@@ -1,0 +1,20 @@
+{
+  "editor.formatOnSave": true, // Automatically format files on save
+  "editor.defaultFormatter": "esbenp.prettier-vscode", // Use Prettier as the default formatter
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ], // Enable ESLint for these file types
+  "files.exclude": {
+    "node_modules": true,
+    ".next": true,
+    "dist": true
+  },
+  "files.associations": {
+    "*.tsx": "typescriptreact",
+    "*.ts": "typescript"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib" // Use the project's TypeScript version
+}

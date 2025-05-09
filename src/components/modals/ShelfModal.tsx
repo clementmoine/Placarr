@@ -283,8 +283,9 @@ export function ShelfModal({
                 {shelf?.id && (
                   <Button
                     type="button"
+                    variant="destructive"
+                    className="sm:mr-auto"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="sm:mr-auto bg-red-500 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-800 text-white"
                   >
                     Delete
                   </Button>

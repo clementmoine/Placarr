@@ -20,7 +20,7 @@ export function ShelfBadge(props: ShelfBadgeProps) {
     />
   ) : (
     <span
-      className="flex rounded w-8 items-center justify-center p-0.5 border overflow-hidden shrink-0"
+      className="flex rounded w-8 items-center justify-center p-1 border overflow-hidden shrink-0"
       style={{
         aspectRatio: "1.61792 / 1",
         backgroundColor: shelf?.color || "white",

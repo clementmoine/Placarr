@@ -32,6 +32,7 @@ import { ScannerButton } from "@/components/ScannerButton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { isUrl } from "@/lib/isUrl";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { deleteItem, getItem } from "@/lib/api/items";
 
 import type { Prisma, Item, Shelf } from "@prisma/client";
@@ -91,6 +92,9 @@ export function ItemModal({
   shelfId: Shelf["id"];
 }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
+
+  const debounce = useDebounce(1000);
 
   const defaultValues: FormValues = useMemo(
     () => ({
@@ -141,20 +145,23 @@ export function ItemModal({
 
   const { reset } = form;
 
-  useEffect(() => {
-    if (item) {
-      reset({
-        shelfId: item.shelfId || defaultValues.shelfId,
-        name: item.name || defaultValues.name,
-        description: item.description || defaultValues.description,
-        condition: item.condition || defaultValues.condition,
-        imageUrl: item.imageUrl || defaultValues.imageUrl,
-        barcode: item.barcode || defaultValues.barcode,
-      });
-    } else {
-      reset(defaultValues);
+  const handleBarcodeChange = async (barcode: string) => {
+    if (barcode.trim() === "") return;
+
+    try {
+      const response = await fetch(`/api/barcode?q=${barcode}`);
+      const data = await response.json();
+
+      if (data?.cleanName) {
+        setNameSuggestion(data.cleanName);
+      } else {
+        setNameSuggestion(null);
+      }
+    } catch (error) {
+      console.error("Erreur de recherche:", error);
+      setNameSuggestion(null);
     }
-  }, [defaultValues, item, reset]);
+  };
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
@@ -206,6 +213,25 @@ export function ItemModal({
     reset();
     onClose();
   };
+
+  useEffect(() => {
+    if (item) {
+      reset({
+        shelfId: item.shelfId || defaultValues.shelfId,
+        name: item.name || defaultValues.name,
+        description: item.description || defaultValues.description,
+        condition: item.condition || defaultValues.condition,
+        imageUrl: item.imageUrl || defaultValues.imageUrl,
+        barcode: item.barcode || defaultValues.barcode,
+      });
+
+      if (item.barcode) {
+        handleBarcodeChange(item.barcode);
+      }
+    } else {
+      reset(defaultValues);
+    }
+  }, [defaultValues, item, reset]);
 
   return (
     <>
@@ -260,16 +286,41 @@ export function ItemModal({
                             className="pr-11"
                             placeholder="Enter barcode"
                             {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              debounce(() =>
+                                handleBarcodeChange(e.target.value),
+                              );
+                            }}
                           />
                           <ScannerButton
                             className="absolute right-2"
                             onScan={(barcode) => {
                               form.setValue("barcode", barcode);
+                              handleBarcodeChange(barcode);
                             }}
                           />
                         </div>
                       </FormControl>
                       <FormMessage />
+
+                      {nameSuggestion && (
+                        <p className="flex items-center overflow-hidden gap-2">
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="!p-0 overflow-hidden shrink text-indigo-600 dark:text-indigo-300"
+                            onClick={() =>
+                              form.setValue("name", nameSuggestion)
+                            }
+                          >
+                            <SparklesIcon />
+                            <span className="text-ellipsis overflow-hidden text-nowrap">
+                              {nameSuggestion}
+                            </span>
+                          </Button>
+                        </p>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -390,8 +441,9 @@ export function ItemModal({
                 {item?.id && (
                   <Button
                     type="button"
+                    variant="destructive"
+                    className="sm:mr-auto"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="sm:mr-auto bg-red-500 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-800 text-white"
                   >
                     Delete
                   </Button>

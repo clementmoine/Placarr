@@ -57,3 +57,11 @@ model Item {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+model BarcodeCache {
+  id              Int      @id @default(autoincrement())
+  barcode         String   @unique
+  name            String
+  provider        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

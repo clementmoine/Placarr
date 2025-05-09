@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": ["@serwist/next/typings"],
+    "types": ["@serwist/next/typings", "node"],
     "plugins": [
       {
         "name": "next"

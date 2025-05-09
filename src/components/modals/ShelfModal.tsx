@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -30,10 +30,11 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { isUrl } from "@/lib/isUrl";
 
 import type { Prisma, Shelf } from "@prisma/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getShelf } from "@/lib/api/shelves";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteShelf, getShelf } from "@/lib/api/shelves";
+import { useRouter } from "next/navigation";
 
-const cardSchema = z.object({
+const shelfSchema = z.object({
   name: z
     .string()
     .trim()
@@ -64,7 +65,7 @@ const cardSchema = z.object({
     }, "Invalid color format"),
 });
 
-type FormValues = z.infer<typeof cardSchema>;
+type FormValues = z.infer<typeof shelfSchema>;
 
 const convertFileToBase64 = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -94,10 +95,14 @@ export function ShelfModal({
   ) => Promise<void>;
   shelfId?: Shelf["id"];
 }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const form = useForm({
-    resolver: zodResolver(cardSchema),
+    resolver: zodResolver(shelfSchema),
     defaultValues,
   });
+
+  const router = useRouter();
 
   const queryClient = useQueryClient();
 
@@ -112,6 +117,21 @@ export function ShelfModal({
       queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
   });
 
+  const { mutate: mutateDelete } = useMutation({
+    mutationFn: deleteShelf,
+    onSuccess: () => {
+      toast.success(`Shelf ${shelf?.name} deleted`);
+      setShowDeleteConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ["shelf", shelfId] });
+      queryClient.invalidateQueries({ queryKey: ["shelves"] });
+      handleClose();
+
+      router.push(`/shelves`);
+    },
+    onError: () => {
+      toast.error("Failed to delete item");
+    },
+  });
   const { reset } = form;
 
   useEffect(() => {
@@ -167,103 +187,145 @@ export function ShelfModal({
     handleClose();
   };
 
+  const handleDelete = async () => {
+    if (shelf?.id) {
+      mutateDelete(shelf.id);
+    }
+  };
+
   const handleClose = () => {
     reset();
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh]">
-        <DialogHeader className="p-4 border-b shrink-0">
-          <DialogTitle className="text-foreground">
-            {shelf ? "Edit shelf" : "Add a new shelf"}
-          </DialogTitle>
-          <DialogDescription className="text-foreground">
-            {shelf
-              ? "Edit the details of your shelf."
-              : "Fill in the details to create a new shelf."}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh]">
+          <DialogHeader className="p-4 border-b shrink-0">
+            <DialogTitle className="text-foreground">
+              {shelf ? "Edit shelf" : "Add a new shelf"}
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              {shelf
+                ? "Edit the details of your shelf."
+                : "Fill in the details to create a new shelf."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="flex flex-col overflow-hidden"
-          >
-            <div className="overflow-x-hidden overflow-y-auto flex flex-col space-y-4 p-4 max-h-[60vh]">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter card name"
-                        className="bg-background text-foreground"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="flex flex-col overflow-hidden"
+            >
+              <div className="overflow-x-hidden overflow-y-auto flex flex-col space-y-4 p-4 max-h-[60vh]">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground">Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter name"
+                          className="bg-background text-foreground"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground">Logo</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="bg-background text-foreground"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            field.onChange(file);
+                            handleLogoChange(file);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground">Color</FormLabel>
+                      <FormControl>
+                        <ColorPicker
+                          placeholder="Choose a color"
+                          className="bg-background text-foreground"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter className="p-4 border-t shrink-0">
+                {shelf?.id && (
+                  <Button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="sm:mr-auto bg-red-500 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-800 text-white"
+                  >
+                    Delete
+                  </Button>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Logo</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        className="bg-background text-foreground"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          field.onChange(file);
-                          handleLogoChange(file);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <Button type="button" onClick={handleClose} variant="secondary">
+                  Cancel
+                </Button>
 
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Color</FormLabel>
-                    <FormControl>
-                      <ColorPicker
-                        placeholder="Choose a color"
-                        className="bg-background text-foreground"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <Button variant="default" type="submit">
+                  {shelf ? "Save Changes" : "Add Shelf"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      {/* Delete dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this item? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancel
+            </Button>
 
-            <DialogFooter className="p-4 border-t shrink-0">
-              <Button type="button" onClick={handleClose} variant="secondary">
-                Cancel
-              </Button>
-
-              <Button variant="default">
-                {shelf ? "Save Changes" : "Add Card"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

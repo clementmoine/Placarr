@@ -4,9 +4,12 @@ import Image from "next/image";
 import React, { useMemo } from "react";
 import color from "color";
 
-import type { Item, Shelf } from "@prisma/client";
+import type { Item } from "@prisma/client";
+import { ShelfWithItemCount } from "@/types/shelves";
 
-export type CardProps = (Item & { type: "item" }) | (Shelf & { type: "shelf" });
+export type CardProps =
+  | (Item & { type: "item" })
+  | (ShelfWithItemCount & { type: "shelf" });
 
 export function Card(props: CardProps) {
   const { type, imageUrl, name } = props;
@@ -24,28 +27,32 @@ export function Card(props: CardProps) {
 
   return (
     <div
-      className="flex flex-col gap-2 items-center justify-center overflow-hidden rounded-xl shadow-lg backface-hidden relative w-full select-none"
+      className="relative flex flex-col w-full select-none gap-2 p-2 overflow-hidden rounded-xl shadow-lg"
       style={{
-        aspectRatio: "1.61792 / 1",
+        aspectRatio: type === "shelf" ? "1.61792 / 1" : "1 / 1.4",
         backgroundColor: (type === "shelf" && props.color) || "#FFF",
       }}
     >
-      {imageUrl ? (
-        <Image
-          src={imageUrl}
-          width={128}
-          height={128}
-          alt="Card Logo"
-          className="size-1/2 object-contain select-none"
-          draggable={false}
-        />
-      ) : (
-        <span className={`text-lg font-bold ${textColor}`}>No logo</span>
-      )}
+      <div className="flex flex-1 w-full items-center justify-center overflow-hidden">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            width={128}
+            height={128}
+            alt="Card Logo"
+            className="h-full w-full object-contain select-none py-4"
+            draggable={false}
+          />
+        ) : (
+          <span className={`text-lg font-bold ${textColor}`}>No Image</span>
+        )}
+      </div>
+
       <span
-        className={`text-sm text-center w-full ${textColor} line-clamp-2 px-2`}
+        className={`text-sm text-center w-full ${textColor} line-clamp-2 px-2 shrink-0`}
       >
         {name.trim().length > 1 ? name : "No name"}
+        {type === "shelf" && ` (${props._count.items} items)`}
       </span>
     </div>
   );

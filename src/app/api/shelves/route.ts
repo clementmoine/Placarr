@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { formatMetadataFromStorage } from "@/services/metadata";
 
 const prisma = new PrismaClient();
 
@@ -23,6 +24,15 @@ export async function GET(req: Request) {
                   { barcode: { contains: searchTerm } },
                 ],
               },
+              include: {
+                metadata: {
+                  include: {
+                    attachments: true,
+                    authors: true,
+                    publishers: true,
+                  },
+                },
+              },
               orderBy: { name: "asc" },
             },
           },
@@ -34,13 +44,37 @@ export async function GET(req: Request) {
             { status: 404 },
           );
         }
-        return NextResponse.json(shelf);
+
+        // Format items with metadata
+        const formattedShelf = {
+          ...shelf,
+          items: shelf.items.map((item) => {
+            if (item.metadata) {
+              const formattedMetadata = formatMetadataFromStorage(
+                item.metadata,
+              );
+              return {
+                ...item,
+                imageUrl: item.imageUrl || formattedMetadata.imageUrl,
+                metadata: formattedMetadata,
+              };
+            }
+            return item;
+          }),
+        };
+
+        return NextResponse.json(formattedShelf);
       }
 
       const shelf = await prisma.shelf.findUnique({
         where: { id },
         include: {
           items: {
+            include: {
+              metadata: {
+                include: { attachments: true, authors: true, publishers: true },
+              },
+            },
             orderBy: { name: "asc" },
           },
         },
@@ -49,7 +83,24 @@ export async function GET(req: Request) {
       if (!shelf) {
         return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
       }
-      return NextResponse.json(shelf);
+
+      // Format items with metadata
+      const formattedShelf = {
+        ...shelf,
+        items: shelf.items.map((item) => {
+          if (item.metadata) {
+            const formattedMetadata = formatMetadataFromStorage(item.metadata);
+            return {
+              ...item,
+              imageUrl: item.imageUrl || formattedMetadata.imageUrl,
+              metadata: formattedMetadata,
+            };
+          }
+          return item;
+        }),
+      };
+
+      return NextResponse.json(formattedShelf);
     }
 
     if (q) {
@@ -59,7 +110,6 @@ export async function GET(req: Request) {
         where: {
           OR: [
             { name: { contains: searchTerm } },
-            // Recherche dans les items de l'étagère
             {
               items: {
                 some: {
@@ -115,10 +165,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { name, imageUrl, color } = body;
+    const { name, imageUrl, color, type } = body;
 
     const shelf = await prisma.shelf.create({
-      data: { name, imageUrl, color },
+      data: { name, imageUrl, color, type },
       include: {
         items: true,
       },

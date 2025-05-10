@@ -5,7 +5,7 @@
 [![UI by shadcn](https://img.shields.io/badge/UI-shadcn%2Fui-8B5CF6?logo=storybook&logoColor=white)](https://ui.shadcn.com/)
 [![License](https://img.shields.io/github/license/clementmoine/placarr)](LICENSE)
 
-**Placarr** is a sleek, mobile-first Next.js app that keeps all your collections in your pocket.
+**Placarr** is a sleek, mobile-first Next.js app that keeps all your inventory in your pocket.
 
 ---
 

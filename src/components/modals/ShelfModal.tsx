@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import color from "color";
 import { z } from "zod";
+import color from "color";
+import { toast } from "sonner";
+import Image from "next/image";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Gamepad2, Film, Music, BookOpen, XIcon, Puzzle } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,13 +30,19 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ColorPicker } from "@/components/ColorPicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { isUrl } from "@/lib/isUrl";
-
-import type { Prisma, Shelf } from "@prisma/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
-import { useRouter } from "next/navigation";
+import { isUrl } from "@/lib/isUrl";
+import { cn } from "@/lib/utils";
+
+import { type Prisma, type Shelf, Type } from "@prisma/client";
 
 const shelfSchema = z.object({
   name: z
@@ -44,13 +54,11 @@ const shelfSchema = z.object({
     .any()
     .refine(
       (url) =>
-        url == null ||
         url instanceof File ||
         isUrl(url) ||
         /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
-      "Invalid image",
-    )
-    .optional(),
+      "Image is required",
+    ),
   color: z
     .string()
     .trim()
@@ -63,6 +71,7 @@ const shelfSchema = z.object({
         return false;
       }
     }, "Invalid color format"),
+  type: z.nativeEnum(Type),
 });
 
 type FormValues = z.infer<typeof shelfSchema>;
@@ -80,6 +89,15 @@ const defaultValues: FormValues = {
   name: "",
   imageUrl: null,
   color: "",
+  type: "games",
+};
+
+const typeIcons: Record<Type, React.ReactNode> = {
+  games: <Gamepad2 className="w-4 h-4" />,
+  movies: <Film className="w-4 h-4" />,
+  musics: <Music className="w-4 h-4" />,
+  books: <BookOpen className="w-4 h-4" />,
+  boardgames: <Puzzle className="w-4 h-4" />,
 };
 
 export function ShelfModal({
@@ -137,6 +155,7 @@ export function ShelfModal({
   useEffect(() => {
     if (shelf) {
       reset({
+        type: shelf.type || defaultValues.type,
         name: shelf.name || defaultValues.name,
         imageUrl: shelf.imageUrl || defaultValues.imageUrl,
         color: shelf.color || defaultValues.color,
@@ -181,6 +200,7 @@ export function ShelfModal({
       name: values.name,
       imageUrl: imageUrl,
       color: values.color,
+      type: values.type,
     };
 
     await onSubmit(updatedShelf);
@@ -219,6 +239,39 @@ export function ShelfModal({
               className="flex flex-col overflow-hidden"
             >
               <div className="overflow-x-hidden overflow-y-auto flex flex-col space-y-4 p-4 max-h-[60vh]">
+                {/* Type */}
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground">Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-background text-foreground w-full">
+                            <SelectValue placeholder="Select a shelf type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(Type).map((type) => (
+                            <SelectItem key={type} value={type}>
+                              <div className="flex items-center gap-2">
+                                {typeIcons[type]}
+                                <span className="capitalize">{type}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Name */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -237,6 +290,7 @@ export function ShelfModal({
                   )}
                 />
 
+                {/* Logo */}
                 <FormField
                   control={form.control}
                   name="imageUrl"
@@ -244,22 +298,56 @@ export function ShelfModal({
                     <FormItem>
                       <FormLabel className="text-foreground">Logo</FormLabel>
                       <FormControl>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="bg-background text-foreground"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] || null;
-                            field.onChange(file);
-                            handleLogoChange(file);
-                          }}
-                        />
+                        <div className="flex flex-col gap-2 relative items-center justify-center">
+                          {field.value && typeof field.value === "string" && (
+                            <Image
+                              width={200}
+                              height={200}
+                              src={field.value}
+                              alt="Item cover"
+                              className="absolute left-1 size-7 object-contain rounded-sm"
+                              style={{
+                                backgroundColor: form.watch("color"),
+                              }}
+                            />
+                          )}
+
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className={cn(
+                              "bg-background text-foreground",
+                              field.value && "pr-9 pl-9",
+                            )}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              field.onChange(file);
+                              handleLogoChange(file);
+                            }}
+                          />
+
+                          {field.value !== null && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="absolute right-1 size-7 p-0 rounded-sm"
+                              size="sm"
+                              onClick={() => {
+                                field.onChange(null);
+                                handleLogoChange(null);
+                              }}
+                            >
+                              <XIcon />
+                            </Button>
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Color */}
                 <FormField
                   control={form.control}
                   name="color"
@@ -303,6 +391,7 @@ export function ShelfModal({
           </Form>
         </DialogContent>
       </Dialog>
+
       {/* Delete dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent>

@@ -7,8 +7,8 @@ import ReactQueryProvider from "@/lib/providers/ReactQueryProvider";
 
 import "./globals.css";
 
-const APP_NAME = "Placarr - Loyalty Cards";
-const APP_DESCRIPTION = "All your loyalty cards, always in your pocket.";
+const APP_NAME = "Placarr - Inventory Management";
+const APP_DESCRIPTION = "All your inventory, always in your pocket.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,

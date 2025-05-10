@@ -1,23 +1,49 @@
+// app/api/items/route.ts
 import { Prisma, PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  fetchAndStoreMetadata,
+  formatMetadataFromStorage,
+} from "@/services/metadata";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const q = searchParams.get("q");
     const shelfId = searchParams.get("shelfId");
+    const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
 
     if (id) {
       const item = await prisma.item.findUnique({
         where: { id },
-        include: { shelf: true },
+        include: {
+          shelf: true,
+          metadata: includeMetadata
+            ? {
+                include: {
+                  attachments: true,
+                  authors: true,
+                  publishers: true,
+                },
+              }
+            : false,
+        },
       });
 
       if (!item) {
         return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      }
+
+      if (item.metadata) {
+        const formattedMetadata = formatMetadataFromStorage(item.metadata);
+        return NextResponse.json({
+          ...item,
+          imageUrl: item.imageUrl || formattedMetadata.imageUrl,
+          metadata: formattedMetadata,
+        });
       }
 
       return NextResponse.json(item);
@@ -42,11 +68,36 @@ export async function GET(req: Request) {
       where: whereClause,
       include: {
         shelf: true,
+        metadata: includeMetadata
+          ? {
+              include: {
+                attachments: true,
+                authors: true,
+                publishers: true,
+              },
+            }
+          : false,
       },
       orderBy: {
         name: "asc",
       },
     });
+
+    if (includeMetadata) {
+      const formattedItems = items.map((item) => {
+        if (item.metadata) {
+          const formattedMetadata = formatMetadataFromStorage(item.metadata);
+          return {
+            ...item,
+            imageUrl: item.imageUrl || formattedMetadata.imageUrl,
+            metadata: formattedMetadata,
+          };
+        }
+        return item;
+      });
+
+      return NextResponse.json(formattedItems);
+    }
 
     return NextResponse.json(items);
   } catch (error) {
@@ -58,10 +109,27 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { shelfId, name, description, imageUrl, barcode, condition } = body;
+    const {
+      shelfId,
+      name,
+      description,
+      imageUrl,
+      barcode,
+      condition,
+      fetchMetadata = true,
+    } = body;
+
+    const shelf = await prisma.shelf.findUnique({
+      where: { id: shelfId },
+      select: { type: true },
+    });
+
+    if (!shelf) {
+      return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
+    }
 
     const item = await prisma.item.create({
       data: {
@@ -74,8 +142,35 @@ export async function POST(req: Request) {
       },
       include: {
         shelf: true,
+        metadata: {
+          include: {
+            attachments: true,
+            authors: true,
+            publishers: true,
+          },
+        },
       },
     });
+
+    if (fetchMetadata) {
+      try {
+        const metadata = await fetchAndStoreMetadata(
+          item.id,
+          name,
+          shelf.type,
+          barcode,
+        );
+
+        if (metadata) {
+          return NextResponse.json({
+            ...item,
+            metadata,
+          });
+        }
+      } catch (metadataError) {
+        console.error("Error fetching metadata:", metadataError);
+      }
+    }
 
     return NextResponse.json(item);
   } catch (error) {
@@ -87,18 +182,53 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, ...data } = body;
+    const { id, refreshMetadata, lookupQuery, ...data } = body;
 
     const item = await prisma.item.update({
       where: { id },
       data,
       include: {
         shelf: true,
+        metadata: {
+          include: {
+            attachments: true,
+            authors: true,
+            publishers: true,
+          },
+        },
       },
     });
+
+    if (refreshMetadata) {
+      try {
+        const metadata = await fetchAndStoreMetadata(
+          item.id,
+          lookupQuery || item.name,
+          item.shelf.type,
+          item.barcode || undefined,
+          true,
+        );
+
+        if (metadata) {
+          return NextResponse.json({
+            ...item,
+            metadata,
+          });
+        }
+      } catch (metadataError) {
+        console.error("Error refreshing metadata:", metadataError);
+      }
+    }
+
+    if (item.metadata) {
+      return NextResponse.json({
+        ...item,
+        metadata: formatMetadataFromStorage(item.metadata),
+      });
+    }
 
     return NextResponse.json(item);
   } catch (error) {
@@ -110,7 +240,7 @@ export async function PATCH(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

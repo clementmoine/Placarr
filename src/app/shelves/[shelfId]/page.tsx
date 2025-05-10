@@ -28,12 +28,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Header from "@/components/Header";
-import { Card } from "@/components/Card";
+import { ItemCard } from "@/components/ItemCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShelfBadge } from "@/components/ShelfBadge";
 import { ItemModal } from "@/components/modals/ItemModal";
+import { ScannerButton } from "@/components/ScannerButton";
 import { ShelfModal } from "@/components/modals/ShelfModal";
 
 import { cn } from "@/lib/utils";
@@ -45,7 +46,6 @@ import type { Shelf, Prisma, Item } from "@prisma/client";
 import type { ShelfWithItemCount } from "@/types/shelves";
 
 import styles from "./shelf.module.css";
-import { ScannerButton } from "@/components/ScannerButton";
 
 const itemSearchSchema = z.object({
   search: z.string(),
@@ -94,7 +94,8 @@ export default function Shelf() {
             shelfId: shelfId,
             description: null,
             barcode: null,
-            condition: "NEW",
+            condition: "new",
+            metadataId: null,
           }),
         ),
       };
@@ -269,12 +270,12 @@ export default function Shelf() {
                       <Search className="absolute size-4 left-3" />
                       <Input
                         type="search"
-                        className="pr-11 pl-9"
+                        className="pr-10 pl-9"
                         placeholder="Search item"
                         {...field}
                       />
                       <ScannerButton
-                        className="absolute right-2"
+                        className="absolute right-1 rounded-sm"
                         onScan={(barcode) => {
                           handleSearch({ search: barcode });
                         }}
@@ -303,7 +304,7 @@ export default function Shelf() {
                 key={`${item.id}-${index}`}
                 href={`/shelves/${shelf?.id}/${item.id}/`}
               >
-                <Card type="item" {...item} />
+                <ItemCard {...item} />
               </Link>
             ),
           )}

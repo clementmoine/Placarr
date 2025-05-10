@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { AvesAPI } from "@/services/avesAPI";
-import { DataForSEO } from "@/services/dataForSEO";
-import { ScaleSerp } from "@/services/scaleSerp";
-import { SerpAPI } from "@/services/serpAPI";
-import { SerpWow } from "@/services/serpWow";
-import { ValueSerp } from "@/services/valueSerp";
+import { AvesAPI } from "@/services/serp/avesAPI";
+import { DataForSEO } from "@/services/serp/dataForSEO";
+import { ScaleSerp } from "@/services/serp/scaleSerp";
+import { SerpAPI } from "@/services/serp/serpAPI";
+import { SerpWow } from "@/services/serp/serpWow";
+import { ValueSerp } from "@/services/serp/valueSerp";
 
 const providers = [
   new SerpWow(),

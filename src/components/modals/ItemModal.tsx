@@ -2,11 +2,12 @@
 
 import { z } from "zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
-import { useEffect, useMemo, useState } from "react";
+import { SparklesIcon, XIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Recycle, Skull, SparklesIcon } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScannerButton } from "@/components/ScannerButton";
+import { ConditionIcon } from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { isUrl } from "@/lib/isUrl";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { deleteItem, getItem } from "@/lib/api/items";
 
-import type { Prisma, Item, Shelf } from "@prisma/client";
+import { type Prisma, type Item, type Shelf, Condition } from "@prisma/client";
+import { cn } from "@/lib/utils";
 
 const itemSchema = z.object({
   shelfId: z.string().trim().min(1, "ShelfId is required"),
@@ -50,7 +53,7 @@ const itemSchema = z.object({
 
   description: z.string().trim().optional(),
 
-  condition: z.enum(["NEW", "USED", "DAMAGED"]),
+  condition: z.nativeEnum(Condition),
 
   imageUrl: z
     .any()
@@ -103,7 +106,7 @@ export function ItemModal({
       imageUrl: null,
       description: "",
       barcode: "",
-      condition: "USED",
+      condition: "used",
     }),
     [shelfId],
   );
@@ -145,23 +148,30 @@ export function ItemModal({
 
   const { reset } = form;
 
-  const handleBarcodeChange = async (barcode: string) => {
-    if (barcode.trim() === "") return;
+  const handleBarcodeChange = useCallback(
+    async (barcode: string) => {
+      if (barcode.trim() === "") return;
 
-    try {
-      const response = await fetch(`/api/barcode?q=${barcode}`);
-      const data = await response.json();
+      try {
+        const response = await fetch(`/api/barcode?q=${barcode}`);
+        const data = await response.json();
 
-      if (data?.cleanName) {
-        setNameSuggestion(data.cleanName);
-      } else {
+        if (data?.cleanName) {
+          setNameSuggestion(data.cleanName);
+
+          if (!form.watch("name")) {
+            form.setValue("name", data.cleanName);
+          }
+        } else {
+          setNameSuggestion(null);
+        }
+      } catch (error) {
+        console.error("Erreur de recherche:", error);
         setNameSuggestion(null);
       }
-    } catch (error) {
-      console.error("Erreur de recherche:", error);
-      setNameSuggestion(null);
-    }
-  };
+    },
+    [form],
+  );
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
@@ -231,7 +241,7 @@ export function ItemModal({
     } else {
       reset(defaultValues);
     }
-  }, [defaultValues, item, reset]);
+  }, [defaultValues, handleBarcodeChange, item, reset]);
 
   return (
     <>
@@ -273,6 +283,7 @@ export function ItemModal({
                   )}
                 />
 
+                {/* Barcode */}
                 <FormField
                   control={form.control}
                   name="barcode"
@@ -294,7 +305,7 @@ export function ItemModal({
                             }}
                           />
                           <ScannerButton
-                            className="absolute right-2"
+                            className="absolute right-1 rounded-sm"
                             onScan={(barcode) => {
                               form.setValue("barcode", barcode);
                               handleBarcodeChange(barcode);
@@ -303,28 +314,11 @@ export function ItemModal({
                         </div>
                       </FormControl>
                       <FormMessage />
-
-                      {nameSuggestion && (
-                        <p className="flex items-center overflow-hidden gap-2">
-                          <Button
-                            type="button"
-                            variant="link"
-                            className="!p-0 overflow-hidden shrink text-indigo-600 dark:text-indigo-300"
-                            onClick={() =>
-                              form.setValue("name", nameSuggestion)
-                            }
-                          >
-                            <SparklesIcon />
-                            <span className="text-ellipsis overflow-hidden text-nowrap">
-                              {nameSuggestion}
-                            </span>
-                          </Button>
-                        </p>
-                      )}
                     </FormItem>
                   )}
                 />
 
+                {/* Name */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -332,17 +326,31 @@ export function ItemModal({
                     <FormItem>
                       <FormLabel className="text-foreground">Name</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter name"
-                          className="bg-background text-foreground"
-                          {...field}
-                        />
+                        <div className="relative flex items-center">
+                          {nameSuggestion && field.value === nameSuggestion && (
+                            <SparklesIcon className="absolute left-2 size-4 text-indigo-600 dark:text-indigo-300" />
+                          )}
+
+                          <Input
+                            placeholder="Enter name"
+                            className={cn("bg-background text-foreground", {
+                              "pl-7":
+                                nameSuggestion &&
+                                field.value === nameSuggestion,
+                              "text-indigo-600 dark:text-indigo-300":
+                                nameSuggestion &&
+                                field.value === nameSuggestion,
+                            })}
+                            {...field}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Description */}
                 <FormField
                   control={form.control}
                   name="description"
@@ -363,6 +371,7 @@ export function ItemModal({
                   )}
                 />
 
+                {/* Condition */}
                 <FormField
                   control={form.control}
                   name="condition"
@@ -380,32 +389,19 @@ export function ItemModal({
                           onValueChange={field.onChange}
                           {...field}
                         >
-                          <ToggleGroupItem
-                            value="NEW"
-                            aria-label="New"
-                            className="flex flex-auto p-4"
-                          >
-                            <SparklesIcon className="shrink-0" />
-                            <span className="shrink-0">New</span>
-                          </ToggleGroupItem>
-
-                          <ToggleGroupItem
-                            value="USED"
-                            aria-label="Used"
-                            className="flex flex-auto p-4"
-                          >
-                            <Recycle className="shrink-0" />
-                            <span className="shrink-0">Used</span>
-                          </ToggleGroupItem>
-
-                          <ToggleGroupItem
-                            value="DAMAGED"
-                            aria-label="Damaged"
-                            className="flex flex-auto p-4"
-                          >
-                            <Skull className="shrink-0" />
-                            <span className="shrink-0">Damaged</span>
-                          </ToggleGroupItem>
+                          {Object.values(Condition).map((condition) => (
+                            <ToggleGroupItem
+                              key={condition}
+                              value={condition}
+                              aria-label={condition}
+                              className="flex flex-auto p-4 gap-1"
+                            >
+                              <ConditionIcon condition={condition} />
+                              <span className="shrink-0 capitalize">
+                                {condition}
+                              </span>
+                            </ToggleGroupItem>
+                          ))}
                         </ToggleGroup>
                       </FormControl>
                       <FormMessage />
@@ -413,6 +409,7 @@ export function ItemModal({
                   )}
                 />
 
+                {/* Cover */}
                 <FormField
                   control={form.control}
                   name="imageUrl"
@@ -420,16 +417,46 @@ export function ItemModal({
                     <FormItem>
                       <FormLabel className="text-foreground">Cover</FormLabel>
                       <FormControl>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="bg-background text-foreground"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] || null;
-                            field.onChange(file);
-                            handleLogoChange(file);
-                          }}
-                        />
+                        <div className="flex flex-col gap-2 relative items-center justify-center">
+                          {field.value && typeof field.value === "string" && (
+                            <Image
+                              width={200}
+                              height={200}
+                              src={field.value}
+                              alt="Item cover"
+                              className="absolute left-1 size-7 object-contain rounded-sm"
+                            />
+                          )}
+
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className={cn(
+                              "bg-background text-foreground",
+                              field.value && "pr-9 pl-9",
+                            )}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              field.onChange(file);
+                              handleLogoChange(file);
+                            }}
+                          />
+
+                          {field.value && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="absolute right-1 size-7 p-0 rounded-sm"
+                              size="sm"
+                              onClick={() => {
+                                field.onChange(null);
+                                handleLogoChange(null);
+                              }}
+                            >
+                              <XIcon />
+                            </Button>
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

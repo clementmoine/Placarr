@@ -84,7 +84,7 @@ export function ScannerButton({
         variant="ghost"
         type="button"
         onClick={handleStart}
-        className="items-center justify-center p-0 size-8"
+        className="items-center justify-center p-0 size-7"
       >
         <Scan className="size-4" />
         <Barcode className="absolute size-2" />

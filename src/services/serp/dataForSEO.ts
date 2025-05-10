@@ -6,17 +6,12 @@ export class DataForSEO {
   url = "https://api.dataforseo.com/v3/serp/google/organic/live/advanced";
   api_key = process.env.DATA_FOR_SEO_API_KEY || "";
 
-  /**
-   * Search an item from the GTIN
-   * @param {string} barcode - Global Trade Item Number
-   * @returns {Promise<Partial<Item> | undefined>}
-   */
-  async search(barcode: string): Promise<Partial<Item> | undefined> {
+  async search(query: string): Promise<Item["name"][] | undefined> {
     return (
       fetch(this.url, {
         body: JSON.stringify([
           {
-            keyword: `${barcode} site:fnac.com OR site:e.leclerc OR site:auchan.fr OR site:cultura.com OR site:decitre.fr OR site:amazon.fr`,
+            keyword: query,
             location_code: "2250",
             language_code: "fr",
             device: "desktop",
@@ -45,25 +40,13 @@ export class DataForSEO {
         // Serialize the item
         .then((response) => {
           if (response?.tasks?.[0]?.result) {
-            const product = response.tasks[0].result.reduce(
-              (
-                acc: { title: string } | undefined,
-                result: { items: { title: string }[] },
-              ) => {
-                if (!acc) {
-                  acc = result.items?.find((item) => item?.title?.length);
-                }
-
-                return acc;
-              },
-              undefined,
+            const products = response.tasks[0].result.flatMap(
+              (result: { items: { title: string }[] }) =>
+                result.items?.map((item) => item?.title).filter(Boolean),
             );
 
-            if (product) {
-              return {
-                name: product.title,
-                barcode,
-              };
+            if (products.length) {
+              return products;
             }
           }
         })

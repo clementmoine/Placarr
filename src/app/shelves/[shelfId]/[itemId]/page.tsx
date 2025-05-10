@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { toast } from "sonner";
-import Image from "next/image";
-import { Wrench } from "lucide-react";
+import { Wrench, Search, Link2 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -25,16 +24,23 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import Header from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShelfBadge } from "@/components/ShelfBadge";
 import { ItemModal } from "@/components/modals/ItemModal";
+import { ConditionIcon } from "@/components/ConditionIcon";
+import { MetadataModal } from "@/components/modals/MetadataModal";
 
 import { getShelf } from "@/lib/api/shelves";
 import { getItem, saveItem } from "@/lib/api/items";
+import { getMetadataPreview } from "@/lib/api/metadata";
 
 import type { ShelfWithItems } from "@/types/shelves";
+import type { ItemWithMetadata } from "@/types/items";
 import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { MetadataWithIncludes } from "@/types/metadata";
+import { ItemCarousel } from "@/components/ItemCarousel";
 
 export default function Shelves() {
   const params = useParams();
@@ -42,6 +48,11 @@ export default function Shelves() {
   const itemId = params.itemId as Item["id"];
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [metadataModalVisible, setMetadataModalVisible] =
+    useState<boolean>(false);
+  const [previewMetadata, setPreviewMetadata] =
+    useState<MetadataWithIncludes | null>(null);
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -56,7 +67,7 @@ export default function Shelves() {
     initialData: () =>
       queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
-        ?.items?.find((i) => i.id === itemId),
+        ?.items?.find((i) => i.id === itemId) as ItemWithMetadata,
     initialDataUpdatedAt: () =>
       queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
   });
@@ -64,7 +75,11 @@ export default function Shelves() {
   const { mutate } = useMutation<
     Item,
     Error,
-    Prisma.ItemCreateInput | Prisma.ItemUpdateInput
+    | Prisma.ItemCreateInput
+    | (Prisma.ItemUpdateInput & {
+        refreshMetadata?: boolean;
+        lookupQuery?: string;
+      })
   >({
     mutationFn: saveItem,
     onSuccess: (item: Item) => {
@@ -96,14 +111,78 @@ export default function Shelves() {
     [mutate],
   );
 
+  const handleMetadataPreview = useCallback(
+    async (name: string) => {
+      if (!shelf?.type) return;
+
+      setIsFetchingMetadata(true);
+      try {
+        const metadata = await getMetadataPreview(
+          name,
+          shelf.type,
+          item?.barcode,
+        );
+        setPreviewMetadata(metadata);
+      } catch (error) {
+        console.error("Error fetching metadata:", error);
+        toast.error("Failed to fetch metadata");
+      } finally {
+        setIsFetchingMetadata(false);
+      }
+    },
+    [shelf?.type, item?.barcode],
+  );
+
+  const handleMetadataUpdate = useCallback(
+    async (name: string) => {
+      if (!item?.id || !shelf?.type) return;
+
+      try {
+        await mutate({
+          id: item.id,
+          lookupQuery: name,
+          refreshMetadata: true,
+        });
+        toast.success("Metadata updated successfully");
+      } catch (error) {
+        console.error("Error updating metadata:", error);
+        toast.error("Failed to update metadata");
+      }
+    },
+    [item?.id, shelf?.type, mutate],
+  );
+
+  const year = useMemo(() => {
+    if (!item?.metadata?.releaseDate) return undefined;
+
+    const date = new Date(item?.metadata?.releaseDate);
+    if (isNaN(date.getTime())) {
+      return undefined;
+    }
+    return date.getFullYear();
+  }, [item?.metadata?.releaseDate]);
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
       <Header>
-        <Button variant="default" onClick={() => setModalVisible(true)}>
-          <Wrench />
-          Edit item
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setMetadataModalVisible(true)}
+          >
+            {item?.metadataId ? (
+              <Link2 className="size-4" />
+            ) : (
+              <Search className="size-4" />
+            )}
+            {item?.metadataId ? "Fix meta" : "Find meta"}
+          </Button>
+          <Button variant="default" onClick={() => setModalVisible(true)}>
+            <Wrench className="size-4" />
+            Edit item
+          </Button>
+        </div>
       </Header>
 
       {/* Modals */}
@@ -114,6 +193,22 @@ export default function Shelves() {
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
       />
+
+      {shelf?.type && item?.name && (
+        <MetadataModal
+          isOpen={metadataModalVisible}
+          onClose={() => {
+            setMetadataModalVisible(false);
+            setPreviewMetadata(null);
+          }}
+          onSubmit={handleMetadataUpdate}
+          onPreview={handleMetadataPreview}
+          currentName={item.name}
+          type={shelf.type}
+          metadata={previewMetadata}
+          isFetching={isFetchingMetadata}
+        />
+      )}
 
       {/* Content */}
       <div className="flex flex-col gap-4 p-4">
@@ -133,24 +228,16 @@ export default function Shelves() {
             </BreadcrumbLink>
             <BreadcrumbSeparator />
             <BreadcrumbPage className="text-ellipsis overflow-hidden text-nowrap">
-              {item?.name || "Item"}
+              {`${item?.name}${year ? ` (${year})` : ""}` || "Item"}
             </BreadcrumbPage>
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* Carrousel of images */}
+        {/* Carrousel of images (with the cover and the images from the metadata) */}
         {isFetching ? (
           <Skeleton className="h-80 w-full" />
         ) : (
-          item?.imageUrl && (
-            <Image
-              src={item?.imageUrl}
-              alt={item?.name || "Item image"}
-              width={250}
-              height={250}
-              className="h-80 w-full object-contain"
-            />
-          )
+          <ItemCarousel item={item} />
         )}
 
         <h2 className="relative text-foreground text-lg font-semibold">
@@ -159,11 +246,17 @@ export default function Shelves() {
               <Skeleton className="absolute inset-0" />
             </span>
           ) : (
-            item?.name
+            `${item?.name}${year ? ` (${year})` : ""}`
           )}
         </h2>
 
-        <p className="relative text-foreground text-sm">
+        {/* Condition in tag */}
+        <Badge variant="outline" className="capitalize">
+          <ConditionIcon condition={item?.condition} />
+          {item?.condition.toLocaleLowerCase() || "Not Provided"}
+        </Badge>
+
+        <p className="relative text-foreground text-sm empty:hidden">
           {isFetching ? (
             <span className="inline-block">
               <Skeleton className="absolute inset-0" />
@@ -176,29 +269,82 @@ export default function Shelves() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Value</TableHead>
+              <TableHead className="w-1/2 md:w-1/3">Data</TableHead>
+              <TableHead className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                Value
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Condition */}
-            <TableRow>
-              <TableCell>Condition</TableCell>
-              <TableCell className="capitalize">
-                {item?.condition.toLocaleLowerCase() || "Not Provided"}
-              </TableCell>
-            </TableRow>
+            {/* Original title */}
+            {item?.metadata?.title && (
+              <TableRow>
+                <TableCell className="w-1/2 md:w-1/3">Original title</TableCell>
+                <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                  {item?.metadata?.title || "Not Provided"}
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* Authors from the metadata */}
+            {item?.metadata?.authors?.length !== 0 && (
+              <TableRow>
+                <TableCell className="w-1/2 md:w-1/3">Authors</TableCell>
+                <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                  {item?.metadata?.authors.map((a) => a.name).join(", ")}
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* Publishers from the metadata */}
+            {item?.metadata?.publishers?.length !== 0 && (
+              <TableRow>
+                <TableCell className="w-1/2 md:w-1/3">Publisher</TableCell>
+                <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                  {item?.metadata?.publishers.map((p) => p.name).join(", ")}
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* Description from the metadata */}
+            {item?.metadata?.description && (
+              <TableRow>
+                <TableCell className="w-1/2 md:w-1/3">Description</TableCell>
+                <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                  {item?.metadata?.description}
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* Aired date */}
+            {item?.metadata?.releaseDate && (
+              <TableRow>
+                <TableCell className="w-1/2 md:w-1/3">Aired date</TableCell>
+                <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                  {new Date(item.metadata.releaseDate).toLocaleDateString(
+                    "en-US",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    },
+                  )}
+                </TableCell>
+              </TableRow>
+            )}
 
             {/* Bar code */}
             <TableRow>
-              <TableCell>GTIN/EAN</TableCell>
-              <TableCell>{item?.barcode || "Not Provided"}</TableCell>
+              <TableCell className="w-1/2 md:w-1/3">Barcode</TableCell>
+              <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
+                {item?.barcode || "Not Provided"}
+              </TableCell>
             </TableRow>
 
             {/* Date added */}
             <TableRow>
-              <TableCell>Added date</TableCell>
-              <TableCell>
+              <TableCell className="w-1/2 md:w-1/3">Added date</TableCell>
+              <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
                 {item?.createdAt
                   ? new Date(item?.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
@@ -212,8 +358,8 @@ export default function Shelves() {
 
             {/* Last edit */}
             <TableRow>
-              <TableCell>Last update</TableCell>
-              <TableCell>
+              <TableCell className="w-1/2 md:w-1/3">Last update</TableCell>
+              <TableCell className="w-1/2 md:w-2/3 whitespace-pre-wrap break-words">
                 {item?.updatedAt
                   ? new Date(item.updatedAt).toLocaleDateString("en-US", {
                       year: "numeric",

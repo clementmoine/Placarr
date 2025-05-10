@@ -40,12 +40,7 @@ export class SerpWow {
     );
   }
 
-  /**
-   * Search an item from the GTIN
-   * @param {string} barcode - Global Trade Item Number
-   * @returns {Promise<Partial<Item> | undefined>}
-   */
-  async search(barcode: string): Promise<Partial<Item> | undefined> {
+  async search(query: string): Promise<Item["name"][] | undefined> {
     if (await !this.available()) {
       return Promise.reject(`${this.name} unavailable`);
     }
@@ -54,7 +49,7 @@ export class SerpWow {
 
     url.search = new URLSearchParams({
       api_key: this.api_key,
-      q: `${barcode} site:fnac.com OR site:e.leclerc OR site:auchan.fr OR site:cultura.com OR site:decitre.fr OR site:amazon.fr`,
+      q: query,
       gl: "fr",
       hl: "fr",
       google_domain: "google.fr",
@@ -79,15 +74,12 @@ export class SerpWow {
         // Serialize the item
         .then((response) => {
           if (response?.organic_results?.length) {
-            const product = response.organic_results.find(
-              (product: { title: string }) => product?.title?.length,
-            );
+            const products = response?.organic_results
+              .map((product: { title: string }) => product?.title)
+              .filter(Boolean);
 
-            if (product) {
-              return {
-                name: product.title,
-                barcode,
-              };
+            if (products.length) {
+              return products;
             }
           }
         })

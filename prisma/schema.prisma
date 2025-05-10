@@ -10,22 +10,38 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-// model User {
-//   id              String   @id @default(cuid())
-//   email           String   @unique
-//   password        String
-//   avatarUrl       String?
-
-//   shelves         Shelf[]
-
-//   createdAt       DateTime @default(now())
-//   updatedAt       DateTime @updatedAt
-// }
+enum Type {
+  games
+  movies
+  musics
+  books
+  boardgames
+}
 
 enum Condition {
-  NEW
-  USED
-  DAMAGED
+  new
+  used
+  damaged
+}
+
+enum AttachmentType {
+  audio
+  image
+  book
+  video
+}
+
+model Attachment {
+  id          String        @id @default(cuid())
+  type        AttachmentType
+  title       String?
+  duration    Int?
+  url         String
+  metadata    Metadata      @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+  metadataId  String
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model Shelf {
@@ -33,14 +49,48 @@ model Shelf {
   name            String
   imageUrl        String?
   color           String?
-
-  // userId          String 
-  // user            User    @relation(fields: [userId], references: [id])
+  type            Type
 
   items           Item[]  
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Author {
+  name      String     @id
+  imageUrl  String?
+  metadata  Metadata[] @relation("MetadataAuthors")
+}
+
+model Publisher {
+  name      String     @id
+  imageUrl  String?
+  metadata  Metadata[] @relation("MetadataPublishers")
+}
+
+model Metadata {
+  id              String      @id @default(cuid())
+  title           String?
+  authors         Author[]    @relation("MetadataAuthors")
+  publishers      Publisher[] @relation("MetadataPublishers")
+  duration        Int?
+  pageCount       Int?
+  tracksCount     Int?
+  description     String?
+  releaseDate     String?
+  imageUrl        String?
+  
+  attachments     Attachment[]
+  
+  sourceType      Type
+  sourceQuery     String
+  lastFetched     DateTime    @default(now())
+  
+  items           Item[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model Item {
@@ -51,17 +101,30 @@ model Item {
   barcode         String?
   condition       Condition
 
+  metadata        Metadata? @relation(fields: [metadataId], references: [id])
+  metadataId      String?
+
+  shelf           Shelf    @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   shelfId         String
-  shelf           Shelf    @relation(fields: [shelfId], references: [id])
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model RawName {
+  id             Int            @id @default(autoincrement())
+  value          String
+  barcodeCacheId Int
+  barcodeCache   BarcodeCache  @relation(fields: [barcodeCacheId], references: [id])
+
+  @@index([barcodeCacheId])
+}
 model BarcodeCache {
   id              Int      @id @default(autoincrement())
   barcode         String   @unique
-  name            String
   provider        String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  rawNames        RawName[]
 }

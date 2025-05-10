@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Header from "@/components/Header";
-import { Card } from "@/components/Card";
+import { ShelfCard } from "@/components/ShelfCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -178,12 +178,12 @@ export default function Shelves() {
                       <Search className="absolute size-4 left-3" />
                       <Input
                         type="search"
-                        className="pr-11 pl-9"
+                        className="pr-10 pl-9"
                         placeholder="Search item or collection"
                         {...field}
                       />
                       <ScannerButton
-                        className="absolute right-2"
+                        className="absolute right-1 rounded-sm"
                         onScan={(barcode) => {
                           handleSearch({ search: barcode });
                         }}
@@ -200,7 +200,7 @@ export default function Shelves() {
         <div className={cn(styles.shelves, "mt-4")}>
           {sortedShelves.map((shelf, index) => (
             <Link key={`${shelf.id}-${index}`} href={`/shelves/${shelf.id}`}>
-              <Card type="shelf" {...shelf} />
+              <ShelfCard {...shelf} />
             </Link>
           ))}
 

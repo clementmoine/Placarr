@@ -1,8 +1,9 @@
 import axios from "axios";
 
 import type { Prisma, Item } from "@prisma/client";
+import type { ItemWithMetadata } from "@/types/items";
 
-export const getItem = (id?: Item["id"]): Promise<Item> => {
+export const getItem = (id?: Item["id"]): Promise<ItemWithMetadata> => {
   if (id == null) {
     throw new Error("Id was not given to getItem");
   }
@@ -14,7 +15,9 @@ export const getItem = (id?: Item["id"]): Promise<Item> => {
 };
 
 export const saveItem = (
-  data: Prisma.ItemCreateInput | Prisma.ItemUpdateInput,
+  data:
+    | Prisma.ItemCreateInput
+    | (Prisma.ItemUpdateInput & { refreshMetadata?: boolean }),
 ): Promise<Item> => {
   const url = new URL("/api/items", window.location.origin);
   let method: "POST" | "PATCH" = "POST";

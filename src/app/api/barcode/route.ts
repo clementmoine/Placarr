@@ -1,11 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { AvesAPI } from "@/services/avesAPI";
-import { DataForSEO } from "@/services/dataForSEO";
-import { ScaleSerp } from "@/services/scaleSerp";
-import { SerpAPI } from "@/services/serpAPI";
-import { SerpWow } from "@/services/serpWow";
-import { ValueSerp } from "@/services/valueSerp";
+import { NextRequest, NextResponse } from "next/server";
+
+import { AvesAPI } from "@/services/serp/avesAPI";
+import { DataForSEO } from "@/services/serp/dataForSEO";
+import { ScaleSerp } from "@/services/serp/scaleSerp";
+import { SerpAPI } from "@/services/serp/serpAPI";
+import { SerpWow } from "@/services/serp/serpWow";
+import { ValueSerp } from "@/services/serp/valueSerp";
+
+import { extractProductName } from "@/lib/productName";
+import { cleanCode, createBarcodeQuery } from "@/lib/barcodeQuery";
 
 const providers = [
   new SerpWow(),
@@ -18,31 +22,22 @@ const providers = [
 
 const prisma = new PrismaClient();
 
-function cleanName(name: string): string {
-  return name
-    .replace(/\(.*?\)/g, "")
-    .replace(
-      /\b(au meilleur prix|meilleur prix|neuf|occasion|prix choc|pas cher|offre spéciale|nouveauté|remise|promotion|promo|livraison gratuite|top vente|en stock|expédié rapidement|100% original|nouveau modèle)\b/gi,
-      "",
-    )
-    .replace(/\s*\|.*$/, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export async function GET(req: NextRequest) {
   const barcode = req.nextUrl.searchParams.get("q");
 
-  if (!barcode) {
+  const cleanedBarcode = cleanCode(barcode);
+
+  if (!cleanedBarcode.length) {
     return NextResponse.json({ error: "Missing barcode" }, { status: 400 });
   }
-
-  const cleanedBarcode = barcode.trim().replace(/\s+/g, "");
 
   let cachedResult;
   try {
     cachedResult = await prisma.barcodeCache.findUnique({
       where: { barcode: cleanedBarcode },
+      include: {
+        rawNames: true,
+      },
     });
   } catch (error) {
     console.error("Error fetching from barcode cache:", error);
@@ -50,11 +45,13 @@ export async function GET(req: NextRequest) {
   }
 
   if (cachedResult) {
+    const rawNames = cachedResult.rawNames.map((n) => n.value);
+
     return NextResponse.json({
       barcode: cachedResult.barcode,
-      name: cachedResult.name,
-      cleanName: cleanName(cachedResult.name),
+      rawNames: rawNames,
       provider: cachedResult.provider,
+      cleanName: extractProductName(rawNames),
     });
   }
 
@@ -62,14 +59,18 @@ export async function GET(req: NextRequest) {
 
   for (const provider of providers) {
     try {
-      const result = await provider.search(cleanedBarcode);
+      const query = createBarcodeQuery(cleanedBarcode);
 
-      if (result?.name) {
+      const rawNames = await provider.search(query);
+
+      if (rawNames) {
         try {
           await prisma.barcodeCache.create({
             data: {
               barcode: cleanedBarcode,
-              name: result.name,
+              rawNames: {
+                create: rawNames.map((value) => ({ value })),
+              },
               provider: provider.name,
             },
           });
@@ -80,10 +81,12 @@ export async function GET(req: NextRequest) {
           );
         }
 
+        const name = extractProductName(rawNames);
+
         return NextResponse.json({
-          ...result,
           provider: provider.name,
-          cleanName: cleanName(result.name),
+          rawNames: rawNames,
+          cleanName: name,
         });
       }
     } catch (error) {

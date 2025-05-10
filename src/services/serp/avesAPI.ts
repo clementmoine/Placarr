@@ -6,12 +6,7 @@ export class AvesAPI {
   url = "https://api.avesapi.com";
   api_key = process.env.AVES_API_KEY || "";
 
-  /**
-   * Search an item from the GTIN
-   * @param {string} barcode - Global Trade Item Number
-   * @returns {Promise<Partial<Item> | undefined>}
-   */
-  async search(barcode: string): Promise<Partial<Item> | undefined> {
+  async search(query: string): Promise<Item["name"][] | undefined> {
     const url = new URL(`${this.url}/search`);
 
     url.search = new URLSearchParams({
@@ -20,7 +15,7 @@ export class AvesAPI {
       hl: "fr",
       num: "10",
       type: "web",
-      query: `${barcode} site:fnac.com OR site:e.leclerc OR site:auchan.fr OR site:cultura.com OR site:decitre.fr OR site:amazon.fr`,
+      query: query,
       output: "json",
       device: "desktop",
       google_domain: "google.fr",
@@ -41,15 +36,12 @@ export class AvesAPI {
         // Serialize the item
         .then((response) => {
           if (response?.result?.organic_results?.length) {
-            const product = response.result.organic_results.find(
-              (product: { title: string }) => product?.title?.length,
-            );
+            const products = response.result.organic_results
+              .map((product: { title: string }) => product?.title)
+              .filter(Boolean);
 
-            if (product) {
-              return {
-                name: product.title,
-                barcode,
-              };
+            if (products.length) {
+              return products;
             }
           }
         })

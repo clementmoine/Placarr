@@ -1,10 +1,10 @@
 import { Item } from "@prisma/client";
 
-// Scale Serp : 100 requests / month
-export class ScaleSerp {
-  name = "Scale Serp";
-  url = "https://api.scaleserp.com";
-  api_key = process.env.SCALE_SERP_API_KEY || "";
+// Value Serp : 100 requests / month
+export class ValueSerp {
+  name = "Value Serp";
+  url = "https://api.valueserp.com";
+  api_key = process.env.VALUE_SERP_API_KEY || "";
 
   // Check remaining credits
   available(): Promise<boolean> {
@@ -40,12 +40,7 @@ export class ScaleSerp {
     );
   }
 
-  /**
-   * Search an item from the GTIN
-   * @param {string} barcode - Global Trade Item Number
-   * @returns {Promise<Partial<Item> | undefined>}
-   */
-  async search(barcode: string): Promise<Partial<Item> | undefined> {
+  async search(query: string): Promise<Item["name"][] | undefined> {
     if (await !this.available()) {
       return Promise.reject(`${this.name} unavailable`);
     }
@@ -54,7 +49,7 @@ export class ScaleSerp {
 
     url.search = new URLSearchParams({
       api_key: this.api_key,
-      q: `${barcode} site:fnac.com OR site:e.leclerc OR site:auchan.fr OR site:cultura.com OR site:decitre.fr OR site:amazon.fr`,
+      q: query,
       gl: "fr",
       hl: "fr",
       google_domain: "google.fr",
@@ -79,15 +74,12 @@ export class ScaleSerp {
         // Serialize the item
         .then((response) => {
           if (response?.organic_results?.length) {
-            const product = response.organic_results.find(
-              (product: { title: string }) => product?.title?.length,
-            );
+            const products = response?.organic_results
+              .map((product: { title: string }) => product?.title)
+              .filter(Boolean);
 
-            if (product) {
-              return {
-                name: product.title,
-                barcode,
-              };
+            if (products.length) {
+              return products;
             }
           }
         })

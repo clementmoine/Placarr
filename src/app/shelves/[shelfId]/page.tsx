@@ -205,6 +205,7 @@ function ShelfComponent() {
 
   const canEdit = useMemo(() => {
     if (!shelf) return false;
+
     return hasPermission(shelf.userId);
   }, [shelf, hasPermission]);
 
@@ -224,7 +225,7 @@ function ShelfComponent() {
             </Button>
           )}
 
-          {isAuthenticated && !isGuest && (
+          {isAuthenticated && !isGuest && canEdit && (
             <Button variant="default" onClick={() => handleModalOpen("item")}>
               <Plus />
               Add item

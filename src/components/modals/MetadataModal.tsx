@@ -1,89 +1,117 @@
-import * as z from "zod";
-import { useEffect, useState } from "react";
+import { z } from "zod";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useState, useEffect } from "react";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { ScannerButton } from "@/components/ScannerButton";
+import Image from "next/image";
 
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ItemCarousel } from "@/components/ItemCarousel";
+import { Input } from "@/components/ui/input";
 
-import { useDebounce } from "@/lib/hooks/useDebounce";
-
+import { Loader2 } from "lucide-react";
+import { MetadataWithIncludes } from "@/types/metadata";
 import type { Type } from "@prisma/client";
-import type { MetadataWithIncludes } from "@/types/metadata";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+const metadataSchema = z.object({
+  name: z.string().trim().optional(),
+  barcode: z.string().trim().optional(),
 });
 
-type MetadataModalProps = {
+type FormValues = z.infer<typeof metadataSchema>;
+
+interface MetadataModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => Promise<void>;
-  onPreview: (name: string) => Promise<void>;
+  onSubmit: ({
+    name,
+    barcode,
+  }: {
+    name: string;
+    barcode: string;
+  }) => Promise<void>;
+  onPreview: ({
+    name,
+    barcode,
+  }: {
+    name: string;
+    barcode: string;
+  }) => Promise<void>;
   currentName: string;
+  currentBarcode: string;
   type: Type;
   metadata: MetadataWithIncludes | null;
   isFetching: boolean;
-};
+}
 
 export function MetadataModal({
   isOpen,
+  type,
   onClose,
   onSubmit,
   onPreview,
   currentName,
+  currentBarcode,
   metadata,
   isFetching,
 }: MetadataModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const debounce = useDebounce(1000);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(metadataSchema),
     defaultValues: {
       name: currentName,
+      barcode: currentBarcode,
     },
   });
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
-
-    try {
-      await onSubmit(values.name);
-      onClose();
-    } catch (error) {
-      console.error("Error submitting form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   useEffect(() => {
     if (isOpen) {
-      onPreview(currentName);
+      onPreview({
+        name: currentName,
+        barcode: currentBarcode,
+      });
+      form.reset();
     }
+  }, [currentName, currentBarcode, form, isOpen, onPreview]);
 
-    form.reset();
-  }, [currentName, form, isOpen, onPreview]);
+  const debounce = useDebounce(1000);
+
+  const handleSubmit = useCallback(
+    async (values: FormValues) => {
+      setIsSubmitting(true);
+      try {
+        await onSubmit({
+          name: values.name || "",
+          barcode: values.barcode || "",
+        });
+        onClose();
+      } catch (error) {
+        console.error("Error submitting metadata:", error);
+        toast.error("Failed to submit metadata");
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [onSubmit, onClose],
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -91,7 +119,7 @@ export function MetadataModal({
         <DialogHeader className="p-4 border-b shrink-0">
           <DialogTitle className="text-foreground">Find Metadata</DialogTitle>
           <DialogDescription className="text-foreground">
-            Find images and details to complete the item.
+            Search for {type} details and cover image
           </DialogDescription>
         </DialogHeader>
 
@@ -101,22 +129,66 @@ export function MetadataModal({
             className="flex flex-col overflow-hidden"
           >
             <div className="overflow-x-hidden overflow-y-auto flex flex-col space-y-4 p-4 max-h-[60vh]">
+              {/* Barcode */}
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground">Barcode</FormLabel>
+                    <FormControl>
+                      <div className="flex relative items-center">
+                        <Input
+                          type="text"
+                          className="pr-11 bg-background text-foreground"
+                          placeholder="Enter barcode"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            debounce(() =>
+                              onPreview({
+                                name: form.watch("name") || "",
+                                barcode: e.target.value,
+                              }),
+                            );
+                          }}
+                        />
+                        <ScannerButton
+                          className="absolute right-1 rounded-sm"
+                          onScan={(barcode: string) => {
+                            form.setValue("barcode", barcode);
+                            onPreview({
+                              name: form.watch("name") || "",
+                              barcode,
+                            });
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">
-                      Search from name
-                    </FormLabel>
+                    <FormLabel className="text-foreground">Name</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Enter a name"
+                        placeholder="Enter name"
                         className="bg-background text-foreground"
                         onChange={(e) => {
                           field.onChange(e);
-                          debounce(() => onPreview(e.target.value));
+                          debounce(() =>
+                            onPreview({
+                              name: e.target.value,
+                              barcode: form.watch("barcode") || "",
+                            }),
+                          );
                         }}
                       />
                     </FormControl>
@@ -126,107 +198,60 @@ export function MetadataModal({
               />
 
               {isFetching ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="size-8 animate-spin" />
                 </div>
               ) : metadata ? (
-                <div className="space-y-4">
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex gap-6 items-center">
-                      {/* Image or Carousel */}
-                      <div className="flex w-24 shrink-0 overflow-hidden">
-                        <ItemCarousel
-                          max={3}
-                          item={{
-                            metadata,
-                          }}
+                <div className="flex flex-col gap-4 mt-4">
+                  <div className="flex gap-4">
+                    {metadata.imageUrl && (
+                      <div className="relative">
+                        <Image
+                          width={500}
+                          height={500}
+                          src={metadata.imageUrl}
+                          alt={metadata.title || "Cover"}
+                          className="object-cover rounded-lg w-32 h-auto"
                         />
                       </div>
-
-                      <div className="space-y-3 min-w-0 flex-1">
-                        {/* Title */}
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-medium text-muted-foreground">
-                            Title
-                          </h4>
-                          <p className="text-foreground font-medium">
-                            {metadata.title}
-                          </p>
-                        </div>
-
-                        {/* Release Date */}
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <h3 className="text-md font-semibold">
+                        {metadata.title}
                         {metadata.releaseDate && (
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-medium text-muted-foreground">
-                              Release Date
-                            </h4>
-                            <p className="text-foreground">
-                              {new Date(
-                                metadata.releaseDate,
-                              ).toLocaleDateString(undefined, {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
-                            </p>
-                          </div>
+                          <span className="ml-2 text-muted-foreground">
+                            ({new Date(metadata.releaseDate).getFullYear()})
+                          </span>
                         )}
-
-                        {/* Authors */}
-                        {metadata.authors && metadata.authors.length > 0 && (
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-medium text-muted-foreground">
-                              Authors
-                            </h4>
-                            <p className="text-foreground text-sm">
-                              {metadata.authors
-                                .map((author) => author.name)
-                                .join(", ")}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Publishers */}
-                        {metadata.publishers &&
-                          metadata.publishers.length > 0 && (
-                            <div className="space-y-1">
-                              <h4 className="text-sm font-medium text-muted-foreground">
-                                Publishers
-                              </h4>
-                              <p className="text-foreground text-sm">
-                                {metadata.publishers
-                                  .map((publisher) => publisher.name)
-                                  .join(", ")}
-                              </p>
-                            </div>
-                          )}
-
-                        {/* Description */}
-                        {metadata.description && (
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-medium text-muted-foreground">
-                              Description
-                            </h4>
-                            <p className="text-foreground whitespace-pre-wrap break-words text-sm leading-relaxed line-clamp-3">
-                              {metadata.description}
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      </h3>
+                      {metadata.authors?.map((author) => (
+                        <p className="text-sm" key={author.name}>
+                          {author.name}
+                        </p>
+                      ))}
+                      {metadata.publishers?.map((publisher) => (
+                        <p className="text-sm" key={publisher.name}>
+                          {publisher.name}
+                        </p>
+                      ))}
                     </div>
                   </div>
+                  {metadata.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {metadata.description}
+                    </p>
+                  )}
                 </div>
               ) : null}
             </div>
 
             <DialogFooter className="p-4 border-t shrink-0">
-              <Button type="button" onClick={onClose} variant="secondary">
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                Update Metadata
+              <Button
+                type="submit"
+                disabled={isSubmitting || isFetching}
+                className="w-full"
+              >
+                {isSubmitting ? "Submitting..." : "Use this metadata"}
               </Button>
             </DialogFooter>
           </form>

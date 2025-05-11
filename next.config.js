@@ -21,20 +21,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "flagcdn.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
         hostname: "media.rawg.io",
       },
       {
         protocol: "https",
         hostname: "image.tmdb.org",
-      },
-      {
-        protocol: "https",
-        hostname: "api.deezer.com",
       },
       {
         protocol: "https",
@@ -45,8 +36,8 @@ const nextConfig = {
         hostname: "cf.geekdo-images.com",
       },
       {
-        protocol: "http",
-        hostname: "books.google.com",
+        protocol: "https",
+        hostname: "covers.openlibrary.org",
       },
     ],
   },

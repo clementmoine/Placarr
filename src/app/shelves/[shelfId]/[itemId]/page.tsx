@@ -114,16 +114,12 @@ export default function Shelves() {
   );
 
   const handleMetadataPreview = useCallback(
-    async (name: string) => {
+    async ({ name, barcode }: { name: string; barcode: string }) => {
       if (!shelf?.type) return;
 
       setIsFetchingMetadata(true);
       try {
-        const metadata = await getMetadataPreview(
-          name,
-          shelf.type,
-          item?.barcode,
-        );
+        const metadata = await getMetadataPreview(name, shelf.type, barcode);
         setPreviewMetadata(metadata);
       } catch (error) {
         console.error("Error fetching metadata:", error);
@@ -132,17 +128,18 @@ export default function Shelves() {
         setIsFetchingMetadata(false);
       }
     },
-    [shelf?.type, item?.barcode],
+    [shelf?.type],
   );
 
   const handleMetadataUpdate = useCallback(
-    async (name: string) => {
+    async ({ name, barcode }: { name: string; barcode: string }) => {
       if (!item?.id || !shelf?.type) return;
 
       try {
         await mutate({
           id: item.id,
           lookupQuery: name,
+          barcode,
           refreshMetadata: true,
         });
         toast.success("Metadata updated successfully");
@@ -166,6 +163,7 @@ export default function Shelves() {
 
   const canEdit = useMemo(() => {
     if (!item) return false;
+
     return hasPermission(item.userId);
   }, [item, hasPermission]);
 
@@ -220,6 +218,7 @@ export default function Shelves() {
               onSubmit={handleMetadataUpdate}
               onPreview={handleMetadataPreview}
               currentName={item.name}
+              currentBarcode={item.barcode || ""}
               type={shelf.type}
               metadata={previewMetadata}
               isFetching={isFetchingMetadata}

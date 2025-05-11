@@ -12,6 +12,8 @@ import levenshtein from "fast-levenshtein";
 import { convertXML } from "simple-xml-to-json";
 import { decode as decodeHTMLEntities } from "html-entities";
 import axios from "axios";
+import { parse, format } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
 
 export interface MetadataAttachment {
   type: AttachmentType;
@@ -262,7 +264,7 @@ async function fetchMetadataByType(
     case "boardgames":
       return fetchFromBGG(name);
     case "books":
-      return fetchFromGoogleBooks(name, barcode);
+      return fetchFromOpenLibrary(name, barcode);
     case "movies":
       return fetchFromTMDB(name);
     default:
@@ -496,77 +498,304 @@ async function fetchFromBGG(name: string) {
   }
 }
 
-async function fetchFromGoogleBooks(name: string, barcode?: string | null) {
-  const query = barcode ? `isbn:${barcode}` : name;
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`;
-  const res = await axios.get(url);
-  const data = res.data;
+interface OpenLibraryWork {
+  key: string;
+  title: string;
+  authors?: { key: string }[];
+  publishers?: string[];
+  number_of_pages?: number;
+  description?: { value: string } | string;
+  publish_date?: string;
+  covers?: number[];
+}
 
-  if (!data.items || data.items.length === 0) return null;
+interface OpenLibrarySearchResponse {
+  docs?: Array<{
+    key: string;
+    title: string;
+    title_suggest?: string;
+    subtitle?: string;
+    author_name?: string[];
+    author_key?: string[];
+    language?: string[];
+    edition_count?: number;
+    has_fulltext?: boolean;
+    first_sentence?: string[];
+    publisher?: string[];
+    publish_year?: number[];
+    publish_date?: string[];
+    cover_i?: number;
+    cover_edition_key?: string;
+    ebook_access?: string;
+    ia?: string[];
+    ia_collection_s?: string;
+    public_scan_b?: boolean;
+  }>;
+}
 
-  let bestMatch = data.items[0];
-  let minDistance = levenshtein.get(
-    name.toLowerCase(),
-    bestMatch.volumeInfo.title.toLowerCase(),
-  );
+interface OpenLibraryAuthor {
+  name: string;
+  photos?: number[];
+}
 
-  for (const item of data.items) {
-    const title = item.volumeInfo.title;
-    const distance = levenshtein.get(name.toLowerCase(), title.toLowerCase());
-    if (distance < minDistance) {
-      minDistance = distance;
-      bestMatch = item;
-    }
-  }
+interface OpenLibraryEditionsResponse {
+  entries?: Array<{
+    key: string;
+    title: string;
+    languages?: Array<{ key: string }>;
+    publishers?: string[];
+    publish_date?: string;
+    number_of_pages?: number;
+    covers?: number[];
+    authors?: Array<{ key: string }>;
+    description?: { value: string } | string;
+  }>;
+}
 
-  if (!bestMatch) return null;
+async function fetchFromOpenLibrary(name: string, barcode?: string | null) {
+  const MAX_RETRIES = 3;
+  const INITIAL_DELAY = 1000; // 1 second
 
-  async function getBestCoverUrl(thumbnailUrl: string): Promise<string> {
-    const maxZoom = 6;
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
-    for (let zoom = maxZoom; zoom >= 0; zoom--) {
-      const testUrl = thumbnailUrl.replace(/zoom=\d+/, `zoom=${zoom}`);
-
-      try {
-        const res = await axios.head(testUrl);
-        if (res.status === 200) {
-          return testUrl;
-        }
-      } catch (error: unknown) {
-        console.error(
-          `Trying to get cover for ${bestMatch.volumeInfo.title} at zoom ${zoom} failed`,
-          error,
+  const fetchWithRetry = async <T>(url: string, retryCount = 0): Promise<T> => {
+    try {
+      const response = await axios.get<T>(url);
+      return response.data;
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status: number } };
+      if (
+        (axiosError.response?.status === 503 ||
+          axiosError.response?.status === 500) &&
+        retryCount < MAX_RETRIES
+      ) {
+        const delay = INITIAL_DELAY * Math.pow(2, retryCount);
+        console.log(
+          `Open Library API request failed with status ${axiosError.response.status}, retrying in ${delay}ms...`,
         );
+        await sleep(delay);
+        return fetchWithRetry<T>(url, retryCount + 1);
+      }
+      throw error;
+    }
+  };
+
+  try {
+    let workId: string | null = null;
+    let workData: OpenLibraryWork | null = null;
+
+    // Extract year from name if it's in parentheses
+    const yearMatch = name.match(/\((\d{4})\)/);
+    const requestedYear = yearMatch ? parseInt(yearMatch[1]) : null;
+    const cleanName = yearMatch ? name.replace(/\(\d{4}\)/, "").trim() : name;
+
+    // First try ISBN search if barcode is provided
+    if (barcode) {
+      const isbnData = await fetchWithRetry<
+        OpenLibraryWork & { works?: { key: string }[] }
+      >(`https://openlibrary.org/isbn/${barcode}.json`);
+
+      if (isbnData && isbnData.works?.[0]?.key) {
+        workId = isbnData.works[0].key;
+        workData = isbnData;
       }
     }
 
-    return thumbnailUrl;
+    // If no results from ISBN or no barcode provided, try title search
+    if (!workId) {
+      const searchQuery = barcode ? `${cleanName} isbn:${barcode}` : cleanName;
+
+      const data = await fetchWithRetry<OpenLibrarySearchResponse>(
+        `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}`,
+      );
+
+      if (data.docs && data.docs.length > 0) {
+        // Find the work with the most editions and data
+        let bestWork = data.docs[0];
+        let maxScore = 0;
+
+        for (const doc of data.docs) {
+          let score = 0;
+          // Higher score for works with more editions
+          score += (doc.edition_count || 0) * 10;
+          // Bonus for works with full text
+          if (doc.has_fulltext) score += 50;
+          // Bonus for works with cover
+          if (doc.cover_i) score += 30;
+          // Bonus for works with multiple languages
+          if (doc.language?.length) score += doc.language.length * 5;
+          // Bonus for works with author info
+          if (doc.author_name?.length) score += 20;
+
+          // Add significant bonus for year match
+          if (requestedYear && doc.publish_year?.length) {
+            const hasMatchingYear = doc.publish_year.some(
+              (year) => Math.abs(year - requestedYear) <= 1,
+            );
+            if (hasMatchingYear) {
+              score += 100; // High bonus for year match
+            }
+          }
+
+          if (score > maxScore) {
+            maxScore = score;
+            bestWork = doc;
+          }
+        }
+
+        workId = bestWork.key;
+
+        // Get all editions of the work
+        const editionsData = await fetchWithRetry<OpenLibraryEditionsResponse>(
+          `https://openlibrary.org${workId}/editions.json`,
+        );
+
+        if (editionsData.entries && editionsData.entries.length > 0) {
+          // Sort editions by language preference and title distance
+          const sortedEditions = editionsData.entries
+            .map((edition) => {
+              const distance = levenshtein.get(
+                cleanName.toLowerCase(),
+                edition.title.toLowerCase(),
+              );
+
+              // Get the language code from the full key
+              const fullLanguageKey = edition.languages?.[0]?.key || "";
+              const language = fullLanguageKey.includes("/fre")
+                ? "fr"
+                : fullLanguageKey.includes("/eng")
+                  ? "en"
+                  : fullLanguageKey.includes("/spa")
+                    ? "sp"
+                    : fullLanguageKey.includes("/ger")
+                      ? "ge"
+                      : fullLanguageKey.includes("/por")
+                        ? "pt"
+                        : fullLanguageKey.includes("/ita")
+                          ? "it"
+                          : "en";
+
+              // Calculate language score (higher is better)
+              const languageScore =
+                language === "fr" ? 2 : language === "en" ? 1 : 0;
+
+              // Check if this edition matches the requested year
+              const editionYear = edition.publish_date
+                ? parseInt(edition.publish_date.match(/\d{4}/)?.[0] || "0")
+                : 0;
+              const yearMatches = requestedYear
+                ? Math.abs(editionYear - requestedYear) <= 1
+                : false;
+
+              return {
+                edition,
+                distance,
+                languageScore,
+                yearMatches,
+              };
+            })
+            .sort((a, b) => {
+              // First sort by language preference (higher score first)
+              if (a.languageScore !== b.languageScore) {
+                return b.languageScore - a.languageScore;
+              }
+              // Then by year match
+              if (a.yearMatches !== b.yearMatches) {
+                return b.yearMatches ? 1 : -1;
+              }
+              // Finally by title distance
+              return a.distance - b.distance;
+            });
+
+          workData = sortedEditions[0].edition;
+        } else {
+          // Fallback to the original work if no editions found
+          workData = await fetchWithRetry<OpenLibraryWork>(
+            `https://openlibrary.org${workId}.json`,
+          );
+        }
+      }
+    }
+
+    if (!workId || !workData) return null;
+
+    // Get author info
+    const authors =
+      workData.authors
+        ?.map((author: { key: string }) => {
+          if (!author?.key) return null;
+          return fetchWithRetry<OpenLibraryAuthor>(
+            `https://openlibrary.org${author.key}.json`,
+          )
+            .then((res) => ({
+              name: res.name,
+              imageUrl: res.photos?.[0]
+                ? `https://covers.openlibrary.org/a/id/${res.photos[0]}-L.jpg`
+                : null,
+            }))
+            .catch(() => null);
+        })
+        .filter(Boolean) || [];
+
+    const authorDetails = (await Promise.all(authors)).filter(Boolean);
+
+    // Parse and format the date
+    let formattedDate: string | undefined;
+    if (workData.publish_date) {
+      try {
+        // Try parsing with different locales
+        const locales = [
+          { locale: fr, format: "d MMMM yyyy" },
+          { locale: enUS, format: "MMMM d, yyyy" },
+          { locale: enUS, format: "d MMMM yyyy" },
+        ];
+
+        for (const { locale, format: dateFormat } of locales) {
+          try {
+            const date = parse(workData.publish_date, dateFormat, new Date(), {
+              locale,
+            });
+            if (!isNaN(date.getTime())) {
+              formattedDate = format(date, "yyyy-MM-dd");
+              break;
+            }
+          } catch {
+            // Try next locale/format
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing date:", error);
+      }
+    }
+
+    return {
+      title: workData.title,
+      authors: authorDetails,
+      publishers:
+        workData.publishers?.map((publisher: string) => ({
+          name: publisher,
+        })) || [],
+      pageCount: workData.number_of_pages,
+      description:
+        typeof workData.description === "string"
+          ? workData.description
+          : workData.description?.value,
+      releaseDate: formattedDate,
+      imageUrl: workData.covers?.[0]
+        ? `https://covers.openlibrary.org/b/id/${workData.covers[0]}-L.jpg`
+        : null,
+      attachments:
+        workData.covers?.slice(1).map((coverId: number) => ({
+          type: "image",
+          url: `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`,
+        })) || [],
+    };
+  } catch (error) {
+    console.error("Error fetching from Open Library:", error);
+    return null;
   }
-
-  const rawThumbnail = bestMatch.volumeInfo.imageLinks?.thumbnail;
-  const imageUrl = rawThumbnail ? await getBestCoverUrl(rawThumbnail) : null;
-
-  return {
-    title: bestMatch.volumeInfo.title,
-    authors: bestMatch.volumeInfo.authors.map((author: string) => ({
-      name: author,
-    })),
-    publishers: [
-      {
-        name: bestMatch.volumeInfo.publisher,
-      },
-    ],
-    pageCount: bestMatch.volumeInfo.pageCount,
-    description: bestMatch.volumeInfo.description,
-    releaseDate: bestMatch.volumeInfo.publishedDate,
-    imageUrl: imageUrl,
-    attachments: [
-      {
-        type: "book",
-        url: bestMatch.accessInfo.webReaderLink,
-      },
-    ],
-  };
 }
 
 async function fetchFromTMDB(name: string) {

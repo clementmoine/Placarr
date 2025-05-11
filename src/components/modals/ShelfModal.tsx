@@ -8,7 +8,15 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Gamepad2, Film, Music, BookOpen, XIcon, Puzzle } from "lucide-react";
+import {
+  Gamepad2,
+  Film,
+  Music,
+  BookOpen,
+  XIcon,
+  Puzzle,
+  Loader2,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +49,7 @@ import {
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
 import { isUrl } from "@/lib/isUrl";
 import { cn } from "@/lib/utils";
+import { fileToBase64 } from "@/lib/toBase64";
 
 import { type Prisma, type Shelf, Type } from "@prisma/client";
 
@@ -76,19 +85,10 @@ const shelfSchema = z.object({
 
 type FormValues = z.infer<typeof shelfSchema>;
 
-const convertFileToBase64 = async (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-};
-
 const defaultValues: FormValues = {
   name: "",
   imageUrl: null,
-  color: "",
+  color: "white",
   type: "games",
 };
 
@@ -114,6 +114,8 @@ export function ShelfModal({
   shelfId?: Shelf["id"];
 }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(shelfSchema),
@@ -175,7 +177,7 @@ export function ShelfModal({
         }
 
         try {
-          const base64 = await convertFileToBase64(file);
+          const base64 = await fileToBase64(file);
           form.setValue("imageUrl", base64);
         } catch (error) {
           console.error("Error converting file to base64:", error);
@@ -190,26 +192,36 @@ export function ShelfModal({
   };
 
   const handleSubmit = async (values: FormValues) => {
-    let imageUrl: FormValues["imageUrl"] = values.imageUrl;
-    if (imageUrl && imageUrl instanceof File) {
-      imageUrl = await convertFileToBase64(imageUrl);
+    setIsSubmitting(true);
+    try {
+      let imageUrl: FormValues["imageUrl"] = values.imageUrl;
+      if (imageUrl && imageUrl instanceof File) {
+        imageUrl = await fileToBase64(imageUrl);
+      }
+
+      const updatedShelf: Prisma.ShelfUpdateInput | Prisma.ShelfCreateInput = {
+        ...values,
+        id: shelf ? shelf?.id : undefined,
+        imageUrl: imageUrl,
+      };
+
+      await onSubmit(updatedShelf);
+      onClose();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Failed to save shelf");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const updatedShelf: Prisma.ShelfUpdateInput | Prisma.ShelfCreateInput = {
-      id: shelf ? shelf?.id : undefined,
-      name: values.name,
-      imageUrl: imageUrl,
-      color: values.color,
-      type: values.type,
-    };
-
-    await onSubmit(updatedShelf);
-    handleClose();
   };
 
   const handleDelete = async () => {
-    if (shelf?.id) {
-      mutateDelete(shelf.id);
+    if (!shelf?.id) return;
+    setIsDeleting(true);
+    try {
+      await mutateDelete(shelf.id);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -374,16 +386,27 @@ export function ShelfModal({
                     variant="destructive"
                     className="sm:mr-auto"
                     onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
                   >
                     Delete
                   </Button>
                 )}
 
-                <Button type="button" onClick={handleClose} variant="secondary">
+                <Button
+                  type="button"
+                  onClick={handleClose}
+                  variant="secondary"
+                  disabled={isSubmitting || isDeleting}
+                >
                   Cancel
                 </Button>
 
-                <Button variant="default" type="submit">
+                <Button
+                  variant="default"
+                  type="submit"
+                  disabled={isSubmitting || isDeleting}
+                >
+                  {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                   {shelf ? "Save Changes" : "Add Shelf"}
                 </Button>
               </DialogFooter>
@@ -398,7 +421,7 @@ export function ShelfModal({
           <DialogHeader>
             <DialogTitle>Confirm deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this item? This action cannot be
+              Are you sure you want to delete this shelf? This action cannot be
               undone.
             </DialogDescription>
           </DialogHeader>
@@ -406,11 +429,17 @@ export function ShelfModal({
             <Button
               variant="secondary"
               onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
 
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting && <Loader2 className="size-4 animate-spin" />}
               Delete
             </Button>
           </DialogFooter>

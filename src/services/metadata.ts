@@ -1,18 +1,17 @@
 import {
   Item,
   Metadata,
-  PrismaClient,
   Type,
   AttachmentType,
   Attachment,
   Author,
   Publisher,
 } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import levenshtein from "fast-levenshtein";
 import { convertXML } from "simple-xml-to-json";
 import { decode as decodeHTMLEntities } from "html-entities";
-
-const prisma = new PrismaClient();
+import axios from "axios";
 
 export interface MetadataAttachment {
   type: AttachmentType;
@@ -273,8 +272,8 @@ async function fetchMetadataByType(
 
 async function fetchFromDeezer(name: string, barcode?: string | null) {
   const searchUrl = `https://api.deezer.com/search/album?q=${encodeURIComponent(name)}`;
-  const res = await fetch(searchUrl);
-  const data = await res.json();
+  const res = await axios.get(searchUrl);
+  const data = res.data;
 
   if (!data.data || data.data.length === 0) return null;
 
@@ -282,10 +281,10 @@ async function fetchFromDeezer(name: string, barcode?: string | null) {
   let minDistance = Infinity;
 
   for (const album of data.data) {
-    const albumDetailsRes = await fetch(
+    const albumDetailsRes = await axios.get(
       `https://api.deezer.com/album/${album.id}`,
     );
-    const albumDetails = await albumDetailsRes.json();
+    const albumDetails = albumDetailsRes.data;
 
     // Try to match the album with upc code
     if (barcode && albumDetails.upc === barcode) {
@@ -335,8 +334,8 @@ async function fetchFromDeezer(name: string, barcode?: string | null) {
 
 async function fetchFromRawg(name: string) {
   const url = `https://api.rawg.io/api/games?search=${encodeURIComponent(name)}&key=${process.env.RAWG_API_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const res = await axios.get(url);
+  const data = res.data;
 
   if (!data.results || data.results.length === 0) return null;
 
@@ -397,8 +396,8 @@ async function fetchFromBGG(name: string) {
   try {
     // First, search for the game
     const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(name)}&type=boardgame`;
-    const searchRes = await fetch(searchUrl);
-    const searchText = await searchRes.text();
+    const searchRes = await axios.get(searchUrl, { responseType: "text" });
+    const searchText = searchRes.data;
     const searchData = convertXML(searchText) as BGGResponse;
     const items = searchData.items?.children || [];
     if (items.length === 0) return null;
@@ -430,13 +429,11 @@ async function fetchFromBGG(name: string) {
 
     // Get detailed game info
     const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
-    const detailsRes = await fetch(detailsUrl);
-    const detailsText = await detailsRes.text();
+    const detailsRes = await axios.get(detailsUrl, { responseType: "text" });
+    const detailsText = detailsRes.data;
     const detailsData = convertXML(detailsText) as BGGResponse;
     const game = detailsData.items?.children?.[0]?.item;
     if (!game) return null;
-
-    console.log(detailsUrl);
 
     // Get primary name
     const primaryName = game.children.find(
@@ -502,8 +499,8 @@ async function fetchFromBGG(name: string) {
 async function fetchFromGoogleBooks(name: string, barcode?: string | null) {
   const query = barcode ? `isbn:${barcode}` : name;
   const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const res = await axios.get(url);
+  const data = res.data;
 
   if (!data.items || data.items.length === 0) return null;
 
@@ -531,8 +528,8 @@ async function fetchFromGoogleBooks(name: string, barcode?: string | null) {
       const testUrl = thumbnailUrl.replace(/zoom=\d+/, `zoom=${zoom}`);
 
       try {
-        const res = await fetch(testUrl, { method: "HEAD" });
-        if (res.ok) {
+        const res = await axios.head(testUrl);
+        if (res.status === 200) {
           return testUrl;
         }
       } catch (error: unknown) {
@@ -574,8 +571,8 @@ async function fetchFromGoogleBooks(name: string, barcode?: string | null) {
 
 async function fetchFromTMDB(name: string) {
   const searchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(name)}&api_key=${process.env.TMDB_API_KEY}`;
-  const res = await fetch(searchUrl);
-  const data = await res.json();
+  const res = await axios.get(searchUrl);
+  const data = res.data;
 
   if (!data.results || data.results.length === 0) return null;
 
@@ -596,15 +593,15 @@ async function fetchFromTMDB(name: string) {
     }
   }
 
-  const detailsRes = await fetch(
+  const detailsRes = await axios.get(
     `https://api.themoviedb.org/3/movie/${bestMatch.id}?api_key=${process.env.TMDB_API_KEY}`,
   );
-  const details = await detailsRes.json();
+  const details = detailsRes.data;
 
-  const creditsRes = await fetch(
+  const creditsRes = await axios.get(
     `https://api.themoviedb.org/3/movie/${bestMatch.id}/credits?api_key=${process.env.TMDB_API_KEY}`,
   );
-  const credits = await creditsRes.json();
+  const credits = creditsRes.data;
 
   return {
     title: bestMatch.title,

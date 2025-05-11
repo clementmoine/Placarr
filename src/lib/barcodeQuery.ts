@@ -35,8 +35,10 @@ export function createBarcodeQuery(barcode: string): string {
     "micromania.fr",
     "philibert.fr",
     "placedeslibraires.fr",
+    "pricecharting.com",
     "qobuz.com",
     "rakuten.fr",
+    "retroplace.com",
     "rueducommerce.fr",
     "trictrac.net",
   ];

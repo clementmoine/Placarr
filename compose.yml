@@ -10,6 +10,12 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - ADMIN_EMAIL=admin@placarr.com
+      - ADMIN_NAME=Admin
+      - ADMIN_PASSWORD=admin
+      - GUEST_EMAIL=guest@placarr.com
+      - GUEST_NAME=Guest
+      - GUEST_PASSWORD=guest-password
       #- AVES_API_KEY=
       #- DATA_FOR_SEO_API_KEY=
       #- SCALE_SERP_API_KEY=

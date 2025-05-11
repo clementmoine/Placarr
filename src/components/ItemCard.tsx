@@ -12,7 +12,7 @@ export function ItemCard(props: Item) {
 
   return (
     <div
-      className="relative flex flex-col w-full select-none gap-2 p-2 overflow-hidden rounded-xl shadow-lg bg-white"
+      className="relative flex flex-col w-full select-none gap-4 p-4 overflow-hidden rounded-xl shadow-lg bg-card"
       style={{
         aspectRatio: "1 / 1.4",
       }}
@@ -24,7 +24,9 @@ export function ItemCard(props: Item) {
             width={128}
             height={128}
             alt="Item Logo"
-            className={cn("w-full h-full object-contain select-none")}
+            className={cn(
+              "w-full h-full object-contain select-none bg-background",
+            )}
             draggable={false}
           />
         ) : (

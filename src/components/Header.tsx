@@ -2,6 +2,7 @@
 
 import { LibraryBig } from "lucide-react";
 import Link from "next/link";
+import { UserNav } from "./UserNav";
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -19,7 +20,10 @@ export default function Header(props: HeaderProps) {
       </Link>
 
       {/* Right part */}
-      <div className="flex items-center gap-2">{props.children}</div>
+      <div className="flex items-center gap-4">
+        {props.children}
+        <UserNav />
+      </div>
     </header>
   );
 }

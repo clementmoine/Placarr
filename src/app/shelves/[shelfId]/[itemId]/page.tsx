@@ -41,9 +41,11 @@ import type { ItemWithMetadata } from "@/types/items";
 import type { Shelf, Prisma, Item } from "@prisma/client";
 import type { MetadataWithIncludes } from "@/types/metadata";
 import { ItemCarousel } from "@/components/ItemCarousel";
+import { useAccount } from "@/lib/hooks/useAccount";
 
 export default function Shelves() {
   const params = useParams();
+  const { isGuest, hasPermission, isAuthenticated } = useAccount();
   const shelfId = params.shelfId as Shelf["id"];
   const itemId = params.itemId as Item["id"];
 
@@ -162,52 +164,68 @@ export default function Shelves() {
     return date.getFullYear();
   }, [item?.metadata?.releaseDate]);
 
+  const canEdit = useMemo(() => {
+    if (!item) return false;
+    return hasPermission(item.userId);
+  }, [item, hasPermission]);
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
       <Header>
         <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => setMetadataModalVisible(true)}
-          >
-            {item?.metadataId ? (
-              <Link2 className="size-4" />
-            ) : (
-              <Search className="size-4" />
-            )}
-            {item?.metadataId ? "Fix meta" : "Find meta"}
-          </Button>
-          <Button variant="default" onClick={() => setModalVisible(true)}>
-            <Wrench className="size-4" />
-            Edit item
-          </Button>
+          {/* Fix metadata */}
+          {isAuthenticated && !isGuest && canEdit && (
+            <Button
+              variant="secondary"
+              onClick={() => setMetadataModalVisible(true)}
+            >
+              {item?.metadataId ? (
+                <Link2 className="size-4" />
+              ) : (
+                <Search className="size-4" />
+              )}
+              {item?.metadataId ? "Fix meta" : "Find meta"}
+            </Button>
+          )}
+
+          {/* Edit item */}
+          {isAuthenticated && !isGuest && canEdit && (
+            <Button variant="default" onClick={() => setModalVisible(true)}>
+              <Wrench className="size-4" />
+              Edit item
+            </Button>
+          )}
         </div>
       </Header>
 
       {/* Modals */}
-      <ItemModal
-        shelfId={shelfId}
-        itemId={itemId}
-        isOpen={modalVisible}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-      />
+      {isAuthenticated && !isGuest && canEdit && (
+        <>
+          <ItemModal
+            shelfId={shelfId}
+            itemId={itemId}
+            isOpen={modalVisible}
+            onClose={handleModalClose}
+            onSubmit={handleModalSubmit}
+          />
 
-      {shelf?.type && item?.name && (
-        <MetadataModal
-          isOpen={metadataModalVisible}
-          onClose={() => {
-            setMetadataModalVisible(false);
-            setPreviewMetadata(null);
-          }}
-          onSubmit={handleMetadataUpdate}
-          onPreview={handleMetadataPreview}
-          currentName={item.name}
-          type={shelf.type}
-          metadata={previewMetadata}
-          isFetching={isFetchingMetadata}
-        />
+          {shelf?.type && item?.name && (
+            <MetadataModal
+              isOpen={metadataModalVisible}
+              onClose={() => {
+                setMetadataModalVisible(false);
+                setPreviewMetadata(null);
+              }}
+              onSubmit={handleMetadataUpdate}
+              onPreview={handleMetadataPreview}
+              currentName={item.name}
+              type={shelf.type}
+              metadata={previewMetadata}
+              isFetching={isFetchingMetadata}
+            />
+          )}
+        </>
       )}
 
       {/* Content */}
@@ -227,7 +245,7 @@ export default function Shelves() {
               </Link>
             </BreadcrumbLink>
             <BreadcrumbSeparator />
-            <BreadcrumbPage className="text-ellipsis overflow-hidden text-nowrap">
+            <BreadcrumbPage className="truncate">
               {`${item?.name}${year ? ` (${year})` : ""}` || "Item"}
             </BreadcrumbPage>
           </BreadcrumbList>
@@ -253,7 +271,7 @@ export default function Shelves() {
         {/* Condition in tag */}
         <Badge variant="outline" className="capitalize">
           <ConditionIcon condition={item?.condition} />
-          {item?.condition.toLocaleLowerCase() || "Not Provided"}
+          {item?.condition?.toLocaleLowerCase() || "Not Provided"}
         </Badge>
 
         <p className="relative text-foreground text-sm empty:hidden">

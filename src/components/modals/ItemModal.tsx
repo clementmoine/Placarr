@@ -4,11 +4,12 @@ import { z } from "zod";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
-import { SparklesIcon, XIcon } from "lucide-react";
+import { SparklesIcon, XIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { isUrl } from "@/lib/isUrl";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { deleteItem, getItem } from "@/lib/api/items";
+import { fileToBase64 } from "@/lib/toBase64";
 
 import { type Prisma, type Item, type Shelf, Condition } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -70,15 +72,6 @@ const itemSchema = z.object({
 
 type FormValues = z.infer<typeof itemSchema>;
 
-const convertFileToBase64 = async (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-};
-
 export function ItemModal({
   isOpen,
   onClose,
@@ -95,6 +88,8 @@ export function ItemModal({
   shelfId: Shelf["id"];
 }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
 
   const debounce = useDebounce(1000);
@@ -153,8 +148,8 @@ export function ItemModal({
       if (barcode.trim() === "") return;
 
       try {
-        const response = await fetch(`/api/barcode?q=${barcode}`);
-        const data = await response.json();
+        const response = await axios.get(`/api/barcode?q=${barcode}`);
+        const data = response.data;
 
         if (data?.cleanName) {
           setNameSuggestion(data.cleanName);
@@ -183,7 +178,7 @@ export function ItemModal({
         }
 
         try {
-          const base64 = await convertFileToBase64(file);
+          const base64 = await fileToBase64(file);
           form.setValue("imageUrl", base64);
         } catch (error) {
           console.error("Error converting file to base64:", error);
@@ -198,24 +193,36 @@ export function ItemModal({
   };
 
   const handleSubmit = async (values: FormValues) => {
-    let imageUrl: FormValues["imageUrl"] = values.imageUrl;
-    if (imageUrl && imageUrl instanceof File) {
-      imageUrl = await convertFileToBase64(imageUrl);
+    setIsSubmitting(true);
+    try {
+      let imageUrl: FormValues["imageUrl"] = values.imageUrl;
+      if (imageUrl && imageUrl instanceof File) {
+        imageUrl = await fileToBase64(imageUrl);
+      }
+
+      const updatedItem: Prisma.ItemUpdateInput | Prisma.ItemCreateInput = {
+        ...values,
+        id: item ? item?.id : undefined,
+        imageUrl: imageUrl,
+      };
+
+      await onSubmit(updatedItem);
+      onClose();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Failed to save item");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const updatedItem: Prisma.ItemUpdateInput | Prisma.ItemCreateInput = {
-      ...values,
-      id: item ? item?.id : undefined,
-      imageUrl: imageUrl,
-    };
-
-    await onSubmit(updatedItem);
-    handleClose();
   };
 
   const handleDelete = async () => {
-    if (item?.id) {
-      mutateDelete(item.id);
+    if (!item?.id) return;
+    setIsDeleting(true);
+    try {
+      await mutateDelete(item.id);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -471,16 +478,27 @@ export function ItemModal({
                     variant="destructive"
                     className="sm:mr-auto"
                     onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
                   >
                     Delete
                   </Button>
                 )}
 
-                <Button type="button" onClick={handleClose} variant="secondary">
+                <Button
+                  type="button"
+                  onClick={handleClose}
+                  variant="secondary"
+                  disabled={isSubmitting || isDeleting}
+                >
                   Cancel
                 </Button>
 
-                <Button variant="default" type="submit">
+                <Button
+                  variant="default"
+                  type="submit"
+                  disabled={isSubmitting || isDeleting}
+                >
+                  {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                   {item ? "Save Changes" : "Add Item"}
                 </Button>
               </DialogFooter>
@@ -503,11 +521,17 @@ export function ItemModal({
             <Button
               variant="secondary"
               onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
 
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting && <Loader2 className="size-4 animate-spin" />}
               Delete
             </Button>
           </DialogFooter>

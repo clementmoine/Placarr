@@ -1,4 +1,5 @@
 import { Item } from "@prisma/client";
+import axios from "axios";
 
 // AvesAPI : 1000 requests
 export class AvesAPI {
@@ -22,9 +23,10 @@ export class AvesAPI {
     }).toString();
 
     return (
-      fetch(url)
+      axios
+        .get(url.toString())
         // Get JSON response
-        .then((response) => response.json())
+        .then((response) => response.data)
         // Check the response
         .then((response) => {
           if (response?.error || !response.request?.success) {

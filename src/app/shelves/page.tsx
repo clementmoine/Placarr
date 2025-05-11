@@ -30,6 +30,7 @@ import { ShelfModal } from "@/components/modals/ShelfModal";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { getShelves, saveShelf } from "@/lib/api/shelves";
+import { useAccount } from "@/lib/hooks/useAccount";
 
 import type { Shelf, Prisma } from "@prisma/client";
 
@@ -61,6 +62,8 @@ function ShelvesComponent() {
   const searchParams = useSearchParams();
 
   const queryClient = useQueryClient();
+
+  const { isGuest, isAuthenticated } = useAccount();
 
   const { data: shelves, isFetching } = useQuery({
     queryKey: searchParams.get("q")
@@ -137,19 +140,26 @@ function ShelvesComponent() {
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
       <Header>
-        <Button variant="default" onClick={() => handleModalOpen()}>
-          <Plus />
-          Add shelve
-        </Button>
+        <div className="flex gap-2">
+          {/* Add shelf */}
+          {isAuthenticated && !isGuest && (
+            <Button variant="default" onClick={() => handleModalOpen()}>
+              <Plus />
+              Add shelf
+            </Button>
+          )}
+        </div>
       </Header>
 
       {/* Modals */}
-      <ShelfModal
-        shelfId={editingShelfId}
-        isOpen={modalVisible}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-      />
+      {isAuthenticated && !isGuest && (
+        <ShelfModal
+          shelfId={editingShelfId}
+          isOpen={modalVisible}
+          onClose={handleModalClose}
+          onSubmit={handleModalSubmit}
+        />
+      )}
 
       {/* Content */}
       <div className="flex flex-col gap-4 p-4">
@@ -177,12 +187,14 @@ function ShelvesComponent() {
                   <FormControl>
                     <div className="flex relative items-center">
                       <Search className="absolute size-4 left-3" />
+
                       <Input
                         type="search"
                         className="pr-10 pl-9"
                         placeholder="Search item or collection"
                         {...field}
                       />
+
                       <ScannerButton
                         className="absolute right-1 rounded-sm"
                         onScan={(barcode) => {

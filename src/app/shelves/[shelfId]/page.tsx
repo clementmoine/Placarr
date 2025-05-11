@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { saveItem } from "@/lib/api/items";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { getShelf, saveShelf } from "@/lib/api/shelves";
+import { useAccount } from "@/lib/hooks/useAccount";
 
 import type { Shelf, Prisma, Item } from "@prisma/client";
 import type { ShelfWithItemCount } from "@/types/shelves";
@@ -55,6 +56,7 @@ type FormValues = z.infer<typeof itemSearchSchema>;
 
 function ShelfComponent() {
   const params = useParams();
+  const { isGuest, isAuthenticated, hasPermission } = useAccount();
   const shelfId = params.shelfId as Shelf["id"];
 
   const [editingItemId, setEditingItemId] = useState<Item["id"]>();
@@ -97,6 +99,7 @@ function ShelfComponent() {
             barcode: null,
             condition: "new",
             metadataId: null,
+            userId: shelf?.userId || "",
           }),
         ),
       };
@@ -200,35 +203,54 @@ function ShelfComponent() {
     [],
   );
 
+  const canEdit = useMemo(() => {
+    if (!shelf) return false;
+    return hasPermission(shelf.userId);
+  }, [shelf, hasPermission]);
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
       <Header>
-        <Button variant="secondary" onClick={() => handleModalOpen("shelf")}>
-          <Wrench />
-          Edit shelf
-        </Button>
+        <div className="flex gap-2">
+          {/* Edit shelf */}
+          {isAuthenticated && !isGuest && canEdit && (
+            <Button
+              variant="secondary"
+              onClick={() => handleModalOpen("shelf")}
+            >
+              <Wrench />
+              Edit shelf
+            </Button>
+          )}
 
-        <Button variant="default" onClick={() => handleModalOpen("item")}>
-          <Plus />
-          Add item
-        </Button>
+          {isAuthenticated && !isGuest && (
+            <Button variant="default" onClick={() => handleModalOpen("item")}>
+              <Plus />
+              Add item
+            </Button>
+          )}
+        </div>
       </Header>
 
       {/* Modals */}
-      <ShelfModal
-        shelfId={shelf?.id}
-        isOpen={visibleModal === "shelf"}
-        onClose={handleModalClose}
-        onSubmit={handleShelfModalSubmit}
-      />
-      <ItemModal
-        shelfId={shelfId}
-        itemId={editingItemId}
-        isOpen={visibleModal === "item"}
-        onClose={handleModalClose}
-        onSubmit={handleItemModalSubmit}
-      />
+      {isAuthenticated && !isGuest && canEdit && (
+        <>
+          <ShelfModal
+            shelfId={shelf?.id}
+            isOpen={visibleModal === "shelf"}
+            onClose={handleModalClose}
+            onSubmit={handleShelfModalSubmit}
+          />
+          <ItemModal
+            shelfId={shelfId}
+            itemId={editingItemId}
+            isOpen={visibleModal === "item"}
+            onClose={handleModalClose}
+            onSubmit={handleItemModalSubmit}
+          />
+        </>
+      )}
 
       {/* Content */}
       <div className="flex flex-col gap-4 p-4">

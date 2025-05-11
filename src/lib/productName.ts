@@ -6,17 +6,18 @@ import levenshtein from "fast-levenshtein";
  * @returns The cleaned product name
  */
 export function extractProductName(rawNames: string[]): string {
-  if (!rawNames || rawNames.length === 0) {
+  const validNames = rawNames?.filter(Boolean) || [];
+  if (validNames.length === 0) {
     return "";
   }
 
   // If there's only one name, perform basic cleaning
-  if (rawNames.length === 1) {
-    return cleanSingleName(rawNames[0]);
+  if (validNames.length === 1) {
+    return cleanSingleName(validNames[0]);
   }
 
   // Normalize all names (lowercase, trim, remove special characters)
-  const normalizedNames = rawNames.map((name) => {
+  const normalizedNames = validNames.map((name) => {
     let normalized = name.toLowerCase();
     normalized = normalized.replace(/\s+/g, " ");
 
@@ -88,7 +89,7 @@ export function extractProductName(rawNames: string[]): string {
   }
 
   // Capitalize the result properly using casing information from raw names
-  return capitalizeProductName(bestMatch, rawNames);
+  return capitalizeProductName(bestMatch, validNames);
 }
 
 /**

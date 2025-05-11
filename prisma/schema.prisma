@@ -31,6 +31,12 @@ enum AttachmentType {
   video
 }
 
+enum UserRole {
+  admin
+  user
+  guest
+}
+
 model Attachment {
   id          String        @id @default(cuid())
   type        AttachmentType
@@ -52,6 +58,8 @@ model Shelf {
   type            Type
 
   items           Item[]  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -107,6 +115,9 @@ model Item {
   shelf           Shelf    @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   shelfId         String
 
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -119,6 +130,7 @@ model RawName {
 
   @@index([barcodeCacheId])
 }
+
 model BarcodeCache {
   id              Int      @id @default(autoincrement())
   barcode         String   @unique
@@ -127,4 +139,19 @@ model BarcodeCache {
   updatedAt       DateTime @updatedAt
 
   rawNames        RawName[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  image         String?
+  role          UserRole  @default(guest)
+  password      String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  shelves       Shelf[]
+  items         Item[]
 }

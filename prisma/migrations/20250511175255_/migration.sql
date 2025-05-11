@@ -18,8 +18,10 @@ CREATE TABLE "Shelf" (
     "imageUrl" TEXT,
     "color" TEXT,
     "type" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Shelf_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -61,10 +63,12 @@ CREATE TABLE "Item" (
     "condition" TEXT NOT NULL,
     "metadataId" TEXT,
     "shelfId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Item_metadataId_fkey" FOREIGN KEY ("metadataId") REFERENCES "Metadata" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Item_shelfId_fkey" FOREIGN KEY ("shelfId") REFERENCES "Shelf" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Item_shelfId_fkey" FOREIGN KEY ("shelfId") REFERENCES "Shelf" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Item_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -80,6 +84,19 @@ CREATE TABLE "BarcodeCache" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "barcode" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT,
+    "email" TEXT,
+    "emailVerified" DATETIME,
+    "image" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'guest',
+    "password" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -105,6 +122,9 @@ CREATE INDEX "RawName_barcodeCacheId_idx" ON "RawName"("barcodeCacheId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BarcodeCache_barcode_key" ON "BarcodeCache"("barcode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_MetadataAuthors_AB_unique" ON "_MetadataAuthors"("A", "B");

@@ -1,4 +1,5 @@
 import { Item } from "@prisma/client";
+import axios from "axios";
 
 // Serp Wow : 100 requests / month
 export class SerpWow {
@@ -15,9 +16,10 @@ export class SerpWow {
     }).toString();
 
     return (
-      fetch(url)
+      axios
+        .get(url.toString())
         // Get JSON response
-        .then((response) => response.json())
+        .then((response) => response.data)
         // Check the response
         .then((response) => {
           if (!response?.request_info?.success) {
@@ -60,9 +62,10 @@ export class SerpWow {
     }).toString();
 
     return (
-      fetch(url)
+      axios
+        .get(url.toString())
         // Get JSON response
-        .then((response) => response.json())
+        .then((response) => response.data)
         // Check the response
         .then((response) => {
           if (!response?.request_info?.success) {

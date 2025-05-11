@@ -1,4 +1,5 @@
 import { Item } from "@prisma/client";
+import axios from "axios";
 
 // Serp API : 100 requests / month
 export class SerpAPI {
@@ -15,9 +16,10 @@ export class SerpAPI {
     }).toString();
 
     return (
-      fetch(url)
+      axios
+        .get(url.toString())
         // Get JSON response
-        .then((response) => response.json())
+        .then((response) => response.data)
         // Check the credits
         .then((response) => {
           if (response?.plan_searches_left === 0) {
@@ -52,9 +54,10 @@ export class SerpAPI {
     }).toString();
 
     return (
-      fetch(url)
+      axios
+        .get(url.toString())
         // Get JSON response
-        .then((response) => response.json())
+        .then((response) => response.data)
         // Check the response
         .then((response) => {
           if (response?.error) {

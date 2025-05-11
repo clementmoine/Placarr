@@ -1,10 +1,14 @@
-import { PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+import { requireGuestOrHigher } from "@/lib/auth";
+
 import { formatMetadataFromStorage } from "@/services/metadata";
 
-const prisma = new PrismaClient();
+export async function GET(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
 
-export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -161,14 +165,31 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+
+  // Only admin and regular users can create shelves
+  if (auth.user.role === "guest") {
+    return NextResponse.json(
+      { error: "Guests cannot create shelves" },
+      { status: 403 },
+    );
+  }
+
   try {
     const body = await req.json();
 
     const { name, imageUrl, color, type } = body;
 
     const shelf = await prisma.shelf.create({
-      data: { name, imageUrl, color, type },
+      data: {
+        name,
+        imageUrl,
+        color,
+        type,
+        userId: auth.user.id,
+      },
       include: {
         items: true,
       },
@@ -184,12 +205,41 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+
+  // Only admin and regular users can update shelves
+  if (auth.user.role === "guest") {
+    return NextResponse.json(
+      { error: "Guests cannot update shelves" },
+      { status: 403 },
+    );
+  }
+
   try {
     const body = await req.json();
     const { id, ...data } = body;
 
-    const item = await prisma.shelf.update({
+    // Check if shelf exists and user has permission to update it
+    const shelf = await prisma.shelf.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!shelf) {
+      return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
+    }
+
+    // Only allow if user is admin or the owner
+    if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to update this shelf" },
+        { status: 403 },
+      );
+    }
+
+    const updatedShelf = await prisma.shelf.update({
       where: { id },
       data,
       include: {
@@ -197,7 +247,7 @@ export async function PATCH(req: Request) {
       },
     });
 
-    return NextResponse.json(item);
+    return NextResponse.json(updatedShelf);
   } catch (error) {
     console.error("Error in PATCH request:", error);
     return NextResponse.json(
@@ -207,7 +257,18 @@ export async function PATCH(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+
+  // Only admin and regular users can delete shelves
+  if (auth.user.role === "guest") {
+    return NextResponse.json(
+      { error: "Guests cannot delete shelves" },
+      { status: 403 },
+    );
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -216,6 +277,24 @@ export async function DELETE(req: Request) {
       return NextResponse.json(
         { error: "Shelf ID is required" },
         { status: 400 },
+      );
+    }
+
+    // Check if shelf exists and user has permission to delete it
+    const shelf = await prisma.shelf.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!shelf) {
+      return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
+    }
+
+    // Only allow if user is admin or the owner
+    if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to delete this shelf" },
+        { status: 403 },
       );
     }
 

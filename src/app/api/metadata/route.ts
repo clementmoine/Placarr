@@ -1,5 +1,5 @@
-// app/api/metadata/route.ts
 import { NextRequest, NextResponse } from "next/server";
+
 import { getMetadata } from "@/services/metadata";
 
 export async function GET(req: NextRequest) {

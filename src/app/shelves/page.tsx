@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, LibraryBig, Search } from "lucide-react";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -45,7 +45,7 @@ const defaultValues: FormValues = {
   search: "",
 };
 
-export default function Shelves() {
+function ShelvesComponent() {
   const form = useForm({
     resolver: zodResolver(shelfSchema),
     defaultValues,
@@ -57,6 +57,7 @@ export default function Shelves() {
 
   const [editingShelfId, setEditingShelfId] = useState<Shelf["id"]>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+
   const searchParams = useSearchParams();
 
   const queryClient = useQueryClient();
@@ -229,5 +230,13 @@ export default function Shelves() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ShelvesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ShelvesComponent />
+    </Suspense>
   );
 }

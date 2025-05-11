@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  placarr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: placarr
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      #- AVES_API_KEY=
+      #- DATA_FOR_SEO_API_KEY=
+      #- SCALE_SERP_API_KEY=
+      #- SERP_API_KEY=
+      #- SERP_WOW_API_KEY=
+      #- VALUE_SERP_API_KEY=
+      #- RAWG_API_KEY=
+      #- TMDB_API_KEY=
+    volumes:
+      - ${ROOT:-.}/config/placarr:/config
+    restart: unless-stopped

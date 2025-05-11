@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { Plus, Wrench, Pizza, Search } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ const itemSearchSchema = z.object({
 
 type FormValues = z.infer<typeof itemSearchSchema>;
 
-export default function Shelf() {
+function ShelfComponent() {
   const params = useParams();
   const shelfId = params.shelfId as Shelf["id"];
 
@@ -61,6 +61,7 @@ export default function Shelf() {
   const [visibleModal, setVisibleModal] = useState<"shelf" | "item">();
 
   const searchParams = useSearchParams();
+
   const router = useRouter();
   const q = searchParams.get("q") || "";
 
@@ -323,5 +324,13 @@ export default function Shelf() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ShelfPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ShelfComponent />
+    </Suspense>
   );
 }

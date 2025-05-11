@@ -24,10 +24,16 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Generate the prisma models
+RUN npx prisma generate
+
+ENV NODE_ENV=production
+ENV NEXT_PRIVATE_STANDALONE=true
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
@@ -40,27 +46,36 @@ RUN \
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=builder /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-USER nextjs
+# Copy Prisma schema and migrations
+COPY --from=builder /app/prisma/schema.prisma ./prisma/
+COPY --from=builder /app/prisma/migrations ./prisma/migrations
+
+# Create directory for config and set permissions
+RUN mkdir -p /config
+
+# Create directory for prisma and set permissions
+RUN mkdir -p /app/prisma 
+
+# Copy start script
+COPY init.sh /app/init.sh
+RUN chmod +x /app/init.sh
 
 EXPOSE 3000
 
 ENV PORT=3000
+ENV DATABASE_URL="file:/app/prisma/dev.db"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+CMD ["/app/init.sh"]

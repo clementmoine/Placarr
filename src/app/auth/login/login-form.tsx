@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocale } from "@/lib/providers/LocaleProvider";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,12 +31,13 @@ type FormValues = z.infer<typeof formSchema>;
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, locale } = useLocale();
   const [isLoading, setIsLoading] = useState<"guest" | "credentials" | false>(
     false,
   );
   const [error, setError] = useState<string | null>(
     searchParams.get("error") === "CredentialsSignin"
-      ? "Invalid email or password"
+      ? t("common.error")
       : null,
   );
 
@@ -113,7 +115,7 @@ export function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t("auth.email")}</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="name@example.com"
@@ -136,7 +138,7 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t("auth.password")}</FormLabel>
                 <FormControl>
                   <Input
                     type="password"
@@ -167,7 +169,7 @@ export function LoginForm() {
             {isLoading === "credentials" && (
               <Loader2 className="size-4 animate-spin" />
             )}
-            Sign In
+            {t("auth.loginButton")}
           </Button>
         </form>
       </Form>
@@ -180,7 +182,7 @@ export function LoginForm() {
         {/* Or continue with */}
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-card px-2 text-muted-foreground">
-            Or continue with
+            {t("common.or")}
           </span>
         </div>
       </div>
@@ -194,7 +196,7 @@ export function LoginForm() {
         onClick={handleGuestLogin}
       >
         {isLoading === "guest" && <Loader2 className="size-4 animate-spin" />}
-        Continue as Guest
+        {t("auth.guestLogin")}
       </Button>
     </div>
   );

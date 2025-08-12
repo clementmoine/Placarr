@@ -1,0 +1,67 @@
+{
+  "common": {
+    "title": "Common",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "close": "Close",
+    "or": "Or continue with"
+  },
+  "navigation": {
+    "title": "Navigation",
+    "home": "Home",
+    "shelves": "Shelves",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "auth": {
+    "title": "Authentication",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "loginTitle": "Welcome back",
+    "loginDescription": "Enter your email to sign in to your account",
+    "registerTitle": "Create account",
+    "description": "Enter your information to create your account",
+    "forgotPassword": "Forgot password?",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "loginButton": "Sign in",
+    "registerButton": "Sign up",
+    "guestLogin": "Continue as Guest",
+    "errorTitle": "Authentication Error",
+    "errorMessage": "An error occurred during authentication. Please try again."
+  },
+  "shelves": {
+    "title": "Shelves",
+    "addShelf": "Add Shelf",
+    "editShelf": "Edit Shelf",
+    "shelfName": "Shelf Name",
+    "shelfDescription": "Description",
+    "noShelves": "No shelves yet",
+    "createFirstShelf": "Create your first shelf to get started"
+  },
+  "items": {
+    "title": "Items",
+    "addItem": "Add Item",
+    "editItem": "Edit Item",
+    "itemName": "Item Name",
+    "itemDescription": "Description",
+    "condition": "Condition",
+    "location": "Location",
+    "noItems": "No items in this shelf",
+    "addFirstItem": "Add your first item to get started"
+  },
+  "app": {
+    "name": "Placarr - Inventory Management",
+    "description": "All your inventory, always in your pocket."
+  }
+}

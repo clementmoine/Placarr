@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { getShelves, saveShelf } from "@/lib/api/shelves";
 import { useAccount } from "@/lib/hooks/useAccount";
+import { useLocale } from "@/lib/providers/LocaleProvider";
 
 import type { Shelf, Prisma } from "@prisma/client";
 
@@ -64,6 +65,7 @@ function ShelvesComponent() {
   const queryClient = useQueryClient();
 
   const { isGuest, isAuthenticated } = useAccount();
+  const { t, locale } = useLocale();
 
   const { data: shelves, isFetching } = useQuery({
     queryKey: searchParams.get("q")
@@ -164,7 +166,7 @@ function ShelvesComponent() {
       {/* Content */}
       <div className="flex flex-col gap-4 p-4">
         <h2 className="text-foreground text-lg font-semibold">
-          Your shelves ({shelves?.length || 0})
+          {t("shelves.title")} ({shelves?.length || 0})
         </h2>
 
         <Form {...form}>
@@ -182,7 +184,7 @@ function ShelvesComponent() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="hidden text-foreground">
-                    Search
+                    {t("common.search")}
                   </FormLabel>
                   <FormControl>
                     <div className="flex relative items-center">
@@ -191,7 +193,7 @@ function ShelvesComponent() {
                       <Input
                         type="search"
                         className="pr-10 pl-9"
-                        placeholder="Search item or collection"
+                        placeholder={t("common.search")}
                         {...field}
                       />
 
@@ -212,7 +214,10 @@ function ShelvesComponent() {
 
         <div className={cn(styles.shelves, "mt-4")}>
           {sortedShelves.map((shelf, index) => (
-            <Link key={`${shelf.id}-${index}`} href={`/shelves/${shelf.id}`}>
+            <Link
+              key={`${shelf.id}-${index}`}
+              href={`/shelves/${shelf.id}`}
+            >
               <ShelfCard {...shelf} />
             </Link>
           ))}
@@ -234,9 +239,11 @@ function ShelvesComponent() {
           <div className="flex flex-col items-center justify-center h-full">
             <LibraryBig className="size-16 text-foreground mb-5" />
 
-            <p className="text-foreground text-center">No shelf</p>
             <p className="text-foreground text-center">
-              Add a new shelf to get started
+              {t("shelves.noShelves")}
+            </p>
+            <p className="text-foreground text-center">
+              {t("shelves.createFirstShelf")}
             </p>
           </div>
         )}

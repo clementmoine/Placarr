@@ -1,0 +1,67 @@
+{
+  "common": {
+    "title": "Commun",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "close": "Fermer",
+    "or": "Ou continuer avec"
+  },
+  "navigation": {
+    "title": "Navigation",
+    "home": "Accueil",
+    "shelves": "Étagères",
+    "profile": "Profil",
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion"
+  },
+  "auth": {
+    "title": "Authentification",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "loginTitle": "Bon retour",
+    "loginDescription": "Entrez votre email pour vous connecter à votre compte",
+    "registerTitle": "Créer un compte",
+    "description": "Entrez vos informations pour créer votre compte",
+    "forgotPassword": "Mot de passe oublié ?",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "loginButton": "Se connecter",
+    "registerButton": "S'inscrire",
+    "guestLogin": "Continuer en tant qu'invité",
+    "errorTitle": "Erreur d'authentification",
+    "errorMessage": "Une erreur s'est produite lors de l'authentification. Veuillez réessayer."
+  },
+  "shelves": {
+    "title": "Étagères",
+    "addShelf": "Ajouter une étagère",
+    "editShelf": "Modifier l'étagère",
+    "shelfName": "Nom de l'étagère",
+    "shelfDescription": "Description",
+    "noShelves": "Aucune étagère pour le moment",
+    "createFirstShelf": "Créez votre première étagère pour commencer"
+  },
+  "items": {
+    "title": "Objets",
+    "addItem": "Ajouter un objet",
+    "editItem": "Modifier l'objet",
+    "itemName": "Nom de l'objet",
+    "itemDescription": "Description",
+    "condition": "État",
+    "location": "Emplacement",
+    "noItems": "Aucun objet dans cette étagère",
+    "addFirstItem": "Ajoutez votre premier objet pour commencer"
+  },
+  "app": {
+    "name": "Placarr - Gestion d'inventaire",
+    "description": "Tout votre inventaire, toujours dans votre poche."
+  }
+}

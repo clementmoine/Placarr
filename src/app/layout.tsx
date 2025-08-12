@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import ReactQueryProvider from "@/lib/providers/ReactQueryProvider";
 import SessionProvider from "@/lib/providers/SessionProvider";
+import { LocaleProvider } from "@/lib/providers/LocaleProvider";
 
 import "./globals.css";
 
@@ -52,15 +53,17 @@ export default function RootLayout({
       <body>
         <SessionProvider>
           <ReactQueryProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
+            <LocaleProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+                <Toaster />
+              </ThemeProvider>
+            </LocaleProvider>
           </ReactQueryProvider>
         </SessionProvider>
       </body>

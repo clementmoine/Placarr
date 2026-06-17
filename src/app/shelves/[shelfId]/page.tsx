@@ -97,6 +97,7 @@ function ShelfComponent() {
           () => ({
             id: "",
             name: "",
+            slug: null,
             imageUrl: null,
             backgroundImageUrl: null,
             createdAt: new Date(),

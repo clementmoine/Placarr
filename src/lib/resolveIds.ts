@@ -1,29 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { slugify } from "@/lib/slugs";
 
 /**
- * Résout un identifiant d'étagère qui peut être soit un cuid direct,
- * soit un slug dérivé du nom (les URLs publiques utilisent des slugs).
- *
- * NOTE perf: le fallback slug fait actuellement un scan de table. Il sera
- * remplacé par une colonne `slug` indexée (cf. resolveIds + schema).
+ * Résout un identifiant d'étagère : soit un cuid direct, soit un slug dérivé du
+ * nom (les URLs publiques utilisent des slugs). Une seule requête indexée
+ * (PK `id` + index `slug`) — plus de scan de table.
  */
 export async function resolveShelfId(value: string): Promise<string> {
-  const direct = await prisma.shelf.findUnique({
-    where: { id: value },
+  const shelf = await prisma.shelf.findFirst({
+    where: { OR: [{ id: value }, { slug: value }] },
     select: { id: true },
   });
-  if (direct) return direct.id;
-
-  const shelves = await prisma.shelf.findMany({
-    select: { id: true, name: true },
-  });
-  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
+  return shelf?.id ?? value;
 }
 
 /**
- * Résout un identifiant d'item (cuid direct ou slug). Quand `shelfValue`
- * est fourni, la recherche par slug est restreinte à cette étagère.
+ * Résout un identifiant d'item (cuid direct ou slug). Quand `shelfValue` est
+ * fourni, la recherche par slug est restreinte à cette étagère. Requêtes
+ * indexées (`id`, `slug`, `shelfId`).
  */
 export async function resolveItemId(
   value: string,
@@ -36,9 +29,12 @@ export async function resolveItemId(
   if (direct) return direct.id;
 
   const resolvedShelfId = shelfValue ? await resolveShelfId(shelfValue) : null;
-  const items = await prisma.item.findMany({
-    where: resolvedShelfId ? { shelfId: resolvedShelfId } : undefined,
-    select: { id: true, name: true },
+  const item = await prisma.item.findFirst({
+    where: {
+      slug: value,
+      ...(resolvedShelfId ? { shelfId: resolvedShelfId } : {}),
+    },
+    select: { id: true },
   });
-  return items.find((item) => slugify(item.name) === value)?.id || value;
+  return item?.id ?? value;
 }

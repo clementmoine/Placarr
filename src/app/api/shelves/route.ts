@@ -6,6 +6,7 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import { formatMetadataFromStorage } from "@/services/metadata";
 import { getCoverImage } from "@/lib/itemMedia";
 import { resolveShelfId } from "@/lib/resolveIds";
+import { slugify } from "@/lib/slugs";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
 
 export async function GET(req: NextRequest) {
@@ -263,6 +264,7 @@ export async function POST(req: NextRequest) {
     const shelf = await prisma.shelf.create({
       data: {
         name,
+        slug: slugify(name),
         imageUrl,
         color,
         type,
@@ -298,6 +300,9 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
     const { id, ...data } = body;
+    if (typeof data.name === "string") {
+      data.slug = slugify(data.name);
+    }
 
     // Check if shelf exists and user has permission to update it
     const shelf = await prisma.shelf.findUnique({

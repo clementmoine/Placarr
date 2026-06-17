@@ -11,6 +11,7 @@ import {
 } from "@/services/metadata";
 import { getCoverImage } from "@/lib/itemMedia";
 import { resolveShelfId, resolveItemId } from "@/lib/resolveIds";
+import { slugify } from "@/lib/slugs";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
 
 export async function GET(req: NextRequest) {
@@ -180,6 +181,7 @@ export async function POST(req: NextRequest) {
       data: {
         shelfId,
         name,
+        slug: slugify(name),
         description,
         imageUrl: localImageUrl,
         backgroundImageUrl: localBackgroundImageUrl,
@@ -246,6 +248,9 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
     const { id, refreshMetadata, lookupQuery, ...data } = body;
+    if (typeof data.name === "string") {
+      data.slug = slugify(data.name);
+    }
     const shelfContext =
       typeof data.shelfId === "string" ? data.shelfId : undefined;
     const resolvedId = await resolveItemId(id, shelfContext);

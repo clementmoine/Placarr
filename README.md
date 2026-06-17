@@ -17,18 +17,31 @@
 
 ## 🚀 Getting Started
 
-The app uses **PostgreSQL**. For local development, start the database with Docker:
+The app uses **PostgreSQL**.
+
+### Recommended (fast, especially on macOS): DB in Docker + Next on host
 
 ```bash
 pnpm install
 docker compose up -d db          # PostgreSQL on localhost:5432
 pnpm prisma migrate deploy       # apply migrations
 pnpm prisma db seed              # create admin/guest users (first run only)
-pnpm dev
+pnpm dev                         # native compile (~1-2s)
 ```
 
 `DATABASE_URL` defaults to `postgresql://placarr:placarr@localhost:5432/placarr`
 (see `.env`). Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Full Docker (parity / Linux servers)
+
+```bash
+pnpm dev:docker                  # Postgres + Next, hot-reload, http://localhost:3000
+```
+
+> ⚠️ **On macOS**, the source bind-mount goes through VirtioFS, which makes the
+> first compile of each route very slow (module resolution is I/O-bound). It's
+> fine on Linux (native bind mounts). On a Mac, prefer the hybrid setup above
+> for day-to-day development.
 
 > Migrating an existing SQLite `dev.db`? Use `scripts/export-data.cjs`
 > (run while still on SQLite) then `scripts/import-data.cjs` (after the

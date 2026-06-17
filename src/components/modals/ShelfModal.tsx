@@ -3,22 +3,15 @@
 import { z } from "zod";
 import color from "color";
 import { toast } from "sonner";
-import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Gamepad2,
-  Film,
-  Music,
-  BookOpen,
-  XIcon,
-  Puzzle,
-  Loader2,
-} from "lucide-react";
+import { LibraryBig, Loader2 } from "lucide-react";
+import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { useLocale } from "@/lib/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,14 +22,9 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
+import { BaseModal } from "@/components/modals/BaseModal";
+import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ColorPicker } from "@/components/ColorPicker";
 import {
   Select,
@@ -48,57 +36,9 @@ import {
 
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
 import { isUrl } from "@/lib/isUrl";
-import { cn } from "@/lib/utils";
-import { fileToBase64 } from "@/lib/toBase64";
+import { uploadImage } from "@/lib/api/upload";
 
 import { type Prisma, type Shelf, Type } from "@prisma/client";
-
-const shelfSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Name is required")
-    .refine((value) => value.trim().length > 0, "Name cannot be empty spaces"),
-  imageUrl: z
-    .any()
-    .refine(
-      (url) =>
-        url instanceof File ||
-        isUrl(url) ||
-        /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
-      "Image is required",
-    ),
-  color: z
-    .string()
-    .trim()
-    .min(1, "Color is required")
-    .refine((value) => {
-      try {
-        color(value);
-        return true;
-      } catch {
-        return false;
-      }
-    }, "Invalid color format"),
-  type: z.nativeEnum(Type),
-});
-
-type FormValues = z.infer<typeof shelfSchema>;
-
-const defaultValues: FormValues = {
-  name: "",
-  imageUrl: null,
-  color: "white",
-  type: "games",
-};
-
-const typeIcons: Record<Type, React.ReactNode> = {
-  games: <Gamepad2 className="w-4 h-4" />,
-  movies: <Film className="w-4 h-4" />,
-  musics: <Music className="w-4 h-4" />,
-  books: <BookOpen className="w-4 h-4" />,
-  boardgames: <Puzzle className="w-4 h-4" />,
-};
 
 export function ShelfModal({
   isOpen,
@@ -113,6 +53,61 @@ export function ShelfModal({
   ) => Promise<void>;
   shelfId?: Shelf["id"];
 }) {
+  const { t } = useLocale();
+
+  const shelfSchema = z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("shelves.nameRequired"))
+      .refine((value) => value.trim().length > 0, t("shelves.nameNotEmpty")),
+    imageUrl: z
+      .any()
+      .refine(
+        (url) =>
+          url instanceof File ||
+          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          isUrl(url) ||
+          /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
+        t("shelves.imageRequired"),
+      ),
+    color: z
+      .string()
+      .trim()
+      .min(1, t("shelves.colorRequired"))
+      .refine((value) => {
+        try {
+          color(value);
+          return true;
+        } catch {
+          return false;
+        }
+      }, t("shelves.invalidColorFormat")),
+    type: z.nativeEnum(Type),
+    cardFormat: z.string().default("default"),
+  });
+
+  type FormValues = z.infer<typeof shelfSchema>;
+
+  const defaultValues: FormValues = useMemo(
+    () => ({
+      name: "",
+      imageUrl: null,
+      color: "white",
+      type: "games",
+      cardFormat: "default",
+    }),
+    [],
+  );
+
+  const typeIcons: Record<Type, React.ReactNode> = {
+    games: <ShelfTypeIcon type="games" className="w-4 h-4" />,
+    movies: <ShelfTypeIcon type="movies" className="w-4 h-4" />,
+    musics: <ShelfTypeIcon type="musics" className="w-4 h-4" />,
+    books: <ShelfTypeIcon type="books" className="w-4 h-4" />,
+    boardgames: <ShelfTypeIcon type="boardgames" className="w-4 h-4" />,
+  };
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -140,7 +135,7 @@ export function ShelfModal({
   const { mutate: mutateDelete } = useMutation({
     mutationFn: deleteShelf,
     onSuccess: () => {
-      toast.success(`Shelf ${shelf?.name} deleted`);
+      toast.success(t("shelves.shelfDeleted", { name: shelf?.name }));
       setShowDeleteConfirm(false);
       queryClient.invalidateQueries({ queryKey: ["shelf", shelfId] });
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
@@ -149,10 +144,31 @@ export function ShelfModal({
       router.push(`/shelves`);
     },
     onError: () => {
-      toast.error("Failed to delete item");
+      toast.error(t("shelves.deleteFailed"));
     },
   });
   const { reset } = form;
+
+  const selectedType = form.watch("type");
+
+  const defaultFormatLabel = useMemo(() => {
+    let typeName = "";
+    switch (selectedType) {
+      case "musics":
+      case "boardgames":
+        typeName = t("shelf.type.musics") + " / " + t("shelf.type.boardgames");
+        break;
+      case "movies":
+      case "books":
+        typeName = t("shelf.type.movies") + " / " + t("shelf.type.books");
+        break;
+      case "games":
+      default:
+        typeName = t("shelf.type.games");
+        break;
+    }
+    return t("shelves.cardFormats.default").replace("{type}", typeName);
+  }, [selectedType, t]);
 
   useEffect(() => {
     if (shelf) {
@@ -161,28 +177,22 @@ export function ShelfModal({
         name: shelf.name || defaultValues.name,
         imageUrl: shelf.imageUrl || defaultValues.imageUrl,
         color: shelf.color || defaultValues.color,
+        cardFormat: shelf.cardFormat || defaultValues.cardFormat,
       });
     } else {
       reset(defaultValues);
     }
-  }, [shelf, reset]);
+  }, [shelf, reset, defaultValues]);
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
       if (file instanceof File) {
         if (!file.type.startsWith("image/")) {
-          toast.error("Please upload a valid image file.");
+          toast.error(t("shelves.invalidImageFile"));
           form.setValue("imageUrl", null);
           return;
         }
-
-        try {
-          const base64 = await fileToBase64(file);
-          form.setValue("imageUrl", base64);
-        } catch (error) {
-          console.error("Error converting file to base64:", error);
-          form.setValue("imageUrl", null);
-        }
+        form.setValue("imageUrl", file);
       } else {
         form.setValue("imageUrl", file);
       }
@@ -196,7 +206,7 @@ export function ShelfModal({
     try {
       let imageUrl: FormValues["imageUrl"] = values.imageUrl;
       if (imageUrl && imageUrl instanceof File) {
-        imageUrl = await fileToBase64(imageUrl);
+        imageUrl = await uploadImage(imageUrl);
       }
 
       const updatedShelf: Prisma.ShelfUpdateInput | Prisma.ShelfCreateInput = {
@@ -232,219 +242,239 @@ export function ShelfModal({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh]">
-          <DialogHeader className="p-4 border-b shrink-0">
-            <DialogTitle className="text-foreground">
-              {shelf ? "Edit shelf" : "Add a new shelf"}
-            </DialogTitle>
-            <DialogDescription className="text-foreground">
+      <BaseModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={
+          <div className="flex items-center gap-2">
+            {shelf ? (
+              <ShelfTypeIcon type={shelf.type} className="size-5" />
+            ) : (
+              <LibraryBig className="size-5" />
+            )}
+            <span>
               {shelf
-                ? "Edit the details of your shelf."
-                : "Fill in the details to create a new shelf."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="flex flex-col overflow-hidden"
-            >
-              <div className="overflow-x-hidden overflow-y-auto flex flex-col space-y-4 p-4 max-h-[60vh]">
-                {/* Type */}
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground">Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-background text-foreground w-full">
-                            <SelectValue placeholder="Select a shelf type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.values(Type).map((type) => (
-                            <SelectItem key={type} value={type}>
-                              <div className="flex items-center gap-2">
-                                {typeIcons[type]}
-                                <span className="capitalize">{type}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Name */}
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground">Name</FormLabel>
+                ? `${t("shelves.editShelf")} : ${shelf.name}`
+                : t("shelves.addShelf")}
+            </span>
+          </div>
+        }
+        description={
+          shelf
+            ? t("shelves.editShelfDetails")
+            : t("shelves.createNewShelfDetails")
+        }
+        size="xl-auto"
+        customChildren={true}
+        footer={null}
+      >
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 min-h-0 space-y-4">
+              {/* Type */}
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("common.type")}
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input
-                          placeholder="Enter name"
-                          className="bg-background text-foreground"
-                          {...field}
-                        />
+                        <SelectTrigger className="bg-zinc-50/50 dark:bg-zinc-950/20 text-xs h-10 border-border/80 rounded-xl focus:border-primary/80 focus:ring-primary/20 focus:ring-[3px] transition-all duration-200 w-full">
+                          <SelectValue placeholder="Select a shelf type" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Logo */}
-                <FormField
-                  control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground">Logo</FormLabel>
-                      <FormControl>
-                        <div className="flex flex-col gap-2 relative items-center justify-center">
-                          {field.value && typeof field.value === "string" && (
-                            <Image
-                              width={200}
-                              height={200}
-                              src={field.value}
-                              alt="Item cover"
-                              className="absolute left-1 size-7 object-contain rounded-sm"
-                              style={{
-                                backgroundColor: form.watch("color"),
-                              }}
-                            />
-                          )}
-
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            className={cn(
-                              "bg-background text-foreground",
-                              field.value && "pr-9 pl-9",
-                            )}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0] || null;
-                              field.onChange(file);
-                              handleLogoChange(file);
-                            }}
-                          />
-
-                          {field.value !== null && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="absolute right-1 size-7 p-0 rounded-sm"
-                              size="sm"
-                              onClick={() => {
-                                field.onChange(null);
-                                handleLogoChange(null);
-                              }}
-                            >
-                              <XIcon />
-                            </Button>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Color */}
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground">Color</FormLabel>
-                      <FormControl>
-                        <ColorPicker
-                          placeholder="Choose a color"
-                          className="bg-background text-foreground"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <DialogFooter className="p-4 border-t shrink-0">
-                {shelf?.id && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="sm:mr-auto"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={isDeleting}
-                  >
-                    Delete
-                  </Button>
+                      <SelectContent>
+                        {Object.values(Type).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            <div className="flex items-center gap-2">
+                              {typeIcons[type]}
+                              <span className="capitalize">
+                                {t(`shelf.type.${type}`)}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
+              />
 
+              {/* Card Format */}
+              <FormField
+                control={form.control}
+                name="cardFormat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("shelves.cardFormat")}
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || "default"}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-zinc-50/50 dark:bg-zinc-950/20 text-xs h-10 border-border/80 rounded-xl focus:border-primary/80 focus:ring-primary/20 focus:ring-[3px] transition-all duration-200 w-full">
+                          <SelectValue placeholder="Choisir le format" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="default">
+                          {defaultFormatLabel}
+                        </SelectItem>
+                        <SelectItem value="square">
+                          {t("shelves.cardFormats.square")}
+                        </SelectItem>
+                        <SelectItem value="bluray">
+                          {t("shelves.cardFormats.bluray")}
+                        </SelectItem>
+                        <SelectItem value="dvd">
+                          {t("shelves.cardFormats.dvd")}
+                        </SelectItem>
+                        <SelectItem value="switch">
+                          {t("shelves.cardFormats.switch")}
+                        </SelectItem>
+                        <SelectItem value="landscape_retro">
+                          {t("shelves.cardFormats.landscape_retro")}
+                        </SelectItem>
+                        <SelectItem value="landscape">
+                          {t("shelves.cardFormats.landscape")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Name */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("common.name")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("shelves.shelfName")}
+                        className="bg-zinc-50/50 dark:bg-zinc-950/20 text-xs h-10 border-border/80 rounded-xl focus-visible:border-primary/80 focus-visible:ring-primary/20 focus-visible:ring-[3px] transition-all duration-200"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Logo */}
+              <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <ImagePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                    onFileChange={handleLogoChange}
+                    label={t("common.logo")}
+                    placeholder="Pas de logo"
+                    chooseImageText="Importer"
+                    enterUrlText="Saisir une URL"
+                    urlPlaceholderText="https://example.com/logo.jpg"
+                    invalidUrlText="Image invalide"
+                    previewBgColor={form.watch("color")}
+                    contain={true}
+                  />
+                )}
+              />
+
+              {/* Color */}
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("common.color")}
+                    </FormLabel>
+                    <FormControl>
+                      <ColorPicker
+                        placeholder={t("common.chooseColor")}
+                        className="bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus:border-primary/80 transition-all duration-200"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className="p-4 md:p-5 border-t border-border/60 dark:border-zinc-900/60 bg-zinc-50/30 dark:bg-zinc-950/30 shrink-0 flex flex-row items-center justify-end gap-2 w-full mt-6">
+              {shelf?.id && (
                 <Button
                   type="button"
-                  onClick={handleClose}
-                  variant="secondary"
-                  disabled={isSubmitting || isDeleting}
+                  variant="destructive"
+                  className="mr-auto rounded-xl h-10 px-5 text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isDeleting}
                 >
-                  Cancel
+                  {t("shelves.deleteShelf")}
                 </Button>
+              )}
 
-                <Button
-                  variant="default"
-                  type="submit"
-                  disabled={isSubmitting || isDeleting}
-                >
-                  {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-                  {shelf ? "Save Changes" : "Add Shelf"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              <Button
+                type="button"
+                onClick={handleClose}
+                variant="outline"
+                className="rounded-xl h-10 px-5 text-xs font-semibold border-border hover:bg-accent cursor-pointer active:scale-[0.98] transition-all"
+                disabled={isSubmitting || isDeleting}
+              >
+                {t("shelves.cancel")}
+              </Button>
+
+              <Button
+                variant="default"
+                type="submit"
+                className="rounded-xl h-10 px-5 text-xs font-semibold bg-primary hover:bg-primary/95 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                disabled={isSubmitting || isDeleting}
+              >
+                {isSubmitting && (
+                  <Loader2 className="size-4 animate-spin mr-1.5" />
+                )}
+                {shelf ? t("shelves.saveChanges") : t("shelves.addShelf")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </BaseModal>
 
       {/* Delete dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this shelf? This action cannot be
-              undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDeleteConfirm(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting && <Loader2 className="size-4 animate-spin" />}
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BaseModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title={t("shelves.confirmDeletion")}
+        description={t("shelves.deleteConfirmMessage")}
+        size="sm"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onDelete={handleDelete}
+        deleteLabel={t("shelves.deleteShelf")}
+        isDeleting={isDeleting}
+        cancelLabel={t("shelves.cancel")}
+      >
+        <div className="hidden" />
+      </BaseModal>
     </>
   );
 }

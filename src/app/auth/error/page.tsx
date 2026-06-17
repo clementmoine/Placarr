@@ -21,7 +21,7 @@ export default function AuthErrorPage() {
         </div>
 
         <Button asChild>
-          <Link href="/auth/login">Back to Login</Link>
+          <Link href="/auth/login">{t("auth.backToLogin")}</Link>
         </Button>
       </div>
     </div>

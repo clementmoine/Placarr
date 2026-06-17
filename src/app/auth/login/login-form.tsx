@@ -21,17 +21,17 @@ import {
 } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
+
+  const formSchema = z.object({
+    email: z.string().email(t("auth.invalidEmail")),
+    password: z.string().min(1, t("auth.passwordRequired")),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
   const [isLoading, setIsLoading] = useState<"guest" | "credentials" | false>(
     false,
   );
@@ -63,7 +63,7 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError(t("auth.invalidCredentials"));
         form.setValue("email", values.email);
         form.setValue("password", values.password);
         return;
@@ -72,7 +72,7 @@ export function LoginForm() {
       router.push(callbackUrl);
     } catch (err) {
       console.error("Login error:", err);
-      setError("Something went wrong. Please try again.");
+      setError(t("auth.loginError"));
       form.setValue("email", values.email);
       form.setValue("password", values.password);
     } finally {
@@ -92,14 +92,14 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Something went wrong. Please try again.");
+        setError(t("auth.loginError"));
         return;
       }
 
       router.push(callbackUrl);
     } catch (err) {
       console.error("Guest login error:", err);
-      setError("Something went wrong. Please try again.");
+      setError(t("auth.loginError"));
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +118,7 @@ export function LoginForm() {
                 <FormLabel>{t("auth.email")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="name@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     type="email"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -143,7 +143,7 @@ export function LoginForm() {
                   <Input
                     type="password"
                     autoComplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder={t("auth.passwordPlaceholder")}
                     disabled={isLoading === "credentials"}
                     {...field}
                   />

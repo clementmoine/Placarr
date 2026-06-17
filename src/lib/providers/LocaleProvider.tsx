@@ -5,7 +5,7 @@ import { useTranslations } from "@/lib/hooks/useTranslations";
 import type { Locale } from "@/types/i18n";
 
 interface LocaleContextType {
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
   locale: Locale;
   changeLocale: (locale: Locale) => void;
   availableLocales: Locale[];

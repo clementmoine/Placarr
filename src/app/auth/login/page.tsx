@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useLocale } from "@/lib/providers/LocaleProvider";
 
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { LoginForm } from "./login-form";
 import {
   Card,
@@ -31,7 +33,15 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
-            <LoginForm />
+            <Suspense
+              fallback={
+                <div className="flex justify-center p-4">
+                  <Loader2 className="animate-spin text-muted-foreground" />
+                </div>
+              }
+            >
+              <LoginForm />
+            </Suspense>
           </CardContent>
 
           <CardFooter className="flex flex-wrap items-center justify-center gap-2">

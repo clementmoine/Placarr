@@ -34,8 +34,29 @@ export class SerpAPI {
     );
   }
 
+  async getCredits(): Promise<{ remaining: number; limit: number } | null> {
+    const url = new URL(`${this.url}/account`);
+    url.search = new URLSearchParams({
+      api_key: this.api_key,
+    }).toString();
+
+    try {
+      const response = await axios.get(url.toString());
+      const data = response.data;
+      if (data && typeof data.plan_searches_left === "number") {
+        return {
+          remaining: data.plan_searches_left,
+          limit: data.searches_per_month ?? data.plan_searches_limit ?? 100,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async search(query: string): Promise<Item["name"][] | undefined> {
-    if (await !this.available()) {
+    if (!(await this.available())) {
       return Promise.reject(`${this.name} unavailable`);
     }
 

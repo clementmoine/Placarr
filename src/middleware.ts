@@ -42,11 +42,11 @@ export const config = {
      * - screenshots/wide or screenshots/narrow (screenshots)
      * - sw.js (service worker file)
      * - icons (icons)
-     * - public folder
+     * - public folder and uploaded media
      * - auth/error (auth error page)
      * - auth/login (login page)
      * - auth/register (register page)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|public|auth/error|auth/login|auth/register|manifest.json|robots.txt|screenshots|sw.js|icons).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|public|uploads|auth/error|auth/login|auth/register|manifest.json|robots.txt|screenshots|sw.js|icons).*)",
   ],
 };

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 
 export default function RegisterPage() {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
 
   return (
     <div className="flex h-screen p-4 w-screen flex-col items-center justify-center">

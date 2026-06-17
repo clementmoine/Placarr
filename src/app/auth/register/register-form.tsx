@@ -17,20 +17,26 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useLocale } from "@/lib/providers/LocaleProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface FormValues {
+  name: string;
+  email: string;
+  password: string;
+}
 
 export function RegisterForm() {
+  const { t } = useLocale();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const formSchema = z.object({
+    name: z.string().min(2, t("auth.nameMinLength")),
+    email: z.string().email(t("auth.invalidEmail")),
+    password: z.string().min(8, t("auth.passwordMinLength")),
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,7 +68,9 @@ export function RegisterForm() {
       router.push("/auth/login?registered=true");
     } catch (err) {
       console.error("Registration error:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(
+        err instanceof Error ? err.message : t("common.somethingWentWrong"),
+      );
       // Preserve form values on error
       form.setValue("name", values.name);
       form.setValue("email", values.email);
@@ -82,10 +90,10 @@ export function RegisterForm() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t("common.name")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="John Doe"
+                    placeholder={t("auth.namePlaceholder")}
                     autoCapitalize="words"
                     autoComplete="name"
                     autoCorrect="off"
@@ -104,10 +112,10 @@ export function RegisterForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t("auth.email")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="name@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     type="email"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -127,12 +135,12 @@ export function RegisterForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t("auth.password")}</FormLabel>
                 <FormControl>
                   <Input
                     type="password"
                     autoComplete="new-password"
-                    placeholder="Enter your password"
+                    placeholder={t("auth.passwordPlaceholder")}
                     disabled={isLoading}
                     {...field}
                   />
@@ -152,7 +160,7 @@ export function RegisterForm() {
           {/* Create Account Button */}
           <Button type="submit" className="w-full mt-4" disabled={isLoading}>
             {isLoading && <Loader2 className="size-4 animate-spin" />}
-            Create Account
+            {t("auth.registerButton")}
           </Button>
         </form>
       </Form>

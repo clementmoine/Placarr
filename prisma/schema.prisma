@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,6 +5,18 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
+}
+
+enum UserRole {
+  guest
+  user
+  admin
+}
+
+enum Condition {
+  new
+  used
+  damaged
 }
 
 enum Type {
@@ -18,140 +27,173 @@ enum Type {
   boardgames
 }
 
-enum Condition {
-  new
-  used
-  damaged
-}
-
 enum AttachmentType {
-  audio
+  cover
+  background
+  screenshot
+  artwork
   image
-  book
-  video
-}
-
-enum UserRole {
-  admin
-  user
-  guest
+  logo
+  audio
 }
 
 model Attachment {
-  id          String        @id @default(cuid())
-  type        AttachmentType
-  title       String?
-  duration    Int?
-  url         String
-  metadata    Metadata      @relation(fields: [metadataId], references: [id], onDelete: Cascade)
-  metadataId  String
-
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id         String   @id @default(cuid())
+  type       AttachmentType
+  title      String?
+  duration   Int?
+  url        String
+  metadataId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  role       String?
+  source     String?
+  metadata   Metadata @relation(fields: [metadataId], references: [id], onDelete: Cascade)
 }
 
 model Shelf {
-  id              String   @id @default(cuid()) 
-  name            String
-  imageUrl        String?
-  color           String?
-  type            Type
-
-  items           Item[]  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  imageUrl   String?
+  color      String?
+  type       Type
+  isPublic   Boolean  @default(true)
+  cardFormat String   @default("default")
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  items      Item[]
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Author {
-  name      String     @id
-  imageUrl  String?
-  metadata  Metadata[] @relation("MetadataAuthors")
+  name     String     @id
+  imageUrl String?
+  metadata Metadata[] @relation("MetadataAuthors")
 }
 
 model Publisher {
-  name      String     @id
-  imageUrl  String?
-  metadata  Metadata[] @relation("MetadataPublishers")
+  name     String     @id
+  imageUrl String?
+  metadata Metadata[] @relation("MetadataPublishers")
 }
 
 model Metadata {
-  id              String      @id @default(cuid())
-  title           String?
-  authors         Author[]    @relation("MetadataAuthors")
-  publishers      Publisher[] @relation("MetadataPublishers")
-  duration        Int?
-  pageCount       Int?
-  tracksCount     Int?
-  description     String?
-  releaseDate     String?
-  imageUrl        String?
-  
-  attachments     Attachment[]
-  
-  sourceType      Type
-  sourceQuery     String
-  lastFetched     DateTime    @default(now())
-  
-  items           Item[]
-
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id          String       @id @default(cuid())
+  title       String?
+  duration    Int?
+  pageCount   Int?
+  tracksCount Int?
+  description String?
+  releaseDate String?
+  imageUrl    String?
+  sourceType  Type
+  sourceQuery String
+  lastFetched DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  aliases     String?
+  facts       String?
+  attachments Attachment[]
+  items       Item[]
+  authors     Author[]     @relation("MetadataAuthors")
+  publishers  Publisher[]  @relation("MetadataPublishers")
 }
 
 model Item {
-  id              String   @id @default(cuid())
-  name            String
-  description     String?
-  imageUrl        String?
-  barcode         String?
-  condition       Condition
-
-  metadata        Metadata? @relation(fields: [metadataId], references: [id])
-  metadataId      String?
-
-  shelf           Shelf    @relation(fields: [shelfId], references: [id], onDelete: Cascade)
-  shelfId         String
-
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String        @id @default(cuid())
+  name               String
+  description        String?
+  imageUrl           String?
+  barcode            String?
+  condition          Condition
+  metadataId         String?
+  shelfId            String
+  userId             String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  backgroundImageUrl String?
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shelf              Shelf         @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  metadata           Metadata?     @relation(fields: [metadataId], references: [id])
+  loans              LoanRequest[]
 }
 
 model RawName {
-  id             Int            @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   value          String
+  coverUrl       String?
   barcodeCacheId Int
-  barcodeCache   BarcodeCache  @relation(fields: [barcodeCacheId], references: [id])
+  barcodeCache   BarcodeCache @relation(fields: [barcodeCacheId], references: [id], onDelete: Cascade)
 
   @@index([barcodeCacheId])
 }
 
 model BarcodeCache {
-  id              Int      @id @default(autoincrement())
-  barcode         String   @unique
-  provider        String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               Int       @id @default(autoincrement())
+  barcode          String    @unique
+  provider         String
+  platformKey      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  shelfType        String?
+  priceLastUpdated DateTime?
+  priceNew         Int?
+  priceUsed        Int?
+  priceUsedCIB     Int?
+  rawNames         RawName[]
+}
 
-  rawNames        RawName[]
+model UnresolvedBarcodeScan {
+  id         Int      @id @default(autoincrement())
+  barcode    String
+  shelfType  String   @default("unknown")
+  reason     String
+  status     String   @default("open")
+  seenCount  Int      @default(1)
+  providers  String?
+  rawNames   String?
+  rawPayload String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @updatedAt
+
+  @@unique([barcode, shelfType, reason])
+  @@index([barcode])
+  @@index([status, lastSeenAt])
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  image         String?
-  role          UserRole  @default(guest)
-  password      String?
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String        @id @default(cuid())
+  name           String?
+  email          String?       @unique
+  image          String?
+  role           UserRole      @default(guest)
+  password       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  items          Item[]
+  ownedLoans     LoanRequest[] @relation("OwnedLoans")
+  requestedLoans LoanRequest[] @relation("RequestedLoans")
+  shelves        Shelf[]
+}
 
-  shelves       Shelf[]
-  items         Item[]
+model Setting {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoanRequest {
+  id          String   @id @default(cuid())
+  itemId      String
+  requesterId String
+  ownerId     String
+  status      String   @default("PENDING")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  owner       User     @relation("OwnedLoans", fields: [ownerId], references: [id], onDelete: Cascade)
+  requester   User     @relation("RequestedLoans", fields: [requesterId], references: [id], onDelete: Cascade)
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
 }

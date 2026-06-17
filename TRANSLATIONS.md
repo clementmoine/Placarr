@@ -9,11 +9,13 @@ The app supports multiple languages (currently English and French) using a JSON-
 ## How It Works
 
 ### 1. URL Structure
+
 - URLs include the locale: `/en/shelves`, `/fr/shelves`
 - The root `/` redirects to the best available locale
 - Locale is detected from: URL > localStorage > browser language > default (en)
 
 ### 2. Translation Files
+
 - `src/messages/en.json` - English translations
 - `src/messages/fr.json` - French translations
 - Translations are organized by feature (common, navigation, auth, shelves, items, app)
@@ -21,25 +23,25 @@ The app supports multiple languages (currently English and French) using a JSON-
 ### 3. Using Translations in Components
 
 #### Basic Usage
+
 ```tsx
 import { useLocale } from "@/lib/providers/LocaleProvider";
 
 export function MyComponent() {
   const { t, locale, changeLocale } = useLocale();
-  
+
   return (
     <div>
-      <h1>{t('common.title')}</h1>
-      <p>{t('shelves.description')}</p>
-      <button onClick={() => changeLocale('fr')}>
-        Switch to French
-      </button>
+      <h1>{t("common.title")}</h1>
+      <p>{t("shelves.description")}</p>
+      <button onClick={() => changeLocale("fr")}>Switch to French</button>
     </div>
   );
 }
 ```
 
 #### Available Functions
+
 - `t(key)` - Get translated text for a key
 - `locale` - Current locale (en/fr)
 - `changeLocale(newLocale)` - Switch to a different locale
@@ -49,6 +51,7 @@ export function MyComponent() {
 ### 4. Adding New Translations
 
 #### 1. Add to English file (`src/messages/en.json`)
+
 ```json
 {
   "newFeature": {
@@ -59,6 +62,7 @@ export function MyComponent() {
 ```
 
 #### 2. Add to French file (`src/messages/fr.json`)
+
 ```json
 {
   "newFeature": {
@@ -69,6 +73,7 @@ export function MyComponent() {
 ```
 
 #### 3. Use in component
+
 ```tsx
 const { t } = useLocale();
 <h1>{t('newFeature.title')}</h1>
@@ -128,17 +133,18 @@ Visit `/en/test-translations` or `/fr/test-translations` to see all translations
 4. Add locale name to `src/components/LocaleSwitcher.tsx`
 
 Example for Spanish:
+
 ```tsx
 // src/lib/i18n.ts
-export const locales: Locale[] = ['en', 'fr', 'es'];
+export const locales: Locale[] = ["en", "fr", "es"];
 
 // src/types/i18n.ts
-export type Locale = 'en' | 'fr' | 'es';
+export type Locale = "en" | "fr" | "es";
 
 // src/components/LocaleSwitcher.tsx
 const localeNames: Record<string, string> = {
-  en: 'English',
-  fr: 'Français',
-  es: 'Español'
+  en: "English",
+  fr: "Français",
+  es: "Español",
 };
 ```

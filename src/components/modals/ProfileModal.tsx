@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { toast } from "sonner";
+import { useLocale } from "@/lib/providers/LocaleProvider";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { XIcon, Loader2 } from "lucide-react";
@@ -25,48 +26,52 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { BaseModal } from "@/components/modals/BaseModal";
+import { ImagePickerField } from "@/components/modals/ImagePickerField";
 
 import { useAccount } from "@/lib/hooks/useAccount";
 import { isUrl } from "@/lib/isUrl";
 import { cn } from "@/lib/utils";
-import { fileToBase64 } from "@/lib/toBase64";
-
-const profileSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Name is required")
-    .refine((value) => value.trim().length > 0, "Name cannot be empty spaces"),
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required")
-    .email("Invalid email address"),
-  password: z.string().trim().optional(),
-  image: z
-    .any()
-    .refine(
-      (url) =>
-        url == "" ||
-        url == null ||
-        url instanceof File ||
-        isUrl(url) ||
-        /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
-      "Invalid image",
-    )
-    .optional(),
-});
-
-type FormValues = z.infer<typeof profileSchema>;
+import { uploadImage } from "@/lib/api/upload";
 
 interface ProfileModalProps {
   onClose: () => void;
 }
 
 export function ProfileModal({ onClose }: ProfileModalProps) {
+  const { t } = useLocale();
   const { user, update, deleteAccount, isGuest } = useAccount();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const profileSchema = z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("profile.nameRequired"))
+      .refine((value) => value.trim().length > 0, t("profile.nameNotEmpty")),
+    email: z
+      .string()
+      .trim()
+      .min(1, t("profile.emailRequired"))
+      .email(t("profile.invalidEmail")),
+    password: z.string().trim().optional(),
+    image: z
+      .any()
+      .refine(
+        (url) =>
+          url == "" ||
+          url == null ||
+          url instanceof File ||
+          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          isUrl(url) ||
+          /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
+        t("profile.invalidImage"),
+      )
+      .optional(),
+  });
+
+  type FormValues = z.infer<typeof profileSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(profileSchema),
@@ -82,7 +87,7 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
     mutationFn: async (values: FormValues) => {
       let imageUrl: FormValues["image"] = values.image;
       if (imageUrl && imageUrl instanceof File) {
-        imageUrl = await fileToBase64(imageUrl);
+        imageUrl = await uploadImage(imageUrl);
       }
 
       await update({
@@ -93,12 +98,14 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
       });
     },
     onSuccess: () => {
-      toast.success("Profile updated successfully");
+      toast.success(t("profile.updateSuccess"));
       onClose();
     },
     onError: (error) => {
       toast.error(
-        `Failed to update profile: ${error instanceof Error ? error.message : "Unknown error"}`,
+        t("profile.updateFailed", {
+          error: error instanceof Error ? error.message : "Unknown error",
+        }),
       );
     },
   });
@@ -111,18 +118,11 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
     if (file != null) {
       if (file instanceof File) {
         if (!file.type.startsWith("image/")) {
-          toast.error("Please upload a valid image file.");
+          toast.error(t("profile.invalidImage"));
           form.setValue("image", null);
           return;
         }
-
-        try {
-          const base64 = await fileToBase64(file);
-          form.setValue("image", base64);
-        } catch (error) {
-          console.error("Error converting file to base64:", error);
-          form.setValue("image", null);
-        }
+        form.setValue("image", file);
       } else {
         form.setValue("image", file);
       }
@@ -135,9 +135,12 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
     if (isGuest) return;
     let imageUrl: FormValues["image"] = values.image;
     if (imageUrl && imageUrl instanceof File) {
-      imageUrl = await fileToBase64(imageUrl);
+      imageUrl = await uploadImage(imageUrl);
     }
-    updateProfile.mutate(values);
+    updateProfile.mutate({
+      ...values,
+      image: imageUrl,
+    });
   };
 
   const handleDeleteAccount = async () => {
@@ -151,71 +154,36 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh]">
-        <DialogHeader className="p-4 border-b shrink-0">
-          <DialogTitle className="text-foreground">
-            {isGuest ? "View Profile" : "Edit Profile"}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <BaseModal
+        isOpen={true}
+        onClose={onClose}
+        title={isGuest ? t("profile.viewProfile") : t("profile.editProfile")}
+        size="md"
+        customChildren={true}
+        footer={null}
+      >
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="flex flex-col overflow-hidden"
+            className="flex flex-col flex-1 overflow-hidden"
           >
-            <div className="overflow-x-hidden overflow-y-auto flex flex-col space-y-6 p-4 max-h-[60vh]">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 min-h-0 space-y-5">
               <FormField
                 control={form.control}
                 name="image"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Avatar</FormLabel>
-                    <FormControl>
-                      <div className="flex flex-col gap-2 relative items-center justify-center">
-                        {field.value && typeof field.value === "string" && (
-                          <Image
-                            width={200}
-                            height={200}
-                            src={field.value}
-                            alt="User avatar"
-                            className="absolute left-1 size-7 object-contain rounded-sm"
-                          />
-                        )}
-
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className={cn(
-                            "bg-background text-foreground",
-                            field.value && "pr-9 pl-9",
-                          )}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] || null;
-                            field.onChange(file);
-                            handleLogoChange(file);
-                          }}
-                          disabled={isGuest}
-                        />
-
-                        {field.value && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="absolute right-1 size-7 p-0 rounded-sm"
-                            size="sm"
-                            onClick={() => {
-                              field.onChange(null);
-                              handleLogoChange(null);
-                            }}
-                            disabled={isGuest}
-                          >
-                            <XIcon />
-                          </Button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <ImagePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                    onFileChange={handleLogoChange}
+                    label={t("profile.avatar")}
+                    placeholder="Pas d'avatar"
+                    chooseImageText="Importer"
+                    enterUrlText="Saisir une URL"
+                    urlPlaceholderText="https://example.com/avatar.jpg"
+                    invalidUrlText="Image invalide"
+                  />
                 )}
               />
 
@@ -224,9 +192,15 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("common.name")}
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isGuest} />
+                      <Input
+                        {...field}
+                        disabled={isGuest}
+                        className="bg-zinc-50/50 dark:bg-zinc-950/20 text-xs h-10 border-border/80 rounded-xl focus-visible:border-primary/80 focus-visible:ring-primary/20 focus-visible:ring-[3px] transition-all duration-200"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,9 +211,15 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("auth.email")}
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isGuest} />
+                      <Input
+                        {...field}
+                        disabled={isGuest}
+                        className="bg-zinc-50/50 dark:bg-zinc-950/20 text-xs h-10 border-border/80 rounded-xl focus-visible:border-primary/80 focus-visible:ring-primary/20 focus-visible:ring-[3px] transition-all duration-200"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -250,13 +230,16 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
+                      {t("profile.newPassword")}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         {...field}
                         disabled={isGuest}
-                        placeholder="Leave blank to keep current password"
+                        placeholder={t("profile.passwordPlaceholder")}
+                        className="bg-zinc-50/50 dark:bg-zinc-950/20 text-xs h-10 border-border/80 rounded-xl focus-visible:border-primary/80 focus-visible:ring-primary/20 focus-visible:ring-[3px] transition-all duration-200"
                       />
                     </FormControl>
                     <FormMessage />
@@ -264,65 +247,56 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
                 )}
               />
             </div>
-            <DialogFooter className="p-4 border-t shrink-0">
-              <div className="flex justify-between w-full">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={isGuest}
-                >
-                  Delete Account
-                </Button>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isGuest || updateProfile.isPending}
-                  >
-                    {updateProfile.isPending && (
-                      <Loader2 className="size-4 animate-spin" />
-                    )}
-                    Save
-                  </Button>
-                </div>
-              </div>
+
+            <DialogFooter className="p-4 md:p-5 border-t border-border/60 dark:border-zinc-900/60 bg-zinc-50/30 dark:bg-zinc-950/30 shrink-0 flex flex-row items-center justify-end gap-2 w-full mt-6">
+              <Button
+                type="button"
+                variant="destructive"
+                className="mr-auto rounded-xl h-10 px-5 text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isGuest}
+              >
+                {t("profile.deleteAccount")}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl h-10 px-5 text-xs font-semibold border-border hover:bg-accent cursor-pointer active:scale-[0.98] transition-all"
+                onClick={onClose}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                className="rounded-xl h-10 px-5 text-xs font-semibold bg-primary hover:bg-primary/95 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                disabled={isGuest || updateProfile.isPending}
+              >
+                {updateProfile.isPending && (
+                  <Loader2 className="size-4 animate-spin mr-1.5" />
+                )}
+                {t("common.save")}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
+      </BaseModal>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Account</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete your account? This action cannot
-              be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDeleteConfirm(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAccount}
-              disabled={isDeleting}
-            >
-              {isDeleting && <Loader2 className="size-4 animate-spin" />}
-              Delete Account
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Dialog>
+      <BaseModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title={t("profile.deleteAccount")}
+        description={t("profile.deleteConfirmMessage")}
+        size="sm"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onDelete={handleDeleteAccount}
+        deleteLabel={t("profile.deleteAccount")}
+        isDeleting={isDeleting}
+        cancelLabel={t("common.cancel")}
+      >
+        <div className="hidden" />
+      </BaseModal>
+    </>
   );
 }

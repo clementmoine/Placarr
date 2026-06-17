@@ -1,5 +1,7 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 
 const prisma = new PrismaClient();
 
@@ -32,6 +34,51 @@ async function main() {
   });
 
   console.log({ adminUser, guestUser });
+
+  // Seeding custom shelves from shelves-seed.json
+  const shelvesDataPath = path.join(
+    process.cwd(),
+    "prisma",
+    "shelves-seed.json",
+  );
+  if (fs.existsSync(shelvesDataPath)) {
+    const shelves = JSON.parse(fs.readFileSync(shelvesDataPath, "utf-8"));
+    console.log(`Seeding ${shelves.length} custom shelves...`);
+
+    const users = [adminUser, guestUser];
+    for (const user of users) {
+      for (const shelf of shelves) {
+        const existing = await prisma.shelf.findFirst({
+          where: {
+            name: shelf.name,
+            userId: user.id,
+          },
+        });
+
+        if (!existing) {
+          await prisma.shelf.create({
+            data: {
+              name: shelf.name,
+              type: shelf.type,
+              color: shelf.color,
+              imageUrl: shelf.imageUrl,
+              userId: user.id,
+            },
+          });
+        } else {
+          await prisma.shelf.update({
+            where: { id: existing.id },
+            data: {
+              type: shelf.type,
+              color: shelf.color,
+              imageUrl: shelf.imageUrl,
+            },
+          });
+        }
+      }
+    }
+    console.log("Custom shelves seeded successfully.");
+  }
 }
 
 main()

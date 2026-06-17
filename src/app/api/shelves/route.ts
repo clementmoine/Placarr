@@ -4,6 +4,22 @@ import { prisma } from "@/lib/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
 
 import { formatMetadataFromStorage } from "@/services/metadata";
+import { getCoverImage } from "@/lib/itemMedia";
+import { slugify } from "@/lib/slugs";
+import { buildItemSearchConditions } from "@/lib/itemSearch";
+
+async function resolveShelfId(value: string): Promise<string> {
+  const direct = await prisma.shelf.findUnique({
+    where: { id: value },
+    select: { id: true },
+  });
+  if (direct) return direct.id;
+
+  const shelves = await prisma.shelf.findMany({
+    select: { id: true, name: true },
+  });
+  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
@@ -15,18 +31,15 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q");
 
     if (id) {
+      const resolvedId = await resolveShelfId(id);
       if (q) {
         const searchTerm = q.trim();
         const shelf = await prisma.shelf.findUnique({
-          where: { id },
+          where: { id: resolvedId },
           include: {
             items: {
               where: {
-                OR: [
-                  { name: { contains: searchTerm } },
-                  { description: { contains: searchTerm } },
-                  { barcode: { contains: searchTerm } },
-                ],
+                OR: buildItemSearchConditions(searchTerm),
               },
               include: {
                 metadata: {
@@ -49,21 +62,60 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        // Format items with metadata
+        // Only allow if user is admin or the owner
+        if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
+        }
+
+        // Fetch prices from BarcodeCache
+        const barcodes = shelf.items
+          .map((item) => item.barcode)
+          .filter((b): b is string => !!b);
+        const cleanBarcodes = barcodes
+          .map((b) => b.replace(/[^\d]/g, "").trim())
+          .filter(Boolean);
+        const priceCaches =
+          cleanBarcodes.length > 0
+            ? await prisma.barcodeCache.findMany({
+                where: { barcode: { in: cleanBarcodes } },
+              })
+            : [];
+        const priceMap = new Map(priceCaches.map((c) => [c.barcode, c]));
+
+        // Format items with metadata and prices
         const formattedShelf = {
           ...shelf,
           items: shelf.items.map((item) => {
+            const clean = item.barcode
+              ? item.barcode.replace(/[^\d]/g, "").trim()
+              : "";
+            const cache = clean ? priceMap.get(clean) : null;
+            const prices = {
+              priceNew: cache?.priceNew ?? null,
+              priceUsed: cache?.priceUsed ?? null,
+              priceUsedCIB: cache?.priceUsedCIB ?? null,
+              priceLastUpdated: cache?.priceLastUpdated ?? null,
+            };
+
             if (item.metadata) {
               const formattedMetadata = formatMetadataFromStorage(
                 item.metadata,
               );
               return {
                 ...item,
-                imageUrl: item.imageUrl || formattedMetadata.imageUrl,
+                imageUrl: getCoverImage({
+                  imageUrl: item.imageUrl,
+                  metadata: formattedMetadata,
+                  shelf: { type: shelf.type } as any,
+                }),
                 metadata: formattedMetadata,
+                ...prices,
               };
             }
-            return item;
+            return {
+              ...item,
+              ...prices,
+            };
           }),
         };
 
@@ -71,7 +123,7 @@ export async function GET(req: NextRequest) {
       }
 
       const shelf = await prisma.shelf.findUnique({
-        where: { id },
+        where: { id: resolvedId },
         include: {
           items: {
             include: {
@@ -88,19 +140,58 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
       }
 
-      // Format items with metadata
+      // Only allow if user is admin or the owner
+      if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      }
+
+      // Fetch prices from BarcodeCache
+      const barcodes = shelf.items
+        .map((item) => item.barcode)
+        .filter((b): b is string => !!b);
+      const cleanBarcodes = barcodes
+        .map((b) => b.replace(/[^\d]/g, "").trim())
+        .filter(Boolean);
+      const priceCaches =
+        cleanBarcodes.length > 0
+          ? await prisma.barcodeCache.findMany({
+              where: { barcode: { in: cleanBarcodes } },
+            })
+          : [];
+      const priceMap = new Map(priceCaches.map((c) => [c.barcode, c]));
+
+      // Format items with metadata and prices
       const formattedShelf = {
         ...shelf,
         items: shelf.items.map((item) => {
+          const clean = item.barcode
+            ? item.barcode.replace(/[^\d]/g, "").trim()
+            : "";
+          const cache = clean ? priceMap.get(clean) : null;
+          const prices = {
+            priceNew: cache?.priceNew ?? null,
+            priceUsed: cache?.priceUsed ?? null,
+            priceUsedCIB: cache?.priceUsedCIB ?? null,
+            priceLastUpdated: cache?.priceLastUpdated ?? null,
+          };
+
           if (item.metadata) {
             const formattedMetadata = formatMetadataFromStorage(item.metadata);
             return {
               ...item,
-              imageUrl: item.imageUrl || formattedMetadata.imageUrl,
+              imageUrl: getCoverImage({
+                imageUrl: item.imageUrl,
+                metadata: formattedMetadata,
+                shelf: { type: shelf.type } as any,
+              }),
               metadata: formattedMetadata,
+              ...prices,
             };
           }
-          return item;
+          return {
+            ...item,
+            ...prices,
+          };
         }),
       };
 
@@ -112,16 +203,13 @@ export async function GET(req: NextRequest) {
 
       const shelves = await prisma.shelf.findMany({
         where: {
+          userId: auth.user.id,
           OR: [
             { name: { contains: searchTerm } },
             {
               items: {
                 some: {
-                  OR: [
-                    { name: { contains: searchTerm } },
-                    { description: { contains: searchTerm } },
-                    { barcode: { contains: searchTerm } },
-                  ],
+                  OR: buildItemSearchConditions(searchTerm),
                 },
               },
             },
@@ -143,6 +231,9 @@ export async function GET(req: NextRequest) {
     }
 
     const shelves = await prisma.shelf.findMany({
+      where: {
+        userId: auth.user.id,
+      },
       include: {
         _count: {
           select: {

@@ -30,8 +30,8 @@ export function ShelfBadge(props: ShelfBadgeProps) {
         <Image
           src={shelf.imageUrl}
           alt={shelf.name}
-          width={32}
-          height={32}
+          width={128}
+          height={128}
           className="w-full h-full object-contain"
         />
       )}

@@ -42,8 +42,50 @@ export class SerpWow {
     );
   }
 
+  async getCredits(): Promise<{ remaining: number; limit: number } | null> {
+    const url = new URL(`${this.url}/account`);
+    url.search = new URLSearchParams({
+      api_key: this.api_key,
+    }).toString();
+
+    try {
+      const response = await axios.get(url.toString());
+      const info = response.data?.account_info;
+      if (info) {
+        const remaining =
+          (info.credits_remaining !== undefined
+            ? info.credits_remaining
+            : null) ??
+          (info.topup_credits_remaining || 0) +
+            (info.subscription_credits_remaining || 0);
+
+        let limit = 0;
+        if (info.credits_limit !== undefined) {
+          limit = info.credits_limit;
+        } else if (
+          info.topup_credits_limit !== undefined ||
+          info.subscription_credits_limit !== undefined
+        ) {
+          limit =
+            (info.topup_credits_limit || 0) +
+            (info.subscription_credits_limit || 0);
+        } else if (info.credits_used !== undefined && remaining !== null) {
+          limit = remaining + info.credits_used;
+        }
+
+        return {
+          remaining: remaining ?? 0,
+          limit,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async search(query: string): Promise<Item["name"][] | undefined> {
-    if (await !this.available()) {
+    if (!(await this.available())) {
       return Promise.reject(`${this.name} unavailable`);
     }
 

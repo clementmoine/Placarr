@@ -3,50 +3,54 @@
 import { z } from "zod";
 import Link from "next/link";
 import { toast } from "sonner";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { Plus, Wrench, Pizza, Search } from "lucide-react";
+import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShelfBadge } from "@/components/ShelfBadge";
 import { ItemModal } from "@/components/modals/ItemModal";
 import { ScannerButton } from "@/components/ScannerButton";
 import { ShelfModal } from "@/components/modals/ShelfModal";
+import { ScanFAB } from "@/components/ScanFAB";
 
-import { cn } from "@/lib/utils";
 import { saveItem } from "@/lib/api/items";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { getShelf, saveShelf } from "@/lib/api/shelves";
 import { useAccount } from "@/lib/hooks/useAccount";
+import { useLocale } from "@/lib/providers/LocaleProvider";
+import colorLib from "color";
+import { getAspectRatio } from "@/lib/cardFormat";
+import { itemPath } from "@/lib/slugs";
+import { syncItemQueries } from "@/lib/itemQueryCache";
+import { getEstimatedItemValueCents } from "@/lib/itemValue";
 
 import type { Shelf, Prisma, Item } from "@prisma/client";
 import type { ShelfWithItemCount } from "@/types/shelves";
-
-import styles from "./shelf.module.css";
+import type { ItemWithMetadata } from "@/types/items";
 
 const itemSearchSchema = z.object({
   search: z.string(),
@@ -57,10 +61,12 @@ type FormValues = z.infer<typeof itemSearchSchema>;
 function ShelfComponent() {
   const params = useParams();
   const { isGuest, isAuthenticated, hasPermission } = useAccount();
+  const { t } = useLocale();
   const shelfId = params.shelfId as Shelf["id"];
 
   const [editingItemId, setEditingItemId] = useState<Item["id"]>();
   const [visibleModal, setVisibleModal] = useState<"shelf" | "item">();
+  const [sortBy, setSortBy] = useState<string>("name_asc");
 
   const searchParams = useSearchParams();
 
@@ -92,6 +98,7 @@ function ShelfComponent() {
             id: "",
             name: "",
             imageUrl: null,
+            backgroundImageUrl: null,
             createdAt: new Date(),
             updatedAt: new Date(),
             shelfId: shelfId,
@@ -121,7 +128,7 @@ function ShelfComponent() {
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
     },
     onError: () => {
-      toast.error("Error creating or updating shelf");
+      toast.error(t("shelves.createUpdateError"));
     },
   });
 
@@ -132,24 +139,69 @@ function ShelfComponent() {
   >({
     mutationFn: saveItem,
     onSuccess: (item: Item) => {
-      const itemId = item.id;
       const shelfId = item.shelfId;
 
-      queryClient.invalidateQueries({
-        queryKey: ["shelf", shelfId, "items", itemId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["shelf", shelfId] });
-      queryClient.invalidateQueries({ queryKey: ["shelves"] });
+      void syncItemQueries(queryClient, item, [shelfId]);
     },
     onError: () => {
-      toast.error("Error creating or updating shelf");
+      toast.error(t("items.saveFailed"));
     },
   });
 
-  const sortedItems = useMemo(
-    () => shelf?.items?.sort((a, b) => a.name.localeCompare(b.name)) || [],
-    [shelf],
-  );
+  const sortedItems = useMemo(() => {
+    if (!shelf?.items) return [];
+
+    const items = shelf.items as unknown as ItemWithMetadata[];
+
+    return [...items].sort((a, b) => {
+      switch (sortBy) {
+        case "name_desc":
+          return b.name.localeCompare(a.name);
+        case "added_desc":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "added_asc":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "release_desc": {
+          const timeA = a.metadata?.releaseDate
+            ? new Date(a.metadata.releaseDate).getTime()
+            : 0;
+          const timeB = b.metadata?.releaseDate
+            ? new Date(b.metadata.releaseDate).getTime()
+            : 0;
+          return timeB - timeA;
+        }
+        case "release_asc": {
+          const timeA = a.metadata?.releaseDate
+            ? new Date(a.metadata.releaseDate).getTime()
+            : 9999999999999;
+          const timeB = b.metadata?.releaseDate
+            ? new Date(b.metadata.releaseDate).getTime()
+            : 9999999999999;
+          return timeA - timeB;
+        }
+        case "name_asc":
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+  }, [shelf?.items, sortBy]);
+
+  const totalValue = useMemo(() => {
+    if (!shelf?.items) return 0;
+    const totalCents = shelf.items.reduce((sum, item: any) => {
+      const price =
+        getEstimatedItemValueCents({
+          ...item,
+          shelfType: shelf.type,
+        }) ?? 0;
+      return sum + price;
+    }, 0);
+    return totalCents / 100;
+  }, [shelf?.items]);
 
   const handleModalClose = useCallback(() => {
     setVisibleModal(undefined);
@@ -209,30 +261,28 @@ function ShelfComponent() {
     return hasPermission(shelf.userId);
   }, [shelf, hasPermission]);
 
-  return (
-    <div className="flex flex-col h-screen bg-background text-foreground">
-      {/* Header */}
-      <Header>
-        <div className="flex gap-2">
-          {/* Edit shelf */}
-          {isAuthenticated && !isGuest && canEdit && (
-            <Button
-              variant="secondary"
-              onClick={() => handleModalOpen("shelf")}
-            >
-              <Wrench />
-              Edit shelf
-            </Button>
-          )}
+  const safeColor = useMemo(() => {
+    if (!shelf?.color) return undefined;
+    try {
+      return colorLib(shelf.color);
+    } catch {
+      return undefined;
+    }
+  }, [shelf?.color]);
 
-          {isAuthenticated && !isGuest && canEdit && (
-            <Button variant="default" onClick={() => handleModalOpen("item")}>
-              <Plus />
-              Add item
-            </Button>
-          )}
-        </div>
-      </Header>
+  const shelfTextColor = useMemo(() => {
+    if (!safeColor) return undefined;
+    return safeColor.lighten(0.1).string();
+  }, [safeColor]);
+
+  const skeletonAspectRatio = useMemo(() => {
+    return getAspectRatio(shelf?.cardFormat, shelf?.type);
+  }, [shelf?.cardFormat, shelf?.type]);
+
+  return (
+    <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
+      {/* Header */}
+      <Header />
 
       {/* Modals */}
       {isAuthenticated && !isGuest && canEdit && (
@@ -245,6 +295,7 @@ function ShelfComponent() {
           />
           <ItemModal
             shelfId={shelfId}
+            shelfType={shelf?.type}
             itemId={editingItemId}
             isOpen={visibleModal === "item"}
             onClose={handleModalClose}
@@ -254,105 +305,216 @@ function ShelfComponent() {
       )}
 
       {/* Content */}
-      <div className="flex flex-col gap-4 p-4">
-        <Breadcrumb>
-          <BreadcrumbList className="flex-nowrap">
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild className="text-nowrap">
-                <Link href="/shelves">Home</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbPage className="flex gap-1 text-nowrap">
-              <ShelfBadge shelf={shelf} isFetching={isFetching} />
-              {shelf?.name || "Shelf"}
-            </BreadcrumbPage>
-          </BreadcrumbList>
-        </Breadcrumb>
+      <div className="overflow-y-auto">
+        <div className="flex-1 p-4 md:p-6 pb-24 md:pb-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300">
+          {/* Clean Shelf Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 w-full">
+            <div className="flex items-center gap-3">
+              {shelf?.imageUrl ? (
+                <Image
+                  src={shelf.imageUrl}
+                  alt=""
+                  width={128}
+                  height={128}
+                  className="size-10 object-contain select-none shrink-0 aspect-square p-1 rounded-md"
+                  style={{
+                    backgroundColor: shelf?.color || undefined,
+                  }}
+                />
+              ) : shelf?.type ? (
+                <span
+                  className="shrink-0"
+                  style={{ color: shelfTextColor || "var(--primary)" }}
+                >
+                  <ShelfTypeIcon type={shelf.type} className="size-8" />
+                </span>
+              ) : null}
 
-        <h2 className="text-foreground text-lg font-semibold">
-          Items ({shelf?.items?.length || 0})
-        </h2>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
+                    {shelf?.name || "..."}
+                  </h1>
+                </div>
+              </div>
+            </div>
 
-        <Form {...form}>
-          <form
-            onChange={(e) => {
-              const search = (e.target as HTMLInputElement).value;
+            {/* Action Buttons */}
+            {isAuthenticated && !isGuest && canEdit && (
+              <div className="flex items-center gap-2 shrink-0 select-none">
+                <Button
+                  variant="secondary"
+                  className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                  onClick={() => handleModalOpen("shelf")}
+                >
+                  <Wrench className="size-4" />
+                  {t("shelves.editShelf")}
+                </Button>
 
-              debounce(() => handleSearch({ search }));
-            }}
-            onSubmit={form.handleSubmit(() => {})}
-          >
-            <FormField
-              control={form.control}
-              name="search"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="hidden">Search</FormLabel>
-                  <FormControl>
-                    <div className="flex relative items-center">
-                      <Search className="absolute size-4 left-3" />
-                      <Input
-                        type="search"
-                        className="pr-10 pl-9"
-                        placeholder="Search item"
-                        {...field}
-                      />
-                      <ScannerButton
-                        className="absolute right-1 rounded-sm"
-                        onScan={(barcode) => {
-                          handleSearch({ search: barcode });
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-
-        <div className={cn(styles["shelf_items"], "mt-4")}>
-          {sortedItems.map((item, index) =>
-            isFetching ? (
-              <Skeleton
-                key={index}
-                className="flex rounded-xl w-full"
-                style={{
-                  aspectRatio: "1 / 1.4",
-                }}
-              />
-            ) : (
-              <Link
-                key={`${item.id}-${index}`}
-                href={`/shelves/${shelf?.id}/${item.id}/`}
-              >
-                <ItemCard {...item} />
-              </Link>
-            ),
-          )}
-        </div>
-
-        {/* Empty state */}
-        {sortedItems.length === 0 && !isFetching && (
-          <div className="flex flex-col items-center justify-center h-full">
-            <Pizza className="size-16 text-foreground mb-5" />
-
-            <p className="text-foreground text-center">No items</p>
-            <p className="text-foreground text-center">
-              Add a new item to get started
-            </p>
+                <Button
+                  className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                  onClick={() => handleModalOpen("item")}
+                >
+                  <Plus className="size-4" />
+                  {t("items.addItem")}
+                </Button>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Search and Sort controls */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            <div className="flex-1">
+              <Form {...form}>
+                <form
+                  onChange={(e) => {
+                    const search = (e.target as HTMLInputElement).value;
+                    debounce(() => handleSearch({ search }));
+                  }}
+                  onSubmit={form.handleSubmit(() => {})}
+                >
+                  <FormField
+                    control={form.control}
+                    name="search"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="hidden">
+                          {t("common.search")}
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative w-full flex items-center">
+                            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
+                            <Input
+                              type="search"
+                              className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
+                              placeholder={t("common.search")}
+                              {...field}
+                            />
+                            <ScannerButton
+                              className="absolute right-1 rounded-xl"
+                              onScan={(barcode) => {
+                                handleSearch({ search: barcode });
+                              }}
+                            />
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </div>
+
+            <div className="w-full sm:w-[220px] shrink-0">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 cursor-pointer">
+                  <SelectValue placeholder={t("sorting.title")} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
+                  <SelectItem value="name_asc" className="cursor-pointer">
+                    {t("sorting.nameAsc")}
+                  </SelectItem>
+                  <SelectItem value="name_desc" className="cursor-pointer">
+                    {t("sorting.nameDesc")}
+                  </SelectItem>
+                  <SelectItem value="added_desc" className="cursor-pointer">
+                    {t("sorting.addedDesc")}
+                  </SelectItem>
+                  <SelectItem value="added_asc" className="cursor-pointer">
+                    {t("sorting.addedAsc")}
+                  </SelectItem>
+                  <SelectItem value="release_desc" className="cursor-pointer">
+                    {t("sorting.releaseDesc")}
+                  </SelectItem>
+                  <SelectItem value="release_asc" className="cursor-pointer">
+                    {t("sorting.releaseAsc")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Items Grid */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
+            <h2 className="text-xl font-semibold">
+              {shelf?.items?.length || 0}{" "}
+              {shelf?.items?.length === 1 ? "item" : "items"}
+            </h2>
+
+            {totalValue > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
+                <span>Valeur estimée :</span>
+                <span className="font-extrabold text-sm">
+                  {totalValue.toFixed(2)} €
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
+            {sortedItems.map((item, index) =>
+              isFetching ? (
+                <Skeleton
+                  key={index}
+                  className="flex rounded-xl w-full"
+                  style={{
+                    aspectRatio: skeletonAspectRatio,
+                  }}
+                />
+              ) : (
+                <Link
+                  key={`${item.id}-${index}`}
+                  href={itemPath(
+                    shelf || { id: shelfId },
+                    item,
+                  )}
+                >
+                  <ItemCard
+                    {...item}
+                    shelfType={shelf?.type}
+                    cardFormat={shelf?.cardFormat}
+                  />
+                </Link>
+              ),
+            )}
+
+            {/* Plus Add Item Card in the items grid */}
+            {!isFetching && isAuthenticated && !isGuest && canEdit && (
+              <button
+                onClick={() => handleModalOpen("item")}
+                className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
+                style={{ aspectRatio: skeletonAspectRatio }}
+              >
+                <Plus className="size-5 text-primary" />
+                <span>{t("items.addItem")}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Empty state for non-editable shelves */}
+          {sortedItems.length === 0 &&
+            !isFetching &&
+            (!isAuthenticated || isGuest || !canEdit) && (
+              <div className="flex flex-col items-center justify-center py-12 select-none">
+                <Pizza className="size-12 text-zinc-400 dark:text-zinc-650 mb-3 animate-pulse" />
+                <p className="text-muted-foreground text-xs">
+                  {t("items.noItems")}
+                </p>
+              </div>
+            )}
+        </div>
       </div>
+
+      <ScanFAB />
     </div>
   );
 }
 
 export default function ShelfPage() {
+  const { t } = useLocale();
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("common.loading")}</div>}>
       <ShelfComponent />
     </Suspense>
   );

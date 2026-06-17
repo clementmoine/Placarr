@@ -1,4 +1,4 @@
-export type Locale = 'en' | 'fr';
+export type Locale = "en" | "fr";
 
 export interface Messages {
   common: {

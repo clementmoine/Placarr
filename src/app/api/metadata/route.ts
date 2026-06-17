@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireGuestOrHigher } from "@/lib/auth";
 import { getMetadata, getDatabaseSuggestions } from "@/services/metadata";
 
 export async function GET(req: NextRequest) {
+  // Proxy vers des API tierces (souvent payantes) → auth obligatoire.
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { searchParams } = new URL(req.url);
     const name = searchParams.get("name");

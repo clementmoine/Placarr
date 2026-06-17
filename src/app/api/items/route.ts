@@ -10,41 +10,14 @@ import {
   downloadRemoteImage,
 } from "@/services/metadata";
 import { getCoverImage } from "@/lib/itemMedia";
-import { slugify } from "@/lib/slugs";
+import { resolveShelfId, resolveItemId } from "@/lib/resolveIds";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
 
-async function resolveShelfId(value: string): Promise<string> {
-  const direct = await prisma.shelf.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const shelves = await prisma.shelf.findMany({
-    select: { id: true, name: true },
-  });
-  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
-}
-
-async function resolveItemId(
-  value: string,
-  shelfValue?: string | null,
-): Promise<string> {
-  const direct = await prisma.item.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const resolvedShelfId = shelfValue ? await resolveShelfId(shelfValue) : null;
-  const items = await prisma.item.findMany({
-    where: resolvedShelfId ? { shelfId: resolvedShelfId } : undefined,
-    select: { id: true, name: true },
-  });
-  return items.find((item) => slugify(item.name) === value)?.id || value;
-}
-
 export async function GET(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+  const isAdmin = auth.user.role === "admin";
+
   const searchParams = req.nextUrl.searchParams;
   const id = searchParams.get("id");
   const q = searchParams.get("q");
@@ -73,6 +46,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
+    // L'item appartient à l'utilisateur, est admin, ou se trouve dans une
+    // étagère publique (consultation cross-user via collections partagées).
+    if (!isAdmin && item.userId !== auth.user.id && !item.shelf.isPublic) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     if (item.metadata) {
       const formattedMetadata = formatMetadataFromStorage(item.metadata);
       return NextResponse.json({
@@ -90,6 +69,12 @@ export async function GET(req: NextRequest) {
   }
 
   const whereClause: Prisma.ItemWhereInput = {};
+
+  // Les listes/recherches sont restreintes aux items de l'utilisateur
+  // (le cross-user public passe par /api/explore). L'admin voit tout.
+  if (!isAdmin) {
+    whereClause.userId = auth.user.id;
+  }
 
   if (q) {
     whereClause.OR = buildItemSearchConditions(q);

@@ -17,12 +17,22 @@
 
 ## 🚀 Getting Started
 
+The app uses **PostgreSQL**. For local development, start the database with Docker:
+
 ```bash
 pnpm install
+docker compose up -d db          # PostgreSQL on localhost:5432
+pnpm prisma migrate deploy       # apply migrations
+pnpm prisma db seed              # create admin/guest users (first run only)
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.
+`DATABASE_URL` defaults to `postgresql://placarr:placarr@localhost:5432/placarr`
+(see `.env`). Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+> Migrating an existing SQLite `dev.db`? Use `scripts/export-data.cjs`
+> (run while still on SQLite) then `scripts/import-data.cjs` (after the
+> Postgres migration). See the migration notes in the repo.
 
 ---
 

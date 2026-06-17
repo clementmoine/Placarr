@@ -50,3 +50,5 @@ public/swe-worker*
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
+prisma/*.backup*
+prisma/data-export.json

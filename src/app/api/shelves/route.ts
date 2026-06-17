@@ -5,21 +5,8 @@ import { requireGuestOrHigher } from "@/lib/auth";
 
 import { formatMetadataFromStorage } from "@/services/metadata";
 import { getCoverImage } from "@/lib/itemMedia";
-import { slugify } from "@/lib/slugs";
+import { resolveShelfId } from "@/lib/resolveIds";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
-
-async function resolveShelfId(value: string): Promise<string> {
-  const direct = await prisma.shelf.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const shelves = await prisma.shelf.findMany({
-    select: { id: true, name: true },
-  });
-  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
-}
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
@@ -205,7 +192,7 @@ export async function GET(req: NextRequest) {
         where: {
           userId: auth.user.id,
           OR: [
-            { name: { contains: searchTerm } },
+            { name: { contains: searchTerm, mode: "insensitive" } },
             {
               items: {
                 some: {

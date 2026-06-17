@@ -73,7 +73,7 @@ RUN chmod +x /app/init.sh
 EXPOSE 3000
 
 ENV PORT=3000
-ENV DATABASE_URL="file:/app/prisma/dev.db"
+# DATABASE_URL est fournie à l'exécution (PostgreSQL) via compose/env.
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/config/next-config-js/output

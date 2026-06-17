@@ -433,5 +433,13 @@
     "noLoansDesc": "You are not borrowing any items. Explore other members' collections to request one!",
     "noLentsTitle": "No Active Lent Items",
     "noLentsDesc": "You haven't lent any items yet. Incoming loan requests will appear here."
+  },
+  "errors": {
+    "genericTitle": "Something went wrong",
+    "genericMessage": "An unexpected error occurred. You can try again or go back home.",
+    "tryAgain": "Try again",
+    "goHome": "Back home",
+    "notFoundTitle": "Page not found",
+    "notFoundMessage": "The page you're looking for doesn't exist or has been moved."
   }
 }

@@ -5,12 +5,17 @@
   "scripts": {
     "dev:ssl": "next dev --experimental-https",
     "dev": "next dev",
+    "dev:docker": "docker compose -f compose.dev.yml up",
+    "dev:docker:down": "docker compose -f compose.dev.yml down",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -78,6 +83,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3",
+    "@mswjs/interceptors": "^0.41.9",
     "@tailwindcss/postcss": "4",
     "@tanstack/eslint-plugin-query": "5.74.7",
     "@types/fast-levenshtein": "^0.0.4",
@@ -93,7 +99,8 @@
     "prettier": "3.5.3",
     "tailwindcss": "4",
     "ts-node": "10.9.2",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^4.1.9"
   },
   "packageManager": "pnpm@9.14.2+sha1.5202b50ab92394b3c922d2e293f196e2df6d441b"
 }

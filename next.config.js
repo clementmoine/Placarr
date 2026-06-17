@@ -18,10 +18,14 @@ const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
   eslint: {
+    // TODO: repasser à false une fois la dette lint résorbée
+    // (102 prettier auto-fixables + 113 no-explicit-any dans les services).
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // Le typecheck est propre (0 erreur) : on l'applique au build pour
+    // qu'aucune régression de type ne puisse être déployée.
+    ignoreBuildErrors: false,
   },
   images: {
     remotePatterns: [

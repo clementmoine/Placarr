@@ -1,21 +1,12 @@
 #!/bin/sh
-if [ ! -f /config/dev.db ]; then
-  echo "Database not found in volume, initializing..."
-  if [ -f /app/prisma/dev.db ]; then
-    cp /app/prisma/dev.db /config/dev.db
-  else
-    touch /config/dev.db
-  fi
-fi
+set -e
 
-# Create symbolic link to the database in the volume
-ln -sf /config/dev.db /app/prisma/dev.db
+# La base est désormais PostgreSQL (service `db` du compose). DATABASE_URL est
+# fournie par l'environnement. Le compose attend que la DB soit "healthy"
+# (depends_on: condition: service_healthy) avant de lancer ce conteneur.
 
-# Generate Prisma client
-npx prisma generate
-
-# Apply migrations
+# Applique les migrations en attente sur Postgres.
 npx prisma migrate deploy
 
-# Start the application
+# Démarre l'application (sortie standalone de Next.js).
 exec node server.js

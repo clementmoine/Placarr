@@ -1,15 +1,36 @@
-version: "3"
-
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: placarr-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-placarr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-placarr}
+      POSTGRES_DB: ${POSTGRES_DB:-placarr}
+    ports:
+      # Exposé sur l'hôte pour le dev local (next dev sur le Mac).
+      - "5432:5432"
+    volumes:
+      - placarr-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-placarr}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   placarr:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: placarr
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
       - ADMIN_EMAIL=admin@placarr.com
       - ADMIN_NAME=Admin
       - ADMIN_PASSWORD=admin
@@ -27,3 +48,6 @@ services:
     volumes:
       - ${ROOT:-.}/config/placarr:/config
     restart: unless-stopped
+
+volumes:
+  placarr-db:

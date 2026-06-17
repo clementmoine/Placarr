@@ -433,5 +433,13 @@
     "noLoansDesc": "Vous n'avez aucun objet emprunté. Explorez les collections des autres membres pour en demander un !",
     "noLentsTitle": "Aucun prêt actif",
     "noLentsDesc": "Vous n'avez prêté aucun objet pour le moment. Vos demandes reçues apparaîtront ici."
+  },
+  "errors": {
+    "genericTitle": "Une erreur est survenue",
+    "genericMessage": "Une erreur inattendue s'est produite. Vous pouvez réessayer ou revenir à l'accueil.",
+    "tryAgain": "Réessayer",
+    "goHome": "Retour à l'accueil",
+    "notFoundTitle": "Page introuvable",
+    "notFoundMessage": "La page que vous cherchez n'existe pas ou a été déplacée."
   }
 }

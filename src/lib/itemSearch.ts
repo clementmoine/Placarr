@@ -70,12 +70,13 @@ function buildPhraseVariants(value: string): string[] {
 export function buildItemSearchConditions(
   searchTerm: string,
 ): Prisma.ItemWhereInput[] {
+  const i = "insensitive" as const;
   return buildPhraseVariants(searchTerm).flatMap((term) => [
-    { name: { contains: term } },
-    { description: { contains: term } },
-    { barcode: { contains: term } },
-    { metadata: { is: { title: { contains: term } } } },
-    { metadata: { is: { sourceQuery: { contains: term } } } },
-    { metadata: { is: { aliases: { contains: term } } } },
+    { name: { contains: term, mode: i } },
+    { description: { contains: term, mode: i } },
+    { barcode: { contains: term, mode: i } },
+    { metadata: { is: { title: { contains: term, mode: i } } } },
+    { metadata: { is: { sourceQuery: { contains: term, mode: i } } } },
+    { metadata: { is: { aliases: { contains: term, mode: i } } } },
   ]);
 }

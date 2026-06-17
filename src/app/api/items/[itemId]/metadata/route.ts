@@ -5,38 +5,7 @@ import {
   fetchAndStoreMetadata,
   formatMetadataFromStorage,
 } from "@/services/metadata";
-import { slugify } from "@/lib/slugs";
-
-async function resolveShelfId(value: string): Promise<string> {
-  const direct = await prisma.shelf.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const shelves = await prisma.shelf.findMany({
-    select: { id: true, name: true },
-  });
-  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
-}
-
-async function resolveItemId(
-  value: string,
-  shelfValue?: string | null,
-): Promise<string> {
-  const direct = await prisma.item.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const resolvedShelfId = shelfValue ? await resolveShelfId(shelfValue) : null;
-  const items = await prisma.item.findMany({
-    where: resolvedShelfId ? { shelfId: resolvedShelfId } : undefined,
-    select: { id: true, name: true },
-  });
-  return items.find((item) => slugify(item.name) === value)?.id || value;
-}
+import { resolveItemId } from "@/lib/resolveIds";
 
 export async function POST(
   req: NextRequest,

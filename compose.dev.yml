@@ -1,0 +1,59 @@
+# Développement "tout en Docker" : PostgreSQL + Next.js en hot-reload.
+#
+#   docker compose -f compose.dev.yml up        # démarre db + app
+#   docker compose -f compose.dev.yml down       # arrête
+#
+# L'app est servie sur http://localhost:3000. Le code est monté en bind-mount
+# (hot-reload) ; node_modules et .next vivent dans des volumes dédiés pour ne
+# pas mélanger les binaires natifs Linux du conteneur avec ceux de l'hôte (mac).
+# La base partage le volume `placarr-db` avec compose.yml (mêmes données).
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-placarr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-placarr}
+      POSTGRES_DB: ${POSTGRES_DB:-placarr}
+    ports:
+      - "5432:5432"
+    volumes:
+      - placarr-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-placarr}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    image: node:23.11.0-bookworm-slim
+    working_dir: /app
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm prisma generate &&
+             pnpm prisma migrate deploy &&
+             pnpm exec next dev -H 0.0.0.0"
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Surcharge le DATABASE_URL de .env (qui pointe localhost) → service `db`.
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - NEXTAUTH_URL=http://localhost:3000
+      # Fiabilise le file-watching de Next dans un bind-mount Docker (macOS).
+      - WATCHPACK_POLLING=true
+    volumes:
+      - .:/app
+      - placarr-dev-node-modules:/app/node_modules
+      - placarr-dev-next:/app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  placarr-db:
+  placarr-dev-node-modules:
+  placarr-dev-next:

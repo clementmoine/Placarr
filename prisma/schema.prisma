@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -49,6 +49,8 @@ model Attachment {
   role       String?
   source     String?
   metadata   Metadata @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+
+  @@index([metadataId])
 }
 
 model Shelf {
@@ -64,6 +66,8 @@ model Shelf {
   updatedAt  DateTime @updatedAt
   items      Item[]
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Author {
@@ -117,6 +121,11 @@ model Item {
   shelf              Shelf         @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   metadata           Metadata?     @relation(fields: [metadataId], references: [id])
   loans              LoanRequest[]
+
+  @@index([shelfId])
+  @@index([userId])
+  @@index([metadataId])
+  @@index([barcode])
 }
 
 model RawName {
@@ -196,4 +205,9 @@ model LoanRequest {
   owner       User     @relation("OwnedLoans", fields: [ownerId], references: [id], onDelete: Cascade)
   requester   User     @relation("RequestedLoans", fields: [requesterId], references: [id], onDelete: Cascade)
   item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([ownerId])
+  @@index([requesterId])
+  @@index([status])
 }

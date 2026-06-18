@@ -34,6 +34,7 @@ import {
 import { fetchFromFreakxy } from "@/services/freakxy";
 import { fetchFromApriloshop } from "@/services/apriloshop";
 import { fetchFromPicClick } from "@/services/picclick";
+import { fetchFromMusicBrainz } from "@/services/musicBrainz";
 import {
   markUnresolvedBarcodeScanResolved,
   recordUnresolvedBarcodeScan,
@@ -923,6 +924,7 @@ const CANONICAL_PROVIDERS = new Set([
   "TMDB",
   "OpenLibrary",
   "Deezer",
+  "MusicBrainz",
   "ScanDex",
   "BoardGameGeek",
   "DatabaseResolver",
@@ -1045,6 +1047,7 @@ function sourceWeightForProvider(
     TMDB: 0.44,
     OpenLibrary: 0.44,
     Deezer: 0.44,
+    MusicBrainz: 0.46,
     BoardGameGeek: 0.44,
     PriceCharting: 0.38,
     ScanDex: 0.36,
@@ -1970,6 +1973,7 @@ export async function resolveBarcode(
 
   let ol: any = null;
   let deezer: any = null;
+  let mb: any = null;
   let ss: any = null;
   let tmdb: any = null;
   let pc: any = null;
@@ -2111,11 +2115,13 @@ export async function resolveBarcode(
     calFr = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
   } else if (type === "musics") {
-    const [deezerRes, calRes, amcRes] = await Promise.allSettled([
+    const [mbRes, deezerRes, calRes, amcRes] = await Promise.allSettled([
+      fetchFromMusicBrainz(cleanedBarcode),
       fetchFromDeezer("", cleanedBarcode),
       fetchFromChasseAuxLivres(cleanedBarcode, "music"),
       fetchFromAchatMoinsCher(cleanedBarcode),
     ]);
+    mb = mbRes.status === "fulfilled" ? mbRes.value : null;
     deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
     calMusic = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
@@ -2455,6 +2461,12 @@ export async function resolveBarcode(
 
   // 3. Musics
   const musicSources = [];
+  if (mb?.title) {
+    musicSources.push({
+      providerName: "MusicBrainz",
+      products: [{ name: mb.title, coverUrl: mb.imageUrl }],
+    });
+  }
   if (deezer?.title) {
     musicSources.push({
       providerName: "Deezer",

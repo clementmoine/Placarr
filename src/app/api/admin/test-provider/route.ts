@@ -2,14 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import axios from "axios";
 
-// Import barcode resolvers
-import { OmkarDDG } from "@/services/serp/omkarDDG";
-import { ValueSerp } from "@/services/serp/valueSerp";
-import { ScaleSerp } from "@/services/serp/scaleSerp";
-import { SerpWow } from "@/services/serp/serpWow";
-import { SerpAPI } from "@/services/serp/serpAPI";
-import { AvesAPI } from "@/services/serp/avesAPI";
-import { DataForSEO } from "@/services/serp/dataForSEO";
 import { fetchFromChasseAuxLivres } from "@/services/chasseAuxLivres";
 import { fetchFromAchatMoinsCher } from "@/services/achatMoinsCher";
 import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
@@ -90,42 +82,7 @@ export async function POST(req: NextRequest) {
     // -------------------------------------------------------------
     // BARCODE RESOLVERS (Input: Barcode -> Output: Name list / Title)
     // -------------------------------------------------------------
-    if (provider === "omkarddg-barcode") {
-      providerName = "DuckDuckGo Scraper (Omkar) - Barcode";
-      const p = new OmkarDDG();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "valueserp-barcode") {
-      providerName = "Value Serp - Barcode";
-      const p = new ValueSerp();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "scaleserp-barcode") {
-      providerName = "Scale Serp - Barcode";
-      const p = new ScaleSerp();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "serpwow-barcode") {
-      providerName = "Serp Wow - Barcode";
-      const p = new SerpWow();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "serpapi-barcode") {
-      providerName = "Serp API - Barcode";
-      const p = new SerpAPI();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "avesapi-barcode") {
-      providerName = "AvesAPI - Barcode";
-      const p = new AvesAPI();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "dataforseo-barcode") {
-      providerName = "DataForSEO - Barcode";
-      const p = new DataForSEO();
-      const rawNames = await p.search(query);
-      result = await processScrapedNames(rawNames, type);
-    } else if (provider === "chasseauxlivres-barcode") {
+    if (provider === "chasseauxlivres-barcode") {
       providerName = "Chasse aux Livres - Barcode";
       // Map shelf type to catalog: books, movies, musics, games, boardgames
       let catalog = "fr";

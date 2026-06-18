@@ -17,6 +17,10 @@ interface SteamAppDetails {
   name?: string;
   steam_appid?: number;
   required_age?: string | number;
+  release_date?: {
+    coming_soon?: boolean;
+    date?: string;
+  };
   is_free?: boolean;
   detailed_description?: string;
   short_description?: string;
@@ -134,6 +138,21 @@ function buildSteamFacts(appId: number, data: SteamAppDetails): MetadataFact[] {
       source: "steam",
       confidence: 0.65,
       priority: 25,
+    });
+  }
+
+  const requiredAgeValue =
+    typeof data.required_age === "number"
+      ? data.required_age
+      : Number(String(data.required_age || "").replace(/[^\d]/g, ""));
+  if (Number.isFinite(requiredAgeValue) && requiredAgeValue > 0) {
+    facts.push({
+      kind: "age-rating",
+      label: "Classification",
+      value: `${requiredAgeValue}+`,
+      source: "steam",
+      confidence: 0.66,
+      priority: 52,
     });
   }
 
@@ -259,6 +278,7 @@ export async function fetchFromSteam(
     return {
       title,
       description: stripHtml(data.short_description || data.detailed_description),
+      releaseDate: data.release_date?.date || undefined,
       imageUrl: data.capsule_imagev5 || data.capsule_image || data.header_image,
       publishers: (data.publishers || []).map((publisher) => ({
         name: publisher,

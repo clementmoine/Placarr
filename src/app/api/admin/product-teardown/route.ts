@@ -82,6 +82,44 @@ const BARCODE_CATALOG_BY_TYPE: Record<string, string> = {
 
 const ALL_METADATA_TYPES = ["games", "books", "movies", "musics", "boardgames"];
 
+function normalizeProviderToken(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function parseProviderSelection(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => cleanText(entry))
+    .filter(Boolean)
+    .filter((entry) => {
+      const normalized = normalizeProviderToken(entry);
+      return normalized !== "all" && normalized !== "default";
+    });
+}
+
+function shouldRunSelectedProvider(
+  providerLabel: string,
+  selectedProviders: string[],
+) {
+  if (selectedProviders.length === 0) return true;
+  const selected = selectedProviders.map(normalizeProviderToken).filter(Boolean);
+  if (selected.length === 0) return true;
+  const full = normalizeProviderToken(providerLabel);
+  const base = normalizeProviderToken(providerLabel.split(":")[0] || providerLabel);
+
+  return selected.some(
+    (token) =>
+      token === full ||
+      token === base ||
+      full.includes(token) ||
+      base.includes(token),
+  );
+}
+
 const BLOCK_PATTERNS: Array<{
   kind: NameBlockKind;
   reason: string;
@@ -424,8 +462,13 @@ async function runBarcodeProviders(
   barcode: string,
   type: string | null,
   nameCandidates: string[] = [],
+  selectedProviders: string[] = [],
 ) {
   const tasks: Array<Promise<ProviderContribution>> = [];
+  const addTask = (providerLabel: string, fn: () => Promise<unknown>) => {
+    if (!shouldRunSelectedProvider(providerLabel, selectedProviders)) return;
+    tasks.push(runProvider(providerLabel, "barcode", fn));
+  };
 
   if (barcode) {
     const catalogEntries = type
@@ -439,67 +482,41 @@ async function runBarcodeProviders(
         ];
 
     for (const entry of catalogEntries) {
-      tasks.push(
-        runProvider(entry.label, "barcode", () =>
-          fetchFromChasseAuxLivres(barcode, entry.catalog),
-        ),
-      );
+      addTask(entry.label, () => fetchFromChasseAuxLivres(barcode, entry.catalog));
     }
 
-    tasks.push(
-      runProvider("AchatMoinsCher", "barcode", () =>
-        fetchFromAchatMoinsCher(barcode),
-      ),
-    );
+    addTask("AchatMoinsCher", () => fetchFromAchatMoinsCher(barcode));
   }
 
   const leDenicheurQueries = Array.from(
     new Set([barcode, ...nameCandidates].filter(Boolean)),
   );
   if (leDenicheurQueries.length > 0) {
-    tasks.push(
-      runProvider("LeDenicheur", "barcode", () =>
-        fetchPricesFromLeDenicheur(leDenicheurQueries),
-      ),
-    );
+    addTask("LeDenicheur", () => fetchPricesFromLeDenicheur(leDenicheurQueries));
   }
 
   if (
     barcode &&
     (type === "books" || barcode.startsWith("978") || barcode.startsWith("979"))
   ) {
-    tasks.push(
-      runProvider("OpenLibrary", "barcode", () =>
-        fetchFromOpenLibrary("", barcode),
-      ),
-    );
+    addTask("OpenLibrary", () => fetchFromOpenLibrary("", barcode));
   }
 
   if (barcode && (type === "musics" || !type)) {
-    tasks.push(
-      runProvider("MusicBrainz", "barcode", () =>
-        fetchFromMusicBrainz(barcode),
-      ),
-      runProvider("Discogs", "barcode", () => fetchFromDiscogs(barcode)),
-      runProvider("Deezer", "barcode", () => fetchFromDeezer("", barcode)),
-    );
+    addTask("MusicBrainz", () => fetchFromMusicBrainz(barcode));
+    addTask("Discogs", () => fetchFromDiscogs(barcode));
+    addTask("Deezer", () => fetchFromDeezer("", barcode));
   }
 
   if (barcode && (type === "games" || !type)) {
-    tasks.push(
-      runProvider("PriceCharting", "barcode", () =>
-        fetchMetadataFromPriceCharting(barcode),
-      ),
-      runProvider("Freakxy", "barcode", () => fetchFromFreakxy(barcode)),
-      runProvider("Apriloshop", "barcode", () => fetchFromApriloshop(barcode)),
-      runProvider("PicClick", "barcode", () => fetchFromPicClick(barcode)),
-    );
+    addTask("PriceCharting", () => fetchMetadataFromPriceCharting(barcode));
+    addTask("Freakxy", () => fetchFromFreakxy(barcode));
+    addTask("Apriloshop", () => fetchFromApriloshop(barcode));
+    addTask("PicClick", () => fetchFromPicClick(barcode));
   }
 
   if (barcode && (type === "movies" || type === "boardgames")) {
-    tasks.push(
-      runProvider("PicClick", "barcode", () => fetchFromPicClick(barcode)),
-    );
+    addTask("PicClick", () => fetchFromPicClick(barcode));
   }
 
   return Promise.all(tasks);
@@ -511,82 +528,67 @@ async function runMetadataProvidersForType(
   barcode: string | null,
   platform: string | null,
   includeTypeInLabel: boolean,
+  selectedProviders: string[],
 ) {
   if (!name) return [];
   const tasks: Array<Promise<ProviderContribution>> = [];
   const label = (provider: string) =>
     labelProvider(provider, type, includeTypeInLabel);
+  const addTask = (
+    providerLabel: string,
+    phase: ProviderPhase,
+    fn: () => Promise<unknown>,
+  ) => {
+    if (!shouldRunSelectedProvider(providerLabel, selectedProviders)) return;
+    tasks.push(runProvider(providerLabel, phase, fn));
+  };
 
   if (type === "games") {
-    tasks.push(
-      runProvider(label("ScreenScraper"), "metadata", () =>
-        fetchFromScreenScraper(name, barcode, platform),
-      ),
-      runProvider(label("IGDB"), "metadata", () =>
-        fetchFromIGDB(name, platform),
-      ),
-      runProvider(label("HowLongToBeat"), "metadata", () =>
-        fetchFromHowLongToBeat(name, platform),
-      ),
-      runProvider(label("RAWG"), "metadata", () => fetchFromRawg(name)),
-      runProvider(label("SteamGridDB"), "metadata", () =>
-        fetchFromSteamGridDB(name),
-      ),
-      runProvider(label("TheCoverProject"), "metadata", async () => {
-        const coverUrl = await fetchCoverFromCoverProject(name, platform || "");
-        return coverUrl
-          ? ({
-              title: name,
-              imageUrl: coverUrl,
-              attachments: [
-                { type: "cover", url: coverUrl, source: "coverproject" },
-              ] as MetadataAttachment[],
-            } satisfies MetadataResult)
-          : null;
-      }),
+    addTask(label("ScreenScraper"), "metadata", () =>
+      fetchFromScreenScraper(name, barcode, platform),
     );
+    addTask(label("IGDB"), "metadata", () => fetchFromIGDB(name, platform));
+    addTask(label("HowLongToBeat"), "metadata", () =>
+      fetchFromHowLongToBeat(name, platform),
+    );
+    addTask(label("RAWG"), "metadata", () => fetchFromRawg(name));
+    addTask(label("SteamGridDB"), "metadata", () => fetchFromSteamGridDB(name));
+    addTask(label("TheCoverProject"), "metadata", async () => {
+      const coverUrl = await fetchCoverFromCoverProject(name, platform || "");
+      return coverUrl
+        ? ({
+            title: name,
+            imageUrl: coverUrl,
+            attachments: [
+              { type: "cover", url: coverUrl, source: "coverproject" },
+            ] as MetadataAttachment[],
+          } satisfies MetadataResult)
+        : null;
+    });
 
     if (platform && /\b(pc|windows|steam)\b/i.test(platform)) {
-      tasks.push(
-        runProvider(label("Steam"), "metadata", () => fetchFromSteam(name)),
-      );
+      addTask(label("Steam"), "metadata", () => fetchFromSteam(name));
     }
   } else if (type === "books") {
-    tasks.push(
-      runProvider(label("OpenLibrary"), "metadata", () =>
-        fetchFromOpenLibrary(name, barcode),
-      ),
+    addTask(label("OpenLibrary"), "metadata", () =>
+      fetchFromOpenLibrary(name, barcode),
     );
   } else if (type === "movies") {
-    tasks.push(
-      runProvider(label("TMDB"), "metadata", () => fetchFromTMDB(name)),
-    );
+    addTask(label("TMDB"), "metadata", () => fetchFromTMDB(name));
   } else if (type === "musics") {
-    tasks.push(
-      runProvider(label("Deezer"), "metadata", () =>
-        fetchFromDeezer(name, barcode),
-      ),
-      ...(barcode
-        ? [
-            runProvider(label("MusicBrainz"), "metadata", () =>
-              fetchFromMusicBrainz(barcode),
-            ),
-            runProvider(label("Discogs"), "metadata", () =>
-              fetchFromDiscogs(barcode),
-            ),
-          ]
-        : []),
-    );
+    addTask(label("Deezer"), "metadata", () => fetchFromDeezer(name, barcode));
+    if (barcode) {
+      addTask(label("MusicBrainz"), "metadata", () =>
+        fetchFromMusicBrainz(barcode),
+      );
+      addTask(label("Discogs"), "metadata", () => fetchFromDiscogs(barcode));
+    }
   } else if (type === "boardgames") {
-    tasks.push(
-      runProvider(label("BoardGameGeek"), "metadata", () => fetchFromBGG(name)),
-    );
+    addTask(label("BoardGameGeek"), "metadata", () => fetchFromBGG(name));
   }
 
-  tasks.push(
-    runProvider(label("MergedEngine"), "merged", () =>
-      getMetadata(name, type, barcode, platform),
-    ),
+  addTask(label("MergedEngine"), "merged", () =>
+    getMetadata(name, type, barcode, platform),
   );
 
   return Promise.all(tasks);
@@ -597,12 +599,20 @@ async function runMetadataProviders(
   type: string | null,
   barcode: string | null,
   platform: string | null,
+  selectedProviders: string[] = [],
 ) {
   if (!name) return [];
   const types = type ? [type] : ALL_METADATA_TYPES;
   const results = await Promise.all(
     types.map((metadataType) =>
-      runMetadataProvidersForType(name, metadataType, barcode, platform, !type),
+      runMetadataProvidersForType(
+        name,
+        metadataType,
+        barcode,
+        platform,
+        !type,
+        selectedProviders,
+      ),
     ),
   );
   return results.flat();
@@ -851,6 +861,7 @@ export async function POST(req: NextRequest) {
     const type =
       requestedType && requestedType !== "auto" ? requestedType : null;
     const platform = cleanText(body.platform) || null;
+    const selectedProviders = parseProviderSelection(body.providers);
 
     if (!barcode && !rawName) {
       return NextResponse.json(
@@ -885,12 +896,13 @@ export async function POST(req: NextRequest) {
     ).slice(0, 6);
 
     const [barcodeProviders, metadataProviders] = await Promise.all([
-      runBarcodeProviders(barcode, type, providerNameCandidates),
+      runBarcodeProviders(barcode, type, providerNameCandidates, selectedProviders),
       runMetadataProviders(
         selectedName,
         type || inferredType,
         barcode || null,
         platform,
+        selectedProviders,
       ),
     ]);
 
@@ -929,7 +941,13 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({
-      input: { barcode, name: rawName, type: type || "auto", platform },
+      input: {
+        barcode,
+        name: rawName,
+        type: type || "auto",
+        platform,
+        providers: selectedProviders,
+      },
       inferredType,
       selectedName,
       barcodeResult,

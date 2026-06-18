@@ -1,13 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { getSetting } from "@/services/settings";
-
-import { AvesAPI } from "@/services/serp/avesAPI";
-import { DataForSEO } from "@/services/serp/dataForSEO";
-import { ScaleSerp } from "@/services/serp/scaleSerp";
-import { SerpAPI } from "@/services/serp/serpAPI";
-import { SerpWow } from "@/services/serp/serpWow";
-import { ValueSerp } from "@/services/serp/valueSerp";
-import { OmkarDDG } from "@/services/serp/omkarDDG";
 import { fetchFromChasseAuxLivres } from "@/services/chasseAuxLivres";
 import { fetchMetadataFromPriceCharting } from "@/services/priceCharting";
 import { fetchFromAchatMoinsCher } from "@/services/achatMoinsCher";
@@ -25,10 +16,8 @@ import {
 
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
-import { extractProductName } from "@/lib/productName";
 import {
   cleanCode,
-  createBarcodeQuery,
   detectPlatformKey,
 } from "@/lib/barcodeQuery";
 import { fetchFromFreakxy } from "@/services/freakxy";
@@ -37,11 +26,7 @@ import { fetchFromPicClick } from "@/services/picclick";
 import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
 import { fetchFromMusicBrainz } from "@/services/musicBrainz";
 import { fetchFromDiscogs } from "@/services/discogs";
-import {
-  markUnresolvedBarcodeScanResolved,
-  recordUnresolvedBarcodeScan,
-  type UnresolvedBarcodeSource,
-} from "@/services/unresolvedBarcodeScans";
+import { createBarcodeLookupTaskBuilders } from "@/services/providers/barcodeLookupTasks";
 import levenshtein from "fast-levenshtein";
 
 function deduplicate<T>(arr: T[], keyFn: (item: T) => string): T[] {
@@ -576,16 +561,6 @@ export function cleanTitleForDisplay(
   return cleaned || name;
 }
 
-const providers = [
-  new OmkarDDG(),
-  new SerpWow(),
-  new ValueSerp(),
-  new ScaleSerp(),
-  new SerpAPI(),
-  new AvesAPI(),
-  new DataForSEO(),
-];
-
 type PlatformSignal = {
   value?: string | null;
   weight: number;
@@ -687,6 +662,21 @@ async function fetchFromScanDex(
     return null;
   }
 }
+
+const barcodeLookupTaskBuilders = createBarcodeLookupTaskBuilders({
+  fetchMetadataFromPriceCharting,
+  fetchFromChasseAuxLivres,
+  fetchFromScanDex,
+  fetchFromAchatMoinsCher,
+  fetchFromFreakxy,
+  fetchFromApriloshop,
+  fetchFromPicClick,
+  fetchPricesFromLeDenicheur,
+  fetchFromOpenLibrary,
+  fetchFromDeezer,
+  fetchFromMusicBrainz,
+  fetchFromDiscogs,
+});
 
 async function getPrioritizedImageUrl(title: string): Promise<string | null> {
   const metas = await prisma.metadata.findMany({
@@ -1824,6 +1814,22 @@ export type BarcodeResolveResult = {
   refreshed?: boolean;
 };
 
+async function resolveSettledLookups(
+  tasks: Record<string, Promise<unknown>>,
+): Promise<Record<string, unknown>> {
+  const entries = Object.entries(tasks);
+  const settled = await Promise.allSettled(entries.map(([, task]) => task));
+  return entries.reduce<Record<string, unknown>>((acc, [key], index) => {
+    const result = settled[index];
+    acc[key] = result?.status === "fulfilled" ? result.value : null;
+    return acc;
+  }, {});
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 /**
  * Cœur de la primitive : code-barres (déjà nettoyé) → résultat structuré.
  * Découplé du HTTP pour être testable (golden-master via fixtures rejouées).
@@ -1952,7 +1958,6 @@ export async function resolveBarcode(
     };
   }
 
-  const unresolvedSourceBuckets: Record<string, UnresolvedBarcodeSource[]> = {};
 
   // Helper to save cache
   const cacheResult = async (res: any, shelfType: string) => {
@@ -2013,39 +2018,20 @@ export async function resolveBarcode(
   let leDenicheur: any = null;
 
   if (type === "games") {
-    const [
-      pcRes,
-      calRes,
-      sdRes,
-      amcRes,
-      freakxyRes,
-      apriloRes,
-      picclickRes,
-      leDenicheurRes,
-    ] = await Promise.allSettled([
-      fetchMetadataFromPriceCharting(
-        cleanedBarcode,
-        undefined,
-        contextPlatformKey || undefined,
-        cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0"),
-      ),
-      fetchFromChasseAuxLivres(cleanedBarcode, "jeuxvideo"),
-      fetchFromScanDex(cleanedBarcode),
-      fetchFromAchatMoinsCher(cleanedBarcode),
-      fetchFromFreakxy(cleanedBarcode),
-      fetchFromApriloshop(cleanedBarcode),
-      fetchFromPicClick(cleanedBarcode),
-      fetchPricesFromLeDenicheur(cleanedBarcode),
-    ]);
-    pc = pcRes.status === "fulfilled" ? pcRes.value : null;
-    calJeuxVideo = calRes.status === "fulfilled" ? calRes.value : [];
-    sd = sdRes.status === "fulfilled" ? sdRes.value : null;
-    amc = amcRes.status === "fulfilled" ? amcRes.value : [];
-    freakxy = freakxyRes.status === "fulfilled" ? freakxyRes.value : [];
-    aprilo = apriloRes.status === "fulfilled" ? apriloRes.value : [];
-    picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
-    leDenicheur =
-      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+    const lookups = await resolveSettledLookups(
+      barcodeLookupTaskBuilders.games({
+        barcode: cleanedBarcode,
+        platformKey: contextPlatformKey,
+      }),
+    );
+    pc = lookups.pc;
+    calJeuxVideo = asArray(lookups.cal);
+    sd = lookups.sd;
+    amc = asArray(lookups.amc);
+    freakxy = asArray(lookups.freakxy);
+    aprilo = asArray(lookups.aprilo);
+    picclick = asArray(lookups.picclick);
+    leDenicheur = lookups.leDenicheur;
 
     const candidates: string[] = [];
     const platformSignals: PlatformSignal[] = [];
@@ -2143,47 +2129,31 @@ export async function resolveBarcode(
       console.error("[ScreenScraper] Error fetching in games search:", err);
     }
   } else if (type === "books") {
-    const [olRes, calRes, amcRes, leDenicheurRes] = await Promise.allSettled([
-      fetchFromOpenLibrary("", cleanedBarcode),
-      fetchFromChasseAuxLivres(cleanedBarcode, "fr"),
-      fetchFromAchatMoinsCher(cleanedBarcode),
-      fetchPricesFromLeDenicheur(cleanedBarcode),
-    ]);
-    ol = olRes.status === "fulfilled" ? olRes.value : null;
-    calFr = calRes.status === "fulfilled" ? calRes.value : [];
-    amc = amcRes.status === "fulfilled" ? amcRes.value : [];
-    leDenicheur =
-      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+    const lookups = await resolveSettledLookups(
+      barcodeLookupTaskBuilders.books({ barcode: cleanedBarcode }),
+    );
+    ol = lookups.ol;
+    calFr = asArray(lookups.cal);
+    amc = asArray(lookups.amc);
+    leDenicheur = lookups.leDenicheur;
   } else if (type === "musics") {
-    const [mbRes, discogsRes, deezerRes, calRes, amcRes, leDenicheurRes] =
-      await Promise.allSettled([
-        fetchFromMusicBrainz(cleanedBarcode),
-        fetchFromDiscogs(cleanedBarcode),
-        fetchFromDeezer("", cleanedBarcode),
-        fetchFromChasseAuxLivres(cleanedBarcode, "music"),
-        fetchFromAchatMoinsCher(cleanedBarcode),
-        fetchPricesFromLeDenicheur(cleanedBarcode),
-      ]);
-    mb = mbRes.status === "fulfilled" ? mbRes.value : null;
-    discogs = discogsRes.status === "fulfilled" ? discogsRes.value : null;
-    deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
-    calMusic = calRes.status === "fulfilled" ? calRes.value : [];
-    amc = amcRes.status === "fulfilled" ? amcRes.value : [];
-    leDenicheur =
-      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+    const lookups = await resolveSettledLookups(
+      barcodeLookupTaskBuilders.musics({ barcode: cleanedBarcode }),
+    );
+    mb = lookups.mb;
+    discogs = lookups.discogs;
+    deezer = lookups.deezer;
+    calMusic = asArray(lookups.cal);
+    amc = asArray(lookups.amc);
+    leDenicheur = lookups.leDenicheur;
   } else if (type === "movies") {
-    const [calRes, amcRes, picclickRes, leDenicheurRes] =
-      await Promise.allSettled([
-        fetchFromChasseAuxLivres(cleanedBarcode, "dvd"),
-        fetchFromAchatMoinsCher(cleanedBarcode),
-        fetchFromPicClick(cleanedBarcode),
-        fetchPricesFromLeDenicheur(cleanedBarcode),
-      ]);
-    calDvd = calRes.status === "fulfilled" ? calRes.value : [];
-    amc = amcRes.status === "fulfilled" ? amcRes.value : [];
-    picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
-    leDenicheur =
-      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+    const lookups = await resolveSettledLookups(
+      barcodeLookupTaskBuilders.movies({ barcode: cleanedBarcode }),
+    );
+    calDvd = asArray(lookups.cal);
+    amc = asArray(lookups.amc);
+    picclick = asArray(lookups.picclick);
+    leDenicheur = lookups.leDenicheur;
 
     let movieTitle = "";
     if (picclick[0]?.name) movieTitle = picclick[0].name;
@@ -2204,59 +2174,28 @@ export async function resolveBarcode(
       }
     }
   } else if (type === "boardgames") {
-    const [calRes, amcRes, picclickRes, leDenicheurRes] =
-      await Promise.allSettled([
-        fetchFromChasseAuxLivres(cleanedBarcode, "toys"),
-        fetchFromAchatMoinsCher(cleanedBarcode),
-        fetchFromPicClick(cleanedBarcode),
-        fetchPricesFromLeDenicheur(cleanedBarcode),
-      ]);
-    calToys = calRes.status === "fulfilled" ? calRes.value : [];
-    amc = amcRes.status === "fulfilled" ? amcRes.value : [];
-    picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
-    leDenicheur =
-      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+    const lookups = await resolveSettledLookups(
+      barcodeLookupTaskBuilders.boardgames({ barcode: cleanedBarcode }),
+    );
+    calToys = asArray(lookups.cal);
+    amc = asArray(lookups.amc);
+    picclick = asArray(lookups.picclick);
+    leDenicheur = lookups.leDenicheur;
   } else {
     // Generic search (type is not specified) - query each free API once
-    const [
-      olRes,
-      deezerRes,
-      pcRes,
-      calRes,
-      sdRes,
-      amcRes,
-      freakxyRes,
-      apriloRes,
-      picclickRes,
-      leDenicheurRes,
-    ] = await Promise.allSettled([
-      fetchFromOpenLibrary("", cleanedBarcode),
-      fetchFromDeezer("", cleanedBarcode),
-      fetchMetadataFromPriceCharting(
-        cleanedBarcode,
-        undefined,
-        undefined,
-        cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0"),
-      ),
-      fetchFromChasseAuxLivres(cleanedBarcode, ""),
-      fetchFromScanDex(cleanedBarcode),
-      fetchFromAchatMoinsCher(cleanedBarcode),
-      fetchFromFreakxy(cleanedBarcode),
-      fetchFromApriloshop(cleanedBarcode),
-      fetchFromPicClick(cleanedBarcode),
-      fetchPricesFromLeDenicheur(cleanedBarcode),
-    ]);
-    ol = olRes.status === "fulfilled" ? olRes.value : null;
-    deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
-    pc = pcRes.status === "fulfilled" ? pcRes.value : null;
-    calGeneric = calRes.status === "fulfilled" ? calRes.value : [];
-    sd = sdRes.status === "fulfilled" ? sdRes.value : null;
-    amc = amcRes.status === "fulfilled" ? amcRes.value : [];
-    freakxy = freakxyRes.status === "fulfilled" ? freakxyRes.value : [];
-    aprilo = apriloRes.status === "fulfilled" ? apriloRes.value : [];
-    picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
-    leDenicheur =
-      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+    const lookups = await resolveSettledLookups(
+      barcodeLookupTaskBuilders.generic({ barcode: cleanedBarcode }),
+    );
+    ol = lookups.ol;
+    deezer = lookups.deezer;
+    pc = lookups.pc;
+    calGeneric = asArray(lookups.cal);
+    sd = lookups.sd;
+    amc = asArray(lookups.amc);
+    freakxy = asArray(lookups.freakxy);
+    aprilo = asArray(lookups.aprilo);
+    picclick = asArray(lookups.picclick);
+    leDenicheur = lookups.leDenicheur;
 
     const candidates: string[] = [];
     const platformSignals: PlatformSignal[] = [];
@@ -2415,7 +2354,6 @@ export async function resolveBarcode(
     bookSources,
     cleanedBarcode,
   );
-  unresolvedSourceBuckets.books = bookSources;
 
   // 2. Games
   const gameSources = [];
@@ -2537,7 +2475,6 @@ export async function resolveBarcode(
     gameSources,
     cleanedBarcode,
   );
-  unresolvedSourceBuckets.games = gameSources;
 
   // 3. Musics
   const musicSources = [];
@@ -2588,7 +2525,6 @@ export async function resolveBarcode(
     musicSources,
     cleanedBarcode,
   );
-  unresolvedSourceBuckets.musics = musicSources;
 
   // 4. Movies
   const movieSources = [];
@@ -2642,7 +2578,6 @@ export async function resolveBarcode(
     movieSources,
     cleanedBarcode,
   );
-  unresolvedSourceBuckets.movies = movieSources;
 
   // 5. Boardgames
   const boardgameSources = [];
@@ -2684,7 +2619,6 @@ export async function resolveBarcode(
     boardgameSources,
     cleanedBarcode,
   );
-  unresolvedSourceBuckets.boardgames = boardgameSources;
 
   // Pick selected type or fallback
   let selectedType: string | null = null;
@@ -2706,10 +2640,6 @@ export async function resolveBarcode(
 
   if (selectedResult && selectedType) {
     await cacheResult(selectedResult, selectedType);
-    await markUnresolvedBarcodeScanResolved({
-      barcode: cleanedBarcode,
-      shelfType: selectedType,
-    });
     const preservePlatformSuffix = selectedType === "games";
     const cleanNameStr = cleanTitleForDisplay(
       decodeHTMLEntities(selectedResult.cleanName),
@@ -2751,171 +2681,6 @@ export async function resolveBarcode(
       matches: cleanMatches,
       shelfType: selectedType,
     };
-  }
-
-  const unresolvedSources = type
-    ? unresolvedSourceBuckets[type] || []
-    : Object.values(unresolvedSourceBuckets).flat();
-  const unresolvedProductCount = unresolvedSources.reduce(
-    (sum, source) => sum + (source.products?.length || 0),
-    0,
-  );
-  await recordUnresolvedBarcodeScan({
-    barcode: cleanedBarcode,
-    shelfType: type || "unknown",
-    reason:
-      unresolvedProductCount > 0
-        ? "raw_names_unconfirmed"
-        : "no_provider_result",
-    sources: unresolvedSources,
-  });
-
-  // Fallback to paid search engines (if onlyFreeProviders is set to false)
-  const onlyFreeProviders =
-    (await getSetting("only_free_providers", "true")) === "true";
-  if (!onlyFreeProviders) {
-    for (const provider of providers) {
-      try {
-        const query = createBarcodeQuery(cleanedBarcode, type);
-        const rawNames = await provider.search(query);
-
-        if (rawNames) {
-          const name = extractProductName(rawNames);
-          const confrontedName = await confrontWithDatabase(name, type);
-          const dbSuggestions = await getDatabaseSuggestions(name, type);
-
-          if (!confrontedName && dbSuggestions.length === 0) {
-            await recordUnresolvedBarcodeScan({
-              barcode: cleanedBarcode,
-              shelfType: type || "unknown",
-              reason: "paid_raw_names_unconfirmed",
-              sources: [
-                {
-                  providerName: provider.name,
-                  products: rawNames.map((rawName) => ({ name: rawName })),
-                },
-              ],
-            });
-            continue;
-          }
-
-          const suggestions = [
-            confrontedName,
-            ...dbSuggestions,
-            name,
-            ...rawNames,
-          ].filter((s): s is string => !!s);
-          const seen = new Set<string>();
-          const uniqueSuggestions: string[] = [];
-          for (const s of suggestions) {
-            const norm = s.toLowerCase().trim();
-            if (norm && !seen.has(norm)) {
-              seen.add(norm);
-              uniqueSuggestions.push(s.trim());
-            }
-          }
-          const filteredSuggestions =
-            filterPlatformRedundancies(uniqueSuggestions);
-          const finalSuggestions = filteredSuggestions.slice(0, 15);
-
-          const suggestionPriorities = new Map<string, number>();
-          if (confrontedName) {
-            suggestionPriorities.set(confrontedName.toLowerCase().trim(), 2);
-          }
-          for (const s of dbSuggestions) {
-            suggestionPriorities.set(s.toLowerCase().trim(), 2);
-          }
-
-          const mappedSuggestionsWithPriority = finalSuggestions.map((s) => {
-            const key = s.toLowerCase().trim();
-            const priority = suggestionPriorities.get(key) || 0;
-            return {
-              value: s,
-              priority,
-            };
-          });
-
-          const matches = await Promise.all(
-            clusterSuggestions(mappedSuggestionsWithPriority).map(async (m) => {
-              const coverUrl = await getPrioritizedImageUrl(m.name);
-              return {
-                ...m,
-                coverUrl,
-              };
-            }),
-          );
-
-          const resolvedType = type || "movies"; // Default to movies if type is not specified
-          await prisma.barcodeCache.create({
-            data: {
-              barcode: cleanedBarcode,
-              provider: versionProvider(provider.name),
-              shelfType: resolvedType,
-              rawNames: {
-                create: finalSuggestions.map((s) => {
-                  const matchingMatch = matches.find(
-                    (m) =>
-                      m.suggestions?.some(
-                        (sig: string) =>
-                          sig.toLowerCase().trim() === s.toLowerCase().trim(),
-                      ) ||
-                      m.name.toLowerCase().trim() === s.toLowerCase().trim(),
-                  );
-                  return {
-                    value: s,
-                    coverUrl: matchingMatch?.coverUrl || null,
-                  };
-                }),
-              },
-            },
-          });
-
-          const cleanNameStr = cleanTitleForDisplay(
-            decodeHTMLEntities(confrontedName || name),
-          );
-          const cleanSuggestions = Array.from(
-            new Set(
-              finalSuggestions.map((s) =>
-                cleanTitleForDisplay(decodeHTMLEntities(s)),
-              ),
-            ),
-          );
-          const cleanMatches = deduplicate(
-            matches.map((m) => ({
-              ...m,
-              name: cleanTitleForDisplay(decodeHTMLEntities(m.name)),
-              suggestions: Array.from(
-                new Set(
-                  m.suggestions.map((s) =>
-                    cleanTitleForDisplay(decodeHTMLEntities(s)),
-                  ),
-                ),
-              ),
-            })),
-            (m) => m.name,
-          );
-
-          await markUnresolvedBarcodeScanResolved({
-            barcode: cleanedBarcode,
-            shelfType: resolvedType,
-          });
-
-          return {
-            provider: provider.name,
-            rawNames: rawNames,
-            cleanName: cleanNameStr,
-            suggestions: cleanSuggestions,
-            matches: cleanMatches,
-            shelfType: resolvedType,
-          };
-        }
-      } catch (error) {
-        console.error(
-          `[${provider.name}] Error searching with barcode "${cleanedBarcode}":`,
-          error,
-        );
-      }
-    }
   }
 
   if (cachedResult && cachedResult.rawNames.length > 0 && shouldBypassCache) {

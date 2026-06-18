@@ -1,5 +1,9 @@
 import levenshtein from "fast-levenshtein";
-import type { MetadataFact, MetadataResult } from "@/services/metadata";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/services/metadata";
 
 interface HLTBInitResponse {
   token?: string;
@@ -192,6 +196,13 @@ function buildTimeToBeatFacts(
   }
 
   return facts;
+}
+
+function buildHowLongToBeatImageUrl(gameImage?: string | null): string | null {
+  const value = String(gameImage || "").trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${HLTB_BASE_URL}/games/${value.replace(/^\/+/, "")}`;
 }
 
 function normalizePlatformForHLTB(platform?: string | null): string {
@@ -422,8 +433,15 @@ export async function fetchFromHowLongToBeat(
           alias.toLowerCase().trim() !== best.game_name.toLowerCase().trim(),
       );
 
+    const coverUrl = buildHowLongToBeatImageUrl(best.game_image);
+    const attachments: MetadataAttachment[] = coverUrl
+      ? [{ type: "cover", url: coverUrl, source: "howlongtobeat" }]
+      : [];
+
     return {
       title: best.game_name || undefined,
+      imageUrl: coverUrl || undefined,
+      attachments: attachments.length > 0 ? attachments : undefined,
       aliases: aliases.length > 0 ? aliases : undefined,
       facts,
     };

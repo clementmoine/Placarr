@@ -1,0 +1,342 @@
+import axios from "axios";
+import levenshtein from "fast-levenshtein";
+import { parse, format } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
+
+import type { MetadataResult } from "@/services/metadata";
+
+interface OpenLibraryWork {
+  key: string;
+  title: string;
+  authors?: { key: string }[];
+  publishers?: string[];
+  number_of_pages?: number;
+  description?: { value: string } | string;
+  publish_date?: string;
+  covers?: number[];
+}
+
+interface OpenLibrarySearchResponse {
+  docs?: Array<{
+    key: string;
+    title: string;
+    title_suggest?: string;
+    subtitle?: string;
+    author_name?: string[];
+    author_key?: string[];
+    language?: string[];
+    edition_count?: number;
+    has_fulltext?: boolean;
+    first_sentence?: string[];
+    publisher?: string[];
+    publish_year?: number[];
+    publish_date?: string[];
+    cover_i?: number;
+    cover_edition_key?: string;
+    ebook_access?: string;
+    ia?: string[];
+    ia_collection_s?: string;
+    public_scan_b?: boolean;
+  }>;
+}
+
+interface OpenLibraryAuthor {
+  name: string;
+  photos?: number[];
+}
+
+interface OpenLibraryEditionsResponse {
+  entries?: Array<{
+    key: string;
+    title: string;
+    languages?: Array<{ key: string }>;
+    publishers?: string[];
+    publish_date?: string;
+    number_of_pages?: number;
+    covers?: number[];
+    authors?: Array<{ key: string }>;
+    description?: { value: string } | string;
+  }>;
+}
+
+export function createOpenLibraryResolver() {
+  return async function fetchFromOpenLibrary(
+    name: string,
+    barcode?: string | null,
+  ): Promise<MetadataResult | null> {
+    const MAX_RETRIES = 3;
+    const INITIAL_DELAY = 1000;
+
+    const sleep = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    const fetchWithRetry = async <T>(url: string, retryCount = 0): Promise<T> => {
+      try {
+        const response = await axios.get<T>(url);
+        return response.data;
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { status: number } };
+        if (
+          (axiosError.response?.status === 503 ||
+            axiosError.response?.status === 500) &&
+          retryCount < MAX_RETRIES
+        ) {
+          const delay = INITIAL_DELAY * Math.pow(2, retryCount);
+          console.log(
+            `Open Library API request failed with status ${axiosError.response.status}, retrying in ${delay}ms...`,
+          );
+          await sleep(delay);
+          return fetchWithRetry<T>(url, retryCount + 1);
+        }
+        throw error;
+      }
+    };
+
+    try {
+      let workId: string | null = null;
+      let workData: OpenLibraryWork | null = null;
+
+      const yearMatch = name ? name.match(/\((\d{4})\)/) : null;
+      const requestedYear = yearMatch ? parseInt(yearMatch[1]) : null;
+      const cleanName = name
+        ? yearMatch
+          ? name.replace(/\(\d{4}\)/, "").trim()
+          : name
+        : "";
+
+      if (barcode) {
+        const isbnData = await fetchWithRetry<
+          OpenLibraryWork & { works?: { key: string }[] }
+        >(`https://openlibrary.org/isbn/${barcode}.json`);
+
+        if (isbnData && isbnData.works?.[0]?.key) {
+          if (!name) {
+            workId = isbnData.works[0].key;
+            workData = isbnData;
+          } else {
+            const isbnTitle = (isbnData.title || "").toLowerCase();
+            const queryLower = cleanName.toLowerCase();
+            const dist = levenshtein.get(isbnTitle, queryLower);
+            const maxL = Math.max(isbnTitle.length, queryLower.length);
+            const similarity = 1 - dist / maxL;
+
+            if (
+              isbnTitle.includes(queryLower) ||
+              queryLower.includes(isbnTitle) ||
+              similarity > 0.4
+            ) {
+              workId = isbnData.works[0].key;
+              workData = isbnData;
+            } else {
+              console.warn(
+                `[OpenLibrary] Barcode "${barcode}" resolved to title "${isbnData.title}", which does not match query name "${name}". Ignoring ISBN match.`,
+              );
+            }
+          }
+        }
+      }
+
+      if (!workId) {
+        if (!name) return null;
+        const searchQuery = barcode ? `${cleanName} isbn:${barcode}` : cleanName;
+
+        const data = await fetchWithRetry<OpenLibrarySearchResponse>(
+          `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}`,
+        );
+
+        if (data.docs && data.docs.length > 0) {
+          let bestWork = data.docs[0];
+          let maxScore = 0;
+
+          for (const doc of data.docs) {
+            let score = 0;
+            score += (doc.edition_count || 0) * 10;
+            if (doc.has_fulltext) score += 50;
+            if (doc.cover_i) score += 30;
+            if (doc.language?.length) score += doc.language.length * 5;
+            if (doc.author_name?.length) score += 20;
+
+            if (requestedYear && doc.publish_year?.length) {
+              const hasMatchingYear = doc.publish_year.some(
+                (year) => Math.abs(year - requestedYear) <= 1,
+              );
+              if (hasMatchingYear) score += 100;
+            }
+
+            if (score > maxScore) {
+              maxScore = score;
+              bestWork = doc;
+            }
+          }
+
+          workId = bestWork.key;
+
+          const editionsData = await fetchWithRetry<OpenLibraryEditionsResponse>(
+            `https://openlibrary.org${workId}/editions.json`,
+          );
+
+          if (editionsData.entries && editionsData.entries.length > 0) {
+            const sortedEditions = editionsData.entries
+              .map((edition) => {
+                const distance = levenshtein.get(
+                  cleanName.toLowerCase(),
+                  edition.title.toLowerCase(),
+                );
+
+                const fullLanguageKey = edition.languages?.[0]?.key || "";
+                const language = fullLanguageKey.includes("/fre")
+                  ? "fr"
+                  : fullLanguageKey.includes("/eng")
+                    ? "en"
+                    : fullLanguageKey.includes("/spa")
+                      ? "sp"
+                      : fullLanguageKey.includes("/ger")
+                        ? "ge"
+                        : fullLanguageKey.includes("/por")
+                          ? "pt"
+                          : fullLanguageKey.includes("/ita")
+                            ? "it"
+                            : "en";
+
+                const languageScore =
+                  language === "fr" ? 2 : language === "en" ? 1 : 0;
+
+                const editionYear = edition.publish_date
+                  ? parseInt(edition.publish_date.match(/\d{4}/)?.[0] || "0")
+                  : 0;
+                const yearMatches = requestedYear
+                  ? Math.abs(editionYear - requestedYear) <= 1
+                  : false;
+
+                return {
+                  edition,
+                  distance,
+                  languageScore,
+                  yearMatches,
+                };
+              })
+              .sort((a, b) => {
+                if (a.languageScore !== b.languageScore) {
+                  return b.languageScore - a.languageScore;
+                }
+                if (a.yearMatches !== b.yearMatches) {
+                  return b.yearMatches ? 1 : -1;
+                }
+                return a.distance - b.distance;
+              });
+
+            workData = sortedEditions[0].edition;
+            if ((bestWork as any).alternate_names) {
+              (workData as any).alternate_names = (bestWork as any).alternate_names;
+            }
+          } else {
+            workData = await fetchWithRetry<OpenLibraryWork>(
+              `https://openlibrary.org${workId}.json`,
+            );
+            if ((bestWork as any).alternate_names) {
+              (workData as any).alternate_names = (bestWork as any).alternate_names;
+            }
+          }
+        }
+      }
+
+      if (!workId || !workData) return null;
+
+      const authors =
+        workData.authors
+          ?.map((author: { key: string }) => {
+            if (!author?.key) return null;
+            return fetchWithRetry<OpenLibraryAuthor>(
+              `https://openlibrary.org${author.key}.json`,
+            )
+              .then((res) => ({
+                name: res.name,
+                imageUrl: res.photos?.[0]
+                  ? `https://covers.openlibrary.org/a/id/${res.photos[0]}-L.jpg`
+                  : null,
+              }))
+              .catch(() => null);
+          })
+          .filter(Boolean) || [];
+
+      const authorDetails = (await Promise.all(authors)).filter(
+        (
+          author,
+        ): author is {
+          name: string;
+          imageUrl: string | null;
+        } => Boolean(author),
+      );
+
+      let formattedDate: string | undefined;
+      if (workData.publish_date) {
+        try {
+          const locales = [
+            { locale: fr, format: "d MMMM yyyy" },
+            { locale: enUS, format: "MMMM d, yyyy" },
+            { locale: enUS, format: "d MMMM yyyy" },
+          ];
+
+          for (const { locale, format: dateFormat } of locales) {
+            try {
+              const date = parse(workData.publish_date, dateFormat, new Date(), {
+                locale,
+              });
+              if (!isNaN(date.getTime())) {
+                formattedDate = format(date, "yyyy-MM-dd");
+                break;
+              }
+            } catch {
+              continue;
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing date:", error);
+        }
+      }
+
+      const alternateNames = (workData as any).alternate_names || [];
+      const aliases = alternateNames.filter(
+        (n: string) => n.toLowerCase().trim() !== workData.title.toLowerCase().trim(),
+      );
+
+      return {
+        title: workData.title,
+        authors: authorDetails,
+        publishers:
+          workData.publishers?.map((publisher: string) => ({
+            name: publisher,
+          })) || [],
+        pageCount: workData.number_of_pages,
+        description:
+          typeof workData.description === "string"
+            ? workData.description
+            : workData.description?.value,
+        releaseDate: formattedDate,
+        imageUrl: workData.covers?.[0]
+          ? `https://covers.openlibrary.org/b/id/${workData.covers[0]}-L.jpg`
+          : undefined,
+        attachments: [
+          ...(workData.covers?.[0]
+            ? [
+                {
+                  type: "cover" as const,
+                  url: `https://covers.openlibrary.org/b/id/${workData.covers[0]}-L.jpg`,
+                  source: "openlibrary",
+                },
+              ]
+            : []),
+          ...(workData.covers?.slice(1).map((coverId: number) => ({
+            type: "cover" as const,
+            url: `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`,
+            source: "openlibrary",
+          })) || []),
+        ],
+        aliases,
+      };
+    } catch (error) {
+      console.error("Error fetching from Open Library:", error);
+      return null;
+    }
+  };
+}

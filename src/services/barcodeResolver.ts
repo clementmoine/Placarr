@@ -1791,7 +1791,8 @@ async function compileResultForType(
       .flatMap((evidence) => [evidence.title, evidence.cleanName]),
     { preservePlatformSuffix: type === "games" },
   ).slice(0, 15);
-  const platformKey = pickPlatformKeyFromEvidence(allEvidence);
+  const platformKey =
+    type === "games" ? pickPlatformKeyFromEvidence(allEvidence) : null;
 
   return {
     provider,
@@ -1801,6 +1802,28 @@ async function compileResultForType(
     matches,
     platformKey,
   };
+}
+
+function scoreTypeCandidate(
+  candidateType: string,
+  result: CompiledResult,
+  barcode: string,
+): number {
+  const topMatch = result.matches[0];
+  if (!topMatch) return 0;
+  const evidence = topMatch.evidence;
+  const isBookBarcode = /^(978|979)/.test(barcode);
+  const isAudioBarcode = /^(498|602|724|731|886|888)/.test(barcode);
+
+  let score = topMatch.confidence;
+  score += evidence.canonicalCount * 0.08;
+  score += evidence.canonicalProviders.length * 0.05;
+  score += evidence.hasCover ? 0.03 : 0;
+  if (candidateType === "books" && isBookBarcode) score += 0.45;
+  if (candidateType === "musics" && isAudioBarcode) score += 0.12;
+  if (candidateType === "games" && (result.platformKey || "").length > 0) score += 0.04;
+
+  return score;
 }
 
 export type BarcodeResolveResult = {
@@ -2628,13 +2651,18 @@ export async function resolveBarcode(
     selectedType = type;
     selectedResult = typeResults[type];
   } else {
-    const priorityTypes = ["games", "books", "movies", "musics", "boardgames"];
-    for (const pType of priorityTypes) {
-      if (typeResults[pType]) {
-        selectedType = pType;
-        selectedResult = typeResults[pType];
-        break;
-      }
+    const candidates = Object.entries(typeResults).filter(
+      (entry): entry is [string, CompiledResult] => Boolean(entry[1]),
+    );
+    candidates.sort(
+      (a, b) =>
+        scoreTypeCandidate(b[0], b[1], cleanedBarcode) -
+        scoreTypeCandidate(a[0], a[1], cleanedBarcode),
+    );
+    const best = candidates[0];
+    if (best) {
+      selectedType = best[0];
+      selectedResult = best[1];
     }
   }
 

@@ -24,6 +24,7 @@ import {
 import { fetchFromIGDB, getIGDBSuggestions } from "./igdb";
 import { fetchFromHowLongToBeat } from "./howLongToBeat";
 import { fetchFromSteamGridDB } from "./steamGridDb";
+import { fetchMetadataFromPriceCharting } from "./priceCharting";
 import {
   gameExternalMetadataAdapters,
 } from "@/services/providers/metadataGameExternalAdapters";
@@ -893,6 +894,17 @@ async function fetchFromAllGameSources(
   const steam = byProvider.get("steam") || null;
   let rawg = byProvider.get("rawg") || null;
   let steamGrid = byProvider.get("steamgriddb") || null;
+  let pcMeta = null as Awaited<
+    ReturnType<typeof fetchMetadataFromPriceCharting>
+  > | null;
+
+  if (barcode) {
+    try {
+      pcMeta = await fetchMetadataFromPriceCharting(barcode, name, platform || undefined);
+    } catch (error) {
+      console.warn("[PriceCharting] metadata enrichment failed", error);
+    }
+  }
 
   let canonicalFallbackNames = collectCanonicalFallbackNames(name, [
     igdb,
@@ -990,8 +1002,20 @@ async function fetchFromAllGameSources(
   const merged = mergeGameMetadata(igdb, ss, hltb, steam, rawg, steamGrid, {
     includePcSources,
   });
+  const pcFacts: MetadataFact[] = [];
+  if (pcMeta?.ageRating) {
+    pcFacts.push({
+      kind: "age-rating",
+      label: pcMeta.ageRating.startsWith("PEGI") ? "PEGI" : "PriceCharting",
+      value: pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() || pcMeta.ageRating,
+      source: "pricecharting",
+      confidence: 0.62,
+      priority: 58,
+    });
+  }
   const mergedWithEvidence = {
     ...merged,
+    facts: dedupeFacts([...(merged.facts || []), ...pcFacts]),
     fieldEvidence: dedupeFieldEvidence([
       ...providerEvidence,
       ...metadataFieldEvidence("MergedEngine", merged, {

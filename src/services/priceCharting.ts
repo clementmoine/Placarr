@@ -13,6 +13,7 @@ export interface PriceChartingMetadata {
   title: string;
   platform?: string;
   coverUrl?: string;
+  ageRating?: string;
 }
 
 const CLASSICS_KEYWORDS = [
@@ -526,7 +527,19 @@ export async function fetchMetadataFromPriceCharting(
       }
     }
 
-    return { title, platform, coverUrl };
+    const ageRatingMatch = html.match(
+      /\b(PEGI|ESRB|USK|CERO)\b[^<\n\r]{0,40}?(?:\b(\d{1,2})\+?\b|\b(E|E10\+|T|M|AO|RP)\b|\b([A-DZ])\b)/i,
+    );
+    const ageRating = ageRatingMatch
+      ? [
+          ageRatingMatch[1]?.toUpperCase(),
+          ageRatingMatch[2] || ageRatingMatch[3] || ageRatingMatch[4],
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : undefined;
+
+    return { title, platform, coverUrl, ageRating };
   } catch (error: any) {
     console.error(
       `[PriceCharting Metadata] Error fetching barcode ${cleanedBarcode}:`,

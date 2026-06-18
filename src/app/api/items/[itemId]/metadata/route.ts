@@ -26,7 +26,7 @@ export async function POST(
 
   try {
     const body = await req.json().catch(() => ({}));
-    const resolvedItemId = await resolveItemId(itemId, shelfId);
+    const resolvedItemId = await resolveItemId(itemId, shelfId, auth.user.id);
     const item = await prisma.item.findUnique({
       where: { id: resolvedItemId },
       include: {

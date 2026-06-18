@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q");
 
     if (id) {
-      const resolvedId = await resolveShelfId(id);
+      const resolvedId = await resolveShelfId(id, auth.user.id);
       if (q) {
         const searchTerm = q.trim();
         const shelf = await prisma.shelf.findUnique({

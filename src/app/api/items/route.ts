@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
 
   if (id) {
-    const resolvedId = await resolveItemId(id, shelfId);
+    const resolvedId = await resolveItemId(id, shelfId, auth.user.id);
     const item = await prisma.item.findUnique({
       where: { id: resolvedId },
       include: {
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (shelfId) {
-    whereClause.shelfId = await resolveShelfId(shelfId);
+    whereClause.shelfId = await resolveShelfId(shelfId, auth.user.id);
   }
 
   const items = await prisma.item.findMany({
@@ -253,7 +253,7 @@ export async function PATCH(req: NextRequest) {
     }
     const shelfContext =
       typeof data.shelfId === "string" ? data.shelfId : undefined;
-    const resolvedId = await resolveItemId(id, shelfContext);
+    const resolvedId = await resolveItemId(id, shelfContext, auth.user.id);
 
     // Check if item exists and user has permission to update it
     const item = await prisma.item.findUnique({
@@ -368,7 +368,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const resolvedId = await resolveItemId(id, shelfId);
+    const resolvedId = await resolveItemId(id, shelfId, auth.user.id);
 
     // Check if item exists and user has permission to delete it
     const item = await prisma.item.findUnique({

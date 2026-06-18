@@ -12,15 +12,13 @@ export async function GET(
   context: { params: Promise<{ itemId: string }> },
 ) {
   const session = await requireGuestOrHigher(req);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (session instanceof NextResponse) return session;
 
   const { itemId } = await context.params;
   const shelfId = req.nextUrl.searchParams.get("shelfId");
 
   try {
-    const resolvedItemId = await resolveItemId(itemId, shelfId);
+    const resolvedItemId = await resolveItemId(itemId, shelfId, session.user.id);
     const item = await prisma.item.findUnique({
       where: { id: resolvedItemId },
       include: { shelf: true, metadata: true },

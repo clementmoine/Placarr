@@ -20,7 +20,24 @@ export interface DiscogsResult {
   imageUrl: string | null;
 }
 
-let warnedMissingToken = false;
+let warnedMissingAuth = false;
+
+/**
+ * Auth Discogs : un token personnel (`DISCOGS_TOKEN`) OU un couple consumer
+ * key/secret (`DISCOGS_CONSUMER_KEY` + `DISCOGS_CONSUMER_SECRET`). Les deux
+ * passent en query params et suffisent aux endpoints database (pas besoin du
+ * flow OAuth complet). Sans aucun, la source est inactive.
+ */
+export function getDiscogsAuthParams(): Record<string, string> | null {
+  const token = process.env.DISCOGS_TOKEN?.trim();
+  if (token) return { token };
+
+  const key = process.env.DISCOGS_CONSUMER_KEY?.trim();
+  const secret = process.env.DISCOGS_CONSUMER_SECRET?.trim();
+  if (key && secret) return { key, secret };
+
+  return null;
+}
 
 export async function fetchFromDiscogs(
   barcode: string,
@@ -28,18 +45,20 @@ export async function fetchFromDiscogs(
   const clean = (barcode || "").replace(/[^\d]/g, "").trim();
   if (!clean) return null;
 
-  const token = process.env.DISCOGS_TOKEN;
-  if (!token) {
-    if (!warnedMissingToken) {
-      warnedMissingToken = true;
-      console.warn("[Discogs] DISCOGS_TOKEN manquant — source désactivée.");
+  const auth = getDiscogsAuthParams();
+  if (!auth) {
+    if (!warnedMissingAuth) {
+      warnedMissingAuth = true;
+      console.warn(
+        "[Discogs] Auth manquante (DISCOGS_TOKEN ou DISCOGS_CONSUMER_KEY/SECRET) — source désactivée.",
+      );
     }
     return null;
   }
 
   try {
     const res = await axios.get(`${DISCOGS_BASE}/database/search`, {
-      params: { barcode: clean, token, per_page: 5 },
+      params: { barcode: clean, per_page: 5, ...auth },
       headers: { "User-Agent": USER_AGENT },
       timeout: 8000,
     });

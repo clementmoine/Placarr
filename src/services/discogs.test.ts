@@ -6,22 +6,45 @@ import axios from "axios";
 import { fetchFromDiscogs } from "./discogs";
 
 const mockedGet = vi.mocked(axios.get);
-const ORIGINAL_TOKEN = process.env.DISCOGS_TOKEN;
+const AUTH_VARS = [
+  "DISCOGS_TOKEN",
+  "DISCOGS_CONSUMER_KEY",
+  "DISCOGS_CONSUMER_SECRET",
+] as const;
+const ORIGINAL = Object.fromEntries(
+  AUTH_VARS.map((k) => [k, process.env[k]]),
+);
+
+function clearAuth() {
+  for (const k of AUTH_VARS) delete process.env[k];
+}
 
 beforeEach(() => {
   mockedGet.mockReset();
+  clearAuth();
 });
 afterEach(() => {
-  if (ORIGINAL_TOKEN === undefined) delete process.env.DISCOGS_TOKEN;
-  else process.env.DISCOGS_TOKEN = ORIGINAL_TOKEN;
+  clearAuth();
+  for (const [k, v] of Object.entries(ORIGINAL)) {
+    if (v !== undefined) process.env[k] = v;
+  }
 });
 
 describe("fetchFromDiscogs", () => {
-  it("est inactif (null) sans token, sans appel réseau", async () => {
-    delete process.env.DISCOGS_TOKEN;
+  it("est inactif (null) sans auth, sans appel réseau", async () => {
     const r = await fetchFromDiscogs("4988601467124");
     expect(r).toBeNull();
     expect(mockedGet).not.toHaveBeenCalled();
+  });
+
+  it("s'active avec consumer key + secret", async () => {
+    process.env.DISCOGS_CONSUMER_KEY = "k";
+    process.env.DISCOGS_CONSUMER_SECRET = "s";
+    mockedGet.mockResolvedValue({
+      data: { results: [{ title: "Air - Moon Safari", year: 1998 }] },
+    } as never);
+    const r = await fetchFromDiscogs("3614971544081");
+    expect(r?.title).toBe("Air - Moon Safari");
   });
 
   it("résout un code-barres avec token", async () => {

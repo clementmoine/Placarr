@@ -18,9 +18,12 @@ import crypto from "crypto";
 import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { getSetting } from "./settings";
+import { applyConsensus } from "@/lib/metadataConsensus";
 import { fetchFromIGDB, getIGDBSuggestions } from "./igdb";
 import { fetchFromSteam } from "./steam";
 import { fetchFromHowLongToBeat } from "./howLongToBeat";
+import { fetchFromMobyGames } from "./mobygames";
+import { fetchFromSteamGridDB } from "./steamGridDb";
 
 export interface MetadataAttachment {
   type: AttachmentType;
@@ -93,7 +96,7 @@ const mapAttachments = (attachments?: Attachment[]) =>
 function dedupeFacts(facts?: MetadataFact[]): MetadataFact[] | undefined {
   if (!facts || facts.length === 0) return undefined;
   const seen = new Set<string>();
-  const normalizedFacts = normalizeMetadataFacts(facts);
+  const normalizedFacts = normalizeMetadataFacts(applyConsensus(facts));
   const cleanFacts = normalizedFacts
     .filter((fact) => fact.label && fact.value)
     .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
@@ -123,7 +126,11 @@ function normalizeMetadataFacts(facts: MetadataFact[]): MetadataFact[] {
     if (fact.kind !== "age-rating") return [fact];
 
     const label = fact.label.replace(/^Classification\s+/i, "").trim();
-    if (gameClassificationLabels.has(label) && label !== "PEGI" && label !== "ESRB") {
+    if (
+      gameClassificationLabels.has(label) &&
+      label !== "PEGI" &&
+      label !== "ESRB"
+    ) {
       return [];
     }
 
@@ -198,7 +205,9 @@ export function formatMetadataFromStorage(
   if (metadata.facts) {
     try {
       const parsed = JSON.parse(metadata.facts);
-      facts = Array.isArray(parsed) ? normalizeMetadataFacts(parsed) : [];
+      facts = Array.isArray(parsed)
+        ? normalizeMetadataFacts(applyConsensus(parsed))
+        : [];
     } catch (e) {
       console.error("Failed to parse facts from storage:", e);
     }
@@ -535,11 +544,14 @@ async function fetchMetadataByType(
 
 /**
  * Multi-source game metadata aggregator.
- * Runs IGDB, ScreenScraper, HLTB, Steam and RAWG in parallel and merges their results:
+ * Runs IGDB, ScreenScraper, HLTB, Steam, RAWG and optional artwork/catalog
+ * providers in parallel and merges their results:
  *   - ScreenScraper: best for physical box art covers (scanned)
+ *   - MobyGames: strong catalog fallback with platform-specific cover scans
  *   - IGDB: best for descriptions, screenshots, artworks (HD)
  *   - HowLongToBeat: direct playtime enrichment when IGDB has no HLTB data
  *   - Steam: useful enrichment facts, store art and reference links
+ *   - SteamGridDB: rich community artwork fallback
  *   - RAWG: fallback when both above are unconfigured / return nothing
  */
 async function fetchFromAllGameSources(
@@ -548,26 +560,40 @@ async function fetchFromAllGameSources(
   platform?: string | null,
 ): Promise<MetadataResult | null> {
   const includePcSources = isPcLikeGamePlatform(platform);
-  const [igdbResult, ssResult, hltbResult, steamResult, rawgResult] =
-    await Promise.allSettled([
-      fetchFromIGDB(name, platform),
-      fetchFromScreenScraper(name, barcode, platform),
-      fetchFromHowLongToBeat(name, platform),
-      includePcSources ? fetchFromSteam(name) : Promise.resolve(null),
-      fetchFromRawg(name),
-    ]);
+  const [
+    igdbResult,
+    ssResult,
+    hltbResult,
+    steamResult,
+    rawgResult,
+    mobyResult,
+    steamGridResult,
+  ] = await Promise.allSettled([
+    fetchFromIGDB(name, platform),
+    fetchFromScreenScraper(name, barcode, platform),
+    fetchFromHowLongToBeat(name, platform),
+    includePcSources ? fetchFromSteam(name) : Promise.resolve(null),
+    fetchFromRawg(name),
+    fetchFromMobyGames(name, platform),
+    fetchFromSteamGridDB(name),
+  ]);
 
   let igdb = igdbResult.status === "fulfilled" ? igdbResult.value : null;
   let ss = ssResult.status === "fulfilled" ? ssResult.value : null;
   let hltb = hltbResult.status === "fulfilled" ? hltbResult.value : null;
   const steam = steamResult.status === "fulfilled" ? steamResult.value : null;
   let rawg = rawgResult.status === "fulfilled" ? rawgResult.value : null;
+  let moby = mobyResult.status === "fulfilled" ? mobyResult.value : null;
+  let steamGrid =
+    steamGridResult.status === "fulfilled" ? steamGridResult.value : null;
 
   let canonicalFallbackNames = collectCanonicalFallbackNames(name, [
     igdb,
     ss,
+    moby,
     rawg,
     steam,
+    steamGrid,
   ]);
 
   if (!ss) {
@@ -587,14 +613,13 @@ async function fetchFromAllGameSources(
   canonicalFallbackNames = collectCanonicalFallbackNames(name, [
     igdb,
     ss,
+    moby,
     rawg,
     steam,
+    steamGrid,
   ]);
 
-  if (
-    ss &&
-    shouldRecheckScreenScraperMatch(name, ss, canonicalFallbackNames)
-  ) {
+  if (ss && shouldRecheckScreenScraperMatch(name, ss, canonicalFallbackNames)) {
     const improved = await findBetterScreenScraperMatch(
       name,
       ss,
@@ -605,10 +630,7 @@ async function fetchFromAllGameSources(
     if (improved) ss = improved;
   }
 
-  const rawgComparisonNames = collectCanonicalFallbackNames(name, [
-    ss,
-    igdb,
-  ]);
+  const rawgComparisonNames = collectCanonicalFallbackNames(name, [ss, igdb]);
   const hasRawgRating = rawg?.facts?.some((fact) => fact.kind === "rating");
   const rawgLooksMismatched =
     rawg &&
@@ -633,6 +655,20 @@ async function fetchFromAllGameSources(
     }
   }
 
+  if (!moby) {
+    for (const fallbackName of canonicalFallbackNames.slice(0, 12)) {
+      moby = await fetchFromMobyGames(fallbackName, platform);
+      if (moby) break;
+    }
+  }
+
+  if (!steamGrid) {
+    for (const fallbackName of canonicalFallbackNames.slice(0, 12)) {
+      steamGrid = await fetchFromSteamGridDB(fallbackName);
+      if (steamGrid) break;
+    }
+  }
+
   if (!hltb) {
     for (const fallbackName of canonicalFallbackNames.slice(0, 12)) {
       hltb = await fetchFromHowLongToBeat(fallbackName, platform);
@@ -641,12 +677,14 @@ async function fetchFromAllGameSources(
   }
 
   // If all failed, return null
-  if (!igdb && !ss && !hltb && !steam && !rawg) {
+  if (!igdb && !ss && !hltb && !steam && !rawg && !moby && !steamGrid) {
     return null;
   }
 
   return preferRequestedDisplayTitle(
-    mergeGameMetadata(igdb, ss, hltb, steam, rawg, { includePcSources }),
+    mergeGameMetadata(igdb, ss, hltb, steam, rawg, moby, steamGrid, {
+      includePcSources,
+    }),
     name,
   );
 }
@@ -871,24 +909,38 @@ function mergeGameMetadata(
   hltb: MetadataResult | null,
   steam: MetadataResult | null,
   rawg: MetadataResult | null,
+  moby: MetadataResult | null,
+  steamGrid: MetadataResult | null,
   options: { includePcSources?: boolean } = {},
 ): MetadataResult {
-  // Title: ScreenScraper (physical, region-aware) > IGDB > RAWG > Steam
-  const title = ss?.title || igdb?.title || rawg?.title || steam?.title;
+  // Title: ScreenScraper (physical, region-aware) > MobyGames > IGDB > RAWG
+  const title =
+    ss?.title ||
+    moby?.title ||
+    igdb?.title ||
+    rawg?.title ||
+    steam?.title ||
+    steamGrid?.title;
 
-  // Description: IGDB tends to be richer / more complete > ScreenScraper > RAWG
+  // Description: IGDB tends to be richer, MobyGames is a strong catalog fallback.
   const description =
     igdb?.description ||
+    moby?.description ||
     ss?.description ||
     rawg?.description ||
     steam?.description;
 
-  // Release date: IGDB > ScreenScraper > RAWG
-  const releaseDate = igdb?.releaseDate || ss?.releaseDate || rawg?.releaseDate;
+  // Release date: IGDB > MobyGames platform release > ScreenScraper > RAWG
+  const releaseDate =
+    igdb?.releaseDate ||
+    moby?.releaseDate ||
+    ss?.releaseDate ||
+    rawg?.releaseDate;
 
   // Publishers: merge all lists, deduplicated by name
   const allPublishers = [
     ...(igdb?.publishers || []),
+    ...(moby?.publishers || []),
     ...(ss?.publishers || []),
     ...(rawg?.publishers || []),
     ...(steam?.publishers || []),
@@ -900,23 +952,29 @@ function mergeGameMetadata(
         )
       : undefined;
 
-  // imageUrl: prefer ScreenScraper (physical scan), then IGDB/RAWG, then Steam store art
+  // imageUrl: prefer physical scans, then catalog covers/artwork.
   const imageUrl =
-    ss?.imageUrl || igdb?.imageUrl || rawg?.imageUrl || steam?.imageUrl;
+    ss?.imageUrl ||
+    moby?.imageUrl ||
+    igdb?.imageUrl ||
+    rawg?.imageUrl ||
+    steamGrid?.imageUrl ||
+    steam?.imageUrl;
 
   // Attachments: merge all, ordering:
   //   1. Covers from ScreenScraper (physical scans, highest priority)
-  //   2. Covers from IGDB (HD digital)
-  //   3. Covers from RAWG/CoverProject
-  //   4. Covers/art from Steam (store art, useful fallback)
-  //   5. Screenshots from IGDB (HD)
-  //   6. Screenshots from ScreenScraper
-  //   7. Screenshots from RAWG/Steam
-  //   8. Artworks from IGDB
-  //   8. Everything else
+  //   2. Covers from MobyGames / RAWG-CoverProject physical fallbacks
+  //   3. Covers from IGDB / SteamGridDB / Steam
+  //   4. Screenshots from IGDB, MobyGames, ScreenScraper, RAWG/Steam
+  //   5. Artworks/backgrounds/logos
+  //   6. Everything else
   const ssAttachments = (ss?.attachments || []).map((a) => ({
     ...a,
     source: a.source || "screenscraper",
+  }));
+  const mobyAttachments = (moby?.attachments || []).map((a) => ({
+    ...a,
+    source: a.source || "mobygames",
   }));
   const igdbAttachments = (igdb?.attachments || []).map((a) => ({
     ...a,
@@ -932,13 +990,22 @@ function mergeGameMetadata(
     ...a,
     source: a.source || "steam",
   }));
+  const steamGridAttachments = (steamGrid?.attachments || []).map((a) => ({
+    ...a,
+    source: a.source || "steamgriddb",
+  }));
 
   const ssCovers = ssAttachments.filter((a) => a.type === "cover");
+  const mobyCovers = mobyAttachments.filter((a) => a.type === "cover");
   const igdbCovers = igdbAttachments.filter((a) => a.type === "cover");
   const rawgCovers = rawgAttachments.filter((a) => a.type === "cover");
+  const steamGridCovers = steamGridAttachments.filter((a) => a.type === "cover");
   const steamCovers = steamAttachments.filter((a) => a.type === "cover");
 
   const igdbScreenshots = igdbAttachments.filter(
+    (a) => a.type === "screenshot",
+  );
+  const mobyScreenshots = mobyAttachments.filter(
     (a) => a.type === "screenshot",
   );
   const ssScreenshots = ssAttachments.filter((a) => a.type === "screenshot");
@@ -950,10 +1017,16 @@ function mergeGameMetadata(
   );
 
   const igdbArtworks = igdbAttachments.filter((a) => a.type === "artwork");
+  const steamGridArtworks = steamGridAttachments.filter(
+    (a) => a.type === "artwork" || a.type === "background" || a.type === "logo",
+  );
   const steamArtworks = steamAttachments.filter(
     (a) => a.type === "artwork" || a.type === "background",
   );
 
+  const mobyOther = mobyAttachments.filter(
+    (a) => a.type !== "cover" && a.type !== "screenshot",
+  );
   const ssOther = ssAttachments.filter(
     (a) => a.type !== "cover" && a.type !== "screenshot",
   );
@@ -971,21 +1044,34 @@ function mergeGameMetadata(
       a.type !== "artwork" &&
       a.type !== "background",
   );
+  const steamGridOther = steamGridAttachments.filter(
+    (a) =>
+      a.type !== "cover" &&
+      a.type !== "artwork" &&
+      a.type !== "background" &&
+      a.type !== "logo",
+  );
 
   const allAttachments: MetadataAttachment[] = [
     ...ssCovers,
+    ...mobyCovers,
     ...igdbCovers,
     ...rawgCovers,
+    ...steamGridCovers,
     ...steamCovers,
     ...igdbScreenshots,
+    ...mobyScreenshots,
     ...ssScreenshots,
     ...rawgScreenshots,
     ...steamScreenshots,
     ...igdbArtworks,
+    ...steamGridArtworks,
     ...steamArtworks,
+    ...mobyOther,
     ...ssOther,
     ...igdbOther,
     ...rawgOther,
+    ...steamGridOther,
     ...steamOther,
   ];
 
@@ -1000,10 +1086,12 @@ function mergeGameMetadata(
   const allAliases = Array.from(
     new Set([
       ...(igdb?.aliases || []),
+      ...(moby?.aliases || []),
       ...(ss?.aliases || []),
       ...(hltb?.aliases || []),
       ...(rawg?.aliases || []),
       ...(steam?.aliases || []),
+      ...(steamGrid?.aliases || []),
     ]),
   ).filter((a) => a.toLowerCase().trim() !== title?.toLowerCase().trim());
   const aliases = allAliases.length > 0 ? allAliases : undefined;
@@ -1019,6 +1107,7 @@ function mergeGameMetadata(
   );
   const facts = dedupeFacts([
     ...igdbFacts,
+    ...(moby?.facts || []),
     ...(ss?.facts || []),
     ...hltbFacts,
     ...(rawg?.facts || []),
@@ -1443,7 +1532,8 @@ function buildScreenScraperFacts(gameData: SSGame): MetadataFact[] {
  * This keeps box-2D(eu) above decorative mix images such as mixrbv2(fr).
  */
 export function pickSSCover(medias: SSMedia[]): string | null {
-  const preferredTypes = ["box-2D", "box-3D", "mixrbv2", "mixrbv1"];
+  // Uniquement de vraies boîtes scannées (pas de rendus "mix" reconstitués).
+  const preferredTypes = ["box-2D", "box-3D"];
   const regionOrder = ["fr", "eu", "wor", "us", "jp"];
 
   // Type quality matters most for the default poster: flat box art beats
@@ -1461,7 +1551,9 @@ export function pickSSCover(medias: SSMedia[]): string | null {
     if (found) return found.url;
   }
 
-  return medias.length > 0 ? medias[0].url : null;
+  // Pas de vraie boîte → on ne renvoie pas une image quelconque (mix,
+  // screenshot…) : on laisse une autre source (SteamGridDB, etc.) fournir la cover.
+  return null;
 }
 
 /**
@@ -1564,10 +1656,7 @@ function hasCachedCandidateSystemConflict(
 }
 
 function normalizeScreenScraperSearchQuery(value: string): string {
-  return value
-    .replace(/[’‘]/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return value.replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim();
 }
 
 function uniqueScreenScraperSearchQueries(values: string[]): string[] {
@@ -1963,9 +2052,8 @@ async function fetchFromScreenScraper(
         } else if (m.type === "box-3D") {
           type = "cover";
           role = m.region ? `${m.region}-3d` : "wor-3d";
-        } else if (m.type === "mixrbv1" || m.type === "mixrbv2") {
-          type = "cover";
-          role = m.region ? `${m.region}-${m.type}` : m.type;
+          // mixrbv1 / mixrbv2 (jaquettes "mix" reconstituées) volontairement
+          // ignorés : on ne veut que de vraies boîtes en cover.
         } else if (m.type === "box-2D-back" || m.type === "box-back") {
           type = "image";
           role = m.region ? `${m.region}-back` : "back";
@@ -2146,10 +2234,12 @@ function getBGGRatingValue(
   game: { children?: BGGChild[] },
   key: string,
 ): string | undefined {
-  const statistics = game.children?.find((child) => child.statistics)
-    ?.statistics;
-  const ratings = statistics?.children?.find((child: any) => child.ratings)
-    ?.ratings;
+  const statistics = game.children?.find(
+    (child) => child.statistics,
+  )?.statistics;
+  const ratings = statistics?.children?.find(
+    (child: any) => child.ratings,
+  )?.ratings;
   const rating = ratings?.children?.find((child: any) => child[key])?.[key];
   return rating?.value;
 }
@@ -2694,7 +2784,89 @@ async function fetchFromOpenLibrary(name: string, barcode?: string | null) {
   }
 }
 
+type TMDBSeriesIntent = {
+  isSeriesLike: boolean;
+  searchTitle: string;
+  seasonNumber?: number;
+};
+
+type TMDBSearchResult = {
+  id: number;
+  title?: string;
+  name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+};
+
+function parseTMDBSeriesIntent(name: string): TMDBSeriesIntent {
+  const seasonMatch =
+    name.match(/\b(?:saison|season)\s*(\d{1,2})\b/i) ||
+    name.match(/\bs(?:eason)?\s*(\d{1,2})\b/i);
+  const isSeriesLike =
+    /\b(saison|season|series|s[eé]rie|episode|[ée]pisode|vol(?:ume)?\.?)\b/i.test(
+      name,
+    ) || Boolean(seasonMatch);
+
+  let searchTitle = name
+    .replace(/\b(?:saison|season)\s*\d{1,2}\b/gi, "")
+    .replace(/\bs(?:eason)?\s*\d{1,2}\b/gi, "")
+    .replace(/\b(?:episode|[ée]pisode)\s*\d{1,3}\b/gi, "")
+    .replace(/\bvol(?:ume)?\.?\s*\d{1,3}\b/gi, "")
+    .replace(/\b(dvd|blu[\s-]?ray|bluray|coffret|box)\b/gi, "")
+    .replace(/\s*[-–—:|]+\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!searchTitle) searchTitle = cleanSearchQuery(name) || name;
+
+  return {
+    isSeriesLike,
+    searchTitle,
+    seasonNumber: seasonMatch ? Number(seasonMatch[1]) : undefined,
+  };
+}
+
+function pickBestTMDBMatch<T extends { title?: string; name?: string }>(
+  query: string,
+  results: T[],
+): T | null {
+  if (results.length === 0) return null;
+
+  const normalizedQuery = query.toLowerCase();
+  let bestMatch = results[0];
+  let minDistance = Number.POSITIVE_INFINITY;
+
+  for (const result of results) {
+    const titles = [result.title, result.name].filter(Boolean) as string[];
+    const distance = Math.min(
+      ...titles.map((title) =>
+        levenshtein.get(normalizedQuery, title.toLowerCase()),
+      ),
+    );
+    if (distance < minDistance) {
+      minDistance = distance;
+      bestMatch = result;
+    }
+  }
+
+  return bestMatch;
+}
+
 async function fetchFromTMDB(name: string) {
+  const seriesIntent = parseTMDBSeriesIntent(name);
+
+  if (seriesIntent.isSeriesLike) {
+    const tvResult = await fetchFromTMDBSeries(name);
+    if (tvResult) return tvResult;
+    return fetchFromTMDBMovie(name);
+  }
+
+  const movieResult = await fetchFromTMDBMovie(name);
+  if (movieResult) return movieResult;
+  return fetchFromTMDBSeries(name);
+}
+
+async function fetchFromTMDBMovie(name: string) {
   const searchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(name)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
   const res = await axios.get(searchUrl);
   const data = res.data;
@@ -2897,6 +3069,256 @@ async function fetchFromTMDB(name: string) {
   };
 }
 
+async function fetchFromTMDBSeries(name: string) {
+  const intent = parseTMDBSeriesIntent(name);
+  const searchUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(intent.searchTitle)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
+  const res = await axios.get(searchUrl);
+  const data = res.data;
+
+  if (!data.results || data.results.length === 0) return null;
+
+  const bestMatch = pickBestTMDBMatch(
+    intent.searchTitle,
+    data.results as TMDBSearchResult[],
+  );
+  if (!bestMatch) return null;
+
+  const detailsRes = await axios.get(
+    `https://api.themoviedb.org/3/tv/${bestMatch.id}?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
+  );
+  const details = detailsRes.data;
+
+  let seasonDetails: any | null = null;
+  if (intent.seasonNumber) {
+    try {
+      const seasonRes = await axios.get(
+        `https://api.themoviedb.org/3/tv/${bestMatch.id}/season/${intent.seasonNumber}?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
+      );
+      seasonDetails = seasonRes.data;
+    } catch (err) {
+      console.error(
+        `[TMDB] Failed to fetch season ${intent.seasonNumber} for TV ID ${bestMatch.id}:`,
+        err,
+      );
+    }
+  }
+
+  let imagesData: {
+    posters?: { file_path: string }[];
+    backdrops?: { file_path: string }[];
+    logos?: { file_path: string }[];
+  } = {};
+  try {
+    const imagesRes = await axios.get(
+      `https://api.themoviedb.org/3/tv/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}`,
+    );
+    imagesData = imagesRes.data;
+  } catch (err) {
+    console.error(
+      `[TMDB] Failed to fetch images for TV ID ${bestMatch.id}:`,
+      err,
+    );
+  }
+
+  let seasonImagesData: { posters?: { file_path: string }[] } = {};
+  if (intent.seasonNumber) {
+    try {
+      const seasonImagesRes = await axios.get(
+        `https://api.themoviedb.org/3/tv/${bestMatch.id}/season/${intent.seasonNumber}/images?api_key=${process.env.TMDB_API_KEY}`,
+      );
+      seasonImagesData = seasonImagesRes.data;
+    } catch (err) {
+      console.error(
+        `[TMDB] Failed to fetch season images for TV ID ${bestMatch.id}:`,
+        err,
+      );
+    }
+  }
+
+  const seasonPosters = (seasonImagesData.posters || [])
+    .slice(0, 20)
+    .map((img: { file_path: string }) => ({
+      type: "cover" as const,
+      url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+      source: "tmdb",
+    }));
+
+  const tmdbPosters = (imagesData.posters || [])
+    .slice(0, 30)
+    .map((img: { file_path: string }) => ({
+      type: "cover" as const,
+      url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+      source: "tmdb",
+    }));
+
+  const tmdbBackdrops = (imagesData.backdrops || [])
+    .slice(0, 30)
+    .map((img: { file_path: string }) => ({
+      type: "background" as const,
+      url: `https://image.tmdb.org/t/p/w1280${img.file_path}`,
+      source: "tmdb",
+    }));
+
+  const tmdbLogos = (imagesData.logos || [])
+    .slice(0, 10)
+    .map((img: { file_path: string }) => ({
+      type: "logo" as const,
+      url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
+      source: "tmdb",
+    }));
+
+  const seasonCoverUrl = seasonDetails?.poster_path
+    ? `https://image.tmdb.org/t/p/w780${seasonDetails.poster_path}`
+    : null;
+  const coverUrl =
+    seasonCoverUrl ||
+    (bestMatch.poster_path
+      ? `https://image.tmdb.org/t/p/w780${bestMatch.poster_path}`
+      : null);
+
+  let aliases: string[] = [];
+  try {
+    const titlesRes = await axios.get(
+      `https://api.themoviedb.org/3/tv/${bestMatch.id}/alternative_titles?api_key=${process.env.TMDB_API_KEY}`,
+    );
+    aliases = (titlesRes.data?.results || [])
+      .map((t: any) => (t.title || t.name) as string)
+      .filter(Boolean)
+      .filter(
+        (t: string) =>
+          t.toLowerCase().trim() !==
+          String(details.name || bestMatch.name)
+            .toLowerCase()
+            .trim(),
+      );
+  } catch (err) {
+    console.error(
+      `[TMDB] Failed to fetch alternative titles for TV ID ${bestMatch.id}:`,
+      err,
+    );
+  }
+
+  let certification: string | null = null;
+  try {
+    const ratingsRes = await axios.get(
+      `https://api.themoviedb.org/3/tv/${bestMatch.id}/content_ratings?api_key=${process.env.TMDB_API_KEY}`,
+    );
+    const countries = ratingsRes.data?.results || [];
+    const preferredCountries = ["FR", "BE", "CA", "US", "GB"];
+    for (const iso of preferredCountries) {
+      const country = countries.find((entry: any) => entry.iso_3166_1 === iso);
+      const rating =
+        typeof country?.rating === "string" && country.rating.trim()
+          ? country.rating
+          : null;
+      if (rating) {
+        certification = iso === "FR" ? rating : `${iso} ${rating}`;
+        break;
+      }
+    }
+  } catch (err) {
+    console.error(
+      `[TMDB] Failed to fetch content ratings for TV ID ${bestMatch.id}:`,
+      err,
+    );
+  }
+
+  const facts: MetadataFact[] = [];
+  if (certification) {
+    facts.push({
+      kind: "age-rating",
+      label: "Classification",
+      value: certification,
+      source: "tmdb",
+      confidence: 0.78,
+      priority: 75,
+    });
+  }
+  if (typeof details.vote_average === "number" && details.vote_average > 0) {
+    const rating = formatScore(details.vote_average, 10);
+    if (rating) {
+      facts.push({
+        kind: "rating",
+        label: "TMDB",
+        value: rating,
+        source: "tmdb",
+        confidence: 0.72,
+        priority: 80,
+      });
+    }
+  }
+
+  const seriesTitle = details.name || bestMatch.name;
+  const displayTitle = intent.seasonNumber
+    ? `${seriesTitle} - Saison ${intent.seasonNumber}`
+    : seriesTitle;
+  const releaseDate = seasonDetails?.air_date || details.first_air_date;
+  const runtime = Array.isArray(details.episode_run_time)
+    ? details.episode_run_time.find(
+        (value: unknown) => typeof value === "number" && value > 0,
+      )
+    : undefined;
+
+  return {
+    title: displayTitle,
+    authors:
+      details.created_by?.map(
+        (person: { name: string; profile_path?: string | null }) => ({
+          name: person.name,
+          imageUrl: person.profile_path
+            ? `https://image.tmdb.org/t/p/w780${person.profile_path}`
+            : null,
+        }),
+      ) || [],
+    publishers:
+      details.production_companies?.map(
+        (company: { name: string; logo_path?: string | null }) => ({
+          name: company.name,
+          imageUrl: company.logo_path
+            ? `https://image.tmdb.org/t/p/w780${company.logo_path}`
+            : null,
+        }),
+      ) || [],
+    duration: runtime,
+    description: seasonDetails?.overview || details.overview,
+    releaseDate,
+    imageUrl: coverUrl,
+    attachments: [
+      ...(coverUrl &&
+      !seasonPosters.some((p) => p.url === coverUrl) &&
+      !tmdbPosters.some((p) => p.url === coverUrl)
+        ? [
+            {
+              type: "cover" as const,
+              url: coverUrl,
+              source: "tmdb",
+            },
+          ]
+        : []),
+      ...seasonPosters,
+      ...tmdbPosters,
+      ...(bestMatch.backdrop_path &&
+      !tmdbBackdrops.some(
+        (b) =>
+          b.url ===
+          `https://image.tmdb.org/t/p/w1280${bestMatch.backdrop_path}`,
+      )
+        ? [
+            {
+              type: "background" as const,
+              url: `https://image.tmdb.org/t/p/w1280${bestMatch.backdrop_path}`,
+              source: "tmdb",
+            },
+          ]
+        : []),
+      ...tmdbBackdrops,
+      ...tmdbLogos,
+    ],
+    aliases,
+    facts: facts.length > 0 ? facts : undefined,
+  };
+}
+
 function cleanSearchQuery(name: string): string {
   let cleaned = name;
   cleaned = cleaned.replace(/\b\d{12,13}\b/g, "");
@@ -2980,11 +3402,37 @@ export async function confrontWithDatabase(
 
 async function getTMDBSuggestions(name: string): Promise<string[]> {
   try {
-    const searchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(name)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
-    const res = await axios.get(searchUrl);
-    return (res.data?.results || [])
+    const seriesIntent = parseTMDBSeriesIntent(name);
+    const movieSearchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(name)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
+    const tvSearchUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(seriesIntent.searchTitle)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
+
+    const [movieRes, tvRes] = await Promise.all([
+      seriesIntent.isSeriesLike
+        ? Promise.resolve({ data: { results: [] } })
+        : axios.get(movieSearchUrl),
+      axios.get(tvSearchUrl),
+    ]);
+
+    const movieSuggestions = (movieRes.data?.results || [])
       .slice(0, 5)
-      .map((m: any) => m.title as string);
+      .map((m: any) => m.title as string)
+      .filter(Boolean);
+    const tvSuggestions = (tvRes.data?.results || [])
+      .slice(0, 5)
+      .map((m: any) =>
+        seriesIntent.seasonNumber
+          ? `${m.name} - Saison ${seriesIntent.seasonNumber}`
+          : (m.name as string),
+      )
+      .filter(Boolean);
+
+    return Array.from(
+      new Set(
+        seriesIntent.isSeriesLike
+          ? [...tvSuggestions, ...movieSuggestions]
+          : [...movieSuggestions, ...tvSuggestions],
+      ),
+    ).slice(0, 5);
   } catch (e) {
     console.warn("[TMDB] Suggestions failed:", e);
     return [];

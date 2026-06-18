@@ -30,28 +30,46 @@ export interface MediaInput {
 }
 
 // ─── Priorité source pour les covers ─────────────────────────────────────────
-// screenscraper > igdb > rawg (scan physique > digital)
-const COVER_SOURCE_PRIORITY = ["barcode", "screenscraper", "igdb", "rawg"];
+// screenscraper > physical catalog scans > digital artwork fallbacks.
+const COVER_SOURCE_PRIORITY = [
+  "barcode",
+  "screenscraper",
+  "mobygames",
+  "coverproject",
+  "igdb",
+  "steamgriddb",
+  "rawg",
+  "steam",
+];
 
 function getSourceScore(a: MediaItem, type: string): number {
   const source = a.source ?? "";
   const role = a.role ?? "";
+  const roleLower = role.toLowerCase();
 
   if (type === "games") {
+    // Objectif : une vraie BOÎTE en cover par défaut, peu importe la source.
     if (source === "screenscraper") {
+      if (roleLower.includes("mixrbv")) return 90; // garde-fou (normalement non émis)
+      // Vraies boîtes plates box-2D, par région.
       if (role === "fr") return 1;
       if (role === "eu") return 2;
       if (role === "wor") return 3;
-      if (role && !role.endsWith("-3d")) return 4;
-      if (role === "fr-3d") return 5;
-      if (role === "eu-3d") return 6;
-      if (role === "wor-3d") return 7;
-      if (role && role.endsWith("-3d")) return 8;
+      if (role && !roleLower.endsWith("-3d")) return 4; // autres régions box-2D
+      // box-3D (rendu en perspective) après les boîtes plates des autres sources.
+      if (roleLower.endsWith("-3d")) return 8;
       return 9;
     }
+    if (source === "mobygames") return 5; // scans de boîte (catalogue)
+    // SteamGridDB : grille verticale = format boîte → au-dessus du digital.
+    if (source === "steamgriddb" && roleLower.includes("grid-vertical"))
+      return 6;
+    if (source === "coverproject") return 7;
     if (source === "barcode") return 10;
-    if (source === "igdb") return 11;
+    if (source === "igdb") return 11; // covers digitales
     if (source === "rawg") return 12;
+    if (source === "steam") return 13;
+    if (source === "steamgriddb") return 14; // autres formats (horizontal, etc.)
     return 99;
   }
 
@@ -104,11 +122,15 @@ function sortBySource(
  *   4. Attachment type=artwork[0]
  *   5. Attachment type=screenshot[0]
  */
-export function getCoverImage(
-  item: MediaInput,
-): string | null {
-  // 1. Photo utilisateur
-  if (item.imageUrl) return item.imageUrl;
+export function getCoverImage(item: MediaInput): string | null {
+  const type = item.metadata?.sourceType ?? item.shelf?.type ?? "games";
+
+  // 1. Photo utilisateur / image locale explicite.
+  // For games, legacy external covers from IGDB/RAWG should not hide
+  // structured physical scans from ScreenScraper.
+  const isExternalGameImage =
+    type === "games" && /^https?:\/\//i.test(item.imageUrl || "");
+  if (item.imageUrl && !isExternalGameImage) return item.imageUrl;
 
   const attachments = (item.metadata?.attachments ?? []) as MediaItem[];
 
@@ -130,7 +152,10 @@ export function getCoverImage(
   const screenshot = attachments.find((a) => a.type === "screenshot");
   if (screenshot) return screenshot.url;
 
-  // 6. Image générique (backward compat)
+  // 6. Legacy external item image fallback.
+  if (item.imageUrl) return item.imageUrl;
+
+  // 7. Image générique (backward compat)
   const generic = attachments.find((a) => a.type === "image");
   if (generic) return generic.url;
 
@@ -147,9 +172,7 @@ export function getCoverImage(
  *   3. Attachment type=screenshot[0]
  *   4. getCoverImage() (fallback)
  */
-export function getHeroImage(
-  item: MediaInput,
-): string | null {
+export function getHeroImage(item: MediaInput): string | null {
   const attachments = (item.metadata?.attachments ?? []) as MediaItem[];
 
   const bg = attachments.find((a) => a.type === "background");
@@ -171,10 +194,7 @@ export function getHeroImage(
  * Ordre: cover → screenshots → artworks → images génériques
  * Dédupliqués par URL.
  */
-export function getGalleryImages(
-  item: MediaInput,
-  max?: number,
-): MediaItem[] {
+export function getGalleryImages(item: MediaInput, max?: number): MediaItem[] {
   const seen = new Set<string>();
   const result: MediaItem[] = [];
 
@@ -188,7 +208,10 @@ export function getGalleryImages(
   const attachments = (item.metadata?.attachments ?? []) as MediaItem[];
 
   // Covers (sorted by source priority)
-  sortBySource(attachments.filter((a) => a.type === "cover"), item).forEach(add);
+  sortBySource(
+    attachments.filter((a) => a.type === "cover"),
+    item,
+  ).forEach(add);
 
   // Legacy imageUrl (if not already added)
   if (item.metadata?.imageUrl) {
@@ -231,4 +254,3 @@ export function getMediaTypeLabel(type: string): string {
   };
   return labels[type] ?? type;
 }
-

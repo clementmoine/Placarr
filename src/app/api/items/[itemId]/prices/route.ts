@@ -4,6 +4,8 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import { fetchPricesFromChasseAuxLivres } from "@/services/chasseAuxLivres";
 import { fetchPricesFromPriceCharting } from "@/services/priceCharting";
 import { fetchPricesFromAchatMoinsCher } from "@/services/achatMoinsCher";
+import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
+import { replacePriceOffers, type PriceOfferInput } from "@/services/evidence";
 import { cleanCode } from "@/lib/barcodeQuery";
 import { resolveItemId } from "@/lib/resolveIds";
 
@@ -18,7 +20,11 @@ export async function GET(
   const shelfId = req.nextUrl.searchParams.get("shelfId");
 
   try {
-    const resolvedItemId = await resolveItemId(itemId, shelfId, session.user.id);
+    const resolvedItemId = await resolveItemId(
+      itemId,
+      shelfId,
+      session.user.id,
+    );
     const item = await prisma.item.findUnique({
       where: { id: resolvedItemId },
       include: { shelf: true, metadata: true },
@@ -55,7 +61,7 @@ export async function GET(
 
     const isCacheFresh = (cacheRecord: any) => {
       if (!cacheRecord || !cacheRecord.priceLastUpdated) return false;
-      
+
       const hasAnyPrice =
         cacheRecord.priceNew !== null ||
         cacheRecord.priceUsed !== null ||
@@ -63,7 +69,7 @@ export async function GET(
 
       const ageInMs =
         Date.now() - new Date(cacheRecord.priceLastUpdated).getTime();
-      
+
       const cacheLifetime = hasAnyPrice ? 24 * 60 * 60 * 1000 : 5 * 60 * 1000;
       return ageInMs < cacheLifetime;
     };
@@ -85,43 +91,52 @@ export async function GET(
       `[API Prices] Fetching fresh prices for barcode ${cleanedBarcode} (shelf type: ${item.shelf.type})`,
     );
 
+    const rawNamesList = cached?.rawNames?.map((rn) => rn.value) || [];
+    let aliases: string[] = [];
+    if (item.metadata?.aliases) {
+      try {
+        aliases = JSON.parse(item.metadata.aliases);
+      } catch (error) {
+        console.warn("[API Prices] Failed to parse metadata aliases:", error);
+      }
+    }
+    const fallbackNames = Array.from(
+      new Set(
+        [item.metadata?.title, ...aliases, item.name, ...rawNamesList].filter(
+          (name): name is string => !!name && name.trim().length > 0,
+        ),
+      ),
+    );
+    const leDenicheurQueries = [cleanedBarcode, ...fallbackNames];
+
     let standardPrices: any = null;
     let amcPrices: any = null;
+    let leDenicheurPrices: any = null;
 
     if (item.shelf.type === "games") {
-      const rawNamesList = cached?.rawNames?.map((rn) => rn.value) || [];
-      let aliases: string[] = [];
-      if (item.metadata?.aliases) {
-        try {
-          aliases = JSON.parse(item.metadata.aliases);
-        } catch (error) {
-          console.warn("[API Prices] Failed to parse metadata aliases:", error);
-        }
-      }
-      const fallbackNames = Array.from(
-        new Set(
-          [
-            item.metadata?.title,
-            ...aliases,
-            item.name,
-            ...rawNamesList,
-          ].filter((name): name is string => !!name && name.trim().length > 0),
-        ),
-      );
       const hasNtscIndicator =
         /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(item.name) ||
         /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(item.shelf.name) ||
         rawNamesList.some((rn) => /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(rn));
       const isPal = !hasNtscIndicator;
 
-      const CLASSICS_KEYWORDS = ["classics", "platinum", "essential", "players choice", "player's choice", "greatest hits", "nintendo selects", "best of"];
+      const CLASSICS_KEYWORDS = [
+        "classics",
+        "platinum",
+        "essential",
+        "players choice",
+        "player's choice",
+        "greatest hits",
+        "nintendo selects",
+        "best of",
+      ];
       const isClassics =
         rawNamesList.some((rn) =>
-          CLASSICS_KEYWORDS.some((kw) => rn.toLowerCase().includes(kw))
+          CLASSICS_KEYWORDS.some((kw) => rn.toLowerCase().includes(kw)),
         ) ||
         CLASSICS_KEYWORDS.some((kw) => item.name.toLowerCase().includes(kw));
 
-      const [stdRes, amcRes] = await Promise.allSettled([
+      const [stdRes, amcRes, leDenicheurRes] = await Promise.allSettled([
         fetchPricesFromPriceCharting(
           cleanedBarcode,
           fallbackNames,
@@ -130,16 +145,22 @@ export async function GET(
           isClassics,
         ),
         fetchPricesFromAchatMoinsCher(cleanedBarcode),
+        fetchPricesFromLeDenicheur(leDenicheurQueries),
       ]);
       standardPrices = stdRes.status === "fulfilled" ? stdRes.value : null;
       amcPrices = amcRes.status === "fulfilled" ? amcRes.value : null;
+      leDenicheurPrices =
+        leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
     } else {
-      const [stdRes, amcRes] = await Promise.allSettled([
+      const [stdRes, amcRes, leDenicheurRes] = await Promise.allSettled([
         fetchPricesFromChasseAuxLivres(cleanedBarcode),
         fetchPricesFromAchatMoinsCher(cleanedBarcode),
+        fetchPricesFromLeDenicheur(leDenicheurQueries),
       ]);
       standardPrices = stdRes.status === "fulfilled" ? stdRes.value : null;
       amcPrices = amcRes.status === "fulfilled" ? amcRes.value : null;
+      leDenicheurPrices =
+        leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
     }
 
     const candidatesNew: number[] = [];
@@ -150,6 +171,11 @@ export async function GET(
       candidatesNew.push(standardPrices.priceNew);
     if (amcPrices?.priceNew !== undefined && amcPrices.priceNew !== null)
       candidatesNew.push(amcPrices.priceNew);
+    if (
+      leDenicheurPrices?.priceNew !== undefined &&
+      leDenicheurPrices.priceNew !== null
+    )
+      candidatesNew.push(leDenicheurPrices.priceNew);
     const priceNew =
       candidatesNew.length > 0 ? Math.min(...candidatesNew) : null;
 
@@ -173,11 +199,12 @@ export async function GET(
         item.shelf.type === "games" ? "PriceCharting" : "ChasseAuxLivres",
       );
     if (amcPrices) providersList.push("AchatMoinsCher");
+    if (leDenicheurPrices) providersList.push("LeDenicheur");
     const provider =
       providersList.length > 0 ? providersList.join("+") : "None";
 
     // Store/Update cache
-    await prisma.barcodeCache.upsert({
+    const cacheRecord = await prisma.barcodeCache.upsert({
       where: { barcode: cleanedBarcode },
       create: {
         barcode: cleanedBarcode,
@@ -196,6 +223,84 @@ export async function GET(
         priceLastUpdated: now,
       },
     });
+
+    const standardSource =
+      item.shelf.type === "games" ? "PriceCharting" : "ChasseAuxLivres";
+    const priceOffers: PriceOfferInput[] = [];
+    const pushOffer = (
+      source: string,
+      condition: string,
+      priceCents: unknown,
+      rawValue: unknown,
+      extra: Partial<PriceOfferInput> = {},
+    ) => {
+      if (typeof priceCents !== "number" || priceCents <= 0) return;
+      priceOffers.push({
+        source,
+        condition,
+        priceCents,
+        rawValue,
+        ...extra,
+      });
+    };
+
+    if (item.shelf.type === "games") {
+      pushOffer(
+        "PriceCharting",
+        "loose",
+        standardPrices?.priceUsed,
+        standardPrices,
+      );
+      pushOffer(
+        "PriceCharting",
+        "cib",
+        standardPrices?.priceUsedCIB,
+        standardPrices,
+      );
+      pushOffer(
+        "PriceCharting",
+        "new",
+        standardPrices?.priceNew,
+        standardPrices,
+      );
+    } else {
+      pushOffer(
+        standardSource,
+        "used",
+        standardPrices?.priceUsed,
+        standardPrices,
+      );
+      pushOffer(
+        standardSource,
+        "new",
+        standardPrices?.priceNew,
+        standardPrices,
+      );
+    }
+
+    pushOffer("AchatMoinsCher", "used", amcPrices?.priceUsed, amcPrices);
+    pushOffer("AchatMoinsCher", "new", amcPrices?.priceNew, amcPrices);
+    pushOffer(
+      "LeDenicheur",
+      "new",
+      leDenicheurPrices?.priceNew,
+      leDenicheurPrices,
+      {
+        productName: leDenicheurPrices?.productName ?? null,
+        merchantName: leDenicheurPrices?.merchantName ?? null,
+        sourceUrl: leDenicheurPrices?.sourceUrl ?? null,
+        offerCount: leDenicheurPrices?.offerCount ?? null,
+      },
+    );
+
+    await replacePriceOffers(
+      {
+        barcodeCacheId: cacheRecord.id,
+        itemId: item.id,
+        metadataId: item.metadataId,
+      },
+      priceOffers,
+    );
 
     return NextResponse.json({
       priceNew,

@@ -44,6 +44,7 @@ services:
       #- SERP_WOW_API_KEY=
       #- VALUE_SERP_API_KEY=
       #- RAWG_API_KEY=
+      #- STEAMGRIDDB_API_KEY=
       #- TMDB_API_KEY=
     volumes:
       - ${ROOT:-.}/config/placarr:/config

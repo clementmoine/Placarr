@@ -18,8 +18,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { saveItem } from "@/lib/api/items";
 import { itemPath } from "@/lib/slugs";
 import { syncItemQueries } from "@/lib/itemQueryCache";
+import { useCameraAvailability } from "@/lib/hooks/useCameraAvailability";
 import { ItemModal } from "./modals/ItemModal";
 import { QuickScanModal } from "./modals/QuickScanModal";
+import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
 import {
   BarcodeScannerView,
   type BarcodeScannerResult,
@@ -28,6 +30,7 @@ import {
 export function ScanFAB() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string>("");
+  const [manualBarcode, setManualBarcode] = useState<string>("");
   const [quickScanOpen, setQuickScanOpen] = useState<boolean>(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
   const [prefilledItemValues, setPrefilledItemValues] = useState<
@@ -44,6 +47,7 @@ export function ScanFAB() {
   const router = useRouter();
   const { t } = useLocale();
   const queryClient = useQueryClient();
+  const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
 
   const shelfMatch = pathname.match(/^\/shelves\/([^\/]+)/);
   const shelfId = shelfMatch ? shelfMatch[1] : undefined;
@@ -64,6 +68,27 @@ export function ScanFAB() {
     console.error("Scanner error:", error);
     toast.error(t("scanner.error") || "Error scanning");
   };
+
+  const handleScanButtonClick = () => {
+    if (isCameraUnavailable || isCheckingCamera) {
+      setScannedBarcode("");
+      setQuickScanOpen(true);
+      return;
+    }
+    setIsScannerOpen(true);
+  };
+
+  const handleManualBarcodeSubmit = (barcode: string) => {
+    setManualBarcode("");
+    setIsScannerOpen(false);
+    setScannedBarcode(barcode);
+    setQuickScanOpen(true);
+  };
+
+  const shouldUseManualScan = isCameraUnavailable || isCheckingCamera;
+  const scanButtonLabel = shouldUseManualScan
+    ? t("scanner.manualScanTitle")
+    : t("scanner.title");
 
   const handleSelectProduct = (product: {
     name: string;
@@ -108,18 +133,29 @@ export function ScanFAB() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setIsScannerOpen(true)}
+          onClick={handleScanButtonClick}
+          aria-label={scanButtonLabel}
+          title={scanButtonLabel}
           className="size-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center relative focus:outline-none cursor-pointer border border-primary-foreground/10"
         >
-          <Scan className="size-6" />
-          <Barcode className="absolute size-3" />
-
-          {/* Pulsing ring */}
-          <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+          {shouldUseManualScan ? (
+            <Barcode className="size-6" />
+          ) : (
+            <>
+              <Scan className="size-6" />
+              <Barcode className="absolute size-3" />
+            </>
+          )}
         </motion.button>
       </div>
 
-      <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+      <Dialog
+        open={isScannerOpen}
+        onOpenChange={(open) => {
+          setIsScannerOpen(open);
+          if (!open) setManualBarcode("");
+        }}
+      >
         <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh] w-[95vw] sm:max-w-md rounded-2xl border border-border dark:border-zinc-800 shadow-2xl">
           <DialogHeader className="p-5 border-b shrink-0 flex flex-col gap-1">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
@@ -157,6 +193,14 @@ export function ScanFAB() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="border-t border-border/60 p-4">
+            <ManualBarcodeEntry
+              value={manualBarcode}
+              onValueChange={setManualBarcode}
+              onSubmit={handleManualBarcodeSubmit}
+            />
           </div>
         </DialogContent>
       </Dialog>

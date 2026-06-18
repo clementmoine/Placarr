@@ -19,10 +19,13 @@ import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { getSetting } from "./settings";
 import { applyConsensus } from "@/lib/metadataConsensus";
+import {
+  replaceFieldEvidence,
+  type FieldEvidenceInput,
+} from "@/services/evidence";
 import { fetchFromIGDB, getIGDBSuggestions } from "./igdb";
 import { fetchFromSteam } from "./steam";
 import { fetchFromHowLongToBeat } from "./howLongToBeat";
-import { fetchFromMobyGames } from "./mobygames";
 import { fetchFromSteamGridDB } from "./steamGridDb";
 
 export interface MetadataAttachment {
@@ -60,6 +63,7 @@ export interface MetadataResult {
   aliases?: string[];
   regionalTitles?: { region?: string; text: string }[];
   facts?: MetadataFact[];
+  fieldEvidence?: FieldEvidenceInput[];
   lastFetched?: string;
 }
 
@@ -158,6 +162,194 @@ function normalizeMetadataFacts(facts: MetadataFact[]): MetadataFact[] {
     if (pegi) return fact === pegi;
     return esrb ? fact === esrb : false;
   });
+}
+
+function cleanEvidenceText(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  const text = String(value).replace(/\s+/g, " ").trim();
+  return text.length > 0 ? text : null;
+}
+
+function fieldForFact(fact: MetadataFact) {
+  if (fact.kind === "rating") return "rating";
+  if (fact.kind === "age-rating") return "ageRating";
+  if (
+    fact.kind === "time-to-beat" ||
+    fact.kind === "duration" ||
+    fact.kind === "completion-time"
+  ) {
+    return "timeToBeat";
+  }
+  return fact.label ? `${fact.kind}:${fact.label}` : fact.kind;
+}
+
+function fieldForAttachment(attachment: MetadataAttachment) {
+  if (attachment.type === "cover") return "cover";
+  return `attachment:${attachment.type}`;
+}
+
+function pushEvidence(
+  evidence: FieldEvidenceInput[],
+  input: FieldEvidenceInput,
+) {
+  const value = cleanEvidenceText(input.value);
+  if (!value || !input.field || !input.source) return;
+  evidence.push({
+    ...input,
+    value,
+  });
+}
+
+function metadataFieldEvidence(
+  source: string,
+  metadata: MetadataResult | null | undefined,
+  options: { confidence?: number; priority?: number } = {},
+): FieldEvidenceInput[] {
+  if (!metadata) return [];
+  const evidence: FieldEvidenceInput[] = [];
+  const base = {
+    source,
+    confidence: options.confidence,
+    priority: options.priority,
+  };
+
+  pushEvidence(evidence, {
+    ...base,
+    field: "title",
+    value: metadata.title || "",
+  });
+  pushEvidence(evidence, {
+    ...base,
+    field: "description",
+    value: metadata.description || "",
+  });
+  pushEvidence(evidence, {
+    ...base,
+    field: "releaseDate",
+    value: metadata.releaseDate || "",
+  });
+  pushEvidence(evidence, {
+    ...base,
+    field: "imageUrl",
+    value: metadata.imageUrl || "",
+    sourceUrl: metadata.imageUrl,
+  });
+  pushEvidence(evidence, {
+    ...base,
+    field: "duration",
+    value: metadata.duration?.toString() || "",
+  });
+  pushEvidence(evidence, {
+    ...base,
+    field: "pageCount",
+    value: metadata.pageCount?.toString() || "",
+  });
+  pushEvidence(evidence, {
+    ...base,
+    field: "tracksCount",
+    value: metadata.tracksCount?.toString() || "",
+  });
+
+  for (const author of metadata.authors || []) {
+    pushEvidence(evidence, {
+      ...base,
+      field: "author",
+      value: author.name,
+      rawValue: author,
+      sourceUrl: author.imageUrl || undefined,
+    });
+  }
+
+  for (const publisher of metadata.publishers || []) {
+    pushEvidence(evidence, {
+      ...base,
+      field: "publisher",
+      value: publisher.name,
+      rawValue: publisher,
+      sourceUrl: publisher.imageUrl || undefined,
+    });
+  }
+
+  for (const alias of metadata.aliases || []) {
+    pushEvidence(evidence, {
+      ...base,
+      field: "alias",
+      value: alias,
+      rawValue: { alias },
+    });
+  }
+
+  for (const regionalTitle of metadata.regionalTitles || []) {
+    pushEvidence(evidence, {
+      ...base,
+      field: "regionalTitle",
+      value: regionalTitle.text,
+      region: regionalTitle.region,
+      rawValue: regionalTitle,
+    });
+  }
+
+  for (const fact of metadata.facts || []) {
+    pushEvidence(evidence, {
+      source: fact.source || source,
+      field: fieldForFact(fact),
+      value: fact.value,
+      confidence: fact.confidence ?? options.confidence,
+      priority: fact.priority ?? options.priority,
+      sourceUrl: fact.url,
+      rawValue: fact,
+    });
+  }
+
+  for (const attachment of metadata.attachments || []) {
+    pushEvidence(evidence, {
+      source: attachment.source || source,
+      field: fieldForAttachment(attachment),
+      value: attachment.url,
+      sourceUrl: attachment.url,
+      rawValue: attachment,
+      priority: options.priority,
+    });
+  }
+
+  return evidence;
+}
+
+function dedupeFieldEvidence(
+  evidence: FieldEvidenceInput[],
+): FieldEvidenceInput[] {
+  const seen = new Set<string>();
+  const output: FieldEvidenceInput[] = [];
+  for (const item of evidence) {
+    const key = [
+      item.field,
+      item.source,
+      item.value,
+      item.sourceUrl || "",
+      item.region || "",
+    ]
+      .join("\u0000")
+      .toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    output.push(item);
+  }
+  return output;
+}
+
+function withProviderEvidence(
+  metadata: MetadataResult | null,
+  source: string,
+): MetadataResult | null {
+  if (!metadata) return null;
+  const providerEvidence = metadataFieldEvidence(source, metadata);
+  return {
+    ...metadata,
+    fieldEvidence: dedupeFieldEvidence([
+      ...(metadata.fieldEvidence || []),
+      ...providerEvidence,
+    ]),
+  };
 }
 
 export function formatMetadataForStorage(
@@ -475,6 +667,12 @@ async function storeMetadata(
     updatedAt: now,
   };
 
+  let storedMetadata: Metadata & {
+    attachments?: Attachment[];
+    authors?: Author[];
+    publishers?: Publisher[];
+  };
+
   if (item?.metadata) {
     // Delete existing attachments
     await prisma.attachment.deleteMany({
@@ -482,7 +680,7 @@ async function storeMetadata(
     });
 
     // Update existing metadata with new authors and publishers
-    return prisma.metadata.update({
+    storedMetadata = await prisma.metadata.update({
       where: { id: item.metadata.id },
       data: {
         ...metadataData,
@@ -502,7 +700,7 @@ async function storeMetadata(
     });
   } else {
     // Create new metadata and connect it to the item
-    return prisma.metadata.create({
+    storedMetadata = await prisma.metadata.create({
       data: {
         ...metadataData,
         items: {
@@ -515,6 +713,24 @@ async function storeMetadata(
       include: { attachments: true, authors: true, publishers: true },
     });
   }
+
+  const evidence =
+    metadata.fieldEvidence && metadata.fieldEvidence.length > 0
+      ? metadata.fieldEvidence
+      : metadataFieldEvidence("MergedEngine", metadata, {
+          confidence: 0.72,
+          priority: 100,
+        });
+
+  await replaceFieldEvidence(
+    {
+      itemId,
+      metadataId: storedMetadata.id,
+    },
+    evidence,
+  );
+
+  return storedMetadata;
 }
 
 async function fetchMetadataByType(
@@ -525,18 +741,27 @@ async function fetchMetadataByType(
 ): Promise<MetadataResult | null> {
   switch (type) {
     case "musics":
-      return (await fetchFromDeezer(name, barcode)) as MetadataResult | null;
+      return withProviderEvidence(
+        (await fetchFromDeezer(name, barcode)) as MetadataResult | null,
+        "Deezer",
+      );
     case "games":
       return fetchFromAllGameSources(name, barcode, platform);
     case "boardgames":
-      return (await fetchFromBGG(name)) as MetadataResult | null;
+      return withProviderEvidence(
+        (await fetchFromBGG(name)) as MetadataResult | null,
+        "BoardGameGeek",
+      );
     case "books":
-      return (await fetchFromOpenLibrary(
-        name,
-        barcode,
-      )) as MetadataResult | null;
+      return withProviderEvidence(
+        (await fetchFromOpenLibrary(name, barcode)) as MetadataResult | null,
+        "OpenLibrary",
+      );
     case "movies":
-      return (await fetchFromTMDB(name)) as MetadataResult | null;
+      return withProviderEvidence(
+        (await fetchFromTMDB(name)) as MetadataResult | null,
+        "TMDB",
+      );
     default:
       return null;
   }
@@ -547,7 +772,6 @@ async function fetchMetadataByType(
  * Runs IGDB, ScreenScraper, HLTB, Steam, RAWG and optional artwork/catalog
  * providers in parallel and merges their results:
  *   - ScreenScraper: best for physical box art covers (scanned)
- *   - MobyGames: strong catalog fallback with platform-specific cover scans
  *   - IGDB: best for descriptions, screenshots, artworks (HD)
  *   - HowLongToBeat: direct playtime enrichment when IGDB has no HLTB data
  *   - Steam: useful enrichment facts, store art and reference links
@@ -566,7 +790,6 @@ async function fetchFromAllGameSources(
     hltbResult,
     steamResult,
     rawgResult,
-    mobyResult,
     steamGridResult,
   ] = await Promise.allSettled([
     fetchFromIGDB(name, platform),
@@ -574,7 +797,6 @@ async function fetchFromAllGameSources(
     fetchFromHowLongToBeat(name, platform),
     includePcSources ? fetchFromSteam(name) : Promise.resolve(null),
     fetchFromRawg(name),
-    fetchFromMobyGames(name, platform),
     fetchFromSteamGridDB(name),
   ]);
 
@@ -583,14 +805,12 @@ async function fetchFromAllGameSources(
   let hltb = hltbResult.status === "fulfilled" ? hltbResult.value : null;
   const steam = steamResult.status === "fulfilled" ? steamResult.value : null;
   let rawg = rawgResult.status === "fulfilled" ? rawgResult.value : null;
-  let moby = mobyResult.status === "fulfilled" ? mobyResult.value : null;
   let steamGrid =
     steamGridResult.status === "fulfilled" ? steamGridResult.value : null;
 
   let canonicalFallbackNames = collectCanonicalFallbackNames(name, [
     igdb,
     ss,
-    moby,
     rawg,
     steam,
     steamGrid,
@@ -613,7 +833,6 @@ async function fetchFromAllGameSources(
   canonicalFallbackNames = collectCanonicalFallbackNames(name, [
     igdb,
     ss,
-    moby,
     rawg,
     steam,
     steamGrid,
@@ -655,13 +874,6 @@ async function fetchFromAllGameSources(
     }
   }
 
-  if (!moby) {
-    for (const fallbackName of canonicalFallbackNames.slice(0, 12)) {
-      moby = await fetchFromMobyGames(fallbackName, platform);
-      if (moby) break;
-    }
-  }
-
   if (!steamGrid) {
     for (const fallbackName of canonicalFallbackNames.slice(0, 12)) {
       steamGrid = await fetchFromSteamGridDB(fallbackName);
@@ -677,16 +889,33 @@ async function fetchFromAllGameSources(
   }
 
   // If all failed, return null
-  if (!igdb && !ss && !hltb && !steam && !rawg && !moby && !steamGrid) {
+  if (!igdb && !ss && !hltb && !steam && !rawg && !steamGrid) {
     return null;
   }
 
-  return preferRequestedDisplayTitle(
-    mergeGameMetadata(igdb, ss, hltb, steam, rawg, moby, steamGrid, {
-      includePcSources,
-    }),
-    name,
-  );
+  const providerEvidence = dedupeFieldEvidence([
+    ...metadataFieldEvidence("IGDB", igdb),
+    ...metadataFieldEvidence("ScreenScraper", ss),
+    ...metadataFieldEvidence("HowLongToBeat", hltb),
+    ...(includePcSources ? metadataFieldEvidence("Steam", steam) : []),
+    ...metadataFieldEvidence("RAWG", rawg),
+    ...metadataFieldEvidence("SteamGridDB", steamGrid),
+  ]);
+  const merged = mergeGameMetadata(igdb, ss, hltb, steam, rawg, steamGrid, {
+    includePcSources,
+  });
+  const mergedWithEvidence = {
+    ...merged,
+    fieldEvidence: dedupeFieldEvidence([
+      ...providerEvidence,
+      ...metadataFieldEvidence("MergedEngine", merged, {
+        confidence: 0.8,
+        priority: 200,
+      }),
+    ]),
+  };
+
+  return preferRequestedDisplayTitle(mergedWithEvidence, name);
 }
 
 function collectCanonicalFallbackNames(
@@ -909,38 +1138,26 @@ function mergeGameMetadata(
   hltb: MetadataResult | null,
   steam: MetadataResult | null,
   rawg: MetadataResult | null,
-  moby: MetadataResult | null,
   steamGrid: MetadataResult | null,
   options: { includePcSources?: boolean } = {},
 ): MetadataResult {
-  // Title: ScreenScraper (physical, region-aware) > MobyGames > IGDB > RAWG
+  // Title: ScreenScraper (physical, region-aware) > IGDB > RAWG
   const title =
-    ss?.title ||
-    moby?.title ||
-    igdb?.title ||
-    rawg?.title ||
-    steam?.title ||
-    steamGrid?.title;
+    ss?.title || igdb?.title || rawg?.title || steam?.title || steamGrid?.title;
 
-  // Description: IGDB tends to be richer, MobyGames is a strong catalog fallback.
+  // Description: IGDB tends to be richer than ScreenScraper / RAWG.
   const description =
     igdb?.description ||
-    moby?.description ||
     ss?.description ||
     rawg?.description ||
     steam?.description;
 
-  // Release date: IGDB > MobyGames platform release > ScreenScraper > RAWG
-  const releaseDate =
-    igdb?.releaseDate ||
-    moby?.releaseDate ||
-    ss?.releaseDate ||
-    rawg?.releaseDate;
+  // Release date: IGDB > ScreenScraper > RAWG
+  const releaseDate = igdb?.releaseDate || ss?.releaseDate || rawg?.releaseDate;
 
   // Publishers: merge all lists, deduplicated by name
   const allPublishers = [
     ...(igdb?.publishers || []),
-    ...(moby?.publishers || []),
     ...(ss?.publishers || []),
     ...(rawg?.publishers || []),
     ...(steam?.publishers || []),
@@ -955,7 +1172,6 @@ function mergeGameMetadata(
   // imageUrl: prefer physical scans, then catalog covers/artwork.
   const imageUrl =
     ss?.imageUrl ||
-    moby?.imageUrl ||
     igdb?.imageUrl ||
     rawg?.imageUrl ||
     steamGrid?.imageUrl ||
@@ -963,18 +1179,14 @@ function mergeGameMetadata(
 
   // Attachments: merge all, ordering:
   //   1. Covers from ScreenScraper (physical scans, highest priority)
-  //   2. Covers from MobyGames / RAWG-CoverProject physical fallbacks
+  //   2. Covers from RAWG / CoverProject physical fallbacks
   //   3. Covers from IGDB / SteamGridDB / Steam
-  //   4. Screenshots from IGDB, MobyGames, ScreenScraper, RAWG/Steam
+  //   4. Screenshots from IGDB, ScreenScraper, RAWG/Steam
   //   5. Artworks/backgrounds/logos
   //   6. Everything else
   const ssAttachments = (ss?.attachments || []).map((a) => ({
     ...a,
     source: a.source || "screenscraper",
-  }));
-  const mobyAttachments = (moby?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "mobygames",
   }));
   const igdbAttachments = (igdb?.attachments || []).map((a) => ({
     ...a,
@@ -996,16 +1208,14 @@ function mergeGameMetadata(
   }));
 
   const ssCovers = ssAttachments.filter((a) => a.type === "cover");
-  const mobyCovers = mobyAttachments.filter((a) => a.type === "cover");
   const igdbCovers = igdbAttachments.filter((a) => a.type === "cover");
   const rawgCovers = rawgAttachments.filter((a) => a.type === "cover");
-  const steamGridCovers = steamGridAttachments.filter((a) => a.type === "cover");
+  const steamGridCovers = steamGridAttachments.filter(
+    (a) => a.type === "cover",
+  );
   const steamCovers = steamAttachments.filter((a) => a.type === "cover");
 
   const igdbScreenshots = igdbAttachments.filter(
-    (a) => a.type === "screenshot",
-  );
-  const mobyScreenshots = mobyAttachments.filter(
     (a) => a.type === "screenshot",
   );
   const ssScreenshots = ssAttachments.filter((a) => a.type === "screenshot");
@@ -1024,9 +1234,6 @@ function mergeGameMetadata(
     (a) => a.type === "artwork" || a.type === "background",
   );
 
-  const mobyOther = mobyAttachments.filter(
-    (a) => a.type !== "cover" && a.type !== "screenshot",
-  );
   const ssOther = ssAttachments.filter(
     (a) => a.type !== "cover" && a.type !== "screenshot",
   );
@@ -1054,20 +1261,17 @@ function mergeGameMetadata(
 
   const allAttachments: MetadataAttachment[] = [
     ...ssCovers,
-    ...mobyCovers,
     ...igdbCovers,
     ...rawgCovers,
     ...steamGridCovers,
     ...steamCovers,
     ...igdbScreenshots,
-    ...mobyScreenshots,
     ...ssScreenshots,
     ...rawgScreenshots,
     ...steamScreenshots,
     ...igdbArtworks,
     ...steamGridArtworks,
     ...steamArtworks,
-    ...mobyOther,
     ...ssOther,
     ...igdbOther,
     ...rawgOther,
@@ -1086,7 +1290,6 @@ function mergeGameMetadata(
   const allAliases = Array.from(
     new Set([
       ...(igdb?.aliases || []),
-      ...(moby?.aliases || []),
       ...(ss?.aliases || []),
       ...(hltb?.aliases || []),
       ...(rawg?.aliases || []),
@@ -1107,7 +1310,6 @@ function mergeGameMetadata(
   );
   const facts = dedupeFacts([
     ...igdbFacts,
-    ...(moby?.facts || []),
     ...(ss?.facts || []),
     ...hltbFacts,
     ...(rawg?.facts || []),
@@ -1218,6 +1420,20 @@ function preferRequestedDisplayTitle(
     ...metadata,
     title: requestedTitle,
     aliases: aliases.length > 0 ? aliases : undefined,
+    fieldEvidence: dedupeFieldEvidence([
+      ...(metadata.fieldEvidence || []),
+      {
+        field: "title",
+        source: "RequestedDisplayTitle",
+        value: requestedTitle,
+        confidence: 0.62,
+        priority: 180,
+        rawValue: {
+          previousTitle: currentTitle,
+          reason: "preferred localized/requested display title",
+        },
+      },
+    ]),
   };
 }
 

@@ -148,10 +148,18 @@ export async function POST(req: NextRequest) {
       condition,
       fetchMetadata = true,
     } = body;
+    if (typeof shelfId !== "string" || !shelfId.trim()) {
+      return NextResponse.json(
+        { error: "Shelf ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const resolvedShelfId = await resolveShelfId(shelfId, auth.user.id);
 
     // Check if shelf exists and user has permission to add items to it
     const shelf = await prisma.shelf.findUnique({
-      where: { id: shelfId },
+      where: { id: resolvedShelfId },
       select: { type: true, userId: true, name: true },
     });
 
@@ -179,7 +187,7 @@ export async function POST(req: NextRequest) {
 
     const item = await prisma.item.create({
       data: {
-        shelfId,
+        shelfId: resolvedShelfId,
         name,
         slug: slugify(name),
         description,
@@ -250,6 +258,9 @@ export async function PATCH(req: NextRequest) {
     const { id, refreshMetadata, lookupQuery, ...data } = body;
     if (typeof data.name === "string") {
       data.slug = slugify(data.name);
+    }
+    if (typeof data.shelfId === "string") {
+      data.shelfId = await resolveShelfId(data.shelfId, auth.user.id);
     }
     const shelfContext =
       typeof data.shelfId === "string" ? data.shelfId : undefined;

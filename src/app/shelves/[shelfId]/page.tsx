@@ -8,7 +8,7 @@ import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Suspense, useCallback, useMemo, useState } from "react";
-import { Plus, Wrench, Pizza, Search } from "lucide-react";
+import { Compass, Plus, Wrench, Pizza, Search } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,7 +44,7 @@ import { useAccount } from "@/lib/hooks/useAccount";
 import { useLocale } from "@/lib/providers/LocaleProvider";
 import colorLib from "color";
 import { getAspectRatio } from "@/lib/cardFormat";
-import { itemPath } from "@/lib/slugs";
+import { itemPath, slugify } from "@/lib/slugs";
 import { syncItemQueries } from "@/lib/itemQueryCache";
 import { getEstimatedItemValueCents } from "@/lib/itemValue";
 
@@ -82,18 +82,31 @@ function ShelfComponent() {
 
   const queryClient = useQueryClient();
 
-  const { data: shelf, isFetching } = useQuery({
+  const {
+    data: shelf,
+    isError,
+    isFetching,
+  } = useQuery({
     queryKey: ["shelf", shelfId, q],
     queryFn: () => getShelf(shelfId, q),
-    initialData: () => {
+    staleTime: 0,
+    refetchOnMount: "always",
+    placeholderData: () => {
       const shelf = queryClient
         .getQueryData<ShelfWithItemCount[]>(["shelves"])
-        ?.find((s) => s.id === shelfId);
+        ?.find(
+          (s) =>
+            s.id === shelfId ||
+            s.slug === shelfId ||
+            slugify(s.name) === shelfId,
+        );
+
+      if (!shelf) return undefined;
 
       // Fake items for proper skeleton
       return {
         ...(shelf as Shelf),
-        items: Array.from({ length: shelf?._count.items || 1 }).map<Item>(
+        items: Array.from({ length: shelf._count.items ?? 1 }).map<Item>(
           () => ({
             id: "",
             name: "",
@@ -112,8 +125,6 @@ function ShelfComponent() {
         ),
       };
     },
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
   });
 
   const { mutate: shelfMutate } = useMutation<
@@ -262,6 +273,8 @@ function ShelfComponent() {
     return hasPermission(shelf.userId);
   }, [shelf, hasPermission]);
 
+  const resolvedShelfId = shelf?.id || shelfId;
+
   const safeColor = useMemo(() => {
     if (!shelf?.color) return undefined;
     try {
@@ -280,6 +293,30 @@ function ShelfComponent() {
     return getAspectRatio(shelf?.cardFormat, shelf?.type);
   }, [shelf?.cardFormat, shelf?.type]);
 
+  if (!isFetching && (isError || !shelf?.id)) {
+    return (
+      <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
+        <Header />
+        <div className="overflow-y-auto">
+          <div className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-6 p-6 text-center">
+            <Compass className="size-10 text-muted-foreground" />
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("errors.notFoundTitle")}
+              </h1>
+              <p className="max-w-md text-sm text-muted-foreground">
+                {t("errors.notFoundMessage")}
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/shelves">{t("errors.goHome")}</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
       {/* Header */}
@@ -295,7 +332,7 @@ function ShelfComponent() {
             onSubmit={handleShelfModalSubmit}
           />
           <ItemModal
-            shelfId={shelfId}
+            shelfId={resolvedShelfId}
             shelfType={shelf?.type}
             itemId={editingItemId}
             isOpen={visibleModal === "item"}
@@ -454,7 +491,7 @@ function ShelfComponent() {
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
             {sortedItems.map((item, index) =>
-              isFetching ? (
+              isFetching || !item.id ? (
                 <Skeleton
                   key={index}
                   className="flex rounded-xl w-full"
@@ -465,10 +502,7 @@ function ShelfComponent() {
               ) : (
                 <Link
                   key={`${item.id}-${index}`}
-                  href={itemPath(
-                    shelf || { id: shelfId },
-                    item,
-                  )}
+                  href={itemPath(shelf || { id: resolvedShelfId }, item)}
                 >
                   <ItemCard
                     {...item}

@@ -97,10 +97,6 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn2.steamgriddb.com",
       },
-      {
-        protocol: "https",
-        hostname: "www.mobygames.com",
-      },
     ],
   },
 };

@@ -12,6 +12,7 @@ import { AvesAPI } from "@/services/serp/avesAPI";
 import { DataForSEO } from "@/services/serp/dataForSEO";
 import { fetchFromChasseAuxLivres } from "@/services/chasseAuxLivres";
 import { fetchFromAchatMoinsCher } from "@/services/achatMoinsCher";
+import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
 import { extractProductName } from "@/lib/productName";
 
 // Import metadata resolvers
@@ -29,6 +30,7 @@ import {
 import { fetchFromIGDB } from "@/services/igdb";
 import { fetchFromSteam } from "@/services/steam";
 import { fetchFromHowLongToBeat } from "@/services/howLongToBeat";
+import { fetchFromSteamGridDB } from "@/services/steamGridDb";
 
 async function processScrapedNames(
   rawNames: string[] | undefined,
@@ -226,6 +228,10 @@ export async function POST(req: NextRequest) {
           (resolvedNames[0] ? resolvedNames[0].name : null),
         suggestions: uniqueSuggestions.slice(0, 6),
       };
+    } else if (provider === "ledenicheur-prices") {
+      providerName = "LeDenicheur - Prices";
+      const prices = await fetchPricesFromLeDenicheur(query);
+      result = { prices };
     } else if (provider === "openlibrary-barcode") {
       providerName = "Open Library - Barcode";
       const response = await axios.get(
@@ -328,6 +334,10 @@ export async function POST(req: NextRequest) {
     } else if (provider === "rawg-metadata") {
       providerName = "RAWG - Metadata";
       const meta = await fetchFromRawg(query);
+      result = { metadata: meta };
+    } else if (provider === "steamgriddb-metadata") {
+      providerName = "SteamGridDB - Artwork";
+      const meta = await fetchFromSteamGridDB(query);
       result = { metadata: meta };
     } else if (provider === "tmdb-metadata") {
       providerName = "TMDB - Metadata";

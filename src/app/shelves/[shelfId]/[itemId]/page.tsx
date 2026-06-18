@@ -83,7 +83,9 @@ type DetailFact = {
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 const ENRICHMENT_FEATURE_RELEASE = new Date("2026-06-16T17:30:00.000Z");
+const GAME_AGE_RATING_FEATURE_RELEASE = new Date("2026-06-18T08:00:00.000Z");
 const METADATA_REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const ITEM_RATING_SCALE = 10;
 
 function formatRuntimeMinutes(minutes?: number | null) {
   if (!minutes || minutes <= 0) return null;
@@ -98,7 +100,9 @@ function formatDurationSeconds(seconds?: number | null) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.round((seconds % 3600) / 60);
   if (!hours) return `${minutes} min`;
-  return minutes ? `${hours} h ${String(minutes).padStart(2, "0")}` : `${hours} h`;
+  return minutes
+    ? `${hours} h ${String(minutes).padStart(2, "0")}`
+    : `${hours} h`;
 }
 
 function shouldIgnoreItemNavigation(target: EventTarget | null) {
@@ -220,6 +224,8 @@ function formatFactSource(source: string) {
       return "IGDB";
     case "rawg":
       return "RAWG";
+    case "steamgriddb":
+      return "SteamGridDB";
     case "tmdb":
       return "TMDB";
     case "bgg":
@@ -340,14 +346,17 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
   };
 }
 
-function parseRatingOnFive(fact: DetailFact): number | null {
+function parseRatingOnScale(fact: DetailFact): number | null {
   const value = fact.value.replace(",", ".").trim();
   const fractional = value.match(/([\d.]+)\s*\/\s*([\d.]+)/);
   if (fractional) {
     const score = Number(fractional[1]);
     const max = Number(fractional[2]);
     if (Number.isFinite(score) && Number.isFinite(max) && max > 0) {
-      return Math.max(0, Math.min(5, (score / max) * 5));
+      return Math.max(
+        0,
+        Math.min(ITEM_RATING_SCALE, (score / max) * ITEM_RATING_SCALE),
+      );
     }
   }
 
@@ -355,18 +364,21 @@ function parseRatingOnFive(fact: DetailFact): number | null {
   if (percent) {
     const score = Number(percent[1]);
     if (Number.isFinite(score)) {
-      return Math.max(0, Math.min(5, (score / 100) * 5));
+      return Math.max(
+        0,
+        Math.min(ITEM_RATING_SCALE, (score / 100) * ITEM_RATING_SCALE),
+      );
     }
   }
 
   return null;
 }
 
-function formatRatingOnFive(value: number, locale: string) {
+function formatRatingOnScale(value: number, locale: string) {
   return `${value.toLocaleString(locale, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })}/5`;
+  })}/${ITEM_RATING_SCALE}`;
 }
 
 function buildAverageRatingFact(
@@ -376,18 +388,17 @@ function buildAverageRatingFact(
 ): DetailFact | null {
   const values = facts
     .filter((fact) => fact.kind === "rating")
-    .map(parseRatingOnFive)
+    .map(parseRatingOnScale)
     .filter((value): value is number => value !== null);
 
   if (values.length === 0) return null;
 
-  const average =
-    values.reduce((sum, value) => sum + value, 0) / values.length;
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
 
   return {
     kind: "rating",
     label: t("items.info.averageRating"),
-    value: formatRatingOnFive(average, locale),
+    value: formatRatingOnScale(average, locale),
     source:
       values.length === 1
         ? t("items.info.oneSource")
@@ -401,6 +412,32 @@ function normalizeRatingAge(value: string): number | null {
   if (!match) return null;
   const age = Number(match[0]);
   return Number.isFinite(age) ? age : null;
+}
+
+function isDisplayableAgeRatingFact(
+  fact: DetailFact,
+  shelfName?: string | null,
+) {
+  if (fact.kind !== "age-rating") return false;
+  const label = fact.label.toUpperCase();
+  const value = fact.value.trim().toUpperCase();
+
+  if (label === "ESRB" && !isNtscLikeGameShelf(shelfName)) {
+    return false;
+  }
+
+  return (
+    normalizeRatingAge(value) !== null ||
+    [
+      "ALL",
+      "ALL AGES",
+      "EVERYONE",
+      "G",
+      "TP",
+      "TOUT PUBLIC",
+      "TOUS PUBLICS",
+    ].includes(value)
+  );
 }
 
 function formatPublicValue(fact: DetailFact, t: TranslateFn): string | null {
@@ -437,9 +474,15 @@ function formatPublicValue(fact: DetailFact, t: TranslateFn): string | null {
   }
 
   if (
-    ["ALL", "ALL AGES", "EVERYONE", "G", "TP", "TOUT PUBLIC", "TOUS PUBLICS"].includes(
-      value,
-    )
+    [
+      "ALL",
+      "ALL AGES",
+      "EVERYONE",
+      "G",
+      "TP",
+      "TOUT PUBLIC",
+      "TOUS PUBLICS",
+    ].includes(value)
   ) {
     return t("items.info.allAges");
   }
@@ -651,12 +694,7 @@ export default function ItemDetailsPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    isDetailOverlayOpen,
-    navigateToSibling,
-    nextItemHref,
-    previousItemHref,
-  ]);
+  }, [isDetailOverlayOpen, navigateToSibling, nextItemHref, previousItemHref]);
 
   const handleTouchStart = useCallback(
     (event: TouchEvent<HTMLDivElement>) => {
@@ -726,7 +764,10 @@ export default function ItemDetailsPage() {
       const actualShelfId = item?.shelfId;
 
       if (response.item) {
-        void syncItemQueries(queryClient, response.item, [shelfId, actualShelfId]);
+        void syncItemQueries(queryClient, response.item, [
+          shelfId,
+          actualShelfId,
+        ]);
         return;
       }
 
@@ -776,8 +817,11 @@ export default function ItemDetailsPage() {
   }, [item, hasPermission]);
 
   const shouldAutoRefreshMetadata = useMemo(() => {
-    if (!item?.metadataId || !item.metadata || !isAuthenticated || isGuest) {
+    if (!isAuthenticated || isGuest || !canEdit) {
       return false;
+    }
+    if (!item?.metadataId || !item.metadata) {
+      return Boolean(item?.barcode);
     }
     const metadata = item.metadata as any;
     const facts = normalizeFacts(metadata.facts);
@@ -803,16 +847,38 @@ export default function ItemDetailsPage() {
       (attachment: any) => attachment.source === "screenscraper",
     );
     const hasRating = facts.some((fact) => fact.kind === "rating");
+    const hasDisplayableAgeRating = facts.some((fact) =>
+      isDisplayableAgeRatingFact(fact, shelf?.name),
+    );
+    const isBeforeGameAgeRatingEnrichment =
+      !hasValidLastFetched || lastFetched < GAME_AGE_RATING_FEATURE_RELEASE;
     const isMissingGameEnrichment =
       shelf?.type === "games" &&
       isBeforeCurrentEnrichment &&
       (!hasHowLongToBeat || !hasScreenScraperMedia || !hasRating);
+    const isMissingGameAgeRating =
+      shelf?.type === "games" &&
+      isBeforeGameAgeRatingEnrichment &&
+      !hasDisplayableAgeRating;
     const isStale =
       hasValidLastFetched &&
       Date.now() - lastFetched.getTime() > METADATA_REFRESH_TTL_MS;
 
-    return isPreEnrichmentMetadata || isMissingGameEnrichment || isStale;
-  }, [isAuthenticated, isGuest, item?.metadata, item?.metadataId, shelf?.type]);
+    return (
+      isPreEnrichmentMetadata ||
+      isMissingGameEnrichment ||
+      isMissingGameAgeRating ||
+      isStale
+    );
+  }, [
+    canEdit,
+    isAuthenticated,
+    isGuest,
+    item?.barcode,
+    item?.metadata,
+    item?.metadataId,
+    shelf?.type,
+  ]);
 
   useEffect(() => {
     if (
@@ -969,8 +1035,7 @@ export default function ItemDetailsPage() {
     const normalizedFacts = normalizeDisplayFacts(sourceFacts, {
       includeEsrbAgeRatings:
         shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
-      includePcFacts:
-        shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
+      includePcFacts: shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
     });
     const averageRating = buildAverageRatingFact(normalizedFacts, t, locale);
     facts.push(

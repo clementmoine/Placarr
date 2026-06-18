@@ -10,13 +10,21 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  cleanManualBarcode,
+  ManualBarcodeEntry,
+} from "@/components/ManualBarcodeEntry";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getItems } from "@/lib/api/items";
 import { getShelves } from "@/lib/api/shelves";
 import Image from "next/image";
-import { guessBestShelf, guessShelfByPlatformKey } from "@/lib/barcodeQuery";
-import { itemPath } from "@/lib/slugs";
+import {
+  detectPlatformKey,
+  guessBestShelf,
+  guessShelfByPlatformKey,
+} from "@/lib/barcodeQuery";
+import { itemPath, slugify } from "@/lib/slugs";
 
 export function QuickScanModal({
   isOpen,
@@ -44,6 +52,8 @@ export function QuickScanModal({
   const [results, setResults] = useState<any[]>([]);
   const [customName, setCustomName] = useState<string>("");
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
+  const [activeBarcode, setActiveBarcode] = useState<string>("");
+  const [barcodeInput, setBarcodeInput] = useState<string>("");
 
   // Get user's shelves
   const { data: shelves } = useQuery({
@@ -54,27 +64,41 @@ export function QuickScanModal({
 
   // Query if the user already owns an item with this barcode
   const { data: existingItems, isFetching: isFetchingExisting } = useQuery({
-    queryKey: ["existingItems", barcode],
-    queryFn: () => getItems(barcode),
-    enabled: isOpen && !!barcode,
+    queryKey: ["existingItems", activeBarcode],
+    queryFn: () => getItems(activeBarcode),
+    enabled: isOpen && !!activeBarcode,
   });
 
-  // Automatically select default/active shelf in background
+  const defaultShelf = defaultShelfId
+    ? shelves?.find(
+        (s) =>
+          s.id === defaultShelfId ||
+          s.slug === defaultShelfId ||
+          slugify(s.name) === defaultShelfId,
+      )
+    : undefined;
+
+  // Automatically select the current shelf when the quick scan starts from one.
   useEffect(() => {
-    if (isOpen) {
-      if (defaultShelfId) {
-        setSelectedShelfId(defaultShelfId);
-      } else if (shelves && shelves.length > 0) {
-        setSelectedShelfId(shelves[0].id);
-      }
-    }
-  }, [isOpen, defaultShelfId, shelves]);
+    if (!isOpen) return;
+    setSelectedShelfId(defaultShelf?.id || "");
+  }, [isOpen, defaultShelf?.id]);
 
   const activeShelf = shelves?.find((s) => s.id === selectedShelfId);
   const shelfType = activeShelf?.type;
+  const platformKey =
+    activeShelf?.type === "games" ? detectPlatformKey(activeShelf.name) : null;
+  const isResolvingDefaultShelf = !!defaultShelfId && !shelves;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const cleanedBarcode = cleanManualBarcode(barcode);
+    setActiveBarcode(cleanedBarcode);
+    setBarcodeInput(cleanedBarcode);
+  }, [isOpen, barcode]);
 
   const performBarcodeLookup = useCallback(
-    async (code: string, type?: string) => {
+    async (code: string, type?: string, platform?: string | null) => {
       if (!code) return;
       setIsSearching(true);
       setResults([]);
@@ -82,8 +106,10 @@ export function QuickScanModal({
       setGuessedShelfId(null);
 
       try {
-        const typeParam = type ? `&type=${type}` : "";
-        const res = await axios.get(`/api/barcode?q=${code}${typeParam}`);
+        const params = new URLSearchParams({ q: code });
+        if (type) params.set("type", type);
+        if (platform) params.set("platform", platform);
+        const res = await axios.get(`/api/barcode?${params.toString()}`);
 
         const matches = res.data.matches || [];
         const suggestions = res.data.suggestions || [];
@@ -157,14 +183,36 @@ export function QuickScanModal({
 
   // Trigger lookup when modal opens or shelf category changes
   useEffect(() => {
-    if (isOpen && barcode) {
-      performBarcodeLookup(barcode, shelfType);
+    if (isOpen && activeBarcode && !isResolvingDefaultShelf) {
+      performBarcodeLookup(activeBarcode, shelfType, platformKey);
     }
-  }, [isOpen, barcode, shelfType, performBarcodeLookup]);
+  }, [
+    isOpen,
+    activeBarcode,
+    shelfType,
+    platformKey,
+    isResolvingDefaultShelf,
+    performBarcodeLookup,
+  ]);
+
+  const handleManualBarcodeSubmit = useCallback(
+    (code: string) => {
+      setBarcodeInput(code);
+      if (code === activeBarcode) {
+        performBarcodeLookup(code, shelfType, platformKey);
+        return;
+      }
+      setActiveBarcode(code);
+    },
+    [activeBarcode, performBarcodeLookup, shelfType, platformKey],
+  );
 
   const handleClose = useCallback(() => {
     setCustomName("");
     setGuessedShelfId(null);
+    setActiveBarcode("");
+    setBarcodeInput("");
+    setSelectedShelfId("");
     onClose();
   }, [onClose]);
 
@@ -191,11 +239,11 @@ export function QuickScanModal({
       onSelectProduct({
         name: product.title,
         imageUrl: product.imageUrl,
-        barcode: barcode,
+        barcode: activeBarcode,
         shelfId: targetShelfId,
       });
     },
-    [barcode, selectedShelfId, shelves, guessedShelfId, onSelectProduct],
+    [activeBarcode, selectedShelfId, shelves, guessedShelfId, onSelectProduct],
   );
 
   const getOwnedStatusForProduct = (productTitle: string) => {
@@ -244,8 +292,19 @@ export function QuickScanModal({
       footer={null}
     >
       <div className="flex flex-col gap-4">
+        <ManualBarcodeEntry
+          value={barcodeInput}
+          onValueChange={setBarcodeInput}
+          onSubmit={handleManualBarcodeSubmit}
+          disabled={isSearching}
+        />
+
         <div className="flex flex-col gap-3 mt-2">
-          {isFetchingExisting || isSearching ? (
+          {!activeBarcode ? (
+            <p className="text-xs text-muted-foreground italic select-none py-4">
+              {t("scanner.manualBarcodeHelp")}
+            </p>
+          ) : isFetchingExisting || isSearching ? (
             <div className="flex flex-col items-center justify-center py-8 gap-2">
               <Loader2 className="size-7 text-primary animate-spin" />
               <span className="text-xs text-muted-foreground font-medium select-none">

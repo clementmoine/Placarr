@@ -38,19 +38,81 @@ enum AttachmentType {
 }
 
 model Attachment {
-  id         String   @id @default(cuid())
+  id         String         @id @default(cuid())
   type       AttachmentType
   title      String?
   duration   Int?
   url        String
   metadataId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
   role       String?
   source     String?
-  metadata   Metadata @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+  metadata   Metadata       @relation(fields: [metadataId], references: [id], onDelete: Cascade)
 
   @@index([metadataId])
+}
+
+model FieldEvidence {
+  id              String        @id @default(cuid())
+  field           String
+  source          String
+  value           String
+  normalizedValue String?
+  rawValue        Json?
+  confidence      Float?
+  priority        Int?
+  sourceUrl       String?
+  locale          String?
+  region          String?
+  itemId          String?
+  metadataId      String?
+  barcodeCacheId  Int?
+  observedAt      DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  item            Item?         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  metadata        Metadata?     @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+  barcodeCache    BarcodeCache? @relation(fields: [barcodeCacheId], references: [id], onDelete: Cascade)
+
+  @@index([field])
+  @@index([source])
+  @@index([itemId, field])
+  @@index([metadataId, field])
+  @@index([barcodeCacheId, field])
+  @@index([observedAt])
+}
+
+model PriceOffer {
+  id             String        @id @default(cuid())
+  source         String
+  productName    String?
+  merchantName   String?
+  condition      String?
+  priceCents     Int
+  currency       String        @default("EUR")
+  shippingCents  Int?
+  totalCents     Int?
+  sourceUrl      String?
+  availability   String?
+  offerCount     Int?
+  rawValue       Json?
+  itemId         String?
+  metadataId     String?
+  barcodeCacheId Int?
+  observedAt     DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  item           Item?         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  metadata       Metadata?     @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+  barcodeCache   BarcodeCache? @relation(fields: [barcodeCacheId], references: [id], onDelete: Cascade)
+
+  @@index([source])
+  @@index([itemId, source])
+  @@index([metadataId, source])
+  @@index([barcodeCacheId, source])
+  @@index([condition, priceCents])
+  @@index([observedAt])
 }
 
 model Shelf {
@@ -85,29 +147,31 @@ model Publisher {
 }
 
 model Metadata {
-  id          String       @id @default(cuid())
-  title       String?
-  duration    Int?
-  pageCount   Int?
-  tracksCount Int?
-  description String?
-  releaseDate String?
-  imageUrl    String?
-  sourceType  Type
-  sourceQuery String
-  lastFetched DateTime     @default(now())
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  aliases     String?
-  facts       String?
-  attachments Attachment[]
-  items       Item[]
-  authors     Author[]     @relation("MetadataAuthors")
-  publishers  Publisher[]  @relation("MetadataPublishers")
+  id            String          @id @default(cuid())
+  title         String?
+  duration      Int?
+  pageCount     Int?
+  tracksCount   Int?
+  description   String?
+  releaseDate   String?
+  imageUrl      String?
+  sourceType    Type
+  sourceQuery   String
+  lastFetched   DateTime        @default(now())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  aliases       String?
+  facts         String?
+  attachments   Attachment[]
+  fieldEvidence FieldEvidence[]
+  priceOffers   PriceOffer[]
+  items         Item[]
+  authors       Author[]        @relation("MetadataAuthors")
+  publishers    Publisher[]     @relation("MetadataPublishers")
 }
 
 model Item {
-  id                 String        @id @default(cuid())
+  id                 String          @id @default(cuid())
   name               String
   slug               String?
   description        String?
@@ -117,12 +181,14 @@ model Item {
   metadataId         String?
   shelfId            String
   userId             String
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
   backgroundImageUrl String?
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shelf              Shelf         @relation(fields: [shelfId], references: [id], onDelete: Cascade)
-  metadata           Metadata?     @relation(fields: [metadataId], references: [id])
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shelf              Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  metadata           Metadata?       @relation(fields: [metadataId], references: [id])
+  fieldEvidence      FieldEvidence[]
+  priceOffers        PriceOffer[]
   loans              LoanRequest[]
 
   @@index([shelfId])
@@ -143,30 +209,32 @@ model RawName {
 }
 
 model BarcodeCache {
-  id               Int       @id @default(autoincrement())
-  barcode          String    @unique
+  id               Int             @id @default(autoincrement())
+  barcode          String          @unique
   provider         String
   platformKey      String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   shelfType        String?
   priceLastUpdated DateTime?
   priceNew         Int?
   priceUsed        Int?
   priceUsedCIB     Int?
   rawNames         RawName[]
+  fieldEvidence    FieldEvidence[]
+  priceOffers      PriceOffer[]
 }
 
 model UnresolvedBarcodeScan {
-  id         Int      @id @default(autoincrement())
-  barcode    String
-  shelfType  String   @default("unknown")
-  reason     String
-  status     String   @default("open")
-  seenCount  Int      @default(1)
-  providers  String?
-  rawNames   String?
-  rawPayload String?
+  id          Int      @id @default(autoincrement())
+  barcode     String
+  shelfType   String   @default("unknown")
+  reason      String
+  status      String   @default("open")
+  seenCount   Int      @default(1)
+  providers   String?
+  rawNames    String?
+  rawPayload  String?
   firstSeenAt DateTime @default(now())
   lastSeenAt  DateTime @updatedAt
 

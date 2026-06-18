@@ -47,6 +47,7 @@ describe("detectPlatformKey — précision plateforme (jamais de faux positif)",
     ["Halo Infinite Xbox Series X", "xboxseries"],
     ["Forza Xbox One", "xboxone"],
     ["Gears of War Xbox 360", "xbox360"],
+    ["Xbox Original", "xbox"],
     ["Crazy Taxi Dreamcast", "dreamcast"],
     ["Sonic Mega Drive", "megadrive"],
   ])("'%s' → %s", (input, expected) => {
@@ -67,6 +68,14 @@ describe("detectPlatformKey — précision plateforme (jamais de faux positif)",
     expect(detectPlatformKey("Le Petit Prince")).toBeNull();
     expect(detectPlatformKey("Catan board game")).toBeNull();
     expect(detectPlatformKey("")).toBeNull();
+  });
+
+  it("reconnaît les noms d'étagères utilisateur courants", () => {
+    expect(detectPlatformKey("PlayStation")).toBe("ps1");
+    expect(detectPlatformKey("PlayStation 1")).toBe("ps1");
+    expect(detectPlatformKey("PS1")).toBe("ps1");
+    expect(detectPlatformKey("PS2")).toBe("ps2");
+    expect(detectPlatformKey("Xbox Original")).toBe("xbox");
   });
 });
 

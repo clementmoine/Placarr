@@ -34,6 +34,7 @@ import {
 import { fetchFromFreakxy } from "@/services/freakxy";
 import { fetchFromApriloshop } from "@/services/apriloshop";
 import { fetchFromPicClick } from "@/services/picclick";
+import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
 import { fetchFromMusicBrainz } from "@/services/musicBrainz";
 import { fetchFromDiscogs } from "@/services/discogs";
 import {
@@ -790,6 +791,20 @@ interface SourceProduct {
   platformKey?: string | null;
 }
 
+function sourceProductsFromLeDenicheur(result: any): SourceProduct[] {
+  const name =
+    typeof result?.productName === "string" && result.productName.trim()
+      ? result.productName.trim()
+      : null;
+  if (!name) return [];
+  return [
+    {
+      name,
+      coverUrl: result.coverUrl || null,
+    },
+  ];
+}
+
 interface ParsedProductName {
   rawName: string;
   cleanName: string;
@@ -1057,6 +1072,7 @@ function sourceWeightForProvider(
     DatabaseResolver: 0.34,
     DatabaseSuggestions: 0.26,
     ChasseAuxLivres: 0.16,
+    LeDenicheur: 0.14,
     AchatMoinsCher: 0.12,
     Freakxy: 0.1,
     Apriloshop: 0.1,
@@ -1808,7 +1824,6 @@ export type BarcodeResolveResult = {
   refreshed?: boolean;
 };
 
-
 /**
  * Cœur de la primitive : code-barres (déjà nettoyé) → résultat structuré.
  * Découplé du HTTP pour être testable (golden-master via fixtures rejouées).
@@ -1817,9 +1832,12 @@ export type BarcodeResolveResult = {
 export async function resolveBarcode(
   cleanedBarcode: string,
   type: string | null,
-  opts: { refresh?: boolean } = {},
+  opts: { refresh?: boolean; platformHint?: string | null } = {},
 ): Promise<BarcodeResolveResult> {
   const shouldRefresh = opts.refresh ?? false;
+  const contextPlatformKey = opts.platformHint
+    ? detectPlatformKey(opts.platformHint)
+    : null;
 
   // Check cache first
   const cachedResult = await prisma.barcodeCache.findUnique({
@@ -1992,23 +2010,33 @@ export async function resolveBarcode(
   let freakxy: any[] = [];
   let aprilo: any[] = [];
   let picclick: any[] = [];
+  let leDenicheur: any = null;
 
   if (type === "games") {
-    const [pcRes, calRes, sdRes, amcRes, freakxyRes, apriloRes, picclickRes] =
-      await Promise.allSettled([
-        fetchMetadataFromPriceCharting(
-          cleanedBarcode,
-          undefined,
-          undefined,
-          cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0"),
-        ),
-        fetchFromChasseAuxLivres(cleanedBarcode, "jeuxvideo"),
-        fetchFromScanDex(cleanedBarcode),
-        fetchFromAchatMoinsCher(cleanedBarcode),
-        fetchFromFreakxy(cleanedBarcode),
-        fetchFromApriloshop(cleanedBarcode),
-        fetchFromPicClick(cleanedBarcode),
-      ]);
+    const [
+      pcRes,
+      calRes,
+      sdRes,
+      amcRes,
+      freakxyRes,
+      apriloRes,
+      picclickRes,
+      leDenicheurRes,
+    ] = await Promise.allSettled([
+      fetchMetadataFromPriceCharting(
+        cleanedBarcode,
+        undefined,
+        contextPlatformKey || undefined,
+        cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0"),
+      ),
+      fetchFromChasseAuxLivres(cleanedBarcode, "jeuxvideo"),
+      fetchFromScanDex(cleanedBarcode),
+      fetchFromAchatMoinsCher(cleanedBarcode),
+      fetchFromFreakxy(cleanedBarcode),
+      fetchFromApriloshop(cleanedBarcode),
+      fetchFromPicClick(cleanedBarcode),
+      fetchPricesFromLeDenicheur(cleanedBarcode),
+    ]);
     pc = pcRes.status === "fulfilled" ? pcRes.value : null;
     calJeuxVideo = calRes.status === "fulfilled" ? calRes.value : [];
     sd = sdRes.status === "fulfilled" ? sdRes.value : null;
@@ -2016,9 +2044,14 @@ export async function resolveBarcode(
     freakxy = freakxyRes.status === "fulfilled" ? freakxyRes.value : [];
     aprilo = apriloRes.status === "fulfilled" ? apriloRes.value : [];
     picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
+    leDenicheur =
+      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
 
     const candidates: string[] = [];
     const platformSignals: PlatformSignal[] = [];
+    if (contextPlatformKey) {
+      platformSignals.push({ value: contextPlatformKey, weight: 4.5 });
+    }
     if (pc?.title) {
       const value = pc.platform ? `${pc.title} (${pc.platform})` : pc.title;
       candidates.push(value);
@@ -2091,7 +2124,7 @@ export async function resolveBarcode(
         pc = await fetchMetadataFromPriceCharting(
           cleanedBarcode,
           gameTitle,
-          detectedPlatform || undefined,
+          detectedPlatform || contextPlatformKey || undefined,
           isPal,
           isClassics,
         );
@@ -2104,43 +2137,53 @@ export async function resolveBarcode(
       ss = await fetchFromScreenScraper(
         gameTitle,
         cleanedBarcode,
-        detectedPlatform,
+        detectedPlatform || contextPlatformKey,
       );
     } catch (err) {
       console.error("[ScreenScraper] Error fetching in games search:", err);
     }
   } else if (type === "books") {
-    const [olRes, calRes, amcRes] = await Promise.allSettled([
+    const [olRes, calRes, amcRes, leDenicheurRes] = await Promise.allSettled([
       fetchFromOpenLibrary("", cleanedBarcode),
       fetchFromChasseAuxLivres(cleanedBarcode, "fr"),
       fetchFromAchatMoinsCher(cleanedBarcode),
+      fetchPricesFromLeDenicheur(cleanedBarcode),
     ]);
     ol = olRes.status === "fulfilled" ? olRes.value : null;
     calFr = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
+    leDenicheur =
+      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
   } else if (type === "musics") {
-    const [mbRes, discogsRes, deezerRes, calRes, amcRes] =
+    const [mbRes, discogsRes, deezerRes, calRes, amcRes, leDenicheurRes] =
       await Promise.allSettled([
         fetchFromMusicBrainz(cleanedBarcode),
         fetchFromDiscogs(cleanedBarcode),
         fetchFromDeezer("", cleanedBarcode),
         fetchFromChasseAuxLivres(cleanedBarcode, "music"),
         fetchFromAchatMoinsCher(cleanedBarcode),
+        fetchPricesFromLeDenicheur(cleanedBarcode),
       ]);
     mb = mbRes.status === "fulfilled" ? mbRes.value : null;
     discogs = discogsRes.status === "fulfilled" ? discogsRes.value : null;
     deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
     calMusic = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
+    leDenicheur =
+      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
   } else if (type === "movies") {
-    const [calRes, amcRes, picclickRes] = await Promise.allSettled([
-      fetchFromChasseAuxLivres(cleanedBarcode, "dvd"),
-      fetchFromAchatMoinsCher(cleanedBarcode),
-      fetchFromPicClick(cleanedBarcode),
-    ]);
+    const [calRes, amcRes, picclickRes, leDenicheurRes] =
+      await Promise.allSettled([
+        fetchFromChasseAuxLivres(cleanedBarcode, "dvd"),
+        fetchFromAchatMoinsCher(cleanedBarcode),
+        fetchFromPicClick(cleanedBarcode),
+        fetchPricesFromLeDenicheur(cleanedBarcode),
+      ]);
     calDvd = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
     picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
+    leDenicheur =
+      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
 
     let movieTitle = "";
     if (picclick[0]?.name) movieTitle = picclick[0].name;
@@ -2161,14 +2204,18 @@ export async function resolveBarcode(
       }
     }
   } else if (type === "boardgames") {
-    const [calRes, amcRes, picclickRes] = await Promise.allSettled([
-      fetchFromChasseAuxLivres(cleanedBarcode, "toys"),
-      fetchFromAchatMoinsCher(cleanedBarcode),
-      fetchFromPicClick(cleanedBarcode),
-    ]);
+    const [calRes, amcRes, picclickRes, leDenicheurRes] =
+      await Promise.allSettled([
+        fetchFromChasseAuxLivres(cleanedBarcode, "toys"),
+        fetchFromAchatMoinsCher(cleanedBarcode),
+        fetchFromPicClick(cleanedBarcode),
+        fetchPricesFromLeDenicheur(cleanedBarcode),
+      ]);
     calToys = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
     picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
+    leDenicheur =
+      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
   } else {
     // Generic search (type is not specified) - query each free API once
     const [
@@ -2181,6 +2228,7 @@ export async function resolveBarcode(
       freakxyRes,
       apriloRes,
       picclickRes,
+      leDenicheurRes,
     ] = await Promise.allSettled([
       fetchFromOpenLibrary("", cleanedBarcode),
       fetchFromDeezer("", cleanedBarcode),
@@ -2196,6 +2244,7 @@ export async function resolveBarcode(
       fetchFromFreakxy(cleanedBarcode),
       fetchFromApriloshop(cleanedBarcode),
       fetchFromPicClick(cleanedBarcode),
+      fetchPricesFromLeDenicheur(cleanedBarcode),
     ]);
     ol = olRes.status === "fulfilled" ? olRes.value : null;
     deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
@@ -2206,9 +2255,14 @@ export async function resolveBarcode(
     freakxy = freakxyRes.status === "fulfilled" ? freakxyRes.value : [];
     aprilo = apriloRes.status === "fulfilled" ? apriloRes.value : [];
     picclick = picclickRes.status === "fulfilled" ? picclickRes.value : [];
+    leDenicheur =
+      leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
 
     const candidates: string[] = [];
     const platformSignals: PlatformSignal[] = [];
+    if (contextPlatformKey) {
+      platformSignals.push({ value: contextPlatformKey, weight: 4.5 });
+    }
     if (pc?.title) {
       const value = pc.platform ? `${pc.title} (${pc.platform})` : pc.title;
       candidates.push(value);
@@ -2281,7 +2335,7 @@ export async function resolveBarcode(
         pc = await fetchMetadataFromPriceCharting(
           cleanedBarcode,
           gameTitle,
-          detectedPlatform || undefined,
+          detectedPlatform || contextPlatformKey || undefined,
           isPal,
           isClassics,
         );
@@ -2294,7 +2348,7 @@ export async function resolveBarcode(
       ss = await fetchFromScreenScraper(
         gameTitle,
         cleanedBarcode,
-        detectedPlatform,
+        detectedPlatform || contextPlatformKey,
       );
     } catch (err) {
       console.error("[ScreenScraper] Error fetching in generic search:", err);
@@ -2321,6 +2375,7 @@ export async function resolveBarcode(
   }
 
   const typeResults: Record<string, CompiledResult | null> = {};
+  const leDenicheurProducts = sourceProductsFromLeDenicheur(leDenicheur);
 
   // 1. Books
   const bookSources = [];
@@ -2332,6 +2387,15 @@ export async function resolveBarcode(
   }
   const isBook =
     cleanedBarcode.startsWith("978") || cleanedBarcode.startsWith("979");
+  if (
+    leDenicheurProducts.length > 0 &&
+    (type === "books" || (!type && isBook))
+  ) {
+    bookSources.push({
+      providerName: "LeDenicheur",
+      products: leDenicheurProducts,
+    });
+  }
   const booksCalProducts = type === "books" ? calFr : isBook ? calGeneric : [];
   if (booksCalProducts && booksCalProducts.length > 0) {
     bookSources.push({
@@ -2421,6 +2485,15 @@ export async function resolveBarcode(
       ],
     });
   }
+  if (
+    leDenicheurProducts.length > 0 &&
+    (type === "games" || (!type && !isBook))
+  ) {
+    gameSources.push({
+      providerName: "LeDenicheur",
+      products: leDenicheurProducts,
+    });
+  }
   const gamesCalProducts =
     type === "games" ? calJeuxVideo : !isBook ? calGeneric : [];
   if (gamesCalProducts && gamesCalProducts.length > 0) {
@@ -2486,6 +2559,15 @@ export async function resolveBarcode(
       products: [{ name: deezer.title, coverUrl: deezer.imageUrl }],
     });
   }
+  if (
+    leDenicheurProducts.length > 0 &&
+    (type === "musics" || (!type && !isBook))
+  ) {
+    musicSources.push({
+      providerName: "LeDenicheur",
+      products: leDenicheurProducts,
+    });
+  }
   const musicsCalProducts =
     type === "musics" ? calMusic : !isBook ? calGeneric : [];
   if (musicsCalProducts && musicsCalProducts.length > 0) {
@@ -2523,6 +2605,15 @@ export async function resolveBarcode(
       ],
     });
   }
+  if (
+    leDenicheurProducts.length > 0 &&
+    (type === "movies" || (!type && !isBook))
+  ) {
+    movieSources.push({
+      providerName: "LeDenicheur",
+      products: leDenicheurProducts,
+    });
+  }
   const moviesCalProducts =
     type === "movies" ? calDvd : !isBook ? calGeneric : [];
   if (moviesCalProducts && moviesCalProducts.length > 0) {
@@ -2555,6 +2646,15 @@ export async function resolveBarcode(
 
   // 5. Boardgames
   const boardgameSources = [];
+  if (
+    leDenicheurProducts.length > 0 &&
+    (type === "boardgames" || (!type && !isBook))
+  ) {
+    boardgameSources.push({
+      providerName: "LeDenicheur",
+      products: leDenicheurProducts,
+    });
+  }
   const boardgamesCalProducts =
     type === "boardgames" ? calToys : !isBook ? calGeneric : [];
   if (boardgamesCalProducts && boardgamesCalProducts.length > 0) {

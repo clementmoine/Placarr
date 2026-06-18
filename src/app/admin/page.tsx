@@ -126,6 +126,69 @@ interface BarcodeRegressionReport {
   results: BarcodeRegressionResult[];
 }
 
+interface TeardownNameBlock {
+  kind:
+    | "title"
+    | "platform"
+    | "edition"
+    | "region"
+    | "format"
+    | "condition"
+    | "year"
+    | "noise";
+  text: string;
+  reason: string;
+}
+
+interface TeardownNameParse {
+  rawName: string;
+  cleanName: string;
+  platformKey: string | null;
+  blocks: TeardownNameBlock[];
+}
+
+interface TeardownProviderContribution {
+  provider: string;
+  phase: "barcode" | "metadata" | "merged";
+  status: "hit" | "empty" | "error" | "skipped";
+  durationMs: number;
+  fields: Array<{
+    field: string;
+    value: string;
+    confidence?: number;
+  }>;
+  products: Array<{
+    name: string;
+    coverUrl?: string | null;
+    platformKey?: string | null;
+  }>;
+  error?: string;
+  rawSample?: unknown;
+}
+
+interface ProductTeardownResult {
+  input: {
+    barcode: string;
+    name: string;
+    type: string;
+    platform: string | null;
+  };
+  inferredType?: string | null;
+  selectedName: string;
+  barcodeResult: any;
+  parser: TeardownNameParse[];
+  providers: TeardownProviderContribution[];
+  coverage: Array<{
+    field: string;
+    providers: string[];
+    values: string[];
+    confidence?: number;
+  }>;
+  gaps: string[];
+  globalConfidence: number;
+  generatedAt: string;
+}
+
 const dashboardUrls: Record<string, string> = {
   "DuckDuckGo Scraper (Omkar)": "https://omkar.cloud/",
   "Value Serp": "https://app.valueserp.com/",
@@ -138,11 +201,38 @@ const dashboardUrls: Record<string, string> = {
   "Open Library": "https://openlibrary.org/",
   BoardGameGeek: "https://boardgamegeek.com/",
   "Chasse aux Livres": "https://www.chasse-aux-livres.fr/",
+  LeDenicheur: "https://ledenicheur.fr/",
   TMDB: "https://www.themoviedb.org/settings/api",
   RAWG: "https://rawg.io/apikeys",
   ScreenScraper: "https://www.screenscraper.fr/",
   IGDB: "https://dev.twitch.tv/console/apps",
 };
+
+function teardownStatusClass(status: TeardownProviderContribution["status"]) {
+  if (status === "hit") {
+    return "bg-emerald-500/10 text-emerald-700 border-emerald-500/25 dark:text-emerald-300";
+  }
+  if (status === "error") {
+    return "bg-destructive/10 text-destructive border-destructive/25";
+  }
+  return "bg-zinc-500/10 text-zinc-600 border-zinc-500/20 dark:text-zinc-300";
+}
+
+function teardownBlockClass(kind: TeardownNameBlock["kind"]) {
+  if (kind === "title") {
+    return "bg-primary/10 text-primary border-primary/25";
+  }
+  if (kind === "platform") {
+    return "bg-cyan-500/10 text-cyan-700 border-cyan-500/25 dark:text-cyan-300";
+  }
+  if (kind === "edition") {
+    return "bg-violet-500/10 text-violet-700 border-violet-500/25 dark:text-violet-300";
+  }
+  if (kind === "condition" || kind === "noise") {
+    return "bg-amber-500/10 text-amber-700 border-amber-500/25 dark:text-amber-300";
+  }
+  return "bg-zinc-500/10 text-zinc-700 border-zinc-500/20 dark:text-zinc-300";
+}
 
 function AdminDashboardComponent() {
   const { status, data: session } = useSession();
@@ -232,8 +322,15 @@ function AdminDashboardComponent() {
     string | null
   >(null);
   const [customBarcodeBatch, setCustomBarcodeBatch] = useState("");
-  const [customBarcodeBatchType, setCustomBarcodeBatchType] =
-    useState("games");
+  const [customBarcodeBatchType, setCustomBarcodeBatchType] = useState("games");
+  const [teardownBarcode, setTeardownBarcode] = useState("");
+  const [teardownName, setTeardownName] = useState("");
+  const [teardownType, setTeardownType] = useState("auto");
+  const [teardownPlatform, setTeardownPlatform] = useState("");
+  const [isRunningTeardown, setIsRunningTeardown] = useState(false);
+  const [teardownResult, setTeardownResult] =
+    useState<ProductTeardownResult | null>(null);
+  const [teardownError, setTeardownError] = useState<string | null>(null);
 
   const formatAdminDate = (value: string) => {
     const date = new Date(value);
@@ -323,9 +420,43 @@ function AdminDashboardComponent() {
     }
   };
 
-  const handleReplayUnresolvedBarcode = async (
-    scan: UnresolvedBarcodeScan,
-  ) => {
+  const handleRunProductTeardown = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!teardownBarcode.trim() && !teardownName.trim()) {
+      toast.error(
+        locale === "fr"
+          ? "Entre un code-barres, un nom, ou les deux"
+          : "Enter a barcode, a name, or both",
+      );
+      return;
+    }
+
+    setIsRunningTeardown(true);
+    setTeardownError(null);
+    setTeardownResult(null);
+    try {
+      const res = await axios.post("/api/admin/product-teardown", {
+        barcode: teardownBarcode,
+        name: teardownName,
+        type: teardownType === "auto" ? null : teardownType,
+        platform: teardownPlatform,
+        refresh: true,
+      });
+      setTeardownResult(res.data);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.error ||
+        err.message ||
+        t("common.somethingWentWrong") ||
+        "Request failed";
+      setTeardownError(msg);
+      toast.error(msg);
+    } finally {
+      setIsRunningTeardown(false);
+    }
+  };
+
+  const handleReplayUnresolvedBarcode = async (scan: UnresolvedBarcodeScan) => {
     setReplayingBarcodeId(scan.id);
     try {
       const params: Record<string, string> = {
@@ -497,7 +628,7 @@ function AdminDashboardComponent() {
         </div>
 
         <Tabs defaultValue="settings" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-5 max-w-[900px]">
+          <TabsList className="grid w-full grid-cols-6 max-w-[1080px]">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="size-4" />
               {t("admin.status.settings")}
@@ -515,6 +646,10 @@ function AdminDashboardComponent() {
             >
               <CheckCircle2 className="size-4" />
               {t("admin.status.barcodeTests")}
+            </TabsTrigger>
+            <TabsTrigger value="teardown" className="flex items-center gap-2">
+              <Cpu className="size-4" />
+              {locale === "fr" ? "Teardown fiche" : "Product teardown"}
             </TabsTrigger>
             <TabsTrigger value="status" className="flex items-center gap-2">
               <Activity className="size-4" />
@@ -760,8 +895,7 @@ function AdminDashboardComponent() {
               <Button
                 onClick={handleRunDefaultBarcodeRegression}
                 disabled={
-                  isRunningBarcodeRegression ||
-                  isLoadingBarcodeRegressionCases
+                  isRunningBarcodeRegression || isLoadingBarcodeRegressionCases
                 }
                 className="w-full lg:w-auto"
               >
@@ -1023,7 +1157,10 @@ function AdminDashboardComponent() {
                             </thead>
                             <tbody>
                               {result.assertions.map((assertion, index) => (
-                                <tr key={index} className="border-b last:border-0">
+                                <tr
+                                  key={index}
+                                  className="border-b last:border-0"
+                                >
                                   <td className="py-2 pr-3 font-medium">
                                     {assertion.label}
                                   </td>
@@ -1074,6 +1211,461 @@ function AdminDashboardComponent() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="teardown" className="space-y-6 outline-none">
+            <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+              <Card className="border bg-card/60 backdrop-blur-sm shadow-md h-fit">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Cpu className="size-5 text-primary" />
+                    {locale === "fr" ? "Teardown fiche" : "Product teardown"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form
+                    onSubmit={handleRunProductTeardown}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="teardown-barcode">
+                        {locale === "fr" ? "Code-barres" : "Barcode"}
+                      </Label>
+                      <Input
+                        id="teardown-barcode"
+                        value={teardownBarcode}
+                        onChange={(e) => setTeardownBarcode(e.target.value)}
+                        placeholder="5021290082728"
+                        className="bg-background text-foreground"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="teardown-name">
+                        {locale === "fr"
+                          ? "Nom connu ou suspect"
+                          : "Known or suspected name"}
+                      </Label>
+                      <Input
+                        id="teardown-name"
+                        value={teardownName}
+                        onChange={(e) => setTeardownName(e.target.value)}
+                        placeholder="Wheelman PS3 PAL"
+                        className="bg-background text-foreground"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="teardown-type">
+                          {locale === "fr" ? "Type" : "Type"}
+                        </Label>
+                        <Select
+                          value={teardownType}
+                          onValueChange={setTeardownType}
+                        >
+                          <SelectTrigger
+                            id="teardown-type"
+                            className="bg-background text-foreground w-full"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">
+                              {locale === "fr" ? "Auto" : "Auto"}
+                            </SelectItem>
+                            <SelectItem value="books">
+                              {t("shelf.type.books")}
+                            </SelectItem>
+                            <SelectItem value="games">
+                              {t("shelf.type.games")}
+                            </SelectItem>
+                            <SelectItem value="movies">
+                              {t("shelf.type.movies")}
+                            </SelectItem>
+                            <SelectItem value="musics">
+                              {t("shelf.type.musics")}
+                            </SelectItem>
+                            <SelectItem value="boardgames">
+                              {t("shelf.type.boardgames")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="teardown-platform">
+                          {locale === "fr" ? "Plateforme" : "Platform"}
+                        </Label>
+                        <Input
+                          id="teardown-platform"
+                          value={teardownPlatform}
+                          onChange={(e) => setTeardownPlatform(e.target.value)}
+                          placeholder="PS3, Wii, Switch, PC..."
+                          className="bg-background text-foreground"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={isRunningTeardown}
+                      className="w-full flex items-center justify-center gap-2"
+                    >
+                      {isRunningTeardown ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          {locale === "fr" ? "Analyse..." : "Analyzing..."}
+                        </>
+                      ) : (
+                        <>
+                          <Play className="size-4" />
+                          {locale === "fr"
+                            ? "Lancer le teardown"
+                            : "Run teardown"}
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="border bg-card/60 backdrop-blur-sm shadow-md min-h-[520px]">
+                <CardHeader className="border-b">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-lg font-semibold">
+                        {locale === "fr" ? "Diagnostic" : "Diagnostic"}
+                      </CardTitle>
+                      <CardDescription>
+                        {teardownResult
+                          ? teardownResult.selectedName || "-"
+                          : locale === "fr"
+                            ? "Aucun teardown lance"
+                            : "No teardown run yet"}
+                      </CardDescription>
+                    </div>
+                    {teardownResult && (
+                      <Badge variant="outline" className="w-fit">
+                        {Math.round(teardownResult.globalConfidence * 100)}%
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {isRunningTeardown && (
+                    <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                      <Loader2 className="size-8 text-primary animate-spin mb-4" />
+                      <p className="text-sm text-muted-foreground">
+                        {locale === "fr"
+                          ? "Les providers sont interroges en parallele."
+                          : "Providers are being queried in parallel."}
+                      </p>
+                    </div>
+                  )}
+
+                  {!isRunningTeardown && teardownError && (
+                    <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive">
+                      {teardownError}
+                    </div>
+                  )}
+
+                  {!isRunningTeardown && !teardownResult && !teardownError && (
+                    <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                      <Terminal className="size-12 text-muted-foreground/30 mb-4" />
+                      <p className="text-sm text-muted-foreground">
+                        {locale === "fr" ? "Aucun diagnostic" : "No diagnostic"}
+                      </p>
+                    </div>
+                  )}
+
+                  {!isRunningTeardown && teardownResult && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div className="rounded-lg border bg-background/60 p-3">
+                          <div className="text-xs text-muted-foreground">
+                            {locale === "fr" ? "Nom retenu" : "Selected name"}
+                          </div>
+                          <div className="font-semibold truncate">
+                            {teardownResult.selectedName || "-"}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border bg-background/60 p-3">
+                          <div className="text-xs text-muted-foreground">
+                            {locale === "fr" ? "Type" : "Type"}
+                          </div>
+                          <div className="font-mono">
+                            {teardownResult.input.type}
+                            {teardownResult.input.type === "auto" &&
+                            teardownResult.inferredType
+                              ? ` -> ${teardownResult.inferredType}`
+                              : ""}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border bg-background/60 p-3">
+                          <div className="text-xs text-muted-foreground">
+                            {locale === "fr" ? "Providers OK" : "Provider hits"}
+                          </div>
+                          <div className="font-semibold">
+                            {
+                              teardownResult.providers.filter(
+                                (provider) => provider.status === "hit",
+                              ).length
+                            }
+                            /{teardownResult.providers.length}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border bg-background/60 p-3">
+                          <div className="text-xs text-muted-foreground">
+                            {locale === "fr"
+                              ? "Champs couverts"
+                              : "Covered fields"}
+                          </div>
+                          <div className="font-semibold">
+                            {teardownResult.coverage.length}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="text-sm font-semibold">
+                            {locale === "fr"
+                              ? "Confiance globale"
+                              : "Global confidence"}
+                          </h3>
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {teardownResult.globalConfidence.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-primary"
+                            style={{
+                              width: `${Math.round(
+                                teardownResult.globalConfidence * 100,
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {teardownResult.gaps.length > 0 && (
+                        <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-4">
+                          <div className="flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-300 mb-2">
+                            <AlertTriangle className="size-4" />
+                            {locale === "fr"
+                              ? "Points fragiles"
+                              : "Weak points"}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {teardownResult.gaps.map((gap) => (
+                              <Badge
+                                key={gap}
+                                variant="outline"
+                                className="border-amber-500/25 text-amber-700 dark:text-amber-300"
+                              >
+                                {gap}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold">
+                          {locale === "fr" ? "Parser de nom" : "Name parser"}
+                        </h3>
+                        <div className="space-y-3">
+                          {teardownResult.parser.map((parsed, index) => (
+                            <div
+                              key={`${parsed.rawName}-${index}`}
+                              className="rounded-lg border bg-background/60 p-3 space-y-2"
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="font-medium truncate">
+                                    {parsed.cleanName}
+                                  </div>
+                                  <div className="text-xs font-mono text-muted-foreground truncate">
+                                    {parsed.rawName}
+                                  </div>
+                                </div>
+                                {parsed.platformKey && (
+                                  <Badge variant="secondary">
+                                    {parsed.platformKey}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {parsed.blocks.map((block, blockIndex) => (
+                                  <span
+                                    key={`${block.text}-${blockIndex}`}
+                                    title={block.reason}
+                                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold ${teardownBlockClass(
+                                      block.kind,
+                                    )}`}
+                                  >
+                                    <span className="uppercase text-[10px] opacity-70">
+                                      {block.kind}
+                                    </span>
+                                    {block.text}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold">
+                            {locale === "fr" ? "Providers" : "Providers"}
+                          </h3>
+                          <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+                            {teardownResult.providers.map((provider) => (
+                              <div
+                                key={`${provider.phase}-${provider.provider}`}
+                                className="rounded-lg border bg-background/60 p-3 space-y-2"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <div className="font-semibold truncate">
+                                      {provider.provider}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {provider.phase} · {provider.durationMs}{" "}
+                                      ms
+                                    </div>
+                                  </div>
+                                  <Badge
+                                    variant="outline"
+                                    className={teardownStatusClass(
+                                      provider.status,
+                                    )}
+                                  >
+                                    {provider.status}
+                                  </Badge>
+                                </div>
+                                {provider.error && (
+                                  <div className="text-xs text-destructive">
+                                    {provider.error}
+                                  </div>
+                                )}
+                                {provider.products.length > 0 && (
+                                  <div className="space-y-1">
+                                    {provider.products
+                                      .slice(0, 3)
+                                      .map((product) => (
+                                        <div
+                                          key={product.name}
+                                          className="flex items-center gap-2 text-xs"
+                                        >
+                                          {product.coverUrl && (
+                                            <Image
+                                              src={product.coverUrl}
+                                              alt={product.name}
+                                              width={40}
+                                              height={52}
+                                              className="size-8 rounded border object-cover bg-muted"
+                                            />
+                                          )}
+                                          <span className="truncate">
+                                            {product.name}
+                                          </span>
+                                        </div>
+                                      ))}
+                                  </div>
+                                )}
+                                {provider.fields.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {provider.fields
+                                      .slice(0, 8)
+                                      .map((field) => (
+                                        <Badge
+                                          key={`${field.field}-${field.value}`}
+                                          variant="secondary"
+                                          className="max-w-full whitespace-normal"
+                                        >
+                                          {field.field}: {field.value}
+                                        </Badge>
+                                      ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold">
+                            {locale === "fr"
+                              ? "Couverture des champs"
+                              : "Field coverage"}
+                          </h3>
+                          <div className="rounded-lg border overflow-hidden">
+                            <div className="max-h-[520px] overflow-auto">
+                              <table className="w-full text-xs">
+                                <thead className="sticky top-0 bg-muted text-muted-foreground">
+                                  <tr>
+                                    <th className="text-left p-2">
+                                      {locale === "fr" ? "Champ" : "Field"}
+                                    </th>
+                                    <th className="text-left p-2">
+                                      {locale === "fr" ? "Sources" : "Sources"}
+                                    </th>
+                                    <th className="text-left p-2">
+                                      {locale === "fr" ? "Valeurs" : "Values"}
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {teardownResult.coverage.map((field) => (
+                                    <tr
+                                      key={field.field}
+                                      className="border-t align-top"
+                                    >
+                                      <td className="p-2 font-mono">
+                                        {field.field}
+                                      </td>
+                                      <td className="p-2">
+                                        <div className="flex flex-wrap gap-1">
+                                          {field.providers.map((provider) => (
+                                            <Badge
+                                              key={provider}
+                                              variant="outline"
+                                            >
+                                              {provider}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </td>
+                                      <td className="p-2 text-muted-foreground">
+                                        {field.values.join(" | ")}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                          JSON
+                        </span>
+                        <pre className="p-4 rounded-lg bg-black/90 text-green-400 font-mono text-[11px] overflow-x-auto whitespace-pre max-h-[260px] border">
+                          {JSON.stringify(teardownResult, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="status" className="space-y-6 outline-none">
@@ -1559,6 +2151,9 @@ function AdminDashboardComponent() {
                           <SelectItem value="achatmoinscher-barcode">
                             AchatMoinsCher
                           </SelectItem>
+                          <SelectItem value="ledenicheur-prices">
+                            LeDenicheur (prix)
+                          </SelectItem>
                           <SelectItem value="apriloshop-barcode">
                             ApriloShop
                           </SelectItem>
@@ -1592,6 +2187,9 @@ function AdminDashboardComponent() {
                           </SelectItem>
                           <SelectItem value="rawg-metadata">
                             RAWG (Games Fallback)
+                          </SelectItem>
+                          <SelectItem value="steamgriddb-metadata">
+                            SteamGridDB (Games Artwork)
                           </SelectItem>
                           <SelectItem value="tmdb-metadata">
                             TMDB (Movies)

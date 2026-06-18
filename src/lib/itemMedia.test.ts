@@ -41,7 +41,7 @@ describe("getCoverImage", () => {
     ).toBe("igdb-cover");
   });
 
-  it("prefers MobyGames physical covers over digital artwork fallbacks", () => {
+  it("prefers The Cover Project physical covers over digital artwork fallbacks", () => {
     expect(
       getCoverImage({
         shelf: { type: "games" },
@@ -49,14 +49,18 @@ describe("getCoverImage", () => {
           attachments: [
             { type: "cover", source: "steamgriddb", url: "steamgrid-cover" },
             { type: "cover", source: "igdb", url: "igdb-cover" },
-            { type: "cover", source: "mobygames", url: "moby-cover" },
+            {
+              type: "cover",
+              source: "coverproject",
+              url: "coverproject-cover",
+            },
           ],
         },
       }),
-    ).toBe("moby-cover");
+    ).toBe("coverproject-cover");
   });
 
-  it("prefers MobyGames covers over ScreenScraper mix images", () => {
+  it("prefers The Cover Project covers over ScreenScraper mix images", () => {
     expect(
       getCoverImage({
         shelf: { type: "games" },
@@ -68,11 +72,15 @@ describe("getCoverImage", () => {
               role: "eu-mixrbv2",
               url: "screenscraper-mix",
             },
-            { type: "cover", source: "mobygames", url: "moby-cover" },
+            {
+              type: "cover",
+              source: "coverproject",
+              url: "coverproject-cover",
+            },
           ],
         },
       }),
-    ).toBe("moby-cover");
+    ).toBe("coverproject-cover");
   });
 
   // Format boîte SteamGridDB (grille verticale) — cas Wheelman.

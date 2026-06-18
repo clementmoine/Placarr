@@ -28,6 +28,7 @@ import { ScanFAB } from "@/components/ScanFAB";
 import { ScannerButton } from "@/components/ScannerButton";
 import { QuickScanModal } from "@/components/modals/QuickScanModal";
 import { ItemModal } from "@/components/modals/ItemModal";
+import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +87,7 @@ function ShelvesComponent() {
   // Hero scanner states
   const [heroScannerOpen, setHeroScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string>("");
+  const [manualBarcode, setManualBarcode] = useState<string>("");
   const [quickScanOpen, setQuickScanOpen] = useState<boolean>(false);
 
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -208,6 +210,13 @@ function ShelvesComponent() {
     toast.error(t("scanner.error") || "Error scanning");
   };
 
+  const handleManualBarcodeSubmit = (barcode: string) => {
+    setManualBarcode("");
+    setHeroScannerOpen(false);
+    setScannedBarcode(barcode);
+    setQuickScanOpen(true);
+  };
+
   const handleSelectProduct = (product: {
     name: string;
     imageUrl: string | null;
@@ -259,7 +268,13 @@ function ShelvesComponent() {
       )}
 
       {/* Hero Scanner Dialog */}
-      <Dialog open={heroScannerOpen} onOpenChange={setHeroScannerOpen}>
+      <Dialog
+        open={heroScannerOpen}
+        onOpenChange={(open) => {
+          setHeroScannerOpen(open);
+          if (!open) setManualBarcode("");
+        }}
+      >
         <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh] w-[95vw] sm:max-w-md rounded-2xl border border-border dark:border-zinc-800 shadow-2xl">
           <DialogHeader className="p-5 border-b shrink-0 flex flex-col gap-1">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
@@ -296,6 +311,14 @@ function ShelvesComponent() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="border-t border-border/60 p-4">
+            <ManualBarcodeEntry
+              value={manualBarcode}
+              onValueChange={setManualBarcode}
+              onSubmit={handleManualBarcodeSubmit}
+            />
           </div>
         </DialogContent>
       </Dialog>

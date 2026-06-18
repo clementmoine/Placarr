@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   );
   const cleanedBarcode = cleanCode(req.nextUrl.searchParams.get("q"));
   const type = req.nextUrl.searchParams.get("type");
+  const platformHint = req.nextUrl.searchParams.get("platform");
 
   if (!cleanedBarcode.length) {
     return NextResponse.json({ error: "Missing barcode" }, { status: 400 });
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
 
   const result = await resolveBarcode(cleanedBarcode, type, {
     refresh: shouldRefresh,
+    platformHint,
   });
   return NextResponse.json(result);
 }

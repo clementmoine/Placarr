@@ -8,6 +8,8 @@ import { SerpWow } from "@/services/serp/serpWow";
 import { SerpAPI } from "@/services/serp/serpAPI";
 import { OmkarDDG } from "@/services/serp/omkarDDG";
 import { pingIGDB } from "@/services/igdb";
+import { pingLeDenicheur } from "@/services/leDenicheur";
+import { pingSteamGridDB } from "@/services/steamGridDb";
 
 interface ApiStatus {
   name: string;
@@ -452,6 +454,21 @@ export async function GET() {
 
     // 12. TMDB
     (async (): Promise<ApiStatus> => {
+      const name = "LeDenicheur";
+      const result = await pingLeDenicheur();
+      return {
+        name,
+        type: "metadata",
+        configured: true,
+        status: result.ok ? "up" : "down",
+        latency: result.latency,
+        error: result.error ?? null,
+        credits: null,
+      };
+    })(),
+
+    // 13. TMDB
+    (async (): Promise<ApiStatus> => {
       const name = "TMDB";
       const key = process.env.TMDB_API_KEY || "";
       if (!key) {
@@ -622,6 +639,36 @@ export async function GET() {
         status: isUp ? "up" : "down",
         latency,
         error: isUp ? null : "Host unreachable",
+        credits: null,
+      };
+    })(),
+
+    // 18. SteamGridDB
+    (async (): Promise<ApiStatus> => {
+      const name = "SteamGridDB";
+      const key =
+        process.env.STEAMGRIDDB_API_KEY ||
+        process.env.STEAM_GRID_DB_API_KEY ||
+        "";
+      if (!key) {
+        return {
+          name,
+          type: "metadata",
+          configured: false,
+          status: "unconfigured",
+          latency: null,
+          error: "STEAMGRIDDB_API_KEY missing",
+          credits: null,
+        };
+      }
+      const result = await pingSteamGridDB();
+      return {
+        name,
+        type: "metadata",
+        configured: true,
+        status: result.ok ? "up" : "down",
+        latency: result.latency,
+        error: result.error ?? null,
         credits: null,
       };
     })(),

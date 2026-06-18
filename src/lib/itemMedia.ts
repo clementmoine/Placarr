@@ -34,10 +34,9 @@ export interface MediaInput {
 const COVER_SOURCE_PRIORITY = [
   "barcode",
   "screenscraper",
-  "mobygames",
+  "steamgriddb",
   "coverproject",
   "igdb",
-  "steamgriddb",
   "rawg",
   "steam",
 ];
@@ -60,10 +59,9 @@ function getSourceScore(a: MediaItem, type: string): number {
       if (roleLower.endsWith("-3d")) return 8;
       return 9;
     }
-    if (source === "mobygames") return 5; // scans de boîte (catalogue)
     // SteamGridDB : grille verticale = format boîte → au-dessus du digital.
     if (source === "steamgriddb" && roleLower.includes("grid-vertical"))
-      return 6;
+      return 5;
     if (source === "coverproject") return 7;
     if (source === "barcode") return 10;
     if (source === "igdb") return 11; // covers digitales

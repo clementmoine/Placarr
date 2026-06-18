@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { slugify } from "@/lib/slugs";
 
 /**
  * Résout un identifiant d'étagère : cuid direct ou slug dérivé du nom.
- * Une seule requête indexée (PK `id` + index `slug`).
+ * D'abord via les colonnes indexées (`id`, `slug`), puis via un slug calculé
+ * depuis le nom pour les données créées avant le backfill de `slug`.
  *
  * IMPORTANT (multi-utilisateurs) : les slugs ne sont uniques QUE par
  * utilisateur (deux comptes peuvent avoir une étagère "Nintendo Wii"
@@ -20,7 +22,17 @@ export async function resolveShelfId(
     },
     select: { id: true },
   });
-  return shelf?.id ?? value;
+  if (shelf) return shelf.id;
+
+  const shelves = await prisma.shelf.findMany({
+    where: {
+      ...(userId ? { userId } : {}),
+    },
+    select: { id: true, name: true },
+  });
+  const shelfWithComputedSlug = shelves.find((s) => slugify(s.name) === value);
+
+  return shelfWithComputedSlug?.id ?? value;
 }
 
 /**

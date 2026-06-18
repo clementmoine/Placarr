@@ -35,6 +35,7 @@ import { fetchFromFreakxy } from "@/services/freakxy";
 import { fetchFromApriloshop } from "@/services/apriloshop";
 import { fetchFromPicClick } from "@/services/picclick";
 import { fetchFromMusicBrainz } from "@/services/musicBrainz";
+import { fetchFromDiscogs } from "@/services/discogs";
 import {
   markUnresolvedBarcodeScanResolved,
   recordUnresolvedBarcodeScan,
@@ -925,6 +926,7 @@ const CANONICAL_PROVIDERS = new Set([
   "OpenLibrary",
   "Deezer",
   "MusicBrainz",
+  "Discogs",
   "ScanDex",
   "BoardGameGeek",
   "DatabaseResolver",
@@ -1048,6 +1050,7 @@ function sourceWeightForProvider(
     OpenLibrary: 0.44,
     Deezer: 0.44,
     MusicBrainz: 0.46,
+    Discogs: 0.45,
     BoardGameGeek: 0.44,
     PriceCharting: 0.38,
     ScanDex: 0.36,
@@ -1974,6 +1977,7 @@ export async function resolveBarcode(
   let ol: any = null;
   let deezer: any = null;
   let mb: any = null;
+  let discogs: any = null;
   let ss: any = null;
   let tmdb: any = null;
   let pc: any = null;
@@ -2115,13 +2119,16 @@ export async function resolveBarcode(
     calFr = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
   } else if (type === "musics") {
-    const [mbRes, deezerRes, calRes, amcRes] = await Promise.allSettled([
-      fetchFromMusicBrainz(cleanedBarcode),
-      fetchFromDeezer("", cleanedBarcode),
-      fetchFromChasseAuxLivres(cleanedBarcode, "music"),
-      fetchFromAchatMoinsCher(cleanedBarcode),
-    ]);
+    const [mbRes, discogsRes, deezerRes, calRes, amcRes] =
+      await Promise.allSettled([
+        fetchFromMusicBrainz(cleanedBarcode),
+        fetchFromDiscogs(cleanedBarcode),
+        fetchFromDeezer("", cleanedBarcode),
+        fetchFromChasseAuxLivres(cleanedBarcode, "music"),
+        fetchFromAchatMoinsCher(cleanedBarcode),
+      ]);
     mb = mbRes.status === "fulfilled" ? mbRes.value : null;
+    discogs = discogsRes.status === "fulfilled" ? discogsRes.value : null;
     deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
     calMusic = calRes.status === "fulfilled" ? calRes.value : [];
     amc = amcRes.status === "fulfilled" ? amcRes.value : [];
@@ -2465,6 +2472,12 @@ export async function resolveBarcode(
     musicSources.push({
       providerName: "MusicBrainz",
       products: [{ name: mb.title, coverUrl: mb.imageUrl }],
+    });
+  }
+  if (discogs?.title) {
+    musicSources.push({
+      providerName: "Discogs",
+      products: [{ name: discogs.title, coverUrl: discogs.imageUrl }],
     });
   }
   if (deezer?.title) {

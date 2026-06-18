@@ -20,6 +20,12 @@ export interface MusicBrainzResult {
   releaseDate: string | null;
   imageUrl: string | null;
   mbid: string;
+  country?: string | null;
+  status?: string | null;
+  packaging?: string | null;
+  label?: string | null;
+  tracksCount?: number | null;
+  format?: string | null;
 }
 
 /** Construit un nom canonique "Artiste - Titre" sans dupliquer l'artiste. */
@@ -69,12 +75,29 @@ export async function fetchFromMusicBrainz(
     if (!best?.title) return null;
 
     const artist = artistFromCredit(best["artist-credit"]);
+    const firstLabel = Array.isArray(best["label-info"])
+      ? best["label-info"][0]?.label?.name
+      : null;
+    const firstMedia = Array.isArray(best.media) ? best.media[0] : null;
+    const tracksCount =
+      typeof best["track-count"] === "number"
+        ? best["track-count"]
+        : typeof firstMedia?.["track-count"] === "number"
+          ? firstMedia["track-count"]
+          : null;
+
     return {
       title: formatMusicTitle(artist, best.title),
       artist,
       releaseDate: best.date || null,
       imageUrl: null,
       mbid: best.id,
+      country: best.country || null,
+      status: best.status || null,
+      packaging: best.packaging || null,
+      label: typeof firstLabel === "string" ? firstLabel : null,
+      tracksCount,
+      format: typeof firstMedia?.format === "string" ? firstMedia.format : null,
     };
   } catch {
     return null;

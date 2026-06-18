@@ -56,6 +56,7 @@ const SUFFIX_PATTERNS = [
   "version française",
   "import fr",
   "import",
+  "adresse course",
 
   // Platforms
   "nintendo switch",
@@ -504,6 +505,14 @@ export function cleanTitleForDisplay(
         /\s+\bnintendo\s+(?:wii|switch|ds|3ds|gamecube|game\s+cube)\b\s*(?:pal|france|fr|vf|eur|eu)?\s*$/i,
         "",
       )
+      .replace(
+        /\s+\b(?:cd|album)\b(?:\s+\b(?:disney|square\s+enix|japan|jpn|import)\b)*\s*$/i,
+        "",
+      )
+      .replace(/\s+\b(?:disney|square\s+enix|japan|jpn|import)\b\s*$/i, "")
+      .replace(/\s*[-–—|]\s*album\s+cd\b.*$/i, "")
+      .replace(/\bSQEX\d+\b/gi, "")
+      .replace(/\s*\*rare\*\s*$/i, "")
       .replace(/\b(?:pour|for)\s*$/i, "")
       .trim();
 
@@ -851,6 +860,7 @@ interface CompiledResult {
 }
 
 const DISCARD_PATTERNS = [
+  /\bcomparateur\s+de\s+prix\s+neutre\s+et\s+ind[ée]pendant\b/i,
   // No game
   /\bpas\s+de\s+jeu\b/i,
   /\bsans\s+jeu\b/i,
@@ -1403,6 +1413,19 @@ const RESOLVER_PLATFORM_TOKENS = new Set([
   "pc",
 ]);
 
+const NON_CANONICAL_CONTEXT_TOKENS = new Set([
+  "orchestra",
+  "soundtrack",
+  "ost",
+  "album",
+  "vinyl",
+  "cd",
+  "fan",
+  "fanbook",
+  "guide",
+  "book",
+]);
+
 function resolverSignificantTokens(value: string): Set<string> {
   const tokens = normalizeForTokens(
     cleanTitleForDisplay(value, {
@@ -1427,8 +1450,16 @@ function isDatabaseResolvedNameAcceptable(
   const extraResolvedTokens = [...resolvedTokens].filter(
     (token) => !inputTokens.has(token) && !RESOLVER_PLATFORM_TOKENS.has(token),
   );
+  const extraInputTokens = [...inputTokens].filter(
+    (token) => !resolvedTokens.has(token) && !RESOLVER_PLATFORM_TOKENS.has(token),
+  );
+  const hasNonCanonicalContext = extraInputTokens.some((token) =>
+    NON_CANONICAL_CONTEXT_TOKENS.has(token),
+  );
 
-  return extraResolvedTokens.length === 0;
+  if (hasNonCanonicalContext && extraInputTokens.length >= 1) return false;
+
+  return extraResolvedTokens.length === 0 && extraInputTokens.length <= 3;
 }
 
 function pickRepresentativeEvidence(
@@ -1726,6 +1757,16 @@ async function compileResultForType(
     for (const product of source.products) {
       const evidence = buildProductEvidence(source.providerName, product);
       if (!evidence) continue;
+      if (
+        type === "games" &&
+        !evidence.isCanonical &&
+        !evidence.parsed.platformKey &&
+        [...evidence.parsed.tokens].some((token) =>
+          NON_CANONICAL_CONTEXT_TOKENS.has(token),
+        )
+      ) {
+        continue;
+      }
       sourceEvidence.push(evidence);
       if (evidence.isCanonical) {
         canonicalEvidence.push(evidence);
@@ -1751,7 +1792,10 @@ async function compileResultForType(
       })
     : sourceEvidence;
 
-  const databaseEvidence = hasCanonicalSignals
+  const looksLikeAudioBarcode = /^(0?(498|499)|45|88)/.test(cleanedBarcode);
+  const skipGameDatabaseFallback = type === "games" && looksLikeAudioBarcode;
+
+  const databaseEvidence = hasCanonicalSignals || skipGameDatabaseFallback
     ? []
     : await buildDatabaseEvidence(
         trustedEvidence
@@ -1760,21 +1804,40 @@ async function compileResultForType(
         type,
       );
 
+  const canAcceptMarketplaceOnlyBooks =
+    type === "books" &&
+    /^(978|979)/.test(cleanedBarcode) &&
+    trustedEvidence.length > 0;
+
   if (!hasCanonicalSignals && databaseEvidence.length === 0) {
-    console.warn(
-      `[Barcode API] No canonical resolver confirmed barcode ${cleanedBarcode} for ${type}; raw marketplace names ignored.`,
-    );
-    return null;
+    if (canAcceptMarketplaceOnlyBooks) {
+      console.warn(
+        `[Barcode API] No canonical resolver for ISBN ${cleanedBarcode}; using marketplace-only book hints.`,
+      );
+    } else {
+      console.warn(
+        `[Barcode API] No canonical resolver confirmed barcode ${cleanedBarcode} for ${type}; raw marketplace names ignored.`,
+      );
+      return null;
+    }
   }
 
   const supportingEvidence = hasCanonicalSignals
     ? trustedEvidence
-    : trustedEvidence.filter((evidence) =>
-        databaseEvidence.some((canonical) =>
-          areEvidenceSameProduct(canonical, evidence),
-        ),
-      );
+    : canAcceptMarketplaceOnlyBooks
+      ? trustedEvidence
+      : trustedEvidence.filter((evidence) =>
+          databaseEvidence.some((canonical) =>
+            areEvidenceSameProduct(canonical, evidence),
+          ),
+        );
   const allEvidence = [...databaseEvidence, ...supportingEvidence];
+  if (allEvidence.length === 0) {
+    console.warn(
+      `[Barcode API] No usable evidence after filtering for ${cleanedBarcode} (${type})`,
+    );
+    return null;
+  }
   const matches = resolveEvidenceToMatches(allEvidence, type, cleanedBarcode);
   const representative =
     matches[0]?.name || pickRepresentativeEvidence(allEvidence).title;
@@ -1820,7 +1883,7 @@ function scoreTypeCandidate(
   score += evidence.canonicalProviders.length * 0.05;
   score += evidence.hasCover ? 0.03 : 0;
   if (candidateType === "books" && isBookBarcode) score += 0.45;
-  if (candidateType === "musics" && isAudioBarcode) score += 0.12;
+  if (candidateType === "musics" && isAudioBarcode) score += 0.3;
   if (candidateType === "games" && (result.platformKey || "").length > 0) score += 0.04;
 
   return score;
@@ -2651,9 +2714,12 @@ export async function resolveBarcode(
     selectedType = type;
     selectedResult = typeResults[type];
   } else {
-    const candidates = Object.entries(typeResults).filter(
+    const isAudioLikeBarcode = /^(0?(498|499)|45|88)/.test(cleanedBarcode);
+    const candidates = Object.entries(typeResults)
+      .filter(([candidateType]) => !(isAudioLikeBarcode && candidateType === "games"))
+      .filter(
       (entry): entry is [string, CompiledResult] => Boolean(entry[1]),
-    );
+      );
     candidates.sort(
       (a, b) =>
         scoreTypeCandidate(b[0], b[1], cleanedBarcode) -
@@ -2664,6 +2730,15 @@ export async function resolveBarcode(
       selectedType = best[0];
       selectedResult = best[1];
     }
+  }
+
+  if (
+    !type &&
+    selectedResult &&
+    /^(0?(498|499)|45|88)/.test(cleanedBarcode) &&
+    /\b(?:orchestra|soundtrack|ost|album|cd)\b/i.test(selectedResult.cleanName)
+  ) {
+    selectedType = "musics";
   }
 
   if (selectedResult && selectedType) {

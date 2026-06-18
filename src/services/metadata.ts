@@ -23,8 +23,10 @@ import {
 } from "@/services/evidence";
 import { fetchFromIGDB, getIGDBSuggestions } from "./igdb";
 import { fetchFromHowLongToBeat } from "./howLongToBeat";
+import { fetchFromMusicBrainz } from "./musicBrainz";
 import { fetchFromSteamGridDB } from "./steamGridDb";
 import { fetchMetadataFromPriceCharting } from "./priceCharting";
+import { fetchFromDiscogs } from "./discogs";
 import {
   gameExternalMetadataAdapters,
 } from "@/services/providers/metadataGameExternalAdapters";
@@ -36,6 +38,7 @@ import {
 } from "@/services/providers/bggProvider";
 import { createDeezerResolver } from "@/services/providers/deezerProvider";
 import { createOpenLibraryResolver } from "@/services/providers/openLibraryProvider";
+import { createOMDbResolver } from "@/services/providers/omdbProvider";
 import { createRawgResolver } from "@/services/providers/rawgProvider";
 import {
   createTMDBResolver,
@@ -769,11 +772,155 @@ async function fetchMetadataByType(
   if (type === "games") {
     return fetchFromAllGameSources(name, barcode, platform);
   }
+  if (type === "movies") {
+    return fetchFromAllMovieSources(name, barcode, platform);
+  }
   return fetchFromRegistryMetadataResolvers(name, type, barcode, platform);
 }
 
 const metadataProviderAdapters: MetadataProviderAdapter[] = [
   ...gameExternalMetadataAdapters,
+  {
+    id: "musicbrainz",
+    async resolve({ barcode }) {
+      if (!barcode) return null;
+      const mb = await fetchFromMusicBrainz(barcode);
+      if (!mb?.title) return null;
+
+      const facts: MetadataFact[] = [];
+      if (mb.country) {
+        facts.push({
+          kind: "release-region",
+          label: "Pays",
+          value: mb.country,
+          source: "musicbrainz",
+          confidence: 0.7,
+          priority: 35,
+        });
+      }
+      if (mb.status) {
+        facts.push({
+          kind: "release-status",
+          label: "Statut",
+          value: mb.status,
+          source: "musicbrainz",
+          confidence: 0.68,
+          priority: 34,
+        });
+      }
+      if (mb.packaging) {
+        facts.push({
+          kind: "format",
+          label: "Packaging",
+          value: mb.packaging,
+          source: "musicbrainz",
+          confidence: 0.67,
+          priority: 33,
+        });
+      }
+      if (mb.label) {
+        facts.push({
+          kind: "label",
+          label: "Label",
+          value: mb.label,
+          source: "musicbrainz",
+          confidence: 0.7,
+          priority: 42,
+        });
+      }
+      if (mb.format) {
+        facts.push({
+          kind: "format",
+          label: "Support",
+          value: mb.format,
+          source: "musicbrainz",
+          confidence: 0.66,
+          priority: 31,
+        });
+      }
+
+      return {
+        title: mb.title,
+        releaseDate: mb.releaseDate || undefined,
+        authors: mb.artist ? [{ name: mb.artist }] : [],
+        tracksCount: mb.tracksCount || undefined,
+        imageUrl: mb.imageUrl || undefined,
+        facts: facts.length > 0 ? facts : undefined,
+      };
+    },
+  },
+  {
+    id: "discogs",
+    async resolve({ barcode }) {
+      if (!barcode) return null;
+      const discogs = await fetchFromDiscogs(barcode);
+      if (!discogs?.title) return null;
+
+      const facts: MetadataFact[] = [];
+      if (discogs.country) {
+        facts.push({
+          kind: "release-region",
+          label: "Pays",
+          value: discogs.country,
+          source: "discogs",
+          confidence: 0.68,
+          priority: 35,
+        });
+      }
+      if (discogs.format) {
+        facts.push({
+          kind: "format",
+          label: "Support",
+          value: discogs.format,
+          source: "discogs",
+          confidence: 0.7,
+          priority: 40,
+        });
+      }
+      if (discogs.label) {
+        facts.push({
+          kind: "label",
+          label: "Label",
+          value: discogs.label,
+          source: "discogs",
+          confidence: 0.7,
+          priority: 41,
+        });
+      }
+      if (discogs.genres && discogs.genres.length > 0) {
+        facts.push({
+          kind: "genre",
+          label: "Genres",
+          value: discogs.genres.slice(0, 3).join(" • "),
+          source: "discogs",
+          confidence: 0.66,
+          priority: 38,
+        });
+      }
+      if (discogs.styles && discogs.styles.length > 0) {
+        facts.push({
+          kind: "style",
+          label: "Styles",
+          value: discogs.styles.slice(0, 3).join(" • "),
+          source: "discogs",
+          confidence: 0.65,
+          priority: 37,
+        });
+      }
+
+      const releaseDate =
+        discogs.year && /^\d{4}$/.test(discogs.year)
+          ? `${discogs.year}-01-01`
+          : undefined;
+
+      return {
+        title: discogs.title,
+        releaseDate,
+        imageUrl: discogs.imageUrl || undefined,
+        facts: facts.length > 0 ? facts : undefined,
+      };
+    },
+  },
   ...createMetadataCoreAdapters({
     fetchFromScreenScraper: async (name, barcode, platform) =>
       (await fetchFromScreenScraper(
@@ -788,6 +935,7 @@ const metadataProviderAdapters: MetadataProviderAdapter[] = [
     fetchFromOpenLibrary: async (name, barcode) =>
       (await fetchFromOpenLibrary(name, barcode)) as MetadataResult | null,
     fetchFromTMDB: async (name) => (await fetchFromTMDB(name)) as MetadataResult | null,
+    fetchFromOMDb: async (name) => (await fetchFromOMDb(name)) as MetadataResult | null,
   }),
 ];
 
@@ -1026,6 +1174,35 @@ async function fetchFromAllGameSources(
   };
 
   return preferRequestedDisplayTitle(mergedWithEvidence, name);
+}
+
+async function fetchFromAllMovieSources(
+  name: string,
+  barcode?: string | null,
+  platform?: string | null,
+): Promise<MetadataResult | null> {
+  const [tmdb, omdb] = await Promise.all([
+    metadataProviderResolverMap.get("tmdb")?.resolve({ name, barcode, platform }),
+    metadataProviderResolverMap.get("omdb")?.resolve({ name, barcode, platform }),
+  ]);
+
+  if (!tmdb && !omdb) return null;
+
+  const base = tmdb || omdb!;
+  const merged: MetadataResult = {
+    ...base,
+    facts: dedupeFacts([...(tmdb?.facts || []), ...(omdb?.facts || [])]),
+    fieldEvidence: dedupeFieldEvidence([
+      ...metadataFieldEvidence("TMDB", tmdb),
+      ...metadataFieldEvidence("OMDb", omdb),
+      ...metadataFieldEvidence("MergedEngine", base, {
+        confidence: 0.76,
+        priority: 190,
+      }),
+    ]),
+  };
+
+  return preferRequestedDisplayTitle(merged, name);
 }
 
 function collectCanonicalFallbackNames(
@@ -1629,6 +1806,8 @@ const fetchFromTMDB = createTMDBResolver({
   cleanSearchQuery,
 });
 
+const fetchFromOMDb = createOMDbResolver();
+
 function cleanSearchQuery(name: string): string {
   let cleaned = name;
   cleaned = cleaned.replace(/\b\d{12,13}\b/g, "");
@@ -1866,6 +2045,7 @@ export {
   fetchFromBGG,
   fetchFromOpenLibrary,
   fetchFromTMDB,
+  fetchFromOMDb,
   cleanSearchQuery,
 };
 

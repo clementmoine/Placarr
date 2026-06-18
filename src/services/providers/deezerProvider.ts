@@ -3,6 +3,78 @@ import levenshtein from "fast-levenshtein";
 
 import type { MetadataResult } from "@/services/metadata";
 
+function formatDuration(seconds?: number): string | null {
+  if (!seconds || seconds <= 0) return null;
+  const minutes = Math.floor(seconds / 60);
+  const remaining = seconds % 60;
+  return `${minutes}:${String(remaining).padStart(2, "0")}`;
+}
+
+function buildDeezerFacts(album: any) {
+  const facts = [];
+  if (album?.link) {
+    facts.push({
+      kind: "external-link",
+      label: "Deezer",
+      value: "Voir l'album",
+      url: String(album.link),
+      source: "deezer",
+      confidence: 0.7,
+      priority: 41,
+    });
+  }
+
+  const genres = (album?.genres?.data || [])
+    .map((genre: any) => String(genre?.name || "").trim())
+    .filter(Boolean);
+  if (genres.length > 0) {
+    facts.push({
+      kind: "genre",
+      label: "Genres",
+      value: genres.slice(0, 3).join(" • "),
+      source: "deezer",
+      confidence: 0.68,
+      priority: 40,
+    });
+  }
+
+  if (typeof album?.fans === "number" && album.fans > 0) {
+    facts.push({
+      kind: "popularity",
+      label: "Fans Deezer",
+      value: new Intl.NumberFormat("fr-FR").format(album.fans),
+      source: "deezer",
+      confidence: 0.62,
+      priority: 35,
+    });
+  }
+
+  const duration = formatDuration(Number(album?.duration || 0));
+  if (duration) {
+    facts.push({
+      kind: "duration",
+      label: "Durée totale",
+      value: duration,
+      source: "deezer",
+      confidence: 0.74,
+      priority: 52,
+    });
+  }
+
+  if (album?.explicit_lyrics === true) {
+    facts.push({
+      kind: "content-warning",
+      label: "Contenu explicite",
+      value: "Oui",
+      source: "deezer",
+      confidence: 0.72,
+      priority: 54,
+    });
+  }
+
+  return facts.length > 0 ? facts : undefined;
+}
+
 export function createDeezerResolver() {
   return async function fetchFromDeezer(
     name: string,
@@ -58,6 +130,7 @@ export function createDeezerResolver() {
                   }),
                 ) || []),
               ],
+              facts: buildDeezerFacts(bestMatch),
             };
           }
         }
@@ -130,6 +203,7 @@ export function createDeezerResolver() {
           }),
         ),
       ],
+      facts: buildDeezerFacts(bestMatch),
     };
   };
 }

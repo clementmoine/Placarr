@@ -13,6 +13,7 @@ describe("createMetadataCoreAdapters", () => {
       fetchFromBGG: vi.fn(async () => null),
       fetchFromOpenLibrary: vi.fn(async () => null),
       fetchFromTMDB: vi.fn(async () => null),
+      fetchFromOMDb: vi.fn(async () => null),
     });
 
     expect(adapters.map((adapter) => adapter.id)).toEqual([
@@ -22,6 +23,7 @@ describe("createMetadataCoreAdapters", () => {
       "boardgamegeek",
       "openlibrary",
       "tmdb",
+      "omdb",
     ]);
   });
 
@@ -33,6 +35,7 @@ describe("createMetadataCoreAdapters", () => {
       fetchFromBGG: vi.fn(async () => null),
       fetchFromOpenLibrary: vi.fn(async () => null),
       fetchFromTMDB: vi.fn(async () => null),
+      fetchFromOMDb: vi.fn(async () => null),
     });
 
     for (const adapter of adapters) {

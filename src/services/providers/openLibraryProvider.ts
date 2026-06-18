@@ -3,7 +3,7 @@ import levenshtein from "fast-levenshtein";
 import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 
-import type { MetadataResult } from "@/services/metadata";
+import type { MetadataFact, MetadataResult } from "@/services/metadata";
 
 interface OpenLibraryWork {
   key: string;
@@ -14,6 +14,14 @@ interface OpenLibraryWork {
   description?: { value: string } | string;
   publish_date?: string;
   covers?: number[];
+  subjects?: string[];
+  first_sentence?: { value: string } | string;
+  languages?: Array<{ key?: string }>;
+  physical_format?: string;
+  classifications?: {
+    dewey_decimal_class?: string[];
+    lc_classifications?: string[];
+  };
 }
 
 interface OpenLibrarySearchResponse {
@@ -242,6 +250,24 @@ export function createOpenLibraryResolver() {
 
       if (!workId || !workData) return null;
 
+      const languageCodeToLabel = (value?: string): string | null => {
+        const code = String(value || "")
+          .toLowerCase()
+          .replace(/^.*\//, "");
+        if (!code) return null;
+        const map: Record<string, string> = {
+          fre: "Français",
+          fra: "Français",
+          eng: "English",
+          spa: "Español",
+          ger: "Deutsch",
+          deu: "Deutsch",
+          ita: "Italiano",
+          por: "Português",
+        };
+        return map[code] || code.toUpperCase();
+      };
+
       const authors =
         workData.authors
           ?.map((author: { key: string }) => {
@@ -300,6 +326,57 @@ export function createOpenLibraryResolver() {
         (n: string) => n.toLowerCase().trim() !== workData.title.toLowerCase().trim(),
       );
 
+      const facts: MetadataFact[] = [];
+      const languages = (workData.languages || [])
+        .map((language) => languageCodeToLabel(language?.key))
+        .filter((value): value is string => Boolean(value));
+      if (languages.length > 0) {
+        facts.push({
+          kind: "languages",
+          label: "Langue",
+          value: Array.from(new Set(languages)).join(" • "),
+          source: "openlibrary",
+          confidence: 0.66,
+          priority: 38,
+        });
+      }
+      if (workData.physical_format) {
+        facts.push({
+          kind: "format",
+          label: "Format",
+          value: workData.physical_format.trim(),
+          source: "openlibrary",
+          confidence: 0.65,
+          priority: 36,
+        });
+      }
+      const dewey = workData.classifications?.dewey_decimal_class?.[0];
+      if (dewey) {
+        facts.push({
+          kind: "classification",
+          label: "Dewey",
+          value: dewey,
+          source: "openlibrary",
+          confidence: 0.62,
+          priority: 34,
+        });
+      }
+      if (Array.isArray(workData.subjects) && workData.subjects.length > 0) {
+        facts.push({
+          kind: "subjects",
+          label: "Sujets",
+          value: workData.subjects.slice(0, 4).join(" • "),
+          source: "openlibrary",
+          confidence: 0.6,
+          priority: 33,
+        });
+      }
+
+      const firstSentence =
+        typeof workData.first_sentence === "string"
+          ? workData.first_sentence
+          : workData.first_sentence?.value;
+
       return {
         title: workData.title,
         authors: authorDetails,
@@ -311,7 +388,7 @@ export function createOpenLibraryResolver() {
         description:
           typeof workData.description === "string"
             ? workData.description
-            : workData.description?.value,
+            : workData.description?.value || firstSentence || undefined,
         releaseDate: formattedDate,
         imageUrl: workData.covers?.[0]
           ? `https://covers.openlibrary.org/b/id/${workData.covers[0]}-L.jpg`
@@ -333,6 +410,7 @@ export function createOpenLibraryResolver() {
           })) || []),
         ],
         aliases,
+        facts: facts.length > 0 ? facts : undefined,
       };
     } catch (error) {
       console.error("Error fetching from Open Library:", error);

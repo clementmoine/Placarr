@@ -89,17 +89,36 @@ export const providerHealthChecks: ProviderHealthCheck[] = [
     providerId: "boardgamegeek",
     async run() {
       const name = "BoardGameGeek";
+      const token = process.env.BGG_API_TOKEN || "";
+      if (!token) {
+        return {
+          name,
+          type: "metadata",
+          configured: false,
+          status: "unconfigured",
+          latency: null,
+          error: "BGG_API_TOKEN missing",
+          credits: null,
+        };
+      }
       const start = Date.now();
       const isUp = await pingUrl(
         "https://boardgamegeek.com/xmlapi2/search?query=test&type=boardgame",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "User-Agent": "Placarr/1.0 (+https://github.com/clementmoine/Placarr)",
+            Accept: "application/xml,text/xml,*/*",
+          },
+        },
       );
       return {
         name,
         type: "metadata",
-        configured: true,
+        configured: Boolean(token),
         status: isUp ? "up" : "down",
         latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
+        error: isUp ? null : "Host unreachable or invalid token",
         credits: null,
       };
     },
@@ -157,6 +176,35 @@ export const providerHealthChecks: ProviderHealthCheck[] = [
       const isUp = await pingUrl(
         `https://api.themoviedb.org/3/configuration?api_key=${key}`,
       );
+      return {
+        name,
+        type: "metadata",
+        configured: true,
+        status: isUp ? "up" : "down",
+        latency: Date.now() - start,
+        error: isUp ? null : "Host unreachable or invalid key",
+        credits: null,
+      };
+    },
+  },
+  {
+    providerId: "omdb",
+    async run() {
+      const name = "OMDb";
+      const key = process.env.OMDB_API_KEY || "";
+      if (!key) {
+        return {
+          name,
+          type: "metadata",
+          configured: false,
+          status: "unconfigured",
+          latency: null,
+          error: "API key missing",
+          credits: null,
+        };
+      }
+      const start = Date.now();
+      const isUp = await pingUrl(`https://www.omdbapi.com/?apikey=${key}&i=tt0111161`);
       return {
         name,
         type: "metadata",

@@ -52,11 +52,34 @@ type BggResolverDeps = {
   formatScore: (value: number, scale: number) => string | null;
 };
 
+const BGG_HEADERS = {
+  "User-Agent": "Placarr/1.0 (+https://github.com/clementmoine/Placarr)",
+  Accept: "application/xml,text/xml,*/*",
+};
+let warnedMissingToken = false;
+
 export function createBGGResolver(deps: BggResolverDeps) {
   return async function fetchFromBGG(name: string): Promise<MetadataResult | null> {
+    const token = process.env.BGG_API_TOKEN?.trim();
+    if (!token) {
+      if (!warnedMissingToken) {
+        warnedMissingToken = true;
+        console.warn("[BGG] BGG_API_TOKEN missing — source disabled.");
+      }
+      return null;
+    }
+    const headers = {
+      ...BGG_HEADERS,
+      Authorization: `Bearer ${token}`,
+    };
+
     try {
       const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(name)}&type=boardgame`;
-      const searchRes = await axios.get(searchUrl, { responseType: "text" });
+      const searchRes = await axios.get(searchUrl, {
+        responseType: "text",
+        headers,
+        timeout: 10000,
+      });
       const searchText = searchRes.data;
       const searchData = convertXML(searchText) as BGGResponse;
       const items = searchData.items?.children || [];
@@ -86,7 +109,11 @@ export function createBGGResolver(deps: BggResolverDeps) {
       if (!gameId) return null;
 
       const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
-      const detailsRes = await axios.get(detailsUrl, { responseType: "text" });
+      const detailsRes = await axios.get(detailsUrl, {
+        responseType: "text",
+        headers,
+        timeout: 10000,
+      });
       const detailsText = detailsRes.data;
       const detailsData = convertXML(detailsText) as BGGResponse;
       const game = detailsData.items?.children?.[0]?.item;
@@ -141,6 +168,18 @@ export function createBGGResolver(deps: BggResolverDeps) {
         .map((child: BGGChild) => ({
           name: child.link?.value || "",
         }));
+      const categories = game.children
+        .filter((child: BGGChild) => child.link?.type === "boardgamecategory")
+        .map((child: BGGChild) => child.link?.value || "")
+        .filter(Boolean);
+      const mechanics = game.children
+        .filter((child: BGGChild) => child.link?.type === "boardgamemechanic")
+        .map((child: BGGChild) => child.link?.value || "")
+        .filter(Boolean);
+      const families = game.children
+        .filter((child: BGGChild) => child.link?.type === "boardgamefamily")
+        .map((child: BGGChild) => child.link?.value || "")
+        .filter(Boolean);
 
       const alternateNames = game.children
         .filter((child: BGGChild) => child.name?.type === "alternate")
@@ -203,6 +242,36 @@ export function createBGGResolver(deps: BggResolverDeps) {
           });
         }
       }
+      if (categories.length > 0) {
+        facts.push({
+          kind: "category",
+          label: "Catégories",
+          value: Array.from(new Set(categories)).slice(0, 4).join(" • "),
+          source: "BGG",
+          confidence: 0.74,
+          priority: 58,
+        });
+      }
+      if (mechanics.length > 0) {
+        facts.push({
+          kind: "mechanic",
+          label: "Mécaniques",
+          value: Array.from(new Set(mechanics)).slice(0, 4).join(" • "),
+          source: "BGG",
+          confidence: 0.74,
+          priority: 57,
+        });
+      }
+      if (families.length > 0) {
+        facts.push({
+          kind: "family",
+          label: "Familles",
+          value: Array.from(new Set(families)).slice(0, 3).join(" • "),
+          source: "BGG",
+          confidence: 0.7,
+          priority: 49,
+        });
+      }
 
       return {
         title: primaryName,
@@ -223,8 +292,22 @@ export function createBGGResolver(deps: BggResolverDeps) {
         aliases,
         facts,
       };
-    } catch (error) {
-      console.error("Error fetching from BGG:", error);
+    } catch (error: unknown) {
+      const status =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { status?: number } }).response?.status ===
+          "number"
+          ? (error as { response?: { status?: number } }).response?.status
+          : null;
+      if (status === 401) {
+        console.warn(
+          "[BGG] Access denied (401). API temporarily unavailable in current runtime.",
+        );
+      } else {
+        console.error("Error fetching from BGG:", error);
+      }
       return null;
     }
   };

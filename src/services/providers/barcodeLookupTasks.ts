@@ -70,6 +70,7 @@ export function createBarcodeLookupTaskBuilders(
       deezer: deps.fetchFromDeezer("", barcode),
       cal: deps.fetchFromChasseAuxLivres(barcode, "music"),
       amc: deps.fetchFromAchatMoinsCher(barcode),
+      picclick: deps.fetchFromPicClick(barcode),
       leDenicheur: deps.fetchPricesFromLeDenicheur(barcode),
     }),
     movies: ({ barcode }) => ({

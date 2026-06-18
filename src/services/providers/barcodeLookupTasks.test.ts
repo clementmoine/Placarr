@@ -45,6 +45,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
       "deezer",
       "cal",
       "amc",
+      "picclick",
       "leDenicheur",
     ]);
     expect(Object.keys(builders.movies({ barcode: "1" }))).toEqual([

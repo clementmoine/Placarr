@@ -37,6 +37,20 @@ interface SteamAppDetails {
     url?: string;
   };
   genres?: { id?: string; description?: string }[];
+  categories?: { id?: number; description?: string }[];
+  supported_languages?: string;
+  ratings?: Record<
+    string,
+    {
+      rating?: string;
+      descriptors?: string;
+      required_age?: string | number;
+    }
+  >;
+  content_descriptors?: {
+    ids?: number[];
+    notes?: string;
+  };
   recommendations?: { total?: number };
   screenshots?: { id?: number; path_thumbnail?: string; path_full?: string }[];
 }
@@ -154,6 +168,91 @@ function buildSteamFacts(appId: number, data: SteamAppDetails): MetadataFact[] {
       confidence: 0.66,
       priority: 52,
     });
+  }
+
+  const genres = (data.genres || [])
+    .map((genre) => genre.description?.trim())
+    .filter((value): value is string => Boolean(value));
+  if (genres.length > 0) {
+    facts.push({
+      kind: "genre",
+      label: "Genres",
+      value: genres.slice(0, 3).join(" • "),
+      source: "steam",
+      confidence: 0.68,
+      priority: 46,
+    });
+  }
+
+  const gameModes = (data.categories || [])
+    .map((category) => category.description?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter((value) =>
+      /joueur|multijoueur|multiplayer|coop|co-op|solo|lan|pvp/i.test(value),
+    );
+  if (gameModes.length > 0) {
+    facts.push({
+      kind: "modes",
+      label: "Modes de jeu",
+      value: Array.from(new Set(gameModes)).slice(0, 4).join(" • "),
+      source: "steam",
+      confidence: 0.64,
+      priority: 45,
+    });
+  }
+
+  if (data.supported_languages) {
+    const languageText = data.supported_languages
+      .replace(/<br\s*\/?>/gi, ",")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (languageText) {
+      facts.push({
+        kind: "languages",
+        label: "Langues",
+        value: languageText.slice(0, 180),
+        source: "steam",
+        confidence: 0.6,
+        priority: 38,
+      });
+    }
+  }
+
+  if (data.content_descriptors?.notes?.trim()) {
+    facts.push({
+      kind: "content-warning",
+      label: "Contenu sensible",
+      value: data.content_descriptors.notes.trim(),
+      source: "steam",
+      confidence: 0.62,
+      priority: 54,
+    });
+  }
+
+  for (const [board, details] of Object.entries(data.ratings || {})) {
+    const rating = details?.rating?.trim();
+    if (rating) {
+      facts.push({
+        kind: "age-rating",
+        label: board.toUpperCase(),
+        value: rating,
+        source: "steam",
+        confidence: 0.68,
+        priority: 64,
+      });
+    }
+    const descriptors = details?.descriptors?.trim();
+    if (descriptors) {
+      facts.push({
+        kind: "content-warning",
+        label: `${board.toUpperCase()} descripteurs`,
+        value: descriptors,
+        source: "steam",
+        confidence: 0.63,
+        priority: 53,
+      });
+    }
   }
 
   return facts;

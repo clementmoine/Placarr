@@ -18,6 +18,11 @@ export interface DiscogsResult {
   title: string;
   year: string | null;
   imageUrl: string | null;
+  country?: string | null;
+  label?: string | null;
+  format?: string | null;
+  genres?: string[];
+  styles?: string[];
 }
 
 let warnedMissingAuth = false;
@@ -73,6 +78,21 @@ export async function fetchFromDiscogs(
       title: String(best.title).trim(),
       year: best.year ? String(best.year) : null,
       imageUrl: null,
+      country: typeof best.country === "string" ? best.country : null,
+      label:
+        Array.isArray(best.label) && typeof best.label[0] === "string"
+          ? best.label[0]
+          : null,
+      format:
+        Array.isArray(best.format) && typeof best.format[0] === "string"
+          ? best.format[0]
+          : null,
+      genres: Array.isArray(best.genre)
+        ? best.genre.filter((value: unknown): value is string => typeof value === "string")
+        : [],
+      styles: Array.isArray(best.style)
+        ? best.style.filter((value: unknown): value is string => typeof value === "string")
+        : [],
     };
   } catch {
     return null;

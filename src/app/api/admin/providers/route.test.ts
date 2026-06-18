@@ -12,11 +12,13 @@ vi.mock("@/lib/auth", () => ({
 import { GET } from "./route";
 
 const TMDB_API_KEY = "TMDB_API_KEY";
+const OMDB_API_KEY = "OMDB_API_KEY";
 
 describe("GET /api/admin/providers", () => {
   beforeEach(() => {
     h.authReturn = { user: { role: "admin" } } as unknown;
     delete process.env[TMDB_API_KEY];
+    delete process.env[OMDB_API_KEY];
   });
 
   it("renvoie directement la réponse d'auth quand non-admin", async () => {
@@ -37,7 +39,8 @@ describe("GET /api/admin/providers", () => {
       (entry: { capability: string }) => entry.capability === "rating",
     );
 
-    expect(rating.providers).toEqual(["tmdb"]);
+    expect(rating.providers).toEqual(expect.arrayContaining(["tmdb", "omdb"]));
+    expect(rating.providers).toHaveLength(2);
     expect(rating.configuredCount).toBe(0);
     expect(rating.risk).toBe("missing");
   });
@@ -54,7 +57,8 @@ describe("GET /api/admin/providers", () => {
       (entry: { capability: string }) => entry.capability === "rating",
     );
 
-    expect(rating.providers).toEqual(["tmdb"]);
+    expect(rating.providers).toEqual(expect.arrayContaining(["tmdb", "omdb"]));
+    expect(rating.providers).toHaveLength(2);
     expect(rating.configuredCount).toBe(1);
     expect(rating.risk).toBe("single-source");
   });

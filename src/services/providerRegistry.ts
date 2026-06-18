@@ -183,6 +183,15 @@ export const PROVIDERS: ProviderInfo[] = [
     canonical: true,
     notes: "Films + séries (certifications = public conseillé).",
   },
+  {
+    id: "omdb",
+    label: "OMDb",
+    types: ["movies"],
+    capabilities: ["identify", "rating", "ageRating", "releaseDate", "people"],
+    auth: { kind: "key", env: ["OMDB_API_KEY"], free: true },
+    canonical: true,
+    notes: "Ratings complémentaires (IMDb/Rotten) + classification.",
+  },
   // ── Livres ────────────────────────────────────────────────────────────────
   {
     id: "openlibrary",
@@ -198,8 +207,9 @@ export const PROVIDERS: ProviderInfo[] = [
     label: "BoardGameGeek",
     types: ["boardgames"],
     capabilities: ["identify", "rating", "description", "cover", "releaseDate", "people"],
-    auth: { kind: "none" },
+    auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
     canonical: true,
+    notes: "XML API v2 avec token Bearer requis.",
   },
   // ── Multi-types : prix / annonces marchandes ──────────────────────────────
   {

@@ -19,6 +19,7 @@ type MetadataCoreResolverDeps = {
     barcode?: string | null,
   ) => Promise<MetadataResult | null>;
   fetchFromTMDB: (name: string) => Promise<MetadataResult | null>;
+  fetchFromOMDb: (name: string) => Promise<MetadataResult | null>;
 };
 
 export function createMetadataCoreAdapters(
@@ -59,6 +60,12 @@ export function createMetadataCoreAdapters(
       id: "tmdb",
       async resolve({ name }) {
         return deps.fetchFromTMDB(name);
+      },
+    },
+    {
+      id: "omdb",
+      async resolve({ name }) {
+        return deps.fetchFromOMDb(name);
       },
     },
   ];

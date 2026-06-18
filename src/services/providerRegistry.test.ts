@@ -35,11 +35,13 @@ describe("providerRegistry", () => {
     expect(capabilityCoverage("musics", "ageRating").count).toBe(0);
   });
 
-  it("films : TMDB couvre note ET public conseillé", () => {
+  it("films : TMDB/OMDb couvrent note ET public conseillé", () => {
     expect(capabilityCoverage("movies", "rating").providers).toContain("tmdb");
+    expect(capabilityCoverage("movies", "rating").providers).toContain("omdb");
     expect(capabilityCoverage("movies", "ageRating").providers).toContain(
       "tmdb",
     );
+    expect(capabilityCoverage("movies", "ageRating").providers).toContain("omdb");
   });
 
   it("jeux : la duree est couverte par HowLongToBeat", () => {

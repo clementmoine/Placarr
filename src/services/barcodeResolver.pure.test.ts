@@ -43,6 +43,47 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
   it("gère les entrées vides sans planter", () => {
     expect(cleanTitleForDisplay("")).toBe("");
   });
+
+  // Cas réels rapportés (régressions à verrouiller)
+  it("retire le bruit collé sans séparateur (Mario Party 8)", () => {
+    const out = cleanTitleForDisplay("MARIO PARTY 8 COMPLET BOÎTE NOTICE", {
+      preservePlatformSuffix: true,
+    });
+    expect(out.toLowerCase()).toContain("mario party 8");
+    expect(out.toLowerCase()).not.toContain("notice");
+    expect(out.toLowerCase()).not.toContain("boîte");
+    expect(out.toLowerCase()).not.toContain("complet");
+  });
+
+  it("retire le bruit d'annonce allemande (Wakfu)", () => {
+    const out = cleanTitleForDisplay("Wakfu - Saison 2 Volume 1 - DVD - Zustand gut");
+    expect(out.toLowerCase()).toContain("wakfu");
+    expect(out.toLowerCase()).toContain("saison 2 volume 1");
+    expect(out.toLowerCase()).not.toContain("zustand");
+    expect(out.toLowerCase()).not.toContain("dvd");
+  });
+
+  it("retire 'von not specified' + condition (Wakfu S1V2)", () => {
+    const out = cleanTitleForDisplay(
+      "Wakfu - Saison 1 Volume 2 - von not specified - DVD - Zustand gut",
+    );
+    expect(out.toLowerCase()).toContain("wakfu");
+    expect(out.toLowerCase()).not.toContain("von not specified");
+    expect(out.toLowerCase()).not.toContain("zustand");
+  });
+});
+
+describe("isListingDiscardable — rejette les non-produits", () => {
+  it("rejette une tagline de comparateur de prix", () => {
+    expect(
+      isListingDiscardable("Comparateur de prix neutre et indépendant"),
+    ).toBe(true);
+  });
+
+  it("rejette les annonces sans le jeu", () => {
+    expect(isListingDiscardable("Boîtier vide sans jeu")).toBe(true);
+    expect(isListingDiscardable("Notice seule")).toBe(true);
+  });
 });
 
 describe("areLikelySameProduct — ne jamais confondre deux produits différents", () => {

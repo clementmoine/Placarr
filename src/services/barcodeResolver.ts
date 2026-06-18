@@ -283,6 +283,25 @@ const SUFFIX_PATTERNS = [
   "non gratte",
   "non gratté",
   "mode d'emploi",
+  "notice",
+
+  // Conditions multilingues (EN/DE/IT) vues sur les annonces
+  "von not specified",
+  "zustand gut",
+  "zustand neu",
+  "zustand sehr gut",
+  "sehr gut",
+  "neuwertig",
+  "gebraucht",
+  "ovp",
+  "brand new",
+  "sealed",
+  "like new",
+  "region free",
+  "come nuovo",
+  "nuovo",
+  "usato",
+  "sigillato",
 ];
 
 const PLATFORM_SUFFIX_PATTERNS = new Set([
@@ -335,6 +354,10 @@ function isListingMetadataSegment(segment: string): boolean {
     /^(complet|complete|mint|cd|disc|disque|dvd|notice|livret|boite|boîte|box)$/,
     /^(sans|avec)\s+(notice|livret|boite|boîte)$/,
     /^(teste|testé|tested|working|fonctionnel|tbe|hs)$/,
+    /^(zustand\s+(?:sehr\s+)?gut|zustand\s+neu|neuwertig|gebraucht|ovp)$/,
+    /^von\s+not\s+specified$/,
+    /^(come\s+nuovo|nuovo|usato|sigillato|ottimo|buono)$/,
+    /^(brand\s+new|sealed|like\s+new|very\s+good|good\s+condition|region\s+free)$/,
     /\bjeu\s+video\b/,
     /\bjeux?\s+vid[eé]o\b/,
     /\bjeu\b.*\bnotice\b/,
@@ -881,6 +904,11 @@ const DISCARD_PATTERNS = [
   /\blot\s+\d+\s+jeux?\b/i,
   /\bpack\s+\d+\s+jeux?\b/i,
   /\b\d+\s+jeux?\s+(?:wii|switch|ps[1-5]|xbox|ds|3ds)\b/i,
+
+  // Taglines de sites (pas un produit) — ex. comparateurs de prix
+  /\bcomparateur\s+de\s+prix\b/i,
+  /\bneutre\s+et\s+ind[ée]pendant\b/i,
+  /\bmeilleurs?\s+prix\s+(?:du\s+web|en\s+ligne)\b/i,
 ];
 
 export function isListingDiscardable(title: string): boolean {
@@ -1512,6 +1540,10 @@ function filterDisplayEvidenceForSuggestions(
   );
 }
 
+// Plafond de confiance pour un résultat issu uniquement d'annonces (aucune
+// source canonique) : au-dessus, l'UI le présenterait comme certain.
+const LISTING_ONLY_CONFIDENCE_CAP = 0.45;
+
 function scoreEvidenceCluster(
   evidence: ProductEvidence[],
 ): MatchEvidenceSummary {
@@ -1545,6 +1577,14 @@ function scoreEvidenceCluster(
     ),
   );
 
+  // "Jamais affirmer faux" : sans source canonique (annonces marketplace
+  // uniquement), on plafonne la confiance pour que le résultat reste un
+  // "je ne sais pas / aide-moi" plutôt qu'un nom présenté comme certain.
+  const finalConfidence =
+    canonicalProviders.length === 0
+      ? Math.min(confidence, LISTING_ONLY_CONFIDENCE_CAP)
+      : confidence;
+
   const reasons: string[] = [];
   if (canonicalProviders.length > 0) reasons.push("canonical-source");
   if (providers.length > 1) reasons.push("multi-source-agreement");
@@ -1558,7 +1598,7 @@ function scoreEvidenceCluster(
     canonicalCount,
     marketplaceCount,
     hasCover,
-    confidence: Number(confidence.toFixed(2)),
+    confidence: Number(finalConfidence.toFixed(2)),
     reasons,
   };
 }

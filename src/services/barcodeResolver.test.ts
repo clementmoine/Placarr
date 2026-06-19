@@ -124,4 +124,23 @@ describe("resolveBarcode — cache-hit (déterministe, sans réseau)", () => {
     expect(Array.isArray(res.matches)).toBe(true);
     expect(res.cleanName.length).toBeGreaterThan(0);
   });
+
+  it("normalise les éditions marketing (ex: Classics) vers le titre jeu", async () => {
+    h.cache = makeCache({
+      platformKey: "xbox",
+      rawNames: [
+        "Halo 2 Classics",
+        "HALO 2",
+        "Halo 2 - Jeu Video Xbox",
+      ],
+    });
+
+    const res = await resolveBarcode("0882224088060", "games");
+
+    expect(res.platformKey).toBe("xbox");
+    expect(res.cleanName.toLowerCase()).toContain("halo 2");
+    expect(res.cleanName.toLowerCase()).not.toContain("classics");
+    expect(res.matches).toHaveLength(1);
+    expect(res.suggestions.join(" ").toLowerCase()).not.toContain("classics");
+  });
 });

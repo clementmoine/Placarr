@@ -2,13 +2,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./fetch", () => ({
   searchPrestashopProduct: vi.fn(),
+  fetchPrestashopGallery: vi.fn(),
+  prestashopImageId: (url?: string | null) =>
+    url?.match(/\/(\d+)(?:-[a-z_]+)?\/[^/?#]+\.(?:jpe?g|png|webp|gif)/i)?.[1] ??
+    null,
 }));
 
-import { searchPrestashopProduct } from "./fetch";
+import { fetchPrestashopGallery, searchPrestashopProduct } from "./fetch";
 import { createPrestashopResolver } from "./resolver";
 import type { PrestashopProduct, PrestashopRetailerConfig } from "./types";
 
 const mockedSearch = vi.mocked(searchPrestashopProduct);
+const mockedGallery = vi.mocked(fetchPrestashopGallery);
 
 const CONFIG: PrestashopRetailerConfig = {
   id: "test-shop",
@@ -34,6 +39,8 @@ function product(
 
 beforeEach(() => {
   mockedSearch.mockReset();
+  mockedGallery.mockReset();
+  mockedGallery.mockResolvedValue([]);
 });
 
 describe("createPrestashopResolver — garde barcode→item", () => {
@@ -85,5 +92,34 @@ describe("createPrestashopResolver — garde barcode→item", () => {
     const result = await resolve("Catan", BARCODE);
 
     expect(result).toBeNull();
+  });
+
+  it("ajoute la galerie produit en attachments sans redupliquer la couverture", async () => {
+    mockedSearch.mockResolvedValue(
+      product({
+        title: "Catan",
+        barcode: BARCODE,
+        imageUrl: "https://example.com/100-home_default/catan.jpg",
+      }),
+    );
+    mockedGallery.mockResolvedValue([
+      "https://example.com/100-large_default/catan.jpg", // = couverture (id 100)
+      "https://example.com/200-large_default/catan.jpg", // 2e photo distincte
+    ]);
+
+    const result = await resolve("Catan", BARCODE);
+
+    expect(result?.attachments).toEqual([
+      {
+        type: "cover",
+        url: "https://example.com/100-home_default/catan.jpg",
+        source: "test-shop",
+      },
+      {
+        type: "image",
+        url: "https://example.com/200-large_default/catan.jpg",
+        source: "test-shop",
+      },
+    ]);
   });
 });

@@ -61,6 +61,7 @@ import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import type { Shelf, Prisma } from "@prisma/client";
+import type { MetadataResult } from "@/types/metadataProvider";
 
 import styles from "./shelves.module.css";
 
@@ -103,6 +104,7 @@ function ShelvesComponent() {
         imageUrl: string | null;
         barcode: string;
         shelfId?: string;
+        metadataPreview?: MetadataResult | null;
       }
     | undefined
   >(undefined);
@@ -261,6 +263,7 @@ function ShelvesComponent() {
     imageUrl: string | null;
     barcode: string;
     shelfId?: string;
+    metadataPreview?: MetadataResult | null;
   }) => {
     setQuickScanOpen(false);
     setPrefilledItemValues(product);

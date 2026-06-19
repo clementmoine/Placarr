@@ -50,10 +50,12 @@ function rankedAttachments(item: MediaInput): ScoredAttachmentInput[] {
 
 /**
  * Retourne l'URL de la jaquette affichée partout dans l'app.
+ * item.imageUrl = choix explicite utilisateur (upload ou galerie).
+ * metadata.imageUrl = défaut calculé à l'enrichissement.
  */
 export function getCoverImage(item: MediaInput): string | null {
-  if (isUserUploadedImage(item.imageUrl)) {
-    return item.imageUrl || null;
+  if (item.imageUrl) {
+    return item.imageUrl;
   }
 
   if (item.metadata?.imageUrl) {
@@ -62,8 +64,6 @@ export function getCoverImage(item: MediaInput): string | null {
 
   const bestFromAttachments = pickBestCoverFromAttachments(attachments(item));
   if (bestFromAttachments) return bestFromAttachments;
-
-  if (item.imageUrl) return item.imageUrl;
 
   return null;
 }

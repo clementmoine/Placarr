@@ -57,12 +57,20 @@ import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { uploadImage } from "@/lib/api/upload";
 import { getAspectRatio } from "@/lib/cardFormat";
-import { guessBestShelf, guessShelfByPlatformKey } from "@/lib/barcode/query";
+import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
 import { shelfPath } from "@/lib/slugs";
 
-import { type Prisma, type Item, type Shelf, Condition } from "@prisma/client";
+import {
+  type AttachmentType,
+  type Prisma,
+  type Item,
+  type Shelf,
+  Condition,
+} from "@prisma/client";
+import { rankAttachmentsForDisplay } from "@/lib/attachmentDisplayScore";
 import { cn } from "@/lib/utils";
 import type { ItemWithMetadata } from "@/types/items";
+import type { MetadataResult } from "@/types/metadataProvider";
 import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
@@ -103,6 +111,7 @@ export function ItemModal({
     barcode?: string;
     imageUrl?: string | null;
     shelfId?: string;
+    metadataPreview?: MetadataResult | null;
   };
 }) {
   const { t, locale } = useLocale();
@@ -201,6 +210,9 @@ export function ItemModal({
     !itemId &&
     typeof prefilledValues?.imageUrl === "string" &&
     prefilledValues.imageUrl.trim().length > 0;
+  const prefilledScanImageUrl = hasPrefilledScanImage
+    ? prefilledValues?.imageUrl?.trim() || null
+    : null;
 
   const currentShelfId = form.watch("shelfId");
   const selectedShelf = shelves?.find((s) => s.id === currentShelfId);
@@ -275,11 +287,75 @@ export function ItemModal({
     string | null
   >(null);
 
-  const [fetchedMetadata, setFetchedMetadata] = useState<any>(null);
+  const [fetchedMetadata, setFetchedMetadata] = useState<MetadataResult | null>(
+    null,
+  );
   const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
   const [posterPage, setPosterPage] = useState(1);
   const [bgPage, setBgPage] = useState(1);
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+
+  const applyMetadataPreviewToForm = useCallback(
+    (
+      metadata: MetadataResult,
+      options: {
+        forceOverwrite?: boolean;
+        barcodeContext?: string;
+      } = {},
+    ) => {
+      const forceOverwrite = options.forceOverwrite ?? false;
+      const barcodeContext = options.barcodeContext;
+
+      setFetchedMetadata(metadata);
+
+      const currentBarcode = (
+        barcodeContext ||
+        form.getValues("barcode") ||
+        ""
+      ).trim();
+      if (metadata.barcode && !currentBarcode) {
+        form.setValue("barcode", metadata.barcode, {
+          shouldDirty: true,
+        });
+      }
+
+      if (metadata.description?.trim()) {
+        if (forceOverwrite || !form.getValues("description")?.trim()) {
+          form.setValue("description", metadata.description.trim(), {
+            shouldDirty: true,
+          });
+        }
+      }
+
+      if (metadata.imageUrl) {
+        const currentImageUrl = form.getValues("imageUrl");
+        const canReplaceScanImage =
+          activeShelfType === "games" &&
+          hasPrefilledScanImage &&
+          typeof currentImageUrl === "string" &&
+          currentImageUrl.trim() === prefilledScanImageUrl;
+
+        if (forceOverwrite || !currentImageUrl || canReplaceScanImage) {
+          form.setValue("imageUrl", metadata.imageUrl, {
+            shouldDirty: true,
+          });
+        }
+      }
+
+      const bgAttachment =
+        metadata.attachments?.find((a) => a.type === "background") ||
+        metadata.attachments?.find((a) => a.type === "screenshot") ||
+        metadata.attachments?.find((a) => a.type === "artwork");
+      if (bgAttachment?.url) {
+        if (forceOverwrite || !form.getValues("backgroundImageUrl")) {
+          form.setValue("backgroundImageUrl", bgAttachment.url, {
+            shouldDirty: true,
+          });
+        }
+      }
+    },
+    [activeShelfType, form, hasPrefilledScanImage, prefilledScanImageUrl],
+  );
 
   const fetchMetadataPreview = useCallback(
     async (name: string, barcode?: string, forceOverwrite = false) => {
@@ -301,43 +377,10 @@ export function ItemModal({
         );
         if (metadataPreviewRequestRef.current !== requestKey) return;
         if (metadata) {
-          setFetchedMetadata(metadata);
-
-          const currentBarcode = (
-            barcode ||
-            form.getValues("barcode") ||
-            ""
-          ).trim();
-          if (metadata.barcode && !currentBarcode) {
-            form.setValue("barcode", metadata.barcode, {
-              shouldDirty: true,
-            });
-          }
-
-          if (metadata.imageUrl) {
-            // Only auto-set imageUrl if the form doesn't already have one or if forceOverwrite is enabled.
-            // Chasse Aux Livres cover (from barcode scan) is the preferred default
-            // — metadata images (TMDB etc.) are available as alternatives in the poster grid.
-            if (
-              !hasPrefilledScanImage &&
-              (forceOverwrite || !form.getValues("imageUrl"))
-            ) {
-              form.setValue("imageUrl", metadata.imageUrl, {
-                shouldDirty: true,
-              });
-            }
-          }
-          const bgAttachment =
-            metadata.attachments?.find((a: any) => a.type === "background") ||
-            metadata.attachments?.find((a: any) => a.type === "screenshot") ||
-            metadata.attachments?.find((a: any) => a.type === "artwork");
-          if (bgAttachment?.url) {
-            if (forceOverwrite || !form.getValues("backgroundImageUrl")) {
-              form.setValue("backgroundImageUrl", bgAttachment.url, {
-                shouldDirty: true,
-              });
-            }
-          }
+          applyMetadataPreviewToForm(metadata, {
+            forceOverwrite,
+            barcodeContext: barcode,
+          });
         }
       } catch (err) {
         console.error("Error fetching metadata preview:", err);
@@ -347,7 +390,7 @@ export function ItemModal({
         }
       }
     },
-    [activeShelfType, activeShelf?.name, form, hasPrefilledScanImage],
+    [activeShelfType, activeShelf?.name, applyMetadataPreviewToForm],
   );
 
   const fetchNameSuggestions = useCallback(
@@ -464,68 +507,85 @@ export function ItemModal({
     const metadata = item?.metadata || fetchedMetadata;
 
     const urls = new Set<string>();
-    const list: {
+    const attachments: Array<{
+      type: AttachmentType;
       url: string;
-      type: string;
-      label: string;
       source?: string | null;
       role?: string | null;
-    }[] = [];
+    }> = [];
 
-    // Add Chasse Aux Livres barcode cover first — it's a photo of the physical object
+    const addAttachment = (entry: {
+      type: AttachmentType | string;
+      url: string;
+      source?: string | null;
+      role?: string | null;
+    }) => {
+      if (!entry.url || urls.has(entry.url)) return;
+      urls.add(entry.url);
+      attachments.push({
+        type: entry.type as AttachmentType,
+        url: entry.url,
+        source: entry.source,
+        role: entry.role,
+      });
+    };
+
     const barcodeCover = prefilledValues?.imageUrl || item?.imageUrl;
-    if (barcodeCover && !urls.has(barcodeCover)) {
-      urls.add(barcodeCover);
-      list.push({
+    if (barcodeCover) {
+      addAttachment({
         url: barcodeCover,
-        type: "cover",
-        label: "Chasse Aux Livres",
+        type: activeShelfType === "games" ? "image" : "cover",
         source: "barcode",
       });
     }
 
     if (metadata) {
-      // Add default metadata imageUrl
-      if (metadata.imageUrl && !urls.has(metadata.imageUrl)) {
-        urls.add(metadata.imageUrl);
+      if (metadata.imageUrl) {
         const matchingAttachment = metadata.attachments?.find(
           (a: any) => a.url === metadata.imageUrl,
         );
-        list.push({
+        addAttachment({
           url: metadata.imageUrl,
           type: "cover",
-          label: t("items.editTabs.defaultMetadataImage"),
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
         });
       }
 
-      // Add attachments
-      const attachments = metadata.attachments || [];
-      attachments.forEach((a: any) => {
+      for (const attachment of metadata.attachments || []) {
         if (
-          a.url &&
-          !urls.has(a.url) &&
-          ["cover", "artwork", "image"].includes(a.type)
+          attachment.url &&
+          ["cover", "artwork", "image"].includes(attachment.type)
         ) {
-          urls.add(a.url);
-          list.push({
-            url: a.url,
-            type: a.type,
-            label: a.type.charAt(0).toUpperCase() + a.type.slice(1),
-            source: a.source,
-            role: a.role,
+          addAttachment({
+            url: attachment.url,
+            type: attachment.type,
+            source: attachment.source,
+            role: attachment.role,
           });
         }
-      });
+      }
     }
 
-    return list;
+    return rankAttachmentsForDisplay(attachments).map((attachment) => ({
+      url: attachment.url,
+      type: attachment.type,
+      label:
+        attachment.source === "barcode"
+          ? t("items.editTabs.scannedImage")
+          : metadata?.imageUrl === attachment.url
+            ? t("items.editTabs.defaultMetadataImage")
+            : attachment.type.charAt(0).toUpperCase() +
+              attachment.type.slice(1),
+      source: attachment.source,
+      role: attachment.role,
+    }));
   }, [
     item?.metadata,
     item?.imageUrl,
     fetchedMetadata,
     prefilledValues?.imageUrl,
+    activeShelfType,
     t,
   ]);
 
@@ -541,8 +601,10 @@ export function ItemModal({
     ) {
       list.unshift({
         url: currentImageUrl,
-        type: "custom",
+        type: "image",
         label: t("items.editTabs.chooseImage"),
+        source: null,
+        role: null,
       });
     }
 
@@ -601,7 +663,6 @@ export function ItemModal({
           const suggestions = data?.suggestions || [];
           const cleanName = data?.cleanName;
           const rawNames = data?.rawNames || [];
-          const resolvedShelfType = data?.shelfType;
           const platformKey = data?.platformKey;
 
           const allSearchNames = Array.from(
@@ -613,34 +674,14 @@ export function ItemModal({
             ]),
           ).filter(Boolean) as string[];
 
-          let guessedId: string | null = null;
-          const platformGuess = guessShelfByPlatformKey(platformKey, shelves);
-          if (platformGuess) {
-            guessedId = platformGuess.shelfId;
-          }
+          const shelfGuess = guessShelfFromBarcodeLookup({
+            platformKey,
+            searchNames: allSearchNames,
+            shelves,
+            preferredShelfId: form.getValues("shelfId") || shelfId || null,
+          });
 
-          // 2. Try to guess based on matching name keywords
-          if (!guessedId) {
-            for (const name of allSearchNames) {
-              const guess = guessBestShelf(name, shelves);
-              if (guess) {
-                guessedId = guess.shelfId;
-                break;
-              }
-            }
-          }
-
-          // 3. Fallback to matching resolved shelf type
-          if (!guessedId && resolvedShelfType) {
-            const matchingShelf = shelves.find(
-              (s) => s.type === resolvedShelfType,
-            );
-            if (matchingShelf) {
-              guessedId = matchingShelf.id;
-            }
-          }
-
-          setGuessedShelfId(guessedId);
+          setGuessedShelfId(shelfGuess?.shelfId ?? null);
         }
 
         if (
@@ -832,7 +873,10 @@ export function ItemModal({
       reset({
         shelfId: item.shelfId || defaultValues.shelfId,
         name: item.name || defaultValues.name,
-        description: item.description || defaultValues.description,
+        description:
+          item.description ||
+          item.metadata?.description ||
+          defaultValues.description,
         condition: item.condition || defaultValues.condition,
         imageUrl: item.imageUrl || defaultValues.imageUrl,
         backgroundImageUrl:
@@ -849,9 +893,19 @@ export function ItemModal({
       setSuggestions(prefilledValues?.name ? [prefilledValues.name] : []);
       setNameSuggestion(prefilledValues?.name || null);
       setLastInitializedShelfId(defaultValues.shelfId);
+      const prefilledMetadata = prefilledValues?.metadataPreview || null;
+
+      if (prefilledMetadata) {
+        applyMetadataPreviewToForm(prefilledMetadata, {
+          barcodeContext: prefilledValues?.barcode,
+        });
+      }
 
       // If we have prefilled values with barcode/name, let's fetch metadata preview!
-      if (prefilledValues?.barcode || prefilledValues?.name) {
+      if (
+        !prefilledMetadata &&
+        (prefilledValues?.barcode || prefilledValues?.name)
+      ) {
         if (prefilledValues.barcode) {
           handleBarcodeChange(prefilledValues.barcode);
         } else if (prefilledValues.name) {
@@ -870,6 +924,7 @@ export function ItemModal({
     itemId,
     item,
     defaultValues,
+    applyMetadataPreviewToForm,
     handleBarcodeChange,
     fetchMetadataPreview,
     reset,

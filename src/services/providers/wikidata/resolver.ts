@@ -294,8 +294,8 @@ export function createWikidataResolver() {
       const imageFilename =
         typeof imageValue === "string" ? imageValue : undefined;
       const imageUrl =
-        wikiSummary.thumbnail ||
-        (imageFilename ? commonsFileUrl(imageFilename) : undefined);
+        (imageFilename ? commonsFileUrl(imageFilename) : undefined) ||
+        wikiSummary.thumbnail;
 
       const releaseDate = parseWikidataDate(
         (

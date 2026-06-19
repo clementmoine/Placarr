@@ -3,6 +3,7 @@ import type { AttachmentType } from "@prisma/client";
 import {
   localeBonusForAttachmentRole,
   parseRegionFromRole,
+  regionRank,
 } from "@/lib/localePreference";
 
 export interface AttachmentImageMetrics {
@@ -52,6 +53,21 @@ const COVER_FRIENDLY_TYPES = new Set<AttachmentType>([
   "image",
 ]);
 
+const REAL_BOX_COVER_SOURCES = new Set([
+  "bgg",
+  "boardgamegeek",
+  "screenscraper",
+]);
+
+export function isDiscOrSupportCoverCandidate(
+  attachment: ScoredAttachmentInput,
+): boolean {
+  const role = (attachment.role || "").toLowerCase();
+  const url = (attachment.url || "").toLowerCase();
+  const signal = `${role} ${url}`;
+  return /\b(support|texture|disc|back|3d)\b/.test(signal);
+}
+
 function buildAttachmentDisplayScoreDetails(
   attachment: ScoredAttachmentInput,
   imageMetrics?: AttachmentImageMetrics | null,
@@ -65,6 +81,7 @@ function buildAttachmentDisplayScoreDetails(
 
   signals.push(`base ${score} (${attachment.type})`);
   const role = (attachment.role || "").toLowerCase();
+  const source = (attachment.source || "").toLowerCase();
   const url = (attachment.url || "").toLowerCase();
   const signal = `${role} ${url}`;
   const localeBonus = localeBonusForAttachmentRole(attachment.role);
@@ -76,6 +93,9 @@ function buildAttachmentDisplayScoreDetails(
   }
 
   if (COVER_FRIENDLY_TYPES.has(attachment.type)) {
+    if (attachment.type === "cover" && REAL_BOX_COVER_SOURCES.has(source)) {
+      addSignal(220, "real box cover source");
+    }
     if (
       /(front|cover|box[-_\s]?art|box[-_\s]?2d|jaquette|poster|keyart|official)/.test(
         signal,
@@ -83,10 +103,11 @@ function buildAttachmentDisplayScoreDetails(
     ) {
       addSignal(90, "front/cover signal");
     }
-    if (
-      /\b(?:back|rear|verso|spine|disc|media|inside)\b/.test(signal)
-    ) {
+    if (/\b(?:back|rear|verso|spine|disc|media|inside)\b/.test(signal)) {
       addSignal(-220, "back/disc signal");
+    }
+    if (isDiscOrSupportCoverCandidate(attachment)) {
+      addSignal(-320, "disc/support media");
     }
     if (
       /(thumb|tiny|small|icon|avatar|capsule|header|banner|preview|sprite)/.test(
@@ -228,7 +249,37 @@ export function pickBestDisplayImageUrl(
 
 export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
   attachments: T[],
+  imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
 ): string | null {
-  const ranked = rankAttachmentsForDisplay(attachments);
+  const localizedCovers = attachments.filter(
+    (attachment) =>
+      attachment.url &&
+      COVER_FRIENDLY_TYPES.has(attachment.type) &&
+      parseRegionFromRole(attachment.role) &&
+      !isDiscOrSupportCoverCandidate(attachment),
+  );
+
+  if (localizedCovers.length > 0) {
+    const best = localizedCovers
+      .map((attachment, index) => ({
+        attachment,
+        index,
+        localeRank: regionRank(parseRegionFromRole(attachment.role)),
+        score: scoreAttachmentForDisplay(
+          attachment,
+          imageMetricsByUrl?.get(attachment.url),
+        ),
+      }))
+      .sort(
+        (a, b) =>
+          a.localeRank - b.localeRank ||
+          b.score - a.score ||
+          a.index - b.index,
+      )[0];
+
+    if (best?.attachment.url) return best.attachment.url;
+  }
+
+  const ranked = rankAttachmentsForDisplay(attachments, imageMetricsByUrl);
   return pickBestDisplayImageUrl(ranked) || null;
 }

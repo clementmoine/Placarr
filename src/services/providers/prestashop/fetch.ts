@@ -24,6 +24,56 @@ const HEADERS = {
   "Accept-Language": "fr-FR,fr;q=0.9",
 };
 
+const HTML_HEADERS = {
+  "User-Agent": HEADERS["User-Agent"],
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "fr-FR,fr;q=0.9",
+};
+
+/** Identifiant numérique d'une image dans une URL PrestaShop (`/{id}[-{size}]/`). */
+export function prestashopImageId(url?: string | null): string | null {
+  if (!url) return null;
+  return (
+    url.match(/\/(\d+)(?:-[a-z_]+)?\/[^/?#]+\.(?:jpe?g|png|webp|gif)/i)?.[1] ??
+    null
+  );
+}
+
+/**
+ * Extrait la galerie produit d'une page PrestaShop via `data-image-large-src`,
+ * convention du thème standard. Ce sélecteur ne porte que les images du produit
+ * courant (les cross-sell utilisent un autre markup), donc aucun risque de
+ * récupérer les photos d'un autre produit.
+ */
+export function parsePrestashopGallery(html: string): string[] {
+  const seen = new Set<string>();
+  const images: string[] = [];
+  for (const match of html.matchAll(/data-image-large-src="([^"]+)"/gi)) {
+    const url = match[1].split(/[?#]/)[0].trim();
+    if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+    seen.add(url);
+    images.push(url);
+  }
+  return images;
+}
+
+/** Récupère la galerie produit en chargeant la page (chemin métadonnée only). */
+export async function fetchPrestashopGallery(
+  productUrl: string,
+): Promise<string[]> {
+  if (!productUrl || !/^https?:\/\//i.test(productUrl)) return [];
+  try {
+    const response = await axios.get(productUrl, {
+      headers: HTML_HEADERS,
+      timeout: 10000,
+      validateStatus: (status) => status >= 200 && status < 400,
+    });
+    return parsePrestashopGallery(String(response.data));
+  } catch {
+    return [];
+  }
+}
+
 export function mapPrestashopSearchProduct(
   config: PrestashopRetailerConfig,
   product: PrestashopSearchProduct,
@@ -101,4 +151,37 @@ export async function searchPrestashopProduct(
   if (!hit) return null;
 
   return mapPrestashopSearchProduct(config, hit);
+}
+
+export type BarcodeProductHit = {
+  title: string;
+  imageUrl?: string | null;
+};
+
+export async function fetchPrestashopBarcodeProduct(
+  config: PrestashopRetailerConfig,
+  barcode: string,
+): Promise<BarcodeProductHit | null> {
+  const normalizedBarcode = normalizeProductBarcode(barcode);
+  if (!normalizedBarcode) return null;
+
+  try {
+    const product = await searchPrestashopProduct(
+      config,
+      "",
+      normalizedBarcode,
+    );
+    if (!product?.title) return null;
+    if (normalizeProductBarcode(product.barcode) !== normalizedBarcode) {
+      return null;
+    }
+
+    return {
+      title: product.title,
+      imageUrl: product.imageUrl || null,
+    };
+  } catch (error) {
+    console.error(`[${config.label}] Barcode lookup failed:`, error);
+    return null;
+  }
 }

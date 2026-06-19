@@ -37,6 +37,9 @@ export interface MetadataResult {
   attachments?: MetadataAttachment[];
   aliases?: string[];
   regionalTitles?: { region?: string; text: string }[];
+  externalIds?: {
+    imdb?: string | null;
+  };
   facts?: MetadataFact[];
   fieldEvidence?: FieldEvidenceInput[];
   lastFetched?: string;

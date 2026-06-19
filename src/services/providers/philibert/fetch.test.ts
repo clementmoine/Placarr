@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   parsePhilibertFeatureRows,
+  parsePhilibertGalleryImages,
   parsePhilibertProductId,
   parsePhilibertReviewSummary,
   parsePhilibertReviewsHtml,
   parsePhilibertTopFeatures,
+  philibertImageId,
 } from "./fetch";
 
 describe("parsePhilibertTopFeatures", () => {
@@ -94,5 +96,44 @@ describe("parsePhilibertProductId", () => {
         "https://www.philibertnet.com/fr/kosmos/10772-catane-3558380126133.html",
       ),
     ).toBe("10772");
+  });
+});
+
+describe("philibertImageId", () => {
+  it("extrait l'id image depuis une url CDN, quelle que soit la taille", () => {
+    expect(
+      philibertImageId(
+        "https://cdn1.philibertnet.com/547785-large_default/x--3558380099505.jpg",
+      ),
+    ).toBe("547785");
+    expect(
+      philibertImageId(
+        "https://cdn1.philibertnet.com/547785/x--3558380099505.jpg",
+      ),
+    ).toBe("547785");
+    expect(philibertImageId(null)).toBeNull();
+  });
+});
+
+describe("parsePhilibertGalleryImages", () => {
+  it("récupère les images distinctes du produit (originaux) et ignore les produits liés", () => {
+    const url =
+      "https://www.philibertnet.com/fr/space-cowboys/111299-mon-jeu--3558380099505.html";
+    const html = `
+      <img src="https://cdn1.philibertnet.com/100-large_default/mon-jeu--3558380099505.jpg">
+      <img src="https://cdn1.philibertnet.com/100-thickbox_default/mon-jeu--3558380099505.jpg">
+      <img src="https://cdn1.philibertnet.com/100/mon-jeu--3558380099505.jpg">
+      <img src="https://cdn1.philibertnet.com/200-large_default/mon-jeu--3558380099505.jpg">
+      <img src="https://cdn1.philibertnet.com/999-home_default/autre-jeu--3558380099499.jpg">
+    `;
+
+    expect(parsePhilibertGalleryImages(html, url)).toEqual([
+      "https://cdn1.philibertnet.com/100/mon-jeu--3558380099505.jpg",
+      "https://cdn1.philibertnet.com/200/mon-jeu--3558380099505.jpg",
+    ]);
+  });
+
+  it("renvoie une liste vide quand l'url de la fiche n'a pas de slug exploitable", () => {
+    expect(parsePhilibertGalleryImages("<img src=''>", "")).toEqual([]);
   });
 });

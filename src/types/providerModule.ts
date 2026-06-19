@@ -6,6 +6,8 @@ export type MetadataAdapterContext = {
   barcode?: string | null;
   platform?: string | null;
   includePcSources?: boolean;
+  imdbId?: string | null;
+  fallbackNames?: string[];
 };
 
 export interface MetadataProviderAdapter {
@@ -63,6 +65,8 @@ export interface ProviderEvidenceConfig {
   label: string;
   sourceWeight: number;
   canonical?: boolean;
+  /** Official retailer product pages (barcode-confirmed), below catalog sources. */
+  trustedRetailer?: boolean;
   cleanCachedNames?: boolean;
 }
 

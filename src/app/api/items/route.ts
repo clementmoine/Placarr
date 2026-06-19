@@ -320,6 +320,7 @@ export async function PATCH(req: NextRequest) {
           lookupQuery ? undefined : updatedItem.barcode || undefined,
           true,
           updatedItem.shelf.name,
+          true,
         );
 
         if (metadata) {

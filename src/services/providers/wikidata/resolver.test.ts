@@ -130,7 +130,9 @@ describe("createWikidataResolver", () => {
     expect(res?.title).toBe("Catan");
     expect(res?.description).toContain("jeu de société");
     expect(res?.releaseDate).toBe("1995-01-01");
-    expect(res?.imageUrl).toBe("https://upload/catan.jpg");
+    expect(res?.imageUrl).toBe(
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Catan.jpg",
+    );
     expect(res?.authors?.some((p) => /teuber/i.test(p.name))).toBe(true);
     expect(res?.publishers?.some((p) => /kosmos/i.test(p.name))).toBe(true);
     expect(res?.aliases).toContain("Catan (board game)");

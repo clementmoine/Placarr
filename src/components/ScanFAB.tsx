@@ -26,6 +26,7 @@ import {
   BarcodeScannerView,
   type BarcodeScannerResult,
 } from "@/components/BarcodeScannerView";
+import type { MetadataResult } from "@/types/metadataProvider";
 
 export function ScanFAB() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -39,6 +40,7 @@ export function ScanFAB() {
         imageUrl: string | null;
         barcode: string;
         shelfId?: string;
+        metadataPreview?: MetadataResult | null;
       }
     | undefined
   >(undefined);
@@ -95,6 +97,7 @@ export function ScanFAB() {
     imageUrl: string | null;
     barcode: string;
     shelfId?: string;
+    metadataPreview?: MetadataResult | null;
   }) => {
     setQuickScanOpen(false);
     setPrefilledItemValues(product);

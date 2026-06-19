@@ -20,6 +20,49 @@ describe("fetchFromAllMovieSources", () => {
     omdbResolve.mockReset();
   });
 
+  it("passe l'imdb TMDB à OMDb pour enrichir les notes", async () => {
+    tmdbResolve.mockResolvedValue({
+      title: "Pocahontas",
+      externalIds: { imdb: "tt0114148" },
+      facts: [{ kind: "rating", label: "TMDB", value: "6,9/10", source: "tmdb" }],
+    });
+    omdbResolve.mockResolvedValue({
+      title: "Pocahontas",
+      facts: [
+        {
+          kind: "rating",
+          label: "Internet Movie Database",
+          value: "6.7/10",
+          source: "omdb",
+        },
+        {
+          kind: "rating",
+          label: "Metascore",
+          value: "59/100",
+          source: "omdb",
+        },
+      ],
+    });
+
+    const res = await fetchFromAllMovieSources(
+      "Pocahontas: Une légende indienne",
+      null,
+    );
+
+    expect(omdbResolve).toHaveBeenCalledWith(
+      expect.objectContaining({
+        imdbId: "tt0114148",
+        fallbackNames: expect.arrayContaining([
+          "Pocahontas",
+          "Pocahontas: Une légende indienne",
+        ]),
+      }),
+    );
+    expect(res?.facts?.filter((fact) => fact.kind === "rating").length).toBeGreaterThanOrEqual(
+      3,
+    );
+  });
+
   it("fusionne TMDB et OMDb avec fieldEvidence", async () => {
     tmdbResolve.mockResolvedValue({
       title: "Inception",

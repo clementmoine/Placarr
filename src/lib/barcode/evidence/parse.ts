@@ -9,6 +9,7 @@ import {
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
 import {
   isCanonicalProvider,
+  isTrustedRetailerProvider,
   sourceWeightForProvider,
 } from "@/services/providerEvidence";
 import { decode as decodeHTMLEntities } from "html-entities";
@@ -49,7 +50,12 @@ function parseProductName(
   const normalizedRaw = normalizeForTokens(cleanName);
   const tokens = new Set(normalizedTitle.split(/\s+/).filter(Boolean));
   const indicators = getSequelIndicators(normalizedTitle);
-  const platformKey = detectPlatformKey(cleanName) || undefined;
+  // `cleanName` strips the platform suffix for marketplace listings (e.g.
+  // "… - Xbox" → "…"), so fall back to the raw decoded name to keep the
+  // platform signal — otherwise a game named after a movie loses its only
+  // game-vs-movie discriminator and gets misclassified.
+  const platformKey =
+    detectPlatformKey(cleanName) || detectPlatformKey(decoded) || undefined;
   const region = normalizedRaw
     .match(/\b(pal|ntsc|usa|us|eur|eu|uk|jp|jpn|japan|fr|fra)\b/)?.[1]
     ?.toUpperCase();
@@ -189,15 +195,26 @@ export function buildProductEvidence(
   product: SourceProduct,
   canonicalOverride?: boolean,
 ): ProductEvidence | null {
+  const isTrustedRetailer =
+    canonicalOverride == null && isTrustedRetailerProvider(providerName);
   const isCanonical =
-    canonicalOverride ??
-    (isCanonicalProvider(providerName) || providerName.startsWith("Database"));
-  const parsedBase = parseProductName(product.name, isCanonical);
+    canonicalOverride === true ||
+    (canonicalOverride == null &&
+      isCanonicalProvider(providerName) &&
+      !isTrustedRetailer);
+  const preserveDisplayTitle = isCanonical || isTrustedRetailer;
+  const parsedBase = parseProductName(product.name, preserveDisplayTitle);
   const parsed = product.platformKey
     ? { ...parsedBase, platformKey: product.platformKey }
     : parsedBase;
   if (!parsed.title || isListingDiscardable(parsed.cleanName)) return null;
-  const priority = isCanonical ? (product.isAlias ? 1 : 2) : 0;
+  const priority = isCanonical
+    ? product.isAlias
+      ? 1
+      : 2
+    : isTrustedRetailer
+      ? 1
+      : 0;
 
   return {
     providerName,
@@ -206,6 +223,7 @@ export function buildProductEvidence(
     title: parsed.title,
     coverUrl: product.coverUrl || null,
     isCanonical,
+    isTrustedRetailer,
     isAlias: !!product.isAlias,
     region: product.region || null,
     priority,

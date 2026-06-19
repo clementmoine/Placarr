@@ -6,6 +6,7 @@ import {
 import { pickDiscoveredBarcode } from "@/lib/barcode/normalize";
 import {
   areDisplayTitlesSameProduct,
+  requestedTitleCoversCurrentTitle,
   scoreMetadataDisplayTitle,
 } from "@/lib/displayTitleScore";
 import {
@@ -145,20 +146,42 @@ export function mergeGameMetadata(
   ).filter((a) => a.toLowerCase().trim() !== title?.toLowerCase().trim());
   const aliases = allAliases.length > 0 ? allAliases : undefined;
   const hltbFacts = hltb?.facts || [];
-  const hasDirectTimeToBeat = hltbFacts.some(
-    (fact) =>
-      fact.kind === "time-to-beat" ||
-      fact.kind === "duration" ||
-      fact.kind === "completion-time",
+  const durationLikeKinds = new Set([
+    "time-to-beat",
+    "duration",
+    "completion-time",
+    "playtime",
+  ]);
+  const hasDirectTimeToBeat = hltbFacts.some((fact) =>
+    durationLikeKinds.has(fact.kind),
   );
+  const rawgLooksPcOnly =
+    !options.includePcSources &&
+    rawg?.facts?.some((fact) => fact.kind === "platform") &&
+    rawg.facts
+      .filter((fact) => fact.kind === "platform")
+      .every((fact) =>
+        /\b(pc|windows|mac|linux)\b/i.test(fact.value),
+      ) &&
+    !rawg.facts.some(
+      (fact) =>
+        fact.kind === "platform" &&
+        /\b(playstation|xbox|nintendo|wii|switch|ps[1-5])\b/i.test(fact.value),
+    );
+  const trustedRawg = rawgLooksPcOnly ? null : rawg;
   const igdbFacts = (igdb?.facts || []).filter(
     (fact) => !hasDirectTimeToBeat || fact.kind !== "time-to-beat",
+  );
+  const rawgFacts = (trustedRawg?.facts || []).filter(
+    (fact) =>
+      !hasDirectTimeToBeat ||
+      (fact.kind !== "duration" && fact.kind !== "playtime"),
   );
   const facts = dedupeFacts([
     ...igdbFacts,
     ...(ss?.facts || []),
     ...hltbFacts,
-    ...(rawg?.facts || []),
+    ...rawgFacts,
     ...(options.includePcSources ? steam?.facts || [] : []),
   ]);
 
@@ -538,15 +561,30 @@ export function preferRequestedDisplayTitle(
   if (
     !currentTitle ||
     !requestedTitle ||
-    currentTitle.toLowerCase().trim() === requestedTitle.toLowerCase().trim() ||
-    !areDisplayTitlesSameProduct(currentTitle, requestedTitle)
+    currentTitle.toLowerCase().trim() === requestedTitle.toLowerCase().trim()
   ) {
     return metadata;
   }
 
+  if (!areDisplayTitlesSameProduct(currentTitle, requestedTitle)) {
+    const aliases = Array.from(
+      new Set([currentTitle, ...(metadata.aliases || [])]),
+    ).filter(
+      (alias) =>
+        alias.toLowerCase().trim() !== requestedTitle.toLowerCase().trim(),
+    );
+
+    return {
+      ...metadata,
+      title: requestedTitle,
+      aliases: aliases.length > 0 ? aliases : undefined,
+    };
+  }
+
   if (
     scoreMetadataDisplayTitle(requestedTitle) <
-    scoreMetadataDisplayTitle(currentTitle)
+      scoreMetadataDisplayTitle(currentTitle) &&
+    !requestedTitleCoversCurrentTitle(requestedTitle, currentTitle)
   ) {
     return metadata;
   }

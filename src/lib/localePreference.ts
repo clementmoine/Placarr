@@ -24,18 +24,61 @@ export function languageRank(language?: string | null): number {
   return index === -1 ? LOCALE_LANGUAGE_ORDER.length : index;
 }
 
+const BGG_LANGUAGE_ROLE_MAP: Record<string, string> = {
+  french: "fr",
+  francais: "fr",
+  english: "wor",
+  german: "eu",
+  dutch: "eu",
+  spanish: "eu",
+  italian: "eu",
+  portuguese: "eu",
+  polish: "eu",
+  hungarian: "eu",
+  ukrainian: "eu",
+  chinese: "jp",
+  japanese: "jp",
+  korean: "jp",
+};
+
+export function mapBggLanguageToAttachmentRole(
+  language?: string | null,
+  editionName?: string | null,
+): string {
+  const candidates = [language, editionName].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    const normalized = candidate
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+    if (BGG_LANGUAGE_ROLE_MAP[normalized]) {
+      return BGG_LANGUAGE_ROLE_MAP[normalized];
+    }
+
+    for (const [label, role] of Object.entries(BGG_LANGUAGE_ROLE_MAP)) {
+      if (normalized.includes(label)) return role;
+    }
+  }
+
+  return "wor";
+}
+
 export function parseRegionFromRole(role?: string | null): string | undefined {
   if (!role) return undefined;
 
   const normalized = role.toLowerCase();
-  const prefixed = normalized.match(/^(fr|eu|wor|uk|us|jp)(?:[-_]|$)/);
-  if (prefixed) return prefixed[1];
+  const screenScraperAliases: Record<string, LocaleRegion> = {
+    de: "eu",
+  };
 
   if (LOCALE_REGION_ORDER.includes(normalized as LocaleRegion)) {
     return normalized;
   }
 
-  return undefined;
+  return screenScraperAliases[normalized];
 }
 
 const LOCALE_ATTACHMENT_BONUSES = [80, 60, 30, 10, -20, -30];

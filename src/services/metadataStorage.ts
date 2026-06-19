@@ -12,7 +12,8 @@ import fs from "fs";
 import path from "path";
 import sharp from "sharp";
 import {
-  pickBestDisplayImageUrl,
+  pickBestCoverFromAttachments,
+  rankAttachmentsForDisplay,
   rankScoredAttachments,
   scoreAttachmentForDisplay,
   type AttachmentImageMetrics,
@@ -179,23 +180,120 @@ export async function getCachedMetadata(
   return item?.metadata || null;
 }
 
-export async function downloadRemoteImage(
+/**
+ * Variante "originale" (pleine résolution, vrai ratio) d'une URL d'image
+ * redimensionnée par PrestaShop/Philibert. Ces plateformes encodent la taille
+ * via un segment `{id}-{taille}_default/` qui padde l'image en carré et la
+ * sous-échantillonne ; le chemin nu `{id}/` sert le fichier d'origine. Renvoie
+ * null quand l'URL ne suit pas ce motif (on ne touche donc que ces sources).
+ */
+export function retailerOriginalImageUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const match = parsed.pathname.match(
+      /^\/(\d+)-[a-z0-9_]*_default\/([^/?#]+)$/i,
+    );
+    if (!match) return null;
+    parsed.pathname = `/${match[1]}/${match[2]}`;
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+const IMAGE_TRANSFORM_QUERY_PARAMS = new Set([
+  "auto",
+  "compress",
+  "compression",
+  "crop",
+  "dpr",
+  "fit",
+  "fm",
+  "format",
+  "h",
+  "height",
+  "im",
+  "imheight",
+  "imwidth",
+  "ixid",
+  "ixlib",
+  "mode",
+  "pithumbsize",
+  "q",
+  "quality",
+  "resize",
+  "rs",
+  "sharp",
+  "thumb",
+  "thumbnail",
+  "thumbsize",
+  "tr",
+  "transform",
+  "w",
+  "width",
+]);
+
+function isImageTransformParam(param: string): boolean {
+  const normalized = param.toLowerCase();
+  return (
+    IMAGE_TRANSFORM_QUERY_PARAMS.has(normalized) ||
+    normalized.startsWith("crop") ||
+    normalized.startsWith("resize")
+  );
+}
+
+function imageUrlWithoutTransformArgs(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    let changed = false;
+
+    for (const key of Array.from(parsed.searchParams.keys())) {
+      if (!isImageTransformParam(key)) continue;
+      parsed.searchParams.delete(key);
+      changed = true;
+    }
+
+    if (
+      !changed &&
+      (parsed.hostname.includes("cdn.pji.nu") ||
+        parsed.hostname.includes("prisjakt.nu")) &&
+      /\.(jpe?g|png|webp|gif|svg)$/i.test(parsed.pathname)
+    ) {
+      parsed.search = "";
+      changed = true;
+    }
+
+    if (!changed) return null;
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+export function providerOriginalImageUrl(url: string): string | null {
+  const retailerOriginal = retailerOriginalImageUrl(url);
+  const baseUrl = retailerOriginal || url;
+  const cleanUrl = imageUrlWithoutTransformArgs(baseUrl) || baseUrl;
+  return cleanUrl !== url ? cleanUrl : null;
+}
+
+/**
+ * URLs à tenter pour une image, dans l'ordre : l'original d'abord, puis la
+ * variante redimensionnée en repli (certaines boutiques ne servent pas
+ * l'original au chemin nu et renvoient 404).
+ */
+function imageDownloadCandidates(url: string): string[] {
+  const original = providerOriginalImageUrl(url);
+  return Array.from(new Set([original, url].filter(Boolean))) as string[];
+}
+
+async function downloadSingleImage(
   url: string,
-  options: { trim?: boolean; minMarginPixels?: number } = {},
+  options: { trim?: boolean; minMarginPixels?: number },
 ): Promise<string | null> {
-  if (
-    !url ||
-    url.startsWith("/") ||
-    url.startsWith("file://") ||
-    !url.startsWith("http")
-  ) {
-    return url;
-  }
-
-  if (url.includes("cdn.pji.nu") || url.includes("prisjakt.nu")) {
-    url = url.replace(/\.(jpe?g|png|webp|gif|svg)\?.*$/i, ".$1");
-  }
-
   try {
     const hash = crypto.createHash("md5").update(url).digest("hex");
     let ext = ".jpg";
@@ -243,11 +341,33 @@ export async function downloadRemoteImage(
       console.log(`[ImageLocalizer] Downloaded ${url} -> ${targetPath}`);
       return `/uploads/${filename}`;
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error(
       `[ImageLocalizer] Failed to download image from ${url}:`,
-      err.message,
+      err instanceof Error ? err.message : String(err),
     );
+  }
+
+  return null;
+}
+
+export async function downloadRemoteImage(
+  url: string,
+  options: { trim?: boolean; minMarginPixels?: number } = {},
+): Promise<string | null> {
+  if (
+    !url ||
+    url.startsWith("/") ||
+    url.startsWith("file://") ||
+    !url.startsWith("http")
+  ) {
+    return url;
+  }
+
+  // Préfère l'original pleine résolution, avec repli sur la variante servie.
+  for (const candidate of imageDownloadCandidates(url)) {
+    const localized = await downloadSingleImage(candidate, options);
+    if (localized) return localized;
   }
 
   return null;
@@ -345,15 +465,31 @@ export async function storeMetadata(
     )
   ).filter((a): a is NonNullable<typeof a> => a !== null);
 
-  const rankedLocalizedAttachments =
-    await rankLocalizedAttachmentsForDisplay(localizedAttachments);
+  const imageMetricsByUrl = new Map<string, AttachmentImageMetrics | null>();
+  await Promise.all(
+    localizedAttachments
+      .filter((attachment) => shouldReadImageMetricsForAttachment(attachment.type))
+      .map(async (attachment) => {
+        imageMetricsByUrl.set(
+          attachment.url,
+          await readAttachmentImageMetrics(attachment.url),
+        );
+      }),
+  );
+
+  const rankedLocalizedAttachments = await dedupeLocalizedAttachmentsByContent(
+    rankAttachmentsForDisplay(localizedAttachments, imageMetricsByUrl),
+  );
   const discogsCover = rankedLocalizedAttachments.find(
     (attachment) =>
       attachment.source === "discogs" && attachment.type === "cover",
   );
   const selectedImageUrl =
     discogsCover?.url ??
-    pickBestDisplayImageUrl(rankedLocalizedAttachments) ??
+    pickBestCoverFromAttachments(
+      rankedLocalizedAttachments,
+      imageMetricsByUrl,
+    ) ??
     formattedMetadata.imageUrl ??
     null;
 
@@ -441,6 +577,7 @@ export async function storeMetadata(
     const shouldSyncItemCover =
       !item.imageUrl ||
       item.imageUrl === previousMetadataImage ||
+      item.imageUrl === croppedImageUrl ||
       localizedAttachments.some(
         (attachment) =>
           attachment.source === "barcode" && attachment.url === item.imageUrl,
@@ -460,13 +597,116 @@ export async function storeMetadata(
 
   return storedMetadata;
 }
-function isPcLikeGamePlatform(platform?: string | null): boolean {
-  if (!platform) return false;
-  const normalized = platform
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  return /\b(pc|windows|steam)\b/.test(normalized);
+/**
+ * Distance de Hamming entre deux empreintes perceptuelles, représentées en
+ * chaîne binaire de même longueur (64 caractères "0"/"1").
+ */
+export function hammingDistance(a: string, b: string): number {
+  let count = 0;
+  const length = Math.min(a.length, b.length);
+  for (let i = 0; i < length; i++) {
+    if (a[i] !== b[i]) count++;
+  }
+  return count + Math.abs(a.length - b.length);
+}
+
+// Au-delà de cette distance, deux images sont considérées distinctes. Les copies
+// d'une même jaquette (tailles/encodages différents) tombent bien en dessous ;
+// deux visuels réellement différents sont très au-dessus.
+const PERCEPTUAL_DUPLICATE_MAX_DISTANCE = 8;
+
+/**
+ * Déduplique des images visuellement identiques même servies à des URLs, des
+ * tailles ou des encodages différents (ex. la même boîte chez 5 boutiques).
+ * On garde la première occurrence : l'appelant fournit la liste triée par
+ * pertinence, donc la meilleure copie de chaque visuel est conservée.
+ * Générique à tous les types de média.
+ */
+export function dedupeByPerceptualHash<
+  T extends { type: AttachmentType; url: string },
+>(
+  attachments: T[],
+  hashOf: (url: string) => string | null,
+  maxDistance: number = PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+): T[] {
+  const kept: string[] = [];
+  const result: T[] = [];
+  for (const attachment of attachments) {
+    const hash = hashOf(attachment.url);
+    if (hash === null) {
+      result.push(attachment);
+      continue;
+    }
+    if (
+      kept.some((existing) => hammingDistance(existing, hash) <= maxDistance)
+    ) {
+      continue;
+    }
+    kept.push(hash);
+    result.push(attachment);
+  }
+  return result;
+}
+
+const perceptualHashCache = new Map<string, Promise<string | null>>();
+
+/**
+ * Empreinte perceptuelle (dHash 64 bits, en chaîne binaire) d'un asset local :
+ * niveaux de gris réduits en 9×8, chaque pixel comparé à son voisin de droite.
+ * Mémoïsée.
+ */
+async function perceptualHashForAsset(url: string): Promise<string | null> {
+  if (!url || !url.startsWith("/")) return null;
+  const cached = perceptualHashCache.get(url);
+  if (cached) return cached;
+
+  const task = (async () => {
+    const filePath = resolvePublicAssetPath(url);
+    if (!filePath || !fs.existsSync(filePath)) return null;
+    try {
+      const { data, info } = await sharp(filePath)
+        .greyscale()
+        .resize(9, 8, { fit: "fill" })
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      const channels = info.channels;
+      let hash = "";
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const left = data[(row * 9 + col) * channels];
+          const right = data[(row * 9 + col + 1) * channels];
+          hash += left < right ? "1" : "0";
+        }
+      }
+      return hash;
+    } catch {
+      return null;
+    }
+  })();
+
+  perceptualHashCache.set(url, task);
+  if (perceptualHashCache.size > IMAGE_METRICS_CACHE_LIMIT) {
+    const oldestKey = perceptualHashCache.keys().next().value;
+    if (typeof oldestKey === "string") perceptualHashCache.delete(oldestKey);
+  }
+  return task;
+}
+
+async function dedupeLocalizedAttachmentsByContent<
+  T extends { type: AttachmentType; url: string },
+>(attachments: T[]): Promise<T[]> {
+  const hashByUrl = new Map<string, string>();
+  await Promise.all(
+    attachments.map(async (attachment) => {
+      if (!shouldReadImageMetricsForAttachment(attachment.type)) return;
+      const hash = await perceptualHashForAsset(attachment.url);
+      if (hash !== null) hashByUrl.set(attachment.url, hash);
+    }),
+  );
+  return dedupeByPerceptualHash(
+    attachments,
+    (url) => hashByUrl.get(url) ?? null,
+  );
 }
 
 const imageMetricsCache = new Map<
@@ -524,29 +764,4 @@ export async function readAttachmentImageMetrics(
     }
   }
   return task;
-}
-
-async function rankLocalizedAttachmentsForDisplay<
-  T extends ScoredAttachmentInput,
->(attachments: T[]): Promise<T[]> {
-  const scoredEntries: Array<{ attachment: T; score: number; index: number }> =
-    [];
-  const batchSize = 8;
-  for (let offset = 0; offset < attachments.length; offset += batchSize) {
-    const batch = attachments.slice(offset, offset + batchSize);
-    const batchEntries = await Promise.all(
-      batch.map(async (attachment, batchIndex) => {
-        const metrics = shouldReadImageMetricsForAttachment(attachment.type)
-          ? await readAttachmentImageMetrics(attachment.url)
-          : null;
-        return {
-          attachment,
-          index: offset + batchIndex,
-          score: scoreAttachmentForDisplay(attachment, metrics),
-        };
-      }),
-    );
-    scoredEntries.push(...batchEntries);
-  }
-  return rankScoredAttachments(scoredEntries);
 }

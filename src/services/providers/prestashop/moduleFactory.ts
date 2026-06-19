@@ -4,11 +4,15 @@ import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
+  BarcodeLookupType,
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
 
-import { searchPrestashopProduct } from "./fetch";
+import {
+  fetchPrestashopBarcodeProduct,
+  searchPrestashopProduct,
+} from "./fetch";
 import { createPrestashopResolver } from "./resolver";
 
 import type { PrestashopRetailerConfig } from "./types";
@@ -24,6 +28,8 @@ const RESOLVER_DEP_KEYS: Record<string, string> = {
   bcdjeux: "fetchFromBcdjeux",
   lepassetemps: "fetchFromLepassetemps",
 };
+
+const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames"];
 
 export function createPrestashopModule(
   config: PrestashopRetailerConfig,
@@ -53,7 +59,8 @@ export function createPrestashopModule(
     },
     evidence: {
       label: config.label,
-      sourceWeight: 0.12,
+      sourceWeight: 0.24,
+      trustedRetailer: true,
     },
     createMetadataAdapter(deps) {
       const fetch = (deps as Record<string, unknown>)[depKey] as
@@ -91,6 +98,14 @@ export function createPrestashopModule(
         kind: "metadata-barcode",
         run: (query) => resolver("", query),
       },
+    },
+    buildBarcodeTasks(_deps, type, { barcode }) {
+      if (!BARCODE_TYPES.includes(type)) {
+        return {} as Record<string, Promise<unknown>>;
+      }
+      return {
+        [config.id]: fetchPrestashopBarcodeProduct(config, barcode),
+      };
     },
     buildTeardownMetadataTasks(ctx) {
       return teardownMetadataWhen(

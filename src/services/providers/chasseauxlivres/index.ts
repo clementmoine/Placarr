@@ -8,9 +8,14 @@ import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import {
   fetchFromChasseAuxLivres,
   fetchPricesFromChasseAuxLivres,
+  isChasseAuxLivresSearchProtected,
 } from "./fetch";
 
-export { fetchFromChasseAuxLivres, fetchPricesFromChasseAuxLivres };
+export {
+  fetchFromChasseAuxLivres,
+  fetchPricesFromChasseAuxLivres,
+  isChasseAuxLivresSearchProtected,
+};
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",
@@ -106,6 +111,12 @@ export const chasseauxlivresModule: ProviderModule = {
     );
     const probe = listProbe(products);
     if (probe) return probe;
+    if (await isChasseAuxLivresSearchProtected("9780140328721", "fr")) {
+      return probeErrorResult(
+        "Search redirects to a protected login page — Chasse aux Livres blocks anonymous server requests",
+        "blocked",
+      );
+    }
     return probeErrorResult(
       "No listing for sample ISBN — site HTML may have changed or blocked the request",
       "empty",

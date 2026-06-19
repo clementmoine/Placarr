@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Users,
   Star,
+  Gauge,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useParams, useRouter } from "next/navigation";
@@ -30,6 +31,8 @@ import {
   type SyntheticEvent,
   type TouchEvent,
 } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Header from "@/components/Header";
@@ -37,6 +40,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ItemModal } from "@/components/modals/ItemModal";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { ItemCard } from "@/components/ItemCard";
@@ -79,6 +87,9 @@ type DetailFact = {
   value: string;
   url?: string;
   source?: string;
+  sourceCount?: number;
+  sourceNames?: string[];
+  sourceMeta?: string;
   priority?: number;
 };
 
@@ -142,6 +153,7 @@ function factIcon(kind: string) {
   }
   if (kind === "pages") return BookOpen;
   if (kind === "tracks") return ListMusic;
+  if (kind === "complexity") return Gauge;
   if (kind === "rating" || kind === "popularity") return Star;
   return Search;
 }
@@ -196,6 +208,13 @@ function factTone(kind: string) {
       bg: "bg-rose-500/10 border-rose-500/25",
     };
   }
+  if (kind === "complexity") {
+    return {
+      icon: "text-indigo-600 dark:text-indigo-400",
+      value: "text-indigo-700 dark:text-indigo-300",
+      bg: "bg-indigo-500/10 border-indigo-500/25",
+    };
+  }
   return {
     icon: "text-zinc-600 dark:text-zinc-400",
     value: "text-foreground dark:text-zinc-100",
@@ -239,13 +258,140 @@ function formatFactSource(source: string) {
       return "SteamGridDB";
     case "tmdb":
       return "TMDB";
+    case "omdb":
+      return "OMDb";
     case "bgg":
-      return "BGG";
+      return "BoardGameGeek";
     case "ledenicheur":
       return "LeDénicheur";
+    case "pricecharting":
+      return "PriceCharting";
+    case "screenscraper":
+      return "ScreenScraper";
+    case "how long to beat":
+      return "How Long to Beat";
+    case "consensus":
+      return "Consensus";
+    case "philibert":
+      return "Philibert";
+    case "monsieurde":
+      return "Monsieur de";
+    case "ludifolie":
+      return "Ludifolie";
+    case "bcdjeux":
+      return "BCD Jeux";
+    case "lepassetemps":
+      return "Le Passe-Temps";
     default:
       return source;
   }
+}
+
+function parseFactSourceList(source: string) {
+  return Array.from(
+    new Set(
+      source
+        .split(/\s*,\s*|\s*\+\s*/)
+        .map((part) => part.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function formatFactSourceEntry(source: string) {
+  const trimmed = source.trim();
+  const hltbMatch = trimmed.match(/^how long to beat(?:\s*·\s*(.+))?$/i);
+  if (hltbMatch) {
+    const platform = hltbMatch[1]?.trim();
+    return platform ? `How Long to Beat · ${platform}` : "How Long to Beat";
+  }
+  return formatFactSource(trimmed);
+}
+
+function resolveFactSourceDisplay(fact: DetailFact) {
+  const names = (fact.sourceNames || [])
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  if (names.length > 0) {
+    return {
+      count: names.length,
+      names,
+      meta: fact.sourceMeta,
+    };
+  }
+
+  if (fact.sourceCount != null && fact.sourceCount > 0) {
+    return {
+      count: fact.sourceCount,
+      names: [],
+      meta: fact.sourceMeta,
+    };
+  }
+
+  if (!fact.source) return null;
+
+  const normalizedCount = fact.source.trim().toLowerCase();
+  const sourcesCountMatch = normalizedCount.match(/^(\d+)\s+sources?$/);
+  if (sourcesCountMatch) {
+    return {
+      count: Number(sourcesCountMatch[1]),
+      names: [],
+      meta: fact.sourceMeta,
+    };
+  }
+
+  const parsedSources = parseFactSourceList(fact.source);
+  if (parsedSources.length > 0) {
+    return {
+      count: parsedSources.length,
+      names: parsedSources,
+      meta: fact.sourceMeta,
+    };
+  }
+
+  return null;
+}
+
+function formatSourceCountLabel(count: number, t: TranslateFn) {
+  return count === 1
+    ? t("items.info.oneSource")
+    : t("items.info.sourcesCount", { count });
+}
+
+function FactSourceFooter({ fact }: { fact: DetailFact }) {
+  const { t } = useLocale();
+  const display = resolveFactSourceDisplay(fact);
+  if (!display) return null;
+
+  const formattedNames = display.names.map(formatFactSourceEntry);
+  const countLabel = formatSourceCountLabel(display.count, t);
+  const countNode = (
+    <span
+      className={cn(
+        formattedNames.length > 0 &&
+          "cursor-help underline decoration-dotted underline-offset-2",
+      )}
+    >
+      {countLabel}
+    </span>
+  );
+
+  return (
+    <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 truncate">
+      {formattedNames.length > 0 ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{countNode}</TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            {formattedNames.join(" · ")}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        countNode
+      )}
+      {display.meta ? <span> · {display.meta}</span> : null}
+    </span>
+  );
 }
 
 function priceObservationConditions(
@@ -271,11 +417,13 @@ function isPrimaryInfoFact(fact: DetailFact) {
   return [
     "age-rating",
     "completion-time",
+    "complexity",
     "duration",
     "estimated-value",
     "pages",
     "players",
     "playtime",
+    "popularity",
     "rating",
     "time-to-beat",
     "tracks",
@@ -283,7 +431,22 @@ function isPrimaryInfoFact(fact: DetailFact) {
 }
 
 function isDetailTableFact(fact: DetailFact) {
-  return ["genre", "platform", "store", "tag"].includes(fact.kind);
+  return [
+    "artist",
+    "category",
+    "external-link",
+    "family",
+    "genre",
+    "mechanic",
+    "platform",
+    "recommended-players",
+    "store",
+    "tag",
+  ].includes(fact.kind);
+}
+
+function isTagLikeDetailFact(fact: DetailFact) {
+  return ["tag", "category", "mechanic", "family"].includes(fact.kind);
 }
 
 function splitTagFactValue(value: string) {
@@ -301,6 +464,8 @@ const FACT_DISPLAY_ORDER: Record<string, number> = {
   "time-to-beat": 30,
   "completion-time": 40,
   rating: 50,
+  popularity: 55,
+  complexity: 62,
   players: 60,
   pages: 70,
   tracks: 80,
@@ -362,7 +527,9 @@ function isDurationLikeFact(fact: DetailFact) {
 }
 
 function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
-  if (fact.kind === "external-link") return null;
+  if (fact.kind === "external-link") {
+    return fact.url ? fact : null;
+  }
 
   if (fact.kind === "time-to-beat") {
     const label = fact.label.toLowerCase();
@@ -434,28 +601,110 @@ function formatRatingOnScale(value: number, locale: string) {
   })}/${ITEM_RATING_SCALE}`;
 }
 
+function isStoredConsensusRating(fact: DetailFact) {
+  return (
+    fact.kind === "rating" &&
+    (fact.source === "consensus" || fact.label === "Note")
+  );
+}
+
+function parseAgeRatingYears(fact: DetailFact): number | null {
+  const age = normalizeRatingAge(fact.value);
+  return age !== null && age > 0 ? age : null;
+}
+
+function consolidateAgeRatingFacts(facts: DetailFact[]): DetailFact[] {
+  const ageFacts = facts.filter((fact) => fact.kind === "age-rating");
+  if (ageFacts.length <= 1) {
+    return facts.filter(
+      (fact) => fact.kind !== "age-rating" || parseAgeRatingYears(fact) !== null,
+    );
+  }
+
+  const validAgeFacts = ageFacts.filter(
+    (fact) => parseAgeRatingYears(fact) !== null,
+  );
+  if (validAgeFacts.length === 0) {
+    return facts.filter((fact) => fact.kind !== "age-rating");
+  }
+
+  const best = validAgeFacts.reduce((currentBest, fact) => {
+    const bestAge = parseAgeRatingYears(currentBest) ?? 0;
+    const factAge = parseAgeRatingYears(fact) ?? 0;
+    return factAge >= bestAge ? fact : currentBest;
+  });
+
+  const sourceNames = Array.from(
+    new Set(
+      validAgeFacts.flatMap((fact) => {
+        if (fact.sourceNames?.length) return fact.sourceNames;
+        if (!fact.source) return [];
+        return parseFactSourceList(fact.source).map((entry) =>
+          formatFactSource(entry),
+        );
+      }),
+    ),
+  );
+
+  return [
+    ...facts.filter((fact) => fact.kind !== "age-rating"),
+    {
+      ...best,
+      source: undefined,
+      sourceCount: sourceNames.length > 0 ? sourceNames.length : undefined,
+      sourceNames: sourceNames.length > 0 ? sourceNames : undefined,
+    },
+  ];
+}
+
+function canonicalRatingSourceName(fact: DetailFact): string | null {
+  const label = fact.label?.trim() || "";
+  const source = (fact.source || "").trim().toLowerCase();
+  if (
+    label === "BoardGameGeek" ||
+    label === "BGG (Bayes)" ||
+    source === "bgg"
+  ) {
+    return "BoardGameGeek";
+  }
+  if (label) return label;
+  if (fact.source) return formatFactSource(fact.source);
+  return null;
+}
+
+function collectRatingSourceNames(facts: DetailFact[]) {
+  return Array.from(
+    new Set(
+      facts
+        .map(canonicalRatingSourceName)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  );
+}
+
 function buildAverageRatingFact(
   facts: DetailFact[],
   t: TranslateFn,
   locale: string,
 ): DetailFact | null {
-  const values = facts
-    .filter((fact) => fact.kind === "rating")
+  const ratingFacts = facts.filter(
+    (fact) => fact.kind === "rating" && !isStoredConsensusRating(fact),
+  );
+  const values = ratingFacts
     .map(parseRatingOnScale)
     .filter((value): value is number => value !== null);
 
   if (values.length === 0) return null;
 
   const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const sourceNames = collectRatingSourceNames(ratingFacts);
 
   return {
     kind: "rating",
     label: t("items.info.averageRating"),
     value: formatRatingOnScale(average, locale),
-    source:
-      values.length === 1
-        ? t("items.info.oneSource")
-        : t("items.info.sourcesCount", { count: values.length }),
+    sourceCount: sourceNames.length,
+    sourceNames,
     priority: 84,
   };
 }
@@ -581,9 +830,7 @@ function normalizeDisplayFacts(
   } = {},
 ) {
   const hasDirectHltb = facts.some(
-    (fact) =>
-      (fact.kind === "duration" || fact.kind === "completion-time") &&
-      isHowLongToBeatSource(fact),
+    (fact) => isHowLongToBeatSource(fact) && isDurationLikeFact(fact),
   );
 
   return facts
@@ -591,8 +838,7 @@ function normalizeDisplayFacts(
       (fact) =>
         !hasDirectHltb ||
         !isDurationLikeFact(fact) ||
-        ((fact.kind === "duration" || fact.kind === "completion-time") &&
-          isHowLongToBeatSource(fact)),
+        isHowLongToBeatSource(fact),
     )
     .filter((fact) => options.includePcFacts || !isPcSpecificFact(fact))
     .filter(
@@ -626,11 +872,7 @@ function DetailInfoItem({ fact }: { fact: DetailFact }) {
         <span className={cn("text-sm font-black truncate", tone.value)}>
           {formatFactValue(fact)}
         </span>
-        {fact.source && (
-          <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 truncate">
-            {formatFactSource(fact.source)}
-          </span>
-        )}
+        <FactSourceFooter fact={fact} />
       </div>
       {fact.url && <Link2 className="ml-auto size-3 text-zinc-400 shrink-0" />}
     </div>
@@ -878,16 +1120,11 @@ export default function ItemDetailsPage() {
 
   const handleModalSubmit = useCallback(
     async (itemData: Prisma.ItemUpdateInput | Prisma.ItemCreateInput) => {
-      const lookupQuery =
-        typeof itemData.name === "string" ? itemData.name : item?.name;
-
       return new Promise<void>((resolve, reject) => {
         mutate(
           {
             ...itemData,
             id: itemId,
-            refreshMetadata: true,
-            lookupQuery,
           },
           {
             onSuccess: () => resolve(),
@@ -896,7 +1133,7 @@ export default function ItemDetailsPage() {
         );
       });
     },
-    [mutate, itemId, item?.name],
+    [mutate, itemId],
   );
 
   const year = useMemo(() => {
@@ -1052,6 +1289,13 @@ export default function ItemDetailsPage() {
   const description = useMemo(() => {
     return item?.description || item?.metadata?.description;
   }, [item?.description, item?.metadata?.description]);
+  const markdownDescription = useMemo(() => {
+    if (!description) return null;
+    return description
+      .replace(/\r\n/g, "\n")
+      .replace(/^(#{1,6})([^\s#])/gm, "$1 $2")
+      .trim();
+  }, [description]);
 
   const copyValue = useMemo(() => {
     if (!prices || !item?.condition) return null;
@@ -1090,11 +1334,17 @@ export default function ItemDetailsPage() {
           .filter(Boolean),
       ),
     );
-    const fallbackSources = Array.from(
+    const observationSources = Array.from(
+      new Set(
+        observations.map((observation) => observation.source).filter(Boolean),
+      ),
+    );
+    const apiSources = Array.from(
       new Set((prices?.priceSources || []).filter(Boolean)),
     );
-    const sources =
-      relevantSources.length > 0 ? relevantSources : fallbackSources;
+    const sources = Array.from(
+      new Set([...observationSources, ...apiSources, ...relevantSources]),
+    );
 
     return {
       count: sources.length,
@@ -1103,26 +1353,6 @@ export default function ItemDetailsPage() {
         sources.length === 1 && sources[0]?.toLowerCase() === "pricecharting",
     };
   }, [item?.condition, prices, shelf?.type]);
-
-  const priceSourceLabel = useMemo(() => {
-    const parts: string[] = [];
-    if (priceSourceSummary.count > 0) {
-      parts.push(
-        priceSourceSummary.count === 1
-          ? t("items.info.oneSource")
-          : t("items.info.sourcesCount", { count: priceSourceSummary.count }),
-      );
-    }
-    if (prices?.priceLastUpdated) {
-      parts.push(
-        new Date(prices.priceLastUpdated).toLocaleDateString(locale, {
-          month: "short",
-          day: "numeric",
-        }),
-      );
-    }
-    return parts.join(" · ");
-  }, [locale, priceSourceSummary, prices?.priceLastUpdated, t]);
 
   const priceChartingAliases = useMemo(() => {
     const aliases = item?.metadata?.aliases;
@@ -1204,11 +1434,14 @@ export default function ItemDetailsPage() {
       });
     }
 
-    const normalizedFacts = normalizeDisplayFacts(sourceFacts, {
-      includeEsrbAgeRatings:
-        shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
-      includePcFacts: shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
-    });
+    const normalizedFacts = consolidateAgeRatingFacts(
+      normalizeDisplayFacts(sourceFacts, {
+        includeEsrbAgeRatings:
+          shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
+        includePcFacts:
+          shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
+      }),
+    );
     const averageRating = buildAverageRatingFact(normalizedFacts, t, locale);
     facts.push(
       ...normalizedFacts
@@ -1242,7 +1475,8 @@ export default function ItemDetailsPage() {
         label: priceLabel,
         value: formattedCopyValue,
         url: priceChartingLink?.url,
-        source: priceSourceLabel || undefined,
+        sourceCount: priceSourceSummary.count,
+        sourceNames: priceSourceSummary.sources,
         priority: 110,
       });
     }
@@ -1251,16 +1485,25 @@ export default function ItemDetailsPage() {
   }, [
     formattedCopyValue,
     priceChartingLink?.url,
-    priceSourceLabel,
+    priceSourceSummary.count,
     priceSourceSummary.isPriceChartingOnly,
+    priceSourceSummary.sources,
     t,
     usefulFacts,
   ]);
 
-  const detailTableFacts = useMemo(
-    () => usefulFacts.filter(isDetailTableFact),
-    [usefulFacts],
-  );
+  const detailTableFacts = useMemo(() => {
+    const facts = usefulFacts.filter(
+      (fact) =>
+        isDetailTableFact(fact) &&
+        (fact.kind !== "external-link" || shelf?.type === "boardgames"),
+    );
+    return facts.sort((a, b) => {
+      if (a.kind === "external-link") return 1;
+      if (b.kind === "external-link") return -1;
+      return sortDetailFacts(a, b);
+    });
+  }, [shelf?.type, usefulFacts]);
 
   const audioTracks = useMemo(() => {
     const attachments = ((item?.metadata as any)?.attachments || []) as Array<{
@@ -1516,10 +1759,40 @@ export default function ItemDetailsPage() {
                 {infoStrip}
 
                 {/* Description */}
-                {description && (
-                  <p className="text-foreground/90 dark:text-zinc-300 text-sm leading-relaxed max-w-3xl bg-zinc-50/50 dark:bg-zinc-950/20 backdrop-blur-sm border border-border dark:border-zinc-800/50 p-4 rounded-xl shadow-inner mt-1">
-                    {description}
-                  </p>
+                {markdownDescription && (
+                  <div
+                    className={cn(
+                      "text-foreground/90 dark:text-zinc-300 text-sm leading-relaxed max-w-3xl bg-zinc-50/50 dark:bg-zinc-950/20 backdrop-blur-sm border border-border dark:border-zinc-800/50 p-4 rounded-xl shadow-inner mt-1",
+                      "[&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0",
+                      "[&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1",
+                      "[&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:text-base [&_h3]:font-semibold",
+                      "[&_strong]:font-semibold [&_em]:italic",
+                      "[&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3",
+                      "[&_code]:rounded [&_code]:bg-zinc-200/60 [&_code]:px-1 [&_code]:py-0.5 dark:[&_code]:bg-zinc-800/60",
+                      "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-zinc-900 [&_pre]:p-3 [&_pre]:text-zinc-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
+                      "[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/70 [&_th]:bg-zinc-100/70 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left dark:[&_th]:bg-zinc-900/40 [&_td]:border [&_td]:border-border/60 [&_td]:px-2 [&_td]:py-1",
+                      "[&_hr]:my-3 [&_hr]:border-border/70",
+                      "[&_a]:font-semibold [&_a]:text-primary [&_a]:underline-offset-2 hover:[&_a]:underline",
+                    )}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ({ node, ...props }) => {
+                          void node;
+                          return (
+                            <a
+                              {...props}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            />
+                          );
+                        },
+                      }}
+                    >
+                      {markdownDescription}
+                    </ReactMarkdown>
+                  </div>
                 )}
 
                 {/* Key Details Grid */}
@@ -1569,7 +1842,7 @@ export default function ItemDetailsPage() {
                       <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
                         {fact.label}
                       </span>
-                      {fact.kind === "tag" ? (
+                      {isTagLikeDetailFact(fact) ? (
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {splitTagFactValue(fact.value).map((tag) => (
                             <Badge
@@ -1581,6 +1854,16 @@ export default function ItemDetailsPage() {
                             </Badge>
                           ))}
                         </div>
+                      ) : fact.kind === "external-link" && fact.url ? (
+                        <a
+                          href={fact.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                        >
+                          {fact.value}
+                          <Link2 className="size-3.5 shrink-0" />
+                        </a>
                       ) : (
                         <span className="text-sm font-medium text-foreground dark:text-zinc-200">
                           {fact.value}

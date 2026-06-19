@@ -28,7 +28,21 @@ describe("getCoverImage", () => {
     ).toBe("/uploads/my-photo.jpg");
   });
 
-  it("scores front box art above back covers without provider priority", () => {
+  it("prefers an explicit item cover over metadata.imageUrl", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/my-choice.jpg",
+        metadata: {
+          imageUrl: "/uploads/canonical-cover.jpg",
+          attachments: [
+            { type: "cover", source: "bgg", url: "/uploads/my-choice.jpg" },
+          ],
+        },
+      }),
+    ).toBe("/uploads/my-choice.jpg");
+  });
+
+  it("scores front box art above back covers", () => {
     expect(
       getCoverImage({
         metadata: {

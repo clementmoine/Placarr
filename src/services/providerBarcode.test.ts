@@ -56,7 +56,19 @@ describe("createBarcodeLookupTaskBuilders", () => {
       ["cal", "amc", "picclick", "leDenicheur"].sort(),
     );
     expect(Object.keys(builders.boardgames({ barcode: "1" })).sort()).toEqual(
-      ["cal", "sd", "amc", "picclick", "leDenicheur"].sort(),
+      [
+        "archichouette",
+        "bcdjeux",
+        "cal",
+        "lepassetemps",
+        "leDenicheur",
+        "ludifolie",
+        "monsieurde",
+        "philibert",
+        "sd",
+        "amc",
+        "picclick",
+      ].sort(),
     );
     expect(Object.keys(builders.generic({ barcode: "1" })).sort()).toEqual(
       [

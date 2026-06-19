@@ -2,9 +2,17 @@ import levenshtein from "fast-levenshtein";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
-import { searchPrestashopProduct } from "./fetch";
+import {
+  fetchPrestashopGallery,
+  prestashopImageId,
+  searchPrestashopProduct,
+} from "./fetch";
 
 import type { PrestashopProduct, PrestashopRetailerConfig } from "./types";
 
@@ -85,7 +93,23 @@ function buildPrestashopFacts(
 export function mapPrestashopMetadata(
   product: PrestashopProduct,
   label: string,
+  galleryImages: string[] = [],
 ): MetadataResult {
+  const coverId = prestashopImageId(product.imageUrl);
+  const attachments: MetadataAttachment[] = [];
+  if (product.imageUrl) {
+    attachments.push({
+      type: "cover",
+      url: product.imageUrl,
+      source: product.source,
+    });
+  }
+  for (const url of galleryImages) {
+    // La couverture est déjà ajoutée ; on évite de la redupliquer.
+    if (prestashopImageId(url) === coverId) continue;
+    attachments.push({ type: "image", url, source: product.source });
+  }
+
   return {
     title: product.title,
     description: product.description,
@@ -95,9 +119,7 @@ export function mapPrestashopMetadata(
     publishers: product.manufacturer
       ? [{ name: product.manufacturer }]
       : undefined,
-    attachments: product.imageUrl
-      ? [{ type: "cover", url: product.imageUrl, source: product.source }]
-      : undefined,
+    attachments: attachments.length > 0 ? attachments : undefined,
     facts: buildPrestashopFacts(product, label),
   };
 }
@@ -137,7 +159,8 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
         }
       }
 
-      return mapPrestashopMetadata(product, config.label);
+      const galleryImages = await fetchPrestashopGallery(product.productUrl);
+      return mapPrestashopMetadata(product, config.label, galleryImages);
     } catch (error) {
       console.error(`[${config.label}] Metadata lookup failed:`, error);
       return null;

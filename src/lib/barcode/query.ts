@@ -61,8 +61,49 @@ export function detectPlatformKey(name: string): string | null {
   if (has(/\bmaster\s+system\b|\bmastersystem\b/)) return "mastersystem";
   if (has(/\bgame\s+gear\b|\bgamegear\b/)) return "gamegear";
   if (has(/\bneo\s+geo\b|\bneogeo\b/)) return "neogeo";
-  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/) || has(/\batari\b/))
-    return "atari2600";
+  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/)) return "atari2600";
+  if (has(/\batari\s+5200\b/) || has(/\batari5200\b/)) return "atari5200";
+  if (has(/\batari\s+7800\b/) || has(/\batari7800\b/)) return "atari7800";
+
+  return null;
+}
+
+type ShelfLike = { id: string; name: string; type: string };
+
+export function isShelfCompatibleWithPlatformKey(
+  shelf: ShelfLike,
+  platformKey: string | null | undefined,
+): boolean {
+  if (!platformKey) return true;
+  if (shelf.type !== "games") return true;
+  const shelfPlatformKey = detectPlatformKey(shelf.name);
+  if (!shelfPlatformKey) return true;
+  return shelfPlatformKey === platformKey;
+}
+
+export function guessShelfFromBarcodeLookup(params: {
+  platformKey?: string | null;
+  searchNames?: string[];
+  shelves: ShelfLike[];
+  preferredShelfId?: string | null;
+}): { shelfId: string; isGuessed: boolean } | null {
+  const { platformKey, searchNames = [], shelves, preferredShelfId } = params;
+  if (!shelves.length) return null;
+
+  const platformGuess = guessShelfByPlatformKey(platformKey, shelves);
+  if (platformGuess) return platformGuess;
+
+  for (const name of searchNames) {
+    const guess = guessBestShelf(name, shelves);
+    if (guess) return guess;
+  }
+
+  if (preferredShelfId && platformKey) {
+    const preferred = shelves.find((shelf) => shelf.id === preferredShelfId);
+    if (preferred && isShelfCompatibleWithPlatformKey(preferred, platformKey)) {
+      return { shelfId: preferred.id, isGuessed: false };
+    }
+  }
 
   return null;
 }

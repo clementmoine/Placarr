@@ -256,6 +256,15 @@ function normalizePlatformForHLTB(platform?: string | null): string {
   return platformMap[normalized] || "";
 }
 
+function tokenizeHLTBQuery(query: string): string[] {
+  return query
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
 function buildSearchPayload(
   query: string,
   platform: string,
@@ -263,7 +272,7 @@ function buildSearchPayload(
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     searchType: "games",
-    searchTerms: query.split(/\s+/).filter(Boolean),
+    searchTerms: tokenizeHLTBQuery(query),
     searchPage: 1,
     size: 20,
     searchOptions: {
@@ -430,7 +439,10 @@ export async function fetchFromHowLongToBeat(
   if (!query) return null;
 
   try {
-    const results = await searchHowLongToBeat(query, platform);
+    let results = await searchHowLongToBeat(query, platform);
+    if (results.length === 0 && normalizePlatformForHLTB(platform)) {
+      results = await searchHowLongToBeat(query, null);
+    }
     if (results.length === 0) return null;
 
     const best = pickBestResult(query, results);

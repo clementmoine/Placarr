@@ -8,6 +8,7 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import { getScreenScraperDebugParams, getScreenScraperEnv } from "./env";
 
 /**
  * Maps a RAWG platform name to a ScreenScraper system ID.
@@ -173,8 +174,7 @@ function detectSystemIdFromName(name: string): number | undefined {
   if (has(/\bmaster\s+system\b|\bmastersystem\b/)) return 2;
   if (has(/\bgame\s+gear\b|\bgamegear\b/)) return 22;
   if (has(/\bneo\s+geo\b|\bneogeo\b/)) return 24;
-  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/) || has(/\batari\b/))
-    return 26;
+  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/)) return 26;
   return undefined;
 }
 
@@ -223,6 +223,7 @@ function uniqueScreenScraperSearchQueries(values: string[]): string[] {
 }
 
 const BROAD_SCREENSCRAPER_FALLBACK_WORDS = new Set([
+  "club",
   "star",
   "super",
   "the",
@@ -232,6 +233,24 @@ const BROAD_SCREENSCRAPER_FALLBACK_WORDS = new Set([
   "jeux",
   "wii",
   "nintendo",
+]);
+
+const NON_DISTINCTIVE_SCREENSCRAPER_TOKENS = new Set([
+  "avec",
+  "bundle",
+  "complete",
+  "complet",
+  "edition",
+  "editions",
+  "force",
+  "pack",
+  "packs",
+  "pour",
+  "sans",
+  "standard",
+  "sur",
+  "ultimate",
+  "version",
 ]);
 
 function screenScraperSignificantTokens(
@@ -247,13 +266,13 @@ function screenScraperSignificantTokens(
       (token) =>
         token.length > 2 &&
         !BROAD_SCREENSCRAPER_FALLBACK_WORDS.has(token) &&
-        !["pour", "avec", "sans", "sur", "force"].includes(token),
+        !NON_DISTINCTIVE_SCREENSCRAPER_TOKENS.has(token),
     );
 
   return new Set(tokens);
 }
 
-function isPlausibleScreenScraperFallbackResult(
+export function isPlausibleScreenScraperFallbackResult(
   originalName: string,
   resultName: string,
   cleanSearchQuery: (name: string) => string,
@@ -274,15 +293,34 @@ function isPlausibleScreenScraperFallbackResult(
   return overlap.length >= Math.min(2, originalTokens.size);
 }
 
-function buildScreenScraperSearchQueries(
+export function shouldUseCachedScreenScraperSuggestions(
+  cleanedName: string,
+  cleanSearchQuery: (name: string) => string,
+): boolean {
+  const tokenCount = screenScraperSignificantTokens(
+    cleanedName,
+    cleanSearchQuery,
+  ).size;
+  return tokenCount <= 2;
+}
+
+export function buildScreenScraperSearchQueries(
   name: string,
   cleanSearchQuery: (name: string) => string,
 ): string[] {
   const cleanedName = cleanSearchQuery(name);
-  const bases = uniqueScreenScraperSearchQueries([cleanedName, name]);
-  const variants: string[] = [];
+  const bases = uniqueScreenScraperSearchQueries([name, cleanedName]);
+  const variants: string[] = [name];
 
   for (const base of bases) {
+    const licensedEdition = base.match(/^(club football\s+\d{4})\s+(.+)$/i);
+    if (licensedEdition) {
+      variants.push(
+        `${licensedEdition[1]} - ${licensedEdition[2]}`,
+        `${licensedEdition[1]} : ${licensedEdition[2]}`,
+      );
+    }
+
     variants.push(
       base,
       base.replace(/\s*:\s*/g, " : "),
@@ -291,11 +329,13 @@ function buildScreenScraperSearchQueries(
       base.replace(/\s*[-–—]\s*/g, ": "),
       base.replace(/\s*:\s*/g, " - "),
       base.replace(/\s*[:\-–—]\s*/g, " "),
+      base.replace(/\s*[!?]+$/g, ""),
+      base.replace(/[!?]+/g, " "),
       base.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
     );
   }
 
-  return uniqueScreenScraperSearchQueries(variants).slice(0, 8);
+  return uniqueScreenScraperSearchQueries(variants).slice(0, 12);
 }
 
 async function searchScreenScraperGames(
@@ -368,23 +408,21 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
     barcode?: string | null,
     platform?: string | null,
   ): Promise<MetadataResult | null> {
-    const devId = process.env.SCREENSCRAPER_DEV_ID;
-    const devPass = process.env.SCREENSCRAPER_DEV_PASSWORD;
+    const credentials = getScreenScraperEnv();
 
-    if (!devId || !devPass) {
+    if (!credentials) {
       console.info("[ScreenScraper] Not configured");
       return null;
     }
 
-    const ssUser = process.env.SCREENSCRAPER_USER || "";
-    const ssPass = process.env.SCREENSCRAPER_PASSWORD || "";
-
     const baseParams: Record<string, string> = {
-      devid: devId,
-      devpassword: devPass,
+      devid: credentials.devId,
+      devpassword: credentials.devPass,
       softname: "Placarr",
       output: "json",
-      ...(ssUser && ssPass ? { ssid: ssUser, sspassword: ssPass } : {}),
+      ...(credentials.ssUser && credentials.ssPass
+        ? { ssid: credentials.ssUser, sspassword: credentials.ssPass }
+        : {}),
     };
 
     try {
@@ -411,6 +449,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                   romtype: "rom",
                   romnom: cleanedBarcode,
                   romtaille: "",
+                  ...getScreenScraperDebugParams(credentials),
                 },
                 timeout: 8000,
               },
@@ -442,6 +481,11 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         if (!name) return null;
         const cleanedName = deps.cleanSearchQuery(name);
         let searchNameUsed = cleanedName;
+        const allowCachedSuggestionFallback =
+          shouldUseCachedScreenScraperSuggestions(
+            cleanedName,
+            deps.cleanSearchQuery,
+          );
 
         let validResults: any[] = [];
         for (const query of buildScreenScraperSearchQueries(
@@ -466,7 +510,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           }
         }
 
-        if (!validResults || validResults.length === 0) {
+        if (
+          (!validResults || validResults.length === 0) &&
+          allowCachedSuggestionFallback
+        ) {
           if (barcode) {
             const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
             if (cleanedBarcode) {
@@ -478,6 +525,13 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 if (cached && cached.rawNames.length > 0) {
                   const candidates = cached.rawNames
                     .map((rn) => deps.cleanSearchQuery(rn.value))
+                    .filter((value) =>
+                      isPlausibleScreenScraperFallbackResult(
+                        cleanedName,
+                        value,
+                        deps.cleanSearchQuery,
+                      ),
+                    )
                     .filter(
                       (value) =>
                         value &&
@@ -527,6 +581,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               }
             }
           }
+        } else if (!allowCachedSuggestionFallback) {
+          console.info(
+            `[ScreenScraper] Skipping cached suggestion fallback for specific query "${cleanedName}"`,
+          );
         }
 
         if (!validResults || validResults.length === 0) {
@@ -587,25 +645,46 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             ? platformCompatibleResults
             : validResults;
 
-        console.log("=== SCREEN SCRAPER DEBUG ===");
-        console.log("systemeid:", systemeid);
-        console.log("validResults count:", validResults.length);
-        console.log("validResults ids:", validResults.map((r: any) => `${r.id} (${r.systeme?.id})`));
-        console.log("platformCompatibleResults count:", platformCompatibleResults.length);
-        console.log("rankedResults count:", rankedResults.length);
-
+        const targetNameForRanking = name.trim() || cleanedName || searchNameUsed;
         let bestId = rankedResults[0].id;
         let minDist = Infinity;
+        let bestOverlap = -1;
+        const rankingTokens = screenScraperSignificantTokens(
+          targetNameForRanking,
+          deps.cleanSearchQuery,
+        );
         for (const r of rankedResults) {
-          const rTitle = pickSSTitle(r.noms)?.toLowerCase() || "";
-          const dist = levenshtein.get(searchNameUsed.toLowerCase(), rTitle);
-          console.log(`Candidate ${r.id} (${rTitle}) distance to ${searchNameUsed}: ${dist}`);
-          if (dist < minDist) {
+          const rTitle = pickSSTitle(r.noms) || "";
+          const resultTokens = screenScraperSignificantTokens(
+            rTitle,
+            deps.cleanSearchQuery,
+          );
+          const overlap = [...rankingTokens].filter((token) =>
+            resultTokens.has(token),
+          ).length;
+          const dist = levenshtein.get(
+            targetNameForRanking.toLowerCase(),
+            rTitle.toLowerCase(),
+          );
+          if (
+            overlap > bestOverlap ||
+            (overlap === bestOverlap && dist < minDist)
+          ) {
+            bestOverlap = overlap;
             minDist = dist;
             bestId = r.id;
           }
         }
-        console.log("Selected bestId:", bestId);
+
+        if (
+          rankingTokens.size >= 2 &&
+          bestOverlap < Math.min(2, rankingTokens.size)
+        ) {
+          console.info(
+            `[ScreenScraper] No sufficiently specific match for "${name}" (best overlap ${bestOverlap}/${rankingTokens.size})`,
+          );
+          return null;
+        }
 
         const infoRes = await axios.get<{ response: { jeu: SSGame } }>(
           "https://api.screenscraper.fr/api2/jeuInfos.php",
@@ -620,6 +699,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               romnom: "",
               romtaille: "",
               gameid: String(bestId),
+              ...getScreenScraperDebugParams(credentials),
             },
             timeout: 8000,
           },
@@ -656,13 +736,13 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             role = m.region || "wor";
           } else if (m.type === "box-3D") {
             type = "cover";
-            role = m.region ? `${m.region}-3d` : "wor-3d";
+            role = m.region ? `3d-${m.region}` : "3d-wor";
           } else if (m.type === "box-2D-back" || m.type === "box-back") {
             type = "image";
-            role = m.region ? `${m.region}-back` : "back";
+            role = m.region ? `back-${m.region}` : "back";
           } else if (m.type === "support-2D" || m.type === "support-texture") {
             type = "image";
-            role = m.region ? `${m.region}-support` : "support";
+            role = m.region ? `disc-${m.region}` : "disc";
           } else if (m.type === "ss") {
             type = "screenshot";
             role = m.region || "wor";

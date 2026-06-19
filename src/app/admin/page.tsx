@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/providers/LocaleProvider";
 import Header from "@/components/Header";
+import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
 import {
   Card,
   CardContent,
@@ -767,16 +768,24 @@ function AdminDashboardComponent() {
         </div>
 
         <Tabs defaultValue="providers" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-[620px]">
+          <TabsList className="grid w-full grid-cols-3 max-w-[760px]">
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Database className="size-4" />
               {locale === "fr" ? "Providers" : "Providers"}
+            </TabsTrigger>
+            <TabsTrigger value="refresh" className="flex items-center gap-2">
+              <RefreshCw className="size-4" />
+              {locale === "fr" ? "Refresh" : "Refresh"}
             </TabsTrigger>
             <TabsTrigger value="playground" className="flex items-center gap-2">
               <FlaskConical className="size-4" />
               {locale === "fr" ? "Teardown" : "Teardown"}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="refresh" className="space-y-6 outline-none">
+            <MetadataRefreshPanel />
+          </TabsContent>
 
           <TabsContent value="playground" className="space-y-6 outline-none">
             <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">

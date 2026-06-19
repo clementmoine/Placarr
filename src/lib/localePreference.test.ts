@@ -4,6 +4,8 @@ import { getCoverImage } from "@/lib/itemMedia";
 import {
   inferTextLanguage,
   localeBonusForAttachmentRole,
+  mapBggLanguageToAttachmentRole,
+  parseRegionFromRole,
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
   regionRank,
@@ -48,6 +50,23 @@ describe("localePreference", () => {
   it("detects French text from accents and common words", () => {
     expect(inferTextLanguage("Le jeu des singes")).toBe("fr");
     expect(inferTextLanguage("The monkey game")).toBe("en");
+  });
+
+  it("maps BGG edition languages to attachment locale roles", () => {
+    expect(mapBggLanguageToAttachmentRole("French")).toBe("fr");
+    expect(mapBggLanguageToAttachmentRole("English")).toBe("wor");
+    expect(mapBggLanguageToAttachmentRole(null, "French edition")).toBe("fr");
+    expect(mapBggLanguageToAttachmentRole("Korean")).toBe("jp");
+  });
+
+  it("only treats plain region roles as cover locales", () => {
+    expect(parseRegionFromRole("eu")).toBe("eu");
+    expect(parseRegionFromRole("fr")).toBe("fr");
+    expect(parseRegionFromRole("de")).toBe("eu");
+    expect(parseRegionFromRole("fr-support")).toBeUndefined();
+    expect(parseRegionFromRole("disc-fr")).toBeUndefined();
+    expect(parseRegionFromRole("back-eu")).toBeUndefined();
+    expect(parseRegionFromRole("3d-us")).toBeUndefined();
   });
 });
 

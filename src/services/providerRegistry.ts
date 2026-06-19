@@ -20,6 +20,7 @@ import { picclickModule } from "@/services/providers/picclick";
 import { pricechartingModule } from "@/services/providers/pricecharting";
 import { rawgModule } from "@/services/providers/rawg";
 import { scandexModule } from "@/services/providers/scandex";
+import { isScreenScraperConfigured } from "@/services/providers/screenscraper/env";
 import { screenscraperModule } from "@/services/providers/screenscraper";
 import { steamModule } from "@/services/providers/steam";
 import { steamgriddbModule } from "@/services/providers/steamgriddb";
@@ -77,6 +78,7 @@ export function getProviderModule(id: string): ProviderModule | undefined {
 }
 
 export function isProviderConfigured(p: ProviderInfo): boolean {
+  if (p.id === "screenscraper") return isScreenScraperConfigured();
   if (p.auth.kind !== "key") return true;
   return p.auth.env.every((name) => Boolean(process.env[name]?.trim()));
 }

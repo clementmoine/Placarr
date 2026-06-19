@@ -176,6 +176,20 @@ export function pickRepresentativeEvidence(
     })[0];
   }
 
+  const trustedRetailerEvidence = evidence.filter(
+    (item) => item.isTrustedRetailer,
+  );
+  if (trustedRetailerEvidence.length > 0) {
+    return trustedRetailerEvidence.slice().sort((a, b) => {
+      const scoreA =
+        getRepresentativeScore(a.title, a.priority) + a.sourceWeight * 1000;
+      const scoreB =
+        getRepresentativeScore(b.title, b.priority) + b.sourceWeight * 1000;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return a.title.length - b.title.length;
+    })[0];
+  }
+
   return evidence.slice().sort((a, b) => {
     const scoreA =
       getRepresentativeScore(a.title, a.priority) + a.sourceWeight * 1000;
@@ -214,7 +228,14 @@ export function filterDisplayEvidenceForSuggestions(
   evidence: ProductEvidence[],
 ): ProductEvidence[] {
   const canonicalEvidence = evidence.filter((item) => item.isCanonical);
-  if (canonicalEvidence.length === 0) return evidence;
+  const trustedRetailerEvidence = evidence.filter(
+    (item) => item.isTrustedRetailer,
+  );
+  if (canonicalEvidence.length === 0) {
+    return trustedRetailerEvidence.length > 0
+      ? trustedRetailerEvidence
+      : evidence;
+  }
 
   const preferredRegionEvidence = canonicalEvidence.filter(
     (item) =>
@@ -242,8 +263,19 @@ function scoreEvidenceCluster(
   const canonicalProviders = Array.from(
     new Set(evidence.filter((e) => e.isCanonical).map((e) => e.providerName)),
   );
+  const trustedRetailerProviders = Array.from(
+    new Set(
+      evidence
+        .filter((e) => e.isTrustedRetailer)
+        .map((e) => e.providerName),
+    ),
+  );
   const canonicalCount = evidence.filter((e) => e.isCanonical).length;
-  const marketplaceCount = evidence.length - canonicalCount;
+  const trustedRetailerCount = evidence.filter(
+    (e) => e.isTrustedRetailer,
+  ).length;
+  const marketplaceCount =
+    evidence.length - canonicalCount - trustedRetailerCount;
   const hasCover = evidence.some((e) => e.coverUrl);
   const sourceScore = evidence.reduce((sum, e) => sum + e.sourceWeight, 0);
   const providerBonus = Math.min(
@@ -251,6 +283,10 @@ function scoreEvidenceCluster(
     Math.max(0, providers.length - 1) * 0.04,
   );
   const canonicalBonus = Math.min(0.18, canonicalProviders.length * 0.06);
+  const trustedRetailerBonus = Math.min(
+    0.12,
+    trustedRetailerProviders.length * 0.05,
+  );
   const coverBonus = hasCover ? 0.05 : 0;
   const rawSupportBonus = Math.min(
     0.12,
@@ -263,21 +299,23 @@ function scoreEvidenceCluster(
       sourceScore +
         providerBonus +
         canonicalBonus +
+        trustedRetailerBonus +
         coverBonus +
         rawSupportBonus,
     ),
   );
 
-  // "Jamais affirmer faux" : sans source canonique (annonces marketplace
-  // uniquement), on plafonne la confiance pour que le résultat reste un
-  // "je ne sais pas / aide-moi" plutôt qu'un nom présenté comme certain.
-  const finalConfidence =
-    canonicalProviders.length === 0
-      ? Math.min(confidence, LISTING_ONLY_CONFIDENCE_CAP)
-      : confidence;
+  const hasAnchorSignals =
+    canonicalProviders.length > 0 || trustedRetailerProviders.length > 0;
+  const finalConfidence = hasAnchorSignals
+    ? confidence
+    : Math.min(confidence, LISTING_ONLY_CONFIDENCE_CAP);
 
   const reasons: string[] = [];
   if (canonicalProviders.length > 0) reasons.push("canonical-source");
+  if (trustedRetailerProviders.length > 0) {
+    reasons.push("trusted-retailer-source");
+  }
   if (providers.length > 1) reasons.push("multi-source-agreement");
   if (hasCover) reasons.push("cover-match");
   if (marketplaceCount > 0) reasons.push("marketplace-support");
@@ -285,8 +323,10 @@ function scoreEvidenceCluster(
   return {
     providers,
     canonicalProviders,
+    trustedRetailerProviders,
     rawCount: evidence.length,
     canonicalCount,
+    trustedRetailerCount,
     marketplaceCount,
     hasCover,
     confidence: Number(finalConfidence.toFixed(2)),
@@ -375,7 +415,8 @@ export function resolveEvidenceToMatches(
     const isStrongAmbiguity =
       isRelatedToTop &&
       match.confidence >= 0.72 &&
-      match.evidence.canonicalCount > 0;
+      match.evidence.canonicalCount > 0 ||
+      match.evidence.trustedRetailerCount > 0;
     const isCloseToTop =
       top.confidence < 0.82 && top.confidence - match.confidence <= 0.18;
     const hasNoDominantWinner =

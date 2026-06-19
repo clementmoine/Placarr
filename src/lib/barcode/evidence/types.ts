@@ -28,6 +28,7 @@ export interface ProductEvidence {
   title: string;
   coverUrl: string | null;
   isCanonical: boolean;
+  isTrustedRetailer: boolean;
   isAlias: boolean;
   region: string | null;
   priority: number;
@@ -38,8 +39,10 @@ export interface ProductEvidence {
 export interface MatchEvidenceSummary {
   providers: string[];
   canonicalProviders: string[];
+  trustedRetailerProviders: string[];
   rawCount: number;
   canonicalCount: number;
+  trustedRetailerCount: number;
   marketplaceCount: number;
   hasCover: boolean;
   confidence: number;

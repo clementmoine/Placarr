@@ -10,6 +10,7 @@ import {
   asNamedListings,
   asPriceChartingHit,
   asScanDexHit,
+  collectBoardRetailerBarcodeHits,
   createEmptyBarcodeLookupPayload,
   resolveSettledLookups,
   type BarcodeLookupPayload,
@@ -118,6 +119,8 @@ export async function runBarcodeLookups(params: {
     payload.amc = asNamedListings(lookups.amc);
     payload.picclick = asNamedListings(lookups.picclick);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
+    payload.philibert = asMetadataHit(lookups.philibert);
+    payload.boardRetailers = collectBoardRetailerBarcodeHits(lookups);
     return payload;
   }
 

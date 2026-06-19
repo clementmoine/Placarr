@@ -35,8 +35,8 @@ export const omdbModule: ProviderModule = {
     const wiredFetchFromOMDb = deps.fetchFromOMDb as NameResolver;
     return {
       id: "omdb",
-      async resolve({ name }) {
-        return wiredFetchFromOMDb(name);
+      async resolve({ name, imdbId, fallbackNames }) {
+        return wiredFetchFromOMDb(name, { imdbId, fallbackNames });
       },
     } satisfies MetadataProviderAdapter;
   },

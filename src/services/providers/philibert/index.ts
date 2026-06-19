@@ -2,11 +2,15 @@ import { metadataProbe } from "@/lib/mappingProbeUtils";
 import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
-import type { ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
-import { fetchPhilibertProduct, searchPhilibert } from "./fetch";
+import {
+  fetchPhilibertBarcodeProduct,
+  fetchPhilibertProduct,
+  searchPhilibert,
+} from "./fetch";
 import { createPhilibertResolver } from "./resolver";
 
 type Resolver = (
@@ -15,6 +19,7 @@ type Resolver = (
 ) => Promise<MetadataResult | null>;
 
 const fetchFromPhilibert = createPhilibertResolver();
+const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames"];
 
 export const philibertModule: ProviderModule = {
   info: {
@@ -38,7 +43,8 @@ export const philibertModule: ProviderModule = {
   },
   evidence: {
     label: "Philibert",
-    sourceWeight: 0.18,
+    sourceWeight: 0.28,
+    trustedRetailer: true,
   },
   createMetadataAdapter(deps) {
     const fetchFromPhilibert = deps.fetchFromPhilibert as Resolver;
@@ -69,6 +75,12 @@ export const philibertModule: ProviderModule = {
       kind: "metadata-barcode",
       run: (query) => fetchFromPhilibert("", query),
     },
+  },
+  buildBarcodeTasks(_deps, type, { barcode }) {
+    if (!BARCODE_TYPES.includes(type)) {
+      return {} as Record<string, Promise<unknown>>;
+    }
+    return { philibert: fetchPhilibertBarcodeProduct(barcode) };
   },
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(

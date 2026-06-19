@@ -24,6 +24,16 @@ describe("provider mapping probes", () => {
     }
   });
 
+  it("keeps the ScreenScraper mapping probe semantically aligned", () => {
+    const module = PROVIDER_MODULES.find(
+      (candidate) => candidate.info.id === "screenscraper",
+    );
+
+    expect(module?.mappingProbe?.sampleInput).toContain("Skyward Sword");
+    expect(module?.mappingProbe?.context.name).toContain("Skyward Sword");
+    expect(module?.mappingProbe?.context.platform).toBe("wii");
+  });
+
   it("registers custom mapping probes for scrape/barcode providers", () => {
     const customProbeIds = PROVIDER_MODULES.flatMap((module) =>
       module.runMappingProbe ? [module.info.id] : [],
@@ -32,6 +42,7 @@ describe("provider mapping probes", () => {
       [
         "achatmoinscher",
         "apriloshop",
+        "archichouette",
         "bcdjeux",
         "chasseauxlivres",
         "coverproject",

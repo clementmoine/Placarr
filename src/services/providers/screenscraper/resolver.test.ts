@@ -1,10 +1,42 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildScreenScraperSearchQueries,
   createScreenScraperResolver,
+  isPlausibleScreenScraperFallbackResult,
   pickSSCover,
+  shouldUseCachedScreenScraperSuggestions,
   type SSMedia,
 } from "./resolver";
+import { getScreenScraperEnv } from "./env";
+
+const SCREEN_SCRAPER_ENV_KEYS = [
+  "SCREENSCRAPER_DEV_ID",
+  "SCREENSCRAPER_DEV_PASSWORD",
+  "SCREENSCRAPER_USER",
+  "SCREENSCRAPER_PASSWORD",
+  "SCREENSCRAPER_DEV_DEBUG_PASSWORD",
+  "SCREENSCRAPER_FORCE_UPDATE",
+] as const;
+
+function withCleanScreenScraperEnv(run: () => void | Promise<void>) {
+  return async () => {
+    const previous = Object.fromEntries(
+      SCREEN_SCRAPER_ENV_KEYS.map((key) => [key, process.env[key]]),
+    );
+    for (const key of SCREEN_SCRAPER_ENV_KEYS) delete process.env[key];
+
+    try {
+      await run();
+    } finally {
+      for (const key of SCREEN_SCRAPER_ENV_KEYS) {
+        const value = previous[key];
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  };
+}
 
 describe("pickSSCover", () => {
   it("prefers box-2D with region priority", () => {
@@ -29,30 +61,100 @@ describe("pickSSCover", () => {
 });
 
 describe("createScreenScraperResolver", () => {
-  it("returns null when ScreenScraper is not configured", async () => {
-    const previousDevId = process.env.SCREENSCRAPER_DEV_ID;
-    const previousDevPass = process.env.SCREENSCRAPER_DEV_PASSWORD;
-    delete process.env.SCREENSCRAPER_DEV_ID;
-    delete process.env.SCREENSCRAPER_DEV_PASSWORD;
-
-    try {
+  it(
+    "returns null when ScreenScraper is not configured",
+    withCleanScreenScraperEnv(async () => {
       const resolver = createScreenScraperResolver({
         cleanSearchQuery: (value) => value,
         formatScore: () => null,
       });
       const result = await resolver("Any Game");
       expect(result).toBeNull();
-    } finally {
-      if (previousDevId === undefined) {
-        delete process.env.SCREENSCRAPER_DEV_ID;
-      } else {
-        process.env.SCREENSCRAPER_DEV_ID = previousDevId;
-      }
-      if (previousDevPass === undefined) {
-        delete process.env.SCREENSCRAPER_DEV_PASSWORD;
-      } else {
-        process.env.SCREENSCRAPER_DEV_PASSWORD = previousDevPass;
-      }
-    }
+    }),
+  );
+
+  it(
+    "requires the ScreenScraper developer credentials from the API docs",
+    withCleanScreenScraperEnv(() => {
+      process.env.SCREENSCRAPER_DEV_ID = "dev-id";
+      process.env.SCREENSCRAPER_DEV_PASSWORD = "dev-pass";
+      process.env.SCREENSCRAPER_USER = "screen-user";
+      process.env.SCREENSCRAPER_PASSWORD = "screen-pass";
+
+      expect(getScreenScraperEnv()).toEqual({
+        devId: "dev-id",
+        devPass: "dev-pass",
+        ssUser: "screen-user",
+        ssPass: "screen-pass",
+        devDebugPassword: "",
+        forceUpdate: false,
+      });
+    }),
+  );
+});
+
+describe("isPlausibleScreenScraperFallbackResult", () => {
+  it("does not reject plain base titles when query contains generic words", () => {
+    const cleanSearchQuery = (value: string) => value;
+    expect(
+      isPlausibleScreenScraperFallbackResult(
+        "Minecraft Edition",
+        "Minecraft",
+        cleanSearchQuery,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("shouldUseCachedScreenScraperSuggestions", () => {
+  it("allows cache fallback for short/ambiguous queries only", () => {
+    const cleanSearchQuery = (value: string) => value;
+
+    expect(
+      shouldUseCachedScreenScraperSuggestions(
+        "Minecraft Edition",
+        cleanSearchQuery,
+      ),
+    ).toBe(true);
+    expect(
+      shouldUseCachedScreenScraperSuggestions(
+        "Medal Of Honor En Premiere Ligne",
+        cleanSearchQuery,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("buildScreenScraperSearchQueries", () => {
+  it("tries a punctuation-stripped variant for titles ending with ! or ?", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "Whacked!",
+      (value) => value,
+    );
+
+    expect(queries).toContain("Whacked!");
+    expect(queries).toContain("Whacked");
+  });
+
+  it("adds hyphen/colon variants for Club Football team editions", () => {
+    const cleanSearchQuery = (value: string) =>
+      value.replace(/\bde\b/gi, " ").replace(/\s+/g, " ").trim();
+    const queries = buildScreenScraperSearchQueries(
+      "Club Football 2005 Olympique de Marseille",
+      cleanSearchQuery,
+    );
+
+    expect(queries).toContain(
+      "Club Football 2005 - Olympique Marseille",
+    );
+  });
+
+  it("prioritizes the original title before stripped variants", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "New Super Mario Bros. Wii",
+      (value) => value.replace(/\bwii\b/gi, "").trim(),
+    );
+
+    expect(queries[0]).toBe("New Super Mario Bros. Wii");
   });
 });

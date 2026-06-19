@@ -55,8 +55,10 @@ function fallbackEvidenceForMatch(
   return {
     providers: [providerName],
     canonicalProviders: [],
+    trustedRetailerProviders: [],
     rawCount: Math.max(1, match.suggestions.length),
     canonicalCount: 0,
+    trustedRetailerCount: 0,
     marketplaceCount: Math.max(1, match.suggestions.length),
     hasCover: !!match.coverUrl,
     confidence: Number(confidence.toFixed(2)),
@@ -72,6 +74,9 @@ function mergeEvidenceSummaries(
   const canonicalProviders = Array.from(
     new Set([...a.canonicalProviders, ...b.canonicalProviders]),
   );
+  const trustedRetailerProviders = Array.from(
+    new Set([...a.trustedRetailerProviders, ...b.trustedRetailerProviders]),
+  );
   const confidence = Math.min(
     0.98,
     Math.max(a.confidence, b.confidence) + Math.min(0.08, b.rawCount * 0.015),
@@ -80,8 +85,10 @@ function mergeEvidenceSummaries(
   return {
     providers,
     canonicalProviders,
+    trustedRetailerProviders,
     rawCount: a.rawCount + b.rawCount,
     canonicalCount: a.canonicalCount + b.canonicalCount,
+    trustedRetailerCount: a.trustedRetailerCount + b.trustedRetailerCount,
     marketplaceCount: a.marketplaceCount + b.marketplaceCount,
     hasCover: a.hasCover || b.hasCover,
     confidence: Number(confidence.toFixed(2)),
@@ -165,10 +172,22 @@ export function pickPreferredClusterDisplayName(
   }
 
   const candidates = [
-    { name: representative, isCanonical: true },
+    {
+      name: representative,
+      isCanonical: true,
+      isTrustedRetailer: false,
+    },
     ...cluster.flatMap((item) => [
-      { name: item.title, isCanonical: item.isCanonical },
-      { name: item.cleanName, isCanonical: item.isCanonical },
+      {
+        name: item.title,
+        isCanonical: item.isCanonical,
+        isTrustedRetailer: item.isTrustedRetailer,
+      },
+      {
+        name: item.cleanName,
+        isCanonical: item.isCanonical,
+        isTrustedRetailer: item.isTrustedRetailer,
+      },
     ]),
   ];
   const seen = new Set<string>();
@@ -197,30 +216,45 @@ export function pickPreferredClusterDisplayName(
       (other) =>
         other.name !== candidate.name &&
         isStrictTitleSubset(other.name, candidate.name) &&
-        scoreDisplayTitle(other.name, other.isCanonical) >=
-          scoreDisplayTitle(candidate.name, candidate.isCanonical) - 40,
+        scoreDisplayTitle(other.name, {
+          isCanonical: other.isCanonical,
+          isTrustedRetailer: other.isTrustedRetailer,
+        }) >=
+          scoreDisplayTitle(candidate.name, {
+            isCanonical: candidate.isCanonical,
+            isTrustedRetailer: candidate.isTrustedRetailer,
+          }) - 40,
     );
   });
   const displayCandidates =
     specificCandidates.length > 0 ? specificCandidates : validCandidates;
 
   const ranked = displayCandidates.sort((a, b) => {
-    const scoreA = scoreDisplayTitle(a.name, a.isCanonical);
-    const scoreB = scoreDisplayTitle(b.name, b.isCanonical);
+    const scoreA = scoreDisplayTitle(a.name, {
+      isCanonical: a.isCanonical,
+      isTrustedRetailer: a.isTrustedRetailer,
+    });
+    const scoreB = scoreDisplayTitle(b.name, {
+      isCanonical: b.isCanonical,
+      isTrustedRetailer: b.isTrustedRetailer,
+    });
     if (scoreA !== scoreB) return scoreB - scoreA;
     return a.name.length - b.name.length;
   });
 
   for (const candidate of ranked) {
-    const candidateScore = scoreDisplayTitle(
-      candidate.name,
-      candidate.isCanonical,
-    );
+    const candidateScore = scoreDisplayTitle(candidate.name, {
+      isCanonical: candidate.isCanonical,
+      isTrustedRetailer: candidate.isTrustedRetailer,
+    });
     const beatenByNoisySuperset = ranked.some(
       (other) =>
         other.name !== candidate.name &&
         isStrictTitleSubset(candidate.name, other.name) &&
-        scoreDisplayTitle(other.name, other.isCanonical) > candidateScore,
+        scoreDisplayTitle(other.name, {
+          isCanonical: other.isCanonical,
+          isTrustedRetailer: other.isTrustedRetailer,
+        }) > candidateScore,
     );
     if (!beatenByNoisySuperset) {
       return candidate.name;

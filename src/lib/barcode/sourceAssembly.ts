@@ -29,6 +29,13 @@ export function sourceProductsFromLeDenicheur(
   ];
 }
 
+function sourceProductsFromMetadataHit(
+  hit: { title?: string; imageUrl?: string | null } | null,
+): SourceProduct[] {
+  if (!hit?.title?.trim()) return [];
+  return [{ name: hit.title.trim(), coverUrl: hit.imageUrl || null }];
+}
+
 function pushSource(
   sources: EvidenceSource[],
   providerName: string,
@@ -302,6 +309,18 @@ export async function compileAllBarcodeTypeResults(params: {
     (type === "boardgames" || (!type && !isBook))
   ) {
     pushSource(boardgameSources, "LeDenicheur", leDenicheurProducts);
+  }
+  pushSource(
+    boardgameSources,
+    "Philibert",
+    sourceProductsFromMetadataHit(payload.philibert),
+  );
+  for (const retailer of payload.boardRetailers) {
+    pushSource(
+      boardgameSources,
+      retailer.providerName,
+      sourceProductsFromMetadataHit(retailer),
+    );
   }
   pushSource(
     boardgameSources,

@@ -25,11 +25,91 @@ import {
 import { fetchFromIGDB } from "@/services/providers/igdb";
 import { fetchFromHowLongToBeat } from "@/services/providers/howlongtobeat";
 import { fetchFromSteamGridDB } from "@/services/providers/steamgriddb";
+import {
+  areDisplayTitlesSameProduct,
+  requestedTitleCoversCurrentTitle,
+} from "@/lib/displayTitleScore";
 import { pickDiscoveredBarcode } from "@/lib/barcode/normalize";
 import { cleanCode } from "@/lib/barcode/query";
 import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
 import { fetchMetadataFromPriceChartingByName } from "@/services/providers/pricecharting/fetch";
+import type { PriceChartingMetadata } from "@/services/providers/pricecharting/fetch";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+
+function resolvePriceChartingTitleFallback(
+  pcMeta: PriceChartingMetadata | null | undefined,
+  requestedName: string,
+): string | undefined {
+  const title = pcMeta?.title?.trim();
+  if (!title) return undefined;
+  if (!isMetadataTitleAligned({ title }, [requestedName], 0.58)) {
+    return undefined;
+  }
+  return title;
+}
+
+function applyPriceChartingTitleFallback(
+  merged: MetadataResult,
+  pcTitle: string | undefined,
+  requestedName: string,
+): MetadataResult {
+  if (!pcTitle) return merged;
+  if (!merged.title?.trim()) {
+    return { ...merged, title: pcTitle };
+  }
+  if (
+    !isMetadataTitleAligned(merged, [requestedName], 0.58) &&
+    isMetadataTitleAligned({ title: pcTitle }, [requestedName], 0.58)
+  ) {
+    const aliases = Array.from(
+      new Set([merged.title, ...(merged.aliases || [])]),
+    ).filter(
+      (alias) => alias.toLowerCase().trim() !== pcTitle.toLowerCase().trim(),
+    );
+    return {
+      ...merged,
+      title: pcTitle,
+      aliases: aliases.length > 0 ? aliases : undefined,
+    };
+  }
+  return merged;
+}
+
+function preferRequestedDisplayTitleWithPriceCharting(
+  metadata: MetadataResult,
+  requestedName: string,
+  pcTitleFallback?: string,
+): MetadataResult {
+  if (
+    pcTitleFallback &&
+    metadata.title === pcTitleFallback &&
+    areDisplayTitlesSameProduct(pcTitleFallback, requestedName) &&
+    !requestedTitleCoversCurrentTitle(requestedName, pcTitleFallback)
+  ) {
+    const requestedTitle = requestedName.trim();
+    const aliases = Array.from(
+      new Set([requestedTitle, ...(metadata.aliases || [])]),
+    ).filter(
+      (alias) =>
+        alias.toLowerCase().trim() !== pcTitleFallback.toLowerCase().trim(),
+    );
+    return {
+      ...metadata,
+      aliases: aliases.length > 0 ? aliases : undefined,
+    };
+  }
+
+  return preferRequestedDisplayTitle(metadata, requestedName);
+}
+
+function dropMisalignedGameMetadata(
+  result: MetadataResult | null,
+  requestedName: string,
+): MetadataResult | null {
+  const comparisonNames = requestedName.trim() ? [requestedName.trim()] : [];
+  if (!result?.title || comparisonNames.length === 0) return result;
+  return isMetadataTitleAligned(result, comparisonNames, 0.58) ? result : null;
+}
 
 export async function fetchFromAllGameSources(
   name: string,
@@ -63,11 +143,11 @@ export async function fetchFromAllGameSources(
     byProvider.set(item.value.providerId, item.value.value || null);
   }
 
-  let igdb = byProvider.get("igdb") || null;
+  let igdb = dropMisalignedGameMetadata(byProvider.get("igdb") || null, name);
   let ss = byProvider.get("screenscraper") || null;
   let hltb = byProvider.get("howlongtobeat") || null;
   const steam = byProvider.get("steam") || null;
-  let rawg = byProvider.get("rawg") || null;
+  let rawg = dropMisalignedGameMetadata(byProvider.get("rawg") || null, name);
   let steamGrid = byProvider.get("steamgriddb") || null;
   let pcMeta = null as Awaited<
     ReturnType<typeof fetchMetadataFromPriceCharting>
@@ -117,8 +197,18 @@ export async function fetchFromAllGameSources(
 
   if (!igdb) {
     for (const fallbackName of canonicalFallbackNames.slice(0, 12)) {
-      igdb = await fetchFromIGDB(fallbackName, platform);
-      if (igdb) break;
+      const candidate = await fetchFromIGDB(fallbackName, platform);
+      if (
+        candidate &&
+        isMetadataTitleAligned(
+          candidate,
+          [name, fallbackName, ...canonicalFallbackNames],
+          0.58,
+        )
+      ) {
+        igdb = candidate;
+        break;
+      }
     }
   }
 
@@ -180,7 +270,18 @@ export async function fetchFromAllGameSources(
     }
   }
 
-  if (!igdb && !ss && !hltb && !steam && !rawg && !steamGrid) {
+  const pcTitleFallback = resolvePriceChartingTitleFallback(pcMeta, name);
+
+  if (
+    !igdb &&
+    !ss &&
+    !hltb &&
+    !steam &&
+    !rawg &&
+    !steamGrid &&
+    !pcTitleFallback &&
+    !pcMeta?.ageRating
+  ) {
     return null;
   }
 
@@ -192,9 +293,13 @@ export async function fetchFromAllGameSources(
     ...metadataFieldEvidence("RAWG", rawg),
     ...metadataFieldEvidence("SteamGridDB", steamGrid),
   ]);
-  const merged = mergeGameMetadata(igdb, ss, hltb, steam, rawg, steamGrid, {
-    includePcSources,
-  });
+  const merged = applyPriceChartingTitleFallback(
+    mergeGameMetadata(igdb, ss, hltb, steam, rawg, steamGrid, {
+      includePcSources,
+    }),
+    pcTitleFallback,
+    name,
+  );
   const pcFacts: MetadataFact[] = [];
   if (pcMeta?.ageRating) {
     pcFacts.push({
@@ -207,11 +312,17 @@ export async function fetchFromAllGameSources(
       priority: 58,
     });
   }
+  const pcTitleEvidence =
+    pcTitleFallback && merged.title === pcTitleFallback
+      ? metadataFieldEvidence("PriceCharting", { title: pcTitleFallback })
+      : [];
+
   const mergedWithEvidence = {
     ...merged,
     facts: dedupeFacts([...(merged.facts || []), ...pcFacts]),
     fieldEvidence: dedupeFieldEvidence([
       ...providerEvidence,
+      ...pcTitleEvidence,
       ...metadataFieldEvidence("MergedEngine", merged, {
         confidence: 0.8,
         priority: 200,
@@ -219,7 +330,7 @@ export async function fetchFromAllGameSources(
     ]),
   };
 
-  return preferRequestedDisplayTitle(
+  return preferRequestedDisplayTitleWithPriceCharting(
     {
       ...mergedWithEvidence,
       barcode:
@@ -227,5 +338,6 @@ export async function fetchFromAllGameSources(
         undefined,
     },
     name,
+    pcTitleFallback,
   );
 }

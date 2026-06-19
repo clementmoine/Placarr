@@ -3,10 +3,56 @@ import { describe, expect, it } from "vitest";
 import {
   mergeBookMetadata,
   mergeBoardGameMetadata,
+  mergeGameMetadata,
   mergeMusicMetadata,
   preferRequestedDisplayTitle,
 } from "@/services/metadataMerge";
 import type { MetadataResult } from "@/types/metadataProvider";
+
+describe("mergeGameMetadata", () => {
+  it("drops RAWG playtime when How Long to Beat already provides durations", () => {
+    const hltb: MetadataResult = {
+      title: "Commandos 2 : Men Of Courage",
+      facts: [
+        {
+          kind: "time-to-beat",
+          label: "Durée",
+          value: "55 h",
+          source: "How Long to Beat",
+        },
+        {
+          kind: "time-to-beat",
+          label: "Complétion",
+          value: "55 h",
+          source: "How Long to Beat",
+        },
+      ],
+    };
+    const rawg: MetadataResult = {
+      title: "Commandos 2: Men of Courage",
+      facts: [
+        {
+          kind: "duration",
+          label: "Temps de jeu",
+          value: "1 h",
+          source: "RAWG",
+        },
+        {
+          kind: "rating",
+          label: "RAWG",
+          value: "4.2/5",
+          source: "RAWG",
+        },
+      ],
+    };
+
+    const merged = mergeGameMetadata(null, null, hltb, null, rawg, null);
+
+    expect(merged.facts?.some((fact) => fact.source === "RAWG" && fact.kind === "duration")).toBe(false);
+    expect(merged.facts?.some((fact) => fact.source === "How Long to Beat")).toBe(true);
+    expect(merged.facts?.some((fact) => fact.label === "RAWG")).toBe(true);
+  });
+});
 
 describe("mergeMusicMetadata", () => {
   it("priorise MusicBrainz pour le titre canonique et le nombre de pistes", () => {
@@ -177,5 +223,25 @@ describe("preferRequestedDisplayTitle", () => {
     const requested = "KINGDOM HEARTS: ORCHESTRA - World Of Tres";
     const result = preferRequestedDisplayTitle(metadata, requested);
     expect(result.title).toBe("KINGDOM HEARTS: ORCHESTRA - World Of Tres");
+  });
+
+  it("prefers a more specific requested title over a shorter provider title", () => {
+    const metadata: MetadataResult = {
+      title: "Super Mario Bros.",
+    };
+    const requested = "New Super Mario Bros. Wii";
+    const result = preferRequestedDisplayTitle(metadata, requested);
+    expect(result.title).toBe("New Super Mario Bros. Wii");
+  });
+
+  it("rejects a mismatched provider title in favor of the requested catalog name", () => {
+    const metadata: MetadataResult = {
+      title: "Super Blue Boy Planet",
+      aliases: ["Super Blue Boy Planet.exe"],
+    };
+    const requested = "Game Boy Player";
+    const result = preferRequestedDisplayTitle(metadata, requested);
+    expect(result.title).toBe("Game Boy Player");
+    expect(result.aliases).toContain("Super Blue Boy Planet");
   });
 });

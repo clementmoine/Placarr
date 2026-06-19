@@ -42,6 +42,24 @@ const NUMBER_WORD_MAP: Record<string, string> = {
   eight: "8",
   nine: "9",
   ten: "10",
+  eleven: "11",
+  twelve: "12",
+  thirteen: "13",
+  fourteen: "14",
+  fifteen: "15",
+  sixteen: "16",
+  seventeen: "17",
+  eighteen: "18",
+  nineteen: "19",
+  twenty: "20",
+  thirty: "30",
+  forty: "40",
+  fifty: "50",
+  sixty: "60",
+  seventy: "70",
+  eighty: "80",
+  ninety: "90",
+  hundred: "100",
 };
 
 export function getSequelIndicators(normStr: string): Set<string> {
@@ -566,6 +584,7 @@ export function cleanTitleForDisplay(
       cleaned = cleaned.slice(1, -1).trim();
     }
     cleaned = moveTrailingSortArticleToFront(cleaned);
+    cleaned = stripLeadingPlatformPrefix(cleaned);
 
     // Strip trailing suffix
     cleaned = cleaned
@@ -630,14 +649,18 @@ const PLATFORMS = [
   "ps1",
   "playstation 1",
   "playstation",
-  "xbox series",
   "xbox series x",
   "xbox series s",
+  "xbox series",
   "xbox sx",
   "xbox s/x",
   "xbox one",
   "xbox 360",
+  "xbox original",
+  "original xbox",
   "xbox",
+  "atari 2600",
+  "atari2600",
   "3ds",
   "nintendo 3ds",
   "ds",
@@ -656,6 +679,21 @@ const PLATFORMS = [
   "game boy color",
   "game boy",
 ];
+
+function stripLeadingPlatformPrefix(value: string): string {
+  const normalized = value.trim();
+  if (!normalized) return normalized;
+
+  const sortedPlatforms = [...PLATFORMS].sort((a, b) => b.length - a.length);
+  for (const platform of sortedPlatforms) {
+    const regex = new RegExp(`^${escapeRegExp(platform)}\\s+(?=\\S)`, "i");
+    if (regex.test(normalized)) {
+      return normalized.replace(regex, "").trim();
+    }
+  }
+
+  return normalized;
+}
 
 export function filterPlatformRedundancies(suggestions: string[]): string[] {
   return suggestions.filter((item, index) => {

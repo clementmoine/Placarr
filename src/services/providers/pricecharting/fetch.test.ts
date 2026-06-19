@@ -4,8 +4,11 @@ vi.mock("axios", () => ({ default: { get: vi.fn(), isAxiosError: vi.fn() } }));
 import axios from "axios";
 
 import {
+  decodePriceChartingHtmlEntities,
   fetchMetadataFromPriceCharting,
   fetchPricesFromPriceCharting,
+  parsePriceChartingDetailHtml,
+  priceChartingPlatformMatchesTarget,
 } from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
@@ -43,6 +46,47 @@ beforeEach(() => {
   mockedGet.mockReset();
 });
 
+describe("priceChartingPlatformMatchesTarget", () => {
+  it("accepte une plateforme correspondante", () => {
+    expect(
+      priceChartingPlatformMatchesTarget("PlayStation 2", "PlayStation 2"),
+    ).toBe(true);
+    expect(
+      priceChartingPlatformMatchesTarget("PAL Xbox", "Xbox Original"),
+    ).toBe(true);
+  });
+
+  it("rejette une plateforme différente", () => {
+    expect(
+      priceChartingPlatformMatchesTarget("PAL Xbox", "PlayStation 2"),
+    ).toBe(false);
+  });
+});
+
+describe("decodePriceChartingHtmlEntities", () => {
+  it("décode les entités HTML courantes", () => {
+    expect(decodePriceChartingHtmlEntities("Assassin&#39;s Creed")).toBe(
+      "Assassin's Creed",
+    );
+    expect(decodePriceChartingHtmlEntities("Tom &amp; Jerry")).toBe(
+      "Tom & Jerry",
+    );
+  });
+});
+
+describe("parsePriceChartingDetailHtml", () => {
+  it("décode les entités HTML dans le titre", () => {
+    expect(
+      parsePriceChartingDetailHtml(
+        "<html><body><h1>Assassin&#39;s Creed <a>PAL Xbox 360</a></h1></body></html>",
+      ),
+    ).toEqual({
+      title: "Assassin's Creed",
+      platform: "PAL Xbox 360",
+    });
+  });
+});
+
 describe("fetchMetadataFromPriceCharting", () => {
   it("parse titre, plateforme, jaquette et classification depuis une fiche directe", async () => {
     mockedGet.mockResolvedValue(detailResponse());
@@ -56,6 +100,26 @@ describe("fetchMetadataFromPriceCharting", () => {
       ageRating: "PEGI 3",
       barcode: "0045496365226",
     });
+  });
+
+  it("ignore une fiche barcode redirigée vers une autre plateforme", async () => {
+    mockedGet.mockResolvedValue({
+      data: `<html><body><h1>Club Football 2005 <a>PAL Xbox</a></h1></body></html>`,
+      request: {
+        res: {
+          responseUrl:
+            "https://www.pricecharting.com/game/pal-xbox/club-football-2005-olympique-de-marseille",
+        },
+      },
+    } as never);
+
+    expect(
+      await fetchMetadataFromPriceCharting(
+        "0045496365226",
+        "Club Football 2005 Olympique de Marseille",
+        "PlayStation 2",
+      ),
+    ).toBeNull();
   });
 
   it("renvoie null quand la recherche reste ambiguë sans fallback", async () => {

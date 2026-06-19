@@ -203,4 +203,31 @@ export const DEFAULT_BARCODE_REGRESSION_CASES: BarcodeRegressionCase[] = [
       maxMatches: 1,
     },
   },
+  {
+    id: "halo-2-xbox",
+    label: "Halo 2",
+    barcode: "0882224088060",
+    type: "games",
+    expected: {
+      cleanName: "Halo 2",
+      platformKey: "xbox",
+      shelfType: "games",
+      maxMatches: 1,
+    },
+  },
+  {
+    id: "star-wars-revenge-sith-xbox-untyped",
+    label:
+      "Star Wars Episode III : La Revanche des Sith (Xbox, scan sans étagère)",
+    barcode: "023272327521",
+    // `type` omis : scan générique → la sélection de type (jeu vs film) est
+    // exercée. Un jeu Xbox homonyme du film ne doit pas être classé "movies"
+    // via le match TMDB du film, ni hériter d'un titre étranger (hongrois).
+    expected: {
+      cleanNameIncludes: ["Revanche des Sith"],
+      platformKey: "xbox",
+      shelfType: "games",
+      suggestionsExclude: ["bosszúja", "venganza", "vendetta"],
+    },
+  },
 ];

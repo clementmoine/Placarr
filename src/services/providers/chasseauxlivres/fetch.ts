@@ -6,6 +6,26 @@ export interface ChasseAuxLivresProduct {
   coverUrl?: string;
 }
 
+const CHASSE_AUX_LIVRES_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+  "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+  Referer: "https://www.chasse-aux-livres.fr/",
+};
+
+function buildSearchUrl(barcode: string, catalog: string): string {
+  return `https://www.chasse-aux-livres.fr/search?query=${encodeURIComponent(barcode)}&catalog=${encodeURIComponent(catalog)}`;
+}
+
+function isProtectedLoginPage(html: string, finalUrl = ""): boolean {
+  return (
+    finalUrl.includes("/login?protect=true") ||
+    /<title[^>]*>\s*Connexion\s+-\s+Chasse aux livres/i.test(html)
+  );
+}
+
 function parseRedirProduct(redir: string): ChasseAuxLivresProduct | null {
   const parts = redir.split("?")[0].split("/");
   const slug = parts[parts.length - 1];
@@ -90,21 +110,22 @@ export async function fetchFromChasseAuxLivres(
   barcode: string,
   catalog: string,
 ): Promise<ChasseAuxLivresProduct[]> {
-  const searchUrl = `https://www.chasse-aux-livres.fr/search?query=${barcode}&catalog=${catalog}`;
+  const searchUrl = buildSearchUrl(barcode, catalog);
   try {
-    const headers = {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-      "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-      Referer: "https://www.chasse-aux-livres.fr/",
-    };
     // Step 1: Fetch initial page to get the hash
-    const initialRes = await axios.get(searchUrl, { headers });
+    const initialRes = await axios.get(searchUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
     const html = initialRes.data;
 
     const finalUrl = initialRes.request.res.responseUrl || "";
+    if (isProtectedLoginPage(html, finalUrl)) {
+      console.warn(
+        `[ChasseAuxLivres] Search is protected by login for barcode ${barcode}`,
+      );
+      return [];
+    }
+
     if (finalUrl.includes("/prix/")) {
       console.log(`[ChasseAuxLivres] Direct redirect detected: ${finalUrl}`);
       const redirPath = finalUrl.replace(/^https?:\/\/[^/]+/, "");
@@ -133,7 +154,9 @@ export async function fetchFromChasseAuxLivres(
 
     // Step 2: Fetch search results
     const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=1`;
-    const resultsRes = await axios.get(resultsUrl, { headers });
+    const resultsRes = await axios.get(resultsUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
     const data = resultsRes.data;
 
     if (typeof data.redir === "string" && data.redir.trim()) {
@@ -163,6 +186,21 @@ export async function fetchFromChasseAuxLivres(
   }
 }
 
+export async function isChasseAuxLivresSearchProtected(
+  barcode: string,
+  catalog: string,
+): Promise<boolean> {
+  try {
+    const response = await axios.get(buildSearchUrl(barcode, catalog), {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
+    const finalUrl = response.request.res.responseUrl || "";
+    return isProtectedLoginPage(String(response.data || ""), finalUrl);
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchPricesFromChasseAuxLivres(
   query: string,
   catalog = "fr",
@@ -170,21 +208,22 @@ export async function fetchPricesFromChasseAuxLivres(
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
 
-  const searchUrl = `https://www.chasse-aux-livres.fr/search?query=${encodeURIComponent(trimmedQuery)}&catalog=${catalog}`;
-
-  const headers = {
-    "User-Agent":
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    Accept:
-      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-    "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-    Referer: "https://www.chasse-aux-livres.fr/",
-  };
+  const searchUrl = buildSearchUrl(trimmedQuery, catalog);
 
   try {
     // Step 1: Fetch initial page to get the hash and other params
-    const initialRes = await axios.get(searchUrl, { headers });
+    const initialRes = await axios.get(searchUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
     const html = initialRes.data;
+    const finalUrl = initialRes.request.res.responseUrl || "";
+    if (isProtectedLoginPage(html, finalUrl)) {
+      console.warn(
+        `[ChasseAuxLivres] Prices lookup: search is protected by login for query ${trimmedQuery}`,
+      );
+      return null;
+    }
+
     const hashMatch = html.match(/data-hash="([^"]+)"/);
     if (!hashMatch) {
       console.warn(
@@ -196,7 +235,9 @@ export async function fetchPricesFromChasseAuxLivres(
 
     // Step 2: Fetch search results redirect
     const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=1`;
-    const resultsRes = await axios.get(resultsUrl, { headers });
+    const resultsRes = await axios.get(resultsUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
     const data = resultsRes.data;
 
     if (!data.redir) {
@@ -209,7 +250,9 @@ export async function fetchPricesFromChasseAuxLivres(
     const redirUrl = `https://www.chasse-aux-livres.fr${data.redir}`;
 
     // Fetch product detail page to extract lvs and other data attributes
-    let redirRes = await axios.get(redirUrl, { headers });
+    let redirRes = await axios.get(redirUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
     let redirHtml = redirRes.data;
 
     const extractParams = (htmlContent: string) => {
@@ -253,7 +296,7 @@ export async function fetchPricesFromChasseAuxLivres(
     }
 
     const ajaxHeaders = {
-      ...headers,
+      ...CHASSE_AUX_LIVRES_HEADERS,
       Accept: "application/json, text/javascript, */*; q=0.01",
       "X-Requested-With": "XMLHttpRequest",
       Referer: redirUrl,
@@ -280,7 +323,9 @@ export async function fetchPricesFromChasseAuxLivres(
           );
           await new Promise((resolve) => setTimeout(resolve, 2500));
           // Refetch product page to get new session/lvs parameters
-          redirRes = await axios.get(redirUrl, { headers });
+          redirRes = await axios.get(redirUrl, {
+            headers: CHASSE_AUX_LIVRES_HEADERS,
+          });
           redirHtml = redirRes.data;
           params = extractParams(redirHtml);
         } else {

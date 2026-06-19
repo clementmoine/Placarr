@@ -136,6 +136,55 @@ describe("fetchFromAllGameSources — orchestration", () => {
     expect(res?.title).toBe("Celeste");
   });
 
+  it("utilise le titre PriceCharting quand les autres sources sont absentes", async () => {
+    h.fetchMetadataFromPriceCharting.mockResolvedValue({
+      title: "Game Boy Player Start-up Disc",
+      platform: "PAL Gamecube",
+    });
+    h.isMetadataTitleAligned.mockImplementation(
+      (_meta: { title?: string }, names: string[]) =>
+        names.some((name) =>
+          name.toLowerCase().includes("game boy player"),
+        ) ||
+        _meta.title?.toLowerCase().includes("game boy player") ||
+        false,
+    );
+
+    const res = await fetchFromAllGameSources(
+      "Game Boy Player",
+      "0045496380038",
+      "GameCube",
+    );
+
+    expect(res?.title).toBe("Game Boy Player Start-up Disc");
+    expect(res?.fieldEvidence?.some((e) => e.source === "PriceCharting")).toBe(
+      true,
+    );
+  });
+
+  it("remplace un titre désaligné par le titre PriceCharting aligné", async () => {
+    h.ssResolve.mockResolvedValue({ title: "Super Blue Boy Planet" });
+    h.fetchMetadataFromPriceCharting.mockResolvedValue({
+      title: "Game Boy Player Start-up Disc",
+    });
+    h.isMetadataTitleAligned.mockImplementation(
+      (meta: { title?: string }, names: string[]) => {
+        const title = meta.title?.toLowerCase() || "";
+        if (title.includes("super blue boy")) return false;
+        if (title.includes("game boy player")) return true;
+        return names.some((name) => name.toLowerCase().includes("game boy"));
+      },
+    );
+
+    const res = await fetchFromAllGameSources(
+      "Game Boy Player",
+      "0045496380038",
+      "GameCube",
+    );
+
+    expect(res?.title).toBe("Game Boy Player Start-up Disc");
+  });
+
   it("déclenche le fallback ScreenScraper via les noms canoniques quand SS est absent", async () => {
     h.collectCanonicalFallbackNames.mockReturnValue(["Mario Kart"]);
     h.igdbResolve.mockResolvedValue({ title: "Mario Kart Wii" });

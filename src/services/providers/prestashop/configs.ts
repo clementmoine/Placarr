@@ -32,9 +32,18 @@ export const LEPASSETEMPS_CONFIG: PrestashopRetailerConfig = {
   searchParam: "search_query",
 };
 
+export const ARCHICHOUETTE_CONFIG: PrestashopRetailerConfig = {
+  id: "archichouette",
+  label: "Archi-Chouette",
+  baseUrl: "https://archi-chouette.fr",
+  searchPath: "/recherche",
+  searchParam: "search_query",
+};
+
 export const PRESTASHOP_RETAILER_CONFIGS: PrestashopRetailerConfig[] = [
   MONSIEURDE_CONFIG,
   LUDIFOLIE_CONFIG,
   BCDJEUX_CONFIG,
   LEPASSETEMPS_CONFIG,
+  ARCHICHOUETTE_CONFIG,
 ];

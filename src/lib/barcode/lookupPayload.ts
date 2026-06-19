@@ -26,6 +26,8 @@ export type BarcodeLookupPayload = {
   tmdb: BarcodeMetadataHit | null;
   pc: PriceChartingMetadata | null;
   sd: ScanDexLookup;
+  philibert: BarcodeMetadataHit | null;
+  boardRetailers: BoardRetailerBarcodeHit[];
   amc: NamedListing[];
   calFr: NamedListing[];
   calDvd: NamedListing[];
@@ -49,6 +51,8 @@ export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
     tmdb: null,
     pc: null,
     sd: null,
+    philibert: null,
+    boardRetailers: [],
     amc: [],
     calFr: [],
     calDvd: [],
@@ -107,4 +111,25 @@ export function asNamedListings(value: unknown): NamedListing[] {
   return asArray<NamedListing>(value).filter(
     (listing) => typeof listing?.name === "string" && listing.name.trim(),
   );
+}
+
+export const BOARDGAME_RETAILER_BARCODE_TASKS = [
+  { key: "monsieurde", providerName: "Monsieur de" },
+  { key: "ludifolie", providerName: "Ludifolie" },
+  { key: "bcdjeux", providerName: "BCD Jeux" },
+  { key: "lepassetemps", providerName: "Le Passe-Temps" },
+] as const;
+
+export type BoardRetailerBarcodeHit = BarcodeMetadataHit & {
+  providerName: string;
+};
+
+export function collectBoardRetailerBarcodeHits(
+  lookups: Record<string, unknown>,
+): BoardRetailerBarcodeHit[] {
+  return BOARDGAME_RETAILER_BARCODE_TASKS.flatMap(({ key, providerName }) => {
+    const hit = asMetadataHit(lookups[key]);
+    if (!hit?.title) return [];
+    return [{ ...hit, providerName }];
+  });
 }

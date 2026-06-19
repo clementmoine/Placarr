@@ -63,6 +63,21 @@ const TITLE_STOP_WORDS = new Set([
   "une",
 ]);
 
+export function decodePriceChartingHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, code) =>
+      String.fromCharCode(Number.parseInt(code, 10)),
+    )
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCharCode(Number.parseInt(hex, 16)),
+    );
+}
+
 function normalizeTitleForComparison(value: string): string {
   return value
     .normalize("NFD")
@@ -126,6 +141,29 @@ function getPlatformSlug(platform?: string, isPal?: boolean): string | null {
   const slugs = platformKey ? PLATFORM_SLUGS[platformKey] : null;
   if (!slugs) return null;
   return isPal && slugs.pal ? slugs.pal : slugs.default;
+}
+
+export function priceChartingPlatformMatchesTarget(
+  parsedPlatform: string | undefined,
+  fallbackPlatform?: string,
+): boolean {
+  if (!fallbackPlatform) return true;
+  const targetKey = detectPlatformKey(fallbackPlatform);
+  if (!targetKey) return true;
+  const parsedKey = detectPlatformKey(parsedPlatform || "");
+  if (!parsedKey) return true;
+  return parsedKey === targetKey;
+}
+
+function rejectMismatchedPriceChartingMetadata(
+  metadata: PriceChartingMetadata | null,
+  fallbackPlatform?: string,
+): PriceChartingMetadata | null {
+  if (!metadata) return null;
+  if (!priceChartingPlatformMatchesTarget(metadata.platform, fallbackPlatform)) {
+    return null;
+  }
+  return metadata;
 }
 
 function buildDirectDetailUrls(
@@ -312,6 +350,29 @@ async function fetchDirectDetailHtmlFromNameFallback(
   return null;
 }
 
+function isAcceptedPriceChartingDetailHtml(
+  html: string,
+  finalUrl: string,
+  fallbackName: string | undefined,
+  fallbackPlatform?: string,
+): boolean {
+  if (!fallbackPlatform) return true;
+
+  const parsed = parsePriceChartingDetailHtml(html, fallbackName);
+  if (parsed?.platform) {
+    return priceChartingPlatformMatchesTarget(parsed.platform, fallbackPlatform);
+  }
+
+  if (
+    finalUrl.includes("/game/") &&
+    !isDetailUrlForPlatform(finalUrl, fallbackPlatform)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 async function fetchDetailHtmlFromNameFallback(
   fallbackNames: string[],
   headers: Record<string, string>,
@@ -356,7 +417,29 @@ async function fetchDetailHtmlFromNameFallback(
 
       const gameUrl = `https://www.pricecharting.com/game/${bestRow.id}`;
       const detailRes = await axios.get(gameUrl, { headers });
+      const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
+      if (
+        !isAcceptedPriceChartingDetailHtml(
+          detailRes.data,
+          detailFinalUrl,
+          fallbackName,
+          fallbackPlatform,
+        )
+      ) {
+        continue;
+      }
       return detailRes.data;
+    }
+
+    if (
+      !isAcceptedPriceChartingDetailHtml(
+        html,
+        nameFinalUrl,
+        fallbackName,
+        fallbackPlatform,
+      )
+    ) {
+      continue;
     }
 
     return html;
@@ -391,7 +474,9 @@ export function parsePriceChartingDetailHtml(
   const h1Content = h1Match[1];
   const titleMatch = h1Content.match(/^([\s\S]*?)(?:<a|<span|$)/i);
   const rawTitle = titleMatch ? titleMatch[1].replace(/\s+/g, " ").trim() : "";
-  const title = preferSpecificFallbackTitle(rawTitle, fallbackName);
+  const title = decodePriceChartingHtmlEntities(
+    preferSpecificFallbackTitle(rawTitle, fallbackName),
+  );
 
   const platformMatch = h1Content.match(/<a[^>]*>([\s\S]*?)<\/a>/i);
   const platform = platformMatch
@@ -458,7 +543,10 @@ export async function fetchMetadataFromPriceChartingByName(
       isClassics,
     );
     if (!html) return null;
-    return parsePriceChartingDetailHtml(html, cleanedName);
+    return rejectMismatchedPriceChartingMetadata(
+      parsePriceChartingDetailHtml(html, cleanedName),
+      fallbackPlatform,
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(
@@ -517,6 +605,48 @@ export async function fetchPricesFromPriceCharting(
       } else {
         return null;
       }
+    } else if (
+      fallbackPlatform &&
+      !isAcceptedPriceChartingDetailHtml(
+        html,
+        finalUrl,
+        Array.isArray(fallbackName) ? fallbackName[0] : fallbackName,
+        fallbackPlatform,
+      )
+    ) {
+      const fallbackNames = Array.isArray(fallbackName)
+        ? fallbackName
+        : fallbackName
+          ? [fallbackName]
+          : [];
+      if (fallbackNames.length === 0) return null;
+      console.log(
+        `[PriceCharting Prices] Barcode ${cleanedBarcode} resolved to a different platform, trying name fallback(s)`,
+      );
+      const fallbackHtml = await fetchDetailHtmlFromNameFallback(
+        fallbackNames,
+        PRICECHARTING_HEADERS,
+        fallbackPlatform,
+        isPal,
+        isClassics,
+      );
+      if (!fallbackHtml) return null;
+      html = fallbackHtml;
+    }
+
+    const priceFallbackName = Array.isArray(fallbackName)
+      ? fallbackName[0]
+      : fallbackName;
+    if (
+      fallbackPlatform &&
+      !isAcceptedPriceChartingDetailHtml(
+        html,
+        finalUrl,
+        priceFallbackName,
+        fallbackPlatform,
+      )
+    ) {
+      return null;
     }
 
     // Extract exchange rates
@@ -614,9 +744,34 @@ export async function fetchMetadataFromPriceCharting(
       } else {
         return null;
       }
+    } else if (
+      fallbackPlatform &&
+      !isAcceptedPriceChartingDetailHtml(
+        html,
+        finalUrl,
+        fallbackName,
+        fallbackPlatform,
+      )
+    ) {
+      if (!fallbackName) return null;
+      console.log(
+        `[PriceCharting Metadata] Barcode ${cleanedBarcode} resolved to a different platform, searching by name fallback: ${fallbackName}`,
+      );
+      const fallbackHtml = await fetchDetailHtmlFromNameFallback(
+        [fallbackName],
+        PRICECHARTING_HEADERS,
+        fallbackPlatform,
+        isPal,
+        isClassics,
+      );
+      if (!fallbackHtml) return null;
+      html = fallbackHtml;
     }
 
-    const parsed = parsePriceChartingDetailHtml(html, fallbackName);
+    const parsed = rejectMismatchedPriceChartingMetadata(
+      parsePriceChartingDetailHtml(html, fallbackName),
+      fallbackPlatform,
+    );
     if (!parsed) return null;
 
     return {

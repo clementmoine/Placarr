@@ -10,6 +10,7 @@ import type { MetadataResult } from "@/types/metadataProvider";
 import { formatScore } from "@/services/metadataSearchUtils";
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
 import { createScreenScraperResolver } from "./resolver";
+import { getScreenScraperEnv, SCREEN_SCRAPER_ENV_NAMES } from "./env";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
 const fetchFromScreenScraper = createScreenScraperResolver({
@@ -24,23 +25,12 @@ type Resolver = (
 ) => Promise<MetadataResult | null>;
 
 function screenscraperCredentials() {
-  const devId = process.env.SCREENSCRAPER_DEV_ID?.trim();
-  const devPass = process.env.SCREENSCRAPER_DEV_PASSWORD?.trim();
-  if (devId && devPass) {
-    return {
-      url: `https://api.screenscraper.fr/api2/ssuserInfos.php?devid=${devId}&devpassword=${devPass}&softname=Placarr&output=json`,
-      error: "SCREENSCRAPER_DEV_ID / SCREENSCRAPER_DEV_PASSWORD missing",
-    };
-  }
-  const user = process.env.SCREENSCRAPER_USER?.trim();
-  const pass = process.env.SCREENSCRAPER_PASSWORD?.trim();
-  if (user && pass) {
-    return {
-      url: `https://api.screenscraper.fr/api2/ssuserInfos.php?devid=${user}&devpassword=${pass}&softname=Placarr&output=json`,
-      error: "SCREENSCRAPER_USER / SCREENSCRAPER_PASSWORD missing",
-    };
-  }
-  return null;
+  const credentials = getScreenScraperEnv();
+  if (!credentials) return null;
+
+  return {
+    url: `https://api.screenscraper.fr/api2/ssuserInfos.php?devid=${credentials.devId}&devpassword=${credentials.devPass}&softname=Placarr&output=json`,
+  };
 }
 
 export const screenscraperModule: ProviderModule = {
@@ -60,7 +50,7 @@ export const screenscraperModule: ProviderModule = {
     ],
     auth: {
       kind: "key",
-      env: ["SCREENSCRAPER_USER", "SCREENSCRAPER_PASSWORD"],
+      env: SCREEN_SCRAPER_ENV_NAMES,
       free: true,
     },
     canonical: true,
@@ -125,8 +115,8 @@ export const screenscraperModule: ProviderModule = {
     );
   },
   mappingProbe: {
-    sampleInput: "The Legend of Zelda: Skyward Sword",
-    context: { name: "Mario Kart Wii" },
+    sampleInput: "The Legend of Zelda: Skyward Sword (Wii)",
+    context: { name: "The Legend of Zelda: Skyward Sword", platform: "wii" },
   },
 };
 

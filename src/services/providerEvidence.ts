@@ -6,6 +6,7 @@ const INTERNAL_EVIDENCE: Record<
     label: string;
     sourceWeight: number;
     canonical?: boolean;
+    trustedRetailer?: boolean;
     cleanCachedNames?: boolean;
   }
 > = {
@@ -21,20 +22,21 @@ const INTERNAL_EVIDENCE: Record<
   },
 };
 
-const evidenceByLabel = new Map<
-  string,
-  {
-    sourceWeight: number;
-    canonical: boolean;
-    cleanCachedNames: boolean;
-  }
->();
+type ProviderEvidenceProfile = {
+  sourceWeight: number;
+  canonical: boolean;
+  trustedRetailer: boolean;
+  cleanCachedNames: boolean;
+};
+
+const evidenceByLabel = new Map<string, ProviderEvidenceProfile>();
 
 for (const module of PROVIDER_MODULES) {
   if (!module.evidence) continue;
   evidenceByLabel.set(module.evidence.label, {
     sourceWeight: module.evidence.sourceWeight,
     canonical: module.evidence.canonical ?? module.info.canonical,
+    trustedRetailer: module.evidence.trustedRetailer ?? false,
     cleanCachedNames: module.evidence.cleanCachedNames ?? false,
   });
 }
@@ -43,8 +45,22 @@ for (const [label, config] of Object.entries(INTERNAL_EVIDENCE)) {
   evidenceByLabel.set(label, {
     sourceWeight: config.sourceWeight,
     canonical: config.canonical ?? false,
+    trustedRetailer: config.trustedRetailer ?? false,
     cleanCachedNames: config.cleanCachedNames ?? false,
   });
+}
+
+function matchesProviderLabel(
+  providerName: string,
+  label: string,
+  predicate: (config: ProviderEvidenceProfile) => boolean,
+): boolean {
+  const config = evidenceByLabel.get(label);
+  if (!config || !predicate(config)) return false;
+  const normalized = providerName.toLowerCase();
+  return (
+    providerName === label || normalized.includes(label.toLowerCase())
+  );
 }
 
 export function getCanonicalProviderLabels(): string[] {
@@ -53,11 +69,33 @@ export function getCanonicalProviderLabels(): string[] {
     .map(([label]) => label);
 }
 
+export function getTrustedRetailerProviderLabels(): string[] {
+  return [...evidenceByLabel.entries()]
+    .filter(([, config]) => config.trustedRetailer)
+    .map(([label]) => label);
+}
+
 export function isCanonicalProvider(providerName: string): boolean {
   if (evidenceByLabel.get(providerName)?.canonical) return true;
-  const normalized = providerName.toLowerCase();
   return getCanonicalProviderLabels().some((label) =>
-    normalized.includes(label.toLowerCase()),
+    matchesProviderLabel(providerName, label, (config) => config.canonical),
+  );
+}
+
+export function isTrustedRetailerProvider(providerName: string): boolean {
+  if (evidenceByLabel.get(providerName)?.trustedRetailer) return true;
+  return getTrustedRetailerProviderLabels().some((label) =>
+    matchesProviderLabel(
+      providerName,
+      label,
+      (config) => config.trustedRetailer,
+    ),
+  );
+}
+
+export function isAnchorProvider(providerName: string): boolean {
+  return (
+    isCanonicalProvider(providerName) || isTrustedRetailerProvider(providerName)
   );
 }
 
@@ -67,7 +105,12 @@ export function sourceWeightForProvider(
 ): number {
   const config = evidenceByLabel.get(providerName);
   const weight =
-    config?.sourceWeight ?? (isCanonicalProvider(providerName) ? 0.36 : 0.08);
+    config?.sourceWeight ??
+    (isCanonicalProvider(providerName)
+      ? 0.36
+      : isTrustedRetailerProvider(providerName)
+        ? 0.28
+        : 0.08);
   return isAlias ? weight * 0.72 : weight;
 }
 

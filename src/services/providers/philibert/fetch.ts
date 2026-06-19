@@ -1,7 +1,17 @@
 import axios from "axios";
+import sharp from "sharp";
 import { decode as decodeHTMLEntities } from "html-entities";
 
+import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+
 const BASE_URL = "https://www.philibertnet.com";
+
+// Philibert ne sert le vrai ratio que sur l'URL originale (sans token de
+// taille) : toutes les variantes nommées sont paddées en carré. On lit donc
+// juste l'en-tête JPEG (Range) pour mesurer l'aspect sans rapatrier l'image.
+const IMAGE_HEADER_RANGE = "bytes=0-65535";
+// Un fond doit être plus large que haut pour rendre correctement en `bg-cover`.
+const BACKGROUND_MIN_RATIO = 1.15;
 const HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -42,6 +52,10 @@ export interface PhilibertProduct {
   designers?: string[];
   publishers?: string[];
   country?: string;
+  /** Toutes les images produit de la fiche (URLs originales, dédupliquées). */
+  images?: string[];
+  /** Visuel large retenu comme arrière-plan (résolu via mesure d'aspect). */
+  backgroundImageUrl?: string;
   productUrl: string;
 }
 
@@ -142,6 +156,90 @@ export function parsePhilibertFeatureRows(
 export function parsePhilibertProductId(url: string): string | undefined {
   const match = url.match(/\/(\d+)-[^/]+\.html(?:\?|$)/i);
   return match?.[1];
+}
+
+/** Identifiant numérique d'une image dans une URL CDN Philibert. */
+export function philibertImageId(
+  url: string | null | undefined,
+): string | null {
+  if (!url) return null;
+  return url.match(/cdn1\.philibertnet\.com\/(\d+)/i)?.[1] ?? null;
+}
+
+/** Slug de fichier image attendu pour le produit (déduit de l'URL de la fiche). */
+function parsePhilibertImageSlug(url: string): string | null {
+  const file = url.split(/[?#]/)[0].split("/").pop() || "";
+  const slug = file.replace(/\.html$/i, "").replace(/^\d+-/, "");
+  return slug || null;
+}
+
+/**
+ * Récupère les images produit de la fiche, dédupliquées par identifiant et
+ * renvoyées en URL originale (seule à préserver le vrai ratio).
+ *
+ * Le filtrage par slug garantit qu'on ne ramasse jamais les images du carrousel
+ * de produits liés (slug/code-barres différents dans le nom de fichier).
+ */
+export function parsePhilibertGalleryImages(
+  html: string,
+  url: string,
+): string[] {
+  const slug = parsePhilibertImageSlug(url);
+  if (!slug) return [];
+
+  const seen = new Set<string>();
+  const images: string[] = [];
+  for (const match of html.matchAll(
+    /https:\/\/cdn1\.philibertnet\.com\/(\d+)(?:-[a-z_]+)?\/([^"'?\/ ]+)\.jpg/gi,
+  )) {
+    const [, id, file] = match;
+    if (file !== slug || seen.has(id)) continue;
+    seen.add(id);
+    images.push(`https://cdn1.philibertnet.com/${id}/${slug}.jpg`);
+  }
+  return images;
+}
+
+/** Lit les dimensions d'une image en ne rapatriant que son en-tête JPEG. */
+async function measurePhilibertImage(
+  url: string,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const response = await axios.get<ArrayBuffer>(url, {
+      responseType: "arraybuffer",
+      headers: { ...HEADERS, Accept: "image/*", Range: IMAGE_HEADER_RANGE },
+      timeout: 8000,
+      validateStatus: (status) => status >= 200 && status < 400,
+    });
+    const meta = await sharp(Buffer.from(response.data)).metadata();
+    if (!meta.width || !meta.height) return null;
+    return { width: meta.width, height: meta.height };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Choisit, parmi les images produit hors couverture, le visuel paysage le plus
+ * grand pour servir d'arrière-plan. Renvoie `undefined` si aucune n'est large.
+ */
+export async function resolvePhilibertBackgroundUrl(
+  product: PhilibertProduct,
+): Promise<string | undefined> {
+  const coverId = philibertImageId(product.imageUrl);
+  const extras = (product.images ?? []).filter(
+    (url) => philibertImageId(url) !== coverId,
+  );
+
+  let best: { url: string; area: number } | null = null;
+  for (const url of extras) {
+    const dim = await measurePhilibertImage(url);
+    if (!dim) continue;
+    if (dim.width / dim.height < BACKGROUND_MIN_RATIO) continue;
+    const area = dim.width * dim.height;
+    if (!best || area > best.area) best = { url, area };
+  }
+  return best?.url;
 }
 
 export function parsePhilibertReviewSummary(html: string): {
@@ -287,6 +385,7 @@ export function parsePhilibertProductHtml(
     title,
     description: description || undefined,
     imageUrl,
+    images: parsePhilibertGalleryImages(html, url),
     barcode,
     reference: featureRows.Référence?.[0] || featureRows.Reference?.[0],
     productId: parsePhilibertProductId(url),
@@ -391,4 +490,38 @@ export async function fetchPhilibertProduct(
   }
 
   return product;
+}
+
+export type BarcodeProductHit = {
+  title: string;
+  imageUrl?: string | null;
+};
+
+export async function fetchPhilibertBarcodeProduct(
+  barcode: string,
+): Promise<BarcodeProductHit | null> {
+  const normalizedBarcode = normalizeProductBarcode(barcode);
+  if (!normalizedBarcode) return null;
+
+  try {
+    const hit = await searchPhilibert("", normalizedBarcode);
+    if (!hit) return null;
+
+    const product = await fetchPhilibertProduct(hit.url);
+    const title = product.title || hit.title;
+    if (!title) return null;
+
+    const resolvedBarcode =
+      normalizeProductBarcode(product.barcode) ||
+      normalizeProductBarcode(hit.barcode);
+    if (resolvedBarcode !== normalizedBarcode) return null;
+
+    return {
+      title,
+      imageUrl: product.imageUrl || null,
+    };
+  } catch (error) {
+    console.error("[Philibert] Barcode lookup failed:", error);
+    return null;
+  }
 }

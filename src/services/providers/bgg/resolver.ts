@@ -3,8 +3,14 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
 import { convertXML } from "simple-xml-to-json";
 
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
+import { pickBestCoverFromAttachments } from "@/lib/attachmentDisplayScore";
 import { formatBoardGamePlayerCount } from "@/lib/boardGamePlayers";
+import { mapBggLanguageToAttachmentRole } from "@/lib/localePreference";
 
 export interface BGGChild {
   name?: { type: string; value: string };
@@ -19,6 +25,13 @@ export interface BGGChild {
   image?: { content: string };
   link?: { type: string; id: string; value: string };
   statistics?: { children?: any[] };
+  versions?: {
+    children?: Array<{
+      item?: {
+        children?: BGGChild[];
+      };
+    }>;
+  };
 }
 
 interface BGGItem {
@@ -35,11 +48,16 @@ export interface BGGResponse {
   };
 }
 
-function getBGGRankValue(game: { children?: BGGChild[] }): string | undefined {
+function getBGGRatingsNode(game: { children?: BGGChild[] }) {
   const statistics = game.children?.find(
     (child) => child.statistics,
   )?.statistics;
-  const ranks = statistics?.children?.find((child: any) => child.ranks)?.ranks;
+  return statistics?.children?.find((child: any) => child.ratings)?.ratings;
+}
+
+function getBGGRankValue(game: { children?: BGGChild[] }): string | undefined {
+  const ratings = getBGGRatingsNode(game);
+  const ranks = ratings?.children?.find((child: any) => child.ranks)?.ranks;
   const rankEntries = ranks?.children || [];
   for (const entry of rankEntries) {
     const rank = entry.rank;
@@ -54,14 +72,83 @@ function getBGGRatingValue(
   game: { children?: BGGChild[] },
   key: string,
 ): string | undefined {
-  const statistics = game.children?.find(
-    (child) => child.statistics,
-  )?.statistics;
-  const ratings = statistics?.children?.find(
-    (child: any) => child.ratings,
-  )?.ratings;
+  const ratings = getBGGRatingsNode(game);
   const rating = ratings?.children?.find((child: any) => child[key])?.[key];
   return rating?.value;
+}
+
+function getBGGPollSummaries(
+  game: { children?: BGGChild[] },
+): Map<string, Record<string, string>> {
+  const summaries = new Map<string, Record<string, string>>();
+  for (const child of game.children || []) {
+    const pollSummary = (child as BGGChild & Record<string, unknown>)[
+      "poll-summary"
+    ] as
+      | {
+          name?: string;
+          children?: Array<{ result?: { name?: string; value?: string } }>;
+        }
+      | undefined;
+    if (!pollSummary?.name) continue;
+
+    const results: Record<string, string> = {};
+    for (const entry of pollSummary.children || []) {
+      const result = entry.result;
+      if (result?.name && result?.value) {
+        results[result.name] = result.value;
+      }
+    }
+    summaries.set(pollSummary.name, results);
+  }
+  return summaries;
+}
+
+function formatBGGComplexity(weight: string): string | null {
+  const value = Number(weight);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return `${value.toFixed(1).replace(".", ",")} / 5`;
+}
+
+function buildBggAttachments(game: {
+  children?: BGGChild[];
+}): MetadataAttachment[] {
+  const attachments: MetadataAttachment[] = [];
+  const seenUrls = new Set<string>();
+
+  const addCover = (url: string | undefined, role: string) => {
+    if (!url || seenUrls.has(url)) return;
+    seenUrls.add(url);
+    attachments.push({
+      type: "cover",
+      url,
+      role,
+      source: "bgg",
+    });
+  };
+
+  const mainImage = game.children?.find((child) => child.image)?.image?.content;
+  addCover(mainImage, "wor");
+
+  const versionsNode = game.children?.find((child) => child.versions)?.versions;
+
+  for (const entry of versionsNode?.children || []) {
+    const versionChildren = entry.item?.children;
+    if (!versionChildren) continue;
+
+    const image = versionChildren.find((child) => child.image)?.image?.content;
+    const languages = versionChildren
+      .filter((child) => child.link?.type === "language")
+      .map((child) => child.link?.value || "")
+      .filter(Boolean);
+    const editionName = versionChildren.find(
+      (child) => child.name?.type === "primary",
+    )?.name?.value;
+    const role = mapBggLanguageToAttachmentRole(languages[0], editionName);
+    addCover(image, role);
+  }
+
+  return attachments;
 }
 
 type BggResolverDeps = {
@@ -126,7 +213,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
       const gameId = bestMatch.item.id;
       if (!gameId) return null;
 
-      const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
+      const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1&versions=1`;
       const detailsRes = await axios.get(detailsUrl, {
         responseType: "text",
         headers,
@@ -176,15 +263,21 @@ export function createBGGResolver(deps: BggResolverDeps) {
       const bayesAverage = getBGGRatingValue(game, "bayesaverage");
       const usersRated = getBGGRatingValue(game, "usersrated");
       const boardGameRank = getBGGRankValue(game);
+      const averageWeight = getBGGRatingValue(game, "averageweight");
+      const pollSummaries = getBGGPollSummaries(game);
 
-      const image = game.children.find((child: BGGChild) => child.image)?.image
-        ?.content;
+      const attachments = buildBggAttachments(game);
+      const imageUrl = pickBestCoverFromAttachments(attachments) || undefined;
 
       const designers = game.children
         .filter((child: BGGChild) => child.link?.type === "boardgamedesigner")
         .map((child: BGGChild) => ({
           name: child.link?.value || "",
         }));
+      const artists = game.children
+        .filter((child: BGGChild) => child.link?.type === "boardgameartist")
+        .map((child: BGGChild) => child.link?.value || "")
+        .filter(Boolean);
 
       const publishers = game.children
         .filter((child: BGGChild) => child.link?.type === "boardgamepublisher")
@@ -251,7 +344,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
           priority: 88,
         });
       }
-      if (minAge) {
+      if (minAge && Number(minAge) > 0) {
         facts.push({
           kind: "age-rating",
           label: "Âge recommandé",
@@ -261,8 +354,9 @@ export function createBGGResolver(deps: BggResolverDeps) {
           priority: 75,
         });
       }
-      if (averageRating) {
-        const value = deps.formatScore(Number(averageRating), 10);
+      if (averageRating || bayesAverage) {
+        const ratingNumber = bayesAverage || averageRating;
+        const value = deps.formatScore(Number(ratingNumber), 10);
         if (value) {
           const count =
             usersRated && Number(usersRated) > 0
@@ -273,21 +367,8 @@ export function createBGGResolver(deps: BggResolverDeps) {
             label: "BoardGameGeek",
             value: `${value}${count}`,
             source: "BGG",
-            confidence: 0.82,
+            confidence: bayesAverage ? 0.84 : 0.82,
             priority: 84,
-          });
-        }
-      }
-      if (bayesAverage) {
-        const value = deps.formatScore(Number(bayesAverage), 10);
-        if (value) {
-          facts.push({
-            kind: "rating",
-            label: "BGG (Bayes)",
-            value,
-            source: "BGG",
-            confidence: 0.78,
-            priority: 80,
           });
         }
       }
@@ -301,11 +382,51 @@ export function createBGGResolver(deps: BggResolverDeps) {
           priority: 70,
         });
       }
+      const complexityValue = averageWeight
+        ? formatBGGComplexity(averageWeight)
+        : null;
+      if (complexityValue) {
+        facts.push({
+          kind: "complexity",
+          label: "Complexité",
+          value: complexityValue,
+          source: "BGG",
+          confidence: 0.8,
+          priority: 72,
+        });
+      }
+      const recommendedPlayersPoll = pollSummaries.get("suggested_numplayers");
+      if (recommendedPlayersPoll) {
+        const pollParts = [
+          recommendedPlayersPoll.bestwith,
+          recommendedPlayersPoll.recommmendedwith,
+        ].filter(Boolean);
+        if (pollParts.length > 0) {
+          facts.push({
+            kind: "recommended-players",
+            label: "Joueurs recommandés",
+            value: pollParts.join(" · "),
+            source: "BGG",
+            confidence: 0.78,
+            priority: 86,
+          });
+        }
+      }
+      if (artists.length > 0) {
+        facts.push({
+          kind: "artist",
+          label: "Artistes",
+          value: Array.from(new Set(artists)).join(", "),
+          source: "BGG",
+          confidence: 0.72,
+          priority: 52,
+        });
+      }
       if (categories.length > 0) {
         facts.push({
           kind: "category",
           label: "Catégories",
-          value: Array.from(new Set(categories)).slice(0, 4).join(" • "),
+          value: Array.from(new Set(categories)).slice(0, 6).join(" • "),
           source: "BGG",
           confidence: 0.74,
           priority: 58,
@@ -315,7 +436,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
         facts.push({
           kind: "mechanic",
           label: "Mécaniques",
-          value: Array.from(new Set(mechanics)).slice(0, 4).join(" • "),
+          value: Array.from(new Set(mechanics)).slice(0, 6).join(" • "),
           source: "BGG",
           confidence: 0.74,
           priority: 57,
@@ -325,7 +446,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
         facts.push({
           kind: "family",
           label: "Familles",
-          value: Array.from(new Set(families)).slice(0, 3).join(" • "),
+          value: Array.from(new Set(families)).slice(0, 4).join(" • "),
           source: "BGG",
           confidence: 0.7,
           priority: 49,
@@ -336,18 +457,10 @@ export function createBGGResolver(deps: BggResolverDeps) {
         title: primaryName,
         description,
         releaseDate: yearPublished,
-        imageUrl: image,
+        imageUrl,
         authors: designers,
         publishers,
-        attachments: image
-          ? [
-              {
-                type: "cover",
-                url: image,
-                source: "bgg",
-              },
-            ]
-          : [],
+        attachments: attachments.length > 0 ? attachments : undefined,
         aliases,
         facts,
       };

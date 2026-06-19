@@ -5,6 +5,8 @@ import {
   detectPlatformKey,
   guessShelfByPlatformKey,
   guessBestShelf,
+  guessShelfFromBarcodeLookup,
+  isShelfCompatibleWithPlatformKey,
 } from "./query";
 
 describe("cleanCode", () => {
@@ -76,6 +78,12 @@ describe("detectPlatformKey — précision plateforme (jamais de faux positif)",
     expect(detectPlatformKey("PS1")).toBe("ps1");
     expect(detectPlatformKey("PS2")).toBe("ps2");
     expect(detectPlatformKey("Xbox Original")).toBe("xbox");
+    expect(detectPlatformKey("Atari 2600")).toBe("atari2600");
+  });
+
+  it("ne confond pas l'éditeur Atari avec la plateforme Atari 2600", () => {
+    expect(detectPlatformKey("Atari Flashback Classics")).toBeNull();
+    expect(detectPlatformKey("Ryse : Son of Rome")).toBeNull();
   });
 });
 
@@ -119,5 +127,75 @@ describe("guessBestShelf — devine via le titre, sinon s'abstient", () => {
 
   it("s'abstient (null) quand le titre ne donne aucun signal exploitable", () => {
     expect(guessBestShelf("Un titre totalement inconnu", shelves)).toBeNull();
+  });
+});
+
+describe("guessShelfFromBarcodeLookup — Ryse / Xbox One", () => {
+  const shelves = [
+    { id: "s-atari", name: "Atari 2600", type: "games" },
+    { id: "s-xbox", name: "Xbox One", type: "games" },
+    { id: "s-books", name: "Livres", type: "books" },
+  ];
+
+  it("route Ryse vers Xbox One via platformKey, pas la première étagère jeux", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        platformKey: "xboxone",
+        searchNames: ["Ryse : Son of Rome"],
+        shelves,
+      }),
+    ).toEqual({
+      shelfId: "s-xbox",
+      isGuessed: true,
+    });
+  });
+
+  it("n'utilise pas une étagère préférée incompatible avec la plateforme détectée", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        platformKey: "xboxone",
+        searchNames: ["Ryse : Son of Rome"],
+        shelves,
+        preferredShelfId: "s-atari",
+      }),
+    ).toEqual({
+      shelfId: "s-xbox",
+      isGuessed: true,
+    });
+  });
+
+  it("peut conserver l'étagère courante quand elle est compatible", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        platformKey: "xboxone",
+        searchNames: ["Ryse : Son of Rome"],
+        shelves,
+        preferredShelfId: "s-xbox",
+      }),
+    ).toEqual({
+      shelfId: "s-xbox",
+      isGuessed: true,
+    });
+  });
+
+  it("s'abstient sans signal plateforme plutôt que de prendre la première étagère jeux", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        searchNames: ["Ryse : Son of Rome"],
+        shelves,
+        preferredShelfId: "s-atari",
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("isShelfCompatibleWithPlatformKey", () => {
+  it("refuse Atari 2600 pour un jeu Xbox One", () => {
+    expect(
+      isShelfCompatibleWithPlatformKey(
+        { id: "s-atari", name: "Atari 2600", type: "games" },
+        "xboxone",
+      ),
+    ).toBe(false);
   });
 });

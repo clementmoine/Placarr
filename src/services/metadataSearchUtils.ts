@@ -22,7 +22,11 @@ export function cleanSearchQuery(name: string): string {
     "",
   );
   cleaned = cleaned.replace(
-    /\b(good\s+condition|condition|new|used|occasion|neuf|pal|ntsc|fr|fra|fre|us|usa|uk|eu|eur|jp|jpn|import|jeu\s+vid[eé]o|jeu|game|jeux(?!\s+olympiques?)|sans\s+notice|avec\s+notice|boite\s+avec\s+notice|sans\s+boite|cib|loose|notice|boite|sans|complet|complete|vf|vo|vost|vostfr|eng|ger|de|it|ita|es|spa)\b/gi,
+    /\b(good\s+condition|condition|pal|ntsc|fr|fra|fre|us|usa|uk|eu|eur|jp|jpn|import|jeu\s+vid[eé]o|jeu|game|jeux(?!\s+olympiques?)|sans\s+notice|avec\s+notice|boite\s+avec\s+notice|sans\s+boite|notice|boite|vf|vo|vost|vostfr|eng|ger|ita|spa)\b/gi,
+    "",
+  );
+  cleaned = cleaned.replace(
+    /\s+\b(used|occasion|neuf|new|loose|cib|complet|complete)\s*$/gi,
     "",
   );
   cleaned = cleaned.replace(

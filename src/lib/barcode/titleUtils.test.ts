@@ -37,6 +37,13 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
     expect(stripped.toLowerCase()).toContain("mario kart");
   });
 
+  it("retire un préfixe plateforme en tête de titre marketplace", () => {
+    expect(cleanTitleForDisplay("Atari 2600 Ryse : Son of Rome")).toBe(
+      "Ryse : Son of Rome",
+    );
+    expect(cleanTitleForDisplay("Xbox One Halo 3")).toBe("Halo 3");
+  });
+
   it("gère les entrées vides sans planter", () => {
     expect(cleanTitleForDisplay("")).toBe("");
   });

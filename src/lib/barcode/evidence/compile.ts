@@ -36,6 +36,7 @@ export async function compileResultForType(
   const provider = activeSources.map((s) => s.providerName).join("+");
   const sourceEvidence: ProductEvidence[] = [];
   const canonicalEvidence: ProductEvidence[] = [];
+  const trustedRetailerEvidence: ProductEvidence[] = [];
 
   for (const source of activeSources) {
     for (const product of source.products) {
@@ -44,6 +45,7 @@ export async function compileResultForType(
       if (
         type === "games" &&
         !evidence.isCanonical &&
+        !evidence.isTrustedRetailer &&
         !evidence.parsed.platformKey &&
         [...evidence.parsed.tokens].some((token) =>
           NON_CANONICAL_CONTEXT_TOKENS.has(token),
@@ -55,24 +57,29 @@ export async function compileResultForType(
       if (evidence.isCanonical) {
         canonicalEvidence.push(evidence);
       }
+      if (evidence.isTrustedRetailer) {
+        trustedRetailerEvidence.push(evidence);
+      }
     }
   }
 
   if (sourceEvidence.length === 0) return null;
 
+  const anchorEvidence = [...canonicalEvidence, ...trustedRetailerEvidence];
+  const hasAnchorSignals = anchorEvidence.length > 0;
   const hasCanonicalSignals = canonicalEvidence.length > 0;
-  const trustedEvidence = hasCanonicalSignals
+  const trustedEvidence = hasAnchorSignals
     ? sourceEvidence.filter((evidence) => {
-        if (evidence.isCanonical) return true;
-        const isRelatedToCanonical = canonicalEvidence.some((canonical) =>
-          areEvidenceSameProduct(canonical, evidence),
+        if (evidence.isCanonical || evidence.isTrustedRetailer) return true;
+        const isRelatedToAnchor = anchorEvidence.some((anchor) =>
+          areEvidenceSameProduct(anchor, evidence),
         );
-        if (!isRelatedToCanonical) {
+        if (!isRelatedToAnchor) {
           console.log(
-            `[Barcode API] Ignoring marketplace noise "${evidence.cleanName}" because canonical signals exist for ${type}`,
+            `[Barcode API] Ignoring marketplace noise "${evidence.cleanName}" because anchor signals exist for ${type}`,
           );
         }
-        return isRelatedToCanonical;
+        return isRelatedToAnchor;
       })
     : sourceEvidence;
 
@@ -94,7 +101,7 @@ export async function compileResultForType(
     /^(978|979)/.test(cleanedBarcode) &&
     trustedEvidence.length > 0;
 
-  if (!hasCanonicalSignals && databaseEvidence.length === 0) {
+  if (!hasAnchorSignals && databaseEvidence.length === 0) {
     if (canAcceptMarketplaceOnlyBooks) {
       console.warn(
         `[Barcode API] No canonical resolver for ISBN ${cleanedBarcode}; using marketplace-only book hints.`,
@@ -107,7 +114,7 @@ export async function compileResultForType(
     }
   }
 
-  const supportingEvidence = hasCanonicalSignals
+  const supportingEvidence = hasAnchorSignals
     ? trustedEvidence
     : canAcceptMarketplaceOnlyBooks
       ? trustedEvidence
@@ -164,7 +171,14 @@ export function scoreTypeCandidate(
   const isAudioBarcode = /^(498|602|724|731|886|888)/.test(barcode);
 
   let score = topMatch.confidence;
-  score += evidence.canonicalCount * 0.08;
+  // Canonical corroboration is about *distinct* sources agreeing, not the raw
+  // number of evidence rows. A single provider can emit dozens of rows (e.g.
+  // TMDB returning every localized movie alias), which must not snowball the
+  // score and let a same-name movie outrank the actual game. Cap the row bonus
+  // at one unit per distinct canonical provider.
+  score +=
+    Math.min(evidence.canonicalCount, evidence.canonicalProviders.length) *
+    0.08;
   score += evidence.canonicalProviders.length * 0.05;
   score += evidence.hasCover ? 0.03 : 0;
   if (candidateType === "books" && isBookBarcode) score += 0.45;

@@ -41,18 +41,75 @@ export { pickSSCover } from "@/services/providers/screenscraper";
 export type { SSMedia } from "@/services/providers/screenscraper";
 export type { BGGChild, BGGResponse } from "@/services/providers/bgg";
 
+/**
+ * Short-lived cache of provider lookups keyed by the resolved identity
+ * (type + name + barcode + platform). A single scan triggers the same lookup
+ * up to three times — QuickScan preview, ItemModal preview, then storage on
+ * create — so coalescing them avoids re-hitting slow providers and guarantees
+ * the preview and the saved item display the exact same chosen image.
+ *
+ * The stored value is the in-flight promise, so concurrent identical requests
+ * share one network round-trip. Failed/empty lookups are evicted so transient
+ * provider timeouts are retried. Explicit user-triggered refreshes bypass it.
+ */
+const METADATA_CACHE_TTL_MS = 5 * 60 * 1000;
+const METADATA_CACHE_MAX_ENTRIES = 256;
+const metadataCache = new Map<
+  string,
+  { expires: number; promise: Promise<MetadataResult | null> }
+>();
+
+function metadataCacheKey(
+  name: string,
+  type: string,
+  barcode?: string | null,
+  platform?: string | null,
+): string {
+  const norm = (value?: string | null) =>
+    (value ?? "").normalize("NFKC").trim().toLowerCase();
+  return [norm(type), norm(name), norm(barcode), norm(platform)].join("|");
+}
+
 export async function getMetadata(
   name: string,
   type: string,
   barcode?: string | null,
   platform?: string | null,
+  options: { bypassCache?: boolean } = {},
 ): Promise<MetadataResult | null> {
-  try {
-    return await fetchMetadataByType(name, type, barcode, platform);
-  } catch (err) {
-    console.error("Failed to fetch metadata:", err);
-    return null;
+  const key = metadataCacheKey(name, type, barcode, platform);
+  const now = Date.now();
+
+  if (!options.bypassCache) {
+    const cached = metadataCache.get(key);
+    if (cached && cached.expires > now) {
+      return cached.promise;
+    }
   }
+
+  const promise = (async () => {
+    try {
+      return await fetchMetadataByType(name, type, barcode, platform);
+    } catch (err) {
+      console.error("Failed to fetch metadata:", err);
+      return null;
+    }
+  })();
+
+  metadataCache.set(key, { expires: now + METADATA_CACHE_TTL_MS, promise });
+  if (metadataCache.size > METADATA_CACHE_MAX_ENTRIES) {
+    const oldestKey = metadataCache.keys().next().value;
+    if (oldestKey !== undefined) metadataCache.delete(oldestKey);
+  }
+
+  // Never persist a miss: a null may be a transient provider failure.
+  void promise
+    .then((result) => {
+      if (!result) metadataCache.delete(key);
+    })
+    .catch(() => metadataCache.delete(key));
+
+  return promise;
 }
 
 export async function fetchAndStoreMetadata(
@@ -62,6 +119,10 @@ export async function fetchAndStoreMetadata(
   barcode?: string | null,
   forceRefresh = false,
   platform?: string | null,
+  // Explicit user-triggered refreshes bypass the short-lived lookup cache so
+  // they always re-query providers. Enrichment on create leaves it false to
+  // reuse the lookup the scan preview just performed.
+  bypassMetadataCache = false,
 ): Promise<MetadataResult | null> {
   // Check if we should use cached metadata
   if (!forceRefresh) {
@@ -79,7 +140,9 @@ export async function fetchAndStoreMetadata(
   }
 
   // Fetch new metadata using the name for lookup only
-  const metadata = await getMetadata(name, type, barcode, platform);
+  const metadata = await getMetadata(name, type, barcode, platform, {
+    bypassCache: bypassMetadataCache,
+  });
   if (!metadata) return null;
 
   try {

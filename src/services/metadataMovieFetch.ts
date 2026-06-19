@@ -14,19 +14,40 @@ import {
 import { metadataProviderResolverMap } from "@/services/metadataResolvers";
 import type { MetadataResult } from "@/types/metadataProvider";
 
+function buildOmdbFallbackNames(
+  name: string,
+  tmdb: MetadataResult | null | undefined,
+) {
+  return Array.from(
+    new Set(
+      [
+        tmdb?.title,
+        ...(tmdb?.aliases || []),
+        ...(tmdb?.regionalTitles?.map((entry) => entry.text) || []),
+        name,
+      ]
+        .filter((value): value is string => Boolean(value?.trim()))
+        .map((value) => value.trim()),
+    ),
+  );
+}
+
 export async function fetchFromAllMovieSources(
   name: string,
   barcode?: string | null,
   platform?: string | null,
 ): Promise<MetadataResult | null> {
-  const [tmdb, omdb] = await Promise.all([
-    metadataProviderResolverMap
-      .get("tmdb")
-      ?.resolve({ name, barcode, platform }),
-    metadataProviderResolverMap
-      .get("omdb")
-      ?.resolve({ name, barcode, platform }),
-  ]);
+  const tmdb = await metadataProviderResolverMap
+    .get("tmdb")
+    ?.resolve({ name, barcode, platform });
+
+  const omdb = await metadataProviderResolverMap.get("omdb")?.resolve({
+    name,
+    barcode,
+    platform,
+    imdbId: tmdb?.externalIds?.imdb,
+    fallbackNames: buildOmdbFallbackNames(name, tmdb),
+  });
 
   if (!tmdb && !omdb) return null;
 

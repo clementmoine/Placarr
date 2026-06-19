@@ -2,10 +2,16 @@ import levenshtein from "fast-levenshtein";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
 import {
   fetchPhilibertProduct,
+  philibertImageId,
+  resolvePhilibertBackgroundUrl,
   searchPhilibert,
   type PhilibertProduct,
 } from "./fetch";
@@ -161,6 +167,37 @@ function buildPhilibertFacts(product: PhilibertProduct): MetadataFact[] {
   return facts;
 }
 
+function buildPhilibertAttachments(
+  product: PhilibertProduct,
+): MetadataAttachment[] | undefined {
+  const attachments: MetadataAttachment[] = [];
+  const coverId = philibertImageId(product.imageUrl);
+  const backgroundUrl = product.backgroundImageUrl;
+
+  if (product.imageUrl) {
+    attachments.push({
+      type: "cover",
+      url: product.imageUrl,
+      source: "philibert",
+    });
+  }
+  if (backgroundUrl) {
+    attachments.push({
+      type: "background",
+      url: backgroundUrl,
+      source: "philibert",
+    });
+  }
+
+  for (const url of product.images ?? []) {
+    // La couverture (variante carrée) et le fond sont déjà ajoutés ci-dessus.
+    if (philibertImageId(url) === coverId || url === backgroundUrl) continue;
+    attachments.push({ type: "image", url, source: "philibert" });
+  }
+
+  return attachments.length > 0 ? attachments : undefined;
+}
+
 function mapPhilibertMetadata(product: PhilibertProduct): MetadataResult {
   return {
     title: product.title,
@@ -169,9 +206,7 @@ function mapPhilibertMetadata(product: PhilibertProduct): MetadataResult {
     barcode: normalizeProductBarcode(product.barcode),
     authors: product.designers?.map((name) => ({ name })),
     publishers: product.publishers?.map((name) => ({ name })),
-    attachments: product.imageUrl
-      ? [{ type: "cover", url: product.imageUrl, source: "philibert" }]
-      : undefined,
+    attachments: buildPhilibertAttachments(product),
     facts: buildPhilibertFacts(product),
   };
 }
@@ -216,11 +251,14 @@ export function createPhilibertResolver() {
         }
       }
 
+      const backgroundImageUrl = await resolvePhilibertBackgroundUrl(product);
+
       return mapPhilibertMetadata({
         ...product,
         title,
         barcode:
           product.barcode || hit.barcode || normalizedBarcode || undefined,
+        backgroundImageUrl,
       });
     } catch (error) {
       console.error("[Philibert] Metadata lookup failed:", error);

@@ -6,10 +6,16 @@ import { fetchPricesFromPriceCharting } from "@/services/providers/pricecharting
 import { fetchPricesFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
 import { fetchPricesFromLeDenicheur } from "@/services/providers/ledenicheur";
 import { fetchPricesFromPicClick } from "@/services/providers/picclick";
+import { fetchPricesFromSmartoys } from "@/services/providers/smartoys";
 import { replacePriceOffers, type PriceOfferInput } from "@/services/evidence";
 import { cleanCode } from "@/lib/barcode/query";
 import { resolveItemId } from "@/lib/resolveIds";
 import { catalogForShelfType } from "@/lib/providerCatalog";
+import {
+  finalizeGamePriceProviders,
+  isPriceCacheFresh,
+  parsePriceProviderSources,
+} from "@/lib/priceCachePolicy";
 
 type PriceObservation = {
   source: string;
@@ -56,26 +62,17 @@ function summarizeObservedPrices(
   };
 }
 
-function parseProviderSources(provider?: string | null) {
-  return Array.from(
-    new Set(
-      (provider || "")
-        .replace(/\+?canonical-v\d+/g, "")
-        .split("+")
-        .map((source) => source.trim())
-        .filter((source) => source && source !== "None"),
-    ),
-  );
-}
-
 function priceSourcesFromOffers(
   offers: PriceObservation[],
   fallbackProvider?: string | null,
 ) {
   const sources = Array.from(
-    new Set(offers.map((offer) => offer.source).filter(Boolean)),
+    new Set([
+      ...offers.map((offer) => offer.source).filter(Boolean),
+      ...parsePriceProviderSources(fallbackProvider),
+    ]),
   );
-  return sources.length > 0 ? sources : parseProviderSources(fallbackProvider);
+  return sources;
 }
 
 function serializePriceOffers(offers: PriceObservation[]) {
@@ -170,20 +167,8 @@ export async function GET(
     const cacheMatchesShelfType =
       !cached?.shelfType || cached.shelfType === item.shelf.type;
 
-    const isCacheFresh = (cacheRecord: any) => {
-      if (!cacheRecord || !cacheRecord.priceLastUpdated) return false;
-
-      const hasAnyPrice =
-        cacheRecord.priceNew !== null ||
-        cacheRecord.priceUsed !== null ||
-        cacheRecord.priceUsedCIB !== null;
-
-      const ageInMs =
-        Date.now() - new Date(cacheRecord.priceLastUpdated).getTime();
-
-      const cacheLifetime = hasAnyPrice ? 24 * 60 * 60 * 1000 : 5 * 60 * 1000;
-      return ageInMs < cacheLifetime;
-    };
+    const isCacheFresh = (cacheRecord: typeof cached) =>
+      isPriceCacheFresh(item.shelf.type, cacheRecord ?? {});
 
     if (cached && !cacheMatchesShelfType) {
       console.log(
@@ -267,6 +252,7 @@ export async function GET(
     let amcPrices: any = null;
     let leDenicheurPrices: any = null;
     let picClickPrices: any = null;
+    let smartoysPrices: any = null;
 
     if (item.shelf.type === "games") {
       const hasNtscIndicator =
@@ -291,21 +277,25 @@ export async function GET(
         ) ||
         CLASSICS_KEYWORDS.some((kw) => item.name.toLowerCase().includes(kw));
 
-      const [stdRes, amcRes, leDenicheurRes] = await Promise.allSettled([
-        fetchPricesFromPriceCharting(
-          cleanedBarcode,
-          fallbackNames,
-          item.shelf.name,
-          isPal,
-          isClassics,
-        ),
-        fetchPricesFromAchatMoinsCher(cleanedBarcode),
-        fetchPricesFromLeDenicheur(leDenicheurQueries),
-      ]);
+      const [stdRes, amcRes, leDenicheurRes, smartoysRes] =
+        await Promise.allSettled([
+          fetchPricesFromPriceCharting(
+            cleanedBarcode,
+            fallbackNames,
+            item.shelf.name,
+            isPal,
+            isClassics,
+          ),
+          fetchPricesFromAchatMoinsCher(cleanedBarcode),
+          fetchPricesFromLeDenicheur(leDenicheurQueries),
+          fetchPricesFromSmartoys(cleanedBarcode),
+        ]);
       standardPrices = stdRes.status === "fulfilled" ? stdRes.value : null;
       amcPrices = amcRes.status === "fulfilled" ? amcRes.value : null;
       leDenicheurPrices =
         leDenicheurRes.status === "fulfilled" ? leDenicheurRes.value : null;
+      smartoysPrices =
+        smartoysRes.status === "fulfilled" ? smartoysRes.value : null;
     } else {
       const chasseAuxLivresQueries = [cleanedBarcode, ...fallbackNames];
       const chasseAuxLivresCatalog = catalogForShelfType(item.shelf.type);
@@ -353,8 +343,13 @@ export async function GET(
     if (amcPrices) providersList.push("AchatMoinsCher");
     if (leDenicheurPrices) providersList.push("LeDenicheur");
     if (picClickPrices) providersList.push("PicClick");
+    if (smartoysPrices) providersList.push("Smartoys");
+    const resolvedProviders =
+      item.shelf.type === "games"
+        ? finalizeGamePriceProviders(providersList)
+        : providersList;
     const provider =
-      providersList.length > 0 ? providersList.join("+") : "None";
+      resolvedProviders.length > 0 ? resolvedProviders.join("+") : "None";
 
     const standardSource =
       item.shelf.type === "games" ? "PriceCharting" : "ChasseAuxLivres";
@@ -429,6 +424,14 @@ export async function GET(
         offerCount: leDenicheurPrices?.offerCount ?? null,
       },
     );
+    pushOffer("Smartoys", "new", smartoysPrices?.priceNew, smartoysPrices, {
+      productName: smartoysPrices?.productName ?? null,
+      sourceUrl: smartoysPrices?.sourceUrl ?? null,
+    });
+    pushOffer("Smartoys", "used", smartoysPrices?.priceUsed, smartoysPrices, {
+      productName: smartoysPrices?.productName ?? null,
+      sourceUrl: smartoysPrices?.sourceUrl ?? null,
+    });
 
     const { priceNew, priceUsed, priceUsedCIB } = summarizeObservedPrices(
       item.shelf.type,

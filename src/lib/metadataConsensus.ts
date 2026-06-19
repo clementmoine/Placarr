@@ -13,6 +13,7 @@ import type { MetadataFact } from "@/services/metadata";
 
 const CONSENSUS_SOURCE = "consensus";
 const CONSENSUS_RATING_LABEL = "Note";
+const CONSENSUS_PLAYTIME_KIND = "playtime";
 const VALID_PEGI_AGES = new Set([3, 7, 12, 16, 18]);
 
 function clamp01(n: number): number {
@@ -128,9 +129,126 @@ export function computeAgeConsensus(
   };
 }
 
+/** Formate une durée en minutes vers "30 min" / "1 h" / "1 h 30". */
+export function formatPlaytimeMinutes(total: number): string {
+  if (total <= 0) return "";
+  if (total % 60 === 0) return `${total / 60} h`;
+  if (total < 60) return `${total} min`;
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  return `${hours} h ${String(minutes).padStart(2, "0")}`;
+}
+
+function detectDurationUnit(part: string): "h" | "min" | null {
+  if (/h/.test(part)) return "h";
+  if (/min/.test(part)) return "min";
+  return null;
+}
+
+function parseSingleDuration(
+  part: string,
+  inheritedUnit: "h" | "min" | null,
+): number | null {
+  const s = part.trim();
+  const hourMinutes = s.match(/^(\d+)\s*h\s*(\d+)?$/);
+  if (hourMinutes) {
+    return (
+      Number(hourMinutes[1]) * 60 +
+      (hourMinutes[2] ? Number(hourMinutes[2]) : 0)
+    );
+  }
+  const minutes = s.match(/^(\d+)\s*min$/);
+  if (minutes) return Number(minutes[1]);
+  const bare = s.match(/^(\d+)$/);
+  if (bare) {
+    if (inheritedUnit === "h") return Number(bare[1]) * 60;
+    if (inheritedUnit === "min") return Number(bare[1]);
+  }
+  return null;
+}
+
 /**
- * Applique le consensus : ajoute une note de consensus (en tête) et remplace
- * les multiples PEGI par la valeur consensuelle. Idempotent.
+ * Convertit une durée de partie ("30mn à 1h", "1 à 2h", "45 min") en intervalle
+ * [lo, hi] de minutes. Renvoie null si la valeur n'est pas exploitable avec
+ * certitude (on préfère ne rien fusionner plutôt que d'inventer).
+ */
+export function parsePlaytimeRange(value: string): [number, number] | null {
+  if (!value) return null;
+  // Normalise les unités, y compris collées aux chiffres ("30mn", "1 heure").
+  const normalized = value
+    .toLowerCase()
+    .replace(/(\d)\s*h(?:eures?|rs?)?/g, "$1h")
+    .replace(/(\d)\s*(?:mn|min(?:ute)?s?)/g, "$1min")
+    .trim();
+
+  const parts = normalized
+    .split(/\s*(?:à|-|–|—|\bto\b)\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 1) {
+    const single = parseSingleDuration(parts[0], detectDurationUnit(parts[0]));
+    return single != null ? [single, single] : null;
+  }
+  if (parts.length === 2) {
+    // L'unité n'est souvent portée que par la borne haute ("1 à 2h") : on la
+    // fait hériter à la borne basse quand celle-ci n'en a pas.
+    const upperUnit = detectDurationUnit(parts[1]);
+    const hi = parseSingleDuration(parts[1], upperUnit);
+    const lo = parseSingleDuration(
+      parts[0],
+      detectDurationUnit(parts[0]) ?? upperUnit,
+    );
+    if (lo == null || hi == null) return null;
+    return [Math.min(lo, hi), Math.max(lo, hi)];
+  }
+  return null;
+}
+
+/**
+ * Durée de partie consensuelle : union des intervalles de toutes les sources
+ * (≥2) qui expriment une durée exploitable. Les sources sont créditées
+ * ensemble. Renvoie null s'il n'y a pas matière à fusionner.
+ */
+export function computePlaytimeConsensus(
+  facts: MetadataFact[],
+): MetadataFact | null {
+  const parsed = facts
+    .filter((fact) => fact.kind === CONSENSUS_PLAYTIME_KIND)
+    .map((fact) => ({ fact, range: parsePlaytimeRange(fact.value) }))
+    .filter(
+      (entry): entry is { fact: MetadataFact; range: [number, number] } =>
+        entry.range !== null,
+    );
+
+  if (parsed.length < 2) return null;
+
+  const lo = Math.min(...parsed.map((entry) => entry.range[0]));
+  const hi = Math.max(...parsed.map((entry) => entry.range[1]));
+  const value =
+    lo === hi
+      ? formatPlaytimeMinutes(lo)
+      : `${formatPlaytimeMinutes(lo)} à ${formatPlaytimeMinutes(hi)}`;
+  if (!value) return null;
+
+  const sources = Array.from(
+    new Set(parsed.map((entry) => entry.fact.source).filter(Boolean)),
+  );
+
+  return {
+    kind: CONSENSUS_PLAYTIME_KIND,
+    label: parsed[0].fact.label,
+    value,
+    source: sources.length > 0 ? sources.join(", ") : CONSENSUS_SOURCE,
+    confidence: Math.min(1, 0.5 + parsed.length * 0.15),
+    priority: Math.max(...parsed.map((entry) => entry.fact.priority ?? 0), 86),
+  };
+}
+
+/**
+ * Applique le consensus : note (en tête), PEGI consensuel, et durée de partie
+ * fusionnée. Idempotent : après fusion il ne reste qu'un seul fact par champ,
+ * donc une seconde passe ne re-déclenche aucun consensus.
  */
 export function applyConsensus(facts: MetadataFact[]): MetadataFact[] {
   if (!Array.isArray(facts) || facts.length === 0) return facts;
@@ -140,6 +258,7 @@ export function applyConsensus(facts: MetadataFact[]): MetadataFact[] {
 
   const consensusRating = computeRatingConsensus(base);
   const consensusPegi = computeAgeConsensus(base);
+  const consensusPlaytime = computePlaytimeConsensus(base);
 
   let result = base;
   if (consensusPegi) {
@@ -147,6 +266,15 @@ export function applyConsensus(facts: MetadataFact[]): MetadataFact[] {
       (f) => !(f.kind === "age-rating" && /pegi/i.test(f.label)),
     );
     result = [...result, consensusPegi];
+  }
+  if (consensusPlaytime) {
+    // Retire les durées fusionnées (exploitables), garde celles non parsables.
+    result = result.filter(
+      (f) =>
+        f.kind !== CONSENSUS_PLAYTIME_KIND ||
+        parsePlaytimeRange(f.value) === null,
+    );
+    result = [...result, consensusPlaytime];
   }
   if (consensusRating) {
     result = [consensusRating, ...result];

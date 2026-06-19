@@ -350,6 +350,12 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         ...tmdbLogos,
       ],
       aliases,
+      externalIds: {
+        imdb:
+          typeof details.imdb_id === "string" && details.imdb_id.trim()
+            ? details.imdb_id
+            : null,
+      },
       facts: facts.length > 0 ? facts : undefined,
     };
   }

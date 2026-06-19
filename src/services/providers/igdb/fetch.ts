@@ -23,26 +23,31 @@ const TOKEN_EXPIRY_KEY = "igdb_token_expiry";
 
 // ─── Token management ────────────────────────────────────────────────────────
 
-async function getToken(): Promise<string | null> {
+async function getToken(
+  options: { forceRefresh?: boolean } = {},
+): Promise<string | null> {
   const clientId = process.env.IGDB_CLIENT_ID;
   const clientSecret = process.env.IGDB_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
 
-  // Check cached token
-  const [tokenRow, expiryRow] = await Promise.all([
-    prisma.setting.findUnique({ where: { key: TOKEN_KEY } }),
-    prisma.setting.findUnique({ where: { key: TOKEN_EXPIRY_KEY } }),
-  ]);
+  if (!options.forceRefresh) {
+    // Check cached token
+    const [tokenRow, expiryRow] = await Promise.all([
+      prisma.setting.findUnique({ where: { key: TOKEN_KEY } }),
+      prisma.setting.findUnique({ where: { key: TOKEN_EXPIRY_KEY } }),
+    ]);
 
-  const now = Date.now();
-  const expiry = expiryRow ? parseInt(expiryRow.value, 10) : 0;
+    const now = Date.now();
+    const expiry = expiryRow ? parseInt(expiryRow.value, 10) : 0;
 
-  if (tokenRow?.value && expiry > now + 60_000) {
-    return tokenRow.value;
+    if (tokenRow?.value && expiry > now + 60_000) {
+      return tokenRow.value;
+    }
   }
 
   // Fetch new token
   try {
+    const now = Date.now();
     const res = await axios.post<{
       access_token: string;
       expires_in: number;
@@ -73,9 +78,28 @@ async function getToken(): Promise<string | null> {
 
     return access_token;
   } catch (err) {
-    console.error("[IGDB] Failed to fetch Twitch token:", err);
+    console.error(
+      `[IGDB] Failed to fetch Twitch token: ${describeIGDBError(err)}`,
+    );
     return null;
   }
+}
+
+async function clearCachedToken(): Promise<void> {
+  try {
+    await prisma.setting.deleteMany({
+      where: { key: { in: [TOKEN_KEY, TOKEN_EXPIRY_KEY] } },
+    });
+  } catch (err) {
+    console.warn(
+      `[IGDB] Failed to clear cached token: ${describeIGDBError(err)}`,
+    );
+  }
+}
+
+async function refreshTokenAfterUnauthorized(): Promise<string | null> {
+  await clearCachedToken();
+  return getToken({ forceRefresh: true });
 }
 
 function igdbHeaders(token: string): Record<string, string> {
@@ -84,6 +108,27 @@ function igdbHeaders(token: string): Record<string, string> {
     Authorization: `Bearer ${token}`,
     Accept: "application/json",
   };
+}
+
+function isUnauthorizedIGDBError(err: unknown): boolean {
+  return axios.isAxiosError(err) && err.response?.status === 401;
+}
+
+function describeIGDBError(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status;
+    const responseMessage =
+      typeof err.response?.data === "object" &&
+      err.response?.data &&
+      "message" in err.response.data
+        ? String(err.response.data.message)
+        : null;
+    return [status ? `HTTP ${status}` : null, responseMessage || err.message]
+      .filter(Boolean)
+      .join(" - ");
+  }
+
+  return err instanceof Error ? err.message : String(err);
 }
 
 // ─── Image URL helpers ────────────────────────────────────────────────────────
@@ -319,67 +364,152 @@ export async function fetchFromIGDB(
     return null;
   }
 
+  try {
+    return await fetchFromIGDBWithToken(name, platform, token);
+  } catch (err) {
+    if (isUnauthorizedIGDBError(err)) {
+      const freshToken = await refreshTokenAfterUnauthorized();
+      if (freshToken) {
+        try {
+          return await fetchFromIGDBWithToken(name, platform, freshToken);
+        } catch (retryErr) {
+          console.error(
+            `[IGDB] Error searching for "${name}" after token refresh: ${describeIGDBError(retryErr)}`,
+          );
+          return null;
+        }
+      }
+    }
+
+    console.error(
+      `[IGDB] Error searching for "${name}": ${describeIGDBError(err)}`,
+    );
+    return null;
+  }
+}
+
+async function fetchFromIGDBWithToken(
+  name: string,
+  platform: string | null | undefined,
+  token: string,
+): Promise<IGDBGameResult | null> {
   const headers = igdbHeaders(token);
 
-  try {
-    // Search for the game using the search endpoint
-    const searchRes = await axios.post<IGDBGame[]>(
-      `${IGDB_BASE}/games`,
-      `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
+  // Search for the game using the search endpoint
+  const searchRes = await axios.post<IGDBGame[]>(
+    `${IGDB_BASE}/games`,
+    `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
        search "${name.replace(/"/g, " ")}";
        limit 20;`,
-      { headers, timeout: 8000 },
-    );
+    { headers, timeout: 8000 },
+  );
 
-    let results = searchRes.data;
+  let results = searchRes.data;
 
-    // IGDB full-text search can rank unrelated seasons/updates above the exact
-    // game. Always add a stricter keyword pass and let the local ranker choose.
-    const keywords = getIGDBSearchKeywords(name);
-    if (keywords.length > 0) {
-      const nameConditions = keywords.map((w) => `name ~ *"${w}"*`).join(" & ");
-      const altConditions = keywords
-        .map((w) => `alternative_names.name ~ *"${w}"*`)
-        .join(" & ");
-      const fallbackQuery = `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
+  // IGDB full-text search can rank unrelated seasons/updates above the exact
+  // game. Always add a stricter keyword pass and let the local ranker choose.
+  const keywords = getIGDBSearchKeywords(name);
+  if (keywords.length > 0) {
+    const nameConditions = keywords.map((w) => `name ~ *"${w}"*`).join(" & ");
+    const altConditions = keywords
+      .map((w) => `alternative_names.name ~ *"${w}"*`)
+      .join(" & ");
+    const fallbackQuery = `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
         where (${nameConditions}) | (${altConditions});
         limit 20;`;
 
-      const fallbackRes = await axios.post<IGDBGame[]>(
-        `${IGDB_BASE}/games`,
-        fallbackQuery,
-        { headers, timeout: 8000 },
-      );
-      results = mergeIGDBResults(results, fallbackRes.data);
-    }
-
-    if (!results || results.length === 0) return null;
-
-    // Pick best match by normalized name comparison
-    const normSearchName = normalizeTitleForCompare(name);
-    const rankedResults = rankIGDBGames(results, name, platform);
-    const candidates = rankedResults.length > 0 ? rankedResults : results;
-    const game =
-      candidates.find(
-        (g) =>
-          normalizeTitleForCompare(g.name) === normSearchName &&
-          isPlatformCompatible(g, platform),
-      ) ||
-      candidates.find(
-        (g) =>
-          isPlatformCompatible(g, platform) &&
-          g.alternative_names?.some(
-            (an) => normalizeTitleForCompare(an.name) === normSearchName,
-          ),
-      ) ||
-      candidates[0];
-
-    const timeToBeat = await fetchIGDBTimeToBeat(game.id, headers);
-    return parseIGDBGame(game, timeToBeat);
-  } catch (err) {
-    console.error(`[IGDB] Error searching for "${name}":`, err);
-    return null;
+    const fallbackRes = await axios.post<IGDBGame[]>(
+      `${IGDB_BASE}/games`,
+      fallbackQuery,
+      { headers, timeout: 8000 },
+    );
+    results = mergeIGDBResults(results, fallbackRes.data);
   }
+
+  if (!results || results.length === 0) return null;
+
+  // Pick best match by normalized name comparison
+  const normSearchName = normalizeTitleForCompare(name);
+  const rankedResults = rankIGDBGames(results, name, platform);
+  const candidates = rankedResults.length > 0 ? rankedResults : results;
+  const game =
+    candidates.find(
+      (g) =>
+        normalizeTitleForCompare(g.name) === normSearchName &&
+        isPlatformCompatible(g, platform),
+    ) ||
+    candidates.find(
+      (g) =>
+        isPlatformCompatible(g, platform) &&
+        g.alternative_names?.some(
+          (an) => normalizeTitleForCompare(an.name) === normSearchName,
+        ),
+    ) ||
+    candidates[0];
+
+  const timeToBeat = await fetchIGDBTimeToBeat(game.id, headers);
+  return parseIGDBGame(game, timeToBeat);
+}
+
+async function fetchIGDBSuggestionsWithToken(
+  name: string,
+  platform: string | null | undefined,
+  token: string,
+): Promise<string[]> {
+  const headers = igdbHeaders(token);
+
+  const searchRes = await axios.post<IGDBGame[]>(
+    `${IGDB_BASE}/games`,
+    `fields name, category, platforms.name, alternative_names.name;
+       search "${name.replace(/"/g, " ")}";
+       limit 20;`,
+    { headers, timeout: 5000 },
+  );
+
+  let results = searchRes.data;
+
+  const keywords = getIGDBSearchKeywords(name);
+  if (keywords.length > 0) {
+    const nameConditions = keywords.map((w) => `name ~ *"${w}"*`).join(" & ");
+    const altConditions = keywords
+      .map((w) => `alternative_names.name ~ *"${w}"*`)
+      .join(" & ");
+    const fallbackQuery = `fields name, category, platforms.name, alternative_names.name;
+        where (${nameConditions}) | (${altConditions});
+        limit 20;`;
+
+    const fallbackRes = await axios.post<IGDBGame[]>(
+      `${IGDB_BASE}/games`,
+      fallbackQuery,
+      { headers, timeout: 5000 },
+    );
+    results = mergeIGDBResults(results, fallbackRes.data);
+  }
+
+  if (!results) return [];
+
+  const ranked = rankIGDBGames(results, name, platform);
+  const candidates = ranked.length > 0 ? ranked : results;
+  const normalizedQuery = normalizeTitleForCompare(name);
+  const exactMatches = candidates.filter(
+    (game) =>
+      normalizeTitleForCompare(game.name) === normalizedQuery ||
+      game.alternative_names?.some(
+        (alt) => normalizeTitleForCompare(alt.name) === normalizedQuery,
+      ),
+  );
+  if (exactMatches.length > 0) {
+    return Array.from(new Set(exactMatches.map((g) => g.name))).slice(0, 5);
+  }
+
+  return Array.from(new Set(candidates.map((g) => g.name))).slice(0, 5);
+}
+
+async function pingIGDBWithToken(token: string): Promise<void> {
+  await axios.post(`${IGDB_BASE}/games`, "fields name; limit 1;", {
+    headers: igdbHeaders(token),
+    timeout: 5000,
+  });
 }
 
 /**
@@ -393,56 +523,30 @@ export async function getIGDBSuggestions(
   const token = await getToken();
   if (!token) return [];
 
-  const headers = igdbHeaders(token);
-
   try {
-    const searchRes = await axios.post<IGDBGame[]>(
-      `${IGDB_BASE}/games`,
-      `fields name, category, platforms.name, alternative_names.name;
-       search "${name.replace(/"/g, " ")}";
-       limit 20;`,
-      { headers, timeout: 5000 },
-    );
-
-    let results = searchRes.data;
-
-    const keywords = getIGDBSearchKeywords(name);
-    if (keywords.length > 0) {
-      const nameConditions = keywords.map((w) => `name ~ *"${w}"*`).join(" & ");
-      const altConditions = keywords
-        .map((w) => `alternative_names.name ~ *"${w}"*`)
-        .join(" & ");
-      const fallbackQuery = `fields name, category, platforms.name, alternative_names.name;
-        where (${nameConditions}) | (${altConditions});
-        limit 20;`;
-
-      const fallbackRes = await axios.post<IGDBGame[]>(
-        `${IGDB_BASE}/games`,
-        fallbackQuery,
-        { headers, timeout: 5000 },
-      );
-      results = mergeIGDBResults(results, fallbackRes.data);
-    }
-
-    if (!results) return [];
-
-    const ranked = rankIGDBGames(results, name, platform);
-    const candidates = ranked.length > 0 ? ranked : results;
-    const normalizedQuery = normalizeTitleForCompare(name);
-    const exactMatches = candidates.filter(
-      (game) =>
-        normalizeTitleForCompare(game.name) === normalizedQuery ||
-        game.alternative_names?.some(
-          (alt) => normalizeTitleForCompare(alt.name) === normalizedQuery,
-        ),
-    );
-    if (exactMatches.length > 0) {
-      return Array.from(new Set(exactMatches.map((g) => g.name))).slice(0, 5);
-    }
-
-    return Array.from(new Set(candidates.map((g) => g.name))).slice(0, 5);
+    return await fetchIGDBSuggestionsWithToken(name, platform, token);
   } catch (err) {
-    console.error(`[IGDB] Error fetching suggestions for "${name}":`, err);
+    if (isUnauthorizedIGDBError(err)) {
+      const freshToken = await refreshTokenAfterUnauthorized();
+      if (freshToken) {
+        try {
+          return await fetchIGDBSuggestionsWithToken(
+            name,
+            platform,
+            freshToken,
+          );
+        } catch (retryErr) {
+          console.error(
+            `[IGDB] Error fetching suggestions for "${name}" after token refresh: ${describeIGDBError(retryErr)}`,
+          );
+          return [];
+        }
+      }
+    }
+
+    console.error(
+      `[IGDB] Error fetching suggestions for "${name}": ${describeIGDBError(err)}`,
+    );
     return [];
   }
 }
@@ -465,14 +569,29 @@ export async function pingIGDB(): Promise<{
     };
   }
   try {
-    await axios.post(`${IGDB_BASE}/games`, "fields name; limit 1;", {
-      headers: igdbHeaders(token),
-      timeout: 5000,
-    });
+    await pingIGDBWithToken(token);
     return { ok: true, latency: Date.now() - start };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Request failed";
-    return { ok: false, latency: Date.now() - start, error: msg };
+    if (isUnauthorizedIGDBError(err)) {
+      const freshToken = await refreshTokenAfterUnauthorized();
+      if (freshToken) {
+        try {
+          await pingIGDBWithToken(freshToken);
+          return { ok: true, latency: Date.now() - start };
+        } catch (retryErr) {
+          return {
+            ok: false,
+            latency: Date.now() - start,
+            error: describeIGDBError(retryErr),
+          };
+        }
+      }
+    }
+    return {
+      ok: false,
+      latency: Date.now() - start,
+      error: describeIGDBError(err),
+    };
   }
 }
 
@@ -491,8 +610,7 @@ async function fetchIGDBTimeToBeat(
     return res.data?.[0] || null;
   } catch (err) {
     console.error(
-      `[IGDB] Error fetching time to beat for game ${gameId}:`,
-      err,
+      `[IGDB] Error fetching time to beat for game ${gameId}: ${describeIGDBError(err)}`,
     );
     return null;
   }

@@ -3,10 +3,19 @@ import type { MetadataFact } from "@/services/metadata";
 import {
   parseRatingRatio,
   parsePegiAge,
+  parsePlaytimeRange,
   computeRatingConsensus,
   computeAgeConsensus,
+  computePlaytimeConsensus,
   applyConsensus,
 } from "./metadataConsensus";
+
+const playtime = (value: string, source: string): MetadataFact => ({
+  kind: "playtime",
+  label: "Durée d'une partie",
+  value,
+  source,
+});
 
 const rating = (value: string, source: string): MetadataFact => ({
   kind: "rating",
@@ -90,7 +99,64 @@ describe("computeAgeConsensus — PEGI le plus fréquent", () => {
   });
 });
 
+describe("parsePlaytimeRange", () => {
+  it.each([
+    ["30 min", [30, 30]],
+    ["30mn à 1h", [30, 60]],
+    ["1 à 2h", [60, 120]],
+    ["30 à 45 min", [30, 45]],
+    ["1h30", [90, 90]],
+  ])("'%s' → %j", (input, expected) => {
+    expect(parsePlaytimeRange(input as string)).toEqual(expected);
+  });
+
+  it("renvoie null sur une valeur non exploitable", () => {
+    expect(parsePlaytimeRange("variable")).toBeNull();
+    expect(parsePlaytimeRange("")).toBeNull();
+  });
+});
+
+describe("computePlaytimeConsensus — union des intervalles", () => {
+  it("fusionne '30mn à 1h' et '30 min' en une seule durée", () => {
+    const c = computePlaytimeConsensus([
+      playtime("30mn à 1h", "philibert"),
+      playtime("30 min", "monsieurde"),
+    ]);
+    expect(c?.value).toBe("30 min à 1 h");
+    expect(c?.kind).toBe("playtime");
+    expect(c?.source).toBe("philibert, monsieurde");
+  });
+
+  it("pas de consensus avec une seule durée exploitable", () => {
+    expect(
+      computePlaytimeConsensus([playtime("30 min", "philibert")]),
+    ).toBeNull();
+  });
+});
+
 describe("applyConsensus", () => {
+  it("fusionne les durées de partie en un seul fact", () => {
+    const out = applyConsensus([
+      playtime("30mn à 1h", "philibert"),
+      playtime("30 min", "monsieurde"),
+    ]);
+    const playtimes = out.filter((f) => f.kind === "playtime");
+    expect(playtimes).toHaveLength(1);
+    expect(playtimes[0].value).toBe("30 min à 1 h");
+  });
+
+  it("est idempotent sur la durée de partie", () => {
+    const once = applyConsensus([
+      playtime("30mn à 1h", "philibert"),
+      playtime("30 min", "monsieurde"),
+    ]);
+    const twice = applyConsensus(once);
+    expect(twice.filter((f) => f.kind === "playtime")).toHaveLength(1);
+    expect(twice.find((f) => f.kind === "playtime")?.value).toBe(
+      "30 min à 1 h",
+    );
+  });
+
   it("ajoute la note de consensus en tête et collapse les PEGI", () => {
     const facts = [
       rating("16/20", "ScreenScraper"),

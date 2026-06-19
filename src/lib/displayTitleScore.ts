@@ -56,11 +56,23 @@ export function getRepresentativeScore(name: string, priority: number): number {
   return score;
 }
 
-export function scoreDisplayTitle(name: string, isCanonical = false): number {
+export type DisplayTitleScoreFlags = {
+  isCanonical?: boolean;
+  isTrustedRetailer?: boolean;
+};
+
+export function scoreDisplayTitle(
+  name: string,
+  flags: DisplayTitleScoreFlags | boolean = false,
+): number {
+  const isCanonical = typeof flags === "boolean" ? flags : !!flags?.isCanonical;
+  const isTrustedRetailer =
+    typeof flags === "boolean" ? false : !!flags?.isTrustedRetailer;
   const normalized = normalizeForTokens(name);
   let score = getRepresentativeScore(name, 1);
 
   if (isCanonical) score += 120;
+  if (isTrustedRetailer) score += 95;
   if (name.includes("&")) score += 180;
   if (/\b(19|20)\d{2}\b/.test(normalized)) score -= 90;
   if (
@@ -69,6 +81,14 @@ export function scoreDisplayTitle(name: string, isCanonical = false): number {
     )
   ) {
     score -= 360;
+  }
+
+  if (
+    /^(?:atari\s+2600|atari2600|xbox\s+one|xbox\s+360|xbox\s+series|playstation\s+[1-5]|ps[1-5]|nintendo\s+switch|wii\s*u?)\b/i.test(
+      name.trim(),
+    )
+  ) {
+    score -= 420;
   }
 
   if (/\s[-–—]\s*(wiisc|wii|switch|ps[1-5]|xbox)\s*$/i.test(name)) {
@@ -110,6 +130,17 @@ export function areDisplayTitlesSameProduct(a: string, b: string): boolean {
 
   const shared = aTokens.filter((token) => bTokens.includes(token));
   return shared.length >= Math.min(2, Math.min(aTokens.length, bTokens.length));
+}
+
+export function requestedTitleCoversCurrentTitle(
+  requested: string,
+  current: string,
+): boolean {
+  const requestedTokens = new Set(normalizeDisplayTitle(requested));
+  const currentTokens = normalizeDisplayTitle(current);
+  if (requestedTokens.size === 0 || currentTokens.length === 0) return false;
+
+  return currentTokens.every((token) => requestedTokens.has(token));
 }
 
 export function scoreMetadataDisplayTitle(title: string): number {

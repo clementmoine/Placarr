@@ -72,6 +72,10 @@ function pickPriceChartingTitle({
   )[0];
 }
 
+function shouldUsePriceChartingSearchUrl(title: string) {
+  return /\bclub football\b/i.test(title);
+}
+
 export function buildPriceChartingGameUrl({
   title,
   fallbackTitle,
@@ -89,7 +93,7 @@ export function buildPriceChartingGameUrl({
   const titleSlug = slugify(cleanTitle);
   const searchUrl = `https://www.pricecharting.com/fr/search-products?type=videogames&q=${encodeURIComponent(cleanTitle || cleanCode(barcode))}`;
 
-  if (!titleSlug || !shelfName) {
+  if (!titleSlug || !shelfName || shouldUsePriceChartingSearchUrl(cleanTitle)) {
     return { url: searchUrl, isDirect: false };
   }
 

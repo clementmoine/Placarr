@@ -53,6 +53,7 @@ export async function POST(
       item.barcode || undefined,
       true,
       item.shelf.name,
+      true,
     );
 
     const refreshedItem = await prisma.item.findUnique({

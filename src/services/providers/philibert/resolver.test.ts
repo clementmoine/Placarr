@@ -3,10 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("./fetch", () => ({
   searchPhilibert: vi.fn(),
   fetchPhilibertProduct: vi.fn(),
+  resolvePhilibertBackgroundUrl: vi.fn(),
+  philibertImageId: (url?: string | null) =>
+    url?.match(/cdn1\.philibertnet\.com\/(\d+)/i)?.[1] ?? null,
 }));
 
 import {
   fetchPhilibertProduct,
+  resolvePhilibertBackgroundUrl,
   searchPhilibert,
   type PhilibertProduct,
   type PhilibertSearchHit,
@@ -15,6 +19,7 @@ import { createPhilibertResolver } from "./resolver";
 
 const mockedSearch = vi.mocked(searchPhilibert);
 const mockedFetch = vi.mocked(fetchPhilibertProduct);
+const mockedBackground = vi.mocked(resolvePhilibertBackgroundUrl);
 
 // EAN-13 valide → normalizeProductBarcode est idempotent dessus.
 const BARCODE = "3558380126133";
@@ -37,6 +42,8 @@ function product(overrides: Partial<PhilibertProduct> = {}): PhilibertProduct {
 beforeEach(() => {
   mockedSearch.mockReset();
   mockedFetch.mockReset();
+  mockedBackground.mockReset();
+  mockedBackground.mockResolvedValue(undefined);
 });
 
 describe("createPhilibertResolver — garde barcode→item", () => {
@@ -104,5 +111,34 @@ describe("createPhilibertResolver — garde barcode→item", () => {
 
     expect(result).toBeNull();
     expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it("expose la couverture, le fond et la galerie en attachments", async () => {
+    const cover = `https://cdn1.philibertnet.com/100-large_default/catan--${BARCODE}.jpg`;
+    const coverOriginal = `https://cdn1.philibertnet.com/100/catan--${BARCODE}.jpg`;
+    const wide = `https://cdn1.philibertnet.com/200/catan--${BARCODE}.jpg`;
+    const extra = `https://cdn1.philibertnet.com/300/catan--${BARCODE}.jpg`;
+
+    mockedSearch.mockResolvedValue(hit({ barcode: BARCODE }));
+    mockedFetch.mockResolvedValue(
+      product({
+        title: "Catan",
+        barcode: BARCODE,
+        imageUrl: cover,
+        images: [coverOriginal, wide, extra],
+      }),
+    );
+    mockedBackground.mockResolvedValue(wide);
+
+    const result = await resolve("Catan", BARCODE);
+
+    // Couverture en premier, fond paysage ensuite, puis la galerie restante.
+    // L'original de la couverture (id 100) et le fond (id 200) ne sont pas
+    // redupliqués en `image`.
+    expect(result?.attachments).toEqual([
+      { type: "cover", url: cover, source: "philibert" },
+      { type: "background", url: wide, source: "philibert" },
+      { type: "image", url: extra, source: "philibert" },
+    ]);
   });
 });

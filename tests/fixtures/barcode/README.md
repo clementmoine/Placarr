@@ -10,8 +10,14 @@ de façon **déterministe**, sans réseau.
 (ScreenScraper/IGDB authentifiés, pas de blocage d'IP type BGG 401, etc.) :
 
 ```bash
-RECORD=1 pnpm vitest run src/services/barcodeResolver.fresh.test.ts
+# Sous-ensemble borné en temps (3 cas) :
+pnpm test:record
+
+# Les 14 cas canoniques en une seule passe :
+pnpm test:record:all
 ```
+
+(équivalent à `RECORD=1` / `RECORD=1 RECORD_ALL=1` devant la commande vitest.)
 
 Cela appelle les vraies API une fois et écrit un fixture par cas. Les clés
 d'API sont **expurgées** automatiquement (`__REDACTED__`) avant écriture.
@@ -26,5 +32,7 @@ dégradé verrouillerait un comportement faux.
 pnpm test
 ```
 
-Les cas sans fixture sont automatiquement ignorés (skip) : la suite reste verte
-tant que les fixtures n'ont pas été enregistrées.
+Le REPLAY parcourt **tous** les cas canoniques : chaque fixture enregistrée est
+rejouée automatiquement, les cas sans fixture sont ignorés (skip). La suite
+reste donc verte tant que les fixtures n'ont pas été enregistrées, et chaque
+fixture ajoutée s'active sans modifier le test.

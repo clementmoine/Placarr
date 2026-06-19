@@ -15,7 +15,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:record": "RECORD=1 vitest run src/services/barcodeResolver.fresh.test.ts",
+    "test:record:all": "RECORD=1 RECORD_ALL=1 vitest run src/services/barcodeResolver.fresh.test.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

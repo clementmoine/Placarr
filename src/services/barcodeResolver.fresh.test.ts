@@ -60,17 +60,24 @@ vi.mock("@/lib/prisma", () => {
 import { resolveBarcode } from "./barcodeResolver";
 
 const RECORD = !!process.env.RECORD;
+const RECORD_ALL = !!process.env.RECORD_ALL;
 const FIXTURES_DIR = join(process.cwd(), "tests/fixtures/barcode");
 
-// Sous-ensemble de cas enregistrés (on garde le record borné en temps).
-const CASE_IDS = [
+// RECORD est borné en temps par défaut (sous-ensemble) ; RECORD_ALL=1 capture
+// les 14 cas canoniques en une seule passe.
+const RECORD_CASE_IDS = [
   "mario-kart-wii",
   "super-mario-galaxy-wii",
   "links-crossbow-training-wii",
 ];
-const CASES = DEFAULT_BARCODE_REGRESSION_CASES.filter((c) =>
-  CASE_IDS.includes(c.id),
-);
+const RECORD_CASES = RECORD_ALL
+  ? DEFAULT_BARCODE_REGRESSION_CASES
+  : DEFAULT_BARCODE_REGRESSION_CASES.filter((c) =>
+      RECORD_CASE_IDS.includes(c.id),
+    );
+// En REPLAY on parcourt TOUS les cas : chaque fixture enregistrée est
+// automatiquement rejouée, les autres restent skip (suite verte).
+const REPLAY_CASES = DEFAULT_BARCODE_REGRESSION_CASES;
 
 function norm(value: unknown): string {
   return String(value ?? "")
@@ -127,7 +134,7 @@ function assertExpectation(
 if (RECORD) {
   describe("RECORD — enregistrement des fixtures réseau (live)", () => {
     mkdirSync(FIXTURES_DIR, { recursive: true });
-    for (const testCase of CASES) {
+    for (const testCase of RECORD_CASES) {
       it(`enregistre ${testCase.id}`, async () => {
         const replay = new HttpReplay();
         replay.startRecord();
@@ -156,7 +163,7 @@ if (RECORD) {
   });
 } else {
   describe("REPLAY — chemin frais déterministe (fixtures figées)", () => {
-    for (const testCase of CASES) {
+    for (const testCase of REPLAY_CASES) {
       const path = fixturePath(testCase.id);
       const hasFixture = existsSync(path);
 
@@ -182,7 +189,10 @@ if (RECORD) {
         const misses = replay.getMisses();
         if (misses.length > 0) {
           // eslint-disable-next-line no-console
-          console.warn(`[replay ${testCase.id}] requêtes non couvertes:`, misses);
+          console.warn(
+            `[replay ${testCase.id}] requêtes non couvertes:`,
+            misses,
+          );
         }
 
         assertExpectation(res, testCase.expected);

@@ -14,5 +14,17 @@ export default defineConfig({
     // Les tests "golden-master" (fixtures rejouées) peuvent être plus longs ;
     // l'enregistrement live (RECORD=1) encore plus.
     testTimeout: process.env.RECORD ? 90000 : 15000,
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.ts",
+        "src/**/*.d.ts",
+        "src/types/**",
+        "src/**/types.ts",
+        "src/messages/**",
+      ],
+      reporter: ["text-summary", "text"],
+    },
   },
 });

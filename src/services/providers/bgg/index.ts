@@ -1,3 +1,6 @@
+import axios from "axios";
+import { convertXML } from "simple-xml-to-json";
+
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
@@ -9,6 +12,7 @@ import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { formatScore } from "@/services/metadataSearchUtils";
 import { createBGGResolver } from "./resolver";
+import type { BGGResponse } from "./resolver";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
 const fetchFromBGG = createBGGResolver({ formatScore });
@@ -23,10 +27,13 @@ export const bggModule: ProviderModule = {
     capabilities: [
       "identify",
       "rating",
+      "ageRating",
       "description",
       "cover",
       "releaseDate",
+      "duration",
       "people",
+      "players",
     ],
     auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
     canonical: true,
@@ -91,6 +98,30 @@ export const bggModule: ProviderModule = {
   mappingProbe: {
     sampleInput: "Catan",
     context: { name: "Catan" },
+  },
+  collectMappingRawKeys: async () => {
+    const token = process.env.BGG_API_TOKEN?.trim();
+    if (!token) return [];
+    try {
+      const res = await axios.get(
+        "https://boardgamegeek.com/xmlapi2/thing?id=13&stats=1",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/xml,text/xml,*/*",
+          },
+          responseType: "text",
+          timeout: 8000,
+        },
+      );
+      const data = convertXML(res.data) as BGGResponse;
+      const children = data.items?.children?.[0]?.item?.children || [];
+      return children
+        .map((child) => Object.keys(child)[0])
+        .filter((key): key is string => Boolean(key));
+    } catch {
+      return [];
+    }
   },
 };
 

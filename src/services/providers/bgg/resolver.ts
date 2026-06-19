@@ -4,6 +4,7 @@ import levenshtein from "fast-levenshtein";
 import { convertXML } from "simple-xml-to-json";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { formatBoardGamePlayerCount } from "@/lib/boardGamePlayers";
 
 export interface BGGChild {
   name?: { type: string; value: string };
@@ -32,6 +33,21 @@ export interface BGGResponse {
   items?: {
     children?: BGGItem[];
   };
+}
+
+function getBGGRankValue(game: { children?: BGGChild[] }): string | undefined {
+  const statistics = game.children?.find(
+    (child) => child.statistics,
+  )?.statistics;
+  const ranks = statistics?.children?.find((child: any) => child.ranks)?.ranks;
+  const rankEntries = ranks?.children || [];
+  for (const entry of rankEntries) {
+    const rank = entry.rank;
+    if (rank?.name === "boardgame" && rank?.value) {
+      return String(rank.value);
+    }
+  }
+  return undefined;
 }
 
 function getBGGRatingValue(
@@ -153,6 +169,9 @@ export function createBGGResolver(deps: BggResolverDeps) {
       const minAge = game.children.find((child: BGGChild) => child.minage)?.minage
         ?.value;
       const averageRating = getBGGRatingValue(game, "average");
+      const bayesAverage = getBGGRatingValue(game, "bayesaverage");
+      const usersRated = getBGGRatingValue(game, "usersrated");
+      const boardGameRank = getBGGRankValue(game);
 
       const image = game.children.find((child: BGGChild) => child.image)?.image
         ?.content;
@@ -190,18 +209,27 @@ export function createBGGResolver(deps: BggResolverDeps) {
       );
 
       const facts: MetadataFact[] = [];
+      facts.push({
+        kind: "external-link",
+        label: "BoardGameGeek",
+        value: "Fiche BGG",
+        url: `https://boardgamegeek.com/boardgame/${gameId}`,
+        source: "bgg",
+        confidence: 0.84,
+        priority: 42,
+      });
       if (minPlayers && maxPlayers) {
-        facts.push({
-          kind: "players",
-          label: "Joueurs",
-          value:
-            minPlayers === maxPlayers
-              ? minPlayers
-              : `${minPlayers}-${maxPlayers}`,
-          source: "bgg",
-          confidence: 0.82,
-          priority: 90,
-        });
+        const players = formatBoardGamePlayerCount(minPlayers, maxPlayers);
+        if (players) {
+          facts.push({
+            kind: "players",
+            label: "Joueurs",
+            value: players,
+            source: "bgg",
+            confidence: 0.82,
+            priority: 90,
+          });
+        }
       }
       const durationValue =
         minPlayTime && maxPlayTime && minPlayTime !== maxPlayTime
@@ -232,15 +260,42 @@ export function createBGGResolver(deps: BggResolverDeps) {
       if (averageRating) {
         const value = deps.formatScore(Number(averageRating), 10);
         if (value) {
+          const count =
+            usersRated && Number(usersRated) > 0
+              ? ` (${new Intl.NumberFormat("fr-FR").format(Number(usersRated))} votes)`
+              : "";
           facts.push({
             kind: "rating",
             label: "BoardGameGeek",
-            value,
+            value: `${value}${count}`,
             source: "BGG",
             confidence: 0.82,
             priority: 84,
           });
         }
+      }
+      if (bayesAverage) {
+        const value = deps.formatScore(Number(bayesAverage), 10);
+        if (value) {
+          facts.push({
+            kind: "rating",
+            label: "BGG (Bayes)",
+            value,
+            source: "BGG",
+            confidence: 0.78,
+            priority: 80,
+          });
+        }
+      }
+      if (boardGameRank) {
+        facts.push({
+          kind: "popularity",
+          label: "Classement BGG",
+          value: `#${new Intl.NumberFormat("fr-FR").format(Number(boardGameRank))}`,
+          source: "BGG",
+          confidence: 0.76,
+          priority: 70,
+        });
       }
       if (categories.length > 0) {
         facts.push({

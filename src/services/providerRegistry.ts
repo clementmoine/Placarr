@@ -13,6 +13,9 @@ import { musicbrainzModule } from "@/services/providers/musicbrainz";
 import { omdbModule } from "@/services/providers/omdb";
 import { googlebooksModule } from "@/services/providers/googlebooks";
 import { openlibraryModule } from "@/services/providers/openlibrary";
+import { philibertModule } from "@/services/providers/philibert";
+import { PRESTASHOP_RETAILER_MODULES } from "@/services/providers/prestashop";
+import { wikidataModule } from "@/services/providers/wikidata";
 import { picclickModule } from "@/services/providers/picclick";
 import { pricechartingModule } from "@/services/providers/pricecharting";
 import { rawgModule } from "@/services/providers/rawg";
@@ -53,6 +56,9 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   openlibraryModule,
   googlebooksModule,
   bggModule,
+  wikidataModule,
+  philibertModule,
+  ...PRESTASHOP_RETAILER_MODULES,
   chasseauxlivresModule,
   achatmoinscherModule,
   ledenicheurModule,

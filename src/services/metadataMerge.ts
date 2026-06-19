@@ -296,6 +296,135 @@ export function mergeBookMetadata(
   };
 }
 
+export function mergeBoardGameMetadata(
+  bgg: MetadataResult | null,
+  wikidata: MetadataResult | null,
+  retailers: MetadataResult[],
+  scraper: MetadataResult | null = null,
+): MetadataResult {
+  const activeRetailers = retailers.filter(Boolean);
+  const primaryRetailer = activeRetailers[0] || null;
+
+  const titleSources = [bgg, primaryRetailer, wikidata, scraper].filter(
+    Boolean,
+  ) as MetadataResult[];
+  const title =
+    bgg?.title ||
+    primaryRetailer?.title ||
+    wikidata?.title ||
+    scraper?.title ||
+    pickBestMetadataTitle(titleSources.map((source) => source.title));
+
+  const description =
+    activeRetailers.find((retailer) => retailer.description)?.description ||
+    wikidata?.description ||
+    bgg?.description ||
+    scraper?.description;
+
+  const releaseDate =
+    bgg?.releaseDate ||
+    activeRetailers.find((retailer) => retailer.releaseDate)?.releaseDate ||
+    wikidata?.releaseDate ||
+    scraper?.releaseDate;
+
+  const duration = bgg?.duration;
+  const authors = dedupePeople([
+    ...(bgg?.authors || []),
+    ...(wikidata?.authors || []),
+    ...activeRetailers.flatMap((retailer) => retailer.authors || []),
+  ]);
+  const publishers = dedupePeople([
+    ...(bgg?.publishers || []),
+    ...(wikidata?.publishers || []),
+    ...activeRetailers.flatMap((retailer) => retailer.publishers || []),
+  ]);
+
+  const bggAttachments = (bgg?.attachments || []).map((attachment) => ({
+    ...attachment,
+    source: attachment.source || "boardgamegeek",
+  }));
+  const wikidataAttachments = (wikidata?.attachments || []).map((attachment) => ({
+    ...attachment,
+    source: attachment.source || "wikidata",
+  }));
+  const retailerAttachments = activeRetailers.flatMap((retailer) =>
+    (retailer.attachments || []).map((attachment) => ({
+      ...attachment,
+      source: attachment.source || retailer.facts?.[0]?.source || "retailer",
+    })),
+  );
+  const scraperAttachments = (scraper?.attachments || []).map((attachment) => ({
+    ...attachment,
+    source: attachment.source || "scraper",
+  }));
+
+  const providerImageCandidates: MetadataAttachment[] = [
+    ...activeRetailers.map((retailer) => ({
+      source: retailer.facts?.[0]?.source || "retailer",
+      url: retailer.imageUrl,
+    })),
+    { source: "boardgamegeek", url: bgg?.imageUrl },
+    { source: "wikidata", url: wikidata?.imageUrl },
+    { source: "scraper", url: scraper?.imageUrl },
+  ].flatMap((candidate) =>
+    candidate.url
+      ? [
+          {
+            type: "cover" as AttachmentType,
+            url: candidate.url,
+            source: candidate.source,
+          },
+        ]
+      : [],
+  );
+
+  const attachments = rankAttachmentsForDisplay([
+    ...retailerAttachments,
+    ...bggAttachments,
+    ...wikidataAttachments,
+    ...scraperAttachments,
+    ...providerImageCandidates,
+  ]);
+  const imageUrl = pickBestDisplayImageUrl(attachments);
+
+  const aliases = Array.from(
+    new Set([
+      ...(bgg?.aliases || []),
+      ...(wikidata?.aliases || []),
+      ...activeRetailers.flatMap((retailer) => retailer.aliases || []),
+      ...(scraper?.aliases || []),
+    ]),
+  ).filter(
+    (alias) =>
+      !title || alias.toLowerCase().trim() !== title.toLowerCase().trim(),
+  );
+
+  const facts = dedupeFacts([
+    ...(bgg?.facts || []),
+    ...(wikidata?.facts || []),
+    ...activeRetailers.flatMap((retailer) => retailer.facts || []),
+    ...(scraper?.facts || []),
+  ]);
+
+  return {
+    title,
+    description,
+    authors,
+    publishers,
+    duration,
+    releaseDate,
+    imageUrl,
+    barcode: pickDiscoveredBarcode([
+      ...activeRetailers.map((retailer) => retailer.barcode),
+      bgg?.barcode,
+      scraper?.barcode,
+    ]),
+    attachments: attachments.length > 0 ? attachments : undefined,
+    aliases: aliases.length > 0 ? aliases : undefined,
+    facts: facts && facts.length > 0 ? facts : undefined,
+  };
+}
+
 export function mergeMusicMetadata(
   musicbrainz: MetadataResult | null,
   discogs: MetadataResult | null,

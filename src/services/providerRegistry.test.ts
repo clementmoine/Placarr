@@ -50,6 +50,18 @@ describe("providerRegistry", () => {
     );
   });
 
+  it("livres : OpenLibrary et Google Books couvrent les notes", () => {
+    process.env.GOOGLE_BOOKS_API_KEY = "fake-key";
+    expect(capabilityCoverage("books", "rating").providers).toContain(
+      "openlibrary",
+    );
+    expect(capabilityCoverage("books", "rating").providers).toContain(
+      "googlebooks",
+    );
+    expect(capabilityCoverage("books", "rating").count).toBe(2);
+    delete process.env.GOOGLE_BOOKS_API_KEY;
+  });
+
   it("films : TMDB/OMDb couvrent note ET public conseillé", () => {
     expect(capabilityCoverage("movies", "rating").providers).toContain("tmdb");
     expect(capabilityCoverage("movies", "rating").providers).toContain("omdb");
@@ -73,6 +85,44 @@ describe("providerRegistry", () => {
     expect(capabilityCoverage("games", "releaseDate").providers).toContain(
       "steam",
     );
+  });
+
+  it("jeux de société : BGG couvre durée et âge recommandé", () => {
+    process.env.BGG_API_TOKEN = "fake-token";
+    expect(capabilityCoverage("boardgames", "duration").providers).toContain(
+      "boardgamegeek",
+    );
+    expect(capabilityCoverage("boardgames", "ageRating").providers).toContain(
+      "boardgamegeek",
+    );
+    delete process.env.BGG_API_TOKEN;
+  });
+
+  it("jeux de société : retailers FR couvrent le nombre de joueurs", () => {
+    expect(capabilityCoverage("boardgames", "players").providers).toEqual(
+      expect.arrayContaining([
+        "boardgamegeek",
+        "philibert",
+        "monsieurde",
+        "ludifolie",
+        "bcdjeux",
+        "lepassetemps",
+      ]),
+    );
+    expect(capabilityCoverage("boardgames", "players").count).toBeGreaterThanOrEqual(
+      6,
+    );
+  });
+
+  it("jeux de société : Wikidata et Philibert couvrent description avec BGG", () => {
+    process.env.BGG_API_TOKEN = "fake-token";
+    expect(capabilityCoverage("boardgames", "description").providers).toEqual(
+      expect.arrayContaining(["boardgamegeek", "wikidata", "philibert"]),
+    );
+    expect(capabilityCoverage("boardgames", "description").count).toBeGreaterThanOrEqual(
+      3,
+    );
+    delete process.env.BGG_API_TOKEN;
   });
 
   it("providersForType ne renvoie que des providers du type", () => {

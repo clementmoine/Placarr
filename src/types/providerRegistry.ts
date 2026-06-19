@@ -11,6 +11,7 @@ export type Capability =
   | "releaseDate"
   | "duration"
   | "people"
+  | "players"
   | "pageCount"
   | "tracksCount";
 

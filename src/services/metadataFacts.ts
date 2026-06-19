@@ -82,6 +82,7 @@ function cleanEvidenceText(value: unknown): string | null {
 function fieldForFact(fact: MetadataFact) {
   if (fact.kind === "rating") return "rating";
   if (fact.kind === "age-rating") return "ageRating";
+  if (fact.kind === "players") return "players";
   if (
     fact.kind === "time-to-beat" ||
     fact.kind === "duration" ||

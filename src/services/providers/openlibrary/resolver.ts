@@ -333,6 +333,38 @@ export function createOpenLibraryResolver() {
       );
 
       const facts: MetadataFact[] = [];
+      const workKeyForRatings = workId.startsWith("/works/")
+        ? workId
+        : typeof workData.key === "string" && workData.key.startsWith("/works/")
+          ? workData.key
+          : null;
+      if (workKeyForRatings) {
+        try {
+          const workSlug = workKeyForRatings.replace(/^\/works\//, "");
+          const ratingsData = await fetchWithRetry<{
+            summary?: { average?: number | null; count?: number | null };
+          }>(`https://openlibrary.org/works/${workSlug}/ratings.json`);
+          const average = ratingsData?.summary?.average;
+          const count = ratingsData?.summary?.count;
+          if (
+            typeof average === "number" &&
+            average > 0 &&
+            typeof count === "number" &&
+            count > 0
+          ) {
+            facts.push({
+              kind: "rating",
+              label: "OpenLibrary",
+              value: `${average.toFixed(1)}/5 (${new Intl.NumberFormat("fr-FR").format(count)} avis)`,
+              source: "openlibrary",
+              confidence: 0.64,
+              priority: 68,
+            });
+          }
+        } catch {
+          // Community ratings are optional on Open Library.
+        }
+      }
       const languages = (workData.languages || [])
         .map((language) => languageCodeToLabel(language?.key))
         .filter((value): value is string => Boolean(value));

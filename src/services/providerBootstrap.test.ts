@@ -11,6 +11,12 @@ describe("createMetadataAdapters", () => {
     fetchFromBGG: vi.fn(async () => null),
     fetchFromOpenLibrary: vi.fn(async () => null),
     fetchFromGoogleBooks: vi.fn(async () => null),
+    fetchFromWikidata: vi.fn(async () => null),
+    fetchFromPhilibert: vi.fn(async () => null),
+    fetchFromMonsieurde: vi.fn(async () => null),
+    fetchFromLudifolie: vi.fn(async () => null),
+    fetchFromBcdjeux: vi.fn(async () => null),
+    fetchFromLepassetemps: vi.fn(async () => null),
     fetchFromTMDB: vi.fn(async () => null),
     fetchFromOMDb: vi.fn(async () => null),
   };
@@ -20,20 +26,26 @@ describe("createMetadataAdapters", () => {
 
     expect(adapters.map((adapter) => adapter.id).sort()).toEqual(
       [
+        "bcdjeux",
         "boardgamegeek",
         "deezer",
         "discogs",
         "googlebooks",
         "howlongtobeat",
         "igdb",
+        "lepassetemps",
+        "ludifolie",
+        "monsieurde",
         "musicbrainz",
         "omdb",
         "openlibrary",
+        "philibert",
         "rawg",
         "screenscraper",
         "steam",
         "steamgriddb",
         "tmdb",
+        "wikidata",
       ].sort(),
     );
   });

@@ -74,6 +74,7 @@ type ProviderCapability =
   | "releaseDate"
   | "duration"
   | "people"
+  | "players"
   | "pageCount"
   | "tracksCount";
 
@@ -264,6 +265,7 @@ const matrixCapabilities: ProviderCapability[] = [
   "releaseDate",
   "duration",
   "people",
+  "players",
   "pageCount",
   "tracksCount",
 ];
@@ -412,6 +414,7 @@ function AdminDashboardComponent() {
         releaseDate: "Date de sortie",
         duration: "Durée / time-to-beat",
         people: "Auteurs / studios",
+        players: "Nombre de joueurs",
         pageCount: "Nombre de pages",
         tracksCount: "Nombre de pistes",
       };
@@ -428,6 +431,7 @@ function AdminDashboardComponent() {
       releaseDate: "Release date",
       duration: "Duration / time-to-beat",
       people: "People / studios",
+      players: "Player count",
       pageCount: "Page count",
       tracksCount: "Track count",
     };

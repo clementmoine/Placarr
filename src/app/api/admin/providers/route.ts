@@ -22,6 +22,7 @@ const CAPABILITIES: Capability[] = [
   "releaseDate",
   "duration",
   "people",
+  "players",
   "pageCount",
   "tracksCount",
 ];
@@ -41,6 +42,10 @@ export async function GET() {
     configured: isProviderConfigured(p),
   }));
 
+  const providerAuthKinds = new Map(
+    PROVIDERS.map((provider) => [provider.id, provider.auth.kind]),
+  );
+
   const coverage = buildCapabilityCoverageMatrix(
     TYPES,
     CAPABILITIES,
@@ -49,6 +54,7 @@ export async function GET() {
       const info = PROVIDERS.find((provider) => provider.id === providerId);
       return info ? isProviderConfigured(info) : false;
     },
+    providerAuthKinds,
   );
 
   return NextResponse.json({ providers, coverage });

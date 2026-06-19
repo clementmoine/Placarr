@@ -200,6 +200,10 @@ function factTone(kind: string) {
 }
 
 function formatFactValue(fact: DetailFact) {
+  if (fact.kind === "players") {
+    return fact.value.replace(/^(\d+)\s*[-–—]\s*(\d+)$/, "$1 à $2");
+  }
+
   if (
     fact.kind === "duration" ||
     fact.kind === "completion-time" ||

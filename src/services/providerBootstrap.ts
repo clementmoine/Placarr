@@ -23,6 +23,27 @@ export type MetadataAdapterDeps = {
     name: string,
     barcode?: string | null,
   ) => Promise<MetadataResult | null>;
+  fetchFromWikidata: (name: string) => Promise<MetadataResult | null>;
+  fetchFromPhilibert: (
+    name: string,
+    barcode?: string | null,
+  ) => Promise<MetadataResult | null>;
+  fetchFromMonsieurde: (
+    name: string,
+    barcode?: string | null,
+  ) => Promise<MetadataResult | null>;
+  fetchFromLudifolie: (
+    name: string,
+    barcode?: string | null,
+  ) => Promise<MetadataResult | null>;
+  fetchFromBcdjeux: (
+    name: string,
+    barcode?: string | null,
+  ) => Promise<MetadataResult | null>;
+  fetchFromLepassetemps: (
+    name: string,
+    barcode?: string | null,
+  ) => Promise<MetadataResult | null>;
   fetchFromTMDB: (name: string) => Promise<MetadataResult | null>;
   fetchFromOMDb: (name: string) => Promise<MetadataResult | null>;
 };

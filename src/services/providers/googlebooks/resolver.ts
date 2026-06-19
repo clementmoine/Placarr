@@ -209,6 +209,7 @@ function pickBestVolume(
       const isbn = pickIsbn(volume.volumeInfo?.industryIdentifiers);
       if (isbn === cleanedBarcode) return volume;
     }
+    if (volumes.length === 1) return volumes[0];
   }
 
   if (!cleanName) return volumes[0] || null;
@@ -261,6 +262,16 @@ export function createGoogleBooksResolver() {
 
       return mapVolumeToMetadata(best, cleanedBarcode);
     } catch (error) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.status === 429
+      ) {
+        throw new Error(
+          apiKey
+            ? "Google Books API rate limit exceeded"
+            : "Google Books API rate limit — add GOOGLE_BOOKS_API_KEY to .env",
+        );
+      }
       const message = error instanceof Error ? error.message : String(error);
       console.error(`[GoogleBooks] Error fetching metadata for "${name}":`, message);
       return null;

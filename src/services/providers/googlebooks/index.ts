@@ -38,9 +38,9 @@ export const googlebooksModule: ProviderModule = {
       "pageCount",
       "rating",
     ],
-    auth: { kind: "none" },
+    auth: { kind: "key", env: ["GOOGLE_BOOKS_API_KEY"], free: true },
     canonical: true,
-    notes: "Complète OpenLibrary (descriptions, notes, couvertures).",
+    notes: "Clé gratuite Google Cloud (Books API). Sans clé, quota très bas.",
   },
   evidence: {
     label: "Google Books",

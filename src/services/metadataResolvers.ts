@@ -6,6 +6,15 @@ import { createDeezerResolver } from "@/services/providers/deezer/resolver";
 import { createOMDbResolver } from "@/services/providers/omdb/resolver";
 import { createGoogleBooksResolver } from "@/services/providers/googlebooks/resolver";
 import { createOpenLibraryResolver } from "@/services/providers/openlibrary/resolver";
+import { createPhilibertResolver } from "@/services/providers/philibert/resolver";
+import {
+  BCDJEUX_CONFIG,
+  createPrestashopResolver,
+  LEPASSETEMPS_CONFIG,
+  LUDIFOLIE_CONFIG,
+  MONSIEURDE_CONFIG,
+} from "@/services/providers/prestashop";
+import { createWikidataResolver } from "@/services/providers/wikidata/resolver";
 import { createRawgResolver } from "@/services/providers/rawg/resolver";
 import { createScreenScraperResolver } from "@/services/providers/screenscraper/resolver";
 import { createTMDBResolver } from "@/services/providers/tmdb/resolver";
@@ -30,6 +39,15 @@ export const fetchFromOpenLibrary = createOpenLibraryResolver();
 
 export const fetchFromGoogleBooks = createGoogleBooksResolver();
 
+export const fetchFromWikidata = createWikidataResolver();
+
+export const fetchFromPhilibert = createPhilibertResolver();
+
+export const fetchFromMonsieurde = createPrestashopResolver(MONSIEURDE_CONFIG);
+export const fetchFromLudifolie = createPrestashopResolver(LUDIFOLIE_CONFIG);
+export const fetchFromBcdjeux = createPrestashopResolver(BCDJEUX_CONFIG);
+export const fetchFromLepassetemps = createPrestashopResolver(LEPASSETEMPS_CONFIG);
+
 export const fetchFromTMDB = createTMDBResolver({
   formatScore,
   cleanSearchQuery,
@@ -46,6 +64,12 @@ export const metadataProviderResolverMap = buildMetadataAdapterMap({
   fetchFromBGG,
   fetchFromOpenLibrary,
   fetchFromGoogleBooks,
+  fetchFromWikidata,
+  fetchFromPhilibert,
+  fetchFromMonsieurde,
+  fetchFromLudifolie,
+  fetchFromBcdjeux,
+  fetchFromLepassetemps,
   fetchFromTMDB,
   fetchFromOMDb,
 });

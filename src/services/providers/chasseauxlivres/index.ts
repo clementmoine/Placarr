@@ -3,7 +3,7 @@ import {
   pingUrl,
 } from "@/lib/providerHealthUtils";
 import { catalogForShelfType } from "@/lib/providerCatalog";
-import { listProbe, retry } from "@/lib/mappingProbeUtils";
+import { listProbe, probeErrorResult, retry } from "@/lib/mappingProbeUtils";
 import { createTeardownBarcodeTask } from "@/lib/teardownUtils";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
@@ -90,12 +90,20 @@ export const chasseauxlivresModule: ProviderModule = {
     },
   },
   mappingProbe: {
-    sampleInput: "9782070368228",
-    context: { name: "", barcode: "9782070368228" },
+    sampleInput: "9780140328721",
+    context: { name: "", barcode: "9780140328721" },
     catalog: "fr",
   },
-  runMappingProbe: async () =>
-    listProbe(
-      await retry(() => fetchFromChasseAuxLivres("9782070368228", "fr"), 2),
-    ),
+  runMappingProbe: async () => {
+    const products = await retry(
+      () => fetchFromChasseAuxLivres("9780140328721", "fr"),
+      2,
+    );
+    const probe = listProbe(products);
+    if (probe) return probe;
+    return probeErrorResult(
+      "No listing for sample ISBN — site HTML may have changed or blocked the request",
+      "empty",
+    );
+  },
 };

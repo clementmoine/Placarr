@@ -36,6 +36,7 @@ export const openlibraryModule: ProviderModule = {
       "releaseDate",
       "people",
       "pageCount",
+      "rating",
     ],
     auth: { kind: "none" },
     canonical: true,
@@ -108,10 +109,19 @@ export const openlibraryModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const res = await axios.get("https://openlibrary.org/isbn/9780140328721.json", {
+      const isbn = await axios.get("https://openlibrary.org/isbn/9780140328721.json", {
         timeout: 8000,
       });
-      return Object.keys(res.data || {});
+      const workKey = String(isbn.data?.works?.[0]?.key || "").replace(
+        /^\/works\//,
+        "",
+      );
+      if (!workKey) return Object.keys(isbn.data || {});
+      const ratings = await axios.get(
+        `https://openlibrary.org/works/${workKey}/ratings.json`,
+        { timeout: 8000 },
+      );
+      return Object.keys(ratings.data || {});
     } catch {
       return [];
     }

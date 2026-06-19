@@ -6,6 +6,79 @@ export interface ChasseAuxLivresProduct {
   coverUrl?: string;
 }
 
+function parseRedirProduct(redir: string): ChasseAuxLivresProduct | null {
+  const parts = redir.split("?")[0].split("/");
+  const slug = parts[parts.length - 1];
+  if (!slug) return null;
+
+  const title = decodeHTMLEntities(
+    slug
+      .split("-")
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" "),
+  ).trim();
+
+  return title ? { name: title } : null;
+}
+
+function extractCoverFromListing(html: string, redir?: string): string | undefined {
+  if (!html) return undefined;
+
+  if (redir) {
+    const hrefPattern = redir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const linkedImg = html.match(
+      new RegExp(
+        `<a[^>]*href="${hrefPattern}"[^>]*>[\\s\\S]*?<img[^>]*src="([^"]+)"`,
+        "i",
+      ),
+    );
+    if (linkedImg?.[1]) {
+      return linkedImg[1].split("?")[0];
+    }
+  }
+
+  const srcAlt = html.match(/<img[^>]*src="([^"]+)"[^>]*alt="([^"]+)"/i);
+  if (srcAlt?.[1]) return srcAlt[1].split("?")[0];
+
+  const altSrc = html.match(/<img[^>]*alt="([^"]+)"[^>]*src="([^"]+)"/i);
+  if (altSrc?.[2]) return altSrc[2].split("?")[0];
+
+  return undefined;
+}
+
+function parseListingProducts(html: string): ChasseAuxLivresProduct[] {
+  const products: ChasseAuxLivresProduct[] = [];
+
+  for (const match of html.matchAll(/<img[^>]*src="([^"]+)"[^>]*alt="([^"]+)"/g)) {
+    const coverUrl = match[1].split("?")[0];
+    const name = decodeHTMLEntities(match[2].trim());
+    if (name && !products.some((product) => product.name === name)) {
+      products.push({ name, coverUrl });
+    }
+  }
+
+  if (products.length === 0) {
+    for (const match of html.matchAll(/<img[^>]*alt="([^"]+)"[^>]*src="([^"]+)"/g)) {
+      const name = decodeHTMLEntities(match[1].trim());
+      const coverUrl = match[2].split("?")[0];
+      if (name && !products.some((product) => product.name === name)) {
+        products.push({ name, coverUrl });
+      }
+    }
+  }
+
+  if (products.length === 0) {
+    const titleMatch = html.match(/title="([^"]+)"/);
+    if (titleMatch) {
+      products.push({
+        name: decodeHTMLEntities(titleMatch[1]).trim(),
+      });
+    }
+  }
+
+  return products;
+}
+
 export async function fetchFromChasseAuxLivres(
   barcode: string,
   catalog: string,
@@ -27,26 +100,14 @@ export async function fetchFromChasseAuxLivres(
     const finalUrl = initialRes.request.res.responseUrl || "";
     if (finalUrl.includes("/prix/")) {
       console.log(`[ChasseAuxLivres] Direct redirect detected: ${finalUrl}`);
-      const parts = finalUrl.split("?")[0].split("/");
-      const slug = parts[parts.length - 1];
-      const title = decodeHTMLEntities(
-        slug
-          .split("-")
-          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" "),
-      ).trim();
-
-      let coverUrl: string | undefined;
-      const coverMatch =
-        html.match(/<img[^>]*id="book-cover"[^>]*src="([^"]+)"/i) ||
-        html.match(/<img[^>]*class="[^"]*cover[^"]*"[^>]*src="([^"]+)"/i) ||
-        html.match(/<img[^>]*src="([^"]+)"[^>]*class="[^"]*cover[^"]*"/i);
-      if (coverMatch) {
-        coverUrl = coverMatch[1].split("?")[0];
-      }
-
-      if (title) {
-        return [{ name: title, coverUrl }];
+      const redirPath = finalUrl.replace(/^https?:\/\/[^/]+/, "");
+      const product = parseRedirProduct(redirPath);
+      if (product) {
+        const coverUrl =
+          extractCoverFromListing(html) ||
+          html.match(/<img[^>]*id="book-cover"[^>]*src="([^"]+)"/i)?.[1]?.split("?")[0] ||
+          html.match(/<img[^>]*class="[^"]*cover[^"]*"[^>]*src="([^"]+)"/i)?.[1]?.split("?")[0];
+        return [{ ...product, coverUrl }];
       }
     }
 
@@ -64,47 +125,21 @@ export async function fetchFromChasseAuxLivres(
     const resultsRes = await axios.get(resultsUrl, { headers });
     const data = resultsRes.data;
 
-    const products: ChasseAuxLivresProduct[] = [];
-
-    // Step 3: Parse titles and covers from HTML in "d" property or the "redir" URL
-    if (data.d) {
-      const imgRegex = /<img[^>]*src="([^"]+)"[^>]*alt="([^"]+)"/g;
-      const imgMatches = [...data.d.matchAll(imgRegex)];
-      for (const m of imgMatches) {
-        const rawCoverUrl = m[1];
-        // Strip resize query params to get full-resolution image
-        const coverUrl = rawCoverUrl.split("?")[0];
-        const name = decodeHTMLEntities(m[2]).trim();
-        if (name && !products.some((p) => p.name === name)) {
-          products.push({ name, coverUrl });
-        }
-      }
-
-      if (products.length === 0) {
-        const titleMatch = data.d.match(/title="([^"]+)"/);
-        if (titleMatch) {
-          products.push({
-            name: decodeHTMLEntities(titleMatch[1]).trim(),
-          });
-        }
+    if (typeof data.redir === "string" && data.redir.trim()) {
+      const product = parseRedirProduct(data.redir.trim());
+      if (product) {
+        const coverUrl = extractCoverFromListing(String(data.d || ""), data.redir.trim());
+        return [{ ...product, coverUrl }];
       }
     }
 
-    if (data.redir && products.length === 0) {
-      const parts = data.redir.split("?")[0].split("/");
-      const slug = parts[parts.length - 1];
-      const title = decodeHTMLEntities(
-        slug
-          .split("-")
-          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" "),
-      ).trim();
-      if (title) {
-        products.push({ name: title });
-      }
+    const products = parseListingProducts(String(data.d || ""));
+
+    if (products.length > 0) {
+      return products;
     }
 
-    return products;
+    return [];
   } catch (error) {
     console.error(
       `[ChasseAuxLivres] Error fetching for barcode ${barcode}:`,

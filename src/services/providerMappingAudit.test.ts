@@ -32,13 +32,19 @@ describe("provider mapping probes", () => {
       [
         "achatmoinscher",
         "apriloshop",
+        "bcdjeux",
         "chasseauxlivres",
         "coverproject",
         "freakxy",
         "ledenicheur",
+        "lepassetemps",
+        "ludifolie",
+        "monsieurde",
+        "philibert",
         "picclick",
         "pricecharting",
         "scandex",
+        "wikidata",
       ].sort(),
     );
   });
@@ -51,6 +57,7 @@ describe("provider mapping probes", () => {
       [
         "deezer",
         "discogs",
+        "boardgamegeek",
         "googlebooks",
         "musicbrainz",
         "omdb",
@@ -59,6 +66,7 @@ describe("provider mapping probes", () => {
         "scandex",
         "steam",
         "tmdb",
+        "wikidata",
       ].sort(),
     );
   });

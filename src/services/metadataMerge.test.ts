@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeBookMetadata, mergeMusicMetadata } from "@/services/metadataMerge";
+import { mergeBookMetadata, mergeBoardGameMetadata, mergeMusicMetadata } from "@/services/metadataMerge";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 describe("mergeMusicMetadata", () => {
@@ -67,7 +67,15 @@ describe("mergeBookMetadata", () => {
       pageCount: 96,
       releaseDate: "1974-06-01",
       authors: [{ name: "Roald Dahl" }],
-      facts: [{ kind: "format", label: "Format", value: "Paperback", source: "openlibrary" }],
+      facts: [
+        { kind: "format", label: "Format", value: "Paperback", source: "openlibrary" },
+        {
+          kind: "rating",
+          label: "OpenLibrary",
+          value: "4.2/5 (120 avis)",
+          source: "openlibrary",
+        },
+      ],
     };
     const googlebooks: MetadataResult = {
       title: "Fantastic Mr Fox",
@@ -93,5 +101,37 @@ describe("mergeBookMetadata", () => {
     expect(merged.barcode).toBe("9780140328721");
     expect(merged.facts?.some((fact) => fact.value === "Paperback")).toBe(true);
     expect(merged.facts?.some((fact) => fact.value === "4.5/5")).toBe(true);
+    expect(merged.facts?.some((fact) => fact.label === "Note")).toBe(true);
+  });
+});
+
+describe("mergeBoardGameMetadata", () => {
+  it("priorise la description FR Philibert et conserve les facts BGG", () => {
+    const bgg: MetadataResult = {
+      title: "Catan",
+      description: "English BGG description.",
+      duration: 75,
+      facts: [{ kind: "players", label: "Joueurs", value: "3-4", source: "bgg" }],
+    };
+    const wikidata: MetadataResult = {
+      title: "Les Colons de Catane",
+      description: "Les Colons de Catane est un jeu de société.",
+      imageUrl: "https://upload.wikimedia.org/catane.jpg",
+    };
+    const philibert: MetadataResult = {
+      title: "Catan",
+      description: "Description boutique FR.",
+      imageUrl: "https://cdn1.philibertnet.com/catane.jpg",
+      barcode: "3558380126133",
+    };
+
+    const merged = mergeBoardGameMetadata(bgg, wikidata, [philibert]);
+
+    expect(merged.title).toBe("Catan");
+    expect(merged.description).toBe("Description boutique FR.");
+    expect(merged.duration).toBe(75);
+    expect(merged.barcode).toBe("3558380126133");
+    expect(merged.imageUrl).toBe("https://cdn1.philibertnet.com/catane.jpg");
+    expect(merged.facts?.some((fact) => fact.value === "3-4")).toBe(true);
   });
 });

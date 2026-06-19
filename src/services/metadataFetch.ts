@@ -1,3 +1,4 @@
+import { fetchFromAllBoardGameSources } from "@/services/metadataBoardGameFetch";
 import { fetchFromAllBookSources } from "@/services/metadataBookFetch";
 import { fetchFromAllGameSources } from "@/services/metadataGameFetch";
 import { fetchFromAllMovieSources } from "@/services/metadataMovieFetch";
@@ -22,6 +23,9 @@ export async function fetchMetadataByType(
   }
   if (type === "books") {
     return fetchFromAllBookSources(name, barcode, platform);
+  }
+  if (type === "boardgames") {
+    return fetchFromAllBoardGameSources(name, barcode, platform);
   }
   return fetchFromRegistryMetadataResolvers(name, type, barcode, platform);
 }

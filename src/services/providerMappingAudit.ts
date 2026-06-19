@@ -47,7 +47,10 @@ async function runMetadataAdapterProbe(
 
   const resolve = () => adapter.resolve(ctx);
   const metadata =
-    providerId === "openlibrary" || providerId === "screenscraper"
+    providerId === "googlebooks" ||
+    providerId === "boardgamegeek" ||
+    providerId === "openlibrary" ||
+    providerId === "screenscraper"
       ? await retry(resolve, 2)
       : await resolve();
   return metadataProbe(metadata);
@@ -70,6 +73,14 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
       const module = getProviderModule(provider.id);
       const sampleInput =
         module?.mappingProbe?.sampleInput || provider.id;
+
+      if (provider.id === "googlebooks" && !process.env.GOOGLE_BOOKS_API_KEY?.trim()) {
+        return blockedEntry(
+          provider,
+          sampleInput,
+          "GOOGLE_BOOKS_API_KEY missing — free key via Google Cloud Console (Books API)",
+        );
+      }
 
       if (provider.id === "boardgamegeek" && !process.env.BGG_API_TOKEN?.trim()) {
         return blockedEntry(

@@ -17,7 +17,8 @@ dire *« je ne sais pas »* (résultat vide + suggestions), mais on ne renvoie
 ### 1. Unit — le cerveau (déterministe, sans réseau)
 
 Fonctions pures qui décident de la justesse.
-Ex. [src/lib/barcodeQuery.test.ts](src/lib/barcodeQuery.test.ts) :
+Ex. [src/lib/barcode/query.test.ts](src/lib/barcode/query.test.ts) et
+[src/lib/barcode/titleUtils.test.ts](src/lib/barcode/titleUtils.test.ts) :
 détection de plateforme (Wii vs Wii U, GBA vs GB, PS3/PS2…), nettoyage du
 code-barres, routage d'étagère — avec les cas « null honnête » quand on ne sait
 pas. Ajoute un cas = ajoute une ligne dans le `it.each`.

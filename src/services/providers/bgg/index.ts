@@ -1,0 +1,98 @@
+import {
+  createMetadataHealthCheck,
+  createUnconfiguredHealthCheck,
+  pingUrl,
+} from "@/lib/providerHealthUtils";
+
+import type { ProviderModule } from "@/types/providerModule";
+import type { MetadataProviderAdapter } from "@/types/providerModule";
+import type { MetadataResult } from "@/types/metadataProvider";
+import { formatScore } from "@/services/metadataSearchUtils";
+import { createBGGResolver } from "./resolver";
+import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+
+const fetchFromBGG = createBGGResolver({ formatScore });
+
+type NameResolver = (name: string) => Promise<MetadataResult | null>;
+
+export const bggModule: ProviderModule = {
+  info: {
+    id: "boardgamegeek",
+    label: "BoardGameGeek",
+    types: ["boardgames"],
+    capabilities: [
+      "identify",
+      "rating",
+      "description",
+      "cover",
+      "releaseDate",
+      "people",
+    ],
+    auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
+    canonical: true,
+    notes: "XML API v2 avec token Bearer requis.",
+  },
+  evidence: {
+    label: "BoardGameGeek",
+    sourceWeight: 0.44,
+    canonical: true,
+    cleanCachedNames: true,
+  },
+  createMetadataAdapter(deps) {
+    const fetchFromBGG = deps.fetchFromBGG as NameResolver;
+    return {
+      id: "boardgamegeek",
+      async resolve({ name }) {
+        return fetchFromBGG(name);
+      },
+    } satisfies MetadataProviderAdapter;
+  },
+  healthCheck: (() => {
+    const token = process.env.BGG_API_TOKEN?.trim();
+    if (!token) {
+      return createUnconfiguredHealthCheck(
+        "boardgamegeek",
+        "BoardGameGeek",
+        "BGG_API_TOKEN missing",
+      );
+    }
+    return createMetadataHealthCheck(
+      "boardgamegeek",
+      "BoardGameGeek",
+      async () => {
+        const start = Date.now();
+        const isUp = await pingUrl(
+          "https://boardgamegeek.com/xmlapi2/search?query=test&type=boardgame",
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        return {
+          ok: isUp,
+          latency: Date.now() - start,
+          error: isUp ? null : "Host unreachable or invalid token",
+        };
+      },
+    );
+  })(),
+  testHandlers: {
+    "bgg-metadata": {
+      label: "BoardGameGeek - Metadata",
+      kind: "metadata",
+      run: (query) => fetchFromBGG(query),
+    },
+  },
+  buildTeardownMetadataTasks(ctx) {
+    return teardownMetadataWhen(
+      ctx,
+      "BoardGameGeek",
+      () => fetchFromBGG(ctx.name),
+      "boardgames",
+    );
+  },
+  mappingProbe: {
+    sampleInput: "Catan",
+    context: { name: "Catan" },
+  },
+};
+
+export { createBGGResolver } from "./resolver";
+export type { BGGChild, BGGResponse } from "./resolver";

@@ -1,0 +1,77 @@
+import { pickPlatformKeyFromSignals } from "@/lib/barcode/gameLookup";
+
+export interface SourceProduct {
+  name: string;
+  coverUrl?: string | null;
+  isAlias?: boolean;
+  region?: string | null;
+  platformKey?: string | null;
+}
+
+export interface ParsedProductName {
+  rawName: string;
+  cleanName: string;
+  title: string;
+  normalizedTitle: string;
+  platformKey?: string;
+  region?: string;
+  edition?: string;
+  year?: string;
+  tokens: Set<string>;
+  indicators: Set<string>;
+}
+
+export interface ProductEvidence {
+  providerName: string;
+  rawName: string;
+  cleanName: string;
+  title: string;
+  coverUrl: string | null;
+  isCanonical: boolean;
+  isAlias: boolean;
+  region: string | null;
+  priority: number;
+  sourceWeight: number;
+  parsed: ParsedProductName;
+}
+
+export interface MatchEvidenceSummary {
+  providers: string[];
+  canonicalProviders: string[];
+  rawCount: number;
+  canonicalCount: number;
+  marketplaceCount: number;
+  hasCover: boolean;
+  confidence: number;
+  reasons: string[];
+}
+
+export interface ResolvedMatch {
+  name: string;
+  suggestions: string[];
+  coverUrl: string | null;
+  confidence: number;
+  evidence: MatchEvidenceSummary;
+}
+
+export interface CompiledResult {
+  provider: string;
+  rawNames: string[];
+  cleanName: string;
+  suggestions: string[];
+  matches: ResolvedMatch[];
+  platformKey?: string | null;
+}
+
+export function pickPlatformKeyFromEvidence(
+  evidence: ProductEvidence[],
+): string | null {
+  const signals = evidence
+    .filter((item) => item.parsed.platformKey)
+    .map((item) => ({
+      value: item.parsed.platformKey,
+      weight: item.sourceWeight + (item.isCanonical ? 0.22 : 0),
+    }));
+
+  return pickPlatformKeyFromSignals(signals);
+}

@@ -1,0 +1,65 @@
+import { describe, expect, it } from "vitest";
+
+import { PROVIDER_MODULES } from "@/services/providerRegistry";
+import { getMetadataProviderAdapter } from "@/services/metadataResolvers";
+
+describe("provider mapping probes", () => {
+  it("registers a probe path for every provider module", () => {
+    for (const module of PROVIDER_MODULES) {
+      expect(module.mappingProbe).toBeDefined();
+
+      const hasAdapter = !!module.createMetadataAdapter;
+      const hasCustomProbe = !!module.runMappingProbe;
+      expect(hasAdapter || hasCustomProbe).toBe(true);
+    }
+  });
+
+  it("keeps metadata adapter ids resolvable at runtime", () => {
+    const adapterIds = PROVIDER_MODULES.flatMap((module) =>
+      module.createMetadataAdapter ? [module.info.id] : [],
+    );
+
+    for (const id of adapterIds) {
+      expect(getMetadataProviderAdapter(id)).toBeDefined();
+    }
+  });
+
+  it("registers custom mapping probes for scrape/barcode providers", () => {
+    const customProbeIds = PROVIDER_MODULES.flatMap((module) =>
+      module.runMappingProbe ? [module.info.id] : [],
+    );
+    expect(customProbeIds.sort()).toEqual(
+      [
+        "achatmoinscher",
+        "apriloshop",
+        "chasseauxlivres",
+        "coverproject",
+        "freakxy",
+        "ledenicheur",
+        "picclick",
+        "pricecharting",
+        "scandex",
+      ].sort(),
+    );
+  });
+
+  it("registers raw-key collectors for metadata providers with live APIs", () => {
+    const collectorIds = PROVIDER_MODULES.flatMap((module) =>
+      module.collectMappingRawKeys ? [module.info.id] : [],
+    );
+    expect(collectorIds.sort()).toEqual(
+      [
+        "deezer",
+        "discogs",
+        "googlebooks",
+        "musicbrainz",
+        "omdb",
+        "openlibrary",
+        "rawg",
+        "scandex",
+        "steam",
+        "tmdb",
+      ].sort(),
+    );
+  });
+});

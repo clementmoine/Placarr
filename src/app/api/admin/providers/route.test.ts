@@ -62,4 +62,127 @@ describe("GET /api/admin/providers", () => {
     expect(rating.configuredCount).toBe(1);
     expect(rating.risk).toBe("single-source");
   });
+
+  it("marque n/a les capacités sans provider déclaré", async () => {
+    const response = await GET();
+    const payload = await response.json();
+    const movies = payload.coverage.find(
+      (entry: { type: string }) => entry.type === "movies",
+    );
+    const screenshots = movies.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "screenshots",
+    );
+
+    expect(screenshots.providers).toHaveLength(0);
+    expect(screenshots.risk).toBe("n/a");
+  });
+
+  it("couvre duration pour les jeux via HLTB, IGDB et RAWG", async () => {
+    process.env.IGDB_CLIENT_ID = "fake-id";
+    process.env.IGDB_CLIENT_SECRET = "fake-secret";
+    process.env.RAWG_API_KEY = "fake-key";
+
+    const response = await GET();
+    const payload = await response.json();
+    const games = payload.coverage.find(
+      (entry: { type: string }) => entry.type === "games",
+    );
+    const duration = games.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "duration",
+    );
+
+    expect(duration.providers).toEqual(
+      expect.arrayContaining(["howlongtobeat", "igdb", "rawg"]),
+    );
+    expect(duration.providers).toHaveLength(3);
+    expect(duration.configuredCount).toBe(3);
+    expect(duration.risk).toBe("ok");
+  });
+
+  it("couvre pageCount livres via OpenLibrary et Google Books", async () => {
+    const response = await GET();
+    const payload = await response.json();
+    const books = payload.coverage.find(
+      (entry: { type: string }) => entry.type === "books",
+    );
+    const pageCount = books.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "pageCount",
+    );
+
+    expect(pageCount.providers).toEqual(
+      expect.arrayContaining(["openlibrary", "googlebooks"]),
+    );
+    expect(pageCount.configuredCount).toBe(2);
+    expect(pageCount.risk).toBe("ok");
+  });
+
+  it("couvre tracksCount pour la musique via Deezer et MusicBrainz", async () => {
+    const response = await GET();
+    const payload = await response.json();
+    const musics = payload.coverage.find(
+      (entry: { type: string }) => entry.type === "musics",
+    );
+    const tracksCount = musics.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "tracksCount",
+    );
+
+    expect(tracksCount.providers).toEqual(
+      expect.arrayContaining(["deezer", "musicbrainz"]),
+    );
+    expect(tracksCount.configuredCount).toBe(2);
+    expect(tracksCount.risk).toBe("ok");
+  });
+
+  it("couvre identify et cover pour les jeux de société via plusieurs scrapers", async () => {
+    const response = await GET();
+    const payload = await response.json();
+    const boardgames = payload.coverage.find(
+      (entry: { type: string }) => entry.type === "boardgames",
+    );
+    const identify = boardgames.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "identify",
+    );
+    const cover = boardgames.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "cover",
+    );
+    const price = boardgames.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "price",
+    );
+
+    expect(identify.providers).toEqual(
+      expect.arrayContaining([
+        "boardgamegeek",
+        "scandex",
+        "chasseauxlivres",
+        "achatmoinscher",
+        "picclick",
+        "ledenicheur",
+      ]),
+    );
+    expect(identify.configuredCount).toBeGreaterThanOrEqual(4);
+    expect(identify.risk).toBe("ok");
+
+    expect(cover.providers).toEqual(
+      expect.arrayContaining([
+        "boardgamegeek",
+        "chasseauxlivres",
+        "achatmoinscher",
+        "picclick",
+        "ledenicheur",
+      ]),
+    );
+    expect(cover.configuredCount).toBeGreaterThanOrEqual(4);
+    expect(cover.risk).toBe("ok");
+
+    expect(price.providers).toEqual(
+      expect.arrayContaining([
+        "chasseauxlivres",
+        "achatmoinscher",
+        "picclick",
+        "ledenicheur",
+      ]),
+    );
+    expect(price.configuredCount).toBe(4);
+    expect(price.risk).toBe("ok");
+  });
 });

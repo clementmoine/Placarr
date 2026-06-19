@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 import { requireGuestOrHigher } from "@/lib/auth";
 
-import { formatMetadataFromStorage } from "@/services/metadata";
-import { getCoverImage } from "@/lib/itemMedia";
+import { presentItemFromStorage } from "@/lib/presentItem";
 import { resolveShelfId } from "@/lib/resolveIds";
 import { slugify } from "@/lib/slugs";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
@@ -85,23 +84,8 @@ export async function GET(req: NextRequest) {
               priceLastUpdated: cache?.priceLastUpdated ?? null,
             };
 
-            if (item.metadata) {
-              const formattedMetadata = formatMetadataFromStorage(
-                item.metadata,
-              );
-              return {
-                ...item,
-                imageUrl: getCoverImage({
-                  imageUrl: item.imageUrl,
-                  metadata: formattedMetadata,
-                  shelf: { type: shelf.type } as any,
-                }),
-                metadata: formattedMetadata,
-                ...prices,
-              };
-            }
             return {
-              ...item,
+              ...presentItemFromStorage(item),
               ...prices,
             };
           }),
@@ -163,21 +147,8 @@ export async function GET(req: NextRequest) {
             priceLastUpdated: cache?.priceLastUpdated ?? null,
           };
 
-          if (item.metadata) {
-            const formattedMetadata = formatMetadataFromStorage(item.metadata);
-            return {
-              ...item,
-              imageUrl: getCoverImage({
-                imageUrl: item.imageUrl,
-                metadata: formattedMetadata,
-                shelf: { type: shelf.type } as any,
-              }),
-              metadata: formattedMetadata,
-              ...prices,
-            };
-          }
           return {
-            ...item,
+            ...presentItemFromStorage(item),
             ...prices,
           };
         }),

@@ -11,4 +11,7 @@ export type ItemWithMetadata = Prisma.ItemGetPayload<{
       };
     };
   };
-}>;
+}> & {
+  /** Present when API canonical title differs from the user-entered stored name. */
+  storedName?: string;
+};

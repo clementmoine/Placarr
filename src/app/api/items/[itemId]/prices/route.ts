@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import { fetchPricesFromChasseAuxLivres } from "@/services/chasseAuxLivres";
-import { fetchPricesFromPriceCharting } from "@/services/priceCharting";
-import { fetchPricesFromAchatMoinsCher } from "@/services/achatMoinsCher";
-import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
+import { fetchPricesFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
+import { fetchPricesFromPriceCharting } from "@/services/providers/pricecharting";
+import { fetchPricesFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
+import { fetchPricesFromLeDenicheur } from "@/services/providers/ledenicheur";
 import { replacePriceOffers, type PriceOfferInput } from "@/services/evidence";
-import { cleanCode } from "@/lib/barcodeQuery";
+import { cleanCode } from "@/lib/barcode/query";
 import { resolveItemId } from "@/lib/resolveIds";
 
 export async function GET(

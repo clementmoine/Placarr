@@ -23,7 +23,7 @@ import {
   detectPlatformKey,
   guessBestShelf,
   guessShelfByPlatformKey,
-} from "@/lib/barcodeQuery";
+} from "@/lib/barcode/query";
 import { itemPath, slugify } from "@/lib/slugs";
 
 export function QuickScanModal({

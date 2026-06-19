@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import {
-  fetchAndStoreMetadata,
-  formatMetadataFromStorage,
-} from "@/services/metadata";
+import { fetchAndStoreMetadata } from "@/services/metadata";
+import { presentItemFromStorage } from "@/lib/presentItem";
 import { resolveItemId } from "@/lib/resolveIds";
 
 export async function POST(
@@ -73,14 +71,7 @@ export async function POST(
 
     return NextResponse.json({
       metadata,
-      item: refreshedItem
-        ? {
-            ...refreshedItem,
-            metadata: refreshedItem.metadata
-              ? formatMetadataFromStorage(refreshedItem.metadata)
-              : null,
-          }
-        : null,
+      item: refreshedItem ? presentItemFromStorage(refreshedItem) : null,
     });
   } catch (error) {
     console.error("[API Metadata Refresh] Error refreshing metadata:", error);

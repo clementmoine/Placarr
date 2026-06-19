@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { cleanCode } from "@/lib/barcodeQuery";
+import { cleanCode } from "@/lib/barcode/query";
 import { resolveBarcode } from "@/services/barcodeResolver";
 
 export async function GET(req: NextRequest) {

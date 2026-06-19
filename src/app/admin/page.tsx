@@ -73,7 +73,9 @@ type ProviderCapability =
   | "screenshots"
   | "releaseDate"
   | "duration"
-  | "people";
+  | "people"
+  | "pageCount"
+  | "tracksCount";
 
 interface ProviderRegistryEntry {
   id: string;
@@ -93,7 +95,7 @@ interface ProviderCoverageEntry {
   capability: ProviderCapability;
   providers: string[];
   configuredCount: number;
-  risk: "missing" | "single-source" | "ok";
+  risk: "missing" | "single-source" | "ok" | "n/a";
 }
 
 interface ProviderCoverageByType {
@@ -104,6 +106,26 @@ interface ProviderCoverageByType {
 interface ProviderRegistryPayload {
   providers: ProviderRegistryEntry[];
   coverage: ProviderCoverageByType[];
+}
+
+type MappingProbeStatus = "ok" | "partial" | "empty" | "blocked" | "error";
+
+interface ProviderMappingProbeEntry {
+  providerId: string;
+  label: string;
+  status: MappingProbeStatus;
+  sampleInput: string;
+  mappedKeys: string[];
+  unusedKeys: string[];
+  attachmentsCount: number;
+  factsCount: number;
+  reason: string | null;
+  example: string | null;
+}
+
+interface ProviderMappingAuditPayload {
+  generatedAt: string;
+  probes: ProviderMappingProbeEntry[];
 }
 
 interface TeardownNameBlock {
@@ -144,6 +166,22 @@ interface TeardownProviderContribution {
   }>;
   error?: string;
   rawSample?: unknown;
+  coverSelection?: {
+    selectedUrl: string | null;
+    candidates: Array<{
+      url: string;
+      type: string;
+      source?: string;
+      role?: string;
+      score: number;
+      selected: boolean;
+      signals: string[];
+      width?: number;
+      height?: number;
+      aspectRatio?: number;
+      format?: string;
+    }>;
+  };
 }
 
 interface ProductTeardownResult {
@@ -182,6 +220,31 @@ const dashboardUrls: Record<string, string> = {
   IGDB: "https://dev.twitch.tv/console/apps",
 };
 
+const providerWebsiteUrls: Record<string, string> = {
+  screenscraper: "https://www.screenscraper.fr/",
+  igdb: "https://www.igdb.com/",
+  rawg: "https://rawg.io/",
+  steamgriddb: "https://www.steamgriddb.com/",
+  steam: "https://store.steampowered.com/",
+  howlongtobeat: "https://howlongtobeat.com/",
+  pricecharting: "https://www.pricecharting.com/",
+  coverproject: "https://www.thecoverproject.net/",
+  musicbrainz: "https://musicbrainz.org/",
+  discogs: "https://www.discogs.com/",
+  deezer: "https://www.deezer.com/",
+  tmdb: "https://www.themoviedb.org/",
+  omdb: "https://www.omdbapi.com/",
+  openlibrary: "https://openlibrary.org/",
+  boardgamegeek: "https://boardgamegeek.com/",
+  chasseauxlivres: "https://www.chasse-aux-livres.fr/",
+  achatmoinscher: "https://www.achatmoinscher.com/",
+  ledenicheur: "https://ledenicheur.fr/",
+  apriloshop: "https://apriloshop.fr/",
+  freakxy: "https://www.freakxy.fr/",
+  picclick: "https://picclick.fr/",
+  scandex: "https://scandex.app/",
+};
+
 const providerTypesOrder: ProviderType[] = [
   "games",
   "movies",
@@ -201,6 +264,8 @@ const matrixCapabilities: ProviderCapability[] = [
   "releaseDate",
   "duration",
   "people",
+  "pageCount",
+  "tracksCount",
 ];
 
 const normalizeProviderKey = (value: string) =>
@@ -276,6 +341,20 @@ function AdminDashboardComponent() {
     refetchOnWindowFocus: false,
   });
 
+  const {
+    data: providerMappingAudit,
+    isFetching: isFetchingMappingAudit,
+    refetch: refetchMappingAudit,
+  } = useQuery<ProviderMappingAuditPayload>({
+    queryKey: ["adminProviderMappingAudit"],
+    queryFn: async () => {
+      const res = await axios.get("/api/admin/provider-mapping-audit");
+      return res.data;
+    },
+    enabled: false,
+    refetchOnWindowFocus: false,
+  });
+
   const [teardownBarcode, setTeardownBarcode] = useState("");
   const [teardownName, setTeardownName] = useState("");
   const [teardownType, setTeardownType] = useState("auto");
@@ -306,6 +385,9 @@ function AdminDashboardComponent() {
   >("asc");
   const [showProviderRuntime, setShowProviderRuntime] = useState(false);
   const [showCoverageByType, setShowCoverageByType] = useState(false);
+  const [mappingAuditFilter, setMappingAuditFilter] = useState<
+    "all" | MappingProbeStatus
+  >("all");
 
   const formatAdminDate = (value: string) => {
     const date = new Date(value);
@@ -330,6 +412,8 @@ function AdminDashboardComponent() {
         releaseDate: "Date de sortie",
         duration: "Durée / time-to-beat",
         people: "Auteurs / studios",
+        pageCount: "Nombre de pages",
+        tracksCount: "Nombre de pistes",
       };
       return labels[capability];
     }
@@ -344,6 +428,8 @@ function AdminDashboardComponent() {
       releaseDate: "Release date",
       duration: "Duration / time-to-beat",
       people: "People / studios",
+      pageCount: "Page count",
+      tracksCount: "Track count",
     };
     return labels[capability];
   };
@@ -488,9 +574,32 @@ function AdminDashboardComponent() {
 
   const coverageRisks = (providerRegistry?.coverage || []).flatMap((entry) =>
     entry.capabilities
-      .filter((cell) => cell.risk !== "ok")
+      .filter((cell) => cell.risk === "missing" || cell.risk === "single-source")
       .map((cell) => ({ type: entry.type, ...cell })),
   );
+
+  const mappingAuditSummary = (providerMappingAudit?.probes || []).reduce(
+    (acc, probe) => {
+      acc[probe.status] += 1;
+      return acc;
+    },
+    { ok: 0, partial: 0, empty: 0, blocked: 0, error: 0 },
+  );
+  const filteredMappingProbes = (providerMappingAudit?.probes || []).filter(
+    (probe) => mappingAuditFilter === "all" || probe.status === mappingAuditFilter,
+  );
+  const mappingStatusRank: Record<MappingProbeStatus, number> = {
+    error: 5,
+    blocked: 4,
+    empty: 3,
+    partial: 2,
+    ok: 1,
+  };
+  const sortedMappingProbes = [...filteredMappingProbes].sort((a, b) => {
+    const rankDiff = mappingStatusRank[b.status] - mappingStatusRank[a.status];
+    if (rankDiff !== 0) return rankDiff;
+    return a.label.localeCompare(b.label, undefined, { numeric: true });
+  });
 
   const searchTerm = providerSearch.trim().toLowerCase();
   const filteredProviders = providersWithRuntime.filter((provider) => {
@@ -616,6 +725,7 @@ function AdminDashboardComponent() {
             onClick={() => {
               refetch();
               refetchProviders();
+              refetchMappingAudit();
             }}
             disabled={isLoading || isFetching}
             className="flex items-center gap-1.5"
@@ -1049,6 +1159,92 @@ function AdminDashboardComponent() {
                                       ))}
                                   </div>
                                 )}
+                                {provider.coverSelection?.candidates?.length ? (
+                                  <div className="space-y-2 rounded-md border border-dashed bg-muted/25 p-2">
+                                    <div className="flex items-center justify-between text-[11px]">
+                                      <span className="font-semibold text-muted-foreground">
+                                        {locale === "fr"
+                                          ? "Score cover (objectif)"
+                                          : "Objective cover score"}
+                                      </span>
+                                      <span className="font-mono text-muted-foreground">
+                                        {provider.coverSelection.selectedUrl
+                                          ? (locale === "fr"
+                                              ? "cover retenue"
+                                              : "selected cover")
+                                          : "-"}
+                                      </span>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      {provider.coverSelection.candidates
+                                        .slice(0, 4)
+                                        .map((candidate, candidateIndex) => (
+                                          <div
+                                            key={`${candidate.url}-${candidateIndex}`}
+                                            className="rounded border bg-background/70 p-1.5"
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex min-w-0 items-center gap-2">
+                                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-mono">
+                                                  {candidateIndex + 1}
+                                                </span>
+                                                <span className="font-mono text-[10px] uppercase text-muted-foreground">
+                                                  {candidate.type}
+                                                </span>
+                                                {candidate.source && (
+                                                  <span className="truncate text-[10px] text-muted-foreground">
+                                                    {candidate.source}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="font-mono text-xs font-semibold">
+                                                  {candidate.score}
+                                                </span>
+                                                {candidate.selected && (
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="h-5 px-1.5 text-[10px]"
+                                                  >
+                                                    {locale === "fr"
+                                                      ? "retenue"
+                                                      : "selected"}
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                                              {candidate.url && (
+                                                <Image
+                                                  src={candidate.url}
+                                                  alt={`candidate-${candidateIndex + 1}`}
+                                                  width={26}
+                                                  height={34}
+                                                  className="h-7 w-5 rounded border object-cover bg-muted"
+                                                />
+                                              )}
+                                              <span className="truncate">
+                                                {candidate.role || "-"}
+                                                {candidate.width && candidate.height
+                                                  ? ` • ${candidate.width}x${candidate.height}`
+                                                  : ""}
+                                                {candidate.format
+                                                  ? ` • ${candidate.format}`
+                                                  : ""}
+                                              </span>
+                                            </div>
+                                            {candidate.signals.length > 0 && (
+                                              <div className="mt-1 truncate text-[10px] text-muted-foreground">
+                                                {candidate.signals
+                                                  .slice(0, 3)
+                                                  .join(" • ")}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                    </div>
+                                  </div>
+                                ) : null}
                                 {provider.fields.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5">
                                     {provider.fields
@@ -1167,6 +1363,7 @@ function AdminDashboardComponent() {
                     onClick={() => {
                       refetch();
                       refetchProviders();
+                      refetchMappingAudit();
                     }}
                     disabled={isFetchingProviders}
                     className="w-full sm:w-auto"
@@ -1430,8 +1627,8 @@ function AdminDashboardComponent() {
                     <CardHeader className="pb-2">
                       <CardDescription className="text-xs uppercase tracking-wider">
                         {locale === "fr"
-                          ? "Risque (0/1 source)"
-                          : "At risk (0/1 source)"}
+                          ? "Risques actifs"
+                          : "Active risks"}
                       </CardDescription>
                       <CardTitle className="text-2xl">
                         {coverageRisks.length}
@@ -1439,6 +1636,172 @@ function AdminDashboardComponent() {
                     </CardHeader>
                   </Card>
                 </div>
+
+                <Card className="border bg-card/60 shadow-md">
+                  <CardHeader>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {locale === "fr"
+                            ? "Audit mapping providers (informatif)"
+                            : "Provider mapping audit (informative)"}
+                        </CardTitle>
+                        <CardDescription>
+                          {locale === "fr"
+                            ? "Détecte les retours vides / partiels sur des requêtes exemples. Aucun blocage automatique."
+                            : "Highlights empty/partial probe results on sample queries. Never blocks builds."}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refetchMappingAudit()}
+                        disabled={isFetchingMappingAudit}
+                        className="w-full md:w-auto"
+                      >
+                        <RefreshCw
+                          className={`size-4 ${isFetchingMappingAudit ? "animate-spin" : ""}`}
+                        />
+                        {locale === "fr" ? "Relancer audit" : "Rerun audit"}
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                      <Badge variant="outline" className="border-emerald-500/30 text-emerald-700">
+                        OK: {mappingAuditSummary.ok}
+                      </Badge>
+                      <Badge variant="outline" className="border-amber-500/30 text-amber-700">
+                        {locale === "fr" ? "Partiel" : "Partial"}: {mappingAuditSummary.partial}
+                      </Badge>
+                      <Badge variant="outline" className="border-zinc-500/30 text-zinc-700">
+                        {locale === "fr" ? "Vide" : "Empty"}: {mappingAuditSummary.empty}
+                      </Badge>
+                      <Badge variant="outline" className="border-sky-500/30 text-sky-700">
+                        {locale === "fr" ? "Bloqué" : "Blocked"}: {mappingAuditSummary.blocked}
+                      </Badge>
+                      <Badge variant="outline" className="border-rose-500/30 text-rose-700">
+                        {locale === "fr" ? "Erreurs" : "Errors"}: {mappingAuditSummary.error}
+                      </Badge>
+                      {providerMappingAudit?.generatedAt && (
+                        <span className="text-muted-foreground self-center">
+                          {locale === "fr" ? "Dernier audit" : "Last audit"}:{" "}
+                          {formatAdminDate(providerMappingAudit.generatedAt)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="pt-1">
+                      <Select
+                        value={mappingAuditFilter}
+                        onValueChange={(value) =>
+                          setMappingAuditFilter(value as "all" | MappingProbeStatus)
+                        }
+                      >
+                        <SelectTrigger className="w-full md:w-[220px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            {locale === "fr" ? "Tous les statuts" : "All statuses"}
+                          </SelectItem>
+                          <SelectItem value="ok">ok</SelectItem>
+                          <SelectItem value="partial">partial</SelectItem>
+                          <SelectItem value="empty">empty</SelectItem>
+                          <SelectItem value="blocked">blocked</SelectItem>
+                          <SelectItem value="error">error</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isFetchingMappingAudit ? (
+                      <Skeleton className="h-28 rounded-lg" />
+                    ) : !providerMappingAudit ? (
+                      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                        {locale === "fr"
+                          ? "Aucun audit lancé. Cliquez sur « Relancer audit » pour interroger les providers."
+                          : "No audit run yet. Click “Rerun audit” to probe providers."}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-lg border">
+                        <table className="w-full min-w-[1140px] text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b bg-background text-left text-muted-foreground">
+                              <th className="px-3 py-2">{locale === "fr" ? "Provider" : "Provider"}</th>
+                              <th className="px-3 py-2">{locale === "fr" ? "Statut" : "Status"}</th>
+                              <th className="px-3 py-2">{locale === "fr" ? "Exemple" : "Example"}</th>
+                              <th className="px-3 py-2">{locale === "fr" ? "Input probe" : "Probe input"}</th>
+                              <th className="px-3 py-2">{locale === "fr" ? "Champs mappés" : "Mapped fields"}</th>
+                              <th className="px-3 py-2">
+                                {locale === "fr" ? "Champs inutilisés" : "Unused fields"}
+                              </th>
+                              <th className="px-3 py-2">attachments</th>
+                              <th className="px-3 py-2">facts</th>
+                              <th className="px-3 py-2">{locale === "fr" ? "Info" : "Details"}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sortedMappingProbes.map((probe) => (
+                              <tr key={probe.providerId} className="border-b align-top">
+                                <td className="px-3 py-2">
+                                  <div className="font-medium">{probe.label}</div>
+                                  <div className="font-mono text-[11px] text-muted-foreground">
+                                    {probe.providerId}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      probe.status === "ok"
+                                        ? "border-emerald-500/30 text-emerald-700"
+                                        : probe.status === "partial"
+                                          ? "border-amber-500/30 text-amber-700"
+                                          : probe.status === "empty"
+                                            ? "border-zinc-500/30 text-zinc-700"
+                                            : probe.status === "blocked"
+                                              ? "border-sky-500/30 text-sky-700"
+                                              : "border-rose-500/30 text-rose-700"
+                                    }
+                                  >
+                                    {probe.status}
+                                  </Badge>
+                                </td>
+                                <td className="px-3 py-2">{probe.example || "-"}</td>
+                                <td className="px-3 py-2 font-mono">{probe.sampleInput}</td>
+                                <td className="px-3 py-2 font-mono text-[11px] leading-relaxed break-words max-w-md">
+                                  {probe.mappedKeys.length > 0
+                                    ? probe.mappedKeys.join(", ")
+                                    : "-"}
+                                </td>
+                                <td className="px-3 py-2 font-mono text-[11px] leading-relaxed break-words max-w-md">
+                                  {probe.unusedKeys.length > 0
+                                    ? probe.unusedKeys.join(", ")
+                                    : "-"}
+                                </td>
+                                <td className="px-3 py-2">{probe.attachmentsCount}</td>
+                                <td className="px-3 py-2">{probe.factsCount}</td>
+                                <td className="px-3 py-2 text-muted-foreground">
+                                  {probe.reason || "-"}
+                                </td>
+                              </tr>
+                            ))}
+                            {filteredMappingProbes.length === 0 && (
+                              <tr>
+                                <td
+                                  colSpan={9}
+                                  className="px-3 py-8 text-center text-muted-foreground"
+                                >
+                                  {locale === "fr"
+                                    ? "Aucun provider ne correspond au filtre."
+                                    : "No provider matches the filter."}
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 <Card className="border bg-card/60 shadow-md">
                   <CardContent className="pt-6">
@@ -1616,6 +1979,8 @@ function AdminDashboardComponent() {
                           {sortedProviders.map((provider, rowIndex) => {
                             const stickyRowBg =
                               rowIndex % 2 === 0 ? "bg-background" : "bg-muted";
+                            const providerWebsite =
+                              providerWebsiteUrls[provider.id] || dashboardUrls[provider.label];
                             return (
                             <tr
                               key={provider.id}
@@ -1626,7 +1991,20 @@ function AdminDashboardComponent() {
                               >
                                 <div className="space-y-1">
                                   <div className="font-semibold flex items-center gap-2">
-                                    {provider.label}
+                                    {providerWebsite ? (
+                                      <a
+                                        href={providerWebsite}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                                        title={locale === "fr" ? "Ouvrir le site du provider" : "Open provider website"}
+                                      >
+                                        <span>{provider.label}</span>
+                                        <ExternalLink className="size-3.5" />
+                                      </a>
+                                    ) : (
+                                      <span>{provider.label}</span>
+                                    )}
                                     {provider.canonical && (
                                       <Badge
                                         variant="outline"
@@ -1738,8 +2116,8 @@ function AdminDashboardComponent() {
                       </CardTitle>
                       <CardDescription>
                         {locale === "fr"
-                          ? "Trou = 0 source configurée. Single-source = 1 seule source configurée."
-                          : "Missing means 0 configured source. Single-source means only 1 configured source."}
+                          ? "Trou = aucune source active. Single-source = une seule source active pour cette capacité."
+                          : "Missing means no active source. Single-source means only one active source for this capability."}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -1849,11 +2227,18 @@ function AdminDashboardComponent() {
                                       ? "border-destructive/30 text-destructive"
                                       : cell.risk === "single-source"
                                         ? "border-amber-500/30 text-amber-600"
-                                        : ""
+                                        : cell.risk === "n/a"
+                                          ? "text-muted-foreground"
+                                          : ""
                                   }
                                 >
                                   {capabilityLabel(cell.capability)} (
-                                  {cell.configuredCount})
+                                  {cell.risk === "n/a"
+                                    ? locale === "fr"
+                                      ? "n/a"
+                                      : "n/a"
+                                    : `${cell.configuredCount}/${cell.providers.length}`}
+                                  )
                                 </Badge>
                               ))}
                             </div>

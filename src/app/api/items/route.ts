@@ -6,10 +6,9 @@ import { requireGuestOrHigher } from "@/lib/auth";
 
 import {
   fetchAndStoreMetadata,
-  formatMetadataFromStorage,
   downloadRemoteImage,
 } from "@/services/metadata";
-import { getCoverImage } from "@/lib/itemMedia";
+import { presentItem, presentItemFromStorage } from "@/lib/presentItem";
 import { resolveShelfId, resolveItemId } from "@/lib/resolveIds";
 import { slugify } from "@/lib/slugs";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
@@ -53,20 +52,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    if (item.metadata) {
-      const formattedMetadata = formatMetadataFromStorage(item.metadata);
-      return NextResponse.json({
-        ...item,
-        imageUrl: getCoverImage({
-          imageUrl: item.imageUrl,
-          metadata: formattedMetadata,
-          shelf: item.shelf,
-        }),
-        metadata: formattedMetadata,
-      });
-    }
-
-    return NextResponse.json(item);
+    return NextResponse.json(presentItemFromStorage(item));
   }
 
   const whereClause: Prisma.ItemWhereInput = {};
@@ -104,20 +90,7 @@ export async function GET(req: NextRequest) {
 
   if (includeMetadata) {
     return NextResponse.json(
-      items.map((item) => {
-        const formattedMetadata = item.metadata
-          ? formatMetadataFromStorage(item.metadata)
-          : null;
-        return {
-          ...item,
-          imageUrl: getCoverImage({
-            imageUrl: item.imageUrl,
-            metadata: formattedMetadata || undefined,
-            shelf: item.shelf,
-          }),
-          metadata: formattedMetadata,
-        };
-      }),
+      items.map((item) => presentItemFromStorage(item)),
     );
   }
 
@@ -221,17 +194,20 @@ export async function POST(req: NextRequest) {
         );
 
         if (metadata) {
-          return NextResponse.json({
-            ...item,
-            metadata,
-          });
+          return NextResponse.json(
+            presentItem({
+              ...item,
+              metadata,
+              shelf: item.shelf,
+            }),
+          );
         }
       } catch (metadataError) {
         console.error("Error fetching metadata:", metadataError);
       }
     }
 
-    return NextResponse.json(item);
+    return NextResponse.json(presentItemFromStorage(item));
   } catch (error) {
     console.error("Error in POST request:", error);
     return NextResponse.json(
@@ -328,24 +304,20 @@ export async function PATCH(req: NextRequest) {
         );
 
         if (metadata) {
-          return NextResponse.json({
-            ...updatedItem,
-            metadata,
-          });
+          return NextResponse.json(
+            presentItem({
+              ...updatedItem,
+              metadata,
+              shelf: updatedItem.shelf,
+            }),
+          );
         }
       } catch (metadataError) {
         console.error("Error refreshing metadata:", metadataError);
       }
     }
 
-    if (updatedItem.metadata) {
-      return NextResponse.json({
-        ...updatedItem,
-        metadata: formatMetadataFromStorage(updatedItem.metadata),
-      });
-    }
-
-    return NextResponse.json(updatedItem);
+    return NextResponse.json(presentItemFromStorage(updatedItem));
   } catch (error) {
     console.error("Error in PATCH request:", error);
     return NextResponse.json(

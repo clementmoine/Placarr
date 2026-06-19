@@ -11,13 +11,17 @@ export function slugify(value?: string | null): string {
     .replace(/-{2,}/g, "-");
 }
 
-export function shelfPath(shelf: { id: string; name?: string | null }): string {
-  return `/shelves/${slugify(shelf.name) || shelf.id}`;
+export function shelfPath(shelf: {
+  id: string;
+  name?: string | null;
+  slug?: string | null;
+}): string {
+  return `/shelves/${shelf.slug || slugify(shelf.name) || shelf.id}`;
 }
 
 export function itemPath(
-  shelf: { id: string; name?: string | null },
-  item: { id: string; name?: string | null },
+  shelf: { id: string; name?: string | null; slug?: string | null },
+  item: { id: string; name?: string | null; slug?: string | null },
 ): string {
-  return `${shelfPath(shelf)}/${slugify(item.name) || item.id}`;
+  return `${shelfPath(shelf)}/${item.slug || slugify(item.name) || item.id}`;
 }

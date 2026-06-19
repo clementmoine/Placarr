@@ -56,7 +56,7 @@ import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { uploadImage } from "@/lib/api/upload";
 import { getAspectRatio } from "@/lib/cardFormat";
-import { guessBestShelf, guessShelfByPlatformKey } from "@/lib/barcodeQuery";
+import { guessBestShelf, guessShelfByPlatformKey } from "@/lib/barcode/query";
 import { shelfPath } from "@/lib/slugs";
 
 import { type Prisma, type Item, type Shelf, Condition } from "@prisma/client";
@@ -292,6 +292,13 @@ export function ItemModal({
         );
         if (metadata) {
           setFetchedMetadata(metadata);
+
+          const currentBarcode = (barcode || form.getValues("barcode") || "").trim();
+          if (metadata.barcode && !currentBarcode) {
+            form.setValue("barcode", metadata.barcode, {
+              shouldDirty: true,
+            });
+          }
 
           if (metadata.imageUrl) {
             // Only auto-set imageUrl if the form doesn't already have one or if forceOverwrite is enabled.

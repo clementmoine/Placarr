@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
+import { buildCapabilityCoverageMatrix } from "@/lib/providerCoverage";
 import {
   PROVIDERS,
   isProviderConfigured,
@@ -21,6 +22,8 @@ const CAPABILITIES: Capability[] = [
   "releaseDate",
   "duration",
   "people",
+  "pageCount",
+  "tracksCount",
 ];
 
 /**
@@ -38,23 +41,15 @@ export async function GET() {
     configured: isProviderConfigured(p),
   }));
 
-  const coverage = TYPES.map((type) => ({
-    type,
-    capabilities: CAPABILITIES.map((capability) => {
-      const { providers: ids } = capabilityCoverage(type, capability);
-      const configuredIds = ids.filter((id) => {
-        const info = PROVIDERS.find((p) => p.id === id);
-        return info ? isProviderConfigured(info) : false;
-      });
-      const risk =
-        configuredIds.length === 0
-          ? "missing"
-          : configuredIds.length === 1
-            ? "single-source"
-            : "ok";
-      return { capability, providers: ids, configuredCount: configuredIds.length, risk };
-    }),
-  }));
+  const coverage = buildCapabilityCoverageMatrix(
+    TYPES,
+    CAPABILITIES,
+    capabilityCoverage,
+    (providerId) => {
+      const info = PROVIDERS.find((provider) => provider.id === providerId);
+      return info ? isProviderConfigured(info) : false;
+    },
+  );
 
   return NextResponse.json({ providers, coverage });
 }

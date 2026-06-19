@@ -1,5 +1,5 @@
-import { fetchFromFreakxy } from "../src/services/freakxy";
-import { fetchFromApriloshop } from "../src/services/apriloshop";
+import { fetchFromFreakxy } from "../src/services/providers/freakxy";
+import { fetchFromApriloshop } from "../src/services/providers/apriloshop";
 
 async function main() {
   console.log("Testing scrapers...");

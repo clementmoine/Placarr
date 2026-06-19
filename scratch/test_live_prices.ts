@@ -1,4 +1,4 @@
-import { fetchPricesFromPriceCharting } from "../src/services/priceCharting";
+import { fetchPricesFromPriceCharting } from "../src/services/providers/pricecharting";
 
 async function main() {
   const barcode = "0805529491427";

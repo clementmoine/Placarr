@@ -1,4 +1,4 @@
-import { fetchFromScreenScraper } from "@/services/metadata";
+import { fetchFromScreenScraper } from "@/services/metadataResolvers";
 
 async function main() {
   console.log("Starting test...");

@@ -2,35 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { cleanCode, detectPlatformKey } from "@/lib/barcodeQuery";
-import { fetchFromAchatMoinsCher } from "@/services/achatMoinsCher";
-import { fetchFromApriloshop } from "@/services/apriloshop";
+import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import { resolveBarcode } from "@/services/barcodeResolver";
-import { fetchFromChasseAuxLivres } from "@/services/chasseAuxLivres";
-import { fetchFromDiscogs } from "@/services/discogs";
-import { fetchFromFreakxy } from "@/services/freakxy";
-import { fetchFromHowLongToBeat } from "@/services/howLongToBeat";
-import { fetchFromIGDB } from "@/services/igdb";
-import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
 import {
   cleanSearchQuery,
-  fetchCoverFromCoverProject,
-  fetchFromBGG,
-  fetchFromDeezer,
-  fetchFromOpenLibrary,
-  fetchFromRawg,
-  fetchFromScreenScraper,
-  fetchFromTMDB,
-  getMetadata,
-  type MetadataAttachment,
-  type MetadataFact,
+  explainAttachmentScoreForDisplay,
+  readAttachmentImageMetrics,
   type MetadataResult,
 } from "@/services/metadata";
-import { fetchFromMusicBrainz } from "@/services/musicBrainz";
-import { fetchFromPicClick } from "@/services/picclick";
-import { fetchMetadataFromPriceCharting } from "@/services/priceCharting";
-import { fetchFromSteam } from "@/services/steam";
-import { fetchFromSteamGridDB } from "@/services/steamGridDb";
+import {
+  buildTeardownBarcodeProviderTasks,
+  buildTeardownMetadataProviderTasks,
+} from "@/services/providerTeardown";
 
 type ProviderPhase = "barcode" | "metadata" | "merged";
 type ProviderStatus = "hit" | "empty" | "error" | "skipped";
@@ -39,6 +22,25 @@ type ProviderField = {
   field: string;
   value: string;
   confidence?: number;
+};
+
+type CoverSelectionCandidate = {
+  url: string;
+  type: string;
+  source?: string;
+  role?: string;
+  score: number;
+  selected: boolean;
+  signals: string[];
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+  format?: string;
+};
+
+type CoverSelectionAudit = {
+  selectedUrl: string | null;
+  candidates: CoverSelectionCandidate[];
 };
 
 type ProviderContribution = {
@@ -54,6 +56,7 @@ type ProviderContribution = {
   }>;
   error?: string;
   rawSample?: unknown;
+  coverSelection?: CoverSelectionAudit;
 };
 
 type NameBlockKind =
@@ -70,14 +73,6 @@ type NameBlock = {
   kind: NameBlockKind;
   text: string;
   reason: string;
-};
-
-const BARCODE_CATALOG_BY_TYPE: Record<string, string> = {
-  books: "fr",
-  movies: "dvd",
-  musics: "music",
-  games: "jeuxvideo",
-  boardgames: "toys",
 };
 
 const ALL_METADATA_TYPES = ["games", "books", "movies", "musics", "boardgames"];
@@ -319,6 +314,72 @@ function metadataProducts(metadata: MetadataResult | null) {
   ];
 }
 
+async function metadataCoverSelection(
+  metadata: MetadataResult | null,
+): Promise<CoverSelectionAudit | undefined> {
+  if (!metadata) return undefined;
+
+  const candidates = [
+    ...(metadata.imageUrl
+      ? [
+          {
+            type: "cover" as const,
+            url: metadata.imageUrl,
+            role: "selected-image",
+            source: "metadata.imageUrl",
+          },
+        ]
+      : []),
+    ...(metadata.attachments || []),
+  ].filter((candidate) => Boolean(candidate.url));
+
+  if (candidates.length === 0) return undefined;
+
+  const uniqueCandidates = candidates.filter(
+    (candidate, index, list) =>
+      index ===
+      list.findIndex(
+        (entry) =>
+          entry.url === candidate.url &&
+          entry.type === candidate.type &&
+          cleanText(entry.role || "").toLowerCase() ===
+            cleanText(candidate.role || "").toLowerCase(),
+      ),
+  );
+
+  const scored = await Promise.all(
+    uniqueCandidates.map(async (candidate, index) => {
+      const metrics = await readAttachmentImageMetrics(candidate.url);
+      const details = explainAttachmentScoreForDisplay(candidate, metrics);
+      return {
+        ...candidate,
+        ...details,
+        index,
+      };
+    }),
+  );
+
+  scored.sort((a, b) => b.score - a.score || a.index - b.index);
+  const selectedUrl = metadata.imageUrl || scored[0]?.url || null;
+
+  return {
+    selectedUrl,
+    candidates: scored.map((candidate) => ({
+      url: candidate.url,
+      type: candidate.type,
+      source: candidate.source || undefined,
+      role: candidate.role || undefined,
+      score: candidate.score,
+      selected: Boolean(selectedUrl) && candidate.url === selectedUrl,
+      signals: candidate.signals,
+      width: candidate.width,
+      height: candidate.height,
+      aspectRatio: candidate.aspectRatio,
+      format: candidate.format,
+    })),
+  };
+}
+
 function productFields(
   products: Array<{ name?: string; coverUrl?: string | null }>,
 ) {
@@ -386,6 +447,7 @@ async function runProvider(
     if (phase === "metadata" || phase === "merged") {
       const metadata = raw as MetadataResult | null;
       const fields = metadataFields(metadata);
+      const coverSelection = await metadataCoverSelection(metadata);
       return {
         provider,
         phase,
@@ -394,6 +456,7 @@ async function runProvider(
         fields,
         products: metadataProducts(metadata),
         rawSample: sampleRaw(raw),
+        coverSelection,
       };
     }
 
@@ -427,35 +490,47 @@ function normalizeBarcodeProducts(
   if (!raw) return [];
   if (Array.isArray(raw)) {
     return raw
-      .map((item: any) => ({
-        name: cleanText(item?.name || item?.title),
-        coverUrl: item?.coverUrl || item?.imageUrl || null,
-        platformKey: item?.platformKey || null,
-      }))
+      .map((item: any) => {
+        const platformName = cleanText(item?.igdb_metadata?.platform?.name);
+        return {
+          name: cleanText(
+            item?.name ||
+              item?.title ||
+              item?.cleanName ||
+              item?.productName ||
+              item?.igdb_metadata?.name,
+          ),
+          coverUrl: item?.coverUrl || item?.imageUrl || null,
+          platformKey:
+            item?.platformKey ||
+            (platformName ? detectPlatformKey(platformName) : null) ||
+            null,
+        };
+      })
       .filter((item) => item.name);
   }
 
   const item = raw as any;
+  const platformName = cleanText(item?.igdb_metadata?.platform?.name);
   const name = cleanText(
-    item.name || item.title || item.cleanName || item.productName,
+    item.name ||
+      item.title ||
+      item.cleanName ||
+      item.productName ||
+      item.igdb_metadata?.name,
   );
   return name
     ? [
         {
           name,
           coverUrl: item.coverUrl || item.imageUrl || null,
-          platformKey: item.platformKey || null,
+          platformKey:
+            item.platformKey ||
+            (platformName ? detectPlatformKey(platformName) : null) ||
+            null,
         },
       ]
     : [];
-}
-
-function catalogForType(type: string | null) {
-  return type ? BARCODE_CATALOG_BY_TYPE[type] || "" : "";
-}
-
-function labelProvider(provider: string, type: string, includeType: boolean) {
-  return includeType ? `${provider}:${type}` : provider;
 }
 
 async function runBarcodeProviders(
@@ -464,62 +539,14 @@ async function runBarcodeProviders(
   nameCandidates: string[] = [],
   selectedProviders: string[] = [],
 ) {
-  const tasks: Array<Promise<ProviderContribution>> = [];
-  const addTask = (providerLabel: string, fn: () => Promise<unknown>) => {
-    if (!shouldRunSelectedProvider(providerLabel, selectedProviders)) return;
-    tasks.push(runProvider(providerLabel, "barcode", fn));
-  };
-
-  if (barcode) {
-    const catalogEntries = type
-      ? [{ label: "ChasseAuxLivres", catalog: catalogForType(type) }]
-      : [
-          { label: "ChasseAuxLivres:books", catalog: "fr" },
-          { label: "ChasseAuxLivres:movies", catalog: "dvd" },
-          { label: "ChasseAuxLivres:musics", catalog: "music" },
-          { label: "ChasseAuxLivres:games", catalog: "jeuxvideo" },
-          { label: "ChasseAuxLivres:boardgames", catalog: "toys" },
-        ];
-
-    for (const entry of catalogEntries) {
-      addTask(entry.label, () => fetchFromChasseAuxLivres(barcode, entry.catalog));
-    }
-
-    addTask("AchatMoinsCher", () => fetchFromAchatMoinsCher(barcode));
-  }
-
-  const leDenicheurQueries = Array.from(
-    new Set([barcode, ...nameCandidates].filter(Boolean)),
+  const tasks = buildTeardownBarcodeProviderTasks({ barcode, type, nameCandidates });
+  return Promise.all(
+    tasks
+      .filter((task) =>
+        shouldRunSelectedProvider(task.providerLabel, selectedProviders),
+      )
+      .map((task) => runProvider(task.providerLabel, task.phase, task.run)),
   );
-  if (leDenicheurQueries.length > 0) {
-    addTask("LeDenicheur", () => fetchPricesFromLeDenicheur(leDenicheurQueries));
-  }
-
-  if (
-    barcode &&
-    (type === "books" || barcode.startsWith("978") || barcode.startsWith("979"))
-  ) {
-    addTask("OpenLibrary", () => fetchFromOpenLibrary("", barcode));
-  }
-
-  if (barcode && (type === "musics" || !type)) {
-    addTask("MusicBrainz", () => fetchFromMusicBrainz(barcode));
-    addTask("Discogs", () => fetchFromDiscogs(barcode));
-    addTask("Deezer", () => fetchFromDeezer("", barcode));
-  }
-
-  if (barcode && (type === "games" || !type)) {
-    addTask("PriceCharting", () => fetchMetadataFromPriceCharting(barcode));
-    addTask("Freakxy", () => fetchFromFreakxy(barcode));
-    addTask("Apriloshop", () => fetchFromApriloshop(barcode));
-    addTask("PicClick", () => fetchFromPicClick(barcode));
-  }
-
-  if (barcode && (type === "movies" || type === "boardgames")) {
-    addTask("PicClick", () => fetchFromPicClick(barcode));
-  }
-
-  return Promise.all(tasks);
 }
 
 async function runMetadataProvidersForType(
@@ -530,68 +557,20 @@ async function runMetadataProvidersForType(
   includeTypeInLabel: boolean,
   selectedProviders: string[],
 ) {
-  if (!name) return [];
-  const tasks: Array<Promise<ProviderContribution>> = [];
-  const label = (provider: string) =>
-    labelProvider(provider, type, includeTypeInLabel);
-  const addTask = (
-    providerLabel: string,
-    phase: ProviderPhase,
-    fn: () => Promise<unknown>,
-  ) => {
-    if (!shouldRunSelectedProvider(providerLabel, selectedProviders)) return;
-    tasks.push(runProvider(providerLabel, phase, fn));
-  };
-
-  if (type === "games") {
-    addTask(label("ScreenScraper"), "metadata", () =>
-      fetchFromScreenScraper(name, barcode, platform),
-    );
-    addTask(label("IGDB"), "metadata", () => fetchFromIGDB(name, platform));
-    addTask(label("HowLongToBeat"), "metadata", () =>
-      fetchFromHowLongToBeat(name, platform),
-    );
-    addTask(label("RAWG"), "metadata", () => fetchFromRawg(name));
-    addTask(label("SteamGridDB"), "metadata", () => fetchFromSteamGridDB(name));
-    addTask(label("TheCoverProject"), "metadata", async () => {
-      const coverUrl = await fetchCoverFromCoverProject(name, platform || "");
-      return coverUrl
-        ? ({
-            title: name,
-            imageUrl: coverUrl,
-            attachments: [
-              { type: "cover", url: coverUrl, source: "coverproject" },
-            ] as MetadataAttachment[],
-          } satisfies MetadataResult)
-        : null;
-    });
-
-    if (platform && /\b(pc|windows|steam)\b/i.test(platform)) {
-      addTask(label("Steam"), "metadata", () => fetchFromSteam(name));
-    }
-  } else if (type === "books") {
-    addTask(label("OpenLibrary"), "metadata", () =>
-      fetchFromOpenLibrary(name, barcode),
-    );
-  } else if (type === "movies") {
-    addTask(label("TMDB"), "metadata", () => fetchFromTMDB(name));
-  } else if (type === "musics") {
-    addTask(label("Deezer"), "metadata", () => fetchFromDeezer(name, barcode));
-    if (barcode) {
-      addTask(label("MusicBrainz"), "metadata", () =>
-        fetchFromMusicBrainz(barcode),
-      );
-      addTask(label("Discogs"), "metadata", () => fetchFromDiscogs(barcode));
-    }
-  } else if (type === "boardgames") {
-    addTask(label("BoardGameGeek"), "metadata", () => fetchFromBGG(name));
-  }
-
-  addTask(label("MergedEngine"), "merged", () =>
-    getMetadata(name, type, barcode, platform),
+  const tasks = buildTeardownMetadataProviderTasks({
+    name,
+    type,
+    barcode,
+    platform,
+    includeTypeInLabel,
+  });
+  return Promise.all(
+    tasks
+      .filter((task) =>
+        shouldRunSelectedProvider(task.providerLabel, selectedProviders),
+      )
+      .map((task) => runProvider(task.providerLabel, task.phase, task.run)),
   );
-
-  return Promise.all(tasks);
 }
 
 async function runMetadataProviders(
@@ -689,6 +668,14 @@ function buildGaps(
     );
     if (!hasRating) gaps.push("note: aucune source");
     if (!hasAge) gaps.push("PEGI/age: aucune source");
+  }
+
+  if (type === "books") {
+    requireField("pageCount", "nombre de pages");
+  }
+
+  if (type === "musics") {
+    requireField("tracksCount", "nombre de pistes");
   }
 
   return gaps;

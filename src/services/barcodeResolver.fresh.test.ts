@@ -6,8 +6,8 @@ import {
   DEFAULT_BARCODE_REGRESSION_CASES,
   type BarcodeRegressionCase,
   type BarcodeRegressionExpectation,
-} from "@/lib/barcodeRegressionCases";
-import { cleanCode } from "@/lib/barcodeQuery";
+} from "@/lib/barcode/regressionCases";
+import { cleanCode } from "@/lib/barcode/query";
 import { HttpReplay, type Interaction } from "../../tests/helpers/httpReplay";
 
 /**

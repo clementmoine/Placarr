@@ -1,9 +1,9 @@
-import { fetchMetadataFromPriceCharting } from "../src/services/priceCharting";
-import { fetchFromChasseAuxLivres } from "../src/services/chasseAuxLivres";
-import { fetchFromAchatMoinsCher } from "../src/services/achatMoinsCher";
-import { fetchFromFreakxy } from "../src/services/freakxy";
-import { fetchFromApriloshop } from "../src/services/apriloshop";
-import { fetchFromPicClick } from "../src/services/picclick";
+import { fetchMetadataFromPriceCharting } from "../src/services/providers/pricecharting";
+import { fetchFromChasseAuxLivres } from "../src/services/providers/chasseauxlivres";
+import { fetchFromAchatMoinsCher } from "../src/services/providers/achatmoinscher";
+import { fetchFromFreakxy } from "../src/services/providers/freakxy";
+import { fetchFromApriloshop } from "../src/services/providers/apriloshop";
+import { fetchFromPicClick } from "../src/services/providers/picclick";
 
 async function runTest(barcode: string) {
   console.log(`\n===================================`);

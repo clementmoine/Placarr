@@ -1,4 +1,4 @@
-import { cleanCode, detectPlatformKey } from "@/lib/barcodeQuery";
+import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import { slugify } from "@/lib/slugs";
 
 const LEGACY_PLATFORM_SLUGS: Record<

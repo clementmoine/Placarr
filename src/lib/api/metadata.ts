@@ -1,12 +1,12 @@
 import axios from "axios";
-import { MetadataWithIncludes } from "@/types/metadata";
+import type { MetadataResult } from "@/types/metadataProvider";
 
 export async function getMetadataPreview(
   name: string,
   type: string,
   barcode?: string | null,
   platform?: string | null,
-): Promise<MetadataWithIncludes | null> {
+): Promise<MetadataResult | null> {
   const { data } = await axios.get("/api/metadata", {
     params: {
       name,

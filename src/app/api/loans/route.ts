@@ -1,24 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  itemWithMetadataInclude,
+  presentItemFromStorage,
+} from "@/lib/presentItem";
+
+function presentLoanRequest<
+  T extends {
+    item: Parameters<typeof presentItemFromStorage>[0];
+  },
+>(loan: T) {
+  return {
+    ...loan,
+    item: presentItemFromStorage(loan.item),
+  };
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
   try {
-    // 1. Sent requests
     const sent = await prisma.loanRequest.findMany({
       where: {
         requesterId: auth.user.id,
       },
       include: {
         item: {
-          select: {
-            id: true,
-            name: true,
-            imageUrl: true,
-          },
+          include: itemWithMetadataInclude,
         },
         owner: {
           select: {
@@ -33,18 +43,13 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // 2. Received requests
     const received = await prisma.loanRequest.findMany({
       where: {
         ownerId: auth.user.id,
       },
       include: {
         item: {
-          select: {
-            id: true,
-            name: true,
-            imageUrl: true,
-          },
+          include: itemWithMetadataInclude,
         },
         requester: {
           select: {
@@ -59,7 +64,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ sent, received });
+    return NextResponse.json({
+      sent: sent.map(presentLoanRequest),
+      received: received.map(presentLoanRequest),
+    });
   } catch (error) {
     console.error("Error in loans GET route:", error);
     return NextResponse.json(
@@ -91,7 +99,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Retrieve the item to find the owner
     const item = await prisma.item.findUnique({
       where: { id: itemId },
       select: { userId: true },
@@ -132,11 +139,13 @@ export async function POST(req: NextRequest) {
         status: "PENDING",
       },
       include: {
-        item: true,
+        item: {
+          include: itemWithMetadataInclude,
+        },
       },
     });
 
-    return NextResponse.json(loanRequest);
+    return NextResponse.json(presentLoanRequest(loanRequest));
   } catch (error) {
     console.error("Error in loans POST route:", error);
     return NextResponse.json(
@@ -172,7 +181,6 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Only allow if user is owner of the item or the requester of the loan
     const isOwner = loanRequest.ownerId === auth.user.id;
     const isRequester = loanRequest.requesterId === auth.user.id;
 
@@ -180,7 +188,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Requester can only mark as RETURNED or cancel (PENDING -> REJECTED)
     if (!isOwner && auth.user.role !== "admin") {
       if (status !== "RETURNED" && status !== "REJECTED") {
         return NextResponse.json(
@@ -196,11 +203,13 @@ export async function PATCH(req: NextRequest) {
         status,
       },
       include: {
-        item: true,
+        item: {
+          include: itemWithMetadataInclude,
+        },
       },
     });
 
-    return NextResponse.json(updatedRequest);
+    return NextResponse.json(presentLoanRequest(updatedRequest));
   } catch (error) {
     console.error("Error in loans PATCH route:", error);
     return NextResponse.json(

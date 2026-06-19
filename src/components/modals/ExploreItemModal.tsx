@@ -25,7 +25,7 @@ import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useLocale } from "@/lib/providers/LocaleProvider";
 import { useAccount } from "@/lib/hooks/useAccount";
 import { cn } from "@/lib/utils";
-import { getHeroImage, getCoverImage, getGalleryImages } from "@/lib/itemMedia";
+import { getHeroImage, getGalleryImages } from "@/lib/itemMedia";
 import { getExploreDetailCoverClass } from "@/lib/cardFormat";
 
 interface ExploreItemModalProps {
@@ -107,7 +107,7 @@ export function ExploreItemModal({
   if (!item) return null;
 
   const heroImage = item.backgroundImageUrl || getHeroImage(item);
-  const coverImage = getCoverImage(item);
+  const coverImage = item.imageUrl ?? null;
   const galleryImages = getGalleryImages(item).filter(
     (img) => img.url !== coverImage,
   );

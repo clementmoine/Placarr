@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import { formatMetadataFromStorage } from "@/services/metadata";
-import { getCoverImage } from "@/lib/itemMedia";
+import { presentItemFromStorage } from "@/lib/presentItem";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
 
 export async function GET(req: NextRequest) {
@@ -58,16 +57,7 @@ export async function GET(req: NextRequest) {
       // Format items metadata
       const formattedItems = items.map((item) => {
         if (item.metadata) {
-          const formattedMetadata = formatMetadataFromStorage(item.metadata);
-          return {
-            ...item,
-            imageUrl: getCoverImage({
-              imageUrl: item.imageUrl,
-              metadata: formattedMetadata,
-              shelf: item.shelf,
-            }),
-            metadata: formattedMetadata,
-          };
+          return presentItemFromStorage(item);
         }
         return item;
       });

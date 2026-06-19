@@ -1,4 +1,4 @@
-import { fetchFromScreenScraper } from "../src/services/metadata";
+import { fetchFromScreenScraper } from "../src/services/metadataResolvers";
 
 async function main() {
   console.log("=== CALLING SCREEN SCRAPER FOR WHEELMAN ===");

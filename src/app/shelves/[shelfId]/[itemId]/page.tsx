@@ -49,7 +49,6 @@ import {
 } from "@/lib/api/items";
 import {
   getHeroImage,
-  getCoverImage,
   getGalleryImages,
   getMediaTypeLabel,
 } from "@/lib/itemMedia";
@@ -903,8 +902,8 @@ export default function ItemDetailsPage() {
   }, [item]);
 
   const coverImage = useMemo(() => {
-    return item ? getCoverImage(item) : null;
-  }, [item]);
+    return item?.imageUrl ?? null;
+  }, [item?.imageUrl]);
 
   const galleryImages = useMemo(() => {
     if (!item) return [];
@@ -1363,17 +1362,16 @@ export default function ItemDetailsPage() {
 
                 {/* Key Details Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 max-w-3xl bg-zinc-50/40 dark:bg-zinc-950/10 backdrop-blur-sm border border-border dark:border-zinc-800/40 p-5 rounded-2xl shadow-sm mt-3">
-                  {item?.metadata?.title &&
-                    item.metadata.title !== item.name && (
-                      <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
-                          {t("items.originalTitle")}
-                        </span>
-                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
-                          {item.metadata.title}
-                        </span>
-                      </div>
-                    )}
+                  {item?.storedName && (
+                    <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                        {t("items.originalTitle")}
+                      </span>
+                      <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                        {item.storedName}
+                      </span>
+                    </div>
+                  )}
 
                   {item?.metadata?.authors &&
                     item.metadata.authors.length > 0 && (

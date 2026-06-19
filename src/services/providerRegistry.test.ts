@@ -35,6 +35,21 @@ describe("providerRegistry", () => {
     expect(capabilityCoverage("musics", "ageRating").count).toBe(0);
   });
 
+  it("livres : OpenLibrary et Google Books couvrent description et pages", () => {
+    expect(capabilityCoverage("books", "description").providers).toContain(
+      "openlibrary",
+    );
+    expect(capabilityCoverage("books", "description").providers).toContain(
+      "googlebooks",
+    );
+    expect(capabilityCoverage("books", "pageCount").providers).toContain(
+      "openlibrary",
+    );
+    expect(capabilityCoverage("books", "pageCount").providers).toContain(
+      "googlebooks",
+    );
+  });
+
   it("films : TMDB/OMDb couvrent note ET public conseillé", () => {
     expect(capabilityCoverage("movies", "rating").providers).toContain("tmdb");
     expect(capabilityCoverage("movies", "rating").providers).toContain("omdb");

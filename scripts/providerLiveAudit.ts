@@ -1,19 +1,19 @@
 import axios from "axios";
 
-import { fetchFromAchatMoinsCher } from "@/services/achatMoinsCher";
-import { fetchFromApriloshop } from "@/services/apriloshop";
-import { fetchFromChasseAuxLivres } from "@/services/chasseAuxLivres";
-import { fetchFromFreakxy } from "@/services/freakxy";
-import { fetchFromHowLongToBeat } from "@/services/howLongToBeat";
-import { fetchPricesFromLeDenicheur } from "@/services/leDenicheur";
-import { fetchFromMusicBrainz } from "@/services/musicBrainz";
-import { fetchFromPicClick } from "@/services/picclick";
-import { fetchMetadataFromPriceCharting } from "@/services/priceCharting";
-import { fetchFromSteam } from "@/services/steam";
-import { fetchFromDiscogs } from "@/services/discogs";
-import { createBGGResolver } from "@/services/providers/bggProvider";
-import { createDeezerResolver } from "@/services/providers/deezerProvider";
-import { createOpenLibraryResolver } from "@/services/providers/openLibraryProvider";
+import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
+import { fetchFromApriloshop } from "@/services/providers/apriloshop";
+import { fetchFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
+import { fetchFromFreakxy } from "@/services/providers/freakxy";
+import { fetchFromHowLongToBeat } from "@/services/providers/howlongtobeat";
+import { fetchPricesFromLeDenicheur } from "@/services/providers/ledenicheur";
+import { fetchFromMusicBrainz } from "@/services/providers/musicbrainz";
+import { fetchFromPicClick } from "@/services/providers/picclick";
+import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
+import { fetchFromSteam } from "@/services/providers/steam";
+import { fetchFromDiscogs } from "@/services/providers/discogs";
+import { createBGGResolver } from "@/services/providers/bgg";
+import { createDeezerResolver } from "@/services/providers/deezer";
+import { createOpenLibraryResolver } from "@/services/providers/openlibrary";
 
 const fetchFromOpenLibrary = createOpenLibraryResolver();
 const fetchFromDeezer = createDeezerResolver();

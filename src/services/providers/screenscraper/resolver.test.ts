@@ -4,6 +4,7 @@ import {
   buildScreenScraperSearchQueries,
   createScreenScraperResolver,
   isPlausibleScreenScraperFallbackResult,
+  parseScreenScraperMediaUrl,
   pickSSCover,
   shouldUseCachedScreenScraperSuggestions,
   type SSMedia,
@@ -107,7 +108,7 @@ describe("isPlausibleScreenScraperFallbackResult", () => {
 });
 
 describe("shouldUseCachedScreenScraperSuggestions", () => {
-  it("allows cache fallback for short/ambiguous queries only", () => {
+  it("allows cache fallback for franchise-style queries", () => {
     const cleanSearchQuery = (value: string) => value;
 
     expect(
@@ -118,10 +119,20 @@ describe("shouldUseCachedScreenScraperSuggestions", () => {
     ).toBe(true);
     expect(
       shouldUseCachedScreenScraperSuggestions(
-        "Medal Of Honor En Premiere Ligne",
+        "Syphon Filter Dark Mirror",
         cleanSearchQuery,
       ),
-    ).toBe(false);
+    ).toBe(true);
+  });
+});
+
+describe("parseScreenScraperMediaUrl", () => {
+  it("extracts game and system ids from media urls", () => {
+    expect(
+      parseScreenScraperMediaUrl(
+        "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=58&jeuid=22693&media=box-2D(eu)",
+      ),
+    ).toEqual({ gameId: 22693, systemId: 58 });
   });
 });
 
@@ -156,5 +167,15 @@ describe("buildScreenScraperSearchQueries", () => {
     );
 
     expect(queries[0]).toBe("New Super Mario Bros. Wii");
+  });
+
+  it("adds the base franchise title before subtitle for colon titles", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "Syphon Filter : Dark Mirror",
+      (value) => value,
+    );
+
+    expect(queries).toContain("Syphon Filter");
+    expect(queries).toContain("Dark Mirror");
   });
 });

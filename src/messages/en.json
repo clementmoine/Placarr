@@ -88,6 +88,7 @@
     "shelves": "Shelves",
     "explore": "Explore",
     "loans": "My Loans",
+    "items": "Items",
     "profile": "Profile",
     "status": "Status",
     "admin": "Administration",
@@ -241,6 +242,23 @@
     "lastUpdate": "Last update",
     "artworksAndScreenshots": "Artworks & Screenshots",
     "searchResults": "Search Results",
+    "collection": {
+      "subtitle": "All your games, movies, music, and board games in one place — excluding your library.",
+      "sortBy": "Sort by",
+      "estimatedValue": "Estimated value",
+      "noItems": "No items found outside your library.",
+      "filters": {
+        "all": "All"
+      },
+      "sort": {
+        "nameAsc": "Name (A → Z)",
+        "nameDesc": "Name (Z → A)",
+        "addedDesc": "Recently added",
+        "addedAsc": "Oldest added",
+        "releaseDesc": "Recent release",
+        "releaseAsc": "Oldest release"
+      }
+    },
     "associated": "Associated",
     "otherItems": "Other items on this shelf",
     "viewAll": "View all",

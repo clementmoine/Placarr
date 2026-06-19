@@ -136,6 +136,25 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
 
     expect(h.item.findMany.mock.calls[0][0].where.userId).toBeUndefined();
   });
+
+  it("filtre par types d'étagère exclus ou inclus", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findMany.mockResolvedValue([]);
+
+    await GET(get("/api/items?excludeShelfTypes=books&shelfTypes=games,movies"));
+
+    expect(h.item.findMany.mock.calls[0][0].where.shelf).toEqual({
+      type: { in: ["games", "movies"] },
+    });
+
+    h.item.findMany.mockClear();
+
+    await GET(get("/api/items?excludeShelfTypes=books"));
+
+    expect(h.item.findMany.mock.calls[0][0].where.shelf).toEqual({
+      type: { notIn: ["books"] },
+    });
+  });
 });
 
 describe("POST /api/items — autorisation", () => {

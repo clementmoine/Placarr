@@ -197,6 +197,88 @@ function hasCachedCandidateSystemConflict(
   return !!candidateSystemId && candidateSystemId !== requestedSystemId;
 }
 
+export function parseScreenScraperMediaUrl(url: string): {
+  gameId?: number;
+  systemId?: number;
+} | null {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("screenscraper.fr")) return null;
+    const gameId = Number(parsed.searchParams.get("jeuid"));
+    const systemId = Number(parsed.searchParams.get("systemeid"));
+    return {
+      gameId: Number.isFinite(gameId) && gameId > 0 ? gameId : undefined,
+      systemId: Number.isFinite(systemId) && systemId > 0 ? systemId : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isScreenScraperQuotaError(error: unknown): boolean {
+  return (
+    axios.isAxiosError(error) &&
+    (error.response?.status === 430 || error.response?.status === 429)
+  );
+}
+
+async function fetchScreenScraperGameById(
+  baseParams: Record<string, string>,
+  gameId: number,
+  credentials: ReturnType<typeof getScreenScraperEnv>,
+): Promise<SSGame | null> {
+  const infoRes = await axios.get<{ response: { jeu: SSGame } }>(
+    "https://api.screenscraper.fr/api2/jeuInfos.php",
+    {
+      params: {
+        ...baseParams,
+        crc: "",
+        md5: "",
+        sha1: "",
+        systemeid: "0",
+        romtype: "rom",
+        romnom: "",
+        romtaille: "",
+        gameid: String(gameId),
+        ...getScreenScraperDebugParams(credentials),
+      },
+      timeout: 8000,
+    },
+  );
+  const jeu = infoRes.data?.response?.jeu;
+  return jeu?.id ? jeu : null;
+}
+
+async function resolveScreenScraperGameIdFromBarcodeCache(
+  barcode: string,
+  requestedSystemId?: number,
+): Promise<{ gameId: number; systemId?: number } | null> {
+  const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
+  if (!cleanedBarcode) return null;
+
+  const cached = await prisma.barcodeCache.findUnique({
+    where: { barcode: cleanedBarcode },
+    include: { rawNames: true },
+  });
+  if (!cached?.rawNames.length) return null;
+
+  for (const rawName of cached.rawNames) {
+    if (!rawName.coverUrl) continue;
+    const parsed = parseScreenScraperMediaUrl(rawName.coverUrl);
+    if (!parsed?.gameId) continue;
+    if (
+      requestedSystemId &&
+      parsed.systemId &&
+      parsed.systemId !== requestedSystemId
+    ) {
+      continue;
+    }
+    return { gameId: parsed.gameId, systemId: parsed.systemId };
+  }
+
+  return null;
+}
+
 function normalizeScreenScraperSearchQuery(value: string): string {
   return value.replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim();
 }
@@ -301,7 +383,7 @@ export function shouldUseCachedScreenScraperSuggestions(
     cleanedName,
     cleanSearchQuery,
   ).size;
-  return tokenCount <= 2;
+  return tokenCount <= 4;
 }
 
 export function buildScreenScraperSearchQueries(
@@ -319,6 +401,11 @@ export function buildScreenScraperSearchQueries(
         `${licensedEdition[1]} - ${licensedEdition[2]}`,
         `${licensedEdition[1]} : ${licensedEdition[2]}`,
       );
+    }
+
+    const subtitleSplit = base.match(/^([^:–—-]+?)\s*[:\-–—]\s*(.+)$/);
+    if (subtitleSplit) {
+      variants.push(subtitleSplit[1].trim(), subtitleSplit[2].trim());
     }
 
     variants.push(
@@ -433,43 +520,80 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         systemeid = detectSystemIdFromName(name);
       }
 
-      if (barcode && systemeid !== undefined && systemeid > 0) {
-        const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
-        if (cleanedBarcode.length > 0) {
+      if (barcode) {
+        const cachedGame = await resolveScreenScraperGameIdFromBarcodeCache(
+          barcode,
+          systemeid,
+        );
+        if (cachedGame) {
           try {
-            const res = await axios.get<{ response: { jeu: SSGame } }>(
-              "https://api.screenscraper.fr/api2/jeuInfos.php",
-              {
-                params: {
-                  ...baseParams,
-                  crc: "",
-                  md5: "",
-                  sha1: "",
-                  systemeid: String(systemeid),
-                  romtype: "rom",
-                  romnom: cleanedBarcode,
-                  romtaille: "",
-                  ...getScreenScraperDebugParams(credentials),
-                },
-                timeout: 8000,
-              },
+            const jeu = await fetchScreenScraperGameById(
+              baseParams,
+              cachedGame.gameId,
+              credentials,
             );
-            const jeu = res.data?.response?.jeu;
-            if (jeu && jeu.id) {
+            if (jeu) {
               gameData = jeu;
-              resolvedSystemId = systemeid;
+              resolvedSystemId =
+                cachedGame.systemId ??
+                (Number(jeu.systeme?.id) || systemeid);
               console.info(
-                `[ScreenScraper] Successfully found game by barcode "${cleanedBarcode}": "${pickSSTitle(jeu.noms) || name || ""}"`,
+                `[ScreenScraper] Resolved game ${cachedGame.gameId} from barcode cache for "${barcode}"`,
               );
             }
           } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.status === 404) {
-              console.info(
-                `[ScreenScraper] No direct barcode match for "${cleanedBarcode}", trying name fallback`,
+            if (isScreenScraperQuotaError(error)) {
+              console.warn(
+                `[ScreenScraper] Quota exceeded while loading cached game ${cachedGame.gameId}`,
               );
             } else {
               console.error(
-                `[ScreenScraper] Error looking up barcode "${cleanedBarcode}":`,
+                `[ScreenScraper] Error loading cached game ${cachedGame.gameId}:`,
+                error,
+              );
+            }
+          }
+        }
+      }
+
+      if (!gameData && barcode && systemeid !== undefined && systemeid > 0) {
+        const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
+        if (cleanedBarcode.length > 0) {
+          try {
+            const barcodeResults = await searchScreenScraperGames(
+              baseParams,
+              cleanedBarcode,
+              systemeid,
+            );
+            if (barcodeResults.length === 1 && barcodeResults[0]?.id) {
+              const jeu = await fetchScreenScraperGameById(
+                baseParams,
+                Number(barcodeResults[0].id),
+                credentials,
+              );
+              if (jeu) {
+                gameData = jeu;
+                resolvedSystemId = systemeid;
+                console.info(
+                  `[ScreenScraper] Successfully found game by barcode search "${cleanedBarcode}"`,
+                );
+              }
+            }
+          } catch (error) {
+            if (isScreenScraperQuotaError(error)) {
+              console.warn(
+                `[ScreenScraper] Quota exceeded during barcode search for "${cleanedBarcode}"`,
+              );
+            } else if (
+              axios.isAxiosError(error) &&
+              error.response?.status === 404
+            ) {
+              console.info(
+                `[ScreenScraper] No barcode search match for "${cleanedBarcode}"`,
+              );
+            } else {
+              console.error(
+                `[ScreenScraper] Error searching barcode "${cleanedBarcode}":`,
                 error,
               );
             }
@@ -686,27 +810,13 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           return null;
         }
 
-        const infoRes = await axios.get<{ response: { jeu: SSGame } }>(
-          "https://api.screenscraper.fr/api2/jeuInfos.php",
-          {
-            params: {
-              ...baseParams,
-              crc: "",
-              md5: "",
-              sha1: "",
-              systemeid: "0",
-              romtype: "rom",
-              romnom: "",
-              romtaille: "",
-              gameid: String(bestId),
-              ...getScreenScraperDebugParams(credentials),
-            },
-            timeout: 8000,
-          },
+        const infoRes = await fetchScreenScraperGameById(
+          baseParams,
+          Number(bestId),
+          credentials,
         );
-        const jeu = infoRes.data?.response?.jeu;
-        if (jeu && jeu.id) {
-          gameData = jeu;
+        if (infoRes) {
+          gameData = infoRes;
           resolvedSystemId = systemeid;
         }
       }

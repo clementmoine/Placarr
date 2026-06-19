@@ -58,9 +58,15 @@ export const deleteItem = (id: Item["id"]): Promise<void> => {
   return axios.delete(url.toString()).then(() => {});
 };
 
+export type GetItemsOptions = {
+  excludeShelfTypes?: string[];
+  shelfTypes?: string[];
+};
+
 export const getItems = (
   search?: string | null,
   shelfId?: string | null,
+  options?: GetItemsOptions,
 ): Promise<ItemWithMetadata[]> => {
   const url = new URL("/api/items", window.location.origin);
   if (search && search.length >= 1) {
@@ -68,6 +74,15 @@ export const getItems = (
   }
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
+  }
+  if (options?.excludeShelfTypes?.length) {
+    url.searchParams.set(
+      "excludeShelfTypes",
+      options.excludeShelfTypes.join(","),
+    );
+  }
+  if (options?.shelfTypes?.length) {
+    url.searchParams.set("shelfTypes", options.shelfTypes.join(","));
   }
   return axios.get(url.toString()).then((response) => response.data);
 };

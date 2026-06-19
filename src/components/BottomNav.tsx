@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LibraryBig, Compass, Repeat } from "lucide-react";
+import { LibraryBig, Compass, Repeat, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/providers/LocaleProvider";
 import { useAccount } from "@/lib/hooks/useAccount";
@@ -19,6 +19,11 @@ export function BottomNav() {
       href: "/shelves",
       label: t("navigation.shelves") || "Étagères",
       icon: LibraryBig,
+    },
+    {
+      href: "/items",
+      label: t("navigation.items") || "Objets",
+      icon: LayoutGrid,
     },
     {
       href: "/explore",
@@ -43,7 +48,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="relative flex flex-col items-center justify-center w-20 h-full"
+            className="relative flex flex-col items-center justify-center w-16 h-full"
           >
             <div
               className={`flex flex-col items-center gap-1 transition-all duration-300 ${isActive ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground"}`}

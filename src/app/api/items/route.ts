@@ -23,6 +23,16 @@ export async function GET(req: NextRequest) {
   const id = searchParams.get("id");
   const q = searchParams.get("q");
   const shelfId = searchParams.get("shelfId");
+  const excludeShelfTypes = searchParams
+    .get("excludeShelfTypes")
+    ?.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const includeShelfTypes = searchParams
+    .get("shelfTypes")
+    ?.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
   const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
 
   if (id) {
@@ -70,6 +80,12 @@ export async function GET(req: NextRequest) {
 
   if (shelfId) {
     whereClause.shelfId = await resolveShelfId(shelfId, auth.user.id);
+  }
+
+  if (excludeShelfTypes?.length || includeShelfTypes?.length) {
+    whereClause.shelf = includeShelfTypes?.length
+      ? { type: { in: includeShelfTypes } }
+      : { type: { notIn: excludeShelfTypes! } };
   }
 
   const items = await prisma.item.findMany({

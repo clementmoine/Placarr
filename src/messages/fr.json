@@ -88,6 +88,7 @@
     "shelves": "Étagères",
     "explore": "Exploration",
     "loans": "Mes Prêts",
+    "items": "Objets",
     "profile": "Profil",
     "status": "Statut",
     "admin": "Administration",
@@ -241,6 +242,23 @@
     "lastUpdate": "Dernière mise à jour",
     "artworksAndScreenshots": "Illustrations & Captures",
     "searchResults": "Résultats de recherche",
+    "collection": {
+      "subtitle": "Tous vos jeux, films, musiques et jeux de société réunis — hors bibliothèque.",
+      "sortBy": "Trier par",
+      "estimatedValue": "Valeur estimée",
+      "noItems": "Aucun objet trouvé hors bibliothèque.",
+      "filters": {
+        "all": "Tout"
+      },
+      "sort": {
+        "nameAsc": "Nom (A → Z)",
+        "nameDesc": "Nom (Z → A)",
+        "addedDesc": "Ajout récent",
+        "addedAsc": "Ajout ancien",
+        "releaseDesc": "Sortie récente",
+        "releaseAsc": "Sortie ancienne"
+      }
+    },
     "associated": "Associé",
     "otherItems": "Autres objets sur cette étagère",
     "viewAll": "Tout voir",

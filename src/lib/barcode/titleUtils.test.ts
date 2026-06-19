@@ -5,6 +5,7 @@ import {
   cleanTitleForDisplay,
   filterPlatformRedundancies,
   isListingDiscardable,
+  moveTrailingSortArticleToFront,
   versionProvider,
 } from "@/lib/barcode/titleUtils";
 import { isCanonicalProvider } from "@/services/providerEvidence";
@@ -38,6 +39,40 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
 
   it("gère les entrées vides sans planter", () => {
     expect(cleanTitleForDisplay("")).toBe("");
+  });
+
+  it("réaffiche les titres de tri avec l'article en tête", () => {
+    expect(cleanTitleForDisplay("Dwarves, The")).toBe("The Dwarves");
+    expect(cleanTitleForDisplay("Last Guardian, The")).toBe(
+      "The Last Guardian",
+    );
+    expect(cleanTitleForDisplay("Hat in Time, A")).toBe("A Hat in Time");
+  });
+
+  it("nettoie les annonces escape game Unlock", () => {
+    expect(
+      cleanTitleForDisplay(
+        "Jeu d'escape game Asmodee Unlock Short Adventures Red Mask",
+      ),
+    ).toBe("Unlock Short Adventures Red Mask");
+    expect(
+      cleanTitleForDisplay(
+        "Asmodee Unlock Short Adventures Red Mask Space Cowboys Jeu D Enquete Escape Game",
+      ),
+    ).toBe("Unlock Short Adventures Red Mask");
+  });
+});
+
+describe("moveTrailingSortArticleToFront", () => {
+  it("détecte les articles anglais placés en fin de titre", () => {
+    expect(moveTrailingSortArticleToFront("Dwarves, The")).toBe("The Dwarves");
+    expect(moveTrailingSortArticleToFront("Adventure, An")).toBe(
+      "An Adventure",
+    );
+  });
+
+  it("laisse les titres normaux inchangés", () => {
+    expect(moveTrailingSortArticleToFront("The Dwarves")).toBe("The Dwarves");
   });
 });
 

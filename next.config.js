@@ -71,7 +71,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "neoclone.screenscraper.fr",
+        hostname: "**.screenscraper.fr",
       },
       {
         protocol: "https",
@@ -96,6 +96,19 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "cdn2.steamgriddb.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.pji.nu",
+      },
+      {
+        protocol: "https",
+        hostname: "**.prisjakt.nu",
+      },
+      {
+        protocol: "https",
+        hostname: "i.discogs.com",
+        pathname: "/**",
       },
     ],
   },

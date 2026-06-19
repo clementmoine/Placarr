@@ -155,17 +155,25 @@ function buildTimeToBeatFacts(
     ? `How Long to Beat · ${platformData.platform}`
     : "How Long to Beat";
   const main = platformData?.comp_main || entry.comp_main || null;
-  const completion = platformData
-    ? platformData.comp_100 || null
-    : entry.comp_100 || null;
-  const fallback = platformData
-    ? platformData.comp_all || platformData.comp_plus || null
-    : entry.comp_all || entry.comp_plus || null;
+  const mainSource = platformData?.comp_main ? source : "How Long to Beat";
+  const completion = platformData?.comp_100 || entry.comp_100 || null;
+  const completionSource = platformData?.comp_100 ? source : "How Long to Beat";
+  const fallback =
+    platformData?.comp_all ||
+    platformData?.comp_plus ||
+    entry.comp_all ||
+    entry.comp_plus ||
+    null;
+  const fallbackSource =
+    platformData?.comp_all || platformData?.comp_plus
+      ? source
+      : "How Long to Beat";
   const pushTime = (
     kind: string,
     label: string,
     value: number | null,
     priority: number,
+    factSource = source,
   ) => {
     const formatted = formatSecondsAsHours(value);
     if (!formatted) return false;
@@ -174,18 +182,24 @@ function buildTimeToBeatFacts(
       label,
       value: formatted,
       url: hltbLink,
-      source,
+      source: factSource,
       confidence,
       priority,
     });
     return true;
   };
 
-  const hasMainDuration = pushTime("duration", "Durée", main, 86);
-  pushTime("completion-time", "Complétion", completion, 82);
+  const hasMainDuration = pushTime("duration", "Durée", main, 86, mainSource);
+  pushTime("completion-time", "Complétion", completion, 82, completionSource);
 
   if (!hasMainDuration) {
-    pushTime("duration", "Durée", fallback || completion, 80);
+    pushTime(
+      "duration",
+      "Durée",
+      fallback || completion,
+      80,
+      fallback ? fallbackSource : completionSource,
+    );
   }
 
   const reviewScore = formatReviewScore(entry.review_score);

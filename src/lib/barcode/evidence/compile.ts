@@ -170,7 +170,7 @@ export function scoreTypeCandidate(
   if (candidateType === "books" && isBookBarcode) score += 0.45;
   if (candidateType === "musics" && isAudioBarcode) score += 0.3;
   if (candidateType === "games" && (result.platformKey || "").length > 0)
-    score += 0.04;
+    score += 0.25;
 
   return score;
 }

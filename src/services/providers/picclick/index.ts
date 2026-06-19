@@ -1,9 +1,9 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import { listProbe } from "@/lib/mappingProbeUtils";
 
-import { fetchFromPicClick } from "./fetch";
+import { fetchFromPicClick, fetchPricesFromPicClick } from "./fetch";
 
-export { fetchFromPicClick };
+export { fetchFromPicClick, fetchPricesFromPicClick };
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",

@@ -18,6 +18,7 @@ import {
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { createBarcodeLookupDeps } from "@/services/providerBarcodeDeps";
 import { createBarcodeLookupTaskBuilders } from "@/services/providerBarcode";
+import type { BarcodeCache } from "@prisma/client";
 
 export {
   areLikelySameProduct,
@@ -31,6 +32,11 @@ export { isCanonicalProvider } from "@/services/providerEvidence";
 const barcodeLookupTaskBuilders = createBarcodeLookupTaskBuilders(
   createBarcodeLookupDeps(),
 );
+
+type BarcodeCachePriceSnapshot = Pick<
+  BarcodeCache,
+  "priceLastUpdated" | "priceNew" | "priceUsed" | "priceUsedCIB"
+>;
 
 export type BarcodeResolveResult = {
   provider: string | null;
@@ -48,36 +54,62 @@ async function cacheBarcodeResult(
   cleanedBarcode: string,
   res: CompiledResult,
   shelfType: string,
+  previousCache?: BarcodeCachePriceSnapshot | null,
 ) {
   try {
-    await prisma.barcodeCache.deleteMany({
-      where: { barcode: cleanedBarcode },
+    const priceSnapshot =
+      previousCache ??
+      (await prisma.barcodeCache.findUnique({
+        where: { barcode: cleanedBarcode },
+        select: {
+          priceLastUpdated: true,
+          priceNew: true,
+          priceUsed: true,
+          priceUsedCIB: true,
+        },
+      }));
+    const rawNames = uniqueClean([res.cleanName, ...(res.suggestions || [])], {
+      preservePlatformSuffix: shelfType === "games",
+    }).map((value) => {
+      const matchingMatch = res.matches.find(
+        (match) =>
+          match.suggestions.some(
+            (suggestion) =>
+              suggestion.toLowerCase().trim() === value.toLowerCase().trim(),
+          ) || match.name.toLowerCase().trim() === value.toLowerCase().trim(),
+      );
+      return {
+        value,
+        coverUrl: matchingMatch?.coverUrl || null,
+      };
     });
 
-    await prisma.barcodeCache.create({
-      data: {
+    await prisma.barcodeCache.upsert({
+      where: { barcode: cleanedBarcode },
+      create: {
         barcode: cleanedBarcode,
         provider: versionProvider(res.provider),
         shelfType,
         platformKey: res.platformKey || null,
+        priceLastUpdated: priceSnapshot?.priceLastUpdated ?? null,
+        priceNew: priceSnapshot?.priceNew ?? null,
+        priceUsed: priceSnapshot?.priceUsed ?? null,
+        priceUsedCIB: priceSnapshot?.priceUsedCIB ?? null,
         rawNames: {
-          create: uniqueClean([res.cleanName, ...(res.suggestions || [])], {
-            preservePlatformSuffix: shelfType === "games",
-          }).map((value) => {
-            const matchingMatch = res.matches.find(
-              (match) =>
-                match.suggestions.some(
-                  (suggestion) =>
-                    suggestion.toLowerCase().trim() ===
-                    value.toLowerCase().trim(),
-                ) ||
-                match.name.toLowerCase().trim() === value.toLowerCase().trim(),
-            );
-            return {
-              value,
-              coverUrl: matchingMatch?.coverUrl || null,
-            };
-          }),
+          create: rawNames,
+        },
+      },
+      update: {
+        provider: versionProvider(res.provider),
+        shelfType,
+        platformKey: res.platformKey || null,
+        priceLastUpdated: priceSnapshot?.priceLastUpdated ?? null,
+        priceNew: priceSnapshot?.priceNew ?? null,
+        priceUsed: priceSnapshot?.priceUsed ?? null,
+        priceUsedCIB: priceSnapshot?.priceUsedCIB ?? null,
+        rawNames: {
+          deleteMany: {},
+          create: rawNames,
         },
       },
     });
@@ -141,9 +173,13 @@ export async function resolveBarcode(
     include: { rawNames: true },
   });
 
+  const cachedTypeMismatches =
+    !!type && !!cachedResult?.shelfType && cachedResult.shelfType !== type;
   const shouldBypassCache =
     !!cachedResult &&
-    (shouldRefresh || !cachedResult.provider.includes(BARCODE_CACHE_VERSION));
+    (shouldRefresh ||
+      cachedTypeMismatches ||
+      !cachedResult.provider.includes(BARCODE_CACHE_VERSION));
 
   if (cachedResult && cachedResult.rawNames.length > 0 && !shouldBypassCache) {
     return buildCachedBarcodePayload(cachedResult, type, cleanedBarcode);
@@ -167,7 +203,12 @@ export async function resolveBarcode(
   );
 
   if (selectedResult && selectedType) {
-    await cacheBarcodeResult(cleanedBarcode, selectedResult, selectedType);
+    await cacheBarcodeResult(
+      cleanedBarcode,
+      selectedResult,
+      selectedType,
+      cachedResult,
+    );
     const cleaned = cleanCompiledResultForResponse(
       selectedResult,
       selectedType,
@@ -181,7 +222,7 @@ export async function resolveBarcode(
   }
 
   if (cachedResult && cachedResult.rawNames.length > 0 && shouldBypassCache) {
-    if (shouldRefresh) {
+    if (shouldRefresh || cachedTypeMismatches) {
       return {
         provider: null,
         rawNames: [],
@@ -190,7 +231,8 @@ export async function resolveBarcode(
         matches: [],
         shelfType: type || null,
         platformKey: null,
-        refreshed: true,
+        refreshed: shouldRefresh || undefined,
+        staleCache: cachedTypeMismatches || undefined,
       };
     }
 

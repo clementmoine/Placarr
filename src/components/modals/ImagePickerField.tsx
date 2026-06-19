@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { isUrl } from "@/lib/isUrl";
 import { toast } from "sonner";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { RemoteImage } from "@/components/RemoteImage";
 
 interface ImagePickerFieldProps {
   value: any;
@@ -93,21 +93,20 @@ export function ImagePickerField({
         {/* Left: Preview Card */}
         <div
           className={cn(
-            "relative group/cover w-28 rounded-xl overflow-hidden border border-border bg-zinc-950/10 flex flex-col items-center justify-center shrink-0 shadow-sm transition-all duration-300",
+            "relative group/cover w-28 rounded-xl overflow-hidden border border-border flex flex-col items-center justify-center shrink-0 shadow-sm transition-all duration-300",
+            hasImage ? "bg-white" : "bg-zinc-950/10",
             !aspectRatio && "aspect-[1/1.4]",
           )}
           style={{ backgroundColor: previewBgColor, aspectRatio }}
         >
           {hasImage ? (
             <>
-              <Image
+              <RemoteImage
                 src={previewSrc}
                 alt="Preview"
-                width={512}
-                height={512}
                 className={cn(
                   "w-full h-full",
-                  contain ? "object-contain p-2" : "object-cover",
+                  contain ? "object-contain" : "object-cover",
                 )}
               />
               <button
@@ -220,7 +219,7 @@ export function ImagePickerField({
                       type="button"
                       onClick={() => handleSelectSuggestion(img.url)}
                       className={cn(
-                        "relative w-12 rounded-lg overflow-hidden border-2 bg-zinc-950/10 cursor-pointer transition-all duration-200 shrink-0",
+                        "relative w-12 rounded-lg overflow-hidden border-2 bg-white cursor-pointer transition-all duration-200 shrink-0",
                         !aspectRatio && "aspect-[1/1.4]",
                         isSelected
                           ? "border-amber-600 dark:border-amber-500 shadow-sm ring-1 ring-amber-600/30"
@@ -228,14 +227,12 @@ export function ImagePickerField({
                       )}
                       style={{ aspectRatio }}
                     >
-                      <Image
+                      <RemoteImage
                         src={img.url}
                         alt={img.label}
-                        width={512}
-                        height={512}
                         className={cn(
                           "w-full h-full",
-                          contain ? "object-contain p-1" : "object-cover",
+                          contain ? "object-contain" : "object-cover",
                         )}
                       />
 

@@ -164,10 +164,13 @@ export async function fetchFromChasseAuxLivres(
 }
 
 export async function fetchPricesFromChasseAuxLivres(
-  barcode: string,
+  query: string,
+  catalog = "fr",
 ): Promise<{ priceNew?: number; priceUsed?: number } | null> {
-  const catalog = "fr"; // default catalog for books/movies/boardgames
-  const searchUrl = `https://www.chasse-aux-livres.fr/search?query=${barcode}&catalog=${catalog}`;
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return null;
+
+  const searchUrl = `https://www.chasse-aux-livres.fr/search?query=${encodeURIComponent(trimmedQuery)}&catalog=${catalog}`;
 
   const headers = {
     "User-Agent":
@@ -185,7 +188,7 @@ export async function fetchPricesFromChasseAuxLivres(
     const hashMatch = html.match(/data-hash="([^"]+)"/);
     if (!hashMatch) {
       console.warn(
-        `[ChasseAuxLivres] Prices lookup: Could not find data-hash for barcode ${barcode}`,
+        `[ChasseAuxLivres] Prices lookup: Could not find data-hash for query ${trimmedQuery}`,
       );
       return null;
     }
@@ -198,7 +201,7 @@ export async function fetchPricesFromChasseAuxLivres(
 
     if (!data.redir) {
       console.warn(
-        `[ChasseAuxLivres] Prices lookup: No redirect URL found for barcode ${barcode}`,
+        `[ChasseAuxLivres] Prices lookup: No redirect URL found for query ${trimmedQuery}`,
       );
       return null;
     }
@@ -244,7 +247,7 @@ export async function fetchPricesFromChasseAuxLivres(
     let params = extractParams(redirHtml);
     if (!params.asin) {
       console.warn(
-        `[ChasseAuxLivres] Prices lookup: Could not parse product details for barcode ${barcode}`,
+        `[ChasseAuxLivres] Prices lookup: Could not parse product details for query ${trimmedQuery}`,
       );
       return null;
     }
@@ -282,7 +285,7 @@ export async function fetchPricesFromChasseAuxLivres(
           params = extractParams(redirHtml);
         } else {
           console.warn(
-            `[ChasseAuxLivres] Maximum retries reached for barcode ${barcode}`,
+            `[ChasseAuxLivres] Maximum retries reached for query ${trimmedQuery}`,
           );
         }
       } else {
@@ -293,7 +296,7 @@ export async function fetchPricesFromChasseAuxLivres(
 
     if (!offersData) {
       console.warn(
-        `[ChasseAuxLivres] No offers returned for barcode ${barcode}`,
+        `[ChasseAuxLivres] No offers returned for query ${trimmedQuery}`,
       );
       return null;
     }
@@ -323,7 +326,7 @@ export async function fetchPricesFromChasseAuxLivres(
     return Object.keys(result).length > 0 ? result : null;
   } catch (error: any) {
     console.error(
-      `[ChasseAuxLivres] Error fetching prices for barcode ${barcode}:`,
+      `[ChasseAuxLivres] Error fetching prices for query ${trimmedQuery}:`,
       error.message,
     );
     return null;

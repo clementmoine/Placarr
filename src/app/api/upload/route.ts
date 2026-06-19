@@ -3,6 +3,7 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { trimLightImageMargins } from "@/lib/server/imageTrim";
 
 // Allowed MIME types for images
 const ALLOWED_MIMETYPES = [
@@ -73,11 +74,28 @@ export async function POST(req: NextRequest) {
 
     // Write file to uploads directory
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const filePath = join(uploadsDir, filename);
-    await writeFile(filePath, buffer);
+    const originalBuffer = Buffer.from(bytes);
+    const originalFilePath = join(uploadsDir, filename);
+    await writeFile(originalFilePath, originalBuffer);
 
-    return NextResponse.json({ url: relativePath });
+    const croppedBuffer = await trimLightImageMargins(originalBuffer, {
+      minMarginPixels: 30,
+    });
+
+    let finalRelativePath = relativePath;
+    if (croppedBuffer !== originalBuffer) {
+      const ext = extension;
+      const baseName = filename.substring(
+        0,
+        filename.length - (ext.length + 1),
+      );
+      const cropFilename = `${baseName}_crop.${ext}`;
+      const cropFilePath = join(uploadsDir, cropFilename);
+      await writeFile(cropFilePath, croppedBuffer);
+      finalRelativePath = `/uploads/${cropFilename}`;
+    }
+
+    return NextResponse.json({ url: finalRelativePath });
   } catch (error) {
     console.error("Error in upload POST request:", error);
     return NextResponse.json(

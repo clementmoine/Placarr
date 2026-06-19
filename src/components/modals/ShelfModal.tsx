@@ -335,14 +335,26 @@ export function ShelfModal({
                         <SelectItem value="square">
                           {t("shelves.cardFormats.square")}
                         </SelectItem>
+                        <SelectItem value="ds">
+                          {t("shelves.cardFormats.ds")}
+                        </SelectItem>
                         <SelectItem value="bluray">
                           {t("shelves.cardFormats.bluray")}
                         </SelectItem>
                         <SelectItem value="dvd">
                           {t("shelves.cardFormats.dvd")}
                         </SelectItem>
+                        <SelectItem value="book">
+                          {t("shelves.cardFormats.book")}
+                        </SelectItem>
                         <SelectItem value="switch">
                           {t("shelves.cardFormats.switch")}
+                        </SelectItem>
+                        <SelectItem value="psp">
+                          {t("shelves.cardFormats.psp")}
+                        </SelectItem>
+                        <SelectItem value="vhs">
+                          {t("shelves.cardFormats.vhs")}
                         </SelectItem>
                         <SelectItem value="landscape_retro">
                           {t("shelves.cardFormats.landscape_retro")}

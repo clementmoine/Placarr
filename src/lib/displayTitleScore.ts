@@ -4,10 +4,14 @@ export function getRepresentativeScore(name: string, priority: number): number {
   let score = priority * 1000;
   const normalized = normalizeForTokens(name);
   const listingNoise =
-    /\b(jeux?\s+video|vintage|old|pal|ntsc|scelle|scellé|blister|boite|boîte|livret|notice|complet|complete|fonctionnel|tested|teste|testé|tbe|hs|condizioni|multilingua|originale|vip|gratte|gratté)\b/i;
+    /\b(jeux?\s+video|vintage|old|pal|ntsc|scelle|scellé|blister|boite|boîte|livret|notice|complet|complete|fonctionnel|tested|teste|testé|tbe|hs|condizioni|multilingua|originale|vip|gratte|gratté|escape\s+game|jeu\s+d\s*enquete|space\s+cowboys|scunl[a-z0-9]+)\b/i;
 
   if (name.includes(":") || name.includes(" - ")) {
     score += 100;
+  }
+
+  if (/![\s!]/.test(name) || /unlock!/i.test(name)) {
+    score += 80;
   }
 
   if (name.includes("&")) {
@@ -76,6 +80,12 @@ export function scoreDisplayTitle(name: string, isCanonical = false): number {
     score -= 120;
   }
 
+  // CJK characters penalty (Japanese, Chinese, Korean)
+  const hasCjk = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/.test(name);
+  if (hasCjk) {
+    score -= 200;
+  }
+
   return score;
 }
 
@@ -132,6 +142,12 @@ export function scoreMetadataDisplayTitle(title: string): number {
     )
   ) {
     score -= 120;
+  }
+
+  // CJK characters penalty (Japanese, Chinese, Korean)
+  const hasCjk = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/.test(title);
+  if (hasCjk) {
+    score -= 200;
   }
 
   return score;

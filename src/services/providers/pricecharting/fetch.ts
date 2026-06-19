@@ -408,6 +408,12 @@ export function parsePriceChartingDetailHtml(
       coverDivMatch[1].match(/src="([^"]*)"/i);
     if (imgMatch) {
       coverUrl = imgMatch[1];
+      if (
+        coverUrl &&
+        (coverUrl.includes("cdn.pji.nu") || coverUrl.includes("prisjakt.nu"))
+      ) {
+        coverUrl = coverUrl.replace(/\.(jpe?g|png|webp|gif|svg)\?.*$/i, ".$1");
+      }
     }
   }
 

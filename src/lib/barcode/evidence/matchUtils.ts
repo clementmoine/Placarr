@@ -196,18 +196,36 @@ export function pickPreferredClusterDisplayName(
     return !validCandidates.some(
       (other) =>
         other.name !== candidate.name &&
-        isStrictTitleSubset(candidate.name, other.name),
+        isStrictTitleSubset(other.name, candidate.name) &&
+        scoreDisplayTitle(other.name, other.isCanonical) >=
+          scoreDisplayTitle(candidate.name, candidate.isCanonical) - 40,
     );
   });
   const displayCandidates =
     specificCandidates.length > 0 ? specificCandidates : validCandidates;
 
-  return (
-    displayCandidates.sort((a, b) => {
-      const scoreA = scoreDisplayTitle(a.name, a.isCanonical);
-      const scoreB = scoreDisplayTitle(b.name, b.isCanonical);
-      if (scoreA !== scoreB) return scoreB - scoreA;
-      return a.name.length - b.name.length;
-    })[0]?.name || representative
-  );
+  const ranked = displayCandidates.sort((a, b) => {
+    const scoreA = scoreDisplayTitle(a.name, a.isCanonical);
+    const scoreB = scoreDisplayTitle(b.name, b.isCanonical);
+    if (scoreA !== scoreB) return scoreB - scoreA;
+    return a.name.length - b.name.length;
+  });
+
+  for (const candidate of ranked) {
+    const candidateScore = scoreDisplayTitle(
+      candidate.name,
+      candidate.isCanonical,
+    );
+    const beatenByNoisySuperset = ranked.some(
+      (other) =>
+        other.name !== candidate.name &&
+        isStrictTitleSubset(candidate.name, other.name) &&
+        scoreDisplayTitle(other.name, other.isCanonical) > candidateScore,
+    );
+    if (!beatenByNoisySuperset) {
+      return candidate.name;
+    }
+  }
+
+  return ranked[0]?.name || representative;
 }

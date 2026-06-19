@@ -107,7 +107,10 @@ function meaningfulTokens(query: string) {
     "blu",
     "bluray",
     "book",
+    "coffret",
     "collector",
+    "collection",
+    "complete",
     "dvd",
     "edition",
     "film",
@@ -132,12 +135,33 @@ function meaningfulTokens(query: string) {
   );
 }
 
+function seasonNumbers(value: string) {
+  return Array.from(
+    normalizeForMatch(value).matchAll(/\b(?:saison|season)\s*(\d{1,2})\b/g),
+  )
+    .map((match) => match[1])
+    .filter(Boolean);
+}
+
+function hasConflictingSeason(query: string, productName?: string | null) {
+  const expectedSeasons = seasonNumbers(query);
+  if (expectedSeasons.length === 0) return false;
+
+  const productSeasons = seasonNumbers(productName || "");
+  return (
+    productSeasons.length > 0 &&
+    !productSeasons.some((season) => expectedSeasons.includes(season))
+  );
+}
+
 function isBarcodeLike(query: string) {
   return /^\d{8,14}$/.test(query.replace(/[^\d]/g, ""));
 }
 
 function isProbablyRelevant(query: string, productName?: string | null) {
   if (isBarcodeLike(query)) return true;
+  if (hasConflictingSeason(query, productName)) return false;
+
   const tokens = meaningfulTokens(query);
   if (tokens.length === 0) return true;
   const normalizedProduct = normalizeForMatch(productName || "");

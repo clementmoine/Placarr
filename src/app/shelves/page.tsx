@@ -8,7 +8,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, LibraryBig, Search, Scan, Sparkles } from "lucide-react";
 import { useCallback, useMemo, useState, useEffect, Suspense } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
+import { motion, LayoutGroup } from "framer-motion";
 
 import {
   Form,
@@ -107,10 +113,12 @@ function ShelvesComponent() {
   const [exploreModalOpen, setExploreModalOpen] = useState(false);
 
   const q = searchParams.get("q") || "";
+  const [searchQuery, setSearchQuery] = useState(q);
 
-  const { data: shelves, isFetching } = useQuery({
-    queryKey: q ? ["shelves", q] : ["shelves"],
-    queryFn: () => getShelves(q),
+  const { data: shelves, isLoading } = useQuery({
+    queryKey: ["shelves", searchQuery],
+    queryFn: () => getShelves(searchQuery),
+    placeholderData: keepPreviousData,
   });
 
   const { data: recentItems, isFetching: isFetchingRecent } = useQuery({
@@ -119,22 +127,23 @@ function ShelvesComponent() {
   });
 
   // Search items across all shelves
-  const { data: searchItems, isFetching: isFetchingSearchItems } = useQuery({
-    queryKey: ["searchItems", q],
-    queryFn: () => getItems(q),
-    enabled: !!q,
+  const { data: searchItems, isLoading: isLoadingSearchItems } = useQuery({
+    queryKey: ["searchItems", searchQuery],
+    queryFn: () => getItems(searchQuery),
+    enabled: !!searchQuery,
+    placeholderData: keepPreviousData,
   });
 
   // Search items in other users' public shelves
   const { data: exploreItems, isFetching: isFetchingExploreItems } = useQuery({
-    queryKey: ["exploreItems", q],
+    queryKey: ["exploreItems", searchQuery],
     queryFn: async () => {
       const { data } = await axios.get(
-        `/api/explore?q=${encodeURIComponent(q)}`,
+        `/api/explore?q=${encodeURIComponent(searchQuery)}`,
       );
       return data as any[];
     },
-    enabled: !!q,
+    enabled: !!searchQuery,
   });
 
   const { mutate } = useMutation<
@@ -175,15 +184,45 @@ function ShelvesComponent() {
     [mutate],
   );
 
-  const handleSearch = async (values: FormValues) => {
+  const handleSearch = (values: FormValues) => {
     const value = values.search;
+    setSearchQuery(value);
     const params = new URLSearchParams(window.location.search);
     if (value) {
       params.set("q", value);
     } else {
       params.delete("q");
     }
-    router.replace(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    form.setValue("search", value);
+    debounce(() => {
+      setSearchQuery(value);
+      const params = new URLSearchParams(window.location.search);
+      if (value) {
+        params.set("q", value);
+      } else {
+        params.delete("q");
+      }
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      try {
+        History.prototype.replaceState.call(
+          window.history,
+          { ...window.history.state, as: newUrl, url: newUrl },
+          "",
+          newUrl,
+        );
+      } catch {
+        window.history.replaceState(
+          { ...window.history.state, as: newUrl, url: newUrl },
+          "",
+          newUrl,
+        );
+      }
+    });
   };
 
   const handleModalOpen = useCallback((id?: Shelf["id"]) => {
@@ -250,6 +289,7 @@ function ShelvesComponent() {
 
   useEffect(() => {
     form.setValue("search", q);
+    setSearchQuery(q);
   }, [q, form]);
 
   return (
@@ -355,280 +395,159 @@ function ShelvesComponent() {
       {/* Content */}
       <div className=" overflow-y-auto">
         <div className="flex-1 p-4 md:p-6 pb-24 md:pb-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300">
-          {q ? (
-            /* Search Results View */
-            <div className="flex flex-col gap-6 mt-2">
-              <div className="flex flex-col gap-1 border-b border-border/60 pb-4">
+          <LayoutGroup>
+            {/* Always visible single Search Bar */}
+            <div className="w-full">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSearch)}>
+                  <FormField
+                    control={form.control}
+                    name="search"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="relative w-full flex items-center">
+                            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
+                            <Input
+                              type="search"
+                              autoFocus
+                              className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+                              placeholder={t("common.search")}
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                handleSearchChange(e);
+                              }}
+                            />
+                            <ScannerButton
+                              className="absolute right-1 rounded-xl"
+                              onScan={(barcode) => {
+                                handleSearch({ search: barcode });
+                              }}
+                            />
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </div>
+
+            {/* Search Header (only if searching) */}
+            {searchQuery && (
+              <div className="flex flex-col gap-1 border-b border-border/60 pb-4 mt-2">
                 <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
                   <Search className="size-6 text-primary" />
                   {t("items.searchResults")}
                 </h1>
                 <p className="text-xs text-muted-foreground">
-                  Showing results for &ldquo;{q}&rdquo;
+                  Showing results for &ldquo;{searchQuery}&rdquo;
                 </p>
               </div>
+            )}
 
-              {/* Search Input on top of search page */}
-              <div className="w-full max-w-md">
-                <Form {...form}>
-                  <form
-                    onChange={(e) => {
-                      const search = (e.target as HTMLInputElement).value;
-                      debounce(() => handleSearch({ search }));
-                    }}
-                    onSubmit={form.handleSubmit(handleSearch)}
-                  >
-                    <FormField
-                      control={form.control}
-                      name="search"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="relative w-full flex items-center">
-                              <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
-                              <Input
-                                type="search"
-                                className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300"
-                                placeholder={t("common.search")}
-                                {...field}
-                              />
-                              <ScannerButton
-                                className="absolute right-1 rounded-xl"
-                                onScan={(barcode) => {
-                                  handleSearch({ search: barcode });
-                                }}
-                              />
-                            </div>
-                          </FormControl>
-                        </FormItem>
-                      )}
+            {/* SHELVES (COLLECTIONS) GRID - RENDERED ONCE AND ANIMATED */}
+            <div className="flex flex-col gap-3">
+              <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200">
+                {searchQuery
+                  ? t("common.collections")
+                  : t("navigation.shelves")}
+              </h2>
+
+              {isLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <Skeleton
+                      key={idx}
+                      className="rounded-xl aspect-[1.61792/1] w-full"
                     />
-                  </form>
-                </Form>
-              </div>
-
-              {/* Matching Collections Grid */}
-              <div className="flex flex-col gap-3">
-                <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200">
-                  {t("common.collections")}
-                </h2>
-                {isFetching ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                      <Skeleton
-                        key={idx}
-                        className="rounded-xl aspect-[1.6/1] w-full"
-                      />
-                    ))}
-                  </div>
-                ) : sortedShelves.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {sortedShelves.map((shelf) => (
-                      <Link key={shelf.id} href={shelfPath(shelf)}>
+                  ))}
+                </div>
+              ) : sortedShelves.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {sortedShelves.map((shelf) => (
+                    <motion.div
+                      key={shelf.id}
+                      layoutId={`shelf-card-${shelf.id}`}
+                      layout
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
+                    >
+                      <Link href={shelfPath(shelf)}>
                         <ShelfCard {...shelf} />
                       </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">
-                    {t("common.noResults")}
-                  </p>
-                )}
-              </div>
+                    </motion.div>
+                  ))}
 
-              {/* Matching Items Grid */}
-              <div className="flex flex-col gap-3 mt-2">
-                <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200">
-                  {t("items.title")}
-                </h2>
-                {isFetchingSearchItems ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                    {Array.from({ length: 8 }).map((_, idx) => (
-                      <Skeleton
-                        key={idx}
-                        className="rounded-2xl aspect-[1/1.4] w-full"
-                      />
-                    ))}
-                  </div>
-                ) : searchItems && searchItems.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                    {searchItems.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={itemPath(
-                          item.shelf || { id: item.shelfId },
-                          item,
-                        )}
-                      >
-                        <ItemCard
-                          {...item}
-                          shelfType={item.shelf?.type}
-                          cardFormat={item.shelf?.cardFormat}
-                        />
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">
-                    {t("common.noResults")}
-                  </p>
-                )}
-              </div>
-
-              {/* Community Items Fallback */}
-              {exploreItems && exploreItems.length > 0 && (
-                <div className="flex flex-col gap-3 mt-4">
-                  <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200 flex items-center gap-1.5 select-none animate-fade-in">
-                    <Sparkles className="size-4.5 text-amber-500" />
-                    Disponible chez d'autres collectionneurs
-                  </h2>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                    {exploreItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="relative group cursor-pointer animate-fade-in"
-                        onClick={() => {
-                          setSelectedExploreItem(item);
-                          setExploreModalOpen(true);
-                        }}
-                      >
-                        <ItemCard
-                          {...item}
-                          shelfType={item.shelf?.type}
-                          cardFormat={item.shelf?.cardFormat}
-                        />
-                        {/* Owner badge top right */}
-                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/85 backdrop-blur text-white shadow-sm border border-white/10 max-w-[80px] select-none pointer-events-none">
-                          <Avatar className="size-3.5 shrink-0 border border-white/20 select-none pointer-events-none">
-                            <AvatarImage
-                              src={item.user?.image || undefined}
-                              className="object-cover"
-                            />
-                            <AvatarFallback className="text-[6px] font-black text-amber-700 bg-white leading-none">
-                              {item.user?.name?.substring(0, 2).toUpperCase() ||
-                                "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-[7px] font-black uppercase truncate">
-                            {item.user?.name || item.user?.email}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {/* Plus Create New Shelf Card inside the grid */}
+                  {!searchQuery && isAuthenticated && !isGuest && (
+                    <motion.button
+                      layout
+                      layoutId="add-shelf-btn"
+                      onClick={() => handleModalOpen()}
+                      className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
+                      style={{ aspectRatio: "1.61792 / 1" }}
+                    >
+                      <Plus className="size-5 text-primary" />
+                      <span>{t("shelves.addShelf")}</span>
+                    </motion.button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {/* Plus Create New Shelf Card when no shelves exist */}
+                  {!searchQuery && isAuthenticated && !isGuest && (
+                    <motion.button
+                      layout
+                      layoutId="add-shelf-btn"
+                      onClick={() => handleModalOpen()}
+                      className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
+                      style={{ aspectRatio: "1.61792 / 1" }}
+                    >
+                      <Plus className="size-5 text-primary" />
+                      <span>{t("shelves.addShelf")}</span>
+                    </motion.button>
+                  )}
+                  {!searchQuery && (!isAuthenticated || isGuest) && (
+                    <div className="col-span-full text-xs text-muted-foreground italic py-6 select-none">
+                      {t("shelves.noShelves")}
+                    </div>
+                  )}
+                  {searchQuery && (
+                    <p className="text-xs text-muted-foreground italic col-span-full">
+                      {t("common.noResults")}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
-          ) : (
-            <>
-              {/* Clean Title & Search Section */}
-              <div className="flex flex-col gap-4 mt-2">
-                <Form {...form}>
-                  <form
-                    onChange={(e) => {
-                      const search = (e.target as HTMLInputElement).value;
-                      debounce(() => handleSearch({ search }));
-                    }}
-                    onSubmit={form.handleSubmit(handleSearch)}
-                  >
-                    <FormField
-                      control={form.control}
-                      name="search"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="relative w-full flex items-center">
-                              <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
-                              <Input
-                                type="search"
-                                className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300"
-                                placeholder={t("common.search")}
-                                {...field}
-                              />
-                              <ScannerButton
-                                className="absolute right-1 rounded-xl"
-                                onScan={(barcode) => {
-                                  handleSearch({ search: barcode });
-                                }}
-                              />
-                            </div>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </form>
-                </Form>
-              </div>
 
-              {/* Horizontal Collections (Shelves) Row */}
-              <div className="flex flex-col gap-3 mt-2 w-full">
-                <div className="flex items-center justify-between select-none">
-                  <h2 className="text-lg font-black tracking-tight text-foreground dark:text-zinc-200">
-                    {t("navigation.shelves")}
+            {searchQuery ? (
+              /* Search Results Additional Sections */
+              <>
+                {/* Matching Items Grid */}
+                <div className="flex flex-col gap-3 mt-2">
+                  <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200">
+                    {t("items.title")}
                   </h2>
-                </div>
-
-                {isFetching ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                      <Skeleton
-                        key={idx}
-                        className="rounded-xl aspect-[1.61792/1] w-full"
-                      />
-                    ))}
-                  </div>
-                ) : sortedShelves.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {sortedShelves.map((shelf) => (
-                      <Link key={shelf.id} href={shelfPath(shelf)}>
-                        <ShelfCard {...shelf} />
-                      </Link>
-                    ))}
-
-                    {/* Plus Create New Shelf Card inside the grid */}
-                    {isAuthenticated && !isGuest && (
-                      <button
-                        onClick={() => handleModalOpen()}
-                        className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
-                        style={{ aspectRatio: "1.61792 / 1" }}
-                      >
-                        <Plus className="size-5 text-primary" />
-                        <span>{t("shelves.addShelf")}</span>
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {/* Plus Create New Shelf Card when no shelves exist */}
-                    {isAuthenticated && !isGuest && (
-                      <button
-                        onClick={() => handleModalOpen()}
-                        className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
-                        style={{ aspectRatio: "1.61792 / 1" }}
-                      >
-                        <Plus className="size-5 text-primary" />
-                        <span>{t("shelves.addShelf")}</span>
-                      </button>
-                    )}
-                    {(!isAuthenticated || isGuest) && (
-                      <div className="col-span-full text-xs text-muted-foreground italic py-6 select-none">
-                        {t("shelves.noShelves")}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Horizontal Recent Additions Row */}
-              {recentItems && recentItems.length > 0 && (
-                <div className="flex flex-col gap-3 mt-2 w-full animate-fade-in duration-300">
-                  <h2 className="text-lg font-black tracking-tight text-foreground dark:text-zinc-200 select-none">
-                    {t("home.recentAdditions")}
-                  </h2>
-                  <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-                    {recentItems.slice(0, 15).map((item) => (
-                      <div key={item.id} className="w-28 sm:w-32 shrink-0">
+                  {isLoadingSearchItems ? (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                      {Array.from({ length: 8 }).map((_, idx) => (
+                        <Skeleton
+                          key={idx}
+                          className="rounded-2xl aspect-[1/1.4] w-full"
+                        />
+                      ))}
+                    </div>
+                  ) : searchItems && searchItems.length > 0 ? (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                      {searchItems.map((item) => (
                         <Link
+                          key={item.id}
                           href={itemPath(
                             item.shelf || { id: item.shelfId },
                             item,
@@ -640,28 +559,107 @@ function ShelvesComponent() {
                             cardFormat={item.shelf?.cardFormat}
                           />
                         </Link>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">
+                      {t("common.noResults")}
+                    </p>
+                  )}
                 </div>
-              )}
 
-              {isFetchingRecent && (
-                <div className="flex flex-col gap-3 mt-2 w-full">
-                  <Skeleton className="h-5 w-32 rounded-md" />
-                  <div className="flex gap-4 overflow-x-auto pb-3">
-                    {Array.from({ length: 6 }).map((_, idx) => (
-                      <Skeleton
-                        key={idx}
-                        className="w-28 sm:w-32 rounded-2xl shrink-0"
-                        style={{ aspectRatio: "1 / 1.4" }}
-                      />
-                    ))}
+                {/* Community Items Fallback */}
+                {exploreItems && exploreItems.length > 0 && (
+                  <div className="flex flex-col gap-3 mt-4">
+                    <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200 flex items-center gap-1.5 select-none animate-fade-in">
+                      <Sparkles className="size-4.5 text-amber-500" />
+                      Disponible chez d'autres collectionneurs
+                    </h2>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                      {exploreItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="relative group cursor-pointer animate-fade-in"
+                          onClick={() => {
+                            setSelectedExploreItem(item);
+                            setExploreModalOpen(true);
+                          }}
+                        >
+                          <ItemCard
+                            {...item}
+                            shelfType={item.shelf?.type}
+                            cardFormat={item.shelf?.cardFormat}
+                          />
+                          {/* Owner badge top right */}
+                          <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/85 backdrop-blur text-white shadow-sm border border-white/10 max-w-[80px] select-none pointer-events-none">
+                            <Avatar className="size-3.5 shrink-0 border border-white/20 select-none pointer-events-none">
+                              <AvatarImage
+                                src={item.user?.image || undefined}
+                                className="object-cover"
+                              />
+                              <AvatarFallback className="text-[6px] font-black text-amber-700 bg-white leading-none">
+                                {item.user?.name
+                                  ?.substring(0, 2)
+                                  .toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[7px] font-black uppercase truncate">
+                              {item.user?.name || item.user?.email}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            ) : (
+              /* Landing State Additional Sections */
+              <>
+                {/* Horizontal Recent Additions Row */}
+                {recentItems && recentItems.length > 0 && (
+                  <div className="flex flex-col gap-3 mt-2 w-full animate-fade-in duration-300">
+                    <h2 className="text-lg font-black tracking-tight text-foreground dark:text-zinc-200 select-none">
+                      {t("home.recentAdditions")}
+                    </h2>
+                    <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+                      {recentItems.slice(0, 15).map((item) => (
+                        <div key={item.id} className="w-28 sm:w-32 shrink-0">
+                          <Link
+                            href={itemPath(
+                              item.shelf || { id: item.shelfId },
+                              item,
+                            )}
+                          >
+                            <ItemCard
+                              {...item}
+                              shelfType={item.shelf?.type}
+                              cardFormat={item.shelf?.cardFormat}
+                            />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {isFetchingRecent && (
+                  <div className="flex flex-col gap-3 mt-2 w-full">
+                    <Skeleton className="h-5 w-32 rounded-md" />
+                    <div className="flex gap-4 overflow-x-auto pb-3">
+                      {Array.from({ length: 6 }).map((_, idx) => (
+                        <Skeleton
+                          key={idx}
+                          className="w-28 sm:w-32 rounded-2xl shrink-0"
+                          style={{ aspectRatio: "1 / 1.4" }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </LayoutGroup>
         </div>
       </div>
 

@@ -1,6 +1,9 @@
 import levenshtein from "fast-levenshtein";
 
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
+import { moveTrailingSortArticleToFront } from "@/lib/titleSort";
+
+export { moveTrailingSortArticleToFront } from "@/lib/titleSort";
 
 export function normalizeForTokens(s: string): string {
   return s
@@ -449,6 +452,7 @@ export function cleanTitleForDisplay(
     });
     return isMetadata ? "" : match;
   });
+  cleaned = moveTrailingSortArticleToFront(cleaned);
 
   const suffixPatterns = options.preservePlatformSuffix
     ? SUFFIX_PATTERNS.filter(
@@ -503,6 +507,18 @@ export function cleanTitleForDisplay(
     cleaned = stripListingMetadataSegments(cleaned);
     cleaned = cleaned
       .replace(
+        /^(?:jeu\s+d['']?\s*)?escape\s+game\s*[-–—:|]?\s*/i,
+        "",
+      )
+      .replace(/^d['']?escape\s+game\s*[-–—:|]?\s*/i, "")
+      .replace(/^jeu\s+d['']?enqu[eê]te\s*[-–—:|]?\s*/i, "")
+      .replace(/^asmodee\s+(?=unlock!?)/i, "")
+      .replace(/\s+space\s+cowboys.*$/i, "")
+      .replace(/\s+jeu\s+d['']?\s*enqu[eê]te(?:\s+escape\s+game)?\s*$/i, "")
+      .replace(/\s+escape\s+game\s*$/i, "")
+      .replace(/\s+\bFR\b\s*$/i, "")
+      .replace(/\bSCUNL[A-Z0-9]+\b/gi, "")
+      .replace(
         /^(?:ancien\s+jeu\s+|ancien\s+)?nintendo\s+(?=(?!land\b).{4,})/i,
         "",
       )
@@ -549,6 +565,7 @@ export function cleanTitleForDisplay(
     ) {
       cleaned = cleaned.slice(1, -1).trim();
     }
+    cleaned = moveTrailingSortArticleToFront(cleaned);
 
     // Strip trailing suffix
     cleaned = cleaned

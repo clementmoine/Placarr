@@ -240,6 +240,11 @@ export async function compileAllBarcodeTypeResults(params: {
     "AchatMoinsCher",
     type === "musics" ? payload.amc : !isBook ? payload.amc : [],
   );
+  pushSource(
+    musicSources,
+    "PicClick",
+    type === "musics" ? payload.picclick : !isBook ? payload.picclick : [],
+  );
 
   const movieSources: EvidenceSource[] = [];
   if (payload.tmdb?.title) {

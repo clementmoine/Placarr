@@ -18,7 +18,7 @@ import {
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getItems } from "@/lib/api/items";
 import { getShelves } from "@/lib/api/shelves";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 import {
   detectPlatformKey,
   guessBestShelf,
@@ -324,11 +324,9 @@ export function QuickScanModal({
                   >
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
                       {product.imageUrl ? (
-                        <Image
+                        <RemoteImage
                           src={product.imageUrl}
                           alt=""
-                          width={512}
-                          height={512}
                           className="w-12 h-16 rounded-xl object-cover shrink-0 bg-muted/10 border border-border/50 shadow-sm transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (

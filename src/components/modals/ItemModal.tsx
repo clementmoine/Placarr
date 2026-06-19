@@ -17,6 +17,7 @@ import {
   Maximize2,
 } from "lucide-react";
 import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -196,6 +197,11 @@ export function ItemModal({
     enabled: isOpen,
   });
 
+  const hasPrefilledScanImage =
+    !itemId &&
+    typeof prefilledValues?.imageUrl === "string" &&
+    prefilledValues.imageUrl.trim().length > 0;
+
   const currentShelfId = form.watch("shelfId");
   const selectedShelf = shelves?.find((s) => s.id === currentShelfId);
   const activeShelfType = selectedShelf?.type || shelfType;
@@ -278,12 +284,13 @@ export function ItemModal({
   const fetchMetadataPreview = useCallback(
     async (name: string, barcode?: string, forceOverwrite = false) => {
       if (!name || !activeShelfType) return;
-      metadataPreviewRequestRef.current = [
+      const requestKey = [
         activeShelfType,
         activeShelf?.name || "",
         name.trim().toLowerCase(),
         (barcode || "").trim(),
       ].join("|");
+      metadataPreviewRequestRef.current = requestKey;
       setIsFetchingMetadata(true);
       try {
         const metadata = await getMetadataPreview(
@@ -292,6 +299,7 @@ export function ItemModal({
           barcode || null,
           activeShelf?.name || null,
         );
+        if (metadataPreviewRequestRef.current !== requestKey) return;
         if (metadata) {
           setFetchedMetadata(metadata);
 
@@ -310,7 +318,10 @@ export function ItemModal({
             // Only auto-set imageUrl if the form doesn't already have one or if forceOverwrite is enabled.
             // Chasse Aux Livres cover (from barcode scan) is the preferred default
             // — metadata images (TMDB etc.) are available as alternatives in the poster grid.
-            if (forceOverwrite || !form.getValues("imageUrl")) {
+            if (
+              !hasPrefilledScanImage &&
+              (forceOverwrite || !form.getValues("imageUrl"))
+            ) {
               form.setValue("imageUrl", metadata.imageUrl, {
                 shouldDirty: true,
               });
@@ -331,10 +342,12 @@ export function ItemModal({
       } catch (err) {
         console.error("Error fetching metadata preview:", err);
       } finally {
-        setIsFetchingMetadata(false);
+        if (metadataPreviewRequestRef.current === requestKey) {
+          setIsFetchingMetadata(false);
+        }
       }
     },
-    [activeShelfType, activeShelf?.name, form],
+    [activeShelfType, activeShelf?.name, form, hasPrefilledScanImage],
   );
 
   const fetchNameSuggestions = useCallback(
@@ -662,11 +675,9 @@ export function ItemModal({
           if (!form.watch("name") || prefilledValues?.name) {
             form.setValue("name", bestSuggestion);
           }
-          // Apply barcode cover directly if no image is already set or if it's the prefilled image
-          if (
-            chosenMatch.coverUrl &&
-            (!form.getValues("imageUrl") || prefilledValues?.imageUrl)
-          ) {
+          // Apply barcode cover directly only when the form does not already
+          // carry the cover selected in the quick-scan step.
+          if (chosenMatch.coverUrl && !form.getValues("imageUrl")) {
             form.setValue("imageUrl", chosenMatch.coverUrl, {
               shouldDirty: true,
             });
@@ -690,10 +701,7 @@ export function ItemModal({
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
-            if (
-              firstMatchCover &&
-              (!form.getValues("imageUrl") || prefilledValues?.imageUrl)
-            ) {
+            if (firstMatchCover && !form.getValues("imageUrl")) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
             fetchMetadataPreview(bestSuggestion, barcode, true);
@@ -706,10 +714,7 @@ export function ItemModal({
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
-            if (
-              firstMatchCover &&
-              (!form.getValues("imageUrl") || prefilledValues?.imageUrl)
-            ) {
+            if (firstMatchCover && !form.getValues("imageUrl")) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
             fetchMetadataPreview(data.cleanName, barcode, true);
@@ -841,7 +846,7 @@ export function ItemModal({
       }
     } else {
       reset(defaultValues);
-      setSuggestions([]);
+      setSuggestions(prefilledValues?.name ? [prefilledValues.name] : []);
       setNameSuggestion(prefilledValues?.name || null);
       setLastInitializedShelfId(defaultValues.shelfId);
 
@@ -920,7 +925,7 @@ export function ItemModal({
     ].join("|");
 
     if (metadataPreviewRequestRef.current === requestKey) return;
-    fetchMetadataPreview(name, barcode, true);
+    fetchMetadataPreview(name, barcode, false);
   }, [
     activeShelf?.name,
     activeShelfType,
@@ -1234,11 +1239,13 @@ export function ItemModal({
                                   }}
                                   onFocus={() => {
                                     setShowDropdown(true);
-                                    fetchNameSuggestions(
-                                      field.value ||
-                                        form.getValues("name") ||
-                                        "",
-                                    );
+                                    if (suggestions.length === 0) {
+                                      fetchNameSuggestions(
+                                        field.value ||
+                                          form.getValues("name") ||
+                                          "",
+                                      );
+                                    }
                                   }}
                                   onBlur={(e) => {
                                     field.onBlur();
@@ -1384,6 +1391,7 @@ export function ItemModal({
                           suggestions={finalImages}
                           onViewMore={() => setActiveTab("poster")}
                           aspectRatio={itemAspectRatio}
+                          contain={true}
                         />
                       )}
                     />
@@ -1514,19 +1522,17 @@ export function ItemModal({
                                       }
                                     }}
                                     className={cn(
-                                      "group relative overflow-hidden rounded-xl border-2 bg-zinc-950/20 text-left transition-all duration-200 outline-none flex flex-col items-center justify-center cursor-pointer",
+                                      "group relative overflow-hidden rounded-xl border-2 bg-white text-left transition-all duration-200 outline-none flex flex-col items-center justify-center cursor-pointer",
                                       isSelected
                                         ? "border-amber-600 dark:border-amber-500 shadow-md ring-2 ring-amber-600/30"
                                         : "border-border/60 hover:border-border hover:shadow-sm",
                                     )}
                                     style={{ aspectRatio: itemAspectRatio }}
                                   >
-                                    <Image
+                                    <RemoteImage
                                       src={img.url}
                                       alt={img.label}
-                                      width={512}
-                                      height={512}
-                                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                      className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                     />
 
                                     {/* Hover Zoom Button */}
@@ -1768,11 +1774,9 @@ export function ItemModal({
                                         : "border-border/60 hover:border-border hover:shadow-sm",
                                     )}
                                   >
-                                    <Image
+                                    <RemoteImage
                                       src={img.url}
                                       alt={img.label}
-                                      width={512}
-                                      height={512}
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
 

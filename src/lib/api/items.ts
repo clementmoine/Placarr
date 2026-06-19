@@ -77,6 +77,18 @@ export interface ItemPrices {
   priceUsed: number | null;
   priceUsedCIB: number | null;
   priceLastUpdated: string | null;
+  priceSources?: string[];
+  priceObservations?: Array<{
+    source: string;
+    productName?: string | null;
+    merchantName?: string | null;
+    condition?: string | null;
+    priceCents: number;
+    currency?: string | null;
+    sourceUrl?: string | null;
+    offerCount?: number | null;
+    observedAt?: string | null;
+  }>;
 }
 
 export interface RefreshItemMetadataResponse {

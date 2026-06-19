@@ -2,6 +2,7 @@ import axios from "axios";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { fetchFromDiscogs, getDiscogsAuthParams } from "./fetch";
+import type { DiscogsImage } from "./fetch";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -12,7 +13,39 @@ import {
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 
 export { fetchFromDiscogs, getDiscogsAuthParams };
-export type { DiscogsResult } from "./fetch";
+export type { DiscogsResult, DiscogsImage } from "./fetch";
+
+function buildDiscogsAttachments(
+  images: DiscogsImage[] | undefined,
+  imageUrl: string | null | undefined,
+) {
+  if (images && images.length > 0) {
+    return images.map((image, index) => ({
+      type: image.kind === "primary" ? ("cover" as const) : ("image" as const),
+      url: image.url,
+      source: "discogs",
+      role:
+        image.kind === "primary"
+          ? "front"
+          : index === 1
+            ? "back"
+            : `secondary-${index}`,
+    }));
+  }
+
+  if (imageUrl) {
+    return [
+      {
+        type: "cover" as const,
+        url: imageUrl,
+        source: "discogs",
+        role: "front",
+      },
+    ];
+  }
+
+  return [];
+}
 
 function createDiscogsAdapter(): MetadataProviderAdapter {
   return {
@@ -128,11 +161,17 @@ function createDiscogsAdapter(): MetadataProviderAdapter {
           ? `${discogs.year}-01-01`
           : undefined;
 
+      const attachments = buildDiscogsAttachments(
+        discogs.images,
+        discogs.imageUrl,
+      );
+
       return {
         title: discogs.title,
         barcode: cleanedBarcode,
         releaseDate,
         imageUrl: discogs.imageUrl || undefined,
+        attachments: attachments.length > 0 ? attachments : undefined,
         facts: facts.length > 0 ? facts : undefined,
       } satisfies MetadataResult;
     },

@@ -6,6 +6,7 @@ import {
   Wrench,
   Search,
   Link2,
+  RefreshCw,
   ChevronLeft,
   ChevronRight,
   Coins,
@@ -26,6 +27,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type SyntheticEvent,
   type TouchEvent,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +38,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ItemModal } from "@/components/modals/ItemModal";
-import { AssociationModal } from "@/components/modals/AssociationModal";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { ItemCard } from "@/components/ItemCard";
 
@@ -52,6 +53,7 @@ import {
   getGalleryImages,
   getMediaTypeLabel,
 } from "@/lib/itemMedia";
+import { isMissingDiscogsGallery } from "@/lib/metadataDiscogs";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
@@ -62,6 +64,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/cardFormat";
 import { itemPath, shelfPath } from "@/lib/slugs";
+import { compareTitlesForSort } from "@/lib/titleSort";
 import { buildPriceChartingGameUrl } from "@/lib/priceChartingUrl";
 import {
   invalidateItemQueries,
@@ -83,6 +86,7 @@ type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 const ENRICHMENT_FEATURE_RELEASE = new Date("2026-06-16T17:30:00.000Z");
 const GAME_AGE_RATING_FEATURE_RELEASE = new Date("2026-06-18T08:00:00.000Z");
+const HLTB_COMPLETION_FEATURE_RELEASE = new Date("2026-06-19T09:29:04.000Z");
 const METADATA_REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const ITEM_RATING_SCALE = 10;
 
@@ -221,6 +225,10 @@ function formatFactValue(fact: DetailFact) {
 
 function formatFactSource(source: string) {
   switch (source.toLowerCase()) {
+    case "achatmoinscher":
+      return "AchatMoinsCher";
+    case "chasseauxlivres":
+      return "Chasse Aux Livres";
     case "steam":
       return "Steam";
     case "igdb":
@@ -233,9 +241,30 @@ function formatFactSource(source: string) {
       return "TMDB";
     case "bgg":
       return "BGG";
+    case "ledenicheur":
+      return "LeDénicheur";
     default:
       return source;
   }
+}
+
+function priceObservationConditions(
+  condition?: string | null,
+  shelfType?: string | null,
+  prices?: {
+    priceUsedCIB?: number | null;
+  } | null,
+) {
+  if (condition === "new") return ["new"];
+
+  if (condition === "used" || condition === "damaged") {
+    if (shelfType === "games") {
+      return prices?.priceUsedCIB ? ["cib"] : ["loose", "used"];
+    }
+    return ["used"];
+  }
+
+  return [];
 }
 
 function isPrimaryInfoFact(fact: DetailFact) {
@@ -251,6 +280,17 @@ function isPrimaryInfoFact(fact: DetailFact) {
     "time-to-beat",
     "tracks",
   ].includes(fact.kind);
+}
+
+function isDetailTableFact(fact: DetailFact) {
+  return ["genre", "platform", "store", "tag"].includes(fact.kind);
+}
+
+function splitTagFactValue(value: string) {
+  return value
+    .split(/\s*•\s*/g)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }
 
 const FACT_DISPLAY_ORDER: Record<string, number> = {
@@ -308,6 +348,16 @@ function isPcSpecificFact(fact: DetailFact) {
     label === "steam" ||
     label === "steamdb" ||
     label === "pcgamingwiki"
+  );
+}
+
+function isHowLongToBeatSource(fact: DetailFact) {
+  return fact.source?.toLowerCase().includes("how long") ?? false;
+}
+
+function isDurationLikeFact(fact: DetailFact) {
+  return ["completion-time", "duration", "playtime", "time-to-beat"].includes(
+    fact.kind,
   );
 }
 
@@ -533,11 +583,17 @@ function normalizeDisplayFacts(
   const hasDirectHltb = facts.some(
     (fact) =>
       (fact.kind === "duration" || fact.kind === "completion-time") &&
-      fact.source?.toLowerCase().includes("how long"),
+      isHowLongToBeatSource(fact),
   );
 
   return facts
-    .filter((fact) => !hasDirectHltb || fact.kind !== "time-to-beat")
+    .filter(
+      (fact) =>
+        !hasDirectHltb ||
+        !isDurationLikeFact(fact) ||
+        ((fact.kind === "duration" || fact.kind === "completion-time") &&
+          isHowLongToBeatSource(fact)),
+    )
     .filter((fact) => options.includePcFacts || !isPcSpecificFact(fact))
     .filter(
       (fact) =>
@@ -603,12 +659,13 @@ export default function ItemDetailsPage() {
   const itemId = params.itemId as Item["id"];
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [associationModalVisible, setAssociationModalVisible] =
-    useState<boolean>(false);
   const [modalActiveTab, setModalActiveTab] = useState<
     "general" | "poster" | "background" | "info"
   >("general");
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
+    "contain",
+  );
   const [autoMetadataRefreshAttempted, setAutoMetadataRefreshAttempted] =
     useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -637,8 +694,22 @@ export default function ItemDetailsPage() {
     enabled: !!itemId && !!item?.barcode,
   });
 
+  useEffect(() => {
+    if (!prices || !item?.id) return;
+    patchCachedItem(queryClient, {
+      id: item.id,
+      shelfId: item.shelfId,
+      priceNew: prices.priceNew,
+      priceUsed: prices.priceUsed,
+      priceUsedCIB: prices.priceUsedCIB,
+    });
+  }, [item?.id, item?.shelfId, prices, queryClient]);
+
   const shelfItems = useMemo(
-    () => ((shelf?.items || []) as Item[]).filter((shelfItem) => shelfItem.id),
+    () =>
+      ((shelf?.items || []) as Item[])
+        .filter((shelfItem) => shelfItem.id)
+        .sort((a, b) => compareTitlesForSort(a.name, b.name)),
     [shelf?.items],
   );
 
@@ -660,7 +731,7 @@ export default function ItemDetailsPage() {
   const nextItemHref =
     shelf && nextShelfItem ? itemPath(shelf, nextShelfItem) : null;
   const isDetailOverlayOpen =
-    modalVisible || associationModalVisible || Boolean(zoomImageUrl);
+    modalVisible || Boolean(zoomImageUrl);
 
   const navigateToSibling = useCallback(
     (href?: string | null) => {
@@ -760,7 +831,8 @@ export default function ItemDetailsPage() {
     },
   });
 
-  const { mutate: refreshMetadata } = useMutation({
+  const { mutate: refreshMetadata, isPending: isRefreshingMetadata } =
+    useMutation({
     mutationFn: () =>
       refreshItemMetadata(itemId, shelfId, item?.metadata?.title || item?.name),
     onSuccess: (response) => {
@@ -785,24 +857,46 @@ export default function ItemDetailsPage() {
       void invalidateItemQueries(queryClient, itemId, [shelfId, actualShelfId]);
     },
     onError: (error) => {
-      console.warn("[Metadata] Auto refresh failed:", error);
+      console.warn("[Metadata] Refresh failed:", error);
     },
   });
+
+  const handleRefreshMetadata = useCallback(() => {
+    refreshMetadata(undefined, {
+      onSuccess: () => {
+        toast.success(t("items.refreshMetadataSuccess"));
+      },
+      onError: () => {
+        toast.error(t("items.refreshMetadataFailed"));
+      },
+    });
+  }, [refreshMetadata, t]);
 
   const handleModalClose = useCallback(() => {
     setModalVisible(false);
   }, []);
 
   const handleModalSubmit = useCallback(
-    async (shelf: Prisma.ShelfUpdateInput) => {
+    async (itemData: Prisma.ItemUpdateInput | Prisma.ItemCreateInput) => {
+      const lookupQuery =
+        typeof itemData.name === "string" ? itemData.name : item?.name;
+
       return new Promise<void>((resolve, reject) => {
-        mutate(shelf, {
-          onSuccess: () => resolve(),
-          onError: () => reject(),
-        });
+        mutate(
+          {
+            ...itemData,
+            id: itemId,
+            refreshMetadata: true,
+            lookupQuery,
+          },
+          {
+            onSuccess: () => resolve(),
+            onError: () => reject(),
+          },
+        );
       });
     },
-    [mutate],
+    [mutate, itemId, item?.name],
   );
 
   const year = useMemo(() => {
@@ -846,6 +940,13 @@ export default function ItemDetailsPage() {
         ["duration", "completion-time", "time-to-beat"].includes(fact.kind) &&
         fact.source?.toLowerCase().includes("how long"),
     );
+    const hasHowLongToBeatCompletion = facts.some(
+      (fact) =>
+        (fact.kind === "completion-time" ||
+          (fact.kind === "time-to-beat" &&
+            fact.label.toLowerCase().includes("compl"))) &&
+        fact.source?.toLowerCase().includes("how long"),
+    );
     const hasScreenScraperMedia = attachments.some(
       (attachment: any) => attachment.source === "screenscraper",
     );
@@ -855,6 +956,8 @@ export default function ItemDetailsPage() {
     );
     const isBeforeGameAgeRatingEnrichment =
       !hasValidLastFetched || lastFetched < GAME_AGE_RATING_FEATURE_RELEASE;
+    const isBeforeHltbCompletionEnrichment =
+      !hasValidLastFetched || lastFetched < HLTB_COMPLETION_FEATURE_RELEASE;
     const isMissingGameEnrichment =
       shelf?.type === "games" &&
       isBeforeCurrentEnrichment &&
@@ -863,6 +966,14 @@ export default function ItemDetailsPage() {
       shelf?.type === "games" &&
       isBeforeGameAgeRatingEnrichment &&
       !hasDisplayableAgeRating;
+    const isMissingHltbCompletion =
+      shelf?.type === "games" &&
+      isBeforeHltbCompletionEnrichment &&
+      hasHowLongToBeat &&
+      !hasHowLongToBeatCompletion;
+    const isMissingMusicDiscogsGallery =
+      shelf?.type === "musics" &&
+      isMissingDiscogsGallery("musics", item?.barcode, attachments);
     const isStale =
       hasValidLastFetched &&
       Date.now() - lastFetched.getTime() > METADATA_REFRESH_TTL_MS;
@@ -871,6 +982,8 @@ export default function ItemDetailsPage() {
       isPreEnrichmentMetadata ||
       isMissingGameEnrichment ||
       isMissingGameAgeRating ||
+      isMissingHltbCompletion ||
+      isMissingMusicDiscogsGallery ||
       isStale
     );
   }, [
@@ -908,6 +1021,17 @@ export default function ItemDetailsPage() {
   const coverImage = useMemo(() => {
     return item?.imageUrl ?? null;
   }, [item?.imageUrl]);
+
+  useEffect(() => {
+    setCoverImageFit("contain");
+  }, [coverImage]);
+
+  const handleCoverImageLoad = useCallback(
+    (event: SyntheticEvent<HTMLImageElement>) => {
+      setCoverImageFit("contain");
+    },
+    [],
+  );
 
   const galleryImages = useMemo(() => {
     if (!item) return [];
@@ -948,12 +1072,57 @@ export default function ItemDetailsPage() {
     }).format(copyValue / 100);
   }, [copyValue, locale]);
 
+  const priceSourceSummary = useMemo(() => {
+    const conditions = priceObservationConditions(
+      item?.condition,
+      shelf?.type,
+      prices,
+    );
+    const observations = prices?.priceObservations || [];
+    const relevantObservations = observations.filter(
+      (observation) =>
+        observation.condition && conditions.includes(observation.condition),
+    );
+    const relevantSources = Array.from(
+      new Set(
+        relevantObservations
+          .map((observation) => observation.source)
+          .filter(Boolean),
+      ),
+    );
+    const fallbackSources = Array.from(
+      new Set((prices?.priceSources || []).filter(Boolean)),
+    );
+    const sources =
+      relevantSources.length > 0 ? relevantSources : fallbackSources;
+
+    return {
+      count: sources.length,
+      sources,
+      isPriceChartingOnly:
+        sources.length === 1 && sources[0]?.toLowerCase() === "pricecharting",
+    };
+  }, [item?.condition, prices, shelf?.type]);
+
   const priceSourceLabel = useMemo(() => {
-    if (!prices?.priceLastUpdated) return "PriceCharting";
-    return `PriceCharting · ${new Date(
-      prices.priceLastUpdated,
-    ).toLocaleDateString(locale, { month: "short", day: "numeric" })}`;
-  }, [locale, prices?.priceLastUpdated]);
+    const parts: string[] = [];
+    if (priceSourceSummary.count > 0) {
+      parts.push(
+        priceSourceSummary.count === 1
+          ? t("items.info.oneSource")
+          : t("items.info.sourcesCount", { count: priceSourceSummary.count }),
+      );
+    }
+    if (prices?.priceLastUpdated) {
+      parts.push(
+        new Date(prices.priceLastUpdated).toLocaleDateString(locale, {
+          month: "short",
+          day: "numeric",
+        }),
+      );
+    }
+    return parts.join(" · ");
+  }, [locale, priceSourceSummary, prices?.priceLastUpdated, t]);
 
   const priceChartingAliases = useMemo(() => {
     const aliases = item?.metadata?.aliases;
@@ -1060,18 +1229,20 @@ export default function ItemDetailsPage() {
         seen.add(key);
         return true;
       })
-      .sort(sortDetailFacts)
-      .slice(0, 8);
+      .sort(sortDetailFacts);
   }, [item?.metadata, locale, shelf?.name, shelf?.type, t]);
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
     if (formattedCopyValue) {
+      const priceLabel = priceSourceSummary.isPriceChartingOnly
+        ? t("items.info.estimatedValue")
+        : t("items.info.observedPrice");
       facts.push({
         kind: "estimated-value",
-        label: t("items.info.estimatedValue"),
+        label: priceLabel,
         value: formattedCopyValue,
         url: priceChartingLink?.url,
-        source: priceSourceLabel,
+        source: priceSourceLabel || undefined,
         priority: 110,
       });
     }
@@ -1081,12 +1252,13 @@ export default function ItemDetailsPage() {
     formattedCopyValue,
     priceChartingLink?.url,
     priceSourceLabel,
+    priceSourceSummary.isPriceChartingOnly,
     t,
     usefulFacts,
   ]);
 
-  const secondaryFacts = useMemo(
-    () => usefulFacts.filter((fact) => !isPrimaryInfoFact(fact)),
+  const detailTableFacts = useMemo(
+    () => usefulFacts.filter(isDetailTableFact),
     [usefulFacts],
   );
 
@@ -1104,7 +1276,6 @@ export default function ItemDetailsPage() {
   const showInfoStrip =
     isFetchingPrices ||
     primaryInfoFacts.length > 0 ||
-    secondaryFacts.length > 0 ||
     Boolean(item?.barcode && prices && !formattedCopyValue);
 
   const shelfHref = shelf ? shelfPath(shelf) : `/shelves/${shelfId}`;
@@ -1136,17 +1307,6 @@ export default function ItemDetailsPage() {
             <span className="text-xs text-zinc-500 italic">
               {t("items.noPricesFound")}
             </span>
-          )}
-
-          {secondaryFacts.length > 0 && (
-            <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
-              {secondaryFacts.map((fact) => (
-                <DetailInfoItem
-                  key={`${fact.kind}-${fact.label}-${fact.value}`}
-                  fact={fact}
-                />
-              ))}
-            </div>
           )}
         </>
       )}
@@ -1183,15 +1343,6 @@ export default function ItemDetailsPage() {
             onClose={handleModalClose}
             onSubmit={handleModalSubmit}
             defaultTab={modalActiveTab}
-          />
-          <AssociationModal
-            isOpen={associationModalVisible}
-            onClose={() => setAssociationModalVisible(false)}
-            itemId={itemId}
-            routeShelfId={shelfId}
-            item={item}
-            shelfType={shelf?.type}
-            shelfName={shelf?.name}
           />
         </>
       )}
@@ -1257,12 +1408,13 @@ export default function ItemDetailsPage() {
             </div>
           ) : (
             <div className="relative flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl overflow-hidden w-full mt-4">
-              {/* Left Column: Poster/Cover Card */}
               <div
                 onClick={() => coverImage && setZoomImageUrl(coverImage)}
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none bg-zinc-950/20 transition-all duration-300",
-                  coverImage ? "cursor-pointer group/cover" : "",
+                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
+                  coverImage
+                    ? "cursor-pointer group/cover bg-white"
+                    : "bg-zinc-950/20",
                   coverAspectRatio,
                 )}
               >
@@ -1273,7 +1425,13 @@ export default function ItemDetailsPage() {
                       alt={item?.name}
                       width={512}
                       height={512}
-                      className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform duration-500"
+                      onLoad={handleCoverImageLoad}
+                      className={cn(
+                        "w-full h-full transition-transform duration-500",
+                        coverImageFit === "contain"
+                          ? "object-contain"
+                          : "object-cover group-hover/cover:scale-105",
+                      )}
                     />
                     {/* Hover Zoom Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
@@ -1341,16 +1499,16 @@ export default function ItemDetailsPage() {
                     <Button
                       variant="secondary"
                       className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
-                      onClick={() => setAssociationModalVisible(true)}
+                      onClick={handleRefreshMetadata}
+                      disabled={isRefreshingMetadata}
                     >
-                      {item?.metadataId ? (
-                        <Link2 className="size-4 mr-1.5" />
-                      ) : (
-                        <Search className="size-4 mr-1.5" />
-                      )}
-                      {item?.metadataId
-                        ? t("items.fixMeta")
-                        : t("items.findMeta")}
+                      <RefreshCw
+                        className={cn(
+                          "size-4 mr-1.5",
+                          isRefreshingMetadata && "animate-spin",
+                        )}
+                      />
+                      {t("items.refreshMetadata")}
                     </Button>
                   </div>
                 )}
@@ -1402,6 +1560,34 @@ export default function ItemDetailsPage() {
                         </span>
                       </div>
                     )}
+
+                  {detailTableFacts.map((fact) => (
+                    <div
+                      key={`${fact.kind}-${fact.label}-${fact.value}`}
+                      className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0"
+                    >
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                        {fact.label}
+                      </span>
+                      {fact.kind === "tag" ? (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {splitTagFactValue(fact.value).map((tag) => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                          {fact.value}
+                        </span>
+                      )}
+                    </div>
+                  ))}
 
                   {item?.metadata?.releaseDate &&
                     !isNaN(new Date(item.metadata.releaseDate).getTime()) && (

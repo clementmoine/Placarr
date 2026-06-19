@@ -83,7 +83,9 @@ function buildAttachmentDisplayScoreDetails(
     ) {
       addSignal(90, "front/cover signal");
     }
-    if (/(back|rear|verso|spine|disc|media|inside)/.test(signal)) {
+    if (
+      /\b(?:back|rear|verso|spine|disc|media|inside)\b/.test(signal)
+    ) {
       addSignal(-220, "back/disc signal");
     }
     if (

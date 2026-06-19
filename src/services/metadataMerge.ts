@@ -469,8 +469,8 @@ export function mergeMusicMetadata(
   }));
 
   const providerImageCandidates: MetadataAttachment[] = [
-    { source: "deezer", url: deezer?.imageUrl },
     { source: "discogs", url: discogs?.imageUrl },
+    { source: "deezer", url: deezer?.imageUrl },
     { source: "musicbrainz", url: musicbrainz?.imageUrl },
   ].flatMap((candidate) =>
     candidate.url
@@ -485,11 +485,12 @@ export function mergeMusicMetadata(
   );
 
   const attachments = rankAttachmentsForDisplay([
-    ...deezerAttachments,
     ...discogsAttachments,
+    ...deezerAttachments,
     ...providerImageCandidates,
   ]);
-  const imageUrl = pickBestDisplayImageUrl(attachments);
+  const imageUrl =
+    discogs?.imageUrl || pickBestDisplayImageUrl(attachments);
 
   const aliases = Array.from(
     new Set([
@@ -544,7 +545,7 @@ export function preferRequestedDisplayTitle(
   }
 
   if (
-    scoreMetadataDisplayTitle(requestedTitle) <=
+    scoreMetadataDisplayTitle(requestedTitle) <
     scoreMetadataDisplayTitle(currentTitle)
   ) {
     return metadata;

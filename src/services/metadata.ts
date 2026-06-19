@@ -1,5 +1,3 @@
-import { AttachmentType } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import {
   explainAttachmentScoreForDisplay,
   type AttachmentDisplayScoreDetails,
@@ -11,6 +9,7 @@ import {
   getCachedMetadata,
   storeMetadata,
 } from "@/services/metadataStorage";
+import { isMissingDiscogsGallery } from "@/lib/metadataDiscogs";
 import type { Item, Type } from "@prisma/client";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -49,40 +48,7 @@ export async function getMetadata(
   platform?: string | null,
 ): Promise<MetadataResult | null> {
   try {
-    const metadata = await fetchMetadataByType(name, type, barcode, platform);
-
-    if (metadata && barcode) {
-      const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
-      if (cleanedBarcode) {
-        const cached = await prisma.barcodeCache.findUnique({
-          where: { barcode: cleanedBarcode },
-          include: { rawNames: true },
-        });
-
-        if (cached) {
-          const barcodeCover = cached.rawNames.find(
-            (rn) => rn.coverUrl,
-          )?.coverUrl;
-          if (barcodeCover) {
-            if (!metadata.attachments) {
-              metadata.attachments = [];
-            }
-            const exists = metadata.attachments.some(
-              (a) => a.url === barcodeCover,
-            );
-            if (!exists) {
-              metadata.attachments.unshift({
-                type: "cover" as AttachmentType,
-                url: barcodeCover,
-                source: "barcode",
-              });
-            }
-          }
-        }
-      }
-    }
-
-    return metadata;
+    return await fetchMetadataByType(name, type, barcode, platform);
   } catch (err) {
     console.error("Failed to fetch metadata:", err);
     return null;
@@ -101,7 +67,14 @@ export async function fetchAndStoreMetadata(
   if (!forceRefresh) {
     const cachedMetadata = await getCachedMetadata(itemId);
     if (cachedMetadata) {
-      return formatMetadataFromStorage(cachedMetadata);
+      const staleDiscogsGallery = isMissingDiscogsGallery(
+        type,
+        barcode,
+        cachedMetadata.attachments,
+      );
+      if (!staleDiscogsGallery) {
+        return formatMetadataFromStorage(cachedMetadata);
+      }
     }
   }
 

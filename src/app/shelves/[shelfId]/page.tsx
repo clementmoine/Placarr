@@ -7,11 +7,17 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState, useEffect } from "react";
 import { Compass, Plus, Wrench, Pizza, Search } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
+import { motion, LayoutGroup } from "framer-motion";
 
 import {
   Form,
@@ -47,6 +53,7 @@ import { getAspectRatio } from "@/lib/cardFormat";
 import { itemPath, slugify } from "@/lib/slugs";
 import { syncItemQueries } from "@/lib/itemQueryCache";
 import { getEstimatedItemValueCents } from "@/lib/itemValue";
+import { compareTitlesForSort } from "@/lib/titleSort";
 
 import type { Shelf, Prisma, Item } from "@prisma/client";
 import type { ShelfWithItemCount } from "@/types/shelves";
@@ -72,6 +79,7 @@ function ShelfComponent() {
 
   const router = useRouter();
   const q = searchParams.get("q") || "";
+  const [searchQuery, setSearchQuery] = useState(q);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(itemSearchSchema),
@@ -82,16 +90,23 @@ function ShelfComponent() {
 
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    form.setValue("search", q);
+    setSearchQuery(q);
+  }, [q, form]);
+
   const {
     data: shelf,
     isError,
-    isFetching,
+    isLoading,
   } = useQuery({
-    queryKey: ["shelf", shelfId, q],
-    queryFn: () => getShelf(shelfId, q),
+    queryKey: ["shelf", shelfId, searchQuery],
+    queryFn: () => getShelf(shelfId, searchQuery),
     staleTime: 0,
     refetchOnMount: "always",
-    placeholderData: () => {
+    placeholderData: (previousData) => {
+      if (previousData) return previousData;
+
       const shelf = queryClient
         .getQueryData<ShelfWithItemCount[]>(["shelves"])
         ?.find(
@@ -123,7 +138,7 @@ function ShelfComponent() {
             userId: shelf?.userId || "",
           }),
         ),
-      };
+      } as any;
     },
   });
 
@@ -168,7 +183,7 @@ function ShelfComponent() {
     return [...items].sort((a, b) => {
       switch (sortBy) {
         case "name_desc":
-          return b.name.localeCompare(a.name);
+          return compareTitlesForSort(a.name, b.name, "desc");
         case "added_desc":
           return (
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -197,7 +212,7 @@ function ShelfComponent() {
         }
         case "name_asc":
         default:
-          return a.name.localeCompare(b.name);
+          return compareTitlesForSort(a.name, b.name);
       }
     });
   }, [shelf?.items, sortBy]);
@@ -244,16 +259,45 @@ function ShelfComponent() {
     [itemMutate],
   );
 
-  const handleSearch = async (values: FormValues) => {
+  const handleSearch = (values: FormValues) => {
     const value = values.search;
-
+    setSearchQuery(value);
     const params = new URLSearchParams(window.location.search);
     if (value) {
       params.set("q", value);
     } else {
       params.delete("q");
     }
-    router.replace(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    form.setValue("search", value);
+    debounce(() => {
+      setSearchQuery(value);
+      const params = new URLSearchParams(window.location.search);
+      if (value) {
+        params.set("q", value);
+      } else {
+        params.delete("q");
+      }
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      try {
+        History.prototype.replaceState.call(
+          window.history,
+          { ...window.history.state, as: newUrl, url: newUrl },
+          "",
+          newUrl,
+        );
+      } catch {
+        window.history.replaceState(
+          { ...window.history.state, as: newUrl, url: newUrl },
+          "",
+          newUrl,
+        );
+      }
+    });
   };
 
   const handleModalOpen = useCallback(
@@ -293,7 +337,7 @@ function ShelfComponent() {
     return getAspectRatio(shelf?.cardFormat, shelf?.type);
   }, [shelf?.cardFormat, shelf?.type]);
 
-  if (!isFetching && (isError || !shelf?.id)) {
+  if (!isLoading && (isError || !shelf?.id)) {
     return (
       <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
         <Header />
@@ -404,13 +448,7 @@ function ShelfComponent() {
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <div className="flex-1">
               <Form {...form}>
-                <form
-                  onChange={(e) => {
-                    const search = (e.target as HTMLInputElement).value;
-                    debounce(() => handleSearch({ search }));
-                  }}
-                  onSubmit={form.handleSubmit(() => {})}
-                >
+                <form onSubmit={form.handleSubmit(handleSearch)}>
                   <FormField
                     control={form.control}
                     name="search"
@@ -424,9 +462,14 @@ function ShelfComponent() {
                             <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
                             <Input
                               type="search"
+                              autoFocus
                               className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
                               placeholder={t("common.search")}
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                handleSearchChange(e);
+                              }}
                             />
                             <ScannerButton
                               className="absolute right-1 rounded-xl"
@@ -488,47 +531,60 @@ function ShelfComponent() {
               </div>
             )}
           </div>
-
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
-            {sortedItems.map((item, index) =>
-              isFetching || !item.id ? (
-                <Skeleton
-                  key={index}
-                  className="flex rounded-xl w-full"
-                  style={{
-                    aspectRatio: skeletonAspectRatio,
-                  }}
-                />
-              ) : (
-                <Link
-                  key={`${item.id}-${index}`}
-                  href={itemPath(shelf || { id: resolvedShelfId }, item)}
-                >
-                  <ItemCard
-                    {...item}
-                    shelfType={shelf?.type}
-                    cardFormat={shelf?.cardFormat}
+          <LayoutGroup>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
+              {sortedItems.map((item, index) =>
+                isLoading || !item.id ? (
+                  <Skeleton
+                    key={`skeleton-${index}`}
+                    className="flex rounded-xl w-full"
+                    style={{
+                      aspectRatio: skeletonAspectRatio,
+                    }}
                   />
-                </Link>
-              ),
-            )}
+                ) : (
+                  <motion.div
+                    key={item.id}
+                    layoutId={`item-card-${item.id}`}
+                    layout
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                    }}
+                  >
+                    <Link
+                      href={itemPath(shelf || { id: resolvedShelfId }, item)}
+                    >
+                      <ItemCard
+                        {...item}
+                        shelfType={shelf?.type}
+                        cardFormat={shelf?.cardFormat}
+                      />
+                    </Link>
+                  </motion.div>
+                ),
+              )}
 
-            {/* Plus Add Item Card in the items grid */}
-            {!isFetching && isAuthenticated && !isGuest && canEdit && (
-              <button
-                onClick={() => handleModalOpen("item")}
-                className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
-                style={{ aspectRatio: skeletonAspectRatio }}
-              >
-                <Plus className="size-5 text-primary" />
-                <span>{t("items.addItem")}</span>
-              </button>
-            )}
-          </div>
+              {/* Plus Add Item Card in the items grid */}
+              {!isLoading && isAuthenticated && !isGuest && canEdit && (
+                <motion.button
+                  layout
+                  layoutId="add-item-btn"
+                  onClick={() => handleModalOpen("item")}
+                  className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
+                  style={{ aspectRatio: skeletonAspectRatio }}
+                >
+                  <Plus className="size-5 text-primary" />
+                  <span>{t("items.addItem")}</span>
+                </motion.button>
+              )}
+            </div>
+          </LayoutGroup>
 
           {/* Empty state for non-editable shelves */}
           {sortedItems.length === 0 &&
-            !isFetching &&
+            !isLoading &&
             (!isAuthenticated || isGuest || !canEdit) && (
               <div className="flex flex-col items-center justify-center py-12 select-none">
                 <Pizza className="size-12 text-zinc-400 dark:text-zinc-650 mb-3 animate-pulse" />

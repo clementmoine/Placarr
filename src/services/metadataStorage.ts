@@ -25,6 +25,10 @@ import {
   metadataFieldEvidence,
   normalizeMetadataFacts,
 } from "@/services/metadataFacts";
+import {
+  trimLightImageMargins,
+  cropImageIfNeeded,
+} from "@/lib/server/imageTrim";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type { Item } from "@prisma/client";
 import { replaceFieldEvidence } from "@/services/evidence";
@@ -58,6 +62,34 @@ const mapAttachments = (attachments?: Attachment[]) =>
     role: attachment.role ?? undefined,
     source: attachment.source ?? undefined,
   })) ?? [];
+
+function isDisplayImageAttachment(attachment: {
+  type?: AttachmentType | string | null;
+  url?: string | null;
+}) {
+  return (
+    Boolean(attachment.url) &&
+    ["cover", "artwork", "image", "screenshot", "background"].includes(
+      String(attachment.type || ""),
+    )
+  );
+}
+
+function hasMetadataImageCandidate(metadata: MetadataResult) {
+  if (metadata.imageUrl) return true;
+  return Boolean(metadata.attachments?.some(isDisplayImageAttachment));
+}
+
+function canUseBarcodeCacheCover(
+  cached: { shelfType?: string | null } | null,
+  type: Type,
+  metadata: MetadataResult,
+) {
+  return cached?.shelfType === type && !hasMetadataImageCandidate(metadata);
+}
+
+export { isMissingDiscogsGallery } from "@/lib/metadataDiscogs";
+
 export function formatMetadataForStorage(
   metadata: MetadataResult,
   sourceType: Type,
@@ -147,7 +179,10 @@ export async function getCachedMetadata(
   return item?.metadata || null;
 }
 
-export async function downloadRemoteImage(url: string): Promise<string | null> {
+export async function downloadRemoteImage(
+  url: string,
+  options: { trim?: boolean; minMarginPixels?: number } = {},
+): Promise<string | null> {
   if (
     !url ||
     url.startsWith("/") ||
@@ -155,6 +190,10 @@ export async function downloadRemoteImage(url: string): Promise<string | null> {
     !url.startsWith("http")
   ) {
     return url;
+  }
+
+  if (url.includes("cdn.pji.nu") || url.includes("prisjakt.nu")) {
+    url = url.replace(/\.(jpe?g|png|webp|gif|svg)\?.*$/i, ".$1");
   }
 
   try {
@@ -194,7 +233,13 @@ export async function downloadRemoteImage(url: string): Promise<string | null> {
     });
 
     if (res.status === 200) {
-      fs.writeFileSync(targetPath, Buffer.from(res.data));
+      let imageBuffer = Buffer.from(res.data);
+      if (options.trim) {
+        imageBuffer = await trimLightImageMargins(imageBuffer, {
+          minMarginPixels: options.minMarginPixels,
+        });
+      }
+      fs.writeFileSync(targetPath, imageBuffer);
       console.log(`[ImageLocalizer] Downloaded ${url} -> ${targetPath}`);
       return `/uploads/${filename}`;
     }
@@ -262,7 +307,7 @@ export async function storeMetadata(
         where: { barcode: cleanedBarcode },
         include: { rawNames: true },
       });
-      if (cached) {
+      if (cached && canUseBarcodeCacheCover(cached, type, metadata)) {
         const barcodeCover = cached.rawNames.find(
           (rn) => rn.coverUrl,
         )?.coverUrl;
@@ -302,15 +347,25 @@ export async function storeMetadata(
 
   const rankedLocalizedAttachments =
     await rankLocalizedAttachmentsForDisplay(localizedAttachments);
+  const discogsCover = rankedLocalizedAttachments.find(
+    (attachment) =>
+      attachment.source === "discogs" && attachment.type === "cover",
+  );
   const selectedImageUrl =
+    discogsCover?.url ??
     pickBestDisplayImageUrl(rankedLocalizedAttachments) ??
     formattedMetadata.imageUrl ??
     null;
-  metadata.imageUrl = selectedImageUrl || undefined;
+
+  const croppedImageUrl = selectedImageUrl
+    ? await cropImageIfNeeded(selectedImageUrl, { minMarginPixels: 30 })
+    : null;
+
+  metadata.imageUrl = croppedImageUrl || undefined;
 
   const metadataData = {
     ...formattedMetadata,
-    imageUrl: selectedImageUrl,
+    imageUrl: croppedImageUrl,
     lastFetched: now,
     updatedAt: now,
   };
@@ -377,6 +432,31 @@ export async function storeMetadata(
     },
     evidence,
   );
+
+  if (item && croppedImageUrl) {
+    const previousMetadataImage = item.metadata?.imageUrl || null;
+    const itemCoverStillInGallery = rankedLocalizedAttachments.some(
+      (attachment) => attachment.url === item.imageUrl,
+    );
+    const shouldSyncItemCover =
+      !item.imageUrl ||
+      item.imageUrl === previousMetadataImage ||
+      localizedAttachments.some(
+        (attachment) =>
+          attachment.source === "barcode" && attachment.url === item.imageUrl,
+      ) ||
+      (type === "musics" &&
+        !itemCoverStillInGallery &&
+        rankedLocalizedAttachments.some(
+          (attachment) => attachment.source === "discogs",
+        ));
+    if (shouldSyncItemCover) {
+      await prisma.item.update({
+        where: { id: itemId },
+        data: { imageUrl: croppedImageUrl },
+      });
+    }
+  }
 
   return storedMetadata;
 }

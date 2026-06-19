@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
     delete: vi.fn(),
   },
   shelf: { findUnique: vi.fn() },
+  metadata: { update: vi.fn() },
   fetchAndStoreMetadata: vi.fn(),
   downloadRemoteImage: vi.fn(),
 }));
@@ -19,7 +20,7 @@ vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: h.requireGuestOrHigher,
 }));
 vi.mock("@/lib/prisma", () => ({
-  prisma: { item: h.item, shelf: h.shelf },
+  prisma: { item: h.item, shelf: h.shelf, metadata: h.metadata },
 }));
 vi.mock("@/services/metadata", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
@@ -222,6 +223,29 @@ describe("PATCH /api/items — autorisation", () => {
 
     expect(res.status).toBe(200);
     expect(h.item.update).toHaveBeenCalled();
+  });
+
+  it("met à jour le titre dans les métadonnées de l'item si elles existent", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelf: { type: "games" },
+    });
+    h.item.update.mockResolvedValue({
+      id: "i1",
+      metadataId: "m1",
+      metadata: { id: "m1", title: "Old Title" },
+      shelf: { type: "games" },
+    });
+
+    const res = await PATCH(withBody("PATCH", { id: "i1", name: "New Title" }));
+
+    expect(res.status).toBe(200);
+    expect(h.item.update).toHaveBeenCalled();
+    expect(h.metadata.update).toHaveBeenCalledWith({
+      where: { id: "m1" },
+      data: { title: "New Title" },
+    });
   });
 });
 

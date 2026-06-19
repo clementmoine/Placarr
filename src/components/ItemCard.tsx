@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import type { Item } from "@prisma/client";
 import { useLocale } from "@/lib/providers/LocaleProvider";
 import {
   ShelfTypeIcon,
   getShelfTypeIconComponent,
 } from "@/components/ShelfTypeIcon";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
 import { getAspectRatio } from "@/lib/cardFormat";
 import { getEstimatedItemValueCents } from "@/lib/itemValue";
@@ -24,6 +29,7 @@ interface ItemCardProps extends Item {
 export function ItemCard(props: ItemCardProps) {
   const { imageUrl, name, shelfType, cardFormat, condition } = props;
   const { t } = useLocale();
+  const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
 
   // Determine aspect ratio based on shelf type or card format
   const aspectRatio = useMemo(() => {
@@ -34,6 +40,14 @@ export function ItemCard(props: ItemCardProps) {
   const PlaceholderIcon = useMemo(() => {
     return getShelfTypeIconComponent(shelfType);
   }, [shelfType]);
+
+  useEffect(() => {
+    setImageFit("contain");
+  }, [imageUrl]);
+
+  const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    setImageFit("contain");
+  };
 
   // Calculate estimated price in Euros
   const estimatedPrice = useMemo(() => {
@@ -70,19 +84,20 @@ export function ItemCard(props: ItemCardProps) {
       </div>
 
       {imageUrl ? (
-        <>
+        <div className="w-full h-full bg-white relative overflow-hidden">
           {/* Main Cover Image */}
-          <Image
+          <RemoteImage
             src={imageUrl}
             alt={name}
-            width={512}
-            height={512}
-            className="w-full h-full object-cover select-none transition-transform duration-500 ease-out"
-            draggable={false}
+            onLoad={handleImageLoad}
+            className={[
+              "w-full h-full select-none transition-transform duration-500 ease-out",
+              imageFit === "contain" ? "object-contain" : "object-cover",
+            ].join(" ")}
           />
           {/* subtle dark overlay gradient for title legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-        </>
+        </div>
       ) : (
         /* Premium looking placeholder fallback */
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-900 dark:to-zinc-950 text-muted-foreground gap-3">

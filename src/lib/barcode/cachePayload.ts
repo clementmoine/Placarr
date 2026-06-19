@@ -61,6 +61,8 @@ export async function buildCachedBarcodePayload(
   cleanedBarcode: string,
   options: { markStale?: boolean } = {},
 ) {
+  const canUseRawCoverFromCache =
+    !type || !cachedResult.shelfType || cachedResult.shelfType === type;
   const rawNames = cachedResult.rawNames.map((rn) => rn.value);
   const filteredNames = filterPlatformRedundancies(rawNames);
   const mappedNamesWithPriority = filteredNames.map((val, index) => {
@@ -77,7 +79,7 @@ export async function buildCachedBarcodePayload(
     matches.map(async (m) => {
       let coverUrl = await getPrioritizedImageUrl(m.name);
 
-      if (!coverUrl) {
+      if (!coverUrl && canUseRawCoverFromCache) {
         const matchingRaw = cachedResult.rawNames.find((rn) => {
           const valNorm = rn.value.toLowerCase().trim();
           return (

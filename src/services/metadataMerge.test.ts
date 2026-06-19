@@ -4,6 +4,7 @@ import {
   mergeBookMetadata,
   mergeBoardGameMetadata,
   mergeMusicMetadata,
+  preferRequestedDisplayTitle,
 } from "@/services/metadataMerge";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -156,5 +157,25 @@ describe("mergeBoardGameMetadata", () => {
     expect(merged.barcode).toBe("3558380126133");
     expect(merged.imageUrl).toBe("https://cdn1.philibertnet.com/catane.jpg");
     expect(merged.facts?.some((fact) => fact.value === "3-4")).toBe(true);
+  });
+});
+
+describe("preferRequestedDisplayTitle", () => {
+  it("prefers a clean requested Latin title over a CJK-prefixed metadata title", () => {
+    const metadata: MetadataResult = {
+      title: "下村陽子 - KINGDOM HEARTS Orchestra -World of Tres-",
+    };
+    const requested = "KINGDOM HEARTS: ORCHESTRA - World Of Tres";
+    const result = preferRequestedDisplayTitle(metadata, requested);
+    expect(result.title).toBe("KINGDOM HEARTS: ORCHESTRA - World Of Tres");
+  });
+
+  it("prefers the requested title when quality scores are tied", () => {
+    const metadata: MetadataResult = {
+      title: "Yoko Shimomura - Kingdom Hearts Orchestra  -World Of Tres- Album",
+    };
+    const requested = "KINGDOM HEARTS: ORCHESTRA - World Of Tres";
+    const result = preferRequestedDisplayTitle(metadata, requested);
+    expect(result.title).toBe("KINGDOM HEARTS: ORCHESTRA - World Of Tres");
   });
 });

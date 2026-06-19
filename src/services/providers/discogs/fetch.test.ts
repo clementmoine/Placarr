@@ -80,6 +80,58 @@ describe("fetchFromDiscogs", () => {
     expect(r?.year).toBe("2001");
   });
 
+  it("récupère les images du détail release", async () => {
+    process.env.DISCOGS_TOKEN = "test-token";
+    mockedGet
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              id: 14232304,
+              title: "Yoko Shimomura - Kingdom Hearts Orchestra",
+              year: 2019,
+              cover_image: "https://i.discogs.com/search-cover.jpeg",
+            },
+          ],
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          images: [
+            {
+              type: "primary",
+              uri: "https://i.discogs.com/primary.jpeg",
+              width: 600,
+              height: 546,
+            },
+            {
+              type: "secondary",
+              uri: "https://i.discogs.com/back.jpeg",
+              width: 600,
+              height: 537,
+            },
+          ],
+        },
+      } as never);
+
+    const r = await fetchFromDiscogs("4988601467124");
+    expect(r?.imageUrl).toBe("https://i.discogs.com/primary.jpeg");
+    expect(r?.images).toEqual([
+      {
+        url: "https://i.discogs.com/primary.jpeg",
+        kind: "primary",
+        width: 600,
+        height: 546,
+      },
+      {
+        url: "https://i.discogs.com/back.jpeg",
+        kind: "secondary",
+        width: 600,
+        height: 537,
+      },
+    ]);
+  });
+
   it("renvoie null quand aucun résultat", async () => {
     process.env.DISCOGS_TOKEN = "test-token";
     mockedGet.mockResolvedValue({ data: { results: [] } } as never);

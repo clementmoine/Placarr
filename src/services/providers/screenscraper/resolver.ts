@@ -134,6 +134,9 @@ function detectSystemIdFromName(name: string): number | undefined {
   const lower = name.toLowerCase().replace(/[._-]+/g, " ");
   const has = (pattern: RegExp) => pattern.test(lower);
 
+  if (has(/\bpsp\b|\bplaystation\s+portable\b/)) return 61;
+  if (has(/\bvita\b/) || has(/\bplaystation\s+vita\b/) || has(/\bps\s+vita\b/))
+    return 62;
   if (has(/\bps5\b|\bplaystation\s+5\b/)) return 284;
   if (has(/\bps4\b|\bplaystation\s+4\b/)) return 60;
   if (has(/\bps3\b|\bplaystation\s+3\b/)) return 59;
@@ -172,9 +175,6 @@ function detectSystemIdFromName(name: string): number | undefined {
   if (has(/\bneo\s+geo\b|\bneogeo\b/)) return 24;
   if (has(/\batari\s+2600\b/) || has(/\batari2600\b/) || has(/\batari\b/))
     return 26;
-  if (has(/\bpsp\b|\bplaystation\s+portable\b/)) return 61;
-  if (has(/\bvita\b/) || has(/\bplaystation\s+vita\b/) || has(/\bps\s+vita\b/))
-    return 62;
   return undefined;
 }
 
@@ -575,6 +575,9 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
         const platformCompatibleResults = systemeid
           ? validResults.filter((r: any) => {
+              if (r.systeme?.id) {
+                return Number(r.systeme.id) === systemeid;
+              }
               const title = pickSSTitle(r.noms) || "";
               return !hasCachedCandidateSystemConflict(title, systemeid);
             })
@@ -584,16 +587,25 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             ? platformCompatibleResults
             : validResults;
 
+        console.log("=== SCREEN SCRAPER DEBUG ===");
+        console.log("systemeid:", systemeid);
+        console.log("validResults count:", validResults.length);
+        console.log("validResults ids:", validResults.map((r: any) => `${r.id} (${r.systeme?.id})`));
+        console.log("platformCompatibleResults count:", platformCompatibleResults.length);
+        console.log("rankedResults count:", rankedResults.length);
+
         let bestId = rankedResults[0].id;
         let minDist = Infinity;
         for (const r of rankedResults) {
           const rTitle = pickSSTitle(r.noms)?.toLowerCase() || "";
           const dist = levenshtein.get(searchNameUsed.toLowerCase(), rTitle);
+          console.log(`Candidate ${r.id} (${rTitle}) distance to ${searchNameUsed}: ${dist}`);
           if (dist < minDist) {
             minDist = dist;
             bestId = r.id;
           }
         }
+        console.log("Selected bestId:", bestId);
 
         const infoRes = await axios.get<{ response: { jeu: SSGame } }>(
           "https://api.screenscraper.fr/api2/jeuInfos.php",

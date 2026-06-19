@@ -8,6 +8,7 @@ import {
   fetchAndStoreMetadata,
   downloadRemoteImage,
 } from "@/services/metadata";
+import { cropImageIfNeeded } from "@/lib/server/imageTrim";
 import { presentItem, presentItemFromStorage } from "@/lib/presentItem";
 import { resolveShelfId, resolveItemId } from "@/lib/resolveIds";
 import { slugify } from "@/lib/slugs";
@@ -151,6 +152,11 @@ export async function POST(req: NextRequest) {
 
     if (imageUrl) {
       localImageUrl = await downloadRemoteImage(imageUrl);
+      if (localImageUrl) {
+        localImageUrl = await cropImageIfNeeded(localImageUrl, {
+          minMarginPixels: 30,
+        });
+      }
     }
     if (backgroundImageUrl) {
       localBackgroundImageUrl = await downloadRemoteImage(backgroundImageUrl);
@@ -260,6 +266,11 @@ export async function PATCH(req: NextRequest) {
 
     if (data.imageUrl) {
       data.imageUrl = await downloadRemoteImage(data.imageUrl);
+      if (data.imageUrl) {
+        data.imageUrl = await cropImageIfNeeded(data.imageUrl, {
+          minMarginPixels: 30,
+        });
+      }
     }
     if (data.backgroundImageUrl) {
       data.backgroundImageUrl = await downloadRemoteImage(
@@ -281,6 +292,16 @@ export async function PATCH(req: NextRequest) {
         },
       },
     });
+
+    if (typeof data.name === "string" && updatedItem.metadataId) {
+      await prisma.metadata.update({
+        where: { id: updatedItem.metadataId },
+        data: { title: data.name },
+      });
+      if (updatedItem.metadata) {
+        updatedItem.metadata.title = data.name;
+      }
+    }
 
     if (refreshMetadata) {
       try {

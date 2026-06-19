@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,6 +37,7 @@ function ExplorePageComponent() {
   const debounce = useDebounce();
 
   const q = searchParams.get("q") || "";
+  const [searchQuery, setSearchQuery] = useState(q);
 
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,54 +47,74 @@ function ExplorePageComponent() {
     defaultValues,
   });
 
-  const { data: results, isFetching } = useQuery({
-    queryKey: ["explore", q],
+  const { data: results, isLoading } = useQuery({
+    queryKey: ["explore", searchQuery],
     queryFn: async () => {
       const { data } = await axios.get(
-        q ? `/api/explore?q=${encodeURIComponent(q)}` : "/api/explore",
+        searchQuery
+          ? `/api/explore?q=${encodeURIComponent(searchQuery)}`
+          : "/api/explore",
       );
       return data;
     },
+    placeholderData: keepPreviousData,
   });
 
   const handleSearch = (values: FormValues) => {
     const value = values.search;
+    setSearchQuery(value);
     const params = new URLSearchParams(window.location.search);
     if (value) {
       params.set("q", value);
     } else {
       params.delete("q");
     }
-    router.replace(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     form.setValue("search", value);
     debounce(() => {
+      setSearchQuery(value);
       const params = new URLSearchParams(window.location.search);
       if (value) {
         params.set("q", value);
       } else {
         params.delete("q");
       }
-      router.replace(`?${params.toString()}`);
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      try {
+        History.prototype.replaceState.call(
+          window.history,
+          { ...window.history.state, as: newUrl, url: newUrl },
+          "",
+          newUrl,
+        );
+      } catch {
+        window.history.replaceState(
+          { ...window.history.state, as: newUrl, url: newUrl },
+          "",
+          newUrl,
+        );
+      }
     });
   };
 
   useEffect(() => {
     form.setValue("search", q);
+    setSearchQuery(q);
   }, [q, form]);
 
   const items = useMemo(() => {
-    if (!q) return [];
+    if (!searchQuery) return [];
     return (results as any[]) || [];
-  }, [q, results]);
+  }, [searchQuery, results]);
 
   const publicShelves = useMemo(() => {
-    if (q) return [];
+    if (searchQuery) return [];
     return (results as any[]) || [];
-  }, [q, results]);
+  }, [searchQuery, results]);
 
   return (
     <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
@@ -136,6 +157,7 @@ function ExplorePageComponent() {
             <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
             <Input
               type="search"
+              autoFocus
               placeholder="Rechercher des objets chez d'autres collectionneurs..."
               className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
               {...form.register("search")}
@@ -145,7 +167,7 @@ function ExplorePageComponent() {
         </div>
 
         {/* Results grid */}
-        {isFetching ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-2">
             {Array.from({ length: 10 }).map((_, i) => (
               <div
@@ -154,7 +176,7 @@ function ExplorePageComponent() {
               />
             ))}
           </div>
-        ) : q ? (
+        ) : searchQuery ? (
           items.length > 0 ? (
             <div className="flex flex-col gap-3">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none flex items-center gap-1.5 select-none">
@@ -216,11 +238,14 @@ function ExplorePageComponent() {
                     key={shelf.id}
                     onClick={() => {
                       form.setValue("search", shelf.name);
+                      setSearchQuery(shelf.name);
                       const params = new URLSearchParams(
                         window.location.search,
                       );
                       params.set("q", shelf.name);
-                      router.replace(`?${params.toString()}`);
+                      router.replace(`?${params.toString()}`, {
+                        scroll: false,
+                      });
                     }}
                     className="relative group select-none hover:-translate-y-1 transition-all duration-300 ease-out"
                   >

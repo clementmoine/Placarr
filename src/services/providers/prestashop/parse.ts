@@ -9,7 +9,10 @@ import type { PrestashopSearchProduct } from "./types";
 
 export function stripHtml(value: string): string {
   return decodeHTMLEntities(
-    value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+    value
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
   );
 }
 
@@ -38,7 +41,9 @@ export function extractEditionYearFromProductName(
   if (parenthetical) {
     return `${parenthetical[1]}-01-01`;
   }
-  const suffix = trimmed.match(/\b(19\d{2}|20\d{2})\b(?!.*\b(19\d{2}|20\d{2})\b)/);
+  const suffix = trimmed.match(
+    /\b(19\d{2}|20\d{2})\b(?!.*\b(19\d{2}|20\d{2})\b)/,
+  );
   if (suffix) {
     return `${suffix[1]}-01-01`;
   }
@@ -98,9 +103,7 @@ export function parsePrestashopShortDescription(html: string): {
     }
   }
 
-  const ageMatch = plain.match(
-    /(?:à partir de|des?|dès)\s*(\d+)\s*ans?/i,
-  );
+  const ageMatch = plain.match(/(?:à partir de|des?|dès)\s*(\d+)\s*ans?/i);
   if (ageMatch) {
     result.ageRating = `${ageMatch[1]}+`;
   }
@@ -123,10 +126,7 @@ export function parsePrestashopShortDescription(html: string): {
   }
 
   const description = plain
-    .replace(
-      /(?:de\s+)?\d+\s*(?:à|a|-)\s*\d+\s*joueurs?\.?/gi,
-      "",
-    )
+    .replace(/(?:de\s+)?\d+\s*(?:à|a|-)\s*\d+\s*joueurs?\.?/gi, "")
     .replace(/(?:à partir de|des?|dès)\s*\d+\s*ans?\.?/gi, "")
     .replace(/\d+\s*minutes?\.?/gi, "")
     .replace(/\s+/g, " ")

@@ -88,10 +88,7 @@ export const getItemPrices = (
   itemId: string,
   shelfId?: string | null,
 ): Promise<ItemPrices> => {
-  const url = new URL(
-    `/api/items/${itemId}/prices`,
-    window.location.origin,
-  );
+  const url = new URL(`/api/items/${itemId}/prices`, window.location.origin);
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
   }
@@ -103,10 +100,7 @@ export const refreshItemMetadata = (
   shelfId?: string | null,
   lookupQuery?: string | null,
 ): Promise<RefreshItemMetadataResponse> => {
-  const url = new URL(
-    `/api/items/${itemId}/metadata`,
-    window.location.origin,
-  );
+  const url = new URL(`/api/items/${itemId}/metadata`, window.location.origin);
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
   }

@@ -6,7 +6,9 @@ import type {
   MetadataResult,
 } from "@/types/metadataProvider";
 
-export function dedupeFacts(facts?: MetadataFact[]): MetadataFact[] | undefined {
+export function dedupeFacts(
+  facts?: MetadataFact[],
+): MetadataFact[] | undefined {
   if (!facts || facts.length === 0) return undefined;
   const seen = new Set<string>();
   const normalizedFacts = normalizeMetadataFacts(applyConsensus(facts));

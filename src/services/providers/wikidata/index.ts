@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { metadataProbe } from "@/lib/mappingProbeUtils";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 

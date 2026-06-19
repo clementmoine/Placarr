@@ -78,8 +78,12 @@ function titleSimilarity(a: string, b?: string | null): number {
 }
 
 function hasUsableTime(entry: HLTBSearchGame): boolean {
-  return [entry.comp_main, entry.comp_plus, entry.comp_100, entry.comp_all]
-    .some((value) => typeof value === "number" && value > 0);
+  return [
+    entry.comp_main,
+    entry.comp_plus,
+    entry.comp_100,
+    entry.comp_all,
+  ].some((value) => typeof value === "number" && value > 0);
 }
 
 function scoreEntry(query: string, entry: HLTBSearchGame): number {
@@ -120,7 +124,9 @@ function formatSecondsAsHours(value?: number | null): string | null {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   if (!hours) return `${minutes} min`;
-  return minutes ? `${hours} h ${String(minutes).padStart(2, "0")}` : `${hours} h`;
+  return minutes
+    ? `${hours} h ${String(minutes).padStart(2, "0")}`
+    : `${hours} h`;
 }
 
 function formatReviewScore(value?: number | null): string | null {
@@ -396,7 +402,8 @@ function pickPlatformData(
 
   return (
     detail.platformData.find(
-      (entry) => normalizeForComparison(entry.platform || "") === normalizedTarget,
+      (entry) =>
+        normalizeForComparison(entry.platform || "") === normalizedTarget,
     ) || null
   );
 }

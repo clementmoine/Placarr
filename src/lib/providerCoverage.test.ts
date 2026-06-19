@@ -26,16 +26,18 @@ describe("computeCapabilityRisk", () => {
 
   it("marks ok when only one provider exists and is configured", () => {
     expect(
-      computeCapabilityRisk(["howlongtobeat"], ["howlongtobeat"], new Map([
-        ["howlongtobeat", "scrape"],
-      ])),
+      computeCapabilityRisk(
+        ["howlongtobeat"],
+        ["howlongtobeat"],
+        new Map([["howlongtobeat", "scrape"]]),
+      ),
     ).toBe("ok");
   });
 
   it("marks single-source when multiple key providers exist but only one is configured", () => {
-    expect(
-      computeCapabilityRisk(["tmdb", "omdb"], ["tmdb"], keyOnly),
-    ).toBe("single-source");
+    expect(computeCapabilityRisk(["tmdb", "omdb"], ["tmdb"], keyOnly)).toBe(
+      "single-source",
+    );
   });
 
   it("marks ok when multiple configured providers exist", () => {

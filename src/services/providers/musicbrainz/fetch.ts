@@ -38,10 +38,7 @@ export interface MusicBrainzResult {
 }
 
 /** Construit un nom canonique "Artiste - Titre" sans dupliquer l'artiste. */
-export function formatMusicTitle(
-  artist: string | null,
-  title: string,
-): string {
+export function formatMusicTitle(artist: string | null, title: string): string {
   const t = (title || "").trim();
   const a = (artist || "").trim();
   if (!a || !t) return t;
@@ -84,7 +81,9 @@ export async function fetchFromMusicBrainz(
     if (!best?.title) return null;
 
     const artist = artistFromCredit(best["artist-credit"]);
-    const labelInfo = Array.isArray(best["label-info"]) ? best["label-info"] : [];
+    const labelInfo = Array.isArray(best["label-info"])
+      ? best["label-info"]
+      : [];
     const firstLabel =
       typeof labelInfo[0]?.label?.name === "string"
         ? labelInfo[0].label.name
@@ -101,10 +100,14 @@ export async function fetchFromMusicBrainz(
         if (!entry || typeof entry !== "object") return "";
         const format = typeof entry.format === "string" ? entry.format : "";
         const discTracks =
-          typeof entry["track-count"] === "number" ? entry["track-count"] : null;
+          typeof entry["track-count"] === "number"
+            ? entry["track-count"]
+            : null;
         const parts = [
           format,
-          discTracks != null ? `${discTracks} piste${discTracks > 1 ? "s" : ""}` : "",
+          discTracks != null
+            ? `${discTracks} piste${discTracks > 1 ? "s" : ""}`
+            : "",
         ].filter(Boolean);
         return parts.join(" — ");
       })

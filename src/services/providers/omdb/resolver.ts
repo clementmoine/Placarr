@@ -31,7 +31,11 @@ export function createOMDbResolver() {
       });
 
       const search = searchRes.data;
-      if (!search || search.Response === "False" || !Array.isArray(search.Search)) {
+      if (
+        !search ||
+        search.Response === "False" ||
+        !Array.isArray(search.Search)
+      ) {
         return null;
       }
 
@@ -87,7 +91,10 @@ export function createOMDbResolver() {
         });
       }
 
-      if (typeof details.Metascore === "string" && details.Metascore !== "N/A") {
+      if (
+        typeof details.Metascore === "string" &&
+        details.Metascore !== "N/A"
+      ) {
         facts.push({
           kind: "rating",
           label: "Metascore",
@@ -98,7 +105,10 @@ export function createOMDbResolver() {
         });
       }
 
-      if (typeof details.imdbVotes === "string" && details.imdbVotes !== "N/A") {
+      if (
+        typeof details.imdbVotes === "string" &&
+        details.imdbVotes !== "N/A"
+      ) {
         facts.push({
           kind: "popularity",
           label: "Votes IMDb",
@@ -193,7 +203,10 @@ export function createOMDbResolver() {
           priority: 24,
         });
       }
-      if (typeof details.BoxOffice === "string" && details.BoxOffice !== "N/A") {
+      if (
+        typeof details.BoxOffice === "string" &&
+        details.BoxOffice !== "N/A"
+      ) {
         facts.push({
           kind: "box-office",
           label: "Box office",

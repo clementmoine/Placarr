@@ -244,7 +244,9 @@ export async function storeMetadata(
 
   const attachmentsList = [...(metadata.attachments || [])];
   if (metadata.imageUrl) {
-    const exists = attachmentsList.some((attachment) => attachment.url === metadata.imageUrl);
+    const exists = attachmentsList.some(
+      (attachment) => attachment.url === metadata.imageUrl,
+    );
     if (!exists) {
       attachmentsList.unshift({
         type: "cover",
@@ -387,7 +389,10 @@ function isPcLikeGamePlatform(platform?: string | null): boolean {
   return /\b(pc|windows|steam)\b/.test(normalized);
 }
 
-const imageMetricsCache = new Map<string, Promise<AttachmentImageMetrics | null>>();
+const imageMetricsCache = new Map<
+  string,
+  Promise<AttachmentImageMetrics | null>
+>();
 const IMAGE_METRICS_CACHE_LIMIT = 1500;
 
 function shouldReadImageMetricsForAttachment(type: AttachmentType): boolean {
@@ -441,10 +446,11 @@ export async function readAttachmentImageMetrics(
   return task;
 }
 
-async function rankLocalizedAttachmentsForDisplay<T extends ScoredAttachmentInput>(
-  attachments: T[],
-): Promise<T[]> {
-  const scoredEntries: Array<{ attachment: T; score: number; index: number }> = [];
+async function rankLocalizedAttachmentsForDisplay<
+  T extends ScoredAttachmentInput,
+>(attachments: T[]): Promise<T[]> {
+  const scoredEntries: Array<{ attachment: T; score: number; index: number }> =
+    [];
   const batchSize = 8;
   for (let offset = 0; offset < attachments.length; offset += batchSize) {
     const batch = attachments.slice(offset, offset + batchSize);

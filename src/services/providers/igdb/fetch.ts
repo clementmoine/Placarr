@@ -11,7 +11,10 @@
 import axios from "axios";
 import { prisma } from "@/lib/prisma";
 import levenshtein from "fast-levenshtein";
-import type { MetadataAttachment, MetadataFact } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+} from "@/types/metadataProvider";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -168,7 +171,9 @@ function normalizeTitleForCompare(t: string): string {
 const SUGGESTION_GAME_CATEGORIES = new Set([0, 8, 9, 10, 11]);
 
 function isPrimaryGameCategory(game: IGDBGame): boolean {
-  return game.category === undefined || SUGGESTION_GAME_CATEGORIES.has(game.category);
+  return (
+    game.category === undefined || SUGGESTION_GAME_CATEGORIES.has(game.category)
+  );
 }
 
 function normalizePlatformForCompare(value: string): string {
@@ -283,7 +288,9 @@ function rankIGDBGames(
     );
 }
 
-function mergeIGDBResults(...groups: Array<IGDBGame[] | undefined>): IGDBGame[] {
+function mergeIGDBResults(
+  ...groups: Array<IGDBGame[] | undefined>
+): IGDBGame[] {
   const byId = new Map<number, IGDBGame>();
   for (const group of groups) {
     for (const game of group || []) {
@@ -330,9 +337,7 @@ export async function fetchFromIGDB(
     // game. Always add a stricter keyword pass and let the local ranker choose.
     const keywords = getIGDBSearchKeywords(name);
     if (keywords.length > 0) {
-      const nameConditions = keywords
-        .map((w) => `name ~ *"${w}"*`)
-        .join(" & ");
+      const nameConditions = keywords.map((w) => `name ~ *"${w}"*`).join(" & ");
       const altConditions = keywords
         .map((w) => `alternative_names.name ~ *"${w}"*`)
         .join(" & ");
@@ -403,9 +408,7 @@ export async function getIGDBSuggestions(
 
     const keywords = getIGDBSearchKeywords(name);
     if (keywords.length > 0) {
-      const nameConditions = keywords
-        .map((w) => `name ~ *"${w}"*`)
-        .join(" & ");
+      const nameConditions = keywords.map((w) => `name ~ *"${w}"*`).join(" & ");
       const altConditions = keywords
         .map((w) => `alternative_names.name ~ *"${w}"*`)
         .join(" & ");

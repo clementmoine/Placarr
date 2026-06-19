@@ -511,7 +511,6 @@ function AdminDashboardComponent() {
     }
   };
 
-
   useEffect(() => {
     if (status !== "loading") {
       if (!session || session.user.role !== "admin") {
@@ -578,7 +577,9 @@ function AdminDashboardComponent() {
 
   const coverageRisks = (providerRegistry?.coverage || []).flatMap((entry) =>
     entry.capabilities
-      .filter((cell) => cell.risk === "missing" || cell.risk === "single-source")
+      .filter(
+        (cell) => cell.risk === "missing" || cell.risk === "single-source",
+      )
       .map((cell) => ({ type: entry.type, ...cell })),
   );
 
@@ -590,7 +591,8 @@ function AdminDashboardComponent() {
     { ok: 0, partial: 0, empty: 0, blocked: 0, error: 0 },
   );
   const filteredMappingProbes = (providerMappingAudit?.probes || []).filter(
-    (probe) => mappingAuditFilter === "all" || probe.status === mappingAuditFilter,
+    (probe) =>
+      mappingAuditFilter === "all" || probe.status === mappingAuditFilter,
   );
   const mappingStatusRank: Record<MappingProbeStatus, number> = {
     error: 5,
@@ -872,7 +874,9 @@ function AdminDashboardComponent() {
 
                     <div className="space-y-2">
                       <Label htmlFor="teardown-providers">
-                        {locale === "fr" ? "Providers cibles" : "Target providers"}
+                        {locale === "fr"
+                          ? "Providers cibles"
+                          : "Target providers"}
                       </Label>
                       <Textarea
                         id="teardown-providers"
@@ -1173,9 +1177,9 @@ function AdminDashboardComponent() {
                                       </span>
                                       <span className="font-mono text-muted-foreground">
                                         {provider.coverSelection.selectedUrl
-                                          ? (locale === "fr"
-                                              ? "cover retenue"
-                                              : "selected cover")
+                                          ? locale === "fr"
+                                            ? "cover retenue"
+                                            : "selected cover"
                                           : "-"}
                                       </span>
                                     </div>
@@ -1229,7 +1233,8 @@ function AdminDashboardComponent() {
                                               )}
                                               <span className="truncate">
                                                 {candidate.role || "-"}
-                                                {candidate.width && candidate.height
+                                                {candidate.width &&
+                                                candidate.height
                                                   ? ` • ${candidate.width}x${candidate.height}`
                                                   : ""}
                                                 {candidate.format
@@ -1399,201 +1404,202 @@ function AdminDashboardComponent() {
                   </button>
                 </div>
 
-                {showProviderRuntime && (isLoading ? (
-                  <div className="grid gap-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-28 rounded-xl" />
-                      ))}
-                    </div>
-                    <Skeleton className="h-6 w-48" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <Skeleton key={i} className="h-44 rounded-xl" />
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card className="relative overflow-hidden border bg-card/60 backdrop-blur-sm shadow-md">
-                        <div className="absolute top-0 right-0 p-3 opacity-10">
-                          <Activity className="size-16" />
-                        </div>
-                        <CardHeader className="pb-2">
-                          <CardDescription className="text-xs font-medium uppercase tracking-wider">
-                            {t("admin.status.overallStatus")}
-                          </CardDescription>
-                          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                            {t("admin.status.apisHealthy", {
-                              healthy: healthyCount,
-                              total: totalCount,
-                            })}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden mt-1">
-                            <div
-                              className={`h-full transition-all duration-500 ${
-                                healthyCount === totalCount
-                                  ? "bg-emerald-500"
-                                  : healthyCount > totalCount / 2
-                                    ? "bg-amber-500"
-                                    : "bg-destructive"
-                              }`}
-                              style={{
-                                width: `${(healthyCount / (totalCount || 1)) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="relative overflow-hidden border bg-card/60 backdrop-blur-sm shadow-md">
-                        <div className="absolute top-0 right-0 p-3 opacity-10">
-                          <Database className="size-16" />
-                        </div>
-                        <CardHeader className="pb-2">
-                          <CardDescription className="text-xs font-medium uppercase tracking-wider">
-                            {t("admin.status.servicesConfigured")}
-                          </CardDescription>
-                          <CardTitle className="text-2xl font-bold">
-                            {apis?.filter((a) => a.configured).length || 0} /{" "}
-                            {totalCount}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-xs text-muted-foreground">
-                            {t("admin.status.servicesConfiguredDesc")}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 border-b pb-2">
-                        <Database className="size-5 text-primary" />
-                        <h3 className="text-lg font-semibold tracking-tight">
-                          {t("admin.status.metadataApis")}
-                        </h3>
+                {showProviderRuntime &&
+                  (isLoading ? (
+                    <div className="grid gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-28 rounded-xl" />
+                        ))}
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {metadataApis.map((api) => (
-                          <Card
-                            key={api.name}
-                            className={`relative overflow-hidden border transition-all duration-300 ${
-                              api.status === "down"
-                                ? "border-destructive/30 bg-destructive/5"
-                                : api.status === "unconfigured"
-                                  ? "border-muted/30 opacity-70 bg-card/30"
-                                  : "border-border bg-card/40 hover:border-border/80"
-                            }`}
-                          >
-                            <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                              <div className="space-y-0.5">
-                                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                  {api.name}
-                                  {dashboardUrls[api.name] && (
-                                    <a
-                                      href={dashboardUrls[api.name]}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-muted-foreground hover:text-foreground transition-colors"
-                                      title="Open Dashboard"
-                                    >
-                                      <ExternalLink className="size-3.5" />
-                                    </a>
-                                  )}
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                  {api.configured ? (
-                                    <span className="text-emerald-500 font-medium flex items-center gap-1">
-                                      <Key className="size-3" />
-                                      {t("admin.status.configured")}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground flex items-center gap-1">
-                                      <Key className="size-3" />
-                                      {t("admin.status.notConfigured")}
-                                    </span>
-                                  )}
-                                </CardDescription>
-                              </div>
-
-                              <div>
-                                {api.status === "up" && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/20 font-medium flex items-center gap-1"
-                                  >
-                                    <span className="relative flex h-2 w-2">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                    </span>
-                                    {t("admin.status.up")}
-                                  </Badge>
-                                )}
-                                {api.status === "down" && (
-                                  <Badge
-                                    variant="destructive"
-                                    className="font-medium flex items-center gap-1"
-                                  >
-                                    <XCircle className="size-3.5" />
-                                    {t("admin.status.down")}
-                                  </Badge>
-                                )}
-                                {api.status === "unconfigured" && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-muted-foreground font-medium flex items-center gap-1"
-                                  >
-                                    <AlertTriangle className="size-3.5 text-muted-foreground" />
-                                    {t("admin.status.unconfigured")}
-                                  </Badge>
-                                )}
-                              </div>
-                            </CardHeader>
-
-                            <CardContent className="space-y-2">
-                              {api.latency !== null && (
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>{t("admin.status.latency")}</span>
-                                  <span>{api.latency} ms</span>
-                                </div>
-                              )}
-
-                              {api.error && (
-                                <div className="border-t pt-2 mt-2">
-                                  <button
-                                    id={`btn-toggle-error-${api.name.replace(/\s+/g, "-").toLowerCase()}`}
-                                    onClick={() => toggleError(api.name)}
-                                    className="w-full flex items-center justify-between text-xs font-semibold text-destructive/80 hover:text-destructive transition-colors"
-                                  >
-                                    <span className="flex items-center gap-1">
-                                      <AlertTriangle className="size-3.5" />
-                                      {t("admin.status.error")}
-                                    </span>
-                                    {expandedErrors[api.name] ? (
-                                      <ChevronUp className="size-3.5" />
-                                    ) : (
-                                      <ChevronDown className="size-3.5" />
-                                    )}
-                                  </button>
-                                  {expandedErrors[api.name] && (
-                                    <pre className="mt-2 p-2 rounded bg-black/80 dark:bg-black/50 text-[10px] font-mono text-red-400 overflow-x-auto whitespace-pre-wrap max-h-24">
-                                      {api.error}
-                                    </pre>
-                                  )}
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
+                      <Skeleton className="h-6 w-48" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <Skeleton key={i} className="h-44 rounded-xl" />
                         ))}
                       </div>
                     </div>
-                  </>
-                ))}
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="relative overflow-hidden border bg-card/60 backdrop-blur-sm shadow-md">
+                          <div className="absolute top-0 right-0 p-3 opacity-10">
+                            <Activity className="size-16" />
+                          </div>
+                          <CardHeader className="pb-2">
+                            <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                              {t("admin.status.overallStatus")}
+                            </CardDescription>
+                            <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                              {t("admin.status.apisHealthy", {
+                                healthy: healthyCount,
+                                total: totalCount,
+                              })}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="w-full bg-secondary h-2 rounded-full overflow-hidden mt-1">
+                              <div
+                                className={`h-full transition-all duration-500 ${
+                                  healthyCount === totalCount
+                                    ? "bg-emerald-500"
+                                    : healthyCount > totalCount / 2
+                                      ? "bg-amber-500"
+                                      : "bg-destructive"
+                                }`}
+                                style={{
+                                  width: `${(healthyCount / (totalCount || 1)) * 100}%`,
+                                }}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="relative overflow-hidden border bg-card/60 backdrop-blur-sm shadow-md">
+                          <div className="absolute top-0 right-0 p-3 opacity-10">
+                            <Database className="size-16" />
+                          </div>
+                          <CardHeader className="pb-2">
+                            <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                              {t("admin.status.servicesConfigured")}
+                            </CardDescription>
+                            <CardTitle className="text-2xl font-bold">
+                              {apis?.filter((a) => a.configured).length || 0} /{" "}
+                              {totalCount}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-xs text-muted-foreground">
+                              {t("admin.status.servicesConfiguredDesc")}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 border-b pb-2">
+                          <Database className="size-5 text-primary" />
+                          <h3 className="text-lg font-semibold tracking-tight">
+                            {t("admin.status.metadataApis")}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {metadataApis.map((api) => (
+                            <Card
+                              key={api.name}
+                              className={`relative overflow-hidden border transition-all duration-300 ${
+                                api.status === "down"
+                                  ? "border-destructive/30 bg-destructive/5"
+                                  : api.status === "unconfigured"
+                                    ? "border-muted/30 opacity-70 bg-card/30"
+                                    : "border-border bg-card/40 hover:border-border/80"
+                              }`}
+                            >
+                              <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                                <div className="space-y-0.5">
+                                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                    {api.name}
+                                    {dashboardUrls[api.name] && (
+                                      <a
+                                        href={dashboardUrls[api.name]}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-muted-foreground hover:text-foreground transition-colors"
+                                        title="Open Dashboard"
+                                      >
+                                        <ExternalLink className="size-3.5" />
+                                      </a>
+                                    )}
+                                  </CardTitle>
+                                  <CardDescription className="text-xs">
+                                    {api.configured ? (
+                                      <span className="text-emerald-500 font-medium flex items-center gap-1">
+                                        <Key className="size-3" />
+                                        {t("admin.status.configured")}
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted-foreground flex items-center gap-1">
+                                        <Key className="size-3" />
+                                        {t("admin.status.notConfigured")}
+                                      </span>
+                                    )}
+                                  </CardDescription>
+                                </div>
+
+                                <div>
+                                  {api.status === "up" && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/20 font-medium flex items-center gap-1"
+                                    >
+                                      <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                      </span>
+                                      {t("admin.status.up")}
+                                    </Badge>
+                                  )}
+                                  {api.status === "down" && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="font-medium flex items-center gap-1"
+                                    >
+                                      <XCircle className="size-3.5" />
+                                      {t("admin.status.down")}
+                                    </Badge>
+                                  )}
+                                  {api.status === "unconfigured" && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-muted-foreground font-medium flex items-center gap-1"
+                                    >
+                                      <AlertTriangle className="size-3.5 text-muted-foreground" />
+                                      {t("admin.status.unconfigured")}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </CardHeader>
+
+                              <CardContent className="space-y-2">
+                                {api.latency !== null && (
+                                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>{t("admin.status.latency")}</span>
+                                    <span>{api.latency} ms</span>
+                                  </div>
+                                )}
+
+                                {api.error && (
+                                  <div className="border-t pt-2 mt-2">
+                                    <button
+                                      id={`btn-toggle-error-${api.name.replace(/\s+/g, "-").toLowerCase()}`}
+                                      onClick={() => toggleError(api.name)}
+                                      className="w-full flex items-center justify-between text-xs font-semibold text-destructive/80 hover:text-destructive transition-colors"
+                                    >
+                                      <span className="flex items-center gap-1">
+                                        <AlertTriangle className="size-3.5" />
+                                        {t("admin.status.error")}
+                                      </span>
+                                      {expandedErrors[api.name] ? (
+                                        <ChevronUp className="size-3.5" />
+                                      ) : (
+                                        <ChevronDown className="size-3.5" />
+                                      )}
+                                    </button>
+                                    {expandedErrors[api.name] && (
+                                      <pre className="mt-2 p-2 rounded bg-black/80 dark:bg-black/50 text-[10px] font-mono text-red-400 overflow-x-auto whitespace-pre-wrap max-h-24">
+                                        {api.error}
+                                      </pre>
+                                    )}
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ))}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                   <Card className="border bg-card/60 shadow-md">
@@ -1630,9 +1636,7 @@ function AdminDashboardComponent() {
                   <Card className="border bg-card/60 shadow-md">
                     <CardHeader className="pb-2">
                       <CardDescription className="text-xs uppercase tracking-wider">
-                        {locale === "fr"
-                          ? "Risques actifs"
-                          : "Active risks"}
+                        {locale === "fr" ? "Risques actifs" : "Active risks"}
                       </CardDescription>
                       <CardTitle className="text-2xl">
                         {coverageRisks.length}
@@ -1670,20 +1674,39 @@ function AdminDashboardComponent() {
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1 text-xs">
-                      <Badge variant="outline" className="border-emerald-500/30 text-emerald-700">
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-500/30 text-emerald-700"
+                      >
                         OK: {mappingAuditSummary.ok}
                       </Badge>
-                      <Badge variant="outline" className="border-amber-500/30 text-amber-700">
-                        {locale === "fr" ? "Partiel" : "Partial"}: {mappingAuditSummary.partial}
+                      <Badge
+                        variant="outline"
+                        className="border-amber-500/30 text-amber-700"
+                      >
+                        {locale === "fr" ? "Partiel" : "Partial"}:{" "}
+                        {mappingAuditSummary.partial}
                       </Badge>
-                      <Badge variant="outline" className="border-zinc-500/30 text-zinc-700">
-                        {locale === "fr" ? "Vide" : "Empty"}: {mappingAuditSummary.empty}
+                      <Badge
+                        variant="outline"
+                        className="border-zinc-500/30 text-zinc-700"
+                      >
+                        {locale === "fr" ? "Vide" : "Empty"}:{" "}
+                        {mappingAuditSummary.empty}
                       </Badge>
-                      <Badge variant="outline" className="border-sky-500/30 text-sky-700">
-                        {locale === "fr" ? "Bloqué" : "Blocked"}: {mappingAuditSummary.blocked}
+                      <Badge
+                        variant="outline"
+                        className="border-sky-500/30 text-sky-700"
+                      >
+                        {locale === "fr" ? "Bloqué" : "Blocked"}:{" "}
+                        {mappingAuditSummary.blocked}
                       </Badge>
-                      <Badge variant="outline" className="border-rose-500/30 text-rose-700">
-                        {locale === "fr" ? "Erreurs" : "Errors"}: {mappingAuditSummary.error}
+                      <Badge
+                        variant="outline"
+                        className="border-rose-500/30 text-rose-700"
+                      >
+                        {locale === "fr" ? "Erreurs" : "Errors"}:{" "}
+                        {mappingAuditSummary.error}
                       </Badge>
                       {providerMappingAudit?.generatedAt && (
                         <span className="text-muted-foreground self-center">
@@ -1696,7 +1719,9 @@ function AdminDashboardComponent() {
                       <Select
                         value={mappingAuditFilter}
                         onValueChange={(value) =>
-                          setMappingAuditFilter(value as "all" | MappingProbeStatus)
+                          setMappingAuditFilter(
+                            value as "all" | MappingProbeStatus,
+                          )
                         }
                       >
                         <SelectTrigger className="w-full md:w-[220px] h-8 text-xs">
@@ -1704,7 +1729,9 @@ function AdminDashboardComponent() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">
-                            {locale === "fr" ? "Tous les statuts" : "All statuses"}
+                            {locale === "fr"
+                              ? "Tous les statuts"
+                              : "All statuses"}
                           </SelectItem>
                           <SelectItem value="ok">ok</SelectItem>
                           <SelectItem value="partial">partial</SelectItem>
@@ -1729,24 +1756,47 @@ function AdminDashboardComponent() {
                         <table className="w-full min-w-[1140px] text-xs border-collapse">
                           <thead>
                             <tr className="border-b bg-background text-left text-muted-foreground">
-                              <th className="px-3 py-2">{locale === "fr" ? "Provider" : "Provider"}</th>
-                              <th className="px-3 py-2">{locale === "fr" ? "Statut" : "Status"}</th>
-                              <th className="px-3 py-2">{locale === "fr" ? "Exemple" : "Example"}</th>
-                              <th className="px-3 py-2">{locale === "fr" ? "Input probe" : "Probe input"}</th>
-                              <th className="px-3 py-2">{locale === "fr" ? "Champs mappés" : "Mapped fields"}</th>
                               <th className="px-3 py-2">
-                                {locale === "fr" ? "Champs inutilisés" : "Unused fields"}
+                                {locale === "fr" ? "Provider" : "Provider"}
+                              </th>
+                              <th className="px-3 py-2">
+                                {locale === "fr" ? "Statut" : "Status"}
+                              </th>
+                              <th className="px-3 py-2">
+                                {locale === "fr" ? "Exemple" : "Example"}
+                              </th>
+                              <th className="px-3 py-2">
+                                {locale === "fr"
+                                  ? "Input probe"
+                                  : "Probe input"}
+                              </th>
+                              <th className="px-3 py-2">
+                                {locale === "fr"
+                                  ? "Champs mappés"
+                                  : "Mapped fields"}
+                              </th>
+                              <th className="px-3 py-2">
+                                {locale === "fr"
+                                  ? "Champs inutilisés"
+                                  : "Unused fields"}
                               </th>
                               <th className="px-3 py-2">attachments</th>
                               <th className="px-3 py-2">facts</th>
-                              <th className="px-3 py-2">{locale === "fr" ? "Info" : "Details"}</th>
+                              <th className="px-3 py-2">
+                                {locale === "fr" ? "Info" : "Details"}
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
                             {sortedMappingProbes.map((probe) => (
-                              <tr key={probe.providerId} className="border-b align-top">
+                              <tr
+                                key={probe.providerId}
+                                className="border-b align-top"
+                              >
                                 <td className="px-3 py-2">
-                                  <div className="font-medium">{probe.label}</div>
+                                  <div className="font-medium">
+                                    {probe.label}
+                                  </div>
                                   <div className="font-mono text-[11px] text-muted-foreground">
                                     {probe.providerId}
                                   </div>
@@ -1769,8 +1819,12 @@ function AdminDashboardComponent() {
                                     {probe.status}
                                   </Badge>
                                 </td>
-                                <td className="px-3 py-2">{probe.example || "-"}</td>
-                                <td className="px-3 py-2 font-mono">{probe.sampleInput}</td>
+                                <td className="px-3 py-2">
+                                  {probe.example || "-"}
+                                </td>
+                                <td className="px-3 py-2 font-mono">
+                                  {probe.sampleInput}
+                                </td>
                                 <td className="px-3 py-2 font-mono text-[11px] leading-relaxed break-words max-w-md">
                                   {probe.mappedKeys.length > 0
                                     ? probe.mappedKeys.join(", ")
@@ -1781,8 +1835,12 @@ function AdminDashboardComponent() {
                                     ? probe.unusedKeys.join(", ")
                                     : "-"}
                                 </td>
-                                <td className="px-3 py-2">{probe.attachmentsCount}</td>
-                                <td className="px-3 py-2">{probe.factsCount}</td>
+                                <td className="px-3 py-2">
+                                  {probe.attachmentsCount}
+                                </td>
+                                <td className="px-3 py-2">
+                                  {probe.factsCount}
+                                </td>
                                 <td className="px-3 py-2 text-muted-foreground">
                                   {probe.reason || "-"}
                                 </td>
@@ -1905,11 +1963,15 @@ function AdminDashboardComponent() {
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-emerald-700 dark:text-emerald-300">
                         <CheckCircle2 className="size-3.5" />
-                        {locale === "fr" ? "Feature fournie" : "Feature provided"}
+                        {locale === "fr"
+                          ? "Feature fournie"
+                          : "Feature provided"}
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-1 text-rose-700 dark:text-rose-300">
                         <XCircle className="size-3.5" />
-                        {locale === "fr" ? "Feature absente" : "Feature missing"}
+                        {locale === "fr"
+                          ? "Feature absente"
+                          : "Feature missing"}
                       </span>
                     </div>
                     <div className="overflow-x-auto rounded-lg border">
@@ -1928,7 +1990,9 @@ function AdminDashboardComponent() {
                               colSpan={matrixCapabilities.length}
                               className="px-3 py-2 text-center font-semibold"
                             >
-                              {locale === "fr" ? "Fonctionnalités" : "Capabilities"}
+                              {locale === "fr"
+                                ? "Fonctionnalités"
+                                : "Capabilities"}
                             </th>
                           </tr>
                           <tr className="border-b bg-background text-left text-xs text-muted-foreground">
@@ -1958,7 +2022,9 @@ function AdminDashboardComponent() {
                                 onClick={() => handleProviderSort("canonical")}
                                 className="mx-auto inline-flex items-center gap-1 font-semibold hover:text-foreground"
                               >
-                                {locale === "fr" ? "Nom canonique" : "Canonical name"}
+                                {locale === "fr"
+                                  ? "Nom canonique"
+                                  : "Canonical name"}
                                 <SortIndicator sortKey="canonical" />
                               </button>
                             </th>
@@ -1984,113 +2050,122 @@ function AdminDashboardComponent() {
                             const stickyRowBg =
                               rowIndex % 2 === 0 ? "bg-background" : "bg-muted";
                             const providerWebsite =
-                              providerWebsiteUrls[provider.id] || dashboardUrls[provider.label];
+                              providerWebsiteUrls[provider.id] ||
+                              dashboardUrls[provider.label];
                             return (
-                            <tr
-                              key={provider.id}
-                              className="border-b align-top odd:bg-background even:bg-muted hover:bg-primary/5 transition-colors"
-                            >
-                              <td
-                                className={`sticky left-0 z-10 px-3 py-3 ${stickyRowBg}`}
+                              <tr
+                                key={provider.id}
+                                className="border-b align-top odd:bg-background even:bg-muted hover:bg-primary/5 transition-colors"
                               >
-                                <div className="space-y-1">
-                                  <div className="font-semibold flex items-center gap-2">
-                                    {providerWebsite ? (
-                                      <a
-                                        href={providerWebsite}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 hover:text-primary transition-colors"
-                                        title={locale === "fr" ? "Ouvrir le site du provider" : "Open provider website"}
-                                      >
-                                        <span>{provider.label}</span>
-                                        <ExternalLink className="size-3.5" />
-                                      </a>
-                                    ) : (
-                                      <span>{provider.label}</span>
-                                    )}
-                                    {provider.canonical && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[10px] border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
-                                      >
-                                        {locale === "fr" ? "Canonique" : "Canonical"}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="font-mono text-xs text-muted-foreground">
-                                    {provider.id}
-                                  </div>
-                                  {provider.notes && (
-                                    <div className="text-xs text-muted-foreground max-w-[280px]">
-                                      {provider.notes}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                              <td
-                                className={`sticky left-[240px] z-10 px-3 py-3 ${stickyRowBg}`}
-                              >
-                                <div className="flex flex-wrap gap-1">
-                                  {providerTypesOrder
-                                    .filter((type) => provider.types.includes(type))
-                                    .map((type) => (
-                                      <Badge key={type} variant="outline">
-                                        {typeLabel(type)}
-                                      </Badge>
-                                    ))}
-                                </div>
-                              </td>
-                              <td className="px-3 py-3 text-center align-middle">
-                                <span
-                                  className={`mx-auto inline-grid size-8 place-items-center rounded-full border leading-none ${
-                                    provider.canonical
-                                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-600"
-                                      : "border-rose-500/25 bg-rose-500/10 text-rose-500"
-                                  }`}
+                                <td
+                                  className={`sticky left-0 z-10 px-3 py-3 ${stickyRowBg}`}
                                 >
-                                  {provider.canonical ? (
-                                    <CheckCircle2 className="size-4 shrink-0" />
-                                  ) : (
-                                    <XCircle className="size-4 shrink-0" />
-                                  )}
-                                </span>
-                              </td>
-                              {matrixCapabilities.map((capability) => {
-                                const hasCapability =
-                                  provider.capabilities.includes(capability);
-                                return (
-                                  <td
-                                    key={capability}
-                                    className="px-2 py-3 text-center align-middle"
-                                  >
-                                    <span
-                                      title={`${provider.label} · ${capabilityLabel(capability)}: ${
-                                        hasCapability
-                                          ? locale === "fr"
-                                            ? "oui"
-                                            : "yes"
-                                          : locale === "fr"
-                                            ? "non"
-                                            : "no"
-                                      }`}
-                                      className={`mx-auto inline-grid size-8 place-items-center rounded-full border leading-none ${
-                                        hasCapability
-                                          ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-600"
-                                          : "border-rose-500/25 bg-rose-500/10 text-rose-500"
-                                      }`}
-                                    >
-                                      {hasCapability ? (
-                                        <CheckCircle2 className="size-4 shrink-0" />
+                                  <div className="space-y-1">
+                                    <div className="font-semibold flex items-center gap-2">
+                                      {providerWebsite ? (
+                                        <a
+                                          href={providerWebsite}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                                          title={
+                                            locale === "fr"
+                                              ? "Ouvrir le site du provider"
+                                              : "Open provider website"
+                                          }
+                                        >
+                                          <span>{provider.label}</span>
+                                          <ExternalLink className="size-3.5" />
+                                        </a>
                                       ) : (
-                                        <XCircle className="size-4 shrink-0" />
+                                        <span>{provider.label}</span>
                                       )}
-                                    </span>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
+                                      {provider.canonical && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                                        >
+                                          {locale === "fr"
+                                            ? "Canonique"
+                                            : "Canonical"}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="font-mono text-xs text-muted-foreground">
+                                      {provider.id}
+                                    </div>
+                                    {provider.notes && (
+                                      <div className="text-xs text-muted-foreground max-w-[280px]">
+                                        {provider.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td
+                                  className={`sticky left-[240px] z-10 px-3 py-3 ${stickyRowBg}`}
+                                >
+                                  <div className="flex flex-wrap gap-1">
+                                    {providerTypesOrder
+                                      .filter((type) =>
+                                        provider.types.includes(type),
+                                      )
+                                      .map((type) => (
+                                        <Badge key={type} variant="outline">
+                                          {typeLabel(type)}
+                                        </Badge>
+                                      ))}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-center align-middle">
+                                  <span
+                                    className={`mx-auto inline-grid size-8 place-items-center rounded-full border leading-none ${
+                                      provider.canonical
+                                        ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-600"
+                                        : "border-rose-500/25 bg-rose-500/10 text-rose-500"
+                                    }`}
+                                  >
+                                    {provider.canonical ? (
+                                      <CheckCircle2 className="size-4 shrink-0" />
+                                    ) : (
+                                      <XCircle className="size-4 shrink-0" />
+                                    )}
+                                  </span>
+                                </td>
+                                {matrixCapabilities.map((capability) => {
+                                  const hasCapability =
+                                    provider.capabilities.includes(capability);
+                                  return (
+                                    <td
+                                      key={capability}
+                                      className="px-2 py-3 text-center align-middle"
+                                    >
+                                      <span
+                                        title={`${provider.label} · ${capabilityLabel(capability)}: ${
+                                          hasCapability
+                                            ? locale === "fr"
+                                              ? "oui"
+                                              : "yes"
+                                            : locale === "fr"
+                                              ? "non"
+                                              : "no"
+                                        }`}
+                                        className={`mx-auto inline-grid size-8 place-items-center rounded-full border leading-none ${
+                                          hasCapability
+                                            ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-600"
+                                            : "border-rose-500/25 bg-rose-500/10 text-rose-500"
+                                        }`}
+                                      >
+                                        {hasCapability ? (
+                                          <CheckCircle2 className="size-4 shrink-0" />
+                                        ) : (
+                                          <XCircle className="size-4 shrink-0" />
+                                        )}
+                                      </span>
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
                           })}
                           {sortedProviders.length === 0 && (
                             <tr>
@@ -2146,7 +2221,9 @@ function AdminDashboardComponent() {
                                   {locale === "fr" ? "Providers" : "Providers"}
                                 </th>
                                 <th className="py-2 pr-3">
-                                  {locale === "fr" ? "Configurés" : "Configured"}
+                                  {locale === "fr"
+                                    ? "Configurés"
+                                    : "Configured"}
                                 </th>
                                 <th className="py-2">
                                   {locale === "fr" ? "Risque" : "Risk"}
@@ -2217,7 +2294,10 @@ function AdminDashboardComponent() {
                     {showCoverageByType && (
                       <CardContent className="space-y-4">
                         {(providerRegistry?.coverage || []).map((entry) => (
-                          <div key={entry.type} className="rounded-lg border p-3">
+                          <div
+                            key={entry.type}
+                            className="rounded-lg border p-3"
+                          >
                             <div className="font-semibold mb-2">
                               {typeLabel(entry.type)}
                             </div>
@@ -2255,7 +2335,6 @@ function AdminDashboardComponent() {
               </>
             )}
           </TabsContent>
-
         </Tabs>
       </div>
     </div>

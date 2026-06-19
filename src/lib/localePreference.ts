@@ -118,15 +118,14 @@ export function pickBestLocalizedDescription(
   candidates: LocalizedTextCandidate[],
 ): string | undefined {
   const valid = candidates
-    .filter((candidate): candidate is LocalizedTextCandidate & { text: string } =>
-      Boolean(candidate.text?.trim()),
+    .filter(
+      (candidate): candidate is LocalizedTextCandidate & { text: string } =>
+        Boolean(candidate.text?.trim()),
     )
     .map((candidate) => ({
       text: candidate.text.trim(),
       language:
-        candidate.language ||
-        inferTextLanguage(candidate.text) ||
-        undefined,
+        candidate.language || inferTextLanguage(candidate.text) || undefined,
       region: candidate.region,
       source: candidate.source,
     }));
@@ -134,16 +133,13 @@ export function pickBestLocalizedDescription(
   if (valid.length === 0) return undefined;
   if (valid.length === 1) return valid[0].text;
 
-  return valid
-    .slice()
-    .sort((a, b) => {
-      const languageDiff =
-        languageRank(a.language) - languageRank(b.language);
-      if (languageDiff !== 0) return languageDiff;
+  return valid.slice().sort((a, b) => {
+    const languageDiff = languageRank(a.language) - languageRank(b.language);
+    if (languageDiff !== 0) return languageDiff;
 
-      const regionDiff = regionRank(a.region) - regionRank(b.region);
-      if (regionDiff !== 0) return regionDiff;
+    const regionDiff = regionRank(a.region) - regionRank(b.region);
+    if (regionDiff !== 0) return regionDiff;
 
-      return b.text.length - a.text.length;
-    })[0].text;
+    return b.text.length - a.text.length;
+  })[0].text;
 }

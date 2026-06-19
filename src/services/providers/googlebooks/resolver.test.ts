@@ -25,7 +25,9 @@ describe("createGoogleBooksResolver", () => {
               publishedDate: "1974",
               pageCount: 96,
               description: "A clever fox outwits farmers.",
-              industryIdentifiers: [{ type: "ISBN_13", identifier: "9780140328721" }],
+              industryIdentifiers: [
+                { type: "ISBN_13", identifier: "9780140328721" },
+              ],
               imageLinks: {
                 thumbnail: "http://books.google.com/thumb.jpg",
               },

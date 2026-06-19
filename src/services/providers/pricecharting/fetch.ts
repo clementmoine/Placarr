@@ -99,7 +99,10 @@ function titleSimilarityScore(a: string, b: string): number {
 function buildTitleSlugCandidates(title: string): string[] {
   const cleanedTitle = title
     .replace(/\s*\([^)]*\)\s*/g, " ")
-    .replace(/\b(ps1|ps2|ps3|ps4|ps5|playstation\s*\d?|xbox\s*(360)?|wii)\b/gi, " ")
+    .replace(
+      /\b(ps1|ps2|ps3|ps4|ps5|playstation\s*\d?|xbox\s*(360)?|wii)\b/gi,
+      " ",
+    )
     .replace(/\s+/g, " ")
     .trim();
 
@@ -109,7 +112,11 @@ function buildTitleSlugCandidates(title: string): string[] {
     .trim();
 
   return Array.from(
-    new Set([cleanedTitle, withoutArticles].map((value) => slugify(value)).filter(Boolean)),
+    new Set(
+      [cleanedTitle, withoutArticles]
+        .map((value) => slugify(value))
+        .filter(Boolean),
+    ),
   );
 }
 
@@ -129,7 +136,8 @@ function buildDirectDetailUrls(
   const platformSlug = getPlatformSlug(fallbackPlatform, isPal);
   if (!platformSlug) return [];
   return buildTitleSlugCandidates(title).map(
-    (titleSlug) => `https://www.pricecharting.com/game/${platformSlug}/${titleSlug}`,
+    (titleSlug) =>
+      `https://www.pricecharting.com/game/${platformSlug}/${titleSlug}`,
   );
 }
 
@@ -137,7 +145,10 @@ function isSearchUrl(url: string): boolean {
   return url.includes("/search-products");
 }
 
-function isDetailUrlForPlatform(url: string, fallbackPlatform?: string): boolean {
+function isDetailUrlForPlatform(
+  url: string,
+  fallbackPlatform?: string,
+): boolean {
   if (!url.includes("/game/")) return false;
   const platformSlug = getPlatformSlug(fallbackPlatform, url.includes("/pal-"));
   return !platformSlug || url.includes(`/game/${platformSlug}/`);
@@ -161,7 +172,8 @@ function preferSpecificFallbackTitle(
     detectPlatformKey(cleanFallback) &&
     !detectPlatformKey(title) &&
     normalizedFallback.startsWith(normalizedTitle) &&
-    normalizedFallback.split(/\s+/).length <= normalizedTitle.split(/\s+/).length + 2
+    normalizedFallback.split(/\s+/).length <=
+      normalizedTitle.split(/\s+/).length + 2
   ) {
     return cleanFallback;
   }
@@ -173,7 +185,8 @@ function parseSearchRows(
   html: string,
 ): { id: string; title: string; platform: string }[] {
   const rows: { id: string; title: string; platform: string }[] = [];
-  const rowRegex = /<tr class=\"offer\" id=\"product-(\d+)\">([\s\S]*?)<\/tr>/gi;
+  const rowRegex =
+    /<tr class=\"offer\" id=\"product-(\d+)\">([\s\S]*?)<\/tr>/gi;
   let rMatch;
   while ((rMatch = rowRegex.exec(html)) !== null) {
     const id = rMatch[1];
@@ -353,9 +366,7 @@ async function fetchDetailHtmlFromNameFallback(
 }
 
 export function parsePriceChartingBarcode(html: string): string | undefined {
-  const match = html.match(
-    /EAN\s*\/\s*GTIN:<\/td>\s*<td[^>]*>\s*([\d,\s]+)/i,
-  );
+  const match = html.match(/EAN\s*\/\s*GTIN:<\/td>\s*<td[^>]*>\s*([\d,\s]+)/i);
   if (!match?.[1]) return undefined;
 
   const candidates = match[1]

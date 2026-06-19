@@ -5,12 +5,14 @@ import {
   isListingDiscardable,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
-import {
-  getRepresentativeScore,
-} from "@/lib/displayTitleScore";
+import { getRepresentativeScore } from "@/lib/displayTitleScore";
 import { confrontWithDatabase } from "@/services/metadataDatabase";
 
-import { isStrictTitleSubset, mergeDuplicateMatches, pickPreferredClusterDisplayName } from "./matchUtils";
+import {
+  isStrictTitleSubset,
+  mergeDuplicateMatches,
+  pickPreferredClusterDisplayName,
+} from "./matchUtils";
 
 import {
   areEvidenceSameProduct,
@@ -123,7 +125,8 @@ function isDatabaseResolvedNameAcceptable(
     (token) => !inputTokens.has(token) && !RESOLVER_PLATFORM_TOKENS.has(token),
   );
   const extraInputTokens = [...inputTokens].filter(
-    (token) => !resolvedTokens.has(token) && !RESOLVER_PLATFORM_TOKENS.has(token),
+    (token) =>
+      !resolvedTokens.has(token) && !RESOLVER_PLATFORM_TOKENS.has(token),
   );
   const hasNonCanonicalContext = extraInputTokens.some((token) =>
     NON_CANONICAL_CONTEXT_TOKENS.has(token),

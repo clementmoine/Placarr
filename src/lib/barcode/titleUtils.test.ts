@@ -65,7 +65,9 @@ describe("areLikelySameProduct", () => {
 
 describe("versionProvider / isCanonicalProvider", () => {
   it("versionne les providers de cache", () => {
-    expect(versionProvider("ScreenScraper")).toBe("ScreenScraper+canonical-v23");
+    expect(versionProvider("ScreenScraper")).toBe(
+      "ScreenScraper+canonical-v23",
+    );
   });
 
   it("reconnaît les providers canoniques", () => {

@@ -1,12 +1,12 @@
 import { metadataProbe } from "@/lib/mappingProbeUtils";
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
 import type { MetadataResult } from "@/types/metadataProvider";
-import type { MetadataProviderAdapter, ProviderModule } from "@/types/providerModule";
+import type {
+  MetadataProviderAdapter,
+  ProviderModule,
+} from "@/types/providerModule";
 
 import { searchPrestashopProduct } from "./fetch";
 import { createPrestashopResolver } from "./resolver";
@@ -128,7 +128,13 @@ export function createPrestashopModule(
         imageUrl: product.imageUrl,
         barcode: product.barcode,
         facts: product.priceCents
-          ? [{ kind: "price", label: "Prix", value: String(product.priceCents) }]
+          ? [
+              {
+                kind: "price",
+                label: "Prix",
+                value: String(product.priceCents),
+              },
+            ]
           : undefined,
       });
     },

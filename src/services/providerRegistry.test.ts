@@ -68,7 +68,9 @@ describe("providerRegistry", () => {
     expect(capabilityCoverage("movies", "ageRating").providers).toContain(
       "tmdb",
     );
-    expect(capabilityCoverage("movies", "ageRating").providers).toContain("omdb");
+    expect(capabilityCoverage("movies", "ageRating").providers).toContain(
+      "omdb",
+    );
   });
 
   it("jeux : la duree est couverte par HowLongToBeat", () => {
@@ -109,9 +111,9 @@ describe("providerRegistry", () => {
         "lepassetemps",
       ]),
     );
-    expect(capabilityCoverage("boardgames", "players").count).toBeGreaterThanOrEqual(
-      6,
-    );
+    expect(
+      capabilityCoverage("boardgames", "players").count,
+    ).toBeGreaterThanOrEqual(6);
   });
 
   it("jeux de société : Wikidata et Philibert couvrent description avec BGG", () => {
@@ -119,9 +121,9 @@ describe("providerRegistry", () => {
     expect(capabilityCoverage("boardgames", "description").providers).toEqual(
       expect.arrayContaining(["boardgamegeek", "wikidata", "philibert"]),
     );
-    expect(capabilityCoverage("boardgames", "description").count).toBeGreaterThanOrEqual(
-      3,
-    );
+    expect(
+      capabilityCoverage("boardgames", "description").count,
+    ).toBeGreaterThanOrEqual(3);
     delete process.env.BGG_API_TOKEN;
   });
 

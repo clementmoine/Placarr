@@ -56,7 +56,9 @@ async function runMetadataAdapterProbe(
   return metadataProbe(metadata);
 }
 
-async function runProbe(providerId: string): Promise<MappingProbeResult | null> {
+async function runProbe(
+  providerId: string,
+): Promise<MappingProbeResult | null> {
   const module = getProviderModule(providerId);
   if (module?.runMappingProbe) {
     return module.runMappingProbe();
@@ -71,10 +73,12 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
   const probes = await Promise.all(
     PROVIDERS.map(async (provider): Promise<ProviderMappingProbeEntry> => {
       const module = getProviderModule(provider.id);
-      const sampleInput =
-        module?.mappingProbe?.sampleInput || provider.id;
+      const sampleInput = module?.mappingProbe?.sampleInput || provider.id;
 
-      if (provider.id === "googlebooks" && !process.env.GOOGLE_BOOKS_API_KEY?.trim()) {
+      if (
+        provider.id === "googlebooks" &&
+        !process.env.GOOGLE_BOOKS_API_KEY?.trim()
+      ) {
         return blockedEntry(
           provider,
           sampleInput,
@@ -82,7 +86,10 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
         );
       }
 
-      if (provider.id === "boardgamegeek" && !process.env.BGG_API_TOKEN?.trim()) {
+      if (
+        provider.id === "boardgamegeek" &&
+        !process.env.BGG_API_TOKEN?.trim()
+      ) {
         return blockedEntry(
           provider,
           sampleInput,

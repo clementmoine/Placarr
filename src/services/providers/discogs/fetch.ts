@@ -85,11 +85,14 @@ export async function fetchFromDiscogs(
 
     if (typeof best.id === "number" && Number.isFinite(best.id)) {
       try {
-        const releaseRes = await axios.get(`${DISCOGS_BASE}/releases/${best.id}`, {
-          params: auth,
-          headers: { "User-Agent": USER_AGENT },
-          timeout: 8000,
-        });
+        const releaseRes = await axios.get(
+          `${DISCOGS_BASE}/releases/${best.id}`,
+          {
+            params: auth,
+            headers: { "User-Agent": USER_AGENT },
+            timeout: 8000,
+          },
+        );
         const release = releaseRes.data;
         if (Array.isArray(release?.formats)) {
           formats = release.formats
@@ -99,7 +102,8 @@ export async function fetchFromDiscogs(
               const descriptions = Array.isArray(entry?.descriptions)
                 ? entry.descriptions
                     .filter(
-                      (value: unknown): value is string => typeof value === "string",
+                      (value: unknown): value is string =>
+                        typeof value === "string",
                     )
                     .join(", ")
                 : "";
@@ -145,10 +149,14 @@ export async function fetchFromDiscogs(
       communityHave,
       communityWant,
       genres: Array.isArray(best.genre)
-        ? best.genre.filter((value: unknown): value is string => typeof value === "string")
+        ? best.genre.filter(
+            (value: unknown): value is string => typeof value === "string",
+          )
         : [],
       styles: Array.isArray(best.style)
-        ? best.style.filter((value: unknown): value is string => typeof value === "string")
+        ? best.style.filter(
+            (value: unknown): value is string => typeof value === "string",
+          )
         : [],
     };
   } catch {

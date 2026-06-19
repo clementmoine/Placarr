@@ -84,7 +84,10 @@ export function createOpenLibraryResolver() {
     const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
 
-    const fetchWithRetry = async <T>(url: string, retryCount = 0): Promise<T> => {
+    const fetchWithRetry = async <T>(
+      url: string,
+      retryCount = 0,
+    ): Promise<T> => {
       try {
         const response = await axios.get<T>(url);
         return response.data;
@@ -152,7 +155,9 @@ export function createOpenLibraryResolver() {
 
       if (!workId) {
         if (!name) return null;
-        const searchQuery = barcode ? `${cleanName} isbn:${barcode}` : cleanName;
+        const searchQuery = barcode
+          ? `${cleanName} isbn:${barcode}`
+          : cleanName;
 
         const data = await fetchWithRetry<OpenLibrarySearchResponse>(
           `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}`,
@@ -185,9 +190,10 @@ export function createOpenLibraryResolver() {
 
           workId = bestWork.key;
 
-          const editionsData = await fetchWithRetry<OpenLibraryEditionsResponse>(
-            `https://openlibrary.org${workId}/editions.json`,
-          );
+          const editionsData =
+            await fetchWithRetry<OpenLibraryEditionsResponse>(
+              `https://openlibrary.org${workId}/editions.json`,
+            );
 
           if (editionsData.entries && editionsData.entries.length > 0) {
             const sortedEditions = editionsData.entries
@@ -241,14 +247,18 @@ export function createOpenLibraryResolver() {
 
             workData = sortedEditions[0].edition;
             if ((bestWork as any).alternate_names) {
-              (workData as any).alternate_names = (bestWork as any).alternate_names;
+              (workData as any).alternate_names = (
+                bestWork as any
+              ).alternate_names;
             }
           } else {
             workData = await fetchWithRetry<OpenLibraryWork>(
               `https://openlibrary.org${workId}.json`,
             );
             if ((bestWork as any).alternate_names) {
-              (workData as any).alternate_names = (bestWork as any).alternate_names;
+              (workData as any).alternate_names = (
+                bestWork as any
+              ).alternate_names;
             }
           }
         }
@@ -311,9 +321,14 @@ export function createOpenLibraryResolver() {
 
           for (const { locale, format: dateFormat } of locales) {
             try {
-              const date = parse(workData.publish_date, dateFormat, new Date(), {
-                locale,
-              });
+              const date = parse(
+                workData.publish_date,
+                dateFormat,
+                new Date(),
+                {
+                  locale,
+                },
+              );
               if (!isNaN(date.getTime())) {
                 formattedDate = format(date, "yyyy-MM-dd");
                 break;
@@ -329,7 +344,8 @@ export function createOpenLibraryResolver() {
 
       const alternateNames = (workData as any).alternate_names || [];
       const aliases = alternateNames.filter(
-        (n: string) => n.toLowerCase().trim() !== workData.title.toLowerCase().trim(),
+        (n: string) =>
+          n.toLowerCase().trim() !== workData.title.toLowerCase().trim(),
       );
 
       const facts: MetadataFact[] = [];
@@ -436,7 +452,10 @@ export function createOpenLibraryResolver() {
         normalizeProductBarcode(isbn13) ||
         normalizeProductBarcode(isbn10) ||
         null;
-      if (Array.isArray(workData.contributions) && workData.contributions.length > 0) {
+      if (
+        Array.isArray(workData.contributions) &&
+        workData.contributions.length > 0
+      ) {
         facts.push({
           kind: "writing",
           label: "Contributeurs",
@@ -446,7 +465,10 @@ export function createOpenLibraryResolver() {
           priority: 24,
         });
       }
-      if (Array.isArray(workData.source_records) && workData.source_records.length > 0) {
+      if (
+        Array.isArray(workData.source_records) &&
+        workData.source_records.length > 0
+      ) {
         facts.push({
           kind: "source-record",
           label: "Source records",

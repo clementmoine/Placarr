@@ -69,7 +69,9 @@ export function computeRatingConsensus(
   );
   const parsed = ratings
     .map((f) => ({ fact: f, ratio: parseRatingRatio(f.value) }))
-    .filter((x): x is { fact: MetadataFact; ratio: number } => x.ratio !== null);
+    .filter(
+      (x): x is { fact: MetadataFact; ratio: number } => x.ratio !== null,
+    );
 
   if (parsed.length < 2) return null;
 
@@ -90,7 +92,9 @@ export function computeRatingConsensus(
 }
 
 /** PEGI consensuel (mode ; égalité → âge le plus élevé) si présent, sinon null. */
-export function computeAgeConsensus(facts: MetadataFact[]): MetadataFact | null {
+export function computeAgeConsensus(
+  facts: MetadataFact[],
+): MetadataFact | null {
   const pegis = facts.filter(
     (f) => f.kind === "age-rating" && /pegi/i.test(f.label),
   );

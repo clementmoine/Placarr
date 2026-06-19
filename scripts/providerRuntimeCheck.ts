@@ -36,7 +36,11 @@ function summarizeMeta(value: any) {
   };
 }
 
-async function safe(name: string, fn: () => Promise<unknown>, mode: Mode = "meta") {
+async function safe(
+  name: string,
+  fn: () => Promise<unknown>,
+  mode: Mode = "meta",
+) {
   try {
     const value = await fn();
     if (mode === "list") {
@@ -63,26 +67,52 @@ async function run() {
   await safe("rawg", () => fetchFromRawg("Hades"));
   await safe("tmdb", () => fetchFromTMDB("Aladdin"));
   await safe("omdb", () => fetchFromOMDb("Aladdin"));
-  await safe("screenscraper", () => fetchFromScreenScraper("The Legend of Zelda Skyward Sword"));
+  await safe("screenscraper", () =>
+    fetchFromScreenScraper("The Legend of Zelda Skyward Sword"),
+  );
   await safe("steam", () => fetchFromSteam("Hades"));
   await safe("howlongtobeat", () =>
     fetchFromHowLongToBeat("The Legend of Zelda Skyward Sword", "wii"),
   );
   await safe("steamgriddb", () => fetchFromSteamGridDB("Hades"));
-  await safe("openlibrary", () => fetchFromOpenLibrary("1984", "9782070368228"));
-  await safe("deezer", () => fetchFromDeezer("Daft Punk Random Access Memories"));
+  await safe("openlibrary", () =>
+    fetchFromOpenLibrary("1984", "9782070368228"),
+  );
+  await safe("deezer", () =>
+    fetchFromDeezer("Daft Punk Random Access Memories"),
+  );
   await safe("musicbrainz", () => fetchFromMusicBrainz("886443927087"), "raw");
   await safe("discogs", () => fetchFromDiscogs("886443927087"), "raw");
   await safe("bgg", () => fetchFromBGG("Catan"));
   await safe(
     "coverproject",
-    () => fetchCoverFromCoverProject("The Legend of Zelda Skyward Sword", "Nintendo Wii"),
+    () =>
+      fetchCoverFromCoverProject(
+        "The Legend of Zelda Skyward Sword",
+        "Nintendo Wii",
+      ),
     "raw",
   );
-  await safe("pricecharting", () => fetchMetadataFromPriceCharting("0045496365226"), "raw");
-  await safe("chasseauxlivres", () => fetchFromChasseAuxLivres("9782070368228", "fr"), "list");
-  await safe("achatmoinscher", () => fetchFromAchatMoinsCher("9782070368228"), "list");
-  await safe("ledenicheur", () => fetchPricesFromLeDenicheur("hades switch"), "raw");
+  await safe(
+    "pricecharting",
+    () => fetchMetadataFromPriceCharting("0045496365226"),
+    "raw",
+  );
+  await safe(
+    "chasseauxlivres",
+    () => fetchFromChasseAuxLivres("9782070368228", "fr"),
+    "list",
+  );
+  await safe(
+    "achatmoinscher",
+    () => fetchFromAchatMoinsCher("9782070368228"),
+    "list",
+  );
+  await safe(
+    "ledenicheur",
+    () => fetchPricesFromLeDenicheur("hades switch"),
+    "raw",
+  );
   await safe("apriloshop", () => fetchFromApriloshop("5060004769360"), "list");
   await safe("freakxy", () => fetchFromFreakxy("5060004769360"), "list");
   await safe("picclick", () => fetchFromPicClick("4988601467124"), "list");

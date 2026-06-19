@@ -14,7 +14,11 @@ import {
 import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
 
-import type { ParsedProductName, ProductEvidence, SourceProduct } from "./types";
+import type {
+  ParsedProductName,
+  ProductEvidence,
+  SourceProduct,
+} from "./types";
 
 function normalizeTitleIdentity(
   name: string,
@@ -76,7 +80,10 @@ function indicatorsMatch(a: Set<string>, b: Set<string>): boolean {
   return true;
 }
 
-export function evidenceSimilarity(a: ProductEvidence, b: ProductEvidence): number {
+export function evidenceSimilarity(
+  a: ProductEvidence,
+  b: ProductEvidence,
+): number {
   if (!a.parsed.normalizedTitle || !b.parsed.normalizedTitle) return 0;
   if (!indicatorsMatch(a.parsed.indicators, b.parsed.indicators)) return 0;
 

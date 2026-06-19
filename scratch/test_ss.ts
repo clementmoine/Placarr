@@ -14,8 +14,9 @@ async function testBarcode(barcode: string) {
     const url = `https://picclick.fr/?q=${barcode}`;
     const res = await axios.get(url, { headers, timeout: 5000 });
     const html = res.data;
-    
-    const regex = /<li id="item-\d+">[\s\S]*?<img src="([^"]+)"[^>]*title="([^"]+)"/gi;
+
+    const regex =
+      /<li id="item-\d+">[\s\S]*?<img src="([^"]+)"[^>]*title="([^"]+)"/gi;
     let match;
     let count = 0;
     while ((match = regex.exec(html)) !== null && count < 5) {

@@ -21,7 +21,10 @@ function parseRedirProduct(redir: string): ChasseAuxLivresProduct | null {
   return title ? { name: title } : null;
 }
 
-function extractCoverFromListing(html: string, redir?: string): string | undefined {
+function extractCoverFromListing(
+  html: string,
+  redir?: string,
+): string | undefined {
   if (!html) return undefined;
 
   if (redir) {
@@ -49,7 +52,9 @@ function extractCoverFromListing(html: string, redir?: string): string | undefin
 function parseListingProducts(html: string): ChasseAuxLivresProduct[] {
   const products: ChasseAuxLivresProduct[] = [];
 
-  for (const match of html.matchAll(/<img[^>]*src="([^"]+)"[^>]*alt="([^"]+)"/g)) {
+  for (const match of html.matchAll(
+    /<img[^>]*src="([^"]+)"[^>]*alt="([^"]+)"/g,
+  )) {
     const coverUrl = match[1].split("?")[0];
     const name = decodeHTMLEntities(match[2].trim());
     if (name && !products.some((product) => product.name === name)) {
@@ -58,7 +63,9 @@ function parseListingProducts(html: string): ChasseAuxLivresProduct[] {
   }
 
   if (products.length === 0) {
-    for (const match of html.matchAll(/<img[^>]*alt="([^"]+)"[^>]*src="([^"]+)"/g)) {
+    for (const match of html.matchAll(
+      /<img[^>]*alt="([^"]+)"[^>]*src="([^"]+)"/g,
+    )) {
       const name = decodeHTMLEntities(match[1].trim());
       const coverUrl = match[2].split("?")[0];
       if (name && !products.some((product) => product.name === name)) {
@@ -105,8 +112,12 @@ export async function fetchFromChasseAuxLivres(
       if (product) {
         const coverUrl =
           extractCoverFromListing(html) ||
-          html.match(/<img[^>]*id="book-cover"[^>]*src="([^"]+)"/i)?.[1]?.split("?")[0] ||
-          html.match(/<img[^>]*class="[^"]*cover[^"]*"[^>]*src="([^"]+)"/i)?.[1]?.split("?")[0];
+          html
+            .match(/<img[^>]*id="book-cover"[^>]*src="([^"]+)"/i)?.[1]
+            ?.split("?")[0] ||
+          html
+            .match(/<img[^>]*class="[^"]*cover[^"]*"[^>]*src="([^"]+)"/i)?.[1]
+            ?.split("?")[0];
         return [{ ...product, coverUrl }];
       }
     }
@@ -128,7 +139,10 @@ export async function fetchFromChasseAuxLivres(
     if (typeof data.redir === "string" && data.redir.trim()) {
       const product = parseRedirProduct(data.redir.trim());
       if (product) {
-        const coverUrl = extractCoverFromListing(String(data.d || ""), data.redir.trim());
+        const coverUrl = extractCoverFromListing(
+          String(data.d || ""),
+          data.redir.trim(),
+        );
         return [{ ...product, coverUrl }];
       }
     }

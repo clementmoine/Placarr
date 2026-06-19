@@ -82,8 +82,7 @@ async function main() {
         cacheIds.has(rn.barcodeCacheId),
       );
       const dropped = data.rawNames.length - validRawNames.length;
-      if (dropped > 0)
-        console.warn(`  (skipped ${dropped} orphan rawNames)`);
+      if (dropped > 0) console.warn(`  (skipped ${dropped} orphan rawNames)`);
       if (validRawNames.length)
         await prisma.rawName.createMany({
           data: validRawNames,

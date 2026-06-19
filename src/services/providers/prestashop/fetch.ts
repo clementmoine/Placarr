@@ -34,8 +34,7 @@ export function mapPrestashopSearchProduct(
   const shortHtml = product.description_short || "";
   const parsedShort = parsePrestashopShortDescription(shortHtml);
   const description =
-    parsedShort.description ||
-    (shortHtml ? stripHtml(shortHtml) : undefined);
+    parsedShort.description || (shortHtml ? stripHtml(shortHtml) : undefined);
 
   return {
     title,

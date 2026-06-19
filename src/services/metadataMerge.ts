@@ -12,11 +12,11 @@ import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
 } from "@/lib/localePreference";
-import {
-  dedupeFacts,
-  dedupeFieldEvidence,
-} from "@/services/metadataFacts";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import { dedupeFacts, dedupeFieldEvidence } from "@/services/metadataFacts";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
 export function pickBestMetadataTitle(
   candidates: Array<string | undefined | null>,
@@ -343,10 +343,12 @@ export function mergeBoardGameMetadata(
     ...attachment,
     source: attachment.source || "boardgamegeek",
   }));
-  const wikidataAttachments = (wikidata?.attachments || []).map((attachment) => ({
-    ...attachment,
-    source: attachment.source || "wikidata",
-  }));
+  const wikidataAttachments = (wikidata?.attachments || []).map(
+    (attachment) => ({
+      ...attachment,
+      source: attachment.source || "wikidata",
+    }),
+  );
   const retailerAttachments = activeRetailers.flatMap((retailer) =>
     (retailer.attachments || []).map((attachment) => ({
       ...attachment,

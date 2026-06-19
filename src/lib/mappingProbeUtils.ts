@@ -475,13 +475,10 @@ export function rawProbe(
           ...deriveMappedSemanticKeys(value),
         ]),
       );
-  const mappedKeys = record
-    ? collectMappedKeyLabels(record)
-    : coverageKeys;
+  const mappedKeys = record ? collectMappedKeyLabels(record) : coverageKeys;
   const rawKeys = explicitRawKeys.length > 0 ? explicitRawKeys : coverageKeys;
   const igdbMeta =
-    record?.igdb_metadata &&
-    typeof record.igdb_metadata === "object"
+    record?.igdb_metadata && typeof record.igdb_metadata === "object"
       ? (record.igdb_metadata as Record<string, unknown>)
       : null;
 
@@ -604,9 +601,7 @@ export async function probeBarcodesWithFallback(
 
 export async function probeBarcodeMetadataSamples(
   samples: BarcodeMetadataProbeSample[],
-  fetcher: (
-    sample: BarcodeMetadataProbeSample,
-  ) => Promise<unknown>,
+  fetcher: (sample: BarcodeMetadataProbeSample) => Promise<unknown>,
   toProbe: (value: unknown) => MappingProbeResult | null,
   providerLabel: string,
 ): Promise<MappingProbeResult | null> {
@@ -688,6 +683,9 @@ export function mergeMappingProbeRawKeys(
   return {
     ...result,
     rawKeys,
-    unusedKeys: buildUnusedKeys(rawKeys, result.coverageKeys || result.mappedKeys),
+    unusedKeys: buildUnusedKeys(
+      rawKeys,
+      result.coverageKeys || result.mappedKeys,
+    ),
   };
 }

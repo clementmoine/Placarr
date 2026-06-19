@@ -80,7 +80,9 @@ type TmdbResolverDeps = {
 };
 
 export function createTMDBResolver(deps: TmdbResolverDeps) {
-  async function fetchFromTMDBMovie(name: string): Promise<MetadataResult | null> {
+  async function fetchFromTMDBMovie(
+    name: string,
+  ): Promise<MetadataResult | null> {
     const searchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(name)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
     const res = await axios.get(searchUrl);
     const data = res.data;
@@ -185,7 +187,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       const countries = releaseDatesRes.data?.results || [];
       const preferredCountries = ["FR", "BE", "CA", "US", "GB"];
       for (const iso of preferredCountries) {
-        const country = countries.find((entry: any) => entry.iso_3166_1 === iso);
+        const country = countries.find(
+          (entry: any) => entry.iso_3166_1 === iso,
+        );
         const cert = country?.release_dates?.find(
           (date: any) =>
             typeof date.certification === "string" && date.certification.trim(),
@@ -229,7 +233,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     const genreNames = Array.isArray(details.genres)
       ? details.genres
           .map((entry: any) => entry?.name)
-          .filter((entry: unknown): entry is string => typeof entry === "string")
+          .filter(
+            (entry: unknown): entry is string => typeof entry === "string",
+          )
       : [];
     if (genreNames.length > 0) {
       facts.push({
@@ -241,7 +247,10 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         priority: 46,
       });
     }
-    if (typeof details.original_language === "string" && details.original_language.trim()) {
+    if (
+      typeof details.original_language === "string" &&
+      details.original_language.trim()
+    ) {
       facts.push({
         kind: "language",
         label: "Langue originale",
@@ -254,7 +263,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     const productionCountries = Array.isArray(details.production_countries)
       ? details.production_countries
           .map((entry: any) => entry?.name || entry?.iso_3166_1)
-          .filter((entry: unknown): entry is string => typeof entry === "string")
+          .filter(
+            (entry: unknown): entry is string => typeof entry === "string",
+          )
       : [];
     if (productionCountries.length > 0) {
       facts.push({
@@ -324,7 +335,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         ...(bestMatch.backdrop_path &&
         !tmdbBackdrops.some(
           (b) =>
-            b.url === `https://image.tmdb.org/t/p/w1280${bestMatch.backdrop_path}`,
+            b.url ===
+            `https://image.tmdb.org/t/p/w1280${bestMatch.backdrop_path}`,
         )
           ? [
               {
@@ -342,7 +354,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     };
   }
 
-  async function fetchFromTMDBSeries(name: string): Promise<MetadataResult | null> {
+  async function fetchFromTMDBSeries(
+    name: string,
+  ): Promise<MetadataResult | null> {
     const intent = parseTMDBSeriesIntent(name, deps.cleanSearchQuery);
     const searchUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(intent.searchTitle)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
     const res = await axios.get(searchUrl);
@@ -479,7 +493,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       const countries = ratingsRes.data?.results || [];
       const preferredCountries = ["FR", "BE", "CA", "US", "GB"];
       for (const iso of preferredCountries) {
-        const country = countries.find((entry: any) => entry.iso_3166_1 === iso);
+        const country = countries.find(
+          (entry: any) => entry.iso_3166_1 === iso,
+        );
         const rating =
           typeof country?.rating === "string" && country.rating.trim()
             ? country.rating
@@ -523,7 +539,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     const genreNames = Array.isArray(details.genres)
       ? details.genres
           .map((entry: any) => entry?.name)
-          .filter((entry: unknown): entry is string => typeof entry === "string")
+          .filter(
+            (entry: unknown): entry is string => typeof entry === "string",
+          )
       : [];
     if (genreNames.length > 0) {
       facts.push({
@@ -535,7 +553,10 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         priority: 46,
       });
     }
-    if (typeof details.original_language === "string" && details.original_language.trim()) {
+    if (
+      typeof details.original_language === "string" &&
+      details.original_language.trim()
+    ) {
       facts.push({
         kind: "language",
         label: "Langue originale",
@@ -634,7 +655,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         ...(bestMatch.backdrop_path &&
         !tmdbBackdrops.some(
           (b) =>
-            b.url === `https://image.tmdb.org/t/p/w1280${bestMatch.backdrop_path}`,
+            b.url ===
+            `https://image.tmdb.org/t/p/w1280${bestMatch.backdrop_path}`,
         )
           ? [
               {
@@ -652,7 +674,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     };
   }
 
-  return async function fetchFromTMDB(name: string): Promise<MetadataResult | null> {
+  return async function fetchFromTMDB(
+    name: string,
+  ): Promise<MetadataResult | null> {
     const seriesIntent = parseTMDBSeriesIntent(name, deps.cleanSearchQuery);
 
     if (seriesIntent.isSeriesLike) {

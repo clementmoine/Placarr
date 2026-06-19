@@ -29,7 +29,8 @@ export async function fetchFromPicClick(
 
     // Check if the query yielded results by inspecting matches in item list structures
     // PicClick items have structure: <li id="item-\d+">...<img src="..." title="..." />
-    const regex = /<li id="item-\d+">[\s\S]*?<img src="([^"]+)"[^>]*title="([^"]+)"/gi;
+    const regex =
+      /<li id="item-\d+">[\s\S]*?<img src="([^"]+)"[^>]*title="([^"]+)"/gi;
     const results: PicClickProduct[] = [];
     let match;
     let count = 0;
@@ -40,7 +41,10 @@ export async function fetchFromPicClick(
         coverUrl = "https:" + coverUrl;
       }
       const title = decodeHTMLEntities(match[2].trim());
-      if (title && !results.some((r) => r.name.toLowerCase() === title.toLowerCase())) {
+      if (
+        title &&
+        !results.some((r) => r.name.toLowerCase() === title.toLowerCase())
+      ) {
         results.push({
           name: title,
           coverUrl: coverUrl,

@@ -76,7 +76,9 @@ export function getHeroImage(item: MediaInput): string | null {
   const artwork = ranked.find((attachment) => attachment.type === "artwork");
   if (artwork) return artwork.url;
 
-  const screenshot = ranked.find((attachment) => attachment.type === "screenshot");
+  const screenshot = ranked.find(
+    (attachment) => attachment.type === "screenshot",
+  );
   if (screenshot) return screenshot.url;
 
   return getCoverImage(item);
@@ -106,9 +108,7 @@ export function getGalleryImages(item: MediaInput, max?: number): MediaItem[] {
     add({ url: item.metadata.imageUrl, type: "cover" });
   }
 
-  ranked
-    .filter((attachment) => attachment.type === "screenshot")
-    .forEach(add);
+  ranked.filter((attachment) => attachment.type === "screenshot").forEach(add);
   ranked.filter((attachment) => attachment.type === "artwork").forEach(add);
   ranked.filter((attachment) => attachment.type === "background").forEach(add);
   ranked.filter((attachment) => attachment.type === "logo").forEach(add);
@@ -137,6 +137,8 @@ export function getMediaTypeLabel(type: string): string {
 }
 
 /** Score objectif d'un attachment (debug/admin, sans I/O). */
-export function getAttachmentDisplayScore(attachment: ScoredAttachmentInput): number {
+export function getAttachmentDisplayScore(
+  attachment: ScoredAttachmentInput,
+): number {
   return scoreAttachmentForDisplay(attachment);
 }

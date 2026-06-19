@@ -17,7 +17,10 @@ export function createRawgResolver(deps: RawgResolverDeps) {
   ): Promise<MetadataResult | null> {
     const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
-    const fetchWithRetry = async <T>(url: string, maxRetries = 2): Promise<T> => {
+    const fetchWithRetry = async <T>(
+      url: string,
+      maxRetries = 2,
+    ): Promise<T> => {
       let lastError: unknown;
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         try {
@@ -26,12 +29,11 @@ export function createRawgResolver(deps: RawgResolverDeps) {
         } catch (error: unknown) {
           lastError = error;
           const status =
-            typeof error === "object" &&
-            error !== null &&
-            "response" in error
+            typeof error === "object" && error !== null && "response" in error
               ? (error as { response?: { status?: number } }).response?.status
               : undefined;
-          const isTransient = status === 429 || (status !== undefined && status >= 500);
+          const isTransient =
+            status === 429 || (status !== undefined && status >= 500);
           if (!isTransient || attempt === maxRetries) break;
           await sleep(200 * (attempt + 1));
         }
@@ -97,7 +99,10 @@ export function createRawgResolver(deps: RawgResolverDeps) {
           detailWebsite = detail.website.trim();
         }
       } catch (error) {
-        console.warn(`[RAWG] Failed to fetch details for "${bestMatch.slug}"`, error);
+        console.warn(
+          `[RAWG] Failed to fetch details for "${bestMatch.slug}"`,
+          error,
+        );
       }
     }
 
@@ -154,7 +159,9 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     const platformNames = Array.isArray(bestMatch.platforms)
       ? bestMatch.platforms
           .map((entry: any) => entry?.platform?.name)
-          .filter((entry: unknown): entry is string => typeof entry === "string")
+          .filter(
+            (entry: unknown): entry is string => typeof entry === "string",
+          )
       : [];
     if (platformNames.length > 0) {
       facts.push({
@@ -170,7 +177,9 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     const storeNames = Array.isArray(bestMatch.stores)
       ? bestMatch.stores
           .map((entry: any) => entry?.store?.name)
-          .filter((entry: unknown): entry is string => typeof entry === "string")
+          .filter(
+            (entry: unknown): entry is string => typeof entry === "string",
+          )
       : [];
     if (storeNames.length > 0) {
       facts.push({
@@ -186,7 +195,9 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     const genreNames = Array.isArray(bestMatch.genres)
       ? bestMatch.genres
           .map((entry: any) => entry?.name)
-          .filter((entry: unknown): entry is string => typeof entry === "string")
+          .filter(
+            (entry: unknown): entry is string => typeof entry === "string",
+          )
       : [];
     if (genreNames.length > 0) {
       facts.push({

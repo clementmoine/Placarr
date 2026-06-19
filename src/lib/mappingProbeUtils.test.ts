@@ -44,10 +44,10 @@ describe("mappingProbeUtils", () => {
   });
 
   it("merges API raw keys into probe results", () => {
-    const merged = mergeMappingProbeRawKeys(
-      metadataProbe({ title: "Hades" }),
-      ["Plot", "Title"],
-    );
+    const merged = mergeMappingProbeRawKeys(metadataProbe({ title: "Hades" }), [
+      "Plot",
+      "Title",
+    ]);
     expect(merged?.rawKeys).toEqual(["Plot", "Title"]);
     expect(merged?.unusedKeys.length).toBeGreaterThan(0);
   });

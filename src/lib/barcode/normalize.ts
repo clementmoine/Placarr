@@ -1,8 +1,6 @@
 import { cleanCode } from "@/lib/barcode/query";
 
-export function normalizeProductBarcode(
-  value?: string | null,
-): string | null {
+export function normalizeProductBarcode(value?: string | null): string | null {
   const cleaned = cleanCode(value);
   if (!cleaned) return null;
   if (cleaned.length < 8 || cleaned.length > 14) return null;

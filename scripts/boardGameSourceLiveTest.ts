@@ -24,7 +24,9 @@ async function probeRetailer(label: string, searchUrl: string) {
         : response.data.rendered_products || "";
     const hasProducts =
       typeof html === "string" &&
-      (html.includes("product") || html.includes("catan") || html.includes("Catan"));
+      (html.includes("product") ||
+        html.includes("catan") ||
+        html.includes("Catan"));
     console.log(`[${label}]`, hasProducts ? "search ok" : "empty/unknown");
     return hasProducts;
   } catch (error: any) {
@@ -97,8 +99,13 @@ async function main() {
     "Le Passe-Temps",
     "https://www.le-passe-temps.com/recherche?controller=search&search_query=catan&ajax=1",
   );
-  await probeRetailer("Idealo", "https://www.idealo.fr/preisvergleich/MainSearchProductCategory.html?q=catan");
-  console.log("\nSkipped: Ludum (blog), BGA (jeu en ligne), TCGAPIs (clé payante)");
+  await probeRetailer(
+    "Idealo",
+    "https://www.idealo.fr/preisvergleich/MainSearchProductCategory.html?q=catan",
+  );
+  console.log(
+    "\nSkipped: Ludum (blog), BGA (jeu en ligne), TCGAPIs (clé payante)",
+  );
 }
 
 main().catch((error) => {

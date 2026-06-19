@@ -86,7 +86,10 @@ describe("createBarcodeLookupTaskBuilders", () => {
     builders.boardgames({ barcode: "345" });
     builders.generic({ barcode: "567" });
 
-    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("123", "jeuxvideo");
+    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
+      "123",
+      "jeuxvideo",
+    );
     expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("456", "fr");
     expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("789", "music");
     expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("234", "dvd");

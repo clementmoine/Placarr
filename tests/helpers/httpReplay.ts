@@ -100,9 +100,7 @@ export class HttpReplay {
       if (!it) {
         this.misses.add(key);
         // Échec déterministe : le fournisseur est traité comme indisponible.
-        controller.respondWith(
-          new Response("replay-miss", { status: 504 }),
-        );
+        controller.respondWith(new Response("replay-miss", { status: 504 }));
         return;
       }
       controller.respondWith(

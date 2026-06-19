@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeBookMetadata, mergeBoardGameMetadata, mergeMusicMetadata } from "@/services/metadataMerge";
+import {
+  mergeBookMetadata,
+  mergeBoardGameMetadata,
+  mergeMusicMetadata,
+} from "@/services/metadataMerge";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 describe("mergeMusicMetadata", () => {
@@ -17,8 +21,12 @@ describe("mergeMusicMetadata", () => {
       tracksCount: 13,
       releaseDate: "2001-03-13",
       imageUrl: "https://cdn.example.com/cover.jpg",
-      authors: [{ name: "Daft Punk", imageUrl: "https://cdn.example.com/dp.jpg" }],
-      facts: [{ kind: "genre", label: "Genres", value: "Electro", source: "deezer" }],
+      authors: [
+        { name: "Daft Punk", imageUrl: "https://cdn.example.com/dp.jpg" },
+      ],
+      facts: [
+        { kind: "genre", label: "Genres", value: "Electro", source: "deezer" },
+      ],
     };
 
     const merged = mergeMusicMetadata(musicbrainz, null, deezer);
@@ -39,13 +47,21 @@ describe("mergeMusicMetadata", () => {
       title: "Yoko Shimomura - Final Fantasy",
       releaseDate: "2002-01-01",
       imageUrl: "https://cdn.example.com/discogs.jpg",
-      facts: [{ kind: "format", label: "Support", value: "CD", source: "discogs" }],
+      facts: [
+        { kind: "format", label: "Support", value: "CD", source: "discogs" },
+      ],
     };
     const deezer: MetadataResult = {
       title: "Final Fantasy",
       tracksCount: 18,
       attachments: [
-        { type: "audio", title: "Prelude", duration: 180, url: "https://preview", source: "deezer" },
+        {
+          type: "audio",
+          title: "Prelude",
+          duration: 180,
+          url: "https://preview",
+          source: "deezer",
+        },
       ],
     };
 
@@ -68,7 +84,12 @@ describe("mergeBookMetadata", () => {
       releaseDate: "1974-06-01",
       authors: [{ name: "Roald Dahl" }],
       facts: [
-        { kind: "format", label: "Format", value: "Paperback", source: "openlibrary" },
+        {
+          kind: "format",
+          label: "Format",
+          value: "Paperback",
+          source: "openlibrary",
+        },
         {
           kind: "rating",
           label: "OpenLibrary",
@@ -111,7 +132,9 @@ describe("mergeBoardGameMetadata", () => {
       title: "Catan",
       description: "English BGG description.",
       duration: 75,
-      facts: [{ kind: "players", label: "Joueurs", value: "3-4", source: "bgg" }],
+      facts: [
+        { kind: "players", label: "Joueurs", value: "3-4", source: "bgg" },
+      ],
     };
     const wikidata: MetadataResult = {
       title: "Les Colons de Catane",

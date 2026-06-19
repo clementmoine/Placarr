@@ -85,7 +85,9 @@ export function asMetadataHit(value: unknown): BarcodeMetadataHit | null {
   return typeof hit.title === "string" && hit.title.trim() ? hit : null;
 }
 
-export function asPriceChartingHit(value: unknown): PriceChartingMetadata | null {
+export function asPriceChartingHit(
+  value: unknown,
+): PriceChartingMetadata | null {
   if (!value || typeof value !== "object") return null;
   const hit = value as PriceChartingMetadata;
   return typeof hit.title === "string" && hit.title.trim() ? hit : null;

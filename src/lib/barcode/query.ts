@@ -11,20 +11,11 @@ export function detectPlatformKey(name: string): string | null {
   // 1. Nintendo
   if (has(/\bwii\s*u\b|\bwiiu\b/)) return "wiiu";
   if (has(/\bwii\b/)) return "wii";
-  if (has(/\bnintendo\s+switch\b|\bswitch\b/))
-    return "switch";
-  if (
-    has(/\bgamecube\b/) ||
-    has(/\bgame\s+cube\b/) ||
-    has(/\bgcn\b/)
-  )
+  if (has(/\bnintendo\s+switch\b|\bswitch\b/)) return "switch";
+  if (has(/\bgamecube\b/) || has(/\bgame\s+cube\b/) || has(/\bgcn\b/))
     return "gamecube";
   if (has(/\bn64\b|\bnintendo\s+64\b/)) return "n64";
-  if (
-    has(/\bsuper\s+nintendo\b/) ||
-    has(/\bsnes\b/) ||
-    has(/\bsuper\s+nes\b/)
-  )
+  if (has(/\bsuper\s+nintendo\b/) || has(/\bsnes\b/) || has(/\bsuper\s+nes\b/))
     return "snes";
   if (
     has(/\bnintendo\s+nes\b/) ||
@@ -36,31 +27,17 @@ export function detectPlatformKey(name: string): string | null {
   if (has(/\bnintendo\s+ds\b|\bnds\b|\bds\b/)) return "ds";
   if (has(/\bgame\s+boy\s+advance\b|\bgba\b/)) return "gba";
   if (has(/\bgame\s+boy\s+color\b|\bgbc\b/)) return "gbc";
-  if (
-    has(/\bgame\s+boy\b/) ||
-    has(/\bgameboy\b/) ||
-    has(/\bgb\b/)
-  )
-    return "gb";
+  if (has(/\bgame\s+boy\b/) || has(/\bgameboy\b/) || has(/\bgb\b/)) return "gb";
 
   // 2. PlayStation
   if (has(/\bplaystation\s+5\b|\bps5\b/)) return "ps5";
   if (has(/\bplaystation\s+4\b|\bps4\b/)) return "ps4";
   if (has(/\bplaystation\s+3\b|\bps3\b/)) return "ps3";
   if (has(/\bplaystation\s+2\b|\bps2\b/)) return "ps2";
-  if (has(/\bplaystation\s+portable\b|\bpsp\b/))
-    return "psp";
-  if (
-    has(/\bplaystation\s+vita\b/) ||
-    has(/\bps\s+vita\b/) ||
-    has(/\bvita\b/)
-  )
+  if (has(/\bplaystation\s+portable\b|\bpsp\b/)) return "psp";
+  if (has(/\bplaystation\s+vita\b/) || has(/\bps\s+vita\b/) || has(/\bvita\b/))
     return "psvita";
-  if (
-    has(/\bplaystation\s+1\b/) ||
-    has(/\bps1\b/) ||
-    has(/\bpsone\b/)
-  )
+  if (has(/\bplaystation\s+1\b/) || has(/\bps1\b/) || has(/\bpsone\b/))
     return "ps1";
   if (/\bplaystation\b/i.test(lower)) return "ps1";
 
@@ -73,32 +50,18 @@ export function detectPlatformKey(name: string): string | null {
     return "xboxseries";
   if (has(/\bxbox\s+one\b|\bxboxone\b/)) return "xboxone";
   if (has(/\bxbox\s+360\b|\bxbox360\b/)) return "xbox360";
-  if (
-    has(/\bxbox\s+original\b/) ||
-    has(/\bxbox\s+1\b/) ||
-    has(/\bxbox1\b/)
-  )
+  if (has(/\bxbox\s+original\b/) || has(/\bxbox\s+1\b/) || has(/\bxbox1\b/))
     return "xbox";
   if (/\bxbox\b/i.test(lower)) return "xbox";
 
   // 4. Sega & Retro
   if (has(/\bdreamcast\b/)) return "dreamcast";
-  if (
-    has(/\bmega\s+drive\b/) ||
-    has(/\bmegadrive\b/) ||
-    has(/\bgenesis\b/)
-  )
+  if (has(/\bmega\s+drive\b/) || has(/\bmegadrive\b/) || has(/\bgenesis\b/))
     return "megadrive";
-  if (has(/\bmaster\s+system\b|\bmastersystem\b/))
-    return "mastersystem";
-  if (has(/\bgame\s+gear\b|\bgamegear\b/))
-    return "gamegear";
+  if (has(/\bmaster\s+system\b|\bmastersystem\b/)) return "mastersystem";
+  if (has(/\bgame\s+gear\b|\bgamegear\b/)) return "gamegear";
   if (has(/\bneo\s+geo\b|\bneogeo\b/)) return "neogeo";
-  if (
-    has(/\batari\s+2600\b/) ||
-    has(/\batari2600\b/) ||
-    has(/\batari\b/)
-  )
+  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/) || has(/\batari\b/))
     return "atari2600";
 
   return null;

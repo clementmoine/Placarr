@@ -96,7 +96,9 @@ export async function compileAllBarcodeTypeResults(params: {
   payload: BarcodeLookupPayload;
 }): Promise<Record<string, CompiledResult | null>> {
   const { cleanedBarcode, type, payload } = params;
-  const leDenicheurProducts = sourceProductsFromLeDenicheur(payload.leDenicheur);
+  const leDenicheurProducts = sourceProductsFromLeDenicheur(
+    payload.leDenicheur,
+  );
   const isBook =
     cleanedBarcode.startsWith("978") || cleanedBarcode.startsWith("979");
 
@@ -115,7 +117,13 @@ export async function compileAllBarcodeTypeResults(params: {
   pushSource(
     bookSources,
     "ChasseAuxLivres",
-    pickProductsForScope(payload.calFr, payload.calGeneric, type, "books", isBook),
+    pickProductsForScope(
+      payload.calFr,
+      payload.calGeneric,
+      type,
+      "books",
+      isBook,
+    ),
   );
   pushSource(
     bookSources,
@@ -253,7 +261,13 @@ export async function compileAllBarcodeTypeResults(params: {
   pushSource(
     movieSources,
     "ChasseAuxLivres",
-    pickProductsForScope(payload.calDvd, payload.calGeneric, type, "movies", isBook),
+    pickProductsForScope(
+      payload.calDvd,
+      payload.calGeneric,
+      type,
+      "movies",
+      isBook,
+    ),
   );
   pushSource(
     movieSources,
@@ -287,7 +301,13 @@ export async function compileAllBarcodeTypeResults(params: {
   pushSource(
     boardgameSources,
     "ChasseAuxLivres",
-    pickProductsForScope(payload.calToys, payload.calGeneric, type, "boardgames", isBook),
+    pickProductsForScope(
+      payload.calToys,
+      payload.calGeneric,
+      type,
+      "boardgames",
+      isBook,
+    ),
   );
   pushSource(
     boardgameSources,

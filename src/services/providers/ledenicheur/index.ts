@@ -5,9 +5,7 @@ import {
   dedupeTeardownQueries,
 } from "@/lib/teardownUtils";
 
-import {
-  createMetadataHealthCheck,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck } from "@/lib/providerHealthUtils";
 import { fetchPricesFromLeDenicheur, pingLeDenicheur } from "./fetch";
 
 export { fetchPricesFromLeDenicheur, pingLeDenicheur };
@@ -53,14 +51,18 @@ export const ledenicheurModule: ProviderModule = {
       ),
     ];
   },
-  healthCheck: createMetadataHealthCheck("ledenicheur", "LeDenicheur", async () => {
-    const result = await pingLeDenicheur();
-    return {
-      ok: result.ok,
-      latency: result.latency,
-      error: result.error ?? null,
-    };
-  }),
+  healthCheck: createMetadataHealthCheck(
+    "ledenicheur",
+    "LeDenicheur",
+    async () => {
+      const result = await pingLeDenicheur();
+      return {
+        ok: result.ok,
+        latency: result.latency,
+        error: result.error ?? null,
+      };
+    },
+  ),
   testHandlers: {
     "ledenicheur-prices": {
       label: "LeDenicheur - Prices",

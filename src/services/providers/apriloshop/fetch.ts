@@ -24,7 +24,9 @@ async function validateBarcodeOnPage(
 
     // Look for JSON-LD Product blocks
     const jsonLdMatches =
-      html.match(/<script type=\"application\/ld\+json\">([\s\S]*?)<\/script>/gi) ||
+      html.match(
+        /<script type=\"application\/ld\+json\">([\s\S]*?)<\/script>/gi,
+      ) ||
       html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
 
     let foundProductBlock = false;
@@ -181,7 +183,8 @@ export async function fetchFromApriloshop(
     const results: ApriloshopProduct[] = [];
 
     // Compile list of unique candidates
-    const candidates: { name: string; url: string; image?: string | null }[] = [];
+    const candidates: { name: string; url: string; image?: string | null }[] =
+      [];
     if (jsonLdUrls.length > 0) {
       for (const target of jsonLdUrls) {
         const min = miniatures.find((m) => m.url === target.url);

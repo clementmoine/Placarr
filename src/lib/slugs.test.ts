@@ -4,9 +4,9 @@ import { itemPath, shelfPath } from "./slugs";
 
 describe("shelfPath", () => {
   it("prefers persisted slug over computed slug from name", () => {
-    expect(
-      shelfPath({ id: "s1", name: "New Name", slug: "old-name" }),
-    ).toBe("/shelves/old-name");
+    expect(shelfPath({ id: "s1", name: "New Name", slug: "old-name" })).toBe(
+      "/shelves/old-name",
+    );
   });
 });
 

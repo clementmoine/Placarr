@@ -25,7 +25,10 @@ describe("GET /api/admin/providers", () => {
   });
 
   it("renvoie directement la réponse d'auth quand non-admin", async () => {
-    h.authReturn = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    h.authReturn = NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
 
     const response = await GET();
 

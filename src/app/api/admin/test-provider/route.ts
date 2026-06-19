@@ -145,7 +145,9 @@ export async function POST(req: NextRequest) {
           platform?: { name?: string | null } | null;
         } | null;
       } | null;
-      const rawNames = scandex?.igdb_metadata?.name ? [scandex.igdb_metadata.name] : [];
+      const rawNames = scandex?.igdb_metadata?.name
+        ? [scandex.igdb_metadata.name]
+        : [];
       const processed = await processScrapedNames(rawNames, type || null);
       result = {
         ...processed,
@@ -155,7 +157,9 @@ export async function POST(req: NextRequest) {
     } else if (handler.kind === "prices") {
       result = { prices: resolved };
     } else if (handler.kind === "metadata-barcode") {
-      result = metadataBarcodeResult((resolved as MetadataResult | null) || null);
+      result = metadataBarcodeResult(
+        (resolved as MetadataResult | null) || null,
+      );
     } else if (handler.kind === "metadata") {
       result = { metadata: resolved };
     } else if (handler.kind === "cover") {

@@ -18,7 +18,10 @@ beforeEach(() => {
 describe("formatMusicTitle", () => {
   it("préfixe l'artiste au titre", () => {
     expect(
-      formatMusicTitle("Yoko Shimomura", "Kingdom Hearts Orchestra -World Of Tres"),
+      formatMusicTitle(
+        "Yoko Shimomura",
+        "Kingdom Hearts Orchestra -World Of Tres",
+      ),
     ).toBe("Yoko Shimomura - Kingdom Hearts Orchestra -World Of Tres");
   });
 

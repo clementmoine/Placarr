@@ -62,7 +62,10 @@ function buildDeezerFacts(album: any) {
     });
   }
 
-  if (album?.explicit_lyrics === true || album?.explicit_content_lyrics === true) {
+  if (
+    album?.explicit_lyrics === true ||
+    album?.explicit_content_lyrics === true
+  ) {
     facts.push({
       kind: "content-warning",
       label: "Contenu explicite",
@@ -105,11 +108,15 @@ export function createDeezerResolver() {
   ): Promise<MetadataResult | null> {
     if (!name && barcode) {
       try {
-        const res = await axios.get(`https://api.deezer.com/album/upc:${barcode}`);
+        const res = await axios.get(
+          `https://api.deezer.com/album/upc:${barcode}`,
+        );
         const album = res.data;
         if (album && album.title && !album.error) {
           const artistName = album.artist?.name || "";
-          const title = artistName ? `${artistName} - ${album.title}` : album.title;
+          const title = artistName
+            ? `${artistName} - ${album.title}`
+            : album.title;
           const albumDetailsRes = await axios.get(
             `https://api.deezer.com/album/${album.id}`,
           );
@@ -174,7 +181,9 @@ export function createDeezerResolver() {
     let minDistance = Infinity;
 
     for (const album of data.data) {
-      const albumDetailsRes = await axios.get(`https://api.deezer.com/album/${album.id}`);
+      const albumDetailsRes = await axios.get(
+        `https://api.deezer.com/album/${album.id}`,
+      );
       const albumDetails = albumDetailsRes.data;
 
       if (barcode && albumDetails.upc === barcode) {

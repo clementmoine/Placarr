@@ -34,7 +34,10 @@ export type BarcodeLookupDeps = {
     isPal?: boolean,
     isClassics?: boolean,
   ) => Promise<unknown>;
-  fetchFromChasseAuxLivres: (barcode: string, category: string) => Promise<unknown>;
+  fetchFromChasseAuxLivres: (
+    barcode: string,
+    category: string,
+  ) => Promise<unknown>;
   fetchFromScanDex: (barcode: string) => Promise<unknown>;
   fetchFromAchatMoinsCher: (barcode: string) => Promise<unknown>;
   fetchFromFreakxy: (barcode: string) => Promise<unknown>;

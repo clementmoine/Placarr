@@ -57,12 +57,14 @@ function pickIsbn(
   identifiers: GoogleBooksVolumeInfo["industryIdentifiers"],
 ): string | null {
   if (!Array.isArray(identifiers)) return null;
-  const isbn13 = identifiers.find((entry) => entry?.type === "ISBN_13")?.identifier;
-  const isbn10 = identifiers.find((entry) => entry?.type === "ISBN_10")?.identifier;
+  const isbn13 = identifiers.find(
+    (entry) => entry?.type === "ISBN_13",
+  )?.identifier;
+  const isbn10 = identifiers.find(
+    (entry) => entry?.type === "ISBN_10",
+  )?.identifier;
   return (
-    normalizeProductBarcode(isbn13) ||
-    normalizeProductBarcode(isbn10) ||
-    null
+    normalizeProductBarcode(isbn13) || normalizeProductBarcode(isbn10) || null
   );
 }
 
@@ -96,7 +98,10 @@ function buildGoogleBooksFacts(
     });
   }
 
-  if (Array.isArray(volumeInfo.categories) && volumeInfo.categories.length > 0) {
+  if (
+    Array.isArray(volumeInfo.categories) &&
+    volumeInfo.categories.length > 0
+  ) {
     facts.push({
       kind: "genre",
       label: "Catégories",
@@ -171,7 +176,8 @@ function mapVolumeToMetadata(
     secureImageUrl(volumeInfo.imageLinks?.smallThumbnail);
 
   const discoveredBarcode =
-    normalizeProductBarcode(barcode) || pickIsbn(volumeInfo.industryIdentifiers);
+    normalizeProductBarcode(barcode) ||
+    pickIsbn(volumeInfo.industryIdentifiers);
 
   const facts = buildGoogleBooksFacts(volumeInfo, volume.id);
 
@@ -262,10 +268,7 @@ export function createGoogleBooksResolver() {
 
       return mapVolumeToMetadata(best, cleanedBarcode);
     } catch (error) {
-      if (
-        axios.isAxiosError(error) &&
-        error.response?.status === 429
-      ) {
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
         throw new Error(
           apiKey
             ? "Google Books API rate limit exceeded"
@@ -273,7 +276,10 @@ export function createGoogleBooksResolver() {
         );
       }
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`[GoogleBooks] Error fetching metadata for "${name}":`, message);
+      console.error(
+        `[GoogleBooks] Error fetching metadata for "${name}":`,
+        message,
+      );
       return null;
     }
   };

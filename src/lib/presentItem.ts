@@ -1,7 +1,10 @@
 import type { Attachment, Author, Metadata, Publisher } from "@prisma/client";
 
 import { getCoverImage, getGalleryImages, getHeroImage } from "@/lib/itemMedia";
-import { formatMetadataFromStorage, type MetadataResult } from "@/services/metadata";
+import {
+  formatMetadataFromStorage,
+  type MetadataResult,
+} from "@/services/metadata";
 
 export interface PresentableItemInput {
   name: string;

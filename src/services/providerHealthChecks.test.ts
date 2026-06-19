@@ -12,7 +12,9 @@ describe("providerHealthChecks", () => {
 
   it("maps checks to declared providers", () => {
     for (const check of providerHealthChecks) {
-      const provider = PROVIDERS.find((candidate) => candidate.id === check.providerId);
+      const provider = PROVIDERS.find(
+        (candidate) => candidate.id === check.providerId,
+      );
       expect(provider).toBeDefined();
     }
   });

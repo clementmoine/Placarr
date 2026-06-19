@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { createDeezerResolver } from "./resolver";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";

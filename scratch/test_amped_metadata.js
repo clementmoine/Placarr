@@ -26,16 +26,25 @@ function pickSSTitle(noms) {
 }
 
 async function runEmulatedSearch(name, systemeid) {
-  console.log(`\n--- Emulating search for "${name}" (systemeid: ${systemeid}) ---`);
+  console.log(
+    `\n--- Emulating search for "${name}" (systemeid: ${systemeid}) ---`,
+  );
   const cleanedName = name; // simplified for test
 
   // 1. Search by name
   let searchRes;
   try {
-    searchRes = await axios.get("https://api.screenscraper.fr/api2/jeuRecherche.php", {
-      params: { ...baseParams, recherche: cleanedName, systemeid: String(systemeid) },
-      timeout: 8000,
-    });
+    searchRes = await axios.get(
+      "https://api.screenscraper.fr/api2/jeuRecherche.php",
+      {
+        params: {
+          ...baseParams,
+          recherche: cleanedName,
+          systemeid: String(systemeid),
+        },
+        timeout: 8000,
+      },
+    );
   } catch (err) {
     console.error("Name search request failed:", err.message);
     return;
@@ -51,13 +60,22 @@ async function runEmulatedSearch(name, systemeid) {
   // 2. Fallback if empty
   if (!validResults || validResults.length === 0) {
     const firstWord = cleanedName.split(/\s+/)[0];
-    console.log(`Initial search returned no results. Trying first word fallback search: "${firstWord}"`);
+    console.log(
+      `Initial search returned no results. Trying first word fallback search: "${firstWord}"`,
+    );
     if (firstWord && firstWord.length >= 3) {
       try {
-        const fallbackRes = await axios.get("https://api.screenscraper.fr/api2/jeuRecherche.php", {
-          params: { ...baseParams, recherche: firstWord, systemeid: String(systemeid) },
-          timeout: 8000,
-        });
+        const fallbackRes = await axios.get(
+          "https://api.screenscraper.fr/api2/jeuRecherche.php",
+          {
+            params: {
+              ...baseParams,
+              recherche: firstWord,
+              systemeid: String(systemeid),
+            },
+            timeout: 8000,
+          },
+        );
         let fallbackResults = fallbackRes.data?.response?.jeux;
         if (fallbackResults) {
           if (!Array.isArray(fallbackResults)) {
@@ -65,7 +83,9 @@ async function runEmulatedSearch(name, systemeid) {
           }
           validResults = (fallbackResults || []).filter((r) => r && r.id);
         }
-        console.log(`Fallback search returned ${validResults.length} valid results.`);
+        console.log(
+          `Fallback search returned ${validResults.length} valid results.`,
+        );
       } catch (err) {
         console.error("Fallback search request failed:", err.message);
       }
@@ -93,20 +113,23 @@ async function runEmulatedSearch(name, systemeid) {
 
   // 4. Fetch full game info
   try {
-    const infoRes = await axios.get("https://api.screenscraper.fr/api2/jeuInfos.php", {
-      params: {
-        ...baseParams,
-        crc: "",
-        md5: "",
-        sha1: "",
-        systemeid: "0",
-        romtype: "rom",
-        romnom: "",
-        romtaille: "",
-        gameid: String(bestId),
+    const infoRes = await axios.get(
+      "https://api.screenscraper.fr/api2/jeuInfos.php",
+      {
+        params: {
+          ...baseParams,
+          crc: "",
+          md5: "",
+          sha1: "",
+          systemeid: "0",
+          romtype: "rom",
+          romnom: "",
+          romtaille: "",
+          gameid: String(bestId),
+        },
+        timeout: 8000,
       },
-      timeout: 8000,
-    });
+    );
     const jeu = infoRes.data?.response?.jeu;
     if (jeu && jeu.id) {
       console.log(`Successfully fetched full info for ID: ${jeu.id}`);

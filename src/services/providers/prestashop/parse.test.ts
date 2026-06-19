@@ -69,8 +69,7 @@ describe("mapPrestashopSearchProduct", () => {
       price_amount: 43.9,
       link: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
       manufacturer_name: "Kosmos",
-      description_short:
-        "<address><strong>de 3 à 4 joueurs</strong></address>",
+      description_short: "<address><strong>de 3 à 4 joueurs</strong></address>",
       cover: {
         bySize: {
           home_default: {
@@ -87,7 +86,8 @@ describe("mapPrestashopSearchProduct", () => {
       manufacturer: "Kosmos",
       priceCents: 4390,
       players: "3 à 4",
-      productUrl: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
+      productUrl:
+        "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
       source: "monsieurde",
     });
   });

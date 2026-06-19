@@ -105,7 +105,9 @@ export function createKeyHealthCheck(
   buildUrl: (key: string) => string,
   missingError = "API key missing",
 ): ProviderHealthCheck {
-  const key = envKeys.map((envKey) => process.env[envKey]?.trim()).find(Boolean);
+  const key = envKeys
+    .map((envKey) => process.env[envKey]?.trim())
+    .find(Boolean);
   if (!key) {
     return createUnconfiguredHealthCheck(providerId, name, missingError);
   }

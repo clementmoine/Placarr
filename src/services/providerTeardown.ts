@@ -38,7 +38,9 @@ function buildFallbackBarcodeTeardownTasks(
     if (module.buildTeardownBarcodeTasks || !module.buildBarcodeTasks) continue;
 
     for (const type of types) {
-      const built = module.buildBarcodeTasks(deps, type, { barcode: ctx.barcode });
+      const built = module.buildBarcodeTasks(deps, type, {
+        barcode: ctx.barcode,
+      });
       const promise = Object.values(built)[0];
       if (!promise) continue;
 

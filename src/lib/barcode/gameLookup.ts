@@ -1,6 +1,9 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
-import { fetchFromScreenScraper, fetchFromTMDB } from "@/services/metadataResolvers";
+import {
+  fetchFromScreenScraper,
+  fetchFromTMDB,
+} from "@/services/metadataResolvers";
 import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
 
 export const CLASSICS_KEYWORDS = [

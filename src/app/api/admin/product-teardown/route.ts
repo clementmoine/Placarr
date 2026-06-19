@@ -101,10 +101,14 @@ function shouldRunSelectedProvider(
   selectedProviders: string[],
 ) {
   if (selectedProviders.length === 0) return true;
-  const selected = selectedProviders.map(normalizeProviderToken).filter(Boolean);
+  const selected = selectedProviders
+    .map(normalizeProviderToken)
+    .filter(Boolean);
   if (selected.length === 0) return true;
   const full = normalizeProviderToken(providerLabel);
-  const base = normalizeProviderToken(providerLabel.split(":")[0] || providerLabel);
+  const base = normalizeProviderToken(
+    providerLabel.split(":")[0] || providerLabel,
+  );
 
   return selected.some(
     (token) =>
@@ -539,7 +543,11 @@ async function runBarcodeProviders(
   nameCandidates: string[] = [],
   selectedProviders: string[] = [],
 ) {
-  const tasks = buildTeardownBarcodeProviderTasks({ barcode, type, nameCandidates });
+  const tasks = buildTeardownBarcodeProviderTasks({
+    barcode,
+    type,
+    nameCandidates,
+  });
   return Promise.all(
     tasks
       .filter((task) =>
@@ -883,7 +891,12 @@ export async function POST(req: NextRequest) {
     ).slice(0, 6);
 
     const [barcodeProviders, metadataProviders] = await Promise.all([
-      runBarcodeProviders(barcode, type, providerNameCandidates, selectedProviders),
+      runBarcodeProviders(
+        barcode,
+        type,
+        providerNameCandidates,
+        selectedProviders,
+      ),
       runMetadataProviders(
         selectedName,
         type || inferredType,

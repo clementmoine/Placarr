@@ -6,7 +6,11 @@ import {
 import { scoreDisplayTitle } from "@/lib/displayTitleScore";
 
 import { GENERIC_TITLE_TOKENS } from "./parse";
-import type { MatchEvidenceSummary, ProductEvidence, ResolvedMatch } from "./types";
+import type {
+  MatchEvidenceSummary,
+  ProductEvidence,
+  ResolvedMatch,
+} from "./types";
 
 type MatchLike = {
   name: string;

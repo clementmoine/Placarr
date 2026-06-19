@@ -89,9 +89,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (includeMetadata) {
-    return NextResponse.json(
-      items.map((item) => presentItemFromStorage(item)),
-    );
+    return NextResponse.json(items.map((item) => presentItemFromStorage(item)));
   }
 
   return NextResponse.json(items);

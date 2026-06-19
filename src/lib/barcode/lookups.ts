@@ -53,7 +53,11 @@ export async function runBarcodeLookups(params: {
       contextPlatformKey,
       pc: payload.pc,
       searchLabel: "games",
-      inputs: buildGameLookupInputs(payload, payload.calJeuxVideo, contextPlatformKey),
+      inputs: buildGameLookupInputs(
+        payload,
+        payload.calJeuxVideo,
+        contextPlatformKey,
+      ),
     });
     payload.pc = enriched.pc as PriceChartingMetadata | null;
     payload.ss = asMetadataHit(enriched.ss);
@@ -136,7 +140,11 @@ export async function runBarcodeLookups(params: {
     contextPlatformKey,
     pc: payload.pc,
     searchLabel: "generic",
-    inputs: buildGameLookupInputs(payload, payload.calGeneric, contextPlatformKey),
+    inputs: buildGameLookupInputs(
+      payload,
+      payload.calGeneric,
+      contextPlatformKey,
+    ),
   });
   payload.pc = enriched.pc as PriceChartingMetadata | null;
   payload.ss = asMetadataHit(enriched.ss);

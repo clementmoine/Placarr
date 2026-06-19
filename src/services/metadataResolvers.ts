@@ -46,7 +46,8 @@ export const fetchFromPhilibert = createPhilibertResolver();
 export const fetchFromMonsieurde = createPrestashopResolver(MONSIEURDE_CONFIG);
 export const fetchFromLudifolie = createPrestashopResolver(LUDIFOLIE_CONFIG);
 export const fetchFromBcdjeux = createPrestashopResolver(BCDJEUX_CONFIG);
-export const fetchFromLepassetemps = createPrestashopResolver(LEPASSETEMPS_CONFIG);
+export const fetchFromLepassetemps =
+  createPrestashopResolver(LEPASSETEMPS_CONFIG);
 
 export const fetchFromTMDB = createTMDBResolver({
   formatScore,

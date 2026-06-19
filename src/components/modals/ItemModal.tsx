@@ -265,7 +265,9 @@ export function ItemModal({
 
   const [showBgUrlInput, setShowBgUrlInput] = useState(false);
   const [bgUrlInputValue, setBgUrlInputValue] = useState("");
-  const [lastInitializedShelfId, setLastInitializedShelfId] = useState<string | null>(null);
+  const [lastInitializedShelfId, setLastInitializedShelfId] = useState<
+    string | null
+  >(null);
 
   const [fetchedMetadata, setFetchedMetadata] = useState<any>(null);
   const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
@@ -293,7 +295,11 @@ export function ItemModal({
         if (metadata) {
           setFetchedMetadata(metadata);
 
-          const currentBarcode = (barcode || form.getValues("barcode") || "").trim();
+          const currentBarcode = (
+            barcode ||
+            form.getValues("barcode") ||
+            ""
+          ).trim();
           if (metadata.barcode && !currentBarcode) {
             form.setValue("barcode", metadata.barcode, {
               shouldDirty: true,
@@ -635,10 +641,13 @@ export function ItemModal({
           if (prefilledValues?.name) {
             const matchByName = data.matches.find(
               (m: any) =>
-                m.name.toLowerCase().trim() === prefilledValues.name?.toLowerCase().trim() ||
+                m.name.toLowerCase().trim() ===
+                  prefilledValues.name?.toLowerCase().trim() ||
                 m.suggestions?.some(
-                  (s: string) => s.toLowerCase().trim() === prefilledValues.name?.toLowerCase().trim()
-                )
+                  (s: string) =>
+                    s.toLowerCase().trim() ===
+                    prefilledValues.name?.toLowerCase().trim(),
+                ),
             );
             if (matchByName) {
               chosenMatch = matchByName;
@@ -654,7 +663,10 @@ export function ItemModal({
             form.setValue("name", bestSuggestion);
           }
           // Apply barcode cover directly if no image is already set or if it's the prefilled image
-          if (chosenMatch.coverUrl && (!form.getValues("imageUrl") || prefilledValues?.imageUrl)) {
+          if (
+            chosenMatch.coverUrl &&
+            (!form.getValues("imageUrl") || prefilledValues?.imageUrl)
+          ) {
             form.setValue("imageUrl", chosenMatch.coverUrl, {
               shouldDirty: true,
             });
@@ -678,7 +690,10 @@ export function ItemModal({
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
-            if (firstMatchCover && (!form.getValues("imageUrl") || prefilledValues?.imageUrl)) {
+            if (
+              firstMatchCover &&
+              (!form.getValues("imageUrl") || prefilledValues?.imageUrl)
+            ) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
             fetchMetadataPreview(bestSuggestion, barcode, true);
@@ -691,7 +706,10 @@ export function ItemModal({
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
-            if (firstMatchCover && (!form.getValues("imageUrl") || prefilledValues?.imageUrl)) {
+            if (
+              firstMatchCover &&
+              (!form.getValues("imageUrl") || prefilledValues?.imageUrl)
+            ) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
             fetchMetadataPreview(data.cleanName, barcode, true);
@@ -837,7 +855,7 @@ export function ItemModal({
       }
     }
 
-            if (!isAlreadyInitialized) {
+    if (!isAlreadyInitialized) {
       setActiveTab(defaultTab || "general");
     }
 
@@ -858,7 +876,8 @@ export function ItemModal({
 
   // Re-fetch metadata preview when shelf/platform changes
   useEffect(() => {
-    if (!isOpen || initializedItemId === undefined || !lastInitializedShelfId) return;
+    if (!isOpen || initializedItemId === undefined || !lastInitializedShelfId)
+      return;
     if (currentShelfId !== lastInitializedShelfId) {
       setLastInitializedShelfId(currentShelfId);
       const name = form.getValues("name");
@@ -867,7 +886,14 @@ export function ItemModal({
         fetchMetadataPreview(name, barcode, true);
       }
     }
-  }, [currentShelfId, lastInitializedShelfId, isOpen, initializedItemId, fetchMetadataPreview, form]);
+  }, [
+    currentShelfId,
+    lastInitializedShelfId,
+    isOpen,
+    initializedItemId,
+    fetchMetadataPreview,
+    form,
+  ]);
 
   // Barcode-prefilled items can initialize before shelves are loaded. Once the
   // shelf type/platform is known, fetch the full metadata image set.
@@ -1147,10 +1173,22 @@ export function ItemModal({
                                       form.setValue("name", m.name);
 
                                       // Overwrite cover and background for the new match selection
-                                      form.setValue("imageUrl", m.coverUrl || null, { shouldDirty: true });
-                                      form.setValue("backgroundImageUrl", null, { shouldDirty: true });
+                                      form.setValue(
+                                        "imageUrl",
+                                        m.coverUrl || null,
+                                        { shouldDirty: true },
+                                      );
+                                      form.setValue(
+                                        "backgroundImageUrl",
+                                        null,
+                                        { shouldDirty: true },
+                                      );
 
-                                      fetchMetadataPreview(m.name, form.getValues("barcode") || "", true);
+                                      fetchMetadataPreview(
+                                        m.name,
+                                        form.getValues("barcode") || "",
+                                        true,
+                                      );
                                     }}
                                   >
                                     {m.name}
@@ -1197,7 +1235,9 @@ export function ItemModal({
                                   onFocus={() => {
                                     setShowDropdown(true);
                                     fetchNameSuggestions(
-                                      field.value || form.getValues("name") || "",
+                                      field.value ||
+                                        form.getValues("name") ||
+                                        "",
                                     );
                                   }}
                                   onBlur={(e) => {

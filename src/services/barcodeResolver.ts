@@ -11,7 +11,10 @@ import {
 } from "@/lib/barcode/evidence";
 import { runBarcodeLookups } from "@/lib/barcode/lookups";
 import { compileAllBarcodeTypeResults } from "@/lib/barcode/sourceAssembly";
-import { BARCODE_CACHE_VERSION, versionProvider } from "@/lib/barcode/titleUtils";
+import {
+  BARCODE_CACHE_VERSION,
+  versionProvider,
+} from "@/lib/barcode/titleUtils";
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { createBarcodeLookupDeps } from "@/services/providerBarcodeDeps";
 import { createBarcodeLookupTaskBuilders } from "@/services/providerBarcode";

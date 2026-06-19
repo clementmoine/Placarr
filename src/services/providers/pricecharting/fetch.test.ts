@@ -77,7 +77,9 @@ describe("fetchPricesFromPriceCharting", () => {
   it("extrait les prix loose/CIB/new en centimes EUR", async () => {
     mockedGet.mockResolvedValue(detailResponse());
 
-    await expect(fetchPricesFromPriceCharting("0045496365226")).resolves.toEqual({
+    await expect(
+      fetchPricesFromPriceCharting("0045496365226"),
+    ).resolves.toEqual({
       priceUsed: 1250,
       priceUsedCIB: 1800,
       priceNew: 2499,

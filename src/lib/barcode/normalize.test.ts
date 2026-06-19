@@ -20,9 +20,9 @@ describe("normalizeProductBarcode", () => {
 
 describe("pickDiscoveredBarcode", () => {
   it("prefere un EAN-13 quand plusieurs codes existent", () => {
-    expect(
-      pickDiscoveredBarcode(["45496365226", "9780140328721", null]),
-    ).toBe("9780140328721");
+    expect(pickDiscoveredBarcode(["45496365226", "9780140328721", null])).toBe(
+      "9780140328721",
+    );
   });
 });
 

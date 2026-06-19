@@ -79,16 +79,22 @@ export const tmdbModule: ProviderModule = {
     const key = process.env.TMDB_API_KEY;
     if (!key) return [];
     try {
-      const search = await axios.get("https://api.themoviedb.org/3/search/movie", {
-        params: { query: "Aladdin", api_key: key, language: "fr-FR" },
-        timeout: 8000,
-      });
+      const search = await axios.get(
+        "https://api.themoviedb.org/3/search/movie",
+        {
+          params: { query: "Aladdin", api_key: key, language: "fr-FR" },
+          timeout: 8000,
+        },
+      );
       const id = search.data?.results?.[0]?.id;
       if (!id) return Object.keys(search.data?.results?.[0] || {});
-      const details = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
-        params: { api_key: key, language: "fr-FR" },
-        timeout: 8000,
-      });
+      const details = await axios.get(
+        `https://api.themoviedb.org/3/movie/${id}`,
+        {
+          params: { api_key: key, language: "fr-FR" },
+          timeout: 8000,
+        },
+      );
       return Object.keys(details.data || {});
     } catch {
       return [];

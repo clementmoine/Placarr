@@ -42,9 +42,7 @@ async function fetchCoverFromCoverProjectSearch(
       if (cdnMatch) return cdnMatch[1];
     } catch (error: unknown) {
       const status =
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error
+        typeof error === "object" && error !== null && "response" in error
           ? (error as { response?: { status?: number } }).response?.status
           : undefined;
       if (status === 403) {

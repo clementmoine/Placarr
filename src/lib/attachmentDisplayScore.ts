@@ -103,7 +103,8 @@ function buildAttachmentDisplayScoreDetails(
     attachment.type === "screenshot" ||
     attachment.type === "background"
   ) {
-    if (/(thumb|tiny|small|icon)/.test(signal)) addSignal(-60, "small screenshot");
+    if (/(thumb|tiny|small|icon)/.test(signal))
+      addSignal(-60, "small screenshot");
     if (/(full|large|1080|1440|2160|4k)/.test(signal)) {
       addSignal(20, "large screenshot");
     }

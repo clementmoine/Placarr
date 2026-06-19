@@ -54,7 +54,9 @@ describe("createMetadataAdapters", () => {
     const adapters = createMetadataAdapters(deps);
 
     for (const adapter of adapters) {
-      const provider = PROVIDERS.find((candidate) => candidate.id === adapter.id);
+      const provider = PROVIDERS.find(
+        (candidate) => candidate.id === adapter.id,
+      );
       expect(provider).toBeDefined();
     }
   });

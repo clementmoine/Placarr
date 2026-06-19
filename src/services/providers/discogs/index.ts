@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import type {
-  MetadataFact,
-  MetadataResult,
-} from "@/types/metadataProvider";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { fetchFromDiscogs, getDiscogsAuthParams } from "./fetch";
 
 import type { ProviderModule } from "@/types/providerModule";
@@ -58,7 +55,10 @@ function createDiscogsAdapter(): MetadataProviderAdapter {
           priority: 39,
         });
       }
-      if (typeof discogs.formatQuantity === "number" && discogs.formatQuantity > 0) {
+      if (
+        typeof discogs.formatQuantity === "number" &&
+        discogs.formatQuantity > 0
+      ) {
         facts.push({
           kind: "format",
           label: "Quantité",
@@ -69,7 +69,8 @@ function createDiscogsAdapter(): MetadataProviderAdapter {
         });
       }
       if (
-        (typeof discogs.communityHave === "number" && discogs.communityHave > 0) ||
+        (typeof discogs.communityHave === "number" &&
+          discogs.communityHave > 0) ||
         (typeof discogs.communityWant === "number" && discogs.communityWant > 0)
       ) {
         const parts = [
@@ -196,13 +197,17 @@ export const discogsModule: ProviderModule = {
       });
       const id = res.data?.results?.[0]?.id;
       if (!id) return Object.keys(res.data?.results?.[0] || {});
-      const release = await axios.get(`https://api.discogs.com/releases/${id}`, {
-        params: auth,
-        headers: {
-          "User-Agent": "Placarr/1.0 +https://github.com/clementmoine/Placarr",
+      const release = await axios.get(
+        `https://api.discogs.com/releases/${id}`,
+        {
+          params: auth,
+          headers: {
+            "User-Agent":
+              "Placarr/1.0 +https://github.com/clementmoine/Placarr",
+          },
+          timeout: 8000,
         },
-        timeout: 8000,
-      });
+      );
       return Object.keys(release.data || {});
     } catch {
       return [];

@@ -71,7 +71,9 @@ describe("fetchPricesFromAchatMoinsCher", () => {
     mockedPost.mockResolvedValue({ data: "12345" } as never);
     mockedGet.mockResolvedValue({ data: PRODUCT_HTML } as never);
 
-    await expect(fetchPricesFromAchatMoinsCher("5021290082728")).resolves.toEqual({
+    await expect(
+      fetchPricesFromAchatMoinsCher("5021290082728"),
+    ).resolves.toEqual({
       priceNew: 3999,
       priceUsed: 1999,
     });

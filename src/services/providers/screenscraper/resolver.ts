@@ -262,10 +262,15 @@ function isPlausibleScreenScraperFallbackResult(
     originalName,
     cleanSearchQuery,
   );
-  const resultTokens = screenScraperSignificantTokens(resultName, cleanSearchQuery);
+  const resultTokens = screenScraperSignificantTokens(
+    resultName,
+    cleanSearchQuery,
+  );
   if (originalTokens.size <= 1) return true;
 
-  const overlap = [...originalTokens].filter((token) => resultTokens.has(token));
+  const overlap = [...originalTokens].filter((token) =>
+    resultTokens.has(token),
+  );
   return overlap.length >= Math.min(2, originalTokens.size);
 }
 
@@ -481,7 +486,8 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                     .filter((v, i, self) => v && self.indexOf(v) === i);
 
                   for (const cand of candidates) {
-                    if (cand.toLowerCase() === cleanedName.toLowerCase()) continue;
+                    if (cand.toLowerCase() === cleanedName.toLowerCase())
+                      continue;
                     console.log(
                       `[ScreenScraper] Trying cached barcode suggestion search: "${cand}"`,
                     );
@@ -550,7 +556,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 searchNameUsed = firstWord;
               }
             } catch (err: any) {
-              console.error(`[ScreenScraper] Fallback search error:`, err.message);
+              console.error(
+                `[ScreenScraper] Fallback search error:`,
+                err.message,
+              );
             }
           } else if (firstWord) {
             console.info(
@@ -619,7 +628,8 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       const description = pickSSSynopsis(gameData.synopsis);
       const imageUrl = gameData.medias ? pickSSCover(gameData.medias) : null;
       const releaseDate = gameData.dates?.[0]?.text ?? undefined;
-      const publisherName = gameData.editeur?.text ?? gameData.developpeur?.text;
+      const publisherName =
+        gameData.editeur?.text ?? gameData.developpeur?.text;
       const facts = buildScreenScraperFacts(gameData, deps.formatScore);
 
       const attachments: MetadataAttachment[] = [];

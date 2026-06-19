@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import type {
-  MetadataFact,
-  MetadataResult,
-} from "@/types/metadataProvider";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import {
   fetchFromMusicBrainz,
   formatMusicTitle,
@@ -219,8 +216,9 @@ export const musicbrainzModule: ProviderModule = {
   buildTeardownMetadataTasks(ctx) {
     if (ctx.type !== "musics" || !ctx.barcode) return [];
     return [
-      createTeardownMetadataTask(metadataTeardownLabel("MusicBrainz", ctx), () =>
-        fetchFromMusicBrainz(ctx.barcode!),
+      createTeardownMetadataTask(
+        metadataTeardownLabel("MusicBrainz", ctx),
+        () => fetchFromMusicBrainz(ctx.barcode!),
       ),
     ];
   },

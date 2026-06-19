@@ -11,9 +11,7 @@ const AUTH_VARS = [
   "DISCOGS_CONSUMER_KEY",
   "DISCOGS_CONSUMER_SECRET",
 ] as const;
-const ORIGINAL = Object.fromEntries(
-  AUTH_VARS.map((k) => [k, process.env[k]]),
-);
+const ORIGINAL = Object.fromEntries(AUTH_VARS.map((k) => [k, process.env[k]]));
 
 function clearAuth() {
   for (const k of AUTH_VARS) delete process.env[k];

@@ -86,7 +86,9 @@ describe("presentItem", () => {
     });
 
     expect(presented.name).toBe("Super Monkey Ball: Banana Blitz");
-    expect(presented.storedName).toBe("Super Monkey Ball Banana Blitz Complet VF");
+    expect(presented.storedName).toBe(
+      "Super Monkey Ball Banana Blitz Complet VF",
+    );
     expect(presented.imageUrl).toBe("/uploads/cover.jpg");
   });
 

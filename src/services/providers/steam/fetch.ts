@@ -228,7 +228,10 @@ function buildSteamFacts(appId: number, data: SteamAppDetails): MetadataFact[] {
     });
   }
 
-  if (typeof data.controller_support === "string" && data.controller_support.trim()) {
+  if (
+    typeof data.controller_support === "string" &&
+    data.controller_support.trim()
+  ) {
     facts.push({
       kind: "controllers",
       label: "Support manette",
@@ -276,7 +279,10 @@ function buildSteamFacts(appId: number, data: SteamAppDetails): MetadataFact[] {
     });
   }
 
-  if (typeof data.steam_appid === "number" && Number.isFinite(data.steam_appid)) {
+  if (
+    typeof data.steam_appid === "number" &&
+    Number.isFinite(data.steam_appid)
+  ) {
     facts.push({
       kind: "identifier",
       label: "Steam App ID",
@@ -520,7 +526,9 @@ export async function fetchFromSteam(
     return {
       title,
       description: stripHtml(
-        data.short_description || data.about_the_game || data.detailed_description,
+        data.short_description ||
+          data.about_the_game ||
+          data.detailed_description,
       ),
       releaseDate: data.release_date?.date || undefined,
       imageUrl: data.capsule_imagev5 || data.capsule_image || data.header_image,

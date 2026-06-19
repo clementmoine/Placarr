@@ -79,14 +79,15 @@ export async function compileResultForType(
   const looksLikeAudioBarcode = /^(0?(498|499)|45|88)/.test(cleanedBarcode);
   const skipGameDatabaseFallback = type === "games" && looksLikeAudioBarcode;
 
-  const databaseEvidence = hasCanonicalSignals || skipGameDatabaseFallback
-    ? []
-    : await buildDatabaseEvidence(
-        trustedEvidence
-          .filter((evidence) => !evidence.isCanonical)
-          .map((evidence) => evidence.cleanName),
-        type,
-      );
+  const databaseEvidence =
+    hasCanonicalSignals || skipGameDatabaseFallback
+      ? []
+      : await buildDatabaseEvidence(
+          trustedEvidence
+            .filter((evidence) => !evidence.isCanonical)
+            .map((evidence) => evidence.cleanName),
+          type,
+        );
 
   const canAcceptMarketplaceOnlyBooks =
     type === "books" &&
@@ -168,7 +169,8 @@ export function scoreTypeCandidate(
   score += evidence.hasCover ? 0.03 : 0;
   if (candidateType === "books" && isBookBarcode) score += 0.45;
   if (candidateType === "musics" && isAudioBarcode) score += 0.3;
-  if (candidateType === "games" && (result.platformKey || "").length > 0) score += 0.04;
+  if (candidateType === "games" && (result.platformKey || "").length > 0)
+    score += 0.04;
 
   return score;
 }

@@ -1,7 +1,4 @@
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { fetchFromHowLongToBeat } from "./fetch";
 
 import type { ProviderModule } from "@/types/providerModule";

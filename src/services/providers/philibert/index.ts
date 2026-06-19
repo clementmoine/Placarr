@@ -1,8 +1,5 @@
 import { metadataProbe } from "@/lib/mappingProbeUtils";
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";

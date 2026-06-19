@@ -1,4 +1,8 @@
-import type { Capability, MediaType, ProviderAuth } from "@/types/providerRegistry";
+import type {
+  Capability,
+  MediaType,
+  ProviderAuth,
+} from "@/types/providerRegistry";
 
 export type CoverageRisk = "missing" | "single-source" | "ok" | "n/a";
 
@@ -17,14 +21,13 @@ export function computeCapabilityRisk(
     return "ok";
   }
 
-  const authKinds = providerAuthKinds ?? new Map<string, ProviderAuth["kind"]>();
+  const authKinds =
+    providerAuthKinds ?? new Map<string, ProviderAuth["kind"]>();
   const activeScrapeOrNone = providerIds.filter(
-    (id) =>
-      authKinds.get(id) !== "key" && configuredProviderIds.includes(id),
+    (id) => authKinds.get(id) !== "key" && configuredProviderIds.includes(id),
   );
   const hasUnconfiguredKeyProvider = providerIds.some(
-    (id) =>
-      authKinds.get(id) === "key" && !configuredProviderIds.includes(id),
+    (id) => authKinds.get(id) === "key" && !configuredProviderIds.includes(id),
   );
 
   if (activeScrapeOrNone.length >= 1 && hasUnconfiguredKeyProvider) {

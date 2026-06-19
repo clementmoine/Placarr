@@ -38,7 +38,9 @@ export const coverprojectModule: ProviderModule = {
         return {
           title: ctx.name,
           imageUrl: coverUrl,
-          attachments: [{ type: "cover", url: coverUrl, source: "coverproject" }],
+          attachments: [
+            { type: "cover", url: coverUrl, source: "coverproject" },
+          ],
         };
       },
       "games",

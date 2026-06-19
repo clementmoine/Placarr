@@ -21,9 +21,9 @@ describe("coverproject cdnLookup", () => {
         "Nintendo Wii",
       ),
     ).toBe("wii");
-    expect(resolveCoverProjectPlatformKey("Kingdom Hearts", "PlayStation 2")).toBe(
-      "ps2",
-    );
+    expect(
+      resolveCoverProjectPlatformKey("Kingdom Hearts", "PlayStation 2"),
+    ).toBe("ps2");
   });
 
   it("builds CDN candidates for Wii titles", () => {

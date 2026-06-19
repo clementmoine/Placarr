@@ -9,7 +9,7 @@ pnpm test:coverage   # avec couverture
 ```
 
 La primitive de l'app est **code-barres → item**. La règle d'or : on accepte de
-dire *« je ne sais pas »* (résultat vide + suggestions), mais on ne renvoie
+dire _« je ne sais pas »_ (résultat vide + suggestions), mais on ne renvoie
 **jamais** une réponse confiante fausse. Les tests encodent cette exigence.
 
 ## 3 couches

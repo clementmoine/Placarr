@@ -47,7 +47,10 @@ export interface PhilibertProduct {
 
 function stripHtml(value: string): string {
   return decodeHTMLEntities(
-    value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+    value
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
   );
 }
 
@@ -92,7 +95,11 @@ export function parsePhilibertTopFeatures(html: string): {
       continue;
     }
 
-    if (/\bmin\b/i.test(label) || /\d\s*h\b/i.test(label) || /\d+h\b/i.test(label)) {
+    if (
+      /\bmin\b/i.test(label) ||
+      /\d\s*h\b/i.test(label) ||
+      /\d+h\b/i.test(label)
+    ) {
       result.playtime = label;
       continue;
     }
@@ -168,7 +175,8 @@ export function parsePhilibertReviewsHtml(html: string): PhilibertReview[] {
         /review-content__reviews-item-header-content-name[^>]*>([\s\S]*?)<\//i,
       )?.[1] || "",
     );
-    const author = authorRaw.replace(/^L['’]avis de\s+/i, "").trim() || undefined;
+    const author =
+      authorRaw.replace(/^L['’]avis de\s+/i, "").trim() || undefined;
     const rating = item
       .match(/note-value">([0-9]+(?:[.,][0-9]+)?)\s*\/\s*5/i)?.[1]
       ?.replace(",", ".");
@@ -225,14 +233,17 @@ export function parsePhilibertProductHtml(
   const title =
     stripHtml(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || "") || undefined;
 
-  const description = stripHtml(
-    html.match(
-      /id="product-description"[\s\S]*?<div class="product-description[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-    )?.[1] ||
-      html.match(/id="product-description"[^>]*>([\s\S]*?)<\/section>/i)?.[1] ||
-      html.match(/id="product-description"[^>]*>([\s\S]*?)<\/div>/i)?.[1] ||
-      "",
-  ) || undefined;
+  const description =
+    stripHtml(
+      html.match(
+        /id="product-description"[\s\S]*?<div class="product-description[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      )?.[1] ||
+        html.match(
+          /id="product-description"[^>]*>([\s\S]*?)<\/section>/i,
+        )?.[1] ||
+        html.match(/id="product-description"[^>]*>([\s\S]*?)<\/div>/i)?.[1] ||
+        "",
+    ) || undefined;
 
   const imageCandidates = [
     ...html.matchAll(/https:\/\/cdn1\.philibertnet\.com\/[^"' ]+\.jpg/gi),
@@ -247,7 +258,9 @@ export function parsePhilibertProductHtml(
   ];
   const imageUrl =
     imagePriority
-      .map((token) => imageCandidates.find((candidate) => candidate.includes(token)))
+      .map((token) =>
+        imageCandidates.find((candidate) => candidate.includes(token)),
+      )
       .find(Boolean) || imageCandidates[0];
 
   const featureRows = parsePhilibertFeatureRows(html);
@@ -262,7 +275,9 @@ export function parsePhilibertProductHtml(
     undefined;
 
   const priceText =
-    html.match(/<p class="price[^"]*"[^>]*>[\s\S]*?([0-9]+(?:[.,][0-9]{1,2})?)€/i)?.[1] ||
+    html.match(
+      /<p class="price[^"]*"[^>]*>[\s\S]*?([0-9]+(?:[.,][0-9]{1,2})?)€/i,
+    )?.[1] ||
     html.match(/itemprop="price"[^>]*content="([0-9.]+)"/i)?.[1] ||
     html.match(/"price_amount"\s*:\s*([0-9.]+)/i)?.[1];
 
@@ -293,18 +308,27 @@ export function parsePhilibertProductHtml(
   };
 }
 
-function parseProductLinks(html: string, preferredBarcode?: string): PhilibertSearchHit[] {
+function parseProductLinks(
+  html: string,
+  preferredBarcode?: string,
+): PhilibertSearchHit[] {
   const hits: PhilibertSearchHit[] = [];
   const seen = new Set<string>();
 
-  for (const match of html.matchAll(/href="(\/fr\/[^"]+\/\d+-[^"]+\.html)"/gi)) {
+  for (const match of html.matchAll(
+    /href="(\/fr\/[^"]+\/\d+-[^"]+\.html)"/gi,
+  )) {
     const path = match[1];
     if (seen.has(path)) continue;
     seen.add(path);
 
     const barcodeMatch = path.match(/-(\d{8,14})\.html$/);
     const barcode = barcodeMatch?.[1];
-    const slug = path.split("/").pop()?.replace(/\.html$/, "") || "";
+    const slug =
+      path
+        .split("/")
+        .pop()
+        ?.replace(/\.html$/, "") || "";
     const titlePart = slug.replace(/-\d{8,14}$/, "").replace(/^\d+-/, "");
     const title = titlePart
       ? decodeHTMLEntities(
@@ -353,7 +377,9 @@ export async function searchPhilibert(
   }
 }
 
-export async function fetchPhilibertProduct(url: string): Promise<PhilibertProduct> {
+export async function fetchPhilibertProduct(
+  url: string,
+): Promise<PhilibertProduct> {
   const response = await axios.get(url, {
     headers: HEADERS,
     timeout: 10000,

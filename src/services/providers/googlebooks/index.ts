@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { createGoogleBooksResolver } from "./resolver";
 import {
   createTeardownBarcodeTask,
@@ -75,7 +72,9 @@ export const googlebooksModule: ProviderModule = {
     "Google Books",
     async () => {
       const start = Date.now();
-      const isUp = await pingUrl("https://www.googleapis.com/books/v1/volumes?q=isbn:9780140328721");
+      const isUp = await pingUrl(
+        "https://www.googleapis.com/books/v1/volumes?q=isbn:9780140328721",
+      );
       return {
         ok: isUp,
         latency: Date.now() - start,
@@ -111,14 +110,17 @@ export const googlebooksModule: ProviderModule = {
   collectMappingRawKeys: async () => {
     const apiKey = process.env.GOOGLE_BOOKS_API_KEY?.trim();
     try {
-      const res = await axios.get("https://www.googleapis.com/books/v1/volumes", {
-        params: {
-          q: "isbn:9780140328721",
-          maxResults: 1,
-          ...(apiKey ? { key: apiKey } : {}),
+      const res = await axios.get(
+        "https://www.googleapis.com/books/v1/volumes",
+        {
+          params: {
+            q: "isbn:9780140328721",
+            maxResults: 1,
+            ...(apiKey ? { key: apiKey } : {}),
+          },
+          timeout: 8000,
         },
-        timeout: 8000,
-      });
+      );
       return Object.keys(res.data?.items?.[0]?.volumeInfo || {});
     } catch {
       return [];

@@ -18,10 +18,7 @@ export {
   stripHtml,
 } from "./parse";
 export { createPrestashopModule } from "./moduleFactory";
-export {
-  createPrestashopResolver,
-  mapPrestashopMetadata,
-} from "./resolver";
+export { createPrestashopResolver, mapPrestashopMetadata } from "./resolver";
 
 export const PRESTASHOP_RETAILER_MODULES = PRESTASHOP_RETAILER_CONFIGS.map(
   (config) => createPrestashopModule(config),

@@ -45,7 +45,10 @@ export async function fetchFromAllGameSources(
     "rawg",
     "steamgriddb",
   ];
-  const selectedProviderIds = orderedProviderIdsForType("games", gameProviderOrder);
+  const selectedProviderIds = orderedProviderIdsForType(
+    "games",
+    gameProviderOrder,
+  );
   const settled = await Promise.allSettled(
     selectedProviderIds.map(async (providerId) => ({
       providerId,
@@ -197,7 +200,8 @@ export async function fetchFromAllGameSources(
     pcFacts.push({
       kind: "age-rating",
       label: pcMeta.ageRating.startsWith("PEGI") ? "PEGI" : "PriceCharting",
-      value: pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() || pcMeta.ageRating,
+      value:
+        pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() || pcMeta.ageRating,
       source: "pricecharting",
       confidence: 0.62,
       priority: 58,

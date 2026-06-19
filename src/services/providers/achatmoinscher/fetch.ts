@@ -105,11 +105,16 @@ export async function fetchFromAchatMoinsCher(
   }
 }
 
-async function extractBestCover(html: string, title?: string | null): Promise<string | null> {
+async function extractBestCover(
+  html: string,
+  title?: string | null,
+): Promise<string | null> {
   const candidates: { url: string; score: number }[] = [];
 
   // 1. Gather main product image from container <div class="col-md-12 imgIco">
-  const mainImgMatch = html.match(/<div[^>]*class="[^"]*imgIco[^"]*"[^>]*>\s*<img[^>]+src="([^"]+)"/i);
+  const mainImgMatch = html.match(
+    /<div[^>]*class="[^"]*imgIco[^"]*"[^>]*>\s*<img[^>]+src="([^"]+)"/i,
+  );
   if (mainImgMatch) {
     let url = mainImgMatch[1].trim();
     if (url.startsWith("//")) url = "https:" + url;
@@ -172,7 +177,12 @@ async function extractBestCover(html: string, title?: string | null): Promise<st
     if (altMatch && title) {
       const altText = decodeHTMLEntities(altMatch[1].trim()).toLowerCase();
       const cleanTitle = title.toLowerCase();
-      if (altText && (altText === cleanTitle || cleanTitle.includes(altText) || altText.includes(cleanTitle))) {
+      if (
+        altText &&
+        (altText === cleanTitle ||
+          cleanTitle.includes(altText) ||
+          altText.includes(cleanTitle))
+      ) {
         score += 500;
       }
     }

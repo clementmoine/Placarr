@@ -75,7 +75,9 @@ const BGG_HEADERS = {
 let warnedMissingToken = false;
 
 export function createBGGResolver(deps: BggResolverDeps) {
-  return async function fetchFromBGG(name: string): Promise<MetadataResult | null> {
+  return async function fetchFromBGG(
+    name: string,
+  ): Promise<MetadataResult | null> {
     const token = process.env.BGG_API_TOKEN?.trim();
     if (!token) {
       if (!warnedMissingToken) {
@@ -153,10 +155,12 @@ export function createBGGResolver(deps: BggResolverDeps) {
         (child: BGGChild) => child.yearpublished,
       )?.yearpublished?.value;
 
-      const minPlayers = game.children.find((child: BGGChild) => child.minplayers)
-        ?.minplayers?.value;
-      const maxPlayers = game.children.find((child: BGGChild) => child.maxplayers)
-        ?.maxplayers?.value;
+      const minPlayers = game.children.find(
+        (child: BGGChild) => child.minplayers,
+      )?.minplayers?.value;
+      const maxPlayers = game.children.find(
+        (child: BGGChild) => child.maxplayers,
+      )?.maxplayers?.value;
       const playingTime = game.children.find(
         (child: BGGChild) => child.playingtime,
       )?.playingtime?.value;
@@ -166,8 +170,8 @@ export function createBGGResolver(deps: BggResolverDeps) {
       const maxPlayTime = game.children.find(
         (child: BGGChild) => child.maxplaytime,
       )?.maxplaytime?.value;
-      const minAge = game.children.find((child: BGGChild) => child.minage)?.minage
-        ?.value;
+      const minAge = game.children.find((child: BGGChild) => child.minage)
+        ?.minage?.value;
       const averageRating = getBGGRatingValue(game, "average");
       const bayesAverage = getBGGRatingValue(game, "bayesaverage");
       const usersRated = getBGGRatingValue(game, "usersrated");
@@ -352,8 +356,8 @@ export function createBGGResolver(deps: BggResolverDeps) {
         typeof error === "object" &&
         error !== null &&
         "response" in error &&
-        typeof (error as { response?: { status?: number } }).response?.status ===
-          "number"
+        typeof (error as { response?: { status?: number } }).response
+          ?.status === "number"
           ? (error as { response?: { status?: number } }).response?.status
           : null;
       if (status === 401) {

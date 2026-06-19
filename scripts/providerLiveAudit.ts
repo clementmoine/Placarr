@@ -36,10 +36,13 @@ async function safe(name: string, fn: () => Promise<unknown>) {
 
 async function run() {
   await safe("steam_raw", async () => {
-    const search = await axios.get("https://store.steampowered.com/api/storesearch/", {
-      params: { term: "Hades", cc: "fr", l: "french" },
-      timeout: 8000,
-    });
+    const search = await axios.get(
+      "https://store.steampowered.com/api/storesearch/",
+      {
+        params: { term: "Hades", cc: "fr", l: "french" },
+        timeout: 8000,
+      },
+    );
     const appId = search.data?.items?.[0]?.id;
     const details = appId
       ? await axios.get("https://store.steampowered.com/api/appdetails", {
@@ -108,9 +111,12 @@ async function run() {
   });
 
   await safe("openlibrary_raw", async () => {
-    const response = await axios.get("https://openlibrary.org/isbn/9782919603114.json", {
-      timeout: 8000,
-    });
+    const response = await axios.get(
+      "https://openlibrary.org/isbn/9782919603114.json",
+      {
+        timeout: 8000,
+      },
+    );
     return {
       keys: Object.keys(response.data || {}),
       hasDescription: Boolean(response.data?.description),
@@ -119,9 +125,12 @@ async function run() {
   });
 
   await safe("openlibrary_raw_known", async () => {
-    const response = await axios.get("https://openlibrary.org/isbn/9780140328721.json", {
-      timeout: 8000,
-    });
+    const response = await axios.get(
+      "https://openlibrary.org/isbn/9780140328721.json",
+      {
+        timeout: 8000,
+      },
+    );
     return {
       keys: Object.keys(response.data || {}),
       hasDescription: Boolean(response.data?.description),
@@ -140,7 +149,10 @@ async function run() {
   });
 
   await safe("openlibrary_mapped_known", async () => {
-    const mapped = await fetchFromOpenLibrary("Fantastic Mr. Fox", "9780140328721");
+    const mapped = await fetchFromOpenLibrary(
+      "Fantastic Mr. Fox",
+      "9780140328721",
+    );
     return {
       hasResult: Boolean(mapped),
       keys: Object.keys(mapped || {}),
@@ -150,12 +162,17 @@ async function run() {
   });
 
   await safe("deezer_raw", async () => {
-    const upcResponse = await axios.get("https://api.deezer.com/album/upc:4988601467124", {
-      timeout: 8000,
-    });
+    const upcResponse = await axios.get(
+      "https://api.deezer.com/album/upc:4988601467124",
+      {
+        timeout: 8000,
+      },
+    );
     const albumId = upcResponse.data?.id;
     const albumResponse = albumId
-      ? await axios.get(`https://api.deezer.com/album/${albumId}`, { timeout: 8000 })
+      ? await axios.get(`https://api.deezer.com/album/${albumId}`, {
+          timeout: 8000,
+        })
       : null;
     return {
       upcKeys: Object.keys(upcResponse.data || {}),
@@ -174,14 +191,19 @@ async function run() {
   });
 
   await safe("deezer_raw_by_name", async () => {
-    const searchResponse = await axios.get("https://api.deezer.com/search/album", {
-      params: { q: "Daft Punk Random Access Memories" },
-      timeout: 8000,
-    });
+    const searchResponse = await axios.get(
+      "https://api.deezer.com/search/album",
+      {
+        params: { q: "Daft Punk Random Access Memories" },
+        timeout: 8000,
+      },
+    );
     const first = searchResponse.data?.data?.[0];
     const albumId = first?.id;
     const albumResponse = albumId
-      ? await axios.get(`https://api.deezer.com/album/${albumId}`, { timeout: 8000 })
+      ? await axios.get(`https://api.deezer.com/album/${albumId}`, {
+          timeout: 8000,
+        })
       : null;
     return {
       searchKeys: Object.keys(searchResponse.data || {}),

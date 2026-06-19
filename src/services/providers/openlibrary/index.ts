@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { createOpenLibraryResolver } from "./resolver";
 import {
   createTeardownBarcodeTask,
@@ -109,9 +106,12 @@ export const openlibraryModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const isbn = await axios.get("https://openlibrary.org/isbn/9780140328721.json", {
-        timeout: 8000,
-      });
+      const isbn = await axios.get(
+        "https://openlibrary.org/isbn/9780140328721.json",
+        {
+          timeout: 8000,
+        },
+      );
       const workKey = String(isbn.data?.works?.[0]?.key || "").replace(
         /^\/works\//,
         "",

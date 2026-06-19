@@ -240,9 +240,7 @@ export async function pingSteamGridDB() {
   }
 
   try {
-    await fetchSteamGridDbJson<SteamGridDbGame[]>(
-      "/search/autocomplete/Hades",
-    );
+    await fetchSteamGridDbJson<SteamGridDbGame[]>("/search/autocomplete/Hades");
     return { ok: true, latency: Date.now() - start, error: null };
   } catch (error) {
     return {

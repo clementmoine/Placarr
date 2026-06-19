@@ -20,8 +20,12 @@ export async function fetchFromAllMovieSources(
   platform?: string | null,
 ): Promise<MetadataResult | null> {
   const [tmdb, omdb] = await Promise.all([
-    metadataProviderResolverMap.get("tmdb")?.resolve({ name, barcode, platform }),
-    metadataProviderResolverMap.get("omdb")?.resolve({ name, barcode, platform }),
+    metadataProviderResolverMap
+      .get("tmdb")
+      ?.resolve({ name, barcode, platform }),
+    metadataProviderResolverMap
+      .get("omdb")
+      ?.resolve({ name, barcode, platform }),
   ]);
 
   if (!tmdb && !omdb) return null;

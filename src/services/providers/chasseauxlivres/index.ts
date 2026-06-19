@@ -1,14 +1,14 @@
-import {
-  createMetadataHealthCheck,
-  pingUrl,
-} from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
 import { catalogForShelfType } from "@/lib/providerCatalog";
 import { listProbe, probeErrorResult, retry } from "@/lib/mappingProbeUtils";
 import { createTeardownBarcodeTask } from "@/lib/teardownUtils";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 
-import { fetchFromChasseAuxLivres, fetchPricesFromChasseAuxLivres } from "./fetch";
+import {
+  fetchFromChasseAuxLivres,
+  fetchPricesFromChasseAuxLivres,
+} from "./fetch";
 
 export { fetchFromChasseAuxLivres, fetchPricesFromChasseAuxLivres };
 
@@ -53,7 +53,12 @@ export const chasseauxlivresModule: ProviderModule = {
     if (!ctx.barcode) return [];
 
     const catalogEntries = ctx.type
-      ? [{ label: "ChasseAuxLivres", catalog: CATALOG[ctx.type as BarcodeLookupType] || "" }]
+      ? [
+          {
+            label: "ChasseAuxLivres",
+            catalog: CATALOG[ctx.type as BarcodeLookupType] || "",
+          },
+        ]
       : [
           { label: "ChasseAuxLivres:books", catalog: "fr" },
           { label: "ChasseAuxLivres:movies", catalog: "dvd" },

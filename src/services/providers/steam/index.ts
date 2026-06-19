@@ -55,7 +55,8 @@ export const steamModule: ProviderModule = {
       return {
         ok: false,
         latency: Date.now() - start,
-        error: error instanceof Error ? error.message : "Steam Store unreachable",
+        error:
+          error instanceof Error ? error.message : "Steam Store unreachable",
       };
     }
   }),

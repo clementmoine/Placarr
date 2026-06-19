@@ -29,7 +29,10 @@ export function createBarcodeLookupTaskBuilders(
         PROVIDER_MODULES.reduce<Record<string, Promise<unknown>>>(
           (tasks, module) => {
             if (!module.buildBarcodeTasks) return tasks;
-            return { ...tasks, ...module.buildBarcodeTasks(deps, type, context) };
+            return {
+              ...tasks,
+              ...module.buildBarcodeTasks(deps, type, context),
+            };
           },
           {},
         ),

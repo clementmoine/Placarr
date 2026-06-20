@@ -59,7 +59,9 @@
     "addAnotherCopy": "Ajouter un autre exemplaire",
     "otherMatches": "Autres produits correspondant à ce code-barres :",
     "owned": "Possédé",
-    "alreadyIn": "Déjà dans"
+    "alreadyIn": "Déjà dans",
+    "objectType": "Type",
+    "estimatedShelf": "Étagère estimée"
   },
   "user": {
     "avatar": "Avatar utilisateur",

@@ -2,6 +2,7 @@ import { achatmoinscherModule } from "@/services/providers/achatmoinscher";
 import { apriloshopModule } from "@/services/providers/apriloshop";
 import { bggModule } from "@/services/providers/bgg";
 import { chasseauxlivresModule } from "@/services/providers/chasseauxlivres";
+import { launchboxModule } from "@/services/providers/launchbox";
 import { coverprojectModule } from "@/services/providers/coverproject";
 import { deezerModule } from "@/services/providers/deezer";
 import { discogsModule } from "@/services/providers/discogs";
@@ -24,6 +25,7 @@ import { isScreenScraperConfigured } from "@/services/providers/screenscraper/en
 import { screenscraperModule } from "@/services/providers/screenscraper";
 import { steamModule } from "@/services/providers/steam";
 import { steamgriddbModule } from "@/services/providers/steamgriddb";
+import { thegamesdbModule } from "@/services/providers/thegamesdb";
 import { tmdbModule } from "@/services/providers/tmdb";
 
 import type { ProviderModule } from "@/types/providerModule";
@@ -42,6 +44,8 @@ export type {
 
 export const PROVIDER_MODULES: ProviderModule[] = [
   screenscraperModule,
+  thegamesdbModule,
+  launchboxModule,
   igdbModule,
   rawgModule,
   steamgriddbModule,
@@ -79,6 +83,9 @@ export function getProviderModule(id: string): ProviderModule | undefined {
 
 export function isProviderConfigured(p: ProviderInfo): boolean {
   if (p.id === "screenscraper") return isScreenScraperConfigured();
+  if (p.id === "thegamesdb") {
+    return Boolean(process.env.THEGAMESDB_API_KEY?.trim());
+  }
   if (p.auth.kind !== "key") return true;
   return p.auth.env.every((name) => Boolean(process.env[name]?.trim()));
 }

@@ -128,11 +128,7 @@ describe("resolveBarcode — cache-hit (déterministe, sans réseau)", () => {
   it("normalise les éditions marketing (ex: Classics) vers le titre jeu", async () => {
     h.cache = makeCache({
       platformKey: "xbox",
-      rawNames: [
-        "Halo 2 Classics",
-        "HALO 2",
-        "Halo 2 - Jeu Video Xbox",
-      ],
+      rawNames: ["Halo 2 Classics", "HALO 2", "Halo 2 - Jeu Video Xbox"],
     });
 
     const res = await resolveBarcode("0882224088060", "games");

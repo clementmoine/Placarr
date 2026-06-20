@@ -19,12 +19,15 @@ describe("game metadata provider modules", () => {
   it("keeps stable core game adapter ids", () => {
     expect(gameAdapterIds.sort()).toEqual(
       [
+        "coverproject",
         "howlongtobeat",
         "igdb",
+        "launchbox",
         "rawg",
         "screenscraper",
         "steam",
         "steamgriddb",
+        "thegamesdb",
       ].sort(),
     );
   });

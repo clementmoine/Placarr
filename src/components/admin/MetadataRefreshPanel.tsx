@@ -34,6 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/providers/LocaleProvider";
 
 type RefreshableType = "games" | "movies" | "musics" | "books" | "boardgames";
@@ -68,6 +70,7 @@ interface AdminRefreshItem {
     title?: string | null;
     imageUrl?: string | null;
     lastFetched: string;
+    attachments?: Array<{ source: string }> | null;
   } | null;
 }
 
@@ -131,6 +134,8 @@ export function MetadataRefreshPanel() {
   const [isRunning, setIsRunning] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [lastRunTotal, setLastRunTotal] = useState(0);
+  const [onlyMissingScreenScraper, setOnlyMissingScreenScraper] =
+    useState(false);
 
   const {
     data,
@@ -184,6 +189,14 @@ export function MetadataRefreshPanel() {
     return (data?.items || [])
       .filter((item) => typeFilter === "all" || item.shelf.type === typeFilter)
       .filter((item) => {
+        if (!onlyMissingScreenScraper) return true;
+        if (item.shelf.type !== "games") return false;
+        const hasSS = item.metadata?.attachments?.some(
+          (a) => a.source === "screenscraper",
+        );
+        return !hasSS;
+      })
+      .filter((item) => {
         if (!q) return true;
         return [
           item.name,
@@ -207,7 +220,7 @@ export function MetadataRefreshPanel() {
           : 0;
         return aTime - bTime;
       });
-  }, [data?.items, search, typeFilter]);
+  }, [data?.items, search, typeFilter, onlyMissingScreenScraper]);
 
   const summary = useMemo(() => {
     const values = Object.values(runStates);
@@ -443,11 +456,34 @@ export function MetadataRefreshPanel() {
                 setTypeFilter("all");
                 setRunStates({});
                 setLastRunTotal(0);
+                setOnlyMissingScreenScraper(false);
               }}
               disabled={isRunning}
             >
               {locale === "fr" ? "Réinitialiser" : "Reset"}
             </Button>
+          </div>
+
+          <div className="flex items-center space-x-2.5 pt-1">
+            <Switch
+              id="screenscraper-filter"
+              checked={onlyMissingScreenScraper}
+              onCheckedChange={(checked) => {
+                setOnlyMissingScreenScraper(checked);
+                if (checked) {
+                  setTypeFilter("games");
+                }
+              }}
+              disabled={isRunning}
+            />
+            <Label
+              htmlFor="screenscraper-filter"
+              className="text-xs font-medium cursor-pointer select-none text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {locale === "fr"
+                ? "Uniquement les jeux vidéo sans jaquette physique ScreenScraper"
+                : "Only games missing ScreenScraper covers"}
+            </Label>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

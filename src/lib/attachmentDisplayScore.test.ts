@@ -45,10 +45,7 @@ describe("attachmentDisplayScore", () => {
 
   it("priorise une cover FR locale même si une cover EU a une meilleure résolution", () => {
     const metrics = new Map([
-      [
-        "/uploads/eu-hires.jpg",
-        { width: 754, height: 1355, format: "jpeg" },
-      ],
+      ["/uploads/eu-hires.jpg", { width: 754, height: 1355, format: "jpeg" }],
       ["/uploads/fr-small.jpg", { width: 312, height: 822, format: "jpeg" }],
     ]);
 
@@ -75,10 +72,7 @@ describe("attachmentDisplayScore", () => {
 
   it("ignore le disque ScreenScraper quand aucune jaquette boîte FR n'existe", () => {
     const metrics = new Map([
-      [
-        "/uploads/disc.jpg",
-        { width: 1200, height: 1200, format: "jpeg" },
-      ],
+      ["/uploads/disc.jpg", { width: 1200, height: 1200, format: "jpeg" }],
       ["/uploads/box-eu.jpg", { width: 754, height: 1355, format: "jpeg" }],
     ]);
 

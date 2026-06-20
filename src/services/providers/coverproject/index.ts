@@ -2,8 +2,9 @@ import { rawProbe } from "@/lib/mappingProbeUtils";
 import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
+import type { MetadataResult } from "@/types/metadataProvider";
 
-import { fetchCoverFromCoverProject } from "./resolver";
+import { fetchCoverFromCoverProject, fetchFromCoverProject } from "./resolver";
 
 export const coverprojectModule: ProviderModule = {
   info: {
@@ -13,7 +14,22 @@ export const coverprojectModule: ProviderModule = {
     capabilities: ["cover"],
     auth: { kind: "scrape" },
     canonical: true,
+    notes: "Jaquettes custom haute qualité (souvent PAL/EU).",
   },
+  evidence: {
+    label: "Cover Project",
+    sourceWeight: 0.41,
+    canonical: true,
+  },
+  createMetadataAdapter: () => ({
+    id: "coverproject",
+    async resolve({ name, platform }) {
+      return (await fetchFromCoverProject(
+        name,
+        platform,
+      )) as MetadataResult | null;
+    },
+  }),
   testHandlers: {
     "coverproject-metadata": {
       label: "The Cover Project - Covers",
@@ -61,7 +77,7 @@ export const coverprojectModule: ProviderModule = {
   },
 };
 
-export { fetchCoverFromCoverProject } from "./resolver";
+export { fetchCoverFromCoverProject, fetchFromCoverProject } from "./resolver";
 export {
   buildCoverProjectCdnCandidates,
   fetchCoverFromCoverProjectCdn,

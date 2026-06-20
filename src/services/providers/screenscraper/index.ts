@@ -22,6 +22,7 @@ type Resolver = (
   name: string,
   barcode?: string | null,
   platform?: string | null,
+  options?: { isBackground?: boolean },
 ) => Promise<MetadataResult | null>;
 
 function screenscraperCredentials() {
@@ -66,8 +67,10 @@ export const screenscraperModule: ProviderModule = {
     const fetchFromScreenScraper = deps.fetchFromScreenScraper as Resolver;
     return {
       id: "screenscraper",
-      async resolve({ name, barcode, platform }) {
-        return fetchFromScreenScraper(name, barcode, platform);
+      async resolve({ name, barcode, platform, isBackground }) {
+        return fetchFromScreenScraper(name, barcode, platform, {
+          isBackground,
+        });
       },
     } satisfies MetadataProviderAdapter;
   },

@@ -101,7 +101,10 @@ export function scoreDisplayTitle(
   }
 
   // CJK characters penalty (Japanese, Chinese, Korean)
-  const hasCjk = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/.test(name);
+  const hasCjk =
+    /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/.test(
+      name,
+    );
   if (hasCjk) {
     score -= 200;
   }
@@ -176,7 +179,10 @@ export function scoreMetadataDisplayTitle(title: string): number {
   }
 
   // CJK characters penalty (Japanese, Chinese, Korean)
-  const hasCjk = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/.test(title);
+  const hasCjk =
+    /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/.test(
+      title,
+    );
   if (hasCjk) {
     score -= 200;
   }

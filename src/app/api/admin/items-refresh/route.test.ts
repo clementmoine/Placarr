@@ -54,6 +54,7 @@ describe("GET /api/admin/items-refresh", () => {
           title: "CATAN",
           imageUrl: "/uploads/catan-meta.jpg",
           lastFetched: new Date("2026-01-03T10:00:00.000Z"),
+          attachments: [],
         },
       },
     ]);

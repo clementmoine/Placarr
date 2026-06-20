@@ -52,7 +52,11 @@ export const chasseauxlivresModule: ProviderModule = {
     if (!BARCODE_TYPES.includes(type)) {
       return {} as Record<string, Promise<unknown>>;
     }
-    return { cal: deps.fetchFromChasseAuxLivres(barcode, CATALOG[type]) };
+    return {
+      cal: deps.fetchFromChasseAuxLivres(barcode, CATALOG[type], {
+        withPrices: true,
+      }),
+    };
   },
   buildTeardownBarcodeTasks(ctx, deps) {
     if (!ctx.barcode) return [];

@@ -2,13 +2,36 @@ import axios from "axios";
 import { prisma } from "@/lib/prisma";
 import levenshtein from "fast-levenshtein";
 import type { AttachmentType } from "@prisma/client";
+import { retry } from "@/lib/retry";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import { getScreenScraperDebugParams, getScreenScraperEnv } from "./env";
+import {
+  getScreenScraperDebugParams,
+  getScreenScraperEnv,
+  type ScreenScraperEnv,
+} from "./env";
+import {
+  buildScreenScraperLookupKey,
+  cacheScreenScraperGame,
+  cacheScreenScraperLookup,
+  cacheScreenScraperSearch,
+  clearScreenScraperInFlightLookup,
+  getCachedScreenScraperGame,
+  getCachedScreenScraperSearch,
+  getPersistedScreenScraperLookup,
+  getScreenScraperInFlightLookup,
+  isScreenScraperQuotaBlocked,
+  markScreenScraperQuotaHit,
+  persistScreenScraperGameIdForBarcode,
+  setScreenScraperInFlightLookup,
+} from "./cache";
+import { parseScreenScraperMediaUrl } from "./mediaUrl";
+
+export { parseScreenScraperMediaUrl } from "./mediaUrl";
 
 /**
  * Maps a RAWG platform name to a ScreenScraper system ID.
@@ -71,6 +94,7 @@ export interface SSMedia {
 
 export interface SSGame {
   id?: number;
+  systeme?: { id?: number | string; text?: string };
   noms?: { region: string; text: string }[];
   synopsis?: { langue: string; text: string }[];
   dates?: { region: string; text: string }[];
@@ -197,24 +221,6 @@ function hasCachedCandidateSystemConflict(
   return !!candidateSystemId && candidateSystemId !== requestedSystemId;
 }
 
-export function parseScreenScraperMediaUrl(url: string): {
-  gameId?: number;
-  systemId?: number;
-} | null {
-  try {
-    const parsed = new URL(url);
-    if (!parsed.hostname.includes("screenscraper.fr")) return null;
-    const gameId = Number(parsed.searchParams.get("jeuid"));
-    const systemId = Number(parsed.searchParams.get("systemeid"));
-    return {
-      gameId: Number.isFinite(gameId) && gameId > 0 ? gameId : undefined,
-      systemId: Number.isFinite(systemId) && systemId > 0 ? systemId : undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
 function isScreenScraperQuotaError(error: unknown): boolean {
   return (
     axios.isAxiosError(error) &&
@@ -225,28 +231,59 @@ function isScreenScraperQuotaError(error: unknown): boolean {
 async function fetchScreenScraperGameById(
   baseParams: Record<string, string>,
   gameId: number,
-  credentials: ReturnType<typeof getScreenScraperEnv>,
+  credentials: ScreenScraperEnv,
+  options?: { isBackground?: boolean },
 ): Promise<SSGame | null> {
-  const infoRes = await axios.get<{ response: { jeu: SSGame } }>(
-    "https://api.screenscraper.fr/api2/jeuInfos.php",
-    {
-      params: {
-        ...baseParams,
-        crc: "",
-        md5: "",
-        sha1: "",
-        systemeid: "0",
-        romtype: "rom",
-        romnom: "",
-        romtaille: "",
-        gameid: String(gameId),
-        ...getScreenScraperDebugParams(credentials),
-      },
-      timeout: 8000,
-    },
-  );
-  const jeu = infoRes.data?.response?.jeu;
-  return jeu?.id ? jeu : null;
+  const cached = await getCachedScreenScraperGame(gameId);
+  if (cached) {
+    console.info(`[ScreenScraper] Cache hit for game ${gameId}`);
+    return cached;
+  }
+
+  try {
+    const queryFn = () =>
+      axios.get<{ response: { jeu: SSGame } }>(
+        "https://api.screenscraper.fr/api2/jeuInfos.php",
+        {
+          params: {
+            ...baseParams,
+            crc: "",
+            md5: "",
+            sha1: "",
+            systemeid: "0",
+            romtype: "rom",
+            romnom: "",
+            romtaille: "",
+            gameid: String(gameId),
+            ...getScreenScraperDebugParams(credentials),
+          },
+          timeout: 8000,
+        },
+      );
+
+    const infoRes = options?.isBackground
+      ? await retry(queryFn, 3, 1500)
+      : await queryFn();
+
+    const jeu = infoRes.data?.response?.jeu;
+    if (!jeu?.id) return null;
+    await cacheScreenScraperGame(gameId, jeu);
+    return jeu;
+  } catch (error) {
+    if (isScreenScraperQuotaError(error)) {
+      markScreenScraperQuotaHit();
+      const stale = await getCachedScreenScraperGame(gameId, {
+        allowStale: true,
+      });
+      if (stale) {
+        console.warn(
+          `[ScreenScraper] Quota hit — serving stale cache for game ${gameId}`,
+        );
+        return stale;
+      }
+    }
+    throw error;
+  }
 }
 
 async function resolveScreenScraperGameIdFromBarcodeCache(
@@ -422,31 +459,60 @@ export function buildScreenScraperSearchQueries(
     );
   }
 
-  return uniqueScreenScraperSearchQueries(variants).slice(0, 12);
+  return uniqueScreenScraperSearchQueries(variants).slice(0, 6);
 }
 
 async function searchScreenScraperGames(
   baseParams: Record<string, string>,
   query: string,
   systemeid?: number,
+  options?: { isBackground?: boolean },
 ): Promise<any[]> {
-  const searchRes = await axios.get<{
-    response: { jeux: any };
-  }>("https://api.screenscraper.fr/api2/jeuRecherche.php", {
-    params: {
-      ...baseParams,
-      recherche: query,
-      ...(systemeid ? { systemeid: String(systemeid) } : {}),
-    },
-    timeout: 8000,
-  });
-
-  let results = searchRes.data?.response?.jeux;
-  if (results && !Array.isArray(results)) {
-    results = [results];
+  if (isScreenScraperQuotaBlocked()) {
+    const cached = getCachedScreenScraperSearch(query, systemeid);
+    if (cached) return cached;
+    return [];
   }
 
-  return (results || []).filter((r: any) => r && r.id);
+  const cached = getCachedScreenScraperSearch(query, systemeid);
+  if (cached) {
+    console.info(`[ScreenScraper] Search cache hit for "${query}"`);
+    return cached;
+  }
+
+  try {
+    const queryFn = () =>
+      axios.get<{
+        response: { jeux: any };
+      }>("https://api.screenscraper.fr/api2/jeuRecherche.php", {
+        params: {
+          ...baseParams,
+          recherche: query,
+          ...(systemeid ? { systemeid: String(systemeid) } : {}),
+        },
+        timeout: 8000,
+      });
+
+    const searchRes = options?.isBackground
+      ? await retry(queryFn, 3, 1500)
+      : await queryFn();
+
+    let results = searchRes.data?.response?.jeux;
+    if (results && !Array.isArray(results)) {
+      results = [results];
+    }
+
+    const filtered = (results || []).filter((r: any) => r && r.id);
+    cacheScreenScraperSearch(query, systemeid, filtered);
+    return filtered;
+  } catch (error) {
+    if (isScreenScraperQuotaError(error)) {
+      markScreenScraperQuotaHit();
+      const stale = getCachedScreenScraperSearch(query, systemeid);
+      if (stale) return stale;
+    }
+    throw error;
+  }
 }
 
 type ScreenScraperResolverDeps = {
@@ -490,10 +556,11 @@ function buildScreenScraperFacts(
 }
 
 export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
-  return async function fetchFromScreenScraper(
+  async function resolveScreenScraperMetadata(
     name: string,
     barcode?: string | null,
     platform?: string | null,
+    options?: { isBackground?: boolean },
   ): Promise<MetadataResult | null> {
     const credentials = getScreenScraperEnv();
 
@@ -531,12 +598,12 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               baseParams,
               cachedGame.gameId,
               credentials,
+              options,
             );
             if (jeu) {
               gameData = jeu;
               resolvedSystemId =
-                cachedGame.systemId ??
-                (Number(jeu.systeme?.id) || systemeid);
+                cachedGame.systemId ?? (Number(jeu.systeme?.id) || systemeid);
               console.info(
                 `[ScreenScraper] Resolved game ${cachedGame.gameId} from barcode cache for "${barcode}"`,
               );
@@ -564,12 +631,14 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               baseParams,
               cleanedBarcode,
               systemeid,
+              options,
             );
             if (barcodeResults.length === 1 && barcodeResults[0]?.id) {
               const jeu = await fetchScreenScraperGameById(
                 baseParams,
                 Number(barcodeResults[0].id),
                 credentials,
+                options,
               );
               if (jeu) {
                 gameData = jeu;
@@ -621,6 +690,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               baseParams,
               query,
               systemeid,
+              options,
             );
             if (validResults.length > 0) {
               searchNameUsed = query;
@@ -678,6 +748,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                           baseParams,
                           query,
                           systemeid,
+                          options,
                         );
                         if (newValid.length > 0) {
                           validResults = newValid;
@@ -726,6 +797,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 baseParams,
                 firstWord,
                 systemeid,
+                options,
               );
               validResults = fallbackResults.filter((result: any) =>
                 isPlausibleScreenScraperFallbackResult(
@@ -769,7 +841,8 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             ? platformCompatibleResults
             : validResults;
 
-        const targetNameForRanking = name.trim() || cleanedName || searchNameUsed;
+        const targetNameForRanking =
+          name.trim() || cleanedName || searchNameUsed;
         let bestId = rankedResults[0].id;
         let minDist = Infinity;
         let bestOverlap = -1;
@@ -814,6 +887,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           baseParams,
           Number(bestId),
           credentials,
+          options,
         );
         if (infoRes) {
           gameData = infoRes;
@@ -885,7 +959,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             .map((n) => ({ region: n.region, text: n.text }))
         : undefined;
 
-      return {
+      const result: MetadataResult = {
         title,
         platformKey:
           getPlatformKeyFromSSSystemId(resolvedSystemId) ||
@@ -899,11 +973,70 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         regionalTitles,
         facts: facts.length > 0 ? facts : undefined,
       };
+
+      if (gameData.id) {
+        await persistScreenScraperGameIdForBarcode(
+          barcode,
+          gameData.id,
+          resolvedSystemId,
+          result.imageUrl,
+        );
+      }
+
+      return result;
     } catch (err) {
       console.error(
         `[ScreenScraper] Unexpected error for "${name || barcode}": ${err}`,
       );
       return null;
+    }
+  }
+
+  return async function fetchFromScreenScraper(
+    name: string,
+    barcode?: string | null,
+    platform?: string | null,
+    options?: { isBackground?: boolean },
+  ): Promise<MetadataResult | null> {
+    const lookupKey = buildScreenScraperLookupKey(name, barcode, platform);
+
+    const persisted = await getPersistedScreenScraperLookup(lookupKey);
+    if (persisted) {
+      console.info(`[ScreenScraper] Lookup cache hit for "${name || barcode}"`);
+      return persisted;
+    }
+
+    if (isScreenScraperQuotaBlocked()) {
+      const stale = await getPersistedScreenScraperLookup(lookupKey, {
+        allowStale: true,
+      });
+      if (stale) {
+        console.warn(
+          `[ScreenScraper] Quota cooldown — serving stale lookup for "${name || barcode}"`,
+        );
+        return stale;
+      }
+    }
+
+    const inFlight = getScreenScraperInFlightLookup(lookupKey);
+    if (inFlight) return inFlight;
+
+    const promise = resolveScreenScraperMetadata(
+      name,
+      barcode,
+      platform,
+      options,
+    );
+    setScreenScraperInFlightLookup(lookupKey, promise);
+
+    try {
+      const result = await promise;
+      if (result) {
+        cacheScreenScraperLookup(lookupKey, result);
+      }
+      return result;
+    } finally {
+      clearScreenScraperInFlightLookup(lookupKey);
     }
   };
 }

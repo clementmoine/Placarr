@@ -41,6 +41,7 @@ export async function POST(
       true,
       item.shelf.name,
       true,
+      true, // isBackground
     );
 
     const refreshedItem = await prisma.item.findUnique({

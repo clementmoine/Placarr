@@ -1,6 +1,7 @@
 type PriceCacheRecord = {
   priceUsed?: number | null;
   priceUsedCIB?: number | null;
+  priceNew?: number | null;
   provider?: string | null;
   priceLastUpdated?: Date | string | null;
 };
@@ -83,6 +84,19 @@ export function isPriceCacheFresh(
   if (!cacheRecord.priceLastUpdated) return false;
   const ageInMs = now - new Date(cacheRecord.priceLastUpdated).getTime();
   return ageInMs < getPriceCacheLifetimeMs(shelfType, cacheRecord);
+}
+
+/**
+ * Whether cached prices are old enough to warrant a background refresh. Used
+ * for stale-while-revalidate: the caller may still serve the cached value
+ * immediately, but the refresh cadence stays aligned with the cache quality.
+ */
+export function shouldRefreshPriceCache(
+  shelfType: string,
+  cacheRecord: PriceCacheRecord,
+  now = Date.now(),
+) {
+  return !isPriceCacheFresh(shelfType, cacheRecord, now);
 }
 
 export function finalizeGamePriceProviders(providers: string[]) {

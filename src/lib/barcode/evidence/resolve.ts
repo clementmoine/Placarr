@@ -265,9 +265,7 @@ function scoreEvidenceCluster(
   );
   const trustedRetailerProviders = Array.from(
     new Set(
-      evidence
-        .filter((e) => e.isTrustedRetailer)
-        .map((e) => e.providerName),
+      evidence.filter((e) => e.isTrustedRetailer).map((e) => e.providerName),
     ),
   );
   const canonicalCount = evidence.filter((e) => e.isCanonical).length;
@@ -413,9 +411,9 @@ export function resolveEvidenceToMatches(
     if (index === 0) return true;
     const isRelatedToTop = areLikelySameProduct(top.name, match.name);
     const isStrongAmbiguity =
-      isRelatedToTop &&
-      match.confidence >= 0.72 &&
-      match.evidence.canonicalCount > 0 ||
+      (isRelatedToTop &&
+        match.confidence >= 0.72 &&
+        match.evidence.canonicalCount > 0) ||
       match.evidence.trustedRetailerCount > 0;
     const isCloseToTop =
       top.confidence < 0.82 && top.confidence - match.confidence <= 0.18;

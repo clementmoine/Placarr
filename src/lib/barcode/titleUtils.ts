@@ -524,10 +524,7 @@ export function cleanTitleForDisplay(
     cleaned = stripAccessorySegments(cleaned);
     cleaned = stripListingMetadataSegments(cleaned);
     cleaned = cleaned
-      .replace(
-        /^(?:jeu\s+d['']?\s*)?escape\s+game\s*[-–—:|]?\s*/i,
-        "",
-      )
+      .replace(/^(?:jeu\s+d['']?\s*)?escape\s+game\s*[-–—:|]?\s*/i, "")
       .replace(/^d['']?escape\s+game\s*[-–—:|]?\s*/i, "")
       .replace(/^jeu\s+d['']?enqu[eê]te\s*[-–—:|]?\s*/i, "")
       .replace(/^asmodee\s+(?=unlock!?)/i, "")

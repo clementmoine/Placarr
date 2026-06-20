@@ -8,6 +8,7 @@ export type MetadataAdapterContext = {
   includePcSources?: boolean;
   imdbId?: string | null;
   fallbackNames?: string[];
+  isBackground?: boolean;
 };
 
 export interface MetadataProviderAdapter {
@@ -39,6 +40,7 @@ export type BarcodeLookupDeps = {
   fetchFromChasseAuxLivres: (
     barcode: string,
     category: string,
+    opts?: { withPrices?: boolean },
   ) => Promise<unknown>;
   fetchFromScanDex: (barcode: string) => Promise<unknown>;
   fetchFromAchatMoinsCher: (barcode: string) => Promise<unknown>;

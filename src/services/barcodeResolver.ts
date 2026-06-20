@@ -10,14 +10,18 @@ import {
   type ResolvedMatch,
 } from "@/lib/barcode/evidence";
 import { runBarcodeLookups } from "@/lib/barcode/lookups";
+import type { BarcodeLookupPayload } from "@/lib/barcode/lookupPayload";
 import { compileAllBarcodeTypeResults } from "@/lib/barcode/sourceAssembly";
 import {
   BARCODE_CACHE_VERSION,
   versionProvider,
 } from "@/lib/barcode/titleUtils";
 import { detectPlatformKey } from "@/lib/barcode/query";
+import { isPriceCacheFresh } from "@/lib/priceCachePolicy";
 import { createBarcodeLookupDeps } from "@/services/providerBarcodeDeps";
 import { createBarcodeLookupTaskBuilders } from "@/services/providerBarcode";
+import { persistBarcodePrices } from "@/services/priceResolver";
+import type { PriceOfferInput } from "@/services/evidence";
 import type { BarcodeCache } from "@prisma/client";
 
 export {
@@ -48,7 +52,95 @@ export type BarcodeResolveResult = {
   platformKey?: string | null;
   refreshed?: boolean;
   staleCache?: boolean;
+  priceNew?: number | null;
+  priceUsed?: number | null;
+  priceUsedCIB?: number | null;
 };
+
+/**
+ * Collect price offers captured *for free* during identification — i.e. from
+ * provider calls the lookup already made. Only sources that resolve to a single
+ * product are taken here, so the captured price is never confidently wrong:
+ *  - PriceCharting (games): loose/CIB/new parsed from the same detail page.
+ *  - LeDenicheur (all types): best-match new price from the same BFF call.
+ *  - Philibert (board games): new price from the same product page.
+ *  - AchatMoinsCher (all types): barcode resolves to one product page → new+used.
+ *  - ChasseAuxLivres (all types): only when it resolved a single product.
+ * PicClick is left to the background refresh: it returns a list of marketplace
+ * listings, so its price needs matching/aggregation to avoid being wrong.
+ */
+function collectScanPriceOffers(
+  payload: BarcodeLookupPayload,
+  shelfType: string,
+): PriceOfferInput[] {
+  const offers: PriceOfferInput[] = [];
+  const push = (
+    source: string,
+    condition: string,
+    priceCents: number | null | undefined,
+    rawValue: unknown,
+  ) => {
+    if (typeof priceCents === "number" && priceCents > 0) {
+      offers.push({ source, condition, priceCents, rawValue });
+    }
+  };
+
+  if (shelfType === "games" && payload.pc?.prices) {
+    push(
+      "PriceCharting",
+      "loose",
+      payload.pc.prices.priceUsed,
+      payload.pc.prices,
+    );
+    push(
+      "PriceCharting",
+      "cib",
+      payload.pc.prices.priceUsedCIB,
+      payload.pc.prices,
+    );
+    push("PriceCharting", "new", payload.pc.prices.priceNew, payload.pc.prices);
+  }
+  if (payload.leDenicheur?.priceNew) {
+    push(
+      "LeDenicheur",
+      "new",
+      payload.leDenicheur.priceNew,
+      payload.leDenicheur,
+    );
+  }
+  if (payload.philibert?.priceCents) {
+    push("Philibert", "new", payload.philibert.priceCents, payload.philibert);
+  }
+  // AchatMoinsCher resolves a barcode to a single product page (new + used).
+  const amcPriced = payload.amc.find(
+    (entry) => entry.priceNew != null || entry.priceUsed != null,
+  );
+  if (amcPriced) {
+    push("AchatMoinsCher", "new", amcPriced.priceNew, amcPriced);
+    push("AchatMoinsCher", "used", amcPriced.priceUsed, amcPriced);
+  }
+  // ChasseAuxLivres attaches prices only when it resolved a single product.
+  const calLists = [
+    payload.calFr,
+    payload.calDvd,
+    payload.calMusic,
+    payload.calToys,
+    payload.calJeuxVideo,
+    payload.calGeneric,
+  ];
+  for (const list of calLists) {
+    const priced = list.find(
+      (entry) => entry.priceNew != null || entry.priceUsed != null,
+    );
+    if (priced) {
+      push("ChasseAuxLivres", "new", priced.priceNew, priced);
+      push("ChasseAuxLivres", "used", priced.priceUsed, priced);
+      break;
+    }
+  }
+
+  return offers;
+}
 
 async function cacheBarcodeResult(
   cleanedBarcode: string,
@@ -145,7 +237,7 @@ function selectBarcodeTypeResult(
   }
 
   let selectedType = best[0];
-  let selectedResult = best[1];
+  const selectedResult = best[1];
 
   if (
     !type &&
@@ -214,10 +306,60 @@ export async function resolveBarcode(
       selectedType,
     );
 
+    // Surface prices captured for free during identification (one call per
+    // provider) so the scan shows a value and the item price route reads the
+    // cache instead of re-querying the provider.
+    let capturedPrices: {
+      priceNew: number | null;
+      priceUsed: number | null;
+      priceUsedCIB: number | null;
+    } | null = null;
+
+    const cachedShelfTypeMatches =
+      !cachedResult?.shelfType || cachedResult.shelfType === selectedType;
+    const cachedHasPrices =
+      cachedResult != null &&
+      cachedShelfTypeMatches &&
+      (cachedResult.priceNew != null ||
+        cachedResult.priceUsed != null ||
+        cachedResult.priceUsedCIB != null);
+    const cachedPricesAreFresh =
+      cachedResult != null &&
+      cachedHasPrices &&
+      isPriceCacheFresh(selectedType, cachedResult);
+
+    const scanOffers = collectScanPriceOffers(payload, selectedType);
+
+    if (scanOffers.length > 0 && !cachedPricesAreFresh) {
+      // Merge captured prices into the cache (never clobbers other providers'
+      // offers — see mergePriceOffers).
+      try {
+        const persisted = await persistBarcodePrices({
+          cleanedBarcode,
+          shelfType: selectedType,
+          priceOffers: scanOffers,
+        });
+        capturedPrices = {
+          priceNew: persisted.priceNew,
+          priceUsed: persisted.priceUsed,
+          priceUsedCIB: persisted.priceUsedCIB,
+        };
+      } catch (error) {
+        console.error("[Barcode] Failed to persist captured prices:", error);
+      }
+    } else if (cachedHasPrices) {
+      capturedPrices = {
+        priceNew: cachedResult.priceNew,
+        priceUsed: cachedResult.priceUsed,
+        priceUsedCIB: cachedResult.priceUsedCIB,
+      };
+    }
+
     return {
       ...selectedResult,
       ...cleaned,
       shelfType: selectedType,
+      ...(capturedPrices ?? {}),
     };
   }
 

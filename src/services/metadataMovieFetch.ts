@@ -2,6 +2,7 @@ import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
 } from "@/lib/localePreference";
+import { orderFallbackNamesForLocale } from "@/lib/metadataTitleMatching";
 import {
   dedupeFacts,
   dedupeFieldEvidence,
@@ -18,17 +19,14 @@ function buildOmdbFallbackNames(
   name: string,
   tmdb: MetadataResult | null | undefined,
 ) {
-  return Array.from(
-    new Set(
-      [
-        tmdb?.title,
-        ...(tmdb?.aliases || []),
-        ...(tmdb?.regionalTitles?.map((entry) => entry.text) || []),
-        name,
-      ]
-        .filter((value): value is string => Boolean(value?.trim()))
-        .map((value) => value.trim()),
-    ),
+  return orderFallbackNamesForLocale(
+    name,
+    [
+      ...(tmdb?.regionalTitles?.map((entry) => entry.text) || []),
+      tmdb?.title,
+      ...(tmdb?.aliases || []),
+      name,
+    ].filter((value): value is string => Boolean(value?.trim())),
   );
 }
 

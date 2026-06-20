@@ -58,9 +58,7 @@ function matchesProviderLabel(
   const config = evidenceByLabel.get(label);
   if (!config || !predicate(config)) return false;
   const normalized = providerName.toLowerCase();
-  return (
-    providerName === label || normalized.includes(label.toLowerCase())
-  );
+  return providerName === label || normalized.includes(label.toLowerCase());
 }
 
 export function getCanonicalProviderLabels(): string[] {

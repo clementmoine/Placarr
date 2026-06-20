@@ -42,17 +42,26 @@ function configureIGDBEnv() {
   process.env.IGDB_CLIENT_SECRET = "client-secret";
 }
 
+function setting(key: string, value: string) {
+  return {
+    key,
+    value,
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  };
+}
+
 function mockCachedToken() {
-  mockedSetting.findUnique.mockImplementation(async (args) => {
+  mockedSetting.findUnique.mockImplementation((async (args: any) => {
     const key = args.where.key;
     if (key === "igdb_access_token") {
-      return { key, value: "stale-token" };
+      return setting(key, "stale-token");
     }
     if (key === "igdb_token_expiry") {
-      return { key, value: String(Date.now() + 3_600_000) };
+      return setting(key, String(Date.now() + 3_600_000));
     }
     return null;
-  });
+  }) as any);
 }
 
 function unauthorizedError() {
@@ -86,7 +95,7 @@ describe("fetchFromIGDB — token refresh", () => {
     vi.clearAllMocks();
     configureIGDBEnv();
     mockCachedToken();
-    mockedSetting.upsert.mockResolvedValue({ key: "key", value: "value" });
+    mockedSetting.upsert.mockResolvedValue(setting("key", "value"));
     mockedSetting.deleteMany.mockResolvedValue({ count: 2 });
   });
 

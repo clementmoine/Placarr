@@ -98,14 +98,37 @@ describe("createBarcodeLookupTaskBuilders", () => {
     builders.boardgames({ barcode: "345" });
     builders.generic({ barcode: "567" });
 
+    // The scan-time lookup also captures prices in the same pass.
+    const withPrices = { withPrices: true };
     expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
       "123",
       "jeuxvideo",
+      withPrices,
     );
-    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("456", "fr");
-    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("789", "music");
-    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("234", "dvd");
-    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("345", "toys");
-    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith("567", "");
+    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
+      "456",
+      "fr",
+      withPrices,
+    );
+    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
+      "789",
+      "music",
+      withPrices,
+    );
+    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
+      "234",
+      "dvd",
+      withPrices,
+    );
+    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
+      "345",
+      "toys",
+      withPrices,
+    );
+    expect(deps.fetchFromChasseAuxLivres).toHaveBeenCalledWith(
+      "567",
+      "",
+      withPrices,
+    );
   });
 });

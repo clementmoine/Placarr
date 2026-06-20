@@ -617,7 +617,8 @@ function consolidateAgeRatingFacts(facts: DetailFact[]): DetailFact[] {
   const ageFacts = facts.filter((fact) => fact.kind === "age-rating");
   if (ageFacts.length <= 1) {
     return facts.filter(
-      (fact) => fact.kind !== "age-rating" || parseAgeRatingYears(fact) !== null,
+      (fact) =>
+        fact.kind !== "age-rating" || parseAgeRatingYears(fact) !== null,
     );
   }
 
@@ -972,8 +973,7 @@ export default function ItemDetailsPage() {
     shelf && previousShelfItem ? itemPath(shelf, previousShelfItem) : null;
   const nextItemHref =
     shelf && nextShelfItem ? itemPath(shelf, nextShelfItem) : null;
-  const isDetailOverlayOpen =
-    modalVisible || Boolean(zoomImageUrl);
+  const isDetailOverlayOpen = modalVisible || Boolean(zoomImageUrl);
 
   const navigateToSibling = useCallback(
     (href?: string | null) => {
@@ -1075,33 +1075,40 @@ export default function ItemDetailsPage() {
 
   const { mutate: refreshMetadata, isPending: isRefreshingMetadata } =
     useMutation({
-    mutationFn: () =>
-      refreshItemMetadata(itemId, shelfId, item?.metadata?.title || item?.name),
-    onSuccess: (response) => {
-      const actualShelfId = item?.shelfId;
+      mutationFn: () =>
+        refreshItemMetadata(
+          itemId,
+          shelfId,
+          item?.metadata?.title || item?.name,
+        ),
+      onSuccess: (response) => {
+        const actualShelfId = item?.shelfId;
 
-      if (response.item) {
-        void syncItemQueries(queryClient, response.item, [
+        if (response.item) {
+          void syncItemQueries(queryClient, response.item, [
+            shelfId,
+            actualShelfId,
+          ]);
+          return;
+        }
+
+        if (response.metadata) {
+          patchCachedItem(queryClient, {
+            id: itemId,
+            shelfId: actualShelfId || shelfId,
+            metadata: response.metadata,
+          });
+        }
+
+        void invalidateItemQueries(queryClient, itemId, [
           shelfId,
           actualShelfId,
         ]);
-        return;
-      }
-
-      if (response.metadata) {
-        patchCachedItem(queryClient, {
-          id: itemId,
-          shelfId: actualShelfId || shelfId,
-          metadata: response.metadata,
-        });
-      }
-
-      void invalidateItemQueries(queryClient, itemId, [shelfId, actualShelfId]);
-    },
-    onError: (error) => {
-      console.warn("[Metadata] Refresh failed:", error);
-    },
-  });
+      },
+      onError: (error) => {
+        console.warn("[Metadata] Refresh failed:", error);
+      },
+    });
 
   const handleRefreshMetadata = useCallback(() => {
     refreshMetadata(undefined, {

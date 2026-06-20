@@ -24,6 +24,9 @@ export type PlatformSignal = {
 
 export type NamedListing = {
   name: string;
+  /** New/used price (cents) when the source resolved to a single product (e.g. ChasseAuxLivres). */
+  priceNew?: number;
+  priceUsed?: number;
 };
 
 export type GameLookupInputs = {

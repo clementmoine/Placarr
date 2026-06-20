@@ -8,6 +8,8 @@ export type BarcodeMetadataHit = {
   aliases?: string[];
   platformKey?: string | null;
   regionalTitles?: Array<{ region?: string; text: string }>;
+  /** New-price (cents) captured in the same lookup, when the source is a retailer (e.g. Philibert). */
+  priceCents?: number | null;
 };
 
 export type ScanDexLookup = {

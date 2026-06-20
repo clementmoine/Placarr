@@ -468,7 +468,9 @@ export async function storeMetadata(
   const imageMetricsByUrl = new Map<string, AttachmentImageMetrics | null>();
   await Promise.all(
     localizedAttachments
-      .filter((attachment) => shouldReadImageMetricsForAttachment(attachment.type))
+      .filter((attachment) =>
+        shouldReadImageMetricsForAttachment(attachment.type),
+      )
       .map(async (attachment) => {
         imageMetricsByUrl.set(
           attachment.url,

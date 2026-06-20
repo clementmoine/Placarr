@@ -24,7 +24,9 @@ describe("fetchFromAllMovieSources", () => {
     tmdbResolve.mockResolvedValue({
       title: "Pocahontas",
       externalIds: { imdb: "tt0114148" },
-      facts: [{ kind: "rating", label: "TMDB", value: "6,9/10", source: "tmdb" }],
+      facts: [
+        { kind: "rating", label: "TMDB", value: "6,9/10", source: "tmdb" },
+      ],
     });
     omdbResolve.mockResolvedValue({
       title: "Pocahontas",
@@ -58,9 +60,9 @@ describe("fetchFromAllMovieSources", () => {
         ]),
       }),
     );
-    expect(res?.facts?.filter((fact) => fact.kind === "rating").length).toBeGreaterThanOrEqual(
-      3,
-    );
+    expect(
+      res?.facts?.filter((fact) => fact.kind === "rating").length,
+    ).toBeGreaterThanOrEqual(3);
   });
 
   it("fusionne TMDB et OMDb avec fieldEvidence", async () => {

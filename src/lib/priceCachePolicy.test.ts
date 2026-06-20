@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getPriceCacheLifetimeMs,
   isPriceCacheFresh,
+  shouldRefreshPriceCache,
   shouldReturnCachedPrices,
 } from "./priceCachePolicy";
 
@@ -60,13 +61,44 @@ describe("shouldReturnCachedPrices", () => {
     expect(
       shouldReturnCachedPrices(
         "games",
-        { priceNew: 5230, priceUsed: 697, priceUsedCIB: 946, provider: "PriceCharting+LeDenicheur" },
+        {
+          priceNew: 5230,
+          priceUsed: 697,
+          priceUsedCIB: 946,
+          provider: "PriceCharting+LeDenicheur",
+        },
         [
           { source: "PriceCharting", condition: "loose", priceCents: 697 },
           { source: "LeDenicheur", condition: "new", priceCents: 3596 },
         ],
       ),
     ).toBe(true);
+  });
+});
+
+describe("shouldRefreshPriceCache", () => {
+  it("refreshes incomplete game caches after the short freshness window", () => {
+    const now = Date.parse("2026-06-19T15:00:00.000Z");
+    const cacheRecord = {
+      priceNew: 3596,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceLastUpdated: "2026-06-19T14:54:00.000Z",
+    };
+
+    expect(shouldRefreshPriceCache("games", cacheRecord, now)).toBe(true);
+  });
+
+  it("does not refresh complete game caches before 24 hours", () => {
+    const now = Date.parse("2026-06-19T15:00:00.000Z");
+    const cacheRecord = {
+      priceNew: 5230,
+      priceUsed: 697,
+      priceUsedCIB: 946,
+      priceLastUpdated: "2026-06-18T16:00:00.000Z",
+    };
+
+    expect(shouldRefreshPriceCache("games", cacheRecord, now)).toBe(false);
   });
 });
 
@@ -82,13 +114,9 @@ describe("isPriceCacheFresh", () => {
 
     expect(getPriceCacheLifetimeMs("games", cacheRecord)).toBe(5 * 60 * 1000);
     expect(isPriceCacheFresh("games", cacheRecord, now)).toBe(true);
-    expect(
-      isPriceCacheFresh(
-        "games",
-        cacheRecord,
-        now + 6 * 60 * 1000,
-      ),
-    ).toBe(false);
+    expect(isPriceCacheFresh("games", cacheRecord, now + 6 * 60 * 1000)).toBe(
+      false,
+    );
   });
 
   it("keeps complete game caches fresh for 24 hours", () => {

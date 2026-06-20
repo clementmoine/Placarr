@@ -219,6 +219,7 @@ const dashboardUrls: Record<string, string> = {
   TMDB: "https://www.themoviedb.org/settings/api",
   RAWG: "https://rawg.io/apikeys",
   ScreenScraper: "https://www.screenscraper.fr/",
+  TheGamesDB: "https://api.thegamesdb.net/key.php",
   IGDB: "https://dev.twitch.tv/console/apps",
 };
 
@@ -231,6 +232,7 @@ const providerWebsiteUrls: Record<string, string> = {
   howlongtobeat: "https://howlongtobeat.com/",
   pricecharting: "https://www.pricecharting.com/",
   coverproject: "https://www.thecoverproject.net/",
+  launchbox: "https://gamesdb.launchbox-app.com/",
   musicbrainz: "https://musicbrainz.org/",
   discogs: "https://www.discogs.com/",
   deezer: "https://www.deezer.com/",
@@ -245,6 +247,7 @@ const providerWebsiteUrls: Record<string, string> = {
   freakxy: "https://www.freakxy.fr/",
   picclick: "https://picclick.fr/",
   scandex: "https://scandex.app/",
+  thegamesdb: "https://thegamesdb.net/",
 };
 
 const providerTypesOrder: ProviderType[] = [

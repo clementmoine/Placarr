@@ -11,9 +11,12 @@ export async function fetchMetadataByType(
   type: string,
   barcode?: string | null,
   platform?: string | null,
+  options?: { isBackground?: boolean },
 ): Promise<MetadataResult | null> {
   if (type === "games") {
-    return fetchFromAllGameSources(name, barcode, platform);
+    return options
+      ? fetchFromAllGameSources(name, barcode, platform, options)
+      : fetchFromAllGameSources(name, barcode, platform);
   }
   if (type === "movies") {
     return fetchFromAllMovieSources(name, barcode, platform);

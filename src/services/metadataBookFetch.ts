@@ -12,6 +12,7 @@ import {
   preferRequestedDisplayTitle,
 } from "@/services/metadataMerge";
 import { orderedProviderIdsForType } from "@/services/metadataProviderSelection";
+import { resolveMetadataProvidersInOrder } from "@/lib/metadataProviderQueue";
 import { metadataProviderResolverMap } from "@/services/metadataResolvers";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -26,20 +27,11 @@ export async function fetchFromAllBookSources(
     bookProviderOrder,
   );
 
-  const settled = await Promise.allSettled(
-    selectedProviderIds.map(async (providerId) => ({
-      providerId,
-      value: await metadataProviderResolverMap
-        .get(providerId)
-        ?.resolve({ name, barcode, platform }),
-    })),
+  const byProvider = await resolveMetadataProvidersInOrder(
+    selectedProviderIds,
+    { name, barcode, platform },
+    metadataProviderResolverMap,
   );
-
-  const byProvider = new Map<string, MetadataResult | null>();
-  for (const item of settled) {
-    if (item.status !== "fulfilled") continue;
-    byProvider.set(item.value.providerId, item.value.value || null);
-  }
 
   const openlibrary = byProvider.get("openlibrary") || null;
   const googlebooks = byProvider.get("googlebooks") || null;

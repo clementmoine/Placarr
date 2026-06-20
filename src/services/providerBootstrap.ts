@@ -1,3 +1,4 @@
+import { wrapMetadataProviderAdapter } from "@/lib/metadataProviderQueue";
 import { PROVIDER_MODULES } from "@/services/providerRegistry";
 
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -64,7 +65,10 @@ export function buildMetadataAdapterMap(
   deps: MetadataAdapterDeps,
 ): Map<string, MetadataProviderAdapter> {
   return new Map(
-    createMetadataAdapters(deps).map((adapter) => [adapter.id, adapter]),
+    createMetadataAdapters(deps).map((adapter) => [
+      adapter.id,
+      wrapMetadataProviderAdapter(adapter),
+    ]),
   );
 }
 

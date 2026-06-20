@@ -124,7 +124,10 @@ export async function fetchPricesFromSmartoys(
     // The unknown-id redirect can land on an unrelated product — only trust a
     // page whose canonical URL carries our barcode.
     const urlBarcode = finalUrl.match(/-p-(\d+)\.html/i)?.[1];
-    if (!urlBarcode || normalizeBarcode(urlBarcode) !== normalizeBarcode(cleaned)) {
+    if (
+      !urlBarcode ||
+      normalizeBarcode(urlBarcode) !== normalizeBarcode(cleaned)
+    ) {
       console.info(`[Smartoys] No product for barcode ${cleaned}`);
       return null;
     }

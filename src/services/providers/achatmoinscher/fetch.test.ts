@@ -44,16 +44,20 @@ beforeEach(() => {
 });
 
 describe("fetchFromAchatMoinsCher", () => {
-  it("parse le titre, la plateforme et la jaquette depuis la page produit", async () => {
+  it("parse le titre, la plateforme, la jaquette et les prix depuis la page produit", async () => {
     mockedPost.mockResolvedValue({ data: "12345" } as never);
     mockedGet.mockResolvedValue({ data: PRODUCT_HTML } as never);
     mockedHead.mockResolvedValue({ status: 200 } as never);
 
+    // A single barcode resolves to one product page, so the identify call also
+    // captures its prices (new + used) — no extra request.
     const products = await fetchFromAchatMoinsCher("5021290082728");
     expect(products).toEqual([
       {
         name: "Wheelman (PlayStation 3)",
         coverUrl: "https://cdn.example.com/photoProd/zoom/wheelman.jpg",
+        priceNew: 3999,
+        priceUsed: 1999,
       },
     ]);
   });

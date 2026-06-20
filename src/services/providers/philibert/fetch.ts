@@ -495,6 +495,8 @@ export async function fetchPhilibertProduct(
 export type BarcodeProductHit = {
   title: string;
   imageUrl?: string | null;
+  /** New price (cents) read from the same product page as the identification. */
+  priceCents?: number | null;
 };
 
 export async function fetchPhilibertBarcodeProduct(
@@ -519,6 +521,7 @@ export async function fetchPhilibertBarcodeProduct(
     return {
       title,
       imageUrl: product.imageUrl || null,
+      priceCents: product.priceCents ?? null,
     };
   } catch (error) {
     console.error("[Philibert] Barcode lookup failed:", error);

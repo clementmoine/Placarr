@@ -149,15 +149,16 @@ describe("buildScreenScraperSearchQueries", () => {
 
   it("adds hyphen/colon variants for Club Football team editions", () => {
     const cleanSearchQuery = (value: string) =>
-      value.replace(/\bde\b/gi, " ").replace(/\s+/g, " ").trim();
+      value
+        .replace(/\bde\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     const queries = buildScreenScraperSearchQueries(
       "Club Football 2005 Olympique de Marseille",
       cleanSearchQuery,
     );
 
-    expect(queries).toContain(
-      "Club Football 2005 - Olympique Marseille",
-    );
+    expect(queries).toContain("Club Football 2005 - Olympique Marseille");
   });
 
   it("prioritizes the original title before stripped variants", () => {

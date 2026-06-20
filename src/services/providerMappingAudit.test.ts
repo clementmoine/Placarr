@@ -47,6 +47,7 @@ describe("provider mapping probes", () => {
         "chasseauxlivres",
         "coverproject",
         "freakxy",
+        "launchbox",
         "ledenicheur",
         "lepassetemps",
         "ludifolie",
@@ -55,6 +56,7 @@ describe("provider mapping probes", () => {
         "picclick",
         "pricecharting",
         "scandex",
+        "thegamesdb",
         "wikidata",
       ].sort(),
     );

@@ -206,22 +206,17 @@ describe("createBGGResolver", () => {
     expect(
       res?.facts?.some((f) => f.kind === "age-rating" && f.value === "10+"),
     ).toBe(true);
-    const ratingFacts =
-      res?.facts?.filter((f) => f.kind === "rating") || [];
+    const ratingFacts = res?.facts?.filter((f) => f.kind === "rating") || [];
     expect(ratingFacts).toHaveLength(1);
     expect(ratingFacts[0]).toMatchObject({
       label: "BoardGameGeek",
       value: "7.4 (1 000 votes)",
     });
     expect(
-      res?.facts?.some(
-        (f) => f.kind === "popularity" && f.value === "#342",
-      ),
+      res?.facts?.some((f) => f.kind === "popularity" && f.value === "#342"),
     ).toBe(true);
     expect(
-      res?.facts?.some(
-        (f) => f.kind === "complexity" && f.value === "2,3 / 5",
-      ),
+      res?.facts?.some((f) => f.kind === "complexity" && f.value === "2,3 / 5"),
     ).toBe(true);
     expect(
       res?.facts?.some(

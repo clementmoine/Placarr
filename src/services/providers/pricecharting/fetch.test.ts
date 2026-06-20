@@ -88,9 +88,11 @@ describe("parsePriceChartingDetailHtml", () => {
 });
 
 describe("fetchMetadataFromPriceCharting", () => {
-  it("parse titre, plateforme, jaquette et classification depuis une fiche directe", async () => {
+  it("parse titre, plateforme, jaquette, classification et prix depuis une fiche directe", async () => {
     mockedGet.mockResolvedValue(detailResponse());
 
+    // La même requête HTML sert à l'identification et aux prix : un seul appel
+    // provider doit ramener les deux.
     await expect(
       fetchMetadataFromPriceCharting("0045496365226"),
     ).resolves.toEqual({
@@ -99,6 +101,11 @@ describe("fetchMetadataFromPriceCharting", () => {
       coverUrl: "https://example.com/monkey.jpg",
       ageRating: "PEGI 3",
       barcode: "0045496365226",
+      prices: {
+        priceUsed: 1250,
+        priceUsedCIB: 1800,
+        priceNew: 2499,
+      },
     });
   });
 

@@ -144,6 +144,9 @@ export async function buildCachedBarcodePayload(
     matches: cleanMatches,
     shelfType: cachedResult.shelfType,
     platformKey: cachedResult.platformKey || null,
+    priceNew: cachedResult.priceNew,
+    priceUsed: cachedResult.priceUsed,
+    priceUsedCIB: cachedResult.priceUsedCIB,
     staleCache: options.markStale || undefined,
   };
 }

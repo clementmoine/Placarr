@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, Type } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -14,6 +14,24 @@ import { resolveShelfId, resolveItemId } from "@/lib/resolveIds";
 import { slugify } from "@/lib/slugs";
 import { buildItemSearchConditions } from "@/lib/itemSearch";
 
+const VALID_SHELF_TYPES = new Set<string>(Object.values(Type));
+
+function parseShelfTypesParam(value: string | null): {
+  values?: Type[];
+  invalid?: string[];
+} {
+  if (!value) return {};
+
+  const requested = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const invalid = requested.filter((item) => !VALID_SHELF_TYPES.has(item));
+  if (invalid.length > 0) return { invalid };
+
+  return { values: requested as Type[] };
+}
+
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
@@ -23,16 +41,26 @@ export async function GET(req: NextRequest) {
   const id = searchParams.get("id");
   const q = searchParams.get("q");
   const shelfId = searchParams.get("shelfId");
-  const excludeShelfTypes = searchParams
-    .get("excludeShelfTypes")
-    ?.split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  const includeShelfTypes = searchParams
-    .get("shelfTypes")
-    ?.split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const parsedExcludeShelfTypes = parseShelfTypesParam(
+    searchParams.get("excludeShelfTypes"),
+  );
+  const parsedIncludeShelfTypes = parseShelfTypesParam(
+    searchParams.get("shelfTypes"),
+  );
+  if (parsedExcludeShelfTypes.invalid || parsedIncludeShelfTypes.invalid) {
+    return NextResponse.json(
+      {
+        error: "Invalid shelf type",
+        invalidShelfTypes: [
+          ...(parsedExcludeShelfTypes.invalid || []),
+          ...(parsedIncludeShelfTypes.invalid || []),
+        ],
+      },
+      { status: 400 },
+    );
+  }
+  const excludeShelfTypes = parsedExcludeShelfTypes.values;
+  const includeShelfTypes = parsedIncludeShelfTypes.values;
   const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
 
   if (id) {

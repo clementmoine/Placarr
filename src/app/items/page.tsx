@@ -21,12 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { cn } from "@/lib/utils";
 import { getItems } from "@/lib/api/items";

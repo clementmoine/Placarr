@@ -53,6 +53,7 @@ export type { BGGChild, BGGResponse } from "@/services/providers/bgg";
  * provider timeouts are retried. Explicit user-triggered refreshes bypass it.
  */
 const METADATA_CACHE_TTL_MS = 5 * 60 * 1000;
+const METADATA_GAME_CACHE_TTL_MS = 30 * 60 * 1000;
 const METADATA_CACHE_MAX_ENTRIES = 256;
 const metadataCache = new Map<
   string,
@@ -75,7 +76,7 @@ export async function getMetadata(
   type: string,
   barcode?: string | null,
   platform?: string | null,
-  options: { bypassCache?: boolean } = {},
+  options: { bypassCache?: boolean; isBackground?: boolean } = {},
 ): Promise<MetadataResult | null> {
   const key = metadataCacheKey(name, type, barcode, platform);
   const now = Date.now();
@@ -89,14 +90,19 @@ export async function getMetadata(
 
   const promise = (async () => {
     try {
-      return await fetchMetadataByType(name, type, barcode, platform);
+      return await fetchMetadataByType(name, type, barcode, platform, options);
     } catch (err) {
       console.error("Failed to fetch metadata:", err);
       return null;
     }
   })();
 
-  metadataCache.set(key, { expires: now + METADATA_CACHE_TTL_MS, promise });
+  metadataCache.set(key, {
+    expires:
+      now +
+      (type === "games" ? METADATA_GAME_CACHE_TTL_MS : METADATA_CACHE_TTL_MS),
+    promise,
+  });
   if (metadataCache.size > METADATA_CACHE_MAX_ENTRIES) {
     const oldestKey = metadataCache.keys().next().value;
     if (oldestKey !== undefined) metadataCache.delete(oldestKey);
@@ -123,6 +129,7 @@ export async function fetchAndStoreMetadata(
   // they always re-query providers. Enrichment on create leaves it false to
   // reuse the lookup the scan preview just performed.
   bypassMetadataCache = false,
+  isBackground = false,
 ): Promise<MetadataResult | null> {
   // Check if we should use cached metadata
   if (!forceRefresh) {
@@ -142,6 +149,7 @@ export async function fetchAndStoreMetadata(
   // Fetch new metadata using the name for lookup only
   const metadata = await getMetadata(name, type, barcode, platform, {
     bypassCache: bypassMetadataCache,
+    isBackground,
   });
   if (!metadata) return null;
 

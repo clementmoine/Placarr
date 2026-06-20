@@ -7,7 +7,16 @@ import {
   preferRequestedDisplayTitle,
 } from "@/services/metadataMerge";
 import { orderedProviderIdsForType } from "@/services/metadataProviderSelection";
-import { metadataProviderResolverMap } from "@/services/metadataResolvers";
+import {
+  resolveMetadataProvidersInOrder,
+  runQueuedMetadataProviderCall,
+} from "@/lib/metadataProviderQueue";
+import {
+  fetchFromBGG,
+  metadataProviderResolverMap,
+} from "@/services/metadataResolvers";
+import { loadBarcodeAlternateNames } from "@/lib/barcodeAlternateNames";
+import { buildGameMetadataFallbackNames } from "@/lib/metadataTitleMatching";
 import { PRESTASHOP_RETAILER_CONFIGS } from "@/services/providers/prestashop";
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -31,7 +40,9 @@ async function fetchScraperBoardGameFallback(
   const cleanedBarcode = barcode?.replace(/[^\d]/g, "") || "";
   if (!cleanedBarcode) return null;
 
-  const products = await fetchFromAchatMoinsCher(cleanedBarcode);
+  const products = await runQueuedMetadataProviderCall("achatmoinscher", () =>
+    fetchFromAchatMoinsCher(cleanedBarcode),
+  );
   const product = products[0];
   if (!product?.name) return null;
 
@@ -60,33 +71,43 @@ export async function fetchFromAllBoardGameSources(
     boardGameProviderOrder,
   );
 
-  const settled = await Promise.allSettled(
-    selectedProviderIds.map(async (providerId) => ({
-      providerId,
-      value: await metadataProviderResolverMap
-        .get(providerId)
-        ?.resolve({ name, barcode, platform }),
-    })),
+  const byProvider = await resolveMetadataProvidersInOrder(
+    selectedProviderIds,
+    { name, barcode, platform },
+    metadataProviderResolverMap,
   );
 
-  const byProvider = new Map<string, MetadataResult | null>();
-  for (const item of settled) {
-    if (item.status !== "fulfilled") continue;
-    byProvider.set(item.value.providerId, item.value.value || null);
-  }
-
-  const bgg = byProvider.get("boardgamegeek") || null;
+  let bgg = byProvider.get("boardgamegeek") || null;
   const wikidata = byProvider.get("wikidata") || null;
   const retailers = BOARD_GAME_RETAILER_IDS.flatMap((providerId) => {
     const value = byProvider.get(providerId);
     return value ? [{ providerId, value }] : [];
   });
 
+  if (!bgg) {
+    const barcodeAlternateNames = await loadBarcodeAlternateNames(barcode);
+    const fallbackNames = buildGameMetadataFallbackNames(
+      name,
+      barcodeAlternateNames,
+      [wikidata, ...retailers.map(({ value }) => value)],
+    );
+    for (const fallbackName of fallbackNames.slice(0, 6)) {
+      bgg = await runQueuedMetadataProviderCall("boardgamegeek", () =>
+        fetchFromBGG(fallbackName),
+      );
+      if (bgg) break;
+    }
+  }
+
+  const bggResolved = bgg;
+
   const hasPrimaryMetadata = Boolean(
-    bgg?.title || wikidata?.title || retailers.some(({ value }) => value.title),
+    bggResolved?.title ||
+      wikidata?.title ||
+      retailers.some(({ value }) => value.title),
   );
   const hasCover = Boolean(
-    bgg?.imageUrl ||
+    bggResolved?.imageUrl ||
       wikidata?.imageUrl ||
       retailers.some(({ value }) => value.imageUrl),
   );
@@ -96,12 +117,12 @@ export async function fetchFromAllBoardGameSources(
       ? await fetchScraperBoardGameFallback(name, barcode)
       : null;
 
-  if (!bgg && !wikidata && retailers.length === 0 && !scraper) {
+  if (!bggResolved && !wikidata && retailers.length === 0 && !scraper) {
     return null;
   }
 
   const merged = mergeBoardGameMetadata(
-    bgg,
+    bggResolved,
     wikidata,
     retailers.map(({ value }) => value),
     scraper,
@@ -109,7 +130,7 @@ export async function fetchFromAllBoardGameSources(
   const mergedWithEvidence: MetadataResult = {
     ...merged,
     fieldEvidence: dedupeFieldEvidence([
-      ...metadataFieldEvidence("BoardGameGeek", bgg),
+      ...metadataFieldEvidence("BoardGameGeek", bggResolved),
       ...metadataFieldEvidence("Wikidata", wikidata),
       ...retailers.flatMap(({ providerId, value }) =>
         metadataFieldEvidence(

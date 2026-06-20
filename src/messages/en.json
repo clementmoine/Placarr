@@ -59,7 +59,9 @@
     "addAnotherCopy": "Add Another Copy",
     "otherMatches": "Other products matching this barcode:",
     "owned": "Owned",
-    "alreadyIn": "Already in"
+    "alreadyIn": "Already in",
+    "objectType": "Type",
+    "estimatedShelf": "Estimated shelf"
   },
   "user": {
     "avatar": "User avatar",

@@ -10,7 +10,7 @@ export function isRetryableError(err: unknown): boolean {
     // Pas de réponse = problème réseau / timeout → rejouable.
     if (!err.response) return true;
     const status = err.response.status;
-    return status >= 500 && status < 600;
+    return (status >= 500 && status < 600) || status === 429 || status === 430;
   }
   // Erreurs non-HTTP (ex: parsing, réseau bas niveau) → rejouables par défaut.
   return true;

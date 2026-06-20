@@ -4,6 +4,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 export interface AchatMoinsCherProduct {
   name: string;
   coverUrl?: string | null;
+  priceNew?: number; // cents — parsed from the same product page
+  priceUsed?: number; // cents — parsed from the same product page
 }
 
 export interface AchatMoinsCherPrices {
@@ -95,7 +97,10 @@ export async function fetchFromAchatMoinsCher(
 
     const coverUrl = await extractBestCover(html, title);
 
-    return [{ name: title, coverUrl }];
+    // Prices live on the same product page we just fetched — capture them too.
+    const prices = parseAchatMoinsCherPrices(html, productId);
+
+    return [{ name: title, coverUrl, ...(prices ?? {}) }];
   } catch (error: any) {
     console.error(
       `[AchatMoinsCher] Error fetching barcode ${cleanedBarcode}:`,
@@ -232,6 +237,74 @@ async function extractBestCover(
   return null;
 }
 
+/**
+ * Parse new/used prices (cents) from an already-fetched AchatMoinsCher product
+ * page. Shared by the dedicated price fetch and the scan-time identify call so a
+ * single product page serves both.
+ */
+export function parseAchatMoinsCherPrices(
+  html: string,
+  productId: string,
+): AchatMoinsCherPrices | null {
+  const startIdx = html.indexOf('id="tabBestPrix"');
+  if (startIdx === -1) {
+    return null;
+  }
+
+  let blockHtml = html.substring(startIdx);
+  const endIdx = blockHtml.indexOf('<div class="container"');
+  if (endIdx !== -1) {
+    blockHtml = blockHtml.substring(0, endIdx);
+  }
+
+  const neufIndex = blockHtml.indexOf('id="neuf' + productId + '"');
+  const occasionIndex = blockHtml.indexOf('id="occasion' + productId + '"');
+
+  let neufHtml = "";
+  let occasionHtml = "";
+
+  if (neufIndex !== -1) {
+    neufHtml =
+      occasionIndex !== -1
+        ? blockHtml.substring(neufIndex, occasionIndex)
+        : blockHtml.substring(neufIndex);
+  }
+
+  if (occasionIndex !== -1) {
+    occasionHtml = blockHtml.substring(occasionIndex);
+  }
+
+  const priceRegex = /<p[^>]*class="prix"[^>]*>([\s\S]*?)<\/p>/gi;
+
+  const parsePricesFromBlock = (block: string) => {
+    const prices: number[] = [];
+    let match;
+    priceRegex.lastIndex = 0;
+    while ((match = priceRegex.exec(block)) !== null) {
+      const priceStr = match[1]
+        .replace(/&nbsp;/g, "")
+        .replace(/\s/g, "")
+        .replace(",", ".")
+        .replace("€", "")
+        .trim();
+      const val = parseFloat(priceStr);
+      if (!isNaN(val)) {
+        prices.push(Math.round(val * 100));
+      }
+    }
+    return prices;
+  };
+
+  const neufPrices = parsePricesFromBlock(neufHtml);
+  const occasionPrices = parsePricesFromBlock(occasionHtml);
+
+  const result: AchatMoinsCherPrices = {};
+  if (neufPrices.length > 0) result.priceNew = Math.min(...neufPrices);
+  if (occasionPrices.length > 0) result.priceUsed = Math.min(...occasionPrices);
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 export async function fetchPricesFromAchatMoinsCher(
   barcode: string,
 ): Promise<AchatMoinsCherPrices | null> {
@@ -266,66 +339,8 @@ export async function fetchPricesFromAchatMoinsCher(
       headers: HEADERS,
       timeout: 5000,
     });
-    const html = getRes.data;
 
-    const startIdx = html.indexOf('id="tabBestPrix"');
-    if (startIdx === -1) {
-      return null;
-    }
-
-    let blockHtml = html.substring(startIdx);
-    const endIdx = blockHtml.indexOf('<div class="container"');
-    if (endIdx !== -1) {
-      blockHtml = blockHtml.substring(0, endIdx);
-    }
-
-    const neufIndex = blockHtml.indexOf('id="neuf' + productId + '"');
-    const occasionIndex = blockHtml.indexOf('id="occasion' + productId + '"');
-
-    let neufHtml = "";
-    let occasionHtml = "";
-
-    if (neufIndex !== -1) {
-      neufHtml =
-        occasionIndex !== -1
-          ? blockHtml.substring(neufIndex, occasionIndex)
-          : blockHtml.substring(neufIndex);
-    }
-
-    if (occasionIndex !== -1) {
-      occasionHtml = blockHtml.substring(occasionIndex);
-    }
-
-    const priceRegex = /<p[^>]*class="prix"[^>]*>([\s\S]*?)<\/p>/gi;
-
-    const parsePricesFromBlock = (block: string) => {
-      const prices: number[] = [];
-      let match;
-      priceRegex.lastIndex = 0;
-      while ((match = priceRegex.exec(block)) !== null) {
-        const priceStr = match[1]
-          .replace(/&nbsp;/g, "")
-          .replace(/\s/g, "")
-          .replace(",", ".")
-          .replace("€", "")
-          .trim();
-        const val = parseFloat(priceStr);
-        if (!isNaN(val)) {
-          prices.push(Math.round(val * 100));
-        }
-      }
-      return prices;
-    };
-
-    const neufPrices = parsePricesFromBlock(neufHtml);
-    const occasionPrices = parsePricesFromBlock(occasionHtml);
-
-    const result: AchatMoinsCherPrices = {};
-    if (neufPrices.length > 0) result.priceNew = Math.min(...neufPrices);
-    if (occasionPrices.length > 0)
-      result.priceUsed = Math.min(...occasionPrices);
-
-    return Object.keys(result).length > 0 ? result : null;
+    return parseAchatMoinsCherPrices(getRes.data, productId);
   } catch (error: any) {
     console.error(
       `[AchatMoinsCher Prices] Error fetching for barcode ${cleanedBarcode}:`,

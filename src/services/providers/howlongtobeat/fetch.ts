@@ -47,7 +47,7 @@ interface HLTBDetailData {
   platformData?: HLTBPlatformData[];
 }
 
-const HLTB_TIMEOUT_MS = 4500;
+const HLTB_REQUEST_TIMEOUT_MS = 12_000;
 const MIN_HLTB_SCORE = 0.52;
 const HLTB_BASE_URL = "https://howlongtobeat.com";
 const HLTB_USER_AGENT =
@@ -332,50 +332,73 @@ async function fetchJson<T>(
   return (await response.json()) as T;
 }
 
+async function fetchJsonWithTimeout<T>(
+  url: string,
+  init: RequestInit,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), HLTB_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetchJson<T>(url, init, controller.signal);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchTextWithTimeout(
+  url: string,
+  init: RequestInit,
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), HLTB_REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function searchHowLongToBeat(
   query: string,
   platform?: string | null,
 ): Promise<HLTBSearchGame[]> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), HLTB_TIMEOUT_MS);
   const baseHeaders = {
     "User-Agent": HLTB_USER_AGENT,
     Accept: "application/json",
     Referer: `${HLTB_BASE_URL}/`,
   };
 
-  try {
-    const init = await fetchJson<HLTBInitResponse>(
-      `${HLTB_BASE_URL}/api/bleed/init?t=${Date.now()}`,
-      {
-        headers: baseHeaders,
-      },
-      controller.signal,
-    );
-    if (!init.token) return [];
+  const init = await fetchJsonWithTimeout<HLTBInitResponse>(
+    `${HLTB_BASE_URL}/api/bleed/init?t=${Date.now()}`,
+    {
+      headers: baseHeaders,
+    },
+  );
+  if (!init.token) return [];
 
-    const response = await fetchJson<HLTBSearchResponse>(
-      `${HLTB_BASE_URL}/api/bleed`,
-      {
-        method: "POST",
-        headers: {
-          ...baseHeaders,
-          "Content-Type": "application/json",
-          "x-auth-token": init.token,
-          "x-hp-key": init.hpKey || "",
-          "x-hp-val": init.hpVal || "",
-        },
-        body: JSON.stringify(
-          buildSearchPayload(query, normalizePlatformForHLTB(platform), init),
-        ),
+  const response = await fetchJsonWithTimeout<HLTBSearchResponse>(
+    `${HLTB_BASE_URL}/api/bleed`,
+    {
+      method: "POST",
+      headers: {
+        ...baseHeaders,
+        "Content-Type": "application/json",
+        "x-auth-token": init.token,
+        "x-hp-key": init.hpKey || "",
+        "x-hp-val": init.hpVal || "",
       },
-      controller.signal,
-    );
+      body: JSON.stringify(
+        buildSearchPayload(query, normalizePlatformForHLTB(platform), init),
+      ),
+    },
+  );
 
-    return response.data || [];
-  } finally {
-    clearTimeout(timeout);
-  }
+  return response.data || [];
 }
 
 function extractDetailData(html: string): HLTBDetailData | null {
@@ -395,24 +418,15 @@ function extractDetailData(html: string): HLTBDetailData | null {
 async function fetchHowLongToBeatDetail(
   gameId: number,
 ): Promise<HLTBDetailData | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), HLTB_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(`${HLTB_BASE_URL}/game/${gameId}`, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": HLTB_USER_AGENT,
-        Accept: "text/html",
-        Referer: `${HLTB_BASE_URL}/`,
-      },
-    });
-    if (!response.ok) return null;
-
-    return extractDetailData(await response.text());
-  } finally {
-    clearTimeout(timeout);
-  }
+  const html = await fetchTextWithTimeout(`${HLTB_BASE_URL}/game/${gameId}`, {
+    headers: {
+      "User-Agent": HLTB_USER_AGENT,
+      Accept: "text/html",
+      Referer: `${HLTB_BASE_URL}/`,
+    },
+  });
+  if (!html) return null;
+  return extractDetailData(html);
 }
 
 function pickPlatformData(
@@ -448,8 +462,14 @@ export async function fetchFromHowLongToBeat(
     const best = pickBestResult(query, results);
     if (!best) return null;
 
-    const detail =
-      best.game_id > 0 ? await fetchHowLongToBeatDetail(best.game_id) : null;
+    let detail: HLTBDetailData | null = null;
+    if (best.game_id > 0) {
+      try {
+        detail = await fetchHowLongToBeatDetail(best.game_id);
+      } catch {
+        // Detail page is optional — search results already carry playtime data.
+      }
+    }
     const platformData = pickPlatformData(detail, platform);
     const detailGame = detail?.game?.[0];
     const facts = buildTimeToBeatFacts(
@@ -479,6 +499,13 @@ export async function fetchFromHowLongToBeat(
       facts,
     };
   } catch (err) {
+    const isAbort =
+      (err instanceof DOMException && err.name === "AbortError") ||
+      (err instanceof Error && /aborted/i.test(err.message));
+    if (isAbort) {
+      console.warn(`[HowLongToBeat] Timeout fetching "${name}"`);
+      return null;
+    }
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[HowLongToBeat] Error fetching "${name}":`, message);
     return null;

@@ -36,6 +36,11 @@ export async function GET() {
           title: true,
           imageUrl: true,
           lastFetched: true,
+          attachments: {
+            select: {
+              source: true,
+            },
+          },
         },
       },
     },

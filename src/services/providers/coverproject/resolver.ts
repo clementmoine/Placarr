@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import type { MetadataResult } from "@/types/metadataProvider";
 import { fetchCoverFromCoverProjectCdn } from "./cdnLookup";
 
 const SEARCH_HEADERS = {
@@ -70,4 +71,24 @@ export async function fetchCoverFromCoverProject(
   }
 
   return fetchCoverFromCoverProjectSearch(name, platformName);
+}
+
+export async function fetchFromCoverProject(
+  name: string,
+  platform?: string | null,
+): Promise<MetadataResult | null> {
+  const coverUrl = await fetchCoverFromCoverProject(name, platform || "");
+  if (!coverUrl) return null;
+
+  return {
+    imageUrl: coverUrl,
+    attachments: [
+      {
+        type: "cover",
+        url: coverUrl,
+        source: "coverproject",
+        role: "eu",
+      },
+    ],
+  };
 }

@@ -39,6 +39,7 @@ export interface MetadataResult {
   regionalTitles?: { region?: string; text: string }[];
   externalIds?: {
     imdb?: string | null;
+    launchbox?: string | null;
   };
   facts?: MetadataFact[];
   fieldEvidence?: FieldEvidenceInput[];

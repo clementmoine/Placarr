@@ -90,6 +90,7 @@ describe("POST /api/admin/items-refresh/[itemId]", () => {
       true,
       "Jeux de société",
       true, // explicit refresh bypasses the short-lived lookup cache
+      true, // isBackground
     );
   });
 
@@ -119,6 +120,7 @@ describe("POST /api/admin/items-refresh/[itemId]", () => {
       true,
       "PS5",
       true, // explicit refresh bypasses the short-lived lookup cache
+      true, // isBackground
     );
   });
 });

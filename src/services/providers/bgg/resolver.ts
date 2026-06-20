@@ -77,9 +77,9 @@ function getBGGRatingValue(
   return rating?.value;
 }
 
-function getBGGPollSummaries(
-  game: { children?: BGGChild[] },
-): Map<string, Record<string, string>> {
+function getBGGPollSummaries(game: {
+  children?: BGGChild[];
+}): Map<string, Record<string, string>> {
   const summaries = new Map<string, Record<string, string>>();
   for (const child of game.children || []) {
     const pollSummary = (child as BGGChild & Record<string, unknown>)[

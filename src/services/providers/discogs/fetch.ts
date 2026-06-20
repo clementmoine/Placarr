@@ -108,27 +108,31 @@ export async function fetchFromDiscogs(
         const release = releaseRes.data;
         if (Array.isArray(release?.images)) {
           const parsedImages = release.images
-            .map((entry: {
-              type?: unknown;
-              uri?: unknown;
-              width?: unknown;
-              height?: unknown;
-            }) => {
-              const url =
-                typeof entry?.uri === "string" ? entry.uri.trim() : "";
-              if (!url) return null;
-              return {
-                url,
-                kind:
-                  entry?.type === "primary"
-                    ? ("primary" as const)
-                    : ("secondary" as const),
-                width:
-                  typeof entry?.width === "number" ? entry.width : undefined,
-                height:
-                  typeof entry?.height === "number" ? entry.height : undefined,
-              };
-            })
+            .map(
+              (entry: {
+                type?: unknown;
+                uri?: unknown;
+                width?: unknown;
+                height?: unknown;
+              }) => {
+                const url =
+                  typeof entry?.uri === "string" ? entry.uri.trim() : "";
+                if (!url) return null;
+                return {
+                  url,
+                  kind:
+                    entry?.type === "primary"
+                      ? ("primary" as const)
+                      : ("secondary" as const),
+                  width:
+                    typeof entry?.width === "number" ? entry.width : undefined,
+                  height:
+                    typeof entry?.height === "number"
+                      ? entry.height
+                      : undefined,
+                };
+              },
+            )
             .filter(Boolean) as DiscogsImage[];
           if (parsedImages.length > 0) {
             images = parsedImages;

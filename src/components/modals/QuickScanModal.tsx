@@ -21,6 +21,7 @@ import { getMetadataPreview } from "@/lib/api/metadata";
 import { getShelves } from "@/lib/api/shelves";
 import { getCoverImage } from "@/lib/itemMedia";
 import { RemoteImage } from "@/components/RemoteImage";
+import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
 import { itemPath, slugify } from "@/lib/slugs";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -78,6 +79,11 @@ export function QuickScanModal({
   const [results, setResults] = useState<QuickScanResult[]>([]);
   const [customName, setCustomName] = useState<string>("");
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
+  const [estimatedPrices, setEstimatedPrices] = useState<{
+    priceNew: number | null;
+    priceUsed: number | null;
+    priceUsedCIB: number | null;
+  } | null>(null);
   const [activeBarcode, setActiveBarcode] = useState<string>("");
   const [barcodeInput, setBarcodeInput] = useState<string>("");
   const activeLookupKeyRef = useRef<string>("");
@@ -299,6 +305,11 @@ export function QuickScanModal({
       }
 
       setGuessedShelfId(guessedId);
+      setEstimatedPrices({
+        priceNew: payload?.priceNew ?? null,
+        priceUsed: payload?.priceUsed ?? null,
+        priceUsedCIB: payload?.priceUsedCIB ?? null,
+      });
       if (guessedId && guessedId !== selectedShelfId) {
         skipNextLookupForAutoShelfRef.current = true;
         setSelectedShelfId(guessedId);
@@ -334,6 +345,7 @@ export function QuickScanModal({
       setResults([]);
       setCustomName("");
       setGuessedShelfId(null);
+      setEstimatedPrices(null);
 
       try {
         const params = new URLSearchParams({ q: code });
@@ -439,6 +451,7 @@ export function QuickScanModal({
     setIsRevalidating(false);
     setCustomName("");
     setGuessedShelfId(null);
+    setEstimatedPrices(null);
     setActiveBarcode("");
     setBarcodeInput("");
     setSelectedShelfId("");
@@ -522,6 +535,28 @@ export function QuickScanModal({
   };
 
   const hasExistingItems = Boolean(existingItems && existingItems.length > 0);
+
+  // Barcode-level scan insights shown above the candidate list.
+  const formatEuroFromCents = (cents?: number | null) =>
+    typeof cents === "number" && cents > 0
+      ? `${(cents / 100).toFixed(2)} €`
+      : null;
+  const estimatedType = results[0]?.shelfType ?? null;
+  const estimatedShelfName = guessedShelfId
+    ? (shelves?.find((s) => s.id === guessedShelfId)?.name ?? null)
+    : null;
+  const estimatedNewValue = formatEuroFromCents(estimatedPrices?.priceNew);
+  const estimatedUsedValue = formatEuroFromCents(
+    estimatedType === "games"
+      ? (estimatedPrices?.priceUsedCIB ?? estimatedPrices?.priceUsed)
+      : estimatedPrices?.priceUsed,
+  );
+  const hasEstimatedValue = Boolean(estimatedNewValue || estimatedUsedValue);
+  // While the lookup (or its background revalidation) is running, the value may
+  // still be streaming in from the providers captured at scan time.
+  const isResolvingValue =
+    (isSearching || isRevalidating) && !hasEstimatedValue;
+
   const shouldShowSuggestionsSkeleton =
     (isResolvingShelves || isSearching || isRevalidating) &&
     results.length === 0;
@@ -604,9 +639,9 @@ export function QuickScanModal({
                           <RemoteImage
                             src={product.placeholderImageUrl}
                             alt=""
-                            className="w-full h-full object-cover blur-sm scale-110 opacity-55"
+                            className="w-full h-full object-cover blur-[2px] scale-105 opacity-80"
                           />
-                          <div className="absolute inset-0 bg-background/35 animate-pulse" />
+                          <div className="absolute inset-0 bg-background/15 animate-pulse" />
                         </div>
                       ) : product.isHydrating ? (
                         <Skeleton className="w-12 h-16 rounded-xl shrink-0 bg-zinc-200/80 dark:bg-zinc-800/70" />
@@ -619,13 +654,59 @@ export function QuickScanModal({
                         <span className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2">
                           {product.title}
                         </span>
-                        {isOwned && ownedItem && (
-                          <div className="flex select-none">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/10">
+                        <div className="flex flex-wrap items-center gap-1.5 select-none">
+                          {isOwned && ownedItem && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/10">
                               {t("scanner.alreadyIn")} {ownedItem.shelf?.name}
                             </span>
-                          </div>
-                        )}
+                          )}
+                          {(product.shelfType || estimatedType) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100/70 dark:bg-zinc-900/40 text-foreground/80 border border-border/40">
+                              <ShelfTypeIcon
+                                type={product.shelfType || estimatedType}
+                                className="size-3"
+                              />
+                              {t(
+                                `shelf.type.${product.shelfType || estimatedType}`,
+                              ) ||
+                                product.shelfType ||
+                                estimatedType}
+                            </span>
+                          )}
+                          {estimatedShelfName && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100/70 dark:bg-zinc-900/40 text-foreground/80 border border-border/40">
+                              <span className="opacity-60">
+                                {t("scanner.estimatedShelf")}
+                              </span>
+                              {estimatedShelfName}
+                            </span>
+                          )}
+                          {hasEstimatedValue ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/10">
+                              {estimatedNewValue && (
+                                <span>
+                                  <span className="opacity-60">
+                                    {t("items.priceNew")}
+                                  </span>{" "}
+                                  {estimatedNewValue}
+                                </span>
+                              )}
+                              {estimatedNewValue && estimatedUsedValue && (
+                                <span className="opacity-40">·</span>
+                              )}
+                              {estimatedUsedValue && (
+                                <span>
+                                  <span className="opacity-60">
+                                    {t("items.priceUsed")}
+                                  </span>{" "}
+                                  {estimatedUsedValue}
+                                </span>
+                              )}
+                            </span>
+                          ) : isResolvingValue ? (
+                            <Skeleton className="h-[18px] w-24 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 dark:border-emerald-500/10" />
+                          ) : null}
+                        </div>
                       </div>
                     </div>
 

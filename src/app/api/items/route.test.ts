@@ -141,7 +141,9 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findMany.mockResolvedValue([]);
 
-    await GET(get("/api/items?excludeShelfTypes=books&shelfTypes=games,movies"));
+    await GET(
+      get("/api/items?excludeShelfTypes=books&shelfTypes=games,movies"),
+    );
 
     expect(h.item.findMany.mock.calls[0][0].where.shelf).toEqual({
       type: { in: ["games", "movies"] },
@@ -154,6 +156,17 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     expect(h.item.findMany.mock.calls[0][0].where.shelf).toEqual({
       type: { notIn: ["books"] },
     });
+  });
+
+  it("renvoie 400 pour un type d'étagère invalide", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+
+    const res = await GET(get("/api/items?shelfTypes=games,nope"));
+    const payload = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(payload.invalidShelfTypes).toEqual(["nope"]);
+    expect(h.item.findMany).not.toHaveBeenCalled();
   });
 });
 

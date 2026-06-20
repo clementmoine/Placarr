@@ -46,10 +46,26 @@ describe("mergeGameMetadata", () => {
       ],
     };
 
-    const merged = mergeGameMetadata(null, null, hltb, null, rawg, null);
+    const merged = mergeGameMetadata(
+      null,
+      null,
+      null,
+      null,
+      null,
+      hltb,
+      null,
+      rawg,
+      null,
+    );
 
-    expect(merged.facts?.some((fact) => fact.source === "RAWG" && fact.kind === "duration")).toBe(false);
-    expect(merged.facts?.some((fact) => fact.source === "How Long to Beat")).toBe(true);
+    expect(
+      merged.facts?.some(
+        (fact) => fact.source === "RAWG" && fact.kind === "duration",
+      ),
+    ).toBe(false);
+    expect(
+      merged.facts?.some((fact) => fact.source === "How Long to Beat"),
+    ).toBe(true);
     expect(merged.facts?.some((fact) => fact.label === "RAWG")).toBe(true);
   });
 });

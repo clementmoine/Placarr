@@ -4,6 +4,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 export interface ChasseAuxLivresProduct {
   name: string;
   coverUrl?: string;
+  priceNew?: number; // cents, only when a single product is resolved
+  priceUsed?: number; // cents, only when a single product is resolved
 }
 
 const CHASSE_AUX_LIVRES_HEADERS = {
@@ -109,6 +111,7 @@ function parseListingProducts(html: string): ChasseAuxLivresProduct[] {
 export async function fetchFromChasseAuxLivres(
   barcode: string,
   catalog: string,
+  opts: { withPrices?: boolean } = {},
 ): Promise<ChasseAuxLivresProduct[]> {
   const searchUrl = buildSearchUrl(barcode, catalog);
   try {
@@ -139,7 +142,11 @@ export async function fetchFromChasseAuxLivres(
           html
             .match(/<img[^>]*class="[^"]*cover[^"]*"[^>]*src="([^"]+)"/i)?.[1]
             ?.split("?")[0];
-        return [{ ...product, coverUrl }];
+        // Single product resolved: capture its prices in the same pass.
+        const prices = opts.withPrices
+          ? await fetchChasseAuxLivresOffers(finalUrl, html)
+          : null;
+        return [{ ...product, coverUrl, ...(prices ?? {}) }];
       }
     }
 
@@ -166,7 +173,13 @@ export async function fetchFromChasseAuxLivres(
           String(data.d || ""),
           data.redir.trim(),
         );
-        return [{ ...product, coverUrl }];
+        // Single product resolved: capture its prices in the same pass.
+        const prices = opts.withPrices
+          ? await fetchChasseAuxLivresOffers(
+              `https://www.chasse-aux-livres.fr${data.redir.trim()}`,
+            )
+          : null;
+        return [{ ...product, coverUrl, ...(prices ?? {}) }];
       }
     }
 
@@ -201,96 +214,56 @@ export async function isChasseAuxLivresSearchProtected(
   }
 }
 
-export async function fetchPricesFromChasseAuxLivres(
-  query: string,
-  catalog = "fr",
+/**
+ * Continue from a resolved product page to its marketplace offers and return the
+ * cheapest new/used prices (cents). Shared by the dedicated price fetch and the
+ * scan-time combined lookup so a single product resolution serves both.
+ */
+async function fetchChasseAuxLivresOffers(
+  redirUrl: string,
+  prefetchedHtml?: string,
 ): Promise<{ priceNew?: number; priceUsed?: number } | null> {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) return null;
+  const extractParams = (htmlContent: string) => {
+    const htmlTagMatch = htmlContent.match(/<html[^>]*>/i);
+    const htmlTag = htmlTagMatch ? htmlTagMatch[0] : "";
+    const duihMatch = htmlTag.match(/data-duih="([^"]*)"/);
+    const duih = duihMatch ? duihMatch[1] : "";
 
-  const searchUrl = buildSearchUrl(trimmedQuery, catalog);
+    const bookDetailsMatch = htmlContent.match(
+      /<[^>]*id="book-details"[^>]*>/i,
+    );
+    const bookDetails = bookDetailsMatch ? bookDetailsMatch[0] : "";
+    const asinMatch = bookDetails.match(/data-asin="([^"]*)"/);
+    const asin = asinMatch ? asinMatch[1] : "";
+
+    const lvsMatch = htmlContent.match(/data-lvs="([^"]*)"/);
+    const lvs = lvsMatch ? lvsMatch[1] : "";
+
+    const fuzzMatch = bookDetails.match(/data-fuzz="([^"]*)"/);
+    const fuzz = fuzzMatch ? fuzzMatch[1] : "false";
+
+    const offersMatch = htmlContent.match(/<[^>]*id="offers"[^>]*>/i);
+    const offers = offersMatch ? offersMatch[0] : "";
+    const nbengMatch = offers.match(/data-nbeng="([^"]*)"/);
+    const nbeng = nbengMatch ? parseInt(nbengMatch[1], 10) : 0;
+
+    const linkMatch = htmlContent.match(/<[^>]*id="d-tp-lnk"[^>]*>/i);
+    const link = linkMatch ? linkMatch[0] : "";
+    const uiMatch = link.match(/data-ui="([^"]*)"/);
+    const ui = uiMatch ? uiMatch[1] : "";
+
+    return { asin, duih, lvs, fuzz, nbeng, ui };
+  };
 
   try {
-    // Step 1: Fetch initial page to get the hash and other params
-    const initialRes = await axios.get(searchUrl, {
-      headers: CHASSE_AUX_LIVRES_HEADERS,
-    });
-    const html = initialRes.data;
-    const finalUrl = initialRes.request.res.responseUrl || "";
-    if (isProtectedLoginPage(html, finalUrl)) {
-      console.warn(
-        `[ChasseAuxLivres] Prices lookup: search is protected by login for query ${trimmedQuery}`,
-      );
-      return null;
-    }
-
-    const hashMatch = html.match(/data-hash="([^"]+)"/);
-    if (!hashMatch) {
-      console.warn(
-        `[ChasseAuxLivres] Prices lookup: Could not find data-hash for query ${trimmedQuery}`,
-      );
-      return null;
-    }
-    const hash = hashMatch[1];
-
-    // Step 2: Fetch search results redirect
-    const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=1`;
-    const resultsRes = await axios.get(resultsUrl, {
-      headers: CHASSE_AUX_LIVRES_HEADERS,
-    });
-    const data = resultsRes.data;
-
-    if (!data.redir) {
-      console.warn(
-        `[ChasseAuxLivres] Prices lookup: No redirect URL found for query ${trimmedQuery}`,
-      );
-      return null;
-    }
-
-    const redirUrl = `https://www.chasse-aux-livres.fr${data.redir}`;
-
-    // Fetch product detail page to extract lvs and other data attributes
-    let redirRes = await axios.get(redirUrl, {
-      headers: CHASSE_AUX_LIVRES_HEADERS,
-    });
-    let redirHtml = redirRes.data;
-
-    const extractParams = (htmlContent: string) => {
-      const htmlTagMatch = htmlContent.match(/<html[^>]*>/i);
-      const htmlTag = htmlTagMatch ? htmlTagMatch[0] : "";
-      const duihMatch = htmlTag.match(/data-duih="([^"]*)"/);
-      const duih = duihMatch ? duihMatch[1] : "";
-
-      const bookDetailsMatch = htmlContent.match(
-        /<[^>]*id="book-details"[^>]*>/i,
-      );
-      const bookDetails = bookDetailsMatch ? bookDetailsMatch[0] : "";
-      const asinMatch = bookDetails.match(/data-asin="([^"]*)"/);
-      const asin = asinMatch ? asinMatch[1] : "";
-
-      const lvsMatch = htmlContent.match(/data-lvs="([^"]*)"/);
-      const lvs = lvsMatch ? lvsMatch[1] : "";
-
-      const fuzzMatch = bookDetails.match(/data-fuzz="([^"]*)"/);
-      const fuzz = fuzzMatch ? fuzzMatch[1] : "false";
-
-      const offersMatch = htmlContent.match(/<[^>]*id="offers"[^>]*>/i);
-      const offers = offersMatch ? offersMatch[0] : "";
-      const nbengMatch = offers.match(/data-nbeng="([^"]*)"/);
-      const nbeng = nbengMatch ? parseInt(nbengMatch[1], 10) : 0;
-
-      const linkMatch = htmlContent.match(/<[^>]*id="d-tp-lnk"[^>]*>/i);
-      const link = linkMatch ? linkMatch[0] : "";
-      const uiMatch = link.match(/data-ui="([^"]*)"/);
-      const ui = uiMatch ? uiMatch[1] : "";
-
-      return { asin, duih, lvs, fuzz, nbeng, ui };
-    };
+    let redirHtml =
+      prefetchedHtml ??
+      (await axios.get(redirUrl, { headers: CHASSE_AUX_LIVRES_HEADERS })).data;
 
     let params = extractParams(redirHtml);
     if (!params.asin) {
       console.warn(
-        `[ChasseAuxLivres] Prices lookup: Could not parse product details for query ${trimmedQuery}`,
+        `[ChasseAuxLivres] Prices lookup: could not parse product details at ${redirUrl}`,
       );
       return null;
     }
@@ -304,7 +277,7 @@ export async function fetchPricesFromChasseAuxLivres(
 
     let retryCount = 0;
     const maxRetries = 2;
-    let offersData: any = null;
+    let offersData: Record<string, unknown> | null = null;
 
     while (retryCount <= maxRetries) {
       const engines = Array.from({ length: params.nbeng }, (_, i) => i).join(
@@ -323,14 +296,13 @@ export async function fetchPricesFromChasseAuxLivres(
           );
           await new Promise((resolve) => setTimeout(resolve, 2500));
           // Refetch product page to get new session/lvs parameters
-          redirRes = await axios.get(redirUrl, {
-            headers: CHASSE_AUX_LIVRES_HEADERS,
-          });
-          redirHtml = redirRes.data;
+          redirHtml = (
+            await axios.get(redirUrl, { headers: CHASSE_AUX_LIVRES_HEADERS })
+          ).data;
           params = extractParams(redirHtml);
         } else {
           console.warn(
-            `[ChasseAuxLivres] Maximum retries reached for query ${trimmedQuery}`,
+            `[ChasseAuxLivres] Maximum retries reached at ${redirUrl}`,
           );
         }
       } else {
@@ -339,12 +311,7 @@ export async function fetchPricesFromChasseAuxLivres(
       }
     }
 
-    if (!offersData) {
-      console.warn(
-        `[ChasseAuxLivres] No offers returned for query ${trimmedQuery}`,
-      );
-      return null;
-    }
+    if (!offersData) return null;
 
     let minNew = Infinity;
     let minUsed = Infinity;
@@ -369,10 +336,71 @@ export async function fetchPricesFromChasseAuxLivres(
     if (minUsed !== Infinity) result.priceUsed = minUsed;
 
     return Object.keys(result).length > 0 ? result : null;
-  } catch (error: any) {
+  } catch (error) {
+    console.error(
+      `[ChasseAuxLivres] Error fetching offers at ${redirUrl}:`,
+      error,
+    );
+    return null;
+  }
+}
+
+export async function fetchPricesFromChasseAuxLivres(
+  query: string,
+  catalog = "fr",
+): Promise<{ priceNew?: number; priceUsed?: number } | null> {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return null;
+
+  const searchUrl = buildSearchUrl(trimmedQuery, catalog);
+
+  try {
+    const initialRes = await axios.get(searchUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
+    const html = initialRes.data;
+    const finalUrl = initialRes.request.res.responseUrl || "";
+    if (isProtectedLoginPage(html, finalUrl)) {
+      console.warn(
+        `[ChasseAuxLivres] Prices lookup: search is protected by login for query ${trimmedQuery}`,
+      );
+      return null;
+    }
+
+    // The search may redirect straight to the product page.
+    if (finalUrl.includes("/prix/")) {
+      return fetchChasseAuxLivresOffers(finalUrl, html);
+    }
+
+    const hashMatch = html.match(/data-hash="([^"]+)"/);
+    if (!hashMatch) {
+      console.warn(
+        `[ChasseAuxLivres] Prices lookup: Could not find data-hash for query ${trimmedQuery}`,
+      );
+      return null;
+    }
+    const hash = hashMatch[1];
+
+    const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=1`;
+    const resultsRes = await axios.get(resultsUrl, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+    });
+    const data = resultsRes.data;
+
+    if (!data.redir) {
+      console.warn(
+        `[ChasseAuxLivres] Prices lookup: No redirect URL found for query ${trimmedQuery}`,
+      );
+      return null;
+    }
+
+    return fetchChasseAuxLivresOffers(
+      `https://www.chasse-aux-livres.fr${data.redir}`,
+    );
+  } catch (error) {
     console.error(
       `[ChasseAuxLivres] Error fetching prices for query ${trimmedQuery}:`,
-      error.message,
+      error,
     );
     return null;
   }

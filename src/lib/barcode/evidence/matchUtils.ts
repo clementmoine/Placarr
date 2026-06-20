@@ -223,7 +223,8 @@ export function pickPreferredClusterDisplayName(
           scoreDisplayTitle(candidate.name, {
             isCanonical: candidate.isCanonical,
             isTrustedRetailer: candidate.isTrustedRetailer,
-          }) - 40,
+          }) -
+            40,
     );
   });
   const displayCandidates =

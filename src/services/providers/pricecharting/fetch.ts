@@ -16,6 +16,11 @@ export interface PriceChartingMetadata {
   coverUrl?: string;
   ageRating?: string;
   barcode?: string;
+  /**
+   * Prices parsed from the same detail page as the metadata. Present so a single
+   * PriceCharting request serves both identification and pricing.
+   */
+  prices?: PriceChartingPrices;
 }
 
 const PRICECHARTING_HEADERS = {
@@ -160,7 +165,9 @@ function rejectMismatchedPriceChartingMetadata(
   fallbackPlatform?: string,
 ): PriceChartingMetadata | null {
   if (!metadata) return null;
-  if (!priceChartingPlatformMatchesTarget(metadata.platform, fallbackPlatform)) {
+  if (
+    !priceChartingPlatformMatchesTarget(metadata.platform, fallbackPlatform)
+  ) {
     return null;
   }
   return metadata;
@@ -360,7 +367,10 @@ function isAcceptedPriceChartingDetailHtml(
 
   const parsed = parsePriceChartingDetailHtml(html, fallbackName);
   if (parsed?.platform) {
-    return priceChartingPlatformMatchesTarget(parsed.platform, fallbackPlatform);
+    return priceChartingPlatformMatchesTarget(
+      parsed.platform,
+      fallbackPlatform,
+    );
   }
 
   if (
@@ -525,6 +535,55 @@ export function parsePriceChartingDetailHtml(
   };
 }
 
+/**
+ * Parse loose / CIB / new prices from an already-fetched PriceCharting detail
+ * page. Shared by the price fetch and the metadata fetch so a single HTML
+ * request serves both identification and pricing.
+ */
+export function parsePriceChartingPricesFromHtml(
+  html: string,
+): PriceChartingPrices | null {
+  let eurRate = 1.0;
+  const forexMatch = html.match(/VGPC\.forex_rates\s*=\s*({[^}]+})/);
+  if (forexMatch) {
+    try {
+      const rates = JSON.parse(forexMatch[1]);
+      if (typeof rates.EUR === "number") {
+        eurRate = rates.EUR;
+      }
+    } catch (e) {
+      console.warn(`[PriceCharting Prices] Failed to parse forex rates:`, e);
+    }
+  }
+
+  const parsePrice = (id: string): number | undefined => {
+    const regex = new RegExp(
+      `id="${id}"[^>]*>[\\s\\S]*?class="price js-price"[^>]*>([\\s\\S]*?)<\/span>`,
+      "i",
+    );
+    const match = html.match(regex);
+    if (match) {
+      const priceStr = match[1].replace(/[^0-9.]/g, "").trim();
+      const priceUSD = parseFloat(priceStr);
+      if (!isNaN(priceUSD)) {
+        return Math.round(priceUSD * eurRate * 100);
+      }
+    }
+    return undefined;
+  };
+
+  const result: PriceChartingPrices = {};
+  const used = parsePrice("used_price");
+  const cib = parsePrice("complete_price");
+  const priceNew = parsePrice("new_price");
+
+  if (used !== undefined) result.priceUsed = used;
+  if (cib !== undefined) result.priceUsedCIB = cib;
+  if (priceNew !== undefined) result.priceNew = priceNew;
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 export async function fetchMetadataFromPriceChartingByName(
   name: string,
   fallbackPlatform?: string,
@@ -649,50 +708,7 @@ export async function fetchPricesFromPriceCharting(
       return null;
     }
 
-    // Extract exchange rates
-    let eurRate = 1.0;
-    const forexMatch = html.match(/VGPC\.forex_rates\s*=\s*({[^}]+})/);
-    if (forexMatch) {
-      try {
-        const rates = JSON.parse(forexMatch[1]);
-        if (typeof rates.EUR === "number") {
-          eurRate = rates.EUR;
-        }
-      } catch (e: any) {
-        console.warn(
-          `[PriceCharting Prices] Failed to parse forex rates:`,
-          e.message,
-        );
-      }
-    }
-
-    const parsePrice = (id: string): number | undefined => {
-      const regex = new RegExp(
-        `id="${id}"[^>]*>[\\s\\S]*?class="price js-price"[^>]*>([\\s\\S]*?)<\/span>`,
-        "i",
-      );
-      const match = html.match(regex);
-      if (match) {
-        const priceStr = match[1].replace(/[^0-9.]/g, "").trim();
-        const priceUSD = parseFloat(priceStr);
-        if (!isNaN(priceUSD)) {
-          const priceEUR = priceUSD * eurRate;
-          return Math.round(priceEUR * 100);
-        }
-      }
-      return undefined;
-    };
-
-    const result: PriceChartingPrices = {};
-    const used = parsePrice("used_price");
-    const cib = parsePrice("complete_price");
-    const priceNew = parsePrice("new_price");
-
-    if (used !== undefined) result.priceUsed = used;
-    if (cib !== undefined) result.priceUsedCIB = cib;
-    if (priceNew !== undefined) result.priceNew = priceNew;
-
-    return Object.keys(result).length > 0 ? result : null;
+    return parsePriceChartingPricesFromHtml(html);
   } catch (error: any) {
     console.error(
       `[PriceCharting Prices] Error fetching for barcode ${cleanedBarcode}:`,
@@ -774,9 +790,12 @@ export async function fetchMetadataFromPriceCharting(
     );
     if (!parsed) return null;
 
+    const prices = parsePriceChartingPricesFromHtml(html);
+
     return {
       ...parsed,
       barcode: parsed.barcode || cleanedBarcode,
+      ...(prices ? { prices } : {}),
     };
   } catch (error: any) {
     console.error(

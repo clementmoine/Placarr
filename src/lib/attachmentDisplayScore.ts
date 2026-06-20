@@ -57,6 +57,8 @@ const REAL_BOX_COVER_SOURCES = new Set([
   "bgg",
   "boardgamegeek",
   "screenscraper",
+  "thegamesdb",
+  "coverproject",
 ]);
 
 export function isDiscOrSupportCoverCandidate(
@@ -272,9 +274,7 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
       }))
       .sort(
         (a, b) =>
-          a.localeRank - b.localeRank ||
-          b.score - a.score ||
-          a.index - b.index,
+          a.localeRank - b.localeRank || b.score - a.score || a.index - b.index,
       )[0];
 
     if (best?.attachment.url) return best.attachment.url;

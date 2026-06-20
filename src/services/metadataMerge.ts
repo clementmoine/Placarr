@@ -10,6 +10,7 @@ import {
   scoreMetadataDisplayTitle,
 } from "@/lib/displayTitleScore";
 import {
+  inferTextLanguage,
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
 } from "@/lib/localePreference";
@@ -39,20 +40,32 @@ export function pickBestMetadataTitle(
 export function mergeGameMetadata(
   igdb: MetadataResult | null,
   ss: MetadataResult | null,
+  tgdb: MetadataResult | null,
+  coverProject: MetadataResult | null,
+  launchbox: MetadataResult | null,
   hltb: MetadataResult | null,
   steam: MetadataResult | null,
   rawg: MetadataResult | null,
   steamGrid: MetadataResult | null,
   options: { includePcSources?: boolean } = {},
 ): MetadataResult {
-  const titleSources = [ss, igdb, rawg, steam, steamGrid, hltb].filter(
-    Boolean,
-  ) as MetadataResult[];
+  const titleSources = [
+    ss,
+    igdb,
+    tgdb,
+    launchbox,
+    rawg,
+    steam,
+    steamGrid,
+    hltb,
+  ].filter(Boolean) as MetadataResult[];
   const title =
     pickBestRegionalTitle(titleSources) ||
     pickBestMetadataTitle([
       ss?.title,
       igdb?.title,
+      tgdb?.title,
+      launchbox?.title,
       rawg?.title,
       steam?.title,
       steamGrid?.title,
@@ -62,15 +75,31 @@ export function mergeGameMetadata(
   const description = pickBestLocalizedDescription([
     { text: ss?.description, language: "fr", source: "screenscraper" },
     { text: igdb?.description, source: "igdb" },
+    {
+      text: tgdb?.description,
+      language:
+        tgdb?.title && inferTextLanguage(tgdb.title) === "fr"
+          ? "fr"
+          : undefined,
+      source: "thegamesdb",
+    },
+    { text: launchbox?.description, source: "launchbox" },
     { text: rawg?.description, source: "rawg" },
     { text: steam?.description, source: "steam" },
   ]);
 
-  const releaseDate = igdb?.releaseDate || ss?.releaseDate || rawg?.releaseDate;
+  const releaseDate =
+    igdb?.releaseDate ||
+    ss?.releaseDate ||
+    tgdb?.releaseDate ||
+    launchbox?.releaseDate ||
+    rawg?.releaseDate;
 
   const allPublishers = [
     ...(igdb?.publishers || []),
     ...(ss?.publishers || []),
+    ...(tgdb?.publishers || []),
+    ...(launchbox?.publishers || []),
     ...(rawg?.publishers || []),
     ...(steam?.publishers || []),
   ];
@@ -84,6 +113,20 @@ export function mergeGameMetadata(
   const ssAttachments = (ss?.attachments || []).map((a) => ({
     ...a,
     source: a.source || "screenscraper",
+  }));
+  const tgdbAttachments = (tgdb?.attachments || []).map((a) => ({
+    ...a,
+    source: a.source || "thegamesdb",
+  }));
+  const coverProjectAttachments = (coverProject?.attachments || []).map(
+    (a) => ({
+      ...a,
+      source: a.source || "coverproject",
+    }),
+  );
+  const launchboxAttachments = (launchbox?.attachments || []).map((a) => ({
+    ...a,
+    source: a.source || "launchbox",
   }));
   const igdbAttachments = (igdb?.attachments || []).map((a) => ({
     ...a,
@@ -106,6 +149,8 @@ export function mergeGameMetadata(
 
   const providerImageCandidates: MetadataAttachment[] = [
     { source: "screenscraper", url: ss?.imageUrl },
+    { source: "thegamesdb", url: tgdb?.imageUrl },
+    { source: "coverproject", url: coverProject?.imageUrl },
     { source: "igdb", url: igdb?.imageUrl },
     { source: "rawg", url: rawg?.imageUrl },
     { source: "steamgriddb", url: steamGrid?.imageUrl },
@@ -124,6 +169,9 @@ export function mergeGameMetadata(
 
   const allAttachments: MetadataAttachment[] = [
     ...ssAttachments,
+    ...tgdbAttachments,
+    ...coverProjectAttachments,
+    ...launchboxAttachments,
     ...igdbAttachments,
     ...rawgAttachments,
     ...steamGridAttachments,
@@ -136,8 +184,12 @@ export function mergeGameMetadata(
 
   const allAliases = Array.from(
     new Set([
+      ...(ss?.regionalTitles?.map((entry) => entry.text) || []),
+      ...(tgdb?.regionalTitles?.map((entry) => entry.text) || []),
+      ...(launchbox?.aliases || []),
       ...(igdb?.aliases || []),
       ...(ss?.aliases || []),
+      ...(tgdb?.aliases || []),
       ...(hltb?.aliases || []),
       ...(rawg?.aliases || []),
       ...(steam?.aliases || []),
@@ -160,9 +212,7 @@ export function mergeGameMetadata(
     rawg?.facts?.some((fact) => fact.kind === "platform") &&
     rawg.facts
       .filter((fact) => fact.kind === "platform")
-      .every((fact) =>
-        /\b(pc|windows|mac|linux)\b/i.test(fact.value),
-      ) &&
+      .every((fact) => /\b(pc|windows|mac|linux)\b/i.test(fact.value)) &&
     !rawg.facts.some(
       (fact) =>
         fact.kind === "platform" &&
@@ -180,6 +230,8 @@ export function mergeGameMetadata(
   const facts = dedupeFacts([
     ...igdbFacts,
     ...(ss?.facts || []),
+    ...(tgdb?.facts || []),
+    ...(launchbox?.facts || []),
     ...hltbFacts,
     ...rawgFacts,
     ...(options.includePcSources ? steam?.facts || [] : []),
@@ -512,8 +564,7 @@ export function mergeMusicMetadata(
     ...deezerAttachments,
     ...providerImageCandidates,
   ]);
-  const imageUrl =
-    discogs?.imageUrl || pickBestDisplayImageUrl(attachments);
+  const imageUrl = discogs?.imageUrl || pickBestDisplayImageUrl(attachments);
 
   const aliases = Array.from(
     new Set([

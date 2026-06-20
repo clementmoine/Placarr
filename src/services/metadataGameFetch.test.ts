@@ -13,10 +13,14 @@ const h = vi.hoisted(() => ({
   fetchFromIGDB: vi.fn(),
   fetchFromHowLongToBeat: vi.fn(),
   fetchFromSteamGridDB: vi.fn(),
+  fetchFromCoverProject: vi.fn(),
+  fetchFromLaunchBox: vi.fn(),
+  fetchFromTheGamesDB: vi.fn(),
   fetchMetadataFromPriceCharting: vi.fn(),
   fetchMetadataFromPriceChartingByName: vi.fn(),
   // Helpers de title-matching, stubbés pour un contrôle déterministe du flux.
   collectCanonicalFallbackNames: vi.fn(),
+  buildGameMetadataFallbackNames: vi.fn(),
   shouldRecheckScreenScraperMatch: vi.fn(),
   findBetterScreenScraperMatch: vi.fn(),
   isMetadataTitleAligned: vi.fn(),
@@ -30,6 +34,18 @@ vi.mock("@/services/metadataResolvers", () => ({
     ["steam", { id: "steam", resolve: h.steamResolve }],
     ["rawg", { id: "rawg", resolve: h.rawgResolve }],
     ["steamgriddb", { id: "steamgriddb", resolve: h.steamgridResolve }],
+    [
+      "coverproject",
+      { id: "coverproject", resolve: vi.fn().mockResolvedValue(null) },
+    ],
+    [
+      "launchbox",
+      { id: "launchbox", resolve: vi.fn().mockResolvedValue(null) },
+    ],
+    [
+      "thegamesdb",
+      { id: "thegamesdb", resolve: vi.fn().mockResolvedValue(null) },
+    ],
   ]),
   fetchFromScreenScraper: h.fetchFromScreenScraper,
   fetchFromRawg: h.fetchFromRawg,
@@ -53,12 +69,30 @@ vi.mock("@/services/providers/pricecharting", () => ({
 vi.mock("@/services/providers/pricecharting/fetch", () => ({
   fetchMetadataFromPriceChartingByName: h.fetchMetadataFromPriceChartingByName,
 }));
-vi.mock("@/lib/metadataTitleMatching", () => ({
-  collectCanonicalFallbackNames: h.collectCanonicalFallbackNames,
-  shouldRecheckScreenScraperMatch: h.shouldRecheckScreenScraperMatch,
-  findBetterScreenScraperMatch: h.findBetterScreenScraperMatch,
-  isMetadataTitleAligned: h.isMetadataTitleAligned,
+vi.mock("@/services/providers/coverproject", () => ({
+  fetchFromCoverProject: h.fetchFromCoverProject,
 }));
+vi.mock("@/services/providers/launchbox", () => ({
+  fetchFromLaunchBox: h.fetchFromLaunchBox,
+}));
+vi.mock("@/services/providers/thegamesdb", () => ({
+  fetchFromTheGamesDB: h.fetchFromTheGamesDB,
+}));
+vi.mock("@/lib/barcodeAlternateNames", () => ({
+  loadBarcodeAlternateNames: vi.fn().mockResolvedValue([]),
+}));
+vi.mock("@/lib/metadataTitleMatching", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/metadataTitleMatching")>();
+  return {
+    ...actual,
+    collectCanonicalFallbackNames: h.collectCanonicalFallbackNames,
+    buildGameMetadataFallbackNames: h.buildGameMetadataFallbackNames,
+    shouldRecheckScreenScraperMatch: h.shouldRecheckScreenScraperMatch,
+    findBetterScreenScraperMatch: h.findBetterScreenScraperMatch,
+    isMetadataTitleAligned: h.isMetadataTitleAligned,
+  };
+});
 
 import { fetchFromAllGameSources } from "@/services/metadataGameFetch";
 
@@ -78,10 +112,14 @@ beforeEach(() => {
   h.fetchFromIGDB.mockResolvedValue(null);
   h.fetchFromHowLongToBeat.mockResolvedValue(null);
   h.fetchFromSteamGridDB.mockResolvedValue(null);
+  h.fetchFromCoverProject.mockResolvedValue(null);
+  h.fetchFromLaunchBox.mockResolvedValue(null);
+  h.fetchFromTheGamesDB.mockResolvedValue(null);
   h.fetchMetadataFromPriceCharting.mockResolvedValue(null);
   h.fetchMetadataFromPriceChartingByName.mockResolvedValue(null);
   // Pas de noms canoniques → les boucles de fallback ne s'exécutent pas (sauf override).
   h.collectCanonicalFallbackNames.mockReturnValue([]);
+  h.buildGameMetadataFallbackNames.mockReturnValue([]);
   h.shouldRecheckScreenScraperMatch.mockReturnValue(false);
   h.findBetterScreenScraperMatch.mockResolvedValue(null);
   h.isMetadataTitleAligned.mockReturnValue(true);
@@ -143,9 +181,7 @@ describe("fetchFromAllGameSources — orchestration", () => {
     });
     h.isMetadataTitleAligned.mockImplementation(
       (_meta: { title?: string }, names: string[]) =>
-        names.some((name) =>
-          name.toLowerCase().includes("game boy player"),
-        ) ||
+        names.some((name) => name.toLowerCase().includes("game boy player")) ||
         _meta.title?.toLowerCase().includes("game boy player") ||
         false,
     );
@@ -186,7 +222,7 @@ describe("fetchFromAllGameSources — orchestration", () => {
   });
 
   it("déclenche le fallback ScreenScraper via les noms canoniques quand SS est absent", async () => {
-    h.collectCanonicalFallbackNames.mockReturnValue(["Mario Kart"]);
+    h.buildGameMetadataFallbackNames.mockReturnValue(["Mario Kart"]);
     h.igdbResolve.mockResolvedValue({ title: "Mario Kart Wii" });
     h.ssResolve.mockResolvedValue(null);
     h.fetchFromScreenScraper.mockResolvedValue({

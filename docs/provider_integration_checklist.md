@@ -1,0 +1,168 @@
+# Provider Integration Checklist — "The Ultimate Provider"
+
+A followable checklist for adding a provider so it is **fully exploited, properly
+tested, and verified against the live source** — never under-used, never a hidden
+bias. Companion to [unbiased_ranking.md](unbiased_ranking.md),
+[word_list_audit.md](word_list_audit.md),
+[provider_agnostic_architecture.md](provider_agnostic_architecture.md). Worked
+example: `src/services/providers/okkazeo/`.
+
+Golden rule: a provider may hardcode what is specific to **its own** API/format;
+it must never inject app-global logic (language, shelf type, provider privilege).
+It *declares* what it factually offers; the generic engine ranks the data.
+
+---
+
+## Phase 0 — Reconnaissance (before writing any code)
+
+Hit the real source and inventory **everything** it exposes. Under-exploitation
+starts here, by not looking.
+
+- [ ] Enumerate **every endpoint**: search (by name), search (by barcode/EAN/id),
+  detail page, sub-resources (reviews, versions/editions, images gallery).
+- [ ] Call each endpoint **live** and capture the raw response:
+  ```bash
+  UA="Mozilla/5.0 … Chrome/120 Safari/537.36"
+  curl -sS -A "$UA" -L "<endpoint>" -o /tmp/raw.html   # or .json
+  ```
+- [ ] Look for **structured data first** (most stable, richest): JSON-LD
+  (`application/ld+json`), Open Graph (`og:*`), microdata, a JSON API. Prefer it
+  over HTML scraping.
+- [ ] Inventory **every field** the response carries: title, **aliases /
+  alternate names (and their language!)**, description, image(s) **(+ type/role:
+  cover-front/back/3D/background, + language/region)**, facts (players, duration,
+  age, year, genre, designers/publishers, ratings, reviews), price/offers,
+  **canonical identifiers** (gtin/EAN/ISBN, the source's own id, external ids:
+  imdb/tmdb/bgg…), language/region markers.
+- [ ] Note which fields are **per-language** (versions, regional titles, localized
+  descriptions) — these feed the per-language buckets (unbiased_ranking §7).
+- [ ] Confirm the **barcode→entry mapping** works and how to **verify** it
+  (gtin13 on the page, id in the URL).
+
+Deliverable: a field inventory. Anything on it that you don't map later is
+under-exploitation — make it a conscious decision, not an omission.
+
+---
+
+## Phase 1 — Declare capabilities (factual, per type)
+
+In the registry, the provider announces only what it **factually** offers.
+
+- [ ] `info.types`: the shelf types it serves (`["boardgames"]`, …).
+- [ ] `info.capabilities`: every field it can supply — `identify`, `description`,
+  `cover`, `price`, `players`, `duration`, `ageRating`, `releaseDate`, `rating`,
+  `people`, … Declare **all** of them (capability coverage drives queries).
+- [ ] Mark `canonical` / `trustedRetailer` **truthfully** (is its title/data
+  authoritative, or a marketplace listing?). This is a property of the *data*,
+  not a privilege.
+- [ ] `defaultLanguage` (and, where relevant, that it provides canonical names /
+  covers for specific languages). FR/EN/JA/neutral.
+- [ ] Do **not** add a per-provider merge weight as a privilege (see
+  unbiased_ranking §2 — weights are being phased out for data-quality+consensus).
+
+---
+
+## Phase 2 — Implement the module (`providers/<id>/`)
+
+Map **every** inventoried field. Tag language/region/role on everything.
+
+- [ ] `fetch.ts` — pure parsers (no app logic), provider-internal hardcode OK:
+  - [ ] search (name + barcode), detail parse, sub-resources.
+  - [ ] parse structured data (JSON-LD/JSON) first; HTML only for what's missing.
+  - [ ] extract the **full field inventory** from Phase 0 — incl. **aliases with
+    language**, regional titles, all image roles, all facts, price, external ids.
+  - [ ] **barcode confirmation**: verify gtin/id equals the scanned barcode;
+    reject on explicit mismatch (never confidently wrong).
+- [ ] `resolver.ts` — map to `MetadataResult`:
+  - [ ] `title`, `description`, `imageUrl`, `barcode`, `releaseDate`, `authors`,
+    `publishers`, `externalIds`.
+  - [ ] `regionalTitles: [{region, text}]` for **every** localized name → feeds
+    `pickBestRegionalTitle`.
+  - [ ] `aliases` for **every** alternate name → feeds language-agnostic search.
+  - [ ] `attachments` with `role` (cover-front, background…) **and** language/region
+    → feeds `attachmentDisplayScore`.
+  - [ ] `facts[]` with `kind/value/source` → feeds `applyConsensus`.
+  - [ ] a title/name confidence guard (barcode-confirmed OR close title match).
+- [ ] `index.ts` — the `ProviderModule`:
+  - [ ] `evidence` (label, sourceWeight, canonical/trustedRetailer).
+  - [ ] `createMetadataAdapter` (parameter-less, resolves `{name, barcode}`).
+  - [ ] `healthCheck` (`createMetadataHealthCheck` + `pingUrl`) — read any token
+    **lazily at call time**, never eagerly at import (see the BGG bug).
+  - [ ] `testHandlers` (metadata + metadata-barcode).
+  - [ ] `buildBarcodeTasks` gated by `BARCODE_TYPES` — **include `"generic"`** so
+    typeless home-page scans get this anchor (parity).
+  - [ ] `mappingProbe` + `runMappingProbe` (`metadataProbe`).
+
+---
+
+## Phase 3 — Wire into the generic engine (by type, never by name)
+
+- [ ] Register: `PROVIDER_MODULES` + registry extensions (language, capability).
+- [ ] If barcode-keyed: add the field to `BarcodeLookupPayload` +
+  `createEmptyBarcodeLookupPayload`; read it in the relevant `runBarcodeLookups`
+  branches **and the generic branch** (parity); feed it into the type bucket(s)
+  in `compileAllBarcodeTypeResults`.
+- [ ] Confirm the engine reaches it via `providersForType` / `capabilityCoverage`
+  — **no `providerId === "<id>"` branch anywhere**.
+
+---
+
+## Phase 4 — Tests
+
+- [ ] **Unit** parser tests with a **real captured fixture** (from Phase 0):
+  structured-data parse, field extraction, **gtin/barcode confirmation guard**,
+  title-match guard, search-hit parse.
+- [ ] Update the registry-guard tests that enumerate providers
+  (`providerBarcode.test.ts`, `providerBootstrap.test.ts`,
+  `providerMappingAudit.test.ts`).
+- [ ] `npx tsc --noEmit` clean, `npx vitest run` green.
+- [ ] (When source is healthy) record a golden-master fixture for the
+  barcode→item regression corpus (one case per type — see TESTING).
+
+---
+
+## Phase 5 — Verify against the live source (catch what you missed)
+
+Don't trust the fixture alone — confront the **live** source and your extraction.
+
+- [ ] One-off live call of the resolver and **every** webservice:
+  ```ts
+  process.loadEnvFile(".env");
+  const { create<X>Resolver } = await import("@/services/providers/<id>/resolver");
+  console.log(await create<X>Resolver()("", "<barcode>"));
+  ```
+- [ ] **Diff extracted vs raw**: re-open the raw Phase-0 capture and check, field
+  by field, that everything present is now mapped. Anything still on the page but
+  not in `MetadataResult` = under-exploitation → fix or consciously skip.
+- [ ] Health check is **green** (`scripts/providerHealth.ts` or admin).
+- [ ] Mapping probe reports mapped vs unused keys — **unused keys are leads**, not
+  noise.
+
+---
+
+## Phase 6 — Exploitation completeness audit ("never under-exploited")
+
+Final pass, the point of this whole checklist:
+
+- [ ] Every Phase-0 field is mapped, or skipped on purpose with a reason.
+- [ ] **All aliases retained** (per language) — search recall, not just display.
+- [ ] **All localized titles** emitted as `regionalTitles` (not collapsed to one).
+- [ ] **All image roles/languages** tagged (not just one cover).
+- [ ] **All facts** emitted (they feed consensus even if not shown yet).
+- [ ] **External ids** emitted (enable cross-provider propagation).
+- [ ] Queried in **every** path it's relevant to (its type **and** the generic
+  typeless scan).
+- [ ] **Resilience**: if the provider breaks/times out, the engine degrades to the
+  next best *datum* — never hard-depends on this provider.
+
+---
+
+## Anti-checklist (reject the PR if any is true)
+
+- [ ] A `providerId === "<id>"` branch in core fetch/merge/score.
+- [ ] A per-provider merge weight used as a privilege.
+- [ ] App-global word lists added for this provider (language/condition/noise) —
+  use consensus / corpus-IDF / structured fields instead (word_list_audit).
+- [ ] A title collapsed to one language, or aliases dropped.
+- [ ] A token/secret read at import time instead of call time.
+- [ ] Barcode trusted without a gtin/id confirmation.

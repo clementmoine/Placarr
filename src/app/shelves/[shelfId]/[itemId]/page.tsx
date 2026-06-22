@@ -56,11 +56,11 @@ import {
   getItemPrices,
   refreshItemMetadata,
 } from "@/lib/api/items";
+import { getHeroImage, getGalleryImages } from "@/lib/itemMedia";
 import {
-  getHeroImage,
-  getGalleryImages,
-  getMediaTypeLabel,
-} from "@/lib/itemMedia";
+  getAttachmentGalleryLabels,
+  type AttachmentDisplayLocale,
+} from "@/lib/attachmentDisplayLabels";
 import { isMissingDiscogsGallery } from "@/lib/metadataDiscogs";
 
 import type { ShelfWithItems } from "@/types/shelves";
@@ -81,17 +81,14 @@ import {
 } from "@/lib/itemQueryCache";
 import { getEstimatedItemValueCents } from "@/lib/itemValue";
 
-type DetailFact = {
-  kind: string;
-  label: string;
-  value: string;
-  url?: string;
-  source?: string;
-  sourceCount?: number;
-  sourceNames?: string[];
-  sourceMeta?: string;
-  priority?: number;
-};
+import {
+  type DetailFact,
+  consolidatePlayerFacts,
+  consolidateGeneralFacts,
+  parsePlayerFactRange,
+  parseFactSourceList,
+  formatFactSource,
+} from "@/lib/playerFacts";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
@@ -242,61 +239,7 @@ function formatFactValue(fact: DetailFact) {
   return fact.value;
 }
 
-function formatFactSource(source: string) {
-  switch (source.toLowerCase()) {
-    case "achatmoinscher":
-      return "AchatMoinsCher";
-    case "chasseauxlivres":
-      return "Chasse Aux Livres";
-    case "steam":
-      return "Steam";
-    case "igdb":
-      return "IGDB";
-    case "rawg":
-      return "RAWG";
-    case "steamgriddb":
-      return "SteamGridDB";
-    case "tmdb":
-      return "TMDB";
-    case "omdb":
-      return "OMDb";
-    case "bgg":
-      return "BoardGameGeek";
-    case "ledenicheur":
-      return "LeDénicheur";
-    case "pricecharting":
-      return "PriceCharting";
-    case "screenscraper":
-      return "ScreenScraper";
-    case "how long to beat":
-      return "How Long to Beat";
-    case "consensus":
-      return "Consensus";
-    case "philibert":
-      return "Philibert";
-    case "monsieurde":
-      return "Monsieur de";
-    case "ludifolie":
-      return "Ludifolie";
-    case "bcdjeux":
-      return "BCD Jeux";
-    case "lepassetemps":
-      return "Le Passe-Temps";
-    default:
-      return source;
-  }
-}
 
-function parseFactSourceList(source: string) {
-  return Array.from(
-    new Set(
-      source
-        .split(/\s*,\s*|\s*\+\s*/)
-        .map((part) => part.trim())
-        .filter(Boolean),
-    ),
-  );
-}
 
 function formatFactSourceEntry(source: string) {
   const trimmed = source.trim();
@@ -434,10 +377,12 @@ function isDetailTableFact(fact: DetailFact) {
   return [
     "artist",
     "category",
+    "cooperative",
     "external-link",
     "family",
     "genre",
     "mechanic",
+    "modes",
     "platform",
     "recommended-players",
     "store",
@@ -446,7 +391,7 @@ function isDetailTableFact(fact: DetailFact) {
 }
 
 function isTagLikeDetailFact(fact: DetailFact) {
-  return ["tag", "category", "mechanic", "family"].includes(fact.kind);
+  return ["tag", "category", "mechanic", "family", "modes"].includes(fact.kind);
 }
 
 function splitTagFactValue(value: string) {
@@ -796,6 +741,7 @@ function formatPublicValue(fact: DetailFact, t: TranslateFn): string | null {
 function localizeDisplayFact(
   fact: DetailFact,
   t: TranslateFn,
+  options: { compactVideoGamePlayers?: boolean } = {},
 ): DetailFact | null {
   if (fact.kind === "age-rating") {
     const value = formatPublicValue(fact, t);
@@ -808,14 +754,102 @@ function localizeDisplayFact(
     };
   }
 
+  if (fact.kind === "players") {
+    let value = fact.value;
+    if (value.includes("|")) {
+      const parts = value.split("|");
+      const orSeparator = ` ${t("items.info.or") || "ou"} `;
+
+      const allMax = parts.every((p) => p.endsWith(" max"));
+      if (allMax) {
+        const numbers = parts
+          .map((p) => Number(p.slice(0, -4)))
+          .sort((a, b) => a - b);
+        const countString = numbers.join(orSeparator);
+        return {
+          ...fact,
+          label: t("items.info.players"),
+          value: t("items.info.upToPlayers", { count: countString }),
+        };
+      }
+
+      const allRanges = parts.every((p) => p.includes("-"));
+      if (allRanges) {
+        const ranges = parts.map((p) => p.split("-").map(Number));
+        const firstMin = ranges[0][0];
+        const sameMin = ranges.every((r) => r[0] === firstMin);
+        if (sameMin) {
+          const maxes = ranges.map((r) => r[1]).sort((a, b) => a - b);
+          const maxString = maxes.join(orSeparator);
+          return {
+            ...fact,
+            label: t("items.info.players"),
+            value: t("items.info.playersRange", { min: firstMin, max: maxString }),
+          };
+        }
+      }
+
+      const localizedParts = parts.map((part) => {
+        let partValue = part;
+        let partLabel = "Players";
+        if (part.endsWith(" max")) {
+          partValue = part.slice(0, -4);
+          partLabel = "Max players";
+        }
+        const tempFact = { ...fact, value: partValue, label: partLabel };
+        return localizeDisplayFact(tempFact, t, options)?.value || partValue;
+      });
+
+      return {
+        ...fact,
+        label: t("items.info.players"),
+        value: localizedParts.join(orSeparator),
+      };
+    }
+
+    const range = parsePlayerFactRange(fact);
+    if (range) {
+      if (range.maxOnly || (options.compactVideoGamePlayers && range.min === 1 && range.max > 1)) {
+        value = t("items.info.upToPlayers", { count: range.max });
+      } else if (range.min === 1 && range.max === 1) {
+        value = t("items.info.solo");
+      } else if (range.min === range.max) {
+        value = t("items.info.multiplePlayers", { count: range.min });
+      } else if (range.min !== null) {
+        value = t("items.info.playersRange", { min: range.min, max: range.max });
+      }
+    }
+    return {
+      ...fact,
+      label: t("items.info.players"),
+      value,
+    };
+  }
+
   const labelByKind: Record<string, string> = {
     "completion-time": t("items.info.completion"),
+    cooperative: t("items.info.coop"),
     duration: t("items.info.duration"),
+    modes: t("items.info.gameModes"),
     pages: t("items.info.pages"),
-    players: t("items.info.players"),
     playtime: t("items.info.playtime"),
     tracks: t("items.info.tracks"),
   };
+
+  if (fact.value.includes("|")) {
+    const parts = fact.value.split("|");
+    const orSeparator = ` ${t("items.info.or") || "ou"} `;
+    const localizedParts = parts.map((part) => {
+      const tempFact = { ...fact, value: part };
+      const localized = localizeDisplayFact(tempFact, t, options);
+      return localized ? localized.value : part;
+    });
+    return {
+      ...fact,
+      label: labelByKind[fact.kind] || fact.label,
+      value: localizedParts.join(orSeparator),
+    };
+  }
 
   return {
     ...fact,
@@ -1279,9 +1313,29 @@ export default function ItemDetailsPage() {
 
   const galleryImages = useMemo(() => {
     if (!item) return [];
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
     const allImages = getGalleryImages(item);
-    return allImages.filter((img) => img.url !== coverImage).slice(0, 24);
-  }, [item, coverImage]);
+    return allImages
+      .filter((img) => img.url !== coverImage)
+      .slice(0, 24)
+      .map((img) => {
+        const gallery = getAttachmentGalleryLabels(
+          {
+            type: img.type,
+            role: img.role,
+            title: img.title,
+            source: img.source,
+          },
+          displayLocale,
+        );
+        return {
+          ...img,
+          galleryProvider: gallery.provider,
+          galleryDetail: gallery.detail,
+        };
+      });
+  }, [item, coverImage, locale]);
 
   const otherItems = useMemo(() => {
     if (!shelf?.items) return [];
@@ -1441,19 +1495,27 @@ export default function ItemDetailsPage() {
       });
     }
 
-    const normalizedFacts = consolidateAgeRatingFacts(
-      normalizeDisplayFacts(sourceFacts, {
-        includeEsrbAgeRatings:
-          shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
-        includePcFacts:
-          shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
-      }),
+    const normalizedFacts = consolidateGeneralFacts(
+      consolidatePlayerFacts(
+        consolidateAgeRatingFacts(
+          normalizeDisplayFacts(sourceFacts, {
+            includeEsrbAgeRatings:
+              shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
+            includePcFacts:
+              shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
+          }),
+        ),
+      ),
     );
     const averageRating = buildAverageRatingFact(normalizedFacts, t, locale);
     facts.push(
       ...normalizedFacts
         .filter((fact) => fact.kind !== "rating")
-        .map((fact) => localizeDisplayFact(fact, t))
+        .map((fact) =>
+          localizeDisplayFact(fact, t, {
+            compactVideoGamePlayers: shelf?.type === "games",
+          }),
+        )
         .filter((fact): fact is DetailFact => Boolean(fact)),
     );
     if (averageRating) {
@@ -1998,19 +2060,21 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2 flex gap-1 items-center z-10 select-none">
-                      <Badge
-                        variant="secondary"
-                        className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-zinc-100 uppercase px-1.5 py-0.5 rounded"
-                      >
-                        {getMediaTypeLabel(img.type)}
-                      </Badge>
-                      {img.source && (
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10 select-none">
+                      {img.galleryProvider && (
                         <Badge
                           variant="secondary"
                           className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded"
                         >
-                          {img.source}
+                          {img.galleryProvider}
+                        </Badge>
+                      )}
+                      {img.galleryDetail && (
+                        <Badge
+                          variant="secondary"
+                          className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-zinc-100 uppercase px-1.5 py-0.5 rounded"
+                        >
+                          {img.galleryDetail}
                         </Badge>
                       )}
                     </div>

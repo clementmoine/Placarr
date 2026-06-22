@@ -58,22 +58,7 @@ export const fetchFromOMDb = createOMDbResolver();
 
 export const fetchFromDeezer = createDeezerResolver();
 
-export const metadataProviderResolverMap = buildMetadataAdapterMap({
-  fetchFromScreenScraper,
-  fetchFromRawg,
-  fetchFromDeezer,
-  fetchFromBGG,
-  fetchFromOpenLibrary,
-  fetchFromGoogleBooks,
-  fetchFromWikidata,
-  fetchFromPhilibert,
-  fetchFromMonsieurde,
-  fetchFromLudifolie,
-  fetchFromBcdjeux,
-  fetchFromLepassetemps,
-  fetchFromTMDB,
-  fetchFromOMDb,
-});
+export const metadataProviderResolverMap = buildMetadataAdapterMap();
 
 export function getMetadataProviderAdapter(
   id: string,

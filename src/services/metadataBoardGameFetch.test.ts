@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 
 const { bggResolve, wikidataResolve, philibertResolve, scraperFetch } =
   vi.hoisted(() => ({
@@ -12,10 +13,39 @@ const { bggResolve, wikidataResolve, philibertResolve, scraperFetch } =
   }));
 
 vi.mock("@/services/metadataResolvers", () => ({
-  metadataProviderResolverMap: new Map([
+  metadataProviderResolverMap: new Map<
+    string,
+    { id: string; resolve: (ctx: MetadataAdapterContext) => unknown }
+  >([
     ["boardgamegeek", { id: "boardgamegeek", resolve: bggResolve }],
     ["wikidata", { id: "wikidata", resolve: wikidataResolve }],
     ["philibert", { id: "philibert", resolve: philibertResolve }],
+    [
+      "achatmoinscher",
+      {
+        id: "achatmoinscher",
+        resolve: async ({ barcode }) => {
+          if (!barcode) return null;
+          const products = await scraperFetch(barcode);
+          const product = products[0];
+          if (!product?.name) return null;
+          return {
+            title: product.name,
+            barcode,
+            imageUrl: product.coverUrl || undefined,
+            attachments: product.coverUrl
+              ? [
+                  {
+                    type: "cover",
+                    url: product.coverUrl,
+                    source: "achatmoinscher",
+                  },
+                ]
+              : undefined,
+          };
+        },
+      },
+    ],
   ]),
 }));
 

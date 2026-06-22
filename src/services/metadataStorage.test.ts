@@ -4,6 +4,7 @@ import type { AttachmentType } from "@prisma/client";
 import {
   dedupeByPerceptualHash,
   hammingDistance,
+  isDegenerateFlatImage,
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
 } from "./metadataStorage";
@@ -119,5 +120,29 @@ describe("dedupeByPerceptualHash", () => {
   it("conserve les attachments sans empreinte (jamais de perte par défaut)", () => {
     const ranked = [att("/uploads/a.jpg", "a"), att("/uploads/b.jpg", "b")];
     expect(dedupeByPerceptualHash(ranked, () => null)).toHaveLength(2);
+  });
+});
+
+describe("isDegenerateFlatImage", () => {
+  it("rejette une image unicolore (entropie et écart-type nuls)", () => {
+    // Cas réel : placeholder vert plein renvoyé par ScreenScraper.
+    expect(isDegenerateFlatImage({ entropy: 0, maxColorStdev: 0 })).toBe(true);
+  });
+
+  it("rejette un placeholder quasi uniforme", () => {
+    expect(isDegenerateFlatImage({ entropy: 0.4, maxColorStdev: 3 })).toBe(true);
+  });
+
+  it("conserve une vraie jaquette (entropie et contraste élevés)", () => {
+    expect(isDegenerateFlatImage({ entropy: 6.2, maxColorStdev: 70 })).toBe(
+      false,
+    );
+  });
+
+  it("conserve une image à faible entropie mais avec du contraste (logo)", () => {
+    // Exige les DEUX conditions : un visuel contrasté n'est jamais supprimé.
+    expect(isDegenerateFlatImage({ entropy: 0.5, maxColorStdev: 40 })).toBe(
+      false,
+    );
   });
 });

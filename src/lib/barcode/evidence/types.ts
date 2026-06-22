@@ -34,6 +34,10 @@ export interface ProductEvidence {
   priority: number;
   sourceWeight: number;
   parsed: ParsedProductName;
+  // Set when a strong independent marketplace consensus contradicts this
+  // canonical barcode match: it stays an anchor (so it survives as a clean
+  // alternate) but its cluster confidence is capped so the consensus leads.
+  contradictedByConsensus?: boolean;
 }
 
 export interface MatchEvidenceSummary {
@@ -61,6 +65,8 @@ export interface CompiledResult {
   provider: string;
   rawNames: string[];
   cleanName: string;
+  displayName: string;
+  edition: string | null;
   suggestions: string[];
   matches: ResolvedMatch[];
   platformKey?: string | null;

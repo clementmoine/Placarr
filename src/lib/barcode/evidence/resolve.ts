@@ -256,6 +256,11 @@ export function filterDisplayEvidenceForSuggestions(
 // source canonique) : au-dessus, l'UI le présenterait comme certain.
 const LISTING_ONLY_CONFIDENCE_CAP = 0.45;
 
+// Plafond pour une source canonique contredite par un fort consensus marchand
+// indépendant (probable mauvais mapping code-barres → on la garde en
+// alternative, mais sous le consensus qui mène).
+const CONTRADICTED_CANONICAL_CONFIDENCE_CAP = 0.4;
+
 function scoreEvidenceCluster(
   evidence: ProductEvidence[],
 ): MatchEvidenceSummary {
@@ -305,11 +310,17 @@ function scoreEvidenceCluster(
 
   const hasAnchorSignals =
     canonicalProviders.length > 0 || trustedRetailerProviders.length > 0;
-  const finalConfidence = hasAnchorSignals
-    ? confidence
-    : Math.min(confidence, LISTING_ONLY_CONFIDENCE_CAP);
+  const isContradictedCanonical = evidence.some(
+    (e) => e.contradictedByConsensus,
+  );
+  const finalConfidence = isContradictedCanonical
+    ? Math.min(confidence, CONTRADICTED_CANONICAL_CONFIDENCE_CAP)
+    : hasAnchorSignals
+      ? confidence
+      : Math.min(confidence, LISTING_ONLY_CONFIDENCE_CAP);
 
   const reasons: string[] = [];
+  if (isContradictedCanonical) reasons.push("contradicted-by-consensus");
   if (canonicalProviders.length > 0) reasons.push("canonical-source");
   if (trustedRetailerProviders.length > 0) {
     reasons.push("trusted-retailer-source");
@@ -419,6 +430,17 @@ export function resolveEvidenceToMatches(
       top.confidence < 0.82 && top.confidence - match.confidence <= 0.18;
     const hasNoDominantWinner =
       top.confidence < 0.62 && match.confidence >= 0.28;
-    return isStrongAmbiguity || isCloseToTop || hasNoDominantWinner;
+    // When the leader carries no canonical evidence, a marketplace consensus
+    // overrode a contradicting canonical barcode match. Keep that canonical
+    // match as a clean, least-prioritised alternate so the user can still pick
+    // the item the canonical strictly identified by barcode.
+    const isContradictedCanonicalAlternate =
+      top.evidence.canonicalCount === 0 && match.evidence.canonicalCount > 0;
+    return (
+      isStrongAmbiguity ||
+      isCloseToTop ||
+      hasNoDominantWinner ||
+      isContradictedCanonicalAlternate
+    );
   });
 }

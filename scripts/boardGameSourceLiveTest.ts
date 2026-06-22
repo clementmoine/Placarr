@@ -7,7 +7,7 @@ import { createPhilibertResolver } from "@/services/providers/philibert/resolver
 import { createWikidataResolver } from "@/services/providers/wikidata/resolver";
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
 import { formatScore } from "@/services/metadataSearchUtils";
-import { mergeBoardGameMetadata } from "@/services/metadataMerge";
+import { mergeMetadata } from "@/services/metadataMerge";
 import axios from "axios";
 
 const SAMPLE = { name: "Catan", barcode: "3558380126133" };
@@ -74,11 +74,11 @@ async function main() {
     cover: Boolean(amc[0]?.coverUrl),
   });
 
-  const merged = mergeBoardGameMetadata(
-    bgg,
-    wikidata,
-    philibert ? [philibert] : [],
-  );
+  const merged = mergeMetadata("boardgames", [
+    ...(bgg ? [{ providerId: "boardgamegeek", metadata: bgg }] : []),
+    ...(wikidata ? [{ providerId: "wikidata", metadata: wikidata }] : []),
+    ...(philibert ? [{ providerId: "philibert", metadata: philibert }] : []),
+  ]);
   console.log("Merged:", {
     title: merged.title,
     descLen: merged.description?.length,

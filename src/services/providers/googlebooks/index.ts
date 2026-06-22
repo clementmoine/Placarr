@@ -82,11 +82,10 @@ export const googlebooksModule: ProviderModule = {
       };
     },
   ),
-  createMetadataAdapter(deps) {
-    const fetchFromGoogleBooks = deps.fetchFromGoogleBooks as Resolver;
+  createMetadataAdapter() {
     return {
       id: "googlebooks",
-      async resolve({ name, barcode }) {
+      async resolve({ name, barcode }: any) {
         return fetchFromGoogleBooks(name, barcode);
       },
     } satisfies MetadataProviderAdapter;

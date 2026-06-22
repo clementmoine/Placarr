@@ -15,6 +15,7 @@ import { omdbModule } from "@/services/providers/omdb";
 import { googlebooksModule } from "@/services/providers/googlebooks";
 import { openlibraryModule } from "@/services/providers/openlibrary";
 import { philibertModule } from "@/services/providers/philibert";
+import { okkazeoModule } from "@/services/providers/okkazeo";
 import { PRESTASHOP_RETAILER_MODULES } from "@/services/providers/prestashop";
 import { wikidataModule } from "@/services/providers/wikidata";
 import { picclickModule } from "@/services/providers/picclick";
@@ -63,6 +64,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   bggModule,
   wikidataModule,
   philibertModule,
+  okkazeoModule,
   ...PRESTASHOP_RETAILER_MODULES,
   chasseauxlivresModule,
   achatmoinscherModule,
@@ -73,9 +75,52 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   scandexModule,
 ];
 
-export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map(
-  (module) => module.info,
-);
+const PROVIDER_METADATA_EXTENSIONS: Record<
+  string,
+  { weight: number; defaultLanguage?: "fr" | "en" | "unknown"; isRealBoxCover?: boolean }
+> = {
+  screenscraper: { weight: 0.9, defaultLanguage: "fr", isRealBoxCover: true },
+  igdb: { weight: 0.85, defaultLanguage: "en" },
+  thegamesdb: { weight: 0.75, defaultLanguage: "en", isRealBoxCover: true },
+  launchbox: { weight: 0.7, defaultLanguage: "en", isRealBoxCover: true },
+  coverproject: { weight: 0.8, isRealBoxCover: true },
+  howlongtobeat: { weight: 0.6 },
+  steam: { weight: 0.8, defaultLanguage: "en" },
+  rawg: { weight: 0.65, defaultLanguage: "en" },
+  steamgriddb: { weight: 0.5 },
+  pricecharting: { weight: 0.7 },
+  tmdb: { weight: 0.85, defaultLanguage: "fr" },
+  omdb: { weight: 0.7, defaultLanguage: "en", isSecondary: true } as any,
+  musicbrainz: { weight: 0.8 },
+  discogs: { weight: 0.75 },
+  deezer: { weight: 0.7 },
+  openlibrary: { weight: 0.85, defaultLanguage: "en" },
+  googlebooks: { weight: 0.8, defaultLanguage: "en" },
+  boardgamegeek: { weight: 0.9, defaultLanguage: "en", isRealBoxCover: true },
+  wikidata: { weight: 0.6 },
+  philibert: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
+  okkazeo: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
+  chasseauxlivres: { weight: 0.8, defaultLanguage: "fr" },
+  achatmoinscher: { weight: 0.5, defaultLanguage: "fr", isSecondary: true } as any,
+  ledenicheur: { weight: 0.7, defaultLanguage: "fr" },
+  apriloshop: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
+  freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
+  picclick: { weight: 0.5 },
+  scandex: { weight: 0.5 },
+};
+
+export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((module) => {
+  const ext = PROVIDER_METADATA_EXTENSIONS[module.info.id] || {};
+  return {
+    ...module.info,
+    weight: module.info.weight ?? ext.weight ?? 0.5,
+    defaultLanguage: module.info.defaultLanguage ?? ext.defaultLanguage ?? "unknown",
+    isRealBoxCover: module.info.isRealBoxCover ?? ext.isRealBoxCover ?? false,
+    isSecondary: module.info.isSecondary ?? (ext as any).isSecondary ?? false,
+  };
+});
+
+
 
 export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((module) => module.info.id === id);

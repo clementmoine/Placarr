@@ -12,7 +12,7 @@ export const howlongtobeatModule: ProviderModule = {
     id: "howlongtobeat",
     label: "HowLongToBeat",
     types: ["games"],
-    capabilities: ["cover", "duration"],
+    capabilities: ["identify", "cover", "duration"],
     auth: { kind: "scrape" },
     canonical: true,
     notes: "Durées de jeu (time-to-beat) + jaquette quand disponible.",

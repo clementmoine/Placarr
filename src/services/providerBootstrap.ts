@@ -50,7 +50,7 @@ export type MetadataAdapterDeps = {
 };
 
 export function createMetadataAdapters(
-  deps: MetadataAdapterDeps,
+  deps?: MetadataAdapterDeps,
 ): MetadataProviderAdapter[] {
   return PROVIDER_MODULES.flatMap((module) => {
     if (!module.createMetadataAdapter) return [];
@@ -62,7 +62,7 @@ export function createMetadataAdapters(
 }
 
 export function buildMetadataAdapterMap(
-  deps: MetadataAdapterDeps,
+  deps?: MetadataAdapterDeps,
 ): Map<string, MetadataProviderAdapter> {
   return new Map(
     createMetadataAdapters(deps).map((adapter) => [
@@ -74,7 +74,7 @@ export function buildMetadataAdapterMap(
 
 export function getMetadataProviderAdapterFromDeps(
   id: string,
-  deps: MetadataAdapterDeps,
+  deps?: MetadataAdapterDeps,
 ): MetadataProviderAdapter | undefined {
   return buildMetadataAdapterMap(deps).get(id);
 }

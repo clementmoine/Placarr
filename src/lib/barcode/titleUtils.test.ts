@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   areLikelySameProduct,
+  BARCODE_CACHE_VERSION,
   cleanTitleForDisplay,
   filterPlatformRedundancies,
   isListingDiscardable,
@@ -108,7 +109,7 @@ describe("areLikelySameProduct", () => {
 describe("versionProvider / isCanonicalProvider", () => {
   it("versionne les providers de cache", () => {
     expect(versionProvider("ScreenScraper")).toBe(
-      "ScreenScraper+canonical-v23",
+      `ScreenScraper+${BARCODE_CACHE_VERSION}`,
     );
   });
 

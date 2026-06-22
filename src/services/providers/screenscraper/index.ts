@@ -48,6 +48,7 @@ export const screenscraperModule: ProviderModule = {
       "screenshots",
       "releaseDate",
       "people",
+      "players",
     ],
     auth: {
       kind: "key",
@@ -63,11 +64,10 @@ export const screenscraperModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
-  createMetadataAdapter(deps) {
-    const fetchFromScreenScraper = deps.fetchFromScreenScraper as Resolver;
+  createMetadataAdapter() {
     return {
       id: "screenscraper",
-      async resolve({ name, barcode, platform, isBackground }) {
+      async resolve({ name, barcode, platform, isBackground }: any) {
         return fetchFromScreenScraper(name, barcode, platform, {
           isBackground,
         });

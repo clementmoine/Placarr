@@ -18,6 +18,34 @@ describe("localePreference", () => {
     expect(regionRank("us")).toBeLessThan(regionRank("jp"));
   });
 
+  it("maps provider region labels to canonical locale ranks", () => {
+    expect(regionRank("europe")).toBe(regionRank("eu"));
+    expect(regionRank("eur")).toBe(regionRank("eu"));
+    expect(regionRank("France")).toBe(regionRank("fr"));
+    expect(regionRank("world")).toBe(regionRank("wor"));
+    expect(parseRegionFromRole("europe")).toBe("eu");
+    expect(parseRegionFromRole("Europe")).toBe("eu");
+    expect(localeBonusForAttachmentRole("europe")).toBe(
+      localeBonusForAttachmentRole("eu"),
+    );
+  });
+
+  it("picks LaunchBox Europe titles at the same priority as EU", () => {
+    expect(
+      pickBestRegionalTitle([
+        {
+          title: "Tom Clancy's Ghost Recon 2",
+          regionalTitles: [
+            { region: "World", text: "Tom Clancy's Ghost Recon 2" },
+            { region: "Europe", text: "Tom Clancy's Ghost Recon 2" },
+            { region: "us", text: "Tom Clancy's Ghost Recon 2" },
+          ],
+        },
+      ]),
+    ).toBe("Tom Clancy's Ghost Recon 2");
+    expect(regionRank("Europe")).toBe(regionRank("eu"));
+  });
+
   it("picks the best regional title from provider payloads", () => {
     expect(
       pickBestRegionalTitle([

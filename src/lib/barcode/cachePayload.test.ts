@@ -9,12 +9,13 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { buildCachedBarcodePayload } from "@/lib/barcode/cachePayload";
+import { BARCODE_CACHE_VERSION } from "@/lib/barcode/titleUtils";
 
 function makeCachedRecord(shelfType: string) {
   return {
     id: 1,
     barcode: "8717418223908",
-    provider: "AchatMoinsCher-canonical-v23",
+    provider: `AchatMoinsCher-${BARCODE_CACHE_VERSION}`,
     shelfType,
     platformKey: null,
     createdAt: new Date(),

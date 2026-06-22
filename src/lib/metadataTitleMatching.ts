@@ -73,11 +73,29 @@ export function buildGameMetadataFallbackNames(
   sources: Array<MetadataResult | null | undefined>,
   extraNames: string[] = [],
 ): string[] {
-  return orderFallbackNamesForLocale(requestedName, [
+  // Title-derived and provider-canonical names are more reliable than noisy
+  // marketplace barcode listings (e.g. "... Nintendo Wii FR PAL TBE Complet
+  // Testé"). Order them first so high-value retries — including the base title
+  // produced by buildRequestedTitleFallbackVariants — survive the per-provider
+  // fallback `limit` instead of being crowded out by listing chatter.
+  const canonical = orderFallbackNamesForLocale(requestedName, [
     ...collectCanonicalFallbackNames(requestedName, sources),
-    ...barcodeAlternateNames,
     ...extraNames,
   ]);
+  const barcode = orderFallbackNamesForLocale(
+    requestedName,
+    barcodeAlternateNames,
+  );
+
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const name of [...canonical, ...barcode]) {
+    const key = cleanSearchQuery(name).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    ordered.push(name);
+  }
+  return ordered;
 }
 
 export function buildRequestedTitleFallbackVariants(
@@ -128,7 +146,42 @@ export function buildRequestedTitleFallbackVariants(
     requestedName.replace(/\b4\b/g, "IV"),
   );
 
+  const baseTitle = extractBaseTitleVariant(requestedName);
+  if (baseTitle) variants.push(baseTitle);
+
   return variants;
+}
+
+/**
+ * Edition/reprint qualifiers that describe a *variant* of a game rather than a
+ * distinct title. Kept deliberately narrow (strong markers only) so a real
+ * subtitle is never mistaken for an edition.
+ */
+const EDITION_QUALIFIER =
+  /\b([eé]ditions?|collector'?s?|limit[eé]es?|limited|deluxe|premium|goty|game of the year|remaster(ed)?|definitive|anniversary|greatest hits|platinum|essentials?|nintendo selects|player'?s? choice)\b/i;
+
+/**
+ * Strips a *trailing* edition qualifier so providers that only index the base
+ * game can still match:
+ *   "Monopoly - Editions Classique Et Monde"            -> "Monopoly"
+ *   "The Legend of Zelda: Skyward Sword - Edition Lim." -> "The Legend of Zelda: Skyward Sword"
+ *
+ * Splits on the LAST top-level separator (a colon or a spaced dash) so a
+ * meaningful subtitle ("Skyward Sword") is preserved, and only when the trailing
+ * part is an edition qualifier — never a distinct subtitle. Used as a
+ * last-resort fallback name, after the full title and aliases have failed.
+ */
+export function extractBaseTitleVariant(requestedName: string): string | null {
+  const trimmed = requestedName.trim();
+  // Greedy leading group => the separator captured is the last one in the title.
+  const match = trimmed.match(/^(.+)(?::\s+|\s+[-–—]\s+)(\S.*)$/);
+  if (!match) return null;
+  const base = match[1].trim();
+  const trailing = match[2].trim();
+  if (base.length < 3) return null;
+  if (base.toLowerCase() === trimmed.toLowerCase()) return null;
+  if (!EDITION_QUALIFIER.test(trailing)) return null;
+  return base;
 }
 
 export { metadataTitleSimilarity } from "@/lib/metadataTitleSimilarity";
@@ -171,6 +224,40 @@ export function isMetadataTitleAligned(
 ): boolean {
   if (!result.title) return true;
   return screenScraperMatchScore(result, comparisonNames) >= minScore;
+}
+
+/**
+ * Detects a candidate whose title is only a *generic fragment* of the requested
+ * title: a strict token-subset of one of the comparison names that drops that
+ * name's leading identity token. Catches false matches such as RAWG returning
+ * the itch.io game "Retour vers le passé" for "The Lapins Crétins : Retour vers
+ * le passé" — it shares the generic subtitle but none of the franchise identity,
+ * yet still scores above the alignment threshold via token overlap.
+ *
+ * Legit base titles keep the leading token and are NOT flagged ("Monopoly" for
+ * "Monopoly - Editions ...", "Mario Kart" for "Mario Kart Wii", "The Legend of
+ * Zelda: Skyward Sword" for the same with an edition suffix).
+ */
+export function isGenericTitleFragment(
+  candidateTitle: string | undefined,
+  comparisonNames: string[],
+): boolean {
+  if (!candidateTitle) return false;
+  const candTokens = normalizeDisplayTitle(candidateTitle);
+  if (candTokens.length === 0) return false;
+  const candSet = new Set(candTokens);
+
+  let isStrictSubsetOfSome = false;
+  for (const name of comparisonNames) {
+    const nameTokens = normalizeDisplayTitle(name);
+    if (nameTokens.length === 0) continue;
+    const nameSet = new Set(nameTokens);
+    if (!candTokens.every((token) => nameSet.has(token))) continue;
+    if (candTokens.length >= nameTokens.length) return false; // equal/exact → aligned
+    isStrictSubsetOfSome = true;
+    if (candSet.has(nameTokens[0])) return false; // keeps the leading identity token
+  }
+  return isStrictSubsetOfSome;
 }
 
 export function shouldRecheckScreenScraperMatch(

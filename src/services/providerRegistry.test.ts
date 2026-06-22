@@ -79,6 +79,12 @@ describe("providerRegistry", () => {
     );
   });
 
+  it("jeux : les providers qui exposent les joueurs sont déclarés", () => {
+    expect(capabilityCoverage("games", "players").providers).toEqual(
+      expect.arrayContaining(["launchbox", "screenscraper", "thegamesdb"]),
+    );
+  });
+
   it("jeux : Steam expose note, public et date de sortie", () => {
     expect(capabilityCoverage("games", "rating").providers).toContain("steam");
     expect(capabilityCoverage("games", "ageRating").providers).toContain(

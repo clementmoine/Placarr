@@ -52,6 +52,7 @@ describe("provider mapping probes", () => {
         "lepassetemps",
         "ludifolie",
         "monsieurde",
+        "okkazeo",
         "philibert",
         "picclick",
         "pricecharting",

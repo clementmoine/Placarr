@@ -50,7 +50,7 @@ function buildDiscogsAttachments(
 function createDiscogsAdapter(): MetadataProviderAdapter {
   return {
     id: "discogs",
-    async resolve({ barcode }) {
+    async resolve({ barcode }: any) {
       if (!barcode) return null;
       const cleanedBarcode = normalizeProductBarcode(barcode);
       if (!cleanedBarcode) return null;
@@ -173,6 +173,7 @@ function createDiscogsAdapter(): MetadataProviderAdapter {
         imageUrl: discogs.imageUrl || undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
         facts: facts.length > 0 ? facts : undefined,
+        externalIds: { discogs: String(discogs.id) },
       } satisfies MetadataResult;
     },
   };

@@ -515,6 +515,10 @@ export function createOpenLibraryResolver() {
           ? workData.first_sentence
           : workData.first_sentence?.value;
 
+      const openlibraryId = workData.key
+        ? workData.key.replace(/^\/(works|books|authors)\//, "")
+        : undefined;
+
       return {
         title: workData.title,
         barcode: discoveredBarcode,
@@ -550,6 +554,7 @@ export function createOpenLibraryResolver() {
         ],
         aliases,
         facts: facts.length > 0 ? facts : undefined,
+        externalIds: openlibraryId ? { openlibrary: openlibraryId } : undefined,
       };
     } catch (error) {
       console.error("Error fetching from Open Library:", error);

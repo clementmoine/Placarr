@@ -29,7 +29,9 @@ const RESOLVER_DEP_KEYS: Record<string, string> = {
   lepassetemps: "fetchFromLepassetemps",
 };
 
-const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames"];
+// "generic" included so typeless home-page scans get a board-game anchor too
+// (parity with the video-game stack, which already fires in the generic branch).
+const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
 
 export function createPrestashopModule(
   config: PrestashopRetailerConfig,
@@ -62,15 +64,11 @@ export function createPrestashopModule(
       sourceWeight: 0.24,
       trustedRetailer: true,
     },
-    createMetadataAdapter(deps) {
-      const fetch = (deps as Record<string, unknown>)[depKey] as
-        | Resolver
-        | undefined;
-      const resolve = fetch || resolver;
+    createMetadataAdapter() {
       return {
         id: config.id,
-        async resolve({ name, barcode }) {
-          return resolve(name, barcode);
+        async resolve({ name, barcode }: any) {
+          return resolver(name, barcode);
         },
       } satisfies MetadataProviderAdapter;
     },

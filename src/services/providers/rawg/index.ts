@@ -40,8 +40,7 @@ export const rawgModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
-  createMetadataAdapter(deps) {
-    const fetchFromRawg = deps.fetchFromRawg as NameResolver;
+  createMetadataAdapter() {
     return {
       id: "rawg",
       async resolve({ name }) {

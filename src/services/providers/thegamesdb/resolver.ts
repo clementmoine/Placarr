@@ -1,6 +1,6 @@
 import { cleanCode } from "@/lib/barcode/query";
-import { metadataTitleSimilarity } from "@/lib/metadataTitleSimilarity";
 import { inferTextLanguage } from "@/lib/localePreference";
+import { scoreLaunchBoxTitleMatch } from "@/services/providers/launchbox/matchScore";
 import {
   fetchTheGamesDbById,
   searchTheGamesDbByName,
@@ -27,7 +27,7 @@ function pickFrontBoxArtUrl(
   const entries = boxArt?.data?.[String(gameId)] || [];
   const front =
     entries.find((entry) => entry.side === "front") ||
-    entries.find((entry) => entry.type === "boxart") ||
+    entries.find((entry) => entry.type === "boxart" && entry.side !== "back") ||
     entries[0];
   if (!front?.filename) return undefined;
 
@@ -58,23 +58,12 @@ function buildAttachments(
 
   return entries.flatMap((entry) => {
     if (!entry.filename) return [];
-    const type =
-      entry.type === "boxart"
-        ? ("cover" as const)
-        : entry.side === "back"
-          ? ("image" as const)
-          : ("image" as const);
+    const isBack = entry.side === "back";
+    const type = entry.type === "boxart" ? ("cover" as const) : ("image" as const);
     return [
       {
         type,
-        role:
-          type === "cover"
-            ? role
-            : entry.side === "back"
-              ? role
-                ? `back-${role}`
-                : "back"
-              : role,
+        role: isBack ? (role ? `back-${role}` : "back") : role,
         url: `${base}${entry.filename}`,
         source: "thegamesdb",
       },
@@ -88,7 +77,7 @@ function scoreSearchCandidate(
   platformId: number | null,
   preferPal: boolean,
 ): number {
-  let score = metadataTitleSimilarity(requestedName, game.game_title);
+  let score = scoreLaunchBoxTitleMatch(requestedName, game.game_title);
 
   if (platformId != null && game.platform === platformId) {
     score += 0.28;
@@ -150,6 +139,34 @@ function buildRegionalTitles(
       region: regionIdToAttachmentRole(game.region_id),
       text: game.game_title.trim(),
     }));
+}
+
+function normalizeTheGamesDbPlayerCount(value?: string | null): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  const cleaned = raw
+    .replace(/\b(players?|joueurs?)\b/gi, "")
+    .replace(/\s*(?:to|à)\s*/gi, "-")
+    .replace(/\s*[-–—]\s*/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const range = cleaned.match(/^(\d+)\s*-\s*(\d+)\+?$/);
+  if (range) return `${range[1]}-${range[2]}`;
+
+  const single = cleaned.match(/^(\d+)\+?$/);
+  if (single) return single[1];
+
+  return raw.replace(/\s+/g, " ");
+}
+
+function normalizeTheGamesDbCoop(value?: string | null): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^(yes|true|1|oui)$/i.test(raw)) return "Oui";
+  if (/^(no|false|0|non)$/i.test(raw)) return "Non";
+  return raw.replace(/\s+/g, " ");
 }
 
 export async function fetchFromTheGamesDB(
@@ -223,6 +240,30 @@ export async function fetchFromTheGamesDB(
     });
   }
 
+  const players = normalizeTheGamesDbPlayerCount(game.players);
+  if (players) {
+    facts.push({
+      kind: "players",
+      label: "Joueurs",
+      value: players,
+      source: "thegamesdb",
+      confidence: 0.6,
+      priority: 38,
+    });
+  }
+
+  const cooperative = normalizeTheGamesDbCoop(game.coop);
+  if (cooperative) {
+    facts.push({
+      kind: "cooperative",
+      label: "Coop",
+      value: cooperative,
+      source: "thegamesdb",
+      confidence: 0.58,
+      priority: 34,
+    });
+  }
+
   return {
     title,
     description: overview || undefined,
@@ -233,5 +274,6 @@ export async function fetchFromTheGamesDB(
     aliases: aliases.length > 0 ? Array.from(new Set(aliases)) : undefined,
     regionalTitles: regionalTitles.length > 0 ? regionalTitles : undefined,
     facts: facts.length > 0 ? facts : undefined,
+    externalIds: { thegamesdb: String(game.id || selected.id) },
   };
 }

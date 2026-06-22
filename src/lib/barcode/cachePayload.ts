@@ -1,3 +1,7 @@
+import {
+  formatDisplayNameWithEdition,
+  inferEditionFromNames,
+} from "@/lib/barcode/evidence/edition";
 import { prisma } from "@/lib/prisma";
 import {
   BARCODE_CACHE_VERSION,
@@ -134,14 +138,42 @@ export async function buildCachedBarcodePayload(
     (m) => m.name,
   );
 
+  const edition =
+    inferEditionFromNames(
+      [
+        cleanNameStr,
+        ...cleanSuggestions,
+        ...cleanMatches.flatMap((match) => [match.name, ...match.suggestions]),
+        ...rawNames,
+      ],
+      cleanNameStr,
+    ) || null;
+  const displayName = formatDisplayNameWithEdition(cleanNameStr, edition);
+
   return {
     provider: options.markStale
       ? versionProvider(cachedResult.provider)
       : cachedResult.provider,
     rawNames: rawNames.map((rn) => decodeHTMLEntities(rn)),
     cleanName: cleanNameStr,
-    suggestions: cleanSuggestions,
-    matches: cleanMatches,
+    displayName,
+    edition,
+    suggestions: edition
+      ? Array.from(new Set([displayName, ...cleanSuggestions]))
+      : cleanSuggestions,
+    matches: edition
+      ? cleanMatches.map((match, index) =>
+          index === 0
+            ? {
+                ...match,
+                name: displayName,
+                suggestions: Array.from(
+                  new Set([displayName, ...match.suggestions]),
+                ),
+              }
+            : match,
+        )
+      : cleanMatches,
     shelfType: cachedResult.shelfType,
     platformKey: cachedResult.platformKey || null,
     priceNew: cachedResult.priceNew,
@@ -159,6 +191,8 @@ export function cleanCompiledResultForResponse(
   selectedResult: {
     rawNames: string[];
     cleanName: string;
+    displayName?: string;
+    edition?: string | null;
     suggestions: string[];
     matches: ResolvedMatch[];
   },
@@ -169,6 +203,7 @@ export function cleanCompiledResultForResponse(
     decodeHTMLEntities(selectedResult.cleanName),
     { preservePlatformSuffix },
   );
+  const edition = selectedResult.edition ?? null;
   const cleanSuggestions = Array.from(
     new Set(
       selectedResult.suggestions.map((s) =>
@@ -197,10 +232,44 @@ export function cleanCompiledResultForResponse(
     (m) => m.name,
   );
 
+  const resolvedEdition =
+    edition ??
+    inferEditionFromNames(
+      [
+        ...selectedResult.rawNames,
+        cleanNameStr,
+        ...cleanSuggestions,
+        ...cleanMatches.flatMap((match) => [match.name, ...match.suggestions]),
+      ],
+      cleanNameStr,
+    );
+  const resolvedDisplayName = formatDisplayNameWithEdition(
+    cleanNameStr,
+    resolvedEdition,
+  );
+  const finalSuggestions = resolvedEdition
+    ? Array.from(new Set([resolvedDisplayName, ...cleanSuggestions]))
+    : cleanSuggestions;
+  const finalMatches = resolvedEdition
+    ? cleanMatches.map((match, index) =>
+        index === 0
+          ? {
+              ...match,
+              name: resolvedDisplayName,
+              suggestions: Array.from(
+                new Set([resolvedDisplayName, ...match.suggestions]),
+              ),
+            }
+          : match,
+      )
+    : cleanMatches;
+
   return {
     rawNames: selectedResult.rawNames.map((rn) => decodeHTMLEntities(rn)),
     cleanName: cleanNameStr,
-    suggestions: cleanSuggestions,
-    matches: cleanMatches,
+    displayName: resolvedDisplayName,
+    edition: resolvedEdition,
+    suggestions: finalSuggestions,
+    matches: finalMatches,
   };
 }

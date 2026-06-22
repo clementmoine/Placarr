@@ -11,11 +11,19 @@ export const launchboxModule: ProviderModule = {
     id: "launchbox",
     label: "LaunchBox",
     types: ["games"],
-    capabilities: ["identify", "description", "releaseDate", "people"],
+    capabilities: [
+      "identify",
+      "description",
+      "releaseDate",
+      "people",
+      "players",
+      "cover",
+      "screenshots",
+    ],
     auth: { kind: "scrape" },
     canonical: true,
     notes:
-      "Base communautaire LaunchBox (Metadata.zip). Utilise un index local; build/download uniquement si explicitement configuré.",
+      "Base communautaire LaunchBox (Metadata.zip). Index local: jeux, nombre de joueurs max, titres alternatifs regionaux, images (box, fanart, screenshots).",
   },
   evidence: {
     label: "LaunchBox",

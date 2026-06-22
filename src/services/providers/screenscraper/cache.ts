@@ -28,12 +28,18 @@ function normalizeLookupPart(value?: string | null): string {
     .replace(/\s+/g, " ");
 }
 
+// Bump when the resolver's output shape changes so stale cached results are
+// re-resolved instead of served. v3: include ScreenScraper players/modes facts
+// and keep v2's placeholder-media filtering.
+const SCREENSCRAPER_LOOKUP_CACHE_VERSION = "v3";
+
 export function buildScreenScraperLookupKey(
   name: string,
   barcode?: string | null,
   platform?: string | null,
 ): string {
   return [
+    SCREENSCRAPER_LOOKUP_CACHE_VERSION,
     normalizeLookupPart(barcode),
     normalizeLookupPart(name),
     normalizeLookupPart(platform),

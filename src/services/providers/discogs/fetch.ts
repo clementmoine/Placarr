@@ -21,6 +21,7 @@ export type DiscogsImage = {
 };
 
 export interface DiscogsResult {
+  id: number;
   title: string;
   year: string | null;
   imageUrl: string | null;
@@ -184,6 +185,7 @@ export async function fetchFromDiscogs(
     }
 
     return {
+      id: best.id,
       title: String(best.title).trim(),
       year: best.year ? String(best.year) : null,
       imageUrl,

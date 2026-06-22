@@ -12,10 +12,59 @@ export const LOCALE_LANGUAGE_ORDER = ["fr", "en"] as const;
 export type LocaleRegion = (typeof LOCALE_REGION_ORDER)[number];
 export type LocaleLanguage = (typeof LOCALE_LANGUAGE_ORDER)[number];
 
+const LOCALE_REGION_ALIASES: Record<string, LocaleRegion> = {
+  de: "eu",
+  eur: "eu",
+  europe: "eu",
+  france: "fr",
+  fra: "fr",
+  world: "wor",
+  global: "wor",
+  usa: "us",
+  "north america": "us",
+  japan: "jp",
+  jpn: "jp",
+  uk: "uk",
+  "united kingdom": "uk",
+  germany: "eu",
+  spain: "eu",
+  italy: "eu",
+  netherlands: "eu",
+  portugal: "eu",
+  poland: "eu",
+  australia: "eu",
+  canada: "us",
+  brazil: "us",
+  korea: "jp",
+};
+
+function normalizeRegionToken(region?: string | null): string {
+  return (region || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+export function resolveLocaleRegion(
+  region?: string | null,
+): LocaleRegion | undefined {
+  const normalized = normalizeRegionToken(region);
+  if (!normalized) return undefined;
+
+  if (LOCALE_REGION_ORDER.includes(normalized as LocaleRegion)) {
+    return normalized as LocaleRegion;
+  }
+
+  return LOCALE_REGION_ALIASES[normalized];
+}
+
 export function regionRank(region?: string | null): number {
-  const normalized = (region || "").toLowerCase().split(/[-_]/)[0];
-  const index = LOCALE_REGION_ORDER.indexOf(normalized as LocaleRegion);
-  return index === -1 ? LOCALE_REGION_ORDER.length : index;
+  const resolved = resolveLocaleRegion(region);
+  if (resolved) {
+    return LOCALE_REGION_ORDER.indexOf(resolved);
+  }
+  return LOCALE_REGION_ORDER.length;
 }
 
 export function languageRank(language?: string | null): number {
@@ -69,16 +118,12 @@ export function mapBggLanguageToAttachmentRole(
 export function parseRegionFromRole(role?: string | null): string | undefined {
   if (!role) return undefined;
 
-  const normalized = role.toLowerCase();
-  const screenScraperAliases: Record<string, LocaleRegion> = {
-    de: "eu",
-  };
-
-  if (LOCALE_REGION_ORDER.includes(normalized as LocaleRegion)) {
-    return normalized;
+  const normalized = normalizeRegionToken(role);
+  if (/[-_]/.test(normalized) && !LOCALE_REGION_ALIASES[normalized]) {
+    return undefined;
   }
 
-  return screenScraperAliases[normalized];
+  return resolveLocaleRegion(normalized);
 }
 
 const LOCALE_ATTACHMENT_BONUSES = [80, 60, 30, 10, -20, -30];

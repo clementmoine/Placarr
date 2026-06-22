@@ -540,6 +540,7 @@ export async function fetchFromSteam(
       })),
       attachments: buildSteamAttachments(data),
       facts: buildSteamFacts(best.id, data),
+      externalIds: { steam: String(best.id) },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

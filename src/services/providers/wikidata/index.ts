@@ -30,8 +30,7 @@ export const wikidataModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
-  createMetadataAdapter(deps) {
-    const fetchFromWikidata = deps.fetchFromWikidata as Resolver;
+  createMetadataAdapter() {
     return {
       id: "wikidata",
       async resolve({ name }) {

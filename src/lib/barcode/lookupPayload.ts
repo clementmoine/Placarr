@@ -29,6 +29,7 @@ export type BarcodeLookupPayload = {
   pc: PriceChartingMetadata | null;
   sd: ScanDexLookup;
   philibert: BarcodeMetadataHit | null;
+  okkazeo: BarcodeMetadataHit | null;
   boardRetailers: BoardRetailerBarcodeHit[];
   amc: NamedListing[];
   calFr: NamedListing[];
@@ -54,6 +55,7 @@ export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
     pc: null,
     sd: null,
     philibert: null,
+    okkazeo: null,
     boardRetailers: [],
     amc: [],
     calFr: [],

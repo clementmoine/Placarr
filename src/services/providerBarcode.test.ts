@@ -65,6 +65,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "ludifolie",
         "monsieurde",
         "philibert",
+        "okkazeo",
         "sd",
         "amc",
         "picclick",
@@ -83,6 +84,15 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "aprilo",
         "picclick",
         "leDenicheur",
+        // Board-game anchors fire in generic too (parity), so a typeless scan
+        // of a board game has a trusted source and isn't misclassified.
+        "philibert",
+        "okkazeo",
+        "archichouette",
+        "monsieurde",
+        "ludifolie",
+        "bcdjeux",
+        "lepassetemps",
       ].sort(),
     );
   });

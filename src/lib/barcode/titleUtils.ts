@@ -789,7 +789,7 @@ export function isListingDiscardable(title: string): boolean {
   return DISCARD_PATTERNS.some((pattern) => pattern.test(title));
 }
 
-export const BARCODE_CACHE_VERSION = "canonical-v23";
+export const BARCODE_CACHE_VERSION = "canonical-v25";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider

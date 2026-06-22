@@ -41,8 +41,7 @@ export const tmdbModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
-  createMetadataAdapter(deps) {
-    const fetchFromTMDB = deps.fetchFromTMDB as NameResolver;
+  createMetadataAdapter() {
     return {
       id: "tmdb",
       async resolve({ name }) {

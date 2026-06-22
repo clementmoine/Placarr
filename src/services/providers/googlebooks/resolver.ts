@@ -197,6 +197,7 @@ function mapVolumeToMetadata(
       ? [{ type: "cover", url: imageUrl, source: "googlebooks" }]
       : [],
     facts: facts.length > 0 ? facts : undefined,
+    externalIds: { googlebooks: volume.id },
   };
 }
 

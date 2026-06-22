@@ -120,6 +120,7 @@ export async function runBarcodeLookups(params: {
     payload.picclick = asNamedListings(lookups.picclick);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.philibert = asMetadataHit(lookups.philibert);
+    payload.okkazeo = asMetadataHit(lookups.okkazeo);
     payload.boardRetailers = collectBoardRetailerBarcodeHits(lookups);
     return payload;
   }
@@ -137,6 +138,12 @@ export async function runBarcodeLookups(params: {
   payload.aprilo = asNamedListings(lookups.aprilo);
   payload.picclick = asNamedListings(lookups.picclick);
   payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
+  // Board-game anchors (Okkazeo + Philibert + board retailers), in parity with
+  // the video-game stack above, so a board game scanned without a type has a
+  // trusted source and is not misclassified as "games".
+  payload.philibert = asMetadataHit(lookups.philibert);
+  payload.okkazeo = asMetadataHit(lookups.okkazeo);
+  payload.boardRetailers = collectBoardRetailerBarcodeHits(lookups);
 
   const enriched = await enrichGameBarcodeLookups({
     cleanedBarcode,

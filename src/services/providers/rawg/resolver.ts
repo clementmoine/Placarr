@@ -299,6 +299,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
         })) || []),
       ],
       facts: facts.length > 0 ? facts : undefined,
+      externalIds: { rawg: String(bestMatch.id) },
     };
   };
 }

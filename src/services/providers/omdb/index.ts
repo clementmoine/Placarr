@@ -34,12 +34,11 @@ export const omdbModule: ProviderModule = {
     canonical: true,
     notes: "Ratings complémentaires (IMDb/Rotten) + classification.",
   },
-  createMetadataAdapter(deps) {
-    const wiredFetchFromOMDb = deps.fetchFromOMDb as NameResolver;
+  createMetadataAdapter() {
     return {
       id: "omdb",
-      async resolve({ name, imdbId, fallbackNames }) {
-        return wiredFetchFromOMDb(name, { imdbId, fallbackNames });
+      async resolve({ name, imdbId, fallbackNames }: any) {
+        return fetchFromOMDb(name, { imdbId, fallbackNames });
       },
     } satisfies MetadataProviderAdapter;
   },

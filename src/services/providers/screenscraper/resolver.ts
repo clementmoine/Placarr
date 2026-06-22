@@ -30,6 +30,7 @@ import {
   setScreenScraperInFlightLookup,
 } from "./cache";
 import { parseScreenScraperMediaUrl } from "./mediaUrl";
+import { areLikelySameProduct } from "@/lib/barcode/titleUtils";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
 
@@ -90,6 +91,21 @@ export interface SSMedia {
   url: string;
   region?: string;
   format?: string;
+  size?: string | number;
+}
+
+// ScreenScraper lists media it doesn't really have and serves a tiny solid
+// "no image" placeholder for them (observed at 2742 bytes, e.g. box-2D-back(jp)
+// on jeuid 14825). Real box art is always far larger (the smallest legitimate
+// spine/side seen is ~8.7 KB), so a small `size` is a reliable, download-free
+// signal to drop these before they reach the gallery or cover picker.
+const SS_PLACEHOLDER_MAX_SIZE_BYTES = 4096;
+
+export function isScreenScraperPlaceholderMedia(media: SSMedia): boolean {
+  const size = Number(media.size);
+  return (
+    Number.isFinite(size) && size > 0 && size < SS_PLACEHOLDER_MAX_SIZE_BYTES
+  );
 }
 
 export interface SSGame {
@@ -100,6 +116,8 @@ export interface SSGame {
   dates?: { region: string; text: string }[];
   editeur?: { text: string };
   developpeur?: { text: string };
+  joueurs?: string | { text?: string } | Array<string | { text?: string }>;
+  modes?: string | { text?: string } | Array<string | { text?: string }>;
   note?: { text: string };
   classifications?: { type?: string; text?: string }[];
   medias?: SSMedia[];
@@ -110,7 +128,8 @@ export interface SSGame {
  * Prefers a true front cover first, then the best region inside that type.
  * This keeps box-2D(eu) above decorative mix images such as mixrbv2(fr).
  */
-export function pickSSCover(medias: SSMedia[]): string | null {
+export function pickSSCover(allMedias: SSMedia[]): string | null {
+  const medias = allMedias.filter((m) => !isScreenScraperPlaceholderMedia(m));
   const preferredTypes = ["box-2D", "box-3D"];
   const regionOrder = ["fr", "eu", "wor", "us", "jp"];
 
@@ -289,6 +308,7 @@ async function fetchScreenScraperGameById(
 async function resolveScreenScraperGameIdFromBarcodeCache(
   barcode: string,
   requestedSystemId?: number,
+  requestedName?: string | null,
 ): Promise<{ gameId: number; systemId?: number } | null> {
   const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
   if (!cleanedBarcode) return null;
@@ -299,6 +319,7 @@ async function resolveScreenScraperGameIdFromBarcodeCache(
   });
   if (!cached?.rawNames.length) return null;
 
+  const trimmedName = requestedName?.trim();
   for (const rawName of cached.rawNames) {
     if (!rawName.coverUrl) continue;
     const parsed = parseScreenScraperMediaUrl(rawName.coverUrl);
@@ -308,6 +329,14 @@ async function resolveScreenScraperGameIdFromBarcodeCache(
       parsed.systemId &&
       parsed.systemId !== requestedSystemId
     ) {
+      continue;
+    }
+    // Guide the canonical by the chosen item: only reuse a cached ScreenScraper
+    // game whose cached name matches the one we are resolving. For an ambiguous
+    // barcode (where a marketplace consensus led with a different product than
+    // the one ScreenScraper pinned by barcode), this skips the mismatched cover
+    // and lets the name search below find the correct game.
+    if (trimmedName && !areLikelySameProduct(trimmedName, rawName.value)) {
       continue;
     }
     return { gameId: parsed.gameId, systemId: parsed.systemId };
@@ -520,7 +549,41 @@ type ScreenScraperResolverDeps = {
   formatScore: (value: number, scale: number) => string | null;
 };
 
-function buildScreenScraperFacts(
+function screenScraperTextValues(
+  value:
+    | string
+    | { text?: string }
+    | Array<string | { text?: string }>
+    | undefined,
+): string[] {
+  const values = Array.isArray(value) ? value : value == null ? [] : [value];
+  return values
+    .map((entry) => (typeof entry === "string" ? entry : entry.text))
+    .map((entry) => entry?.replace(/\s+/g, " ").trim())
+    .filter((entry): entry is string => Boolean(entry));
+}
+
+function normalizePlayerCountText(value?: string | null): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  const cleaned = raw
+    .replace(/\b(players?|joueurs?)\b/gi, "")
+    .replace(/\s*(?:to|à)\s*/gi, "-")
+    .replace(/\s*[-–—]\s*/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const range = cleaned.match(/^(\d+)\s*-\s*(\d+)\+?$/);
+  if (range) return `${range[1]}-${range[2]}`;
+
+  const single = cleaned.match(/^(\d+)\+?$/);
+  if (single) return single[1];
+
+  return raw.replace(/\s+/g, " ");
+}
+
+export function buildScreenScraperFacts(
   gameData: SSGame,
   formatScore: (value: number, scale: number) => string | null,
 ): MetadataFact[] {
@@ -549,6 +612,32 @@ function buildScreenScraperFacts(
       source: "screenscraper",
       confidence: 0.74,
       priority: 76,
+    });
+  }
+
+  const players = screenScraperTextValues(gameData.joueurs)
+    .map(normalizePlayerCountText)
+    .find((value): value is string => Boolean(value));
+  if (players) {
+    facts.push({
+      kind: "players",
+      label: "Joueurs",
+      value: players,
+      source: "screenscraper",
+      confidence: 0.82,
+      priority: 70,
+    });
+  }
+
+  const modes = Array.from(new Set(screenScraperTextValues(gameData.modes)));
+  if (modes.length > 0) {
+    facts.push({
+      kind: "modes",
+      label: "Modes de jeu",
+      value: modes.slice(0, 5).join(" • "),
+      source: "screenscraper",
+      confidence: 0.72,
+      priority: 52,
     });
   }
 
@@ -591,6 +680,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         const cachedGame = await resolveScreenScraperGameIdFromBarcodeCache(
           barcode,
           systemeid,
+          name,
         );
         if (cachedGame) {
           try {
@@ -641,11 +731,23 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 options,
               );
               if (jeu) {
-                gameData = jeu;
-                resolvedSystemId = systemeid;
-                console.info(
-                  `[ScreenScraper] Successfully found game by barcode search "${cleanedBarcode}"`,
-                );
+                // ScreenScraper's serial/barcode index can return a different
+                // game than the one being identified (a wrong barcode→game
+                // mapping). Only trust the hit when its title matches the
+                // requested one; otherwise fall through to the title-driven
+                // name search below, so a bad mapping never wins.
+                const jeuTitle = pickSSTitle(jeu.noms) || "";
+                if (name && jeuTitle && !areLikelySameProduct(name, jeuTitle)) {
+                  console.info(
+                    `[ScreenScraper] Ignoring barcode-search hit "${jeuTitle}" — does not match requested "${name}"`,
+                  );
+                } else {
+                  gameData = jeu;
+                  resolvedSystemId = systemeid;
+                  console.info(
+                    `[ScreenScraper] Successfully found game by barcode search "${cleanedBarcode}"`,
+                  );
+                }
               }
             }
           } catch (error) {
@@ -912,6 +1014,9 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
       if (gameData.medias) {
         gameData.medias.forEach((m) => {
+          // Drop ScreenScraper's tiny "no image" placeholders (see helper).
+          if (isScreenScraperPlaceholderMedia(m)) return;
+
           let type: AttachmentType | null = null;
           let role: string | null = null;
 
@@ -992,6 +1097,18 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
     }
   }
 
+  // A cached lookup is keyed by the query, but it stores whatever the resolver
+  // returned at the time — including a wrong game from a stale/poisoned entry.
+  // Only trust it when its title still matches the requested one; otherwise
+  // re-resolve so the (now title-validated) resolution path can correct it.
+  const isCachedLookupAcceptable = (
+    requestedName: string,
+    cached: MetadataResult,
+  ): boolean =>
+    !requestedName ||
+    !cached.title ||
+    areLikelySameProduct(requestedName, cached.title);
+
   return async function fetchFromScreenScraper(
     name: string,
     barcode?: string | null,
@@ -1002,15 +1119,22 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
     const persisted = await getPersistedScreenScraperLookup(lookupKey);
     if (persisted) {
-      console.info(`[ScreenScraper] Lookup cache hit for "${name || barcode}"`);
-      return persisted;
+      if (isCachedLookupAcceptable(name, persisted)) {
+        console.info(
+          `[ScreenScraper] Lookup cache hit for "${name || barcode}"`,
+        );
+        return persisted;
+      }
+      console.info(
+        `[ScreenScraper] Ignoring cached lookup "${persisted.title}" — does not match requested "${name}"`,
+      );
     }
 
     if (isScreenScraperQuotaBlocked()) {
       const stale = await getPersistedScreenScraperLookup(lookupKey, {
         allowStale: true,
       });
-      if (stale) {
+      if (stale && isCachedLookupAcceptable(name, stale)) {
         console.warn(
           `[ScreenScraper] Quota cooldown — serving stale lookup for "${name || barcode}"`,
         );

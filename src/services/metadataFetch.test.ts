@@ -1,73 +1,69 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const h = vi.hoisted(() => ({
-  games: vi.fn(),
-  movies: vi.fn(),
-  musics: vi.fn(),
-  books: vi.fn(),
-  boardgames: vi.fn(),
-  registry: vi.fn(),
-}));
-
-vi.mock("@/services/metadataGameFetch", () => ({
-  fetchFromAllGameSources: h.games,
-}));
-vi.mock("@/services/metadataMovieFetch", () => ({
-  fetchFromAllMovieSources: h.movies,
-}));
-vi.mock("@/services/metadataMusicFetch", () => ({
-  fetchFromAllMusicSources: h.musics,
-}));
-vi.mock("@/services/metadataBookFetch", () => ({
-  fetchFromAllBookSources: h.books,
-}));
-vi.mock("@/services/metadataBoardGameFetch", () => ({
-  fetchFromAllBoardGameSources: h.boardgames,
-}));
-vi.mock("@/services/metadataProviderSelection", () => ({
-  fetchFromRegistryMetadataResolvers: h.registry,
-}));
-
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fetchMetadataByType } from "./metadataFetch";
+import { metadataProviderResolverMap } from "@/services/metadataResolvers";
+import type { MetadataResult } from "@/types/metadataProvider";
 
-const CASES: Array<{ type: string; fn: ReturnType<typeof vi.fn> }> = [
-  { type: "games", fn: h.games },
-  { type: "movies", fn: h.movies },
-  { type: "musics", fn: h.musics },
-  { type: "books", fn: h.books },
-  { type: "boardgames", fn: h.boardgames },
-];
+// Mock the resolvers map to return test data
+const defaultImplementation = async (ctx: any, id: string) => {
+  if (ctx.name === "failing") return null;
+  return {
+    title: `${id} - ${ctx.name}`,
+    description: `Description from ${id}`,
+  } as MetadataResult;
+};
 
-beforeEach(() => {
-  for (const fn of Object.values(h)) fn.mockReset();
-});
+const mockResolve = vi.fn().mockImplementation(defaultImplementation);
+vi.mock("@/services/metadataResolvers", () => ({
+  metadataProviderResolverMap: {
+    get: (id: string) => ({
+      id,
+      resolve: (ctx: any) => mockResolve(ctx, id),
+    }),
+  },
+}));
 
-describe("fetchMetadataByType — routage par type", () => {
-  it.each(CASES)(
-    "route le type « $type » vers le bon fetcher et propage les arguments",
-    async ({ type, fn }) => {
-      fn.mockResolvedValue({ title: `${type} result` });
+describe("fetchMetadataByType generic routing", () => {
+  beforeEach(() => {
+    mockResolve.mockClear();
+    mockResolve.mockImplementation(defaultImplementation);
+  });
 
-      const res = await fetchMetadataByType("Catan", type, "123", "wii");
-
-      expect(fn).toHaveBeenCalledWith("Catan", "123", "wii");
-      expect(res).toEqual({ title: `${type} result` });
-
-      // Aucun autre fetcher n'est sollicité.
-      for (const other of CASES) {
-        if (other.fn !== fn) expect(other.fn).not.toHaveBeenCalled();
-      }
-      expect(h.registry).not.toHaveBeenCalled();
-    },
-  );
-
-  it("retombe sur le registre pour un type inconnu", async () => {
-    h.registry.mockResolvedValue(null);
-
-    const res = await fetchMetadataByType("X", "comics", null, null);
-
-    expect(h.registry).toHaveBeenCalledWith("X", "comics", null, null);
+  it("returns null for unknown media type", async () => {
+    const res = await fetchMetadataByType("Catan", "unknown-type");
     expect(res).toBeNull();
-    for (const c of CASES) expect(c.fn).not.toHaveBeenCalled();
+  });
+
+  it("queries appropriate providers for books and merges their results", async () => {
+    const res = await fetchMetadataByType("Fantastic Mr. Fox", "books");
+    
+    expect(res).not.toBeNull();
+    expect(res?.title).toBe("Fantastic Mr. Fox"); // preferred requested title
+    expect(res?.description).toContain("chasseauxlivres"); // description selected from high-weight/French chasseauxlivres
+    expect(mockResolve).toHaveBeenCalled();
+  });
+
+  it("propagates externalIds from Stage 1 to Stage 2 and fallback resolvers", async () => {
+    mockResolve.mockImplementation(async (ctx, id) => {
+      if (ctx.name === "Toy Story" && id === "tmdb") {
+        return {
+          title: "Toy Story",
+          externalIds: { imdb: "tt0114709", customId: "prop-test" },
+        } as MetadataResult;
+      }
+      return {
+        title: `${id} - Toy Story Stub`,
+      } as MetadataResult;
+    });
+
+    await fetchMetadataByType("Toy Story", "movies");
+    
+    const secondaryCall = mockResolve.mock.calls.find((call: any) => {
+      const firstArg = call[0];
+      const secondArg = call[1];
+      return secondArg === "omdb" && firstArg.externalIds?.customId === "prop-test";
+    });
+
+    expect(secondaryCall).toBeDefined();
+    expect(secondaryCall?.[0].externalIds?.imdb).toBe("tt0114709");
   });
 });

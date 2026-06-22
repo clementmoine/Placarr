@@ -67,7 +67,14 @@ import {
   type Shelf,
   Condition,
 } from "@prisma/client";
-import { rankAttachmentsForDisplay } from "@/lib/attachmentDisplayScore";
+import {
+  rankAttachmentsForDisplay,
+  rankCoversForDisplay,
+} from "@/lib/attachmentDisplayScore";
+import {
+  getAttachmentGalleryLabels,
+  type AttachmentDisplayLocale,
+} from "@/lib/attachmentDisplayLabels";
 import { cn } from "@/lib/utils";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -450,7 +457,12 @@ export function ItemModal({
       label: string;
       source?: string | null;
       role?: string | null;
+      galleryProvider?: string | null;
+      galleryDetail?: string | null;
     }[] = [];
+
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
 
     // Add attachments of type background, artwork, screenshot, image
     const attachments = metadata.attachments || [];
@@ -461,18 +473,29 @@ export function ItemModal({
         ["background", "artwork", "screenshot", "image"].includes(a.type)
       ) {
         urls.add(a.url);
+        const gallery = getAttachmentGalleryLabels(
+          {
+            type: a.type,
+            role: a.role,
+            title: a.title,
+            source: a.source,
+          },
+          displayLocale,
+        );
         list.push({
           url: a.url,
           type: a.type,
-          label: a.type.charAt(0).toUpperCase() + a.type.slice(1),
+          label: gallery.caption,
           source: a.source,
           role: a.role,
+          galleryProvider: gallery.provider,
+          galleryDetail: gallery.detail,
         });
       }
     });
 
     return list;
-  }, [item?.metadata, fetchedMetadata]);
+  }, [item?.metadata, fetchedMetadata, locale]);
 
   const currentBackgroundUrl = form.watch("backgroundImageUrl");
 
@@ -512,13 +535,18 @@ export function ItemModal({
       url: string;
       source?: string | null;
       role?: string | null;
+      title?: string | null;
     }> = [];
+
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
 
     const addAttachment = (entry: {
       type: AttachmentType | string;
       url: string;
       source?: string | null;
       role?: string | null;
+      title?: string | null;
     }) => {
       if (!entry.url || urls.has(entry.url)) return;
       urls.add(entry.url);
@@ -527,11 +555,28 @@ export function ItemModal({
         url: entry.url,
         source: entry.source,
         role: entry.role,
+        title: entry.title,
       });
     };
 
+    // URLs that already exist as real metadata attachments, with their true
+    // type/source. The currently-selected cover is almost always one of these;
+    // re-injecting it below as a transient "barcode"/"image" entry would give it
+    // a different score and rank, so the whole list reordered every time the
+    // selection changed. Only inject the scanned/selected cover when it is NOT
+    // already a metadata attachment (e.g. a fresh scan not yet in metadata).
+    const metadataImageUrls = new Set<string>();
+    if (metadata?.imageUrl) metadataImageUrls.add(metadata.imageUrl);
+    for (const attachment of metadata?.attachments || []) {
+      if (attachment.url) metadataImageUrls.add(attachment.url);
+    }
+
     const barcodeCover = prefilledValues?.imageUrl || item?.imageUrl;
-    if (barcodeCover) {
+    if (
+      barcodeCover &&
+      typeof barcodeCover === "string" &&
+      !metadataImageUrls.has(barcodeCover)
+    ) {
       addAttachment({
         url: barcodeCover,
         type: activeShelfType === "games" ? "image" : "cover",
@@ -549,6 +594,7 @@ export function ItemModal({
           type: "cover",
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
+          title: matchingAttachment?.title,
         });
       }
 
@@ -562,30 +608,46 @@ export function ItemModal({
             type: attachment.type,
             source: attachment.source,
             role: attachment.role,
+            title: attachment.title,
           });
         }
       }
     }
 
-    return rankAttachmentsForDisplay(attachments).map((attachment) => ({
-      url: attachment.url,
-      type: attachment.type,
-      label:
+    return rankCoversForDisplay(attachments).map((attachment) => {
+      const gallery = getAttachmentGalleryLabels(
+        {
+          type: attachment.type,
+          role: attachment.role,
+          title: attachment.title,
+          source: attachment.source,
+        },
+        displayLocale,
+      );
+      const label =
         attachment.source === "barcode"
           ? t("items.editTabs.scannedImage")
           : metadata?.imageUrl === attachment.url
             ? t("items.editTabs.defaultMetadataImage")
-            : attachment.type.charAt(0).toUpperCase() +
-              attachment.type.slice(1),
-      source: attachment.source,
-      role: attachment.role,
-    }));
+            : gallery.caption;
+
+      return {
+        url: attachment.url,
+        type: attachment.type,
+        label,
+        source: attachment.source,
+        role: attachment.role,
+        galleryProvider: gallery.provider,
+        galleryDetail: gallery.detail,
+      };
+    });
   }, [
     item?.metadata,
     item?.imageUrl,
     fetchedMetadata,
     prefilledValues?.imageUrl,
     activeShelfType,
+    locale,
     t,
   ]);
 
@@ -605,6 +667,8 @@ export function ItemModal({
         label: t("items.editTabs.chooseImage"),
         source: null,
         role: null,
+        galleryProvider: null,
+        galleryDetail: null,
       });
     }
 
@@ -656,6 +720,8 @@ export function ItemModal({
           `/api/barcode?q=${barcode}${typeParam}`,
         );
         const data = response.data;
+        const displayName = data?.displayName || data?.cleanName;
+        const metadataTitle = data?.cleanName || data?.displayName;
 
         // Set guessed shelf
         if (shelves && shelves.length > 0) {
@@ -667,6 +733,7 @@ export function ItemModal({
 
           const allSearchNames = Array.from(
             new Set([
+              ...(displayName ? [displayName] : []),
               ...(cleanName ? [cleanName] : []),
               ...rawNames,
               ...suggestions,
@@ -723,7 +790,7 @@ export function ItemModal({
               shouldDirty: true,
             });
           }
-          fetchMetadataPreview(bestSuggestion, barcode, true);
+          fetchMetadataPreview(metadataTitle || bestSuggestion, barcode, true);
         } else {
           setMatches([]);
           setSelectedMatch(null);
@@ -734,7 +801,7 @@ export function ItemModal({
             data.suggestions.length > 0
           ) {
             setSuggestions(data.suggestions);
-            const bestSuggestion = data.cleanName || data.suggestions[0];
+            const bestSuggestion = displayName || data.suggestions[0];
             setNameSuggestion(bestSuggestion);
 
             if (!form.watch("name") || prefilledValues?.name) {
@@ -745,20 +812,22 @@ export function ItemModal({
             if (firstMatchCover && !form.getValues("imageUrl")) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
-            fetchMetadataPreview(bestSuggestion, barcode, true);
-          } else if (data?.cleanName) {
-            setSuggestions([data.cleanName]);
-            setNameSuggestion(data.cleanName);
+            fetchMetadataPreview(metadataTitle || bestSuggestion, barcode, true);
+          } else if (displayName) {
+            setSuggestions(data.suggestions?.length ? data.suggestions : [displayName]);
+            setNameSuggestion(displayName);
 
             if (!form.watch("name") || prefilledValues?.name) {
-              form.setValue("name", data.cleanName);
+              form.setValue("name", displayName);
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
             if (firstMatchCover && !form.getValues("imageUrl")) {
-              form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
+              form.setValue("imageUrl", firstMatchCover, {
+                shouldDirty: true,
+              });
             }
-            fetchMetadataPreview(data.cleanName, barcode, true);
+            fetchMetadataPreview(metadataTitle || displayName, barcode, true);
           } else {
             setSuggestions([]);
             setNameSuggestion(null);
@@ -1611,20 +1680,20 @@ export function ItemModal({
 
                                     {/* Source & Type Badges */}
                                     <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none select-none">
-                                      {img.source && (
+                                      {img.galleryProvider && (
                                         <Badge
                                           variant="secondary"
                                           className="bg-black/85 backdrop-blur text-[8px] font-extrabold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded leading-none tracking-wider"
                                         >
-                                          {img.source}
+                                          {img.galleryProvider}
                                         </Badge>
                                       )}
-                                      {img.role && (
+                                      {img.galleryDetail && (
                                         <Badge
                                           variant="secondary"
                                           className="bg-black/85 backdrop-blur text-[8px] font-bold border-none text-zinc-300 uppercase px-1.5 py-0.5 rounded leading-none"
                                         >
-                                          {img.role}
+                                          {img.galleryDetail}
                                         </Badge>
                                       )}
                                     </div>
@@ -1856,20 +1925,20 @@ export function ItemModal({
 
                                     {/* Source & Type Badges */}
                                     <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none select-none">
-                                      {img.source && (
+                                      {img.galleryProvider && (
                                         <Badge
                                           variant="secondary"
                                           className="bg-black/85 backdrop-blur text-[8px] font-extrabold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded leading-none tracking-wider"
                                         >
-                                          {img.source}
+                                          {img.galleryProvider}
                                         </Badge>
                                       )}
-                                      {img.role && (
+                                      {img.galleryDetail && (
                                         <Badge
                                           variant="secondary"
                                           className="bg-black/85 backdrop-blur text-[8px] font-bold border-none text-zinc-300 uppercase px-1.5 py-0.5 rounded leading-none"
                                         >
-                                          {img.role}
+                                          {img.galleryDetail}
                                         </Badge>
                                       )}
                                     </div>

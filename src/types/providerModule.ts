@@ -7,6 +7,7 @@ export type MetadataAdapterContext = {
   platform?: string | null;
   includePcSources?: boolean;
   imdbId?: string | null;
+  externalIds?: Record<string, string | null>;
   fallbackNames?: string[];
   isBackground?: boolean;
 };
@@ -130,7 +131,7 @@ export interface ProviderModule {
   info: ProviderInfo;
   evidence?: ProviderEvidenceConfig;
   createMetadataAdapter?: (
-    deps: Record<string, unknown>,
+    deps?: Record<string, unknown>,
   ) => MetadataProviderAdapter | null;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;

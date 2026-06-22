@@ -279,16 +279,23 @@
       "allAges": "Tout public",
       "averageRating": "Note moyenne",
       "completion": "Complétion",
+      "coop": "Coop",
       "duration": "Durée",
       "estimatedValue": "Valeur estimée",
+      "gameModes": "Modes de jeu",
       "observedPrice": "Prix constaté",
       "oneSource": "1 source",
       "pages": "Pages",
       "players": "Joueurs",
       "playtime": "Durée d'une partie",
       "public": "Public",
+      "solo": "Solo",
+      "multiplePlayers": "{count}",
+      "or": "ou",
+      "playersRange": "{min} à {max}",
       "sourcesCount": "{count} sources",
-      "tracks": "Tracks"
+      "tracks": "Tracks",
+      "upToPlayers": "Jusqu'à {count}"
     }
   },
   "sorting": {

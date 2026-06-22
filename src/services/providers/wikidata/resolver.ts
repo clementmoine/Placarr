@@ -328,6 +328,7 @@ export function createWikidataResolver() {
           selectedEntity,
           frWikiTitle || enWikiTitle,
         ),
+        externalIds: { wikidata: selectedQid },
       };
     } catch (error) {
       console.error("[Wikidata] Metadata lookup failed:", error);

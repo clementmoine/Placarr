@@ -452,7 +452,7 @@ export async function storeMetadata(
   );
 
   // Localize all attachments before database save, filtering out failures (e.g. 404)
-  const localizedAttachments = (
+  const downloadedAttachments = (
     await Promise.all(
       uniqueAttachments.map(async (attachment) => {
         const localizedUrl = await downloadRemoteImage(attachment.url);
@@ -464,6 +464,11 @@ export async function storeMetadata(
       }),
     )
   ).filter((a): a is NonNullable<typeof a> => a !== null);
+
+  // Reject solid-colour / near-uniform placeholder images (e.g. ScreenScraper
+  // fillers) so they never pollute the gallery or get picked as the cover.
+  const localizedAttachments =
+    await filterOutFlatImageAttachments(downloadedAttachments);
 
   const imageMetricsByUrl = new Map<string, AttachmentImageMetrics | null>();
   await Promise.all(
@@ -766,4 +771,74 @@ export async function readAttachmentImageMetrics(
     }
   }
   return task;
+}
+
+/**
+ * A "degenerate" image carries no usable visual content: a solid colour or a
+ * near-uniform placeholder. Some providers (notably ScreenScraper) hand back
+ * such fillers for missing box backs/3D shots, and because their aspect ratio
+ * can sit right on the cover sweet spot they would otherwise outrank a real
+ * jaquette. We require BOTH near-zero entropy AND virtually no per-channel
+ * variation so a genuine cover (high entropy, high stdev) is never dropped.
+ */
+export function isDegenerateFlatImage(stats: {
+  entropy: number;
+  maxColorStdev: number;
+}): boolean {
+  return stats.entropy < 1 && stats.maxColorStdev < 5;
+}
+
+const flatImageAssetCache = new Map<string, Promise<boolean>>();
+
+async function isFlatImageAsset(url: string): Promise<boolean> {
+  if (!url || !url.startsWith("/")) return false;
+  const cached = flatImageAssetCache.get(url);
+  if (cached) return cached;
+
+  const task = (async () => {
+    const filePath = resolvePublicAssetPath(url);
+    if (!filePath || !fs.existsSync(filePath)) return false;
+    try {
+      const stats = await sharp(filePath).stats();
+      const colorChannels = stats.channels.slice(0, 3); // ignore alpha
+      const maxColorStdev = Math.max(
+        0,
+        ...colorChannels.map((channel) => channel.stdev),
+      );
+      return isDegenerateFlatImage({
+        entropy: stats.entropy ?? 0,
+        maxColorStdev,
+      });
+    } catch {
+      return false;
+    }
+  })();
+
+  flatImageAssetCache.set(url, task);
+  if (flatImageAssetCache.size > IMAGE_METRICS_CACHE_LIMIT) {
+    const oldestKey = flatImageAssetCache.keys().next().value;
+    if (typeof oldestKey === "string") flatImageAssetCache.delete(oldestKey);
+  }
+  return task;
+}
+
+/**
+ * Drop image-type attachments whose downloaded asset is a degenerate flat
+ * placeholder. Non-image attachments (audio, etc.) pass through untouched.
+ */
+async function filterOutFlatImageAttachments<
+  T extends { type: AttachmentType; url: string },
+>(attachments: T[]): Promise<T[]> {
+  const flatChecks = await Promise.all(
+    attachments.map(async (attachment) => ({
+      url: attachment.url,
+      flat:
+        shouldReadImageMetricsForAttachment(attachment.type) &&
+        (await isFlatImageAsset(attachment.url)),
+    })),
+  );
+  const flatUrls = new Set(
+    flatChecks.filter((check) => check.flat).map((check) => check.url),
+  );
+  return attachments.filter((attachment) => !flatUrls.has(attachment.url));
 }

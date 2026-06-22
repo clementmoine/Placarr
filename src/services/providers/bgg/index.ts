@@ -45,8 +45,7 @@ export const bggModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
-  createMetadataAdapter(deps) {
-    const fetchFromBGG = deps.fetchFromBGG as NameResolver;
+  createMetadataAdapter() {
     return {
       id: "boardgamegeek",
       async resolve({ name }) {

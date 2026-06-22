@@ -10,6 +10,10 @@ import {
   type ResolvedMatch,
 } from "@/lib/barcode/evidence";
 import { runBarcodeLookups } from "@/lib/barcode/lookups";
+import {
+  collectPayloadListingNames,
+  detectBoardGameSignal,
+} from "@/lib/barcode/boardGameSignal";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookupPayload";
 import { compileAllBarcodeTypeResults } from "@/lib/barcode/sourceAssembly";
 import {
@@ -46,6 +50,8 @@ export type BarcodeResolveResult = {
   provider: string | null;
   rawNames: string[];
   cleanName: string;
+  displayName: string;
+  edition: string | null;
   suggestions: string[];
   matches: ResolvedMatch[];
   shelfType: string | null;
@@ -160,9 +166,16 @@ async function cacheBarcodeResult(
           priceUsedCIB: true,
         },
       }));
-    const rawNames = uniqueClean([res.cleanName, ...(res.suggestions || [])], {
-      preservePlatformSuffix: shelfType === "games",
-    }).map((value) => {
+    const rawNames = uniqueClean(
+      [
+        res.displayName || res.cleanName,
+        res.cleanName,
+        ...(res.suggestions || []),
+      ],
+      {
+        preservePlatformSuffix: shelfType === "games",
+      },
+    ).map((value) => {
       const matchingMatch = res.matches.find(
         (match) =>
           match.suggestions.some(
@@ -214,6 +227,7 @@ function selectBarcodeTypeResult(
   type: string | null,
   typeResults: Record<string, CompiledResult | null>,
   cleanedBarcode: string,
+  boardGameSignal = 0,
 ): { selectedType: string | null; selectedResult: CompiledResult | null } {
   if (type && typeResults[type]) {
     return { selectedType: type, selectedResult: typeResults[type] };
@@ -227,8 +241,8 @@ function selectBarcodeTypeResult(
     .filter((entry): entry is [string, CompiledResult] => Boolean(entry[1]));
   candidates.sort(
     (a, b) =>
-      scoreTypeCandidate(b[0], b[1], cleanedBarcode) -
-      scoreTypeCandidate(a[0], a[1], cleanedBarcode),
+      scoreTypeCandidate(b[0], b[1], cleanedBarcode, boardGameSignal) -
+      scoreTypeCandidate(a[0], a[1], cleanedBarcode, boardGameSignal),
   );
 
   const best = candidates[0];
@@ -288,10 +302,14 @@ export async function resolveBarcode(
     type,
     payload,
   });
+  const boardGameSignal = detectBoardGameSignal(
+    collectPayloadListingNames(payload),
+  );
   const { selectedType, selectedResult } = selectBarcodeTypeResult(
     type,
     typeResults,
     cleanedBarcode,
+    boardGameSignal,
   );
 
   if (selectedResult && selectedType) {
@@ -369,6 +387,8 @@ export async function resolveBarcode(
         provider: null,
         rawNames: [],
         cleanName: "",
+        displayName: "",
+        edition: null,
         suggestions: [],
         matches: [],
         shelfType: type || null,
@@ -387,6 +407,8 @@ export async function resolveBarcode(
     provider: null,
     rawNames: [],
     cleanName: "",
+    displayName: "",
+    edition: null,
     suggestions: [],
     matches: [],
     shelfType: type || null,

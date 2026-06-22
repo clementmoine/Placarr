@@ -21,6 +21,7 @@ export interface MediaItem {
   type: AttachmentType | string;
   source?: string | null;
   role?: string | null;
+  title?: string | null;
 }
 
 export interface MediaInput {
@@ -121,20 +122,7 @@ export function getGalleryImages(item: MediaInput, max?: number): MediaItem[] {
   return max ? result.slice(0, max) : result;
 }
 
-export function getMediaTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    cover: "Cover",
-    screenshot: "Screenshot",
-    artwork: "Artwork",
-    background: "Background",
-    logo: "Logo",
-    image: "Image",
-    video: "Video",
-    audio: "Audio",
-    book: "Book",
-  };
-  return labels[type] ?? type;
-}
+export { getMediaTypeLabel } from "@/lib/attachmentDisplayLabels";
 
 /** Score objectif d'un attachment (debug/admin, sans I/O). */
 export function getAttachmentDisplayScore(

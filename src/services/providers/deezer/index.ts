@@ -47,8 +47,7 @@ export const deezerModule: ProviderModule = {
       error: isUp ? null : "Host unreachable",
     };
   }),
-  createMetadataAdapter(deps) {
-    const fetchFromDeezer = deps.fetchFromDeezer as Resolver;
+  createMetadataAdapter() {
     return {
       id: "deezer",
       async resolve({ name, barcode }) {

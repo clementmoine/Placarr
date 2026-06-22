@@ -12,6 +12,7 @@ import {
   pickRepresentativeEvidence,
   resolveEvidenceToMatches,
 } from "./resolve";
+import { applyEditionToCompiledResult } from "./edition";
 import {
   pickPlatformKeyFromEvidence,
   type CompiledResult,
@@ -19,6 +20,86 @@ import {
   type ResolvedMatch,
   type SourceProduct,
 } from "./types";
+
+/**
+ * A lone marketplace listing can be wrong, but when several INDEPENDENT
+ * marketplaces point at the same product, their consensus is strong evidence of
+ * what the barcode physically is. When that consensus contradicts the lone
+ * canonical source (typically a bad ScreenScraper barcode→game mapping), we let
+ * the consensus lead: it is promoted to trusted-retailer level so it is no
+ * longer capped as "listing-only" and outranks the canonical. The canonical
+ * evidence is left untouched so it still surfaces as a clean, least-prioritised
+ * alternate — the user then sees two clean candidates (the consensual title
+ * match, and the item the canonical identified strictly by barcode).
+ */
+export const MARKETPLACE_CONSENSUS_MIN_PROVIDERS = 3;
+
+export function applyMarketplaceConsensusOverride(
+  evidence: ProductEvidence[],
+): void {
+  const marketplace = evidence.filter(
+    (item) => !item.isCanonical && !item.isTrustedRetailer,
+  );
+  const canonicalProviderCount = new Set(
+    evidence
+      .filter((item) => item.isCanonical)
+      .map((item) => item.providerName),
+  ).size;
+  if (canonicalProviderCount === 0 || marketplace.length === 0) return;
+
+  // Group marketplace evidence by same product; keep the largest group.
+  const clusters: ProductEvidence[][] = [];
+  for (const item of marketplace) {
+    const cluster = clusters.find((group) =>
+      group.some((other) => areEvidenceSameProduct(other, item)),
+    );
+    if (cluster) cluster.push(item);
+    else clusters.push([item]);
+  }
+
+  let consensus: ProductEvidence[] = [];
+  let consensusProviders = 0;
+  for (const cluster of clusters) {
+    const distinct = new Set(cluster.map((item) => item.providerName)).size;
+    if (distinct > consensusProviders) {
+      consensusProviders = distinct;
+      consensus = cluster;
+    }
+  }
+
+  // Only override when the consensus is both strong and clearly dominant.
+  if (
+    consensusProviders < MARKETPLACE_CONSENSUS_MIN_PROVIDERS ||
+    consensusProviders <= canonicalProviderCount
+  ) {
+    return;
+  }
+
+  // If any anchor already agrees with the consensus, there is no contradiction.
+  const corroborated = evidence.some(
+    (item) =>
+      (item.isCanonical || item.isTrustedRetailer) &&
+      consensus.some((other) => areEvidenceSameProduct(item, other)),
+  );
+  if (corroborated) return;
+
+  // Promote the consensus so it leads (no listing-only confidence cap)…
+  for (const item of consensus) {
+    item.isTrustedRetailer = true;
+    item.priority = Math.max(item.priority, 1);
+  }
+  // …and flag the contradicted canonical evidence. It stays canonical (so it
+  // survives noise filtering and surfaces as a clean alternate) but its cluster
+  // confidence is capped so it ranks below the consensus.
+  for (const item of evidence) {
+    if (
+      item.isCanonical &&
+      !consensus.some((other) => areEvidenceSameProduct(item, other))
+    ) {
+      item.contradictedByConsensus = true;
+    }
+  }
+}
 
 export async function compileResultForType(
   type: string,
@@ -35,8 +116,6 @@ export async function compileResultForType(
 
   const provider = activeSources.map((s) => s.providerName).join("+");
   const sourceEvidence: ProductEvidence[] = [];
-  const canonicalEvidence: ProductEvidence[] = [];
-  const trustedRetailerEvidence: ProductEvidence[] = [];
 
   for (const source of activeSources) {
     for (const product of source.products) {
@@ -54,20 +133,21 @@ export async function compileResultForType(
         continue;
       }
       sourceEvidence.push(evidence);
-      if (evidence.isCanonical) {
-        canonicalEvidence.push(evidence);
-      }
-      if (evidence.isTrustedRetailer) {
-        trustedRetailerEvidence.push(evidence);
-      }
     }
   }
 
   if (sourceEvidence.length === 0) return null;
 
+  // Let a strong, independent marketplace consensus lead when it contradicts
+  // the lone canonical source (see helper above).
+  applyMarketplaceConsensusOverride(sourceEvidence);
+
+  const canonicalEvidence = sourceEvidence.filter((item) => item.isCanonical);
+  const trustedRetailerEvidence = sourceEvidence.filter(
+    (item) => item.isTrustedRetailer,
+  );
   const anchorEvidence = [...canonicalEvidence, ...trustedRetailerEvidence];
   const hasAnchorSignals = anchorEvidence.length > 0;
-  const hasCanonicalSignals = canonicalEvidence.length > 0;
   const trustedEvidence = hasAnchorSignals
     ? sourceEvidence.filter((evidence) => {
         if (evidence.isCanonical || evidence.isTrustedRetailer) return true;
@@ -86,8 +166,12 @@ export async function compileResultForType(
   const looksLikeAudioBarcode = /^(0?(498|499)|45|88)/.test(cleanedBarcode);
   const skipGameDatabaseFallback = type === "games" && looksLikeAudioBarcode;
 
+  // The database fallback only exists to anchor marketplace-only results. When a
+  // trusted retailer already confirmed the barcode (e.g. Philibert/Okkazeo for a
+  // board game), skip it: its echo of an unmatched name would otherwise become a
+  // fake canonical that outranks the clean trusted-retailer title.
   const databaseEvidence =
-    hasCanonicalSignals || skipGameDatabaseFallback
+    hasAnchorSignals || skipGameDatabaseFallback
       ? []
       : await buildDatabaseEvidence(
           trustedEvidence
@@ -149,20 +233,24 @@ export async function compileResultForType(
   const platformKey =
     type === "games" ? pickPlatformKeyFromEvidence(allEvidence) : null;
 
-  return {
-    provider,
-    rawNames,
-    cleanName: representative,
-    suggestions: finalSuggestions,
-    matches,
-    platformKey,
-  };
+  return applyEditionToCompiledResult(
+    {
+      provider,
+      rawNames,
+      cleanName: representative,
+      suggestions: finalSuggestions,
+      matches,
+      platformKey,
+    },
+    allEvidence,
+  );
 }
 
 export function scoreTypeCandidate(
   candidateType: string,
   result: CompiledResult,
   barcode: string,
+  boardGameSignal = 0,
 ): number {
   const topMatch = result.matches[0];
   if (!topMatch) return 0;
@@ -185,6 +273,15 @@ export function scoreTypeCandidate(
   if (candidateType === "musics" && isAudioBarcode) score += 0.3;
   if (candidateType === "games" && (result.platformKey || "").length > 0)
     score += 0.25;
+
+  // A board-game signal harvested from the listings (category phrase like
+  // "jeu de société", or a board-game publisher) promotes `boardgames` and
+  // suppresses `games`, so a coincidental same-named video game cannot win the
+  // type. See detectBoardGameSignal.
+  if (boardGameSignal > 0) {
+    if (candidateType === "boardgames") score += boardGameSignal * 0.35;
+    if (candidateType === "games") score -= boardGameSignal * 0.3;
+  }
 
   return score;
 }

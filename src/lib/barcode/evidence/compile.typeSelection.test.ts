@@ -50,6 +50,8 @@ function makeResult(
     provider: "",
     rawNames: [],
     cleanName: "x",
+    displayName: "x",
+    edition: null,
     suggestions: [],
     matches: [resolved],
     platformKey: null,
@@ -113,6 +115,75 @@ describe("scoreTypeCandidate — jeu vs film homonyme", () => {
     });
     expect(scoreTypeCandidate("movies", moviesResult, barcode)).toBe(
       scoreTypeCandidate("movies", fewAliases, barcode),
+    );
+  });
+});
+
+/**
+ * Régression "jeu de société classé en jeu vidéo". Code-barres 3421272109517 =
+ * "Mille Sabords" (Gigamic). En scan sans type, un match jeu vidéo coïncident
+ * pouvait l'emporter sur le jeu de société. Le signal board-game extrait des
+ * annonces ("jeu de société", éditeur Gigamic) doit promouvoir `boardgames` et
+ * pénaliser `games`.
+ */
+describe("scoreTypeCandidate — signal jeu de société", () => {
+  const barcode = "3421272109517";
+
+  // Un match jeu vidéo coïncident : plateforme détectée (+0.25) sur du bruit.
+  const gamesResult = makeResult({
+    platformKey: "switch",
+    match: {
+      evidence: makeEvidence({
+        providers: ["PriceCharting", "PicClick"],
+        canonicalProviders: [],
+        canonicalCount: 0,
+        marketplaceCount: 3,
+        hasCover: true,
+        confidence: 0.7,
+      }),
+    },
+  });
+
+  // Le jeu de société ancré par un retailer de confiance (Philibert).
+  const boardgamesResult = makeResult({
+    platformKey: null,
+    match: {
+      evidence: makeEvidence({
+        providers: ["Philibert", "AchatMoinsCher"],
+        trustedRetailerProviders: ["Philibert"],
+        trustedRetailerCount: 1,
+        marketplaceCount: 2,
+        hasCover: true,
+        confidence: 0.6,
+      }),
+    },
+  });
+
+  it("sans signal, le match jeu vidéo (avec plateforme) peut l'emporter", () => {
+    const gamesScore = scoreTypeCandidate("games", gamesResult, barcode);
+    const boardScore = scoreTypeCandidate("boardgames", boardgamesResult, barcode);
+    expect(gamesScore).toBeGreaterThan(boardScore);
+  });
+
+  it("avec un signal board-game, le jeu de société l'emporte", () => {
+    const gamesScore = scoreTypeCandidate("games", gamesResult, barcode, 1);
+    const boardScore = scoreTypeCandidate(
+      "boardgames",
+      boardgamesResult,
+      barcode,
+      1,
+    );
+    expect(boardScore).toBeGreaterThan(gamesScore);
+  });
+
+  it("le signal pénalise `games` et promeut `boardgames`", () => {
+    expect(scoreTypeCandidate("games", gamesResult, barcode, 1)).toBeLessThan(
+      scoreTypeCandidate("games", gamesResult, barcode, 0),
+    );
+    expect(
+      scoreTypeCandidate("boardgames", boardgamesResult, barcode, 1),
+    ).toBeGreaterThan(
+      scoreTypeCandidate("boardgames", boardgamesResult, barcode, 0),
     );
   });
 });

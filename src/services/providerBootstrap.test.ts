@@ -26,6 +26,7 @@ describe("createMetadataAdapters", () => {
 
     expect(adapters.map((adapter) => adapter.id).sort()).toEqual(
       [
+        "achatmoinscher",
         "archichouette",
         "bcdjeux",
         "boardgamegeek",
@@ -40,9 +41,11 @@ describe("createMetadataAdapters", () => {
         "ludifolie",
         "monsieurde",
         "musicbrainz",
+        "okkazeo",
         "omdb",
         "openlibrary",
         "philibert",
+        "pricecharting",
         "rawg",
         "screenscraper",
         "steam",

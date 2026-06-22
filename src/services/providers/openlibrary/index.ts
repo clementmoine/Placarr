@@ -79,11 +79,10 @@ export const openlibraryModule: ProviderModule = {
       };
     },
   ),
-  createMetadataAdapter(deps) {
-    const fetchFromOpenLibrary = deps.fetchFromOpenLibrary as Resolver;
+  createMetadataAdapter() {
     return {
       id: "openlibrary",
-      async resolve({ name, barcode }) {
+      async resolve({ name, barcode }: any) {
         return fetchFromOpenLibrary(name, barcode);
       },
     } satisfies MetadataProviderAdapter;

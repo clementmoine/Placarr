@@ -211,8 +211,26 @@ export function pickPreferredClusterDisplayName(
       seen.add(key);
       return true;
     });
-  const specificCandidates = validCandidates.filter((candidate) => {
-    return !validCandidates.some(
+  // A non-anchor title that merely wraps an anchor's clean title in extra noise
+  // (publisher/edition junk) must never become the display name: a trusted /
+  // canonical source's clean name wins over a noisier marketplace superset of it.
+  const anchorNames = validCandidates
+    .filter((candidate) => candidate.isCanonical || candidate.isTrustedRetailer)
+    .map((candidate) => candidate.name);
+  const deNoisedCandidates =
+    anchorNames.length > 0
+      ? validCandidates.filter((candidate) => {
+          if (candidate.isCanonical || candidate.isTrustedRetailer) return true;
+          return !anchorNames.some(
+            (anchorName) =>
+              anchorName !== candidate.name &&
+              isStrictTitleSubset(anchorName, candidate.name),
+          );
+        })
+      : validCandidates;
+
+  const specificCandidates = deNoisedCandidates.filter((candidate) => {
+    return !deNoisedCandidates.some(
       (other) =>
         other.name !== candidate.name &&
         isStrictTitleSubset(other.name, candidate.name) &&
@@ -228,7 +246,7 @@ export function pickPreferredClusterDisplayName(
     );
   });
   const displayCandidates =
-    specificCandidates.length > 0 ? specificCandidates : validCandidates;
+    specificCandidates.length > 0 ? specificCandidates : deNoisedCandidates;
 
   const ranked = displayCandidates.sort((a, b) => {
     const scoreA = scoreDisplayTitle(a.name, {

@@ -27,8 +27,9 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { resolveBarcode } from "./barcodeResolver";
+import { BARCODE_CACHE_VERSION } from "@/lib/barcode/titleUtils";
 
-const CACHE_VERSION = "canonical-v23";
+const CACHE_VERSION = BARCODE_CACHE_VERSION;
 
 function makeCache(opts: {
   provider?: string;
@@ -136,7 +137,9 @@ describe("resolveBarcode — cache-hit (déterministe, sans réseau)", () => {
     expect(res.platformKey).toBe("xbox");
     expect(res.cleanName.toLowerCase()).toContain("halo 2");
     expect(res.cleanName.toLowerCase()).not.toContain("classics");
+    expect(res.edition?.toLowerCase()).toBe("classics");
+    expect(res.displayName.toLowerCase()).toContain("classics");
     expect(res.matches).toHaveLength(1);
-    expect(res.suggestions.join(" ").toLowerCase()).not.toContain("classics");
+    expect(res.matches[0]?.name.toLowerCase()).toContain("classics");
   });
 });

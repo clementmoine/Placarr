@@ -19,7 +19,10 @@ type Resolver = (
 ) => Promise<MetadataResult | null>;
 
 const fetchFromPhilibert = createPhilibertResolver();
-const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames"];
+// "generic" included so typeless home-page scans get a board-game anchor too:
+// without it, a board game scanned without a type has no canonical/trusted source
+// and gets misclassified as "games" (see runBarcodeLookups generic branch).
+const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
 
 export const philibertModule: ProviderModule = {
   info: {
@@ -46,11 +49,10 @@ export const philibertModule: ProviderModule = {
     sourceWeight: 0.28,
     trustedRetailer: true,
   },
-  createMetadataAdapter(deps) {
-    const fetchFromPhilibert = deps.fetchFromPhilibert as Resolver;
+  createMetadataAdapter() {
     return {
       id: "philibert",
-      async resolve({ name, barcode }) {
+      async resolve({ name, barcode }: any) {
         return fetchFromPhilibert(name, barcode);
       },
     } satisfies MetadataProviderAdapter;

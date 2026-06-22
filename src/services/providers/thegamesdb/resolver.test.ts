@@ -49,6 +49,8 @@ describe("fetchFromTheGamesDB", () => {
             release_date: "2004-11-22",
             platform: 14,
             region_id: 6,
+            players: "1-8 Players",
+            coop: "Yes",
           },
         ],
       },
@@ -77,6 +79,110 @@ describe("fetchFromTheGamesDB", () => {
 
     expect(result?.title).toBe("GoldenEye: Au Service Du Mal");
     expect(result?.imageUrl).toContain("109154-1.jpg");
+    expect(result?.facts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "players",
+          label: "Joueurs",
+          value: "1-8",
+          source: "thegamesdb",
+        }),
+        expect.objectContaining({
+          kind: "cooperative",
+          label: "Coop",
+          value: "Oui",
+          source: "thegamesdb",
+        }),
+      ]),
+    );
     expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(109154);
+  });
+
+  it("keeps the requested sequel over the base game on the same platform", async () => {
+    h.searchTheGamesDbByName.mockResolvedValue({
+      code: 200,
+      data: {
+        count: 2,
+        games: [
+          {
+            id: 23520,
+            game_title: "Tom Clancy's Ghost Recon",
+            platform: 14,
+            region_id: 0,
+            release_date: "2002-11-11",
+          },
+          {
+            id: 6183,
+            game_title: "Tom Clancy's Ghost Recon 2",
+            platform: 14,
+            region_id: 0,
+            release_date: "2004-11-16",
+          },
+        ],
+      },
+    });
+    h.fetchTheGamesDbById.mockResolvedValue({
+      code: 200,
+      data: {
+        games: [
+          {
+            id: 6183,
+            game_title: "Tom Clancy's Ghost Recon 2",
+            release_date: "2004-11-16",
+            platform: 14,
+            players: "1-4 Players",
+          },
+        ],
+      },
+    });
+
+    const result = await fetchFromTheGamesDB(
+      "Tom Clancy's Ghost Recon 2",
+      "Xbox Original",
+      "3307210196804",
+    );
+
+    expect(result?.title).toBe("Tom Clancy's Ghost Recon 2");
+    expect(result?.facts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "players",
+          value: "1-4",
+          source: "thegamesdb",
+        }),
+      ]),
+    );
+    expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(6183);
+  });
+
+  it("identifie correctement les jaquettes verso (back) dans les pièces jointes TGDB", async () => {
+    h.searchTheGamesDbByName.mockResolvedValue({
+      code: 200,
+      data: {
+        count: 1,
+        games: [{ id: 123, game_title: "Test Game", platform: 14, region_id: 6 }],
+      },
+    });
+    h.fetchTheGamesDbById.mockResolvedValue({
+      code: 200,
+      data: {
+        games: [{ id: 123, game_title: "Test Game", platform: 14 }],
+      },
+      include: {
+        boxart: {
+          base_url: { original: "https://cdn.example/" },
+          data: {
+            "123": [
+              { id: 1, type: "boxart", side: "back", filename: "back.jpg" },
+              { id: 2, type: "boxart", side: "front", filename: "front.jpg" },
+            ],
+          },
+        },
+      },
+    });
+
+    const result = await fetchFromTheGamesDB("Test Game", "Xbox Original");
+    const backAttachment = result?.attachments?.find((a) => a.url.includes("back.jpg"));
+    expect(backAttachment?.role).toBe("back-eu"); // region_id 6 is PAL/EU
   });
 });

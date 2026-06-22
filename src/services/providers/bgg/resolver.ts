@@ -463,6 +463,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
         attachments: attachments.length > 0 ? attachments : undefined,
         aliases,
         facts,
+        externalIds: { bgg: String(gameId) },
       };
     } catch (error: unknown) {
       const status =

@@ -15,7 +15,14 @@ export const thegamesdbModule: ProviderModule = {
     id: "thegamesdb",
     label: "TheGamesDB",
     types: ["games"],
-    capabilities: ["identify", "cover", "description", "releaseDate", "people"],
+    capabilities: [
+      "identify",
+      "cover",
+      "description",
+      "releaseDate",
+      "people",
+      "players",
+    ],
     auth: {
       kind: "key",
       env: ["THEGAMESDB_API_KEY"],
@@ -33,7 +40,7 @@ export const thegamesdbModule: ProviderModule = {
   },
   createMetadataAdapter: () => ({
     id: "thegamesdb",
-    async resolve({ name, barcode, platform }) {
+    async resolve({ name, barcode, platform }: any) {
       return (await fetchFromTheGamesDB(
         name,
         platform,

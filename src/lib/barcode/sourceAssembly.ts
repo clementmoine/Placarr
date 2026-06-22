@@ -315,6 +315,11 @@ export async function compileAllBarcodeTypeResults(params: {
     "Philibert",
     sourceProductsFromMetadataHit(payload.philibert),
   );
+  pushSource(
+    boardgameSources,
+    "Okkazeo",
+    sourceProductsFromMetadataHit(payload.okkazeo),
+  );
   for (const retailer of payload.boardRetailers) {
     pushSource(
       boardgameSources,

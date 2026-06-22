@@ -1,5 +1,8 @@
 import { AttachmentType } from "@prisma/client";
+import type { MediaType } from "@/types/providerRegistry";
+import { PROVIDERS } from "@/services/providerRegistry";
 import {
+  pickBestCoverFromAttachments,
   pickBestDisplayImageUrl,
   rankAttachmentsForDisplay,
 } from "@/lib/attachmentDisplayScore";
@@ -37,217 +40,6 @@ export function pickBestMetadataTitle(
   )[0];
 }
 
-export function mergeGameMetadata(
-  igdb: MetadataResult | null,
-  ss: MetadataResult | null,
-  tgdb: MetadataResult | null,
-  coverProject: MetadataResult | null,
-  launchbox: MetadataResult | null,
-  hltb: MetadataResult | null,
-  steam: MetadataResult | null,
-  rawg: MetadataResult | null,
-  steamGrid: MetadataResult | null,
-  options: { includePcSources?: boolean } = {},
-): MetadataResult {
-  const titleSources = [
-    ss,
-    igdb,
-    tgdb,
-    launchbox,
-    rawg,
-    steam,
-    steamGrid,
-    hltb,
-  ].filter(Boolean) as MetadataResult[];
-  const title =
-    pickBestRegionalTitle(titleSources) ||
-    pickBestMetadataTitle([
-      ss?.title,
-      igdb?.title,
-      tgdb?.title,
-      launchbox?.title,
-      rawg?.title,
-      steam?.title,
-      steamGrid?.title,
-      hltb?.title,
-    ]);
-
-  const description = pickBestLocalizedDescription([
-    { text: ss?.description, language: "fr", source: "screenscraper" },
-    { text: igdb?.description, source: "igdb" },
-    {
-      text: tgdb?.description,
-      language:
-        tgdb?.title && inferTextLanguage(tgdb.title) === "fr"
-          ? "fr"
-          : undefined,
-      source: "thegamesdb",
-    },
-    { text: launchbox?.description, source: "launchbox" },
-    { text: rawg?.description, source: "rawg" },
-    { text: steam?.description, source: "steam" },
-  ]);
-
-  const releaseDate =
-    igdb?.releaseDate ||
-    ss?.releaseDate ||
-    tgdb?.releaseDate ||
-    launchbox?.releaseDate ||
-    rawg?.releaseDate;
-
-  const allPublishers = [
-    ...(igdb?.publishers || []),
-    ...(ss?.publishers || []),
-    ...(tgdb?.publishers || []),
-    ...(launchbox?.publishers || []),
-    ...(rawg?.publishers || []),
-    ...(steam?.publishers || []),
-  ];
-  const publishers =
-    allPublishers.length > 0
-      ? allPublishers.filter(
-          (p, i, arr) => arr.findIndex((q) => q.name === p.name) === i,
-        )
-      : undefined;
-
-  const ssAttachments = (ss?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "screenscraper",
-  }));
-  const tgdbAttachments = (tgdb?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "thegamesdb",
-  }));
-  const coverProjectAttachments = (coverProject?.attachments || []).map(
-    (a) => ({
-      ...a,
-      source: a.source || "coverproject",
-    }),
-  );
-  const launchboxAttachments = (launchbox?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "launchbox",
-  }));
-  const igdbAttachments = (igdb?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "igdb",
-  }));
-  const rawgAttachments = (rawg?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "rawg",
-  }));
-  const steamAttachments = (
-    options.includePcSources ? steam?.attachments || [] : []
-  ).map((a) => ({
-    ...a,
-    source: a.source || "steam",
-  }));
-  const steamGridAttachments = (steamGrid?.attachments || []).map((a) => ({
-    ...a,
-    source: a.source || "steamgriddb",
-  }));
-
-  const providerImageCandidates: MetadataAttachment[] = [
-    { source: "screenscraper", url: ss?.imageUrl },
-    { source: "thegamesdb", url: tgdb?.imageUrl },
-    { source: "coverproject", url: coverProject?.imageUrl },
-    { source: "igdb", url: igdb?.imageUrl },
-    { source: "rawg", url: rawg?.imageUrl },
-    { source: "steamgriddb", url: steamGrid?.imageUrl },
-    { source: "steam", url: steam?.imageUrl },
-  ].flatMap((candidate) =>
-    candidate.url
-      ? [
-          {
-            type: "cover" as AttachmentType,
-            url: candidate.url,
-            source: candidate.source,
-          },
-        ]
-      : [],
-  );
-
-  const allAttachments: MetadataAttachment[] = [
-    ...ssAttachments,
-    ...tgdbAttachments,
-    ...coverProjectAttachments,
-    ...launchboxAttachments,
-    ...igdbAttachments,
-    ...rawgAttachments,
-    ...steamGridAttachments,
-    ...steamAttachments,
-    ...providerImageCandidates,
-  ];
-
-  const attachments = rankAttachmentsForDisplay(allAttachments);
-  const imageUrl = pickBestDisplayImageUrl(attachments);
-
-  const allAliases = Array.from(
-    new Set([
-      ...(ss?.regionalTitles?.map((entry) => entry.text) || []),
-      ...(tgdb?.regionalTitles?.map((entry) => entry.text) || []),
-      ...(launchbox?.aliases || []),
-      ...(igdb?.aliases || []),
-      ...(ss?.aliases || []),
-      ...(tgdb?.aliases || []),
-      ...(hltb?.aliases || []),
-      ...(rawg?.aliases || []),
-      ...(steam?.aliases || []),
-      ...(steamGrid?.aliases || []),
-    ]),
-  ).filter((a) => a.toLowerCase().trim() !== title?.toLowerCase().trim());
-  const aliases = allAliases.length > 0 ? allAliases : undefined;
-  const hltbFacts = hltb?.facts || [];
-  const durationLikeKinds = new Set([
-    "time-to-beat",
-    "duration",
-    "completion-time",
-    "playtime",
-  ]);
-  const hasDirectTimeToBeat = hltbFacts.some((fact) =>
-    durationLikeKinds.has(fact.kind),
-  );
-  const rawgLooksPcOnly =
-    !options.includePcSources &&
-    rawg?.facts?.some((fact) => fact.kind === "platform") &&
-    rawg.facts
-      .filter((fact) => fact.kind === "platform")
-      .every((fact) => /\b(pc|windows|mac|linux)\b/i.test(fact.value)) &&
-    !rawg.facts.some(
-      (fact) =>
-        fact.kind === "platform" &&
-        /\b(playstation|xbox|nintendo|wii|switch|ps[1-5])\b/i.test(fact.value),
-    );
-  const trustedRawg = rawgLooksPcOnly ? null : rawg;
-  const igdbFacts = (igdb?.facts || []).filter(
-    (fact) => !hasDirectTimeToBeat || fact.kind !== "time-to-beat",
-  );
-  const rawgFacts = (trustedRawg?.facts || []).filter(
-    (fact) =>
-      !hasDirectTimeToBeat ||
-      (fact.kind !== "duration" && fact.kind !== "playtime"),
-  );
-  const facts = dedupeFacts([
-    ...igdbFacts,
-    ...(ss?.facts || []),
-    ...(tgdb?.facts || []),
-    ...(launchbox?.facts || []),
-    ...hltbFacts,
-    ...rawgFacts,
-    ...(options.includePcSources ? steam?.facts || [] : []),
-  ]);
-
-  return {
-    title,
-    description,
-    releaseDate,
-    publishers,
-    imageUrl,
-    attachments,
-    aliases,
-    facts,
-  };
-}
 
 function dedupePeople(
   people: Array<{ name: string; imageUrl?: string | null }>,
@@ -270,337 +62,6 @@ function dedupePeople(
   return merged.length > 0 ? merged : undefined;
 }
 
-export function mergeBookMetadata(
-  openlibrary: MetadataResult | null,
-  googlebooks: MetadataResult | null,
-): MetadataResult {
-  const titleSources = [openlibrary, googlebooks].filter(
-    Boolean,
-  ) as MetadataResult[];
-  const title =
-    openlibrary?.title ||
-    pickBestMetadataTitle([googlebooks?.title]) ||
-    pickBestMetadataTitle(titleSources.map((source) => source.title));
-
-  const description =
-    pickBestLocalizedDescription([
-      { text: googlebooks?.description, language: "en", source: "googlebooks" },
-      { text: openlibrary?.description, source: "openlibrary" },
-    ]) ||
-    googlebooks?.description ||
-    openlibrary?.description;
-
-  const pageCount =
-    openlibrary?.pageCount ?? googlebooks?.pageCount ?? undefined;
-
-  const releaseDate =
-    openlibrary?.releaseDate || googlebooks?.releaseDate || undefined;
-
-  const authors = dedupePeople([
-    ...(openlibrary?.authors || []),
-    ...(googlebooks?.authors || []),
-  ]);
-
-  const publishers = dedupePeople([
-    ...(openlibrary?.publishers || []),
-    ...(googlebooks?.publishers || []),
-  ]);
-
-  const openlibraryAttachments = (openlibrary?.attachments || []).map(
-    (attachment) => ({
-      ...attachment,
-      source: attachment.source || "openlibrary",
-    }),
-  );
-  const googlebooksAttachments = (googlebooks?.attachments || []).map(
-    (attachment) => ({
-      ...attachment,
-      source: attachment.source || "googlebooks",
-    }),
-  );
-
-  const providerImageCandidates: MetadataAttachment[] = [
-    { source: "openlibrary", url: openlibrary?.imageUrl },
-    { source: "googlebooks", url: googlebooks?.imageUrl },
-  ].flatMap((candidate) =>
-    candidate.url
-      ? [
-          {
-            type: "cover" as AttachmentType,
-            url: candidate.url,
-            source: candidate.source,
-          },
-        ]
-      : [],
-  );
-
-  const attachments = rankAttachmentsForDisplay([
-    ...openlibraryAttachments,
-    ...googlebooksAttachments,
-    ...providerImageCandidates,
-  ]);
-  const imageUrl = pickBestDisplayImageUrl(attachments);
-
-  const aliases = Array.from(
-    new Set([...(openlibrary?.aliases || []), ...(googlebooks?.aliases || [])]),
-  ).filter(
-    (alias) =>
-      !title || alias.toLowerCase().trim() !== title.toLowerCase().trim(),
-  );
-
-  const facts = dedupeFacts([
-    ...(openlibrary?.facts || []),
-    ...(googlebooks?.facts || []),
-  ]);
-
-  return {
-    title,
-    description,
-    authors,
-    publishers,
-    pageCount,
-    releaseDate,
-    imageUrl,
-    barcode: pickDiscoveredBarcode([
-      openlibrary?.barcode,
-      googlebooks?.barcode,
-    ]),
-    attachments: attachments.length > 0 ? attachments : undefined,
-    aliases: aliases.length > 0 ? aliases : undefined,
-    facts: facts && facts.length > 0 ? facts : undefined,
-  };
-}
-
-export function mergeBoardGameMetadata(
-  bgg: MetadataResult | null,
-  wikidata: MetadataResult | null,
-  retailers: MetadataResult[],
-  scraper: MetadataResult | null = null,
-): MetadataResult {
-  const activeRetailers = retailers.filter(Boolean);
-  const primaryRetailer = activeRetailers[0] || null;
-
-  const titleSources = [bgg, primaryRetailer, wikidata, scraper].filter(
-    Boolean,
-  ) as MetadataResult[];
-  const title =
-    bgg?.title ||
-    primaryRetailer?.title ||
-    wikidata?.title ||
-    scraper?.title ||
-    pickBestMetadataTitle(titleSources.map((source) => source.title));
-
-  const description =
-    activeRetailers.find((retailer) => retailer.description)?.description ||
-    wikidata?.description ||
-    bgg?.description ||
-    scraper?.description;
-
-  const releaseDate =
-    bgg?.releaseDate ||
-    activeRetailers.find((retailer) => retailer.releaseDate)?.releaseDate ||
-    wikidata?.releaseDate ||
-    scraper?.releaseDate;
-
-  const duration = bgg?.duration;
-  const authors = dedupePeople([
-    ...(bgg?.authors || []),
-    ...(wikidata?.authors || []),
-    ...activeRetailers.flatMap((retailer) => retailer.authors || []),
-  ]);
-  const publishers = dedupePeople([
-    ...(bgg?.publishers || []),
-    ...(wikidata?.publishers || []),
-    ...activeRetailers.flatMap((retailer) => retailer.publishers || []),
-  ]);
-
-  const bggAttachments = (bgg?.attachments || []).map((attachment) => ({
-    ...attachment,
-    source: attachment.source || "boardgamegeek",
-  }));
-  const wikidataAttachments = (wikidata?.attachments || []).map(
-    (attachment) => ({
-      ...attachment,
-      source: attachment.source || "wikidata",
-    }),
-  );
-  const retailerAttachments = activeRetailers.flatMap((retailer) =>
-    (retailer.attachments || []).map((attachment) => ({
-      ...attachment,
-      source: attachment.source || retailer.facts?.[0]?.source || "retailer",
-    })),
-  );
-  const scraperAttachments = (scraper?.attachments || []).map((attachment) => ({
-    ...attachment,
-    source: attachment.source || "scraper",
-  }));
-
-  const providerImageCandidates: MetadataAttachment[] = [
-    ...activeRetailers.map((retailer) => ({
-      source: retailer.facts?.[0]?.source || "retailer",
-      url: retailer.imageUrl,
-    })),
-    { source: "boardgamegeek", url: bgg?.imageUrl },
-    { source: "wikidata", url: wikidata?.imageUrl },
-    { source: "scraper", url: scraper?.imageUrl },
-  ].flatMap((candidate) =>
-    candidate.url
-      ? [
-          {
-            type: "cover" as AttachmentType,
-            url: candidate.url,
-            source: candidate.source,
-          },
-        ]
-      : [],
-  );
-
-  const attachments = rankAttachmentsForDisplay([
-    ...retailerAttachments,
-    ...bggAttachments,
-    ...wikidataAttachments,
-    ...scraperAttachments,
-    ...providerImageCandidates,
-  ]);
-  const imageUrl = pickBestDisplayImageUrl(attachments);
-
-  const aliases = Array.from(
-    new Set([
-      ...(bgg?.aliases || []),
-      ...(wikidata?.aliases || []),
-      ...activeRetailers.flatMap((retailer) => retailer.aliases || []),
-      ...(scraper?.aliases || []),
-    ]),
-  ).filter(
-    (alias) =>
-      !title || alias.toLowerCase().trim() !== title.toLowerCase().trim(),
-  );
-
-  const facts = dedupeFacts([
-    ...(bgg?.facts || []),
-    ...(wikidata?.facts || []),
-    ...activeRetailers.flatMap((retailer) => retailer.facts || []),
-    ...(scraper?.facts || []),
-  ]);
-
-  return {
-    title,
-    description,
-    authors,
-    publishers,
-    duration,
-    releaseDate,
-    imageUrl,
-    barcode: pickDiscoveredBarcode([
-      ...activeRetailers.map((retailer) => retailer.barcode),
-      bgg?.barcode,
-      scraper?.barcode,
-    ]),
-    attachments: attachments.length > 0 ? attachments : undefined,
-    aliases: aliases.length > 0 ? aliases : undefined,
-    facts: facts && facts.length > 0 ? facts : undefined,
-  };
-}
-
-export function mergeMusicMetadata(
-  musicbrainz: MetadataResult | null,
-  discogs: MetadataResult | null,
-  deezer: MetadataResult | null,
-): MetadataResult {
-  const titleSources = [musicbrainz, deezer, discogs].filter(
-    Boolean,
-  ) as MetadataResult[];
-  const title =
-    musicbrainz?.title ||
-    pickBestMetadataTitle([discogs?.title, deezer?.title]) ||
-    pickBestMetadataTitle(titleSources.map((source) => source.title));
-
-  const tracksCount =
-    musicbrainz?.tracksCount ?? deezer?.tracksCount ?? undefined;
-
-  const releaseDate =
-    musicbrainz?.releaseDate ||
-    deezer?.releaseDate ||
-    discogs?.releaseDate ||
-    undefined;
-
-  const authors = dedupePeople([
-    ...(musicbrainz?.authors || []),
-    ...(deezer?.authors || []),
-  ]);
-
-  const publishers = dedupePeople([
-    ...(deezer?.publishers || []),
-    ...(discogs?.publishers || []),
-  ]);
-
-  const deezerAttachments = (deezer?.attachments || []).map((attachment) => ({
-    ...attachment,
-    source: attachment.source || "deezer",
-  }));
-  const discogsAttachments = (discogs?.attachments || []).map((attachment) => ({
-    ...attachment,
-    source: attachment.source || "discogs",
-  }));
-
-  const providerImageCandidates: MetadataAttachment[] = [
-    { source: "discogs", url: discogs?.imageUrl },
-    { source: "deezer", url: deezer?.imageUrl },
-    { source: "musicbrainz", url: musicbrainz?.imageUrl },
-  ].flatMap((candidate) =>
-    candidate.url
-      ? [
-          {
-            type: "cover" as AttachmentType,
-            url: candidate.url,
-            source: candidate.source,
-          },
-        ]
-      : [],
-  );
-
-  const attachments = rankAttachmentsForDisplay([
-    ...discogsAttachments,
-    ...deezerAttachments,
-    ...providerImageCandidates,
-  ]);
-  const imageUrl = discogs?.imageUrl || pickBestDisplayImageUrl(attachments);
-
-  const aliases = Array.from(
-    new Set([
-      ...(musicbrainz?.aliases || []),
-      ...(deezer?.aliases || []),
-      ...(discogs?.aliases || []),
-    ]),
-  ).filter(
-    (alias) =>
-      !title || alias.toLowerCase().trim() !== title.toLowerCase().trim(),
-  );
-
-  const facts = dedupeFacts([
-    ...(musicbrainz?.facts || []),
-    ...(discogs?.facts || []),
-    ...(deezer?.facts || []),
-  ]);
-
-  return {
-    title,
-    authors,
-    publishers,
-    duration: deezer?.duration,
-    tracksCount,
-    releaseDate,
-    imageUrl,
-    barcode: pickDiscoveredBarcode([
-      musicbrainz?.barcode,
-      deezer?.barcode,
-      discogs?.barcode,
-    ]),
-    attachments: attachments.length > 0 ? attachments : undefined,
-    aliases: aliases.length > 0 ? aliases : undefined,
-    facts: facts && facts.length > 0 ? facts : undefined,
-  };
-}
 
 export function preferRequestedDisplayTitle(
   metadata: MetadataResult,
@@ -665,5 +126,140 @@ export function preferRequestedDisplayTitle(
         },
       },
     ]),
+  };
+}
+
+export interface ProviderMetadataInput {
+  providerId: string;
+  metadata: MetadataResult;
+}
+
+export function mergeMetadata(
+  mediaType: MediaType,
+  results: ProviderMetadataInput[],
+  options: { includePcSources?: boolean } = {},
+): MetadataResult {
+  const activeResults = results.filter((r) => r.metadata);
+  if (activeResults.length === 0) return {};
+
+  const resultsByWeight = [...activeResults].sort((a, b) => {
+    const providerA = PROVIDERS.find((p) => p.id === a.providerId);
+    const providerB = PROVIDERS.find((p) => p.id === b.providerId);
+    const weightA = providerA?.weight ?? 0.5;
+    const weightB = providerB?.weight ?? 0.5;
+    return weightB - weightA;
+  });
+
+  const titleSources = resultsByWeight.map((r) => r.metadata);
+  const title =
+    pickBestRegionalTitle(titleSources) ||
+    pickBestMetadataTitle(titleSources.map((source) => source.title));
+
+  const descriptionCandidates = resultsByWeight.flatMap((r) => {
+    const text = r.metadata.description;
+    if (!text?.trim()) return [];
+    const provider = PROVIDERS.find((p) => p.id === r.providerId);
+    return [{
+      text,
+      language: provider?.defaultLanguage === "fr" ? "fr" : undefined,
+      source: r.providerId,
+    }];
+  });
+  const description = pickBestLocalizedDescription(descriptionCandidates);
+
+  const releaseDate = resultsByWeight.find((r) => r.metadata.releaseDate)?.metadata.releaseDate;
+
+  const barcode = pickDiscoveredBarcode(resultsByWeight.map((r) => r.metadata.barcode));
+
+  const allAuthors = resultsByWeight.flatMap((r) => r.metadata.authors || []);
+  const authors = allAuthors.length > 0 ? dedupePeople(allAuthors) : undefined;
+
+  const allPublishers = resultsByWeight.flatMap((r) => r.metadata.publishers || []);
+  const publishers = allPublishers.length > 0 ? dedupePeople(allPublishers) : undefined;
+
+  const allAttachments = resultsByWeight.flatMap((r) => {
+    const attachments = r.metadata.attachments || [];
+    if (r.providerId === "steam" && mediaType === "games" && !options.includePcSources) {
+      return [];
+    }
+    return attachments.map((a) => ({
+      ...a,
+      source: a.source || r.providerId,
+    }));
+  });
+
+  const providerImageCandidates = resultsByWeight.flatMap((r) => {
+    if (!r.metadata.imageUrl) return [];
+    if (r.providerId === "steam" && mediaType === "games" && !options.includePcSources) {
+      return [];
+    }
+    return [{
+      type: "cover" as AttachmentType,
+      url: r.metadata.imageUrl,
+      source: r.providerId,
+    }];
+  });
+
+  const attachments = rankAttachmentsForDisplay([
+    ...allAttachments,
+    ...providerImageCandidates,
+  ]);
+
+  const highestWeightResultWithImage = resultsByWeight.find((r) => r.metadata.imageUrl);
+  const imageUrl =
+    highestWeightResultWithImage?.providerId === "discogs"
+      ? highestWeightResultWithImage.metadata.imageUrl
+      : mediaType === "games"
+        ? pickBestCoverFromAttachments(attachments) ||
+          pickBestDisplayImageUrl(attachments)
+        : pickBestDisplayImageUrl(attachments);
+
+  const duration = resultsByWeight.find((r) => r.metadata.duration !== undefined)?.metadata.duration;
+  const pageCount = resultsByWeight.find((r) => r.metadata.pageCount !== undefined)?.metadata.pageCount;
+  const tracksCount = resultsByWeight.find((r) => r.metadata.tracksCount !== undefined)?.metadata.tracksCount;
+
+  const rawFacts = resultsByWeight.flatMap((r) => r.metadata.facts || []);
+  let finalFacts = rawFacts;
+  const hasTimeToBeat = rawFacts.some((f) => f.kind === "time-to-beat");
+  if (hasTimeToBeat) {
+    finalFacts = rawFacts.filter((f) => f.kind !== "duration");
+  }
+  const facts = finalFacts.length > 0 ? dedupeFacts(finalFacts) : undefined;
+
+  const rawAliases = resultsByWeight.flatMap((r) => r.metadata.aliases || []);
+  const aliases = Array.from(
+    new Set(rawAliases),
+  ).filter(
+    (alias) =>
+      !title || alias.toLowerCase().trim() !== title.toLowerCase().trim(),
+  );
+
+  const externalIdsList = resultsByWeight.map((r) => r.metadata.externalIds).filter(Boolean);
+  const externalIds = externalIdsList.length > 0
+    ? externalIdsList.reduce<Record<string, string | null | undefined>>((acc, curr) => {
+        for (const [key, val] of Object.entries(curr!)) {
+          if (val && !acc[key]) {
+            acc[key] = val;
+          }
+        }
+        return acc;
+      }, {})
+    : undefined;
+
+  return {
+    title,
+    description,
+    releaseDate,
+    barcode,
+    authors,
+    publishers,
+    duration,
+    pageCount,
+    tracksCount,
+    imageUrl,
+    attachments: attachments.length > 0 ? attachments : undefined,
+    aliases: aliases.length > 0 ? aliases : undefined,
+    facts: facts && facts.length > 0 ? facts : undefined,
+    externalIds,
   };
 }

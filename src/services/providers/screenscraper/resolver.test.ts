@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildScreenScraperFacts,
   buildScreenScraperSearchQueries,
   createScreenScraperResolver,
   isPlausibleScreenScraperFallbackResult,
   parseScreenScraperMediaUrl,
+  isScreenScraperPlaceholderMedia,
   pickSSCover,
   shouldUseCachedScreenScraperSuggestions,
   type SSMedia,
@@ -58,6 +60,81 @@ describe("pickSSCover", () => {
   it("returns null when no supported cover type is available", () => {
     const medias: SSMedia[] = [{ type: "mixrbv2", region: "fr", url: "mix" }];
     expect(pickSSCover(medias)).toBeNull();
+  });
+
+  it("ignores tiny placeholder media when choosing the cover", () => {
+    const medias: SSMedia[] = [
+      { type: "box-2D", region: "jp", url: "2d-jp", size: "2742" }, // placeholder
+      { type: "box-2D", region: "eu", url: "2d-eu", size: "571174" },
+    ];
+    expect(pickSSCover(medias)).toBe("2d-eu");
+  });
+});
+
+describe("isScreenScraperPlaceholderMedia", () => {
+  it("flags the tiny green placeholder (~2.7 KB)", () => {
+    expect(
+      isScreenScraperPlaceholderMedia({
+        type: "box-2D-back",
+        region: "jp",
+        url: "x",
+        size: "2742",
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps real box art and small-but-legit spines", () => {
+    expect(
+      isScreenScraperPlaceholderMedia({
+        type: "box-2D",
+        url: "x",
+        size: "571174",
+      }),
+    ).toBe(false);
+    // Smallest legitimate side/spine observed (~8.7 KB) stays.
+    expect(
+      isScreenScraperPlaceholderMedia({
+        type: "box-2D-side",
+        url: "x",
+        size: "8704",
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps media with no size info (cannot judge → never dropped)", () => {
+    expect(isScreenScraperPlaceholderMedia({ type: "box-2D", url: "x" })).toBe(
+      false,
+    );
+  });
+});
+
+describe("buildScreenScraperFacts", () => {
+  it("maps player count and play modes when ScreenScraper exposes them", () => {
+    const facts = buildScreenScraperFacts(
+      {
+        joueurs: { text: "1-4 joueurs" },
+        modes: [{ text: "Solo" }, { text: "Coopératif" }],
+        note: { text: "17" },
+      },
+      (value, scale) => `${value}/${scale}`,
+    );
+
+    expect(facts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "players",
+          label: "Joueurs",
+          value: "1-4",
+          source: "screenscraper",
+        }),
+        expect.objectContaining({
+          kind: "modes",
+          label: "Modes de jeu",
+          value: "Solo • Coopératif",
+          source: "screenscraper",
+        }),
+      ]),
+    );
   });
 });
 

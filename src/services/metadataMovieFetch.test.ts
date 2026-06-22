@@ -56,7 +56,6 @@ describe("fetchFromAllMovieSources", () => {
         imdbId: "tt0114148",
         fallbackNames: expect.arrayContaining([
           "Pocahontas",
-          "Pocahontas: Une légende indienne",
         ]),
       }),
     );

@@ -21,7 +21,7 @@ export type { MusicBrainzResult } from "./fetch";
 function createMusicBrainzAdapter(): MetadataProviderAdapter {
   return {
     id: "musicbrainz",
-    async resolve({ barcode }) {
+    async resolve({ barcode }: any) {
       if (!barcode) return null;
       const cleanedBarcode = normalizeProductBarcode(barcode);
       if (!cleanedBarcode) return null;
@@ -179,6 +179,7 @@ function createMusicBrainzAdapter(): MetadataProviderAdapter {
         tracksCount: mb.tracksCount || undefined,
         imageUrl: mb.imageUrl || undefined,
         facts: facts.length > 0 ? facts : undefined,
+        externalIds: mb.mbid ? { musicbrainz: mb.mbid } : undefined,
       } satisfies MetadataResult;
     },
   };

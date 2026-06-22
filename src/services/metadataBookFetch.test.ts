@@ -11,9 +11,13 @@ vi.mock("@/services/metadataResolvers", () => ({
     ["googlebooks", { id: "googlebooks", resolve: googlebooksResolve }],
   ]),
 }));
-vi.mock("@/services/metadataProviderSelection", () => ({
-  orderedProviderIdsForType: (_type: string, order: string[]) => order,
-}));
+vi.mock("@/services/metadataProviderSelection", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/metadataProviderSelection")>();
+  return {
+    ...actual,
+    orderedProviderIdsForType: (_type: string, order: string[]) => order,
+  };
+});
 
 import { fetchFromAllBookSources } from "@/services/metadataBookFetch";
 

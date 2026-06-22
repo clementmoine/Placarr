@@ -200,6 +200,10 @@ export interface IGDBGameResult {
   attachments: MetadataAttachment[];
   aliases?: string[];
   facts?: MetadataFact[];
+  externalIds?: {
+    igdb?: string | null;
+    [key: string]: string | null | undefined;
+  };
 }
 
 /**
@@ -850,5 +854,6 @@ function parseIGDBGame(
       ...buildRatingFacts(game),
       ...buildTimeToBeatFacts(timeToBeat),
     ],
+    externalIds: { igdb: String(game.id) },
   };
 }

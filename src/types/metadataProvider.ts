@@ -39,7 +39,20 @@ export interface MetadataResult {
   regionalTitles?: { region?: string; text: string }[];
   externalIds?: {
     imdb?: string | null;
+    tmdb?: string | null;
     launchbox?: string | null;
+    igdb?: string | null;
+    screenscraper?: string | null;
+    steam?: string | null;
+    rawg?: string | null;
+    bgg?: string | null;
+    googlebooks?: string | null;
+    openlibrary?: string | null;
+    musicbrainz?: string | null;
+    discogs?: string | null;
+    wikidata?: string | null;
+    thegamesdb?: string | null;
+    [key: string]: string | null | undefined;
   };
   facts?: MetadataFact[];
   fieldEvidence?: FieldEvidenceInput[];

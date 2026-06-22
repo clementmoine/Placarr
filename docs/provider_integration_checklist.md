@@ -11,6 +11,12 @@ Golden rule: a provider may hardcode what is specific to **its own** API/format;
 it must never inject app-global logic (language, shelf type, provider privilege).
 It *declares* what it factually offers; the generic engine ranks the data.
 
+Second golden rule: a provider is not globally "clean" or "noisy". It can expose
+several sub-documents with different roles: a reference/product fiche, marketplace
+listings, offer blocks, gallery images, reviews, user/vendor photos, aliases, and
+structured facts. Each extracted value must carry its own role/context so the
+engine can keep everything while deciding what each observation may influence.
+
 ---
 
 ## Phase 0 — Reconnaissance (before writing any code)
@@ -20,6 +26,9 @@ starts here, by not looking.
 
 - [ ] Enumerate **every endpoint**: search (by name), search (by barcode/EAN/id),
   detail page, sub-resources (reviews, versions/editions, images gallery).
+- [ ] Enumerate **every source document role** the provider exposes: reference
+  record, catalog product, marketplace listing, offer, gallery, review, user/vendor
+  photo, API object, structured-data block.
 - [ ] Call each endpoint **live** and capture the raw response:
   ```bash
   UA="Mozilla/5.0 … Chrome/120 Safari/537.36"
@@ -38,6 +47,9 @@ starts here, by not looking.
   descriptions) — these feed the per-language buckets (unbiased_ranking §7).
 - [ ] Confirm the **barcode→entry mapping** works and how to **verify** it
   (gtin13 on the page, id in the URL).
+- [ ] Identify which values are **object-level candidates** (clean fiche title,
+  structured cover, typed fact) and which are **evidence-only or weak candidates**
+  (listing title, marketplace photo, free-text offer, user import).
 
 Deliverable: a field inventory. Anything on it that you don't map later is
 under-exploitation — make it a conscious decision, not an omission.
@@ -47,16 +59,19 @@ under-exploitation — make it a conscious decision, not an omission.
 ## Phase 1 — Declare capabilities (factual, per type)
 
 In the registry, the provider announces only what it **factually** offers.
+It does not get to declare "this value is canonical" globally; the canonical
+display value is a projection chosen by the engine.
 
 - [ ] `info.types`: the shelf types it serves (`["boardgames"]`, …).
 - [ ] `info.capabilities`: every field it can supply — `identify`, `description`,
   `cover`, `price`, `players`, `duration`, `ageRating`, `releaseDate`, `rating`,
   `people`, … Declare **all** of them (capability coverage drives queries).
-- [ ] Mark `canonical` / `trustedRetailer` **truthfully** (is its title/data
-  authoritative, or a marketplace listing?). This is a property of the *data*,
-  not a privilege.
-- [ ] `defaultLanguage` (and, where relevant, that it provides canonical names /
-  covers for specific languages). FR/EN/JA/neutral.
+- [ ] Declare capabilities only at provider/type level. Fine-grained trust lives
+  on observations: source-document role, field role, language/region, evidence
+  signals (`barcode_match`, `structured_data`, `external_id`, `provider_grouped_alias`,
+  `title_match`, ...), not on the provider name.
+- [ ] `defaultLanguage` (and, where relevant, which observations carry explicit
+  language/region). FR/EN/JA/neutral.
 - [ ] Do **not** add a per-provider merge weight as a privilege (see
   unbiased_ranking §2 — weights are being phased out for data-quality+consensus).
 
@@ -64,13 +79,17 @@ In the registry, the provider announces only what it **factually** offers.
 
 ## Phase 2 — Implement the module (`providers/<id>/`)
 
-Map **every** inventoried field. Tag language/region/role on everything.
+Map **every** inventoried field. Tag language/region/role on everything. Do not
+drop a noisy observation just because today's display engine will rank it low.
 
 - [ ] `fetch.ts` — pure parsers (no app logic), provider-internal hardcode OK:
   - [ ] search (name + barcode), detail parse, sub-resources.
   - [ ] parse structured data (JSON-LD/JSON) first; HTML only for what's missing.
   - [ ] extract the **full field inventory** from Phase 0 — incl. **aliases with
     language**, regional titles, all image roles, all facts, price, external ids.
+  - [ ] preserve source-document context for each extracted value (fiche/product
+    vs listing/offer vs gallery/user photo). Okkazeo-style providers can have both
+    clean fiche data and noisy announcement data in the same connector.
   - [ ] **barcode confirmation**: verify gtin/id equals the scanned barcode;
     reject on explicit mismatch (never confidently wrong).
 - [ ] `resolver.ts` — map to `MetadataResult`:
@@ -83,8 +102,14 @@ Map **every** inventoried field. Tag language/region/role on everything.
     → feeds `attachmentDisplayScore`.
   - [ ] `facts[]` with `kind/value/source` → feeds `applyConsensus`.
   - [ ] a title/name confidence guard (barcode-confirmed OR close title match).
+  - [ ] where the current `MetadataResult` shape is too lossy, add/prepare typed
+    candidate structures instead of overloading strings. Target model:
+    discriminated observations such as `TitleObservation`, `ImageObservation`,
+    `FactObservation`, `AliasObservation`, `OfferObservation`, each with provenance
+    and role.
 - [ ] `index.ts` — the `ProviderModule`:
-  - [ ] `evidence` (label, sourceWeight, canonical/trustedRetailer).
+  - [ ] `evidence` (legacy bridge only while migrating; do not use
+    `sourceWeight`, `canonical`, or `trustedRetailer` as field-winning privilege).
   - [ ] `createMetadataAdapter` (parameter-less, resolves `{name, barcode}`).
   - [ ] `healthCheck` (`createMetadataHealthCheck` + `pingUrl`) — read any token
     **lazily at call time**, never eagerly at import (see the BGG bug).
@@ -112,6 +137,18 @@ Map **every** inventoried field. Tag language/region/role on everything.
 - [ ] **Unit** parser tests with a **real captured fixture** (from Phase 0):
   structured-data parse, field extraction, **gtin/barcode confirmation guard**,
   title-match guard, search-hit parse.
+- [ ] **Contract tests** shared by all providers:
+  - [ ] every emitted candidate/observation has provider id, source URL or stable
+    source id when available, source-document role, field role, observed-at/cache
+    context, and language/region when textual/localized.
+  - [ ] object-level values and listing/evidence values are not collapsed into one
+    flat title/image.
+  - [ ] noisy marketplace/user observations are retained, but marked weak or
+    excluded from display/search where appropriate.
+  - [ ] explicit mismatches (barcode/platform/type) become rejection evidence.
+- [ ] **TypeScript contract**: prefer discriminated unions and exhaustive switches
+  for observation kinds. A provider should fail to compile if it emits an untyped
+  title/image/fact or forgets required provenance fields.
 - [ ] Update the registry-guard tests that enumerate providers
   (`providerBarcode.test.ts`, `providerBootstrap.test.ts`,
   `providerMappingAudit.test.ts`).
@@ -145,6 +182,8 @@ Don't trust the fixture alone — confront the **live** source and your extracti
 Final pass, the point of this whole checklist:
 
 - [ ] Every Phase-0 field is mapped, or skipped on purpose with a reason.
+- [ ] Raw/normalized observations are retained for future reprojection; the current
+  ranking output is not the only stored representation.
 - [ ] **All aliases retained** (per language) — search recall, not just display.
 - [ ] **All localized titles** emitted as `regionalTitles` (not collapsed to one).
 - [ ] **All image roles/languages** tagged (not just one cover).
@@ -161,8 +200,11 @@ Final pass, the point of this whole checklist:
 
 - [ ] A `providerId === "<id>"` branch in core fetch/merge/score.
 - [ ] A per-provider merge weight used as a privilege.
+- [ ] A provider-level `canonical`/trust flag is used to make a field win instead
+  of per-observation roles and evidence signals.
 - [ ] App-global word lists added for this provider (language/condition/noise) —
   use consensus / corpus-IDF / structured fields instead (word_list_audit).
 - [ ] A title collapsed to one language, or aliases dropped.
+- [ ] Marketplace/listing/user observations are thrown away because they are noisy.
 - [ ] A token/secret read at import time instead of call time.
 - [ ] Barcode trusted without a gtin/id confirmation.

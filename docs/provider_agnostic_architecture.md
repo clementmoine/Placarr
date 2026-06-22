@@ -6,9 +6,11 @@ This document presents the findings of our codebase audit regarding provider-spe
 > per-provider `weight` (e.g. "choose the date from the provider with the highest
 > weight"). That per-provider weighting is now considered a bias to remove. Field
 > ranking is governed by [unbiased_ranking.md](unbiased_ranking.md): rank by
-> factual *data* properties (canonical / locale / role) + cross-source consensus,
-> never by which provider supplied the datum. The fetching/merging *plumbing*
-> below (capability-driven, type-addressed, plug-and-play) still stands.
+> factual *observation* properties (source-document role, field role, locale,
+> evidence signals) + cross-source consensus, never by which provider supplied the
+> datum. `canonicalTitle` / display cover / final facts are projections computed by
+> Placarr, not provider promises. The fetching/merging *plumbing* below
+> (capability-driven, type-addressed, plug-and-play) still stands.
 
 > **Adding a provider?** Follow the step-by-step
 > [provider_integration_checklist.md](provider_integration_checklist.md) — it
@@ -28,15 +30,24 @@ The contract:
 - **Single entry point**: `PROVIDER_MODULES` in `providerRegistry.ts`. Adding or
   removing a provider = adding/removing **one module object**. Nothing else changes.
 - **The module self-declares everything** the app needs: `info` (id, label,
-  `types`, `capabilities`, `auth`, and its **`baseUrl`/site**), `evidence`
-  (canonical / trustedRetailer), `defaultLanguage`, plus its own
-  fetch/resolve/health/probe logic.
+  `types`, `capabilities`, `auth`, and its **`baseUrl`/site**), default language,
+  plus its own fetch/resolve/health/probe logic. Fine-grained trust is emitted per
+  observation, not as a global provider privilege.
 - **The core consumes only abstract contracts**: `ProviderInfo`, `MetadataResult`,
   `MetadataAttachment` (role + language), `MetadataFact`, `capabilities`. It
   iterates via `providersForType` / `capabilityCoverage` — **never** a branch on a
   concrete id.
 - **Per-provider behaviour = a declared property, not a name.** "I provide real box
   covers" → an `isRealBoxCover` capability, not a hardcoded `Set` of provider names.
+- **Providers emit typed observations, not final truth.** A single provider may
+  expose a clean product fiche, noisy marketplace listings, structured facts,
+  provider-grouped aliases, cover art, user/vendor photos, and offers. Each value
+  must carry source-document role, field role, language/region when relevant, and
+  evidence signals (barcode match, external id, structured data, title match, ...).
+- **Never throw useful observations away.** The current ranking output is a
+  projection over stored observations. Weak marketplace/user observations can rank
+  low or be excluded from public search, but they remain available for audit,
+  debugging, and future ranking-engine reprojection.
 - **Scope = everything except `src/services/providers/`** — the **core *and* the
   admin**. A connector may hardcode what is specific to *its own* API/format
   (legitimate, encapsulated); the rest of the app may not.
@@ -132,40 +143,56 @@ To make all providers 100% plug-and-play and remove all hardcoded references fro
 
 ```mermaid
 flowchart TD
-    Registry[Provider Registry\nDeclares capabilities, weights, languages] -->|Query active providers| Engine[Unified Fetching Engine]
+    Registry[Provider Registry\nDeclares capabilities and languages] -->|Query active providers| Engine[Unified Fetching Engine]
     Engine -->|Resolve adapters concurrently| Resolvers[Provider Adapters]
-    Resolvers -->|Retrieve metadata results| Engine
-    Engine -->|Generic merge by weight & language| Merge[Unified Merge Engine]
-    Merge -->|Factual sorting & consensus| Output[Normalized Metadata Output]
+    Resolvers -->|Emit typed observations| Store[Observation Store]
+    Store -->|Normalize candidates| Merge[Projection Engine]
+    Merge -->|Tier, consensus, quality| Output[Ranked Metadata Projection]
 ```
 
 ### 1. Enriching the Provider Registry (`providerRegistry.ts`)
 Each provider will announce its factual metadata attributes and supported item types in the registry:
 - **`types`**: The item types managed by this provider (e.g., `["games"]`, `["books"]`, `["movies"]`), allowing the engine to dynamically filter active providers based on the media type requested.
 - **`capabilities`**: The specific metadata fields and data types this provider can supply (e.g., `"price"` for pricing data, `"rating"` for user reviews, `"duration"` for play-time/difficulty, `"cover"`, `"description"`). The engine uses these declarations to only query the subset of providers capable of supplying the requested data fields.
-- **`weight` / `priority`**: The default priority of its fields during merging (e.g., trust level).
 - **`defaultLanguage`**: The primary language of its returned text (e.g. `"fr"` for ScreenScraper, `"en"` for OMDb).
-- **`isRealBoxCover`**: Boolean marking if it offers real retail box covers.
+- **source/field roles on observations**: a provider declares what each returned
+  value is (`object_title`, `listing_title`, `cover_front`, `listing_photo`,
+  `structured_fact`, `offer`, ...). The registry says what can be queried; the
+  observation says what was actually found.
 
 ### 2. A Unified Fetching Engine (`metadataFetch.ts`)
 Instead of 5 separate fetchers, a single generic fetcher will handle all media types:
 1. Query the registry to find all enabled providers that support the requested `MediaType`.
-2. Sort providers by their declared `weight`/`priority`.
-3. Resolve them concurrently using the registered adapters.
-4. Run generic fallbacks: if a high-priority field (like `title` or `cover`) is missing, retry queries using canonical fallback names collected from other providers.
+2. Resolve them concurrently using the registered adapters.
+3. Store their raw/normalized observations with provenance.
+4. Run generic fallbacks only from abstract evidence (external ids, strong object
+   titles, platform/type signals), never from a named provider.
 
 ### 3. A Unified Merge Engine (`metadataMerge.ts`)
 Instead of type-specific merge functions, a single `mergeMetadata()` function will merge an array of `MetadataResult` objects:
 
-- **Title**: Select the title by comparing the `title` and `regionalTitles` of all candidates, sorted by `regionRank` and provider `weight`.
+- **Title**: Select the projected display/canonical title by comparing typed title
+  observations: object/catalog title + locale first, then medoid consensus, then
+  cleanliness. Listing/user titles remain evidence even when they lose display.
 - **Description**: Collect descriptions, tag them with their provider's `defaultLanguage` or use `inferTextLanguage()`, and sort them using the existing `pickBestLocalizedDescription()` (preferring French, then English, then longest text).
-- **Release Date**: Choose the date from the provider with the highest `weight` that returned a valid date (factual priority).
+- **Release Date**: Choose the best typed date observation by source role,
+  consensus and specificity.
 - **People / Publishers**: Deduplicate and union all authors/publishers.
-- **Attachments**: Merge and rank all attachments dynamically. The ranker in `attachmentDisplayScore.ts` will check the provider's `isRealBoxCover` flag from the registry instead of a hardcoded set.
+- **Attachments**: Merge and rank all attachments dynamically. Product covers /
+  box-fronts rank above listing/user photos, but weak photos are retained as
+  observations.
 - **Facts & Aliases**: Merge and deduplicate dynamically.
-- **Field Evidence**: Automatically generate evidence tags using the provider's registry label and weight.
-- **External IDs**: Merge all external IDs returned by providers. If two providers return different values for the same identifier type (e.g., IMDb ID), choose the value from the provider with the higher `weight`.
-- **Propagation between Stages**: Collect all external IDs returned by Stage 1 canonical providers and pass them down as an `externalIds` dictionary in `MetadataAdapterContext` to subsequent providers (Stage 2 and fallbacks), enabling cross-provider identifier propagation (e.g., retrieving Steam/RAWG metadata using an IGDB ID resolved in Stage 1) without hardcoding.
+- **Field Evidence**: Automatically generate evidence tags from observation
+  provenance, source-document role and evidence signals.
+- **External IDs**: Merge all external IDs returned by providers. If two providers
+  return different values for the same identifier type (e.g., IMDb ID), resolve by
+  confirmation evidence (same barcode, same object id family, cross-source
+  agreement), not provider weight.
+- **Propagation between Stages**: Collect strong external-id observations and pass
+  them down as an `externalIds` dictionary in `MetadataAdapterContext` to
+  subsequent providers (Stage 2 and fallbacks), enabling cross-provider identifier
+  propagation (e.g., retrieving Steam/RAWG metadata using an IGDB ID resolved in
+  Stage 1) without hardcoding.
 
 ### 4. A Common API Contract & Modular Connectors
 To allow dropping in new providers or removing old ones easily during the app lifecycle:
@@ -188,7 +215,8 @@ To guarantee system stability, the entire migration must follow a strict **Test-
 
 ### Step 1: TDD for Generic Merging
 Before writing any code for the generic merge engine, we write new tests in `metadataMerge.test.ts`:
-- **Test 1**: Verify title selection selects the best title based on region rank and provider weight.
+- **Test 1**: Verify title selection chooses the best projected title from typed
+  observations: role + locale, then medoid consensus, then quality.
 - **Test 2**: Verify description selection correctly tags and sorts French/English descriptions from unknown/non-tagged ones.
 - **Test 3**: Verify attachments are correctly ranked according to provider attributes.
 - **Test 4**: Verify publishers, authors, facts, and aliases are correctly deduplicated and combined.
@@ -223,10 +251,13 @@ We migrate each media type fetcher one by one:
 
 We can execute this refactoring in phases without breaking existing tests:
 
-### Phase 1: Enrich Provider Info
-- Update the `ProviderInfo` type in `src/types/providerRegistry.ts` to include `weight`, `defaultLanguage`, and `isRealBoxCover`.
-- Populate these fields for all providers in `src/services/providerRegistry.ts`.
-- Update `attachmentDisplayScore.ts` to check `provider.isRealBoxCover` from the registry.
+### Phase 1: Enrich Provider Contracts
+- Add discriminated observation/candidate types for titles, images, facts, aliases
+  and offers, with required provenance and role fields.
+- Update provider modules to emit those roles instead of relying on global
+  `weight`, `canonical`, `trustedRetailer` or `isRealBoxCover` privilege.
+- Update `attachmentDisplayScore.ts` and title ranking to consume observation
+  roles and consensus, not provider-name sets.
 
 ### Phase 2: Implement Generic Merging
 - Write the generic `mergeMetadata()` function in `metadataMerge.ts`.

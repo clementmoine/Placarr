@@ -21,8 +21,9 @@ selection.
   make it a privileged source. We take its data on the same factual footing as
   everyone else's.
 - The app is **plug-and-play and agnostic**: a provider is a module that
-  *declares*, per type, what it can supply (canonical names? covers? facts?). If
-  a provider breaks or is removed, ranking degrades gracefully to the next best
+  *declares*, per type, what it can supply and emits typed observations (object
+  title, listing title, cover image, listing photo, fact, alias, offer, ...). If a
+  provider breaks or is removed, ranking degrades gracefully to the next best
   *datum* — never to "our backup provider".
 - Therefore ranking must rest only on **factual properties of the datum** and on
   **agreement between independent sources**, both of which are provider-neutral.
@@ -32,9 +33,43 @@ What this bans: per-provider weights, per-provider flags used as privilege,
 `providerId === "x"` branches in the core engine.
 
 What this allows: per-field, per-type **capabilities** that a provider *declares*
-about its data (e.g. "I provide canonical board-game titles"). That is a factual
-description of the datum's provenance, not a privilege — any other provider
-declaring the same capability is treated identically.
+about what it can fetch, plus per-observation roles that describe where the value
+came from (reference page, catalog product, marketplace listing, user input, ...).
+That is factual provenance, not privilege — any other provider emitting the same
+kind of observation is treated identically.
+
+### Canonical is an output, not an input flag
+
+The engine must not accept `canonical: true` as a magical provider promise. A
+provider can tell us that a title came from a **reference record**, a **catalog
+product**, an **offer/listing**, a **provider-grouped alias**, or **user input**.
+The canonical/display title is the **projection chosen by Placarr** from those
+observations.
+
+Same rule for images and facts:
+
+- a product cover / box-front is an image candidate for display,
+- a marketplace photo is a weak display candidate but still an observation,
+- a structured fact is stronger than text scraped from a listing,
+- an offer title is evidence, but it is not an objective name for the item.
+
+### Never throw observations away
+
+Placarr should almost never discard a useful, lawful observation. Marketplace
+titles, listing photos, user imports, weak aliases, raw offers and source URLs may
+rank low, be excluded from public search, or only count as weak evidence — but
+they must remain available for audit, debug, future ranking engines, and offline
+reprojection.
+
+The durable shape is:
+
+```
+raw observations -> normalized candidates -> ranked projection(engineVersion)
+```
+
+Changing the ranking engine tomorrow should let us recompute display titles,
+covers, facts and aliases from stored observations without re-querying every
+provider.
 
 ---
 
@@ -76,8 +111,8 @@ name appears anywhere in it.
 
 ```
 rank(field) =
-  1. TIER       — factual declared properties of the datum
-                  (isCanonical, region/language, role e.g. cover-front)
+  1. TIER       — factual properties of the observation
+                  (source document role, field role, region/language, image role)
   2. CONSENSUS  — agreement across DISTINCT, INDEPENDENT sources,
                   measured by the field's similarity metric
   3. QUALITY    — intrinsic, objective, cheap quality of the datum
@@ -97,9 +132,9 @@ Consensus alone is **not** infallible, and this is deliberate:
    "consensus" without truth.
 
 Mitigations baked into the model:
-- Consensus is **second** to the factual tier (canonical/locale leads).
+- Consensus is **second** to the factual tier (object-level/locale data leads).
 - Count **distinct, independent** sources, and weight agreement among
-  *canonical-declared* data higher than agreement among raw listings.
+  object-level observations higher than agreement among raw listings.
 - A **quality penalty** (noise/length for titles, etc.) is the final tie-break.
 
 ---
@@ -109,14 +144,19 @@ Mitigations baked into the model:
 The model is the same; only the similarity metric and the quality measure differ.
 
 ### Titles
-- **Tier**: titles carry, in addition to `region`, an `isCanonical` property —
-  the title analogue of the image "cover-front" role. A provider declares (per
-  type) whether its title is canonical/official. Priority:
-  **canonical+locale → canonical → locale → rest.**
+- **Tier**: title observations carry a role and source-document context. Examples:
+  `object_title` from a reference page, `catalog_title` from a product fiche,
+  `alias` grouped by the provider, `edition_title`, `listing_title`,
+  `user_input_title`. Priority:
+  **object/catalog+locale → object/catalog → provider-grouped alias/edition →
+  locale evidence → listing/user input evidence.**
 - **Consensus**: the **medoid** — the candidate with the highest average
   text-proximity to all others. (`{Mille Sabords ×4 anchors, Mille Sabords !
   Gigamic ×1}` → medoid = `Mille Sabords`.)
 - **Quality**: shorter / cleaner (fewer non-consensus / junk tokens) wins ties.
+
+The selected `canonicalTitle` / display title is a **result** of this ranking, not
+a field the provider gets to assert globally.
 
 > Open question answered: "is a title that is much closer to everything else in
 > the list the best?" — Yes, as a **tie-breaker within a tier**, never as the
@@ -124,7 +164,9 @@ The model is the same; only the similarity metric and the quality measure differ
 > how images/facts work.
 
 ### Images
-- **Tier**: role (cover-front) → region/language (`localeBonusForAttachmentRole`).
+- **Tier**: image role and source context (`cover-front`, `product_packshot`,
+  `listing_photo`, `user_photo`) → region/language
+  (`localeBonusForAttachmentRole`).
 - **Consensus**: **perceptual-hash agreement** — the same image reached by the
   most distinct, independent sources (dHash clustering already exists in the
   dedup path). This is the image analogue of title medoid.
@@ -133,7 +175,8 @@ The model is the same; only the similarity metric and the quality measure differ
   aesthetic/ML "visual quality" scoring (expensive, fuzzy) unless proven needed.
 
 ### Facts (players, duration, year, …)
-- **Tier**: typed value; canonical-declared sources first.
+- **Tier**: typed value; structured object/catalog facts before listing-derived
+  facts.
 - **Consensus**: the **mode** (most-agreed value across distinct sources) —
   already `applyConsensus`.
 - **Quality**: completeness / specificity of the value.
@@ -147,8 +190,8 @@ The model is the same; only the similarity metric and the quality measure differ
 
 ## 6. The generic engine: query by type, never by name
 
-Providers self-declare, per type, their capabilities (`canonical` titles?
-`cover`? `facts`? `price`?). The engine:
+Providers self-declare, per type, their capabilities (`identify`, title
+observations, `cover`, `facts`, `price`, ...). The engine:
 
 1. asks the registry for **all providers serving `type` that declare
    `capability`** (`providersForType` / `capabilityCoverage` — already present),
@@ -176,11 +219,11 @@ that are conflated today (FR-biased everywhere) must be separated:
   language*, with a fallback chain. French today; switchable to English (or any
   language) per user tomorrow — zero engine change.
 
-### Per-language canonical data
-Per item, per field, keep the best canonical datum **per language**, each ranked by
-the same `tier → consensus → quality` engine *scoped to that language bucket*
+### Per-language projections
+Per item, per field, keep the best projected datum **per language**, each ranked
+by the same `tier → consensus → quality` engine *scoped to that language bucket*
 ("for EN, the consensus of EN sources picks the best EN title"). Plus retain the
-full alias set for matching.
+full alias and observation set for matching/debug/reprojection.
 
 ```
 display(field, userLang) = best[userLang] || best[fallback…] || best[neutral]
@@ -222,12 +265,12 @@ The board-game work validated the direction end-to-end:
   type happened to have providers wired (`lookups.ts`).
 - A type signal derived from the **data** (category phrase / publisher tokens in
   listings), not from a provider, biases classification (`boardGameSignal.ts`).
-- Okkazeo added as a plug-and-play board-game provider that *declares* a canonical
-  name (JSON-LD, gtin13-verified), an FR-tagged cover (`role: "fr"`) and
-  region-tagged titles — feeding the generic locale ranking, adding **zero** new
-  ranking logic (`providers/okkazeo/`).
-- Display name fixed *structurally*, not by hardcoding: a trusted/canonical
-  anchor's clean title now wins over a noisier marketplace superset, and the
+- Okkazeo added as a plug-and-play board-game provider that can emit both a clean
+  fiche/product title (JSON-LD, gtin13-verified) and noisier marketplace evidence.
+  Its FR-tagged cover (`role: "fr"`) and region-tagged titles feed the generic
+  locale ranking, adding **zero** new ranking logic (`providers/okkazeo/`).
+- Display name fixed *structurally*, not by hardcoding: an object-level clean
+  title now wins over a noisier marketplace superset, and the
   database fallback no longer fabricates a fake-canonical from an echoed listing
   (`compile.ts`, `matchUtils.ts`). No "strip Gigamic" hardcode.
 
@@ -238,17 +281,21 @@ merits."
 
 ## 9. Migration path
 
-1. **Titles first** (live pain, sets the reusable pattern): add `isCanonical` to
-   title candidates (declared per type), implement tier → medoid-consensus →
-   quality in `pickBestRegionalTitle`.
-2. **De-bias**: replace `PROVIDER_METADATA_EXTENSIONS` weights and
+1. **Observation model first**: introduce typed observations/candidates with
+   source-document role, field role, language/region, evidence signals, and usage
+   flags. `canonicalTitle` becomes a ranked projection, not a provider flag.
+2. **Titles first** (live pain, sets the reusable pattern): rank title
+   observations by object/catalog role + locale, then medoid-consensus, then
+   cleanliness in `pickBestRegionalTitle`.
+3. **De-bias**: replace `PROVIDER_METADATA_EXTENSIONS` weights and
    `isRealBoxCover`/`isSecondary` with datum properties + consensus; delete the
    `providerId === …` hardcodes; derive `REAL_BOX_COVER` from a declared
    capability, not a name set.
-3. **Generalize** the title pattern to images (perceptual-hash consensus +
+4. **Generalize** the title pattern to images (perceptual-hash consensus +
    objective quality) and facts (already `applyConsensus`).
-4. **TDD throughout** — lock current good outcomes first, refactor green (see the
+5. **TDD throughout** — lock current good outcomes first, refactor green (see the
    workflow in [provider_agnostic_architecture.md](provider_agnostic_architecture.md)).
 
 Invariant to preserve at every step: **no provider name in the ranking, and the
-barcode→item identification is never confidently wrong.**
+barcode→item identification is never confidently wrong. Never discard observations
+just because the current ranking engine gives them a low score.

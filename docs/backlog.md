@@ -5,24 +5,33 @@
 Date: 2026-06-22
 
 Context: field ranking (title, cover, facts, description) must stop relying on
-per-provider weights / name hardcodes and rank by factual *data* properties +
-cross-source consensus. Full design in
+per-provider weights / name hardcodes and rank by factual *observation*
+properties + cross-source consensus. Full design in
 [unbiased_ranking.md](unbiased_ranking.md).
 
 Next steps (in order):
 
-1. **Titles first** — add an `isCanonical` property to title candidates (declared
-   per type, like the image cover-front role); rank `canonical+locale → canonical
-   → locale → rest`, then medoid-consensus, then cleanliness. Sets the reusable
-   pattern.
-2. **De-bias** — replace `PROVIDER_METADATA_EXTENSIONS` weights +
+1. **Observation model first** — `canonicalTitle` / display cover / final facts are
+   outputs, not provider promises. Add typed candidates/observations with
+   source-document role (reference fiche, catalog product, listing, user input),
+   field role (object title, alias, listing title, cover-front, listing photo,
+   structured fact), language/region, evidence signals, and usage flags. Providers
+   like Okkazeo can then emit both clean fiche data and noisy announcement data.
+2. **Titles first** — rank title observations by `object/catalog + locale →
+   object/catalog → provider-grouped alias/edition → locale evidence →
+   listing/user evidence`, then medoid-consensus, then cleanliness. Sets the
+   reusable pattern.
+3. **Never discard observations** — store raw/normalized observations and compute
+   ranked projections with an engine version, so future ranking changes can
+   re-exploit existing data without re-querying providers.
+4. **De-bias** — replace `PROVIDER_METADATA_EXTENSIONS` weights +
    `isRealBoxCover`/`isSecondary` with datum properties + consensus; delete the
    `providerId === "screenscraper" ? 6 : 12` hardcode (`metadataFetch.ts`) and the
    `REAL_BOX_COVER_SOURCES` name set (`attachmentDisplayScore.ts`).
-3. **Generalize** to images (perceptual-hash consensus + objective quality) and
+5. **Generalize** to images (perceptual-hash consensus + objective quality) and
    facts (already `applyConsensus`).
-4. **Per-language data + language-agnostic search** (see
-   [unbiased_ranking.md](unbiased_ranking.md) §7): keep the best canonical title
+6. **Per-language data + language-agnostic search** (see
+   [unbiased_ranking.md](unbiased_ranking.md) §7): keep the best projected title
    *per language* (fr/en/ja/neutral), make display order a user preference (not
    hardcoded fr-first `LOCALE_REGION_ORDER`), and match name→item against the union
    of all variants + provider-grouped aliases (`Shingeki no Kyojin` /
@@ -132,6 +141,24 @@ env (`pnpm test:record:all`) and add representative cases per type — at minimu
 board game (Mille Sabords `3421272109517` → boardgames, clean name via
 Philibert/Okkazeo), plus book / music / movie cases (user supplies trusted
 barcodes). See `placarr-testing-architecture` memory + TESTING.md.
+
+### G. Provider observation contract + TypeScript guardrails
+
+Before widening the ranking refactor, design the TypeScript contract that forces
+providers to emit exploitable observations instead of loose strings:
+
+- discriminated unions for `TitleObservation`, `ImageObservation`,
+  `FactObservation`, `AliasObservation`, `OfferObservation`;
+- required provenance: provider id, source URL/stable source id when available,
+  source-document role, field role, language/region when relevant, evidence
+  signals, observed/cache context;
+- usage metadata: display candidate, search alias strength/exclusion, evidence
+  strength, debug/raw retention;
+- exhaustive switches in the ranking engine so new observation kinds cannot be
+  ignored silently;
+- shared provider contract tests: object-level fiche data and noisy listing data
+  must not be collapsed, explicit mismatches must reject, and low-ranked
+  marketplace/user observations must still be retained for future reprojection.
 
 ## LaunchBox provider decision
 

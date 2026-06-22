@@ -8,8 +8,8 @@ try {
 }
 
 async function main() {
-  // Dynamic import AFTER loadEnvFile: some modules (e.g. BGG) capture their
-  // token eagerly at import time, so env must be present before the module loads.
+  // Keep the registry import after loadEnvFile so provider modules that still
+  // derive import-time configuration see the same environment as the app.
   const { PROVIDER_MODULES } = await import("@/services/providerRegistry");
   const mods = PROVIDER_MODULES.filter((m) => m.healthCheck);
   const results = await Promise.all(

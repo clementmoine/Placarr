@@ -53,32 +53,35 @@ export const bggModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: (() => {
-    const token = process.env.BGG_API_TOKEN?.trim();
-    if (!token) {
-      return createUnconfiguredHealthCheck(
+  healthCheck: {
+    providerId: "boardgamegeek",
+    async run() {
+      const token = process.env.BGG_API_TOKEN?.trim();
+      if (!token) {
+        return createUnconfiguredHealthCheck(
+          "boardgamegeek",
+          "BoardGameGeek",
+          "BGG_API_TOKEN missing",
+        ).run();
+      }
+      return createMetadataHealthCheck(
         "boardgamegeek",
         "BoardGameGeek",
-        "BGG_API_TOKEN missing",
-      );
-    }
-    return createMetadataHealthCheck(
-      "boardgamegeek",
-      "BoardGameGeek",
-      async () => {
-        const start = Date.now();
-        const isUp = await pingUrl(
-          "https://boardgamegeek.com/xmlapi2/search?query=test&type=boardgame",
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        return {
-          ok: isUp,
-          latency: Date.now() - start,
-          error: isUp ? null : "Host unreachable or invalid token",
-        };
-      },
-    );
-  })(),
+        async () => {
+          const start = Date.now();
+          const isUp = await pingUrl(
+            "https://boardgamegeek.com/xmlapi2/search?query=test&type=boardgame",
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          return {
+            ok: isUp,
+            latency: Date.now() - start,
+            error: isUp ? null : "Host unreachable or invalid token",
+          };
+        },
+      ).run();
+    },
+  },
   testHandlers: {
     "bgg-metadata": {
       label: "BoardGameGeek - Metadata",

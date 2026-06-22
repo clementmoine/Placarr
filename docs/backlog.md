@@ -146,6 +146,10 @@ per-language work, unbiased-ranking step 4). Today fr-first happens to match the
 as `pnpm providers:health` (handy pre-scan check) or delete it to avoid a third
 audit script. Undecided.
 
+- **Done 2026-06-22**: BGG's health-check no longer captures `BGG_API_TOKEN` at
+  import time; it reads the token lazily when `run()` executes. The keep/delete
+  decision for `scripts/providerHealth.ts` remains open.
+
 ### F. Multi-type barcode→item regression corpus
 
 `DEFAULT_BARCODE_REGRESSION_CASES` is 100% video games — a test-side bias. The

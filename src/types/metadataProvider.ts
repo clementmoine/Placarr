@@ -1,6 +1,7 @@
 import type { AttachmentType } from "@prisma/client";
 
 import type { FieldEvidenceInput } from "@/services/evidence";
+import type { MetadataObservation } from "@/types/metadataObservation";
 
 export interface MetadataAttachment {
   type: AttachmentType;
@@ -55,6 +56,8 @@ export interface MetadataResult {
     [key: string]: string | null | undefined;
   };
   facts?: MetadataFact[];
+  observations?: MetadataObservation[];
+  observationSchemaVersion?: string;
   fieldEvidence?: FieldEvidenceInput[];
   lastFetched?: string;
 }

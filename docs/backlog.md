@@ -178,6 +178,13 @@ providers to emit exploitable observations instead of loose strings:
   must not be collapsed, explicit mismatches must reject, and low-ranked
   marketplace/user observations must still be retained for future reprojection.
 
+Started:
+
+- 2026-06-22: added the minimal observation-first TypeScript contract
+  (`MetadataObservation` discriminated union), helper functions, and legacy
+  `MetadataResult` → observations bridge. `MetadataResult` can now carry optional
+  `observations` + `observationSchemaVersion` for gradual provider migration.
+
 ## LaunchBox provider decision
 
 Date: 2026-06-20

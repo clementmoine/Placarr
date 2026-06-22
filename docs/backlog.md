@@ -68,6 +68,13 @@ Next steps:
 3. Add `info.baseUrl` so each provider declares its site once (used generically by
    health/probe/admin).
 
+Done:
+
+- 2026-06-22: added `src/services/providerBlindnessGuard.test.ts`, a runtime
+  guard for quoted provider literals outside `src/services/providers/`, with an
+  exact shrinking allowlist. First pass deliberately excludes docs/tests and does
+  not yet catch unquoted object keys; broaden it as the allowlist drains.
+
 ## Open studies & decisions to resume
 
 Date: 2026-06-22

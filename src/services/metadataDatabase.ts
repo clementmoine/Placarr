@@ -24,10 +24,10 @@ function normalizeSuggestionTitle(value: string): string {
 export async function confrontWithDatabase(
   name: string,
   type?: string | null,
-): Promise<string> {
-  if (!name || !type) return name;
+): Promise<string | null> {
+  if (!name || !type) return null;
   const cleanedName = cleanSearchQuery(name);
-  if (!cleanedName) return name;
+  if (!cleanedName) return null;
   try {
     switch (type) {
       case "games": {
@@ -59,7 +59,7 @@ export async function confrontWithDatabase(
   } catch (e) {
     console.warn(`[ConfrontWithDatabase] Error for "${name}" (${type}):`, e);
   }
-  return name;
+  return null;
 }
 
 async function getTMDBSuggestions(name: string): Promise<string[]> {

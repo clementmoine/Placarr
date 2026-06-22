@@ -119,6 +119,10 @@ no-match (return `null`) instead of echoing, and update the 3 callers
 (`buildDatabaseEvidence`, admin `test-provider`, `metadata.ts`). Guard against
 regression. Note: `confrontWithDatabase` is itself a provider-blindness leak (it
 `switch`es on type to call a named provider) — folds into the §0 cleanup.
+- **Done 2026-06-22**: no-match now returns `null` instead of echoing the input,
+  and `buildDatabaseEvidence` has regression coverage proving a DB miss creates no
+  canonical `DatabaseResolver` evidence. Remaining work: remove the type→named
+  provider switch as part of the provider-blind cleanup.
 
 ### D. Display-language region order = user preference
 

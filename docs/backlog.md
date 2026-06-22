@@ -184,6 +184,9 @@ Started:
   (`MetadataObservation` discriminated union), helper functions, and legacy
   `MetadataResult` → observations bridge. `MetadataResult` can now carry optional
   `observations` + `observationSchemaVersion` for gradual provider migration.
+- 2026-06-22: Okkazeo is the first provider to emit typed observations alongside
+  legacy metadata: catalog title, cover-front image, structured facts, and a weak
+  retained price snapshot offer.
 
 ## LaunchBox provider decision
 

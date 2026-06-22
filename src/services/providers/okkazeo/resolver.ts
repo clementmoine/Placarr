@@ -2,11 +2,20 @@ import levenshtein from "fast-levenshtein";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
+import {
+  makeObservationUsage,
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type {
+  MetadataObservation,
+  ObservationEvidenceSignal,
+} from "@/types/metadataObservation";
 
 import { fetchOkkazeoGame, searchOkkazeo, type OkkazeoGame } from "./fetch";
 
@@ -111,8 +120,52 @@ function buildOkkazeoAttachments(
   ];
 }
 
+function buildOkkazeoObservations(
+  game: OkkazeoGame,
+  metadata: MetadataResult,
+): MetadataObservation[] {
+  const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];
+  if (metadata.barcode) evidenceSignals.push("barcode_match");
+
+  const observations = observationsFromMetadataResult(metadata, {
+    providerId: "okkazeo",
+    providerLabel: "Okkazeo",
+    sourceDocumentRole: "catalog_product",
+    sourceUrl: game.productUrl,
+    evidenceSignals,
+    titleRole: "catalog_title",
+    aliasRole: "provider_grouped_alias",
+    imageRole: "cover_front",
+    factRole: "structured_fact",
+    language: OKKAZEO_REGION,
+  });
+
+  if (game.priceCents != null && Number.isFinite(game.priceCents)) {
+    observations.push({
+      kind: "offer",
+      role: "price_snapshot",
+      priceCents: game.priceCents,
+      currency: "EUR",
+      provenance: {
+        providerId: "okkazeo",
+        providerLabel: "Okkazeo",
+        sourceDocumentRole: "offer",
+        sourceUrl: game.productUrl,
+        evidenceSignals: ["structured_data"],
+      },
+      usage: makeObservationUsage({
+        evidence: "weak",
+        searchAlias: "none",
+        displayCandidate: false,
+      }),
+    });
+  }
+
+  return observations;
+}
+
 function mapOkkazeoMetadata(game: OkkazeoGame): MetadataResult {
-  return {
+  const metadata: MetadataResult = {
     title: game.title,
     description: game.description,
     imageUrl: game.imageUrl,
@@ -125,6 +178,11 @@ function mapOkkazeoMetadata(game: OkkazeoGame): MetadataResult {
       : undefined,
     attachments: buildOkkazeoAttachments(game),
     facts: buildOkkazeoFacts(game),
+  };
+  return {
+    ...metadata,
+    observations: buildOkkazeoObservations(game, metadata),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
 }
 
@@ -179,4 +237,4 @@ export function createOkkazeoResolver() {
   };
 }
 
-export { mapOkkazeoMetadata, buildOkkazeoFacts };
+export { mapOkkazeoMetadata, buildOkkazeoFacts, buildOkkazeoObservations };

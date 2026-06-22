@@ -104,6 +104,9 @@ For a board game / book / CD this means several 8 s timeouts (~24 s of the origi
   `detectedPlatform || contextPlatformKey` — only query the video-game DBs when
   there is an actual game/platform signal. Kills the timeout cascade for
   non-games; classification already protects correctness.
+- **Done 2026-06-22**: `enrichGameBarcodeLookups` now skips ScreenScraper and the
+  PriceCharting name fallback when no platform signal exists, with regression
+  coverage in `src/lib/barcode/gameLookup.test.ts`.
 
 ### C. `confrontWithDatabase` echo → fake canonical (follow-up)
 

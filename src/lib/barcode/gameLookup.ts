@@ -144,9 +144,10 @@ export async function enrichGameBarcodeLookups(params: {
   searchLabel: "games" | "generic";
 }): Promise<{ pc: unknown; ss: unknown }> {
   const context = buildGameLookupContext(params.inputs);
+  const gameDbPlatform = context.detectedPlatform || params.contextPlatformKey;
   let pc = params.pc;
 
-  if (!pc && context.gameTitle) {
+  if (!pc && context.gameTitle && gameDbPlatform) {
     try {
       console.log(
         `[PriceCharting Fallback] Barcode not found, trying name fallback: ${context.gameTitle} (isPal: ${context.isPal}, isClassics: ${context.isClassics})`,
@@ -154,7 +155,7 @@ export async function enrichGameBarcodeLookups(params: {
       pc = await fetchMetadataFromPriceCharting(
         params.cleanedBarcode,
         context.gameTitle,
-        context.detectedPlatform || params.contextPlatformKey || undefined,
+        gameDbPlatform,
         context.isPal,
         context.isClassics,
       );
@@ -167,17 +168,19 @@ export async function enrichGameBarcodeLookups(params: {
   }
 
   let ss: unknown = null;
-  try {
-    ss = await fetchFromScreenScraper(
-      context.gameTitle,
-      params.cleanedBarcode,
-      context.detectedPlatform || params.contextPlatformKey,
-    );
-  } catch (error) {
-    console.error(
-      `[ScreenScraper] Error fetching in ${params.searchLabel} search:`,
-      error,
-    );
+  if (gameDbPlatform) {
+    try {
+      ss = await fetchFromScreenScraper(
+        context.gameTitle,
+        params.cleanedBarcode,
+        gameDbPlatform,
+      );
+    } catch (error) {
+      console.error(
+        `[ScreenScraper] Error fetching in ${params.searchLabel} search:`,
+        error,
+      );
+    }
   }
 
   return { pc, ss };

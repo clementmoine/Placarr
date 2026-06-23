@@ -1,40 +1,8 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
+import { getCoverProjectPlatformSpecs } from "@/lib/videoGamePlatforms";
 
 const CDN_BASE = "https://coverproject.sfo2.cdn.digitaloceanspaces.com";
 const CDN_REFERER = "https://www.thecoverproject.net/";
-
-type PlatformSpec = { folder: string; prefix: string };
-
-const PLATFORM_SPECS: Record<string, PlatformSpec[]> = {
-  wii: [{ folder: "nintendo_wii", prefix: "wii_" }],
-  wiiu: [
-    { folder: "nintendo_wii_u", prefix: "wiiu_" },
-    { folder: "wii_u", prefix: "wiiu_" },
-  ],
-  switch: [{ folder: "nintendo_switch", prefix: "switch_" }],
-  ds: [{ folder: "nintendo_ds", prefix: "ds_" }],
-  "3ds": [{ folder: "nintendo_3ds", prefix: "3ds_" }],
-  ps1: [
-    { folder: "playstation", prefix: "ps_" },
-    { folder: "playstation_1", prefix: "ps1_" },
-  ],
-  ps2: [{ folder: "playstation_2", prefix: "ps2_" }],
-  ps3: [{ folder: "playstation_3", prefix: "ps3_" }],
-  ps4: [{ folder: "playstation_4", prefix: "ps4_" }],
-  ps5: [{ folder: "playstation_5", prefix: "ps5_" }],
-  gamecube: [
-    { folder: "gamecube", prefix: "gc_" },
-    { folder: "nintendo_gamecube", prefix: "gc_" },
-  ],
-  xbox: [{ folder: "xbox", prefix: "xbox_" }],
-  xbox360: [{ folder: "xbox_360", prefix: "xbox360_" }],
-  gba: [{ folder: "gameboy_advance", prefix: "gba_" }],
-  gb: [{ folder: "gameboy", prefix: "gb_" }],
-  gbc: [{ folder: "gameboy_color", prefix: "gbc_" }],
-  n64: [{ folder: "nintendo_64", prefix: "n64_" }],
-  snes: [{ folder: "super_nintendo", prefix: "snes_" }],
-  nes: [{ folder: "nintendo", prefix: "nes_" }],
-};
 
 const REGION_SUFFIXES = ["", "_us", "_eu", "_pal", "_jp", "_wor", "_ntsc"];
 const IMAGE_SUFFIXES = ["cover", "thumb"] as const;
@@ -71,7 +39,7 @@ export function buildCoverProjectCdnCandidates(
   platformName: string,
 ): string[] {
   const platformKey = resolveCoverProjectPlatformKey(name, platformName);
-  const specs = platformKey ? PLATFORM_SPECS[platformKey] || [] : [];
+  const specs = getCoverProjectPlatformSpecs(platformKey);
   if (specs.length === 0) return [];
 
   const titleSlugs = Array.from(

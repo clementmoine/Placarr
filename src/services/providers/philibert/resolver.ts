@@ -2,11 +2,20 @@ import levenshtein from "fast-levenshtein";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
+import {
+  makeObservationUsage,
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type {
+  MetadataObservation,
+  ObservationEvidenceSignal,
+} from "@/types/metadataObservation";
 
 import {
   fetchPhilibertProduct,
@@ -15,6 +24,8 @@ import {
   searchPhilibert,
   type PhilibertProduct,
 } from "./fetch";
+
+const PHILIBERT_REGION = "fr";
 
 function buildPhilibertFacts(product: PhilibertProduct): MetadataFact[] {
   const facts: MetadataFact[] = [
@@ -178,6 +189,7 @@ function buildPhilibertAttachments(
     attachments.push({
       type: "cover",
       url: product.imageUrl,
+      role: PHILIBERT_REGION,
       source: "philibert",
     });
   }
@@ -185,6 +197,7 @@ function buildPhilibertAttachments(
     attachments.push({
       type: "background",
       url: backgroundUrl,
+      role: PHILIBERT_REGION,
       source: "philibert",
     });
   }
@@ -192,22 +205,79 @@ function buildPhilibertAttachments(
   for (const url of product.images ?? []) {
     // La couverture (variante carrée) et le fond sont déjà ajoutés ci-dessus.
     if (philibertImageId(url) === coverId || url === backgroundUrl) continue;
-    attachments.push({ type: "image", url, source: "philibert" });
+    attachments.push({
+      type: "image",
+      url,
+      role: PHILIBERT_REGION,
+      source: "philibert",
+    });
   }
 
   return attachments.length > 0 ? attachments : undefined;
 }
 
+function buildPhilibertObservations(
+  product: PhilibertProduct,
+  metadata: MetadataResult,
+): MetadataObservation[] {
+  const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];
+  if (metadata.barcode) evidenceSignals.push("barcode_match");
+
+  const observations = observationsFromMetadataResult(metadata, {
+    providerId: "philibert",
+    providerLabel: "Philibert",
+    sourceDocumentRole: "catalog_product",
+    sourceUrl: product.productUrl,
+    evidenceSignals,
+    titleRole: "catalog_title",
+    aliasRole: "provider_grouped_alias",
+    imageRole: "cover_front",
+    factRole: "structured_fact",
+    language: PHILIBERT_REGION,
+  });
+
+  if (product.priceCents != null && Number.isFinite(product.priceCents)) {
+    observations.push({
+      kind: "offer",
+      role: "retail_offer",
+      priceCents: product.priceCents,
+      currency: "EUR",
+      provenance: {
+        providerId: "philibert",
+        providerLabel: "Philibert",
+        sourceDocumentRole: "offer",
+        sourceUrl: product.productUrl,
+        evidenceSignals: ["structured_data"],
+      },
+      usage: makeObservationUsage({
+        evidence: "weak",
+        searchAlias: "none",
+        displayCandidate: false,
+      }),
+    });
+  }
+
+  return observations;
+}
+
 function mapPhilibertMetadata(product: PhilibertProduct): MetadataResult {
-  return {
+  const metadata: MetadataResult = {
     title: product.title,
     description: product.description,
     imageUrl: product.imageUrl,
     barcode: normalizeProductBarcode(product.barcode),
+    regionalTitles: product.title
+      ? [{ region: PHILIBERT_REGION, text: product.title }]
+      : undefined,
     authors: product.designers?.map((name) => ({ name })),
     publishers: product.publishers?.map((name) => ({ name })),
     attachments: buildPhilibertAttachments(product),
     facts: buildPhilibertFacts(product),
+  };
+  return {
+    ...metadata,
+    observations: buildPhilibertObservations(product, metadata),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
 }
 
@@ -267,4 +337,4 @@ export function createPhilibertResolver() {
   };
 }
 
-export { mapPhilibertMetadata, buildPhilibertFacts };
+export { mapPhilibertMetadata, buildPhilibertFacts, buildPhilibertObservations };

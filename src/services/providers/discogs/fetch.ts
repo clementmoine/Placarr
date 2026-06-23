@@ -26,6 +26,9 @@ export interface DiscogsResult {
   year: string | null;
   imageUrl: string | null;
   images?: DiscogsImage[];
+  artists?: string[];
+  labels?: string[];
+  notes?: string | null;
   country?: string | null;
   label?: string | null;
   format?: string | null;
@@ -35,6 +38,38 @@ export interface DiscogsResult {
   communityWant?: number | null;
   genres?: string[];
   styles?: string[];
+}
+
+/**
+ * Discogs disambiguates same-named entities (artists, labels) with a trailing
+ * "(n)" suffix (e.g. "Nirvana (2)", "Columbia (3)"); strip it for display.
+ */
+function cleanDiscogsEntityName(name: string): string {
+  return name.replace(/\s*\(\d+\)\s*$/, "").trim();
+}
+
+/**
+ * Discogs release notes use a bracket markup ([a=Name], [l=Label], [url=…]…).
+ * Convert it to plain text: keep the human label of named refs, drop numeric-id
+ * refs we can't resolve, and strip styling tags.
+ */
+export function cleanDiscogsNotes(notes: string): string {
+  return notes
+    .replace(/\[url=[^\]]*\]/gi, "")
+    .replace(/\[\/url\]/gi, "")
+    // [a=Name] / [l=Label] / [m=…] / [r=…] → keep the inner label
+    .replace(/\[[almr]=([^\]]+)\]/gi, "$1")
+    // [a123] / [l123] → numeric-id reference we can't resolve → drop
+    .replace(/\[[almr]\d+\]/gi, "")
+    // styling tags [b] [/i] [u] …
+    .replace(/\[\/?[a-z]+\]/gi, "")
+    .replace(/\r\n/g, "\n")
+    // tidy whitespace left by removed tags (runs of spaces, space before punctuation)
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([.,;:!?])/g, "$1")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 let warnedMissingAuth = false;
@@ -90,6 +125,9 @@ export async function fetchFromDiscogs(
     let formatQuantity: number | null = null;
     let communityHave: number | null = null;
     let communityWant: number | null = null;
+    let artists: string[] | undefined;
+    let labels: string[] | undefined;
+    let notes: string | null = null;
     let imageUrl: string | null =
       typeof best.cover_image === "string" && best.cover_image.trim()
         ? best.cover_image.trim()
@@ -107,6 +145,10 @@ export async function fetchFromDiscogs(
           },
         );
         const release = releaseRes.data;
+        // NB: `release.lowest_price` is deliberately NOT used — it excludes
+        // shipping and is routinely a €0.01–0.50 teaser/loss-leader, so it would
+        // surface a misleading "used price". The reliable price-suggestions
+        // endpoint needs seller OAuth we don't have.
         if (Array.isArray(release?.images)) {
           const parsedImages = release.images
             .map(
@@ -175,6 +217,34 @@ export async function fetchFromDiscogs(
               ? release.community.want
               : null;
         }
+        if (Array.isArray(release?.artists)) {
+          const names = release.artists
+            .map((entry: { name?: unknown }) =>
+              typeof entry?.name === "string"
+                ? cleanDiscogsEntityName(entry.name)
+                : "",
+            )
+            .filter(
+              (name: string) => name && name.toLowerCase() !== "various",
+            );
+          if (names.length > 0) artists = Array.from(new Set(names));
+        }
+        if (Array.isArray(release?.labels)) {
+          const names = release.labels
+            .map((entry: { name?: unknown }) =>
+              typeof entry?.name === "string"
+                ? cleanDiscogsEntityName(entry.name)
+                : "",
+            )
+            .filter(
+              (name: string) =>
+                name && name.toLowerCase() !== "not on label",
+            );
+          if (names.length > 0) labels = Array.from(new Set(names));
+        }
+        if (typeof release?.notes === "string" && release.notes.trim()) {
+          notes = cleanDiscogsNotes(release.notes) || null;
+        }
       } catch {
         // Search hit is still useful without release detail.
       }
@@ -190,6 +260,9 @@ export async function fetchFromDiscogs(
       year: best.year ? String(best.year) : null,
       imageUrl,
       images,
+      artists,
+      labels,
+      notes,
       country: typeof best.country === "string" ? best.country : null,
       label:
         Array.isArray(best.label) && typeof best.label[0] === "string"

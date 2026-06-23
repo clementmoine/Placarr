@@ -33,7 +33,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "sd",
         "amc",
         "freakxy",
-        "aprilo",
+        "apriloshop",
         "picclick",
         "leDenicheur",
       ].sort(),
@@ -81,7 +81,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "sd",
         "amc",
         "freakxy",
-        "aprilo",
+        "apriloshop",
         "picclick",
         "leDenicheur",
         // Board-game anchors fire in generic too (parity), so a typeless scan

@@ -1,6 +1,8 @@
 #!/usr/bin/env npx tsx
 /** One-off: run every provider module's healthCheck and report up/down. */
 
+export {};
+
 try {
   process.loadEnvFile(".env");
 } catch {

@@ -29,22 +29,28 @@ const RESOLVER_DEP_KEYS: Record<string, string> = {
   lepassetemps: "fetchFromLepassetemps",
 };
 
-// "generic" included so typeless home-page scans get a board-game anchor too
-// (parity with the video-game stack, which already fires in the generic branch).
-const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
-
 export function createPrestashopModule(
   config: PrestashopRetailerConfig,
 ): ProviderModule {
   const resolver = createPrestashopResolver(config);
   const depKey = RESOLVER_DEP_KEYS[config.id] || `fetchFrom${config.id}`;
+  // The connector is type-agnostic: the shop declares its types. "generic" is
+  // appended so typeless home-page scans still reach it (parity).
+  const barcodeTypes: BarcodeLookupType[] = config.barcodeTypes ?? [
+    ...config.types,
+    "generic",
+  ];
+  const sample = config.sample ?? {
+    name: "Catan",
+    barcode: "3558380126133",
+  };
 
   return {
     info: {
       id: config.id,
       label: config.label,
-      types: ["boardgames"],
-      capabilities: [
+      types: config.types,
+      capabilities: config.capabilities ?? [
         "identify",
         "description",
         "cover",
@@ -98,7 +104,7 @@ export function createPrestashopModule(
       },
     },
     buildBarcodeTasks(_deps, type, { barcode }) {
-      if (!BARCODE_TYPES.includes(type)) {
+      if (!barcodeTypes.includes(type)) {
         return {} as Record<string, Promise<unknown>>;
       }
       return {
@@ -106,22 +112,24 @@ export function createPrestashopModule(
       };
     },
     buildTeardownMetadataTasks(ctx) {
-      return teardownMetadataWhen(
-        ctx,
-        config.label,
-        () => resolver(ctx.name, ctx.barcode),
-        "boardgames",
+      return config.types.flatMap((mediaType) =>
+        teardownMetadataWhen(
+          ctx,
+          config.label,
+          () => resolver(ctx.name, ctx.barcode),
+          mediaType,
+        ),
       );
     },
     mappingProbe: {
-      sampleInput: "3558380126133",
-      context: { name: "Catan", barcode: "3558380126133" },
+      sampleInput: sample.barcode,
+      context: { name: sample.name, barcode: sample.barcode },
     },
     runMappingProbe: async () => {
       const product = await searchPrestashopProduct(
         config,
-        "Catan",
-        "3558380126133",
+        sample.name,
+        sample.barcode,
       );
       if (!product) {
         return {

@@ -1,3 +1,4 @@
+import { createGameEditionMatcher } from "@/lib/barcode/listingTerms";
 import { normalizeDisplayTitle } from "@/lib/displayTitleScore";
 import { inferTextLanguage, regionRank } from "@/lib/localePreference";
 import { metadataTitleSimilarity } from "@/lib/metadataTitleSimilarity";
@@ -157,8 +158,7 @@ export function buildRequestedTitleFallbackVariants(
  * distinct title. Kept deliberately narrow (strong markers only) so a real
  * subtitle is never mistaken for an edition.
  */
-const EDITION_QUALIFIER =
-  /\b([eé]ditions?|collector'?s?|limit[eé]es?|limited|deluxe|premium|goty|game of the year|remaster(ed)?|definitive|anniversary|greatest hits|platinum|essentials?|nintendo selects|player'?s? choice)\b/i;
+const EDITION_QUALIFIER = createGameEditionMatcher("i");
 
 /**
  * Strips a *trailing* edition qualifier so providers that only index the base

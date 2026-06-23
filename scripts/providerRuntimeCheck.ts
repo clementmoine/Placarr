@@ -1,5 +1,4 @@
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
-import { fetchFromApriloshop } from "@/services/providers/apriloshop";
 import { fetchFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
 import { fetchFromDiscogs } from "@/services/providers/discogs";
 import { fetchFromFreakxy } from "@/services/providers/freakxy";
@@ -113,7 +112,6 @@ async function run() {
     () => fetchPricesFromLeDenicheur("hades switch"),
     "raw",
   );
-  await safe("apriloshop", () => fetchFromApriloshop("5060004769360"), "list");
   await safe("freakxy", () => fetchFromFreakxy("5060004769360"), "list");
   await safe("picclick", () => fetchFromPicClick("4988601467124"), "list");
 

@@ -1,5 +1,4 @@
 import { achatmoinscherModule } from "@/services/providers/achatmoinscher";
-import { apriloshopModule } from "@/services/providers/apriloshop";
 import { bggModule } from "@/services/providers/bgg";
 import { chasseauxlivresModule } from "@/services/providers/chasseauxlivres";
 import { launchboxModule } from "@/services/providers/launchbox";
@@ -69,7 +68,6 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   chasseauxlivresModule,
   achatmoinscherModule,
   ledenicheurModule,
-  apriloshopModule,
   freakxyModule,
   picclickModule,
   scandexModule,
@@ -103,7 +101,6 @@ const PROVIDER_METADATA_EXTENSIONS: Record<
   chasseauxlivres: { weight: 0.8, defaultLanguage: "fr" },
   achatmoinscher: { weight: 0.5, defaultLanguage: "fr", isSecondary: true } as any,
   ledenicheur: { weight: 0.7, defaultLanguage: "fr" },
-  apriloshop: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
   freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
   picclick: { weight: 0.5 },
   scandex: { weight: 0.5 },

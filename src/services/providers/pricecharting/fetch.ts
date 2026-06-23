@@ -2,6 +2,8 @@ import axios from "axios";
 import levenshtein from "fast-levenshtein";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { detectPlatformKey } from "@/lib/barcode/query";
+import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
+import { getPriceChartingPlatformSlugs } from "@/lib/videoGamePlatforms";
 import { slugify } from "@/lib/slugs";
 
 export interface PriceChartingPrices {
@@ -29,27 +31,6 @@ const PRICECHARTING_HEADERS = {
   Accept:
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-};
-
-const CLASSICS_KEYWORDS = [
-  "classics",
-  "platinum",
-  "essential",
-  "players choice",
-  "player's choice",
-  "greatest hits",
-  "nintendo selects",
-  "best of",
-];
-
-const PLATFORM_SLUGS: Record<string, { pal?: string; default: string }> = {
-  xbox: { pal: "pal-xbox", default: "xbox" },
-  xbox360: { pal: "pal-xbox-360", default: "xbox-360" },
-  ps1: { pal: "pal-playstation", default: "playstation" },
-  ps2: { pal: "pal-playstation-2", default: "playstation-2" },
-  ps3: { pal: "pal-playstation-3", default: "playstation-3" },
-  gamecube: { pal: "pal-gamecube", default: "gamecube" },
-  wii: { pal: "pal-wii", default: "wii" },
 };
 
 const TITLE_STOP_WORDS = new Set([
@@ -143,7 +124,7 @@ function buildTitleSlugCandidates(title: string): string[] {
 function getPlatformSlug(platform?: string, isPal?: boolean): string | null {
   if (!platform) return null;
   const platformKey = detectPlatformKey(platform);
-  const slugs = platformKey ? PLATFORM_SLUGS[platformKey] : null;
+  const slugs = getPriceChartingPlatformSlugs(platformKey);
   if (!slugs) return null;
   return isPal && slugs.pal ? slugs.pal : slugs.default;
 }
@@ -295,13 +276,12 @@ function pickBestRow(
 
   if (isClassics) {
     const classicsRows = matchingRows.filter((row) =>
-      CLASSICS_KEYWORDS.some((kw) => row.title.toLowerCase().includes(kw)),
+      containsGameClassicsKeyword(row.title),
     );
     if (classicsRows.length > 0) matchingRows = classicsRows;
   } else {
     const standardRows = matchingRows.filter(
-      (row) =>
-        !CLASSICS_KEYWORDS.some((kw) => row.title.toLowerCase().includes(kw)),
+      (row) => !containsGameClassicsKeyword(row.title),
     );
     if (standardRows.length > 0) matchingRows = standardRows;
   }

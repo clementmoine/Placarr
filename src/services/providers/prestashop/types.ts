@@ -1,3 +1,6 @@
+import type { BarcodeLookupType } from "@/types/providerModule";
+import type { Capability, MediaType } from "@/types/providerRegistry";
+
 export type PrestashopSearchParam = "search_query" | "s";
 
 export interface PrestashopRetailerConfig {
@@ -6,6 +9,20 @@ export interface PrestashopRetailerConfig {
   baseUrl: string;
   searchPath: string;
   searchParam: PrestashopSearchParam;
+  /**
+   * Media types this shop serves. The PrestaShop connector is type-agnostic — the
+   * shop declares its own types instead of the factory assuming board games.
+   */
+  types: MediaType[];
+  /** Barcode lookup branches it fires in. Defaults to its `types` + "generic". */
+  barcodeTypes?: BarcodeLookupType[];
+  /**
+   * Capabilities this shop supplies. Defaults to the board-game-oriented set; a
+   * shop serving another type declares its own (a games shop has no `players`).
+   */
+  capabilities?: Capability[];
+  /** Representative product for the mapping probe. Defaults to a board game. */
+  sample?: { name: string; barcode: string };
 }
 
 export interface PrestashopSearchProduct {

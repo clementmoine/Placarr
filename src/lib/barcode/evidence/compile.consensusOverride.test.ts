@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { applyMarketplaceConsensusOverride } from "./compile";
+import { applyMarketplaceConsensusOverride, compileResultForType } from "./compile";
 import { buildProductEvidence } from "./parse";
 import type { ProductEvidence } from "./types";
 
@@ -22,6 +22,7 @@ function buildAll(
 
 const RS3 = "Tom Clancy's Rainbow Six 3";
 const LOCKDOWN = "Tom Clancy's Rainbow Six Lockdown";
+const GHOST_RECON = "Tom Clancy's Ghost Recon";
 
 describe("applyMarketplaceConsensusOverride", () => {
   it("promeut un consensus marchand qui contredit l'unique source canonique", () => {
@@ -80,5 +81,117 @@ describe("applyMarketplaceConsensusOverride", () => {
       (e) => !e.isCanonical && !e.isTrustedRetailer,
     );
     expect(marketplace.length).toBeGreaterThan(0);
+  });
+
+  it("contredit un numéro de suite canonique que des annonces variées démentent", async () => {
+    // Cas réel 3307210117168 : ScreenScraper mappe à tort le code-barres sur
+    // "Ghost Recon 2", mais les marchands nomment l'original sous des formes
+    // variées ("Ghost Recon", "Tom Clancy's Ghost Recon", "… 1 Classics"). Trop
+    // dispersées pour un cluster "même produit", elles s'accordent au niveau de
+    // la franchise et démentent le "2" : la source canonique ne doit pas gagner.
+    const evidence = buildAll([
+      { provider: "ScreenScraper", name: "Tom Clancy's Ghost Recon 2" },
+      { provider: "AchatMoinsCher", name: "Ghost Recon" },
+      { provider: "PicClick", name: "Tom Clancy's Ghost Recon" },
+      { provider: "ChasseAuxLivres", name: "Tom Clancy's Ghost Recon 1 Classics" },
+    ]);
+
+    applyMarketplaceConsensusOverride(evidence);
+
+    const ss = evidence.find((e) => e.providerName === "ScreenScraper");
+    expect(ss?.contradictedByConsensus).toBe(true);
+    const promoted = evidence.filter(
+      (e) => e.providerName !== "ScreenScraper",
+    );
+    expect(promoted.every((e) => e.isTrustedRetailer)).toBe(true);
+  });
+
+  it("ne déclenche pas la contradiction de suite avec moins de 3 marchands", () => {
+    const evidence = buildAll([
+      { provider: "ScreenScraper", name: "Tom Clancy's Ghost Recon 2" },
+      { provider: "AchatMoinsCher", name: "Ghost Recon" },
+      { provider: "PicClick", name: "Tom Clancy's Ghost Recon" },
+    ]);
+
+    applyMarketplaceConsensusOverride(evidence);
+
+    const ss = evidence.find((e) => e.providerName === "ScreenScraper");
+    expect(ss?.contradictedByConsensus).toBeFalsy();
+  });
+
+  it("ne contredit pas un numéro canonique corroboré par les marchands", () => {
+    // Si les marchands citent eux-mêmes le "2", aucune contradiction.
+    const evidence = buildAll([
+      { provider: "ScreenScraper", name: "Tom Clancy's Ghost Recon 2" },
+      { provider: "AchatMoinsCher", name: "Ghost Recon 2" },
+      { provider: "PicClick", name: "Tom Clancy's Ghost Recon 2" },
+      { provider: "ChasseAuxLivres", name: "Ghost Recon 2 Xbox" },
+    ]);
+
+    applyMarketplaceConsensusOverride(evidence);
+
+    const ss = evidence.find((e) => e.providerName === "ScreenScraper");
+    expect(ss?.contradictedByConsensus).toBeFalsy();
+  });
+
+  it("ne laisse pas une source canonique contredite imposer sa plateforme", async () => {
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "ScreenScraper",
+          products: [{ name: "Tom Clancy's Ghost Recon 2", platformKey: "xbox" }],
+        },
+        {
+          providerName: "PicClick",
+          products: [{ name: GHOST_RECON, platformKey: "pc" }],
+        },
+        {
+          providerName: "AchatMoinsCher",
+          products: [{ name: GHOST_RECON, platformKey: "pc" }],
+        },
+        {
+          providerName: "Freakxy",
+          products: [{ name: GHOST_RECON, platformKey: "pc" }],
+        },
+      ],
+      "3307210117168",
+    );
+
+    expect(result?.matches[0]?.name).toBe(GHOST_RECON);
+    expect(result?.platformKey).toBe("pc");
+  });
+
+  it("ne renvoie pas la suite quand les marchands démentent le numéro (données réelles)", async () => {
+    // Reproduit la dispersion réelle des annonces du code-barres 3307210117168
+    // (ScreenScraper a un mauvais mapping vers "Ghost Recon 2").
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "ScreenScraper",
+          products: [{ name: "Tom Clancy's Ghost Recon 2", platformKey: "xbox" }],
+        },
+        {
+          providerName: "AchatMoinsCher",
+          products: [{ name: "Ghost Recon", platformKey: "xbox" }],
+        },
+        {
+          providerName: "PicClick",
+          products: [
+            { name: "Tom Clancy's Ghost Recon", platformKey: "xbox" },
+            { name: "Ghost Recon Xbox", platformKey: "xbox" },
+          ],
+        },
+        {
+          providerName: "ChasseAuxLivres",
+          products: [{ name: "Tom Clancy's Ghost Recon", platformKey: "xbox" }],
+        },
+      ],
+      "3307210117168",
+    );
+
+    expect(result?.matches[0]?.name).not.toMatch(/\b2\b/);
+    expect(result?.matches[0]?.name?.toLowerCase()).toContain("ghost recon");
   });
 });

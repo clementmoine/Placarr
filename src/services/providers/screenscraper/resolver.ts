@@ -1,14 +1,27 @@
 import axios from "axios";
 import { prisma } from "@/lib/prisma";
 import levenshtein from "fast-levenshtein";
-import type { AttachmentType } from "@prisma/client";
 import { retry } from "@/lib/retry";
+import {
+  makeObservationUsage,
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
+import {
+  detectScreenScraperSystemId,
+  getPlatformKeyByScreenScraperSystemId,
+} from "@/lib/videoGamePlatforms";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type {
+  ImageObservationRole,
+  MetadataObservation,
+  ObservationEvidenceSignal,
+} from "@/types/metadataObservation";
 import {
   getScreenScraperDebugParams,
   getScreenScraperEnv,
@@ -29,54 +42,17 @@ import {
   persistScreenScraperGameIdForBarcode,
   setScreenScraperInFlightLookup,
 } from "./cache";
-import { parseScreenScraperMediaUrl } from "./mediaUrl";
+import {
+  parseScreenScraperMediaUrl,
+  screenScraperMediaAttachmentSemantics,
+} from "./mediaUrl";
 import { areLikelySameProduct } from "@/lib/barcode/titleUtils";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
 
-/**
- * Maps a RAWG platform name to a ScreenScraper system ID.
- * Only the most common modern platforms are listed; omitting = fall through to search.
- */
-const RAWG_PLATFORM_TO_SS_SYSTEM: Record<string, number> = {
-  "PlayStation 5": 284,
-  "PlayStation 4": 60,
-  "PlayStation 3": 59,
-  "PlayStation 2": 58,
-  PlayStation: 57,
-  "Xbox One": 34,
-  "Xbox Series S/X": 34,
-  "Xbox 360": 33,
-  Xbox: 32,
-  "Nintendo Switch": 225,
-  "Nintendo 3DS": 17,
-  "Nintendo DS": 15,
-  "Wii U": 18,
-  Wii: 16,
-  PC: 138,
-  "PC (Windows)": 138,
-};
-
-const SS_SYSTEM_TO_PLATFORM_KEY: Record<number, string> = {
-  15: "ds",
-  16: "wii",
-  17: "3ds",
-  18: "wiiu",
-  32: "xbox",
-  33: "xbox360",
-  34: "xboxone",
-  57: "ps1",
-  58: "ps2",
-  59: "ps3",
-  60: "ps4",
-  138: "pc",
-  225: "switch",
-  284: "ps5",
-};
-
 function getPlatformKeyFromSSSystemId(systemId?: number): string | undefined {
   if (!systemId) return undefined;
-  return SS_SYSTEM_TO_PLATFORM_KEY[systemId];
+  return getPlatformKeyByScreenScraperSystemId(systemId) || undefined;
 }
 
 function getPlatformKeyFromSSMediaUrl(url?: string | null): string | undefined {
@@ -172,53 +148,7 @@ function pickSSSynopsis(synopsis?: SSGame["synopsis"]): string | undefined {
 }
 
 function detectSystemIdFromName(name: string): number | undefined {
-  const exact = RAWG_PLATFORM_TO_SS_SYSTEM[name];
-  if (exact) return exact;
-
-  const lower = name.toLowerCase().replace(/[._-]+/g, " ");
-  const has = (pattern: RegExp) => pattern.test(lower);
-
-  if (has(/\bpsp\b|\bplaystation\s+portable\b/)) return 61;
-  if (has(/\bvita\b/) || has(/\bplaystation\s+vita\b/) || has(/\bps\s+vita\b/))
-    return 62;
-  if (has(/\bps5\b|\bplaystation\s+5\b/)) return 284;
-  if (has(/\bps4\b|\bplaystation\s+4\b/)) return 60;
-  if (has(/\bps3\b|\bplaystation\s+3\b/)) return 59;
-  if (has(/\bps2\b|\bplaystation\s+2\b/)) return 58;
-  if (has(/\bps1\b/) || has(/\bplaystation\s+1\b/) || has(/\bplaystation\b/))
-    return 57;
-  if (
-    has(/\bxbox\s+series\b/) ||
-    has(/\bxbox\s+sx\b/) ||
-    has(/\bxbox\s+s\/x\b/)
-  )
-    return 34;
-  if (has(/\bxbox\s+one\b|\bxboxone\b/)) return 34;
-  if (has(/\bxbox\s+360\b|\bxbox360\b/)) return 33;
-  if (has(/\bxbox\b/)) return 32;
-  if (has(/\bswitch\b|\bnintendo\s+switch\b/)) return 225;
-  if (has(/\b3ds\b|\bnintendo\s+3ds\b/)) return 17;
-  if (has(/\bds\b|\bnds\b|\bnintendo\s+ds\b/)) return 15;
-  if (has(/\bwii\s+u\b|\bwiiu\b/)) return 18;
-  if (has(/\bwii\b/)) return 16;
-  if (has(/\bpc\b|\bwindows\b/)) return 138;
-  if (has(/\bgamecube\b/) || has(/\bgame\s+cube\b/) || has(/\bgcn\b/))
-    return 13;
-  if (has(/\bdreamcast\b/)) return 23;
-  if (has(/\bn64\b|\bnintendo\s+64\b/)) return 14;
-  if (has(/\bsuper\s+nintendo\b/) || has(/\bsnes\b/) || has(/\bsuper\s+nes\b/))
-    return 4;
-  if (has(/\bnes\b|\bnintendo\s+entertainment\s+system\b/)) return 3;
-  if (has(/\bgame\s+boy\s+advance\b|\bgba\b/)) return 12;
-  if (has(/\bgame\s+boy\s+color\b|\bgbc\b/)) return 10;
-  if (has(/\bgame\s+boy\b/) || has(/\bgameboy\b/) || has(/\bgb\b/)) return 9;
-  if (has(/\bmega\s+drive\b/) || has(/\bmegadrive\b/) || has(/\bgenesis\b/))
-    return 21;
-  if (has(/\bmaster\s+system\b|\bmastersystem\b/)) return 2;
-  if (has(/\bgame\s+gear\b|\bgamegear\b/)) return 22;
-  if (has(/\bneo\s+geo\b|\bneogeo\b/)) return 24;
-  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/)) return 26;
-  return undefined;
+  return detectScreenScraperSystemId(name) || undefined;
 }
 
 function detectCachedCandidateSystemId(name: string): number | undefined {
@@ -644,6 +574,148 @@ export function buildScreenScraperFacts(
   return facts;
 }
 
+const SCREEN_SCRAPER_PROVIDER_ID = "screenscraper";
+const SCREEN_SCRAPER_REGION_RE = /(?:^|[-_])(fr|eu|wor|uk|us|jp)$/i;
+
+interface ScreenScraperObservationContext {
+  sourceUrl?: string;
+  hasBarcodeMatch: boolean;
+  hasPlatformMatch: boolean;
+}
+
+function screenScraperImageRole(
+  attachment: MetadataAttachment,
+): ImageObservationRole {
+  const role = (attachment.role || "").toLowerCase();
+  if (attachment.type === "cover") {
+    if (role.startsWith("3d-")) return "product_packshot";
+    return "cover_front";
+  }
+  if (attachment.type === "screenshot") return "screenshot";
+  if (attachment.type === "logo") return "logo";
+  if (attachment.type === "background") return "background";
+  if (attachment.type === "image") {
+    if (role === "back" || role.startsWith("back-")) return "cover_back";
+    if (role === "disc" || role.startsWith("disc-")) return "product_packshot";
+    return "gallery_image";
+  }
+  return "gallery_image";
+}
+
+function screenScraperImageRegion(
+  attachment: MetadataAttachment,
+): string | undefined {
+  const role = attachment.role?.trim();
+  if (!role) return undefined;
+  const match = role.match(SCREEN_SCRAPER_REGION_RE);
+  return match?.[1]?.toLowerCase();
+}
+
+function imageObservationUsage(role: ImageObservationRole) {
+  return makeObservationUsage({
+    displayCandidate: true,
+    evidence:
+      role === "cover_front" ||
+      role === "cover_back" ||
+      role === "product_packshot"
+        ? "strong"
+        : "normal",
+  });
+}
+
+export function buildScreenScraperObservations(
+  metadata: MetadataResult,
+  context: ScreenScraperObservationContext,
+): MetadataObservation[] {
+  const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];
+  if (context.hasBarcodeMatch) evidenceSignals.push("barcode_match");
+  if (context.hasPlatformMatch) evidenceSignals.push("platform_match");
+
+  const observations = observationsFromMetadataResult(
+    {
+      ...metadata,
+      imageUrl: undefined,
+      attachments: undefined,
+    },
+    {
+      providerId: SCREEN_SCRAPER_PROVIDER_ID,
+      providerLabel: "ScreenScraper",
+      sourceDocumentRole: "api_object",
+      sourceUrl: context.sourceUrl,
+      evidenceSignals,
+      titleRole: "object_title",
+      aliasRole: "provider_grouped_alias",
+      imageRole: "cover_front",
+      factRole: "structured_fact",
+      externalIdRole: "provider_record_id",
+      language: "unknown",
+    },
+  );
+
+  const seenImageUrls = new Set<string>();
+  const imageCandidates: MetadataAttachment[] = [
+    ...(metadata.imageUrl
+      ? [
+          {
+            type: "cover",
+            url: metadata.imageUrl,
+            source: SCREEN_SCRAPER_PROVIDER_ID,
+          } satisfies MetadataAttachment,
+        ]
+      : []),
+    ...(metadata.attachments || []),
+  ];
+
+  for (const attachment of imageCandidates) {
+    const url = attachment.url?.trim();
+    if (!url || seenImageUrls.has(url)) continue;
+    seenImageUrls.add(url);
+
+    const role = screenScraperImageRole(attachment);
+    observations.push({
+      kind: "image",
+      role,
+      type: attachment.type,
+      url,
+      title: attachment.title ?? null,
+      region: screenScraperImageRegion(attachment) ?? null,
+      provenance: {
+        providerId: SCREEN_SCRAPER_PROVIDER_ID,
+        providerLabel: "ScreenScraper",
+        sourceDocumentRole:
+          attachment.type === "cover" ? "api_object" : "gallery",
+        sourceUrl: context.sourceUrl,
+        evidenceSignals,
+      },
+      usage: imageObservationUsage(role),
+    });
+  }
+
+  return observations;
+}
+
+function withScreenScraperObservations(
+  metadata: MetadataResult,
+  context: Partial<ScreenScraperObservationContext> = {},
+): MetadataResult {
+  if (
+    metadata.observationSchemaVersion === METADATA_OBSERVATION_SCHEMA_VERSION &&
+    (metadata.observations?.length || 0) > 0
+  ) {
+    return metadata;
+  }
+
+  return {
+    ...metadata,
+    observations: buildScreenScraperObservations(metadata, {
+      sourceUrl: context.sourceUrl,
+      hasBarcodeMatch: context.hasBarcodeMatch ?? false,
+      hasPlatformMatch: context.hasPlatformMatch ?? false,
+    }),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+  };
+}
+
 export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
   async function resolveScreenScraperMetadata(
     name: string,
@@ -672,6 +744,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       let gameData: SSGame | null = null;
       let systemeid = platform ? detectSystemIdFromName(platform) : undefined;
       let resolvedSystemId: number | undefined;
+      let resolvedFromBarcodeEvidence = false;
       if (!systemeid && name) {
         systemeid = detectSystemIdFromName(name);
       }
@@ -694,6 +767,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               gameData = jeu;
               resolvedSystemId =
                 cachedGame.systemId ?? (Number(jeu.systeme?.id) || systemeid);
+              resolvedFromBarcodeEvidence = true;
               console.info(
                 `[ScreenScraper] Resolved game ${cachedGame.gameId} from barcode cache for "${barcode}"`,
               );
@@ -744,6 +818,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 } else {
                   gameData = jeu;
                   resolvedSystemId = systemeid;
+                  resolvedFromBarcodeEvidence = true;
                   console.info(
                     `[ScreenScraper] Successfully found game by barcode search "${cleanedBarcode}"`,
                   );
@@ -1017,35 +1092,12 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           // Drop ScreenScraper's tiny "no image" placeholders (see helper).
           if (isScreenScraperPlaceholderMedia(m)) return;
 
-          let type: AttachmentType | null = null;
-          let role: string | null = null;
+          const semantics = screenScraperMediaAttachmentSemantics(m);
 
-          if (m.type === "box-2D") {
-            type = "cover";
-            role = m.region || "wor";
-          } else if (m.type === "box-3D") {
-            type = "cover";
-            role = m.region ? `3d-${m.region}` : "3d-wor";
-          } else if (m.type === "box-2D-back" || m.type === "box-back") {
-            type = "image";
-            role = m.region ? `back-${m.region}` : "back";
-          } else if (m.type === "support-2D" || m.type === "support-texture") {
-            type = "image";
-            role = m.region ? `disc-${m.region}` : "disc";
-          } else if (m.type === "ss") {
-            type = "screenshot";
-            role = m.region || "wor";
-          } else if (m.type === "sstitle") {
-            type = "screenshot";
-            role = "title";
-          } else if (m.type === "wheel") {
-            type = "logo";
-          }
-
-          if (type) {
+          if (semantics) {
             attachments.push({
-              type,
-              role: role || undefined,
+              type: semantics.type,
+              role: semantics.role,
               url: m.url,
               source: "screenscraper",
             });
@@ -1077,6 +1129,9 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         aliases,
         regionalTitles,
         facts: facts.length > 0 ? facts : undefined,
+        externalIds: gameData.id
+          ? { screenscraper: String(gameData.id) }
+          : undefined,
       };
 
       if (gameData.id) {
@@ -1088,7 +1143,17 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         );
       }
 
-      return result;
+      return withScreenScraperObservations(result, {
+        sourceUrl: gameData.id
+          ? `https://api.screenscraper.fr/api2/jeuInfos.php?gameid=${gameData.id}`
+          : undefined,
+        hasBarcodeMatch: resolvedFromBarcodeEvidence,
+        hasPlatformMatch: !!(
+          systemeid &&
+          resolvedSystemId &&
+          systemeid === resolvedSystemId
+        ),
+      });
     } catch (err) {
       console.error(
         `[ScreenScraper] Unexpected error for "${name || barcode}": ${err}`,
@@ -1119,11 +1184,12 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
     const persisted = await getPersistedScreenScraperLookup(lookupKey);
     if (persisted) {
-      if (isCachedLookupAcceptable(name, persisted)) {
+      const normalizedPersisted = withScreenScraperObservations(persisted);
+      if (isCachedLookupAcceptable(name, normalizedPersisted)) {
         console.info(
           `[ScreenScraper] Lookup cache hit for "${name || barcode}"`,
         );
-        return persisted;
+        return normalizedPersisted;
       }
       console.info(
         `[ScreenScraper] Ignoring cached lookup "${persisted.title}" — does not match requested "${name}"`,
@@ -1134,11 +1200,14 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       const stale = await getPersistedScreenScraperLookup(lookupKey, {
         allowStale: true,
       });
-      if (stale && isCachedLookupAcceptable(name, stale)) {
+      const normalizedStale = stale
+        ? withScreenScraperObservations(stale)
+        : null;
+      if (normalizedStale && isCachedLookupAcceptable(name, normalizedStale)) {
         console.warn(
           `[ScreenScraper] Quota cooldown — serving stale lookup for "${name || barcode}"`,
         );
-        return stale;
+        return normalizedStale;
       }
     }
 
@@ -1155,10 +1224,13 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
     try {
       const result = await promise;
-      if (result) {
-        cacheScreenScraperLookup(lookupKey, result);
+      const normalizedResult = result
+        ? withScreenScraperObservations(result)
+        : null;
+      if (normalizedResult) {
+        cacheScreenScraperLookup(lookupKey, normalizedResult);
       }
-      return result;
+      return normalizedResult;
     } finally {
       clearScreenScraperInFlightLookup(lookupKey);
     }

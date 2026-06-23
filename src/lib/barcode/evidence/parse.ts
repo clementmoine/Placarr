@@ -15,6 +15,7 @@ import {
 import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
 
+import { extractEditionFromText } from "./edition";
 import type {
   ParsedProductName,
   ProductEvidence,
@@ -60,9 +61,7 @@ function parseProductName(
     .match(/\b(pal|ntsc|usa|us|eur|eu|uk|jp|jpn|japan|fr|fra)\b/)?.[1]
     ?.toUpperCase();
   const year = cleanName.match(/\b(19|20)\d{2}\b/)?.[0];
-  const edition = normalizedRaw.match(
-    /\b(classics|platinum|essential|essentials|players choice|player's choice|greatest hits|nintendo selects|best of|collector|collectors|limited|limitee|limitee|edition)\b/,
-  )?.[1];
+  const edition = extractEditionFromText(normalizedRaw) || undefined;
 
   return {
     rawName,

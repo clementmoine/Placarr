@@ -51,7 +51,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   },
   "scripts/providerLiveAudit.ts": {
     achatmoinscher: 1,
-    apriloshop: 1,
     chasseauxlivres: 1,
     freakxy: 1,
     ledenicheur: 1,
@@ -60,7 +59,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   },
   "scripts/providerRuntimeCheck.ts": {
     achatmoinscher: 1,
-    apriloshop: 1,
     bgg: 1,
     chasseauxlivres: 1,
     coverproject: 1,
@@ -134,18 +132,11 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   "src/lib/barcode/cachePayload.ts": {
     screenscraper: 2,
   },
-  "src/lib/barcode/lookupPayload.ts": {
-    bcdjeux: 1,
-    lepassetemps: 1,
-    ludifolie: 2,
-    monsieurde: 1,
-  },
   "src/lib/barcode/regressionCases.ts": {
     screenscraper: 2,
   },
   "src/lib/barcode/sourceAssembly.ts": {
     achatmoinscher: 5,
-    apriloshop: 1,
     chasseauxlivres: 5,
     deezer: 1,
     discogs: 1,

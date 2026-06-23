@@ -189,6 +189,163 @@ describe("guessShelfFromBarcodeLookup — Ryse / Xbox One", () => {
   });
 });
 
+describe("guessShelfFromBarcodeLookup — match par type résolu", () => {
+  const shelves = [
+    { id: "s-games", name: "Jeux Switch", type: "games" },
+    { id: "s-bg", name: "Jeux de société", type: "boardgames" },
+    { id: "s-books", name: "Livres", type: "books" },
+  ];
+
+  it("recommande l'étagère du type résolu quand ni plateforme ni nom ne matchent", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "boardgames",
+        searchNames: ["Mille Sabords"],
+        shelves,
+      }),
+    ).toEqual({ shelfId: "s-bg", isGuessed: true });
+  });
+
+  it("reste null si aucune étagère du type résolu n'existe", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "boardgames",
+        searchNames: ["Mille Sabords"],
+        shelves: [{ id: "s-games", name: "Jeux Switch", type: "games" }],
+      }),
+    ).toBeNull();
+  });
+
+  it("la plateforme l'emporte sur le type pour les jeux vidéo", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "games",
+        platformKey: "switch",
+        searchNames: ["Zelda"],
+        shelves,
+      }),
+    ).toEqual({ shelfId: "s-games", isGuessed: true });
+  });
+
+  it("la plateforme détectée dans le titre reste prioritaire sur l'étagère jeux vidéo globale", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "games",
+        searchNames: ["Mario Kart Wii"],
+        shelves: [
+          { id: "s-generic", name: "Jeux vidéo", type: "games" },
+          { id: "s-wii", name: "Wii", type: "games" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-wii", isGuessed: true });
+  });
+
+  it("utilise l'étagère jeux vidéo globale quand aucun signal spécifique ne matche", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "games",
+        searchNames: ["Ryse : Son of Rome"],
+        shelves: [
+          { id: "s-atari", name: "Atari 2600", type: "games" },
+          { id: "s-jv", name: "JV", type: "games" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-jv", isGuessed: true });
+  });
+
+  it("préfère une étagère générique du type à une première étagère spécifique", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "boardgames",
+        searchNames: ["Mille Sabords"],
+        shelves: [
+          { id: "s-black-stories", name: "Black Stories", type: "boardgames" },
+          { id: "s-generic", name: "Jeux de société", type: "boardgames" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-generic", isGuessed: true });
+  });
+
+  it("conserve le match fort par nom avant l'étagère générique", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "boardgames",
+        searchNames: ["Unlock"],
+        shelves: [
+          { id: "s-generic", name: "Jeux de société", type: "boardgames" },
+          { id: "s-unlock", name: "Unlock", type: "boardgames" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-unlock", isGuessed: true });
+  });
+
+  it.each([
+    ["games", "Halo", "Jeux vidéo"],
+    ["books", "Dune", "Livres"],
+    ["movies", "Alien", "Films"],
+    ["musics", "Daft Punk", "Musique"],
+    ["boardgames", "Unlock", "Jeux de société"],
+  ])(
+    "conserve le match fort par nom avant l'étagère générique pour %s",
+    (shelfType, specificName, genericName) => {
+      expect(
+        guessShelfFromBarcodeLookup({
+          shelfType,
+          searchNames: [specificName],
+          shelves: [
+            { id: "s-generic", name: genericName, type: shelfType },
+            { id: "s-specific", name: specificName, type: shelfType },
+          ],
+        }),
+      ).toEqual({ shelfId: "s-specific", isGuessed: true });
+    },
+  );
+
+  it("ignore une étagère homonyme d'un autre type quand le type est résolu", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "books",
+        searchNames: ["Dune"],
+        shelves: [
+          { id: "s-movie-dune", name: "Dune", type: "movies" },
+          { id: "s-books", name: "Livres", type: "books" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-books", isGuessed: true });
+  });
+
+  it("garde le fallback vers la première étagère du type quand rien n'est proche", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "boardgames",
+        searchNames: ["Mille Sabords"],
+        shelves: [
+          { id: "s-black-stories", name: "Black Stories", type: "boardgames" },
+          { id: "s-unlock", name: "Unlock", type: "boardgames" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-black-stories", isGuessed: true });
+  });
+
+  it.each([
+    ["books", "Mes livres"],
+    ["movies", "Films"],
+    ["musics", "CD"],
+    ["boardgames", "Jeux de société"],
+  ])("reconnaît une étagère générique pour %s", (shelfType, shelfName) => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType,
+        searchNames: ["Un titre sans lien"],
+        shelves: [
+          { id: "s-specific", name: "Une saga précise", type: shelfType },
+          { id: "s-generic", name: shelfName, type: shelfType },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-generic", isGuessed: true });
+  });
+});
+
 describe("isShelfCompatibleWithPlatformKey", () => {
   it("refuse Atari 2600 pour un jeu Xbox One", () => {
     expect(

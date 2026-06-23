@@ -3,7 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
+import {
+  createGameEditionMatcher,
+  createTermMatcher,
+  LISTING_CONDITION_TERMS,
+  LISTING_FORMAT_TERMS,
+  LISTING_NOISE_TERMS,
+  LISTING_REGION_TERMS,
+} from "@/lib/barcode/listingTerms";
 import { resolveBarcode } from "@/services/barcodeResolver";
+import { createVideoGamePlatformMatcher } from "@/lib/videoGamePlatforms";
 import {
   cleanSearchQuery,
   explainAttachmentScoreForDisplay,
@@ -127,32 +136,27 @@ const BLOCK_PATTERNS: Array<{
   {
     kind: "platform",
     reason: "plateforme detectee",
-    pattern:
-      /\b(nintendo switch|switch|playstation 5|playstation 4|playstation 3|playstation 2|playstation 1|ps5|ps4|ps3|ps2|ps1|xbox series x|xbox series s|xbox series|xbox one|xbox 360|xbox original|xbox|wii u|wiiu|wii|nintendo 3ds|3ds|nintendo ds|ds|gamecube|dreamcast|pc|windows|snes|nes|n64|game boy advance|game boy color|game boy|gba|gbc)\b/gi,
+    pattern: createVideoGamePlatformMatcher(),
   },
   {
     kind: "edition",
     reason: "edition commerciale",
-    pattern:
-      /\b(classics|platinum|essential|essentials|players choice|player's choice|greatest hits|nintendo selects|best of|collector|collectors|limited|limitee|limitee|edition|edition collector|edition limitee|edition limitee)\b/gi,
+    pattern: createGameEditionMatcher(),
   },
   {
     kind: "condition",
     reason: "etat ou wording d'annonce",
-    pattern:
-      /\b(neuf sous blister|sous blister|avec notice|sans notice|avec livret|sans livret|neuf|occasion|scelle|scelle|blister|cib|loose|bon etat|tres bon etat|excellent etat|comme neuf|complet|complete|tested|working|fonctionnel|tbe|hs|brand new|sealed|like new|very good|zustand gut|zustand neu|gebraucht|ovp|nuovo|usato|sigillato)\b/gi,
+    pattern: createTermMatcher(LISTING_CONDITION_TERMS),
   },
   {
     kind: "format",
     reason: "format physique",
-    pattern:
-      /\b(blu-ray|bluray|dvd|vhs|cd|k7|cassette|disc|disque|boite|boite|box|vinyle|vinyl|lp)\b/gi,
+    pattern: createTermMatcher(LISTING_FORMAT_TERMS),
   },
   {
     kind: "region",
     reason: "region ou langue",
-    pattern:
-      /\b(pal fr|pal vf|pal|ntsc|secam|vf|fr|fra|fre|en|eng|de|ger|it|ita|es|spa|eu|eur|us|usa|uk|jp|jpn|region free)\b/gi,
+    pattern: createTermMatcher(LISTING_REGION_TERMS),
   },
   {
     kind: "year",
@@ -162,7 +166,7 @@ const BLOCK_PATTERNS: Array<{
   {
     kind: "noise",
     reason: "prefixe generique",
-    pattern: /\b(jeu video|jeux video|jeu pour|game for|jeu|game|pour|for)\b/gi,
+    pattern: createTermMatcher(LISTING_NOISE_TERMS),
   },
 ];
 

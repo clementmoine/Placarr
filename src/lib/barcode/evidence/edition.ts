@@ -1,30 +1,22 @@
 import { normalizeForTokens } from "@/lib/barcode/titleUtils";
+import {
+  createTermMatcher,
+  GAME_EDITION_DEFINITIONS,
+} from "@/lib/barcode/listingTerms";
 
 import type { ProductEvidence } from "./types";
 
-const EDITION_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
-  { pattern: /\bplayers?\s*'?s?\s*choice\b/i, label: "Player's Choice" },
-  { pattern: /\bnintendo\s+selects\b/i, label: "Nintendo Selects" },
-  { pattern: /\bgreatest\s+hits\b/i, label: "Greatest Hits" },
-  { pattern: /\bplatinum\b/i, label: "Platinum" },
-  { pattern: /\bessentials?\b/i, label: "Essentials" },
-  { pattern: /\bclassics\b/i, label: "Classics" },
-  { pattern: /\bbest\s+of\b/i, label: "Best Of" },
-  { pattern: /\bedition\s+collector\b/i, label: "Édition Collector" },
-  { pattern: /\b[eé]dition\s+limit[eé]e\b/i, label: "Édition Limitée" },
-  { pattern: /\blimited\s+edition\b/i, label: "Limited Edition" },
-  { pattern: /\bcollectors?\s+edition\b/i, label: "Collector's Edition" },
-  { pattern: /\bcollector\b/i, label: "Collector" },
-];
+const EDITION_PATTERNS: Array<{ pattern: RegExp; label: string }> =
+  GAME_EDITION_DEFINITIONS.map(({ label, terms }) => ({
+    label,
+    pattern: createTermMatcher(terms, "i"),
+  }));
 
 function normalizeEditionKey(value: string): string {
   return normalizeForTokens(value).replace(/\s+/g, " ").trim();
 }
 
-export function titleContainsEdition(
-  title: string,
-  edition: string,
-): boolean {
+export function titleContainsEdition(title: string, edition: string): boolean {
   const titleNorm = normalizeEditionKey(title);
   const editionNorm = normalizeEditionKey(edition);
   if (!titleNorm || !editionNorm) return false;
@@ -143,7 +135,10 @@ export function applyEditionToCompiledResult<
       [
         result.cleanName,
         ...result.suggestions,
-        ...result.matches.flatMap((match) => [match.name, ...match.suggestions]),
+        ...result.matches.flatMap((match) => [
+          match.name,
+          ...match.suggestions,
+        ]),
       ],
       result.cleanName,
     );
@@ -154,7 +149,10 @@ export function applyEditionToCompiledResult<
   }
 
   const suggestions = Array.from(
-    new Set([displayName, ...result.suggestions.filter((s) => s !== displayName)]),
+    new Set([
+      displayName,
+      ...result.suggestions.filter((s) => s !== displayName),
+    ]),
   );
   const matches = result.matches.map((match, index) => {
     if (index !== 0) return match;

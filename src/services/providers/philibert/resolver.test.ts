@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
 
 vi.mock("./fetch", () => ({
   searchPhilibert: vi.fn(),
@@ -15,7 +16,7 @@ import {
   type PhilibertProduct,
   type PhilibertSearchHit,
 } from "./fetch";
-import { createPhilibertResolver } from "./resolver";
+import { createPhilibertResolver, mapPhilibertMetadata } from "./resolver";
 
 const mockedSearch = vi.mocked(searchPhilibert);
 const mockedFetch = vi.mocked(fetchPhilibertProduct);
@@ -136,9 +137,91 @@ describe("createPhilibertResolver — garde barcode→item", () => {
     // L'original de la couverture (id 100) et le fond (id 200) ne sont pas
     // redupliqués en `image`.
     expect(result?.attachments).toEqual([
-      { type: "cover", url: cover, source: "philibert" },
-      { type: "background", url: wide, source: "philibert" },
-      { type: "image", url: extra, source: "philibert" },
+      { type: "cover", url: cover, role: "fr", source: "philibert" },
+      { type: "background", url: wide, role: "fr", source: "philibert" },
+      { type: "image", url: extra, role: "fr", source: "philibert" },
     ]);
+  });
+});
+
+describe("mapPhilibertMetadata observations", () => {
+  it("emits catalog observations while preserving legacy metadata fields", () => {
+    const cover = `https://cdn1.philibertnet.com/100-large_default/catan--${BARCODE}.jpg`;
+    const background = `https://cdn1.philibertnet.com/200/catan--${BARCODE}.jpg`;
+    const gallery = `https://cdn1.philibertnet.com/300/catan--${BARCODE}.jpg`;
+
+    const metadata = mapPhilibertMetadata({
+      title: "Catan",
+      description: "Le classique du commerce et des colonies.",
+      imageUrl: cover,
+      barcode: BARCODE,
+      productUrl: "https://www.philibertnet.com/fr/jeux/123-catan.html",
+      players: "3 à 4",
+      playtime: "60 min",
+      ageRating: "10+",
+      language: "Français",
+      rating: "4.7",
+      reviewCount: 128,
+      themes: ["Gestion", "Commerce"],
+      mechanics: ["Placement"],
+      designers: ["Klaus Teuber"],
+      publishers: ["Kosmos"],
+      priceCents: 3999,
+      images: [gallery],
+      backgroundImageUrl: background,
+    });
+
+    expect(metadata).toMatchObject({
+      title: "Catan",
+      barcode: BARCODE,
+      regionalTitles: [{ region: "fr", text: "Catan" }],
+      observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+      imageUrl: cover,
+    });
+
+    expect(metadata.observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "title",
+          role: "catalog_title",
+          value: "Catan",
+          provenance: expect.objectContaining({
+            providerId: "philibert",
+            sourceDocumentRole: "catalog_product",
+            evidenceSignals: ["structured_data", "barcode_match"],
+          }),
+          usage: expect.objectContaining({
+            displayCandidate: true,
+            searchAlias: "strong",
+            evidence: "strong",
+          }),
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          url: cover,
+        }),
+        expect.objectContaining({
+          kind: "fact",
+          role: "structured_fact",
+          factKind: "players",
+          value: "3 à 4",
+        }),
+        expect.objectContaining({
+          kind: "offer",
+          role: "retail_offer",
+          priceCents: 3999,
+          currency: "EUR",
+          provenance: expect.objectContaining({
+            sourceDocumentRole: "offer",
+          }),
+          usage: expect.objectContaining({
+            displayCandidate: false,
+            searchAlias: "none",
+            evidence: "weak",
+          }),
+        }),
+      ]),
+    );
   });
 });

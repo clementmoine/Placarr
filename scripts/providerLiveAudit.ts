@@ -1,7 +1,6 @@
 import axios from "axios";
 
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
-import { fetchFromApriloshop } from "@/services/providers/apriloshop";
 import { fetchFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
 import { fetchFromFreakxy } from "@/services/providers/freakxy";
 import { fetchFromHowLongToBeat } from "@/services/providers/howlongtobeat";
@@ -320,15 +319,6 @@ async function run() {
       hasResult: Boolean(result),
       keys: Object.keys(result || {}),
       result,
-    };
-  });
-
-  await safe("apriloshop", async () => {
-    const result = await fetchFromApriloshop("5060004769360");
-    return {
-      count: result.length,
-      firstKeys: Object.keys(result[0] || {}),
-      first: result[0] || null,
     };
   });
 

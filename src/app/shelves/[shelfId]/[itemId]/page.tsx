@@ -1316,8 +1316,12 @@ export default function ItemDetailsPage() {
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
     const allImages = getGalleryImages(item);
+    // Exclude the cover, including its uncropped twin: the cover is a "_crop"
+    // derivative of a gallery image, so its source image must not show again.
+    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
+    const coverKey = coverImage ? stripCrop(coverImage) : null;
     return allImages
-      .filter((img) => img.url !== coverImage)
+      .filter((img) => img.url !== coverImage && stripCrop(img.url) !== coverKey)
       .slice(0, 24)
       .map((img) => {
         const gallery = getAttachmentGalleryLabels(

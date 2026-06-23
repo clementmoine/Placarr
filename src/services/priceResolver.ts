@@ -11,6 +11,7 @@ import {
   finalizeGamePriceProviders,
   parsePriceProviderSources,
 } from "@/lib/priceCachePolicy";
+import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
 
 type ProviderPriceResult = {
   priceNew?: number | null;
@@ -319,18 +320,8 @@ export async function refreshBarcodePrices(
     );
     const isPal = !hasNtscIndicator;
 
-    const CLASSICS_KEYWORDS = [
-      "classics",
-      "platinum",
-      "essential",
-      "players choice",
-      "player's choice",
-      "greatest hits",
-      "nintendo selects",
-      "best of",
-    ];
     const isClassics = [primaryName, ...rawNamesList].some((value) =>
-      CLASSICS_KEYWORDS.some((kw) => value.toLowerCase().includes(kw)),
+      containsGameClassicsKeyword(value),
     );
 
     const [stdRes, amcRes, leDenicheurRes, smartoysRes] =

@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import sharp from "sharp";
 import {
+  pickBestBackgroundFromAttachments,
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
   rankScoredAttachments,
@@ -19,6 +20,8 @@ import {
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/lib/attachmentDisplayScore";
+import { resolveAttachmentDisplayRegion } from "@/lib/attachmentDisplayLabels";
+import { regionRank } from "@/lib/localePreference";
 import { applyConsensus } from "@/lib/metadataConsensus";
 import { prisma } from "@/lib/prisma";
 import {
@@ -30,9 +33,14 @@ import {
   trimLightImageMargins,
   cropImageIfNeeded,
 } from "@/lib/server/imageTrim";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type { Item } from "@prisma/client";
 import { replaceFieldEvidence } from "@/services/evidence";
+import { screenScraperAttachmentFromMediaUrl } from "@/services/providers/screenscraper/mediaUrl";
 
 const mapAuthors = (authors?: MetadataResult["authors"]) =>
   authors && authors.length > 0
@@ -81,12 +89,37 @@ function hasMetadataImageCandidate(metadata: MetadataResult) {
   return Boolean(metadata.attachments?.some(isDisplayImageAttachment));
 }
 
+export function metadataImageAttachmentSemantics(
+  metadata: MetadataResult,
+  originalImageUrl: string,
+): Pick<MetadataAttachment, "type" | "role" | "source" | "title"> | null {
+  const direct = metadata.attachments?.find(
+    (attachment) => attachment.url === originalImageUrl,
+  );
+  const inferred = screenScraperAttachmentFromMediaUrl(originalImageUrl);
+
+  if (!direct && !inferred) return null;
+
+  return {
+    type: direct?.type ?? inferred?.type ?? "cover",
+    role: direct?.role ?? inferred?.role,
+    source: direct?.source ?? inferred?.source,
+    title: direct?.title,
+  };
+}
+
 function canUseBarcodeCacheCover(
   cached: { shelfType?: string | null } | null,
   type: Type,
   metadata: MetadataResult,
+  inferredCoverSemantics?: Pick<
+    MetadataAttachment,
+    "type" | "role" | "source" | "title"
+  > | null,
 ) {
-  return cached?.shelfType === type && !hasMetadataImageCandidate(metadata);
+  if (cached?.shelfType !== type) return false;
+  if (!hasMetadataImageCandidate(metadata)) return true;
+  return Boolean(inferredCoverSemantics?.source && inferredCoverSemantics.role);
 }
 
 export { isMissingDiscogsGallery } from "@/lib/metadataDiscogs";
@@ -162,6 +195,7 @@ export function formatMetadataFromStorage(
     description: metadata.description || undefined,
     releaseDate: metadata.releaseDate || undefined,
     imageUrl: metadata.imageUrl || undefined,
+    heroImageUrl: metadata.heroImageUrl || undefined,
     attachments: mapAttachments(metadata.attachments),
     aliases: aliases.length > 0 ? aliases : undefined,
     facts: facts.length > 0 ? facts : undefined,
@@ -384,6 +418,11 @@ export async function storeMetadata(
     publishers?: Publisher[];
   }
 > {
+  const originalMetadataImageUrl = metadata.imageUrl;
+  const metadataImageSemantics = originalMetadataImageUrl
+    ? metadataImageAttachmentSemantics(metadata, originalMetadataImageUrl)
+    : null;
+
   if (metadata.imageUrl) {
     const localized = await downloadRemoteImage(metadata.imageUrl);
     metadata.imageUrl = localized || undefined;
@@ -414,9 +453,11 @@ export async function storeMetadata(
     );
     if (!exists) {
       attachmentsList.unshift({
-        type: "cover",
+        type: metadataImageSemantics?.type ?? "cover",
         url: metadata.imageUrl,
-        source: "merged",
+        role: metadataImageSemantics?.role,
+        source: metadataImageSemantics?.source ?? "merged",
+        title: metadataImageSemantics?.title,
       });
     }
   }
@@ -427,17 +468,28 @@ export async function storeMetadata(
         where: { barcode: cleanedBarcode },
         include: { rawNames: true },
       });
-      if (cached && canUseBarcodeCacheCover(cached, type, metadata)) {
+      if (cached) {
         const barcodeCover = cached.rawNames.find(
           (rn) => rn.coverUrl,
         )?.coverUrl;
-        if (barcodeCover) {
+        const barcodeCoverSemantics = barcodeCover
+          ? metadataImageAttachmentSemantics(
+              { imageUrl: barcodeCover },
+              barcodeCover,
+            )
+          : null;
+        if (
+          barcodeCover &&
+          canUseBarcodeCacheCover(cached, type, metadata, barcodeCoverSemantics)
+        ) {
           const exists = attachmentsList.some((a) => a.url === barcodeCover);
           if (!exists) {
             attachmentsList.unshift({
-              type: "cover" as AttachmentType,
+              type: barcodeCoverSemantics?.type ?? ("cover" as AttachmentType),
               url: barcodeCover,
-              source: "barcode",
+              role: barcodeCoverSemantics?.role,
+              source: barcodeCoverSemantics?.source ?? "barcode",
+              title: barcodeCoverSemantics?.title,
             });
           }
         }
@@ -504,11 +556,36 @@ export async function storeMetadata(
     ? await cropImageIfNeeded(selectedImageUrl, { minMarginPixels: 30 })
     : null;
 
+  // Cropping writes a new "_crop" file, so the cover URL stored on the item /
+  // metadata would no longer match any gallery attachment. Repoint the source
+  // attachment at the cropped file so the cover keeps its provenance
+  // (source + region role) instead of surfacing as an orphan "Scan" image.
+  if (
+    croppedImageUrl &&
+    selectedImageUrl &&
+    croppedImageUrl !== selectedImageUrl
+  ) {
+    const coverAttachment = rankedLocalizedAttachments.find(
+      (attachment) => attachment.url === selectedImageUrl,
+    );
+    if (coverAttachment) coverAttachment.url = croppedImageUrl;
+  }
+
   metadata.imageUrl = croppedImageUrl || undefined;
+
+  // Computed wide hero/background: the sharpest landscape image we have (reuses
+  // the display scorer + the metrics already gathered above). Null when nothing
+  // high-resolution qualifies, so the UI falls back to the legacy heuristic.
+  const heroImageUrl = pickBestBackgroundFromAttachments(
+    rankedLocalizedAttachments,
+    imageMetricsByUrl,
+  );
+  metadata.heroImageUrl = heroImageUrl || undefined;
 
   const metadataData = {
     ...formattedMetadata,
     imageUrl: croppedImageUrl,
+    heroImageUrl,
     lastFetched: now,
     updatedAt: now,
   };
@@ -635,8 +712,12 @@ export function dedupeByPerceptualHash<
   attachments: T[],
   hashOf: (url: string) => string | null,
   maxDistance: number = PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+  // Lower = keep. When two images are visually identical, the one with the
+  // smaller preference rank is kept as the representative (used to keep the most
+  // valuable region instead of an arbitrary first-seen one).
+  preferenceOf?: (item: T) => number,
 ): T[] {
-  const kept: string[] = [];
+  const kept: Array<{ hash: string; resultIndex: number }> = [];
   const result: T[] = [];
   for (const attachment of attachments) {
     const hash = hashOf(attachment.url);
@@ -644,12 +725,22 @@ export function dedupeByPerceptualHash<
       result.push(attachment);
       continue;
     }
-    if (
-      kept.some((existing) => hammingDistance(existing, hash) <= maxDistance)
-    ) {
+    const duplicate = kept.find(
+      (entry) => hammingDistance(entry.hash, hash) <= maxDistance,
+    );
+    if (duplicate) {
+      if (
+        preferenceOf &&
+        preferenceOf(attachment) < preferenceOf(result[duplicate.resultIndex])
+      ) {
+        // Same visual, better region: swap it in (keeps its url + role) without
+        // changing the slot's display order.
+        result[duplicate.resultIndex] = attachment;
+        duplicate.hash = hash;
+      }
       continue;
     }
-    kept.push(hash);
+    kept.push({ hash, resultIndex: result.length });
     result.push(attachment);
   }
   return result;
@@ -700,7 +791,7 @@ async function perceptualHashForAsset(url: string): Promise<string | null> {
 }
 
 async function dedupeLocalizedAttachmentsByContent<
-  T extends { type: AttachmentType; url: string },
+  T extends { type: AttachmentType; url: string; role?: string | null },
 >(attachments: T[]): Promise<T[]> {
   const hashByUrl = new Map<string, string>();
   await Promise.all(
@@ -713,6 +804,11 @@ async function dedupeLocalizedAttachmentsByContent<
   return dedupeByPerceptualHash(
     attachments,
     (url) => hashByUrl.get(url) ?? null,
+    PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+    (item) =>
+      regionRank(
+        resolveAttachmentDisplayRegion({ type: item.type, role: item.role }),
+      ),
   );
 }
 

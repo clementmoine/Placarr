@@ -59,6 +59,7 @@ export interface ResolvedMatch {
   coverUrl: string | null;
   confidence: number;
   evidence: MatchEvidenceSummary;
+  platformKey?: string | null;
 }
 
 export interface CompiledResult {

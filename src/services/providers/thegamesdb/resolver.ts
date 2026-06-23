@@ -1,5 +1,10 @@
 import { cleanCode } from "@/lib/barcode/query";
 import { inferTextLanguage } from "@/lib/localePreference";
+import {
+  makeObservationUsage,
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 import { scoreLaunchBoxTitleMatch } from "@/services/providers/launchbox/matchScore";
 import {
   fetchTheGamesDbById,
@@ -14,6 +19,13 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type {
+  ImageObservationRole,
+  MetadataObservation,
+  ObservationEvidenceSignal,
+} from "@/types/metadataObservation";
+
+const THEGAMESDB_PROVIDER_ID = "thegamesdb";
 
 function pickFrontBoxArtUrl(
   gameId: number,
@@ -169,6 +181,106 @@ function normalizeTheGamesDbCoop(value?: string | null): string | null {
   return raw.replace(/\s+/g, " ");
 }
 
+function normalizeTheGamesDbImageRegion(
+  role: string | undefined,
+): string | undefined {
+  if (!role) return undefined;
+  if (role === "back") return undefined;
+  if (role.startsWith("back-")) {
+    return role.slice("back-".length) || undefined;
+  }
+  return role;
+}
+
+function theGamesDbImageObservationRole(
+  attachment: MetadataAttachment,
+): ImageObservationRole {
+  const role = (attachment.role || "").toLowerCase();
+  if (role === "back" || role.startsWith("back-")) return "cover_back";
+  if (attachment.type === "cover") return "cover_front";
+  return "gallery_image";
+}
+
+function buildTheGamesDbObservations(
+  metadata: MetadataResult,
+  gameId: number,
+  options: { hasPlatformMatch: boolean },
+): MetadataObservation[] {
+  const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];
+  if (options.hasPlatformMatch) {
+    evidenceSignals.push("platform_match");
+  }
+
+  const factsForObservation = metadata.facts?.map((fact) => ({
+    ...fact,
+    source: THEGAMESDB_PROVIDER_ID,
+  }));
+  const observations = observationsFromMetadataResult(
+    {
+      ...metadata,
+      imageUrl: undefined,
+      attachments: undefined,
+      facts: factsForObservation,
+    },
+    {
+      providerId: THEGAMESDB_PROVIDER_ID,
+      providerLabel: "TheGamesDB",
+      sourceDocumentRole: "reference_record",
+      sourceUrl: `https://thegamesdb.net/game.php?id=${gameId}`,
+      evidenceSignals,
+      titleRole: "object_title",
+      aliasRole: "provider_grouped_alias",
+      imageRole: "cover_front",
+      factRole: "structured_fact",
+      externalIdRole: "provider_record_id",
+      language: metadata.title ? inferTextLanguage(metadata.title) : "unknown",
+    },
+  );
+
+  const seenImageUrls = new Set<string>();
+  const imageCandidates: MetadataAttachment[] = [
+    ...(metadata.imageUrl
+      ? [
+          {
+            type: "cover",
+            url: metadata.imageUrl,
+            source: THEGAMESDB_PROVIDER_ID,
+          } satisfies MetadataAttachment,
+        ]
+      : []),
+    ...(metadata.attachments || []),
+  ];
+
+  for (const attachment of imageCandidates) {
+    const url = attachment.url?.trim();
+    if (!url || seenImageUrls.has(url)) continue;
+    seenImageUrls.add(url);
+
+    const role = theGamesDbImageObservationRole(attachment);
+    observations.push({
+      kind: "image",
+      role,
+      type: attachment.type,
+      url,
+      title: attachment.title ?? null,
+      region: normalizeTheGamesDbImageRegion(attachment.role) ?? null,
+      provenance: {
+        providerId: THEGAMESDB_PROVIDER_ID,
+        providerLabel: "TheGamesDB",
+        sourceDocumentRole: "reference_record",
+        sourceUrl: `https://thegamesdb.net/game.php?id=${gameId}`,
+        evidenceSignals,
+      },
+      usage: makeObservationUsage({
+        displayCandidate: true,
+        evidence: role === "cover_front" || role === "cover_back" ? "strong" : "normal",
+      }),
+    });
+  }
+
+  return observations;
+}
+
 export async function fetchFromTheGamesDB(
   name: string,
   platform?: string | null,
@@ -178,6 +290,7 @@ export async function fetchFromTheGamesDB(
   const games = search?.data?.games || [];
   const selected = pickBestSearchCandidate(games, name, platform, barcode);
   if (!selected) return null;
+  const requestedPlatformId = resolveTheGamesDbPlatformId(platform);
 
   const details = await fetchTheGamesDbById(selected.id);
   const game = details?.data?.games?.[0];
@@ -264,7 +377,7 @@ export async function fetchFromTheGamesDB(
     });
   }
 
-  return {
+  const result: MetadataResult = {
     title,
     description: overview || undefined,
     releaseDate: game.release_date || selected.release_date,
@@ -275,5 +388,15 @@ export async function fetchFromTheGamesDB(
     regionalTitles: regionalTitles.length > 0 ? regionalTitles : undefined,
     facts: facts.length > 0 ? facts : undefined,
     externalIds: { thegamesdb: String(game.id || selected.id) },
+  };
+  return {
+    ...result,
+    observations: buildTheGamesDbObservations(result, game.id || selected.id, {
+      hasPlatformMatch:
+        requestedPlatformId != null &&
+        (selected.platform === requestedPlatformId ||
+          game.platform === requestedPlatformId),
+    }),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
 }

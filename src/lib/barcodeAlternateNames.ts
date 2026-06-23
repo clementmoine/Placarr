@@ -1,9 +1,19 @@
 import { cleanCode } from "@/lib/barcode/query";
+import { VIDEO_GAME_PLATFORM_TERMS } from "@/lib/videoGamePlatforms";
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
 import { prisma } from "@/lib/prisma";
 
-const TRAILING_PLATFORM_SUFFIX =
-  /\s+(ps1|ps2|ps3|ps4|ps5|xbox(?:\s+original)?|gamecube|wii|psp|nds|3ds|switch)\s*$/i;
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const TRAILING_PLATFORM_SUFFIX = new RegExp(
+  `\\s+(?:${[...VIDEO_GAME_PLATFORM_TERMS]
+    .sort((a, b) => b.length - a.length)
+    .map((term) => term.split(/\s+/).map(escapeRegExp).join("[\\s._/-]+"))
+    .join("|")})\\s*$`,
+  "i",
+);
 
 export function expandBarcodeAlternateNames(values: string[]): string[] {
   const seen = new Set<string>();

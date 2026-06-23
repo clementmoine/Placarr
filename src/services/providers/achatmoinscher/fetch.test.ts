@@ -55,6 +55,8 @@ describe("fetchFromAchatMoinsCher", () => {
     expect(products).toEqual([
       {
         name: "Wheelman (PlayStation 3)",
+        productId: "12345",
+        productUrl: "https://www.achatmoinscher.com/12345.html",
         coverUrl: "https://cdn.example.com/photoProd/zoom/wheelman.jpg",
         priceNew: 3999,
         priceUsed: 1999,

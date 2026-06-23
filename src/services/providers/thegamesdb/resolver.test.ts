@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
 
 const h = vi.hoisted(() => ({
   searchTheGamesDbByName: vi.fn(),
@@ -95,6 +96,43 @@ describe("fetchFromTheGamesDB", () => {
         }),
       ]),
     );
+    expect(result?.observationSchemaVersion).toBe(
+      METADATA_OBSERVATION_SCHEMA_VERSION,
+    );
+    expect(result?.observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "title",
+          role: "object_title",
+          value: "GoldenEye: Au Service Du Mal",
+          provenance: expect.objectContaining({
+            providerId: "thegamesdb",
+            sourceDocumentRole: "reference_record",
+            evidenceSignals: expect.arrayContaining([
+              "structured_data",
+              "platform_match",
+            ]),
+          }),
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          url: expect.stringContaining("109154-1.jpg"),
+        }),
+        expect.objectContaining({
+          kind: "fact",
+          role: "structured_fact",
+          factKind: "players",
+          value: "1-8",
+        }),
+        expect.objectContaining({
+          kind: "external-id",
+          role: "provider_record_id",
+          idKind: "thegamesdb",
+          value: "109154",
+        }),
+      ]),
+    );
     expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(109154);
   });
 
@@ -184,5 +222,15 @@ describe("fetchFromTheGamesDB", () => {
     const result = await fetchFromTheGamesDB("Test Game", "Xbox Original");
     const backAttachment = result?.attachments?.find((a) => a.url.includes("back.jpg"));
     expect(backAttachment?.role).toBe("back-eu"); // region_id 6 is PAL/EU
+    const backObservation = result?.observations?.find(
+      (observation) =>
+        observation.kind === "image" &&
+        observation.url.includes("back.jpg"),
+    );
+    expect(backObservation).toMatchObject({
+      kind: "image",
+      role: "cover_back",
+      region: "eu",
+    });
   });
 });

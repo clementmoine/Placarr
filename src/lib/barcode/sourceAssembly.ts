@@ -198,11 +198,14 @@ export async function compileAllBarcodeTypeResults(params: {
     "Freakxy",
     type === "games" ? payload.freakxy : !isBook ? payload.freakxy : [],
   );
-  pushSource(
-    gameSources,
-    "Apriloshop",
-    type === "games" ? payload.aprilo : !isBook ? payload.aprilo : [],
-  );
+  for (const retailer of payload.retailers) {
+    if (!retailer.types.includes("games")) continue;
+    pushSource(
+      gameSources,
+      retailer.providerName,
+      sourceProductsFromMetadataHit(retailer),
+    );
+  }
   pushSource(
     gameSources,
     "PicClick",
@@ -320,7 +323,8 @@ export async function compileAllBarcodeTypeResults(params: {
     "Okkazeo",
     sourceProductsFromMetadataHit(payload.okkazeo),
   );
-  for (const retailer of payload.boardRetailers) {
+  for (const retailer of payload.retailers) {
+    if (!retailer.types.includes("boardgames")) continue;
     pushSource(
       boardgameSources,
       retailer.providerName,

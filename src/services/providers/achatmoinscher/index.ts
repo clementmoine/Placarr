@@ -1,7 +1,20 @@
+import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import {
+  makeObservationUsage,
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 import { listProbe } from "@/lib/mappingProbeUtils";
+import type { MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataObservation,
+  ObservationEvidenceSignal,
+} from "@/types/metadataObservation";
+import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
+  type AchatMoinsCherProduct,
   fetchFromAchatMoinsCher,
   fetchPricesFromAchatMoinsCher,
 } from "./fetch";
@@ -16,6 +29,103 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "boardgames",
   "generic",
 ];
+
+const ACHATMOINSCHER_LANGUAGE = "fr";
+
+function buildAchatMoinsCherObservations(
+  product: AchatMoinsCherProduct,
+  metadata: MetadataResult,
+): MetadataObservation[] {
+  const evidenceSignals: ObservationEvidenceSignal[] = [
+    "barcode_match",
+    "structured_data",
+  ];
+  const observations = observationsFromMetadataResult(
+    {
+      ...metadata,
+      imageUrl: undefined,
+    },
+    {
+      providerId: "achatmoinscher",
+      providerLabel: "AchatMoinsCher",
+      sourceDocumentRole: "marketplace_listing",
+      sourceUrl: product.productUrl ?? undefined,
+      sourceId: product.productId ?? undefined,
+      evidenceSignals,
+      titleRole: "listing_title",
+      aliasRole: "listing_alias",
+      imageRole: "listing_photo",
+      factRole: "listing_fact",
+      language: ACHATMOINSCHER_LANGUAGE,
+    },
+  );
+
+  if (product.priceNew != null && Number.isFinite(product.priceNew)) {
+    observations.push({
+      kind: "offer",
+      role: "marketplace_offer",
+      condition: "new",
+      priceCents: product.priceNew,
+      currency: "EUR",
+      provenance: {
+        providerId: "achatmoinscher",
+        providerLabel: "AchatMoinsCher",
+        sourceDocumentRole: "offer",
+        sourceUrl: product.productUrl ?? undefined,
+        sourceId: product.productId ?? undefined,
+        evidenceSignals,
+      },
+      usage: makeObservationUsage({
+        displayCandidate: false,
+        searchAlias: "none",
+        evidence: "weak",
+      }),
+    });
+  }
+
+  if (product.priceUsed != null && Number.isFinite(product.priceUsed)) {
+    observations.push({
+      kind: "offer",
+      role: "marketplace_offer",
+      condition: "used",
+      priceCents: product.priceUsed,
+      currency: "EUR",
+      provenance: {
+        providerId: "achatmoinscher",
+        providerLabel: "AchatMoinsCher",
+        sourceDocumentRole: "offer",
+        sourceUrl: product.productUrl ?? undefined,
+        sourceId: product.productId ?? undefined,
+        evidenceSignals,
+      },
+      usage: makeObservationUsage({
+        displayCandidate: false,
+        searchAlias: "none",
+        evidence: "weak",
+      }),
+    });
+  }
+
+  if (metadata.barcode) {
+    observations.push({
+      kind: "external-id",
+      role: "barcode",
+      idKind: "ean13",
+      value: metadata.barcode,
+      provenance: {
+        providerId: "achatmoinscher",
+        providerLabel: "AchatMoinsCher",
+        sourceDocumentRole: "marketplace_listing",
+        sourceUrl: product.productUrl ?? undefined,
+        sourceId: product.productId ?? undefined,
+        evidenceSignals,
+      },
+      usage: makeObservationUsage({ evidence: "strong" }),
+    });
+  }
+
+  return observations;
+}
 
 export const achatmoinscherModule: ProviderModule = {
   info: {
@@ -35,23 +145,42 @@ export const achatmoinscherModule: ProviderModule = {
     sourceWeight: 0.12,
   },
   createMetadataAdapter() {
-    return {
+    const adapter: MetadataProviderAdapter = {
       id: "achatmoinscher",
-      async resolve({ barcode }: any) {
-        if (!barcode) return null;
-        const products = await fetchFromAchatMoinsCher(barcode);
+      async resolve({ barcode }) {
+        const normalizedBarcode = normalizeProductBarcode(barcode);
+        if (!normalizedBarcode) return null;
+        const products = await fetchFromAchatMoinsCher(normalizedBarcode);
         const product = products[0];
         if (!product?.name) return null;
-        return {
+        const metadata: MetadataResult = {
           title: product.name,
-          barcode,
+          barcode: normalizedBarcode,
           imageUrl: product.coverUrl || undefined,
+          regionalTitles: product.name
+            ? [{ region: ACHATMOINSCHER_LANGUAGE, text: product.name }]
+            : undefined,
           attachments: product.coverUrl
-            ? [{ type: "cover" as any, url: product.coverUrl, source: "achatmoinscher" }]
+            ? [
+                {
+                  type: "cover",
+                  url: product.coverUrl,
+                  role: ACHATMOINSCHER_LANGUAGE,
+                  source: "achatmoinscher",
+                },
+              ]
             : undefined,
         };
+        return {
+          ...metadata,
+          observations: buildAchatMoinsCherObservations(product, metadata),
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        };
       },
-    } satisfies any;
+    };
+    return {
+      ...adapter,
+    } satisfies MetadataProviderAdapter;
   },
   buildBarcodeTasks(deps, type, { barcode }) {
     if (!BARCODE_TYPES.includes(type)) {

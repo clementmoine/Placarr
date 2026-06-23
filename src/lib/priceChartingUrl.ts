@@ -1,16 +1,6 @@
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
+import { getPriceChartingPlatformSlugs } from "@/lib/videoGamePlatforms";
 import { slugify } from "@/lib/slugs";
-
-const LEGACY_PLATFORM_SLUGS: Record<string, { pal?: string; default: string }> =
-  {
-    xbox: { pal: "pal-xbox", default: "xbox" },
-    xbox360: { pal: "pal-xbox-360", default: "xbox-360" },
-    ps1: { pal: "pal-playstation", default: "playstation" },
-    ps2: { pal: "pal-playstation-2", default: "playstation-2" },
-    ps3: { pal: "pal-playstation-3", default: "playstation-3" },
-    gamecube: { pal: "pal-gamecube", default: "gamecube" },
-    wii: { pal: "pal-wii", default: "wii" },
-  };
 
 function looksPal({
   barcode,
@@ -98,7 +88,7 @@ export function buildPriceChartingGameUrl({
   }
 
   const platformKey = detectPlatformKey(shelfName);
-  const platform = platformKey ? LEGACY_PLATFORM_SLUGS[platformKey] : null;
+  const platform = getPriceChartingPlatformSlugs(platformKey);
   if (!platform) {
     return { url: searchUrl, isDirect: false };
   }

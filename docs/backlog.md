@@ -46,6 +46,72 @@ Done so far (proof-of-concept): board-game anchor parity in the generic scan pat
 data-derived type signal, Okkazeo provider, and a structural display-name fix
 (anchor beats marketplace, no "strip Gigamic" hardcode).
 
+## Provider migration factory (observation mode + exploitation audit)
+
+Date: 2026-06-22
+
+Goal: migrate **every metadata provider** to typed `observations` and run a
+repeatable audit loop proving each connector is fully exploited.
+
+### Factory loop (same for each provider)
+
+1. Implement observation emission in the resolver:
+   - set `observationSchemaVersion`,
+   - emit typed title/image/fact/alias/offer observations with provenance/usage,
+   - keep legacy `MetadataResult` fields during migration.
+2. Add contract tests on the provider resolver:
+   - legacy compatibility,
+   - observation kinds/roles/provenance/evidence,
+   - weak retained observations for listing/offer/user-noise when applicable.
+3. Run automated audits:
+   - `pnpm providers:audit:mapping` (mapping + observation mode),
+   - `pnpm providers:health` (connector health),
+   - targeted provider tests + full test suite.
+4. Only then mark the provider as migrated.
+
+### Automated audit surface
+
+- `runProviderMappingAudit` now reports both:
+  - mapping coverage (`status`, `mappedKeys`, `unusedKeys`, facts/attachments),
+  - observation migration status (`observationMode`, `observationSchemaVersion`,
+    `observationCount`, `observationKinds`).
+- `pnpm providers:audit:mapping` prints one consolidated report (mapping +
+  observation mode) and a prioritized migration queue (`legacy -> unknown`)
+  usable in CI or manual review.
+- Admin `/api/admin/provider-mapping-audit` remains the central endpoint and now
+  exposes observation-mode fields too.
+
+### Migration waves (ordered)
+
+1. **Wave A — boardgames canonical anchors**
+   - `boardgamegeek`, `screenscraper`, `thegamesdb`, `wikidata`,
+     `monsieurde`, `ludifolie`, `bcdjeux`, `lepassetemps`, `archichouette`.
+2. **Wave B — games**
+   - `igdb`, `rawg`, `launchbox`, `steam`, `pricecharting`, `coverproject`,
+     `steamgriddb`, `howlongtobeat`.
+3. **Wave C — movies/books/music**
+   - `tmdb`, `omdb`, `openlibrary`, `googlebooks`, `deezer`, `musicbrainz`,
+     `discogs`.
+4. **Wave D — marketplaces / price scrapers**
+   - `achatmoinscher`, `chasseauxlivres`, `ledenicheur`, `picclick`,
+     `apriloshop`, `freakxy`, `scandex`.
+
+Current migration baseline:
+- ✅ all providers with a metadata adapter are now in observation mode
+  (`observationMode = enabled` in `pnpm providers:audit:mapping`).
+- ⚪ remaining unknown providers are out-of-scope for migration because they are
+  custom-probe-only (no metadata adapter):
+  `chasseauxlivres`, `freakxy`, `ledenicheur`, `picclick`, `scandex`,
+  `apriloshop`.
+
+### Done criteria per provider
+
+- Observation mode: `observationMode = enabled`.
+- No regression on legacy metadata output and existing consumers.
+- Mapping probe not `error`; unresolved raw keys documented (or mapped).
+- Health-check green (or explicitly `blocked` by missing credentials).
+- Provider checklist completed (`docs/provider_integration_checklist.md`).
+
 ## Provider-blind core + admin (enforcement guard)
 
 Date: 2026-06-22
@@ -74,6 +140,109 @@ Done:
   guard for quoted provider literals outside `src/services/providers/`, with an
   exact shrinking allowlist. First pass deliberately excludes docs/tests and does
   not yet catch unquoted object keys; broaden it as the allowlist drains.
+
+## Observation migration & exploitation (from `providerMappingAudit`)
+
+Date: 2026-06-22
+
+Dashboard: `npx tsx scripts/providerMappingAudit.ts` (drives
+`services/providerMappingAudit.ts`) — per provider: mapping status, observation
+mode, mapped/unused keys, observation count/kinds/schema, migration queues.
+
+State (2026-06-22): **27 providers `enabled`** (schema `metadata-observations/v1`),
+0 migrating, 0 legacy. The 6 `unknown` are adapter-less barcode/listing providers
+(chasseauxlivres, freakxy, ledenicheur, picclick, scandex, apriloshop) — correctly
+out-of-scope for the *metadata-adapter* observation path; they come into scope when
+the **barcode path** emits observations (their listings → `listing_title` /
+`marketplace_listing`). Consumption: `metadataMerge.ts` ranks **titles** by
+observation tier/locale/evidence; barcode resolution (`compile.ts`) still legacy
+`sourceWeight`/`canonical`. To do: migrate barcode path; generalize consumption to
+images + facts.
+
+**Under-exploitation leads** (high `unused` keys = fields returned but not mapped —
+checklist Phase 6):
+
+| Provider | mapped / unused | notes |
+| --- | --- | --- |
+| wikidata | 12 / **97** | ~90 are noise: per-language label/description variants + obscure P-codes. Real wins: P136 genre, P178 developer, P123 publisher, P856 official site, P166 awards. Language variants belong to the per-language title work (item D), not a key-by-key map. |
+| discogs | ~~17 / 17~~ **20 / 13** | ✅ 2026-06-23: `artists`→`authors`, `notes`→description (markup-stripped), `labels`→`publishers`. Music items now keep artist + edition description + record label. ❌ `lowest_price`/`num_for_sale` investigated & rejected: `lowest_price` excludes shipping and is routinely a €0.01–0.50 teaser/loss-leader (saw €0.28 for a real album), so it would surface a misleading price; the reliable `price_suggestions` endpoint needs seller OAuth we don't have. Remaining low-value: `videos`→links, `series`→fact. Rest noise. |
+| googlebooks | ~~17 / 10~~ **18 / 0** | ✅ 2026-06-23: `printType`→format fact ("Livre"/"Magazine"), `maturityRating==MATURE`→content-warning. Rest were links/noise. |
+| rawg | 19 / **8** | `clip`→gameplay video; rest noise (dominant_color, added_by_status…). |
+| boardgamegeek | ~~23 / 4~~ **25 / 0** | ✅ 2026-06-23: raw `<poll>` top-voted results → `recommended-age` (community age, e.g. "8+") + `language-dependence` facts; `poll`/`poll-summary` now register mapped. Verified on live Catan. |
+| deezer | 18 / 2 | `explicit_*` is **already exploited** (resolver → content-warning fact) but *conditionally*: the audit only credits it on an explicit sample. Aliases added; a non-explicit sample legitimately leaves it "unused". Not a real gap. |
+
+**Audit baseline 2026-06-23**: 21/27 metadata providers already at 100% (`unused: 0`).
+The "unused" count conflates real gaps with noise — chase valuable fields, not the
+raw number. Wikidata's 97 is the clearest example (mostly language variants).
+
+**Multi-sample probe (2026-06-23)**: the audit now unions raw + mapped keys across
+several sample inputs per provider (`mappingProbe.additionalSamples`, opt-in;
+`collectMappingRawKeys(context)` receives the probed context), via
+`mergeMappingProbeSamples` — a field counts mapped/returned if *any* sample shows
+it, removing the single-sample blind spot. The union never degrades the primary
+sample's status. Finding: most providers' single sample already exposes their full
+schema (Discogs' one release returns all 33 keys incl. videos/notes/series), and
+live providers rate-limit, so extra samples are reserved for genuinely
+heterogeneous-schema providers rather than enabled everywhere.
+
+## Apriloshop — search integration broken (fix or remove)
+
+Date: 2026-06-22
+
+`providerMappingAudit` flagged apriloshop `error`. Diagnosis: the site is up (sells
+figurines / UMD / pop-culture) but our scraper hits `https://apriloshop.fr/recherche?s=<q>`,
+which now returns the PrestaShop **"no results"** page for **every** query —
+including products the site clearly has (e.g. "Death Note"). So it has been dead
+weight (returns nothing), not a stale-sample issue.
+
+Root cause: apriloshop migrated search to the **IQIT Search** module
+(`/module/iqitsearch/searchiqit?s=<q>`, HTML response); the native search index is
+emptied. Verified: apriloshop **does** answer the native PrestaShop AJAX search
+(`/recherche?controller=search&s=<q>&ajax=1` → valid `application/json`) but with
+**`products: 0`** for every query — so the native path our module relies on returns
+nothing.
+
+**Compatibility with our `createPrestashopModule`**: partial. Same PrestaShop
+product-page format, but the module's search is native-AJAX-JSON, which on apriloshop
+is empty; the live search is IQIT (HTML). Recommended (aligned with plug-and-play /
+no-duplication):
+
+1. Add `searchStrategy: "native-ajax" | "iqit"` to `PrestashopRetailerConfig`
+   (`prestashop/types.ts`); implement the IQIT HTML `product-miniature` parse once
+   alongside the native JSON parse.
+2. Make apriloshop a **prestashop config** (`searchStrategy: "iqit"`) and **delete
+   the bespoke `apriloshop/` connector**. Any other IQIT-based PrestaShop shop is
+   then supported for free.
+3. Before committing: verify IQIT **indexes barcodes** (the raw GET seemed to return
+   a constant set — likely needs the module's AJAX params/headers). If name-only,
+   apriloshop feeds the metadata path but not barcode identification.
+4. Else, if it can't be made reliable: **remove the provider** (same rule as
+   LaunchBox). It feeds the barcode generic/games path today.
+
+**Status (2026-06-22): migration DONE** (search still native = returns nothing for
+now, accepted). `createPrestashopModule` is fully type- and capability-agnostic
+(`types`/`barcodeTypes`/`capabilities`/`sample` from config). Apriloshop is now a
+PrestaShop config (`types: ["games"]`, games-appropriate capabilities); the bespoke
+`apriloshop/` connector + its `fetchFromApriloshop` dep + the `payload.aprilo` slot
+are deleted. Retailer barcode hits are collected generically
+(`collectRetailerBarcodeHits`, derived from the configs — removed the hardcoded
+`BOARDGAME_RETAILER_BARCODE_TASKS` list, which also fixed the dropped-archichouette
+bug) and routed by each shop's declared `types` (games shop → `gameSources`,
+board-game shop → `boardgameSources`). Build green (579 tests).
+
+**Remaining**: add a `searchStrategy: native | iqit` to the factory + implement the
+IQIT HTML parse so apriloshop actually returns results (verify it filters + indexes
+barcodes). Until then apriloshop is wired but empty.
+
+**Platform audit of all bespoke shop connectors (2026-06-22)** — to know what else
+could fold into the shared PrestaShop module: **only apriloshop is PrestaShop**
+(presta markers + native ajax → JSON). The others are different platforms, so their
+bespoke connectors are justified: philibert = custom (no PS markers, custom
+selectors), **freakxy = Magento** (`/catalogsearch/result`), smartoys =
+custom/legacy (iso-8859-1), okkazeo = custom JSON-LD DB; achatmoinscher /
+ledenicheur / picclick / chasseauxlivres are comparators/aggregators, not shops. No
+PrestaShop consolidation beyond apriloshop. (If more Magento shops appear later, a
+shared Magento module would be worth it — same pattern as PrestaShop.)
 
 ## Open studies & decisions to resume
 
@@ -187,6 +356,25 @@ Started:
 - 2026-06-22: Okkazeo is the first provider to emit typed observations alongside
   legacy metadata: catalog title, cover-front image, structured facts, and a weak
   retained price snapshot offer.
+
+### H. Video-game platform catalog DRY
+
+The app must not fetch ScreenScraper / LaunchBox platform lists during barcode
+scans or metadata requests. Use provider lists as **build-time snapshots** only:
+
+- `src/lib/videoGamePlatformSources.ts` stores the 2026-06-22 static snapshots
+  from ScreenScraper `api2/systemesListe.php` and the LaunchBox public platform
+  selector. Media URLs are intentionally omitted.
+- `src/lib/videoGamePlatforms.ts` is the Placarr canonical catalog: typed keys,
+  aliases, provider IDs/slugs, and helpers. Provider adapters import from there
+  instead of owning local platform maps.
+- ScreenScraper source names are used for detection only when a name maps to a
+  single system in the snapshot; ambiguous aliases such as broad arcade/MAME-style
+  labels stay out of decisive routing.
+
+Future refresh: run a one-off/admin script to update the snapshot and review the
+diff. Do not add live calls to `systemesListe.php`, LaunchBox pages, or
+`Metadata.zip` in the user scan path.
 
 ## LaunchBox provider decision
 

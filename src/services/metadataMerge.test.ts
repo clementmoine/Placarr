@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  makeObservationUsage,
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+} from "@/lib/metadataObservations";
+import {
   mergeMetadata,
   preferRequestedDisplayTitle,
 } from "@/services/metadataMerge";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { MetadataObservation } from "@/types/metadataObservation";
 
 describe("preferRequestedDisplayTitle", () => {
   it("prefers a clean requested Latin title over a CJK-prefixed metadata title", () => {
@@ -47,6 +52,166 @@ describe("preferRequestedDisplayTitle", () => {
 });
 
 describe("mergeMetadata generic function", () => {
+  it("prefers trusted display observations over noisy regional fallback titles", () => {
+    const noisyListingObservation = {
+      kind: "title",
+      role: "listing_title",
+      value: "Mille Sabords - Complet Boite Notice",
+      region: "fr",
+      provenance: {
+        providerId: "screenscraper",
+        sourceDocumentRole: "marketplace_listing",
+        evidenceSignals: ["same_provider_listing"],
+      },
+      usage: makeObservationUsage({
+        displayCandidate: false,
+        searchAlias: "weak",
+        evidence: "weak",
+      }),
+    } satisfies MetadataObservation;
+
+    const catalogObservation = {
+      kind: "title",
+      role: "catalog_title",
+      value: "Mille Sabords",
+      language: "fr",
+      provenance: {
+        providerId: "okkazeo",
+        sourceDocumentRole: "catalog_product",
+        evidenceSignals: ["structured_data", "barcode_match"],
+      },
+      usage: makeObservationUsage({
+        displayCandidate: true,
+        searchAlias: "strong",
+        evidence: "strong",
+      }),
+    } satisfies MetadataObservation;
+
+    const merged = mergeMetadata("boardgames", [
+      {
+        providerId: "screenscraper",
+        metadata: {
+          title: "Mille Sabords - Complet Boite Notice",
+          regionalTitles: [
+            { region: "fr", text: "Mille Sabords - Complet Boite Notice" },
+          ],
+          observations: [noisyListingObservation],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+      {
+        providerId: "okkazeo",
+        metadata: {
+          title: "Mille Sabords",
+          regionalTitles: [{ region: "wor", text: "Mille Sabords" }],
+          observations: [catalogObservation],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+    ]);
+
+    expect(merged.title).toBe("Mille Sabords");
+  });
+
+  it("uses medoid-like consensus inside the best title tier", () => {
+    const catalogUsage = makeObservationUsage({
+      displayCandidate: true,
+      searchAlias: "strong",
+      evidence: "strong",
+    });
+
+    const merged = mergeMetadata("boardgames", [
+      {
+        providerId: "screenscraper",
+        metadata: {
+          title: "Les Aventuriers du Rail",
+          observations: [
+            {
+              kind: "title",
+              role: "catalog_title",
+              value: "Les Aventuriers du Rail",
+              language: "fr",
+              provenance: {
+                providerId: "screenscraper",
+                sourceDocumentRole: "catalog_product",
+                evidenceSignals: ["structured_data"],
+              },
+              usage: catalogUsage,
+            } satisfies MetadataObservation,
+          ],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+      {
+        providerId: "okkazeo",
+        metadata: {
+          title: "Les Aventuriers du Rail",
+          observations: [
+            {
+              kind: "title",
+              role: "catalog_title",
+              value: "Les Aventuriers du Rail",
+              language: "fr",
+              provenance: {
+                providerId: "okkazeo",
+                sourceDocumentRole: "catalog_product",
+                evidenceSignals: ["structured_data"],
+              },
+              usage: catalogUsage,
+            } satisfies MetadataObservation,
+          ],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+      {
+        providerId: "philibert",
+        metadata: {
+          title: "Les Aventuriers du Rail - Complet Boite Notice",
+          observations: [
+            {
+              kind: "title",
+              role: "catalog_title",
+              value: "Les Aventuriers du Rail - Complet Boite Notice",
+              language: "fr",
+              provenance: {
+                providerId: "philibert",
+                sourceDocumentRole: "catalog_product",
+                evidenceSignals: ["structured_data"],
+              },
+              usage: catalogUsage,
+            } satisfies MetadataObservation,
+          ],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+    ]);
+
+    expect(merged.title).toBe("Les Aventuriers du Rail");
+  });
+
+  it("keeps legacy regional ranking when no display observation can be consumed", () => {
+    const merged = mergeMetadata("boardgames", [
+      {
+        providerId: "screenscraper",
+        metadata: {
+          title: "Mille Sabords - Complet Boite Notice",
+          regionalTitles: [
+            { region: "fr", text: "Mille Sabords - Complet Boite Notice" },
+          ],
+        },
+      },
+      {
+        providerId: "okkazeo",
+        metadata: {
+          title: "Mille Sabords",
+          regionalTitles: [{ region: "wor", text: "Mille Sabords" }],
+        },
+      },
+    ]);
+
+    expect(merged.title).toBe("Mille Sabords - Complet Boite Notice");
+  });
+
   it("merges game metadata correctly matching legacy outcomes", () => {
     const hltb: MetadataResult = {
       title: "Commandos 2 : Men Of Courage",

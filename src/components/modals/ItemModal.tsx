@@ -571,21 +571,65 @@ export function ItemModal({
       if (attachment.url) metadataImageUrls.add(attachment.url);
     }
 
-    const barcodeCover = prefilledValues?.imageUrl || item?.imageUrl;
+    // The stored cover is cropped to a new "_crop" file, so its URL no longer
+    // matches the gallery attachment it was derived from. Index attachments by
+    // their crop-normalized URL so the cover still inherits its real provenance
+    // (source + region role) instead of looking like an orphan.
+    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
+    const attachmentByNormalizedUrl = new Map<string, any>();
+    for (const attachment of metadata?.attachments || []) {
+      if (attachment.url) {
+        attachmentByNormalizedUrl.set(stripCrop(attachment.url), attachment);
+      }
+    }
+
+    // A freshly-scanned cover (prefill, usually a remote URL not yet enriched)
+    // is the only thing that should read as "Scan".
+    const scannedCover = prefilledValues?.imageUrl;
     if (
-      barcodeCover &&
-      typeof barcodeCover === "string" &&
-      !metadataImageUrls.has(barcodeCover)
+      scannedCover &&
+      typeof scannedCover === "string" &&
+      !metadataImageUrls.has(scannedCover)
     ) {
       addAttachment({
-        url: barcodeCover,
+        url: scannedCover,
         type: activeShelfType === "games" ? "image" : "cover",
         source: "barcode",
       });
     }
 
+    // A persisted local cover keeps the provenance of the attachment it was
+    // cropped from (so its region badge survives); it falls back to the user's
+    // own selection — never "Scan".
+    const persistedCover = item?.imageUrl;
+    if (
+      persistedCover &&
+      typeof persistedCover === "string" &&
+      persistedCover !== scannedCover &&
+      !metadataImageUrls.has(persistedCover)
+    ) {
+      const matching = attachmentByNormalizedUrl.get(stripCrop(persistedCover));
+      addAttachment({
+        url: persistedCover,
+        type: matching?.type || (activeShelfType === "games" ? "image" : "cover"),
+        source: matching?.source || "user",
+        role: matching?.role,
+        title: matching?.title,
+      });
+    }
+
+    // The current cover is usually a cropped derivative of one gallery image.
+    // Once that crop is shown as the cover, its uncropped twin is a redundant
+    // duplicate — drop it from the list. (It comes back automatically when the
+    // user selects a different cover, since the gallery is rebuilt uncropped.)
+    const currentCover = item?.imageUrl;
+    const isRedundantTwinOfCover = (url: string) =>
+      typeof currentCover === "string" &&
+      url !== currentCover &&
+      stripCrop(url) === stripCrop(currentCover);
+
     if (metadata) {
-      if (metadata.imageUrl) {
+      if (metadata.imageUrl && !isRedundantTwinOfCover(metadata.imageUrl)) {
         const matchingAttachment = metadata.attachments?.find(
           (a: any) => a.url === metadata.imageUrl,
         );
@@ -601,7 +645,8 @@ export function ItemModal({
       for (const attachment of metadata.attachments || []) {
         if (
           attachment.url &&
-          ["cover", "artwork", "image"].includes(attachment.type)
+          ["cover", "artwork", "image"].includes(attachment.type) &&
+          !isRedundantTwinOfCover(attachment.url)
         ) {
           addAttachment({
             url: attachment.url,

@@ -20,6 +20,20 @@ export interface MappingProbeResult {
 const RAW_KEY_ALIASES: Record<string, string[]> = {
   airdate: ["releaseDate"],
   aboutthegame: ["description"],
+  artists: ["authors", "people"],
+  artistssort: ["authors", "people"],
+  labels: ["publishers", "company", "label"],
+  notes: ["description"],
+  poll: ["facts"],
+  pollsummary: ["facts"],
+  // Always surfaced when present → credited directly.
+  printtype: ["format"],
+  // Conditionally surfaced (MATURE / explicit only) → credited only when the
+  // sample actually emits the content-warning, never via a loose "facts" match.
+  maturityrating: ["contentWarning", "ageRating"],
+  explicitlyrics: ["contentWarning"],
+  explicitcontentlyrics: ["contentWarning"],
+  explicitcontentcover: ["contentWarning"],
   artistcredit: ["authors", "people", "facts"],
   artistcreditid: ["authors", "people", "facts"],
   backdroppath: ["attachments", "background"],
@@ -696,5 +710,60 @@ export function mergeMappingProbeRawKeys(
       rawKeys,
       result.coverageKeys || result.mappedKeys,
     ),
+  };
+}
+
+/**
+ * Unions several per-sample probes (each = adapter probe + live raw keys) into a
+ * single coverage view: a field counts as mapped if *any* sample mapped it, and
+ * as a raw key if *any* sample returned it. This removes the single-sample blind
+ * spot where a product that lacks a field hides it from the audit.
+ */
+export function mergeMappingProbeSamples(
+  samples: Array<{ probe: MappingProbeResult | null; rawKeys: string[] }>,
+): MappingProbeResult | null {
+  const sortUnion = (keys: string[]) =>
+    sortProbeKeys(Array.from(new Set(keys.filter(Boolean))));
+
+  const rawUnion = sortUnion([
+    ...samples.flatMap((sample) => sample.rawKeys),
+    ...samples.flatMap((sample) => sample.probe?.rawKeys ?? []),
+  ]);
+  const probed = samples
+    .map((sample) => sample.probe)
+    .filter((probe): probe is MappingProbeResult => probe != null);
+
+  if (probed.length === 0) {
+    if (rawUnion.length === 0) return null;
+    return {
+      rawKeys: rawUnion,
+      mappedKeys: [],
+      coverageKeys: [],
+      unusedKeys: buildUnusedKeys(rawUnion, []),
+      attachmentsCount: 0,
+      factsCount: 0,
+      example: null,
+    };
+  }
+
+  const mappedUnion = sortUnion(probed.flatMap((probe) => probe.mappedKeys));
+  const coverageUnion = sortUnion(
+    probed.flatMap((probe) => probe.coverageKeys ?? probe.mappedKeys),
+  );
+
+  // Carry the primary (first non-null) probe's status/reason so the union never
+  // *degrades* a provider's status — additional samples only add keys.
+  const primary = probed[0];
+
+  return {
+    rawKeys: rawUnion,
+    mappedKeys: mappedUnion,
+    coverageKeys: coverageUnion,
+    unusedKeys: buildUnusedKeys(rawUnion, coverageUnion),
+    attachmentsCount: Math.max(...probed.map((probe) => probe.attachmentsCount)),
+    factsCount: Math.max(...probed.map((probe) => probe.factsCount)),
+    example: probed.find((probe) => probe.example)?.example ?? null,
+    ...(primary.statusHint ? { statusHint: primary.statusHint } : {}),
+    ...(primary.reason ? { reason: primary.reason } : {}),
   };
 }

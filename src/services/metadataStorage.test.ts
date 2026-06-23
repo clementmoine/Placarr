@@ -5,6 +5,7 @@ import {
   dedupeByPerceptualHash,
   hammingDistance,
   isDegenerateFlatImage,
+  metadataImageAttachmentSemantics,
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
 } from "./metadataStorage";
@@ -120,6 +121,76 @@ describe("dedupeByPerceptualHash", () => {
   it("conserve les attachments sans empreinte (jamais de perte par défaut)", () => {
     const ranked = [att("/uploads/a.jpg", "a"), att("/uploads/b.jpg", "b")];
     expect(dedupeByPerceptualHash(ranked, () => null)).toHaveLength(2);
+  });
+
+  it("garde la région la plus valuable parmi des visuels identiques", () => {
+    // Même boîte servie en "Monde" (mieux scorée, vue en premier) et en
+    // "France" : on doit conserver la version France.
+    const ranked = [
+      { type: "cover" as AttachmentType, url: "/wor.jpg", role: "wor" },
+      { type: "cover" as AttachmentType, url: "/fr.jpg", role: "fr" },
+    ];
+    const hashes: Record<string, string> = {
+      "/wor.jpg": bits("0000"),
+      "/fr.jpg": bits("0001"), // distance 1 → même visuel
+    };
+    const regionRankOf = (item: { role?: string | null }) =>
+      ({ fr: 0, eu: 1, wor: 2 })[item.role ?? ""] ?? 6;
+
+    const out = dedupeByPerceptualHash(
+      ranked,
+      (u) => hashes[u],
+      8,
+      regionRankOf,
+    );
+
+    expect(out).toHaveLength(1);
+    expect(out[0].url).toBe("/fr.jpg");
+    expect(out[0].role).toBe("fr");
+  });
+});
+
+describe("metadataImageAttachmentSemantics", () => {
+  it("préserve source et région depuis une URL média ScreenScraper", () => {
+    expect(
+      metadataImageAttachmentSemantics(
+        {
+          imageUrl:
+            "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=14774&media=box-2D(fr)",
+        },
+        "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=14774&media=box-2D(fr)",
+      ),
+    ).toEqual({
+      type: "cover",
+      role: "fr",
+      source: "screenscraper",
+      title: undefined,
+    });
+  });
+
+  it("garde les métadonnées d'attachment explicites quand elles existent", () => {
+    expect(
+      metadataImageAttachmentSemantics(
+        {
+          imageUrl: "https://example.com/cover.jpg",
+          attachments: [
+            {
+              type: "cover",
+              role: "eu",
+              source: "bgg",
+              title: "Box front",
+              url: "https://example.com/cover.jpg",
+            },
+          ],
+        },
+        "https://example.com/cover.jpg",
+      ),
+    ).toEqual({
+      type: "cover",
+      role: "eu",
+      source: "bgg",
+      title: "Box front",
+    });
   });
 });
 

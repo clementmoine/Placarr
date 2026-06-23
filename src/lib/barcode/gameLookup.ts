@@ -1,4 +1,8 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
+import {
+  containsGameClassicsKeyword,
+  GAME_CLASSICS_KEYWORDS,
+} from "@/lib/barcode/listingTerms";
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
 import {
   fetchFromScreenScraper,
@@ -6,16 +10,7 @@ import {
 } from "@/services/metadataResolvers";
 import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
 
-export const CLASSICS_KEYWORDS = [
-  "classics",
-  "platinum",
-  "essential",
-  "players choice",
-  "player's choice",
-  "greatest hits",
-  "nintendo selects",
-  "best of",
-];
+export const CLASSICS_KEYWORDS = GAME_CLASSICS_KEYWORDS;
 
 export type PlatformSignal = {
   value?: string | null;
@@ -40,7 +35,6 @@ export type GameLookupInputs = {
   calListings: NamedListing[];
   amc: NamedListing[];
   freakxy: NamedListing[];
-  aprilo: NamedListing[];
   picclick: NamedListing[];
   contextPlatformKey: string | null;
 };
@@ -79,17 +73,17 @@ function pushListingSignals(
 
 export function buildGameLookupContext(inputs: GameLookupInputs) {
   const candidates: string[] = [];
-  const platformSignals: PlatformSignal[] = [];
+  const productPlatformSignals: PlatformSignal[] = [];
 
-  if (inputs.contextPlatformKey) {
-    platformSignals.push({ value: inputs.contextPlatformKey, weight: 4.5 });
-  }
   if (inputs.pc?.title) {
     const value = inputs.pc.platform
       ? `${inputs.pc.title} (${inputs.pc.platform})`
       : inputs.pc.title;
     candidates.push(value);
-    platformSignals.push({ value, weight: inputs.pc.platform ? 3.5 : 1.2 });
+    productPlatformSignals.push({
+      value,
+      weight: inputs.pc.platform ? 3.5 : 1.2,
+    });
   }
   if (inputs.sd?.igdb_metadata?.name) {
     const sdPlatform = inputs.sd.igdb_metadata.platform?.name;
@@ -97,16 +91,17 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
       ? `${inputs.sd.igdb_metadata.name} (${sdPlatform})`
       : inputs.sd.igdb_metadata.name;
     candidates.push(value);
-    platformSignals.push({ value, weight: sdPlatform ? 1.4 : 0.8 });
+    productPlatformSignals.push({ value, weight: sdPlatform ? 1.4 : 0.8 });
   }
 
-  pushListingSignals(inputs.calListings, candidates, platformSignals, 0.9);
-  pushListingSignals(inputs.amc, candidates, platformSignals, 1.1);
-  pushListingSignals(inputs.freakxy, candidates, platformSignals, 0.8);
-  pushListingSignals(inputs.aprilo, candidates, platformSignals, 0.8);
-  pushListingSignals(inputs.picclick, candidates, platformSignals, 0.9);
+  pushListingSignals(inputs.calListings, candidates, productPlatformSignals, 0.9);
+  pushListingSignals(inputs.amc, candidates, productPlatformSignals, 1.1);
+  pushListingSignals(inputs.freakxy, candidates, productPlatformSignals, 0.8);
+  pushListingSignals(inputs.picclick, candidates, productPlatformSignals, 0.9);
 
-  const detectedPlatform = pickPlatformKeyFromSignals(platformSignals);
+  const detectedPlatform =
+    pickPlatformKeyFromSignals(productPlatformSignals) ||
+    inputs.contextPlatformKey;
 
   let gameTitle = "";
   if (inputs.pc?.title) gameTitle = inputs.pc.title;
@@ -116,7 +111,6 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
   else if (inputs.amc[0]?.name) gameTitle = inputs.amc[0].name;
   else if (inputs.calListings[0]?.name) gameTitle = inputs.calListings[0].name;
   else if (inputs.freakxy[0]?.name) gameTitle = inputs.freakxy[0].name;
-  else if (inputs.aprilo[0]?.name) gameTitle = inputs.aprilo[0].name;
 
   const hasNtscIndicator = candidates.some((candidate) =>
     /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(candidate),
@@ -124,15 +118,11 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
 
   return {
     candidates,
-    platformSignals,
+    platformSignals: productPlatformSignals,
     detectedPlatform,
     gameTitle,
     isPal: !hasNtscIndicator,
-    isClassics: candidates.some((candidate) =>
-      CLASSICS_KEYWORDS.some((keyword) =>
-        candidate.toLowerCase().includes(keyword),
-      ),
-    ),
+    isClassics: candidates.some(containsGameClassicsKeyword),
   };
 }
 

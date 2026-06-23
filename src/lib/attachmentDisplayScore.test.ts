@@ -4,6 +4,7 @@ import { parseRegionFromRole } from "@/lib/localePreference";
 
 import {
   explainAttachmentScoreForDisplay,
+  pickBestBackgroundFromAttachments,
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
   rankCoversForDisplay,
@@ -369,6 +370,59 @@ describe("attachmentDisplayScore", () => {
     ]);
 
     expect(ranked[0].url).toBe("/c/shared.jpg");
+  });
+
+  it("garde la région la plus valuable quand une même URL est vue Monde puis France", () => {
+    // La même image arrive d'abord taguée "wor" puis "fr" : la fusion par URL
+    // doit conserver le tag France (le plus valuable), pas le premier vu.
+    const ranked = rankAttachmentsForDisplay([
+      { type: "cover" as const, source: "thegamesdb", role: "wor", url: "/x.jpg" },
+      { type: "cover" as const, source: "screenscraper", role: "fr", url: "/x.jpg" },
+    ]);
+
+    expect(ranked).toHaveLength(1);
+    expect(parseRegionFromRole(ranked[0].role)).toBe("fr");
+  });
+
+  describe("pickBestBackgroundFromAttachments", () => {
+    it("préfère la photo paysage haute-résolution à la cover portrait", () => {
+      const attachments = [
+        { type: "cover" as const, source: "bgg", url: "/cover.jpg" },
+        { type: "image" as const, source: "philibert", url: "/photo.jpg" },
+        { type: "image" as const, source: "archichouette", url: "/small.jpg" },
+      ];
+      const metrics = new Map([
+        ["/cover.jpg", { width: 470, height: 475 }], // portrait, exclu (cover)
+        ["/photo.jpg", { width: 5184, height: 3456 }], // paysage HD
+        ["/small.jpg", { width: 800, height: 800 }], // ok mais carré + petit
+      ]);
+
+      expect(pickBestBackgroundFromAttachments(attachments, metrics)).toBe(
+        "/photo.jpg",
+      );
+    });
+
+    it("retourne null si aucune image n'atteint la résolution minimale", () => {
+      const attachments = [
+        { type: "image" as const, source: "x", url: "/tiny.jpg" },
+      ];
+      const metrics = new Map([["/tiny.jpg", { width: 400, height: 300 }]]);
+
+      expect(pickBestBackgroundFromAttachments(attachments, metrics)).toBeNull();
+    });
+
+    it("ignore les covers et les médias physiques (dos/disque)", () => {
+      const attachments = [
+        { type: "cover" as const, source: "x", role: "fr", url: "/c.jpg" },
+        { type: "image" as const, source: "x", role: "back-fr", url: "/back.jpg" },
+      ];
+      const metrics = new Map([
+        ["/c.jpg", { width: 2000, height: 3000 }],
+        ["/back.jpg", { width: 2000, height: 2000 }],
+      ]);
+
+      expect(pickBestBackgroundFromAttachments(attachments, metrics)).toBeNull();
+    });
   });
 });
 

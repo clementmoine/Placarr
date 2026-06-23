@@ -87,12 +87,11 @@ export function collectPayloadListingNames(
   pushListings(payload.amc);
   pushListings(payload.picclick);
   pushListings(payload.freakxy);
-  pushListings(payload.aprilo);
   pushListings(payload.calGeneric);
   pushListings(payload.calToys);
 
   if (payload.philibert?.title) names.push(payload.philibert.title);
-  for (const retailer of payload.boardRetailers) {
+  for (const retailer of payload.retailers) {
     if (retailer.title) names.push(retailer.title);
   }
   if (payload.leDenicheur?.productName) {

@@ -155,6 +155,7 @@ model Metadata {
   description   String?
   releaseDate   String?
   imageUrl      String?
+  heroImageUrl  String?
   sourceType    Type
   sourceQuery   String
   lastFetched   DateTime        @default(now())

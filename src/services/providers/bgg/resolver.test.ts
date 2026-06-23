@@ -6,6 +6,7 @@ vi.mock("simple-xml-to-json", () => ({ convertXML: vi.fn() }));
 import axios from "axios";
 import { convertXML } from "simple-xml-to-json";
 
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
 import { createBGGResolver } from "./resolver";
 
 const mockedGet = vi.mocked(axios.get);
@@ -164,6 +165,49 @@ describe("createBGGResolver", () => {
                     },
                   },
                   {
+                    poll: {
+                      name: "suggested_playerage",
+                      children: [
+                        {
+                          results: {
+                            children: [
+                              { result: { value: "8", numvotes: "293" } },
+                              { result: { value: "10", numvotes: "184" } },
+                              { result: { value: "6", numvotes: "63" } },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    poll: {
+                      name: "language_dependence",
+                      children: [
+                        {
+                          results: {
+                            children: [
+                              {
+                                result: {
+                                  level: "1",
+                                  value: "No necessary in-game text",
+                                  numvotes: "21",
+                                },
+                              },
+                              {
+                                result: {
+                                  level: "2",
+                                  value: "Some necessary text",
+                                  numvotes: "300",
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
                     link: { type: "boardgameartist", value: "Michael Menzel" },
                   },
                 ],
@@ -203,6 +247,52 @@ describe("createBGGResolver", () => {
     expect(res?.publishers).toEqual([{ name: "Kosmos" }]);
     expect(res?.aliases).toContain("Les Colons de Catane");
     expect(res?.facts?.some((f) => f.kind === "players")).toBe(true);
+    // Community polls → top-voted age + language dependence.
+    expect(
+      res?.facts?.find((f) => f.kind === "recommended-age")?.value,
+    ).toBe("8+");
+    expect(
+      res?.facts?.find((f) => f.kind === "language-dependence")?.value,
+    ).toBe("Texte limité (facile à mémoriser)");
+    expect(res?.observationSchemaVersion).toBe(
+      METADATA_OBSERVATION_SCHEMA_VERSION,
+    );
+    expect(res?.observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "title",
+          role: "object_title",
+          value: "Catan",
+          provenance: expect.objectContaining({
+            providerId: "boardgamegeek",
+            sourceDocumentRole: "reference_record",
+            evidenceSignals: ["structured_data", "external_id"],
+          }),
+          usage: expect.objectContaining({
+            displayCandidate: true,
+            searchAlias: "strong",
+            evidence: "strong",
+          }),
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          url: "https://cf.geekdo-images.com/catan-fr.jpg",
+        }),
+        expect.objectContaining({
+          kind: "fact",
+          role: "structured_fact",
+          factKind: "players",
+          value: "3 à 4",
+        }),
+        expect.objectContaining({
+          kind: "external-id",
+          role: "provider_record_id",
+          idKind: "bgg",
+          value: "13",
+        }),
+      ]),
+    );
     expect(
       res?.facts?.some((f) => f.kind === "age-rating" && f.value === "10+"),
     ).toBe(true);

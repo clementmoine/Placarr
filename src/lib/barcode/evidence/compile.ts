@@ -1,8 +1,10 @@
 import { filterPlatformRedundancies } from "@/lib/barcode/titleUtils";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/videoGamePlatforms";
 
 import {
   areEvidenceSameProduct,
   buildProductEvidence,
+  GENERIC_TITLE_TOKENS,
   uniqueClean,
 } from "./parse";
 import {
@@ -34,20 +36,41 @@ import {
  */
 export const MARKETPLACE_CONSENSUS_MIN_PROVIDERS = 3;
 
-export function applyMarketplaceConsensusOverride(
-  evidence: ProductEvidence[],
-): void {
-  const marketplace = evidence.filter(
-    (item) => !item.isCanonical && !item.isTrustedRetailer,
-  );
-  const canonicalProviderCount = new Set(
-    evidence
-      .filter((item) => item.isCanonical)
-      .map((item) => item.providerName),
-  ).size;
-  if (canonicalProviderCount === 0 || marketplace.length === 0) return;
+// Significant, franchise-identifying tokens of a title (drops generic words,
+// platform names and bare numbers — those last are handled as sequel
+// indicators). Used to recognise that "Ghost Recon", "Tom Clancy's Ghost Recon"
+// and "Ghost Recon Classics" all name the same franchise.
+const PLATFORM_TOKEN_TERMS = new Set(VIDEO_GAME_PLATFORM_TOKEN_TERMS);
 
-  // Group marketplace evidence by same product; keep the largest group.
+function franchiseBaseTokens(evidence: ProductEvidence): Set<string> {
+  const out = new Set<string>();
+  for (const token of evidence.parsed.tokens) {
+    if (token.length <= 2) continue;
+    if (/^\d+$/.test(token)) continue;
+    if (GENERIC_TITLE_TOKENS.has(token)) continue;
+    if (PLATFORM_TOKEN_TERMS.has(token)) continue;
+    out.add(token);
+  }
+  return out;
+}
+
+// True when one franchise-token set is contained in the other and they share at
+// least two identifying tokens — a strong "same franchise" signal that tolerates
+// the brand prefix ("Tom Clancy's") and edition words real listings add or drop.
+function shareFranchise(a: Set<string>, b: Set<string>): boolean {
+  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+  if (small.size < 2) return false;
+  for (const token of small) if (!big.has(token)) return false;
+  return true;
+}
+
+/**
+ * Largest cluster of marketplace listings that name the exact same product.
+ */
+function strictMarketplaceConsensus(marketplace: ProductEvidence[]): {
+  items: ProductEvidence[];
+  providers: number;
+} {
   const clusters: ProductEvidence[][] = [];
   for (const item of marketplace) {
     const cluster = clusters.find((group) =>
@@ -57,20 +80,87 @@ export function applyMarketplaceConsensusOverride(
     else clusters.push([item]);
   }
 
-  let consensus: ProductEvidence[] = [];
-  let consensusProviders = 0;
+  let items: ProductEvidence[] = [];
+  let providers = 0;
   for (const cluster of clusters) {
     const distinct = new Set(cluster.map((item) => item.providerName)).size;
-    if (distinct > consensusProviders) {
-      consensusProviders = distinct;
-      consensus = cluster;
+    if (distinct > providers) {
+      providers = distinct;
+      items = cluster;
     }
+  }
+  return { items, providers };
+}
+
+/**
+ * Marketplace listings that name the canonical's franchise but contradict its
+ * sequel number. A lone canonical claiming a sequel ("Ghost Recon 2") that *no*
+ * marketplace corroborates — while several independent ones name the same
+ * franchise without that number ("Ghost Recon", "Ghost Recon 1", "… Classics")
+ * — is almost always a bad barcode→game mapping on the canonical's side. Real
+ * listings vary too much to form a clean same-product cluster, so this groups
+ * them at the franchise level instead.
+ */
+function sequelContradictionConsensus(
+  marketplace: ProductEvidence[],
+  canonicalEvidence: ProductEvidence[],
+): { items: ProductEvidence[]; providers: number } {
+  const numberedCanonical = canonicalEvidence.filter(
+    (item) => item.parsed.indicators.size > 0,
+  );
+  if (numberedCanonical.length === 0) return { items: [], providers: 0 };
+
+  const canonicalBase = new Set<string>();
+  const canonicalIndicators = new Set<string>();
+  for (const item of numberedCanonical) {
+    for (const token of franchiseBaseTokens(item)) canonicalBase.add(token);
+    for (const indicator of item.parsed.indicators) {
+      canonicalIndicators.add(indicator);
+    }
+  }
+  // Require a specific franchise (avoid latching onto one-word canonicals).
+  if (canonicalBase.size < 2) return { items: [], providers: 0 };
+
+  const items = marketplace.filter((item) => {
+    if (!shareFranchise(franchiseBaseTokens(item), canonicalBase)) return false;
+    // Drop listings that actually corroborate the canonical's sequel number.
+    for (const indicator of canonicalIndicators) {
+      if (item.parsed.indicators.has(indicator)) return false;
+    }
+    return true;
+  });
+  const providers = new Set(items.map((item) => item.providerName)).size;
+  return { items, providers };
+}
+
+export function applyMarketplaceConsensusOverride(
+  evidence: ProductEvidence[],
+): void {
+  const marketplace = evidence.filter(
+    (item) => !item.isCanonical && !item.isTrustedRetailer,
+  );
+  const canonicalEvidence = evidence.filter((item) => item.isCanonical);
+  const canonicalProviderCount = new Set(
+    canonicalEvidence.map((item) => item.providerName),
+  ).size;
+  if (canonicalProviderCount === 0 || marketplace.length === 0) return;
+
+  let consensus = strictMarketplaceConsensus(marketplace);
+  // When the exact-product consensus is too weak, fall back to a franchise-level
+  // consensus that specifically contradicts the canonical's (unsupported) sequel
+  // number — see helper above.
+  if (consensus.providers < MARKETPLACE_CONSENSUS_MIN_PROVIDERS) {
+    const franchise = sequelContradictionConsensus(
+      marketplace,
+      canonicalEvidence,
+    );
+    if (franchise.providers > consensus.providers) consensus = franchise;
   }
 
   // Only override when the consensus is both strong and clearly dominant.
   if (
-    consensusProviders < MARKETPLACE_CONSENSUS_MIN_PROVIDERS ||
-    consensusProviders <= canonicalProviderCount
+    consensus.providers < MARKETPLACE_CONSENSUS_MIN_PROVIDERS ||
+    consensus.providers <= canonicalProviderCount
   ) {
     return;
   }
@@ -79,12 +169,12 @@ export function applyMarketplaceConsensusOverride(
   const corroborated = evidence.some(
     (item) =>
       (item.isCanonical || item.isTrustedRetailer) &&
-      consensus.some((other) => areEvidenceSameProduct(item, other)),
+      consensus.items.some((other) => areEvidenceSameProduct(item, other)),
   );
   if (corroborated) return;
 
   // Promote the consensus so it leads (no listing-only confidence cap)…
-  for (const item of consensus) {
+  for (const item of consensus.items) {
     item.isTrustedRetailer = true;
     item.priority = Math.max(item.priority, 1);
   }
@@ -94,7 +184,7 @@ export function applyMarketplaceConsensusOverride(
   for (const item of evidence) {
     if (
       item.isCanonical &&
-      !consensus.some((other) => areEvidenceSameProduct(item, other))
+      !consensus.items.some((other) => areEvidenceSameProduct(item, other))
     ) {
       item.contradictedByConsensus = true;
     }
@@ -230,8 +320,16 @@ export async function compileResultForType(
       .flatMap((evidence) => [evidence.title, evidence.cleanName]),
     { preservePlatformSuffix: type === "games" },
   ).slice(0, 15);
+  const platformEvidence = allEvidence.filter(
+    (evidence) => !evidence.contradictedByConsensus,
+  );
   const platformKey =
-    type === "games" ? pickPlatformKeyFromEvidence(allEvidence) : null;
+    type === "games"
+      ? matches[0]?.platformKey ||
+        pickPlatformKeyFromEvidence(
+          platformEvidence.length > 0 ? platformEvidence : allEvidence,
+        )
+      : null;
 
   return applyEditionToCompiledResult(
     {

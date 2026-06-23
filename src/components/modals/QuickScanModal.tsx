@@ -293,6 +293,7 @@ export function QuickScanModal({
       if (shelves && shelves.length > 0) {
         const fallbackShelfId = selectedShelfId || defaultShelf?.id || null;
         const shelfGuess = guessShelfFromBarcodeLookup({
+          shelfType: metadataType || resolvedShelfType || null,
           platformKey,
           searchNames: allSearchNames,
           shelves,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildScreenScraperFacts,
+  buildScreenScraperObservations,
   buildScreenScraperSearchQueries,
   createScreenScraperResolver,
   isPlausibleScreenScraperFallbackResult,
@@ -12,6 +13,7 @@ import {
   type SSMedia,
 } from "./resolver";
 import { getScreenScraperEnv } from "./env";
+import { screenScraperAttachmentFromMediaUrl } from "./mediaUrl";
 
 const SCREEN_SCRAPER_ENV_KEYS = [
   "SCREENSCRAPER_DEV_ID",
@@ -138,6 +140,102 @@ describe("buildScreenScraperFacts", () => {
   });
 });
 
+describe("buildScreenScraperObservations", () => {
+  it("emits typed observations with image roles and evidence signals", () => {
+    const observations = buildScreenScraperObservations(
+      {
+        title: "The Legend of Zelda: Skyward Sword",
+        imageUrl: "https://media.screenscraper.fr/box-2D-fr.jpg",
+        aliases: ["Zelda Skyward Sword"],
+        regionalTitles: [
+          { region: "fr", text: "The Legend of Zelda : Skyward Sword" },
+        ],
+        attachments: [
+          {
+            type: "cover",
+            role: "fr",
+            url: "https://media.screenscraper.fr/box-2D-fr.jpg",
+            source: "screenscraper",
+          },
+          {
+            type: "screenshot",
+            role: "wor",
+            url: "https://media.screenscraper.fr/screenshot-1.jpg",
+            source: "screenscraper",
+          },
+          {
+            type: "image",
+            role: "back-fr",
+            url: "https://media.screenscraper.fr/box-back-fr.jpg",
+            source: "screenscraper",
+          },
+        ],
+        facts: [
+          {
+            kind: "players",
+            label: "Joueurs",
+            value: "1-4",
+            source: "screenscraper",
+          },
+        ],
+        externalIds: { screenscraper: "14825" },
+      },
+      {
+        sourceUrl: "https://api.screenscraper.fr/api2/jeuInfos.php?gameid=14825",
+        hasBarcodeMatch: true,
+        hasPlatformMatch: true,
+      },
+    );
+
+    expect(observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "title",
+          role: "object_title",
+          value: "The Legend of Zelda: Skyward Sword",
+          provenance: expect.objectContaining({
+            providerId: "screenscraper",
+            sourceDocumentRole: "api_object",
+            evidenceSignals: expect.arrayContaining([
+              "structured_data",
+              "barcode_match",
+              "platform_match",
+            ]),
+          }),
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          url: "https://media.screenscraper.fr/box-2D-fr.jpg",
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "screenshot",
+          url: "https://media.screenscraper.fr/screenshot-1.jpg",
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_back",
+          url: "https://media.screenscraper.fr/box-back-fr.jpg",
+          region: "fr",
+        }),
+        expect.objectContaining({
+          kind: "fact",
+          role: "structured_fact",
+          factKind: "players",
+          value: "1-4",
+        }),
+        expect.objectContaining({
+          kind: "external-id",
+          role: "provider_record_id",
+          idKind: "screenscraper",
+          value: "14825",
+        }),
+      ]),
+    );
+  });
+});
+
 describe("createScreenScraperResolver", () => {
   it(
     "returns null when ScreenScraper is not configured",
@@ -209,7 +307,20 @@ describe("parseScreenScraperMediaUrl", () => {
       parseScreenScraperMediaUrl(
         "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=58&jeuid=22693&media=box-2D(eu)",
       ),
-    ).toEqual({ gameId: 22693, systemId: 58 });
+    ).toEqual({
+      gameId: 22693,
+      systemId: 58,
+      mediaType: "box-2D",
+      mediaRegion: "eu",
+    });
+  });
+
+  it("infers attachment semantics from media urls", () => {
+    expect(
+      screenScraperAttachmentFromMediaUrl(
+        "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=14774&media=box-2D(fr)",
+      ),
+    ).toEqual({ type: "cover", role: "fr", source: "screenscraper" });
   });
 });
 

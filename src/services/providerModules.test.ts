@@ -20,6 +20,7 @@ describe("game metadata provider modules", () => {
     expect(gameAdapterIds.sort()).toEqual(
       [
         "achatmoinscher",
+        "apriloshop",
         "coverproject",
         "howlongtobeat",
         "igdb",

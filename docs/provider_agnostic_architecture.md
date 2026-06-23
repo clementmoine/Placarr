@@ -6,10 +6,10 @@ This document presents the findings of our codebase audit regarding provider-spe
 > per-provider `weight` (e.g. "choose the date from the provider with the highest
 > weight"). That per-provider weighting is now considered a bias to remove. Field
 > ranking is governed by [unbiased_ranking.md](unbiased_ranking.md): rank by
-> factual *observation* properties (source-document role, field role, locale,
+> factual _observation_ properties (source-document role, field role, locale,
 > evidence signals) + cross-source consensus, never by which provider supplied the
 > datum. `canonicalTitle` / display cover / final facts are projections computed by
-> Placarr, not provider promises. The fetching/merging *plumbing* below
+> Placarr, not provider promises. The fetching/merging _plumbing_ below
 > (capability-driven, type-addressed, plug-and-play) still stands.
 
 > **Adding a provider?** Follow the step-by-step
@@ -48,33 +48,33 @@ The contract:
   projection over stored observations. Weak marketplace/user observations can rank
   low or be excluded from public search, but they remain available for audit,
   debugging, and future ranking-engine reprojection.
-- **Scope = everything except `src/services/providers/`** — the **core *and* the
-  admin**. A connector may hardcode what is specific to *its own* API/format
+- **Scope = everything except `src/services/providers/`** — the **core _and_ the
+  admin**. A connector may hardcode what is specific to _its own_ API/format
   (legitimate, encapsulated); the rest of the app may not.
 
 ### Current violations (the gap between intent and code)
 
 **Core engine:**
 
-| File | Leak |
-| --- | --- |
-| `services/metadataFetch.ts` | dedicated `get/set("screenscraper")` stage; `=== "screenscraper" ? 6 : 12`; hardcoded list `["igdb","thegamesdb","launchbox","rawg"]`; `=== "pricecharting"` ×3 |
-| `lib/attachmentDisplayScore.ts` | `REAL_BOX_COVER_SOURCES` name set; `=== "coverproject"` ×2 |
-| `services/metadataMerge.ts` | `=== "steam"` ×2, `=== "discogs"` |
-| `services/metadataStorage.ts` | `source === "discogs"` ×2 (covers) |
-| `lib/barcode/cachePayload.ts` | `url.includes("screenscraper")` |
-| `lib/metadataDiscogs.ts` | Discogs-specific logic leaked into `lib/` |
-| type-specific fetchers (`metadataGameFetch.ts`, …) | name providers (`gameProviderOrder`, `let ss =`, …) — see §1 |
-| `services/metadataDatabase.ts` `confrontWithDatabase` | `switch(type)` calling a named provider per type (IGDB/TMDB/BGG/…) |
+| File                                                  | Leak                                                                                                                                                            |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services/metadataFetch.ts`                           | dedicated `get/set("screenscraper")` stage; `=== "screenscraper" ? 6 : 12`; hardcoded list `["igdb","thegamesdb","launchbox","rawg"]`; `=== "pricecharting"` ×3 |
+| `lib/attachmentDisplayScore.ts`                       | `REAL_BOX_COVER_SOURCES` name set; `=== "coverproject"` ×2                                                                                                      |
+| `services/metadataMerge.ts`                           | `=== "steam"` ×2, `=== "discogs"`                                                                                                                               |
+| `services/metadataStorage.ts`                         | `source === "discogs"` ×2 (covers)                                                                                                                              |
+| `lib/barcode/cachePayload.ts`                         | `url.includes("screenscraper")`                                                                                                                                 |
+| `lib/metadataDiscogs.ts`                              | Discogs-specific logic leaked into `lib/`                                                                                                                       |
+| type-specific fetchers (`metadataGameFetch.ts`, …)    | name providers (`gameProviderOrder`, `let ss =`, …) — see §1                                                                                                    |
+| `services/metadataDatabase.ts` `confrontWithDatabase` | `switch(type)` calling a named provider per type (IGDB/TMDB/BGG/…)                                                                                              |
 
 **Admin:**
 
-| File | Leak |
-| --- | --- |
-| `app/api/admin/product-teardown/route.ts` | replicates the noise dictionaries (conditions / regions / "jeu video") — content hardcode **and** duplication of `titleUtils` |
-| `app/api/admin/test-provider/route.ts` | `handler.kind === "scandex"` branch instead of driving `testHandlers` generically |
-| `app/api/admin/metadata-enrich/route.ts` | `source: "screenscraper"` hardcoded |
-| `app/api/admin/providers/route.ts` | `TYPES` / `CAPABILITIES` listed by hand instead of derived from the type system / registry union |
+| File                                      | Leak                                                                                                                                                                                           |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/api/admin/product-teardown/route.ts` | consumes shared `listingTerms` / `videoGamePlatforms` matchers; remaining debt is the existence of title-parsed listing noise, not route-local duplication |
+| `app/api/admin/test-provider/route.ts`    | `handler.kind === "scandex"` branch instead of driving `testHandlers` generically                                                                                                              |
+| `app/api/admin/metadata-enrich/route.ts`  | `source: "screenscraper"` hardcoded                                                                                                                                                            |
+| `app/api/admin/providers/route.ts`        | `TYPES` / `CAPABILITIES` listed by hand instead of derived from the type system / registry union                                                                                               |
 
 (`admin/providers/route.ts` otherwise correctly iterates `PROVIDERS` — the model to follow everywhere.)
 
@@ -93,7 +93,9 @@ This turns the agreement into an invariant, not a hope.
 Our audit identified several areas where specific metadata providers (such as `screenscraper`, `igdb`, `launchbox`, `musicbrainz`, etc.) are hardcoded and treated as special cases in the core engine.
 
 ### A. Fetching Orchestration (High Specificity)
+
 The application has 5 media-type-specific fetchers:
+
 - `metadataGameFetch.ts`
 - `metadataMovieFetch.ts`
 - `metadataMusicFetch.ts`
@@ -101,14 +103,17 @@ The application has 5 media-type-specific fetchers:
 - `metadataBoardGameFetch.ts`
 
 Each of these files:
+
 - Hardcodes a specific list of providers (`gameProviderOrder`, `musicProviderOrder`, etc.).
 - Resolves results into specific local variables (e.g. `let ss = ...`, `let igdb = ...`).
 - Triggers custom fallback query logic targeting specific providers by name (e.g., checking if `!ss` to run a Screenscraper fallback, or if `!tgdb` to run a TheGamesDB fallback).
 - Manually maps hardcoded provider names when generating `fieldEvidence`.
 
 ### B. Merge Operations (High Specificity)
+
 In `metadataMerge.ts`, there are 5 type-specific merge functions (e.g., `mergeGameMetadata`, `mergeBookMetadata`).
 These functions:
+
 - Receive a fixed list of provider results as positional arguments.
 - Select fields like `releaseDate` or `description` using hardcoded priority rules:
   ```typescript
@@ -120,18 +125,23 @@ These functions:
   ```
 - Map specific attachments by source name:
   ```typescript
-  const screenscraperAttachments = (ss?.attachments || []).map(a => ({ ...a, source: "screenscraper" }))
+  const screenscraperAttachments = (ss?.attachments || []).map((a) => ({
+    ...a,
+    source: "screenscraper",
+  }));
   ```
 
 ### C. Attachment Ranking (Medium Specificity)
+
 In `attachmentDisplayScore.ts`, provider names are hardcoded to identify real retail box cover scans:
+
 ```typescript
 const REAL_BOX_COVER_SOURCES = new Set([
   "bgg",
   "boardgamegeek",
   "screenscraper",
   "thegamesdb",
-  "coverproject"
+  "coverproject",
 ]);
 ```
 
@@ -151,7 +161,9 @@ flowchart TD
 ```
 
 ### 1. Enriching the Provider Registry (`providerRegistry.ts`)
+
 Each provider will announce its factual metadata attributes and supported item types in the registry:
+
 - **`types`**: The item types managed by this provider (e.g., `["games"]`, `["books"]`, `["movies"]`), allowing the engine to dynamically filter active providers based on the media type requested.
 - **`capabilities`**: The specific metadata fields and data types this provider can supply (e.g., `"price"` for pricing data, `"rating"` for user reviews, `"duration"` for play-time/difficulty, `"cover"`, `"description"`). The engine uses these declarations to only query the subset of providers capable of supplying the requested data fields.
 - **`defaultLanguage`**: The primary language of its returned text (e.g. `"fr"` for ScreenScraper, `"en"` for OMDb).
@@ -161,7 +173,9 @@ Each provider will announce its factual metadata attributes and supported item t
   observation says what was actually found.
 
 ### 2. A Unified Fetching Engine (`metadataFetch.ts`)
+
 Instead of 5 separate fetchers, a single generic fetcher will handle all media types:
+
 1. Query the registry to find all enabled providers that support the requested `MediaType`.
 2. Resolve them concurrently using the registered adapters.
 3. Store their raw/normalized observations with provenance.
@@ -169,6 +183,7 @@ Instead of 5 separate fetchers, a single generic fetcher will handle all media t
    titles, platform/type signals), never from a named provider.
 
 ### 3. A Unified Merge Engine (`metadataMerge.ts`)
+
 Instead of type-specific merge functions, a single `mergeMetadata()` function will merge an array of `MetadataResult` objects:
 
 - **Title**: Select the projected display/canonical title by comparing typed title
@@ -195,7 +210,9 @@ Instead of type-specific merge functions, a single `mergeMetadata()` function wi
   Stage 1) without hardcoding.
 
 ### 4. A Common API Contract & Modular Connectors
+
 To allow dropping in new providers or removing old ones easily during the app lifecycle:
+
 - **Parameter-less Adapter Instantiation**: Eliminate the circular dependency pattern where resolvers are instantiated globally and injected back into adapters via `deps` objects. The `createMetadataAdapter` contract will be parameter-less:
   ```typescript
   export interface ProviderModule {
@@ -214,24 +231,30 @@ To allow dropping in new providers or removing old ones easily during the app li
 To guarantee system stability, the entire migration must follow a strict **Test-Driven Development (TDD)** and test-guided refactoring process.
 
 ### Step 1: TDD for Generic Merging
+
 Before writing any code for the generic merge engine, we write new tests in `metadataMerge.test.ts`:
+
 - **Test 1**: Verify title selection chooses the best projected title from typed
   observations: role + locale, then medoid consensus, then quality.
 - **Test 2**: Verify description selection correctly tags and sorts French/English descriptions from unknown/non-tagged ones.
 - **Test 3**: Verify attachments are correctly ranked according to provider attributes.
 - **Test 4**: Verify publishers, authors, facts, and aliases are correctly deduplicated and combined.
-Once the tests are written and failing, we implement `mergeMetadata()` in `metadataMerge.ts` until all tests pass.
+  Once the tests are written and failing, we implement `mergeMetadata()` in `metadataMerge.ts` until all tests pass.
 
 ### Step 2: TDD for Generic Fetching
+
 We write unit tests in `metadataFetch.test.ts` for the new `fetchMetadata()` engine using mock provider modules:
+
 - Test fetching by media type (filtering out irrelevant providers).
 - Test fetching with capabilities (filtering only providers declaring those capabilities).
 - Test fallback querying (ensuring that when a primary search fails, fallback titles are searched sequentially).
-We then implement the generic fetching engine in `metadataFetch.ts`.
+  We then implement the generic fetching engine in `metadataFetch.ts`.
 
 ### Step 3: Incremental Media-Type Migration
+
 We migrate each media type fetcher one by one:
-1. **Books**: 
+
+1. **Books**:
    - Verify existing tests in `metadataBookFetch.test.ts` are passing.
    - Refactor `metadataBookFetch.ts` to call the generic fetching and merging engine.
    - Verify tests in `metadataBookFetch.test.ts` still pass.
@@ -252,6 +275,7 @@ We migrate each media type fetcher one by one:
 We can execute this refactoring in phases without breaking existing tests:
 
 ### Phase 1: Enrich Provider Contracts
+
 - Add discriminated observation/candidate types for titles, images, facts, aliases
   and offers, with required provenance and role fields.
 - Update provider modules to emit those roles instead of relying on global
@@ -260,10 +284,12 @@ We can execute this refactoring in phases without breaking existing tests:
   roles and consensus, not provider-name sets.
 
 ### Phase 2: Implement Generic Merging
+
 - Write the generic `mergeMetadata()` function in `metadataMerge.ts`.
 - Write unit tests in `metadataMerge.test.ts` to verify it matches the current merging outcomes for all media types.
 
 ### Phase 3: Implement Generic Fetching
+
 - Write the generic fetching orchestrator in `metadataFetch.ts`.
 - Replace the type-specific fetch files (`metadataGameFetch.ts`, etc.) with calls to the generic fetcher.
 - Verify all tests pass.

@@ -31,7 +31,6 @@ function makeInputs(
     calListings: [],
     amc: [],
     freakxy: [],
-    aprilo: [],
     picclick: [],
     contextPlatformKey: null,
     ...overrides,
@@ -92,6 +91,44 @@ describe("enrichGameBarcodeLookups", () => {
       "Mario Kart Wii",
       BARCODE,
       "wii",
+    );
+  });
+
+  it("uses the shelf platform hint only when barcode sources expose no platform", async () => {
+    await enrichGameBarcodeLookups({
+      cleanedBarcode: BARCODE,
+      contextPlatformKey: "xbox",
+      pc: null,
+      searchLabel: "games",
+      inputs: makeInputs({
+        amc: [{ name: "Halo Combat Evolved" }],
+        contextPlatformKey: "xbox",
+      }),
+    });
+
+    expect(h.fetchFromScreenScraper).toHaveBeenCalledWith(
+      "Halo Combat Evolved",
+      BARCODE,
+      "xbox",
+    );
+  });
+
+  it("lets barcode platform evidence beat the shelf platform hint", async () => {
+    await enrichGameBarcodeLookups({
+      cleanedBarcode: "3307210117168",
+      contextPlatformKey: "xbox",
+      pc: null,
+      searchLabel: "games",
+      inputs: makeInputs({
+        amc: [{ name: "Tom Clancy's Ghost Recon - Big Box - PC" }],
+        contextPlatformKey: "xbox",
+      }),
+    });
+
+    expect(h.fetchFromScreenScraper).toHaveBeenCalledWith(
+      "Tom Clancy's Ghost Recon - Big Box - PC",
+      "3307210117168",
+      "pc",
     );
   });
 });

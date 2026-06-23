@@ -24,6 +24,8 @@ describe("createGoogleBooksResolver", () => {
               publisher: "Puffin",
               publishedDate: "1974",
               pageCount: 96,
+              printType: "BOOK",
+              maturityRating: "MATURE",
               description: "A clever fox outwits farmers.",
               industryIdentifiers: [
                 { type: "ISBN_13", identifier: "9780140328721" },
@@ -46,6 +48,12 @@ describe("createGoogleBooksResolver", () => {
     expect(result?.pageCount).toBe(96);
     expect(result?.releaseDate).toBe("1974-01-01");
     expect(result?.imageUrl).toBe("https://books.google.com/thumb.jpg");
+    expect(result?.facts?.find((f) => f.kind === "format")?.value).toBe(
+      "Livre",
+    );
+    expect(
+      result?.facts?.find((f) => f.kind === "content-warning")?.value,
+    ).toBe("Réservé aux adultes");
   });
 
   it("renvoie null sans résultat", async () => {

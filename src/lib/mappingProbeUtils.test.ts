@@ -7,6 +7,7 @@ import {
   listProbe,
   metadataProbe,
   mergeMappingProbeRawKeys,
+  mergeMappingProbeSamples,
   rawProbe,
 } from "./mappingProbeUtils";
 
@@ -50,6 +51,50 @@ describe("mappingProbeUtils", () => {
     ]);
     expect(merged?.rawKeys).toEqual(["Plot", "Title"]);
     expect(merged?.unusedKeys.length).toBeGreaterThan(0);
+  });
+
+  it("unions multiple samples so a field mapped or returned by any sample counts", () => {
+    // Sample A: maps title, exposes a raw "Plot" we don't map.
+    const sampleA = {
+      probe: mergeMappingProbeRawKeys(metadataProbe({ title: "A" }), [
+        "Title",
+        "Plot",
+      ]),
+      rawKeys: ["Title", "Plot"],
+    };
+    // Sample B: maps a description (covers "Plot"), exposes a new raw "Videos".
+    const sampleB = {
+      probe: mergeMappingProbeRawKeys(
+        metadataProbe({ title: "B", description: "desc" }),
+        ["Title", "Videos"],
+      ),
+      rawKeys: ["Title", "Videos"],
+    };
+
+    const merged = mergeMappingProbeSamples([sampleA, sampleB]);
+
+    // Raw keys are unioned across both samples.
+    expect(merged?.rawKeys).toEqual(["Plot", "Title", "Videos"]);
+    // "Plot" is covered by B's description → no longer counted unused.
+    expect(merged?.unusedKeys).not.toContain("Plot");
+    // "Videos" is exposed by B but mapped by nobody → a real gap surfaces.
+    expect(merged?.unusedKeys).toContain("Videos");
+  });
+
+  it("preserves the primary sample's statusHint (never degrades)", () => {
+    // A sparse probe would infer "partial"…
+    expect(inferMappingProbeStatus(metadataProbe({ title: "Sparse" }))).toBe(
+      "partial",
+    );
+    // …but if the primary sample carries an explicit "ok" hint, the union keeps it.
+    const sparse = metadataProbe({ title: "Sparse" })!;
+    const primary = { ...sparse, statusHint: "ok" as const };
+    const merged = mergeMappingProbeSamples([
+      { probe: primary, rawKeys: [] },
+      { probe: metadataProbe({ title: "Other" }), rawKeys: [] },
+    ]);
+    expect(merged?.statusHint).toBe("ok");
+    expect(inferMappingProbeStatus(merged)).toBe("ok");
   });
 
   it("extracts list probe examples", () => {

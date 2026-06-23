@@ -51,8 +51,12 @@ describe("collectPayloadListingNames", () => {
     payload.amc = [{ name: "Mille Sabords FR Gigamic" }];
     payload.picclick = [{ name: "Jeu de société Mille Sabords" }];
     payload.philibert = { title: "Mille Sabords" };
-    payload.boardRetailers = [
-      { providerName: "Monsieur de", title: "Mille Sabords - Gigamic" },
+    payload.retailers = [
+      {
+        providerName: "Monsieur de",
+        title: "Mille Sabords - Gigamic",
+        types: ["boardgames"],
+      },
     ];
     payload.leDenicheur = { productName: "Mille Sabords" } as never;
 

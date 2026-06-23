@@ -35,6 +35,8 @@ export interface MetadataResult {
   description?: string;
   releaseDate?: string;
   imageUrl?: string;
+  /** Computed wide hero/background image (quality-ranked), distinct from the cover. */
+  heroImageUrl?: string;
   attachments?: MetadataAttachment[];
   aliases?: string[];
   regionalTitles?: { region?: string; text: string }[];

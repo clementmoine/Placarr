@@ -123,7 +123,11 @@ export const pricechartingModule: ProviderModule = {
   },
   mappingProbe: {
     sampleInput: "0045496365226",
-    context: { name: "", barcode: "0045496365226" },
+    context: {
+      name: "Mario Kart Wii",
+      barcode: "0045496365226",
+      platform: "Wii",
+    },
     fallbackBarcodes: FALLBACK_BARCODES,
   },
   runMappingProbe: () =>

@@ -1,74 +1,173 @@
+import {
+  detectVideoGamePlatformKey,
+  type VideoGamePlatformKey,
+} from "@/lib/videoGamePlatforms";
+
+export type { VideoGamePlatformKey } from "@/lib/videoGamePlatforms";
+
 export function cleanCode(barcode?: string | null): string {
   if (!barcode) return "";
 
   return barcode.replace(/[^\d]/g, "").trim();
 }
 
-export function detectPlatformKey(name: string): string | null {
-  const lower = name.toLowerCase().replace(/[._-]+/g, " ");
-  const has = (pattern: RegExp) => pattern.test(lower);
-
-  // 1. Nintendo
-  if (has(/\bwii\s*u\b|\bwiiu\b/)) return "wiiu";
-  if (has(/\bwii\b/)) return "wii";
-  if (has(/\bnintendo\s+switch\b|\bswitch\b/)) return "switch";
-  if (has(/\bgamecube\b/) || has(/\bgame\s+cube\b/) || has(/\bgcn\b/))
-    return "gamecube";
-  if (has(/\bn64\b|\bnintendo\s+64\b/)) return "n64";
-  if (has(/\bsuper\s+nintendo\b/) || has(/\bsnes\b/) || has(/\bsuper\s+nes\b/))
-    return "snes";
-  if (
-    has(/\bnintendo\s+nes\b/) ||
-    has(/\bnes\b/) ||
-    has(/\bnintendo\s+entertainment\s+system\b/)
-  )
-    return "nes";
-  if (has(/\bnintendo\s+3ds\b|\b3ds\b/)) return "3ds";
-  if (has(/\bnintendo\s+ds\b|\bnds\b|\bds\b/)) return "ds";
-  if (has(/\bgame\s+boy\s+advance\b|\bgba\b/)) return "gba";
-  if (has(/\bgame\s+boy\s+color\b|\bgbc\b/)) return "gbc";
-  if (has(/\bgame\s+boy\b/) || has(/\bgameboy\b/) || has(/\bgb\b/)) return "gb";
-
-  // 2. PlayStation
-  if (has(/\bplaystation\s+5\b|\bps5\b/)) return "ps5";
-  if (has(/\bplaystation\s+4\b|\bps4\b/)) return "ps4";
-  if (has(/\bplaystation\s+3\b|\bps3\b/)) return "ps3";
-  if (has(/\bplaystation\s+2\b|\bps2\b/)) return "ps2";
-  if (has(/\bplaystation\s+portable\b|\bpsp\b/)) return "psp";
-  if (has(/\bplaystation\s+vita\b/) || has(/\bps\s+vita\b/) || has(/\bvita\b/))
-    return "psvita";
-  if (has(/\bplaystation\s+1\b/) || has(/\bps1\b/) || has(/\bpsone\b/))
-    return "ps1";
-  if (/\bplaystation\b/i.test(lower)) return "ps1";
-
-  // 3. Xbox
-  if (
-    has(/\bxbox\s+series\b/) ||
-    has(/\bxbox\s+sx\b/) ||
-    has(/\bxbox\s+s\/x\b/)
-  )
-    return "xboxseries";
-  if (has(/\bxbox\s+one\b|\bxboxone\b/)) return "xboxone";
-  if (has(/\bxbox\s+360\b|\bxbox360\b/)) return "xbox360";
-  if (has(/\bxbox\s+original\b/) || has(/\bxbox\s+1\b/) || has(/\bxbox1\b/))
-    return "xbox";
-  if (/\bxbox\b/i.test(lower)) return "xbox";
-
-  // 4. Sega & Retro
-  if (has(/\bdreamcast\b/)) return "dreamcast";
-  if (has(/\bmega\s+drive\b/) || has(/\bmegadrive\b/) || has(/\bgenesis\b/))
-    return "megadrive";
-  if (has(/\bmaster\s+system\b|\bmastersystem\b/)) return "mastersystem";
-  if (has(/\bgame\s+gear\b|\bgamegear\b/)) return "gamegear";
-  if (has(/\bneo\s+geo\b|\bneogeo\b/)) return "neogeo";
-  if (has(/\batari\s+2600\b/) || has(/\batari2600\b/)) return "atari2600";
-  if (has(/\batari\s+5200\b/) || has(/\batari5200\b/)) return "atari5200";
-  if (has(/\batari\s+7800\b/) || has(/\batari7800\b/)) return "atari7800";
-
-  return null;
+export function detectPlatformKey(
+  name?: string | null,
+): VideoGamePlatformKey | null {
+  return detectVideoGamePlatformKey(name);
 }
 
 type ShelfLike = { id: string; name: string; type: string };
+
+const GENERIC_SHELF_NAME_HINTS: Record<string, string[]> = {
+  games: [
+    "jeux video",
+    "jeu video",
+    "jeux videos",
+    "jeu videos",
+    "video games",
+    "video game",
+    "jeux",
+    "games",
+    "jv",
+  ],
+  movies: [
+    "films",
+    "film",
+    "movies",
+    "movie",
+    "cinema",
+    "dvd",
+    "blu ray",
+    "bluray",
+    "vhs",
+    "laserdisc",
+    "series",
+  ],
+  books: ["livres", "livre", "books", "book", "bibliotheque", "library"],
+  musics: [
+    "musiques",
+    "musique",
+    "music",
+    "musics",
+    "albums",
+    "album",
+    "cd",
+    "vinyles",
+    "vinyle",
+    "vinyl",
+  ],
+  boardgames: [
+    "jeux de societe",
+    "jeu de societe",
+    "jeux de societes",
+    "jeu de societes",
+    "jeux de plateau",
+    "jeu de plateau",
+    "board games",
+    "board game",
+    "boardgames",
+    "tabletop games",
+    "jds",
+  ],
+};
+
+function normalizeShelfName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function scoreGenericShelfName(shelfName: string, shelfType: string): number {
+  const normalizedName = normalizeShelfName(shelfName);
+  if (!normalizedName) return 0;
+
+  const hints = GENERIC_SHELF_NAME_HINTS[shelfType] || [];
+  const paddedName = ` ${normalizedName} `;
+  let score = 0;
+
+  for (const hint of hints) {
+    const normalizedHint = normalizeShelfName(hint);
+    if (!normalizedHint) continue;
+    if (normalizedName === normalizedHint) {
+      score = Math.max(score, 3);
+      continue;
+    }
+    if (
+      normalizedHint.length >= 4 &&
+      paddedName.includes(` ${normalizedHint} `)
+    ) {
+      score = Math.max(score, 2);
+    }
+  }
+
+  return score;
+}
+
+export function guessGenericShelfByType(
+  shelfType: string | null | undefined,
+  shelves: ShelfLike[],
+): { shelfId: string; isGuessed: boolean } | null {
+  if (!shelfType || !shelves.length) return null;
+
+  let best: { shelfId: string; score: number } | null = null;
+  for (const shelf of shelves) {
+    if (shelf.type !== shelfType) continue;
+    const score = scoreGenericShelfName(shelf.name, shelfType);
+    if (score > 0 && (!best || score > best.score)) {
+      best = { shelfId: shelf.id, score };
+    }
+  }
+
+  return best ? { shelfId: best.shelfId, isGuessed: true } : null;
+}
+
+export function guessShelfByStrongNameMatch(
+  productTitle: string,
+  shelves: ShelfLike[],
+): { shelfId: string; isGuessed: boolean } | null {
+  const normalizedTitle = normalizeShelfName(productTitle);
+  if (!normalizedTitle || !shelves.length) return null;
+
+  let best: { shelfId: string; score: number } | null = null;
+  for (const shelf of shelves) {
+    const normalizedShelfName = normalizeShelfName(shelf.name);
+    if (normalizedShelfName.length < 3) continue;
+
+    let score = 0;
+    if (normalizedTitle === normalizedShelfName) {
+      score = 3;
+    } else if (normalizedTitle.startsWith(`${normalizedShelfName} `)) {
+      score = 2;
+    }
+
+    if (score > 0 && (!best || score > best.score)) {
+      best = { shelfId: shelf.id, score };
+    }
+  }
+
+  return best ? { shelfId: best.shelfId, isGuessed: true } : null;
+}
+
+function guessFirstShelfByType(
+  shelfType: string | null | undefined,
+  shelves: ShelfLike[],
+): { shelfId: string; isGuessed: boolean } | null {
+  if (!shelfType) return null;
+  const typedShelf = shelves.find((shelf) => shelf.type === shelfType);
+  return typedShelf ? { shelfId: typedShelf.id, isGuessed: true } : null;
+}
+
+function guessShelfByTitlePlatform(
+  productTitle: string,
+  shelves: ShelfLike[],
+): { shelfId: string; isGuessed: boolean } | null {
+  const titlePlatformKey = detectPlatformKey(productTitle);
+  return guessShelfByPlatformKey(titlePlatformKey, shelves);
+}
 
 export function isShelfCompatibleWithPlatformKey(
   shelf: ShelfLike,
@@ -82,21 +181,51 @@ export function isShelfCompatibleWithPlatformKey(
 }
 
 export function guessShelfFromBarcodeLookup(params: {
+  shelfType?: string | null;
   platformKey?: string | null;
   searchNames?: string[];
   shelves: ShelfLike[];
   preferredShelfId?: string | null;
 }): { shelfId: string; isGuessed: boolean } | null {
-  const { platformKey, searchNames = [], shelves, preferredShelfId } = params;
+  const {
+    shelfType,
+    platformKey,
+    searchNames = [],
+    shelves,
+    preferredShelfId,
+  } = params;
   if (!shelves.length) return null;
+  const typeCompatibleShelves = shelfType
+    ? shelves.filter((shelf) => shelf.type === shelfType)
+    : shelves;
 
+  // Video games: a platform-specific shelf is the most precise match.
   const platformGuess = guessShelfByPlatformKey(platformKey, shelves);
   if (platformGuess) return platformGuess;
 
   for (const name of searchNames) {
-    const guess = guessBestShelf(name, shelves);
+    const guess = guessShelfByStrongNameMatch(name, typeCompatibleShelves);
     if (guess) return guess;
   }
+
+  for (const name of searchNames) {
+    const guess = guessShelfByTitlePlatform(name, shelves);
+    if (guess) return guess;
+  }
+
+  const genericTypeGuess = guessGenericShelfByType(shelfType, shelves);
+  if (genericTypeGuess) return genericTypeGuess;
+
+  for (const name of searchNames) {
+    const guess = guessBestShelf(name, typeCompatibleShelves);
+    if (guess) return guess;
+  }
+
+  // Otherwise fall back to a shelf of the *resolved* type — the right home for a
+  // board game / book / album / movie (and a single-games-shelf fallback). This
+  // is what lets a freshly-created "Jeux de société" shelf be recommended.
+  const typedShelfGuess = guessFirstShelfByType(shelfType, shelves);
+  if (typedShelfGuess) return typedShelfGuess;
 
   if (preferredShelfId && platformKey) {
     const preferred = shelves.find((shelf) => shelf.id === preferredShelfId);

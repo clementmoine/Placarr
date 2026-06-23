@@ -46,7 +46,6 @@ export type BarcodeLookupDeps = {
   fetchFromScanDex: (barcode: string) => Promise<unknown>;
   fetchFromAchatMoinsCher: (barcode: string) => Promise<unknown>;
   fetchFromFreakxy: (barcode: string) => Promise<unknown>;
-  fetchFromApriloshop: (barcode: string) => Promise<unknown>;
   fetchFromPicClick: (barcode: string) => Promise<unknown>;
   fetchPricesFromLeDenicheur: (
     queryOrQueries: string | string[],
@@ -102,11 +101,22 @@ export interface TestProviderHandler {
   run: (query: string, type: string | null) => Promise<unknown>;
 }
 
+export interface ProviderMappingProbeSample {
+  sampleInput: string;
+  context: MetadataAdapterContext;
+}
+
 export interface ProviderMappingProbe {
   sampleInput: string;
   context: MetadataAdapterContext;
   fallbackBarcodes?: string[];
   catalog?: string;
+  /**
+   * Extra sample inputs probed alongside the primary one; their raw + mapped
+   * keys are unioned so the audit sees fields that only some products expose
+   * (e.g. a Discogs release with `videos`/`notes`). Opt-in per provider.
+   */
+  additionalSamples?: ProviderMappingProbeSample[];
 }
 
 export type MappingProbeStatus =
@@ -135,7 +145,14 @@ export interface ProviderModule {
   ) => MetadataProviderAdapter | null;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;
-  collectMappingRawKeys?: () => Promise<string[]>;
+  /**
+   * Live raw keys for a sample. Receives the probed context so the audit can
+   * union keys across multiple samples; implementations may ignore it and fall
+   * back to their default sample (backward compatible).
+   */
+  collectMappingRawKeys?: (
+    context?: MetadataAdapterContext,
+  ) => Promise<string[]>;
   healthCheck?: ProviderHealthCheck;
   buildBarcodeTasks?: (
     deps: BarcodeLookupDeps,

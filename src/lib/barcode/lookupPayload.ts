@@ -1,6 +1,8 @@
 import type { NamedListing } from "@/lib/barcode/gameLookup";
+import { PRESTASHOP_RETAILER_CONFIGS } from "@/services/providers/prestashop/configs";
 import type { PriceChartingMetadata } from "@/services/providers/pricecharting/fetch";
 import type { LeDenicheurPrices } from "@/services/providers/ledenicheur/fetch";
+import type { MediaType } from "@/types/providerRegistry";
 
 export type BarcodeMetadataHit = {
   title?: string;
@@ -30,7 +32,7 @@ export type BarcodeLookupPayload = {
   sd: ScanDexLookup;
   philibert: BarcodeMetadataHit | null;
   okkazeo: BarcodeMetadataHit | null;
-  boardRetailers: BoardRetailerBarcodeHit[];
+  retailers: RetailerBarcodeHit[];
   amc: NamedListing[];
   calFr: NamedListing[];
   calDvd: NamedListing[];
@@ -39,7 +41,6 @@ export type BarcodeLookupPayload = {
   calJeuxVideo: NamedListing[];
   calGeneric: NamedListing[];
   freakxy: NamedListing[];
-  aprilo: NamedListing[];
   picclick: NamedListing[];
   leDenicheur: LeDenicheurPrices | null;
 };
@@ -56,7 +57,7 @@ export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
     sd: null,
     philibert: null,
     okkazeo: null,
-    boardRetailers: [],
+    retailers: [],
     amc: [],
     calFr: [],
     calDvd: [],
@@ -65,7 +66,6 @@ export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
     calJeuxVideo: [],
     calGeneric: [],
     freakxy: [],
-    aprilo: [],
     picclick: [],
     leDenicheur: null,
   };
@@ -117,23 +117,23 @@ export function asNamedListings(value: unknown): NamedListing[] {
   );
 }
 
-export const BOARDGAME_RETAILER_BARCODE_TASKS = [
-  { key: "monsieurde", providerName: "Monsieur de" },
-  { key: "ludifolie", providerName: "Ludifolie" },
-  { key: "bcdjeux", providerName: "BCD Jeux" },
-  { key: "lepassetemps", providerName: "Le Passe-Temps" },
-] as const;
-
-export type BoardRetailerBarcodeHit = BarcodeMetadataHit & {
+export type RetailerBarcodeHit = BarcodeMetadataHit & {
   providerName: string;
+  types: MediaType[];
 };
 
-export function collectBoardRetailerBarcodeHits(
+/**
+ * Collect barcode hits from the PrestaShop-family retailers, each tagged with its
+ * shop's declared media types so the evidence assembly routes it to the right
+ * bucket (a games shop → game sources, a board-game shop → board-game sources).
+ * Derived from the configs — no hardcoded retailer list.
+ */
+export function collectRetailerBarcodeHits(
   lookups: Record<string, unknown>,
-): BoardRetailerBarcodeHit[] {
-  return BOARDGAME_RETAILER_BARCODE_TASKS.flatMap(({ key, providerName }) => {
-    const hit = asMetadataHit(lookups[key]);
+): RetailerBarcodeHit[] {
+  return PRESTASHOP_RETAILER_CONFIGS.flatMap((config) => {
+    const hit = asMetadataHit(lookups[config.id]);
     if (!hit?.title) return [];
-    return [{ ...hit, providerName }];
+    return [{ ...hit, providerName: config.label, types: config.types }];
   });
 }

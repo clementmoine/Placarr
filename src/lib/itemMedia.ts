@@ -28,6 +28,7 @@ export interface MediaInput {
   imageUrl?: string | null;
   metadata?: {
     imageUrl?: string | null;
+    heroImageUrl?: string | null;
     sourceType?: string | null;
     attachments?: MediaItem[] | null;
   } | null;
@@ -70,6 +71,11 @@ export function getCoverImage(item: MediaInput): string | null {
 }
 
 export function getHeroImage(item: MediaInput): string | null {
+  // Quality-ranked hero computed at enrichment time (sharp, landscape). Takes
+  // precedence over the legacy type-order heuristic, which has no resolution
+  // signal at display time.
+  if (item.metadata?.heroImageUrl) return item.metadata.heroImageUrl;
+
   const ranked = rankedAttachments(item);
   const bg = ranked.find((attachment) => attachment.type === "background");
   if (bg) return bg.url;

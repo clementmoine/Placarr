@@ -1,5 +1,9 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
+import {
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
@@ -242,6 +246,53 @@ function buildWikidataFacts(
   return facts;
 }
 
+function buildWikidataRegionalTitles(
+  entity: WikidataEntity,
+  title: string | undefined,
+): Array<{ region?: string; text: string }> | undefined {
+  if (!title) return undefined;
+  const labels = Object.entries(entity.labels || {}).flatMap(
+    ([language, entry]) => {
+      const text = entry.value?.trim();
+      if (!text) return [];
+      return [{ region: language, text }];
+    },
+  );
+
+  if (labels.length === 0) return undefined;
+  return Array.from(
+    new Map(
+      labels.map((entry) => [`${entry.region || ""}:${entry.text.toLowerCase()}`, entry]),
+    ).values(),
+  );
+}
+
+function buildWikidataObservations(
+  qid: string,
+  metadata: MetadataResult,
+  language: "fr" | "en",
+) {
+  return observationsFromMetadataResult(
+    {
+      ...metadata,
+      imageUrl: undefined,
+    },
+    {
+      providerId: "wikidata",
+      providerLabel: "Wikidata",
+      sourceDocumentRole: "reference_record",
+      sourceUrl: `https://www.wikidata.org/wiki/${qid}`,
+      evidenceSignals: ["structured_data", "external_id"],
+      titleRole: "object_title",
+      aliasRole: "provider_grouped_alias",
+      imageRole: "cover_front",
+      factRole: "structured_fact",
+      externalIdRole: "provider_record_id",
+      language,
+    },
+  );
+}
+
 export function createWikidataResolver() {
   return async function fetchFromWikidata(
     name: string,
@@ -311,7 +362,7 @@ export function createWikidataResolver() {
         .map((entry) => entry.value)
         .filter((alias) => alias && alias !== title);
 
-      return {
+      const metadata: MetadataResult = {
         title,
         description,
         releaseDate,
@@ -320,6 +371,7 @@ export function createWikidataResolver() {
           people.publishers.length > 0 ? people.publishers : undefined,
         imageUrl,
         aliases: aliases.length > 0 ? Array.from(new Set(aliases)) : undefined,
+        regionalTitles: buildWikidataRegionalTitles(selectedEntity, title),
         attachments: imageUrl
           ? [{ type: "cover", url: imageUrl, source: "wikidata" }]
           : undefined,
@@ -329,6 +381,15 @@ export function createWikidataResolver() {
           frWikiTitle || enWikiTitle,
         ),
         externalIds: { wikidata: selectedQid },
+      };
+      return {
+        ...metadata,
+        observations: buildWikidataObservations(
+          selectedQid,
+          metadata,
+          wikiLanguage,
+        ),
+        observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
       };
     } catch (error) {
       console.error("[Wikidata] Metadata lookup failed:", error);

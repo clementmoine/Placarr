@@ -10,7 +10,7 @@ import {
   asNamedListings,
   asPriceChartingHit,
   asScanDexHit,
-  collectBoardRetailerBarcodeHits,
+  collectRetailerBarcodeHits,
   createEmptyBarcodeLookupPayload,
   resolveSettledLookups,
   type BarcodeLookupPayload,
@@ -45,9 +45,9 @@ export async function runBarcodeLookups(params: {
     payload.sd = asScanDexHit(lookups.sd);
     payload.amc = asNamedListings(lookups.amc);
     payload.freakxy = asNamedListings(lookups.freakxy);
-    payload.aprilo = asNamedListings(lookups.aprilo);
     payload.picclick = asNamedListings(lookups.picclick);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
+    payload.retailers = collectRetailerBarcodeHits(lookups);
 
     const enriched = await enrichGameBarcodeLookups({
       cleanedBarcode,
@@ -121,7 +121,7 @@ export async function runBarcodeLookups(params: {
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.philibert = asMetadataHit(lookups.philibert);
     payload.okkazeo = asMetadataHit(lookups.okkazeo);
-    payload.boardRetailers = collectBoardRetailerBarcodeHits(lookups);
+    payload.retailers = collectRetailerBarcodeHits(lookups);
     return payload;
   }
 
@@ -135,15 +135,16 @@ export async function runBarcodeLookups(params: {
   payload.sd = asScanDexHit(lookups.sd);
   payload.amc = asNamedListings(lookups.amc);
   payload.freakxy = asNamedListings(lookups.freakxy);
-  payload.aprilo = asNamedListings(lookups.aprilo);
   payload.picclick = asNamedListings(lookups.picclick);
   payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
-  // Board-game anchors (Okkazeo + Philibert + board retailers), in parity with
-  // the video-game stack above, so a board game scanned without a type has a
-  // trusted source and is not misclassified as "games".
+  // Board-game anchors (Okkazeo + Philibert + retailers), in parity with the
+  // video-game stack above, so a board game scanned without a type has a trusted
+  // source and is not misclassified as "games". Retailers are routed by their
+  // declared types (a games shop feeds game sources, a board-game shop board-game
+  // sources).
   payload.philibert = asMetadataHit(lookups.philibert);
   payload.okkazeo = asMetadataHit(lookups.okkazeo);
-  payload.boardRetailers = collectBoardRetailerBarcodeHits(lookups);
+  payload.retailers = collectRetailerBarcodeHits(lookups);
 
   const enriched = await enrichGameBarcodeLookups({
     cleanedBarcode,
@@ -182,7 +183,6 @@ function buildGameLookupInputs(
     calListings,
     amc: payload.amc,
     freakxy: payload.freakxy,
-    aprilo: payload.aprilo,
     picclick: payload.picclick,
     contextPlatformKey,
   };

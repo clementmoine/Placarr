@@ -2,6 +2,10 @@ import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
 import { convertXML } from "simple-xml-to-json";
+import {
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 
 import type {
   MetadataAttachment,
@@ -104,6 +108,55 @@ function getBGGPollSummaries(game: {
   return summaries;
 }
 
+// Community language-dependence levels (BGG `language_dependence` poll) → short FR.
+const BGG_LANGUAGE_DEPENDENCE_FR: Record<string, string> = {
+  "1": "Aucun texte nécessaire",
+  "2": "Texte limité (facile à mémoriser)",
+  "3": "Texte modéré (aide de jeu utile)",
+  "4": "Texte important (traduction nécessaire)",
+  "5": "Injouable dans une autre langue",
+};
+
+/**
+ * Top community-voted result of a raw BGG `<poll>` (suggested_playerage,
+ * language_dependence): `poll > results > result[numvotes]`, picking the most
+ * voted entry. Returns null when the poll is absent or has no votes.
+ */
+function getBGGTopPollResult(
+  game: { children?: BGGChild[] },
+  pollName: string,
+): { value: string; level?: string } | null {
+  for (const child of game.children || []) {
+    const poll = (child as BGGChild & Record<string, unknown>).poll as
+      | {
+          name?: string;
+          children?: Array<{
+            results?: {
+              children?: Array<{
+                result?: { value?: string; numvotes?: string; level?: string };
+              }>;
+            };
+          }>;
+        }
+      | undefined;
+    if (poll?.name !== pollName) continue;
+
+    let best: { value: string; level?: string; votes: number } | null = null;
+    for (const group of poll.children || []) {
+      for (const entry of group.results?.children || []) {
+        const result = entry.result;
+        const votes = Number(result?.numvotes ?? 0);
+        if (!result?.value || !Number.isFinite(votes) || votes <= 0) continue;
+        if (!best || votes > best.votes) {
+          best = { value: result.value, level: result.level, votes };
+        }
+      }
+    }
+    return best ? { value: best.value, level: best.level } : null;
+  }
+  return null;
+}
+
 function formatBGGComplexity(weight: string): string | null {
   const value = Number(weight);
   if (!Number.isFinite(value) || value <= 0) return null;
@@ -149,6 +202,52 @@ function buildBggAttachments(game: {
   }
 
   return attachments;
+}
+
+const BGG_PROVIDER_ID = "boardgamegeek";
+const BGG_SOURCE_LABELS = new Set([
+  "bgg",
+  "boardgamegeek",
+  "board game geek",
+]);
+
+function normalizeBggSource(
+  source: string | undefined,
+): string | undefined {
+  if (!source) return source;
+  const normalized = source.trim().toLowerCase();
+  return BGG_SOURCE_LABELS.has(normalized) ? BGG_PROVIDER_ID : source;
+}
+
+function buildBggObservations(
+  gameId: string,
+  metadata: MetadataResult,
+) {
+  const normalizedMetadata: MetadataResult = {
+    ...metadata,
+    attachments: metadata.attachments?.map((attachment) => ({
+      ...attachment,
+      source: normalizeBggSource(attachment.source),
+    })),
+    facts: metadata.facts?.map((fact) => ({
+      ...fact,
+      source: normalizeBggSource(fact.source),
+    })),
+  };
+
+  return observationsFromMetadataResult(normalizedMetadata, {
+    providerId: BGG_PROVIDER_ID,
+    providerLabel: "BoardGameGeek",
+    sourceDocumentRole: "reference_record",
+    sourceUrl: `https://boardgamegeek.com/boardgame/${gameId}`,
+    evidenceSignals: ["structured_data", "external_id"],
+    titleRole: "object_title",
+    aliasRole: "provider_grouped_alias",
+    imageRole: "cover_front",
+    factRole: "structured_fact",
+    externalIdRole: "provider_record_id",
+    language: "en",
+  });
 }
 
 type BggResolverDeps = {
@@ -412,6 +511,35 @@ export function createBGGResolver(deps: BggResolverDeps) {
           });
         }
       }
+      const suggestedAge = getBGGTopPollResult(game, "suggested_playerage");
+      if (suggestedAge) {
+        facts.push({
+          kind: "recommended-age",
+          label: "Âge conseillé (communauté)",
+          value: /^\d+$/.test(suggestedAge.value)
+            ? `${suggestedAge.value}+`
+            : suggestedAge.value,
+          source: "BGG",
+          confidence: 0.74,
+          priority: 60,
+        });
+      }
+      const languageDependence = getBGGTopPollResult(
+        game,
+        "language_dependence",
+      );
+      if (languageDependence) {
+        facts.push({
+          kind: "language-dependence",
+          label: "Dépendance à la langue",
+          value:
+            BGG_LANGUAGE_DEPENDENCE_FR[languageDependence.level ?? ""] ??
+            languageDependence.value,
+          source: "BGG",
+          confidence: 0.72,
+          priority: 55,
+        });
+      }
       if (artists.length > 0) {
         facts.push({
           kind: "artist",
@@ -453,7 +581,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
         });
       }
 
-      return {
+      const metadata: MetadataResult = {
         title: primaryName,
         description,
         releaseDate: yearPublished,
@@ -464,6 +592,11 @@ export function createBGGResolver(deps: BggResolverDeps) {
         aliases,
         facts,
         externalIds: { bgg: String(gameId) },
+      };
+      return {
+        ...metadata,
+        observations: buildBggObservations(String(gameId), metadata),
+        observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
       };
     } catch (error: unknown) {
       const status =

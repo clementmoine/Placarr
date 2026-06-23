@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 
 import axios from "axios";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
 
 import {
   createWikidataResolver,
@@ -136,6 +137,40 @@ describe("createWikidataResolver", () => {
     expect(res?.authors?.some((p) => /teuber/i.test(p.name))).toBe(true);
     expect(res?.publishers?.some((p) => /kosmos/i.test(p.name))).toBe(true);
     expect(res?.aliases).toContain("Catan (board game)");
+    expect(res?.observationSchemaVersion).toBe(
+      METADATA_OBSERVATION_SCHEMA_VERSION,
+    );
+    expect(res?.observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "title",
+          role: "object_title",
+          value: "Catan",
+          provenance: expect.objectContaining({
+            providerId: "wikidata",
+            sourceDocumentRole: "reference_record",
+            evidenceSignals: ["structured_data", "external_id"],
+          }),
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          url: "https://commons.wikimedia.org/wiki/Special:FilePath/Catan.jpg",
+        }),
+        expect.objectContaining({
+          kind: "fact",
+          role: "structured_fact",
+          factKind: "external-link",
+          value: "Q17271",
+        }),
+        expect.objectContaining({
+          kind: "external-id",
+          role: "provider_record_id",
+          idKind: "wikidata",
+          value: "Q17271",
+        }),
+      ]),
+    );
   });
 
   it("retourne null quand l'entité n'est pas un jeu de société", async () => {

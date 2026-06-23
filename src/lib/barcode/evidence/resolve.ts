@@ -6,6 +6,7 @@ import {
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
 import { getRepresentativeScore } from "@/lib/displayTitleScore";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/videoGamePlatforms";
 import { confrontWithDatabase } from "@/services/metadataDatabase";
 
 import {
@@ -21,6 +22,7 @@ import {
   GENERIC_TITLE_TOKENS,
   uniqueClean,
 } from "./parse";
+import { pickPlatformKeyFromEvidence } from "./types";
 import type {
   MatchEvidenceSummary,
   ProductEvidence,
@@ -73,19 +75,7 @@ const RESOLVER_GENERIC_TOKENS = new Set([
   "sega",
 ]);
 
-const RESOLVER_PLATFORM_TOKENS = new Set([
-  "wii",
-  "switch",
-  "ds",
-  "3ds",
-  "ps1",
-  "ps2",
-  "ps3",
-  "ps4",
-  "ps5",
-  "xbox",
-  "pc",
-]);
+const RESOLVER_PLATFORM_TOKENS = new Set(VIDEO_GAME_PLATFORM_TOKEN_TERMS);
 
 export const NON_CANONICAL_CONTEXT_TOKENS = new Set([
   "orchestra",
@@ -391,6 +381,15 @@ export function resolveEvidenceToMatches(
       (type === "books"
         ? `https://covers.openlibrary.org/b/isbn/${cleanedBarcode}-M.jpg`
         : null);
+    const platformEvidence = cluster.filter(
+      (item) => !item.contradictedByConsensus,
+    );
+    const platformKey =
+      type === "games"
+        ? pickPlatformKeyFromEvidence(
+            platformEvidence.length > 0 ? platformEvidence : cluster,
+          )
+        : null;
     const suggestions = filterPlatformRedundancies(
       uniqueClean(
         [
@@ -410,6 +409,7 @@ export function resolveEvidenceToMatches(
       coverUrl,
       confidence: evidence.confidence,
       evidence,
+      platformKey,
     };
   });
 

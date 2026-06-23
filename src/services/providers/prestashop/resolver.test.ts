@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
 
 vi.mock("./fetch", () => ({
   searchPrestashopProduct: vi.fn(),
@@ -21,6 +22,7 @@ const CONFIG: PrestashopRetailerConfig = {
   baseUrl: "https://example.com",
   searchPath: "/recherche",
   searchParam: "search_query",
+  types: ["boardgames"],
 };
 
 // EAN-13 valide → normalizeProductBarcode est idempotent dessus.
@@ -99,6 +101,7 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       product({
         title: "Catan",
         barcode: BARCODE,
+        priceCents: 4390,
         imageUrl: "https://example.com/100-home_default/catan.jpg",
       }),
     );
@@ -113,13 +116,59 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       {
         type: "cover",
         url: "https://example.com/100-home_default/catan.jpg",
+        role: "fr",
         source: "test-shop",
       },
       {
         type: "image",
         url: "https://example.com/200-large_default/catan.jpg",
+        role: "fr",
         source: "test-shop",
       },
     ]);
+    expect(result?.observationSchemaVersion).toBe(
+      METADATA_OBSERVATION_SCHEMA_VERSION,
+    );
+    expect(result?.observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "title",
+          role: "catalog_title",
+          value: "Catan",
+          language: "fr",
+          provenance: expect.objectContaining({
+            providerId: "test-shop",
+            sourceDocumentRole: "catalog_product",
+          }),
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          type: "cover",
+          url: "https://example.com/100-home_default/catan.jpg",
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "gallery_image",
+          type: "image",
+          url: "https://example.com/200-large_default/catan.jpg",
+        }),
+        expect.objectContaining({
+          kind: "offer",
+          role: "retail_offer",
+          priceCents: 4390,
+          currency: "EUR",
+          provenance: expect.objectContaining({
+            sourceDocumentRole: "offer",
+          }),
+        }),
+        expect.objectContaining({
+          kind: "external-id",
+          role: "barcode",
+          idKind: "ean13",
+          value: BARCODE,
+        }),
+      ]),
+    );
   });
 });

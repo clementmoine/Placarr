@@ -3,12 +3,28 @@ import type { AttachmentType } from "@prisma/client";
 import {
   isCoverCandidateKind,
   isPhysicalNonCoverKind,
+  resolveAttachmentDisplayRegion,
   resolveAttachmentSemantics,
 } from "@/lib/attachmentDisplayLabels";
 import {
   localeBonusForAttachmentRole,
   regionRank,
 } from "@/lib/localePreference";
+
+// When the same image is contributed by several sources, it may carry different
+// region tags (e.g. "wor" from one, "fr" from another). Keep the most valuable
+// region (France > Europe > World > …) so the merged attachment never loses a
+// better localisation than the one it happened to be seen with first.
+function mergeRolesByRegion(
+  a?: string | null,
+  b?: string | null,
+): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a ?? null;
+  const rankA = regionRank(resolveAttachmentDisplayRegion({ type: "image", role: a }));
+  const rankB = regionRank(resolveAttachmentDisplayRegion({ type: "image", role: b }));
+  return rankA <= rankB ? a : b;
+}
 
 const REAL_BOX_COVER_SOURCES = new Set([
   "bgg",
@@ -284,7 +300,10 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
         sources: new Set(source ? [source] : []),
       });
     } else {
-      const mergedRole = existing.attachment.role || entry.attachment.role || null;
+      const mergedRole = mergeRolesByRegion(
+        existing.attachment.role,
+        entry.attachment.role,
+      );
       const mergedSource = existing.attachment.source || entry.attachment.source || null;
       const mergedTitle = existing.attachment.title || entry.attachment.title || null;
 
@@ -348,6 +367,59 @@ export function pickBestDisplayImageUrl(
   return attachments.find((attachment) => Boolean(attachment.url))?.url;
 }
 
+// Types that can serve as a wide hero/background. Covers/logos are excluded:
+// they are portrait or tiny and look bad stretched behind the page.
+const BACKGROUND_CANDIDATE_TYPES = new Set<AttachmentType>([
+  "background",
+  "artwork",
+  "screenshot",
+  "image",
+]);
+
+// A hero banner is displayed large, so demand a genuinely high-resolution
+// source — otherwise leave it empty and let the caller fall back.
+const MIN_BACKGROUND_SHORTEST_EDGE = 600;
+
+/**
+ * Picks the highest-quality landscape image to use as a hero/background, reusing
+ * the existing display scorer (its resolution signals are type-agnostic) but via
+ * the landscape aspect branch so wide photos win over portrait covers. Requires
+ * known dimensions ≥ {@link MIN_BACKGROUND_SHORTEST_EDGE} so a pixelated source
+ * is never promoted; returns null when nothing qualifies.
+ */
+export function pickBestBackgroundFromAttachments<T extends ScoredAttachmentInput>(
+  attachments: T[],
+  imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
+): string | null {
+  let best: { url: string; score: number } | null = null;
+  for (const attachment of attachments) {
+    if (!attachment.url) continue;
+    if (!BACKGROUND_CANDIDATE_TYPES.has(attachment.type)) continue;
+    const { kind } = attachmentSemantics(attachment);
+    if (isPhysicalNonCoverKind(kind)) continue; // skip back/disc/spine
+
+    const metrics = imageMetricsByUrl?.get(attachment.url);
+    if (
+      !metrics?.width ||
+      !metrics?.height ||
+      Math.min(metrics.width, metrics.height) < MIN_BACKGROUND_SHORTEST_EDGE
+    ) {
+      continue;
+    }
+
+    // Score as a "background" so the landscape (16:9) aspect branch applies
+    // while reusing the shared resolution signals.
+    const score = scoreAttachmentForDisplay(
+      { ...attachment, type: "background" },
+      metrics,
+    );
+    if (!best || score > best.score) {
+      best = { url: attachment.url, score };
+    }
+  }
+  return best?.url ?? null;
+}
+
 export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
   attachments: T[],
   imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
@@ -406,8 +478,10 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         sources: new Set(source ? [source] : []),
       });
     } else {
-      const mergedRole =
-        existing.attachment.role || entry.attachment.role || null;
+      const mergedRole = mergeRolesByRegion(
+        existing.attachment.role,
+        entry.attachment.role,
+      );
       const mergedSource =
         existing.attachment.source || entry.attachment.source || null;
       const mergedTitle =

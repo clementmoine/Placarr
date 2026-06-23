@@ -3,6 +3,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 
 export interface AchatMoinsCherProduct {
   name: string;
+  productId?: string | null;
+  productUrl?: string | null;
   coverUrl?: string | null;
   priceNew?: number; // cents — parsed from the same product page
   priceUsed?: number; // cents — parsed from the same product page
@@ -100,7 +102,15 @@ export async function fetchFromAchatMoinsCher(
     // Prices live on the same product page we just fetched — capture them too.
     const prices = parseAchatMoinsCherPrices(html, productId);
 
-    return [{ name: title, coverUrl, ...(prices ?? {}) }];
+    return [
+      {
+        name: title,
+        productId,
+        productUrl,
+        coverUrl,
+        ...(prices ?? {}),
+      },
+    ];
   } catch (error: any) {
     console.error(
       `[AchatMoinsCher] Error fetching barcode ${cleanedBarcode}:`,

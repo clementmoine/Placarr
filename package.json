@@ -17,7 +17,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:record": "RECORD=1 vitest run src/services/barcodeResolver.fresh.test.ts",
-    "test:record:all": "RECORD=1 RECORD_ALL=1 vitest run src/services/barcodeResolver.fresh.test.ts"
+    "test:record:all": "RECORD=1 RECORD_ALL=1 vitest run src/services/barcodeResolver.fresh.test.ts",
+    "providers:audit:mapping": "npx tsx scripts/providerMappingAudit.ts",
+    "providers:health": "npx tsx scripts/providerHealth.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

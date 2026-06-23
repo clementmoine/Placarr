@@ -15,6 +15,8 @@ interface GoogleBooksVolumeInfo {
   description?: string;
   industryIdentifiers?: Array<{ type?: string; identifier?: string }>;
   pageCount?: number;
+  printType?: string;
+  maturityRating?: string;
   categories?: string[];
   averageRating?: number;
   ratingsCount?: number;
@@ -152,6 +154,33 @@ function buildGoogleBooksFacts(
       source: "googlebooks",
       confidence: 0.7,
       priority: 40,
+    });
+  }
+
+  const printTypeLabel: Record<string, string> = {
+    BOOK: "Livre",
+    MAGAZINE: "Magazine",
+  };
+  if (typeof volumeInfo.printType === "string" && volumeInfo.printType.trim()) {
+    facts.push({
+      kind: "format",
+      label: "Type",
+      value:
+        printTypeLabel[volumeInfo.printType] ?? volumeInfo.printType,
+      source: "googlebooks",
+      confidence: 0.62,
+      priority: 30,
+    });
+  }
+
+  if (volumeInfo.maturityRating === "MATURE") {
+    facts.push({
+      kind: "content-warning",
+      label: "Public",
+      value: "Réservé aux adultes",
+      source: "googlebooks",
+      confidence: 0.7,
+      priority: 45,
     });
   }
 

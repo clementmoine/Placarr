@@ -3,7 +3,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 import axios from "axios";
 
-import { fetchFromDiscogs, getDiscogsAuthParams } from "./fetch";
+import {
+  cleanDiscogsNotes,
+  fetchFromDiscogs,
+  getDiscogsAuthParams,
+} from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
 const AUTH_VARS = [
@@ -44,6 +48,20 @@ describe("getDiscogsAuthParams", () => {
 
   it("renvoie null sans auth", () => {
     expect(getDiscogsAuthParams()).toBeNull();
+  });
+});
+
+describe("cleanDiscogsNotes", () => {
+  it("retire le markup Discogs en gardant le texte lisible", () => {
+    const raw =
+      "Composed by [a=Yoko Shimomura].\n" +
+      "Published by [l=Square Enix Music].\n" +
+      "See [url=https://example.com]the site[/url]. [b]Limited[/b] edition [a123].";
+    expect(cleanDiscogsNotes(raw)).toBe(
+      "Composed by Yoko Shimomura.\n" +
+        "Published by Square Enix Music.\n" +
+        "See the site. Limited edition.",
+    );
   });
 });
 
@@ -130,6 +148,38 @@ describe("fetchFromDiscogs", () => {
         height: 537,
       },
     ]);
+  });
+
+  it("extrait les artistes du détail release et nettoie le suffixe (n)", async () => {
+    process.env.DISCOGS_TOKEN = "test-token";
+    mockedGet
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            { id: 42, title: "Nirvana - Nevermind", year: 1991 },
+          ],
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          artists: [
+            { name: "Nirvana (2)" },
+            { name: "Various" },
+            { name: "Butch Vig" },
+          ],
+          labels: [
+            { name: "DGC (2)" },
+            { name: "Not On Label" },
+            { name: "Sub Pop" },
+          ],
+        },
+      } as never);
+
+    const r = await fetchFromDiscogs("0720642442524");
+    // "(2)" disambiguation stripped, "Various" dropped.
+    expect(r?.artists).toEqual(["Nirvana", "Butch Vig"]);
+    // labels → publishers source, "(2)" stripped, "Not On Label" dropped.
+    expect(r?.labels).toEqual(["DGC", "Sub Pop"]);
   });
 
   it("renvoie null quand aucun résultat", async () => {

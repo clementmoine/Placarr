@@ -1,6 +1,11 @@
 import axios from "axios";
+import {
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/lib/metadataObservations";
 
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
 import { fetchCoverFromCoverProjectCdn } from "./cdnLookup";
 
 const SEARCH_HEADERS = {
@@ -11,6 +16,7 @@ const SEARCH_HEADERS = {
   "Accept-Language": "en-US,en;q=0.5",
   Referer: "https://www.thecoverproject.net/",
 };
+const COVERPROJECT_REGION = "eu";
 
 async function fetchCoverFromCoverProjectSearch(
   name: string,
@@ -80,15 +86,45 @@ export async function fetchFromCoverProject(
   const coverUrl = await fetchCoverFromCoverProject(name, platform || "");
   if (!coverUrl) return null;
 
-  return {
+  const metadata: MetadataResult = {
     imageUrl: coverUrl,
     attachments: [
       {
         type: "cover",
         url: coverUrl,
         source: "coverproject",
-        role: "eu",
+        role: COVERPROJECT_REGION,
       },
     ],
+  };
+  const evidenceSignals: ObservationEvidenceSignal[] = [
+    "structured_data",
+    "title_match",
+  ];
+  if (platform?.trim()) {
+    evidenceSignals.push("platform_match");
+  }
+
+  return {
+    ...metadata,
+    observations: observationsFromMetadataResult(
+      {
+        ...metadata,
+        imageUrl: undefined,
+      },
+      {
+        providerId: "coverproject",
+        providerLabel: "Cover Project",
+        sourceDocumentRole: "reference_record",
+        sourceUrl: "https://www.thecoverproject.net/",
+        evidenceSignals,
+        titleRole: "object_title",
+        aliasRole: "provider_grouped_alias",
+        imageRole: "cover_front",
+        factRole: "structured_fact",
+        language: "neutral",
+      },
+    ),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
 }

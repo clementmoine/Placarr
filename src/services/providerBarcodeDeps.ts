@@ -1,5 +1,4 @@
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
-import { fetchFromApriloshop } from "@/services/providers/apriloshop";
 import { fetchFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
 import { fetchFromDiscogs } from "@/services/providers/discogs";
 import { fetchFromFreakxy } from "@/services/providers/freakxy";
@@ -23,7 +22,6 @@ export function createBarcodeLookupDeps(): BarcodeLookupDeps {
     fetchFromScanDex,
     fetchFromAchatMoinsCher,
     fetchFromFreakxy,
-    fetchFromApriloshop,
     fetchFromPicClick,
     fetchPricesFromLeDenicheur,
     fetchFromOpenLibrary,

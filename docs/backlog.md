@@ -130,13 +130,16 @@ Next steps:
    `requiresTitleAlignment` trait; ~~`screenscraper ? 6 : 12`~~ ✅ → `rateLimited`
    trait; **remaining**: SS recheck stage + PriceCharting title fallback, both
    genuinely provider-specific stages needing a post-resolve hook capability),
-   `attachmentDisplayScore.ts` (`REAL_BOX_COVER_SOURCES` →
-   `isRealBoxCover` capability), ~~`metadataMerge.ts` (steam/discogs)~~ ✅,
-   ~~`metadataStorage.ts` (discogs)~~ ✅, ~~`confrontWithDatabase` (named provider
-   per type)~~ ✅, admin `product-teardown`/`test-provider`/
-   ~~`metadata-enrich`~~ ✅`/providers` routes. (Remaining admin leaks are harder:
-   `test-provider` is a handler-kind discriminator, `MetadataRefreshPanel.tsx` is a
-   client component that can't import the registry.)
+   `attachmentDisplayScore.ts` (`REAL_BOX_COVER_SOURCES`) — **NOT a literal swap;
+   client-safe lib + the two real-box truths diverge → behaviour change. Full
+   focused spec in [debias_attachment_display_score.md](debias_attachment_display_score.md)**),
+   ~~`metadataMerge.ts` (steam/discogs)~~ ✅, ~~`metadataStorage.ts` (discogs)~~ ✅,
+   ~~`confrontWithDatabase` (named provider per type)~~ ✅,
+   ~~`providerRegistry.ts` `isProviderConfigured`~~ ✅ (redundant special-cases),
+   admin `product-teardown`/`test-provider`/~~`metadata-enrich`~~ ✅`/providers`
+   routes. (Remaining admin leaks are harder: `test-provider` is a handler-kind
+   discriminator, `MetadataRefreshPanel.tsx` is a client component that can't
+   import the registry.)
 3. Add `info.baseUrl` so each provider declares its site once (used generically by
    health/probe/admin).
 

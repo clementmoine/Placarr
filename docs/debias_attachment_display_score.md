@@ -98,6 +98,27 @@ re-ranking and consumes a server-ordered list.
 - `metadataDiscogs.ts` (`source === "discogs"`, client-reachable via `[itemId]/page.tsx`):
   same constraint; reuses the `canonicalCover` trait once it can travel client-side.
 
+## DONE (2026-06-23) — shipped on `feat/foundation-postgres-tests`
+`attachmentDisplayScore.ts` is drained from the guard (whole allowlist entry
+removed). Approach as specced: the scorer reads two flags on the attachment —
+`isRealBoxCoverSource` and `isFullWrapCoverSource` — stamped server-side by
+`src/services/providerSourceTraits.ts` (`withProviderCoverTraits`, registry-derived,
+no provider literals). Stamped in `metadataMerge` (`allAttachments` +
+`providerImageCandidates`), `metadataStorage.storeMetadata` (before ranking) and
+re-derived in `formatMetadataFromStorage` (`mapAttachments`) so the client ranks
+identically; `ItemModal` threads the flags through `addAttachment`. The flags are
+**not persisted** — `storeMetadata` projects attachments through
+`toAttachmentCreateData` before the Prisma `create` (would otherwise reject the
+unknown args). New `ProviderInfo` traits: `sourceAliases` (bgg declares `["bgg"]`
+→ canonicalises to `boardgamegeek` so aliased/historical covers keep the bonus)
+and `fullWrapCover` (coverproject; replaces the `source==="coverproject"` penalty).
+**Behaviour change validated:** unifying onto the registry trait gives **okkazeo**
+the +220 real-box bonus (it was absent from the old hardcoded set). Re-ranking the
+real stored attachments (OLD set vs NEW registry) left the selected cover UNCHANGED
+for every item, and a live re-fetch of Mille Sabords (`3421272109517`) kept
+`meta.imageUrl` on the same bgg FR cover (okkazeo flagged `true` but not winning) —
+no regression. Full suite green (633 passing).
+
 ## State of the provider-blind drain (2026-06-23, this session)
 Done (clean, behaviour-preserving, full suite green): `metadataMerge.ts` (steam/
 discogs → `digitalStorefrontArt`/`canonicalCover` traits), `metadataStorage.ts`
@@ -105,11 +126,12 @@ discogs → `digitalStorefrontArt`/`canonicalCover` traits), `metadataStorage.ts
 → `nameDatabase` trait), admin `metadata-enrich` (→ derive primary game cover
 source), `metadataFetch.ts` partial (`requiresTitleAlignment` + `rateLimited`
 traits), `providerRegistry.ts` `isProviderConfigured` (redundant special-cases
-removed). New `ProviderInfo` traits added: `digitalStorefrontArt`, `canonicalCover`,
-`nameDatabase`, `rateLimited`, `requiresTitleAlignment` (declared in the provider
-modules).
+removed), **`attachmentDisplayScore.ts` (this doc — see DONE above)**. New
+`ProviderInfo` traits added: `digitalStorefrontArt`, `canonicalCover`,
+`nameDatabase`, `rateLimited`, `requiresTitleAlignment`, `sourceAliases`,
+`fullWrapCover` (declared in the provider modules).
 
-Remaining leaks needing design (not literal swaps): **this doc** (attachmentDisplayScore),
+Remaining leaks needing design (not literal swaps):
 `attachmentDisplayLabels`, `metadataDiscogs`, `[itemId]/page.tsx`,
 `MetadataRefreshPanel.tsx` (client components); `barcodeResolver.ts` /
 `sourceAssembly.ts` / `playerFacts.ts` (per-provider payload/fact shapes →

@@ -115,17 +115,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     tmdb: 1,
     wikidata: 1,
   },
-  "src/lib/attachmentDisplayScore.ts": {
-    apriloshop: 1,
-    bgg: 1,
-    boardgamegeek: 1,
-    coverproject: 3,
-    freakxy: 1,
-    launchbox: 1,
-    philibert: 1,
-    screenscraper: 1,
-    thegamesdb: 1,
-  },
   "src/lib/barcode/cachePayload.ts": {
     screenscraper: 2,
   },

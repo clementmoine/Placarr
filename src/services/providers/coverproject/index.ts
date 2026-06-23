@@ -14,6 +14,9 @@ export const coverprojectModule: ProviderModule = {
     capabilities: ["cover"],
     auth: { kind: "scrape" },
     canonical: true,
+    // Covers are full front+back wraps, so the display scorer penalises them and
+    // ranks them below standard 2D/3D fronts.
+    fullWrapCover: true,
     notes: "Jaquettes custom haute qualité (souvent PAL/EU).",
   },
   evidence: {

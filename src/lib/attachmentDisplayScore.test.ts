@@ -23,6 +23,7 @@ describe("attachmentDisplayScore", () => {
       source: "screenscraper",
       role: "uk",
       url: "/uploads/screenscraper.jpg",
+      isRealBoxCoverSource: true,
     };
     const metrics = new Map([
       [steamGridCover.url, { width: 600, height: 900, format: "png" }],
@@ -37,11 +38,12 @@ describe("attachmentDisplayScore", () => {
     ).toBe(screenScraperCover);
   });
 
-  it("documente le bonus de source vraie boîte pour ScreenScraper", () => {
+  it("documente le bonus de source vraie boîte via le flag stampé serveur", () => {
     const details = explainAttachmentScoreForDisplay({
       type: "cover",
       source: "screenscraper",
       url: "/uploads/cover.jpg",
+      isRealBoxCoverSource: true,
     });
 
     expect(details.signals).toContain("+220 real box cover source");
@@ -85,6 +87,7 @@ describe("attachmentDisplayScore", () => {
       source: "launchbox",
       role: "europe",
       url: "https://images.launchbox-app.com/cover-eu.jpg",
+      isRealBoxCoverSource: true,
     };
     const screenScraperCover = {
       type: "cover" as const,
@@ -202,6 +205,10 @@ describe("attachmentDisplayScore", () => {
       source: "coverproject",
       role: "eu",
       url: "/uploads/coverproject.jpg",
+      // A real CoverProject attachment is stamped both real-box and full-wrap by
+      // the server; the full-wrap flag is what de-ranks it below 2D/3D fronts.
+      isRealBoxCoverSource: true,
+      isFullWrapCoverSource: true,
     };
     const fr3dCover = {
       type: "cover" as const,
@@ -382,6 +389,54 @@ describe("attachmentDisplayScore", () => {
 
     expect(ranked).toHaveLength(1);
     expect(parseRegionFromRole(ranked[0].role)).toBe("fr");
+  });
+
+  it("classe une cover marquée vraie boîte au-dessus d'une cover identique sans le flag", () => {
+    const flagged = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/flagged.jpg",
+      isRealBoxCoverSource: true,
+    };
+    const plain = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/plain.jpg",
+    };
+
+    // Même type (2D front) et même région : seul le bonus +220 départage, même si
+    // `plain` est en tête de liste (index 0).
+    const ranked = rankCoversForDisplay([plain, flagged]);
+    expect(ranked[0]).toBe(flagged);
+
+    expect(explainAttachmentScoreForDisplay(flagged).signals).toContain(
+      "+220 real box cover source",
+    );
+    expect(explainAttachmentScoreForDisplay(plain).signals).not.toContain(
+      "+220 real box cover source",
+    );
+  });
+
+  it("pénalise et déclasse une cover full wrap signalée par le flag", () => {
+    const fullWrap = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/wrap.jpg",
+      isFullWrapCoverSource: true,
+    };
+    const standard = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/standard.jpg",
+    };
+
+    expect(explainAttachmentScoreForDisplay(fullWrap).signals).toContain(
+      "-250 full wrap cover penalty",
+    );
+
+    // Le flag full wrap déclasse la cover (typeRank 2) sous une 2D standard (0).
+    const ranked = rankCoversForDisplay([fullWrap, standard]);
+    expect(ranked[0]).toBe(standard);
   });
 
   describe("pickBestBackgroundFromAttachments", () => {

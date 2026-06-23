@@ -25,6 +25,10 @@ export const bggModule: ProviderModule = {
     label: "BoardGameGeek",
     types: ["boardgames"],
     nameDatabase: true,
+    // BGG attachments carry the short "bgg" source handle; declare it so the
+    // registry canonicalises them back to this provider when reading the
+    // real-box cover trait (otherwise aliased sources would lose the bonus).
+    sourceAliases: ["bgg"],
     capabilities: [
       "identify",
       "rating",

@@ -24,6 +24,11 @@ import { resolveAttachmentDisplayRegion } from "@/lib/attachmentDisplayLabels";
 import { regionRank } from "@/lib/localePreference";
 import { applyConsensus } from "@/lib/metadataConsensus";
 import { PROVIDERS } from "@/services/providerRegistry";
+import {
+  isRealBoxCoverSource,
+  isFullWrapCoverSource,
+  withProviderCoverTraits,
+} from "@/services/providerSourceTraits";
 import { prisma } from "@/lib/prisma";
 import {
   dedupeFacts,
@@ -81,7 +86,32 @@ const mapAttachments = (attachments?: Attachment[]) =>
     url: attachment.url,
     role: attachment.role ?? undefined,
     source: attachment.source ?? undefined,
+    // Re-derive the provider cover traits on load (not stored) so the client-safe
+    // scorer ranks identically to the server.
+    isRealBoxCoverSource: isRealBoxCoverSource(attachment.source),
+    isFullWrapCoverSource: isFullWrapCoverSource(attachment.source),
   })) ?? [];
+
+/**
+ * Project a scored/ranked attachment down to the columns the `Attachment` table
+ * actually has, dropping derived display-only fields (e.g. the provider cover
+ * trait flags) so Prisma `create` does not reject unknown args.
+ */
+const toAttachmentCreateData = (attachment: {
+  type: AttachmentType;
+  title?: string | null;
+  duration?: number | null;
+  url: string;
+  role?: string | null;
+  source?: string | null;
+}) => ({
+  type: attachment.type,
+  title: attachment.title ?? undefined,
+  duration: attachment.duration ?? undefined,
+  url: attachment.url,
+  role: attachment.role ?? undefined,
+  source: attachment.source ?? undefined,
+});
 
 function isDisplayImageAttachment(attachment: {
   type?: AttachmentType | string | null;
@@ -547,8 +577,14 @@ export async function storeMetadata(
       }),
   );
 
+  // Stamp the provider-declared cover traits onto each attachment so the display
+  // scorer (and the client, via the stored payload) ranks the box cover / full
+  // wrap signals without reading the registry.
   const rankedLocalizedAttachments = await dedupeLocalizedAttachmentsByContent(
-    rankAttachmentsForDisplay(localizedAttachments, imageMetricsByUrl),
+    rankAttachmentsForDisplay(
+      localizedAttachments.map(withProviderCoverTraits),
+      imageMetricsByUrl,
+    ),
   );
   const canonicalCover = rankedLocalizedAttachments.find(
     (attachment) =>
@@ -620,7 +656,7 @@ export async function storeMetadata(
       data: {
         ...metadataData,
         attachments: {
-          create: rankedLocalizedAttachments,
+          create: rankedLocalizedAttachments.map(toAttachmentCreateData),
         },
         authors: {
           set: [], // Disconnect all existing authors
@@ -642,7 +678,7 @@ export async function storeMetadata(
           connect: { id: itemId },
         },
         attachments: {
-          create: rankedLocalizedAttachments,
+          create: rankedLocalizedAttachments.map(toAttachmentCreateData),
         },
       },
       include: { attachments: true, authors: true, publishers: true },

@@ -536,6 +536,8 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       title?: string | null;
+      isRealBoxCoverSource?: boolean;
+      isFullWrapCoverSource?: boolean;
     }> = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -547,6 +549,10 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       title?: string | null;
+      // Provider cover traits travel on the server attachment payload; carry
+      // them through so the client gallery ranks identically to the server.
+      isRealBoxCoverSource?: boolean;
+      isFullWrapCoverSource?: boolean;
     }) => {
       if (!entry.url || urls.has(entry.url)) return;
       urls.add(entry.url);
@@ -556,7 +562,23 @@ export function ItemModal({
         source: entry.source,
         role: entry.role,
         title: entry.title,
+        isRealBoxCoverSource: entry.isRealBoxCoverSource,
+        isFullWrapCoverSource: entry.isFullWrapCoverSource,
       });
+    };
+
+    // The presented attachment payload carries the provider cover traits, but the
+    // raw Prisma attachment type does not declare them; read them tolerantly so
+    // the gallery ranks identically to the server-computed cover.
+    const coverTraitsOf = (attachment: unknown) => {
+      const traits = attachment as
+        | { isRealBoxCoverSource?: boolean; isFullWrapCoverSource?: boolean }
+        | null
+        | undefined;
+      return {
+        isRealBoxCoverSource: traits?.isRealBoxCoverSource,
+        isFullWrapCoverSource: traits?.isFullWrapCoverSource,
+      };
     };
 
     // URLs that already exist as real metadata attachments, with their true
@@ -615,6 +637,7 @@ export function ItemModal({
         source: matching?.source || "user",
         role: matching?.role,
         title: matching?.title,
+        ...coverTraitsOf(matching),
       });
     }
 
@@ -639,6 +662,7 @@ export function ItemModal({
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
           title: matchingAttachment?.title,
+          ...coverTraitsOf(matchingAttachment),
         });
       }
 
@@ -654,6 +678,7 @@ export function ItemModal({
             source: attachment.source,
             role: attachment.role,
             title: attachment.title,
+            ...coverTraitsOf(attachment),
           });
         }
       }

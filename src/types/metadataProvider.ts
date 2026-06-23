@@ -10,6 +10,13 @@ export interface MetadataAttachment {
   url: string;
   role?: string;
   source?: string;
+  /**
+   * Provider-declared cover traits, derived from `source` server-side so the
+   * client-safe display scorer can read them. Not persisted (recomputed on load).
+   * See `@/services/providerSourceTraits`.
+   */
+  isRealBoxCoverSource?: boolean;
+  isFullWrapCoverSource?: boolean;
 }
 
 export interface MetadataFact {

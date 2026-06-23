@@ -1,6 +1,7 @@
 import { AttachmentType } from "@prisma/client";
 import type { MediaType } from "@/types/providerRegistry";
 import { PROVIDERS } from "@/services/providerRegistry";
+import { withProviderCoverTraits } from "@/services/providerSourceTraits";
 import {
   isDisplayObservation,
   isRejectedObservation,
@@ -406,10 +407,12 @@ export function mergeMetadata(
     if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
     }
-    return attachments.map((a) => ({
-      ...a,
-      source: a.source || r.providerId,
-    }));
+    return attachments.map((a) =>
+      withProviderCoverTraits({
+        ...a,
+        source: a.source || r.providerId,
+      }),
+    );
   });
 
   const providerImageCandidates = resultsByWeight.flatMap((r) => {
@@ -420,13 +423,15 @@ export function mergeMetadata(
     const matchingAttachment = r.metadata.attachments?.find(
       (attachment) => attachment.url === r.metadata.imageUrl,
     );
-    return [{
-      type: matchingAttachment?.type ?? ("cover" as AttachmentType),
-      url: r.metadata.imageUrl,
-      role: matchingAttachment?.role,
-      source: matchingAttachment?.source || r.providerId,
-      title: matchingAttachment?.title,
-    }];
+    return [
+      withProviderCoverTraits({
+        type: matchingAttachment?.type ?? ("cover" as AttachmentType),
+        url: r.metadata.imageUrl,
+        role: matchingAttachment?.role,
+        source: matchingAttachment?.source || r.providerId,
+        title: matchingAttachment?.title,
+      }),
+    ];
   });
 
   const attachments = rankAttachmentsForDisplay([

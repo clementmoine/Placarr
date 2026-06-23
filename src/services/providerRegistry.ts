@@ -112,6 +112,8 @@ export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((module) => {
     weight: module.info.weight ?? ext.weight ?? 0.5,
     defaultLanguage: module.info.defaultLanguage ?? ext.defaultLanguage ?? "unknown",
     isRealBoxCover: module.info.isRealBoxCover ?? ext.isRealBoxCover ?? false,
+    sourceAliases: module.info.sourceAliases ?? [],
+    fullWrapCover: module.info.fullWrapCover ?? false,
     isSecondary: module.info.isSecondary ?? (ext as any).isSecondary ?? false,
     digitalStorefrontArt: module.info.digitalStorefrontArt ?? false,
     canonicalCover: module.info.canonicalCover ?? false,

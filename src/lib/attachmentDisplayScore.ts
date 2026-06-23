@@ -26,24 +26,6 @@ function mergeRolesByRegion(
   return rankA <= rankB ? a : b;
 }
 
-const REAL_BOX_COVER_SOURCES = new Set([
-  "bgg",
-  "boardgamegeek",
-  "screenscraper",
-  "thegamesdb",
-  "launchbox",
-  "coverproject",
-  "apriloshop",
-  "freakxy",
-  "philibert",
-]);
-
-function isRealBoxCoverSource(source?: string | null): boolean {
-  if (!source) return false;
-  const id = source.toLowerCase().trim();
-  return REAL_BOX_COVER_SOURCES.has(id);
-}
-
 // When the very same image URL is contributed by several independent sources,
 // that agreement is a strong signal it really depicts the product, so it earns
 // a display-ranking bonus. Counted per distinct source and capped so it breaks
@@ -77,6 +59,15 @@ export type ScoredAttachmentInput = {
   role?: string | null;
   source?: string | null;
   title?: string | null;
+  /**
+   * Provider-declared cover traits, stamped server-side (the scorer is client-safe
+   * and cannot read the registry). `isRealBoxCoverSource` marks a source whose
+   * cover is the real physical box (earns the box-cover bonus);
+   * `isFullWrapCoverSource` marks a full front+back wrap (penalised). See
+   * `@/services/providerSourceTraits`.
+   */
+  isRealBoxCoverSource?: boolean;
+  isFullWrapCoverSource?: boolean;
 };
 
 export interface AttachmentDisplayScoreDetails {
@@ -168,13 +159,13 @@ function buildAttachmentDisplayScoreDetails(
     if (semantics.kind === "cover3d") {
       addSignal(-60, "3D cover penalty");
     }
-    if (attachment.source?.toLowerCase().trim() === "coverproject") {
-      addSignal(-250, "CoverProject full wrap penalty");
+    if (attachment.isFullWrapCoverSource) {
+      addSignal(-250, "full wrap cover penalty");
     }
     if (
       isCoverCandidateKind(semantics.kind) &&
       attachment.type === "cover" &&
-      isRealBoxCoverSource(attachment.source)
+      attachment.isRealBoxCoverSource === true
     ) {
       addSignal(220, "real box cover source");
     }
@@ -427,8 +418,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
   const scored = attachments.map((attachment, index) => {
     const semantics = attachmentSemantics(attachment);
     const is3d = semantics.kind === "cover3d";
-    const isCoverProject =
-      attachment.source?.toLowerCase().trim() === "coverproject";
+    const isFullWrap = attachment.isFullWrapCoverSource === true;
     const isFrontCover =
       isCoverCandidateKind(semantics.kind) &&
       !isPhysicalNonCoverKind(semantics.kind);
@@ -437,8 +427,8 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
     if (isFrontCover) {
       if (is3d) {
         typeRank = 1; // 3D
-      } else if (isCoverProject) {
-        typeRank = 2; // CoverProject full wrap
+      } else if (isFullWrap) {
+        typeRank = 2; // full wrap (front+back spread)
       } else {
         typeRank = 0; // 2D Standard
       }

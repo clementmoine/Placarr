@@ -41,6 +41,19 @@ export interface ProviderInfo {
   weight?: number;
   defaultLanguage?: "fr" | "en" | "unknown";
   isRealBoxCover?: boolean;
+  /**
+   * Alternate `source` tokens an attachment may carry for this provider, besides
+   * its `id` (e.g. a short marketplace handle). Used to canonicalise a stored
+   * attachment source back to the provider id when reading provider-declared
+   * cover traits, so historical/aliased sources resolve identically.
+   */
+  sourceAliases?: string[];
+  /**
+   * The provider's covers are full front+back wraps (a single image spanning the
+   * whole sleeve), which look wrong shown as a portrait cover, so they are
+   * penalised and ranked below standard 2D/3D fronts in the display scorer.
+   */
+  fullWrapCover?: boolean;
   isSecondary?: boolean;
   /**
    * Provider art is digital-storefront (e.g. PC capsule/header), not the physical

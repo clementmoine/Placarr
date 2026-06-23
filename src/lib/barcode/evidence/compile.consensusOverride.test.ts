@@ -194,4 +194,77 @@ describe("applyMarketplaceConsensusOverride", () => {
     expect(result?.matches[0]?.name).not.toMatch(/\b2\b/);
     expect(result?.matches[0]?.name?.toLowerCase()).toContain("ghost recon");
   });
+
+  it("dément un numéro de suite via le volume d'un seul marchand dominant (#3307210117168)", async () => {
+    // Cas réel : seuls 2 marchands distincts répondent (PicClick en renvoie le
+    // gros), aucun ne cite le « 2 ». Le volume d'annonces concordantes doit
+    // suffire à démentir l'unique source canonique mal mappée.
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "ScreenScraper",
+          products: [{ name: "Tom Clancy's Ghost Recon 2", platformKey: "xbox" }],
+        },
+        {
+          providerName: "PicClick",
+          products: [
+            { name: "Tom Clancy's Ghost Recon - Big Box - PC", platformKey: "pc" },
+            { name: "Tom Clancy's Ghost Recon Version Française", platformKey: "xbox" },
+            { name: "Tom Clancy's Ghost Recon pour PC Big Box", platformKey: "pc" },
+            { name: "Ghost Recon Xbox", platformKey: "xbox" },
+            { name: "Tom Clancy's Ghost Recon Classics", platformKey: "xbox" },
+          ],
+        },
+        {
+          providerName: "AchatMoinsCher",
+          products: [{ name: "Ghost Recon", platformKey: "xbox" }],
+        },
+      ],
+      "3307210117168",
+    );
+
+    expect(result?.matches[0]?.name).not.toMatch(/\b2\b/);
+    expect(result?.matches[0]?.name?.toLowerCase()).toContain("ghost recon");
+  });
+
+  it("dément un numéro d'édition canonique via un canonique pair + volume (#083717120032)", async () => {
+    // Cas réel : ScreenScraper mappe à tort sur « TMNT III : The Manhattan
+    // Project », mais un second canonique (IGDB via ScanDex) nomme l'original et
+    // les marchands le corroborent. La source numérotée doit être déclassée.
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "ScreenScraper",
+          products: [
+            {
+              name: "Teenage Mutant Ninja Turtles III : The Manhattan Project",
+              platformKey: "nes",
+            },
+          ],
+        },
+        {
+          providerName: "ScanDex",
+          products: [{ name: "Teenage Mutant Ninja Turtles", platformKey: "nes" }],
+        },
+        {
+          providerName: "PicClick",
+          products: [
+            { name: "Teenage Mutant Ninja Turtles (Nintendo NES, 1989)", platformKey: "nes" },
+            { name: "Teenage Mutant Ninja Turtles NES CIB", platformKey: "nes" },
+            { name: "Teenage Mutant Hero Turtles NES", platformKey: "nes" },
+          ],
+        },
+        {
+          providerName: "ChasseAuxLivres",
+          products: [{ name: "Teenage Mutant Hero Turtles", platformKey: "nes" }],
+        },
+      ],
+      "083717120032",
+    );
+
+    expect(result?.matches[0]?.name?.toLowerCase()).not.toContain("manhattan");
+    expect(result?.matches[0]?.name?.toLowerCase()).toContain("turtles");
+  });
 });

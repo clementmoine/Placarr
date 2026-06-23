@@ -1,4 +1,7 @@
-import { filterPlatformRedundancies } from "@/lib/barcode/titleUtils";
+import {
+  filterPlatformRedundancies,
+  getSequelIndicators,
+} from "@/lib/barcode/titleUtils";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/videoGamePlatforms";
 
 import {
@@ -36,6 +39,15 @@ import {
  */
 export const MARKETPLACE_CONSENSUS_MIN_PROVIDERS = 3;
 
+// A wrong canonical sequel/edition number is, in the wild, usually disputed by a
+// single dominant marketplace (e.g. PicClick) returning many listings — too few
+// *distinct* providers for the strict gate above, but an overwhelming volume of
+// independent listings that no source corroborates. When the number is
+// uncorroborated, accept the franchise-level contradiction from ≥2 providers as
+// long as it carries at least this many disputing listings.
+export const SEQUEL_CONTRADICTION_MIN_PROVIDERS = 2;
+export const SEQUEL_CONTRADICTION_MIN_LISTINGS = 4;
+
 // Significant, franchise-identifying tokens of a title (drops generic words,
 // platform names and bare numbers — those last are handled as sequel
 // indicators). Used to recognise that "Ghost Recon", "Tom Clancy's Ghost Recon"
@@ -54,16 +66,44 @@ function franchiseBaseTokens(evidence: ProductEvidence): Set<string> {
   return out;
 }
 
+// The franchise identity of a *numbered* canonical, without its edition subtitle
+// or sequel number: drop everything after the first ":" ("… III : The Manhattan
+// Project" → "… III") and any number / roman-numeral / number-word token. This
+// clean core is what listings are matched against, so "Teenage Mutant Ninja
+// Turtles III : The Manhattan Project" reduces to {teenage,mutant,ninja,turtles}.
+function franchiseCoreTokens(evidence: ProductEvidence): Set<string> {
+  const beforeSubtitle = evidence.cleanName.split(":")[0] ?? evidence.cleanName;
+  const out = new Set<string>();
+  for (const token of beforeSubtitle.toLowerCase().split(/[^a-z0-9]+/)) {
+    if (token.length <= 2) continue;
+    if (/^\d+$/.test(token)) continue;
+    if (GENERIC_TITLE_TOKENS.has(token)) continue;
+    if (PLATFORM_TOKEN_TERMS.has(token)) continue;
+    if (getSequelIndicators(token).size > 0) continue; // 2 / ii / iii / two…
+    out.add(token);
+  }
+  return out;
+}
+
+// A listing names the canonical's franchise when it covers most of that clean
+// core, with ≥2 identifying tokens in common. Coverage is measured against the
+// smaller of the two sets so it tolerates both listing noise ("… NES Tested
+// CIB") and the brand prefix or regional variant real listings add or drop
+// ("Ghost Recon" vs "Tom Clancy's Ghost Recon"; "Hero" vs "Ninja" Turtles).
+function sharesFranchiseCore(
+  core: Set<string>,
+  listingFranchise: Set<string>,
+): boolean {
+  if (core.size < 2 || listingFranchise.size === 0) return false;
+  let shared = 0;
+  for (const token of core) if (listingFranchise.has(token)) shared++;
+  const minSize = Math.min(core.size, listingFranchise.size);
+  return shared >= 2 && shared >= Math.ceil(minSize * 0.6);
+}
+
 // True when one franchise-token set is contained in the other and they share at
 // least two identifying tokens — a strong "same franchise" signal that tolerates
 // the brand prefix ("Tom Clancy's") and edition words real listings add or drop.
-function shareFranchise(a: Set<string>, b: Set<string>): boolean {
-  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
-  if (small.size < 2) return false;
-  for (const token of small) if (!big.has(token)) return false;
-  return true;
-}
-
 /**
  * Largest cluster of marketplace listings that name the exact same product.
  */
@@ -104,33 +144,80 @@ function strictMarketplaceConsensus(marketplace: ProductEvidence[]): {
 function sequelContradictionConsensus(
   marketplace: ProductEvidence[],
   canonicalEvidence: ProductEvidence[],
-): { items: ProductEvidence[]; providers: number } {
+): {
+  items: ProductEvidence[];
+  numberedCanonical: ProductEvidence[];
+  disputingProviders: number;
+  numberedProviders: number;
+  numberCited: boolean;
+} {
+  const empty = {
+    items: [],
+    numberedCanonical: [],
+    disputingProviders: 0,
+    numberedProviders: 0,
+    numberCited: false,
+  };
   const numberedCanonical = canonicalEvidence.filter(
     (item) => item.parsed.indicators.size > 0,
   );
-  if (numberedCanonical.length === 0) return { items: [], providers: 0 };
+  if (numberedCanonical.length === 0) return empty;
 
-  const canonicalBase = new Set<string>();
+  const canonicalCore = new Set<string>();
   const canonicalIndicators = new Set<string>();
   for (const item of numberedCanonical) {
-    for (const token of franchiseBaseTokens(item)) canonicalBase.add(token);
+    for (const token of franchiseCoreTokens(item)) canonicalCore.add(token);
     for (const indicator of item.parsed.indicators) {
       canonicalIndicators.add(indicator);
     }
   }
   // Require a specific franchise (avoid latching onto one-word canonicals).
-  if (canonicalBase.size < 2) return { items: [], providers: 0 };
+  if (canonicalCore.size < 2) return empty;
 
-  const items = marketplace.filter((item) => {
-    if (!shareFranchise(franchiseBaseTokens(item), canonicalBase)) return false;
-    // Drop listings that actually corroborate the canonical's sequel number.
+  const sharesFranchise = (item: ProductEvidence) =>
+    sharesFranchiseCore(canonicalCore, franchiseBaseTokens(item));
+  const citesCanonicalNumber = (item: ProductEvidence) => {
     for (const indicator of canonicalIndicators) {
-      if (item.parsed.indicators.has(indicator)) return false;
+      if (item.parsed.indicators.has(indicator)) return true;
     }
-    return true;
-  });
-  const providers = new Set(items.map((item) => item.providerName)).size;
-  return { items, providers };
+    return false;
+  };
+
+  // A second canonical (e.g. IGDB via ScanDex) that names the same franchise but
+  // omits the number is strong, independent evidence the number is a bad mapping;
+  // it counts toward the dispute alongside the marketplace listings.
+  const otherCanonical = canonicalEvidence.filter(
+    (item) => !numberedCanonical.includes(item),
+  );
+
+  // If anything sharing the franchise actually cites the number, it is real — do
+  // not treat it as a misnumbering.
+  const numberCited = [...marketplace, ...otherCanonical].some(
+    (item) => sharesFranchise(item) && citesCanonicalNumber(item),
+  );
+
+  // Marketplace listings that name the franchise but omit the number dispute it
+  // (these are the ones we promote); disagreeing peer canonicals strengthen the
+  // dispute but are already anchors, so they only count toward the provider tally.
+  const items = marketplace.filter(
+    (item) => sharesFranchise(item) && !citesCanonicalNumber(item),
+  );
+  const disputingCanonicals = otherCanonical.filter(
+    (item) => sharesFranchise(item) && !citesCanonicalNumber(item),
+  );
+  const disputingProviders = new Set(
+    [...items, ...disputingCanonicals].map((item) => item.providerName),
+  ).size;
+  const numberedProviders = new Set(
+    numberedCanonical.map((item) => item.providerName),
+  ).size;
+  return {
+    items,
+    numberedCanonical,
+    disputingProviders,
+    numberedProviders,
+    numberCited,
+  };
 }
 
 export function applyMarketplaceConsensusOverride(
@@ -145,50 +232,61 @@ export function applyMarketplaceConsensusOverride(
   ).size;
   if (canonicalProviderCount === 0 || marketplace.length === 0) return;
 
-  let consensus = strictMarketplaceConsensus(marketplace);
-  // When the exact-product consensus is too weak, fall back to a franchise-level
-  // consensus that specifically contradicts the canonical's (unsupported) sequel
-  // number — see helper above.
-  if (consensus.providers < MARKETPLACE_CONSENSUS_MIN_PROVIDERS) {
-    const franchise = sequelContradictionConsensus(
-      marketplace,
-      canonicalEvidence,
-    );
-    if (franchise.providers > consensus.providers) consensus = franchise;
-  }
-
-  // Only override when the consensus is both strong and clearly dominant.
-  if (
-    consensus.providers < MARKETPLACE_CONSENSUS_MIN_PROVIDERS ||
-    consensus.providers <= canonicalProviderCount
-  ) {
-    return;
-  }
-
-  // If any anchor already agrees with the consensus, there is no contradiction.
-  const corroborated = evidence.some(
-    (item) =>
-      (item.isCanonical || item.isTrustedRetailer) &&
-      consensus.items.some((other) => areEvidenceSameProduct(item, other)),
-  );
-  if (corroborated) return;
-
-  // Promote the consensus so it leads (no listing-only confidence cap)…
-  for (const item of consensus.items) {
-    item.isTrustedRetailer = true;
-    item.priority = Math.max(item.priority, 1);
-  }
-  // …and flag the contradicted canonical evidence. It stays canonical (so it
-  // survives noise filtering and surfaces as a clean alternate) but its cluster
-  // confidence is capped so it ranks below the consensus.
-  for (const item of evidence) {
-    if (
-      item.isCanonical &&
-      !consensus.items.some((other) => areEvidenceSameProduct(item, other))
-    ) {
-      item.contradictedByConsensus = true;
+  // Promote the disputing marketplace listings to trusted-retailer level (no
+  // "listing-only" confidence cap) and cap the contradicted canonical(s). A
+  // contradicted canonical stays canonical so it still surfaces as a clean
+  // least-prioritised alternate.
+  const promote = (
+    itemsToTrust: ProductEvidence[],
+    contradicted: ProductEvidence[],
+  ) => {
+    for (const item of itemsToTrust) {
+      item.isTrustedRetailer = true;
+      item.priority = Math.max(item.priority, 1);
     }
+    for (const item of contradicted) item.contradictedByConsensus = true;
+  };
+
+  // Path 1 — a strong, independent SAME-PRODUCT marketplace consensus overrules a
+  // lone canonical, unless an anchor already agrees (then it wins on its own).
+  const strict = strictMarketplaceConsensus(marketplace);
+  if (
+    strict.providers >= MARKETPLACE_CONSENSUS_MIN_PROVIDERS &&
+    strict.providers > canonicalProviderCount
+  ) {
+    const corroborated = evidence.some(
+      (item) =>
+        (item.isCanonical || item.isTrustedRetailer) &&
+        strict.items.some((other) => areEvidenceSameProduct(item, other)),
+    );
+    if (!corroborated) {
+      promote(
+        strict.items,
+        canonicalEvidence.filter(
+          (item) =>
+            !strict.items.some((other) => areEvidenceSameProduct(item, other)),
+        ),
+      );
+      return;
+    }
+    // Corroborated: an anchor already names the consensus product. It normally
+    // wins on its own — but a disagreeing *numbered* canonical can still
+    // out-weight it (e.g. ScreenScraper "… III" vs IGDB's base title), so fall
+    // through to the franchise path below to demote that one.
   }
+
+  // Path 2 — a franchise-level contradiction of the canonical's UNCORROBORATED
+  // sequel/edition number. That number is often disputed by one dominant
+  // marketplace's many listings and/or a second, disagreeing canonical, so we
+  // count listing volume and peer canonicals — never when any source cites it.
+  const franchise = sequelContradictionConsensus(marketplace, canonicalEvidence);
+  const qualifies =
+    !franchise.numberCited &&
+    franchise.disputingProviders > franchise.numberedProviders &&
+    (franchise.disputingProviders >= MARKETPLACE_CONSENSUS_MIN_PROVIDERS ||
+      (franchise.disputingProviders >= SEQUEL_CONTRADICTION_MIN_PROVIDERS &&
+        franchise.items.length >= SEQUEL_CONTRADICTION_MIN_LISTINGS));
+  if (qualifies) promote(franchise.items, franchise.numberedCanonical);
 }
 
 export async function compileResultForType(

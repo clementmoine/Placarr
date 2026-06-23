@@ -4,7 +4,8 @@ import {
   canonicalProviderIdForSource,
   isFullWrapCoverSource,
   isRealBoxCoverSource,
-  withProviderCoverTraits,
+  providerLabelForSource,
+  withProviderAttachmentTraits,
 } from "./providerSourceTraits";
 
 describe("providerSourceTraits", () => {
@@ -56,20 +57,41 @@ describe("providerSourceTraits", () => {
     expect(isFullWrapCoverSource("bgg")).toBe(false);
   });
 
-  it("stampe les deux flags dérivés de la source sur l'attachment", () => {
-    expect(withProviderCoverTraits({ source: "coverproject" })).toMatchObject({
-      source: "coverproject",
-      isRealBoxCoverSource: true,
-      isFullWrapCoverSource: true,
-    });
-    expect(withProviderCoverTraits({ source: "bgg", url: "/c.jpg" })).toMatchObject({
+  it("résout le libellé d'affichage depuis info.label du registre", () => {
+    expect(providerLabelForSource("screenscraper")).toBe("ScreenScraper");
+    expect(providerLabelForSource("thegamesdb")).toBe("TheGamesDB");
+    expect(providerLabelForSource("bgg")).toBe("BoardGameGeek"); // via alias
+    expect(providerLabelForSource("ScreenScraper · fr")).toBe("ScreenScraper");
+    expect(providerLabelForSource("barcode")).toBeNull(); // tag non-provider
+    expect(providerLabelForSource("user")).toBeNull();
+    expect(providerLabelForSource(null)).toBeNull();
+  });
+
+  it("stampe flags + libellé dérivés de la source sur l'attachment", () => {
+    expect(withProviderAttachmentTraits({ source: "coverproject" })).toMatchObject(
+      {
+        source: "coverproject",
+        isRealBoxCoverSource: true,
+        isFullWrapCoverSource: true,
+        providerLabel: "Cover Project",
+      },
+    );
+    expect(
+      withProviderAttachmentTraits({ source: "bgg", url: "/c.jpg" }),
+    ).toMatchObject({
       url: "/c.jpg",
       isRealBoxCoverSource: true,
       isFullWrapCoverSource: false,
+      providerLabel: "BoardGameGeek",
     });
-    expect(withProviderCoverTraits({ source: "steamgriddb" })).toMatchObject({
+    expect(withProviderAttachmentTraits({ source: "steamgriddb" })).toMatchObject({
       isRealBoxCoverSource: false,
       isFullWrapCoverSource: false,
+      providerLabel: "SteamGridDB",
     });
+    // Non-provider tag → no propagated label (formatter falls back to its tag map).
+    expect(withProviderAttachmentTraits({ source: "barcode" }).providerLabel).toBe(
+      undefined,
+    );
   });
 });

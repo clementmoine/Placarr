@@ -1,7 +1,7 @@
 import { AttachmentType } from "@prisma/client";
 import type { MediaType } from "@/types/providerRegistry";
 import { PROVIDERS } from "@/services/providerRegistry";
-import { withProviderCoverTraits } from "@/services/providerSourceTraits";
+import { withProviderAttachmentTraits } from "@/services/providerSourceTraits";
 import {
   isDisplayObservation,
   isRejectedObservation,
@@ -408,7 +408,7 @@ export function mergeMetadata(
       return [];
     }
     return attachments.map((a) =>
-      withProviderCoverTraits({
+      withProviderAttachmentTraits({
         ...a,
         source: a.source || r.providerId,
       }),
@@ -424,7 +424,7 @@ export function mergeMetadata(
       (attachment) => attachment.url === r.metadata.imageUrl,
     );
     return [
-      withProviderCoverTraits({
+      withProviderAttachmentTraits({
         type: matchingAttachment?.type ?? ("cover" as AttachmentType),
         url: r.metadata.imageUrl,
         role: matchingAttachment?.role,

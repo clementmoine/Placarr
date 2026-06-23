@@ -33,6 +33,13 @@ const FULL_WRAP_COVER_PROVIDER_IDS = new Set(
   ),
 );
 
+// Provider id → human display label (registry `info.label`). Used to stamp a
+// gallery chip label onto attachments so the client-safe label formatter need
+// not carry a provider-id→label map.
+const PROVIDER_LABEL_BY_ID = new Map(
+  PROVIDERS.map((provider) => [provider.id, provider.label]),
+);
+
 /**
  * Resolve an attachment `source` to its canonical provider id. Sources may be a
  * provider id, a declared alias, or carry a "· region" / "/ variant" suffix; the
@@ -68,16 +75,34 @@ export function isFullWrapCoverSource(source?: string | null): boolean {
 }
 
 /**
- * Stamp the provider-declared cover traits onto an attachment so the
- * client-safe display scorer can read them without the registry. Pure: returns a
- * new object, leaving the input untouched.
+ * Human display label (registry `info.label`) for a provider source, or null for
+ * a non-provider tag (barcode/merged/…) or an unknown source. Stamped onto
+ * attachments so the gallery label formatter stays registry-free.
  */
-export function withProviderCoverTraits<T extends { source?: string | null }>(
+export function providerLabelForSource(source?: string | null): string | null {
+  const id = canonicalProviderIdForSource(source);
+  return (id !== null && PROVIDER_LABEL_BY_ID.get(id)) || null;
+}
+
+/**
+ * Stamp the provider-declared, registry-derived attachment fields (cover-scoring
+ * flags + display label) onto an attachment so the client-safe display scorer
+ * and label formatter can read them without importing the registry. Pure:
+ * returns a new object, leaving the input untouched.
+ */
+export function withProviderAttachmentTraits<
+  T extends { source?: string | null },
+>(
   attachment: T,
-): T & { isRealBoxCoverSource: boolean; isFullWrapCoverSource: boolean } {
+): T & {
+  isRealBoxCoverSource: boolean;
+  isFullWrapCoverSource: boolean;
+  providerLabel?: string;
+} {
   return {
     ...attachment,
     isRealBoxCoverSource: isRealBoxCoverSource(attachment.source),
     isFullWrapCoverSource: isFullWrapCoverSource(attachment.source),
+    providerLabel: providerLabelForSource(attachment.source) ?? undefined,
   };
 }

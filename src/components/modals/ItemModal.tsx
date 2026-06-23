@@ -479,6 +479,7 @@ export function ItemModal({
             role: a.role,
             title: a.title,
             source: a.source,
+            providerLabel: a.providerLabel,
           },
           displayLocale,
         );
@@ -538,6 +539,7 @@ export function ItemModal({
       title?: string | null;
       isRealBoxCoverSource?: boolean;
       isFullWrapCoverSource?: boolean;
+      providerLabel?: string | null;
     }> = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -549,10 +551,12 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       title?: string | null;
-      // Provider cover traits travel on the server attachment payload; carry
-      // them through so the client gallery ranks identically to the server.
+      // Provider-derived display fields travel on the server attachment payload;
+      // carry them through so the client gallery ranks and labels identically to
+      // the server.
       isRealBoxCoverSource?: boolean;
       isFullWrapCoverSource?: boolean;
+      providerLabel?: string | null;
     }) => {
       if (!entry.url || urls.has(entry.url)) return;
       urls.add(entry.url);
@@ -564,20 +568,26 @@ export function ItemModal({
         title: entry.title,
         isRealBoxCoverSource: entry.isRealBoxCoverSource,
         isFullWrapCoverSource: entry.isFullWrapCoverSource,
+        providerLabel: entry.providerLabel,
       });
     };
 
-    // The presented attachment payload carries the provider cover traits, but the
-    // raw Prisma attachment type does not declare them; read them tolerantly so
-    // the gallery ranks identically to the server-computed cover.
-    const coverTraitsOf = (attachment: unknown) => {
+    // The presented attachment payload carries the provider-derived display
+    // fields, but the raw Prisma attachment type does not declare them; read them
+    // tolerantly so the gallery ranks and labels identically to the server.
+    const attachmentTraitsOf = (attachment: unknown) => {
       const traits = attachment as
-        | { isRealBoxCoverSource?: boolean; isFullWrapCoverSource?: boolean }
+        | {
+            isRealBoxCoverSource?: boolean;
+            isFullWrapCoverSource?: boolean;
+            providerLabel?: string | null;
+          }
         | null
         | undefined;
       return {
         isRealBoxCoverSource: traits?.isRealBoxCoverSource,
         isFullWrapCoverSource: traits?.isFullWrapCoverSource,
+        providerLabel: traits?.providerLabel,
       };
     };
 
@@ -637,7 +647,7 @@ export function ItemModal({
         source: matching?.source || "user",
         role: matching?.role,
         title: matching?.title,
-        ...coverTraitsOf(matching),
+        ...attachmentTraitsOf(matching),
       });
     }
 
@@ -662,7 +672,7 @@ export function ItemModal({
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
           title: matchingAttachment?.title,
-          ...coverTraitsOf(matchingAttachment),
+          ...attachmentTraitsOf(matchingAttachment),
         });
       }
 
@@ -678,7 +688,7 @@ export function ItemModal({
             source: attachment.source,
             role: attachment.role,
             title: attachment.title,
-            ...coverTraitsOf(attachment),
+            ...attachmentTraitsOf(attachment),
           });
         }
       }
@@ -691,6 +701,7 @@ export function ItemModal({
           role: attachment.role,
           title: attachment.title,
           source: attachment.source,
+          providerLabel: attachment.providerLabel,
         },
         displayLocale,
       );

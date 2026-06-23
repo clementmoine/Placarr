@@ -22,10 +22,11 @@ export interface MediaItem {
   source?: string | null;
   role?: string | null;
   title?: string | null;
-  // Provider cover traits stamped server-side (see providerSourceTraits); read by
-  // the display scorer so client-side ranking matches the server.
+  // Provider-derived display fields stamped server-side (see providerSourceTraits):
+  // cover-scoring flags read by the scorer, plus the gallery chip label.
   isRealBoxCoverSource?: boolean;
   isFullWrapCoverSource?: boolean;
+  providerLabel?: string;
 }
 
 export interface MediaInput {

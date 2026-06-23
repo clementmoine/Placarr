@@ -1330,6 +1330,7 @@ export default function ItemDetailsPage() {
             role: img.role,
             title: img.title,
             source: img.source,
+            providerLabel: img.providerLabel,
           },
           displayLocale,
         );

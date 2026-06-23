@@ -27,7 +27,8 @@ import { PROVIDERS } from "@/services/providerRegistry";
 import {
   isRealBoxCoverSource,
   isFullWrapCoverSource,
-  withProviderCoverTraits,
+  providerLabelForSource,
+  withProviderAttachmentTraits,
 } from "@/services/providerSourceTraits";
 import { prisma } from "@/lib/prisma";
 import {
@@ -86,10 +87,11 @@ const mapAttachments = (attachments?: Attachment[]) =>
     url: attachment.url,
     role: attachment.role ?? undefined,
     source: attachment.source ?? undefined,
-    // Re-derive the provider cover traits on load (not stored) so the client-safe
-    // scorer ranks identically to the server.
+    // Re-derive the provider display fields on load (not stored) so the
+    // client-safe scorer ranks and the gallery labels identically to the server.
     isRealBoxCoverSource: isRealBoxCoverSource(attachment.source),
     isFullWrapCoverSource: isFullWrapCoverSource(attachment.source),
+    providerLabel: providerLabelForSource(attachment.source) ?? undefined,
   })) ?? [];
 
 /**
@@ -582,7 +584,7 @@ export async function storeMetadata(
   // wrap signals without reading the registry.
   const rankedLocalizedAttachments = await dedupeLocalizedAttachmentsByContent(
     rankAttachmentsForDisplay(
-      localizedAttachments.map(withProviderCoverTraits),
+      localizedAttachments.map(withProviderAttachmentTraits),
       imageMetricsByUrl,
     ),
   );

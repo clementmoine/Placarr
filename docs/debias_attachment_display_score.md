@@ -90,13 +90,20 @@ re-ranking and consumes a server-ordered list.
   identical one without it (covering the +220 signal at the data level).
 
 ## Sibling targets (same client-trait-propagation pattern — do after, or together)
-- `attachmentDisplayLabels.ts` `PROVIDER_LABELS` (≈20 literals, the biggest single
-  allowlist entry): provider id → display label ("SS", "BoardGameGeek"). Providers
-  already have `info.label`. Same client constraint → propagate the label on the
-  attachment (`attachment.providerLabel`) server-side, or generate a client-safe
-  label snapshot. Solving flag-on-attachment here unlocks the same mechanism.
+- ~~`attachmentDisplayLabels.ts` `PROVIDER_LABELS`~~ **DONE** — drained via the same
+  flag-on-attachment mechanism: `providerLabelForSource` (registry `info.label`) is
+  stamped as `attachment.providerLabel` by `withProviderAttachmentTraits` (the cover
+  helper, renamed + extended), and `getAttachmentGalleryLabels` reads it; only the
+  synthetic non-provider tags (`barcode`→Scan, `merged`→Fusion, `metadata`, `user`)
+  remain in the client file (not provider terms). **Deliberate UI change** (user-
+  approved): chips now show the canonical label, e.g. `SS`→`ScreenScraper`,
+  `TGDB`→`TheGamesDB`, `Archichouette`→`Archi-Chouette`. Client threading:
+  `ItemModal` (2 gallery calls via `addAttachment`/`attachmentTraitsOf`) +
+  `[itemId]/page.tsx` (1) + `MediaItem.providerLabel`. Verified end-to-end on real
+  stored items (Mille Sabords, PES 6).
 - `metadataDiscogs.ts` (`source === "discogs"`, client-reachable via `[itemId]/page.tsx`):
   same constraint; reuses the `canonicalCover` trait once it can travel client-side.
+  Now the **only** remaining client-reachable label/source leak.
 
 ## DONE (2026-06-23) — shipped on `feat/foundation-postgres-tests`
 `attachmentDisplayScore.ts` is drained from the guard (whole allowlist entry
@@ -126,13 +133,15 @@ discogs → `digitalStorefrontArt`/`canonicalCover` traits), `metadataStorage.ts
 → `nameDatabase` trait), admin `metadata-enrich` (→ derive primary game cover
 source), `metadataFetch.ts` partial (`requiresTitleAlignment` + `rateLimited`
 traits), `providerRegistry.ts` `isProviderConfigured` (redundant special-cases
-removed), **`attachmentDisplayScore.ts` (this doc — see DONE above)**. New
-`ProviderInfo` traits added: `digitalStorefrontArt`, `canonicalCover`,
-`nameDatabase`, `rateLimited`, `requiresTitleAlignment`, `sourceAliases`,
-`fullWrapCover` (declared in the provider modules).
+removed), **`attachmentDisplayScore.ts` + `attachmentDisplayLabels.ts` (this doc —
+see DONE / Sibling targets above)**. New `ProviderInfo` traits added:
+`digitalStorefrontArt`, `canonicalCover`, `nameDatabase`, `rateLimited`,
+`requiresTitleAlignment`, `sourceAliases`, `fullWrapCover` (declared in the
+provider modules). The flag/label-on-attachment helper is
+`withProviderAttachmentTraits` in `src/services/providerSourceTraits.ts`.
 
 Remaining leaks needing design (not literal swaps):
-`attachmentDisplayLabels`, `metadataDiscogs`, `[itemId]/page.tsx`,
+`metadataDiscogs`, `[itemId]/page.tsx`,
 `MetadataRefreshPanel.tsx` (client components); `barcodeResolver.ts` /
 `sourceAssembly.ts` / `playerFacts.ts` (per-provider payload/fact shapes →
 provider-declared shaping); `metadataFetch.ts` SS-recheck + PC-title (provider

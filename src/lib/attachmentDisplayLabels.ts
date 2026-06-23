@@ -21,40 +21,22 @@ export type AttachmentLabelInput = {
   role?: string | null;
   title?: string | null;
   source?: string | null;
+  /**
+   * Provider display label (registry `info.label`) stamped onto the attachment
+   * server-side (see `@/services/providerSourceTraits`). The chip label reads
+   * this so this client-safe module carries no provider-id→label map. Absent for
+   * non-provider tags (handled below) and for unknown sources (title-cased).
+   */
+  providerLabel?: string | null;
 };
 
-const PROVIDER_LABELS: Record<string, string> = {
-  screenscraper: "SS",
-  launchbox: "LaunchBox",
-  thegamesdb: "TGDB",
-  steamgriddb: "SteamGridDB",
-  coverproject: "CoverProject",
-  pricecharting: "PriceCharting",
-  howlongtobeat: "HowLongToBeat",
-  boardgamegeek: "BoardGameGeek",
-  bgg: "BoardGameGeek",
-  googlebooks: "Google Books",
-  openlibrary: "Open Library",
-  musicbrainz: "MusicBrainz",
-  achatmoinscher: "AchatMoinsCher",
-  chasseauxlivres: "ChasseAuxLivres",
-  ledenicheur: "LeDenicheur",
-  philibert: "Philibert",
-  archichouette: "Archichouette",
-  lepassetemps: "Le Passe-Temps",
-  ludifolie: "Ludifolie",
+// Synthetic, non-provider attachment sources (not registry providers, so no
+// `info.label`); these keep an explicit display label here.
+const SOURCE_TAG_LABELS: Record<string, string> = {
   barcode: "Scan",
   metadata: "Metadata",
   merged: "Fusion",
   user: "Perso",
-  igdb: "IGDB",
-  rawg: "RAWG",
-  tmdb: "TMDB",
-  omdb: "OMDb",
-  steam: "Steam",
-  discogs: "Discogs",
-  deezer: "Deezer",
-  wikidata: "Wikidata",
 };
 
 const KIND_LABELS: Record<
@@ -289,14 +271,18 @@ export function isPhysicalNonCoverKind(kind: AttachmentDisplayKind): boolean {
 }
 
 export function formatProviderDisplayName(
-  source?: string | null,
+  input: AttachmentLabelInput,
 ): string | null {
+  const source = input.source;
   if (!source) return null;
   const normalized = normalizeToken(source);
   if (!normalized) return null;
 
+  // Synthetic tag → its fixed label; otherwise the registry label stamped on the
+  // attachment; otherwise a best-effort title-cased fallback for unknown sources.
   return (
-    PROVIDER_LABELS[normalized] ||
+    SOURCE_TAG_LABELS[normalized] ||
+    input.providerLabel ||
     source.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
   );
 }
@@ -330,7 +316,7 @@ export function getAttachmentGalleryLabels(
   const regionKey = resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
   const region = formatAttachmentRegionLabel(regionKey, locale);
-  const provider = formatProviderDisplayName(input.source);
+  const provider = formatProviderDisplayName(input);
   const detail = region ? `${kind} · ${region}` : kind;
 
   return {

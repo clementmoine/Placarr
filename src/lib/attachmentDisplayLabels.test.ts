@@ -3,15 +3,16 @@ import { describe, expect, it } from "vitest";
 import { getAttachmentGalleryLabels } from "./attachmentDisplayLabels";
 
 describe("attachmentDisplayLabels", () => {
-  it("normalise ScreenScraper back/eu", () => {
+  it("normalise ScreenScraper back/eu (chip = registry label propagée)", () => {
     expect(
       getAttachmentGalleryLabels({
         type: "image",
         role: "back-eu",
         source: "screenscraper",
+        providerLabel: "ScreenScraper",
       }),
     ).toMatchObject({
-      provider: "SS",
+      provider: "ScreenScraper",
       kind: "Dos",
       region: "Europe",
       detail: "Dos · Europe",
@@ -25,6 +26,7 @@ describe("attachmentDisplayLabels", () => {
         role: "europe",
         title: "Box - Front",
         source: "launchbox",
+        providerLabel: "LaunchBox",
       }),
     ).toMatchObject({
       provider: "LaunchBox",
@@ -41,6 +43,7 @@ describe("attachmentDisplayLabels", () => {
         role: "europe",
         title: "Box - Back",
         source: "launchbox",
+        providerLabel: "LaunchBox",
       }),
     ).toMatchObject({
       kind: "Dos",
@@ -55,9 +58,10 @@ describe("attachmentDisplayLabels", () => {
         type: "cover",
         role: "eu",
         source: "thegamesdb",
+        providerLabel: "TheGamesDB",
       }),
     ).toMatchObject({
-      provider: "TGDB",
+      provider: "TheGamesDB",
       detail: "Jaquette · Europe",
     });
   });
@@ -69,6 +73,7 @@ describe("attachmentDisplayLabels", () => {
           type: "cover",
           role: "us",
           source: "igdb",
+          providerLabel: "IGDB",
         },
         "en",
       ),
@@ -76,5 +81,17 @@ describe("attachmentDisplayLabels", () => {
       provider: "IGDB",
       detail: "Cover · United States",
     });
+  });
+
+  it("garde les libellés des tags synthétiques (barcode → Scan)", () => {
+    expect(
+      getAttachmentGalleryLabels({ type: "image", source: "barcode" }),
+    ).toMatchObject({ provider: "Scan" });
+  });
+
+  it("title-case une source provider inconnue sans label propagé", () => {
+    expect(
+      getAttachmentGalleryLabels({ type: "cover", source: "screenscraper" }),
+    ).toMatchObject({ provider: "Screenscraper" });
   });
 });

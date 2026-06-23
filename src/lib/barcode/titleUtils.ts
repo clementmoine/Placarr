@@ -226,6 +226,31 @@ export function cleanTitleForDisplay(
   // Replace escaped SQL single quotes or doubled single quotes with a single quote
   cleaned = cleaned.replace(/''/g, "'");
 
+  // Strip emoji / pictographs / dingbats / arrows and stray double-quotes that
+  // marketplace listings sprinkle into titles ("Laserdisc📀 …", '… " WALT DISNEY "').
+  // They defeat canonical name lookups (TMDB/IGDB) and title scoring. Apostrophes
+  // are preserved.
+  cleaned = cleaned
+    .replace(
+      /[\u{1F000}-\u{1FAFF}\u{2190}-\u{21FF}\u{2300}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}]/gu,
+      " ",
+    )
+    .replace(/["“”«»]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Media-format and disc-count noise that the suffix/prefix lists miss because
+  // it sits mid-title: "Laserdisc", "1 disque", "2 discs", "Coffret 3 DVD"…
+  cleaned = cleaned
+    .replace(/\blaser\s?disc\b/gi, " ")
+    .replace(
+      /\b\d+\s*(?:disques?|discs?|cd|dvd|blu-?rays?|vhs|k7|cassettes?|vinyles?|lps?)\b/gi,
+      " ",
+    )
+    .replace(/^(?:jeux?\s+)?vid[eé]o(?:\s+(?:pc|console))?\b[\s:–—\-|]*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
   // Remove wrapping quotes if they match
   if (
     (cleaned.startsWith("'") && cleaned.endsWith("'")) ||

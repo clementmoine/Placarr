@@ -26,6 +26,23 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
     expect(out.toLowerCase()).not.toContain("pal");
   });
 
+  it("retire emoji, format laserdisc, comptage de disques et guillemets", () => {
+    const out = cleanTitleForDisplay(
+      'Laserdisc📀  TOY STORY (PAL) 1 disque " WALT DISNEY "',
+    );
+    expect(out.toLowerCase()).toContain("toy story");
+    expect(out).not.toMatch(/📀|"/);
+    expect(out.toLowerCase()).not.toContain("laserdisc");
+    expect(out.toLowerCase()).not.toContain("disque");
+  });
+
+  it("retire un préfixe 'vidéo PC' et les guillemets intégrés d'une annonce", () => {
+    const out = cleanTitleForDisplay('Jeu vidéo PC " Tom Clancy \'s Ghost Recon " - TBE');
+    expect(out.toLowerCase()).toContain("ghost recon");
+    expect(out).not.toContain('"');
+    expect(out.toLowerCase()).not.toContain("vidéo");
+  });
+
   it("conserve le suffixe plateforme quand demandé, le retire sinon", () => {
     const kept = cleanTitleForDisplay("Mario Kart Wii", {
       preservePlatformSuffix: true,

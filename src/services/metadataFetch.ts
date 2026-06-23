@@ -207,7 +207,7 @@ export async function fetchMetadata(
           fallbackNames: finalFallbackNames,
         }),
       {
-        limit: providerId === "screenscraper" ? 6 : 12,
+        limit: providerInfo?.rateLimited ? 6 : 12,
         validate: (candidate, fallbackName) =>
           isMetadataTitleAligned(
             candidate,
@@ -244,7 +244,12 @@ export async function fetchMetadata(
   // 6. Merge results generically
   const mergeInputs = Array.from(byProvider.entries()).flatMap(([providerId, metadata]) => {
     if (!metadata) return [];
-    if (type === "games" && ["igdb", "thegamesdb", "launchbox", "rawg"].includes(providerId)) {
+    // Name-searched game DBs (provider-declared) can return a different game, so
+    // validate their title alignment before merging.
+    if (
+      type === "games" &&
+      providers.find((p) => p.id === providerId)?.requiresTitleAlignment
+    ) {
       const alignmentNames = [name, ...barcodeAlternateNames].filter(Boolean);
       if (
         !isMetadataTitleAligned(metadata, alignmentNames, 0.58) ||

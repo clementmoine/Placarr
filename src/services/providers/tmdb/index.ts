@@ -21,6 +21,7 @@ export const tmdbModule: ProviderModule = {
     id: "tmdb",
     label: "TMDB",
     types: ["movies"],
+    nameDatabase: true,
     capabilities: [
       "identify",
       "rating",

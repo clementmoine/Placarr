@@ -15,6 +15,8 @@ export const igdbModule: ProviderModule = {
     id: "igdb",
     label: "IGDB",
     types: ["games"],
+    nameDatabase: true,
+    requiresTitleAlignment: true,
     capabilities: [
       "identify",
       "description",

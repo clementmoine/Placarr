@@ -28,6 +28,8 @@ export const steamModule: ProviderModule = {
     ],
     auth: { kind: "none" },
     canonical: true,
+    // PC capsule/header art, not the physical console box being scanned.
+    digitalStorefrontArt: true,
     notes: "Jeux PC uniquement (store API).",
   },
   createMetadataAdapter: () => ({

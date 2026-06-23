@@ -26,6 +26,7 @@ export const openlibraryModule: ProviderModule = {
     id: "openlibrary",
     label: "OpenLibrary",
     types: ["books"],
+    nameDatabase: true,
     capabilities: [
       "identify",
       "cover",

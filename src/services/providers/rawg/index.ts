@@ -22,6 +22,7 @@ export const rawgModule: ProviderModule = {
     id: "rawg",
     label: "RAWG",
     types: ["games"],
+    requiresTitleAlignment: true,
     capabilities: [
       "identify",
       "rating",

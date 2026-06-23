@@ -2,13 +2,9 @@ import { convertXML } from "simple-xml-to-json";
 import { decode as decodeHTMLEntities } from "html-entities";
 import axios from "axios";
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
-import {
-  fetchFromBGG,
-  fetchFromDeezer,
-  fetchFromOpenLibrary,
-  fetchFromTMDB,
-} from "@/services/metadataResolvers";
-import { fetchFromIGDB, getIGDBSuggestions } from "@/services/providers/igdb";
+import { getMetadataProviderAdapter } from "@/services/metadataResolvers";
+import { PROVIDERS } from "@/services/providerRegistry";
+import { getIGDBSuggestions } from "@/services/providers/igdb";
 import { parseTMDBSeriesIntent } from "@/services/providers/tmdb";
 import type { BGGChild, BGGResponse } from "@/services/providers/bgg";
 
@@ -28,38 +24,23 @@ export async function confrontWithDatabase(
   if (!name || !type) return null;
   const cleanedName = cleanSearchQuery(name);
   if (!cleanedName) return null;
+
+  // The authoritative name database for this media type declares itself via the
+  // `nameDatabase` trait (e.g. IGDB/games, TMDB/movies) — no hardcoded
+  // type→provider switch. Resolved by name through the provider's adapter.
+  const provider = PROVIDERS.filter(
+    (p) => p.types.some((t) => t === type) && p.nameDatabase,
+  ).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0];
+  if (!provider) return null;
+
   try {
-    switch (type) {
-      case "games": {
-        const game = await fetchFromIGDB(cleanedName);
-        if (game && game.title) return game.title;
-        break;
-      }
-      case "movies": {
-        const movie = await fetchFromTMDB(cleanedName);
-        if (movie && movie.title) return movie.title;
-        break;
-      }
-      case "books": {
-        const book = await fetchFromOpenLibrary(cleanedName);
-        if (book && book.title) return book.title;
-        break;
-      }
-      case "musics": {
-        const music = await fetchFromDeezer(cleanedName);
-        if (music && music.title) return music.title;
-        break;
-      }
-      case "boardgames": {
-        const boardgame = await fetchFromBGG(cleanedName);
-        if (boardgame && boardgame.title) return boardgame.title;
-        break;
-      }
-    }
+    const adapter = getMetadataProviderAdapter(provider.id);
+    const result = await adapter?.resolve({ name: cleanedName });
+    return result?.title ?? null;
   } catch (e) {
     console.warn(`[ConfrontWithDatabase] Error for "${name}" (${type}):`, e);
+    return null;
   }
-  return null;
 }
 
 async function getTMDBSuggestions(name: string): Promise<string[]> {

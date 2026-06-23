@@ -42,4 +42,32 @@ export interface ProviderInfo {
   defaultLanguage?: "fr" | "en" | "unknown";
   isRealBoxCover?: boolean;
   isSecondary?: boolean;
+  /**
+   * Provider art is digital-storefront (e.g. PC capsule/header), not the physical
+   * product being scanned, so it is excluded from a physical-game cover set
+   * unless PC sources are explicitly requested.
+   */
+  digitalStorefrontArt?: boolean;
+  /**
+   * The provider's `imageUrl` is the definitive cover for its media type and is
+   * trusted as-is (no re-ranking) when it is the highest-weight result.
+   */
+  canonicalCover?: boolean;
+  /**
+   * The authoritative name→canonical-title database for this media type, queried
+   * by `confrontWithDatabase` to clean up noisy marketplace names (e.g. IGDB for
+   * games, TMDB for movies). Resolved by name, not barcode.
+   */
+  nameDatabase?: boolean;
+  /**
+   * Provider enforces a tight rate limit, so concurrent fallback-name
+   * resolutions are throttled harder (e.g. ScreenScraper).
+   */
+  rateLimited?: boolean;
+  /**
+   * Provider fuzzy-matches by name and can return a different product, so its
+   * result is validated against the requested title before being merged (the
+   * name-searched game databases: IGDB, TheGamesDB, LaunchBox, RAWG).
+   */
+  requiresTitleAlignment?: boolean;
 }

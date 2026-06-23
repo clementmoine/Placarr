@@ -15,6 +15,7 @@ export const thegamesdbModule: ProviderModule = {
     id: "thegamesdb",
     label: "TheGamesDB",
     types: ["games"],
+    requiresTitleAlignment: true,
     capabilities: [
       "identify",
       "cover",

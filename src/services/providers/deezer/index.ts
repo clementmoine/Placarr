@@ -22,6 +22,7 @@ export const deezerModule: ProviderModule = {
     id: "deezer",
     label: "Deezer",
     types: ["musics"],
+    nameDatabase: true,
     capabilities: ["identify", "cover", "releaseDate", "people", "tracksCount"],
     auth: { kind: "none" },
     canonical: true,

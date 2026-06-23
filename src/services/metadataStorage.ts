@@ -23,6 +23,7 @@ import {
 import { resolveAttachmentDisplayRegion } from "@/lib/attachmentDisplayLabels";
 import { regionRank } from "@/lib/localePreference";
 import { applyConsensus } from "@/lib/metadataConsensus";
+import { PROVIDERS } from "@/services/providerRegistry";
 import { prisma } from "@/lib/prisma";
 import {
   dedupeFacts,
@@ -41,6 +42,16 @@ import type {
 import type { Item } from "@prisma/client";
 import { replaceFieldEvidence } from "@/services/evidence";
 import { screenScraperAttachmentFromMediaUrl } from "@/services/providers/screenscraper/mediaUrl";
+
+/**
+ * Whether an attachment source is a provider whose cover is canonical for its
+ * media type (provider-declared `canonicalCover` trait, e.g. Discogs album art).
+ * Evaluated against the registry at call time — no hardcoded provider name.
+ */
+function isCanonicalCoverSource(source?: string | null): boolean {
+  if (!source) return false;
+  return PROVIDERS.some((p) => p.id === source && p.canonicalCover);
+}
 
 const mapAuthors = (authors?: MetadataResult["authors"]) =>
   authors && authors.length > 0
@@ -539,12 +550,13 @@ export async function storeMetadata(
   const rankedLocalizedAttachments = await dedupeLocalizedAttachmentsByContent(
     rankAttachmentsForDisplay(localizedAttachments, imageMetricsByUrl),
   );
-  const discogsCover = rankedLocalizedAttachments.find(
+  const canonicalCover = rankedLocalizedAttachments.find(
     (attachment) =>
-      attachment.source === "discogs" && attachment.type === "cover",
+      isCanonicalCoverSource(attachment.source) &&
+      attachment.type === "cover",
   );
   const selectedImageUrl =
-    discogsCover?.url ??
+    canonicalCover?.url ??
     pickBestCoverFromAttachments(
       rankedLocalizedAttachments,
       imageMetricsByUrl,
@@ -668,8 +680,8 @@ export async function storeMetadata(
       ) ||
       (type === "musics" &&
         !itemCoverStillInGallery &&
-        rankedLocalizedAttachments.some(
-          (attachment) => attachment.source === "discogs",
+        rankedLocalizedAttachments.some((attachment) =>
+          isCanonicalCoverSource(attachment.source),
         ));
     if (shouldSyncItemCover) {
       await prisma.item.update({

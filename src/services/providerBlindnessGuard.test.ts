@@ -79,9 +79,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     steamgriddb: 1,
     tmdb: 1,
   },
-  "src/app/api/admin/metadata-enrich/route.ts": {
-    screenscraper: 1,
-  },
   "src/app/api/admin/test-provider/route.ts": {
     scandex: 1,
   },
@@ -188,19 +185,8 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     pricecharting: 3,
   },
   "src/services/metadataFetch.ts": {
-    igdb: 1,
-    launchbox: 1,
     pricecharting: 4,
-    rawg: 1,
-    screenscraper: 3,
-    thegamesdb: 1,
-  },
-  "src/services/metadataMerge.ts": {
-    discogs: 1,
-    steam: 2,
-  },
-  "src/services/metadataStorage.ts": {
-    discogs: 2,
+    screenscraper: 2,
   },
   "src/services/priceResolver.ts": {
     achatmoinscher: 3,

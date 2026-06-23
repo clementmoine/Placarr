@@ -335,6 +335,8 @@ export const discogsModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    // The Discogs release image is the definitive album cover — trust it as-is.
+    canonicalCover: true,
     notes: "Noms latins (ex. Yoko Shimomura).",
   },
   evidence: {

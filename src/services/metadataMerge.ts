@@ -391,9 +391,19 @@ export function mergeMetadata(
   const allPublishers = resultsByWeight.flatMap((r) => r.metadata.publishers || []);
   const publishers = allPublishers.length > 0 ? dedupePeople(allPublishers) : undefined;
 
+  const providerInfo = (providerId: string) =>
+    PROVIDERS.find((p) => p.id === providerId);
+  // Digital-storefront art (e.g. Steam PC capsules) misrepresents a physical
+  // console scan, so drop it from the game cover set unless PC sources are asked
+  // for. Trait-driven (provider-declared), not a hardcoded provider name.
+  const excludesDigitalStorefrontArt = (providerId: string) =>
+    Boolean(providerInfo(providerId)?.digitalStorefrontArt) &&
+    mediaType === "games" &&
+    !options.includePcSources;
+
   const allAttachments = resultsByWeight.flatMap((r) => {
     const attachments = r.metadata.attachments || [];
-    if (r.providerId === "steam" && mediaType === "games" && !options.includePcSources) {
+    if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
     }
     return attachments.map((a) => ({
@@ -404,7 +414,7 @@ export function mergeMetadata(
 
   const providerImageCandidates = resultsByWeight.flatMap((r) => {
     if (!r.metadata.imageUrl) return [];
-    if (r.providerId === "steam" && mediaType === "games" && !options.includePcSources) {
+    if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
     }
     const matchingAttachment = r.metadata.attachments?.find(
@@ -425,8 +435,11 @@ export function mergeMetadata(
   ]);
 
   const highestWeightResultWithImage = resultsByWeight.find((r) => r.metadata.imageUrl);
+  // A provider whose cover is canonical for its media type (e.g. Discogs album
+  // art) is trusted as-is when it leads, rather than re-ranked.
   const imageUrl =
-    highestWeightResultWithImage?.providerId === "discogs"
+    highestWeightResultWithImage &&
+    providerInfo(highestWeightResultWithImage.providerId)?.canonicalCover
       ? highestWeightResultWithImage.metadata.imageUrl
       : mediaType === "games"
         ? pickBestCoverFromAttachments(attachments) ||

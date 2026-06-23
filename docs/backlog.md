@@ -126,11 +126,17 @@ Next steps:
 1. Add a **guard test** (scope = everything except `src/services/providers/`) that
    fails on a provider-id literal / hardcoded provider-name set / noise list, with
    current leaks seeded as a shrinking allowlist.
-2. Drain the allowlist: `metadataFetch.ts` (ScreenScraper stage, PriceCharting,
-   game-provider list), `attachmentDisplayScore.ts` (`REAL_BOX_COVER_SOURCES` →
-   `isRealBoxCover` capability), `metadataMerge.ts`/`metadataStorage.ts` (steam/
-   discogs), `confrontWithDatabase` (named provider per type), admin
-   `product-teardown`/`test-provider`/`metadata-enrich`/`providers` routes.
+2. Drain the allowlist: `metadataFetch.ts` (~~game-provider list~~ ✅ →
+   `requiresTitleAlignment` trait; ~~`screenscraper ? 6 : 12`~~ ✅ → `rateLimited`
+   trait; **remaining**: SS recheck stage + PriceCharting title fallback, both
+   genuinely provider-specific stages needing a post-resolve hook capability),
+   `attachmentDisplayScore.ts` (`REAL_BOX_COVER_SOURCES` →
+   `isRealBoxCover` capability), ~~`metadataMerge.ts` (steam/discogs)~~ ✅,
+   ~~`metadataStorage.ts` (discogs)~~ ✅, ~~`confrontWithDatabase` (named provider
+   per type)~~ ✅, admin `product-teardown`/`test-provider`/
+   ~~`metadata-enrich`~~ ✅`/providers` routes. (Remaining admin leaks are harder:
+   `test-provider` is a handler-kind discriminator, `MetadataRefreshPanel.tsx` is a
+   client component that can't import the registry.)
 3. Add `info.baseUrl` so each provider declares its site once (used generically by
    health/probe/admin).
 
@@ -140,6 +146,16 @@ Done:
   guard for quoted provider literals outside `src/services/providers/`, with an
   exact shrinking allowlist. First pass deliberately excludes docs/tests and does
   not yet catch unquoted object keys; broaden it as the allowlist drains.
+- 2026-06-23: drained `metadataMerge.ts` (steam + discogs literals → 0).
+  Replaced `providerId === "steam"` / `=== "discogs"` cover routing with two
+  provider-declared `ProviderInfo` traits — `digitalStorefrontArt` (Steam: PC
+  capsule art excluded from physical-game covers) and `canonicalCover` (Discogs:
+  album art trusted as-is). Traits live in the provider modules (guard-allowed);
+  the merge reads them via the registry. Behaviour unchanged, full suite green.
+- 2026-06-23: drained `metadataStorage.ts` (discogs literals → 0) with the same
+  `canonicalCover` trait via an `isCanonicalCoverSource(source)` helper that reads
+  the registry at call time (no import-order hazard). Cover selection + music
+  cover-sync now provider-blind.
 
 ## Observation migration & exploitation (from `providerMappingAudit`)
 
@@ -297,8 +313,15 @@ regression. Note: `confrontWithDatabase` is itself a provider-blindness leak (it
 `switch`es on type to call a named provider) — folds into the §0 cleanup.
 - **Done 2026-06-22**: no-match now returns `null` instead of echoing the input,
   and `buildDatabaseEvidence` has regression coverage proving a DB miss creates no
-  canonical `DatabaseResolver` evidence. Remaining work: remove the type→named
-  provider switch as part of the provider-blind cleanup.
+  canonical `DatabaseResolver` evidence.
+- **Done 2026-06-23**: removed the `confrontWithDatabase` type→named-provider
+  `switch`. Each authoritative name DB declares a `nameDatabase` ProviderInfo
+  trait (IGDB/games, TMDB/movies, OpenLibrary/books, Deezer/musics, BGG/
+  boardgames); the function selects the highest-weight `nameDatabase` provider for
+  the type and resolves by name through its registry adapter (behaviour-preserving
+  — adapters resolve-by-name identically to the old direct calls). `getDatabaseSuggestions`
+  still switches on type (uses suggestion fns outside the adapter interface) — a
+  later step needs a provider suggestion capability.
 
 ### D. Display-language region order = user preference
 

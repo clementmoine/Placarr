@@ -39,6 +39,7 @@ export const screenscraperModule: ProviderModule = {
     id: "screenscraper",
     label: "ScreenScraper",
     types: ["games"],
+    rateLimited: true,
     capabilities: [
       "identify",
       "cover",

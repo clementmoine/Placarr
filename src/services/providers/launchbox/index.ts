@@ -11,6 +11,7 @@ export const launchboxModule: ProviderModule = {
     id: "launchbox",
     label: "LaunchBox",
     types: ["games"],
+    requiresTitleAlignment: true,
     capabilities: [
       "identify",
       "description",

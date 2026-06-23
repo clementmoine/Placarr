@@ -24,6 +24,7 @@ export const bggModule: ProviderModule = {
     id: "boardgamegeek",
     label: "BoardGameGeek",
     types: ["boardgames"],
+    nameDatabase: true,
     capabilities: [
       "identify",
       "rating",

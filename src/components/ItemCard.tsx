@@ -91,7 +91,7 @@ export function ItemCard(props: ItemCardProps) {
             alt={name}
             onLoad={handleImageLoad}
             className={[
-              "w-full h-full select-none transition-transform duration-500 ease-out",
+              "w-full h-full select-none transition-transform duration-500 ease-out object-top",
               imageFit === "contain" ? "object-contain" : "object-cover",
             ].join(" ")}
           />

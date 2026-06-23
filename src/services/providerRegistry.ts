@@ -21,7 +21,6 @@ import { picclickModule } from "@/services/providers/picclick";
 import { pricechartingModule } from "@/services/providers/pricecharting";
 import { rawgModule } from "@/services/providers/rawg";
 import { scandexModule } from "@/services/providers/scandex";
-import { isScreenScraperConfigured } from "@/services/providers/screenscraper/env";
 import { screenscraperModule } from "@/services/providers/screenscraper";
 import { steamModule } from "@/services/providers/steam";
 import { steamgriddbModule } from "@/services/providers/steamgriddb";
@@ -129,10 +128,9 @@ export function getProviderModule(id: string): ProviderModule | undefined {
 }
 
 export function isProviderConfigured(p: ProviderInfo): boolean {
-  if (p.id === "screenscraper") return isScreenScraperConfigured();
-  if (p.id === "thegamesdb") {
-    return Boolean(process.env.THEGAMESDB_API_KEY?.trim());
-  }
+  // Generic check: a key-auth provider is configured once all of its declared
+  // env vars are set. (ScreenScraper's DEV_ID/DEV_PASSWORD and TheGamesDB's API
+  // key are exactly those, so no per-provider special case is needed.)
   if (p.auth.kind !== "key") return true;
   return p.auth.env.every((name) => Boolean(process.env[name]?.trim()));
 }

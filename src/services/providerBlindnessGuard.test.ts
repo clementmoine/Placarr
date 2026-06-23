@@ -201,10 +201,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     openlibrary: 1,
     screenscraper: 1,
   },
-  "src/services/providerRegistry.ts": {
-    screenscraper: 1,
-    thegamesdb: 1,
-  },
   "src/types/providerModule.ts": {
     scandex: 1,
   },

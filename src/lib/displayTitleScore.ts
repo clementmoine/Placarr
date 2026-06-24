@@ -3,6 +3,18 @@ import { normalizeForTokens } from "@/lib/barcode/titleUtils";
 export function getRepresentativeScore(name: string, priority: number): number {
   let score = priority * 1000;
   const normalized = normalizeForTokens(name);
+
+  // Prefer a properly-cased title ("Tom Clancy's Ghost Recon") over an
+  // all-lowercase listing fragment ("tom clancy ghost recon"), which otherwise
+  // wins the shorter-length tiebreak after losing its apostrophe. Words are the
+  // alphabetic tokens; a title is "cased" when most of them start uppercase.
+  const words = name.split(/\s+/).filter((word) => /[A-Za-z]/.test(word));
+  if (words.length >= 2) {
+    const capitalised = words.filter((word) => /^[^a-z]*[A-Z]/.test(word)).length;
+    const casedRatio = capitalised / words.length;
+    if (casedRatio >= 0.6) score += 60;
+    else if (casedRatio === 0) score -= 60;
+  }
   const listingNoise =
     /\b(jeux?\s+video|vintage|old|pal|ntsc|scelle|scellé|blister|boite|boîte|livret|notice|complet|complete|fonctionnel|tested|teste|testé|tbe|hs|condizioni|multilingua|originale|vip|gratte|gratté|escape\s+game|jeu\s+d\s*enquete|space\s+cowboys|scunl[a-z0-9]+)\b/i;
 

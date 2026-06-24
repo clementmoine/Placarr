@@ -152,6 +152,10 @@ const SUFFIX_PATTERNS = Array.from(
 
 const PLATFORM_SUFFIX_PATTERNS = new Set(VIDEO_GAME_PLATFORM_TERMS);
 
+// Noise terms that are valid leading prefixes but meaningful as a trailing word,
+// so they must be excluded from suffix stripping (e.g. "… The Arcade Game").
+const SUFFIX_EXCLUDED_NOISE = new Set(["game", "jeu", "jeux"]);
+
 function isListingMetadataSegment(segment: string): boolean {
   const normalized = normalizeForTokens(segment)
     .replace(/[^a-z0-9]+/g, " ")
@@ -274,11 +278,16 @@ export function cleanTitleForDisplay(
   });
   cleaned = moveTrailingSortArticleToFront(cleaned);
 
-  const suffixPatterns = options.preservePlatformSuffix
-    ? SUFFIX_PATTERNS.filter(
-        (pattern) => !PLATFORM_SUFFIX_PATTERNS.has(pattern),
-      )
-    : SUFFIX_PATTERNS;
+  // Bare "game"/"jeu" are stripped as LEADING listing noise (PREFIX_PATTERNS),
+  // but as a trailing word they are usually part of the real title ("… The
+  // Arcade Game", "End Game", "War Game"), so never strip them as a suffix.
+  const suffixPatterns = (
+    options.preservePlatformSuffix
+      ? SUFFIX_PATTERNS.filter(
+          (pattern) => !PLATFORM_SUFFIX_PATTERNS.has(pattern),
+        )
+      : SUFFIX_PATTERNS
+  ).filter((pattern) => !SUFFIX_EXCLUDED_NOISE.has(pattern));
   const suffixRegex = new RegExp(
     `\\s*\\b(?:${suffixPatterns.map((p) => escapeRegExp(p)).join("|")})\\b\\s*$`,
     "i",

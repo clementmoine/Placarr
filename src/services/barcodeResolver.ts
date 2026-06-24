@@ -157,6 +157,7 @@ async function cacheBarcodeResult(
   res: CompiledResult,
   shelfType: string,
   previousCache?: BarcodeCachePriceSnapshot | null,
+  mediaFormat?: string | null,
 ) {
   try {
     const priceSnapshot =
@@ -192,6 +193,13 @@ async function cacheBarcodeResult(
         coverUrl: matchingMatch?.coverUrl || null,
       };
     });
+
+    // Persist the physical-format clue ("LaserDisc"…) as a raw name so it
+    // survives caching and the shelf-guess can match a format shelf — the format
+    // word is stripped from the title, so this is the only place it lives.
+    if (mediaFormat && !rawNames.some((rn) => rn.value === mediaFormat)) {
+      rawNames.unshift({ value: mediaFormat, coverUrl: null });
+    }
 
     await prisma.barcodeCache.upsert({
       where: { barcode: cleanedBarcode },
@@ -330,12 +338,21 @@ export async function resolveBarcode(
     videoFormatSignal,
   );
 
+  const mediaFormat = detectMediaFormat(listingNames);
+
   if (selectedResult && selectedType) {
+    // Keep the format clue in rawNames (used only for shelf-matching, never
+    // displayed) so it persists in the cache and reaches both the scan modal and
+    // the item modal on every lookup, not just the fresh one.
+    if (mediaFormat && !selectedResult.rawNames.includes(mediaFormat)) {
+      selectedResult.rawNames = [mediaFormat, ...selectedResult.rawNames];
+    }
     await cacheBarcodeResult(
       cleanedBarcode,
       selectedResult,
       selectedType,
       cachedResult,
+      mediaFormat,
     );
     const cleaned = cleanCompiledResultForResponse(
       selectedResult,
@@ -395,7 +412,7 @@ export async function resolveBarcode(
       ...selectedResult,
       ...cleaned,
       shelfType: selectedType,
-      mediaFormat: detectMediaFormat(listingNames),
+      mediaFormat,
       ...(capturedPrices ?? {}),
     };
   }

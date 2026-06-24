@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   collectPayloadListingNames,
   detectBoardGameSignal,
+  detectMediaFormat,
   detectVideoFormatSignal,
 } from "./boardGameSignal";
 import { createEmptyBarcodeLookupPayload } from "./lookupPayload";
@@ -22,6 +23,22 @@ describe("detectVideoFormatSignal", () => {
     expect(detectVideoFormatSignal(["Toy Story Bande Originale CD"])).toBe(0);
     expect(detectVideoFormatSignal(["Mario Kart Wii"])).toBe(0);
     expect(detectVideoFormatSignal(["Toy Story 2 DVD"])).toBe(0);
+  });
+});
+
+describe("detectMediaFormat", () => {
+  it("renvoie le libellé du format physique le plus spécifique", () => {
+    expect(
+      detectMediaFormat(['Laserdisc📀 TOY STORY (PAL) 1 disque " WALT DISNEY "']),
+    ).toBe("LaserDisc");
+    expect(detectMediaFormat(["Star Wars VHS Collector"])).toBe("VHS");
+    expect(detectMediaFormat(["Toy Story Blu-ray Disney"])).toBe("Blu-ray");
+    expect(detectMediaFormat(["Le Roi Lion DVD"])).toBe("DVD");
+  });
+
+  it("renvoie null sans format reconnu", () => {
+    expect(detectMediaFormat(["Toy Story"])).toBeNull();
+    expect(detectMediaFormat([])).toBeNull();
   });
 });
 

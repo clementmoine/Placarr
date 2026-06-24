@@ -279,9 +279,14 @@ export function QuickScanModal({
           };
         });
       });
-      // Try to guess shelf from rawNames, cleanName, suggestions
+      // Try to guess shelf from rawNames, cleanName, suggestions. The detected
+      // physical format ("LaserDisc"/"VHS"…) leads so a matching format shelf is
+      // recommended over a generic same-type one (the format word is stripped
+      // from the title, so it only survives here).
+      const mediaFormat = payload?.mediaFormat as string | undefined;
       const allSearchNames = Array.from(
         new Set([
+          ...(mediaFormat ? [mediaFormat] : []),
           ...(cleanName ? [cleanName] : []),
           ...rawNames,
           ...suggestions,

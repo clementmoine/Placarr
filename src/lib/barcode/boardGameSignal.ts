@@ -84,6 +84,29 @@ export function detectVideoFormatSignal(names: string[]): number {
   return 0;
 }
 
+// Physical media format → display label, most specific first. The label doubles
+// as a shelf-name hint (a "LaserDisc"/"VHS" scan should be recommended to the
+// matching shelf), which the cleaned title no longer carries since the format
+// word is stripped. DVD/Blu-ray are kept here (unlike the type signal) because
+// at shelf-suggestion time the media type is already decided.
+const MEDIA_FORMAT_LABELS: Array<[RegExp, string]> = [
+  [/\blaser\s?disc\b/, "LaserDisc"],
+  [/\bvhs\b/, "VHS"],
+  [/\bblu\s?-?\s?ray\b/, "Blu-ray"],
+  [/\bdvd\b/, "DVD"],
+];
+
+/** The physical format named by the listings ("LaserDisc", "VHS"…), or null. */
+export function detectMediaFormat(names: string[]): string | null {
+  const normalized = names
+    .map((name) => normalizeName(name))
+    .filter(Boolean);
+  for (const [pattern, label] of MEDIA_FORMAT_LABELS) {
+    if (normalized.some((name) => pattern.test(name))) return label;
+  }
+  return null;
+}
+
 /**
  * Returns a 0..1 board-game signal strength from a set of listing/title names.
  * Strongest hit wins (a category phrase outweighs a lone publisher mention).

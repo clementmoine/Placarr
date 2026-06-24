@@ -13,6 +13,7 @@ import { runBarcodeLookups } from "@/lib/barcode/lookups";
 import {
   collectPayloadListingNames,
   detectBoardGameSignal,
+  detectMediaFormat,
   detectVideoFormatSignal,
 } from "@/lib/barcode/boardGameSignal";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookupPayload";
@@ -56,6 +57,8 @@ export type BarcodeResolveResult = {
   suggestions: string[];
   matches: ResolvedMatch[];
   shelfType: string | null;
+  /** Physical format named by the listings ("LaserDisc", "VHS"…), for shelf hints. */
+  mediaFormat?: string | null;
   platformKey?: string | null;
   refreshed?: boolean;
   staleCache?: boolean;
@@ -392,6 +395,7 @@ export async function resolveBarcode(
       ...selectedResult,
       ...cleaned,
       shelfType: selectedType,
+      mediaFormat: detectMediaFormat(listingNames),
       ...(capturedPrices ?? {}),
     };
   }

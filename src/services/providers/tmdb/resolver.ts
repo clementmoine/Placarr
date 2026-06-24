@@ -17,6 +17,23 @@ type TMDBSearchResult = {
   backdrop_path?: string | null;
 };
 
+type TMDBImage = { file_path: string; iso_639_1?: string | null };
+
+// Map a TMDB image language (iso_639_1) to a display-region role so the cover
+// scorer can prefer the French artwork (France > Europe > World > …). A textless
+// image (no language) is the neutral international "wor".
+export function tmdbImageRole(iso?: string | null): string | undefined {
+  const lang = (iso || "").toLowerCase().trim();
+  if (!lang) return "wor";
+  if (lang === "fr") return "fr";
+  if (lang === "ja") return "jp";
+  if (lang === "en") return "us";
+  if (["de", "es", "it", "nl", "pt", "sv", "da", "no", "fi", "pl", "cs"].includes(lang)) {
+    return "eu";
+  }
+  return undefined;
+}
+
 export function parseTMDBSeriesIntent(
   name: string,
   cleanSearchQuery: (value: string) => string,
@@ -117,13 +134,15 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     const credits = creditsRes.data;
 
     let imagesData: {
-      posters?: { file_path: string }[];
-      backdrops?: { file_path: string }[];
-      logos?: { file_path: string }[];
+      posters?: TMDBImage[];
+      backdrops?: TMDBImage[];
+      logos?: TMDBImage[];
     } = {};
     try {
+      // include_image_language ensures French + textless artwork is returned
+      // (the default endpoint already returns every language, but be explicit).
       const imagesRes = await axios.get(
-        `https://api.themoviedb.org/3/movie/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}`,
+        `https://api.themoviedb.org/3/movie/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}&include_image_language=fr,en,null`,
       );
       imagesData = imagesRes.data;
     } catch (err) {
@@ -135,25 +154,28 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
 
     const tmdbPosters = (imagesData.posters || [])
       .slice(0, 30)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "cover" as const,
         url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 
     const tmdbBackdrops = (imagesData.backdrops || [])
       .slice(0, 30)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "background" as const,
         url: `https://image.tmdb.org/t/p/w1280${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 
     const tmdbLogos = (imagesData.logos || [])
       .slice(0, 10)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "logo" as const,
         url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 
@@ -397,13 +419,13 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     }
 
     let imagesData: {
-      posters?: { file_path: string }[];
-      backdrops?: { file_path: string }[];
-      logos?: { file_path: string }[];
+      posters?: TMDBImage[];
+      backdrops?: TMDBImage[];
+      logos?: TMDBImage[];
     } = {};
     try {
       const imagesRes = await axios.get(
-        `https://api.themoviedb.org/3/tv/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}`,
+        `https://api.themoviedb.org/3/tv/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}&include_image_language=fr,en,null`,
       );
       imagesData = imagesRes.data;
     } catch (err) {
@@ -413,11 +435,11 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       );
     }
 
-    let seasonImagesData: { posters?: { file_path: string }[] } = {};
+    let seasonImagesData: { posters?: TMDBImage[] } = {};
     if (intent.seasonNumber) {
       try {
         const seasonImagesRes = await axios.get(
-          `https://api.themoviedb.org/3/tv/${bestMatch.id}/season/${intent.seasonNumber}/images?api_key=${process.env.TMDB_API_KEY}`,
+          `https://api.themoviedb.org/3/tv/${bestMatch.id}/season/${intent.seasonNumber}/images?api_key=${process.env.TMDB_API_KEY}&include_image_language=fr,en,null`,
         );
         seasonImagesData = seasonImagesRes.data;
       } catch (err) {
@@ -430,33 +452,37 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
 
     const seasonPosters = (seasonImagesData.posters || [])
       .slice(0, 20)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "cover" as const,
         url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 
     const tmdbPosters = (imagesData.posters || [])
       .slice(0, 30)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "cover" as const,
         url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 
     const tmdbBackdrops = (imagesData.backdrops || [])
       .slice(0, 30)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "background" as const,
         url: `https://image.tmdb.org/t/p/w1280${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 
     const tmdbLogos = (imagesData.logos || [])
       .slice(0, 10)
-      .map((img: { file_path: string }) => ({
+      .map((img) => ({
         type: "logo" as const,
         url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
+        role: tmdbImageRole(img.iso_639_1),
         source: "tmdb",
       }));
 

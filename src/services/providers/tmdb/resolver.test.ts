@@ -1,6 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { parseTMDBSeriesIntent } from "./resolver";
+import { parseTMDBSeriesIntent, tmdbImageRole } from "./resolver";
+
+describe("tmdbImageRole — langue de l'affiche → région", () => {
+  it("mappe la langue de l'affiche vers une région d'affichage", () => {
+    expect(tmdbImageRole("fr")).toBe("fr");
+    expect(tmdbImageRole("ja")).toBe("jp");
+    expect(tmdbImageRole("en")).toBe("us");
+    expect(tmdbImageRole("de")).toBe("eu");
+    expect(tmdbImageRole("es")).toBe("eu");
+  });
+
+  it("traite une affiche sans texte (sans langue) comme internationale", () => {
+    expect(tmdbImageRole(null)).toBe("wor");
+    expect(tmdbImageRole("")).toBe("wor");
+    expect(tmdbImageRole(undefined)).toBe("wor");
+  });
+
+  it("n'invente pas de région pour une langue inconnue", () => {
+    expect(tmdbImageRole("zh")).toBeUndefined();
+  });
+});
 
 describe("parseTMDBSeriesIntent", () => {
   it("detects a series with explicit season number", () => {

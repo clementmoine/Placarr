@@ -33,9 +33,11 @@ export async function buildDatabaseEvidence(
   names: string[],
   type: string,
 ): Promise<ProductEvidence[]> {
+  // Confront a wider slice so a specific edition the marketplace names ("… II:
+  // The Arcade Game") is resolved even when noisier base-ish listings come first.
   const uniqueNames = uniqueClean(names, {
     preservePlatformSuffix: type === "games",
-  }).slice(0, 4);
+  }).slice(0, 8);
   const resolved = await Promise.all(
     uniqueNames.map(async (name) => {
       const evidence: ProductEvidence[] = [];

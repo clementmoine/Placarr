@@ -267,4 +267,35 @@ describe("applyMarketplaceConsensusOverride", () => {
     expect(result?.matches[0]?.name?.toLowerCase()).not.toContain("manhattan");
     expect(result?.matches[0]?.name?.toLowerCase()).toContain("turtles");
   });
+
+  it("laisse l'édition que les marchands nomment massivement mener, sans canonique (#083717120131)", async () => {
+    // Aucune source canonique : PriceCharting mappe à tort sur le jeu de BASE,
+    // mais 5 annonces de 2 marchands nomment « II : The Arcade Game ». L'édition
+    // doit l'emporter, pas la base.
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "PriceCharting",
+          products: [{ name: "Teenage Mutant Ninja Turtles", platformKey: "nes" }],
+        },
+        {
+          providerName: "PicClick",
+          products: [
+            { name: "Teenage Mutant Ninja Turtles II: The Arcade Game (Nintendo NES, 1991 PAL A)", platformKey: "nes" },
+            { name: "Teenage Mutant Ninja Turtles II Arcade TMNT NES Complete CIB", platformKey: "nes" },
+            { name: "Teenage Mutant Hero Turtles II - The Arcade Game", platformKey: "nes" },
+            { name: "Turtles 2 The Arcade Game Nintendo Nes", platformKey: "nes" },
+          ],
+        },
+        {
+          providerName: "ChasseAuxLivres",
+          products: [{ name: "Teenage Mutant Hero Turtles II The Arcade Game", platformKey: "nes" }],
+        },
+      ],
+      "083717120131",
+    );
+
+    expect(result?.matches[0]?.name?.toLowerCase()).toContain("arcade");
+  });
 });

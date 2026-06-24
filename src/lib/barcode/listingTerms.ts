@@ -113,6 +113,14 @@ export const LISTING_CONDITION_TERMS = [
   "nuovo",
   "usato",
   "sigillato",
+  // German listing condition / packaging noise ("Spiel + Hülle" = game + case).
+  "spiel",
+  "spiele",
+  "hülle",
+  "huelle",
+  "hulle",
+  "in ovp",
+  "getestet",
 ] as const;
 
 export const LISTING_FORMAT_TERMS = [

@@ -289,6 +289,72 @@ export function applyMarketplaceConsensusOverride(
   if (qualifies) promote(franchise.items, franchise.numberedCanonical);
 }
 
+// Minimum independent listings carrying an edition number for it to be a real
+// marketplace consensus (not one noisy listing).
+const EDITION_CONSENSUS_MIN_LISTINGS = 4;
+
+/**
+ * The no-anchor counterpart of the sequel-contradiction override. When NO
+ * canonical source identifies the barcode, the result falls back to a database
+ * lookup of marketplace names — where a single wrong mapping (e.g. PriceCharting
+ * naming the franchise BASE) can out-rank the specific sequel/edition that the
+ * marketplace overwhelmingly names. When many independent listings carry an
+ * edition number, promote those listings to trusted-retailer level so they anchor
+ * and lead, bypassing the contaminating base lookup ("… II: The Arcade Game" vs a
+ * lone "Teenage Mutant Ninja Turtles").
+ */
+function applyMarketplaceEditionConsensus(evidence: ProductEvidence[]): void {
+  // Only the no-anchor case — a canonical source (or the override above) decides
+  // otherwise.
+  if (evidence.some((item) => item.isCanonical || item.isTrustedRetailer)) return;
+  const marketplace = evidence;
+  if (marketplace.length < EDITION_CONSENSUS_MIN_LISTINGS) return;
+
+  // The edition number carried by the most marketplace listings.
+  const listingsByIndicator = new Map<string, ProductEvidence[]>();
+  for (const item of marketplace) {
+    for (const indicator of item.parsed.indicators) {
+      const list = listingsByIndicator.get(indicator) ?? [];
+      list.push(item);
+      listingsByIndicator.set(indicator, list);
+    }
+  }
+  let dominant: string | null = null;
+  let dominantListings: ProductEvidence[] = [];
+  for (const [indicator, list] of listingsByIndicator) {
+    if (list.length > dominantListings.length) {
+      dominant = indicator;
+      dominantListings = list;
+    }
+  }
+  if (dominant === null || dominantListings.length < EDITION_CONSENSUS_MIN_LISTINGS) {
+    return;
+  }
+  // Require ≥2 independent providers (not one source repeating itself).
+  if (new Set(dominantListings.map((i) => i.providerName)).size < 2) return;
+
+  const core = new Set<string>();
+  for (const item of dominantListings) {
+    for (const token of franchiseCoreTokens(item)) core.add(token);
+  }
+  if (core.size < 2) return;
+
+  // Bail when the same franchise is also strongly named WITHOUT the number — a
+  // split like "Halo" vs "Halo 1" is not a real edition consensus.
+  const withoutDominant = marketplace.filter(
+    (item) =>
+      !item.parsed.indicators.has(dominant) &&
+      sharesFranchiseCore(core, franchiseBaseTokens(item)),
+  ).length;
+  if (withoutDominant * 2 >= dominantListings.length) return;
+
+  // Promote the edition listings so they anchor and lead.
+  for (const item of dominantListings) {
+    item.isTrustedRetailer = true;
+    item.priority = Math.max(item.priority, 1);
+  }
+}
+
 export async function compileResultForType(
   type: string,
   sources: {
@@ -329,6 +395,9 @@ export async function compileResultForType(
   // Let a strong, independent marketplace consensus lead when it contradicts
   // the lone canonical source (see helper above).
   applyMarketplaceConsensusOverride(sourceEvidence);
+  // With no canonical source at all, let a strong marketplace edition consensus
+  // anchor the result (so a lone wrong "base" database mapping cannot win).
+  applyMarketplaceEditionConsensus(sourceEvidence);
 
   const canonicalEvidence = sourceEvidence.filter((item) => item.isCanonical);
   const trustedRetailerEvidence = sourceEvidence.filter(

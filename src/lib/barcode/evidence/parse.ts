@@ -4,6 +4,7 @@ import {
   cleanTitleForDisplay,
   getSequelIndicators,
   isListingDiscardable,
+  isLotListing,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
 import { cleanSearchQuery } from "@/services/metadataSearchUtils";
@@ -201,6 +202,10 @@ export function buildProductEvidence(
     (canonicalOverride == null &&
       isCanonicalProvider(providerName) &&
       !isTrustedRetailer);
+  // A marketplace lot ("… 1,2,3", "Lot de 3 jeux") sells several games at once;
+  // it doesn't identify the scanned product and its name collapses to a bare
+  // franchise, so drop it. Canonical databases never return lots.
+  if (!isCanonical && isLotListing(product.name)) return null;
   const preserveDisplayTitle = isCanonical || isTrustedRetailer;
   const parsedBase = parseProductName(product.name, preserveDisplayTitle);
   const parsed = product.platformKey

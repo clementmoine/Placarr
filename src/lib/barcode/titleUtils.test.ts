@@ -6,6 +6,7 @@ import {
   cleanTitleForDisplay,
   filterPlatformRedundancies,
   isListingDiscardable,
+  isLotListing,
   moveTrailingSortArticleToFront,
   versionProvider,
 } from "@/lib/barcode/titleUtils";
@@ -133,6 +134,39 @@ describe("versionProvider / isCanonicalProvider", () => {
   it("reconnaît les providers canoniques", () => {
     expect(isCanonicalProvider("ScreenScraper")).toBe(true);
     expect(isCanonicalProvider("eBay")).toBe(false);
+  });
+});
+
+describe("isLotListing — détection des lots multi-jeux", () => {
+  it("repère les lots explicites et les suites en série", () => {
+    for (const name of [
+      "Teenage Mutant Ninja Turtles 1,2,3 NES",
+      "Resident Evil 1, 2, 3 GameCube",
+      "Spyro 1 2 3 PS1",
+      "Lot de 3 jeux Nintendo Wii",
+      "Lot of games PS2",
+      "Bundle 5 games Xbox",
+      "Pack 4 jeux PSP",
+    ]) {
+      expect(isLotListing(name)).toBe(true);
+    }
+  });
+
+  it("ne déclasse pas les jeux uniques (suites, collections officielles, faux positifs)", () => {
+    for (const name of [
+      "Tom Clancy's Ghost Recon",
+      "Resident Evil 2 game",
+      "Tony Hawk's Pro Skater 1 + 2",
+      "1-2-Switch",
+      "Crash Bandicoot N. Sane Trilogy",
+      "Teenage Mutant Ninja Turtles II: The Arcade Game",
+      "Ensemble Stars",
+      "Coffret Collector Zelda",
+      "1080 Snowboarding",
+      "Final Fantasy VII",
+    ]) {
+      expect(isLotListing(name)).toBe(false);
+    }
   });
 });
 

@@ -175,6 +175,7 @@ export async function buildCachedBarcodePayload(
         )
       : cleanMatches,
     shelfType: cachedResult.shelfType,
+    mediaFormat: cachedResult.mediaFormat ?? null,
     platformKey: cachedResult.platformKey || null,
     priceNew: cachedResult.priceNew,
     priceUsed: cachedResult.priceUsed,

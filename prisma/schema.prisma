@@ -217,6 +217,7 @@ model BarcodeCache {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   shelfType        String?
+  mediaFormat      String?
   priceLastUpdated DateTime?
   priceNew         Int?
   priceUsed        Int?

@@ -280,11 +280,14 @@ export function QuickScanModal({
         });
       });
       // Try to guess shelf from rawNames, cleanName, suggestions. The backend
-      // keeps the physical-format clue ("LaserDisc"/"VHS"…) in rawNames — the
-      // word is stripped from the title — so a matching format shelf is
-      // recommended over a generic same-type one.
+      // surfaces the physical-format clue ("LaserDisc"/"VHS"…) as a separate
+      // cached `mediaFormat` field (NOT in rawNames, so it never shows as a
+      // candidate item); it leads here so a matching format shelf is recommended
+      // over a generic same-type one.
+      const mediaFormat = payload?.mediaFormat as string | undefined;
       const allSearchNames = Array.from(
         new Set([
+          ...(mediaFormat ? [mediaFormat] : []),
           ...(cleanName ? [cleanName] : []),
           ...rawNames,
           ...suggestions,

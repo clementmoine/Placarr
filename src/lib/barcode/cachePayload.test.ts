@@ -17,6 +17,7 @@ function makeCachedRecord(shelfType: string) {
     barcode: "8717418223908",
     provider: `AchatMoinsCher-${BARCODE_CACHE_VERSION}`,
     shelfType,
+    mediaFormat: null,
     platformKey: null,
     createdAt: new Date(),
     updatedAt: new Date(),

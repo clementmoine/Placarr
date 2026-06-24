@@ -811,9 +811,13 @@ export function ItemModal({
           const cleanName = data?.cleanName;
           const rawNames = data?.rawNames || [];
           const platformKey = data?.platformKey;
+          // Physical-format clue ("LaserDisc"…) leads so a matching format shelf
+          // is recommended over a generic same-type one.
+          const mediaFormat = data?.mediaFormat as string | undefined;
 
           const allSearchNames = Array.from(
             new Set([
+              ...(mediaFormat ? [mediaFormat] : []),
               ...(displayName ? [displayName] : []),
               ...(cleanName ? [cleanName] : []),
               ...rawNames,

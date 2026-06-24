@@ -132,13 +132,19 @@ export function guessShelfByStrongNameMatch(
   const normalizedTitle = normalizeShelfName(productTitle);
   if (!normalizedTitle || !shelves.length) return null;
 
+  // Spacing/punctuation-insensitive form so a "LaserDisc" clue matches a
+  // "Laser Disc" / "Laser-Disc" shelf (and vice-versa).
+  const compactTitle = normalizedTitle.replace(/\s+/g, "");
   let best: { shelfId: string; score: number } | null = null;
   for (const shelf of shelves) {
     const normalizedShelfName = normalizeShelfName(shelf.name);
     if (normalizedShelfName.length < 3) continue;
 
     let score = 0;
-    if (normalizedTitle === normalizedShelfName) {
+    if (
+      normalizedTitle === normalizedShelfName ||
+      compactTitle === normalizedShelfName.replace(/\s+/g, "")
+    ) {
       score = 3;
     } else if (normalizedTitle.startsWith(`${normalizedShelfName} `)) {
       score = 2;

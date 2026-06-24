@@ -189,6 +189,36 @@ describe("guessShelfFromBarcodeLookup — Ryse / Xbox One", () => {
   });
 });
 
+describe("guessShelfFromBarcodeLookup — étagère par format physique", () => {
+  const shelves = [
+    { id: "s-bd", name: "Blu-ray", type: "movies" },
+    { id: "s-ld", name: "Laser Disc", type: "movies" },
+  ];
+
+  it("recommande l'étagère format (espace/casse-insensible) plutôt que la première du type", () => {
+    // L'indice "LaserDisc" (sans espace) doit matcher l'étagère "Laser Disc".
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "movies",
+        searchNames: ["Toy Story", "LaserDisc"],
+        shelves,
+        preferredShelfId: "s-bd",
+      }),
+    ).toEqual({ shelfId: "s-ld", isGuessed: true });
+  });
+
+  it("retombe sur l'étagère du type quand aucun format ne matche", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "movies",
+        searchNames: ["Toy Story"],
+        shelves,
+        preferredShelfId: "s-bd",
+      }),
+    ).toEqual({ shelfId: "s-bd", isGuessed: true });
+  });
+});
+
 describe("guessShelfFromBarcodeLookup — match par type résolu", () => {
   const shelves = [
     { id: "s-games", name: "Jeux Switch", type: "games" },

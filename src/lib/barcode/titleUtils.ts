@@ -359,10 +359,13 @@ export function cleanTitleForDisplay(
         "",
       )
       .replace(
-        /\s+\b(?:cd|album)\b(?:\s+\b(?:disney|square\s+enix|japan|jpn|import)\b)*\s*$/i,
+        /\s+\b(?:cd|album)\b(?:\s+\b(?:walt\s+disney|walt|disney|square\s+enix|japan|jpn|import)\b)*\s*$/i,
         "",
       )
-      .replace(/\s+\b(?:disney|square\s+enix|japan|jpn|import)\b\s*$/i, "")
+      .replace(
+        /\s+\b(?:walt\s+disney|walt|disney|square\s+enix|japan|jpn|import)\b\s*$/i,
+        "",
+      )
       .replace(/\s*[-–—|]\s*album\s+cd\b.*$/i, "")
       .replace(/\bSQEX\d+\b/gi, "")
       .replace(/\s*\*rare\*\s*$/i, "")

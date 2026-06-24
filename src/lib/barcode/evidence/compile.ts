@@ -516,6 +516,7 @@ export function scoreTypeCandidate(
   result: CompiledResult,
   barcode: string,
   boardGameSignal = 0,
+  videoFormatSignal = 0,
 ): number {
   const topMatch = result.matches[0];
   if (!topMatch) return 0;
@@ -546,6 +547,14 @@ export function scoreTypeCandidate(
   if (boardGameSignal > 0) {
     if (candidateType === "boardgames") score += boardGameSignal * 0.35;
     if (candidateType === "games") score -= boardGameSignal * 0.3;
+  }
+
+  // A video-format signal (LaserDisc/VHS/animated film) promotes `movies` and
+  // suppresses `musics`, so a same-named soundtrack album cannot win the type of
+  // a scanned film. See detectVideoFormatSignal.
+  if (videoFormatSignal > 0) {
+    if (candidateType === "movies") score += videoFormatSignal * 0.35;
+    if (candidateType === "musics") score -= videoFormatSignal * 0.3;
   }
 
   return score;

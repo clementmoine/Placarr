@@ -13,6 +13,7 @@ import { runBarcodeLookups } from "@/lib/barcode/lookups";
 import {
   collectPayloadListingNames,
   detectBoardGameSignal,
+  detectVideoFormatSignal,
 } from "@/lib/barcode/boardGameSignal";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookupPayload";
 import { compileAllBarcodeTypeResults } from "@/lib/barcode/sourceAssembly";
@@ -228,6 +229,7 @@ function selectBarcodeTypeResult(
   typeResults: Record<string, CompiledResult | null>,
   cleanedBarcode: string,
   boardGameSignal = 0,
+  videoFormatSignal = 0,
 ): { selectedType: string | null; selectedResult: CompiledResult | null } {
   if (type && typeResults[type]) {
     return { selectedType: type, selectedResult: typeResults[type] };
@@ -241,8 +243,20 @@ function selectBarcodeTypeResult(
     .filter((entry): entry is [string, CompiledResult] => Boolean(entry[1]));
   candidates.sort(
     (a, b) =>
-      scoreTypeCandidate(b[0], b[1], cleanedBarcode, boardGameSignal) -
-      scoreTypeCandidate(a[0], a[1], cleanedBarcode, boardGameSignal),
+      scoreTypeCandidate(
+        b[0],
+        b[1],
+        cleanedBarcode,
+        boardGameSignal,
+        videoFormatSignal,
+      ) -
+      scoreTypeCandidate(
+        a[0],
+        a[1],
+        cleanedBarcode,
+        boardGameSignal,
+        videoFormatSignal,
+      ),
   );
 
   const best = candidates[0];
@@ -302,14 +316,15 @@ export async function resolveBarcode(
     type,
     payload,
   });
-  const boardGameSignal = detectBoardGameSignal(
-    collectPayloadListingNames(payload),
-  );
+  const listingNames = collectPayloadListingNames(payload);
+  const boardGameSignal = detectBoardGameSignal(listingNames);
+  const videoFormatSignal = detectVideoFormatSignal(listingNames);
   const { selectedType, selectedResult } = selectBarcodeTypeResult(
     type,
     typeResults,
     cleanedBarcode,
     boardGameSignal,
+    videoFormatSignal,
   );
 
   if (selectedResult && selectedType) {

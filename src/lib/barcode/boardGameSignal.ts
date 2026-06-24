@@ -49,8 +49,39 @@ const PUBLISHERS = [
 const CATEGORY_STRENGTH = 1;
 const PUBLISHER_STRENGTH = 0.6;
 
+// Video-only formats / film content cues: a LaserDisc, VHS or "dessin animé" is a
+// MOVIE, never a music CD — so the same harvested listings can disambiguate a
+// film that a coincidental same-named soundtrack album would otherwise win.
+// (DVD/Blu-ray are intentionally excluded — too ambiguous with games.)
+const VIDEO_FORMAT_PATTERNS = [
+  /\blaser\s?disc\b/,
+  /\bvhs\b/,
+  /\bdessin\s+anime\b/,
+  /\blong\s+metrage\b/,
+  /\bvostfr\b/,
+];
+const VIDEO_FORMAT_STRENGTH = 1;
+
 function normalizeName(value: string): string {
   return normalizeForTokens(value).replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * A video-format signal (LaserDisc/VHS/animated film) harvested from the
+ * listings. Used to bias the type scoring towards `movies` and away from
+ * `musics`, so a coincidental same-named soundtrack cannot hijack the type of a
+ * scanned film. See scoreTypeCandidate.
+ */
+export function detectVideoFormatSignal(names: string[]): number {
+  for (const raw of names) {
+    if (!raw) continue;
+    const normalized = normalizeName(raw);
+    if (!normalized) continue;
+    if (VIDEO_FORMAT_PATTERNS.some((pattern) => pattern.test(normalized))) {
+      return VIDEO_FORMAT_STRENGTH;
+    }
+  }
+  return 0;
 }
 
 /**

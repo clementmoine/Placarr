@@ -3,8 +3,27 @@ import { describe, expect, it } from "vitest";
 import {
   collectPayloadListingNames,
   detectBoardGameSignal,
+  detectVideoFormatSignal,
 } from "./boardGameSignal";
 import { createEmptyBarcodeLookupPayload } from "./lookupPayload";
+
+describe("detectVideoFormatSignal", () => {
+  it("repère un format vidéo (LaserDisc/VHS/dessin animé)", () => {
+    expect(
+      detectVideoFormatSignal(['Laserdisc📀 TOY STORY (PAL) 1 disque " WALT DISNEY "']),
+    ).toBe(1);
+    expect(
+      detectVideoFormatSignal(["Occasion : Laserdisc - Dessin Animé TOY STORY de DISNEY"]),
+    ).toBe(1);
+    expect(detectVideoFormatSignal(["Star Wars VHS Collector"])).toBe(1);
+  });
+
+  it("ne signale pas un produit non vidéo (CD, jeu, DVD ambigu)", () => {
+    expect(detectVideoFormatSignal(["Toy Story Bande Originale CD"])).toBe(0);
+    expect(detectVideoFormatSignal(["Mario Kart Wii"])).toBe(0);
+    expect(detectVideoFormatSignal(["Toy Story 2 DVD"])).toBe(0);
+  });
+});
 
 describe("detectBoardGameSignal", () => {
   it("returns the strongest signal for a category phrase (accents stripped)", () => {

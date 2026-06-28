@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-27** (`pnpm test` 827+ OK,
+> Dernière vérification : **2026-06-28** (`pnpm exec vitest run` **1187** OK / 24 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,12 +11,14 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | 830 passent |
+| Tests | **1187** passent (1211 total, 24 skipped) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
 
-1. `apriloshop` — search PrestaShop native vide (IQIT requis, voir § Apriloshop)
-2. `thegamesdb` — probe vide sans `THEGAMESDB_API_KEY` en env (attendu en CI/local sans clé)
+1. `picclick` — probe listing souvent `empty` (timeout scrape)
+2. `screenscraper` — probe `empty` si quota API dépassé
+3. `thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé
+4. `apriloshop` — search PrestaShop native vide (IQIT requis, voir § Apriloshop)
 
 **Hors scope adapter metadata** (probe custom seulement — normal) :
 `freakxy`, `ledenicheur`, `scandex`
@@ -89,10 +91,11 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 - **Corpus barcode multi-types** ([§ F](#f-multi-type-barcodeitem-regression-corpus)) — `pnpm test:record:all` + livre / musique / film / JdS
 - Fixtures `barcodeResolver.fresh.test.ts` quasi vides
+- **Pricing manga** — lots/bundles filtrés ; reste possible : mauvais volume PicClick quand seules des annonces hors-sujet existent
 
 ### P6 — Architecture lib (optionnel)
 
-Réorganiser `src/lib/` en sous-dossiers thématiques (`metadata/`, `media/`, `items/`) — pas de fusion des `services/providers/*` (plug-and-play voulu).
+~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** (`metadata/`, `item/`, `media/`, `pricing/`, …) — ne pas fusionner `services/providers/*`.
 
 ---
 
@@ -110,6 +113,11 @@ Réorganiser `src/lib/` en sous-dossiers thématiques (`metadata/`, `media/`, `i
 - **Ludifolie observations** : sample Mille Sabords ajouté → `obs:enabled` (2026-06-27)
 - **Metadata adapters** : `metadataResolvers.ts` supprimé — map unique dans `providerBootstrap.ts` (**fait 2026-06-27**)
 - **Game barcode enrich** : `contributeGameBarcodeEnrichment` (**fait 2026-06-27**)
+- **Lib/services split** : domain modules `lib/*`, `services/provider|metadata|pricing|barcode` (**fait 2026-06-28**)
+- **Pricing card ↔ fiche** : `resolveItemDisplayPrices` / `summarizeShelfItemPrices` unifiés, filtres lots manga, sync cache étagère (**fait 2026-06-28**)
+- **Barcode consensus title** : colonne structurée + compile observations (**fait 2026-06-28**)
+- **Retailer barcode guards** : Philibert trust EAN confirmé ; PrestaShop exige alignement titre ; couvertures retail filtrées par plateforme/suite (**fait 2026-06-28**)
+- **Booknode covers** : téléchargement `/full/` JPEG + préférence merge sur OpenLibrary (**fait 2026-06-28**)
 
 ---
 

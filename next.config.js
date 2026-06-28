@@ -1,12 +1,11 @@
 // @ts-check
+import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
 
-// You may want to use a more robust revision to cache
-// files more efficiently.
-// A viable option is `git rev-parse HEAD`.
 const revision = crypto.randomUUID();
 
 const withSerwist = withSerwistInit({
+  disable: process.env.NODE_ENV !== "production",
   cacheOnNavigation: true,
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
@@ -17,14 +16,7 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  eslint: {
-    // TODO: repasser à false une fois la dette lint résorbée
-    // (102 prettier auto-fixables + 113 no-explicit-any dans les services).
-    ignoreDuringBuilds: true,
-  },
   typescript: {
-    // Le typecheck est propre (0 erreur) : on l'applique au build pour
-    // qu'aucune régression de type ne puisse être déployée.
     ignoreBuildErrors: false,
   },
   images: {
@@ -48,6 +40,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "covers.openlibrary.org",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn1.booknode.com",
       },
       {
         protocol: "https",
@@ -109,6 +105,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "i.discogs.com",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.booknode.com",
       },
     ],
   },

@@ -58,3 +58,9 @@ prisma/data-export.json
 # Médias téléchargés/uploadés à l'exécution (données runtime, pas du source)
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# Scripts et données de debug locaux
+/scratch/
+
+# Cursor IDE
+.cursor/

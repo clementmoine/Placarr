@@ -1,6 +1,5 @@
 import levenshtein from "fast-levenshtein";
 import type {
-  MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
@@ -487,14 +486,12 @@ export async function fetchFromHowLongToBeat(
       );
 
     const coverUrl = buildHowLongToBeatImageUrl(best.game_image);
-    const attachments: MetadataAttachment[] = coverUrl
-      ? [{ type: "cover", url: coverUrl, source: "howlongtobeat" }]
-      : [];
 
     return {
       title: best.game_name || undefined,
-      imageUrl: coverUrl || undefined,
-      attachments: attachments.length > 0 ? attachments : undefined,
+      attachments: coverUrl
+        ? [{ type: "image", url: coverUrl, source: "howlongtobeat" }]
+        : undefined,
       aliases: aliases.length > 0 ? aliases : undefined,
       facts,
     };

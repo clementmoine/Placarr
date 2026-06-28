@@ -4,7 +4,21 @@ import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { volumeNumberFromTitle } from "@/lib/title/volumeNumber";
+import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+
+function openLibraryTitleAligned(
+  resultTitle: string,
+  requestedName: string,
+): boolean {
+  const requestedIssue = volumeNumberFromTitle(requestedName);
+  const resultIssue = volumeNumberFromTitle(resultTitle);
+  if (requestedIssue && resultIssue && requestedIssue !== resultIssue) {
+    return false;
+  }
+  return metadataTitleSimilarity(resultTitle, requestedName) >= 0.58;
+}
 
 interface OpenLibraryWork {
   key: string;
@@ -73,14 +87,60 @@ interface OpenLibraryEditionsResponse {
   }>;
 }
 
+const OPENLIBRARY_TIMEOUT_MS = 12_000;
+const OPENLIBRARY_MAX_RETRIES = 2;
+const OPENLIBRARY_INITIAL_RETRY_DELAY_MS = 500;
+const RETRYABLE_OPENLIBRARY_STATUSES = new Set([429, 500, 502, 503, 504]);
+const RETRYABLE_OPENLIBRARY_CODES = new Set([
+  "ECONNABORTED",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "EAI_AGAIN",
+  "ENOTFOUND",
+  "ERR_NETWORK",
+]);
+
+type OpenLibraryRequestError = {
+  response?: { status?: number };
+  code?: string;
+  message?: string;
+  cause?: { code?: string; message?: string };
+};
+
+function openLibraryErrorStatus(error: unknown): number | null {
+  const status = (error as OpenLibraryRequestError).response?.status;
+  return typeof status === "number" ? status : null;
+}
+
+function openLibraryErrorCode(error: unknown): string | null {
+  const requestError = error as OpenLibraryRequestError;
+  return requestError.code || requestError.cause?.code || null;
+}
+
+function isRetryableOpenLibraryError(error: unknown): boolean {
+  const status = openLibraryErrorStatus(error);
+  if (status && RETRYABLE_OPENLIBRARY_STATUSES.has(status)) return true;
+  const code = openLibraryErrorCode(error);
+  return Boolean(code && RETRYABLE_OPENLIBRARY_CODES.has(code));
+}
+
+function summarizeOpenLibraryError(error: unknown): string {
+  const status = openLibraryErrorStatus(error);
+  if (status) return `HTTP ${status}`;
+  const code = openLibraryErrorCode(error);
+  const message =
+    error instanceof Error
+      ? error.message
+      : (error as OpenLibraryRequestError).message;
+  return [code, message].filter(Boolean).join(" - ") || "unknown error";
+}
+
 export function createOpenLibraryResolver() {
   return async function fetchFromOpenLibrary(
     name: string,
     barcode?: string | null,
   ): Promise<MetadataResult | null> {
-    const MAX_RETRIES = 3;
-    const INITIAL_DELAY = 1000;
-
     const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -89,18 +149,19 @@ export function createOpenLibraryResolver() {
       retryCount = 0,
     ): Promise<T> => {
       try {
-        const response = await axios.get<T>(url);
+        const response = await axios.get<T>(url, {
+          timeout: OPENLIBRARY_TIMEOUT_MS,
+        });
         return response.data;
       } catch (error: unknown) {
-        const axiosError = error as { response?: { status: number } };
         if (
-          (axiosError.response?.status === 503 ||
-            axiosError.response?.status === 500) &&
-          retryCount < MAX_RETRIES
+          isRetryableOpenLibraryError(error) &&
+          retryCount < OPENLIBRARY_MAX_RETRIES
         ) {
-          const delay = INITIAL_DELAY * Math.pow(2, retryCount);
-          console.log(
-            `Open Library API request failed with status ${axiosError.response.status}, retrying in ${delay}ms...`,
+          const delay =
+            OPENLIBRARY_INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCount);
+          console.warn(
+            `[OpenLibrary] Request failed (${summarizeOpenLibraryError(error)}), retrying in ${delay}ms`,
           );
           await sleep(delay);
           return fetchWithRetry<T>(url, retryCount + 1);
@@ -131,17 +192,7 @@ export function createOpenLibraryResolver() {
             workId = isbnData.works[0].key;
             workData = isbnData;
           } else {
-            const isbnTitle = (isbnData.title || "").toLowerCase();
-            const queryLower = cleanName.toLowerCase();
-            const dist = levenshtein.get(isbnTitle, queryLower);
-            const maxL = Math.max(isbnTitle.length, queryLower.length);
-            const similarity = 1 - dist / maxL;
-
-            if (
-              isbnTitle.includes(queryLower) ||
-              queryLower.includes(isbnTitle) ||
-              similarity > 0.4
-            ) {
+            if (openLibraryTitleAligned(isbnData.title, name)) {
               workId = isbnData.works[0].key;
               workData = isbnData;
             } else {
@@ -169,6 +220,11 @@ export function createOpenLibraryResolver() {
 
           for (const doc of data.docs) {
             let score = 0;
+            if (openLibraryTitleAligned(doc.title, cleanName)) {
+              score += 250;
+            } else {
+              score -= 400;
+            }
             score += (doc.edition_count || 0) * 10;
             if (doc.has_fulltext) score += 50;
             if (doc.cover_i) score += 30;
@@ -202,6 +258,13 @@ export function createOpenLibraryResolver() {
                   cleanName.toLowerCase(),
                   edition.title.toLowerCase(),
                 );
+                const aligned = openLibraryTitleAligned(edition.title, cleanName);
+                const requestedIssue = volumeNumberFromTitle(cleanName);
+                const editionIssue = volumeNumberFromTitle(edition.title);
+                const issueMismatch =
+                  requestedIssue &&
+                  editionIssue &&
+                  requestedIssue !== editionIssue;
 
                 const fullLanguageKey = edition.languages?.[0]?.key || "";
                 const language = fullLanguageKey.includes("/fre")
@@ -233,8 +296,11 @@ export function createOpenLibraryResolver() {
                   distance,
                   languageScore,
                   yearMatches,
+                  aligned,
+                  issueMismatch,
                 };
               })
+              .filter((entry) => entry.aligned && !entry.issueMismatch)
               .sort((a, b) => {
                 if (a.languageScore !== b.languageScore) {
                   return b.languageScore - a.languageScore;
@@ -245,11 +311,22 @@ export function createOpenLibraryResolver() {
                 return a.distance - b.distance;
               });
 
-            workData = sortedEditions[0].edition;
-            if ((bestWork as any).alternate_names) {
-              (workData as any).alternate_names = (
-                bestWork as any
-              ).alternate_names;
+            if (sortedEditions.length > 0) {
+              workData = sortedEditions[0].edition;
+              if ((bestWork as any).alternate_names) {
+                (workData as any).alternate_names = (
+                  bestWork as any
+                ).alternate_names;
+              }
+            } else {
+              workData = await fetchWithRetry<OpenLibraryWork>(
+                `https://openlibrary.org${workId}.json`,
+              );
+              if ((bestWork as any).alternate_names) {
+                (workData as any).alternate_names = (
+                  bestWork as any
+                ).alternate_names;
+              }
             }
           } else {
             workData = await fetchWithRetry<OpenLibraryWork>(
@@ -519,6 +596,17 @@ export function createOpenLibraryResolver() {
         ? workData.key.replace(/^\/(works|books|authors)\//, "")
         : undefined;
 
+      if (
+        name &&
+        workData.title &&
+        !openLibraryTitleAligned(workData.title, name)
+      ) {
+        console.warn(
+          `[OpenLibrary] Rejecting "${workData.title}" — not aligned with "${name}"`,
+        );
+        return null;
+      }
+
       return {
         title: workData.title,
         barcode: discoveredBarcode,
@@ -557,7 +645,9 @@ export function createOpenLibraryResolver() {
         externalIds: openlibraryId ? { openlibrary: openlibraryId } : undefined,
       };
     } catch (error) {
-      console.error("Error fetching from Open Library:", error);
+      console.warn(
+        `[OpenLibrary] Metadata lookup failed: ${summarizeOpenLibraryError(error)}`,
+      );
       return null;
     }
   };

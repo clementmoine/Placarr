@@ -10,10 +10,10 @@ de façon **déterministe**, sans réseau.
 (ScreenScraper/IGDB authentifiés, pas de blocage d'IP type BGG 401, etc.) :
 
 ```bash
-# Sous-ensemble borné en temps (3 cas) :
+# Sous-ensemble borné en temps (4 cas, ~5 min/cas si réseau lent) :
 pnpm test:record
 
-# Les 14 cas canoniques en une seule passe :
+# Les 18 cas canoniques en une seule passe :
 pnpm test:record:all
 ```
 
@@ -22,9 +22,9 @@ pnpm test:record:all
 Cela appelle les vraies API une fois et écrit un fixture par cas. Les clés
 d'API sont **expurgées** automatiquement (`__REDACTED__`) avant écriture.
 
-Vérifie ensuite la qualité du résultat loggé (`[record …]`) avant de commiter :
-on ne commite **que** des fixtures dont le résultat est correct — un fixture
-dégradé verrouillerait un comportement faux.
+Le test RECORD appelle `assertExpectation` **avant** d'écrire le fichier : un
+résultat incorrect n'est pas sauvegardé. Vérifie quand même le log `[record …]`
+avant de commiter — un fixture dégradé verrouillerait un comportement faux.
 
 ## Rejouer (par défaut, en CI)
 

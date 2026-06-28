@@ -1,22 +1,20 @@
-import type {
-  MetadataAttachment,
-  MetadataFact,
-  MetadataResult,
-} from "@/types/metadataProvider";
+import type { DatabaseSync } from "node:sqlite";
 
-import {
-  buildLaunchBoxAttachments,
-  pickLaunchBoxCoverUrl,
-} from "./images";
-import {
-  ensureLaunchBoxIndex,
-  isLaunchBoxEnabled,
-} from "./indexStore";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+
+import { buildLaunchBoxAttachments, pickLaunchBoxCoverUrl } from "./images";
+import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
+import { ensureLaunchBoxIndex } from "./indexStore";
 import {
   decodeLaunchBoxTitle,
   minimumLaunchBoxMatchScore,
+  minimumLaunchBoxPlatformMatchScore,
   scoreLaunchBoxTitleMatch,
 } from "./matchScore";
+import {
+  platformMatchesLaunchBoxEntry,
+  resolveLaunchBoxPlatformNames,
+} from "./platformMap";
 import type {
   LaunchBoxAlternateNameRecord,
   LaunchBoxGameRecord,
@@ -68,6 +66,80 @@ function ftsPrefixToken(token: string): string | null {
   return safe ? `${safe}*` : null;
 }
 
+const LAUNCHBOX_MARKETING_QUERY_TOKENS = new Set([
+  "anniversary",
+  "bundle",
+  "collector",
+  "collectors",
+  "complete",
+  "definitive",
+  "deluxe",
+  "director",
+  "directors",
+  "edition",
+  "goty",
+  "gold",
+  "limited",
+  "platinum",
+  "premium",
+  "remaster",
+  "remastered",
+  "special",
+  "standard",
+  "ultimate",
+]);
+
+export function stripLaunchBoxMarketingTokens(tokens: string[]): string[] {
+  return tokens.filter((token) => !LAUNCHBOX_MARKETING_QUERY_TOKENS.has(token));
+}
+
+/** Full title tokens plus a marketing-stripped variant for edition-heavy queries. */
+export function buildLaunchBoxSearchTokenSets(name: string): string[][] {
+  const tokens = tokenizeLaunchBoxQuery(name);
+  if (tokens.length === 0) return [];
+
+  const stripped = stripLaunchBoxMarketingTokens(tokens);
+  if (
+    stripped.length >= 2 &&
+    stripped.length < tokens.length &&
+    stripped.join(" ") !== tokens.join(" ")
+  ) {
+    return [tokens, stripped];
+  }
+
+  return [tokens];
+}
+
+function collectLaunchBoxCandidateIds(
+  db: DatabaseSync,
+  name: string,
+): number[] {
+  const candidateIdSet = new Set<number>();
+  const stmtFts = db.prepare(`
+    SELECT databaseId FROM games_fts
+    WHERE games_fts MATCH ?
+    LIMIT 200
+  `);
+
+  try {
+    for (const tokenSet of buildLaunchBoxSearchTokenSets(name)) {
+      const ftsQueries = buildLaunchBoxFtsQueries(tokenSet);
+      for (const ftsQuery of ftsQueries) {
+        const rows = stmtFts.all(ftsQuery) as { databaseId: number }[];
+        if (rows.length === 0) continue;
+        for (const row of rows) {
+          candidateIdSet.add(row.databaseId);
+        }
+        break;
+      }
+    }
+  } catch (error) {
+    console.error("[LaunchBox] FTS query failed", error);
+  }
+
+  return [...candidateIdSet];
+}
+
 export function buildLaunchBoxFtsQueries(tokens: string[]): string[] {
   const prefixes = tokens
     .map(ftsPrefixToken)
@@ -102,10 +174,7 @@ export function buildLaunchBoxFtsQueries(tokens: string[]): string[] {
 }
 
 function candidateNames(game: LaunchBoxGameRecord): string[] {
-  return [
-    game.name,
-    ...game.alternateNames.map((alternate) => alternate.name),
-  ];
+  return [game.name, ...game.alternateNames.map((alternate) => alternate.name)];
 }
 
 function scoreLaunchBoxCandidate(
@@ -128,11 +197,11 @@ function scoreLaunchBoxCandidate(
   );
 }
 
-export function pickBestLaunchBoxGame(
+function pickBestLaunchBoxGameFromPool(
   games: LaunchBoxGameRecord[],
   requestedName: string,
-  platform?: string | null,
-  minScore = minimumLaunchBoxMatchScore(requestedName),
+  platform: string | null | undefined,
+  minScore: number,
 ): LaunchBoxGameRecord | null {
   let best: LaunchBoxGameRecord | null = null;
   let bestScore = minScore;
@@ -146,6 +215,37 @@ export function pickBestLaunchBoxGame(
   }
 
   return best;
+}
+
+export function pickBestLaunchBoxGame(
+  games: LaunchBoxGameRecord[],
+  requestedName: string,
+  platform?: string | null,
+  minScore = minimumLaunchBoxMatchScore(requestedName),
+): LaunchBoxGameRecord | null {
+  const hasRequestedPlatform =
+    resolveLaunchBoxPlatformNames(platform).length > 0;
+
+  if (hasRequestedPlatform) {
+    const platformCandidates = games.filter((game) =>
+      platformMatchesLaunchBoxEntry(platform, game.platform),
+    );
+    if (platformCandidates.length === 0) return null;
+
+    return pickBestLaunchBoxGameFromPool(
+      platformCandidates,
+      requestedName,
+      platform,
+      minimumLaunchBoxPlatformMatchScore(requestedName),
+    );
+  }
+
+  return pickBestLaunchBoxGameFromPool(
+    games,
+    requestedName,
+    platform,
+    minScore,
+  );
 }
 
 function formatReleaseDate(game: LaunchBoxGameRecord): string | undefined {
@@ -292,6 +392,7 @@ export function mapLaunchBoxGameToMetadata(
 
   return {
     title: decodedTitle,
+    platformKey: detectVideoGamePlatformKey(game.platform) || undefined,
     description: game.overview,
     releaseDate: formatReleaseDate(game),
     imageUrl,
@@ -343,42 +444,15 @@ export async function fetchFromLaunchBox(
   name: string,
   platform?: string | null,
 ): Promise<MetadataResult | null> {
-  if (!isLaunchBoxEnabled()) return null;
-
   const db = await ensureLaunchBoxIndex();
   if (!db) {
     console.info(
-      "[LaunchBox] Index unavailable — set LAUNCHBOX_ENABLED=true or LAUNCHBOX_METADATA_XML to build it",
+      "[LaunchBox] Index unavailable — download/build failed (Metadata.zip → SQLite in .cache/launchbox)",
     );
     return null;
   }
 
-  const tokens = tokenizeLaunchBoxQuery(name);
-  const ftsQueries = buildLaunchBoxFtsQueries(tokens);
-  if (ftsQueries.length === 0) return null;
-
-  const candidateIdSet = new Set<number>();
-
-  try {
-    const stmtFts = db.prepare(`
-      SELECT databaseId FROM games_fts 
-      WHERE games_fts MATCH ? 
-      LIMIT 200
-    `);
-
-    for (const ftsQuery of ftsQueries) {
-      const rows = stmtFts.all(ftsQuery) as { databaseId: number }[];
-      if (rows.length === 0) continue;
-      for (const row of rows) {
-        candidateIdSet.add(row.databaseId);
-      }
-      break;
-    }
-  } catch (error) {
-    console.error("[LaunchBox] FTS query failed", error);
-  }
-
-  const candidateIds = [...candidateIdSet];
+  const candidateIds = collectLaunchBoxCandidateIds(db, name);
   if (candidateIds.length === 0) return null;
 
   const games: LaunchBoxGameRecord[] = [];

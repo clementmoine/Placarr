@@ -107,7 +107,7 @@ describe("LaunchBox XML block extraction", () => {
 });
 
 describe("buildLaunchBoxAttachments", () => {
-  it("prefers a European box front as cover and maps other media types", () => {
+  it("exports every regional box front and still prefers Europe for the default cover", () => {
     const attachments = buildLaunchBoxAttachments([
       {
         databaseId: 1,
@@ -138,31 +138,50 @@ describe("buildLaunchBoxAttachments", () => {
       },
     ]);
 
-    expect(pickLaunchBoxCoverUrl([
-      {
-        databaseId: 1,
-        fileName: "na.jpg",
-        type: "Box - Front",
-        region: "North America",
-      },
-      {
-        databaseId: 1,
-        fileName: "eu.jpg",
-        type: "Box - Front",
-        region: "Europe",
-      },
-    ])).toBe("https://images.launchbox-app.com/eu.jpg");
+    expect(
+      pickLaunchBoxCoverUrl([
+        {
+          databaseId: 1,
+          fileName: "na.jpg",
+          type: "Box - Front",
+          region: "North America",
+        },
+        {
+          databaseId: 1,
+          fileName: "eu.jpg",
+          type: "Box - Front",
+          region: "Europe",
+        },
+      ]),
+    ).toBe("https://images.launchbox-app.com/eu.jpg");
 
-    expect(attachments.some((entry) => entry.type === "cover" && entry.url.endsWith("eu.jpg"))).toBe(true);
-    expect(attachments.some((entry) => entry.type === "cover" && entry.role === "eu")).toBe(
-      true,
-    );
+    expect(
+      attachments.some(
+        (entry) => entry.type === "cover" && entry.url.endsWith("eu.jpg"),
+      ),
+    ).toBe(true);
+    expect(
+      attachments.some(
+        (entry) => entry.type === "cover" && entry.role === "eu",
+      ),
+    ).toBe(true);
+    expect(
+      attachments.some(
+        (entry) => entry.type === "cover" && entry.url.endsWith("na.jpg"),
+      ),
+    ).toBe(true);
+    expect(
+      attachments.some(
+        (entry) => entry.type === "cover" && entry.role === "us",
+      ),
+    ).toBe(true);
+    expect(attachments.filter((entry) => entry.type === "cover")).toHaveLength(2);
     expect(attachments.some((entry) => entry.type === "background")).toBe(true);
     expect(attachments.some((entry) => entry.type === "logo")).toBe(true);
     expect(attachments.some((entry) => entry.type === "screenshot")).toBe(true);
   });
 
-  it("tags box backs, spines and discs explicitly", () => {
+  it("tags box backs, spines and discs explicitly per region", () => {
     const attachments = buildLaunchBoxAttachments([
       {
         databaseId: 1,
@@ -172,9 +191,21 @@ describe("buildLaunchBoxAttachments", () => {
       },
       {
         databaseId: 1,
+        fileName: "front-jp.jpg",
+        type: "Box - Front",
+        region: "Japan",
+      },
+      {
+        databaseId: 1,
         fileName: "back-eu.jpg",
         type: "Box - Back",
         region: "Europe",
+      },
+      {
+        databaseId: 1,
+        fileName: "back-jp.jpg",
+        type: "Box - Back",
+        region: "Japan",
       },
       {
         databaseId: 1,
@@ -199,10 +230,22 @@ describe("buildLaunchBoxAttachments", () => {
           url: "https://images.launchbox-app.com/front-eu.jpg",
         }),
         expect.objectContaining({
+          type: "cover",
+          title: "Box - Front",
+          role: "jp",
+          url: "https://images.launchbox-app.com/front-jp.jpg",
+        }),
+        expect.objectContaining({
           type: "image",
           title: "Box - Back",
           role: "back-eu",
           url: "https://images.launchbox-app.com/back-eu.jpg",
+        }),
+        expect.objectContaining({
+          type: "image",
+          title: "Box - Back",
+          role: "back-jp",
+          url: "https://images.launchbox-app.com/back-jp.jpg",
         }),
         expect.objectContaining({
           type: "image",

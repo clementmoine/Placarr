@@ -27,7 +27,7 @@ export const GAME_EDITION_DEFINITIONS = [
     ],
   },
   {
-    label: "Edition Limitee",
+    label: "Édition Limitée",
     terms: ["edition limitee", "édition limitée", "limited edition"],
   },
   { label: "Collector", terms: ["collector", "collectors"] },
@@ -163,6 +163,10 @@ export const LISTING_REGION_TERMS = [
   "ita",
   "es",
   "spa",
+  "nl",
+  "nld",
+  "dut",
+  "dutch",
   "eu",
   "eur",
   "us",
@@ -180,6 +184,10 @@ export const LISTING_REGION_TERMS = [
 ] as const;
 
 export const LISTING_NOISE_TERMS = [
+  // Seller placeholders for an unknown/missing field — never part of a title.
+  "inconnu",
+  "inconnue",
+  "unknown",
   "jeu video",
   "jeux video",
   "jeu pour",
@@ -245,6 +253,14 @@ export function createGameEditionMatcher(flags = "gi"): RegExp {
   return createTermMatcher(GAME_EDITION_TERMS, flags);
 }
 
+export const GAME_OF_THE_YEAR_TERMS = GAME_EDITION_DEFINITIONS.find(
+  (edition) => edition.label === "Game of the Year",
+)!.terms;
+
+export function containsGameOfTheYearEdition(value: string): boolean {
+  return containsAnyTerm(value, GAME_OF_THE_YEAR_TERMS);
+}
+
 export function containsAnyTerm(
   value: string,
   terms: readonly string[],
@@ -255,4 +271,38 @@ export function containsAnyTerm(
 
 export function containsGameClassicsKeyword(value: string): boolean {
   return containsAnyTerm(value, GAME_CLASSICS_KEYWORDS);
+}
+
+/** Marketplace/condition noise penalized when picking a display title. */
+export const DISPLAY_TITLE_NOISE_TERMS = [
+  ...LISTING_NOISE_TERMS,
+  ...LISTING_CONDITION_TERMS,
+  "vintage",
+  "escape game",
+  "jeu d enquete",
+  "jeu d'enquete",
+] as const;
+
+export function createDisplayTitleNoiseMatcher(flags = "gi"): RegExp {
+  return createTermMatcher(DISPLAY_TITLE_NOISE_TERMS, flags);
+}
+
+/** Region/format tokens that usually belong to listings, not canonical titles. */
+export const DISPLAY_TITLE_SUFFIX_NOISE_TERMS = [
+  ...LISTING_REGION_TERMS,
+  "notice",
+  "manuale",
+  "livret",
+  "completo",
+  "nintendo",
+  "playstation",
+  "xbox",
+  "wii",
+  "wiisc",
+  "switch",
+  "sega",
+] as const;
+
+export function createDisplayTitleSuffixNoiseMatcher(flags = "gi"): RegExp {
+  return createTermMatcher(DISPLAY_TITLE_SUFFIX_NOISE_TERMS, flags);
 }

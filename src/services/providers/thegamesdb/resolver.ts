@@ -1,10 +1,10 @@
 import { cleanCode } from "@/lib/barcode/query";
-import { inferTextLanguage } from "@/lib/localePreference";
+import { inferTextLanguage } from "@/lib/locale/preference";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 import { scoreLaunchBoxTitleMatch } from "@/services/providers/launchbox/matchScore";
 import {
   fetchTheGamesDbById,
@@ -13,6 +13,7 @@ import {
   type TheGamesDbSearchGame,
 } from "./fetch";
 import { resolveTheGamesDbPlatformId } from "./platformMap";
+import { getPlatformKeyByTheGamesDbPlatformId } from "@/lib/games/platforms";
 import { isPalRegionId, regionIdToAttachmentRole } from "./regions";
 import type {
   MetadataAttachment,
@@ -26,6 +27,13 @@ import type {
 } from "@/types/metadataObservation";
 
 const THEGAMESDB_PROVIDER_ID = "thegamesdb";
+const MIN_REGIONAL_SIBLING_SCORE = 0.55;
+const MAX_REGIONAL_SIBLING_FETCHES = 4;
+
+type TheGamesDbBoxArtBundle = {
+  base_url?: Partial<Record<string, string>>;
+  data?: Record<string, TheGamesDbBoxArt[]>;
+};
 
 function pickFrontBoxArtUrl(
   gameId: number,
@@ -54,12 +62,7 @@ function pickFrontBoxArtUrl(
 function buildAttachments(
   gameId: number,
   regionId: number | undefined,
-  boxArt:
-    | {
-        base_url?: Partial<Record<string, string>>;
-        data?: Record<string, TheGamesDbBoxArt[]>;
-      }
-    | undefined,
+  boxArt: TheGamesDbBoxArtBundle | undefined,
 ): MetadataAttachment[] {
   const entries = boxArt?.data?.[String(gameId)] || [];
   const role = regionIdToAttachmentRole(regionId);
@@ -71,7 +74,8 @@ function buildAttachments(
   return entries.flatMap((entry) => {
     if (!entry.filename) return [];
     const isBack = entry.side === "back";
-    const type = entry.type === "boxart" ? ("cover" as const) : ("image" as const);
+    const type =
+      entry.type === "boxart" ? ("cover" as const) : ("image" as const);
     return [
       {
         type,
@@ -81,6 +85,80 @@ function buildAttachments(
       },
     ];
   });
+}
+
+function mergeTheGamesDbAttachments(
+  bundles: Array<{
+    gameId: number;
+    regionId?: number | null;
+    boxArt?: TheGamesDbBoxArtBundle;
+  }>,
+): MetadataAttachment[] {
+  const seenUrls = new Set<string>();
+  const merged: MetadataAttachment[] = [];
+
+  for (const bundle of bundles) {
+    for (const attachment of buildAttachments(
+      bundle.gameId,
+      bundle.regionId ?? undefined,
+      bundle.boxArt,
+    )) {
+      const key = attachment.url.trim().toLowerCase();
+      if (!key || seenUrls.has(key)) continue;
+      seenUrls.add(key);
+      merged.push(attachment);
+    }
+  }
+
+  return merged;
+}
+
+function regionalAttachmentBucket(
+  regionId?: number | null,
+  gameId?: number,
+): string {
+  return regionIdToAttachmentRole(regionId) || `game-${gameId ?? "unknown"}`;
+}
+
+/** Same-platform search hits worth fetching for regional box art. */
+export function pickRegionalSiblingGames(
+  games: TheGamesDbSearchGame[],
+  selected: TheGamesDbSearchGame,
+  requestedName: string,
+  platform?: string | null,
+  barcode?: string | null,
+  limit = MAX_REGIONAL_SIBLING_FETCHES,
+): TheGamesDbSearchGame[] {
+  const platformId = resolveTheGamesDbPlatformId(platform);
+  const cleanedBarcode = cleanCode(barcode);
+  const preferPal =
+    cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0");
+  const selectedPlatform = selected.platform;
+  const seenRegions = new Set([regionalAttachmentBucket(selected.region_id, selected.id)]);
+
+  const ranked = games
+    .filter((game) => game.id !== selected.id)
+    .filter(
+      (game) =>
+        selectedPlatform == null || game.platform === selectedPlatform,
+    )
+    .map((game) => ({
+      game,
+      score: scoreSearchCandidate(game, requestedName, platformId, preferPal),
+    }))
+    .filter((entry) => entry.score >= MIN_REGIONAL_SIBLING_SCORE)
+    .sort((a, b) => b.score - a.score);
+
+  const picked: TheGamesDbSearchGame[] = [];
+  for (const { game } of ranked) {
+    const bucket = regionalAttachmentBucket(game.region_id, game.id);
+    if (seenRegions.has(bucket)) continue;
+    seenRegions.add(bucket);
+    picked.push(game);
+    if (picked.length >= limit) break;
+  }
+
+  return picked;
 }
 
 function scoreSearchCandidate(
@@ -273,7 +351,8 @@ function buildTheGamesDbObservations(
       },
       usage: makeObservationUsage({
         displayCandidate: true,
-        evidence: role === "cover_front" || role === "cover_back" ? "strong" : "normal",
+        evidence:
+          role === "cover_front" || role === "cover_back" ? "strong" : "normal",
       }),
     });
   }
@@ -296,6 +375,17 @@ export async function fetchFromTheGamesDB(
   const game = details?.data?.games?.[0];
   if (!game) return null;
 
+  const regionalSiblings = pickRegionalSiblingGames(
+    games,
+    selected,
+    name,
+    platform,
+    barcode,
+  );
+  const siblingDetails = await Promise.all(
+    regionalSiblings.map((sibling) => fetchTheGamesDbById(sibling.id)),
+  );
+
   const title = game.game_title?.trim() || selected.game_title?.trim();
   if (!title) return null;
 
@@ -303,11 +393,28 @@ export async function fetchFromTheGamesDB(
     game.overview?.trim() ||
     details?.include?.overview?.data?.[String(game.id)]?.overview?.trim();
   const imageUrl = pickFrontBoxArtUrl(game.id, details?.include?.boxart);
-  const attachments = buildAttachments(
-    game.id,
-    game.region_id ?? selected.region_id,
-    details?.include?.boxart,
-  );
+  const attachmentBundles = [
+    {
+      gameId: game.id,
+      regionId: game.region_id ?? selected.region_id,
+      boxArt: details?.include?.boxart,
+    },
+    ...regionalSiblings.flatMap((sibling, index) => {
+      const siblingResponse = siblingDetails[index];
+      const siblingGame = siblingResponse?.data?.games?.[0];
+      const boxArt = siblingResponse?.include?.boxart;
+      const entries = boxArt?.data?.[String(sibling.id)] || [];
+      if (entries.length === 0) return [];
+      return [
+        {
+          gameId: sibling.id,
+          regionId: siblingGame?.region_id ?? sibling.region_id,
+          boxArt,
+        },
+      ];
+    }),
+  ];
+  const attachments = mergeTheGamesDbAttachments(attachmentBundles);
   const regionalTitles = buildRegionalTitles(games, game.id);
   const aliases = regionalTitles
     .map((entry) => entry.text)
@@ -379,6 +486,10 @@ export async function fetchFromTheGamesDB(
 
   const result: MetadataResult = {
     title,
+    platformKey:
+      getPlatformKeyByTheGamesDbPlatformId(game.platform) ||
+      getPlatformKeyByTheGamesDbPlatformId(selected.platform) ||
+      undefined,
     description: overview || undefined,
     releaseDate: game.release_date || selected.release_date,
     imageUrl,

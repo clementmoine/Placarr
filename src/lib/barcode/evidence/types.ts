@@ -1,4 +1,11 @@
-import { pickPlatformKeyFromSignals } from "@/lib/barcode/gameLookup";
+import type { MetadataObservation } from "@/types/metadataObservation";
+
+export interface BarcodeSourceFact {
+  kind: string;
+  label: string;
+  value: string;
+  unit?: string | null;
+}
 
 export interface SourceProduct {
   name: string;
@@ -6,6 +13,7 @@ export interface SourceProduct {
   isAlias?: boolean;
   region?: string | null;
   platformKey?: string | null;
+  facts?: BarcodeSourceFact[];
 }
 
 export interface ParsedProductName {
@@ -34,10 +42,18 @@ export interface ProductEvidence {
   priority: number;
   sourceWeight: number;
   parsed: ParsedProductName;
+  facts?: BarcodeSourceFact[];
   // Set when a strong independent marketplace consensus contradicts this
   // canonical barcode match: it stays an anchor (so it survives as a clean
   // alternate) but its cluster confidence is capped so the consensus leads.
   contradictedByConsensus?: boolean;
+  // Subset of the above: the consensus specifically disputed this canonical's
+  // EDITION — a sequel number or an edition subtitle (same franchise as the
+  // leader, wrong edition — e.g. a bad "Ghost Recon 2" or "Ghost Recon : Island
+  // Thunder" mapping of "Ghost Recon"). Such a wrong edition is a known-bad
+  // alternate, not a genuinely different product, so it must NOT be surfaced as
+  // a pickable alternate (it would shelve the wrong game).
+  contradictedEdition?: boolean;
 }
 
 export interface MatchEvidenceSummary {
@@ -71,17 +87,6 @@ export interface CompiledResult {
   suggestions: string[];
   matches: ResolvedMatch[];
   platformKey?: string | null;
-}
-
-export function pickPlatformKeyFromEvidence(
-  evidence: ProductEvidence[],
-): string | null {
-  const signals = evidence
-    .filter((item) => item.parsed.platformKey)
-    .map((item) => ({
-      value: item.parsed.platformKey,
-      weight: item.sourceWeight + (item.isCanonical ? 0.22 : 0),
-    }));
-
-  return pickPlatformKeyFromSignals(signals);
+  observations?: MetadataObservation[];
+  observationSchemaVersion?: string;
 }

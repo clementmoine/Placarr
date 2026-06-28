@@ -5,16 +5,21 @@ import {
   detectBoardGameSignal,
   detectMediaFormat,
   detectVideoFormatSignal,
+  detectVideoGameSignal,
 } from "./boardGameSignal";
-import { createEmptyBarcodeLookupPayload } from "./lookupPayload";
+import { createEmptyBarcodeLookupPayload } from "./lookup/payload";
 
 describe("detectVideoFormatSignal", () => {
   it("repère un format vidéo (LaserDisc/VHS/dessin animé)", () => {
     expect(
-      detectVideoFormatSignal(['Laserdisc📀 TOY STORY (PAL) 1 disque " WALT DISNEY "']),
+      detectVideoFormatSignal([
+        'Laserdisc📀 TOY STORY (PAL) 1 disque " WALT DISNEY "',
+      ]),
     ).toBe(1);
     expect(
-      detectVideoFormatSignal(["Occasion : Laserdisc - Dessin Animé TOY STORY de DISNEY"]),
+      detectVideoFormatSignal([
+        "Occasion : Laserdisc - Dessin Animé TOY STORY de DISNEY",
+      ]),
     ).toBe(1);
     expect(detectVideoFormatSignal(["Star Wars VHS Collector"])).toBe(1);
   });
@@ -26,10 +31,30 @@ describe("detectVideoFormatSignal", () => {
   });
 });
 
+describe("detectVideoGameSignal", () => {
+  it("repère une plateforme console nommée dans les annonces", () => {
+    expect(detectVideoGameSignal(["Tom Clancy's Ghost Recon Xbox"])).toBe(1);
+    expect(detectVideoGameSignal(["Ghost Recon : Silent Weapon Xbox"])).toBe(1);
+    expect(detectVideoGameSignal(["Zelda Ocarina of Time Nintendo 64"])).toBe(
+      1,
+    );
+    expect(detectVideoGameSignal(["Mario Kart Wii"])).toBe(1);
+  });
+
+  it("n'invente pas de signal sans plateforme console (PC exclu, CD/album)", () => {
+    expect(detectVideoGameSignal(["Ghost Recon — Classics"])).toBe(0);
+    expect(detectVideoGameSignal(["Best of PC Music"])).toBe(0);
+    expect(detectVideoGameSignal(["Toy Story Bande Originale CD"])).toBe(0);
+    expect(detectVideoGameSignal(["", "   "])).toBe(0);
+  });
+});
+
 describe("detectMediaFormat", () => {
   it("renvoie le libellé du format physique le plus spécifique", () => {
     expect(
-      detectMediaFormat(['Laserdisc📀 TOY STORY (PAL) 1 disque " WALT DISNEY "']),
+      detectMediaFormat([
+        'Laserdisc📀 TOY STORY (PAL) 1 disque " WALT DISNEY "',
+      ]),
     ).toBe("LaserDisc");
     expect(detectMediaFormat(["Star Wars VHS Collector"])).toBe("VHS");
     expect(detectMediaFormat(["Toy Story Blu-ray Disney"])).toBe("Blu-ray");
@@ -50,17 +75,20 @@ describe("detectBoardGameSignal", () => {
     expect(detectBoardGameSignal(["Catan board game"])).toBe(1);
   });
 
-  it("returns a medium signal for a board-game publisher", () => {
-    expect(detectBoardGameSignal(["Mille Sabords FR Gigamic"])).toBe(0.6);
-    expect(detectBoardGameSignal(["Les Aventuriers du Rail Days of Wonder"])).toBe(
-      0.6,
-    );
+  it("does NOT fire on a publisher name alone (no hardcoded publisher list)", () => {
+    // The publisher list was removed: a publisher name is a never-complete entity
+    // list. Authoritative board-game identity now comes from a specialist provider
+    // (see detectBoardGameSpecialistSignal in barcodeResolver), not from names.
+    expect(detectBoardGameSignal(["Mille Sabords FR Gigamic"])).toBe(0);
+    expect(
+      detectBoardGameSignal(["Les Aventuriers du Rail Days of Wonder"]),
+    ).toBe(0);
   });
 
-  it("prefers the category phrase over a lone publisher mention", () => {
-    expect(
-      detectBoardGameSignal(["Mille Sabords Gigamic", "Jeu de société"]),
-    ).toBe(1);
+  it("detects the category phrase among several names", () => {
+    expect(detectBoardGameSignal(["Mille Sabords FR", "Jeu de société"])).toBe(
+      1,
+    );
   });
 
   it("returns 0 for video-game / unrelated listings", () => {

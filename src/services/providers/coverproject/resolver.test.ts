@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
 vi.mock("axios", () => ({
   default: {
@@ -18,7 +18,9 @@ import { fetchCoverFromCoverProjectCdn } from "./cdnLookup";
 import { fetchCoverFromCoverProject, fetchFromCoverProject } from "./resolver";
 
 const mockedAxiosGet = vi.mocked(axios.get);
-const mockedFetchCoverFromCoverProjectCdn = vi.mocked(fetchCoverFromCoverProjectCdn);
+const mockedFetchCoverFromCoverProjectCdn = vi.mocked(
+  fetchCoverFromCoverProjectCdn,
+);
 
 beforeEach(() => {
   mockedAxiosGet.mockReset();

@@ -3,7 +3,7 @@ import {
   cleanTitleForDisplay,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
-import { scoreDisplayTitle } from "@/lib/displayTitleScore";
+import { scoreDisplayTitle } from "@/lib/title/displayScore";
 
 import { GENERIC_TITLE_TOKENS } from "./parse";
 import type {
@@ -153,22 +153,36 @@ export function pickPreferredClusterDisplayName(
   representative: string,
   cluster: ProductEvidence[],
 ): string {
-  const canonicalRegionalCandidates = cluster.filter(
-    (item) => item.isCanonical && item.region,
+  // A genuine, uncontradicted canonical source names the product
+  // authoritatively, so its clean title wins the display — even over
+  // marketplace listings the consensus override raised to trusted-retailer,
+  // which is a RANKING device, not an endorsement of their noisy seller text
+  // ("Teenage Mutant Hero Turtles - TMNT" must not beat the canonical "Teenage
+  // Mutant Ninja Turtles"). Prefer the local region, then the cleanest title.
+  const trustworthyCanonical = cluster.filter(
+    (item) => item.isCanonical && !item.contradictedByConsensus,
   );
-  if (canonicalRegionalCandidates.length > 0) {
+  if (trustworthyCanonical.length > 0) {
     const regionOrder = ["fr", "eu", "wor", "uk", "us", "jp"];
     const regionRank = (region?: string | null) => {
       const index = regionOrder.indexOf((region || "").toLowerCase());
       return index === -1 ? regionOrder.length : index;
     };
-    return canonicalRegionalCandidates.slice().sort((a, b) => {
+    const best = trustworthyCanonical.slice().sort((a, b) => {
       const regionDiff = regionRank(a.region) - regionRank(b.region);
       if (regionDiff !== 0) return regionDiff;
+      const scoreDiff =
+        scoreDisplayTitle(b.title, { isCanonical: true }) -
+        scoreDisplayTitle(a.title, { isCanonical: true });
+      if (scoreDiff !== 0) return scoreDiff;
       const priorityDiff = b.priority - a.priority;
       if (priorityDiff !== 0) return priorityDiff;
       return a.title.length - b.title.length;
-    })[0].title;
+    })[0];
+    return cleanTitleForDisplay(best.title, {
+      preservePlatformSuffix: true,
+      preserveEditionTerms: true,
+    });
   }
 
   const candidates = [
@@ -197,6 +211,7 @@ export function pickPreferredClusterDisplayName(
       ...candidate,
       name: cleanTitleForDisplay(candidate.name, {
         preservePlatformSuffix: candidate.isCanonical,
+        preserveEditionTerms: candidate.isCanonical,
       }),
     }))
     .filter((candidate) => {

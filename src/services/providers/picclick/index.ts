@@ -1,9 +1,21 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
-import { listProbe } from "@/lib/mappingProbeUtils";
+import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { listProbe } from "@/lib/dev/mappingProbe";
+import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
+import { pricedOffer } from "@/lib/provider/priceOffers";
 
-import { fetchFromPicClick, fetchPricesFromPicClick } from "./fetch";
+import {
+  fetchFromPicClick,
+  fetchPicClickProductsByQuery,
+  fetchPricesFromPicClick,
+} from "./fetch";
 
-export { fetchFromPicClick, fetchPricesFromPicClick };
+export {
+  fetchFromPicClick,
+  fetchPicClickProductsByQuery,
+  fetchPricesFromPicClick,
+};
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",
@@ -12,15 +24,40 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "boardgames",
   "generic",
 ];
+const PRICE_SOURCE = "PicClick";
+
+async function refreshPicClickOffers(ctx: BarcodePriceRefreshContext) {
+  const expectedNames = Array.from(
+    new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
+  );
+  for (const query of [ctx.cleanedBarcode, ...ctx.fallbackNames]) {
+    const result = await fetchPricesFromPicClick(query, expectedNames);
+    if (result?.priceUsed) {
+      const offer = pricedOffer(PRICE_SOURCE, "used", result.priceUsed, result, {
+        productName: result.productName ?? null,
+        sourceUrl: result.sourceUrl ?? null,
+        offerCount: result.offerCount ?? null,
+      });
+      return offer ? [offer] : [];
+    }
+  }
+  return [];
+}
 
 export const picclickModule: ProviderModule = {
   info: {
     id: "picclick",
     label: "PicClick (eBay)",
-    types: ["games", "movies", "musics", "boardgames"],
+    types: ["games", "movies", "musics", "books", "boardgames"],
     capabilities: ["identify", "price", "cover"],
+    metadataCapabilities: ["cover"],
     auth: { kind: "scrape" },
     canonical: false,
+    coverUrlHost: "www.picclickimg.com",
+    remoteImageFallback: true,
+    imageScoreAdjustment: -280,
+    isSecondary: true,
+    websiteUrl: "https://picclick.fr/",
   },
   evidence: {
     label: "PicClick",
@@ -32,6 +69,9 @@ export const picclickModule: ProviderModule = {
     }
     return { picclick: deps.fetchFromPicClick(barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromPicClick,
+  }),
   testHandlers: {
     "picclick-barcode": {
       label: "PicClick - Barcode",
@@ -39,10 +79,67 @@ export const picclickModule: ProviderModule = {
       run: (query) => fetchFromPicClick(query),
     },
   },
+  createMetadataAdapter() {
+    return {
+      id: "picclick",
+      async resolve({
+        barcode,
+        name,
+        lookupQueries,
+      }: {
+        barcode?: string | null;
+        name?: string | null;
+        lookupQueries?: string[];
+      }) {
+        const normalizedBarcode = normalizeProductBarcode(barcode);
+        const queries =
+          lookupQueries && lookupQueries.length > 0
+            ? lookupQueries
+            : [String(name || "").trim()].filter(Boolean);
+        const expectedNames = Array.from(
+          new Set([String(name || "").trim(), ...queries].filter(Boolean)),
+        );
+
+        const searchQueries = [
+          ...(normalizedBarcode ? [normalizedBarcode] : []),
+          ...queries,
+        ];
+
+        let products: PicClickProduct[] = [];
+        for (const query of searchQueries) {
+          products = await fetchPicClickProductsByQuery(query, expectedNames);
+          if (products.length > 0) break;
+        }
+
+        const imageProducts = products.filter((product) => product.coverUrl);
+        const firstCover = imageProducts[0]?.coverUrl || undefined;
+        if (!firstCover) return null;
+        return {
+          imageUrl: firstCover,
+          attachments: imageProducts.slice(0, 6).map((product, index) => ({
+            type: "cover" as const,
+            url: product.coverUrl!,
+            source: "picclick",
+            title: product.name,
+            role: "marketplace",
+          })),
+        };
+      },
+    };
+  },
   mappingProbe: {
     sampleInput: "4988601467124",
     context: { name: "", barcode: "4988601467124" },
   },
   runMappingProbe: async () =>
     listProbe(await fetchFromPicClick("4988601467124")),
+  buildBarcodeSources(payload, ctx) {
+    return marketplaceContributions("PicClick", payload.picclick, ctx, [
+      "games",
+      "musics",
+      "movies",
+      "boardgames",
+    ]);
+  },
+  refreshBarcodePriceOffers: refreshPicClickOffers,
 };

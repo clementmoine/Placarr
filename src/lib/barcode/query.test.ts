@@ -79,6 +79,7 @@ describe("detectPlatformKey — précision plateforme (jamais de faux positif)",
     expect(detectPlatformKey("PS2")).toBe("ps2");
     expect(detectPlatformKey("Xbox Original")).toBe("xbox");
     expect(detectPlatformKey("Atari 2600")).toBe("atari2600");
+    expect(detectPlatformKey("Switch 2")).toBe("switch2");
   });
 
   it("ne confond pas l'éditeur Atari avec la plateforme Atari 2600", () => {
@@ -91,12 +92,17 @@ describe("guessShelfByPlatformKey — routage zéro-input", () => {
   const shelves = [
     { id: "s-wii", name: "Jeux Wii", type: "games" },
     { id: "s-ps4", name: "PS4", type: "games" },
+    { id: "s-steam", name: "Steam", type: "games" },
     { id: "s-books", name: "Mes livres", type: "books" },
   ];
 
   it("route vers l'étagère de la bonne plateforme", () => {
     expect(guessShelfByPlatformKey("wii", shelves)).toEqual({
       shelfId: "s-wii",
+      isGuessed: true,
+    });
+    expect(guessShelfByPlatformKey("pc", shelves)).toEqual({
+      shelfId: "s-steam",
       isGuessed: true,
     });
     expect(guessShelfByPlatformKey("ps4", shelves)).toEqual({

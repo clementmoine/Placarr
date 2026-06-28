@@ -6,6 +6,7 @@ import {
   fetchFromLaunchBox,
   tokenizeLaunchBoxQuery,
   buildLaunchBoxFtsQueries,
+  buildLaunchBoxSearchTokenSets,
 } from "@/services/providers/launchbox/resolver";
 import {
   __resetLaunchBoxIndexForTests,
@@ -44,6 +45,15 @@ describe("buildLaunchBoxFtsQueries", () => {
       "rainbow* AND clancy* AND six*",
       "rainbow* AND clancy*",
       "rainbow*",
+    ]);
+  });
+});
+
+describe("buildLaunchBoxSearchTokenSets", () => {
+  it("adds a marketing-stripped variant for edition-heavy titles", () => {
+    expect(buildLaunchBoxSearchTokenSets("Alan Wake II Deluxe Edition")).toEqual([
+      ["alan", "wake", "ii", "deluxe", "edition"],
+      ["alan", "wake", "ii"],
     ]);
   });
 });
@@ -122,6 +132,49 @@ describe("pickBestLaunchBoxGame", () => {
     );
 
     expect(match?.databaseId).toBe(2612);
+  });
+
+  it("prefers the PS5 base game over an Xbox deluxe edition variant", () => {
+    const match = pickBestLaunchBoxGame(
+      [
+        {
+          databaseId: 423762,
+          name: "Alan Wake II",
+          platform: "Sony Playstation 5",
+          alternateNames: [],
+          images: [],
+        },
+        {
+          databaseId: 440579,
+          name: "Alan Wake II: Deluxe Edition",
+          platform: "Microsoft Xbox Series X/S",
+          alternateNames: [],
+          images: [],
+        },
+      ],
+      "Alan Wake II Deluxe Edition",
+      "PlayStation 5",
+    );
+
+    expect(match?.databaseId).toBe(423762);
+  });
+
+  it("returns null when only another platform exists in LaunchBox", () => {
+    const match = pickBestLaunchBoxGame(
+      [
+        {
+          databaseId: 472887,
+          name: "NAIAD",
+          platform: "Nintendo Switch",
+          alternateNames: [],
+          images: [],
+        },
+      ],
+      "Naiad",
+      "PlayStation 5",
+    );
+
+    expect(match).toBeNull();
   });
 
   it("prefers the requested sequel over the first game", () => {
@@ -237,17 +290,6 @@ describe("fetchFromLaunchBox integration with SQLite", () => {
 
   afterEach(() => {
     __resetLaunchBoxIndexForTests();
-  });
-
-  it("returns null if not enabled", async () => {
-    const origEnv = process.env.LAUNCHBOX_ENABLED;
-    try {
-      process.env.LAUNCHBOX_ENABLED = "0";
-      const result = await fetchFromLaunchBox("GoldenEye: Rogue Agent");
-      expect(result).toBeNull();
-    } finally {
-      process.env.LAUNCHBOX_ENABLED = origEnv;
-    }
   });
 
   it("finds a game via alternate name and returns images", async () => {

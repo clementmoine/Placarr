@@ -3,12 +3,10 @@ import {
   containsGameClassicsKeyword,
   GAME_CLASSICS_KEYWORDS,
 } from "@/lib/barcode/listingTerms";
-import { cleanSearchQuery } from "@/services/metadataSearchUtils";
-import {
-  fetchFromScreenScraper,
-  fetchFromTMDB,
-} from "@/services/metadataResolvers";
-import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
+import { cleanSearchQuery } from "@/lib/search/query";
+import { createGameBarcodeEnrichmentDeps } from "@/services/provider/barcode";
+
+import type { GameBarcodeEnrichmentDeps } from "@/types/providerModule";
 
 export const CLASSICS_KEYWORDS = GAME_CLASSICS_KEYWORDS;
 
@@ -29,7 +27,7 @@ export type GameLookupInputs = {
   sd: {
     igdb_metadata?: {
       name?: string;
-      platform?: { name?: string } | null;
+      platform?: { name?: string | null } | null;
     } | null;
   } | null;
   calListings: NamedListing[];
@@ -94,7 +92,12 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
     productPlatformSignals.push({ value, weight: sdPlatform ? 1.4 : 0.8 });
   }
 
-  pushListingSignals(inputs.calListings, candidates, productPlatformSignals, 0.9);
+  pushListingSignals(
+    inputs.calListings,
+    candidates,
+    productPlatformSignals,
+    0.9,
+  );
   pushListingSignals(inputs.amc, candidates, productPlatformSignals, 1.1);
   pushListingSignals(inputs.freakxy, candidates, productPlatformSignals, 0.8);
   pushListingSignals(inputs.picclick, candidates, productPlatformSignals, 0.9);
@@ -132,17 +135,24 @@ export async function enrichGameBarcodeLookups(params: {
   inputs: GameLookupInputs;
   pc: unknown;
   searchLabel: "games" | "generic";
+  enrichmentDeps?: GameBarcodeEnrichmentDeps;
 }): Promise<{ pc: unknown; ss: unknown }> {
+  const deps = params.enrichmentDeps ?? createGameBarcodeEnrichmentDeps();
   const context = buildGameLookupContext(params.inputs);
   const gameDbPlatform = context.detectedPlatform || params.contextPlatformKey;
   let pc = params.pc;
 
-  if (!pc && context.gameTitle && gameDbPlatform) {
+  if (
+    !pc &&
+    context.gameTitle &&
+    gameDbPlatform &&
+    deps.fetchReferencePriceByBarcode
+  ) {
     try {
       console.log(
-        `[PriceCharting Fallback] Barcode not found, trying name fallback: ${context.gameTitle} (isPal: ${context.isPal}, isClassics: ${context.isClassics})`,
+        `[Barcode enrich] Reference-price fallback for ${context.gameTitle} (pal=${context.isPal}, classics=${context.isClassics})`,
       );
-      pc = await fetchMetadataFromPriceCharting(
+      pc = await deps.fetchReferencePriceByBarcode(
         params.cleanedBarcode,
         context.gameTitle,
         gameDbPlatform,
@@ -151,23 +161,23 @@ export async function enrichGameBarcodeLookups(params: {
       );
     } catch (error) {
       console.error(
-        `[PriceCharting Fallback] Error in ${params.searchLabel} search:`,
+        `[Barcode enrich] Reference-price fallback failed (${params.searchLabel}):`,
         error,
       );
     }
   }
 
   let ss: unknown = null;
-  if (gameDbPlatform) {
+  if (gameDbPlatform && deps.fetchGameMediaByBarcode) {
     try {
-      ss = await fetchFromScreenScraper(
+      ss = await deps.fetchGameMediaByBarcode(
         context.gameTitle,
         params.cleanedBarcode,
         gameDbPlatform,
       );
     } catch (error) {
       console.error(
-        `[ScreenScraper] Error fetching in ${params.searchLabel} search:`,
+        `[Barcode enrich] Game media lookup failed (${params.searchLabel}):`,
         error,
       );
     }
@@ -190,20 +200,27 @@ export function pickMovieTitleFromListings(
 export async function fetchTmdbForMovieTitle(
   movieTitle: string,
   logLabel: string,
+  enrichmentDeps?: GameBarcodeEnrichmentDeps,
 ): Promise<unknown> {
   if (!movieTitle) return null;
+
+  const deps = enrichmentDeps ?? createGameBarcodeEnrichmentDeps();
+  if (!deps.fetchMovieByTitle) return null;
 
   try {
     const cleanedMovieTitle = cleanSearchQuery(movieTitle);
     if (!cleanedMovieTitle) return null;
 
     console.log(
-      `[TMDB ${logLabel}] Querying TMDB for: "${cleanedMovieTitle}" (from: "${movieTitle}")`,
+      `[Barcode enrich] Movie name-database lookup (${logLabel}): "${cleanedMovieTitle}"`,
     );
-    return fetchFromTMDB(cleanedMovieTitle);
+    return deps.fetchMovieByTitle(cleanedMovieTitle);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[TMDB] Error fetching in ${logLabel} search:`, message);
+    console.error(
+      `[Barcode enrich] Movie name-database lookup failed (${logLabel}):`,
+      message,
+    );
     return null;
   }
 }

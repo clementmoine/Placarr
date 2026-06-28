@@ -1,9 +1,10 @@
 import {
   detectVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/lib/videoGamePlatforms";
+} from "@/lib/games/platforms";
+import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
 
-export type { VideoGamePlatformKey } from "@/lib/videoGamePlatforms";
+export type { VideoGamePlatformKey } from "@/lib/games/platforms";
 
 export function cleanCode(barcode?: string | null): string {
   if (!barcode) return "";
@@ -181,7 +182,7 @@ export function isShelfCompatibleWithPlatformKey(
 ): boolean {
   if (!platformKey) return true;
   if (shelf.type !== "games") return true;
-  const shelfPlatformKey = detectPlatformKey(shelf.name);
+  const shelfPlatformKey = detectShelfGamePlatformKey(shelf.name);
   if (!shelfPlatformKey) return true;
   return shelfPlatformKey === platformKey;
 }
@@ -254,7 +255,7 @@ export function guessBestShelf(
     // Look for a shelf of type 'games' that matches this platform key
     const matchingShelf = shelves.find((shelf) => {
       if (shelf.type !== "games") return false;
-      const shelfPlatformKey = detectPlatformKey(shelf.name);
+      const shelfPlatformKey = detectShelfGamePlatformKey(shelf.name);
       return shelfPlatformKey === titlePlatformKey;
     });
 
@@ -301,7 +302,7 @@ export function guessShelfByPlatformKey(
 
   const matchingShelf = shelves.find((shelf) => {
     if (shelf.type !== "games") return false;
-    return detectPlatformKey(shelf.name) === platformKey;
+    return detectShelfGamePlatformKey(shelf.name) === platformKey;
   });
 
   return matchingShelf ? { shelfId: matchingShelf.id, isGuessed: true } : null;

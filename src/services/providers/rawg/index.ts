@@ -1,13 +1,15 @@
 import axios from "axios";
 
-import { createKeyHealthCheck } from "@/lib/providerHealthUtils";
+import { createKeyHealthCheck } from "@/lib/provider/healthUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { formatScore } from "@/services/metadataSearchUtils";
+import { formatScore } from "@/services/metadata/searchUtils";
+import { resolveWithLookupQueries } from "@/services/metadata/searchUtils";
 import { fetchCoverFromCoverProject } from "@/services/providers/coverproject/resolver";
 import { createRawgResolver } from "./resolver";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
+import { isRawgQuotaBlocked } from "./quota";
 
 const fetchFromRawg = createRawgResolver({
   formatScore,
@@ -21,6 +23,8 @@ export const rawgModule: ProviderModule = {
   info: {
     id: "rawg",
     label: "RAWG",
+    // Screenshot-style art (not a real box cover), so its covers rank lowest.
+    coverUrlHost: "rawg.io",
     types: ["games"],
     requiresTitleAlignment: true,
     capabilities: [
@@ -34,6 +38,8 @@ export const rawgModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["RAWG_API_KEY"], free: true },
     canonical: true,
+    websiteUrl: "https://rawg.io/",
+    apiKeyDashboardUrl: "https://rawg.io/apikeys",
   },
   evidence: {
     label: "RAWG",
@@ -41,11 +47,14 @@ export const rawgModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
+  isMetadataQuotaBlocked: isRawgQuotaBlocked,
   createMetadataAdapter() {
     return {
       id: "rawg",
-      async resolve({ name }) {
-        return fetchFromRawg(name);
+      async resolve({ name, lookupQueries }) {
+        return resolveWithLookupQueries(lookupQueries, name, (query) =>
+          fetchFromRawg(query),
+        );
       },
     } satisfies MetadataProviderAdapter;
   },

@@ -3,12 +3,19 @@ import type { Capability, MediaType } from "@/types/providerRegistry";
 
 export type PrestashopSearchParam = "search_query" | "s";
 
+/** Native PrestaShop AJAX (`products[]`) vs IQIT themes (`rendered_products` HTML). */
+export type PrestashopSearchStrategy = "native" | "iqit";
+
 export interface PrestashopRetailerConfig {
   id: string;
   label: string;
   baseUrl: string;
   searchPath: string;
   searchParam: PrestashopSearchParam;
+  /** Defaults to native JSON `products`; IQIT shops expose hits in `rendered_products`. */
+  searchStrategy?: PrestashopSearchStrategy;
+  /** HTTP timeout for search/product-page fetches (ms). Defaults to 12000. */
+  requestTimeoutMs?: number;
   /**
    * Media types this shop serves. The PrestaShop connector is type-agnostic — the
    * shop declares its own types instead of the factory assuming board games.

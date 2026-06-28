@@ -1,9 +1,9 @@
-import { metadataProbe } from "@/lib/mappingProbeUtils";
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { metadataProbe } from "@/lib/dev/mappingProbe";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
-import type { MetadataProviderAdapter } from "@/types/providerModule";
+import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
+import type { MetadataProviderAdapter, ProviderModule } from "@/types/providerModule";
 
 import {
   fetchOkkazeoBarcodeProduct,
@@ -34,6 +34,7 @@ export const okkazeoModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: false,
+    websiteUrl: "https://www.okkazeo.com/",
     notes:
       "Base FR jeux de société : fiche canonique (JSON-LD) + recherche par EAN.",
   },
@@ -45,8 +46,8 @@ export const okkazeoModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "okkazeo",
-      async resolve({ name, barcode }: { name: string; barcode?: string | null }) {
-        return fetchFromOkkazeo(name, barcode);
+      async resolve(ctx: MetadataAdapterContext) {
+        return fetchFromOkkazeo(ctx);
       },
     } satisfies MetadataProviderAdapter;
   },
@@ -63,12 +64,12 @@ export const okkazeoModule: ProviderModule = {
     "okkazeo-metadata": {
       label: "Okkazeo - Metadata",
       kind: "metadata",
-      run: (query) => fetchFromOkkazeo(query),
+      run: (query) => fetchFromOkkazeo({ name: query }),
     },
     "okkazeo-barcode": {
       label: "Okkazeo - Barcode",
       kind: "metadata-barcode",
-      run: (query) => fetchFromOkkazeo("", query),
+      run: (query) => fetchFromOkkazeo({ name: "", barcode: query }),
     },
   },
   buildBarcodeTasks(_deps, type, { barcode }) {
@@ -81,7 +82,7 @@ export const okkazeoModule: ProviderModule = {
     return teardownMetadataWhen(
       ctx,
       "Okkazeo",
-      () => fetchFromOkkazeo(ctx.name, ctx.barcode),
+      () => fetchFromOkkazeo(ctx),
       "boardgames",
     );
   },
@@ -113,6 +114,23 @@ export const okkazeoModule: ProviderModule = {
         ? [{ kind: "price", label: "Prix", value: String(game.priceCents) }]
         : undefined,
     });
+  },
+  buildBarcodeSources(payload) {
+    const hit = payload.okkazeo;
+    if (!hit?.title?.trim()) return [];
+    return [
+      {
+        mediaType: "boardgames",
+        label: "Okkazeo",
+        products: [
+          {
+            name: hit.title.trim(),
+            coverUrl: hit.imageUrl || null,
+            facts: barcodeSourceFactsFromFields(hit),
+          },
+        ],
+      },
+    ];
   },
 };
 

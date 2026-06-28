@@ -3,7 +3,7 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import {
   formatBoardGamePlayerCount,
   normalizeBoardGamePlayerCount,
-} from "@/lib/boardGamePlayers";
+} from "@/lib/metadata/boardGame";
 
 import type { PrestashopSearchProduct } from "./types";
 
@@ -60,18 +60,24 @@ export function pickPrestashopCoverUrl(
   product: PrestashopSearchProduct,
 ): string | undefined {
   const bySize = product.cover?.bySize;
+  let url: string | undefined;
   if (bySize) {
     for (const key of [
-      "home_default",
       "large_default",
+      "home_default",
       "medium_default",
       "small_default",
     ]) {
-      const url = bySize[key]?.url;
-      if (url) return url;
+      const candidate = bySize[key]?.url;
+      if (candidate) {
+        url = candidate;
+        break;
+      }
     }
   }
-  return product.cover?.large?.url;
+  url = url || product.cover?.large?.url;
+  if (!url) return undefined;
+  return url.replace(/-home_default\//, "-large_default/");
 }
 
 export function parsePrestashopShortDescription(html: string): {
@@ -137,4 +143,98 @@ export function parsePrestashopShortDescription(html: string): {
   }
 
   return result;
+}
+
+/** EAN / GTIN from a PrestaShop product page (JSON-LD or `data-product` reference). */
+export function parsePrestashopProductPageBarcode(
+  html: string,
+): string | undefined {
+  const gtinMatch = html.match(/"gtin13"\s*:\s*"(\d{12,13})"/i);
+  if (gtinMatch) return gtinMatch[1];
+
+  const referenceMatch = html.match(/"reference"\s*:\s*"(\d{12,13})/i);
+  return referenceMatch?.[1];
+}
+
+function parseIqitMiniatureBlock(
+  block: string,
+): PrestashopSearchProduct | null {
+  const titleLinkMatch =
+    block.match(
+      /<h5 class="product-name">\s*<a href="([^"]+)"[^>]*>([^<]*)</i,
+    ) ||
+    block.match(
+      /<h3[^>]*class="[^"]*product-title[^"]*"[^>]*>\s*<a href="([^"]+)"[^>]*>([^<]*)</i,
+    );
+  const coverLinkMatch = block.match(
+    /<a href="([^"]+)" class="product-cover-link"/i,
+  );
+  const thumbnailLinkMatch = block.match(
+    /<a href="([^"]+)" class="thumbnail product-thumbnail"/i,
+  );
+
+  const link =
+    titleLinkMatch?.[1]?.trim() ||
+    coverLinkMatch?.[1]?.trim() ||
+    thumbnailLinkMatch?.[1]?.trim();
+  if (!link) return null;
+
+  const name =
+    stripHtml(titleLinkMatch?.[2] || "") ||
+    block.match(/<img[^>]+alt\s*=\s*"([^"]+)"/i)?.[1]?.trim();
+  if (!name) return null;
+
+  const priceLabel = block
+    .match(/<span class="price(?: product-price)?"[^>]*>\s*([^<]+)/i)?.[1]
+    ?.trim();
+  const priceCents = parseFrenchPriceCents(undefined, priceLabel);
+
+  const largeImage =
+    block.match(/data-full-size-image-url\s*=\s*"([^"]+)"/i)?.[1] ||
+    block.match(/data-image-large-src="([^"]+)"/i)?.[1];
+  const thumbImage = block.match(
+    /<img[^>]+src\s*=\s*"([^"]+-(?:home|large)_default[^"]+)"/i,
+  )?.[1];
+
+  const bySize: Record<string, { url?: string }> = {};
+  if (largeImage) bySize.large_default = { url: largeImage };
+  if (thumbImage) {
+    if (thumbImage.includes("large_default")) {
+      bySize.large_default = { url: thumbImage };
+    } else {
+      bySize.home_default = { url: thumbImage };
+    }
+  }
+
+  return {
+    name,
+    link,
+    price: priceLabel,
+    price_amount: priceCents != null ? priceCents / 100 : undefined,
+    cover: Object.keys(bySize).length > 0 ? { bySize } : undefined,
+  };
+}
+
+/**
+ * Parses IQIT / ZOne theme search fragments (`rendered_products` AJAX field).
+ * Native PrestaShop exposes structured `products[]`; IQIT embeds miniatures in HTML.
+ */
+export function parseIqitRenderedProducts(
+  renderedHtml: string,
+): PrestashopSearchProduct[] {
+  if (!renderedHtml.trim()) return [];
+
+  const products: PrestashopSearchProduct[] = [];
+  const seenLinks = new Set<string>();
+
+  for (const part of renderedHtml.split(/(?=<div class="product-miniature\b)/i)) {
+    if (!/class="product-miniature/i.test(part)) continue;
+
+    const product = parseIqitMiniatureBlock(part);
+    if (!product?.link || seenLinks.has(product.link)) continue;
+    seenLinks.add(product.link);
+    products.push(product);
+  }
+
+  return products;
 }

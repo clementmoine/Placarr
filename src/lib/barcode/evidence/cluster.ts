@@ -4,7 +4,7 @@ import {
   getSequelIndicators,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
-import { getRepresentativeScore } from "@/lib/displayTitleScore";
+import { getRepresentativeScore } from "@/lib/title/displayScore";
 
 type SuggestionWithPriority = {
   value: string;

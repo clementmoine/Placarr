@@ -4,7 +4,7 @@ const h = vi.hoisted(() => ({
   confrontWithDatabase: vi.fn(),
 }));
 
-vi.mock("@/services/metadataDatabase", () => ({
+vi.mock("@/services/metadata/database", () => ({
   confrontWithDatabase: h.confrontWithDatabase,
 }));
 

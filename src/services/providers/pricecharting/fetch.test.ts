@@ -6,9 +6,12 @@ import axios from "axios";
 import {
   decodePriceChartingHtmlEntities,
   fetchMetadataFromPriceCharting,
+  fetchMetadataFromPriceChartingByName,
   fetchPricesFromPriceCharting,
   parsePriceChartingDetailHtml,
+  parsePriceChartingGalleryImages,
   priceChartingPlatformMatchesTarget,
+  upgradePriceChartingImageUrl,
 } from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
@@ -74,7 +77,144 @@ describe("decodePriceChartingHtmlEntities", () => {
   });
 });
 
+describe("upgradePriceChartingImageUrl", () => {
+  it("upgrades PriceCharting CDN thumbnails to 1600px", () => {
+    expect(
+      upgradePriceChartingImageUrl(
+        "https://storage.googleapis.com/images.pricecharting.com/4fwej2lejxesbe3m/240.jpg",
+      ),
+    ).toBe(
+      "https://storage.googleapis.com/images.pricecharting.com/4fwej2lejxesbe3m/1600.jpg",
+    );
+  });
+});
+
+describe("parsePriceChartingGalleryImages", () => {
+  it("extracts full-resolution gallery photos from the #images section", () => {
+    const html = `
+      <div id="extra-images">
+        <div class="extra">
+          <div>
+            <a href="https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg">
+              <img src="https://storage.googleapis.com/images.pricecharting.com/abc/240.jpg" />
+            </a>
+          </div>
+          <p>Main Image</p>
+        </div>
+        <div class="extra">
+          <div>
+            <a href="https://storage.googleapis.com/images.pricecharting.com/def/1600.jpg">
+              <img src="https://storage.googleapis.com/images.pricecharting.com/def/240.jpg" />
+            </a>
+          </div>
+          <p>Cart</p>
+        </div>
+        <div class="spacer">&nbsp;</div>
+      </div>
+      <div id="full-prices"></div>
+    `;
+
+    expect(parsePriceChartingGalleryImages(html)).toEqual([
+      {
+        url: "https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg",
+        label: "Main Image",
+      },
+      {
+        url: "https://storage.googleapis.com/images.pricecharting.com/def/1600.jpg",
+        label: "Cart",
+      },
+    ]);
+  });
+});
+
 describe("parsePriceChartingDetailHtml", () => {
+  it("prefers max-resolution cover and gallery images over the 240px thumbnail", () => {
+    expect(
+      parsePriceChartingDetailHtml(`
+        <h1>Mario Kart 8 Deluxe <a>Nintendo Switch</a></h1>
+        <div class="cover">
+          <img src='https://storage.googleapis.com/images.pricecharting.com/abc/240.jpg' />
+        </div>
+        <div id="extra-images">
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/abc/240.jpg" />
+              </a>
+            </div>
+            <p>Main Image</p>
+          </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/def/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/def/240.jpg" />
+              </a>
+            </div>
+            <p>Full Art</p>
+          </div>
+          <div class="spacer">&nbsp;</div>
+        </div>
+        <div id="full-prices"></div>
+      `),
+    ).toEqual({
+      title: "Mario Kart 8 Deluxe",
+      platform: "Nintendo Switch",
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg",
+      images: [
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg",
+          label: "Main Image",
+        },
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/def/1600.jpg",
+          label: "Full Art",
+        },
+      ],
+    });
+  });
+
+  it("drops community fan-art gallery labels such as Foxigami", () => {
+    expect(
+      parsePriceChartingDetailHtml(`
+        <h1>Endling: Extinction is Forever <a>PlayStation 4</a></h1>
+        <div class="cover">
+          <img src='https://storage.googleapis.com/images.pricecharting.com/main/240.jpg' />
+        </div>
+        <div id="extra-images">
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/main/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/main/240.jpg" />
+              </a>
+            </div>
+            <p>Main Image</p>
+          </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/fox/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/fox/240.jpg" />
+              </a>
+            </div>
+            <p>Foxigami</p>
+          </div>
+        </div>
+        <div id="full-prices"></div>
+      `),
+    ).toEqual({
+      title: "Endling: Extinction is Forever",
+      platform: "PlayStation 4",
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/main/1600.jpg",
+      images: [
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/main/1600.jpg",
+          label: "Main Image",
+        },
+      ],
+    });
+  });
+
   it("décode les entités HTML dans le titre", () => {
     expect(
       parsePriceChartingDetailHtml(
@@ -142,6 +282,53 @@ describe("fetchMetadataFromPriceCharting", () => {
 
     expect(await fetchMetadataFromPriceCharting("0045496365226")).toBeNull();
   });
+
+  it("prefers Borderlands GOTY over Borderlands 3 on PS4 search", async () => {
+    const searchHtml = `
+      <html><body>Buy & Sell Search Results
+        <tr class="offer" id="product-99999">
+          <td class="product_name"><a href="/game/ps4/borderlands-3">Borderlands 3 [Deluxe Edition]</a><h2><br>PlayStation 4</h2></td>
+        </tr>
+        <tr class="offer" id="product-88888">
+          <td class="product_name"><a href="/game/ps4/borderlands-goty">Borderlands [Game of the Year]</a><h2><br>PlayStation 4</h2></td>
+        </tr>
+      </body></html>`;
+    const gotyDetailHtml = `
+      <html><body>
+        <h1>Borderlands [Game of the Year] <a>PlayStation 4</a></h1>
+        <div class="cover"><img src='https://example.com/borderlands-goty.jpg'/></div>
+      </body></html>`;
+
+    mockedGet
+      .mockResolvedValueOnce({
+        data: searchHtml,
+        request: {
+          res: {
+            responseUrl:
+              "https://www.pricecharting.com/search-products?q=Borderlands+1",
+          },
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        data: gotyDetailHtml,
+        request: {
+          res: {
+            responseUrl:
+              "https://www.pricecharting.com/game/ps4/borderlands-goty",
+          },
+        },
+      } as never);
+
+    await expect(
+      fetchMetadataFromPriceChartingByName(
+        "Borderlands 1 - Game of the Year edition",
+        "PlayStation 4",
+        true,
+      ),
+    ).resolves.toMatchObject({
+      title: "Borderlands [Game of the Year]",
+    });
+  });
 });
 
 describe("fetchPricesFromPriceCharting", () => {
@@ -150,6 +337,18 @@ describe("fetchPricesFromPriceCharting", () => {
 
     await expect(
       fetchPricesFromPriceCharting("0045496365226"),
+    ).resolves.toEqual({
+      priceUsed: 1250,
+      priceUsedCIB: 1800,
+      priceNew: 2499,
+    });
+  });
+
+  it("accepte une recherche par titre sans barcode", async () => {
+    mockedGet.mockResolvedValue(detailResponse());
+
+    await expect(
+      fetchPricesFromPriceCharting("", ["Super Monkey Ball"], "Wii", true),
     ).resolves.toEqual({
       priceUsed: 1250,
       priceUsedCIB: 1800,

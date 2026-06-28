@@ -1,29 +1,23 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import type {
+  PriceChartingMetadata,
+  PriceChartingPrices,
+} from "@/lib/barcode/lookup/providerTypes";
+import { parsePriceChartingBarcode } from "@/lib/barcode/lookup/priceChartingParse";
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
-import { getPriceChartingPlatformSlugs } from "@/lib/videoGamePlatforms";
-import { slugify } from "@/lib/slugs";
+import { getPriceChartingPlatformSlugs } from "@/lib/games/platforms";
+import { franchiseSequelNumbersConflict } from "@/lib/metadata/titleMatching";
+import { slugify } from "@/lib/routing/slugs";
+import { pickPriceChartingPrimaryCoverUrl, priceChartingGalleryLabelIsRecognized } from "./imageLabels";
 
-export interface PriceChartingPrices {
-  priceUsed?: number; // "Loose" price in cents
-  priceUsedCIB?: number; // "CIB" (Complete in Box) price in cents
-  priceNew?: number; // "New" price in cents
-}
-
-export interface PriceChartingMetadata {
-  title: string;
-  platform?: string;
-  coverUrl?: string;
-  ageRating?: string;
-  barcode?: string;
-  /**
-   * Prices parsed from the same detail page as the metadata. Present so a single
-   * PriceCharting request serves both identification and pricing.
-   */
-  prices?: PriceChartingPrices;
-}
+export type {
+  PriceChartingMetadata,
+  PriceChartingPrices,
+} from "@/lib/barcode/lookup/providerTypes";
+export { parsePriceChartingBarcode } from "@/lib/barcode/lookup/priceChartingParse";
 
 const PRICECHARTING_HEADERS = {
   "User-Agent":
@@ -112,9 +106,18 @@ function buildTitleSlugCandidates(title: string): string[] {
     .replace(/\s+/g, " ")
     .trim();
 
+  const withoutSequelBeforeEdition = cleanedTitle
+    .replace(/\bedition\b/gi, " ")
+    .replace(
+      /\b\d{1,2}\s*[-–—]?\s*(?=game of the year|goty)\b/gi,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+
   return Array.from(
     new Set(
-      [cleanedTitle, withoutArticles]
+      [cleanedTitle, withoutArticles, withoutSequelBeforeEdition]
         .map((value) => slugify(value))
         .filter(Boolean),
     ),
@@ -143,6 +146,7 @@ export function priceChartingPlatformMatchesTarget(
 
 function rejectMismatchedPriceChartingMetadata(
   metadata: PriceChartingMetadata | null,
+  fallbackName?: string,
   fallbackPlatform?: string,
 ): PriceChartingMetadata | null {
   if (!metadata) return null;
@@ -151,7 +155,29 @@ function rejectMismatchedPriceChartingMetadata(
   ) {
     return null;
   }
+  if (
+    fallbackName &&
+    franchiseSequelNumbersConflict([fallbackName], metadata.title || "")
+  ) {
+    return null;
+  }
   return metadata;
+}
+
+function priceChartingEditionKeywordBonus(
+  requestedName: string,
+  catalogTitle: string,
+): number {
+  const request = requestedName.toLowerCase();
+  const catalog = catalogTitle.toLowerCase();
+  let bonus = 0;
+  if (
+    /\bgame of the year\b|\bgoty\b/.test(request) &&
+    /\bgame of the year\b|\bgoty\b/.test(catalog)
+  ) {
+    bonus += 0.15;
+  }
+  return bonus;
 }
 
 function buildDirectDetailUrls(
@@ -286,9 +312,18 @@ function pickBestRow(
     if (standardRows.length > 0) matchingRows = standardRows;
   }
 
+  const alignedRows = matchingRows.filter(
+    (row) => !franchiseSequelNumbersConflict([fallbackName], row.title),
+  );
+  if (alignedRows.length > 0) matchingRows = alignedRows;
+
   const best = matchingRows.reduce((currentBest, row) => {
-    const score = titleSimilarityScore(fallbackName, row.title);
-    const bestScore = titleSimilarityScore(fallbackName, currentBest.title);
+    const score =
+      titleSimilarityScore(fallbackName, row.title) +
+      priceChartingEditionKeywordBonus(fallbackName, row.title);
+    const bestScore =
+      titleSimilarityScore(fallbackName, currentBest.title) +
+      priceChartingEditionKeywordBonus(fallbackName, currentBest.title);
     return score > bestScore ? row : currentBest;
   }, matchingRows[0]);
 
@@ -346,6 +381,11 @@ function isAcceptedPriceChartingDetailHtml(
   if (!fallbackPlatform) return true;
 
   const parsed = parsePriceChartingDetailHtml(html, fallbackName);
+  if (parsed?.title && fallbackName) {
+    if (franchiseSequelNumbersConflict([fallbackName], parsed.title)) {
+      return false;
+    }
+  }
   if (parsed?.platform) {
     return priceChartingPlatformMatchesTarget(
       parsed.platform,
@@ -438,20 +478,71 @@ async function fetchDetailHtmlFromNameFallback(
   return null;
 }
 
-export function parsePriceChartingBarcode(html: string): string | undefined {
-  const match = html.match(/EAN\s*\/\s*GTIN:<\/td>\s*<td[^>]*>\s*([\d,\s]+)/i);
-  if (!match?.[1]) return undefined;
+const PRICECHARTING_IMAGE_SIZE_SUFFIX = /\/(\d+)\.(jpe?g|png|webp)$/i;
 
-  const candidates = match[1]
-    .split(",")
-    .map((value) => normalizeProductBarcode(value))
-    .filter((value): value is string => Boolean(value));
+/** Upgrade PriceCharting CDN thumbnails (240px, etc.) to the max served size. */
+export function upgradePriceChartingImageUrl(url: string): string {
+  if (!url) return url;
+  if (url.includes("images.pricecharting.com")) {
+    return url.replace(PRICECHARTING_IMAGE_SIZE_SUFFIX, "/1600.$2");
+  }
+  if (url.includes("cdn.pji.nu") || url.includes("prisjakt.nu")) {
+    return url.replace(/\.(jpe?g|png|webp|gif|svg)\?.*$/i, ".$1");
+  }
+  return url;
+}
 
-  return (
-    candidates.find((value) => value.length === 13) ||
-    candidates.find((value) => value.length === 12) ||
-    candidates[0]
+/** Parse full-resolution product photos from the #images gallery section. */
+export function parsePriceChartingGalleryImages(
+  html: string,
+): Array<{ url: string; label?: string }> {
+  const section = html.match(
+    /<div id="extra-images">([\s\S]*?)<div id="full-prices">/i,
+  )?.[1];
+  if (!section) return [];
+
+  const images: Array<{ url: string; label?: string }> = [];
+  const seen = new Set<string>();
+  const extraRegex = /<div class="extra">([\s\S]*?)<\/div>\s*<p>([^<]*)<\/p>/gi;
+
+  for (const match of section.matchAll(extraRegex)) {
+    const block = match[1];
+    const label = match[2]?.replace(/\s+/g, " ").trim();
+    const hrefMatch = block.match(
+      /href="(https:\/\/storage\.googleapis\.com\/images\.pricecharting\.com\/[^"]+)"/i,
+    );
+    if (!hrefMatch) continue;
+    const url = upgradePriceChartingImageUrl(hrefMatch[1]);
+    if (seen.has(url)) continue;
+    seen.add(url);
+    images.push({ url, label: label || undefined });
+  }
+
+  return images;
+}
+
+function parsePriceChartingCoverUrl(html: string): string | undefined {
+  const gallery = parsePriceChartingGalleryImages(html);
+  const primary = pickPriceChartingPrimaryCoverUrl(gallery);
+  if (primary) return primary;
+
+  const dialogMatch = html.match(
+    /<div id="js-dialog-large-image"[^>]*>[\s\S]*?<img[^>]+src=['"]([^'"]+)['"]/i,
   );
+  if (dialogMatch?.[1]) {
+    return upgradePriceChartingImageUrl(dialogMatch[1]);
+  }
+
+  const coverDivMatch = html.match(
+    /<div[^>]*class="cover"[^>]*>([\s\S]*?)<\/div>/i,
+  );
+  if (!coverDivMatch) return undefined;
+
+  const imgMatch =
+    coverDivMatch[1].match(/src='([^']*)'/i) ||
+    coverDivMatch[1].match(/src="([^"]*)"/i);
+  if (!imgMatch?.[1]) return undefined;
+  return upgradePriceChartingImageUrl(imgMatch[1]);
 }
 
 export function parsePriceChartingDetailHtml(
@@ -473,24 +564,10 @@ export function parsePriceChartingDetailHtml(
     ? platformMatch[1].replace(/\s+/g, " ").trim()
     : undefined;
 
-  const coverDivMatch = html.match(
-    /<div[^>]*class="cover"[^>]*>([\s\S]*?)<\/div>/i,
+  const images = parsePriceChartingGalleryImages(html).filter((image) =>
+    priceChartingGalleryLabelIsRecognized(image.label),
   );
-  let coverUrl: string | undefined;
-  if (coverDivMatch) {
-    const imgMatch =
-      coverDivMatch[1].match(/src='([^']*)'/i) ||
-      coverDivMatch[1].match(/src="([^"]*)"/i);
-    if (imgMatch) {
-      coverUrl = imgMatch[1];
-      if (
-        coverUrl &&
-        (coverUrl.includes("cdn.pji.nu") || coverUrl.includes("prisjakt.nu"))
-      ) {
-        coverUrl = coverUrl.replace(/\.(jpe?g|png|webp|gif|svg)\?.*$/i, ".$1");
-      }
-    }
-  }
+  const coverUrl = parsePriceChartingCoverUrl(html);
 
   const ageRatingMatch = html.match(
     /\b(PEGI|ESRB|USK|CERO)\b[^<\n\r]{0,40}?(?:\b(\d{1,2})\+?\b|\b(E|E10\+|T|M|AO|RP)\b|\b([A-DZ])\b)/i,
@@ -510,6 +587,7 @@ export function parsePriceChartingDetailHtml(
     title,
     platform,
     coverUrl,
+    ...(images.length > 0 ? { images } : {}),
     ageRating,
     ...(barcode ? { barcode } : {}),
   };
@@ -584,6 +662,7 @@ export async function fetchMetadataFromPriceChartingByName(
     if (!html) return null;
     return rejectMismatchedPriceChartingMetadata(
       parsePriceChartingDetailHtml(html, cleanedName),
+      cleanedName,
       fallbackPlatform,
     );
   } catch (error: unknown) {
@@ -604,7 +683,48 @@ export async function fetchPricesFromPriceCharting(
   isClassics?: boolean,
 ): Promise<PriceChartingPrices | null> {
   const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
-  if (!cleanedBarcode) return null;
+  const fallbackNames = Array.isArray(fallbackName)
+    ? fallbackName.filter(Boolean)
+    : fallbackName
+      ? [fallbackName]
+      : [];
+
+  if (!cleanedBarcode) {
+    if (fallbackNames.length === 0) return null;
+    try {
+      console.log(
+        `[PriceCharting Prices] Querying by name: ${fallbackNames.join(" | ")}`,
+      );
+      const fallbackHtml = await fetchDetailHtmlFromNameFallback(
+        fallbackNames,
+        PRICECHARTING_HEADERS,
+        fallbackPlatform,
+        isPal,
+        isClassics,
+      );
+      if (!fallbackHtml) return null;
+      const priceFallbackName = fallbackNames[0];
+      if (
+        fallbackPlatform &&
+        !isAcceptedPriceChartingDetailHtml(
+          fallbackHtml,
+          "",
+          priceFallbackName,
+          fallbackPlatform,
+        )
+      ) {
+        return null;
+      }
+      return parsePriceChartingPricesFromHtml(fallbackHtml);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(
+        `[PriceCharting Prices] Error fetching by name "${fallbackNames[0]}":`,
+        message,
+      );
+      return null;
+    }
+  }
 
   const searchUrl = `https://www.pricecharting.com/search-products?q=${cleanedBarcode}`;
 
@@ -766,6 +886,7 @@ export async function fetchMetadataFromPriceCharting(
 
     const parsed = rejectMismatchedPriceChartingMetadata(
       parsePriceChartingDetailHtml(html, fallbackName),
+      fallbackName,
       fallbackPlatform,
     );
     if (!parsed) return null;

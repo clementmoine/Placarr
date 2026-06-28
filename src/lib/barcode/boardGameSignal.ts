@@ -1,5 +1,6 @@
-import type { BarcodeLookupPayload } from "@/lib/barcode/lookupPayload";
+import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { normalizeForTokens } from "@/lib/barcode/titleUtils";
+import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
 
 /**
  * A board game scanned without a type (home-page scan → generic branch) competes
@@ -18,36 +19,7 @@ const CATEGORY_PATTERNS = [
   /\bboard\s?games?\b/,
 ];
 
-// Board-game publishers that do NOT also publish video games (keeps precision
-// high — Hasbro/Ravensburger etc. are intentionally excluded as ambiguous).
-const PUBLISHERS = [
-  "gigamic",
-  "asmodee",
-  "days of wonder",
-  "repos production",
-  "iello",
-  "matagot",
-  "libellud",
-  "space cowboys",
-  "bombyx",
-  "blue orange",
-  "cocktail games",
-  "le scorpion masque",
-  "funforge",
-  "catch up games",
-  "blackrock games",
-  "ludonaute",
-  "helvetiq",
-  "pixie games",
-  "lumberjacks",
-  "oka luda",
-  "sit down",
-  "blue cocker",
-  "grrre games",
-];
-
 const CATEGORY_STRENGTH = 1;
-const PUBLISHER_STRENGTH = 0.6;
 
 // Video-only formats / film content cues: a LaserDisc, VHS or "dessin animé" is a
 // MOVIE, never a music CD — so the same harvested listings can disambiguate a
@@ -63,7 +35,9 @@ const VIDEO_FORMAT_PATTERNS = [
 const VIDEO_FORMAT_STRENGTH = 1;
 
 function normalizeName(value: string): string {
-  return normalizeForTokens(value).replace(/[^a-z0-9]+/g, " ").trim();
+  return normalizeForTokens(value)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 /**
@@ -84,6 +58,28 @@ export function detectVideoFormatSignal(names: string[]): number {
   return 0;
 }
 
+/**
+ * A video-game signal harvested from the listings: a console platform named in a
+ * listing ("… Xbox", "… Nintendo NES", "… PS2") is strong evidence the physical
+ * item is a video game, never a music CD or film. Used to bias the type scoring
+ * towards `games` and away from `musics`/`movies`, so a coincidental same-named
+ * canonical — most often a music album the DATABASE fallback fabricates from a
+ * game listing name (e.g. "Ghost Recon — Classics") — cannot hijack the type of
+ * a scanned game whose own canonical was demoted. See scoreTypeCandidate.
+ *
+ * PC is excluded as the one ambiguous platform (a bare "PC"/"Windows" token can
+ * appear outside video-game contexts); a console alias has to match as a whole
+ * token, which keeps precision high.
+ */
+export function detectVideoGameSignal(names: string[]): number {
+  for (const raw of names) {
+    if (!raw) continue;
+    const key = detectVideoGamePlatformKey(raw);
+    if (key && key !== "pc") return 1;
+  }
+  return 0;
+}
+
 // Physical media format → display label, most specific first. The label doubles
 // as a shelf-name hint (a "LaserDisc"/"VHS" scan should be recommended to the
 // matching shelf), which the cleaned title no longer carries since the format
@@ -98,9 +94,7 @@ const MEDIA_FORMAT_LABELS: Array<[RegExp, string]> = [
 
 /** The physical format named by the listings ("LaserDisc", "VHS"…), or null. */
 export function detectMediaFormat(names: string[]): string | null {
-  const normalized = names
-    .map((name) => normalizeName(name))
-    .filter(Boolean);
+  const normalized = names.map((name) => normalizeName(name)).filter(Boolean);
   for (const [pattern, label] of MEDIA_FORMAT_LABELS) {
     if (normalized.some((name) => pattern.test(name))) return label;
   }
@@ -108,23 +102,23 @@ export function detectMediaFormat(names: string[]): string | null {
 }
 
 /**
- * Returns a 0..1 board-game signal strength from a set of listing/title names.
- * Strongest hit wins (a category phrase outweighs a lone publisher mention).
+ * Returns a 0..1 board-game signal strength from a set of listing/title names,
+ * based only on GENERIC category phrases ("jeu de société", "board game"). The
+ * old hand-maintained publisher list was removed: a publisher is a never-complete
+ * entity list. The authoritative replacement is provider-as-signal — a board-game
+ * SPECIALIST source identifying the barcode — computed from the registry in
+ * `barcodeResolver` (see `detectBoardGameSpecialistSignal`), not from names.
  */
 export function detectBoardGameSignal(names: string[]): number {
-  let strength = 0;
   for (const raw of names) {
     if (!raw) continue;
     const normalized = normalizeName(raw);
     if (!normalized) continue;
     if (CATEGORY_PATTERNS.some((pattern) => pattern.test(normalized))) {
-      return CATEGORY_STRENGTH; // can't get stronger; short-circuit
-    }
-    if (PUBLISHERS.some((publisher) => normalized.includes(publisher))) {
-      strength = Math.max(strength, PUBLISHER_STRENGTH);
+      return CATEGORY_STRENGTH;
     }
   }
-  return strength;
+  return 0;
 }
 
 /** Gather every name a barcode lookup harvested, for signal detection. */

@@ -1,5 +1,5 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
-import { getTheGamesDbPlatformId } from "@/lib/videoGamePlatforms";
+import { getTheGamesDbPlatformId } from "@/lib/games/platforms";
 
 export function resolveTheGamesDbPlatformId(
   platform?: string | null,

@@ -1,12 +1,14 @@
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
-} from "@/lib/providerHealthUtils";
+} from "@/lib/provider/healthUtils";
 import { fetchFromIGDB, pingIGDB } from "./fetch";
+import { getIGDBDatabaseSuggestions } from "./suggestions";
+import { resolveWithLookupQueries } from "@/services/metadata/searchUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 export { fetchFromIGDB, getIGDBSuggestions, pingIGDB } from "./fetch";
 
@@ -34,6 +36,8 @@ export const igdbModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    websiteUrl: "https://www.igdb.com/",
+    apiKeyDashboardUrl: "https://dev.twitch.tv/console/apps",
   },
   evidence: {
     label: "IGDB",
@@ -42,10 +46,14 @@ export const igdbModule: ProviderModule = {
   },
   createMetadataAdapter: () => ({
     id: "igdb",
-    async resolve({ name, platform }) {
-      return (await fetchFromIGDB(name, platform)) as MetadataResult | null;
+    async resolve({ name, platform, lookupQueries }) {
+      return resolveWithLookupQueries(lookupQueries, name, (query) =>
+        fetchFromIGDB(query, platform),
+      ) as Promise<MetadataResult | null>;
     },
   }),
+  suggestDatabaseTitles: ({ name, cleanedName, platform }) =>
+    getIGDBDatabaseSuggestions(name, cleanedName, platform),
   healthCheck: (() => {
     const clientId = process.env.IGDB_CLIENT_ID?.trim();
     const clientSecret = process.env.IGDB_CLIENT_SECRET?.trim();

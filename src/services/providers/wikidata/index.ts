@@ -1,8 +1,8 @@
 import axios from "axios";
 
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
-import { metadataProbe } from "@/lib/mappingProbeUtils";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
+import { metadataProbe } from "@/lib/dev/mappingProbe";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -22,6 +22,7 @@ export const wikidataModule: ProviderModule = {
     capabilities: ["identify", "description", "cover", "releaseDate", "people"],
     auth: { kind: "none" },
     canonical: true,
+    websiteUrl: "https://www.wikidata.org/",
     notes: "Descriptions FR via Wikipedia/Wikidata (jeux de société).",
   },
   evidence: {

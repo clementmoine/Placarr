@@ -28,7 +28,11 @@ export function tmdbImageRole(iso?: string | null): string | undefined {
   if (lang === "fr") return "fr";
   if (lang === "ja") return "jp";
   if (lang === "en") return "us";
-  if (["de", "es", "it", "nl", "pt", "sv", "da", "no", "fi", "pl", "cs"].includes(lang)) {
+  if (
+    ["de", "es", "it", "nl", "pt", "sv", "da", "no", "fi", "pl", "cs"].includes(
+      lang,
+    )
+  ) {
     return "eu";
   }
   return undefined;
@@ -96,6 +100,52 @@ type TmdbResolverDeps = {
   cleanSearchQuery: (value: string) => string;
 };
 
+function positiveRuntime(value: unknown): number | undefined {
+  return typeof value === "number" && value > 0 ? value : undefined;
+}
+
+async function fetchTMDBMovieOverviewFallback(
+  movieId: number,
+  localizedOverview?: string | null,
+): Promise<string | undefined> {
+  const localized = localizedOverview?.trim();
+  if (localized) return localized;
+  try {
+    const enRes = await axios.get(
+      `https://api.themoviedb.org/3/movie/${movieId}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
+    );
+    const enOverview = enRes.data?.overview?.trim();
+    return enOverview || undefined;
+  } catch (err) {
+    console.error(
+      `[TMDB] Failed to fetch en-US overview for movie ID ${movieId}:`,
+      err,
+    );
+    return undefined;
+  }
+}
+
+async function fetchTMDBSeriesOverviewFallback(
+  seriesId: number,
+  localizedOverview?: string | null,
+): Promise<string | undefined> {
+  const localized = localizedOverview?.trim();
+  if (localized) return localized;
+  try {
+    const enRes = await axios.get(
+      `https://api.themoviedb.org/3/tv/${seriesId}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
+    );
+    const enOverview = enRes.data?.overview?.trim();
+    return enOverview || undefined;
+  } catch (err) {
+    console.error(
+      `[TMDB] Failed to fetch en-US overview for series ID ${seriesId}:`,
+      err,
+    );
+    return undefined;
+  }
+}
+
 export function createTMDBResolver(deps: TmdbResolverDeps) {
   async function fetchFromTMDBMovie(
     name: string,
@@ -128,6 +178,11 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     );
     const details = detailsRes.data;
 
+    const overview = await fetchTMDBMovieOverviewFallback(
+      bestMatch.id,
+      details.overview,
+    );
+
     const creditsRes = await axios.get(
       `https://api.themoviedb.org/3/movie/${bestMatch.id}/credits?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
     );
@@ -152,14 +207,12 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       );
     }
 
-    const tmdbPosters = (imagesData.posters || [])
-      .slice(0, 30)
-      .map((img) => ({
-        type: "cover" as const,
-        url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
-        role: tmdbImageRole(img.iso_639_1),
-        source: "tmdb",
-      }));
+    const tmdbPosters = (imagesData.posters || []).slice(0, 30).map((img) => ({
+      type: "cover" as const,
+      url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+      role: tmdbImageRole(img.iso_639_1),
+      source: "tmdb",
+    }));
 
     const tmdbBackdrops = (imagesData.backdrops || [])
       .slice(0, 30)
@@ -170,14 +223,12 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         source: "tmdb",
       }));
 
-    const tmdbLogos = (imagesData.logos || [])
-      .slice(0, 10)
-      .map((img) => ({
-        type: "logo" as const,
-        url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
-        role: tmdbImageRole(img.iso_639_1),
-        source: "tmdb",
-      }));
+    const tmdbLogos = (imagesData.logos || []).slice(0, 10).map((img) => ({
+      type: "logo" as const,
+      url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
+      role: tmdbImageRole(img.iso_639_1),
+      source: "tmdb",
+    }));
 
     const coverUrl = bestMatch.poster_path
       ? `https://image.tmdb.org/t/p/w780${bestMatch.poster_path}`
@@ -339,8 +390,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
             : null,
         }),
       ),
-      duration: details.runtime,
-      description: details.overview,
+      duration: positiveRuntime(details.runtime),
+      description: overview,
       releaseDate: details.release_date,
       imageUrl: coverUrl || undefined,
       attachments: [
@@ -459,14 +510,12 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         source: "tmdb",
       }));
 
-    const tmdbPosters = (imagesData.posters || [])
-      .slice(0, 30)
-      .map((img) => ({
-        type: "cover" as const,
-        url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
-        role: tmdbImageRole(img.iso_639_1),
-        source: "tmdb",
-      }));
+    const tmdbPosters = (imagesData.posters || []).slice(0, 30).map((img) => ({
+      type: "cover" as const,
+      url: `https://image.tmdb.org/t/p/w780${img.file_path}`,
+      role: tmdbImageRole(img.iso_639_1),
+      source: "tmdb",
+    }));
 
     const tmdbBackdrops = (imagesData.backdrops || [])
       .slice(0, 30)
@@ -477,14 +526,12 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         source: "tmdb",
       }));
 
-    const tmdbLogos = (imagesData.logos || [])
-      .slice(0, 10)
-      .map((img) => ({
-        type: "logo" as const,
-        url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
-        role: tmdbImageRole(img.iso_639_1),
-        source: "tmdb",
-      }));
+    const tmdbLogos = (imagesData.logos || []).slice(0, 10).map((img) => ({
+      type: "logo" as const,
+      url: `https://image.tmdb.org/t/p/w500${img.file_path}`,
+      role: tmdbImageRole(img.iso_639_1),
+      source: "tmdb",
+    }));
 
     const seasonCoverUrl = seasonDetails?.poster_path
       ? `https://image.tmdb.org/t/p/w780${seasonDetails.poster_path}`
@@ -645,6 +692,10 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
           (value: unknown) => typeof value === "number" && value > 0,
         )
       : undefined;
+    const overview = await fetchTMDBSeriesOverviewFallback(
+      bestMatch.id,
+      seasonDetails?.overview || details.overview,
+    );
 
     return {
       title: displayTitle,
@@ -666,8 +717,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
               : null,
           }),
         ) || [],
-      duration: runtime,
-      description: seasonDetails?.overview || details.overview,
+      duration: positiveRuntime(runtime),
+      description: overview,
       releaseDate,
       imageUrl: coverUrl || undefined,
       attachments: [

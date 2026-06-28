@@ -8,7 +8,6 @@ import { spawn } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 import axios from "axios";
-// @ts-ignore
 import { DatabaseSync } from "node:sqlite";
 
 import {
@@ -53,42 +52,11 @@ function metadataXmlPath(): string {
   );
 }
 
-export function isLaunchBoxEnabled(): boolean {
-  const flag = process.env.LAUNCHBOX_ENABLED?.trim().toLowerCase();
-  if (flag === "0" || flag === "false" || flag === "no" || flag === "off") {
-    return false;
-  }
-
-  const hasSqlite = existsSync(indexPath());
-  const hasXml = existsSync(metadataXmlPath());
-  const hasZip = existsSync(zipPath());
-  const hasExplicitXml = Boolean(process.env.LAUNCHBOX_METADATA_XML?.trim());
-
-  return hasSqlite || hasXml || hasZip || hasExplicitXml;
-}
-
 function shouldBuildLaunchBoxIndex(): boolean {
-  const flag = process.env.LAUNCHBOX_ENABLED?.trim().toLowerCase();
-  if (flag === "0" || flag === "false" || flag === "no" || flag === "off") {
-    return false;
-  }
-
-  const hasXml = existsSync(metadataXmlPath());
-  const hasZip = existsSync(zipPath());
-  const hasExplicitXml = Boolean(process.env.LAUNCHBOX_METADATA_XML?.trim());
-  const hasExplicitZipUrl = Boolean(
-    process.env.LAUNCHBOX_METADATA_ZIP_URL?.trim(),
-  );
-
-  return hasXml || hasZip || hasExplicitXml || hasExplicitZipUrl;
+  return true;
 }
 
 function shouldDownloadLaunchBoxZip(): boolean {
-  const flag = process.env.LAUNCHBOX_ENABLED?.trim().toLowerCase();
-  if (flag === "0" || flag === "false" || flag === "no" || flag === "off") {
-    return false;
-  }
-
   const hasExplicitZipUrl = Boolean(
     process.env.LAUNCHBOX_METADATA_ZIP_URL?.trim(),
   );
@@ -510,11 +478,7 @@ export function __setLaunchBoxIndexForTests(
     );
 
     for (const alt of game.alternateNames) {
-      insertAlt.run(
-        game.databaseId,
-        alt.name,
-        alt.region || null,
-      );
+      insertAlt.run(game.databaseId, alt.name, alt.region || null);
     }
 
     for (const image of game.images) {
@@ -529,9 +493,7 @@ export function __setLaunchBoxIndexForTests(
 
   rebuildGamesFts(memoryDb);
   memoryDb
-    .prepare(
-      "INSERT INTO index_meta (key, value) VALUES ('schema_version', ?)",
-    )
+    .prepare("INSERT INTO index_meta (key, value) VALUES ('schema_version', ?)")
     .run(LAUNCHBOX_INDEX_SCHEMA_VERSION);
   memoryDb.exec("COMMIT");
 }

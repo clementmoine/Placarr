@@ -5,15 +5,16 @@ import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
   pingUrl,
-} from "@/lib/providerHealthUtils";
+} from "@/lib/provider/healthUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { formatScore } from "@/services/metadataSearchUtils";
+import { formatScore } from "@/services/metadata/searchUtils";
 import { createBGGResolver } from "./resolver";
 import type { BGGResponse } from "./resolver";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { getBGGSuggestions } from "./suggestions";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 const fetchFromBGG = createBGGResolver({ formatScore });
 
@@ -42,6 +43,11 @@ export const bggModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
     canonical: true,
+    websiteUrl: "https://boardgamegeek.com/",
+    apiKeyDashboardUrl: "https://boardgamegeek.com/",
+    mappingProbeRetry: true,
+    mappingProbeConfigHint:
+      "BGG_API_TOKEN missing — add it to .env (Bearer token from boardgamegeek.com/using_the_xml_api)",
     notes: "XML API v2 avec token Bearer requis.",
   },
   evidence: {
@@ -53,11 +59,12 @@ export const bggModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "boardgamegeek",
-      async resolve({ name }) {
-        return fetchFromBGG(name);
+      async resolve(ctx) {
+        return fetchFromBGG(ctx);
       },
     } satisfies MetadataProviderAdapter;
   },
+  suggestDatabaseTitles: ({ cleanedName }) => getBGGSuggestions(cleanedName),
   healthCheck: {
     providerId: "boardgamegeek",
     async run() {

@@ -6,7 +6,7 @@ import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 import type {
   MetadataAttachment,
   MetadataFact,
@@ -150,7 +150,9 @@ function buildDeezerFacts(album: DeezerAlbum): MetadataFact[] | undefined {
 
 function normalizeDeezerId(album: DeezerAlbum): string | undefined {
   const value =
-    album.id === undefined || album.id === null ? null : String(album.id).trim();
+    album.id === undefined || album.id === null
+      ? null
+      : String(album.id).trim();
   return value || undefined;
 }
 
@@ -284,7 +286,9 @@ function mapDeezerMetadata(
     includeTitleMatch?: boolean;
   },
 ): MetadataResult {
-  const normalizedBarcode = normalizeProductBarcode(album.upc || options.barcodeInput);
+  const normalizedBarcode = normalizeProductBarcode(
+    album.upc || options.barcodeInput,
+  );
   const canonicalTitle = String(album.title || "").trim();
   const resolvedTitle = title.trim();
   const externalId = normalizeDeezerId(album);

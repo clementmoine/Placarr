@@ -1,5 +1,5 @@
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
-import { metadataProbe } from "@/lib/mappingProbeUtils";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
+import { metadataProbe } from "@/lib/dev/mappingProbe";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -23,6 +23,7 @@ export const launchboxModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: true,
+    websiteUrl: "https://gamesdb.launchbox-app.com/",
     notes:
       "Base communautaire LaunchBox (Metadata.zip). Index local: jeux, nombre de joueurs max, titres alternatifs regionaux, images (box, fanart, screenshots).",
   },

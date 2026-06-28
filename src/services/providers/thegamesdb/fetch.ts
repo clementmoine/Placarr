@@ -1,5 +1,10 @@
 import axios from "axios";
 
+import {
+  isTheGamesDbQuotaBlocked,
+  markTheGamesDbQuotaHit,
+} from "./quota";
+
 const API_BASE = "https://api.thegamesdb.net";
 
 export type TheGamesDbSearchGame = {
@@ -82,8 +87,20 @@ function getApiKey(): string | null {
 
 function warnAllowance(response: { remaining_monthly_allowance?: number }) {
   const remaining = response.remaining_monthly_allowance;
+  if (typeof remaining === "number" && remaining <= 0) {
+    markTheGamesDbQuotaHit({ monthlyExhausted: true });
+    console.warn("[TheGamesDB] Monthly API allowance exhausted");
+    return;
+  }
   if (typeof remaining === "number" && remaining <= 50) {
     console.warn(`[TheGamesDB] Low monthly API allowance: ${remaining}`);
+  }
+}
+
+function noteQuotaFailure(status: number, code?: number) {
+  if (status === 429 || code === 429) {
+    markTheGamesDbQuotaHit({ monthlyExhausted: true });
+    console.warn("[TheGamesDB] API quota exceeded — pausing lookups for 12h");
   }
 }
 
@@ -91,7 +108,7 @@ export async function searchTheGamesDbByName(
   name: string,
 ): Promise<TheGamesDbSearchResponse | null> {
   const apiKey = getApiKey();
-  if (!apiKey || !name.trim()) return null;
+  if (!apiKey || !name.trim() || isTheGamesDbQuotaBlocked()) return null;
 
   try {
     const response = await axios.get<TheGamesDbSearchResponse>(
@@ -102,8 +119,12 @@ export async function searchTheGamesDbByName(
         validateStatus: (status) => status < 500,
       },
     );
-    if (response.status >= 400 || response.data.code !== 200) return null;
+    if (response.status >= 400 || response.data.code !== 200) {
+      noteQuotaFailure(response.status, response.data?.code);
+      return null;
+    }
     warnAllowance(response.data);
+    if (isTheGamesDbQuotaBlocked()) return null;
     return response.data;
   } catch (error) {
     console.warn("[TheGamesDB] Search failed", error);
@@ -115,7 +136,7 @@ export async function fetchTheGamesDbById(
   gameId: number,
 ): Promise<TheGamesDbByGameIdResponse | null> {
   const apiKey = getApiKey();
-  if (!apiKey) return null;
+  if (!apiKey || isTheGamesDbQuotaBlocked()) return null;
 
   try {
     const response = await axios.get<TheGamesDbByGameIdResponse>(
@@ -130,8 +151,12 @@ export async function fetchTheGamesDbById(
         validateStatus: (status) => status < 500,
       },
     );
-    if (response.status >= 400 || response.data.code !== 200) return null;
+    if (response.status >= 400 || response.data.code !== 200) {
+      noteQuotaFailure(response.status, response.data?.code);
+      return null;
+    }
     warnAllowance(response.data);
+    if (isTheGamesDbQuotaBlocked()) return null;
     return response.data;
   } catch (error) {
     console.warn(`[TheGamesDB] Details fetch failed for id=${gameId}`, error);

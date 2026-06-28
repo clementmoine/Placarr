@@ -1,19 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
-vi.mock("./fetch", () => ({
-  searchPrestashopProduct: vi.fn(),
-  fetchPrestashopGallery: vi.fn(),
-  prestashopImageId: (url?: string | null) =>
-    url?.match(/\/(\d+)(?:-[a-z_]+)?\/[^/?#]+\.(?:jpe?g|png|webp|gif)/i)?.[1] ??
-    null,
-}));
+vi.mock("./fetch", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./fetch")>();
+  return {
+    ...actual,
+    searchPrestashopProduct: vi.fn(),
+    searchPrestashopHits: vi.fn(),
+    fetchPrestashopGallery: vi.fn(),
+  };
+});
 
-import { fetchPrestashopGallery, searchPrestashopProduct } from "./fetch";
+import {
+  fetchPrestashopGallery,
+  searchPrestashopHits,
+  searchPrestashopProduct,
+} from "./fetch";
 import { createPrestashopResolver } from "./resolver";
 import type { PrestashopProduct, PrestashopRetailerConfig } from "./types";
 
 const mockedSearch = vi.mocked(searchPrestashopProduct);
+const mockedHits = vi.mocked(searchPrestashopHits);
 const mockedGallery = vi.mocked(fetchPrestashopGallery);
 
 const CONFIG: PrestashopRetailerConfig = {
@@ -41,19 +48,34 @@ function product(
 
 beforeEach(() => {
   mockedSearch.mockReset();
+  mockedHits.mockReset();
   mockedGallery.mockReset();
   mockedGallery.mockResolvedValue([]);
+  mockedHits.mockResolvedValue([]);
 });
 
 describe("createPrestashopResolver — garde barcode→item", () => {
   const resolve = createPrestashopResolver(CONFIG);
 
-  it("accepte le produit quand l'ean13 confirme le code-barres, même si le titre diffère", async () => {
+  it("rejette un ean13 confirmé quand le titre catalogue ne correspond pas au produit demandé", async () => {
     mockedSearch.mockResolvedValue(
       product({ title: "Catan — Édition FR", barcode: BARCODE }),
     );
 
-    const result = await resolve("Nom totalement différent", BARCODE);
+    const result = await resolve({
+      name: "Nom totalement différent",
+      barcode: BARCODE,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("accepte un ean13 confirmé quand le titre catalogue correspond au produit demandé", async () => {
+    mockedSearch.mockResolvedValue(
+      product({ title: "Catan — Édition FR", barcode: BARCODE }),
+    );
+
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result?.title).toBe("Catan — Édition FR");
   });
@@ -63,7 +85,7 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       product({ title: "Tapis de souris gamer RGB", barcode: undefined }),
     );
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result).toBeNull();
   });
@@ -73,7 +95,7 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       product({ title: "Catan", barcode: undefined }),
     );
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result?.title).toBe("Catan");
   });
@@ -83,7 +105,7 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       product({ title: "Produit sans rapport", barcode: "9999999999999" }),
     );
 
-    const result = await resolve("", BARCODE);
+    const result = await resolve({ name: "", barcode: BARCODE });
 
     expect(result).toBeNull();
   });
@@ -91,9 +113,37 @@ describe("createPrestashopResolver — garde barcode→item", () => {
   it("retourne null quand aucun produit n'est trouvé", async () => {
     mockedSearch.mockResolvedValue(null);
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result).toBeNull();
+  });
+
+  it("rejette un ean13 confirmé mal étiqueté sans accepter un mauvais hit titre", async () => {
+    const tlouBarcode = "711719330103";
+    mockedSearch.mockResolvedValue(
+      product({
+        title: "The Last of Us Part II PS4",
+        barcode: tlouBarcode,
+      }),
+    );
+    mockedHits.mockResolvedValue([
+      {
+        name: "The Last of Us Part II PS4",
+        link: "https://example.com/the-last-of-us-part-ii-ps4.html",
+      },
+      {
+        name: "Manette PlayStation 4 Collector The Last of Us Part II",
+        link: "https://example.com/manette-tlou-part-ii.html",
+      },
+    ]);
+
+    const result = await resolve({
+      name: "The Last of Us Part I",
+      barcode: tlouBarcode,
+    });
+
+    expect(result).toBeNull();
+    expect(mockedHits).toHaveBeenCalled();
   });
 
   it("ajoute la galerie produit en attachments sans redupliquer la couverture", async () => {
@@ -110,7 +160,7 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       "https://example.com/200-large_default/catan.jpg", // 2e photo distincte
     ]);
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result?.attachments).toEqual([
       {

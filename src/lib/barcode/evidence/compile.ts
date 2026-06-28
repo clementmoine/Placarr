@@ -1,8 +1,16 @@
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 import {
+  cleanTitleForDisplay,
   filterPlatformRedundancies,
   getSequelIndicators,
 } from "@/lib/barcode/titleUtils";
-import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/videoGamePlatforms";
+import { selectConsensusTitle } from "./consensusTitle";
+import {
+  compareBarcodeEvidenceByObservationRank,
+  observationsFromBarcodeEvidenceList,
+  pickPlatformKeyFromEvidence,
+} from "./observations";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
 
 import {
   areEvidenceSameProduct,
@@ -18,13 +26,18 @@ import {
   resolveEvidenceToMatches,
 } from "./resolve";
 import { applyEditionToCompiledResult } from "./edition";
-import {
-  pickPlatformKeyFromEvidence,
-  type CompiledResult,
-  type ProductEvidence,
-  type ResolvedMatch,
-  type SourceProduct,
+import type {
+  CompiledResult,
+  ProductEvidence,
+  ResolvedMatch,
+  SourceProduct,
 } from "./types";
+import {
+  AUDIO_BARCODE_PREFIX,
+  BOOK_BARCODE_PREFIX,
+  CONSENSUS,
+  TYPE_SCORE,
+} from "./scoring";
 
 /**
  * A lone marketplace listing can be wrong, but when several INDEPENDENT
@@ -36,17 +49,9 @@ import {
  * evidence is left untouched so it still surfaces as a clean, least-prioritised
  * alternate — the user then sees two clean candidates (the consensual title
  * match, and the item the canonical identified strictly by barcode).
+ *
+ * All gating thresholds live in `CONSENSUS` (see ./scoring).
  */
-export const MARKETPLACE_CONSENSUS_MIN_PROVIDERS = 3;
-
-// A wrong canonical sequel/edition number is, in the wild, usually disputed by a
-// single dominant marketplace (e.g. PicClick) returning many listings — too few
-// *distinct* providers for the strict gate above, but an overwhelming volume of
-// independent listings that no source corroborates. When the number is
-// uncorroborated, accept the franchise-level contradiction from ≥2 providers as
-// long as it carries at least this many disputing listings.
-export const SEQUEL_CONTRADICTION_MIN_PROVIDERS = 2;
-export const SEQUEL_CONTRADICTION_MIN_LISTINGS = 4;
 
 // Significant, franchise-identifying tokens of a title (drops generic words,
 // platform names and bare numbers — those last are handled as sequel
@@ -85,6 +90,30 @@ function franchiseCoreTokens(evidence: ProductEvidence): Set<string> {
   return out;
 }
 
+// The tokens that make a canonical a SPECIFIC edition of its franchise, beyond
+// the base name: the sequel number/roman ("2", "iii") AND any edition subtitle
+// after the first ":" ("… : Island Thunder" → {island,thunder}). This is the
+// signature a real listing must echo to corroborate the edition; when *no*
+// listing does, the edition is a likely bad barcode→game mapping (e.g.
+// ScreenScraper mapping a base "Ghost Recon" barcode to "… : Island Thunder").
+function editionSignatureTokens(evidence: ProductEvidence): Set<string> {
+  const out = new Set<string>(evidence.parsed.indicators);
+  const colonIndex = evidence.cleanName.indexOf(":");
+  if (colonIndex >= 0) {
+    for (const token of evidence.cleanName
+      .slice(colonIndex + 1)
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)) {
+      if (token.length <= 2) continue;
+      if (/^\d+$/.test(token)) continue;
+      if (GENERIC_TITLE_TOKENS.has(token)) continue;
+      if (PLATFORM_TOKEN_TERMS.has(token)) continue;
+      out.add(token);
+    }
+  }
+  return out;
+}
+
 // A listing names the canonical's franchise when it covers most of that clean
 // core, with ≥2 identifying tokens in common. Coverage is measured against the
 // smaller of the two sets so it tolerates both listing noise ("… NES Tested
@@ -94,11 +123,15 @@ function sharesFranchiseCore(
   core: Set<string>,
   listingFranchise: Set<string>,
 ): boolean {
-  if (core.size < 2 || listingFranchise.size === 0) return false;
+  if (core.size < CONSENSUS.minFranchiseTokens || listingFranchise.size === 0)
+    return false;
   let shared = 0;
   for (const token of core) if (listingFranchise.has(token)) shared++;
   const minSize = Math.min(core.size, listingFranchise.size);
-  return shared >= 2 && shared >= Math.ceil(minSize * 0.6);
+  return (
+    shared >= CONSENSUS.minFranchiseTokens &&
+    shared >= Math.ceil(minSize * CONSENSUS.franchiseCoverageRatio)
+  );
 }
 
 // True when one franchise-token set is contained in the other and they share at
@@ -134,89 +167,102 @@ function strictMarketplaceConsensus(marketplace: ProductEvidence[]): {
 
 /**
  * Marketplace listings that name the canonical's franchise but contradict its
- * sequel number. A lone canonical claiming a sequel ("Ghost Recon 2") that *no*
- * marketplace corroborates — while several independent ones name the same
- * franchise without that number ("Ghost Recon", "Ghost Recon 1", "… Classics")
- * — is almost always a bad barcode→game mapping on the canonical's side. Real
- * listings vary too much to form a clean same-product cluster, so this groups
- * them at the franchise level instead.
+ * specific EDITION — a sequel number ("Ghost Recon 2") or an edition subtitle
+ * ("Ghost Recon : Island Thunder"). A lone canonical claiming such an edition
+ * that *no* marketplace corroborates — while several independent ones name the
+ * same franchise without it ("Ghost Recon", "Ghost Recon 1", "… Classics") — is
+ * almost always a bad barcode→game mapping on the canonical's side. Real listings
+ * vary too much to form a clean same-product cluster, so this groups them at the
+ * franchise level instead.
  */
-function sequelContradictionConsensus(
+function editionContradictionConsensus(
   marketplace: ProductEvidence[],
   canonicalEvidence: ProductEvidence[],
 ): {
   items: ProductEvidence[];
-  numberedCanonical: ProductEvidence[];
+  editionCanonical: ProductEvidence[];
   disputingProviders: number;
-  numberedProviders: number;
-  numberCited: boolean;
+  editionProviders: number;
+  editionCited: boolean;
 } {
   const empty = {
     items: [],
-    numberedCanonical: [],
+    editionCanonical: [],
     disputingProviders: 0,
-    numberedProviders: 0,
-    numberCited: false,
+    editionProviders: 0,
+    editionCited: false,
   };
-  const numberedCanonical = canonicalEvidence.filter(
-    (item) => item.parsed.indicators.size > 0,
+  const editionCanonical = canonicalEvidence.filter(
+    (item) => editionSignatureTokens(item).size > 0,
   );
-  if (numberedCanonical.length === 0) return empty;
+  if (editionCanonical.length === 0) return empty;
 
   const canonicalCore = new Set<string>();
-  const canonicalIndicators = new Set<string>();
-  for (const item of numberedCanonical) {
+  const canonicalEdition = new Set<string>();
+  for (const item of editionCanonical) {
     for (const token of franchiseCoreTokens(item)) canonicalCore.add(token);
-    for (const indicator of item.parsed.indicators) {
-      canonicalIndicators.add(indicator);
-    }
+    for (const token of editionSignatureTokens(item))
+      canonicalEdition.add(token);
   }
   // Require a specific franchise (avoid latching onto one-word canonicals).
-  if (canonicalCore.size < 2) return empty;
+  if (canonicalCore.size < CONSENSUS.minFranchiseTokens) return empty;
 
   const sharesFranchise = (item: ProductEvidence) =>
     sharesFranchiseCore(canonicalCore, franchiseBaseTokens(item));
-  const citesCanonicalNumber = (item: ProductEvidence) => {
-    for (const indicator of canonicalIndicators) {
-      if (item.parsed.indicators.has(indicator)) return true;
+  // A listing cites the edition when it echoes any of its signature tokens — the
+  // sequel number (via indicators) or an edition-subtitle word (via tokens).
+  const citesCanonicalEdition = (item: ProductEvidence) => {
+    const itemTokens = franchiseBaseTokens(item);
+    for (const token of canonicalEdition) {
+      if (item.parsed.indicators.has(token) || itemTokens.has(token)) {
+        return true;
+      }
     }
     return false;
   };
 
   // A second canonical (e.g. IGDB via ScanDex) that names the same franchise but
-  // omits the number is strong, independent evidence the number is a bad mapping;
-  // it counts toward the dispute alongside the marketplace listings.
+  // omits the edition is strong, independent evidence it is a bad mapping; it
+  // counts toward the dispute alongside the marketplace listings. But a mere
+  // alias of the SAME edition canonical (e.g. ScreenScraper listing the same
+  // game as "… : Island Thunder" and "… - Island Thunder") is the same bad
+  // mapping, not independent corroboration — exclude it so it cannot self-cite
+  // the edition and block the override.
   const otherCanonical = canonicalEvidence.filter(
-    (item) => !numberedCanonical.includes(item),
+    (item) =>
+      !editionCanonical.includes(item) &&
+      !editionCanonical.some((edition) =>
+        areEvidenceSameProduct(edition, item),
+      ),
   );
 
-  // If anything sharing the franchise actually cites the number, it is real — do
-  // not treat it as a misnumbering.
-  const numberCited = [...marketplace, ...otherCanonical].some(
-    (item) => sharesFranchise(item) && citesCanonicalNumber(item),
+  // If anything sharing the franchise actually cites the edition, it is real — do
+  // not treat it as a bad mapping.
+  const editionCited = [...marketplace, ...otherCanonical].some(
+    (item) => sharesFranchise(item) && citesCanonicalEdition(item),
   );
 
-  // Marketplace listings that name the franchise but omit the number dispute it
+  // Marketplace listings that name the franchise but omit the edition dispute it
   // (these are the ones we promote); disagreeing peer canonicals strengthen the
   // dispute but are already anchors, so they only count toward the provider tally.
   const items = marketplace.filter(
-    (item) => sharesFranchise(item) && !citesCanonicalNumber(item),
+    (item) => sharesFranchise(item) && !citesCanonicalEdition(item),
   );
   const disputingCanonicals = otherCanonical.filter(
-    (item) => sharesFranchise(item) && !citesCanonicalNumber(item),
+    (item) => sharesFranchise(item) && !citesCanonicalEdition(item),
   );
   const disputingProviders = new Set(
     [...items, ...disputingCanonicals].map((item) => item.providerName),
   ).size;
-  const numberedProviders = new Set(
-    numberedCanonical.map((item) => item.providerName),
+  const editionProviders = new Set(
+    editionCanonical.map((item) => item.providerName),
   ).size;
   return {
     items,
-    numberedCanonical,
+    editionCanonical,
     disputingProviders,
-    numberedProviders,
-    numberCited,
+    editionProviders,
+    editionCited,
   };
 }
 
@@ -251,7 +297,7 @@ export function applyMarketplaceConsensusOverride(
   // lone canonical, unless an anchor already agrees (then it wins on its own).
   const strict = strictMarketplaceConsensus(marketplace);
   if (
-    strict.providers >= MARKETPLACE_CONSENSUS_MIN_PROVIDERS &&
+    strict.providers >= CONSENSUS.minProviders &&
     strict.providers > canonicalProviderCount
   ) {
     const corroborated = evidence.some(
@@ -276,22 +322,31 @@ export function applyMarketplaceConsensusOverride(
   }
 
   // Path 2 — a franchise-level contradiction of the canonical's UNCORROBORATED
-  // sequel/edition number. That number is often disputed by one dominant
+  // edition (sequel number or subtitle). It is often disputed by one dominant
   // marketplace's many listings and/or a second, disagreeing canonical, so we
   // count listing volume and peer canonicals — never when any source cites it.
-  const franchise = sequelContradictionConsensus(marketplace, canonicalEvidence);
+  const franchise = editionContradictionConsensus(
+    marketplace,
+    canonicalEvidence,
+  );
   const qualifies =
-    !franchise.numberCited &&
-    franchise.disputingProviders > franchise.numberedProviders &&
-    (franchise.disputingProviders >= MARKETPLACE_CONSENSUS_MIN_PROVIDERS ||
-      (franchise.disputingProviders >= SEQUEL_CONTRADICTION_MIN_PROVIDERS &&
-        franchise.items.length >= SEQUEL_CONTRADICTION_MIN_LISTINGS));
-  if (qualifies) promote(franchise.items, franchise.numberedCanonical);
+    !franchise.editionCited &&
+    franchise.disputingProviders > franchise.editionProviders &&
+    (franchise.disputingProviders >= CONSENSUS.minProviders ||
+      (franchise.disputingProviders >=
+        CONSENSUS.sequelContradiction.minProviders &&
+        franchise.items.length >= CONSENSUS.sequelContradiction.minListings));
+  if (qualifies) {
+    promote(franchise.items, franchise.editionCanonical);
+    // The contradicted canonical is the same franchise in a wrong edition (a bad
+    // "… 2" / "… : Island Thunder" mapping of the base), not a distinct product.
+    // Mark it so it is not surfaced as a pickable alternate — see
+    // resolveEvidenceToMatches.
+    for (const item of franchise.editionCanonical) {
+      item.contradictedEdition = true;
+    }
+  }
 }
-
-// Minimum independent listings carrying an edition number for it to be a real
-// marketplace consensus (not one noisy listing).
-const EDITION_CONSENSUS_MIN_LISTINGS = 4;
 
 /**
  * The no-anchor counterpart of the sequel-contradiction override. When NO
@@ -306,9 +361,10 @@ const EDITION_CONSENSUS_MIN_LISTINGS = 4;
 function applyMarketplaceEditionConsensus(evidence: ProductEvidence[]): void {
   // Only the no-anchor case — a canonical source (or the override above) decides
   // otherwise.
-  if (evidence.some((item) => item.isCanonical || item.isTrustedRetailer)) return;
+  if (evidence.some((item) => item.isCanonical || item.isTrustedRetailer))
+    return;
   const marketplace = evidence;
-  if (marketplace.length < EDITION_CONSENSUS_MIN_LISTINGS) return;
+  if (marketplace.length < CONSENSUS.edition.minListings) return;
 
   // The edition number carried by the most marketplace listings.
   const listingsByIndicator = new Map<string, ProductEvidence[]>();
@@ -327,17 +383,29 @@ function applyMarketplaceEditionConsensus(evidence: ProductEvidence[]): void {
       dominantListings = list;
     }
   }
-  if (dominant === null || dominantListings.length < EDITION_CONSENSUS_MIN_LISTINGS) {
+  if (
+    dominant === null ||
+    dominantListings.length < CONSENSUS.edition.minListings
+  ) {
     return;
   }
-  // Require ≥2 independent providers (not one source repeating itself).
-  if (new Set(dominantListings.map((i) => i.providerName)).size < 2) return;
+  // Normally require ≥2 independent providers (not one source repeating
+  // itself). A single dominant marketplace is accepted only when it carries an
+  // overwhelming volume of listings all naming the edition (see constant).
+  const distinctProviders = new Set(dominantListings.map((i) => i.providerName))
+    .size;
+  if (
+    distinctProviders < CONSENSUS.edition.minProviders &&
+    dominantListings.length < CONSENSUS.edition.singleProviderMinListings
+  ) {
+    return;
+  }
 
   const core = new Set<string>();
   for (const item of dominantListings) {
     for (const token of franchiseCoreTokens(item)) core.add(token);
   }
-  if (core.size < 2) return;
+  if (core.size < CONSENSUS.minFranchiseTokens) return;
 
   // Bail when the same franchise is also strongly named WITHOUT the number — a
   // split like "Halo" vs "Halo 1" is not a real edition consensus.
@@ -346,7 +414,11 @@ function applyMarketplaceEditionConsensus(evidence: ProductEvidence[]): void {
       !item.parsed.indicators.has(dominant) &&
       sharesFranchiseCore(core, franchiseBaseTokens(item)),
   ).length;
-  if (withoutDominant * 2 >= dominantListings.length) return;
+  if (
+    withoutDominant >=
+    dominantListings.length * CONSENSUS.edition.splitGuardRatio
+  )
+    return;
 
   // Promote the edition listings so they anchor and lead.
   for (const item of dominantListings) {
@@ -391,6 +463,24 @@ export async function compileResultForType(
   }
 
   if (sourceEvidence.length === 0) return null;
+
+  // Agnostic title: the token-consensus of independent listings (BEFORE any
+  // promotion), so the displayed title is the form sellers corroborate — a
+  // canonical token no listing echoes is dropped, a token the listings carry but
+  // the canonical lacks is added — with no per-difference-type override. The
+  // marketplace votes are re-cleaned keeping edition words ("Classics", years,
+  // sequel numbers) but dropping platform/seller noise, so corroboration is
+  // measured on the meaningful tokens.
+  const consensusTitleValue = selectConsensusTitle({
+    canonical: sourceEvidence
+      .filter((e) => e.isCanonical || e.isTrustedRetailer)
+      .map((e) => e.cleanName),
+    marketplace: sourceEvidence
+      .filter((e) => !e.isCanonical && !e.isTrustedRetailer)
+      .map((e) =>
+        cleanTitleForDisplay(e.rawName, { preserveEditionTerms: true }),
+      ),
+  });
 
   // Let a strong, independent marketplace consensus lead when it contradicts
   // the lone canonical source (see helper above).
@@ -472,8 +562,15 @@ export async function compileResultForType(
     return null;
   }
   const matches = resolveEvidenceToMatches(allEvidence, type, cleanedBarcode);
+  // The agnostic token-consensus is the source of truth for the leader's title;
+  // it stays consistent across the leader match and the result's cleanName.
+  if (consensusTitleValue && matches[0]) {
+    matches[0].name = consensusTitleValue;
+  }
   const representative =
-    matches[0]?.name || pickRepresentativeEvidence(allEvidence).title;
+    consensusTitleValue ||
+    matches[0]?.name ||
+    pickRepresentativeEvidence(allEvidence).title;
   const displayEvidence = filterDisplayEvidenceForSuggestions(allEvidence);
   const finalSuggestions = filterPlatformRedundancies(
     uniqueClean(
@@ -483,7 +580,7 @@ export async function compileResultForType(
   ).slice(0, 15);
   const rawNames = uniqueClean(
     displayEvidence
-      .sort((a, b) => b.sourceWeight - a.sourceWeight)
+      .sort(compareBarcodeEvidenceByObservationRank)
       .flatMap((evidence) => [evidence.title, evidence.cleanName]),
     { preservePlatformSuffix: type === "games" },
   ).slice(0, 15);
@@ -506,6 +603,8 @@ export async function compileResultForType(
       suggestions: finalSuggestions,
       matches,
       platformKey,
+      observations: observationsFromBarcodeEvidenceList(allEvidence),
+      observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
     },
     allEvidence,
   );
@@ -517,44 +616,53 @@ export function scoreTypeCandidate(
   barcode: string,
   boardGameSignal = 0,
   videoFormatSignal = 0,
+  videoGameSignal = 0,
 ): number {
   const topMatch = result.matches[0];
   if (!topMatch) return 0;
   const evidence = topMatch.evidence;
-  const isBookBarcode = /^(978|979)/.test(barcode);
-  const isAudioBarcode = /^(498|602|724|731|886|888)/.test(barcode);
+  const isBookBarcode = BOOK_BARCODE_PREFIX.test(barcode);
+  const isAudioBarcode = AUDIO_BARCODE_PREFIX.test(barcode);
 
   let score = topMatch.confidence;
   // Canonical corroboration is about *distinct* sources agreeing, not the raw
-  // number of evidence rows. A single provider can emit dozens of rows (e.g.
+  // number of evidence rows: a single provider can emit dozens of rows (e.g.
   // TMDB returning every localized movie alias), which must not snowball the
-  // score and let a same-name movie outrank the actual game. Cap the row bonus
-  // at one unit per distinct canonical provider.
+  // score and let a same-name movie outrank the actual game. See TYPE_SCORE.
   score +=
     Math.min(evidence.canonicalCount, evidence.canonicalProviders.length) *
-    0.08;
-  score += evidence.canonicalProviders.length * 0.05;
-  score += evidence.hasCover ? 0.03 : 0;
-  if (candidateType === "books" && isBookBarcode) score += 0.45;
-  if (candidateType === "musics" && isAudioBarcode) score += 0.3;
+    TYPE_SCORE.canonicalCorroboration;
+  score += evidence.canonicalProviders.length * TYPE_SCORE.canonicalProvider;
+  score += evidence.hasCover ? TYPE_SCORE.cover : 0;
+  if (candidateType === "books" && isBookBarcode)
+    score += TYPE_SCORE.bookBarcode;
+  if (candidateType === "musics" && isAudioBarcode)
+    score += TYPE_SCORE.audioBarcode;
   if (candidateType === "games" && (result.platformKey || "").length > 0)
-    score += 0.25;
+    score += TYPE_SCORE.gamePlatform;
 
-  // A board-game signal harvested from the listings (category phrase like
-  // "jeu de société", or a board-game publisher) promotes `boardgames` and
-  // suppresses `games`, so a coincidental same-named video game cannot win the
-  // type. See detectBoardGameSignal.
+  // Each listing-harvested type signal promotes its own type and suppresses the
+  // type it is most often confused with (suppression weights are negative in
+  // TYPE_SCORE), so a coincidental same-named product cannot steal the type.
   if (boardGameSignal > 0) {
-    if (candidateType === "boardgames") score += boardGameSignal * 0.35;
-    if (candidateType === "games") score -= boardGameSignal * 0.3;
+    if (candidateType === "boardgames")
+      score += boardGameSignal * TYPE_SCORE.boardGameSignal.boardgames;
+    if (candidateType === "games")
+      score += boardGameSignal * TYPE_SCORE.boardGameSignal.games;
   }
-
-  // A video-format signal (LaserDisc/VHS/animated film) promotes `movies` and
-  // suppresses `musics`, so a same-named soundtrack album cannot win the type of
-  // a scanned film. See detectVideoFormatSignal.
   if (videoFormatSignal > 0) {
-    if (candidateType === "movies") score += videoFormatSignal * 0.35;
-    if (candidateType === "musics") score -= videoFormatSignal * 0.3;
+    if (candidateType === "movies")
+      score += videoFormatSignal * TYPE_SCORE.videoFormatSignal.movies;
+    if (candidateType === "musics")
+      score += videoFormatSignal * TYPE_SCORE.videoFormatSignal.musics;
+  }
+  if (videoGameSignal > 0) {
+    if (candidateType === "games")
+      score += videoGameSignal * TYPE_SCORE.videoGameSignal.games;
+    if (candidateType === "musics")
+      score += videoGameSignal * TYPE_SCORE.videoGameSignal.musics;
+    if (candidateType === "movies")
+      score += videoGameSignal * TYPE_SCORE.videoGameSignal.movies;
   }
 
   return score;

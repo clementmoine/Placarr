@@ -1,16 +1,16 @@
 import axios from "axios";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
-import { retry } from "@/lib/retry";
+import { retry } from "@/lib/http/retry";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 import {
   detectScreenScraperSystemId,
   getPlatformKeyByScreenScraperSystemId,
-} from "@/lib/videoGamePlatforms";
+} from "@/lib/games/platforms";
 
 import type {
   MetadataAttachment,
@@ -47,6 +47,8 @@ import {
   screenScraperMediaAttachmentSemantics,
 } from "./mediaUrl";
 import { areLikelySameProduct } from "@/lib/barcode/titleUtils";
+import { isWeakMetadataSearchFragment } from "@/lib/title/searchVariants";
+import { metadataHasDisplayImage } from "@/lib/metadata/displayImage";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
 
@@ -401,7 +403,10 @@ export function buildScreenScraperSearchQueries(
 
     const subtitleSplit = base.match(/^([^:–—-]+?)\s*[:\-–—]\s*(.+)$/);
     if (subtitleSplit) {
-      variants.push(subtitleSplit[1].trim(), subtitleSplit[2].trim());
+      const leading = subtitleSplit[1].trim();
+      const trailing = subtitleSplit[2].trim();
+      if (!isWeakMetadataSearchFragment(leading)) variants.push(leading);
+      if (!isWeakMetadataSearchFragment(trailing)) variants.push(trailing);
     }
 
     variants.push(
@@ -467,8 +472,12 @@ async function searchScreenScraperGames(
   } catch (error) {
     if (isScreenScraperQuotaError(error)) {
       markScreenScraperQuotaHit();
+      console.warn(
+        `[ScreenScraper] Quota exceeded during search for "${query}" — pausing API calls`,
+      );
       const stale = getCachedScreenScraperSearch(query, systemeid);
       if (stale) return stale;
+      return [];
     }
     throw error;
   }
@@ -862,6 +871,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           name,
           deps.cleanSearchQuery,
         )) {
+          if (isScreenScraperQuotaBlocked()) break;
           try {
             validResults = await searchScreenScraperGames(
               baseParams,
@@ -920,6 +930,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                       cand,
                       deps.cleanSearchQuery,
                     )) {
+                      if (isScreenScraperQuotaBlocked()) break;
                       try {
                         const newValid = await searchScreenScraperGames(
                           baseParams,
@@ -960,10 +971,12 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         }
 
         if (!validResults || validResults.length === 0) {
-          const firstWord = cleanedName.split(/\s+/)[0];
+          const queryTokens = cleanedName.split(/\s+/).filter(Boolean);
+          const firstWord = queryTokens[0];
           if (
             firstWord &&
             firstWord.length >= 3 &&
+            queryTokens.length <= 1 &&
             !BROAD_SCREENSCRAPER_FALLBACK_WORDS.has(firstWord.toLowerCase())
           ) {
             console.log(
@@ -1169,10 +1182,16 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
   const isCachedLookupAcceptable = (
     requestedName: string,
     cached: MetadataResult,
-  ): boolean =>
-    !requestedName ||
-    !cached.title ||
-    areLikelySameProduct(requestedName, cached.title);
+  ): boolean => {
+    if (
+      requestedName &&
+      cached.title &&
+      !areLikelySameProduct(requestedName, cached.title)
+    ) {
+      return false;
+    }
+    return metadataHasDisplayImage(cached);
+  };
 
   return async function fetchFromScreenScraper(
     name: string,

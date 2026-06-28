@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
 vi.mock("./fetch", () => ({
-  searchPhilibert: vi.fn(),
+  searchPhilibertHits: vi.fn(),
   fetchPhilibertProduct: vi.fn(),
   resolvePhilibertBackgroundUrl: vi.fn(),
   philibertImageId: (url?: string | null) =>
@@ -12,13 +12,13 @@ vi.mock("./fetch", () => ({
 import {
   fetchPhilibertProduct,
   resolvePhilibertBackgroundUrl,
-  searchPhilibert,
+  searchPhilibertHits,
   type PhilibertProduct,
   type PhilibertSearchHit,
 } from "./fetch";
 import { createPhilibertResolver, mapPhilibertMetadata } from "./resolver";
 
-const mockedSearch = vi.mocked(searchPhilibert);
+const mockedSearchHits = vi.mocked(searchPhilibertHits);
 const mockedFetch = vi.mocked(fetchPhilibertProduct);
 const mockedBackground = vi.mocked(resolvePhilibertBackgroundUrl);
 
@@ -41,7 +41,7 @@ function product(overrides: Partial<PhilibertProduct> = {}): PhilibertProduct {
 }
 
 beforeEach(() => {
-  mockedSearch.mockReset();
+  mockedSearchHits.mockReset();
   mockedFetch.mockReset();
   mockedBackground.mockReset();
   mockedBackground.mockResolvedValue(undefined);
@@ -51,67 +51,111 @@ describe("createPhilibertResolver — garde barcode→item", () => {
   const resolve = createPhilibertResolver();
 
   it("accepte le produit quand la page confirme le code-barres, même si le titre diffère", async () => {
-    mockedSearch.mockResolvedValue(hit());
+    mockedSearchHits.mockResolvedValue([hit()]);
     mockedFetch.mockResolvedValue(
       product({ title: "Catan — Édition FR", barcode: BARCODE }),
     );
 
-    const result = await resolve("Nom totalement différent", BARCODE);
+    const result = await resolve({
+      name: "Nom totalement différent",
+      barcode: BARCODE,
+    });
 
     expect(result?.title).toBe("Catan — Édition FR");
   });
 
   it("accepte le produit quand seule l'URL du résultat confirme le code-barres", async () => {
-    mockedSearch.mockResolvedValue(hit({ barcode: BARCODE }));
+    mockedSearchHits.mockResolvedValue([hit({ barcode: BARCODE })]);
     mockedFetch.mockResolvedValue(
       product({ title: "Catan — Édition FR", barcode: undefined }),
     );
 
-    const result = await resolve("Nom totalement différent", BARCODE);
+    const result = await resolve({
+      name: "Nom totalement différent",
+      barcode: BARCODE,
+    });
 
     expect(result?.title).toBe("Catan — Édition FR");
   });
 
   it("rejette un produit non confirmé dont le titre ne correspond pas (jamais confidently wrong)", async () => {
-    mockedSearch.mockResolvedValue(hit({ barcode: undefined }));
+    mockedSearchHits.mockResolvedValue([hit({ barcode: undefined })]);
     mockedFetch.mockResolvedValue(
       product({ title: "Échiquier en bois massif", barcode: undefined }),
     );
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result).toBeNull();
   });
 
   it("accepte un produit non confirmé si le titre correspond à la requête", async () => {
-    mockedSearch.mockResolvedValue(hit({ barcode: undefined }));
+    mockedSearchHits.mockResolvedValue([hit({ barcode: undefined })]);
     mockedFetch.mockResolvedValue(
       product({ title: "Catan", barcode: undefined }),
     );
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result?.title).toBe("Catan");
   });
 
+  it("rejette un faux positif proche mais différent (La Maison du Lac)", async () => {
+    mockedSearchHits.mockResolvedValue([hit({ barcode: undefined })]);
+    mockedFetch.mockResolvedValue(
+      product({ title: "La Maison des Souris", barcode: undefined }),
+    );
+
+    const result = await resolve({ name: "La Maison du Lac" });
+
+    expect(result).toBeNull();
+  });
+
   it("rejette une recherche par code-barres seul quand rien ne confirme l'EAN", async () => {
-    mockedSearch.mockResolvedValue(hit({ barcode: undefined }));
+    mockedSearchHits.mockResolvedValue([hit({ barcode: undefined })]);
     mockedFetch.mockResolvedValue(
       product({ title: "Produit sans rapport", barcode: undefined }),
     );
 
-    const result = await resolve("", BARCODE);
+    const result = await resolve({ name: "", barcode: BARCODE });
 
     expect(result).toBeNull();
   });
 
   it("retourne null quand la recherche ne renvoie aucun résultat", async () => {
-    mockedSearch.mockResolvedValue(null);
+    mockedSearchHits.mockResolvedValue([]);
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
     expect(result).toBeNull();
     expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it("itère les lookup queries et ignore les faux positifs", async () => {
+    mockedSearchHits
+      .mockResolvedValueOnce([
+        hit({
+          url: "https://www.philibertnet.com/fr/jeux/unrelated.html",
+        }),
+      ])
+      .mockResolvedValueOnce([hit()]);
+
+    mockedFetch
+      .mockResolvedValueOnce(
+        product({
+          title: "Totally Unrelated Game",
+          productUrl: "https://www.philibertnet.com/fr/jeux/unrelated.html",
+        }),
+      )
+      .mockResolvedValueOnce(product({ title: "Catan" }));
+
+    const result = await resolve({
+      name: "Catan",
+      lookupQueries: ["Catan bruit", "Catan"],
+    });
+
+    expect(result?.title).toBe("Catan");
+    expect(mockedSearchHits).toHaveBeenCalledTimes(2);
   });
 
   it("expose la couverture, le fond et la galerie en attachments", async () => {
@@ -120,7 +164,7 @@ describe("createPhilibertResolver — garde barcode→item", () => {
     const wide = `https://cdn1.philibertnet.com/200/catan--${BARCODE}.jpg`;
     const extra = `https://cdn1.philibertnet.com/300/catan--${BARCODE}.jpg`;
 
-    mockedSearch.mockResolvedValue(hit({ barcode: BARCODE }));
+    mockedSearchHits.mockResolvedValue([hit({ barcode: BARCODE })]);
     mockedFetch.mockResolvedValue(
       product({
         title: "Catan",
@@ -131,11 +175,8 @@ describe("createPhilibertResolver — garde barcode→item", () => {
     );
     mockedBackground.mockResolvedValue(wide);
 
-    const result = await resolve("Catan", BARCODE);
+    const result = await resolve({ name: "Catan", barcode: BARCODE });
 
-    // Couverture en premier, fond paysage ensuite, puis la galerie restante.
-    // L'original de la couverture (id 100) et le fond (id 200) ne sont pas
-    // redupliqués en `image`.
     expect(result?.attachments).toEqual([
       { type: "cover", url: cover, role: "fr", source: "philibert" },
       { type: "background", url: wide, role: "fr", source: "philibert" },

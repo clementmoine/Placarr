@@ -1,12 +1,13 @@
 import axios from "axios";
 
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { createOpenLibraryResolver } from "./resolver";
+import { getOpenLibrarySuggestions } from "./suggestions";
 import {
   createTeardownBarcodeTask,
   shouldRunBookBarcodeTeardown,
-} from "@/lib/teardownUtils";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+} from "@/lib/dev/teardownUtils";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -38,6 +39,12 @@ export const openlibraryModule: ProviderModule = {
     ],
     auth: { kind: "none" },
     canonical: true,
+    websiteUrl: "https://openlibrary.org/",
+    apiKeyDashboardUrl: "https://openlibrary.org/",
+    mappingProbeRetry: true,
+    bookCoverPriority: "secondary",
+    requiresTitleAlignment: true,
+    isbnCoverUrlTemplate: "https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg",
   },
   evidence: {
     label: "OpenLibrary",
@@ -59,6 +66,9 @@ export const openlibraryModule: ProviderModule = {
       ),
     ];
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromOpenLibrary,
+  }),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -88,6 +98,8 @@ export const openlibraryModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
+  suggestDatabaseTitles: ({ cleanedName }) =>
+    getOpenLibrarySuggestions(cleanedName),
   testHandlers: {
     "openlibrary-barcode": {
       label: "Open Library - Barcode",
@@ -125,6 +137,17 @@ export const openlibraryModule: ProviderModule = {
     } catch {
       return [];
     }
+  },
+  buildBarcodeSources(payload) {
+    const hit = payload.ol;
+    if (!hit?.title) return [];
+    return [
+      {
+        mediaType: "books",
+        label: "OpenLibrary",
+        products: [{ name: hit.title, coverUrl: hit.imageUrl }],
+      },
+    ];
   },
 };
 

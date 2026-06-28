@@ -54,22 +54,24 @@ function cleanDiscogsEntityName(name: string): string {
  * refs we can't resolve, and strip styling tags.
  */
 export function cleanDiscogsNotes(notes: string): string {
-  return notes
-    .replace(/\[url=[^\]]*\]/gi, "")
-    .replace(/\[\/url\]/gi, "")
-    // [a=Name] / [l=Label] / [m=…] / [r=…] → keep the inner label
-    .replace(/\[[almr]=([^\]]+)\]/gi, "$1")
-    // [a123] / [l123] → numeric-id reference we can't resolve → drop
-    .replace(/\[[almr]\d+\]/gi, "")
-    // styling tags [b] [/i] [u] …
-    .replace(/\[\/?[a-z]+\]/gi, "")
-    .replace(/\r\n/g, "\n")
-    // tidy whitespace left by removed tags (runs of spaces, space before punctuation)
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/[ \t]+([.,;:!?])/g, "$1")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    notes
+      .replace(/\[url=[^\]]*\]/gi, "")
+      .replace(/\[\/url\]/gi, "")
+      // [a=Name] / [l=Label] / [m=…] / [r=…] → keep the inner label
+      .replace(/\[[almr]=([^\]]+)\]/gi, "$1")
+      // [a123] / [l123] → numeric-id reference we can't resolve → drop
+      .replace(/\[[almr]\d+\]/gi, "")
+      // styling tags [b] [/i] [u] …
+      .replace(/\[\/?[a-z]+\]/gi, "")
+      .replace(/\r\n/g, "\n")
+      // tidy whitespace left by removed tags (runs of spaces, space before punctuation)
+      .replace(/[ \t]{2,}/g, " ")
+      .replace(/[ \t]+([.,;:!?])/g, "$1")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 let warnedMissingAuth = false;
@@ -224,9 +226,7 @@ export async function fetchFromDiscogs(
                 ? cleanDiscogsEntityName(entry.name)
                 : "",
             )
-            .filter(
-              (name: string) => name && name.toLowerCase() !== "various",
-            );
+            .filter((name: string) => name && name.toLowerCase() !== "various");
           if (names.length > 0) artists = Array.from(new Set(names));
         }
         if (Array.isArray(release?.labels)) {
@@ -237,8 +237,7 @@ export async function fetchFromDiscogs(
                 : "",
             )
             .filter(
-              (name: string) =>
-                name && name.toLowerCase() !== "not on label",
+              (name: string) => name && name.toLowerCase() !== "not on label",
             );
           if (names.length > 0) labels = Array.from(new Set(names));
         }

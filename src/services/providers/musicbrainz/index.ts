@@ -13,7 +13,7 @@ import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   createTeardownMetadataTask,
   metadataTeardownLabel,
-} from "@/lib/teardownUtils";
+} from "@/lib/dev/teardownUtils";
 
 export { fetchFromMusicBrainz, formatMusicTitle, artistFromCredit };
 export type { MusicBrainzResult } from "./fetch";
@@ -193,6 +193,7 @@ export const musicbrainzModule: ProviderModule = {
     capabilities: ["identify", "cover", "releaseDate", "people", "tracksCount"],
     auth: { kind: "none" },
     canonical: true,
+    websiteUrl: "https://musicbrainz.org/",
     notes: "Lookup par code-barre, sans clé.",
   },
   evidence: {
@@ -206,6 +207,9 @@ export const musicbrainzModule: ProviderModule = {
     }
     return { mb: deps.fetchFromMusicBrainz(barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromMusicBrainz,
+  }),
   createMetadataAdapter: () => createMusicBrainzAdapter(),
   testHandlers: {
     "musicbrainz-barcode": {
@@ -238,5 +242,16 @@ export const musicbrainzModule: ProviderModule = {
     } catch {
       return [];
     }
+  },
+  buildBarcodeSources(payload) {
+    const hit = payload.mb;
+    if (!hit?.title) return [];
+    return [
+      {
+        mediaType: "musics",
+        label: "MusicBrainz",
+        products: [{ name: hit.title, coverUrl: hit.imageUrl }],
+      },
+    ];
   },
 };

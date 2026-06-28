@@ -2,6 +2,7 @@ import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { isRawgQuotaBlocked, markRawgQuotaHit } from "./quota";
 
 type RawgResolverDeps = {
   formatScore: (value: number, scale: number) => string | null;
@@ -11,16 +12,26 @@ type RawgResolverDeps = {
   ) => Promise<string | null>;
 };
 
+function readAxiosStatus(error: unknown): number | undefined {
+  return typeof error === "object" && error !== null && "response" in error
+    ? (error as { response?: { status?: number } }).response?.status
+    : undefined;
+}
+
 export function createRawgResolver(deps: RawgResolverDeps) {
   return async function fetchFromRawg(
     name: string,
   ): Promise<MetadataResult | null> {
+    if (!process.env.RAWG_API_KEY?.trim() || isRawgQuotaBlocked()) {
+      return null;
+    }
+
     const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
     const fetchWithRetry = async <T>(
       url: string,
       maxRetries = 2,
-    ): Promise<T> => {
+    ): Promise<T | null> => {
       let lastError: unknown;
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         try {
@@ -28,23 +39,35 @@ export function createRawgResolver(deps: RawgResolverDeps) {
           return response.data;
         } catch (error: unknown) {
           lastError = error;
-          const status =
-            typeof error === "object" && error !== null && "response" in error
-              ? (error as { response?: { status?: number } }).response?.status
-              : undefined;
-          const isTransient =
-            status === 429 || (status !== undefined && status >= 500);
+          const status = readAxiosStatus(error);
+          if (status === 429) {
+            markRawgQuotaHit({ rateLimited: true });
+            console.warn("[RAWG] Rate limit exceeded — pausing lookups for 20m");
+            return null;
+          }
+          if (status === 401) {
+            markRawgQuotaHit({ authFailure: true });
+            console.warn("[RAWG] Unauthorized API key — pausing lookups for 1h");
+            return null;
+          }
+          const isTransient = status !== undefined && status >= 500;
           if (!isTransient || attempt === maxRetries) break;
           await sleep(200 * (attempt + 1));
         }
       }
-      throw lastError;
+      if (lastError) {
+        console.warn(
+          `[RAWG] Request failed for "${name}"`,
+          lastError instanceof Error ? lastError.message : String(lastError),
+        );
+      }
+      return null;
     };
 
     const url = `https://api.rawg.io/api/games?search=${encodeURIComponent(name)}&key=${process.env.RAWG_API_KEY}`;
     const data = await fetchWithRetry<any>(url, 2);
 
-    if (!data.results || data.results.length === 0) return null;
+    if (!data?.results || data.results.length === 0) return null;
 
     let bestMatch = data.results[0];
     let minDistance = levenshtein.get(

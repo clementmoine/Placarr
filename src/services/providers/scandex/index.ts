@@ -3,9 +3,12 @@ import {
   probeBarcodesWithFallback,
   probeErrorResult,
   rawProbe,
-} from "@/lib/mappingProbeUtils";
+} from "@/lib/dev/mappingProbe";
 
 import { fetchFromScanDex } from "./fetch";
+import { detectPlatformKey } from "@/lib/barcode/query";
+import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
+import type { BarcodeSourceContribution } from "@/types/providerModule";
 
 export { fetchFromScanDex };
 
@@ -28,6 +31,7 @@ export const scandexModule: ProviderModule = {
     capabilities: ["identify"],
     auth: { kind: "key", env: ["SCANDEX_ACCESS_TOKEN"], free: true },
     canonical: false,
+    websiteUrl: "https://scandex.app/",
   },
   evidence: {
     label: "ScanDex",
@@ -41,11 +45,31 @@ export const scandexModule: ProviderModule = {
     }
     return { sd: deps.fetchFromScanDex(barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromScanDex,
+  }),
   testHandlers: {
     "scandex-barcode": {
       label: "ScanDex - Barcode",
-      kind: "scandex",
+      kind: "metadata-barcode",
       run: (query) => fetchFromScanDex(query),
+      formatResult: async (resolved, type, { processScrapedNames }) => {
+        const payload = resolved as {
+          igdb_metadata?: {
+            name?: string;
+            platform?: { name?: string | null } | null;
+          } | null;
+        } | null;
+        const rawNames = payload?.igdb_metadata?.name
+          ? [payload.igdb_metadata.name]
+          : [];
+        const processed = await processScrapedNames(rawNames, type);
+        return {
+          ...processed,
+          platformName: payload?.igdb_metadata?.platform?.name || null,
+          rawResponse: payload,
+        };
+      },
     },
   },
   mappingProbe: {
@@ -78,5 +102,25 @@ export const scandexModule: ProviderModule = {
       if (data && typeof data === "object") return Object.keys(data);
     }
     return [];
+  },
+  buildBarcodeSources(payload: BarcodeLookupPayload) {
+    const name = payload.sd?.igdb_metadata?.name;
+    if (!name) return [];
+    const platform = payload.sd?.igdb_metadata?.platform?.name;
+    // ScanDex (IGDB) identifies the same product for both games and board games;
+    // the type scorer decides which result wins.
+    const products = [
+      {
+        name: platform ? `${name} (${platform})` : name,
+        platformKey: platform ? detectPlatformKey(platform) : null,
+      },
+    ];
+    return (["games", "boardgames"] as const).map(
+      (mediaType): BarcodeSourceContribution => ({
+        mediaType,
+        label: "ScanDex",
+        products,
+      }),
+    );
   },
 };

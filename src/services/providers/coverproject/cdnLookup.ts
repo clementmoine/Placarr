@@ -1,5 +1,5 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
-import { getCoverProjectPlatformSpecs } from "@/lib/videoGamePlatforms";
+import { getCoverProjectPlatformSpecs } from "@/lib/games/platforms";
 
 const CDN_BASE = "https://coverproject.sfo2.cdn.digitaloceanspaces.com";
 const CDN_REFERER = "https://www.thecoverproject.net/";

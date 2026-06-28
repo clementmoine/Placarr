@@ -1,12 +1,13 @@
-import { createKeyHealthCheck } from "@/lib/providerHealthUtils";
-import { metadataProbe } from "@/lib/mappingProbeUtils";
+import { createKeyHealthCheck } from "@/lib/provider/healthUtils";
+import { metadataProbe, probeErrorResult } from "@/lib/dev/mappingProbe";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import { pingTheGamesDb } from "./fetch";
 import { fetchFromTheGamesDB } from "./resolver";
+import { isTheGamesDbQuotaBlocked } from "./quota";
 
 export { fetchFromTheGamesDB } from "./resolver";
 
@@ -14,6 +15,7 @@ export const thegamesdbModule: ProviderModule = {
   info: {
     id: "thegamesdb",
     label: "TheGamesDB",
+    factLabel: "TGDB",
     types: ["games"],
     requiresTitleAlignment: true,
     capabilities: [
@@ -30,6 +32,10 @@ export const thegamesdbModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    websiteUrl: "https://thegamesdb.net/",
+    apiKeyDashboardUrl: "https://api.thegamesdb.net/key.php",
+    mappingProbeConfigHint:
+      "THEGAMESDB_API_KEY missing — request one at api.thegamesdb.net/key.php",
     notes:
       "The GameDB / TheGamesDB — titres PAL/EU et jaquettes régionales. Fallback quand ScreenScraper est indisponible.",
   },
@@ -39,6 +45,7 @@ export const thegamesdbModule: ProviderModule = {
     canonical: true,
     cleanCachedNames: true,
   },
+  isMetadataQuotaBlocked: isTheGamesDbQuotaBlocked,
   createMetadataAdapter: () => ({
     id: "thegamesdb",
     async resolve({ name, barcode, platform }: any) {
@@ -80,7 +87,10 @@ export const thegamesdbModule: ProviderModule = {
   },
   runMappingProbe: async () => {
     const result = await pingTheGamesDb();
-    if (!result.ok) return null;
+    if (!result.ok) {
+      const statusHint = result.error?.includes("missing") ? "blocked" : "error";
+      return probeErrorResult(result.error ?? "TheGamesDB unreachable", statusHint);
+    }
     const metadata = await fetchFromTheGamesDB(
       "GoldenEye: Au Service Du Mal",
       "PlayStation 2",

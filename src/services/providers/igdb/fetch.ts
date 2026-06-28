@@ -9,7 +9,7 @@
  */
 
 import axios from "axios";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
 import type {
   MetadataAttachment,

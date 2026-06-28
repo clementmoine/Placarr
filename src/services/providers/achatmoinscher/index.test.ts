@@ -1,19 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
 vi.mock("./fetch", () => ({
   fetchFromAchatMoinsCher: vi.fn(),
+  fetchFromAchatMoinsCherByQuery: vi.fn(),
   fetchPricesFromAchatMoinsCher: vi.fn(),
 }));
 
-import { fetchFromAchatMoinsCher } from "./fetch";
+import { fetchFromAchatMoinsCher, fetchFromAchatMoinsCherByQuery } from "./fetch";
 import { achatmoinscherModule } from "./index";
 
 const mockedFetchFromAchatMoinsCher = vi.mocked(fetchFromAchatMoinsCher);
+const mockedFetchFromAchatMoinsCherByQuery = vi.mocked(
+  fetchFromAchatMoinsCherByQuery,
+);
 
 beforeEach(() => {
   mockedFetchFromAchatMoinsCher.mockReset();
+  mockedFetchFromAchatMoinsCherByQuery.mockReset();
 });
 
 describe("achatmoinscherModule metadata adapter", () => {
@@ -40,9 +45,16 @@ describe("achatmoinscherModule metadata adapter", () => {
     ]);
 
     const adapter = achatmoinscherModule.createMetadataAdapter?.();
-    const result = await adapter!.resolve({ name: "", barcode: "5021290082728" });
+    const result = await adapter!.resolve({
+      name: "Wheelman PS3",
+      barcode: "5021290082728",
+      lookupQueries: ["Wheelman PS3"],
+    });
 
-    expect(mockedFetchFromAchatMoinsCher).toHaveBeenCalledWith("5021290082728");
+    expect(mockedFetchFromAchatMoinsCher).toHaveBeenCalledWith(
+      "5021290082728",
+      ["Wheelman PS3"],
+    );
     expect(result).toMatchObject({
       title: "Wheelman (PlayStation 3)",
       barcode: "5021290082728",

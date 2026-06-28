@@ -3,7 +3,7 @@ import levenshtein from "fast-levenshtein";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
@@ -262,7 +262,10 @@ function buildWikidataRegionalTitles(
   if (labels.length === 0) return undefined;
   return Array.from(
     new Map(
-      labels.map((entry) => [`${entry.region || ""}:${entry.text.toLowerCase()}`, entry]),
+      labels.map((entry) => [
+        `${entry.region || ""}:${entry.text.toLowerCase()}`,
+        entry,
+      ]),
     ).values(),
   );
 }

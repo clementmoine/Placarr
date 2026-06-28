@@ -1,12 +1,12 @@
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
-} from "@/lib/providerHealthUtils";
+} from "@/lib/provider/healthUtils";
 import { fetchFromSteamGridDB, pingSteamGridDB } from "./fetch";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 export { fetchFromSteamGridDB, pingSteamGridDB } from "./fetch";
 
@@ -18,6 +18,8 @@ export const steamgriddbModule: ProviderModule = {
     capabilities: ["cover"],
     auth: { kind: "key", env: ["STEAMGRIDDB_API_KEY"], free: true },
     canonical: true,
+    requiresTitleAlignment: true,
+    websiteUrl: "https://www.steamgriddb.com/",
     notes: "Artworks communautaires ; grille verticale = format boîte.",
   },
   createMetadataAdapter: () => ({

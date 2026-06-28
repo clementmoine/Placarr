@@ -165,8 +165,7 @@ function buildGoogleBooksFacts(
     facts.push({
       kind: "format",
       label: "Type",
-      value:
-        printTypeLabel[volumeInfo.printType] ?? volumeInfo.printType,
+      value: printTypeLabel[volumeInfo.printType] ?? volumeInfo.printType,
       source: "googlebooks",
       confidence: 0.62,
       priority: 30,

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
+import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
 
 export interface PicClickProduct {
   name: string;
@@ -21,6 +22,19 @@ const HEADERS = {
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
 };
 
+const PICCLICK_NON_GAME_MARKERS =
+  /\b(?:comics?|manga|bande[\s-]?dessin[eé]e|\bbd\b|graphic[\s-]?novel|artbook|storybook|paperback|hardcover|\btome\b|\bvol(?:ume)?\.?\s*\d|\bintegrale?\b|coffret\s+(?:bd|comics?)|(?:^|\s)livre(?:\s|$)|puzzle|\bposter\b|figurine|statuette)\b/i;
+
+function picclickNonGameListingConflict(
+  listingTitle: string,
+  expectedNames: string[],
+): boolean {
+  if (!PICCLICK_NON_GAME_MARKERS.test(listingTitle)) return false;
+  const requested = expectedNames.join(" ");
+  if (PICCLICK_NON_GAME_MARKERS.test(requested)) return false;
+  return true;
+}
+
 function parseEuroPriceCents(value: string) {
   const match = value.match(/(?:EUR|€)\s*([\d\s.,]+)/i);
   if (!match) return null;
@@ -38,38 +52,6 @@ function median(values: number[]) {
   return Math.round((sorted[middle - 1] + sorted[middle]) / 2);
 }
 
-function titleTokens(value: string) {
-  const ignored = new Set([
-    "blu",
-    "bluray",
-    "coffret",
-    "collection",
-    "complete",
-    "disc",
-    "dvd",
-    "edition",
-    "film",
-    "integrale",
-    "neuf",
-    "occasion",
-    "saison",
-    "season",
-    "vol",
-    "volume",
-  ]);
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter(
-      (token) =>
-        (token.length >= 3 || /^\d+$/.test(token)) && !ignored.has(token),
-    );
-}
-
 function seasonNumbers(value: string) {
   const normalized = value
     .normalize("NFD")
@@ -80,8 +62,17 @@ function seasonNumbers(value: string) {
     .filter(Boolean);
 }
 
+function isBarcodeLike(value: string) {
+  return /^\d{8,14}$/.test(value.replace(/[^\d]/g, ""));
+}
+
 function matchesExpectedTitle(title: string, expectedNames: string[]) {
-  const expectedSeasons = new Set(expectedNames.flatMap(seasonNumbers));
+  const names = expectedNames.filter(Boolean);
+  if (names.length === 0) return true;
+
+  if (picclickNonGameListingConflict(title, names)) return false;
+
+  const expectedSeasons = new Set(names.flatMap(seasonNumbers));
   if (expectedSeasons.size > 0) {
     const titleSeasons = seasonNumbers(title);
     if (
@@ -92,35 +83,33 @@ function matchesExpectedTitle(title: string, expectedNames: string[]) {
     }
   }
 
-  const expectedTokens = Array.from(
-    new Set(expectedNames.flatMap(titleTokens)),
-  );
-  if (expectedTokens.length === 0) return expectedNames.length === 0;
+  const textNames = names.filter((name) => !isBarcodeLike(name));
+  if (textNames.length === 0) return true;
 
-  const normalizedTitle = titleTokens(title);
-  const titleSet = new Set(normalizedTitle);
-  const expectedTextTokens = expectedTokens.filter(
-    (token) => !/^\d+$/.test(token),
+  return textNames.some((expected) =>
+    isNameOnlyRetailerTitleMatch(expected, title),
   );
-  if (
-    expectedTextTokens.length > 0 &&
-    !expectedTextTokens.some((token) => titleSet.has(token))
-  ) {
-    return false;
-  }
-
-  const hits = expectedTokens.filter((token) => titleSet.has(token)).length;
-  return hits >= Math.min(2, expectedTokens.length);
 }
 
 export async function fetchFromPicClick(
   barcode: string,
+  expectedNames: string[] = [],
 ): Promise<PicClickProduct[]> {
   const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
   if (!cleanedBarcode) return [];
 
-  const url = `https://picclick.fr/?q=${cleanedBarcode}`;
-  console.log(`[PicClick] Querying barcode search: ${url}`);
+  return fetchPicClickProductsByQuery(cleanedBarcode, expectedNames);
+}
+
+export async function fetchPicClickProductsByQuery(
+  query: string,
+  expectedNames: string[] = [],
+): Promise<PicClickProduct[]> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return [];
+
+  const url = `https://picclick.fr/?q=${encodeURIComponent(cleanedQuery)}`;
+  console.log(`[PicClick] Querying search: ${url}`);
 
   try {
     const res = await axios.get(url, { headers: HEADERS, timeout: 6000 });
@@ -141,6 +130,12 @@ export async function fetchFromPicClick(
       }
       const title = decodeHTMLEntities(match[2].trim());
       if (
+        expectedNames.length > 0 &&
+        !matchesExpectedTitle(title, expectedNames)
+      ) {
+        continue;
+      }
+      if (
         title &&
         !results.some((r) => r.name.toLowerCase() === title.toLowerCase())
       ) {
@@ -154,10 +149,7 @@ export async function fetchFromPicClick(
 
     return results;
   } catch (error: any) {
-    console.error(
-      `[PicClick] Error querying barcode ${cleanedBarcode}:`,
-      error.message,
-    );
+    console.error(`[PicClick] Error querying ${cleanedQuery}:`, error.message);
     return [];
   }
 }

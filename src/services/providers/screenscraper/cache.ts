@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { SSGame } from "./resolver";
@@ -29,9 +29,9 @@ function normalizeLookupPart(value?: string | null): string {
 }
 
 // Bump when the resolver's output shape changes so stale cached results are
-// re-resolved instead of served. v3: include ScreenScraper players/modes facts
-// and keep v2's placeholder-media filtering.
-const SCREENSCRAPER_LOOKUP_CACHE_VERSION = "v3";
+// re-resolved instead of served. v4: reject lookups cached without gallery
+// images (poisoned Alan Wake / empty-media entries).
+const SCREENSCRAPER_LOOKUP_CACHE_VERSION = "v4";
 
 export function buildScreenScraperLookupKey(
   name: string,

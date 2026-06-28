@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
+
 /**
  * Smartoys (https://www.smartoys.be) is a Belgian retro-gaming retailer whose
  * product pages are keyed by barcode: `product_info.php?products_id=<barcode>`
@@ -8,7 +10,8 @@ import axios from "axios";
  * (`advanced_search.php`, which robots.txt disallows).
  *
  * Safety: an unknown id can redirect to an *unrelated* product, so we only
- * trust a page whose canonical URL actually carries our barcode.
+ * trust a page whose canonical URL actually carries our barcode, or whose title
+ * aligns with the requested name on a name-based lookup.
  */
 
 const SMARTOYS_BASE = "https://www.smartoys.be";
@@ -39,6 +42,11 @@ interface SmartoysJsonLdProduct {
 
 function normalizeBarcode(value: string): string {
   return value.replace(/[^\d]/g, "").replace(/^0+/, "");
+}
+
+function isBarcodeOnlyQuery(query: string) {
+  const cleaned = query.replace(/[^\d]/g, "").trim();
+  return cleaned.length >= 8 && query.replace(/\s/g, "") === cleaned;
 }
 
 function extractProductJsonLd(html: string): SmartoysJsonLdProduct | null {
@@ -75,8 +83,6 @@ function newPriceCentsFromJsonLd(
 }
 
 function usedPriceCentsFromHtml(html: string): number | undefined {
-  // Per-store availability rows expose the used price in cells shaped like
-  // `<td width="20%">10.00&nbsp;&euro;</td>`. The cheapest is the "Prix min.".
   const amounts = [
     ...html.matchAll(
       /<td[^>]*width="20%"[^>]*>\s*(\d{1,4}(?:[.,]\d{2}))\s*(?:&nbsp;|\s)*&euro;/gi,
@@ -93,62 +99,147 @@ function firstImage(image?: string | string[]): string | null {
   return Array.isArray(image) ? image[0] || null : image;
 }
 
-export async function fetchPricesFromSmartoys(
+function parseSmartoysPricesFromHtml(
+  html: string,
+  finalUrl: string,
+): SmartoysPrices | null {
+  const product = extractProductJsonLd(html);
+  if (!product) return null;
+
+  const priceNew = newPriceCentsFromJsonLd(product);
+  const priceUsed = usedPriceCentsFromHtml(html);
+  if (priceNew === undefined && priceUsed === undefined) return null;
+
+  return {
+    priceNew,
+    priceUsed,
+    productName: typeof product.name === "string" ? product.name : null,
+    coverUrl: firstImage(product.image),
+    sourceUrl: finalUrl,
+  };
+}
+
+function titleMatchesExpected(
+  productName: string | null | undefined,
+  expectedNames: string[],
+) {
+  const title = productName?.trim();
+  if (!title || expectedNames.length === 0) return true;
+  return expectedNames.some((name) => isNameOnlyRetailerTitleMatch(name, title));
+}
+
+async function fetchSmartoysProductPage(
+  productUrl: string,
+  expectedNames: string[],
+  options: { requireBarcode?: string } = {},
+): Promise<SmartoysPrices | null> {
+  const res = await axios.get<string>(productUrl, {
+    headers: {
+      "User-Agent": SMARTOYS_USER_AGENT,
+      "Accept-Language": "fr-BE,fr;q=0.9",
+    },
+    timeout: SMARTOYS_TIMEOUT_MS,
+    responseType: "text",
+    maxRedirects: 5,
+  });
+
+  const html = typeof res.data === "string" ? res.data : "";
+  if (!html) return null;
+
+  const finalUrl: string =
+    (res.request?.res?.responseUrl as string) ||
+    (res.request?.responseURL as string) ||
+    productUrl;
+
+  if (options.requireBarcode) {
+    const urlBarcode = finalUrl.match(/-p-(\d+)\.html/i)?.[1];
+    if (
+      !urlBarcode ||
+      normalizeBarcode(urlBarcode) !== normalizeBarcode(options.requireBarcode)
+    ) {
+      return null;
+    }
+  }
+
+  const parsed = parseSmartoysPricesFromHtml(html, finalUrl);
+  if (!parsed) return null;
+  if (!titleMatchesExpected(parsed.productName, expectedNames)) return null;
+  return parsed;
+}
+
+function parseSmartoysSearchUrls(html: string): string[] {
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const match of html.matchAll(
+    /href="(https:\/\/www\.smartoys\.be\/catalog\/jeux-video[^"]*-p-\d+\.html)"/gi,
+  )) {
+    const url = match[1];
+    if (seen.has(url)) continue;
+    seen.add(url);
+    urls.push(url);
+  }
+  return urls;
+}
+
+async function fetchSmartoysByName(
+  query: string,
+  expectedNames: string[],
+): Promise<SmartoysPrices | null> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return null;
+
+  const searchUrl = `${SMARTOYS_BASE}/catalog/advanced_search_result.php?keywords=${encodeURIComponent(cleanedQuery)}`;
+  console.info(`[Smartoys] Querying search: ${cleanedQuery}`);
+
+  const res = await axios.get<string>(searchUrl, {
+    headers: {
+      "User-Agent": SMARTOYS_USER_AGENT,
+      "Accept-Language": "fr-BE,fr;q=0.9",
+    },
+    timeout: SMARTOYS_TIMEOUT_MS,
+    responseType: "text",
+  });
+
+  const names =
+    expectedNames.length > 0 ? expectedNames : [cleanedQuery];
+  for (const productUrl of parseSmartoysSearchUrls(res.data)) {
+    const result = await fetchSmartoysProductPage(productUrl, names);
+    if (result) return result;
+  }
+
+  return null;
+}
+
+async function fetchSmartoysByBarcode(
   barcode: string,
 ): Promise<SmartoysPrices | null> {
-  const cleaned = (barcode || "").replace(/[^\d]/g, "").trim();
+  const cleaned = barcode.replace(/[^\d]/g, "").trim();
   if (!cleaned) return null;
 
   const requestUrl = `${SMARTOYS_BASE}/catalog/product_info.php?products_id=${cleaned}`;
   console.info(`[Smartoys] Querying product page for barcode: ${cleaned}`);
+  return fetchSmartoysProductPage(requestUrl, [], {
+    requireBarcode: cleaned,
+  });
+}
+
+export async function fetchPricesFromSmartoys(
+  query: string,
+  expectedNames: string[] = [],
+): Promise<SmartoysPrices | null> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return null;
 
   try {
-    const res = await axios.get<string>(requestUrl, {
-      headers: {
-        "User-Agent": SMARTOYS_USER_AGENT,
-        "Accept-Language": "fr-BE,fr;q=0.9",
-      },
-      timeout: SMARTOYS_TIMEOUT_MS,
-      responseType: "text",
-      maxRedirects: 5,
-    });
-
-    const html = typeof res.data === "string" ? res.data : "";
-    if (!html) return null;
-
-    const finalUrl: string =
-      (res.request?.res?.responseUrl as string) ||
-      (res.request?.responseURL as string) ||
-      requestUrl;
-
-    // The unknown-id redirect can land on an unrelated product — only trust a
-    // page whose canonical URL carries our barcode.
-    const urlBarcode = finalUrl.match(/-p-(\d+)\.html/i)?.[1];
-    if (
-      !urlBarcode ||
-      normalizeBarcode(urlBarcode) !== normalizeBarcode(cleaned)
-    ) {
-      console.info(`[Smartoys] No product for barcode ${cleaned}`);
-      return null;
+    if (isBarcodeOnlyQuery(cleanedQuery)) {
+      const byBarcode = await fetchSmartoysByBarcode(cleanedQuery);
+      if (byBarcode) return byBarcode;
     }
 
-    const product = extractProductJsonLd(html);
-    if (!product) return null;
-
-    const priceNew = newPriceCentsFromJsonLd(product);
-    const priceUsed = usedPriceCentsFromHtml(html);
-    if (priceNew === undefined && priceUsed === undefined) return null;
-
-    return {
-      priceNew,
-      priceUsed,
-      productName: typeof product.name === "string" ? product.name : null,
-      coverUrl: firstImage(product.image),
-      sourceUrl: finalUrl,
-    };
+    return await fetchSmartoysByName(cleanedQuery, expectedNames);
   } catch (error) {
     console.error(
-      `[Smartoys] Price lookup failed for "${cleaned}":`,
+      `[Smartoys] Price lookup failed for "${cleanedQuery}":`,
       error instanceof Error ? error.message : error,
     );
     return null;

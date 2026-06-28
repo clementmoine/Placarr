@@ -1,5 +1,6 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
-import { probeBarcodesWithFallback, listProbe } from "@/lib/mappingProbeUtils";
+import { probeBarcodesWithFallback, listProbe } from "@/lib/dev/mappingProbe";
+import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
 
 import { fetchFromFreakxy } from "./fetch";
 
@@ -17,6 +18,7 @@ export const freakxyModule: ProviderModule = {
     capabilities: ["identify", "price"],
     auth: { kind: "scrape" },
     canonical: false,
+    websiteUrl: "https://www.freakxy.fr/",
   },
   evidence: {
     label: "Freakxy",
@@ -28,6 +30,9 @@ export const freakxyModule: ProviderModule = {
     }
     return { freakxy: deps.fetchFromFreakxy(barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromFreakxy,
+  }),
   testHandlers: {
     "freakxy-barcode": {
       label: "Freakxy - Barcode",
@@ -48,4 +53,7 @@ export const freakxyModule: ProviderModule = {
       "Freakxy",
       { retryAttempts: 2, unreachableStatus: "blocked" },
     ),
+  buildBarcodeSources(payload, ctx) {
+    return marketplaceContributions("Freakxy", payload.freakxy, ctx, ["games"]);
+  },
 };

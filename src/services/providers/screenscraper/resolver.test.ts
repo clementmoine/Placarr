@@ -181,7 +181,8 @@ describe("buildScreenScraperObservations", () => {
         externalIds: { screenscraper: "14825" },
       },
       {
-        sourceUrl: "https://api.screenscraper.fr/api2/jeuInfos.php?gameid=14825",
+        sourceUrl:
+          "https://api.screenscraper.fr/api2/jeuInfos.php?gameid=14825",
         hasBarcodeMatch: true,
         hasPlatformMatch: true,
       },
@@ -366,5 +367,16 @@ describe("buildScreenScraperSearchQueries", () => {
 
     expect(queries).toContain("Syphon Filter");
     expect(queries).toContain("Dark Mirror");
+  });
+
+  it("does not search edition-only subtitle fragments alone", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "Alan Wake II - Deluxe Edition",
+      (value) => value,
+    );
+
+    expect(queries).toContain("Alan Wake II - Deluxe Edition");
+    expect(queries).toContain("Alan Wake II");
+    expect(queries).not.toContain("Deluxe Edition");
   });
 });

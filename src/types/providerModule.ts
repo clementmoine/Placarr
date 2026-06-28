@@ -1,15 +1,29 @@
+import type { AttachmentType } from "@prisma/client";
+
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { ProviderInfo } from "@/types/providerRegistry";
+import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
+import type { PriceOfferInput } from "@/services/metadata/evidence";
+
+export type InferredImageAttachmentSemantics = {
+  type: AttachmentType;
+  role?: string;
+  source: string;
+};
 
 export type MetadataAdapterContext = {
   name: string;
+  type?: string | null;
   barcode?: string | null;
   platform?: string | null;
+  shelfName?: string | null;
+  lookupQueries?: string[];
   includePcSources?: boolean;
   imdbId?: string | null;
   externalIds?: Record<string, string | null>;
   fallbackNames?: string[];
   isBackground?: boolean;
+  signal?: AbortSignal;
 };
 
 export interface MetadataProviderAdapter {
@@ -28,6 +42,74 @@ export type BarcodeLookupType =
 export type BarcodeLookupContext = {
   barcode: string;
   platformKey?: string | null;
+};
+
+export type BarcodePriceRefreshContext = {
+  cleanedBarcode: string;
+  shelfType: string;
+  shelfName?: string | null;
+  primaryName: string;
+  fallbackNames: string[];
+  leDenicheurQueries: string[];
+  isPal: boolean;
+  isClassics: boolean;
+};
+
+export type CatalogExternalLinkContext = {
+  mediaType: string;
+  title?: string | null;
+  fallbackTitle?: string | null;
+  shelfName?: string | null;
+  barcode?: string | null;
+  aliases?: string[];
+};
+
+export type CatalogExternalLink = {
+  url: string;
+  isDirect?: boolean;
+  /** Registry evidence/display label for the provider that built the link. */
+  providerLabel?: string;
+};
+
+export type DatabaseTitleSuggestionContext = {
+  name: string;
+  cleanedName: string;
+  platform?: string | null;
+};
+
+export type GameBarcodeEnrichmentDeps = {
+  fetchReferencePriceByBarcode?: (
+    barcode: string,
+    searchName: string,
+    platform: string,
+    isPal: boolean,
+    isClassics: boolean,
+  ) => Promise<unknown>;
+  fetchGameMediaByBarcode?: (
+    name: string,
+    barcode: string,
+    platform: string,
+  ) => Promise<unknown>;
+  fetchMovieByTitle?: (title: string) => Promise<unknown>;
+};
+
+/** Context for turning a barcode lookup payload into per-type evidence sources. */
+export type BarcodeSourceContext = {
+  type: string | null;
+  isBook: boolean;
+  cleanedBarcode: string;
+};
+
+/**
+ * One provider's contribution of evidence products to a media type, extracted
+ * from its own slice of the lookup payload. `label` is the exact evidence
+ * `providerName` (preserved verbatim from the former central assembler, since
+ * downstream evidence classification matches on it).
+ */
+export type BarcodeSourceContribution = {
+  mediaType: BarcodeLookupType;
+  label: string;
+  products: SourceProduct[];
 };
 
 export type BarcodeLookupDeps = {
@@ -61,6 +143,7 @@ export type BarcodeLookupDeps = {
   fetchFromDeezer: (name: string, barcode?: string | null) => Promise<unknown>;
   fetchFromMusicBrainz: (barcode: string) => Promise<unknown>;
   fetchFromDiscogs: (barcode: string) => Promise<unknown>;
+  fetchICollectMetadataByBarcode: (barcode: string) => Promise<unknown>;
 };
 
 export interface ProviderEvidenceConfig {
@@ -89,16 +172,31 @@ export interface ProviderHealthCheck {
 
 export type TestProviderHandlerKind =
   | "scraped-list"
-  | "scandex"
   | "prices"
   | "metadata-barcode"
   | "metadata"
   | "cover";
 
+export interface TestProviderFormatContext {
+  processScrapedNames: (
+    rawNames: string[] | undefined,
+    type: string | null,
+  ) => Promise<{
+    rawNames: string[] | null;
+    extractedName: string | null;
+    suggestions: string[];
+  }>;
+}
+
 export interface TestProviderHandler {
   label: string;
   kind: TestProviderHandlerKind;
   run: (query: string, type: string | null) => Promise<unknown>;
+  formatResult?: (
+    resolved: unknown,
+    type: string | null,
+    ctx: TestProviderFormatContext,
+  ) => Promise<unknown>;
 }
 
 export interface ProviderMappingProbeSample {
@@ -143,6 +241,13 @@ export interface ProviderModule {
   createMetadataAdapter?: (
     deps?: Record<string, unknown>,
   ) => MetadataProviderAdapter | null;
+  /**
+   * Title suggestions for manual item entry / association modals. Implemented by
+   * providers that declare `nameDatabase` for a media type.
+   */
+  suggestDatabaseTitles?: (
+    ctx: DatabaseTitleSuggestionContext,
+  ) => Promise<string[]>;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;
   /**
@@ -154,11 +259,48 @@ export interface ProviderModule {
     context?: MetadataAdapterContext,
   ) => Promise<string[]>;
   healthCheck?: ProviderHealthCheck;
+  /** When set, metadata fetch skips this provider while its quota cooldown is active. */
+  isMetadataQuotaBlocked?: () => boolean;
+  /**
+   * Turn this provider's slice of a barcode lookup payload into price offers
+   * captured during identification (one network call, single-product match).
+   */
+  extractScanPriceOffers?: (
+    payload: BarcodeLookupPayload,
+    shelfType: string,
+  ) => PriceOfferInput[];
+  /**
+   * Fetch fresh barcode-scoped price offers for a background refresh. Return an
+   * empty array when this provider does not apply to the shelf type/context.
+   */
+  refreshBarcodePriceOffers?: (
+    ctx: BarcodePriceRefreshContext,
+  ) => Promise<PriceOfferInput[]>;
+  /** Registers barcode lookup fetchers for dependency injection. */
+  contributeBarcodeLookupDeps?: () => Partial<BarcodeLookupDeps>;
+  /**
+   * Build an external catalog link (reference price / market lookup) for items
+   * of a supported media type.
+   */
+  buildCatalogExternalLink?: (
+    ctx: CatalogExternalLinkContext,
+  ) => CatalogExternalLink | null;
+  /** Registers post-barcode enrichment fetchers (reference price, game media, movies). */
+  contributeGameBarcodeEnrichment?: () => Partial<GameBarcodeEnrichmentDeps>;
   buildBarcodeTasks?: (
     deps: BarcodeLookupDeps,
     type: BarcodeLookupType,
     context: BarcodeLookupContext,
   ) => Record<string, Promise<unknown>>;
+  /**
+   * Turn this provider's slice of the lookup payload into evidence sources,
+   * tagged by media type. Plug-and-play replacement for the central assembler:
+   * core iterates the registry instead of hard-coding each provider.
+   */
+  buildBarcodeSources?: (
+    payload: BarcodeLookupPayload,
+    ctx: BarcodeSourceContext,
+  ) => BarcodeSourceContribution[];
   buildTeardownBarcodeTasks?: (
     ctx: TeardownBarcodeContext,
     deps: BarcodeLookupDeps,
@@ -167,6 +309,18 @@ export interface ProviderModule {
     ctx: TeardownMetadataContext,
   ) => TeardownProviderTask[];
   testHandlers?: Record<string, TestProviderHandler>;
+  /**
+   * Expand a canonical cover URL into ordered download candidates (CDN path
+   * variants, slug forms, size fallbacks). Used during image localization.
+   */
+  expandCoverDownloadCandidates?: (url: string) => string[];
+  /**
+   * Infer attachment type/role/source from a remote media URL owned by this
+   * provider (e.g. ScreenScraper mediaJeu.php query params).
+   */
+  inferImageAttachmentFromMediaUrl?: (
+    url: string,
+  ) => InferredImageAttachmentSemantics | null;
 }
 
 export type TeardownProviderTaskPhase = "barcode" | "metadata" | "merged";

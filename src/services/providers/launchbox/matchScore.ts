@@ -1,24 +1,10 @@
-import { metadataTitleSimilarity } from "@/lib/metadataTitleSimilarity";
+import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
+import { parseRomanToken } from "@/lib/title/romanNumeral";
 
 import {
   platformMatchesLaunchBoxEntry,
   resolveLaunchBoxPlatformNames,
 } from "./platformMap";
-
-const ROMAN_NUMERALS: Record<string, number> = {
-  i: 1,
-  ii: 2,
-  iii: 3,
-  iv: 4,
-  v: 5,
-  vi: 6,
-  vii: 7,
-  viii: 8,
-  ix: 9,
-  x: 10,
-  xi: 11,
-  xii: 12,
-};
 
 const TOKEN_SYNONYMS: Record<string, string[]> = {
   football: ["soccer"],
@@ -61,8 +47,8 @@ export function extractTitleInstallments(title: string): Set<number> {
       continue;
     }
 
-    const roman = ROMAN_NUMERALS[token];
-    if (roman) installments.add(roman);
+    const roman = parseRomanToken(token);
+    if (roman != null && roman >= 1 && roman <= 99) installments.add(roman);
   }
 
   return installments;
@@ -224,4 +210,11 @@ export function minimumLaunchBoxMatchScore(requestedName: string): number {
   if (tokenCount <= 1) return 0.72;
   if (tokenCount === 2) return 0.64;
   return 0.58;
+}
+
+/** Relaxed floor when the shelf platform is known and a matching entry exists. */
+export function minimumLaunchBoxPlatformMatchScore(
+  requestedName: string,
+): number {
+  return Math.max(0.48, minimumLaunchBoxMatchScore(requestedName) - 0.12);
 }

@@ -4,7 +4,7 @@ import {
   normalizeProductBarcode,
   pickDiscoveredBarcode,
 } from "@/lib/barcode/normalize";
-import { parsePriceChartingBarcode } from "@/services/providers/pricecharting/fetch";
+import { parsePriceChartingBarcode } from "@/lib/barcode/lookup/priceChartingParse";
 
 describe("normalizeProductBarcode", () => {
   it("normalise les codes produits valides", () => {

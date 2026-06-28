@@ -1,6 +1,9 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 
+import { isRetailerCoverUrlAlignedWithTitle } from "@/lib/retailer/coverUrlMatch";
+import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
+
 export interface AchatMoinsCherProduct {
   name: string;
   productId?: string | null;
@@ -25,6 +28,7 @@ const HEADERS = {
 
 export async function fetchFromAchatMoinsCher(
   barcode: string,
+  expectedNames: string[] = [],
 ): Promise<AchatMoinsCherProduct[]> {
   const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
   if (!cleanedBarcode) return [];
@@ -49,68 +53,29 @@ export async function fetchFromAchatMoinsCher(
       console.log(
         `[AchatMoinsCher] No product ID found for barcode: ${cleanedBarcode}`,
       );
-      return [];
+      return fetchFromAchatMoinsCherByQuery(cleanedBarcode, expectedNames);
     }
 
-    const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
-    console.log(`[AchatMoinsCher] Fetching product page: ${productUrl}`);
-    const getRes = await axios.get(productUrl, {
-      headers: HEADERS,
-      timeout: 5000,
-    });
-    const html = getRes.data;
-
-    const titleMatch =
-      html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) ||
-      html.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
-    let title = titleMatch
-      ? titleMatch[1]
-          .replace(/<[^>]+>/g, "")
-          .replace(/\s+/g, " ")
-          .trim()
-      : null;
-
-    if (!title) {
-      console.log(`[AchatMoinsCher] Product ID ${productId} page has no title`);
-      return [];
+    const product = await fetchAchatMoinsCherProductById(productId);
+    if (
+      product &&
+      achatMoinsCherTitleMatchesExpectedNames(product.name, expectedNames)
+    ) {
+      return [product];
     }
 
-    // Decode HTML entities and strip common prepended brand manufacturer words
-    title = decodeHTMLEntities(title);
-    title = title.replace(/^(Sony|Microsoft)\s+/i, "");
-
-    // Try to extract Platform to append to title (for better automatic shelf selection)
-    const platformMatch = html.match(
-      /<td>Plateforme<\/td>\s*<td>\s*([\s\S]*?)\s*<\/td>/i,
-    );
-    const platformName = platformMatch
-      ? platformMatch[1]
-          .replace(/<[^>]+>/g, "")
-          .replace(/\s+/g, " ")
-          .trim()
-      : null;
-
-    if (platformName) {
-      const decodedPlatform = decodeHTMLEntities(platformName);
-      if (!title.toLowerCase().includes(decodedPlatform.toLowerCase())) {
-        title = `${title} (${decodedPlatform})`;
-      }
+    if (product) {
+      console.log(
+        `[AchatMoinsCher] Barcode ${cleanedBarcode} resolved to unrelated product "${product.name}", searching by name fallback`,
+      );
     }
 
-    const coverUrl = await extractBestCover(html, title);
+    for (const query of expectedNames) {
+      const byName = await fetchFromAchatMoinsCherByQuery(query, expectedNames);
+      if (byName.length > 0) return byName;
+    }
 
-    // Prices live on the same product page we just fetched — capture them too.
-    const prices = parseAchatMoinsCherPrices(html, productId);
-
-    return [
-      {
-        name: title,
-        productId,
-        productUrl,
-        coverUrl,
-        ...(prices ?? {}),
-      },
-    ];
+    return expectedNames.length === 0 && product ? [product] : [];
   } catch (error: any) {
     console.error(
       `[AchatMoinsCher] Error fetching barcode ${cleanedBarcode}:`,
@@ -168,7 +133,8 @@ async function extractBestCover(
       lowerUrl.includes("check") ||
       lowerUrl.includes("star") ||
       lowerUrl.includes("pixel") ||
-      lowerUrl.includes("avatar")
+      lowerUrl.includes("avatar") ||
+      lowerUrl.includes("achatmoinscher.com/img/")
     ) {
       continue;
     }
@@ -211,8 +177,11 @@ async function extractBestCover(
   // Deduplicate
   const uniqueUrls = Array.from(new Set(candidates.map((c) => c.url)));
 
-  // Test top 5 candidates with a validation request (HEAD/GET)
-  for (const url of uniqueUrls.slice(0, 5)) {
+  // Test top candidates with HTTP validation and title alignment.
+  for (const url of uniqueUrls.slice(0, 8)) {
+    if (title && !isRetailerCoverUrlAlignedWithTitle(url, title)) {
+      continue;
+    }
     try {
       const res = await axios.head(url, {
         headers: {
@@ -315,45 +284,228 @@ export function parseAchatMoinsCherPrices(
   return Object.keys(result).length > 0 ? result : null;
 }
 
-export async function fetchPricesFromAchatMoinsCher(
-  barcode: string,
+async function fetchAchatMoinsCherProductPrices(
+  productId: string,
 ): Promise<AchatMoinsCherPrices | null> {
-  const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
-  if (!cleanedBarcode) return null;
+  const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
+  console.log(`[AchatMoinsCher Prices] Fetching product page: ${productUrl}`);
+  const getRes = await axios.get(productUrl, {
+    headers: HEADERS,
+    timeout: 5000,
+  });
+  return parseAchatMoinsCherPrices(getRes.data, productId);
+}
+
+function isBarcodeOnlyQuery(query: string) {
+  const cleaned = query.replace(/[^\d]/g, "").trim();
+  return cleaned.length >= 8 && query.replace(/\s/g, "") === cleaned;
+}
+
+function achatMoinsCherTitleMatchesExpectedNames(
+  title: string,
+  expectedNames: string[],
+): boolean {
+  const names = expectedNames.filter(Boolean);
+  if (names.length === 0) return true;
+  return names.some((name) => isNameOnlyRetailerTitleMatch(name, title));
+}
+
+async function parseAchatMoinsCherProductPage(
+  html: string,
+  productId: string,
+): Promise<AchatMoinsCherProduct | null> {
+  const titleMatch =
+    html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) ||
+    html.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+  let title = titleMatch
+    ? titleMatch[1]
+        .replace(/<[^>]+>/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    : null;
+
+  if (!title) return null;
+
+  title = decodeHTMLEntities(title);
+  title = title.replace(/^(Sony|Microsoft)\s+/i, "");
+
+  const platformMatch = html.match(
+    /<td>Plateforme<\/td>\s*<td>\s*([\s\S]*?)\s*<\/td>/i,
+  );
+  const platformName = platformMatch
+    ? platformMatch[1]
+        .replace(/<[^>]+>/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    : null;
+
+  if (platformName) {
+    const decodedPlatform = decodeHTMLEntities(platformName);
+    if (!title.toLowerCase().includes(decodedPlatform.toLowerCase())) {
+      title = `${title} (${decodedPlatform})`;
+    }
+  }
+
+  const coverUrl = await extractBestCover(html, title);
+
+  if (
+    coverUrl &&
+    title &&
+    !isRetailerCoverUrlAlignedWithTitle(coverUrl, title)
+  ) {
+    console.warn(
+      `[AchatMoinsCher] Rejected mismatched cover for "${title}": ${coverUrl}`,
+    );
+  }
+
+  const prices = parseAchatMoinsCherPrices(html, productId);
+
+  return {
+    name: title,
+    productId,
+    productUrl: `https://www.achatmoinscher.com/${productId}.html`,
+    coverUrl:
+      coverUrl &&
+      (!title || isRetailerCoverUrlAlignedWithTitle(coverUrl, title))
+        ? coverUrl
+        : null,
+    ...(prices ?? {}),
+  };
+}
+
+async function fetchAchatMoinsCherProductById(
+  productId: string,
+): Promise<AchatMoinsCherProduct | null> {
+  const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
+  console.log(`[AchatMoinsCher] Fetching product page: ${productUrl}`);
+  const getRes = await axios.get(productUrl, {
+    headers: HEADERS,
+    timeout: 5000,
+  });
+  return parseAchatMoinsCherProductPage(getRes.data, productId);
+}
+
+export async function fetchFromAchatMoinsCherByQuery(
+  query: string,
+  expectedNames: string[] = [],
+): Promise<AchatMoinsCherProduct[]> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return [];
+
+  const names =
+    expectedNames.length > 0 ? expectedNames : [cleanedQuery];
+  const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
+  console.log(`[AchatMoinsCher] Querying search: ${cleanedQuery}`);
+  const searchRes = await axios.get(searchUrl, {
+    headers: HEADERS,
+    timeout: 5000,
+  });
+
+  for (const hit of parseAchatMoinsCherSearchHits(searchRes.data)) {
+    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) continue;
+    const product = await fetchAchatMoinsCherProductById(hit.productId);
+    if (product) return [product];
+  }
+
+  return [];
+}
+
+export function parseAchatMoinsCherSearchHits(html: string) {
+  const hits: Array<{ productId: string; title: string }> = [];
+  const seen = new Set<string>();
+
+  for (const match of html.matchAll(
+    /alt="([^"]+)"[^>]*onclick="[^"]*vProd\('(\d+)'\)/gi,
+  )) {
+    const productId = match[2];
+    if (seen.has(productId)) continue;
+    seen.add(productId);
+    const title = decodeHTMLEntities(match[1].replace(/^\[EDITEUR\]\s*/i, ""))
+      .replace(/\s+/g, " ")
+      .trim();
+    if (title) hits.push({ productId, title });
+  }
+
+  return hits;
+}
+
+async function fetchPricesFromAchatMoinsCherByName(
+  query: string,
+  expectedNames: string[],
+): Promise<AchatMoinsCherPrices | null> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return null;
+
+  const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
+  console.log(`[AchatMoinsCher Prices] Querying search: ${cleanedQuery}`);
+  const searchRes = await axios.get(searchUrl, {
+    headers: HEADERS,
+    timeout: 5000,
+  });
+
+  const names =
+    expectedNames.length > 0 ? expectedNames : [cleanedQuery];
+  for (const hit of parseAchatMoinsCherSearchHits(searchRes.data)) {
+    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) {
+      continue;
+    }
+    const prices = await fetchAchatMoinsCherProductPrices(hit.productId);
+    if (prices) return prices;
+  }
+
+  return null;
+}
+
+export async function fetchPricesFromAchatMoinsCher(
+  query: string,
+  expectedNames: string[] = [],
+): Promise<AchatMoinsCherPrices | null> {
+  const cleanedBarcode = query.replace(/[^\d]/g, "").trim();
+  if (isBarcodeOnlyQuery(query) && cleanedBarcode) {
+    try {
+      console.log(
+        `[AchatMoinsCher Prices] Querying barcode scanner: ${cleanedBarcode}`,
+      );
+      const postRes = await axios.post(
+        "https://www.achatmoinscher.com/scanner.php",
+        `code=${cleanedBarcode}`,
+        {
+          headers: {
+            ...HEADERS,
+            "Content-Type": "application/x-www-form-urlencoded",
+            Referer: "https://www.achatmoinscher.com/scanner.php",
+          },
+          timeout: 5000,
+        },
+      );
+
+      const productId = String(postRes.data).trim();
+      if (productId && /^\d+$/.test(productId)) {
+        const product = await fetchAchatMoinsCherProductById(productId);
+        if (
+          product &&
+          achatMoinsCherTitleMatchesExpectedNames(product.name, expectedNames) &&
+          (product.priceNew != null || product.priceUsed != null)
+        ) {
+          return {
+            priceNew: product.priceNew,
+            priceUsed: product.priceUsed,
+          };
+        }
+      }
+    } catch (error: any) {
+      console.error(
+        `[AchatMoinsCher Prices] Error fetching for barcode ${cleanedBarcode}:`,
+        error.message,
+      );
+    }
+  }
 
   try {
-    console.log(
-      `[AchatMoinsCher Prices] Querying barcode scanner: ${cleanedBarcode}`,
-    );
-    const postRes = await axios.post(
-      "https://www.achatmoinscher.com/scanner.php",
-      `code=${cleanedBarcode}`,
-      {
-        headers: {
-          ...HEADERS,
-          "Content-Type": "application/x-www-form-urlencoded",
-          Referer: "https://www.achatmoinscher.com/scanner.php",
-        },
-        timeout: 5000,
-      },
-    );
-
-    const productId = String(postRes.data).trim();
-    if (!productId || !/^\d+$/.test(productId)) {
-      return null;
-    }
-
-    const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
-    console.log(`[AchatMoinsCher Prices] Fetching product page: ${productUrl}`);
-    const getRes = await axios.get(productUrl, {
-      headers: HEADERS,
-      timeout: 5000,
-    });
-
-    return parseAchatMoinsCherPrices(getRes.data, productId);
+    return await fetchPricesFromAchatMoinsCherByName(query, expectedNames);
   } catch (error: any) {
     console.error(
-      `[AchatMoinsCher Prices] Error fetching for barcode ${cleanedBarcode}:`,
+      `[AchatMoinsCher Prices] Error fetching for query "${query}":`,
       error.message,
     );
     return null;

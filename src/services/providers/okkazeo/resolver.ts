@@ -1,23 +1,26 @@
-import levenshtein from "fast-levenshtein";
-
+import {
+  acceptRetailerCatalogCandidate,
+  retailerSearchHitLimit,
+} from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
+import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 import type {
   MetadataObservation,
   ObservationEvidenceSignal,
 } from "@/types/metadataObservation";
 
-import { fetchOkkazeoGame, searchOkkazeo, type OkkazeoGame } from "./fetch";
+import { fetchOkkazeoGame, searchOkkazeoHits, type OkkazeoGame } from "./fetch";
 
 // okkazeo.com is a FR board-game database → its single cover is the FR edition.
 // Tagging the attachment with the "fr" role lets the generic locale-aware image
@@ -188,48 +191,74 @@ function mapOkkazeoMetadata(game: OkkazeoGame): MetadataResult {
 
 export function createOkkazeoResolver() {
   return async function fetchFromOkkazeo(
-    name: string,
-    barcode?: string | null,
+    ctx: MetadataAdapterContext,
   ): Promise<MetadataResult | null> {
-    const query = name.trim();
-    const normalizedBarcode = normalizeProductBarcode(barcode);
-    if (!query && !normalizedBarcode) return null;
+    const requestedName = ctx.name.trim();
+    const normalizedBarcode = normalizeProductBarcode(ctx.barcode);
+    const queries =
+      ctx.lookupQueries && ctx.lookupQueries.length > 0
+        ? ctx.lookupQueries
+        : [requestedName].filter(Boolean);
+    if (queries.length === 0 && !normalizedBarcode) return null;
 
     try {
-      const hit = await searchOkkazeo(query, normalizedBarcode);
-      if (!hit) return null;
+      const seenUrls = new Set<string>();
 
-      const game = await fetchOkkazeoGame(hit.url);
-      const title = game.title;
-      if (!title) return null;
+      for (const query of queries) {
+        if (!query && !normalizedBarcode) continue;
 
-      // Trust the result only when the barcode is confirmed by the page's
-      // gtin13, or (barcodeless / gtin-less) when the title is a close match —
-      // otherwise a loose search hit could mislabel the item.
-      const resolvedBarcode = normalizeProductBarcode(game.barcode);
-      const barcodeConfirmed =
-        !!normalizedBarcode &&
-        (!resolvedBarcode || resolvedBarcode === normalizedBarcode);
-      const barcodeContradicted =
-        !!normalizedBarcode &&
-        !!resolvedBarcode &&
-        resolvedBarcode !== normalizedBarcode;
+        const hitLimit = retailerSearchHitLimit({
+          requestedName,
+          searchQuery: query,
+          shelfName: ctx.shelfName,
+        });
 
-      if (barcodeContradicted) return null;
+        const hits = await searchOkkazeoHits(query, normalizedBarcode, hitLimit);
+        for (const hit of hits) {
+          if (seenUrls.has(hit.url)) continue;
+          seenUrls.add(hit.url);
 
-      if (!barcodeConfirmed) {
-        if (!query) return null;
-        const distance = levenshtein.get(
-          query.toLowerCase(),
-          title.toLowerCase(),
-        );
-        if (distance > Math.max(8, query.length * 0.6)) return null;
+          let game: OkkazeoGame;
+          try {
+            game = await fetchOkkazeoGame(hit.url);
+          } catch {
+            continue;
+          }
+          const title = game.title;
+          if (!title) continue;
+
+          const resolvedBarcode = normalizeProductBarcode(game.barcode);
+          const barcodeConfirmed =
+            !!normalizedBarcode &&
+            (!resolvedBarcode || resolvedBarcode === normalizedBarcode);
+          const barcodeContradicted =
+            !!normalizedBarcode &&
+            !!resolvedBarcode &&
+            resolvedBarcode !== normalizedBarcode;
+
+          if (barcodeContradicted) continue;
+
+          if (
+            !acceptRetailerCatalogCandidate({
+              requestedName,
+              searchQuery: query,
+              shelfName: ctx.shelfName,
+              catalogTitle: title,
+              catalogAliases: game.listingTitles,
+              barcodeConfirmed,
+            })
+          ) {
+            continue;
+          }
+
+          return mapOkkazeoMetadata({
+            ...game,
+            barcode: game.barcode || normalizedBarcode || undefined,
+          });
+        }
       }
 
-      return mapOkkazeoMetadata({
-        ...game,
-        barcode: game.barcode || normalizedBarcode || undefined,
-      });
+      return null;
     } catch (error) {
       console.error("[Okkazeo] Metadata lookup failed:", error);
       return null;

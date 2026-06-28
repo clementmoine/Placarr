@@ -1,9 +1,10 @@
-import { metadataProbe } from "@/lib/mappingProbeUtils";
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { metadataProbe } from "@/lib/dev/mappingProbe";
+import { pricedOffer } from "@/lib/provider/priceOffers";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
-import type { MetadataProviderAdapter } from "@/types/providerModule";
+import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
+import type { MetadataProviderAdapter, ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import {
@@ -13,16 +14,12 @@ import {
 } from "./fetch";
 import { createPhilibertResolver } from "./resolver";
 
-type Resolver = (
-  name: string,
-  barcode?: string | null,
-) => Promise<MetadataResult | null>;
-
 const fetchFromPhilibert = createPhilibertResolver();
 // "generic" included so typeless home-page scans get a board-game anchor too:
 // without it, a board game scanned without a type has no canonical/trusted source
 // and gets misclassified as "games" (see runBarcodeLookups generic branch).
 const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
+const PRICE_SOURCE = "Philibert";
 
 export const philibertModule: ProviderModule = {
   info: {
@@ -42,6 +39,7 @@ export const philibertModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: false,
+    websiteUrl: "https://www.philibertnet.com/",
     notes: "Fiches produit FR (description, couverture, prix, avis).",
   },
   evidence: {
@@ -52,8 +50,8 @@ export const philibertModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "philibert",
-      async resolve({ name, barcode }: any) {
-        return fetchFromPhilibert(name, barcode);
+      async resolve(ctx) {
+        return fetchFromPhilibert(ctx);
       },
     } satisfies MetadataProviderAdapter;
   },
@@ -70,12 +68,12 @@ export const philibertModule: ProviderModule = {
     "philibert-metadata": {
       label: "Philibert - Metadata",
       kind: "metadata",
-      run: (query) => fetchFromPhilibert(query),
+      run: (query) => fetchFromPhilibert({ name: query }),
     },
     "philibert-barcode": {
       label: "Philibert - Barcode",
       kind: "metadata-barcode",
-      run: (query) => fetchFromPhilibert("", query),
+      run: (query) => fetchFromPhilibert({ name: "", barcode: query }),
     },
   },
   buildBarcodeTasks(_deps, type, { barcode }) {
@@ -88,7 +86,7 @@ export const philibertModule: ProviderModule = {
     return teardownMetadataWhen(
       ctx,
       "Philibert",
-      () => fetchFromPhilibert(ctx.name, ctx.barcode),
+      () => fetchFromPhilibert(ctx),
       "boardgames",
     );
   },
@@ -121,6 +119,34 @@ export const philibertModule: ProviderModule = {
         : undefined,
     });
   },
+  buildBarcodeSources(payload) {
+    const hit = payload.philibert;
+    if (!hit?.title?.trim()) return [];
+    return [
+      {
+        mediaType: "boardgames",
+        label: "Philibert",
+        products: [
+          {
+            name: hit.title.trim(),
+            coverUrl: hit.imageUrl || null,
+            facts: barcodeSourceFactsFromFields(hit),
+          },
+        ],
+      },
+    ];
+  },
+  extractScanPriceOffers(payload) {
+    if (!payload.philibert?.priceCents) return [];
+    const offer = pricedOffer(
+      PRICE_SOURCE,
+      "new",
+      payload.philibert.priceCents,
+      payload.philibert,
+    );
+    return offer ? [offer] : [];
+  },
 };
 
-export { createPhilibertResolver, fetchPhilibertProduct, searchPhilibert };
+export { createPhilibertResolver } from "./resolver";
+export { fetchPhilibertProduct, searchPhilibert, searchPhilibertHits } from "./fetch";

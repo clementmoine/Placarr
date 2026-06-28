@@ -1,5 +1,5 @@
 import type { MetadataAttachment } from "@/types/metadataProvider";
-import { resolveLocaleRegion } from "@/lib/localePreference";
+import { resolveLocaleRegion } from "@/lib/locale/preference";
 
 import { decodeLaunchBoxTitle } from "./matchScore";
 import type { LaunchBoxImageRecord } from "./parse";
@@ -115,9 +115,34 @@ function pickBestImage(
     )[0];
 }
 
-function mapAttachmentType(
-  imageType: string,
-): MetadataAttachment["type"] {
+/** Best image per LaunchBox region bucket for a given media-type priority list. */
+function pickBestImagesPerRegion(
+  images: LaunchBoxImageRecord[],
+  typePriority: string[],
+): LaunchBoxImageRecord[] {
+  const allowed = new Set(typePriority);
+  const candidates = images.filter((image) => allowed.has(image.type));
+  if (candidates.length === 0) return [];
+
+  const byRegion = new Map<string, LaunchBoxImageRecord>();
+  for (const image of candidates) {
+    const regionKey = normalizeRegion(image.region) || "__unknown__";
+    const existing = byRegion.get(regionKey);
+    if (
+      !existing ||
+      typePriority.indexOf(image.type) - typePriority.indexOf(existing.type) <
+        0
+    ) {
+      byRegion.set(regionKey, image);
+    }
+  }
+
+  return [...byRegion.values()].sort(
+    (a, b) => regionScore(a.region) - regionScore(b.region),
+  );
+}
+
+function mapAttachmentType(imageType: string): MetadataAttachment["type"] {
   if (COVER_TYPE_PRIORITY.includes(imageType)) return "cover";
   if (BACKGROUND_TYPE_PRIORITY.includes(imageType)) return "background";
   if (LOGO_TYPE_PRIORITY.includes(imageType)) return "logo";
@@ -155,24 +180,27 @@ export function buildLaunchBoxAttachments(
     });
   };
 
-  const bestCover = pickBestImage(images, COVER_TYPE_PRIORITY);
-  const bestBack = pickBestImage(images, BACK_TYPE_PRIORITY);
-  const bestSpine = pickBestImage(images, SPINE_TYPE_PRIORITY);
-  const bestDisc = pickBestImage(images, DISC_TYPE_PRIORITY);
-
-  pushImage(bestCover, { forcedType: "cover" });
-  pushImage(bestBack, {
-    forcedType: "image",
-    role: mapBackRole(bestBack?.region),
-  });
-  pushImage(bestSpine, {
-    forcedType: "image",
-    role: mapSpineRole(bestSpine?.region),
-  });
-  pushImage(bestDisc, {
-    forcedType: "image",
-    role: mapDiscRole(bestDisc?.region),
-  });
+  for (const cover of pickBestImagesPerRegion(images, COVER_TYPE_PRIORITY)) {
+    pushImage(cover, { forcedType: "cover" });
+  }
+  for (const back of pickBestImagesPerRegion(images, BACK_TYPE_PRIORITY)) {
+    pushImage(back, {
+      forcedType: "image",
+      role: mapBackRole(back.region),
+    });
+  }
+  for (const spine of pickBestImagesPerRegion(images, SPINE_TYPE_PRIORITY)) {
+    pushImage(spine, {
+      forcedType: "image",
+      role: mapSpineRole(spine.region),
+    });
+  }
+  for (const disc of pickBestImagesPerRegion(images, DISC_TYPE_PRIORITY)) {
+    pushImage(disc, {
+      forcedType: "image",
+      role: mapDiscRole(disc.region),
+    });
+  }
   pushImage(pickBestImage(images, BACKGROUND_TYPE_PRIORITY), {
     forcedType: "background",
   });

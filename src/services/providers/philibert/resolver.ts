@@ -1,17 +1,20 @@
-import levenshtein from "fast-levenshtein";
-
+import {
+  acceptRetailerCatalogCandidate,
+  retailerSearchHitLimit,
+} from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
+import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 import type {
   MetadataObservation,
   ObservationEvidenceSignal,
@@ -21,7 +24,7 @@ import {
   fetchPhilibertProduct,
   philibertImageId,
   resolvePhilibertBackgroundUrl,
-  searchPhilibert,
+  searchPhilibertHits,
   type PhilibertProduct,
 } from "./fetch";
 
@@ -203,7 +206,6 @@ function buildPhilibertAttachments(
   }
 
   for (const url of product.images ?? []) {
-    // La couverture (variante carrée) et le fond sont déjà ajoutés ci-dessus.
     if (philibertImageId(url) === coverId || url === backgroundUrl) continue;
     attachments.push({
       type: "image",
@@ -281,55 +283,118 @@ function mapPhilibertMetadata(product: PhilibertProduct): MetadataResult {
   };
 }
 
+async function resolvePhilibertHit(
+  hit: { url: string; title?: string; barcode?: string },
+  requestedName: string,
+  normalizedBarcode: string | null,
+  input: {
+    searchQuery?: string;
+    shelfName?: string | null;
+  },
+): Promise<MetadataResult | null> {
+  const product = await fetchPhilibertProduct(hit.url);
+  const title = product.title || hit.title;
+  if (!title) return null;
+
+  const resolvedBarcode =
+    normalizeProductBarcode(product.barcode) ||
+    normalizeProductBarcode(hit.barcode);
+  const barcodeConfirmed =
+    !!normalizedBarcode && resolvedBarcode === normalizedBarcode;
+  const barcodeContradicted =
+    !!normalizedBarcode &&
+    !!resolvedBarcode &&
+    resolvedBarcode !== normalizedBarcode;
+
+  if (barcodeContradicted) return null;
+
+  if (
+    !acceptRetailerCatalogCandidate({
+      requestedName,
+      searchQuery: input.searchQuery,
+      shelfName: input.shelfName,
+      catalogTitle: title,
+      barcodeConfirmed,
+      trustConfirmedProductBarcode: true,
+    })
+  ) {
+    return null;
+  }
+
+  const backgroundImageUrl = await resolvePhilibertBackgroundUrl(product);
+
+  return mapPhilibertMetadata({
+    ...product,
+    title,
+    barcode:
+      product.barcode || hit.barcode || normalizedBarcode || undefined,
+    backgroundImageUrl,
+  });
+}
+
 export function createPhilibertResolver() {
   return async function fetchFromPhilibert(
-    name: string,
-    barcode?: string | null,
+    ctx: MetadataAdapterContext,
   ): Promise<MetadataResult | null> {
-    const query = name.trim();
-    const normalizedBarcode = normalizeProductBarcode(barcode);
-    if (!query && !normalizedBarcode) return null;
+    const requestedName = ctx.name.trim();
+    const normalizedBarcode = normalizeProductBarcode(ctx.barcode);
+    const queries =
+      ctx.lookupQueries && ctx.lookupQueries.length > 0
+        ? ctx.lookupQueries
+        : [requestedName].filter(Boolean);
+    if (queries.length === 0 && !normalizedBarcode) return null;
 
     try {
-      const hit = await searchPhilibert(
-        query || normalizedBarcode || "",
-        normalizedBarcode,
-      );
-      if (!hit) return null;
+      const seenUrls = new Set<string>();
 
-      const product = await fetchPhilibertProduct(hit.url);
-      const title = product.title || hit.title;
-      if (!title) return null;
-
-      // A barcode is only trustworthy when the product page or the result URL
-      // confirms it. Otherwise the search may have returned an unrelated first
-      // hit, so fall back to a title match (or reject outright).
-      const resolvedBarcode =
-        normalizeProductBarcode(product.barcode) ||
-        normalizeProductBarcode(hit.barcode);
-      const barcodeConfirmed =
-        !!normalizedBarcode && resolvedBarcode === normalizedBarcode;
-
-      if (!barcodeConfirmed) {
-        if (!query) return null;
-        const distance = levenshtein.get(
-          query.toLowerCase(),
-          title.toLowerCase(),
+      if (normalizedBarcode) {
+        const hits = await searchPhilibertHits(
+          normalizedBarcode,
+          normalizedBarcode,
+          retailerSearchHitLimit({
+            requestedName,
+            searchQuery: requestedName,
+            shelfName: ctx.shelfName,
+          }),
         );
-        if (distance > Math.max(8, query.length * 0.6)) {
-          return null;
+
+        for (const hit of hits) {
+          if (seenUrls.has(hit.url)) continue;
+          seenUrls.add(hit.url);
+
+          const result = await resolvePhilibertHit(
+            hit,
+            requestedName,
+            normalizedBarcode,
+            { shelfName: ctx.shelfName },
+          );
+          if (result) return result;
         }
       }
 
-      const backgroundImageUrl = await resolvePhilibertBackgroundUrl(product);
+      for (const query of queries) {
+        if (!query) continue;
 
-      return mapPhilibertMetadata({
-        ...product,
-        title,
-        barcode:
-          product.barcode || hit.barcode || normalizedBarcode || undefined,
-        backgroundImageUrl,
-      });
+        const hitLimit = retailerSearchHitLimit({
+          requestedName,
+          searchQuery: query,
+          shelfName: ctx.shelfName,
+        });
+        const hits = await searchPhilibertHits(query, null, hitLimit);
+
+        for (const hit of hits) {
+          if (seenUrls.has(hit.url)) continue;
+          seenUrls.add(hit.url);
+
+          const result = await resolvePhilibertHit(hit, requestedName, null, {
+            searchQuery: query,
+            shelfName: ctx.shelfName,
+          });
+          if (result) return result;
+        }
+      }
+
+      return null;
     } catch (error) {
       console.error("[Philibert] Metadata lookup failed:", error);
       return null;
@@ -337,4 +402,8 @@ export function createPhilibertResolver() {
   };
 }
 
-export { mapPhilibertMetadata, buildPhilibertFacts, buildPhilibertObservations };
+export {
+  mapPhilibertMetadata,
+  buildPhilibertFacts,
+  buildPhilibertObservations,
+};

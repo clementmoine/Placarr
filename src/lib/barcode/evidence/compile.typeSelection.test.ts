@@ -161,7 +161,11 @@ describe("scoreTypeCandidate — signal jeu de société", () => {
 
   it("sans signal, le match jeu vidéo (avec plateforme) peut l'emporter", () => {
     const gamesScore = scoreTypeCandidate("games", gamesResult, barcode);
-    const boardScore = scoreTypeCandidate("boardgames", boardgamesResult, barcode);
+    const boardScore = scoreTypeCandidate(
+      "boardgames",
+      boardgamesResult,
+      barcode,
+    );
     expect(gamesScore).toBeGreaterThan(boardScore);
   });
 
@@ -184,6 +188,89 @@ describe("scoreTypeCandidate — signal jeu de société", () => {
       scoreTypeCandidate("boardgames", boardgamesResult, barcode, 1),
     ).toBeGreaterThan(
       scoreTypeCandidate("boardgames", boardgamesResult, barcode, 0),
+    );
+  });
+});
+
+/**
+ * Régression "jeu vidéo classé en musique". Code-barres 3307210117168 = le jeu
+ * "Tom Clancy's Ghost Recon". ScreenScraper le mappe à tort sur "Ghost Recon 2"
+ * (déclassé), donc `games` repose sur le consensus marchand. Aucun vrai provider
+ * musique ne matche : le fallback base de données fabrique pourtant un faux album
+ * canonique ("Ghost Recon — Classics", conf 0.98) qui faisait gagner le type
+ * `musics`. Le signal jeu-vidéo (plateforme console "Xbox" dans les annonces)
+ * doit promouvoir `games` et écraser `musics`.
+ */
+describe("scoreTypeCandidate — signal jeu vidéo", () => {
+  const barcode = "3307210117168";
+
+  // Le jeu, canonique déclassé → consensus marchand (plateforme Xbox détectée).
+  const gamesResult = makeResult({
+    platformKey: "xbox",
+    match: {
+      evidence: makeEvidence({
+        providers: ["PicClick", "ChasseAuxLivres"],
+        canonicalProviders: [],
+        canonicalCount: 0,
+        trustedRetailerCount: 4,
+        marketplaceCount: 4,
+        hasCover: true,
+        confidence: 0.77,
+      }),
+    },
+  });
+
+  // Faux album fabriqué par le seul fallback base de données.
+  const musicsResult = makeResult({
+    platformKey: null,
+    match: {
+      evidence: makeEvidence({
+        providers: ["DatabaseResolver", "PicClick"],
+        canonicalProviders: ["DatabaseResolver"],
+        canonicalCount: 1,
+        marketplaceCount: 1,
+        hasCover: true,
+        confidence: 0.98,
+      }),
+    },
+  });
+
+  it("sans signal, le faux album peut hijacker le type", () => {
+    const gamesScore = scoreTypeCandidate("games", gamesResult, barcode);
+    const musicsScore = scoreTypeCandidate("musics", musicsResult, barcode);
+    expect(musicsScore).toBeGreaterThan(gamesScore);
+  });
+
+  it("avec un signal jeu vidéo, le jeu l'emporte sur le faux album", () => {
+    const gamesScore = scoreTypeCandidate(
+      "games",
+      gamesResult,
+      barcode,
+      0,
+      0,
+      1,
+    );
+    const musicsScore = scoreTypeCandidate(
+      "musics",
+      musicsResult,
+      barcode,
+      0,
+      0,
+      1,
+    );
+    expect(gamesScore).toBeGreaterThan(musicsScore);
+  });
+
+  it("le signal promeut `games` et pénalise `musics`/`movies`", () => {
+    expect(
+      scoreTypeCandidate("games", gamesResult, barcode, 0, 0, 1),
+    ).toBeGreaterThan(
+      scoreTypeCandidate("games", gamesResult, barcode, 0, 0, 0),
+    );
+    expect(
+      scoreTypeCandidate("musics", musicsResult, barcode, 0, 0, 1),
+    ).toBeLessThan(
+      scoreTypeCandidate("musics", musicsResult, barcode, 0, 0, 0),
     );
   });
 });

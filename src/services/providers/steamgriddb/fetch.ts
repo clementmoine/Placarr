@@ -1,5 +1,5 @@
 import axios from "axios";
-import levenshtein from "fast-levenshtein";
+import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 import type {
   MetadataAttachment,
   MetadataResult,
@@ -60,59 +60,34 @@ async function fetchSteamGridDbJson<T>(
   return res.data?.data ?? null;
 }
 
-function normalizeForComparison(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function titleSimilarity(a: string, b: string): number {
-  const normalizedA = normalizeForComparison(a);
-  const normalizedB = normalizeForComparison(b);
-  if (!normalizedA || !normalizedB) return 0;
-  if (normalizedA === normalizedB) return 1;
-  if (normalizedA.includes(normalizedB) || normalizedB.includes(normalizedA)) {
-    return 0.9;
-  }
-
-  const aTokens = new Set(normalizedA.split(/\s+/));
-  const bTokens = new Set(normalizedB.split(/\s+/));
-  const shared = [...aTokens].filter((token) => bTokens.has(token)).length;
-  const tokenScore = shared / Math.max(aTokens.size, bTokens.size);
-  const distanceScore =
-    1 -
-    levenshtein.get(normalizedA, normalizedB) /
-      Math.max(normalizedA.length, normalizedB.length);
-
-  return Math.max(tokenScore, distanceScore);
-}
-
 function pickBestGame(
   games: SteamGridDbGame[],
   requestedName: string,
 ): SteamGridDbGame | null {
   if (games.length === 0) return null;
 
-  const best = [...games].sort((a, b) => {
-    const scoreA = titleSimilarity(a.name || "", requestedName);
-    const scoreB = titleSimilarity(b.name || "", requestedName);
-    if (scoreA !== scoreB) return scoreB - scoreA;
-    return Number(Boolean(b.verified)) - Number(Boolean(a.verified));
-  })[0];
+  const aligned = games.filter(
+    (game) =>
+      game.name &&
+      isMetadataTitleAligned({ title: game.name }, [requestedName], 0.58),
+  );
+  if (aligned.length === 0) return null;
 
-  if (!best?.name || titleSimilarity(best.name, requestedName) < 0.56) {
-    return null;
-  }
-  return best;
+  return [...aligned].sort(
+    (a, b) => Number(Boolean(b.verified)) - Number(Boolean(a.verified)),
+  )[0];
 }
 
 function assetUrl(asset: SteamGridDbAsset): string | null {
   return asset.url || asset.thumb || null;
+}
+
+function gridRoleForStyle(style?: string | null, isVertical = true): string {
+  const normalized = (style || "").toLowerCase();
+  if (normalized === "material") {
+    return isVertical ? "3d-grid-vertical" : "3d-grid-horizontal";
+  }
+  return isVertical ? "grid-vertical" : "grid-horizontal";
 }
 
 function buildGridAttachments(grids?: SteamGridDbAsset[] | null) {
@@ -132,7 +107,7 @@ function buildGridAttachments(grids?: SteamGridDbAsset[] | null) {
         type: isVertical ? "cover" : "artwork",
         title: grid.style ? `SteamGridDB - ${grid.style}` : "SteamGridDB",
         url,
-        role: isVertical ? "grid-vertical" : "grid-horizontal",
+        role: gridRoleForStyle(grid.style, isVertical),
         source: "steamgriddb",
       } satisfies MetadataAttachment,
     ];

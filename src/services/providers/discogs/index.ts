@@ -3,7 +3,7 @@ import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 
 import type {
   MetadataAttachment,
@@ -23,7 +23,7 @@ import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   createTeardownMetadataTask,
   metadataTeardownLabel,
-} from "@/lib/teardownUtils";
+} from "@/lib/dev/teardownUtils";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 
 export { fetchFromDiscogs, getDiscogsAuthParams };
@@ -248,7 +248,8 @@ function buildDiscogsObservations(
       },
       usage: makeObservationUsage({
         displayCandidate: true,
-        evidence: role === "cover_front" || role === "cover_back" ? "strong" : "normal",
+        evidence:
+          role === "cover_front" || role === "cover_back" ? "strong" : "normal",
       }),
     });
   }
@@ -335,8 +336,10 @@ export const discogsModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    musicGallerySource: true,
     // The Discogs release image is the definitive album cover — trust it as-is.
     canonicalCover: true,
+    websiteUrl: "https://www.discogs.com/",
     notes: "Noms latins (ex. Yoko Shimomura).",
   },
   evidence: {
@@ -350,6 +353,9 @@ export const discogsModule: ProviderModule = {
     }
     return { discogs: deps.fetchFromDiscogs(barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromDiscogs,
+  }),
   createMetadataAdapter: () => createDiscogsAdapter(),
   testHandlers: {
     "discogs-barcode": {
@@ -404,5 +410,16 @@ export const discogsModule: ProviderModule = {
     } catch {
       return [];
     }
+  },
+  buildBarcodeSources(payload) {
+    const hit = payload.discogs;
+    if (!hit?.title) return [];
+    return [
+      {
+        mediaType: "musics",
+        label: "Discogs",
+        products: [{ name: hit.title, coverUrl: hit.imageUrl }],
+      },
+    ];
   },
 };

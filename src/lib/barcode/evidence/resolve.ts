@@ -2,12 +2,14 @@ import {
   areLikelySameProduct,
   cleanTitleForDisplay,
   filterPlatformRedundancies,
+  getSequelIndicators,
   isListingDiscardable,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
-import { getRepresentativeScore } from "@/lib/displayTitleScore";
-import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/videoGamePlatforms";
-import { confrontWithDatabase } from "@/services/metadataDatabase";
+import { getRepresentativeScore } from "@/lib/title/displayScore";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
+import { confrontWithDatabase } from "@/services/metadata/database";
+import { isbnCoverUrlForBarcode } from "@/services/provider/registry";
 
 import {
   isStrictTitleSubset,
@@ -16,18 +18,26 @@ import {
 } from "./matchUtils";
 
 import {
+  barcodeEvidenceObservationSourceWeight,
+  barcodeEvidenceTitleObservationScore,
+  compareBarcodeEvidenceByImageObservationRank,
+  compareBarcodeEvidenceByObservationRank,
+  pickPlatformKeyFromEvidence,
+} from "./observations";
+
+import {
   areEvidenceSameProduct,
   buildProductEvidence,
   evidenceSimilarity,
   GENERIC_TITLE_TOKENS,
   uniqueClean,
 } from "./parse";
-import { pickPlatformKeyFromEvidence } from "./types";
 import type {
   MatchEvidenceSummary,
   ProductEvidence,
   ResolvedMatch,
 } from "./types";
+import { ALTERNATE, CLUSTER_CONFIDENCE } from "./scoring";
 
 export async function buildDatabaseEvidence(
   names: string[],
@@ -105,6 +115,61 @@ function resolverSignificantTokens(value: string): Set<string> {
   return new Set(tokens);
 }
 
+// How many franchise-identifying tokens two titles share, ignoring platform
+// names. Used to fold a noisy marketplace listing ("Tom Clancy's Ghost Recon …
+// Big Box Ubisoft Rainbow six") into the clean consensus leader it names, even
+// when its seller junk defeats the stricter areLikelySameProduct.
+function sharedFranchiseTokenCount(a: string, b: string): number {
+  const franchiseTokens = (value: string) => {
+    const out = new Set<string>();
+    for (const token of resolverSignificantTokens(value)) {
+      if (!RESOLVER_PLATFORM_TOKENS.has(token)) out.add(token);
+    }
+    return out;
+  };
+  const aTokens = franchiseTokens(a);
+  const bTokens = franchiseTokens(b);
+  let shared = 0;
+  for (const token of aTokens) if (bTokens.has(token)) shared++;
+  return shared;
+}
+
+// Whether `candidate` is exactly the leader's title plus a sequel number it
+// lacks ("De Blob" → "de Blob 2"). Such a candidate is the wrong edition of the
+// same game, not a different product — so a contradicted canonical of this shape
+// must not surface as a pickable alternate, even when the franchise is a single
+// word that the consensus override's ≥2-token guard can't dispute. A candidate
+// that adds an identifying *word* ("Rainbow Six" → "… Lockdown") is NOT matched.
+function isLeaderWithExtraSequelNumber(
+  leaderName: string,
+  candidateName: string,
+): boolean {
+  const words = (name: string) => {
+    const out = new Set<string>();
+    for (const token of resolverSignificantTokens(name)) {
+      if (/^\d+$/.test(token)) continue;
+      if (getSequelIndicators(token).size > 0) continue;
+      if (RESOLVER_PLATFORM_TOKENS.has(token)) continue;
+      out.add(token);
+    }
+    return out;
+  };
+  const leaderWords = words(leaderName);
+  const candidateWords = words(candidateName);
+  if (leaderWords.size === 0 || leaderWords.size !== candidateWords.size) {
+    return false;
+  }
+  for (const token of leaderWords) {
+    if (!candidateWords.has(token)) return false;
+  }
+  const leaderNums = getSequelIndicators(normalizeForTokens(leaderName));
+  const candidateNums = getSequelIndicators(normalizeForTokens(candidateName));
+  for (const num of candidateNums) {
+    if (!leaderNums.has(num)) return true;
+  }
+  return false;
+}
+
 function isDatabaseResolvedNameAcceptable(
   input: string,
   resolved: string,
@@ -127,6 +192,15 @@ function isDatabaseResolvedNameAcceptable(
   if (hasNonCanonicalContext && extraInputTokens.length >= 1) return false;
 
   return extraResolvedTokens.length === 0 && extraInputTokens.length <= 3;
+}
+
+const REPRESENTATIVE_TIER_WEIGHT = 1_000;
+
+function representativeEvidenceScore(item: ProductEvidence): number {
+  return (
+    barcodeEvidenceTitleObservationScore(item) * REPRESENTATIVE_TIER_WEIGHT +
+    getRepresentativeScore(item.title, item.priority)
+  );
 }
 
 export function pickRepresentativeEvidence(
@@ -159,10 +233,8 @@ export function pickRepresentativeEvidence(
   );
   if (specificCanonicalEvidence.length > 0) {
     return specificCanonicalEvidence.slice().sort((a, b) => {
-      const scoreA =
-        getRepresentativeScore(a.title, a.priority) + a.sourceWeight * 1000;
-      const scoreB =
-        getRepresentativeScore(b.title, b.priority) + b.sourceWeight * 1000;
+      const scoreA = representativeEvidenceScore(a);
+      const scoreB = representativeEvidenceScore(b);
       if (scoreA !== scoreB) return scoreB - scoreA;
       return a.title.length - b.title.length;
     })[0];
@@ -173,20 +245,16 @@ export function pickRepresentativeEvidence(
   );
   if (trustedRetailerEvidence.length > 0) {
     return trustedRetailerEvidence.slice().sort((a, b) => {
-      const scoreA =
-        getRepresentativeScore(a.title, a.priority) + a.sourceWeight * 1000;
-      const scoreB =
-        getRepresentativeScore(b.title, b.priority) + b.sourceWeight * 1000;
+      const scoreA = representativeEvidenceScore(a);
+      const scoreB = representativeEvidenceScore(b);
       if (scoreA !== scoreB) return scoreB - scoreA;
       return a.title.length - b.title.length;
     })[0];
   }
 
   return evidence.slice().sort((a, b) => {
-    const scoreA =
-      getRepresentativeScore(a.title, a.priority) + a.sourceWeight * 1000;
-    const scoreB =
-      getRepresentativeScore(b.title, b.priority) + b.sourceWeight * 1000;
+    const scoreA = representativeEvidenceScore(a);
+    const scoreB = representativeEvidenceScore(b);
     if (scoreA !== scoreB) return scoreB - scoreA;
     return a.title.length - b.title.length;
   })[0];
@@ -244,15 +312,6 @@ export function filterDisplayEvidenceForSuggestions(
   );
 }
 
-// Plafond de confiance pour un résultat issu uniquement d'annonces (aucune
-// source canonique) : au-dessus, l'UI le présenterait comme certain.
-const LISTING_ONLY_CONFIDENCE_CAP = 0.45;
-
-// Plafond pour une source canonique contredite par un fort consensus marchand
-// indépendant (probable mauvais mapping code-barres → on la garde en
-// alternative, mais sous le consensus qui mène).
-const CONTRADICTED_CANONICAL_CONFIDENCE_CAP = 0.4;
-
 function scoreEvidenceCluster(
   evidence: ProductEvidence[],
 ): MatchEvidenceSummary {
@@ -272,25 +331,34 @@ function scoreEvidenceCluster(
   const marketplaceCount =
     evidence.length - canonicalCount - trustedRetailerCount;
   const hasCover = evidence.some((e) => e.coverUrl);
-  const sourceScore = evidence.reduce((sum, e) => sum + e.sourceWeight, 0);
+  const sourceScore = evidence.reduce(
+    (sum, item) => sum + barcodeEvidenceObservationSourceWeight(item),
+    0,
+  );
   const providerBonus = Math.min(
-    0.16,
-    Math.max(0, providers.length - 1) * 0.04,
+    CLUSTER_CONFIDENCE.multiProvider.cap,
+    Math.max(0, providers.length - 1) *
+      CLUSTER_CONFIDENCE.multiProvider.perExtraProvider,
   );
-  const canonicalBonus = Math.min(0.18, canonicalProviders.length * 0.06);
+  const canonicalBonus = Math.min(
+    CLUSTER_CONFIDENCE.canonical.cap,
+    canonicalProviders.length * CLUSTER_CONFIDENCE.canonical.perProvider,
+  );
   const trustedRetailerBonus = Math.min(
-    0.12,
-    trustedRetailerProviders.length * 0.05,
+    CLUSTER_CONFIDENCE.trustedRetailer.cap,
+    trustedRetailerProviders.length *
+      CLUSTER_CONFIDENCE.trustedRetailer.perProvider,
   );
-  const coverBonus = hasCover ? 0.05 : 0;
+  const coverBonus = hasCover ? CLUSTER_CONFIDENCE.cover : 0;
   const rawSupportBonus = Math.min(
-    0.12,
-    Math.max(0, evidence.length - 1) * 0.025,
+    CLUSTER_CONFIDENCE.rawSupport.cap,
+    Math.max(0, evidence.length - 1) *
+      CLUSTER_CONFIDENCE.rawSupport.perExtraRow,
   );
   const confidence = Math.max(
-    0.05,
+    CLUSTER_CONFIDENCE.floor,
     Math.min(
-      0.98,
+      CLUSTER_CONFIDENCE.ceiling,
       sourceScore +
         providerBonus +
         canonicalBonus +
@@ -305,14 +373,16 @@ function scoreEvidenceCluster(
   const isContradictedCanonical = evidence.some(
     (e) => e.contradictedByConsensus,
   );
+  const isWrongEdition = evidence.some((e) => e.contradictedEdition);
   const finalConfidence = isContradictedCanonical
-    ? Math.min(confidence, CONTRADICTED_CANONICAL_CONFIDENCE_CAP)
+    ? Math.min(confidence, CLUSTER_CONFIDENCE.contradictedCanonicalCap)
     : hasAnchorSignals
       ? confidence
-      : Math.min(confidence, LISTING_ONLY_CONFIDENCE_CAP);
+      : Math.min(confidence, CLUSTER_CONFIDENCE.listingOnlyCap);
 
   const reasons: string[] = [];
   if (isContradictedCanonical) reasons.push("contradicted-by-consensus");
+  if (isWrongEdition) reasons.push("contradicted-edition");
   if (canonicalProviders.length > 0) reasons.push("canonical-source");
   if (trustedRetailerProviders.length > 0) {
     reasons.push("trusted-retailer-source");
@@ -376,13 +446,10 @@ export function resolveEvidenceToMatches(
     );
     const displayEvidence = filterDisplayEvidenceForSuggestions(cluster);
     const coverUrl =
-      cluster.find(
-        (e) => e.providerName === representative.providerName && e.coverUrl,
-      )?.coverUrl ||
-      cluster.find((e) => e.coverUrl)?.coverUrl ||
-      (type === "books"
-        ? `https://covers.openlibrary.org/b/isbn/${cleanedBarcode}-M.jpg`
-        : null);
+      cluster
+        .filter((entry) => entry.coverUrl)
+        .sort(compareBarcodeEvidenceByImageObservationRank)[0]?.coverUrl ||
+      isbnCoverUrlForBarcode(type, cleanedBarcode);
     const platformEvidence = cluster.filter(
       (item) => !item.contradictedByConsensus,
     );
@@ -398,7 +465,7 @@ export function resolveEvidenceToMatches(
           displayName,
           representative.title,
           ...displayEvidence
-            .sort((a, b) => b.sourceWeight - a.sourceWeight)
+            .sort(compareBarcodeEvidenceByObservationRank)
             .flatMap((e) => [e.title, e.cleanName]),
         ],
         { preservePlatformSuffix: type === "games" },
@@ -422,24 +489,79 @@ export function resolveEvidenceToMatches(
 
   return sorted.filter((match, index) => {
     if (index === 0) return true;
+
+    // A canonical the override demoted as a wrong edition of the leader's own
+    // franchise (a bad "… 2" or "… : Island Thunder" mapping of the base) is the
+    // edition the consensus already disproved — not a different product the user
+    // might want. Never surface it, whatever the ambiguity heuristics below say:
+    // offering it would only invite shelving the wrong game.
+    if (match.evidence.reasons.includes("contradicted-edition")) {
+      return false;
+    }
+
+    // A contradicted canonical that is just the leader's title plus a sequel
+    // number ("De Blob" leader vs SS's bad "de Blob 2") is the wrong edition,
+    // not a different product — drop it. This covers short franchises the
+    // edition-contradiction override can't dispute (its ≥2 franchise-token
+    // guard) yet whose strict-consensus demotion still leaves the sequel as an
+    // alternate.
+    if (
+      match.evidence.canonicalCount > 0 &&
+      isLeaderWithExtraSequelNumber(top.name, match.name)
+    ) {
+      return false;
+    }
+
     const isRelatedToTop = areLikelySameProduct(top.name, match.name);
-    const isStrongAmbiguity =
-      (isRelatedToTop &&
-        match.confidence >= 0.72 &&
-        match.evidence.canonicalCount > 0) ||
-      match.evidence.trustedRetailerCount > 0;
-    const isCloseToTop =
-      top.confidence < 0.82 && top.confidence - match.confidence <= 0.18;
-    const hasNoDominantWinner =
-      top.confidence < 0.62 && match.confidence >= 0.28;
+
     // When the leader carries no canonical evidence, a marketplace consensus
     // overrode a contradicting canonical barcode match. Keep that canonical
     // match as a clean, least-prioritised alternate so the user can still pick
     // the item the canonical strictly identified by barcode.
     const isContradictedCanonicalAlternate =
       top.evidence.canonicalCount === 0 && match.evidence.canonicalCount > 0;
+
+    // A match that names the SAME product as the leader (just noisier seller
+    // text — e.g. the same-edition listings the consensus override promoted to
+    // trusted-retailer, often split across clusters by abbreviations like
+    // "TMNT") adds no real choice. Surface it only when it brings genuinely
+    // higher-trust evidence: a related, high-confidence canonical alternate, or
+    // the contradicted canonical above. Otherwise drop it so one clean leader
+    // stands for the whole consensus.
+    if (isRelatedToTop) {
+      const isStrongCanonicalAmbiguity =
+        match.confidence >= ALTERNATE.strongCanonicalConfidence &&
+        match.evidence.canonicalCount > 0;
+      return isStrongCanonicalAmbiguity || isContradictedCanonicalAlternate;
+    }
+
+    // The marketplace-consensus override promotes EVERY franchise-matching
+    // listing to trusted-retailer. A noisy one ("… Big Box Ubisoft Rainbow six")
+    // fails the stricter areLikelySameProduct against the clean leader and would
+    // surface as its own candidate. When the leader is itself a consensus result
+    // (no canonical) and this alternate carries no canonical evidence either, a
+    // shared franchise core means it is the SAME identified product with seller
+    // noise — fold it into the leader rather than offering a duplicate.
+    if (
+      top.evidence.canonicalCount === 0 &&
+      match.evidence.canonicalCount === 0 &&
+      sharedFranchiseTokenCount(top.name, match.name) >=
+        ALTERNATE.sharedFranchiseTokens
+    ) {
+      return false;
+    }
+
+    // Below: the match names a DIFFERENT candidate product, so genuine ambiguity
+    // heuristics apply.
+    const isDistinctTrustedAlternate = match.evidence.trustedRetailerCount > 0;
+    const isCloseToTop =
+      top.confidence < ALTERNATE.closeRunnerUp.leaderBelow &&
+      top.confidence - match.confidence <= ALTERNATE.closeRunnerUp.maxGap;
+    const hasNoDominantWinner =
+      top.confidence < ALTERNATE.noDominantWinner.leaderBelow &&
+      match.confidence >= ALTERNATE.noDominantWinner.matchAtLeast;
     return (
-      isStrongAmbiguity ||
+      isDistinctTrustedAlternate ||
       isCloseToTop ||
       hasNoDominantWinner ||
       isContradictedCanonicalAlternate

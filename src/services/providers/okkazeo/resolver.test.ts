@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
 import { mapOkkazeoMetadata } from "./resolver";
 

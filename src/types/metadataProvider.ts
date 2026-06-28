@@ -1,6 +1,6 @@
 import type { AttachmentType } from "@prisma/client";
 
-import type { FieldEvidenceInput } from "@/services/evidence";
+import type { FieldEvidenceInput } from "@/services/metadata/evidence";
 import type { MetadataObservation } from "@/types/metadataObservation";
 
 export interface MetadataAttachment {
@@ -13,10 +13,14 @@ export interface MetadataAttachment {
   /**
    * Provider-derived display fields, computed from `source` server-side so the
    * client-safe scorer/label formatter can read them. Not persisted (recomputed
-   * on load). See `@/services/providerSourceTraits`.
+   * on load). See `@/services/provider/sourceTraits`.
    */
   isRealBoxCoverSource?: boolean;
   isFullWrapCoverSource?: boolean;
+  isGameMediaGallerySource?: boolean;
+  isMusicGallerySource?: boolean;
+  isCanonicalCoverSource?: boolean;
+  providerImageScoreAdjustment?: number;
   providerLabel?: string;
 }
 
@@ -27,8 +31,19 @@ export interface MetadataFact {
   url?: string;
   unit?: string;
   source?: string;
+  sourceNames?: string[];
   confidence?: number;
   priority?: number;
+  /**
+   * Provider-derived display fields, computed from `source`/`label` server-side so
+   * the client can filter facts without importing the registry. Not persisted
+   * (recomputed on load). See `@/services/provider/sourceTraits`.
+   */
+  isBoardGameRatingSource?: boolean;
+  isPcSpecificFact?: boolean;
+  isDigitalStorefrontSource?: boolean;
+  isHowLongToBeatSource?: boolean;
+  providerLabel?: string;
 }
 
 export interface MetadataResult {

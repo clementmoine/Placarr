@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
 const h = vi.hoisted(() => ({
   searchTheGamesDbByName: vi.fn(),
@@ -193,12 +193,108 @@ describe("fetchFromTheGamesDB", () => {
     expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(6183);
   });
 
+  it("merges box art from regional sibling releases on the same platform", async () => {
+    h.searchTheGamesDbByName.mockResolvedValue({
+      code: 200,
+      data: {
+        count: 3,
+        games: [
+          {
+            id: 100,
+            game_title: "Example Game",
+            platform: 14,
+            region_id: 6,
+          },
+          {
+            id: 101,
+            game_title: "Example Game",
+            platform: 14,
+            region_id: 1,
+          },
+          {
+            id: 102,
+            game_title: "Example Game",
+            platform: 14,
+            region_id: 4,
+          },
+        ],
+      },
+    });
+    h.fetchTheGamesDbById.mockImplementation(async (id: number) => {
+      const boxArtById: Record<
+        number,
+        { side: string; filename: string; regionRole: string }
+      > = {
+        100: { side: "front", filename: "eu-front.jpg", regionRole: "eu" },
+        101: { side: "front", filename: "us-front.jpg", regionRole: "us" },
+        102: { side: "front", filename: "jp-front.jpg", regionRole: "jp" },
+      };
+      const entry = boxArtById[id];
+      if (!entry) return null;
+      return {
+        code: 200,
+        data: {
+          games: [
+            {
+              id,
+              game_title: "Example Game",
+              platform: 14,
+              region_id: id === 100 ? 6 : id === 101 ? 1 : 4,
+            },
+          ],
+        },
+        include: {
+          boxart: {
+            base_url: { original: "https://cdn.example/" },
+            data: {
+              [String(id)]: [
+                {
+                  id: 1,
+                  type: "boxart",
+                  side: entry.side,
+                  filename: entry.filename,
+                },
+              ],
+            },
+          },
+        },
+      };
+    });
+
+    const result = await fetchFromTheGamesDB("Example Game", "Xbox Original");
+
+    expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(100);
+    expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(101);
+    expect(h.fetchTheGamesDbById).toHaveBeenCalledWith(102);
+    expect(result?.attachments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "cover",
+          role: "eu",
+          url: "https://cdn.example/eu-front.jpg",
+        }),
+        expect.objectContaining({
+          type: "cover",
+          role: "us",
+          url: "https://cdn.example/us-front.jpg",
+        }),
+        expect.objectContaining({
+          type: "cover",
+          role: "jp",
+          url: "https://cdn.example/jp-front.jpg",
+        }),
+      ]),
+    );
+  });
+
   it("identifie correctement les jaquettes verso (back) dans les pièces jointes TGDB", async () => {
     h.searchTheGamesDbByName.mockResolvedValue({
       code: 200,
       data: {
         count: 1,
-        games: [{ id: 123, game_title: "Test Game", platform: 14, region_id: 6 }],
+        games: [
+          { id: 123, game_title: "Test Game", platform: 14, region_id: 6 },
+        ],
       },
     });
     h.fetchTheGamesDbById.mockResolvedValue({
@@ -220,12 +316,13 @@ describe("fetchFromTheGamesDB", () => {
     });
 
     const result = await fetchFromTheGamesDB("Test Game", "Xbox Original");
-    const backAttachment = result?.attachments?.find((a) => a.url.includes("back.jpg"));
+    const backAttachment = result?.attachments?.find((a) =>
+      a.url.includes("back.jpg"),
+    );
     expect(backAttachment?.role).toBe("back-eu"); // region_id 6 is PAL/EU
     const backObservation = result?.observations?.find(
       (observation) =>
-        observation.kind === "image" &&
-        observation.url.includes("back.jpg"),
+        observation.kind === "image" && observation.url.includes("back.jpg"),
     );
     expect(backObservation).toMatchObject({
       kind: "image",

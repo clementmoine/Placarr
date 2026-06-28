@@ -1,11 +1,14 @@
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
+import { pricedOffer, pricedOffers } from "@/lib/provider/priceOffers";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
-import { listProbe } from "@/lib/mappingProbeUtils";
+} from "@/lib/metadata/observations";
+import { listProbe } from "@/lib/dev/mappingProbe";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataObservation,
@@ -16,10 +19,15 @@ import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   type AchatMoinsCherProduct,
   fetchFromAchatMoinsCher,
+  fetchFromAchatMoinsCherByQuery,
   fetchPricesFromAchatMoinsCher,
 } from "./fetch";
 
-export { fetchFromAchatMoinsCher, fetchPricesFromAchatMoinsCher };
+export {
+  fetchFromAchatMoinsCher,
+  fetchFromAchatMoinsCherByQuery,
+  fetchPricesFromAchatMoinsCher,
+};
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",
@@ -29,6 +37,23 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "boardgames",
   "generic",
 ];
+const PRICE_SOURCE = "AchatMoinsCher";
+
+async function refreshAchatMoinsCherOffers(ctx: BarcodePriceRefreshContext) {
+  const expectedNames = Array.from(
+    new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
+  );
+  for (const query of [ctx.cleanedBarcode, ...ctx.fallbackNames]) {
+    if (!query.trim()) continue;
+    const result = await fetchPricesFromAchatMoinsCher(query, expectedNames);
+    if (!result) continue;
+    return pricedOffers(PRICE_SOURCE, [
+      { condition: "used", priceCents: result.priceUsed, rawValue: result },
+      { condition: "new", priceCents: result.priceNew, rawValue: result },
+    ]);
+  }
+  return [];
+}
 
 const ACHATMOINSCHER_LANGUAGE = "fr";
 
@@ -139,6 +164,8 @@ export const achatmoinscherModule: ProviderModule = {
     metadataCapabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
     canonical: false,
+    requiresTitleAlignment: true,
+    websiteUrl: "https://www.achatmoinscher.com/",
   },
   evidence: {
     label: "AchatMoinsCher",
@@ -147,10 +174,32 @@ export const achatmoinscherModule: ProviderModule = {
   createMetadataAdapter() {
     const adapter: MetadataProviderAdapter = {
       id: "achatmoinscher",
-      async resolve({ barcode }) {
+      async resolve({ barcode, name, lookupQueries, fallbackNames }) {
         const normalizedBarcode = normalizeProductBarcode(barcode);
-        if (!normalizedBarcode) return null;
-        const products = await fetchFromAchatMoinsCher(normalizedBarcode);
+        const expectedNames = Array.from(
+          new Set(
+            [
+              String(name || "").trim(),
+              ...(lookupQueries ?? []),
+              ...(fallbackNames ?? []),
+            ].filter(Boolean),
+          ),
+        );
+
+        let products: AchatMoinsCherProduct[] = [];
+        if (normalizedBarcode) {
+          products = await fetchFromAchatMoinsCher(
+            normalizedBarcode,
+            expectedNames,
+          );
+        }
+        if (products.length === 0) {
+          for (const query of expectedNames) {
+            products = await fetchFromAchatMoinsCherByQuery(query, expectedNames);
+            if (products.length > 0) break;
+          }
+        }
+
         const product = products[0];
         if (!product?.name) return null;
         const metadata: MetadataResult = {
@@ -188,6 +237,9 @@ export const achatmoinscherModule: ProviderModule = {
     }
     return { amc: deps.fetchFromAchatMoinsCher(barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromAchatMoinsCher,
+  }),
   testHandlers: {
     "achatmoinscher-barcode": {
       label: "AchatMoinsCher - Barcode",
@@ -201,4 +253,24 @@ export const achatmoinscherModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     listProbe(await fetchFromAchatMoinsCher("9782070368228")),
+  buildBarcodeSources(payload, ctx) {
+    return marketplaceContributions("AchatMoinsCher", payload.amc, ctx, [
+      "games",
+      "musics",
+      "movies",
+      "boardgames",
+      "books",
+    ]);
+  },
+  extractScanPriceOffers(payload) {
+    const priced = payload.amc.find(
+      (entry) => entry.priceNew != null || entry.priceUsed != null,
+    );
+    if (!priced) return [];
+    return pricedOffers(PRICE_SOURCE, [
+      { condition: "new", priceCents: priced.priceNew, rawValue: priced },
+      { condition: "used", priceCents: priced.priceUsed, rawValue: priced },
+    ]);
+  },
+  refreshBarcodePriceOffers: refreshAchatMoinsCherOffers,
 };

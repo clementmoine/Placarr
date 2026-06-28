@@ -20,9 +20,9 @@ describe("extractTitleInstallments", () => {
 
 describe("installmentAlignmentAdjustment", () => {
   it("penalizes sequels when the base game was requested", () => {
-    expect(
-      installmentAlignmentAdjustment("Tekken", "Tekken 3"),
-    ).toBeLessThan(0);
+    expect(installmentAlignmentAdjustment("Tekken", "Tekken 3")).toBeLessThan(
+      0,
+    );
     expect(
       installmentAlignmentAdjustment(
         "Project Gotham Racing",
@@ -43,7 +43,12 @@ describe("installmentAlignmentAdjustment", () => {
 
 describe("scoreLaunchBoxTitleMatch", () => {
   it("prefers the exact game over a sequel on the same platform", () => {
-    const tekken = scoreLaunchBoxTitleMatch("Tekken", "Tekken", "PlayStation 1", "Sony Playstation");
+    const tekken = scoreLaunchBoxTitleMatch(
+      "Tekken",
+      "Tekken",
+      "PlayStation 1",
+      "Sony Playstation",
+    );
     const tekken3 = scoreLaunchBoxTitleMatch(
       "Tekken",
       "Tekken 3",

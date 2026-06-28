@@ -3,12 +3,12 @@ import axios from "axios";
 import {
   createMetadataHealthCheck,
   fetchWithTimeout,
-} from "@/lib/providerHealthUtils";
+} from "@/lib/provider/healthUtils";
 import { fetchFromSteam } from "./fetch";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 export { fetchFromSteam } from "./fetch";
 
@@ -30,6 +30,7 @@ export const steamModule: ProviderModule = {
     canonical: true,
     // PC capsule/header art, not the physical console box being scanned.
     digitalStorefrontArt: true,
+    websiteUrl: "https://store.steampowered.com/",
     notes: "Jeux PC uniquement (store API).",
   },
   createMetadataAdapter: () => ({

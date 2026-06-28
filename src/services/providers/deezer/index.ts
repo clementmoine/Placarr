@@ -1,12 +1,13 @@
 import axios from "axios";
 
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { createDeezerResolver } from "./resolver";
+import { getDeezerSuggestions } from "./suggestions";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 type Resolver = (
   name: string,
@@ -26,6 +27,8 @@ export const deezerModule: ProviderModule = {
     capabilities: ["identify", "cover", "releaseDate", "people", "tracksCount"],
     auth: { kind: "none" },
     canonical: true,
+    websiteUrl: "https://www.deezer.com/",
+    apiKeyDashboardUrl: "https://developers.deezer.com/",
   },
   evidence: {
     label: "Deezer",
@@ -39,6 +42,9 @@ export const deezerModule: ProviderModule = {
     }
     return { deezer: deps.fetchFromDeezer("", barcode) };
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromDeezer,
+  }),
   healthCheck: createMetadataHealthCheck("deezer", "Deezer", async () => {
     const start = Date.now();
     const isUp = await pingUrl("https://api.deezer.com/infos");
@@ -56,6 +62,7 @@ export const deezerModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
+  suggestDatabaseTitles: ({ cleanedName }) => getDeezerSuggestions(cleanedName),
   testHandlers: {
     "deezer-barcode": {
       label: "Deezer - Barcode",
@@ -95,6 +102,17 @@ export const deezerModule: ProviderModule = {
     } catch {
       return [];
     }
+  },
+  buildBarcodeSources(payload) {
+    const hit = payload.deezer;
+    if (!hit?.title) return [];
+    return [
+      {
+        mediaType: "musics",
+        label: "Deezer",
+        products: [{ name: hit.title, coverUrl: hit.imageUrl }],
+      },
+    ];
   },
 };
 

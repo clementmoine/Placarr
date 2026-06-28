@@ -453,14 +453,15 @@ function parseProductLinks(
   return hits;
 }
 
-export async function searchPhilibert(
+export async function searchPhilibertHits(
   query: string,
   barcode?: string | null,
-): Promise<PhilibertSearchHit | null> {
+  hitLimit = 8,
+): Promise<PhilibertSearchHit[]> {
   const cleanedQuery = query.trim();
-  const cleanedBarcode = barcode?.replace(/[^\d]/g, "") || "";
+  const cleanedBarcode = normalizeProductBarcode(barcode) || "";
   const searchTerm = cleanedBarcode || cleanedQuery;
-  if (!searchTerm) return null;
+  if (!searchTerm) return [];
 
   try {
     const response = await axios.get(`${BASE_URL}/fr/recherche`, {
@@ -469,11 +470,19 @@ export async function searchPhilibert(
       timeout: 10000,
     });
     const hits = parseProductLinks(response.data, cleanedBarcode || undefined);
-    return hits[0] || null;
+    return hits.slice(0, hitLimit);
   } catch (error) {
     console.error("[Philibert] Search failed:", error);
-    return null;
+    return [];
   }
+}
+
+export async function searchPhilibert(
+  query: string,
+  barcode?: string | null,
+): Promise<PhilibertSearchHit | null> {
+  const hits = await searchPhilibertHits(query, barcode, 1);
+  return hits[0] || null;
 }
 
 export async function fetchPhilibertProduct(
@@ -497,6 +506,9 @@ export type BarcodeProductHit = {
   imageUrl?: string | null;
   /** New price (cents) read from the same product page as the identification. */
   priceCents?: number | null;
+  players?: string | null;
+  playtime?: string | null;
+  ageRating?: string | null;
 };
 
 export async function fetchPhilibertBarcodeProduct(
@@ -522,6 +534,9 @@ export async function fetchPhilibertBarcodeProduct(
       title,
       imageUrl: product.imageUrl || null,
       priceCents: product.priceCents ?? null,
+      players: product.players ?? null,
+      playtime: product.playtime ?? null,
+      ageRating: product.ageRating ?? null,
     };
   } catch (error) {
     console.error("[Philibert] Barcode lookup failed:", error);

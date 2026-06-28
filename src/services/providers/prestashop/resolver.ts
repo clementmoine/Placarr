@@ -1,17 +1,20 @@
-import levenshtein from "fast-levenshtein";
-
+import {
+  acceptRetailerCatalogCandidate,
+  retailerSearchHitLimit,
+} from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { normalizeBoardGamePlayerCount } from "@/lib/boardGamePlayers";
+import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 import type {
   MetadataObservation,
   ObservationEvidenceSignal,
@@ -19,7 +22,9 @@ import type {
 
 import {
   fetchPrestashopGallery,
+  mapPrestashopSearchProduct,
   prestashopImageId,
+  searchPrestashopHits,
   searchPrestashopProduct,
 } from "./fetch";
 
@@ -228,41 +233,89 @@ export function mapPrestashopMetadata(
 
 export function createPrestashopResolver(config: PrestashopRetailerConfig) {
   return async function fetchFromPrestashopRetailer(
-    name: string,
-    barcode?: string | null,
+    ctx: MetadataAdapterContext,
   ): Promise<MetadataResult | null> {
-    const query = name.trim();
-    const normalizedBarcode = normalizeProductBarcode(barcode);
-    if (!query && !normalizedBarcode) return null;
+    const requestedName = ctx.name.trim();
+    const normalizedBarcode = normalizeProductBarcode(ctx.barcode);
+    const queries =
+      ctx.lookupQueries && ctx.lookupQueries.length > 0
+        ? ctx.lookupQueries
+        : [requestedName].filter(Boolean);
+    if (queries.length === 0 && !normalizedBarcode) return null;
 
     try {
-      const product = await searchPrestashopProduct(
-        config,
-        query || normalizedBarcode || "",
-        normalizedBarcode,
-      );
-      if (!product?.title) return null;
-
-      // A barcode is only trustworthy when the retailer's own ean13/URL
-      // confirms it. Otherwise the search may have returned an unrelated
-      // first hit, so fall back to a title match (or reject outright).
-      const barcodeConfirmed =
-        !!normalizedBarcode &&
-        normalizeProductBarcode(product.barcode) === normalizedBarcode;
-
-      if (!barcodeConfirmed) {
-        if (!query) return null;
-        const distance = levenshtein.get(
-          query.toLowerCase(),
-          product.title.toLowerCase(),
+      if (normalizedBarcode) {
+        const product = await searchPrestashopProduct(
+          config,
+          requestedName,
+          normalizedBarcode,
+          queries,
         );
-        if (distance > Math.max(8, query.length * 0.6)) {
-          return null;
+        if (product?.title) {
+          const barcodeConfirmed =
+            normalizeProductBarcode(product.barcode) === normalizedBarcode;
+          if (
+            acceptRetailerCatalogCandidate({
+              requestedName,
+              shelfName: ctx.shelfName,
+              catalogTitle: product.title,
+              barcodeConfirmed,
+            })
+          ) {
+            const galleryImages = await fetchPrestashopGallery(
+              product.productUrl,
+            );
+            return mapPrestashopMetadata(product, config.label, galleryImages);
+          }
         }
       }
 
-      const galleryImages = await fetchPrestashopGallery(product.productUrl);
-      return mapPrestashopMetadata(product, config.label, galleryImages);
+      const seenProductKeys = new Set<string>();
+
+      for (const query of queries) {
+        if (!query) continue;
+
+        const hitLimit = retailerSearchHitLimit({
+          requestedName,
+          searchQuery: query,
+          shelfName: ctx.shelfName,
+        });
+        const hits = (await searchPrestashopHits(config, query)).slice(
+          0,
+          hitLimit,
+        );
+
+        for (const hit of hits) {
+          const key =
+            hit.id_product?.toString() ||
+            hit.link ||
+            hit.name?.trim() ||
+            "";
+          if (!key || seenProductKeys.has(key)) continue;
+          seenProductKeys.add(key);
+
+          const product = mapPrestashopSearchProduct(config, hit);
+          if (!product?.title) continue;
+
+          if (
+            !acceptRetailerCatalogCandidate({
+              requestedName,
+              searchQuery: query,
+              shelfName: ctx.shelfName,
+              catalogTitle: product.title,
+            })
+          ) {
+            continue;
+          }
+
+          const galleryImages = await fetchPrestashopGallery(
+            product.productUrl,
+          );
+          return mapPrestashopMetadata(product, config.label, galleryImages);
+        }
+      }
+
+      return null;
     } catch (error) {
       console.error(`[${config.label}] Metadata lookup failed:`, error);
       return null;

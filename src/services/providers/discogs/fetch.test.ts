@@ -155,9 +155,7 @@ describe("fetchFromDiscogs", () => {
     mockedGet
       .mockResolvedValueOnce({
         data: {
-          results: [
-            { id: 42, title: "Nirvana - Nevermind", year: 1991 },
-          ],
+          results: [{ id: 42, title: "Nirvana - Nevermind", year: 1991 }],
         },
       } as never)
       .mockResolvedValueOnce({

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
 vi.mock("axios", () => ({
   default: { get: vi.fn() },
@@ -144,7 +144,9 @@ describe("createDeezerResolver", () => {
       ]),
     );
     expect(
-      (result?.observations || []).filter((observation) => observation.kind === "image"),
+      (result?.observations || []).filter(
+        (observation) => observation.kind === "image",
+      ),
     ).toHaveLength(1);
   });
 

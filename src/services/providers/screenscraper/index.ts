@@ -2,16 +2,21 @@ import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
   pingUrl,
-} from "@/lib/providerHealthUtils";
+} from "@/lib/provider/healthUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { formatScore } from "@/services/metadataSearchUtils";
-import { cleanSearchQuery } from "@/services/metadataSearchUtils";
+import type { SourceProduct } from "@/lib/barcode/evidence/types";
+import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
+import { formatScore } from "@/services/metadata/searchUtils";
+import { cleanSearchQuery } from "@/services/metadata/searchUtils";
+import { resolveWithLookupQueries } from "@/services/metadata/searchUtils";
 import { createScreenScraperResolver } from "./resolver";
 import { getScreenScraperEnv, SCREEN_SCRAPER_ENV_NAMES } from "./env";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { isScreenScraperQuotaBlocked } from "./cache";
+import { screenScraperAttachmentFromMediaUrl } from "./mediaUrl";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 const fetchFromScreenScraper = createScreenScraperResolver({
   cleanSearchQuery,
@@ -34,10 +39,47 @@ function screenscraperCredentials() {
   };
 }
 
+// Build ScreenScraper evidence products: the canonical title plus its regional
+// titles and aliases (each tagged with its region; non-primary spellings flagged
+// as aliases), all carrying the same cover and platform key.
+function buildScreenScraperProducts(
+  ss: NonNullable<BarcodeLookupPayload["ss"]>,
+): SourceProduct[] {
+  const products: SourceProduct[] = [
+    { name: ss.title!, coverUrl: ss.imageUrl, platformKey: ss.platformKey },
+  ];
+  for (const regionalTitle of ss.regionalTitles || []) {
+    products.push({
+      name: regionalTitle.text,
+      coverUrl: ss.imageUrl,
+      region: regionalTitle.region,
+      platformKey: ss.platformKey,
+      isAlias:
+        regionalTitle.text.toLowerCase().trim() !==
+        ss.title?.toLowerCase().trim(),
+    });
+  }
+  for (const alias of ss.aliases || []) {
+    const regional = ss.regionalTitles?.find(
+      (title) => title.text.toLowerCase().trim() === alias.toLowerCase().trim(),
+    );
+    products.push({
+      name: alias,
+      coverUrl: ss.imageUrl,
+      region: regional?.region,
+      platformKey: ss.platformKey,
+      isAlias: true,
+    });
+  }
+  return products;
+}
+
 export const screenscraperModule: ProviderModule = {
   info: {
     id: "screenscraper",
     label: "ScreenScraper",
+    factLabel: "SS",
+    coverUrlHost: "screenscraper",
     types: ["games"],
     rateLimited: true,
     capabilities: [
@@ -57,8 +99,18 @@ export const screenscraperModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    websiteUrl: "https://www.screenscraper.fr/",
+    apiKeyDashboardUrl: "https://www.screenscraper.fr/",
+    metadataMatchRecheck: true,
+    gameMediaGallerySource: true,
+    mappingProbeRetry: true,
     notes: "Meilleur pour les jaquettes physiques scannées (box-2D/3D).",
   },
+  contributeGameBarcodeEnrichment: () => ({
+    fetchGameMediaByBarcode: (name, barcode, platform) =>
+      fetchFromScreenScraper(name, barcode, platform),
+  }),
+  isMetadataQuotaBlocked: isScreenScraperQuotaBlocked,
   evidence: {
     label: "ScreenScraper",
     sourceWeight: 0.46,
@@ -68,10 +120,15 @@ export const screenscraperModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "screenscraper",
-      async resolve({ name, barcode, platform, isBackground }: any) {
-        return fetchFromScreenScraper(name, barcode, platform, {
-          isBackground,
-        });
+      async resolve({ name, barcode, platform, isBackground, lookupQueries }: any) {
+        return resolveWithLookupQueries(
+          lookupQueries,
+          name,
+          (query) =>
+            fetchFromScreenScraper(query, barcode, platform, {
+              isBackground,
+            }),
+        );
       },
     } satisfies MetadataProviderAdapter;
   },
@@ -121,6 +178,25 @@ export const screenscraperModule: ProviderModule = {
   mappingProbe: {
     sampleInput: "The Legend of Zelda: Skyward Sword (Wii)",
     context: { name: "The Legend of Zelda: Skyward Sword", platform: "wii" },
+  },
+  buildBarcodeSources(payload) {
+    if (!payload.ss?.title) return [];
+    return [
+      {
+        mediaType: "games",
+        label: "ScreenScraper",
+        products: buildScreenScraperProducts(payload.ss),
+      },
+    ];
+  },
+  inferImageAttachmentFromMediaUrl(url) {
+    const inferred = screenScraperAttachmentFromMediaUrl(url);
+    if (!inferred) return null;
+    return {
+      type: inferred.type,
+      role: inferred.role,
+      source: "screenscraper",
+    };
   },
 };
 

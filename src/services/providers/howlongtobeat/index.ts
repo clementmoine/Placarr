@@ -1,9 +1,9 @@
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { fetchFromHowLongToBeat } from "./fetch";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 export { fetchFromHowLongToBeat } from "./fetch";
 
@@ -12,9 +12,12 @@ export const howlongtobeatModule: ProviderModule = {
     id: "howlongtobeat",
     label: "HowLongToBeat",
     types: ["games"],
-    capabilities: ["identify", "cover", "duration"],
+    capabilities: ["identify", "duration"],
     auth: { kind: "scrape" },
     canonical: true,
+    websiteUrl: "https://howlongtobeat.com/",
+    timeToBeatSource: true,
+    timeToBeatFactSourcePrefix: "How Long to Beat",
     notes: "Durées de jeu (time-to-beat) + jaquette quand disponible.",
   },
   createMetadataAdapter: () => ({

@@ -1,12 +1,12 @@
 import axios from "axios";
 
-import { createMetadataHealthCheck, pingUrl } from "@/lib/providerHealthUtils";
+import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { createGoogleBooksResolver } from "./resolver";
 import {
   createTeardownBarcodeTask,
   shouldRunBookBarcodeTeardown,
-} from "@/lib/teardownUtils";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+} from "@/lib/dev/teardownUtils";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -37,6 +37,12 @@ export const googlebooksModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["GOOGLE_BOOKS_API_KEY"], free: true },
     canonical: true,
+    mappingProbeRetry: true,
+    mappingProbeConfigHint:
+      "GOOGLE_BOOKS_API_KEY missing — free key via Google Cloud Console (Books API)",
+    bookCoverPriority: "secondary",
+    requiresTitleAlignment: true,
+    websiteUrl: "https://books.google.com/",
     notes: "Clé gratuite Google Cloud (Books API). Sans clé, quota très bas.",
   },
   evidence: {
@@ -59,6 +65,9 @@ export const googlebooksModule: ProviderModule = {
       ),
     ];
   },
+  contributeBarcodeLookupDeps: () => ({
+    fetchFromGoogleBooks,
+  }),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,

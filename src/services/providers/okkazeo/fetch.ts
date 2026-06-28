@@ -29,6 +29,7 @@ export interface OkkazeoGame {
   categories?: string[];
   priceCents?: number;
   productUrl: string;
+  listingTitles?: string[];
 }
 
 function stripHtml(value: string): string {
@@ -102,10 +103,7 @@ export function parseOkkazeoJsonLd(html: string): OkkazeoJsonLd {
   return {};
 }
 
-function parseMetaContent(
-  html: string,
-  property: string,
-): string | undefined {
+function parseMetaContent(html: string, property: string): string | undefined {
   const match = html.match(
     new RegExp(
       `<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']`,
@@ -158,23 +156,55 @@ export function parseOkkazeoGameHtml(html: string, url: string): OkkazeoGame {
     categories: categories && categories.length > 0 ? categories : undefined,
     priceCents: jsonLd.priceCents,
     productUrl: url,
+    listingTitles: parseOkkazeoListingTitles(html),
   };
+}
+
+/** Marketplace listing titles embedded in the product page (offers block). */
+export function parseOkkazeoListingTitles(html: string): string[] {
+  const seen = new Set<string>();
+  const titles: string[] = [];
+  for (const match of html.matchAll(/\[titre\]\s*=>\s*([^\n\[]+)/gi)) {
+    const title = stripHtml(match[1]);
+    if (!title) continue;
+    const key = title.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    titles.push(title);
+  }
+  return titles;
+}
+
+/** Canonical game links `/jeux/<id>/<slug>` in a results page. */
+export function parseOkkazeoSearchHits(
+  html: string,
+  limit = 8,
+): OkkazeoSearchHit[] {
+  const seen = new Set<string>();
+  const hits: OkkazeoSearchHit[] = [];
+  for (const match of html.matchAll(/href="(\/jeux\/(\d+)\/[^"]+)"/gi)) {
+    const gameId = match[2];
+    if (seen.has(gameId)) continue;
+    seen.add(gameId);
+    hits.push({ url: `${BASE_URL}${match[1]}`, gameId });
+    if (hits.length >= limit) break;
+  }
+  return hits;
 }
 
 /** First canonical game link `/jeux/<id>/<slug>` in a results page. */
 export function parseOkkazeoSearchHit(html: string): OkkazeoSearchHit | null {
-  const match = html.match(/href="(\/jeux\/(\d+)\/[^"]+)"/i);
-  if (!match) return null;
-  return { url: `${BASE_URL}${match[1]}`, gameId: match[2] };
+  return parseOkkazeoSearchHits(html, 1)[0] ?? null;
 }
 
-export async function searchOkkazeo(
+export async function searchOkkazeoHits(
   query: string,
   barcode?: string | null,
-): Promise<OkkazeoSearchHit | null> {
+  limit = 8,
+): Promise<OkkazeoSearchHit[]> {
   const ean = (barcode || "").replace(/[^\d]/g, "");
   const cleanedQuery = query.trim();
-  if (!ean && !cleanedQuery) return null;
+  if (!ean && !cleanedQuery) return [];
 
   const params = ean
     ? { ean, titre_jeu: "", action: "Rechercher" }
@@ -186,11 +216,19 @@ export async function searchOkkazeo(
       headers: HEADERS,
       timeout: 10000,
     });
-    return parseOkkazeoSearchHit(response.data as string);
+    return parseOkkazeoSearchHits(response.data as string, limit);
   } catch (error) {
     console.error("[Okkazeo] Search failed:", error);
-    return null;
+    return [];
   }
+}
+
+export async function searchOkkazeo(
+  query: string,
+  barcode?: string | null,
+): Promise<OkkazeoSearchHit | null> {
+  const hits = await searchOkkazeoHits(query, barcode, 1);
+  return hits[0] ?? null;
 }
 
 export async function fetchOkkazeoGame(url: string): Promise<OkkazeoGame> {
@@ -202,6 +240,7 @@ export type OkkazeoBarcodeHit = {
   title: string;
   imageUrl?: string | null;
   priceCents?: number | null;
+  players?: string | null;
 };
 
 export async function fetchOkkazeoBarcodeProduct(
@@ -227,6 +266,7 @@ export async function fetchOkkazeoBarcodeProduct(
       title: game.title,
       imageUrl: game.imageUrl || null,
       priceCents: game.priceCents ?? null,
+      players: game.players ?? null,
     };
   } catch (error) {
     console.error("[Okkazeo] Barcode lookup failed:", error);

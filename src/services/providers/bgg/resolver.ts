@@ -5,16 +5,18 @@ import { convertXML } from "simple-xml-to-json";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/lib/metadataObservations";
+} from "@/lib/metadata/observations";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import { pickBestCoverFromAttachments } from "@/lib/attachmentDisplayScore";
-import { formatBoardGamePlayerCount } from "@/lib/boardGamePlayers";
-import { mapBggLanguageToAttachmentRole } from "@/lib/localePreference";
+import { pickBestCoverFromAttachments } from "@/lib/media/attachmentDisplayScore";
+import { acceptRetailerCatalogCandidate } from "@/lib/retailer/metadataLookup";
+import { formatBoardGamePlayerCount } from "@/lib/metadata/boardGame";
+import { mapBggLanguageToAttachmentRole } from "@/lib/locale/preference";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 
 export interface BGGChild {
   name?: { type: string; value: string };
@@ -205,24 +207,15 @@ function buildBggAttachments(game: {
 }
 
 const BGG_PROVIDER_ID = "boardgamegeek";
-const BGG_SOURCE_LABELS = new Set([
-  "bgg",
-  "boardgamegeek",
-  "board game geek",
-]);
+const BGG_SOURCE_LABELS = new Set(["bgg", "boardgamegeek", "board game geek"]);
 
-function normalizeBggSource(
-  source: string | undefined,
-): string | undefined {
+function normalizeBggSource(source: string | undefined): string | undefined {
   if (!source) return source;
   const normalized = source.trim().toLowerCase();
   return BGG_SOURCE_LABELS.has(normalized) ? BGG_PROVIDER_ID : source;
 }
 
-function buildBggObservations(
-  gameId: string,
-  metadata: MetadataResult,
-) {
+function buildBggObservations(gameId: string, metadata: MetadataResult) {
   const normalizedMetadata: MetadataResult = {
     ...metadata,
     attachments: metadata.attachments?.map((attachment) => ({
@@ -262,8 +255,16 @@ let warnedMissingToken = false;
 
 export function createBGGResolver(deps: BggResolverDeps) {
   return async function fetchFromBGG(
-    name: string,
+    ctx: MetadataAdapterContext | string,
   ): Promise<MetadataResult | null> {
+    const context = typeof ctx === "string" ? { name: ctx } : ctx;
+    const requestedName = context.name.trim();
+    const queries =
+      context.lookupQueries && context.lookupQueries.length > 0
+        ? context.lookupQueries
+        : [requestedName].filter(Boolean);
+    if (queries.length === 0) return null;
+
     const token = process.env.BGG_API_TOKEN?.trim();
     if (!token) {
       if (!warnedMissingToken) {
@@ -278,39 +279,55 @@ export function createBGGResolver(deps: BggResolverDeps) {
     };
 
     try {
-      const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(name)}&type=boardgame`;
-      const searchRes = await axios.get(searchUrl, {
-        responseType: "text",
-        headers,
-        timeout: 10000,
-      });
-      const searchText = searchRes.data;
-      const searchData = convertXML(searchText) as BGGResponse;
-      const items = searchData.items?.children || [];
-      if (items.length === 0) return null;
+      const seenGameIds = new Set<string>();
 
-      let bestMatch = items[0];
-      let minDistance = levenshtein.get(
-        name.toLowerCase(),
-        bestMatch.item.children
-          .find((child: BGGChild) => child.name?.type === "primary")
-          ?.name?.value?.toLowerCase() || "",
-      );
+      for (const query of queries) {
+        if (!query) continue;
 
-      for (const item of items) {
-        const itemName =
-          item.item.children
-            .find((child: BGGChild) => child.name?.type === "primary")
-            ?.name?.value?.toLowerCase() || "";
-        const distance = levenshtein.get(name.toLowerCase(), itemName);
-        if (distance < minDistance) {
-          minDistance = distance;
-          bestMatch = item;
-        }
-      }
+        const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`;
+        const searchRes = await axios.get(searchUrl, {
+          responseType: "text",
+          headers,
+          timeout: 10000,
+        });
+        const searchText = searchRes.data;
+        const searchData = convertXML(searchText) as BGGResponse;
+        const items = searchData.items?.children || [];
+        if (items.length === 0) continue;
 
-      const gameId = bestMatch.item.id;
-      if (!gameId) return null;
+        const candidates = items
+          .map((item) => ({
+            item,
+            itemName:
+              item.item.children
+                .find((child: BGGChild) => child.name?.type === "primary")
+                ?.name?.value?.trim() || "",
+          }))
+          .filter((entry) => entry.itemName.length > 0)
+          .filter(({ itemName }) =>
+            acceptRetailerCatalogCandidate({
+              requestedName,
+              searchQuery: query,
+              shelfName: context.shelfName,
+              catalogTitle: itemName,
+            }),
+          )
+          .sort(
+            (a, b) =>
+              levenshtein.get(
+                requestedName.toLowerCase(),
+                a.itemName.toLowerCase(),
+              ) -
+              levenshtein.get(
+                requestedName.toLowerCase(),
+                b.itemName.toLowerCase(),
+              ),
+          );
+
+        for (const { item } of candidates) {
+          const gameId = item.item.id;
+          if (!gameId || seenGameIds.has(gameId)) continue;
+          seenGameIds.add(gameId);
 
       const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1&versions=1`;
       const detailsRes = await axios.get(detailsUrl, {
@@ -321,7 +338,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
       const detailsText = detailsRes.data;
       const detailsData = convertXML(detailsText) as BGGResponse;
       const game = detailsData.items?.children?.[0]?.item;
-      if (!game) return null;
+      if (!game) continue;
 
       const primaryName = game.children.find(
         (child: BGGChild) => child.name?.type === "primary",
@@ -403,6 +420,19 @@ export function createBGGResolver(deps: BggResolverDeps) {
       const aliases = alternateNames.filter(
         (n) => n.toLowerCase().trim() !== primaryName?.toLowerCase().trim(),
       );
+
+      if (
+        primaryName &&
+        !acceptRetailerCatalogCandidate({
+          requestedName,
+          searchQuery: query,
+          shelfName: context.shelfName,
+          catalogTitle: primaryName,
+          catalogAliases: aliases,
+        })
+      ) {
+        continue;
+      }
 
       const facts: MetadataFact[] = [];
       facts.push({
@@ -598,6 +628,10 @@ export function createBGGResolver(deps: BggResolverDeps) {
         observations: buildBggObservations(String(gameId), metadata),
         observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
       };
+        }
+      }
+
+      return null;
     } catch (error: unknown) {
       const status =
         typeof error === "object" &&

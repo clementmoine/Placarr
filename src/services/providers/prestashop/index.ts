@@ -24,15 +24,15 @@ export const PRESTASHOP_RETAILER_MODULES = PRESTASHOP_RETAILER_CONFIGS.map(
   (config) => createPrestashopModule(config),
 );
 
-export const monsieurdeModule = PRESTASHOP_RETAILER_MODULES.find(
-  (module) => module.info.id === "monsieurde",
+export const monsieurdemdl = PRESTASHOP_RETAILER_MODULES.find(
+  (mdl) => mdl.info.id === "monsieurde",
 )!;
-export const ludifolieModule = PRESTASHOP_RETAILER_MODULES.find(
-  (module) => module.info.id === "ludifolie",
+export const ludifoliemdl = PRESTASHOP_RETAILER_MODULES.find(
+  (mdl) => mdl.info.id === "ludifolie",
 )!;
-export const bcdjeuxModule = PRESTASHOP_RETAILER_MODULES.find(
-  (module) => module.info.id === "bcdjeux",
+export const bcdjeuxmdl = PRESTASHOP_RETAILER_MODULES.find(
+  (mdl) => mdl.info.id === "bcdjeux",
 )!;
-export const lepassetempsModule = PRESTASHOP_RETAILER_MODULES.find(
-  (module) => module.info.id === "lepassetemps",
+export const lepassetempsmdl = PRESTASHOP_RETAILER_MODULES.find(
+  (mdl) => mdl.info.id === "lepassetemps",
 )!;

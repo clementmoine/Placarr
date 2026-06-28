@@ -1,8 +1,8 @@
 import axios from "axios";
 
-import { createKeyHealthCheck } from "@/lib/providerHealthUtils";
+import { createKeyHealthCheck } from "@/lib/provider/healthUtils";
 import { createOMDbResolver, type OMDbResolveOptions } from "./resolver";
-import { teardownMetadataWhen } from "@/lib/providerTeardownHelpers";
+import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -32,6 +32,7 @@ export const omdbModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["OMDB_API_KEY"], free: true },
     canonical: true,
+    websiteUrl: "https://www.omdbapi.com/",
     notes: "Ratings complémentaires (IMDb/Rotten) + classification.",
   },
   createMetadataAdapter() {

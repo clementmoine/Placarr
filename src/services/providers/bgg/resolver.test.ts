@@ -6,7 +6,7 @@ vi.mock("simple-xml-to-json", () => ({ convertXML: vi.fn() }));
 import axios from "axios";
 import { convertXML } from "simple-xml-to-json";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadataObservations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 import { createBGGResolver } from "./resolver";
 
 const mockedGet = vi.mocked(axios.get);
@@ -248,9 +248,9 @@ describe("createBGGResolver", () => {
     expect(res?.aliases).toContain("Les Colons de Catane");
     expect(res?.facts?.some((f) => f.kind === "players")).toBe(true);
     // Community polls → top-voted age + language dependence.
-    expect(
-      res?.facts?.find((f) => f.kind === "recommended-age")?.value,
-    ).toBe("8+");
+    expect(res?.facts?.find((f) => f.kind === "recommended-age")?.value).toBe(
+      "8+",
+    );
     expect(
       res?.facts?.find((f) => f.kind === "language-dependence")?.value,
     ).toBe("Texte limité (facile à mémoriser)");

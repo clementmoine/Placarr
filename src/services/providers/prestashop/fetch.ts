@@ -1,11 +1,16 @@
 import axios from "axios";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
+
+import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/lib/retailer/titleMatch";
 
 import {
   extractBarcodeFromProductUrl,
   extractEditionYearFromProductName,
   parseFrenchPriceCents,
+  parseIqitRenderedProducts,
+  parsePrestashopProductPageBarcode,
   parsePrestashopShortDescription,
   pickPrestashopCoverUrl,
   stripHtml,
@@ -92,6 +97,7 @@ export function mapPrestashopSearchProduct(
     imageUrl: pickPrestashopCoverUrl(product),
     barcode:
       normalizeProductBarcode(product.ean13) ||
+      normalizeProductBarcode(product.reference) ||
       extractBarcodeFromProductUrl(product.link),
     reference: product.reference?.trim() || undefined,
     releaseDate: extractEditionYearFromProductName(title),
@@ -107,32 +113,72 @@ export function mapPrestashopSearchProduct(
 
 function pickBestPrestashopHit(
   products: PrestashopSearchProduct[],
-  barcode?: string | null,
+  options?: { barcode?: string | null; queries?: string[] },
 ): PrestashopSearchProduct | null {
   if (products.length === 0) return null;
 
-  const normalizedBarcode = normalizeProductBarcode(barcode);
+  const normalizedBarcode = normalizeProductBarcode(options?.barcode);
   if (normalizedBarcode) {
     const barcodeHit = products.find((product) => {
       const productBarcode =
         normalizeProductBarcode(product.ean13) ||
+        normalizeProductBarcode(product.reference) ||
         extractBarcodeFromProductUrl(product.link);
       return productBarcode === normalizedBarcode;
     });
     if (barcodeHit) return barcodeHit;
   }
 
-  return products[0];
+  const queries = options?.queries?.map((query) => query.trim()).filter(Boolean) ?? [];
+  if (queries.length > 0) {
+    let best: PrestashopSearchProduct | null = null;
+    let bestScore = -1;
+    for (const product of products) {
+      const title = stripHtml(product.name || "");
+      if (!title) continue;
+      const score = Math.max(
+        ...queries.map((query) => metadataTitleSimilarity(query, title)),
+      );
+      if (score > bestScore) {
+        bestScore = score;
+        best = product;
+      }
+    }
+    if (best && bestScore >= NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY) {
+      return best;
+    }
+  }
+
+  return null;
 }
 
-export async function searchPrestashopProduct(
+async function enrichPrestashopSearchProductsWithEan(
   config: PrestashopRetailerConfig,
-  query: string,
-  barcode?: string | null,
-): Promise<PrestashopProduct | null> {
-  const searchValue = (barcode || query).trim();
-  if (!searchValue) return null;
+  products: PrestashopSearchProduct[],
+): Promise<PrestashopSearchProduct[]> {
+  return Promise.all(
+    products.map(async (product) => {
+      if (product.ean13 || !product.link) return product;
+      try {
+        const response = await axios.get(product.link, {
+          headers: HTML_HEADERS,
+          timeout: config.requestTimeoutMs ?? 10000,
+          validateStatus: (status) => status >= 200 && status < 400,
+        });
+        const ean13 = parsePrestashopProductPageBarcode(String(response.data));
+        return ean13 ? { ...product, ean13 } : product;
+      } catch {
+        return product;
+      }
+    }),
+  );
+}
 
+async function fetchPrestashopSearchProducts(
+  config: PrestashopRetailerConfig,
+  searchValue: string,
+): Promise<PrestashopSearchProduct[]> {
+  const timeoutMs = config.requestTimeoutMs ?? 12000;
   const url = new URL(config.searchPath, config.baseUrl);
   url.searchParams.set("controller", "search");
   url.searchParams.set(config.searchParam, searchValue);
@@ -140,14 +186,75 @@ export async function searchPrestashopProduct(
 
   const response = await axios.get(url.toString(), {
     headers: HEADERS,
-    timeout: 12000,
+    timeout: timeoutMs,
     validateStatus: (status) => status >= 200 && status < 500,
   });
 
-  const products = response.data?.products;
-  if (!Array.isArray(products) || products.length === 0) return null;
+  if (config.searchStrategy === "iqit") {
+    const rendered = response.data?.rendered_products;
+    return typeof rendered === "string"
+      ? parseIqitRenderedProducts(rendered)
+      : [];
+  }
 
-  const hit = pickBestPrestashopHit(products, barcode);
+  const products = response.data?.products;
+  return Array.isArray(products) ? products : [];
+}
+
+export async function searchPrestashopHits(
+  config: PrestashopRetailerConfig,
+  searchValue: string,
+): Promise<PrestashopSearchProduct[]> {
+  return fetchPrestashopSearchProducts(config, searchValue);
+}
+
+export async function searchPrestashopProduct(
+  config: PrestashopRetailerConfig,
+  query: string,
+  barcode?: string | null,
+  lookupQueries?: string[],
+): Promise<PrestashopProduct | null> {
+  const normalizedBarcode = normalizeProductBarcode(barcode);
+  const searchValue = (normalizedBarcode || query).trim();
+  if (!searchValue) return null;
+
+  let products: PrestashopSearchProduct[] = [];
+  if (normalizedBarcode) {
+    products = await fetchPrestashopSearchProducts(config, normalizedBarcode);
+  } else {
+    const queries =
+      lookupQueries && lookupQueries.length > 0
+        ? lookupQueries
+        : [query.trim()].filter(Boolean);
+    const seen = new Set<string>();
+    for (const searchQuery of queries) {
+      const hits = await fetchPrestashopSearchProducts(config, searchQuery);
+      for (const product of hits) {
+        const key =
+          product.id_product?.toString() ||
+          product.link ||
+          stripHtml(product.name || "");
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        products.push(product);
+      }
+    }
+  }
+
+  if (products.length === 0) return null;
+
+  if (normalizedBarcode) {
+    products = await enrichPrestashopSearchProductsWithEan(config, products);
+  }
+
+  const queries =
+    lookupQueries && lookupQueries.length > 0
+      ? lookupQueries
+      : [query.trim()].filter(Boolean);
+  const hit = pickBestPrestashopHit(products, {
+    barcode: normalizedBarcode,
+    queries,
+  });
   if (!hit) return null;
 
   return mapPrestashopSearchProduct(config, hit);

@@ -7,16 +7,20 @@ import {
   isLotListing,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
-import { cleanSearchQuery } from "@/services/metadataSearchUtils";
+import { cleanSearchQuery } from "@/lib/search/query";
 import {
   isCanonicalProvider,
   isTrustedRetailerProvider,
   sourceWeightForProvider,
-} from "@/services/providerEvidence";
+} from "@/services/provider/evidence";
 import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
 
 import { extractEditionFromText } from "./edition";
+import {
+  barcodeSourceFactsFromFields,
+  mergeBarcodeSourceFacts,
+} from "./sourceFacts";
 import type {
   ParsedProductName,
   ProductEvidence,
@@ -41,6 +45,9 @@ function parseProductName(
   const decoded = decodeHTMLEntities(rawName || "");
   const cleanName = cleanTitleForDisplay(decoded, {
     preservePlatformSuffix: preserveDisplayTitle,
+    // Authoritative titles keep their edition words ("Gottlieb Pinball Classics"
+    // stays intact instead of "Gottlieb Pinball" + a re-assembled "— Classics").
+    preserveEditionTerms: preserveDisplayTitle,
   });
   const title = preserveDisplayTitle
     ? cleanName
@@ -233,6 +240,12 @@ export function buildProductEvidence(
     priority,
     sourceWeight: sourceWeightForProvider(providerName, !!product.isAlias),
     parsed,
+    facts: mergeBarcodeSourceFacts(
+      product.facts,
+      barcodeSourceFactsFromFields({
+        platformKey: parsed.platformKey ?? product.platformKey,
+      }),
+    ),
   };
 }
 

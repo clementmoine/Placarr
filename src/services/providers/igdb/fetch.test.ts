@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     setting: {
       findUnique: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock("axios", () => ({
 }));
 
 import axios from "axios";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { fetchFromIGDB, pingIGDB } from "./fetch";
 
 const mockedAxios = vi.mocked(axios, true);

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     setting: {
       findUnique: vi.fn(async () => null),

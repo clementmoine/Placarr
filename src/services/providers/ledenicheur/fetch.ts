@@ -1,14 +1,8 @@
 import axios from "axios";
 
-export interface LeDenicheurPrices {
-  priceNew?: number;
-  sourceUrl?: string;
-  productName?: string;
-  merchantName?: string;
-  offerCount?: number;
-  coverUrl?: string | null;
-  matchedQuery?: string;
-}
+import type { LeDenicheurPrices } from "@/lib/barcode/lookup/providerTypes";
+
+export type { LeDenicheurPrices } from "@/lib/barcode/lookup/providerTypes";
 
 const BASE_URL = "https://ledenicheur.fr";
 const BFF_URL = `${BASE_URL}/_internal/bff`;
@@ -67,16 +61,36 @@ const SEARCH_QUERY = `
   }
 `;
 
+const PRODUCT_DETAIL_QUERY = `
+  query productPrices($id: Int!) {
+    product(id: $id) {
+      name
+      pathName
+      priceSummary {
+        regular
+        alternative
+        inStock
+        count
+      }
+      media {
+        first(width: _280)
+      }
+    }
+  }
+`;
+
+type LeDenicheurPriceSummary = {
+  regular?: number | string | null;
+  alternative?: number | string | null;
+  inStock?: number | string | null;
+  count?: number | null;
+};
+
 type LeDenicheurProductNode = {
   __typename?: "Product";
   name?: string | null;
   pathName?: string | null;
-  priceSummary?: {
-    regular?: number | string | null;
-    alternative?: number | string | null;
-    inStock?: number | string | null;
-    count?: number | null;
-  } | null;
+  priceSummary?: LeDenicheurPriceSummary | null;
   media?: { first?: string | null } | null;
 };
 
@@ -200,40 +214,106 @@ function absoluteLeDenicheurUrl(pathName?: string | null) {
   return `${BASE_URL}${pathName.startsWith("/") ? "" : "/"}${pathName}`;
 }
 
-function parseNode(node: LeDenicheurNode): LeDenicheurPrices | null {
-  if (node.__typename === "Offer") {
-    const priceNew = priceToCents(node.offerPrice?.regular);
-    if (!priceNew) return null;
-    return {
-      priceNew,
-      sourceUrl: node.externalUri || undefined,
-      productName: node.name || undefined,
-      merchantName: node.store?.name || undefined,
-      offerCount: 1,
-      coverUrl: node.media?.first || null,
-    };
+export function extractLeDenicheurProductId(pathName?: string | null) {
+  if (!pathName) return null;
+  const match = pathName.match(/[?&]p=(\d+)/);
+  if (!match) return null;
+  const productId = Number(match[1]);
+  return Number.isFinite(productId) ? productId : null;
+}
+
+/** LeDenicheur exposes new vs used as `regular` vs `alternative` on product pages. */
+export function parseLeDenicheurPriceSummary(
+  summary?: LeDenicheurPriceSummary | null,
+): Pick<LeDenicheurPrices, "priceNew" | "priceUsed"> {
+  const regular = priceToCents(summary?.regular);
+  const inStock = priceToCents(summary?.inStock);
+  const alternative = priceToCents(summary?.alternative);
+  const priceNew = regular ?? inStock ?? undefined;
+
+  let priceUsed: number | undefined;
+  if (alternative != null && priceNew != null && alternative !== priceNew) {
+    // `alternative` is usually the used/lowest offer, but on some SKUs it can be
+    // a marketplace outlier (e.g. PC listing at 1000€ vs 13€ new).
+    if (alternative <= priceNew * 4) {
+      priceUsed = alternative;
+    }
   }
 
-  const product = node as LeDenicheurProductNode;
-  const regularPrice = priceToCents(product.priceSummary?.regular);
-  const inStockPrice = priceToCents(product.priceSummary?.inStock);
-  const fallbackPrice = priceToCents(product.priceSummary?.alternative);
-  const priceNew = regularPrice ?? inStockPrice ?? fallbackPrice;
-  if (!priceNew) return null;
+  return { priceNew, priceUsed };
+}
+
+function buildProductPrices(
+  product: LeDenicheurProductNode,
+  detail: LeDenicheurProductNode | null,
+): LeDenicheurPrices | null {
+  const summary = detail?.priceSummary ?? product.priceSummary;
+  const { priceNew, priceUsed } = parseLeDenicheurPriceSummary(summary);
+  if (!priceNew && !priceUsed) return null;
 
   return {
     priceNew,
-    sourceUrl: absoluteLeDenicheurUrl(product.pathName),
-    productName: product.name || undefined,
-    offerCount: product.priceSummary?.count ?? undefined,
-    coverUrl: product.media?.first || null,
+    priceUsed,
+    sourceUrl: absoluteLeDenicheurUrl(detail?.pathName ?? product.pathName),
+    productName: detail?.name ?? product.name ?? undefined,
+    offerCount: summary?.count ?? undefined,
+    coverUrl: detail?.media?.first ?? product.media?.first ?? null,
   };
 }
 
-function parseSearchResponse(
+function parseOfferNode(node: LeDenicheurOfferNode): LeDenicheurPrices | null {
+  const priceNew = priceToCents(node.offerPrice?.regular);
+  if (!priceNew) return null;
+  return {
+    priceNew,
+    sourceUrl: node.externalUri || undefined,
+    productName: node.name || undefined,
+    merchantName: node.store?.name || undefined,
+    offerCount: 1,
+    coverUrl: node.media?.first || null,
+  };
+}
+
+async function fetchProductDetail(
+  productId: number,
+): Promise<LeDenicheurProductNode | null> {
+  try {
+    const response = await axios.post(
+      BFF_URL,
+      {
+        query: PRODUCT_DETAIL_QUERY,
+        variables: { id: productId },
+      },
+      {
+        headers: HEADERS,
+        timeout: 6000,
+        validateStatus: (status) => status >= 200 && status < 500,
+      },
+    );
+
+    if (response.status >= 400) return null;
+    return (
+      (response.data as any)?.data?.product ??
+      (response.data as any)?.product ??
+      null
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function resolveProductNode(
+  product: LeDenicheurProductNode,
+): Promise<LeDenicheurPrices | null> {
+  const productId = extractLeDenicheurProductId(product.pathName);
+  const detail = productId ? await fetchProductDetail(productId) : null;
+  return buildProductPrices(product, detail);
+}
+
+async function parseSearchResponse(
   data: unknown,
   query: string,
-): LeDenicheurPrices | null {
+): Promise<LeDenicheurPrices | null> {
   const nodes =
     (data as any)?.data?.newSearch?.results?.products?.nodes ??
     (data as any)?.newSearch?.results?.products?.nodes;
@@ -242,8 +322,12 @@ function parseSearchResponse(
   for (const node of nodes) {
     const productName = (node as LeDenicheurNode).name;
     if (!isProbablyRelevant(query, productName)) continue;
-    const result = parseNode(node as LeDenicheurNode);
-    if (result) return result;
+
+    const result =
+      (node as LeDenicheurNode).__typename === "Offer"
+        ? parseOfferNode(node as LeDenicheurOfferNode)
+        : await resolveProductNode(node as LeDenicheurProductNode);
+    if (result) return { ...result, matchedQuery: query };
   }
 
   return null;
@@ -276,8 +360,7 @@ async function fetchSingleQuery(
     return null;
   }
 
-  const result = parseSearchResponse(response.data, query);
-  return result ? { ...result, matchedQuery: query } : null;
+  return parseSearchResponse(response.data, query);
 }
 
 export async function fetchPricesFromLeDenicheur(

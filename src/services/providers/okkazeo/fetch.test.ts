@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   parseOkkazeoGameHtml,
   parseOkkazeoJsonLd,
+  parseOkkazeoListingTitles,
   parseOkkazeoSearchHit,
+  parseOkkazeoSearchHits,
 } from "./fetch";
 
 const GAME_HTML = `
@@ -90,5 +92,35 @@ describe("parseOkkazeoSearchHit", () => {
 
   it("returns null when no game link is present", () => {
     expect(parseOkkazeoSearchHit("<div>aucun résultat</div>")).toBeNull();
+  });
+});
+
+describe("parseOkkazeoSearchHits", () => {
+  it("deduplicates multiple links to the same game", () => {
+    const searchHtml = `
+      <a href="/jeux/10267/mille-sabords">A</a>
+      <a href="/jeux/10267/mille-sabords">B</a>
+      <a href="/jeux/40446/escape-room-2-joueurs-horreur">C</a>`;
+    expect(parseOkkazeoSearchHits(searchHtml)).toEqual([
+      {
+        url: "https://www.okkazeo.com/jeux/10267/mille-sabords",
+        gameId: "10267",
+      },
+      {
+        url: "https://www.okkazeo.com/jeux/40446/escape-room-2-joueurs-horreur",
+        gameId: "40446",
+      },
+    ]);
+  });
+});
+
+describe("parseOkkazeoListingTitles", () => {
+  it("extracts marketplace listing titles from the offers block", () => {
+    const html = `
+      [titre] => Escape Room Le Jeu - 2 Joueurs - Petite Fille + Maison du Lac
+      [prix] => 14.9`;
+    expect(parseOkkazeoListingTitles(html)).toEqual([
+      "Escape Room Le Jeu - 2 Joueurs - Petite Fille + Maison du Lac",
+    ]);
   });
 });

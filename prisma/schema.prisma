@@ -185,6 +185,8 @@ model Item {
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   backgroundImageUrl String?
+  metadataRefreshStartedAt DateTime?
+  metadataRefreshGeneration Int @default(0)
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   shelf              Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   metadata           Metadata?       @relation(fields: [metadataId], references: [id])
@@ -218,10 +220,19 @@ model BarcodeCache {
   updatedAt        DateTime        @updatedAt
   shelfType        String?
   mediaFormat      String?
+  // The compile step's final, structured title decision, persisted verbatim so a
+  // cache read reuses it instead of lossily re-deriving (which stripped integral
+  // edition terms like "Gottlieb Pinball Classics" → "Gottlieb Pinball"). Null on
+  // pre-migration rows, which fall back to re-derivation.
+  cleanName        String?
+  displayName      String?
+  edition          String?
   priceLastUpdated DateTime?
   priceNew         Int?
   priceUsed        Int?
   priceUsedCIB     Int?
+  observations           Json?
+  observationSchemaVersion String?
   rawNames         RawName[]
   fieldEvidence    FieldEvidence[]
   priceOffers      PriceOffer[]

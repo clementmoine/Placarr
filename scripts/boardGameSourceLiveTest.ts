@@ -3,11 +3,14 @@
  * Live smoke test for board game metadata sources proposed in admin audit.
  */
 import { createBGGResolver } from "@/services/providers/bgg/resolver";
+import { bggModule } from "@/services/providers/bgg";
 import { createPhilibertResolver } from "@/services/providers/philibert/resolver";
+import { philibertModule } from "@/services/providers/philibert";
 import { createWikidataResolver } from "@/services/providers/wikidata/resolver";
+import { wikidataModule } from "@/services/providers/wikidata";
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
-import { formatScore } from "@/services/metadataSearchUtils";
-import { mergeMetadata } from "@/services/metadataMerge";
+import { formatScore } from "@/services/metadata/searchUtils";
+import { mergeMetadata } from "@/services/metadata/merge";
 import axios from "axios";
 
 const SAMPLE = { name: "Catan", barcode: "3558380126133" };
@@ -50,7 +53,10 @@ async function main() {
     image: Boolean(wikidata?.imageUrl),
   });
 
-  const philibert = await fetchFromPhilibert(SAMPLE.name, SAMPLE.barcode);
+  const philibert = await fetchFromPhilibert({
+    name: SAMPLE.name,
+    barcode: SAMPLE.barcode,
+  });
   console.log("Philibert:", {
     ok: Boolean(philibert?.title),
     title: philibert?.title,
@@ -75,9 +81,9 @@ async function main() {
   });
 
   const merged = mergeMetadata("boardgames", [
-    ...(bgg ? [{ providerId: "boardgamegeek", metadata: bgg }] : []),
-    ...(wikidata ? [{ providerId: "wikidata", metadata: wikidata }] : []),
-    ...(philibert ? [{ providerId: "philibert", metadata: philibert }] : []),
+    ...(bgg ? [{ providerId: bggModule.info.id, metadata: bgg }] : []),
+    ...(wikidata ? [{ providerId: wikidataModule.info.id, metadata: wikidata }] : []),
+    ...(philibert ? [{ providerId: philibertModule.info.id, metadata: philibert }] : []),
   ]);
   console.log("Merged:", {
     title: merged.title,

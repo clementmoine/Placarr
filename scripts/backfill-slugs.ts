@@ -1,13 +1,19 @@
+#!/usr/bin/env npx tsx
 /**
- * Remplit la colonne `slug` (= slugify(name)) pour toutes les étagères et items
- * existants. À lancer une fois après la migration `add_slug`.
+ * Remplit la colonne `slug` pour toutes les étagères et items existants.
+ * Les items utilisent slugifyItemName (numéros de volume sans zéros dans l'URL).
  *
- *   pnpm exec ts-node scripts/backfill-slugs.ts
- *
- * Utilise le MÊME slugify que l'app pour garantir l'égalité slug ↔ résolution.
+ *   pnpm backfill:slugs
  */
 import { PrismaClient } from "@prisma/client";
-import { slugify } from "../src/lib/slugs";
+
+import { slugify, slugifyItemName } from "@/lib/routing/slugs";
+
+try {
+  process.loadEnvFile(".env");
+} catch {
+  console.warn("(.env not loaded)");
+}
 
 async function main() {
   const prisma = new PrismaClient();
@@ -28,7 +34,7 @@ async function main() {
     for (const it of items) {
       await prisma.item.update({
         where: { id: it.id },
-        data: { slug: slugify(it.name) },
+        data: { slug: slugifyItemName(it.name) },
       });
     }
 

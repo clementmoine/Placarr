@@ -1,13 +1,19 @@
 import axios from "axios";
 
 import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
+import { achatmoinscherModule } from "@/services/providers/achatmoinscher";
 import { fetchFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
+import { chasseauxlivresModule } from "@/services/providers/chasseauxlivres";
 import { fetchFromFreakxy } from "@/services/providers/freakxy";
+import { freakxyModule } from "@/services/providers/freakxy";
 import { fetchFromHowLongToBeat } from "@/services/providers/howlongtobeat";
 import { fetchPricesFromLeDenicheur } from "@/services/providers/ledenicheur";
+import { ledenicheurModule } from "@/services/providers/ledenicheur";
 import { fetchFromMusicBrainz } from "@/services/providers/musicbrainz";
 import { fetchFromPicClick } from "@/services/providers/picclick";
+import { picclickModule } from "@/services/providers/picclick";
 import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
+import { pricechartingModule } from "@/services/providers/pricecharting";
 import { fetchFromSteam } from "@/services/providers/steam";
 import { fetchFromDiscogs } from "@/services/providers/discogs";
 import { createBGGResolver } from "@/services/providers/bgg";
@@ -286,7 +292,7 @@ async function run() {
     };
   });
 
-  await safe("chasseauxlivres", async () => {
+  await safe(chasseauxlivresModule.info.id, async () => {
     const result = await fetchFromChasseAuxLivres("9782919603114", "fr");
     return {
       count: result.length,
@@ -295,7 +301,7 @@ async function run() {
     };
   });
 
-  await safe("achatmoinscher", async () => {
+  await safe(achatmoinscherModule.info.id, async () => {
     const result = await fetchFromAchatMoinsCher("9782919603114");
     return {
       count: result.length,
@@ -304,7 +310,7 @@ async function run() {
     };
   });
 
-  await safe("ledenicheur", async () => {
+  await safe(ledenicheurModule.info.id, async () => {
     const result = await fetchPricesFromLeDenicheur("9782919603114");
     return {
       hasResult: Boolean(result),
@@ -313,7 +319,7 @@ async function run() {
     };
   });
 
-  await safe("pricecharting", async () => {
+  await safe(pricechartingModule.info.id, async () => {
     const result = await fetchMetadataFromPriceCharting("5060004769360");
     return {
       hasResult: Boolean(result),
@@ -322,7 +328,7 @@ async function run() {
     };
   });
 
-  await safe("freakxy", async () => {
+  await safe(freakxyModule.info.id, async () => {
     const result = await fetchFromFreakxy("5060004769360");
     return {
       count: result.length,
@@ -331,7 +337,7 @@ async function run() {
     };
   });
 
-  await safe("picclick", async () => {
+  await safe(picclickModule.info.id, async () => {
     const result = await fetchFromPicClick("4988601467124");
     return {
       count: result.length,

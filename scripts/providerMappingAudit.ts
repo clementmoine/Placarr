@@ -70,7 +70,7 @@ function printMigrationSection(
 
 async function main() {
   const { runProviderMappingAudit } = await import(
-    "@/services/providerMappingAudit"
+    "@/services/provider/mappingAudit"
   );
   const payload = await runProviderMappingAudit();
 
@@ -143,7 +143,10 @@ async function main() {
     payload.migrationPlan.next,
   );
   console.log("");
-  printMigrationSection("legacy providers with metadata adapter:", payload.migrationPlan.legacy);
+  printMigrationSection(
+    "legacy providers with metadata adapter:",
+    payload.migrationPlan.legacy,
+  );
   console.log("");
   printMigrationSection(
     "unknown providers with metadata adapter:",

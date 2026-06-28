@@ -69,12 +69,12 @@ The contract:
 
 **Admin:**
 
-| File                                      | Leak                                                                                                                                                                                           |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File                                      | Leak                                                                                                                                                       |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `app/api/admin/product-teardown/route.ts` | consumes shared `listingTerms` / `videoGamePlatforms` matchers; remaining debt is the existence of title-parsed listing noise, not route-local duplication |
-| `app/api/admin/test-provider/route.ts`    | `handler.kind === "scandex"` branch instead of driving `testHandlers` generically                                                                                                              |
-| `app/api/admin/metadata-enrich/route.ts`  | `source: "screenscraper"` hardcoded                                                                                                                                                            |
-| `app/api/admin/providers/route.ts`        | `TYPES` / `CAPABILITIES` listed by hand instead of derived from the type system / registry union                                                                                               |
+| `app/api/admin/test-provider/route.ts`    | `handler.kind === "scandex"` branch instead of driving `testHandlers` generically                                                                          |
+| `app/api/admin/metadata-enrich/route.ts`  | `source: "screenscraper"` hardcoded                                                                                                                        |
+| `app/api/admin/providers/route.ts`        | `TYPES` / `CAPABILITIES` listed by hand instead of derived from the type system / registry union                                                           |
 
 (`admin/providers/route.ts` otherwise correctly iterates `PROVIDERS` — the model to follow everywhere.)
 

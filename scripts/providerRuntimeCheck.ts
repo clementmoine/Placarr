@@ -1,29 +1,32 @@
-import { fetchFromAchatMoinsCher } from "@/services/providers/achatmoinscher";
-import { fetchFromChasseAuxLivres } from "@/services/providers/chasseauxlivres";
-import { fetchFromDiscogs } from "@/services/providers/discogs";
-import { fetchFromFreakxy } from "@/services/providers/freakxy";
-import { fetchFromHowLongToBeat } from "@/services/providers/howlongtobeat";
-import { fetchFromIGDB } from "@/services/providers/igdb";
-import { fetchPricesFromLeDenicheur } from "@/services/providers/ledenicheur";
-import {
-  fetchFromBGG,
-  fetchFromDeezer,
-  fetchFromOMDb,
-  fetchFromOpenLibrary,
-  fetchFromRawg,
-  fetchFromScreenScraper,
-  fetchFromTMDB,
-} from "@/services/metadataResolvers";
-import { fetchCoverFromCoverProject } from "@/services/providers/coverproject";
-import { fetchFromMusicBrainz } from "@/services/providers/musicbrainz";
-import { fetchFromPicClick } from "@/services/providers/picclick";
-import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
-import { fetchFromSteam } from "@/services/providers/steam";
-import { fetchFromSteamGridDB } from "@/services/providers/steamgriddb";
+import { createBarcodeLookupDeps } from "@/services/provider/barcode";
+import { getMetadataProviderAdapter } from "@/services/provider/bootstrap";
+import { achatmoinscherModule } from "@/services/providers/achatmoinscher";
+import { bggModule } from "@/services/providers/bgg";
+import { chasseauxlivresModule } from "@/services/providers/chasseauxlivres";
+import { coverprojectModule } from "@/services/providers/coverproject";
+import { deezerModule } from "@/services/providers/deezer";
+import { discogsModule } from "@/services/providers/discogs";
+import { freakxyModule } from "@/services/providers/freakxy";
+import { howlongtobeatModule } from "@/services/providers/howlongtobeat";
+import { igdbModule } from "@/services/providers/igdb";
+import { ledenicheurModule } from "@/services/providers/ledenicheur";
+import { musicbrainzModule } from "@/services/providers/musicbrainz";
+import { omdbModule } from "@/services/providers/omdb";
+import { openlibraryModule } from "@/services/providers/openlibrary";
+import { picclickModule } from "@/services/providers/picclick";
+import { pricechartingModule } from "@/services/providers/pricecharting";
+import { rawgModule } from "@/services/providers/rawg";
+import { screenscraperModule } from "@/services/providers/screenscraper";
+import { steamModule } from "@/services/providers/steam";
+import { steamgriddbModule } from "@/services/providers/steamgriddb";
+import { tmdbModule } from "@/services/providers/tmdb";
+
+import type { MetadataAdapterContext } from "@/types/providerModule";
 
 type Mode = "meta" | "list" | "raw";
 
 const out: Record<string, unknown> = {};
+const barcodeDeps = createBarcodeLookupDeps();
 
 function summarizeMeta(value: any) {
   return {
@@ -33,6 +36,12 @@ function summarizeMeta(value: any) {
     facts: value?.facts?.length || 0,
     title: value?.title || null,
   };
+}
+
+async function resolveMetadata(providerId: string, ctx: MetadataAdapterContext) {
+  const adapter = getMetadataProviderAdapter(providerId);
+  if (!adapter) return null;
+  return adapter.resolve(ctx);
 }
 
 async function safe(
@@ -62,58 +71,110 @@ async function safe(
 }
 
 async function run() {
-  await safe("igdb", () => fetchFromIGDB("Hades"));
-  await safe("rawg", () => fetchFromRawg("Hades"));
-  await safe("tmdb", () => fetchFromTMDB("Aladdin"));
-  await safe("omdb", () => fetchFromOMDb("Aladdin"));
-  await safe("screenscraper", () =>
-    fetchFromScreenScraper("The Legend of Zelda Skyward Sword"),
+  await safe(igdbModule.info.id, () =>
+    resolveMetadata(igdbModule.info.id, { name: "Hades", type: "games" }),
   );
-  await safe("steam", () => fetchFromSteam("Hades"));
-  await safe("howlongtobeat", () =>
-    fetchFromHowLongToBeat("The Legend of Zelda Skyward Sword", "wii"),
+  await safe(rawgModule.info.id, () =>
+    resolveMetadata(rawgModule.info.id, { name: "Hades", type: "games" }),
   );
-  await safe("steamgriddb", () => fetchFromSteamGridDB("Hades"));
-  await safe("openlibrary", () =>
-    fetchFromOpenLibrary("1984", "9782070368228"),
+  await safe(tmdbModule.info.id, () =>
+    resolveMetadata(tmdbModule.info.id, { name: "Aladdin", type: "movies" }),
   );
-  await safe("deezer", () =>
-    fetchFromDeezer("Daft Punk Random Access Memories"),
+  await safe(omdbModule.info.id, () =>
+    resolveMetadata(omdbModule.info.id, { name: "Aladdin", type: "movies" }),
   );
-  await safe("musicbrainz", () => fetchFromMusicBrainz("886443927087"), "raw");
-  await safe("discogs", () => fetchFromDiscogs("886443927087"), "raw");
-  await safe("bgg", () => fetchFromBGG("Catan"));
+  await safe(screenscraperModule.info.id, () =>
+    resolveMetadata(screenscraperModule.info.id, {
+      name: "The Legend of Zelda Skyward Sword",
+      type: "games",
+    }),
+  );
+  await safe(steamModule.info.id, () =>
+    resolveMetadata(steamModule.info.id, {
+      name: "Hades",
+      type: "games",
+      includePcSources: true,
+    }),
+  );
+  await safe(howlongtobeatModule.info.id, () =>
+    resolveMetadata(howlongtobeatModule.info.id, {
+      name: "The Legend of Zelda Skyward Sword",
+      type: "games",
+      platform: "wii",
+    }),
+  );
+  await safe(steamgriddbModule.info.id, () =>
+    resolveMetadata(steamgriddbModule.info.id, {
+      name: "Hades",
+      type: "games",
+    }),
+  );
+  await safe(openlibraryModule.info.id, () =>
+    resolveMetadata(openlibraryModule.info.id, {
+      name: "1984",
+      type: "books",
+      barcode: "9782070368228",
+    }),
+  );
+  await safe(deezerModule.info.id, () =>
+    resolveMetadata(deezerModule.info.id, {
+      name: "Daft Punk Random Access Memories",
+      type: "musics",
+    }),
+  );
   await safe(
-    "coverproject",
+    musicbrainzModule.info.id,
+    () => barcodeDeps.fetchFromMusicBrainz!("886443927087"),
+    "raw",
+  );
+  await safe(
+    discogsModule.info.id,
+    () => barcodeDeps.fetchFromDiscogs!("886443927087"),
+    "raw",
+  );
+  await safe(bggModule.info.id, () =>
+    resolveMetadata(bggModule.info.id, { name: "Catan", type: "boardgames" }),
+  );
+  await safe(
+    coverprojectModule.info.id,
     () =>
-      fetchCoverFromCoverProject(
-        "The Legend of Zelda Skyward Sword",
-        "Nintendo Wii",
-      ),
+      resolveMetadata(coverprojectModule.info.id, {
+        name: "The Legend of Zelda Skyward Sword",
+        type: "games",
+        platform: "Nintendo Wii",
+      }),
     "raw",
   );
   await safe(
-    "pricecharting",
-    () => fetchMetadataFromPriceCharting("0045496365226"),
+    pricechartingModule.info.id,
+    () => barcodeDeps.fetchMetadataFromPriceCharting!("0045496365226"),
     "raw",
   );
   await safe(
-    "chasseauxlivres",
-    () => fetchFromChasseAuxLivres("9782070368228", "fr"),
+    chasseauxlivresModule.info.id,
+    () => barcodeDeps.fetchFromChasseAuxLivres!("9782070368228", "fr"),
     "list",
   );
   await safe(
-    "achatmoinscher",
-    () => fetchFromAchatMoinsCher("9782070368228"),
+    achatmoinscherModule.info.id,
+    () => barcodeDeps.fetchFromAchatMoinsCher!("9782070368228"),
     "list",
   );
   await safe(
-    "ledenicheur",
-    () => fetchPricesFromLeDenicheur("hades switch"),
+    ledenicheurModule.info.id,
+    () => barcodeDeps.fetchPricesFromLeDenicheur!("hades switch"),
     "raw",
   );
-  await safe("freakxy", () => fetchFromFreakxy("5060004769360"), "list");
-  await safe("picclick", () => fetchFromPicClick("4988601467124"), "list");
+  await safe(
+    freakxyModule.info.id,
+    () => barcodeDeps.fetchFromFreakxy!("5060004769360"),
+    "list",
+  );
+  await safe(
+    picclickModule.info.id,
+    () => barcodeDeps.fetchFromPicClick!("4988601467124"),
+    "list",
+  );
 
   console.log(JSON.stringify(out, null, 2));
 }

@@ -21,6 +21,7 @@ providerRegistry). Two reasons:
    set server-side.
 
 2. **The two "real box cover" truths DIVERGE → this is a behaviour change.**
+
    - `REAL_BOX_COVER_SOURCES` (in `attachmentDisplayScore.ts`):
      `{ bgg, boardgamegeek, screenscraper, thegamesdb, launchbox, coverproject, apriloshop, freakxy, philibert }`
    - Registry `isRealBoxCover` (`PROVIDER_METADATA_EXTENSIONS` in `providerRegistry.ts`):
@@ -60,8 +61,8 @@ selected cover for existing items (or changing it only deliberately, validated).
    - `presentItem.ts` (or `formatMetadataFromStorage`) — annotate
      `metadata.attachments` loaded from the DB before they reach the client, so
      client-side `rankCoversForDisplay`/`getHeroImage` rank identically.
-   Use one shared server helper, e.g. `isRealBoxCoverSource(source)` backed by a
-   registry-derived `Set` of `PROVIDERS.filter(p => p.isRealBoxCover).map(p => p.id)`.
+     Use one shared server helper, e.g. `isRealBoxCoverSource(source)` backed by a
+     registry-derived `Set` of `PROVIDERS.filter(p => p.isRealBoxCover).map(p => p.id)`.
 3. **Source normalisation.** Attachment `source` can be an alias (`"bgg"`) or
    carry a `· region` / `/ variant` suffix (already normalised in
    `normalizeAttachmentSource`). Map the source to a canonical provider id before
@@ -72,6 +73,7 @@ selected cover for existing items (or changing it only deliberately, validated).
    cover (re-fetch e.g. Mille Sabords `3421272109517`).
 
 ### Alternative (simpler, rejected): inject a predicate
+
 Pass an optional `isRealBoxCoverSource` predicate into the rank/score fns; server
 passes a registry-backed one, client passes a no-op. **Rejected**: causes
 client/server ranking divergence (the gallery picker would order covers
@@ -79,6 +81,7 @@ differently than the server-computed cover). Only acceptable if the client stops
 re-ranking and consumes a server-ordered list.
 
 ## Validation (do not skip — critical path)
+
 - Full suite green (`npx vitest run`, currently 625 passing).
 - Guard test green after removing the `attachmentDisplayScore.ts` allowlist entry.
 - Re-fetch a board game (okkazeo/bgg covers), a video game (screenscraper), and a
@@ -90,6 +93,7 @@ re-ranking and consumes a server-ordered list.
   identical one without it (covering the +220 signal at the data level).
 
 ## Sibling targets (same client-trait-propagation pattern — do after, or together)
+
 - ~~`attachmentDisplayLabels.ts` `PROVIDER_LABELS`~~ **DONE** — drained via the same
   flag-on-attachment mechanism: `providerLabelForSource` (registry `info.label`) is
   stamped as `attachment.providerLabel` by `withProviderAttachmentTraits` (the cover
@@ -106,6 +110,7 @@ re-ranking and consumes a server-ordered list.
   Now the **only** remaining client-reachable label/source leak.
 
 ## DONE (2026-06-23) — shipped on `feat/foundation-postgres-tests`
+
 `attachmentDisplayScore.ts` is drained from the guard (whole allowlist entry
 removed). Approach as specced: the scorer reads two flags on the attachment —
 `isRealBoxCoverSource` and `isFullWrapCoverSource` — stamped server-side by
@@ -127,6 +132,7 @@ for every item, and a live re-fetch of Mille Sabords (`3421272109517`) kept
 no regression. Full suite green (633 passing).
 
 ## State of the provider-blind drain (2026-06-23, this session)
+
 Done (clean, behaviour-preserving, full suite green): `metadataMerge.ts` (steam/
 discogs → `digitalStorefrontArt`/`canonicalCover` traits), `metadataStorage.ts`
 (discogs → `isCanonicalCoverSource`), `confrontWithDatabase` (type→provider switch

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { buildCapabilityCoverageMatrix } from "@/lib/providerCoverage";
+import { buildCapabilityCoverageMatrix } from "@/lib/provider/coverage";
+import { type MediaType, type Capability } from "@/services/provider/registry";
+
 import {
   PROVIDERS,
   isProviderConfigured,
   capabilityCoverage,
-  type MediaType,
-  type Capability,
-} from "@/services/providerRegistry";
+} from "@/services/provider/registry";
 
 const TYPES: MediaType[] = ["games", "movies", "musics", "books", "boardgames"];
 const CAPABILITIES: Capability[] = [

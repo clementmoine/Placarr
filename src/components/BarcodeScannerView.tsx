@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, CSSProperties } from "react";
 import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
-import { markCameraUnavailable } from "@/lib/hooks/useCameraAvailability";
+import { markCameraUnavailable } from "@/lib/client/hooks/useCameraAvailability";
 
 type ScannerProps = {
   onScan: (detectedCodes: IDetectedBarcode[]) => void;

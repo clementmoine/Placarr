@@ -10,8 +10,8 @@ import { CarouselDots } from "@/components/CarouselDots";
 import { Badge } from "@/components/ui/badge";
 
 import type { ItemWithMetadata } from "@/types/items";
-import { getGalleryImages, getMediaTypeLabel } from "@/lib/itemMedia";
-import Image from "next/image";
+import { getGalleryImages, getMediaTypeLabel } from "@/lib/item/media";
+import { RemoteImage } from "@/components/RemoteImage";
 
 interface ItemCarouselProps {
   item: Partial<Pick<ItemWithMetadata, "metadata" | "imageUrl">>;
@@ -35,7 +35,7 @@ export function ItemCarousel(props: ItemCarouselProps) {
         {images.map((media) => (
           <CarouselItem key={media.url}>
             <div className="relative">
-              <Image
+              <RemoteImage
                 src={media.url}
                 alt="Item image"
                 width={512}

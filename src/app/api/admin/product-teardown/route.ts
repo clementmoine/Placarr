@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import {
   createGameEditionMatcher,
@@ -11,8 +11,8 @@ import {
   LISTING_NOISE_TERMS,
   LISTING_REGION_TERMS,
 } from "@/lib/barcode/listingTerms";
-import { resolveBarcode } from "@/services/barcodeResolver";
-import { createVideoGamePlatformMatcher } from "@/lib/videoGamePlatforms";
+import { resolveBarcode } from "@/services/barcode/resolver";
+import { createVideoGamePlatformMatcher } from "@/lib/games/platforms";
 import {
   cleanSearchQuery,
   explainAttachmentScoreForDisplay,
@@ -22,7 +22,7 @@ import {
 import {
   buildTeardownBarcodeProviderTasks,
   buildTeardownMetadataProviderTasks,
-} from "@/services/providerTeardown";
+} from "@/services/provider/teardown";
 
 type ProviderPhase = "barcode" | "metadata" | "merged";
 type ProviderStatus = "hit" | "empty" | "error" | "skipped";

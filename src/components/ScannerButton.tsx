@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
-import { useCameraAvailability } from "@/lib/hooks/useCameraAvailability";
+import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 
 import { Barcode, Scan } from "lucide-react";
 import {

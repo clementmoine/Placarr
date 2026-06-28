@@ -1,15 +1,12 @@
-import { NextRequest, NextResponse, after } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+
 import { requireGuestOrHigher } from "@/lib/auth";
-import { cleanCode } from "@/lib/barcode/query";
-import { resolveItemId } from "@/lib/resolveIds";
-import { shouldRefreshPriceCache } from "@/lib/priceCachePolicy";
+import { prisma } from "@/lib/db/prisma";
+import { resolveItemId } from "@/lib/routing/resolveIds";
 import {
-  emptyBarcodePrices,
-  getCachedBarcodePrices,
-  refreshBarcodePrices,
-  type RefreshBarcodePricesInput,
-} from "@/services/priceResolver";
+  itemPricesContextFromRecord,
+  readItemPrices,
+} from "@/services/pricing/itemDisplay";
 
 export async function GET(
   req: NextRequest,
@@ -36,54 +33,8 @@ export async function GET(
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    const cleanedBarcode = item.barcode ? cleanCode(item.barcode) : "";
-    if (!cleanedBarcode) {
-      return NextResponse.json(emptyBarcodePrices());
-    }
-
-    let aliases: string[] = [];
-    if (item.metadata?.aliases) {
-      try {
-        aliases = JSON.parse(item.metadata.aliases);
-      } catch (error) {
-        console.warn("[API Prices] Failed to parse metadata aliases:", error);
-      }
-    }
-
-    const refreshInput: RefreshBarcodePricesInput = {
-      cleanedBarcode,
-      shelfType: item.shelf.type,
-      shelfName: item.shelf.name,
-      primaryName: item.name,
-      extraNames: [item.metadata?.title, ...aliases].filter(
-        (name): name is string => !!name && name.trim().length > 0,
-      ),
-    };
-
-    // Stale-while-revalidate: serve the cache immediately, refresh in the
-    // background once it is too old. The refresh only merges fresher values in
-    // (mergePriceOffers), so cached data is never lost on a failed provider.
-    const cached = await getCachedBarcodePrices(
-      cleanedBarcode,
-      item.shelf.type,
-      { itemId: item.id, metadataId: item.metadataId },
-    );
-    if (cached) {
-      if (shouldRefreshPriceCache(item.shelf.type, cached)) {
-        after(async () => {
-          try {
-            await refreshBarcodePrices(refreshInput);
-          } catch (error) {
-            console.error("[API Prices] Background refresh failed:", error);
-          }
-        });
-      }
-      return NextResponse.json(cached);
-    }
-
-    // Nothing cached yet — fetch synchronously so the first view has prices.
-    const fresh = await refreshBarcodePrices(refreshInput);
-    return NextResponse.json(fresh);
+    const prices = await readItemPrices(itemPricesContextFromRecord(item));
+    return NextResponse.json(prices);
   } catch (error) {
     console.error(`[API Prices] Error handling request:`, error);
     return NextResponse.json(

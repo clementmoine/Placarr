@@ -7,15 +7,32 @@ import React, {
   type SyntheticEvent,
 } from "react";
 import type { Item } from "@prisma/client";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { Loader2 } from "lucide-react";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
   ShelfTypeIcon,
   getShelfTypeIconComponent,
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
 
-import { getAspectRatio } from "@/lib/cardFormat";
-import { getEstimatedItemValueCents } from "@/lib/itemValue";
+import { getAspectRatio } from "@/lib/text/cardFormat";
+import { getEstimatedItemValueCents } from "@/lib/item/value";
+import { isItemMetadataBusy } from "@/lib/item/enrichment";
+import type { Condition } from "@prisma/client";
+import { cn } from "@/lib/core/utils";
+
+function conditionBadgeClass(condition: Condition) {
+  switch (condition) {
+    case "new":
+      return "text-emerald-300 border-emerald-400/25";
+    case "used":
+      return "text-amber-400 border-white/10";
+    case "damaged":
+      return "text-red-300 border-red-400/25";
+    default:
+      return "text-zinc-200 border-white/10";
+  }
+}
 
 interface ItemCardProps extends Item {
   shelfType?: string | null;
@@ -24,12 +41,35 @@ interface ItemCardProps extends Item {
   priceNew?: number | null;
   priceUsed?: number | null;
   priceUsedCIB?: number | null;
+  priority?: boolean;
 }
 
-export function ItemCard(props: ItemCardProps) {
-  const { imageUrl, name, shelfType, cardFormat, condition } = props;
+function itemCardPropsEqual(
+  prev: ItemCardProps,
+  next: ItemCardProps,
+): boolean {
+  return (
+    prev.id === next.id &&
+    prev.imageUrl === next.imageUrl &&
+    prev.name === next.name &&
+    prev.condition === next.condition &&
+    prev.shelfType === next.shelfType &&
+    prev.cardFormat === next.cardFormat &&
+    prev.priceNew === next.priceNew &&
+    prev.priceUsed === next.priceUsed &&
+    prev.priceUsedCIB === next.priceUsedCIB &&
+    prev.priority === next.priority &&
+    prev.metadataId === next.metadataId &&
+    prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
+    prev.createdAt === next.createdAt
+  );
+}
+
+function ItemCardInner(props: ItemCardProps) {
+  const { imageUrl, name, shelfType, cardFormat, condition, priority } = props;
   const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
+  const isEnriching = isItemMetadataBusy(props);
 
   // Determine aspect ratio based on shelf type or card format
   const aspectRatio = useMemo(() => {
@@ -71,14 +111,25 @@ export function ItemCard(props: ItemCardProps) {
     >
       {/* Badges container */}
       <div className="absolute top-2 left-2 z-10 pointer-events-none select-none flex flex-wrap gap-1">
-        {condition && condition !== "new" && (
-          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/75 backdrop-blur-md text-amber-400 border border-white/10 shadow-sm">
+        {condition && (
+          <span
+            className={cn(
+              "text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/75 backdrop-blur-md border shadow-sm",
+              conditionBadgeClass(condition),
+            )}
+          >
             {t(`items.conditions.${condition}`) || condition}
           </span>
         )}
         {estimatedPrice !== null && (
           <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-950/85 backdrop-blur-md text-emerald-400 border border-emerald-500/20 shadow-sm">
             {estimatedPrice.toFixed(2)} €
+          </span>
+        )}
+        {isEnriching && (
+          <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/75 backdrop-blur-md text-sky-300 border border-sky-400/20 shadow-sm">
+            <Loader2 className="size-2.5 animate-spin" />
+            {t("items.fetching")}
           </span>
         )}
       </div>
@@ -89,6 +140,7 @@ export function ItemCard(props: ItemCardProps) {
           <RemoteImage
             src={imageUrl}
             alt={name}
+            priority={priority}
             onLoad={handleImageLoad}
             className={[
               "w-full h-full select-none transition-transform duration-500 ease-out object-top",
@@ -122,3 +174,5 @@ export function ItemCard(props: ItemCardProps) {
     </div>
   );
 }
+
+export const ItemCard = React.memo(ItemCardInner, itemCardPropsEqual);

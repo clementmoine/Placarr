@@ -15,18 +15,18 @@ import {
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
 import { BaseModal } from "./BaseModal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { useAccount } from "@/lib/hooks/useAccount";
-import { cn } from "@/lib/utils";
-import { getHeroImage, getGalleryImages } from "@/lib/itemMedia";
-import { getExploreDetailCoverClass } from "@/lib/cardFormat";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { useAccount } from "@/lib/client/hooks/useAccount";
+import { cn } from "@/lib/core/utils";
+import { getHeroImage, getGalleryImages } from "@/lib/item/media";
+import { getExploreDetailCoverClass } from "@/lib/text/cardFormat";
 
 interface ExploreItemModalProps {
   isOpen: boolean;
@@ -69,6 +69,9 @@ export function ExploreItemModal({
         req.itemId === item.id && ["PENDING", "APPROVED"].includes(req.status),
     );
   }, [loanData, item]);
+
+  const referencePriceProviderLabel =
+    item?.referenceCatalogLink?.providerLabel ?? null;
 
   const createLoanMutation = useMutation({
     mutationFn: async (payload: { itemId: string; notes?: string }) => {
@@ -271,7 +274,7 @@ export function ExploreItemModal({
               )}
             >
               {coverImage ? (
-                <Image
+                <RemoteImage
                   src={coverImage}
                   alt={item.name}
                   width={300}
@@ -349,13 +352,13 @@ export function ExploreItemModal({
                 </div>
               )}
 
-              {item.shelf?.type === "games" && (
+              {item.referenceCatalogLink?.url && referencePriceProviderLabel && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none flex items-center gap-1 select-none">
-                    PriceCharting
+                    {referencePriceProviderLabel}
                   </span>
                   <a
-                    href={`https://www.pricecharting.com/fr/search-products?type=videogames&q=${encodeURIComponent(item.name || "")}`}
+                    href={item.referenceCatalogLink.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 hover:underline flex items-center gap-1 mt-0.5"
@@ -395,7 +398,7 @@ export function ExploreItemModal({
                   key={i}
                   className="relative h-20 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 shrink-0 bg-zinc-950/20"
                 >
-                  <Image
+                  <RemoteImage
                     src={img.url}
                     alt={`Illustration ${i + 1}`}
                     width={200}

@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/core/utils";
+import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -71,15 +72,25 @@ export function BaseModal({
   };
 
   const handleClose = () => {
+    releaseStuckOverlayLocks();
     onClose();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) handleClose();
+  };
+
+  const hasHiddenClass = (className?: string) => {
+    if (!className) return false;
+    return className.split(/\s+/).some((token) => token === "hidden");
   };
 
   const hasVisibleChildren = React.Children.toArray(children).some((child) => {
     if (!child) return false;
     if (React.isValidElement(child)) {
-      const props = child.props as any;
+      const props = child.props as { className?: string };
       if (
-        props.className?.includes("hidden") ||
+        hasHiddenClass(props.className) ||
         (child.type === "div" && props.className === "hidden")
       ) {
         return false;
@@ -91,7 +102,7 @@ export function BaseModal({
   const isConfirmDialog = size === "sm" && !submitLabel;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn(
           "flex flex-col p-0 overflow-hidden bg-zinc-50/98 dark:bg-zinc-950/98 backdrop-blur-md text-foreground gap-0 border border-border/80 dark:border-zinc-850/80 rounded-2xl shadow-2xl",
@@ -125,7 +136,9 @@ export function BaseModal({
         {/* Scrollable content area */}
         {hasVisibleChildren &&
           (customChildren ? (
-            children
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              {children}
+            </div>
           ) : (
             <div className="flex-1 overflow-y-auto p-5 md:p-6 min-h-0 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
               {children}

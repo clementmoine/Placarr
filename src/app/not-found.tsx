@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Compass } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 export default function NotFound() {
   const { t } = useLocale();

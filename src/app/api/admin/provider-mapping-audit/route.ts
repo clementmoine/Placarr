@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { runProviderMappingAudit } from "@/services/providerMappingAudit";
+import { runProviderMappingAudit } from "@/services/provider/mappingAudit";
 
 export async function GET() {
   const auth = await requireAdmin();

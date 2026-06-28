@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
 import {
   itemWithMetadataInclude,
   presentItemFromStorage,
-} from "@/lib/presentItem";
+} from "@/lib/item/present";
 
 function presentLoanRequest<
   T extends {

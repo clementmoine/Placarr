@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import Header from "@/components/Header";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
 import {
@@ -40,7 +40,7 @@ import {
   FlaskConical,
   Terminal,
 } from "lucide-react";
-import { useAccount } from "@/lib/hooks/useAccount";
+import { useAccount } from "@/lib/client/hooks/useAccount";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -51,9 +51,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
 interface ApiStatus {
+  providerId: string;
   name: string;
   type: "metadata";
   configured: boolean;
@@ -86,6 +87,8 @@ interface ProviderRegistryEntry {
   capabilities: ProviderCapability[];
   canonical: boolean;
   notes?: string;
+  websiteUrl?: string;
+  apiKeyDashboardUrl?: string;
   auth:
     | { kind: "none" }
     | { kind: "scrape" }
@@ -209,46 +212,6 @@ interface ProductTeardownResult {
   globalConfidence: number;
   generatedAt: string;
 }
-
-const dashboardUrls: Record<string, string> = {
-  Deezer: "https://developers.deezer.com/",
-  "Open Library": "https://openlibrary.org/",
-  BoardGameGeek: "https://boardgamegeek.com/",
-  "Chasse aux Livres": "https://www.chasse-aux-livres.fr/",
-  LeDenicheur: "https://ledenicheur.fr/",
-  TMDB: "https://www.themoviedb.org/settings/api",
-  RAWG: "https://rawg.io/apikeys",
-  ScreenScraper: "https://www.screenscraper.fr/",
-  TheGamesDB: "https://api.thegamesdb.net/key.php",
-  IGDB: "https://dev.twitch.tv/console/apps",
-};
-
-const providerWebsiteUrls: Record<string, string> = {
-  screenscraper: "https://www.screenscraper.fr/",
-  igdb: "https://www.igdb.com/",
-  rawg: "https://rawg.io/",
-  steamgriddb: "https://www.steamgriddb.com/",
-  steam: "https://store.steampowered.com/",
-  howlongtobeat: "https://howlongtobeat.com/",
-  pricecharting: "https://www.pricecharting.com/",
-  coverproject: "https://www.thecoverproject.net/",
-  launchbox: "https://gamesdb.launchbox-app.com/",
-  musicbrainz: "https://musicbrainz.org/",
-  discogs: "https://www.discogs.com/",
-  deezer: "https://www.deezer.com/",
-  tmdb: "https://www.themoviedb.org/",
-  omdb: "https://www.omdbapi.com/",
-  openlibrary: "https://openlibrary.org/",
-  boardgamegeek: "https://boardgamegeek.com/",
-  chasseauxlivres: "https://www.chasse-aux-livres.fr/",
-  achatmoinscher: "https://www.achatmoinscher.com/",
-  ledenicheur: "https://ledenicheur.fr/",
-  apriloshop: "https://apriloshop.fr/",
-  freakxy: "https://www.freakxy.fr/",
-  picclick: "https://picclick.fr/",
-  scandex: "https://scandex.app/",
-  thegamesdb: "https://thegamesdb.net/",
-};
 
 const providerTypesOrder: ProviderType[] = [
   "games",
@@ -541,16 +504,24 @@ function AdminDashboardComponent() {
 
   const metadataApis = apis?.filter((a) => a.type === "metadata") || [];
 
+  const providerById = new Map(
+    (providerRegistry?.providers || []).map((provider) => [provider.id, provider]),
+  );
+
   const healthyCount = apis?.filter((a) => a.status === "up").length || 0;
   const totalCount = apis?.length || 0;
 
   const runtimeStatusByProviderKey = new Map(
     (apis || []).map((api) => [normalizeProviderKey(api.name), api]),
   );
+  const runtimeStatusByProviderId = new Map(
+    (apis || []).map((api) => [api.providerId, api]),
+  );
 
   const providersWithRuntime = (providerRegistry?.providers || []).map(
     (provider) => {
       const runtime =
+        runtimeStatusByProviderId.get(provider.id) ||
         runtimeStatusByProviderKey.get(normalizeProviderKey(provider.label)) ||
         runtimeStatusByProviderKey.get(normalizeProviderKey(provider.id));
       return {
@@ -1164,7 +1135,7 @@ function AdminDashboardComponent() {
                                           className="flex items-center gap-2 text-xs"
                                         >
                                           {product.coverUrl && (
-                                            <Image
+                                            <RemoteImage
                                               src={product.coverUrl}
                                               alt={product.name}
                                               width={40}
@@ -1235,7 +1206,7 @@ function AdminDashboardComponent() {
                                             </div>
                                             <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
                                               {candidate.url && (
-                                                <Image
+                                                <RemoteImage
                                                   src={candidate.url}
                                                   alt={`candidate-${candidateIndex + 1}`}
                                                   width={26}
@@ -1497,7 +1468,11 @@ function AdminDashboardComponent() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                          {metadataApis.map((api) => (
+                          {metadataApis.map((api) => {
+                            const providerConfig = providerById.get(api.providerId);
+                            const apiDashboardUrl =
+                              providerConfig?.apiKeyDashboardUrl;
+                            return (
                             <Card
                               key={api.name}
                               className={`relative overflow-hidden border transition-all duration-300 ${
@@ -1512,9 +1487,9 @@ function AdminDashboardComponent() {
                                 <div className="space-y-0.5">
                                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                                     {api.name}
-                                    {dashboardUrls[api.name] && (
+                                    {apiDashboardUrl && (
                                       <a
-                                        href={dashboardUrls[api.name]}
+                                        href={apiDashboardUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -1607,7 +1582,8 @@ function AdminDashboardComponent() {
                                 )}
                               </CardContent>
                             </Card>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     </>
@@ -2062,8 +2038,7 @@ function AdminDashboardComponent() {
                             const stickyRowBg =
                               rowIndex % 2 === 0 ? "bg-background" : "bg-muted";
                             const providerWebsite =
-                              providerWebsiteUrls[provider.id] ||
-                              dashboardUrls[provider.label];
+                              provider.websiteUrl ?? provider.apiKeyDashboardUrl;
                             return (
                               <tr
                                 key={provider.id}

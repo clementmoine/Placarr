@@ -6,21 +6,21 @@ const h = vi.hoisted(() => ({
   item: {
     findUnique: vi.fn(),
   },
-  fetchAndStoreMetadata: vi.fn(),
+  startItemMetadataRefresh: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
   requireAdmin: vi.fn(async () => h.authReturn),
 }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     item: h.item,
   },
 }));
-vi.mock("@/services/metadata", () => ({
-  fetchAndStoreMetadata: h.fetchAndStoreMetadata,
+vi.mock("@/lib/jobs/scheduleMetadataRefresh", () => ({
+  startItemMetadataRefresh: h.startItemMetadataRefresh,
 }));
-vi.mock("@/lib/presentItem", () => ({
+vi.mock("@/lib/item/present", () => ({
   presentItemFromStorage: (item: { id: string }) => ({
     id: item.id,
     presented: true,
@@ -42,7 +42,11 @@ describe("POST /api/admin/items-refresh/[itemId]", () => {
   beforeEach(() => {
     h.authReturn = { user: { role: "admin" } } as unknown;
     h.item.findUnique.mockReset();
-    h.fetchAndStoreMetadata.mockReset();
+    h.startItemMetadataRefresh.mockReset();
+    h.startItemMetadataRefresh.mockResolvedValue({
+      startedAt: new Date("2026-06-27T12:00:00.000Z"),
+      generation: 1,
+    });
   });
 
   it("renvoie directement la réponse d'auth quand non-admin", async () => {
@@ -54,10 +58,10 @@ describe("POST /api/admin/items-refresh/[itemId]", () => {
     const response = await POST(post(), context);
 
     expect(response.status).toBe(401);
-    expect(h.fetchAndStoreMetadata).not.toHaveBeenCalled();
+    expect(h.startItemMetadataRefresh).not.toHaveBeenCalled();
   });
 
-  it("force le refresh metadata de l'item demandé", async () => {
+  it("planifie le refresh metadata de l'item demandé", async () => {
     h.item.findUnique
       .mockResolvedValueOnce({
         id: "i1",
@@ -75,23 +79,20 @@ describe("POST /api/admin/items-refresh/[itemId]", () => {
           publishers: [],
         },
       });
-    h.fetchAndStoreMetadata.mockResolvedValue({ title: "CATAN" });
 
     const response = await POST(post(), context);
     const payload = await response.json();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(202);
     expect(payload.ok).toBe(true);
-    expect(h.fetchAndStoreMetadata).toHaveBeenCalledWith(
-      "i1",
-      "CATAN",
-      "boardgames",
-      "3558380126133",
-      true,
-      "Jeux de société",
-      true, // explicit refresh bypasses the short-lived lookup cache
-      true, // isBackground
-    );
+    expect(payload.accepted).toBe(true);
+    expect(h.startItemMetadataRefresh).toHaveBeenCalledWith({
+      itemId: "i1",
+      lookupQuery: "CATAN",
+      shelfType: "boardgames",
+      barcode: "3558380126133",
+      shelfName: "Jeux de société",
+    });
   });
 
   it("utilise lookupQuery quand fourni", async () => {
@@ -108,19 +109,15 @@ describe("POST /api/admin/items-refresh/[itemId]", () => {
         shelf: { type: "games" },
         metadata: null,
       });
-    h.fetchAndStoreMetadata.mockResolvedValue(null);
 
     await POST(post({ lookupQuery: "Titre corrigé" }), context);
 
-    expect(h.fetchAndStoreMetadata).toHaveBeenCalledWith(
-      "i1",
-      "Titre corrigé",
-      "games",
-      undefined,
-      true,
-      "PS5",
-      true, // explicit refresh bypasses the short-lived lookup cache
-      true, // isBackground
-    );
+    expect(h.startItemMetadataRefresh).toHaveBeenCalledWith({
+      itemId: "i1",
+      lookupQuery: "Titre corrigé",
+      shelfType: "games",
+      barcode: null,
+      shelfName: "PS5",
+    });
   });
 });

@@ -2,10 +2,10 @@
 "use client";
 
 import { toast } from "sonner";
-import { Search, Barcode, ExternalLink, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { Search, Barcode, ExternalLink, Plus, Loader2, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,14 @@ import {
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
 import { getShelves } from "@/lib/api/shelves";
-import { getCoverImage } from "@/lib/itemMedia";
+import { getCoverImage } from "@/lib/item/media";
 import { RemoteImage } from "@/components/RemoteImage";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
-import { itemPath, slugify } from "@/lib/slugs";
+import { saveItem } from "@/lib/api/items";
+import { syncItemQueries } from "@/lib/item/queryCache";
+import { cn } from "@/lib/core/utils";
+import { itemPath, slugify } from "@/lib/routing/slugs";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 type QuickScanResult = {
@@ -42,12 +45,21 @@ type ExistingQuickItem = {
   name: string;
   shelfId: string;
   condition: string;
+  barcode?: string | null;
+  metadataId?: string | null;
   imageUrl?: string | null;
   shelf?: {
     id: string;
     name: string;
   } | null;
 };
+
+function isOwnedItemCompletable(
+  item: ExistingQuickItem,
+  scannedBarcode: string,
+): boolean {
+  return Boolean(scannedBarcode.trim()) && !item.barcode?.trim();
+}
 
 const MIN_BACKGROUND_LOADING_MS = 250;
 
@@ -72,10 +84,12 @@ export function QuickScanModal({
 }) {
   const { t } = useLocale();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [selectedShelfId, setSelectedShelfId] = useState<string>("");
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [isRevalidating, setIsRevalidating] = useState<boolean>(false);
+  const [completingItemId, setCompletingItemId] = useState<string | null>(null);
   const [results, setResults] = useState<QuickScanResult[]>([]);
   const [customName, setCustomName] = useState<string>("");
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
@@ -111,6 +125,42 @@ export function QuickScanModal({
     enabled: isOpen && !!activeBarcode,
   });
 
+  const titleLookupKey = useMemo(
+    () => results.map((result) => result.title).slice(0, 3).join("\0"),
+    [results],
+  );
+
+  const { data: titleMatchedItems } = useQuery<ExistingQuickItem[]>({
+    queryKey: ["existingItemsByTitle", titleLookupKey],
+    queryFn: async () => {
+      const titles = results.map((result) => result.title).slice(0, 3);
+      const seen = new Map<string, ExistingQuickItem>();
+
+      for (const title of titles) {
+        const { data } = await axios.get<ExistingQuickItem[]>("/api/items", {
+          params: {
+            q: title,
+            includeMetadata: "false",
+          },
+        });
+        for (const item of data) {
+          seen.set(item.id, item);
+        }
+      }
+
+      return Array.from(seen.values());
+    },
+    enabled: isOpen && results.length > 0,
+  });
+
+  const ownedCandidates = useMemo(() => {
+    const seen = new Map<string, ExistingQuickItem>();
+    for (const item of [...(existingItems || []), ...(titleMatchedItems || [])]) {
+      seen.set(item.id, item);
+    }
+    return Array.from(seen.values());
+  }, [existingItems, titleMatchedItems]);
+
   const defaultShelf = defaultShelfId
     ? shelves?.find(
         (s) =>
@@ -145,6 +195,7 @@ export function QuickScanModal({
       code: string,
       type: string,
       platform: string | null,
+      shelfName: string | null,
       initialResults: QuickScanResult[],
     ) => {
       const toHydrate = initialResults;
@@ -156,6 +207,7 @@ export function QuickScanModal({
               type,
               code,
               platform,
+              shelfName,
             );
             if (activeLookupKeyRef.current !== lookupKey) return;
             const hydratedImageUrl = metadata
@@ -326,6 +378,7 @@ export function QuickScanModal({
           lookupKey,
           code,
           metadataType,
+          platformKey || null,
           guessedPlatformContext || null,
           resolvedList,
         );
@@ -462,6 +515,7 @@ export function QuickScanModal({
     setActiveBarcode("");
     setBarcodeInput("");
     setSelectedShelfId("");
+    setCompletingItemId(null);
     onClose();
   }, [onClose]);
 
@@ -509,13 +563,42 @@ export function QuickScanModal({
     ],
   );
 
+  const handleCompleteOwnedItem = useCallback(
+    async (ownedItem: ExistingQuickItem) => {
+      if (!activeBarcode.trim()) return;
+
+      setCompletingItemId(ownedItem.id);
+      try {
+        const updated = await saveItem({
+          id: ownedItem.id,
+          barcode: activeBarcode,
+          currentShelfId: ownedItem.shelfId,
+          refreshMetadata: true,
+        });
+
+        await syncItemQueries(queryClient, updated, [ownedItem.shelfId]);
+        toast.success(t("scanner.completeSuccess"));
+        handleClose();
+        router.push(
+          itemPath(ownedItem.shelf || { id: ownedItem.shelfId }, updated),
+        );
+      } catch (error) {
+        console.error("Failed to complete owned item:", error);
+        toast.error(t("scanner.completeFailed"));
+      } finally {
+        setCompletingItemId(null);
+      }
+    },
+    [activeBarcode, handleClose, queryClient, router, t],
+  );
+
   const getOwnedStatusForProduct = (productTitle: string) => {
-    if (!existingItems || existingItems.length === 0) return null;
+    if (!ownedCandidates.length) return null;
 
     const titleNorm = productTitle.toLowerCase().trim();
 
     // 1. Try to find exact/close name match first
-    const exactMatch = existingItems.find(
+    const exactMatch = ownedCandidates.find(
       (item) => item.name.toLowerCase().trim() === titleNorm,
     );
     if (exactMatch) return exactMatch;
@@ -523,7 +606,7 @@ export function QuickScanModal({
     // 2. Token overlap fuzzy check to catch spelling or punctuation variations
     // but prevent matching completely unrelated titles
     const sugTokens = new Set(titleNorm.split(/[^a-z0-9]+/));
-    for (const item of existingItems) {
+    for (const item of ownedCandidates) {
       const dbNorm = item.name.toLowerCase().trim();
       const dbTokens = new Set(dbNorm.split(/[^a-z0-9]+/));
 
@@ -541,7 +624,7 @@ export function QuickScanModal({
     return null;
   };
 
-  const hasExistingItems = Boolean(existingItems && existingItems.length > 0);
+  const hasExistingItems = Boolean(ownedCandidates.length);
 
   // Barcode-level scan insights shown above the candidate list.
   const formatEuroFromCents = (cents?: number | null) =>
@@ -609,6 +692,7 @@ export function QuickScanModal({
           onValueChange={setBarcodeInput}
           onSubmit={handleManualBarcodeSubmit}
           disabled={isResolvingShelves || isSearching}
+          shelfType={shelfType}
         />
 
         <div className="flex flex-col gap-3 mt-2">
@@ -628,6 +712,11 @@ export function QuickScanModal({
               {results.map((product) => {
                 const ownedItem = getOwnedStatusForProduct(product.title);
                 const isOwned = !!ownedItem;
+                const canComplete =
+                  isOwned &&
+                  ownedItem &&
+                  isOwnedItemCompletable(ownedItem, activeBarcode);
+                const isCompleting = completingItemId === ownedItem?.id;
 
                 return (
                   <div
@@ -663,8 +752,20 @@ export function QuickScanModal({
                         </span>
                         <div className="flex flex-wrap items-center gap-1.5 select-none">
                           {isOwned && ownedItem && (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/10">
-                              {t("scanner.alreadyIn")} {ownedItem.shelf?.name}
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black border",
+                                canComplete
+                                  ? "bg-amber-500/10 dark:bg-amber-500/5 text-amber-700 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/10"
+                                  : "bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/10",
+                              )}
+                            >
+                              {canComplete
+                                ? t("scanner.alreadyIncomplete").replace(
+                                    "{shelf}",
+                                    ownedItem.shelf?.name || "Placarr",
+                                  )
+                                : `${t("scanner.alreadyIn")} ${ownedItem.shelf?.name}`}
                             </span>
                           )}
                           {(product.shelfType || estimatedType) && (
@@ -738,14 +839,32 @@ export function QuickScanModal({
                           {t("scanner.viewExisting") || "Consulter"}
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        onClick={() => handleSelectProduct(product)}
-                        className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
-                      >
-                        <Plus className="size-4 mr-1.5 shrink-0" />
-                        {t("common.add") || "Ajouter"}
-                      </Button>
+                      {canComplete && ownedItem ? (
+                        <Button
+                          size="sm"
+                          onClick={() => void handleCompleteOwnedItem(ownedItem)}
+                          disabled={Boolean(completingItemId)}
+                          className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
+                        >
+                          {isCompleting ? (
+                            <Loader2 className="size-4 mr-1.5 shrink-0 animate-spin" />
+                          ) : (
+                            <Sparkles className="size-4 mr-1.5 shrink-0" />
+                          )}
+                          {t("scanner.complete")}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSelectProduct(product)}
+                          className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
+                        >
+                          <Plus className="size-4 mr-1.5 shrink-0" />
+                          {isOwned
+                            ? t("scanner.addAnotherCopy")
+                            : t("common.add") || "Ajouter"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
@@ -803,9 +922,20 @@ export function QuickScanModal({
               {hasExistingItems && (
                 <div className="flex flex-col gap-2.5">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider select-none">
-                    {t("scanner.alreadyOwn")}
+                    {ownedCandidates.some((item) =>
+                      isOwnedItemCompletable(item, activeBarcode),
+                    )
+                      ? t("scanner.alreadyOwnIncomplete")
+                      : t("scanner.alreadyOwn")}
                   </span>
-                  {(existingItems || []).map((existItem) => (
+                  {ownedCandidates.map((existItem) => {
+                    const canComplete = isOwnedItemCompletable(
+                      existItem,
+                      activeBarcode,
+                    );
+                    const isCompleting = completingItemId === existItem.id;
+
+                    return (
                     <div
                       key={existItem.id}
                       className="flex items-center justify-between gap-4 p-3 bg-zinc-50/50 dark:bg-zinc-900/20 border border-border/40 rounded-2xl"
@@ -833,6 +963,22 @@ export function QuickScanModal({
                           </span>
                         </div>
                       </div>
+                      <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                        {canComplete ? (
+                          <Button
+                            size="sm"
+                            onClick={() => void handleCompleteOwnedItem(existItem)}
+                            disabled={Boolean(completingItemId)}
+                            className="h-9 px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer"
+                          >
+                            {isCompleting ? (
+                              <Loader2 className="size-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Sparkles className="size-3.5 mr-1" />
+                            )}
+                            {t("scanner.complete")}
+                          </Button>
+                        ) : null}
                       <Button
                         size="sm"
                         variant="ghost"
@@ -850,8 +996,10 @@ export function QuickScanModal({
                         <ExternalLink className="size-3.5 mr-1" />
                         {t("scanner.viewExisting") || "Consulter"}
                       </Button>
+                      </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

@@ -5,7 +5,7 @@ import {
   DEFAULT_BARCODE_REGRESSION_CASES,
   type BarcodeRegressionCase,
   type BarcodeRegressionExpectation,
-} from "@/lib/barcode/regressionCases";
+} from "@/lib/barcode/lookup/regressionCases";
 
 type BarcodeRegressionAssertion = {
   label: string;

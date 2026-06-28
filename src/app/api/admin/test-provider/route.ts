@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { extractProductName } from "@/lib/productName";
+import { extractProductName } from "@/lib/text/productName";
 
 import {
   confrontWithDatabase,
   getDatabaseSuggestions,
   type MetadataResult,
 } from "@/services/metadata";
-import { testProviderHandlers } from "@/services/providerTestHandlers";
+import { testProviderHandlers } from "@/services/provider/runtime";
 
 async function processScrapedNames(
   rawNames: string[] | undefined,
@@ -133,27 +133,15 @@ export async function POST(req: NextRequest) {
 
     const resolved = await handler.run(query, type || null);
 
-    if (handler.kind === "scraped-list") {
+    if (handler.formatResult) {
+      result = await handler.formatResult(resolved, type || null, {
+        processScrapedNames,
+      });
+    } else if (handler.kind === "scraped-list") {
       result = await processResolvedProducts(
         (resolved as Array<{ name: string; coverUrl?: string | null }>) || [],
         type || null,
       );
-    } else if (handler.kind === "scandex") {
-      const scandex = resolved as {
-        igdb_metadata?: {
-          name?: string;
-          platform?: { name?: string | null } | null;
-        } | null;
-      } | null;
-      const rawNames = scandex?.igdb_metadata?.name
-        ? [scandex.igdb_metadata.name]
-        : [];
-      const processed = await processScrapedNames(rawNames, type || null);
-      result = {
-        ...processed,
-        platformName: scandex?.igdb_metadata?.platform?.name || null,
-        rawResponse: scandex,
-      };
     } else if (handler.kind === "prices") {
       result = { prices: resolved };
     } else if (handler.kind === "metadata-barcode") {

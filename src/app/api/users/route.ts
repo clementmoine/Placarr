@@ -4,8 +4,8 @@ import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { getToken } from "next-auth/jwt";
 
-import { authOptions } from "@/lib/auth.config";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth/config";
+import { prisma } from "@/lib/db/prisma";
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);

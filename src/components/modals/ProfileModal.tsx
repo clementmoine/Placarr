@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { toast } from "sonner";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { XIcon, Loader2 } from "lucide-react";
@@ -29,9 +29,9 @@ import {
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 
-import { useAccount } from "@/lib/hooks/useAccount";
-import { isUrl } from "@/lib/isUrl";
-import { cn } from "@/lib/utils";
+import { useAccount } from "@/lib/client/hooks/useAccount";
+import { isUrl } from "@/lib/core/isUrl";
+import { cn } from "@/lib/core/utils";
 import { uploadImage } from "@/lib/api/upload";
 
 interface ProfileModalProps {

@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
@@ -51,14 +51,19 @@ import { ConditionIcon } from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 
-import { isUrl } from "@/lib/isUrl";
-import { useDebounce } from "@/lib/hooks/useDebounce";
+import { isUrl } from "@/lib/core/isUrl";
+import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { uploadImage } from "@/lib/api/upload";
-import { getAspectRatio } from "@/lib/cardFormat";
-import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
-import { shelfPath } from "@/lib/slugs";
+import { getAspectRatio } from "@/lib/text/cardFormat";
+import {
+  itemsBarcodeLabelKey,
+  itemsBarcodePlaceholderKey,
+  scannerBarcodePlaceholderKey,
+  scannerEnterBarcodeKey,
+} from "@/lib/barcode/shelfLabels";
+import { shelfPath } from "@/lib/routing/slugs";
 
 import {
   type AttachmentType,
@@ -68,17 +73,21 @@ import {
   Condition,
 } from "@prisma/client";
 import {
-  rankAttachmentsForDisplay,
-  rankCoversForDisplay,
-} from "@/lib/attachmentDisplayScore";
+  mergeCoverAttachmentsForPicker,
+  resolveMetadataCoverUrl,
+  filterMetadataForShelfPlatform,
+} from "@/lib/item/media";
+import { stripCropSuffixFromUrl, urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
-} from "@/lib/attachmentDisplayLabels";
-import { cn } from "@/lib/utils";
+} from "@/lib/media/attachmentDisplayLabels";
+import { cn } from "@/lib/core/utils";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
+import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
+import { invalidateItemQueries } from "@/lib/item/queryCache";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,
@@ -92,6 +101,28 @@ function ShelfIcon({ type, className }: { type: string; className?: string }) {
   return (
     <ShelfTypeIcon type={type} className={cn("size-4 shrink-0", className)} />
   );
+}
+
+function attachmentTraitsOf(attachment: unknown) {
+  const traits = attachment as
+    | {
+        isRealBoxCoverSource?: boolean;
+        isFullWrapCoverSource?: boolean;
+        isGameMediaGallerySource?: boolean;
+        isMusicGallerySource?: boolean;
+        providerImageScoreAdjustment?: number;
+        providerLabel?: string | null;
+      }
+    | null
+    | undefined;
+  return {
+    isRealBoxCoverSource: traits?.isRealBoxCoverSource,
+    isFullWrapCoverSource: traits?.isFullWrapCoverSource,
+    isGameMediaGallerySource: traits?.isGameMediaGallerySource,
+    isMusicGallerySource: traits?.isMusicGallerySource,
+    providerImageScoreAdjustment: traits?.providerImageScoreAdjustment,
+    providerLabel: traits?.providerLabel,
+  };
 }
 
 export function ItemModal({
@@ -191,15 +222,20 @@ export function ItemModal({
   const queryClient = useQueryClient();
 
   const { data: item } = useQuery<ItemWithMetadata>({
-    queryKey: ["item", itemId],
-    queryFn: () => getItem(itemId, shelfId),
+    queryKey: ["shelf", shelfId, "items", itemId],
+    queryFn: () => getItem(itemId!, shelfId),
+    enabled: Boolean(isOpen && itemId && shelfId),
+    refetchOnMount: "always",
     initialData: () =>
-      queryClient
-        .getQueryData<Item[]>(["shelves"])
-        ?.find((s) => s.id === itemId) as ItemWithMetadata | undefined,
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
+      queryClient.getQueryData<ItemWithMetadata>([
+        "shelf",
+        shelfId,
+        "items",
+        itemId,
+      ]),
   });
+
+  useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
 
   const { data: shelf } = useQuery<Shelf>({
     queryKey: ["shelf", shelfId],
@@ -225,6 +261,29 @@ export function ItemModal({
   const selectedShelf = shelves?.find((s) => s.id === currentShelfId);
   const activeShelfType = selectedShelf?.type || shelfType;
   const activeShelf = selectedShelf || shelf;
+
+  const activeShelfForMedia = useMemo(
+    () => ({
+      type: activeShelfType,
+      name:
+        activeShelf?.name ??
+        shelves?.find((entry) => entry.id === currentShelfId)?.name ??
+        shelves?.find((entry) => entry.id === shelfId)?.name ??
+        item?.shelf?.name ??
+        shelf?.name ??
+        currentShelfId ??
+        shelfId,
+    }),
+    [
+      activeShelf?.name,
+      activeShelfType,
+      currentShelfId,
+      item?.shelf?.name,
+      shelf?.name,
+      shelfId,
+      shelves,
+    ],
+  );
 
   const itemAspectRatio = useMemo(() => {
     return getAspectRatio(
@@ -293,6 +352,7 @@ export function ItemModal({
   const [lastInitializedShelfId, setLastInitializedShelfId] = useState<
     string | null
   >(null);
+  const lastMetadataStampRef = useRef<string | null>(null);
 
   const [fetchedMetadata, setFetchedMetadata] = useState<MetadataResult | null>(
     null,
@@ -313,7 +373,9 @@ export function ItemModal({
       const forceOverwrite = options.forceOverwrite ?? false;
       const barcodeContext = options.barcodeContext;
 
-      setFetchedMetadata(metadata);
+      setFetchedMetadata(
+        filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ?? metadata,
+      );
 
       const currentBarcode = (
         barcodeContext ||
@@ -361,7 +423,7 @@ export function ItemModal({
         }
       }
     },
-    [activeShelfType, form, hasPrefilledScanImage, prefilledScanImageUrl],
+    [activeShelfForMedia, activeShelfType, form, hasPrefilledScanImage, prefilledScanImageUrl],
   );
 
   const fetchMetadataPreview = useCallback(
@@ -380,6 +442,7 @@ export function ItemModal({
           name,
           activeShelfType,
           barcode || null,
+          null,
           activeShelf?.name || null,
         );
         if (metadataPreviewRequestRef.current !== requestKey) return;
@@ -412,6 +475,7 @@ export function ItemModal({
         const nextSuggestions = await getMetadataSuggestions(
           trimmed,
           activeShelfType,
+          null,
           activeShelf?.name || null,
         );
 
@@ -447,7 +511,10 @@ export function ItemModal({
   );
 
   const availableBackgrounds = useMemo(() => {
-    const metadata = item?.metadata || fetchedMetadata;
+    const metadata = filterMetadataForShelfPlatform(
+      item?.metadata || fetchedMetadata,
+      activeShelfForMedia,
+    );
     if (!metadata) return [];
 
     const urls = new Set<string>();
@@ -528,7 +595,12 @@ export function ItemModal({
   );
 
   const availableImages = useMemo(() => {
-    const metadata = item?.metadata || fetchedMetadata;
+    const rawMetadata =
+      itemId && item?.metadata ? item.metadata : (item?.metadata ?? fetchedMetadata);
+    const metadata = filterMetadataForShelfPlatform(
+      rawMetadata,
+      activeShelfForMedia,
+    );
 
     const urls = new Set<string>();
     const attachments: Array<{
@@ -539,6 +611,9 @@ export function ItemModal({
       title?: string | null;
       isRealBoxCoverSource?: boolean;
       isFullWrapCoverSource?: boolean;
+      isGameMediaGallerySource?: boolean;
+      isMusicGallerySource?: boolean;
+      providerImageScoreAdjustment?: number;
       providerLabel?: string | null;
     }> = [];
 
@@ -551,11 +626,11 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       title?: string | null;
-      // Provider-derived display fields travel on the server attachment payload;
-      // carry them through so the client gallery ranks and labels identically to
-      // the server.
       isRealBoxCoverSource?: boolean;
       isFullWrapCoverSource?: boolean;
+      isGameMediaGallerySource?: boolean;
+      isMusicGallerySource?: boolean;
+      providerImageScoreAdjustment?: number;
       providerLabel?: string | null;
     }) => {
       if (!entry.url || urls.has(entry.url)) return;
@@ -568,27 +643,11 @@ export function ItemModal({
         title: entry.title,
         isRealBoxCoverSource: entry.isRealBoxCoverSource,
         isFullWrapCoverSource: entry.isFullWrapCoverSource,
+        isGameMediaGallerySource: entry.isGameMediaGallerySource,
+        isMusicGallerySource: entry.isMusicGallerySource,
+        providerImageScoreAdjustment: entry.providerImageScoreAdjustment,
         providerLabel: entry.providerLabel,
       });
-    };
-
-    // The presented attachment payload carries the provider-derived display
-    // fields, but the raw Prisma attachment type does not declare them; read them
-    // tolerantly so the gallery ranks and labels identically to the server.
-    const attachmentTraitsOf = (attachment: unknown) => {
-      const traits = attachment as
-        | {
-            isRealBoxCoverSource?: boolean;
-            isFullWrapCoverSource?: boolean;
-            providerLabel?: string | null;
-          }
-        | null
-        | undefined;
-      return {
-        isRealBoxCoverSource: traits?.isRealBoxCoverSource,
-        isFullWrapCoverSource: traits?.isFullWrapCoverSource,
-        providerLabel: traits?.providerLabel,
-      };
     };
 
     // URLs that already exist as real metadata attachments, with their true
@@ -607,7 +666,7 @@ export function ItemModal({
     // matches the gallery attachment it was derived from. Index attachments by
     // their crop-normalized URL so the cover still inherits its real provenance
     // (source + region role) instead of looking like an orphan.
-    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
+    const stripCrop = stripCropSuffixFromUrl;
     const attachmentByNormalizedUrl = new Map<string, any>();
     for (const attachment of metadata?.attachments || []) {
       if (attachment.url) {
@@ -643,7 +702,8 @@ export function ItemModal({
       const matching = attachmentByNormalizedUrl.get(stripCrop(persistedCover));
       addAttachment({
         url: persistedCover,
-        type: matching?.type || (activeShelfType === "games" ? "image" : "cover"),
+        type:
+          matching?.type || (activeShelfType === "games" ? "image" : "cover"),
         source: matching?.source || "user",
         role: matching?.role,
         title: matching?.title,
@@ -694,7 +754,19 @@ export function ItemModal({
       }
     }
 
-    return rankCoversForDisplay(attachments).map((attachment) => {
+    const defaultCoverUrl = resolveMetadataCoverUrl({
+      metadata,
+      shelf: activeShelfForMedia,
+    });
+
+    return mergeCoverAttachmentsForPicker(
+      {
+        imageUrl: item?.imageUrl ?? prefilledValues?.imageUrl ?? null,
+        metadata,
+        shelf: activeShelfForMedia,
+      },
+      attachments,
+    ).map((attachment) => {
       const gallery = getAttachmentGalleryLabels(
         {
           type: attachment.type,
@@ -708,7 +780,8 @@ export function ItemModal({
       const label =
         attachment.source === "barcode"
           ? t("items.editTabs.scannedImage")
-          : metadata?.imageUrl === attachment.url
+          : defaultCoverUrl &&
+              urlsReferToSameLocalizedImage(defaultCoverUrl, attachment.url)
             ? t("items.editTabs.defaultMetadataImage")
             : gallery.caption;
 
@@ -723,11 +796,12 @@ export function ItemModal({
       };
     });
   }, [
+    itemId,
     item?.metadata,
     item?.imageUrl,
     fetchedMetadata,
     prefilledValues?.imageUrl,
-    activeShelfType,
+    activeShelfForMedia,
     locale,
     t,
   ]);
@@ -735,26 +809,63 @@ export function ItemModal({
   const currentImageUrl = form.watch("imageUrl");
 
   const finalImages = useMemo(() => {
+    const rawMetadata =
+      itemId && item?.metadata ? item.metadata : (item?.metadata ?? fetchedMetadata);
+    const metadata = filterMetadataForShelfPlatform(
+      rawMetadata,
+      activeShelfForMedia,
+    );
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
     const list = [...availableImages];
 
     if (
       currentImageUrl &&
       typeof currentImageUrl === "string" &&
-      !availableImages.some((img) => img.url === currentImageUrl)
+      !availableImages.some((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentImageUrl),
+      )
     ) {
+      const provenance = (metadata?.attachments || []).find(
+        (attachment: { url?: string | null }) =>
+          attachment.url &&
+          urlsReferToSameLocalizedImage(attachment.url, currentImageUrl),
+      );
+      const gallery = provenance
+        ? getAttachmentGalleryLabels(
+            {
+              type: provenance.type,
+              role: provenance.role,
+              title: provenance.title,
+              source: provenance.source,
+              providerLabel: attachmentTraitsOf(provenance).providerLabel,
+            },
+            displayLocale,
+          )
+        : null;
+
       list.unshift({
         url: currentImageUrl,
-        type: "image",
-        label: t("items.editTabs.chooseImage"),
-        source: null,
-        role: null,
-        galleryProvider: null,
-        galleryDetail: null,
+        type: provenance?.type ?? "image",
+        label: gallery?.caption ?? t("items.editTabs.chooseImage"),
+        source: provenance?.source ?? null,
+        role: provenance?.role ?? null,
+        galleryProvider: gallery?.provider ?? null,
+        galleryDetail: gallery?.detail ?? null,
       });
     }
 
     return list;
-  }, [availableImages, currentImageUrl, t]);
+  }, [
+    availableImages,
+    currentImageUrl,
+    itemId,
+    item?.metadata,
+    fetchedMetadata,
+    activeShelfForMedia,
+    locale,
+    t,
+  ]);
 
   const totalPosterPages = useMemo(
     () => Math.ceil(finalImages.length / 12) || 1,
@@ -897,9 +1008,15 @@ export function ItemModal({
             if (firstMatchCover && !form.getValues("imageUrl")) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
-            fetchMetadataPreview(metadataTitle || bestSuggestion, barcode, true);
+            fetchMetadataPreview(
+              metadataTitle || bestSuggestion,
+              barcode,
+              true,
+            );
           } else if (displayName) {
-            setSuggestions(data.suggestions?.length ? data.suggestions : [displayName]);
+            setSuggestions(
+              data.suggestions?.length ? data.suggestions : [displayName],
+            );
             setNameSuggestion(displayName);
 
             if (!form.watch("name") || prefilledValues?.name) {
@@ -970,7 +1087,7 @@ export function ItemModal({
 
       await onSubmit(updatedItem);
       if (itemId) {
-        queryClient.invalidateQueries({ queryKey: ["item", itemId] });
+        void invalidateItemQueries(queryClient, itemId, [shelfId, values.shelfId]);
       }
       onClose();
     } catch (error) {
@@ -1001,13 +1118,21 @@ export function ItemModal({
     setInitializedItemId(undefined);
     setFetchedMetadata(null);
     setLastInitializedShelfId(null);
+    lastMetadataStampRef.current = null;
     onClose();
   };
+
+  useEffect(() => {
+    if (item?.metadata) {
+      setFetchedMetadata(null);
+    }
+  }, [item?.id, item?.metadata?.lastFetched]);
 
   useEffect(() => {
     if (!isOpen) {
       setInitializedItemId(undefined);
       setFetchedMetadata(null);
+      lastMetadataStampRef.current = null;
       return;
     }
 
@@ -1018,8 +1143,15 @@ export function ItemModal({
 
     const currentId = itemId || null;
     const isAlreadyInitialized = initializedItemId === currentId;
+    const metadataStamp = item?.metadata?.lastFetched
+      ? new Date(item.metadata.lastFetched).toISOString()
+      : (item?.metadataId ?? "none");
+    const metadataChanged =
+      isAlreadyInitialized &&
+      lastMetadataStampRef.current !== null &&
+      lastMetadataStampRef.current !== metadataStamp;
 
-    if (isAlreadyInitialized && (isDirty || !item)) {
+    if (isAlreadyInitialized && (isDirty || !item) && !metadataChanged) {
       return;
     }
 
@@ -1038,6 +1170,7 @@ export function ItemModal({
         barcode: item.barcode || defaultValues.barcode,
       });
       setLastInitializedShelfId(item.shelfId || defaultValues.shelfId);
+      lastMetadataStampRef.current = metadataStamp;
 
       if (item.barcode && !item.metadata) {
         handleBarcodeChange(item.barcode);
@@ -1336,14 +1469,14 @@ export function ItemModal({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t("items.barcode")}
+                            {t(itemsBarcodeLabelKey(shelfType))}
                           </FormLabel>
                           <FormControl>
                             <div className="flex relative items-center">
                               <Input
                                 type="text"
                                 className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
-                                placeholder={t("items.enterBarcode")}
+                                placeholder={t(itemsBarcodePlaceholderKey(shelfType))}
                                 {...field}
                                 onChange={(e) => {
                                   field.onChange(e);
@@ -1707,8 +1840,13 @@ export function ItemModal({
                                 currentPosterPage * 12,
                               )
                               .map((img, i) => {
+                                const selectedCoverUrl = form.watch("imageUrl");
                                 const isSelected =
-                                  form.watch("imageUrl") === img.url;
+                                  typeof selectedCoverUrl === "string" &&
+                                  urlsReferToSameLocalizedImage(
+                                    selectedCoverUrl,
+                                    img.url,
+                                  );
                                 return (
                                   <div
                                     key={i}

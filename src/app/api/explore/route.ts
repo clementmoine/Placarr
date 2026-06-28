@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import { presentItemFromStorage } from "@/lib/presentItem";
-import { buildItemSearchConditions } from "@/lib/itemSearch";
+import { presentItemFromStorage } from "@/lib/item/present";
+import { buildItemSearchConditions } from "@/lib/item/search";
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);

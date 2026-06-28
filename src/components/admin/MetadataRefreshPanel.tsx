@@ -36,7 +36,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { hasGameMediaGalleryAttachment } from "@/lib/metadata/galleries";
 
 type RefreshableType = "games" | "movies" | "musics" | "books" | "boardgames";
 type RefreshState =
@@ -53,6 +54,7 @@ interface AdminRefreshItem {
   imageUrl?: string | null;
   barcode?: string | null;
   condition: string;
+  metadataRefreshStartedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   shelf: {
@@ -134,7 +136,7 @@ export function MetadataRefreshPanel() {
   const [isRunning, setIsRunning] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [lastRunTotal, setLastRunTotal] = useState(0);
-  const [onlyMissingScreenScraper, setOnlyMissingScreenScraper] =
+  const [onlyMissingGameMediaGallery, setOnlyMissingGameMediaGallery] =
     useState(false);
 
   const {
@@ -189,12 +191,12 @@ export function MetadataRefreshPanel() {
     return (data?.items || [])
       .filter((item) => typeFilter === "all" || item.shelf.type === typeFilter)
       .filter((item) => {
-        if (!onlyMissingScreenScraper) return true;
+        if (!onlyMissingGameMediaGallery) return true;
         if (item.shelf.type !== "games") return false;
-        const hasSS = item.metadata?.attachments?.some(
-          (a) => a.source === "screenscraper",
+        const hasGallery = hasGameMediaGalleryAttachment(
+          item.metadata?.attachments ?? [],
         );
-        return !hasSS;
+        return !hasGallery;
       })
       .filter((item) => {
         if (!q) return true;
@@ -220,7 +222,7 @@ export function MetadataRefreshPanel() {
           : 0;
         return aTime - bTime;
       });
-  }, [data?.items, search, typeFilter, onlyMissingScreenScraper]);
+  }, [data?.items, search, typeFilter, onlyMissingGameMediaGallery]);
 
   const summary = useMemo(() => {
     const values = Object.values(runStates);
@@ -287,6 +289,21 @@ export function MetadataRefreshPanel() {
     }));
   };
 
+  const waitForMetadataRefreshComplete = async (
+    itemId: string,
+  ): Promise<AdminRefreshItem | null> => {
+    const deadline = Date.now() + 10 * 60 * 1000;
+    while (!cancelRef.current && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await axios.get<AdminRefreshPayload>("/api/admin/items-refresh");
+      const refreshed = res.data.items.find((entry) => entry.id === itemId);
+      if (!refreshed?.metadataRefreshStartedAt) {
+        return refreshed ?? null;
+      }
+    }
+    return null;
+  };
+
   const runRefreshQueue = async (items: AdminRefreshItem[]) => {
     if (isRunning || items.length === 0) return;
     cancelRef.current = false;
@@ -309,19 +326,59 @@ export function MetadataRefreshPanel() {
 
       try {
         const res = await axios.post(`/api/admin/items-refresh/${item.id}`, {});
-        const hasMetadata = Boolean(res.data?.metadata);
         updateItemAfterRefresh(item.id, res.data);
-        markState(item.id, {
-          status: hasMetadata ? "success" : "empty",
-          message: hasMetadata
-            ? locale === "fr"
-              ? "Métadonnées rafraîchies"
-              : "Metadata refreshed"
-            : locale === "fr"
-              ? "Aucune métadonnée trouvée"
-              : "No metadata found",
-          endedAt: Date.now(),
-        });
+
+        if (res.data?.accepted) {
+          const refreshedItem = await waitForMetadataRefreshComplete(item.id);
+          if (cancelRef.current) break;
+          if (refreshedItem) {
+            queryClient.setQueryData<AdminRefreshPayload>(
+              ["adminItemsRefresh"],
+              (current) => {
+                if (!current) return current;
+                return {
+                  ...current,
+                  items: current.items.map((entry) =>
+                    entry.id === item.id ? refreshedItem : entry,
+                  ),
+                };
+              },
+            );
+          }
+          const hasMetadata = Boolean(refreshedItem?.metadata);
+          markState(item.id, {
+            status: refreshedItem
+              ? hasMetadata
+                ? "success"
+                : "empty"
+              : "error",
+            message: !refreshedItem
+              ? locale === "fr"
+                ? "Délai de refresh dépassé"
+                : "Refresh timed out"
+              : hasMetadata
+                ? locale === "fr"
+                  ? "Métadonnées rafraîchies"
+                  : "Metadata refreshed"
+                : locale === "fr"
+                  ? "Aucune métadonnée trouvée"
+                  : "No metadata found",
+            endedAt: Date.now(),
+          });
+        } else {
+          const hasMetadata = Boolean(res.data?.metadata);
+          markState(item.id, {
+            status: hasMetadata ? "success" : "empty",
+            message: hasMetadata
+              ? locale === "fr"
+                ? "Métadonnées rafraîchies"
+                : "Metadata refreshed"
+              : locale === "fr"
+                ? "Aucune métadonnée trouvée"
+                : "No metadata found",
+            endedAt: Date.now(),
+          });
+        }
       } catch (error: any) {
         markState(item.id, {
           status: "error",
@@ -456,7 +513,7 @@ export function MetadataRefreshPanel() {
                 setTypeFilter("all");
                 setRunStates({});
                 setLastRunTotal(0);
-                setOnlyMissingScreenScraper(false);
+                setOnlyMissingGameMediaGallery(false);
               }}
               disabled={isRunning}
             >
@@ -466,10 +523,10 @@ export function MetadataRefreshPanel() {
 
           <div className="flex items-center space-x-2.5 pt-1">
             <Switch
-              id="screenscraper-filter"
-              checked={onlyMissingScreenScraper}
+              id="game-media-gallery-filter"
+              checked={onlyMissingGameMediaGallery}
               onCheckedChange={(checked) => {
-                setOnlyMissingScreenScraper(checked);
+                setOnlyMissingGameMediaGallery(checked);
                 if (checked) {
                   setTypeFilter("games");
                 }
@@ -477,12 +534,12 @@ export function MetadataRefreshPanel() {
               disabled={isRunning}
             />
             <Label
-              htmlFor="screenscraper-filter"
+              htmlFor="game-media-gallery-filter"
               className="text-xs font-medium cursor-pointer select-none text-muted-foreground hover:text-foreground transition-colors"
             >
               {locale === "fr"
-                ? "Uniquement les jeux vidéo sans jaquette physique ScreenScraper"
-                : "Only games missing ScreenScraper covers"}
+                ? "Uniquement les jeux vidéo sans galerie média catalogue"
+                : "Only games missing catalog media gallery"}
             </Label>
           </div>
 

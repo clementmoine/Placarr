@@ -6,8 +6,8 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("next-auth", () => ({ getServerSession: h.getServerSession }));
-vi.mock("@/lib/auth.config", () => ({ authOptions: {} }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/auth/config", () => ({ authOptions: {} }));
+vi.mock("@/lib/db/prisma", () => ({
   prisma: { user: { findUnique: h.findUnique } },
 }));
 

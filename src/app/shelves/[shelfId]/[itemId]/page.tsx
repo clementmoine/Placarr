@@ -19,6 +19,7 @@ import {
   Users,
   Star,
   Gauge,
+  Loader2,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useParams, useRouter } from "next/navigation";
@@ -53,33 +54,40 @@ import { getShelf } from "@/lib/api/shelves";
 import {
   getItem,
   saveItem,
-  getItemPrices,
   refreshItemMetadata,
+  type ItemPrices,
 } from "@/lib/api/items";
-import { getHeroImage, getGalleryImages } from "@/lib/itemMedia";
+import { getHeroImage, getGalleryImages, getCoverImage } from "@/lib/item/media";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
-} from "@/lib/attachmentDisplayLabels";
-import { isMissingDiscogsGallery } from "@/lib/metadataDiscogs";
+} from "@/lib/media/attachmentDisplayLabels";
+import { hasGameMediaGalleryAttachment } from "@/lib/metadata/galleries";
+import { isMissingMusicGallery } from "@/lib/metadata/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
 import type { Shelf, Prisma, Item } from "@prisma/client";
-import { useAccount } from "@/lib/hooks/useAccount";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { getDetailCoverClass, getAspectRatio } from "@/lib/cardFormat";
-import { itemPath, shelfPath } from "@/lib/slugs";
-import { compareTitlesForSort } from "@/lib/titleSort";
-import { buildPriceChartingGameUrl } from "@/lib/priceChartingUrl";
+import { useAccount } from "@/lib/client/hooks/useAccount";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import {
+  isItemMetadataBusy,
+  isItemMetadataRefreshing,
+} from "@/lib/item/enrichment";
+import { itemsBarcodeLabelKey } from "@/lib/barcode/shelfLabels";
+import { cn } from "@/lib/core/utils";
+import { RemoteImage } from "@/components/RemoteImage";
+import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
+import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
+import { itemPath, shelfPath } from "@/lib/routing/slugs";
+import { compareTitlesForSort } from "@/lib/title/sort";
 import {
   invalidateItemQueries,
   patchCachedItem,
   syncItemQueries,
-} from "@/lib/itemQueryCache";
-import { getEstimatedItemValueCents } from "@/lib/itemValue";
+} from "@/lib/item/queryCache";
+import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
+import { getEstimatedItemValueCents } from "@/lib/item/value";
 
 import {
   type DetailFact,
@@ -87,8 +95,8 @@ import {
   consolidateGeneralFacts,
   parsePlayerFactRange,
   parseFactSourceList,
-  formatFactSource,
-} from "@/lib/playerFacts";
+  formatDetailFactSourceToken,
+} from "@/lib/metadata/facts/playerFacts";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
@@ -239,18 +247,6 @@ function formatFactValue(fact: DetailFact) {
   return fact.value;
 }
 
-
-
-function formatFactSourceEntry(source: string) {
-  const trimmed = source.trim();
-  const hltbMatch = trimmed.match(/^how long to beat(?:\s*·\s*(.+))?$/i);
-  if (hltbMatch) {
-    const platform = hltbMatch[1]?.trim();
-    return platform ? `How Long to Beat · ${platform}` : "How Long to Beat";
-  }
-  return formatFactSource(trimmed);
-}
-
 function resolveFactSourceDisplay(fact: DetailFact) {
   const names = (fact.sourceNames || [])
     .map((name) => name.trim())
@@ -307,7 +303,9 @@ function FactSourceFooter({ fact }: { fact: DetailFact }) {
   const display = resolveFactSourceDisplay(fact);
   if (!display) return null;
 
-  const formattedNames = display.names.map(formatFactSourceEntry);
+  const formattedNames = display.names.map((name) =>
+    formatDetailFactSourceToken(fact, name),
+  );
   const countLabel = formatSourceCountLabel(display.count, t);
   const countNode = (
     <span
@@ -449,20 +447,11 @@ function isNtscLikeGameShelf(shelfName?: string | null) {
 }
 
 function isPcSpecificFact(fact: DetailFact) {
-  const source = (fact.source || "").toLowerCase();
-  const label = fact.label.toLowerCase();
-  return (
-    source === "steam" ||
-    source === "steamdb" ||
-    source === "pcgamingwiki" ||
-    label === "steam" ||
-    label === "steamdb" ||
-    label === "pcgamingwiki"
-  );
+  return fact.isPcSpecificFact === true;
 }
 
 function isHowLongToBeatSource(fact: DetailFact) {
-  return fact.source?.toLowerCase().includes("how long") ?? false;
+  return fact.isHowLongToBeatSource === true;
 }
 
 function isDurationLikeFact(fact: DetailFact) {
@@ -485,9 +474,7 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
         ...fact,
         kind: "completion-time",
         label: "Complétion",
-        url: fact.source?.toLowerCase().includes("how long")
-          ? fact.url
-          : undefined,
+        url: isHowLongToBeatSource(fact) ? fact.url : undefined,
       };
     }
 
@@ -495,17 +482,14 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
       ...fact,
       kind: "duration",
       label: "Durée",
-      url: fact.source?.toLowerCase().includes("how long")
-        ? fact.url
-        : undefined,
+      url: isHowLongToBeatSource(fact) ? fact.url : undefined,
     };
   }
 
   return {
     ...fact,
     url:
-      fact.kind === "estimated-value" ||
-      fact.source?.toLowerCase().includes("how long")
+      fact.kind === "estimated-value" || isHowLongToBeatSource(fact)
         ? fact.url
         : undefined,
   };
@@ -586,7 +570,7 @@ function consolidateAgeRatingFacts(facts: DetailFact[]): DetailFact[] {
         if (fact.sourceNames?.length) return fact.sourceNames;
         if (!fact.source) return [];
         return parseFactSourceList(fact.source).map((entry) =>
-          formatFactSource(entry),
+          formatDetailFactSourceToken(fact, entry),
         );
       }),
     ),
@@ -604,17 +588,16 @@ function consolidateAgeRatingFacts(facts: DetailFact[]): DetailFact[] {
 }
 
 function canonicalRatingSourceName(fact: DetailFact): string | null {
-  const label = fact.label?.trim() || "";
-  const source = (fact.source || "").trim().toLowerCase();
-  if (
-    label === "BoardGameGeek" ||
-    label === "BGG (Bayes)" ||
-    source === "bgg"
-  ) {
-    return "BoardGameGeek";
+  if (fact.isBoardGameRatingSource) {
+    return (
+      fact.providerLabel ??
+      formatDetailFactSourceToken(fact, fact.source ?? fact.label ?? "")
+    );
   }
+  const label = fact.label?.trim() || "";
   if (label) return label;
-  if (fact.source) return formatFactSource(fact.source);
+  if (fact.providerLabel && fact.source) return fact.providerLabel;
+  if (fact.source) return formatDetailFactSourceToken(fact, fact.source);
   return null;
 }
 
@@ -784,7 +767,10 @@ function localizeDisplayFact(
           return {
             ...fact,
             label: t("items.info.players"),
-            value: t("items.info.playersRange", { min: firstMin, max: maxString }),
+            value: t("items.info.playersRange", {
+              min: firstMin,
+              max: maxString,
+            }),
           };
         }
       }
@@ -809,14 +795,20 @@ function localizeDisplayFact(
 
     const range = parsePlayerFactRange(fact);
     if (range) {
-      if (range.maxOnly || (options.compactVideoGamePlayers && range.min === 1 && range.max > 1)) {
+      if (
+        range.maxOnly ||
+        (options.compactVideoGamePlayers && range.min === 1 && range.max > 1)
+      ) {
         value = t("items.info.upToPlayers", { count: range.max });
       } else if (range.min === 1 && range.max === 1) {
         value = t("items.info.solo");
       } else if (range.min === range.max) {
         value = t("items.info.multiplePlayers", { count: range.min });
       } else if (range.min !== null) {
-        value = t("items.info.playersRange", { min: range.min, max: range.max });
+        value = t("items.info.playersRange", {
+          min: range.min,
+          max: range.max,
+        });
       }
     }
     return {
@@ -954,7 +946,7 @@ export default function ItemDetailsPage() {
     queryFn: () => getShelf(shelfId),
   });
 
-  const { data: item, isFetching } = useQuery({
+  const { data: item, isPending } = useQuery({
     queryKey: ["shelf", shelfId, "items", itemId],
     queryFn: () => getItem(itemId, shelfId),
     initialData: () =>
@@ -963,24 +955,85 @@ export default function ItemDetailsPage() {
         ?.items?.find((i) => i.id === itemId) as ItemWithMetadata,
     initialDataUpdatedAt: () =>
       queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
+    placeholderData: (previousData) => previousData,
+    // Metadata is enriched in the background after an item is added, so poll
+    // while this item is still being enriched (no metadataId yet) — survives a
+    // page refresh since the state is derived from the persisted item.
+    refetchInterval: (query) =>
+      isItemMetadataBusy(query.state.data) ? 2500 : false,
   });
 
-  const { data: prices, isFetching: isFetchingPrices } = useQuery({
-    queryKey: ["shelf", shelfId, "items", itemId, "prices"],
-    queryFn: () => getItemPrices(itemId, shelfId),
-    enabled: !!itemId && !!item?.barcode,
-  });
+  const isMetadataBusy = isItemMetadataBusy(item);
+  const wasMetadataRefreshingRef = useRef(false);
+
+  useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
 
   useEffect(() => {
-    if (!prices || !item?.id) return;
+    if (!item?.id) return;
+    if (
+      item.priceNew == null &&
+      item.priceUsed == null &&
+      item.priceUsedCIB == null
+    ) {
+      return;
+    }
     patchCachedItem(queryClient, {
       id: item.id,
-      shelfId: item.shelfId,
-      priceNew: prices.priceNew,
-      priceUsed: prices.priceUsed,
-      priceUsedCIB: prices.priceUsedCIB,
+      shelfId: item.shelfId ?? shelfId,
+      priceNew: item.priceNew ?? null,
+      priceUsed: item.priceUsed ?? null,
+      priceUsedCIB: item.priceUsedCIB ?? null,
+      priceLastUpdated: item.priceLastUpdated ?? null,
     });
-  }, [item?.id, item?.shelfId, prices, queryClient]);
+    void queryClient.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey[0] === "shelf" &&
+        (query.queryKey[1] === shelfId ||
+          query.queryKey[1] === item.shelfId),
+    });
+  }, [
+    item?.id,
+    item?.shelfId,
+    item?.priceNew,
+    item?.priceUsed,
+    item?.priceUsedCIB,
+    item?.priceLastUpdated,
+    queryClient,
+    shelfId,
+  ]);
+
+  useEffect(() => {
+    const refreshing = isItemMetadataRefreshing(item);
+    if (wasMetadataRefreshingRef.current && !refreshing) {
+      toast.success(t("items.refreshMetadataSuccess"));
+    }
+    wasMetadataRefreshingRef.current = refreshing;
+  }, [item?.metadataRefreshStartedAt, item, t]);
+
+  const prices = useMemo<ItemPrices | null>(() => {
+    if (!item?.id) return null;
+    if (
+      item.priceNew == null &&
+      item.priceUsed == null &&
+      item.priceUsedCIB == null &&
+      !item.priceObservations?.length
+    ) {
+      return null;
+    }
+    return {
+      priceNew: item.priceNew ?? null,
+      priceUsed: item.priceUsed ?? null,
+      priceUsedCIB: item.priceUsedCIB ?? null,
+      priceLastUpdated:
+        typeof item.priceLastUpdated === "string"
+          ? item.priceLastUpdated
+          : item.priceLastUpdated?.toISOString?.() ?? null,
+      priceSources: item.priceSources,
+      priceSourceDisplayNames: item.priceSourceDisplayNames,
+      isReferencePriceOnly: item.isReferencePriceOnly,
+      priceObservations: item.priceObservations,
+    };
+  }, [item]);
 
   const shelfItems = useMemo(
     () =>
@@ -1095,6 +1148,7 @@ export default function ItemDetailsPage() {
     | (Prisma.ItemUpdateInput & {
         refreshMetadata?: boolean;
         lookupQuery?: string;
+        currentShelfId?: string | null;
       })
   >({
     mutationFn: saveItem,
@@ -1146,9 +1200,6 @@ export default function ItemDetailsPage() {
 
   const handleRefreshMetadata = useCallback(() => {
     refreshMetadata(undefined, {
-      onSuccess: () => {
-        toast.success(t("items.refreshMetadataSuccess"));
-      },
       onError: () => {
         toast.error(t("items.refreshMetadataFailed"));
       },
@@ -1166,15 +1217,28 @@ export default function ItemDetailsPage() {
           {
             ...itemData,
             id: itemId,
+            currentShelfId: item?.shelfId || shelfId,
           },
           {
-            onSuccess: () => resolve(),
-            onError: () => reject(),
+            onSuccess: (savedItem) => {
+              if (savedItem.shelfId && savedItem.shelfId !== shelfId) {
+                router.replace(
+                  itemPath(
+                    (savedItem as ItemWithMetadata).shelf || {
+                      id: savedItem.shelfId,
+                    },
+                    savedItem,
+                  ),
+                );
+              }
+              resolve();
+            },
+            onError: (error) => reject(error),
           },
         );
       });
     },
-    [mutate, itemId],
+    [item?.shelfId, itemId, mutate, router, shelfId],
   );
 
   const year = useMemo(() => {
@@ -1216,18 +1280,16 @@ export default function ItemDetailsPage() {
     const hasHowLongToBeat = facts.some(
       (fact) =>
         ["duration", "completion-time", "time-to-beat"].includes(fact.kind) &&
-        fact.source?.toLowerCase().includes("how long"),
+        fact.isHowLongToBeatSource,
     );
     const hasHowLongToBeatCompletion = facts.some(
       (fact) =>
         (fact.kind === "completion-time" ||
           (fact.kind === "time-to-beat" &&
             fact.label.toLowerCase().includes("compl"))) &&
-        fact.source?.toLowerCase().includes("how long"),
+        fact.isHowLongToBeatSource,
     );
-    const hasScreenScraperMedia = attachments.some(
-      (attachment: any) => attachment.source === "screenscraper",
-    );
+    const hasGameMediaGallery = hasGameMediaGalleryAttachment(attachments);
     const hasRating = facts.some((fact) => fact.kind === "rating");
     const hasDisplayableAgeRating = facts.some((fact) =>
       isDisplayableAgeRatingFact(fact, shelf?.name),
@@ -1239,7 +1301,7 @@ export default function ItemDetailsPage() {
     const isMissingGameEnrichment =
       shelf?.type === "games" &&
       isBeforeCurrentEnrichment &&
-      (!hasHowLongToBeat || !hasScreenScraperMedia || !hasRating);
+      (!hasHowLongToBeat || !hasGameMediaGallery || !hasRating);
     const isMissingGameAgeRating =
       shelf?.type === "games" &&
       isBeforeGameAgeRatingEnrichment &&
@@ -1249,9 +1311,9 @@ export default function ItemDetailsPage() {
       isBeforeHltbCompletionEnrichment &&
       hasHowLongToBeat &&
       !hasHowLongToBeatCompletion;
-    const isMissingMusicDiscogsGallery =
+    const isMissingMusicGalleryRefresh =
       shelf?.type === "musics" &&
-      isMissingDiscogsGallery("musics", item?.barcode, attachments);
+      isMissingMusicGallery("musics", item?.barcode, attachments);
     const isStale =
       hasValidLastFetched &&
       Date.now() - lastFetched.getTime() > METADATA_REFRESH_TTL_MS;
@@ -1261,7 +1323,7 @@ export default function ItemDetailsPage() {
       isMissingGameEnrichment ||
       isMissingGameAgeRating ||
       isMissingHltbCompletion ||
-      isMissingMusicDiscogsGallery ||
+      isMissingMusicGalleryRefresh ||
       isStale
     );
   }, [
@@ -1278,7 +1340,7 @@ export default function ItemDetailsPage() {
     if (
       !shouldAutoRefreshMetadata ||
       autoMetadataRefreshAttempted ||
-      isFetching
+      isPending
     ) {
       return;
     }
@@ -1287,7 +1349,7 @@ export default function ItemDetailsPage() {
     refreshMetadata();
   }, [
     autoMetadataRefreshAttempted,
-    isFetching,
+    isPending,
     refreshMetadata,
     shouldAutoRefreshMetadata,
   ]);
@@ -1297,8 +1359,8 @@ export default function ItemDetailsPage() {
   }, [item]);
 
   const coverImage = useMemo(() => {
-    return item?.imageUrl ?? null;
-  }, [item?.imageUrl]);
+    return item ? getCoverImage(item) : null;
+  }, [item]);
 
   useEffect(() => {
     setCoverImageFit("contain");
@@ -1321,7 +1383,9 @@ export default function ItemDetailsPage() {
     const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
     const coverKey = coverImage ? stripCrop(coverImage) : null;
     return allImages
-      .filter((img) => img.url !== coverImage && stripCrop(img.url) !== coverKey)
+      .filter(
+        (img) => img.url !== coverImage && stripCrop(img.url) !== coverKey,
+      )
       .slice(0, 24)
       .map((img) => {
         const gallery = getAttachmentGalleryLabels(
@@ -1357,10 +1421,7 @@ export default function ItemDetailsPage() {
   }, [item?.description, item?.metadata?.description]);
   const markdownDescription = useMemo(() => {
     if (!description) return null;
-    return description
-      .replace(/\r\n/g, "\n")
-      .replace(/^(#{1,6})([^\s#])/gm, "$1 $2")
-      .trim();
+    return prepareDescriptionMarkdown(description);
   }, [description]);
 
   const copyValue = useMemo(() => {
@@ -1412,47 +1473,35 @@ export default function ItemDetailsPage() {
       new Set([...observationSources, ...apiSources, ...relevantSources]),
     );
 
+    const soleSource = sources[0];
+    const stampedReferenceOnly =
+      soleSource &&
+      observations.find((observation) => observation.source === soleSource)
+        ?.isReferencePriceSource;
+
+    const sourceDisplayNames = sources.map((source) => {
+      const fromObservation = observations.find(
+        (observation) => observation.source === source,
+      )?.sourceDisplayLabel;
+      if (fromObservation) return fromObservation;
+      const index = (prices?.priceSources || []).indexOf(source);
+      if (index >= 0 && prices?.priceSourceDisplayNames?.[index]) {
+        return prices.priceSourceDisplayNames[index]!;
+      }
+      return source;
+    });
+
     return {
       count: sources.length,
       sources,
-      isPriceChartingOnly:
-        sources.length === 1 && sources[0]?.toLowerCase() === "pricecharting",
+      sourceDisplayNames,
+      isReferencePriceOnly:
+        sources.length === 1 &&
+        (stampedReferenceOnly ?? prices?.isReferencePriceOnly ?? false),
     };
   }, [item?.condition, prices, shelf?.type]);
 
-  const priceChartingAliases = useMemo(() => {
-    const aliases = item?.metadata?.aliases;
-    if (!aliases) return undefined;
-    if (Array.isArray(aliases)) return aliases;
-    if (typeof aliases === "string") {
-      try {
-        const parsed = JSON.parse(aliases);
-        return Array.isArray(parsed) ? parsed : undefined;
-      } catch {
-        return undefined;
-      }
-    }
-    return undefined;
-  }, [item?.metadata?.aliases]);
-
-  const priceChartingLink = useMemo(() => {
-    if (!item || shelf?.type !== "games") return null;
-    return buildPriceChartingGameUrl({
-      title: item.metadata?.title,
-      fallbackTitle: item.name,
-      shelfName: shelf?.name,
-      barcode: item.barcode,
-      aliases: priceChartingAliases,
-    });
-  }, [
-    item,
-    item?.barcode,
-    item?.metadata?.title,
-    item?.name,
-    priceChartingAliases,
-    shelf?.name,
-    shelf?.type,
-  ]);
+  const priceChartingLink = item?.referenceCatalogLink ?? null;
 
   const usefulFacts = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -1541,7 +1590,7 @@ export default function ItemDetailsPage() {
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
     if (formattedCopyValue) {
-      const priceLabel = priceSourceSummary.isPriceChartingOnly
+      const priceLabel = priceSourceSummary.isReferencePriceOnly
         ? t("items.info.estimatedValue")
         : t("items.info.observedPrice");
       facts.push({
@@ -1550,7 +1599,7 @@ export default function ItemDetailsPage() {
         value: formattedCopyValue,
         url: priceChartingLink?.url,
         sourceCount: priceSourceSummary.count,
-        sourceNames: priceSourceSummary.sources,
+        sourceNames: priceSourceSummary.sourceDisplayNames,
         priority: 110,
       });
     }
@@ -1560,8 +1609,8 @@ export default function ItemDetailsPage() {
     formattedCopyValue,
     priceChartingLink?.url,
     priceSourceSummary.count,
-    priceSourceSummary.isPriceChartingOnly,
-    priceSourceSummary.sources,
+    priceSourceSummary.isReferencePriceOnly,
+    priceSourceSummary.sourceDisplayNames,
     t,
     usefulFacts,
   ]);
@@ -1591,9 +1640,7 @@ export default function ItemDetailsPage() {
   }, [item?.metadata]);
 
   const showInfoStrip =
-    isFetchingPrices ||
-    primaryInfoFacts.length > 0 ||
-    Boolean(item?.barcode && prices && !formattedCopyValue);
+    primaryInfoFacts.length > 0 || Boolean(prices && !formattedCopyValue);
 
   const shelfHref = shelf ? shelfPath(shelf) : `/shelves/${shelfId}`;
   const backToShelfLabel = shelf?.name
@@ -1602,30 +1649,21 @@ export default function ItemDetailsPage() {
 
   const infoStrip = showInfoStrip ? (
     <div className="max-w-3xl w-full border-y border-border/60 dark:border-zinc-800/50 py-3 mt-1 space-y-3">
-      {isFetchingPrices ? (
+      {primaryInfoFacts.length > 0 && (
         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
-          <Skeleton className="h-[62px] w-full sm:w-[176px] rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <Skeleton className="h-[62px] w-full sm:w-[176px] rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          {primaryInfoFacts.map((fact) => (
+            <DetailInfoItem
+              key={`${fact.kind}-${fact.label}-${fact.value}`}
+              fact={fact}
+            />
+          ))}
         </div>
-      ) : (
-        <>
-          {primaryInfoFacts.length > 0 && (
-            <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
-              {primaryInfoFacts.map((fact) => (
-                <DetailInfoItem
-                  key={`${fact.kind}-${fact.label}-${fact.value}`}
-                  fact={fact}
-                />
-              ))}
-            </div>
-          )}
+      )}
 
-          {item?.barcode && prices && !formattedCopyValue && (
-            <span className="text-xs text-zinc-500 italic">
-              {t("items.noPricesFound")}
-            </span>
-          )}
-        </>
+      {prices && !formattedCopyValue && (
+        <span className="text-xs text-zinc-500 italic">
+          {t("items.noPricesFound")}
+        </span>
       )}
     </div>
   ) : null;
@@ -1709,7 +1747,7 @@ export default function ItemDetailsPage() {
             )}
           </div>
 
-          {isFetching ? (
+          {isPending ? (
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/30 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl w-full mt-4">
               <Skeleton
                 className={cn(
@@ -1737,11 +1775,13 @@ export default function ItemDetailsPage() {
               >
                 {coverImage ? (
                   <>
-                    <Image
+                    <RemoteImage
                       src={coverImage}
-                      alt={item?.name}
-                      width={512}
-                      height={512}
+                      alt={item?.name ?? ""}
+                      width={768}
+                      height={1152}
+                      sizes="(max-width: 768px) 240px, 480px"
+                      priority
                       onLoad={handleCoverImageLoad}
                       className={cn(
                         "w-full h-full transition-transform duration-500",
@@ -1774,6 +1814,15 @@ export default function ItemDetailsPage() {
                     {item?.name}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
+                    {isMetadataBusy && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1.5 bg-sky-500/10 text-sky-600 dark:text-sky-300 border border-sky-400/20 font-bold px-2.5 py-0.5"
+                      >
+                        <Loader2 className="size-3 animate-spin" />
+                        {t("items.fetching")}
+                      </Badge>
+                    )}
                     {year && (
                       <Badge
                         variant="secondary"
@@ -1817,12 +1866,12 @@ export default function ItemDetailsPage() {
                       variant="secondary"
                       className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
                       onClick={handleRefreshMetadata}
-                      disabled={isRefreshingMetadata}
+                      disabled={isMetadataBusy || isRefreshingMetadata}
                     >
                       <RefreshCw
                         className={cn(
                           "size-4 mr-1.5",
-                          isRefreshingMetadata && "animate-spin",
+                          (isMetadataBusy || isRefreshingMetadata) && "animate-spin",
                         )}
                       />
                       {t("items.refreshMetadata")}
@@ -1967,7 +2016,7 @@ export default function ItemDetailsPage() {
                   {item?.barcode && (
                     <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
-                        {t("items.barcode")}
+                        {t(itemsBarcodeLabelKey(shelf?.type))}
                       </span>
                       <span className="text-sm font-medium text-foreground dark:text-zinc-200 font-mono">
                         {item.barcode}
@@ -2040,7 +2089,7 @@ export default function ItemDetailsPage() {
             </div>
           )}
 
-          {!isFetching && galleryImages.length > 0 && (
+          {!isPending && galleryImages.length > 0 && (
             <div className="mt-8 flex flex-col gap-3">
               <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
                 {t("items.artworksAndScreenshots")}
@@ -2052,7 +2101,7 @@ export default function ItemDetailsPage() {
                     onClick={() => setZoomImageUrl(img.url)}
                     className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 bg-zinc-100/30 dark:bg-zinc-950/30 hover:border-zinc-350 dark:hover:border-zinc-700/80 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
-                    <Image
+                    <RemoteImage
                       src={img.url}
                       alt={img.type}
                       width={512}
@@ -2090,7 +2139,7 @@ export default function ItemDetailsPage() {
           )}
 
           {/* Other items in this shelf carousel */}
-          {!isFetching && otherItems.length > 0 && (
+          {!isPending && otherItems.length > 0 && (
             <div className="mt-8 flex flex-col gap-3">
               <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
                 {t("items.otherItems")}
@@ -2144,10 +2193,12 @@ export default function ItemDetailsPage() {
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
             {zoomImageUrl && (
-              <img
+              <RemoteImage
                 src={zoomImageUrl}
                 alt="Zoom"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
+                width={1920}
+                height={1920}
+                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
               />
             )}
           </div>
@@ -2156,3 +2207,6 @@ export default function ItemDetailsPage() {
     </div>
   );
 }
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

@@ -1,18 +1,25 @@
 import { Prisma, Type } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
 
+import { cropImageIfNeeded } from "@/lib/media/imageTrim";
 import {
-  fetchAndStoreMetadata,
   downloadRemoteImage,
-} from "@/services/metadata";
-import { cropImageIfNeeded } from "@/lib/server/imageTrim";
-import { presentItem, presentItemFromStorage } from "@/lib/presentItem";
-import { resolveShelfId, resolveItemId } from "@/lib/resolveIds";
-import { slugify } from "@/lib/slugs";
-import { buildItemSearchConditions } from "@/lib/itemSearch";
+  syncCroppedCoverAttachment,
+} from "@/services/metadata/storage";
+import { presentItem, presentItemFromStorage } from "@/lib/item/present";
+import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
+import { slugifyItemName } from "@/lib/routing/slugs";
+import { buildItemSearchConditions } from "@/lib/item/search";
+import { startItemMetadataRefresh, shelfMoveMetadataResetData } from "@/lib/jobs/scheduleMetadataRefresh";
+import {
+  itemPricesContextFromRecord,
+  readItemPrices,
+  summarizeListItemPrices,
+  EMPTY_LIST_ITEM_PRICES,
+} from "@/services/pricing/itemDisplay";
 
 const VALID_SHELF_TYPES = new Set<string>(Object.values(Type));
 
@@ -91,7 +98,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    return NextResponse.json(presentItemFromStorage(item));
+    const prices = await readItemPrices(itemPricesContextFromRecord(item));
+    return NextResponse.json({
+      ...presentItemFromStorage(item),
+      ...(prices ?? {
+        priceNew: null,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceLastUpdated: null,
+      }),
+    });
   }
 
   const whereClause: Prisma.ItemWhereInput = {};
@@ -134,7 +150,13 @@ export async function GET(req: NextRequest) {
   });
 
   if (includeMetadata) {
-    return NextResponse.json(items.map((item) => presentItemFromStorage(item)));
+    const priceByItemId = await summarizeListItemPrices(items);
+    return NextResponse.json(
+      items.map((item) => ({
+        ...presentItemFromStorage(item),
+        ...(priceByItemId.get(item.id) ?? EMPTY_LIST_ITEM_PRICES),
+      })),
+    );
   }
 
   return NextResponse.json(items);
@@ -210,7 +232,7 @@ export async function POST(req: NextRequest) {
       data: {
         shelfId: resolvedShelfId,
         name,
-        slug: slugify(name),
+        slug: slugifyItemName(name),
         description,
         imageUrl: localImageUrl,
         backgroundImageUrl: localBackgroundImageUrl,
@@ -231,28 +253,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (fetchMetadata) {
-      try {
-        const metadata = await fetchAndStoreMetadata(
-          item.id,
-          name,
-          shelf.type,
-          barcode,
-          true,
-          shelf.name,
-        );
-
-        if (metadata) {
-          return NextResponse.json(
-            presentItem({
-              ...item,
-              metadata,
-              shelf: item.shelf,
-            }),
-          );
-        }
-      } catch (metadataError) {
-        console.error("Error fetching metadata:", metadataError);
-      }
+      await startItemMetadataRefresh({
+        itemId: item.id,
+        lookupQuery: name,
+        shelfType: shelf.type,
+        barcode,
+        shelfName: shelf.name,
+        bypassMetadataCache: false,
+        forceRefresh: true,
+      });
     }
 
     return NextResponse.json(presentItemFromStorage(item));
@@ -278,22 +287,48 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
+    const searchParams = req.nextUrl.searchParams;
     const body = await req.json();
-    const { id, refreshMetadata, lookupQuery, ...data } = body;
+    const { id, refreshMetadata, lookupQuery, currentShelfId, ...data } = body;
+    const requestId = typeof id === "string" ? id : searchParams.get("id");
+    const sourceShelfId =
+      typeof currentShelfId === "string"
+        ? currentShelfId
+        : searchParams.get("shelfId");
+
+    if (!requestId) {
+      return NextResponse.json(
+        { error: "Item ID is required" },
+        { status: 400 },
+      );
+    }
+
     if (typeof data.name === "string") {
-      data.slug = slugify(data.name);
+      data.slug = slugifyItemName(data.name);
     }
     if (typeof data.shelfId === "string") {
       data.shelfId = await resolveShelfId(data.shelfId, auth.user.id);
     }
-    const shelfContext =
-      typeof data.shelfId === "string" ? data.shelfId : undefined;
-    const resolvedId = await resolveItemId(id, shelfContext, auth.user.id);
+
+    const resolvedId = await resolveItemId(
+      requestId,
+      sourceShelfId,
+      auth.user.id,
+    );
 
     // Check if item exists and user has permission to update it
     const item = await prisma.item.findUnique({
       where: { id: resolvedId },
-      select: { userId: true, shelf: { select: { type: true } } },
+      select: {
+        userId: true,
+        shelfId: true,
+        metadataId: true,
+        name: true,
+        barcode: true,
+        imageUrl: true,
+        backgroundImageUrl: true,
+        shelf: { select: { type: true, name: true } },
+      },
     });
 
     if (!item) {
@@ -308,12 +343,31 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const shelfChanged =
+      typeof data.shelfId === "string" && data.shelfId !== item.shelfId;
+
+    if (shelfChanged) {
+      Object.assign(data, shelfMoveMetadataResetData(item, data));
+    }
+
     if (data.imageUrl) {
+      const previousImageUrl = item.imageUrl;
       data.imageUrl = await downloadRemoteImage(data.imageUrl);
       if (data.imageUrl) {
         data.imageUrl = await cropImageIfNeeded(data.imageUrl, {
           minMarginPixels: 30,
         });
+      }
+      if (
+        data.imageUrl &&
+        item.metadataId &&
+        data.imageUrl !== previousImageUrl
+      ) {
+        await syncCroppedCoverAttachment(
+          item.metadataId,
+          data.imageUrl,
+          previousImageUrl,
+        );
       }
     }
     if (data.backgroundImageUrl) {
@@ -347,38 +401,49 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    if (refreshMetadata) {
-      try {
-        if (updatedItem.imageUrl && updatedItem.imageUrl.startsWith("http")) {
-          await prisma.item.update({
-            where: { id: updatedItem.id },
-            data: { imageUrl: null },
-          });
-          updatedItem.imageUrl = null;
-        }
+    if (refreshMetadata || shelfChanged) {
+      const metadataLookupQuery =
+        typeof lookupQuery === "string" && lookupQuery.trim()
+          ? lookupQuery.trim()
+          : updatedItem.name;
 
-        const metadata = await fetchAndStoreMetadata(
-          updatedItem.id,
-          lookupQuery || updatedItem.name,
-          updatedItem.shelf.type,
-          lookupQuery ? undefined : updatedItem.barcode || undefined,
-          true,
-          updatedItem.shelf.name,
-          true,
-        );
+      const metadataRefreshStartedAt = (
+        await startItemMetadataRefresh({
+          itemId: updatedItem.id,
+          lookupQuery: metadataLookupQuery,
+          shelfType: updatedItem.shelf.type,
+          barcode: shelfChanged
+            ? updatedItem.barcode || undefined
+            : lookupQuery
+              ? undefined
+              : updatedItem.barcode || undefined,
+          shelfName: updatedItem.shelf.name,
+          clearRemoteCover: Boolean(
+            updatedItem.imageUrl && updatedItem.imageUrl.startsWith("http"),
+          ),
+        })
+      ).startedAt;
 
-        if (metadata) {
-          return NextResponse.json(
-            presentItem({
-              ...updatedItem,
-              metadata,
-              shelf: updatedItem.shelf,
-            }),
-          );
-        }
-      } catch (metadataError) {
-        console.error("Error refreshing metadata:", metadataError);
-      }
+      const itemWithRefreshFlag = await prisma.item.findUnique({
+        where: { id: updatedItem.id },
+        include: {
+          shelf: true,
+          metadata: {
+            include: {
+              attachments: true,
+              authors: true,
+              publishers: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json(
+        presentItemFromStorage({
+          ...(itemWithRefreshFlag || updatedItem),
+          metadataRefreshStartedAt,
+        }),
+      );
     }
 
     return NextResponse.json(presentItemFromStorage(updatedItem));

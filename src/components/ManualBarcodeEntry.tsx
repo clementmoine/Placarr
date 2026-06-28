@@ -3,9 +3,14 @@
 import { Barcode, Search } from "lucide-react";
 import { toast } from "sonner";
 
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import {
+  scannerBarcodePlaceholderKey,
+  scannerEnterBarcodeKey,
+} from "@/lib/barcode/shelfLabels";
 
 export function cleanManualBarcode(value: string): string {
   return value.replace(/[^\d]/g, "").trim();
@@ -17,12 +22,14 @@ export function ManualBarcodeEntry({
   onSubmit,
   disabled,
   className,
+  shelfType,
 }: {
   value: string;
   onValueChange: (value: string) => void;
   onSubmit: (barcode: string) => void;
   disabled?: boolean;
   className?: string;
+  shelfType?: string | null;
 }) {
   const { t } = useLocale();
   const cleanedValue = cleanManualBarcode(value);
@@ -33,7 +40,7 @@ export function ManualBarcodeEntry({
       onSubmit={(event) => {
         event.preventDefault();
         if (!cleanedValue) {
-          toast.error(t("scanner.enterBarcode"));
+          toast.error(t(scannerEnterBarcodeKey(shelfType)));
           return;
         }
         onSubmit(cleanedValue);
@@ -45,7 +52,7 @@ export function ManualBarcodeEntry({
           type="text"
           inputMode="numeric"
           autoComplete="off"
-          placeholder={t("scanner.manualBarcodePlaceholder")}
+          placeholder={t(scannerBarcodePlaceholderKey(shelfType))}
           value={value}
           onChange={(event) => onValueChange(event.target.value)}
           className="h-11 w-full rounded-2xl border-border/70 bg-zinc-50/80 pl-10 pr-28 text-sm dark:bg-zinc-950/30"

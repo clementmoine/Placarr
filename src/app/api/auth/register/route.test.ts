@@ -8,7 +8,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("bcryptjs", () => ({ hash: h.hash }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/db/prisma", () => ({
   prisma: { user: { findUnique: h.findUnique, create: h.create } },
 }));
 

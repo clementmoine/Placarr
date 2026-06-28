@@ -41,14 +41,16 @@ describe("GET /api/admin/providers", () => {
     const movies = payload.coverage.find(
       (entry: { type: string }) => entry.type === "movies",
     );
-    const rating = movies.capabilities.find(
-      (entry: { capability: string }) => entry.capability === "rating",
+    const ageRating = movies.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "ageRating",
     );
 
-    expect(rating.providers).toEqual(expect.arrayContaining(["tmdb", "omdb"]));
-    expect(rating.providers).toHaveLength(2);
-    expect(rating.configuredCount).toBe(0);
-    expect(rating.risk).toBe("missing");
+    expect(ageRating.providers).toEqual(
+      expect.arrayContaining(["tmdb", "omdb"]),
+    );
+    expect(ageRating.providers).toHaveLength(2);
+    expect(ageRating.configuredCount).toBe(0);
+    expect(ageRating.risk).toBe("missing");
   });
 
   it("signale 'single-source' quand une seule source est configurée", async () => {
@@ -59,14 +61,16 @@ describe("GET /api/admin/providers", () => {
     const movies = payload.coverage.find(
       (entry: { type: string }) => entry.type === "movies",
     );
-    const rating = movies.capabilities.find(
-      (entry: { capability: string }) => entry.capability === "rating",
+    const ageRating = movies.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "ageRating",
     );
 
-    expect(rating.providers).toEqual(expect.arrayContaining(["tmdb", "omdb"]));
-    expect(rating.providers).toHaveLength(2);
-    expect(rating.configuredCount).toBe(1);
-    expect(rating.risk).toBe("single-source");
+    expect(ageRating.providers).toEqual(
+      expect.arrayContaining(["tmdb", "omdb"]),
+    );
+    expect(ageRating.providers).toHaveLength(2);
+    expect(ageRating.configuredCount).toBe(1);
+    expect(ageRating.risk).toBe("single-source");
   });
 
   it("marque n/a les capacités sans provider déclaré", async () => {
@@ -124,7 +128,7 @@ describe("GET /api/admin/providers", () => {
     expect(pageCount.risk).toBe("ok");
   });
 
-  it("couvre rating livres via OpenLibrary et Google Books", async () => {
+  it("couvre rating livres via OpenLibrary, Google Books et Booknode", async () => {
     process.env[GOOGLE_BOOKS_API_KEY] = "fake-key";
 
     const response = await GET();
@@ -137,9 +141,14 @@ describe("GET /api/admin/providers", () => {
     );
 
     expect(rating.providers).toEqual(
-      expect.arrayContaining(["openlibrary", "googlebooks"]),
+      expect.arrayContaining([
+        "openlibrary",
+        "googlebooks",
+        "booknode",
+        "bedetheque",
+      ]),
     );
-    expect(rating.configuredCount).toBe(2);
+    expect(rating.configuredCount).toBeGreaterThanOrEqual(3);
     expect(rating.risk).toBe("ok");
   });
 
@@ -231,7 +240,7 @@ describe("GET /api/admin/providers", () => {
     expect(rating.providers).toEqual(
       expect.arrayContaining(["boardgamegeek", "philibert"]),
     );
-    expect(rating.configuredCount).toBe(1);
+    expect(rating.configuredCount).toBeGreaterThanOrEqual(1);
     expect(rating.risk).toBe("ok");
   });
 

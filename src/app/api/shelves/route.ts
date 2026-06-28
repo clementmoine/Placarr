@@ -1,12 +1,127 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 
 import { requireGuestOrHigher } from "@/lib/auth";
 
-import { presentItemFromStorage } from "@/lib/presentItem";
-import { resolveShelfId } from "@/lib/resolveIds";
-import { slugify } from "@/lib/slugs";
-import { buildItemSearchConditions } from "@/lib/itemSearch";
+import {
+  itemListMetadataInclude,
+  presentItemFromStorage,
+} from "@/lib/item/present";
+import { resolveShelfId } from "@/lib/routing/resolveIds";
+import { slugify } from "@/lib/routing/slugs";
+import { buildItemSearchConditions } from "@/lib/item/search";
+import { bestRatingRatioFromFacts } from "@/lib/item/rating";
+import { summarizeShelfItemPrices } from "@/services/pricing/resolver";
+import type { ShelfBestItem } from "@/types/shelves";
+
+const emptyShelfItemPrices = {
+  priceNew: null,
+  priceUsed: null,
+  priceUsedCIB: null,
+  priceLastUpdated: null,
+} as const;
+
+async function formatShelfWithItemPrices<
+  T extends {
+    type: string;
+    name: string;
+    items: Array<
+      {
+        id: string;
+        name: string;
+        barcode?: string | null;
+        metadataId?: string | null;
+        metadata?: { title?: string | null; aliases?: string | null } | null;
+      } & Record<string, unknown>
+    >;
+  },
+>(shelf: T) {
+  const priceByItemId = await summarizeShelfItemPrices(
+    shelf.type,
+    shelf.items.map((item) => ({
+      id: item.id,
+      barcode: item.barcode,
+      name: item.name,
+      metadataTitle: item.metadata?.title ?? null,
+    })),
+    shelf.name,
+  );
+
+  return {
+    ...shelf,
+    items: shelf.items.map((item) => ({
+      ...presentItemFromStorage(item),
+      ...(priceByItemId.get(item.id) ?? emptyShelfItemPrices),
+    })),
+  };
+}
+
+/** Highest parseable rating ratio (0..1) across an item's rating facts, or -1. */
+function bestRatingRatio(factsJson: string | null | undefined): number {
+  if (!factsJson) return -1;
+  try {
+    const facts = JSON.parse(factsJson);
+    if (!Array.isArray(facts)) return -1;
+    return bestRatingRatioFromFacts(facts) ?? -1;
+  } catch {
+    return -1;
+  }
+}
+
+/**
+ * Attach each shelf's `bestItem` — the cover + background of its highest-rated
+ * item that actually has a background to show. One extra query for the whole
+ * list; ratings live in metadata.facts (JSON) so the pick happens in JS.
+ */
+async function withBestItems<T extends { id: string }>(
+  shelves: T[],
+): Promise<Array<T & { bestItem: ShelfBestItem | null }>> {
+  if (shelves.length === 0) {
+    return shelves.map((shelf) => ({ ...shelf, bestItem: null }));
+  }
+
+  const items = await prisma.item.findMany({
+    where: { shelfId: { in: shelves.map((shelf) => shelf.id) } },
+    select: {
+      shelfId: true,
+      imageUrl: true,
+      backgroundImageUrl: true,
+      metadata: {
+        select: { imageUrl: true, heroImageUrl: true, facts: true },
+      },
+    },
+  });
+
+  const bestByShelf = new Map<string, ShelfBestItem & { ratio: number }>();
+  for (const item of items) {
+    const background =
+      item.backgroundImageUrl ?? item.metadata?.heroImageUrl ?? null;
+    const image = item.imageUrl ?? item.metadata?.imageUrl ?? null;
+    if (!background && !image) continue;
+    const ratio = bestRatingRatio(item.metadata?.facts);
+    const current = bestByShelf.get(item.shelfId);
+    if (!current || ratio > current.ratio) {
+      bestByShelf.set(item.shelfId, {
+        ratio,
+        imageUrl: image,
+        backgroundImageUrl: background,
+      });
+    }
+  }
+
+  return shelves.map((shelf) => {
+    const best = bestByShelf.get(shelf.id);
+    return {
+      ...shelf,
+      bestItem: best
+        ? {
+            imageUrl: best.imageUrl,
+            backgroundImageUrl: best.backgroundImageUrl,
+          }
+        : null,
+    };
+  });
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
@@ -29,13 +144,7 @@ export async function GET(req: NextRequest) {
                 OR: buildItemSearchConditions(searchTerm),
               },
               include: {
-                metadata: {
-                  include: {
-                    attachments: true,
-                    authors: true,
-                    publishers: true,
-                  },
-                },
+                metadata: itemListMetadataInclude,
               },
               orderBy: { name: "asc" },
             },
@@ -54,44 +163,7 @@ export async function GET(req: NextRequest) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
-        // Fetch prices from BarcodeCache
-        const barcodes = shelf.items
-          .map((item) => item.barcode)
-          .filter((b): b is string => !!b);
-        const cleanBarcodes = barcodes
-          .map((b) => b.replace(/[^\d]/g, "").trim())
-          .filter(Boolean);
-        const priceCaches =
-          cleanBarcodes.length > 0
-            ? await prisma.barcodeCache.findMany({
-                where: { barcode: { in: cleanBarcodes } },
-              })
-            : [];
-        const priceMap = new Map(priceCaches.map((c) => [c.barcode, c]));
-
-        // Format items with metadata and prices
-        const formattedShelf = {
-          ...shelf,
-          items: shelf.items.map((item) => {
-            const clean = item.barcode
-              ? item.barcode.replace(/[^\d]/g, "").trim()
-              : "";
-            const cache = clean ? priceMap.get(clean) : null;
-            const prices = {
-              priceNew: cache?.priceNew ?? null,
-              priceUsed: cache?.priceUsed ?? null,
-              priceUsedCIB: cache?.priceUsedCIB ?? null,
-              priceLastUpdated: cache?.priceLastUpdated ?? null,
-            };
-
-            return {
-              ...presentItemFromStorage(item),
-              ...prices,
-            };
-          }),
-        };
-
-        return NextResponse.json(formattedShelf);
+        return NextResponse.json(await formatShelfWithItemPrices(shelf));
       }
 
       const shelf = await prisma.shelf.findUnique({
@@ -99,9 +171,7 @@ export async function GET(req: NextRequest) {
         include: {
           items: {
             include: {
-              metadata: {
-                include: { attachments: true, authors: true, publishers: true },
-              },
+              metadata: itemListMetadataInclude,
             },
             orderBy: { name: "asc" },
           },
@@ -117,44 +187,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
-      // Fetch prices from BarcodeCache
-      const barcodes = shelf.items
-        .map((item) => item.barcode)
-        .filter((b): b is string => !!b);
-      const cleanBarcodes = barcodes
-        .map((b) => b.replace(/[^\d]/g, "").trim())
-        .filter(Boolean);
-      const priceCaches =
-        cleanBarcodes.length > 0
-          ? await prisma.barcodeCache.findMany({
-              where: { barcode: { in: cleanBarcodes } },
-            })
-          : [];
-      const priceMap = new Map(priceCaches.map((c) => [c.barcode, c]));
-
-      // Format items with metadata and prices
-      const formattedShelf = {
-        ...shelf,
-        items: shelf.items.map((item) => {
-          const clean = item.barcode
-            ? item.barcode.replace(/[^\d]/g, "").trim()
-            : "";
-          const cache = clean ? priceMap.get(clean) : null;
-          const prices = {
-            priceNew: cache?.priceNew ?? null,
-            priceUsed: cache?.priceUsed ?? null,
-            priceUsedCIB: cache?.priceUsedCIB ?? null,
-            priceLastUpdated: cache?.priceLastUpdated ?? null,
-          };
-
-          return {
-            ...presentItemFromStorage(item),
-            ...prices,
-          };
-        }),
-      };
-
-      return NextResponse.json(formattedShelf);
+      return NextResponse.json(await formatShelfWithItemPrices(shelf));
     }
 
     if (q) {
@@ -186,7 +219,7 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      return NextResponse.json(shelves);
+      return NextResponse.json(await withBestItems(shelves));
     }
 
     const shelves = await prisma.shelf.findMany({
@@ -205,7 +238,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(shelves);
+    return NextResponse.json(await withBestItems(shelves));
   } catch (error) {
     console.error("Error in GET request:", error);
     return NextResponse.json(

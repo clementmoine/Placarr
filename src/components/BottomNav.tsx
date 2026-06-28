@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LibraryBig, Compass, Repeat, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { useAccount } from "@/lib/hooks/useAccount";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { useAccount } from "@/lib/client/hooks/useAccount";
 
 export function BottomNav() {
   const { t } = useLocale();

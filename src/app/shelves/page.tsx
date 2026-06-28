@@ -47,15 +47,15 @@ import {
   type BarcodeScannerResult,
 } from "@/components/BarcodeScannerView";
 
-import { cn } from "@/lib/utils";
-import { useDebounce } from "@/lib/hooks/useDebounce";
+import { cn } from "@/lib/core/utils";
+import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { getShelves, saveShelf } from "@/lib/api/shelves";
 import { getItems, saveItem } from "@/lib/api/items";
 import { ItemCard } from "@/components/ItemCard";
-import { useAccount } from "@/lib/hooks/useAccount";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { itemPath, shelfPath } from "@/lib/slugs";
-import { syncItemQueries } from "@/lib/itemQueryCache";
+import { useAccount } from "@/lib/client/hooks/useAccount";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { itemPath, shelfPath } from "@/lib/routing/slugs";
+import { syncItemQueries, syncShelfQueries } from "@/lib/item/queryCache";
 import axios from "axios";
 import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -154,10 +154,8 @@ function ShelvesComponent() {
     Prisma.ShelfCreateInput | Prisma.ShelfUpdateInput
   >({
     mutationFn: saveShelf,
-    onSuccess: (shelf: Shelf) => {
-      const shelfId = shelf.id;
-      queryClient.invalidateQueries({ queryKey: ["shelf", shelfId] });
-      queryClient.invalidateQueries({ queryKey: ["shelves"] });
+    onSuccess: (updatedShelf: Shelf) => {
+      void syncShelfQueries(queryClient, updatedShelf);
     },
     onError: () => {
       toast.error(t("shelves.createUpdateError"));
@@ -179,7 +177,7 @@ function ShelvesComponent() {
       return new Promise<void>((resolve, reject) => {
         mutate(shelf, {
           onSuccess: () => resolve(),
-          onError: () => reject(),
+          onError: (error) => reject(error),
         });
       });
     },
@@ -277,7 +275,9 @@ function ShelvesComponent() {
         refreshMetadata: true,
       });
 
-      await syncItemQueries(queryClient, newItem, [newItem.shelfId]);
+      await syncItemQueries(queryClient, newItem, [newItem.shelfId], {
+        isCreate: true,
+      });
 
       toast.success(t("common.success"));
       router.push(

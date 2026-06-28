@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -14,6 +14,7 @@ export async function GET() {
       imageUrl: true,
       barcode: true,
       condition: true,
+      metadataRefreshStartedAt: true,
       createdAt: true,
       updatedAt: true,
       shelf: {
@@ -54,6 +55,7 @@ export async function GET() {
       ...item,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
+      metadataRefreshStartedAt: item.metadataRefreshStartedAt?.toISOString() ?? null,
       metadata: item.metadata
         ? {
             ...item.metadata,

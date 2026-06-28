@@ -12,7 +12,7 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   requireAdmin: vi.fn(async () => h.authReturn),
 }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     item: h.item,
   },

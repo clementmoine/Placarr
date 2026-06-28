@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { presentItemFromStorage } from "@/lib/presentItem";
-import { prisma } from "@/lib/prisma";
-import { fetchAndStoreMetadata } from "@/services/metadata";
+import { presentItemFromStorage } from "@/lib/item/present";
+import { prisma } from "@/lib/db/prisma";
+import { startItemMetadataRefresh } from "@/lib/jobs/scheduleMetadataRefresh";
 
 export async function POST(
   req: NextRequest,
@@ -33,16 +33,14 @@ export async function POST(
         ? body.lookupQuery.trim()
         : item.metadata?.title || item.name;
 
-    const metadata = await fetchAndStoreMetadata(
-      item.id,
-      lookupQuery,
-      item.shelf.type,
-      item.barcode || undefined,
-      true,
-      item.shelf.name,
-      true,
-      true, // isBackground
-    );
+    const { startedAt: metadataRefreshStartedAt } =
+      await startItemMetadataRefresh({
+        itemId: item.id,
+        lookupQuery,
+        shelfType: item.shelf.type,
+        barcode: item.barcode,
+        shelfName: item.shelf.name,
+      });
 
     const refreshedItem = await prisma.item.findUnique({
       where: { id: item.id },
@@ -58,12 +56,15 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
-      ok: Boolean(metadata),
-      metadata,
-      item: refreshedItem ? presentItemFromStorage(refreshedItem) : null,
-      refreshedAt: new Date().toISOString(),
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        accepted: true,
+        metadataRefreshStartedAt: metadataRefreshStartedAt.toISOString(),
+        item: refreshedItem ? presentItemFromStorage(refreshedItem) : null,
+      },
+      { status: 202 },
+    );
   } catch (error) {
     console.error("[Admin Items Refresh] Error refreshing item:", error);
     return NextResponse.json(

@@ -12,24 +12,28 @@ import { LayoutGrid, Search } from "lucide-react";
 import Header from "@/components/Header";
 import { ScanFAB } from "@/components/ScanFAB";
 import { ItemCard } from "@/components/ItemCard";
+import {
+  ItemCollectionFilterBar,
+  ItemCollectionSortSelect,
+} from "@/components/ItemCollectionControls";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/core/utils";
 import { getItems } from "@/lib/api/items";
-import { useDebounce } from "@/lib/hooks/useDebounce";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { itemPath } from "@/lib/slugs";
-import { compareTitlesForSort } from "@/lib/titleSort";
-import { getEstimatedItemValueCents } from "@/lib/itemValue";
+import { useDebounce } from "@/lib/client/hooks/useDebounce";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { itemPath } from "@/lib/routing/slugs";
+import {
+  collectionFiltersToSearchParams,
+  parseItemCollectionFilters,
+  parseItemCollectionSort,
+  queryCollectionItems,
+  sumCollectionEstimatedValue,
+  type ItemCollectionFilters,
+  type ItemCollectionSort,
+} from "@/lib/item/collectionQuery";
 
 import type { ItemWithMetadata } from "@/types/items";
 
@@ -43,6 +47,7 @@ const COLLECTION_SHELF_TYPES = [
   "games",
   "movies",
   "musics",
+  "books",
   "boardgames",
 ] as const;
 
@@ -60,7 +65,12 @@ function ItemsPageComponent() {
 
   const [searchQuery, setSearchQuery] = useState(q);
   const [typeFilter, setTypeFilter] = useState(typeParam);
-  const [sortBy, setSortBy] = useState(sortParam);
+  const [sortBy, setSortBy] = useState<ItemCollectionSort>(
+    parseItemCollectionSort(sortParam),
+  );
+  const [filters, setFilters] = useState<ItemCollectionFilters>(() =>
+    parseItemCollectionFilters(searchParams),
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(searchSchema),
@@ -71,7 +81,6 @@ function ItemsPageComponent() {
     queryKey: ["collectionItems", searchQuery, typeFilter],
     queryFn: () =>
       getItems(searchQuery || null, null, {
-        excludeShelfTypes: typeFilter === "all" ? ["books"] : undefined,
         shelfTypes:
           typeFilter !== "all" &&
           COLLECTION_SHELF_TYPES.includes(typeFilter as CollectionShelfType)
@@ -84,55 +93,21 @@ function ItemsPageComponent() {
   const sortedItems = useMemo(() => {
     if (!items?.length) return [] as ItemWithMetadata[];
 
-    return [...items].sort((a, b) => {
-      switch (sortBy) {
-        case "name_desc":
-          return compareTitlesForSort(a.name, b.name, "desc");
-        case "added_desc":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case "added_asc":
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case "release_desc": {
-          const timeA = a.metadata?.releaseDate
-            ? new Date(a.metadata.releaseDate).getTime()
-            : 0;
-          const timeB = b.metadata?.releaseDate
-            ? new Date(b.metadata.releaseDate).getTime()
-            : 0;
-          return timeB - timeA;
-        }
-        case "release_asc": {
-          const timeA = a.metadata?.releaseDate
-            ? new Date(a.metadata.releaseDate).getTime()
-            : 9999999999999;
-          const timeB = b.metadata?.releaseDate
-            ? new Date(b.metadata.releaseDate).getTime()
-            : 9999999999999;
-          return timeA - timeB;
-        }
-        case "name_asc":
-        default:
-          return compareTitlesForSort(a.name, b.name);
-      }
+    return queryCollectionItems(items, {
+      sortBy,
+      filters,
     });
-  }, [items, sortBy]);
+  }, [items, sortBy, filters]);
 
   const totalValue = useMemo(() => {
     if (!items?.length) return 0;
-    const totalCents = items.reduce((sum, item) => {
-      const price =
-        getEstimatedItemValueCents({
-          ...item,
-          shelfType: item.shelf?.type,
-        }) ?? 0;
-      return sum + price;
-    }, 0);
-    return totalCents / 100;
-  }, [items]);
+    return sumCollectionEstimatedValue(
+      queryCollectionItems(items, {
+        sortBy: "name_asc",
+        filters,
+      }),
+    );
+  }, [items, filters]);
 
   const replaceParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(window.location.search);
@@ -161,8 +136,9 @@ function ItemsPageComponent() {
     form.setValue("search", q);
     setSearchQuery(q);
     setTypeFilter(typeParam);
-    setSortBy(sortParam);
-  }, [q, typeParam, sortParam, form]);
+    setSortBy(parseItemCollectionSort(sortParam));
+    setFilters(parseItemCollectionFilters(searchParams));
+  }, [q, typeParam, sortParam, searchParams, form]);
 
   return (
     <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
@@ -194,12 +170,12 @@ function ItemsPageComponent() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <div className="relative">
-                          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                        <div className="relative w-full flex items-center">
+                          <Search className="pointer-events-none absolute left-3.5 z-10 size-4 text-muted-foreground" />
                           <Input
                             type="search"
                             placeholder={t("common.search")}
-                            className="pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11"
+                            className="h-11 w-full rounded-2xl border border-border/80 bg-zinc-50/5 pl-10 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/20"
                             {...field}
                             onChange={(e) => {
                               field.onChange(e);
@@ -214,38 +190,24 @@ function ItemsPageComponent() {
               </form>
             </Form>
 
-            <Select
+            <ItemCollectionSortSelect
               value={sortBy}
               onValueChange={(value) => {
                 setSortBy(value);
                 replaceParams({ sort: value });
               }}
-            >
-              <SelectTrigger className="w-full md:w-52 rounded-2xl h-11">
-                <SelectValue placeholder={t("items.collection.sortBy")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name_asc">
-                  {t("items.collection.sort.nameAsc")}
-                </SelectItem>
-                <SelectItem value="name_desc">
-                  {t("items.collection.sort.nameDesc")}
-                </SelectItem>
-                <SelectItem value="added_desc">
-                  {t("items.collection.sort.addedDesc")}
-                </SelectItem>
-                <SelectItem value="added_asc">
-                  {t("items.collection.sort.addedAsc")}
-                </SelectItem>
-                <SelectItem value="release_desc">
-                  {t("items.collection.sort.releaseDesc")}
-                </SelectItem>
-                <SelectItem value="release_asc">
-                  {t("items.collection.sort.releaseAsc")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              className="w-full md:w-52 rounded-2xl h-11"
+              placeholderKey="items.collection.sortBy"
+            />
           </div>
+
+          <ItemCollectionFilterBar
+            filters={filters}
+            onChange={(next) => {
+              setFilters(next);
+              replaceParams(collectionFiltersToSearchParams(next));
+            }}
+          />
 
           <div className="flex flex-wrap gap-2">
             <button

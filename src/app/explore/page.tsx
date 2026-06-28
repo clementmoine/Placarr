@@ -16,9 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ItemCard } from "@/components/ItemCard";
 import { ShelfCard } from "@/components/ShelfCard";
 import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useDebounce } from "@/lib/client/hooks/useDebounce";
 
 const searchSchema = z.object({
   search: z.string(),

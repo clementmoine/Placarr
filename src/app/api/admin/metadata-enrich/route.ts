@@ -2,9 +2,10 @@ import { after, NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { fetchAndStoreMetadata } from "@/services/metadata";
-import { PROVIDERS } from "@/services/providerRegistry";
+
+import { PROVIDERS } from "@/services/provider/registry";
 
 const DEFAULT_BATCH_LIMIT = 5;
 const MAX_BATCH_LIMIT = 10;
@@ -24,9 +25,7 @@ function metadataEnrichmentWhere(): Prisma.ItemWhereInput {
     shelf: { type: "games" },
     OR: [
       { metadataId: null },
-      ...(source
-        ? [{ metadata: { attachments: { none: { source } } } }]
-        : []),
+      ...(source ? [{ metadata: { attachments: { none: { source } } } }] : []),
     ],
   };
 }
@@ -111,9 +110,10 @@ export async function POST(req: NextRequest) {
           item.shelf.type,
           item.barcode || undefined,
           true,
+          undefined,
+          true,
+          true,
           item.shelf.name,
-          true,
-          true,
         );
       } catch (error) {
         console.error(

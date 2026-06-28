@@ -3,9 +3,9 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
-import ReactQueryProvider from "@/lib/providers/ReactQueryProvider";
-import SessionProvider from "@/lib/providers/SessionProvider";
-import { LocaleProvider } from "@/lib/providers/LocaleProvider";
+import ReactQueryProvider from "@/lib/client/providers/ReactQueryProvider";
+import SessionProvider from "@/lib/client/providers/SessionProvider";
+import { LocaleProvider } from "@/lib/client/providers/LocaleProvider";
 
 import "./globals.css";
 

@@ -12,33 +12,62 @@ const h = vi.hoisted(() => ({
   },
   shelf: { findUnique: vi.fn() },
   metadata: { update: vi.fn() },
+  resolveShelfId: vi.fn(),
+  resolveItemId: vi.fn(),
   fetchAndStoreMetadata: vi.fn(),
   downloadRemoteImage: vi.fn(),
+  startItemMetadataRefresh: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: h.requireGuestOrHigher,
 }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/db/prisma", () => ({
   prisma: { item: h.item, shelf: h.shelf, metadata: h.metadata },
 }));
 vi.mock("@/services/metadata", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
   downloadRemoteImage: h.downloadRemoteImage,
 }));
-vi.mock("@/lib/presentItem", () => ({
+vi.mock("@/lib/item/present", () => ({
   presentItem: (i: { id: string }) => ({ presented: "full", id: i.id }),
   presentItemFromStorage: (i: { id: string }) => ({
     presented: "storage",
     id: i.id,
   }),
 }));
-vi.mock("@/lib/resolveIds", () => ({
-  resolveShelfId: async (id: string) => id,
-  resolveItemId: async (id: string) => id,
+vi.mock("@/lib/routing/resolveIds", () => ({
+  resolveShelfId: h.resolveShelfId,
+  resolveItemId: h.resolveItemId,
 }));
-vi.mock("@/lib/slugs", () => ({ slugify: (s: string) => `slug-${s}` }));
-vi.mock("@/lib/itemSearch", () => ({ buildItemSearchConditions: () => [] }));
+vi.mock("@/lib/routing/slugs", () => ({
+  slugifyItemName: (s: string) => `slug-${s}`,
+}));
+vi.mock("@/lib/item/search", () => ({ buildItemSearchConditions: () => [] }));
+vi.mock("@/lib/jobs/scheduleMetadataRefresh", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/jobs/scheduleMetadataRefresh")>();
+  return {
+    ...actual,
+    startItemMetadataRefresh: h.startItemMetadataRefresh,
+  };
+});
+vi.mock("@/services/pricing/itemDisplay", () => ({
+  itemPricesContextFromRecord: (item: { id: string }) => ({ id: item.id }),
+  readItemPrices: vi.fn().mockResolvedValue({
+    priceNew: null,
+    priceUsed: null,
+    priceUsedCIB: null,
+    priceLastUpdated: null,
+  }),
+  summarizeListItemPrices: vi.fn().mockResolvedValue(new Map()),
+  EMPTY_LIST_ITEM_PRICES: {
+    priceNew: null,
+    priceUsed: null,
+    priceUsedCIB: null,
+    priceLastUpdated: null,
+  },
+}));
 
 import { GET, POST, PATCH, DELETE } from "./route";
 
@@ -65,12 +94,21 @@ beforeEach(() => {
     h.item.update,
     h.item.delete,
     h.shelf.findUnique,
+    h.resolveShelfId,
+    h.resolveItemId,
+    h.startItemMetadataRefresh,
     h.fetchAndStoreMetadata,
     h.downloadRemoteImage,
   ]) {
     fn.mockReset();
   }
+  h.resolveShelfId.mockImplementation(async (id: string) => id);
+  h.resolveItemId.mockImplementation(async (id: string) => id);
   h.downloadRemoteImage.mockImplementation(async (u: string) => u);
+  h.startItemMetadataRefresh.mockResolvedValue({
+    startedAt: new Date("2026-06-27T12:00:00.000Z"),
+    generation: 1,
+  });
 });
 
 describe("GET /api/items — autorisation & cloisonnement", () => {
@@ -167,6 +205,35 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     expect(res.status).toBe(400);
     expect(payload.invalidShelfTypes).toEqual(["nope"]);
     expect(h.item.findMany).not.toHaveBeenCalled();
+  });
+
+  it("attache les prix aux listes d'items", async () => {
+    const { summarizeListItemPrices } =
+      await import("@/services/pricing/itemDisplay");
+
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findMany.mockResolvedValue([
+      { id: "i1", shelf: { type: "games", name: "PS4" } },
+    ]);
+    vi.mocked(summarizeListItemPrices).mockResolvedValue(
+      new Map([
+        [
+          "i1",
+          {
+            priceNew: null,
+            priceUsed: 1200,
+            priceUsedCIB: null,
+            priceLastUpdated: null,
+          },
+        ],
+      ]),
+    );
+
+    const res = await GET(get("/api/items"));
+    const payload = await res.json();
+
+    expect(payload[0].priceUsed).toBe(1200);
+    expect(summarizeListItemPrices).toHaveBeenCalled();
   });
 });
 
@@ -278,6 +345,48 @@ describe("PATCH /api/items — autorisation", () => {
       where: { id: "m1" },
       data: { title: "New Title" },
     });
+  });
+
+  it("résout l'item avec l'étagère source quand il est déplacé par slug", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.resolveShelfId.mockResolvedValue("target-shelf-id");
+    h.resolveItemId.mockResolvedValue("item-id");
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelfId: "source-shelf-id",
+      name: "Aladdin",
+      barcode: null,
+      imageUrl: null,
+      backgroundImageUrl: null,
+      shelf: { type: "movies", name: "DVD" },
+    });
+    h.item.update.mockResolvedValue({
+      id: "item-id",
+      shelfId: "target-shelf-id",
+      name: "Aladdin",
+      barcode: null,
+      shelf: { type: "movies", name: "DVD Disney" },
+    });
+
+    const res = await PATCH(
+      new NextRequest("http://localhost/api/items?shelfId=dvd", {
+        method: "PATCH",
+        body: JSON.stringify({
+          id: "aladdin",
+          name: "Aladdin",
+          shelfId: "dvd-disney",
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.resolveShelfId).toHaveBeenCalledWith("dvd-disney", "u1");
+    expect(h.resolveItemId).toHaveBeenCalledWith("aladdin", "dvd", "u1");
+    expect(h.item.update.mock.calls[0][0].where.id).toBe("item-id");
+    expect(h.item.update.mock.calls[0][0].data.shelfId).toBe(
+      "target-shelf-id",
+    );
+    expect(h.startItemMetadataRefresh).toHaveBeenCalled();
   });
 });
 

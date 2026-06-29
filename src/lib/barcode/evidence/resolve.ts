@@ -18,7 +18,7 @@ import {
 } from "./matchUtils";
 
 import {
-  barcodeEvidenceObservationSourceWeight,
+  barcodeClusterObservationContribution,
   barcodeEvidenceTitleObservationScore,
   compareBarcodeEvidenceByImageObservationRank,
   compareBarcodeEvidenceByObservationRank,
@@ -332,7 +332,7 @@ function scoreEvidenceCluster(
     evidence.length - canonicalCount - trustedRetailerCount;
   const hasCover = evidence.some((e) => e.coverUrl);
   const sourceScore = evidence.reduce(
-    (sum, item) => sum + barcodeEvidenceObservationSourceWeight(item),
+    (sum, item) => sum + barcodeClusterObservationContribution(item),
     0,
   );
   const providerBonus = Math.min(

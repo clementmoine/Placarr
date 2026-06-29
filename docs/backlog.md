@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1198** OK / 25 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1217** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1198** passent (1223 total, 25 skipped) |
+| Tests | **1217** passent (1242 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -47,7 +47,7 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 
 | Priorité | Item | État | Prochaine action |
 | -------- | ---- | ---- | ---------------- |
-| **P2** | Cluster confidence `sourceScore` + tier observations | **Bloqué** | Ajouter `barcodeClusterObservationContribution` (tier × scale + `barcodeEvidenceObservationSourceWeight`) dans `scoreEvidenceCluster` ; **recalibrer** les 6 valeurs figées dans `compile.confidenceLock.test.ts` (essai `observationTierScale: 0.01` → +0.06–0.08 sur Ghost Recon / TMNT, revert 2026-06-29). Voir `scoring.ts` § cluster confidence. |
+| ~~**P2**~~ | ~~Cluster confidence `sourceScore` + tier observations~~ | **Fait 2026-06-29** | `barcodeClusterObservationContribution` (= `barcodeEvidenceTier × CLUSTER_CONFIDENCE.observationTierScale` + `barcodeEvidenceObservationSourceWeight`) branché dans le base score de `scoreEvidenceCluster` ; `observationTierScale: 0.01`. Leaders/platformKeys **inchangés**, seules les 6 valeurs `compile.confidenceLock.test.ts` montent (+0.06 sur cas ancrés : Ghost Recon 0.55→0.61 / 0.45→0.53 / 0.47→0.53, TMNT II Arcade 0.51→0.57 ; deux cas plafond 0.98 stables). Suite complète verte (1217). Cap `listingOnlyCap` intact (clusters listing-only restent ≤ 0.45). |
 | **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
 | **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22 — bloqué env** | Slim RECORD saute les `slowScanScrape` (PicClick seul désormais) + enrich PC/SS. **Constat 2026-06-29** : batch lookups OK en ~2.3 s, mais `resolveBarcode` reste `null` (pas d’ancre canonique sans enrich SS/PC complet) **et** le test hang jusqu’au timeout (900s) sur une promesse orpheline (`buildBarcodeTasks` crée le fetch avant filtrage). Avant de réessayer : (a) couper l’ancre canonique sur le hit barcode PriceCharting en slim, ou (b) ne pas *construire* les tâches `slowScanScrape` (skip avant `buildBarcodeTasks`, pas après). Puis `pnpm test:record` / `test:record:all`. |
 | **P3** | PicClick → eBay Browse API | **Provider créé — à clés** | **Investigation 2026-06-29** : PicClick résout vers une IP AWS us-west (`54.176.32.72`), TCP connect *hang* (`http=000`) → chaque scan paie le timeout 6 s puis `[]` ; le TOS PicClick **interdit le scraping**. **Fait 2026-06-29** : module `src/services/providers/ebay/` (Browse API officielle, OAuth `client_credentials`, recherche `gtin`, prix new/used par condition, cover via `i.ebayimg.com`). Sans clés → no-op gracieux. **Reste** : compte eBay Developers Program **en attente d'approbation** (≥ 1 jour ouvré, demandé 2026-06-29). À réception : fixer `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET` (+ `EBAY_MARKETPLACE_ID`, défaut `EBAY_FR`), valider en live (`pnpm providers:audit:mapping` + scan réel), puis **déprécier PicClick** (retirer le module + slot payload + `slowScanScrape`). |

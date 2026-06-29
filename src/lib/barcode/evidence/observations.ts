@@ -23,6 +23,7 @@ import {
 import {
   barcodeEvidenceRankScore,
   barcodeEvidenceTier,
+  CLUSTER_CONFIDENCE,
   OBSERVATION_RANK_SOURCE_WEIGHT_SCALE,
   OBSERVATION_ROLE_CLUSTER_WEIGHT,
 } from "./scoring";
@@ -157,6 +158,23 @@ export function barcodeEvidenceObservationSupportWeight(
 ): number {
   return (
     barcodeEvidenceTier(evidence) +
+    barcodeEvidenceObservationSourceWeight(evidence)
+  );
+}
+
+/**
+ * Per-row contribution to the cluster-confidence base score: the projected
+ * observation source weight plus a small factual-tier nudge. Folding the tier in
+ * here (instead of only via the per-provider anchor bonuses) lets a canonical row
+ * lift the base more than a marketplace row, keeping the confidence number
+ * faithful to the evidence tier while the tier scale stays well under a full
+ * `sourceWeight` so it never flips a cluster winner on its own.
+ */
+export function barcodeClusterObservationContribution(
+  evidence: ProductEvidence,
+): number {
+  return (
+    barcodeEvidenceTier(evidence) * CLUSTER_CONFIDENCE.observationTierScale +
     barcodeEvidenceObservationSourceWeight(evidence)
   );
 }

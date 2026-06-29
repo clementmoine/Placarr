@@ -63,6 +63,15 @@ export const CLUSTER_CONFIDENCE = {
   trustedRetailer: { perProvider: 0.05, cap: 0.12 },
   cover: 0.05,
   rawSupport: { perExtraRow: 0.025, cap: 0.12 },
+  /**
+   * Per-row factual-tier nudge folded into the cluster base score
+   * (`barcodeClusterObservationContribution`). A canonical row (tier 3) lifts the
+   * base more than a marketplace row (tier 1), so a canonical-anchored cluster is
+   * deservedly more confident than a same-sized listing-only one — without
+   * letting the within-tier `sourceWeight` outweigh the tier itself. Kept small
+   * so it tunes, never decides: floors/caps and the anchor bonuses still govern.
+   */
+  observationTierScale: 0.01,
 } as const;
 
 // ── Alternate visibility ─────────────────────────────────────────────────────

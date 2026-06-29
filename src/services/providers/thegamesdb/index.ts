@@ -86,9 +86,18 @@ export const thegamesdbModule: ProviderModule = {
     },
   },
   runMappingProbe: async () => {
+    if (isTheGamesDbQuotaBlocked()) {
+      return probeErrorResult(
+        "TheGamesDB API quota exceeded — lookups pause for 12–20 minutes",
+        "blocked",
+      );
+    }
     const result = await pingTheGamesDb();
     if (!result.ok) {
-      const statusHint = result.error?.includes("missing") ? "blocked" : "error";
+      const statusHint =
+        result.error?.includes("missing") || result.error?.includes("429")
+          ? "blocked"
+          : "error";
       return probeErrorResult(result.error ?? "TheGamesDB unreachable", statusHint);
     }
     const metadata = await fetchFromTheGamesDB(

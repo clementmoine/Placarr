@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1195** OK / 25 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1196** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,14 +11,14 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1195** passent (1220 total, 25 skipped) |
+| Tests | **1196** passent (1221 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
 
 1. ~~`picclick` — probe listing souvent `empty` (timeout scrape)~~ **hint `blocked` + retry** (`runMappingProbe`)
 2. ~~`screenscraper` — probe `empty` si quota API dépassé~~ **hint `blocked` quota/credentials** (`runMappingProbe`)
-3. `thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé
+3. ~~`thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé~~ **hint `blocked` clé/quota** (`runMappingProbe`)
 4. `apriloshop` — ~~search vide~~ **IQIT OK** (`searchStrategy: iqit`, probe live `rendered_products` + `product-miniature`)
 
 **Hors scope adapter metadata** (probe custom seulement — normal) :
@@ -60,7 +60,7 @@ Règles persistantes dans `.cursor/rules/` :
 | ~~**Chasse aux Livres probe `empty`**~~ | **fait** — fallback FlareSolverr + hint probe | `chasseauxlivres/fetch.ts` |
 | ~~**PicClick probe timeout**~~ | **fait** — retry probe + `blocked` sur timeout scrape | `picclick/index.ts` |
 | ~~**ScreenScraper probe quota**~~ | **fait** — `blocked` si quota/credentials | `screenscraper/index.ts` |
-| **TheGamesDB audit** | ~~Marquer `blocked` quand clé absente~~ **fait** — `runMappingProbe` + `mappingProbeConfigHint` | `thegamesdb/index.ts` |
+| ~~**TheGamesDB audit**~~ | **fait** — `blocked` clé absente ou quota + `mappingProbeConfigHint` | `thegamesdb/index.ts` |
 
 ### P2 — Ranking sans biais (gros chantier)
 
@@ -127,6 +127,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - **Chasse aux Livres FlareSolverr** : fallback scrape + hint probe (**fait 2026-06-29**)
 - **Pricing volume mismatch** : rejette agrégats PicClick n°183 sur item n°07 (**fait 2026-06-29**)
 - **PicClick / ScreenScraper probes** : hints `blocked` actionnables (timeout, quota, credentials) (**fait 2026-06-29**)
+- **TheGamesDB probe quota** : `blocked` si cooldown quota actif (**fait 2026-06-29**)
 - **Barcode platform pick** : `pickPlatformKeyFromEvidence` via `barcodeEvidenceObservationSourceWeight` (**fait 2026-06-29**)
 
 ---

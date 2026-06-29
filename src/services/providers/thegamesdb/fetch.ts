@@ -183,10 +183,17 @@ export async function pingTheGamesDb(): Promise<{
     });
     const latency = Date.now() - start;
     const ok = response.status === 200 && response.data?.code === 200;
+    if (response.status === 429 || response.data?.code === 429) {
+      markTheGamesDbQuotaHit({ monthlyExhausted: true });
+    }
     return {
       ok,
       latency,
-      error: ok ? undefined : `HTTP ${response.status}`,
+      error: ok
+        ? undefined
+        : response.status === 429 || response.data?.code === 429
+          ? "TheGamesDB API quota exceeded"
+          : `HTTP ${response.status}`,
     };
   } catch (error) {
     return {

@@ -5,8 +5,9 @@ import {
   type NamedListing,
 } from "@/lib/barcode/gameLookup";
 import {
-  filterBarcodeLookupTasksForRecord,
+  buildBarcodeRecordEnrichmentDeps,
   isBarcodeRecordSlimMode,
+  resolveBarcodeLookupTasks,
 } from "@/lib/barcode/lookup/recordMode";
 import {
   asLeDenicheurHit,
@@ -16,12 +17,10 @@ import {
   asScanDexHit,
   collectRetailerBarcodeHits,
   createEmptyBarcodeLookupPayload,
-  resolveSettledLookups,
   type BarcodeLookupPayload,
 } from "@/lib/barcode/lookup/payload";
 import type { PriceChartingMetadata } from "@/lib/barcode/lookup/providerTypes";
 import type { BarcodeLookupTaskBuilder } from "@/services/provider/barcode";
-import { createGameBarcodeEnrichmentDeps } from "@/services/provider/barcode";
 import type { BarcodeLookupType } from "@/types/providerModule";
 
 type BarcodeLookupTaskBuilders = Record<
@@ -39,13 +38,11 @@ export async function runBarcodeLookups(params: {
   const payload = createEmptyBarcodeLookupPayload();
 
   if (type === "games") {
-    const lookups = await resolveSettledLookups(
-      filterBarcodeLookupTasksForRecord(
-        taskBuilders.games({
-          barcode: cleanedBarcode,
-          platformKey: contextPlatformKey,
-        }),
-      ),
+    const lookups = await resolveBarcodeLookupTasks(
+      taskBuilders.games({
+        barcode: cleanedBarcode,
+        platformKey: contextPlatformKey,
+      }),
     );
     payload.pc = asPriceChartingHit(lookups.pc);
     payload.calJeuxVideo = asNamedListings(lookups.cal);
@@ -66,12 +63,7 @@ export async function runBarcodeLookups(params: {
         payload.calJeuxVideo,
         contextPlatformKey,
       ),
-      enrichmentDeps: isBarcodeRecordSlimMode()
-        ? {
-            ...createGameBarcodeEnrichmentDeps(),
-            fetchReferencePriceByBarcode: undefined,
-          }
-        : undefined,
+      enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
     });
     payload.pc = enriched.pc as PriceChartingMetadata | null;
     payload.ss = asMetadataHit(enriched.ss);
@@ -79,10 +71,8 @@ export async function runBarcodeLookups(params: {
   }
 
   if (type === "books") {
-    const lookups = await resolveSettledLookups(
-      filterBarcodeLookupTasksForRecord(
-        taskBuilders.books({ barcode: cleanedBarcode }),
-      ),
+    const lookups = await resolveBarcodeLookupTasks(
+      taskBuilders.books({ barcode: cleanedBarcode }),
     );
     payload.ol = asMetadataHit(lookups.ol);
     payload.calFr = asNamedListings(lookups.cal);
@@ -92,10 +82,8 @@ export async function runBarcodeLookups(params: {
   }
 
   if (type === "musics") {
-    const lookups = await resolveSettledLookups(
-      filterBarcodeLookupTasksForRecord(
-        taskBuilders.musics({ barcode: cleanedBarcode }),
-      ),
+    const lookups = await resolveBarcodeLookupTasks(
+      taskBuilders.musics({ barcode: cleanedBarcode }),
     );
     payload.mb = asMetadataHit(lookups.mb);
     payload.discogs = asMetadataHit(lookups.discogs);
@@ -107,10 +95,8 @@ export async function runBarcodeLookups(params: {
   }
 
   if (type === "movies") {
-    const lookups = await resolveSettledLookups(
-      filterBarcodeLookupTasksForRecord(
-        taskBuilders.movies({ barcode: cleanedBarcode }),
-      ),
+    const lookups = await resolveBarcodeLookupTasks(
+      taskBuilders.movies({ barcode: cleanedBarcode }),
     );
     payload.calDvd = asNamedListings(lookups.cal);
     payload.amc = asNamedListings(lookups.amc);
@@ -132,10 +118,8 @@ export async function runBarcodeLookups(params: {
   }
 
   if (type === "boardgames") {
-    const lookups = await resolveSettledLookups(
-      filterBarcodeLookupTasksForRecord(
-        taskBuilders.boardgames({ barcode: cleanedBarcode }),
-      ),
+    const lookups = await resolveBarcodeLookupTasks(
+      taskBuilders.boardgames({ barcode: cleanedBarcode }),
     );
     payload.sd = asScanDexHit(lookups.sd);
     payload.calToys = asNamedListings(lookups.cal);
@@ -148,10 +132,8 @@ export async function runBarcodeLookups(params: {
     return payload;
   }
 
-  const lookups = await resolveSettledLookups(
-    filterBarcodeLookupTasksForRecord(
-      taskBuilders.generic({ barcode: cleanedBarcode }),
-    ),
+  const lookups = await resolveBarcodeLookupTasks(
+    taskBuilders.generic({ barcode: cleanedBarcode }),
   );
   payload.ol = asMetadataHit(lookups.ol);
   payload.deezer = asMetadataHit(lookups.deezer);
@@ -181,12 +163,7 @@ export async function runBarcodeLookups(params: {
       payload.calGeneric,
       contextPlatformKey,
     ),
-    enrichmentDeps: isBarcodeRecordSlimMode()
-      ? {
-          ...createGameBarcodeEnrichmentDeps(),
-          fetchReferencePriceByBarcode: undefined,
-        }
-      : undefined,
+    enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
   });
   payload.pc = enriched.pc as PriceChartingMetadata | null;
   payload.ss = asMetadataHit(enriched.ss);

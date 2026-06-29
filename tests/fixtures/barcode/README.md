@@ -20,8 +20,8 @@ pnpm test:record:one
 pnpm test:record:all
 ```
 
-(`BARCODE_RECORD_SLIM=1` saute PicClick/LeDenicheur et le fallback PriceCharting
-post-scan ; le chemin SS canonique reste actif.)
+(`BARCODE_RECORD_SLIM=1` saute PicClick/LeDenicheur et l'enrichissement post-scan
+PriceCharting + ScreenScraper ; les lookups parallèles PC/AMC/etc. restent actifs.)
 
 (équivalent à `RECORD=1` / `RECORD=1 RECORD_ALL=1` devant la commande vitest.)
 

@@ -1,4 +1,5 @@
 import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
+import { isBarcodeRecordSlimMode } from "@/lib/barcode/lookup/recordMode";
 import {
   cleanTitleForDisplay,
   filterPlatformRedundancies,
@@ -518,7 +519,7 @@ export async function compileResultForType(
   // board game), skip it: its echo of an unmatched name would otherwise become a
   // fake canonical that outranks the clean trusted-retailer title.
   const databaseEvidence =
-    hasAnchorSignals || skipGameDatabaseFallback
+    hasAnchorSignals || skipGameDatabaseFallback || isBarcodeRecordSlimMode()
       ? []
       : await buildDatabaseEvidence(
           trustedEvidence

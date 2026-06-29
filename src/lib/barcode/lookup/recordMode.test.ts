@@ -1,13 +1,16 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  buildBarcodeRecordEnrichmentDeps,
   filterBarcodeLookupTasksForRecord,
   isBarcodeRecordSlimMode,
+  resolveBarcodeLookupTasks,
 } from "./recordMode";
 
 describe("barcode recordMode", () => {
   afterEach(() => {
     delete process.env.BARCODE_RECORD_SLIM;
+    delete process.env.RECORD;
   });
 
   it("is off by default", () => {
@@ -27,5 +30,23 @@ describe("barcode recordMode", () => {
       pc: tasks.pc,
       amc: tasks.amc,
     });
+  });
+
+  it("skips post-scan enrich during slim record", () => {
+    process.env.BARCODE_RECORD_SLIM = "1";
+    const deps = buildBarcodeRecordEnrichmentDeps();
+    expect(deps?.fetchReferencePriceByBarcode).toBeUndefined();
+    expect(deps?.fetchGameMediaByBarcode).toBeUndefined();
+  });
+
+  it("logs per-provider timings during RECORD", async () => {
+    process.env.RECORD = "1";
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    await resolveBarcodeLookupTasks({
+      fast: Promise.resolve("ok"),
+      slow: new Promise((resolve) => setTimeout(() => resolve("slow"), 5)),
+    });
+    expect(log.mock.calls.some(([line]) => String(line).includes("[record lookup] fast"))).toBe(true);
+    log.mockRestore();
   });
 });

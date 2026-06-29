@@ -59,6 +59,7 @@ export const picclickModule: ProviderModule = {
     isSecondary: true,
     websiteUrl: "https://picclick.fr/",
     mappingProbeRetry: true,
+    slowScanScrape: true,
   },
   evidence: {
     label: "PicClick",

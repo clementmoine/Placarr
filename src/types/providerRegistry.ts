@@ -141,6 +141,13 @@ export interface ProviderInfo {
    */
   rateLimited?: boolean;
   /**
+   * Slow live marketplace scrape with no canonical anchor; skipped while
+   * recording network fixtures in slim mode so RECORD runs stay fast. Lets the
+   * record-mode skip set stay provider-blind (derived from this trait instead of
+   * hard-coded ids).
+   */
+  slowScanScrape?: boolean;
+  /**
    * Provider fuzzy-matches by name and can return a different product, so its
    * result is validated against the requested title before being merged (the
    * name-searched game databases: IGDB, TheGamesDB, LaunchBox, RAWG).

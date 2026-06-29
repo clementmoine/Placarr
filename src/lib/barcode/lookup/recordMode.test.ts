@@ -17,17 +17,19 @@ describe("barcode recordMode", () => {
     expect(isBarcodeRecordSlimMode()).toBe(false);
   });
 
-  it("filters slow scrape providers during slim record", () => {
+  it("filters only blocked slow-scrape providers during slim record", () => {
     process.env.BARCODE_RECORD_SLIM = "1";
     const tasks = {
       pc: Promise.resolve(null),
       picclick: Promise.resolve([]),
+      // LeDenicheur is a fast JSON BFF (~280ms), not a blocked scrape: kept.
       leDenicheur: Promise.resolve(null),
       amc: Promise.resolve([]),
     };
 
     expect(filterBarcodeLookupTasksForRecord(tasks)).toEqual({
       pc: tasks.pc,
+      leDenicheur: tasks.leDenicheur,
       amc: tasks.amc,
     });
   });

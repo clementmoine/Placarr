@@ -141,10 +141,13 @@ export interface ProviderInfo {
    */
   rateLimited?: boolean;
   /**
-   * Slow live marketplace scrape with no canonical anchor; skipped while
-   * recording network fixtures in slim mode so RECORD runs stay fast. Lets the
-   * record-mode skip set stay provider-blind (derived from this trait instead of
-   * hard-coded ids).
+   * Live scrape that reliably stalls (host unreachable / connection blocked /
+   * bot-protected) with no canonical anchor to show for it, so it eats its full
+   * request timeout on most calls. Skipped while recording network fixtures in
+   * slim mode so RECORD runs stay fast. Lets the record-mode skip set stay
+   * provider-blind (derived from this trait instead of hard-coded ids). Reserve
+   * for genuinely blocked hosts — a fast JSON source (e.g. a GraphQL BFF) does
+   * not qualify just because it is non-canonical.
    */
   slowScanScrape?: boolean;
   /**

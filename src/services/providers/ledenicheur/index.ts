@@ -85,7 +85,6 @@ export const ledenicheurModule: ProviderModule = {
     canonical: false,
     websiteUrl: "https://ledenicheur.fr/",
     apiKeyDashboardUrl: "https://ledenicheur.fr/",
-    slowScanScrape: true,
   },
   evidence: {
     label: "LeDenicheur",

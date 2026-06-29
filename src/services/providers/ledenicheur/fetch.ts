@@ -302,9 +302,25 @@ async function fetchProductDetail(
   }
 }
 
+/**
+ * The detail POST exists to recover the used/alternative price the search list
+ * often omits. Skip that round-trip only when the search node already carries
+ * *both* new and used prices — then the detail fetch is pure redundancy, so we
+ * halve latency without dropping pricing data.
+ */
+function searchNodeHasCompletePricing(product: LeDenicheurProductNode): boolean {
+  const { priceNew, priceUsed } = parseLeDenicheurPriceSummary(
+    product.priceSummary,
+  );
+  return priceNew != null && priceUsed != null;
+}
+
 async function resolveProductNode(
   product: LeDenicheurProductNode,
 ): Promise<LeDenicheurPrices | null> {
+  if (searchNodeHasCompletePricing(product)) {
+    return buildProductPrices(product, null);
+  }
   const productId = extractLeDenicheurProductId(product.pathName);
   const detail = productId ? await fetchProductDetail(productId) : null;
   return buildProductPrices(product, detail);

@@ -80,11 +80,56 @@ export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
   };
 }
 
+export const DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS = 8000;
+
+/**
+ * Soft cap (ms) for a single barcode lookup task. The batch waits for the
+ * slowest provider, so a provider that chains round-trips (e.g. a marketplace
+ * search + detail fetch, each with its own request timeout) can hold every scan
+ * hostage well past any single request timeout. This caps that tail
+ * provider-blind: a task that overruns yields `null` instead of stalling the
+ * batch. Tunable via env; `0`/invalid disables the cap. Read at call-time so it
+ * can be tuned without a rebuild.
+ */
+export function barcodeLookupTaskDeadlineMs(): number {
+  const raw = process.env.BARCODE_LOOKUP_TASK_DEADLINE_MS;
+  if (raw === undefined) return DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS;
+}
+
+export function withBarcodeLookupDeadline<T>(
+  task: Promise<T>,
+  ms: number = barcodeLookupTaskDeadlineMs(),
+): Promise<T | null> {
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return task.catch(() => null);
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), ms);
+    timer.unref?.();
+  });
+  const guarded = task.then(
+    (value) => {
+      if (timer) clearTimeout(timer);
+      return value as T | null;
+    },
+    () => {
+      if (timer) clearTimeout(timer);
+      return null;
+    },
+  );
+  return Promise.race([guarded, deadline]);
+}
+
 export async function resolveSettledLookups(
   tasks: Record<string, Promise<unknown>>,
 ): Promise<Record<string, unknown>> {
   const entries = Object.entries(tasks);
-  const settled = await Promise.allSettled(entries.map(([, task]) => task));
+  const settled = await Promise.allSettled(
+    entries.map(([, task]) => withBarcodeLookupDeadline(task)),
+  );
   return entries.reduce<Record<string, unknown>>((acc, [key], index) => {
     const result = settled[index];
     acc[key] = result?.status === "fulfilled" ? result.value : null;

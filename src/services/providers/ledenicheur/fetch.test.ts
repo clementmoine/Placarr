@@ -134,6 +134,36 @@ describe("fetchPricesFromLeDenicheur", () => {
     });
   });
 
+  it("évite la fiche produit quand la recherche fournit déjà neuf + occasion", async () => {
+    mockedPost.mockResolvedValueOnce(
+      bffResponse([
+        {
+          __typename: "Product",
+          name: "Hades Nintendo Switch",
+          pathName: "/product.php?p=5752524",
+          priceSummary: {
+            regular: 21.99,
+            alternative: 34.99,
+            inStock: 21.99,
+            count: 9,
+          },
+          media: { first: "https://example.com/hades.jpg" },
+        },
+      ]),
+    );
+
+    await expect(fetchPricesFromLeDenicheur("hades switch")).resolves.toEqual({
+      priceNew: 2199,
+      priceUsed: 3499,
+      sourceUrl: "https://ledenicheur.fr/product.php?p=5752524",
+      productName: "Hades Nintendo Switch",
+      offerCount: 9,
+      coverUrl: "https://example.com/hades.jpg",
+      matchedQuery: "hades switch",
+    });
+    expect(mockedPost).toHaveBeenCalledTimes(1);
+  });
+
   it("récupère l'occasion depuis la fiche produit quand la recherche ne la sépare pas", async () => {
     mockedPost
       .mockResolvedValueOnce(

@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1187+** OK,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1191** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)

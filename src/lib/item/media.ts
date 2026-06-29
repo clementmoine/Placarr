@@ -28,7 +28,6 @@ import {
   isICollectAgeRatingFact,
   isICollectAttachmentSource,
 } from "@/services/providers/icollect/imageLabels";
-import { retailCatalogImageTitleSource } from "@/services/provider/sourceTraits";
 
 export interface MediaItem {
   url: string;
@@ -104,10 +103,7 @@ function filterAttachmentsForProductTitle<
   const attachments = (metadata.attachments ?? []).filter((attachment) => {
     if (!COVER_GALLERY_TYPES.has(attachment.type)) return true;
     if (!attachment.title?.trim()) return true;
-    const retailCatalogTitles =
-      attachment.retailCatalogImageTitlesSource ??
-      retailCatalogImageTitleSource(attachment.source);
-    if (!retailCatalogTitles) {
+    if (!attachment.retailCatalogImageTitlesSource) {
       return true;
     }
     return !catalogAttachmentTitleConflicts(productTitle, attachment.title);

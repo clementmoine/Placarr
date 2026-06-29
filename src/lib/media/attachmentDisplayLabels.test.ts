@@ -19,6 +19,62 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("affiche la région d'une jaquette ScreenScraper australienne (au → Europe)", () => {
+    // Regression: a `box-2D(au)` cover was stored with role "au" and showed
+    // "Jaquette" with no region because the resolver only knew the 6 canonical
+    // codes. Australia is a PAL territory → Europe bucket.
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "au",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({
+      provider: "ScreenScraper",
+      kind: "Jaquette",
+      region: "Europe",
+      detail: "Jaquette · Europe",
+    });
+  });
+
+  it("résout les régions ISO ScreenScraper sur les rôles composés", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        role: "back-sp",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({ kind: "Dos", region: "Europe", detail: "Dos · Europe" });
+
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "3d-au",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({
+      kind: "Jaquette 3D",
+      region: "Europe",
+      detail: "Jaquette 3D · Europe",
+    });
+
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        role: "disc-br",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({
+      kind: "Disque",
+      region: "États-Unis",
+      detail: "Disque · États-Unis",
+    });
+  });
+
   it("normalise LaunchBox Europe cover", () => {
     expect(
       getAttachmentGalleryLabels({

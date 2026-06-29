@@ -51,6 +51,7 @@ import {
 import { areLikelySameProduct } from "@/lib/barcode/titleUtils";
 import { isWeakMetadataSearchFragment } from "@/lib/title/searchVariants";
 import { metadataHasDisplayImage } from "@/lib/metadata/displayImage";
+import { resolveAttachmentDisplayRegion } from "@/lib/media/attachmentDisplayLabels";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
 
@@ -588,7 +589,6 @@ export function buildScreenScraperFacts(
 }
 
 const SCREEN_SCRAPER_PROVIDER_ID = "screenscraper";
-const SCREEN_SCRAPER_REGION_RE = /(?:^|[-_])(fr|eu|wor|uk|us|jp)$/i;
 
 interface ScreenScraperObservationContext {
   sourceUrl?: string;
@@ -618,10 +618,16 @@ function screenScraperImageRole(
 function screenScraperImageRegion(
   attachment: MetadataAttachment,
 ): string | undefined {
-  const role = attachment.role?.trim();
-  if (!role) return undefined;
-  const match = role.match(SCREEN_SCRAPER_REGION_RE);
-  return match?.[1]?.toLowerCase();
+  // Reuse the shared, provider-agnostic region resolver so the full ScreenScraper
+  // region vocabulary (ISO codes like `au`/`sp`, continent groupings, and compound
+  // roles such as `back-au`/`3d-sp`) is recognised and bucketed into a canonical
+  // region instead of being silently dropped.
+  return (
+    resolveAttachmentDisplayRegion({
+      type: attachment.type,
+      role: attachment.role,
+    }) ?? undefined
+  );
 }
 
 function imageObservationUsage(role: ImageObservationRole) {

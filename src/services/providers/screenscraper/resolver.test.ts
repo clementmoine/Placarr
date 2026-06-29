@@ -235,6 +235,58 @@ describe("buildScreenScraperObservations", () => {
       ]),
     );
   });
+
+  it("buckets ScreenScraper ISO region codes into canonical regions", () => {
+    const observations = buildScreenScraperObservations(
+      {
+        title: "Assassin's Creed: The Ezio Collection",
+        attachments: [
+          {
+            type: "cover",
+            role: "au",
+            url: "https://media.screenscraper.fr/box-2D-au.jpg",
+            source: "screenscraper",
+          },
+          {
+            type: "cover",
+            role: "3d-sp",
+            url: "https://media.screenscraper.fr/box-3D-sp.jpg",
+            source: "screenscraper",
+          },
+          {
+            type: "image",
+            role: "back-br",
+            url: "https://media.screenscraper.fr/box-back-br.jpg",
+            source: "screenscraper",
+          },
+        ],
+      },
+      { hasBarcodeMatch: false, hasPlatformMatch: false },
+    );
+
+    expect(observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_front",
+          url: "https://media.screenscraper.fr/box-2D-au.jpg",
+          region: "eu",
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "product_packshot",
+          url: "https://media.screenscraper.fr/box-3D-sp.jpg",
+          region: "eu",
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_back",
+          url: "https://media.screenscraper.fr/box-back-br.jpg",
+          region: "us",
+        }),
+      ]),
+    );
+  });
 });
 
 describe("createScreenScraperResolver", () => {

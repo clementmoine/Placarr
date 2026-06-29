@@ -30,6 +30,34 @@ describe("localePreference", () => {
     );
   });
 
+  it("maps ScreenScraper ISO short codes to canonical PAL/NTSC/JP buckets", () => {
+    // PAL territories → eu (this is the regression behind covers showing no
+    // region: a real `au`/`sp` cover used to resolve to nothing).
+    for (const code of ["au", "sp", "it", "nl", "pl", "dk", "no", "se", "ru"]) {
+      expect(parseRegionFromRole(code)).toBe("eu");
+      expect(regionRank(code)).toBe(regionRank("eu"));
+    }
+    // Americas → us
+    for (const code of ["ca", "br", "mx"]) {
+      expect(parseRegionFromRole(code)).toBe("us");
+    }
+    // East Asia → jp
+    for (const code of ["kr", "ko", "cn", "tw"]) {
+      expect(parseRegionFromRole(code)).toBe("jp");
+    }
+    expect(parseRegionFromRole("gb")).toBe("uk");
+    // Continent groupings
+    expect(parseRegionFromRole("ame")).toBe("us");
+    expect(parseRegionFromRole("asi")).toBe("jp");
+    expect(parseRegionFromRole("oce")).toBe("eu");
+  });
+
+  it("leaves ScreenScraper's region-agnostic codes unmapped (honest empty)", () => {
+    // `ss`/`cus` mean "no specific region" — better to show no region badge.
+    expect(parseRegionFromRole("ss")).toBeUndefined();
+    expect(parseRegionFromRole("cus")).toBeUndefined();
+  });
+
   it("picks LaunchBox Europe titles at the same priority as EU", () => {
     expect(
       pickBestRegionalTitle([

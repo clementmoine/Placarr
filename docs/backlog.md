@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1188+** passent (1212+ total, 24 skipped) |
+| Tests | **1191** passent (1216 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -57,7 +57,7 @@ Règles persistantes dans `.cursor/rules/` :
 | Item | Action | Doc |
 | ---- | ------ | --- |
 | ~~**Apriloshop IQIT**~~ | **fait** — `searchStrategy: iqit`, parse `product-miniature`, `id_product` extrait | `prestashop/parse.ts` |
-| **Chasse aux Livres probe `empty`** | Listing ISBN souvent bloqué en scrape serveur — vérifier FlareSolverr / sample ; pas un bug mapping | `provider_integration_checklist.md` |
+| **Chasse aux Livres probe `empty`** | Fallback **FlareSolverr** sur page login ; hint probe si `FLARESOLVERR_URL` absent | `chasseauxlivres/fetch.ts` |
 | **TheGamesDB audit** | ~~Marquer `blocked` quand clé absente~~ **fait** — `runMappingProbe` + `mappingProbeConfigHint` | `thegamesdb/index.ts` |
 
 ### P2 — Ranking sans biais (gros chantier)
@@ -66,7 +66,7 @@ Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_lis
 
 1. Modèle d'observations complet (déjà amorcé — généraliser ranking images + facts)
 2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; ranking cluster encore hybride `sourceWeight` + `barcodeEvidenceTitleObservationScore`
-3. Dé-bias attachment : `isRealBoxCoverSource` remplace l'ancien name-set — spec restante dans [debias_attachment_display_score.md](debias_attachment_display_score.md)
+3. Dé-bias attachment : `isRealBoxCoverSource` via flags stampés server-side — **fait** ; spec historique dans [debias_attachment_display_score.md](debias_attachment_display_score.md)
 4. Titres multilingues + ordre région = préférence utilisateur ([§ D](#d-display-language-region-order))
 
 ### P3 — Provider-blind core
@@ -92,7 +92,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 - ~~**Corpus barcode multi-types**~~ — **fait** : livre `9780140328721`, musique `0724384960650`, film `7321906123457`, JdS `3558380126133` + `3421272109517` (Mille Sabords, scan sans type)
 - Fixtures `barcodeResolver.fresh.test.ts` — 5 cas RECORD par défaut ; `RECORD_ALL=1` pour les 22
-- **Pricing manga** — lots/bundles filtrés ; reste possible : mauvais volume PicClick quand seules des annonces hors-sujet existent
+- ~~**Pricing manga** — lots/bundles filtrés ; mauvais volume PicClick quand seules annonces hors-sujet~~ **fait** (`priceListingVolumeConflictsWithItem`)
 
 ### P6 — Architecture lib (optionnel)
 
@@ -122,6 +122,8 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - **Client bundle** : `item/media` ne tire plus la registry providers (`node:sqlite` webpack) (**fait 2026-06-29**)
 - **Apriloshop IQIT** : `searchStrategy: iqit` + parse miniatures + `id_product` (**fait 2026-06-29**)
 - **Corpus barcode multi-types** : 22 cas dont Mille Sabords scan sans type (**fait 2026-06-29**)
+- **Chasse aux Livres FlareSolverr** : fallback scrape + hint probe (**fait 2026-06-29**)
+- **Pricing volume mismatch** : rejette agrégats PicClick n°183 sur item n°07 (**fait 2026-06-29**)
 
 ---
 

@@ -10,6 +10,7 @@ import {
   isLotListing,
   moveTrailingSortArticleToFront,
   priceListingMatchesAnyItemName,
+  priceListingVolumeConflictsWithItem,
   versionProvider,
 } from "@/lib/barcode/titleUtils";
 import { isCanonicalProvider } from "@/services/provider/evidence";
@@ -188,7 +189,29 @@ describe("barcodeListingMatchesItem", () => {
       ),
     ).toBe(true);
   });
+});
 
+describe("priceListingVolumeConflictsWithItem", () => {
+  it("flags a different issue number on the same series", () => {
+    expect(
+      priceListingVolumeConflictsWithItem(
+        ["Super Picsou Géant n°07"],
+        "Super Picsou Géant n°183 occasion",
+      ),
+    ).toBe(true);
+  });
+
+  it("ignores unrelated listings without explicit volumes", () => {
+    expect(
+      priceListingVolumeConflictsWithItem(
+        ["L'Art et la Création de Arcane"],
+        "Graphics Tablet Pen Display 2 Monitor",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("barcodeListingMatchesItem volume markers", () => {
   it("aligns equivalent volume markers across formats", () => {
     expect(
       barcodeListingMatchesItem(

@@ -611,6 +611,20 @@ export function barcodeListingMatchesAnyItemName(
   return itemNames.some((name) => barcodeListingMatchesItem(name, listing));
 }
 
+/** True when a listing names a different issue/volume than the shelf item. */
+export function priceListingVolumeConflictsWithItem(
+  itemNames: string[],
+  listingName?: string | null,
+): boolean {
+  const listing = listingName?.trim();
+  if (!listing) return false;
+  return itemNames.some((name) => {
+    const itemIssue = volumeNumberFromTitle(name);
+    const listingIssue = volumeNumberFromTitle(listing);
+    return Boolean(itemIssue && listingIssue && itemIssue !== listingIssue);
+  });
+}
+
 function normalizeEditionSubtitleTokens(value: string): string {
   return normalizeForTokens(value)
     .replace(/\b20\s*eme\s*anniversaire\b/g, "20yearcelebration")

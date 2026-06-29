@@ -4,6 +4,7 @@ import {
   isLotListing,
   listingLooksLikeNonBookProduct,
   priceListingMatchesAnyItemName,
+  priceListingVolumeConflictsWithItem,
 } from "@/lib/barcode/titleUtils";
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
@@ -368,15 +369,23 @@ export function alignBarcodePricesForItemNames(
 
   if (filtered.length === 0) {
     const namedOffers = sourceOffers.filter((offer) => offer.productName?.trim());
-    if (
-      namedOffers.length > 0 &&
-      namedOffers.every(
-        (offer) =>
-          isLotListing(offer.productName!) ||
-          listingLooksLikeNonBookProduct(offer.productName!),
-      )
-    ) {
-      return emptyBarcodePrices();
+    if (namedOffers.length > 0) {
+      if (
+        namedOffers.every(
+          (offer) =>
+            isLotListing(offer.productName!) ||
+            listingLooksLikeNonBookProduct(offer.productName!),
+        )
+      ) {
+        return emptyBarcodePrices();
+      }
+      if (
+        namedOffers.every((offer) =>
+          priceListingVolumeConflictsWithItem(names, offer.productName),
+        )
+      ) {
+        return emptyBarcodePrices();
+      }
     }
 
     const hasSummary =

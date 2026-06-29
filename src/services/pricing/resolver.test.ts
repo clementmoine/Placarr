@@ -300,7 +300,7 @@ describe("summarizeShelfItemPrices", () => {
     expect(map.get("item-1")?.priceNew).toBe(5101);
   });
 
-  it("matches item-page fallback when only unfiltered aggregates remain", async () => {
+  it("drops wrong-issue listings instead of surfacing unfiltered aggregates", async () => {
     h.barcodeCache.findMany.mockResolvedValue([]);
     h.priceOffer.findMany.mockResolvedValue([
       {
@@ -325,7 +325,7 @@ describe("summarizeShelfItemPrices", () => {
       "Super Picsou Géant",
     );
 
-    expect(map.get("item-1")?.priceUsed).toBe(450);
+    expect(map.get("item-1")?.priceUsed).toBeUndefined();
   });
 
   it("falls back to unfiltered aggregates when title filters reject every listing", async () => {
@@ -413,6 +413,36 @@ describe("alignBarcodePricesForItemNames", () => {
             merchantName: null,
             condition: "new",
             priceCents: 11690,
+            currency: "EUR",
+            sourceUrl: null,
+            offerCount: null,
+            observedAt: "2026-06-19T12:00:00.000Z",
+          },
+        ],
+      },
+    );
+
+    expect(aligned.priceNew).toBeNull();
+    expect(aligned.priceObservations).toEqual([]);
+  });
+
+  it("clears cached aggregates when every named listing targets another issue", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "books",
+      ["Super Picsou Géant n°07"],
+      {
+        priceNew: 450,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceLastUpdated: new Date("2026-06-19T11:00:00.000Z"),
+        priceSources: ["PicClick"],
+        priceObservations: [
+          {
+            source: "PicClick",
+            productName: "Super Picsou Géant n°183 - Occasion",
+            merchantName: null,
+            condition: "used",
+            priceCents: 450,
             currency: "EUR",
             sourceUrl: null,
             offerCount: null,

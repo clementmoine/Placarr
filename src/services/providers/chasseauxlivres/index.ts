@@ -378,7 +378,9 @@ export const chasseauxlivresModule: ProviderModule = {
       );
     }
     return probeErrorResult(
-      "No listing for sample ISBN — site HTML may have changed or blocked the request",
+      process.env.FLARESOLVERR_URL?.trim()
+        ? "No listing for sample ISBN — site HTML may have changed or blocked the request"
+        : "No listing for sample ISBN — set FLARESOLVERR_URL for server-side scrape or run probe from an unblocked network",
       "empty",
     );
   },

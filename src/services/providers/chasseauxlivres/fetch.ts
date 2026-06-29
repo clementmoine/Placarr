@@ -1,6 +1,7 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
 
 export interface ChasseAuxLivresProduct {
   name: string;
@@ -29,6 +30,33 @@ const CHASSE_AUX_LIVRES_HEADERS = {
   Referer: "https://www.chasse-aux-livres.fr/",
 };
 const CHASSE_AUX_LIVRES_TIMEOUT_MS = 8_000;
+const CHASSE_FLARESOLVERR_TIMEOUT_MS = 25_000;
+
+async function fetchChassePageHtml(
+  url: string,
+): Promise<{ html: string; finalUrl: string } | null> {
+  try {
+    const response = await axios.get(url, {
+      headers: CHASSE_AUX_LIVRES_HEADERS,
+      timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
+      responseType: "text",
+      transformResponse: [(body) => body],
+    });
+    const html = String(response.data || "");
+    const finalUrl = response.request?.res?.responseUrl || url;
+    if (!isProtectedLoginPage(html, finalUrl)) {
+      return { html, finalUrl };
+    }
+  } catch {
+    // Fall through to FlareSolverr when direct access is blocked.
+  }
+
+  const flareHtml = await fetchWithFlareSolverr(url, CHASSE_FLARESOLVERR_TIMEOUT_MS);
+  if (!flareHtml || isProtectedLoginPage(flareHtml, url)) {
+    return null;
+  }
+  return { html: flareHtml, finalUrl: url };
+}
 
 function describeChasseError(error: unknown): string {
   const requestError = error as {
@@ -347,17 +375,10 @@ async function fetchProductPage(
   html: string;
   product: ChasseAuxLivresProduct;
 } | null> {
-  const productRes = await axios.get(productUrl, {
-    headers: CHASSE_AUX_LIVRES_HEADERS,
-    responseType: "text",
-    transformResponse: [(body) => body],
-    timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
-  });
-  const html = String(productRes.data || "");
-  const finalUrl = productRes.request?.res?.responseUrl || productUrl;
-  if (isProtectedLoginPage(html, finalUrl)) return null;
-  const product = parseChasseAuxLivresProductPage(html, finalUrl);
-  return product ? { url: finalUrl, html, product } : null;
+  const page = await fetchChassePageHtml(productUrl);
+  if (!page) return null;
+  const product = parseChasseAuxLivresProductPage(page.html, page.finalUrl);
+  return product ? { url: page.finalUrl, html: page.html, product } : null;
 }
 
 async function resolveChasseAuxLivresProductPage(
@@ -452,20 +473,15 @@ export async function fetchFromChasseAuxLivres(
 ): Promise<ChasseAuxLivresProduct[]> {
   const searchUrl = buildSearchUrl(barcode, catalog);
   try {
-    // Step 1: Fetch initial page to get the hash
-    const initialRes = await axios.get(searchUrl, {
-      headers: CHASSE_AUX_LIVRES_HEADERS,
-      timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
-    });
-    const html = initialRes.data;
-
-    const finalUrl = initialRes.request.res.responseUrl || "";
-    if (isProtectedLoginPage(html, finalUrl)) {
+    const initialPage = await fetchChassePageHtml(searchUrl);
+    if (!initialPage) {
       console.warn(
-        `[ChasseAuxLivres] Search is protected by login for barcode ${barcode}`,
+        `[ChasseAuxLivres] Search is protected or unreachable for barcode ${barcode}`,
       );
       return [];
     }
+    const html = initialPage.html;
+    const finalUrl = initialPage.finalUrl;
 
     if (finalUrl.includes("/prix/")) {
       console.log(`[ChasseAuxLivres] Direct redirect detected: ${finalUrl}`);
@@ -560,16 +576,9 @@ export async function isChasseAuxLivresSearchProtected(
   barcode: string,
   catalog: string,
 ): Promise<boolean> {
-  try {
-    const response = await axios.get(buildSearchUrl(barcode, catalog), {
-      headers: CHASSE_AUX_LIVRES_HEADERS,
-      timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
-    });
-    const finalUrl = response.request.res.responseUrl || "";
-    return isProtectedLoginPage(String(response.data || ""), finalUrl);
-  } catch {
-    return false;
-  }
+  const page = await fetchChassePageHtml(buildSearchUrl(barcode, catalog));
+  if (!page) return true;
+  return isProtectedLoginPage(page.html, page.finalUrl);
 }
 
 /**

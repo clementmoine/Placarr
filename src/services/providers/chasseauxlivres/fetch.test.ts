@@ -3,16 +3,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   fetchChasseAuxLivresMetadataProduct,
+  fetchFromChasseAuxLivres,
   parseChasseAuxLivresProductPage,
 } from "./fetch";
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+vi.mock("@/lib/http/flareSolverr", () => ({
+  fetchWithFlareSolverr: vi.fn().mockResolvedValue(null),
+}));
+
+import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
 
 const mockedGet = vi.mocked(axios.get);
+const mockedFlare = vi.mocked(fetchWithFlareSolverr);
 
 describe("parseChasseAuxLivresProductPage", () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    mockedFlare.mockReset();
+    mockedFlare.mockResolvedValue(null);
   });
 
   it("exploite les donnees structurees JSON-LD d'une fiche produit", () => {
@@ -176,6 +185,46 @@ describe("parseChasseAuxLivresProductPage", () => {
       warnSpy.mockRestore();
       errorSpy.mockRestore();
     }
+  });
+});
+
+describe("fetchFromChasseAuxLivres", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    mockedFlare.mockReset();
+    mockedFlare.mockResolvedValue(null);
+  });
+
+  it("utilise FlareSolverr quand la recherche directe renvoie une page login", async () => {
+    mockedGet
+      .mockResolvedValueOnce({
+        data: "<html><title>Connexion - Chasse aux livres</title></html>",
+        request: {
+          res: {
+            responseUrl:
+              "https://www.chasse-aux-livres.fr/login?protect=true",
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: { d: "" },
+      });
+    mockedFlare.mockResolvedValue(
+      '<html><body data-hash="flare-hash"></body></html>',
+    );
+
+    const products = await fetchFromChasseAuxLivres("9780140328721", "fr");
+
+    expect(products).toEqual([]);
+    expect(mockedFlare).toHaveBeenCalledWith(
+      "https://www.chasse-aux-livres.fr/search?query=9780140328721&catalog=fr",
+      25_000,
+    );
+    expect(mockedGet).toHaveBeenNthCalledWith(
+      2,
+      "https://www.chasse-aux-livres.fr/rest/search-results?h=flare-hash&p=1&l=1",
+      expect.objectContaining({ timeout: 8000 }),
+    );
   });
 });
 

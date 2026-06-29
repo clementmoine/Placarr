@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1217** OK / 25 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1220** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1217** passent (1242 total, 25 skipped) |
+| Tests | **1220** passent (1245 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -53,6 +53,17 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | **P3** | PicClick → eBay Browse API | **Provider créé — à clés** | **Investigation 2026-06-29** : PicClick résout vers une IP AWS us-west (`54.176.32.72`), TCP connect *hang* (`http=000`) → chaque scan paie le timeout 6 s puis `[]` ; le TOS PicClick **interdit le scraping**. **Fait 2026-06-29** : module `src/services/providers/ebay/` (Browse API officielle, OAuth `client_credentials`, recherche `gtin`, prix new/used par condition, cover via `i.ebayimg.com`). Sans clés → no-op gracieux. **Reste** : compte eBay Developers Program **en attente d'approbation** (≥ 1 jour ouvré, demandé 2026-06-29). À réception : fixer `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET` (+ `EBAY_MARKETPLACE_ID`, défaut `EBAY_FR`), valider en live (`pnpm providers:audit:mapping` + scan réel), puis **déprécier PicClick** (retirer le module + slot payload + `slowScanScrape`). |
 | **P2** | Titres multilingues + région utilisateur | **Ouvert** | Brancher `LOCALE_REGION_ORDER` sur préférence utilisateur ([§ D](#d-display-language-region-order)). |
 | **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
+| ~~**P1**~~ | ~~Golden-master « vide honnête »~~ | **Fait 2026-06-29** | `compile.honestEmpty.test.ts` : marketplace-only sans ancre + DB miss (`confrontWithDatabase` mocké `null`) ⇒ `compileResultForType` renvoie `null`, même sur consensus de 3 marketplaces (majority noise). Encode la moitié manquante de la règle produit (l'autre moitié = `confidenceLock`). |
+
+**Audit principes 2026-06-29** (`go` autopilot) — constats restants à traiter :
+
+| Priorité | Item | État | Prochaine action |
+| -------- | ---- | ---- | ---------------- |
+| **P2** | Dé-biaiser le merge d'enrichissement | **Ouvert** | Dernier biais provider : `merge.ts` `resultsByWeight` trie par `PROVIDER_METADATA_EXTENSIONS.weight`. Le path barcode est neutre ; remplacer le tri par poids par observation/consensus (le pick de titre passe déjà par `pickBestMetadataObservationTitle` d'abord). |
+| **P3** | Rétention des observations rejetées (barcode) | **Ouvert** | `compile.ts` jette lots/bruit/non-match **avant** de construire le blob `observations` (≠ « never throw observations away »). Émettre ces lignes en observations `evidence: "reject"` + `retainForReprojection: true` (le path enrichissement le fait déjà). |
+| **P3** | Décision cap canonique seul / DB-fallback | **Ouvert** | Un canonique seul (ou DB-fallback synthétique) ancre le cluster ⇒ pas de `listingOnlyCap`, peut atteindre 0.98 sans corroboration. Soit documenter comme acceptable (un barcode→canonique est une ancre légitime), soit ajouter un cap « source unique non corroborée » + test. |
+
+> **Provider-blindness : migration TERMINÉE** — allowlist du guard `blindnessGuard.test.ts` **vide** (0 littéral provider hors `services/providers/`). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
 
 **P1 providers / probes** : file migration metadata **vide** (PicClick, ScreenScraper, TheGamesDB, Apriloshop IQIT — tous faits 2026-06-29).
 

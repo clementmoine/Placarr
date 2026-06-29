@@ -54,6 +54,12 @@ The contract:
 
 ### Current violations (the gap between intent and code)
 
+> **RESOLVED 2026-06-29.** Every leak in the two tables below has been removed; the
+> blindness guard (`src/services/provider/blindnessGuard.test.ts`) enforces an
+> **empty** allowlist (zero provider literals outside `src/services/providers/`).
+> The tables are kept as the historical record of what was migrated — not an open
+> to-do list.
+
 **Core engine:**
 
 | File                                                  | Leak                                                                                                                                                            |

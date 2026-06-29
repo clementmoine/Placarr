@@ -1,5 +1,14 @@
 # Hardcoding audit — core must be agnostic, data-driven, provider-neutral
 
+> **STATUS 2026-06-29 — provider-literal migration COMPLETE.** The blindness guard
+> (`src/services/provider/blindnessGuard.test.ts`) now ships an **empty** allowlist:
+> **zero** provider-id literals remain outside `src/services/providers/`. The
+> "current violations" tables, per-file allowlist notes and the `P2*` progress log
+> below are **historical** — kept for rationale, no longer the live surface. The one
+> remaining provider bias is per-provider `weight` in the metadata **enrichment**
+> merge (`src/services/metadata/merge.ts` `resultsByWeight`); the barcode resolution
+> path is fully unbiased (tier → consensus → quality).
+
 > **Enforcement already exists:** `src/services/providerBlindnessGuard.test.ts`
 > inventories every quoted provider literal in `src/`+`scripts/` (excluding
 > provider modules + tests) against a **shrinking allowlist**. Removing a provider

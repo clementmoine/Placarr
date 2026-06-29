@@ -17,7 +17,8 @@ import { HttpReplay, type Interaction } from "../../../tests/helpers/httpReplay"
  * - REPLAY (défaut) : rejoue des fixtures réseau figées → 100% déterministe.
  *   Les cas sans fixture sont ignorés (skip), la suite reste verte.
  * - RECORD=1 : appelle les vraies API une fois et écrit les fixtures.
- *     RECORD=1 pnpm vitest run src/services/barcode/resolver.fresh.test.ts
+ *     RECORD=1 BARCODE_RECORD_SLIM=1 pnpm vitest run ...
+ *     RECORD_CASE_ID=mario-kart-wii pour un seul cas.
  *
  * Prisma est neutralisé (cache toujours vide, écritures no-op) pour forcer le
  * chemin frais et garantir l'identité record == replay.
@@ -61,11 +62,11 @@ import { resolveBarcode } from "./resolver";
 
 const RECORD = !!process.env.RECORD;
 const RECORD_ALL = !!process.env.RECORD_ALL;
+const RECORD_CASE_ID = process.env.RECORD_CASE_ID?.trim() || "";
 const FIXTURES_DIR = join(process.cwd(), "tests/fixtures/barcode");
 
 // RECORD est borné en temps par défaut (sous-ensemble) ; RECORD_ALL=1 capture
-// les 18 cas canoniques en une seule passe.
-const RECORD_TIMEOUT_MS = 600_000;
+// les 22 cas canoniques en une seule passe.
 const RECORD_CASE_IDS = [
   "mario-kart-wii",
   "super-mario-galaxy-wii",
@@ -73,11 +74,13 @@ const RECORD_CASE_IDS = [
   "mille-sabords-boardgame-untyped",
   "catan-boardgame",
 ];
-const RECORD_CASES = RECORD_ALL
-  ? DEFAULT_BARCODE_REGRESSION_CASES
-  : DEFAULT_BARCODE_REGRESSION_CASES.filter((c) =>
-      RECORD_CASE_IDS.includes(c.id),
-    );
+const RECORD_CASES = (() => {
+  if (RECORD_ALL) return DEFAULT_BARCODE_REGRESSION_CASES;
+  const ids = RECORD_CASE_ID ? [RECORD_CASE_ID] : RECORD_CASE_IDS;
+  return DEFAULT_BARCODE_REGRESSION_CASES.filter((c) => ids.includes(c.id));
+})();
+const RECORD_TIMEOUT_MS =
+  RECORD_CASE_ID || RECORD_CASES.length === 1 ? 900_000 : 600_000;
 // En REPLAY on parcourt TOUS les cas : chaque fixture enregistrée est
 // automatiquement rejouée, les autres restent skip (suite verte).
 const REPLAY_CASES = DEFAULT_BARCODE_REGRESSION_CASES;
@@ -143,12 +146,20 @@ if (RECORD) {
         async () => {
           const replay = new HttpReplay();
           replay.startRecord();
+          const started = Date.now();
           let res: ResolveResult;
           try {
             res = await resolveBarcode(
               cleanCode(testCase.barcode),
               testCase.type ?? null,
-              { refresh: true },
+              {
+                refresh: true,
+                platformHint:
+                  testCase.expected.platformKey &&
+                  typeof testCase.expected.platformKey === "string"
+                    ? testCase.expected.platformKey
+                    : undefined,
+              },
             );
           } finally {
             await replay.flush();
@@ -162,7 +173,7 @@ if (RECORD) {
           );
           // eslint-disable-next-line no-console
           console.log(
-            `[record ${testCase.id}] interactions=${interactions.length} cleanName=${JSON.stringify(res.cleanName)} platform=${res.platformKey} matches=${res.matches.length} provider=${res.provider}`,
+            `[record ${testCase.id}] ${Date.now() - started}ms interactions=${interactions.length} cleanName=${JSON.stringify(res.cleanName)} platform=${res.platformKey} matches=${res.matches.length} provider=${res.provider}`,
           );
         },
         RECORD_TIMEOUT_MS,

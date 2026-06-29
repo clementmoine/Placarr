@@ -49,7 +49,7 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | -------- | ---- | ---- | ---------------- |
 | **P2** | Cluster confidence `sourceScore` + tier observations | **Bloqué** | Ajouter `barcodeClusterObservationContribution` (tier × scale + `barcodeEvidenceObservationSourceWeight`) dans `scoreEvidenceCluster` ; **recalibrer** les 6 valeurs figées dans `compile.confidenceLock.test.ts` (essai `observationTierScale: 0.01` → +0.06–0.08 sur Ghost Recon / TMNT, revert 2026-06-29). Voir `scoring.ts` § cluster confidence. |
 | **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
-| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22** | `RECORD=1` (5 cas) lancé 2026-06-29 : **5/5 timeout** à 300s/cas (pipeline multi-providers lent). **Mitigations 2026-06-29** : SS timeout 15s + retry foreground, health via `jeuRecherche`, `RECORD_TIMEOUT_MS` 600s. Relancer `pnpm test:record` quand réseau OK. |
+| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22** | `BARCODE_RECORD_SLIM=1` (skip PicClick/LeDenicheur + enrich PC fallback) ; `RECORD_CASE_ID` ; `pnpm test:record:one` pour smoke. Relancer batch via `pnpm test:record`. |
 | **P2** | Titres multilingues + région utilisateur | **Ouvert** | Brancher `LOCALE_REGION_ORDER` sur préférence utilisateur ([§ D](#d-display-language-region-order)). |
 | **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
 

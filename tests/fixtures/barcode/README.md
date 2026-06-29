@@ -10,12 +10,18 @@ de façon **déterministe**, sans réseau.
 (ScreenScraper/IGDB authentifiés, pas de blocage d'IP type BGG 401, etc.) :
 
 ```bash
-# Sous-ensemble borné en temps (5 cas, ~10 min/cas si réseau lent) :
+# Sous-ensemble (5 cas) — slim mode activé par défaut :
 pnpm test:record
 
-# Les 18 cas canoniques en une seule passe :
+# Un seul cas (smoke, ~15 min max) :
+pnpm test:record:one
+
+# Les 22 cas canoniques :
 pnpm test:record:all
 ```
+
+(`BARCODE_RECORD_SLIM=1` saute PicClick/LeDenicheur et le fallback PriceCharting
+post-scan ; le chemin SS canonique reste actif.)
 
 (équivalent à `RECORD=1` / `RECORD=1 RECORD_ALL=1` devant la commande vitest.)
 

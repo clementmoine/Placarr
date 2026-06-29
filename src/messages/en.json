@@ -352,6 +352,8 @@
     },
     "associated": "Associated",
     "otherItems": "Other items on this shelf",
+    "otherVolumes": "Other volumes in this series",
+    "moreFromFranchise": "More from {name}",
     "viewAll": "View all",
     "priceEstimation": "Estimated Value",
     "priceUpdated": "Updated on",

@@ -82,6 +82,8 @@ import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import { itemPath, shelfPath } from "@/lib/routing/slugs";
 import { compareTitlesForSort } from "@/lib/title/sort";
+import { seriesSiblings } from "@/lib/title/series";
+import { FRANCHISE_FACT_KIND } from "@/lib/metadata/facts/franchiseFact";
 import {
   invalidateItemQueries,
   patchCachedItem,
@@ -146,6 +148,41 @@ function normalizeFacts(rawFacts: unknown): DetailFact[] {
     }
   }
   return [];
+}
+
+/** Horizontal carousel of related items (series volumes / franchise siblings). */
+function RelatedItemsRow({
+  title,
+  items,
+  shelf,
+  shelfId,
+}: {
+  title: string;
+  items: ItemWithMetadata[];
+  shelf: ShelfWithItems | undefined;
+  shelfId: string;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-8 flex flex-col gap-3">
+      <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+        {title}
+      </h3>
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+        {items.slice(0, 12).map((related) => (
+          <div key={related.id} className="w-28 sm:w-32 shrink-0">
+            <Link href={itemPath(shelf || { id: shelfId }, related)}>
+              <ItemCard
+                {...related}
+                shelfType={shelf?.type}
+                cardFormat={shelf?.cardFormat}
+              />
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function factIcon(kind: string) {
@@ -1415,11 +1452,55 @@ export default function ItemDetailsPage() {
       });
   }, [item, coverImage, locale]);
 
+  // Other volumes in the same series — consensus-gated (≥2 distinct volumes), so a
+  // lone numbered title never renders a phantom series. seriesBaseKey strips the
+  // marker + number, so padded shelf names and the unpadded detail name align.
+  const seriesVolumes = useMemo(() => {
+    if (!shelf?.items || !item) return [];
+    const entries = (shelf.items as unknown as ItemWithMetadata[]).map(
+      (shelfItem) => ({ ...shelfItem, title: shelfItem.name ?? "" }),
+    );
+    return seriesSiblings(item.name ?? "", entries).filter(
+      (entry) => entry.id !== itemId,
+    );
+  }, [shelf?.items, item, itemId]);
+
+  // Franchise grouping comes only from the provider-sourced franchise fact, never
+  // from title heuristics.
+  const franchiseName = useMemo(
+    () =>
+      normalizeFacts(item?.metadata?.facts)
+        .find((fact) => fact.kind === FRANCHISE_FACT_KIND)
+        ?.value?.trim() || null,
+    [item?.metadata?.facts],
+  );
+
+  const franchiseItems = useMemo(() => {
+    if (!shelf?.items || !franchiseName) return [];
+    const target = franchiseName.toLowerCase();
+    const seriesIds = new Set(seriesVolumes.map((entry) => entry.id));
+    return (shelf.items as unknown as ItemWithMetadata[]).filter((shelfItem) => {
+      if (shelfItem.id === itemId || seriesIds.has(shelfItem.id)) return false;
+      return normalizeFacts(shelfItem.metadata?.facts).some(
+        (fact) =>
+          fact.kind === FRANCHISE_FACT_KIND &&
+          fact.value?.trim().toLowerCase() === target,
+      );
+    });
+  }, [shelf?.items, franchiseName, seriesVolumes, itemId]);
+
+  // Generic "other items" excludes the more specific groups above, so each sibling
+  // shows up once in its most meaningful section.
   const otherItems = useMemo(() => {
     if (!shelf?.items) return [];
-    const items = shelf.items as unknown as ItemWithMetadata[];
-    return items.filter((i) => i.id !== itemId);
-  }, [shelf?.items, itemId]);
+    const grouped = new Set<string>([
+      ...seriesVolumes.map((entry) => entry.id),
+      ...franchiseItems.map((entry) => entry.id),
+    ]);
+    return (shelf.items as unknown as ItemWithMetadata[]).filter(
+      (shelfItem) => shelfItem.id !== itemId && !grouped.has(shelfItem.id),
+    );
+  }, [shelf?.items, itemId, seriesVolumes, franchiseItems]);
 
   const coverAspectRatio = useMemo(() => {
     return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
@@ -2145,6 +2226,26 @@ export default function ItemDetailsPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Other volumes in this series */}
+          {!isPending && (
+            <RelatedItemsRow
+              title={t("items.otherVolumes")}
+              items={seriesVolumes}
+              shelf={shelf}
+              shelfId={shelfId}
+            />
+          )}
+
+          {/* More from this franchise */}
+          {!isPending && franchiseName && (
+            <RelatedItemsRow
+              title={t("items.moreFromFranchise", { name: franchiseName })}
+              items={franchiseItems}
+              shelf={shelf}
+              shelfId={shelfId}
+            />
           )}
 
           {/* Other items in this shelf carousel */}

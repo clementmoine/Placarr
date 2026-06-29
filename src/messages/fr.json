@@ -352,6 +352,8 @@
     },
     "associated": "Associé",
     "otherItems": "Autres objets sur cette étagère",
+    "otherVolumes": "Autres tomes de la série",
+    "moreFromFranchise": "Plus de {name}",
     "viewAll": "Tout voir",
     "priceEstimation": "Valeur Estimée",
     "priceUpdated": "Mis à jour le",

@@ -27,6 +27,7 @@ const CATAN_ENTITY = {
     ],
     P178: [{ mainsnak: { datavalue: { value: { id: "Q61088" } } } }],
     P123: [{ mainsnak: { datavalue: { value: { id: "Q881194" } } } }],
+    P179: [{ mainsnak: { datavalue: { value: { id: "Q1759851" } } } }],
     P18: [{ mainsnak: { datavalue: { value: "Catan.jpg" } } }],
   },
 };
@@ -50,6 +51,7 @@ function routeWikidata(entity: unknown) {
           entities: {
             Q61088: { labels: { fr: { value: "Klaus Teuber" } } },
             Q881194: { labels: { fr: { value: "Kosmos" } } },
+            Q1759851: { labels: { fr: { value: "Catan (série)" } } },
           },
         },
       };
@@ -137,6 +139,11 @@ describe("createWikidataResolver", () => {
     expect(res?.authors?.some((p) => /teuber/i.test(p.name))).toBe(true);
     expect(res?.publishers?.some((p) => /kosmos/i.test(p.name))).toBe(true);
     expect(res?.aliases).toContain("Catan (board game)");
+    // P179 "part of the series" → provider-sourced franchise fact.
+    expect(res?.facts?.find((f) => f.kind === "franchise")).toMatchObject({
+      value: "Catan (série)",
+      source: "wikidata",
+    });
     expect(res?.observationSchemaVersion).toBe(
       METADATA_OBSERVATION_SCHEMA_VERSION,
     );

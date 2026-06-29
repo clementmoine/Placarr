@@ -12,6 +12,7 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 import { pickBestCoverFromAttachments } from "@/lib/media/attachmentDisplayScore";
 import { acceptRetailerCatalogCandidate } from "@/lib/retailer/metadataLookup";
 import { formatBoardGamePlayerCount } from "@/lib/metadata/boardGame";
@@ -600,6 +601,14 @@ export function createBGGResolver(deps: BggResolverDeps) {
           priority: 57,
         });
       }
+      // BGG's own taxonomy marks a game line with a `Game:` family prefix
+      // (e.g. "Game: Catan"). That is a provider-declared franchise, distinct from
+      // the heterogeneous "Familles" fact (themes, components, crowdfunding…).
+      const franchiseFromFamily = families
+        .map((value) => /^Game:\s*(.+)$/i.exec(value)?.[1]?.trim())
+        .find((name): name is string => Boolean(name));
+      facts.push(...buildFranchiseFact(franchiseFromFamily, "BGG"));
+
       if (families.length > 0) {
         facts.push({
           kind: "family",

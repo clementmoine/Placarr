@@ -6,6 +6,7 @@ import {
 } from "@/lib/metadata/observations";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 
 const USER_AGENT = "Placarr/1.0 (+https://github.com/clementmoine/Placarr)";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
@@ -361,6 +362,13 @@ export function createWikidataResolver() {
 
       const people = await extractWikidataPeople(selectedEntity);
 
+      // P179 "part of the series" is Wikidata's declared franchise/series grouping.
+      const seriesIds = extractWikidataEntityIds(selectedEntity, "P179");
+      const seriesLabels = await resolveWikidataLabels(seriesIds);
+      const franchiseName = seriesIds
+        .map((qid) => seriesLabels.get(qid))
+        .find((label): label is string => Boolean(label));
+
       const aliases = Object.values(selectedEntity.labels || {})
         .map((entry) => entry.value)
         .filter((alias) => alias && alias !== title);
@@ -378,11 +386,14 @@ export function createWikidataResolver() {
         attachments: imageUrl
           ? [{ type: "cover", url: imageUrl, source: "wikidata" }]
           : undefined,
-        facts: buildWikidataFacts(
-          selectedQid,
-          selectedEntity,
-          frWikiTitle || enWikiTitle,
-        ),
+        facts: [
+          ...buildWikidataFacts(
+            selectedQid,
+            selectedEntity,
+            frWikiTitle || enWikiTitle,
+          ),
+          ...buildFranchiseFact(franchiseName, "wikidata"),
+        ],
         externalIds: { wikidata: selectedQid },
       };
       return {

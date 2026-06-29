@@ -1,8 +1,19 @@
 import type { Prisma } from "@prisma/client";
 
 import { TITLE_TOKEN_EQUIVALENT_GROUPS } from "@/lib/title/tokenEquivalents";
+import { stripVolumeMarkersKeepingNumber } from "@/lib/title/volumeNumber";
 
 const MIN_AND_TOKEN_LENGTH = 2;
+
+/** Zero-padding variants of a numeric token so search ignores padding (1↔01↔001). */
+function numericPaddingVariants(token: string): string[] {
+  const match = /^0*(\d+)$/.exec(token);
+  if (!match) return [];
+  const digits = match[1];
+  return Array.from(
+    new Set([digits, digits.padStart(2, "0"), digits.padStart(3, "0")]),
+  );
+}
 
 function unique(values: string[]): string[] {
   return Array.from(
@@ -24,6 +35,10 @@ function buildTokenVariants(token: string): string[] {
   if (!cleaned) return [];
 
   variants.add(cleaned);
+
+  for (const numeric of numericPaddingVariants(cleaned)) {
+    variants.add(numeric);
+  }
 
   const lower = cleaned.toLowerCase();
   if (lower.endsWith("ings") && cleaned.length > 5) {
@@ -88,7 +103,10 @@ function searchTokens(searchTerm: string): string[] {
     searchTerm
       .trim()
       .split(/\s+/)
-      .filter((token) => token.length >= MIN_AND_TOKEN_LENGTH),
+      .filter(
+        (token) =>
+          token.length >= MIN_AND_TOKEN_LENGTH || /^\d+$/.test(token),
+      ),
   );
 }
 
@@ -126,7 +144,9 @@ function tokenOrConditions(token: string): Prisma.ItemWhereInput {
 function buildTokenAndSearchCondition(
   searchTerm: string,
 ): Prisma.ItemWhereInput | null {
-  const tokens = searchTokens(searchTerm);
+  // Tokenize on the volume-normalized term so a different marker/padding never
+  // blocks an AND match ("Naruto vol. 1" / "Naruto n°01" → tokens naruto + 1).
+  const tokens = searchTokens(stripVolumeMarkersKeepingNumber(searchTerm));
   if (tokens.length <= 1) return null;
   return { AND: tokens.map(tokenOrConditions) };
 }
@@ -164,9 +184,14 @@ export function itemMatchesSearchQuery(
     return true;
   }
 
-  const tokens = searchTokens(trimmed);
+  // Mirror the server: marker/padding-agnostic tokens (Naruto n°01 → naruto + 1).
+  const tokens = searchTokens(stripVolumeMarkersKeepingNumber(trimmed));
   if (tokens.length <= 1) {
-    return haystackContains(trimmed);
+    if (haystackContains(trimmed)) return true;
+    const token = tokens[0];
+    return token
+      ? buildTokenVariants(token).some((variant) => haystackContains(variant))
+      : false;
   }
 
   return tokens.every((token) =>

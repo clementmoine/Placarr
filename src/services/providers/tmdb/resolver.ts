@@ -2,6 +2,7 @@ import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 
 export type TMDBSeriesIntent = {
   isSeriesLike: boolean;
@@ -280,6 +281,12 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     }
 
     const facts: MetadataFact[] = [];
+    // TMDB's movie details carry `belongs_to_collection` — the canonical, provider-
+    // declared film franchise (e.g. "The Lord of the Rings Collection"). The only
+    // safe franchise source: a provider observation, never a title-prefix guess.
+    facts.push(
+      ...buildFranchiseFact(details.belongs_to_collection?.name, "tmdb"),
+    );
     if (certification) {
       facts.push({
         kind: "age-rating",

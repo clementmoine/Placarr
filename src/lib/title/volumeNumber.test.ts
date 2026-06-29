@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   explicitVolumeNumbers,
   hasExplicitVolumeMarker,
+  padVolumeNumbersInTitle,
   stripVolumeMarkersFromTitle,
+  stripVolumeMarkersKeepingNumber,
   unpaddedVolumeNumbersInTitle,
   volumeNumberFromTitle,
 } from "@/lib/title/volumeNumber";
@@ -60,6 +62,31 @@ describe("stripVolumeMarkersFromTitle", () => {
   });
 });
 
+describe("stripVolumeMarkersKeepingNumber", () => {
+  it.each([
+    ["Naruto n°01", "Naruto 1"],
+    ["Death Note Vol. 007", "Death Note 7"],
+    ["Attack on Titan #12", "Attack on Titan 12"],
+    ["Super Picsou Géant n°036", "Super Picsou Géant 36"],
+    ["Astérix Numéro 38", "Astérix 38"],
+    ["Naruto Tome 1", "Naruto 1"],
+    ["One Piece Volume 01", "One Piece 1"],
+    ["01", "1"],
+  ])("collapses %s to %s", (input, expected) => {
+    expect(stripVolumeMarkersKeepingNumber(input)).toBe(expected);
+  });
+
+  it("keeps accents and proper-name numbers that are not volume markers", () => {
+    expect(stripVolumeMarkersKeepingNumber("Pokémon Rouge")).toBe(
+      "Pokémon Rouge",
+    );
+    expect(stripVolumeMarkersKeepingNumber("Mighty No. 9")).toBe("Mighty 9");
+    expect(stripVolumeMarkersKeepingNumber("Final Fantasy VII")).toBe(
+      "Final Fantasy VII",
+    );
+  });
+});
+
 describe("unpaddedVolumeNumbersInTitle", () => {
   it("keeps display wording but removes decorative zeros", () => {
     expect(unpaddedVolumeNumbersInTitle("Super Picsou Géant n°036")).toBe(
@@ -71,5 +98,34 @@ describe("unpaddedVolumeNumbersInTitle", () => {
     expect(unpaddedVolumeNumbersInTitle("Astérix Numéro 038")).toBe(
       "Astérix Numéro 38",
     );
+  });
+});
+
+describe("padVolumeNumbersInTitle", () => {
+  it("re-pads a marker to the requested width, normalising source padding", () => {
+    expect(padVolumeNumbersInTitle("Super Picsou Géant n°36", 3)).toBe(
+      "Super Picsou Géant n°036",
+    );
+    expect(padVolumeNumbersInTitle("Super Picsou Géant n°036", 2)).toBe(
+      "Super Picsou Géant n°36",
+    );
+    expect(padVolumeNumbersInTitle("Naruto Tome 1", 2)).toBe("Naruto Tome 01");
+    expect(padVolumeNumbersInTitle("Death Note Vol. 7", 3)).toBe(
+      "Death Note Vol. 007",
+    );
+    expect(padVolumeNumbersInTitle("Attack on Titan #5", 2)).toBe(
+      "Attack on Titan #05",
+    );
+  });
+
+  it("leaves titles without a volume marker untouched", () => {
+    expect(padVolumeNumbersInTitle("Resident Evil 2", 3)).toBe(
+      "Resident Evil 2",
+    );
+    expect(padVolumeNumbersInTitle("Catan", 3)).toBe("Catan");
+  });
+
+  it("is a no-op for a width below 1", () => {
+    expect(padVolumeNumbersInTitle("Naruto Tome 1", 0)).toBe("Naruto Tome 1");
   });
 });

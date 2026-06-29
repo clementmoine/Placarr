@@ -15,6 +15,7 @@ import type {
   MetadataAttachment,
   MetadataFact,
 } from "@/types/metadataProvider";
+import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -174,6 +175,9 @@ interface IGDBGame {
     developer: boolean;
   }[];
   genres?: { id: number; name: string }[];
+  franchise?: { id: number; name: string };
+  franchises?: { id: number; name: string }[];
+  collections?: { id: number; name: string }[];
   age_ratings?: {
     id: number;
     category?: number;
@@ -402,7 +406,7 @@ async function fetchFromIGDBWithToken(
   // Search for the game using the search endpoint
   const searchRes = await axios.post<IGDBGame[]>(
     `${IGDB_BASE}/games`,
-    `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
+    `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, franchise.name, franchises.name, collections.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
        search "${name.replace(/"/g, " ")}";
        limit 20;`,
     { headers, timeout: 8000 },
@@ -418,7 +422,7 @@ async function fetchFromIGDBWithToken(
     const altConditions = keywords
       .map((w) => `alternative_names.name ~ *"${w}"*`)
       .join(" & ");
-    const fallbackQuery = `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
+    const fallbackQuery = `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, franchise.name, franchises.name, collections.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
         where (${nameConditions}) | (${altConditions});
         limit 20;`;
 
@@ -719,6 +723,19 @@ function buildAgeRatingFacts(game: IGDBGame): MetadataFact[] {
   return [];
 }
 
+/**
+ * IGDB declares both a broad `franchise`/`franchises` and a tighter `collections`
+ * (series) grouping. We surface the most specific one available as the single
+ * provider-sourced franchise fact (collection → main franchise → first franchise).
+ */
+function buildFranchiseFacts(game: IGDBGame): MetadataFact[] {
+  const name =
+    game.collections?.[0]?.name ||
+    game.franchise?.name ||
+    game.franchises?.[0]?.name;
+  return buildFranchiseFact(name, "igdb");
+}
+
 function buildRatingFacts(game: IGDBGame): MetadataFact[] {
   const rating =
     game.aggregated_rating || game.total_rating || game.rating || undefined;
@@ -850,6 +867,7 @@ function parseIGDBGame(
     attachments,
     aliases,
     facts: [
+      ...buildFranchiseFacts(game),
       ...buildAgeRatingFacts(game),
       ...buildRatingFacts(game),
       ...buildTimeToBeatFacts(timeToBeat),

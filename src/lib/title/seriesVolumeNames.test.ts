@@ -9,16 +9,16 @@ import {
 } from "@/lib/title/seriesVolumeNames";
 
 describe("seriesVolumeNames", () => {
-  it("pads volumes from the range end", () => {
-    expect(seriesVolumePaddingWidth(9)).toBe(2);
-    expect(seriesVolumePaddingWidth(10)).toBe(3);
-    expect(seriesVolumePaddingWidth(35)).toBe(3);
-    expect(seriesVolumePaddingWidth(99)).toBe(3);
+  it("aligns padding to the widest volume in the range (no floor)", () => {
+    expect(seriesVolumePaddingWidth(9)).toBe(1);
+    expect(seriesVolumePaddingWidth(10)).toBe(2);
+    expect(seriesVolumePaddingWidth(35)).toBe(2);
+    expect(seriesVolumePaddingWidth(99)).toBe(2);
     expect(seriesVolumePaddingWidth(100)).toBe(3);
     expect(seriesVolumePaddingWidth(1000)).toBe(4);
   });
 
-  it("builds zero-padded tome names", () => {
+  it("builds volume names padded to the range's widest number", () => {
     expect(
       buildSeriesItemName(
         SERIES_VOLUME_PATTERNS.tome_nn,
@@ -26,7 +26,7 @@ describe("seriesVolumeNames", () => {
         1,
         9,
       ),
-    ).toBe("Naruto Tome 01");
+    ).toBe("Naruto Tome 1");
     expect(
       buildSeriesItemName(
         SERIES_VOLUME_PATTERNS.tome_nn,
@@ -34,7 +34,7 @@ describe("seriesVolumeNames", () => {
         1,
         52,
       ),
-    ).toBe("Naruto Tome 001");
+    ).toBe("Naruto Tome 01");
     expect(
       buildSeriesItemName(
         SERIES_VOLUME_PATTERNS.tome_nn,
@@ -42,18 +42,18 @@ describe("seriesVolumeNames", () => {
         52,
         52,
       ),
-    ).toBe("Naruto Tome 052");
+    ).toBe("Naruto Tome 52");
   });
 
-  it("uses three digits from volume 10 upward", () => {
+  it("pads to two digits when the range reaches 10..99", () => {
     const names = expandSeriesVolumeNames(
       "Série",
       1,
       35,
       SERIES_VOLUME_PATTERNS.numero_nn,
     );
-    expect(names[0]).toBe("Série n°001");
-    expect(names[34]).toBe("Série n°035");
+    expect(names[0]).toBe("Série n°01");
+    expect(names[34]).toBe("Série n°35");
   });
 
   it("pads volume 99 with three digits when the range reaches 100", () => {
@@ -75,7 +75,7 @@ describe("seriesVolumeNames", () => {
     ).toBe("Série n°100");
   });
 
-  it("expands an inclusive volume range", () => {
+  it("expands a small inclusive range with bare numbers", () => {
     expect(
       expandSeriesVolumeNames(
         "One Piece",
@@ -83,7 +83,7 @@ describe("seriesVolumeNames", () => {
         3,
         SERIES_VOLUME_PATTERNS.numero_nn,
       ),
-    ).toEqual(["One Piece n°01", "One Piece n°02", "One Piece n°03"]);
+    ).toEqual(["One Piece n°1", "One Piece n°2", "One Piece n°3"]);
   });
 
   it("expands large inclusive ranges", () => {

@@ -19,6 +19,7 @@ import {
   Users,
   Star,
   Gauge,
+  Layers,
   Loader2,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -160,6 +161,7 @@ function factIcon(kind: string) {
   if (kind === "tracks") return ListMusic;
   if (kind === "complexity") return Gauge;
   if (kind === "rating" || kind === "popularity") return Star;
+  if (kind === "franchise") return Layers;
   return Search;
 }
 
@@ -218,6 +220,13 @@ function factTone(kind: string) {
       icon: "text-indigo-600 dark:text-indigo-400",
       value: "text-indigo-700 dark:text-indigo-300",
       bg: "bg-indigo-500/10 border-indigo-500/25",
+    };
+  }
+  if (kind === "franchise") {
+    return {
+      icon: "text-teal-600 dark:text-teal-400",
+      value: "text-teal-700 dark:text-teal-300",
+      bg: "bg-teal-500/10 border-teal-500/25",
     };
   }
   return {

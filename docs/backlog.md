@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1220** OK / 25 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1265** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1220** passent (1245 total, 25 skipped) |
+| Tests | **1265** passent (1290 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -54,6 +54,21 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | **P2** | Titres multilingues + région utilisateur | **Ouvert** | Brancher `LOCALE_REGION_ORDER` sur préférence utilisateur ([§ D](#d-display-language-region-order)). |
 | **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
 | ~~**P1**~~ | ~~Golden-master « vide honnête »~~ | **Fait 2026-06-29** | `compile.honestEmpty.test.ts` : marketplace-only sans ancre + DB miss (`confrontWithDatabase` mocké `null`) ⇒ `compileResultForType` renvoie `null`, même sur consensus de 3 marketplaces (majority noise). Encode la moitié manquante de la règle produit (l'autre moitié = `confidenceLock`). |
+
+**Séries & franchises 2026-06-29** (display / recherche / regroupement) :
+
+Deux concepts **distincts**, sourcés différemment :
+
+- **Série** = ordinal serré, *dérivable du titre + consensus* (≥ 2 frères même base + volumes distincts).
+- **Franchise** = regroupement large type-agnostique, *jamais deviné du titre* → **observation provider** uniquement.
+
+| Priorité | Item | État | Détail / prochaine action |
+| -------- | ---- | ---- | ------------------------- |
+| ~~**P2**~~ | ~~Padding dynamique des volumes (affichage)~~ | **Fait 2026-06-29** | `src/lib/title/series.ts` (`seriesDisplayTitles`, gate `MIN_SERIES_VOLUMES = 2`) câblé dans `formatShelfWithItemPrices` (route shelves) : numéros alignés sur le volume le plus large de la série (`01…10` → `001…100`), aligné-au-plus-large sans plancher. Projection **affichage** : slugs/navigation dépaddent (`slugifyItemName`), rien de stocké. `Mighty No. 9` (numéro = nom propre, pas de frère) reste intact. Tests : `series.test.ts` (stress Final Fantasy), `route.test.ts`. |
+| ~~**P2**~~ | ~~Recherche indifférente au marqueur/padding~~ | **Fait 2026-06-29** | `stripVolumeMarkersKeepingNumber` (`volumeNumber.ts`) + variantes de padding numérique dans `buildTokenVariants` : `n° / # / vol. / Volume / Tome / Numéro` et `1 / 01 / 001` interchangeables, côté serveur (`buildItemSearchConditions`) **et** client (`itemMatchesSearchQuery`). Accents/casse préservés (pas de régression). Tests : `search.test.ts`, `volumeNumber.test.ts`. |
+| ~~**P3**~~ | ~~Franchise = fact typé, sourcé provider~~ | **Fait 2026-06-29** | `buildFranchiseFact` (`src/lib/metadata/facts/franchiseFact.ts`, `kind: "franchise"` stable, `label` localisable plus tard ; **pas** « collection » = réservé à la bibliothèque utilisateur). Sourcé IGDB (`collections`/`franchise`/`franchises`) + TMDB (`belongs_to_collection`). Rendu avec icône/teinte dédiées sur la page détail. Tests : `franchiseFact.test.ts`. |
+| **P4** | Franchise — autres sources | **Ouvert** | Étendre `buildFranchiseFact` à Wikidata (P179 *part of the series*), Google Books (`series`), BGG (`family`). Réutiliser le même `kind`. |
+| **P4** | Découverte « autres volumes / plus de cette franchise » | **Ouvert (UI)** | Briques prêtes : `seriesSiblings` (même gate consensus) côté série, fact `franchise` côté franchise. Manque la **surface UI** sur la page détail (`[shelfId]/[itemId]`) : requêter les frères (même shelf, même base série / même valeur de fact franchise) + grilles « Autres tomes » / « Plus de cette franchise ». |
 
 **Audit principes 2026-06-29** (`go` autopilot) — constats restants à traiter :
 

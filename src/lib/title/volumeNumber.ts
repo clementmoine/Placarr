@@ -1,4 +1,4 @@
-const VOLUME_KEYWORD_PATTERN =
+export const VOLUME_KEYWORD_PATTERN =
   "(?:tome|vol(?:ume)?|numero|num|chapitre|chapter|ch|partie|part|pt)";
 
 export function normalizeVolumeTitleText(value: string): string {
@@ -106,8 +106,74 @@ export function unpaddedVolumeNumbersInTitle(value: string): string {
   return result;
 }
 
+/**
+ * Inverse of `unpaddedVolumeNumbersInTitle`: re-pads every explicit volume marker
+ * to a fixed digit `width` (zero-filled), normalising whatever padding the source
+ * supplied. Used for *display* so a series lines up on the width of its largest
+ * volume (`n°36` → `n°036` when the series reaches 100). Titles without a marker
+ * are returned untouched.
+ */
+export function padVolumeNumbersInTitle(value: string, width: number): string {
+  if (!Number.isFinite(width) || width < 1) return value;
+
+  const pad = (digits: string) =>
+    String(Number.parseInt(digits, 10)).padStart(Math.trunc(width), "0");
+
+  let result = value;
+
+  result = result.replace(/#\s*0*(\d+)\b/g, (_, digits) => `#${pad(digits)}`);
+
+  result = result.replace(
+    /n[°º]\s*0*(\d+)\b/gi,
+    (_, digits) => `n°${pad(digits)}`,
+  );
+
+  result = result.replace(
+    new RegExp(
+      `\\b(${VOLUME_KEYWORD_PATTERN}|num[eé]ro)\\s*\\.\\s*0*(\\d+)\\b`,
+      "gi",
+    ),
+    (_, keyword, digits) =>
+      /^vol/i.test(keyword) ? `${keyword}. ${pad(digits)}` : `${keyword} ${pad(digits)}`,
+  );
+
+  result = result.replace(
+    new RegExp(`\\b(${VOLUME_KEYWORD_PATTERN}|num[eé]ro)\\s+0*(\\d+)\\b`, "gi"),
+    (_, keyword, digits) => `${keyword} ${pad(digits)}`,
+  );
+
+  return result;
+}
+
 export function hasExplicitVolumeMarker(value: string): boolean {
   return explicitVolumeNumbers(value).length > 0;
+}
+
+/**
+ * Search normalization: removes volume *markers* (`#`, `n°`, `Tome`, `Vol.`,
+ * `Chapitre`, `Numéro`…) while KEEPING the volume number, unpadded — and otherwise
+ * preserves the text (case, accents) so it stays a faithful search-token source.
+ * Every way a user might type a volume collapses to the bare number, so search is
+ * marker- and padding-agnostic:
+ *   "Naruto n°01" → "Naruto 1", "Death Note Vol. 007" → "Death Note 7",
+ *   "Attack on Titan #12" → "Attack on Titan 12", "01" → "1".
+ * Titles with no marker keep their text (numbers are still unpadded).
+ */
+export function stripVolumeMarkersKeepingNumber(value: string): string {
+  return value
+    .replace(/#\s*0*(\d+)\b/g, "$1")
+    .replace(/n[°º]\s*0*(\d+)\b/gi, "$1")
+    .replace(
+      new RegExp(
+        `\\b(?:${VOLUME_KEYWORD_PATTERN}|num[eé]ro)\\.?\\s*0*(\\d+)\\b`,
+        "gi",
+      ),
+      "$1",
+    )
+    .replace(/\bno\.?\s*0*(\d+)\b/gi, "$1")
+    .replace(/\b0+(\d+)\b/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function stripVolumeMarkersFromTitle(value: string): string {

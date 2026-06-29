@@ -5,3 +5,4 @@ export * from "./sort";
 export * from "./displayScore";
 export * from "./volumeNumber";
 export * from "./seriesVolumeNames";
+export * from "./series";

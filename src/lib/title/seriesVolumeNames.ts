@@ -48,13 +48,14 @@ export function countSeriesVolumes(
   return toVolume - fromVolume + 1;
 }
 
-/** Zero-padding width for `{nn}` from the highest volume in the range. */
+/**
+ * Zero-padding width for `{nn}`, aligned to the widest volume in the range: a
+ * series ending at 9 stays single-digit, at 10 pads to 2 (01–10), at 100 pads to
+ * 3 (001–100). Width = digit count of the highest volume, no floor — matching the
+ * series *display* padding (`seriesVolumeDisplayWidth`).
+ */
 export function seriesVolumePaddingWidth(rangeEnd: number): number {
-  const end = Math.max(1, Math.trunc(rangeEnd));
-  const digitCount = String(end).length;
-  // Single-digit series: 01–09. From volume 10 upward: at least 3 digits (001–035, 099).
-  const minimum = end >= 10 ? 3 : 2;
-  return Math.max(minimum, digitCount);
+  return String(Math.max(1, Math.trunc(rangeEnd))).length;
 }
 
 export function buildSeriesItemName(

@@ -7,6 +7,7 @@ import {
   itemListMetadataInclude,
   presentItemFromStorage,
 } from "@/lib/item/present";
+import { seriesDisplayTitles } from "@/lib/title/series";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { slugify } from "@/lib/routing/slugs";
 import { buildItemSearchConditions } from "@/lib/item/search";
@@ -47,12 +48,26 @@ async function formatShelfWithItemPrices<
     shelf.name,
   );
 
+  const items = shelf.items.map((item) => ({
+    ...presentItemFromStorage(item),
+    ...(priceByItemId.get(item.id) ?? emptyShelfItemPrices),
+  }));
+
+  // Series-aware display padding: within this shelf, align each volume number to
+  // the widest volume of its detected series (≥2 siblings sharing a base title).
+  // Pure display projection — slugs/navigation unpad, so nothing here is stored.
+  const seriesTitleById = seriesDisplayTitles(
+    items.map((item) => ({ id: item.id, title: item.name ?? "" })),
+  );
+
   return {
     ...shelf,
-    items: shelf.items.map((item) => ({
-      ...presentItemFromStorage(item),
-      ...(priceByItemId.get(item.id) ?? emptyShelfItemPrices),
-    })),
+    items: items.map((item) => {
+      const seriesTitle = seriesTitleById.get(item.id);
+      return seriesTitle && seriesTitle !== item.name
+        ? { ...item, name: seriesTitle }
+        : item;
+    }),
   };
 }
 

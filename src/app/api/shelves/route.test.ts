@@ -27,7 +27,10 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 vi.mock("@/lib/item/present", () => ({
   itemListMetadataInclude: { select: { id: true } },
-  presentItemFromStorage: (i: { id: string }) => ({ id: i.id }),
+  presentItemFromStorage: (i: { id: string; name?: string }) => ({
+    id: i.id,
+    name: i.name,
+  }),
 }));
 vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: async (id: string) => id,
@@ -133,6 +136,36 @@ describe("GET /api/shelves — autorisation & cloisonnement", () => {
       imageUrl: "top.jpg",
       backgroundImageUrl: "top-hero.jpg",
     });
+  });
+
+  it("aligne les numéros de volume d'une série, sans toucher aux items isolés", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.shelf.findUnique.mockResolvedValue({
+      userId: "u1",
+      type: "books",
+      name: "Manga",
+      items: [
+        { id: "v1", name: "Naruto Tome 1" },
+        { id: "v2", name: "Naruto Tome 2" },
+        { id: "v12", name: "Naruto Tome 12" },
+        { id: "solo", name: "Mighty No. 9" },
+      ],
+    });
+
+    const res = await GET(get("/api/shelves?id=s1"));
+    const body = await res.json();
+    const nameById = Object.fromEntries(
+      body.items.map((item: { id: string; name: string }) => [
+        item.id,
+        item.name,
+      ]),
+    );
+
+    expect(nameById.v1).toBe("Naruto Tome 01");
+    expect(nameById.v2).toBe("Naruto Tome 02");
+    expect(nameById.v12).toBe("Naruto Tome 12");
+    // Lone numbered title is never coerced into a series.
+    expect(nameById.solo).toBe("Mighty No. 9");
   });
 });
 

@@ -1,8 +1,8 @@
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
-  pingUrl,
 } from "@/lib/provider/healthUtils";
+import axios from "axios";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -13,7 +13,12 @@ import { formatScore } from "@/services/metadata/searchUtils";
 import { cleanSearchQuery } from "@/services/metadata/searchUtils";
 import { resolveWithLookupQueries } from "@/services/metadata/searchUtils";
 import { createScreenScraperResolver } from "./resolver";
-import { getScreenScraperEnv, SCREEN_SCRAPER_ENV_NAMES } from "./env";
+import {
+  buildScreenScraperBaseParams,
+  getScreenScraperEnv,
+  SCREEN_SCRAPER_ENV_NAMES,
+  SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
+} from "./env";
 import { isScreenScraperQuotaBlocked } from "./cache";
 import { screenScraperAttachmentFromMediaUrl } from "./mediaUrl";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
@@ -30,15 +35,6 @@ type Resolver = (
   platform?: string | null,
   options?: { isBackground?: boolean },
 ) => Promise<MetadataResult | null>;
-
-function screenscraperCredentials() {
-  const credentials = getScreenScraperEnv();
-  if (!credentials) return null;
-
-  return {
-    url: `https://api.screenscraper.fr/api2/ssuserInfos.php?devid=${credentials.devId}&devpassword=${credentials.devPass}&softname=Placarr&output=json`,
-  };
-}
 
 // Build ScreenScraper evidence products: the canonical title plus its regional
 // titles and aliases (each tagged with its region; non-primary spellings flagged
@@ -134,7 +130,7 @@ export const screenscraperModule: ProviderModule = {
     } satisfies MetadataProviderAdapter;
   },
   healthCheck: (() => {
-    const credentials = screenscraperCredentials();
+    const credentials = getScreenScraperEnv();
     if (!credentials) {
       return createUnconfiguredHealthCheck(
         "screenscraper",
@@ -147,12 +143,38 @@ export const screenscraperModule: ProviderModule = {
       "ScreenScraper",
       async () => {
         const start = Date.now();
-        const isUp = await pingUrl(credentials.url);
-        return {
-          ok: isUp,
-          latency: Date.now() - start,
-          error: isUp ? null : "Host unreachable or invalid credentials",
-        };
+        try {
+          const response = await axios.get(
+            "https://api.screenscraper.fr/api2/jeuRecherche.php",
+            {
+              params: {
+                ...buildScreenScraperBaseParams(credentials),
+                recherche: "zelda",
+                systemeid: "9",
+              },
+              timeout: SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
+              validateStatus: () => true,
+            },
+          );
+          const latency = Date.now() - start;
+          const apiError = response.data?.response?.error;
+          const ok = response.status === 200 && !apiError;
+          return {
+            ok,
+            latency,
+            error: ok
+              ? null
+              : apiError
+                ? String(apiError)
+                : `HTTP ${response.status}`,
+          };
+        } catch (error) {
+          return {
+            ok: false,
+            latency: Date.now() - start,
+            error: error instanceof Error ? error.message : "Request failed",
+          };
+        }
       },
     );
   })(),

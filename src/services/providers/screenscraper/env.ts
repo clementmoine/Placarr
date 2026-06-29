@@ -3,6 +3,9 @@ export const SCREEN_SCRAPER_ENV_NAMES = [
   "SCREENSCRAPER_DEV_PASSWORD",
 ];
 
+/** jeuRecherche/jeuInfos can exceed 8s on broad queries (observed ~13s unscoped). */
+export const SCREEN_SCRAPER_REQUEST_TIMEOUT_MS = 15_000;
+
 export type ScreenScraperEnv = {
   devId: string;
   devPass: string;
@@ -37,6 +40,20 @@ export function getScreenScraperEnv(): ScreenScraperEnv | null {
 
 export function isScreenScraperConfigured(): boolean {
   return Boolean(getScreenScraperEnv());
+}
+
+export function buildScreenScraperBaseParams(
+  credentials: ScreenScraperEnv,
+): Record<string, string> {
+  return {
+    devid: credentials.devId,
+    devpassword: credentials.devPass,
+    softname: "Placarr",
+    output: "json",
+    ...(credentials.ssUser && credentials.ssPass
+      ? { ssid: credentials.ssUser, sspassword: credentials.ssPass }
+      : {}),
+  };
 }
 
 export function getScreenScraperDebugParams(

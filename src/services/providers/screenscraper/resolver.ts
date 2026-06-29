@@ -25,6 +25,8 @@ import type {
 import {
   getScreenScraperDebugParams,
   getScreenScraperEnv,
+  buildScreenScraperBaseParams,
+  SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
   type ScreenScraperEnv,
 } from "./env";
 import {
@@ -208,13 +210,12 @@ async function fetchScreenScraperGameById(
             gameid: String(gameId),
             ...getScreenScraperDebugParams(credentials),
           },
-          timeout: 8000,
+          timeout: SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
         },
       );
 
-    const infoRes = options?.isBackground
-      ? await retry(queryFn, 3, 1500)
-      : await queryFn();
+    const attempts = options?.isBackground ? 3 : 2;
+    const infoRes = await retry(queryFn, attempts, options?.isBackground ? 1500 : 1000);
 
     const jeu = infoRes.data?.response?.jeu;
     if (!jeu?.id) return null;
@@ -454,12 +455,15 @@ async function searchScreenScraperGames(
           recherche: query,
           ...(systemeid ? { systemeid: String(systemeid) } : {}),
         },
-        timeout: 8000,
+        timeout: SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
       });
 
-    const searchRes = options?.isBackground
-      ? await retry(queryFn, 3, 1500)
-      : await queryFn();
+    const attempts = options?.isBackground ? 3 : 2;
+    const searchRes = await retry(
+      queryFn,
+      attempts,
+      options?.isBackground ? 1500 : 1000,
+    );
 
     let results = searchRes.data?.response?.jeux;
     if (results && !Array.isArray(results)) {
@@ -739,15 +743,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       return null;
     }
 
-    const baseParams: Record<string, string> = {
-      devid: credentials.devId,
-      devpassword: credentials.devPass,
-      softname: "Placarr",
-      output: "json",
-      ...(credentials.ssUser && credentials.ssPass
-        ? { ssid: credentials.ssUser, sspassword: credentials.ssPass }
-        : {}),
-    };
+    const baseParams = buildScreenScraperBaseParams(credentials);
 
     try {
       let gameData: SSGame | null = null;

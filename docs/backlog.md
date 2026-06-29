@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1196** OK / 25 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1198** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1196** passent (1221 total, 25 skipped) |
+| Tests | **1198** passent (1223 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -49,7 +49,7 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | -------- | ---- | ---- | ---------------- |
 | **P2** | Cluster confidence `sourceScore` + tier observations | **Bloqué** | Ajouter `barcodeClusterObservationContribution` (tier × scale + `barcodeEvidenceObservationSourceWeight`) dans `scoreEvidenceCluster` ; **recalibrer** les 6 valeurs figées dans `compile.confidenceLock.test.ts` (essai `observationTierScale: 0.01` → +0.06–0.08 sur Ghost Recon / TMNT, revert 2026-06-29). Voir `scoring.ts` § cluster confidence. |
 | **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
-| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22** | `RECORD=1` (5 cas) lancé 2026-06-29 : **5/5 timeout** à 300s/cas (ScreenScraper 8s, PicClick 6s, enrichissement lent). Prérequis : réseau stable, `SCREENSCRAPER_*` + clés OK, éventuellement monter `RECORD_TIMEOUT_MS` dans `resolver.fresh.test.ts` ou enregistrer cas par cas. Commandes : `pnpm test:record` / `pnpm test:record:all`. |
+| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22** | `RECORD=1` (5 cas) lancé 2026-06-29 : **5/5 timeout** à 300s/cas (pipeline multi-providers lent). **Mitigations 2026-06-29** : SS timeout 15s + retry foreground, health via `jeuRecherche`, `RECORD_TIMEOUT_MS` 600s. Relancer `pnpm test:record` quand réseau OK. |
 | **P2** | Titres multilingues + région utilisateur | **Ouvert** | Brancher `LOCALE_REGION_ORDER` sur préférence utilisateur ([§ D](#d-display-language-region-order)). |
 | **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
 
@@ -73,7 +73,7 @@ Règles persistantes dans `.cursor/rules/` :
 | ~~**Apriloshop IQIT**~~ | **fait** — `searchStrategy: iqit`, parse `product-miniature`, `id_product` extrait | `prestashop/parse.ts` |
 | ~~**Chasse aux Livres probe `empty`**~~ | **fait** — fallback FlareSolverr + hint probe | `chasseauxlivres/fetch.ts` |
 | ~~**PicClick probe timeout**~~ | **fait** — retry probe + `blocked` sur timeout scrape | `picclick/index.ts` |
-| ~~**ScreenScraper probe quota**~~ | **fait** — `blocked` si quota/credentials | `screenscraper/index.ts` |
+| ~~**ScreenScraper probe quota**~~ | **fait** — `blocked` si quota/credentials ; timeout 15s + retry search ; health via `jeuRecherche` | `screenscraper/` |
 | ~~**TheGamesDB audit**~~ | **fait** — `blocked` clé absente ou quota + `mappingProbeConfigHint` | `thegamesdb/index.ts` |
 
 ### P2 — Ranking sans biais (gros chantier)
@@ -142,6 +142,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - **Pricing volume mismatch** : rejette agrégats PicClick n°183 sur item n°07 (**fait 2026-06-29**)
 - **PicClick / ScreenScraper probes** : hints `blocked` actionnables (timeout, quota, credentials) (**fait 2026-06-29**)
 - **TheGamesDB probe quota** : `blocked` si cooldown quota actif (**fait 2026-06-29**)
+- **ScreenScraper resilience** : timeout 15s, retry search foreground, health `jeuRecherche` (**fait 2026-06-29**)
 - **Barcode platform pick** : `pickPlatformKeyFromEvidence` via `barcodeEvidenceObservationSourceWeight` (**fait 2026-06-29**)
 
 ---

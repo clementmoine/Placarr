@@ -65,7 +65,7 @@ const FIXTURES_DIR = join(process.cwd(), "tests/fixtures/barcode");
 
 // RECORD est borné en temps par défaut (sous-ensemble) ; RECORD_ALL=1 capture
 // les 18 cas canoniques en une seule passe.
-const RECORD_TIMEOUT_MS = 300_000;
+const RECORD_TIMEOUT_MS = 600_000;
 const RECORD_CASE_IDS = [
   "mario-kart-wii",
   "super-mario-galaxy-wii",

@@ -10,7 +10,7 @@ de façon **déterministe**, sans réseau.
 (ScreenScraper/IGDB authentifiés, pas de blocage d'IP type BGG 401, etc.) :
 
 ```bash
-# Sous-ensemble borné en temps (4 cas, ~5 min/cas si réseau lent) :
+# Sous-ensemble borné en temps (5 cas, ~10 min/cas si réseau lent) :
 pnpm test:record
 
 # Les 18 cas canoniques en une seule passe :
@@ -27,9 +27,10 @@ résultat incorrect n'est pas sauvegardé. Vérifie quand même le log `[record 
 avant de commiter — un fixture dégradé verrouillerait un comportement faux.
 
 **État 2026-06-29** : dossier vide sauf ce README. `RECORD=1` sur le sous-ensemble
-par défaut (5 cas) a expiré à 300s/cas (timeouts ScreenScraper / PicClick depuis
-cet environnement). Relancer quand le réseau et les credentials providers sont OK ;
-voir aussi [backlog.md § Roadmap](../backlog.md#roadmap-prochaines-étapes).
+par défaut (5 cas) a expiré à 300s/cas (pipeline multi-providers lent). Timeout
+RECORD porté à **600s/cas** ; ScreenScraper search timeout **15s** + retry. Relancer
+quand le réseau et les credentials providers sont OK ; voir
+[backlog.md § Roadmap](../backlog.md#roadmap-prochaines-étapes).
 
 ## Rejouer (par défaut, en CI)
 

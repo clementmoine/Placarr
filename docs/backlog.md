@@ -41,7 +41,21 @@ pnpm backfill:slugs            # slugs items (volumes sans zéros dans l'URL)
 
 ---
 
-### P0 — Principes (Cursor rules)
+## Roadmap (prochaines étapes)
+
+Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions.
+
+| Priorité | Item | État | Prochaine action |
+| -------- | ---- | ---- | ---------------- |
+| **P2** | Cluster confidence `sourceScore` + tier observations | **Bloqué** | Ajouter `barcodeClusterObservationContribution` (tier × scale + `barcodeEvidenceObservationSourceWeight`) dans `scoreEvidenceCluster` ; **recalibrer** les 6 valeurs figées dans `compile.confidenceLock.test.ts` (essai `observationTierScale: 0.01` → +0.06–0.08 sur Ghost Recon / TMNT, revert 2026-06-29). Voir `scoring.ts` § cluster confidence. |
+| **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
+| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22** | `RECORD=1` (5 cas) lancé 2026-06-29 : **5/5 timeout** à 300s/cas (ScreenScraper 8s, PicClick 6s, enrichissement lent). Prérequis : réseau stable, `SCREENSCRAPER_*` + clés OK, éventuellement monter `RECORD_TIMEOUT_MS` dans `resolver.fresh.test.ts` ou enregistrer cas par cas. Commandes : `pnpm test:record` / `pnpm test:record:all`. |
+| **P2** | Titres multilingues + région utilisateur | **Ouvert** | Brancher `LOCALE_REGION_ORDER` sur préférence utilisateur ([§ D](#d-display-language-region-order)). |
+| **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
+
+**P1 providers / probes** : file migration metadata **vide** (PicClick, ScreenScraper, TheGamesDB, Apriloshop IQIT — tous faits 2026-06-29).
+
+---
 
 Règles persistantes dans `.cursor/rules/` :
 
@@ -67,7 +81,7 @@ Règles persistantes dans `.cursor/rules/` :
 Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_list_audit.md).
 
 1. Modèle d'observations complet (déjà amorcé — généraliser ranking images + facts)
-2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; `pickPlatformKeyFromEvidence` + ranks titre/image via `barcodeEvidenceObservationSourceWeight` (échelle legacy ~0.05–0.45)
+2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; `pickPlatformKeyFromEvidence` + ranks titre/image via `barcodeEvidenceObservationSourceWeight` (échelle legacy ~0.05–0.45). **Reste** : cluster `sourceScore` + tier (voir [Roadmap](#roadmap-prochaines-étapes)).
 3. Dé-bias attachment : `isRealBoxCoverSource` via flags stampés server-side — **fait** ; spec historique dans [debias_attachment_display_score.md](debias_attachment_display_score.md)
 4. Titres multilingues + ordre région = préférence utilisateur ([§ D](#d-display-language-region-order))
 
@@ -78,7 +92,7 @@ Guard : `src/services/providerBlindnessGuard.test.ts` — **allowlist vide** (`s
 Prochaines cibles optionnelles :
 
 - P1 ~~**Apriloshop IQIT**~~ — fait
-- P2 barcode observations (`compile.ts`) — cluster confidence `sourceScore` restant
+- P2 barcode observations (`compile.ts`) — cluster confidence `sourceScore` + tier ([Roadmap](#roadmap-prochaines-étapes))
 
 ### P4 — Exploitation champs provider
 
@@ -93,7 +107,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 ### P5 — Qualité / tests
 
 - ~~**Corpus barcode multi-types**~~ — **fait** : livre `9780140328721`, musique `0724384960650`, film `7321906123457`, JdS `3558380126133` + `3421272109517` (Mille Sabords, scan sans type)
-- Fixtures `barcodeResolver.fresh.test.ts` — 5 cas RECORD par défaut ; `RECORD_ALL=1` pour les 22
+- **Fixtures replay** (`resolver.fresh.test.ts`) — **0/22 enregistrées** ; cas définis, REPLAY skip sans fichier. Voir [Roadmap](#roadmap-prochaines-étapes) (tentative RECORD 2026-06-29, timeouts réseau).
 - ~~**Pricing manga** — lots/bundles filtrés ; mauvais volume PicClick quand seules annonces hors-sujet~~ **fait** (`priceListingVolumeConflictsWithItem`)
 
 ### P6 — Architecture lib (optionnel)
@@ -193,6 +207,12 @@ Pas d'autre boutique PrestaShop à migrer (audit plateformes 2026-06-22 : seul a
 #### F. Multi-type barcode regression corpus
 
 **Fait 2026-06-29** — `DEFAULT_BARCODE_REGRESSION_CASES` couvre jeux (Wii/Xbox), livre, musique, film, JdS (Catan + Mille Sabords sans type). Voir `TESTING.md` pour `RECORD=1` / `RECORD_ALL=1`.
+
+**Reste** : fixtures HTTP replay (`tests/fixtures/barcode/*.json`) — aucune enregistrée au 2026-06-29 ; première passe `RECORD=1` (5 cas) a expiré à 300s/cas (ScreenScraper/PicClick lents). Prérequis documentés dans [Roadmap](#roadmap-prochaines-étapes).
+
+#### I. Cluster confidence calibration (barcode P2)
+
+**Ouvert 2026-06-29** — `scoreEvidenceCluster` somme encore `barcodeEvidenceObservationSourceWeight` (~0.05–0.45/row). Introduire une contribution tier-aware (`barcodeClusterObservationContribution` ou `observationTierScale` dans `CLUSTER_CONFIDENCE`) impose de **mettre à jour** `compile.confidenceLock.test.ts` en même commit (6 locks Ghost Recon / de Blob / TMNT). Ne pas shipper sans recalibration : un essai à `0.01`/tier a déplacé les confidences de +0.06 à +0.08.
 
 #### G. Observation contract TypeScript
 

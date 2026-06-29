@@ -26,6 +26,11 @@ Le test RECORD appelle `assertExpectation` **avant** d'écrire le fichier : un
 résultat incorrect n'est pas sauvegardé. Vérifie quand même le log `[record …]`
 avant de commiter — un fixture dégradé verrouillerait un comportement faux.
 
+**État 2026-06-29** : dossier vide sauf ce README. `RECORD=1` sur le sous-ensemble
+par défaut (5 cas) a expiré à 300s/cas (timeouts ScreenScraper / PicClick depuis
+cet environnement). Relancer quand le réseau et les credentials providers sont OK ;
+voir aussi [backlog.md § Roadmap](../backlog.md#roadmap-prochaines-étapes).
+
 ## Rejouer (par défaut, en CI)
 
 ```bash

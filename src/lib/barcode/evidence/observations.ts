@@ -67,7 +67,8 @@ export function barcodeEvidenceTitleObservationScore(
 
   return (
     titleObservationRankScore(titleObservation) +
-    evidence.sourceWeight * OBSERVATION_RANK_SOURCE_WEIGHT_SCALE
+    barcodeEvidenceObservationSourceWeight(evidence) *
+      OBSERVATION_RANK_SOURCE_WEIGHT_SCALE
   );
 }
 
@@ -80,14 +81,16 @@ export function barcodeEvidenceImageObservationScore(
   );
   if (!imageObservation || imageObservation.kind !== "image") {
     return evidence.coverUrl
-      ? evidence.sourceWeight * OBSERVATION_RANK_SOURCE_WEIGHT_SCALE
+      ? barcodeEvidenceObservationSourceWeight(evidence) *
+          OBSERVATION_RANK_SOURCE_WEIGHT_SCALE
       : 0;
   }
 
   return (
     imageObservationRankScore(imageObservation) +
     (evidence.coverUrl ? coverUrlQualityRank(evidence.coverUrl) / 100 : 0) +
-    evidence.sourceWeight * OBSERVATION_RANK_SOURCE_WEIGHT_SCALE
+    barcodeEvidenceObservationSourceWeight(evidence) *
+      OBSERVATION_RANK_SOURCE_WEIGHT_SCALE
   );
 }
 
@@ -274,7 +277,9 @@ export function pickPlatformKeyFromEvidence(
   evidence: ProductEvidence[],
 ): string | null {
   const signals = evidence.flatMap((item) => {
-    const weight = item.sourceWeight + (item.isCanonical ? 0.22 : 0);
+    const weight =
+      barcodeEvidenceObservationSourceWeight(item) +
+      (item.isCanonical ? 0.22 : 0);
     const platformValue =
       item.parsed.platformKey ??
       item.facts?.find((fact) => fact.kind === "platform")?.value?.trim();

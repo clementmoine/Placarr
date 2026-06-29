@@ -1,7 +1,7 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { listProbe } from "@/lib/dev/mappingProbe";
+import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
 import { pricedOffer } from "@/lib/provider/priceOffers";
 
@@ -58,6 +58,7 @@ export const picclickModule: ProviderModule = {
     imageScoreAdjustment: -280,
     isSecondary: true,
     websiteUrl: "https://picclick.fr/",
+    mappingProbeRetry: true,
   },
   evidence: {
     label: "PicClick",
@@ -131,8 +132,29 @@ export const picclickModule: ProviderModule = {
     sampleInput: "4988601467124",
     context: { name: "", barcode: "4988601467124" },
   },
-  runMappingProbe: async () =>
-    listProbe(await fetchFromPicClick("4988601467124")),
+  runMappingProbe: async () => {
+    try {
+      const products = await retry(
+        () => fetchFromPicClick("4988601467124"),
+        2,
+      );
+      const probe = listProbe(products);
+      if (probe) return probe;
+      return probeErrorResult(
+        "No PicClick listings for sample barcode",
+        "empty",
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/timeout|timed out|ETIMEDOUT|ECONNABORTED|AbortError/i.test(message)) {
+        return probeErrorResult(
+          "PicClick search timed out — marketplace scrape is slow from this network",
+          "blocked",
+        );
+      }
+      return probeErrorResult(message);
+    }
+  },
   buildBarcodeSources(payload, ctx) {
     return marketplaceContributions("PicClick", payload.picclick, ctx, [
       "games",

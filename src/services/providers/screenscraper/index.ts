@@ -17,6 +17,7 @@ import { getScreenScraperEnv, SCREEN_SCRAPER_ENV_NAMES } from "./env";
 import { isScreenScraperQuotaBlocked } from "./cache";
 import { screenScraperAttachmentFromMediaUrl } from "./mediaUrl";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
+import { metadataProbe, probeErrorResult } from "@/lib/dev/mappingProbe";
 
 const fetchFromScreenScraper = createScreenScraperResolver({
   cleanSearchQuery,
@@ -178,6 +179,32 @@ export const screenscraperModule: ProviderModule = {
   mappingProbe: {
     sampleInput: "The Legend of Zelda: Skyward Sword (Wii)",
     context: { name: "The Legend of Zelda: Skyward Sword", platform: "wii" },
+  },
+  runMappingProbe: async () => {
+    if (isScreenScraperQuotaBlocked()) {
+      return probeErrorResult(
+        "ScreenScraper API quota exceeded — lookups pause for ~20 minutes",
+        "blocked",
+      );
+    }
+    const credentials = getScreenScraperEnv();
+    if (!credentials) {
+      return probeErrorResult(
+        `ScreenScraper credentials missing — set ${SCREEN_SCRAPER_ENV_NAMES.join(" / ")}`,
+        "blocked",
+      );
+    }
+    const metadata = await fetchFromScreenScraper(
+      "The Legend of Zelda: Skyward Sword",
+      null,
+      "wii",
+    );
+    const probe = metadataProbe(metadata);
+    if (probe) return probe;
+    return probeErrorResult(
+      "No ScreenScraper match for probe sample — quota or title mismatch",
+      "empty",
+    );
   },
   buildBarcodeSources(payload) {
     if (!payload.ss?.title) return [];

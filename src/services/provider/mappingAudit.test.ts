@@ -41,7 +41,14 @@ describe("provider mapping probes", () => {
       (mdl) => mdl.info.mappingProbeRetry,
     ).map((mdl) => mdl.info.id);
     expect(retryIds.sort()).toEqual(
-      ["boardgamegeek", "googlebooks", "icollect", "openlibrary", "screenscraper"].sort(),
+      [
+        "boardgamegeek",
+        "googlebooks",
+        "icollect",
+        "openlibrary",
+        "picclick",
+        "screenscraper",
+      ].sort(),
     );
   });
 
@@ -80,6 +87,7 @@ describe("provider mapping probes", () => {
         "picclick",
         "pricecharting",
         "scandex",
+        "screenscraper",
         "smartoys",
         "thegamesdb",
         "tokyogamestory",

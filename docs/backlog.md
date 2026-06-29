@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1191** OK / 25 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1195** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,13 +11,13 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1191** passent (1216 total, 25 skipped) |
+| Tests | **1195** passent (1220 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
 
-1. `picclick` — probe listing souvent `empty` (timeout scrape)
-2. `screenscraper` — probe `empty` si quota API dépassé
+1. ~~`picclick` — probe listing souvent `empty` (timeout scrape)~~ **hint `blocked` + retry** (`runMappingProbe`)
+2. ~~`screenscraper` — probe `empty` si quota API dépassé~~ **hint `blocked` quota/credentials** (`runMappingProbe`)
 3. `thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé
 4. `apriloshop` — ~~search vide~~ **IQIT OK** (`searchStrategy: iqit`, probe live `rendered_products` + `product-miniature`)
 
@@ -57,7 +57,9 @@ Règles persistantes dans `.cursor/rules/` :
 | Item | Action | Doc |
 | ---- | ------ | --- |
 | ~~**Apriloshop IQIT**~~ | **fait** — `searchStrategy: iqit`, parse `product-miniature`, `id_product` extrait | `prestashop/parse.ts` |
-| **Chasse aux Livres probe `empty`** | Fallback **FlareSolverr** sur page login ; hint probe si `FLARESOLVERR_URL` absent | `chasseauxlivres/fetch.ts` |
+| ~~**Chasse aux Livres probe `empty`**~~ | **fait** — fallback FlareSolverr + hint probe | `chasseauxlivres/fetch.ts` |
+| ~~**PicClick probe timeout**~~ | **fait** — retry probe + `blocked` sur timeout scrape | `picclick/index.ts` |
+| ~~**ScreenScraper probe quota**~~ | **fait** — `blocked` si quota/credentials | `screenscraper/index.ts` |
 | **TheGamesDB audit** | ~~Marquer `blocked` quand clé absente~~ **fait** — `runMappingProbe` + `mappingProbeConfigHint` | `thegamesdb/index.ts` |
 
 ### P2 — Ranking sans biais (gros chantier)
@@ -65,7 +67,7 @@ Règles persistantes dans `.cursor/rules/` :
 Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_list_audit.md).
 
 1. Modèle d'observations complet (déjà amorcé — généraliser ranking images + facts)
-2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; ranking cluster encore hybride `sourceWeight` + `barcodeEvidenceTitleObservationScore`
+2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; `pickPlatformKeyFromEvidence` + ranks titre/image via `barcodeEvidenceObservationSourceWeight` (échelle legacy ~0.05–0.45)
 3. Dé-bias attachment : `isRealBoxCoverSource` via flags stampés server-side — **fait** ; spec historique dans [debias_attachment_display_score.md](debias_attachment_display_score.md)
 4. Titres multilingues + ordre région = préférence utilisateur ([§ D](#d-display-language-region-order))
 
@@ -76,7 +78,7 @@ Guard : `src/services/providerBlindnessGuard.test.ts` — **allowlist vide** (`s
 Prochaines cibles optionnelles :
 
 - P1 ~~**Apriloshop IQIT**~~ — fait
-- P2 barcode observations (`compile.ts`) — ranking cluster restant
+- P2 barcode observations (`compile.ts`) — cluster confidence `sourceScore` restant
 
 ### P4 — Exploitation champs provider
 
@@ -124,6 +126,8 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - **Corpus barcode multi-types** : 22 cas dont Mille Sabords scan sans type (**fait 2026-06-29**)
 - **Chasse aux Livres FlareSolverr** : fallback scrape + hint probe (**fait 2026-06-29**)
 - **Pricing volume mismatch** : rejette agrégats PicClick n°183 sur item n°07 (**fait 2026-06-29**)
+- **PicClick / ScreenScraper probes** : hints `blocked` actionnables (timeout, quota, credentials) (**fait 2026-06-29**)
+- **Barcode platform pick** : `pickPlatformKeyFromEvidence` via `barcodeEvidenceObservationSourceWeight` (**fait 2026-06-29**)
 
 ---
 

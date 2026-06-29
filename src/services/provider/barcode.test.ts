@@ -15,6 +15,7 @@ function createDeps() {
     fetchFromFreakxy: vi.fn(async () => []),
     fetchFromApriloshop: vi.fn(async () => []),
     fetchFromPicClick: vi.fn(async () => []),
+    fetchFromEbay: vi.fn(async () => []),
     fetchPricesFromLeDenicheur: vi.fn(async () => null),
     fetchFromOpenLibrary: vi.fn(async () => null),
     fetchFromGoogleBooks: vi.fn(async () => null),
@@ -51,6 +52,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "apriloshop",
         "chipweld",
         "picclick",
+        "ebay",
         "leDenicheur",
         "ice",
         "tokyogamestory",
@@ -67,11 +69,12 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "cal",
         "amc",
         "picclick",
+        "ebay",
         "leDenicheur",
       ].sort(),
     );
     expect(Object.keys(builders.movies({ barcode: "1" })).sort()).toEqual(
-      ["cal", "amc", "picclick", "leDenicheur"].sort(),
+      ["cal", "amc", "picclick", "ebay", "leDenicheur"].sort(),
     );
     expect(Object.keys(builders.boardgames({ barcode: "1" })).sort()).toEqual(
       [
@@ -93,6 +96,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "sd",
         "amc",
         "picclick",
+        "ebay",
       ].sort(),
     );
     expect(Object.keys(builders.generic({ barcode: "1" })).sort()).toEqual(
@@ -108,6 +112,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "apriloshop",
         "chipweld",
         "picclick",
+        "ebay",
         "leDenicheur",
         "ice",
         "tokyogamestory",

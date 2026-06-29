@@ -8,6 +8,7 @@ import { launchboxModule } from "@/services/providers/launchbox";
 import { coverprojectModule } from "@/services/providers/coverproject";
 import { deezerModule } from "@/services/providers/deezer";
 import { discogsModule } from "@/services/providers/discogs";
+import { ebayModule } from "@/services/providers/ebay";
 import { freakxyModule } from "@/services/providers/freakxy";
 import { geedieModule } from "@/services/providers/geedie";
 import { howlongtobeatModule } from "@/services/providers/howlongtobeat";
@@ -87,6 +88,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   geedieModule,
   freakxyModule,
   picclickModule,
+  ebayModule,
   scandexModule,
 ];
 
@@ -181,6 +183,12 @@ const PROVIDER_METADATA_EXTENSIONS: Record<
   } as any,
   freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
   picclick: {
+    weight: 0.5,
+    imageScoreAdjustment: -280,
+    remoteImageFallback: true,
+    isSecondary: true,
+  },
+  ebay: {
     weight: 0.5,
     imageScoreAdjustment: -280,
     remoteImageFallback: true,

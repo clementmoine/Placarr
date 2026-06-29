@@ -50,6 +50,7 @@ export async function runBarcodeLookups(params: {
     payload.amc = asNamedListings(lookups.amc);
     payload.freakxy = asNamedListings(lookups.freakxy);
     payload.picclick = asNamedListings(lookups.picclick);
+    payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.retailers = collectRetailerBarcodeHits(lookups);
 
@@ -101,6 +102,7 @@ export async function runBarcodeLookups(params: {
     payload.calDvd = asNamedListings(lookups.cal);
     payload.amc = asNamedListings(lookups.amc);
     payload.picclick = asNamedListings(lookups.picclick);
+    payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.tmdb = asMetadataHit(
       isBarcodeRecordSlimMode()
@@ -125,6 +127,7 @@ export async function runBarcodeLookups(params: {
     payload.calToys = asNamedListings(lookups.cal);
     payload.amc = asNamedListings(lookups.amc);
     payload.picclick = asNamedListings(lookups.picclick);
+    payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.philibert = asMetadataHit(lookups.philibert);
     payload.okkazeo = asMetadataHit(lookups.okkazeo);
@@ -143,6 +146,7 @@ export async function runBarcodeLookups(params: {
   payload.amc = asNamedListings(lookups.amc);
   payload.freakxy = asNamedListings(lookups.freakxy);
   payload.picclick = asNamedListings(lookups.picclick);
+  payload.ebay = asNamedListings(lookups.ebay);
   payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
   // Board-game anchors (Okkazeo + Philibert + retailers), in parity with the
   // video-game stack above, so a board game scanned without a type has a trusted

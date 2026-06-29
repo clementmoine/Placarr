@@ -23,6 +23,7 @@ describe("game metadata provider modules", () => {
         "apriloshop",
         "chipweld",
         "chocobonplan",
+        "ebay",
         "geedie",
         "coverproject",
         "howlongtobeat",

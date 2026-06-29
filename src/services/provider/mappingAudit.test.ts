@@ -43,6 +43,7 @@ describe("provider mapping probes", () => {
     expect(retryIds.sort()).toEqual(
       [
         "boardgamegeek",
+        "ebay",
         "googlebooks",
         "icollect",
         "openlibrary",
@@ -71,6 +72,7 @@ describe("provider mapping probes", () => {
         "geedie",
         "coverproject",
         "didacto",
+        "ebay",
         "fairplayjeux",
         "freakxy",
         "icollect",

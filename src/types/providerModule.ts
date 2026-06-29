@@ -129,6 +129,7 @@ export type BarcodeLookupDeps = {
   fetchFromAchatMoinsCher: (barcode: string) => Promise<unknown>;
   fetchFromFreakxy: (barcode: string) => Promise<unknown>;
   fetchFromPicClick: (barcode: string) => Promise<unknown>;
+  fetchFromEbay: (barcode: string) => Promise<unknown>;
   fetchPricesFromLeDenicheur: (
     queryOrQueries: string | string[],
   ) => Promise<unknown>;

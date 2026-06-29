@@ -29,6 +29,7 @@ describe("createMetadataAdapters", () => {
         "deezer",
         "didacto",
         "discogs",
+        "ebay",
         "fairplayjeux",
         "googlebooks",
         "howlongtobeat",

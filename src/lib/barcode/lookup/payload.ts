@@ -49,6 +49,7 @@ export type BarcodeLookupPayload = {
   calGeneric: NamedListing[];
   freakxy: NamedListing[];
   picclick: NamedListing[];
+  ebay: NamedListing[];
   leDenicheur: LeDenicheurPrices | null;
   ice: ICollectMetadata | null;
 };
@@ -75,6 +76,7 @@ export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
     calGeneric: [],
     freakxy: [],
     picclick: [],
+    ebay: [],
     leDenicheur: null,
     ice: null,
   };

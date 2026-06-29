@@ -251,6 +251,18 @@ export const DEFAULT_BARCODE_REGRESSION_CASES: BarcodeRegressionCase[] = [
     },
   },
   {
+    id: "mille-sabords-boardgame-untyped",
+    label:
+      "Mille Sabords (Gigamic, scan sans étagère — ne pas classer en jeu vidéo)",
+    barcode: "3421272109517",
+    expected: {
+      cleanNameIncludes: ["Mille", "Sabords"],
+      shelfType: "boardgames",
+      maxMatches: 2,
+      suggestionsExclude: ["Nintendo", "PlayStation", "Xbox"],
+    },
+  },
+  {
     id: "catan-boardgame",
     label: "Catan (jeu de société)",
     barcode: "3558380126133",

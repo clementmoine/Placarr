@@ -70,6 +70,7 @@ const RECORD_CASE_IDS = [
   "mario-kart-wii",
   "super-mario-galaxy-wii",
   "links-crossbow-training-wii",
+  "mille-sabords-boardgame-untyped",
   "catan-boardgame",
 ];
 const RECORD_CASES = RECORD_ALL

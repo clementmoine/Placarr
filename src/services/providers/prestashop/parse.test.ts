@@ -117,6 +117,7 @@ describe("parseIqitRenderedProducts", () => {
 
     expect(parseIqitRenderedProducts(rendered)).toEqual([
       {
+        id_product: 14324,
         name: "Star Wars Jedi Survivor XBOX SERIES X [NEUF]",
         link: "https://apriloshop.fr/jeux-xbox-one/star-wars-jedi-survivor",
         price: "19,90&nbsp;€",
@@ -153,6 +154,7 @@ describe("parseIqitRenderedProducts", () => {
 
     expect(parseIqitRenderedProducts(rendered)).toEqual([
       {
+        id_product: 2572,
         name: "Trine: Ultimate Collection",
         link: "https://www.chipweld.fr/jeux-playstation-4/2572-trine-ultimate-collection-5016488132497.html",
         price: "19,99&nbsp;€",

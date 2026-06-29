@@ -33,6 +33,7 @@ export interface PrestashopRetailerConfig {
 }
 
 export interface PrestashopSearchProduct {
+  id_product?: number;
   name?: string;
   price?: string;
   price_amount?: number;

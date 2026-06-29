@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-06-28** (`pnpm exec vitest run` **1187** OK / 24 skipped,
+> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1187+** OK,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,14 +11,15 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1187** passent (1211 total, 24 skipped) |
+| Tests | **1188+** passent (1212+ total, 24 skipped) |
+| Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
 
 1. `picclick` — probe listing souvent `empty` (timeout scrape)
 2. `screenscraper` — probe `empty` si quota API dépassé
 3. `thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé
-4. `apriloshop` — search PrestaShop native vide (IQIT requis, voir § Apriloshop)
+4. `apriloshop` — ~~search vide~~ **IQIT OK** (`searchStrategy: iqit`, probe live `rendered_products` + `product-miniature`)
 
 **Hors scope adapter metadata** (probe custom seulement — normal) :
 `freakxy`, `ledenicheur`, `scandex`
@@ -55,7 +56,7 @@ Règles persistantes dans `.cursor/rules/` :
 
 | Item | Action | Doc |
 | ---- | ------ | --- |
-| **Apriloshop IQIT** | Ajouter `searchStrategy: native \| iqit` au factory PrestaShop + parse HTML IQIT ; sinon retirer le provider | § Apriloshop ci-dessous |
+| ~~**Apriloshop IQIT**~~ | **fait** — `searchStrategy: iqit`, parse `product-miniature`, `id_product` extrait | `prestashop/parse.ts` |
 | **Chasse aux Livres probe `empty`** | Listing ISBN souvent bloqué en scrape serveur — vérifier FlareSolverr / sample ; pas un bug mapping | `provider_integration_checklist.md` |
 | **TheGamesDB audit** | ~~Marquer `blocked` quand clé absente~~ **fait** — `runMappingProbe` + `mappingProbeConfigHint` | `thegamesdb/index.ts` |
 
@@ -64,7 +65,7 @@ Règles persistantes dans `.cursor/rules/` :
 Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_list_audit.md).
 
 1. Modèle d'observations complet (déjà amorcé — généraliser ranking images + facts)
-2. Migrer le **chemin barcode** (`compile.ts`) vers observations (pas seulement metadata merge)
+2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; ranking cluster encore hybride `sourceWeight` + `barcodeEvidenceTitleObservationScore`
 3. Dé-bias attachment : `isRealBoxCoverSource` remplace l'ancien name-set — spec restante dans [debias_attachment_display_score.md](debias_attachment_display_score.md)
 4. Titres multilingues + ordre région = préférence utilisateur ([§ D](#d-display-language-region-order))
 
@@ -74,8 +75,8 @@ Guard : `src/services/providerBlindnessGuard.test.ts` — **allowlist vide** (`s
 
 Prochaines cibles optionnelles :
 
-- P1 **Apriloshop IQIT** — `searchStrategy` PrestaShop factory
-- P2 barcode observations (`compile.ts`)
+- P1 ~~**Apriloshop IQIT**~~ — fait
+- P2 barcode observations (`compile.ts`) — ranking cluster restant
 
 ### P4 — Exploitation champs provider
 
@@ -89,8 +90,8 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 ### P5 — Qualité / tests
 
-- **Corpus barcode multi-types** ([§ F](#f-multi-type-barcodeitem-regression-corpus)) — `pnpm test:record:all` + livre / musique / film / JdS
-- Fixtures `barcodeResolver.fresh.test.ts` quasi vides
+- ~~**Corpus barcode multi-types**~~ — **fait** : livre `9780140328721`, musique `0724384960650`, film `7321906123457`, JdS `3558380126133` + `3421272109517` (Mille Sabords, scan sans type)
+- Fixtures `barcodeResolver.fresh.test.ts` — 5 cas RECORD par défaut ; `RECORD_ALL=1` pour les 22
 - **Pricing manga** — lots/bundles filtrés ; reste possible : mauvais volume PicClick quand seules des annonces hors-sujet existent
 
 ### P6 — Architecture lib (optionnel)
@@ -118,6 +119,9 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - **Barcode consensus title** : colonne structurée + compile observations (**fait 2026-06-28**)
 - **Retailer barcode guards** : Philibert trust EAN confirmé ; PrestaShop exige alignement titre ; couvertures retail filtrées par plateforme/suite (**fait 2026-06-28**)
 - **Booknode covers** : téléchargement `/full/` JPEG + préférence merge sur OpenLibrary (**fait 2026-06-28**)
+- **Client bundle** : `item/media` ne tire plus la registry providers (`node:sqlite` webpack) (**fait 2026-06-29**)
+- **Apriloshop IQIT** : `searchStrategy: iqit` + parse miniatures + `id_product` (**fait 2026-06-29**)
+- **Corpus barcode multi-types** : 22 cas dont Mille Sabords scan sans type (**fait 2026-06-29**)
 
 ---
 
@@ -153,7 +157,7 @@ Site sur **IQIT Search** ; AJAX PrestaShop natif renvoie `products: 0`.
 
 **Fait** : config PrestaShop, factory agnostique, `collectRetailerBarcodeHits` générique.
 
-**Reste** : `searchStrategy: iqit` dans `PrestashopRetailerConfig` + parse `product-miniature` une fois ; vérifier index barcode IQIT. Sinon **remove provider**.
+**Reste** : ~~`searchStrategy: iqit`~~ fait ; vérifier index barcode IQIT en prod si résolution EAN échoue encore (enrichissement page produit).
 
 Pas d'autre boutique PrestaShop à migrer (audit plateformes 2026-06-22 : seul apriloshop = PrestaShop+IQIT).
 
@@ -181,7 +185,7 @@ Pas d'autre boutique PrestaShop à migrer (audit plateformes 2026-06-22 : seul a
 
 #### F. Multi-type barcode regression corpus
 
-`DEFAULT_BARCODE_REGRESSION_CASES` = jeux seulement. À enrichir : JdS `3421272109517`, livre, musique, film. Voir `TESTING.md`.
+**Fait 2026-06-29** — `DEFAULT_BARCODE_REGRESSION_CASES` couvre jeux (Wii/Xbox), livre, musique, film, JdS (Catan + Mille Sabords sans type). Voir `TESTING.md` pour `RECORD=1` / `RECORD_ALL=1`.
 
 #### G. Observation contract TypeScript
 

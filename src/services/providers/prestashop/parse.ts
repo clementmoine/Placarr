@@ -156,9 +156,17 @@ export function parsePrestashopProductPageBarcode(
   return referenceMatch?.[1];
 }
 
+function parseIqitProductId(block: string): number | undefined {
+  const match = block.match(/\bdata-id-product\s*=\s*["'](\d+)["']/i);
+  if (!match) return undefined;
+  const id = Number.parseInt(match[1], 10);
+  return Number.isFinite(id) ? id : undefined;
+}
+
 function parseIqitMiniatureBlock(
   block: string,
 ): PrestashopSearchProduct | null {
+  const id_product = parseIqitProductId(block);
   const titleLinkMatch =
     block.match(
       /<h5 class="product-name">\s*<a href="([^"]+)"[^>]*>([^<]*)</i,
@@ -207,6 +215,7 @@ function parseIqitMiniatureBlock(
   }
 
   return {
+    id_product,
     name,
     link,
     price: priceLabel,

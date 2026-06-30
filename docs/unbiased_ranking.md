@@ -101,9 +101,9 @@ These must be replaced by data-property + consensus scoring (below).
 - **Consensus for images and facts**:
   - `crossSourceConsensusBonus(distinctSourceCount)` in `attachmentDisplayScore.ts`.
   - `applyConsensus` in `metadataConsensus.ts` (fact consensus).
-- **Locale ranking** (provider-neutral, factual): `LOCALE_REGION_ORDER`,
+- **Locale ranking** (provider-neutral, factual): `regionOrderForUiLocale`,
   `pickBestRegionalTitle`, `regionRank`, `localeBonusForAttachmentRole` in
-  `localePreference.ts`.
+  `preference.ts` — driven by UI locale when known (`fr` PAL-first, `en` US-first).
 
 The work is to **generalize these to every field** and **drop the per-provider
 weights** — not to build a new ranking system.
@@ -281,9 +281,8 @@ search(query)            = match query against every best[*] and every alias
 
 - Present: `inferTextLanguage`, `languageRank`, per-language _description_ tagging
   (`metadataMerge.ts`), `aliases` storage, `regionalTitles`.
-- Missing: per-language _title_ bucketing (today: one FR-biased title); name→item
-  search across aliases/variants (today: FR title only); user-driven display order
-  (today: `LOCALE_REGION_ORDER` hardcoded fr-first → make it a user preference).
+- Missing: per-language _title_ bucketing (today: one locale-biased title at enrich time unless request locale is set); name→item
+  search across aliases/variants (today: FR title only). **Done 2026-06-30**: user-driven display region order via `preferred-locale` cookie + `regionOrderForUiLocale`.
 
 ### Provider-internal hardcode is allowed
 

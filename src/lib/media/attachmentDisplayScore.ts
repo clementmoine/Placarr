@@ -9,6 +9,7 @@ import {
 import {
   localeBonusForAttachmentRole,
   regionRank,
+  type LocalePreferenceOptions,
 } from "@/lib/locale/preference";
 import {
   coverProvenanceRank,
@@ -30,14 +31,17 @@ import {
 function mergeRolesByRegion(
   a?: string | null,
   b?: string | null,
+  options?: AttachmentDisplayScoreOptions,
 ): string | null {
   if (!a) return b ?? null;
   if (!b) return a ?? null;
   const rankA = regionRank(
     resolveAttachmentDisplayRegion({ type: "image", role: a }),
+    options,
   );
   const rankB = regionRank(
     resolveAttachmentDisplayRegion({ type: "image", role: b }),
+    options,
   );
   return rankA <= rankB ? a : b;
 }
@@ -98,9 +102,12 @@ export type ScoredAttachmentInput = {
   coverProvenance?: string | null;
 };
 
-export type AttachmentDisplayScoreOptions = {
+import type { Locale } from "@/types/i18n";
+
+export type AttachmentDisplayScoreOptions = LocalePreferenceOptions & {
   /** Shelf / requested game platform — boosts matching covers, penalises mismatches. */
   requestedPlatformKey?: string | null;
+  uiLocale?: Locale | null;
 };
 
 export interface AttachmentDisplayScoreDetails {
@@ -296,7 +303,7 @@ function buildAttachmentDisplayScoreDetails(
   const role = (attachment.role || "").toLowerCase();
   const url = (attachment.url || "").toLowerCase();
   const signal = `${role} ${url}`;
-  const localeBonus = localeBonusForAttachmentRole(semantics.region);
+  const localeBonus = localeBonusForAttachmentRole(semantics.region, options);
   if (localeBonus !== 0) {
     addSignal(localeBonus, `locale ${semantics.region || role || "unknown"}`);
   }
@@ -453,6 +460,7 @@ export function scoreAttachmentForDisplay(
 
 export function rankScoredAttachments<T extends ScoredAttachmentInput>(
   scoredEntries: Array<{ attachment: T; score: number; index: number }>,
+  options?: AttachmentDisplayScoreOptions,
 ): T[] {
   const bestByUrl = new Map<
     string,
@@ -474,6 +482,7 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
       const mergedRole = mergeRolesByRegion(
         existing.attachment.role,
         entry.attachment.role,
+        options,
       );
       const mergedSource =
         existing.attachment.source || entry.attachment.source || null;
@@ -527,6 +536,7 @@ export function rankAttachmentsForDisplay<T extends ScoredAttachmentInput>(
         options,
       ),
     })),
+    options,
   );
 }
 
@@ -630,7 +640,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         attachment,
         options?.requestedPlatformKey,
       ),
-      regionRankValue: regionRank(semantics.region),
+      regionRankValue: regionRank(semantics.region, options),
       provenanceRank: coverProvenanceRank(
         resolveCoverProvenance({
           provenance: attachment.coverProvenance,
@@ -669,6 +679,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       const mergedRole = mergeRolesByRegion(
         existing.attachment.role,
         entry.attachment.role,
+        options,
       );
       const mergedSource =
         existing.attachment.source || entry.attachment.source || null;

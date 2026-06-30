@@ -1398,12 +1398,12 @@ export default function ItemDetailsPage() {
   ]);
 
   const heroImage = useMemo(() => {
-    return item?.backgroundImageUrl || (item ? getHeroImage(item) : null);
-  }, [item]);
+    return item?.backgroundImageUrl || (item ? getHeroImage(item, locale) : null);
+  }, [item, locale]);
 
   const coverImage = useMemo(() => {
-    return item ? getCoverImage(item) : null;
-  }, [item]);
+    return item ? getCoverImage(item, locale) : null;
+  }, [item, locale]);
 
   useEffect(() => {
     setCoverImageFit("contain");

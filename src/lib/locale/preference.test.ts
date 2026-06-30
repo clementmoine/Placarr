@@ -12,10 +12,19 @@ import {
 } from "@/lib/locale/preference";
 
 describe("localePreference", () => {
-  it("ranks FR/EU regions ahead of US/JP", () => {
-    expect(regionRank("fr")).toBeLessThan(regionRank("eu"));
-    expect(regionRank("eu")).toBeLessThan(regionRank("us"));
-    expect(regionRank("us")).toBeLessThan(regionRank("jp"));
+  const frLocale = { uiLocale: "fr" as const };
+  const enLocale = { uiLocale: "en" as const };
+
+  it("ranks FR/EU regions ahead of US/JP for French UI locale", () => {
+    expect(regionRank("fr", frLocale)).toBeLessThan(regionRank("eu", frLocale));
+    expect(regionRank("eu", frLocale)).toBeLessThan(regionRank("us", frLocale));
+    expect(regionRank("us", frLocale)).toBeLessThan(regionRank("jp", frLocale));
+  });
+
+  it("ranks US/UK regions ahead of FR/EU for English UI locale", () => {
+    expect(regionRank("us", enLocale)).toBeLessThan(regionRank("uk", enLocale));
+    expect(regionRank("uk", enLocale)).toBeLessThan(regionRank("fr", enLocale));
+    expect(regionRank("eu", enLocale)).toBeLessThan(regionRank("jp", enLocale));
   });
 
   it("maps provider region labels to canonical locale ranks", () => {
@@ -127,25 +136,53 @@ describe("localePreference", () => {
 });
 
 describe("attachment locale scoring", () => {
-  it("boosts FR/EU cover roles over US covers", () => {
-    expect(localeBonusForAttachmentRole("fr")).toBeGreaterThan(
-      localeBonusForAttachmentRole("us"),
+  const frLocale = { uiLocale: "fr" as const };
+  const enLocale = { uiLocale: "en" as const };
+
+  it("boosts FR/EU cover roles over US covers for French UI locale", () => {
+    expect(localeBonusForAttachmentRole("fr", frLocale)).toBeGreaterThan(
+      localeBonusForAttachmentRole("us", frLocale),
     );
-    expect(localeBonusForAttachmentRole("eu")).toBeGreaterThan(
-      localeBonusForAttachmentRole("us"),
+    expect(localeBonusForAttachmentRole("eu", frLocale)).toBeGreaterThan(
+      localeBonusForAttachmentRole("us", frLocale),
+    );
+  });
+
+  it("boosts US cover roles over FR covers for English UI locale", () => {
+    expect(localeBonusForAttachmentRole("us", enLocale)).toBeGreaterThan(
+      localeBonusForAttachmentRole("fr", enLocale),
     );
   });
 
   it("prefers FR regional covers over US when quality signals match", () => {
     expect(
-      getCoverImage({
-        metadata: {
-          attachments: [
-            { type: "cover", role: "us", url: "/uploads/us.jpg" },
-            { type: "cover", role: "fr", url: "/uploads/fr.jpg" },
-          ],
+      getCoverImage(
+        {
+          metadata: {
+            attachments: [
+              { type: "cover", role: "us", url: "/uploads/us.jpg" },
+              { type: "cover", role: "fr", url: "/uploads/fr.jpg" },
+            ],
+          },
         },
-      }),
+        "fr",
+      ),
     ).toBe("/uploads/fr.jpg");
+  });
+
+  it("prefers US regional covers over FR for English UI locale", () => {
+    expect(
+      getCoverImage(
+        {
+          metadata: {
+            attachments: [
+              { type: "cover", role: "us", url: "/uploads/us.jpg" },
+              { type: "cover", role: "fr", url: "/uploads/fr.jpg" },
+            ],
+          },
+        },
+        "en",
+      ),
+    ).toBe("/uploads/us.jpg");
   });
 });

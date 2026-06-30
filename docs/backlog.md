@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1255** passent (1280 total, 25 skipped) |
+| Tests | **1258** passent (1283 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -51,7 +51,7 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
 | **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22 — bloqué env** | Slim RECORD saute les `slowScanScrape` (PicClick seul désormais) + enrich PC/SS. **Constat 2026-06-29** : batch lookups OK en ~2.3 s, mais `resolveBarcode` reste `null` (pas d’ancre canonique sans enrich SS/PC complet) **et** le test hang jusqu’au timeout (900s) sur une promesse orpheline (`buildBarcodeTasks` crée le fetch avant filtrage). Avant de réessayer : (a) couper l’ancre canonique sur le hit barcode PriceCharting en slim, ou (b) ne pas *construire* les tâches `slowScanScrape` (skip avant `buildBarcodeTasks`, pas après). Puis `pnpm test:record` / `test:record:all`. |
 | **P3** | PicClick → eBay Browse API | **Fait** | Module `ebay/` actif ; PicClick retiré (scraping bloqué + interdit CGU). Sans clés eBay → no-op gracieux. |
-| **P2** | Titres multilingues + région utilisateur | **Ouvert** | Brancher `LOCALE_REGION_ORDER` sur préférence utilisateur ([§ D](#d-display-language-region-order)). |
+| **P2** | Titres multilingues + région utilisateur | **Fait 2026-06-30** | `regionOrderForUiLocale` / `languageOrderForUiLocale` dans `preference.ts` ; cookie `preferred-locale` sync client→API ; `withRequestUiLocale` sur routes items/shelves/explore/loans ; couverture read-time via `getCoverImage(item, locale)`. |
 | **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
 | ~~**P1**~~ | ~~Golden-master « vide honnête »~~ | **Fait 2026-06-29** | `compile.honestEmpty.test.ts` : marketplace-only sans ancre + DB miss (`confrontWithDatabase` mocké `null`) ⇒ `compileResultForType` renvoie `null`, même sur consensus de 3 marketplaces (majority noise). Encode la moitié manquante de la règle produit (l'autre moitié = `confidenceLock`). |
 
@@ -110,7 +110,7 @@ Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_lis
 1. Modèle d'observations complet (déjà amorcé — généraliser ranking images + facts)
 2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **partiel** : observations persistées + `selectConsensusTitle` ; `pickPlatformKeyFromEvidence` + ranks titre/image via `barcodeEvidenceObservationSourceWeight` (échelle legacy ~0.05–0.45). **Reste** : cluster `sourceScore` + tier (voir [Roadmap](#roadmap-prochaines-étapes)).
 3. Dé-bias attachment : `isRealBoxCoverSource` via flags stampés server-side — **fait** ; spec historique dans [debias_attachment_display_score.md](debias_attachment_display_score.md)
-4. Titres multilingues + ordre région = préférence utilisateur ([§ D](#d-display-language-region-order))
+4. Titres multilingues + ordre région = préférence utilisateur — **fait 2026-06-30** ([§ D](#d-display-language-region-order))
 
 ### P3 — Provider-blind core
 
@@ -226,7 +226,7 @@ Pas d'autre boutique PrestaShop à migrer (audit plateformes 2026-06-22 : seul a
 
 #### D. Display-language region order
 
-`LOCALE_REGION_ORDER` fr-first → à brancher sur préférence utilisateur (lié unbiased step 4).
+`LOCALE_REGION_ORDER` est dérivé de la préférence UI (`fr` → PAL-first, `en` → US-first) via `regionOrderForUiLocale` ; cookie `preferred-locale` + `Accept-Language` côté API.
 
 #### E. Provider health script
 

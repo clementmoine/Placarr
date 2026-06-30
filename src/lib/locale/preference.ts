@@ -1,4 +1,7 @@
 import { scoreMetadataDisplayTitle } from "@/lib/title/displayScore";
+import type { Locale } from "@/types/i18n";
+
+import { activeUiLocale } from "./preferenceContext";
 
 export const LOCALE_REGION_ORDER = [
   "fr",
@@ -9,10 +12,64 @@ export const LOCALE_REGION_ORDER = [
   "jp",
 ] as const;
 
+export const LOCALE_REGION_ORDER_EN = [
+  "us",
+  "uk",
+  "wor",
+  "eu",
+  "fr",
+  "jp",
+] as const;
+
 export const LOCALE_LANGUAGE_ORDER = ["fr", "en"] as const;
+
+export const LOCALE_LANGUAGE_ORDER_EN = ["en", "fr"] as const;
 
 export type LocaleRegion = (typeof LOCALE_REGION_ORDER)[number];
 export type LocaleLanguage = (typeof LOCALE_LANGUAGE_ORDER)[number];
+
+export type LocalePreferenceOptions = {
+  uiLocale?: Locale | null;
+  regionOrder?: readonly LocaleRegion[];
+  languageOrder?: readonly LocaleLanguage[];
+};
+
+export function regionOrderForUiLocale(
+  locale?: string | null,
+): readonly LocaleRegion[] {
+  if (!locale) return LOCALE_REGION_ORDER;
+  const normalized = locale.toLowerCase().split(/[-_]/)[0];
+  if (normalized === "en") return LOCALE_REGION_ORDER_EN;
+  return LOCALE_REGION_ORDER;
+}
+
+export function languageOrderForUiLocale(
+  locale?: string | null,
+): readonly LocaleLanguage[] {
+  if (!locale) return LOCALE_LANGUAGE_ORDER;
+  const normalized = locale.toLowerCase().split(/[-_]/)[0];
+  if (normalized === "en") return LOCALE_LANGUAGE_ORDER_EN;
+  return LOCALE_LANGUAGE_ORDER;
+}
+
+function resolveUiLocale(options?: LocalePreferenceOptions): Locale | undefined {
+  if (options?.uiLocale) return options.uiLocale;
+  return activeUiLocale();
+}
+
+function resolveRegionOrder(
+  options?: LocalePreferenceOptions,
+): readonly LocaleRegion[] {
+  if (options?.regionOrder) return options.regionOrder;
+  return regionOrderForUiLocale(resolveUiLocale(options));
+}
+
+function resolveLanguageOrder(
+  options?: LocalePreferenceOptions,
+): readonly LocaleLanguage[] {
+  if (options?.languageOrder) return options.languageOrder;
+  return languageOrderForUiLocale(resolveUiLocale(options));
+}
 
 // Canonical buckets follow the console-region convention already used by the
 // full-word aliases: PAL territories → eu, the Americas → us, and Japan / East
@@ -133,18 +190,26 @@ export function resolveLocaleRegion(
   return LOCALE_REGION_ALIASES[normalized];
 }
 
-export function regionRank(region?: string | null): number {
+export function regionRank(
+  region?: string | null,
+  options?: LocalePreferenceOptions,
+): number {
+  const order = resolveRegionOrder(options);
   const resolved = resolveLocaleRegion(region);
   if (resolved) {
-    return LOCALE_REGION_ORDER.indexOf(resolved);
+    return order.indexOf(resolved);
   }
-  return LOCALE_REGION_ORDER.length;
+  return order.length;
 }
 
-export function languageRank(language?: string | null): number {
+export function languageRank(
+  language?: string | null,
+  options?: LocalePreferenceOptions,
+): number {
+  const order = resolveLanguageOrder(options);
   const normalized = (language || "").toLowerCase().split(/[-_]/)[0];
-  const index = LOCALE_LANGUAGE_ORDER.indexOf(normalized as LocaleLanguage);
-  return index === -1 ? LOCALE_LANGUAGE_ORDER.length : index;
+  const index = order.indexOf(normalized as LocaleLanguage);
+  return index === -1 ? order.length : index;
 }
 
 const BGG_LANGUAGE_ROLE_MAP: Record<string, string> = {
@@ -202,9 +267,12 @@ export function parseRegionFromRole(role?: string | null): string | undefined {
 
 const LOCALE_ATTACHMENT_BONUSES = [80, 60, 30, 10, -20, -30];
 
-export function localeBonusForAttachmentRole(role?: string | null): number {
+export function localeBonusForAttachmentRole(
+  role?: string | null,
+  options?: LocalePreferenceOptions,
+): number {
   const region = parseRegionFromRole(role) || (role || "").toLowerCase();
-  const rank = regionRank(region);
+  const rank = regionRank(region, options);
   return rank < LOCALE_ATTACHMENT_BONUSES.length
     ? LOCALE_ATTACHMENT_BONUSES[rank]
     : 0;
@@ -253,6 +321,7 @@ export interface RegionalTitleSource {
 
 export function pickBestRegionalTitle(
   sources: RegionalTitleSource[],
+  options?: LocalePreferenceOptions,
 ): string | undefined {
   const candidates: Array<{ text: string; region?: string }> = [];
 
@@ -276,7 +345,8 @@ export function pickBestRegionalTitle(
   return candidates
     .slice()
     .sort((a, b) => {
-      const regionDiff = regionRank(a.region) - regionRank(b.region);
+      const regionDiff =
+        regionRank(a.region, options) - regionRank(b.region, options);
       if (regionDiff !== 0) return regionDiff;
       return scoreMetadataDisplayTitle(b.text) - scoreMetadataDisplayTitle(a.text);
     })[0].text;
@@ -284,6 +354,7 @@ export function pickBestRegionalTitle(
 
 export function pickBestLocalizedDescription(
   candidates: LocalizedTextCandidate[],
+  options?: LocalePreferenceOptions,
 ): string | undefined {
   const valid = candidates
     .filter(
@@ -302,10 +373,12 @@ export function pickBestLocalizedDescription(
   if (valid.length === 1) return valid[0].text;
 
   return valid.slice().sort((a, b) => {
-    const languageDiff = languageRank(a.language) - languageRank(b.language);
+    const languageDiff =
+      languageRank(a.language, options) - languageRank(b.language, options);
     if (languageDiff !== 0) return languageDiff;
 
-    const regionDiff = regionRank(a.region) - regionRank(b.region);
+    const regionDiff =
+      regionRank(a.region, options) - regionRank(b.region, options);
     if (regionDiff !== 0) return regionDiff;
 
     return b.text.length - a.text.length;

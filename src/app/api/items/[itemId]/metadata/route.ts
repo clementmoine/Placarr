@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
+import { withRequestUiLocale } from "@/lib/locale/serverPreference";
 import { presentItemFromStorage } from "@/lib/item/present";
 import { resolveItemId } from "@/lib/routing/resolveIds";
 import { startItemMetadataRefresh } from "@/lib/jobs/scheduleMetadataRefresh";
@@ -9,6 +10,7 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ itemId: string }> },
 ) {
+  return withRequestUiLocale(req, async () => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -87,4 +89,5 @@ export async function POST(
       { status: 500 },
     );
   }
+  });
 }

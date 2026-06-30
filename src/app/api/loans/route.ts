@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
+import { withRequestUiLocale } from "@/lib/locale/serverPreference";
 import {
   itemWithMetadataInclude,
   presentItemFromStorage,
@@ -18,6 +19,7 @@ function presentLoanRequest<
 }
 
 export async function GET(req: NextRequest) {
+  return withRequestUiLocale(req, async () => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -75,6 +77,7 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -1,12 +1,27 @@
 import type { Locale } from "@/types/i18n";
 import { locales, defaultLocale } from "@/lib/locale/i18n";
 
+export const PREFERRED_LOCALE_COOKIE = "preferred-locale";
+
+const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
+export function parseUiLocale(value?: string | null): Locale {
+  const normalized = (value || "").toLowerCase().split(/[-_]/)[0];
+  return locales.includes(normalized as Locale)
+    ? (normalized as Locale)
+    : defaultLocale;
+}
+
+function writeLocaleCookie(locale: Locale): void {
+  document.cookie = `${PREFERRED_LOCALE_COOKIE}=${locale};path=/;max-age=${LOCALE_COOKIE_MAX_AGE_SECONDS};SameSite=Lax`;
+}
+
 // Get locale from localStorage
 export function getStoredLocale(): Locale | null {
   if (typeof window === "undefined") return null;
 
   try {
-    const stored = localStorage.getItem("preferred-locale");
+    const stored = localStorage.getItem(PREFERRED_LOCALE_COOKIE);
     if (stored && locales.includes(stored as Locale)) {
       return stored as Locale;
     }
@@ -22,7 +37,8 @@ export function setStoredLocale(locale: Locale): void {
   if (typeof window === "undefined") return;
 
   try {
-    localStorage.setItem("preferred-locale", locale);
+    localStorage.setItem(PREFERRED_LOCALE_COOKIE, locale);
+    writeLocaleCookie(locale);
   } catch (error) {
     console.warn("Failed to save locale to localStorage:", error);
   }

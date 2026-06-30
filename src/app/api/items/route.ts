@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
+import { withRequestUiLocale } from "@/lib/locale/serverPreference";
 
 import { cropImageIfNeeded } from "@/lib/media/imageTrim";
 import {
@@ -40,6 +41,7 @@ function parseShelfTypesParam(value: string | null): {
 }
 
 export async function GET(req: NextRequest) {
+  return withRequestUiLocale(req, async () => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
   const isAdmin = auth.user.role === "admin";
@@ -160,9 +162,11 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(items);
+  });
 }
 
 export async function POST(req: NextRequest) {
+  return withRequestUiLocale(req, async () => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -272,9 +276,11 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }
 
 export async function PATCH(req: NextRequest) {
+  return withRequestUiLocale(req, async () => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -454,6 +460,7 @@ export async function PATCH(req: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }
 
 export async function DELETE(req: NextRequest) {

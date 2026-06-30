@@ -8,6 +8,9 @@
  */
 
 import type { AttachmentType } from "@prisma/client";
+import type { Locale } from "@/types/i18n";
+import { activeUiLocale } from "@/lib/locale/preferenceContext";
+import { getBestLocale } from "@/lib/locale/utils";
 
 import {
   isAttachmentCoverPlatformMismatch,
@@ -74,12 +77,25 @@ function isUserUploadedImage(url?: string | null): boolean {
   return url.startsWith("/") || url.startsWith("data:");
 }
 
-function coverDisplayOptions(item: MediaInput): AttachmentDisplayScoreOptions {
+function resolveCoverUiLocale(uiLocale?: Locale | null): Locale | undefined {
+  if (uiLocale) return uiLocale;
+  const fromContext = activeUiLocale();
+  if (fromContext) return fromContext;
+  if (typeof window !== "undefined") return getBestLocale();
+  return undefined;
+}
+
+function coverDisplayOptions(
+  item: MediaInput,
+  uiLocale?: Locale | null,
+): AttachmentDisplayScoreOptions {
+  const resolvedLocale = resolveCoverUiLocale(uiLocale);
   return {
     requestedPlatformKey:
       item.shelf?.type === "games"
         ? detectShelfGamePlatformKey(item.shelf?.name)
         : undefined,
+    ...(resolvedLocale ? { uiLocale: resolvedLocale } : {}),
   };
 }
 
@@ -260,11 +276,14 @@ function attachmentForUrl(
 }
 
 /** metadata.imageUrl unless it explicitly targets another console than the shelf. */
-export function resolveMetadataCoverUrl(item: MediaInput): string | null {
+export function resolveMetadataCoverUrl(
+  item: MediaInput,
+  uiLocale?: Locale | null,
+): string | null {
   const pin = item.metadata?.imageUrl;
   if (!pin) return null;
 
-  const options = coverDisplayOptions(item);
+  const options = coverDisplayOptions(item, uiLocale);
   const attachment = attachmentForUrl(item, pin);
   if (
     attachment &&
@@ -288,8 +307,9 @@ export function resolveMetadataCoverUrl(item: MediaInput): string | null {
  */
 export function orderedCoverAttachmentsForDisplay(
   item: MediaInput,
+  uiLocale?: Locale | null,
 ): ScoredAttachmentInput[] {
-  const options = coverDisplayOptions(item);
+  const options = coverDisplayOptions(item, uiLocale);
   const covers = coverAttachmentsMatchingShelfPlatform(
     attachments(item).filter((attachment) =>
       COVER_GALLERY_TYPES.has(attachment.type),
@@ -302,7 +322,7 @@ export function orderedCoverAttachmentsForDisplay(
     persistedImageMetricsByUrl(item),
     options,
   );
-  const pin = resolveMetadataCoverUrl(item);
+  const pin = resolveMetadataCoverUrl(item, uiLocale);
 
   if (!pin) return dedupeAttachmentsByImageUrl(ranked);
 
@@ -321,9 +341,10 @@ export function orderedCoverAttachmentsForDisplay(
 export function mergeCoverAttachmentsForPicker(
   item: MediaInput,
   pickerAttachments: ScoredAttachmentInput[],
+  uiLocale?: Locale | null,
 ): ScoredAttachmentInput[] {
-  const options = coverDisplayOptions(item);
-  const ordered = orderedCoverAttachmentsForDisplay(item);
+  const options = coverDisplayOptions(item, uiLocale);
+  const ordered = orderedCoverAttachmentsForDisplay(item, uiLocale);
   const orderedUrls = new Set(
     ordered.map((attachment) =>
       attachment.url ? stripCropSuffixFromUrl(attachment.url) : "",
@@ -346,11 +367,14 @@ export function mergeCoverAttachmentsForPicker(
   return [...extras, ...ordered, ...nonCovers];
 }
 
-function rankedAttachments(item: MediaInput): ScoredAttachmentInput[] {
+function rankedAttachments(
+  item: MediaInput,
+  uiLocale?: Locale | null,
+): ScoredAttachmentInput[] {
   return rankAttachmentsForDisplay(
     attachments(item),
     undefined,
-    coverDisplayOptions(item),
+    coverDisplayOptions(item, uiLocale),
   );
 }
 
@@ -359,12 +383,15 @@ function rankedAttachments(item: MediaInput): ScoredAttachmentInput[] {
  * item.imageUrl = choix explicite utilisateur (upload ou galerie).
  * metadata.imageUrl = défaut calculé à l'enrichissement.
  */
-export function getCoverImage(item: MediaInput): string | null {
+export function getCoverImage(
+  item: MediaInput,
+  uiLocale?: Locale | null,
+): string | null {
   if (item.imageUrl) {
     return item.imageUrl;
   }
 
-  const metadataCover = resolveMetadataCoverUrl(item);
+  const metadataCover = resolveMetadataCoverUrl(item, uiLocale);
   if (metadataCover) {
     return metadataCover;
   }
@@ -372,20 +399,23 @@ export function getCoverImage(item: MediaInput): string | null {
   const bestFromAttachments = pickBestCoverFromAttachments(
     attachments(item),
     undefined,
-    coverDisplayOptions(item),
+    coverDisplayOptions(item, uiLocale),
   );
   if (bestFromAttachments) return bestFromAttachments;
 
   return null;
 }
 
-export function getHeroImage(item: MediaInput): string | null {
+export function getHeroImage(
+  item: MediaInput,
+  uiLocale?: Locale | null,
+): string | null {
   // Quality-ranked hero computed at enrichment time (sharp, landscape). Takes
   // precedence over the legacy type-order heuristic, which has no resolution
   // signal at display time.
   if (item.metadata?.heroImageUrl) return item.metadata.heroImageUrl;
 
-  const ranked = rankedAttachments(item);
+  const ranked = rankedAttachments(item, uiLocale);
   const bg = ranked.find((attachment) => attachment.type === "background");
   if (bg) return bg.url;
 
@@ -397,10 +427,14 @@ export function getHeroImage(item: MediaInput): string | null {
   );
   if (screenshot) return screenshot.url;
 
-  return getCoverImage(item);
+  return getCoverImage(item, uiLocale);
 }
 
-export function getGalleryImages(item: MediaInput, max?: number): MediaItem[] {
+export function getGalleryImages(
+  item: MediaInput,
+  max?: number,
+  uiLocale?: Locale | null,
+): MediaItem[] {
   const seen = new Set<string>();
   const result: MediaItem[] = [];
 
@@ -425,9 +459,9 @@ export function getGalleryImages(item: MediaInput, max?: number): MediaItem[] {
     });
   }
 
-  orderedCoverAttachmentsForDisplay(item).forEach(add);
+  orderedCoverAttachmentsForDisplay(item, uiLocale).forEach(add);
 
-  const resolvedDefault = resolveMetadataCoverUrl(item);
+  const resolvedDefault = resolveMetadataCoverUrl(item, uiLocale);
   if (resolvedDefault) {
     const alreadyListed = urlsReferToSameLocalizedImage(
       resolvedDefault,
@@ -438,7 +472,7 @@ export function getGalleryImages(item: MediaInput, max?: number): MediaItem[] {
     }
   }
 
-  const ranked = rankedAttachments(item);
+  const ranked = rankedAttachments(item, uiLocale);
 
   ranked.filter((attachment) => attachment.type === "screenshot").forEach(add);
   ranked.filter((attachment) => attachment.type === "artwork").forEach(add);

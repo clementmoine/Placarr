@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import { withRequestUiLocale } from "@/lib/locale/serverPreference";
+import { uiLocaleFromRequest, withRequestUiLocale } from "@/lib/locale/serverPreference";
+import type { Locale } from "@/types/i18n";
 import {
   itemWithMetadataInclude,
   presentItemFromStorage,
@@ -11,15 +12,15 @@ function presentLoanRequest<
   T extends {
     item: Parameters<typeof presentItemFromStorage>[0];
   },
->(loan: T) {
+>(loan: T, uiLocale: Locale) {
   return {
     ...loan,
-    item: presentItemFromStorage(loan.item),
+    item: presentItemFromStorage(loan.item, { uiLocale }),
   };
 }
 
 export async function GET(req: NextRequest) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -67,8 +68,8 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      sent: sent.map(presentLoanRequest),
-      received: received.map(presentLoanRequest),
+      sent: sent.map((loan) => presentLoanRequest(loan, uiLocale)),
+      received: received.map((loan) => presentLoanRequest(loan, uiLocale)),
     });
   } catch (error) {
     console.error("Error in loans GET route:", error);
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(presentLoanRequest(loanRequest));
+    return NextResponse.json(presentLoanRequest(loanRequest, uiLocaleFromRequest(req)));
   } catch (error) {
     console.error("Error in loans POST route:", error);
     return NextResponse.json(
@@ -212,7 +213,7 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(presentLoanRequest(updatedRequest));
+    return NextResponse.json(presentLoanRequest(updatedRequest, uiLocaleFromRequest(req)));
   } catch (error) {
     console.error("Error in loans PATCH route:", error);
     return NextResponse.json(

@@ -9,7 +9,6 @@
 
 import type { AttachmentType } from "@prisma/client";
 import type { Locale } from "@/types/i18n";
-import { activeUiLocale } from "@/lib/locale/preferenceContext";
 import { getBestLocale } from "@/lib/locale/utils";
 
 import {
@@ -79,8 +78,6 @@ function isUserUploadedImage(url?: string | null): boolean {
 
 function resolveCoverUiLocale(uiLocale?: Locale | null): Locale | undefined {
   if (uiLocale) return uiLocale;
-  const fromContext = activeUiLocale();
-  if (fromContext) return fromContext;
   if (typeof window !== "undefined") return getBestLocale();
   return undefined;
 }

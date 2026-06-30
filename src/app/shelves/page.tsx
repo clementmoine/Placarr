@@ -459,16 +459,16 @@ function ShelvesComponent() {
               </h2>
 
               {isLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {Array.from({ length: 4 }).map((_, idx) => (
                     <Skeleton
                       key={idx}
-                      className="rounded-xl aspect-[1.61792/1] w-full"
+                      className="rounded-2xl aspect-[3/2] md:aspect-[1.618/1] w-full"
                     />
                   ))}
                 </div>
               ) : sortedShelves.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {sortedShelves.map((shelf) => (
                     <motion.div
                       key={shelf.id}
@@ -492,8 +492,7 @@ function ShelvesComponent() {
                       layout
                       layoutId="add-shelf-btn"
                       onClick={() => handleModalOpen()}
-                      className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
-                      style={{ aspectRatio: "1.61792 / 1" }}
+                      className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none aspect-[3/2] md:aspect-[1.618/1]"
                     >
                       <Plus className="size-5 text-primary" />
                       <span>{t("shelves.addShelf")}</span>
@@ -501,15 +500,14 @@ function ShelvesComponent() {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {/* Plus Create New Shelf Card when no shelves exist */}
                   {!searchQuery && isAuthenticated && !isGuest && (
                     <motion.button
                       layout
                       layoutId="add-shelf-btn"
                       onClick={() => handleModalOpen()}
-                      className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
-                      style={{ aspectRatio: "1.61792 / 1" }}
+                      className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none aspect-[3/2] md:aspect-[1.618/1]"
                     >
                       <Plus className="size-5 text-primary" />
                       <span>{t("shelves.addShelf")}</span>

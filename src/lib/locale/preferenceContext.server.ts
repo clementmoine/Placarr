@@ -1,3 +1,5 @@
+import "server-only";
+
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import type { Locale } from "@/types/i18n";

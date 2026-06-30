@@ -15,6 +15,7 @@ import { slugify } from "@/lib/routing/slugs";
 import { buildItemSearchConditions } from "@/lib/item/search";
 import { bestRatingRatioFromFacts } from "@/lib/item/rating";
 import { summarizeShelfItemPrices } from "@/services/pricing/resolver";
+import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
 
 const emptyShelfItemPrices = {
@@ -38,7 +39,7 @@ async function formatShelfWithItemPrices<
       } & Record<string, unknown>
     >;
   },
->(shelf: T) {
+>(shelf: T, uiLocale: Locale) {
   const priceByItemId = await summarizeShelfItemPrices(
     shelf.type,
     shelf.items.map((item) => ({
@@ -54,7 +55,7 @@ async function formatShelfWithItemPrices<
     const presented = presentItemFromStorage({
       ...item,
       metadata: (item.metadata ?? null) as StoredItemMetadata | null,
-    });
+    }, { uiLocale });
     return {
       ...presented,
       id: item.id,
@@ -148,7 +149,7 @@ async function withBestItems<T extends { id: string }>(
 }
 
 export async function GET(req: NextRequest) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -188,7 +189,7 @@ export async function GET(req: NextRequest) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
-        return NextResponse.json(await formatShelfWithItemPrices(shelf));
+        return NextResponse.json(await formatShelfWithItemPrices(shelf, uiLocale));
       }
 
       const shelf = await prisma.shelf.findUnique({
@@ -212,7 +213,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
-      return NextResponse.json(await formatShelfWithItemPrices(shelf));
+      return NextResponse.json(await formatShelfWithItemPrices(shelf, uiLocale));
     }
 
     if (q) {

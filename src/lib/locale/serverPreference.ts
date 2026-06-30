@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { defaultLocale } from "@/lib/locale/i18n";
-import { runWithUiLocale } from "@/lib/locale/preferenceContext";
+import { runWithUiLocale } from "@/lib/locale/preferenceContext.server";
 import {
   PREFERRED_LOCALE_COOKIE,
   parseUiLocale,
@@ -23,7 +23,8 @@ export function uiLocaleFromRequest(req: NextRequest): Locale {
 
 export async function withRequestUiLocale<T>(
   req: NextRequest,
-  fn: () => Promise<T>,
+  fn: (uiLocale: Locale) => Promise<T>,
 ): Promise<T> {
-  return runWithUiLocale(uiLocaleFromRequest(req), fn);
+  const uiLocale = uiLocaleFromRequest(req);
+  return runWithUiLocale(uiLocale, () => fn(uiLocale));
 }

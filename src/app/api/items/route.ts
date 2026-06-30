@@ -41,7 +41,7 @@ function parseShelfTypesParam(value: string | null): {
 }
 
 export async function GET(req: NextRequest) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
   const isAdmin = auth.user.role === "admin";
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
 
     const prices = await readItemPrices(itemPricesContextFromRecord(item));
     return NextResponse.json({
-      ...presentItemFromStorage(item),
+      ...presentItemFromStorage(item, { uiLocale }),
       ...(prices ?? {
         priceNew: null,
         priceUsed: null,
@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
     const priceByItemId = await summarizeListItemPrices(items);
     return NextResponse.json(
       items.map((item) => ({
-        ...presentItemFromStorage(item),
+        ...presentItemFromStorage(item, { uiLocale }),
         ...(priceByItemId.get(item.id) ?? EMPTY_LIST_ITEM_PRICES),
       })),
     );
@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json(presentItemFromStorage(item));
+    return NextResponse.json(presentItemFromStorage(item, { uiLocale }));
   } catch (error) {
     console.error("Error in POST request:", error);
     return NextResponse.json(
@@ -280,7 +280,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -448,11 +448,11 @@ export async function PATCH(req: NextRequest) {
         presentItemFromStorage({
           ...(itemWithRefreshFlag || updatedItem),
           metadataRefreshStartedAt,
-        }),
+        }, { uiLocale }),
       );
     }
 
-    return NextResponse.json(presentItemFromStorage(updatedItem));
+    return NextResponse.json(presentItemFromStorage(updatedItem, { uiLocale }));
   } catch (error) {
     console.error("Error in PATCH request:", error);
     return NextResponse.json(

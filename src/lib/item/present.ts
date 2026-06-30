@@ -7,6 +7,7 @@ import {
 } from "@/services/metadata/catalogLink";
 import { formatMetadataFromStorage } from "@/services/metadata/storage";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { Locale } from "@/types/i18n";
 
 export interface PresentableItemInput {
   name: string;
@@ -98,9 +99,14 @@ export function getDisplayTitle(item: PresentableItemInput): string {
   return item.name;
 }
 
+export type PresentOptions = {
+  uiLocale?: Locale | null;
+};
+
 /** Apply canonical title + cover to any item payload returned by the API. */
 export function presentItem<T extends PresentableItemInput>(
   item: T,
+  options?: PresentOptions,
 ): PresentedItem<T> {
   const storedName = item.name;
   const displayName = getDisplayTitle(item);
@@ -119,7 +125,7 @@ export function presentItem<T extends PresentableItemInput>(
     ...item,
     ...(displayName !== storedName ? { storedName } : {}),
     name: displayName,
-    imageUrl: getCoverImage(input),
+    imageUrl: getCoverImage(input, options?.uiLocale),
     ...(referenceCatalogLink ? { referenceCatalogLink } : {}),
   };
 }
@@ -130,31 +136,35 @@ export function presentItemFromStorage<
     metadata?: StoredItemMetadata | MetadataResult | null;
     shelf?: PresentableItemInput["shelf"];
   },
->(item: T): T {
+>(item: T, options?: PresentOptions): T {
   const formatted = formatItemMetadata(item.metadata);
   const filteredMetadata =
     formatted && item.shelf
       ? filterMetadataForShelfPlatform(formatted, item.shelf)
       : formatted;
 
-  return presentItem({
-    ...(item as PresentableItemInput),
-    metadata: filteredMetadata ?? null,
-  }) as T;
+  return presentItem(
+    {
+      ...(item as PresentableItemInput),
+      metadata: filteredMetadata ?? null,
+    },
+    options,
+  ) as T;
 }
 
 export function presentItemWithMedia<T extends PresentableItemInput>(
   item: T,
+  options?: PresentOptions,
 ): T & {
   heroImageUrl: string | null;
   galleryImages: ReturnType<typeof getGalleryImages>;
 } {
   const input = mediaInput(item);
-  const presented = presentItem(item);
+  const presented = presentItem(item, options);
   return {
     ...presented,
-    heroImageUrl: getHeroImage(input),
-    galleryImages: getGalleryImages(input),
+    heroImageUrl: getHeroImage(input, options?.uiLocale),
+    galleryImages: getGalleryImages(input, undefined, options?.uiLocale),
   };
 }
 

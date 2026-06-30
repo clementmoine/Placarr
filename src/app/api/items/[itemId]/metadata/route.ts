@@ -10,7 +10,7 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ itemId: string }> },
 ) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -78,7 +78,7 @@ export async function POST(
       {
         accepted: true,
         metadataRefreshStartedAt: metadataRefreshStartedAt.toISOString(),
-        item: refreshedItem ? presentItemFromStorage(refreshedItem) : null,
+        item: refreshedItem ? presentItemFromStorage(refreshedItem, { uiLocale }) : null,
       },
       { status: 202 },
     );

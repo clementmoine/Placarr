@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(process.cwd(), "src"),
+      "server-only": resolve(process.cwd(), "tests/helpers/server-only-stub.ts"),
     },
   },
   test: {

@@ -6,7 +6,7 @@ import { presentItemFromStorage } from "@/lib/item/present";
 import { buildItemSearchConditions } from "@/lib/item/search";
 
 export async function GET(req: NextRequest) {
-  return withRequestUiLocale(req, async () => {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       // Format items metadata
       const formattedItems = items.map((item) => {
         if (item.metadata) {
-          return presentItemFromStorage(item);
+          return presentItemFromStorage(item, { uiLocale });
         }
         return item;
       });

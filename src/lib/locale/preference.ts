@@ -1,8 +1,6 @@
 import { scoreMetadataDisplayTitle } from "@/lib/title/displayScore";
 import type { Locale } from "@/types/i18n";
 
-import { activeUiLocale } from "./preferenceContext";
-
 export const LOCALE_REGION_ORDER = [
   "fr",
   "eu",
@@ -53,8 +51,7 @@ export function languageOrderForUiLocale(
 }
 
 function resolveUiLocale(options?: LocalePreferenceOptions): Locale | undefined {
-  if (options?.uiLocale) return options.uiLocale;
-  return activeUiLocale();
+  return options?.uiLocale ?? undefined;
 }
 
 function resolveRegionOrder(

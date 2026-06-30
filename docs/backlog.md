@@ -11,7 +11,7 @@
 | Mapping `ok` | 38 · `empty` 3 · `error` 0 |
 | Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
 | Health-check | 32 modules · **0 down** |
-| Tests | **1265** passent (1290 total, 25 skipped) |
+| Tests | **1255** passent (1280 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
@@ -74,9 +74,9 @@ Deux concepts **distincts**, sourcés différemment :
 
 | Priorité | Item | État | Prochaine action |
 | -------- | ---- | ---- | ---------------- |
-| **P2** | Dé-biaiser le merge d'enrichissement | **Ouvert** | Dernier biais provider : `merge.ts` `resultsByWeight` trie par `PROVIDER_METADATA_EXTENSIONS.weight`. Le path barcode est neutre ; remplacer le tri par poids par observation/consensus (le pick de titre passe déjà par `pickBestMetadataObservationTitle` d'abord). |
-| **P3** | Rétention des observations rejetées (barcode) | **Ouvert** | `compile.ts` jette lots/bruit/non-match **avant** de construire le blob `observations` (≠ « never throw observations away »). Émettre ces lignes en observations `evidence: "reject"` + `retainForReprojection: true` (le path enrichissement le fait déjà). |
-| **P3** | Décision cap canonique seul / DB-fallback | **Ouvert** | Un canonique seul (ou DB-fallback synthétique) ancre le cluster ⇒ pas de `listingOnlyCap`, peut atteindre 0.98 sans corroboration. Soit documenter comme acceptable (un barcode→canonique est une ancre légitime), soit ajouter un cap « source unique non corroborée » + test. |
+| **P2** | Dé-biaiser le merge d'enrichissement | **Fait 2026-06-30** | `merge.ts` : `orderResultsByObservationStrength` remplace le tri `PROVIDER_METADATA_EXTENSIONS.weight` ; tie-break `pickBestRegionalTitle` via `scoreMetadataDisplayTitle` quand les rangs région sont égaux. |
+| **P3** | Rétention des observations rejetées (barcode) | **Fait 2026-06-30** | `compile.ts` : listings bruit / contexte non-canonique / hors-ancre émis en observations `evidence: "reject"` + `retainForReprojection: true` via `rejectedObservationsFromProductEvidence`. |
+| **P3** | Décision cap canonique seul / DB-fallback | **Documenté** | Un barcode confirmé par une source canonique (ou DB-fallback honnête) est une ancre légitime — le plafond `listingOnlyCap` ne s'applique pas. Comportement voulu, encodé dans `compile.confidenceLock.test.ts` + `compile.honestEmpty.test.ts`. |
 
 > **Provider-blindness : migration TERMINÉE** — allowlist du guard `blindnessGuard.test.ts` **vide** (0 littéral provider hors `services/providers/`). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
 

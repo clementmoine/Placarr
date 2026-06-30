@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 
+import { isRejectedObservation } from "@/lib/metadata/observations";
+
 import { compileResultForType } from "./compile";
 
 describe("compileResultForType — observations", () => {
@@ -39,5 +41,42 @@ describe("compileResultForType — observations", () => {
         providerLabel: "Philibert",
       },
     });
+  });
+
+  it("retient les listings marketplace rejetés comme observations reject", async () => {
+    const result = await compileResultForType(
+      "boardgames",
+      [
+        {
+          providerName: "ScreenScraper",
+          products: [
+            {
+              name: "Catan",
+              coverUrl: "https://example.com/catan.jpg",
+            },
+          ],
+        },
+        {
+          providerName: "eBay",
+          products: [
+            {
+              name: "Totally Unrelated Board Game Lot",
+              coverUrl: "https://example.com/noise.jpg",
+            },
+          ],
+        },
+      ],
+      "3558380126133",
+    );
+
+    const rejected = (result?.observations ?? []).filter(isRejectedObservation);
+    expect(rejected.length).toBeGreaterThan(0);
+    expect(rejected.some((row) => row.kind === "title")).toBe(true);
+    expect(
+      rejected.some((row) =>
+        row.kind === "title" &&
+        /unrelated/i.test(String(row.value)),
+      ),
+    ).toBe(true);
   });
 });

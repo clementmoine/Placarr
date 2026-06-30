@@ -1,3 +1,5 @@
+import { scoreMetadataDisplayTitle } from "@/lib/title/displayScore";
+
 export const LOCALE_REGION_ORDER = [
   "fr",
   "eu",
@@ -273,7 +275,11 @@ export function pickBestRegionalTitle(
 
   return candidates
     .slice()
-    .sort((a, b) => regionRank(a.region) - regionRank(b.region))[0].text;
+    .sort((a, b) => {
+      const regionDiff = regionRank(a.region) - regionRank(b.region);
+      if (regionDiff !== 0) return regionDiff;
+      return scoreMetadataDisplayTitle(b.text) - scoreMetadataDisplayTitle(a.text);
+    })[0].text;
 }
 
 export function pickBestLocalizedDescription(

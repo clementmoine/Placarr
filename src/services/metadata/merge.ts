@@ -211,9 +211,9 @@ function observationTitlesFromMetadata(
 }
 
 function metadataObservationsFromResults(
-  resultsByWeight: ProviderMetadataInput[],
+  results: ProviderMetadataInput[],
 ): MetadataObservation[] {
-  return resultsByWeight.flatMap(({ metadata }) => {
+  return results.flatMap(({ metadata }) => {
     if (!metadata.observations?.length) return [];
     if (
       metadata.observationSchemaVersion &&
@@ -225,10 +225,64 @@ function metadataObservationsFromResults(
   });
 }
 
+function bestProviderObservationRank(input: ProviderMetadataInput): {
+  tierRank: number;
+  evidenceRank: number;
+} {
+  const observations = metadataObservationsFromResults([input]);
+  const titleObservations = observations.filter(
+    (row): row is TitleObservation => row.kind === "title",
+  );
+  if (titleObservations.length === 0) {
+    return {
+      tierRank: OBSERVATION_TITLE_TIER_ORDER.length,
+      evidenceRank: 0,
+    };
+  }
+
+  let bestTierRank = OBSERVATION_TITLE_TIER_ORDER.length;
+  let bestEvidenceRank = 0;
+  for (const observation of titleObservations) {
+    const candidateTierRank = tierRank(titleObservationTier(observation));
+    const candidateEvidenceRank = observationEvidenceRank(
+      observation.usage.evidence,
+    );
+    if (
+      candidateTierRank < bestTierRank ||
+      (candidateTierRank === bestTierRank &&
+        candidateEvidenceRank > bestEvidenceRank)
+    ) {
+      bestTierRank = candidateTierRank;
+      bestEvidenceRank = candidateEvidenceRank;
+    }
+  }
+  return { tierRank: bestTierRank, evidenceRank: bestEvidenceRank };
+}
+
+/** Provider-neutral pre-order for merge tie-breaks (replaces per-provider weight). */
+function orderResultsByObservationStrength(
+  results: ProviderMetadataInput[],
+): ProviderMetadataInput[] {
+  return results
+    .map((result, index) => ({ result, index }))
+    .sort((a, b) => {
+      const rankA = bestProviderObservationRank(a.result);
+      const rankB = bestProviderObservationRank(b.result);
+      if (rankA.tierRank !== rankB.tierRank) {
+        return rankA.tierRank - rankB.tierRank;
+      }
+      if (rankA.evidenceRank !== rankB.evidenceRank) {
+        return rankB.evidenceRank - rankA.evidenceRank;
+      }
+      return a.index - b.index;
+    })
+    .map(({ result }) => result);
+}
+
 function pickBestMetadataObservationImageUrl(
-  resultsByWeight: ProviderMetadataInput[],
+  results: ProviderMetadataInput[],
 ): string | undefined {
-  const observations = metadataObservationsFromResults(resultsByWeight);
+  const observations = metadataObservationsFromResults(results);
   if (observations.length === 0) return undefined;
   return (
     pickCoverUrlFromObservations(observations, coverUrlQualityRank) ?? undefined
@@ -250,17 +304,17 @@ function factObservationToMetadataFact(
 }
 
 export function pickBestMetadataFactsFromObservations(
-  resultsByWeight: ProviderMetadataInput[],
+  results: ProviderMetadataInput[],
 ): MetadataFact[] {
   return pickBestFactObservationsByGroup(
-    metadataObservationsFromResults(resultsByWeight),
+    metadataObservationsFromResults(results),
   ).map(factObservationToMetadataFact);
 }
 
 function pickBestMetadataObservationTitle(
-  resultsByWeight: ProviderMetadataInput[],
+  results: ProviderMetadataInput[],
 ): string | undefined {
-  const rawCandidates = resultsByWeight.flatMap(({ metadata }) =>
+  const rawCandidates = results.flatMap(({ metadata }) =>
     observationTitlesFromMetadata(metadata),
   );
   if (rawCandidates.length === 0) return undefined;
@@ -458,22 +512,16 @@ export function mergeMetadata(
   );
   if (activeResults.length === 0) return {};
 
-  const resultsByWeight = [...activeResults].sort((a, b) => {
-    const providerA = PROVIDERS.find((p) => p.id === a.providerId);
-    const providerB = PROVIDERS.find((p) => p.id === b.providerId);
-    const weightA = providerA?.weight ?? 0.5;
-    const weightB = providerB?.weight ?? 0.5;
-    return weightB - weightA;
-  });
+  const orderedResults = orderResultsByObservationStrength(activeResults);
 
-  const titleSources = resultsByWeight.map((r) => r.metadata);
-  const observedTitle = pickBestMetadataObservationTitle(resultsByWeight);
+  const titleSources = orderedResults.map((r) => r.metadata);
+  const observedTitle = pickBestMetadataObservationTitle(orderedResults);
   const title =
     observedTitle ||
     pickBestRegionalTitle(titleSources) ||
     pickBestMetadataTitle(titleSources.map((source) => source.title));
 
-  const descriptionCandidates = resultsByWeight.flatMap((r) => {
+  const descriptionCandidates = orderedResults.flatMap((r) => {
     const text = r.metadata.description;
     if (!text?.trim()) return [];
     if (
@@ -492,11 +540,12 @@ export function mergeMetadata(
   });
   const description = pickBestLocalizedDescription(descriptionCandidates);
 
-  const releaseDate = resultsByWeight.find((r) => r.metadata.releaseDate)?.metadata.releaseDate;
+  const releaseDate = orderedResults.find((r) => r.metadata.releaseDate)?.metadata
+    .releaseDate;
 
   const barcodeCandidates =
     options.requestedTitle?.trim() && mediaType === "games"
-      ? resultsByWeight.filter(
+      ? orderedResults.filter(
           (r) =>
             r.metadata.barcode &&
             r.metadata.title &&
@@ -506,15 +555,15 @@ export function mergeMetadata(
               0.58,
             ),
         )
-      : resultsByWeight;
+      : orderedResults;
   const barcode = pickDiscoveredBarcode(
     barcodeCandidates.map((r) => r.metadata.barcode),
   );
 
-  const allAuthors = resultsByWeight.flatMap((r) => r.metadata.authors || []);
+  const allAuthors = orderedResults.flatMap((r) => r.metadata.authors || []);
   const authors = allAuthors.length > 0 ? dedupePeople(allAuthors) : undefined;
 
-  const allPublishers = resultsByWeight.flatMap((r) => r.metadata.publishers || []);
+  const allPublishers = orderedResults.flatMap((r) => r.metadata.publishers || []);
   const publishers = allPublishers.length > 0 ? dedupePeople(allPublishers) : undefined;
 
   const providerInfo = (providerId: string) =>
@@ -527,7 +576,7 @@ export function mergeMetadata(
     mediaType === "games" &&
     !options.includePcSources;
 
-  const allAttachments = resultsByWeight.flatMap((r) => {
+  const allAttachments = orderedResults.flatMap((r) => {
     const attachments = r.metadata.attachments || [];
     if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
@@ -540,7 +589,7 @@ export function mergeMetadata(
     );
   });
 
-  const providerImageCandidates = resultsByWeight.flatMap((r) => {
+  const providerImageCandidates = orderedResults.flatMap((r) => {
     if (!r.metadata.imageUrl) return [];
     if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
@@ -577,14 +626,14 @@ export function mergeMetadata(
   );
   const attachments = [...rankedCovers, ...trailing];
 
-  const highestWeightResultWithImage = resultsByWeight.find((r) => r.metadata.imageUrl);
-  const observedImageUrl = pickBestMetadataObservationImageUrl(resultsByWeight);
+  const leadingResultWithImage = orderedResults.find((r) => r.metadata.imageUrl);
+  const observedImageUrl = pickBestMetadataObservationImageUrl(orderedResults);
   // A provider whose cover is canonical for its media type (e.g. Discogs album
   // art) is trusted as-is when it leads, rather than re-ranked.
   const imageUrl =
-    highestWeightResultWithImage &&
-    providerInfo(highestWeightResultWithImage.providerId)?.canonicalCover
-      ? highestWeightResultWithImage.metadata.imageUrl
+    leadingResultWithImage &&
+    providerInfo(leadingResultWithImage.providerId)?.canonicalCover
+      ? leadingResultWithImage.metadata.imageUrl
       : (observedImageUrl ??
         (pickBestCoverFromAttachments(
           combined,
@@ -592,12 +641,16 @@ export function mergeMetadata(
           displayScoreOptions,
         ) || pickBestDisplayImageUrl(combined)));
 
-  const duration = resultsByWeight.find((r) => r.metadata.duration !== undefined)?.metadata.duration;
-  const pageCount = resultsByWeight.find((r) => r.metadata.pageCount !== undefined)?.metadata.pageCount;
-  const tracksCount = resultsByWeight.find((r) => r.metadata.tracksCount !== undefined)?.metadata.tracksCount;
+  const duration = orderedResults.find((r) => r.metadata.duration !== undefined)
+    ?.metadata.duration;
+  const pageCount = orderedResults.find((r) => r.metadata.pageCount !== undefined)
+    ?.metadata.pageCount;
+  const tracksCount = orderedResults.find(
+    (r) => r.metadata.tracksCount !== undefined,
+  )?.metadata.tracksCount;
 
-  const rawFacts = resultsByWeight.flatMap((r) => r.metadata.facts || []);
-  const observedFacts = pickBestMetadataFactsFromObservations(resultsByWeight);
+  const rawFacts = orderedResults.flatMap((r) => r.metadata.facts || []);
+  const observedFacts = pickBestMetadataFactsFromObservations(orderedResults);
   let finalFacts =
     observedFacts.length > 0 ? [...observedFacts, ...rawFacts] : rawFacts;
   const hasTimeToBeat = finalFacts.some((f) => f.kind === "time-to-beat");
@@ -607,11 +660,13 @@ export function mergeMetadata(
   const facts = finalFacts.length > 0 ? dedupeFacts(finalFacts) : undefined;
 
   const aliases = collectMergedSearchAliases(
-    resultsByWeight.map((r) => r.metadata),
+    orderedResults.map((r) => r.metadata),
     title ?? "",
   );
 
-  const externalIdsList = resultsByWeight.map((r) => r.metadata.externalIds).filter(Boolean);
+  const externalIdsList = orderedResults
+    .map((r) => r.metadata.externalIds)
+    .filter(Boolean);
   const externalIds = externalIdsList.length > 0
     ? externalIdsList.reduce<Record<string, string | null | undefined>>((acc, curr) => {
         for (const [key, val] of Object.entries(curr!)) {
@@ -624,7 +679,7 @@ export function mergeMetadata(
     : undefined;
 
   const platformKey =
-    resultsByWeight.find((r) => r.metadata.platformKey)?.metadata.platformKey ??
+    orderedResults.find((r) => r.metadata.platformKey)?.metadata.platformKey ??
     options.requestedPlatformKey ??
     undefined;
 

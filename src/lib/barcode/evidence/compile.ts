@@ -10,6 +10,7 @@ import {
   compareBarcodeEvidenceByObservationRank,
   observationsFromBarcodeEvidenceList,
   pickPlatformKeyFromEvidence,
+  rejectedObservationsFromProductEvidence,
 } from "./observations";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
 
@@ -443,6 +444,7 @@ export async function compileResultForType(
 
   const provider = activeSources.map((s) => s.providerName).join("+");
   const sourceEvidence: ProductEvidence[] = [];
+  const rejectedEvidence: ProductEvidence[] = [];
 
   for (const source of activeSources) {
     for (const product of source.products) {
@@ -457,6 +459,7 @@ export async function compileResultForType(
           NON_CANONICAL_CONTEXT_TOKENS.has(token),
         )
       ) {
+        rejectedEvidence.push(evidence);
         continue;
       }
       sourceEvidence.push(evidence);
@@ -506,6 +509,7 @@ export async function compileResultForType(
           console.log(
             `[Barcode API] Ignoring marketplace noise "${evidence.cleanName}" because anchor signals exist for ${type}`,
           );
+          rejectedEvidence.push(evidence);
         }
         return isRelatedToAnchor;
       })
@@ -550,11 +554,15 @@ export async function compileResultForType(
     ? trustedEvidence
     : canAcceptMarketplaceOnlyBooks
       ? trustedEvidence
-      : trustedEvidence.filter((evidence) =>
-          databaseEvidence.some((canonical) =>
+      : trustedEvidence.filter((evidence) => {
+          const accepted = databaseEvidence.some((canonical) =>
             areEvidenceSameProduct(canonical, evidence),
-          ),
-        );
+          );
+          if (!accepted) {
+            rejectedEvidence.push(evidence);
+          }
+          return accepted;
+        });
   const allEvidence = [...databaseEvidence, ...supportingEvidence];
   if (allEvidence.length === 0) {
     console.warn(
@@ -604,7 +612,10 @@ export async function compileResultForType(
       suggestions: finalSuggestions,
       matches,
       platformKey,
-      observations: observationsFromBarcodeEvidenceList(allEvidence),
+      observations: [
+        ...observationsFromBarcodeEvidenceList(allEvidence),
+        ...rejectedEvidence.flatMap(rejectedObservationsFromProductEvidence),
+      ],
       observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
     },
     allEvidence,

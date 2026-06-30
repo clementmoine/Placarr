@@ -10,6 +10,7 @@ import {
   compareBarcodeEvidenceByRank,
   compareBarcodeEvidenceByImageObservationRank,
   observationsFromProductEvidence,
+  rejectedObservationsFromProductEvidence,
 } from "./observations";
 
 function evidence(
@@ -199,5 +200,22 @@ describe("observationsFromProductEvidence", () => {
         value: "60 min",
       }),
     ]);
+  });
+
+  it("marque les observations rejetées pour reprojection", () => {
+    const rows = rejectedObservationsFromProductEvidence(
+      evidence({
+        providerName: "eBay",
+        title: "Noise Listing",
+        cleanName: "Noise Listing",
+      }),
+    );
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row) => row.usage.evidence === "reject")).toBe(true);
+    expect(rows.every((row) => row.usage.retainForReprojection)).toBe(true);
+    expect(rows.every((row) => row.usage.displayCandidate === false)).toBe(
+      true,
+    );
   });
 });

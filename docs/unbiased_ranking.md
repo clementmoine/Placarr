@@ -79,12 +79,11 @@ provider.
 > provider set are **gone** (blindness guard allowlist is empty). Per-provider
 > flags/weights no longer drive the **barcode** path. The **only** row still live is
 > per-provider `weight` in the metadata **enrichment** merge
-> (`src/services/metadata/merge.ts` `resultsByWeight`, now a soft pre-sort behind the
-> observation-title pick) — the last bias to retire here.
+> (`src/services/metadata/merge.ts` `orderResultsByObservationStrength`) — **retiré 2026-06-30**.
 
 | Bias                                                               | Where                                                               |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Per-provider merge weights (`screenscraper: 0.9`, `igdb: 0.85`, …) | `src/services/providerRegistry.ts` (`PROVIDER_METADATA_EXTENSIONS`) |
+| Per-provider merge weights (`screenscraper: 0.9`, `igdb: 0.85`, …) | ~~`src/services/providerRegistry.ts`~~ **retiré du merge 2026-06-30** ; poids registry restent pour bridge legacy barcode uniquement |
 | Per-provider flags as privilege (`isRealBoxCover`, `isSecondary`)  | same                                                                |
 | Literal name hardcode (`providerId === "screenscraper" ? 6 : 12`)  | `src/services/metadataFetch.ts`                                     |
 | ~~"real box cover" `+220` display bonus~~ — **removed**            | was `attachmentDisplayScore.ts`; the magic weight + `isRealBoxCoverSource` plumbing are gone. Cover ranking is now resolution + exposure + provenance tier only. |

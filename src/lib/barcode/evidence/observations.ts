@@ -278,6 +278,21 @@ export function observationsFromProductEvidence(
   return observations;
 }
 
+/** Barcode rows filtered out of compile still persist as reject observations. */
+export function rejectedObservationsFromProductEvidence(
+  evidence: ProductEvidence,
+): MetadataObservation[] {
+  return observationsFromProductEvidence(evidence).map((observation) => ({
+    ...observation,
+    usage: makeObservationUsage({
+      displayCandidate: false,
+      searchAlias: "none",
+      evidence: "reject",
+      retainForReprojection: true,
+    }),
+  }));
+}
+
 export function observationsFromBarcodeEvidenceList(
   evidence: ProductEvidence[],
 ): MetadataObservation[] {

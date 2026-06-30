@@ -327,10 +327,11 @@ describe("mergeMetadata generic function", () => {
       },
     ]);
 
+    expect(merged.title).toBe("L'Attaque des Titans n°1");
     expect(merged.aliases).toEqual(
       expect.arrayContaining([
-        "L'Attaque des Titans n°1",
         "Shingeki no Kyojin",
+        "Attack on Titan, Vol. 1",
       ]),
     );
   });
@@ -424,7 +425,7 @@ describe("mergeMetadata generic function", () => {
     );
   });
 
-  it("merges externalIds prioritizing higher weighted providers", () => {
+  it("merges externalIds in observation-strength order with stable input fallback", () => {
     const tmdb: MetadataResult = {
       title: "Toy Story",
       externalIds: { imdb: "tt0114709" },
@@ -440,9 +441,67 @@ describe("mergeMetadata generic function", () => {
     ]);
 
     expect(merged.externalIds).toEqual({
-      imdb: "tt0114709", // tmdb has higher weight than omdb
+      imdb: "tt0114709", // tmdb listed first; no observation tie-break needed
       launchbox: "123", // only omdb has launchbox
     });
+  });
+
+  it("orders scalar merge tie-breaks by observation tier instead of provider weight", () => {
+    const catalogUsage = makeObservationUsage({
+      displayCandidate: true,
+      searchAlias: "strong",
+      evidence: "strong",
+    });
+    const listingUsage = makeObservationUsage({
+      displayCandidate: false,
+      searchAlias: "weak",
+      evidence: "weak",
+    });
+
+    const merged = mergeMetadata("games", [
+      {
+        providerId: "rawg",
+        metadata: {
+          duration: 999,
+          observations: [
+            {
+              kind: "title",
+              role: "listing_title",
+              value: "Heavy Rain",
+              provenance: {
+                providerId: "rawg",
+                sourceDocumentRole: "marketplace_listing",
+                evidenceSignals: [],
+              },
+              usage: listingUsage,
+            } satisfies MetadataObservation,
+          ],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+      {
+        providerId: "screenscraper",
+        metadata: {
+          duration: 12,
+          observations: [
+            {
+              kind: "title",
+              role: "catalog_title",
+              value: "Heavy Rain",
+              provenance: {
+                providerId: "screenscraper",
+                sourceDocumentRole: "catalog_product",
+                evidenceSignals: ["structured_data"],
+              },
+              usage: catalogUsage,
+            } satisfies MetadataObservation,
+          ],
+          observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+        },
+      },
+    ]);
+
+    expect(merged.duration).toBe(12);
   });
 
   it("prefers cover_front image observations over listing photos", () => {

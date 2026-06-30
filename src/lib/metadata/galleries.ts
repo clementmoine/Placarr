@@ -9,7 +9,7 @@ export type MusicGalleryAttachment = {
 };
 
 export function hasGameMediaGalleryAttachment(
-  attachments: readonly GameMediaGalleryAttachment[],
+  attachments: readonly Record<string, unknown>[],
 ): boolean {
   return attachments.some(
     (attachment) => attachment.isGameMediaGallerySource === true,

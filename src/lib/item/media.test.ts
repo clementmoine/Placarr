@@ -104,7 +104,6 @@ describe("getCoverImage", () => {
             role: "eu",
             url: "/uploads/icollect-ps4.jpg",
             title: "PS4 Metal Gear Solid Master Collection Vol. 1",
-            isRealBoxCoverSource: true,
           },
         ],
       },

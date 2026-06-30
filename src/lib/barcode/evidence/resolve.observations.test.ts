@@ -13,7 +13,7 @@ describe("pickRepresentativeEvidence — observation rank", () => {
       name: "Catan",
       coverUrl: "https://example.test/catan.jpg",
     });
-    const marketplace = buildProductEvidence("PicClick", {
+    const marketplace = buildProductEvidence("eBay", {
       name: "Catan - Complet Boite Notice",
       coverUrl: null,
     });
@@ -33,7 +33,7 @@ describe("pickRepresentativeEvidence — observation rank", () => {
 describe("barcodeEvidenceObservationSourceWeight", () => {
   it("maps catalog observations above listing observations", () => {
     const trusted = buildProductEvidence("Philibert", { name: "Catan" });
-    const listing = buildProductEvidence("PicClick", {
+    const listing = buildProductEvidence("eBay", {
       name: "Catan - Complet",
     });
     expect(trusted).not.toBeNull();
@@ -46,7 +46,7 @@ describe("barcodeEvidenceObservationSourceWeight", () => {
   });
 
   it("keeps provider sourceWeight when observation role matches evidence tier", () => {
-    const listing = buildProductEvidence("PicClick", { name: "Catan" });
+    const listing = buildProductEvidence("eBay", { name: "Catan" });
     expect(listing).not.toBeNull();
     if (!listing) return;
 

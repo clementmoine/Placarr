@@ -47,7 +47,7 @@ describe("edition detection", () => {
   });
 
   it("préfère l'édition la plus nommée quand un seul marchand domine", () => {
-    // 4 annonces "Édition Limitée" (PicClick) doivent battre une "Special
+    // 4 annonces "Édition Limitée" (eBay) doivent battre une "Special
     // Edition" isolée → générique "Edition", malgré le même fournisseur unique.
     const evidence = [
       buildProductEvidence(
@@ -57,19 +57,19 @@ describe("edition detection", () => {
         },
         true,
       )!,
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "Skyward Sword Édition Limitée Neuf",
       })!,
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "Skyward Sword Edition Limitée Wii",
       })!,
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "Skyward Sword Edition Limitée FRA",
       })!,
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "Skyward Sword Edition Limitée Complet",
       })!,
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "Skyward Sword Special Edition",
       })!,
     ];
@@ -84,7 +84,7 @@ describe("edition detection", () => {
     // édition sur le jeu de base.
     const evidence = [
       buildProductEvidence("PriceCharting", { name: "De Blob Nintendo Wii" })!,
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "De Blob Nintendo Wii Edition Fr Pal Complet",
       })!,
     ];
@@ -101,7 +101,7 @@ describe("edition detection", () => {
     // « Edition ». Un « — Edition » nu n'informe de rien → jamais affiché, même
     // avec ≥2 fournisseurs (régression « Call Of Duty Modern Warfare — Edition »).
     const evidence = [
-      buildProductEvidence("PicClick", {
+      buildProductEvidence("eBay", {
         name: "Call Of Duty Modern Warfare Edition Réflexes",
       })!,
       buildProductEvidence("AchatMoinsCher", {

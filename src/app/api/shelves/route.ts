@@ -6,6 +6,7 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import {
   itemListMetadataInclude,
   presentItemFromStorage,
+  type StoredItemMetadata,
 } from "@/lib/item/present";
 import { seriesDisplayTitles } from "@/lib/title/series";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
@@ -48,10 +49,17 @@ async function formatShelfWithItemPrices<
     shelf.name,
   );
 
-  const items = shelf.items.map((item) => ({
-    ...presentItemFromStorage(item),
-    ...(priceByItemId.get(item.id) ?? emptyShelfItemPrices),
-  }));
+  const items = shelf.items.map((item) => {
+    const presented = presentItemFromStorage({
+      ...item,
+      metadata: (item.metadata ?? null) as StoredItemMetadata | null,
+    });
+    return {
+      ...presented,
+      id: item.id,
+      ...(priceByItemId.get(item.id) ?? emptyShelfItemPrices),
+    };
+  });
 
   // Series-aware display padding: within this shelf, align each volume number to
   // the widest volume of its detected series (≥2 siblings sharing a base title).

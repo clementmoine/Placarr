@@ -452,7 +452,9 @@ describe("fetchPricesFromChocoBonPlan", () => {
     } as never);
     mockedGet.mockResolvedValue({ status: 200, data: SAMPLE_HTML } as never);
 
-    await expect(fetchPricesFromChocoBonPlan("Ball x Pit PS5", ["Ball x Pit PS5"])).resolves.toEqual({
+    await expect(
+      fetchPricesFromChocoBonPlan(["Ball x Pit PS5", "Ball x Pit PS5"]),
+    ).resolves.toEqual({
       priceNew: 3499,
       sourceUrl: "https://chocobonplan.com/ball-x-pit/",
       productName: "Ball x Pit sur PS5",

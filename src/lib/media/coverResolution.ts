@@ -6,15 +6,24 @@ export type ImageDimensions = {
   height: number;
 };
 
+/**
+ * Persisted/observed metrics expose dimensions as optional (a probe may not have
+ * measured them yet), so the read-path helpers accept a partial shape.
+ */
+type PartialImageDimensions = {
+  width?: number | null;
+  height?: number | null;
+};
+
 export function shortestImageEdge(
-  metrics: ImageDimensions | null | undefined,
+  metrics: PartialImageDimensions | null | undefined,
 ): number {
-  if (!metrics) return 0;
+  if (metrics?.width == null || metrics.height == null) return 0;
   return Math.min(metrics.width, metrics.height);
 }
 
 export function isCoverResolutionAcceptable(
-  metrics: ImageDimensions | null | undefined,
+  metrics: PartialImageDimensions | null | undefined,
 ): boolean {
   const shortest = shortestImageEdge(metrics);
   return shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE;

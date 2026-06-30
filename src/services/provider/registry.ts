@@ -24,7 +24,6 @@ import { okkazeoModule } from "@/services/providers/okkazeo";
 import { PRESTASHOP_RETAILER_MODULES } from "@/services/providers/prestashop";
 import { SHOPIFY_RETAILER_MODULES } from "@/services/providers/shopify";
 import { wikidataModule } from "@/services/providers/wikidata";
-import { picclickModule } from "@/services/providers/picclick";
 import { pricechartingModule } from "@/services/providers/pricecharting";
 import { rawgModule } from "@/services/providers/rawg";
 import { scandexModule } from "@/services/providers/scandex";
@@ -87,22 +86,30 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   chocobonplanModule,
   geedieModule,
   freakxyModule,
-  picclickModule,
   ebayModule,
   scandexModule,
 ];
 
-const PROVIDER_METADATA_EXTENSIONS: Record<
-  string,
-  {
-    weight: number;
-    defaultLanguage?: "fr" | "en" | "unknown";
-    isRealBoxCover?: boolean;
-    imageScoreAdjustment?: number;
-    remoteImageFallback?: boolean;
-    isSecondary?: boolean;
-  }
-> = {
+type ProviderMetadataExtension = {
+  weight: number;
+} & Partial<
+  Pick<
+    ProviderInfo,
+    | "defaultLanguage"
+    | "isRealBoxCover"
+    | "imageScoreAdjustment"
+    | "remoteImageFallback"
+    | "isSecondary"
+    | "retailCatalogImageTitles"
+    | "strictShelfPlatformCover"
+    | "authoritative3dCoverRole"
+    | "gridStyleCoverLabels"
+    | "collectorCoverRegionFromAgeRating"
+    | "coverDefaultRegion"
+  >
+>;
+
+const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> = {
   screenscraper: { weight: 0.9, defaultLanguage: "fr", isRealBoxCover: true, authoritative3dCoverRole: true },
   igdb: { weight: 0.85, defaultLanguage: "en" },
   thegamesdb: { weight: 0.75, defaultLanguage: "en", isRealBoxCover: true },
@@ -123,9 +130,9 @@ const PROVIDER_METADATA_EXTENSIONS: Record<
     isRealBoxCover: true,
     isSecondary: true,
     collectorCoverRegionFromAgeRating: true,
-  } as any,
+  },
   tmdb: { weight: 0.85, defaultLanguage: "fr" },
-  omdb: { weight: 0.7, defaultLanguage: "en", isSecondary: true } as any,
+  omdb: { weight: 0.7, defaultLanguage: "en", isSecondary: true },
   musicbrainz: { weight: 0.8 },
   discogs: { weight: 0.75 },
   deezer: { weight: 0.7 },
@@ -155,7 +162,7 @@ const PROVIDER_METADATA_EXTENSIONS: Record<
     weight: 0.5,
     defaultLanguage: "fr",
     isSecondary: true,
-  } as any,
+  },
   ledenicheur: { weight: 0.7, defaultLanguage: "fr" },
   chocobonplan: {
     weight: 0.55,
@@ -165,13 +172,13 @@ const PROVIDER_METADATA_EXTENSIONS: Record<
     retailCatalogImageTitles: true,
     strictShelfPlatformCover: true,
     coverDefaultRegion: "fr",
-  } as any,
+  },
   chipweld: {
     weight: 0.58,
     defaultLanguage: "fr",
     isRealBoxCover: true,
     isSecondary: true,
-  } as any,
+  },
   geedie: {
     weight: 0.72,
     defaultLanguage: "en",
@@ -180,14 +187,8 @@ const PROVIDER_METADATA_EXTENSIONS: Record<
     isSecondary: true,
     retailCatalogImageTitles: true,
     strictShelfPlatformCover: true,
-  } as any,
-  freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
-  picclick: {
-    weight: 0.5,
-    imageScoreAdjustment: -280,
-    remoteImageFallback: true,
-    isSecondary: true,
   },
+  freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
   ebay: {
     weight: 0.5,
     imageScoreAdjustment: -280,

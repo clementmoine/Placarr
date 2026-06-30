@@ -17,6 +17,7 @@ import {
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
   type AttachmentDisplayScoreOptions,
+  type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/lib/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
@@ -37,7 +38,6 @@ export interface MediaItem {
   title?: string | null;
   // Provider-derived display fields stamped server-side (see providerSourceTraits):
   // cover-scoring flags read by the scorer, plus the gallery chip label.
-  isRealBoxCoverSource?: boolean;
   isFullWrapCoverSource?: boolean;
   isGameMediaGallerySource?: boolean;
   isMusicGallerySource?: boolean;
@@ -45,7 +45,14 @@ export interface MediaItem {
   retailCatalogImageTitlesSource?: boolean;
   strictShelfPlatformCoverSource?: boolean;
   collectorCoverRegionFromAgeRatingSource?: boolean;
-  providerLabel?: string;
+  coverProvenance?: string | null;
+  providerLabel?: string | null;
+  // Persisted image metrics (computed once at enrichment) so the read-time cover
+  // ranking can sort by resolution + exposure without re-decoding image files.
+  width?: number | null;
+  height?: number | null;
+  meanLuminance?: number | null;
+  darkPixelRatio?: number | null;
 }
 
 export interface MediaInput {
@@ -78,6 +85,39 @@ function coverDisplayOptions(item: MediaInput): AttachmentDisplayScoreOptions {
 
 function attachments(item: MediaInput): ScoredAttachmentInput[] {
   return (item.metadata?.attachments ?? []) as ScoredAttachmentInput[];
+}
+
+/**
+ * Build the read-time image-metrics map from the metrics persisted on each
+ * attachment at enrichment (resolution + exposure). This is what lets the cover
+ * gallery re-sort from stored data — without re-decoding any image file — so a
+ * ranking change no longer needs a metadata refresh to take effect.
+ */
+function persistedImageMetricsByUrl(
+  item: MediaInput,
+): Map<string, AttachmentImageMetrics | null> | undefined {
+  const list = item.metadata?.attachments;
+  if (!list || list.length === 0) return undefined;
+  const map = new Map<string, AttachmentImageMetrics | null>();
+  for (const attachment of list) {
+    if (!attachment.url) continue;
+    const { width, height, meanLuminance, darkPixelRatio } = attachment;
+    if (
+      width == null &&
+      height == null &&
+      meanLuminance == null &&
+      darkPixelRatio == null
+    ) {
+      continue;
+    }
+    map.set(attachment.url, {
+      width: width ?? undefined,
+      height: height ?? undefined,
+      meanLuminance: meanLuminance ?? undefined,
+      darkPixelRatio: darkPixelRatio ?? undefined,
+    });
+  }
+  return map.size > 0 ? map : undefined;
 }
 
 const COVER_GALLERY_TYPES = new Set(["cover", "artwork", "image"]);
@@ -257,7 +297,11 @@ export function orderedCoverAttachmentsForDisplay(
     options,
   );
   if (covers.length === 0) return [];
-  const ranked = rankCoverGalleryAttachments(covers, undefined, options);
+  const ranked = rankCoverGalleryAttachments(
+    covers,
+    persistedImageMetricsByUrl(item),
+    options,
+  );
   const pin = resolveMetadataCoverUrl(item);
 
   if (!pin) return dedupeAttachmentsByImageUrl(ranked);

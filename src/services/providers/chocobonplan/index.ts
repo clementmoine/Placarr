@@ -57,7 +57,7 @@ function productToMetadata(product: NonNullable<
     title: product.title,
     description: product.description || undefined,
     imageUrl: product.coverUrl || undefined,
-    backgroundImageUrl: product.backgroundImageUrl || undefined,
+    heroImageUrl: product.backgroundImageUrl || undefined,
     regionalTitles: [{ region: LANGUAGE, text: product.title }],
     attachments:
       product.attachments && product.attachments.length > 0

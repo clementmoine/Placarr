@@ -267,6 +267,7 @@ function mapPhilibertMetadata(product: PhilibertProduct): MetadataResult {
     title: product.title,
     description: product.description,
     imageUrl: product.imageUrl,
+    heroImageUrl: product.backgroundImageUrl,
     barcode: normalizeProductBarcode(product.barcode),
     regionalTitles: product.title
       ? [{ region: PHILIBERT_REGION, text: product.title }]

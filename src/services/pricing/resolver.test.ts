@@ -23,6 +23,7 @@ import {
   getCachedBarcodePrices,
   getCachedItemPrices,
   summarizeShelfItemPrices,
+  type BarcodePricesResult,
 } from "@/services/pricing/resolver";
 
 function offer(overrides: Record<string, unknown>) {
@@ -36,6 +37,42 @@ function offer(overrides: Record<string, unknown>) {
     sourceUrl: null,
     offerCount: null,
     observedAt: new Date("2026-06-19T12:00:00.000Z"),
+    ...overrides,
+  };
+}
+
+/** Cached barcode row shape after `serializePriceOffers` (server-stamped traits). */
+function serializedPriceObservation(
+  overrides: Record<string, unknown> & { source: string; priceCents: number },
+) {
+  const source = String(overrides.source);
+  return {
+    productName: null,
+    merchantName: null,
+    condition: "new",
+    currency: "EUR",
+    sourceUrl: null,
+    offerCount: null,
+    observedAt: "2026-06-19T12:00:00.000Z",
+    isReferencePriceSource: false,
+    sourceDisplayLabel: source,
+    ...overrides,
+  };
+}
+
+function cachedBarcodePrices(
+  overrides: Omit<
+    BarcodePricesResult,
+    "priceSourceDisplayNames" | "isReferencePriceOnly"
+  > &
+    Partial<
+      Pick<BarcodePricesResult, "priceSourceDisplayNames" | "isReferencePriceOnly">
+    >,
+): BarcodePricesResult {
+  const sources = overrides.priceSources;
+  return {
+    priceSourceDisplayNames: sources,
+    isReferencePriceOnly: false,
     ...overrides,
   };
 }
@@ -81,7 +118,7 @@ describe("getCachedItemPrices", () => {
 
   it("reads item-scoped offers without a barcode", async () => {
     h.priceOffer.findMany.mockResolvedValue([
-      offer({ source: "PicClick", condition: "used", priceCents: 1490 }),
+      offer({ source: "eBay", condition: "used", priceCents: 1490 }),
       offer({ source: "LeDenicheur", condition: "new", priceCents: 1400 }),
     ]);
 
@@ -112,7 +149,7 @@ describe("summarizeShelfItemPrices", () => {
     h.priceOffer.findMany.mockResolvedValue([
       {
         itemId: "item-1",
-        source: "PicClick",
+        source: "eBay",
         productName: "Ball x Pit PS5",
         condition: "used",
         priceCents: 3499,
@@ -190,7 +227,7 @@ describe("summarizeShelfItemPrices", () => {
       {
         itemId: "item-1",
         barcodeCacheId: 1,
-        source: "PicClick",
+        source: "eBay",
         productName: "Rise of the Tomb Raider 20 Year Celebration Edition PS4",
         condition: "used",
         priceCents: 1903,
@@ -238,7 +275,7 @@ describe("summarizeShelfItemPrices", () => {
       {
         itemId: "item-1",
         barcodeCacheId: 1,
-        source: "PicClick",
+        source: "eBay",
         productName: "The Promised Neverland Box Set Vol. 1-20",
         condition: "new",
         priceCents: 11690,
@@ -277,7 +314,7 @@ describe("summarizeShelfItemPrices", () => {
       {
         itemId: "item-1",
         barcodeCacheId: 1,
-        source: "PicClick",
+        source: "eBay",
         productName: "Graphics Tablet Pen Display 2 Monitor 2K IPS",
         condition: "new",
         priceCents: 9999,
@@ -305,7 +342,7 @@ describe("summarizeShelfItemPrices", () => {
     h.priceOffer.findMany.mockResolvedValue([
       {
         itemId: "item-1",
-        source: "PicClick",
+        source: "eBay",
         productName: "livre super picsou géant N° 183",
         condition: "used",
         priceCents: 450,
@@ -370,26 +407,21 @@ describe("alignBarcodePricesForItemNames", () => {
     const aligned = alignBarcodePricesForItemNames(
       "books",
       ["L'Art et la Création de Arcane"],
-      {
+      cachedBarcodePrices({
         priceNew: 5101,
         priceUsed: null,
         priceUsedCIB: null,
         priceLastUpdated: new Date("2026-06-19T11:00:00.000Z"),
         priceSources: ["ChasseAuxLivres"],
         priceObservations: [
-          {
-            source: "PicClick",
+          serializedPriceObservation({
+            source: "eBay",
             productName: "Graphics Tablet Pen Display 2 Monitor 2K IPS",
-            merchantName: null,
             condition: "new",
             priceCents: 9999,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
-            observedAt: "2026-06-19T12:00:00.000Z",
-          },
+          }),
         ],
-      },
+      }),
     );
 
     expect(aligned.priceNew).toBe(5101);
@@ -400,26 +432,21 @@ describe("alignBarcodePricesForItemNames", () => {
     const aligned = alignBarcodePricesForItemNames(
       "books",
       ["The Promised Neverland n°01"],
-      {
+      cachedBarcodePrices({
         priceNew: 11690,
         priceUsed: null,
         priceUsedCIB: null,
         priceLastUpdated: new Date("2026-06-19T11:00:00.000Z"),
-        priceSources: ["PicClick"],
+        priceSources: ["eBay"],
         priceObservations: [
-          {
-            source: "PicClick",
+          serializedPriceObservation({
+            source: "eBay",
             productName: "The Promised Neverland Box Set Vol. 1-20",
-            merchantName: null,
             condition: "new",
             priceCents: 11690,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
-            observedAt: "2026-06-19T12:00:00.000Z",
-          },
+          }),
         ],
-      },
+      }),
     );
 
     expect(aligned.priceNew).toBeNull();
@@ -430,26 +457,21 @@ describe("alignBarcodePricesForItemNames", () => {
     const aligned = alignBarcodePricesForItemNames(
       "books",
       ["Super Picsou Géant n°07"],
-      {
+      cachedBarcodePrices({
         priceNew: 450,
         priceUsed: null,
         priceUsedCIB: null,
         priceLastUpdated: new Date("2026-06-19T11:00:00.000Z"),
-        priceSources: ["PicClick"],
+        priceSources: ["eBay"],
         priceObservations: [
-          {
-            source: "PicClick",
+          serializedPriceObservation({
+            source: "eBay",
             productName: "Super Picsou Géant n°183 - Occasion",
-            merchantName: null,
             condition: "used",
             priceCents: 450,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
-            observedAt: "2026-06-19T12:00:00.000Z",
-          },
+          }),
         ],
-      },
+      }),
     );
 
     expect(aligned.priceNew).toBeNull();
@@ -460,38 +482,28 @@ describe("alignBarcodePricesForItemNames", () => {
     const aligned = alignBarcodePricesForItemNames(
       "books",
       ["L'Art et la Création de Arcane"],
-      {
+      cachedBarcodePrices({
         priceNew: 9999,
         priceUsed: null,
         priceUsedCIB: null,
         priceLastUpdated: new Date("2026-06-19T11:00:00.000Z"),
-        priceSources: ["PicClick"],
+        priceSources: ["eBay"],
         priceObservations: [
-          {
-            source: "PicClick",
+          serializedPriceObservation({
+            source: "eBay",
             productName:
               "The Art and Making of Arcane League Of Legends AVAILABLE",
-            merchantName: null,
             condition: "new",
             priceCents: 5101,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
-            observedAt: "2026-06-19T12:00:00.000Z",
-          },
-          {
-            source: "PicClick",
+          }),
+          serializedPriceObservation({
+            source: "eBay",
             productName: "Graphics Tablet Pen Display 2 Monitor 2K IPS",
-            merchantName: null,
             condition: "new",
             priceCents: 9999,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
-            observedAt: "2026-06-19T12:00:00.000Z",
-          },
+          }),
         ],
-      },
+      }),
     );
 
     expect(aligned.priceNew).toBe(5101);
@@ -502,46 +514,37 @@ describe("alignBarcodePricesForItemNames", () => {
     const aligned = alignBarcodePricesForItemNames(
       "games",
       ["Les Gardiens de la Galaxie - The Telltale Series"],
-      {
+      cachedBarcodePrices({
         priceNew: 2355,
         priceUsed: 26081,
         priceUsedCIB: null,
         priceLastUpdated: new Date("2026-06-28T12:00:00.000Z"),
-        priceSources: ["Smartoys", "LeDenicheur", "PicClick"],
+        priceSources: ["Smartoys", "LeDenicheur", "eBay"],
         priceObservations: [
-          {
+          serializedPriceObservation({
             source: "Smartoys",
             productName: "LES GARDIENS DE LA GALAXIE - THE TELLTALE SERIES",
             condition: "used",
             priceCents: 1200,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
             observedAt: "2026-06-28T12:00:00.000Z",
-          },
-          {
+          }),
+          serializedPriceObservation({
             source: "LeDenicheur",
             productName: "Guardians of the Galaxy: The Telltale Series (PC)",
             condition: "used",
             priceCents: 100000,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
             observedAt: "2026-06-28T12:00:00.000Z",
-          },
-          {
-            source: "PicClick",
+          }),
+          serializedPriceObservation({
+            source: "eBay",
             productName:
               "Marvel's Guardians Of The Galaxy : The Telltale Series (Xbox One)",
             condition: "used",
             priceCents: 2235,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
             observedAt: "2026-06-28T12:00:00.000Z",
-          },
+          }),
         ],
-      },
+      }),
       "PlayStation 4",
     );
 
@@ -554,45 +557,36 @@ describe("alignBarcodePricesForItemNames", () => {
     const aligned = alignBarcodePricesForItemNames(
       "games",
       ["Dark Pictures: The Devil in Me"],
-      {
+      cachedBarcodePrices({
         priceNew: 3333,
         priceUsed: null,
         priceUsedCIB: null,
         priceLastUpdated: new Date("2026-06-28T12:00:00.000Z"),
         priceSources: ["Smartoys", "AchatMoinsCher", "LeDenicheur"],
         priceObservations: [
-          {
+          serializedPriceObservation({
             source: "AchatMoinsCher",
             productName: "The Dark Pictures Anthology: The Devil in Me",
             condition: "new",
             priceCents: 2278,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
             observedAt: "2026-06-28T12:00:00.000Z",
-          },
-          {
+          }),
+          serializedPriceObservation({
             source: "Smartoys",
             productName: "THE DARK PICTURES ANTHOLOGY: THE DEVIL IN ME",
             condition: "new",
             priceCents: 2995,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
             observedAt: "2026-06-28T12:00:00.000Z",
-          },
-          {
+          }),
+          serializedPriceObservation({
             source: "LeDenicheur",
             productName: "The Dark Pictures Anthology: The Devil in Me",
             condition: "new",
             priceCents: 7190,
-            currency: "EUR",
-            sourceUrl: null,
-            offerCount: null,
             observedAt: "2026-06-28T12:00:00.000Z",
-          },
+          }),
         ],
-      },
+      }),
       "PlayStation 4",
     );
 
@@ -629,7 +623,7 @@ describe("filterItemPriceOffers", () => {
           priceCents: 817,
         },
         {
-          source: "PicClick",
+          source: "eBay",
           productName: "A Way Out PlayStation 4",
           condition: "used",
           priceCents: 4743,
@@ -640,7 +634,7 @@ describe("filterItemPriceOffers", () => {
     expect(filtered.map((row) => `${row.source}:${row.condition}`)).toEqual([
       "PriceCharting:loose",
       "PriceCharting:new",
-      "PicClick:used",
+      "eBay:used",
     ]);
   });
 
@@ -668,7 +662,7 @@ describe("filterItemPriceOffers", () => {
           priceCents: 11190,
         },
         {
-          source: "PicClick",
+          source: "eBay",
           productName: "Transistor BD139",
           condition: "used",
           priceCents: 370,
@@ -695,7 +689,7 @@ describe("filterItemPriceOffers", () => {
           priceCents: 4500,
         },
         {
-          source: "PicClick",
+          source: "eBay",
           productName: "Borderlands 3 [ Deluxe Edition ] (PS4)",
           condition: "used",
           priceCents: 2390,
@@ -710,7 +704,7 @@ describe("filterItemPriceOffers", () => {
     );
 
     expect(filtered.map((row) => `${row.source}:${row.condition}`)).toEqual([
-      "PicClick:used",
+      "eBay:used",
     ]);
   });
 
@@ -721,7 +715,7 @@ describe("filterItemPriceOffers", () => {
       ["Dragon Ball Super n°01"],
       [
         {
-          source: "PicClick",
+          source: "eBay",
           productName: "Dragon Ball Super Mythic Booster Box",
           condition: "new",
           priceCents: 9900,
@@ -752,7 +746,7 @@ describe("filterItemPriceOffers", () => {
           priceCents: 3000,
         },
         {
-          source: "PicClick",
+          source: "eBay",
           productName: "livre super picsou géant N° 183",
           condition: "used",
           priceCents: 450,

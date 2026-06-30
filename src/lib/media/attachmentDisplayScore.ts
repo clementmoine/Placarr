@@ -10,6 +10,10 @@ import {
   localeBonusForAttachmentRole,
   regionRank,
 } from "@/lib/locale/preference";
+import {
+  coverProvenanceRank,
+  resolveCoverProvenance,
+} from "@/lib/media/coverProvenance";
 import { MIN_COVER_SHORTEST_EDGE, isCoverResolutionAcceptable, shortestImageEdge } from "@/lib/media/coverResolution";
 import { exposureScoreAdjustment, isUnderexposedCoverScan } from "@/lib/media/coverExposure";
 import {
@@ -63,8 +67,6 @@ export interface AttachmentImageMetrics {
   width?: number;
   height?: number;
   format?: string;
-  /** eBay/smartphone photo on a textured surface — not a clean cover asset. */
-  isListingPhoto?: boolean;
   /** Average RGB luminance sampled from the asset (0–255). */
   meanLuminance?: number;
   /** Share of sampled pixels below the dark-luminance threshold. */
@@ -77,17 +79,23 @@ export type ScoredAttachmentInput = {
   role?: string | null;
   source?: string | null;
   title?: string | null;
+  providerLabel?: string | null;
   /**
    * Provider-declared cover traits, stamped server-side (the scorer is client-safe
-   * and cannot read the registry). `isRealBoxCoverSource` marks a source whose
-   * cover is the real physical box (earns the box-cover bonus);
-   * `isFullWrapCoverSource` marks a full front+back wrap (penalised). See
-   * `@/services/provider/sourceTraits`.
+   * and cannot read the registry). `isFullWrapCoverSource` marks a full front+back
+   * wrap (penalised). See `@/services/provider/sourceTraits`.
    */
-  isRealBoxCoverSource?: boolean;
   isFullWrapCoverSource?: boolean;
   strictShelfPlatformCoverSource?: boolean;
   providerImageScoreAdjustment?: number;
+  /**
+   * Provider-declared, URL-derived source context of the image
+   * (catalog / listing_photo / user_photo). Stamped server-side from
+   * `ProviderInfo.coverProvenanceRules`; drives the provenance tier in
+   * `rankCoversForDisplay` so a photographed copy ranks below catalog art of the
+   * same region. See `@/lib/media/coverProvenance`.
+   */
+  coverProvenance?: string | null;
 };
 
 export type AttachmentDisplayScoreOptions = {
@@ -316,13 +324,6 @@ function buildAttachmentDisplayScoreDetails(
     }
     if (
       isCoverCandidateKind(semantics.kind) &&
-      attachment.type === "cover" &&
-      attachment.isRealBoxCoverSource === true
-    ) {
-      addSignal(220, "real box cover source");
-    }
-    if (
-      isCoverCandidateKind(semantics.kind) &&
       /(front|cover|box[-_\s]?art|box[-_\s]?2d|jaquette|poster|keyart|official)/.test(
         signal,
       )
@@ -357,12 +358,6 @@ function buildAttachmentDisplayScoreDetails(
     );
     if (platformDelta !== 0) {
       addSignal(platformDelta, "platform alignment");
-    }
-    if (
-      imageMetrics?.isListingPhoto &&
-      !isCatalogBoxCoverAttachment(attachment)
-    ) {
-      addSignal(-480, "seller listing photo");
     }
     if (
       imageMetrics?.meanLuminance != null &&
@@ -636,6 +631,11 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         options?.requestedPlatformKey,
       ),
       regionRankValue: regionRank(semantics.region),
+      provenanceRank: coverProvenanceRank(
+        resolveCoverProvenance({
+          provenance: attachment.coverProvenance,
+        }),
+      ),
       shortestEdge: shortestImageEdge(metrics),
       score: scoreAttachmentForDisplay(attachment, metrics, options),
     };
@@ -650,6 +650,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       typeRank: number;
       platformMismatchRank: number;
       regionRankValue: number;
+      provenanceRank: number;
       shortestEdge: number;
       sources: Set<string>;
     }
@@ -689,11 +690,13 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
           existing.platformMismatchRank === entry.platformMismatchRank &&
           (existing.regionRankValue < entry.regionRankValue ||
             (existing.regionRankValue === entry.regionRankValue &&
-              (existing.score > entry.score ||
-                (existing.score === entry.score &&
-                  (existing.shortestEdge > entry.shortestEdge ||
-                    (existing.shortestEdge === entry.shortestEdge &&
-                      existing.index < entry.index)))))));
+              (existing.provenanceRank < entry.provenanceRank ||
+                (existing.provenanceRank === entry.provenanceRank &&
+                  (existing.score > entry.score ||
+                    (existing.score === entry.score &&
+                      (existing.shortestEdge > entry.shortestEdge ||
+                        (existing.shortestEdge === entry.shortestEdge &&
+                          existing.index < entry.index)))))))));
 
       if (source) existing.sources.add(source);
 
@@ -709,6 +712,9 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         regionRankValue: keepExisting
           ? existing.regionRankValue
           : entry.regionRankValue,
+        provenanceRank: keepExisting
+          ? existing.provenanceRank
+          : entry.provenanceRank,
         shortestEdge: keepExisting ? existing.shortestEdge : entry.shortestEdge,
       });
     }
@@ -724,6 +730,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         a.typeRank - b.typeRank ||
         a.platformMismatchRank - b.platformMismatchRank ||
         a.regionRankValue - b.regionRankValue ||
+        a.provenanceRank - b.provenanceRank ||
         b.score - a.score ||
         b.shortestEdge - a.shortestEdge ||
         a.index - b.index,
@@ -731,23 +738,11 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
     .map((entry) => entry.attachment);
 }
 
-function isCatalogBoxCoverAttachment(
-  attachment?: ScoredAttachmentInput | null,
-): boolean {
-  return (
-    attachment?.type === "cover" &&
-    attachment.isRealBoxCoverSource === true
-  );
-}
-
 function isRejectedCoverAsset(
-  attachment: ScoredAttachmentInput | null | undefined,
+  _attachment: ScoredAttachmentInput | null | undefined,
   metrics?: AttachmentImageMetrics | null,
 ): boolean {
   if (!metrics) return false;
-  if (metrics.isListingPhoto && !isCatalogBoxCoverAttachment(attachment)) {
-    return true;
-  }
   return isUnderexposedCoverScan(metrics);
 }
 

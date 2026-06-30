@@ -113,7 +113,7 @@ describe("collectPayloadListingNames", () => {
   it("gathers names from marketplace listings, board anchors and LeDenicheur", () => {
     const payload = createEmptyBarcodeLookupPayload();
     payload.amc = [{ name: "Mille Sabords FR Gigamic" }];
-    payload.picclick = [{ name: "Jeu de société Mille Sabords" }];
+    payload.ebay = [{ name: "Jeu de société Mille Sabords" }];
     payload.philibert = { title: "Mille Sabords" };
     payload.retailers = [
       {

@@ -12,7 +12,7 @@ export function measureCoverExposureFromBuffer(
 }
 
 async function measureCoverExposureFromSharp(
-  image: sharp.Sharp,
+  image: import("sharp").Sharp,
 ): Promise<CoverExposureMetrics | null> {
   try {
     const metadata = await image.metadata();

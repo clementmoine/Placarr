@@ -457,7 +457,7 @@ describe("mergeMetadata generic function", () => {
 
     const merged = mergeMetadata("boardgames", [
       {
-        providerId: "picclick",
+        providerId: "ebay",
         metadata: {
           title: "Mille Sabords",
           imageUrl: "https://example.test/listing.jpg",
@@ -468,8 +468,9 @@ describe("mergeMetadata generic function", () => {
               type: "cover",
               url: "https://example.test/listing.jpg",
               provenance: {
-                providerId: "picclick",
+                providerId: "ebay",
                 sourceDocumentRole: "marketplace_listing",
+                evidenceSignals: [],
               },
               usage: listingImageUsage,
             } satisfies MetadataObservation,
@@ -516,7 +517,7 @@ describe("mergeMetadata generic function", () => {
 
     const merged = mergeMetadata("boardgames", [
       {
-        providerId: "picclick",
+        providerId: "ebay",
         metadata: {
           title: "Mille Sabords",
           observations: [
@@ -527,8 +528,9 @@ describe("mergeMetadata generic function", () => {
               label: "Joueurs",
               value: "1-99",
               provenance: {
-                providerId: "picclick",
+                providerId: "ebay",
                 sourceDocumentRole: "marketplace_listing",
+                evidenceSignals: [],
               },
               usage: listingUsage,
             } satisfies MetadataObservation,

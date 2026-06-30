@@ -138,9 +138,9 @@ export function presentItemFromStorage<
       : formatted;
 
   return presentItem({
-    ...item,
-    metadata: filteredMetadata,
-  });
+    ...(item as PresentableItemInput),
+    metadata: filteredMetadata ?? null,
+  }) as T;
 }
 
 export function presentItemWithMedia<T extends PresentableItemInput>(

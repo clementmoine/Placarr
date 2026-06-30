@@ -266,8 +266,9 @@ function ShelfComponent() {
             barcode: null,
             condition: "new",
             metadataId: null,
-            metadataRefreshStartedAt: null,
-            userId: shelf?.userId || "",
+    metadataRefreshStartedAt: null,
+    metadataRefreshGeneration: 0,
+    userId: shelf?.userId || "",
           }),
         ),
       } as any;

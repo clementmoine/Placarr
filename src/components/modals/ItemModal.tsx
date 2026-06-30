@@ -63,6 +63,7 @@ import {
   scannerBarcodePlaceholderKey,
   scannerEnterBarcodeKey,
 } from "@/lib/barcode/shelfLabels";
+import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
 import { shelfPath } from "@/lib/routing/slugs";
 
 import {
@@ -106,21 +107,21 @@ function ShelfIcon({ type, className }: { type: string; className?: string }) {
 function attachmentTraitsOf(attachment: unknown) {
   const traits = attachment as
     | {
-        isRealBoxCoverSource?: boolean;
         isFullWrapCoverSource?: boolean;
         isGameMediaGallerySource?: boolean;
         isMusicGallerySource?: boolean;
         providerImageScoreAdjustment?: number;
+        coverProvenance?: string | null;
         providerLabel?: string | null;
       }
     | null
     | undefined;
   return {
-    isRealBoxCoverSource: traits?.isRealBoxCoverSource,
     isFullWrapCoverSource: traits?.isFullWrapCoverSource,
     isGameMediaGallerySource: traits?.isGameMediaGallerySource,
     isMusicGallerySource: traits?.isMusicGallerySource,
     providerImageScoreAdjustment: traits?.providerImageScoreAdjustment,
+    coverProvenance: traits?.coverProvenance,
     providerLabel: traits?.providerLabel,
   };
 }
@@ -609,12 +610,16 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       title?: string | null;
-      isRealBoxCoverSource?: boolean;
       isFullWrapCoverSource?: boolean;
       isGameMediaGallerySource?: boolean;
       isMusicGallerySource?: boolean;
       providerImageScoreAdjustment?: number;
+      coverProvenance?: string | null;
       providerLabel?: string | null;
+      width?: number | null;
+      height?: number | null;
+      meanLuminance?: number | null;
+      darkPixelRatio?: number | null;
     }> = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -626,12 +631,16 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       title?: string | null;
-      isRealBoxCoverSource?: boolean;
       isFullWrapCoverSource?: boolean;
       isGameMediaGallerySource?: boolean;
       isMusicGallerySource?: boolean;
       providerImageScoreAdjustment?: number;
+      coverProvenance?: string | null;
       providerLabel?: string | null;
+      width?: number | null;
+      height?: number | null;
+      meanLuminance?: number | null;
+      darkPixelRatio?: number | null;
     }) => {
       if (!entry.url || urls.has(entry.url)) return;
       urls.add(entry.url);
@@ -641,12 +650,16 @@ export function ItemModal({
         source: entry.source,
         role: entry.role,
         title: entry.title,
-        isRealBoxCoverSource: entry.isRealBoxCoverSource,
         isFullWrapCoverSource: entry.isFullWrapCoverSource,
         isGameMediaGallerySource: entry.isGameMediaGallerySource,
         isMusicGallerySource: entry.isMusicGallerySource,
         providerImageScoreAdjustment: entry.providerImageScoreAdjustment,
+        coverProvenance: entry.coverProvenance,
         providerLabel: entry.providerLabel,
+        width: entry.width,
+        height: entry.height,
+        meanLuminance: entry.meanLuminance,
+        darkPixelRatio: entry.darkPixelRatio,
       });
     };
 

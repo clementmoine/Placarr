@@ -66,7 +66,7 @@ describe("scoreTypeCandidate — jeu vs film homonyme", () => {
     platformKey: "xbox",
     match: {
       evidence: makeEvidence({
-        providers: ["ChasseAuxLivres", "PicClick"],
+        providers: ["ChasseAuxLivres", "eBay"],
         canonicalProviders: [],
         canonicalCount: 0,
         marketplaceCount: 4,
@@ -81,7 +81,7 @@ describe("scoreTypeCandidate — jeu vs film homonyme", () => {
     platformKey: null,
     match: {
       evidence: makeEvidence({
-        providers: ["TMDB", "ChasseAuxLivres", "PicClick"],
+        providers: ["TMDB", "ChasseAuxLivres", "eBay"],
         canonicalProviders: ["TMDB"],
         canonicalCount: 76,
         marketplaceCount: 5,
@@ -104,7 +104,7 @@ describe("scoreTypeCandidate — jeu vs film homonyme", () => {
       platformKey: null,
       match: {
         evidence: makeEvidence({
-          providers: ["TMDB", "ChasseAuxLivres", "PicClick"],
+          providers: ["TMDB", "ChasseAuxLivres", "eBay"],
           canonicalProviders: ["TMDB"],
           canonicalCount: 2,
           marketplaceCount: 5,
@@ -134,7 +134,7 @@ describe("scoreTypeCandidate — signal jeu de société", () => {
     platformKey: "switch",
     match: {
       evidence: makeEvidence({
-        providers: ["PriceCharting", "PicClick"],
+        providers: ["PriceCharting", "eBay"],
         canonicalProviders: [],
         canonicalCount: 0,
         marketplaceCount: 3,
@@ -209,7 +209,7 @@ describe("scoreTypeCandidate — signal jeu vidéo", () => {
     platformKey: "xbox",
     match: {
       evidence: makeEvidence({
-        providers: ["PicClick", "ChasseAuxLivres"],
+        providers: ["eBay", "ChasseAuxLivres"],
         canonicalProviders: [],
         canonicalCount: 0,
         trustedRetailerCount: 4,
@@ -225,7 +225,7 @@ describe("scoreTypeCandidate — signal jeu vidéo", () => {
     platformKey: null,
     match: {
       evidence: makeEvidence({
-        providers: ["DatabaseResolver", "PicClick"],
+        providers: ["DatabaseResolver", "eBay"],
         canonicalProviders: ["DatabaseResolver"],
         canonicalCount: 1,
         marketplaceCount: 1,
@@ -277,7 +277,7 @@ describe("scoreTypeCandidate — signal jeu vidéo", () => {
 
 describe("buildProductEvidence — plateforme depuis une annonce marketplace", () => {
   it("détecte xbox même quand le suffixe plateforme est nettoyé du titre", () => {
-    const evidence = buildProductEvidence("PicClick", {
+    const evidence = buildProductEvidence("eBay", {
       name: "Star Wars Episode Iii 3 La Revanche Des Sith - Xbox - Fr - En Boite",
     });
 

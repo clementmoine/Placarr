@@ -51,7 +51,7 @@ describe("barcodeEvidenceTier", () => {
       sourceWeight: 0.9,
     });
     const marketplace = evidence({
-      providerName: "PicClick",
+      providerName: "eBay",
       sourceWeight: 0.99,
     });
 
@@ -85,7 +85,7 @@ describe("barcodeEvidenceTier", () => {
       sourceWeight: 0.9,
     });
     const marketplace = evidence({
-      providerName: "PicClick",
+      providerName: "eBay",
       sourceWeight: 0.99,
     });
 
@@ -108,7 +108,7 @@ describe("barcodeEvidenceTier", () => {
       sourceWeight: 0.2,
     });
     const marketplace = evidence({
-      providerName: "PicClick",
+      providerName: "eBay",
       coverUrl: "https://example.test/listing.jpg",
       sourceWeight: 0.99,
     });
@@ -119,7 +119,7 @@ describe("barcodeEvidenceTier", () => {
 
   it("limite le tie-break sourceWeight au sein d'un même tier listing", () => {
     const heavy = evidence({
-      providerName: "PicClick",
+      providerName: "eBay",
       sourceWeight: 0.99,
     });
     const light = evidence({

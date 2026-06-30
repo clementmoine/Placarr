@@ -46,10 +46,7 @@ const fieldInputClassName =
   "bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 w-full text-xs sm:text-sm h-10";
 
 function volumeFieldSchema(message: string) {
-  return z.preprocess(
-    (value) => parseSeriesVolume(value) ?? Number.NaN,
-    z.number().int().min(1, message),
-  );
+  return z.coerce.number({ invalid_type_error: message }).int().min(1, message);
 }
 
 export function BulkSeriesForm({
@@ -216,12 +213,10 @@ export function BulkSeriesForm({
                       name={field.name}
                       ref={field.ref}
                       onBlur={field.onBlur}
-                      value={field.value === "" ? "" : field.value}
+                      value={field.value}
                       onChange={(event) => {
-                        const next = event.target.value;
-                        field.onChange(
-                          next === "" ? "" : Number.parseInt(next, 10),
-                        );
+                        const parsed = parseSeriesVolume(event.target.value);
+                        field.onChange(parsed ?? Number.NaN);
                       }}
                     />
                   </FormControl>
@@ -245,12 +240,10 @@ export function BulkSeriesForm({
                       name={field.name}
                       ref={field.ref}
                       onBlur={field.onBlur}
-                      value={field.value === "" ? "" : field.value}
+                      value={field.value}
                       onChange={(event) => {
-                        const next = event.target.value;
-                        field.onChange(
-                          next === "" ? "" : Number.parseInt(next, 10),
-                        );
+                        const parsed = parseSeriesVolume(event.target.value);
+                        field.onChange(parsed ?? Number.NaN);
                       }}
                     />
                   </FormControl>

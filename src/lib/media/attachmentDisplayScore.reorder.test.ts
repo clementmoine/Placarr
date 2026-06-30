@@ -10,14 +10,12 @@ describe("reorderAttachmentsCoverFirst", () => {
         type: "cover" as const,
         url: "/uploads/low.jpg",
         source: "pricecharting",
-        isRealBoxCoverSource: true,
         providerImageScoreAdjustment: 160,
       },
       {
         type: "cover" as const,
         url: "/uploads/high.jpg",
         source: "steamgriddb",
-        isRealBoxCoverSource: true,
       },
     ];
 
@@ -27,8 +25,6 @@ describe("reorderAttachmentsCoverFirst", () => {
         {
           width: 260,
           height: 366,
-          shortestEdge: 260,
-          isListingPhoto: false,
           meanLuminance: 120,
           darkPixelRatio: 0.1,
         },
@@ -38,8 +34,6 @@ describe("reorderAttachmentsCoverFirst", () => {
         {
           width: 920,
           height: 1200,
-          shortestEdge: 920,
-          isListingPhoto: false,
           meanLuminance: 140,
           darkPixelRatio: 0.05,
         },

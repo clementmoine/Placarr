@@ -40,6 +40,13 @@ export const geedieModule: ProviderModule = {
     gameMediaGallerySource: true,
     isRealBoxCover: true,
     coverUrlHost: "geedie.lt",
+    // `/storage/collectables/` images are a seller's photo of their own used
+    // copy (case glare, perspective); `/storage/products/` and the Cloudflare
+    // Images CDN serve the clean catalogue render. Provenance, not privilege.
+    coverProvenanceRules: {
+      userPhoto: ["/storage/collectables/"],
+      catalog: ["/storage/products/", "imagedelivery.net"],
+    },
     remoteImageReferer: "https://geedie.lt/",
     websiteUrl: "https://geedie.lt/",
     notes: "Photos de boîtes du marketplace Geedie (PS/Xbox/Nintendo).",
@@ -58,7 +65,11 @@ export const geedieModule: ProviderModule = {
     id: "geedie",
     async resolve({ name, platform, lookupQueries, barcode }) {
       const queries = lookupQueries?.length ? lookupQueries : [name];
-      const gallery = await fetchGeedieGallery(queries, platform, barcode);
+      const gallery = await fetchGeedieGallery(
+        queries,
+        platform ?? undefined,
+        barcode ?? undefined,
+      );
       return gallery ? galleryToMetadata(gallery) : null;
     },
   }),
@@ -85,8 +96,11 @@ export const geedieModule: ProviderModule = {
       platform: "ps4",
     },
   },
-  runMappingProbe: () =>
-    rawProbe("Geedie", () =>
-      fetchFromGeedie("Trine 4: The Nightmare Prince", "ps4"),
-    ),
+  runMappingProbe: async () => {
+    const product = await fetchFromGeedie(
+      "Trine 4: The Nightmare Prince",
+      "ps4",
+    );
+    return rawProbe(product);
+  },
 };

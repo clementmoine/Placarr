@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import {
   buildCachedBarcodePayload,
   cleanCompiledResultForResponse,
@@ -164,7 +165,9 @@ async function cacheBarcodeResult(
         priceNew: priceSnapshot?.priceNew ?? null,
         priceUsed: priceSnapshot?.priceUsed ?? null,
         priceUsedCIB: priceSnapshot?.priceUsedCIB ?? null,
-        observations: res.observations?.length ? res.observations : undefined,
+        observations: res.observations?.length
+          ? (res.observations as unknown as Prisma.InputJsonValue)
+          : undefined,
         observationSchemaVersion: res.observationSchemaVersion ?? null,
         rawNames: {
           create: rawNames,
@@ -182,7 +185,9 @@ async function cacheBarcodeResult(
         priceNew: priceSnapshot?.priceNew ?? null,
         priceUsed: priceSnapshot?.priceUsed ?? null,
         priceUsedCIB: priceSnapshot?.priceUsedCIB ?? null,
-        observations: res.observations?.length ? res.observations : undefined,
+        observations: res.observations?.length
+          ? (res.observations as unknown as Prisma.InputJsonValue)
+          : undefined,
         observationSchemaVersion: res.observationSchemaVersion ?? null,
         rawNames: {
           deleteMany: {},

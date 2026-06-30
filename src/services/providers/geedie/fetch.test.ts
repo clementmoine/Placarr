@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  inferGeedieAttachmentRole,
+  parseGeedieCountryOfRelease,
   parseGeedieProductPage,
   parseGeedieSearchResults,
   pickAlignedGeedieSearchHits,
@@ -76,6 +78,98 @@ describe("geedie fetch", () => {
     expect(product?.title).toBe("PS4 Trine 4: The Nightmare Prince");
     expect(product?.barcode).toBe("5016488133142");
     expect(product?.coverUrl).toContain("/public");
+  });
+
+  it("prefers the catalog render over a seller's collectable photo", () => {
+    // Real Geedie shape: a listing with both the full-res /storage/products
+    // catalog cover (currentImage) and a seller-uploaded /storage/collectables
+    // photo of their used copy. The catalog render must win.
+    const html = `
+<script type="application/ld+json">
+{"@context":"https://schema.org/","@type":"Product","name":"PS4 Assassin's Creed The Ezio Collection","image":"/storage/products/ps4-assassin-s-creed-the-ezio-collection-3307215977361/640x480-8BLefyaJREyxJt58VPPwOjToIoBA7xSTIYUTCrHL.webp","gtin13":"3307215977361"}
+</script>
+<div x-data="{ currentImage: 'https://geedie.lt/storage/products/ps4-assassin-s-creed-the-ezio-collection-3307215977361/8BLefyaJREyxJt58VPPwOjToIoBA7xSTIYUTCrHL.jpg' }">
+<img src="https://geedie.lt/storage/collectables/32736/qw9dgEgL5rQcg6HPYMdJSQxXdhWgDmcu00RsZkBU.jpg" />
+`;
+    const product = parseGeedieProductPage(
+      html,
+      "https://geedie.lt/en/ps4-assassin-s-creed-the-ezio-collection-3307215977361",
+    );
+    expect(product?.coverUrl).toBe(
+      "https://geedie.lt/storage/products/ps4-assassin-s-creed-the-ezio-collection-3307215977361/8BLefyaJREyxJt58VPPwOjToIoBA7xSTIYUTCrHL.jpg",
+    );
+    expect(product?.coverUrl).not.toContain("/storage/collectables/");
+  });
+
+  it("falls back to the collectable photo only when no catalog image exists", () => {
+    // No JSON-LD image and no currentImage → the seller photo is the only cover,
+    // so keep it (honest fallback over nothing) rather than dropping the listing.
+    const html = `
+<script type="application/ld+json">
+{"@context":"https://schema.org/","@type":"Product","name":"PS4 Obscure Used Game","gtin13":"1234567890123"}
+</script>
+<img src="https://geedie.lt/storage/collectables/99999/onlyPhoto.jpg" />
+`;
+    const product = parseGeedieProductPage(
+      html,
+      "https://geedie.lt/en/ps4-obscure-used-game",
+    );
+    expect(product?.coverUrl).toBe(
+      "https://geedie.lt/storage/collectables/99999/onlyPhoto.jpg",
+    );
+  });
+
+  it("reads the announced 'Country of release' from the product detail", () => {
+    // Real Geedie shape: the attribute label sits in one div and the value is a
+    // marketplace filter link carrying both a title attribute and visible text.
+    const html = `
+<div class="text-xs font-bold capitalize">
+    Country of release
+</div>
+<div class="text-sm md:mt-1 md:text-base">
+    <a href="https://geedie.lt/en/marketplace?Country%20of%20release%5B0%5D=1367" rel="nofollow" title="Japan">Japan</a>
+</div>
+`;
+    expect(parseGeedieCountryOfRelease(html)).toBe("Japan");
+  });
+
+  it("derives the region role from the announced country, not the title", () => {
+    // A Japanese edition whose marketplace title says nothing about region must
+    // still resolve to "jp" via the declared country — so the shared regionRank
+    // ordering can rank it below the PAL covers instead of mislabelling it "eu".
+    const role = inferGeedieAttachmentRole(
+      {
+        title: "PS4 Assassin's Creed The Ezio Collection",
+        productUrl:
+          "https://geedie.lt/en/sony-playstation-4-assassin-s-creed-the-ezio-collection-3",
+        thumbnailUrl: "https://geedie.lt/storage/products/x/cover.webp",
+      },
+      {
+        title: "PS4 Assassin's Creed The Ezio Collection",
+        productUrl:
+          "https://geedie.lt/en/sony-playstation-4-assassin-s-creed-the-ezio-collection-3",
+        coverUrl: "https://geedie.lt/storage/products/x/cover.webp",
+        countryOfRelease: "Japan",
+      },
+    );
+    expect(role).toBe("jp");
+  });
+
+  it("falls back to title keywords when no country is announced", () => {
+    const role = inferGeedieAttachmentRole(
+      {
+        title: "PS4 Some Game (USA)",
+        productUrl: "https://geedie.lt/en/ps4-some-game-usa",
+        thumbnailUrl: "https://geedie.lt/storage/products/x/cover.webp",
+      },
+      {
+        title: "PS4 Some Game (USA)",
+        productUrl: "https://geedie.lt/en/ps4-some-game-usa",
+        coverUrl: "https://geedie.lt/storage/products/x/cover.webp",
+        countryOfRelease: null,
+      },
+    );
+    expect(role).toBe("us");
   });
 
   it("accepts Geedie marketplace titles with platform prefix", () => {

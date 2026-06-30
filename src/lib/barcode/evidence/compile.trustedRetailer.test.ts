@@ -16,8 +16,8 @@ describe("buildProductEvidence — trusted retailers", () => {
     });
   });
 
-  it("laisse PicClick en marketplace", () => {
-    const evidence = buildProductEvidence("PicClick", {
+  it("laisse eBay en marketplace", () => {
+    const evidence = buildProductEvidence("eBay", {
       name: "Unlock! Short Adventures - Red Mask",
     });
 

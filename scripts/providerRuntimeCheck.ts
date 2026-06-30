@@ -13,7 +13,6 @@ import { ledenicheurModule } from "@/services/providers/ledenicheur";
 import { musicbrainzModule } from "@/services/providers/musicbrainz";
 import { omdbModule } from "@/services/providers/omdb";
 import { openlibraryModule } from "@/services/providers/openlibrary";
-import { picclickModule } from "@/services/providers/picclick";
 import { pricechartingModule } from "@/services/providers/pricecharting";
 import { rawgModule } from "@/services/providers/rawg";
 import { screenscraperModule } from "@/services/providers/screenscraper";
@@ -168,11 +167,6 @@ async function run() {
   await safe(
     freakxyModule.info.id,
     () => barcodeDeps.fetchFromFreakxy!("5060004769360"),
-    "list",
-  );
-  await safe(
-    picclickModule.info.id,
-    () => barcodeDeps.fetchFromPicClick!("4988601467124"),
     "list",
   );
 

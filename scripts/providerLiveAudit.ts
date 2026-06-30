@@ -10,8 +10,6 @@ import { fetchFromHowLongToBeat } from "@/services/providers/howlongtobeat";
 import { fetchPricesFromLeDenicheur } from "@/services/providers/ledenicheur";
 import { ledenicheurModule } from "@/services/providers/ledenicheur";
 import { fetchFromMusicBrainz } from "@/services/providers/musicbrainz";
-import { fetchFromPicClick } from "@/services/providers/picclick";
-import { picclickModule } from "@/services/providers/picclick";
 import { fetchMetadataFromPriceCharting } from "@/services/providers/pricecharting";
 import { pricechartingModule } from "@/services/providers/pricecharting";
 import { fetchFromSteam } from "@/services/providers/steam";
@@ -330,15 +328,6 @@ async function run() {
 
   await safe(freakxyModule.info.id, async () => {
     const result = await fetchFromFreakxy("5060004769360");
-    return {
-      count: result.length,
-      firstKeys: Object.keys(result[0] || {}),
-      first: result[0] || null,
-    };
-  });
-
-  await safe(picclickModule.info.id, async () => {
-    const result = await fetchFromPicClick("4988601467124");
     return {
       count: result.length,
       firstKeys: Object.keys(result[0] || {}),

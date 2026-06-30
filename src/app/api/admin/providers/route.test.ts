@@ -191,7 +191,7 @@ describe("GET /api/admin/providers", () => {
         "scandex",
         "chasseauxlivres",
         "achatmoinscher",
-        "picclick",
+        "ebay",
         "ledenicheur",
       ]),
     );
@@ -203,7 +203,7 @@ describe("GET /api/admin/providers", () => {
         "boardgamegeek",
         "chasseauxlivres",
         "achatmoinscher",
-        "picclick",
+        "ebay",
         "ledenicheur",
       ]),
     );
@@ -214,7 +214,7 @@ describe("GET /api/admin/providers", () => {
       expect.arrayContaining([
         "chasseauxlivres",
         "achatmoinscher",
-        "picclick",
+        "ebay",
         "ledenicheur",
         "philibert",
         "monsieurde",

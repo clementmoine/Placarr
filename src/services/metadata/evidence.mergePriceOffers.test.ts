@@ -92,7 +92,7 @@ describe("mergePriceOffers", () => {
     ]);
 
     const merged = await mergePriceOffers({ barcodeCacheId: 9 }, [
-      { source: "PicClick", condition: "used", priceCents: 0 },
+      { source: "eBay", condition: "used", priceCents: 0 },
       { source: "Smartoys", condition: "new", priceCents: 12.5 },
     ]);
 

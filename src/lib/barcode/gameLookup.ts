@@ -33,7 +33,7 @@ export type GameLookupInputs = {
   calListings: NamedListing[];
   amc: NamedListing[];
   freakxy: NamedListing[];
-  picclick: NamedListing[];
+  ebay: NamedListing[];
   contextPlatformKey: string | null;
 };
 
@@ -100,7 +100,7 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
   );
   pushListingSignals(inputs.amc, candidates, productPlatformSignals, 1.1);
   pushListingSignals(inputs.freakxy, candidates, productPlatformSignals, 0.8);
-  pushListingSignals(inputs.picclick, candidates, productPlatformSignals, 0.9);
+  pushListingSignals(inputs.ebay, candidates, productPlatformSignals, 0.9);
 
   const detectedPlatform =
     pickPlatformKeyFromSignals(productPlatformSignals) ||
@@ -110,7 +110,7 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
   if (inputs.pc?.title) gameTitle = inputs.pc.title;
   else if (inputs.sd?.igdb_metadata?.name) {
     gameTitle = inputs.sd.igdb_metadata.name;
-  } else if (inputs.picclick[0]?.name) gameTitle = inputs.picclick[0].name;
+  } else if (inputs.ebay[0]?.name) gameTitle = inputs.ebay[0].name;
   else if (inputs.amc[0]?.name) gameTitle = inputs.amc[0].name;
   else if (inputs.calListings[0]?.name) gameTitle = inputs.calListings[0].name;
   else if (inputs.freakxy[0]?.name) gameTitle = inputs.freakxy[0].name;
@@ -187,11 +187,11 @@ export async function enrichGameBarcodeLookups(params: {
 }
 
 export function pickMovieTitleFromListings(
-  picclick: NamedListing[],
+  ebay: NamedListing[],
   amc: NamedListing[],
   calListings: NamedListing[],
 ): string {
-  if (picclick[0]?.name) return picclick[0].name;
+  if (ebay[0]?.name) return ebay[0].name;
   if (amc[0]?.name) return amc[0].name;
   if (calListings[0]?.name) return calListings[0].name;
   return "";

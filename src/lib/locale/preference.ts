@@ -28,6 +28,8 @@ const LOCALE_REGION_ALIASES: Record<string, LocaleRegion> = {
   gb: "uk",
   uk: "uk",
   "united kingdom": "uk",
+  "great britain": "uk",
+  england: "uk",
   // World
   world: "wor",
   global: "wor",
@@ -80,6 +82,7 @@ const LOCALE_REGION_ALIASES: Record<string, LocaleRegion> = {
   // Americas / NTSC
   ame: "us",
   usa: "us",
+  "united states": "us",
   "north america": "us",
   ar: "us",
   br: "us",
@@ -208,7 +211,7 @@ export function localeBonusForAttachmentRole(role?: string | null): number {
 export function inferTextLanguage(text: string): LocaleLanguage | "unknown" {
   if (/[éèàùçêâôîëïüû]/i.test(text)) return "fr";
 
-  if (/[¿¡]/.test(text)) return "es";
+  if (/[¿¡]/.test(text)) return "unknown";
 
   const normalized = text
     .normalize("NFD")

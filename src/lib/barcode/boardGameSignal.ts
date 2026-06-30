@@ -133,7 +133,7 @@ export function collectPayloadListingNames(
   };
 
   pushListings(payload.amc);
-  pushListings(payload.picclick);
+  pushListings(payload.ebay);
   pushListings(payload.freakxy);
   pushListings(payload.calGeneric);
   pushListings(payload.calToys);

@@ -261,9 +261,14 @@ export const EMPTY_LIST_ITEM_PRICES = {
   priceUsed: null,
   priceUsedCIB: null,
   priceLastUpdated: null,
-} as const;
+};
 
-export type ListItemPriceFields = typeof EMPTY_LIST_ITEM_PRICES;
+export type ListItemPriceFields = {
+  priceNew: number | null;
+  priceUsed: number | null;
+  priceUsedCIB: number | null;
+  priceLastUpdated: Date | string | null;
+};
 
 type ListItemPriceRecord = {
   id: string;

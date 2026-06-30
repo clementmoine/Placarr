@@ -553,8 +553,8 @@ export function supplementGameEditionMetadata(
       pickBestCoverFromAttachments(attachments ?? []) ||
       base.imageUrl?.trim() ||
       edition.imageUrl?.trim(),
-    backgroundImageUrl:
-      edition.backgroundImageUrl?.trim() || base.backgroundImageUrl,
+    heroImageUrl:
+      edition.heroImageUrl?.trim() || base.heroImageUrl,
     attachments,
     aliases: Array.from(
       new Set(

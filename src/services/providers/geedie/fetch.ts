@@ -7,6 +7,7 @@ import {
   metadataTitleMatchScore,
 } from "@/lib/metadata/titleMatching";
 import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
+import { resolveLocaleRegion } from "@/lib/locale/preference";
 
 const GEEDIE_BASE_URL = "https://geedie.lt";
 const MAX_GEEDIE_GALLERY_FETCHES = 6;
@@ -30,6 +31,7 @@ export interface GeedieProduct {
   coverUrl?: string | null;
   barcode?: string | null;
   productId?: string;
+  countryOfRelease?: string | null;
 }
 
 export interface GeedieGalleryItem {
@@ -367,10 +369,18 @@ function buildGeedieBarcodeProductUrls(
   return [...urls];
 }
 
-function inferGeedieAttachmentRole(
+export function inferGeedieAttachmentRole(
   hit: GeedieSearchHit,
   product: GeedieProduct,
 ): string {
+  // Geedie announces the edition's region on the product page as a structured
+  // "Country of release" field (e.g. Japan, France, United States). Trust that
+  // declared value first: accurate region labelling then lets the shared
+  // regionRank ordering place, say, a JP cover below the PAL ones on its own
+  // merits, instead of every Geedie cover silently defaulting to "eu".
+  const announced = resolveLocaleRegion(product.countryOfRelease);
+  if (announced) return announced;
+
   const hay = `${hit.title} ${product.title} ${hit.productUrl}`;
   if (/\b(japan|japanese|jpn|asia)\b/i.test(hay)) return "jp";
   if (/\b(usa|us version|ntsc-u)\b/i.test(hay)) return "us";
@@ -426,6 +436,23 @@ async function resolveGeedieGalleryItem(
   };
 }
 
+export function parseGeedieCountryOfRelease(html: string): string | null {
+  // The detail page renders a "Country of release" attribute whose value is a
+  // marketplace filter link, e.g.
+  //   <div ...>Country of release</div>
+  //   <div ...><a href="...Country of release[0]=1367" title="Japan">Japan</a></div>
+  // Prefer the anchor's title attribute (clean country name) and fall back to
+  // its visible text.
+  const block = html.match(
+    /Country of release[\s\S]{0,300}?<a\b([^>]*)>([\s\S]*?)<\/a>/i,
+  );
+  if (!block) return null;
+  const fromTitle = block[1]?.match(/\btitle="([^"]+)"/i)?.[1];
+  const fromText = block[2]?.replace(/<[^>]*>/g, "").trim();
+  const value = (fromTitle || fromText || "").trim();
+  return value || null;
+}
+
 export function parseGeedieProductPage(html: string, productUrl: string): GeedieProduct | null {
   const jsonLdMatch = html.match(
     /<script type="application\/ld\+json">\s*(\{[\s\S]*?\})\s*<\/script>/,
@@ -442,9 +469,19 @@ export function parseGeedieProductPage(html: string, productUrl: string): Geedie
     if (!title) return null;
 
     const imageFromJson = upgradeGeedieImageUrl(payload.image);
-    const imageFromGallery = html.match(
-      /currentImage:\s*'(https:\/\/imagedelivery\.net\/[^']+)'/,
+    // `currentImage` is the gallery's main, full-resolution catalog render. It is
+    // hosted either on Cloudflare Images or Geedie's own /storage/products bucket,
+    // so capture any host — matching only imagedelivery used to miss the full-res
+    // /storage/products cover and fall through to a smaller/worse image.
+    const galleryCover = html.match(
+      /currentImage:\s*'(https?:\/\/[^']+)'/,
     )?.[1];
+    // `/storage/collectables/` images are seller-uploaded PHOTOS of an actual used
+    // copy (plastic case borders, glare, perspective, off aspect ratio) — not clean
+    // catalog art. Geedie serves one whenever a listing has it, which is why some
+    // Geedie covers look like a snapshot of a second-hand box. For a cover we always
+    // prefer the catalog render and only fall back to the user photo when the
+    // listing has no catalog image at all (honest fallback over none).
     const collectableImage = html.match(
       /https:\/\/geedie\.lt\/storage\/collectables\/\d+\/[^"'\\]+/,
     )?.[0];
@@ -453,12 +490,13 @@ export function parseGeedieProductPage(html: string, productUrl: string): Geedie
       title,
       productUrl,
       coverUrl:
-        collectableImage ||
-        upgradeGeedieImageUrl(imageFromGallery) ||
+        upgradeGeedieImageUrl(galleryCover) ||
         imageFromJson ||
+        collectableImage ||
         null,
       barcode: payload.gtin13 || null,
       productId: productUrl.split("/").pop() || undefined,
+      countryOfRelease: parseGeedieCountryOfRelease(html),
     };
   } catch {
     return null;

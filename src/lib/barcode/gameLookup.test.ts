@@ -17,7 +17,7 @@ function makeInputs(
     calListings: [],
     amc: [],
     freakxy: [],
-    picclick: [],
+    ebay: [],
     contextPlatformKey: null,
     ...overrides,
   };

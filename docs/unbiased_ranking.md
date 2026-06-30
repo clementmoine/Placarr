@@ -87,7 +87,7 @@ provider.
 | Per-provider merge weights (`screenscraper: 0.9`, `igdb: 0.85`, …) | `src/services/providerRegistry.ts` (`PROVIDER_METADATA_EXTENSIONS`) |
 | Per-provider flags as privilege (`isRealBoxCover`, `isSecondary`)  | same                                                                |
 | Literal name hardcode (`providerId === "screenscraper" ? 6 : 12`)  | `src/services/metadataFetch.ts`                                     |
-| Hardcoded "real box cover" provider set                            | `attachmentDisplayScore.ts` (`REAL_BOX_COVER_SOURCES`)              |
+| ~~"real box cover" `+220` display bonus~~ — **removed**            | was `attachmentDisplayScore.ts`; the magic weight + `isRealBoxCoverSource` plumbing are gone. Cover ranking is now resolution + exposure + provenance tier only. |
 
 These must be replaced by data-property + consensus scoring (below).
 
@@ -177,6 +177,27 @@ a field the provider gets to assert globally.
 - **Tier**: image role and source context (`cover-front`, `product_packshot`,
   `listing_photo`, `user_photo`) → region/language
   (`localeBonusForAttachmentRole`).
+
+  > **STATUS 2026-06-29.** The **provenance** layer of this tier shipped:
+  > `@/lib/media/coverProvenance.ts` (`catalog < listing_photo < user_photo`) is
+  > a lexicographic rung in `rankCoversForDisplay` inserted **after region** (so a
+  > photographed copy sinks below catalog art of the same region, never above a
+  > better-region cover). Provenance is observed, not privileged: providers
+  > declare `coverProvenanceRules` (URL substrings) on `ProviderInfo`
+  > (Geedie `/storage/collectables` → user_photo vs `/storage/products` → catalog;
+  > iCollect images → listing_photo); core resolves them generically in
+  > `coverProvenanceForSource` (no provider id). Because the provider URL is
+  > rewritten to a local `/uploads` path on download, provenance is **persisted**
+  > (`Attachment.coverProvenance`) — derived from the original URL at enrichment.
+  > Provenance is **declaration-only**: the brittle pixel `isListingPhoto`
+  > heuristic (and the perspective/3D raster detectors) were removed after they
+  > false-positived on tightly-cropped front-on photos. The additive `+220`
+  > real-box bonus and the `-480` listing-photo penalty are gone; the photo-vs-
+  > catalog axis is now the provenance tier alone, above a quality score built
+  > from **persisted** resolution + exposure metrics
+  > (`Attachment.width/height/meanLuminance/darkPixelRatio`, read at display time
+  > so the gallery re-sorts without a refresh). **Existing items keep
+  > `coverProvenance = NULL` and null metrics until re-enriched.**
 - **Consensus**: **perceptual-hash agreement** — the same image reached by the
   most distinct, independent sources (dHash clustering already exists in the
   dedup path). This is the image analogue of title medoid.

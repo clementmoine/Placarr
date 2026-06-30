@@ -15,14 +15,14 @@ export type BackgroundJobKind = "metadataRefresh" | "metadataEnrich";
 export type BackgroundJobRow = {
   id: string;
   name: string;
-  slug: string;
+  slug: string | null;
   kind: BackgroundJobKind;
   startedAt: Date;
   cancellable: boolean;
   shelf: {
     id: string;
     name: string;
-    slug: string;
+    slug: string | null;
     type: string;
   };
 };

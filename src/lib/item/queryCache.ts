@@ -9,7 +9,13 @@ import {
 type ItemPatch = Partial<Item> & {
   id: Item["id"];
   shelf?: { id?: Shelf["id"] | null } | null;
-  metadata?: unknown;
+  metadata?: {
+    title?: string | null;
+    aliases?: string[] | string | null;
+    sourceQuery?: string | null;
+    facts?: Array<{ kind?: string; value?: string | null }> | string | null;
+    authors?: Array<{ name?: string | null }> | null;
+  } | null;
   [key: string]: unknown;
 };
 

@@ -38,17 +38,30 @@ enum AttachmentType {
 }
 
 model Attachment {
-  id         String         @id @default(cuid())
-  type       AttachmentType
-  title      String?
-  duration   Int?
-  url        String
-  metadataId String
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  role       String?
-  source     String?
-  metadata   Metadata       @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+  id              String         @id @default(cuid())
+  type            AttachmentType
+  title           String?
+  duration        Int?
+  url             String
+  metadataId      String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  role            String?
+  source          String?
+  // Factual source context of a cover image (catalog / listing_photo /
+  // user_photo). Persisted because it is derived from the provider's original
+  // image URL, which is rewritten to a local /uploads path on download — so it
+  // cannot be recomputed from the stored URL. Drives the provenance tier in the
+  // cover ranking (see @/lib/media/coverProvenance).
+  coverProvenance String?
+  // Image metrics measured once at enrichment (sharp) and persisted so the
+  // read-time cover ranking can sort by resolution + exposure without
+  // re-decoding files on every page render. See @/lib/media/attachmentDisplayScore.
+  width           Int?
+  height          Int?
+  meanLuminance   Float?
+  darkPixelRatio  Float?
+  metadata        Metadata       @relation(fields: [metadataId], references: [id], onDelete: Cascade)
 
   @@index([metadataId])
 }

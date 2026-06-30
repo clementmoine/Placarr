@@ -38,7 +38,6 @@ import {
   isCoverResolutionAcceptable,
 } from "@/lib/media/imageMetrics";
 import { resolveCoverAttachmentRole } from "@/lib/media/coverPerspective";
-import { detectListingPhotoFromBuffer } from "@/lib/media/coverListingPhoto";
 import { measureCoverExposureFromBuffer } from "@/lib/media/coverExposure.server";
 import { regionRank } from "@/lib/locale/preference";
 import { applyConsensus } from "@/lib/metadata/consensus";
@@ -49,6 +48,7 @@ import { PROVIDERS, inferImageAttachmentFromMediaUrl } from "@/services/provider
 import {
   authoritative3dCoverRoleSource,
   canonicalProviderIdForSource,
+  coverProvenanceForSource,
   gridStyleCoverLabelSource,
   isCanonicalCoverSource,
   withProviderAttachmentTraits,
@@ -100,6 +100,12 @@ const mapAttachments = (attachments?: Attachment[]) =>
       url: attachment.url,
       role: attachment.role ?? undefined,
       source: attachment.source ?? undefined,
+      coverProvenance: attachment.coverProvenance ?? undefined,
+      // Persisted image metrics → read-time cover ranking (no re-decode on load).
+      width: attachment.width ?? undefined,
+      height: attachment.height ?? undefined,
+      meanLuminance: attachment.meanLuminance ?? undefined,
+      darkPixelRatio: attachment.darkPixelRatio ?? undefined,
     }),
   ) ?? [];
 
@@ -108,20 +114,31 @@ const mapAttachments = (attachments?: Attachment[]) =>
  * actually has, dropping derived display-only fields (e.g. the provider cover
  * trait flags) so Prisma `create` does not reject unknown args.
  */
-const toAttachmentCreateData = (attachment: {
-  type: AttachmentType;
-  title?: string | null;
-  duration?: number | null;
-  url: string;
-  role?: string | null;
-  source?: string | null;
-}) => ({
+const toAttachmentCreateData = (
+  attachment: {
+    type: AttachmentType;
+    title?: string | null;
+    duration?: number | null;
+    url: string;
+    role?: string | null;
+    source?: string | null;
+    coverProvenance?: string | null;
+  },
+  metrics?: AttachmentImageMetrics | null,
+) => ({
   type: attachment.type,
   title: attachment.title ?? undefined,
   duration: attachment.duration ?? undefined,
   url: attachment.url,
   role: attachment.role ?? undefined,
   source: attachment.source ?? undefined,
+  coverProvenance: attachment.coverProvenance ?? undefined,
+  // Persist the metrics measured during this enrichment so the read-time cover
+  // ranking can reorder the gallery from stored data (no refresh required).
+  width: metrics?.width ?? null,
+  height: metrics?.height ?? null,
+  meanLuminance: metrics?.meanLuminance ?? null,
+  darkPixelRatio: metrics?.darkPixelRatio ?? null,
 });
 
 function isDisplayImageAttachment(attachment: {
@@ -668,38 +685,33 @@ export async function storeMetadata(
 
         let role = attachment.role;
         if (attachment.type === "cover") {
-          const localPath = localizedUrl.startsWith("/uploads/")
-            ? path.join(
-                process.cwd(),
-                "public",
-                localizedUrl.replace(/^\//, ""),
-              )
-            : null;
-          const imageBuffer =
-            localPath && fs.existsSync(localPath)
-              ? fs.readFileSync(localPath)
-              : null;
           role =
-            (await resolveCoverAttachmentRole({
+            resolveCoverAttachmentRole({
               type: attachment.type,
               url: sourceUrl,
               title: attachment.title,
               role: attachment.role,
               source: attachment.source,
-              imageBuffer,
               authoritative3dCoverRoleSource: authoritative3dCoverRoleSource(
                 attachment.source,
               ),
               gridStyleCoverLabelsSource: gridStyleCoverLabelSource(
                 attachment.source,
               ),
-            })) ?? role;
+            }) ?? role;
         }
 
         return {
           ...attachment,
           url: localizedUrl,
           role,
+          // Resolve provenance from the ORIGINAL provider URL before it is
+          // replaced by the local /uploads path, then persist it: the localized
+          // URL no longer reveals the source bucket (catalog vs seller/user
+          // photo), so it cannot be recomputed on read.
+          coverProvenance:
+            coverProvenanceForSource(attachment.source, sourceUrl) ??
+            attachment.coverProvenance,
         };
       }),
     )
@@ -717,9 +729,10 @@ export async function storeMetadata(
       .map((attachment) => ({
         type: attachment.type,
         url: attachment.url,
-        role: attachment.role,
+        role: attachment.role ?? undefined,
         source: attachment.source ?? "merged",
-        title: attachment.title,
+        title: attachment.title ?? undefined,
+        coverProvenance: attachment.coverProvenance ?? undefined,
       }));
   }
 
@@ -862,7 +875,12 @@ export async function storeMetadata(
       data: {
         ...metadataData,
         attachments: {
-          create: storableAttachments.map(toAttachmentCreateData),
+          create: storableAttachments.map((attachment) =>
+            toAttachmentCreateData(
+              attachment,
+              imageMetricsByUrl.get(attachment.url),
+            ),
+          ),
         },
         authors: {
           set: [], // Disconnect all existing authors
@@ -884,7 +902,12 @@ export async function storeMetadata(
           connect: { id: itemId },
         },
         attachments: {
-          create: storableAttachments.map(toAttachmentCreateData),
+          create: storableAttachments.map((attachment) =>
+            toAttachmentCreateData(
+              attachment,
+              imageMetricsByUrl.get(attachment.url),
+            ),
+          ),
         },
       },
       include: { attachments: true, authors: true, publishers: true },
@@ -1087,7 +1110,12 @@ async function perceptualHashForAsset(url: string): Promise<string | null> {
 }
 
 async function dedupeLocalizedAttachmentsByContent<
-  T extends { type: AttachmentType; url: string; role?: string | null },
+  T extends {
+    type: AttachmentType;
+    url: string;
+    role?: string | null;
+    source?: string | null;
+  },
 >(attachments: T[]): Promise<T[]> {
   const hashByUrl = new Map<string, string>();
   const metricsByUrl = new Map<string, AttachmentImageMetrics | null>();
@@ -1158,13 +1186,11 @@ export async function readAttachmentImageMetrics(
       const buffer = fs.readFileSync(filePath);
       const metadata = await sharp(buffer).metadata();
       if (!metadata.width || !metadata.height) return null;
-      const isListingPhoto = await detectListingPhotoFromBuffer(buffer);
       const exposure = await measureCoverExposureFromBuffer(buffer);
       return {
         width: metadata.width,
         height: metadata.height,
         format: metadata.format,
-        isListingPhoto,
         meanLuminance: exposure?.meanLuminance,
         darkPixelRatio: exposure?.darkPixelRatio,
       };

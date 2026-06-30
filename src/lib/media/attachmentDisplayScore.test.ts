@@ -12,48 +12,10 @@ import {
 } from "./attachmentDisplayScore";
 
 describe("attachmentDisplayScore", () => {
-  it("priorise les covers ScreenScraper, qui sont des scans de vraies boîtes", () => {
-    const steamGridCover = {
-      type: "cover" as const,
-      source: "steamgriddb",
-      role: "grid-vertical",
-      url: "/uploads/steamgrid.png",
-    };
-    const screenScraperCover = {
-      type: "cover" as const,
-      source: "screenscraper",
-      role: "uk",
-      url: "/uploads/screenscraper.jpg",
-      isRealBoxCoverSource: true,
-    };
-    const metrics = new Map([
-      [steamGridCover.url, { width: 600, height: 900, format: "png" }],
-      [screenScraperCover.url, { width: 486, height: 606, format: "jpg" }],
-    ]);
-
-    expect(
-      rankAttachmentsForDisplay(
-        [steamGridCover, screenScraperCover],
-        metrics,
-      )[0],
-    ).toBe(screenScraperCover);
-  });
-
-  it("documente le bonus de source vraie boîte via le flag stampé serveur", () => {
-    const details = explainAttachmentScoreForDisplay({
-      type: "cover",
-      source: "screenscraper",
-      url: "/uploads/cover.jpg",
-      isRealBoxCoverSource: true,
-    });
-
-    expect(details.signals).toContain("+220 real box cover source");
-  });
-
   it("applique l'ajustement de score image déclaré par le provider", () => {
     const details = explainAttachmentScoreForDisplay({
       type: "cover",
-      source: "picclick",
+      source: "ebay",
       url: "/uploads/listing.jpg",
       providerImageScoreAdjustment: -280,
     });
@@ -67,14 +29,12 @@ describe("attachmentDisplayScore", () => {
       source: "bedetheque",
       role: "fr",
       url: "/uploads/dark-scan.jpg",
-      isRealBoxCoverSource: true,
     };
     const brightCover = {
       type: "cover" as const,
       source: "booknode",
       role: "fr",
       url: "/uploads/bright-cover.webp",
-      isRealBoxCoverSource: true,
     };
     const metrics = new Map([
       [
@@ -107,77 +67,6 @@ describe("attachmentDisplayScore", () => {
     expect(
       pickBestCoverFromAttachments([darkScan, brightCover], metrics),
     ).toBe(brightCover.url);
-  });
-
-  it("n'ecarte pas une jaquette catalogue marquee a tort en photo listing", () => {
-    const catalogCover = {
-      type: "cover" as const,
-      source: "bedetheque",
-      role: "fr",
-      url: "/uploads/catalog-scan.jpg",
-      isRealBoxCoverSource: true,
-    };
-    const metrics = new Map([
-      [
-        catalogCover.url,
-        {
-          width: 400,
-          height: 570,
-          format: "jpeg",
-          isListingPhoto: true,
-        },
-      ],
-    ]);
-
-    expect(
-      pickBestCoverFromAttachments([catalogCover], metrics),
-    ).toBe(catalogCover.url);
-    expect(
-      explainAttachmentScoreForDisplay(
-        catalogCover,
-        metrics.get(catalogCover.url),
-      ).signals,
-    ).not.toContain("-480 seller listing photo");
-  });
-
-  it("penalise fortement les photos listing vendeur et les exclut du cover par defaut", () => {
-    const listingPhoto = {
-      type: "cover" as const,
-      source: "picclick",
-      role: "wor",
-      url: "/uploads/seller-photo.jpg",
-    };
-    const cleanCover = {
-      type: "cover" as const,
-      source: "picclick",
-      role: "wor",
-      url: "/uploads/clean-render.jpg",
-    };
-    const metrics = new Map([
-      [
-        listingPhoto.url,
-        { width: 480, height: 640, format: "webp", isListingPhoto: true },
-      ],
-      [
-        cleanCover.url,
-        { width: 512, height: 640, format: "webp", isListingPhoto: false },
-      ],
-    ]);
-
-    const listingDetails = explainAttachmentScoreForDisplay(
-      listingPhoto,
-      metrics.get(listingPhoto.url),
-    );
-    const cleanDetails = explainAttachmentScoreForDisplay(
-      cleanCover,
-      metrics.get(cleanCover.url),
-    );
-
-    expect(listingDetails.signals).toContain("-480 seller listing photo");
-    expect(cleanDetails.score).toBeGreaterThan(listingDetails.score);
-    expect(
-      pickBestCoverFromAttachments([listingPhoto, cleanCover], metrics),
-    ).toBe(cleanCover.url);
   });
 
   it("ne penalise pas media= dans les URLs ScreenScraper", () => {
@@ -218,7 +107,6 @@ describe("attachmentDisplayScore", () => {
       source: "launchbox",
       role: "europe",
       url: "https://images.launchbox-app.com/cover-eu.jpg",
-      isRealBoxCoverSource: true,
     };
     const screenScraperCover = {
       type: "cover" as const,
@@ -228,9 +116,6 @@ describe("attachmentDisplayScore", () => {
     };
 
     expect(parseRegionFromRole("europe")).toBe("eu");
-    expect(explainAttachmentScoreForDisplay(launchboxCover).signals).toContain(
-      "+220 real box cover source",
-    );
     expect(
       pickBestCoverFromAttachments([launchboxCover, screenScraperCover]),
     ).toBeTruthy();
@@ -336,9 +221,8 @@ describe("attachmentDisplayScore", () => {
       source: "coverproject",
       role: "eu",
       url: "/uploads/coverproject.jpg",
-      // A real CoverProject attachment is stamped both real-box and full-wrap by
-      // the server; the full-wrap flag is what de-ranks it below 2D/3D fronts.
-      isRealBoxCoverSource: true,
+      // A real CoverProject attachment is stamped full-wrap by the server; that
+      // flag is what de-ranks it below 2D/3D fronts.
       isFullWrapCoverSource: true,
     };
     const fr3dCover = {
@@ -532,32 +416,6 @@ describe("attachmentDisplayScore", () => {
     expect(parseRegionFromRole(ranked[0].role)).toBe("fr");
   });
 
-  it("classe une cover marquée vraie boîte au-dessus d'une cover identique sans le flag", () => {
-    const flagged = {
-      type: "cover" as const,
-      role: "eu",
-      url: "/uploads/flagged.jpg",
-      isRealBoxCoverSource: true,
-    };
-    const plain = {
-      type: "cover" as const,
-      role: "eu",
-      url: "/uploads/plain.jpg",
-    };
-
-    // Même type (2D front) et même région : seul le bonus +220 départage, même si
-    // `plain` est en tête de liste (index 0).
-    const ranked = rankCoversForDisplay([plain, flagged]);
-    expect(ranked[0]).toBe(flagged);
-
-    expect(explainAttachmentScoreForDisplay(flagged).signals).toContain(
-      "+220 real box cover source",
-    );
-    expect(explainAttachmentScoreForDisplay(plain).signals).not.toContain(
-      "+220 real box cover source",
-    );
-  });
-
   it("pénalise et déclasse une cover full wrap signalée par le flag", () => {
     const fullWrap = {
       type: "cover" as const,
@@ -578,6 +436,56 @@ describe("attachmentDisplayScore", () => {
     // Le flag full wrap déclasse la cover (typeRank 2) sous une 2D standard (0).
     const ranked = rankCoversForDisplay([fullWrap, standard]);
     expect(ranked[0]).toBe(standard);
+  });
+
+  it("ordonne catalog > photo de listing > photo utilisateur dans une même région", () => {
+    const catalog = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/catalog.jpg",
+      coverProvenance: "catalog",
+    };
+    // The provenance tier is lexicographic and outranks the score: a photographed
+    // copy always sorts below the catalogue render of the same region.
+    const listingPhoto = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/listing.jpg",
+      coverProvenance: "listing_photo",
+    };
+    const userPhoto = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/user.jpg",
+      coverProvenance: "user_photo",
+    };
+
+    expect(
+      rankCoversForDisplay([userPhoto, listingPhoto, catalog]).map((a) => a.url),
+    ).toEqual([
+      "/uploads/catalog.jpg",
+      "/uploads/listing.jpg",
+      "/uploads/user.jpg",
+    ]);
+  });
+
+  it("laisse la région primer sur la provenance (photo FR au-dessus d'un catalogue EU)", () => {
+    const catalogEu = {
+      type: "cover" as const,
+      role: "eu",
+      url: "/uploads/cat-eu.jpg",
+      coverProvenance: "catalog",
+    };
+    const userPhotoFr = {
+      type: "cover" as const,
+      role: "fr",
+      url: "/uploads/photo-fr.jpg",
+      coverProvenance: "user_photo",
+    };
+
+    expect(rankCoversForDisplay([catalogEu, userPhotoFr])[0].url).toBe(
+      "/uploads/photo-fr.jpg",
+    );
   });
 
   describe("pickBestBackgroundFromAttachments", () => {
@@ -636,7 +544,6 @@ describe("attachmentDisplayScore", () => {
       source: "pricecharting",
       role: "eu",
       url: "/pc.jpg",
-      isRealBoxCoverSource: true,
       providerImageScoreAdjustment: 160,
     };
     const steamGrid = {
@@ -668,17 +575,15 @@ describe("attachmentDisplayScore", () => {
   it("prefers PS4 covers over PS3-tagged art on a PS4 shelf", () => {
     const ps3Cover = {
       type: "cover" as const,
-      source: "picclick",
+      source: "ebay",
       role: "uk",
       url: "https://example.com/God-Of-War-III-PS3-PLAYSTATION-3.webp",
-      isRealBoxCoverSource: true,
     };
     const ps4Cover = {
       type: "cover" as const,
       source: "pricecharting",
       role: "uk",
       url: "https://example.com/god-of-war-iii-remastered-ps4.webp",
-      isRealBoxCoverSource: true,
       providerImageScoreAdjustment: 160,
     };
     const metrics = new Map([
@@ -699,7 +604,6 @@ describe("attachmentDisplayScore", () => {
       role: "fr",
       url: "https://example.com/ace-attorney-switch.jpg",
       title: "the great ace attorney switch visuel produit",
-      isRealBoxCoverSource: true,
     };
     const ps4Cover = {
       type: "cover" as const,
@@ -707,7 +611,6 @@ describe("attachmentDisplayScore", () => {
       role: "eu",
       url: "https://example.com/ace-attorney-ps4.jpg",
       title: "PS4 The Great Ace Attorney Chronicles",
-      isRealBoxCoverSource: true,
     };
     const metrics = new Map([
       [switchCover.url, { width: 800, height: 1200, format: "png" }],

@@ -3,7 +3,12 @@ import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
-import type { MetadataProviderAdapter, ProviderModule } from "@/types/providerModule";
+import type {
+  BarcodeLookupType,
+  MetadataAdapterContext,
+  MetadataProviderAdapter,
+  ProviderModule,
+} from "@/types/providerModule";
 
 import {
   fetchOkkazeoBarcodeProduct,

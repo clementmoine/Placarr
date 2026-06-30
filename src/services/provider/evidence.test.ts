@@ -22,7 +22,7 @@ describe("providerEvidence — trusted retailers", () => {
     expect(sourceWeightForProvider("Philibert")).toBeLessThan(
       sourceWeightForProvider("BoardGameGeek"),
     );
-    expect(sourceWeightForProvider("PicClick")).toBeLessThan(
+    expect(sourceWeightForProvider("eBay")).toBeLessThan(
       sourceWeightForProvider("Philibert"),
     );
   });

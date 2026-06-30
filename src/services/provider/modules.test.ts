@@ -30,7 +30,6 @@ describe("game metadata provider modules", () => {
         "icollect",
         "igdb",
         "launchbox",
-        "picclick",
         "pricecharting",
         "rawg",
         "screenscraper",

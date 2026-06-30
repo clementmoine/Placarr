@@ -47,7 +47,6 @@ describe("provider mapping probes", () => {
         "googlebooks",
         "icollect",
         "openlibrary",
-        "picclick",
         "screenscraper",
       ].sort(),
     );
@@ -86,7 +85,6 @@ describe("provider mapping probes", () => {
         "monsieurde",
         "okkazeo",
         "philibert",
-        "picclick",
         "pricecharting",
         "scandex",
         "screenscraper",

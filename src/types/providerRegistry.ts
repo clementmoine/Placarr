@@ -85,6 +85,20 @@ export interface ProviderInfo {
    */
   coverUrlHost?: string;
   /**
+   * Declarative URL→provenance rules for this provider's cover images, matched as
+   * case-insensitive substrings against the attachment URL. Lets the data-first
+   * cover ranking tell a clean catalog render from a photographed copy
+   * (`docs/unbiased_ranking.md` §5 Images Tier) without a provider-id branch in
+   * core: the server stamps the resolved `coverProvenance` onto each attachment
+   * and the client-safe scorer reads it. First matching bucket wins, in order
+   * userPhoto → listingPhoto → catalog.
+   */
+  coverProvenanceRules?: {
+    userPhoto?: string[];
+    listingPhoto?: string[];
+    catalog?: string[];
+  };
+  /**
    * Optional legacy flag: providers that used to keep remote URLs when localization
    * failed. New enrichments localize into /uploads/ and drop failed downloads.
    */

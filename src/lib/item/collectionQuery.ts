@@ -2,6 +2,7 @@ import type { Condition } from "@prisma/client";
 
 import { getEstimatedItemValueCents } from "@/lib/item/value";
 import { getItemRatingScore10 } from "@/lib/item/rating";
+import type { MetadataFact } from "@/types/metadataProvider";
 import { compareTitlesForSort } from "@/lib/title/sort";
 import type { ItemWithMetadata } from "@/types/items";
 
@@ -44,8 +45,20 @@ export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
 
 export const ITEM_COLLECTION_RATING_MIN_OPTIONS = [6, 7, 8, 9] as const;
 
+function metadataFacts(
+  facts: string | MetadataFact[] | null | undefined,
+): MetadataFact[] | null | undefined {
+  if (facts == null || typeof facts !== "string") return facts;
+  try {
+    const parsed = JSON.parse(facts);
+    return Array.isArray(parsed) ? (parsed as MetadataFact[]) : null;
+  } catch {
+    return null;
+  }
+}
+
 function itemRatingScore(item: ItemWithMetadata): number | null {
-  return getItemRatingScore10(item.metadata?.facts);
+  return getItemRatingScore10(metadataFacts(item.metadata?.facts));
 }
 
 function itemEstimatedPriceCents(

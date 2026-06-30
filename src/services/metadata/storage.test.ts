@@ -27,7 +27,6 @@ describe("formatMetadataFromStorage attachment traits", () => {
   it("re-derives provider gallery and cover traits when loading from storage", () => {
     const metadata = formatMetadataFromStorage({
       id: "meta-1",
-      itemId: "item-1",
       title: "Album",
       description: null,
       duration: null,
@@ -39,8 +38,10 @@ describe("formatMetadataFromStorage attachment traits", () => {
       aliases: null,
       facts: null,
       sourceType: "musics",
-      sourceQuery: null,
+      sourceQuery: "",
       lastFetched: new Date("2026-06-01T00:00:00.000Z"),
+      createdAt: new Date("2026-06-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-06-01T00:00:00.000Z"),
       attachments: [
         {
           id: "att-1",
@@ -51,6 +52,13 @@ describe("formatMetadataFromStorage attachment traits", () => {
           title: null,
           duration: null,
           role: null,
+          coverProvenance: null,
+          width: null,
+          height: null,
+          meanLuminance: null,
+          darkPixelRatio: null,
+          createdAt: new Date("2026-06-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-06-01T00:00:00.000Z"),
         },
       ],
     });
@@ -60,7 +68,6 @@ describe("formatMetadataFromStorage attachment traits", () => {
       isMusicGallerySource: true,
       isCanonicalCoverSource: true,
       isGameMediaGallerySource: false,
-      isRealBoxCoverSource: false,
       providerLabel: "Discogs",
     });
   });
@@ -70,7 +77,6 @@ describe("formatMetadataFromStorage fact traits", () => {
   it("re-derives provider fact traits when loading from storage", () => {
     const metadata = formatMetadataFromStorage({
       id: "meta-2",
-      itemId: "item-2",
       title: "Catan",
       description: null,
       duration: null,
@@ -89,8 +95,10 @@ describe("formatMetadataFromStorage fact traits", () => {
         },
       ]),
       sourceType: "boardgames",
-      sourceQuery: null,
+      sourceQuery: "",
       lastFetched: new Date("2026-06-01T00:00:00.000Z"),
+      createdAt: new Date("2026-06-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-06-01T00:00:00.000Z"),
       attachments: [],
     });
 
@@ -314,14 +322,14 @@ describe("canKeepRemoteImageOnDownloadFailure", () => {
     ).toBe(true);
     expect(
       canKeepRemoteImageOnDownloadFailure(
-        "https://www.picclickimg.com/item.jpg",
-        "picclick",
+        "https://i.ebayimg.com/item.jpg",
+        "ebay",
       ),
     ).toBe(true);
     expect(
       canKeepRemoteImageOnDownloadFailure(
         "https://img.example.com/item.jpg",
-        "picclick",
+        "ebay",
       ),
     ).toBe(false);
     expect(canKeepRemoteImageOnDownloadFailure("/uploads/local.jpg")).toBe(

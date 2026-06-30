@@ -31,7 +31,7 @@ describe("applyMarketplaceConsensusOverride", () => {
   it("promeut un consensus marchand qui contredit l'unique source canonique", () => {
     const evidence = buildAll([
       { provider: "ScreenScraper", name: LOCKDOWN },
-      { provider: "PicClick", name: RS3 },
+      { provider: "eBay", name: RS3 },
       { provider: "AchatMoinsCher", name: RS3 },
       { provider: "Freakxy", name: RS3 },
     ]);
@@ -58,7 +58,7 @@ describe("applyMarketplaceConsensusOverride", () => {
   it("ne touche à rien si moins de 3 marchands distincts s'accordent", () => {
     const evidence = buildAll([
       { provider: "ScreenScraper", name: LOCKDOWN },
-      { provider: "PicClick", name: RS3 },
+      { provider: "eBay", name: RS3 },
       { provider: "AchatMoinsCher", name: RS3 },
     ]);
 
@@ -72,7 +72,7 @@ describe("applyMarketplaceConsensusOverride", () => {
   it("ne touche à rien si un ancrage corrobore déjà le consensus", () => {
     const evidence = buildAll([
       { provider: "ScreenScraper", name: RS3 },
-      { provider: "PicClick", name: RS3 },
+      { provider: "eBay", name: RS3 },
       { provider: "AchatMoinsCher", name: RS3 },
       { provider: "Freakxy", name: RS3 },
     ]);
@@ -95,7 +95,7 @@ describe("applyMarketplaceConsensusOverride", () => {
     const evidence = buildAll([
       { provider: "ScreenScraper", name: "Tom Clancy's Ghost Recon 2" },
       { provider: "AchatMoinsCher", name: "Ghost Recon" },
-      { provider: "PicClick", name: "Tom Clancy's Ghost Recon" },
+      { provider: "eBay", name: "Tom Clancy's Ghost Recon" },
       {
         provider: "ChasseAuxLivres",
         name: "Tom Clancy's Ghost Recon 1 Classics",
@@ -114,7 +114,7 @@ describe("applyMarketplaceConsensusOverride", () => {
     const evidence = buildAll([
       { provider: "ScreenScraper", name: "Tom Clancy's Ghost Recon 2" },
       { provider: "AchatMoinsCher", name: "Ghost Recon" },
-      { provider: "PicClick", name: "Tom Clancy's Ghost Recon" },
+      { provider: "eBay", name: "Tom Clancy's Ghost Recon" },
     ]);
 
     applyMarketplaceConsensusOverride(evidence);
@@ -128,7 +128,7 @@ describe("applyMarketplaceConsensusOverride", () => {
     const evidence = buildAll([
       { provider: "ScreenScraper", name: "Tom Clancy's Ghost Recon 2" },
       { provider: "AchatMoinsCher", name: "Ghost Recon 2" },
-      { provider: "PicClick", name: "Tom Clancy's Ghost Recon 2" },
+      { provider: "eBay", name: "Tom Clancy's Ghost Recon 2" },
       { provider: "ChasseAuxLivres", name: "Ghost Recon 2 Xbox" },
     ]);
 
@@ -149,7 +149,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           ],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [{ name: GHOST_RECON, platformKey: "pc" }],
         },
         {
@@ -185,7 +185,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           products: [{ name: "Ghost Recon", platformKey: "xbox" }],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             { name: "Tom Clancy's Ghost Recon", platformKey: "xbox" },
             { name: "Ghost Recon Xbox", platformKey: "xbox" },
@@ -204,7 +204,7 @@ describe("applyMarketplaceConsensusOverride", () => {
   });
 
   it("dément un numéro de suite via le volume d'un seul marchand dominant (#3307210117168)", async () => {
-    // Cas réel : seuls 2 marchands distincts répondent (PicClick en renvoie le
+    // Cas réel : seuls 2 marchands distincts répondent (eBay en renvoie le
     // gros), aucun ne cite le « 2 ». Le volume d'annonces concordantes doit
     // suffire à démentir l'unique source canonique mal mappée.
     const result = await compileResultForType(
@@ -217,7 +217,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           ],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             {
               name: "Tom Clancy's Ghost Recon - Big Box - PC",
@@ -267,7 +267,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           ],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             {
               name: "Tom Clancy's Ghost Recon Classics Xbox",
@@ -336,7 +336,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           ],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             {
               name: "Teenage Mutant Ninja Turtles (Nintendo NES, 1989)",
@@ -377,7 +377,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           ],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             {
               name: "Teenage Mutant Ninja Turtles II: The Arcade Game (Nintendo NES, 1991 PAL A)",
@@ -415,7 +415,7 @@ describe("applyMarketplaceConsensusOverride", () => {
 
   it("laisse l'édition mener même quand un SEUL marchand la nomme en masse (#083717120131)", async () => {
     // Variante réelle du même code-barres : ChasseAuxLivres n'a pas répondu, donc
-    // seul PicClick nomme « II : The Arcade Game » — mais sur un fort volume
+    // seul eBay nomme « II : The Arcade Game » — mais sur un fort volume
     // d'annonces indépendantes. Sans relâchement du verrou « ≥2 marchands », le
     // fallback base de données résolvait à tort le jeu de BASE de PriceCharting
     // et écartait les annonces « II » comme du bruit.
@@ -429,7 +429,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           ],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             {
               name: "Teenage Mutant Ninja Turtles II: The Arcade Game (Nintendo NES, 1991 PAL A)",
@@ -505,7 +505,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           products: [{ name: "De Blob Nintendo Wii", platformKey: "wii" }],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             { name: "De Blob Nintendo Wii", platformKey: "wii" },
             {
@@ -542,7 +542,7 @@ describe("applyMarketplaceConsensusOverride", () => {
           products: [{ name: "Mario Kart Wii", platformKey: "wii" }],
         },
         {
-          providerName: "PicClick",
+          providerName: "eBay",
           products: [
             { name: "Mario Kart Wii Nintendo", platformKey: "wii" },
             { name: "Jeu Wii Mario Kart Wii Complet", platformKey: "wii" },

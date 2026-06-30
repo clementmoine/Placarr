@@ -1,5 +1,6 @@
 import type { AttachmentType } from "@prisma/client";
 
+import type { SourceProduct } from "@/lib/barcode/evidence/types";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { ProviderInfo } from "@/types/providerRegistry";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
@@ -128,7 +129,6 @@ export type BarcodeLookupDeps = {
   fetchFromScanDex: (barcode: string) => Promise<unknown>;
   fetchFromAchatMoinsCher: (barcode: string) => Promise<unknown>;
   fetchFromFreakxy: (barcode: string) => Promise<unknown>;
-  fetchFromPicClick: (barcode: string) => Promise<unknown>;
   fetchFromEbay: (barcode: string) => Promise<unknown>;
   fetchPricesFromLeDenicheur: (
     queryOrQueries: string | string[],

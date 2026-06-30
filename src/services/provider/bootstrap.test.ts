@@ -47,7 +47,6 @@ describe("createMetadataAdapters", () => {
         "omdb",
         "openlibrary",
         "philibert",
-        "picclick",
         "pricecharting",
         "rawg",
         "screenscraper",

@@ -11,11 +11,27 @@ export interface MetadataAttachment {
   role?: string;
   source?: string;
   /**
+   * Factual source context of a cover image (catalog / listing_photo /
+   * user_photo). Unlike the trait flags below this IS persisted: it is derived
+   * from the provider's original image URL, which is rewritten to a local path on
+   * download, so it cannot be recomputed on load. See
+   * `@/lib/media/coverProvenance`.
+   */
+  coverProvenance?: string;
+  /**
+   * Image metrics measured once at enrichment (sharp) and persisted, so the
+   * read-time cover ranking can sort by resolution + exposure without
+   * re-decoding files. See `@/lib/media/attachmentDisplayScore`.
+   */
+  width?: number;
+  height?: number;
+  meanLuminance?: number;
+  darkPixelRatio?: number;
+  /**
    * Provider-derived display fields, computed from `source` server-side so the
    * client-safe scorer/label formatter can read them. Not persisted (recomputed
    * on load). See `@/services/provider/sourceTraits`.
    */
-  isRealBoxCoverSource?: boolean;
   isFullWrapCoverSource?: boolean;
   isGameMediaGallerySource?: boolean;
   isMusicGallerySource?: boolean;

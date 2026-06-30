@@ -92,7 +92,7 @@ export function pickEditionFromEvidence(
     // whose qualifier isn't in the vocabulary falls back to the bare label).
     if (isGenericEditionLabel(entry.label)) continue;
     // Listing VOLUME breaks ties a single dominant marketplace would otherwise
-    // lose: "Edition Limitée" named by 4 PicClick listings must beat a lone
+    // lose: "Edition Limitée" named by 4 eBay listings must beat a lone
     // "Special Edition" → generic "Edition", even though both are one provider.
     const score =
       entry.providers.size +

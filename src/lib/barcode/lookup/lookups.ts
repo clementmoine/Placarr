@@ -49,7 +49,6 @@ export async function runBarcodeLookups(params: {
     payload.sd = asScanDexHit(lookups.sd);
     payload.amc = asNamedListings(lookups.amc);
     payload.freakxy = asNamedListings(lookups.freakxy);
-    payload.picclick = asNamedListings(lookups.picclick);
     payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.retailers = collectRetailerBarcodeHits(lookups);
@@ -101,7 +100,6 @@ export async function runBarcodeLookups(params: {
     );
     payload.calDvd = asNamedListings(lookups.cal);
     payload.amc = asNamedListings(lookups.amc);
-    payload.picclick = asNamedListings(lookups.picclick);
     payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.tmdb = asMetadataHit(
@@ -109,7 +107,7 @@ export async function runBarcodeLookups(params: {
         ? null
         : await fetchTmdbForMovieTitle(
             pickMovieTitleFromListings(
-              payload.picclick,
+              payload.ebay,
               payload.amc,
               payload.calDvd,
             ),
@@ -126,7 +124,6 @@ export async function runBarcodeLookups(params: {
     payload.sd = asScanDexHit(lookups.sd);
     payload.calToys = asNamedListings(lookups.cal);
     payload.amc = asNamedListings(lookups.amc);
-    payload.picclick = asNamedListings(lookups.picclick);
     payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.philibert = asMetadataHit(lookups.philibert);
@@ -145,7 +142,6 @@ export async function runBarcodeLookups(params: {
   payload.sd = asScanDexHit(lookups.sd);
   payload.amc = asNamedListings(lookups.amc);
   payload.freakxy = asNamedListings(lookups.freakxy);
-  payload.picclick = asNamedListings(lookups.picclick);
   payload.ebay = asNamedListings(lookups.ebay);
   payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
   // Board-game anchors (Okkazeo + Philibert + retailers), in parity with the
@@ -176,7 +172,7 @@ export async function runBarcodeLookups(params: {
       ? null
       : await fetchTmdbForMovieTitle(
           pickMovieTitleFromListings(
-            payload.picclick,
+            payload.ebay,
             payload.amc,
             payload.calGeneric,
           ),
@@ -197,7 +193,7 @@ function buildGameLookupInputs(
     calListings,
     amc: payload.amc,
     freakxy: payload.freakxy,
-    picclick: payload.picclick,
+    ebay: payload.ebay,
     contextPlatformKey,
   };
 }

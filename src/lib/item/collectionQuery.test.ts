@@ -26,14 +26,16 @@ function makeItem(
     condition: overrides.condition ?? "new",
     metadataId: null,
     metadataRefreshStartedAt: null,
+    metadataRefreshGeneration: 0,
     userId: "user-1",
     shelf: {
       id: "shelf-1",
       name: "PS4",
       slug: "ps4",
       type: "games",
-      cardFormat: null,
+      cardFormat: "standard",
       color: null,
+      imageUrl: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       userId: "user-1",
@@ -44,7 +46,7 @@ function makeItem(
     priceUsed: overrides.priceUsed ?? null,
     priceUsedCIB: overrides.priceUsedCIB ?? null,
     priceLastUpdated: overrides.priceLastUpdated ?? null,
-  } as ItemWithMetadata;
+  } as unknown as ItemWithMetadata;
 }
 
 describe("collectionQuery", () => {
@@ -57,7 +59,7 @@ describe("collectionQuery", () => {
         priceNew: 3000,
         metadata: {
           facts: [{ kind: "rating", value: "9/10", source: "igdb" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
       makeItem({
         id: "2",
@@ -66,7 +68,7 @@ describe("collectionQuery", () => {
         priceUsedCIB: 1500,
         metadata: {
           facts: [{ kind: "rating", value: "7/10", source: "rawg" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
       makeItem({
         id: "3",
@@ -74,7 +76,7 @@ describe("collectionQuery", () => {
         condition: "new",
         metadata: {
           facts: [{ kind: "rating", value: "6/10", source: "rawg" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
     ];
 
@@ -108,7 +110,7 @@ describe("collectionQuery", () => {
         priceNew: 1000,
         metadata: {
           facts: [{ kind: "rating", value: "6/10", source: "rawg" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
       makeItem({
         id: "best",
@@ -116,7 +118,7 @@ describe("collectionQuery", () => {
         priceNew: 5000,
         metadata: {
           facts: [{ kind: "rating", value: "9/10", source: "igdb" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
       makeItem({
         id: "mid",
@@ -124,7 +126,7 @@ describe("collectionQuery", () => {
         priceNew: 2500,
         metadata: {
           facts: [{ kind: "rating", value: "7.5/10", source: "rawg" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
     ];
 
@@ -163,7 +165,7 @@ describe("collectionQuery", () => {
         priceNew: 2000,
         metadata: {
           facts: [{ kind: "rating", value: "8/10", source: "igdb" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
       makeItem({
         id: "2",
@@ -172,7 +174,7 @@ describe("collectionQuery", () => {
         priceUsedCIB: 4000,
         metadata: {
           facts: [{ kind: "rating", value: "9/10", source: "igdb" }],
-        } as ItemWithMetadata["metadata"],
+        } as unknown as ItemWithMetadata["metadata"],
       }),
     ];
 

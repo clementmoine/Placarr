@@ -14,7 +14,6 @@ function createDeps() {
     fetchFromAchatMoinsCher: vi.fn(async () => []),
     fetchFromFreakxy: vi.fn(async () => []),
     fetchFromApriloshop: vi.fn(async () => []),
-    fetchFromPicClick: vi.fn(async () => []),
     fetchFromEbay: vi.fn(async () => []),
     fetchPricesFromLeDenicheur: vi.fn(async () => null),
     fetchFromOpenLibrary: vi.fn(async () => null),
@@ -51,7 +50,6 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "freakxy",
         "apriloshop",
         "chipweld",
-        "picclick",
         "ebay",
         "leDenicheur",
         "ice",
@@ -68,13 +66,12 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "deezer",
         "cal",
         "amc",
-        "picclick",
         "ebay",
         "leDenicheur",
       ].sort(),
     );
     expect(Object.keys(builders.movies({ barcode: "1" })).sort()).toEqual(
-      ["cal", "amc", "picclick", "ebay", "leDenicheur"].sort(),
+      ["cal", "amc", "ebay", "leDenicheur"].sort(),
     );
     expect(Object.keys(builders.boardgames({ barcode: "1" })).sort()).toEqual(
       [
@@ -95,7 +92,6 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "okkazeo",
         "sd",
         "amc",
-        "picclick",
         "ebay",
       ].sort(),
     );
@@ -111,7 +107,6 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "freakxy",
         "apriloshop",
         "chipweld",
-        "picclick",
         "ebay",
         "leDenicheur",
         "ice",

@@ -46,7 +46,7 @@ describe("filterUsedPricesAboveNew", () => {
         { source: "ChocoBonPlan", condition: "new", priceCents: 1499 },
         { source: "Smartoys", condition: "new", priceCents: 3995 },
         { source: "Smartoys", condition: "used", priceCents: 4999 },
-        { source: "PicClick", condition: "used", priceCents: 16453 },
+        { source: "eBay", condition: "used", priceCents: 16453 },
       ],
       "games",
     );

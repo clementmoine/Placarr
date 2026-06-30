@@ -44,7 +44,7 @@ describe("honest-empty (no anchor + database miss → null)", () => {
   it("a lone marketplace listing never becomes a confident guess", async () => {
     const result = await compile("3760000000017", [
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [{ name: "Speedy Racer Deluxe", platformKey: "wii" }],
       },
     ]);
@@ -58,7 +58,7 @@ describe("honest-empty (no anchor + database miss → null)", () => {
     // consensus must NOT be promoted into a confident item (majority noise).
     const result = await compile("3760000000024", [
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [{ name: "Speedy Racer Deluxe", platformKey: "wii" }],
       },
       {
@@ -79,7 +79,7 @@ describe("honest-empty (no anchor + database miss → null)", () => {
   it("a cover or volume cannot substitute for a missing anchor", async () => {
     const result = await compile("3760000000031", [
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [
           { name: "Speedy Racer Deluxe Edition Collector", platformKey: "wii" },
           { name: "Speedy Racer Deluxe FR PAL", platformKey: "wii" },

@@ -19,11 +19,9 @@ import { compileResultForType } from "./compile";
  * If a deliberate change moves one of these, update the expected value in the
  * same commit — never delete the assertion.
  *
- * 2026-06-29 — recalibrated for `barcodeClusterObservationContribution`: the
- * cluster base now folds a small per-row factual-tier nudge
- * (`CLUSTER_CONFIDENCE.observationTierScale`) so a canonical/promoted-anchor row
- * lifts confidence more than a bare marketplace row. Leaders and platformKeys are
- * unchanged; only the confidence numbers rose (+0.06 on the anchored cases).
+ * 2026-06-30 — recalibrated after PicClick removal: marketplace fixtures now use
+ * eBay (sourceWeight 0.1 vs PicClick 0.08) — confidence nudges on the four
+ * marketplace-heavy cases below.
  */
 
 type Src = {
@@ -42,7 +40,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
         products: [{ name: "Tom Clancy's Ghost Recon 2", platformKey: "xbox" }],
       },
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [{ name: "Tom Clancy's Ghost Recon", platformKey: "pc" }],
       },
       {
@@ -57,7 +55,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
 
     expect(result?.matches[0]?.name).toBe("Tom Clancy's Ghost Recon");
     expect(result?.platformKey).toBe("pc");
-    expect(result?.matches[0]?.confidence).toBe(0.61);
+    expect(result?.matches[0]?.confidence).toBe(0.63);
     expect(result?.matches).toHaveLength(1);
   });
 
@@ -68,7 +66,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
         products: [{ name: "Tom Clancy's Ghost Recon 2", platformKey: "xbox" }],
       },
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [
           {
             name: "Tom Clancy's Ghost Recon - Big Box - PC",
@@ -96,7 +94,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
       "Tom Clancy's Ghost Recon — Classics",
     );
     expect(result?.platformKey).toBeNull();
-    expect(result?.matches[0]?.confidence).toBe(0.53);
+    expect(result?.matches[0]?.confidence).toBe(0.6);
     expect(result?.matches).toHaveLength(1);
   });
 
@@ -109,7 +107,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
         ],
       },
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [
           {
             name: "Tom Clancy's Ghost Recon Classics Xbox",
@@ -141,7 +139,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
       "Tom Clancy's Ghost Recon — Classics",
     );
     expect(result?.platformKey).toBe("xbox");
-    expect(result?.matches[0]?.confidence).toBe(0.53);
+    expect(result?.matches[0]?.confidence).toBe(0.57);
     expect(result?.matches).toHaveLength(1);
   });
 
@@ -164,7 +162,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
         products: [{ name: "De Blob Nintendo Wii", platformKey: "wii" }],
       },
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [
           { name: "De Blob Nintendo Wii", platformKey: "wii" },
           {
@@ -200,7 +198,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
         ],
       },
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [
           {
             name: "Teenage Mutant Ninja Turtles (Nintendo NES, 1989)",
@@ -231,7 +229,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
         ],
       },
       {
-        providerName: "PicClick",
+        providerName: "eBay",
         products: [
           {
             name: "Teenage Mutant Ninja Turtles II: The Arcade Game (Nintendo NES, 1991 PAL A)",
@@ -266,7 +264,7 @@ describe("contradicted-canonical confidence/platform lock", () => {
       "Teenage Mutant Ninja Turtles II: The Arcade Game",
     );
     expect(result?.platformKey).toBe("nes");
-    expect(result?.matches[0]?.confidence).toBe(0.57);
+    expect(result?.matches[0]?.confidence).toBe(0.61);
     expect(result?.matches).toHaveLength(1);
   });
 });

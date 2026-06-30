@@ -1,4 +1,5 @@
 import { parseFactSourceList } from "@/lib/metadata/facts/playerFacts";
+import type { CoverProvenance } from "@/lib/media/coverProvenance";
 import {
   formatProviderSourceLabel,
   PROVIDERS,
@@ -24,12 +25,6 @@ for (const provider of PROVIDERS) {
     PROVIDER_ID_BY_SOURCE.set(alias.toLowerCase(), provider.id);
   }
 }
-
-const REAL_BOX_COVER_PROVIDER_IDS = new Set(
-  PROVIDERS.filter((provider) => provider.isRealBoxCover).map(
-    (provider) => provider.id,
-  ),
-);
 
 const FULL_WRAP_COVER_PROVIDER_IDS = new Set(
   PROVIDERS.filter((provider) => provider.fullWrapCover).map(
@@ -127,6 +122,12 @@ const COVER_DEFAULT_REGION_BY_PROVIDER_ID = new Map(
   ),
 );
 
+const COVER_PROVENANCE_RULES_BY_PROVIDER_ID = new Map(
+  PROVIDERS.filter((provider) => provider.coverProvenanceRules).map(
+    (provider) => [provider.id, provider.coverProvenanceRules!],
+  ),
+);
+
 // Provider id → human display label (registry `info.label`). Used to stamp a
 // gallery chip label onto attachments so the client-safe label formatter need
 // not carry a provider-id→label map.
@@ -147,16 +148,6 @@ export function canonicalProviderIdForSource(
   const normalized = source.split(/[·/]/)[0].toLowerCase().trim();
   if (!normalized) return null;
   return PROVIDER_ID_BY_SOURCE.get(normalized) ?? normalized;
-}
-
-/**
- * Whether the source provider's cover depicts the real physical box
- * (provider-declared `isRealBoxCover` trait). Stamped onto attachments so the
- * scorer can award the box-cover bonus.
- */
-export function isRealBoxCoverSource(source?: string | null): boolean {
-  const id = canonicalProviderIdForSource(source);
-  return id !== null && REAL_BOX_COVER_PROVIDER_IDS.has(id);
 }
 
 /**
@@ -240,17 +231,44 @@ export function coverDefaultRegionForSource(
 }
 
 /**
+ * Resolve the cover provenance (catalog / listing_photo / user_photo) for an
+ * attachment from its provider's declarative `coverProvenanceRules`, matched
+ * against the image URL. Returns undefined when the provider declares no rules
+ * or none match — the scorer then defaults to `catalog` (never demote without
+ * evidence) or upgrades from a pixel signal.
+ */
+export function coverProvenanceForSource(
+  source?: string | null,
+  url?: string | null,
+): CoverProvenance | undefined {
+  const id = canonicalProviderIdForSource(source);
+  if (id === null) return undefined;
+  const rules = COVER_PROVENANCE_RULES_BY_PROVIDER_ID.get(id);
+  if (!rules || !url) return undefined;
+  const haystack = url.toLowerCase();
+  const matches = (patterns?: string[]): boolean =>
+    (patterns ?? []).some((pattern) => haystack.includes(pattern.toLowerCase()));
+  if (matches(rules.userPhoto)) return "user_photo";
+  if (matches(rules.listingPhoto)) return "listing_photo";
+  if (matches(rules.catalog)) return "catalog";
+  return undefined;
+}
+
+/**
  * Stamp the provider-declared, registry-derived attachment fields (cover-scoring
  * flags + display label) onto an attachment so the client-safe display scorer
  * and label formatter can read them without importing the registry. Pure:
  * returns a new object, leaving the input untouched.
  */
 export function withProviderAttachmentTraits<
-  T extends { source?: string | null },
+  T extends {
+    source?: string | null;
+    url?: string | null;
+    coverProvenance?: string | null;
+  },
 >(
   attachment: T,
 ): T & {
-  isRealBoxCoverSource: boolean;
   isFullWrapCoverSource: boolean;
   isGameMediaGallerySource: boolean;
   isMusicGallerySource: boolean;
@@ -261,11 +279,17 @@ export function withProviderAttachmentTraits<
   gridStyleCoverLabelsSource: boolean;
   collectorCoverRegionFromAgeRatingSource: boolean;
   coverDefaultRegion?: string;
+  coverProvenance?: CoverProvenance;
   providerLabel?: string;
 } {
   return {
     ...attachment,
-    isRealBoxCoverSource: isRealBoxCoverSource(attachment.source),
+    // Prefer a provenance already derived from the *original* image URL (set
+    // before the URL was localized to /uploads); only fall back to re-deriving
+    // from the current URL when none is present.
+    coverProvenance:
+      (attachment.coverProvenance as CoverProvenance | undefined) ??
+      coverProvenanceForSource(attachment.source, attachment.url),
     isFullWrapCoverSource: isFullWrapCoverSource(attachment.source),
     isGameMediaGallerySource: isGameMediaGallerySource(attachment.source),
     isMusicGallerySource: isMusicGallerySource(attachment.source),

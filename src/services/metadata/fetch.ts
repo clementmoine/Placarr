@@ -76,10 +76,7 @@ function stage1HasMetadataCapability(
       case "identify":
         return Boolean(result.title?.trim());
       case "rating":
-        return Boolean(
-          result.facts?.some((fact) => fact.kind === "rating") ||
-            result.rating,
-        );
+        return Boolean(result.facts?.some((fact) => fact.kind === "rating"));
       case "releaseDate":
         return Boolean(result.releaseDate?.trim());
       case "people":
@@ -171,7 +168,7 @@ function isMetadataPlatformCompatible(
 
 function isLivingRoomConsolePlatformKey(key: string | null): boolean {
   if (!key || !isVideoGamePlatformKey(key)) return false;
-  return key !== "pc" && key !== "web";
+  return key !== "pc" && key !== ("web" as typeof key);
 }
 
 /** Drops web-only catalog hits when the shelf targets a console release. */

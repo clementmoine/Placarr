@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   canonicalProviderIdForSource,
+  coverProvenanceForSource,
   isFullWrapCoverSource,
   isGameMediaGallerySource,
   isMusicGallerySource,
   isCanonicalCoverSource,
-  isRealBoxCoverSource,
   providerLabelForSource,
   providerImageScoreAdjustmentForSource,
   withProviderAttachmentTraits,
@@ -14,46 +14,16 @@ import {
 } from "./sourceTraits";
 
 describe("providerSourceTraits", () => {
-  it("marque les sources vraie-boîte déclarées par le registre", () => {
-    for (const source of [
-      "screenscraper",
-      "thegamesdb",
-      "launchbox",
-      "coverproject",
-      "booknode",
-      "philibert",
-      "okkazeo",
-      "freakxy",
-    ]) {
-      expect(isRealBoxCoverSource(source)).toBe(true);
-    }
-  });
-
-  it("ne marque pas les sources non vraie-boîte ni les tags non-provider", () => {
-    for (const source of [
-      "steamgriddb",
-      "steam",
-      "igdb",
-      "rawg",
-      "barcode",
-      "user",
-      "merged",
-      null,
-      undefined,
-    ]) {
-      expect(isRealBoxCoverSource(source)).toBe(false);
-    }
-  });
-
-  it("canonicalise l'alias bgg vers boardgamegeek et conserve le bonus", () => {
+  it("canonicalise l'alias bgg vers boardgamegeek", () => {
     expect(canonicalProviderIdForSource("bgg")).toBe("boardgamegeek");
-    expect(isRealBoxCoverSource("bgg")).toBe(true);
   });
 
   it("ignore la casse et les suffixes · région / variante", () => {
-    expect(isRealBoxCoverSource("ScreenScraper")).toBe(true);
-    expect(isRealBoxCoverSource("screenscraper · fr")).toBe(true);
-    expect(isRealBoxCoverSource("thegamesdb/box-2d")).toBe(true);
+    expect(canonicalProviderIdForSource("ScreenScraper")).toBe("screenscraper");
+    expect(canonicalProviderIdForSource("screenscraper · fr")).toBe(
+      "screenscraper",
+    );
+    expect(canonicalProviderIdForSource("thegamesdb/box-2d")).toBe("thegamesdb");
     expect(canonicalProviderIdForSource("BGG · fr")).toBe("boardgamegeek");
   });
 
@@ -90,7 +60,7 @@ describe("providerSourceTraits", () => {
   });
 
   it("stampe l'ajustement de score image déclaré par le provider", () => {
-    expect(providerImageScoreAdjustmentForSource("picclick")).toBe(-280);
+    expect(providerImageScoreAdjustmentForSource("ebay")).toBe(-280);
     expect(providerImageScoreAdjustmentForSource("chasseauxlivres")).toBe(-25);
     expect(providerImageScoreAdjustmentForSource("booknode")).toBeUndefined();
   });
@@ -100,7 +70,6 @@ describe("providerSourceTraits", () => {
       withProviderAttachmentTraits({ source: "coverproject" }),
     ).toMatchObject({
       source: "coverproject",
-      isRealBoxCoverSource: true,
       isFullWrapCoverSource: true,
       isGameMediaGallerySource: false,
       providerLabel: "Cover Project",
@@ -109,7 +78,6 @@ describe("providerSourceTraits", () => {
       withProviderAttachmentTraits({ source: "bgg", url: "/c.jpg" }),
     ).toMatchObject({
       url: "/c.jpg",
-      isRealBoxCoverSource: true,
       isFullWrapCoverSource: false,
       isGameMediaGallerySource: false,
       isMusicGallerySource: false,
@@ -131,20 +99,68 @@ describe("providerSourceTraits", () => {
     expect(
       withProviderAttachmentTraits({ source: "steamgriddb" }),
     ).toMatchObject({
-      isRealBoxCoverSource: false,
       isFullWrapCoverSource: false,
       providerLabel: "SteamGridDB",
     });
-    expect(withProviderAttachmentTraits({ source: "picclick" })).toMatchObject({
-      isRealBoxCoverSource: false,
+    expect(withProviderAttachmentTraits({ source: "ebay" })).toMatchObject({
       isFullWrapCoverSource: false,
       providerImageScoreAdjustment: -280,
-      providerLabel: "PicClick (eBay)",
+      providerLabel: "eBay",
     });
     // Non-provider tag → no propagated label (formatter falls back to its tag map).
     expect(
       withProviderAttachmentTraits({ source: "barcode" }).providerLabel,
     ).toBe(undefined);
+  });
+
+  it("résout la provenance d'image depuis les règles URL déclarées par le provider", () => {
+    // Geedie: catalog render vs seller's photo of an owned copy.
+    expect(
+      coverProvenanceForSource(
+        "geedie",
+        "https://geedie.lt/storage/collectables/32736/abc.jpg",
+      ),
+    ).toBe("user_photo");
+    expect(
+      coverProvenanceForSource(
+        "geedie",
+        "https://geedie.lt/storage/products/ps4-x/640x480-cover.webp",
+      ),
+    ).toBe("catalog");
+    expect(
+      coverProvenanceForSource(
+        "geedie",
+        "https://imagedelivery.net/abc/def/public",
+      ),
+    ).toBe("catalog");
+    // iCollect: its catalogue images are photographs of boxes.
+    expect(
+      coverProvenanceForSource(
+        "icollect",
+        "https://www.icollecteverything.com/images/videogame/main/89/892033_1.jpg",
+      ),
+    ).toBe("listing_photo");
+    // Providers without rules emit no provenance (scorer defaults to catalog).
+    expect(coverProvenanceForSource("screenscraper", "/box.jpg")).toBeUndefined();
+    expect(coverProvenanceForSource("geedie", null)).toBeUndefined();
+  });
+
+  it("stampe la provenance et préserve celle dérivée de l'URL d'origine", () => {
+    expect(
+      withProviderAttachmentTraits({
+        source: "geedie",
+        url: "https://geedie.lt/storage/collectables/1/x.jpg",
+      }).coverProvenance,
+    ).toBe("user_photo");
+    // After localization the URL no longer reveals the bucket; an already-derived
+    // provenance must survive re-stamping rather than be cleared.
+    expect(
+      withProviderAttachmentTraits({
+        source: "geedie",
+        url: "/uploads/abc.webp",
+        coverProvenance: "user_photo",
+      }).coverProvenance,
+    ).toBe("user_photo");
   });
 });
 

@@ -1070,10 +1070,7 @@ export default function ItemDetailsPage() {
       priceNew: item.priceNew ?? null,
       priceUsed: item.priceUsed ?? null,
       priceUsedCIB: item.priceUsedCIB ?? null,
-      priceLastUpdated:
-        typeof item.priceLastUpdated === "string"
-          ? item.priceLastUpdated
-          : item.priceLastUpdated?.toISOString?.() ?? null,
+      priceLastUpdated: item.priceLastUpdated ?? null,
       priceSources: item.priceSources,
       priceSourceDisplayNames: item.priceSourceDisplayNames,
       isReferencePriceOnly: item.isReferencePriceOnly,

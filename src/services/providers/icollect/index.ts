@@ -191,6 +191,12 @@ export const icollectModule: ProviderModule = {
     isSecondary: true,
     isRealBoxCover: true,
     coverUrlHost: "icollecteverything.com",
+    // iCollect's images are photographs of physical boxes (its own catalogue
+    // shots), not clean publisher renders, so they rank below catalog art but
+    // above a private user's photo.
+    coverProvenanceRules: {
+      listingPhoto: ["icollecteverything.com/images/"],
+    },
     websiteUrl: "https://www.icollecteverything.com/games/",
     mappingProbeRetry: true,
     rateLimited: true,

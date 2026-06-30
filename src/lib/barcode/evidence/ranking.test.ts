@@ -146,7 +146,7 @@ describe("pickBarcodeFieldValuesFromObservations", () => {
           label: "Joueurs",
           value: "1-99",
           provenance: {
-            providerId: "picclick",
+            providerId: "ebay",
             sourceDocumentRole: "marketplace_listing",
             evidenceSignals: ["barcode_match"],
           },

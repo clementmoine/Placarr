@@ -277,8 +277,52 @@ export function localeBonusForAttachmentRole(
     : 0;
 }
 
+// Orthography signal shared by inferTextLanguage and the display-title scorers:
+// these diacritics mark French spelling (native FR catalog text vs. an EN import).
+const FRENCH_DIACRITICS = /[éèàùçêâôîëïüû]/i;
+
+// Scripts of the supported UI languages. A title in another script (CJK…)
+// reads as foreign for these locales and is demoted at display time.
+const LATIN_SCRIPT_LANGUAGES: ReadonlySet<LocaleLanguage> = new Set([
+  "fr",
+  "en",
+]);
+
+/** Preferred-first language for the given locale options (app default when unset). */
+export function preferredLanguage(
+  options?: LocalePreferenceOptions,
+): LocaleLanguage {
+  return resolveLanguageOrder(options)[0];
+}
+
+export type TitleLanguagePreference = {
+  /** The title's inferred language is the preferred language. */
+  matchesPreferredLanguage: boolean;
+  /** The title carries the preferred language's native orthography (fr diacritics). */
+  hasPreferredOrthography: boolean;
+  /** The preferred language is Latin-script (non-Latin titles read as foreign). */
+  prefersLatinScript: boolean;
+};
+
+/**
+ * How well a title matches the preferred language of the locale options.
+ * This is the single home of language-preference knowledge for title scoring:
+ * the display scorers consume it instead of hardcoding any language.
+ */
+export function titleLanguagePreference(
+  text: string,
+  options?: LocalePreferenceOptions,
+): TitleLanguagePreference {
+  const preferred = preferredLanguage(options);
+  return {
+    matchesPreferredLanguage: inferTextLanguage(text) === preferred,
+    hasPreferredOrthography: preferred === "fr" && FRENCH_DIACRITICS.test(text),
+    prefersLatinScript: LATIN_SCRIPT_LANGUAGES.has(preferred),
+  };
+}
+
 export function inferTextLanguage(text: string): LocaleLanguage | "unknown" {
-  if (/[éèàùçêâôîëïüû]/i.test(text)) return "fr";
+  if (FRENCH_DIACRITICS.test(text)) return "fr";
 
   if (/[¿¡]/.test(text)) return "unknown";
 
@@ -346,7 +390,8 @@ export function pickBestRegionalTitle(
       regionRank(a.region, options) - regionRank(b.region, options);
     if (regionDiff !== 0) return regionDiff;
     return (
-      scoreMetadataDisplayTitle(b.text) - scoreMetadataDisplayTitle(a.text)
+      scoreMetadataDisplayTitle(b.text, options) -
+      scoreMetadataDisplayTitle(a.text, options)
     );
   })[0].text;
 }

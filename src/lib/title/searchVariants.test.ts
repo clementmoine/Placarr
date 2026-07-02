@@ -62,28 +62,37 @@ describe("buildStructuralTitleSearchVariants", () => {
     }
   });
 
-  it("stays bounded for cross-language phrase swaps", () => {
+  it("stays bounded for dictionary phrase swaps", () => {
+    // Les équivalences par-produit (« Baphomet » → « Broken Sword ») viennent
+    // des alternate names providers, plus d'une table codée en dur : seules
+    // les phrases de niveau dictionnaire génèrent des variantes.
     const variants = buildStructuralTitleSearchVariants(
-      "Les Chevaliers de Baphomet : La Malédiction du serpent",
+      "Rio Le Film : Le Jeu Vidéo",
     );
     expect(variants.length).toBeLessThan(40);
     expect(variants).toEqual(
-      expect.arrayContaining([
-        expect.stringMatching(/broken sword/i),
-        expect.stringMatching(/serpent/i),
-      ]),
+      expect.arrayContaining([expect.stringMatching(/movie video game/i)]),
+    );
+
+    const baphomet = buildStructuralTitleSearchVariants(
+      "Les Chevaliers de Baphomet : La Malédiction du serpent",
+    );
+    expect(baphomet.length).toBeLessThan(40);
+    expect(baphomet).toEqual(
+      expect.not.arrayContaining([expect.stringMatching(/broken sword/i)]),
     );
   });
 
-  it("adds colon form for destiny taken king variants", () => {
+  it("adds colon form for subtitle variants without translating them", () => {
     const variants = buildStructuralTitleSearchVariants(
       "Destiny Le Roi des Corrompus",
     );
     expect(variants).toEqual(
-      expect.arrayContaining([
-        "Destiny: the taken king",
-        "Destiny The taken king",
-      ]),
+      expect.arrayContaining(["Destiny: Le Roi des Corrompus"]),
+    );
+    // La forme anglaise vient des alternate names du provider, pas d'une map.
+    expect(variants).toEqual(
+      expect.not.arrayContaining([expect.stringMatching(/taken king/i)]),
     );
   });
 

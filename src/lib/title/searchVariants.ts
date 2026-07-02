@@ -4,6 +4,7 @@ import {
 } from "@/lib/title/romanNumeral";
 import { createGameEditionMatcher } from "@/lib/barcode/listingTerms";
 import {
+  dedupeTokenTailConsonants,
   TITLE_PHRASE_EQUIVALENT_GROUPS,
   TITLE_TOKEN_EQUIVALENT_GROUPS,
 } from "@/lib/title/tokenEquivalents";
@@ -190,16 +191,16 @@ function deDuplicateWordTailConsonants(title: string): string | null {
   const normalized = title.replace(/\s+/g, " ").trim();
   const rewritten = normalized
     .split(/\s+/)
-    .map((word) =>
-      word
-        .replace(/tt$/i, "t")
-        .replace(/pp$/i, "p")
-        .replace(/ff$/i, "f")
-        .replace(/ck$/i, "k"),
-    )
+    .map((word) => dedupeTokenTailConsonants(word))
     .join(" ");
   if (rewritten === normalized) return null;
   return rewritten;
+}
+
+/** Accent-stripped form ("Pokémon" → "Pokemon") for accent-less provider indexes. */
+function buildAccentInsensitiveVariants(title: string): string[] {
+  const stripped = title.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return stripped !== title ? [stripped] : [];
 }
 
 /** Common stylized spellings ("Pitt") -> indexed forms ("Pit"). */
@@ -273,17 +274,32 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
     ordered.push(candidate);
   };
 
+  // Les transformations par-variante s'appliquent aussi au titre demandé
+  // lui-même (forme « Sous-titre: » et graphies dé-stylisées).
+  for (const colon of buildSubtitleColonVariants(trimmed)) {
+    push(colon);
+  }
+  for (const spelling of buildStylizedSpellingVariants(trimmed)) {
+    push(spelling);
+  }
+
   for (const value of [
     ...buildCamelCaseTitleVariants(trimmed),
     ...buildRomanRangeTitleVariants(trimmed),
     ...buildRomanNumeralTitleVariants(trimmed),
     ...buildTokenEquivalentTitleVariants(trimmed),
     ...buildPhraseEquivalentTitleVariants(trimmed),
+    ...buildAccentInsensitiveVariants(trimmed),
     ...buildApostropheTitleVariants(trimmed),
     ...buildSeparatorTitleVariants(trimmed),
     ...buildLegendTitleVariants(trimmed),
   ]) {
     push(value);
+    // Chaque variante existe aussi sans accents (indexes providers accent-less)
+    // — générique, remplace les anciennes paires d'orthographe par-produit.
+    for (const accentless of buildAccentInsensitiveVariants(value)) {
+      push(accentless);
+    }
     for (const colon of buildSubtitleColonVariants(value)) {
       push(colon);
     }

@@ -1,4 +1,16 @@
-/** Shared colour / language token groups for title matching. */
+/**
+ * Vocabulaire d'équivalence FR↔EN pour le matching de titres.
+ *
+ * RÈGLE (voir docs/word_list_audit.md) : uniquement des équivalences de
+ * DICTIONNAIRE (couleurs, mots communs) — jamais le sous-titre ou le nom d'un
+ * produit précis. L'équivalence par-produit vient des DONNÉES : alternate
+ * names / regionalTitles des providers (IGDB, ScreenScraper, LaunchBox…),
+ * comparés via les jeux d'alias des deux côtés du match.
+ *
+ * Les variantes d'orthographe (accents, consonnes finales doublées « Pitt » →
+ * « Pit ») sont traitées structurellement par `normalizeEquivalentToken`, pas
+ * par des paires nommées.
+ */
 export const TITLE_TOKEN_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
   ["jaune", "yellow"],
   ["rouge", "red"],
@@ -9,34 +21,44 @@ export const TITLE_TOKEN_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
   ["noir", "black"],
   ["blanc", "white"],
   ["criquet", "cricket"],
-  ["pokemon", "pokémon"],
   ["legende", "legend"],
-  ["cretins", "crétins"],
-  ["cretin", "crétin"],
-  ["pit", "pitt"],
 ];
 
-/** Multi-word FR/EN subtitle phrases for cross-language provider search. */
+/** Multi-word FR/EN phrases — dictionary-level only, same rule as above. */
 export const TITLE_PHRASE_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
-  ["destiny le roi des corrompus", "destiny: the taken king"],
-  ["le roi des corrompus", "the taken king"],
-  ["roi des corrompus", "taken king"],
-  ["les chevaliers de baphomet", "broken sword"],
-  ["chevaliers de baphomet", "broken sword"],
-  ["la malediction du serpent", "the serpent's curse"],
-  ["la malédiction du serpent", "the serpent's curse"],
-  ["malediction du serpent", "serpent's curse"],
-  ["l'aube du ragnarok", "dawn of ragnarok"],
-  ["laube du ragnarok", "dawn of ragnarok"],
-  ["aube du ragnarok", "dawn of ragnarok"],
-  ["le film : le jeu vidéo", "movie video game"],
-  ["le film le jeu video", "movie video game"],
+  ["le film : le jeu vidéo", "le film le jeu video", "movie video game"],
 ];
+
+/** Dedupe stylized doubled tail consonants ("Pitt" → "Pit", "Zapp" → "Zap"). */
+export function dedupeTokenTailConsonants(word: string): string {
+  return word
+    .replace(/tt$/i, "t")
+    .replace(/pp$/i, "p")
+    .replace(/ff$/i, "f")
+    .replace(/ck$/i, "k");
+}
+
+/**
+ * Forme canonique d'un token pour l'équivalence : accents retirés, casse
+ * neutralisée, consonne finale dédoublée. Structurel — aucune liste.
+ */
+function normalizeEquivalentToken(token: string): string {
+  return dedupeTokenTailConsonants(
+    token.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(),
+  );
+}
+
+function groupHasToken(group: readonly string[], normalized: string): boolean {
+  return group.some((entry) => normalizeEquivalentToken(entry) === normalized);
+}
 
 export function titleTokensEquivalent(a: string, b: string): boolean {
-  if (a === b) return true;
+  const normalizedA = normalizeEquivalentToken(a);
+  const normalizedB = normalizeEquivalentToken(b);
+  if (normalizedA === normalizedB) return true;
   return TITLE_TOKEN_EQUIVALENT_GROUPS.some(
-    (group) => group.includes(a) && group.includes(b),
+    (group) =>
+      groupHasToken(group, normalizedA) && groupHasToken(group, normalizedB),
   );
 }
 
@@ -45,8 +67,8 @@ export function titleTokenPresentInSet(
   titleTokens: Set<string>,
 ): boolean {
   if (titleTokens.has(token)) return true;
-  return TITLE_TOKEN_EQUIVALENT_GROUPS.some(
-    (group) =>
-      group.includes(token) && group.some((alt) => titleTokens.has(alt)),
-  );
+  for (const candidate of titleTokens) {
+    if (titleTokensEquivalent(token, candidate)) return true;
+  }
+  return false;
 }

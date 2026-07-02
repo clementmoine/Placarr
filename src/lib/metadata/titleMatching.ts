@@ -3,7 +3,11 @@ import {
   createGameEditionMatcher,
 } from "@/lib/barcode/listingTerms";
 import { normalizeDisplayTitle } from "@/lib/title/displayScore";
-import { inferTextLanguage, regionRank } from "@/lib/locale/preference";
+import {
+  inferTextLanguage,
+  preferredLanguage,
+  regionRank,
+} from "@/lib/locale/preference";
 import {
   titleTokensEquivalent,
   TITLE_PHRASE_EQUIVALENT_GROUPS,
@@ -60,25 +64,6 @@ export function collectCanonicalFallbackNames(
   );
 }
 
-function isCrossLanguagePhraseTranslation(
-  requestedName: string,
-  candidate: string,
-): boolean {
-  const requested = requestedName.toLowerCase();
-  const candidateLower = candidate.toLowerCase();
-  return TITLE_PHRASE_EQUIVALENT_GROUPS.some((group) => {
-    const requestedPhrase = group.find((phrase) =>
-      requested.includes(phrase.toLowerCase()),
-    );
-    const candidatePhrase = group.find(
-      (phrase) =>
-        candidateLower.includes(phrase.toLowerCase()) &&
-        phrase.toLowerCase() !== requestedPhrase?.toLowerCase(),
-    );
-    return Boolean(requestedPhrase && candidatePhrase);
-  });
-}
-
 export function orderFallbackNamesForLocale(
   requestedName: string,
   names: string[],
@@ -95,14 +80,13 @@ export function orderFallbackNamesForLocale(
     unique.push(trimmed);
   }
 
+  // Langue préférée d'abord (ordre configuré, pas de langue codée en dur) ;
+  // l'équivalence par-produit vient des alias providers présents dans `names`.
+  const preferred = preferredLanguage();
   return unique.slice().sort((a, b) => {
-    const aCross = isCrossLanguagePhraseTranslation(requestedName, a) ? 0 : 1;
-    const bCross = isCrossLanguagePhraseTranslation(requestedName, b) ? 0 : 1;
-    if (aCross !== bCross) return aCross - bCross;
-
-    const aFrench = inferTextLanguage(a) === "fr" ? 0 : 1;
-    const bFrench = inferTextLanguage(b) === "fr" ? 0 : 1;
-    if (aFrench !== bFrench) return aFrench - bFrench;
+    const aPreferred = inferTextLanguage(a) === preferred ? 0 : 1;
+    const bPreferred = inferTextLanguage(b) === preferred ? 0 : 1;
+    if (aPreferred !== bPreferred) return aPreferred - bPreferred;
 
     const aScore = metadataTitleSimilarity(requestedName, a);
     const bScore = metadataTitleSimilarity(requestedName, b);
@@ -978,18 +962,27 @@ export function metadataTitleMatchScore(
   result: MetadataResult,
   comparisonNames: string[],
 ): number {
-  const title = result.title || "";
-  if (!title) return 0;
+  // L'alignement crédite TOUS les noms que le provider déclare pour le
+  // candidat (titre + aliases + titres régionaux) : la correspondance
+  // inter-langues vient de ces données, jamais d'une table de traduction.
+  const candidateNames = namesFromMetadataSource(result);
+  if (candidateNames.length === 0) return 0;
 
   return comparisonNames.reduce((bestScore, comparisonName) => {
     const normalizedComparisonName =
       stripTrailingPlatformFromComparisonName(comparisonName);
-    const direct = metadataTitleSimilarity(title, normalizedComparisonName);
-    const compact = metadataTitleSimilarity(
-      compactVolumeTitleForMatch(title),
-      compactVolumeTitleForMatch(normalizedComparisonName),
-    );
-    return Math.max(bestScore, direct, compact);
+    const best = candidateNames.reduce((score, candidateName) => {
+      const direct = metadataTitleSimilarity(
+        candidateName,
+        normalizedComparisonName,
+      );
+      const compact = metadataTitleSimilarity(
+        compactVolumeTitleForMatch(candidateName),
+        compactVolumeTitleForMatch(normalizedComparisonName),
+      );
+      return Math.max(score, direct, compact);
+    }, 0);
+    return Math.max(bestScore, best);
   }, 0);
 }
 

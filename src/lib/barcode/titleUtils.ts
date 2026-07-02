@@ -584,7 +584,11 @@ export function listingLooksLikeNonBookProduct(name: string): boolean {
 // displayName/edition) in the cache so reads stop re-stripping integral edition
 // terms ("Gottlieb Pinball Classics" → "Gottlieb Pinball"). Bumped so pre-v40
 // rows (no structured columns, stripped rawNames) are recomputed.
-export const BARCODE_CACHE_VERSION = "canonical-v40";
+// v41: équivalence de titres data-driven — la table de traduction par-produit
+// est remplacée par les alternate names providers + normalisation structurelle
+// (accents, consonnes doublées) ; le matching retailer/board-game devient plus
+// permissif. Bump pour que les scans cachés re-résolvent avec la nouvelle règle.
+export const BARCODE_CACHE_VERSION = "canonical-v41";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider

@@ -90,7 +90,12 @@ describe("buildRequestedTitleFallbackVariants", () => {
 
   it("maps french colour names to english equivalents", () => {
     expect(buildRequestedTitleFallbackVariants("Pokemon Jaune")).toEqual(
-      expect.arrayContaining(["Pokemon Yellow", "Pokémon Yellow"]),
+      expect.arrayContaining(["Pokemon Yellow"]),
+    );
+    // Le sens accents → sans-accents est structurel (aucune paire nommée) ;
+    // l'orthographe accentuée officielle vient des alternate names providers.
+    expect(buildRequestedTitleFallbackVariants("Pokémon Jaune")).toEqual(
+      expect.arrayContaining(["Pokémon Yellow", "Pokemon Yellow"]),
     );
   });
 
@@ -666,12 +671,29 @@ describe("metadataTitleSimilarity", () => {
     ).toBeGreaterThanOrEqual(0.58);
   });
 
-  it("aligns destiny french retail title with the taken king", () => {
+  it("aligns FR retail titles via provider alternate names, not a hand map", () => {
+    // Deux chaînes nues de langues différentes sans recouvrement lexical :
+    // pas de corroboration forcée par une table de traduction par-produit.
     expect(
       metadataTitleSimilarity(
         "Destiny Le Roi des Corrompus",
         "Destiny: The Taken King",
       ),
-    ).toBeGreaterThanOrEqual(0.58);
+    ).toBeLessThan(0.58);
+
+    // Avec les alternate names / titres régionaux du provider (IGDB, SS…),
+    // l'alignement passe par les données.
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "Destiny: The Taken King",
+          regionalTitles: [
+            { region: "fr", text: "Destiny : Le Roi des Corrompus" },
+          ],
+        },
+        ["Destiny Le Roi des Corrompus"],
+        0.58,
+      ),
+    ).toBe(true);
   });
 });

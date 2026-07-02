@@ -1,5 +1,8 @@
 import { PROVIDER_MODULES } from "@/services/provider/registry";
-import { isBarcodeRecordSlimMode } from "@/lib/barcode/lookup/recordMode";
+import {
+  isBarcodeRecordSlimMode,
+  shouldSkipBarcodeTaskInSlimRecord,
+} from "@/lib/barcode/lookup/recordMode";
 
 import type {
   BarcodeLookupContext,
@@ -40,7 +43,9 @@ export function createBarcodeLookupTaskBuilders(
         return PROVIDER_MODULES.reduce<Record<string, Promise<unknown>>>(
           (tasks, module) => {
             if (!module.buildBarcodeTasks) return tasks;
-            if (slim && module.info.slowBarcodeLookup) return tasks;
+            if (slim && shouldSkipBarcodeTaskInSlimRecord(module.info)) {
+              return tasks;
+            }
             return {
               ...tasks,
               ...module.buildBarcodeTasks(deps, type, context),

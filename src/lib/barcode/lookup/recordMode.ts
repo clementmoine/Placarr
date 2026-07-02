@@ -18,9 +18,17 @@ const RECORD_SLIM_BARCODE_TYPES: BarcodeLookupType[] = [
 
 let cachedSlimSkipKeys: Set<string> | null = null;
 
+/** Providers whose barcode task builder must not run in slim RECORD (no orphan fetches). */
+export function shouldSkipBarcodeTaskInSlimRecord(info: {
+  slowBarcodeLookup?: boolean;
+  slowScanScrape?: boolean;
+}): boolean {
+  return !!(info.slowBarcodeLookup || info.slowScanScrape);
+}
+
 /**
- * Lookup task keys contributed by providers flagged `slowScanScrape`. Derived
- * from the registry (no provider-id literals) by probing each tagged module's
+ * Lookup task keys contributed by slow barcode providers. Derived from the
+ * registry (no provider-id literals) by probing each tagged module's
  * `buildBarcodeTasks` with no-op deps so we read keys without firing scrapes.
  */
 function recordSlimSkipLookupKeys(): Set<string> {
@@ -31,10 +39,7 @@ function recordSlimSkipLookupKeys(): Set<string> {
     { get: () => () => Promise.resolve(null) },
   ) as never;
   for (const module of PROVIDER_MODULES) {
-    if (
-      !module.info.slowScanScrape &&
-      !module.info.slowBarcodeLookup
-    ) {
+    if (!shouldSkipBarcodeTaskInSlimRecord(module.info)) {
       continue;
     }
     if (!module.buildBarcodeTasks) continue;

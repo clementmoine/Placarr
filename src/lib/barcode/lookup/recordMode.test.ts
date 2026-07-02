@@ -48,6 +48,8 @@ describe("barcode recordMode", () => {
       "@/services/provider/barcode"
     );
     const leDenicheurStarted = vi.fn(() => Promise.resolve(null));
+    const freakxyStarted = vi.fn(() => Promise.resolve([]));
+    const chasseStarted = vi.fn(() => Promise.resolve([]));
     const pcStarted = vi.fn(() => Promise.resolve(null));
     const builders = createBarcodeLookupTaskBuilders(
       new Proxy(
@@ -55,17 +57,31 @@ describe("barcode recordMode", () => {
         {
           get(_target, prop) {
             if (prop === "fetchPricesFromLeDenicheur") return leDenicheurStarted;
+            if (prop === "fetchFromFreakxy") return freakxyStarted;
+            if (prop === "fetchFromChasseAuxLivres") return chasseStarted;
             if (prop === "fetchMetadataFromPriceCharting") return pcStarted;
             return () => Promise.resolve(null);
           },
         },
       ) as never,
     );
-    const tasks = builders.games({ barcode: "0045496365226" });
-    expect(tasks).not.toHaveProperty("leDenicheur");
-    expect(tasks).toHaveProperty("pc");
-    await Promise.allSettled(Object.values(tasks));
+    const gameTasks = builders.games({ barcode: "0045496365226" });
+    expect(gameTasks).not.toHaveProperty("leDenicheur");
+    expect(gameTasks).not.toHaveProperty("freakxy");
+    expect(gameTasks).not.toHaveProperty("cal");
+    expect(gameTasks).toHaveProperty("pc");
+
+    const bookTasks = builders.books({ barcode: "9780140328721" });
+    expect(bookTasks).not.toHaveProperty("cal");
+    expect(bookTasks).not.toHaveProperty("leDenicheur");
+
+    await Promise.allSettled([
+      ...Object.values(gameTasks),
+      ...Object.values(bookTasks),
+    ]);
     expect(leDenicheurStarted).not.toHaveBeenCalled();
+    expect(freakxyStarted).not.toHaveBeenCalled();
+    expect(chasseStarted).not.toHaveBeenCalled();
     expect(pcStarted).toHaveBeenCalled();
   });
 

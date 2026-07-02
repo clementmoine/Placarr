@@ -28,8 +28,12 @@ import {
   filterPlaceholderCoverAttachments,
   isMissingArtImageUrl,
   isPlaceholderCoverFromPersistedMetrics,
+  type PlaceholderCoverSignals,
 } from "@/lib/media/coverPlaceholder";
-import { stripCropSuffixFromUrl, urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
+import {
+  stripCropSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
+} from "@/lib/media/coverUrl";
 import {
   icollectCoverRegionFromAgeRating,
   icollectRoleWithoutCollectorRegion,
@@ -101,9 +105,12 @@ function coverDisplayOptions(
   };
 }
 
-function attachments(item: MediaInput): ScoredAttachmentInput[] {
+/** Attachments carry their persisted image metrics (see `MediaItem`). */
+type DisplayAttachment = ScoredAttachmentInput & PlaceholderCoverSignals;
+
+function attachments(item: MediaInput): DisplayAttachment[] {
   return filterPlaceholderCoverAttachments(
-    (item.metadata?.attachments ?? []) as ScoredAttachmentInput[],
+    (item.metadata?.attachments ?? []) as DisplayAttachment[],
   );
 }
 
@@ -199,10 +206,7 @@ export function filterMetadataForShelfPlatform<
   const attachmentsWithSanitizedICollect = (
     metadataForTitle.attachments ?? []
   ).map((attachment) => {
-    if (
-      !isICollectAttachmentSource(attachment.source) ||
-      !attachment.role
-    ) {
+    if (!isICollectAttachmentSource(attachment.source) || !attachment.role) {
       return attachment;
     }
     if (icollectRegionFromRating) return attachment;
@@ -214,7 +218,10 @@ export function filterMetadataForShelfPlatform<
 
   const options = coverDisplayOptions({ shelf });
   if (!options.requestedPlatformKey) {
-    return { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect };
+    return {
+      ...metadataForTitle,
+      attachments: attachmentsWithSanitizedICollect,
+    };
   }
 
   const filteredAttachments = coverAttachmentsMatchingShelfPlatform(
@@ -235,8 +242,8 @@ export function filterMetadataForShelfPlatform<
 
   const rawImageUrl = pinStillValid
     ? metadataForTitle.imageUrl
-    : pickBestCoverFromAttachments(filteredAttachments, undefined, options) ??
-      null;
+    : (pickBestCoverFromAttachments(filteredAttachments, undefined, options) ??
+      null);
   const imageUrl =
     rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
 
@@ -280,7 +287,7 @@ function dedupeAttachmentsByImageUrl(
 function attachmentForUrl(
   item: MediaInput,
   url: string,
-): ScoredAttachmentInput | undefined {
+): DisplayAttachment | undefined {
   return attachments(item).find(
     (attachment) =>
       attachment.url && urlsReferToSameLocalizedImage(attachment.url, url),
@@ -297,16 +304,10 @@ export function resolveMetadataCoverUrl(
 
   const options = coverDisplayOptions(item, uiLocale);
   const attachment = attachmentForUrl(item, pin);
-  if (
-    attachment &&
-    isPlaceholderCoverFromPersistedMetrics(attachment)
-  ) {
+  if (attachment && isPlaceholderCoverFromPersistedMetrics(attachment)) {
     return (
-      pickBestCoverFromAttachments(
-        attachments(item),
-        undefined,
-        options,
-      ) ?? null
+      pickBestCoverFromAttachments(attachments(item), undefined, options) ??
+      null
     );
   }
   if (
@@ -314,11 +315,8 @@ export function resolveMetadataCoverUrl(
     isAttachmentCoverPlatformMismatch(attachment, options.requestedPlatformKey)
   ) {
     return (
-      pickBestCoverFromAttachments(
-        attachments(item),
-        undefined,
-        options,
-      ) ?? null
+      pickBestCoverFromAttachments(attachments(item), undefined, options) ??
+      null
     );
   }
 

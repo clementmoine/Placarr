@@ -45,15 +45,19 @@ function mapEbayMetadata(
   products: EbayProduct[],
   normalizedBarcode: string | null,
 ) {
-  const catalogProduct = products.find((product) => product.catalog && product.name);
-  const titledProduct = catalogProduct ?? products.find((product) => product.name);
+  const catalogProduct = products.find(
+    (product) => product.catalog && product.name,
+  );
+  const titledProduct =
+    catalogProduct ?? products.find((product) => product.name);
   const imageProducts = products.filter((product) => product.coverUrl);
   const coverProduct =
     imageProducts.find((product) => product.catalog) ?? imageProducts[0];
   const imageUrl = coverProduct?.coverUrl || undefined;
   if (!imageUrl && !titledProduct?.name) return null;
 
-  const epid = catalogProduct?.epid ?? products.find((product) => product.epid)?.epid;
+  const epid =
+    catalogProduct?.epid ?? products.find((product) => product.epid)?.epid;
   const brand = catalogProduct?.brand?.trim();
 
   return {
@@ -96,8 +100,18 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
       offerCount: result.offerCount ?? null,
     };
     const offers = pricedOffers(PRICE_SOURCE, [
-      { condition: "new", priceCents: result.priceNew, rawValue: result, extra },
-      { condition: "used", priceCents: result.priceUsed, rawValue: result, extra },
+      {
+        condition: "new",
+        priceCents: result.priceNew,
+        rawValue: result,
+        extra,
+      },
+      {
+        condition: "used",
+        priceCents: result.priceUsed,
+        rawValue: result,
+        extra,
+      },
     ]);
     if (offers.length) return offers;
   }
@@ -110,7 +124,7 @@ export const ebayModule: ProviderModule = {
     label: "eBay",
     types: ["games", "movies", "musics", "books", "boardgames"],
     capabilities: ["identify", "price", "cover"],
-    metadataCapabilities: ["cover", "title"],
+    metadataCapabilities: ["identify", "cover"],
     auth: {
       kind: "key",
       env: [...EBAY_ENV_NAMES],
@@ -204,7 +218,9 @@ export const ebayModule: ProviderModule = {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (/timeout|timed out|ETIMEDOUT|ECONNABORTED|AbortError/i.test(message)) {
+      if (
+        /timeout|timed out|ETIMEDOUT|ECONNABORTED|AbortError/i.test(message)
+      ) {
         return probeErrorResult("eBay Browse API timed out", "blocked");
       }
       return probeErrorResult(message);

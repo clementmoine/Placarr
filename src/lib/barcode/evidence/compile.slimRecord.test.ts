@@ -68,9 +68,6 @@ describe("compileResultForType — slim RECORD", () => {
         pc: {
           title: "Mario Kart Wii",
           platform: "Wii",
-          coverUrl: null,
-          prices: null,
-          ageRating: null,
         },
       },
     });
@@ -89,9 +86,6 @@ describe("compileResultForType — slim RECORD", () => {
         pc: {
           title: "Mario Kart Wii",
           platform: "Wii",
-          coverUrl: null,
-          prices: null,
-          ageRating: null,
         },
         ebay: [{ name: "Mario Kart Wii Jeu Nintendo", priceNew: 1999 }],
       },

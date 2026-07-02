@@ -50,6 +50,11 @@ export interface ProviderInfo {
    */
   slowBarcodeLookup?: boolean;
   /**
+   * Re-query this provider when a discovered ISBN replaces a missing barcode
+   * (see `bookIsbnBootstrapProviderIds`).
+   */
+  bookIsbnBootstrapSource?: boolean;
+  /**
    * Deterministic cover URL from a cleaned ISBN barcode; `{isbn}` is substituted.
    */
   isbnCoverUrlTemplate?: string;

@@ -30,6 +30,7 @@ export type GameLookupInputs = {
       platform?: { name?: string | null } | null;
     } | null;
   } | null;
+  ice: { title?: string; platform?: string | null } | null;
   calListings: NamedListing[];
   amc: NamedListing[];
   freakxy: NamedListing[];
@@ -91,6 +92,16 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
     candidates.push(value);
     productPlatformSignals.push({ value, weight: sdPlatform ? 1.4 : 0.8 });
   }
+  if (inputs.ice?.title) {
+    const value = inputs.ice.platform
+      ? `${inputs.ice.title} (${inputs.ice.platform})`
+      : inputs.ice.title;
+    candidates.push(value);
+    productPlatformSignals.push({
+      value,
+      weight: inputs.ice.platform ? 2.6 : 1,
+    });
+  }
 
   pushListingSignals(
     inputs.calListings,
@@ -110,7 +121,8 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
   if (inputs.pc?.title) gameTitle = inputs.pc.title;
   else if (inputs.sd?.igdb_metadata?.name) {
     gameTitle = inputs.sd.igdb_metadata.name;
-  } else if (inputs.ebay[0]?.name) gameTitle = inputs.ebay[0].name;
+  } else if (inputs.ice?.title) gameTitle = inputs.ice.title;
+  else if (inputs.ebay[0]?.name) gameTitle = inputs.ebay[0].name;
   else if (inputs.amc[0]?.name) gameTitle = inputs.amc[0].name;
   else if (inputs.calListings[0]?.name) gameTitle = inputs.calListings[0].name;
   else if (inputs.freakxy[0]?.name) gameTitle = inputs.freakxy[0].name;

@@ -35,10 +35,10 @@ describe("barcode recordMode", () => {
     });
   });
 
-  it("skips post-scan enrich during slim record", () => {
+  it("keeps PC fallback but skips ScreenScraper during slim record", () => {
     process.env.BARCODE_RECORD_SLIM = "1";
     const deps = buildBarcodeRecordEnrichmentDeps();
-    expect(deps?.fetchReferencePriceByBarcode).toBeUndefined();
+    expect(deps?.fetchReferencePriceByBarcode).toBeDefined();
     expect(deps?.fetchGameMediaByBarcode).toBeUndefined();
   });
 

@@ -1,3 +1,5 @@
+import { brotliDecompressSync, gunzipSync } from "node:zlib";
+
 import { BatchInterceptor } from "@mswjs/interceptors";
 import nodeInterceptors from "@mswjs/interceptors/presets/node";
 
@@ -41,7 +43,42 @@ export function redact(input: string): string {
 }
 
 function keyOf(method: string, url: string): string {
-  return `${method.toUpperCase()} ${redact(url)}`;
+  return `${method.toUpperCase()} ${redact(normalizeReplayUrl(url))}`;
+}
+
+/** Collapse redirect-only query noise so record/replay keys stay aligned. */
+function normalizeReplayUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === "www.pricecharting.com" &&
+      parsed.pathname === "/search-products"
+    ) {
+      const q = parsed.searchParams.get("q")?.trim();
+      if (q && /^\d{8,14}$/.test(q.replace(/[^\d]/g, ""))) {
+        const cleaned = q.replace(/[^\d]/g, "");
+        return `${parsed.origin}/search-products?q=${cleaned}`;
+      }
+    }
+  } catch {
+    // ignore malformed URLs
+  }
+  return url;
+}
+
+async function readResponseBody(response: Response): Promise<string> {
+  const buffer = Buffer.from(await response.clone().arrayBuffer());
+  const encoding = response.headers.get("content-encoding")?.toLowerCase() ?? "";
+  if (encoding.includes("br")) {
+    return brotliDecompressSync(buffer).toString("utf8");
+  }
+  if (encoding.includes("gzip") || (buffer[0] === 0x1f && buffer[1] === 0x8b)) {
+    return gunzipSync(buffer).toString("utf8");
+  }
+  if (encoding.includes("deflate")) {
+    return gunzipSync(buffer).toString("utf8");
+  }
+  return buffer.toString("utf8");
 }
 
 export class HttpReplay {
@@ -63,7 +100,7 @@ export class HttpReplay {
       // l'attendre via flush() avant de lire les interactions.
       const p = (async () => {
         try {
-          const body = await response.clone().text();
+          const body = await readResponseBody(response);
           this.recorded.push({
             request: { method: request.method, url: redact(request.url) },
             response: { status: response.status, body: redact(body) },
@@ -77,9 +114,16 @@ export class HttpReplay {
     this.interceptor.apply();
   }
 
-  /** Attend que toutes les captures asynchrones soient terminées. */
-  async flush() {
-    await Promise.allSettled(this.pending);
+  /** Attend que toutes les captures asynchrones soient terminées (borné). */
+  async flush(timeoutMs = 5_000) {
+    if (this.pending.length === 0) return;
+    await Promise.race([
+      Promise.allSettled(this.pending),
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, timeoutMs);
+      }),
+    ]);
+    this.pending = [];
   }
 
   /** Démarre le rejeu à partir d'interactions enregistrées. */

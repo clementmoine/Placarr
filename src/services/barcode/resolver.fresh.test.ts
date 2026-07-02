@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -87,6 +87,7 @@ const REPLAY_CASES = DEFAULT_BARCODE_REGRESSION_CASES;
 
 function norm(value: unknown): string {
   return String(value ?? "")
+    .replace(/[\u2018\u2019\u2032]/g, "'")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
@@ -187,11 +188,17 @@ if (RECORD) {
   });
 } else {
   describe("REPLAY — chemin frais déterministe (fixtures figées)", () => {
+    afterEach(() => {
+      delete process.env.BARCODE_RECORD_SLIM;
+    });
+
     for (const testCase of REPLAY_CASES) {
       const path = fixturePath(testCase.id);
       const hasFixture = existsSync(path);
 
       it.skipIf(!hasFixture)(`${testCase.label} (${testCase.id})`, async () => {
+        process.env.BARCODE_RECORD_SLIM = "1";
+
         const { interactions } = JSON.parse(readFileSync(path, "utf8")) as {
           case: BarcodeRegressionCase;
           interactions: Interaction[];
@@ -204,7 +211,14 @@ if (RECORD) {
           res = await resolveBarcode(
             cleanCode(testCase.barcode),
             testCase.type ?? null,
-            { refresh: true },
+            {
+              refresh: true,
+              platformHint:
+                testCase.expected.platformKey &&
+                typeof testCase.expected.platformKey === "string"
+                  ? testCase.expected.platformKey
+                  : undefined,
+            },
           );
         } finally {
           replay.stop();

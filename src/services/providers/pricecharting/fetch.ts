@@ -235,8 +235,9 @@ function preferSpecificFallbackTitle(
 
 function parseSearchRows(
   html: string,
-): { id: string; title: string; platform: string }[] {
-  const rows: { id: string; title: string; platform: string }[] = [];
+): { id: string; gamePath: string; title: string; platform: string }[] {
+  const rows: { id: string; gamePath: string; title: string; platform: string }[] =
+    [];
   const rowRegex =
     /<tr class=\"offer\" id=\"product-(\d+)\">([\s\S]*?)<\/tr>/gi;
   let rMatch;
@@ -244,13 +245,23 @@ function parseSearchRows(
     const id = rMatch[1];
     const content = rMatch[2];
     const titleMatch = content.match(
-      /class=\"product_name\">[\s\S]*?<a[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+      /class=\"product_name\">[\s\S]*?<a[^>]*href=\"([^\"]+)\"[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
     );
+    const legacyTitleMatch = titleMatch
+      ? null
+      : content.match(
+          /class=\"product_name\">[\s\S]*?<a[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+        );
     const platformMatch = content.match(/<br>\s*([\s\S]*?)\s*<\/h2>/i);
-    if (titleMatch) {
+    const title = (titleMatch?.[2] ?? legacyTitleMatch?.[1])
+      ?.replace(/\s+/g, " ")
+      .trim();
+    if (title) {
+      const href = titleMatch?.[1]?.trim();
       rows.push({
         id,
-        title: titleMatch[1].replace(/\s+/g, " ").trim(),
+        gamePath: href || `/game/${id}`,
+        title,
         platform: platformMatch
           ? platformMatch[1].replace(/\s+/g, " ").trim()
           : "",
@@ -260,8 +271,13 @@ function parseSearchRows(
   return rows;
 }
 
+function priceChartingGameUrl(gamePath: string): string {
+  if (/^https?:\/\//i.test(gamePath)) return gamePath;
+  return `https://www.pricecharting.com${gamePath.startsWith("/") ? gamePath : `/${gamePath}`}`;
+}
+
 function pickBestRow(
-  rows: { id: string; title: string; platform: string }[],
+  rows: { id: string; gamePath: string; title: string; platform: string }[],
   fallbackName: string,
   fallbackPlatform?: string,
   isPal?: boolean,
@@ -328,6 +344,78 @@ function pickBestRow(
   }, matchingRows[0]);
 
   return titleSimilarityScore(fallbackName, best.title) >= 0.62 ? best : null;
+}
+
+/** Barcode search hit a results page with no title hint — pick one NTSC/PAL row. */
+function pickBarcodeSearchRow(
+  rows: { id: string; gamePath: string; title: string; platform: string }[],
+  options?: { fallbackPlatform?: string; isPal?: boolean },
+): { id: string; gamePath: string; title: string; platform: string } | null {
+  if (rows.length === 0) return null;
+
+  let matching = rows;
+  const targetPlatformKey = options?.fallbackPlatform
+    ? detectPlatformKey(options.fallbackPlatform)
+    : null;
+  if (targetPlatformKey) {
+    const platformRows = matching.filter(
+      (row) => detectPlatformKey(row.platform) === targetPlatformKey,
+    );
+    if (platformRows.length > 0) matching = platformRows;
+  }
+
+  if (options?.isPal) {
+    const palRows = matching.filter(
+      (row) =>
+        row.title.toLowerCase().includes("pal") ||
+        row.platform.toLowerCase().includes("pal"),
+    );
+    if (palRows.length > 0) matching = palRows;
+  } else {
+    const ntscRows = matching.filter(
+      (row) =>
+        !row.title.toLowerCase().includes("pal") &&
+        !row.platform.toLowerCase().includes("pal") &&
+        !row.title.toLowerCase().includes("jp") &&
+        !row.platform.toLowerCase().includes("jp"),
+    );
+    if (ntscRows.length > 0) matching = ntscRows;
+  }
+
+  const standardRows = matching.filter(
+    (row) => !containsGameClassicsKeyword(row.title),
+  );
+  if (standardRows.length > 0) matching = standardRows;
+
+  return matching[0] ?? null;
+}
+
+async function fetchDetailHtmlFromBarcodeSearchResults(
+  searchHtml: string,
+  headers: Record<string, string>,
+  fallbackPlatform?: string,
+  isPal?: boolean,
+): Promise<string | null> {
+  const bestRow = pickBarcodeSearchRow(parseSearchRows(searchHtml), {
+    fallbackPlatform,
+    isPal,
+  });
+  if (!bestRow) return null;
+
+  const gameUrl = priceChartingGameUrl(bestRow.gamePath);
+  const detailRes = await axios.get(gameUrl, { headers, maxRedirects: 5 });
+  const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
+  if (
+    !isAcceptedPriceChartingDetailHtml(
+      detailRes.data,
+      detailFinalUrl,
+      bestRow.title,
+      fallbackPlatform,
+    )
+  ) {
+    return null;
+  }
+  return detailRes.data;
 }
 
 async function fetchDirectDetailHtmlFromNameFallback(
@@ -445,7 +533,7 @@ async function fetchDetailHtmlFromNameFallback(
       );
       if (!bestRow) continue;
 
-      const gameUrl = `https://www.pricecharting.com/game/${bestRow.id}`;
+      const gameUrl = priceChartingGameUrl(bestRow.gamePath);
       const detailRes = await axios.get(gameUrl, { headers });
       const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
       if (
@@ -858,7 +946,14 @@ export async function fetchMetadataFromPriceCharting(
         if (!fallbackHtml) return null;
         html = fallbackHtml;
       } else {
-        return null;
+        const detailHtml = await fetchDetailHtmlFromBarcodeSearchResults(
+          html,
+          PRICECHARTING_HEADERS,
+          fallbackPlatform,
+          isPal,
+        );
+        if (!detailHtml) return null;
+        html = detailHtml;
       }
     } else if (
       fallbackPlatform &&

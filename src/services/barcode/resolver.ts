@@ -302,6 +302,12 @@ export async function resolveBarcode(
     payload,
   });
   recordStep("compile:done");
+  if (process.env.RECORD) {
+    // eslint-disable-next-line no-console
+    console.log(
+      `[record step] compile:games=${typeResults.games ? "hit" : "miss"} pc=${payload.pc?.title ?? "null"}`,
+    );
+  }
   const listingNames = collectPayloadListingNames(payload);
   const boardGameSignal = Math.max(
     detectBoardGameSignal(listingNames),

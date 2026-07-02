@@ -14,6 +14,7 @@ function makeInputs(
   return {
     pc: null,
     sd: null,
+    ice: null,
     calListings: [],
     amc: [],
     freakxy: [],
@@ -127,6 +128,29 @@ describe("enrichGameBarcodeLookups", () => {
       "Tom Clancy's Ghost Recon - Big Box - PC",
       "3307210117168",
       "pc",
+    );
+  });
+
+  it("uses catalog metadata for reference-price fallback when marketplaces are empty", async () => {
+    const enrichmentDeps = makeDeps();
+    await enrichGameBarcodeLookups({
+      cleanedBarcode: BARCODE,
+      contextPlatformKey: "wii",
+      pc: null,
+      searchLabel: "games",
+      enrichmentDeps,
+      inputs: makeInputs({
+        ice: { title: "Mario Kart Wii", platform: "Nintendo Wii" },
+        contextPlatformKey: "wii",
+      }),
+    });
+
+    expect(enrichmentDeps.fetchReferencePriceByBarcode).toHaveBeenCalledWith(
+      BARCODE,
+      "Mario Kart Wii",
+      "wii",
+      true,
+      false,
     );
   });
 });

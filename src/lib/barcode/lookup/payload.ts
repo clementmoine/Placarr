@@ -165,6 +165,12 @@ export function asLeDenicheurHit(value: unknown): LeDenicheurPrices | null {
   return value as LeDenicheurPrices;
 }
 
+export function asICollectHit(value: unknown): ICollectMetadata | null {
+  if (!value || typeof value !== "object") return null;
+  const hit = value as ICollectMetadata;
+  return typeof hit.title === "string" && hit.title.trim() ? hit : null;
+}
+
 export function asNamedListings(value: unknown): NamedListing[] {
   return asArray<NamedListing>(value).filter(
     (listing) => typeof listing?.name === "string" && listing.name.trim(),

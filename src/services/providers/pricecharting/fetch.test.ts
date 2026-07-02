@@ -269,7 +269,7 @@ describe("fetchMetadataFromPriceCharting", () => {
     ).toBeNull();
   });
 
-  it("renvoie null quand la recherche reste ambiguë sans fallback", async () => {
+  it("renvoie null quand la recherche barcode reste vide sans fallback", async () => {
     mockedGet.mockResolvedValue({
       data: "<html>Buy & Sell Search Results</html>",
       request: {
@@ -281,6 +281,35 @@ describe("fetchMetadataFromPriceCharting", () => {
     } as never);
 
     expect(await fetchMetadataFromPriceCharting("0045496365226")).toBeNull();
+  });
+
+  it("résout une page de recherche barcode sans fallback via la première ligne NTSC", async () => {
+    const searchHtml = `
+      <html><body>Buy & Sell Search Results
+        <tr class="offer" id="product-12345">
+          <td class="product_name"><a href="/game/wii/mario-kart-wii">Mario Kart Wii</a><h2><br>Wii</h2></td>
+        </tr>
+      </body></html>`;
+
+    mockedGet
+      .mockResolvedValueOnce({
+        data: searchHtml,
+        request: {
+          res: {
+            responseUrl:
+              "https://www.pricecharting.com/search-products?q=0045496365226",
+          },
+        },
+      } as never)
+      .mockResolvedValueOnce(detailResponse());
+
+    await expect(
+      fetchMetadataFromPriceCharting("0045496365226"),
+    ).resolves.toMatchObject({
+      title: "Super Monkey Ball",
+      platform: "Wii",
+      barcode: "0045496365226",
+    });
   });
 
   it("prefers Borderlands GOTY over Borderlands 3 on PS4 search", async () => {

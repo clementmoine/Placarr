@@ -15,6 +15,7 @@ import {
   asNamedListings,
   asPriceChartingHit,
   asScanDexHit,
+  asICollectHit,
   collectRetailerBarcodeHits,
   createEmptyBarcodeLookupPayload,
   type BarcodeLookupPayload,
@@ -49,6 +50,7 @@ export async function runBarcodeLookups(params: {
       console.log("[record step] lookups:tasks-settled");
     }
     payload.pc = asPriceChartingHit(lookups.pc);
+    payload.ice = asICollectHit(lookups.ice);
     payload.calJeuxVideo = asNamedListings(lookups.cal);
     payload.sd = asScanDexHit(lookups.sd);
     payload.amc = asNamedListings(lookups.amc);
@@ -57,22 +59,20 @@ export async function runBarcodeLookups(params: {
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.retailers = collectRetailerBarcodeHits(lookups);
 
-    if (isBarcodeRecordSlimMode()) {
-      payload.ss = null;
-    } else {
-      const enriched = await enrichGameBarcodeLookups({
-        cleanedBarcode,
+    const enriched = await enrichGameBarcodeLookups({
+      cleanedBarcode,
+      contextPlatformKey,
+      pc: payload.pc,
+      searchLabel: "games",
+      inputs: buildGameLookupInputs(
+        payload,
+        payload.calJeuxVideo,
         contextPlatformKey,
-        pc: payload.pc,
-        searchLabel: "games",
-        inputs: buildGameLookupInputs(
-          payload,
-          payload.calJeuxVideo,
-          contextPlatformKey,
-        ),
-        enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
-      });
-      payload.pc = enriched.pc as PriceChartingMetadata | null;
+      ),
+      enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
+    });
+    payload.pc = enriched.pc as PriceChartingMetadata | null;
+    if (!isBarcodeRecordSlimMode()) {
       payload.ss = asMetadataHit(enriched.ss);
     }
     return payload;
@@ -162,23 +162,23 @@ export async function runBarcodeLookups(params: {
   payload.okkazeo = asMetadataHit(lookups.okkazeo);
   payload.retailers = collectRetailerBarcodeHits(lookups);
 
+  const enriched = await enrichGameBarcodeLookups({
+    cleanedBarcode,
+    contextPlatformKey,
+    pc: payload.pc,
+    searchLabel: "generic",
+    inputs: buildGameLookupInputs(
+      payload,
+      payload.calGeneric,
+      contextPlatformKey,
+    ),
+    enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
+  });
+  payload.pc = enriched.pc as PriceChartingMetadata | null;
   if (isBarcodeRecordSlimMode()) {
     payload.ss = null;
     payload.tmdb = null;
   } else {
-    const enriched = await enrichGameBarcodeLookups({
-      cleanedBarcode,
-      contextPlatformKey,
-      pc: payload.pc,
-      searchLabel: "generic",
-      inputs: buildGameLookupInputs(
-        payload,
-        payload.calGeneric,
-        contextPlatformKey,
-      ),
-      enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
-    });
-    payload.pc = enriched.pc as PriceChartingMetadata | null;
     payload.ss = asMetadataHit(enriched.ss);
     payload.tmdb = asMetadataHit(
       await fetchTmdbForMovieTitle(
@@ -202,6 +202,7 @@ function buildGameLookupInputs(
   return {
     pc: payload.pc,
     sd: payload.sd,
+    ice: payload.ice,
     calListings,
     amc: payload.amc,
     freakxy: payload.freakxy,

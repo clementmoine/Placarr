@@ -465,7 +465,14 @@ export async function compileResultForType(
 
   for (const source of activeSources) {
     for (const product of source.products) {
-      const evidence = buildProductEvidence(source.providerName, product);
+      const referenceCatalogAnchor =
+        isBarcodeRecordSlimMode() &&
+        isReferencePriceSource(source.providerName);
+      const evidence = buildProductEvidence(
+        source.providerName,
+        product,
+        referenceCatalogAnchor ? true : undefined,
+      );
       if (!evidence) continue;
       if (
         type === "games" &&

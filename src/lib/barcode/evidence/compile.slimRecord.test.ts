@@ -33,8 +33,25 @@ describe("compileResultForType — slim RECORD", () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.cleanName).toBe("Mario Kart");
+    expect(result?.cleanName).toBe("Mario Kart Wii");
     expect(result?.platformKey).toBe("wii");
+  });
+
+  it("ancre PriceCharting avant le filtre bruit marketplace (token contexte)", async () => {
+    process.env.BARCODE_RECORD_SLIM = "1";
+
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "PriceCharting",
+          products: [{ name: "Mario Kart Wii CD-ROM" }],
+        },
+      ],
+      "0045496365226",
+    );
+
+    expect(result).not.toBeNull();
   });
 
   it("ne consulte pas confrontWithDatabase en mode slim", async () => {
@@ -59,5 +76,29 @@ describe("compileResultForType — slim RECORD", () => {
     });
 
     expect(database.confrontWithDatabase).not.toHaveBeenCalled();
+  });
+
+  it("produit un résultat games depuis payload.pc en mode slim", async () => {
+    process.env.BARCODE_RECORD_SLIM = "1";
+
+    const typeResults = await compileAllBarcodeTypeResults({
+      cleanedBarcode: "0045496365226",
+      type: "games",
+      payload: {
+        ...createEmptyBarcodeLookupPayload(),
+        pc: {
+          title: "Mario Kart Wii",
+          platform: "Wii",
+          coverUrl: null,
+          prices: null,
+          ageRating: null,
+        },
+        ebay: [{ name: "Mario Kart Wii Jeu Nintendo", priceNew: 1999 }],
+      },
+    });
+
+    expect(typeResults.games).not.toBeNull();
+    expect(typeResults.games?.platformKey).toBe("wii");
+    expect(typeResults.games?.cleanName).toBeTruthy();
   });
 });

@@ -53,7 +53,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { isUrl } from "@/lib/core/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
-import { deleteItem, getItem, presentedMetadata } from "@/lib/api/items";
+import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { uploadImage } from "@/lib/api/upload";
 import { getAspectRatio } from "@/lib/text/cardFormat";
@@ -514,7 +514,7 @@ export function ItemModal({
       options: { adoptPlaceholderName?: boolean } = {},
     ) => {
       const metadata = filterMetadataForShelfPlatform(
-        presentedMetadata(sourceItem.metadata),
+        sourceItem.metadata || null,
         sourceItem.shelf || activeShelfForMedia,
       );
       if (!metadata) return;
@@ -1662,8 +1662,7 @@ export function ItemModal({
 
                                     const metadata =
                                       filterMetadataForShelfPlatform(
-                                        presentedMetadata(item?.metadata) ||
-                                          fetchedMetadata,
+                                        item?.metadata || fetchedMetadata,
                                         activeShelfForMedia,
                                       );
                                     if (metadata) {

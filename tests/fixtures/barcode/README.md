@@ -20,8 +20,9 @@ pnpm test:record:one
 pnpm test:record:all
 ```
 
-(`BARCODE_RECORD_SLIM=1` saute PicClick/LeDenicheur et l'enrichissement post-scan
-PriceCharting + ScreenScraper ; les lookups parallèles PC/AMC/etc. restent actifs.)
+(`BARCODE_RECORD_SLIM=1` saute les lookups `slowBarcodeLookup` — LeDénicheur,
+Chasse aux Livres, Freakxy — et l'enrichissement post-scan PriceCharting +
+ScreenScraper ; PriceCharting reste l'ancre catalogue pour les jeux.)
 
 (équivalent à `RECORD=1` / `RECORD=1 RECORD_ALL=1` devant la commande vitest.)
 

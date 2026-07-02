@@ -18,6 +18,7 @@ export const freakxyModule: ProviderModule = {
     capabilities: ["identify", "price"],
     auth: { kind: "scrape" },
     canonical: false,
+    slowBarcodeLookup: true,
     websiteUrl: "https://www.freakxy.fr/",
   },
   evidence: {

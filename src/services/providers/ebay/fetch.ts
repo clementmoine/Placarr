@@ -2,28 +2,19 @@ import axios from "axios";
 
 import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
 
+import { fetchFromEbayCatalog } from "./catalog";
 import {
   EBAY_BROWSE_SEARCH_URL,
-  EBAY_OAUTH_SCOPE,
-  EBAY_OAUTH_URL,
   EBAY_REQUEST_TIMEOUT_MS,
   getEbayEnv,
   getEbayMarketplaceId,
   type EbayCredentials,
 } from "./env";
+import { getEbayAccessToken, getEbayBrowseAccessToken, resetEbayTokenCache } from "./oauth";
+import type { EbayPrices, EbayProduct } from "./types";
 
-export interface EbayProduct {
-  name: string;
-  coverUrl?: string | null;
-}
-
-export interface EbayPrices {
-  priceNew?: number;
-  priceUsed?: number;
-  sourceUrl?: string;
-  productName?: string;
-  offerCount?: number;
-}
+export type { EbayPrices, EbayProduct } from "./types";
+export { resetEbayTokenCache } from "./oauth";
 
 type EbayItemSummary = {
   title?: string | null;
@@ -33,45 +24,6 @@ type EbayItemSummary = {
   condition?: string | null;
   itemWebUrl?: string | null;
 };
-
-let cachedToken: { token: string; expiresAt: number } | null = null;
-
-/** Test helper: forget the cached OAuth token so each case re-authenticates. */
-export function resetEbayTokenCache() {
-  cachedToken = null;
-}
-
-async function getEbayAccessToken(
-  credentials: EbayCredentials,
-): Promise<string | null> {
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
-    return cachedToken.token;
-  }
-  const basic = Buffer.from(
-    `${credentials.clientId}:${credentials.clientSecret}`,
-  ).toString("base64");
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    scope: EBAY_OAUTH_SCOPE,
-  });
-  const res = await axios.post(EBAY_OAUTH_URL, body.toString(), {
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    timeout: EBAY_REQUEST_TIMEOUT_MS,
-    validateStatus: () => true,
-  });
-  const token =
-    res.status === 200 ? (res.data?.access_token as string | undefined) : undefined;
-  if (!token) {
-    cachedToken = null;
-    return null;
-  }
-  const expiresInSec = Number(res.data?.expires_in) || 7200;
-  cachedToken = { token, expiresAt: Date.now() + expiresInSec * 1000 };
-  return token;
-}
 
 function priceToCents(value?: string | null): number | null {
   if (value === undefined || value === null) return null;
@@ -106,11 +58,11 @@ function isNewCondition(condition?: string | null): boolean {
   return /^new/i.test(String(condition ?? "").trim());
 }
 
-async function searchEbay(
+async function searchEbayBrowse(
   params: Record<string, string>,
   credentials: EbayCredentials,
 ): Promise<EbayItemSummary[]> {
-  const token = await getEbayAccessToken(credentials);
+  const token = await getEbayBrowseAccessToken(credentials);
   if (!token) return [];
   const res = await axios.get(EBAY_BROWSE_SEARCH_URL, {
     params: { limit: "10", ...params },
@@ -127,7 +79,7 @@ async function searchEbay(
   return Array.isArray(items) ? (items as EbayItemSummary[]) : [];
 }
 
-function itemsToProducts(
+function listingsToProducts(
   items: EbayItemSummary[],
   expectedNames: string[],
 ): EbayProduct[] {
@@ -141,14 +93,49 @@ function itemsToProducts(
     const coverUrl =
       item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || null;
     if (!out.some((p) => p.name.toLowerCase() === title.toLowerCase())) {
-      out.push({ name: title, coverUrl });
+      out.push({ name: title, coverUrl, catalog: false });
     }
   }
   return out.slice(0, 10);
 }
 
-/** Resolve a barcode to eBay listings (name + cover) via the Browse GTIN search. */
-export async function fetchFromEbay(
+function mergeCatalogAndListings(
+  catalog: EbayProduct[],
+  listings: EbayProduct[],
+): EbayProduct[] {
+  const out = [...catalog];
+  for (const listing of listings) {
+    const duplicate = out.some(
+      (entry) => entry.name.toLowerCase() === listing.name.toLowerCase(),
+    );
+    if (!duplicate) out.push(listing);
+  }
+  return out.slice(0, 12);
+}
+
+async function fetchBrowseListingsByGtin(
+  gtin: string,
+  expectedNames: string[],
+  credentials: EbayCredentials,
+): Promise<EbayProduct[]> {
+  const items = await searchEbayBrowse({ gtin }, credentials);
+  return listingsToProducts(items, expectedNames);
+}
+
+async function fetchBrowseListingsByEpid(
+  epid: string,
+  expectedNames: string[],
+  credentials: EbayCredentials,
+): Promise<EbayProduct[]> {
+  const items = await searchEbayBrowse({ epid }, credentials);
+  return listingsToProducts(items, expectedNames);
+}
+
+/**
+ * GTIN pipeline: Catalog API (canonical product) → Browse GTIN → Browse ePID
+ * fallback when listings are sparse.
+ */
+async function fetchEbayProductsByGtin(
   barcode: string,
   expectedNames: string[] = [],
 ): Promise<EbayProduct[]> {
@@ -157,13 +144,39 @@ export async function fetchFromEbay(
   const credentials = getEbayEnv();
   if (!credentials) return [];
 
-  console.log(`[eBay] Querying GTIN: ${cleaned}`);
+  const catalog = await fetchFromEbayCatalog(cleaned, expectedNames);
+  let listings = await fetchBrowseListingsByGtin(
+    cleaned,
+    expectedNames,
+    credentials,
+  );
+
+  if (listings.length === 0) {
+    for (const product of catalog.slice(0, 2)) {
+      if (!product.epid) continue;
+      listings = await fetchBrowseListingsByEpid(
+        product.epid,
+        expectedNames,
+        credentials,
+      );
+      if (listings.length > 0) break;
+    }
+  }
+
+  return mergeCatalogAndListings(catalog, listings);
+}
+
+/** Resolve a barcode to eBay catalog + listing hits (name + cover). */
+export async function fetchFromEbay(
+  barcode: string,
+  expectedNames: string[] = [],
+): Promise<EbayProduct[]> {
+  console.log(`[eBay] Querying GTIN: ${barcode.replace(/[^\d]/g, "").trim()}`);
   try {
-    const items = await searchEbay({ gtin: cleaned }, credentials);
-    return itemsToProducts(items, expectedNames);
+    return await fetchEbayProductsByGtin(barcode, expectedNames);
   } catch (error: unknown) {
     console.error(
-      `[eBay] Error querying GTIN ${cleaned}:`,
+      `[eBay] Error querying GTIN ${barcode}:`,
       error instanceof Error ? error.message : error,
     );
     return [];
@@ -182,8 +195,8 @@ export async function fetchEbayProductsByQuery(
 
   console.log(`[eBay] Querying search: ${cleaned}`);
   try {
-    const items = await searchEbay({ q: cleaned }, credentials);
-    return itemsToProducts(items, expectedNames);
+    const items = await searchEbayBrowse({ q: cleaned }, credentials);
+    return listingsToProducts(items, expectedNames);
   } catch (error: unknown) {
     console.error(
       `[eBay] Error querying ${cleaned}:`,
@@ -205,7 +218,7 @@ export async function fetchPricesFromEbay(
 
   try {
     const isBarcode = isBarcodeLike(cleaned);
-    const items = await searchEbay(
+    const items = await searchEbayBrowse(
       isBarcode ? { gtin: cleaned.replace(/[^\d]/g, "") } : { q: cleaned },
       credentials,
     );

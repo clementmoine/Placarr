@@ -45,10 +45,10 @@ export interface ProviderInfo {
    */
   timeToBeatFactSourcePrefix?: string;
   /**
-   * When stage-1 book metadata discovers an ISBN without a scanned barcode,
-   * re-query this provider with the discovered ISBN for richer edition data.
+   * Barcode lookup from this provider is too slow for slim RECORD fixtures; the
+   * task builder is not invoked when `BARCODE_RECORD_SLIM=1`.
    */
-  bookIsbnBootstrapSource?: boolean;
+  slowBarcodeLookup?: boolean;
   /**
    * Deterministic cover URL from a cleaned ISBN barcode; `{isbn}` is substituted.
    */

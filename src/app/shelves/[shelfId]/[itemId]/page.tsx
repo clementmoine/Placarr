@@ -185,6 +185,91 @@ function RelatedItemsRow({
   );
 }
 
+function ItemDiscoverySection({
+  isPending,
+  seriesVolumes,
+  franchiseName,
+  franchiseItems,
+  otherItems,
+  shelf,
+  shelfId,
+  t,
+}: {
+  isPending: boolean;
+  seriesVolumes: ItemWithMetadata[];
+  franchiseName: string | null;
+  franchiseItems: ItemWithMetadata[];
+  otherItems: ItemWithMetadata[];
+  shelf: ShelfWithItems | undefined;
+  shelfId: string;
+  t: (key: string, values?: Record<string, string>) => string;
+}) {
+  if (isPending) return null;
+  const hasSeries = seriesVolumes.length > 0;
+  const hasFranchise = Boolean(franchiseName) && franchiseItems.length > 0;
+  const hasOther = otherItems.length > 0;
+  if (!hasSeries && !hasFranchise && !hasOther) return null;
+
+  return (
+    <div className="mt-8 flex flex-col gap-1 w-full">
+      {hasSeries && (
+        <RelatedItemsRow
+          title={t("items.otherVolumes")}
+          items={seriesVolumes}
+          shelf={shelf}
+          shelfId={shelfId}
+        />
+      )}
+      {franchiseName && (
+        <RelatedItemsRow
+          title={t("items.moreFromFranchise", { name: franchiseName })}
+          items={franchiseItems}
+          shelf={shelf}
+          shelfId={shelfId}
+        />
+      )}
+      {hasOther && (
+        <div className="mt-8 flex flex-col gap-3">
+          <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+            {t("items.otherItems")}
+          </h3>
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+            {otherItems.slice(0, 10).map((otherItem) => (
+              <div key={otherItem.id} className="w-28 sm:w-32 shrink-0">
+                <Link href={itemPath(shelf || { id: shelfId }, otherItem)}>
+                  <ItemCard
+                    {...otherItem}
+                    shelfType={shelf?.type}
+                    cardFormat={shelf?.cardFormat}
+                  />
+                </Link>
+              </div>
+            ))}
+            <div className="w-28 sm:w-32 shrink-0">
+              <Link href={shelfPath(shelf || { id: shelfId })}>
+                <div
+                  className="group relative flex flex-col w-full h-full select-none overflow-hidden rounded-2xl border bg-card/45 border-dashed border-border/80 hover:border-zinc-350 dark:hover:border-zinc-700/50 shadow-sm hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 ease-out cursor-pointer items-center justify-center min-h-[150px] gap-2 p-4 text-center"
+                  style={{
+                    aspectRatio: getAspectRatio(
+                      shelf?.cardFormat,
+                      shelf?.type,
+                    ),
+                  }}
+                >
+                  <ChevronLeft className="size-6 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300 rotate-180" />
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground group-hover:text-primary transition-colors">
+                    {t("items.viewAll")}
+                  </span>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function factIcon(kind: string) {
   if (kind === "estimated-value") return Coins;
   if (kind === "age-rating") return ShieldCheck;
@@ -424,6 +509,7 @@ function isDetailTableFact(fact: DetailFact) {
     "cooperative",
     "external-link",
     "family",
+    "franchise",
     "genre",
     "mechanic",
     "modes",
@@ -998,7 +1084,7 @@ export default function ItemDetailsPage() {
     initialData: () =>
       queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
-        ?.items?.find((i) => i.id === itemId) as ItemWithMetadata,
+        ?.items?.find((i) => i.id === itemId || i.slug === itemId) as ItemWithMetadata,
     initialDataUpdatedAt: () =>
       queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
     placeholderData: (previousData) => previousData,
@@ -1452,15 +1538,21 @@ export default function ItemDetailsPage() {
   // Other volumes in the same series — consensus-gated (≥2 distinct volumes), so a
   // lone numbered title never renders a phantom series. seriesBaseKey strips the
   // marker + number, so padded shelf names and the unpadded detail name align.
+  const resolvedItemId = item?.id;
+
   const seriesVolumes = useMemo(() => {
-    if (!shelf?.items || !item) return [];
+    if (!shelf?.items || !item || !resolvedItemId) return [];
+    const seriesTitle = item.storedName ?? item.name ?? "";
     const entries = (shelf.items as unknown as ItemWithMetadata[]).map(
-      (shelfItem) => ({ ...shelfItem, title: shelfItem.name ?? "" }),
+      (shelfItem) => ({
+        ...shelfItem,
+        title: shelfItem.storedName ?? shelfItem.name ?? "",
+      }),
     );
-    return seriesSiblings(item.name ?? "", entries).filter(
-      (entry) => entry.id !== itemId,
+    return seriesSiblings(seriesTitle, entries).filter(
+      (entry) => entry.id !== resolvedItemId,
     );
-  }, [shelf?.items, item, itemId]);
+  }, [shelf?.items, item, resolvedItemId]);
 
   // Franchise grouping comes only from the provider-sourced franchise fact, never
   // from title heuristics.
@@ -1473,31 +1565,34 @@ export default function ItemDetailsPage() {
   );
 
   const franchiseItems = useMemo(() => {
-    if (!shelf?.items || !franchiseName) return [];
+    if (!shelf?.items || !franchiseName || !resolvedItemId) return [];
     const target = franchiseName.toLowerCase();
     const seriesIds = new Set(seriesVolumes.map((entry) => entry.id));
     return (shelf.items as unknown as ItemWithMetadata[]).filter((shelfItem) => {
-      if (shelfItem.id === itemId || seriesIds.has(shelfItem.id)) return false;
+      if (shelfItem.id === resolvedItemId || seriesIds.has(shelfItem.id)) {
+        return false;
+      }
       return normalizeFacts(shelfItem.metadata?.facts).some(
         (fact) =>
           fact.kind === FRANCHISE_FACT_KIND &&
           fact.value?.trim().toLowerCase() === target,
       );
     });
-  }, [shelf?.items, franchiseName, seriesVolumes, itemId]);
+  }, [shelf?.items, franchiseName, seriesVolumes, resolvedItemId]);
 
   // Generic "other items" excludes the more specific groups above, so each sibling
   // shows up once in its most meaningful section.
   const otherItems = useMemo(() => {
-    if (!shelf?.items) return [];
+    if (!shelf?.items || !resolvedItemId) return [];
     const grouped = new Set<string>([
       ...seriesVolumes.map((entry) => entry.id),
       ...franchiseItems.map((entry) => entry.id),
     ]);
     return (shelf.items as unknown as ItemWithMetadata[]).filter(
-      (shelfItem) => shelfItem.id !== itemId && !grouped.has(shelfItem.id),
+      (shelfItem) =>
+        shelfItem.id !== resolvedItemId && !grouped.has(shelfItem.id),
     );
-  }, [shelf?.items, itemId, seriesVolumes, franchiseItems]);
+  }, [shelf?.items, resolvedItemId, seriesVolumes, franchiseItems]);
 
   const coverAspectRatio = useMemo(() => {
     return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
@@ -2225,67 +2320,16 @@ export default function ItemDetailsPage() {
             </div>
           )}
 
-          {/* Other volumes in this series */}
-          {!isPending && (
-            <RelatedItemsRow
-              title={t("items.otherVolumes")}
-              items={seriesVolumes}
-              shelf={shelf}
-              shelfId={shelfId}
-            />
-          )}
-
-          {/* More from this franchise */}
-          {!isPending && franchiseName && (
-            <RelatedItemsRow
-              title={t("items.moreFromFranchise", { name: franchiseName })}
-              items={franchiseItems}
-              shelf={shelf}
-              shelfId={shelfId}
-            />
-          )}
-
-          {/* Other items in this shelf carousel */}
-          {!isPending && otherItems.length > 0 && (
-            <div className="mt-8 flex flex-col gap-3">
-              <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
-                {t("items.otherItems")}
-              </h3>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-                {otherItems.slice(0, 10).map((otherItem) => (
-                  <div key={otherItem.id} className="w-28 sm:w-32 shrink-0">
-                    <Link href={itemPath(shelf || { id: shelfId }, otherItem)}>
-                      <ItemCard
-                        {...otherItem}
-                        shelfType={shelf?.type}
-                        cardFormat={shelf?.cardFormat}
-                      />
-                    </Link>
-                  </div>
-                ))}
-
-                {/* "View all" card at the end */}
-                <div className="w-28 sm:w-32 shrink-0">
-                  <Link href={shelfPath(shelf || { id: shelfId })}>
-                    <div
-                      className="group relative flex flex-col w-full h-full select-none overflow-hidden rounded-2xl border bg-card/45 border-dashed border-border/80 hover:border-zinc-350 dark:hover:border-zinc-700/50 shadow-sm hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 ease-out cursor-pointer items-center justify-center min-h-[150px] gap-2 p-4 text-center"
-                      style={{
-                        aspectRatio: getAspectRatio(
-                          shelf?.cardFormat,
-                          shelf?.type,
-                        ),
-                      }}
-                    >
-                      <ChevronLeft className="size-6 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300 rotate-180" />
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground group-hover:text-primary transition-colors">
-                        {t("items.viewAll")}
-                      </span>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
+          <ItemDiscoverySection
+            isPending={isPending}
+            seriesVolumes={seriesVolumes}
+            franchiseName={franchiseName}
+            franchiseItems={franchiseItems}
+            otherItems={otherItems}
+            shelf={shelf}
+            shelfId={shelfId}
+            t={t}
+          />
         </div>
       </div>
 

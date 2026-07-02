@@ -23,6 +23,7 @@ interface GoogleBooksVolumeInfo {
   language?: string;
   previewLink?: string;
   infoLink?: string;
+  canonicalVolumeLink?: string;
   imageLinks?: {
     smallThumbnail?: string;
     thumbnail?: string;
@@ -30,6 +31,10 @@ interface GoogleBooksVolumeInfo {
     medium?: string;
     large?: string;
     extraLarge?: string;
+  };
+  readingModes?: {
+    text?: boolean;
+    image?: boolean;
   };
 }
 
@@ -100,6 +105,54 @@ function buildGoogleBooksFacts(
     });
   }
 
+  const previewLink = volumeInfo.previewLink?.trim();
+  if (previewLink) {
+    facts.push({
+      kind: "external-link",
+      label: "Aperçu",
+      value: "Lire un extrait",
+      url: previewLink,
+      source: "googlebooks",
+      confidence: 0.58,
+      priority: 22,
+    });
+  }
+
+  const canonicalLink = volumeInfo.canonicalVolumeLink?.trim();
+  if (
+    canonicalLink &&
+    canonicalLink !== volumeInfo.infoLink?.trim() &&
+    canonicalLink !== previewLink
+  ) {
+    facts.push({
+      kind: "source-url",
+      label: "Fiche canonique",
+      value: canonicalLink,
+      url: canonicalLink,
+      source: "googlebooks",
+      confidence: 0.6,
+      priority: 20,
+    });
+  }
+
+  const readingModes = volumeInfo.readingModes;
+  if (readingModes && (readingModes.text || readingModes.image)) {
+    const modes = [
+      readingModes.text ? "Texte" : null,
+      readingModes.image ? "Illustrations" : null,
+    ].filter(Boolean);
+    if (modes.length > 0) {
+      facts.push({
+        kind: "format",
+        label: "Modes de lecture",
+        value: modes.join(" + "),
+        source: "googlebooks",
+        confidence: 0.55,
+        priority: 28,
+      });
+    }
+  }
+
   if (
     Array.isArray(volumeInfo.categories) &&
     volumeInfo.categories.length > 0
@@ -157,6 +210,20 @@ function buildGoogleBooksFacts(
     });
   }
 
+  const isbn10 = volumeInfo.industryIdentifiers?.find(
+    (entry) => entry?.type === "ISBN_10",
+  )?.identifier;
+  if (isbn10) {
+    facts.push({
+      kind: "identifier",
+      label: "ISBN-10",
+      value: isbn10,
+      source: "googlebooks",
+      confidence: 0.68,
+      priority: 38,
+    });
+  }
+
   const printTypeLabel: Record<string, string> = {
     BOOK: "Livre",
     MAGAZINE: "Magazine",
@@ -180,6 +247,15 @@ function buildGoogleBooksFacts(
       source: "googlebooks",
       confidence: 0.7,
       priority: 45,
+    });
+  } else if (volumeInfo.maturityRating === "NOT_MATURE") {
+    facts.push({
+      kind: "content-warning",
+      label: "Public",
+      value: "Tout public",
+      source: "googlebooks",
+      confidence: 0.62,
+      priority: 42,
     });
   }
 

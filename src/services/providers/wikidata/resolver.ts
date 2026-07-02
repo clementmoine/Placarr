@@ -11,6 +11,18 @@ import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 const USER_AGENT = "Placarr/1.0 (+https://github.com/clementmoine/Placarr)";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 const BOARD_GAME_QID = "Q7889";
+const WIKIDATA_DISPLAY_LABEL_LANGS = new Set(["fr", "en"]);
+
+function wikidataLabelEntries(
+  entity: WikidataEntity,
+): Array<{ region: string; text: string }> {
+  return Object.entries(entity.labels || {}).flatMap(([language, entry]) => {
+    if (!WIKIDATA_DISPLAY_LABEL_LANGS.has(language)) return [];
+    const text = entry.value?.trim();
+    if (!text) return [];
+    return [{ region: language, text }];
+  });
+}
 
 interface WikidataSearchHit {
   id: string;
@@ -47,6 +59,19 @@ export function extractWikidataEntityIds(
         Boolean(value.id),
     )
     .map((value) => value.id);
+}
+
+export function extractWikidataStringClaims(
+  entity: WikidataEntity,
+  property: string,
+): string[] {
+  return (entity.claims?.[property] || [])
+    .map((claim) => claim.mainsnak?.datavalue?.value)
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    )
+    .map((value) => value.trim());
 }
 
 async function resolveWikidataLabels(
@@ -211,6 +236,10 @@ function buildWikidataFacts(
   qid: string,
   entity: WikidataEntity,
   wikiTitle?: string,
+  options?: {
+    genres?: string[];
+    officialWebsite?: string;
+  },
 ): MetadataFact[] {
   const facts: MetadataFact[] = [
     {
@@ -232,14 +261,38 @@ function buildWikidataFacts(
     });
   }
 
-  const aliases = Object.values(entity.labels || {})
-    .map((entry) => entry.value)
+  const aliases = wikidataLabelEntries(entity)
+    .map((entry) => entry.text)
     .filter(Boolean);
-  if (aliases.length > 1) {
+  const uniqueAliases = Array.from(new Set(aliases));
+  if (uniqueAliases.length > 1) {
     facts.push({
       kind: "aliases",
       label: "Alias Wikidata",
-      value: aliases.slice(0, 6).join(" · "),
+      value: uniqueAliases.slice(0, 6).join(" · "),
+      source: "wikidata",
+    });
+  }
+
+  const genres = Array.from(
+    new Set((options?.genres || []).map((genre) => genre.trim()).filter(Boolean)),
+  );
+  if (genres.length > 0) {
+    facts.push({
+      kind: "genre",
+      label: "Genres",
+      value: genres.slice(0, 5).join(" • "),
+      source: "wikidata",
+    });
+  }
+
+  const officialWebsite = options?.officialWebsite?.trim();
+  if (officialWebsite && /^https?:\/\//i.test(officialWebsite)) {
+    facts.push({
+      kind: "external-link",
+      label: "Site officiel",
+      value: officialWebsite,
+      url: officialWebsite,
       source: "wikidata",
     });
   }
@@ -252,13 +305,7 @@ function buildWikidataRegionalTitles(
   title: string | undefined,
 ): Array<{ region?: string; text: string }> | undefined {
   if (!title) return undefined;
-  const labels = Object.entries(entity.labels || {}).flatMap(
-    ([language, entry]) => {
-      const text = entry.value?.trim();
-      if (!text) return [];
-      return [{ region: language, text }];
-    },
-  );
+  const labels = wikidataLabelEntries(entity);
 
   if (labels.length === 0) return undefined;
   return Array.from(
@@ -369,8 +416,18 @@ export function createWikidataResolver() {
         .map((qid) => seriesLabels.get(qid))
         .find((label): label is string => Boolean(label));
 
-      const aliases = Object.values(selectedEntity.labels || {})
-        .map((entry) => entry.value)
+      const genreIds = extractWikidataEntityIds(selectedEntity, "P136");
+      const genreLabels = await resolveWikidataLabels(genreIds);
+      const genres = genreIds
+        .map((id) => genreLabels.get(id))
+        .filter((label): label is string => Boolean(label));
+      const officialWebsite = extractWikidataStringClaims(
+        selectedEntity,
+        "P856",
+      ).find((url) => /^https?:\/\//i.test(url));
+
+      const aliases = wikidataLabelEntries(selectedEntity)
+        .map((entry) => entry.text)
         .filter((alias) => alias && alias !== title);
 
       const metadata: MetadataResult = {
@@ -391,6 +448,7 @@ export function createWikidataResolver() {
             selectedQid,
             selectedEntity,
             frWikiTitle || enWikiTitle,
+            { genres, officialWebsite },
           ),
           ...buildFranchiseFact(franchiseName, "wikidata"),
         ],

@@ -39,6 +39,10 @@ import {
 } from "@/lib/media/imageMetrics";
 import { resolveCoverAttachmentRole } from "@/lib/media/coverPerspective";
 import { measureCoverExposureFromBuffer } from "@/lib/media/coverExposure.server";
+import {
+  isMissingArtImageUrl,
+  isPlaceholderCoverImage,
+} from "@/lib/media/coverPlaceholder";
 import { regionRank } from "@/lib/locale/preference";
 import { applyConsensus } from "@/lib/metadata/consensus";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
@@ -496,8 +500,12 @@ export async function downloadRemoteImage(
   options: { trim?: boolean; minMarginPixels?: number } = {},
 ): Promise<string | null> {
   if (!url) return null;
-  if (url.startsWith("/") || url.startsWith("file://")) {
+  if (isMissingArtImageUrl(url)) return null;
+  if (url.startsWith("file://")) {
     return url;
+  }
+  if (url.startsWith("/")) {
+    return url.startsWith("/uploads/") ? url : null;
   }
   if (!url.startsWith("http")) {
     return null;
@@ -718,7 +726,8 @@ export async function storeMetadata(
   ).filter((a): a is NonNullable<typeof a> => a !== null);
 
   // Reject solid-colour / near-uniform placeholder images (e.g. ScreenScraper
-  // fillers) so they never pollute the gallery or get picked as the cover.
+  // fillers, Geedie "no artwork" glyphs) so they never pollute the gallery or
+  // get picked as the cover.
   let localizedAttachments = await filterOutFlatImageAttachments(
     downloadedAttachments,
   );
@@ -1209,21 +1218,6 @@ export async function readAttachmentImageMetrics(
   return task;
 }
 
-/**
- * A "degenerate" image carries no usable visual content: a solid colour or a
- * near-uniform placeholder. Some providers (notably ScreenScraper) hand back
- * such fillers for missing box backs/3D shots, and because their aspect ratio
- * can sit right on the cover sweet spot they would otherwise outrank a real
- * jaquette. We require BOTH near-zero entropy AND virtually no per-channel
- * variation so a genuine cover (high entropy, high stdev) is never dropped.
- */
-export function isDegenerateFlatImage(stats: {
-  entropy: number;
-  maxColorStdev: number;
-}): boolean {
-  return stats.entropy < 1 && stats.maxColorStdev < 5;
-}
-
 const flatImageAssetCache = new Map<string, Promise<boolean>>();
 
 async function isFlatImageAsset(url: string): Promise<boolean> {
@@ -1235,15 +1229,22 @@ async function isFlatImageAsset(url: string): Promise<boolean> {
     const filePath = resolvePublicAssetPath(url);
     if (!filePath || !fs.existsSync(filePath)) return false;
     try {
-      const stats = await sharp(filePath).stats();
-      const colorChannels = stats.channels.slice(0, 3); // ignore alpha
+      const buffer = fs.readFileSync(filePath);
+      const stats = await sharp(buffer).stats();
+      const metadata = await sharp(buffer).metadata();
+      const exposure = await measureCoverExposureFromBuffer(buffer);
+      const colorChannels = stats.channels.slice(0, 3);
       const maxColorStdev = Math.max(
         0,
         ...colorChannels.map((channel) => channel.stdev),
       );
-      return isDegenerateFlatImage({
+      return isPlaceholderCoverImage({
         entropy: stats.entropy ?? 0,
         maxColorStdev,
+        width: metadata.width,
+        height: metadata.height,
+        meanLuminance: exposure?.meanLuminance,
+        darkPixelRatio: exposure?.darkPixelRatio,
       });
     } catch {
       return false;

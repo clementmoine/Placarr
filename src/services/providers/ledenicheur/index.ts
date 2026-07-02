@@ -83,6 +83,7 @@ export const ledenicheurModule: ProviderModule = {
     capabilities: ["price", "identify", "cover"],
     auth: { kind: "scrape" },
     canonical: false,
+    slowBarcodeLookup: true,
     websiteUrl: "https://ledenicheur.fr/",
     apiKeyDashboardUrl: "https://ledenicheur.fr/",
   },

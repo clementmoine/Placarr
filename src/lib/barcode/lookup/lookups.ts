@@ -77,6 +77,7 @@ export async function runBarcodeLookups(params: {
     payload.ol = asMetadataHit(lookups.ol);
     payload.calFr = asNamedListings(lookups.cal);
     payload.amc = asNamedListings(lookups.amc);
+    payload.ebay = asNamedListings(lookups.ebay);
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     return payload;
   }

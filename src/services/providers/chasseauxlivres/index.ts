@@ -252,6 +252,7 @@ export const chasseauxlivresModule: ProviderModule = {
     bookCoverPriority: "primary",
     requiresTitleAlignment: true,
     bookIsbnBootstrapSource: true,
+    slowBarcodeLookup: true,
     websiteUrl: "https://www.chasse-aux-livres.fr/",
     apiKeyDashboardUrl: "https://www.chasse-aux-livres.fr/",
   },

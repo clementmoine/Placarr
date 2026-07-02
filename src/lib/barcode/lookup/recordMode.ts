@@ -31,7 +31,13 @@ function recordSlimSkipLookupKeys(): Set<string> {
     { get: () => () => Promise.resolve(null) },
   ) as never;
   for (const module of PROVIDER_MODULES) {
-    if (!module.info.slowScanScrape || !module.buildBarcodeTasks) continue;
+    if (
+      !module.info.slowScanScrape &&
+      !module.info.slowBarcodeLookup
+    ) {
+      continue;
+    }
+    if (!module.buildBarcodeTasks) continue;
     for (const type of RECORD_SLIM_BARCODE_TYPES) {
       const tasks = module.buildBarcodeTasks(noopDeps, type, {
         barcode: "0000000000000",

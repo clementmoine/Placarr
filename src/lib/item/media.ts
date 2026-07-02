@@ -24,6 +24,11 @@ import {
 } from "@/lib/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
 import { catalogAttachmentTitleConflicts } from "@/lib/metadata/titleMatching";
+import {
+  filterPlaceholderCoverAttachments,
+  isMissingArtImageUrl,
+  isPlaceholderCoverFromPersistedMetrics,
+} from "@/lib/media/coverPlaceholder";
 import { stripCropSuffixFromUrl, urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
 import {
   icollectCoverRegionFromAgeRating,
@@ -97,7 +102,9 @@ function coverDisplayOptions(
 }
 
 function attachments(item: MediaInput): ScoredAttachmentInput[] {
-  return (item.metadata?.attachments ?? []) as ScoredAttachmentInput[];
+  return filterPlaceholderCoverAttachments(
+    (item.metadata?.attachments ?? []) as ScoredAttachmentInput[],
+  );
 }
 
 /**
@@ -150,10 +157,16 @@ function filterAttachmentsForProductTitle<
     attachments?: MediaItem[] | null;
   },
 >(metadata: T): T {
-  const productTitle = metadata.title?.trim();
-  if (!productTitle) return metadata;
+  const withoutPlaceholders = filterPlaceholderCoverAttachments(
+    metadata.attachments ?? [],
+  );
 
-  const attachments = (metadata.attachments ?? []).filter((attachment) => {
+  const productTitle = metadata.title?.trim();
+  if (!productTitle) {
+    return { ...metadata, attachments: withoutPlaceholders };
+  }
+
+  const attachments = withoutPlaceholders.filter((attachment) => {
     if (!COVER_GALLERY_TYPES.has(attachment.type)) return true;
     if (!attachment.title?.trim()) return true;
     if (!attachment.retailCatalogImageTitlesSource) {
@@ -220,10 +233,12 @@ export function filterMetadataForShelfPlatform<
         ),
     );
 
-  const imageUrl = pinStillValid
+  const rawImageUrl = pinStillValid
     ? metadataForTitle.imageUrl
     : pickBestCoverFromAttachments(filteredAttachments, undefined, options) ??
       null;
+  const imageUrl =
+    rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
 
   return {
     ...metadataForTitle,
@@ -278,10 +293,22 @@ export function resolveMetadataCoverUrl(
   uiLocale?: Locale | null,
 ): string | null {
   const pin = item.metadata?.imageUrl;
-  if (!pin) return null;
+  if (!pin || isMissingArtImageUrl(pin)) return null;
 
   const options = coverDisplayOptions(item, uiLocale);
   const attachment = attachmentForUrl(item, pin);
+  if (
+    attachment &&
+    isPlaceholderCoverFromPersistedMetrics(attachment)
+  ) {
+    return (
+      pickBestCoverFromAttachments(
+        attachments(item),
+        undefined,
+        options,
+      ) ?? null
+    );
+  }
   if (
     attachment &&
     isAttachmentCoverPlatformMismatch(attachment, options.requestedPlatformKey)

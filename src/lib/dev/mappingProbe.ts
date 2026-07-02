@@ -215,6 +215,12 @@ const RAW_KEY_ALIASES: Record<string, string[]> = {
   versions: ["attachments", "cover"],
   canonicalname: ["title", "aliases"],
   boardgamelanguage: ["attachments", "cover", "facts"],
+  subtitle: ["title"],
+  publisher: ["publishers"],
+  previewlink: ["source-url", "external-link", "facts"],
+  infolink: ["source-url", "facts"],
+  canonicalvolumelink: ["source-url", "external-link", "facts"],
+  readingmodes: ["facts", "format"],
 };
 
 function normalizeKey(value: string): string {
@@ -309,6 +315,9 @@ const RAW_KEY_IGNORE = new Set(
     "latestrevision",
     "revision",
     "created",
+    "allowanonlogging",
+    "contentversion",
+    "panelizationsummary",
   ].map(normalizeKey),
 );
 

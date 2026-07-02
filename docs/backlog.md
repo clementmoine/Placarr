@@ -1,18 +1,19 @@
 # Backlog
 
-> Dernière vérification : **2026-06-29** (`pnpm exec vitest run` **1265** OK / 25 skipped,
+> Dernière vérification : **2026-07-02** (`pnpm test` **1280** OK / 25 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
 
 | Métrique | Valeur |
 | -------- | ------ |
-| Providers audités | 41 |
-| Mapping `ok` | 38 · `empty` 3 · `error` 0 |
-| Observations `enabled` | **36** · `legacy` 0 · `unknown` 5 |
-| Health-check | 32 modules · **0 down** |
-| Tests | **1258** passent (1283 total, 25 skipped) |
+| Providers audités | **46** |
+| Mapping `ok` | **45** · `empty` 0 · `blocked` 1 · `error` 0 |
+| Observations `enabled` | **42** · `legacy` 0 · `unknown` 5 |
+| Health-check | **38** modules · **0 down** |
+| Tests | **1280** passent (1305 total, 25 skipped) |
 | Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
+| Fixtures replay barcode | **0/22** (slim RECORD ancre PriceCharting — voir Roadmap P5) |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
 
@@ -49,10 +50,10 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | -------- | ---- | ---- | ---------------- |
 | ~~**P2**~~ | ~~Cluster confidence `sourceScore` + tier observations~~ | **Fait 2026-06-29** | `barcodeClusterObservationContribution` (= `barcodeEvidenceTier × CLUSTER_CONFIDENCE.observationTierScale` + `barcodeEvidenceObservationSourceWeight`) branché dans le base score de `scoreEvidenceCluster` ; `observationTierScale: 0.01`. Leaders/platformKeys **inchangés**, seules les 6 valeurs `compile.confidenceLock.test.ts` montent (+0.06 sur cas ancrés : Ghost Recon 0.55→0.61 / 0.45→0.53 / 0.47→0.53, TMNT II Arcade 0.51→0.57 ; deux cas plafond 0.98 stables). Suite complète verte (1217). Cap `listingOnlyCap` intact (clusters listing-only restent ≤ 0.45). |
 | **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
-| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22 — bloqué env** | Slim RECORD saute les `slowScanScrape` (PicClick seul désormais) + enrich PC/SS. **Constat 2026-06-29** : batch lookups OK en ~2.3 s, mais `resolveBarcode` reste `null` (pas d’ancre canonique sans enrich SS/PC complet) **et** le test hang jusqu’au timeout (900s) sur une promesse orpheline (`buildBarcodeTasks` crée le fetch avant filtrage). Avant de réessayer : (a) couper l’ancre canonique sur le hit barcode PriceCharting en slim, ou (b) ne pas *construire* les tâches `slowScanScrape` (skip avant `buildBarcodeTasks`, pas après). Puis `pnpm test:record` / `test:record:all`. |
-| **P3** | PicClick → eBay Browse API | **Fait** | Module `ebay/` actif ; PicClick retiré (scraping bloqué + interdit CGU). Sans clés eBay → no-op gracieux. |
+| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **0/22 — env réseau** | **(a) fait 2026-07-02** : `promoteReferenceCatalogBarcodeAnchors` + `compile.slimRecord.test.ts` — ancre PriceCharting (`referencePriceSource`) en mode slim. **Reste** : skip `slowScanScrape` *avant* `buildBarcodeTasks` (promesse orpheline / timeout 900s) ; puis `pnpm test:record:one` smoke → `test:record:all`. |
+| **P3** | PicClick → eBay Browse API | **Fait 2026-07-02** | Module `ebay/` (OAuth, Browse + Catalog API, barcode multi-types) ; PicClick retiré. Sans clés eBay → no-op gracieux. |
 | **P2** | Titres multilingues + région utilisateur | **Fait 2026-06-30** | `regionOrderForUiLocale` / `languageOrderForUiLocale` dans `preference.ts` ; cookie `preferred-locale` sync client→API ; `withRequestUiLocale` sur routes items/shelves/explore/loans ; couverture read-time via `getCoverImage(item, locale)`. |
-| **P4** | Wikidata / Google Books champs ciblés | **Ouvert** | P136/P178/P123/P856 ; repasser mapping Google Books si régression audit. |
+| **P4** | Wikidata / Google Books champs ciblés | **Fait 2026-07-02** | Wikidata : P136/P178/P123/P856 mappés (`resolver.ts` + tests). Google Books : champs étendus (`resolver.ts` + tests). Relancer `pnpm providers:audit:mapping` après cooldown quota TheGamesDB. |
 | ~~**P1**~~ | ~~Golden-master « vide honnête »~~ | **Fait 2026-06-29** | `compile.honestEmpty.test.ts` : marketplace-only sans ancre + DB miss (`confrontWithDatabase` mocké `null`) ⇒ `compileResultForType` renvoie `null`, même sur consensus de 3 marketplaces (majority noise). Encode la moitié manquante de la règle produit (l'autre moitié = `confidenceLock`). |
 
 **Séries & franchises 2026-06-29** (display / recherche / regroupement) :
@@ -80,7 +81,9 @@ Deux concepts **distincts**, sourcés différemment :
 
 > **Provider-blindness : migration TERMINÉE** — allowlist du guard `blindnessGuard.test.ts` **vide** (0 littéral provider hors `services/providers/`). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
 
-**P1 providers / probes** : file migration metadata **vide** (PicClick, ScreenScraper, TheGamesDB, Apriloshop IQIT — tous faits 2026-06-29).
+**P1 providers / probes** : file migration metadata **vide** (PicClick→eBay, ScreenScraper, TheGamesDB, Apriloshop IQIT — faits). **TheGamesDB** : si audit `map:blocked`, quota API épuisé (12–20 min cooldown) — pas une régression code ; probe classée `blocked` sur message quota.
+
+**Couvertures placeholder (2026-07-02)** : `coverPlaceholder.ts` — détection agnostique (entropie pixel + URL) ; filtrée dans `item/media.ts` et `metadata/storage.ts`.
 
 ---
 
@@ -134,7 +137,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 ### P5 — Qualité / tests
 
 - ~~**Corpus barcode multi-types**~~ — **fait** : livre `9780140328721`, musique `0724384960650`, film `7321906123457`, JdS `3558380126133` + `3421272109517` (Mille Sabords, scan sans type)
-- **Fixtures replay** (`resolver.fresh.test.ts`) — **0/22 enregistrées** ; cas définis, REPLAY skip sans fichier. Voir [Roadmap](#roadmap-prochaines-étapes) (tentative RECORD 2026-06-29, timeouts réseau).
+- **Fixtures replay** (`resolver.fresh.test.ts`) — **0/22 enregistrées** ; ancre slim PriceCharting OK (`compile.slimRecord.test.ts`). Reste : skip tâches lentes avant construction + première passe `pnpm test:record:one`.
 - ~~**Pricing manga** — lots/bundles filtrés ; mauvais volume PicClick quand seules annonces hors-sujet~~ **fait** (`priceListingVolumeConflictsWithItem`)
 
 ### P6 — Architecture lib (optionnel)

@@ -13,6 +13,7 @@ import {
   rejectedObservationsFromProductEvidence,
 } from "./observations";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
+import { isReferencePriceSource } from "@/services/provider/registry";
 
 import {
   areEvidenceSameProduct,
@@ -429,6 +430,22 @@ function applyMarketplaceEditionConsensus(evidence: ProductEvidence[]): void {
   }
 }
 
+/**
+ * Slim RECORD skips DB fallback and post-scan enrich; a direct barcode hit from a
+ * reference catalog (trait `referencePriceSource`) is enough to anchor game
+ * fixture capture without marketplace-only nulls.
+ */
+function promoteReferenceCatalogBarcodeAnchors(
+  evidence: ProductEvidence[],
+): void {
+  if (!isBarcodeRecordSlimMode()) return;
+  for (const item of evidence) {
+    if (!isReferencePriceSource(item.providerName)) continue;
+    item.isCanonical = true;
+    item.priority = Math.max(item.priority, 1);
+  }
+}
+
 export async function compileResultForType(
   type: string,
   sources: {
@@ -467,6 +484,8 @@ export async function compileResultForType(
   }
 
   if (sourceEvidence.length === 0) return null;
+
+  promoteReferenceCatalogBarcodeAnchors(sourceEvidence);
 
   // Agnostic title: the token-consensus of independent listings (BEFORE any
   // promotion), so the displayed title is the form sellers corroborate — a

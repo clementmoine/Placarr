@@ -16,7 +16,7 @@ import {
   resolveCoverProvenance,
 } from "@/lib/media/coverProvenance";
 import { MIN_COVER_SHORTEST_EDGE, isCoverResolutionAcceptable, shortestImageEdge } from "@/lib/media/coverResolution";
-import { exposureScoreAdjustment, isUnderexposedCoverScan } from "@/lib/media/coverExposure";
+import { exposureScoreAdjustment } from "@/lib/media/coverExposure";
 import {
   detectVideoGamePlatformKey,
   getPlatformKeyByScreenScraperSystemId,
@@ -749,14 +749,6 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
     .map((entry) => entry.attachment);
 }
 
-function isRejectedCoverAsset(
-  _attachment: ScoredAttachmentInput | null | undefined,
-  metrics?: AttachmentImageMetrics | null,
-): boolean {
-  if (!metrics) return false;
-  return isUnderexposedCoverScan(metrics);
-}
-
 export function pickBestAcceptableCoverFromAttachments<
   T extends ScoredAttachmentInput,
 >(
@@ -775,7 +767,6 @@ export function pickBestAcceptableCoverFromAttachments<
     if (!attachment.url) continue;
     const metrics = imageMetricsByUrl?.get(attachment.url) ?? null;
     if (!isCoverResolutionAcceptable(metrics)) continue;
-    if (isRejectedCoverAsset(attachment, metrics)) continue;
 
     const semantics = attachmentSemantics(attachment);
     if (isPhysicalNonCoverKind(semantics.kind)) continue;
@@ -816,11 +807,7 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
     ? imageMetricsByUrl?.get(preferred.url) ?? null
     : null;
 
-  if (
-    preferred?.url &&
-    isCoverResolutionAcceptable(preferredMetrics) &&
-    !isRejectedCoverAsset(preferred, preferredMetrics)
-  ) {
+  if (preferred?.url && isCoverResolutionAcceptable(preferredMetrics)) {
     return preferred.url;
   }
 
@@ -831,14 +818,7 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
   );
   if (acceptable) return acceptable;
 
-  const fallback = ranked.find(
-    (attachment) =>
-      attachment.url &&
-      !isRejectedCoverAsset(
-        attachment,
-        imageMetricsByUrl?.get(attachment.url),
-      ),
-  );
+  const fallback = ranked.find((attachment) => attachment.url);
   return fallback?.url ?? preferred?.url ?? null;
 }
 

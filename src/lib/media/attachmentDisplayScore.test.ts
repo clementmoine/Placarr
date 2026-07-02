@@ -23,7 +23,7 @@ describe("attachmentDisplayScore", () => {
     expect(details.signals).toContain("-280 provider image source");
   });
 
-  it("prefere une jaquette lumineuse a un scan Bédéthèque sous-expose", () => {
+  it("prefere une jaquette lumineuse a un scan Bédéthèque sous-expose a poids egal", () => {
     const darkScan = {
       type: "cover" as const,
       source: "bedetheque",
@@ -36,13 +36,16 @@ describe("attachmentDisplayScore", () => {
       role: "fr",
       url: "/uploads/bright-cover.webp",
     };
+    const sharedMetrics = {
+      width: 850,
+      height: 1228,
+      format: "jpeg" as const,
+    };
     const metrics = new Map([
       [
         darkScan.url,
         {
-          width: 850,
-          height: 1228,
-          format: "jpeg",
+          ...sharedMetrics,
           meanLuminance: 84,
           darkPixelRatio: 0.52,
         },
@@ -50,8 +53,7 @@ describe("attachmentDisplayScore", () => {
       [
         brightCover.url,
         {
-          width: 264,
-          height: 400,
+          ...sharedMetrics,
           format: "webp",
           meanLuminance: 147,
           darkPixelRatio: 0.06,
@@ -67,6 +69,53 @@ describe("attachmentDisplayScore", () => {
     expect(
       pickBestCoverFromAttachments([darkScan, brightCover], metrics),
     ).toBe(brightCover.url);
+  });
+
+  it("garde une jaquette EU sombre devant une jaquette JP quand la locale prefere l'Europe", () => {
+    const darkEuCatalog = {
+      type: "cover" as const,
+      source: "geedie",
+      role: "eu",
+      url: "/uploads/dark-eu-catalog.jpg",
+      coverProvenance: "catalog",
+    };
+    const brightJpCatalog = {
+      type: "cover" as const,
+      source: "geedie",
+      role: "jp",
+      url: "/uploads/bright-jp-catalog.jpg",
+      coverProvenance: "catalog",
+    };
+    const metrics = new Map([
+      [
+        darkEuCatalog.url,
+        {
+          width: 1025,
+          height: 1302,
+          format: "jpeg",
+          meanLuminance: 93.6,
+          darkPixelRatio: 0.47,
+        },
+      ],
+      [
+        brightJpCatalog.url,
+        {
+          width: 477,
+          height: 600,
+          format: "jpeg",
+          meanLuminance: 123.8,
+          darkPixelRatio: 0.22,
+        },
+      ],
+    ]);
+
+    expect(
+      pickBestCoverFromAttachments(
+        [brightJpCatalog, darkEuCatalog],
+        metrics,
+        { uiLocale: "fr", requestedPlatformKey: "ps4" },
+      ),
+    ).toBe(darkEuCatalog.url);
   });
 
   it("ne penalise pas media= dans les URLs ScreenScraper", () => {

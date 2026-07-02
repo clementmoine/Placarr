@@ -6,12 +6,12 @@ import {
   canKeepRemoteImageOnDownloadFailure,
   formatMetadataFromStorage,
   hammingDistance,
-  isDegenerateFlatImage,
   looksLikeImageBuffer,
   metadataImageAttachmentSemantics,
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
 } from "./storage";
+import { isDegenerateFlatImage } from "@/lib/media/coverPlaceholder";
 
 type Att = { type: AttachmentType; url: string; source?: string };
 
@@ -346,6 +346,9 @@ describe("isDegenerateFlatImage", () => {
 
   it("rejette un placeholder quasi uniforme", () => {
     expect(isDegenerateFlatImage({ entropy: 0.4, maxColorStdev: 3 })).toBe(
+      true,
+    );
+    expect(isDegenerateFlatImage({ entropy: 0.66, maxColorStdev: 6.49 })).toBe(
       true,
     );
   });

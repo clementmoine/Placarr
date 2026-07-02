@@ -20,10 +20,12 @@ import {
   pingEbay,
   type EbayProduct,
 } from "./fetch";
+import { fetchFromEbayCatalog } from "./catalog";
 
 export {
   fetchEbayProductsByQuery,
   fetchFromEbay,
+  fetchFromEbayCatalog,
   fetchPricesFromEbay,
   pingEbay,
 };
@@ -32,11 +34,54 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",
   "musics",
   "movies",
+  "books",
   "boardgames",
   "generic",
 ];
 const PRICE_SOURCE = "eBay";
-const PROBE_BARCODE = "0045496365226";
+const PROBE_BARCODE = "9782070368228";
+
+function mapEbayMetadata(
+  products: EbayProduct[],
+  normalizedBarcode: string | null,
+) {
+  const catalogProduct = products.find((product) => product.catalog && product.name);
+  const titledProduct = catalogProduct ?? products.find((product) => product.name);
+  const imageProducts = products.filter((product) => product.coverUrl);
+  const coverProduct =
+    imageProducts.find((product) => product.catalog) ?? imageProducts[0];
+  const imageUrl = coverProduct?.coverUrl || undefined;
+  if (!imageUrl && !titledProduct?.name) return null;
+
+  const epid = catalogProduct?.epid ?? products.find((product) => product.epid)?.epid;
+  const brand = catalogProduct?.brand?.trim();
+
+  return {
+    title: catalogProduct?.name ?? titledProduct?.name,
+    barcode: normalizedBarcode,
+    imageUrl,
+    externalIds: epid ? { ebay: epid } : undefined,
+    attachments: imageProducts.slice(0, 6).map((product) => ({
+      type: "cover" as const,
+      url: product.coverUrl!,
+      source: "ebay",
+      title: product.name,
+      role: product.catalog ? "catalog" : "marketplace",
+    })),
+    facts: brand
+      ? [
+          {
+            kind: "brand",
+            label: "Brand",
+            value: brand,
+            source: "ebay",
+            confidence: 0.75,
+            priority: 50,
+          },
+        ]
+      : undefined,
+  };
+}
 
 async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
@@ -65,7 +110,7 @@ export const ebayModule: ProviderModule = {
     label: "eBay",
     types: ["games", "movies", "musics", "books", "boardgames"],
     capabilities: ["identify", "price", "cover"],
-    metadataCapabilities: ["cover"],
+    metadataCapabilities: ["cover", "title"],
     auth: {
       kind: "key",
       env: [...EBAY_ENV_NAMES],
@@ -80,9 +125,9 @@ export const ebayModule: ProviderModule = {
     apiKeyDashboardUrl: "https://developer.ebay.com/my/keys",
     mappingProbeRetry: true,
     mappingProbeConfigHint:
-      "eBay credentials missing — create an app at developer.ebay.com and set EBAY_CLIENT_ID / EBAY_CLIENT_SECRET",
+      "eBay credentials missing — create an app at developer.ebay.com, set EBAY_CLIENT_ID / EBAY_CLIENT_SECRET, and enable Browse + Catalog (commerce.catalog.readonly) scopes",
     notes:
-      "eBay Browse API (officiel, OAuth client-credentials) — recherche par GTIN/code-barres. Remplace le scraping PicClick (interdit par ses CGU).",
+      "eBay Browse API (listings/prix) + Catalog API (produit canonique GTIN/ePID). OAuth client-credentials.",
   },
   evidence: {
     label: "eBay",
@@ -134,19 +179,7 @@ export const ebayModule: ProviderModule = {
           products = await fetchEbayProductsByQuery(query, expectedNames);
         }
 
-        const imageProducts = products.filter((product) => product.coverUrl);
-        const firstCover = imageProducts[0]?.coverUrl || undefined;
-        if (!firstCover) return null;
-        return {
-          imageUrl: firstCover,
-          attachments: imageProducts.slice(0, 6).map((product) => ({
-            type: "cover" as const,
-            url: product.coverUrl!,
-            source: "ebay",
-            title: product.name,
-            role: "marketplace",
-          })),
-        };
+        return mapEbayMetadata(products, normalizedBarcode);
       },
     };
   },
@@ -165,7 +198,10 @@ export const ebayModule: ProviderModule = {
       const products = await retry(() => fetchFromEbay(PROBE_BARCODE), 2);
       const probe = listProbe(products);
       if (probe) return probe;
-      return probeErrorResult("No eBay listings for sample barcode", "empty");
+      return probeErrorResult(
+        "No eBay catalog or listing hits for sample barcode",
+        "empty",
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (/timeout|timed out|ETIMEDOUT|ECONNABORTED|AbortError/i.test(message)) {
@@ -194,6 +230,7 @@ export const ebayModule: ProviderModule = {
       "games",
       "musics",
       "movies",
+      "books",
       "boardgames",
     ]);
   },

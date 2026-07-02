@@ -94,11 +94,15 @@ export const thegamesdbModule: ProviderModule = {
     }
     const result = await pingTheGamesDb();
     if (!result.ok) {
+      const error = result.error ?? "TheGamesDB unreachable";
       const statusHint =
-        result.error?.includes("missing") || result.error?.includes("429")
+        isTheGamesDbQuotaBlocked() ||
+        error.includes("missing") ||
+        error.includes("429") ||
+        /quota/i.test(error)
           ? "blocked"
           : "error";
-      return probeErrorResult(result.error ?? "TheGamesDB unreachable", statusHint);
+      return probeErrorResult(error, statusHint);
     }
     const metadata = await fetchFromTheGamesDB(
       "GoldenEye: Au Service Du Mal",

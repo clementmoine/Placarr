@@ -151,6 +151,40 @@ describe("filterMetadataForShelfPlatform", () => {
     expect(filtered?.imageUrl).toBe("/uploads/icollect-ps4.jpg");
   });
 
+  it("retire les placeholders génériques de la galerie", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/real-eu.jpg",
+            width: 1025,
+            height: 1302,
+            meanLuminance: 93.6,
+            darkPixelRatio: 0.47,
+          },
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "jp",
+            url: "/uploads/placeholder-jp.png",
+            width: 500,
+            height: 500,
+            meanLuminance: 241.9,
+            darkPixelRatio: 0,
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation 4" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/real-eu.jpg",
+    ]);
+  });
+
   it("strips misleading iCollect Japan labels when no rating board confirms them", () => {
     const filtered = filterMetadataForShelfPlatform(
       {
@@ -203,6 +237,34 @@ describe("filterMetadataForShelfPlatform", () => {
 
     expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
       "/uploads/ln1.png",
+    ]);
+  });
+
+  it("drops PriceCharting no-art placeholders from gallery and default cover", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl: "/images/no-image-available.png",
+        attachments: [
+          {
+            type: "cover",
+            source: "pricecharting",
+            role: "eu",
+            url: "/images/no-image-available.png",
+            title: "Main Image",
+          },
+          {
+            type: "cover",
+            source: "igdb",
+            url: "/uploads/real-cover.jpg",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation 4" },
+    );
+
+    expect(filtered?.imageUrl).toBe("/uploads/real-cover.jpg");
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/real-cover.jpg",
     ]);
   });
 });

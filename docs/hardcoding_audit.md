@@ -4,10 +4,15 @@
 > (`src/services/provider/blindnessGuard.test.ts`) now ships an **empty** allowlist:
 > **zero** provider-id literals remain outside `src/services/providers/`. The
 > "current violations" tables, per-file allowlist notes and the `P2*` progress log
-> below are **historical** — kept for rationale, no longer the live surface. The one
-> remaining provider bias is per-provider `weight` in the metadata **enrichment**
-> merge (`src/services/metadata/merge.ts` `resultsByWeight`); the barcode resolution
-> path is fully unbiased (tier → consensus → quality).
+> below are **historical** — kept for rationale, no longer the live surface.
+>
+> **Update 2026-07-02** : le merge d'enrichissement est dé-biaisé depuis le
+> 2026-06-30 (`orderResultsByObservationStrength` a remplacé le tri
+> `resultsByWeight`). Résidu `ProviderInfo.weight` : un seul usage,
+> tie-break de `nameDatabaseProviderForType` (registry.ts) — propriété
+> déclarée par le provider, acceptable mais à surveiller. Écarts word-lists
+> restants (par-produit) : voir [word_list_audit.md](word_list_audit.md)
+> (`tokenEquivalents.ts`, boosts FR de `title/displayScore.ts`).
 
 > **Enforcement already exists:** `src/services/providerBlindnessGuard.test.ts`
 > inventories every quoted provider literal in `src/`+`scripts/` (excluding

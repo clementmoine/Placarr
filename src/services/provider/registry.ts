@@ -90,9 +90,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   scandexModule,
 ];
 
-type ProviderMetadataExtension = {
-  weight: number;
-} & Partial<
+type ProviderMetadataExtension = Partial<
   Pick<
     ProviderInfo,
     | "defaultLanguage"
@@ -112,70 +110,57 @@ type ProviderMetadataExtension = {
 const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
   {
     screenscraper: {
-      weight: 0.9,
       defaultLanguage: "fr",
       isRealBoxCover: true,
       authoritative3dCoverRole: true,
     },
-    igdb: { weight: 0.85, defaultLanguage: "en" },
-    thegamesdb: { weight: 0.75, defaultLanguage: "en", isRealBoxCover: true },
-    launchbox: { weight: 0.7, defaultLanguage: "en", isRealBoxCover: true },
-    coverproject: { weight: 0.8, isRealBoxCover: true },
-    howlongtobeat: { weight: 0.6, imageScoreAdjustment: -500 },
-    steam: { weight: 0.8, defaultLanguage: "en" },
-    rawg: { weight: 0.65, defaultLanguage: "en" },
+    igdb: { defaultLanguage: "en" },
+    thegamesdb: { defaultLanguage: "en", isRealBoxCover: true },
+    launchbox: { defaultLanguage: "en", isRealBoxCover: true },
+    coverproject: { isRealBoxCover: true },
+    howlongtobeat: { imageScoreAdjustment: -500 },
+    steam: { defaultLanguage: "en" },
+    rawg: { defaultLanguage: "en" },
     steamgriddb: {
-      weight: 0.5,
       authoritative3dCoverRole: true,
       gridStyleCoverLabels: true,
     },
     pricecharting: {
-      weight: 0.7,
       isRealBoxCover: true,
       imageScoreAdjustment: 160,
     },
     icollect: {
-      weight: 0.55,
       defaultLanguage: "en",
       isRealBoxCover: true,
       isSecondary: true,
       collectorCoverRegionFromAgeRating: true,
     },
-    tmdb: { weight: 0.85, defaultLanguage: "fr" },
-    omdb: { weight: 0.7, defaultLanguage: "en", isSecondary: true },
-    musicbrainz: { weight: 0.8 },
-    discogs: { weight: 0.75 },
-    deezer: { weight: 0.7 },
-    openlibrary: { weight: 0.85, defaultLanguage: "en" },
-    googlebooks: { weight: 0.8, defaultLanguage: "en" },
+    tmdb: { defaultLanguage: "fr" },
+    omdb: { defaultLanguage: "en", isSecondary: true },
+    openlibrary: { defaultLanguage: "en" },
+    googlebooks: { defaultLanguage: "en" },
     booknode: {
-      weight: 0.78,
       defaultLanguage: "fr",
       isRealBoxCover: true,
     },
     bedetheque: {
-      weight: 0.77,
       defaultLanguage: "fr",
       isRealBoxCover: true,
     },
-    boardgamegeek: { weight: 0.9, defaultLanguage: "en", isRealBoxCover: true },
-    wikidata: { weight: 0.6 },
-    philibert: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
-    okkazeo: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
+    boardgamegeek: { defaultLanguage: "en", isRealBoxCover: true },
+    philibert: { defaultLanguage: "fr", isRealBoxCover: true },
+    okkazeo: { defaultLanguage: "fr", isRealBoxCover: true },
     chasseauxlivres: {
-      weight: 0.8,
       defaultLanguage: "fr",
       imageScoreAdjustment: -25,
       remoteImageFallback: true,
     },
     achatmoinscher: {
-      weight: 0.5,
       defaultLanguage: "fr",
       isSecondary: true,
     },
-    ledenicheur: { weight: 0.7, defaultLanguage: "fr" },
+    ledenicheur: { defaultLanguage: "fr" },
     chocobonplan: {
-      weight: 0.55,
       defaultLanguage: "fr",
       isRealBoxCover: true,
       isSecondary: true,
@@ -184,13 +169,11 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
       coverDefaultRegion: "fr",
     },
     chipweld: {
-      weight: 0.58,
       defaultLanguage: "fr",
       isRealBoxCover: true,
       isSecondary: true,
     },
     geedie: {
-      weight: 0.72,
       defaultLanguage: "en",
       isRealBoxCover: true,
       imageScoreAdjustment: 120,
@@ -198,21 +181,18 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
       retailCatalogImageTitles: true,
       strictShelfPlatformCover: true,
     },
-    freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
+    freakxy: { defaultLanguage: "fr", isRealBoxCover: true },
     ebay: {
-      weight: 0.5,
       imageScoreAdjustment: -280,
       remoteImageFallback: true,
       isSecondary: true,
     },
-    scandex: { weight: 0.5 },
   };
 
 export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((mdl) => {
   const ext = PROVIDER_METADATA_EXTENSIONS[mdl.info.id] || {};
   return {
     ...mdl.info,
-    weight: mdl.info.weight ?? ext.weight ?? 0.5,
     defaultLanguage:
       mdl.info.defaultLanguage ?? ext.defaultLanguage ?? "unknown",
     isRealBoxCover: mdl.info.isRealBoxCover ?? ext.isRealBoxCover ?? false,
@@ -384,7 +364,12 @@ export function providersForType(type: MediaType): ProviderInfo[] {
   return PROVIDERS.filter((p) => p.types.includes(type));
 }
 
-/** Highest-weight provider that owns the authoritative name database for a type. */
+/**
+ * Provider owning the authoritative name database for a type. Canonical
+ * declarers win over scrape-based ones (books: openlibrary over
+ * booknode/bedetheque) ; l'ordre registry départage — la sélection par type
+ * est épinglée par `nameDatabaseProvider.test.ts`.
+ */
 export function nameDatabaseProviderForType(
   type: string,
 ): ProviderInfo | undefined {
@@ -392,7 +377,7 @@ export function nameDatabaseProviderForType(
     (provider) =>
       provider.nameDatabase &&
       provider.types.some((mediaType) => mediaType === type),
-  ).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0];
+  ).sort((a, b) => Number(b.canonical) - Number(a.canonical))[0];
 }
 
 export { scrapeCatalogRetailerLookupEntries } from "@/services/provider/scrapeRetailers";

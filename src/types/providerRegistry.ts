@@ -73,7 +73,6 @@ export interface ProviderInfo {
   auth: ProviderAuth;
   canonical: boolean;
   notes?: string;
-  weight?: number;
   defaultLanguage?: "fr" | "en" | "unknown";
   isRealBoxCover?: boolean;
   /**

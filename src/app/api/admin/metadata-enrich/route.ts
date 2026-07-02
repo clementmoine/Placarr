@@ -11,12 +11,13 @@ const DEFAULT_BATCH_LIMIT = 5;
 const MAX_BATCH_LIMIT = 10;
 
 // A game item counts as enriched once it has a cover from the primary canonical
-// box-art source for games (the highest-weight real-box-cover provider). Derived
-// from the registry — no hardcoded provider name.
+// box-art source for games: the first canonical real-box-cover provider in the
+// registry. Trait-scoped, no hardcoded provider name, no weight knob.
 function primaryGameCoverSource(): string | undefined {
   return PROVIDERS.filter(
-    (p) => p.types.some((t) => t === "games") && p.isRealBoxCover,
-  ).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]?.id;
+    (p) =>
+      p.types.some((t) => t === "games") && p.isRealBoxCover && p.canonical,
+  )[0]?.id;
 }
 
 function metadataEnrichmentWhere(): Prisma.ItemWhereInput {

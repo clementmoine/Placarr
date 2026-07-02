@@ -44,6 +44,10 @@ export async function runBarcodeLookups(params: {
         platformKey: contextPlatformKey,
       }),
     );
+    if (process.env.RECORD) {
+      // eslint-disable-next-line no-console
+      console.log("[record step] lookups:tasks-settled");
+    }
     payload.pc = asPriceChartingHit(lookups.pc);
     payload.calJeuxVideo = asNamedListings(lookups.cal);
     payload.sd = asScanDexHit(lookups.sd);

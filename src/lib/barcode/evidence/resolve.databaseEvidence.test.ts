@@ -12,9 +12,24 @@ import { buildDatabaseEvidence } from "./resolve";
 
 beforeEach(() => {
   h.confrontWithDatabase.mockReset();
+  delete process.env.RECORD;
+  delete process.env.BARCODE_RECORD_SLIM;
 });
 
 describe("buildDatabaseEvidence", () => {
+  it("skips database fan-out during RECORD fixture capture", async () => {
+    process.env.RECORD = "1";
+    h.confrontWithDatabase.mockImplementation(() => new Promise(() => {}));
+
+    const evidence = await buildDatabaseEvidence(
+      ["Mario Kart Wii"],
+      "games",
+    );
+
+    expect(evidence).toEqual([]);
+    expect(h.confrontWithDatabase).not.toHaveBeenCalled();
+  });
+
   it("does not turn a database miss into canonical evidence", async () => {
     h.confrontWithDatabase.mockResolvedValue(null);
 

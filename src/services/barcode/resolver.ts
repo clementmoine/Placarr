@@ -78,6 +78,13 @@ const barcodeLookupTaskBuilders = createBarcodeLookupTaskBuilders(
   createBarcodeLookupDeps(),
 );
 
+function recordStep(label: string) {
+  if (process.env.RECORD) {
+    // eslint-disable-next-line no-console
+    console.log(`[record step] ${label}`);
+  }
+}
+
 type BarcodeCachePriceSnapshot = Pick<
   BarcodeCache,
   "priceLastUpdated" | "priceNew" | "priceUsed" | "priceUsedCIB"
@@ -281,17 +288,20 @@ export async function resolveBarcode(
     return buildCachedBarcodePayload(cachedResult, type, cleanedBarcode);
   }
 
+  recordStep("lookups:start");
   const payload = await runBarcodeLookups({
     cleanedBarcode,
     type,
     contextPlatformKey,
     taskBuilders: barcodeLookupTaskBuilders,
   });
+  recordStep("lookups:done");
   const typeResults = await compileAllBarcodeTypeResults({
     cleanedBarcode,
     type,
     payload,
   });
+  recordStep("compile:done");
   const listingNames = collectPayloadListingNames(payload);
   const boardGameSignal = Math.max(
     detectBoardGameSignal(listingNames),
@@ -309,6 +319,7 @@ export async function resolveBarcode(
   const mediaFormat = detectMediaFormat(listingNames);
 
   if (selectedResult && selectedType) {
+    recordStep("cache:start");
     await cacheBarcodeResult(
       cleanedBarcode,
       selectedResult,
@@ -316,6 +327,7 @@ export async function resolveBarcode(
       cachedResult,
       mediaFormat,
     );
+    recordStep("cache:done");
     const cleaned = cleanCompiledResultForResponse(
       selectedResult,
       selectedType,
@@ -382,6 +394,8 @@ export async function resolveBarcode(
       ...(capturedPrices ?? {}),
     };
   }
+
+  recordStep("resolve:empty");
 
   if (cachedResult && cachedResult.rawNames.length > 0 && shouldBypassCache) {
     if (shouldRefresh || cachedTypeMismatches) {

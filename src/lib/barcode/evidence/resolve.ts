@@ -8,6 +8,7 @@ import {
 } from "@/lib/barcode/titleUtils";
 import { getRepresentativeScore } from "@/lib/title/displayScore";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
+import { isBarcodeRecordSlimMode } from "@/lib/barcode/lookup/recordMode";
 import { confrontWithDatabase } from "@/services/metadata/database";
 import { isbnCoverUrlForBarcode } from "@/services/provider/registry";
 
@@ -43,6 +44,10 @@ export async function buildDatabaseEvidence(
   names: string[],
   type: string,
 ): Promise<ProductEvidence[]> {
+  // Fixture capture replays lookups only — DB echo would fan out to every type's
+  // name-database provider and stall RECORD on live network timeouts.
+  if (isBarcodeRecordSlimMode() || process.env.RECORD) return [];
+
   // Confront a wider slice so a specific edition the marketplace names ("… II:
   // The Arcade Game") is resolved even when noisier base-ish listings come first.
   const uniqueNames = uniqueClean(names, {

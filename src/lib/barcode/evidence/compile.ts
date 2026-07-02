@@ -542,7 +542,10 @@ export async function compileResultForType(
   // board game), skip it: its echo of an unmatched name would otherwise become a
   // fake canonical that outranks the clean trusted-retailer title.
   const databaseEvidence =
-    hasAnchorSignals || skipGameDatabaseFallback || isBarcodeRecordSlimMode()
+    hasAnchorSignals ||
+    skipGameDatabaseFallback ||
+    isBarcodeRecordSlimMode() ||
+    process.env.RECORD
       ? []
       : await buildDatabaseEvidence(
           trustedEvidence

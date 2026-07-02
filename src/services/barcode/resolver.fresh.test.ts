@@ -144,6 +144,11 @@ if (RECORD) {
       it(
         `enregistre ${testCase.id}`,
         async () => {
+          const { isBarcodeRecordSlimMode } = await import(
+            "@/lib/barcode/lookup/recordMode"
+          );
+          expect(isBarcodeRecordSlimMode()).toBe(true);
+
           const replay = new HttpReplay();
           replay.startRecord();
           const started = Date.now();

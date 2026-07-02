@@ -53,20 +53,24 @@ export async function runBarcodeLookups(params: {
     payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
     payload.retailers = collectRetailerBarcodeHits(lookups);
 
-    const enriched = await enrichGameBarcodeLookups({
-      cleanedBarcode,
-      contextPlatformKey,
-      pc: payload.pc,
-      searchLabel: "games",
-      inputs: buildGameLookupInputs(
-        payload,
-        payload.calJeuxVideo,
+    if (isBarcodeRecordSlimMode()) {
+      payload.ss = null;
+    } else {
+      const enriched = await enrichGameBarcodeLookups({
+        cleanedBarcode,
         contextPlatformKey,
-      ),
-      enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
-    });
-    payload.pc = enriched.pc as PriceChartingMetadata | null;
-    payload.ss = asMetadataHit(enriched.ss);
+        pc: payload.pc,
+        searchLabel: "games",
+        inputs: buildGameLookupInputs(
+          payload,
+          payload.calJeuxVideo,
+          contextPlatformKey,
+        ),
+        enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
+      });
+      payload.pc = enriched.pc as PriceChartingMetadata | null;
+      payload.ss = asMetadataHit(enriched.ss);
+    }
     return payload;
   }
 
@@ -154,32 +158,35 @@ export async function runBarcodeLookups(params: {
   payload.okkazeo = asMetadataHit(lookups.okkazeo);
   payload.retailers = collectRetailerBarcodeHits(lookups);
 
-  const enriched = await enrichGameBarcodeLookups({
-    cleanedBarcode,
-    contextPlatformKey,
-    pc: payload.pc,
-    searchLabel: "generic",
-    inputs: buildGameLookupInputs(
-      payload,
-      payload.calGeneric,
+  if (isBarcodeRecordSlimMode()) {
+    payload.ss = null;
+    payload.tmdb = null;
+  } else {
+    const enriched = await enrichGameBarcodeLookups({
+      cleanedBarcode,
       contextPlatformKey,
-    ),
-    enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
-  });
-  payload.pc = enriched.pc as PriceChartingMetadata | null;
-  payload.ss = asMetadataHit(enriched.ss);
-  payload.tmdb = asMetadataHit(
-    isBarcodeRecordSlimMode()
-      ? null
-      : await fetchTmdbForMovieTitle(
-          pickMovieTitleFromListings(
-            payload.ebay,
-            payload.amc,
-            payload.calGeneric,
-          ),
-          "Generic Lookup",
+      pc: payload.pc,
+      searchLabel: "generic",
+      inputs: buildGameLookupInputs(
+        payload,
+        payload.calGeneric,
+        contextPlatformKey,
+      ),
+      enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
+    });
+    payload.pc = enriched.pc as PriceChartingMetadata | null;
+    payload.ss = asMetadataHit(enriched.ss);
+    payload.tmdb = asMetadataHit(
+      await fetchTmdbForMovieTitle(
+        pickMovieTitleFromListings(
+          payload.ebay,
+          payload.amc,
+          payload.calGeneric,
         ),
-  );
+        "Generic Lookup",
+      ),
+    );
+  }
   return payload;
 }
 

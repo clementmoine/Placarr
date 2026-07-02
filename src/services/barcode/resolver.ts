@@ -345,7 +345,11 @@ export async function resolveBarcode(
 
     const scanOffers = collectScanPriceOffers(payload, selectedType);
 
-    if (scanOffers.length > 0 && !cachedPricesAreFresh) {
+    if (
+      scanOffers.length > 0 &&
+      !cachedPricesAreFresh &&
+      !process.env.RECORD
+    ) {
       // Merge captured prices into the cache (never clobbers other providers'
       // offers — see mergePriceOffers).
       try {

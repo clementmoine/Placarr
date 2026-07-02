@@ -8,11 +8,10 @@
 >
 > **Update 2026-07-02** : le merge d'enrichissement est dé-biaisé depuis le
 > 2026-06-30 (`orderResultsByObservationStrength` a remplacé le tri
-> `resultsByWeight`). Résidu `ProviderInfo.weight` : deux usages
-> (tie-break `nameDatabaseProviderForType` — tie 3-way arbitraire sur books —
-> et `primaryGameCoverSource` côté admin) ; poids issus de
-> `PROVIDER_METADATA_EXTENSIONS`. À rendre trait-explicite avec validation
-> live (voir backlog). Écarts word-lists par-produit : **réglés 2026-07-02**
+> `resultsByWeight`). Résidu `ProviderInfo.weight` : **supprimé 2026-07-02**
+> (champ + entrées d'extensions) — `nameDatabaseProviderForType` trie par
+> `canonical` (sélections épinglées par `nameDatabaseProvider.test.ts`),
+> `primaryGameCoverSource` = premier `canonical && isRealBoxCover`. Écarts word-lists par-produit : **réglés 2026-07-02**
 > (`tokenEquivalents.ts` réduit au dictionnaire + alignement par alternate
 > names providers ; boosts FR de `title/displayScore.ts` pilotés par la
 > locale). Détail : [word_list_audit.md](word_list_audit.md).

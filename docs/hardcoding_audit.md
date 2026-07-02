@@ -8,11 +8,14 @@
 >
 > **Update 2026-07-02** : le merge d'enrichissement est dé-biaisé depuis le
 > 2026-06-30 (`orderResultsByObservationStrength` a remplacé le tri
-> `resultsByWeight`). Résidu `ProviderInfo.weight` : un seul usage,
-> tie-break de `nameDatabaseProviderForType` (registry.ts) — propriété
-> déclarée par le provider, acceptable mais à surveiller. Écarts word-lists
-> restants (par-produit) : voir [word_list_audit.md](word_list_audit.md)
-> (`tokenEquivalents.ts`, boosts FR de `title/displayScore.ts`).
+> `resultsByWeight`). Résidu `ProviderInfo.weight` : deux usages
+> (tie-break `nameDatabaseProviderForType` — tie 3-way arbitraire sur books —
+> et `primaryGameCoverSource` côté admin) ; poids issus de
+> `PROVIDER_METADATA_EXTENSIONS`. À rendre trait-explicite avec validation
+> live (voir backlog). Écarts word-lists par-produit : **réglés 2026-07-02**
+> (`tokenEquivalents.ts` réduit au dictionnaire + alignement par alternate
+> names providers ; boosts FR de `title/displayScore.ts` pilotés par la
+> locale). Détail : [word_list_audit.md](word_list_audit.md).
 
 > **Enforcement already exists:** `src/services/providerBlindnessGuard.test.ts`
 > inventories every quoted provider literal in `src/`+`scripts/` (excluding

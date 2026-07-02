@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { Loader2, Check, Search, Link2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import Image from "next/image";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { RemoteImage } from "@/components/RemoteImage";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,12 @@ import { BaseModal } from "@/components/modals/BaseModal";
 
 import { saveItem } from "@/lib/api/items";
 import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
-import { syncItemQueries } from "@/lib/itemQueryCache";
-import { cn } from "@/lib/utils";
+import { syncItemQueries } from "@/lib/item/queryCache";
+import {
+  itemsBarcodeLabelKey,
+  itemsBarcodePlaceholderKey,
+} from "@/lib/barcode/shelfLabels";
+import { cn } from "@/lib/core/utils";
 import type { ItemWithMetadata } from "@/types/items";
 import type { Shelf } from "@prisma/client";
 
@@ -82,6 +86,7 @@ export function AssociationModal({
           const suggestionsList = await getMetadataSuggestions(
             trimmedName,
             resolvedType,
+            null,
             shelfName || item?.shelf?.name || null,
           );
           allNames = suggestionsList || [];
@@ -100,6 +105,7 @@ export function AssociationModal({
                   nameStr,
                   resolvedType,
                   trimmedBarcode || null,
+                  null,
                   shelfName || item?.shelf?.name,
                 );
                 return res;
@@ -249,11 +255,11 @@ export function AssociationModal({
           </div>
           <div className="w-full sm:w-48 flex flex-col gap-1">
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider select-none">
-              {t("items.barcode")}
+              {t(itemsBarcodeLabelKey(shelfType))}
             </label>
             <Input
               type="text"
-              placeholder={t("items.barcode")}
+              placeholder={t(itemsBarcodePlaceholderKey(shelfType))}
               value={associationBarcode}
               onChange={(e) => setAssociationBarcode(e.target.value)}
               className="w-full bg-background text-foreground text-xs h-10"
@@ -305,7 +311,7 @@ export function AssociationModal({
                     )}
                   >
                     {coverUrl && (
-                      <Image
+                      <RemoteImage
                         src={coverUrl}
                         alt={preview.title}
                         width={512}

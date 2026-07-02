@@ -1,12 +1,11 @@
 // @ts-check
+import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
 
-// You may want to use a more robust revision to cache
-// files more efficiently.
-// A viable option is `git rev-parse HEAD`.
 const revision = crypto.randomUUID();
 
 const withSerwist = withSerwistInit({
+  disable: process.env.NODE_ENV !== "production",
   cacheOnNavigation: true,
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
@@ -17,11 +16,8 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     remotePatterns: [
@@ -47,6 +43,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "cdn1.booknode.com",
+      },
+      {
+        protocol: "https",
         hostname: "coverproject.sfo2.cdn.digitaloceanspaces.com",
       },
       {
@@ -67,7 +67,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "neoclone.screenscraper.fr",
+        hostname: "**.screenscraper.fr",
       },
       {
         protocol: "https",
@@ -88,6 +88,27 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "www.picclickimg.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn2.steamgriddb.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.pji.nu",
+      },
+      {
+        protocol: "https",
+        hostname: "**.prisjakt.nu",
+      },
+      {
+        protocol: "https",
+        hostname: "i.discogs.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.booknode.com",
       },
     ],
   },

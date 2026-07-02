@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 import {
   Dialog,
@@ -10,6 +10,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
+import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 
 import { Barcode, Scan } from "lucide-react";
 import {
@@ -29,7 +31,9 @@ export function ScannerButton({
   onStop,
 }: BarcodeScannerProps) {
   const { t } = useLocale();
+  const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
   const [isActive, setActive] = useState(false);
+  const [manualBarcode, setManualBarcode] = useState("");
 
   const handleStart = useCallback(() => {
     setActive(true);
@@ -42,9 +46,19 @@ export function ScannerButton({
 
   const handleStop = useCallback(() => {
     setActive(false);
+    setManualBarcode("");
 
     onStop?.();
   }, [onStop]);
+
+  const handleManualBarcodeSubmit = useCallback(
+    (barcode: string) => {
+      setManualBarcode("");
+      setActive(false);
+      onScan(barcode);
+    },
+    [onScan],
+  );
 
   const handleError = useCallback(
     (error: unknown) => {
@@ -53,6 +67,8 @@ export function ScannerButton({
     },
     [t],
   );
+
+  if (isCameraUnavailable || isCheckingCamera) return null;
 
   return (
     <div className={className}>
@@ -75,10 +91,7 @@ export function ScannerButton({
           </DialogHeader>
 
           <div className="relative overflow-hidden aspect-square bg-zinc-950">
-            <BarcodeScannerView
-              onScan={handleScan}
-              onError={handleError}
-            />
+            <BarcodeScannerView onScan={handleScan} onError={handleError} />
 
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
               <div className="w-4/5 max-w-[280px] aspect-[1.3/1] relative overflow-hidden rounded-2xl border border-white/10 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]">
@@ -97,6 +110,14 @@ export function ScannerButton({
                 />
               </div>
             </div>
+          </div>
+
+          <div className="border-t border-border/60 p-4">
+            <ManualBarcodeEntry
+              value={manualBarcode}
+              onValueChange={setManualBarcode}
+              onSubmit={handleManualBarcodeSubmit}
+            />
           </div>
         </DialogContent>
       </Dialog>

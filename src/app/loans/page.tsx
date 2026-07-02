@@ -16,14 +16,14 @@ import {
   Calendar,
   Sparkles,
 } from "lucide-react";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 function LoansPageComponent() {
   const { t, locale } = useLocale();
@@ -149,7 +149,7 @@ function LoansPageComponent() {
                       {/* Item image */}
                       <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden border shrink-0 bg-zinc-950/20 shadow-inner select-none">
                         {req.item?.imageUrl ? (
-                          <Image
+                          <RemoteImage
                             src={req.item.imageUrl}
                             alt={req.item.name}
                             width={128}
@@ -260,7 +260,7 @@ function LoansPageComponent() {
                       {/* Item image */}
                       <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden border shrink-0 bg-zinc-950/20 shadow-inner select-none">
                         {req.item?.imageUrl ? (
-                          <Image
+                          <RemoteImage
                             src={req.item.imageUrl}
                             alt={req.item.name}
                             width={128}

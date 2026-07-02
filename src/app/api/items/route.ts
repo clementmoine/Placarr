@@ -1,58 +1,79 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { Prisma, Type } from "@prisma/client";
+import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
+import { withRequestUiLocale } from "@/lib/locale/serverPreference";
 
+import { cropImageIfNeeded } from "@/lib/media/imageTrim";
 import {
-  fetchAndStoreMetadata,
-  formatMetadataFromStorage,
   downloadRemoteImage,
-} from "@/services/metadata";
-import { getCoverImage } from "@/lib/itemMedia";
-import { slugify } from "@/lib/slugs";
-import { buildItemSearchConditions } from "@/lib/itemSearch";
+  syncCroppedCoverAttachment,
+} from "@/services/metadata/storage";
+import { presentItem, presentItemFromStorage } from "@/lib/item/present";
+import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
+import { slugifyItemName } from "@/lib/routing/slugs";
+import { buildItemSearchConditions } from "@/lib/item/search";
+import { startItemMetadataRefresh, shelfMoveMetadataResetData } from "@/lib/jobs/scheduleMetadataRefresh";
+import {
+  itemPricesContextFromRecord,
+  readItemPrices,
+  summarizeListItemPrices,
+  EMPTY_LIST_ITEM_PRICES,
+} from "@/services/pricing/itemDisplay";
 
-async function resolveShelfId(value: string): Promise<string> {
-  const direct = await prisma.shelf.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
+const VALID_SHELF_TYPES = new Set<string>(Object.values(Type));
 
-  const shelves = await prisma.shelf.findMany({
-    select: { id: true, name: true },
-  });
-  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
-}
+function parseShelfTypesParam(value: string | null): {
+  values?: Type[];
+  invalid?: string[];
+} {
+  if (!value) return {};
 
-async function resolveItemId(
-  value: string,
-  shelfValue?: string | null,
-): Promise<string> {
-  const direct = await prisma.item.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
+  const requested = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const invalid = requested.filter((item) => !VALID_SHELF_TYPES.has(item));
+  if (invalid.length > 0) return { invalid };
 
-  const resolvedShelfId = shelfValue ? await resolveShelfId(shelfValue) : null;
-  const items = await prisma.item.findMany({
-    where: resolvedShelfId ? { shelfId: resolvedShelfId } : undefined,
-    select: { id: true, name: true },
-  });
-  return items.find((item) => slugify(item.name) === value)?.id || value;
+  return { values: requested as Type[] };
 }
 
 export async function GET(req: NextRequest) {
+  return withRequestUiLocale(req, async (uiLocale) => {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+  const isAdmin = auth.user.role === "admin";
+
   const searchParams = req.nextUrl.searchParams;
   const id = searchParams.get("id");
   const q = searchParams.get("q");
   const shelfId = searchParams.get("shelfId");
+  const parsedExcludeShelfTypes = parseShelfTypesParam(
+    searchParams.get("excludeShelfTypes"),
+  );
+  const parsedIncludeShelfTypes = parseShelfTypesParam(
+    searchParams.get("shelfTypes"),
+  );
+  if (parsedExcludeShelfTypes.invalid || parsedIncludeShelfTypes.invalid) {
+    return NextResponse.json(
+      {
+        error: "Invalid shelf type",
+        invalidShelfTypes: [
+          ...(parsedExcludeShelfTypes.invalid || []),
+          ...(parsedIncludeShelfTypes.invalid || []),
+        ],
+      },
+      { status: 400 },
+    );
+  }
+  const excludeShelfTypes = parsedExcludeShelfTypes.values;
+  const includeShelfTypes = parsedIncludeShelfTypes.values;
   const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
 
   if (id) {
-    const resolvedId = await resolveItemId(id, shelfId);
+    const resolvedId = await resolveItemId(id, shelfId, auth.user.id);
     const item = await prisma.item.findUnique({
       where: { id: resolvedId },
       include: {
@@ -73,30 +94,44 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    if (item.metadata) {
-      const formattedMetadata = formatMetadataFromStorage(item.metadata);
-      return NextResponse.json({
-        ...item,
-        imageUrl: getCoverImage({
-          imageUrl: item.imageUrl,
-          metadata: formattedMetadata,
-          shelf: item.shelf,
-        }),
-        metadata: formattedMetadata,
-      });
+    // L'item appartient à l'utilisateur, est admin, ou se trouve dans une
+    // étagère publique (consultation cross-user via collections partagées).
+    if (!isAdmin && item.userId !== auth.user.id && !item.shelf.isPublic) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    return NextResponse.json(item);
+    const prices = await readItemPrices(itemPricesContextFromRecord(item));
+    return NextResponse.json({
+      ...presentItemFromStorage(item, { uiLocale }),
+      ...(prices ?? {
+        priceNew: null,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceLastUpdated: null,
+      }),
+    });
   }
 
   const whereClause: Prisma.ItemWhereInput = {};
+
+  // Les listes/recherches sont restreintes aux items de l'utilisateur
+  // (le cross-user public passe par /api/explore). L'admin voit tout.
+  if (!isAdmin) {
+    whereClause.userId = auth.user.id;
+  }
 
   if (q) {
     whereClause.OR = buildItemSearchConditions(q);
   }
 
   if (shelfId) {
-    whereClause.shelfId = await resolveShelfId(shelfId);
+    whereClause.shelfId = await resolveShelfId(shelfId, auth.user.id);
+  }
+
+  if (excludeShelfTypes?.length || includeShelfTypes?.length) {
+    whereClause.shelf = includeShelfTypes?.length
+      ? { type: { in: includeShelfTypes } }
+      : { type: { notIn: excludeShelfTypes! } };
   }
 
   const items = await prisma.item.findMany({
@@ -117,28 +152,21 @@ export async function GET(req: NextRequest) {
   });
 
   if (includeMetadata) {
+    const priceByItemId = await summarizeListItemPrices(items);
     return NextResponse.json(
-      items.map((item) => {
-        const formattedMetadata = item.metadata
-          ? formatMetadataFromStorage(item.metadata)
-          : null;
-        return {
-          ...item,
-          imageUrl: getCoverImage({
-            imageUrl: item.imageUrl,
-            metadata: formattedMetadata || undefined,
-            shelf: item.shelf,
-          }),
-          metadata: formattedMetadata,
-        };
-      }),
+      items.map((item) => ({
+        ...presentItemFromStorage(item, { uiLocale }),
+        ...(priceByItemId.get(item.id) ?? EMPTY_LIST_ITEM_PRICES),
+      })),
     );
   }
 
   return NextResponse.json(items);
+  });
 }
 
 export async function POST(req: NextRequest) {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -162,10 +190,18 @@ export async function POST(req: NextRequest) {
       condition,
       fetchMetadata = true,
     } = body;
+    if (typeof shelfId !== "string" || !shelfId.trim()) {
+      return NextResponse.json(
+        { error: "Shelf ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const resolvedShelfId = await resolveShelfId(shelfId, auth.user.id);
 
     // Check if shelf exists and user has permission to add items to it
     const shelf = await prisma.shelf.findUnique({
-      where: { id: shelfId },
+      where: { id: resolvedShelfId },
       select: { type: true, userId: true, name: true },
     });
 
@@ -186,6 +222,11 @@ export async function POST(req: NextRequest) {
 
     if (imageUrl) {
       localImageUrl = await downloadRemoteImage(imageUrl);
+      if (localImageUrl) {
+        localImageUrl = await cropImageIfNeeded(localImageUrl, {
+          minMarginPixels: 30,
+        });
+      }
     }
     if (backgroundImageUrl) {
       localBackgroundImageUrl = await downloadRemoteImage(backgroundImageUrl);
@@ -193,8 +234,9 @@ export async function POST(req: NextRequest) {
 
     const item = await prisma.item.create({
       data: {
-        shelfId,
+        shelfId: resolvedShelfId,
         name,
+        slug: slugifyItemName(name),
         description,
         imageUrl: localImageUrl,
         backgroundImageUrl: localBackgroundImageUrl,
@@ -215,28 +257,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (fetchMetadata) {
-      try {
-        const metadata = await fetchAndStoreMetadata(
-          item.id,
-          name,
-          shelf.type,
-          barcode,
-          true,
-          shelf.name,
-        );
-
-        if (metadata) {
-          return NextResponse.json({
-            ...item,
-            metadata,
-          });
-        }
-      } catch (metadataError) {
-        console.error("Error fetching metadata:", metadataError);
-      }
+      await startItemMetadataRefresh({
+        itemId: item.id,
+        lookupQuery: name,
+        shelfType: shelf.type,
+        barcode,
+        shelfName: shelf.name,
+        bypassMetadataCache: false,
+        forceRefresh: true,
+      });
     }
 
-    return NextResponse.json(item);
+    return NextResponse.json(presentItemFromStorage(item, { uiLocale }));
   } catch (error) {
     console.error("Error in POST request:", error);
     return NextResponse.json(
@@ -244,9 +276,11 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }
 
 export async function PATCH(req: NextRequest) {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -259,16 +293,48 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
+    const searchParams = req.nextUrl.searchParams;
     const body = await req.json();
-    const { id, refreshMetadata, lookupQuery, ...data } = body;
-    const shelfContext =
-      typeof data.shelfId === "string" ? data.shelfId : undefined;
-    const resolvedId = await resolveItemId(id, shelfContext);
+    const { id, refreshMetadata, lookupQuery, currentShelfId, ...data } = body;
+    const requestId = typeof id === "string" ? id : searchParams.get("id");
+    const sourceShelfId =
+      typeof currentShelfId === "string"
+        ? currentShelfId
+        : searchParams.get("shelfId");
+
+    if (!requestId) {
+      return NextResponse.json(
+        { error: "Item ID is required" },
+        { status: 400 },
+      );
+    }
+
+    if (typeof data.name === "string") {
+      data.slug = slugifyItemName(data.name);
+    }
+    if (typeof data.shelfId === "string") {
+      data.shelfId = await resolveShelfId(data.shelfId, auth.user.id);
+    }
+
+    const resolvedId = await resolveItemId(
+      requestId,
+      sourceShelfId,
+      auth.user.id,
+    );
 
     // Check if item exists and user has permission to update it
     const item = await prisma.item.findUnique({
       where: { id: resolvedId },
-      select: { userId: true, shelf: { select: { type: true } } },
+      select: {
+        userId: true,
+        shelfId: true,
+        metadataId: true,
+        name: true,
+        barcode: true,
+        imageUrl: true,
+        backgroundImageUrl: true,
+        shelf: { select: { type: true, name: true } },
+      },
     });
 
     if (!item) {
@@ -283,8 +349,32 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const shelfChanged =
+      typeof data.shelfId === "string" && data.shelfId !== item.shelfId;
+
+    if (shelfChanged) {
+      Object.assign(data, shelfMoveMetadataResetData(item, data));
+    }
+
     if (data.imageUrl) {
+      const previousImageUrl = item.imageUrl;
       data.imageUrl = await downloadRemoteImage(data.imageUrl);
+      if (data.imageUrl) {
+        data.imageUrl = await cropImageIfNeeded(data.imageUrl, {
+          minMarginPixels: 30,
+        });
+      }
+      if (
+        data.imageUrl &&
+        item.metadataId &&
+        data.imageUrl !== previousImageUrl
+      ) {
+        await syncCroppedCoverAttachment(
+          item.metadataId,
+          data.imageUrl,
+          previousImageUrl,
+        );
+      }
     }
     if (data.backgroundImageUrl) {
       data.backgroundImageUrl = await downloadRemoteImage(
@@ -307,44 +397,62 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    if (refreshMetadata) {
-      try {
-        if (updatedItem.imageUrl && updatedItem.imageUrl.startsWith("http")) {
-          await prisma.item.update({
-            where: { id: updatedItem.id },
-            data: { imageUrl: null },
-          });
-          updatedItem.imageUrl = null;
-        }
-
-        const metadata = await fetchAndStoreMetadata(
-          updatedItem.id,
-          lookupQuery || updatedItem.name,
-          updatedItem.shelf.type,
-          lookupQuery ? undefined : updatedItem.barcode || undefined,
-          true,
-          updatedItem.shelf.name,
-        );
-
-        if (metadata) {
-          return NextResponse.json({
-            ...updatedItem,
-            metadata,
-          });
-        }
-      } catch (metadataError) {
-        console.error("Error refreshing metadata:", metadataError);
+    if (typeof data.name === "string" && updatedItem.metadataId) {
+      await prisma.metadata.update({
+        where: { id: updatedItem.metadataId },
+        data: { title: data.name },
+      });
+      if (updatedItem.metadata) {
+        updatedItem.metadata.title = data.name;
       }
     }
 
-    if (updatedItem.metadata) {
-      return NextResponse.json({
-        ...updatedItem,
-        metadata: formatMetadataFromStorage(updatedItem.metadata),
+    if (refreshMetadata || shelfChanged) {
+      const metadataLookupQuery =
+        typeof lookupQuery === "string" && lookupQuery.trim()
+          ? lookupQuery.trim()
+          : updatedItem.name;
+
+      const metadataRefreshStartedAt = (
+        await startItemMetadataRefresh({
+          itemId: updatedItem.id,
+          lookupQuery: metadataLookupQuery,
+          shelfType: updatedItem.shelf.type,
+          barcode: shelfChanged
+            ? updatedItem.barcode || undefined
+            : lookupQuery
+              ? undefined
+              : updatedItem.barcode || undefined,
+          shelfName: updatedItem.shelf.name,
+          clearRemoteCover: Boolean(
+            updatedItem.imageUrl && updatedItem.imageUrl.startsWith("http"),
+          ),
+        })
+      ).startedAt;
+
+      const itemWithRefreshFlag = await prisma.item.findUnique({
+        where: { id: updatedItem.id },
+        include: {
+          shelf: true,
+          metadata: {
+            include: {
+              attachments: true,
+              authors: true,
+              publishers: true,
+            },
+          },
+        },
       });
+
+      return NextResponse.json(
+        presentItemFromStorage({
+          ...(itemWithRefreshFlag || updatedItem),
+          metadataRefreshStartedAt,
+        }, { uiLocale }),
+      );
     }
 
-    return NextResponse.json(updatedItem);
+    return NextResponse.json(presentItemFromStorage(updatedItem, { uiLocale }));
   } catch (error) {
     console.error("Error in PATCH request:", error);
     return NextResponse.json(
@@ -352,6 +460,7 @@ export async function PATCH(req: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -378,7 +487,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const resolvedId = await resolveItemId(id, shelfId);
+    const resolvedId = await resolveItemId(id, shelfId, auth.user.id);
 
     // Check if item exists and user has permission to delete it
     const item = await prisma.item.findUnique({

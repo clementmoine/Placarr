@@ -11,7 +11,7 @@ import { LibraryBig, Loader2 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
-import { isUrl } from "@/lib/isUrl";
+import { isUrl } from "@/lib/core/isUrl";
 import { uploadImage } from "@/lib/api/upload";
 
 import { type Prisma, type Shelf, Type } from "@prisma/client";
@@ -206,7 +206,8 @@ export function ShelfModal({
     try {
       let imageUrl: FormValues["imageUrl"] = values.imageUrl;
       if (imageUrl && imageUrl instanceof File) {
-        imageUrl = await uploadImage(imageUrl);
+        // Shelf images are logos — never trim their margins.
+        imageUrl = await uploadImage(imageUrl, { trim: false });
       }
 
       const updatedShelf: Prisma.ShelfUpdateInput | Prisma.ShelfCreateInput = {
@@ -335,14 +336,26 @@ export function ShelfModal({
                         <SelectItem value="square">
                           {t("shelves.cardFormats.square")}
                         </SelectItem>
+                        <SelectItem value="ds">
+                          {t("shelves.cardFormats.ds")}
+                        </SelectItem>
                         <SelectItem value="bluray">
                           {t("shelves.cardFormats.bluray")}
                         </SelectItem>
                         <SelectItem value="dvd">
                           {t("shelves.cardFormats.dvd")}
                         </SelectItem>
+                        <SelectItem value="book">
+                          {t("shelves.cardFormats.book")}
+                        </SelectItem>
                         <SelectItem value="switch">
                           {t("shelves.cardFormats.switch")}
+                        </SelectItem>
+                        <SelectItem value="psp">
+                          {t("shelves.cardFormats.psp")}
+                        </SelectItem>
+                        <SelectItem value="vhs">
+                          {t("shelves.cardFormats.vhs")}
                         </SelectItem>
                         <SelectItem value="landscape_retro">
                           {t("shelves.cardFormats.landscape_retro")}

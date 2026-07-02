@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.pnpm-store
 /.pnp
 .pnp.*
 .yarn/*
@@ -22,6 +23,7 @@
 
 # misc
 .DS_Store
+.cache/
 *.pem
 
 # debug
@@ -50,3 +52,15 @@ public/swe-worker*
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
+prisma/*.backup*
+prisma/data-export.json
+
+# Médias téléchargés/uploadés à l'exécution (données runtime, pas du source)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Scripts et données de debug locaux
+/scratch/
+
+# Cursor IDE
+.cursor/

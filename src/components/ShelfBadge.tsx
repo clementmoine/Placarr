@@ -32,7 +32,7 @@ export function ShelfBadge(props: ShelfBadgeProps) {
           alt={shelf.name}
           width={128}
           height={128}
-          className="w-full h-full object-contain"
+          className="h-full w-auto max-w-full object-contain"
         />
       )}
     </span>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
   User,
   LogOut,
@@ -33,7 +33,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/modals/ProfileModal";
 
-import { useAccount } from "@/lib/hooks/useAccount";
+import { useAccount } from "@/lib/client/hooks/useAccount";
 
 export function UserNav() {
   const { t, locale, changeLocale, availableLocales } = useLocale();

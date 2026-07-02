@@ -1,57 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+
 import { requireGuestOrHigher } from "@/lib/auth";
-import { fetchPricesFromChasseAuxLivres } from "@/services/chasseAuxLivres";
-import { fetchPricesFromPriceCharting } from "@/services/priceCharting";
-import { fetchPricesFromAchatMoinsCher } from "@/services/achatMoinsCher";
-import { cleanCode } from "@/lib/barcodeQuery";
-import { slugify } from "@/lib/slugs";
-
-async function resolveShelfId(value: string): Promise<string> {
-  const direct = await prisma.shelf.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const shelves = await prisma.shelf.findMany({
-    select: { id: true, name: true },
-  });
-  return shelves.find((shelf) => slugify(shelf.name) === value)?.id || value;
-}
-
-async function resolveItemId(
-  value: string,
-  shelfValue?: string | null,
-): Promise<string> {
-  const direct = await prisma.item.findUnique({
-    where: { id: value },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const resolvedShelfId = shelfValue ? await resolveShelfId(shelfValue) : null;
-  const items = await prisma.item.findMany({
-    where: resolvedShelfId ? { shelfId: resolvedShelfId } : undefined,
-    select: { id: true, name: true },
-  });
-  return items.find((item) => slugify(item.name) === value)?.id || value;
-}
+import { prisma } from "@/lib/db/prisma";
+import { resolveItemId } from "@/lib/routing/resolveIds";
+import {
+  itemPricesContextFromRecord,
+  readItemPrices,
+} from "@/services/pricing/itemDisplay";
 
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ itemId: string }> },
 ) {
   const session = await requireGuestOrHigher(req);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (session instanceof NextResponse) return session;
 
   const { itemId } = await context.params;
   const shelfId = req.nextUrl.searchParams.get("shelfId");
 
   try {
-    const resolvedItemId = await resolveItemId(itemId, shelfId);
+    const resolvedItemId = await resolveItemId(
+      itemId,
+      shelfId,
+      session.user.id,
+    );
     const item = await prisma.item.findUnique({
       where: { id: resolvedItemId },
       include: { shelf: true, metadata: true },
@@ -61,183 +33,10 @@ export async function GET(
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    if (!item.barcode) {
-      return NextResponse.json({
-        priceNew: null,
-        priceUsed: null,
-        priceUsedCIB: null,
-        priceLastUpdated: null,
-      });
-    }
-
-    const cleanedBarcode = cleanCode(item.barcode);
-    if (!cleanedBarcode) {
-      return NextResponse.json({
-        priceNew: null,
-        priceUsed: null,
-        priceUsedCIB: null,
-        priceLastUpdated: null,
-      });
-    }
-
-    // Check cache in database
-    const cached = await prisma.barcodeCache.findUnique({
-      where: { barcode: cleanedBarcode },
-      include: { rawNames: true },
-    });
-
-    const isCacheFresh = (cacheRecord: any) => {
-      if (!cacheRecord || !cacheRecord.priceLastUpdated) return false;
-      
-      const hasAnyPrice =
-        cacheRecord.priceNew !== null ||
-        cacheRecord.priceUsed !== null ||
-        cacheRecord.priceUsedCIB !== null;
-
-      const ageInMs =
-        Date.now() - new Date(cacheRecord.priceLastUpdated).getTime();
-      
-      const cacheLifetime = hasAnyPrice ? 24 * 60 * 60 * 1000 : 5 * 60 * 1000;
-      return ageInMs < cacheLifetime;
-    };
-
-    if (cached && isCacheFresh(cached)) {
-      console.log(
-        `[API Prices] Returning cached prices for barcode ${cleanedBarcode}`,
-      );
-      return NextResponse.json({
-        priceNew: cached.priceNew,
-        priceUsed: cached.priceUsed,
-        priceUsedCIB: cached.priceUsedCIB,
-        priceLastUpdated: cached.priceLastUpdated,
-      });
-    }
-
-    // Cache is stale or empty - fetch new prices
-    console.log(
-      `[API Prices] Fetching fresh prices for barcode ${cleanedBarcode} (shelf type: ${item.shelf.type})`,
-    );
-
-    let standardPrices: any = null;
-    let amcPrices: any = null;
-
-    if (item.shelf.type === "games") {
-      const rawNamesList = cached?.rawNames?.map((rn) => rn.value) || [];
-      let aliases: string[] = [];
-      if (item.metadata?.aliases) {
-        try {
-          aliases = JSON.parse(item.metadata.aliases);
-        } catch (error) {
-          console.warn("[API Prices] Failed to parse metadata aliases:", error);
-        }
-      }
-      const fallbackNames = Array.from(
-        new Set(
-          [
-            item.metadata?.title,
-            ...aliases,
-            item.name,
-            ...rawNamesList,
-          ].filter((name): name is string => !!name && name.trim().length > 0),
-        ),
-      );
-      const hasNtscIndicator =
-        /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(item.name) ||
-        /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(item.shelf.name) ||
-        rawNamesList.some((rn) => /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(rn));
-      const isPal = !hasNtscIndicator;
-
-      const CLASSICS_KEYWORDS = ["classics", "platinum", "essential", "players choice", "player's choice", "greatest hits", "nintendo selects", "best of"];
-      const isClassics =
-        rawNamesList.some((rn) =>
-          CLASSICS_KEYWORDS.some((kw) => rn.toLowerCase().includes(kw))
-        ) ||
-        CLASSICS_KEYWORDS.some((kw) => item.name.toLowerCase().includes(kw));
-
-      const [stdRes, amcRes] = await Promise.allSettled([
-        fetchPricesFromPriceCharting(
-          cleanedBarcode,
-          fallbackNames,
-          item.shelf.name,
-          isPal,
-          isClassics,
-        ),
-        fetchPricesFromAchatMoinsCher(cleanedBarcode),
-      ]);
-      standardPrices = stdRes.status === "fulfilled" ? stdRes.value : null;
-      amcPrices = amcRes.status === "fulfilled" ? amcRes.value : null;
-    } else {
-      const [stdRes, amcRes] = await Promise.allSettled([
-        fetchPricesFromChasseAuxLivres(cleanedBarcode),
-        fetchPricesFromAchatMoinsCher(cleanedBarcode),
-      ]);
-      standardPrices = stdRes.status === "fulfilled" ? stdRes.value : null;
-      amcPrices = amcRes.status === "fulfilled" ? amcRes.value : null;
-    }
-
-    const candidatesNew: number[] = [];
-    if (
-      standardPrices?.priceNew !== undefined &&
-      standardPrices.priceNew !== null
-    )
-      candidatesNew.push(standardPrices.priceNew);
-    if (amcPrices?.priceNew !== undefined && amcPrices.priceNew !== null)
-      candidatesNew.push(amcPrices.priceNew);
-    const priceNew =
-      candidatesNew.length > 0 ? Math.min(...candidatesNew) : null;
-
-    const candidatesUsed: number[] = [];
-    if (
-      standardPrices?.priceUsed !== undefined &&
-      standardPrices.priceUsed !== null
-    )
-      candidatesUsed.push(standardPrices.priceUsed);
-    if (amcPrices?.priceUsed !== undefined && amcPrices.priceUsed !== null)
-      candidatesUsed.push(amcPrices.priceUsed);
-    const priceUsed =
-      candidatesUsed.length > 0 ? Math.min(...candidatesUsed) : null;
-
-    const priceUsedCIB = standardPrices?.priceUsedCIB ?? null;
-    const now = new Date();
-
-    const providersList = [];
-    if (standardPrices)
-      providersList.push(
-        item.shelf.type === "games" ? "PriceCharting" : "ChasseAuxLivres",
-      );
-    if (amcPrices) providersList.push("AchatMoinsCher");
-    const provider =
-      providersList.length > 0 ? providersList.join("+") : "None";
-
-    // Store/Update cache
-    await prisma.barcodeCache.upsert({
-      where: { barcode: cleanedBarcode },
-      create: {
-        barcode: cleanedBarcode,
-        provider,
-        shelfType: item.shelf.type,
-        priceNew,
-        priceUsed,
-        priceUsedCIB,
-        priceLastUpdated: now,
-      },
-      update: {
-        provider,
-        priceNew,
-        priceUsed,
-        priceUsedCIB,
-        priceLastUpdated: now,
-      },
-    });
-
-    return NextResponse.json({
-      priceNew,
-      priceUsed,
-      priceUsedCIB,
-      priceLastUpdated: now,
-    });
-  } catch (error: any) {
-    console.error(`[API Prices] Error handling request:`, error.message);
+    const prices = await readItemPrices(itemPricesContextFromRecord(item));
+    return NextResponse.json(prices);
+  } catch (error) {
+    console.error(`[API Prices] Error handling request:`, error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },

@@ -1,0 +1,16 @@
+{
+  "case": {
+    "id": "catan-boardgame",
+    "label": "Catan (jeu de société)",
+    "barcode": "3558380126133",
+    "type": "boardgames",
+    "expected": {
+      "cleanNameIncludes": [
+        "Catan"
+      ],
+      "shelfType": "boardgames",
+      "maxMatches": 2
+    }
+  },
+  "interactions": []
+}

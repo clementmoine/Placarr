@@ -10,9 +10,9 @@ async function main() {
     "3459370402292",
     "8717418002565",
     "5024866326963",
-    "0659556980511"
+    "0659556980511",
   ];
-  
+
   console.log("Clearing BarcodeCache for:", barcodes);
   const deletedCache = await prisma.barcodeCache.deleteMany({
     where: {

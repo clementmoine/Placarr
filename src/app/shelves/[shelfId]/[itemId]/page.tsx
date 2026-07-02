@@ -6,6 +6,7 @@ import {
   Wrench,
   Search,
   Link2,
+  RefreshCw,
   ChevronLeft,
   ChevronRight,
   Coins,
@@ -17,6 +18,9 @@ import {
   ShieldCheck,
   Users,
   Star,
+  Gauge,
+  Layers,
+  Loader2,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useParams, useRouter } from "next/navigation";
@@ -26,8 +30,11 @@ import {
   useMemo,
   useRef,
   useState,
+  type SyntheticEvent,
   type TouchEvent,
 } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Header from "@/components/Header";
@@ -35,8 +42,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ItemModal } from "@/components/modals/ItemModal";
-import { AssociationModal } from "@/components/modals/AssociationModal";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { ItemCard } from "@/components/ItemCard";
 
@@ -44,46 +55,59 @@ import { getShelf } from "@/lib/api/shelves";
 import {
   getItem,
   saveItem,
-  getItemPrices,
   refreshItemMetadata,
+  type ItemPrices,
 } from "@/lib/api/items";
+import { getHeroImage, getGalleryImages, getCoverImage } from "@/lib/item/media";
 import {
-  getHeroImage,
-  getCoverImage,
-  getGalleryImages,
-  getMediaTypeLabel,
-} from "@/lib/itemMedia";
+  getAttachmentGalleryLabels,
+  type AttachmentDisplayLocale,
+} from "@/lib/media/attachmentDisplayLabels";
+import { hasGameMediaGalleryAttachment } from "@/lib/metadata/galleries";
+import { isMissingMusicGallery } from "@/lib/metadata/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
 import type { Shelf, Prisma, Item } from "@prisma/client";
-import { useAccount } from "@/lib/hooks/useAccount";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { getDetailCoverClass, getAspectRatio } from "@/lib/cardFormat";
-import { itemPath, shelfPath } from "@/lib/slugs";
-import { buildPriceChartingGameUrl } from "@/lib/priceChartingUrl";
+import { useAccount } from "@/lib/client/hooks/useAccount";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import {
+  isItemMetadataBusy,
+  isItemMetadataRefreshing,
+} from "@/lib/item/enrichment";
+import { itemsBarcodeLabelKey } from "@/lib/barcode/shelfLabels";
+import { cn } from "@/lib/core/utils";
+import { RemoteImage } from "@/components/RemoteImage";
+import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
+import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
+import { itemPath, shelfPath } from "@/lib/routing/slugs";
+import { compareTitlesForSort } from "@/lib/title/sort";
+import { seriesSiblings } from "@/lib/title/series";
+import { FRANCHISE_FACT_KIND } from "@/lib/metadata/facts/franchiseFact";
 import {
   invalidateItemQueries,
   patchCachedItem,
   syncItemQueries,
-} from "@/lib/itemQueryCache";
-import { getEstimatedItemValueCents } from "@/lib/itemValue";
+} from "@/lib/item/queryCache";
+import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
+import { getEstimatedItemValueCents } from "@/lib/item/value";
 
-type DetailFact = {
-  kind: string;
-  label: string;
-  value: string;
-  url?: string;
-  source?: string;
-  priority?: number;
-};
+import {
+  type DetailFact,
+  consolidatePlayerFacts,
+  consolidateGeneralFacts,
+  parsePlayerFactRange,
+  parseFactSourceList,
+  formatDetailFactSourceToken,
+} from "@/lib/metadata/facts/playerFacts";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 const ENRICHMENT_FEATURE_RELEASE = new Date("2026-06-16T17:30:00.000Z");
+const GAME_AGE_RATING_FEATURE_RELEASE = new Date("2026-06-18T08:00:00.000Z");
+const HLTB_COMPLETION_FEATURE_RELEASE = new Date("2026-06-19T09:29:04.000Z");
 const METADATA_REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const ITEM_RATING_SCALE = 10;
 
 function formatRuntimeMinutes(minutes?: number | null) {
   if (!minutes || minutes <= 0) return null;
@@ -98,7 +122,9 @@ function formatDurationSeconds(seconds?: number | null) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.round((seconds % 3600) / 60);
   if (!hours) return `${minutes} min`;
-  return minutes ? `${hours} h ${String(minutes).padStart(2, "0")}` : `${hours} h`;
+  return minutes
+    ? `${hours} h ${String(minutes).padStart(2, "0")}`
+    : `${hours} h`;
 }
 
 function shouldIgnoreItemNavigation(target: EventTarget | null) {
@@ -124,6 +150,126 @@ function normalizeFacts(rawFacts: unknown): DetailFact[] {
   return [];
 }
 
+/** Horizontal carousel of related items (series volumes / franchise siblings). */
+function RelatedItemsRow({
+  title,
+  items,
+  shelf,
+  shelfId,
+}: {
+  title: string;
+  items: ItemWithMetadata[];
+  shelf: ShelfWithItems | undefined;
+  shelfId: string;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-8 flex flex-col gap-3">
+      <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+        {title}
+      </h3>
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+        {items.slice(0, 12).map((related) => (
+          <div key={related.id} className="w-28 sm:w-32 shrink-0">
+            <Link href={itemPath(shelf || { id: shelfId }, related)}>
+              <ItemCard
+                {...related}
+                shelfType={shelf?.type}
+                cardFormat={shelf?.cardFormat}
+              />
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ItemDiscoverySection({
+  isPending,
+  seriesVolumes,
+  franchiseName,
+  franchiseItems,
+  otherItems,
+  shelf,
+  shelfId,
+  t,
+}: {
+  isPending: boolean;
+  seriesVolumes: ItemWithMetadata[];
+  franchiseName: string | null;
+  franchiseItems: ItemWithMetadata[];
+  otherItems: ItemWithMetadata[];
+  shelf: ShelfWithItems | undefined;
+  shelfId: string;
+  t: (key: string, values?: Record<string, string>) => string;
+}) {
+  if (isPending) return null;
+  const hasSeries = seriesVolumes.length > 0;
+  const hasFranchise = Boolean(franchiseName) && franchiseItems.length > 0;
+  const hasOther = otherItems.length > 0;
+  if (!hasSeries && !hasFranchise && !hasOther) return null;
+
+  return (
+    <div className="mt-8 flex flex-col gap-1 w-full">
+      {hasSeries && (
+        <RelatedItemsRow
+          title={t("items.otherVolumes")}
+          items={seriesVolumes}
+          shelf={shelf}
+          shelfId={shelfId}
+        />
+      )}
+      {franchiseName && (
+        <RelatedItemsRow
+          title={t("items.moreFromFranchise", { name: franchiseName })}
+          items={franchiseItems}
+          shelf={shelf}
+          shelfId={shelfId}
+        />
+      )}
+      {hasOther && (
+        <div className="mt-8 flex flex-col gap-3">
+          <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+            {t("items.otherItems")}
+          </h3>
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+            {otherItems.slice(0, 10).map((otherItem) => (
+              <div key={otherItem.id} className="w-28 sm:w-32 shrink-0">
+                <Link href={itemPath(shelf || { id: shelfId }, otherItem)}>
+                  <ItemCard
+                    {...otherItem}
+                    shelfType={shelf?.type}
+                    cardFormat={shelf?.cardFormat}
+                  />
+                </Link>
+              </div>
+            ))}
+            <div className="w-28 sm:w-32 shrink-0">
+              <Link href={shelfPath(shelf || { id: shelfId })}>
+                <div
+                  className="group relative flex flex-col w-full h-full select-none overflow-hidden rounded-2xl border bg-card/45 border-dashed border-border/80 hover:border-zinc-350 dark:hover:border-zinc-700/50 shadow-sm hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 ease-out cursor-pointer items-center justify-center min-h-[150px] gap-2 p-4 text-center"
+                  style={{
+                    aspectRatio: getAspectRatio(
+                      shelf?.cardFormat,
+                      shelf?.type,
+                    ),
+                  }}
+                >
+                  <ChevronLeft className="size-6 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300 rotate-180" />
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground group-hover:text-primary transition-colors">
+                    {t("items.viewAll")}
+                  </span>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function factIcon(kind: string) {
   if (kind === "estimated-value") return Coins;
   if (kind === "age-rating") return ShieldCheck;
@@ -135,7 +281,9 @@ function factIcon(kind: string) {
   }
   if (kind === "pages") return BookOpen;
   if (kind === "tracks") return ListMusic;
+  if (kind === "complexity") return Gauge;
   if (kind === "rating" || kind === "popularity") return Star;
+  if (kind === "franchise") return Layers;
   return Search;
 }
 
@@ -189,6 +337,20 @@ function factTone(kind: string) {
       bg: "bg-rose-500/10 border-rose-500/25",
     };
   }
+  if (kind === "complexity") {
+    return {
+      icon: "text-indigo-600 dark:text-indigo-400",
+      value: "text-indigo-700 dark:text-indigo-300",
+      bg: "bg-indigo-500/10 border-indigo-500/25",
+    };
+  }
+  if (kind === "franchise") {
+    return {
+      icon: "text-teal-600 dark:text-teal-400",
+      value: "text-teal-700 dark:text-teal-300",
+      bg: "bg-teal-500/10 border-teal-500/25",
+    };
+  }
   return {
     icon: "text-zinc-600 dark:text-zinc-400",
     value: "text-foreground dark:text-zinc-100",
@@ -197,6 +359,10 @@ function factTone(kind: string) {
 }
 
 function formatFactValue(fact: DetailFact) {
+  if (fact.kind === "players") {
+    return fact.value.replace(/^(\d+)\s*[-–—]\s*(\d+)$/, "$1 à $2");
+  }
+
   if (
     fact.kind === "duration" ||
     fact.kind === "completion-time" ||
@@ -212,36 +378,157 @@ function formatFactValue(fact: DetailFact) {
   return fact.value;
 }
 
-function formatFactSource(source: string) {
-  switch (source.toLowerCase()) {
-    case "steam":
-      return "Steam";
-    case "igdb":
-      return "IGDB";
-    case "rawg":
-      return "RAWG";
-    case "tmdb":
-      return "TMDB";
-    case "bgg":
-      return "BGG";
-    default:
-      return source;
+function resolveFactSourceDisplay(fact: DetailFact) {
+  const names = (fact.sourceNames || [])
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  if (names.length > 0) {
+    return {
+      count: names.length,
+      names,
+      meta: fact.sourceMeta,
+    };
   }
+
+  if (fact.sourceCount != null && fact.sourceCount > 0) {
+    return {
+      count: fact.sourceCount,
+      names: [],
+      meta: fact.sourceMeta,
+    };
+  }
+
+  if (!fact.source) return null;
+
+  const normalizedCount = fact.source.trim().toLowerCase();
+  const sourcesCountMatch = normalizedCount.match(/^(\d+)\s+sources?$/);
+  if (sourcesCountMatch) {
+    return {
+      count: Number(sourcesCountMatch[1]),
+      names: [],
+      meta: fact.sourceMeta,
+    };
+  }
+
+  const parsedSources = parseFactSourceList(fact.source);
+  if (parsedSources.length > 0) {
+    return {
+      count: parsedSources.length,
+      names: parsedSources,
+      meta: fact.sourceMeta,
+    };
+  }
+
+  return null;
+}
+
+function formatSourceCountLabel(count: number, t: TranslateFn) {
+  return count === 1
+    ? t("items.info.oneSource")
+    : t("items.info.sourcesCount", { count });
+}
+
+function FactSourceFooter({ fact }: { fact: DetailFact }) {
+  const { t } = useLocale();
+  const display = resolveFactSourceDisplay(fact);
+  if (!display) return null;
+
+  const formattedNames = display.names.map((name) =>
+    formatDetailFactSourceToken(fact, name),
+  );
+  const countLabel = formatSourceCountLabel(display.count, t);
+  const countNode = (
+    <span
+      className={cn(
+        formattedNames.length > 0 &&
+          "cursor-help underline decoration-dotted underline-offset-2",
+      )}
+    >
+      {countLabel}
+    </span>
+  );
+
+  return (
+    <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 truncate">
+      {formattedNames.length > 0 ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{countNode}</TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            {formattedNames.join(" · ")}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        countNode
+      )}
+      {display.meta ? <span> · {display.meta}</span> : null}
+    </span>
+  );
+}
+
+function priceObservationConditions(
+  condition?: string | null,
+  shelfType?: string | null,
+  prices?: {
+    priceUsedCIB?: number | null;
+  } | null,
+) {
+  if (condition === "new") return ["new"];
+
+  if (condition === "used" || condition === "damaged") {
+    if (shelfType === "games") {
+      return prices?.priceUsedCIB ? ["cib"] : ["loose", "used"];
+    }
+    return ["used"];
+  }
+
+  return [];
 }
 
 function isPrimaryInfoFact(fact: DetailFact) {
   return [
     "age-rating",
     "completion-time",
+    "complexity",
     "duration",
     "estimated-value",
     "pages",
     "players",
     "playtime",
+    "popularity",
     "rating",
     "time-to-beat",
     "tracks",
   ].includes(fact.kind);
+}
+
+function isDetailTableFact(fact: DetailFact) {
+  return [
+    "artist",
+    "category",
+    "cooperative",
+    "external-link",
+    "family",
+    "franchise",
+    "genre",
+    "mechanic",
+    "modes",
+    "platform",
+    "recommended-players",
+    "store",
+    "tag",
+  ].includes(fact.kind);
+}
+
+function isTagLikeDetailFact(fact: DetailFact) {
+  return ["tag", "category", "mechanic", "family", "modes"].includes(fact.kind);
+}
+
+function splitTagFactValue(value: string) {
+  return value
+    .split(/\s*•\s*/g)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }
 
 const FACT_DISPLAY_ORDER: Record<string, number> = {
@@ -252,6 +539,8 @@ const FACT_DISPLAY_ORDER: Record<string, number> = {
   "time-to-beat": 30,
   "completion-time": 40,
   rating: 50,
+  popularity: 55,
+  complexity: 62,
   players: 60,
   pages: 70,
   tracks: 80,
@@ -290,20 +579,23 @@ function isNtscLikeGameShelf(shelfName?: string | null) {
 }
 
 function isPcSpecificFact(fact: DetailFact) {
-  const source = (fact.source || "").toLowerCase();
-  const label = fact.label.toLowerCase();
-  return (
-    source === "steam" ||
-    source === "steamdb" ||
-    source === "pcgamingwiki" ||
-    label === "steam" ||
-    label === "steamdb" ||
-    label === "pcgamingwiki"
+  return fact.isPcSpecificFact === true;
+}
+
+function isHowLongToBeatSource(fact: DetailFact) {
+  return fact.isHowLongToBeatSource === true;
+}
+
+function isDurationLikeFact(fact: DetailFact) {
+  return ["completion-time", "duration", "playtime", "time-to-beat"].includes(
+    fact.kind,
   );
 }
 
 function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
-  if (fact.kind === "external-link") return null;
+  if (fact.kind === "external-link") {
+    return fact.url ? fact : null;
+  }
 
   if (fact.kind === "time-to-beat") {
     const label = fact.label.toLowerCase();
@@ -314,9 +606,7 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
         ...fact,
         kind: "completion-time",
         label: "Complétion",
-        url: fact.source?.toLowerCase().includes("how long")
-          ? fact.url
-          : undefined,
+        url: isHowLongToBeatSource(fact) ? fact.url : undefined,
       };
     }
 
@@ -324,30 +614,30 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
       ...fact,
       kind: "duration",
       label: "Durée",
-      url: fact.source?.toLowerCase().includes("how long")
-        ? fact.url
-        : undefined,
+      url: isHowLongToBeatSource(fact) ? fact.url : undefined,
     };
   }
 
   return {
     ...fact,
     url:
-      fact.kind === "estimated-value" ||
-      fact.source?.toLowerCase().includes("how long")
+      fact.kind === "estimated-value" || isHowLongToBeatSource(fact)
         ? fact.url
         : undefined,
   };
 }
 
-function parseRatingOnFive(fact: DetailFact): number | null {
+function parseRatingOnScale(fact: DetailFact): number | null {
   const value = fact.value.replace(",", ".").trim();
   const fractional = value.match(/([\d.]+)\s*\/\s*([\d.]+)/);
   if (fractional) {
     const score = Number(fractional[1]);
     const max = Number(fractional[2]);
     if (Number.isFinite(score) && Number.isFinite(max) && max > 0) {
-      return Math.max(0, Math.min(5, (score / max) * 5));
+      return Math.max(
+        0,
+        Math.min(ITEM_RATING_SCALE, (score / max) * ITEM_RATING_SCALE),
+      );
     }
   }
 
@@ -355,18 +645,102 @@ function parseRatingOnFive(fact: DetailFact): number | null {
   if (percent) {
     const score = Number(percent[1]);
     if (Number.isFinite(score)) {
-      return Math.max(0, Math.min(5, (score / 100) * 5));
+      return Math.max(
+        0,
+        Math.min(ITEM_RATING_SCALE, (score / 100) * ITEM_RATING_SCALE),
+      );
     }
   }
 
   return null;
 }
 
-function formatRatingOnFive(value: number, locale: string) {
+function formatRatingOnScale(value: number, locale: string) {
   return `${value.toLocaleString(locale, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })}/5`;
+  })}/${ITEM_RATING_SCALE}`;
+}
+
+function isStoredConsensusRating(fact: DetailFact) {
+  return (
+    fact.kind === "rating" &&
+    (fact.source === "consensus" || fact.label === "Note")
+  );
+}
+
+function parseAgeRatingYears(fact: DetailFact): number | null {
+  const age = normalizeRatingAge(fact.value);
+  return age !== null && age > 0 ? age : null;
+}
+
+function consolidateAgeRatingFacts(facts: DetailFact[]): DetailFact[] {
+  const ageFacts = facts.filter((fact) => fact.kind === "age-rating");
+  if (ageFacts.length <= 1) {
+    return facts.filter(
+      (fact) =>
+        fact.kind !== "age-rating" || parseAgeRatingYears(fact) !== null,
+    );
+  }
+
+  const validAgeFacts = ageFacts.filter(
+    (fact) => parseAgeRatingYears(fact) !== null,
+  );
+  if (validAgeFacts.length === 0) {
+    return facts.filter((fact) => fact.kind !== "age-rating");
+  }
+
+  const best = validAgeFacts.reduce((currentBest, fact) => {
+    const bestAge = parseAgeRatingYears(currentBest) ?? 0;
+    const factAge = parseAgeRatingYears(fact) ?? 0;
+    return factAge >= bestAge ? fact : currentBest;
+  });
+
+  const sourceNames = Array.from(
+    new Set(
+      validAgeFacts.flatMap((fact) => {
+        if (fact.sourceNames?.length) return fact.sourceNames;
+        if (!fact.source) return [];
+        return parseFactSourceList(fact.source).map((entry) =>
+          formatDetailFactSourceToken(fact, entry),
+        );
+      }),
+    ),
+  );
+
+  return [
+    ...facts.filter((fact) => fact.kind !== "age-rating"),
+    {
+      ...best,
+      source: undefined,
+      sourceCount: sourceNames.length > 0 ? sourceNames.length : undefined,
+      sourceNames: sourceNames.length > 0 ? sourceNames : undefined,
+    },
+  ];
+}
+
+function canonicalRatingSourceName(fact: DetailFact): string | null {
+  if (fact.isBoardGameRatingSource) {
+    return (
+      fact.providerLabel ??
+      formatDetailFactSourceToken(fact, fact.source ?? fact.label ?? "")
+    );
+  }
+  const label = fact.label?.trim() || "";
+  if (label) return label;
+  if (fact.providerLabel && fact.source) return fact.providerLabel;
+  if (fact.source) return formatDetailFactSourceToken(fact, fact.source);
+  return null;
+}
+
+function collectRatingSourceNames(facts: DetailFact[]) {
+  return Array.from(
+    new Set(
+      facts
+        .map(canonicalRatingSourceName)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  );
 }
 
 function buildAverageRatingFact(
@@ -374,24 +748,24 @@ function buildAverageRatingFact(
   t: TranslateFn,
   locale: string,
 ): DetailFact | null {
-  const values = facts
-    .filter((fact) => fact.kind === "rating")
-    .map(parseRatingOnFive)
+  const ratingFacts = facts.filter(
+    (fact) => fact.kind === "rating" && !isStoredConsensusRating(fact),
+  );
+  const values = ratingFacts
+    .map(parseRatingOnScale)
     .filter((value): value is number => value !== null);
 
   if (values.length === 0) return null;
 
-  const average =
-    values.reduce((sum, value) => sum + value, 0) / values.length;
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const sourceNames = collectRatingSourceNames(ratingFacts);
 
   return {
     kind: "rating",
     label: t("items.info.averageRating"),
-    value: formatRatingOnFive(average, locale),
-    source:
-      values.length === 1
-        ? t("items.info.oneSource")
-        : t("items.info.sourcesCount", { count: values.length }),
+    value: formatRatingOnScale(average, locale),
+    sourceCount: sourceNames.length,
+    sourceNames,
     priority: 84,
   };
 }
@@ -401,6 +775,32 @@ function normalizeRatingAge(value: string): number | null {
   if (!match) return null;
   const age = Number(match[0]);
   return Number.isFinite(age) ? age : null;
+}
+
+function isDisplayableAgeRatingFact(
+  fact: DetailFact,
+  shelfName?: string | null,
+) {
+  if (fact.kind !== "age-rating") return false;
+  const label = fact.label.toUpperCase();
+  const value = fact.value.trim().toUpperCase();
+
+  if (label === "ESRB" && !isNtscLikeGameShelf(shelfName)) {
+    return false;
+  }
+
+  return (
+    normalizeRatingAge(value) !== null ||
+    [
+      "ALL",
+      "ALL AGES",
+      "EVERYONE",
+      "G",
+      "TP",
+      "TOUT PUBLIC",
+      "TOUS PUBLICS",
+    ].includes(value)
+  );
 }
 
 function formatPublicValue(fact: DetailFact, t: TranslateFn): string | null {
@@ -437,9 +837,15 @@ function formatPublicValue(fact: DetailFact, t: TranslateFn): string | null {
   }
 
   if (
-    ["ALL", "ALL AGES", "EVERYONE", "G", "TP", "TOUT PUBLIC", "TOUS PUBLICS"].includes(
-      value,
-    )
+    [
+      "ALL",
+      "ALL AGES",
+      "EVERYONE",
+      "G",
+      "TP",
+      "TOUT PUBLIC",
+      "TOUS PUBLICS",
+    ].includes(value)
   ) {
     return t("items.info.allAges");
   }
@@ -450,6 +856,7 @@ function formatPublicValue(fact: DetailFact, t: TranslateFn): string | null {
 function localizeDisplayFact(
   fact: DetailFact,
   t: TranslateFn,
+  options: { compactVideoGamePlayers?: boolean } = {},
 ): DetailFact | null {
   if (fact.kind === "age-rating") {
     const value = formatPublicValue(fact, t);
@@ -462,14 +869,111 @@ function localizeDisplayFact(
     };
   }
 
+  if (fact.kind === "players") {
+    let value = fact.value;
+    if (value.includes("|")) {
+      const parts = value.split("|");
+      const orSeparator = ` ${t("items.info.or") || "ou"} `;
+
+      const allMax = parts.every((p) => p.endsWith(" max"));
+      if (allMax) {
+        const numbers = parts
+          .map((p) => Number(p.slice(0, -4)))
+          .sort((a, b) => a - b);
+        const countString = numbers.join(orSeparator);
+        return {
+          ...fact,
+          label: t("items.info.players"),
+          value: t("items.info.upToPlayers", { count: countString }),
+        };
+      }
+
+      const allRanges = parts.every((p) => p.includes("-"));
+      if (allRanges) {
+        const ranges = parts.map((p) => p.split("-").map(Number));
+        const firstMin = ranges[0][0];
+        const sameMin = ranges.every((r) => r[0] === firstMin);
+        if (sameMin) {
+          const maxes = ranges.map((r) => r[1]).sort((a, b) => a - b);
+          const maxString = maxes.join(orSeparator);
+          return {
+            ...fact,
+            label: t("items.info.players"),
+            value: t("items.info.playersRange", {
+              min: firstMin,
+              max: maxString,
+            }),
+          };
+        }
+      }
+
+      const localizedParts = parts.map((part) => {
+        let partValue = part;
+        let partLabel = "Players";
+        if (part.endsWith(" max")) {
+          partValue = part.slice(0, -4);
+          partLabel = "Max players";
+        }
+        const tempFact = { ...fact, value: partValue, label: partLabel };
+        return localizeDisplayFact(tempFact, t, options)?.value || partValue;
+      });
+
+      return {
+        ...fact,
+        label: t("items.info.players"),
+        value: localizedParts.join(orSeparator),
+      };
+    }
+
+    const range = parsePlayerFactRange(fact);
+    if (range) {
+      if (
+        range.maxOnly ||
+        (options.compactVideoGamePlayers && range.min === 1 && range.max > 1)
+      ) {
+        value = t("items.info.upToPlayers", { count: range.max });
+      } else if (range.min === 1 && range.max === 1) {
+        value = t("items.info.solo");
+      } else if (range.min === range.max) {
+        value = t("items.info.multiplePlayers", { count: range.min });
+      } else if (range.min !== null) {
+        value = t("items.info.playersRange", {
+          min: range.min,
+          max: range.max,
+        });
+      }
+    }
+    return {
+      ...fact,
+      label: t("items.info.players"),
+      value,
+    };
+  }
+
   const labelByKind: Record<string, string> = {
     "completion-time": t("items.info.completion"),
+    cooperative: t("items.info.coop"),
     duration: t("items.info.duration"),
+    modes: t("items.info.gameModes"),
     pages: t("items.info.pages"),
-    players: t("items.info.players"),
     playtime: t("items.info.playtime"),
     tracks: t("items.info.tracks"),
   };
+
+  if (fact.value.includes("|")) {
+    const parts = fact.value.split("|");
+    const orSeparator = ` ${t("items.info.or") || "ou"} `;
+    const localizedParts = parts.map((part) => {
+      const tempFact = { ...fact, value: part };
+      const localized = localizeDisplayFact(tempFact, t, options);
+      return localized ? localized.value : part;
+    });
+    return {
+      ...fact,
+      label: labelByKind[fact.kind] || fact.label,
+      value: localizedParts.join(orSeparator),
+    };
+  }
 
   return {
     ...fact,
@@ -485,13 +989,16 @@ function normalizeDisplayFacts(
   } = {},
 ) {
   const hasDirectHltb = facts.some(
-    (fact) =>
-      (fact.kind === "duration" || fact.kind === "completion-time") &&
-      fact.source?.toLowerCase().includes("how long"),
+    (fact) => isHowLongToBeatSource(fact) && isDurationLikeFact(fact),
   );
 
   return facts
-    .filter((fact) => !hasDirectHltb || fact.kind !== "time-to-beat")
+    .filter(
+      (fact) =>
+        !hasDirectHltb ||
+        !isDurationLikeFact(fact) ||
+        isHowLongToBeatSource(fact),
+    )
     .filter((fact) => options.includePcFacts || !isPcSpecificFact(fact))
     .filter(
       (fact) =>
@@ -524,11 +1031,7 @@ function DetailInfoItem({ fact }: { fact: DetailFact }) {
         <span className={cn("text-sm font-black truncate", tone.value)}>
           {formatFactValue(fact)}
         </span>
-        {fact.source && (
-          <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 truncate">
-            {formatFactSource(fact.source)}
-          </span>
-        )}
+        <FactSourceFooter fact={fact} />
       </div>
       {fact.url && <Link2 className="ml-auto size-3 text-zinc-400 shrink-0" />}
     </div>
@@ -557,12 +1060,13 @@ export default function ItemDetailsPage() {
   const itemId = params.itemId as Item["id"];
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [associationModalVisible, setAssociationModalVisible] =
-    useState<boolean>(false);
   const [modalActiveTab, setModalActiveTab] = useState<
     "general" | "poster" | "background" | "info"
   >("general");
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
+    "contain",
+  );
   const [autoMetadataRefreshAttempted, setAutoMetadataRefreshAttempted] =
     useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -574,25 +1078,97 @@ export default function ItemDetailsPage() {
     queryFn: () => getShelf(shelfId),
   });
 
-  const { data: item, isFetching } = useQuery({
+  const { data: item, isPending } = useQuery({
     queryKey: ["shelf", shelfId, "items", itemId],
     queryFn: () => getItem(itemId, shelfId),
     initialData: () =>
       queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
-        ?.items?.find((i) => i.id === itemId) as ItemWithMetadata,
+        ?.items?.find((i) => i.id === itemId || i.slug === itemId) as ItemWithMetadata,
     initialDataUpdatedAt: () =>
       queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
+    placeholderData: (previousData) => previousData,
+    // Metadata is enriched in the background after an item is added, so poll
+    // while this item is still being enriched (no metadataId yet) — survives a
+    // page refresh since the state is derived from the persisted item.
+    refetchInterval: (query) =>
+      isItemMetadataBusy(query.state.data) ? 2500 : false,
   });
 
-  const { data: prices, isFetching: isFetchingPrices } = useQuery({
-    queryKey: ["shelf", shelfId, "items", itemId, "prices"],
-    queryFn: () => getItemPrices(itemId, shelfId),
-    enabled: !!itemId && !!item?.barcode,
-  });
+  const isMetadataBusy = isItemMetadataBusy(item);
+  const wasMetadataRefreshingRef = useRef(false);
+
+  useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
+
+  useEffect(() => {
+    if (!item?.id) return;
+    if (
+      item.priceNew == null &&
+      item.priceUsed == null &&
+      item.priceUsedCIB == null
+    ) {
+      return;
+    }
+    patchCachedItem(queryClient, {
+      id: item.id,
+      shelfId: item.shelfId ?? shelfId,
+      priceNew: item.priceNew ?? null,
+      priceUsed: item.priceUsed ?? null,
+      priceUsedCIB: item.priceUsedCIB ?? null,
+      priceLastUpdated: item.priceLastUpdated ?? null,
+    });
+    void queryClient.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey[0] === "shelf" &&
+        (query.queryKey[1] === shelfId ||
+          query.queryKey[1] === item.shelfId),
+    });
+  }, [
+    item?.id,
+    item?.shelfId,
+    item?.priceNew,
+    item?.priceUsed,
+    item?.priceUsedCIB,
+    item?.priceLastUpdated,
+    queryClient,
+    shelfId,
+  ]);
+
+  useEffect(() => {
+    const refreshing = isItemMetadataRefreshing(item);
+    if (wasMetadataRefreshingRef.current && !refreshing) {
+      toast.success(t("items.refreshMetadataSuccess"));
+    }
+    wasMetadataRefreshingRef.current = refreshing;
+  }, [item?.metadataRefreshStartedAt, item, t]);
+
+  const prices = useMemo<ItemPrices | null>(() => {
+    if (!item?.id) return null;
+    if (
+      item.priceNew == null &&
+      item.priceUsed == null &&
+      item.priceUsedCIB == null &&
+      !item.priceObservations?.length
+    ) {
+      return null;
+    }
+    return {
+      priceNew: item.priceNew ?? null,
+      priceUsed: item.priceUsed ?? null,
+      priceUsedCIB: item.priceUsedCIB ?? null,
+      priceLastUpdated: item.priceLastUpdated ?? null,
+      priceSources: item.priceSources,
+      priceSourceDisplayNames: item.priceSourceDisplayNames,
+      isReferencePriceOnly: item.isReferencePriceOnly,
+      priceObservations: item.priceObservations,
+    };
+  }, [item]);
 
   const shelfItems = useMemo(
-    () => ((shelf?.items || []) as Item[]).filter((shelfItem) => shelfItem.id),
+    () =>
+      ((shelf?.items || []) as Item[])
+        .filter((shelfItem) => shelfItem.id)
+        .sort((a, b) => compareTitlesForSort(a.name, b.name)),
     [shelf?.items],
   );
 
@@ -613,8 +1189,7 @@ export default function ItemDetailsPage() {
     shelf && previousShelfItem ? itemPath(shelf, previousShelfItem) : null;
   const nextItemHref =
     shelf && nextShelfItem ? itemPath(shelf, nextShelfItem) : null;
-  const isDetailOverlayOpen =
-    modalVisible || associationModalVisible || Boolean(zoomImageUrl);
+  const isDetailOverlayOpen = modalVisible || Boolean(zoomImageUrl);
 
   const navigateToSibling = useCallback(
     (href?: string | null) => {
@@ -651,12 +1226,7 @@ export default function ItemDetailsPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    isDetailOverlayOpen,
-    navigateToSibling,
-    nextItemHref,
-    previousItemHref,
-  ]);
+  }, [isDetailOverlayOpen, navigateToSibling, nextItemHref, previousItemHref]);
 
   const handleTouchStart = useCallback(
     (event: TouchEvent<HTMLDivElement>) => {
@@ -707,6 +1277,7 @@ export default function ItemDetailsPage() {
     | (Prisma.ItemUpdateInput & {
         refreshMetadata?: boolean;
         lookupQuery?: string;
+        currentShelfId?: string | null;
       })
   >({
     mutationFn: saveItem,
@@ -719,46 +1290,84 @@ export default function ItemDetailsPage() {
     },
   });
 
-  const { mutate: refreshMetadata } = useMutation({
-    mutationFn: () =>
-      refreshItemMetadata(itemId, shelfId, item?.metadata?.title || item?.name),
-    onSuccess: (response) => {
-      const actualShelfId = item?.shelfId;
+  const { mutate: refreshMetadata, isPending: isRefreshingMetadata } =
+    useMutation({
+      mutationFn: () =>
+        refreshItemMetadata(
+          itemId,
+          shelfId,
+          item?.metadata?.title || item?.name,
+        ),
+      onSuccess: (response) => {
+        const actualShelfId = item?.shelfId;
 
-      if (response.item) {
-        void syncItemQueries(queryClient, response.item, [shelfId, actualShelfId]);
-        return;
-      }
+        if (response.item) {
+          void syncItemQueries(queryClient, response.item, [
+            shelfId,
+            actualShelfId,
+          ]);
+          return;
+        }
 
-      if (response.metadata) {
-        patchCachedItem(queryClient, {
-          id: itemId,
-          shelfId: actualShelfId || shelfId,
-          metadata: response.metadata,
-        });
-      }
+        if (response.metadata) {
+          patchCachedItem(queryClient, {
+            id: itemId,
+            shelfId: actualShelfId || shelfId,
+            metadata: response.metadata,
+          });
+        }
 
-      void invalidateItemQueries(queryClient, itemId, [shelfId, actualShelfId]);
-    },
-    onError: (error) => {
-      console.warn("[Metadata] Auto refresh failed:", error);
-    },
-  });
+        void invalidateItemQueries(queryClient, itemId, [
+          shelfId,
+          actualShelfId,
+        ]);
+      },
+      onError: (error) => {
+        console.warn("[Metadata] Refresh failed:", error);
+      },
+    });
+
+  const handleRefreshMetadata = useCallback(() => {
+    refreshMetadata(undefined, {
+      onError: () => {
+        toast.error(t("items.refreshMetadataFailed"));
+      },
+    });
+  }, [refreshMetadata, t]);
 
   const handleModalClose = useCallback(() => {
     setModalVisible(false);
   }, []);
 
   const handleModalSubmit = useCallback(
-    async (shelf: Prisma.ShelfUpdateInput) => {
+    async (itemData: Prisma.ItemUpdateInput | Prisma.ItemCreateInput) => {
       return new Promise<void>((resolve, reject) => {
-        mutate(shelf, {
-          onSuccess: () => resolve(),
-          onError: () => reject(),
-        });
+        mutate(
+          {
+            ...itemData,
+            id: itemId,
+            currentShelfId: item?.shelfId || shelfId,
+          },
+          {
+            onSuccess: (savedItem) => {
+              if (savedItem.shelfId && savedItem.shelfId !== shelfId) {
+                router.replace(
+                  itemPath(
+                    (savedItem as ItemWithMetadata).shelf || {
+                      id: savedItem.shelfId,
+                    },
+                    savedItem,
+                  ),
+                );
+              }
+              resolve();
+            },
+            onError: (error) => reject(error),
+          },
+        );
       });
     },
-    [mutate],
+    [item?.shelfId, itemId, mutate, router, shelfId],
   );
 
   const year = useMemo(() => {
@@ -776,8 +1385,11 @@ export default function ItemDetailsPage() {
   }, [item, hasPermission]);
 
   const shouldAutoRefreshMetadata = useMemo(() => {
-    if (!item?.metadataId || !item.metadata || !isAuthenticated || isGuest) {
+    if (!isAuthenticated || isGuest || !canEdit) {
       return false;
+    }
+    if (!item?.metadataId || !item.metadata) {
+      return Boolean(item?.barcode);
     }
     const metadata = item.metadata as any;
     const facts = normalizeFacts(metadata.facts);
@@ -797,28 +1409,67 @@ export default function ItemDetailsPage() {
     const hasHowLongToBeat = facts.some(
       (fact) =>
         ["duration", "completion-time", "time-to-beat"].includes(fact.kind) &&
-        fact.source?.toLowerCase().includes("how long"),
+        fact.isHowLongToBeatSource,
     );
-    const hasScreenScraperMedia = attachments.some(
-      (attachment: any) => attachment.source === "screenscraper",
+    const hasHowLongToBeatCompletion = facts.some(
+      (fact) =>
+        (fact.kind === "completion-time" ||
+          (fact.kind === "time-to-beat" &&
+            fact.label.toLowerCase().includes("compl"))) &&
+        fact.isHowLongToBeatSource,
     );
+    const hasGameMediaGallery = hasGameMediaGalleryAttachment(attachments);
     const hasRating = facts.some((fact) => fact.kind === "rating");
+    const hasDisplayableAgeRating = facts.some((fact) =>
+      isDisplayableAgeRatingFact(fact, shelf?.name),
+    );
+    const isBeforeGameAgeRatingEnrichment =
+      !hasValidLastFetched || lastFetched < GAME_AGE_RATING_FEATURE_RELEASE;
+    const isBeforeHltbCompletionEnrichment =
+      !hasValidLastFetched || lastFetched < HLTB_COMPLETION_FEATURE_RELEASE;
     const isMissingGameEnrichment =
       shelf?.type === "games" &&
       isBeforeCurrentEnrichment &&
-      (!hasHowLongToBeat || !hasScreenScraperMedia || !hasRating);
+      (!hasHowLongToBeat || !hasGameMediaGallery || !hasRating);
+    const isMissingGameAgeRating =
+      shelf?.type === "games" &&
+      isBeforeGameAgeRatingEnrichment &&
+      !hasDisplayableAgeRating;
+    const isMissingHltbCompletion =
+      shelf?.type === "games" &&
+      isBeforeHltbCompletionEnrichment &&
+      hasHowLongToBeat &&
+      !hasHowLongToBeatCompletion;
+    const isMissingMusicGalleryRefresh =
+      shelf?.type === "musics" &&
+      isMissingMusicGallery("musics", item?.barcode, attachments);
     const isStale =
       hasValidLastFetched &&
       Date.now() - lastFetched.getTime() > METADATA_REFRESH_TTL_MS;
 
-    return isPreEnrichmentMetadata || isMissingGameEnrichment || isStale;
-  }, [isAuthenticated, isGuest, item?.metadata, item?.metadataId, shelf?.type]);
+    return (
+      isPreEnrichmentMetadata ||
+      isMissingGameEnrichment ||
+      isMissingGameAgeRating ||
+      isMissingHltbCompletion ||
+      isMissingMusicGalleryRefresh ||
+      isStale
+    );
+  }, [
+    canEdit,
+    isAuthenticated,
+    isGuest,
+    item?.barcode,
+    item?.metadata,
+    item?.metadataId,
+    shelf?.type,
+  ]);
 
   useEffect(() => {
     if (
       !shouldAutoRefreshMetadata ||
       autoMetadataRefreshAttempted ||
-      isFetching
+      isPending
     ) {
       return;
     }
@@ -827,30 +1478,121 @@ export default function ItemDetailsPage() {
     refreshMetadata();
   }, [
     autoMetadataRefreshAttempted,
-    isFetching,
+    isPending,
     refreshMetadata,
     shouldAutoRefreshMetadata,
   ]);
 
   const heroImage = useMemo(() => {
-    return item?.backgroundImageUrl || (item ? getHeroImage(item) : null);
-  }, [item]);
+    return item?.backgroundImageUrl || (item ? getHeroImage(item, locale) : null);
+  }, [item, locale]);
 
   const coverImage = useMemo(() => {
-    return item ? getCoverImage(item) : null;
-  }, [item]);
+    return item ? getCoverImage(item, locale) : null;
+  }, [item, locale]);
+
+  useEffect(() => {
+    setCoverImageFit("contain");
+  }, [coverImage]);
+
+  const handleCoverImageLoad = useCallback(
+    (event: SyntheticEvent<HTMLImageElement>) => {
+      setCoverImageFit("contain");
+    },
+    [],
+  );
 
   const galleryImages = useMemo(() => {
     if (!item) return [];
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
     const allImages = getGalleryImages(item);
-    return allImages.filter((img) => img.url !== coverImage).slice(0, 24);
-  }, [item, coverImage]);
+    // Exclude the cover, including its uncropped twin: the cover is a "_crop"
+    // derivative of a gallery image, so its source image must not show again.
+    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
+    const coverKey = coverImage ? stripCrop(coverImage) : null;
+    return allImages
+      .filter(
+        (img) => img.url !== coverImage && stripCrop(img.url) !== coverKey,
+      )
+      .slice(0, 24)
+      .map((img) => {
+        const gallery = getAttachmentGalleryLabels(
+          {
+            type: img.type,
+            role: img.role,
+            title: img.title,
+            source: img.source,
+            providerLabel: img.providerLabel,
+          },
+          displayLocale,
+        );
+        return {
+          ...img,
+          galleryProvider: gallery.provider,
+          galleryDetail: gallery.detail,
+        };
+      });
+  }, [item, coverImage, locale]);
 
+  // Other volumes in the same series — consensus-gated (≥2 distinct volumes), so a
+  // lone numbered title never renders a phantom series. seriesBaseKey strips the
+  // marker + number, so padded shelf names and the unpadded detail name align.
+  const resolvedItemId = item?.id;
+
+  const seriesVolumes = useMemo(() => {
+    if (!shelf?.items || !item || !resolvedItemId) return [];
+    const seriesTitle = item.storedName ?? item.name ?? "";
+    const entries = (shelf.items as unknown as ItemWithMetadata[]).map(
+      (shelfItem) => ({
+        ...shelfItem,
+        title: shelfItem.storedName ?? shelfItem.name ?? "",
+      }),
+    );
+    return seriesSiblings(seriesTitle, entries).filter(
+      (entry) => entry.id !== resolvedItemId,
+    );
+  }, [shelf?.items, item, resolvedItemId]);
+
+  // Franchise grouping comes only from the provider-sourced franchise fact, never
+  // from title heuristics.
+  const franchiseName = useMemo(
+    () =>
+      normalizeFacts(item?.metadata?.facts)
+        .find((fact) => fact.kind === FRANCHISE_FACT_KIND)
+        ?.value?.trim() || null,
+    [item?.metadata?.facts],
+  );
+
+  const franchiseItems = useMemo(() => {
+    if (!shelf?.items || !franchiseName || !resolvedItemId) return [];
+    const target = franchiseName.toLowerCase();
+    const seriesIds = new Set(seriesVolumes.map((entry) => entry.id));
+    return (shelf.items as unknown as ItemWithMetadata[]).filter((shelfItem) => {
+      if (shelfItem.id === resolvedItemId || seriesIds.has(shelfItem.id)) {
+        return false;
+      }
+      return normalizeFacts(shelfItem.metadata?.facts).some(
+        (fact) =>
+          fact.kind === FRANCHISE_FACT_KIND &&
+          fact.value?.trim().toLowerCase() === target,
+      );
+    });
+  }, [shelf?.items, franchiseName, seriesVolumes, resolvedItemId]);
+
+  // Generic "other items" excludes the more specific groups above, so each sibling
+  // shows up once in its most meaningful section.
   const otherItems = useMemo(() => {
-    if (!shelf?.items) return [];
-    const items = shelf.items as unknown as ItemWithMetadata[];
-    return items.filter((i) => i.id !== itemId);
-  }, [shelf?.items, itemId]);
+    if (!shelf?.items || !resolvedItemId) return [];
+    const grouped = new Set<string>([
+      ...seriesVolumes.map((entry) => entry.id),
+      ...franchiseItems.map((entry) => entry.id),
+    ]);
+    return (shelf.items as unknown as ItemWithMetadata[]).filter(
+      (shelfItem) =>
+        shelfItem.id !== resolvedItemId && !grouped.has(shelfItem.id),
+    );
+  }, [shelf?.items, resolvedItemId, seriesVolumes, franchiseItems]);
 
   const coverAspectRatio = useMemo(() => {
     return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
@@ -859,6 +1601,10 @@ export default function ItemDetailsPage() {
   const description = useMemo(() => {
     return item?.description || item?.metadata?.description;
   }, [item?.description, item?.metadata?.description]);
+  const markdownDescription = useMemo(() => {
+    if (!description) return null;
+    return prepareDescriptionMarkdown(description);
+  }, [description]);
 
   const copyValue = useMemo(() => {
     if (!prices || !item?.condition) return null;
@@ -879,46 +1625,65 @@ export default function ItemDetailsPage() {
     }).format(copyValue / 100);
   }, [copyValue, locale]);
 
-  const priceSourceLabel = useMemo(() => {
-    if (!prices?.priceLastUpdated) return "PriceCharting";
-    return `PriceCharting · ${new Date(
-      prices.priceLastUpdated,
-    ).toLocaleDateString(locale, { month: "short", day: "numeric" })}`;
-  }, [locale, prices?.priceLastUpdated]);
+  const priceSourceSummary = useMemo(() => {
+    const conditions = priceObservationConditions(
+      item?.condition,
+      shelf?.type,
+      prices,
+    );
+    const observations = prices?.priceObservations || [];
+    const relevantObservations = observations.filter(
+      (observation) =>
+        observation.condition && conditions.includes(observation.condition),
+    );
+    const relevantSources = Array.from(
+      new Set(
+        relevantObservations
+          .map((observation) => observation.source)
+          .filter(Boolean),
+      ),
+    );
+    const observationSources = Array.from(
+      new Set(
+        observations.map((observation) => observation.source).filter(Boolean),
+      ),
+    );
+    const apiSources = Array.from(
+      new Set((prices?.priceSources || []).filter(Boolean)),
+    );
+    const sources = Array.from(
+      new Set([...observationSources, ...apiSources, ...relevantSources]),
+    );
 
-  const priceChartingAliases = useMemo(() => {
-    const aliases = item?.metadata?.aliases;
-    if (!aliases) return undefined;
-    if (Array.isArray(aliases)) return aliases;
-    if (typeof aliases === "string") {
-      try {
-        const parsed = JSON.parse(aliases);
-        return Array.isArray(parsed) ? parsed : undefined;
-      } catch {
-        return undefined;
+    const soleSource = sources[0];
+    const stampedReferenceOnly =
+      soleSource &&
+      observations.find((observation) => observation.source === soleSource)
+        ?.isReferencePriceSource;
+
+    const sourceDisplayNames = sources.map((source) => {
+      const fromObservation = observations.find(
+        (observation) => observation.source === source,
+      )?.sourceDisplayLabel;
+      if (fromObservation) return fromObservation;
+      const index = (prices?.priceSources || []).indexOf(source);
+      if (index >= 0 && prices?.priceSourceDisplayNames?.[index]) {
+        return prices.priceSourceDisplayNames[index]!;
       }
-    }
-    return undefined;
-  }, [item?.metadata?.aliases]);
-
-  const priceChartingLink = useMemo(() => {
-    if (!item || shelf?.type !== "games") return null;
-    return buildPriceChartingGameUrl({
-      title: item.metadata?.title,
-      fallbackTitle: item.name,
-      shelfName: shelf?.name,
-      barcode: item.barcode,
-      aliases: priceChartingAliases,
+      return source;
     });
-  }, [
-    item,
-    item?.barcode,
-    item?.metadata?.title,
-    item?.name,
-    priceChartingAliases,
-    shelf?.name,
-    shelf?.type,
-  ]);
+
+    return {
+      count: sources.length,
+      sources,
+      sourceDisplayNames,
+      isReferencePriceOnly:
+        sources.length === 1 &&
+        (stampedReferenceOnly ?? prices?.isReferencePriceOnly ?? false),
+    };
+  }, [item?.condition, prices, shelf?.type]);
+
+  const priceChartingLink = item?.referenceCatalogLink ?? null;
 
   const usefulFacts = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -966,17 +1731,27 @@ export default function ItemDetailsPage() {
       });
     }
 
-    const normalizedFacts = normalizeDisplayFacts(sourceFacts, {
-      includeEsrbAgeRatings:
-        shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
-      includePcFacts:
-        shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
-    });
+    const normalizedFacts = consolidateGeneralFacts(
+      consolidatePlayerFacts(
+        consolidateAgeRatingFacts(
+          normalizeDisplayFacts(sourceFacts, {
+            includeEsrbAgeRatings:
+              shelf?.type !== "games" || isNtscLikeGameShelf(shelf?.name),
+            includePcFacts:
+              shelf?.type === "games" && isPcLikeGameShelf(shelf?.name),
+          }),
+        ),
+      ),
+    );
     const averageRating = buildAverageRatingFact(normalizedFacts, t, locale);
     facts.push(
       ...normalizedFacts
         .filter((fact) => fact.kind !== "rating")
-        .map((fact) => localizeDisplayFact(fact, t))
+        .map((fact) =>
+          localizeDisplayFact(fact, t, {
+            compactVideoGamePlayers: shelf?.type === "games",
+          }),
+        )
         .filter((fact): fact is DetailFact => Boolean(fact)),
     );
     if (averageRating) {
@@ -992,18 +1767,21 @@ export default function ItemDetailsPage() {
         seen.add(key);
         return true;
       })
-      .sort(sortDetailFacts)
-      .slice(0, 8);
+      .sort(sortDetailFacts);
   }, [item?.metadata, locale, shelf?.name, shelf?.type, t]);
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
     if (formattedCopyValue) {
+      const priceLabel = priceSourceSummary.isReferencePriceOnly
+        ? t("items.info.estimatedValue")
+        : t("items.info.observedPrice");
       facts.push({
         kind: "estimated-value",
-        label: t("items.info.estimatedValue"),
+        label: priceLabel,
         value: formattedCopyValue,
         url: priceChartingLink?.url,
-        source: priceSourceLabel,
+        sourceCount: priceSourceSummary.count,
+        sourceNames: priceSourceSummary.sourceDisplayNames,
         priority: 110,
       });
     }
@@ -1012,15 +1790,25 @@ export default function ItemDetailsPage() {
   }, [
     formattedCopyValue,
     priceChartingLink?.url,
-    priceSourceLabel,
+    priceSourceSummary.count,
+    priceSourceSummary.isReferencePriceOnly,
+    priceSourceSummary.sourceDisplayNames,
     t,
     usefulFacts,
   ]);
 
-  const secondaryFacts = useMemo(
-    () => usefulFacts.filter((fact) => !isPrimaryInfoFact(fact)),
-    [usefulFacts],
-  );
+  const detailTableFacts = useMemo(() => {
+    const facts = usefulFacts.filter(
+      (fact) =>
+        isDetailTableFact(fact) &&
+        (fact.kind !== "external-link" || shelf?.type === "boardgames"),
+    );
+    return facts.sort((a, b) => {
+      if (a.kind === "external-link") return 1;
+      if (b.kind === "external-link") return -1;
+      return sortDetailFacts(a, b);
+    });
+  }, [shelf?.type, usefulFacts]);
 
   const audioTracks = useMemo(() => {
     const attachments = ((item?.metadata as any)?.attachments || []) as Array<{
@@ -1034,10 +1822,7 @@ export default function ItemDetailsPage() {
   }, [item?.metadata]);
 
   const showInfoStrip =
-    isFetchingPrices ||
-    primaryInfoFacts.length > 0 ||
-    secondaryFacts.length > 0 ||
-    Boolean(item?.barcode && prices && !formattedCopyValue);
+    primaryInfoFacts.length > 0 || Boolean(prices && !formattedCopyValue);
 
   const shelfHref = shelf ? shelfPath(shelf) : `/shelves/${shelfId}`;
   const backToShelfLabel = shelf?.name
@@ -1046,41 +1831,21 @@ export default function ItemDetailsPage() {
 
   const infoStrip = showInfoStrip ? (
     <div className="max-w-3xl w-full border-y border-border/60 dark:border-zinc-800/50 py-3 mt-1 space-y-3">
-      {isFetchingPrices ? (
+      {primaryInfoFacts.length > 0 && (
         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
-          <Skeleton className="h-[62px] w-full sm:w-[176px] rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <Skeleton className="h-[62px] w-full sm:w-[176px] rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          {primaryInfoFacts.map((fact) => (
+            <DetailInfoItem
+              key={`${fact.kind}-${fact.label}-${fact.value}`}
+              fact={fact}
+            />
+          ))}
         </div>
-      ) : (
-        <>
-          {primaryInfoFacts.length > 0 && (
-            <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
-              {primaryInfoFacts.map((fact) => (
-                <DetailInfoItem
-                  key={`${fact.kind}-${fact.label}-${fact.value}`}
-                  fact={fact}
-                />
-              ))}
-            </div>
-          )}
+      )}
 
-          {item?.barcode && prices && !formattedCopyValue && (
-            <span className="text-xs text-zinc-500 italic">
-              {t("items.noPricesFound")}
-            </span>
-          )}
-
-          {secondaryFacts.length > 0 && (
-            <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
-              {secondaryFacts.map((fact) => (
-                <DetailInfoItem
-                  key={`${fact.kind}-${fact.label}-${fact.value}`}
-                  fact={fact}
-                />
-              ))}
-            </div>
-          )}
-        </>
+      {prices && !formattedCopyValue && (
+        <span className="text-xs text-zinc-500 italic">
+          {t("items.noPricesFound")}
+        </span>
       )}
     </div>
   ) : null;
@@ -1115,15 +1880,6 @@ export default function ItemDetailsPage() {
             onClose={handleModalClose}
             onSubmit={handleModalSubmit}
             defaultTab={modalActiveTab}
-          />
-          <AssociationModal
-            isOpen={associationModalVisible}
-            onClose={() => setAssociationModalVisible(false)}
-            itemId={itemId}
-            routeShelfId={shelfId}
-            item={item}
-            shelfType={shelf?.type}
-            shelfName={shelf?.name}
           />
         </>
       )}
@@ -1173,7 +1929,7 @@ export default function ItemDetailsPage() {
             )}
           </div>
 
-          {isFetching ? (
+          {isPending ? (
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/30 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl w-full mt-4">
               <Skeleton
                 className={cn(
@@ -1189,23 +1945,32 @@ export default function ItemDetailsPage() {
             </div>
           ) : (
             <div className="relative flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl overflow-hidden w-full mt-4">
-              {/* Left Column: Poster/Cover Card */}
               <div
                 onClick={() => coverImage && setZoomImageUrl(coverImage)}
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none bg-zinc-950/20 transition-all duration-300",
-                  coverImage ? "cursor-pointer group/cover" : "",
+                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
+                  coverImage
+                    ? "cursor-pointer group/cover bg-white"
+                    : "bg-zinc-950/20",
                   coverAspectRatio,
                 )}
               >
                 {coverImage ? (
                   <>
-                    <Image
+                    <RemoteImage
                       src={coverImage}
-                      alt={item?.name}
-                      width={512}
-                      height={512}
-                      className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform duration-500"
+                      alt={item?.name ?? ""}
+                      width={768}
+                      height={1152}
+                      sizes="(max-width: 768px) 240px, 480px"
+                      priority
+                      onLoad={handleCoverImageLoad}
+                      className={cn(
+                        "w-full h-full transition-transform duration-500",
+                        coverImageFit === "contain"
+                          ? "object-contain"
+                          : "object-cover group-hover/cover:scale-105",
+                      )}
                     />
                     {/* Hover Zoom Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
@@ -1231,6 +1996,15 @@ export default function ItemDetailsPage() {
                     {item?.name}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
+                    {isMetadataBusy && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1.5 bg-sky-500/10 text-sky-600 dark:text-sky-300 border border-sky-400/20 font-bold px-2.5 py-0.5"
+                      >
+                        <Loader2 className="size-3 animate-spin" />
+                        {t("items.fetching")}
+                      </Badge>
+                    )}
                     {year && (
                       <Badge
                         variant="secondary"
@@ -1273,16 +2047,16 @@ export default function ItemDetailsPage() {
                     <Button
                       variant="secondary"
                       className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
-                      onClick={() => setAssociationModalVisible(true)}
+                      onClick={handleRefreshMetadata}
+                      disabled={isMetadataBusy || isRefreshingMetadata}
                     >
-                      {item?.metadataId ? (
-                        <Link2 className="size-4 mr-1.5" />
-                      ) : (
-                        <Search className="size-4 mr-1.5" />
-                      )}
-                      {item?.metadataId
-                        ? t("items.fixMeta")
-                        : t("items.findMeta")}
+                      <RefreshCw
+                        className={cn(
+                          "size-4 mr-1.5",
+                          (isMetadataBusy || isRefreshingMetadata) && "animate-spin",
+                        )}
+                      />
+                      {t("items.refreshMetadata")}
                     </Button>
                   </div>
                 )}
@@ -1290,25 +2064,54 @@ export default function ItemDetailsPage() {
                 {infoStrip}
 
                 {/* Description */}
-                {description && (
-                  <p className="text-foreground/90 dark:text-zinc-300 text-sm leading-relaxed max-w-3xl bg-zinc-50/50 dark:bg-zinc-950/20 backdrop-blur-sm border border-border dark:border-zinc-800/50 p-4 rounded-xl shadow-inner mt-1">
-                    {description}
-                  </p>
+                {markdownDescription && (
+                  <div
+                    className={cn(
+                      "text-foreground/90 dark:text-zinc-300 text-sm leading-relaxed max-w-3xl bg-zinc-50/50 dark:bg-zinc-950/20 backdrop-blur-sm border border-border dark:border-zinc-800/50 p-4 rounded-xl shadow-inner mt-1",
+                      "[&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0",
+                      "[&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1",
+                      "[&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:text-base [&_h3]:font-semibold",
+                      "[&_strong]:font-semibold [&_em]:italic",
+                      "[&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3",
+                      "[&_code]:rounded [&_code]:bg-zinc-200/60 [&_code]:px-1 [&_code]:py-0.5 dark:[&_code]:bg-zinc-800/60",
+                      "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-zinc-900 [&_pre]:p-3 [&_pre]:text-zinc-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
+                      "[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/70 [&_th]:bg-zinc-100/70 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left dark:[&_th]:bg-zinc-900/40 [&_td]:border [&_td]:border-border/60 [&_td]:px-2 [&_td]:py-1",
+                      "[&_hr]:my-3 [&_hr]:border-border/70",
+                      "[&_a]:font-semibold [&_a]:text-primary [&_a]:underline-offset-2 hover:[&_a]:underline",
+                    )}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ({ node, ...props }) => {
+                          void node;
+                          return (
+                            <a
+                              {...props}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            />
+                          );
+                        },
+                      }}
+                    >
+                      {markdownDescription}
+                    </ReactMarkdown>
+                  </div>
                 )}
 
                 {/* Key Details Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 max-w-3xl bg-zinc-50/40 dark:bg-zinc-950/10 backdrop-blur-sm border border-border dark:border-zinc-800/40 p-5 rounded-2xl shadow-sm mt-3">
-                  {item?.metadata?.title &&
-                    item.metadata.title !== item.name && (
-                      <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
-                          {t("items.originalTitle")}
-                        </span>
-                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
-                          {item.metadata.title}
-                        </span>
-                      </div>
-                    )}
+                  {item?.storedName && (
+                    <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                        {t("items.originalTitle")}
+                      </span>
+                      <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                        {item.storedName}
+                      </span>
+                    </div>
+                  )}
 
                   {item?.metadata?.authors &&
                     item.metadata.authors.length > 0 && (
@@ -1336,6 +2139,44 @@ export default function ItemDetailsPage() {
                       </div>
                     )}
 
+                  {detailTableFacts.map((fact) => (
+                    <div
+                      key={`${fact.kind}-${fact.label}-${fact.value}`}
+                      className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0"
+                    >
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                        {fact.label}
+                      </span>
+                      {isTagLikeDetailFact(fact) ? (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {splitTagFactValue(fact.value).map((tag) => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : fact.kind === "external-link" && fact.url ? (
+                        <a
+                          href={fact.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                        >
+                          {fact.value}
+                          <Link2 className="size-3.5 shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                          {fact.value}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+
                   {item?.metadata?.releaseDate &&
                     !isNaN(new Date(item.metadata.releaseDate).getTime()) && (
                       <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
@@ -1357,7 +2198,7 @@ export default function ItemDetailsPage() {
                   {item?.barcode && (
                     <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
-                        {t("items.barcode")}
+                        {t(itemsBarcodeLabelKey(shelf?.type))}
                       </span>
                       <span className="text-sm font-medium text-foreground dark:text-zinc-200 font-mono">
                         {item.barcode}
@@ -1430,7 +2271,7 @@ export default function ItemDetailsPage() {
             </div>
           )}
 
-          {!isFetching && galleryImages.length > 0 && (
+          {!isPending && galleryImages.length > 0 && (
             <div className="mt-8 flex flex-col gap-3">
               <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
                 {t("items.artworksAndScreenshots")}
@@ -1442,7 +2283,7 @@ export default function ItemDetailsPage() {
                     onClick={() => setZoomImageUrl(img.url)}
                     className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 bg-zinc-100/30 dark:bg-zinc-950/30 hover:border-zinc-350 dark:hover:border-zinc-700/80 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
-                    <Image
+                    <RemoteImage
                       src={img.url}
                       alt={img.type}
                       width={512}
@@ -1455,19 +2296,21 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2 flex gap-1 items-center z-10 select-none">
-                      <Badge
-                        variant="secondary"
-                        className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-zinc-100 uppercase px-1.5 py-0.5 rounded"
-                      >
-                        {getMediaTypeLabel(img.type)}
-                      </Badge>
-                      {img.source && (
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10 select-none">
+                      {img.galleryProvider && (
                         <Badge
                           variant="secondary"
                           className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded"
                         >
-                          {img.source}
+                          {img.galleryProvider}
+                        </Badge>
+                      )}
+                      {img.galleryDetail && (
+                        <Badge
+                          variant="secondary"
+                          className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-zinc-100 uppercase px-1.5 py-0.5 rounded"
+                        >
+                          {img.galleryDetail}
                         </Badge>
                       )}
                     </div>
@@ -1477,47 +2320,16 @@ export default function ItemDetailsPage() {
             </div>
           )}
 
-          {/* Other items in this shelf carousel */}
-          {!isFetching && otherItems.length > 0 && (
-            <div className="mt-8 flex flex-col gap-3">
-              <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
-                {t("items.otherItems")}
-              </h3>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-                {otherItems.slice(0, 10).map((otherItem) => (
-                  <div key={otherItem.id} className="w-28 sm:w-32 shrink-0">
-                    <Link href={itemPath(shelf || { id: shelfId }, otherItem)}>
-                      <ItemCard
-                        {...otherItem}
-                        shelfType={shelf?.type}
-                        cardFormat={shelf?.cardFormat}
-                      />
-                    </Link>
-                  </div>
-                ))}
-
-                {/* "View all" card at the end */}
-                <div className="w-28 sm:w-32 shrink-0">
-                  <Link href={shelfPath(shelf || { id: shelfId })}>
-                    <div
-                      className="group relative flex flex-col w-full h-full select-none overflow-hidden rounded-2xl border bg-card/45 border-dashed border-border/80 hover:border-zinc-350 dark:hover:border-zinc-700/50 shadow-sm hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 ease-out cursor-pointer items-center justify-center min-h-[150px] gap-2 p-4 text-center"
-                      style={{
-                        aspectRatio: getAspectRatio(
-                          shelf?.cardFormat,
-                          shelf?.type,
-                        ),
-                      }}
-                    >
-                      <ChevronLeft className="size-6 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300 rotate-180" />
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground group-hover:text-primary transition-colors">
-                        {t("items.viewAll")}
-                      </span>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
+          <ItemDiscoverySection
+            isPending={isPending}
+            seriesVolumes={seriesVolumes}
+            franchiseName={franchiseName}
+            franchiseItems={franchiseItems}
+            otherItems={otherItems}
+            shelf={shelf}
+            shelfId={shelfId}
+            t={t}
+          />
         </div>
       </div>
 
@@ -1532,10 +2344,12 @@ export default function ItemDetailsPage() {
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
             {zoomImageUrl && (
-              <img
+              <RemoteImage
                 src={zoomImageUrl}
                 alt="Zoom"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
+                width={1920}
+                height={1920}
+                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
               />
             )}
           </div>
@@ -1544,3 +2358,6 @@ export default function ItemDetailsPage() {
     </div>
   );
 }
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import { formatMetadataFromStorage } from "@/services/metadata";
-import { getCoverImage } from "@/lib/itemMedia";
-import { buildItemSearchConditions } from "@/lib/itemSearch";
+import { withRequestUiLocale } from "@/lib/locale/serverPreference";
+import { presentItemFromStorage } from "@/lib/item/present";
+import { buildItemSearchConditions } from "@/lib/item/search";
 
 export async function GET(req: NextRequest) {
+  return withRequestUiLocale(req, async (uiLocale) => {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
@@ -58,16 +59,7 @@ export async function GET(req: NextRequest) {
       // Format items metadata
       const formattedItems = items.map((item) => {
         if (item.metadata) {
-          const formattedMetadata = formatMetadataFromStorage(item.metadata);
-          return {
-            ...item,
-            imageUrl: getCoverImage({
-              imageUrl: item.imageUrl,
-              metadata: formattedMetadata,
-              shelf: item.shelf,
-            }),
-            metadata: formattedMetadata,
-          };
+          return presentItemFromStorage(item, { uiLocale });
         }
         return item;
       });
@@ -109,4 +101,5 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }

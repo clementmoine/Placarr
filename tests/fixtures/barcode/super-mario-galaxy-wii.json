@@ -1,0 +1,15 @@
+{
+  "case": {
+    "id": "super-mario-galaxy-wii",
+    "label": "Super Mario Galaxy",
+    "barcode": "0045496363949",
+    "type": "games",
+    "expected": {
+      "cleanName": "Super Mario Galaxy",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1
+    }
+  },
+  "interactions": []
+}

@@ -5,7 +5,7 @@ import {
   DEFAULT_BARCODE_REGRESSION_CASES,
   type BarcodeRegressionCase,
   type BarcodeRegressionExpectation,
-} from "@/lib/barcodeRegressionCases";
+} from "@/lib/barcode/lookup/regressionCases";
 
 type BarcodeRegressionAssertion = {
   label: string;
@@ -92,21 +92,31 @@ function evaluateCase(
   const assertions: BarcodeRegressionAssertion[] = [];
 
   if (expected.cleanName !== undefined) {
-    assertions.push(assertEqual("cleanName", expected.cleanName, data?.cleanName));
+    assertions.push(
+      assertEqual("cleanName", expected.cleanName, data?.cleanName),
+    );
   }
 
   for (const value of expected.cleanNameIncludes || []) {
-    assertions.push(assertIncludes("cleanNameIncludes", value, data?.cleanName));
+    assertions.push(
+      assertIncludes("cleanNameIncludes", value, data?.cleanName),
+    );
   }
 
   if (expected.platformKey !== undefined) {
     assertions.push(
-      assertEqual("platformKey", expected.platformKey, data?.platformKey || null),
+      assertEqual(
+        "platformKey",
+        expected.platformKey,
+        data?.platformKey || null,
+      ),
     );
   }
 
   if (expected.shelfType !== undefined) {
-    assertions.push(assertEqual("shelfType", expected.shelfType, data?.shelfType));
+    assertions.push(
+      assertEqual("shelfType", expected.shelfType, data?.shelfType),
+    );
   }
 
   if (expected.maxMatches !== undefined) {
@@ -130,11 +140,15 @@ function evaluateCase(
   }
 
   for (const value of expected.suggestionsInclude || []) {
-    assertions.push(assertIncludes("suggestionsInclude", value, suggestionsText));
+    assertions.push(
+      assertIncludes("suggestionsInclude", value, suggestionsText),
+    );
   }
 
   for (const value of expected.suggestionsExclude || []) {
-    assertions.push(assertNotIncludes("suggestionsExclude", value, suggestionsText));
+    assertions.push(
+      assertNotIncludes("suggestionsExclude", value, suggestionsText),
+    );
   }
 
   const provider = String(data?.provider || "");
@@ -182,7 +196,9 @@ async function runCase(
     const data = await response.json();
     const assertions = evaluateCase(testCase, data);
     const matches = Array.isArray(data?.matches) ? data.matches : [];
-    const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+    const suggestions = Array.isArray(data?.suggestions)
+      ? data.suggestions
+      : [];
 
     return {
       case: testCase,

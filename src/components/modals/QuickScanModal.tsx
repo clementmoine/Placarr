@@ -2,21 +2,66 @@
 "use client";
 
 import { toast } from "sonner";
-import { Loader2, Search, Barcode, ExternalLink, Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { Search, Barcode, ExternalLink, Plus, Loader2, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  cleanManualBarcode,
+  ManualBarcodeEntry,
+} from "@/components/ManualBarcodeEntry";
 
 import { BaseModal } from "@/components/modals/BaseModal";
-import { getItems } from "@/lib/api/items";
+import { getMetadataPreview } from "@/lib/api/metadata";
 import { getShelves } from "@/lib/api/shelves";
-import Image from "next/image";
-import { guessBestShelf, guessShelfByPlatformKey } from "@/lib/barcodeQuery";
-import { itemPath } from "@/lib/slugs";
+import { getCoverImage } from "@/lib/item/media";
+import { RemoteImage } from "@/components/RemoteImage";
+import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
+import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
+import { saveItem } from "@/lib/api/items";
+import { syncItemQueries } from "@/lib/item/queryCache";
+import { cn } from "@/lib/core/utils";
+import { itemPath, slugify } from "@/lib/routing/slugs";
+import type { MetadataResult } from "@/types/metadataProvider";
+
+type QuickScanResult = {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  placeholderImageUrl?: string | null;
+  imageSource: "barcode" | "metadata" | "none";
+  shelfType?: string | null;
+  isHydrating: boolean;
+  metadataPreview?: MetadataResult | null;
+};
+
+type ExistingQuickItem = {
+  id: string;
+  name: string;
+  shelfId: string;
+  condition: string;
+  barcode?: string | null;
+  metadataId?: string | null;
+  imageUrl?: string | null;
+  shelf?: {
+    id: string;
+    name: string;
+  } | null;
+};
+
+function isOwnedItemCompletable(
+  item: ExistingQuickItem,
+  scannedBarcode: string,
+): boolean {
+  return Boolean(scannedBarcode.trim()) && !item.barcode?.trim();
+}
+
+const MIN_BACKGROUND_LOADING_MS = 250;
 
 export function QuickScanModal({
   isOpen,
@@ -34,16 +79,29 @@ export function QuickScanModal({
     imageUrl: string | null;
     barcode: string;
     shelfId?: string;
+    metadataPreview?: MetadataResult | null;
   }) => void;
 }) {
   const { t } = useLocale();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [selectedShelfId, setSelectedShelfId] = useState<string>("");
   const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [isRevalidating, setIsRevalidating] = useState<boolean>(false);
+  const [completingItemId, setCompletingItemId] = useState<string | null>(null);
+  const [results, setResults] = useState<QuickScanResult[]>([]);
   const [customName, setCustomName] = useState<string>("");
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
+  const [estimatedPrices, setEstimatedPrices] = useState<{
+    priceNew: number | null;
+    priceUsed: number | null;
+    priceUsedCIB: number | null;
+  } | null>(null);
+  const [activeBarcode, setActiveBarcode] = useState<string>("");
+  const [barcodeInput, setBarcodeInput] = useState<string>("");
+  const activeLookupKeyRef = useRef<string>("");
+  const skipNextLookupForAutoShelfRef = useRef(false);
 
   // Get user's shelves
   const { data: shelves } = useQuery({
@@ -53,158 +111,494 @@ export function QuickScanModal({
   });
 
   // Query if the user already owns an item with this barcode
-  const { data: existingItems, isFetching: isFetchingExisting } = useQuery({
-    queryKey: ["existingItems", barcode],
-    queryFn: () => getItems(barcode),
-    enabled: isOpen && !!barcode,
+  const { data: existingItems } = useQuery<ExistingQuickItem[]>({
+    queryKey: ["existingItems", activeBarcode],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/items", {
+        params: {
+          q: activeBarcode,
+          includeMetadata: "false",
+        },
+      });
+      return data as ExistingQuickItem[];
+    },
+    enabled: isOpen && !!activeBarcode,
   });
 
-  // Automatically select default/active shelf in background
-  useEffect(() => {
-    if (isOpen) {
-      if (defaultShelfId) {
-        setSelectedShelfId(defaultShelfId);
-      } else if (shelves && shelves.length > 0) {
-        setSelectedShelfId(shelves[0].id);
+  const titleLookupKey = useMemo(
+    () => results.map((result) => result.title).slice(0, 3).join("\0"),
+    [results],
+  );
+
+  const { data: titleMatchedItems } = useQuery<ExistingQuickItem[]>({
+    queryKey: ["existingItemsByTitle", titleLookupKey],
+    queryFn: async () => {
+      const titles = results.map((result) => result.title).slice(0, 3);
+      const seen = new Map<string, ExistingQuickItem>();
+
+      for (const title of titles) {
+        const { data } = await axios.get<ExistingQuickItem[]>("/api/items", {
+          params: {
+            q: title,
+            includeMetadata: "false",
+          },
+        });
+        for (const item of data) {
+          seen.set(item.id, item);
+        }
       }
+
+      return Array.from(seen.values());
+    },
+    enabled: isOpen && results.length > 0,
+  });
+
+  const ownedCandidates = useMemo(() => {
+    const seen = new Map<string, ExistingQuickItem>();
+    for (const item of [...(existingItems || []), ...(titleMatchedItems || [])]) {
+      seen.set(item.id, item);
     }
-  }, [isOpen, defaultShelfId, shelves]);
+    return Array.from(seen.values());
+  }, [existingItems, titleMatchedItems]);
+
+  const defaultShelf = defaultShelfId
+    ? shelves?.find(
+        (s) =>
+          s.id === defaultShelfId ||
+          s.slug === defaultShelfId ||
+          slugify(s.name) === defaultShelfId,
+      )
+    : undefined;
+
+  // Automatically select the current shelf when the quick scan starts from one.
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedShelfId(defaultShelf?.id || "");
+  }, [isOpen, defaultShelf?.id]);
 
   const activeShelf = shelves?.find((s) => s.id === selectedShelfId);
   const shelfType = activeShelf?.type;
+  const isResolvingShelves = isOpen && !shelves;
+  const isResolvingDefaultShelf = !!defaultShelfId && !shelves;
+  const platformContext = activeShelf?.name || null;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const cleanedBarcode = cleanManualBarcode(barcode);
+    setActiveBarcode(cleanedBarcode);
+    setBarcodeInput(cleanedBarcode);
+  }, [isOpen, barcode]);
+
+  const hydrateResultImages = useCallback(
+    async (
+      lookupKey: string,
+      code: string,
+      type: string,
+      platform: string | null,
+      shelfName: string | null,
+      initialResults: QuickScanResult[],
+    ) => {
+      const toHydrate = initialResults;
+      await Promise.all(
+        toHydrate.map(async (result) => {
+          try {
+            const metadata = await getMetadataPreview(
+              result.title,
+              type,
+              code,
+              platform,
+              shelfName,
+            );
+            if (activeLookupKeyRef.current !== lookupKey) return;
+            const hydratedImageUrl = metadata
+              ? getCoverImage({ metadata })
+              : null;
+            setResults((prev) =>
+              prev.map((entry) => {
+                if (entry.id !== result.id) return entry;
+                if (hydratedImageUrl) {
+                  return {
+                    ...entry,
+                    imageUrl: hydratedImageUrl,
+                    imageSource: "metadata",
+                    isHydrating: false,
+                    metadataPreview: metadata || null,
+                  };
+                }
+                return {
+                  ...entry,
+                  isHydrating: false,
+                  metadataPreview: metadata || null,
+                };
+              }),
+            );
+          } catch (error) {
+            if (activeLookupKeyRef.current !== lookupKey) return;
+            console.warn(
+              `[QuickScan] Metadata preview failed for "${result.title}"`,
+              error,
+            );
+            setResults((prev) =>
+              prev.map((entry) =>
+                entry.id === result.id
+                  ? { ...entry, isHydrating: false }
+                  : entry,
+              ),
+            );
+          }
+        }),
+      );
+    },
+    [],
+  );
+
+  const applyLookupResponse = useCallback(
+    (
+      payload: any,
+      lookupKey: string,
+      code: string,
+      requestedType?: string,
+      options: {
+        suppressNoMatchToast?: boolean;
+        keepPreviousResultsOnNoMatches?: boolean;
+      } = {},
+    ) => {
+      if (activeLookupKeyRef.current !== lookupKey) {
+        return { hasMatches: false, usedCache: false };
+      }
+
+      const matches = payload?.matches || [];
+      const suggestions = payload?.suggestions || [];
+      const cleanName = payload?.cleanName;
+      const rawNames = payload?.rawNames || [];
+      const resolvedShelfType = payload?.shelfType as string | undefined;
+      const platformKey = payload?.platformKey;
+      const metadataType = requestedType || resolvedShelfType;
+      const usedCache =
+        typeof payload?.provider === "string" &&
+        /canonical-v\d+/i.test(payload.provider);
+
+      if (matches.length === 0) {
+        if (!options.suppressNoMatchToast) {
+          toast.info(t("scanner.noMatches"));
+        }
+        if (!options.keepPreviousResultsOnNoMatches) {
+          setResults([]);
+          setGuessedShelfId(null);
+        }
+        return { hasMatches: false, usedCache };
+      }
+
+      const resolvedList: QuickScanResult[] = matches.map(
+        (m: any, index: number) => {
+          const shouldHideBarcodeImage = metadataType === "games";
+          return {
+            id: `${index}:${m.name || "match"}`,
+            title: m.name,
+            imageUrl: shouldHideBarcodeImage ? null : m.coverUrl || null,
+            placeholderImageUrl: shouldHideBarcodeImage
+              ? m.coverUrl || null
+              : null,
+            imageSource:
+              m.coverUrl && !shouldHideBarcodeImage ? "barcode" : "none",
+            shelfType: metadataType || resolvedShelfType || null,
+            isHydrating: Boolean(metadataType),
+            metadataPreview: null,
+          };
+        },
+      );
+      setResults((previousResults) => {
+        const previousByTitle = new Map(
+          previousResults.map((entry) => [
+            entry.title.toLowerCase().trim(),
+            entry,
+          ]),
+        );
+        return resolvedList.map((entry) => {
+          const previous = previousByTitle.get(
+            entry.title.toLowerCase().trim(),
+          );
+          if (!previous?.metadataPreview) return entry;
+          return {
+            ...entry,
+            imageUrl: previous.imageUrl || entry.imageUrl,
+            imageSource:
+              previous.imageSource === "metadata"
+                ? previous.imageSource
+                : entry.imageSource,
+            isHydrating: false,
+            metadataPreview: previous.metadataPreview,
+          };
+        });
+      });
+      // Try to guess shelf from rawNames, cleanName, suggestions. The backend
+      // surfaces the physical-format clue ("LaserDisc"/"VHS"…) as a separate
+      // cached `mediaFormat` field (NOT in rawNames, so it never shows as a
+      // candidate item); it leads here so a matching format shelf is recommended
+      // over a generic same-type one.
+      const mediaFormat = payload?.mediaFormat as string | undefined;
+      const allSearchNames = Array.from(
+        new Set([
+          ...(mediaFormat ? [mediaFormat] : []),
+          ...(cleanName ? [cleanName] : []),
+          ...rawNames,
+          ...suggestions,
+          ...matches.map((m: any) => m.name),
+        ]),
+      ).filter(Boolean) as string[];
+      let guessedId: string | null = null;
+      let guessedPlatformContext = platformContext;
+      if (shelves && shelves.length > 0) {
+        const fallbackShelfId = selectedShelfId || defaultShelf?.id || null;
+        const shelfGuess = guessShelfFromBarcodeLookup({
+          shelfType: metadataType || resolvedShelfType || null,
+          platformKey,
+          searchNames: allSearchNames,
+          shelves,
+          preferredShelfId: fallbackShelfId,
+        });
+        guessedId = shelfGuess?.shelfId ?? fallbackShelfId;
+        guessedPlatformContext =
+          shelves.find((s) => s.id === guessedId)?.name ||
+          guessedPlatformContext;
+      }
+
+      setGuessedShelfId(guessedId);
+      setEstimatedPrices({
+        priceNew: payload?.priceNew ?? null,
+        priceUsed: payload?.priceUsed ?? null,
+        priceUsedCIB: payload?.priceUsedCIB ?? null,
+      });
+      if (guessedId && guessedId !== selectedShelfId) {
+        skipNextLookupForAutoShelfRef.current = true;
+        setSelectedShelfId(guessedId);
+      }
+      if (metadataType) {
+        void hydrateResultImages(
+          lookupKey,
+          code,
+          metadataType,
+          platformKey || null,
+          guessedPlatformContext || null,
+          resolvedList,
+        );
+      }
+      return { hasMatches: true, usedCache };
+    },
+    [
+      t,
+      shelves,
+      selectedShelfId,
+      defaultShelf?.id,
+      hydrateResultImages,
+      platformContext,
+    ],
+  );
 
   const performBarcodeLookup = useCallback(
     async (code: string, type?: string) => {
       if (!code) return;
+      const lookupKey = `${code}|${type || "generic"}|${Date.now()}`;
+      activeLookupKeyRef.current = lookupKey;
       setIsSearching(true);
+      setIsRevalidating(false);
       setResults([]);
       setCustomName("");
       setGuessedShelfId(null);
+      setEstimatedPrices(null);
 
       try {
-        const typeParam = type ? `&type=${type}` : "";
-        const res = await axios.get(`/api/barcode?q=${code}${typeParam}`);
+        const params = new URLSearchParams({ q: code });
+        if (type) params.set("type", type);
+        const res = await axios.get(`/api/barcode?${params.toString()}`);
+        if (activeLookupKeyRef.current !== lookupKey) return;
 
-        const matches = res.data.matches || [];
-        const suggestions = res.data.suggestions || [];
-        const cleanName = res.data.cleanName;
-        const rawNames = res.data.rawNames || [];
-        const resolvedShelfType = res.data.shelfType;
-        const platformKey = res.data.platformKey;
+        const initial = applyLookupResponse(res.data, lookupKey, code, type);
+        if (activeLookupKeyRef.current !== lookupKey) return;
+        setIsSearching(false);
 
-        // Build results from matches (clusters) only — one entry per distinct media
-        // suggestions are name variants within a cluster, not separate items
-        if (matches.length > 0) {
-          const resolvedList = matches.map((m: any) => ({
-            title: m.name,
-            imageUrl: m.coverUrl || null,
-          }));
-          setResults(resolvedList);
+        // Stale-while-revalidate: if response likely comes from cache, refresh silently.
+        if (initial.hasMatches && initial.usedCache) {
+          setIsRevalidating(true);
+          const refreshStartedAt = Date.now();
+          try {
+            const refreshParams = new URLSearchParams({
+              q: code,
+              refresh: "1",
+            });
+            if (type) refreshParams.set("type", type);
+            const refreshRes = await axios.get(
+              `/api/barcode?${refreshParams.toString()}`,
+            );
+            if (activeLookupKeyRef.current !== lookupKey) return;
 
-          // Try to guess shelf from rawNames, cleanName, suggestions
-          const allSearchNames = Array.from(
-            new Set([
-              ...(cleanName ? [cleanName] : []),
-              ...rawNames,
-              ...suggestions,
-              ...matches.map((m: any) => m.name),
-            ]),
-          ).filter(Boolean) as string[];
-          let guessedId: string | null = null;
-          if (shelves && shelves.length > 0) {
-            const platformGuess = guessShelfByPlatformKey(platformKey, shelves);
-            if (platformGuess) {
-              guessedId = platformGuess.shelfId;
-            }
-
-            // 2. Try to guess based on matching name keywords
-            if (!guessedId) {
-              for (const name of allSearchNames) {
-                const guess = guessBestShelf(name, shelves);
-                if (guess) {
-                  guessedId = guess.shelfId;
-                  break;
-                }
-              }
-            }
-
-            // 3. Fallback to matching resolved shelf type
-            if (!guessedId && resolvedShelfType) {
-              const matchingShelf = shelves.find(
-                (s) => s.type === resolvedShelfType,
+            applyLookupResponse(refreshRes.data, lookupKey, code, type, {
+              suppressNoMatchToast: true,
+              keepPreviousResultsOnNoMatches: true,
+            });
+          } catch (refreshError) {
+            if (activeLookupKeyRef.current !== lookupKey) return;
+            console.warn(
+              "[QuickScan] Background refresh failed:",
+              refreshError,
+            );
+          } finally {
+            const elapsed = Date.now() - refreshStartedAt;
+            if (elapsed < MIN_BACKGROUND_LOADING_MS) {
+              await new Promise((resolve) =>
+                setTimeout(resolve, MIN_BACKGROUND_LOADING_MS - elapsed),
               );
-              if (matchingShelf) {
-                guessedId = matchingShelf.id;
-              }
+            }
+            if (activeLookupKeyRef.current === lookupKey) {
+              setIsRevalidating(false);
             }
           }
-
-          setGuessedShelfId(guessedId);
-        } else {
-          toast.info(t("scanner.noMatches"));
-          setGuessedShelfId(null);
         }
       } catch (error) {
+        if (activeLookupKeyRef.current !== lookupKey) return;
         console.error("Barcode lookup failed:", error);
         toast.error(t("scanner.error"));
         setGuessedShelfId(null);
       } finally {
-        setIsSearching(false);
+        if (activeLookupKeyRef.current === lookupKey) {
+          setIsSearching(false);
+          setIsRevalidating(false);
+        }
       }
     },
-    [t, shelves],
+    [t, applyLookupResponse],
   );
 
   // Trigger lookup when modal opens or shelf category changes
   useEffect(() => {
-    if (isOpen && barcode) {
-      performBarcodeLookup(barcode, shelfType);
+    if (
+      isOpen &&
+      activeBarcode &&
+      !isResolvingShelves &&
+      !isResolvingDefaultShelf
+    ) {
+      if (skipNextLookupForAutoShelfRef.current) {
+        skipNextLookupForAutoShelfRef.current = false;
+        return;
+      }
+      performBarcodeLookup(activeBarcode, shelfType);
     }
-  }, [isOpen, barcode, shelfType, performBarcodeLookup]);
+  }, [
+    isOpen,
+    activeBarcode,
+    shelfType,
+    isResolvingShelves,
+    isResolvingDefaultShelf,
+    performBarcodeLookup,
+  ]);
+
+  const handleManualBarcodeSubmit = useCallback(
+    (code: string) => {
+      setBarcodeInput(code);
+      if (code === activeBarcode) {
+        performBarcodeLookup(code, shelfType);
+        return;
+      }
+      setActiveBarcode(code);
+    },
+    [activeBarcode, performBarcodeLookup, shelfType],
+  );
 
   const handleClose = useCallback(() => {
+    activeLookupKeyRef.current = "";
+    skipNextLookupForAutoShelfRef.current = false;
+    setIsSearching(false);
+    setIsRevalidating(false);
     setCustomName("");
     setGuessedShelfId(null);
+    setEstimatedPrices(null);
+    setActiveBarcode("");
+    setBarcodeInput("");
+    setSelectedShelfId("");
+    setCompletingItemId(null);
     onClose();
   }, [onClose]);
 
   const handleSelectProduct = useCallback(
-    (product: { title: string; imageUrl: string | null }) => {
-      let targetShelfId = "";
-      if (shelves && shelves.length > 0) {
-        const customGuess = guessBestShelf(product.title, shelves);
-        if (customGuess) {
-          targetShelfId = customGuess.shelfId;
-        }
-      }
-
-      if (!targetShelfId && guessedShelfId) {
-        targetShelfId = guessedShelfId;
-      }
-
-      if (!targetShelfId) {
-        targetShelfId =
-          selectedShelfId ||
-          (shelves && shelves.length > 0 ? shelves[0].id : "");
-      }
+    (product: {
+      title: string;
+      imageUrl: string | null;
+      imageSource?: QuickScanResult["imageSource"];
+      shelfType?: string | null;
+      metadataPreview?: MetadataResult | null;
+    }) => {
+      const shelfGuess =
+        guessedShelfId ||
+        guessShelfFromBarcodeLookup({
+          searchNames: [product.title],
+          shelves: shelves || [],
+          preferredShelfId: selectedShelfId || defaultShelf?.id || null,
+        })?.shelfId ||
+        selectedShelfId ||
+        defaultShelf?.id ||
+        "";
+      const productShelfType =
+        product.shelfType ||
+        shelves?.find((s) => s.id === shelfGuess)?.type ||
+        activeShelf?.type ||
+        null;
+      const shouldLetMetadataOwnImage = productShelfType === "games";
 
       onSelectProduct({
         name: product.title,
-        imageUrl: product.imageUrl,
-        barcode: barcode,
-        shelfId: targetShelfId,
+        imageUrl: shouldLetMetadataOwnImage ? null : product.imageUrl,
+        barcode: activeBarcode,
+        shelfId: shelfGuess || undefined,
+        metadataPreview: product.metadataPreview || null,
       });
     },
-    [barcode, selectedShelfId, shelves, guessedShelfId, onSelectProduct],
+    [
+      activeBarcode,
+      selectedShelfId,
+      defaultShelf?.id,
+      shelves,
+      guessedShelfId,
+      activeShelf?.type,
+      onSelectProduct,
+    ],
+  );
+
+  const handleCompleteOwnedItem = useCallback(
+    async (ownedItem: ExistingQuickItem) => {
+      if (!activeBarcode.trim()) return;
+
+      setCompletingItemId(ownedItem.id);
+      try {
+        const updated = await saveItem({
+          id: ownedItem.id,
+          barcode: activeBarcode,
+          currentShelfId: ownedItem.shelfId,
+          refreshMetadata: true,
+        });
+
+        await syncItemQueries(queryClient, updated, [ownedItem.shelfId]);
+        toast.success(t("scanner.completeSuccess"));
+        handleClose();
+        router.push(
+          itemPath(ownedItem.shelf || { id: ownedItem.shelfId }, updated),
+        );
+      } catch (error) {
+        console.error("Failed to complete owned item:", error);
+        toast.error(t("scanner.completeFailed"));
+      } finally {
+        setCompletingItemId(null);
+      }
+    },
+    [activeBarcode, handleClose, queryClient, router, t],
   );
 
   const getOwnedStatusForProduct = (productTitle: string) => {
-    if (!existingItems || existingItems.length === 0) return null;
+    if (!ownedCandidates.length) return null;
 
     const titleNorm = productTitle.toLowerCase().trim();
 
     // 1. Try to find exact/close name match first
-    const exactMatch = existingItems.find(
+    const exactMatch = ownedCandidates.find(
       (item) => item.name.toLowerCase().trim() === titleNorm,
     );
     if (exactMatch) return exactMatch;
@@ -212,7 +606,7 @@ export function QuickScanModal({
     // 2. Token overlap fuzzy check to catch spelling or punctuation variations
     // but prevent matching completely unrelated titles
     const sugTokens = new Set(titleNorm.split(/[^a-z0-9]+/));
-    for (const item of existingItems) {
+    for (const item of ownedCandidates) {
       const dbNorm = item.name.toLowerCase().trim();
       const dbTokens = new Set(dbNorm.split(/[^a-z0-9]+/));
 
@@ -230,6 +624,55 @@ export function QuickScanModal({
     return null;
   };
 
+  const hasExistingItems = Boolean(ownedCandidates.length);
+
+  // Barcode-level scan insights shown above the candidate list.
+  const formatEuroFromCents = (cents?: number | null) =>
+    typeof cents === "number" && cents > 0
+      ? `${(cents / 100).toFixed(2)} €`
+      : null;
+  const estimatedType = results[0]?.shelfType ?? null;
+  const estimatedShelfName = guessedShelfId
+    ? (shelves?.find((s) => s.id === guessedShelfId)?.name ?? null)
+    : null;
+  const estimatedNewValue = formatEuroFromCents(estimatedPrices?.priceNew);
+  const estimatedUsedValue = formatEuroFromCents(
+    estimatedType === "games"
+      ? (estimatedPrices?.priceUsedCIB ?? estimatedPrices?.priceUsed)
+      : estimatedPrices?.priceUsed,
+  );
+  const hasEstimatedValue = Boolean(estimatedNewValue || estimatedUsedValue);
+  // While the lookup (or its background revalidation) is running, the value may
+  // still be streaming in from the providers captured at scan time.
+  const isResolvingValue =
+    (isSearching || isRevalidating) && !hasEstimatedValue;
+
+  const shouldShowSuggestionsSkeleton =
+    (isResolvingShelves || isSearching || isRevalidating) &&
+    results.length === 0;
+
+  const renderSuggestionSkeletons = (count = 3) => (
+    <div className="flex flex-col gap-2.5">
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={`quick-scan-skeleton-${index}`}
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-zinc-50/50 dark:bg-zinc-900/20 border border-border/40 rounded-2xl"
+        >
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            <Skeleton className="w-12 h-16 rounded-xl shrink-0 bg-zinc-200/80 dark:bg-zinc-800/70" />
+            <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+              <Skeleton className="h-4 w-5/6 rounded-md bg-zinc-200/80 dark:bg-zinc-800/70" />
+              <Skeleton className="h-3 w-1/2 rounded-md bg-zinc-200/70 dark:bg-zinc-800/60" />
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+            <Skeleton className="h-10 sm:h-9 w-full sm:w-24 rounded-xl bg-zinc-200/80 dark:bg-zinc-800/70" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -244,34 +687,60 @@ export function QuickScanModal({
       footer={null}
     >
       <div className="flex flex-col gap-4">
+        <ManualBarcodeEntry
+          value={barcodeInput}
+          onValueChange={setBarcodeInput}
+          onSubmit={handleManualBarcodeSubmit}
+          disabled={isResolvingShelves || isSearching}
+          shelfType={shelfType}
+        />
+
         <div className="flex flex-col gap-3 mt-2">
-          {isFetchingExisting || isSearching ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
-              <Loader2 className="size-7 text-primary animate-spin" />
-              <span className="text-xs text-muted-foreground font-medium select-none">
-                {isSearching ? t("scanner.searching") : t("common.loading")}
+          {!activeBarcode ? (
+            <p className="text-xs text-muted-foreground italic select-none py-4">
+              {t("scanner.manualBarcodeHelp")}
+            </p>
+          ) : shouldShowSuggestionsSkeleton && !hasExistingItems ? (
+            <div className="flex flex-col gap-2.5 py-1">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
+                {t("scanner.searching")}
               </span>
+              {renderSuggestionSkeletons()}
             </div>
           ) : results.length > 0 ? (
             <div className="flex flex-col gap-2.5">
-              {results.map((product, idx) => {
+              {results.map((product) => {
                 const ownedItem = getOwnedStatusForProduct(product.title);
                 const isOwned = !!ownedItem;
+                const canComplete =
+                  isOwned &&
+                  ownedItem &&
+                  isOwnedItemCompletable(ownedItem, activeBarcode);
+                const isCompleting = completingItemId === ownedItem?.id;
 
                 return (
                   <div
-                    key={idx}
+                    key={product.id}
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-zinc-50/50 dark:bg-zinc-900/20 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/20 border border-border/40 rounded-2xl transition-all duration-300 group"
                   >
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
                       {product.imageUrl ? (
-                        <Image
+                        <RemoteImage
                           src={product.imageUrl}
                           alt=""
-                          width={512}
-                          height={512}
                           className="w-12 h-16 rounded-xl object-cover shrink-0 bg-muted/10 border border-border/50 shadow-sm transition-transform duration-300 group-hover:scale-105"
                         />
+                      ) : product.placeholderImageUrl && product.isHydrating ? (
+                        <div className="relative w-12 h-16 rounded-xl shrink-0 overflow-hidden bg-muted/10 border border-border/50 shadow-sm">
+                          <RemoteImage
+                            src={product.placeholderImageUrl}
+                            alt=""
+                            className="w-full h-full object-cover blur-[2px] scale-105 opacity-80"
+                          />
+                          <div className="absolute inset-0 bg-background/15 animate-pulse" />
+                        </div>
+                      ) : product.isHydrating ? (
+                        <Skeleton className="w-12 h-16 rounded-xl shrink-0 bg-zinc-200/80 dark:bg-zinc-800/70" />
                       ) : (
                         <div className="w-12 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-950/20 shrink-0 border border-border/50 shadow-sm flex items-center justify-center">
                           <Search className="size-5 text-muted-foreground/50" />
@@ -281,13 +750,71 @@ export function QuickScanModal({
                         <span className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2">
                           {product.title}
                         </span>
-                        {isOwned && ownedItem && (
-                          <div className="flex select-none">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/10">
-                              {t("scanner.alreadyIn")} {ownedItem.shelf?.name}
+                        <div className="flex flex-wrap items-center gap-1.5 select-none">
+                          {isOwned && ownedItem && (
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black border",
+                                canComplete
+                                  ? "bg-amber-500/10 dark:bg-amber-500/5 text-amber-700 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/10"
+                                  : "bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/10",
+                              )}
+                            >
+                              {canComplete
+                                ? t("scanner.alreadyIncomplete").replace(
+                                    "{shelf}",
+                                    ownedItem.shelf?.name || "Placarr",
+                                  )
+                                : `${t("scanner.alreadyIn")} ${ownedItem.shelf?.name}`}
                             </span>
-                          </div>
-                        )}
+                          )}
+                          {(product.shelfType || estimatedType) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100/70 dark:bg-zinc-900/40 text-foreground/80 border border-border/40">
+                              <ShelfTypeIcon
+                                type={product.shelfType || estimatedType}
+                                className="size-3"
+                              />
+                              {t(
+                                `shelf.type.${product.shelfType || estimatedType}`,
+                              ) ||
+                                product.shelfType ||
+                                estimatedType}
+                            </span>
+                          )}
+                          {estimatedShelfName && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100/70 dark:bg-zinc-900/40 text-foreground/80 border border-border/40">
+                              <span className="opacity-60">
+                                {t("scanner.estimatedShelf")}
+                              </span>
+                              {estimatedShelfName}
+                            </span>
+                          )}
+                          {hasEstimatedValue ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/10">
+                              {estimatedNewValue && (
+                                <span>
+                                  <span className="opacity-60">
+                                    {t("items.priceNew")}
+                                  </span>{" "}
+                                  {estimatedNewValue}
+                                </span>
+                              )}
+                              {estimatedNewValue && estimatedUsedValue && (
+                                <span className="opacity-40">·</span>
+                              )}
+                              {estimatedUsedValue && (
+                                <span>
+                                  <span className="opacity-60">
+                                    {t("items.priceUsed")}
+                                  </span>{" "}
+                                  {estimatedUsedValue}
+                                </span>
+                              )}
+                            </span>
+                          ) : isResolvingValue ? (
+                            <Skeleton className="h-[18px] w-24 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 dark:border-emerald-500/10" />
+                          ) : null}
+                        </div>
                       </div>
                     </div>
 
@@ -312,18 +839,45 @@ export function QuickScanModal({
                           {t("scanner.viewExisting") || "Consulter"}
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        onClick={() => handleSelectProduct(product)}
-                        className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
-                      >
-                        <Plus className="size-4 mr-1.5 shrink-0" />
-                        {t("common.add") || "Ajouter"}
-                      </Button>
+                      {canComplete && ownedItem ? (
+                        <Button
+                          size="sm"
+                          onClick={() => void handleCompleteOwnedItem(ownedItem)}
+                          disabled={Boolean(completingItemId)}
+                          className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
+                        >
+                          {isCompleting ? (
+                            <Loader2 className="size-4 mr-1.5 shrink-0 animate-spin" />
+                          ) : (
+                            <Sparkles className="size-4 mr-1.5 shrink-0" />
+                          )}
+                          {t("scanner.complete")}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSelectProduct(product)}
+                          className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
+                        >
+                          <Plus className="size-4 mr-1.5 shrink-0" />
+                          {isOwned
+                            ? t("scanner.addAnotherCopy")
+                            : t("common.add") || "Ajouter"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
               })}
+
+              {isRevalidating && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
+                    {t("scanner.searching")}
+                  </span>
+                  {renderSuggestionSkeletons(1)}
+                </div>
+              )}
 
               {/* Inline Manual Add Form for Quick Adding Custom items */}
               <div className="flex flex-col gap-2.5 pt-4 border-t border-border/40 mt-3">
@@ -365,26 +919,66 @@ export function QuickScanModal({
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {existingItems && existingItems.length > 0 && (
+              {hasExistingItems && (
                 <div className="flex flex-col gap-2.5">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider select-none">
-                    {t("scanner.alreadyOwn")}
+                    {ownedCandidates.some((item) =>
+                      isOwnedItemCompletable(item, activeBarcode),
+                    )
+                      ? t("scanner.alreadyOwnIncomplete")
+                      : t("scanner.alreadyOwn")}
                   </span>
-                  {existingItems.map((existItem: any) => (
+                  {ownedCandidates.map((existItem) => {
+                    const canComplete = isOwnedItemCompletable(
+                      existItem,
+                      activeBarcode,
+                    );
+                    const isCompleting = completingItemId === existItem.id;
+
+                    return (
                     <div
                       key={existItem.id}
                       className="flex items-center justify-between gap-4 p-3 bg-zinc-50/50 dark:bg-zinc-900/20 border border-border/40 rounded-2xl"
                     >
-                      <div className="flex flex-col min-w-0 gap-1">
-                        <span className="text-sm font-bold text-foreground truncate">
-                          {existItem.name}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground capitalize select-none font-medium">
-                          {t("items.shelf")}:{" "}
-                          {existItem.shelf?.name || "Placarr"} (
-                          {existItem.condition})
-                        </span>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {existItem.imageUrl ? (
+                          <RemoteImage
+                            src={existItem.imageUrl}
+                            alt=""
+                            className="w-12 h-16 rounded-xl object-cover shrink-0 bg-muted/10 border border-border/50 shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-12 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-950/20 shrink-0 border border-border/50 shadow-sm flex items-center justify-center">
+                            <Search className="size-5 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        <div className="flex flex-col min-w-0 gap-1">
+                          <span className="text-sm font-bold text-foreground truncate">
+                            {existItem.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground capitalize select-none font-medium">
+                            {t("items.shelf")}:{" "}
+                            {existItem.shelf?.name || "Placarr"} (
+                            {existItem.condition})
+                          </span>
+                        </div>
                       </div>
+                      <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                        {canComplete ? (
+                          <Button
+                            size="sm"
+                            onClick={() => void handleCompleteOwnedItem(existItem)}
+                            disabled={Boolean(completingItemId)}
+                            className="h-9 px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer"
+                          >
+                            {isCompleting ? (
+                              <Loader2 className="size-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Sparkles className="size-3.5 mr-1" />
+                            )}
+                            {t("scanner.complete")}
+                          </Button>
+                        ) : null}
                       <Button
                         size="sm"
                         variant="ghost"
@@ -402,12 +996,23 @@ export function QuickScanModal({
                         <ExternalLink className="size-3.5 mr-1" />
                         {t("scanner.viewExisting") || "Consulter"}
                       </Button>
+                      </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
-              {(!existingItems || existingItems.length === 0) && (
+              {shouldShowSuggestionsSkeleton && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
+                    {t("scanner.searching")}
+                  </span>
+                  {renderSuggestionSkeletons(hasExistingItems ? 1 : 2)}
+                </div>
+              )}
+
+              {!hasExistingItems && !shouldShowSuggestionsSkeleton && (
                 <p className="text-xs text-muted-foreground italic select-none py-4">
                   {t("scanner.noMatches")}
                 </p>

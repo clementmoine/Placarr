@@ -1,16 +1,16 @@
 import Image from "next/image";
 import React, { useMemo } from "react";
 import colorLib from "color";
-import { cn } from "@/lib/utils";
-import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
+import { cn } from "@/lib/core/utils";
 import type { ShelfWithItemCount } from "@/types/shelves";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 export function ShelfCard(props: ShelfWithItemCount) {
-  const { color, imageUrl, name, type } = props;
+  const { color, imageUrl, name, bestItem } = props;
   const { t } = useLocale();
+  const backgroundImageUrl =
+    bestItem?.backgroundImageUrl || bestItem?.imageUrl || null;
 
-  // Safely parse colors (handles color names like 'white' or 'blue' plus standard hex codes)
   const safeColor = useMemo(() => {
     if (!color) return undefined;
     try {
@@ -30,60 +30,78 @@ export function ShelfCard(props: ShelfWithItemCount) {
     return safeColor.lighten(0.8).string();
   }, [safeColor]);
 
-  // Ensure readable text contrast inside the bottom bar
-  const textColor = useMemo(() => {
-    if (!safeColor) return "#f4f4f5";
-    const lightened = safeColor.lighten(0.8);
-    return lightened.isLight() ? "#18181b" : "#f4f4f5";
-  }, [safeColor]);
-
   return (
     <div
-      className="group relative flex flex-col w-full select-none gap-2 p-3 overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
-      style={{
-        aspectRatio: "1.61792 / 1",
-        backgroundColor: backgroundColor,
-      }}
+      className={cn(
+        "group relative w-full select-none overflow-hidden rounded-2xl shadow-md",
+        "bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md",
+        "border border-border dark:border-zinc-800/65",
+        "cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out",
+        "aspect-[3/2] md:aspect-[1.618/1]",
+      )}
+      style={{ backgroundColor }}
     >
-      <div className="flex flex-1 w-full items-center justify-center overflow-hidden pb-8 pt-2 z-10">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            width={128}
-            height={128}
-            alt="Shelf Logo"
-            className={cn("w-full object-contain select-none h-4/5")}
-            draggable={false}
-          />
-        ) : (
-          <span
-            className={cn(
-              "text-lg font-extrabold tracking-wide transition-transform duration-500 ease-out",
-            )}
-            style={{ color: foregroundColor }}
-          >
-            {name.trim().substring(0, 2).toUpperCase()}
-          </span>
-        )}
-      </div>
+      {backgroundImageUrl && (
+        <Image
+          src={backgroundImageUrl}
+          alt=""
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
+          className="absolute inset-0 object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
+          draggable={false}
+        />
+      )}
 
       <div
-        className="absolute bottom-0 left-0 right-0 p-2 backdrop-blur-md flex justify-center items-center text-center"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundColor: foregroundColor,
+          backgroundImage: `linear-gradient(180deg, rgba(${safeColor?.rgb().array().join(", ") ?? "7, 30, 44"}, 0.7) 0%, rgba(7, 30, 44, 0.45) 55%, rgba(0, 0, 0, 0.75) 100%)`,
         }}
-      >
-        {type && (
-          <span
-            className="flex items-center shrink-0"
-            style={{ color: textColor }}
-          >
-            <ShelfTypeIcon type={type} className="size-4" />
-          </span>
+      />
+
+      {/* Foreground: flex keeps logo + title in separate bands (no overlap). */}
+      <div
+        className={cn(
+          "absolute inset-0 z-1 flex min-h-0 flex-col justify-between",
+          "p-3 sm:p-4 md:p-6",
         )}
+      >
+        <div
+          className={cn(
+            "flex min-h-0 items-start justify-start overflow-hidden",
+            "max-h-[38%] min-[400px]:max-h-[34%] md:max-h-[40%]",
+          )}
+        >
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              width={128}
+              height={128}
+              alt="Shelf Logo"
+              className={cn(
+                "max-h-full w-auto max-w-full object-contain object-left drop-shadow-md",
+                "max-w-[10rem] min-[400px]:max-w-[5.5rem] md:max-w-[6.5rem]",
+              )}
+              draggable={false}
+            />
+          ) : (
+            <span
+              className={cn(
+                "font-extrabold leading-none tracking-wide drop-shadow-md",
+                "text-xl min-[400px]:text-base md:text-lg",
+              )}
+              style={{ color: foregroundColor }}
+            >
+              {name.trim().substring(0, 2).toUpperCase()}
+            </span>
+          )}
+        </div>
+
         <span
-          className="text-xs font-extrabold px-2 flex-1 line-clamp-2 leading-tight"
-          style={{ color: textColor }}
+          className={cn(
+            "shrink-0 truncate text-left font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]",
+            "text-xl leading-tight min-[400px]:text-base sm:text-lg md:text-xl",
+          )}
         >
           {name.trim().length > 1 ? name : t("common.noName")}
         </span>

@@ -1,0 +1,19 @@
+{
+  "case": {
+    "id": "mario-kart-wii",
+    "label": "Mario Kart Wii",
+    "barcode": "0045496365226",
+    "type": "games",
+    "expected": {
+      "cleanName": "Mario Kart Wii",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "minConfidence": 0.9,
+      "suggestionsExclude": [
+        "Jeu Vidéo"
+      ]
+    }
+  },
+  "interactions": []
+}

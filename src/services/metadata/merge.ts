@@ -22,11 +22,12 @@ import {
   requestedTitleCoversCurrentTitle,
   scoreMetadataDisplayTitle,
 } from "@/lib/title/displayScore";
+import { refineCatalogDisplayTitle } from "@/lib/title/refineCatalogDisplayTitle";
 import {
   isMetadataTitleAligned,
   descriptionMatchesRequestedTitle,
+  metadataTitleSimilarity,
 } from "@/lib/metadata/titleMatching";
-import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
 import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
@@ -459,6 +460,19 @@ function metadataHasCover(metadata: MetadataResult): boolean {
   );
 }
 
+function providerMetadataAlignsForGallery(
+  requestedTitle: string | null | undefined,
+  metadata: MetadataResult,
+): boolean {
+  const requested = requestedTitle?.trim();
+  if (!requested) return true;
+
+  const catalogTitle = metadata.title?.trim();
+  if (!catalogTitle) return false;
+
+  return isMetadataTitleAligned({ title: catalogTitle }, [requested], 0.58);
+}
+
 function bookCoverPriorityFor(providerId: string) {
   return PROVIDERS.find((provider) => provider.id === providerId)
     ?.bookCoverPriority;
@@ -506,6 +520,7 @@ export function mergeMetadata(
     includePcSources?: boolean;
     requestedPlatformKey?: string | null;
     requestedTitle?: string | null;
+    itemBarcode?: string | null;
   } = {},
 ): MetadataResult {
   const activeResults = withoutSecondaryBookCoverSources(
@@ -518,10 +533,23 @@ export function mergeMetadata(
 
   const titleSources = orderedResults.map((r) => r.metadata);
   const observedTitle = pickBestMetadataObservationTitle(orderedResults);
-  const title =
+  const preliminaryTitle =
     observedTitle ||
     pickBestRegionalTitle(titleSources) ||
     pickBestMetadataTitle(titleSources.map((source) => source.title));
+  const catalogTitleCandidates = orderedResults.flatMap((result) => [
+    result.metadata.title,
+    ...(result.metadata.aliases || []),
+    ...(result.metadata.regionalTitles || []).map((entry) => entry.text),
+    preliminaryTitle,
+  ]);
+  const title = preliminaryTitle
+    ? refineCatalogDisplayTitle(
+        preliminaryTitle,
+        catalogTitleCandidates,
+        options.itemBarcode ?? options.requestedTitle,
+      )
+    : preliminaryTitle;
 
   const descriptionCandidates = orderedResults.flatMap((r) => {
     const text = r.metadata.description;
@@ -583,7 +611,16 @@ export function mergeMetadata(
     mediaType === "games" &&
     !options.includePcSources;
 
-  const allAttachments = orderedResults.flatMap((r) => {
+  const galleryResults = options.requestedTitle?.trim()
+    ? orderedResults.filter((result) =>
+        providerMetadataAlignsForGallery(
+          options.requestedTitle,
+          result.metadata,
+        ),
+      )
+    : orderedResults;
+
+  const allAttachments = galleryResults.flatMap((r) => {
     const attachments = r.metadata.attachments || [];
     if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
@@ -596,7 +633,7 @@ export function mergeMetadata(
     );
   });
 
-  const providerImageCandidates = orderedResults.flatMap((r) => {
+  const providerImageCandidates = galleryResults.flatMap((r) => {
     if (!r.metadata.imageUrl) return [];
     if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];

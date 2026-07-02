@@ -634,4 +634,105 @@ describe("mergeMetadata generic function", () => {
       ),
     ).toBe(false);
   });
+
+  it("drops misaligned retailer covers from the gallery merge", () => {
+    const merged = mergeMetadata(
+      "boardgames",
+      [
+        {
+          providerId: "okkazeo",
+          metadata: {
+            title: "Black Stories - Faits vécus",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/faits-vecus.jpg",
+                source: "okkazeo",
+              },
+            ],
+          },
+        },
+        {
+          providerId: "philibert",
+          metadata: {
+            title: "Black Stories VF",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/generic-black-stories.jpg",
+                source: "philibert",
+              },
+            ],
+          },
+        },
+        {
+          providerId: "lesgentlemendujeu",
+          metadata: {
+            title: "Black Stories",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/wrong-gentlemen.jpg",
+                source: "lesgentlemendujeu",
+              },
+            ],
+          },
+        },
+      ],
+      { requestedTitle: "Black Stories - Faits vécus" },
+    );
+
+    expect(merged.attachments?.map((attachment) => attachment.url)).toEqual([
+      "https://example.test/faits-vecus.jpg",
+    ]);
+  });
+
+  it("prefers a clean alias over a noisy retailer object title", () => {
+    const merged = mergeMetadata(
+      "boardgames",
+      [
+        {
+          providerId: "monsieurde",
+          metadata: {
+            title: "Black Stories Morts de Rire FR KikiGagne?KIKIBS06F",
+            aliases: [
+              "Black Stories - Morts de Rire",
+              "Black Stories : Morts de Rire",
+            ],
+          },
+        },
+      ],
+      { requestedTitle: "Black Stories Morts de Rire FR KikiGagne?KIKIBS06F" },
+    );
+
+    expect([
+      "Black Stories - Morts de Rire",
+      "Black Stories : Morts de Rire",
+    ]).toContain(merged.title);
+    expect(merged.aliases).toContain(
+      "Black Stories Morts de Rire FR KikiGagne?KIKIBS06F",
+    );
+  });
+
+  it("prefers a catalog alias when the lookup title is still the barcode", () => {
+    const merged = mergeMetadata(
+      "boardgames",
+      [
+        {
+          providerId: "okkazeo",
+          metadata: {
+            title: "0087169139499",
+            aliases: ["Black stories - Autour du monde"],
+          },
+        },
+      ],
+      {
+        requestedTitle: "0087169139499",
+        itemBarcode: "0087169139499",
+      },
+    );
+
+    expect(merged.title).toBe("Black stories - Autour du monde");
+    expect(merged.aliases).toContain("0087169139499");
+  });
 });

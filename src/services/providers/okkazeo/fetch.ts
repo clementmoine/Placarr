@@ -104,13 +104,56 @@ export function parseOkkazeoJsonLd(html: string): OkkazeoJsonLd {
 }
 
 function parseMetaContent(html: string, property: string): string | undefined {
-  const match = html.match(
-    new RegExp(
-      `<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']`,
-      "i",
-    ),
+  const tagMatch = html.match(
+    new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]*>`, "i"),
   );
-  return match ? decodeHTMLEntities(match[1].trim()) : undefined;
+  if (!tagMatch) return undefined;
+
+  const tag = tagMatch[0];
+  const doubleQuoted = tag.match(/\bcontent\s*=\s*"([^"]*)"/i);
+  if (doubleQuoted) {
+    return decodeHTMLEntities(doubleQuoted[1].trim());
+  }
+
+  const singleQuoted = tag.match(/\bcontent\s*=\s*'([^']*)'/i);
+  if (singleQuoted) {
+    return decodeHTMLEntities(singleQuoted[1].trim());
+  }
+
+  return undefined;
+}
+
+export function parseOkkazeoCategoriesFromDescription(
+  description: string,
+): string[] | undefined {
+  const trimmed = description.trim();
+  if (!trimmed) return undefined;
+
+  const yearMatches = trimmed.match(/\b(19|20)\d{2}\b/g);
+  const year = yearMatches?.at(-1);
+  if (year) {
+    const yearIndex = trimmed.lastIndexOf(year);
+    const tail = trimmed
+      .slice(yearIndex + year.length)
+      .replace(/^\s*-\s*/, "")
+      .trim();
+    if (tail) {
+      const categories = tail
+        .split(",")
+        .map((category) => category.trim())
+        .filter(Boolean);
+      if (categories.length > 0) return categories;
+    }
+  }
+
+  const fallback = trimmed
+    .split(" - ")
+    .pop()
+    ?.split(",")
+    .map((category) => category.trim())
+    .filter(Boolean);
+
+  return fallback && fallback.length > 0 ? fallback : undefined;
 }
 
 /** Read a labelled fact, e.g. `title="Nombre de joueurs"></i> 2 à 5 joueurs </div>`. */
@@ -130,12 +173,7 @@ export function parseOkkazeoGameHtml(html: string, url: string): OkkazeoGame {
   // og:description example:
   // "Mille Sabords - 4 annonces … - 2 à 5 joueurs - 2013 - Jeu de dés,Pirates"
   const year = ogDescription.match(/\b(?:19|20)\d{2}\b/)?.[0];
-  const categories = ogDescription
-    .split(" - ")
-    .pop()
-    ?.split(",")
-    .map((category) => category.trim())
-    .filter(Boolean);
+  const categories = parseOkkazeoCategoriesFromDescription(ogDescription);
 
   const title =
     jsonLd.name ||

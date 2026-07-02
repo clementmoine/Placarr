@@ -13,7 +13,13 @@ import {
 import { presentItem, presentItemFromStorage } from "@/lib/item/present";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { slugifyItemName } from "@/lib/routing/slugs";
-import { buildItemSearchConditions } from "@/lib/item/search";
+import { buildBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
+import { resolveItemMetadataLookupQuery } from "@/lib/item/metadataLookupQuery";
+import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  buildExactBarcodeSearchCondition,
+  buildItemSearchConditions,
+} from "@/lib/item/search";
 import {
   startItemMetadataRefresh,
   shelfMoveMetadataResetData,
@@ -124,7 +130,19 @@ export async function GET(req: NextRequest) {
     }
 
     if (q) {
-      whereClause.OR = buildItemSearchConditions(q);
+      const barcodeExact = searchParams.get("barcodeExact") === "true";
+      const exactBarcodeCondition = barcodeExact
+        ? buildExactBarcodeSearchCondition(q)
+        : null;
+
+      if (barcodeExact) {
+        if (!exactBarcodeCondition) {
+          return NextResponse.json([]);
+        }
+        Object.assign(whereClause, exactBarcodeCondition);
+      } else {
+        whereClause.OR = buildItemSearchConditions(q);
+      }
     }
 
     if (shelfId) {
@@ -200,6 +218,21 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const normalizedBarcode = normalizeProductBarcode(
+        typeof barcode === "string" ? barcode : null,
+      );
+      let resolvedName = typeof name === "string" ? name.trim() : "";
+      if (!resolvedName) {
+        if (normalizedBarcode) {
+          resolvedName = buildBarcodePlaceholderItemName(normalizedBarcode);
+        } else {
+          return NextResponse.json(
+            { error: "Name or barcode is required" },
+            { status: 400 },
+          );
+        }
+      }
+
       const resolvedShelfId = await resolveShelfId(shelfId, auth.user.id);
 
       // Check if shelf exists and user has permission to add items to it
@@ -238,12 +271,12 @@ export async function POST(req: NextRequest) {
       const item = await prisma.item.create({
         data: {
           shelfId: resolvedShelfId,
-          name,
-          slug: slugifyItemName(name),
+          name: resolvedName,
+          slug: slugifyItemName(resolvedName),
           description,
           imageUrl: localImageUrl,
           backgroundImageUrl: localBackgroundImageUrl,
-          barcode,
+          barcode: normalizedBarcode ?? barcode,
           condition,
           userId: auth.user.id,
         },
@@ -262,9 +295,12 @@ export async function POST(req: NextRequest) {
       if (fetchMetadata) {
         await startItemMetadataRefresh({
           itemId: item.id,
-          lookupQuery: name,
+          lookupQuery: resolveItemMetadataLookupQuery({
+            name: resolvedName,
+            barcode: normalizedBarcode ?? barcode,
+          }),
           shelfType: shelf.type,
-          barcode,
+          barcode: normalizedBarcode ?? barcode,
           shelfName: shelf.name,
           bypassMetadataCache: false,
           forceRefresh: true,
@@ -412,10 +448,13 @@ export async function PATCH(req: NextRequest) {
       }
 
       if (refreshMetadata || shelfChanged) {
-        const metadataLookupQuery =
-          typeof lookupQuery === "string" && lookupQuery.trim()
-            ? lookupQuery.trim()
-            : updatedItem.name;
+        const metadataLookupQuery = resolveItemMetadataLookupQuery({
+          name: updatedItem.name,
+          barcode: updatedItem.barcode,
+          metadataTitle: updatedItem.metadata?.title,
+          explicitQuery:
+            typeof lookupQuery === "string" ? lookupQuery.trim() : undefined,
+        });
 
         const metadataRefreshStartedAt = (
           await startItemMetadataRefresh({

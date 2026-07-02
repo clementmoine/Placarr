@@ -1,6 +1,41 @@
 import { describe, expect, it } from "vitest";
 
-import { isNameOnlyRetailerTitleMatch } from "./titleMatch";
+import {
+  catalogTitleOmitsRequestedProductIdentity,
+  isNameOnlyRetailerTitleMatch,
+} from "./titleMatch";
+
+describe("catalogTitleOmitsRequestedProductIdentity", () => {
+  it("flags franchise-only catalog rows for a specific scenario line", () => {
+    expect(
+      catalogTitleOmitsRequestedProductIdentity(
+        "Black Stories - Musique D'enfer",
+        "Black Stories",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows a shorter identity query when the catalog keeps the product line", () => {
+    expect(
+      catalogTitleOmitsRequestedProductIdentity(
+        "Alan Wake II Deluxe Edition",
+        "Alan Wake II Deluxe Edition PS5",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not flag equal or longer catalog titles", () => {
+    expect(
+      catalogTitleOmitsRequestedProductIdentity("Catan", "Catan — Édition FR"),
+    ).toBe(false);
+    expect(
+      catalogTitleOmitsRequestedProductIdentity(
+        "Black Stories - Musique D'enfer",
+        "Black Stories Musique d'Enfer",
+      ),
+    ).toBe(false);
+  });
+});
 
 describe("isNameOnlyRetailerTitleMatch", () => {
   it("accepte un titre quasi identique", () => {

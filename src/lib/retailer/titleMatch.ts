@@ -69,17 +69,60 @@ export function retailerIdentityTokenCount(requestedName: string): number {
   ).length;
 }
 
-export function retailerCatalogSharesRequestedIdentity(
+function distinctiveProductTokens(value: string): string[] {
+  return distinctiveTokens(value).filter(
+    (token) => !GENERIC_RETAILER_TOKENS.has(token),
+  );
+}
+
+/**
+ * True when the catalog title is only a franchise/base prefix of the request
+ * and drops distinctive product tokens (e.g. BGG "Black Stories" for
+ * "Black Stories - Musique d'enfer").
+ */
+export function catalogTitleOmitsRequestedProductIdentity(
   requestedName: string,
   catalogTitle: string,
 ): boolean {
   if (franchiseSequelNumbersConflict([requestedName], catalogTitle)) {
     return false;
   }
+
   const requestedBase = extractBaseTitleVariant(requestedName) ?? requestedName;
-  const identityTokens = distinctiveTokens(requestedBase).filter(
-    (token) => !GENERIC_RETAILER_TOKENS.has(token),
+  const requestedTokens = distinctiveProductTokens(requestedBase);
+  const catalogTokens = distinctiveProductTokens(catalogTitle);
+  if (requestedTokens.length === 0 || catalogTokens.length === 0) {
+    return false;
+  }
+  if (catalogTokens.length >= requestedTokens.length) return false;
+
+  const catalogTokenSet = new Set(catalogTokens);
+  const allCatalogTokensInRequest = catalogTokens.every((token) =>
+    titleTokenPresentInSet(
+      token,
+      new Set(distinctiveProductTokens(requestedBase)),
+    ),
   );
+  if (!allCatalogTokensInRequest) return false;
+
+  const missingFromCatalog = requestedTokens.filter(
+    (token) => !titleTokenPresentInSet(token, catalogTokenSet),
+  );
+  return missingFromCatalog.length > 0;
+}
+
+export function retailerCatalogSharesRequestedIdentity(
+  requestedName: string,
+  catalogTitle: string,
+): boolean {
+  if (catalogTitleOmitsRequestedProductIdentity(requestedName, catalogTitle)) {
+    return false;
+  }
+  if (franchiseSequelNumbersConflict([requestedName], catalogTitle)) {
+    return false;
+  }
+  const requestedBase = extractBaseTitleVariant(requestedName) ?? requestedName;
+  const identityTokens = distinctiveProductTokens(requestedBase);
   if (identityTokens.length === 0) return false;
 
   const catalogTokenSet = new Set(distinctiveTokens(catalogTitle));

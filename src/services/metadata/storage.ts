@@ -25,6 +25,8 @@ import {
   type ScoredAttachmentInput,
 } from "@/lib/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
+import { adoptItemNameFromMetadataIfPlaceholder } from "@/lib/item/adoptMetadataTitle";
+import { resolveMetadataDisplayTitle } from "@/lib/title/refineCatalogDisplayTitle";
 import { catalogAttachmentTitleConflicts } from "@/lib/metadata/titleMatching";
 import { urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/lib/media/attachmentDisplayLabels";
@@ -1013,6 +1015,16 @@ export async function storeMetadata(
         data: { backgroundImageUrl: heroImageUrl },
       });
     }
+  }
+
+  if (item) {
+    const displayTitle = resolveMetadataDisplayTitle(metadata, item.barcode);
+    await adoptItemNameFromMetadataIfPlaceholder({
+      itemId,
+      metadataTitle: displayTitle,
+      itemName: item.name?.trim() || name.trim(),
+      barcode: item.barcode,
+    });
   }
 
   return storedMetadata;

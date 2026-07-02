@@ -2,6 +2,20 @@ import axios from "axios";
 
 import type { Prisma, Item, Condition } from "@prisma/client";
 import type { ItemWithMetadata } from "@/types/items";
+import type { MetadataResult } from "@/types/metadataProvider";
+
+/**
+ * Items served by the API went through `presentItemFromStorage`: their
+ * `metadata` is a formatted `MetadataResult` (aliases/facts parsed, provider
+ * traits stamped server-side), not the raw Prisma row that `ItemWithMetadata`
+ * still describes. Narrow here, in one documented place, until
+ * `ItemWithMetadata` is retyped (tracked in docs/backlog.md).
+ */
+export function presentedMetadata(
+  metadata: ItemWithMetadata["metadata"] | null | undefined,
+): MetadataResult | null {
+  return (metadata as unknown as MetadataResult | null) ?? null;
+}
 
 export const getItem = (
   id?: Item["id"],

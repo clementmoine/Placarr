@@ -22,6 +22,7 @@ import {
   cleanManualBarcode,
   ManualBarcodeEntry,
 } from "@/components/ManualBarcodeEntry";
+import { itemMatchesBarcodeQuery } from "@/lib/item/search";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
@@ -30,11 +31,27 @@ import { getCoverImage } from "@/lib/item/media";
 import { RemoteImage } from "@/components/RemoteImage";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
+import { buildBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
 import { saveItem } from "@/lib/api/items";
 import { syncItemQueries } from "@/lib/item/queryCache";
 import { cn } from "@/lib/core/utils";
 import { itemPath, slugify } from "@/lib/routing/slugs";
 import type { MetadataResult } from "@/types/metadataProvider";
+
+function resolveQuickScanCustomTitle(
+  customName: string,
+  barcode: string,
+): string | null {
+  const trimmed = customName.trim();
+  if (trimmed) return trimmed;
+
+  const cleaned = cleanManualBarcode(barcode);
+  if (cleaned.replace(/\D/g, "").length >= 8) {
+    return buildBarcodePlaceholderItemName(cleaned);
+  }
+
+  return null;
+}
 
 type QuickScanResult = {
   id: string;
@@ -124,6 +141,7 @@ export function QuickScanModal({
       const { data } = await axios.get("/api/items", {
         params: {
           q: activeBarcode,
+          barcodeExact: "true",
           includeMetadata: "false",
         },
       });
@@ -132,48 +150,7 @@ export function QuickScanModal({
     enabled: isOpen && !!activeBarcode,
   });
 
-  const titleLookupKey = useMemo(
-    () =>
-      results
-        .map((result) => result.title)
-        .slice(0, 3)
-        .join("\0"),
-    [results],
-  );
-
-  const { data: titleMatchedItems } = useQuery<ExistingQuickItem[]>({
-    queryKey: ["existingItemsByTitle", titleLookupKey],
-    queryFn: async () => {
-      const titles = results.map((result) => result.title).slice(0, 3);
-      const seen = new Map<string, ExistingQuickItem>();
-
-      for (const title of titles) {
-        const { data } = await axios.get<ExistingQuickItem[]>("/api/items", {
-          params: {
-            q: title,
-            includeMetadata: "false",
-          },
-        });
-        for (const item of data) {
-          seen.set(item.id, item);
-        }
-      }
-
-      return Array.from(seen.values());
-    },
-    enabled: isOpen && results.length > 0,
-  });
-
-  const ownedCandidates = useMemo(() => {
-    const seen = new Map<string, ExistingQuickItem>();
-    for (const item of [
-      ...(existingItems || []),
-      ...(titleMatchedItems || []),
-    ]) {
-      seen.set(item.id, item);
-    }
-    return Array.from(seen.values());
-  }, [existingItems, titleMatchedItems]);
+  const ownedCandidates = useMemo(() => existingItems ?? [], [existingItems]);
 
   const defaultShelf = defaultShelfId
     ? shelves?.find(
@@ -577,6 +554,25 @@ export function QuickScanModal({
     ],
   );
 
+  const submitCustomItem = useCallback(
+    (customNameValue: string) => {
+      const title = resolveQuickScanCustomTitle(customNameValue, activeBarcode);
+      if (!title) return;
+      handleSelectProduct({ title, imageUrl: null });
+    },
+    [activeBarcode, handleSelectProduct],
+  );
+
+  const canAddCustomItem = useMemo(
+    () => resolveQuickScanCustomTitle(customName, activeBarcode) !== null,
+    [customName, activeBarcode],
+  );
+
+  const canAddBarcodeOnly = useMemo(
+    () => resolveQuickScanCustomTitle("", activeBarcode) !== null,
+    [activeBarcode],
+  );
+
   const handleCompleteOwnedItem = useCallback(
     async (ownedItem: ExistingQuickItem) => {
       if (!activeBarcode.trim()) return;
@@ -609,33 +605,18 @@ export function QuickScanModal({
   const getOwnedStatusForProduct = (productTitle: string) => {
     if (!ownedCandidates.length) return null;
 
-    const titleNorm = productTitle.toLowerCase().trim();
-
-    // 1. Try to find exact/close name match first
-    const exactMatch = ownedCandidates.find(
-      (item) => item.name.toLowerCase().trim() === titleNorm,
+    const barcodeMatch = ownedCandidates.find((item) =>
+      itemMatchesBarcodeQuery(item.barcode, activeBarcode),
     );
-    if (exactMatch) return exactMatch;
+    if (barcodeMatch) return barcodeMatch;
 
-    // 2. Token overlap fuzzy check to catch spelling or punctuation variations
-    // but prevent matching completely unrelated titles
-    const sugTokens = new Set(titleNorm.split(/[^a-z0-9]+/));
-    for (const item of ownedCandidates) {
-      const dbNorm = item.name.toLowerCase().trim();
-      const dbTokens = new Set(dbNorm.split(/[^a-z0-9]+/));
-
-      const intersection = [...sugTokens].filter(
-        (t) => t.length > 2 && dbTokens.has(t),
-      );
-      if (
-        intersection.length >= 2 ||
-        (sugTokens.size <= 2 && intersection.length >= 1)
-      ) {
-        return item;
-      }
-    }
-
-    return null;
+    const titleNorm = productTitle.toLowerCase().trim();
+    return (
+      ownedCandidates.find(
+        (item) =>
+          !item.barcode?.trim() && item.name.toLowerCase().trim() === titleNorm,
+      ) ?? null
+    );
   };
 
   const hasExistingItems = Boolean(ownedCandidates.length);
@@ -908,22 +889,14 @@ export function QuickScanModal({
                     onChange={(e) => setCustomName(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-950/20 pr-24 text-xs h-10 border-border/60 focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && customName.trim()) {
-                        handleSelectProduct({
-                          title: customName.trim(),
-                          imageUrl: null,
-                        });
+                      if (e.key === "Enter" && canAddCustomItem) {
+                        submitCustomItem(customName);
                       }
                     }}
                   />
                   <Button
-                    onClick={() =>
-                      handleSelectProduct({
-                        title: customName.trim(),
-                        imageUrl: null,
-                      })
-                    }
-                    disabled={!customName.trim()}
+                    onClick={() => submitCustomItem(customName)}
+                    disabled={!canAddCustomItem}
                     size="sm"
                     className="absolute right-1 h-8 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer flex items-center"
                   >
@@ -931,6 +904,18 @@ export function QuickScanModal({
                     {t("common.add") || "Ajouter"}
                   </Button>
                 </div>
+                {activeBarcode.trim() && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => submitCustomItem("")}
+                    disabled={!canAddBarcodeOnly}
+                    className="h-9 rounded-xl text-xs font-semibold border-border/60 cursor-pointer"
+                  >
+                    <Plus className="size-3.5 mr-1.5" />
+                    {t("scanner.addBarcodeOnly")}
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -1049,22 +1034,14 @@ export function QuickScanModal({
                     onChange={(e) => setCustomName(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-950/20 pr-24 text-xs h-10 border-border/60 focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && customName.trim()) {
-                        handleSelectProduct({
-                          title: customName.trim(),
-                          imageUrl: null,
-                        });
+                      if (e.key === "Enter" && canAddCustomItem) {
+                        submitCustomItem(customName);
                       }
                     }}
                   />
                   <Button
-                    onClick={() =>
-                      handleSelectProduct({
-                        title: customName.trim(),
-                        imageUrl: null,
-                      })
-                    }
-                    disabled={!customName.trim()}
+                    onClick={() => submitCustomItem(customName)}
+                    disabled={!canAddCustomItem}
                     size="sm"
                     className="absolute right-1 h-8 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer flex items-center"
                   >
@@ -1072,6 +1049,18 @@ export function QuickScanModal({
                     {t("common.add") || "Ajouter"}
                   </Button>
                 </div>
+                {activeBarcode.trim() && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => submitCustomItem("")}
+                    disabled={!canAddBarcodeOnly}
+                    className="h-9 rounded-xl text-xs font-semibold border-border/60 cursor-pointer"
+                  >
+                    <Plus className="size-3.5 mr-1.5" />
+                    {t("scanner.addBarcodeOnly")}
+                  </Button>
+                )}
               </div>
             </div>
           )}

@@ -166,6 +166,9 @@ function formatBGGComplexity(weight: string): string | null {
   return `${value.toFixed(1).replace(".", ",")} / 5`;
 }
 
+/** BGG exposes every edition cover; cap gallery pollution on multi-edition games. */
+const BGG_MAX_VERSION_COVERS = 8;
+
 function buildBggAttachments(game: {
   children?: BGGChild[];
 }): MetadataAttachment[] {
@@ -188,7 +191,10 @@ function buildBggAttachments(game: {
 
   const versionsNode = game.children?.find((child) => child.versions)?.versions;
 
+  let versionCoverCount = 0;
   for (const entry of versionsNode?.children || []) {
+    if (versionCoverCount >= BGG_MAX_VERSION_COVERS) break;
+
     const versionChildren = entry.item?.children;
     if (!versionChildren) continue;
 
@@ -201,7 +207,9 @@ function buildBggAttachments(game: {
       (child) => child.name?.type === "primary",
     )?.name?.value;
     const role = mapBggLanguageToAttachmentRole(languages[0], editionName);
+    const before = seenUrls.size;
     addCover(image, role);
+    if (seenUrls.size > before) versionCoverCount++;
   }
 
   return attachments;

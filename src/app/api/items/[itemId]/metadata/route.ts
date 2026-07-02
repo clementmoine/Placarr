@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { withRequestUiLocale } from "@/lib/locale/serverPreference";
 import { presentItemFromStorage } from "@/lib/item/present";
+import { resolveItemMetadataLookupQuery } from "@/lib/item/metadataLookupQuery";
 import { resolveItemId } from "@/lib/routing/resolveIds";
 import { startItemMetadataRefresh } from "@/lib/jobs/scheduleMetadataRefresh";
 
@@ -43,10 +44,13 @@ export async function POST(
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
-      const lookupQuery =
-        typeof body.lookupQuery === "string" && body.lookupQuery.trim()
-          ? body.lookupQuery.trim()
-          : item.metadata?.title || item.name;
+      const lookupQuery = resolveItemMetadataLookupQuery({
+        name: item.name,
+        barcode: item.barcode,
+        metadataTitle: item.metadata?.title,
+        explicitQuery:
+          typeof body.lookupQuery === "string" ? body.lookupQuery : undefined,
+      });
 
       const { startedAt: metadataRefreshStartedAt } =
         await startItemMetadataRefresh({

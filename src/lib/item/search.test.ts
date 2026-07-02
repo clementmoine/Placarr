@@ -2,9 +2,36 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildItemSearchConditions,
+  barcodeLookupVariants,
+  itemMatchesBarcodeQuery,
   itemMatchesSearchQuery,
   itemSearchHaystacks,
 } from "./search";
+
+describe("barcodeLookupVariants", () => {
+  it("includes EAN-13 and UPC-A variants", () => {
+    expect(barcodeLookupVariants("0827912079678")).toEqual([
+      "0827912079678",
+      "827912079678",
+    ]);
+    expect(barcodeLookupVariants("827912079678")).toEqual([
+      "827912079678",
+      "0827912079678",
+    ]);
+  });
+});
+
+describe("itemMatchesBarcodeQuery", () => {
+  it("matches equivalent barcode forms", () => {
+    expect(itemMatchesBarcodeQuery("827912079678", "0827912079678")).toBe(true);
+    expect(itemMatchesBarcodeQuery("0827912079678", "0827912079678")).toBe(
+      true,
+    );
+    expect(itemMatchesBarcodeQuery("0087169139499", "0827912079678")).toBe(
+      false,
+    );
+  });
+});
 
 describe("buildItemSearchConditions", () => {
   it("ajoute une condition AND par token pour les requêtes multi-mots", () => {
@@ -23,6 +50,18 @@ describe("buildItemSearchConditions", () => {
 });
 
 describe("itemMatchesSearchQuery", () => {
+  it("does not treat a franchise title as owning another barcode product", () => {
+    const haystacks = itemSearchHaystacks({
+      name: "Black Stories Faits vécus",
+      barcode: "1234567890123",
+    });
+
+    expect(itemMatchesSearchQuery(haystacks, "0827912079678")).toBe(false);
+    expect(
+      itemMatchesSearchQuery(haystacks, "Black Stories FR Kikigagne"),
+    ).toBe(false);
+  });
+
   it("matche un alias anglais même quand la ponctuation sépare les mots", () => {
     const haystacks = itemSearchHaystacks({
       name: "Alice Retour Au Pays de la Folie",

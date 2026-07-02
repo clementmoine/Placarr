@@ -23,11 +23,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "media.rawg.io",
+        hostname: "**.rawg.io",
       },
       {
         protocol: "https",
-        hostname: "image.tmdb.org",
+        hostname: "**.tmdb.org",
       },
       {
         protocol: "https",
@@ -35,15 +35,15 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "cf.geekdo-images.com",
+        hostname: "**.geekdo-images.com",
       },
       {
         protocol: "https",
-        hostname: "covers.openlibrary.org",
+        hostname: "**.openlibrary.org",
       },
       {
         protocol: "https",
-        hostname: "cdn1.booknode.com",
+        hostname: "**.booknode.com",
       },
       {
         protocol: "https",
@@ -51,19 +51,19 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "img.chasse-aux-livres.fr",
+        hostname: "**.chasse-aux-livres.fr",
       },
       {
         protocol: "https",
-        hostname: "storage.googleapis.com",
+        hostname: "**.googleapis.com",
       },
       {
         protocol: "https",
-        hostname: "cdn.achatmoinscher.com",
+        hostname: "**.achatmoinscher.com",
       },
       {
         protocol: "https",
-        hostname: "images.igdb.com",
+        hostname: "**.igdb.com",
       },
       {
         protocol: "https",
@@ -71,11 +71,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "www.achatmoinscher.com",
+        hostname: "**.achatmoinscher.com",
       },
       {
         protocol: "https",
-        hostname: "static.fnac-static.com",
+        hostname: "**.fnac-static.com",
       },
       {
         protocol: "https",
@@ -83,19 +83,19 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "www.freakxy.fr",
+        hostname: "**.freakxy.fr",
       },
       {
         protocol: "https",
-        hostname: "www.picclickimg.com",
+        hostname: "**.picclickimg.com",
       },
       {
         protocol: "https",
-        hostname: "cdn2.steamgriddb.com",
+        hostname: "**.steamgriddb.com",
       },
       {
         protocol: "https",
-        hostname: "cdn.pji.nu",
+        hostname: "**.pji.nu",
       },
       {
         protocol: "https",
@@ -109,6 +109,18 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "**.booknode.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.okkazeo.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.bcd-jeux.fr",
+      },
+      {
+        protocol: "https",
+        hostname: "**.philibertnet.com",
       },
     ],
   },

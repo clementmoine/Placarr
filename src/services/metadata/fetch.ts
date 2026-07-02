@@ -735,6 +735,7 @@ export async function fetchMetadata(
     includePcSources: isPcLikeGamePlatform(resolvedPlatform),
     requestedPlatformKey: resolvedPlatform,
     requestedTitle: name,
+    itemBarcode: cleanedBarcode || barcode,
   });
 
   let finalMerged = merged;

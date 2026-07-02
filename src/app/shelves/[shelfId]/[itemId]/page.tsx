@@ -76,6 +76,7 @@ import type { Shelf, Prisma, Item } from "@prisma/client";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
+  isItemEnriching,
   isItemMetadataBusy,
   isItemMetadataRefreshing,
 } from "@/lib/item/enrichment";
@@ -104,6 +105,11 @@ import {
   parseFactSourceList,
   formatDetailFactSourceToken,
 } from "@/lib/metadata/facts/playerFacts";
+import {
+  extractProviderLinkFacts,
+  filterRedundantDisplayFacts,
+} from "@/lib/metadata/facts/displayFacts";
+import { ProviderLinksBar } from "@/components/ProviderLinksBar";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
@@ -496,7 +502,6 @@ function isPrimaryInfoFact(fact: DetailFact) {
     "pages",
     "players",
     "playtime",
-    "popularity",
     "rating",
     "time-to-beat",
     "tracks",
@@ -508,14 +513,12 @@ function isDetailTableFact(fact: DetailFact) {
     "artist",
     "category",
     "cooperative",
-    "external-link",
     "family",
     "franchise",
     "genre",
     "mechanic",
     "modes",
     "platform",
-    "recommended-players",
     "store",
     "tag",
   ].includes(fact.kind);
@@ -1099,6 +1102,11 @@ export default function ItemDetailsPage() {
   });
 
   const isMetadataBusy = isItemMetadataBusy(item);
+  const hasNoMetadata =
+    Boolean(item?.barcode) &&
+    !item?.metadataId &&
+    !item?.metadata &&
+    !isMetadataBusy;
   const wasMetadataRefreshingRef = useRef(false);
 
   useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
@@ -1294,12 +1302,7 @@ export default function ItemDetailsPage() {
 
   const { mutate: refreshMetadata, isPending: isRefreshingMetadata } =
     useMutation({
-      mutationFn: () =>
-        refreshItemMetadata(
-          itemId,
-          shelfId,
-          item?.metadata?.title || item?.name,
-        ),
+      mutationFn: () => refreshItemMetadata(itemId, shelfId),
       onSuccess: (response) => {
         const actualShelfId = item?.shelfId;
 
@@ -1391,7 +1394,7 @@ export default function ItemDetailsPage() {
       return false;
     }
     if (!item?.metadataId || !item.metadata) {
-      return Boolean(item?.barcode);
+      return isItemEnriching(item) && Boolean(item?.barcode);
     }
     const metadata = item.metadata as any;
     const facts = normalizeFacts(metadata.facts);
@@ -1691,7 +1694,7 @@ export default function ItemDetailsPage() {
 
   const priceChartingLink = item?.referenceCatalogLink ?? null;
 
-  const usefulFacts = useMemo(() => {
+  const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
     const metadata = item?.metadata as any;
     const sourceFacts = normalizeFacts(metadata?.facts);
@@ -1749,9 +1752,11 @@ export default function ItemDetailsPage() {
         ),
       ),
     );
+    const providerLinks = extractProviderLinkFacts(normalizedFacts);
+    const displayFacts = filterRedundantDisplayFacts(normalizedFacts);
     const averageRating = buildAverageRatingFact(normalizedFacts, t, locale);
     facts.push(
-      ...normalizedFacts
+      ...displayFacts
         .filter((fact) => fact.kind !== "rating")
         .map((fact) =>
           localizeDisplayFact(fact, t, {
@@ -1765,7 +1770,7 @@ export default function ItemDetailsPage() {
     }
 
     const seen = new Set<string>();
-    return facts
+    const sortedFacts = facts
       .filter((fact) => fact.label && fact.value)
       .filter((fact) => {
         const key = `${fact.kind}:${fact.label}:${fact.value}`.toLowerCase();
@@ -1774,6 +1779,11 @@ export default function ItemDetailsPage() {
         return true;
       })
       .sort(sortDetailFacts);
+
+    return {
+      usefulFacts: sortedFacts,
+      providerLinkFacts: providerLinks,
+    };
   }, [item?.metadata, locale, shelf?.name, shelf?.type, t]);
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -1803,18 +1813,10 @@ export default function ItemDetailsPage() {
     usefulFacts,
   ]);
 
-  const detailTableFacts = useMemo(() => {
-    const facts = usefulFacts.filter(
-      (fact) =>
-        isDetailTableFact(fact) &&
-        (fact.kind !== "external-link" || shelf?.type === "boardgames"),
-    );
-    return facts.sort((a, b) => {
-      if (a.kind === "external-link") return 1;
-      if (b.kind === "external-link") return -1;
-      return sortDetailFacts(a, b);
-    });
-  }, [shelf?.type, usefulFacts]);
+  const detailTableFacts = useMemo(
+    () => usefulFacts.filter(isDetailTableFact).sort(sortDetailFacts),
+    [usefulFacts],
+  );
 
   const audioTracks = useMemo(() => {
     const attachments = ((item?.metadata as any)?.attachments || []) as Array<{
@@ -2011,6 +2013,14 @@ export default function ItemDetailsPage() {
                         {t("items.fetching")}
                       </Badge>
                     )}
+                    {hasNoMetadata && (
+                      <Badge
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300 font-semibold px-2.5 py-0.5"
+                      >
+                        {t("items.unknownBarcodeMetadata")}
+                      </Badge>
+                    )}
                     {year && (
                       <Badge
                         variant="secondary"
@@ -2069,6 +2079,12 @@ export default function ItemDetailsPage() {
                 )}
 
                 {infoStrip}
+
+                {hasNoMetadata && (
+                  <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                    {t("items.unknownBarcodeMetadataHint")}
+                  </p>
+                )}
 
                 {/* Description */}
                 {markdownDescription && (
@@ -2146,6 +2162,13 @@ export default function ItemDetailsPage() {
                       </div>
                     )}
 
+                  {providerLinkFacts.length > 0 && (
+                    <ProviderLinksBar
+                      facts={providerLinkFacts}
+                      title={t("items.providerLinks")}
+                    />
+                  )}
+
                   {detailTableFacts.map((fact) => (
                     <div
                       key={`${fact.kind}-${fact.label}-${fact.value}`}
@@ -2166,16 +2189,6 @@ export default function ItemDetailsPage() {
                             </Badge>
                           ))}
                         </div>
-                      ) : fact.kind === "external-link" && fact.url ? (
-                        <a
-                          href={fact.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-                        >
-                          {fact.value}
-                          <Link2 className="size-3.5 shrink-0" />
-                        </a>
                       ) : (
                         <span className="text-sm font-medium text-foreground dark:text-zinc-200">
                           {fact.value}

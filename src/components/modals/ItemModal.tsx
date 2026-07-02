@@ -53,7 +53,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { isUrl } from "@/lib/core/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
-import { deleteItem, getItem } from "@/lib/api/items";
+import { deleteItem, getItem, presentedMetadata } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { uploadImage } from "@/lib/api/upload";
 import { getAspectRatio } from "@/lib/text/cardFormat";
@@ -77,6 +77,7 @@ import {
   mergeCoverAttachmentsForPicker,
   resolveMetadataCoverUrl,
   filterMetadataForShelfPlatform,
+  backgroundPickerAttachmentsForItem,
 } from "@/lib/item/media";
 import {
   stripCropSuffixFromUrl,
@@ -88,6 +89,8 @@ import {
 } from "@/lib/media/attachmentDisplayLabels";
 import { cn } from "@/lib/core/utils";
 import type { ItemWithMetadata } from "@/types/items";
+import { isBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
+import { collectMetadataTitleSuggestions } from "@/lib/item/titleSuggestions";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
 import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
@@ -505,6 +508,45 @@ export function ItemModal({
     [activeShelf?.name, activeShelfType],
   );
 
+  const seedTitleSuggestionsFromItemMetadata = useCallback(
+    (
+      sourceItem: ItemWithMetadata,
+      options: { adoptPlaceholderName?: boolean } = {},
+    ) => {
+      const metadata = filterMetadataForShelfPlatform(
+        presentedMetadata(sourceItem.metadata),
+        sourceItem.shelf || activeShelfForMedia,
+      );
+      if (!metadata) return;
+
+      applyMetadataPreviewToForm(metadata, {
+        barcodeContext: sourceItem.barcode || undefined,
+      });
+
+      const storedName = (
+        sourceItem.storedName ??
+        sourceItem.name ??
+        ""
+      ).trim();
+      const titleSuggestions = collectMetadataTitleSuggestions(metadata, {
+        itemName: storedName,
+        barcode: sourceItem.barcode,
+      });
+      if (titleSuggestions.length === 0) return;
+
+      setSuggestions(titleSuggestions);
+      setNameSuggestion(titleSuggestions[0]);
+
+      if (
+        options.adoptPlaceholderName &&
+        isBarcodePlaceholderItemName(storedName, sourceItem.barcode)
+      ) {
+        form.setValue("name", titleSuggestions[0], { shouldDirty: false });
+      }
+    },
+    [activeShelfForMedia, applyMetadataPreviewToForm, form],
+  );
+
   const handleNameChange = useCallback(
     (name: string) => {
       if (!name.trim()) {
@@ -542,39 +584,36 @@ export function ItemModal({
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
 
-    // Add attachments of type background, artwork, screenshot, image
-    const attachments = metadata.attachments || [];
-    attachments.forEach((a: any) => {
-      if (
-        a.url &&
-        !urls.has(a.url) &&
-        ["background", "artwork", "screenshot", "image"].includes(a.type)
-      ) {
-        urls.add(a.url);
-        const gallery = getAttachmentGalleryLabels(
-          {
-            type: a.type,
-            role: a.role,
-            title: a.title,
-            source: a.source,
-            providerLabel: a.providerLabel,
-          },
-          displayLocale,
-        );
-        list.push({
-          url: a.url,
+    backgroundPickerAttachmentsForItem(
+      metadata,
+      activeShelfForMedia,
+      locale,
+    ).forEach((a) => {
+      if (!a.url || urls.has(a.url)) return;
+      urls.add(a.url);
+      const gallery = getAttachmentGalleryLabels(
+        {
           type: a.type,
-          label: gallery.caption,
-          source: a.source,
           role: a.role,
-          galleryProvider: gallery.provider,
-          galleryDetail: gallery.detail,
-        });
-      }
+          title: a.title,
+          source: a.source,
+          providerLabel: a.providerLabel,
+        },
+        displayLocale,
+      );
+      list.push({
+        url: a.url,
+        type: a.type,
+        label: gallery.caption,
+        source: a.source,
+        role: a.role,
+        galleryProvider: gallery.provider,
+        galleryDetail: gallery.detail,
+      });
     });
 
     return list;
-  }, [item?.metadata, fetchedMetadata, locale]);
+  }, [item?.metadata, fetchedMetadata, locale, activeShelfForMedia]);
 
   const currentBackgroundUrl = form.watch("backgroundImageUrl");
 
@@ -1186,9 +1225,10 @@ export function ItemModal({
     }
 
     if (item) {
+      const storedName = item.storedName || item.name || defaultValues.name;
       reset({
         shelfId: item.shelfId || defaultValues.shelfId,
-        name: item.name || defaultValues.name,
+        name: storedName,
         description:
           item.description ||
           item.metadata?.description ||
@@ -1202,7 +1242,11 @@ export function ItemModal({
       setLastInitializedShelfId(item.shelfId || defaultValues.shelfId);
       lastMetadataStampRef.current = metadataStamp;
 
-      if (item.barcode && !item.metadata) {
+      if (item.metadata) {
+        seedTitleSuggestionsFromItemMetadata(item, {
+          adoptPlaceholderName: true,
+        });
+      } else if (item.barcode) {
         handleBarcodeChange(item.barcode);
       }
     } else {
@@ -1244,6 +1288,7 @@ export function ItemModal({
     applyMetadataPreviewToForm,
     handleBarcodeChange,
     fetchMetadataPreview,
+    seedTitleSuggestionsFromItemMetadata,
     reset,
     defaultTab,
     initializedItemId,
@@ -1613,13 +1658,44 @@ export function ItemModal({
                                   }}
                                   onFocus={() => {
                                     setShowDropdown(true);
-                                    if (suggestions.length === 0) {
-                                      fetchNameSuggestions(
-                                        field.value ||
-                                          form.getValues("name") ||
-                                          "",
+                                    if (suggestions.length > 0) return;
+
+                                    const metadata =
+                                      filterMetadataForShelfPlatform(
+                                        presentedMetadata(item?.metadata) ||
+                                          fetchedMetadata,
+                                        activeShelfForMedia,
                                       );
+                                    if (metadata) {
+                                      const storedName = (
+                                        item?.storedName ??
+                                        field.value ??
+                                        form.getValues("name") ??
+                                        ""
+                                      ).trim();
+                                      const seeded =
+                                        collectMetadataTitleSuggestions(
+                                          metadata,
+                                          {
+                                            itemName: storedName,
+                                            barcode:
+                                              form.getValues("barcode") ||
+                                              item?.barcode ||
+                                              null,
+                                          },
+                                        );
+                                      if (seeded.length > 0) {
+                                        setSuggestions(seeded);
+                                        setNameSuggestion(seeded[0]);
+                                        return;
+                                      }
                                     }
+
+                                    fetchNameSuggestions(
+                                      field.value ||
+                                        form.getValues("name") ||
+                                        "",
+                                    );
                                   }}
                                   onBlur={(e) => {
                                     field.onBlur();

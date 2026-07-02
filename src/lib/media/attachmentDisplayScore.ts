@@ -820,17 +820,25 @@ export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
   imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
   options?: AttachmentDisplayScoreOptions,
 ): T[] {
-  const coverCandidates = attachments.filter((attachment) => {
-    if (!attachment.url) return false;
+  const coverCandidates: T[] = [];
+  const galleryExtras: T[] = [];
+
+  for (const attachment of attachments) {
+    if (!attachment.url) continue;
     const semantics = attachmentSemantics(attachment);
-    return (
-      isCoverCandidateKind(semantics.kind) &&
-      !isPhysicalNonCoverKind(semantics.kind)
-    );
-  });
+    if (isPhysicalNonCoverKind(semantics.kind)) continue;
+    if (isCoverCandidateKind(semantics.kind)) {
+      coverCandidates.push(attachment);
+      continue;
+    }
+    galleryExtras.push(attachment);
+  }
 
   if (coverCandidates.length > 0) {
-    return rankCoversForDisplay(coverCandidates, imageMetricsByUrl, options);
+    return [
+      ...rankCoversForDisplay(coverCandidates, imageMetricsByUrl, options),
+      ...rankAttachmentsForDisplay(galleryExtras, imageMetricsByUrl, options),
+    ];
   }
 
   return rankAttachmentsForDisplay(attachments, imageMetricsByUrl, options);

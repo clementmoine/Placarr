@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { cleanCode } from "@/lib/barcode/query";
 import { TITLE_TOKEN_EQUIVALENT_GROUPS } from "@/lib/title/tokenEquivalents";
 import { stripVolumeMarkersKeepingNumber } from "@/lib/title/volumeNumber";
 
@@ -148,6 +149,40 @@ function buildTokenAndSearchCondition(
   const tokens = searchTokens(stripVolumeMarkersKeepingNumber(searchTerm));
   if (tokens.length <= 1) return null;
   return { AND: tokens.map(tokenOrConditions) };
+}
+
+export function barcodeLookupVariants(barcode: string): string[] {
+  const cleaned = cleanCode(barcode);
+  if (!cleaned || cleaned.length < 8 || cleaned.length > 14) return [];
+
+  const variants = new Set<string>([cleaned]);
+  if (cleaned.length === 13 && cleaned.startsWith("0")) {
+    variants.add(cleaned.slice(1));
+  }
+  if (cleaned.length === 12) {
+    variants.add(`0${cleaned}`);
+  }
+
+  return Array.from(variants);
+}
+
+export function buildExactBarcodeSearchCondition(
+  barcode: string,
+): Prisma.ItemWhereInput | null {
+  const variants = barcodeLookupVariants(barcode);
+  if (variants.length === 0) return null;
+  return { barcode: { in: variants } };
+}
+
+export function itemMatchesBarcodeQuery(
+  itemBarcode: string | null | undefined,
+  queryBarcode: string,
+): boolean {
+  const queryVariants = barcodeLookupVariants(queryBarcode);
+  if (queryVariants.length === 0) return false;
+  const stored = cleanCode(itemBarcode);
+  if (!stored) return false;
+  return queryVariants.includes(stored);
 }
 
 export function buildItemSearchConditions(

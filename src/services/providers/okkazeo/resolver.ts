@@ -250,6 +250,7 @@ export function createOkkazeoResolver() {
               catalogTitle: title,
               catalogAliases: game.listingTitles,
               barcodeConfirmed,
+              itemBarcode: normalizedBarcode,
             })
           ) {
             continue;

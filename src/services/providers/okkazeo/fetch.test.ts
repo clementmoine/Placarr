@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  parseOkkazeoCategoriesFromDescription,
   parseOkkazeoGameHtml,
   parseOkkazeoJsonLd,
   parseOkkazeoListingTitles,
@@ -76,6 +77,24 @@ describe("parseOkkazeoGameHtml", () => {
     );
     const game = parseOkkazeoGameHtml(noJsonLd, URL);
     expect(game.title).toBe("Mille Sabords"); // " - Jeu de société" stripped
+  });
+
+  it("keeps categories intact when og:description contains an apostrophe", () => {
+    const html = `<html><head>
+<meta property="og:description" content="Black stories - Autour du monde - 2 à 4 joueurs - 2018 - Jeux d'ambiance,Grand public"/>
+</head></html>`;
+    const game = parseOkkazeoGameHtml(html, URL);
+    expect(game.categories).toEqual(["Jeux d'ambiance", "Grand public"]);
+  });
+});
+
+describe("parseOkkazeoCategoriesFromDescription", () => {
+  it("extracts categories after the release year", () => {
+    expect(
+      parseOkkazeoCategoriesFromDescription(
+        "Black stories - Autour du monde - 2 à 4 joueurs - 2018 - Jeux d'ambiance,Grand public",
+      ),
+    ).toEqual(["Jeux d'ambiance", "Grand public"]);
   });
 });
 

@@ -622,6 +622,32 @@ describe("attachmentDisplayScore", () => {
     expect(picked).toBe(pricecharting.url);
   });
 
+  it("keeps retailer gallery photos when cover candidates are present", () => {
+    const cover = {
+      type: "cover" as const,
+      source: "monsieurde",
+      role: "fr",
+      url: "/cover.jpg",
+    };
+    const ambiance = {
+      type: "image" as const,
+      source: "monsieurde",
+      role: "fr",
+      url: "/ambiance.jpg",
+    };
+    const metrics = new Map([
+      [cover.url, { width: 800, height: 800, format: "jpg" }],
+      [ambiance.url, { width: 1600, height: 900, format: "jpg" }],
+    ]);
+
+    const ranked = rankCoverGalleryAttachments([cover, ambiance], metrics);
+
+    expect(ranked.map((attachment) => attachment.url)).toEqual([
+      cover.url,
+      ambiance.url,
+    ]);
+  });
+
   it("prefers PS4 covers over PS3-tagged art on a PS4 shelf", () => {
     const ps3Cover = {
       type: "cover" as const,

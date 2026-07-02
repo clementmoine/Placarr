@@ -4,6 +4,8 @@ import {
   getCoverImage,
   resolveMetadataCoverUrl,
   filterMetadataForShelfPlatform,
+  backgroundPickerAttachments,
+  backgroundPickerAttachmentsForItem,
 } from "./media";
 import { getDisplayTitle, presentItem } from "./present";
 
@@ -117,6 +119,40 @@ describe("getCoverImage", () => {
 
     expect(resolveMetadataCoverUrl(item)).toBe("/uploads/icollect-ps4.jpg");
     expect(getCoverImage(item)).toBe("/uploads/icollect-ps4.jpg");
+  });
+});
+
+describe("backgroundPickerAttachments", () => {
+  it("returns dedicated backgrounds before covers", () => {
+    const ranked = backgroundPickerAttachments({
+      attachments: [
+        { type: "cover", url: "/cover.jpg", source: "bgg" },
+        { type: "background", url: "/hero.jpg", source: "philibert" },
+      ],
+    });
+
+    expect(ranked.map((attachment) => attachment.url)).toEqual(["/hero.jpg"]);
+  });
+
+  it("falls back to ranked covers when no dedicated background assets exist", () => {
+    const ranked = backgroundPickerAttachmentsForItem(
+      {
+        attachments: [
+          { type: "cover", url: "/small.jpg", source: "philibert" },
+          { type: "cover", url: "/large.jpg", source: "bgg", role: "fr" },
+        ],
+      },
+      { type: "boardgames", name: "Black Stories" },
+    );
+
+    expect(ranked.map((attachment) => attachment.type)).toEqual([
+      "cover",
+      "cover",
+    ]);
+    expect(ranked.map((attachment) => attachment.url).sort()).toEqual([
+      "/large.jpg",
+      "/small.jpg",
+    ]);
   });
 });
 

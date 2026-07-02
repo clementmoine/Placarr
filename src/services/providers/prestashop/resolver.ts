@@ -3,6 +3,7 @@ import {
   retailerSearchHitLimit,
 } from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { retailerProductUrlBarcodeConflicts } from "@/lib/retailer/productUrl";
 import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
@@ -255,6 +256,10 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
           const barcodeConfirmed =
             normalizeProductBarcode(product.barcode) === normalizedBarcode;
           if (
+            !retailerProductUrlBarcodeConflicts(
+              product.productUrl,
+              normalizedBarcode,
+            ) &&
             acceptRetailerCatalogCandidate({
               requestedName,
               shelfName: ctx.shelfName,
@@ -293,6 +298,16 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
 
           const product = mapPrestashopSearchProduct(config, hit);
           if (!product?.title) continue;
+
+          if (
+            normalizedBarcode &&
+            retailerProductUrlBarcodeConflicts(
+              product.productUrl,
+              normalizedBarcode,
+            )
+          ) {
+            continue;
+          }
 
           if (
             !acceptRetailerCatalogCandidate({

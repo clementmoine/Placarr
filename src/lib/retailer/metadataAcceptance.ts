@@ -1,6 +1,7 @@
 import { bundleTitlePartsMatchCatalogTitle } from "@/lib/metadata/boardGame";
 import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
+import { isBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
 import {
   catalogEditionIdentityMismatch,
   franchiseSequelNumbersConflict,
@@ -10,6 +11,7 @@ import {
   metadataTitleSimilarity,
 } from "@/lib/metadata/titleMatching";
 import {
+  catalogTitleOmitsRequestedProductIdentity,
   isNameOnlyRetailerTitleMatch,
   retailerCatalogSharesRequestedIdentity,
   retailerIdentityTokenCount,
@@ -34,6 +36,7 @@ function isBarcodeConfirmedCatalogTitleAccepted(
   catalogTitle: string,
   shelfName?: string | null,
   trustConfirmedProductBarcode = false,
+  itemBarcode?: string | null,
 ): boolean {
   if (retailerCatalogPlatformMismatch(shelfName, catalogTitle)) {
     return false;
@@ -47,7 +50,13 @@ function isBarcodeConfirmedCatalogTitleAccepted(
   if (franchiseSequelNumbersConflict([requestedName], catalogTitle)) {
     return false;
   }
-  if (trustConfirmedProductBarcode) {
+  if (catalogTitleOmitsRequestedProductIdentity(requestedName, catalogTitle)) {
+    return false;
+  }
+  if (
+    trustConfirmedProductBarcode ||
+    isBarcodePlaceholderItemName(requestedName, itemBarcode)
+  ) {
     return true;
   }
   if (isMetadataTitleAligned({ title: catalogTitle }, [requestedName], 0.42)) {
@@ -68,6 +77,8 @@ export function isRetailerCatalogTitleAccepted(input: {
   barcodeConfirmed?: boolean;
   /** When true, a confirmed barcode accepts unless platform/sequel/edition checks fail. */
   trustConfirmedProductBarcode?: boolean;
+  /** Item barcode — used to detect bulk-scan placeholder names (`Objet {ean}`). */
+  itemBarcode?: string | null;
   /** When true, only barcode confirmation or bundle-scenario overlap can accept. */
   requireBundleScenarioMatch?: boolean;
 }): boolean {
@@ -85,6 +96,7 @@ export function isRetailerCatalogTitleAccepted(input: {
       catalogTitle,
       input.shelfName,
       input.trustConfirmedProductBarcode,
+      input.itemBarcode,
     );
   }
 
@@ -107,6 +119,11 @@ export function isRetailerCatalogTitleAccepted(input: {
     isNameOnlyRetailerTitleMatch(searchQuery, catalogTitle)
   ) {
     if (isGenericTitleFragment(searchQuery, [requestedName])) {
+      return false;
+    }
+    if (
+      catalogTitleOmitsRequestedProductIdentity(requestedName, catalogTitle)
+    ) {
       return false;
     }
     return retailerCatalogSharesRequestedIdentity(requestedName, catalogTitle);

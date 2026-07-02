@@ -89,6 +89,18 @@ describe("retailer metadata lookup policy", () => {
     ).toBe(true);
   });
 
+  it("accepts barcode-confirmed catalog hits for bulk-scan placeholder names", () => {
+    expect(
+      acceptRetailerCatalogCandidate({
+        requestedName: "Objet 0087169139499",
+        shelfName: "Black Stories",
+        catalogTitle: "Black stories - Autour du monde",
+        barcodeConfirmed: true,
+        itemBarcode: "0087169139499",
+      }),
+    ).toBe(true);
+  });
+
   it("rejects ps4 catalog hits on a ps5 shelf", () => {
     expect(
       acceptRetailerCatalogCandidate({
@@ -154,6 +166,29 @@ describe("retailer metadata lookup policy", () => {
         catalogTitle: "Tekken 7 Deluxe Edition PS5",
       }),
     ).toBe(true);
+  });
+
+  it("rejects shelf/franchise search hits that drop a scenario-specific suffix", () => {
+    expect(
+      acceptRetailerCatalogCandidate({
+        requestedName: "Black Stories - Musique D'enfer",
+        searchQuery: "Black Stories",
+        shelfName: "Black Stories",
+        catalogTitle: "Black Stories",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects trust-confirmed barcode hits that drop a scenario-specific suffix", () => {
+    expect(
+      isRetailerCatalogTitleAccepted({
+        requestedName: "Black Stories - Faits vécus",
+        catalogTitle: "Black Stories VF",
+        barcodeConfirmed: true,
+        trustConfirmedProductBarcode: true,
+        itemBarcode: "0626570607465",
+      }),
+    ).toBe(false);
   });
 
   it("never injects tokens outside the item title and shelf name", () => {

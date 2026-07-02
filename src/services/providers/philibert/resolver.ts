@@ -3,6 +3,7 @@ import {
   retailerSearchHitLimit,
 } from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { retailerProductUrlBarcodeConflicts } from "@/lib/retailer/productUrl";
 import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
@@ -308,6 +309,13 @@ async function resolvePhilibertHit(
     resolvedBarcode !== normalizedBarcode;
 
   if (barcodeContradicted) return null;
+
+  if (
+    normalizedBarcode &&
+    retailerProductUrlBarcodeConflicts(hit.url, normalizedBarcode)
+  ) {
+    return null;
+  }
 
   if (
     !acceptRetailerCatalogCandidate({

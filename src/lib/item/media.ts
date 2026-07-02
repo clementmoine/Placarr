@@ -149,6 +149,74 @@ function persistedImageMetricsByUrl(
 
 const COVER_GALLERY_TYPES = new Set(["cover", "artwork", "image"]);
 
+// Set<string>: attachment.type is AttachmentType | string (see MediaItem).
+const BACKGROUND_PICKER_TYPES = new Set<string>([
+  "background",
+  "artwork",
+  "screenshot",
+  "image",
+]);
+
+/**
+ * Background choices for the item editor: dedicated hero/screenshot assets first,
+ * then ranked covers when nothing else exists (typical boardgames — retailers only
+ * publish box art, not landscape backdrops).
+ */
+export function backgroundPickerAttachments(
+  metadata:
+    | {
+        attachments?: MediaItem[] | null;
+      }
+    | null
+    | undefined,
+  options?: AttachmentDisplayScoreOptions,
+  imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
+): ScoredAttachmentInput[] {
+  const attachmentsList = metadata?.attachments ?? [];
+  const dedicated = attachmentsList.filter(
+    (attachment) =>
+      attachment.url && BACKGROUND_PICKER_TYPES.has(attachment.type),
+  );
+  const dedupedDedicated = dedupeAttachmentsByImageUrl(
+    dedicated as ScoredAttachmentInput[],
+  );
+  if (dedupedDedicated.length > 0) {
+    return rankAttachmentsForDisplay(
+      dedupedDedicated,
+      imageMetricsByUrl,
+      options,
+    );
+  }
+
+  const covers = attachmentsList.filter(
+    (attachment) => attachment.url && COVER_GALLERY_TYPES.has(attachment.type),
+  );
+  const shelfCovers = options?.requestedPlatformKey
+    ? filterCoverAttachmentsForShelfPlatform(
+        covers as ScoredAttachmentInput[],
+        options,
+      )
+    : (covers as ScoredAttachmentInput[]);
+
+  return rankCoverGalleryAttachments(shelfCovers, imageMetricsByUrl, options);
+}
+
+export function backgroundPickerAttachmentsForItem(
+  metadata:
+    | {
+        attachments?: MediaItem[] | null;
+      }
+    | null
+    | undefined,
+  shelf?: MediaInput["shelf"],
+  uiLocale?: Locale | null,
+): ScoredAttachmentInput[] {
+  return backgroundPickerAttachments(
+    metadata,
+    coverDisplayOptions({ shelf }, uiLocale),
+  );
+}
+
 /** Drop covers whose title/role names another console than the shelf. */
 export function filterCoverAttachmentsForShelfPlatform(
   list: ScoredAttachmentInput[],

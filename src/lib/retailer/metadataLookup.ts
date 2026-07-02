@@ -53,6 +53,7 @@ export function acceptRetailerCatalogCandidate(input: {
   catalogAliases?: string[];
   barcodeConfirmed?: boolean;
   trustConfirmedProductBarcode?: boolean;
+  itemBarcode?: string | null;
 }): boolean {
   const searchQuery = input.searchQuery?.trim() ?? "";
   const shelfOnly =
@@ -71,6 +72,7 @@ export function acceptRetailerCatalogCandidate(input: {
     catalogAliases: input.catalogAliases,
     barcodeConfirmed: input.barcodeConfirmed,
     trustConfirmedProductBarcode: input.trustConfirmedProductBarcode,
+    itemBarcode: input.itemBarcode,
     requireBundleScenarioMatch: shelfOnly,
   });
 }

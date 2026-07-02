@@ -116,6 +116,26 @@ describe("createBGGResolver", () => {
                             ],
                           },
                         },
+                        ...Array.from({ length: 10 }, (_, index) => ({
+                          item: {
+                            children: [
+                              {
+                                image: {
+                                  content: `https://cf.geekdo-images.com/catan-extra-${index}.jpg`,
+                                },
+                              },
+                              {
+                                name: {
+                                  type: "primary",
+                                  value: `Extra edition ${index}`,
+                                },
+                              },
+                              {
+                                link: { type: "language", value: "English" },
+                              },
+                            ],
+                          },
+                        })),
                       ],
                     },
                   },
@@ -249,6 +269,10 @@ describe("createBGGResolver", () => {
         }),
       ]),
     );
+    expect(
+      res?.attachments?.filter((attachment) => attachment.type === "cover")
+        .length,
+    ).toBeLessThanOrEqual(9);
     expect(res?.authors).toEqual([{ name: "Klaus Teuber" }]);
     expect(res?.publishers).toEqual([{ name: "Kosmos" }]);
     expect(res?.aliases).toContain("Les Colons de Catane");
@@ -383,5 +407,31 @@ describe("createBGGResolver", () => {
     const fetchFromBGG = createBGGResolver({ formatScore });
 
     expect(await fetchFromBGG("Inconnu")).toBeNull();
+  });
+
+  it("ignore la fiche BGG franchise quand le titre catalogue omet le scénario demandé", async () => {
+    process.env.BGG_API_TOKEN = "test-token";
+    mockedGet.mockResolvedValue({ data: "<xml/>" } as never);
+    mockedConvert.mockReturnValueOnce({
+      items: {
+        children: [
+          {
+            item: {
+              id: "18803",
+              children: [{ name: { type: "primary", value: "Black Stories" } }],
+            },
+          },
+        ],
+      },
+    } as never);
+
+    const fetchFromBGG = createBGGResolver({ formatScore });
+    const res = await fetchFromBGG({
+      name: "Black Stories - Musique D'enfer",
+      shelfName: "Black Stories",
+      lookupQueries: ["Black Stories - Musique D'enfer"],
+    });
+
+    expect(res).toBeNull();
   });
 });

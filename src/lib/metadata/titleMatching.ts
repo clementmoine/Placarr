@@ -4,12 +4,22 @@ import {
 } from "@/lib/barcode/listingTerms";
 import { normalizeDisplayTitle } from "@/lib/title/displayScore";
 import { inferTextLanguage, regionRank } from "@/lib/locale/preference";
-import { titleTokensEquivalent, TITLE_PHRASE_EQUIVALENT_GROUPS } from "@/lib/title/tokenEquivalents";
+import {
+  titleTokensEquivalent,
+  TITLE_PHRASE_EQUIVALENT_GROUPS,
+} from "@/lib/title/tokenEquivalents";
 import levenshtein from "fast-levenshtein";
-import { explicitVolumeNumbers, normalizeVolumeTitleText, normalizeVolumeNumber } from "@/lib/title/volumeNumber";
+import {
+  explicitVolumeNumbers,
+  normalizeVolumeTitleText,
+  normalizeVolumeNumber,
+} from "@/lib/title/volumeNumber";
 import { pickBestCoverFromAttachments } from "@/lib/media/attachmentDisplayScore";
 import { cleanSearchQuery } from "@/lib/search/query";
-import { buildStructuralTitleSearchVariants, isWeakMetadataSearchFragment } from "@/lib/title/searchVariants";
+import {
+  buildStructuralTitleSearchVariants,
+  isWeakMetadataSearchFragment,
+} from "@/lib/title/searchVariants";
 import { parseRomanToken } from "@/lib/title/romanNumeral";
 import { resolveGameMetadataPlatform } from "@/lib/metadata/platform";
 import type {
@@ -448,7 +458,9 @@ function franchiseSequelTokens(title: string): string[] {
     }
   }
 
-  for (const match of separatorSource.matchAll(/\b(\d{1,2})\s*(?::|(?:-\s))/g)) {
+  for (const match of separatorSource.matchAll(
+    /\b(\d{1,2})\s*(?::|(?:-\s))/g,
+  )) {
     pushFranchiseSequelNumber(numbers, match[1]);
   }
 
@@ -541,7 +553,10 @@ export function supplementGameEditionMetadata(
 ): MetadataResult {
   const title =
     edition.title?.trim() || requestedName.trim() || base.title?.trim();
-  const attachments = mergeEditionAttachments(edition.attachments, base.attachments);
+  const attachments = mergeEditionAttachments(
+    edition.attachments,
+    base.attachments,
+  );
 
   return {
     ...base,
@@ -553,8 +568,7 @@ export function supplementGameEditionMetadata(
       pickBestCoverFromAttachments(attachments ?? []) ||
       base.imageUrl?.trim() ||
       edition.imageUrl?.trim(),
-    heroImageUrl:
-      edition.heroImageUrl?.trim() || base.heroImageUrl,
+    heroImageUrl: edition.heroImageUrl?.trim() || base.heroImageUrl,
     attachments,
     aliases: Array.from(
       new Set(
@@ -594,12 +608,14 @@ function phraseEquivalentSubtitlesAlign(a: string, b: string): boolean {
   const aLower = a.toLowerCase();
   const bLower = b.toLowerCase();
   return TITLE_PHRASE_EQUIVALENT_GROUPS.some((group) => {
-    const aPhrase = group.find((phrase) => aLower.includes(phrase.toLowerCase()));
-    const bPhrase = group.find((phrase) => bLower.includes(phrase.toLowerCase()));
+    const aPhrase = group.find((phrase) =>
+      aLower.includes(phrase.toLowerCase()),
+    );
+    const bPhrase = group.find((phrase) =>
+      bLower.includes(phrase.toLowerCase()),
+    );
     return Boolean(
-      aPhrase &&
-        bPhrase &&
-        aPhrase.toLowerCase() !== bPhrase.toLowerCase(),
+      aPhrase && bPhrase && aPhrase.toLowerCase() !== bPhrase.toLowerCase(),
     );
   });
 }
@@ -756,7 +772,10 @@ function isVariantMarkerToken(token: string): boolean {
   return false;
 }
 
-function isStylizedTitleConnector(token: string, candidateTitle: string): boolean {
+function isStylizedTitleConnector(
+  token: string,
+  candidateTitle: string,
+): boolean {
   return (
     token.toLowerCase() === "x" &&
     /\b\w+\s+x\s+\w+\b/i.test(candidateTitle.trim())
@@ -974,7 +993,9 @@ export function metadataTitleMatchScore(
   }, 0);
 }
 
-function extractNumeralRange(title: string): { start: number; end: number } | null {
+function extractNumeralRange(
+  title: string,
+): { start: number; end: number } | null {
   const match = title.match(/\b([IVXLCDM]+|\d+)\s*[-–—]\s*([IVXLCDM]+|\d+)\b/i);
   if (!match) return null;
   const start = parseRomanToken(match[1]) ?? Number.parseInt(match[1], 10);
@@ -1003,7 +1024,7 @@ export function descriptionMatchesRequestedTitle(
   const colonMatch = requestedTitle.match(/^[^:]+:\s*([^:]+)/);
   if (!colonMatch) return true;
 
-  let subtitle = colonMatch[1].replace(/\s+[-–—]\s+.*$/, "").trim();
+  const subtitle = colonMatch[1].replace(/\s+[-–—]\s+.*$/, "").trim();
   if (EDITION_QUALIFIER.test(subtitle)) return true;
 
   const tokens = normalizeDisplayTitle(subtitle).filter(

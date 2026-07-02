@@ -17,8 +17,8 @@ export type BarcodeLookupTaskBuilder = (
 
 export function createBarcodeLookupDeps(): BarcodeLookupDeps {
   const deps = {} as BarcodeLookupDeps;
-  for (const module of PROVIDER_MODULES) {
-    Object.assign(deps, module.contributeBarcodeLookupDeps?.() ?? {});
+  for (const providerModule of PROVIDER_MODULES) {
+    Object.assign(deps, providerModule.contributeBarcodeLookupDeps?.() ?? {});
   }
   return deps;
 }
@@ -41,14 +41,17 @@ export function createBarcodeLookupTaskBuilders(
       (context: BarcodeLookupContext) => {
         const slim = isBarcodeRecordSlimMode();
         return PROVIDER_MODULES.reduce<Record<string, Promise<unknown>>>(
-          (tasks, module) => {
-            if (!module.buildBarcodeTasks) return tasks;
-            if (slim && shouldSkipBarcodeTaskInSlimRecord(module.info)) {
+          (tasks, providerModule) => {
+            if (!providerModule.buildBarcodeTasks) return tasks;
+            if (
+              slim &&
+              shouldSkipBarcodeTaskInSlimRecord(providerModule.info)
+            ) {
               return tasks;
             }
             return {
               ...tasks,
-              ...module.buildBarcodeTasks(deps, type, context),
+              ...providerModule.buildBarcodeTasks(deps, type, context),
             };
           },
           {},
@@ -60,8 +63,11 @@ export function createBarcodeLookupTaskBuilders(
 
 export function createGameBarcodeEnrichmentDeps(): GameBarcodeEnrichmentDeps {
   const deps: GameBarcodeEnrichmentDeps = {};
-  for (const module of PROVIDER_MODULES) {
-    Object.assign(deps, module.contributeGameBarcodeEnrichment?.() ?? {});
+  for (const providerModule of PROVIDER_MODULES) {
+    Object.assign(
+      deps,
+      providerModule.contributeGameBarcodeEnrichment?.() ?? {},
+    );
   }
   return deps;
 }

@@ -45,16 +45,23 @@ const evidenceByLabel = new Map<string, ProviderEvidenceProfile>();
 const evidenceLabelToProviderId = new Map<string, string>();
 const evidenceLabelToDisplayLabel = new Map<string, string>();
 
-for (const module of PROVIDER_MODULES) {
-  if (!module.evidence) continue;
-  evidenceByLabel.set(module.evidence.label, {
-    sourceWeight: module.evidence.sourceWeight,
-    canonical: module.evidence.canonical ?? module.info.canonical,
-    trustedRetailer: module.evidence.trustedRetailer ?? false,
-    cleanCachedNames: module.evidence.cleanCachedNames ?? false,
+for (const providerModule of PROVIDER_MODULES) {
+  if (!providerModule.evidence) continue;
+  evidenceByLabel.set(providerModule.evidence.label, {
+    sourceWeight: providerModule.evidence.sourceWeight,
+    canonical:
+      providerModule.evidence.canonical ?? providerModule.info.canonical,
+    trustedRetailer: providerModule.evidence.trustedRetailer ?? false,
+    cleanCachedNames: providerModule.evidence.cleanCachedNames ?? false,
   });
-  evidenceLabelToProviderId.set(module.evidence.label, module.info.id);
-  evidenceLabelToDisplayLabel.set(module.evidence.label, module.info.label);
+  evidenceLabelToProviderId.set(
+    providerModule.evidence.label,
+    providerModule.info.id,
+  );
+  evidenceLabelToDisplayLabel.set(
+    providerModule.evidence.label,
+    providerModule.info.label,
+  );
 }
 
 for (const [label, config] of Object.entries(INTERNAL_EVIDENCE)) {

@@ -118,38 +118,43 @@ export function consolidatePlayerFacts(facts: DetailFact[]): DetailFact[] {
       range: parsePlayerFactRange(fact),
     }))
     .filter(
-      (entry): entry is {
+      (
+        entry,
+      ): entry is {
         fact: DetailFact;
         range: { min: number | null; max: number; maxOnly: boolean };
-      } => entry.range !== null
+      } => entry.range !== null,
     );
 
   if (parsed.length === 0) return facts;
 
   // Step 1: Filter out maxOnly facts when there is an explicit fact with the same max.
   const explicit = parsed.filter((entry) => entry.range.min !== null);
-  
+
   const filtered = parsed.filter((entry) => {
     if (!entry.range.maxOnly) return true;
     const hasMatchingExplicit = explicit.some(
-      (exp) => exp.range.max === entry.range.max
+      (exp) => exp.range.max === entry.range.max,
     );
     return !hasMatchingExplicit;
   });
 
   // Step 2: Group the remaining facts by their range signature
-  const groupsMap = new Map<string, {
-    min: number | null;
-    max: number;
-    maxOnly: boolean;
-    facts: DetailFact[];
-    sources: string[];
-  }>();
+  const groupsMap = new Map<
+    string,
+    {
+      min: number | null;
+      max: number;
+      maxOnly: boolean;
+      facts: DetailFact[];
+      sources: string[];
+    }
+  >();
 
   for (const entry of filtered) {
     const key = `${entry.range.min}:${entry.range.max}:${entry.range.maxOnly}`;
     const sources = getFactSourceNames(entry.fact);
-    
+
     if (!groupsMap.has(key)) {
       groupsMap.set(key, {
         min: entry.range.min,
@@ -174,7 +179,7 @@ export function consolidatePlayerFacts(facts: DetailFact[]): DetailFact[] {
   if (winners.length === 1) {
     const win = winners[0];
     const allMergedSources = Array.from(
-      new Set(parsed.flatMap((entry) => getFactSourceNames(entry.fact)))
+      new Set(parsed.flatMap((entry) => getFactSourceNames(entry.fact))),
     );
 
     unifiedFact = {
@@ -183,8 +188,8 @@ export function consolidatePlayerFacts(facts: DetailFact[]): DetailFact[] {
       value: win.maxOnly
         ? String(win.max)
         : win.min === win.max
-        ? String(win.min)
-        : `${win.min}-${win.max}`,
+          ? String(win.min)
+          : `${win.min}-${win.max}`,
       sourceNames: allMergedSources,
       sourceCount: allMergedSources.length,
       source: undefined,
@@ -202,7 +207,7 @@ export function consolidatePlayerFacts(facts: DetailFact[]): DetailFact[] {
     parts.sort();
 
     const allMergedSources = Array.from(
-      new Set(parsed.flatMap((entry) => getFactSourceNames(entry.fact)))
+      new Set(parsed.flatMap((entry) => getFactSourceNames(entry.fact))),
     );
 
     const allMax = winners.every((win) => win.maxOnly);
@@ -226,8 +231,8 @@ export function consolidateGeneralFacts(facts: DetailFact[]): DetailFact[] {
   if (targetFacts.length === 0) return facts;
 
   const kinds = Array.from(new Set(targetFacts.map((f) => f.kind)));
-  
-  let result = facts.filter((f) => !CONSOLIDATABLE_KINDS.has(f.kind));
+
+  const result = facts.filter((f) => !CONSOLIDATABLE_KINDS.has(f.kind));
 
   for (const kind of kinds) {
     const kindFacts = targetFacts.filter((f) => f.kind === kind);
@@ -236,16 +241,19 @@ export function consolidateGeneralFacts(facts: DetailFact[]): DetailFact[] {
       continue;
     }
 
-    const groupsMap = new Map<string, {
-      value: string;
-      facts: DetailFact[];
-      sources: string[];
-    }>();
+    const groupsMap = new Map<
+      string,
+      {
+        value: string;
+        facts: DetailFact[];
+        sources: string[];
+      }
+    >();
 
     for (const fact of kindFacts) {
       const normalizedValue = fact.value.trim().toLowerCase();
       const sources = getFactSourceNames(fact);
-      
+
       if (!groupsMap.has(normalizedValue)) {
         groupsMap.set(normalizedValue, {
           value: fact.value.trim(),
@@ -263,10 +271,12 @@ export function consolidateGeneralFacts(facts: DetailFact[]): DetailFact[] {
     const maxSources = Math.max(...groups.map((g) => g.sources.length));
     const winners = groups.filter((g) => g.sources.length === maxSources);
 
-    winners.sort((a, b) => a.value.localeCompare(b.value, undefined, { numeric: true }));
+    winners.sort((a, b) =>
+      a.value.localeCompare(b.value, undefined, { numeric: true }),
+    );
 
     const allMergedSources = Array.from(
-      new Set(kindFacts.flatMap((f) => getFactSourceNames(f)))
+      new Set(kindFacts.flatMap((f) => getFactSourceNames(f))),
     );
 
     const firstWinnerFact = winners[0].facts[0];

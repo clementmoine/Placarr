@@ -34,19 +34,23 @@ function buildFallbackBarcodeTeardownTasks(
   const tasks: TeardownProviderTask[] = [];
   const seen = new Set<string>();
 
-  for (const module of PROVIDER_MODULES) {
-    if (module.buildTeardownBarcodeTasks || !module.buildBarcodeTasks) continue;
+  for (const providerModule of PROVIDER_MODULES) {
+    if (
+      providerModule.buildTeardownBarcodeTasks ||
+      !providerModule.buildBarcodeTasks
+    )
+      continue;
 
     for (const type of types) {
-      const built = module.buildBarcodeTasks(deps, type, {
+      const built = providerModule.buildBarcodeTasks(deps, type, {
         barcode: ctx.barcode,
       });
       const promise = Object.values(built)[0];
       if (!promise) continue;
 
       const label = ctx.type
-        ? module.info.label
-        : `${module.info.label}:${type}`;
+        ? providerModule.info.label
+        : `${providerModule.info.label}:${type}`;
       if (seen.has(label)) continue;
       seen.add(label);
 
@@ -62,7 +66,8 @@ export function buildTeardownBarcodeProviderTasks(
 ): TeardownProviderTask[] {
   const deps = createBarcodeLookupDeps();
   const customTasks = PROVIDER_MODULES.flatMap(
-    (module) => module.buildTeardownBarcodeTasks?.(params, deps) ?? [],
+    (providerModule) =>
+      providerModule.buildTeardownBarcodeTasks?.(params, deps) ?? [],
   );
 
   return [...customTasks, ...buildFallbackBarcodeTeardownTasks(params, deps)];
@@ -74,7 +79,8 @@ export function buildTeardownMetadataProviderTasks(
   if (!params.name) return [];
 
   const tasks = PROVIDER_MODULES.flatMap(
-    (module) => module.buildTeardownMetadataTasks?.(params) ?? [],
+    (providerModule) =>
+      providerModule.buildTeardownMetadataTasks?.(params) ?? [],
   );
 
   tasks.push({

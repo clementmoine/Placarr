@@ -10,7 +10,7 @@
     "dev:docker:down": "docker compose -f compose.dev.yml down",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "prisma:generate": "prisma generate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

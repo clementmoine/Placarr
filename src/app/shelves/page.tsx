@@ -574,7 +574,7 @@ function ShelvesComponent() {
                   <div className="flex flex-col gap-3 mt-4">
                     <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200 flex items-center gap-1.5 select-none animate-fade-in">
                       <Sparkles className="size-4.5 text-amber-500" />
-                      Disponible chez d'autres collectionneurs
+                      Disponible chez d’autres collectionneurs
                     </h2>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                       {exploreItems.map((item) => (

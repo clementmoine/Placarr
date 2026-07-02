@@ -83,9 +83,9 @@ export async function compileAllBarcodeTypeResults(params: {
     boardgames: boardgameSources,
   };
   const sourceContext = { type, isBook, cleanedBarcode };
-  for (const module of PROVIDER_MODULES) {
-    if (!module.buildBarcodeSources) continue;
-    for (const contribution of module.buildBarcodeSources(
+  for (const providerModule of PROVIDER_MODULES) {
+    if (!providerModule.buildBarcodeSources) continue;
+    for (const contribution of providerModule.buildBarcodeSources(
       payload,
       sourceContext,
     )) {

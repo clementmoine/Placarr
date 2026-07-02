@@ -8,22 +8,21 @@ import type {
 export function buildCatalogExternalLink(
   ctx: CatalogExternalLinkContext,
 ): CatalogExternalLink | null {
-  for (const module of PROVIDER_MODULES) {
-    if (!module.buildCatalogExternalLink) continue;
-    const link = module.buildCatalogExternalLink(ctx);
+  for (const providerModule of PROVIDER_MODULES) {
+    if (!providerModule.buildCatalogExternalLink) continue;
+    const link = providerModule.buildCatalogExternalLink(ctx);
     if (link) {
       return {
         ...link,
-        providerLabel: module.evidence?.label ?? module.info.label,
+        providerLabel:
+          providerModule.evidence?.label ?? providerModule.info.label,
       };
     }
   }
   return null;
 }
 
-export function metadataAliases(
-  aliases: unknown,
-): string[] | undefined {
+export function metadataAliases(aliases: unknown): string[] | undefined {
   if (!aliases) return undefined;
   if (Array.isArray(aliases)) return aliases;
   if (typeof aliases === "string") {

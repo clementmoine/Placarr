@@ -177,7 +177,10 @@ function buildProviderMigrationPlan(
   );
   const outOfScope = sortMigrationEntries(
     probes
-      .filter((probe) => probe.observationMode === "unknown" && !probe.hasMetadataAdapter)
+      .filter(
+        (probe) =>
+          probe.observationMode === "unknown" && !probe.hasMetadataAdapter,
+      )
       .map(toMigrationPlanEntry),
   );
 
@@ -231,13 +234,13 @@ async function runMetadataAdapterProbe(
   providerId: string,
   contextOverride?: MetadataAdapterContext,
 ): Promise<ProbeExecution> {
-  const module = getProviderModule(providerId);
+  const providerModule = getProviderModule(providerId);
   const adapter = getMetadataProviderAdapter(providerId);
-  const ctx = contextOverride ?? module?.mappingProbe?.context;
+  const ctx = contextOverride ?? providerModule?.mappingProbe?.context;
   if (!adapter || !ctx) return { probe: null, metadata: null };
 
   const resolve = (context: typeof ctx) => adapter.resolve(context);
-  const shouldRetry = !!module?.info.mappingProbeRetry;
+  const shouldRetry = !!providerModule?.info.mappingProbeRetry;
 
   const resolveWithPolicy = (context: typeof ctx) =>
     shouldRetry ? retry(() => resolve(context), 2) : resolve(context);
@@ -260,10 +263,10 @@ async function runProbe(
   providerId: string,
   contextOverride?: MetadataAdapterContext,
 ): Promise<ProbeExecution> {
-  const module = getProviderModule(providerId);
+  const providerModule = getProviderModule(providerId);
   const hasAdapter = !!getMetadataProviderAdapter(providerId);
-  if (module?.runMappingProbe) {
-    const customProbe = await module.runMappingProbe();
+  if (providerModule?.runMappingProbe) {
+    const customProbe = await providerModule.runMappingProbe();
     if (hasAdapter) {
       const adapterExecution = await runMetadataAdapterProbe(
         providerId,
@@ -288,9 +291,10 @@ async function runProbe(
 export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPayload> {
   const probes = await Promise.all(
     PROVIDERS.map(async (provider): Promise<ProviderMappingProbeEntry> => {
-      const module = getProviderModule(provider.id);
-      const sampleInput = module?.mappingProbe?.sampleInput || provider.id;
-      const hasCustomProbe = !!module?.runMappingProbe;
+      const providerModule = getProviderModule(provider.id);
+      const sampleInput =
+        providerModule?.mappingProbe?.sampleInput || provider.id;
+      const hasCustomProbe = !!providerModule?.runMappingProbe;
       const hasMetadataAdapter = !!getMetadataProviderAdapter(provider.id);
 
       if (provider.auth.kind === "key" && !isProviderConfigured(provider)) {
@@ -309,8 +313,8 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
         // union their raw + mapped keys so per-product field gaps don't hide
         // unexploited keys (see mergeMappingProbeSamples).
         const sampleContexts: Array<MetadataAdapterContext | undefined> = [
-          module?.mappingProbe?.context,
-          ...(module?.mappingProbe?.additionalSamples ?? []).map(
+          providerModule?.mappingProbe?.context,
+          ...(providerModule?.mappingProbe?.additionalSamples ?? []).map(
             (sample) => sample.context,
           ),
         ];
@@ -319,8 +323,8 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
         const sampleResults = await Promise.all(
           sampleContexts.map(async (context) => {
             const execution = await runProbe(provider.id, context);
-            const rawKeys = module?.collectMappingRawKeys
-              ? await module.collectMappingRawKeys(context)
+            const rawKeys = providerModule?.collectMappingRawKeys
+              ? await providerModule.collectMappingRawKeys(context)
               : [];
             return { ...execution, rawKeys };
           }),

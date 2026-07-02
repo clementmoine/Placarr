@@ -38,13 +38,13 @@ function recordSlimSkipLookupKeys(): Set<string> {
     {},
     { get: () => () => Promise.resolve(null) },
   ) as never;
-  for (const module of PROVIDER_MODULES) {
-    if (!shouldSkipBarcodeTaskInSlimRecord(module.info)) {
+  for (const providerModule of PROVIDER_MODULES) {
+    if (!shouldSkipBarcodeTaskInSlimRecord(providerModule.info)) {
       continue;
     }
-    if (!module.buildBarcodeTasks) continue;
+    if (!providerModule.buildBarcodeTasks) continue;
     for (const type of RECORD_SLIM_BARCODE_TYPES) {
-      const tasks = module.buildBarcodeTasks(noopDeps, type, {
+      const tasks = providerModule.buildBarcodeTasks(noopDeps, type, {
         barcode: "0000000000000",
       });
       for (const key of Object.keys(tasks)) keys.add(key);
@@ -94,11 +94,10 @@ export async function resolveBarcodeLookupTasks(
       const started = Date.now();
       try {
         const value = await task;
-        // eslint-disable-next-line no-console
+
         console.log(`[record lookup] ${key} ${Date.now() - started}ms ok`);
         return value;
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.log(
           `[record lookup] ${key} ${Date.now() - started}ms error`,
           error instanceof Error ? error.message : error,
@@ -107,7 +106,7 @@ export async function resolveBarcodeLookupTasks(
       }
     }),
   );
-  // eslint-disable-next-line no-console
+
   console.log(
     `[record lookup] batch ${Date.now() - batchStarted}ms (${entries.map(([key]) => key).join(", ")})`,
   );

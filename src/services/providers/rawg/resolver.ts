@@ -42,12 +42,16 @@ export function createRawgResolver(deps: RawgResolverDeps) {
           const status = readAxiosStatus(error);
           if (status === 429) {
             markRawgQuotaHit({ rateLimited: true });
-            console.warn("[RAWG] Rate limit exceeded — pausing lookups for 20m");
+            console.warn(
+              "[RAWG] Rate limit exceeded — pausing lookups for 20m",
+            );
             return null;
           }
           if (status === 401) {
             markRawgQuotaHit({ authFailure: true });
-            console.warn("[RAWG] Unauthorized API key — pausing lookups for 1h");
+            console.warn(
+              "[RAWG] Unauthorized API key — pausing lookups for 1h",
+            );
             return null;
           }
           const isTransient = status !== undefined && status >= 500;
@@ -132,7 +136,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     const platformName = bestMatch.platforms?.[0]?.platform?.name || "";
     let imageUrl = bestMatch.background_image;
 
-    let coverUrl = await deps.fetchCoverFromCoverProject(
+    const coverUrl = await deps.fetchCoverFromCoverProject(
       bestMatch.name,
       platformName,
     );

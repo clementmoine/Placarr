@@ -80,7 +80,6 @@ const barcodeLookupTaskBuilders = createBarcodeLookupTaskBuilders(
 
 function recordStep(label: string) {
   if (process.env.RECORD) {
-    // eslint-disable-next-line no-console
     console.log(`[record step] ${label}`);
   }
 }
@@ -110,7 +109,6 @@ export type BarcodeResolveResult = {
   observations?: import("@/types/metadataObservation").MetadataObservation[];
   observationSchemaVersion?: string | null;
 };
-
 
 async function cacheBarcodeResult(
   cleanedBarcode: string,
@@ -303,7 +301,6 @@ export async function resolveBarcode(
   });
   recordStep("compile:done");
   if (process.env.RECORD) {
-    // eslint-disable-next-line no-console
     console.log(
       `[record step] compile:games=${typeResults.games ? "hit" : "miss"} pc=${payload.pc?.title ?? "null"}`,
     );
@@ -363,11 +360,7 @@ export async function resolveBarcode(
 
     const scanOffers = collectScanPriceOffers(payload, selectedType);
 
-    if (
-      scanOffers.length > 0 &&
-      !cachedPricesAreFresh &&
-      !process.env.RECORD
-    ) {
+    if (scanOffers.length > 0 && !cachedPricesAreFresh && !process.env.RECORD) {
       // Merge captured prices into the cache (never clobbers other providers'
       // offers — see mergePriceOffers).
       try {

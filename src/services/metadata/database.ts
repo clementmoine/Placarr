@@ -23,7 +23,10 @@ export async function confrontWithDatabase(
     const result = await adapter?.resolve({ name: cleanedName });
     return result?.title ?? null;
   } catch (error) {
-    console.warn(`[ConfrontWithDatabase] Error for "${name}" (${type}):`, error);
+    console.warn(
+      `[ConfrontWithDatabase] Error for "${name}" (${type}):`,
+      error,
+    );
     return null;
   }
 }
@@ -40,18 +43,21 @@ export async function getDatabaseSuggestions(
   const provider = nameDatabaseProviderForType(type);
   if (!provider) return [];
 
-  const module = getProviderModule(provider.id);
-  if (!module?.suggestDatabaseTitles) return [];
+  const providerModule = getProviderModule(provider.id);
+  if (!providerModule?.suggestDatabaseTitles) return [];
 
   try {
-    const list = await module.suggestDatabaseTitles({
+    const list = await providerModule.suggestDatabaseTitles({
       name,
       cleanedName,
       platform,
     });
     return list.map((item) => decodeHTMLEntities(item));
   } catch (error) {
-    console.warn(`[getDatabaseSuggestions] Error for "${name}" (${type}):`, error);
+    console.warn(
+      `[getDatabaseSuggestions] Error for "${name}" (${type}):`,
+      error,
+    );
   }
   return [];
 }

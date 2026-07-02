@@ -104,8 +104,7 @@ function searchTokens(searchTerm: string): string[] {
       .trim()
       .split(/\s+/)
       .filter(
-        (token) =>
-          token.length >= MIN_AND_TOKEN_LENGTH || /^\d+$/.test(token),
+        (token) => token.length >= MIN_AND_TOKEN_LENGTH || /^\d+$/.test(token),
       ),
   );
 }
@@ -226,7 +225,7 @@ export function itemSearchHaystacks(item: {
     haystacks.push(aliases);
   }
 
-  let facts = item.metadata?.facts;
+  const facts = item.metadata?.facts;
   if (typeof facts === "string") {
     haystacks.push(facts);
   } else {
@@ -238,7 +237,8 @@ export function itemSearchHaystacks(item: {
   }
 
   return haystacks.filter(
-    (value): value is string => typeof value === "string" && value.trim().length > 0,
+    (value): value is string =>
+      typeof value === "string" && value.trim().length > 0,
   );
 }
 

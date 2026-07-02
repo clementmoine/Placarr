@@ -5,6 +5,7 @@ import {
   promises as fs,
 } from "node:fs";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import axios from "axios";
@@ -499,7 +500,6 @@ export function __setLaunchBoxIndexForTests(
 }
 
 export function hashLaunchBoxQuery(value: string): string {
-  const { createHash } = require("node:crypto");
   return createHash("sha1").update(value.normalize("NFKC")).digest("hex");
 }
 

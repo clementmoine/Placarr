@@ -113,7 +113,10 @@ function isChocoBonPlanProductImage(url: string): boolean {
   if (lower.includes("badge-medaille")) return false;
   if (lower.includes("/medailles/")) return false;
   if (lower.includes("amazon-adsystem")) return false;
-  if (lower.includes("google-play-badge") || lower.includes("apple-store-badge")) {
+  if (
+    lower.includes("google-play-badge") ||
+    lower.includes("apple-store-badge")
+  ) {
     return false;
   }
   if (lower.includes("logo") || lower.includes("favicon")) return false;
@@ -131,7 +134,10 @@ function isChocoBonPlanProductImageAlt(alt: string): boolean {
 }
 
 function isChocoBonPlanAuthorAvatar(url: string, alt: string): boolean {
-  const trimmedAlt = alt.trim().replace(/\s+cover$/i, "").trim();
+  const trimmedAlt = alt
+    .trim()
+    .replace(/\s+cover$/i, "")
+    .trim();
   if (!trimmedAlt) return false;
   const fileStem =
     url
@@ -151,10 +157,7 @@ function stripChocoBonPlanAuthorBlocks(html: string): string {
   return html.replace(/<address class="author">[\s\S]*?<\/address>/gi, "");
 }
 
-function classifyChocoBonPlanImage(
-  url: string,
-  alt = "",
-): AttachmentType {
+function classifyChocoBonPlanImage(url: string, alt = ""): AttachmentType {
   const hint = `${url} ${alt}`.toLowerCase();
   if (
     hint.includes("visuel-produit") ||
@@ -183,7 +186,9 @@ function classifyChocoBonPlanImage(
   if (hint.includes("visuel-slider") || hint.includes("slider")) {
     return "background";
   }
-  if (/\/[\w-]+-(?:ps\d|xbox(?:-one)?|switch)\.(?:png|jpe?g|webp)$/i.test(url)) {
+  if (
+    /\/[\w-]+-(?:ps\d|xbox(?:-one)?|switch)\.(?:png|jpe?g|webp)$/i.test(url)
+  ) {
     return "cover";
   }
   if (hint.includes("poster") || hint.includes("artwork")) {
@@ -231,7 +236,7 @@ export function filterChocoBonPlanImagesForProduct(
 ): ChocoBonPlanImage[] {
   if (!productTitle?.trim()) return images;
 
-  let filtered = images.filter((image) => {
+  const filtered = images.filter((image) => {
     if (!image.title?.trim()) return true;
     if (gameProductIdentityMismatch([productTitle], image.title)) return false;
     if (franchiseSequelNumbersConflict([productTitle], image.title)) {
@@ -424,9 +429,7 @@ function chocoBonPlanHitIsEligible(
   sequelPenalty: number,
 ): boolean {
   if (
-    alignmentNames.some((name) =>
-      gameProductIdentityMismatch([name], hitTitle),
-    )
+    alignmentNames.some((name) => gameProductIdentityMismatch([name], hitTitle))
   ) {
     return false;
   }
@@ -438,9 +441,7 @@ function chocoBonPlanHitIsEligible(
     return false;
   }
   if (sequelPenalty <= -0.9) return false;
-  if (
-    isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.58)
-  ) {
+  if (isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.58)) {
     return true;
   }
   if (
@@ -475,9 +476,7 @@ function chocoBonPlanMinimumScore(
   alignmentNames: string[],
   titleScore: number,
 ): number {
-  if (
-    isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.58)
-  ) {
+  if (isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.58)) {
     return 0.42;
   }
   if (
@@ -584,10 +583,18 @@ function chocoBonPlanPlatformBoost(
     (wantedPlatform.startsWith("switch") && /\bswitch\b/i.test(hay));
 
   if (mentionsWantedPlatform) {
-    if (wantedPlatform === "ps4" && /\bxbox\b/.test(hay) && !/\bps4\b/.test(hay)) {
+    if (
+      wantedPlatform === "ps4" &&
+      /\bxbox\b/.test(hay) &&
+      !/\bps4\b/.test(hay)
+    ) {
       return -0.25;
     }
-    if (wantedPlatform === "ps4" && /\bpc\b/.test(hay) && !/\bps4\b/.test(hay)) {
+    if (
+      wantedPlatform === "ps4" &&
+      /\bpc\b/.test(hay) &&
+      !/\bps4\b/.test(hay)
+    ) {
       return -0.25;
     }
     return 0.12;
@@ -620,11 +627,17 @@ function chocoBonPlanEditionPenalty(
 ): number {
   const hay = `${hit.title} ${hit.url}`.toLowerCase();
   const wantsDeluxe = alignmentNames.some((name) => /\bdeluxe\b/i.test(name));
-  const wantsCollector = alignmentNames.some((name) => /\bcollector\b/i.test(name));
+  const wantsCollector = alignmentNames.some((name) =>
+    /\bcollector\b/i.test(name),
+  );
   if (wantsDeluxe && /\bcollector\b/i.test(hay) && !/\bdeluxe\b/i.test(hay)) {
     return -0.2;
   }
-  if (wantsCollector && /\bdeluxe\b/i.test(hay) && !/\bcollector\b/i.test(hay)) {
+  if (
+    wantsCollector &&
+    /\bdeluxe\b/i.test(hay) &&
+    !/\bcollector\b/i.test(hay)
+  ) {
     return -0.2;
   }
   return 0;
@@ -666,7 +679,10 @@ export function pickRelevantChocoBonPlanHit(
   let bestScore = 0;
 
   for (const hit of hits) {
-    const sequelPenalty = chocoBonPlanMainlineSequelPenalty(hit, alignmentNames);
+    const sequelPenalty = chocoBonPlanMainlineSequelPenalty(
+      hit,
+      alignmentNames,
+    );
     const titleScore = scoreChocoBonPlanHit(hit.title, alignmentNames);
     const eligible = chocoBonPlanHitIsEligible(
       hit.title,
@@ -750,7 +766,9 @@ export function parseChocoBonPlanProductPage(html: string): {
     extractChocoBonPlanImages(html),
     title,
   );
-  const coverFromAttachments = attachments.find((image) => image.type === "cover");
+  const coverFromAttachments = attachments.find(
+    (image) => image.type === "cover",
+  );
   const backgroundFromAttachments = attachments.find(
     (image) => image.type === "background",
   );
@@ -760,7 +778,9 @@ export function parseChocoBonPlanProductPage(html: string): {
     description: description?.trim() || undefined,
     coverUrl: coverFromAttachments?.url || upgradeImageUrl(ogImage),
     backgroundImageUrl: backgroundFromAttachments?.url,
-    priceNew: priceMatch ? (euroToCents(priceMatch[1]) ?? undefined) : undefined,
+    priceNew: priceMatch
+      ? (euroToCents(priceMatch[1]) ?? undefined)
+      : undefined,
     attachments,
   };
 }
@@ -817,9 +837,7 @@ export async function fetchFromChocoBonPlan(
 
       const page = await fetchChocoBonPlanProductPage(hit.url);
       const resolvedTitle = page.title || hit.title;
-      if (
-        !isChocoBonPlanProductPlatformCompatible(resolvedTitle, platform)
-      ) {
+      if (!isChocoBonPlanProductPlatformCompatible(resolvedTitle, platform)) {
         continue;
       }
       const attachments = page.attachments ?? [];
@@ -891,7 +909,8 @@ export async function pingChocoBonPlan(): Promise<{
     return {
       ok: false,
       latency: Date.now() - start,
-      error: error instanceof Error ? error.message : "ChocoBonPlan unreachable",
+      error:
+        error instanceof Error ? error.message : "ChocoBonPlan unreachable",
     };
   }
 }

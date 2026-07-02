@@ -109,94 +109,104 @@ type ProviderMetadataExtension = {
   >
 >;
 
-const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> = {
-  screenscraper: { weight: 0.9, defaultLanguage: "fr", isRealBoxCover: true, authoritative3dCoverRole: true },
-  igdb: { weight: 0.85, defaultLanguage: "en" },
-  thegamesdb: { weight: 0.75, defaultLanguage: "en", isRealBoxCover: true },
-  launchbox: { weight: 0.7, defaultLanguage: "en", isRealBoxCover: true },
-  coverproject: { weight: 0.8, isRealBoxCover: true },
-  howlongtobeat: { weight: 0.6, imageScoreAdjustment: -500 },
-  steam: { weight: 0.8, defaultLanguage: "en" },
-  rawg: { weight: 0.65, defaultLanguage: "en" },
-  steamgriddb: { weight: 0.5, authoritative3dCoverRole: true, gridStyleCoverLabels: true },
-  pricecharting: {
-    weight: 0.7,
-    isRealBoxCover: true,
-    imageScoreAdjustment: 160,
-  },
-  icollect: {
-    weight: 0.55,
-    defaultLanguage: "en",
-    isRealBoxCover: true,
-    isSecondary: true,
-    collectorCoverRegionFromAgeRating: true,
-  },
-  tmdb: { weight: 0.85, defaultLanguage: "fr" },
-  omdb: { weight: 0.7, defaultLanguage: "en", isSecondary: true },
-  musicbrainz: { weight: 0.8 },
-  discogs: { weight: 0.75 },
-  deezer: { weight: 0.7 },
-  openlibrary: { weight: 0.85, defaultLanguage: "en" },
-  googlebooks: { weight: 0.8, defaultLanguage: "en" },
-  booknode: {
-    weight: 0.78,
-    defaultLanguage: "fr",
-    isRealBoxCover: true,
-  },
-  bedetheque: {
-    weight: 0.77,
-    defaultLanguage: "fr",
-    isRealBoxCover: true,
-  },
-  boardgamegeek: { weight: 0.9, defaultLanguage: "en", isRealBoxCover: true },
-  wikidata: { weight: 0.6 },
-  philibert: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
-  okkazeo: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
-  chasseauxlivres: {
-    weight: 0.8,
-    defaultLanguage: "fr",
-    imageScoreAdjustment: -25,
-    remoteImageFallback: true,
-  },
-  achatmoinscher: {
-    weight: 0.5,
-    defaultLanguage: "fr",
-    isSecondary: true,
-  },
-  ledenicheur: { weight: 0.7, defaultLanguage: "fr" },
-  chocobonplan: {
-    weight: 0.55,
-    defaultLanguage: "fr",
-    isRealBoxCover: true,
-    isSecondary: true,
-    retailCatalogImageTitles: true,
-    strictShelfPlatformCover: true,
-    coverDefaultRegion: "fr",
-  },
-  chipweld: {
-    weight: 0.58,
-    defaultLanguage: "fr",
-    isRealBoxCover: true,
-    isSecondary: true,
-  },
-  geedie: {
-    weight: 0.72,
-    defaultLanguage: "en",
-    isRealBoxCover: true,
-    imageScoreAdjustment: 120,
-    isSecondary: true,
-    retailCatalogImageTitles: true,
-    strictShelfPlatformCover: true,
-  },
-  freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
-  ebay: {
-    weight: 0.5,
-    imageScoreAdjustment: -280,
-    remoteImageFallback: true,
-    isSecondary: true,
-  },
-  scandex: { weight: 0.5 },
-};
+const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
+  {
+    screenscraper: {
+      weight: 0.9,
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+      authoritative3dCoverRole: true,
+    },
+    igdb: { weight: 0.85, defaultLanguage: "en" },
+    thegamesdb: { weight: 0.75, defaultLanguage: "en", isRealBoxCover: true },
+    launchbox: { weight: 0.7, defaultLanguage: "en", isRealBoxCover: true },
+    coverproject: { weight: 0.8, isRealBoxCover: true },
+    howlongtobeat: { weight: 0.6, imageScoreAdjustment: -500 },
+    steam: { weight: 0.8, defaultLanguage: "en" },
+    rawg: { weight: 0.65, defaultLanguage: "en" },
+    steamgriddb: {
+      weight: 0.5,
+      authoritative3dCoverRole: true,
+      gridStyleCoverLabels: true,
+    },
+    pricecharting: {
+      weight: 0.7,
+      isRealBoxCover: true,
+      imageScoreAdjustment: 160,
+    },
+    icollect: {
+      weight: 0.55,
+      defaultLanguage: "en",
+      isRealBoxCover: true,
+      isSecondary: true,
+      collectorCoverRegionFromAgeRating: true,
+    },
+    tmdb: { weight: 0.85, defaultLanguage: "fr" },
+    omdb: { weight: 0.7, defaultLanguage: "en", isSecondary: true },
+    musicbrainz: { weight: 0.8 },
+    discogs: { weight: 0.75 },
+    deezer: { weight: 0.7 },
+    openlibrary: { weight: 0.85, defaultLanguage: "en" },
+    googlebooks: { weight: 0.8, defaultLanguage: "en" },
+    booknode: {
+      weight: 0.78,
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+    },
+    bedetheque: {
+      weight: 0.77,
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+    },
+    boardgamegeek: { weight: 0.9, defaultLanguage: "en", isRealBoxCover: true },
+    wikidata: { weight: 0.6 },
+    philibert: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
+    okkazeo: { weight: 0.8, defaultLanguage: "fr", isRealBoxCover: true },
+    chasseauxlivres: {
+      weight: 0.8,
+      defaultLanguage: "fr",
+      imageScoreAdjustment: -25,
+      remoteImageFallback: true,
+    },
+    achatmoinscher: {
+      weight: 0.5,
+      defaultLanguage: "fr",
+      isSecondary: true,
+    },
+    ledenicheur: { weight: 0.7, defaultLanguage: "fr" },
+    chocobonplan: {
+      weight: 0.55,
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+      isSecondary: true,
+      retailCatalogImageTitles: true,
+      strictShelfPlatformCover: true,
+      coverDefaultRegion: "fr",
+    },
+    chipweld: {
+      weight: 0.58,
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+      isSecondary: true,
+    },
+    geedie: {
+      weight: 0.72,
+      defaultLanguage: "en",
+      isRealBoxCover: true,
+      imageScoreAdjustment: 120,
+      isSecondary: true,
+      retailCatalogImageTitles: true,
+      strictShelfPlatformCover: true,
+    },
+    freakxy: { weight: 0.7, defaultLanguage: "fr", isRealBoxCover: true },
+    ebay: {
+      weight: 0.5,
+      imageScoreAdjustment: -280,
+      remoteImageFallback: true,
+      isSecondary: true,
+    },
+    scandex: { weight: 0.5 },
+  };
 
 export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((mdl) => {
   const ext = PROVIDER_METADATA_EXTENSIONS[mdl.info.id] || {};
@@ -227,17 +237,20 @@ export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((mdl) => {
       ext.retailCatalogImageTitles ??
       false,
     strictShelfPlatformCover:
-      mdl.info.strictShelfPlatformCover ?? ext.strictShelfPlatformCover ?? false,
+      mdl.info.strictShelfPlatformCover ??
+      ext.strictShelfPlatformCover ??
+      false,
     authoritative3dCoverRole:
-      mdl.info.authoritative3dCoverRole ?? ext.authoritative3dCoverRole ?? false,
+      mdl.info.authoritative3dCoverRole ??
+      ext.authoritative3dCoverRole ??
+      false,
     gridStyleCoverLabels:
       mdl.info.gridStyleCoverLabels ?? ext.gridStyleCoverLabels ?? false,
     collectorCoverRegionFromAgeRating:
       mdl.info.collectorCoverRegionFromAgeRating ??
       ext.collectorCoverRegionFromAgeRating ??
       false,
-    coverDefaultRegion:
-      mdl.info.coverDefaultRegion ?? ext.coverDefaultRegion,
+    coverDefaultRegion: mdl.info.coverDefaultRegion ?? ext.coverDefaultRegion,
   };
 });
 
@@ -247,8 +260,10 @@ export function getProviderModule(id: string): ProviderModule | undefined {
 
 /** Evidence chip label declared by a provider module (server-side). */
 export function providerEvidenceLabelFor(providerId: string): string {
-  const module = getProviderModule(providerId);
-  return module?.evidence?.label ?? module?.info.label ?? providerId;
+  const providerModule = getProviderModule(providerId);
+  return (
+    providerModule?.evidence?.label ?? providerModule?.info.label ?? providerId
+  );
 }
 
 // Display label for a source token (provider id, alias, or stored label) → the
@@ -283,12 +298,12 @@ export function formatProviderSourceLabel(source: string): string {
 // reference/catalog prices — registry-driven, so the price policy never names a
 // provider.
 const REFERENCE_PRICE_SOURCE_KEYS = new Set<string>();
-for (const module of PROVIDER_MODULES) {
-  if (!module.info.referencePriceSource) continue;
+for (const providerModule of PROVIDER_MODULES) {
+  if (!providerModule.info.referencePriceSource) continue;
   for (const key of [
-    module.info.id,
-    module.info.label,
-    ...(module.info.sourceAliases ?? []),
+    providerModule.info.id,
+    providerModule.info.label,
+    ...(providerModule.info.sourceAliases ?? []),
   ]) {
     if (key) REFERENCE_PRICE_SOURCE_KEYS.add(normalizeSourceKey(key));
   }
@@ -350,8 +365,8 @@ export function bookIsbnBootstrapProviderIds(): string[] {
 export function inferImageAttachmentFromMediaUrl(
   url: string,
 ): InferredImageAttachmentSemantics | null {
-  for (const module of PROVIDER_MODULES) {
-    const inferred = module.inferImageAttachmentFromMediaUrl?.(url);
+  for (const providerModule of PROVIDER_MODULES) {
+    const inferred = providerModule.inferImageAttachmentFromMediaUrl?.(url);
     if (inferred) return inferred;
   }
   return null;
@@ -375,13 +390,12 @@ export function nameDatabaseProviderForType(
 ): ProviderInfo | undefined {
   return PROVIDERS.filter(
     (provider) =>
-      provider.nameDatabase && provider.types.some((mediaType) => mediaType === type),
+      provider.nameDatabase &&
+      provider.types.some((mediaType) => mediaType === type),
   ).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0];
 }
 
-export {
-  scrapeCatalogRetailerLookupEntries,
-} from "@/services/provider/scrapeRetailers";
+export { scrapeCatalogRetailerLookupEntries } from "@/services/provider/scrapeRetailers";
 
 export function capabilityCoverage(
   type: MediaType,

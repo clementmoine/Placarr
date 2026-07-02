@@ -104,7 +104,7 @@ function LoansPageComponent() {
             </h2>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
-            Suivez et gérez les objets que vous avez prêtés à d'autres
+            Suivez et gérez les objets que vous avez prêtés à d’autres
             collectionneurs ou ceux que vous avez empruntés.
           </p>
         </div>

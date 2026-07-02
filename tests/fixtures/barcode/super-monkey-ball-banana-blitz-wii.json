@@ -1,0 +1,19 @@
+{
+  "case": {
+    "id": "super-monkey-ball-banana-blitz-wii",
+    "label": "Super Monkey Ball : Banana Blitz",
+    "barcode": "5060004769360",
+    "type": "games",
+    "expected": {
+      "cleanName": "Super Monkey Ball : Banana Blitz",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "suggestionsExclude": [
+        "BOITE",
+        "SANS LIVRET"
+      ]
+    }
+  },
+  "interactions": []
+}

@@ -1,0 +1,16 @@
+{
+  "case": {
+    "id": "discovery-daft-punk-music",
+    "label": "Discovery — Daft Punk",
+    "barcode": "0724384960650",
+    "type": "musics",
+    "expected": {
+      "cleanNameIncludes": [
+        "Discovery"
+      ],
+      "shelfType": "musics",
+      "maxMatches": 2
+    }
+  },
+  "interactions": []
+}

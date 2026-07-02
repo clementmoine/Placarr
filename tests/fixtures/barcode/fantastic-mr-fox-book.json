@@ -1,0 +1,17 @@
+{
+  "case": {
+    "id": "fantastic-mr-fox-book",
+    "label": "Fantastic Mr. Fox (ISBN)",
+    "barcode": "9780140328721",
+    "type": "books",
+    "expected": {
+      "cleanNameIncludes": [
+        "Fantastic",
+        "Fox"
+      ],
+      "shelfType": "books",
+      "maxMatches": 2
+    }
+  },
+  "interactions": []
+}

@@ -1,0 +1,18 @@
+{
+  "case": {
+    "id": "mario-party-8-wii",
+    "label": "Mario Party 8",
+    "barcode": "0045496362874",
+    "type": "games",
+    "expected": {
+      "cleanName": "Mario Party 8",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "suggestionsExclude": [
+        "Marioparty"
+      ]
+    }
+  },
+  "interactions": []
+}

@@ -1,0 +1,18 @@
+{
+  "case": {
+    "id": "qui-veut-gagner-des-millions-wii",
+    "label": "Qui Veut Gagner Des Millions : 1ère Edition",
+    "barcode": "3307210323361",
+    "type": "games",
+    "expected": {
+      "cleanNameIncludes": [
+        "Qui Veut Gagner",
+        "Millions"
+      ],
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1
+    }
+  },
+  "interactions": []
+}

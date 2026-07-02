@@ -27,6 +27,27 @@ const PRICECHARTING_HEADERS = {
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
 };
 
+async function priceChartingGet(
+  url: string,
+  headers: Record<string, string> = PRICECHARTING_HEADERS,
+) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await axios.get<string>(url, { headers, maxRedirects: 5 });
+    } catch (error) {
+      const status = axios.isAxiosError(error)
+        ? error.response?.status
+        : undefined;
+      if (status === 429 && attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error(`PriceCharting GET failed for ${url}`);
+}
+
 const TITLE_STOP_WORDS = new Set([
   "a",
   "an",
@@ -403,7 +424,7 @@ async function fetchDetailHtmlFromBarcodeSearchResults(
   if (!bestRow) return null;
 
   const gameUrl = priceChartingGameUrl(bestRow.gamePath);
-  const detailRes = await axios.get(gameUrl, { headers, maxRedirects: 5 });
+  const detailRes = await priceChartingGet(gameUrl, headers);
   const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
   if (
     !isAcceptedPriceChartingDetailHtml(
@@ -435,10 +456,7 @@ async function fetchDirectDetailHtmlFromNameFallback(
       seen.add(directUrl);
 
       try {
-        const detailRes = await axios.get(directUrl, {
-          headers,
-          maxRedirects: 5,
-        });
+        const detailRes = await priceChartingGet(directUrl, headers);
         const finalUrl = detailRes.request.res.responseUrl || directUrl;
         if (
           !isSearchUrl(finalUrl) &&
@@ -513,10 +531,7 @@ async function fetchDetailHtmlFromNameFallback(
     seen.add(normalized);
 
     const nameSearchUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(fallbackName)}`;
-    const nameRes = await axios.get(nameSearchUrl, {
-      headers,
-      maxRedirects: 5,
-    });
+    const nameRes = await priceChartingGet(nameSearchUrl, headers);
     const html = nameRes.data;
     const nameFinalUrl = nameRes.request.res.responseUrl || "";
 
@@ -534,7 +549,7 @@ async function fetchDetailHtmlFromNameFallback(
       if (!bestRow) continue;
 
       const gameUrl = priceChartingGameUrl(bestRow.gamePath);
-      const detailRes = await axios.get(gameUrl, { headers });
+      const detailRes = await priceChartingGet(gameUrl, headers);
       const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
       if (
         !isAcceptedPriceChartingDetailHtml(
@@ -818,10 +833,7 @@ export async function fetchPricesFromPriceCharting(
 
   try {
     console.log(`[PriceCharting Prices] Querying barcode: ${cleanedBarcode}`);
-    const res = await axios.get(searchUrl, {
-      headers: PRICECHARTING_HEADERS,
-      maxRedirects: 5,
-    });
+    const res = await priceChartingGet(searchUrl);
 
     let html = res.data;
     const finalUrl = res.request.res.responseUrl || "";
@@ -920,10 +932,7 @@ export async function fetchMetadataFromPriceCharting(
 
   try {
     console.log(`[PriceCharting Metadata] Querying barcode: ${cleanedBarcode}`);
-    const res = await axios.get(searchUrl, {
-      headers: PRICECHARTING_HEADERS,
-      maxRedirects: 5,
-    });
+    const res = await priceChartingGet(searchUrl);
 
     let html = res.data;
     const finalUrl = res.request.res.responseUrl || "";

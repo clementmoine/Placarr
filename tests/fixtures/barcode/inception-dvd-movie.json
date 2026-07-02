@@ -1,0 +1,13 @@
+{
+  "case": {
+    "id": "inception-dvd-movie",
+    "label": "Inception (DVD)",
+    "barcode": "7321906123457",
+    "type": "movies",
+    "expected": {
+      "shelfType": "movies",
+      "maxMatches": 3
+    }
+  },
+  "interactions": []
+}

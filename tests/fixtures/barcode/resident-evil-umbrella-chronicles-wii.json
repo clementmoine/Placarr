@@ -1,0 +1,18 @@
+{
+  "case": {
+    "id": "resident-evil-umbrella-chronicles-wii",
+    "label": "Resident Evil : The Umbrella Chronicles",
+    "barcode": "0045496364175",
+    "type": "games",
+    "expected": {
+      "cleanName": "Resident Evil : The Umbrella Chronicles",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "suggestionsExclude": [
+        " pour"
+      ]
+    }
+  },
+  "interactions": []
+}

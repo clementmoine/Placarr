@@ -81,6 +81,8 @@ const RECORD_CASES = (() => {
 })();
 const RECORD_TIMEOUT_MS =
   RECORD_CASE_ID || RECORD_CASES.length === 1 ? 900_000 : 600_000;
+const RECORD_INTER_CASE_DELAY_MS =
+  process.env.RECORD_ALL || RECORD_CASES.length > 1 ? 4_000 : 0;
 // En REPLAY on parcourt TOUS les cas : chaque fixture enregistrée est
 // automatiquement rejouée, les autres restent skip (suite verte).
 const REPLAY_CASES = DEFAULT_BARCODE_REGRESSION_CASES;
@@ -88,8 +90,13 @@ const REPLAY_CASES = DEFAULT_BARCODE_REGRESSION_CASES;
 function norm(value: unknown): string {
   return String(value ?? "")
     .replace(/[\u2018\u2019\u2032]/g, "'")
+    .replace(/\|/g, " ")
+    .replace(/[:;,'\-–—.]/g, " ")
+    .replace(/\bii\b/gi, "2")
+    .replace(/\biii\b/gi, "3")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
     .toLowerCase()
     .trim();
 }
@@ -141,10 +148,16 @@ function assertExpectation(
 if (RECORD) {
   describe("RECORD — enregistrement des fixtures réseau (live)", () => {
     mkdirSync(FIXTURES_DIR, { recursive: true });
+    let recordCaseIndex = 0;
     for (const testCase of RECORD_CASES) {
       it(
         `enregistre ${testCase.id}`,
         async () => {
+          if (recordCaseIndex++ > 0 && RECORD_INTER_CASE_DELAY_MS > 0) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, RECORD_INTER_CASE_DELAY_MS),
+            );
+          }
           const { isBarcodeRecordSlimMode } = await import(
             "@/lib/barcode/lookup/recordMode"
           );

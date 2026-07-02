@@ -1,0 +1,16 @@
+{
+  "case": {
+    "id": "mario-sonic-winter-games-wii",
+    "label": "Mario & Sonic aux Jeux Olympiques d'Hiver",
+    "barcode": "5055277000852",
+    "type": "games",
+    "expected": {
+      "cleanName": "Mario & Sonic aux Jeux Olympiques d'Hiver",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "minConfidence": 0.9
+    }
+  },
+  "interactions": []
+}

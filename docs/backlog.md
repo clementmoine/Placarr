@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-02** (`pnpm test` **1291** OK / 20 skipped,
+> Dernière vérification : **2026-07-02** (`pnpm test` **1308** OK / 4 skipped,
 > `pnpm providers:audit:mapping`, `pnpm providers:health`).
 
 ## État actuel (snapshot)
@@ -11,9 +11,9 @@
 | Mapping `ok` | **45** · `empty` 0 · `blocked` 1 · `error` 0 |
 | Observations `enabled` | **42** · `legacy` 0 · `unknown` 5 |
 | Health-check | **38** modules · **0 down** |
-| Tests | **1291** passent (1311 total, 20 skipped) |
-| Corpus barcode régression | **22** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
-| Fixtures replay barcode | **5/22** (slim RECORD + REPLAY OK — voir Roadmap P5) |
+| Tests | **1308** passent (1312 total, 4 skipped) |
+| Corpus barcode régression | **21** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
+| Fixtures replay barcode | **21/21** |
 
 **Queue migration metadata** (adapter + `observationMode = unknown`) :
 
@@ -50,7 +50,7 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | -------- | ---- | ---- | ---------------- |
 | ~~**P2**~~ | ~~Cluster confidence `sourceScore` + tier observations~~ | **Fait 2026-06-29** | `barcodeClusterObservationContribution` (= `barcodeEvidenceTier × CLUSTER_CONFIDENCE.observationTierScale` + `barcodeEvidenceObservationSourceWeight`) branché dans le base score de `scoreEvidenceCluster` ; `observationTierScale: 0.01`. Leaders/platformKeys **inchangés**, seules les 6 valeurs `compile.confidenceLock.test.ts` montent (+0.06 sur cas ancrés : Ghost Recon 0.55→0.61 / 0.45→0.53 / 0.47→0.53, TMNT II Arcade 0.51→0.57 ; deux cas plafond 0.98 stables). Suite complète verte (1217). Cap `listingOnlyCap` intact (clusters listing-only restent ≤ 0.45). |
 | **P2** | `pickPlatformKey` tier-dominant | **Reporté** | `barcodeEvidenceObservationSupportWeight` fait gagner le canonique sur marketplace à poids gonflé, mais casse le lock « plateforme ambiguë → null » (Ghost Recon Classics). Garder l’échelle legacy pour l’agrégation plateforme. |
-| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **5/22** | **Pipeline slim OK** (`b73a0c2`) : PC anchor via iCollect + enrich, HttpReplay brotli/slug/redirect. **Reste** : `pnpm test:record:all` (17 cas). |
+| **P5** | Fixtures golden-master barcode (`tests/fixtures/barcode/`) | **Fait 2026-07-02** | **21/21** enregistrées + REPLAY déterministe (slim, PC 429 retry, iCollect platform guard, HttpReplay brotli). |
 | **P3** | PicClick → eBay Browse API | **Fait 2026-07-02** | Module `ebay/` (OAuth, Browse + Catalog API, barcode multi-types) ; PicClick retiré. Sans clés eBay → no-op gracieux. |
 | **P2** | Titres multilingues + région utilisateur | **Fait 2026-06-30** | `regionOrderForUiLocale` / `languageOrderForUiLocale` dans `preference.ts` ; cookie `preferred-locale` sync client→API ; `withRequestUiLocale` sur routes items/shelves/explore/loans ; couverture read-time via `getCoverImage(item, locale)`. |
 | **P4** | Wikidata / Google Books champs ciblés | **Fait 2026-07-02** | Wikidata : P136/P178/P123/P856 mappés (`resolver.ts` + tests). Google Books : champs étendus (`resolver.ts` + tests). Relancer `pnpm providers:audit:mapping` après cooldown quota TheGamesDB. |

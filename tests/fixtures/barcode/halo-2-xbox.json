@@ -1,0 +1,15 @@
+{
+  "case": {
+    "id": "halo-2-xbox",
+    "label": "Halo 2",
+    "barcode": "0882224088060",
+    "type": "games",
+    "expected": {
+      "cleanName": "Halo 2",
+      "platformKey": "xbox",
+      "shelfType": "games",
+      "maxMatches": 1
+    }
+  },
+  "interactions": []
+}

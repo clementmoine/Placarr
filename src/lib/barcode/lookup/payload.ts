@@ -5,6 +5,7 @@ import type {
 } from "@/lib/barcode/lookup/providerTypes";
 import type { ICollectMetadata } from "@/services/providers/icollect/fetch";
 import { scrapeCatalogRetailerLookupEntries } from "@/services/provider/scrapeRetailers";
+import { detectPlatformKey } from "@/lib/barcode/query";
 import type { MediaType } from "@/types/providerRegistry";
 
 export type BarcodeMetadataHit = {
@@ -169,6 +170,36 @@ export function asICollectHit(value: unknown): ICollectMetadata | null {
   if (!value || typeof value !== "object") return null;
   const hit = value as ICollectMetadata;
   return typeof hit.title === "string" && hit.title.trim() ? hit : null;
+}
+
+/** Drop cross-generation iCollect hits; keep a title hint for PC fallback. */
+export function catalogIceBarcodeHit(
+  hit: ICollectMetadata | null,
+  contextPlatformKey: string | null,
+): { ice: ICollectMetadata | null; catalogTitleHint: string | null } {
+  if (!hit?.title) return { ice: null, catalogTitleHint: null };
+
+  const catalogPlatformKey = hit.platform
+    ? detectPlatformKey(hit.platform)
+    : null;
+  const platformConflict =
+    contextPlatformKey &&
+    catalogPlatformKey &&
+    catalogPlatformKey !== contextPlatformKey;
+
+  if (!platformConflict) {
+    return { ice: hit, catalogTitleHint: null };
+  }
+
+  const catalogTitleHint = hit.title
+    .replace(/\s*\|\s*HD\b.*$/i, "")
+    .replace(/\s*\|+\s*$/g, "")
+    .trim();
+
+  return {
+    ice: null,
+    catalogTitleHint: catalogTitleHint || null,
+  };
 }
 
 export function asNamedListings(value: unknown): NamedListing[] {

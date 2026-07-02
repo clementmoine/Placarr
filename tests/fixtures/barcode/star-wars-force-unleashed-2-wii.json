@@ -1,0 +1,18 @@
+{
+  "case": {
+    "id": "star-wars-force-unleashed-2-wii",
+    "label": "Star Wars - Le Pouvoir de la Force II",
+    "barcode": "0023272010102",
+    "type": "games",
+    "expected": {
+      "cleanName": "Star Wars - Le Pouvoir de la Force II",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "suggestionsExclude": [
+        "Lylat Wars"
+      ]
+    }
+  },
+  "interactions": []
+}

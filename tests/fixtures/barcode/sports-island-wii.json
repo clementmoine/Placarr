@@ -1,0 +1,15 @@
+{
+  "case": {
+    "id": "sports-island-wii",
+    "label": "Sports Island",
+    "barcode": "4012927091067",
+    "type": "games",
+    "expected": {
+      "cleanName": "Sports Island",
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1
+    }
+  },
+  "interactions": []
+}

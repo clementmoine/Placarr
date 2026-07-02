@@ -15,6 +15,7 @@ function makeInputs(
     pc: null,
     sd: null,
     ice: null,
+    catalogTitleHint: null,
     calListings: [],
     amc: [],
     freakxy: [],
@@ -148,6 +149,29 @@ describe("enrichGameBarcodeLookups", () => {
     expect(enrichmentDeps.fetchReferencePriceByBarcode).toHaveBeenCalledWith(
       BARCODE,
       "Mario Kart Wii",
+      "wii",
+      true,
+      false,
+    );
+  });
+
+  it("uses catalog title hint when catalog platform disagrees with shelf hint", async () => {
+    const enrichmentDeps = makeDeps();
+    await enrichGameBarcodeLookups({
+      cleanedBarcode: "0045496362409",
+      contextPlatformKey: "wii",
+      pc: null,
+      searchLabel: "games",
+      enrichmentDeps,
+      inputs: makeInputs({
+        catalogTitleHint: "The Legend of Zelda: Twilight Princess",
+        contextPlatformKey: "wii",
+      }),
+    });
+
+    expect(enrichmentDeps.fetchReferencePriceByBarcode).toHaveBeenCalledWith(
+      "0045496362409",
+      "The Legend of Zelda: Twilight Princess",
       "wii",
       true,
       false,

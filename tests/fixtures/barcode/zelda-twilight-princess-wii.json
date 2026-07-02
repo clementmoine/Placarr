@@ -1,0 +1,25 @@
+{
+  "case": {
+    "id": "zelda-twilight-princess-wii",
+    "label": "The Legend of Zelda : Twilight Princess",
+    "barcode": "0045496362409",
+    "type": "games",
+    "expected": {
+      "cleanNameIncludes": [
+        "Zelda",
+        "Twilight Princess"
+      ],
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "minConfidence": 0.9,
+      "suggestionsExclude": [
+        "Vintage",
+        "Old",
+        "PAL FR Jeux Vidéo",
+        "HD"
+      ]
+    }
+  },
+  "interactions": []
+}

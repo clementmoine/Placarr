@@ -1,0 +1,20 @@
+{
+  "case": {
+    "id": "new-super-mario-bros-wii",
+    "label": "New Super Mario Bros. Wii",
+    "barcode": "0045496368104",
+    "type": "games",
+    "expected": {
+      "cleanNameIncludes": [
+        "New Super Mario Bros"
+      ],
+      "platformKey": "wii",
+      "shelfType": "games",
+      "maxMatches": 1,
+      "suggestionsExclude": [
+        "Scellé"
+      ]
+    }
+  },
+  "interactions": []
+}

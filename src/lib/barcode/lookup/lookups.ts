@@ -16,6 +16,7 @@ import {
   asPriceChartingHit,
   asScanDexHit,
   asICollectHit,
+  catalogIceBarcodeHit,
   collectRetailerBarcodeHits,
   createEmptyBarcodeLookupPayload,
   type BarcodeLookupPayload,
@@ -50,7 +51,11 @@ export async function runBarcodeLookups(params: {
       console.log("[record step] lookups:tasks-settled");
     }
     payload.pc = asPriceChartingHit(lookups.pc);
-    payload.ice = asICollectHit(lookups.ice);
+    const iceCatalog = catalogIceBarcodeHit(
+      asICollectHit(lookups.ice),
+      contextPlatformKey,
+    );
+    payload.ice = iceCatalog.ice;
     payload.calJeuxVideo = asNamedListings(lookups.cal);
     payload.sd = asScanDexHit(lookups.sd);
     payload.amc = asNamedListings(lookups.amc);
@@ -68,6 +73,7 @@ export async function runBarcodeLookups(params: {
         payload,
         payload.calJeuxVideo,
         contextPlatformKey,
+        iceCatalog.catalogTitleHint,
       ),
       enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
     });
@@ -147,6 +153,11 @@ export async function runBarcodeLookups(params: {
   payload.ol = asMetadataHit(lookups.ol);
   payload.deezer = asMetadataHit(lookups.deezer);
   payload.pc = asPriceChartingHit(lookups.pc);
+  const iceCatalog = catalogIceBarcodeHit(
+    asICollectHit(lookups.ice),
+    contextPlatformKey,
+  );
+  payload.ice = iceCatalog.ice;
   payload.calGeneric = asNamedListings(lookups.cal);
   payload.sd = asScanDexHit(lookups.sd);
   payload.amc = asNamedListings(lookups.amc);
@@ -171,6 +182,7 @@ export async function runBarcodeLookups(params: {
       payload,
       payload.calGeneric,
       contextPlatformKey,
+      iceCatalog.catalogTitleHint,
     ),
     enrichmentDeps: buildBarcodeRecordEnrichmentDeps(),
   });
@@ -198,11 +210,13 @@ function buildGameLookupInputs(
   payload: BarcodeLookupPayload,
   calListings: NamedListing[],
   contextPlatformKey: string | null,
+  catalogTitleHint: string | null = null,
 ) {
   return {
     pc: payload.pc,
     sd: payload.sd,
     ice: payload.ice,
+    catalogTitleHint,
     calListings,
     amc: payload.amc,
     freakxy: payload.freakxy,

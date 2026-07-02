@@ -38,7 +38,10 @@ export function ItemCollectionSortSelect({
   const { t } = useLocale();
 
   return (
-    <Select value={value} onValueChange={(next) => onValueChange(next as ItemCollectionSort)}>
+    <Select
+      value={value}
+      onValueChange={(next) => onValueChange(next as ItemCollectionSort)}
+    >
       <SelectTrigger
         className={cn(
           "w-full bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 cursor-pointer",

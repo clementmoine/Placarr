@@ -55,7 +55,8 @@ export async function GET() {
       ...item,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
-      metadataRefreshStartedAt: item.metadataRefreshStartedAt?.toISOString() ?? null,
+      metadataRefreshStartedAt:
+        item.metadataRefreshStartedAt?.toISOString() ?? null,
       metadata: item.metadata
         ? {
             ...item.metadata,

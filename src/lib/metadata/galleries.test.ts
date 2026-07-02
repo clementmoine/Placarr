@@ -33,13 +33,17 @@ describe("metadataGameGallery", () => {
 describe("hasMusicGalleryAttachment", () => {
   it("returns true when a stamped music-gallery attachment is present", () => {
     expect(
-      hasMusicGalleryAttachment([{ type: "cover", isMusicGallerySource: true }]),
+      hasMusicGalleryAttachment([
+        { type: "cover", isMusicGallerySource: true },
+      ]),
     ).toBe(true);
   });
 
   it("returns false without the stamped flag", () => {
     expect(
-      hasMusicGalleryAttachment([{ type: "cover", isMusicGallerySource: false }]),
+      hasMusicGalleryAttachment([
+        { type: "cover", isMusicGallerySource: false },
+      ]),
     ).toBe(false);
   });
 });

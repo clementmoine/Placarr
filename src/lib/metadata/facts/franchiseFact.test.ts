@@ -33,7 +33,10 @@ describe("buildFranchiseFact", () => {
   );
 
   it("keeps the kind stable across sources (movie collection, game franchise)", () => {
-    const movie = buildFranchiseFact("The Lord of the Rings Collection", "tmdb");
+    const movie = buildFranchiseFact(
+      "The Lord of the Rings Collection",
+      "tmdb",
+    );
     const game = buildFranchiseFact("Halo", "igdb");
     expect(movie[0]?.kind).toBe(FRANCHISE_FACT_KIND);
     expect(game[0]?.kind).toBe(FRANCHISE_FACT_KIND);

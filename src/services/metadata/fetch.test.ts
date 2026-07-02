@@ -252,7 +252,9 @@ describe("fetchMetadataByType generic routing", () => {
       mockResolve.mock.calls.some((call: any) => call[1] === "chocobonplan"),
     ).toBe(true);
     expect(
-      res?.attachments?.some((attachment) => attachment.source === "chocobonplan"),
+      res?.attachments?.some(
+        (attachment) => attachment.source === "chocobonplan",
+      ),
     ).toBe(true);
   });
 });

@@ -106,11 +106,17 @@ export function BulkMoveModal({
         </label>
         <Select value={targetShelfId} onValueChange={setTargetShelfId}>
           <SelectTrigger className="w-full bg-zinc-50 dark:bg-zinc-950/20 h-10 border-border/80 rounded-xl cursor-pointer text-xs font-semibold shadow-none">
-            <SelectValue placeholder={t("items.bulkMove.targetShelfPlaceholder")} />
+            <SelectValue
+              placeholder={t("items.bulkMove.targetShelfPlaceholder")}
+            />
           </SelectTrigger>
           <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg max-h-[280px]">
             {destinationShelves.map((shelf) => (
-              <SelectItem key={shelf.id} value={shelf.id} className="cursor-pointer text-xs">
+              <SelectItem
+                key={shelf.id}
+                value={shelf.id}
+                className="cursor-pointer text-xs"
+              >
                 <div className="flex items-center gap-2">
                   {shelf.type && (
                     <ShelfTypeIcon

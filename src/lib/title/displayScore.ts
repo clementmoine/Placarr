@@ -109,7 +109,11 @@ export function scoreDisplayTitle(
     score -= 420;
   }
 
-  const trailingSegment = name.split(/\s[-–—]\s*/).pop()?.trim() ?? "";
+  const trailingSegment =
+    name
+      .split(/\s[-–—]\s*/)
+      .pop()
+      ?.trim() ?? "";
   if (trailingSegment && TRAILING_PLATFORM_SUFFIX.test(trailingSegment)) {
     score -= 500;
   }

@@ -19,8 +19,7 @@ async function measureCoverExposureFromSharp(
     if (!metadata.width || !metadata.height) return null;
 
     const longest = Math.max(metadata.width, metadata.height);
-    const scale =
-      longest > SAMPLE_MAX_EDGE ? SAMPLE_MAX_EDGE / longest : 1;
+    const scale = longest > SAMPLE_MAX_EDGE ? SAMPLE_MAX_EDGE / longest : 1;
     const sampleWidth = Math.max(1, Math.round(metadata.width * scale));
     const sampleHeight = Math.max(1, Math.round(metadata.height * scale));
 

@@ -72,7 +72,12 @@ describe("filterUsedPricesAboveNew", () => {
   it("keeps reference-catalog used prices above a cheap marketplace new ceiling", () => {
     const filtered = filterUsedPricesAboveNew(
       [
-        { source: "ChocoBonPlan", condition: "new", priceCents: 3100, productName: "Transistor sur PS4" },
+        {
+          source: "ChocoBonPlan",
+          condition: "new",
+          priceCents: 3100,
+          productName: "Transistor sur PS4",
+        },
         { source: "PriceCharting", condition: "loose", priceCents: 7024 },
       ],
       "games",

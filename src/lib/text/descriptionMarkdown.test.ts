@@ -203,8 +203,8 @@ describe("normalizeNumberedDescriptionLists", () => {
 
 describe("prepareDescriptionMarkdown", () => {
   it("normalizes headings and numbered lists together", () => {
-    expect(
-      prepareDescriptionMarkdown("##Synopsis\n\n1 One\n2 Two"),
-    ).toBe("## Synopsis\n\n1. One\n2. Two");
+    expect(prepareDescriptionMarkdown("##Synopsis\n\n1 One\n2 Two")).toBe(
+      "## Synopsis\n\n1. One\n2. Two",
+    );
   });
 });

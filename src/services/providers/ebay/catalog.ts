@@ -37,14 +37,14 @@ function matchesExpectedTitle(title: string, expectedNames: string[]) {
 function catalogCoverUrl(summary: CatalogProductSummary): string | null {
   return (
     summary.image?.imageUrl?.trim() ||
-    summary.additionalImages?.find((img) => img.imageUrl?.trim())?.imageUrl?.trim() ||
+    summary.additionalImages
+      ?.find((img) => img.imageUrl?.trim())
+      ?.imageUrl?.trim() ||
     null
   );
 }
 
-function summaryToProduct(
-  summary: CatalogProductSummary,
-): EbayProduct | null {
+function summaryToProduct(summary: CatalogProductSummary): EbayProduct | null {
   const name = summary.title?.trim();
   const epid = summary.epid?.trim();
   if (!name || !epid) return null;

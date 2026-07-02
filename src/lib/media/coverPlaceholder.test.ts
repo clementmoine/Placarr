@@ -33,16 +33,16 @@ describe("isMissingArtImageUrl", () => {
 
 describe("isPlaceholderCoverImage", () => {
   it("rejette une image unicolore (entropie et écart-type nuls)", () => {
-    expect(
-      isPlaceholderCoverImage({ entropy: 0, maxColorStdev: 0 }),
-    ).toBe(true);
+    expect(isPlaceholderCoverImage({ entropy: 0, maxColorStdev: 0 })).toBe(
+      true,
+    );
     expect(isDegenerateFlatImage({ entropy: 0, maxColorStdev: 0 })).toBe(true);
   });
 
   it("rejette un placeholder quasi uniforme", () => {
-    expect(
-      isPlaceholderCoverImage({ entropy: 0.4, maxColorStdev: 3 }),
-    ).toBe(true);
+    expect(isPlaceholderCoverImage({ entropy: 0.4, maxColorStdev: 3 })).toBe(
+      true,
+    );
   });
 
   it("rejette l'icône Geedie sans jaquette (stats mesurées)", () => {
@@ -65,9 +65,9 @@ describe("isPlaceholderCoverImage", () => {
   });
 
   it("conserve une image à faible entropie mais avec du contraste (logo)", () => {
-    expect(
-      isPlaceholderCoverImage({ entropy: 0.5, maxColorStdev: 40 }),
-    ).toBe(false);
+    expect(isPlaceholderCoverImage({ entropy: 0.5, maxColorStdev: 40 })).toBe(
+      false,
+    );
   });
 });
 

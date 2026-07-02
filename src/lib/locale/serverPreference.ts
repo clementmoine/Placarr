@@ -2,10 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { defaultLocale } from "@/lib/locale/i18n";
 import { runWithUiLocale } from "@/lib/locale/preferenceContext.server";
-import {
-  PREFERRED_LOCALE_COOKIE,
-  parseUiLocale,
-} from "@/lib/locale/utils";
+import { PREFERRED_LOCALE_COOKIE, parseUiLocale } from "@/lib/locale/utils";
 import type { Locale } from "@/types/i18n";
 
 export function uiLocaleFromRequest(req: NextRequest): Locale {

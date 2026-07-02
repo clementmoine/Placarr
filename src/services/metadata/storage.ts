@@ -48,7 +48,10 @@ import { applyConsensus } from "@/lib/metadata/consensus";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 import { barcodeListingMatchesItem } from "@/lib/barcode/titleUtils";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { PROVIDERS, inferImageAttachmentFromMediaUrl } from "@/services/provider/registry";
+import {
+  PROVIDERS,
+  inferImageAttachmentFromMediaUrl,
+} from "@/services/provider/registry";
 import {
   authoritative3dCoverRoleSource,
   canonicalProviderIdForSource,
@@ -182,7 +185,10 @@ export function metadataImageAttachmentSemantics(
 }
 
 function canUseBarcodeCacheCover(
-  cached: { shelfType?: string | null; rawNames?: Array<{ value: string; coverUrl?: string | null }> } | null,
+  cached: {
+    shelfType?: string | null;
+    rawNames?: Array<{ value: string; coverUrl?: string | null }>;
+  } | null,
   type: Type,
   metadata: MetadataResult,
   itemName: string,
@@ -192,11 +198,10 @@ function canUseBarcodeCacheCover(
   > | null,
 ) {
   if (cached?.shelfType !== type) return false;
-  const barcodeListing = cached?.rawNames?.find((entry) => entry.coverUrl)?.value;
-  if (
-    barcodeListing &&
-    !barcodeListingMatchesItem(itemName, barcodeListing)
-  ) {
+  const barcodeListing = cached?.rawNames?.find(
+    (entry) => entry.coverUrl,
+  )?.value;
+  if (barcodeListing && !barcodeListingMatchesItem(itemName, barcodeListing)) {
     return false;
   }
   if (!hasMetadataImageCandidate(metadata)) return true;
@@ -431,7 +436,14 @@ export function providerOriginalImageUrl(url: string): string | null {
 
 export { looksLikeImageBuffer } from "@/lib/media/imageBuffer";
 
-const LOCAL_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+const LOCAL_IMAGE_EXTENSIONS = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".webp",
+  ".svg",
+];
 
 async function existingLocalizedUploadForUrl(
   url: string,
@@ -591,7 +603,8 @@ export async function storeMetadata(
     : null;
 
   if (metadata.imageUrl) {
-    metadata.imageUrl = (await downloadRemoteImage(metadata.imageUrl)) || undefined;
+    metadata.imageUrl =
+      (await downloadRemoteImage(metadata.imageUrl)) || undefined;
   }
 
   const formattedMetadata = await formatMetadataForStorage(
@@ -732,7 +745,10 @@ export async function storeMetadata(
     downloadedAttachments,
   );
 
-  if (localizedAttachments.length === 0 && item?.metadata?.attachments?.length) {
+  if (
+    localizedAttachments.length === 0 &&
+    item?.metadata?.attachments?.length
+  ) {
     localizedAttachments = item.metadata.attachments
       .filter((attachment) => attachment.url.startsWith("/uploads/"))
       .map((attachment) => ({
@@ -745,12 +761,13 @@ export async function storeMetadata(
       }));
   }
 
-  const previousLocalCoverRaw =
-    item?.metadata?.imageUrl?.startsWith("/uploads/")
-      ? item.metadata.imageUrl
-      : item?.imageUrl?.startsWith("/uploads/")
-        ? item.imageUrl
-        : null;
+  const previousLocalCoverRaw = item?.metadata?.imageUrl?.startsWith(
+    "/uploads/",
+  )
+    ? item.metadata.imageUrl
+    : item?.imageUrl?.startsWith("/uploads/")
+      ? item.imageUrl
+      : null;
   const previousLocalCover =
     previousLocalCoverRaw &&
     isCoverResolutionAcceptable(
@@ -819,11 +836,9 @@ export async function storeMetadata(
       : undefined;
   const selectedImageUrl =
     canonicalCover?.url ??
-    pickBestCoverFromAttachments(
-      storableAttachments,
-      imageMetricsByUrl,
-      { requestedPlatformKey },
-    ) ??
+    pickBestCoverFromAttachments(storableAttachments, imageMetricsByUrl, {
+      requestedPlatformKey,
+    }) ??
     formattedMetadata.imageUrl ??
     previousLocalCover ??
     null;
@@ -1145,7 +1160,9 @@ async function dedupeLocalizedAttachmentsByContent<
     PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
     (item) => {
       const metrics = metricsByUrl.get(item.url) ?? null;
-      const resolutionPenalty = isCoverResolutionAcceptable(metrics) ? 0 : 1_000;
+      const resolutionPenalty = isCoverResolutionAcceptable(metrics)
+        ? 0
+        : 1_000;
       return (
         resolutionPenalty +
         regionRank(

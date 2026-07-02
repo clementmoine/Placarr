@@ -51,7 +51,10 @@ async function fetchChassePageHtml(
     // Fall through to FlareSolverr when direct access is blocked.
   }
 
-  const flareHtml = await fetchWithFlareSolverr(url, CHASSE_FLARESOLVERR_TIMEOUT_MS);
+  const flareHtml = await fetchWithFlareSolverr(
+    url,
+    CHASSE_FLARESOLVERR_TIMEOUT_MS,
+  );
   if (!flareHtml || isProtectedLoginPage(flareHtml, url)) {
     return null;
   }
@@ -368,9 +371,7 @@ async function fetchSearchResults(hash: string, limit: number): Promise<any> {
   return resultsRes.data;
 }
 
-async function fetchProductPage(
-  productUrl: string,
-): Promise<{
+async function fetchProductPage(productUrl: string): Promise<{
   url: string;
   html: string;
   product: ChasseAuxLivresProduct;

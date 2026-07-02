@@ -129,7 +129,8 @@ function pickBestPrestashopHit(
     if (barcodeHit) return barcodeHit;
   }
 
-  const queries = options?.queries?.map((query) => query.trim()).filter(Boolean) ?? [];
+  const queries =
+    options?.queries?.map((query) => query.trim()).filter(Boolean) ?? [];
   if (queries.length > 0) {
     let best: PrestashopSearchProduct | null = null;
     let bestScore = -1;

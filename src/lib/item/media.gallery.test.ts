@@ -16,7 +16,9 @@ describe("orderedCoverAttachmentsForDisplay", () => {
     };
 
     expect(
-      orderedCoverAttachmentsForDisplay(item).map((attachment) => attachment.url),
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.url,
+      ),
     ).toEqual(["/uploads/b.jpg", "/uploads/a.jpg", "/uploads/c.jpg"]);
   });
 
@@ -44,7 +46,8 @@ describe("orderedCoverAttachmentsForDisplay", () => {
             source: "chocobonplan",
             role: "fr",
             url: "/uploads/choco-ps5.jpg",
-            title: "Metal Gear Solid Master Collection Volume 1 ps5 visuel produit",
+            title:
+              "Metal Gear Solid Master Collection Volume 1 ps5 visuel produit",
             strictShelfPlatformCoverSource: true,
             retailCatalogImageTitlesSource: true,
           },
@@ -54,7 +57,9 @@ describe("orderedCoverAttachmentsForDisplay", () => {
     };
 
     expect(
-      orderedCoverAttachmentsForDisplay(item).map((attachment) => attachment.url),
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.url,
+      ),
     ).toEqual(["/uploads/ps4-default.jpg"]);
   });
 
@@ -81,7 +86,9 @@ describe("orderedCoverAttachmentsForDisplay", () => {
     };
 
     expect(
-      orderedCoverAttachmentsForDisplay(item).map((attachment) => attachment.source),
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.source,
+      ),
     ).toEqual(["icollect"]);
   });
 
@@ -134,10 +141,10 @@ describe("getGalleryImages", () => {
       },
     };
 
-    expect(getGalleryImages(item).slice(0, 3).map((image) => image.url)).toEqual([
-      "/uploads/b.jpg",
-      "/uploads/a.jpg",
-      "/uploads/c.jpg",
-    ]);
+    expect(
+      getGalleryImages(item)
+        .slice(0, 3)
+        .map((image) => image.url),
+    ).toEqual(["/uploads/b.jpg", "/uploads/a.jpg", "/uploads/c.jpg"]);
   });
 });

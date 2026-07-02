@@ -20,28 +20,13 @@ describe("seriesVolumeNames", () => {
 
   it("builds volume names padded to the range's widest number", () => {
     expect(
-      buildSeriesItemName(
-        SERIES_VOLUME_PATTERNS.tome_nn,
-        "Naruto",
-        1,
-        9,
-      ),
+      buildSeriesItemName(SERIES_VOLUME_PATTERNS.tome_nn, "Naruto", 1, 9),
     ).toBe("Naruto Tome 1");
     expect(
-      buildSeriesItemName(
-        SERIES_VOLUME_PATTERNS.tome_nn,
-        "Naruto",
-        1,
-        52,
-      ),
+      buildSeriesItemName(SERIES_VOLUME_PATTERNS.tome_nn, "Naruto", 1, 52),
     ).toBe("Naruto Tome 01");
     expect(
-      buildSeriesItemName(
-        SERIES_VOLUME_PATTERNS.tome_nn,
-        "Naruto",
-        52,
-        52,
-      ),
+      buildSeriesItemName(SERIES_VOLUME_PATTERNS.tome_nn, "Naruto", 52, 52),
     ).toBe("Naruto Tome 52");
   });
 
@@ -58,20 +43,10 @@ describe("seriesVolumeNames", () => {
 
   it("pads volume 99 with three digits when the range reaches 100", () => {
     expect(
-      buildSeriesItemName(
-        SERIES_VOLUME_PATTERNS.numero_nn,
-        "Série",
-        99,
-        100,
-      ),
+      buildSeriesItemName(SERIES_VOLUME_PATTERNS.numero_nn, "Série", 99, 100),
     ).toBe("Série n°099");
     expect(
-      buildSeriesItemName(
-        SERIES_VOLUME_PATTERNS.numero_nn,
-        "Série",
-        100,
-        100,
-      ),
+      buildSeriesItemName(SERIES_VOLUME_PATTERNS.numero_nn, "Série", 100, 100),
     ).toBe("Série n°100");
   });
 

@@ -75,9 +75,9 @@ describe("buildGameMetadataFallbackNames", () => {
 
 describe("buildRequestedTitleFallbackVariants", () => {
   it("maps roman numerals in titles via romanizr", () => {
-    expect(
-      buildRequestedTitleFallbackVariants("Final Fantasy VII"),
-    ).toEqual(expect.arrayContaining(["Final Fantasy 7"]));
+    expect(buildRequestedTitleFallbackVariants("Final Fantasy VII")).toEqual(
+      expect.arrayContaining(["Final Fantasy 7"]),
+    );
   });
 
   it("includes the base title when an edition/subtitle qualifier is present", () => {
@@ -95,9 +95,9 @@ describe("buildRequestedTitleFallbackVariants", () => {
   });
 
   it("splits subtitles on colon separators", () => {
-    expect(
-      buildRequestedTitleFallbackVariants("La Légende Du Dragon"),
-    ).toEqual(expect.arrayContaining(["Dragon"]));
+    expect(buildRequestedTitleFallbackVariants("La Légende Du Dragon")).toEqual(
+      expect.arrayContaining(["Dragon"]),
+    );
   });
 });
 
@@ -171,10 +171,7 @@ describe("hasUnrequestedVariantMarker", () => {
 
   it("accepte les séries dont le marqueur fait partie de la requête", () => {
     expect(
-      hasUnrequestedVariantMarker(
-        "Dragon Ball Z n°01",
-        "Dragon Ball Z n°01",
-      ),
+      hasUnrequestedVariantMarker("Dragon Ball Z n°01", "Dragon Ball Z n°01"),
     ).toBe(false);
     expect(
       hasUnrequestedVariantMarker("Dragon Ball n°01", "Dragon Ball n°01"),
@@ -339,14 +336,20 @@ describe("isMetadataTitleAligned", () => {
     expect(
       isMetadataTitleAligned(
         { title: "The Binding of Isaac Afterbirth+ sur PS5" },
-        ["The Binding of Isaac Repentance", "The Binding of Isaac Repentance ps5"],
+        [
+          "The Binding of Isaac Repentance",
+          "The Binding of Isaac Repentance ps5",
+        ],
         0.58,
       ),
     ).toBe(false);
     expect(
       isMetadataTitleAligned(
         { title: "The Binding of Isaac Repentance sur PS5" },
-        ["The Binding of Isaac Repentance", "The Binding of Isaac Repentance ps5"],
+        [
+          "The Binding of Isaac Repentance",
+          "The Binding of Isaac Repentance ps5",
+        ],
         0.58,
       ),
     ).toBe(true);
@@ -383,12 +386,15 @@ describe("isMetadataTitleAligned", () => {
       },
       {
         title: "Assassin's Creed Shadows",
-        description: "Feudal Japan action-adventure with a much longer synopsis.",
+        description:
+          "Feudal Japan action-adventure with a much longer synopsis.",
         facts: [{ kind: "rating", label: "IGDB", value: "85/100" }],
       },
     );
 
-    expect(supplemented.title).toBe("Assassin's Creed Shadows: Limited Edition");
+    expect(supplemented.title).toBe(
+      "Assassin's Creed Shadows: Limited Edition",
+    );
     expect(supplemented.description).toContain("Feudal Japan");
     expect(supplemented.facts).toHaveLength(2);
   });
@@ -542,8 +548,7 @@ describe("isMetadataTitleAligned", () => {
     expect(
       isMetadataTitleAligned(
         {
-          title:
-            "Assassin’s Creed Valhalla DLC Aube du Ragnarok sur PS4",
+          title: "Assassin’s Creed Valhalla DLC Aube du Ragnarok sur PS4",
         },
         alignmentNames,
         0.58,
@@ -573,11 +578,7 @@ describe("isMetadataTitleAligned", () => {
       ),
     ).toBe(false);
     expect(
-      isMetadataTitleAligned(
-        { title: "DmC & Devil May Cry 5" },
-        ["DmC"],
-        0.58,
-      ),
+      isMetadataTitleAligned({ title: "DmC & Devil May Cry 5" }, ["DmC"], 0.58),
     ).toBe(false);
   });
 });
@@ -654,9 +655,9 @@ describe("findBetterMetadataMatch", () => {
 
 describe("metadataTitleSimilarity", () => {
   it("does not treat pokemon franchise siblings as aligned via string distance", () => {
-    expect(metadataTitleSimilarity("Pokemon Jaune", "Pokemon Snap")).toBeLessThan(
-      0.58,
-    );
+    expect(
+      metadataTitleSimilarity("Pokemon Jaune", "Pokemon Snap"),
+    ).toBeLessThan(0.58);
   });
 
   it("keeps cross-language pokemon version titles aligned", () => {

@@ -66,7 +66,10 @@ function cachedBarcodePrices(
     "priceSourceDisplayNames" | "isReferencePriceOnly"
   > &
     Partial<
-      Pick<BarcodePricesResult, "priceSourceDisplayNames" | "isReferencePriceOnly">
+      Pick<
+        BarcodePricesResult,
+        "priceSourceDisplayNames" | "isReferencePriceOnly"
+      >
     >,
 ): BarcodePricesResult {
   const sources = overrides.priceSources;
@@ -78,12 +81,12 @@ function cachedBarcodePrices(
 }
 
 describe("getCachedBarcodePrices", () => {
-beforeEach(() => {
-  h.barcodeCache.findUnique.mockReset();
-  h.barcodeCache.findMany.mockReset();
-  h.priceOffer.findMany.mockReset();
-  h.barcodeCache.findMany.mockResolvedValue([]);
-});
+  beforeEach(() => {
+    h.barcodeCache.findUnique.mockReset();
+    h.barcodeCache.findMany.mockReset();
+    h.priceOffer.findMany.mockReset();
+    h.barcodeCache.findMany.mockResolvedValue([]);
+  });
 
   it("keeps barcode summary values when observations miss a condition", async () => {
     h.barcodeCache.findUnique.mockResolvedValue({
@@ -371,7 +374,8 @@ describe("summarizeShelfItemPrices", () => {
       {
         itemId: "item-1",
         source: "ChocoBonPlan",
-        productName: "Disney Infinity 3.0 : Star Wars – pack de démarrage sur PS4",
+        productName:
+          "Disney Infinity 3.0 : Star Wars – pack de démarrage sur PS4",
         condition: "new",
         priceCents: 1990,
         observedAt: new Date("2026-06-20T12:00:00.000Z"),

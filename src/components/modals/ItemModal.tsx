@@ -78,7 +78,10 @@ import {
   resolveMetadataCoverUrl,
   filterMetadataForShelfPlatform,
 } from "@/lib/item/media";
-import { stripCropSuffixFromUrl, urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
+import {
+  stripCropSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
+} from "@/lib/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -375,7 +378,8 @@ export function ItemModal({
       const barcodeContext = options.barcodeContext;
 
       setFetchedMetadata(
-        filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ?? metadata,
+        filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ??
+          metadata,
       );
 
       const currentBarcode = (
@@ -424,7 +428,13 @@ export function ItemModal({
         }
       }
     },
-    [activeShelfForMedia, activeShelfType, form, hasPrefilledScanImage, prefilledScanImageUrl],
+    [
+      activeShelfForMedia,
+      activeShelfType,
+      form,
+      hasPrefilledScanImage,
+      prefilledScanImageUrl,
+    ],
   );
 
   const fetchMetadataPreview = useCallback(
@@ -597,7 +607,9 @@ export function ItemModal({
 
   const availableImages = useMemo(() => {
     const rawMetadata =
-      itemId && item?.metadata ? item.metadata : (item?.metadata ?? fetchedMetadata);
+      itemId && item?.metadata
+        ? item.metadata
+        : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
       rawMetadata,
       activeShelfForMedia,
@@ -823,7 +835,9 @@ export function ItemModal({
 
   const finalImages = useMemo(() => {
     const rawMetadata =
-      itemId && item?.metadata ? item.metadata : (item?.metadata ?? fetchedMetadata);
+      itemId && item?.metadata
+        ? item.metadata
+        : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
       rawMetadata,
       activeShelfForMedia,
@@ -1100,7 +1114,10 @@ export function ItemModal({
 
       await onSubmit(updatedItem);
       if (itemId) {
-        void invalidateItemQueries(queryClient, itemId, [shelfId, values.shelfId]);
+        void invalidateItemQueries(queryClient, itemId, [
+          shelfId,
+          values.shelfId,
+        ]);
       }
       onClose();
     } catch (error) {
@@ -1489,7 +1506,9 @@ export function ItemModal({
                               <Input
                                 type="text"
                                 className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
-                                placeholder={t(itemsBarcodePlaceholderKey(shelfType))}
+                                placeholder={t(
+                                  itemsBarcodePlaceholderKey(shelfType),
+                                )}
                                 {...field}
                                 onChange={(e) => {
                                   field.onChange(e);

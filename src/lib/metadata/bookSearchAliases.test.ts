@@ -26,9 +26,10 @@ describe("supplementBookSearchAliases", () => {
       },
     });
 
-    const aliases = await supplementBookSearchAliases("Attaque des Titans n°02", [
-      { name: "Hajime Isayama" },
-    ]);
+    const aliases = await supplementBookSearchAliases(
+      "Attaque des Titans n°02",
+      [{ name: "Hajime Isayama" }],
+    );
 
     expect(aliases).toEqual(
       expect.arrayContaining([

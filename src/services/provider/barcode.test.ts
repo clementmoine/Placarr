@@ -60,15 +60,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
       ["ol", "googlebooks", "cal", "amc", "ebay", "leDenicheur"].sort(),
     );
     expect(Object.keys(builders.musics({ barcode: "1" })).sort()).toEqual(
-      [
-        "mb",
-        "discogs",
-        "deezer",
-        "cal",
-        "amc",
-        "ebay",
-        "leDenicheur",
-      ].sort(),
+      ["mb", "discogs", "deezer", "cal", "amc", "ebay", "leDenicheur"].sort(),
     );
     expect(Object.keys(builders.movies({ barcode: "1" })).sort()).toEqual(
       ["cal", "amc", "ebay", "leDenicheur"].sort(),

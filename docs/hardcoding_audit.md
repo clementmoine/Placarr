@@ -85,10 +85,11 @@
 > — verify with `pnpm build`, not a tsx scratch.
 >
 > **Findings that reshape the remaining plan:**
+>
 > - **P2c platform tables** — `videoGamePlatforms.ts` (the consumer, client-safe,
 >   13-file blast radius) can't be routed through the heavy registry/provider
 >   modules without re-triggering the client-bundle break. Moving the tables to
->   provider dirs only *relocates* the coupling (core still imports them by name).
+>   provider dirs only _relocates_ the coupling (core still imports them by name).
 >   Low value / high constraint — deprioritise.
 > - **P4 ISO codes / stopwords** — replacing the CURATED region/stopword lists with
 >   COMPLETE libraries would OVER-MATCH and over-strip real title words (`no`=Norway,
@@ -100,6 +101,7 @@
 >   large, resolution-critical — a dedicated pass with live §5 + confidenceLock.
 >
 > **Remaining surface (from the guard allowlist) — larger pieces:**
+>
 > - **P2b `sourceAssembly.ts`** (biggest): a 265-line provider adapter mapping each
 >   payload slice → per-type sources. Inverting it = redesign the provider-keyed
 >   payload shape + move extraction into ~15 modules. Resolution-critical; needs a

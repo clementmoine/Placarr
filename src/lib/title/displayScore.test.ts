@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  scoreDisplayTitle,
-  scoreMetadataDisplayTitle,
-} from "./displayScore";
+import { scoreDisplayTitle, scoreMetadataDisplayTitle } from "./displayScore";
 
 describe("displayTitleScore", () => {
   describe("scoreDisplayTitle", () => {
@@ -31,7 +28,9 @@ describe("displayTitleScore", () => {
     });
 
     it("prefers French catalog spellings over listing noise", () => {
-      const french = scoreMetadataDisplayTitle("Les Lapins Crétins : Retour vers le passé");
+      const french = scoreMetadataDisplayTitle(
+        "Les Lapins Crétins : Retour vers le passé",
+      );
       const noisy = scoreMetadataDisplayTitle(
         "Les Lapins Crétins jeu video complet pal fr",
       );

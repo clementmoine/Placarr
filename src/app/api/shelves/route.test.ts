@@ -113,19 +113,29 @@ describe("GET /api/shelves — autorisation & cloisonnement", () => {
 
   it("attache le bestItem = l'item le mieux noté ayant un fond", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
-    h.shelf.findMany.mockResolvedValue([{ id: "s1", name: "S", _count: { items: 2 } }]);
+    h.shelf.findMany.mockResolvedValue([
+      { id: "s1", name: "S", _count: { items: 2 } },
+    ]);
     h.item.findMany.mockResolvedValue([
       {
         shelfId: "s1",
         imageUrl: "low.jpg",
         backgroundImageUrl: "low-bg.jpg",
-        metadata: { imageUrl: null, heroImageUrl: null, facts: JSON.stringify([{ kind: "rating", value: "6/10" }]) },
+        metadata: {
+          imageUrl: null,
+          heroImageUrl: null,
+          facts: JSON.stringify([{ kind: "rating", value: "6/10" }]),
+        },
       },
       {
         shelfId: "s1",
         imageUrl: "top.jpg",
         backgroundImageUrl: null,
-        metadata: { imageUrl: null, heroImageUrl: "top-hero.jpg", facts: JSON.stringify([{ kind: "rating", value: "9/10" }]) },
+        metadata: {
+          imageUrl: null,
+          heroImageUrl: "top-hero.jpg",
+          facts: JSON.stringify([{ kind: "rating", value: "9/10" }]),
+        },
       },
     ]);
 

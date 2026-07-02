@@ -47,7 +47,6 @@ export async function runBarcodeLookups(params: {
       }),
     );
     if (process.env.RECORD) {
-      // eslint-disable-next-line no-console
       console.log("[record step] lookups:tasks-settled");
     }
     payload.pc = asPriceChartingHit(lookups.pc);

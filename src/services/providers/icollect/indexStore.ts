@@ -222,13 +222,15 @@ export function writeCachedICollectMetadata(
   itemId: string,
   payload: string,
 ): void {
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO item_metadata (item_id, payload, fetched_at)
     VALUES (?, ?, ?)
     ON CONFLICT(item_id) DO UPDATE SET
       payload = excluded.payload,
       fetched_at = excluded.fetched_at
-  `).run(itemId, payload, Date.now());
+  `,
+  ).run(itemId, payload, Date.now());
 }
 
 export function countICollectBarcodeIndex(db: DatabaseSync): number {

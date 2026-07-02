@@ -39,8 +39,7 @@ describe("bedetheque fetch", () => {
       seriesPosition: 7,
       publisher: "EDI-Monde",
       releaseYear: 1984,
-      imageUrl:
-        "https://www.bedetheque.com/media/Couvertures/Couv_56641.jpg",
+      imageUrl: "https://www.bedetheque.com/media/Couvertures/Couv_56641.jpg",
       ratingValue: 4,
       ratingCount: 5,
     });
@@ -65,8 +64,16 @@ describe("bedetheque fetch", () => {
     `);
 
     expect(links).toEqual([
-      { issue: "7", albumId: "56641", albumPath: "BD-Super-Picsou-Geant-Tome-7-Numero-7-56641.html" },
-      { issue: "2", albumId: "478947", albumPath: "BD-Super-Picsou-Geant-Tome-2-Numero-2-478947.html" },
+      {
+        issue: "7",
+        albumId: "56641",
+        albumPath: "BD-Super-Picsou-Geant-Tome-7-Numero-7-56641.html",
+      },
+      {
+        issue: "2",
+        albumId: "478947",
+        albumPath: "BD-Super-Picsou-Geant-Tome-2-Numero-2-478947.html",
+      },
     ]);
     expect(pickBedethequeAlbumLink(links, "7")).toBe(
       "BD-Super-Picsou-Geant-Tome-7-Numero-7-56641.html",
@@ -80,8 +87,16 @@ describe("bedetheque fetch", () => {
     `);
 
     expect(links).toEqual([
-      { issue: "1", albumId: "24065", albumPath: "BD-Naruto-Tome-1-Naruto-Uzumaki-24065.html" },
-      { issue: "2", albumId: "24064", albumPath: "BD-Naruto-Tome-2-Un-client-embarrassant-24064.html" },
+      {
+        issue: "1",
+        albumId: "24065",
+        albumPath: "BD-Naruto-Tome-1-Naruto-Uzumaki-24065.html",
+      },
+      {
+        issue: "2",
+        albumId: "24064",
+        albumPath: "BD-Naruto-Tome-2-Un-client-embarrassant-24064.html",
+      },
     ]);
   });
 
@@ -175,9 +190,7 @@ describe("bedetheque fetch", () => {
   });
 });
 
-function albumHtml(
-  options: { ean?: string; seriesTitle?: string } = {},
-) {
+function albumHtml(options: { ean?: string; seriesTitle?: string } = {}) {
   const ean = options.ean ?? "";
   const seriesTitle = options.seriesTitle ?? "Super Picsou Géant";
   return `

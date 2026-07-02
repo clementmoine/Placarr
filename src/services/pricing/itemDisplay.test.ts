@@ -188,18 +188,16 @@ describe("scheduleItemPricesRefreshBatch", () => {
   });
 
   it("refreshes only items whose cache is missing or stale", async () => {
-    h.getCachedItemPrices
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        priceNew: 1000,
-        priceUsed: null,
-        priceUsedCIB: null,
-        priceLastUpdated: new Date(),
-        priceSources: [],
-        priceSourceDisplayNames: [],
-        isReferencePriceOnly: false,
-        priceObservations: [],
-      });
+    h.getCachedItemPrices.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      priceNew: 1000,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
     h.shouldRefreshPriceCache.mockReturnValue(false);
     h.refreshItemPrices.mockResolvedValue({
       priceNew: 1500,
@@ -227,18 +225,16 @@ describe("scheduleItemPricesRefreshBatch", () => {
   });
 
   it("with onlyWhenEmpty skips items that already have cached prices", async () => {
-    h.getCachedItemPrices
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        priceNew: 1000,
-        priceUsed: null,
-        priceUsedCIB: null,
-        priceLastUpdated: new Date(),
-        priceSources: [],
-        priceSourceDisplayNames: [],
-        isReferencePriceOnly: false,
-        priceObservations: [],
-      });
+    h.getCachedItemPrices.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      priceNew: 1000,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
     h.refreshItemPrices.mockResolvedValue({
       priceNew: 1500,
       priceUsed: null,
@@ -250,10 +246,9 @@ describe("scheduleItemPricesRefreshBatch", () => {
       priceObservations: [],
     });
 
-    scheduleItemPricesRefreshBatch(
-      [CONTEXT, { ...CONTEXT, id: "item-2" }],
-      { onlyWhenEmpty: true },
-    );
+    scheduleItemPricesRefreshBatch([CONTEXT, { ...CONTEXT, id: "item-2" }], {
+      onlyWhenEmpty: true,
+    });
 
     const task = h.after.mock.calls[0]?.[0] as () => Promise<void>;
     await task();

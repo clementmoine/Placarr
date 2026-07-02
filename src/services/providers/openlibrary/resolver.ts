@@ -258,7 +258,10 @@ export function createOpenLibraryResolver() {
                   cleanName.toLowerCase(),
                   edition.title.toLowerCase(),
                 );
-                const aligned = openLibraryTitleAligned(edition.title, cleanName);
+                const aligned = openLibraryTitleAligned(
+                  edition.title,
+                  cleanName,
+                );
                 const requestedIssue = volumeNumberFromTitle(cleanName);
                 const editionIssue = volumeNumberFromTitle(edition.title);
                 const issueMismatch =

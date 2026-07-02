@@ -26,10 +26,7 @@ import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath } from "@/lib/routing/slugs";
 import { cn } from "@/lib/core/utils";
 
-function jobKindLabel(
-  job: BackgroundJob,
-  t: (key: string) => string,
-): string {
+function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   return job.kind === "metadataRefresh"
     ? t("backgroundJobs.kindRefresh")
     : t("backgroundJobs.kindEnrich");

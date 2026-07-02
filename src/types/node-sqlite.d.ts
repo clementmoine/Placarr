@@ -5,13 +5,7 @@
  * once `@types/node` is bumped to a version that ships `node:sqlite`.
  */
 declare module "node:sqlite" {
-  type SupportedValue =
-    | null
-    | number
-    | bigint
-    | string
-    | Uint8Array
-    | boolean;
+  type SupportedValue = null | number | bigint | string | Uint8Array | boolean;
 
   export class StatementSync {
     // Returns the first row (column→value), or undefined when none.

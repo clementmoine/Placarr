@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  resolveSettledLookups,
-  withBarcodeLookupDeadline,
-} from "./payload";
+import { resolveSettledLookups, withBarcodeLookupDeadline } from "./payload";
 
 const delay = <T>(ms: number, value: T) =>
   new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
@@ -32,9 +29,9 @@ describe("withBarcodeLookupDeadline", () => {
   });
 
   it("disables the cap when ms is non-positive", async () => {
-    await expect(
-      withBarcodeLookupDeadline(delay(5, "value"), 0),
-    ).resolves.toBe("value");
+    await expect(withBarcodeLookupDeadline(delay(5, "value"), 0)).resolves.toBe(
+      "value",
+    );
   });
 });
 

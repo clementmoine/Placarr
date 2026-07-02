@@ -15,7 +15,11 @@ import {
   coverProvenanceRank,
   resolveCoverProvenance,
 } from "@/lib/media/coverProvenance";
-import { MIN_COVER_SHORTEST_EDGE, isCoverResolutionAcceptable, shortestImageEdge } from "@/lib/media/coverResolution";
+import {
+  MIN_COVER_SHORTEST_EDGE,
+  isCoverResolutionAcceptable,
+  shortestImageEdge,
+} from "@/lib/media/coverResolution";
 import { exposureScoreAdjustment } from "@/lib/media/coverExposure";
 import {
   detectVideoGamePlatformKey,
@@ -209,10 +213,7 @@ function platformAlignmentScore(
   attachment: ScoredAttachmentInput,
   requestedPlatformKey?: string | null,
 ): number {
-  if (
-    !requestedPlatformKey ||
-    !isVideoGamePlatformKey(requestedPlatformKey)
-  ) {
+  if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
     return 0;
   }
 
@@ -250,10 +251,7 @@ export function isAttachmentCoverPlatformMismatch(
   attachment: ScoredAttachmentInput,
   requestedPlatformKey?: string | null,
 ): boolean {
-  if (
-    !requestedPlatformKey ||
-    !isVideoGamePlatformKey(requestedPlatformKey)
-  ) {
+  if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
     return false;
   }
 
@@ -267,10 +265,7 @@ export function shouldShowCoverAttachmentOnShelf(
   attachment: ScoredAttachmentInput,
   requestedPlatformKey?: string | null,
 ): boolean {
-  if (
-    !requestedPlatformKey ||
-    !isVideoGamePlatformKey(requestedPlatformKey)
-  ) {
+  if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
     return true;
   }
 
@@ -451,11 +446,8 @@ export function scoreAttachmentForDisplay(
   imageMetrics?: AttachmentImageMetrics | null,
   options?: AttachmentDisplayScoreOptions,
 ): number {
-  return explainAttachmentScoreForDisplay(
-    attachment,
-    imageMetrics,
-    options,
-  ).score;
+  return explainAttachmentScoreForDisplay(attachment, imageMetrics, options)
+    .score;
 }
 
 export function rankScoredAttachments<T extends ScoredAttachmentInput>(
@@ -804,7 +796,7 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
   );
   const preferred = ranked[0] ?? null;
   const preferredMetrics = preferred?.url
-    ? imageMetricsByUrl?.get(preferred.url) ?? null
+    ? (imageMetricsByUrl?.get(preferred.url) ?? null)
     : null;
 
   if (preferred?.url && isCoverResolutionAcceptable(preferredMetrics)) {

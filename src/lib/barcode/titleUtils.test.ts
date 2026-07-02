@@ -214,10 +214,7 @@ describe("priceListingVolumeConflictsWithItem", () => {
 describe("barcodeListingMatchesItem volume markers", () => {
   it("aligns equivalent volume markers across formats", () => {
     expect(
-      barcodeListingMatchesItem(
-        "Death Note Tome 01",
-        "Death Note Vol. 1",
-      ),
+      barcodeListingMatchesItem("Death Note Tome 01", "Death Note Vol. 1"),
     ).toBe(true);
   });
 

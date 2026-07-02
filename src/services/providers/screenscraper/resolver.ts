@@ -216,7 +216,11 @@ async function fetchScreenScraperGameById(
       );
 
     const attempts = options?.isBackground ? 3 : 2;
-    const infoRes = await retry(queryFn, attempts, options?.isBackground ? 1500 : 1000);
+    const infoRes = await retry(
+      queryFn,
+      attempts,
+      options?.isBackground ? 1500 : 1000,
+    );
 
     const jeu = infoRes.data?.response?.jeu;
     if (!jeu?.id) return null;

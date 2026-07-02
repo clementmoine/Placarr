@@ -327,8 +327,7 @@ async function resolvePhilibertHit(
   return mapPhilibertMetadata({
     ...product,
     title,
-    barcode:
-      product.barcode || hit.barcode || normalizedBarcode || undefined,
+    barcode: product.barcode || hit.barcode || normalizedBarcode || undefined,
     backgroundImageUrl,
   });
 }

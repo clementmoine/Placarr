@@ -10,7 +10,10 @@ import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
 import { scopedContribution } from "@/lib/barcode/lookup/sourceContribution";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { pricedOffers } from "@/lib/provider/priceOffers";
-import { normalizeVolumeTitleText, hasExplicitVolumeMarker } from "@/lib/title/volumeNumber";
+import {
+  normalizeVolumeTitleText,
+  hasExplicitVolumeMarker,
+} from "@/lib/title/volumeNumber";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
@@ -303,7 +306,10 @@ export const chasseauxlivresModule: ProviderModule = {
             catalog,
             {
               validateProduct: (candidate) =>
-                isChasseTitleAligned(String(name || query).trim(), candidate.name),
+                isChasseTitleAligned(
+                  String(name || query).trim(),
+                  candidate.name,
+                ),
             },
           );
           if (product) return mapChasseAuxLivresMetadata(product);

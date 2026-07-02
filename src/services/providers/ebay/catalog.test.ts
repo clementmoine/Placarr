@@ -12,7 +12,11 @@ const mockedPost = vi.mocked(axios.post);
 function tokenResponse(token = "tok-123", expiresIn = 7200) {
   return {
     status: 200,
-    data: { access_token: token, expires_in: expiresIn, token_type: "Application Access Token" },
+    data: {
+      access_token: token,
+      expires_in: expiresIn,
+      token_type: "Application Access Token",
+    },
   } as never;
 }
 

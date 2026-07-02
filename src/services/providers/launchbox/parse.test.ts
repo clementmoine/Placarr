@@ -175,7 +175,9 @@ describe("buildLaunchBoxAttachments", () => {
         (entry) => entry.type === "cover" && entry.role === "us",
       ),
     ).toBe(true);
-    expect(attachments.filter((entry) => entry.type === "cover")).toHaveLength(2);
+    expect(attachments.filter((entry) => entry.type === "cover")).toHaveLength(
+      2,
+    );
     expect(attachments.some((entry) => entry.type === "background")).toBe(true);
     expect(attachments.some((entry) => entry.type === "logo")).toBe(true);
     expect(attachments.some((entry) => entry.type === "screenshot")).toBe(true);

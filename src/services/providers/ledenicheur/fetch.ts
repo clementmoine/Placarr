@@ -308,7 +308,9 @@ async function fetchProductDetail(
  * *both* new and used prices — then the detail fetch is pure redundancy, so we
  * halve latency without dropping pricing data.
  */
-function searchNodeHasCompletePricing(product: LeDenicheurProductNode): boolean {
+function searchNodeHasCompletePricing(
+  product: LeDenicheurProductNode,
+): boolean {
   const { priceNew, priceUsed } = parseLeDenicheurPriceSummary(
     product.priceSummary,
   );

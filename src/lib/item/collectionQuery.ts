@@ -239,8 +239,7 @@ export function collectionFiltersToSearchParams(
 ): Record<string, string | null> {
   return {
     condition: filters.condition === "all" ? null : filters.condition,
-    ratingMin:
-      filters.ratingMin === null ? null : String(filters.ratingMin),
+    ratingMin: filters.ratingMin === null ? null : String(filters.ratingMin),
     priced: filters.pricedOnly ? "1" : null,
   };
 }

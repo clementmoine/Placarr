@@ -10,9 +10,8 @@ describe("remoteImageProxy", () => {
       ).Referer,
     ).toBe("https://booknode.com/");
     expect(
-      remoteImageRequestHeaders(
-        "https://img.chasse-aux-livres.fr/example.jpg",
-      ).Referer,
+      remoteImageRequestHeaders("https://img.chasse-aux-livres.fr/example.jpg")
+        .Referer,
     ).toBe("https://www.chasse-aux-livres.fr/");
   });
 });

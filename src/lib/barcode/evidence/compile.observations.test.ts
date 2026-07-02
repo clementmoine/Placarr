@@ -73,9 +73,8 @@ describe("compileResultForType — observations", () => {
     expect(rejected.length).toBeGreaterThan(0);
     expect(rejected.some((row) => row.kind === "title")).toBe(true);
     expect(
-      rejected.some((row) =>
-        row.kind === "title" &&
-        /unrelated/i.test(String(row.value)),
+      rejected.some(
+        (row) => row.kind === "title" && /unrelated/i.test(String(row.value)),
       ),
     ).toBe(true);
   });

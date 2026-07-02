@@ -187,14 +187,18 @@ export function barcodeSourceDocumentRole(
   return "marketplace_listing";
 }
 
-export function barcodeTitleRole(evidence: ProductEvidence): TitleObservationRole {
+export function barcodeTitleRole(
+  evidence: ProductEvidence,
+): TitleObservationRole {
   if (evidence.isAlias) return "alias_title";
   if (evidence.isCanonical) return "object_title";
   if (evidence.isTrustedRetailer) return "catalog_title";
   return "listing_title";
 }
 
-export function barcodeImageRole(evidence: ProductEvidence): ImageObservationRole {
+export function barcodeImageRole(
+  evidence: ProductEvidence,
+): ImageObservationRole {
   if (evidence.isCanonical || evidence.isTrustedRetailer) {
     return "cover_front";
   }
@@ -322,9 +326,8 @@ export function pickPlatformKeyFromEvidence(
   });
 
   return pickPlatformKeyFromSignals(
-    signals.filter(
-      (signal): signal is { value: string; weight: number } =>
-        Boolean(signal.value?.trim()),
+    signals.filter((signal): signal is { value: string; weight: number } =>
+      Boolean(signal.value?.trim()),
     ),
   );
 }

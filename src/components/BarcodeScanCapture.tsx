@@ -58,8 +58,7 @@ export function BarcodeScanCapture({
           <div
             className={cn(
               "relative overflow-hidden rounded-2xl bg-zinc-950 border border-border/60",
-              cameraClassName ??
-                "aspect-square max-h-[220px] sm:max-h-[260px]",
+              cameraClassName ?? "aspect-square max-h-[220px] sm:max-h-[260px]",
             )}
           >
             <BarcodeScannerView

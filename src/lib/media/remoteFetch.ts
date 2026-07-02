@@ -66,8 +66,7 @@ function isAcceptableCoverFetch(
   ranked: RankedFetch,
 ): ranked is RankedFetch & { shortestEdge: number } {
   return (
-    ranked.shortestEdge === 0 ||
-    ranked.shortestEdge >= MIN_COVER_SHORTEST_EDGE
+    ranked.shortestEdge === 0 || ranked.shortestEdge >= MIN_COVER_SHORTEST_EDGE
   );
 }
 

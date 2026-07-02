@@ -4,7 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { resolveItemId, resolveShelfId } from "@/lib/routing/resolveIds";
-import { scheduleBatchItemMetadataRefresh, shelfMoveMetadataResetData } from "@/lib/jobs/scheduleMetadataRefresh";
+import {
+  scheduleBatchItemMetadataRefresh,
+  shelfMoveMetadataResetData,
+} from "@/lib/jobs/scheduleMetadataRefresh";
 import { slugifyItemName } from "@/lib/routing/slugs";
 
 const VALID_CONDITIONS = new Set<string>(Object.values(Condition));
@@ -31,7 +34,9 @@ const itemCreateSelect = {
   name: true,
 } satisfies Prisma.ItemSelect;
 
-type CreatedBatchItem = Prisma.ItemGetPayload<{ select: typeof itemCreateSelect }>;
+type CreatedBatchItem = Prisma.ItemGetPayload<{
+  select: typeof itemCreateSelect;
+}>;
 
 function normalizeNames(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null;
@@ -329,7 +334,10 @@ export async function PATCH(req: NextRequest) {
     });
 
     if (items.length !== resolvedIds.length) {
-      return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "One or more items not found" },
+        { status: 404 },
+      );
     }
 
     for (const item of items) {

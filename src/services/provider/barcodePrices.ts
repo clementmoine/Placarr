@@ -35,8 +35,6 @@ export function priceProviderTokenFromOffers(
     new Set(offers.map((offer) => offer.source).filter(Boolean)),
   );
   const resolved =
-    shelfType === "games"
-      ? finalizeGamePriceProviders(sources)
-      : sources;
+    shelfType === "games" ? finalizeGamePriceProviders(sources) : sources;
   return resolved.length > 0 ? resolved.join("+") : "None";
 }

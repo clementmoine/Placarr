@@ -195,7 +195,10 @@ export const achatmoinscherModule: ProviderModule = {
         }
         if (products.length === 0) {
           for (const query of expectedNames) {
-            products = await fetchFromAchatMoinsCherByQuery(query, expectedNames);
+            products = await fetchFromAchatMoinsCherByQuery(
+              query,
+              expectedNames,
+            );
             if (products.length > 0) break;
           }
         }

@@ -13,7 +13,9 @@ describe("icollectCoverRegionFromAgeRating", () => {
 
   it("ignores ambiguous ratings and corrupted timestamps", () => {
     expect(icollectCoverRegionFromAgeRating("3+")).toBeUndefined();
-    expect(icollectCoverRegionFromAgeRating("2024-03-15 08:08:49")).toBeUndefined();
+    expect(
+      icollectCoverRegionFromAgeRating("2024-03-15 08:08:49"),
+    ).toBeUndefined();
     expect(icollectCoverRegionFromAgeRating(null)).toBeUndefined();
   });
 });

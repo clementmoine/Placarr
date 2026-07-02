@@ -8,7 +8,10 @@ vi.mock("./fetch", () => ({
   fetchPricesFromAchatMoinsCher: vi.fn(),
 }));
 
-import { fetchFromAchatMoinsCher, fetchFromAchatMoinsCherByQuery } from "./fetch";
+import {
+  fetchFromAchatMoinsCher,
+  fetchFromAchatMoinsCherByQuery,
+} from "./fetch";
 import { achatmoinscherModule } from "./index";
 
 const mockedFetchFromAchatMoinsCher = vi.mocked(fetchFromAchatMoinsCher);

@@ -453,7 +453,10 @@ export function parseGeedieCountryOfRelease(html: string): string | null {
   return value || null;
 }
 
-export function parseGeedieProductPage(html: string, productUrl: string): GeedieProduct | null {
+export function parseGeedieProductPage(
+  html: string,
+  productUrl: string,
+): GeedieProduct | null {
   const jsonLdMatch = html.match(
     /<script type="application\/ld\+json">\s*(\{[\s\S]*?\})\s*<\/script>/,
   );
@@ -538,7 +541,10 @@ export async function fetchGeedieGallery(
   const queries = uniqueQueries(queryOrQueries);
   if (queries.length === 0) return null;
 
-  const alignmentNames = buildGeedieAlignmentNames(queries[0], queries.slice(1));
+  const alignmentNames = buildGeedieAlignmentNames(
+    queries[0],
+    queries.slice(1),
+  );
   const items: GeedieGalleryItem[] = [];
   const seenCovers = new Set<string>();
 
@@ -622,11 +628,14 @@ export async function fetchFromGeedie(
 
 export async function pingGeedie(): Promise<boolean> {
   try {
-    const response = await axios.get(`${GEEDIE_BASE_URL}/en/marketplace/playstation`, {
-      headers: HEADERS,
-      timeout: 8_000,
-      validateStatus: (status) => status < 500,
-    });
+    const response = await axios.get(
+      `${GEEDIE_BASE_URL}/en/marketplace/playstation`,
+      {
+        headers: HEADERS,
+        timeout: 8_000,
+        validateStatus: (status) => status < 500,
+      },
+    );
     return response.status < 400;
   } catch {
     return false;

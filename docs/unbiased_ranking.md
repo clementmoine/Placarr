@@ -81,11 +81,11 @@ provider.
 > per-provider `weight` in the metadata **enrichment** merge
 > (`src/services/metadata/merge.ts` `orderResultsByObservationStrength`) — **retiré 2026-06-30**.
 
-| Bias                                                               | Where                                                               |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Per-provider merge weights (`screenscraper: 0.9`, `igdb: 0.85`, …) | ~~`src/services/providerRegistry.ts`~~ **retiré du merge 2026-06-30** ; poids registry restent pour bridge legacy barcode uniquement |
-| Per-provider flags as privilege (`isRealBoxCover`, `isSecondary`)  | same                                                                |
-| Literal name hardcode (`providerId === "screenscraper" ? 6 : 12`)  | `src/services/metadataFetch.ts`                                     |
+| Bias                                                               | Where                                                                                                                                                            |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-provider merge weights (`screenscraper: 0.9`, `igdb: 0.85`, …) | ~~`src/services/providerRegistry.ts`~~ **retiré du merge 2026-06-30** ; poids registry restent pour bridge legacy barcode uniquement                             |
+| Per-provider flags as privilege (`isRealBoxCover`, `isSecondary`)  | same                                                                                                                                                             |
+| Literal name hardcode (`providerId === "screenscraper" ? 6 : 12`)  | `src/services/metadataFetch.ts`                                                                                                                                  |
 | ~~"real box cover" `+220` display bonus~~ — **removed**            | was `attachmentDisplayScore.ts`; the magic weight + `isRealBoxCoverSource` plumbing are gone. Cover ranking is now resolution + exposure + provenance tier only. |
 
 These must be replaced by data-property + consensus scoring (below).
@@ -197,6 +197,7 @@ a field the provider gets to assert globally.
   > (`Attachment.width/height/meanLuminance/darkPixelRatio`, read at display time
   > so the gallery re-sorts without a refresh). **Existing items keep
   > `coverProvenance = NULL` and null metrics until re-enriched.**
+
 - **Consensus**: **perceptual-hash agreement** — the same image reached by the
   most distinct, independent sources (dHash clustering already exists in the
   dedup path). This is the image analogue of title medoid.

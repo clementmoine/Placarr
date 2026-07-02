@@ -1,8 +1,5 @@
 import levenshtein from "fast-levenshtein";
-import type {
-  MetadataFact,
-  MetadataResult,
-} from "@/types/metadataProvider";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
 interface HLTBInitResponse {
   token?: string;

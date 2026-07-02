@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const h = vi.hoisted(() => ({
   requireGuestOrHigher: vi.fn(),
-  item: { create: vi.fn(), findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+  item: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+  },
   shelf: { findUnique: vi.fn() },
   resolveShelfId: vi.fn(),
   resolveItemId: vi.fn(),

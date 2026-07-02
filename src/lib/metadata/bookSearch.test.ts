@@ -12,9 +12,9 @@ describe("buildBookMetadataSearchQueries", () => {
   });
 
   it("n'ajoute pas l'étagère si déjà présente dans le titre", () => {
-    expect(buildBookMetadataSearchQueries("Manga Naruto n°01", "Mangas")).toEqual([
-      "Manga Naruto n°01",
-    ]);
+    expect(
+      buildBookMetadataSearchQueries("Manga Naruto n°01", "Mangas"),
+    ).toEqual(["Manga Naruto n°01"]);
   });
 
   it("ne fabrique que des requêtes composées du titre et de l'étagère", () => {

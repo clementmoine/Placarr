@@ -4,11 +4,7 @@ vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
 import axios from "axios";
 
 import { fetchFromEbayCatalog } from "./catalog";
-import {
-  fetchFromEbay,
-  fetchPricesFromEbay,
-  pingEbay,
-} from "./fetch";
+import { fetchFromEbay, fetchPricesFromEbay, pingEbay } from "./fetch";
 import { resetEbayTokenCache } from "./oauth";
 
 const mockedGet = vi.mocked(axios.get);
@@ -17,12 +13,19 @@ const mockedPost = vi.mocked(axios.post);
 function tokenResponse(token = "tok-123", expiresIn = 7200) {
   return {
     status: 200,
-    data: { access_token: token, expires_in: expiresIn, token_type: "Application Access Token" },
+    data: {
+      access_token: token,
+      expires_in: expiresIn,
+      token_type: "Application Access Token",
+    },
   } as never;
 }
 
 function browseResponse(items: unknown[]) {
-  return { status: 200, data: { total: items.length, itemSummaries: items } } as never;
+  return {
+    status: 200,
+    data: { total: items.length, itemSummaries: items },
+  } as never;
 }
 
 function catalogResponse(summaries: unknown[]) {
@@ -34,7 +37,13 @@ function catalogResponse(summaries: unknown[]) {
 
 function itemSummary(
   title: string,
-  opts: { price?: string; currency?: string; condition?: string; img?: string; url?: string } = {},
+  opts: {
+    price?: string;
+    currency?: string;
+    condition?: string;
+    img?: string;
+    url?: string;
+  } = {},
 ) {
   return {
     itemId: "v1|123|0",
@@ -46,10 +55,7 @@ function itemSummary(
   };
 }
 
-function mockCatalogThenBrowse(
-  catalog: unknown[],
-  browse: unknown[],
-) {
+function mockCatalogThenBrowse(catalog: unknown[], browse: unknown[]) {
   mockedPost
     .mockResolvedValueOnce(tokenResponse())
     .mockResolvedValueOnce(tokenResponse());
@@ -141,9 +147,9 @@ describe("fetchFromEbay", () => {
     ]);
 
     const epidCall = mockedGet.mock.calls[2]!;
-    expect((epidCall[1] as { params: Record<string, string> }).params.epid).toBe(
-      "555",
-    );
+    expect(
+      (epidCall[1] as { params: Record<string, string> }).params.epid,
+    ).toBe("555");
   });
 
   it("returns [] without credentials (never calls the API)", async () => {
@@ -256,8 +262,8 @@ describe("pingEbay", () => {
     await fetchFromEbayCatalog("9782070368228");
 
     const bodies = mockedPost.mock.calls.map((call) => String(call[1]));
-    expect(bodies.some((body) => body.includes("commerce.catalog.readonly"))).toBe(
-      true,
-    );
+    expect(
+      bodies.some((body) => body.includes("commerce.catalog.readonly")),
+    ).toBe(true);
   });
 });

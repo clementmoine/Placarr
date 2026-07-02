@@ -82,11 +82,7 @@ function addBooknodeCoverVariants(
 
 function booknodeCandidateScore(value: string): number {
   const path = value.split("/book_cover/")[1] || value;
-  const tier = value.includes("/full/")
-    ? 0
-    : value.includes("/mod11/")
-      ? 1
-      : 2;
+  const tier = value.includes("/full/") ? 0 : value.includes("/mod11/") ? 1 : 2;
   const sizeScore = /264-432/.test(value)
     ? 0
     : /132-216/.test(value)

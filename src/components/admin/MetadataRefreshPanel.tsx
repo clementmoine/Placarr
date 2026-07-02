@@ -295,7 +295,9 @@ export function MetadataRefreshPanel() {
     const deadline = Date.now() + 10 * 60 * 1000;
     while (!cancelRef.current && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      const res = await axios.get<AdminRefreshPayload>("/api/admin/items-refresh");
+      const res = await axios.get<AdminRefreshPayload>(
+        "/api/admin/items-refresh",
+      );
       const refreshed = res.data.items.find((entry) => entry.id === itemId);
       if (!refreshed?.metadataRefreshStartedAt) {
         return refreshed ?? null;

@@ -392,8 +392,7 @@ export async function fetchFromAchatMoinsCherByQuery(
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return [];
 
-  const names =
-    expectedNames.length > 0 ? expectedNames : [cleanedQuery];
+  const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
   console.log(`[AchatMoinsCher] Querying search: ${cleanedQuery}`);
   const searchRes = await axios.get(searchUrl, {
@@ -443,8 +442,7 @@ async function fetchPricesFromAchatMoinsCherByName(
     timeout: 5000,
   });
 
-  const names =
-    expectedNames.length > 0 ? expectedNames : [cleanedQuery];
+  const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   for (const hit of parseAchatMoinsCherSearchHits(searchRes.data)) {
     if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) {
       continue;
@@ -484,7 +482,10 @@ export async function fetchPricesFromAchatMoinsCher(
         const product = await fetchAchatMoinsCherProductById(productId);
         if (
           product &&
-          achatMoinsCherTitleMatchesExpectedNames(product.name, expectedNames) &&
+          achatMoinsCherTitleMatchesExpectedNames(
+            product.name,
+            expectedNames,
+          ) &&
           (product.priceNew != null || product.priceUsed != null)
         ) {
           return {

@@ -133,11 +133,13 @@ export async function supplementBookSearchAliases(
   return Array.from(aliases);
 }
 
-export async function withBookSearchAliases<T extends {
-  title?: string | null;
-  aliases?: string[] | null;
-  authors?: Array<{ name?: string | null }> | null;
-}>(metadata: T): Promise<T> {
+export async function withBookSearchAliases<
+  T extends {
+    title?: string | null;
+    aliases?: string[] | null;
+    authors?: Array<{ name?: string | null }> | null;
+  },
+>(metadata: T): Promise<T> {
   const extra = await supplementBookSearchAliases(
     metadata.title,
     metadata.authors,

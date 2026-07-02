@@ -108,7 +108,8 @@ export function inferCover3dRoleFromHints(input: {
 
   if (!is3dHint) return null;
 
-  const region = input.coverDefaultRegion || regionTokenFromPlainRole(input.role);
+  const region =
+    input.coverDefaultRegion || regionTokenFromPlainRole(input.role);
   return `3d-${region}`;
 }
 

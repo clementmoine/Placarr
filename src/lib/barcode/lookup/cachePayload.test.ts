@@ -193,7 +193,9 @@ describe("buildCachedBarcodePayload", () => {
       "8717418223908",
     );
 
-    expect(payload.matches[0]?.coverUrl).toBe("https://example.test/obs-cover.jpg");
+    expect(payload.matches[0]?.coverUrl).toBe(
+      "https://example.test/obs-cover.jpg",
+    );
   });
 
   it("reprojette platformKey depuis les observations fact quand la colonne est absente", async () => {

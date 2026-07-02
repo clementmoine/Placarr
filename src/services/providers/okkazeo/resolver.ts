@@ -213,7 +213,11 @@ export function createOkkazeoResolver() {
           shelfName: ctx.shelfName,
         });
 
-        const hits = await searchOkkazeoHits(query, normalizedBarcode, hitLimit);
+        const hits = await searchOkkazeoHits(
+          query,
+          normalizedBarcode,
+          hitLimit,
+        );
         for (const hit of hits) {
           if (seenUrls.has(hit.url)) continue;
           seenUrls.add(hit.url);

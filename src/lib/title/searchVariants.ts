@@ -1,4 +1,7 @@
-import { buildRomanNumeralTitleVariants, buildRomanRangeTitleVariants } from "@/lib/title/romanNumeral";
+import {
+  buildRomanNumeralTitleVariants,
+  buildRomanRangeTitleVariants,
+} from "@/lib/title/romanNumeral";
 import { createGameEditionMatcher } from "@/lib/barcode/listingTerms";
 import {
   TITLE_PHRASE_EQUIVALENT_GROUPS,
@@ -67,7 +70,10 @@ export function buildPhraseEquivalentTitleVariants(title: string): string[] {
     { value: trimmed, depth: 0 },
   ];
 
-  while (frontier.length > 0 && variants.size < MAX_PHRASE_EQUIVALENT_VARIANTS) {
+  while (
+    frontier.length > 0 &&
+    variants.size < MAX_PHRASE_EQUIVALENT_VARIANTS
+  ) {
     const { value: current, depth } = frontier.pop()!;
     const lower = current.toLowerCase();
 

@@ -96,7 +96,9 @@ export function barcodeLookupTaskDeadlineMs(): number {
   const raw = process.env.BARCODE_LOOKUP_TASK_DEADLINE_MS;
   if (raw === undefined) return DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS;
   const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS;
+  return Number.isFinite(parsed)
+    ? parsed
+    : DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS;
 }
 
 export function withBarcodeLookupDeadline<T>(

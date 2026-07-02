@@ -82,8 +82,12 @@ async function main() {
 
   const merged = mergeMetadata("boardgames", [
     ...(bgg ? [{ providerId: bggModule.info.id, metadata: bgg }] : []),
-    ...(wikidata ? [{ providerId: wikidataModule.info.id, metadata: wikidata }] : []),
-    ...(philibert ? [{ providerId: philibertModule.info.id, metadata: philibert }] : []),
+    ...(wikidata
+      ? [{ providerId: wikidataModule.info.id, metadata: wikidata }]
+      : []),
+    ...(philibert
+      ? [{ providerId: philibertModule.info.id, metadata: philibert }]
+      : []),
   ]);
   console.log("Merged:", {
     title: merged.title,

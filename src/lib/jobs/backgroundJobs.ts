@@ -48,9 +48,7 @@ type BackgroundJobDbRow = Prisma.ItemGetPayload<{
   select: typeof backgroundJobSelect;
 }>;
 
-function activeBackgroundJobsWhere(
-  userId: string,
-): Prisma.ItemWhereInput {
+function activeBackgroundJobsWhere(userId: string): Prisma.ItemWhereInput {
   const refreshCutoff = new Date(Date.now() - METADATA_REFRESH_MAX_MS);
   const enrichCutoff = new Date(Date.now() - ITEM_ENRICH_WINDOW_MS);
 
@@ -72,9 +70,7 @@ function toBackgroundJobRow(
   inMemoryIds: Set<string>,
 ): BackgroundJobRow {
   const isRefresh = Boolean(item.metadataRefreshStartedAt);
-  const startedAt = isRefresh
-    ? item.metadataRefreshStartedAt!
-    : item.createdAt;
+  const startedAt = isRefresh ? item.metadataRefreshStartedAt! : item.createdAt;
 
   return {
     id: item.id,

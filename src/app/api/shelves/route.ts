@@ -52,10 +52,13 @@ async function formatShelfWithItemPrices<
   );
 
   const items = shelf.items.map((item) => {
-    const presented = presentItemFromStorage({
-      ...item,
-      metadata: (item.metadata ?? null) as StoredItemMetadata | null,
-    }, { uiLocale });
+    const presented = presentItemFromStorage(
+      {
+        ...item,
+        metadata: (item.metadata ?? null) as StoredItemMetadata | null,
+      },
+      { uiLocale },
+    );
     return {
       ...presented,
       id: item.id,
@@ -150,25 +153,57 @@ async function withBestItems<T extends { id: string }>(
 
 export async function GET(req: NextRequest) {
   return withRequestUiLocale(req, async (uiLocale) => {
-  const auth = await requireGuestOrHigher(req);
-  if (auth instanceof NextResponse) return auth;
+    const auth = await requireGuestOrHigher(req);
+    if (auth instanceof NextResponse) return auth;
 
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const q = searchParams.get("q");
+    try {
+      const { searchParams } = new URL(req.url);
+      const id = searchParams.get("id");
+      const q = searchParams.get("q");
 
-    if (id) {
-      const resolvedId = await resolveShelfId(id, auth.user.id);
-      if (q) {
-        const searchTerm = q.trim();
+      if (id) {
+        const resolvedId = await resolveShelfId(id, auth.user.id);
+        if (q) {
+          const searchTerm = q.trim();
+          const shelf = await prisma.shelf.findUnique({
+            where: { id: resolvedId },
+            include: {
+              items: {
+                where: {
+                  OR: buildItemSearchConditions(searchTerm),
+                },
+                include: {
+                  metadata: itemListMetadataInclude,
+                },
+                orderBy: { name: "asc" },
+              },
+            },
+          });
+
+          if (!shelf) {
+            return NextResponse.json(
+              { error: "Shelf not found" },
+              { status: 404 },
+            );
+          }
+
+          // Only allow if user is admin or the owner
+          if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+            return NextResponse.json(
+              { error: "Access denied" },
+              { status: 403 },
+            );
+          }
+
+          return NextResponse.json(
+            await formatShelfWithItemPrices(shelf, uiLocale),
+          );
+        }
+
         const shelf = await prisma.shelf.findUnique({
           where: { id: resolvedId },
           include: {
             items: {
-              where: {
-                OR: buildItemSearchConditions(searchTerm),
-              },
               include: {
                 metadata: itemListMetadataInclude,
               },
@@ -189,49 +224,46 @@ export async function GET(req: NextRequest) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
-        return NextResponse.json(await formatShelfWithItemPrices(shelf, uiLocale));
+        return NextResponse.json(
+          await formatShelfWithItemPrices(shelf, uiLocale),
+        );
       }
 
-      const shelf = await prisma.shelf.findUnique({
-        where: { id: resolvedId },
-        include: {
-          items: {
-            include: {
-              metadata: itemListMetadataInclude,
-            },
-            orderBy: { name: "asc" },
+      if (q) {
+        const searchTerm = q.trim();
+
+        const shelves = await prisma.shelf.findMany({
+          where: {
+            userId: auth.user.id,
+            OR: [
+              { name: { contains: searchTerm, mode: "insensitive" } },
+              {
+                items: {
+                  some: {
+                    OR: buildItemSearchConditions(searchTerm),
+                  },
+                },
+              },
+            ],
           },
-        },
-      });
+          include: {
+            _count: {
+              select: {
+                items: true,
+              },
+            },
+          },
+          orderBy: {
+            name: "asc",
+          },
+        });
 
-      if (!shelf) {
-        return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
+        return NextResponse.json(await withBestItems(shelves));
       }
-
-      // Only allow if user is admin or the owner
-      if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
-        return NextResponse.json({ error: "Access denied" }, { status: 403 });
-      }
-
-      return NextResponse.json(await formatShelfWithItemPrices(shelf, uiLocale));
-    }
-
-    if (q) {
-      const searchTerm = q.trim();
 
       const shelves = await prisma.shelf.findMany({
         where: {
           userId: auth.user.id,
-          OR: [
-            { name: { contains: searchTerm, mode: "insensitive" } },
-            {
-              items: {
-                some: {
-                  OR: buildItemSearchConditions(searchTerm),
-                },
-              },
-            },
-          ],
         },
         include: {
           _count: {
@@ -246,32 +278,13 @@ export async function GET(req: NextRequest) {
       });
 
       return NextResponse.json(await withBestItems(shelves));
+    } catch (error) {
+      console.error("Error in GET request:", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 },
+      );
     }
-
-    const shelves = await prisma.shelf.findMany({
-      where: {
-        userId: auth.user.id,
-      },
-      include: {
-        _count: {
-          select: {
-            items: true,
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-
-    return NextResponse.json(await withBestItems(shelves));
-  } catch (error) {
-    console.error("Error in GET request:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
   });
 }
 

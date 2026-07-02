@@ -153,4 +153,8 @@ export const philibertModule: ProviderModule = {
 };
 
 export { createPhilibertResolver } from "./resolver";
-export { fetchPhilibertProduct, searchPhilibert, searchPhilibertHits } from "./fetch";
+export {
+  fetchPhilibertProduct,
+  searchPhilibert,
+  searchPhilibertHits,
+} from "./fetch";

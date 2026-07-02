@@ -227,9 +227,7 @@ vi.mock("@/services/provider/bootstrap", () => ({
 }));
 vi.mock("@/services/metadata/selection", async (importOriginal) => {
   const actual =
-    await importOriginal<
-      typeof import("@/services/metadata/selection")
-    >();
+    await importOriginal<typeof import("@/services/metadata/selection")>();
   return {
     ...actual,
     orderedProviderIdsForType: (_type: string, order: string[]) => order,
@@ -376,7 +374,11 @@ describe("fetchFromAllGameSources — orchestration", () => {
       description: "Jeu de course.",
     });
 
-    const res = await fetchFromAllGameSources("Mario Kart Wii", GAME_BARCODE, "wii");
+    const res = await fetchFromAllGameSources(
+      "Mario Kart Wii",
+      GAME_BARCODE,
+      "wii",
+    );
 
     expect(res?.title).toBe("Mario Kart Wii");
     expect(res?.fieldEvidence?.some((e) => e.source === "IGDB")).toBe(true);
@@ -389,7 +391,11 @@ describe("fetchFromAllGameSources — orchestration", () => {
     h.igdbResolve.mockResolvedValue({ title: "Mario Kart Wii" });
     h.fetchMetadataFromPriceCharting.mockResolvedValue({ ageRating: "PEGI 3" });
 
-    const res = await fetchFromAllGameSources("Mario Kart Wii", GAME_BARCODE, "wii");
+    const res = await fetchFromAllGameSources(
+      "Mario Kart Wii",
+      GAME_BARCODE,
+      "wii",
+    );
 
     // Passe par le consensus d'âge (value normalisée en « PEGI 3 »).
     expect(
@@ -465,7 +471,11 @@ describe("fetchFromAllGameSources — orchestration", () => {
       imageUrl: "https://cdn/ss.jpg",
     });
 
-    const res = await fetchFromAllGameSources("Mario Kart Wii", GAME_BARCODE, "wii");
+    const res = await fetchFromAllGameSources(
+      "Mario Kart Wii",
+      GAME_BARCODE,
+      "wii",
+    );
 
     expect(h.fetchFromScreenScraper).toHaveBeenCalled();
     expect(res?.fieldEvidence?.some((e) => e.source === "ScreenScraper")).toBe(
@@ -550,7 +560,11 @@ describe("fetchFromAllGameSources — orchestration", () => {
       "Zelda Game HD",
     ]);
 
-    const res = await fetchFromAllGameSources("Zelda Game", GAME_BARCODE, "wii");
+    const res = await fetchFromAllGameSources(
+      "Zelda Game",
+      GAME_BARCODE,
+      "wii",
+    );
 
     // HLTB n'est PAS court-circuité par le time-to-beat IGDB : il est rappelé en repli.
     expect(h.hltbResolve).toHaveBeenCalledWith("Zelda Game HD", "wii");
@@ -858,7 +872,10 @@ describe("fetchFromAllBoardGameSources", () => {
     h.wikidataResolve.mockResolvedValue(null);
     h.philibertResolve.mockResolvedValue(null);
 
-    const result = await fetchFromAllBoardGameSources("Catan", BOARD_GAME_BARCODE);
+    const result = await fetchFromAllBoardGameSources(
+      "Catan",
+      BOARD_GAME_BARCODE,
+    );
 
     expect(result?.title).toBe("Catan");
     expect(h.scraperFetch).not.toHaveBeenCalled();
@@ -872,7 +889,10 @@ describe("fetchFromAllBoardGameSources", () => {
       { name: "Catan", coverUrl: "https://cdn/box.jpg" },
     ]);
 
-    const result = await fetchFromAllBoardGameSources("Catan", BOARD_GAME_BARCODE);
+    const result = await fetchFromAllBoardGameSources(
+      "Catan",
+      BOARD_GAME_BARCODE,
+    );
 
     expect(h.scraperFetch).toHaveBeenCalledTimes(1);
     expect(result?.imageUrl).toContain("box.jpg");
@@ -886,7 +906,10 @@ describe("fetchFromAllBoardGameSources", () => {
       { name: "Catan (boîte)", coverUrl: "https://cdn/box.jpg" },
     ]);
 
-    const result = await fetchFromAllBoardGameSources("Catan", BOARD_GAME_BARCODE);
+    const result = await fetchFromAllBoardGameSources(
+      "Catan",
+      BOARD_GAME_BARCODE,
+    );
 
     expect(h.scraperFetch).toHaveBeenCalledTimes(1);
     expect(result).not.toBeNull();
@@ -901,7 +924,10 @@ describe("fetchFromAllBoardGameSources", () => {
     });
     h.philibertResolve.mockResolvedValue(null);
 
-    const result = await fetchFromAllBoardGameSources("Catan", BOARD_GAME_BARCODE);
+    const result = await fetchFromAllBoardGameSources(
+      "Catan",
+      BOARD_GAME_BARCODE,
+    );
 
     expect(result?.title).toBe("Catan");
     expect(h.scraperFetch).not.toHaveBeenCalled();

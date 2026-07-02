@@ -150,7 +150,8 @@ export const booknodeModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  suggestDatabaseTitles: ({ cleanedName }) => getBooknodeSuggestions(cleanedName),
+  suggestDatabaseTitles: ({ cleanedName }) =>
+    getBooknodeSuggestions(cleanedName),
   healthCheck: createMetadataHealthCheck("booknode", "Booknode", async () => {
     const start = Date.now();
     const isUp = await pingUrl("https://booknode.com/");

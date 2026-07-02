@@ -23,7 +23,10 @@ import {
 } from "@/lib/barcode/evidence";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { isCleanCachedProvider } from "@/services/provider/evidence";
-import { coverUrlQualityRank, isbnCoverUrlForBarcode } from "@/services/provider/registry";
+import {
+  coverUrlQualityRank,
+  isbnCoverUrlForBarcode,
+} from "@/services/provider/registry";
 import type { BarcodeCache, RawName } from "@prisma/client";
 
 type CachedBarcodeRecord = BarcodeCache & {
@@ -171,7 +174,9 @@ export async function buildCachedBarcodePayload(
   const finalCleanName = useStored
     ? cachedResult.cleanName?.trim() || cleanNameStr
     : observationTitle || cleanNameStr;
-  const finalEdition = useStored ? cachedResult.edition?.trim() || null : edition;
+  const finalEdition = useStored
+    ? cachedResult.edition?.trim() || null
+    : edition;
   const finalDisplayName = useStored
     ? storedDisplayName
     : observationTitle
@@ -209,7 +214,8 @@ export async function buildCachedBarcodePayload(
         )
       : cleanMatches,
     shelfType: cachedResult.shelfType,
-    mediaFormat: cachedResult.mediaFormat ?? projectedFields.mediaFormat ?? null,
+    mediaFormat:
+      cachedResult.mediaFormat ?? projectedFields.mediaFormat ?? null,
     platformKey:
       cachedResult.platformKey || projectedFields.platformKey || null,
     observations,

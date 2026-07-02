@@ -19,7 +19,9 @@ export function throwIfAborted(signal?: AbortSignal): void {
 export function mergeAbortSignals(
   ...signals: Array<AbortSignal | undefined>
 ): AbortSignal | undefined {
-  const defined = signals.filter((signal): signal is AbortSignal => Boolean(signal));
+  const defined = signals.filter((signal): signal is AbortSignal =>
+    Boolean(signal),
+  );
   if (defined.length === 0) return undefined;
   if (defined.length === 1) return defined[0];
 

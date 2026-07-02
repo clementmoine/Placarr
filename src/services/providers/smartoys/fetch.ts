@@ -125,7 +125,9 @@ function titleMatchesExpected(
 ) {
   const title = productName?.trim();
   if (!title || expectedNames.length === 0) return true;
-  return expectedNames.some((name) => isNameOnlyRetailerTitleMatch(name, title));
+  return expectedNames.some((name) =>
+    isNameOnlyRetailerTitleMatch(name, title),
+  );
 }
 
 async function fetchSmartoysProductPage(
@@ -200,8 +202,7 @@ async function fetchSmartoysByName(
     responseType: "text",
   });
 
-  const names =
-    expectedNames.length > 0 ? expectedNames : [cleanedQuery];
+  const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   for (const productUrl of parseSmartoysSearchUrls(res.data)) {
     const result = await fetchSmartoysProductPage(productUrl, names);
     if (result) return result;

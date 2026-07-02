@@ -208,8 +208,9 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
   });
 
   it("attache les prix aux listes d'items", async () => {
-    const { summarizeListItemPrices } =
-      await import("@/services/pricing/itemDisplay");
+    const { summarizeListItemPrices } = await import(
+      "@/services/pricing/itemDisplay"
+    );
 
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findMany.mockResolvedValue([
@@ -383,9 +384,7 @@ describe("PATCH /api/items — autorisation", () => {
     expect(h.resolveShelfId).toHaveBeenCalledWith("dvd-disney", "u1");
     expect(h.resolveItemId).toHaveBeenCalledWith("aladdin", "dvd", "u1");
     expect(h.item.update.mock.calls[0][0].where.id).toBe("item-id");
-    expect(h.item.update.mock.calls[0][0].data.shelfId).toBe(
-      "target-shelf-id",
-    );
+    expect(h.item.update.mock.calls[0][0].data.shelfId).toBe("target-shelf-id");
     expect(h.startItemMetadataRefresh).toHaveBeenCalled();
   });
 });

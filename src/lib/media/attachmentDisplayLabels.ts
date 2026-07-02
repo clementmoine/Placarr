@@ -1,4 +1,7 @@
-import { resolveLocaleRegion, type LocaleRegion } from "@/lib/locale/preference";
+import {
+  resolveLocaleRegion,
+  type LocaleRegion,
+} from "@/lib/locale/preference";
 
 export type AttachmentDisplayLocale = "fr" | "en";
 
@@ -214,7 +217,10 @@ function parseKindFromRole(role?: string | null): AttachmentDisplayKind | null {
   if (normalized.startsWith("spine-") || normalized === "spine") {
     return "spine";
   }
-  if (normalized === "3d-grid-vertical" || normalized === "3d-grid-horizontal") {
+  if (
+    normalized === "3d-grid-vertical" ||
+    normalized === "3d-grid-horizontal"
+  ) {
     return "grid3d";
   }
   if (

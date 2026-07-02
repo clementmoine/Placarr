@@ -5,8 +5,7 @@
  */
 export const EBAY_ENV_NAMES = ["EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET"] as const;
 
-export const EBAY_OAUTH_URL =
-  "https://api.ebay.com/identity/v1/oauth2/token";
+export const EBAY_OAUTH_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 
 /** Browse (listings) application scope. */
 export const EBAY_BROWSE_OAUTH_SCOPE = "https://api.ebay.com/oauth/api_scope";

@@ -44,10 +44,7 @@ interface ItemCardProps extends Item {
   priority?: boolean;
 }
 
-function itemCardPropsEqual(
-  prev: ItemCardProps,
-  next: ItemCardProps,
-): boolean {
+function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
   return (
     prev.id === next.id &&
     prev.imageUrl === next.imageUrl &&

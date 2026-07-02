@@ -37,7 +37,10 @@ function summarizeMeta(value: any) {
   };
 }
 
-async function resolveMetadata(providerId: string, ctx: MetadataAdapterContext) {
+async function resolveMetadata(
+  providerId: string,
+  ctx: MetadataAdapterContext,
+) {
   const adapter = getMetadataProviderAdapter(providerId);
   if (!adapter) return null;
   return adapter.resolve(ctx);

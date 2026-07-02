@@ -60,13 +60,16 @@ describe("patchCachedItem", () => {
 
   it("bumps the shelf item count in the shelves list on create", () => {
     const queryClient = new QueryClient();
-    queryClient.setQueryData(["shelves", ""], [
-      {
-        id: "shelf-1",
-        name: "Games",
-        _count: { items: 1 },
-      },
-    ]);
+    queryClient.setQueryData(
+      ["shelves", ""],
+      [
+        {
+          id: "shelf-1",
+          name: "Games",
+          _count: { items: 1 },
+        },
+      ],
+    );
 
     patchCachedItem(
       queryClient,
@@ -95,14 +98,17 @@ describe("patchCachedShelf", () => {
       cardFormat: "default",
       items: [{ id: "item-1", name: "Mario", shelfId: "shelf-1" }],
     });
-    queryClient.setQueryData(["collectionItems", "", "all"], [
-      {
-        id: "item-1",
-        name: "Mario",
-        shelfId: "shelf-1",
-        shelf: { id: "shelf-1", cardFormat: "default", type: "games" },
-      },
-    ]);
+    queryClient.setQueryData(
+      ["collectionItems", "", "all"],
+      [
+        {
+          id: "item-1",
+          name: "Mario",
+          shelfId: "shelf-1",
+          shelf: { id: "shelf-1", cardFormat: "default", type: "games" },
+        },
+      ],
+    );
 
     patchCachedShelf(queryClient, {
       id: "shelf-1",

@@ -38,9 +38,9 @@ function chocoBonPlanCoverRole(image: {
   );
 }
 
-function productToMetadata(product: NonNullable<
-  Awaited<ReturnType<typeof fetchFromChocoBonPlan>>
->): MetadataResult {
+function productToMetadata(
+  product: NonNullable<Awaited<ReturnType<typeof fetchFromChocoBonPlan>>>,
+): MetadataResult {
   const facts =
     product.priceNew != null
       ? [

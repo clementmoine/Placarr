@@ -48,9 +48,9 @@ export type ScrapeCatalogModuleFactoryDeps<
   fetchBarcodeProduct: (config: T, barcode: string) => Promise<unknown>;
 };
 
-export function createScrapeCatalogModule<T extends ScrapeCatalogRetailerConfig>(
-  deps: ScrapeCatalogModuleFactoryDeps<T>,
-) {
+export function createScrapeCatalogModule<
+  T extends ScrapeCatalogRetailerConfig,
+>(deps: ScrapeCatalogModuleFactoryDeps<T>) {
   return function buildModule(config: T): ProviderModule {
     const resolver = deps.createResolver(config);
     const barcodeTypes: BarcodeLookupType[] = config.barcodeTypes ?? [

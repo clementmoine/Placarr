@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { itemPath, itemSlugLookupVariants, shelfPath, slugifyItemName } from "./slugs";
+import {
+  itemPath,
+  itemSlugLookupVariants,
+  shelfPath,
+  slugifyItemName,
+} from "./slugs";
 
 describe("slugifyItemName", () => {
   it("drops decorative zero-padding from volume markers in slugs", () => {

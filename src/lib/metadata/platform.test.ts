@@ -4,9 +4,9 @@ import { resolveGameMetadataPlatform } from "./platform";
 
 describe("resolveGameMetadataPlatform", () => {
   it("prefers an explicit platform", () => {
-    expect(
-      resolveGameMetadataPlatform("ps4", "PlayStation 5", "games"),
-    ).toBe("ps4");
+    expect(resolveGameMetadataPlatform("ps4", "PlayStation 5", "games")).toBe(
+      "ps4",
+    );
   });
 
   it("normalizes a human-readable platform label", () => {

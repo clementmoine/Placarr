@@ -17,9 +17,7 @@ export function getEstimatedItemValueCents(item: ItemPriceValues) {
 
   if (item.condition === "used") {
     if (item.shelfType === "games") {
-      return (
-        item.priceUsedCIB ?? item.priceUsed ?? item.priceNew ?? null
-      );
+      return item.priceUsedCIB ?? item.priceUsed ?? item.priceNew ?? null;
     }
     return item.priceUsed ?? item.priceNew ?? null;
   }

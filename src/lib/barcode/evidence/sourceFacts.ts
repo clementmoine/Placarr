@@ -41,7 +41,10 @@ export function barcodeSourceFactsFromFields(fields: {
       label: fields.ageRating.trim().startsWith("PEGI")
         ? "PEGI"
         : "Classification",
-      value: fields.ageRating.trim().replace(/^PEGI\s*/i, "").trim(),
+      value: fields.ageRating
+        .trim()
+        .replace(/^PEGI\s*/i, "")
+        .trim(),
     });
   }
 

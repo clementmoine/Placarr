@@ -102,7 +102,10 @@ export function bundleTitlePartsMatchCatalogTitle(
   });
 }
 
-function bundleSearchQueries(name: string, shelfName?: string | null): string[] {
+function bundleSearchQueries(
+  name: string,
+  shelfName?: string | null,
+): string[] {
   const parts = splitBundleTitle(name);
   if (parts.length < 2) {
     const shelf = shelfName?.trim();

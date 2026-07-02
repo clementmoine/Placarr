@@ -275,7 +275,9 @@ function buildWikidataFacts(
   }
 
   const genres = Array.from(
-    new Set((options?.genres || []).map((genre) => genre.trim()).filter(Boolean)),
+    new Set(
+      (options?.genres || []).map((genre) => genre.trim()).filter(Boolean),
+    ),
   );
   if (genres.length > 0) {
     facts.push({

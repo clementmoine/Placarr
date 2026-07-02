@@ -1,6 +1,11 @@
 import type { Attachment, Author, Metadata, Publisher } from "@prisma/client";
 
-import { getCoverImage, getGalleryImages, getHeroImage, filterMetadataForShelfPlatform } from "@/lib/item/media";
+import {
+  getCoverImage,
+  getGalleryImages,
+  getHeroImage,
+  filterMetadataForShelfPlatform,
+} from "@/lib/item/media";
 import {
   buildCatalogExternalLink,
   metadataAliases,

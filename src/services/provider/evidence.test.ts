@@ -28,10 +28,8 @@ describe("providerEvidence — trusted retailers", () => {
   });
 
   it("résout id et label d'affichage depuis un label evidence barcode", async () => {
-    const {
-      providerDisplayLabelForEvidenceLabel,
-      providerIdForEvidenceLabel,
-    } = await import("@/services/provider/evidence");
+    const { providerDisplayLabelForEvidenceLabel, providerIdForEvidenceLabel } =
+      await import("@/services/provider/evidence");
     expect(providerIdForEvidenceLabel("ScreenScraper")).toBe("screenscraper");
     expect(providerDisplayLabelForEvidenceLabel("ScreenScraper")).toBe(
       "ScreenScraper",

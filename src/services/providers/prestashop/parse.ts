@@ -236,7 +236,9 @@ export function parseIqitRenderedProducts(
   const products: PrestashopSearchProduct[] = [];
   const seenLinks = new Set<string>();
 
-  for (const part of renderedHtml.split(/(?=<div class="product-miniature\b)/i)) {
+  for (const part of renderedHtml.split(
+    /(?=<div class="product-miniature\b)/i,
+  )) {
     if (!/class="product-miniature/i.test(part)) continue;
 
     const product = parseIqitMiniatureBlock(part);

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
-import { uiLocaleFromRequest, withRequestUiLocale } from "@/lib/locale/serverPreference";
+import {
+  uiLocaleFromRequest,
+  withRequestUiLocale,
+} from "@/lib/locale/serverPreference";
 import type { Locale } from "@/types/i18n";
 import {
   itemWithMetadataInclude,
@@ -21,63 +24,63 @@ function presentLoanRequest<
 
 export async function GET(req: NextRequest) {
   return withRequestUiLocale(req, async (uiLocale) => {
-  const auth = await requireGuestOrHigher(req);
-  if (auth instanceof NextResponse) return auth;
+    const auth = await requireGuestOrHigher(req);
+    if (auth instanceof NextResponse) return auth;
 
-  try {
-    const sent = await prisma.loanRequest.findMany({
-      where: {
-        requesterId: auth.user.id,
-      },
-      include: {
-        item: {
-          include: itemWithMetadataInclude,
+    try {
+      const sent = await prisma.loanRequest.findMany({
+        where: {
+          requesterId: auth.user.id,
         },
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+        include: {
+          item: {
+            include: itemWithMetadataInclude,
+          },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    const received = await prisma.loanRequest.findMany({
-      where: {
-        ownerId: auth.user.id,
-      },
-      include: {
-        item: {
-          include: itemWithMetadataInclude,
+        orderBy: {
+          createdAt: "desc",
         },
-        requester: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+      });
+
+      const received = await prisma.loanRequest.findMany({
+        where: {
+          ownerId: auth.user.id,
+        },
+        include: {
+          item: {
+            include: itemWithMetadataInclude,
+          },
+          requester: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-    return NextResponse.json({
-      sent: sent.map((loan) => presentLoanRequest(loan, uiLocale)),
-      received: received.map((loan) => presentLoanRequest(loan, uiLocale)),
-    });
-  } catch (error) {
-    console.error("Error in loans GET route:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
+      return NextResponse.json({
+        sent: sent.map((loan) => presentLoanRequest(loan, uiLocale)),
+        received: received.map((loan) => presentLoanRequest(loan, uiLocale)),
+      });
+    } catch (error) {
+      console.error("Error in loans GET route:", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 },
+      );
+    }
   });
 }
 
@@ -149,7 +152,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(presentLoanRequest(loanRequest, uiLocaleFromRequest(req)));
+    return NextResponse.json(
+      presentLoanRequest(loanRequest, uiLocaleFromRequest(req)),
+    );
   } catch (error) {
     console.error("Error in loans POST route:", error);
     return NextResponse.json(
@@ -213,7 +218,9 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(presentLoanRequest(updatedRequest, uiLocaleFromRequest(req)));
+    return NextResponse.json(
+      presentLoanRequest(updatedRequest, uiLocaleFromRequest(req)),
+    );
   } catch (error) {
     console.error("Error in loans PATCH route:", error);
     return NextResponse.json(

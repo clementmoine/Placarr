@@ -45,9 +45,9 @@ describe("buildBoardGameMetadataSearchQueries", () => {
   });
 
   it("does not expand unrelated shelves", () => {
-    expect(buildBoardGameMetadataSearchQueries("Catan", "Jeux de société")).toEqual(
-      ["Catan", "Jeux de société Catan"],
-    );
+    expect(
+      buildBoardGameMetadataSearchQueries("Catan", "Jeux de société"),
+    ).toEqual(["Catan", "Jeux de société Catan"]);
   });
 
   it("only uses tokens from the item title and shelf name", () => {

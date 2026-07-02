@@ -10,7 +10,11 @@ vi.mock("axios", () => ({
 
 import axios from "axios";
 
-import { APRILOSHOP_CONFIG, MONSIEURDE_CONFIG, TOKYOGAMESTORY_CONFIG } from "./configs";
+import {
+  APRILOSHOP_CONFIG,
+  MONSIEURDE_CONFIG,
+  TOKYOGAMESTORY_CONFIG,
+} from "./configs";
 import { searchPrestashopProduct } from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
@@ -165,7 +169,8 @@ describe("searchPrestashopProduct", () => {
     );
 
     expect(product).toMatchObject({
-      title: "The Exit 8 + Platform 8 PS4 Japan Game in ENG-FRA-DEU-ESP-ITA New",
+      title:
+        "The Exit 8 + Platform 8 PS4 Japan Game in ENG-FRA-DEU-ESP-ITA New",
       barcode: "4589794580661",
       priceCents: 3499,
       source: "tokyogamestory",

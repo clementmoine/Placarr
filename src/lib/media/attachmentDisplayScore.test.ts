@@ -66,9 +66,9 @@ describe("attachmentDisplayScore", () => {
       metrics.get(darkScan.url),
     );
     expect(darkDetails.signals).toContain("-360 underexposed scan");
-    expect(
-      pickBestCoverFromAttachments([darkScan, brightCover], metrics),
-    ).toBe(brightCover.url);
+    expect(pickBestCoverFromAttachments([darkScan, brightCover], metrics)).toBe(
+      brightCover.url,
+    );
   });
 
   it("garde une jaquette EU sombre devant une jaquette JP quand la locale prefere l'Europe", () => {
@@ -110,11 +110,10 @@ describe("attachmentDisplayScore", () => {
     ]);
 
     expect(
-      pickBestCoverFromAttachments(
-        [brightJpCatalog, darkEuCatalog],
-        metrics,
-        { uiLocale: "fr", requestedPlatformKey: "ps4" },
-      ),
+      pickBestCoverFromAttachments([brightJpCatalog, darkEuCatalog], metrics, {
+        uiLocale: "fr",
+        requestedPlatformKey: "ps4",
+      }),
     ).toBe(darkEuCatalog.url);
   });
 
@@ -510,7 +509,9 @@ describe("attachmentDisplayScore", () => {
     };
 
     expect(
-      rankCoversForDisplay([userPhoto, listingPhoto, catalog]).map((a) => a.url),
+      rankCoversForDisplay([userPhoto, listingPhoto, catalog]).map(
+        (a) => a.url,
+      ),
     ).toEqual([
       "/uploads/catalog.jpg",
       "/uploads/listing.jpg",

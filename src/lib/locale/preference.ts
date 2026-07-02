@@ -50,7 +50,9 @@ export function languageOrderForUiLocale(
   return LOCALE_LANGUAGE_ORDER;
 }
 
-function resolveUiLocale(options?: LocalePreferenceOptions): Locale | undefined {
+function resolveUiLocale(
+  options?: LocalePreferenceOptions,
+): Locale | undefined {
   return options?.uiLocale ?? undefined;
 }
 
@@ -339,14 +341,14 @@ export function pickBestRegionalTitle(
 
   if (candidates.length === 0) return undefined;
 
-  return candidates
-    .slice()
-    .sort((a, b) => {
-      const regionDiff =
-        regionRank(a.region, options) - regionRank(b.region, options);
-      if (regionDiff !== 0) return regionDiff;
-      return scoreMetadataDisplayTitle(b.text) - scoreMetadataDisplayTitle(a.text);
-    })[0].text;
+  return candidates.slice().sort((a, b) => {
+    const regionDiff =
+      regionRank(a.region, options) - regionRank(b.region, options);
+    if (regionDiff !== 0) return regionDiff;
+    return (
+      scoreMetadataDisplayTitle(b.text) - scoreMetadataDisplayTitle(a.text)
+    );
+  })[0].text;
 }
 
 export function pickBestLocalizedDescription(

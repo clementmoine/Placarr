@@ -130,8 +130,7 @@ function pickBestImagesPerRegion(
     const existing = byRegion.get(regionKey);
     if (
       !existing ||
-      typePriority.indexOf(image.type) - typePriority.indexOf(existing.type) <
-        0
+      typePriority.indexOf(image.type) - typePriority.indexOf(existing.type) < 0
     ) {
       byRegion.set(regionKey, image);
     }

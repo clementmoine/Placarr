@@ -330,313 +330,324 @@ export function createBGGResolver(deps: BggResolverDeps) {
           if (!gameId || seenGameIds.has(gameId)) continue;
           seenGameIds.add(gameId);
 
-      const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1&versions=1`;
-      const detailsRes = await axios.get(detailsUrl, {
-        responseType: "text",
-        headers,
-        timeout: 10000,
-      });
-      const detailsText = detailsRes.data;
-      const detailsData = convertXML(detailsText) as BGGResponse;
-      const game = detailsData.items?.children?.[0]?.item;
-      if (!game) continue;
-
-      const primaryName = game.children.find(
-        (child: BGGChild) => child.name?.type === "primary",
-      )?.name?.value;
-
-      const rawDescription = game.children.find(
-        (child: BGGChild) => child.description,
-      )?.description?.content;
-      const description = rawDescription
-        ? decodeHTMLEntities(rawDescription)
-            .replace(/&#10;/g, "\n")
-            .replace(/&ouml;/g, "ö")
-            .replace(/&mdash;/g, "—")
-        : undefined;
-
-      const yearPublished = game.children.find(
-        (child: BGGChild) => child.yearpublished,
-      )?.yearpublished?.value;
-
-      const minPlayers = game.children.find(
-        (child: BGGChild) => child.minplayers,
-      )?.minplayers?.value;
-      const maxPlayers = game.children.find(
-        (child: BGGChild) => child.maxplayers,
-      )?.maxplayers?.value;
-      const playingTime = game.children.find(
-        (child: BGGChild) => child.playingtime,
-      )?.playingtime?.value;
-      const minPlayTime = game.children.find(
-        (child: BGGChild) => child.minplaytime,
-      )?.minplaytime?.value;
-      const maxPlayTime = game.children.find(
-        (child: BGGChild) => child.maxplaytime,
-      )?.maxplaytime?.value;
-      const minAge = game.children.find((child: BGGChild) => child.minage)
-        ?.minage?.value;
-      const averageRating = getBGGRatingValue(game, "average");
-      const bayesAverage = getBGGRatingValue(game, "bayesaverage");
-      const usersRated = getBGGRatingValue(game, "usersrated");
-      const boardGameRank = getBGGRankValue(game);
-      const averageWeight = getBGGRatingValue(game, "averageweight");
-      const pollSummaries = getBGGPollSummaries(game);
-
-      const attachments = buildBggAttachments(game);
-      const imageUrl = pickBestCoverFromAttachments(attachments) || undefined;
-
-      const designers = game.children
-        .filter((child: BGGChild) => child.link?.type === "boardgamedesigner")
-        .map((child: BGGChild) => ({
-          name: child.link?.value || "",
-        }));
-      const artists = game.children
-        .filter((child: BGGChild) => child.link?.type === "boardgameartist")
-        .map((child: BGGChild) => child.link?.value || "")
-        .filter(Boolean);
-
-      const publishers = game.children
-        .filter((child: BGGChild) => child.link?.type === "boardgamepublisher")
-        .map((child: BGGChild) => ({
-          name: child.link?.value || "",
-        }));
-      const categories = game.children
-        .filter((child: BGGChild) => child.link?.type === "boardgamecategory")
-        .map((child: BGGChild) => child.link?.value || "")
-        .filter(Boolean);
-      const mechanics = game.children
-        .filter((child: BGGChild) => child.link?.type === "boardgamemechanic")
-        .map((child: BGGChild) => child.link?.value || "")
-        .filter(Boolean);
-      const families = game.children
-        .filter((child: BGGChild) => child.link?.type === "boardgamefamily")
-        .map((child: BGGChild) => child.link?.value || "")
-        .filter(Boolean);
-
-      const alternateNames = game.children
-        .filter((child: BGGChild) => child.name?.type === "alternate")
-        .map((child: BGGChild) => child.name?.value)
-        .filter(Boolean) as string[];
-      const aliases = alternateNames.filter(
-        (n) => n.toLowerCase().trim() !== primaryName?.toLowerCase().trim(),
-      );
-
-      if (
-        primaryName &&
-        !acceptRetailerCatalogCandidate({
-          requestedName,
-          searchQuery: query,
-          shelfName: context.shelfName,
-          catalogTitle: primaryName,
-          catalogAliases: aliases,
-        })
-      ) {
-        continue;
-      }
-
-      const facts: MetadataFact[] = [];
-      facts.push({
-        kind: "external-link",
-        label: "BoardGameGeek",
-        value: "Fiche BGG",
-        url: `https://boardgamegeek.com/boardgame/${gameId}`,
-        source: "bgg",
-        confidence: 0.84,
-        priority: 42,
-      });
-      if (minPlayers && maxPlayers) {
-        const players = formatBoardGamePlayerCount(minPlayers, maxPlayers);
-        if (players) {
-          facts.push({
-            kind: "players",
-            label: "Joueurs",
-            value: players,
-            source: "bgg",
-            confidence: 0.82,
-            priority: 90,
+          const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1&versions=1`;
+          const detailsRes = await axios.get(detailsUrl, {
+            responseType: "text",
+            headers,
+            timeout: 10000,
           });
-        }
-      }
-      const durationValue =
-        minPlayTime && maxPlayTime && minPlayTime !== maxPlayTime
-          ? `${minPlayTime}-${maxPlayTime} min`
-          : playingTime
-            ? `${playingTime} min`
-            : null;
-      if (durationValue) {
-        facts.push({
-          kind: "playtime",
-          label: "Durée d'une partie",
-          value: durationValue,
-          source: "bgg",
-          confidence: 0.82,
-          priority: 88,
-        });
-      }
-      if (minAge && Number(minAge) > 0) {
-        facts.push({
-          kind: "age-rating",
-          label: "Âge recommandé",
-          value: `${minAge}+`,
-          source: "bgg",
-          confidence: 0.78,
-          priority: 75,
-        });
-      }
-      if (averageRating || bayesAverage) {
-        const ratingNumber = bayesAverage || averageRating;
-        const value = deps.formatScore(Number(ratingNumber), 10);
-        if (value) {
-          const count =
-            usersRated && Number(usersRated) > 0
-              ? ` (${new Intl.NumberFormat("fr-FR").format(Number(usersRated))} votes)`
-              : "";
+          const detailsText = detailsRes.data;
+          const detailsData = convertXML(detailsText) as BGGResponse;
+          const game = detailsData.items?.children?.[0]?.item;
+          if (!game) continue;
+
+          const primaryName = game.children.find(
+            (child: BGGChild) => child.name?.type === "primary",
+          )?.name?.value;
+
+          const rawDescription = game.children.find(
+            (child: BGGChild) => child.description,
+          )?.description?.content;
+          const description = rawDescription
+            ? decodeHTMLEntities(rawDescription)
+                .replace(/&#10;/g, "\n")
+                .replace(/&ouml;/g, "ö")
+                .replace(/&mdash;/g, "—")
+            : undefined;
+
+          const yearPublished = game.children.find(
+            (child: BGGChild) => child.yearpublished,
+          )?.yearpublished?.value;
+
+          const minPlayers = game.children.find(
+            (child: BGGChild) => child.minplayers,
+          )?.minplayers?.value;
+          const maxPlayers = game.children.find(
+            (child: BGGChild) => child.maxplayers,
+          )?.maxplayers?.value;
+          const playingTime = game.children.find(
+            (child: BGGChild) => child.playingtime,
+          )?.playingtime?.value;
+          const minPlayTime = game.children.find(
+            (child: BGGChild) => child.minplaytime,
+          )?.minplaytime?.value;
+          const maxPlayTime = game.children.find(
+            (child: BGGChild) => child.maxplaytime,
+          )?.maxplaytime?.value;
+          const minAge = game.children.find((child: BGGChild) => child.minage)
+            ?.minage?.value;
+          const averageRating = getBGGRatingValue(game, "average");
+          const bayesAverage = getBGGRatingValue(game, "bayesaverage");
+          const usersRated = getBGGRatingValue(game, "usersrated");
+          const boardGameRank = getBGGRankValue(game);
+          const averageWeight = getBGGRatingValue(game, "averageweight");
+          const pollSummaries = getBGGPollSummaries(game);
+
+          const attachments = buildBggAttachments(game);
+          const imageUrl =
+            pickBestCoverFromAttachments(attachments) || undefined;
+
+          const designers = game.children
+            .filter(
+              (child: BGGChild) => child.link?.type === "boardgamedesigner",
+            )
+            .map((child: BGGChild) => ({
+              name: child.link?.value || "",
+            }));
+          const artists = game.children
+            .filter((child: BGGChild) => child.link?.type === "boardgameartist")
+            .map((child: BGGChild) => child.link?.value || "")
+            .filter(Boolean);
+
+          const publishers = game.children
+            .filter(
+              (child: BGGChild) => child.link?.type === "boardgamepublisher",
+            )
+            .map((child: BGGChild) => ({
+              name: child.link?.value || "",
+            }));
+          const categories = game.children
+            .filter(
+              (child: BGGChild) => child.link?.type === "boardgamecategory",
+            )
+            .map((child: BGGChild) => child.link?.value || "")
+            .filter(Boolean);
+          const mechanics = game.children
+            .filter(
+              (child: BGGChild) => child.link?.type === "boardgamemechanic",
+            )
+            .map((child: BGGChild) => child.link?.value || "")
+            .filter(Boolean);
+          const families = game.children
+            .filter((child: BGGChild) => child.link?.type === "boardgamefamily")
+            .map((child: BGGChild) => child.link?.value || "")
+            .filter(Boolean);
+
+          const alternateNames = game.children
+            .filter((child: BGGChild) => child.name?.type === "alternate")
+            .map((child: BGGChild) => child.name?.value)
+            .filter(Boolean) as string[];
+          const aliases = alternateNames.filter(
+            (n) => n.toLowerCase().trim() !== primaryName?.toLowerCase().trim(),
+          );
+
+          if (
+            primaryName &&
+            !acceptRetailerCatalogCandidate({
+              requestedName,
+              searchQuery: query,
+              shelfName: context.shelfName,
+              catalogTitle: primaryName,
+              catalogAliases: aliases,
+            })
+          ) {
+            continue;
+          }
+
+          const facts: MetadataFact[] = [];
           facts.push({
-            kind: "rating",
+            kind: "external-link",
             label: "BoardGameGeek",
-            value: `${value}${count}`,
-            source: "BGG",
-            confidence: bayesAverage ? 0.84 : 0.82,
-            priority: 84,
+            value: "Fiche BGG",
+            url: `https://boardgamegeek.com/boardgame/${gameId}`,
+            source: "bgg",
+            confidence: 0.84,
+            priority: 42,
           });
-        }
-      }
-      if (boardGameRank) {
-        facts.push({
-          kind: "popularity",
-          label: "Classement BGG",
-          value: `#${new Intl.NumberFormat("fr-FR").format(Number(boardGameRank))}`,
-          source: "BGG",
-          confidence: 0.76,
-          priority: 70,
-        });
-      }
-      const complexityValue = averageWeight
-        ? formatBGGComplexity(averageWeight)
-        : null;
-      if (complexityValue) {
-        facts.push({
-          kind: "complexity",
-          label: "Complexité",
-          value: complexityValue,
-          source: "BGG",
-          confidence: 0.8,
-          priority: 72,
-        });
-      }
-      const recommendedPlayersPoll = pollSummaries.get("suggested_numplayers");
-      if (recommendedPlayersPoll) {
-        const pollParts = [
-          recommendedPlayersPoll.bestwith,
-          recommendedPlayersPoll.recommmendedwith,
-        ].filter(Boolean);
-        if (pollParts.length > 0) {
-          facts.push({
-            kind: "recommended-players",
-            label: "Joueurs recommandés",
-            value: pollParts.join(" · "),
-            source: "BGG",
-            confidence: 0.78,
-            priority: 86,
-          });
-        }
-      }
-      const suggestedAge = getBGGTopPollResult(game, "suggested_playerage");
-      if (suggestedAge) {
-        facts.push({
-          kind: "recommended-age",
-          label: "Âge conseillé (communauté)",
-          value: /^\d+$/.test(suggestedAge.value)
-            ? `${suggestedAge.value}+`
-            : suggestedAge.value,
-          source: "BGG",
-          confidence: 0.74,
-          priority: 60,
-        });
-      }
-      const languageDependence = getBGGTopPollResult(
-        game,
-        "language_dependence",
-      );
-      if (languageDependence) {
-        facts.push({
-          kind: "language-dependence",
-          label: "Dépendance à la langue",
-          value:
-            BGG_LANGUAGE_DEPENDENCE_FR[languageDependence.level ?? ""] ??
-            languageDependence.value,
-          source: "BGG",
-          confidence: 0.72,
-          priority: 55,
-        });
-      }
-      if (artists.length > 0) {
-        facts.push({
-          kind: "artist",
-          label: "Artistes",
-          value: Array.from(new Set(artists)).join(", "),
-          source: "BGG",
-          confidence: 0.72,
-          priority: 52,
-        });
-      }
-      if (categories.length > 0) {
-        facts.push({
-          kind: "category",
-          label: "Catégories",
-          value: Array.from(new Set(categories)).slice(0, 6).join(" • "),
-          source: "BGG",
-          confidence: 0.74,
-          priority: 58,
-        });
-      }
-      if (mechanics.length > 0) {
-        facts.push({
-          kind: "mechanic",
-          label: "Mécaniques",
-          value: Array.from(new Set(mechanics)).slice(0, 6).join(" • "),
-          source: "BGG",
-          confidence: 0.74,
-          priority: 57,
-        });
-      }
-      // BGG's own taxonomy marks a game line with a `Game:` family prefix
-      // (e.g. "Game: Catan"). That is a provider-declared franchise, distinct from
-      // the heterogeneous "Familles" fact (themes, components, crowdfunding…).
-      const franchiseFromFamily = families
-        .map((value) => /^Game:\s*(.+)$/i.exec(value)?.[1]?.trim())
-        .find((name): name is string => Boolean(name));
-      facts.push(...buildFranchiseFact(franchiseFromFamily, "BGG"));
+          if (minPlayers && maxPlayers) {
+            const players = formatBoardGamePlayerCount(minPlayers, maxPlayers);
+            if (players) {
+              facts.push({
+                kind: "players",
+                label: "Joueurs",
+                value: players,
+                source: "bgg",
+                confidence: 0.82,
+                priority: 90,
+              });
+            }
+          }
+          const durationValue =
+            minPlayTime && maxPlayTime && minPlayTime !== maxPlayTime
+              ? `${minPlayTime}-${maxPlayTime} min`
+              : playingTime
+                ? `${playingTime} min`
+                : null;
+          if (durationValue) {
+            facts.push({
+              kind: "playtime",
+              label: "Durée d'une partie",
+              value: durationValue,
+              source: "bgg",
+              confidence: 0.82,
+              priority: 88,
+            });
+          }
+          if (minAge && Number(minAge) > 0) {
+            facts.push({
+              kind: "age-rating",
+              label: "Âge recommandé",
+              value: `${minAge}+`,
+              source: "bgg",
+              confidence: 0.78,
+              priority: 75,
+            });
+          }
+          if (averageRating || bayesAverage) {
+            const ratingNumber = bayesAverage || averageRating;
+            const value = deps.formatScore(Number(ratingNumber), 10);
+            if (value) {
+              const count =
+                usersRated && Number(usersRated) > 0
+                  ? ` (${new Intl.NumberFormat("fr-FR").format(Number(usersRated))} votes)`
+                  : "";
+              facts.push({
+                kind: "rating",
+                label: "BoardGameGeek",
+                value: `${value}${count}`,
+                source: "BGG",
+                confidence: bayesAverage ? 0.84 : 0.82,
+                priority: 84,
+              });
+            }
+          }
+          if (boardGameRank) {
+            facts.push({
+              kind: "popularity",
+              label: "Classement BGG",
+              value: `#${new Intl.NumberFormat("fr-FR").format(Number(boardGameRank))}`,
+              source: "BGG",
+              confidence: 0.76,
+              priority: 70,
+            });
+          }
+          const complexityValue = averageWeight
+            ? formatBGGComplexity(averageWeight)
+            : null;
+          if (complexityValue) {
+            facts.push({
+              kind: "complexity",
+              label: "Complexité",
+              value: complexityValue,
+              source: "BGG",
+              confidence: 0.8,
+              priority: 72,
+            });
+          }
+          const recommendedPlayersPoll = pollSummaries.get(
+            "suggested_numplayers",
+          );
+          if (recommendedPlayersPoll) {
+            const pollParts = [
+              recommendedPlayersPoll.bestwith,
+              recommendedPlayersPoll.recommmendedwith,
+            ].filter(Boolean);
+            if (pollParts.length > 0) {
+              facts.push({
+                kind: "recommended-players",
+                label: "Joueurs recommandés",
+                value: pollParts.join(" · "),
+                source: "BGG",
+                confidence: 0.78,
+                priority: 86,
+              });
+            }
+          }
+          const suggestedAge = getBGGTopPollResult(game, "suggested_playerage");
+          if (suggestedAge) {
+            facts.push({
+              kind: "recommended-age",
+              label: "Âge conseillé (communauté)",
+              value: /^\d+$/.test(suggestedAge.value)
+                ? `${suggestedAge.value}+`
+                : suggestedAge.value,
+              source: "BGG",
+              confidence: 0.74,
+              priority: 60,
+            });
+          }
+          const languageDependence = getBGGTopPollResult(
+            game,
+            "language_dependence",
+          );
+          if (languageDependence) {
+            facts.push({
+              kind: "language-dependence",
+              label: "Dépendance à la langue",
+              value:
+                BGG_LANGUAGE_DEPENDENCE_FR[languageDependence.level ?? ""] ??
+                languageDependence.value,
+              source: "BGG",
+              confidence: 0.72,
+              priority: 55,
+            });
+          }
+          if (artists.length > 0) {
+            facts.push({
+              kind: "artist",
+              label: "Artistes",
+              value: Array.from(new Set(artists)).join(", "),
+              source: "BGG",
+              confidence: 0.72,
+              priority: 52,
+            });
+          }
+          if (categories.length > 0) {
+            facts.push({
+              kind: "category",
+              label: "Catégories",
+              value: Array.from(new Set(categories)).slice(0, 6).join(" • "),
+              source: "BGG",
+              confidence: 0.74,
+              priority: 58,
+            });
+          }
+          if (mechanics.length > 0) {
+            facts.push({
+              kind: "mechanic",
+              label: "Mécaniques",
+              value: Array.from(new Set(mechanics)).slice(0, 6).join(" • "),
+              source: "BGG",
+              confidence: 0.74,
+              priority: 57,
+            });
+          }
+          // BGG's own taxonomy marks a game line with a `Game:` family prefix
+          // (e.g. "Game: Catan"). That is a provider-declared franchise, distinct from
+          // the heterogeneous "Familles" fact (themes, components, crowdfunding…).
+          const franchiseFromFamily = families
+            .map((value) => /^Game:\s*(.+)$/i.exec(value)?.[1]?.trim())
+            .find((name): name is string => Boolean(name));
+          facts.push(...buildFranchiseFact(franchiseFromFamily, "BGG"));
 
-      if (families.length > 0) {
-        facts.push({
-          kind: "family",
-          label: "Familles",
-          value: Array.from(new Set(families)).slice(0, 4).join(" • "),
-          source: "BGG",
-          confidence: 0.7,
-          priority: 49,
-        });
-      }
+          if (families.length > 0) {
+            facts.push({
+              kind: "family",
+              label: "Familles",
+              value: Array.from(new Set(families)).slice(0, 4).join(" • "),
+              source: "BGG",
+              confidence: 0.7,
+              priority: 49,
+            });
+          }
 
-      const metadata: MetadataResult = {
-        title: primaryName,
-        description,
-        releaseDate: yearPublished,
-        imageUrl,
-        authors: designers,
-        publishers,
-        attachments: attachments.length > 0 ? attachments : undefined,
-        aliases,
-        facts,
-        externalIds: { bgg: String(gameId) },
-      };
-      return {
-        ...metadata,
-        observations: buildBggObservations(String(gameId), metadata),
-        observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
-      };
+          const metadata: MetadataResult = {
+            title: primaryName,
+            description,
+            releaseDate: yearPublished,
+            imageUrl,
+            authors: designers,
+            publishers,
+            attachments: attachments.length > 0 ? attachments : undefined,
+            aliases,
+            facts,
+            externalIds: { bgg: String(gameId) },
+          };
+          return {
+            ...metadata,
+            observations: buildBggObservations(String(gameId), metadata),
+            observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
+          };
         }
       }
 

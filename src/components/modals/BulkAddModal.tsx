@@ -93,7 +93,10 @@ export function BulkAddModal({
     mutationFn: saveItemsBatch,
     onSuccess: (result) => {
       toast.success(
-        t("items.bulkAdd.namesSuccess").replace("{count}", String(result.count)),
+        t("items.bulkAdd.namesSuccess").replace(
+          "{count}",
+          String(result.count),
+        ),
       );
       onSuccess?.(result.count);
       onClose();
@@ -144,7 +147,9 @@ export function BulkAddModal({
           t("items.bulkAdd.unnamedItem").replace("{barcode}", barcode);
 
         if (matches.length > 1) {
-          toast.info(t("items.bulkAdd.multipleMatchesUsed").replace("{name}", title));
+          toast.info(
+            t("items.bulkAdd.multipleMatchesUsed").replace("{name}", title),
+          );
         }
 
         const newItem = await saveItem({
@@ -193,233 +198,248 @@ export function BulkAddModal({
 
   return (
     <BaseModal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="xl-auto"
-        title={
-          <div className="flex items-center gap-2">
-            {shelfType && (
-              <ShelfTypeIcon type={shelfType} className="size-5 shrink-0" />
-            )}
-            <span>{t("items.bulkAdd.title")}</span>
-          </div>
-        }
-        description={
-          shelfName
-            ? t("items.bulkAdd.descriptionOnShelf").replace("{shelf}", shelfName)
-            : t("items.bulkAdd.description")
-        }
-        customChildren
-        footer={null}
-      >
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as BulkAddTab)}
-          className="flex flex-col flex-1 min-h-0 overflow-hidden"
-        >
-          <div className="px-4 md:px-6 pt-4 shrink-0">
-            <TabsList
-              className={cn(
-                "w-full grid h-auto p-1",
-                isBookShelf ? "grid-cols-3" : "grid-cols-2",
-              )}
-            >
-              <TabsTrigger value="names" className="gap-1.5 py-2">
-                <List className="size-4" />
-                {t("items.bulkAdd.tabNames")}
-              </TabsTrigger>
-              {isBookShelf && (
-                <TabsTrigger value="series" className="gap-1.5 py-2">
-                  <Layers className="size-4" />
-                  {t("items.bulkAdd.tabSeries")}
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="scan" className="gap-1.5 py-2">
-                <ScanLine className="size-4" />
-                {t("items.bulkAdd.tabScan")}
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent
-            value="names"
-            className="flex flex-col flex-1 min-h-0 overflow-hidden mt-0 px-4 md:px-6 pb-4 md:pb-6 data-[state=inactive]:hidden"
-          >
-            <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden pt-4">
-              <div className="flex flex-col flex-1 min-h-0 gap-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0">
-                  {t("items.bulkAdd.namesLabel")}
-                </label>
-                <Textarea
-                  value={nameList}
-                  onChange={(event) => setNameList(event.target.value)}
-                  placeholder={t("items.bulkAdd.namesPlaceholder")}
-                  className={cn(
-                    fieldInputClassName,
-                    "field-sizing-fixed flex-1 min-h-[180px] overflow-y-auto resize-none",
-                  )}
-                />
-                <p className="text-xs text-muted-foreground shrink-0">
-                  {t("items.bulkAdd.metadataHint")}
-                </p>
-              </div>
-
-              <div className="space-y-2 shrink-0">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {t("items.condition")}
-                </label>
-                <ToggleGroup
-                  size="sm"
-                  type="single"
-                  variant="outline"
-                  className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                  value={condition}
-                  onValueChange={(value) => {
-                    if (value) setCondition(value as Condition);
-                  }}
-                >
-                  {Object.values(Condition).map((entry) => (
-                    <ToggleGroupItem
-                      key={entry}
-                      value={entry}
-                      className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
-                    >
-                      <ConditionIcon condition={entry} />
-                      {t(`items.conditions.${entry}`)}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-            </div>
-
-            <DialogFooter className="pt-4 mt-2 border-t border-border/60 shrink-0 flex flex-row items-center justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
-                {t("common.cancel")}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleNamesSubmit}
-                disabled={batchMutation.isPending || parsedNames.length === 0}
-                className="rounded-xl"
-              >
-                {batchMutation.isPending && (
-                  <Loader2 className="size-4 animate-spin mr-1.5" />
-                )}
-                {t("items.bulkAdd.namesSubmit").replace(
-                  "{count}",
-                  String(parsedNames.length),
-                )}
-              </Button>
-            </DialogFooter>
-          </TabsContent>
-
-          {isBookShelf && (
-            <TabsContent
-              value="series"
-              className="flex flex-col flex-1 min-h-0 overflow-hidden mt-0 px-4 md:px-6 pb-4 md:pb-6 data-[state=inactive]:hidden"
-            >
-              <div className="pt-4 flex-1 min-h-0 overflow-y-auto">
-                <BulkSeriesForm
-                  shelfId={shelfId}
-                  isActive={isOpen && tab === "series"}
-                  onSuccess={(count) => {
-                    onSuccess?.(count);
-                    onClose();
-                  }}
-                  onCancel={onClose}
-                />
-              </div>
-            </TabsContent>
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl-auto"
+      title={
+        <div className="flex items-center gap-2">
+          {shelfType && (
+            <ShelfTypeIcon type={shelfType} className="size-5 shrink-0" />
           )}
-
-          <TabsContent
-            value="scan"
-            className="flex flex-col flex-1 min-h-0 overflow-hidden mt-0 px-4 md:px-6 pb-4 md:pb-6 data-[state=inactive]:hidden"
+          <span>{t("items.bulkAdd.title")}</span>
+        </div>
+      }
+      description={
+        shelfName
+          ? t("items.bulkAdd.descriptionOnShelf").replace("{shelf}", shelfName)
+          : t("items.bulkAdd.description")
+      }
+      customChildren
+      footer={null}
+    >
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as BulkAddTab)}
+        className="flex flex-col flex-1 min-h-0 overflow-hidden"
+      >
+        <div className="px-4 md:px-6 pt-4 shrink-0">
+          <TabsList
+            className={cn(
+              "w-full grid h-auto p-1",
+              isBookShelf ? "grid-cols-3" : "grid-cols-2",
+            )}
           >
-            <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden pt-4">
+            <TabsTrigger value="names" className="gap-1.5 py-2">
+              <List className="size-4" />
+              {t("items.bulkAdd.tabNames")}
+            </TabsTrigger>
+            {isBookShelf && (
+              <TabsTrigger value="series" className="gap-1.5 py-2">
+                <Layers className="size-4" />
+                {t("items.bulkAdd.tabSeries")}
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="scan" className="gap-1.5 py-2">
+              <ScanLine className="size-4" />
+              {t("items.bulkAdd.tabScan")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent
+          value="names"
+          className="flex flex-col flex-1 min-h-0 overflow-hidden mt-0 px-4 md:px-6 pb-4 md:pb-6 data-[state=inactive]:hidden"
+        >
+          <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden pt-4">
+            <div className="flex flex-col flex-1 min-h-0 gap-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0">
+                {t("items.bulkAdd.namesLabel")}
+              </label>
+              <Textarea
+                value={nameList}
+                onChange={(event) => setNameList(event.target.value)}
+                placeholder={t("items.bulkAdd.namesPlaceholder")}
+                className={cn(
+                  fieldInputClassName,
+                  "field-sizing-fixed flex-1 min-h-[180px] overflow-y-auto resize-none",
+                )}
+              />
               <p className="text-xs text-muted-foreground shrink-0">
-                {t("items.bulkAdd.scanHint")}
+                {t("items.bulkAdd.metadataHint")}
               </p>
-
-              <div className="shrink-0">
-                <BarcodeScanCapture
-                  active={scanTabActive}
-                  shelfType={shelfType}
-                  disabled={isScanning}
-                  onBarcode={(barcode) => void processBarcode(barcode)}
-                />
-              </div>
-
-              <div className="space-y-2 shrink-0">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {t("items.condition")}
-                </label>
-                <ToggleGroup
-                  size="sm"
-                  type="single"
-                  variant="outline"
-                  className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                  value={condition}
-                  onValueChange={(value) => {
-                    if (value) setCondition(value as Condition);
-                  }}
-                >
-                  {Object.values(Condition).map((entry) => (
-                    <ToggleGroupItem
-                      key={entry}
-                      value={entry}
-                      className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
-                    >
-                      <ConditionIcon condition={entry} />
-                      {t(`items.conditions.${entry}`)}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-
-              {scannedRows.length > 0 && (
-                <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border/60 divide-y divide-border/60">
-                  {scannedRows.map((row) => (
-                    <div
-                      key={row.id}
-                      className="flex items-start gap-2 px-3 py-2.5 text-sm"
-                    >
-                      {row.status === "pending" && (
-                        <Loader2 className="size-4 shrink-0 animate-spin mt-0.5 text-muted-foreground" />
-                      )}
-                      {row.status === "done" && (
-                        <CheckCircle2 className="size-4 shrink-0 mt-0.5 text-emerald-500" />
-                      )}
-                      {row.status === "error" && (
-                        <XCircle className="size-4 shrink-0 mt-0.5 text-rose-500" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{row.name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          {row.barcode}
-                        </p>
-                        {row.error && (
-                          <p className="text-xs text-rose-500 mt-0.5">{row.error}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
-            <DialogFooter className="pt-4 mt-2 border-t border-border/60 shrink-0 flex flex-row items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">
-                {scanCount > 0
-                  ? t("items.bulkAdd.scanCount").replace("{count}", String(scanCount))
-                  : t("items.bulkAdd.scanWaiting")}
-              </span>
-              <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
-                {t("common.close")}
-              </Button>
-            </DialogFooter>
+            <div className="space-y-2 shrink-0">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                {t("items.condition")}
+              </label>
+              <ToggleGroup
+                size="sm"
+                type="single"
+                variant="outline"
+                className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                value={condition}
+                onValueChange={(value) => {
+                  if (value) setCondition(value as Condition);
+                }}
+              >
+                {Object.values(Condition).map((entry) => (
+                  <ToggleGroupItem
+                    key={entry}
+                    value={entry}
+                    className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
+                  >
+                    <ConditionIcon condition={entry} />
+                    {t(`items.conditions.${entry}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4 mt-2 border-t border-border/60 shrink-0 flex flex-row items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="rounded-xl"
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleNamesSubmit}
+              disabled={batchMutation.isPending || parsedNames.length === 0}
+              className="rounded-xl"
+            >
+              {batchMutation.isPending && (
+                <Loader2 className="size-4 animate-spin mr-1.5" />
+              )}
+              {t("items.bulkAdd.namesSubmit").replace(
+                "{count}",
+                String(parsedNames.length),
+              )}
+            </Button>
+          </DialogFooter>
+        </TabsContent>
+
+        {isBookShelf && (
+          <TabsContent
+            value="series"
+            className="flex flex-col flex-1 min-h-0 overflow-hidden mt-0 px-4 md:px-6 pb-4 md:pb-6 data-[state=inactive]:hidden"
+          >
+            <div className="pt-4 flex-1 min-h-0 overflow-y-auto">
+              <BulkSeriesForm
+                shelfId={shelfId}
+                isActive={isOpen && tab === "series"}
+                onSuccess={(count) => {
+                  onSuccess?.(count);
+                  onClose();
+                }}
+                onCancel={onClose}
+              />
+            </div>
           </TabsContent>
-        </Tabs>
-      </BaseModal>
+        )}
+
+        <TabsContent
+          value="scan"
+          className="flex flex-col flex-1 min-h-0 overflow-hidden mt-0 px-4 md:px-6 pb-4 md:pb-6 data-[state=inactive]:hidden"
+        >
+          <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden pt-4">
+            <p className="text-xs text-muted-foreground shrink-0">
+              {t("items.bulkAdd.scanHint")}
+            </p>
+
+            <div className="shrink-0">
+              <BarcodeScanCapture
+                active={scanTabActive}
+                shelfType={shelfType}
+                disabled={isScanning}
+                onBarcode={(barcode) => void processBarcode(barcode)}
+              />
+            </div>
+
+            <div className="space-y-2 shrink-0">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                {t("items.condition")}
+              </label>
+              <ToggleGroup
+                size="sm"
+                type="single"
+                variant="outline"
+                className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                value={condition}
+                onValueChange={(value) => {
+                  if (value) setCondition(value as Condition);
+                }}
+              >
+                {Object.values(Condition).map((entry) => (
+                  <ToggleGroupItem
+                    key={entry}
+                    value={entry}
+                    className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
+                  >
+                    <ConditionIcon condition={entry} />
+                    {t(`items.conditions.${entry}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+
+            {scannedRows.length > 0 && (
+              <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border/60 divide-y divide-border/60">
+                {scannedRows.map((row) => (
+                  <div
+                    key={row.id}
+                    className="flex items-start gap-2 px-3 py-2.5 text-sm"
+                  >
+                    {row.status === "pending" && (
+                      <Loader2 className="size-4 shrink-0 animate-spin mt-0.5 text-muted-foreground" />
+                    )}
+                    {row.status === "done" && (
+                      <CheckCircle2 className="size-4 shrink-0 mt-0.5 text-emerald-500" />
+                    )}
+                    {row.status === "error" && (
+                      <XCircle className="size-4 shrink-0 mt-0.5 text-rose-500" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{row.name}</p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {row.barcode}
+                      </p>
+                      {row.error && (
+                        <p className="text-xs text-rose-500 mt-0.5">
+                          {row.error}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4 mt-2 border-t border-border/60 shrink-0 flex flex-row items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">
+              {scanCount > 0
+                ? t("items.bulkAdd.scanCount").replace(
+                    "{count}",
+                    String(scanCount),
+                  )
+                : t("items.bulkAdd.scanWaiting")}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="rounded-xl"
+            >
+              {t("common.close")}
+            </Button>
+          </DialogFooter>
+        </TabsContent>
+      </Tabs>
+    </BaseModal>
   );
 }

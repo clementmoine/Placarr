@@ -68,10 +68,7 @@ export function BulkSeriesForm({
     () =>
       z
         .object({
-          title: z
-            .string()
-            .trim()
-            .min(1, t("items.bulkSeries.titleRequired")),
+          title: z.string().trim().min(1, t("items.bulkSeries.titleRequired")),
           fromVolume: volumeFieldSchema(t("items.bulkSeries.volumeMin")),
           toVolume: volumeFieldSchema(t("items.bulkSeries.volumeMin")),
           patternKey: z.enum(
@@ -368,9 +365,7 @@ export function BulkSeriesForm({
               className="rounded-xl h-10 px-5 text-xs font-semibold bg-primary hover:bg-primary/95 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
               disabled={isPending || volumeCount === 0 || !title?.trim()}
             >
-              {isPending && (
-                <Loader2 className="size-4 animate-spin mr-1.5" />
-              )}
+              {isPending && <Loader2 className="size-4 animate-spin mr-1.5" />}
               {t("items.bulkSeries.submit").replace(
                 "{count}",
                 String(volumeCount || 0),

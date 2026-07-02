@@ -505,7 +505,10 @@ function AdminDashboardComponent() {
   const metadataApis = apis?.filter((a) => a.type === "metadata") || [];
 
   const providerById = new Map(
-    (providerRegistry?.providers || []).map((provider) => [provider.id, provider]),
+    (providerRegistry?.providers || []).map((provider) => [
+      provider.id,
+      provider,
+    ]),
   );
 
   const healthyCount = apis?.filter((a) => a.status === "up").length || 0;
@@ -1469,119 +1472,121 @@ function AdminDashboardComponent() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {metadataApis.map((api) => {
-                            const providerConfig = providerById.get(api.providerId);
+                            const providerConfig = providerById.get(
+                              api.providerId,
+                            );
                             const apiDashboardUrl =
                               providerConfig?.apiKeyDashboardUrl;
                             return (
-                            <Card
-                              key={api.name}
-                              className={`relative overflow-hidden border transition-all duration-300 ${
-                                api.status === "down"
-                                  ? "border-destructive/30 bg-destructive/5"
-                                  : api.status === "unconfigured"
-                                    ? "border-muted/30 opacity-70 bg-card/30"
-                                    : "border-border bg-card/40 hover:border-border/80"
-                              }`}
-                            >
-                              <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                                <div className="space-y-0.5">
-                                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                    {api.name}
-                                    {apiDashboardUrl && (
-                                      <a
-                                        href={apiDashboardUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-muted-foreground hover:text-foreground transition-colors"
-                                        title="Open Dashboard"
-                                      >
-                                        <ExternalLink className="size-3.5" />
-                                      </a>
-                                    )}
-                                  </CardTitle>
-                                  <CardDescription className="text-xs">
-                                    {api.configured ? (
-                                      <span className="text-emerald-500 font-medium flex items-center gap-1">
-                                        <Key className="size-3" />
-                                        {t("admin.status.configured")}
-                                      </span>
-                                    ) : (
-                                      <span className="text-muted-foreground flex items-center gap-1">
-                                        <Key className="size-3" />
-                                        {t("admin.status.notConfigured")}
-                                      </span>
-                                    )}
-                                  </CardDescription>
-                                </div>
-
-                                <div>
-                                  {api.status === "up" && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/20 font-medium flex items-center gap-1"
-                                    >
-                                      <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                      </span>
-                                      {t("admin.status.up")}
-                                    </Badge>
-                                  )}
-                                  {api.status === "down" && (
-                                    <Badge
-                                      variant="destructive"
-                                      className="font-medium flex items-center gap-1"
-                                    >
-                                      <XCircle className="size-3.5" />
-                                      {t("admin.status.down")}
-                                    </Badge>
-                                  )}
-                                  {api.status === "unconfigured" && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-muted-foreground font-medium flex items-center gap-1"
-                                    >
-                                      <AlertTriangle className="size-3.5 text-muted-foreground" />
-                                      {t("admin.status.unconfigured")}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </CardHeader>
-
-                              <CardContent className="space-y-2">
-                                {api.latency !== null && (
-                                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                    <span>{t("admin.status.latency")}</span>
-                                    <span>{api.latency} ms</span>
-                                  </div>
-                                )}
-
-                                {api.error && (
-                                  <div className="border-t pt-2 mt-2">
-                                    <button
-                                      id={`btn-toggle-error-${api.name.replace(/\s+/g, "-").toLowerCase()}`}
-                                      onClick={() => toggleError(api.name)}
-                                      className="w-full flex items-center justify-between text-xs font-semibold text-destructive/80 hover:text-destructive transition-colors"
-                                    >
-                                      <span className="flex items-center gap-1">
-                                        <AlertTriangle className="size-3.5" />
-                                        {t("admin.status.error")}
-                                      </span>
-                                      {expandedErrors[api.name] ? (
-                                        <ChevronUp className="size-3.5" />
-                                      ) : (
-                                        <ChevronDown className="size-3.5" />
+                              <Card
+                                key={api.name}
+                                className={`relative overflow-hidden border transition-all duration-300 ${
+                                  api.status === "down"
+                                    ? "border-destructive/30 bg-destructive/5"
+                                    : api.status === "unconfigured"
+                                      ? "border-muted/30 opacity-70 bg-card/30"
+                                      : "border-border bg-card/40 hover:border-border/80"
+                                }`}
+                              >
+                                <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                                  <div className="space-y-0.5">
+                                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                      {api.name}
+                                      {apiDashboardUrl && (
+                                        <a
+                                          href={apiDashboardUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-muted-foreground hover:text-foreground transition-colors"
+                                          title="Open Dashboard"
+                                        >
+                                          <ExternalLink className="size-3.5" />
+                                        </a>
                                       )}
-                                    </button>
-                                    {expandedErrors[api.name] && (
-                                      <pre className="mt-2 p-2 rounded bg-black/80 dark:bg-black/50 text-[10px] font-mono text-red-400 overflow-x-auto whitespace-pre-wrap max-h-24">
-                                        {api.error}
-                                      </pre>
+                                    </CardTitle>
+                                    <CardDescription className="text-xs">
+                                      {api.configured ? (
+                                        <span className="text-emerald-500 font-medium flex items-center gap-1">
+                                          <Key className="size-3" />
+                                          {t("admin.status.configured")}
+                                        </span>
+                                      ) : (
+                                        <span className="text-muted-foreground flex items-center gap-1">
+                                          <Key className="size-3" />
+                                          {t("admin.status.notConfigured")}
+                                        </span>
+                                      )}
+                                    </CardDescription>
+                                  </div>
+
+                                  <div>
+                                    {api.status === "up" && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/20 font-medium flex items-center gap-1"
+                                      >
+                                        <span className="relative flex h-2 w-2">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                        </span>
+                                        {t("admin.status.up")}
+                                      </Badge>
+                                    )}
+                                    {api.status === "down" && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="font-medium flex items-center gap-1"
+                                      >
+                                        <XCircle className="size-3.5" />
+                                        {t("admin.status.down")}
+                                      </Badge>
+                                    )}
+                                    {api.status === "unconfigured" && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-muted-foreground font-medium flex items-center gap-1"
+                                      >
+                                        <AlertTriangle className="size-3.5 text-muted-foreground" />
+                                        {t("admin.status.unconfigured")}
+                                      </Badge>
                                     )}
                                   </div>
-                                )}
-                              </CardContent>
-                            </Card>
+                                </CardHeader>
+
+                                <CardContent className="space-y-2">
+                                  {api.latency !== null && (
+                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                      <span>{t("admin.status.latency")}</span>
+                                      <span>{api.latency} ms</span>
+                                    </div>
+                                  )}
+
+                                  {api.error && (
+                                    <div className="border-t pt-2 mt-2">
+                                      <button
+                                        id={`btn-toggle-error-${api.name.replace(/\s+/g, "-").toLowerCase()}`}
+                                        onClick={() => toggleError(api.name)}
+                                        className="w-full flex items-center justify-between text-xs font-semibold text-destructive/80 hover:text-destructive transition-colors"
+                                      >
+                                        <span className="flex items-center gap-1">
+                                          <AlertTriangle className="size-3.5" />
+                                          {t("admin.status.error")}
+                                        </span>
+                                        {expandedErrors[api.name] ? (
+                                          <ChevronUp className="size-3.5" />
+                                        ) : (
+                                          <ChevronDown className="size-3.5" />
+                                        )}
+                                      </button>
+                                      {expandedErrors[api.name] && (
+                                        <pre className="mt-2 p-2 rounded bg-black/80 dark:bg-black/50 text-[10px] font-mono text-red-400 overflow-x-auto whitespace-pre-wrap max-h-24">
+                                          {api.error}
+                                        </pre>
+                                      )}
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
                             );
                           })}
                         </div>
@@ -2038,7 +2043,8 @@ function AdminDashboardComponent() {
                             const stickyRowBg =
                               rowIndex % 2 === 0 ? "bg-background" : "bg-muted";
                             const providerWebsite =
-                              provider.websiteUrl ?? provider.apiKeyDashboardUrl;
+                              provider.websiteUrl ??
+                              provider.apiKeyDashboardUrl;
                             return (
                               <tr
                                 key={provider.id}

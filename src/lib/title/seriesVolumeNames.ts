@@ -36,10 +36,7 @@ export function parseSeriesVolume(value: unknown): number | null {
   return parsed;
 }
 
-export function countSeriesVolumes(
-  from: unknown,
-  to: unknown,
-): number {
+export function countSeriesVolumes(from: unknown, to: unknown): number {
   const fromVolume = parseSeriesVolume(from);
   const toVolume = parseSeriesVolume(to);
   if (fromVolume === null || toVolume === null || toVolume < fromVolume) {

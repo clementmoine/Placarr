@@ -4,7 +4,10 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { volumeNumberFromTitle } from "@/lib/title/volumeNumber";
 import { stripVolumeMarkersFromTitle } from "@/lib/title/volumeNumber";
-import { metadataTitleSimilarity, hasUnrequestedVariantMarker } from "@/lib/metadata/titleMatching";
+import {
+  metadataTitleSimilarity,
+  hasUnrequestedVariantMarker,
+} from "@/lib/metadata/titleMatching";
 
 export interface BedethequeAlbum {
   id: string;
@@ -37,10 +40,8 @@ const BEDETHEQUE_HEADERS = {
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
 };
 
-const ALBUM_ISSUE_LINK_RE =
-  /BD-[^"'\s]*-Numero-(\d+)-(\d+)\.html/gi;
-const ALBUM_TOME_LINK_RE =
-  /BD-[^"'\s]+-Tome-(\d+)-[^"'\s]+-(\d+)\.html/gi;
+const ALBUM_ISSUE_LINK_RE = /BD-[^"'\s]*-Numero-(\d+)-(\d+)\.html/gi;
+const ALBUM_TOME_LINK_RE = /BD-[^"'\s]+-Tome-(\d+)-[^"'\s]+-(\d+)\.html/gi;
 
 function cleanText(value?: string | null): string | undefined {
   const text = decodeHTMLEntities(String(value || ""))
@@ -76,7 +77,9 @@ function hiddenInputValue(html: string, id: string): string | undefined {
   return match?.[1]?.trim() || undefined;
 }
 
-export function absoluteBedethequeUrl(value?: string | null): string | undefined {
+export function absoluteBedethequeUrl(
+  value?: string | null,
+): string | undefined {
   if (!value) return undefined;
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith("/")) return `${BEDETHEQUE_BASE_URL}${value}`;
@@ -151,7 +154,8 @@ export function parseBedethequeSeriesAlbumLinks(html: string): Array<{
   albumPath: string;
 }> {
   const seen = new Set<string>();
-  const links: Array<{ issue: string; albumId: string; albumPath: string }> = [];
+  const links: Array<{ issue: string; albumId: string; albumPath: string }> =
+    [];
 
   const pushMatch = (albumPath: string, issue: string, albumId: string) => {
     const key = `${issue}:${albumId}`;
@@ -186,8 +190,7 @@ export function parseBedethequeAlbumPage(
   sourceUrl: string,
 ): BedethequeAlbum | null {
   const id =
-    hiddenInputValue(html, "IdAlbum") ||
-    sourceUrl.match(/-(\d+)\.html$/i)?.[1];
+    hiddenInputValue(html, "IdAlbum") || sourceUrl.match(/-(\d+)\.html$/i)?.[1];
   if (!id) return null;
 
   const ogTitle = metaContent(html, "og:title");
@@ -384,7 +387,9 @@ async function fetchBedethequeAlbumForTitle(
     const series = pickBedethequeSeriesCandidate(query, candidates);
     if (!series) continue;
 
-    const seriesHtml = await fetchBedethequeHtml(bedethequeAlbumsPageUrl(series));
+    const seriesHtml = await fetchBedethequeHtml(
+      bedethequeAlbumsPageUrl(series),
+    );
     if (!seriesHtml) continue;
 
     const albumPath = pickBedethequeAlbumLink(
@@ -459,7 +464,9 @@ export async function fetchBedethequeMetadata(
   return null;
 }
 
-export async function getBedethequeSuggestions(name: string): Promise<string[]> {
+export async function getBedethequeSuggestions(
+  name: string,
+): Promise<string[]> {
   const trimmed = name.trim();
   if (!trimmed) return [];
 

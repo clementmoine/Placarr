@@ -20,10 +20,7 @@ describe("buildSeparatorTitleVariants", () => {
     expect(
       buildSeparatorTitleVariants("The Lapins Crétins : Retour vers le passé"),
     ).toEqual(
-      expect.arrayContaining([
-        "The Lapins Crétins",
-        "Retour vers le passé",
-      ]),
+      expect.arrayContaining(["The Lapins Crétins", "Retour vers le passé"]),
     );
   });
 });
@@ -50,9 +47,9 @@ describe("buildCamelCaseTitleVariants", () => {
 
 describe("buildStructuralTitleSearchVariants", () => {
   it("extracts the subject from a french legend title", () => {
-    expect(
-      buildStructuralTitleSearchVariants("La Légende Du Dragon"),
-    ).toEqual(expect.arrayContaining(["Dragon", "Legend of Dragon"]));
+    expect(buildStructuralTitleSearchVariants("La Légende Du Dragon")).toEqual(
+      expect.arrayContaining(["Dragon", "Legend of Dragon"]),
+    );
   });
 
   it("does not inject tokens absent from the source title", () => {
@@ -83,7 +80,10 @@ describe("buildStructuralTitleSearchVariants", () => {
       "Destiny Le Roi des Corrompus",
     );
     expect(variants).toEqual(
-      expect.arrayContaining(["Destiny: the taken king", "Destiny The taken king"]),
+      expect.arrayContaining([
+        "Destiny: the taken king",
+        "Destiny The taken king",
+      ]),
     );
   });
 

@@ -86,9 +86,9 @@ describe("parseChocoBonPlanProductPage", () => {
         "https://chocobonplan.com/wp-content/uploads/2020/01/bon-plan-tekken-7-ps4.png",
       ]),
     );
-    expect(parsed.attachments?.some((image) => image.url.includes("5cf52553"))).toBe(
-      false,
-    );
+    expect(
+      parsed.attachments?.some((image) => image.url.includes("5cf52553")),
+    ).toBe(false);
   });
 
   it("prend la jaquette produit sur les anciennes fiches PS4", () => {
@@ -96,9 +96,9 @@ describe("parseChocoBonPlanProductPage", () => {
     expect(parsed.coverUrl).toBe(
       "https://chocobonplan.com/wp-content/uploads/2016/10/les-chevaliers-de-baphomet-pas-cher-la-malediction-du-serpent.jpg",
     );
-    expect(parsed.attachments?.some((image) => image.url.includes("5cf52553"))).toBe(
-      false,
-    );
+    expect(
+      parsed.attachments?.some((image) => image.url.includes("5cf52553")),
+    ).toBe(false);
   });
 
   it("prend la jaquette produit quand elle est dans box-corner__img avant le h1", () => {
@@ -195,12 +195,23 @@ describe("parseChocoBonPlanProductPage", () => {
       "https://chocobonplan.com/wp-content/uploads/2025/04/SLIDER-alan-wake-edition-deluxe-ps5.jpg",
     );
     const byType = Object.fromEntries(
-      (parsed.attachments || []).map((image) => [image.url.split("/").pop(), image.type]),
+      (parsed.attachments || []).map((image) => [
+        image.url.split("/").pop(),
+        image.type,
+      ]),
     );
-    expect(byType["alan-wake-edition-deluxe-ps5-visuel-produit.png"]).toBe("cover");
-    expect(byType["SLIDER-alan-wake-edition-deluxe-ps5.jpg"]).toBe("background");
-    expect(byType["screen-1-Alan-Wake-2-Deluxe-Edition-PS5.jpg"]).toBe("screenshot");
-    expect(byType["screen-2-Alan-Wake-2-Deluxe-Edition-PS5.jpg"]).toBe("screenshot");
+    expect(byType["alan-wake-edition-deluxe-ps5-visuel-produit.png"]).toBe(
+      "cover",
+    );
+    expect(byType["SLIDER-alan-wake-edition-deluxe-ps5.jpg"]).toBe(
+      "background",
+    );
+    expect(byType["screen-1-Alan-Wake-2-Deluxe-Edition-PS5.jpg"]).toBe(
+      "screenshot",
+    );
+    expect(byType["screen-2-Alan-Wake-2-Deluxe-Edition-PS5.jpg"]).toBe(
+      "screenshot",
+    );
   });
 
   it("ignore les avatars auteur staff (BisH0p, Choco)", () => {
@@ -363,7 +374,10 @@ describe("pickRelevantChocoBonPlanHit", () => {
           objectID: "repentance",
         },
       ],
-      ["The Binding of Isaac Repentance", "The Binding of Isaac Repentance ps5"],
+      [
+        "The Binding of Isaac Repentance",
+        "The Binding of Isaac Repentance ps5",
+      ],
     );
     expect(hit?.objectID).toBe("repentance");
   });
@@ -404,7 +418,8 @@ describe("fetchFromChocoBonPlan", () => {
           {
             title: "Ball x Pit sur PS5",
             url: "https://chocobonplan.com/ball-x-pit/",
-            image: "https://chocobonplan.com/wp-content/uploads/ball-300x300.png",
+            image:
+              "https://chocobonplan.com/wp-content/uploads/ball-300x300.png",
             objectID: "299830",
           },
         ],
@@ -417,7 +432,9 @@ describe("fetchFromChocoBonPlan", () => {
       pickRelevantChocoBonPlanHit("Ball x Pit PS5", hits, ["Ball x Pit PS5"]),
     ).toBeTruthy();
 
-    const result = await fetchFromChocoBonPlan("Ball x Pit PS5", ["Ball x Pit PS5"]);
+    const result = await fetchFromChocoBonPlan("Ball x Pit PS5", [
+      "Ball x Pit PS5",
+    ]);
     expect(result).toMatchObject({
       title: "Ball x Pit sur PS5",
       productUrl: "https://chocobonplan.com/ball-x-pit/",

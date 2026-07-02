@@ -11,7 +11,10 @@ import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
 import { getPriceChartingPlatformSlugs } from "@/lib/games/platforms";
 import { franchiseSequelNumbersConflict } from "@/lib/metadata/titleMatching";
 import { slugify } from "@/lib/routing/slugs";
-import { pickPriceChartingPrimaryCoverUrl, priceChartingGalleryLabelIsRecognized } from "./imageLabels";
+import {
+  pickPriceChartingPrimaryCoverUrl,
+  priceChartingGalleryLabelIsRecognized,
+} from "./imageLabels";
 
 export type {
   PriceChartingMetadata,
@@ -39,7 +42,9 @@ async function priceChartingGet(
         ? error.response?.status
         : undefined;
       if (status === 429 && attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1500 * (attempt + 1)),
+        );
         continue;
       }
       throw error;
@@ -129,10 +134,7 @@ function buildTitleSlugCandidates(title: string): string[] {
 
   const withoutSequelBeforeEdition = cleanedTitle
     .replace(/\bedition\b/gi, " ")
-    .replace(
-      /\b\d{1,2}\s*[-–—]?\s*(?=game of the year|goty)\b/gi,
-      " ",
-    )
+    .replace(/\b\d{1,2}\s*[-–—]?\s*(?=game of the year|goty)\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -257,8 +259,12 @@ function preferSpecificFallbackTitle(
 function parseSearchRows(
   html: string,
 ): { id: string; gamePath: string; title: string; platform: string }[] {
-  const rows: { id: string; gamePath: string; title: string; platform: string }[] =
-    [];
+  const rows: {
+    id: string;
+    gamePath: string;
+    title: string;
+    platform: string;
+  }[] = [];
   const rowRegex =
     /<tr class=\"offer\" id=\"product-(\d+)\">([\s\S]*?)<\/tr>/gi;
   let rMatch;

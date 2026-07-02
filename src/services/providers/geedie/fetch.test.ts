@@ -64,9 +64,7 @@ describe("geedie fetch", () => {
 
   it("upgrades thumbnail URLs to public size", () => {
     expect(
-      upgradeGeedieImageUrl(
-        "https://imagedelivery.net/example/id/thumbnail",
-      ),
+      upgradeGeedieImageUrl("https://imagedelivery.net/example/id/thumbnail"),
     ).toBe("https://imagedelivery.net/example/id/public");
   });
 
@@ -179,10 +177,8 @@ describe("geedie fetch", () => {
       [
         {
           title: "PS5 Alan Wake II (2) Deluxe Edition",
-          productUrl:
-            "https://geedie.lt/en/ps5-alan-wake-ii-2-deluxe-edition",
-          thumbnailUrl:
-            "https://imagedelivery.net/example/alan-wake/thumbnail",
+          productUrl: "https://geedie.lt/en/ps5-alan-wake-ii-2-deluxe-edition",
+          thumbnailUrl: "https://imagedelivery.net/example/alan-wake/thumbnail",
         },
         {
           title: "Xbox Series X Alan Wake II (2) Deluxe Edition",
@@ -203,7 +199,11 @@ describe("geedie fetch", () => {
       "The Plucky Squire - Deluxe Edition",
       "ps5",
       hits,
-      ["The Plucky Squire - Deluxe Edition", "The Plucky Squire", "The Plucky Squire ps5"],
+      [
+        "The Plucky Squire - Deluxe Edition",
+        "The Plucky Squire",
+        "The Plucky Squire ps5",
+      ],
     );
     expect(hit?.productUrl).toContain("ps5-the-plucky-squire");
   });

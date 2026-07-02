@@ -78,9 +78,7 @@ export type MoveItemsBatchResult = {
 export const saveItemsBatch = (
   data: SaveItemsBatchInput,
 ): Promise<SaveItemsBatchResult> => {
-  return axios
-    .post("/api/items/batch", data)
-    .then((response) => response.data);
+  return axios.post("/api/items/batch", data).then((response) => response.data);
 };
 
 export const moveItemsBatch = (
@@ -103,9 +101,7 @@ export type RefreshItemsBatchResult = {
 export const refreshItemsBatch = (
   data: RefreshItemsBatchInput,
 ): Promise<RefreshItemsBatchResult> => {
-  return axios
-    .put("/api/items/batch", data)
-    .then((response) => response.data);
+  return axios.put("/api/items/batch", data).then((response) => response.data);
 };
 
 export const deleteItem = (id: Item["id"]): Promise<void> => {

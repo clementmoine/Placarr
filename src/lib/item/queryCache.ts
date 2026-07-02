@@ -1,10 +1,7 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import type { Item, Shelf } from "@prisma/client";
 
-import {
-  itemMatchesSearchQuery,
-  itemSearchHaystacks,
-} from "@/lib/item/search";
+import { itemMatchesSearchQuery, itemSearchHaystacks } from "@/lib/item/search";
 
 type ItemPatch = Partial<Item> & {
   id: Item["id"];
@@ -47,9 +44,7 @@ function isItemArray(data: unknown[]): boolean {
 }
 
 function itemExistsInList(items: unknown[], itemId: string): boolean {
-  return items.some(
-    (entry) => isRecord(entry) && entry.id === itemId,
-  );
+  return items.some((entry) => isRecord(entry) && entry.id === itemId);
 }
 
 function querySearchTerm(queryKey: QueryKey): string {
@@ -89,7 +84,9 @@ function shouldInsertItemIntoQuery(
   return false;
 }
 
-function bumpShelfItemCount(record: Record<string, unknown>): Record<string, unknown> {
+function bumpShelfItemCount(
+  record: Record<string, unknown>,
+): Record<string, unknown> {
   const count = record._count;
   if (!isRecord(count) || typeof count.items !== "number") {
     return record;
@@ -153,7 +150,12 @@ function patchItemInData<T>(
         items: [patch as Record<string, unknown>, ...record.items],
       };
     } else {
-      const patchedItems = patchItemInData(record.items, patch, queryKey, options);
+      const patchedItems = patchItemInData(
+        record.items,
+        patch,
+        queryKey,
+        options,
+      );
       if (patchedItems !== record.items) {
         next = { ...(next ?? record), items: patchedItems };
       }
@@ -209,8 +211,7 @@ function patchShelfOnItem(
   patch: ShelfPatch,
 ): Record<string, unknown> | null {
   const nestedShelf = isRecord(record.shelf) ? record.shelf : null;
-  const matches =
-    record.shelfId === patch.id || nestedShelf?.id === patch.id;
+  const matches = record.shelfId === patch.id || nestedShelf?.id === patch.id;
   if (!matches) return null;
 
   return {
@@ -264,10 +265,7 @@ function patchShelfInData<T>(data: T, patch: ShelfPatch): T {
   return data;
 }
 
-export function patchCachedShelf(
-  queryClient: QueryClient,
-  shelf: ShelfPatch,
-) {
+export function patchCachedShelf(queryClient: QueryClient, shelf: ShelfPatch) {
   const patch = shelfFieldsOnly(shelf);
 
   for (const query of queryClient.getQueryCache().findAll({

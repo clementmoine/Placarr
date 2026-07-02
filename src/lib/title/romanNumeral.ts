@@ -15,10 +15,7 @@ const SINGLE_ROMAN_SEQUEL = new Set(["i", "v", "x"]);
 export function parseRomanToken(token: string): number | null {
   const trimmed = token.trim();
   if (!trimmed || !ROMAN_TOKEN.test(trimmed)) return null;
-  if (
-    trimmed.length === 1 &&
-    !SINGLE_ROMAN_SEQUEL.has(trimmed.toLowerCase())
-  ) {
+  if (trimmed.length === 1 && !SINGLE_ROMAN_SEQUEL.has(trimmed.toLowerCase())) {
     return null;
   }
   try {

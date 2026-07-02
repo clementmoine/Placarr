@@ -69,10 +69,7 @@ function stage1HasMetadataCapability(
       case "description":
         return metadataHasDescription(result);
       case "duration":
-        return (
-          typeof result.duration === "number" &&
-          result.duration > 0
-        );
+        return typeof result.duration === "number" && result.duration > 0;
       case "identify":
         return Boolean(result.title?.trim());
       case "rating":
@@ -198,9 +195,9 @@ function metadataCapabilitiesOf(provider: ProviderInfo): Capability[] {
 function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
   return Boolean(
     provider.gameMediaGallerySource ||
-    (provider.isRealBoxCover &&
-      provider.capabilities.includes("cover") &&
-      provider.isSecondary),
+      (provider.isRealBoxCover &&
+        provider.capabilities.includes("cover") &&
+        provider.isSecondary),
   );
 }
 
@@ -294,8 +291,9 @@ async function supplementGameEditionProviderResults(
       continue;
     }
 
-    const editionStub: MetadataResult =
-      editionMetadata ?? { title: requestedName.trim() };
+    const editionStub: MetadataResult = editionMetadata ?? {
+      title: requestedName.trim(),
+    };
 
     byProvider.set(
       providerId,
@@ -333,7 +331,9 @@ function alignedProviderResultsForFallback(
 ): MetadataResult[] {
   return Array.from(byProvider.entries()).flatMap(([providerId, metadata]) => {
     if (!metadata) return [];
-    const providerInfo = providers.find((provider) => provider.id === providerId);
+    const providerInfo = providers.find(
+      (provider) => provider.id === providerId,
+    );
     if (
       providerInfo?.requiresTitleAlignment &&
       (!isMetadataTitleAligned(metadata, alignmentNames, 0.58) ||
@@ -354,7 +354,11 @@ export async function fetchMetadata(
   type: MediaType,
   barcode?: string | null,
   platform?: string | null,
-  options?: { isBackground?: boolean; shelfName?: string | null; signal?: AbortSignal },
+  options?: {
+    isBackground?: boolean;
+    shelfName?: string | null;
+    signal?: AbortSignal;
+  },
 ): Promise<MetadataResult | null> {
   throwIfAborted(options?.signal);
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -470,7 +474,9 @@ export async function fetchMetadata(
       if (shouldAlwaysFetchGameGallerySource(p)) return true;
       if (p.auth.kind !== "scrape") return true;
       const caps = metadataCapabilitiesOf(p);
-      return caps.some((cap) => !stage1HasMetadataCapability(stage1Results, cap));
+      return caps.some(
+        (cap) => !stage1HasMetadataCapability(stage1Results, cap),
+      );
     });
 
     if (toResolve.length > 0) {
@@ -682,7 +688,9 @@ export async function fetchMetadata(
         ) {
           return [];
         }
-      } else if (providers.find((p) => p.id === providerId)?.requiresTitleAlignment) {
+      } else if (
+        providers.find((p) => p.id === providerId)?.requiresTitleAlignment
+      ) {
         if (
           !isMetadataTitleAligned(metadata, alignmentNames, 0.58) ||
           isGenericTitleFragment(metadata.title, alignmentNames)

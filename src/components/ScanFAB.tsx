@@ -125,10 +125,7 @@ export function ScanFAB() {
         </motion.button>
       </div>
 
-      <Dialog
-        open={isScannerOpen}
-        onOpenChange={setIsScannerOpen}
-      >
+      <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
         <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh] w-[95vw] sm:max-w-md rounded-2xl border border-border dark:border-zinc-800 shadow-2xl">
           <DialogHeader className="p-5 border-b shrink-0 flex flex-col gap-1">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">

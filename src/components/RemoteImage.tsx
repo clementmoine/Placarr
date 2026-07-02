@@ -8,7 +8,9 @@ function isBlobImageSrc(src: string) {
 }
 
 function wantsFillLayout(className?: string) {
-  return /\bw-full\b/.test(className ?? "") && /\bh-full\b/.test(className ?? "");
+  return (
+    /\bw-full\b/.test(className ?? "") && /\bh-full\b/.test(className ?? "")
+  );
 }
 
 function aspectRatioClassName(className?: string) {

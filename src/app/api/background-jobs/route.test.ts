@@ -43,7 +43,9 @@ describe("GET /api/background-jobs", () => {
   });
 
   it("lists active jobs for the signed-in user", async () => {
-    const res = await GET(new NextRequest("http://localhost/api/background-jobs"));
+    const res = await GET(
+      new NextRequest("http://localhost/api/background-jobs"),
+    );
     const payload = await res.json();
 
     expect(res.status).toBe(200);
@@ -54,7 +56,9 @@ describe("GET /api/background-jobs", () => {
   it("returns empty list for guests", async () => {
     h.authReturn = { user: { id: "g1", role: "guest" } } as unknown;
 
-    const res = await GET(new NextRequest("http://localhost/api/background-jobs"));
+    const res = await GET(
+      new NextRequest("http://localhost/api/background-jobs"),
+    );
     const payload = await res.json();
 
     expect(payload).toEqual({ jobs: [], count: 0 });
@@ -70,7 +74,11 @@ describe("DELETE /api/background-jobs", () => {
   });
 
   it("cancels all jobs for the user", async () => {
-    const res = await DELETE(new NextRequest("http://localhost/api/background-jobs", { method: "DELETE" }));
+    const res = await DELETE(
+      new NextRequest("http://localhost/api/background-jobs", {
+        method: "DELETE",
+      }),
+    );
     const payload = await res.json();
 
     expect(res.status).toBe(200);
@@ -80,7 +88,11 @@ describe("DELETE /api/background-jobs", () => {
   it("blocks guests", async () => {
     h.authReturn = { user: { id: "g1", role: "guest" } } as unknown;
 
-    const res = await DELETE(new NextRequest("http://localhost/api/background-jobs", { method: "DELETE" }));
+    const res = await DELETE(
+      new NextRequest("http://localhost/api/background-jobs", {
+        method: "DELETE",
+      }),
+    );
 
     expect(res.status).toBe(403);
   });
@@ -95,7 +107,9 @@ describe("DELETE /api/background-jobs/[itemId]", () => {
 
   it("cancels one job", async () => {
     const res = await DELETE_ONE(
-      new NextRequest("http://localhost/api/background-jobs/i1", { method: "DELETE" }),
+      new NextRequest("http://localhost/api/background-jobs/i1", {
+        method: "DELETE",
+      }),
       { params: Promise.resolve({ itemId: "i1" }) },
     );
 
@@ -104,10 +118,15 @@ describe("DELETE /api/background-jobs/[itemId]", () => {
   });
 
   it("returns auth response directly", async () => {
-    h.authReturn = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    h.authReturn = NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
 
     const res = await DELETE_ONE(
-      new NextRequest("http://localhost/api/background-jobs/i1", { method: "DELETE" }),
+      new NextRequest("http://localhost/api/background-jobs/i1", {
+        method: "DELETE",
+      }),
       { params: Promise.resolve({ itemId: "i1" }) },
     );
 

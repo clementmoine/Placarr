@@ -176,9 +176,9 @@ describe("parseIqitRenderedProducts", () => {
 
 describe("parsePrestashopProductPageBarcode", () => {
   it("lit gtin13 depuis le JSON-LD", () => {
-    expect(
-      parsePrestashopProductPageBarcode(`"gtin13": "5035224124367"`),
-    ).toBe("5035224124367");
+    expect(parsePrestashopProductPageBarcode(`"gtin13": "5035224124367"`)).toBe(
+      "5035224124367",
+    );
   });
 
   it("lit l'EAN depuis la référence produit", () => {

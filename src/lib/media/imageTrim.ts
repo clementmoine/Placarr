@@ -24,9 +24,7 @@ function isNeutralBackgroundPixel(
   const luminance = (red + green + blue) / 3;
 
   if (mode === "light") {
-    return (
-      luminance >= luminanceThreshold && max - min <= maxDelta
-    );
+    return luminance >= luminanceThreshold && max - min <= maxDelta;
   }
 
   return luminance <= luminanceThreshold && max - min <= maxDelta;

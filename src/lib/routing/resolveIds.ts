@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/db/prisma";
-import { itemSlugLookupVariants, itemLookupSlugs, slugify, slugifyItemName } from "@/lib/routing/slugs";
+import {
+  itemSlugLookupVariants,
+  itemLookupSlugs,
+  slugify,
+  slugifyItemName,
+} from "@/lib/routing/slugs";
 
 /**
  * Résout un identifiant d'étagère : cuid direct ou slug dérivé du nom.

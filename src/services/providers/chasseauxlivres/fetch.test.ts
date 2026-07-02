@@ -201,8 +201,7 @@ describe("fetchFromChasseAuxLivres", () => {
         data: "<html><title>Connexion - Chasse aux livres</title></html>",
         request: {
           res: {
-            responseUrl:
-              "https://www.chasse-aux-livres.fr/login?protect=true",
+            responseUrl: "https://www.chasse-aux-livres.fr/login?protect=true",
           },
         },
       })

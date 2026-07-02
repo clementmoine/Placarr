@@ -40,9 +40,9 @@ describe("barcodeEvidenceObservationSourceWeight", () => {
     expect(listing).not.toBeNull();
     if (!trusted || !listing) return;
 
-    expect(
-      barcodeEvidenceObservationSourceWeight(trusted),
-    ).toBeGreaterThan(barcodeEvidenceObservationSourceWeight(listing));
+    expect(barcodeEvidenceObservationSourceWeight(trusted)).toBeGreaterThan(
+      barcodeEvidenceObservationSourceWeight(listing),
+    );
   });
 
   it("keeps provider sourceWeight when observation role matches evidence tier", () => {

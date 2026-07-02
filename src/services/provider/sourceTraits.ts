@@ -74,7 +74,8 @@ const HOW_LONG_TO_BEAT_PROVIDER_IDS = new Set(
 );
 
 const HOW_LONG_TO_BEAT_SOURCE_PREFIXES = PROVIDERS.filter(
-  (provider) => provider.timeToBeatSource && provider.timeToBeatFactSourcePrefix,
+  (provider) =>
+    provider.timeToBeatSource && provider.timeToBeatFactSourcePrefix,
 ).map((provider) => provider.timeToBeatFactSourcePrefix!.toLowerCase());
 
 const IMAGE_SCORE_ADJUSTMENT_BY_PROVIDER_ID = new Map(
@@ -111,9 +112,9 @@ const GRID_STYLE_COVER_LABEL_PROVIDER_IDS = new Set(
 );
 
 const COLLECTOR_COVER_REGION_FROM_AGE_RATING_PROVIDER_IDS = new Set(
-  PROVIDERS.filter((provider) => provider.collectorCoverRegionFromAgeRating).map(
-    (provider) => provider.id,
-  ),
+  PROVIDERS.filter(
+    (provider) => provider.collectorCoverRegionFromAgeRating,
+  ).map((provider) => provider.id),
 );
 
 const COVER_DEFAULT_REGION_BY_PROVIDER_ID = new Map(
@@ -198,12 +199,16 @@ export function retailCatalogImageTitleSource(source?: string | null): boolean {
   return id !== null && RETAIL_CATALOG_IMAGE_TITLE_PROVIDER_IDS.has(id);
 }
 
-export function strictShelfPlatformCoverSource(source?: string | null): boolean {
+export function strictShelfPlatformCoverSource(
+  source?: string | null,
+): boolean {
   const id = canonicalProviderIdForSource(source);
   return id !== null && STRICT_SHELF_PLATFORM_COVER_PROVIDER_IDS.has(id);
 }
 
-export function authoritative3dCoverRoleSource(source?: string | null): boolean {
+export function authoritative3dCoverRoleSource(
+  source?: string | null,
+): boolean {
   const id = canonicalProviderIdForSource(source);
   return id !== null && AUTHORITATIVE_3D_COVER_ROLE_PROVIDER_IDS.has(id);
 }
@@ -247,7 +252,9 @@ export function coverProvenanceForSource(
   if (!rules || !url) return undefined;
   const haystack = url.toLowerCase();
   const matches = (patterns?: string[]): boolean =>
-    (patterns ?? []).some((pattern) => haystack.includes(pattern.toLowerCase()));
+    (patterns ?? []).some((pattern) =>
+      haystack.includes(pattern.toLowerCase()),
+    );
   if (matches(rules.userPhoto)) return "user_photo";
   if (matches(rules.listingPhoto)) return "listing_photo";
   if (matches(rules.catalog)) return "catalog";
@@ -314,9 +321,7 @@ export function withProviderAttachmentTraits<
   };
 }
 
-export function isDigitalStorefrontFactSource(
-  source?: string | null,
-): boolean {
+export function isDigitalStorefrontFactSource(source?: string | null): boolean {
   const id = canonicalProviderIdForSource(source);
   return id !== null && DIGITAL_STOREFRONT_PROVIDER_IDS.has(id);
 }
@@ -347,9 +352,7 @@ export function isPcSpecificFactSource(
     return true;
   }
   const normalizedLabel = (label || "").toLowerCase();
-  return (
-    normalizedLabel === "steamdb" || normalizedLabel === "pcgamingwiki"
-  );
+  return normalizedLabel === "steamdb" || normalizedLabel === "pcgamingwiki";
 }
 
 export function isHowLongToBeatFactSource(source?: string | null): boolean {
@@ -397,7 +400,9 @@ function formatStampedFactSourceToken(
   return formatProviderSourceLabel(trimmed);
 }
 
-function stampFactSourceNames(fact: FactSourceStampInput): string[] | undefined {
+function stampFactSourceNames(
+  fact: FactSourceStampInput,
+): string[] | undefined {
   const rawTokens =
     fact.sourceNames && fact.sourceNames.length > 0
       ? fact.sourceNames
@@ -416,7 +421,9 @@ function stampFactSourceNames(fact: FactSourceStampInput): string[] | undefined 
   }
 
   return Array.from(
-    new Set(rawTokens.map((token) => formatStampedFactSourceToken(fact, token))),
+    new Set(
+      rawTokens.map((token) => formatStampedFactSourceToken(fact, token)),
+    ),
   );
 }
 

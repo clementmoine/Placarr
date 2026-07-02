@@ -629,7 +629,10 @@ function normalizeEditionSubtitleTokens(value: string): string {
   return normalizeForTokens(value)
     .replace(/\b20\s*eme\s*anniversaire\b/g, "20yearcelebration")
     .replace(/\bcelebration\s*des\s*20\s*ans\b/g, "20yearcelebration")
-    .replace(/\b20\s*year\s*celebration(?:\s*edition)?\b/g, "20yearcelebration");
+    .replace(
+      /\b20\s*year\s*celebration(?:\s*edition)?\b/g,
+      "20yearcelebration",
+    );
 }
 
 function stripEditionSubtitleMarkers(value: string): string {
@@ -865,8 +868,9 @@ export function areLikelySameProduct(a: string, b: string): boolean {
     if (intersection.length >= 2) return true;
     const itemSigTokens = [...aTokens].filter((token) => token.length > 2);
     if (itemSigTokens.length >= 2) {
-      const matchedCount = itemSigTokens.filter((token) => bTokens.has(token))
-        .length;
+      const matchedCount = itemSigTokens.filter((token) =>
+        bTokens.has(token),
+      ).length;
       return matchedCount >= 2;
     }
     const itemPrimary = itemSigTokens[0];

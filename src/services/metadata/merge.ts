@@ -101,10 +101,7 @@ interface AggregatedObservationTitle extends RankedObservationTitle {
 }
 
 function normalizeTitleKey(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 function tierRank(tier: ObservationTitleTier): number {
@@ -126,12 +123,12 @@ function hasLocaleHint(observation: TitleObservation): boolean {
   return hasLanguage || hasRegion;
 }
 
-function titleObservationTier(observation: TitleObservation): ObservationTitleTier {
+function titleObservationTier(
+  observation: TitleObservation,
+): ObservationTitleTier {
   const localeHint = hasLocaleHint(observation);
   if (isObjectOrCatalogRole(observation.role)) {
-    return localeHint
-      ? "object_or_catalog_with_locale"
-      : "object_or_catalog";
+    return localeHint ? "object_or_catalog_with_locale" : "object_or_catalog";
   }
   if (isAliasOrEditionRole(observation.role)) return "alias_or_edition";
   if (localeHint) return "locale_hint";
@@ -147,7 +144,10 @@ function titleCleanliness(value: string): TitleCleanliness {
   };
 }
 
-function compareTitleCleanliness(a: TitleCleanliness, b: TitleCleanliness): number {
+function compareTitleCleanliness(
+  a: TitleCleanliness,
+  b: TitleCleanliness,
+): number {
   if (a.punctuationCount !== b.punctuationCount) {
     return a.punctuationCount - b.punctuationCount;
   }
@@ -339,7 +339,9 @@ function pickBestMetadataObservationTitle(
   }
 
   const aggregates = Array.from(byKey.values());
-  const bestTierRank = Math.min(...aggregates.map((entry) => tierRank(entry.tier)));
+  const bestTierRank = Math.min(
+    ...aggregates.map((entry) => tierRank(entry.tier)),
+  );
   const tierCandidates = aggregates.filter(
     (entry) => tierRank(entry.tier) === bestTierRank,
   );
@@ -349,26 +351,25 @@ function pickBestMetadataObservationTitle(
 
   if (tierCandidates.length === 0) return undefined;
 
-  return tierCandidates
-    .slice()
-    .sort((a, b) => {
-      const consensusA = consensusScoreForTitle(a.value, consensusPool);
-      const consensusB = consensusScoreForTitle(b.value, consensusPool);
-      if (consensusA !== consensusB) return consensusB - consensusA;
+  return tierCandidates.slice().sort((a, b) => {
+    const consensusA = consensusScoreForTitle(a.value, consensusPool);
+    const consensusB = consensusScoreForTitle(b.value, consensusPool);
+    if (consensusA !== consensusB) return consensusB - consensusA;
 
-      if (a.mentions !== b.mentions) return b.mentions - a.mentions;
-      if (a.evidenceRank !== b.evidenceRank) return b.evidenceRank - a.evidenceRank;
+    if (a.mentions !== b.mentions) return b.mentions - a.mentions;
+    if (a.evidenceRank !== b.evidenceRank)
+      return b.evidenceRank - a.evidenceRank;
 
-      const cleanlinessDiff = compareTitleCleanliness(
-        a.cleanliness,
-        b.cleanliness,
-      );
-      if (cleanlinessDiff !== 0) return cleanlinessDiff;
+    const cleanlinessDiff = compareTitleCleanliness(
+      a.cleanliness,
+      b.cleanliness,
+    );
+    if (cleanlinessDiff !== 0) return cleanlinessDiff;
 
-      if (a.value.length !== b.value.length) return a.value.length - b.value.length;
-      return a.value.localeCompare(b.value, "en");
-    })[0]
-    ?.value;
+    if (a.value.length !== b.value.length)
+      return a.value.length - b.value.length;
+    return a.value.localeCompare(b.value, "en");
+  })[0]?.value;
 }
 
 function dedupePeople(
@@ -392,7 +393,6 @@ function dedupePeople(
   return merged.length > 0 ? merged : undefined;
 }
 
-
 export function preferRequestedDisplayTitle(
   metadata: MetadataResult,
   requestedName: string,
@@ -408,7 +408,9 @@ export function preferRequestedDisplayTitle(
     return metadata;
   }
 
-  if (!isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58)) {
+  if (
+    !isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58)
+  ) {
     return {
       ...metadata,
       title: requestedTitle,
@@ -532,16 +534,18 @@ export function mergeMetadata(
       return [];
     }
     const provider = PROVIDERS.find((p) => p.id === r.providerId);
-    return [{
-      text,
-      language: provider?.defaultLanguage === "fr" ? "fr" : undefined,
-      source: r.providerId,
-    }];
+    return [
+      {
+        text,
+        language: provider?.defaultLanguage === "fr" ? "fr" : undefined,
+        source: r.providerId,
+      },
+    ];
   });
   const description = pickBestLocalizedDescription(descriptionCandidates);
 
-  const releaseDate = orderedResults.find((r) => r.metadata.releaseDate)?.metadata
-    .releaseDate;
+  const releaseDate = orderedResults.find((r) => r.metadata.releaseDate)
+    ?.metadata.releaseDate;
 
   const barcodeCandidates =
     options.requestedTitle?.trim() && mediaType === "games"
@@ -563,8 +567,11 @@ export function mergeMetadata(
   const allAuthors = orderedResults.flatMap((r) => r.metadata.authors || []);
   const authors = allAuthors.length > 0 ? dedupePeople(allAuthors) : undefined;
 
-  const allPublishers = orderedResults.flatMap((r) => r.metadata.publishers || []);
-  const publishers = allPublishers.length > 0 ? dedupePeople(allPublishers) : undefined;
+  const allPublishers = orderedResults.flatMap(
+    (r) => r.metadata.publishers || [],
+  );
+  const publishers =
+    allPublishers.length > 0 ? dedupePeople(allPublishers) : undefined;
 
   const providerInfo = (providerId: string) =>
     PROVIDERS.find((p) => p.id === providerId);
@@ -626,7 +633,9 @@ export function mergeMetadata(
   );
   const attachments = [...rankedCovers, ...trailing];
 
-  const leadingResultWithImage = orderedResults.find((r) => r.metadata.imageUrl);
+  const leadingResultWithImage = orderedResults.find(
+    (r) => r.metadata.imageUrl,
+  );
   const observedImageUrl = pickBestMetadataObservationImageUrl(orderedResults);
   // A provider whose cover is canonical for its media type (e.g. Discogs album
   // art) is trusted as-is when it leads, rather than re-ranked.
@@ -639,12 +648,14 @@ export function mergeMetadata(
           combined,
           undefined,
           displayScoreOptions,
-        ) || pickBestDisplayImageUrl(combined)));
+        ) ||
+          pickBestDisplayImageUrl(combined)));
 
   const duration = orderedResults.find((r) => r.metadata.duration !== undefined)
     ?.metadata.duration;
-  const pageCount = orderedResults.find((r) => r.metadata.pageCount !== undefined)
-    ?.metadata.pageCount;
+  const pageCount = orderedResults.find(
+    (r) => r.metadata.pageCount !== undefined,
+  )?.metadata.pageCount;
   const tracksCount = orderedResults.find(
     (r) => r.metadata.tracksCount !== undefined,
   )?.metadata.tracksCount;
@@ -667,16 +678,20 @@ export function mergeMetadata(
   const externalIdsList = orderedResults
     .map((r) => r.metadata.externalIds)
     .filter(Boolean);
-  const externalIds = externalIdsList.length > 0
-    ? externalIdsList.reduce<Record<string, string | null | undefined>>((acc, curr) => {
-        for (const [key, val] of Object.entries(curr!)) {
-          if (val && !acc[key]) {
-            acc[key] = val;
-          }
-        }
-        return acc;
-      }, {})
-    : undefined;
+  const externalIds =
+    externalIdsList.length > 0
+      ? externalIdsList.reduce<Record<string, string | null | undefined>>(
+          (acc, curr) => {
+            for (const [key, val] of Object.entries(curr!)) {
+              if (val && !acc[key]) {
+                acc[key] = val;
+              }
+            }
+            return acc;
+          },
+          {},
+        )
+      : undefined;
 
   const platformKey =
     orderedResults.find((r) => r.metadata.platformKey)?.metadata.platformKey ??

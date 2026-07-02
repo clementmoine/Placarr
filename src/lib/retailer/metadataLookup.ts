@@ -104,9 +104,7 @@ export function retailerSearchQueryUsesOnlyInputTokens(
   const allowed = new Set([
     ...distinctiveQueryTokens(name),
     ...distinctiveQueryTokens(shelfName ?? ""),
-    ...name
-      .split(/\s*\+\s*/)
-      .flatMap((part) => distinctiveQueryTokens(part)),
+    ...name.split(/\s*\+\s*/).flatMap((part) => distinctiveQueryTokens(part)),
   ]);
 
   const queryTokens = distinctiveQueryTokens(query);

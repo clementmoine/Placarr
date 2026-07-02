@@ -70,8 +70,10 @@ function findEmbeddedInlineNumberedList(
 ): { prefix: string; items: Array<{ num: number; text: string }> } | null {
   const marker = /(?:^|\s)1\s+/g;
   let match: RegExpExecArray | null;
-  let best: { prefix: string; items: Array<{ num: number; text: string }> } | null =
-    null;
+  let best: {
+    prefix: string;
+    items: Array<{ num: number; text: string }>;
+  } | null = null;
 
   while ((match = marker.exec(line)) !== null) {
     const oneIndex = match.index + (line[match.index] === " " ? 1 : 0);
@@ -133,11 +135,7 @@ function parseDashSeparatedDescriptionList(
   return { prefix: headerMatch[1].trim(), items };
 }
 
-function emitDashBlock(
-  out: string[],
-  prefix: string,
-  items: string[],
-): void {
+function emitDashBlock(out: string[], prefix: string, items: string[]): void {
   out.push(prefix);
   out.push("");
   for (const item of items) {

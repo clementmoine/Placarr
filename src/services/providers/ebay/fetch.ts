@@ -10,7 +10,11 @@ import {
   getEbayMarketplaceId,
   type EbayCredentials,
 } from "./env";
-import { getEbayAccessToken, getEbayBrowseAccessToken, resetEbayTokenCache } from "./oauth";
+import {
+  getEbayAccessToken,
+  getEbayBrowseAccessToken,
+  resetEbayTokenCache,
+} from "./oauth";
 import type { EbayPrices, EbayProduct } from "./types";
 
 export type { EbayPrices, EbayProduct } from "./types";
@@ -87,7 +91,10 @@ function listingsToProducts(
   for (const item of items) {
     const title = item.title?.trim();
     if (!title) continue;
-    if (expectedNames.length > 0 && !matchesExpectedTitle(title, expectedNames)) {
+    if (
+      expectedNames.length > 0 &&
+      !matchesExpectedTitle(title, expectedNames)
+    ) {
       continue;
     }
     const coverUrl =

@@ -112,11 +112,13 @@ describe("isPriceCacheFresh", () => {
       priceLastUpdated: "2026-06-19T14:56:00.000Z",
     };
 
-    expect(getPriceCacheLifetimeMs("games", cacheRecord)).toBe(6 * 60 * 60 * 1000);
-    expect(isPriceCacheFresh("games", cacheRecord, now)).toBe(true);
-    expect(isPriceCacheFresh("games", cacheRecord, now + 6 * 60 * 60 * 1000)).toBe(
-      false,
+    expect(getPriceCacheLifetimeMs("games", cacheRecord)).toBe(
+      6 * 60 * 60 * 1000,
     );
+    expect(isPriceCacheFresh("games", cacheRecord, now)).toBe(true);
+    expect(
+      isPriceCacheFresh("games", cacheRecord, now + 6 * 60 * 60 * 1000),
+    ).toBe(false);
   });
 
   it("keeps complete game caches fresh for 24 hours", () => {

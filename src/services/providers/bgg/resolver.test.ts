@@ -327,13 +327,14 @@ describe("createBGGResolver", () => {
       ),
     ).toBe(true);
     // BGG "Game:" family → provider-sourced franchise (theme families excluded).
-    expect(
-      res?.facts?.find((f) => f.kind === "franchise"),
-    ).toMatchObject({ value: "Catan", source: "BGG" });
+    expect(res?.facts?.find((f) => f.kind === "franchise")).toMatchObject({
+      value: "Catan",
+      source: "BGG",
+    });
     // The heterogeneous "Familles" fact still carries every family verbatim.
-    expect(
-      res?.facts?.find((f) => f.kind === "family")?.value,
-    ).toContain("Theme: Trading");
+    expect(res?.facts?.find((f) => f.kind === "family")?.value).toContain(
+      "Theme: Trading",
+    );
   });
 
   it("ignore un minage BGG à 0", async () => {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getCoverImage, resolveMetadataCoverUrl, filterMetadataForShelfPlatform } from "./media";
+import {
+  getCoverImage,
+  resolveMetadataCoverUrl,
+  filterMetadataForShelfPlatform,
+} from "./media";
 import { getDisplayTitle, presentItem } from "./present";
 
 describe("getCoverImage", () => {
@@ -96,7 +100,8 @@ describe("getCoverImage", () => {
             source: "chocobonplan",
             role: "fr",
             url: "/uploads/chocobonplan-ps5.jpg",
-            title: "Metal Gear Solid Master Collection Volume 1 ps5 visuel produit",
+            title:
+              "Metal Gear Solid Master Collection Volume 1 ps5 visuel produit",
           },
           {
             type: "cover" as const,

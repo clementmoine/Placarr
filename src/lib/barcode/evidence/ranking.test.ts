@@ -60,7 +60,12 @@ function imageObservation(
 describe("pickDisplayTitleFromObservations", () => {
   it("préfère un object_title fort aux listing_title bruyants", () => {
     const title = pickDisplayTitleFromObservations([
-      titleObservation("listing_title", "Mario Kart bruit marketplace", "weak", false),
+      titleObservation(
+        "listing_title",
+        "Mario Kart bruit marketplace",
+        "weak",
+        false,
+      ),
       titleObservation("object_title", "Mario Kart Wii", "strong", true),
     ]);
     expect(title).toBe("Mario Kart Wii");
@@ -70,7 +75,11 @@ describe("pickDisplayTitleFromObservations", () => {
 describe("pickCoverUrlFromObservations", () => {
   it("préfère une cover_front à une listing_photo", () => {
     const url = pickCoverUrlFromObservations([
-      imageObservation("listing_photo", "https://example.test/listing.jpg", "weak"),
+      imageObservation(
+        "listing_photo",
+        "https://example.test/listing.jpg",
+        "weak",
+      ),
       imageObservation("cover_front", "https://example.test/box.jpg", "strong"),
     ]);
     expect(url).toBe("https://example.test/box.jpg");
@@ -179,7 +188,12 @@ describe("pickBarcodeFieldValuesFromObservations", () => {
 describe("titleObservationRankScore", () => {
   it("donne un score plus élevé aux titres catalogue qu'aux listing", () => {
     const catalog = titleObservation("catalog_title", "Catan", "normal", true);
-    const listing = titleObservation("listing_title", "Catan boite", "weak", false);
+    const listing = titleObservation(
+      "listing_title",
+      "Catan boite",
+      "weak",
+      false,
+    );
     if (catalog.kind !== "title" || listing.kind !== "title") {
       throw new Error("expected title observations");
     }

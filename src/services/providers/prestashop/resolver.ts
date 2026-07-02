@@ -287,10 +287,7 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
 
         for (const hit of hits) {
           const key =
-            hit.id_product?.toString() ||
-            hit.link ||
-            hit.name?.trim() ||
-            "";
+            hit.id_product?.toString() || hit.link || hit.name?.trim() || "";
           if (!key || seenProductKeys.has(key)) continue;
           seenProductKeys.add(key);
 

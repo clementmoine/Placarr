@@ -7,8 +7,30 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Suspense, useCallback, useMemo, useState, useEffect, memo } from "react";
-import { Compass, Plus, Wrench, Pizza, Search, ChevronDown, ListPlus, ScanLine, Layers, CheckSquare, ArrowRightLeft, RefreshCw, Loader2, X } from "lucide-react";
+import {
+  Suspense,
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  memo,
+} from "react";
+import {
+  Compass,
+  Plus,
+  Wrench,
+  Pizza,
+  Search,
+  ChevronDown,
+  ListPlus,
+  ScanLine,
+  Layers,
+  CheckSquare,
+  ArrowRightLeft,
+  RefreshCw,
+  Loader2,
+  X,
+} from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +59,10 @@ import {
   ItemCollectionSortSelect,
 } from "@/components/ItemCollectionControls";
 import { ItemModal } from "@/components/modals/ItemModal";
-import { BulkAddModal, type BulkAddTab } from "@/components/modals/BulkAddModal";
+import {
+  BulkAddModal,
+  type BulkAddTab,
+} from "@/components/modals/BulkAddModal";
 import { BulkMoveModal } from "@/components/modals/BulkMoveModal";
 import { ScannerButton } from "@/components/ScannerButton";
 import { ShelfModal } from "@/components/modals/ShelfModal";
@@ -153,7 +178,9 @@ const ShelfGridItem = memo(function ShelfGridItem({
         damping: 30,
       }}
     >
-      <Link href={itemPath(shelf || { id: resolvedShelfId }, item)}>{card}</Link>
+      <Link href={itemPath(shelf || { id: resolvedShelfId }, item)}>
+        {card}
+      </Link>
     </motion.div>
   );
 });
@@ -266,9 +293,9 @@ function ShelfComponent() {
             barcode: null,
             condition: "new",
             metadataId: null,
-    metadataRefreshStartedAt: null,
-    metadataRefreshGeneration: 0,
-    userId: shelf?.userId || "",
+            metadataRefreshStartedAt: null,
+            metadataRefreshGeneration: 0,
+            userId: shelf?.userId || "",
           }),
         ),
       } as any;
@@ -403,7 +430,11 @@ function ShelfComponent() {
   };
 
   const handleModalOpen = useCallback(
-    (modal: "shelf" | "item" | "bulk", id?: Item["id"], bulkTab?: BulkAddTab) => {
+    (
+      modal: "shelf" | "item" | "bulk",
+      id?: Item["id"],
+      bulkTab?: BulkAddTab,
+    ) => {
       if (bulkTab) setBulkInitialTab(bulkTab);
       setVisibleModal(modal);
 
@@ -472,7 +503,10 @@ function ShelfComponent() {
       sourceShelfIds: string[];
     }) => {
       exitSelectionMode();
-      for (const id of new Set([...result.sourceShelfIds, result.targetShelfId])) {
+      for (const id of new Set([
+        ...result.sourceShelfIds,
+        result.targetShelfId,
+      ])) {
         queryClient.invalidateQueries({ queryKey: ["shelf", id] });
       }
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
@@ -487,7 +521,10 @@ function ShelfComponent() {
       mutationFn: refreshItemsBatch,
       onSuccess: (result) => {
         toast.success(
-          t("items.bulkRefresh.success").replace("{count}", String(result.count)),
+          t("items.bulkRefresh.success").replace(
+            "{count}",
+            String(result.count),
+          ),
         );
         queryClient.invalidateQueries({ queryKey: ["shelf", shelfId] });
         queryClient.invalidateQueries({ queryKey: ["shelves"] });
@@ -503,7 +540,12 @@ function ShelfComponent() {
       itemIds: selectedItemIdsArray,
       sourceShelfId: shelfId,
     });
-  }, [bulkRefreshMutation, selectedItemIds.size, selectedItemIdsArray, shelfId]);
+  }, [
+    bulkRefreshMutation,
+    selectedItemIds.size,
+    selectedItemIdsArray,
+    shelfId,
+  ]);
 
   const canEdit = useMemo(() => {
     if (!shelf) return false;
@@ -600,10 +642,12 @@ function ShelfComponent() {
 
       {/* Content */}
       <div className="overflow-y-auto">
-        <div className={cn(
-          "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
-          selectionMode ? "pb-36 md:pb-28" : "pb-24 md:pb-6",
-        )}>
+        <div
+          className={cn(
+            "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
+            selectionMode ? "pb-36 md:pb-28" : "pb-24 md:pb-6",
+          )}
+        >
           {/* Clean Shelf Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 w-full">
             <div className="flex items-center gap-3">
@@ -648,7 +692,11 @@ function ShelfComponent() {
                       {t("shelves.editShelf")}
                     </Button>
 
-                    <DropdownMenu open={addMenuOpen} onOpenChange={setAddMenuOpen} modal={false}>
+                    <DropdownMenu
+                      open={addMenuOpen}
+                      onOpenChange={setAddMenuOpen}
+                      modal={false}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5">
                           <Plus className="size-4" />
@@ -681,7 +729,9 @@ function ShelfComponent() {
                         {shelf?.type === "books" && (
                           <DropdownMenuItem
                             className="cursor-pointer font-medium"
-                            onSelect={() => openModalFromAddMenu("bulk", "series")}
+                            onSelect={() =>
+                              openModalFromAddMenu("bulk", "series")
+                            }
                           >
                             <Layers className="size-4 mr-2" />
                             {t("items.bulkSeries.menuLabel")}
@@ -798,18 +848,22 @@ function ShelfComponent() {
               )}
 
               {/* Plus Add Item Card in the items grid */}
-              {!isLoading && isAuthenticated && !isGuest && canEdit && !selectionMode && (
-                <motion.button
-                  layout
-                  layoutId="add-item-btn"
-                  onClick={() => handleModalOpen("item")}
-                  className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
-                  style={{ aspectRatio: skeletonAspectRatio }}
-                >
-                  <Plus className="size-5 text-primary" />
-                  <span>{t("items.addItem")}</span>
-                </motion.button>
-              )}
+              {!isLoading &&
+                isAuthenticated &&
+                !isGuest &&
+                canEdit &&
+                !selectionMode && (
+                  <motion.button
+                    layout
+                    layoutId="add-item-btn"
+                    onClick={() => handleModalOpen("item")}
+                    className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
+                    style={{ aspectRatio: skeletonAspectRatio }}
+                  >
+                    <Plus className="size-5 text-primary" />
+                    <span>{t("items.addItem")}</span>
+                  </motion.button>
+                )}
             </div>
           </LayoutGroup>
 

@@ -13,7 +13,10 @@ import {
   fetchPricesFromPriceCharting,
 } from "./fetch";
 import { buildPriceChartingCatalogLink } from "./catalogLink";
-import { priceChartingAttachmentRole, priceChartingGalleryLabelIsRecognized } from "./imageLabels";
+import {
+  priceChartingAttachmentRole,
+  priceChartingGalleryLabelIsRecognized,
+} from "./imageLabels";
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
 import type { PriceChartingMetadata } from "@/lib/barcode/lookup/providerTypes";

@@ -38,17 +38,15 @@ describe("isRetryableError", () => {
 
 describe("retry", () => {
   it("does not retry 430 quota errors", async () => {
-    const fn = vi
-      .fn()
-      .mockRejectedValue(
-        new axios.AxiosError("quota", undefined, undefined, undefined, {
-          status: 430,
-          statusText: "Quota",
-          headers: {},
-          config: {} as never,
-          data: {},
-        }),
-      );
+    const fn = vi.fn().mockRejectedValue(
+      new axios.AxiosError("quota", undefined, undefined, undefined, {
+        status: 430,
+        statusText: "Quota",
+        headers: {},
+        config: {} as never,
+        data: {},
+      }),
+    );
 
     await expect(retry(fn, 3, 1)).rejects.toThrow();
     expect(fn).toHaveBeenCalledTimes(1);

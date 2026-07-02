@@ -329,10 +329,7 @@ describe("mergeMetadata generic function", () => {
 
     expect(merged.title).toBe("L'Attaque des Titans n°1");
     expect(merged.aliases).toEqual(
-      expect.arrayContaining([
-        "Shingeki no Kyojin",
-        "Attack on Titan, Vol. 1",
-      ]),
+      expect.arrayContaining(["Shingeki no Kyojin", "Attack on Titan, Vol. 1"]),
     );
   });
 
@@ -342,7 +339,8 @@ describe("mergeMetadata generic function", () => {
         providerId: "booknode",
         metadata: {
           title: "Super Picsou Géant n°26",
-          imageUrl: "https://cdn1.booknode.com/book_cover/1255/full/super-picsou-geant-n26-1254911.jpg",
+          imageUrl:
+            "https://cdn1.booknode.com/book_cover/1255/full/super-picsou-geant-n26-1254911.jpg",
           attachments: [
             {
               type: "cover",

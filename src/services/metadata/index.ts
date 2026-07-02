@@ -9,7 +9,10 @@ import {
   getCachedMetadata,
   storeMetadata,
 } from "@/services/metadata/storage";
-import { isMissingGameMediaGallery, isMissingMusicGallery } from "@/lib/metadata/galleries";
+import {
+  isMissingGameMediaGallery,
+  isMissingMusicGallery,
+} from "@/lib/metadata/galleries";
 import { resolveGameMetadataPlatform } from "@/lib/metadata/platform";
 import { filterMetadataForShelfPlatform } from "@/lib/item/media";
 import {
@@ -77,9 +80,13 @@ function metadataCacheKey(
 ): string {
   const norm = (value?: string | null) =>
     (value ?? "").normalize("NFKC").trim().toLowerCase();
-  return [norm(type), norm(name), norm(barcode), norm(platform), norm(shelfName)].join(
-    "|",
-  );
+  return [
+    norm(type),
+    norm(name),
+    norm(barcode),
+    norm(platform),
+    norm(shelfName),
+  ].join("|");
 }
 
 export async function getMetadata(
@@ -110,10 +117,10 @@ export async function getMetadata(
 
   const applyLookupFilter = (result: MetadataResult | null) =>
     result
-      ? filterMetadataForShelfPlatform(result, {
+      ? (filterMetadataForShelfPlatform(result, {
           type,
           name: options.shelfName,
-        }) ?? null
+        }) ?? null)
       : null;
 
   if (!options.bypassCache) {
@@ -125,11 +132,17 @@ export async function getMetadata(
 
   const promise = (async () => {
     try {
-      const result = await fetchMetadataByType(name, type, barcode, resolvedPlatform, {
-        isBackground: options.isBackground,
-        shelfName: options.shelfName,
-        signal: options.signal,
-      });
+      const result = await fetchMetadataByType(
+        name,
+        type,
+        barcode,
+        resolvedPlatform,
+        {
+          isBackground: options.isBackground,
+          shelfName: options.shelfName,
+          signal: options.signal,
+        },
+      );
       return applyLookupFilter(result);
     } catch (err) {
       if (isAbortError(err)) throw err;
@@ -174,7 +187,10 @@ export async function fetchAndStoreMetadata(
   shelfName?: string | null,
   refreshSession?: ItemMetadataRefreshSession,
 ): Promise<MetadataResult | null> {
-  if (refreshSession && !(await assertRefreshCanPersist(itemId, refreshSession))) {
+  if (
+    refreshSession &&
+    !(await assertRefreshCanPersist(itemId, refreshSession))
+  ) {
     return null;
   }
 
@@ -198,7 +214,10 @@ export async function fetchAndStoreMetadata(
     }
   }
 
-  if (refreshSession && !(await assertRefreshCanPersist(itemId, refreshSession))) {
+  if (
+    refreshSession &&
+    !(await assertRefreshCanPersist(itemId, refreshSession))
+  ) {
     return null;
   }
 
@@ -223,7 +242,10 @@ export async function fetchAndStoreMetadata(
 
   if (!metadata) return null;
 
-  if (refreshSession && !(await assertRefreshCanPersist(itemId, refreshSession))) {
+  if (
+    refreshSession &&
+    !(await assertRefreshCanPersist(itemId, refreshSession))
+  ) {
     return null;
   }
 

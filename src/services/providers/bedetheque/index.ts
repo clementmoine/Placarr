@@ -126,13 +126,7 @@ export const bedethequeModule: ProviderModule = {
     label: "Bédéthèque",
     types: ["books"],
     nameDatabase: true,
-    capabilities: [
-      "identify",
-      "cover",
-      "rating",
-      "people",
-      "releaseDate",
-    ],
+    capabilities: ["identify", "cover", "rating", "people", "releaseDate"],
     auth: { kind: "scrape" },
     canonical: false,
     defaultLanguage: "fr",
@@ -181,15 +175,19 @@ export const bedethequeModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getBedethequeSuggestions(cleanedName),
-  healthCheck: createMetadataHealthCheck("bedetheque", "Bédéthèque", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.bedetheque.com/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
+  healthCheck: createMetadataHealthCheck(
+    "bedetheque",
+    "Bédéthèque",
+    async () => {
+      const start = Date.now();
+      const isUp = await pingUrl("https://www.bedetheque.com/");
+      return {
+        ok: isUp,
+        latency: Date.now() - start,
+        error: isUp ? null : "Host unreachable",
+      };
+    },
+  ),
   testHandlers: {
     "bedetheque-metadata": {
       label: "Bédéthèque - Metadata",

@@ -21,10 +21,7 @@ describe("buildDatabaseEvidence", () => {
     process.env.RECORD = "1";
     h.confrontWithDatabase.mockImplementation(() => new Promise(() => {}));
 
-    const evidence = await buildDatabaseEvidence(
-      ["Mario Kart Wii"],
-      "games",
-    );
+    const evidence = await buildDatabaseEvidence(["Mario Kart Wii"], "games");
 
     expect(evidence).toEqual([]);
     expect(h.confrontWithDatabase).not.toHaveBeenCalled();

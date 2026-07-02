@@ -11,7 +11,11 @@ import {
 
 const mockedPost = vi.mocked(axios.post);
 
-function productNode(name: string, regular = 29.99, path = "/product.php?p=5752524") {
+function productNode(
+  name: string,
+  regular = 29.99,
+  path = "/product.php?p=5752524",
+) {
   return {
     __typename: "Product",
     name,
@@ -109,7 +113,9 @@ describe("parseLeDenicheurPriceSummary", () => {
 describe("extractLeDenicheurProductId", () => {
   it("extrait l'id numérique depuis pathName", () => {
     expect(extractLeDenicheurProductId("/product.php?p=6546817")).toBe(6546817);
-    expect(extractLeDenicheurProductId("/product.php?p=hades-switch")).toBeNull();
+    expect(
+      extractLeDenicheurProductId("/product.php?p=hades-switch"),
+    ).toBeNull();
   });
 });
 
@@ -213,7 +219,9 @@ describe("fetchPricesFromLeDenicheur", () => {
 
   it("accepte un code-barres sans filtrage de pertinence", async () => {
     mockedPost
-      .mockResolvedValueOnce(bffResponse([productNode("Produit générique", 12)]))
+      .mockResolvedValueOnce(
+        bffResponse([productNode("Produit générique", 12)]),
+      )
       .mockResolvedValueOnce(
         productDetailResponse(5752524, "Produit générique", 12, null),
       );

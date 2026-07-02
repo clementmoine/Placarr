@@ -1,9 +1,6 @@
 import axios from "axios";
 
-import {
-  isTheGamesDbQuotaBlocked,
-  markTheGamesDbQuotaHit,
-} from "./quota";
+import { isTheGamesDbQuotaBlocked, markTheGamesDbQuotaHit } from "./quota";
 
 const API_BASE = "https://api.thegamesdb.net";
 

@@ -8,7 +8,10 @@ import {
 } from "@/lib/barcode/titleUtils";
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
-import { mergePriceOffers, type PriceOfferInput } from "@/services/metadata/evidence";
+import {
+  mergePriceOffers,
+  type PriceOfferInput,
+} from "@/services/metadata/evidence";
 import { buildPriceSearchQueries } from "@/lib/pricing/searchQueries";
 import { parsePriceProviderSources } from "@/lib/pricing/cachePolicy";
 import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
@@ -21,7 +24,10 @@ import {
   collectRefreshBarcodePriceOffers,
   priceProviderTokenFromOffers,
 } from "@/services/provider/barcodePrices";
-import { isReferencePriceSource, formatProviderSourceLabel } from "@/services/provider/registry";
+import {
+  isReferencePriceSource,
+  formatProviderSourceLabel,
+} from "@/services/provider/registry";
 
 export type PriceObservation = {
   source: string;
@@ -92,7 +98,10 @@ function trimObservedPriceOutliers(
   offers: PriceObservation[],
 ): PriceObservation[] {
   let trimmed = filterObservationsByOutlierTrim(offers, ["new"]);
-  trimmed = filterObservationsByOutlierTrim(trimmed, gameUsedConditions(shelfType));
+  trimmed = filterObservationsByOutlierTrim(
+    trimmed,
+    gameUsedConditions(shelfType),
+  );
   if (shelfType === "games") {
     trimmed = filterObservationsByOutlierTrim(trimmed, ["cib"]);
   }
@@ -108,8 +117,7 @@ function dropUnnamedMarketplaceNoise(
 
   return offers.filter(
     (offer) =>
-      offer.productName?.trim() ||
-      isReferencePriceSource(offer.source ?? ""),
+      offer.productName?.trim() || isReferencePriceSource(offer.source ?? ""),
   );
 }
 
@@ -299,7 +307,9 @@ export function filterItemPriceOffers(
     priceListingMatchesShelfPlatform(shelfType, shelfName, offer.productName),
   );
 
-  const names = [...new Set(itemNames.map((name) => name.trim()).filter(Boolean))];
+  const names = [
+    ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
+  ];
   const titleFiltered =
     names.length === 0
       ? platformFiltered
@@ -342,7 +352,9 @@ export function alignBarcodePricesForItemNames(
   prices: BarcodePricesResult,
   shelfName?: string | null,
 ): BarcodePricesResult {
-  const names = [...new Set(itemNames.map((name) => name.trim()).filter(Boolean))];
+  const names = [
+    ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
+  ];
   if (names.length === 0 || prices.priceObservations.length === 0) {
     return prices;
   }
@@ -368,7 +380,9 @@ export function alignBarcodePricesForItemNames(
   );
 
   if (filtered.length === 0) {
-    const namedOffers = sourceOffers.filter((offer) => offer.productName?.trim());
+    const namedOffers = sourceOffers.filter((offer) =>
+      offer.productName?.trim(),
+    );
     if (namedOffers.length > 0) {
       if (
         namedOffers.every(
@@ -605,7 +619,10 @@ function resolveItemDisplayPrices(
         priceLastUpdated: priceLastUpdatedFromOffers(offers),
         priceSources: priceSourcesFromOffers(sourceOffers),
         priceObservations: resolution.strictMatch
-          ? observationsFromFilteredOffers(serialized, resolution.filteredOffers)
+          ? observationsFromFilteredOffers(
+              serialized,
+              resolution.filteredOffers,
+            )
           : [],
       });
     }

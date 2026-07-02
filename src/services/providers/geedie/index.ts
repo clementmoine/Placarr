@@ -21,9 +21,7 @@ function galleryToMetadata(
       role: item.role,
       title: item.title,
     })),
-    externalIds: gallery.productId
-      ? { geedie: gallery.productId }
-      : undefined,
+    externalIds: gallery.productId ? { geedie: gallery.productId } : undefined,
   };
 }
 

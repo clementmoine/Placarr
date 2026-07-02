@@ -29,7 +29,10 @@ export function createMetadataAdapters(): MetadataProviderAdapter[] {
   });
 }
 
-export function buildMetadataAdapterMap(): Map<string, MetadataProviderAdapter> {
+export function buildMetadataAdapterMap(): Map<
+  string,
+  MetadataProviderAdapter
+> {
   return new Map(
     createMetadataAdapters().map((adapter) => [
       adapter.id,
@@ -113,7 +116,8 @@ function inferEvidenceSignals(
   if (
     ctx.platform &&
     metadata.platformKey &&
-    ctx.platform.trim().toLowerCase() === metadata.platformKey.trim().toLowerCase()
+    ctx.platform.trim().toLowerCase() ===
+      metadata.platformKey.trim().toLowerCase()
   ) {
     signals.add("platform_match");
   }
@@ -140,7 +144,10 @@ function inferEvidenceSignals(
   return Array.from(signals);
 }
 
-function inferSourceUrl(metadata: MetadataResult, providerId: string): string | undefined {
+function inferSourceUrl(
+  metadata: MetadataResult,
+  providerId: string,
+): string | undefined {
   const direct = (metadata.facts || []).find(
     (fact) =>
       fact.kind === "external-link" &&
@@ -224,8 +231,10 @@ function withProviderObservations(
       let observations = observationsFromMetadataResult(
         {
           ...metadata,
-          imageUrl: visualAttachments.length > 0 ? undefined : metadata.imageUrl,
-          attachments: visualAttachments.length > 0 ? visualAttachments : undefined,
+          imageUrl:
+            visualAttachments.length > 0 ? undefined : metadata.imageUrl,
+          attachments:
+            visualAttachments.length > 0 ? visualAttachments : undefined,
         },
         {
           providerId: adapter.id,

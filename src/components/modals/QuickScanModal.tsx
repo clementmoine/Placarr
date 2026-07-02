@@ -2,7 +2,14 @@
 "use client";
 
 import { toast } from "sonner";
-import { Search, Barcode, ExternalLink, Plus, Loader2, Sparkles } from "lucide-react";
+import {
+  Search,
+  Barcode,
+  ExternalLink,
+  Plus,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -126,7 +133,11 @@ export function QuickScanModal({
   });
 
   const titleLookupKey = useMemo(
-    () => results.map((result) => result.title).slice(0, 3).join("\0"),
+    () =>
+      results
+        .map((result) => result.title)
+        .slice(0, 3)
+        .join("\0"),
     [results],
   );
 
@@ -155,7 +166,10 @@ export function QuickScanModal({
 
   const ownedCandidates = useMemo(() => {
     const seen = new Map<string, ExistingQuickItem>();
-    for (const item of [...(existingItems || []), ...(titleMatchedItems || [])]) {
+    for (const item of [
+      ...(existingItems || []),
+      ...(titleMatchedItems || []),
+    ]) {
       seen.set(item.id, item);
     }
     return Array.from(seen.values());
@@ -842,7 +856,9 @@ export function QuickScanModal({
                       {canComplete && ownedItem ? (
                         <Button
                           size="sm"
-                          onClick={() => void handleCompleteOwnedItem(ownedItem)}
+                          onClick={() =>
+                            void handleCompleteOwnedItem(ownedItem)
+                          }
                           disabled={Boolean(completingItemId)}
                           className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
                         >
@@ -936,68 +952,70 @@ export function QuickScanModal({
                     const isCompleting = completingItemId === existItem.id;
 
                     return (
-                    <div
-                      key={existItem.id}
-                      className="flex items-center justify-between gap-4 p-3 bg-zinc-50/50 dark:bg-zinc-900/20 border border-border/40 rounded-2xl"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {existItem.imageUrl ? (
-                          <RemoteImage
-                            src={existItem.imageUrl}
-                            alt=""
-                            className="w-12 h-16 rounded-xl object-cover shrink-0 bg-muted/10 border border-border/50 shadow-sm"
-                          />
-                        ) : (
-                          <div className="w-12 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-950/20 shrink-0 border border-border/50 shadow-sm flex items-center justify-center">
-                            <Search className="size-5 text-muted-foreground/50" />
+                      <div
+                        key={existItem.id}
+                        className="flex items-center justify-between gap-4 p-3 bg-zinc-50/50 dark:bg-zinc-900/20 border border-border/40 rounded-2xl"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {existItem.imageUrl ? (
+                            <RemoteImage
+                              src={existItem.imageUrl}
+                              alt=""
+                              className="w-12 h-16 rounded-xl object-cover shrink-0 bg-muted/10 border border-border/50 shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-950/20 shrink-0 border border-border/50 shadow-sm flex items-center justify-center">
+                              <Search className="size-5 text-muted-foreground/50" />
+                            </div>
+                          )}
+                          <div className="flex flex-col min-w-0 gap-1">
+                            <span className="text-sm font-bold text-foreground truncate">
+                              {existItem.name}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground capitalize select-none font-medium">
+                              {t("items.shelf")}:{" "}
+                              {existItem.shelf?.name || "Placarr"} (
+                              {existItem.condition})
+                            </span>
                           </div>
-                        )}
-                        <div className="flex flex-col min-w-0 gap-1">
-                          <span className="text-sm font-bold text-foreground truncate">
-                            {existItem.name}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground capitalize select-none font-medium">
-                            {t("items.shelf")}:{" "}
-                            {existItem.shelf?.name || "Placarr"} (
-                            {existItem.condition})
-                          </span>
                         </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                        {canComplete ? (
+                        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                          {canComplete ? (
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                void handleCompleteOwnedItem(existItem)
+                              }
+                              disabled={Boolean(completingItemId)}
+                              className="h-9 px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer"
+                            >
+                              {isCompleting ? (
+                                <Loader2 className="size-3.5 mr-1 animate-spin" />
+                              ) : (
+                                <Sparkles className="size-3.5 mr-1" />
+                              )}
+                              {t("scanner.complete")}
+                            </Button>
+                          ) : null}
                           <Button
                             size="sm"
-                            onClick={() => void handleCompleteOwnedItem(existItem)}
-                            disabled={Boolean(completingItemId)}
-                            className="h-9 px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer"
+                            variant="ghost"
+                            onClick={() => {
+                              handleClose();
+                              router.push(
+                                itemPath(
+                                  existItem.shelf || { id: existItem.shelfId },
+                                  existItem,
+                                ),
+                              );
+                            }}
+                            className="h-9 px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 border border-border/40 cursor-pointer"
                           >
-                            {isCompleting ? (
-                              <Loader2 className="size-3.5 mr-1 animate-spin" />
-                            ) : (
-                              <Sparkles className="size-3.5 mr-1" />
-                            )}
-                            {t("scanner.complete")}
+                            <ExternalLink className="size-3.5 mr-1" />
+                            {t("scanner.viewExisting") || "Consulter"}
                           </Button>
-                        ) : null}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          handleClose();
-                          router.push(
-                            itemPath(
-                              existItem.shelf || { id: existItem.shelfId },
-                              existItem,
-                            ),
-                          );
-                        }}
-                        className="h-9 px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 border border-border/40 cursor-pointer"
-                      >
-                        <ExternalLink className="size-3.5 mr-1" />
-                        {t("scanner.viewExisting") || "Consulter"}
-                      </Button>
+                        </div>
                       </div>
-                    </div>
                     );
                   })}
                 </div>

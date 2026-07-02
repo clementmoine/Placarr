@@ -108,8 +108,8 @@ describe("getDatabaseSuggestions", () => {
   it("returns an empty list when the provider module has no suggestion hook", async () => {
     h.getProviderModule.mockReturnValue({});
 
-    await expect(getDatabaseSuggestions("Catan", "boardgames")).resolves.toEqual(
-      [],
-    );
+    await expect(
+      getDatabaseSuggestions("Catan", "boardgames"),
+    ).resolves.toEqual([]);
   });
 });

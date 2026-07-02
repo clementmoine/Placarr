@@ -352,22 +352,23 @@ export function ExploreItemModal({
                 </div>
               )}
 
-              {item.referenceCatalogLink?.url && referencePriceProviderLabel && (
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none flex items-center gap-1 select-none">
-                    {referencePriceProviderLabel}
-                  </span>
-                  <a
-                    href={item.referenceCatalogLink.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 hover:underline flex items-center gap-1 mt-0.5"
-                  >
-                    <Clock className="size-3" />
-                    Voir la cote
-                  </a>
-                </div>
-              )}
+              {item.referenceCatalogLink?.url &&
+                referencePriceProviderLabel && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none flex items-center gap-1 select-none">
+                      {referencePriceProviderLabel}
+                    </span>
+                    <a
+                      href={item.referenceCatalogLink.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 hover:underline flex items-center gap-1 mt-0.5"
+                    >
+                      <Clock className="size-3" />
+                      Voir la cote
+                    </a>
+                  </div>
+                )}
 
               {/* Description */}
               {(item.description || item.metadata?.description) && (

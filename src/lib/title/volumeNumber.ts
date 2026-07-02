@@ -75,8 +75,9 @@ export function volumeNumberFromTitle(value: string): string | null {
 export function unpaddedVolumeNumbersInTitle(value: string): string {
   let result = value;
 
-  result = result.replace(/#\s*0+(\d+)\b/g, (_, digits) =>
-    `#${Number.parseInt(digits, 10)}`,
+  result = result.replace(
+    /#\s*0+(\d+)\b/g,
+    (_, digits) => `#${Number.parseInt(digits, 10)}`,
   );
 
   result = result.replace(
@@ -91,15 +92,14 @@ export function unpaddedVolumeNumbersInTitle(value: string): string {
     ),
     (_, keyword, digits) => {
       const parsed = Number.parseInt(digits, 10);
-      return /^vol/i.test(keyword) ? `${keyword}. ${parsed}` : `${keyword} ${parsed}`;
+      return /^vol/i.test(keyword)
+        ? `${keyword}. ${parsed}`
+        : `${keyword} ${parsed}`;
     },
   );
 
   result = result.replace(
-    new RegExp(
-      `\\b(${VOLUME_KEYWORD_PATTERN}|num[eé]ro)\\s+0+(\\d+)\\b`,
-      "gi",
-    ),
+    new RegExp(`\\b(${VOLUME_KEYWORD_PATTERN}|num[eé]ro)\\s+0+(\\d+)\\b`, "gi"),
     (_, keyword, digits) => `${keyword} ${Number.parseInt(digits, 10)}`,
   );
 
@@ -134,7 +134,9 @@ export function padVolumeNumbersInTitle(value: string, width: number): string {
       "gi",
     ),
     (_, keyword, digits) =>
-      /^vol/i.test(keyword) ? `${keyword}. ${pad(digits)}` : `${keyword} ${pad(digits)}`,
+      /^vol/i.test(keyword)
+        ? `${keyword}. ${pad(digits)}`
+        : `${keyword} ${pad(digits)}`,
   );
 
   result = result.replace(
@@ -185,10 +187,7 @@ export function stripVolumeMarkersFromTitle(value: string): string {
 
   return normalizeVolumeTitleText(withoutHash)
     .replace(/#\s*0*\d+\b/g, " ")
-    .replace(
-      new RegExp(`\\b${VOLUME_KEYWORD_PATTERN}\\s*0*\\d+\\b`, "g"),
-      " ",
-    )
+    .replace(new RegExp(`\\b${VOLUME_KEYWORD_PATTERN}\\s*0*\\d+\\b`, "g"), " ")
     .replace(/\bno\.?\s+0*\d+\b/g, " ")
     .replace(/\bn\s+0*\d+\b/g, " ")
     .replace(/\s+/g, " ")

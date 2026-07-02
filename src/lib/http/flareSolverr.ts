@@ -25,7 +25,10 @@ export async function flareSolverrCookiesFor(
     if (response.data?.status !== "ok") return null;
     const solution = response.data.solution;
     const cookie = (solution?.cookies || [])
-      .map((entry: { name: string; value: string }) => `${entry.name}=${entry.value}`)
+      .map(
+        (entry: { name: string; value: string }) =>
+          `${entry.name}=${entry.value}`,
+      )
       .join("; ");
     if (!cookie) return null;
     return {

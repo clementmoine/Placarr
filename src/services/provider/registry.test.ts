@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  PROVIDERS,
-  providersForType,
-  capabilityCoverage,
-} from "./registry";
+import { PROVIDERS, providersForType, capabilityCoverage } from "./registry";
 
 describe("providerRegistry", () => {
   it("a des ids uniques", () => {
@@ -181,9 +177,7 @@ describe("providerRegistry", () => {
   });
 
   it("inferImageAttachmentFromMediaUrl delegates to the owning provider module", async () => {
-    const { inferImageAttachmentFromMediaUrl } = await import(
-      "./registry"
-    );
+    const { inferImageAttachmentFromMediaUrl } = await import("./registry");
     expect(
       inferImageAttachmentFromMediaUrl(
         "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=14774&media=box-2D(fr)",

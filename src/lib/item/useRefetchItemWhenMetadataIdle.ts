@@ -51,7 +51,10 @@ export function useRefetchShelfItemsWhenMetadataIdle(
       const busy = isItemMetadataBusy(entry);
       const wasBusy = wasBusyByItemRef.current.get(entry.id) ?? false;
       if (wasBusy && !busy) {
-        void refetchItemQueries(queryClient, entry.id, [shelfId, entry.shelfId]);
+        void refetchItemQueries(queryClient, entry.id, [
+          shelfId,
+          entry.shelfId,
+        ]);
       }
       wasBusyByItemRef.current.set(entry.id, busy);
     }

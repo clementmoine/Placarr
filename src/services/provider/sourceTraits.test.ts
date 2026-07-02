@@ -23,7 +23,9 @@ describe("providerSourceTraits", () => {
     expect(canonicalProviderIdForSource("screenscraper · fr")).toBe(
       "screenscraper",
     );
-    expect(canonicalProviderIdForSource("thegamesdb/box-2d")).toBe("thegamesdb");
+    expect(canonicalProviderIdForSource("thegamesdb/box-2d")).toBe(
+      "thegamesdb",
+    );
     expect(canonicalProviderIdForSource("BGG · fr")).toBe("boardgamegeek");
   });
 
@@ -91,7 +93,10 @@ describe("providerSourceTraits", () => {
       isGameMediaGallerySource: false,
     });
     expect(
-      withProviderAttachmentTraits({ source: "screenscraper", url: "/box.jpg" }),
+      withProviderAttachmentTraits({
+        source: "screenscraper",
+        url: "/box.jpg",
+      }),
     ).toMatchObject({
       isGameMediaGallerySource: true,
       isMusicGallerySource: false,
@@ -141,7 +146,9 @@ describe("providerSourceTraits", () => {
       ),
     ).toBe("listing_photo");
     // Providers without rules emit no provenance (scorer defaults to catalog).
-    expect(coverProvenanceForSource("screenscraper", "/box.jpg")).toBeUndefined();
+    expect(
+      coverProvenanceForSource("screenscraper", "/box.jpg"),
+    ).toBeUndefined();
     expect(coverProvenanceForSource("geedie", null)).toBeUndefined();
   });
 

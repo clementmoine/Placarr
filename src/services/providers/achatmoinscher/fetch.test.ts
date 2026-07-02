@@ -110,7 +110,8 @@ describe("fetchFromAchatMoinsCher", () => {
         name: "Little Nightmares (PlayStation 4)",
         productId: "12345",
         productUrl: "https://www.achatmoinscher.com/12345.html",
-        coverUrl: "https://cdn.example.com/photoProd/zoom/little-nightmares.jpg",
+        coverUrl:
+          "https://cdn.example.com/photoProd/zoom/little-nightmares.jpg",
       },
     ]);
   });

@@ -134,13 +134,14 @@ export function pickRegionalSiblingGames(
   const preferPal =
     cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0");
   const selectedPlatform = selected.platform;
-  const seenRegions = new Set([regionalAttachmentBucket(selected.region_id, selected.id)]);
+  const seenRegions = new Set([
+    regionalAttachmentBucket(selected.region_id, selected.id),
+  ]);
 
   const ranked = games
     .filter((game) => game.id !== selected.id)
     .filter(
-      (game) =>
-        selectedPlatform == null || game.platform === selectedPlatform,
+      (game) => selectedPlatform == null || game.platform === selectedPlatform,
     )
     .map((game) => ({
       game,

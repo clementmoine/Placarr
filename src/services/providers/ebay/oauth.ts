@@ -41,7 +41,9 @@ async function requestEbayAccessToken(
     validateStatus: () => true,
   });
   const token =
-    res.status === 200 ? (res.data?.access_token as string | undefined) : undefined;
+    res.status === 200
+      ? (res.data?.access_token as string | undefined)
+      : undefined;
   if (!token) return null;
 
   const expiresInSec = Number(res.data?.expires_in) || 7200;

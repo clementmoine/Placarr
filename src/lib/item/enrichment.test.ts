@@ -10,15 +10,15 @@ import {
 
 describe("isItemEnriching", () => {
   it("returns true for a recent item without metadata", () => {
-    expect(
-      isItemEnriching({ metadataId: null, createdAt: new Date() }),
-    ).toBe(true);
+    expect(isItemEnriching({ metadataId: null, createdAt: new Date() })).toBe(
+      true,
+    );
   });
 
   it("returns false once metadata is linked", () => {
-    expect(
-      isItemEnriching({ metadataId: "m1", createdAt: new Date() }),
-    ).toBe(false);
+    expect(isItemEnriching({ metadataId: "m1", createdAt: new Date() })).toBe(
+      false,
+    );
   });
 
   it("returns false after the enrich window expires", () => {

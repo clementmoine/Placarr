@@ -146,9 +146,7 @@ function metadataToResult(metadata: ICollectMetadata): MetadataResult {
     releaseDate: metadata.releaseDate || undefined,
     imageUrl: metadata.coverUrl || undefined,
     attachments: buildICollectAttachments(metadata),
-    publishers: metadata.publisher
-      ? [{ name: metadata.publisher }]
-      : undefined,
+    publishers: metadata.publisher ? [{ name: metadata.publisher }] : undefined,
     authors: metadata.developer ? [{ name: metadata.developer }] : undefined,
     facts: facts.length > 0 ? facts : undefined,
     externalIds: { icollect: metadata.itemId },
@@ -209,7 +207,9 @@ export const icollectModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "icollect",
-      async resolve({ barcode }: Parameters<MetadataProviderAdapter["resolve"]>[0]) {
+      async resolve({
+        barcode,
+      }: Parameters<MetadataProviderAdapter["resolve"]>[0]) {
         if (!barcode) return null;
         const metadata = await fetchICollectMetadataByBarcode(barcode);
         return metadata ? metadataToResult(metadata) : null;

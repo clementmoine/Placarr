@@ -52,14 +52,15 @@ describe("createGoogleBooksResolver", () => {
     expect(result?.releaseDate).toBe("1974-01-01");
     expect(result?.imageUrl).toBe("https://books.google.com/thumb.jpg");
     expect(
-      result?.facts?.find((f) => f.kind === "format" && f.label === "Type")?.value,
+      result?.facts?.find((f) => f.kind === "format" && f.label === "Type")
+        ?.value,
     ).toBe("Livre");
     expect(
       result?.facts?.find((f) => f.kind === "content-warning")?.value,
     ).toBe("Réservé aux adultes");
-    expect(
-      result?.facts?.find((f) => f.label === "Aperçu")?.url,
-    ).toBe("https://books.google.com/preview");
+    expect(result?.facts?.find((f) => f.label === "Aperçu")?.url).toBe(
+      "https://books.google.com/preview",
+    );
     expect(
       result?.facts?.find((f) => f.label === "Modes de lecture")?.value,
     ).toBe("Texte + Illustrations");

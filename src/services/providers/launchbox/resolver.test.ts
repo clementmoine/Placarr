@@ -51,7 +51,9 @@ describe("buildLaunchBoxFtsQueries", () => {
 
 describe("buildLaunchBoxSearchTokenSets", () => {
   it("adds a marketing-stripped variant for edition-heavy titles", () => {
-    expect(buildLaunchBoxSearchTokenSets("Alan Wake II Deluxe Edition")).toEqual([
+    expect(
+      buildLaunchBoxSearchTokenSets("Alan Wake II Deluxe Edition"),
+    ).toEqual([
       ["alan", "wake", "ii", "deluxe", "edition"],
       ["alan", "wake", "ii"],
     ]);

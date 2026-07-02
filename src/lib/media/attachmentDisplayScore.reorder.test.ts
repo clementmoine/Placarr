@@ -44,10 +44,6 @@ describe("reorderAttachmentsCoverFirst", () => {
       reorderAttachmentsCoverFirst(attachments, metrics).map(
         (attachment) => attachment.url,
       ),
-    ).toEqual([
-      "/uploads/high.jpg",
-      "/uploads/low.jpg",
-      "/uploads/shot.jpg",
-    ]);
+    ).toEqual(["/uploads/high.jpg", "/uploads/low.jpg", "/uploads/shot.jpg"]);
   });
 });

@@ -58,7 +58,11 @@ import {
   refreshItemMetadata,
   type ItemPrices,
 } from "@/lib/api/items";
-import { getHeroImage, getGalleryImages, getCoverImage } from "@/lib/item/media";
+import {
+  getHeroImage,
+  getGalleryImages,
+  getCoverImage,
+} from "@/lib/item/media";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -250,10 +254,7 @@ function ItemDiscoverySection({
                 <div
                   className="group relative flex flex-col w-full h-full select-none overflow-hidden rounded-2xl border bg-card/45 border-dashed border-border/80 hover:border-zinc-350 dark:hover:border-zinc-700/50 shadow-sm hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 ease-out cursor-pointer items-center justify-center min-h-[150px] gap-2 p-4 text-center"
                   style={{
-                    aspectRatio: getAspectRatio(
-                      shelf?.cardFormat,
-                      shelf?.type,
-                    ),
+                    aspectRatio: getAspectRatio(shelf?.cardFormat, shelf?.type),
                   }}
                 >
                   <ChevronLeft className="size-6 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300 rotate-180" />
@@ -1084,7 +1085,9 @@ export default function ItemDetailsPage() {
     initialData: () =>
       queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
-        ?.items?.find((i) => i.id === itemId || i.slug === itemId) as ItemWithMetadata,
+        ?.items?.find(
+          (i) => i.id === itemId || i.slug === itemId,
+        ) as ItemWithMetadata,
     initialDataUpdatedAt: () =>
       queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
     placeholderData: (previousData) => previousData,
@@ -1120,8 +1123,7 @@ export default function ItemDetailsPage() {
     void queryClient.invalidateQueries({
       predicate: (query) =>
         query.queryKey[0] === "shelf" &&
-        (query.queryKey[1] === shelfId ||
-          query.queryKey[1] === item.shelfId),
+        (query.queryKey[1] === shelfId || query.queryKey[1] === item.shelfId),
     });
   }, [
     item?.id,
@@ -1484,7 +1486,9 @@ export default function ItemDetailsPage() {
   ]);
 
   const heroImage = useMemo(() => {
-    return item?.backgroundImageUrl || (item ? getHeroImage(item, locale) : null);
+    return (
+      item?.backgroundImageUrl || (item ? getHeroImage(item, locale) : null)
+    );
   }, [item, locale]);
 
   const coverImage = useMemo(() => {
@@ -1568,16 +1572,18 @@ export default function ItemDetailsPage() {
     if (!shelf?.items || !franchiseName || !resolvedItemId) return [];
     const target = franchiseName.toLowerCase();
     const seriesIds = new Set(seriesVolumes.map((entry) => entry.id));
-    return (shelf.items as unknown as ItemWithMetadata[]).filter((shelfItem) => {
-      if (shelfItem.id === resolvedItemId || seriesIds.has(shelfItem.id)) {
-        return false;
-      }
-      return normalizeFacts(shelfItem.metadata?.facts).some(
-        (fact) =>
-          fact.kind === FRANCHISE_FACT_KIND &&
-          fact.value?.trim().toLowerCase() === target,
-      );
-    });
+    return (shelf.items as unknown as ItemWithMetadata[]).filter(
+      (shelfItem) => {
+        if (shelfItem.id === resolvedItemId || seriesIds.has(shelfItem.id)) {
+          return false;
+        }
+        return normalizeFacts(shelfItem.metadata?.facts).some(
+          (fact) =>
+            fact.kind === FRANCHISE_FACT_KIND &&
+            fact.value?.trim().toLowerCase() === target,
+        );
+      },
+    );
   }, [shelf?.items, franchiseName, seriesVolumes, resolvedItemId]);
 
   // Generic "other items" excludes the more specific groups above, so each sibling
@@ -2053,7 +2059,8 @@ export default function ItemDetailsPage() {
                       <RefreshCw
                         className={cn(
                           "size-4 mr-1.5",
-                          (isMetadataBusy || isRefreshingMetadata) && "animate-spin",
+                          (isMetadataBusy || isRefreshingMetadata) &&
+                            "animate-spin",
                         )}
                       />
                       {t("items.refreshMetadata")}

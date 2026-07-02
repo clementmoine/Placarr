@@ -56,7 +56,8 @@ describe("barcode recordMode", () => {
         {},
         {
           get(_target, prop) {
-            if (prop === "fetchPricesFromLeDenicheur") return leDenicheurStarted;
+            if (prop === "fetchPricesFromLeDenicheur")
+              return leDenicheurStarted;
             if (prop === "fetchFromFreakxy") return freakxyStarted;
             if (prop === "fetchFromChasseAuxLivres") return chasseStarted;
             if (prop === "fetchMetadataFromPriceCharting") return pcStarted;
@@ -92,7 +93,11 @@ describe("barcode recordMode", () => {
       fast: Promise.resolve("ok"),
       slow: new Promise((resolve) => setTimeout(() => resolve("slow"), 5)),
     });
-    expect(log.mock.calls.some(([line]) => String(line).includes("[record lookup] fast"))).toBe(true);
+    expect(
+      log.mock.calls.some(([line]) =>
+        String(line).includes("[record lookup] fast"),
+      ),
+    ).toBe(true);
     log.mockRestore();
   });
 });

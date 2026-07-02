@@ -25,9 +25,9 @@ pas. Ajoute un cas = ajoute une ligne dans le `it.each`.
 
 ### 2. Golden-master — barcode → item (déterministe, Prisma mocké)
 
-[src/services/barcodeResolver.test.ts](src/services/barcodeResolver.test.ts)
+[src/services/barcode/resolver.test.ts](src/services/barcode/resolver.test.ts)
 fait passer de vrais `rawNames` (bruités) par le **vrai** `resolveBarcode`
-(extrait dans [src/services/barcodeResolver.ts](src/services/barcodeResolver.ts)).
+(extrait dans [src/services/barcode/resolver.ts](src/services/barcode/resolver.ts)).
 Sur un cache-hit, aucun appel réseau externe n'a lieu → 100% reproductible.
 
 **Ajouter un scénario** (cas réel rencontré) :
@@ -40,13 +40,14 @@ Sur un cache-hit, aucun appel réseau externe n'a lieu → 100% reproductible.
    nombre de matches, confiance). Lance le test : il **verrouille** le
    comportement courant. Toute régression future le fera échouer.
 
-Les fonctions pures de précision de `barcodeResolver.ts` (nettoyage de titre,
-détection « même produit », providers canoniques) sont aussi testées en unitaire
-dans [src/services/barcodeResolver.pure.test.ts](src/services/barcodeResolver.pure.test.ts).
+Les fonctions pures de précision (nettoyage de titre, détection « même
+produit », compilation d'évidences, providers canoniques) sont testées en
+unitaire dans les modules extraits sous `src/lib/barcode/` (`titleUtils.test.ts`,
+`evidence/compile.*.test.ts`, `evidence/ranking.test.ts`, etc.).
 
 ### 3. Golden-master du chemin frais — record/replay réseau
 
-[src/services/barcodeResolver.fresh.test.ts](src/services/barcodeResolver.fresh.test.ts)
+[src/services/barcode/resolver.fresh.test.ts](src/services/barcode/resolver.fresh.test.ts)
 rejoue le **premier scan** (cache vide → providers → matching) sur des fixtures
 réseau figées ([tests/helpers/httpReplay.ts](tests/helpers/httpReplay.ts), via
 `@mswjs/interceptors` : couvre axios **et** fetch). Déterministe, couvre aussi
@@ -55,7 +56,9 @@ les cas « je ne sais pas ». Les cas sans fixture sont ignorés (skip).
 Enregistrer les fixtures (depuis un environnement aux providers sains) :
 
 ```bash
-RECORD=1 pnpm vitest run src/services/barcodeResolver.fresh.test.ts
+pnpm test:record       # sous-ensemble (5 cas), slim mode
+pnpm test:record:one   # un seul cas (RECORD_CASE_ID)
+pnpm test:record:all   # les 21 cas, un process vitest par cas
 ```
 
 Voir [tests/fixtures/barcode/README.md](tests/fixtures/barcode/README.md). Les

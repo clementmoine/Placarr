@@ -16,7 +16,8 @@ pnpm test:record
 # Un seul cas (smoke, ~15 min max) :
 pnpm test:record:one
 
-# Les 22 cas canoniques :
+# Les 21 cas canoniques — scripts/record-all-barcode-fixtures.ts lance
+# un process vitest par cas (isolation des caches module entre providers) :
 pnpm test:record:all
 ```
 
@@ -24,7 +25,8 @@ pnpm test:record:all
 Chasse aux Livres, Freakxy — et l'enrichissement post-scan PriceCharting +
 ScreenScraper ; PriceCharting reste l'ancre catalogue pour les jeux.)
 
-(équivalent à `RECORD=1` / `RECORD=1 RECORD_ALL=1` devant la commande vitest.)
+(équivalent à `RECORD=1 BARCODE_RECORD_SLIM=1` devant la commande vitest,
+avec `RECORD_CASE_ID=<case-id>` pour cibler un cas.)
 
 Cela appelle les vraies API une fois et écrit un fixture par cas. Les clés
 d'API sont **expurgées** automatiquement (`__REDACTED__`) avant écriture.
@@ -33,11 +35,12 @@ Le test RECORD appelle `assertExpectation` **avant** d'écrire le fichier : un
 résultat incorrect n'est pas sauvegardé. Vérifie quand même le log `[record …]`
 avant de commiter — un fixture dégradé verrouillerait un comportement faux.
 
-**État 2026-06-29** : dossier vide sauf ce README. `RECORD=1` sur le sous-ensemble
-par défaut (5 cas) a expiré à 300s/cas (pipeline multi-providers lent). Timeout
-RECORD porté à **600s/cas** ; ScreenScraper search timeout **15s** + retry. Relancer
-quand le réseau et les credentials providers sont OK ; voir
-[backlog.md § Roadmap](../backlog.md#roadmap-prochaines-étapes).
+**État 2026-07-02** : **21/21** fixtures enregistrées (slim mode). Les corps de
+réponse > 128 ko sont tronqués à l'enregistrement et les sitemaps ignorés
+(`httpReplay.ts`) ; les redirections conservent leur header `location`. Le
+rejeu utilise un intercepteur réseau **partagé et jamais disposé** : toute
+requête émise hors session (fuite asynchrone d'un cas précédent) reçoit un 504
+déterministe au lieu d'atteindre le vrai réseau.
 
 ## Rejouer (par défaut, en CI)
 

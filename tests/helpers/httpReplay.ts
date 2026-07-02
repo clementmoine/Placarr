@@ -11,13 +11,20 @@ import nodeInterceptors from "@mswjs/interceptors/presets/node";
  * - Mode REPLAY : sert les réponses enregistrées ; toute requête non couverte
  *   est comptée comme "miss" (le test peut alors échouer franchement).
  *
+ * Un SEUL intercepteur est installé par process et n'est jamais disposé :
+ * ré-appliquer un intercepteur @mswjs après dispose dans le même process est
+ * silencieusement inopérant (le 2e patch n'intercepte plus rien et les
+ * requêtes partent sur le vrai réseau). Les sessions record/replay se relaient
+ * via `activeSession` ; sans session active, toute requête reçoit un 504
+ * déterministe plutôt que d'atteindre le réseau réel.
+ *
  * Les secrets (clés d'API présentes dans l'environnement) sont expurgés des
  * fixtures : ils ne doivent jamais être commités.
  */
 
 export type Interaction = {
   request: { method: string; url: string };
-  response: { status: number; body: string };
+  response: { status: number; body: string; headers?: Record<string, string> };
 };
 
 function secretValues(): string[] {
@@ -60,6 +67,10 @@ function normalizeReplayUrl(url: string): string {
         return `${parsed.origin}/search-products?q=${cleaned}`;
       }
     }
+    if (parsed.hostname.includes("googleapis.com")) {
+      parsed.searchParams.delete("key");
+      return parsed.toString();
+    }
   } catch {
     // ignore malformed URLs
   }
@@ -68,7 +79,8 @@ function normalizeReplayUrl(url: string): string {
 
 async function readResponseBody(response: Response): Promise<string> {
   const buffer = Buffer.from(await response.clone().arrayBuffer());
-  const encoding = response.headers.get("content-encoding")?.toLowerCase() ?? "";
+  const encoding =
+    response.headers.get("content-encoding")?.toLowerCase() ?? "";
   if (encoding.includes("br")) {
     return brotliDecompressSync(buffer).toString("utf8");
   }
@@ -81,11 +93,60 @@ async function readResponseBody(response: Response): Promise<string> {
   return buffer.toString("utf8");
 }
 
-export class HttpReplay {
-  private interceptor = new BatchInterceptor({
+const MAX_RECORD_BODY_CHARS = 128_000;
+const SKIP_RECORD_URL_RE =
+  /\/sitemaps\/sitemap-|sitemap-master\.xml|sitemap-videogames/i;
+
+function shouldSkipRecord(url: string): boolean {
+  return SKIP_RECORD_URL_RE.test(url);
+}
+
+function prepareRecordBody(url: string, body: string): string | null {
+  if (shouldSkipRecord(url)) return null;
+  if (body.length <= MAX_RECORD_BODY_CHARS) return body;
+  return `${body.slice(0, MAX_RECORD_BODY_CHARS)}\n<!-- truncated ${body.length} chars -->`;
+}
+
+function createSharedInterceptor() {
+  return new BatchInterceptor({
     name: "barcode-replay",
     interceptors: nodeInterceptors,
   });
+}
+
+let sharedInterceptor: ReturnType<typeof createSharedInterceptor> | null = null;
+let activeSession: HttpReplay | null = null;
+
+function activateSession(session: HttpReplay) {
+  activeSession = session;
+  if (sharedInterceptor) return;
+  sharedInterceptor = createSharedInterceptor();
+  sharedInterceptor.on("request", ({ request, controller }) => {
+    const current = activeSession;
+    if (!current) {
+      // Requête hors session (fuite asynchrone d'un cas précédent) : échec
+      // déterministe plutôt que réseau réel.
+      controller.respondWith(
+        new Response("replay-no-session", { status: 504 }),
+      );
+      return;
+    }
+    const mocked = current.mockedResponseFor(request.method, request.url);
+    if (mocked) controller.respondWith(mocked);
+    // null = mode record : laisser passer vers le vrai réseau.
+  });
+  sharedInterceptor.on("response", ({ request, response }) => {
+    activeSession?.captureResponse(request.method, request.url, response);
+  });
+  sharedInterceptor.apply();
+}
+
+function deactivateSession(session: HttpReplay) {
+  if (activeSession === session) activeSession = null;
+}
+
+export class HttpReplay {
+  private mode: "record" | "replay" | null = null;
   private recorded: Interaction[] = [];
   private replayQueue = new Map<string, Interaction[]>();
   private misses = new Set<string>();
@@ -93,41 +154,15 @@ export class HttpReplay {
 
   /** Démarre la capture du trafic réseau réel. */
   startRecord() {
+    this.mode = "record";
     this.recorded = [];
     this.pending = [];
-    this.interceptor.on("response", ({ request, response }) => {
-      // La lecture du corps est asynchrone : on suit la promesse pour pouvoir
-      // l'attendre via flush() avant de lire les interactions.
-      const p = (async () => {
-        try {
-          const body = await readResponseBody(response);
-          this.recorded.push({
-            request: { method: request.method, url: redact(request.url) },
-            response: { status: response.status, body: redact(body) },
-          });
-        } catch {
-          // réponse illisible (binaire/stream) — ignorée
-        }
-      })();
-      this.pending.push(p);
-    });
-    this.interceptor.apply();
-  }
-
-  /** Attend que toutes les captures asynchrones soient terminées (borné). */
-  async flush(timeoutMs = 5_000) {
-    if (this.pending.length === 0) return;
-    await Promise.race([
-      Promise.allSettled(this.pending),
-      new Promise<void>((resolve) => {
-        setTimeout(resolve, timeoutMs);
-      }),
-    ]);
-    this.pending = [];
+    activateSession(this);
   }
 
   /** Démarre le rejeu à partir d'interactions enregistrées. */
   startReplay(interactions: Interaction[]) {
+    this.mode = "replay";
     this.replayQueue = new Map();
     for (const it of interactions) {
       const key = keyOf(it.request.method, it.request.url);
@@ -136,22 +171,67 @@ export class HttpReplay {
       this.replayQueue.set(key, list);
     }
     this.misses = new Set();
+    activateSession(this);
+  }
 
-    this.interceptor.on("request", ({ request, controller }) => {
-      const key = keyOf(request.method, request.url);
-      const list = this.replayQueue.get(key);
-      const it = list && (list.length > 1 ? list.shift() : list[0]);
-      if (!it) {
-        this.misses.add(key);
-        // Échec déterministe : le fournisseur est traité comme indisponible.
-        controller.respondWith(new Response("replay-miss", { status: 504 }));
-        return;
-      }
-      controller.respondWith(
-        new Response(it.response.body, { status: it.response.status }),
-      );
+  /**
+   * Réponse simulée pour une requête interceptée (délégué par l'intercepteur
+   * partagé). `null` en mode record : la requête part sur le vrai réseau.
+   */
+  mockedResponseFor(method: string, url: string): Response | null {
+    if (this.mode !== "replay") return null;
+    const key = keyOf(method, url);
+    const list = this.replayQueue.get(key);
+    const it = list && (list.length > 1 ? list.shift() : list[0]);
+    if (!it) {
+      this.misses.add(key);
+      // Échec déterministe : le fournisseur est traité comme indisponible.
+      return new Response("replay-miss", { status: 504 });
+    }
+    return new Response(it.response.body, {
+      status: it.response.status,
+      headers: it.response.headers,
     });
-    this.interceptor.apply();
+  }
+
+  /** Capture une réponse réelle (délégué par l'intercepteur partagé). */
+  captureResponse(method: string, url: string, response: Response) {
+    if (this.mode !== "record") return;
+    // La lecture du corps est asynchrone : on suit la promesse pour pouvoir
+    // l'attendre via flush() avant de lire les interactions.
+    const p = (async () => {
+      try {
+        if (shouldSkipRecord(url)) return;
+        const body = prepareRecordBody(url, await readResponseBody(response));
+        if (body === null) return;
+        const headers: Record<string, string> = {};
+        const location = response.headers.get("location");
+        if (location) headers.location = location;
+        this.recorded.push({
+          request: { method, url: redact(url) },
+          response: {
+            status: response.status,
+            body: redact(body),
+            ...(Object.keys(headers).length > 0 ? { headers } : {}),
+          },
+        });
+      } catch {
+        // réponse illisible (binaire/stream) — ignorée
+      }
+    })();
+    this.pending.push(p);
+  }
+
+  /** Attend que toutes les captures asynchrones soient terminées (borné). */
+  async flush(timeoutMs = 30_000) {
+    if (this.pending.length === 0) return;
+    await Promise.race([
+      Promise.allSettled(this.pending),
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, timeoutMs);
+      }),
+    ]);
+    this.pending = [];
   }
 
   getRecorded(): Interaction[] {
@@ -163,6 +243,7 @@ export class HttpReplay {
   }
 
   stop() {
-    this.interceptor.dispose();
+    deactivateSession(this);
+    this.mode = null;
   }
 }

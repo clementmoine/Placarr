@@ -8,7 +8,10 @@ import {
   type BarcodeRegressionExpectation,
 } from "@/lib/barcode/lookup/regressionCases";
 import { cleanCode } from "@/lib/barcode/query";
-import { HttpReplay, type Interaction } from "../../../tests/helpers/httpReplay";
+import {
+  HttpReplay,
+  type Interaction,
+} from "../../../tests/helpers/httpReplay";
 
 /**
  * Golden-master du CHEMIN FRAIS (premier scan : cache vide → providers →
@@ -61,12 +64,12 @@ vi.mock("@/lib/db/prisma", () => {
 import { resolveBarcode } from "./resolver";
 
 const RECORD = !!process.env.RECORD;
-const RECORD_ALL = !!process.env.RECORD_ALL;
 const RECORD_CASE_ID = process.env.RECORD_CASE_ID?.trim() || "";
 const FIXTURES_DIR = join(process.cwd(), "tests/fixtures/barcode");
 
-// RECORD est borné en temps par défaut (sous-ensemble) ; RECORD_ALL=1 capture
-// les 22 cas canoniques en une seule passe.
+// RECORD est borné en temps par défaut (sous-ensemble) ; la capture des 21 cas
+// canoniques passe par `pnpm test:record:all` (scripts/record-all-barcode-fixtures.ts,
+// un process vitest par cas pour isoler les caches module entre providers).
 const RECORD_CASE_IDS = [
   "mario-kart-wii",
   "super-mario-galaxy-wii",
@@ -75,14 +78,12 @@ const RECORD_CASE_IDS = [
   "catan-boardgame",
 ];
 const RECORD_CASES = (() => {
-  if (RECORD_ALL) return DEFAULT_BARCODE_REGRESSION_CASES;
   const ids = RECORD_CASE_ID ? [RECORD_CASE_ID] : RECORD_CASE_IDS;
   return DEFAULT_BARCODE_REGRESSION_CASES.filter((c) => ids.includes(c.id));
 })();
 const RECORD_TIMEOUT_MS =
   RECORD_CASE_ID || RECORD_CASES.length === 1 ? 900_000 : 600_000;
-const RECORD_INTER_CASE_DELAY_MS =
-  process.env.RECORD_ALL || RECORD_CASES.length > 1 ? 4_000 : 0;
+const RECORD_INTER_CASE_DELAY_MS = RECORD_CASES.length > 1 ? 4_000 : 0;
 // En REPLAY on parcourt TOUS les cas : chaque fixture enregistrée est
 // automatiquement rejouée, les autres restent skip (suite verte).
 const REPLAY_CASES = DEFAULT_BARCODE_REGRESSION_CASES;
@@ -145,9 +146,49 @@ function assertExpectation(
   }
 }
 
+async function recordBarcodeFixture(testCase: BarcodeRegressionCase) {
+  const { isBarcodeRecordSlimMode } = await import(
+    "@/lib/barcode/lookup/recordMode"
+  );
+  expect(isBarcodeRecordSlimMode()).toBe(true);
+
+  const replay = new HttpReplay();
+  replay.startRecord();
+  const started = Date.now();
+  let res: ResolveResult;
+  try {
+    res = await resolveBarcode(
+      cleanCode(testCase.barcode),
+      testCase.type ?? null,
+      {
+        refresh: true,
+        platformHint:
+          testCase.expected.platformKey &&
+          typeof testCase.expected.platformKey === "string"
+            ? testCase.expected.platformKey
+            : undefined,
+      },
+    );
+  } finally {
+    await replay.flush();
+    replay.stop();
+  }
+  const interactions = replay.getRecorded();
+  assertExpectation(res, testCase.expected);
+  writeFileSync(
+    fixturePath(testCase.id),
+    JSON.stringify({ case: testCase, interactions }, null, 2),
+  );
+
+  console.log(
+    `[record ${testCase.id}] ${Date.now() - started}ms interactions=${interactions.length} cleanName=${JSON.stringify(res.cleanName)} platform=${res.platformKey} matches=${res.matches.length} provider=${res.provider}`,
+  );
+}
+
 if (RECORD) {
   describe("RECORD — enregistrement des fixtures réseau (live)", () => {
     mkdirSync(FIXTURES_DIR, { recursive: true });
+
     let recordCaseIndex = 0;
     for (const testCase of RECORD_CASES) {
       it(
@@ -158,42 +199,7 @@ if (RECORD) {
               setTimeout(resolve, RECORD_INTER_CASE_DELAY_MS),
             );
           }
-          const { isBarcodeRecordSlimMode } = await import(
-            "@/lib/barcode/lookup/recordMode"
-          );
-          expect(isBarcodeRecordSlimMode()).toBe(true);
-
-          const replay = new HttpReplay();
-          replay.startRecord();
-          const started = Date.now();
-          let res: ResolveResult;
-          try {
-            res = await resolveBarcode(
-              cleanCode(testCase.barcode),
-              testCase.type ?? null,
-              {
-                refresh: true,
-                platformHint:
-                  testCase.expected.platformKey &&
-                  typeof testCase.expected.platformKey === "string"
-                    ? testCase.expected.platformKey
-                    : undefined,
-              },
-            );
-          } finally {
-            await replay.flush();
-            replay.stop();
-          }
-          const interactions = replay.getRecorded();
-          assertExpectation(res, testCase.expected);
-          writeFileSync(
-            fixturePath(testCase.id),
-            JSON.stringify({ case: testCase, interactions }, null, 2),
-          );
-          // eslint-disable-next-line no-console
-          console.log(
-            `[record ${testCase.id}] ${Date.now() - started}ms interactions=${interactions.length} cleanName=${JSON.stringify(res.cleanName)} platform=${res.platformKey} matches=${res.matches.length} provider=${res.provider}`,
-          );
+          await recordBarcodeFixture(testCase);
         },
         RECORD_TIMEOUT_MS,
       );
@@ -239,7 +245,6 @@ if (RECORD) {
 
         const misses = replay.getMisses();
         if (misses.length > 0) {
-          // eslint-disable-next-line no-console
           console.warn(
             `[replay ${testCase.id}] requêtes non couvertes:`,
             misses,

@@ -237,7 +237,9 @@ export function parseICollectVideoGameItemPage(
   if (!itemId) return null;
 
   const blocks = parseJsonLdBlocks(html);
-  const thing = blocks.find((block) => schemaTypes(block?.["@type"]).includes("Thing"));
+  const thing = blocks.find((block) =>
+    schemaTypes(block?.["@type"]).includes("Thing"),
+  );
   const properties = thing?.additionalProperty;
 
   const title =
@@ -247,8 +249,9 @@ export function parseICollectVideoGameItemPage(
 
   const images = parseMainImages(html);
   const coverUrl =
-    cleanText(typeof thing?.image === "string" ? thing.image : thing?.image?.[0]) ||
-    images[0]?.url;
+    cleanText(
+      typeof thing?.image === "string" ? thing.image : thing?.image?.[0],
+    ) || images[0]?.url;
 
   const barcode =
     cleanText(thing?.gtin13) ||
@@ -455,7 +458,7 @@ export async function fetchICollectVideoGameItem(
   const itemId = itemUrl.match(/\/videogame\/(\d+)\/?$/i)?.[1];
   const db = itemId ? await ensureICollectIndex() : null;
 
-  if (db && itemId) {
+  if (db && itemId && !process.env.RECORD) {
     const cachedPayload = readCachedICollectMetadata(db, itemId);
     if (cachedPayload) {
       try {

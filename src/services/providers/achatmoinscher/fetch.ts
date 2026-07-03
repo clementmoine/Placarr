@@ -205,7 +205,7 @@ async function extractBestCover(
         if (res.status === 200) {
           return url;
         }
-      } catch (getErr) {
+      } catch {
         console.warn(
           `[AchatMoinsCher] Validation failed for cover URL: ${url}`,
         );

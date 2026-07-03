@@ -580,12 +580,10 @@ describe("fetchFromAllGameSources — orchestration", () => {
   });
 
   it("écarte un faux match RAWG dont le titre n'est qu'un fragment générique", async () => {
-    h.isMetadataTitleAligned.mockImplementation(
-      (meta: { title?: string }, names: string[], minScore?: number) => {
-        if (meta.title?.toLowerCase() === "retour vers le passé") return false;
-        return true;
-      },
-    );
+    h.isMetadataTitleAligned.mockImplementation((meta: { title?: string }) => {
+      if (meta.title?.toLowerCase() === "retour vers le passé") return false;
+      return true;
+    });
 
     h.igdbResolve.mockResolvedValue({
       title: "The Lapins Crétins : Retour vers le passé",

@@ -326,15 +326,6 @@ export function pickAlignedGeedieSearchHits(
   return selected;
 }
 
-function pickBestSearchHit(
-  query: string,
-  platform: string | undefined,
-  hits: GeedieSearchHit[],
-  alignmentQueries: string[] = [],
-): GeedieSearchHit | null {
-  return pickBestGeedieSearchHit(query, platform, hits, alignmentQueries);
-}
-
 function slugifyGeedieTitle(title: string): string {
   return title
     .normalize("NFD")

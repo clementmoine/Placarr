@@ -15,9 +15,6 @@ const fetchFromRawg = createRawgResolver({
   formatScore,
   fetchCoverFromCoverProject,
 });
-import type { MetadataResult } from "@/types/metadataProvider";
-
-type NameResolver = (name: string) => Promise<MetadataResult | null>;
 
 export const rawgModule: ProviderModule = {
   info: {

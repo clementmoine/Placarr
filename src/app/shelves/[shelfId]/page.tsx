@@ -3,7 +3,6 @@
 import { z } from "zod";
 import Link from "next/link";
 import { toast } from "sonner";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -73,7 +72,6 @@ import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { getShelf, saveShelf } from "@/lib/api/shelves";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import colorLib from "color";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
 import { syncItemQueries, syncShelfQueries } from "@/lib/item/queryCache";
@@ -554,20 +552,6 @@ function ShelfComponent() {
   }, [shelf, hasPermission]);
 
   const resolvedShelfId = shelf?.id || shelfId;
-
-  const safeColor = useMemo(() => {
-    if (!shelf?.color) return undefined;
-    try {
-      return colorLib(shelf.color);
-    } catch {
-      return undefined;
-    }
-  }, [shelf?.color]);
-
-  const shelfTextColor = useMemo(() => {
-    if (!safeColor) return undefined;
-    return safeColor.lighten(0.1).string();
-  }, [safeColor]);
 
   const skeletonAspectRatio = useMemo(() => {
     return getAspectRatio(shelf?.cardFormat, shelf?.type);

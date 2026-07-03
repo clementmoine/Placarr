@@ -6,7 +6,6 @@ import {
   Publisher,
   Type,
 } from "@prisma/client";
-import axios from "axios";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -16,13 +15,8 @@ import {
   pickBestBackgroundFromAttachments,
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
-  rankCoverGalleryAttachments,
   reorderAttachmentsCoverFirst,
-  rankScoredAttachments,
-  scoreAttachmentForDisplay,
   type AttachmentImageMetrics,
-  type AttachmentDisplayScoreOptions,
-  type ScoredAttachmentInput,
 } from "@/lib/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
 import { adoptItemNameFromMetadataIfPlaceholder } from "@/lib/item/adoptMetadataTitle";
@@ -30,7 +24,6 @@ import { resolveMetadataDisplayTitle } from "@/lib/title/refineCatalogDisplayTit
 import { catalogAttachmentTitleConflicts } from "@/lib/metadata/titleMatching";
 import { urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/lib/media/attachmentDisplayLabels";
-import { looksLikeImageBuffer } from "@/lib/media/imageBuffer";
 import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/lib/media/remoteFetch";
 import {
@@ -59,7 +52,6 @@ import {
   canonicalProviderIdForSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
-  isCanonicalCoverSource,
   withProviderAttachmentTraits,
 } from "@/services/provider/sourceTraits";
 import { prisma } from "@/lib/db/prisma";

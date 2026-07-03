@@ -10,7 +10,7 @@ import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
 } from "@/services/metadata/storage";
-import { presentItem, presentItemFromStorage } from "@/lib/item/present";
+import { presentItemFromStorage } from "@/lib/item/present";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { slugifyItemName } from "@/lib/routing/slugs";
 import { buildBarcodePlaceholderItemName } from "@/lib/item/placeholderName";

@@ -9,7 +9,6 @@ import type {
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
 
 import {
   fetchPhilibertBarcodeProduct,

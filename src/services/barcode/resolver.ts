@@ -17,7 +17,6 @@ import {
   detectMediaFormat,
   detectVideoFormatSignal,
 } from "@/lib/barcode/boardGameSignal";
-import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { compileAllBarcodeTypeResults } from "@/lib/barcode/lookup/sourceAssembly";
 import {
   BARCODE_CACHE_VERSION,

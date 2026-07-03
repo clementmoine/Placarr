@@ -6,11 +6,8 @@ import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
 
 import { createWikidataResolver } from "./resolver";
-
-type Resolver = (name: string) => Promise<MetadataResult | null>;
 
 const fetchFromWikidata = createWikidataResolver();
 

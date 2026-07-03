@@ -4,7 +4,6 @@ import { createKeyHealthCheck } from "@/lib/provider/healthUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
 import { cleanSearchQuery, formatScore } from "@/services/metadata/searchUtils";
 import { createTMDBResolver } from "./resolver";
 import { getTMDBSuggestions } from "./suggestions";
@@ -14,8 +13,6 @@ const fetchFromTMDB = createTMDBResolver({
   formatScore,
   cleanSearchQuery,
 });
-
-type NameResolver = (name: string) => Promise<MetadataResult | null>;
 
 export const tmdbModule: ProviderModule = {
   info: {

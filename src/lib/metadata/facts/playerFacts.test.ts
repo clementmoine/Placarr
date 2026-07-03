@@ -5,7 +5,6 @@ import {
   isMaxPlayersFact,
   parsePlayerFactRange,
   formatDetailFactSourceToken,
-  parseFactSourceList,
   DetailFact,
 } from "./playerFacts";
 

@@ -39,14 +39,6 @@ function readTag(block: string, tag: string): string | undefined {
   return value || undefined;
 }
 
-function readAllTags(block: string, tag: string): string[] {
-  return Array.from(
-    block.matchAll(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "g")),
-  )
-    .map((match) => match[1]?.trim())
-    .filter((value): value is string => Boolean(value));
-}
-
 function readBooleanTag(block: string, tag: string): boolean | undefined {
   const value = readTag(block, tag)?.toLowerCase();
   if (value === "true") return true;

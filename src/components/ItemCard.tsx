@@ -83,7 +83,7 @@ function ItemCardInner(props: ItemCardProps) {
     setImageFit("contain");
   }, [imageUrl]);
 
-  const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+  const handleImageLoad = (_event: SyntheticEvent<HTMLImageElement>) => {
     setImageFit("contain");
   };
 

@@ -30,6 +30,19 @@ const eslintConfig = [
       // Sweep 2026-07-02 : les ~130 `any` hérités sont typés — la règle est
       // remontée en erreur pour empêcher toute réintroduction.
       "@typescript-eslint/no-explicit-any": "error",
+      // Sweep 2026-07-02 : imports/variables morts purgés — en erreur, avec
+      // les conventions habituelles (`_` = volontairement inutilisé,
+      // rest-siblings = destructuration d'omission).
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
   {

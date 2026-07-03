@@ -113,13 +113,11 @@ function buildFactsFromOmdbDetails(details: OmdbDetails): MetadataFact[] {
     });
   }
 
-  const directors = splitOmdbList(details.Director);
   const writers = splitOmdbList(details.Writer);
   const actors = splitOmdbList(details.Actors);
   const languages = splitOmdbList(details.Language);
   const countries = splitOmdbList(details.Country);
   const genres = splitOmdbList(details.Genre);
-  const productionCompanies = splitOmdbList(details.Production);
 
   if (writers.length > 0) {
     facts.push({

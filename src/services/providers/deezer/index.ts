@@ -6,13 +6,7 @@ import { getDeezerSuggestions } from "./suggestions";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
-
-type Resolver = (
-  name: string,
-  barcode?: string | null,
-) => Promise<MetadataResult | null>;
 
 const fetchFromDeezer = createDeezerResolver();
 

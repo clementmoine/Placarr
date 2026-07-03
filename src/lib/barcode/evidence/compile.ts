@@ -29,12 +29,7 @@ import {
   resolveEvidenceToMatches,
 } from "./resolve";
 import { applyEditionToCompiledResult } from "./edition";
-import type {
-  CompiledResult,
-  ProductEvidence,
-  ResolvedMatch,
-  SourceProduct,
-} from "./types";
+import type { CompiledResult, ProductEvidence, SourceProduct } from "./types";
 import {
   AUDIO_BARCODE_PREFIX,
   BOOK_BARCODE_PREFIX,

@@ -12,8 +12,6 @@ import { Search, Compass, Sparkles, BookOpen } from "lucide-react";
 
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ItemCard } from "@/components/ItemCard";
 import { ShelfCard } from "@/components/ShelfCard";
 import { ExploreItemModal } from "@/components/modals/ExploreItemModal";

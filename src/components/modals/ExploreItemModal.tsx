@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Calendar,
   Building,
-  Check,
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
@@ -24,7 +23,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { useAccount } from "@/lib/client/hooks/useAccount";
 import { cn } from "@/lib/core/utils";
 import { getHeroImage, getGalleryImages } from "@/lib/item/media";
 import { getExploreDetailCoverClass } from "@/lib/text/cardFormat";
@@ -46,7 +44,7 @@ export function ExploreItemModal({
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [notes, setNotes] = useState("");
 
-  const { data: loanData, isFetching: isFetchingLoans } = useQuery({
+  const { data: loanData } = useQuery({
     queryKey: ["loans"],
     queryFn: async () => {
       const { data } = await axios.get<{

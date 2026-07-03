@@ -1503,7 +1503,7 @@ export default function ItemDetailsPage() {
   }, [coverImage]);
 
   const handleCoverImageLoad = useCallback(
-    (event: SyntheticEvent<HTMLImageElement>) => {
+    (_event: SyntheticEvent<HTMLImageElement>) => {
       setCoverImageFit("contain");
     },
     [],

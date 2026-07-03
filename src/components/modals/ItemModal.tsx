@@ -2399,6 +2399,9 @@ export function ItemModal({
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
             {zoomImageUrl && (
+              // Zoom plein écran d'une URL arbitraire (distante ou blob),
+              // affichée telle quelle sans optimisation.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={zoomImageUrl}
                 alt="Zoom"

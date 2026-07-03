@@ -80,11 +80,6 @@ export function getSequelIndicators(normStr: string): Set<string> {
   return indicators;
 }
 
-interface SuggestionWithPriority {
-  value: string;
-  priority: number; // 2 = clean main, 1 = clean alias, 0 = drafty
-}
-
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

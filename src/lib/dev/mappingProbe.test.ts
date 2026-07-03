@@ -8,7 +8,6 @@ import {
   metadataProbe,
   mergeMappingProbeRawKeys,
   mergeMappingProbeSamples,
-  rawProbe,
 } from "./mappingProbe";
 
 describe("mappingProbeUtils", () => {

@@ -14,7 +14,6 @@ import {
   catalogTitleOmitsRequestedProductIdentity,
   isNameOnlyRetailerTitleMatch,
   retailerCatalogSharesRequestedIdentity,
-  retailerIdentityTokenCount,
 } from "@/lib/retailer/titleMatch";
 
 /** Rejects PS4 catalog hits on a PS5 shelf (etc.) when both platforms are explicit. */

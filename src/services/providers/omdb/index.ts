@@ -1,17 +1,11 @@
 import axios from "axios";
 
 import { createKeyHealthCheck } from "@/lib/provider/healthUtils";
-import { createOMDbResolver, type OMDbResolveOptions } from "./resolver";
+import { createOMDbResolver } from "./resolver";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
-
-type NameResolver = (
-  name: string,
-  options?: OMDbResolveOptions,
-) => Promise<MetadataResult | null>;
 
 const fetchFromOMDb = createOMDbResolver();
 

@@ -9,7 +9,6 @@ import {
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
 import { formatScore } from "@/services/metadata/searchUtils";
 import { createBGGResolver } from "./resolver";
 import type { BGGResponse } from "./resolver";
@@ -17,8 +16,6 @@ import { getBGGSuggestions } from "./suggestions";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 const fetchFromBGG = createBGGResolver({ formatScore });
-
-type NameResolver = (name: string) => Promise<MetadataResult | null>;
 
 export const bggModule: ProviderModule = {
   info: {

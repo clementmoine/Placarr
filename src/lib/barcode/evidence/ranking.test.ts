@@ -4,7 +4,6 @@ import { makeObservationUsage } from "@/lib/metadata/observations";
 import type { MetadataObservation } from "@/types/metadataObservation";
 
 import {
-  compareImageObservations,
   pickBarcodeFieldValuesFromObservations,
   pickCoverUrlFromObservations,
   pickDisplayTitleFromObservations,

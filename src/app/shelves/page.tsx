@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, LibraryBig, Search, Scan, Sparkles } from "lucide-react";
+import { Plus, Search, Scan, Sparkles } from "lucide-react";
 import { useCallback, useMemo, useState, useEffect, Suspense } from "react";
 import {
   useMutation,
@@ -17,18 +17,10 @@ import {
 } from "@tanstack/react-query";
 import { motion, LayoutGroup } from "framer-motion";
 
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import Header from "@/components/Header";
 import { ShelfCard } from "@/components/ShelfCard";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShelfModal } from "@/components/modals/ShelfModal";
 import { ScanFAB } from "@/components/ScanFAB";
@@ -48,7 +40,6 @@ import {
   type BarcodeScannerResult,
 } from "@/components/BarcodeScannerView";
 
-import { cn } from "@/lib/core/utils";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { getShelves, saveShelf } from "@/lib/api/shelves";
 import { getItems, saveItem } from "@/lib/api/items";
@@ -63,8 +54,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import type { Shelf, Prisma } from "@prisma/client";
 import type { MetadataResult } from "@/types/metadataProvider";
-
-import styles from "./shelves.module.css";
 
 const shelfSchema = z.object({
   search: z.string(),
@@ -137,7 +126,7 @@ function ShelvesComponent() {
   });
 
   // Search items in other users' public shelves
-  const { data: exploreItems, isFetching: isFetchingExploreItems } = useQuery({
+  const { data: exploreItems } = useQuery({
     queryKey: ["exploreItems", searchQuery],
     queryFn: async () => {
       const { data } = await axios.get(

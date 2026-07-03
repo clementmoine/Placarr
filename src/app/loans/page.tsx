@@ -1,20 +1,17 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useMemo, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import {
   Inbox,
   User,
-  Clock,
   CheckCircle,
   XCircle,
   FileText,
   RotateCcw,
-  Loader2,
   Calendar,
-  Sparkles,
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
 

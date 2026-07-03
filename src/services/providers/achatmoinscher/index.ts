@@ -2,7 +2,7 @@ import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
-import { pricedOffer, pricedOffers } from "@/lib/provider/priceOffers";
+import { pricedOffers } from "@/lib/provider/priceOffers";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,

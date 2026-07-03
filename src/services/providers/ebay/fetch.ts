@@ -10,11 +10,7 @@ import {
   getEbayMarketplaceId,
   type EbayCredentials,
 } from "./env";
-import {
-  getEbayAccessToken,
-  getEbayBrowseAccessToken,
-  resetEbayTokenCache,
-} from "./oauth";
+import { getEbayAccessToken, getEbayBrowseAccessToken } from "./oauth";
 import type { EbayPrices, EbayProduct } from "./types";
 
 export type { EbayPrices, EbayProduct } from "./types";

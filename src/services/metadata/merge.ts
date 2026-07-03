@@ -39,11 +39,7 @@ import {
   pickCoverUrlFromObservations,
 } from "@/lib/barcode/evidence/ranking";
 import { coverUrlQualityRank } from "@/services/provider/registry";
-import type {
-  MetadataAttachment,
-  MetadataFact,
-  MetadataResult,
-} from "@/types/metadataProvider";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type {
   TitleObservation,
   TitleObservationRole,

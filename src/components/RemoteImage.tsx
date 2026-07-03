@@ -56,6 +56,8 @@ export function RemoteImage({
 }) {
   if (isBlobImageSrc(src)) {
     return (
+      // Aperçus locaux blob:/data: — hors optimiseur next/image.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt={alt}

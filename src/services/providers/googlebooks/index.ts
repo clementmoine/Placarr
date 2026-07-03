@@ -10,12 +10,6 @@ import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
-
-type Resolver = (
-  name: string,
-  barcode?: string | null,
-) => Promise<MetadataResult | null>;
 
 const fetchFromGoogleBooks = createGoogleBooksResolver();
 

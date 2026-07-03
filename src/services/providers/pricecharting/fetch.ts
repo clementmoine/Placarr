@@ -1,6 +1,5 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import type {
   PriceChartingMetadata,
   PriceChartingPrices,

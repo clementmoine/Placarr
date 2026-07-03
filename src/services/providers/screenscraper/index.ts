@@ -6,7 +6,6 @@ import axios from "axios";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { MetadataResult } from "@/types/metadataProvider";
 import type { SourceProduct } from "@/lib/barcode/evidence/types";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { formatScore } from "@/services/metadata/searchUtils";
@@ -28,13 +27,6 @@ const fetchFromScreenScraper = createScreenScraperResolver({
   cleanSearchQuery,
   formatScore,
 });
-
-type Resolver = (
-  name: string,
-  barcode?: string | null,
-  platform?: string | null,
-  options?: { isBackground?: boolean },
-) => Promise<MetadataResult | null>;
 
 // Build ScreenScraper evidence products: the canonical title plus its regional
 // titles and aliases (each tagged with its region; non-primary spellings flagged

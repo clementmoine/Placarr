@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fetchMetadataByType } from "./fetch";
-import { metadataProviderResolverMap } from "@/services/provider/bootstrap";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 

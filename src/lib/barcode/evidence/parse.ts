@@ -1,6 +1,5 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
 import {
-  areLikelySameProduct,
   cleanTitleForDisplay,
   getSequelIndicators,
   isListingDiscardable,

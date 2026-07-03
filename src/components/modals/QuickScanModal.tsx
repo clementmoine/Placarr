@@ -161,11 +161,14 @@ export function QuickScanModal({
       )
     : undefined;
 
-  // Automatically select the current shelf when the quick scan starts from one.
-  useEffect(() => {
-    if (!isOpen) return;
-    setSelectedShelfId(defaultShelf?.id || "");
-  }, [isOpen, defaultShelf?.id]);
+  // Automatically select the current shelf when the quick scan starts from one
+  // — ajusté pendant le render (pattern « adjust state when props change »).
+  const shelfSyncKey = isOpen ? defaultShelf?.id || "" : null;
+  const [prevShelfSyncKey, setPrevShelfSyncKey] = useState(shelfSyncKey);
+  if (prevShelfSyncKey !== shelfSyncKey) {
+    setPrevShelfSyncKey(shelfSyncKey);
+    if (shelfSyncKey !== null) setSelectedShelfId(shelfSyncKey);
+  }
 
   const activeShelf = shelves?.find((s) => s.id === selectedShelfId);
   const shelfType = activeShelf?.type;
@@ -173,12 +176,16 @@ export function QuickScanModal({
   const isResolvingDefaultShelf = !!defaultShelfId && !shelves;
   const platformContext = activeShelf?.name || null;
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const cleanedBarcode = cleanManualBarcode(barcode);
-    setActiveBarcode(cleanedBarcode);
-    setBarcodeInput(cleanedBarcode);
-  }, [isOpen, barcode]);
+  const barcodeSyncKey = isOpen ? barcode : null;
+  const [prevBarcodeSyncKey, setPrevBarcodeSyncKey] = useState(barcodeSyncKey);
+  if (prevBarcodeSyncKey !== barcodeSyncKey) {
+    setPrevBarcodeSyncKey(barcodeSyncKey);
+    if (barcodeSyncKey !== null) {
+      const cleanedBarcode = cleanManualBarcode(barcodeSyncKey);
+      setActiveBarcode(cleanedBarcode);
+      setBarcodeInput(cleanedBarcode);
+    }
+  }
 
   const hydrateResultImages = useCallback(
     async (

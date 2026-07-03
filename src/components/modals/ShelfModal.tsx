@@ -3,7 +3,7 @@
 import { z } from "zod";
 import color from "color";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -149,7 +149,10 @@ export function ShelfModal({
   });
   const { reset } = form;
 
-  const selectedType = form.watch("type");
+  // useWatch : compatible compilateur React (form.watch renvoie des fonctions
+  // non mémoïsables) et re-rendus limités au champ.
+  const selectedType = useWatch({ control: form.control, name: "type" });
+  const watchedColor = useWatch({ control: form.control, name: "color" });
 
   const defaultFormatLabel = useMemo(() => {
     let typeName = "";
@@ -406,7 +409,7 @@ export function ShelfModal({
                     enterUrlText="Saisir une URL"
                     urlPlaceholderText="https://example.com/logo.jpg"
                     invalidUrlText="Image invalide"
-                    previewBgColor={form.watch("color")}
+                    previewBgColor={watchedColor}
                     contain={true}
                   />
                 )}

@@ -1,18 +1,14 @@
 "use client";
 
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  type SyntheticEvent,
-} from "react";
+import React, { useMemo, useState, type SyntheticEvent } from "react";
 import type { Item } from "@prisma/client";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
   ShelfTypeIcon,
-  getShelfTypeIconComponent,
+  DEFAULT_SHELF_TYPE_ICON,
+  SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
 
@@ -74,14 +70,23 @@ function ItemCardInner(props: ItemCardProps) {
     return getAspectRatio(cardFormat, shelfType);
   }, [cardFormat, shelfType]);
 
-  // Pick placeholder icon based on shelf type
-  const PlaceholderIcon = useMemo(() => {
-    return getShelfTypeIconComponent(shelfType);
+  // Pick placeholder icon based on shelf type — memoized as an ELEMENT so no
+  // component identity is created during render.
+  const placeholderIcon = useMemo(() => {
+    const IconComponent =
+      SHELF_TYPE_ICONS[shelfType ?? ""] ?? DEFAULT_SHELF_TYPE_ICON;
+    return (
+      <IconComponent className="size-8 text-zinc-400 dark:text-zinc-500 transition-transform duration-500" />
+    );
   }, [shelfType]);
 
-  useEffect(() => {
+  // Réinitialisation quand l'URL change — ajustée pendant le render (pattern
+  // React « adjust state when props change »), pas dans un effect.
+  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
+  if (prevImageUrl !== imageUrl) {
+    setPrevImageUrl(imageUrl);
     setImageFit("contain");
-  }, [imageUrl]);
+  }
 
   const handleImageLoad = (_event: SyntheticEvent<HTMLImageElement>) => {
     setImageFit("contain");
@@ -98,7 +103,13 @@ function ItemCardInner(props: ItemCardProps) {
     });
     if (priceCents === null || priceCents === 0) return null;
     return priceCents / 100;
-  }, [props.condition, props.priceNew, props.priceUsed, props.priceUsedCIB]);
+  }, [
+    props.condition,
+    props.shelfType,
+    props.priceNew,
+    props.priceUsed,
+    props.priceUsedCIB,
+  ]);
 
   return (
     <div
@@ -151,7 +162,7 @@ function ItemCardInner(props: ItemCardProps) {
       ) : (
         /* Premium looking placeholder fallback */
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-900 dark:to-zinc-950 text-muted-foreground gap-3">
-          <PlaceholderIcon className="size-8 text-zinc-400 dark:text-zinc-500 transition-transform duration-500" />
+          {placeholderIcon}
           <span className="text-[10px] font-extrabold tracking-wide uppercase text-zinc-400 dark:text-zinc-550">
             {name.trim().substring(0, 2).toUpperCase() || "??"}
           </span>

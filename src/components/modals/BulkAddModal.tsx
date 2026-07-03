@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { toast } from "sonner";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   CheckCircle2,
   Layers,
@@ -78,14 +78,18 @@ export function BulkAddModal({
   const [isScanning, setIsScanning] = useState(false);
   const [scannedRows, setScannedRows] = useState<ScannedRow[]>([]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setTab(defaultTab);
-    setNameList("");
-    setCondition(Condition.used);
-    setScannedRows([]);
-    setIsScanning(false);
-  }, [isOpen, defaultTab]);
+  // Remise à zéro à l'ouverture — ajustée pendant le render, pas en effect.
+  const [prevOpen, setPrevOpen] = useState(isOpen);
+  if (prevOpen !== isOpen) {
+    setPrevOpen(isOpen);
+    if (isOpen) {
+      setTab(defaultTab);
+      setNameList("");
+      setCondition(Condition.used);
+      setScannedRows([]);
+      setIsScanning(false);
+    }
+  }
 
   const parsedNames = useMemo(() => parseNameList(nameList), [nameList]);
 

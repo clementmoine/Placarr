@@ -279,9 +279,16 @@ function ShelvesComponent() {
     }
   };
 
+  // L'état local suit le paramètre d'URL : ajusté pendant le render (pattern
+  // « adjust state when props change ») ; seule l'écriture du store externe
+  // react-hook-form reste dans un effect.
+  const [prevQ, setPrevQ] = useState(q);
+  if (prevQ !== q) {
+    setPrevQ(q);
+    setSearchQuery(q);
+  }
   useEffect(() => {
     form.setValue("search", q);
-    setSearchQuery(q);
   }, [q, form]);
 
   return (

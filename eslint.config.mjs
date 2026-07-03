@@ -46,19 +46,6 @@ const eslintConfig = [
     },
   },
   {
-    files: ["**/*.{jsx,tsx}"],
-    rules: {
-      // Règles React Compiler arrivées avec eslint-config-next 16 : vrais
-      // signaux, mais chaque fix est une refonte de composant à tester.
-      // Burn-down suivi au backlog (« React Compiler rules sweep »).
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
-      "react-hooks/static-components": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/incompatible-library": "warn",
-    },
-  },
-  {
     // Scripts CommonJS : require() est l'idiome attendu.
     files: ["**/*.cjs"],
     rules: {

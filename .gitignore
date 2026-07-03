@@ -64,3 +64,5 @@ prisma/data-export.json
 
 # Cursor IDE
 .cursor/
+# Outillage local Claude Code (preview/launch)
+/.claude/

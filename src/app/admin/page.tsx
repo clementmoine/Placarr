@@ -677,28 +677,6 @@ function AdminDashboardComponent() {
     setProviderSortDirection("asc");
   };
 
-  const SortIndicator = ({
-    sortKey,
-  }: {
-    sortKey:
-      | "provider"
-      | "types"
-      | "canonical"
-      | "auth"
-      | "config"
-      | "status"
-      | ProviderCapability;
-  }) => {
-    if (providerSortBy !== sortKey) {
-      return <ChevronDown className="size-3.5 opacity-30" />;
-    }
-    return providerSortDirection === "asc" ? (
-      <ChevronUp className="size-3.5 text-primary" />
-    ) : (
-      <ChevronDown className="size-3.5 text-primary" />
-    );
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-24 md:pb-12">
       <Header>
@@ -1997,7 +1975,11 @@ function AdminDashboardComponent() {
                                 className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                               >
                                 {locale === "fr" ? "Provider" : "Provider"}
-                                <SortIndicator sortKey="provider" />
+                                <SortIndicator
+                                  sortKey="provider"
+                                  sortBy={providerSortBy}
+                                  direction={providerSortDirection}
+                                />
                               </button>
                             </th>
                             <th className="sticky left-[240px] z-20 bg-background px-3 py-2 min-w-[180px]">
@@ -2007,7 +1989,11 @@ function AdminDashboardComponent() {
                                 className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                               >
                                 {locale === "fr" ? "Types" : "Types"}
-                                <SortIndicator sortKey="types" />
+                                <SortIndicator
+                                  sortKey="types"
+                                  sortBy={providerSortBy}
+                                  direction={providerSortDirection}
+                                />
                               </button>
                             </th>
                             <th className="px-3 py-2 min-w-[130px] text-center">
@@ -2019,7 +2005,11 @@ function AdminDashboardComponent() {
                                 {locale === "fr"
                                   ? "Nom canonique"
                                   : "Canonical name"}
-                                <SortIndicator sortKey="canonical" />
+                                <SortIndicator
+                                  sortKey="canonical"
+                                  sortBy={providerSortBy}
+                                  direction={providerSortDirection}
+                                />
                               </button>
                             </th>
                             {matrixCapabilities.map((capability) => (
@@ -2033,7 +2023,11 @@ function AdminDashboardComponent() {
                                   className="mx-auto inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                 >
                                   {capabilityLabel(capability)}
-                                  <SortIndicator sortKey={capability} />
+                                  <SortIndicator
+                                    sortKey={capability}
+                                    sortBy={providerSortBy}
+                                    direction={providerSortDirection}
+                                  />
                                 </button>
                               </th>
                             ))}
@@ -2332,6 +2326,36 @@ function AdminDashboardComponent() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+type ProviderSortKey =
+  | "provider"
+  | "types"
+  | "canonical"
+  | "auth"
+  | "config"
+  | "status"
+  | ProviderCapability;
+
+// Hissé hors du composant page : créé dans le render, il perdait son identité
+// à chaque rendu (règle react-hooks/static-components).
+function SortIndicator({
+  sortKey,
+  sortBy,
+  direction,
+}: {
+  sortKey: ProviderSortKey;
+  sortBy: ProviderSortKey;
+  direction: "asc" | "desc";
+}) {
+  if (sortBy !== sortKey) {
+    return <ChevronDown className="size-3.5 opacity-30" />;
+  }
+  return direction === "asc" ? (
+    <ChevronUp className="size-3.5 text-primary" />
+  ) : (
+    <ChevronDown className="size-3.5 text-primary" />
   );
 }
 

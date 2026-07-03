@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -39,11 +39,12 @@ export function BulkMoveModal({
   const { t } = useLocale();
   const [targetShelfId, setTargetShelfId] = useState("");
 
-  useEffect(() => {
-    if (!isOpen) {
-      setTargetShelfId("");
-    }
-  }, [isOpen]);
+  // Remise à zéro à la fermeture — ajustée pendant le render, pas en effect.
+  const [prevOpen, setPrevOpen] = useState(isOpen);
+  if (prevOpen !== isOpen) {
+    setPrevOpen(isOpen);
+    if (!isOpen) setTargetShelfId("");
+  }
 
   const { data: shelves } = useQuery({
     queryKey: ["shelves"],

@@ -220,12 +220,20 @@ function ShelfComponent() {
 
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    form.setValue("search", q);
+  // L'état local suit le paramètre d'URL : ajusté pendant le render (pattern
+  // « adjust state when props change ») ; seule l'écriture du store externe
+  // react-hook-form reste dans un effect.
+  const paramsKey = searchParams.toString();
+  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
+  if (prevParamsKey !== paramsKey) {
+    setPrevParamsKey(paramsKey);
     setSearchQuery(q);
     setSortBy(parseItemCollectionSort(searchParams.get("sort")));
     setFilters(parseItemCollectionFilters(searchParams));
-  }, [q, searchParams, form]);
+  }
+  useEffect(() => {
+    form.setValue("search", q);
+  }, [q, form]);
 
   const replaceCollectionParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -341,7 +349,7 @@ function ShelfComponent() {
       filters,
       shelfType: shelf.type,
     });
-  }, [shelf?.items, shelf?.type, sortBy, filters]);
+  }, [shelf, sortBy, filters]);
 
   const totalValue = useMemo(() => {
     if (!shelf?.items) return 0;
@@ -354,7 +362,7 @@ function ShelfComponent() {
       }),
       shelf.type,
     );
-  }, [shelf?.items, shelf?.type, filters]);
+  }, [shelf, filters]);
 
   const handleModalClose = useCallback(() => {
     setVisibleModal(undefined);

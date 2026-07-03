@@ -132,13 +132,21 @@ function ItemsPageComponent() {
     });
   };
 
-  useEffect(() => {
-    form.setValue("search", q);
+  // L'état local suit le paramètre d'URL : ajusté pendant le render (pattern
+  // « adjust state when props change ») ; seule l'écriture du store externe
+  // react-hook-form reste dans un effect.
+  const paramsKey = searchParams.toString();
+  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
+  if (prevParamsKey !== paramsKey) {
+    setPrevParamsKey(paramsKey);
     setSearchQuery(q);
     setTypeFilter(typeParam);
     setSortBy(parseItemCollectionSort(sortParam));
     setFilters(parseItemCollectionFilters(searchParams));
-  }, [q, typeParam, sortParam, searchParams, form]);
+  }
+  useEffect(() => {
+    form.setValue("search", q);
+  }, [q, form]);
 
   return (
     <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">

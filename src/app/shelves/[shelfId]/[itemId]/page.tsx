@@ -21,6 +21,7 @@ import {
   Gauge,
   Layers,
   Loader2,
+  type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useParams, useRouter } from "next/navigation";
@@ -277,22 +278,24 @@ function ItemDiscoverySection({
   );
 }
 
-function factIcon(kind: string) {
-  if (kind === "estimated-value") return Coins;
-  if (kind === "age-rating") return ShieldCheck;
-  if (kind === "players") return Users;
-  if (kind === "completion-time") return Trophy;
-  if (kind === "external-link") return Link2;
-  if (kind === "playtime" || kind === "time-to-beat" || kind === "duration") {
-    return Clock3;
-  }
-  if (kind === "pages") return BookOpen;
-  if (kind === "tracks") return ListMusic;
-  if (kind === "complexity") return Gauge;
-  if (kind === "rating" || kind === "popularity") return Star;
-  if (kind === "franchise") return Layers;
-  return Search;
-}
+// Map statique kind → icône : lecture de référence pendant le render, pas de
+// création de composant (règle react-hooks/static-components).
+const FACT_ICONS: Record<string, LucideIcon> = {
+  "estimated-value": Coins,
+  "age-rating": ShieldCheck,
+  players: Users,
+  "completion-time": Trophy,
+  "external-link": Link2,
+  playtime: Clock3,
+  "time-to-beat": Clock3,
+  duration: Clock3,
+  pages: BookOpen,
+  tracks: ListMusic,
+  complexity: Gauge,
+  rating: Star,
+  popularity: Star,
+  franchise: Layers,
+};
 
 function factTone(kind: string) {
   if (kind === "estimated-value") {
@@ -1015,7 +1018,8 @@ function normalizeDisplayFacts(
 }
 
 function DetailInfoItem({ fact }: { fact: DetailFact }) {
-  const Icon = factIcon(fact.kind);
+  // Lecture inline de la map — référence stable pour le compilateur React.
+  const Icon = FACT_ICONS[fact.kind] ?? Search;
   const tone = factTone(fact.kind);
   const content = (
     <div
@@ -1071,8 +1075,9 @@ export default function ItemDetailsPage() {
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
     "contain",
   );
-  const [autoMetadataRefreshAttempted, setAutoMetadataRefreshAttempted] =
-    useState(false);
+  // Garde « une seule tentative » : jamais rendu → ref, pas un state (évite
+  // un setState synchrone dans l'effect de refresh).
+  const autoMetadataRefreshAttemptedRef = useRef(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const queryClient = useQueryClient();
@@ -1185,7 +1190,7 @@ export default function ItemDetailsPage() {
   const currentItemIndex = useMemo(() => {
     if (!item?.id || shelfItems.length === 0) return -1;
     return shelfItems.findIndex((shelfItem) => shelfItem.id === item.id);
-  }, [item?.id, shelfItems]);
+  }, [item, shelfItems]);
 
   const hasSiblingNavigation =
     shelfItems.length > 1 && currentItemIndex >= 0 && Boolean(shelf);
@@ -1389,12 +1394,18 @@ export default function ItemDetailsPage() {
     return hasPermission(item.userId);
   }, [item, hasPermission]);
 
-  const shouldAutoRefreshMetadata = useMemo(() => {
+  // Le memo reste PUR : il renvoie les raisons indépendantes du temps et
+  // l'échéance de fraîcheur ; Date.now() est évalué dans l'effect (impureté
+  // permise), pas pendant le render (règle react-hooks/purity).
+  const metadataRefreshNeed = useMemo(() => {
     if (!isAuthenticated || isGuest || !canEdit) {
-      return false;
+      return { needsRefresh: false, staleAfterMs: null };
     }
     if (!item?.metadataId || !item.metadata) {
-      return isItemEnriching(item) && Boolean(item?.barcode);
+      return {
+        needsRefresh: isItemEnriching(item) && Boolean(item?.barcode),
+        staleAfterMs: null,
+      };
     }
     const metadata = item.metadata;
     const facts = normalizeFacts(metadata.facts);
@@ -1448,45 +1459,35 @@ export default function ItemDetailsPage() {
     const isMissingMusicGalleryRefresh =
       shelf?.type === "musics" &&
       isMissingMusicGallery("musics", item?.barcode, attachments);
-    const isStale =
-      hasValidLastFetched &&
-      Date.now() - lastFetched.getTime() > METADATA_REFRESH_TTL_MS;
-
-    return (
-      isPreEnrichmentMetadata ||
-      isMissingGameEnrichment ||
-      isMissingGameAgeRating ||
-      isMissingHltbCompletion ||
-      isMissingMusicGalleryRefresh ||
-      isStale
-    );
-  }, [
-    canEdit,
-    isAuthenticated,
-    isGuest,
-    item?.barcode,
-    item?.metadata,
-    item?.metadataId,
-    shelf?.type,
-  ]);
+    return {
+      needsRefresh:
+        isPreEnrichmentMetadata ||
+        isMissingGameEnrichment ||
+        isMissingGameAgeRating ||
+        isMissingHltbCompletion ||
+        isMissingMusicGalleryRefresh,
+      staleAfterMs: hasValidLastFetched
+        ? lastFetched.getTime() + METADATA_REFRESH_TTL_MS
+        : null,
+    };
+  }, [canEdit, isAuthenticated, isGuest, item, shelf?.name, shelf?.type]);
 
   useEffect(() => {
+    const shouldAutoRefreshMetadata =
+      metadataRefreshNeed.needsRefresh ||
+      (metadataRefreshNeed.staleAfterMs !== null &&
+        Date.now() > metadataRefreshNeed.staleAfterMs);
     if (
       !shouldAutoRefreshMetadata ||
-      autoMetadataRefreshAttempted ||
+      autoMetadataRefreshAttemptedRef.current ||
       isPending
     ) {
       return;
     }
 
-    setAutoMetadataRefreshAttempted(true);
+    autoMetadataRefreshAttemptedRef.current = true;
     refreshMetadata();
-  }, [
-    autoMetadataRefreshAttempted,
-    isPending,
-    refreshMetadata,
-    shouldAutoRefreshMetadata,
-  ]);
+  }, [isPending, refreshMetadata, metadataRefreshNeed]);
 
   const heroImage = useMemo(() => {
     return (
@@ -1498,9 +1499,12 @@ export default function ItemDetailsPage() {
     return item ? getCoverImage(item, locale) : null;
   }, [item, locale]);
 
-  useEffect(() => {
+  // Réinitialisation quand la cover change — ajustée pendant le render.
+  const [prevCoverImage, setPrevCoverImage] = useState(coverImage);
+  if (prevCoverImage !== coverImage) {
+    setPrevCoverImage(coverImage);
     setCoverImageFit("contain");
-  }, [coverImage]);
+  }
 
   const handleCoverImageLoad = useCallback(
     (_event: SyntheticEvent<HTMLImageElement>) => {
@@ -1601,7 +1605,7 @@ export default function ItemDetailsPage() {
       (shelfItem) =>
         shelfItem.id !== resolvedItemId && !grouped.has(shelfItem.id),
     );
-  }, [shelf?.items, resolvedItemId, seriesVolumes, franchiseItems]);
+  }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
   const coverAspectRatio = useMemo(() => {
     return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
@@ -1624,7 +1628,7 @@ export default function ItemDetailsPage() {
       priceUsed: prices.priceUsed,
       priceUsedCIB: prices.priceUsedCIB,
     });
-  }, [prices, item?.condition, shelf?.type]);
+  }, [prices, item, shelf?.type]);
 
   const formattedCopyValue = useMemo(() => {
     if (copyValue === null) return null;

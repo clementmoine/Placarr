@@ -1,6 +1,7 @@
 "use client";
 
 import { z } from "zod";
+import type { ExploreItem } from "@/types/explore";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -109,9 +110,8 @@ function ShelvesComponent() {
     | undefined
   >(undefined);
 
-  const [selectedExploreItem, setSelectedExploreItem] = useState<any | null>(
-    null,
-  );
+  const [selectedExploreItem, setSelectedExploreItem] =
+    useState<ExploreItem | null>(null);
   const [exploreModalOpen, setExploreModalOpen] = useState(false);
 
   const q = searchParams.get("q") || "";
@@ -143,7 +143,7 @@ function ShelvesComponent() {
       const { data } = await axios.get(
         `/api/explore?q=${encodeURIComponent(searchQuery)}`,
       );
-      return data as any[];
+      return data as ExploreItem[];
     },
     enabled: !!searchQuery,
   });
@@ -268,7 +268,9 @@ function ShelvesComponent() {
     setIsItemModalOpen(true);
   };
 
-  const handleItemModalSubmit = async (itemData: any) => {
+  const handleItemModalSubmit = async (
+    itemData: Prisma.ItemCreateInput | Prisma.ItemUpdateInput,
+  ) => {
     try {
       const newItem = await saveItem({
         ...itemData,
@@ -280,9 +282,7 @@ function ShelvesComponent() {
       });
 
       toast.success(t("common.success"));
-      router.push(
-        itemPath((newItem as any).shelf || { id: newItem.shelfId }, newItem),
-      );
+      router.push(itemPath(newItem.shelf || { id: newItem.shelfId }, newItem));
     } catch (error) {
       console.error("Failed to save scanned item:", error);
       toast.error(t("items.saveFailed"));

@@ -7,6 +7,7 @@ import React, {
   type SyntheticEvent,
 } from "react";
 import type { Item } from "@prisma/client";
+import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
@@ -37,7 +38,7 @@ function conditionBadgeClass(condition: Condition) {
 interface ItemCardProps extends Item {
   shelfType?: string | null;
   cardFormat?: string | null;
-  metadata?: any;
+  metadata?: MetadataResult | null;
   priceNew?: number | null;
   priceUsed?: number | null;
   priceUsedCIB?: number | null;

@@ -87,8 +87,10 @@ function cleanText(value?: string | null): string | undefined {
   return text || undefined;
 }
 
-function parseJsonLdBlocks(html: string): any[] {
-  const blocks: any[] = [];
+type JsonLdSchema = Record<string, unknown>;
+
+function parseJsonLdBlocks(html: string): JsonLdSchema[] {
+  const blocks: JsonLdSchema[] = [];
   for (const match of html.matchAll(
     /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   )) {
@@ -243,18 +245,22 @@ export function parseICollectVideoGameItemPage(
   const properties = thing?.additionalProperty;
 
   const title =
-    cleanText(thing?.name) ||
+    cleanText(typeof thing?.name === "string" ? thing.name : undefined) ||
     cleanText(html.match(/<h1 class="important_value">([^<]+)<\/h1>/i)?.[1]);
   if (!title) return null;
 
   const images = parseMainImages(html);
   const coverUrl =
     cleanText(
-      typeof thing?.image === "string" ? thing.image : thing?.image?.[0],
+      typeof thing?.image === "string"
+        ? thing.image
+        : Array.isArray(thing?.image) && typeof thing.image[0] === "string"
+          ? thing.image[0]
+          : undefined,
     ) || images[0]?.url;
 
   const barcode =
-    cleanText(thing?.gtin13) ||
+    cleanText(typeof thing?.gtin13 === "string" ? thing.gtin13 : undefined) ||
     parseHtmlField(html, "barcode") ||
     title.match(/\[Barcode\s+([0-9]+)\]/i)?.[1];
 

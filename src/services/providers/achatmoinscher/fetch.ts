@@ -76,10 +76,10 @@ export async function fetchFromAchatMoinsCher(
     }
 
     return expectedNames.length === 0 && product ? [product] : [];
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       `[AchatMoinsCher] Error fetching barcode ${cleanedBarcode}:`,
-      error.message,
+      error instanceof Error ? error.message : error,
     );
     return [];
   }
@@ -193,7 +193,7 @@ async function extractBestCover(
       if (res.status === 200) {
         return url;
       }
-    } catch (err: any) {
+    } catch {
       try {
         const res = await axios.get(url, {
           headers: {
@@ -494,20 +494,20 @@ export async function fetchPricesFromAchatMoinsCher(
           };
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         `[AchatMoinsCher Prices] Error fetching for barcode ${cleanedBarcode}:`,
-        error.message,
+        error instanceof Error ? error.message : error,
       );
     }
   }
 
   try {
     return await fetchPricesFromAchatMoinsCherByName(query, expectedNames);
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       `[AchatMoinsCher Prices] Error fetching for query "${query}":`,
-      error.message,
+      error instanceof Error ? error.message : error,
     );
     return null;
   }

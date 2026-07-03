@@ -23,6 +23,7 @@ function openLibraryTitleAligned(
 interface OpenLibraryWork {
   key: string;
   title: string;
+  alternate_names?: string[];
   type?: { key?: string };
   authors?: { key: string }[];
   publishers?: string[];
@@ -48,6 +49,7 @@ interface OpenLibrarySearchResponse {
   docs?: Array<{
     key: string;
     title: string;
+    alternate_names?: string[];
     title_suggest?: string;
     subtitle?: string;
     author_name?: string[];
@@ -316,29 +318,23 @@ export function createOpenLibraryResolver() {
 
             if (sortedEditions.length > 0) {
               workData = sortedEditions[0].edition;
-              if ((bestWork as any).alternate_names) {
-                (workData as any).alternate_names = (
-                  bestWork as any
-                ).alternate_names;
+              if (bestWork.alternate_names) {
+                workData.alternate_names = bestWork.alternate_names;
               }
             } else {
               workData = await fetchWithRetry<OpenLibraryWork>(
                 `https://openlibrary.org${workId}.json`,
               );
-              if ((bestWork as any).alternate_names) {
-                (workData as any).alternate_names = (
-                  bestWork as any
-                ).alternate_names;
+              if (bestWork.alternate_names) {
+                workData.alternate_names = bestWork.alternate_names;
               }
             }
           } else {
             workData = await fetchWithRetry<OpenLibraryWork>(
               `https://openlibrary.org${workId}.json`,
             );
-            if ((bestWork as any).alternate_names) {
-              (workData as any).alternate_names = (
-                bestWork as any
-              ).alternate_names;
+            if (bestWork.alternate_names) {
+              workData.alternate_names = bestWork.alternate_names;
             }
           }
         }
@@ -422,7 +418,7 @@ export function createOpenLibraryResolver() {
         }
       }
 
-      const alternateNames = (workData as any).alternate_names || [];
+      const alternateNames = workData.alternate_names || [];
       const aliases = alternateNames.filter(
         (n: string) =>
           n.toLowerCase().trim() !== workData.title.toLowerCase().trim(),

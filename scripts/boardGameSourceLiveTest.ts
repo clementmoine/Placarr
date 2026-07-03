@@ -3,6 +3,7 @@
  * Live smoke test for board game metadata sources proposed in admin audit.
  */
 import { createBGGResolver } from "@/services/providers/bgg/resolver";
+import { isAxiosError } from "axios";
 import { bggModule } from "@/services/providers/bgg";
 import { createPhilibertResolver } from "@/services/providers/philibert/resolver";
 import { philibertModule } from "@/services/providers/philibert";
@@ -32,8 +33,13 @@ async function probeRetailer(label: string, searchUrl: string) {
         html.includes("Catan"));
     console.log(`[${label}]`, hasProducts ? "search ok" : "empty/unknown");
     return hasProducts;
-  } catch (error: any) {
-    console.log(`[${label}]`, "fail", error?.response?.status || error.message);
+  } catch (error) {
+    console.log(
+      `[${label}]`,
+      "fail",
+      (isAxiosError(error) && error.response?.status) ||
+        (error instanceof Error ? error.message : error),
+    );
     return false;
   }
 }

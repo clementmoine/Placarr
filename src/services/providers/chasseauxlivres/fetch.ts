@@ -126,8 +126,10 @@ function parseRedirProduct(redir: string): ChasseAuxLivresProduct | null {
   return title ? { name: title } : null;
 }
 
-function parseJsonLdBlocks(html: string): any[] {
-  const blocks: any[] = [];
+type JsonLdSchema = Record<string, unknown>;
+
+function parseJsonLdBlocks(html: string): JsonLdSchema[] {
+  const blocks: JsonLdSchema[] = [];
   for (const match of html.matchAll(
     /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   )) {
@@ -231,7 +233,9 @@ export function parseChasseAuxLivresProductPage(
     metaContent(html, "og:image") ||
     metaContent(html, "twitter:image") ||
     html.match(/<img[^>]*id=["']book-cover["'][^>]*src=["']([^"']+)["']/i)?.[1];
-  const aggregateRating = productSchema?.aggregateRating;
+  const aggregateRating = productSchema?.aggregateRating as
+    | { ratingValue?: unknown; ratingCount?: unknown }
+    | undefined;
   const sku =
     firstSchemaValue(productSchema?.sku) ||
     productUrl?.match(/\/prix\/([^/]+)/)?.[1];
@@ -353,22 +357,28 @@ function uniqueProductUrls(products: ChasseAuxLivresProduct[]): string[] {
   return urls;
 }
 
-function searchResultCandidates(data: any): string[] {
+type ChasseSearchPayload = { redir?: unknown; d?: unknown };
+
+function searchResultCandidates(
+  data: ChasseSearchPayload | null | undefined,
+): string[] {
+  const redir = typeof data?.redir === "string" ? data.redir.trim() : "";
   return uniqueProductUrls([
-    ...(typeof data?.redir === "string" && data.redir.trim()
-      ? [{ name: "", productUrl: data.redir.trim() }]
-      : []),
+    ...(redir ? [{ name: "", productUrl: redir }] : []),
     ...parseListingProducts(String(data?.d || "")),
   ]);
 }
 
-async function fetchSearchResults(hash: string, limit: number): Promise<any> {
+async function fetchSearchResults(
+  hash: string,
+  limit: number,
+): Promise<ChasseSearchPayload> {
   const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=${limit}`;
   const resultsRes = await axios.get(resultsUrl, {
     headers: CHASSE_AUX_LIVRES_HEADERS,
     timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
   });
-  return resultsRes.data;
+  return resultsRes.data as ChasseSearchPayload;
 }
 
 async function fetchProductPage(productUrl: string): Promise<{
@@ -421,7 +431,7 @@ async function resolveChasseAuxLivresProductPage(
 
   const candidateUrls: string[] = [];
   for (const limit of [8, 1]) {
-    let data: any;
+    let data: ChasseSearchPayload;
     try {
       data = await fetchSearchResults(hashMatch[1], limit);
     } catch (error) {

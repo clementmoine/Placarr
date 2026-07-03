@@ -19,6 +19,15 @@ import { formatBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import { mapBggLanguageToAttachmentRole } from "@/lib/locale/preference";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 
+// Nœuds statistiques BGG (XML→JSON) : clé dynamique (ratings/ranks/average…)
+// portant valeur et/ou enfants.
+type BGGStatValue = {
+  value?: string;
+  name?: string;
+  children?: BGGStatNode[];
+};
+type BGGStatNode = Record<string, BGGStatValue | undefined>;
+
 export interface BGGChild {
   name?: { type: string; value: string };
   description?: { content: string };
@@ -31,7 +40,7 @@ export interface BGGChild {
   minage?: { value: string };
   image?: { content: string };
   link?: { type: string; id: string; value: string };
-  statistics?: { children?: any[] };
+  statistics?: { children?: BGGStatNode[] };
   versions?: {
     children?: Array<{
       item?: {
@@ -59,12 +68,12 @@ function getBGGRatingsNode(game: { children?: BGGChild[] }) {
   const statistics = game.children?.find(
     (child) => child.statistics,
   )?.statistics;
-  return statistics?.children?.find((child: any) => child.ratings)?.ratings;
+  return statistics?.children?.find((child) => child.ratings)?.ratings;
 }
 
 function getBGGRankValue(game: { children?: BGGChild[] }): string | undefined {
   const ratings = getBGGRatingsNode(game);
-  const ranks = ratings?.children?.find((child: any) => child.ranks)?.ranks;
+  const ranks = ratings?.children?.find((child) => child.ranks)?.ranks;
   const rankEntries = ranks?.children || [];
   for (const entry of rankEntries) {
     const rank = entry.rank;
@@ -80,7 +89,7 @@ function getBGGRatingValue(
   key: string,
 ): string | undefined {
   const ratings = getBGGRatingsNode(game);
-  const rating = ratings?.children?.find((child: any) => child[key])?.[key];
+  const rating = ratings?.children?.find((child) => child[key])?.[key];
   return rating?.value;
 }
 

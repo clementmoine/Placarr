@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
                 name: true,
                 color: true,
                 type: true,
+                cardFormat: true,
               },
             },
             metadata: {

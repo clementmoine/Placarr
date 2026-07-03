@@ -8,7 +8,7 @@ export type ShelfBestItem = {
 
 export type ShelfWithItemCount = Prisma.ShelfGetPayload<{
   include: {
-    _count: true;
+    _count: { select: { items: true } };
   };
 }> & {
   bestItem?: ShelfBestItem | null;

@@ -17,8 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { RemoteImage } from "@/components/RemoteImage";
 
 interface ImagePickerFieldProps {
-  value: any;
-  onChange: (value: any) => void;
+  value: string | File | null;
+  onChange: (value: string | File | null) => void;
   onFileChange?: (file: File | string | null) => void;
   label?: string;
   placeholder?: string;

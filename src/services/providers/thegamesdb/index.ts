@@ -48,7 +48,7 @@ export const thegamesdbModule: ProviderModule = {
   isMetadataQuotaBlocked: isTheGamesDbQuotaBlocked,
   createMetadataAdapter: () => ({
     id: "thegamesdb",
-    async resolve({ name, barcode, platform }: any) {
+    async resolve({ name, barcode, platform }) {
       return (await fetchFromTheGamesDB(
         name,
         platform,

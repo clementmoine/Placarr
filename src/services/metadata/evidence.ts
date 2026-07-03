@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/db/prisma";
 
 type EvidenceScope = {
@@ -73,7 +75,7 @@ export async function replaceFieldEvidence(
       value: item.value,
       normalizedValue:
         item.normalizedValue ?? normalizeEvidenceValue(String(item.value)),
-      rawValue: item.rawValue as any,
+      rawValue: item.rawValue as Prisma.InputJsonValue,
       confidence: item.confidence ?? null,
       priority: item.priority ?? null,
       sourceUrl: item.sourceUrl ?? null,
@@ -117,7 +119,7 @@ export async function replacePriceOffers(
       sourceUrl: offer.sourceUrl ?? null,
       availability: offer.availability ?? null,
       offerCount: offer.offerCount ?? null,
-      rawValue: offer.rawValue as any,
+      rawValue: offer.rawValue as Prisma.InputJsonValue,
       observedAt: offer.observedAt ?? new Date(),
     }));
 
@@ -212,7 +214,7 @@ export async function mergePriceOffers(
   const rows = merged.map((offer) => ({
     ...where,
     ...offer,
-    rawValue: offer.rawValue as any,
+    rawValue: offer.rawValue as Prisma.InputJsonValue,
   }));
 
   await prisma.$transaction([

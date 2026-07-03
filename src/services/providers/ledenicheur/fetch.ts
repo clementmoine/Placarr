@@ -105,6 +105,17 @@ type LeDenicheurOfferNode = {
 
 type LeDenicheurNode = LeDenicheurProductNode | LeDenicheurOfferNode;
 
+// Le BFF renvoie le payload GraphQL parfois enveloppé (`{ data: {...} }`),
+// parfois à plat — les deux formes sont tolérées.
+type LeDenicheurProductDetailEnvelope = {
+  data?: { product?: LeDenicheurProductNode | null };
+  product?: LeDenicheurProductNode | null;
+};
+type LeDenicheurSearchEnvelope = {
+  data?: { newSearch?: { results?: { products?: { nodes?: unknown[] } } } };
+  newSearch?: { results?: { products?: { nodes?: unknown[] } } };
+};
+
 function cleanQuery(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
@@ -292,11 +303,8 @@ async function fetchProductDetail(
     );
 
     if (response.status >= 400) return null;
-    return (
-      (response.data as any)?.data?.product ??
-      (response.data as any)?.product ??
-      null
-    );
+    const envelope = response.data as LeDenicheurProductDetailEnvelope;
+    return envelope?.data?.product ?? envelope?.product ?? null;
   } catch {
     return null;
   }
@@ -332,9 +340,10 @@ async function parseSearchResponse(
   data: unknown,
   query: string,
 ): Promise<LeDenicheurPrices | null> {
+  const envelope = data as LeDenicheurSearchEnvelope;
   const nodes =
-    (data as any)?.data?.newSearch?.results?.products?.nodes ??
-    (data as any)?.newSearch?.results?.products?.nodes;
+    envelope?.data?.newSearch?.results?.products?.nodes ??
+    envelope?.newSearch?.results?.products?.nodes;
   if (!Array.isArray(nodes)) return null;
 
   for (const node of nodes) {
@@ -392,10 +401,10 @@ export async function fetchPricesFromLeDenicheur(
       console.log(`[LeDenicheur] Querying: ${query}`);
       const result = await fetchSingleQuery(query);
       if (result) return result;
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         `[LeDenicheur] Error fetching prices for "${query}":`,
-        error.message,
+        error instanceof Error ? error.message : error,
       );
     }
   }
@@ -416,11 +425,12 @@ export async function pingLeDenicheur(): Promise<{
       latency: Date.now() - start,
       error: result ? undefined : "No product returned",
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       ok: false,
       latency: Date.now() - start,
-      error: error?.message || "LeDenicheur unreachable",
+      error:
+        (error instanceof Error && error.message) || "LeDenicheur unreachable",
     };
   }
 }

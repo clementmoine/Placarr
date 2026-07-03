@@ -94,7 +94,7 @@ export const googlebooksModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "googlebooks",
-      async resolve({ name, barcode }: any) {
+      async resolve({ name, barcode }) {
         return fetchFromGoogleBooks(name, barcode);
       },
     } satisfies MetadataProviderAdapter;

@@ -19,20 +19,20 @@ async function main() {
       const id = m.info.id;
       const started = Date.now();
       try {
-        const r: any = await m.healthCheck!.run();
-        const status = r.status ?? (r.ok ? "up" : "down");
+        const r = await m.healthCheck!.run();
+        const status = r.status;
         return {
           id,
           status,
           latency: r.latency ?? Date.now() - started,
           error: r.error ?? null,
         };
-      } catch (e: any) {
+      } catch (e) {
         return {
           id,
           status: "down",
           latency: Date.now() - started,
-          error: e?.message || String(e),
+          error: e instanceof Error ? e.message : String(e) || String(e),
         };
       }
     }),

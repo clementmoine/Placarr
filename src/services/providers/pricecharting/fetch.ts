@@ -915,10 +915,10 @@ export async function fetchPricesFromPriceCharting(
     }
 
     return parsePriceChartingPricesFromHtml(html);
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       `[PriceCharting Prices] Error fetching for barcode ${cleanedBarcode}:`,
-      error.message,
+      error instanceof Error ? error.message : error,
     );
     return null;
   }
@@ -1008,10 +1008,10 @@ export async function fetchMetadataFromPriceCharting(
       barcode: parsed.barcode || cleanedBarcode,
       ...(prices ? { prices } : {}),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       `[PriceCharting Metadata] Error fetching barcode ${cleanedBarcode}:`,
-      error.message,
+      error instanceof Error ? error.message : error,
     );
     return null;
   }

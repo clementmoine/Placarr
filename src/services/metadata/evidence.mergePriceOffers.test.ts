@@ -35,7 +35,7 @@ function dbOffer(overrides: Record<string, unknown>) {
 
 function lastCreatedRows() {
   const call = prismaMock.priceOffer.createMany.mock.calls.at(-1);
-  return (call?.[0] as { data: any[] }).data;
+  return (call?.[0] as { data: Array<Record<string, unknown>> }).data;
 }
 
 describe("mergePriceOffers", () => {

@@ -35,7 +35,7 @@ export const steamModule: ProviderModule = {
   },
   createMetadataAdapter: () => ({
     id: "steam",
-    async resolve({ name, includePcSources }: any) {
+    async resolve({ name, includePcSources }) {
       if (!includePcSources) return null;
       return (await fetchFromSteam(name)) as MetadataResult | null;
     },

@@ -38,7 +38,7 @@ export const omdbModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "omdb",
-      async resolve({ name, imdbId, fallbackNames }: any) {
+      async resolve({ name, imdbId, fallbackNames }) {
         return fetchFromOMDb(name, { imdbId, fallbackNames });
       },
     } satisfies MetadataProviderAdapter;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import type { MetadataResult } from "@/types/metadataProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -244,7 +245,10 @@ export function MetadataRefreshPanel() {
   const updateItemAfterRefresh = (
     id: string,
     payload: {
-      item?: { imageUrl?: string | null; metadata?: any } | null;
+      item?: {
+        imageUrl?: string | null;
+        metadata?: MetadataResult | null;
+      } | null;
       refreshedAt?: string;
     },
   ) => {
@@ -261,10 +265,7 @@ export function MetadataRefreshPanel() {
               imageUrl: payload.item?.imageUrl ?? item.imageUrl,
               metadata: payload.item?.metadata
                 ? {
-                    id:
-                      item.metadata?.id ||
-                      payload.item.metadata.id ||
-                      "metadata",
+                    id: item.metadata?.id || "metadata",
                     title: payload.item.metadata.title || item.metadata?.title,
                     imageUrl:
                       payload.item.metadata.imageUrl || item.metadata?.imageUrl,
@@ -381,12 +382,13 @@ export function MetadataRefreshPanel() {
             endedAt: Date.now(),
           });
         }
-      } catch (error: any) {
+      } catch (error) {
         markState(item.id, {
           status: "error",
           message:
-            error.response?.data?.error ||
-            error.message ||
+            (axios.isAxiosError<{ error?: string }>(error) &&
+              error.response?.data?.error) ||
+            (error instanceof Error ? error.message : undefined) ||
             (locale === "fr" ? "Erreur de refresh" : "Refresh failed"),
           endedAt: Date.now(),
         });

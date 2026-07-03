@@ -117,13 +117,7 @@ export const screenscraperModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "screenscraper",
-      async resolve({
-        name,
-        barcode,
-        platform,
-        isBackground,
-        lookupQueries,
-      }: any) {
+      async resolve({ name, barcode, platform, isBackground, lookupQueries }) {
         return resolveWithLookupQueries(lookupQueries, name, (query) =>
           fetchFromScreenScraper(query, barcode, platform, {
             isBackground,

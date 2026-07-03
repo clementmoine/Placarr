@@ -25,6 +25,22 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
+type LoanParty = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
+type LoanRequestEntry = {
+  id: string;
+  status: string;
+  notes?: string | null;
+  createdAt: string;
+  item?: { name?: string | null; imageUrl?: string | null } | null;
+  owner?: LoanParty | null;
+  requester?: LoanParty | null;
+};
+
 function LoansPageComponent() {
   const { t, locale } = useLocale();
   const queryClient = useQueryClient();
@@ -32,7 +48,10 @@ function LoansPageComponent() {
   const { data: loanData, isFetching } = useQuery({
     queryKey: ["loans"],
     queryFn: async () => {
-      const { data } = await axios.get("/api/loans");
+      const { data } = await axios.get<{
+        sent: LoanRequestEntry[];
+        received: LoanRequestEntry[];
+      }>("/api/loans");
       return data;
     },
   });
@@ -141,7 +160,7 @@ function LoansPageComponent() {
             >
               {sentRequests.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {sentRequests.map((req: any) => (
+                  {sentRequests.map((req) => (
                     <div
                       key={req.id}
                       className="group relative flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 bg-zinc-50/20 dark:bg-zinc-950/40 border border-border/60 dark:border-zinc-800/80 rounded-2xl shadow-sm hover:border-zinc-350 dark:hover:border-zinc-750 transition-all duration-200"
@@ -151,7 +170,7 @@ function LoansPageComponent() {
                         {req.item?.imageUrl ? (
                           <RemoteImage
                             src={req.item.imageUrl}
-                            alt={req.item.name}
+                            alt={req.item.name || ""}
                             width={128}
                             height={128}
                             className="w-full h-full object-cover"
@@ -252,7 +271,7 @@ function LoansPageComponent() {
             >
               {receivedRequests.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {receivedRequests.map((req: any) => (
+                  {receivedRequests.map((req) => (
                     <div
                       key={req.id}
                       className="group relative flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 bg-zinc-50/20 dark:bg-zinc-950/40 border border-border/60 dark:border-zinc-800/80 rounded-2xl shadow-sm hover:border-zinc-350 dark:hover:border-zinc-750 transition-all duration-200"
@@ -262,7 +281,7 @@ function LoansPageComponent() {
                         {req.item?.imageUrl ? (
                           <RemoteImage
                             src={req.item.imageUrl}
-                            alt={req.item.name}
+                            alt={req.item.name || ""}
                             width={128}
                             height={128}
                             className="w-full h-full object-cover"

@@ -1,6 +1,29 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
+type RawgNamedEntry = { name?: string };
+type RawgGame = {
+  id?: number;
+  slug?: string;
+  name: string;
+  released?: string;
+  rating?: number;
+  reviews_count?: number;
+  metacritic?: number | null;
+  playtime?: number;
+  background_image?: string | null;
+  short_screenshots?: Array<{ image: string }>;
+  platforms?: Array<{ platform?: RawgNamedEntry }>;
+  parent_platforms?: Array<{ platform?: RawgNamedEntry }>;
+  stores?: Array<{ store?: RawgNamedEntry }>;
+  genres?: RawgNamedEntry[];
+  tags?: RawgNamedEntry[];
+  description?: string;
+  description_raw?: string;
+  website?: string;
+};
+type RawgSearchResponse = { results?: RawgGame[] };
+
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { isRawgQuotaBlocked, markRawgQuotaHit } from "./quota";
 
@@ -69,7 +92,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     };
 
     const url = `https://api.rawg.io/api/games?search=${encodeURIComponent(name)}&key=${process.env.RAWG_API_KEY}`;
-    const data = await fetchWithRetry<any>(url, 2);
+    const data = await fetchWithRetry<RawgSearchResponse>(url, 2);
 
     if (!data?.results || data.results.length === 0) return null;
 
@@ -97,7 +120,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     let detailTags: string[] = [];
     if (bestMatch.slug) {
       try {
-        const detail = await fetchWithRetry<any>(
+        const detail = await fetchWithRetry<RawgGame>(
           `https://api.rawg.io/api/games/${bestMatch.slug}?key=${process.env.RAWG_API_KEY}`,
           2,
         );
@@ -134,7 +157,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     }
 
     const platformName = bestMatch.platforms?.[0]?.platform?.name || "";
-    let imageUrl = bestMatch.background_image;
+    let imageUrl = bestMatch.background_image ?? undefined;
 
     const coverUrl = await deps.fetchCoverFromCoverProject(
       bestMatch.name,
@@ -185,7 +208,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     const platformNames = Array.isArray(bestMatch.platforms)
       ? bestMatch.platforms
-          .map((entry: any) => entry?.platform?.name)
+          .map((entry) => entry?.platform?.name)
           .filter(
             (entry: unknown): entry is string => typeof entry === "string",
           )
@@ -203,7 +226,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     const storeNames = Array.isArray(bestMatch.stores)
       ? bestMatch.stores
-          .map((entry: any) => entry?.store?.name)
+          .map((entry) => entry?.store?.name)
           .filter(
             (entry: unknown): entry is string => typeof entry === "string",
           )
@@ -221,7 +244,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     const genreNames = Array.isArray(bestMatch.genres)
       ? bestMatch.genres
-          .map((entry: any) => entry?.name)
+          .map((entry) => entry?.name)
           .filter(
             (entry: unknown): entry is string => typeof entry === "string",
           )

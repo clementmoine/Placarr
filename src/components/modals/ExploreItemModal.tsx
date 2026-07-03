@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import type { ExploreItem } from "@/types/explore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
@@ -31,7 +32,7 @@ import { getExploreDetailCoverClass } from "@/lib/text/cardFormat";
 interface ExploreItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: any; // Explore item result
+  item: ExploreItem | null;
 }
 
 export function ExploreItemModal({
@@ -48,7 +49,9 @@ export function ExploreItemModal({
   const { data: loanData, isFetching: isFetchingLoans } = useQuery({
     queryKey: ["loans"],
     queryFn: async () => {
-      const { data } = await axios.get("/api/loans");
+      const { data } = await axios.get<{
+        sent: Array<{ id: string; itemId: string; status: string }>;
+      }>("/api/loans");
       return data;
     },
     enabled: isOpen,
@@ -57,7 +60,7 @@ export function ExploreItemModal({
   const alreadyRequested = useMemo(() => {
     if (!loanData || !item) return false;
     return loanData.sent.some(
-      (req: any) =>
+      (req) =>
         req.itemId === item.id && ["PENDING", "APPROVED"].includes(req.status),
     );
   }, [loanData, item]);
@@ -65,7 +68,7 @@ export function ExploreItemModal({
   const activeRequest = useMemo(() => {
     if (!loanData || !item) return null;
     return loanData.sent.find(
-      (req: any) =>
+      (req) =>
         req.itemId === item.id && ["PENDING", "APPROVED"].includes(req.status),
     );
   }, [loanData, item]);
@@ -84,8 +87,11 @@ export function ExploreItemModal({
       setShowRequestForm(false);
       setNotes("");
     },
-    onError: (err: any) => {
-      const errMsg = err.response?.data?.error || t("common.error");
+    onError: (err: unknown) => {
+      const errMsg =
+        (axios.isAxiosError<{ error?: string }>(err) &&
+          err.response?.data?.error) ||
+        t("common.error");
       toast.error(errMsg);
     },
   });
@@ -102,7 +108,7 @@ export function ExploreItemModal({
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       toast.success(t("common.success") || "Action réussie");
     },
-    onError: (err: any) => {
+    onError: () => {
       toast.error(t("common.error"));
     },
   });
@@ -313,7 +319,7 @@ export function ExploreItemModal({
                       Créateurs
                     </span>
                     <span className="text-xs font-semibold text-foreground truncate">
-                      {item.metadata.authors.map((a: any) => a.name).join(", ")}
+                      {item.metadata.authors.map((a) => a.name).join(", ")}
                     </span>
                   </div>
                 )}
@@ -325,9 +331,7 @@ export function ExploreItemModal({
                         Éditeurs
                       </span>
                       <span className="text-xs font-semibold text-foreground truncate">
-                        {item.metadata.publishers
-                          .map((p: any) => p.name)
-                          .join(", ")}
+                        {item.metadata.publishers.map((p) => p.name).join(", ")}
                       </span>
                     </div>
                   )}
@@ -378,7 +382,7 @@ export function ExploreItemModal({
                     Description
                   </span>
                   <p className="text-xs leading-relaxed text-muted-foreground line-clamp-6">
-                    {item.description || item.metadata.description}
+                    {item.description || item.metadata?.description}
                   </p>
                 </div>
               )}

@@ -27,10 +27,9 @@ const eslintConfig = [
   {
     files: ["**/*.{ts,tsx}"],
     rules: {
-      // Dette existante (~130 occurrences) accumulée pendant que `next lint`
-      // était cassé — repassé en erreur une fois le typage assaini
-      // (backlog: « no-explicit-any sweep »).
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Sweep 2026-07-02 : les ~130 `any` hérités sont typés — la règle est
+      // remontée en erreur pour empêcher toute réintroduction.
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {

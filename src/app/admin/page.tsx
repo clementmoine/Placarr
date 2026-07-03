@@ -199,7 +199,7 @@ interface ProductTeardownResult {
   };
   inferredType?: string | null;
   selectedName: string;
-  barcodeResult: any;
+  barcodeResult: unknown;
   parser: TeardownNameParse[];
   providers: TeardownProviderContribution[];
   coverage: Array<{
@@ -465,10 +465,11 @@ function AdminDashboardComponent() {
         refresh: true,
       });
       setTeardownResult(res.data);
-    } catch (err: any) {
+    } catch (err) {
       const msg =
-        err.response?.data?.error ||
-        err.message ||
+        (axios.isAxiosError<{ error?: string }>(err) &&
+          err.response?.data?.error) ||
+        (err instanceof Error ? err.message : undefined) ||
         t("common.somethingWentWrong") ||
         "Request failed";
       setTeardownError(msg);

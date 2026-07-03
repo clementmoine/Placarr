@@ -1,4 +1,5 @@
 import { createBarcodeLookupDeps } from "@/services/provider/barcode";
+import type { MetadataResult } from "@/types/metadataProvider";
 import { getMetadataProviderAdapter } from "@/services/provider/bootstrap";
 import { achatmoinscherModule } from "@/services/providers/achatmoinscher";
 import { bggModule } from "@/services/providers/bgg";
@@ -27,13 +28,14 @@ type Mode = "meta" | "list" | "raw";
 const out: Record<string, unknown> = {};
 const barcodeDeps = createBarcodeLookupDeps();
 
-function summarizeMeta(value: any) {
+function summarizeMeta(value: unknown) {
+  const meta = (value ?? null) as MetadataResult | null;
   return {
-    hasResult: Boolean(value),
-    keys: Object.keys(value || {}),
-    attachments: value?.attachments?.length || 0,
-    facts: value?.facts?.length || 0,
-    title: value?.title || null,
+    hasResult: Boolean(meta),
+    keys: Object.keys(meta || {}),
+    attachments: meta?.attachments?.length || 0,
+    facts: meta?.facts?.length || 0,
+    title: meta?.title || null,
   };
 }
 

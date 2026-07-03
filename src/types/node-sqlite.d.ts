@@ -9,13 +9,17 @@ declare module "node:sqlite" {
 
   export class StatementSync {
     // Returns the first row (column→value), or undefined when none.
-    get(...params: SupportedValue[]): any;
-    all(...params: SupportedValue[]): any[];
+    get(
+      ...params: SupportedValue[]
+    ): Record<string, SupportedValue> | undefined;
+    all(...params: SupportedValue[]): Record<string, SupportedValue>[];
     run(...params: SupportedValue[]): {
       changes: number | bigint;
       lastInsertRowid: number | bigint;
     };
-    iterate(...params: SupportedValue[]): IterableIterator<any>;
+    iterate(
+      ...params: SupportedValue[]
+    ): IterableIterator<Record<string, SupportedValue>>;
   }
 
   export class DatabaseSync {

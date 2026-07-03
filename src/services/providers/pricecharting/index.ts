@@ -19,6 +19,7 @@ import {
 } from "./imageLabels";
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
+import type { MetadataFact } from "@/types/metadataProvider";
 import type { PriceChartingMetadata } from "@/lib/barcode/lookup/providerTypes";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 
@@ -134,12 +135,12 @@ export const pricechartingModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "pricecharting",
-      async resolve({ name, barcode, platform }: any) {
+      async resolve({ name, barcode, platform }) {
         const cleanedBarcode = barcode ? cleanCode(barcode) : "";
         const isPal = cleanedBarcode
           ? cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0")
           : true;
-        let pcMeta: any = null;
+        let pcMeta: PriceChartingMetadata | null = null;
         if (cleanedBarcode) {
           pcMeta = await fetchMetadataFromPriceCharting(
             cleanedBarcode,
@@ -156,7 +157,7 @@ export const pricechartingModule: ProviderModule = {
         }
         if (!pcMeta) return null;
 
-        const facts: any[] = [];
+        const facts: MetadataFact[] = [];
         if (pcMeta.ageRating) {
           facts.push({
             kind: "age-rating",
@@ -183,7 +184,7 @@ export const pricechartingModule: ProviderModule = {
           facts: facts.length > 0 ? facts : undefined,
         };
       },
-    } satisfies any;
+    };
   },
   buildBarcodeTasks(deps, type, { barcode, platformKey }) {
     if (!BARCODE_TYPES.includes(type)) {

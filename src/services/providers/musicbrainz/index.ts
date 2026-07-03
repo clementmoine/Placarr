@@ -21,7 +21,7 @@ export type { MusicBrainzResult } from "./fetch";
 function createMusicBrainzAdapter(): MetadataProviderAdapter {
   return {
     id: "musicbrainz",
-    async resolve({ barcode }: any) {
+    async resolve({ barcode }) {
       if (!barcode) return null;
       const cleanedBarcode = normalizeProductBarcode(barcode);
       if (!cleanedBarcode) return null;

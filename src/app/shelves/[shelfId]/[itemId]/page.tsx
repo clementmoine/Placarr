@@ -1396,7 +1396,7 @@ export default function ItemDetailsPage() {
     if (!item?.metadataId || !item.metadata) {
       return isItemEnriching(item) && Boolean(item?.barcode);
     }
-    const metadata = item.metadata as any;
+    const metadata = item.metadata;
     const facts = normalizeFacts(metadata.facts);
     const attachments = Array.isArray(metadata.attachments)
       ? metadata.attachments
@@ -1696,7 +1696,7 @@ export default function ItemDetailsPage() {
 
   const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
-    const metadata = item?.metadata as any;
+    const metadata = item?.metadata;
     const sourceFacts = normalizeFacts(metadata?.facts);
 
     if (shelf?.type === "movies") {
@@ -1819,7 +1819,7 @@ export default function ItemDetailsPage() {
   );
 
   const audioTracks = useMemo(() => {
-    const attachments = ((item?.metadata as any)?.attachments || []) as Array<{
+    const attachments = (item?.metadata?.attachments || []) as Array<{
       type?: string;
       title?: string | null;
       duration?: number | null;

@@ -152,8 +152,10 @@ function isCandidateAligned(query: string, title: string): boolean {
   return isMetadataTitleAligned({ title }, [query], 0.58);
 }
 
-function parseJsonLdBlocks(html: string): any[] {
-  const blocks: any[] = [];
+type JsonLdSchema = Record<string, unknown>;
+
+function parseJsonLdBlocks(html: string): JsonLdSchema[] {
+  const blocks: JsonLdSchema[] = [];
   for (const match of html.matchAll(
     /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   )) {
@@ -335,8 +337,12 @@ export function parseBooknodeBookPage(
   const cleanTitle = cleanText(stripBooknodeTitleSuffix(title || ""));
   if (!cleanTitle) return null;
 
-  const rating = book?.aggregateRating;
-  const series = book?.isPartOf;
+  const rating = book?.aggregateRating as
+    | { ratingValue?: unknown; ratingCount?: unknown; reviewCount?: unknown }
+    | undefined;
+  const series = book?.isPartOf as
+    | { name?: unknown; url?: unknown; position?: unknown }
+    | undefined;
   const image =
     firstSchemaValue(book?.image) ||
     metaContent(html, "twitter:image") ||
@@ -348,7 +354,9 @@ export function parseBooknodeBookPage(
   const markdownSeriesData = markdownSeries(html);
 
   return {
-    id: idFromBooknodeUrl(sourceUrl) || idFromBooknodeUrl(book?.["@id"]),
+    id:
+      idFromBooknodeUrl(sourceUrl) ||
+      idFromBooknodeUrl(firstSchemaValue(book?.["@id"])),
     title: cleanTitle,
     sourceUrl,
     imageUrl: normalizeBooknodeCoverUrl(absoluteBooknodeUrl(image)),

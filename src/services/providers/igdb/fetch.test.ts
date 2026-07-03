@@ -52,7 +52,9 @@ function setting(key: string, value: string) {
 }
 
 function mockCachedToken() {
-  mockedSetting.findUnique.mockImplementation((async (args: any) => {
+  mockedSetting.findUnique.mockImplementation((async (args: {
+    where: { key: string };
+  }) => {
     const key = args.where.key;
     if (key === "igdb_access_token") {
       return setting(key, "stale-token");
@@ -61,7 +63,7 @@ function mockCachedToken() {
       return setting(key, String(Date.now() + 3_600_000));
     }
     return null;
-  }) as any);
+  }) as never);
 }
 
 function unauthorizedError() {

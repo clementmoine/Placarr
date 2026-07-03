@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Prisma } from "@prisma/client";
 import { usePathname, useRouter } from "next/navigation";
 import { Scan, Barcode } from "lucide-react";
 import { motion } from "framer-motion";
@@ -81,7 +82,9 @@ export function ScanFAB() {
     setIsItemModalOpen(true);
   };
 
-  const handleItemModalSubmit = async (itemData: any) => {
+  const handleItemModalSubmit = async (
+    itemData: Prisma.ItemCreateInput | Prisma.ItemUpdateInput,
+  ) => {
     try {
       const newItem = await saveItem({
         ...itemData,
@@ -93,9 +96,7 @@ export function ScanFAB() {
       });
 
       toast.success(t("common.success"));
-      router.push(
-        itemPath((newItem as any).shelf || { id: newItem.shelfId }, newItem),
-      );
+      router.push(itemPath(newItem.shelf || { id: newItem.shelfId }, newItem));
     } catch (error) {
       console.error("Failed to save scanned item:", error);
       toast.error(t("items.saveFailed"));

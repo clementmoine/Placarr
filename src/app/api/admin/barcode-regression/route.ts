@@ -79,9 +79,18 @@ function assertNotIncludes(
   };
 }
 
+type LiveBarcodeResponse = {
+  provider?: string | null;
+  cleanName?: string | null;
+  shelfType?: string | null;
+  platformKey?: string | null;
+  suggestions?: string[];
+  matches?: Array<{ name?: string; confidence?: number }>;
+};
+
 function evaluateCase(
   testCase: BarcodeRegressionCase,
-  data: any,
+  data: LiveBarcodeResponse | null | undefined,
 ): BarcodeRegressionAssertion[] {
   const expected: BarcodeRegressionExpectation = testCase.expected || {};
   const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
@@ -99,7 +108,7 @@ function evaluateCase(
 
   for (const value of expected.cleanNameIncludes || []) {
     assertions.push(
-      assertIncludes("cleanNameIncludes", value, data?.cleanName),
+      assertIncludes("cleanNameIncludes", value, data?.cleanName || ""),
     );
   }
 
@@ -159,17 +168,25 @@ function evaluateCase(
   return assertions;
 }
 
-function normalizeCases(body: any): BarcodeRegressionCase[] {
+type BarcodeRegressionRequestBody = {
+  cases?: BarcodeRegressionCase[];
+  barcodes?: string[];
+  type?: string | null;
+};
+
+function normalizeCases(
+  body: BarcodeRegressionRequestBody | null | undefined,
+): BarcodeRegressionCase[] {
   if (Array.isArray(body?.cases) && body.cases.length > 0) {
     return body.cases;
   }
 
   if (Array.isArray(body?.barcodes) && body.barcodes.length > 0) {
-    return body.barcodes.map((barcode: string, index: number) => ({
+    return body.barcodes.map((barcode, index) => ({
       id: `batch-${index + 1}`,
       label: barcode,
       barcode,
-      type: body.type,
+      type: body?.type ?? undefined,
       expected: {},
     }));
   }

@@ -1,5 +1,31 @@
 import axios from "axios";
 
+/** Réponse détail OMDb : champs texte souvent "N/A". */
+type OmdbDetails = {
+  Response?: string;
+  Title?: string;
+  Released?: string;
+  Runtime?: string;
+  Genre?: string;
+  Director?: string;
+  Writer?: string;
+  Actors?: string;
+  Plot?: string;
+  Language?: string;
+  Country?: string;
+  Awards?: string;
+  Poster?: string;
+  Metascore?: string;
+  imdbRating?: string;
+  imdbVotes?: string;
+  imdbID?: string;
+  BoxOffice?: string;
+  Production?: string;
+  Website?: string;
+  Rated?: string;
+  Ratings?: Array<{ Source?: string; Value?: string }>;
+};
+
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
 export type OMDbResolveOptions = {
@@ -22,7 +48,7 @@ function splitOmdbList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function buildFactsFromOmdbDetails(details: any): MetadataFact[] {
+function buildFactsFromOmdbDetails(details: OmdbDetails): MetadataFact[] {
   const facts: MetadataFact[] = [];
   const ageRating =
     typeof details.Rated === "string" && details.Rated !== "N/A"
@@ -181,7 +207,7 @@ function buildFactsFromOmdbDetails(details: any): MetadataFact[] {
 }
 
 function buildMetadataFromOmdbDetails(
-  details: any,
+  details: OmdbDetails,
   fallbackTitle?: string,
 ): MetadataResult | null {
   if (!details || details.Response === "False") return null;

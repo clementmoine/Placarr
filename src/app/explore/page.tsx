@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
+import type { ExploreItem, ExplorePublicShelf } from "@/types/explore";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,7 +40,7 @@ function ExplorePageComponent() {
   const q = searchParams.get("q") || "";
   const [searchQuery, setSearchQuery] = useState(q);
 
-  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ExploreItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const form = useForm<FormValues>({
@@ -108,12 +109,12 @@ function ExplorePageComponent() {
 
   const items = useMemo(() => {
     if (!searchQuery) return [];
-    return (results as any[]) || [];
+    return (results as ExploreItem[]) || [];
   }, [searchQuery, results]);
 
   const publicShelves = useMemo(() => {
     if (searchQuery) return [];
-    return (results as any[]) || [];
+    return (results as ExplorePublicShelf[]) || [];
   }, [searchQuery, results]);
 
   return (
@@ -233,7 +234,7 @@ function ExplorePageComponent() {
             </span>
             {publicShelves.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {publicShelves.map((shelf: any) => (
+                {publicShelves.map((shelf) => (
                   <div
                     key={shelf.id}
                     onClick={() => {

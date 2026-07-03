@@ -93,7 +93,7 @@ export const openlibraryModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "openlibrary",
-      async resolve({ name, barcode }: any) {
+      async resolve({ name, barcode }) {
         return fetchFromOpenLibrary(name, barcode);
       },
     } satisfies MetadataProviderAdapter;

@@ -279,7 +279,7 @@ export const chasseauxlivresModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "chasseauxlivres",
-      async resolve({ type, name, barcode, lookupQueries }: any) {
+      async resolve({ type, name, barcode, lookupQueries }) {
         const normalizedBarcode = String(barcode || "").trim();
         const queries =
           lookupQueries && lookupQueries.length > 0

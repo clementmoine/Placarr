@@ -437,7 +437,7 @@ async function searchScreenScraperGames(
   query: string,
   systemeid?: number,
   options?: { isBackground?: boolean },
-): Promise<any[]> {
+): Promise<SSGame[]> {
   if (isScreenScraperQuotaBlocked()) {
     const cached = getCachedScreenScraperSearch(query, systemeid);
     if (cached) return cached;
@@ -453,7 +453,7 @@ async function searchScreenScraperGames(
   try {
     const queryFn = () =>
       axios.get<{
-        response: { jeux: any };
+        response: { jeux?: SSGame[] | SSGame };
       }>("https://api.screenscraper.fr/api2/jeuRecherche.php", {
         params: {
           ...baseParams,
@@ -475,7 +475,7 @@ async function searchScreenScraperGames(
       results = [results];
     }
 
-    const filtered = (results || []).filter((r: any) => r && r.id);
+    const filtered = (results || []).filter((r) => r && r.id);
     cacheScreenScraperSearch(query, systemeid, filtered);
     return filtered;
   } catch (error) {
@@ -872,7 +872,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             deps.cleanSearchQuery,
           );
 
-        let validResults: any[] = [];
+        let validResults: SSGame[] = [];
         for (const query of buildScreenScraperSearchQueries(
           name,
           deps.cleanSearchQuery,
@@ -889,10 +889,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               searchNameUsed = query;
               break;
             }
-          } catch (err: any) {
+          } catch (err) {
             console.error(
               `[ScreenScraper] Search error for "${query}":`,
-              err.message,
+              err instanceof Error ? err.message : err,
             );
           }
         }
@@ -952,10 +952,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                           );
                           break;
                         }
-                      } catch (err: any) {
+                      } catch (err) {
                         console.error(
                           `[ScreenScraper] Cached suggestion search error for "${query}":`,
-                          err.message,
+                          err instanceof Error ? err.message : err,
                         );
                       }
                     }
@@ -995,7 +995,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 systemeid,
                 options,
               );
-              validResults = fallbackResults.filter((result: any) =>
+              validResults = fallbackResults.filter((result) =>
                 isPlausibleScreenScraperFallbackResult(
                   cleanedName,
                   pickSSTitle(result.noms) || "",
@@ -1005,10 +1005,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               if (validResults.length > 0) {
                 searchNameUsed = firstWord;
               }
-            } catch (err: any) {
+            } catch (err) {
               console.error(
                 `[ScreenScraper] Fallback search error:`,
-                err.message,
+                err instanceof Error ? err.message : err,
               );
             }
           } else if (firstWord) {
@@ -1024,7 +1024,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         }
 
         const platformCompatibleResults = systemeid
-          ? validResults.filter((r: any) => {
+          ? validResults.filter((r) => {
               if (r.systeme?.id) {
                 return Number(r.systeme.id) === systemeid;
               }

@@ -20,6 +20,19 @@ type TMDBSearchResult = {
 
 type TMDBImage = { file_path: string; iso_639_1?: string | null };
 
+type TMDBAlternativeTitle = { title?: string; name?: string };
+type TMDBCertificationCountry = {
+  iso_3166_1?: string;
+  rating?: string;
+  release_dates?: Array<{ certification?: string }>;
+};
+type TMDBNamedEntry = { name?: string; iso_3166_1?: string };
+type TMDBSeasonDetails = {
+  poster_path?: string | null;
+  air_date?: string | null;
+  overview?: string | null;
+};
+
 // Map a TMDB image language (iso_639_1) to a display-region role so the cover
 // scorer can prefer the French artwork (France > Europe > World > …). A textless
 // image (no language) is the neutral international "wor".
@@ -240,8 +253,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       const titlesRes = await axios.get(
         `https://api.themoviedb.org/3/movie/${bestMatch.id}/alternative_titles?api_key=${process.env.TMDB_API_KEY}`,
       );
-      aliases = (titlesRes.data?.titles || [])
-        .map((t: any) => t.title as string)
+      aliases = ((titlesRes.data?.titles || []) as TMDBAlternativeTitle[])
+        .map((t) => t.title || "")
         .filter(
           (t: string) =>
             t.toLowerCase().trim() !== bestMatch.title.toLowerCase().trim(),
@@ -261,11 +274,11 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       const countries = releaseDatesRes.data?.results || [];
       const preferredCountries = ["FR", "BE", "CA", "US", "GB"];
       for (const iso of preferredCountries) {
-        const country = countries.find(
-          (entry: any) => entry.iso_3166_1 === iso,
+        const country = (countries as TMDBCertificationCountry[]).find(
+          (entry) => entry.iso_3166_1 === iso,
         );
         const cert = country?.release_dates?.find(
-          (date: any) =>
+          (date) =>
             typeof date.certification === "string" && date.certification.trim(),
         )?.certification;
         if (cert) {
@@ -312,7 +325,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     }
     const genreNames = Array.isArray(details.genres)
       ? details.genres
-          .map((entry: any) => entry?.name)
+          .map((entry: TMDBNamedEntry | null) => entry?.name)
           .filter(
             (entry: unknown): entry is string => typeof entry === "string",
           )
@@ -342,7 +355,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     }
     const productionCountries = Array.isArray(details.production_countries)
       ? details.production_countries
-          .map((entry: any) => entry?.name || entry?.iso_3166_1)
+          .map(
+            (entry: TMDBNamedEntry | null) => entry?.name || entry?.iso_3166_1,
+          )
           .filter(
             (entry: unknown): entry is string => typeof entry === "string",
           )
@@ -461,7 +476,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     );
     const details = detailsRes.data;
 
-    let seasonDetails: any | null = null;
+    let seasonDetails: TMDBSeasonDetails | null = null;
     if (intent.seasonNumber) {
       try {
         const seasonRes = await axios.get(
@@ -554,8 +569,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       const titlesRes = await axios.get(
         `https://api.themoviedb.org/3/tv/${bestMatch.id}/alternative_titles?api_key=${process.env.TMDB_API_KEY}`,
       );
-      aliases = (titlesRes.data?.results || [])
-        .map((t: any) => (t.title || t.name) as string)
+      aliases = ((titlesRes.data?.results || []) as TMDBAlternativeTitle[])
+        .map((t) => t.title || t.name || "")
         .filter(Boolean)
         .filter(
           (t: string) =>
@@ -579,8 +594,8 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       const countries = ratingsRes.data?.results || [];
       const preferredCountries = ["FR", "BE", "CA", "US", "GB"];
       for (const iso of preferredCountries) {
-        const country = countries.find(
-          (entry: any) => entry.iso_3166_1 === iso,
+        const country = (countries as TMDBCertificationCountry[]).find(
+          (entry) => entry.iso_3166_1 === iso,
         );
         const rating =
           typeof country?.rating === "string" && country.rating.trim()
@@ -624,7 +639,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     }
     const genreNames = Array.isArray(details.genres)
       ? details.genres
-          .map((entry: any) => entry?.name)
+          .map((entry: TMDBNamedEntry | null) => entry?.name)
           .filter(
             (entry: unknown): entry is string => typeof entry === "string",
           )

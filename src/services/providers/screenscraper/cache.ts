@@ -14,7 +14,7 @@ const QUOTA_COOLDOWN_MS = 20 * 60 * 1000;
 type TimedEntry<T> = { expires: number; value: T };
 
 const gameByIdMemory = new Map<number, TimedEntry<SSGame>>();
-const searchMemory = new Map<string, TimedEntry<unknown[]>>();
+const searchMemory = new Map<string, TimedEntry<SSGame[]>>();
 const lookupMemory = new Map<string, TimedEntry<MetadataResult>>();
 const inFlightLookups = new Map<string, Promise<MetadataResult | null>>();
 
@@ -145,7 +145,7 @@ export async function cacheScreenScraperGame(
 export function getCachedScreenScraperSearch(
   query: string,
   systemeid?: number,
-): unknown[] | null {
+): SSGame[] | null {
   const entry = searchMemory.get(searchMemoryKey(query, systemeid));
   if (!entry || entry.expires <= Date.now()) return null;
   return entry.value;
@@ -154,7 +154,7 @@ export function getCachedScreenScraperSearch(
 export function cacheScreenScraperSearch(
   query: string,
   systemeid: number | undefined,
-  results: unknown[],
+  results: SSGame[],
 ): void {
   if (results.length === 0) return;
   searchMemory.set(searchMemoryKey(query, systemeid), {

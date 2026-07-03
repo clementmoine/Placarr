@@ -134,7 +134,7 @@ export const booknodeModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "booknode",
-      async resolve({ name, lookupQueries }: any) {
+      async resolve({ name, lookupQueries }) {
         const queries =
           lookupQueries && lookupQueries.length > 0
             ? lookupQueries

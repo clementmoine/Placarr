@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAxiosError } from "axios";
 import { requireAdmin } from "@/lib/auth";
 import { extractProductName } from "@/lib/text/productName";
 
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let result: any = null;
+    let result: unknown = null;
     let providerName = "";
 
     const handler = testProviderHandlers[provider];
@@ -160,13 +161,15 @@ export async function POST(req: NextRequest) {
       query,
       result,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[TestProvider] Error running provider test:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "An error occurred during testing",
-        details: error.response?.data || null,
+        error:
+          (error instanceof Error && error.message) ||
+          "An error occurred during testing",
+        details: (isAxiosError(error) && error.response?.data) || null,
       },
       { status: 500 },
     );

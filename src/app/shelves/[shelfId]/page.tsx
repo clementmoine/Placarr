@@ -298,7 +298,7 @@ function ShelfComponent() {
             userId: shelf?.userId || "",
           }),
         ),
-      } as any;
+      };
     },
   });
 

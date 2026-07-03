@@ -2,9 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fetchMetadataByType } from "./fetch";
 import { metadataProviderResolverMap } from "@/services/provider/bootstrap";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 
 // Mock the resolvers map to return test data
-const defaultImplementation = async (ctx: any, id: string) => {
+const defaultImplementation = async (
+  ctx: MetadataAdapterContext,
+  id: string,
+) => {
   if (ctx.name === "failing") return null;
   return {
     title: `${id} - ${ctx.name}`,
@@ -17,7 +21,7 @@ vi.mock("@/services/provider/bootstrap", () => ({
   metadataProviderResolverMap: {
     get: (id: string) => ({
       id,
-      resolve: (ctx: any) => mockResolve(ctx, id),
+      resolve: (ctx: MetadataAdapterContext) => mockResolve(ctx, id),
     }),
   },
 }));
@@ -46,7 +50,7 @@ describe("fetchMetadataByType generic routing", () => {
     await fetchMetadataByType("Super Picsou Geant", "books");
 
     expect(
-      mockResolve.mock.calls.some((call: any) => call[0]?.type === "books"),
+      mockResolve.mock.calls.some((call) => call[0]?.type === "books"),
     ).toBe(true);
   });
 
@@ -198,7 +202,7 @@ describe("fetchMetadataByType generic routing", () => {
 
     await fetchMetadataByType("Toy Story", "movies");
 
-    const secondaryCall = mockResolve.mock.calls.find((call: any) => {
+    const secondaryCall = mockResolve.mock.calls.find((call) => {
       const firstArg = call[0];
       const secondArg = call[1];
       return (
@@ -249,7 +253,7 @@ describe("fetchMetadataByType generic routing", () => {
     );
 
     expect(
-      mockResolve.mock.calls.some((call: any) => call[1] === "chocobonplan"),
+      mockResolve.mock.calls.some((call) => call[1] === "chocobonplan"),
     ).toBe(true);
     expect(
       res?.attachments?.some(

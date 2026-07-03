@@ -479,7 +479,7 @@ async function runProvider(
       products,
       rawSample: sampleRaw(raw),
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       provider,
       phase,
@@ -487,7 +487,7 @@ async function runProvider(
       durationMs: Date.now() - start,
       fields: [],
       products: [],
-      error: error?.message || "Provider failed",
+      error: (error instanceof Error && error.message) || "Provider failed",
     };
   }
 }
@@ -495,10 +495,21 @@ async function runProvider(
 function normalizeBarcodeProducts(
   raw: unknown,
 ): ProviderContribution["products"] {
+  type ProbedProduct = {
+    name?: string | null;
+    title?: string | null;
+    cleanName?: string | null;
+    productName?: string | null;
+    coverUrl?: string | null;
+    imageUrl?: string | null;
+    platformKey?: string | null;
+    igdb_metadata?: { name?: string | null; platform?: { name?: string } };
+  };
+
   if (!raw) return [];
   if (Array.isArray(raw)) {
     return raw
-      .map((item: any) => {
+      .map((item: ProbedProduct | null) => {
         const platformName = cleanText(item?.igdb_metadata?.platform?.name);
         return {
           name: cleanText(
@@ -518,7 +529,7 @@ function normalizeBarcodeProducts(
       .filter((item) => item.name);
   }
 
-  const item = raw as any;
+  const item = raw as ProbedProduct;
   const platformName = cleanText(item?.igdb_metadata?.platform?.name);
   const name = cleanText(
     item.name ||
@@ -963,10 +974,14 @@ export async function POST(req: NextRequest) {
       persistedEvidence,
       generatedAt: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[ProductTeardown] Failed:", error);
     return NextResponse.json(
-      { error: error?.message || "Product teardown failed" },
+      {
+        error:
+          (error instanceof Error && error.message) ||
+          "Product teardown failed",
+      },
       { status: 500 },
     );
   }

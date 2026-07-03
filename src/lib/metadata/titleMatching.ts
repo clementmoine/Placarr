@@ -138,6 +138,29 @@ export function buildRequestedTitleFallbackVariants(
   return variants;
 }
 
+/** Names used to accept provider hits against a requested shelf title. */
+export function buildMetadataAlignmentNames(
+  name: string,
+  barcodeAlternateNames: string[] = [],
+): string[] {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const candidate of [
+    name,
+    ...buildRequestedTitleFallbackVariants(name),
+    extractBaseTitleVariant(name),
+    ...barcodeAlternateNames,
+  ]) {
+    const value = candidate?.trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    ordered.push(value);
+  }
+  return ordered;
+}
+
 /** Initial provider lookup queries for a game title (variants + optional platform). */
 export function buildGameMetadataSearchQueries(
   name: string,
@@ -520,12 +543,146 @@ export function franchiseSequelNumbersConflict(
   return !catalog.some((number) => requestedSet.has(number));
 }
 
+function normalizeCatalogTitleText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function textContainsCatalogPhrase(text: string, phrase: string): boolean {
+  const normalizedText = ` ${normalizeCatalogTitleText(text)} `;
+  const normalizedPhrase = normalizeCatalogTitleText(phrase);
+  return Boolean(
+    normalizedPhrase && normalizedText.includes(` ${normalizedPhrase} `),
+  );
+}
+
+const CATALOG_REQUIRED_TITLE_MARKER_GROUPS: readonly (readonly string[])[] = [
+  ["trilogy", "trilogie"],
+  ["collection"],
+  ["saga"],
+  ["compilation", "anthology", "anthologie"],
+  ["special edition", "edition speciale"],
+  ["game of the year", "goty"],
+];
+
+function catalogAttachmentDropsRequiredTitleMarker(
+  productTitle: string,
+  attachmentTitle: string,
+): boolean {
+  return CATALOG_REQUIRED_TITLE_MARKER_GROUPS.some(
+    (group) =>
+      group.some((term) => textContainsCatalogPhrase(productTitle, term)) &&
+      !group.some((term) => textContainsCatalogPhrase(attachmentTitle, term)),
+  );
+}
+
+const NON_GAME_MEDIA_TITLE_PATTERN =
+  /\b(?:blu[\s-]*ray|bluray|dvd|uhd|ultra[\s-]+hd|vhs|cd|vinyl|vinyle)\b/i;
+
+function attachmentTitleLooksLikeNonGameMedia(
+  attachmentTitle: string,
+  productTitle: string,
+): boolean {
+  return (
+    NON_GAME_MEDIA_TITLE_PATTERN.test(attachmentTitle) &&
+    !NON_GAME_MEDIA_TITLE_PATTERN.test(productTitle)
+  );
+}
+
+export function attachmentTitleMediaTypeConflicts(
+  productTitle: string | undefined,
+  attachmentTitle: string | undefined,
+  options: { mediaType?: string | null } = {},
+): boolean {
+  if (!productTitle?.trim() || !attachmentTitle?.trim()) return false;
+  return (
+    options.mediaType === "games" &&
+    attachmentTitleLooksLikeNonGameMedia(attachmentTitle, productTitle)
+  );
+}
+
+function specificSubtitleTokens(title: string): string[] {
+  const segments = title
+    .split(/\s*(?::|[-–—])\s*/g)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (segments.length < 2) return [];
+
+  return Array.from(
+    new Set(
+      segments
+        .slice(1)
+        .flatMap((segment) => normalizeDisplayTitle(segment))
+        .filter(
+          (token) =>
+            token.length > 3 &&
+            ![
+              "edition",
+              "special",
+              "deluxe",
+              "limited",
+              "collector",
+              "complete",
+              "definitive",
+              "standard",
+            ].includes(token),
+        ),
+    ),
+  );
+}
+
+function catalogAttachmentDropsSpecificSubtitle(
+  productTitle: string,
+  attachmentTitle: string,
+): boolean {
+  const subtitleTokens = specificSubtitleTokens(productTitle);
+  if (subtitleTokens.length === 0) return false;
+
+  const attachmentTokens = normalizeDisplayTitle(attachmentTitle);
+  const compactAttachmentTitle = normalizeCatalogTitleText(
+    attachmentTitle,
+  ).replace(/\s+/g, "");
+
+  return !subtitleTokens.some((token) => {
+    const compactToken = normalizeCatalogTitleText(token).replace(/\s+/g, "");
+    return (
+      attachmentTokens.some(
+        (other) =>
+          titleTokensEquivalent(token, other) ||
+          other.includes(token) ||
+          token.includes(other),
+      ) ||
+      (compactToken.length > 3 && compactAttachmentTitle.includes(compactToken))
+    );
+  });
+}
+
 /** True when a gallery image title names another product than the shelf item. */
 export function catalogAttachmentTitleConflicts(
   productTitle: string | undefined,
   attachmentTitle: string | undefined,
+  options: { mediaType?: string | null } = {},
 ): boolean {
   if (!productTitle?.trim() || !attachmentTitle?.trim()) return false;
+  if (
+    attachmentTitleMediaTypeConflicts(productTitle, attachmentTitle, options)
+  ) {
+    return true;
+  }
+  if (
+    catalogAttachmentDropsRequiredTitleMarker(productTitle, attachmentTitle)
+  ) {
+    return true;
+  }
+  if (catalogAttachmentDropsSpecificSubtitle(productTitle, attachmentTitle)) {
+    return true;
+  }
   if (gameProductIdentityMismatch([productTitle], attachmentTitle)) return true;
   return franchiseSequelNumbersConflict([productTitle], attachmentTitle);
 }

@@ -9,13 +9,14 @@ import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import { createWikidataResolver } from "./resolver";
 
-const fetchFromWikidata = createWikidataResolver();
+const fetchBoardGameFromWikidata = createWikidataResolver("boardgames");
+const fetchGameFromWikidata = createWikidataResolver("games");
 
 export const wikidataModule: ProviderModule = {
   info: {
     id: "wikidata",
     label: "Wikidata",
-    types: ["boardgames"],
+    types: ["games", "boardgames"],
     capabilities: ["identify", "description", "cover", "releaseDate", "people"],
     auth: { kind: "none" },
     canonical: true,
@@ -31,8 +32,10 @@ export const wikidataModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "wikidata",
-      async resolve({ name }) {
-        return fetchFromWikidata(name);
+      async resolve({ name, type }) {
+        return type === "games"
+          ? fetchGameFromWikidata(name)
+          : fetchBoardGameFromWikidata(name);
       },
     } satisfies MetadataProviderAdapter;
   },
@@ -52,22 +55,26 @@ export const wikidataModule: ProviderModule = {
     "wikidata-metadata": {
       label: "Wikidata - Metadata",
       kind: "metadata",
-      run: (query) => fetchFromWikidata(query),
+      run: (query) => fetchBoardGameFromWikidata(query),
     },
   },
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
       "Wikidata",
-      () => fetchFromWikidata(ctx.name),
-      "boardgames",
+      () =>
+        ctx.type === "games"
+          ? fetchGameFromWikidata(ctx.name)
+          : fetchBoardGameFromWikidata(ctx.name),
+      ctx.type,
     );
   },
   mappingProbe: {
     sampleInput: "Catan",
     context: { name: "Catan" },
   },
-  runMappingProbe: async () => metadataProbe(await fetchFromWikidata("Catan")),
+  runMappingProbe: async () =>
+    metadataProbe(await fetchBoardGameFromWikidata("Catan")),
   collectMappingRawKeys: async () => {
     try {
       const response = await axios.get(

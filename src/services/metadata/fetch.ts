@@ -12,7 +12,7 @@ import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import { isVideoGamePlatformKey } from "@/lib/games/platforms";
 import {
   buildGameMetadataFallbackNames,
-  buildRequestedTitleFallbackVariants,
+  buildMetadataAlignmentNames,
   extractBaseTitleVariant,
   buildGameMetadataSearchQueries,
   isMetadataTitleAligned,
@@ -306,22 +306,7 @@ function metadataAlignmentNames(
   name: string,
   barcodeAlternateNames: string[],
 ): string[] {
-  const seen = new Set<string>();
-  const ordered: string[] = [];
-  for (const candidate of [
-    name,
-    ...buildRequestedTitleFallbackVariants(name),
-    extractBaseTitleVariant(name),
-    ...barcodeAlternateNames,
-  ]) {
-    const value = candidate?.trim();
-    if (!value) continue;
-    const key = value.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    ordered.push(value);
-  }
-  return ordered;
+  return buildMetadataAlignmentNames(name, barcodeAlternateNames);
 }
 
 function alignedProviderResultsForFallback(

@@ -4,6 +4,7 @@ import {
   mapLaunchBoxGameToMetadata,
   pickBestLaunchBoxGame,
   fetchFromLaunchBox,
+  fetchFromLaunchBoxWithLookupQueries,
   tokenizeLaunchBoxQuery,
   buildLaunchBoxFtsQueries,
   buildLaunchBoxSearchTokenSets,
@@ -357,5 +358,31 @@ describe("fetchFromLaunchBox integration with SQLite", () => {
     expect(result).not.toBeNull();
     expect(result?.title).toBe("Tom Clancy's Rainbow Six 3");
     expect(result?.externalIds?.launchbox).toBe("14606");
+  });
+
+  it("tries orchestrator lookup variants when the raw localized title misses", async () => {
+    __setLaunchBoxIndexForTests([
+      {
+        databaseId: 10929,
+        name: "Ghostbusters: The Video Game",
+        platform: "Sony Playstation 3",
+        overview: "Action-adventure game starring the Ghostbusters.",
+        alternateNames: [],
+        images: [],
+      },
+    ]);
+
+    expect(
+      await fetchFromLaunchBox("SOS Fantômes, le jeu vidéo", "PlayStation 3"),
+    ).toBeNull();
+
+    const result = await fetchFromLaunchBoxWithLookupQueries(
+      "SOS Fantômes, le jeu vidéo",
+      "PlayStation 3",
+      ["Ghostbusters: The Video Game"],
+    );
+
+    expect(result?.title).toBe("Ghostbusters: The Video Game");
+    expect(result?.description).toContain("Action-adventure");
   });
 });

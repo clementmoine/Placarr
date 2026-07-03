@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildGameMetadataFallbackNames,
   buildRequestedTitleFallbackVariants,
+  catalogAttachmentTitleConflicts,
   collectCanonicalFallbackNames,
   extractBaseTitleVariant,
   findBetterMetadataMatch,
@@ -584,6 +585,59 @@ describe("isMetadataTitleAligned", () => {
     ).toBe(false);
     expect(
       isMetadataTitleAligned({ title: "DmC & Devil May Cry 5" }, ["DmC"], 0.58),
+    ).toBe(false);
+  });
+});
+
+describe("catalogAttachmentTitleConflicts", () => {
+  it("rejects base-game catalog art for an official trilogy collection", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Prince of Persia Trilogy",
+        "PS3 Prince of Persia",
+        { mediaType: "games" },
+      ),
+    ).toBe(true);
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Prince of Persia Trilogy",
+        "PS3 Prince of Persia Trilogy: 3 Full Games",
+        { mediaType: "games" },
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects non-game media titles on game shelves", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "La Mémoire dans la peau",
+        "La Mémoire dans la peau [Blu-ray]",
+        { mediaType: "games" },
+      ),
+    ).toBe(true);
+    expect(
+      catalogAttachmentTitleConflicts(
+        "La Mémoire dans la peau",
+        "La Mémoire dans la peau [Blu-ray]",
+        { mediaType: "movies" },
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects generic base art when a specific subtitle is requested", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Ratchet and Clank: Q-Force",
+        "PS3 Ratchet & Clank",
+        { mediaType: "games" },
+      ),
+    ).toBe(true);
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Ratchet and Clank: Q-Force",
+        "Ratchet & Clank: QForce PS3",
+        { mediaType: "games" },
+      ),
     ).toBe(false);
   });
 });

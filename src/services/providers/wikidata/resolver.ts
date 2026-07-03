@@ -10,7 +10,8 @@ import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 
 const USER_AGENT = "Placarr/1.0 (+https://github.com/clementmoine/Placarr)";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
-const BOARD_GAME_QID = "Q7889";
+const VIDEO_GAME_QID = "Q7889";
+const BOARD_GAME_QIDS = new Set(["Q131436", "Q3244175"]);
 const WIKIDATA_DISPLAY_LABEL_LANGS = new Set(["fr", "en"]);
 
 function wikidataLabelEntries(
@@ -145,12 +146,30 @@ function isBoardGameDescription(description?: string): boolean {
   );
 }
 
+function entityClaimsVideoGame(entity: WikidataEntity): boolean {
+  const instanceIds = extractWikidataEntityIds(entity, "P31");
+  if (instanceIds.includes(VIDEO_GAME_QID)) return true;
+  const desc = [
+    entity.descriptions?.fr?.value,
+    entity.descriptions?.en?.value,
+  ].join(" ");
+  return /video game|jeu vidéo/i.test(desc);
+}
+
 function entityClaimsBoardGame(entity: WikidataEntity): boolean {
   const instanceIds = extractWikidataEntityIds(entity, "P31");
-  if (instanceIds.includes(BOARD_GAME_QID)) return true;
+  if (instanceIds.some((id) => BOARD_GAME_QIDS.has(id))) return true;
   return isBoardGameDescription(
     entity.descriptions?.fr?.value || entity.descriptions?.en?.value,
   );
+}
+
+function entityMatchesMediaType(
+  entity: WikidataEntity,
+  mediaType: "boardgames" | "games",
+): boolean {
+  if (mediaType === "games") return entityClaimsVideoGame(entity);
+  return entityClaimsBoardGame(entity);
 }
 
 function commonsFileUrl(filename: string): string {
@@ -346,7 +365,9 @@ function buildWikidataObservations(
   );
 }
 
-export function createWikidataResolver() {
+export function createWikidataResolver(
+  mediaType: "boardgames" | "games" = "boardgames",
+) {
   return async function fetchFromWikidata(
     name: string,
   ): Promise<MetadataResult | null> {
@@ -366,7 +387,7 @@ export function createWikidataResolver() {
 
       for (const hit of ranked) {
         const entity = await fetchWikidataEntity(hit.id);
-        if (!entity || !entityClaimsBoardGame(entity)) continue;
+        if (!entity || !entityMatchesMediaType(entity, mediaType)) continue;
         selectedEntity = entity;
         selectedQid = hit.id;
         break;

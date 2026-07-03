@@ -261,6 +261,37 @@ describe("mergeMetadata generic function", () => {
     ).toBe(true);
   });
 
+  it("keeps catalog covers when the requested title is a french edition label", () => {
+    const merged = mergeMetadata(
+      "games",
+      [
+        {
+          providerId: "geedie",
+          metadata: {
+            title: "PS3 The Secret of Monkey Island: Special Edition",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.com/monkey-ps3.jpg",
+                source: "geedie",
+                role: "eu",
+                title: "PS3 The Secret of Monkey Island: Special Edition",
+              },
+            ],
+          },
+        },
+      ],
+      {
+        requestedTitle: "Monkey Island Édition Spéciale Collection",
+        requestedPlatformKey: "ps3",
+      },
+    );
+
+    expect(
+      merged.attachments?.some((attachment) => attachment.source === "geedie"),
+    ).toBe(true);
+  });
+
   it("n'emprunte pas l'ean d'un provider dont le titre catalogue diverge", () => {
     const chipweld: MetadataResult = {
       title: "The Last of Us Part II PS4",

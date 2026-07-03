@@ -347,6 +347,7 @@ beforeEach(() => {
   h.fetchFromCoverProject.mockResolvedValue(null);
   h.fetchFromLaunchBox.mockResolvedValue(null);
   h.fetchFromTheGamesDB.mockResolvedValue(null);
+  h.wikidataResolve.mockResolvedValue(null);
   h.fetchMetadataFromPriceCharting.mockResolvedValue(null);
   h.fetchMetadataFromPriceChartingByName.mockResolvedValue(null);
   // Pas de noms canoniques → les boucles de fallback ne s'exécutent pas (sauf override).
@@ -479,6 +480,46 @@ describe("fetchFromAllGameSources — orchestration", () => {
 
     expect(h.fetchFromScreenScraper).toHaveBeenCalled();
     expect(res?.fieldEvidence?.some((e) => e.source === "ScreenScraper")).toBe(
+      true,
+    );
+  });
+
+  it("utilise les aliases Wikidata pour rappeler LaunchBox sur un titre localisé", async () => {
+    h.wikidataResolve.mockResolvedValue({
+      title: "SOS Fantômes, le jeu vidéo",
+      aliases: ["Ghostbusters: The Video Game"],
+      regionalTitles: [
+        { region: "fr", text: "SOS Fantômes, le jeu vidéo" },
+        { region: "en", text: "Ghostbusters: The Video Game" },
+      ],
+      externalIds: { wikidata: "Q1514853" },
+    });
+    h.fetchFromLaunchBox.mockImplementation((name: string) =>
+      name === "Ghostbusters: The Video Game"
+        ? Promise.resolve({
+            title: "Ghostbusters: The Video Game",
+            description: "Action-adventure game starring the Ghostbusters.",
+            imageUrl: "https://cdn/ghostbusters.jpg",
+          })
+        : Promise.resolve(null),
+    );
+    h.buildGameMetadataFallbackNames.mockReturnValue([
+      "Ghostbusters: The Video Game",
+    ]);
+
+    const res = await fetchFromAllGameSources(
+      "SOS Fantômes, le jeu vidéo",
+      null,
+      "ps3",
+    );
+
+    expect(h.fetchFromLaunchBox).toHaveBeenCalledWith(
+      "Ghostbusters: The Video Game",
+      "ps3",
+    );
+    expect(res?.description).toContain("Ghostbusters");
+    expect(res?.fieldEvidence?.some((e) => e.source === "Wikidata")).toBe(true);
+    expect(res?.fieldEvidence?.some((e) => e.source === "LaunchBox")).toBe(
       true,
     );
   });

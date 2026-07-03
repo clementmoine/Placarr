@@ -2,7 +2,10 @@ import {
   buildRomanNumeralTitleVariants,
   buildRomanRangeTitleVariants,
 } from "@/lib/title/romanNumeral";
-import { createGameEditionMatcher } from "@/lib/barcode/listingTerms";
+import {
+  createGameEditionMatcher,
+  GAME_EDITION_DEFINITIONS,
+} from "@/lib/barcode/listingTerms";
 import {
   dedupeTokenTailConsonants,
   TITLE_PHRASE_EQUIVALENT_GROUPS,
@@ -96,6 +99,38 @@ export function buildPhraseEquivalentTitleVariants(title: string): string[] {
             frontier.push({ value: swapped, depth: depth + 1 });
           }
         }
+      }
+    }
+  }
+
+  return [...variants];
+}
+
+/** FR/EN edition label swaps from shared edition definitions (provider search retries). */
+export function buildEditionPhraseEquivalentVariants(title: string): string[] {
+  const trimmed = title.trim();
+  if (!trimmed) return [];
+
+  const variants = new Set<string>();
+  const seen = new Set([trimmed.toLowerCase()]);
+  const lower = trimmed.toLowerCase();
+
+  for (const definition of GAME_EDITION_DEFINITIONS) {
+    const terms = definition.terms.filter((term) => /\s/.test(term));
+    if (terms.length < 2) continue;
+    const orderedTerms = [...terms].sort((a, b) => b.length - a.length);
+    for (const term of orderedTerms) {
+      const pattern = new RegExp(escapeRegExp(term), "gi");
+      if (!pattern.test(lower)) continue;
+
+      for (const alt of orderedTerms) {
+        if (alt.toLowerCase() === term.toLowerCase()) continue;
+        const swapped = trimmed.replace(pattern, () => alt);
+        const key = swapped.toLowerCase();
+        if (key === trimmed.toLowerCase() || seen.has(key)) continue;
+        if (isWeakMetadataSearchFragment(swapped)) continue;
+        seen.add(key);
+        variants.add(swapped);
       }
     }
   }
@@ -289,6 +324,7 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
     ...buildRomanNumeralTitleVariants(trimmed),
     ...buildTokenEquivalentTitleVariants(trimmed),
     ...buildPhraseEquivalentTitleVariants(trimmed),
+    ...buildEditionPhraseEquivalentVariants(trimmed),
     ...buildAccentInsensitiveVariants(trimmed),
     ...buildApostropheTitleVariants(trimmed),
     ...buildSeparatorTitleVariants(trimmed),

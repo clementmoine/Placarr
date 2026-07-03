@@ -129,6 +129,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "**.philibertnet.com",
       },
+      {
+        protocol: "https",
+        hostname: "**.icollecteverything.com",
+      },
     ],
   },
 };

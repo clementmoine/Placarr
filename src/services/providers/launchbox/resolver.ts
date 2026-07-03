@@ -525,3 +525,21 @@ export async function fetchFromLaunchBox(
 
   return mapLaunchBoxGameToMetadata(match);
 }
+
+export async function fetchFromLaunchBoxWithLookupQueries(
+  name: string,
+  platform?: string | null,
+  lookupQueries: string[] = [],
+): Promise<MetadataResult | null> {
+  const seen = new Set<string>();
+  for (const query of [name, ...lookupQueries]) {
+    const cleanQuery = query.replace(/\s+/g, " ").trim();
+    const key = cleanQuery.toLowerCase();
+    if (!cleanQuery || seen.has(key)) continue;
+    seen.add(key);
+
+    const metadata = await fetchFromLaunchBox(cleanQuery, platform);
+    if (metadata) return metadata;
+  }
+  return null;
+}

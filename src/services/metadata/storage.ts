@@ -12,6 +12,7 @@ import path from "path";
 import sharp from "sharp";
 import {
   shouldShowCoverAttachmentOnShelf,
+  shouldSuppressCoverOnPlatformShelf,
   pickBestBackgroundFromAttachments,
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
@@ -21,7 +22,10 @@ import {
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
 import { adoptItemNameFromMetadataIfPlaceholder } from "@/lib/item/adoptMetadataTitle";
 import { resolveMetadataDisplayTitle } from "@/lib/title/refineCatalogDisplayTitle";
-import { catalogAttachmentTitleConflicts } from "@/lib/metadata/titleMatching";
+import {
+  attachmentTitleMediaTypeConflicts,
+  catalogAttachmentTitleConflicts,
+} from "@/lib/metadata/titleMatching";
 import { urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/lib/media/attachmentDisplayLabels";
 import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
@@ -802,20 +806,40 @@ export async function storeMetadata(
   );
   const storableAttachments = (
     requestedPlatformKey
-      ? rankedLocalizedAttachments.filter(
-          (attachment) =>
-            !["cover", "artwork", "image"].includes(attachment.type) ||
-            shouldShowCoverAttachmentOnShelf(attachment, requestedPlatformKey),
-        )
+      ? (() => {
+          const coverCandidates = rankedLocalizedAttachments.filter(
+            (attachment) =>
+              ["cover", "artwork", "image"].includes(attachment.type),
+          );
+          return rankedLocalizedAttachments.filter((attachment) => {
+            if (!["cover", "artwork", "image"].includes(attachment.type)) {
+              return true;
+            }
+            return shouldShowCoverAttachmentOnShelf(
+              attachment,
+              requestedPlatformKey,
+              coverCandidates,
+            );
+          });
+        })()
       : rankedLocalizedAttachments
   ).filter((attachment) => {
     if (!["cover", "artwork", "image"].includes(attachment.type)) return true;
     if (!attachment.title?.trim()) return true;
+    const catalogTitle = formattedMetadata.title || name;
+    if (
+      attachmentTitleMediaTypeConflicts(catalogTitle, attachment.title, {
+        mediaType: type,
+      })
+    ) {
+      return false;
+    }
     if (!attachment.retailCatalogImageTitlesSource) {
       return true;
     }
-    const catalogTitle = formattedMetadata.title || name;
-    return !catalogAttachmentTitleConflicts(catalogTitle, attachment.title);
+    return !catalogAttachmentTitleConflicts(catalogTitle, attachment.title, {
+      mediaType: type,
+    });
   });
   const canonicalCoverCandidate = storableAttachments.find(
     (attachment) =>
@@ -834,7 +858,19 @@ export async function storeMetadata(
       requestedPlatformKey,
     }) ??
     formattedMetadata.imageUrl ??
-    previousLocalCover ??
+    (previousLocalCover &&
+    requestedPlatformKey &&
+    shouldSuppressCoverOnPlatformShelf(
+      localizedAttachments.find(
+        (attachment) => attachment.url === previousLocalCover,
+      ) ?? { type: "cover", url: previousLocalCover },
+      storableAttachments.filter((attachment) =>
+        ["cover", "artwork", "image"].includes(attachment.type),
+      ),
+      requestedPlatformKey,
+    )
+      ? null
+      : previousLocalCover) ??
     null;
 
   const croppedImageUrl = selectedImageUrl

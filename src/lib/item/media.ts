@@ -18,12 +18,16 @@ import {
   rankCoverGalleryAttachments,
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
+  shouldSuppressCoverOnPlatformShelf,
   type AttachmentDisplayScoreOptions,
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/lib/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
-import { catalogAttachmentTitleConflicts } from "@/lib/metadata/titleMatching";
+import {
+  attachmentTitleMediaTypeConflicts,
+  catalogAttachmentTitleConflicts,
+} from "@/lib/metadata/titleMatching";
 import {
   filterPlaceholderCoverAttachments,
   isMissingArtImageUrl,
@@ -231,7 +235,7 @@ function filterAttachmentsForProductTitle<
     title?: string | null;
     attachments?: MediaItem[] | null;
   },
->(metadata: T): T {
+>(metadata: T, shelf?: MediaInput["shelf"]): T {
   const withoutPlaceholders = filterPlaceholderCoverAttachments(
     metadata.attachments ?? [],
   );
@@ -244,10 +248,19 @@ function filterAttachmentsForProductTitle<
   const attachments = withoutPlaceholders.filter((attachment) => {
     if (!COVER_GALLERY_TYPES.has(attachment.type)) return true;
     if (!attachment.title?.trim()) return true;
+    if (
+      attachmentTitleMediaTypeConflicts(productTitle, attachment.title, {
+        mediaType: shelf?.type,
+      })
+    ) {
+      return false;
+    }
     if (!attachment.retailCatalogImageTitlesSource) {
       return true;
     }
-    return !catalogAttachmentTitleConflicts(productTitle, attachment.title);
+    return !catalogAttachmentTitleConflicts(productTitle, attachment.title, {
+      mediaType: shelf?.type,
+    });
   });
 
   return { ...metadata, attachments };
@@ -262,7 +275,7 @@ export function filterMetadataForShelfPlatform<
 >(metadata: T | null | undefined, shelf?: MediaInput["shelf"]): T | undefined {
   if (!metadata) return undefined;
 
-  const metadataForTitle = filterAttachmentsForProductTitle(metadata);
+  const metadataForTitle = filterAttachmentsForProductTitle(metadata, shelf);
   const icollectAgeRating =
     (
       metadataForTitle as {
@@ -322,6 +335,12 @@ export function filterMetadataForShelfPlatform<
   };
 }
 
+function shelfCoverCandidates(
+  list: ScoredAttachmentInput[],
+): ScoredAttachmentInput[] {
+  return list.filter((attachment) => COVER_GALLERY_TYPES.has(attachment.type));
+}
+
 function coverAttachmentsMatchingShelfPlatform(
   list: ScoredAttachmentInput[],
   options: AttachmentDisplayScoreOptions,
@@ -329,10 +348,37 @@ function coverAttachmentsMatchingShelfPlatform(
   const platformKey = options.requestedPlatformKey;
   if (!platformKey) return list;
 
+  const coverCandidates = shelfCoverCandidates(list);
+
   return list.filter((attachment) => {
     if (!COVER_GALLERY_TYPES.has(attachment.type)) return true;
-    return shouldShowCoverAttachmentOnShelf(attachment, platformKey);
+    return shouldShowCoverAttachmentOnShelf(
+      attachment,
+      platformKey,
+      coverCandidates,
+    );
   });
+}
+
+function pinnedCoverNeedsPlatformFallback(
+  item: MediaInput,
+  pin: string,
+  options: AttachmentDisplayScoreOptions,
+): boolean {
+  const attachment = attachmentForUrl(item, pin);
+  if (!attachment) return false;
+  if (attachment.source === "user") return false;
+  if (isPlaceholderCoverFromPersistedMetrics(attachment)) return true;
+  if (
+    isAttachmentCoverPlatformMismatch(attachment, options.requestedPlatformKey)
+  ) {
+    return true;
+  }
+  return shouldSuppressCoverOnPlatformShelf(
+    attachment,
+    shelfCoverCandidates(attachments(item)),
+    options.requestedPlatformKey,
+  );
 }
 
 function dedupeAttachmentsByImageUrl(
@@ -371,20 +417,13 @@ export function resolveMetadataCoverUrl(
   if (!pin || isMissingArtImageUrl(pin)) return null;
 
   const options = coverDisplayOptions(item, uiLocale);
-  const attachment = attachmentForUrl(item, pin);
-  if (attachment && isPlaceholderCoverFromPersistedMetrics(attachment)) {
+  if (pinnedCoverNeedsPlatformFallback(item, pin, options)) {
     return (
-      pickBestCoverFromAttachments(attachments(item), undefined, options) ??
-      null
-    );
-  }
-  if (
-    attachment &&
-    isAttachmentCoverPlatformMismatch(attachment, options.requestedPlatformKey)
-  ) {
-    return (
-      pickBestCoverFromAttachments(attachments(item), undefined, options) ??
-      null
+      pickBestCoverFromAttachments(
+        coverAttachmentsMatchingShelfPlatform(attachments(item), options),
+        persistedImageMetricsByUrl(item),
+        options,
+      ) ?? null
     );
   }
 
@@ -477,7 +516,12 @@ export function getCoverImage(
   item: MediaInput,
   uiLocale?: Locale | null,
 ): string | null {
-  if (item.imageUrl) {
+  const options = coverDisplayOptions(item, uiLocale);
+
+  if (
+    item.imageUrl &&
+    !pinnedCoverNeedsPlatformFallback(item, item.imageUrl, options)
+  ) {
     return item.imageUrl;
   }
 
@@ -487,9 +531,9 @@ export function getCoverImage(
   }
 
   const bestFromAttachments = pickBestCoverFromAttachments(
-    attachments(item),
-    undefined,
-    coverDisplayOptions(item, uiLocale),
+    coverAttachmentsMatchingShelfPlatform(attachments(item), options),
+    persistedImageMetricsByUrl(item),
+    options,
   );
   if (bestFromAttachments) return bestFromAttachments;
 

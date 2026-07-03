@@ -4,7 +4,10 @@ import { metadataProbe } from "@/lib/dev/mappingProbe";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
-import { fetchFromLaunchBox } from "./resolver";
+import {
+  fetchFromLaunchBox,
+  fetchFromLaunchBoxWithLookupQueries,
+} from "./resolver";
 
 export const launchboxModule: ProviderModule = {
   info: {
@@ -35,10 +38,11 @@ export const launchboxModule: ProviderModule = {
   },
   createMetadataAdapter: () => ({
     id: "launchbox",
-    async resolve({ name, platform }) {
-      return (await fetchFromLaunchBox(
+    async resolve({ name, platform, lookupQueries }) {
+      return (await fetchFromLaunchBoxWithLookupQueries(
         name,
         platform,
+        lookupQueries,
       )) as MetadataResult | null;
     },
   }),

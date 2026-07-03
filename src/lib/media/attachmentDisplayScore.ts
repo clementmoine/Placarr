@@ -260,16 +260,81 @@ export function isAttachmentCoverPlatformMismatch(
   return !detected.has(requestedPlatformKey);
 }
 
+function isCoverGalleryAttachment(attachment: ScoredAttachmentInput): boolean {
+  return COVER_FRIENDLY_TYPES.has(attachment.type);
+}
+
+/** True when at least one cover in the list explicitly names the shelf platform. */
+export function coverListHasShelfPlatformSignal(
+  attachments: ScoredAttachmentInput[],
+  requestedPlatformKey: VideoGamePlatformKey,
+): boolean {
+  return attachments.some(
+    (attachment) =>
+      isCoverGalleryAttachment(attachment) &&
+      detectAttachmentPlatformKeysForMismatchRank(attachment).has(
+        requestedPlatformKey,
+      ),
+  );
+}
+
+/** Cover with no platform in title/role (and URL when strict) on a platform shelf. */
+export function isCoverAmbiguousForShelfPlatform(
+  attachment: ScoredAttachmentInput,
+  requestedPlatformKey?: string | null,
+): boolean {
+  if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
+    return false;
+  }
+  if (isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)) {
+    return false;
+  }
+  return detectAttachmentPlatformKeysForMismatchRank(attachment).size === 0;
+}
+
+/**
+ * Hide marketplace / secondary covers that carry no platform signal when
+ * shelf-aligned box art exists — avoids PC listings winning on a PS3 shelf.
+ */
+export function shouldSuppressCoverOnPlatformShelf(
+  attachment: ScoredAttachmentInput,
+  allCovers: ScoredAttachmentInput[],
+  requestedPlatformKey?: string | null,
+): boolean {
+  if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
+    return false;
+  }
+  if (isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)) {
+    return true;
+  }
+  if (!coverListHasShelfPlatformSignal(allCovers, requestedPlatformKey)) {
+    return false;
+  }
+  return isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey);
+}
+
 /** Gallery visibility on a platform-specific game shelf. */
 export function shouldShowCoverAttachmentOnShelf(
   attachment: ScoredAttachmentInput,
   requestedPlatformKey?: string | null,
+  allCovers?: ScoredAttachmentInput[],
 ): boolean {
   if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
     return true;
   }
 
   if (isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)) {
+    return false;
+  }
+
+  if (
+    allCovers &&
+    shouldSuppressCoverOnPlatformShelf(
+      attachment,
+      allCovers,
+      requestedPlatformKey,
+    )
+  ) {
     return false;
   }
 

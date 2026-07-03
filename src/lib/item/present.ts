@@ -13,6 +13,7 @@ import {
 import { formatMetadataFromStorage } from "@/services/metadata/storage";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
+import { urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
 
 export interface PresentableItemInput {
   name: string;
@@ -97,6 +98,38 @@ function mediaInput(item: PresentableItemInput) {
   };
 }
 
+function metadataHasAttachmentUrl(
+  metadata: MetadataResult | undefined,
+  url?: string | null,
+): boolean {
+  if (!metadata || !url) return false;
+  return Boolean(
+    metadata.attachments?.some(
+      (attachment) =>
+        attachment.url && urlsReferToSameLocalizedImage(attachment.url, url),
+    ),
+  );
+}
+
+function itemImageUrlAfterMetadataFilter(
+  itemImageUrl: string | null | undefined,
+  originalMetadata: MetadataResult | undefined,
+  filteredMetadata: MetadataResult | undefined,
+): string | null | undefined {
+  if (!itemImageUrl || !originalMetadata || !filteredMetadata) {
+    return itemImageUrl;
+  }
+
+  const cameFromMetadata = metadataHasAttachmentUrl(
+    originalMetadata,
+    itemImageUrl,
+  );
+  const stillAllowed = metadataHasAttachmentUrl(filteredMetadata, itemImageUrl);
+  if (!cameFromMetadata || stillAllowed) return itemImageUrl;
+
+  return filteredMetadata.imageUrl ?? null;
+}
+
 /** Canonical display title for a product across the whole app. */
 export function getDisplayTitle(item: PresentableItemInput): string {
   const metadataTitle = item.metadata?.title?.trim();
@@ -147,10 +180,16 @@ export function presentItemFromStorage<
     formatted && item.shelf
       ? filterMetadataForShelfPlatform(formatted, item.shelf)
       : formatted;
+  const imageUrl = itemImageUrlAfterMetadataFilter(
+    item.imageUrl,
+    formatted,
+    filteredMetadata,
+  );
 
   return presentItem(
     {
       ...(item as PresentableItemInput),
+      imageUrl,
       metadata: filteredMetadata ?? null,
     },
     options,

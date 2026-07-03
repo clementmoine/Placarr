@@ -37,6 +37,7 @@ describe("game metadata provider modules", () => {
         "steamgriddb",
         "thegamesdb",
         "tokyogamestory",
+        "wikidata",
       ].sort(),
     );
   });

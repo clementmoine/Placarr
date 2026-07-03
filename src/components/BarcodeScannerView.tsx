@@ -23,11 +23,15 @@ type ScannerProps = {
   scanDelay?: number;
   allowMultiple?: boolean;
   sound?: boolean | string;
+  paused?: boolean;
 };
 
 export type BarcodeScannerResult = IDetectedBarcode[];
 
 const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"];
+const SCANNER_CLOSE_DELAY_MS = 150;
+
+export { SCANNER_CLOSE_DELAY_MS };
 
 const PRIMARY_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
   facingMode: { ideal: "environment" },
@@ -62,12 +66,22 @@ function isCameraAccessUnavailable(error: unknown): boolean {
   );
 }
 
+/** Harmless when the scanner dialog closes while the camera stream is starting. */
+export function isBenignScannerMediaError(error: unknown): boolean {
+  const message = getErrorMessage(error);
+  return /play\(\) request was interrupted|media was removed from the document|The operation was aborted/i.test(
+    message,
+  );
+}
+
 export function BarcodeScannerView({
   onScan,
   onError,
+  paused = false,
 }: {
   onScan: (detectedCodes: BarcodeScannerResult) => void;
   onError?: (error: unknown) => void;
+  paused?: boolean;
 }) {
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onErrorRef = useRef(onError);
@@ -126,6 +140,9 @@ export function BarcodeScannerView({
 
   const handleError = useCallback(
     (error: unknown) => {
+      if (isBenignScannerMediaError(error)) {
+        return;
+      }
       if (isCameraWarmupTimeout(error) && attempt < 3) {
         setIsRetrying(true);
         if (retryTimerRef.current) {
@@ -161,6 +178,7 @@ export function BarcodeScannerView({
         key={attempt}
         onScan={handleScan}
         onError={handleError}
+        paused={paused}
         constraints={constraints}
         formats={BARCODE_FORMATS}
         scanDelay={250}

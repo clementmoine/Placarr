@@ -14,9 +14,10 @@ import {
 
 const mockedGet = vi.mocked(axios.get);
 
-const BOARD_GAME_QID = "Q7889";
+const VIDEO_GAME_QID = "Q7889";
+const BOARD_GAME_QID = "Q131436";
 
-// Entité « jeu de société » complète (instance-of Q7889, dates, gens, image).
+// Entité « jeu de société » complète (instance-of Q131436, dates, gens, image).
 const CATAN_ENTITY = {
   labels: { fr: { value: "Catan" }, en: { value: "Catan (board game)" } },
   descriptions: { fr: { value: "jeu de société" } },
@@ -41,16 +42,33 @@ const CATAN_ENTITY = {
   },
 };
 
+const GHOSTBUSTERS_GAME_ENTITY = {
+  labels: {
+    fr: { value: "SOS Fantômes, le jeu vidéo" },
+    en: { value: "Ghostbusters: The Video Game" },
+  },
+  descriptions: { fr: { value: "jeu vidéo d'action-aventure de 2009" } },
+  claims: {
+    P31: [{ mainsnak: { datavalue: { value: { id: VIDEO_GAME_QID } } } }],
+    P577: [
+      { mainsnak: { datavalue: { value: { time: "+2009-06-16T00:00:00Z" } } } },
+    ],
+  },
+};
+
 // Routeur de mock axios déterministe (aucun appel réseau réel).
-function routeWikidata(entity: unknown) {
+function routeWikidata(
+  entity: unknown,
+  search: Array<{ id: string; label: string; description?: string }> = [
+    { id: "Q17271", label: "Catan", description: "jeu de société" },
+  ],
+) {
   return async (url: string, config?: { params?: { action?: string } }) => {
     const action = config?.params?.action;
     if (action === "wbsearchentities") {
       return {
         data: {
-          search: [
-            { id: "Q17271", label: "Catan", description: "jeu de société" },
-          ],
+          search,
         },
       };
     }
@@ -234,6 +252,49 @@ describe("createWikidataResolver", () => {
     mockedGet.mockImplementation(routeWikidata(notABoardGame) as never);
 
     expect(await createWikidataResolver()("Some Movie")).toBeNull();
+  });
+
+  it("résout un jeu vidéo localisé et expose le titre anglais en alias", async () => {
+    mockedGet.mockImplementation(
+      routeWikidata(GHOSTBUSTERS_GAME_ENTITY, [
+        {
+          id: "Q1514853",
+          label: "Ghostbusters: The Video Game",
+          description: "jeu vidéo d'action-aventure",
+        },
+      ]) as never,
+    );
+
+    const res = await createWikidataResolver("games")(
+      "SOS Fantômes, le jeu vidéo",
+    );
+
+    expect(res?.title).toBe("SOS Fantômes, le jeu vidéo");
+    expect(res?.aliases).toContain("Ghostbusters: The Video Game");
+    expect(res?.regionalTitles).toEqual(
+      expect.arrayContaining([
+        { region: "fr", text: "SOS Fantômes, le jeu vidéo" },
+        { region: "en", text: "Ghostbusters: The Video Game" },
+      ]),
+    );
+    expect(res?.releaseDate).toBe("2009-01-01");
+    expect(res?.externalIds?.wikidata).toBe("Q1514853");
+  });
+
+  it("ne laisse pas une entité jeu vidéo matcher le resolver jeu de société", async () => {
+    mockedGet.mockImplementation(
+      routeWikidata(GHOSTBUSTERS_GAME_ENTITY, [
+        {
+          id: "Q1514853",
+          label: "Ghostbusters: The Video Game",
+          description: "jeu vidéo d'action-aventure",
+        },
+      ]) as never,
+    );
+
+    expect(
+      await createWikidataResolver("boardgames")("SOS Fantômes, le jeu vidéo"),
+    ).toBeNull();
   });
 
   it("retourne null quand la recherche ne renvoie rien", async () => {

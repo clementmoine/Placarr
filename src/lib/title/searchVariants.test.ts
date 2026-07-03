@@ -130,4 +130,26 @@ describe("buildStructuralTitleSearchVariants", () => {
     expect(variants).not.toContain("Tomb Raider IV");
     expect(variants).not.toContain("VI Remastered Starring Lara Croft");
   });
+
+  it("swaps french special edition labels for english provider indexes", () => {
+    expect(
+      buildStructuralTitleSearchVariants(
+        "Monkey Island Édition Spéciale Collection",
+      ),
+    ).toEqual(
+      expect.arrayContaining(["Monkey Island special edition Collection"]),
+    );
+  });
+
+  it("swaps dictionary-level french subtitle phrases for provider indexes", () => {
+    expect(
+      buildStructuralTitleSearchVariants(
+        "Assassin's Creed: Naissance d'un Nouveau Monde - La Saga américaine",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "Assassin's Creed: Birth of a new world - The american saga",
+      ]),
+    );
+  });
 });

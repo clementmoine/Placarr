@@ -27,6 +27,13 @@ export const TITLE_TOKEN_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
 /** Multi-word FR/EN phrases — dictionary-level only, same rule as above. */
 export const TITLE_PHRASE_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
   ["le film : le jeu vidéo", "le film le jeu video", "movie video game"],
+  [
+    "naissance d'un nouveau monde",
+    "naissance d’un nouveau monde",
+    "birth of a new world",
+    "birth of a new World",
+  ],
+  ["la saga americaine", "la saga américaine", "the american saga"],
 ];
 
 /** Dedupe stylized doubled tail consonants ("Pitt" → "Pit", "Zapp" → "Zap"). */

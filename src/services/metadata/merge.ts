@@ -28,6 +28,7 @@ import {
   descriptionMatchesRequestedTitle,
   metadataTitleSimilarity,
 } from "@/lib/metadata/titleMatching";
+import { buildEditionPhraseEquivalentVariants } from "@/lib/title/searchVariants";
 import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
@@ -466,7 +467,11 @@ function providerMetadataAlignsForGallery(
   const catalogTitle = metadata.title?.trim();
   if (!catalogTitle) return false;
 
-  return isMetadataTitleAligned({ title: catalogTitle }, [requested], 0.58);
+  return isMetadataTitleAligned(
+    { title: catalogTitle },
+    [requested, ...buildEditionPhraseEquivalentVariants(requested)],
+    0.58,
+  );
 }
 
 function bookCoverPriorityFor(providerId: string) {

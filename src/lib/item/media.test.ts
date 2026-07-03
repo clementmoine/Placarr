@@ -7,7 +7,11 @@ import {
   backgroundPickerAttachments,
   backgroundPickerAttachmentsForItem,
 } from "./media";
-import { getDisplayTitle, presentItem } from "./present";
+import {
+  getDisplayTitle,
+  presentItem,
+  presentItemFromStorage,
+} from "./present";
 
 describe("getCoverImage", () => {
   it("uses canonical metadata.imageUrl when present", () => {
@@ -120,6 +124,53 @@ describe("getCoverImage", () => {
     expect(resolveMetadataCoverUrl(item)).toBe("/uploads/icollect-ps4.jpg");
     expect(getCoverImage(item)).toBe("/uploads/icollect-ps4.jpg");
   });
+
+  it("prefers PS3-tagged cover over ambiguous marketplace art on a PS3 shelf", () => {
+    const item = {
+      imageUrl: "/uploads/amc-oblivion.jpg",
+      metadata: {
+        imageUrl: "/uploads/amc-oblivion.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "achatmoinscher",
+            role: "fr",
+            url: "/uploads/amc-oblivion.jpg",
+          },
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/geedie-ps3-oblivion.jpg",
+            title: "PS3 The Elder Scrolls IV: Oblivion 5th Anniversary Edition",
+            strictShelfPlatformCoverSource: true,
+          },
+        ],
+      },
+      shelf: { type: "games", name: "PlayStation 3" },
+    };
+
+    expect(getCoverImage(item)).toBe("/uploads/geedie-ps3-oblivion.jpg");
+  });
+
+  it("keeps ambiguous marketplace cover when no platform-tagged alternative exists", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/uploads/amc-only.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "achatmoinscher",
+            role: "fr",
+            url: "/uploads/amc-only.jpg",
+          },
+        ],
+      },
+      shelf: { type: "games", name: "PlayStation 3" },
+    };
+
+    expect(getCoverImage(item)).toBe("/uploads/amc-only.jpg");
+  });
 });
 
 describe("backgroundPickerAttachments", () => {
@@ -157,6 +208,35 @@ describe("backgroundPickerAttachments", () => {
 });
 
 describe("filterMetadataForShelfPlatform", () => {
+  it("removes ambiguous marketplace covers from a PS3 metadata payload when PS3 art exists", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl: "/uploads/amc-oblivion.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "achatmoinscher",
+            role: "fr",
+            url: "/uploads/amc-oblivion.jpg",
+          },
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/geedie-ps3-oblivion.jpg",
+            title: "PS3 The Elder Scrolls IV: Oblivion 5th Anniversary Edition",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation 3" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/geedie-ps3-oblivion.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/geedie-ps3-oblivion.jpg");
+  });
+
   it("removes PS5 retail covers from a PS4 metadata payload", () => {
     const filtered = filterMetadataForShelfPlatform(
       {
@@ -281,6 +361,69 @@ describe("filterMetadataForShelfPlatform", () => {
     ]);
   });
 
+  it("removes base-game retail covers when the item is an official trilogy", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        title: "Prince of Persia Trilogy",
+        imageUrl: "/uploads/base-pop.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/base-pop.jpg",
+            title: "PS3 Prince of Persia",
+            retailCatalogImageTitlesSource: true,
+          },
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/trilogy-pop.jpg",
+            title: "PS3 Prince of Persia Trilogy: 3 Full Games",
+            retailCatalogImageTitlesSource: true,
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation 3" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/trilogy-pop.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/trilogy-pop.jpg");
+  });
+
+  it("removes Blu-ray retail covers from game metadata", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        title: "La Mémoire dans la peau",
+        imageUrl: "/uploads/bourne-bluray.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "ebay",
+            url: "/uploads/bourne-bluray.jpg",
+            title: "La Mémoire dans la peau [Blu-ray]",
+          },
+          {
+            type: "cover" as const,
+            source: "launchbox",
+            role: "europe",
+            url: "/uploads/bourne-game.jpg",
+            title: "Box - Front",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation 3" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/bourne-game.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/bourne-game.jpg");
+  });
+
   it("drops PriceCharting no-art placeholders from gallery and default cover", () => {
     const filtered = filterMetadataForShelfPlatform(
       {
@@ -346,5 +489,83 @@ describe("presentItem", () => {
         metadata: {},
       }),
     ).toBe("Mon jeu");
+  });
+
+  it("does not keep a stored gallery cover after metadata filtering removed it", () => {
+    const presented = presentItemFromStorage({
+      id: "item-1",
+      name: "Prince of Persia Trilogy",
+      condition: "used",
+      shelfId: "shelf-1",
+      userId: "user-1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      barcode: null,
+      description: null,
+      backgroundImageUrl: null,
+      metadataId: "metadata-1",
+      metadataRefreshStartedAt: null,
+      metadataRefreshGeneration: 0,
+      imageUrl: "/uploads/base-pop.jpg",
+      shelf: { type: "games", name: "PlayStation 3" },
+      metadata: {
+        id: "metadata-1",
+        title: "Prince of Persia Trilogy",
+        description: null,
+        releaseDate: null,
+        imageUrl: "/uploads/base-pop.jpg",
+        heroImageUrl: null,
+        duration: null,
+        pageCount: null,
+        tracksCount: null,
+        aliases: null,
+        facts: null,
+        sourceType: "games",
+        sourceQuery: "Prince of Persia Trilogy",
+        lastFetched: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        authors: [],
+        publishers: [],
+        attachments: [
+          {
+            id: "base",
+            metadataId: "metadata-1",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            duration: null,
+            type: "cover",
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/base-pop.jpg",
+            title: "PS3 Prince of Persia",
+            coverProvenance: null,
+            width: null,
+            height: null,
+            meanLuminance: null,
+            darkPixelRatio: null,
+          },
+          {
+            id: "trilogy",
+            metadataId: "metadata-1",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            duration: null,
+            type: "cover",
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/trilogy-pop.jpg",
+            title: "PS3 Prince of Persia Trilogy: 3 Full Games",
+            coverProvenance: null,
+            width: null,
+            height: null,
+            meanLuminance: null,
+            darkPixelRatio: null,
+          },
+        ],
+      },
+    } as Parameters<typeof presentItemFromStorage>[0]);
+
+    expect(presented.imageUrl).toBe("/uploads/trilogy-pop.jpg");
   });
 });

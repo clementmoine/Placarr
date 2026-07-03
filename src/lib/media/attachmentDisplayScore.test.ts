@@ -9,6 +9,7 @@ import {
   rankCoverGalleryAttachments,
   rankAttachmentsForDisplay,
   rankCoversForDisplay,
+  shouldShowCoverAttachmentOnShelf,
 } from "./attachmentDisplayScore";
 
 describe("attachmentDisplayScore", () => {
@@ -699,5 +700,33 @@ describe("attachmentDisplayScore", () => {
       { requestedPlatformKey: "ps4" },
     );
     expect(ranked[0]).toBe(ps4Cover);
+  });
+
+  it("hides ambiguous marketplace covers when shelf-aligned box art exists", () => {
+    const marketplaceCover = {
+      type: "cover" as const,
+      source: "achatmoinscher",
+      role: "fr",
+      url: "/uploads/amc.jpg",
+    };
+    const ps3Cover = {
+      type: "cover" as const,
+      source: "geedie",
+      role: "eu",
+      url: "/uploads/ps3.jpg",
+      title: "PS3 The Elder Scrolls IV: Oblivion 5th Anniversary Edition",
+    };
+
+    expect(
+      shouldShowCoverAttachmentOnShelf(marketplaceCover, "ps3", [
+        marketplaceCover,
+        ps3Cover,
+      ]),
+    ).toBe(false);
+    expect(
+      shouldShowCoverAttachmentOnShelf(marketplaceCover, "ps3", [
+        marketplaceCover,
+      ]),
+    ).toBe(true);
   });
 });

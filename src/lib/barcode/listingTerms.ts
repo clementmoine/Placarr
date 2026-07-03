@@ -30,6 +30,10 @@ export const GAME_EDITION_DEFINITIONS = [
     label: "Édition Limitée",
     terms: ["edition limitee", "édition limitée", "limited edition"],
   },
+  {
+    label: "Special Edition",
+    terms: ["special edition", "édition spéciale", "edition speciale"],
+  },
   { label: "Collector", terms: ["collector", "collectors"] },
   { label: "Limited", terms: ["limited", "limitee"] },
   { label: "Edition", terms: ["edition", "editions", "édition", "éditions"] },

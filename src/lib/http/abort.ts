@@ -2,10 +2,19 @@ export function isAbortError(error: unknown): boolean {
   if (!error) return false;
   if (error instanceof DOMException && error.name === "AbortError") return true;
   if (error instanceof Error && error.name === "AbortError") return true;
+  if (error instanceof Error && /request aborted/i.test(error.message)) {
+    return true;
+  }
   if (typeof error === "object" && error !== null) {
-    const record = error as { code?: string; name?: string };
+    const record = error as { code?: string; name?: string; message?: string };
     if (record.code === "ERR_CANCELED") return true;
     if (record.name === "CanceledError") return true;
+    if (
+      typeof record.message === "string" &&
+      /request aborted/i.test(record.message)
+    ) {
+      return true;
+    }
   }
   return false;
 }

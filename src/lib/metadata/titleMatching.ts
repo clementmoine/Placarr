@@ -19,12 +19,13 @@ import {
   normalizeVolumeNumber,
 } from "@/lib/title/volumeNumber";
 import { pickBestCoverFromAttachments } from "@/lib/media/attachmentDisplayScore";
-import { cleanSearchQuery } from "@/lib/search/query";
+import { cleanSearchQuery, stripLegalMarkSymbols } from "@/lib/search/query";
 import {
   buildStructuralTitleSearchVariants,
   isWeakMetadataSearchFragment,
 } from "@/lib/title/searchVariants";
 import { parseRomanToken } from "@/lib/title/romanNumeral";
+import { buildBundleMetadataSearchQueries } from "@/lib/metadata/bundleTitle";
 import { resolveGameMetadataPlatform } from "@/lib/metadata/platform";
 import type {
   MetadataAttachment,
@@ -167,7 +168,7 @@ export function buildGameMetadataSearchQueries(
   platform?: string | null,
   shelfName?: string | null,
 ): string[] {
-  const trimmed = name.trim();
+  const trimmed = stripLegalMarkSymbols(name.trim()) || name.trim();
   if (!trimmed) return [];
 
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -179,7 +180,9 @@ export function buildGameMetadataSearchQueries(
   const queries: string[] = [];
 
   const push = (value: string) => {
-    const candidate = value.replace(/\s+/g, " ").trim();
+    const candidate =
+      stripLegalMarkSymbols(value.replace(/\s+/g, " ").trim()) ||
+      value.replace(/\s+/g, " ").trim();
     if (!candidate) return;
     if (isWeakMetadataSearchFragment(candidate)) return;
     const key = candidate.toLowerCase();
@@ -191,6 +194,13 @@ export function buildGameMetadataSearchQueries(
   push(trimmed);
   for (const variant of buildStructuralTitleSearchVariants(trimmed)) {
     push(variant);
+  }
+  for (const query of buildBundleMetadataSearchQueries(
+    trimmed,
+    shelfName,
+    resolvedPlatform ?? undefined,
+  )) {
+    push(query);
   }
   if (resolvedPlatform) {
     push(`${trimmed} ${resolvedPlatform}`);
@@ -583,7 +593,7 @@ function catalogAttachmentDropsRequiredTitleMarker(
 }
 
 const NON_GAME_MEDIA_TITLE_PATTERN =
-  /\b(?:blu[\s-]*ray|bluray|dvd|uhd|ultra[\s-]+hd|vhs|cd|vinyl|vinyle)\b/i;
+  /\b(?:blu[\s-]*ray|bluray|dvd|uhd|ultra[\s-]+hd|vhs|cd|vinyl|vinyle|livre)\b/i;
 
 function attachmentTitleLooksLikeNonGameMedia(
   attachmentTitle: string,
@@ -777,6 +787,16 @@ export function metadataTitleSimilarity(a: string, b: string): number {
     1 -
     levenshtein.get(normalizedA, normalizedB) /
       Math.max(normalizedA.length, normalizedB.length);
+
+  // Single-token titles ("Parrain" vs "Parkan") must not align on string distance
+  // alone when the sequel marker was stripped by normalizeDisplayTitle.
+  if (
+    aTokens.length === 1 &&
+    bTokens.length === 1 &&
+    !titleTokensEquivalent(aTokens[0], bTokens[0])
+  ) {
+    return Math.min(Math.max(tokenScore, distanceScore), 0.55);
+  }
 
   if (
     aTokens[0] &&

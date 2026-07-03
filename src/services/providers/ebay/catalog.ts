@@ -11,6 +11,7 @@ import {
 } from "./env";
 import { getEbayCatalogAccessToken } from "./oauth";
 import type { EbayProduct } from "./types";
+import { bestEbayCoverUrl } from "./coverUrl";
 
 type CatalogProductSummary = {
   title?: string | null;
@@ -35,13 +36,13 @@ function matchesExpectedTitle(title: string, expectedNames: string[]) {
 }
 
 function catalogCoverUrl(summary: CatalogProductSummary): string | null {
-  return (
+  const raw =
     summary.image?.imageUrl?.trim() ||
     summary.additionalImages
       ?.find((img) => img.imageUrl?.trim())
       ?.imageUrl?.trim() ||
-    null
-  );
+    null;
+  return bestEbayCoverUrl(raw) ?? raw;
 }
 
 function summaryToProduct(summary: CatalogProductSummary): EbayProduct | null {

@@ -52,6 +52,10 @@ import { inferTextLanguage } from "@/lib/locale/preference";
 import { throwIfAborted, isAbortError } from "@/lib/http/abort";
 
 import { metadataHasDisplayImage } from "@/lib/metadata/displayImage";
+import {
+  metadataResultsNeedGalleryEnrichment,
+  metadataResultsHaveGameGallerySource,
+} from "@/lib/metadata/galleryEnrichment";
 
 function metadataHasDescription(metadata: MetadataResult): boolean {
   return Boolean(metadata.description?.trim());
@@ -199,6 +203,31 @@ function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
         provider.capabilities.includes("cover") &&
         provider.isSecondary),
   );
+}
+
+function shouldResolveProviderForGallery(
+  type: MediaType,
+  provider: ProviderInfo,
+  existing: MetadataResult | null | undefined,
+  activeResults: MetadataResult[],
+  barcode: string,
+): boolean {
+  if (type !== "games") return false;
+  if (!metadataResultsNeedGalleryEnrichment(type, activeResults, barcode)) {
+    return false;
+  }
+  if (
+    !metadataCapabilitiesOf(provider).includes("cover") &&
+    !shouldAlwaysFetchGameGallerySource(provider)
+  ) {
+    return false;
+  }
+  if (!existing) return true;
+  if (!metadataHasDisplayImage(existing)) return true;
+  if (shouldAlwaysFetchGameGallerySource(provider)) {
+    return !metadataResultsHaveGameGallerySource([existing]);
+  }
+  return false;
 }
 
 function mergeInputWithTrait(
@@ -453,10 +482,30 @@ export async function fetchMetadata(
   if (secondaryProviders.length > 0) {
     throwIfAborted(options?.signal);
     const stage1Results = Array.from(byProvider.values());
+    const stage1ActiveResults = stage1Results.filter(
+      Boolean,
+    ) as MetadataResult[];
+    const stage1NeedsGallery = metadataResultsNeedGalleryEnrichment(
+      type,
+      stage1ActiveResults,
+      cleanedBarcode,
+    );
 
     const toResolve = secondaryProviders.filter((p) => {
       if (isMetadataProviderQuotaBlocked(p.id)) return false;
       if (shouldAlwaysFetchGameGallerySource(p)) return true;
+      if (
+        stage1NeedsGallery &&
+        shouldResolveProviderForGallery(
+          type,
+          p,
+          byProvider.get(p.id) ?? null,
+          stage1ActiveResults,
+          cleanedBarcode,
+        )
+      ) {
+        return true;
+      }
       if (p.auth.kind !== "scrape") return true;
       const caps = metadataCapabilitiesOf(p);
       return caps.some(
@@ -514,17 +563,37 @@ export async function fetchMetadata(
   for (const providerId of providers.map((p) => p.id)) {
     throwIfAborted(options?.signal);
     const existing = byProvider.get(providerId);
-    if (existing) continue;
-
     const providerInfo = providers.find((p) => p.id === providerId);
     if (!providerInfo?.capabilities.includes("identify")) continue;
     if (isMetadataProviderQuotaBlocked(providerId)) continue;
 
-    const hasTitleAndCover = Array.from(byProvider.values()).some(
-      (res) => res?.title && res?.imageUrl,
+    const activeForGallery = Array.from(byProvider.values()).filter(
+      Boolean,
+    ) as MetadataResult[];
+    const needsGallery = metadataResultsNeedGalleryEnrichment(
+      type,
+      activeForGallery,
+      cleanedBarcode,
     );
-    const hasPrice = Array.from(byProvider.values()).some((res) =>
-      res?.facts?.some(
+
+    if (
+      existing &&
+      !shouldResolveProviderForGallery(
+        type,
+        providerInfo,
+        existing,
+        activeForGallery,
+        cleanedBarcode,
+      )
+    ) {
+      continue;
+    }
+
+    const hasTitleAndCover = activeForGallery.some(
+      (res) => res.title && res.imageUrl,
+    );
+    const hasPrice = activeForGallery.some((res) =>
+      res.facts?.some(
         (f) =>
           f.kind === "price" ||
           f.kind === "estimated-value" ||
@@ -532,7 +601,7 @@ export async function fetchMetadata(
       ),
     );
 
-    if (providerInfo?.auth.kind === "scrape") {
+    if (providerInfo.auth.kind === "scrape") {
       const caps = metadataCapabilitiesOf(providerInfo);
       // Duration providers (HowLongToBeat) always run for games so their
       // playtimes are fetched and can be cross-checked against other sources —
@@ -541,6 +610,7 @@ export async function fetchMetadata(
       const skip =
         !shouldAlwaysFetchGameGallerySource(providerInfo) &&
         hasTitleAndCover &&
+        !needsGallery &&
         !caps.includes("duration") &&
         (!caps.includes("price") || hasPrice);
       if (skip) continue;

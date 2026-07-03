@@ -7,6 +7,8 @@ import {
   cleanDiscogsNotes,
   fetchFromDiscogs,
   getDiscogsAuthParams,
+  isDiscogsCompilationBundle,
+  pickBestDiscogsBarcodeSearchResult,
 } from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
@@ -62,6 +64,54 @@ describe("cleanDiscogsNotes", () => {
         "Published by Square Enix Music.\n" +
         "See the site. Limited edition.",
     );
+  });
+});
+
+const MAROON_FIVE_DISCOGS_HITS = [
+  {
+    id: 9140437,
+    country: "Indonesia",
+    title: "Maroon 5 - It Won't Be Soon Before Long",
+    year: 2008,
+    format: ["CD", "Album", "Deluxe Edition"],
+  },
+  {
+    id: 8646306,
+    country: "UK",
+    title: "Maroon 5 - It Won't Be Soon Before Long",
+    year: 2008,
+    format: ["CD", "Album", "Deluxe Edition"],
+  },
+  {
+    id: 2497671,
+    country: "Europe",
+    title: "Maroon 5 - It Won't Be Soon Before Long",
+    year: 2008,
+    format: ["CD", "Album", "Special Edition"],
+  },
+  {
+    id: 15751696,
+    country: "Europe",
+    title: "Maroon 5 - Songs About Jane / It Won't Be Soon Before Long",
+    year: 2011,
+    format: ["CD", "Album", "All Media", "Compilation"],
+  },
+];
+
+describe("pickBestDiscogsBarcodeSearchResult", () => {
+  it("prefers a locale-relevant regional pressing over distant duplicates", () => {
+    expect(
+      pickBestDiscogsBarcodeSearchResult(MAROON_FIVE_DISCOGS_HITS)?.id,
+    ).toBe(2497671);
+  });
+
+  it("ignores multi-album compilation bundles on the same barcode", () => {
+    expect(
+      isDiscogsCompilationBundle({
+        title: "Maroon 5 - Songs About Jane / It Won't Be Soon Before Long",
+        format: ["CD", "Album", "All Media", "Compilation"],
+      }),
+    ).toBe(true);
   });
 });
 
@@ -184,6 +234,39 @@ describe("fetchFromDiscogs", () => {
     process.env.DISCOGS_TOKEN = "test-token";
     mockedGet.mockResolvedValue({ data: { results: [] } } as never);
     expect(await fetchFromDiscogs("0000000000000")).toBeNull();
+  });
+
+  it("choisit la pressing régionale la plus pertinente pour un barcode ambigu", async () => {
+    process.env.DISCOGS_TOKEN = "test-token";
+    mockedGet
+      .mockResolvedValueOnce({
+        data: { results: MAROON_FIVE_DISCOGS_HITS },
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          country: "Europe",
+          labels: [{ name: "A&M Octone Records", catno: "0602517767669" }],
+          formats: [
+            {
+              name: "CD",
+              descriptions: ["Album", "Special Edition"],
+              qty: 1,
+            },
+          ],
+          images: [
+            {
+              type: "primary",
+              uri: "https://i.discogs.com/europe-primary.jpeg",
+            },
+          ],
+        },
+      } as never);
+
+    const r = await fetchFromDiscogs("602517767669");
+    expect(r?.id).toBe(2497671);
+    expect(r?.country).toBe("Europe");
+    expect(r?.catalogNumber).toBe("0602517767669");
+    expect(r?.edition).toBe("Special Edition");
   });
 
   it("renvoie null sur erreur réseau", async () => {

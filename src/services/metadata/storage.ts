@@ -26,7 +26,10 @@ import {
   attachmentTitleMediaTypeConflicts,
   catalogAttachmentTitleConflicts,
 } from "@/lib/metadata/titleMatching";
-import { urlsReferToSameLocalizedImage } from "@/lib/media/coverUrl";
+import {
+  urlsReferToSameLocalizedImage,
+  isUrlEligibleDefaultCover,
+} from "@/lib/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/lib/media/attachmentDisplayLabels";
 import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/lib/media/remoteFetch";
@@ -852,12 +855,17 @@ export async function storeMetadata(
     )
       ? canonicalCoverCandidate
       : undefined;
+  const metadataCoverFallback =
+    formattedMetadata.imageUrl &&
+    isUrlEligibleDefaultCover(formattedMetadata.imageUrl, storableAttachments)
+      ? formattedMetadata.imageUrl
+      : null;
   const selectedImageUrl =
     canonicalCover?.url ??
     pickBestCoverFromAttachments(storableAttachments, imageMetricsByUrl, {
       requestedPlatformKey,
     }) ??
-    formattedMetadata.imageUrl ??
+    metadataCoverFallback ??
     (previousLocalCover &&
     requestedPlatformKey &&
     shouldSuppressCoverOnPlatformShelf(
@@ -989,10 +997,24 @@ export async function storeMetadata(
     const itemCoverStillInGallery = storableAttachments.some(
       (attachment) => attachment.url === item.imageUrl,
     );
+    const itemCoverMetrics = item.imageUrl?.startsWith("/uploads/")
+      ? (imageMetricsByUrl.get(item.imageUrl) ??
+        (await readFileImageMetrics(
+          path.join(process.cwd(), "public", item.imageUrl),
+        )))
+      : null;
+    const itemCoverIsLowRes =
+      Boolean(item.imageUrl) && !isCoverResolutionAcceptable(itemCoverMetrics);
+    const userCoverSavedAfterEnrichment =
+      item.updatedAt &&
+      item.metadata?.lastFetched &&
+      new Date(item.updatedAt).getTime() >
+        new Date(item.metadata.lastFetched).getTime();
     const shouldSyncItemCover =
       !item.imageUrl ||
       item.imageUrl === previousMetadataImage ||
       item.imageUrl === croppedImageUrl ||
+      (itemCoverIsLowRes && !userCoverSavedAfterEnrichment) ||
       localizedAttachments.some(
         (attachment) =>
           attachment.source === "barcode" && attachment.url === item.imageUrl,

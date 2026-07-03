@@ -34,9 +34,12 @@ import {
   isPlaceholderCoverFromPersistedMetrics,
   type PlaceholderCoverSignals,
 } from "@/lib/media/coverPlaceholder";
+import { isCoverResolutionAcceptable } from "@/lib/media/coverResolution";
 import {
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
+  isCoverEligibleAttachmentType,
+  isUrlEligibleDefaultCover,
 } from "@/lib/media/coverUrl";
 import {
   icollectCoverRegionFromAgeRating,
@@ -72,10 +75,12 @@ export interface MediaItem {
 
 export interface MediaInput {
   imageUrl?: string | null;
+  updatedAt?: Date | string | null;
   metadata?: {
     imageUrl?: string | null;
     heroImageUrl?: string | null;
     sourceType?: string | null;
+    lastFetched?: Date | string | null;
     attachments?: MediaItem[] | null;
   } | null;
   shelf?: {
@@ -87,6 +92,15 @@ export interface MediaInput {
 function isUserUploadedImage(url?: string | null): boolean {
   if (!url) return false;
   return url.startsWith("/") || url.startsWith("data:");
+}
+
+/** Cover saved manually after the last enrichment — do not auto-heal over it. */
+export function isExplicitUserCoverOverride(item: MediaInput): boolean {
+  if (!item.imageUrl) return false;
+  const lastFetched = item.metadata?.lastFetched;
+  const updatedAt = item.updatedAt;
+  if (!lastFetched || !updatedAt) return false;
+  return new Date(updatedAt).getTime() > new Date(lastFetched).getTime();
 }
 
 function resolveCoverUiLocale(uiLocale?: Locale | null): Locale | undefined {
@@ -321,10 +335,16 @@ export function filterMetadataForShelfPlatform<
         ),
     );
 
-  const rawImageUrl = pinStillValid
-    ? metadataForTitle.imageUrl
-    : (pickBestCoverFromAttachments(filteredAttachments, undefined, options) ??
-      null);
+  const rawImageUrl =
+    pinStillValid &&
+    metadataForTitle.imageUrl &&
+    isUrlEligibleDefaultCover(metadataForTitle.imageUrl, filteredAttachments)
+      ? metadataForTitle.imageUrl
+      : (pickBestCoverFromAttachments(
+          filteredAttachments,
+          undefined,
+          options,
+        ) ?? null);
   const imageUrl =
     rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
 
@@ -364,11 +384,33 @@ function pinnedCoverNeedsPlatformFallback(
   item: MediaInput,
   pin: string,
   options: AttachmentDisplayScoreOptions,
+  { honorUserOverride = false }: { honorUserOverride?: boolean } = {},
 ): boolean {
   const attachment = attachmentForUrl(item, pin);
-  if (!attachment) return false;
-  if (attachment.source === "user") return false;
-  if (isPlaceholderCoverFromPersistedMetrics(attachment)) return true;
+  if (attachment?.source === "user") return false;
+  if (!attachment) {
+    if (isUserUploadedImage(pin)) return false;
+    if (
+      item.metadata?.imageUrl &&
+      item.metadata.imageUrl !== pin &&
+      pin.startsWith("/uploads/")
+    ) {
+      return true;
+    }
+    return false;
+  }
+  if (!honorUserOverride) {
+    if (isPlaceholderCoverFromPersistedMetrics(attachment)) return true;
+  }
+  if (attachment.type && !isCoverEligibleAttachmentType(attachment.type)) {
+    return true;
+  }
+  const metrics =
+    persistedImageMetricsByUrl(item)?.get(pin) ??
+    (attachment.width != null && attachment.height != null
+      ? { width: attachment.width, height: attachment.height }
+      : null);
+  if (!honorUserOverride && !isCoverResolutionAcceptable(metrics)) return true;
   if (
     isAttachmentCoverPlatformMismatch(attachment, options.requestedPlatformKey)
   ) {
@@ -417,7 +459,10 @@ export function resolveMetadataCoverUrl(
   if (!pin || isMissingArtImageUrl(pin)) return null;
 
   const options = coverDisplayOptions(item, uiLocale);
-  if (pinnedCoverNeedsPlatformFallback(item, pin, options)) {
+  if (
+    !isUrlEligibleDefaultCover(pin, attachments(item)) ||
+    pinnedCoverNeedsPlatformFallback(item, pin, options)
+  ) {
     return (
       pickBestCoverFromAttachments(
         coverAttachmentsMatchingShelfPlatform(attachments(item), options),
@@ -517,10 +562,14 @@ export function getCoverImage(
   uiLocale?: Locale | null,
 ): string | null {
   const options = coverDisplayOptions(item, uiLocale);
+  const honorUserOverride = isExplicitUserCoverOverride(item);
 
   if (
     item.imageUrl &&
-    !pinnedCoverNeedsPlatformFallback(item, item.imageUrl, options)
+    isUrlEligibleDefaultCover(item.imageUrl, attachments(item)) &&
+    !pinnedCoverNeedsPlatformFallback(item, item.imageUrl, options, {
+      honorUserOverride,
+    })
   ) {
     return item.imageUrl;
   }

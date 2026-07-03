@@ -719,6 +719,15 @@ describe("metadataTitleSimilarity", () => {
     ).toBeLessThan(0.58);
   });
 
+  it("does not treat Parrain and Parkan sequels as the same product", () => {
+    expect(metadataTitleSimilarity("Le Parrain 2", "Parkan II")).toBeLessThan(
+      0.58,
+    );
+    expect(
+      isMetadataTitleAligned({ title: "Parkan II" }, ["Le Parrain 2"], 0.58),
+    ).toBe(false);
+  });
+
   it("keeps cross-language pokemon version titles aligned", () => {
     expect(
       metadataTitleSimilarity("Pokemon Jaune", "Pokemon Yellow"),

@@ -81,6 +81,23 @@ describe("parseVideoGameSitemapUrls", () => {
   });
 });
 
+const MX_VS_ATV_BROKEN_FIELDS_HTML = `
+<html>
+  <head>
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Thing","name":"MX vs ATV : Extrême limite Xbox 360","gtin13":"4005209102735","additionalProperty":[{"@type":"PropertyValue","name":"Release Date","value":"1969-12-31"},{"@type":"PropertyValue","name":"Platform","value":"Microsoft Xbox 360"},{"@type":"PropertyValue","name":"Automatic Estimated Value","value":"en_FR 1758"},{"@type":"PropertyValue","name":"Automatic Estimated Date","value":"2025-05-25"}]}]}</script>
+  </head>
+  <body>
+    <h1 class="important_value">MX vs ATV : Extrême limite Xbox 360</h1>
+    <div class="field-entry" data-field-key="players"><div class="value">~€17.58</div></div>
+    <div class="field-entry" data-field-key="rating"><div class="value">1969-12-31</div></div>
+    <div class="field-entry" data-field-key="release_date"><div class="value">1969-12-31</div></div>
+    <div class="field-entry" data-field-key="publisher"><div class="value">4005209102735</div></div>
+    <div class="field-entry" data-field-key="automatic_estimated_value"><div class="value">~€17.58</div></div>
+    <div class="field-entry" data-field-key="genre"><div class="many_values"><div class="one_value">Racing</div></div></div>
+  </body>
+</html>
+`;
+
 describe("parseICollectVideoGameItemPage", () => {
   it("extracts structured game metadata from JSON-LD and HTML", () => {
     const metadata = parseICollectVideoGameItemPage(
@@ -108,5 +125,26 @@ describe("parseICollectVideoGameItemPage", () => {
     });
     expect(metadata?.images).toHaveLength(2);
     expect(metadata?.genres).toEqual(["Racing"]);
+  });
+
+  it("drops misaligned collector fields instead of emitting price/date as players/rating", () => {
+    const metadata = parseICollectVideoGameItemPage(
+      MX_VS_ATV_BROKEN_FIELDS_HTML,
+      "https://www.icollecteverything.com/db/item/videogame/1553057/",
+    );
+
+    expect(metadata).toMatchObject({
+      itemId: "1553057",
+      title: "MX vs ATV : Extrême limite Xbox 360",
+      barcode: "4005209102735",
+      platform: "Microsoft Xbox 360",
+      estimatedValueCents: 1758,
+      estimatedValueDate: "2025-05-25",
+      genres: ["Racing"],
+      players: null,
+      ageRating: null,
+      releaseDate: null,
+      publisher: null,
+    });
   });
 });

@@ -11,6 +11,8 @@ import {
   TITLE_PHRASE_EQUIVALENT_GROUPS,
   TITLE_TOKEN_EQUIVALENT_GROUPS,
 } from "@/lib/title/tokenEquivalents";
+import { isBundleTitle, splitBundleTitle } from "@/lib/metadata/bundleTitle";
+import { stripLegalMarkSymbols } from "@/lib/search/query";
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -138,14 +140,66 @@ export function buildEditionPhraseEquivalentVariants(title: string): string[] {
   return [...variants];
 }
 
-/** "Destiny The taken king" -> "Destiny: The Taken King" for provider indexes. */
+/** Inserts ":" before FR/EN subtitle preambles when packaging omits it. */
 function buildSubtitleColonVariants(title: string): string[] {
   if (title.includes(":")) return [];
-  const match = title.match(/^(.+?)\s+((?:The|Le|La|Les)\s+.+)$/i);
+  const match = title.match(
+    /^(.+?)\s+((?:The|Le|La|Les|En|À|Au|Aux|A)\s+.+)$/i,
+  );
   if (!match) return [];
   const colon = `${match[1].trim()}: ${match[2].trim()}`;
   if (colon.toLowerCase() === title.trim().toLowerCase()) return [];
-  return [colon];
+  return [colon, `${match[1].trim()} : ${match[2].trim()}`];
+}
+
+const LEADING_ARTICLE = /^(the|le|la|les|l'|a|an)$/i;
+const CONNECTOR_WORD =
+  /^(au|aux|de|du|des|en|a|of|the|in|on|for|et|and|sur|dans|chez|par|pour|with|versus|vs)$/i;
+
+function normalizeConnectorToken(word: string): string {
+  return word
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function suffixHasConnectorPreposition(words: string[]): boolean {
+  return words.some(
+    (word, index) =>
+      index > 0 && CONNECTOR_WORD.test(normalizeConnectorToken(word)),
+  );
+}
+
+/**
+ * Titles fused without ":" (common on FR packaging: "Franchise Subtitle words").
+ * Yields franchise prefix and subtitle fragments for provider indexes.
+ */
+export function buildFranchisePrefixTitleVariants(title: string): string[] {
+  const trimmed = title.trim();
+  if (!trimmed || /[:–—-]/.test(trimmed)) return [];
+
+  const words = trimmed.split(/\s+/);
+  if (words.length < 4) return [];
+  if (LEADING_ARTICLE.test(normalizeConnectorToken(words[0]))) return [];
+
+  const variants = new Set<string>();
+  const maxPrefix = Math.min(3, words.length - 2);
+
+  for (let prefixLen = 2; prefixLen <= maxPrefix; prefixLen++) {
+    const suffixWords = words.slice(prefixLen);
+    if (suffixWords.length < 2) continue;
+    if (CONNECTOR_WORD.test(normalizeConnectorToken(suffixWords[0]))) continue;
+    if (!suffixHasConnectorPreposition(suffixWords)) continue;
+
+    const prefix = words.slice(0, prefixLen).join(" ");
+    const suffix = suffixWords.join(" ");
+    variants.add(prefix);
+    variants.add(suffix);
+    variants.add(`${prefix}: ${suffix}`);
+    variants.add(`${prefix} : ${suffix}`);
+  }
+
+  return [...variants].filter((v) => v.toLowerCase() !== trimmed.toLowerCase());
 }
 
 function buildLegendTitleVariants(title: string): string[] {
@@ -192,6 +246,25 @@ export function isWeakMetadataSearchFragment(value: string): boolean {
   if (!withoutEdition) return true;
 
   return withoutEdition.split(/\s+/).filter(Boolean).length <= 1;
+}
+
+/** Normalizes bundle separators (&, and, /) for provider indexes. */
+export function buildBundleTitleSearchVariants(title: string): string[] {
+  if (!isBundleTitle(title)) return [];
+
+  const parts = splitBundleTitle(title);
+  if (parts.length < 2) return [];
+
+  const variants = new Set<string>();
+  variants.add(parts.join(" + "));
+  variants.add(parts.join("/"));
+  variants.add(parts.join(" and "));
+  variants.add(`${parts.join(" + ")} Dual Pack`);
+  variants.add(`${parts.join(" + ")} Bundle`);
+
+  return [...variants].filter(
+    (value) => value.toLowerCase() !== title.trim().toLowerCase(),
+  );
 }
 
 export function buildSeparatorTitleVariants(title: string): string[] {
@@ -295,14 +368,16 @@ export function buildCamelCaseTitleVariants(title: string): string[] {
 }
 
 export function buildStructuralTitleSearchVariants(title: string): string[] {
-  const trimmed = title.trim();
+  const trimmed = stripLegalMarkSymbols(title.trim()) || title.trim();
   if (!trimmed) return [];
 
   const seen = new Set<string>();
   const ordered: string[] = [];
 
   const push = (value: string) => {
-    const candidate = value.replace(/\s+/g, " ").trim();
+    const candidate =
+      stripLegalMarkSymbols(value.replace(/\s+/g, " ").trim()) ||
+      value.replace(/\s+/g, " ").trim();
     if (!candidate || seen.has(candidate.toLowerCase())) return;
     if (isWeakMetadataSearchFragment(candidate)) return;
     seen.add(candidate.toLowerCase());
@@ -317,6 +392,9 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
   for (const spelling of buildStylizedSpellingVariants(trimmed)) {
     push(spelling);
   }
+  for (const fused of buildFranchisePrefixTitleVariants(trimmed)) {
+    push(fused);
+  }
 
   for (const value of [
     ...buildCamelCaseTitleVariants(trimmed),
@@ -328,6 +406,7 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
     ...buildAccentInsensitiveVariants(trimmed),
     ...buildApostropheTitleVariants(trimmed),
     ...buildSeparatorTitleVariants(trimmed),
+    ...buildBundleTitleSearchVariants(trimmed),
     ...buildLegendTitleVariants(trimmed),
   ]) {
     push(value);

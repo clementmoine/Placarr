@@ -63,6 +63,39 @@ describe("orderedCoverAttachmentsForDisplay", () => {
     ).toEqual(["/uploads/ps4-default.jpg"]);
   });
 
+  it("ranks catalog art before low-resolution listing photos in gallery order", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/uploads/geedie-cover.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "icollect",
+            coverProvenance: "listing_photo",
+            url: "/uploads/icollect-thumb.jpg",
+            width: 140,
+            height: 196,
+          },
+          {
+            type: "cover" as const,
+            source: "geedie",
+            coverProvenance: "catalog",
+            url: "/uploads/geedie-cover.jpg",
+            width: 454,
+            height: 640,
+          },
+        ],
+      },
+      shelf: { type: "games", name: "PlayStation 4" },
+    };
+
+    expect(
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.source,
+      ),
+    ).toEqual(["geedie", "icollect"]);
+  });
+
   it("hides Geedie covers without an explicit PS4 signal on a PS4 shelf", () => {
     const item = {
       metadata: {

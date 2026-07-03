@@ -38,6 +38,8 @@ export function coverProvenanceRank(provenance?: string | null): number {
 export interface CoverProvenanceSignals {
   /** Provider-declared, URL-derived provenance — persisted at enrichment. */
   provenance?: string | null;
+  /** Attachment column name for persisted provenance. */
+  coverProvenance?: string | null;
 }
 
 /**
@@ -48,7 +50,7 @@ export interface CoverProvenanceSignals {
 export function resolveCoverProvenance(
   signals: CoverProvenanceSignals,
 ): CoverProvenance {
-  const declared = signals.provenance;
+  const declared = signals.provenance ?? signals.coverProvenance;
   if (
     declared &&
     COVER_PROVENANCE_ORDER.includes(declared as CoverProvenance)

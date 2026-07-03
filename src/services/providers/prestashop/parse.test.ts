@@ -9,6 +9,7 @@ import {
   parseIqitRenderedProducts,
   parsePrestashopProductPageBarcode,
   parsePrestashopShortDescription,
+  resolvePrestashopSearchProductBarcode,
 } from "./parse";
 
 describe("parsePrestashopShortDescription", () => {
@@ -52,6 +53,17 @@ describe("extractBarcodeFromProductUrl", () => {
         "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
       ),
     ).toBe("3558380126133");
+  });
+});
+
+describe("resolvePrestashopSearchProductBarcode", () => {
+  it("prefere l'EAN URL a une reference interne alphanumerique", () => {
+    expect(
+      resolvePrestashopSearchProductBarcode({
+        link: "https://www.netgamesretro.com/fr/jeux-video-netgamesretrocom/3947-mx-vs-atv-extreme-limite-xbox-360-4005209102735.html",
+        reference: "1C63979A6E18",
+      }),
+    ).toBe("4005209102735");
   });
 });
 

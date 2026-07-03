@@ -150,6 +150,45 @@ describe("createDeezerResolver", () => {
     ).toHaveLength(1);
   });
 
+  it("formate Artiste - Album quand nom et barcode sont fournis ensemble", async () => {
+    mockedGet.mockImplementation(async (url) => {
+      if (url.startsWith("https://api.deezer.com/search/album?q=")) {
+        return { data: { data: [{ id: 103069 }] } } as never;
+      }
+      if (url === "https://api.deezer.com/album/103069") {
+        return {
+          data: {
+            id: 103069,
+            title: "It Won't Be Soon Before Long",
+            upc: "602517767669",
+            cover_big: "https://cdn-images.dzcdn.net/images/cover/maroon5.jpg",
+            artist: { name: "Maroon 5" },
+            contributors: [{ name: "Maroon 5" }],
+            tracks: { data: [] },
+          },
+        } as never;
+      }
+      return { data: {} } as never;
+    });
+
+    const resolve = createDeezerResolver();
+    const result = await resolve(
+      "Maroon 5 - It Won't Be Soon Before Long",
+      "602517767669",
+    );
+
+    expect(result?.title).toBe("Maroon 5 - It Won't Be Soon Before Long");
+    expect(result?.attachments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "cover",
+          source: "deezer",
+          url: "https://cdn-images.dzcdn.net/images/cover/maroon5.jpg",
+        }),
+      ]),
+    );
+  });
+
   it("résout par nom via la meilleure distance titre et ajoute title_match", async () => {
     mockedGet.mockImplementation(async (url) => {
       if (url.startsWith("https://api.deezer.com/search/album?q=")) {
@@ -171,7 +210,7 @@ describe("createDeezerResolver", () => {
     const resolve = createDeezerResolver();
     const result = await resolve("Discovery");
 
-    expect(result?.title).toBe("Discovery");
+    expect(result?.title).toBe("Daft Punk - Discovery");
     expect(result?.observationSchemaVersion).toBe(
       METADATA_OBSERVATION_SCHEMA_VERSION,
     );
@@ -180,7 +219,7 @@ describe("createDeezerResolver", () => {
         expect.objectContaining({
           kind: "title",
           role: "object_title",
-          value: "Discovery",
+          value: "Daft Punk - Discovery",
           provenance: expect.objectContaining({
             evidenceSignals: ["structured_data", "title_match"],
           }),

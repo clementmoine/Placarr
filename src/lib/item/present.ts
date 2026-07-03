@@ -19,6 +19,7 @@ export interface PresentableItemInput {
   name: string;
   barcode?: string | null;
   imageUrl?: string | null;
+  updatedAt?: Date | string | null;
   metadata?: MetadataResult | null;
   shelf?: {
     type?: string | null;
@@ -93,6 +94,7 @@ function formatItemMetadata(
 function mediaInput(item: PresentableItemInput) {
   return {
     imageUrl: item.imageUrl,
+    updatedAt: "updatedAt" in item ? item.updatedAt : undefined,
     metadata: item.metadata,
     shelf: item.shelf,
   };

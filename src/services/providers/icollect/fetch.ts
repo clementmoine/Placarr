@@ -152,6 +152,80 @@ export function parseEstimatedValueCents(raw?: string | null): number | null {
   return null;
 }
 
+function looksLikeCurrency(value: string): boolean {
+  return /[€$£]|(?:^|\s)(?:EUR|USD|GBP)(?:\s|$)/i.test(value);
+}
+
+function looksLikeIsoDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2})?$/.test(value.trim());
+}
+
+function isEpochSentinelDate(value: string): boolean {
+  return /^1969-12-31|^1970-01-01/.test(value.trim());
+}
+
+/** Rejects iCollect rows where collector fields are misaligned (price → players, etc.). */
+export function sanitizeICollectPlayers(
+  value?: string | null,
+): string | undefined {
+  const text = cleanText(value);
+  if (!text || looksLikeCurrency(text) || looksLikeIsoDate(text))
+    return undefined;
+  if (/player/i.test(text) && /\d/.test(text)) return text;
+  if (/^\d+(?:\s*[-–—]\s*\d+)?$/.test(text)) return text;
+  if (/^[12](?:\s*[-–—]\s*\d+)?$/.test(text)) return text;
+  return undefined;
+}
+
+export function sanitizeICollectAgeRating(
+  value?: string | null,
+): string | undefined {
+  const text = cleanText(value);
+  if (!text || looksLikeCurrency(text)) return undefined;
+  if (looksLikeIsoDate(text) || isEpochSentinelDate(text)) return undefined;
+  return text;
+}
+
+export function sanitizeICollectReleaseDate(
+  value?: string | null,
+): string | undefined {
+  const text = cleanText(value);
+  if (!text || isEpochSentinelDate(text)) return undefined;
+  if (looksLikeIsoDate(text)) {
+    const year = Number.parseInt(text.slice(0, 4), 10);
+    if (!Number.isFinite(year) || year < 1975 || year > 2035) return undefined;
+  }
+  return text;
+}
+
+export function sanitizeICollectPublisher(
+  value?: string | null,
+  barcode?: string | null,
+): string | undefined {
+  const text = cleanText(value);
+  if (!text) return undefined;
+  const digits = text.replace(/\D/g, "");
+  if (digits.length >= 8 && barcodesEquivalent(digits, barcode))
+    return undefined;
+  if (/^\d{8,14}$/.test(digits) && digits === text.replace(/\s/g, "")) {
+    return undefined;
+  }
+  return text;
+}
+
+export function sanitizeICollectMetadata(
+  metadata: ICollectMetadata,
+): ICollectMetadata {
+  return {
+    ...metadata,
+    players: sanitizeICollectPlayers(metadata.players) ?? null,
+    ageRating: sanitizeICollectAgeRating(metadata.ageRating) ?? null,
+    releaseDate: sanitizeICollectReleaseDate(metadata.releaseDate) ?? null,
+    publisher:
+      sanitizeICollectPublisher(metadata.publisher, metadata.barcode) ?? null,
+  };
+}
+
 export function extractItemUrlFromSitemapContext(
   xml: string,
   markerIndex: number,
@@ -278,28 +352,37 @@ export function parseICollectVideoGameItemPage(
       parseHtmlField(html, "platform") ||
       null,
     publisher:
-      readAdditionalProperty(properties, "Publisher") ||
-      parseHtmlField(html, "publisher") ||
-      null,
+      sanitizeICollectPublisher(
+        readAdditionalProperty(properties, "Publisher") ||
+          parseHtmlField(html, "publisher") ||
+          null,
+        barcode,
+      ) || null,
     developer: readAdditionalProperty(properties, "Developers") || null,
     description:
       readAdditionalProperty(properties, "Game Summary") ||
       parseHtmlField(html, "game_summary") ||
       null,
     releaseDate:
-      readAdditionalProperty(properties, "Release Date") ||
-      parseHtmlField(html, "release_date") ||
-      null,
+      sanitizeICollectReleaseDate(
+        readAdditionalProperty(properties, "Release Date") ||
+          parseHtmlField(html, "release_date") ||
+          null,
+      ) || null,
     coverUrl: coverUrl || null,
     images,
     players:
-      readAdditionalProperty(properties, "Players") ||
-      parseHtmlField(html, "players") ||
-      null,
+      sanitizeICollectPlayers(
+        readAdditionalProperty(properties, "Players") ||
+          parseHtmlField(html, "players") ||
+          null,
+      ) || null,
     ageRating:
-      readAdditionalProperty(properties, "Rating") ||
-      parseHtmlField(html, "rating") ||
-      null,
+      sanitizeICollectAgeRating(
+        readAdditionalProperty(properties, "Rating") ||
+          parseHtmlField(html, "rating") ||
+          null,
+      ) || null,
     estimatedValueCents: parseEstimatedValueCents(estimatedValueRaw),
     estimatedValueDate:
       readAdditionalProperty(properties, "Automatic Estimated Date") ||
@@ -468,7 +551,9 @@ export async function fetchICollectVideoGameItem(
     const cachedPayload = readCachedICollectMetadata(db, itemId);
     if (cachedPayload) {
       try {
-        return JSON.parse(cachedPayload) as ICollectMetadata;
+        return sanitizeICollectMetadata(
+          JSON.parse(cachedPayload) as ICollectMetadata,
+        );
       } catch {
         // Ignore corrupted cache rows.
       }
@@ -484,7 +569,7 @@ export async function fetchICollectVideoGameItem(
   if (metadata && db && itemId) {
     writeCachedICollectMetadata(db, itemId, JSON.stringify(metadata));
   }
-  return metadata;
+  return metadata ? sanitizeICollectMetadata(metadata) : null;
 }
 
 export async function fetchICollectMetadataByBarcode(

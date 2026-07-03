@@ -1,5 +1,11 @@
 import axios from "axios";
 
+import {
+  regionRank,
+  type LocalePreferenceOptions,
+} from "@/lib/locale/preference";
+import { createGameEditionMatcher } from "@/lib/barcode/listingTerms";
+
 /**
  * Discogs — base musicale de référence (vinyles/CD), recherche par code-barres.
  * Nécessite un token API gratuit (Settings → Developers sur discogs.com) fourni
@@ -21,7 +27,8 @@ export type DiscogsImage = {
 };
 
 export interface DiscogsResult {
-  id: number;
+  /** Absent sur certains hits de recherche : les liens release sont alors omis. */
+  id: number | null;
   title: string;
   year: string | null;
   imageUrl: string | null;
@@ -31,6 +38,8 @@ export interface DiscogsResult {
   notes?: string | null;
   country?: string | null;
   label?: string | null;
+  catalogNumber?: string | null;
+  edition?: string | null;
   format?: string | null;
   formats?: string[];
   formatQuantity?: number | null;
@@ -38,6 +47,73 @@ export interface DiscogsResult {
   communityWant?: number | null;
   genres?: string[];
   styles?: string[];
+}
+
+export type DiscogsSearchHit = {
+  id?: number;
+  title?: string;
+  country?: string;
+  year?: number | string;
+  format?: string[];
+  cover_image?: string;
+  thumb?: string;
+  label?: string[];
+  genre?: string[];
+  style?: string[];
+};
+
+const DISCOGS_FORMAT_ROLE_NOISE =
+  /^(album|single|ep|maxi|stereo|mono|repress|reissue|promo|enhanced|copy protected|mixed|unofficial release)$/i;
+const DISCOGS_EDITION_MATCHER = createGameEditionMatcher("i");
+
+/** Multi-album bundles ("A / B") share barcodes but aren't one catalog item. */
+export function isDiscogsCompilationBundle(hit: DiscogsSearchHit): boolean {
+  const title = String(hit.title || "").trim();
+  if (/\s\/\s/.test(title)) return true;
+
+  const formats = Array.isArray(hit.format) ? hit.format : [];
+  const joined = formats.join(" ").toLowerCase();
+  return joined.includes("compilation") && joined.includes("all media");
+}
+
+/** Prefer locale-relevant regional pressings when one barcode maps to many releases. */
+export function pickBestDiscogsBarcodeSearchResult(
+  results: DiscogsSearchHit[],
+  options?: LocalePreferenceOptions,
+): DiscogsSearchHit | null {
+  const candidates = results.filter(
+    (result) => result?.title && !isDiscogsCompilationBundle(result),
+  );
+  if (candidates.length === 0) return null;
+
+  return [...candidates].sort((left, right) => {
+    const regionDelta =
+      regionRank(left.country, options) - regionRank(right.country, options);
+    if (regionDelta !== 0) return regionDelta;
+
+    const leftYear = Number.parseInt(String(left.year ?? ""), 10);
+    const rightYear = Number.parseInt(String(right.year ?? ""), 10);
+    if (Number.isFinite(leftYear) && Number.isFinite(rightYear)) {
+      return leftYear - rightYear;
+    }
+    return 0;
+  })[0];
+}
+
+function extractDiscogsEdition(formats: string[] | undefined): string | null {
+  if (!formats?.length) return null;
+  const hints = formats
+    .flatMap((entry) => entry.split(" — "))
+    .flatMap((entry) => entry.split(", "))
+    .map((entry) => entry.trim())
+    .filter(
+      (entry) =>
+        entry.length > 0 &&
+        !DISCOGS_FORMAT_ROLE_NOISE.test(entry) &&
+        DISCOGS_EDITION_MATCHER.test(entry),
+    );
+  if (hints.length === 0) return null;
+  return Array.from(new Set(hints)).slice(0, 3).join(" • ");
 }
 
 /**
@@ -112,7 +188,7 @@ export async function fetchFromDiscogs(
 
   try {
     const res = await axios.get(`${DISCOGS_BASE}/database/search`, {
-      params: { barcode: clean, per_page: 5, ...auth },
+      params: { barcode: clean, per_page: 10, ...auth },
       headers: { "User-Agent": USER_AGENT },
       timeout: 8000,
     });
@@ -120,7 +196,7 @@ export async function fetchFromDiscogs(
     const results = res.data?.results;
     if (!Array.isArray(results) || results.length === 0) return null;
 
-    const best = results.find((r) => r?.title) ?? null;
+    const best = pickBestDiscogsBarcodeSearchResult(results);
     if (!best?.title) return null;
 
     let formats: string[] | undefined;
@@ -130,6 +206,12 @@ export async function fetchFromDiscogs(
     let artists: string[] | undefined;
     let labels: string[] | undefined;
     let notes: string | null = null;
+    let country: string | null =
+      typeof best.country === "string" ? best.country : null;
+    let catalogNumber: string | null = null;
+    let edition: string | null = extractDiscogsEdition(
+      Array.isArray(best.format) ? best.format : undefined,
+    );
     let imageUrl: string | null =
       typeof best.cover_image === "string" && best.cover_image.trim()
         ? best.cover_image.trim()
@@ -147,6 +229,9 @@ export async function fetchFromDiscogs(
           },
         );
         const release = releaseRes.data;
+        if (typeof release?.country === "string" && release.country.trim()) {
+          country = release.country.trim();
+        }
         // NB: `release.lowest_price` is deliberately NOT used — it excludes
         // shipping and is routinely a €0.01–0.50 teaser/loss-leader, so it would
         // surface a misleading "used price". The reliable price-suggestions
@@ -208,6 +293,18 @@ export async function fetchFromDiscogs(
               total + (typeof entry?.qty === "number" ? entry.qty : 1),
             0,
           );
+          edition =
+            extractDiscogsEdition(formats) ??
+            edition ??
+            extractDiscogsEdition(
+              release.formats.flatMap((entry: { descriptions?: unknown[] }) =>
+                Array.isArray(entry?.descriptions)
+                  ? entry.descriptions.filter(
+                      (value): value is string => typeof value === "string",
+                    )
+                  : [],
+              ),
+            );
         }
         if (release?.community && typeof release.community === "object") {
           communityHave =
@@ -231,11 +328,18 @@ export async function fetchFromDiscogs(
         }
         if (Array.isArray(release?.labels)) {
           const names = release.labels
-            .map((entry: { name?: unknown }) =>
-              typeof entry?.name === "string"
+            .map((entry: { name?: unknown; catno?: unknown }) => {
+              if (
+                !catalogNumber &&
+                typeof entry?.catno === "string" &&
+                entry.catno.trim()
+              ) {
+                catalogNumber = entry.catno.trim();
+              }
+              return typeof entry?.name === "string"
                 ? cleanDiscogsEntityName(entry.name)
-                : "",
-            )
+                : "";
+            })
             .filter(
               (name: string) => name && name.toLowerCase() !== "not on label",
             );
@@ -254,7 +358,7 @@ export async function fetchFromDiscogs(
     }
 
     return {
-      id: best.id,
+      id: typeof best.id === "number" ? best.id : null,
       title: String(best.title).trim(),
       year: best.year ? String(best.year) : null,
       imageUrl,
@@ -262,11 +366,13 @@ export async function fetchFromDiscogs(
       artists,
       labels,
       notes,
-      country: typeof best.country === "string" ? best.country : null,
+      country,
       label:
         Array.isArray(best.label) && typeof best.label[0] === "string"
           ? best.label[0]
-          : null,
+          : labels?.[0] || null,
+      catalogNumber,
+      edition,
       format:
         Array.isArray(best.format) && typeof best.format[0] === "string"
           ? best.format[0]

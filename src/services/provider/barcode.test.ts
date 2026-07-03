@@ -53,6 +53,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "ebay",
         "leDenicheur",
         "ice",
+        "netgamesretro",
         "tokyogamestory",
       ].sort(),
     );
@@ -102,6 +103,7 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "ebay",
         "leDenicheur",
         "ice",
+        "netgamesretro",
         "tokyogamestory",
         // Board-game anchors fire in generic too (parity), so a typeless scan
         // of a board game has a trusted source and isn't misclassified.

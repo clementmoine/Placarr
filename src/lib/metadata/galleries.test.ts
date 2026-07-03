@@ -28,6 +28,15 @@ describe("metadataGameGallery", () => {
       ]),
     ).toBe(false);
   });
+
+  it("flags barcode-less games with an empty gallery for refresh", () => {
+    expect(isMissingGameMediaGallery("games", null, [])).toBe(true);
+    expect(
+      isMissingGameMediaGallery("games", "", [
+        { type: "screenshot", isGameMediaGallerySource: true },
+      ]),
+    ).toBe(false);
+  });
 });
 
 describe("hasMusicGalleryAttachment", () => {
@@ -65,16 +74,19 @@ describe("isMissingMusicGallery", () => {
     ).toBe(true);
   });
 
-  it("ignores non-music types and items without a barcode", () => {
+  it("ignores non-music types", () => {
     expect(
       isMissingMusicGallery("games", "4988601467124", [
         { type: "cover", isMusicGallerySource: false },
       ]),
     ).toBe(false);
+  });
+
+  it("flags barcode-less music items with a sparse gallery for refresh", () => {
     expect(
       isMissingMusicGallery("musics", null, [
         { type: "cover", isMusicGallerySource: false },
       ]),
-    ).toBe(false);
+    ).toBe(true);
   });
 });

@@ -18,4 +18,11 @@ describe("coverDownloadCandidates", () => {
     const url = "https://covers.openlibrary.org/b/id/12345-L.jpg";
     expect(coverDownloadCandidates(url)).toEqual([url]);
   });
+
+  it("upgrades eBay thumbnails through structural candidates", () => {
+    const url = "https://i.ebayimg.com/images/g/UQ0AAOSwUfBglr-b/s-l225.jpg";
+    expect(coverDownloadCandidates(url)[0]).toBe(
+      "https://i.ebayimg.com/images/g/UQ0AAOSwUfBglr-b/s-l1600.jpg",
+    );
+  });
 });

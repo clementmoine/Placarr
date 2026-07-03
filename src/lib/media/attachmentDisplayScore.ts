@@ -15,6 +15,7 @@ import {
   coverProvenanceRank,
   resolveCoverProvenance,
 } from "@/lib/media/coverProvenance";
+import { isCoverEligibleAttachmentType } from "@/lib/media/coverUrl";
 import {
   MIN_COVER_SHORTEST_EDGE,
   isCoverResolutionAcceptable,
@@ -278,6 +279,18 @@ export function coverListHasShelfPlatformSignal(
   );
 }
 
+/** True when a cover explicitly names a different console than the shelf. */
+function coverListHasForeignPlatformSignal(
+  attachments: ScoredAttachmentInput[],
+  requestedPlatformKey: VideoGamePlatformKey,
+): boolean {
+  return attachments.some((attachment) => {
+    if (!isCoverGalleryAttachment(attachment)) return false;
+    const detected = detectAttachmentPlatformKeysForMismatchRank(attachment);
+    return detected.size > 0 && !detected.has(requestedPlatformKey);
+  });
+}
+
 /** Cover with no platform in title/role (and URL when strict) on a platform shelf. */
 export function isCoverAmbiguousForShelfPlatform(
   attachment: ScoredAttachmentInput,
@@ -290,6 +303,17 @@ export function isCoverAmbiguousForShelfPlatform(
     return false;
   }
   return detectAttachmentPlatformKeysForMismatchRank(attachment).size === 0;
+}
+
+function isAmbiguousMarketplaceCover(
+  attachment: ScoredAttachmentInput,
+  requestedPlatformKey: VideoGamePlatformKey,
+): boolean {
+  if (!isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey)) {
+    return false;
+  }
+  if (resolveCoverProvenance(attachment) === "listing_photo") return true;
+  return (attachment.role || "").toLowerCase() === "marketplace";
 }
 
 /**
@@ -305,6 +329,13 @@ export function shouldSuppressCoverOnPlatformShelf(
     return false;
   }
   if (isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)) {
+    return true;
+  }
+  if (
+    !coverListHasShelfPlatformSignal(allCovers, requestedPlatformKey) &&
+    coverListHasForeignPlatformSignal(allCovers, requestedPlatformKey) &&
+    isAmbiguousMarketplaceCover(attachment, requestedPlatformKey)
+  ) {
     return true;
   }
   if (!coverListHasShelfPlatformSignal(allCovers, requestedPlatformKey)) {
@@ -864,7 +895,11 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
     ? (imageMetricsByUrl?.get(preferred.url) ?? null)
     : null;
 
-  if (preferred?.url && isCoverResolutionAcceptable(preferredMetrics)) {
+  if (
+    preferred?.url &&
+    isCoverEligibleAttachmentType(preferred.type) &&
+    isCoverResolutionAcceptable(preferredMetrics)
+  ) {
     return preferred.url;
   }
 
@@ -875,8 +910,11 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
   );
   if (acceptable) return acceptable;
 
-  const fallback = ranked.find((attachment) => attachment.url);
-  return fallback?.url ?? preferred?.url ?? null;
+  const fallback = ranked.find(
+    (attachment) =>
+      attachment.url && isCoverEligibleAttachmentType(attachment.type),
+  );
+  return fallback?.url ?? null;
 }
 
 /** Shared cover ordering for the default picker and gallery UIs. */

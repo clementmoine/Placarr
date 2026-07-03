@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { buildGameMetadataSearchQueries } from "@/lib/metadata/titleMatching";
 import {
   buildCamelCaseTitleVariants,
+  buildFranchisePrefixTitleVariants,
   buildSeparatorTitleVariants,
   buildStructuralTitleSearchVariants,
   buildTokenEquivalentTitleVariants,
@@ -49,6 +51,63 @@ describe("buildStructuralTitleSearchVariants", () => {
   it("extracts the subject from a french legend title", () => {
     expect(buildStructuralTitleSearchVariants("La Légende Du Dragon")).toEqual(
       expect.arrayContaining(["Dragon", "Legend of Dragon"]),
+    );
+  });
+
+  it("never emits legal mark symbols in search variants", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "You Suck at Parking® - Complete Edition",
+    );
+    expect(
+      variants.some((variant) => /Parking.*Complete Edition/i.test(variant)),
+    ).toBe(true);
+    for (const variant of variants) {
+      expect(variant).not.toMatch(/[\u00AE\u2122\u00A9\u2120\u2117]/);
+    }
+  });
+
+  it("splits fused franchise + subtitle titles for localized FR packaging", () => {
+    expect(
+      buildFranchisePrefixTitleVariants("Viva Pinata Pagaille au Paradis"),
+    ).toEqual(
+      expect.arrayContaining([
+        "Viva Pinata",
+        "Pagaille au Paradis",
+        "Viva Pinata: Pagaille au Paradis",
+        "Viva Pinata : Pagaille au Paradis",
+      ]),
+    );
+    expect(
+      buildGameMetadataSearchQueries(
+        "Viva Pinata Pagaille au Paradis",
+        "xbox-360",
+        "Xbox 360",
+      ),
+    ).toEqual(expect.arrayContaining(["Pagaille au Paradis", "Viva Pinata"]));
+    expect(
+      buildGameMetadataSearchQueries(
+        "LEGO Indiana Jones: The Original Adventures & Kung Fu Panda",
+        "xbox-360",
+        "Xbox 360",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "LEGO Indiana Jones: The Original Adventures + Kung Fu Panda Dual Pack",
+        expect.stringMatching(
+          /^Pack : LEGO Indiana Jones: The Original Adventures \+ Kung Fu Panda \/ /,
+        ),
+      ]),
+    );
+  });
+
+  it("inserts a colon before FR subtitle preambles like En marche", () => {
+    expect(
+      buildStructuralTitleSearchVariants("Call of Duty 3 En marche vers Paris"),
+    ).toEqual(
+      expect.arrayContaining([
+        "Call of Duty 3: En marche vers Paris",
+        "Call of Duty 3 : En marche vers Paris",
+      ]),
     );
   });
 

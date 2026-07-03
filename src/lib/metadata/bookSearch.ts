@@ -1,4 +1,4 @@
-import { cleanSearchQuery } from "@/lib/search/query";
+import { cleanSearchQuery, stripLegalMarkSymbols } from "@/lib/search/query";
 import { normalizeDisplayTitle } from "@/lib/title/displayScore";
 
 const TITLE_STOP_WORDS = new Set([
@@ -63,7 +63,9 @@ export function buildBookMetadataSearchQueries(
   const ordered: string[] = [];
 
   const push = (value: string) => {
-    const candidate = value.replace(/\s+/g, " ").trim();
+    const candidate =
+      stripLegalMarkSymbols(value.replace(/\s+/g, " ").trim()) ||
+      value.replace(/\s+/g, " ").trim();
     if (!candidate) return;
     const key = cleanSearchQuery(candidate).toLowerCase();
     if (seen.has(key)) return;
@@ -71,7 +73,7 @@ export function buildBookMetadataSearchQueries(
     ordered.push(candidate);
   };
 
-  push(trimmed);
+  push(stripLegalMarkSymbols(trimmed) || trimmed);
 
   const shelf = shelfName?.trim();
   if (shelf && !shelfAlreadyInTitle(shelf, trimmed)) {

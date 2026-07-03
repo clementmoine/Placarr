@@ -3,7 +3,6 @@ import axios from "axios";
 import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
 import { flareSolverrCookiesFor } from "@/lib/http/flareSolverr";
 import {
-  MIN_COVER_SHORTEST_EDGE,
   readBufferImageMetrics,
   shortestImageEdge,
 } from "@/lib/media/imageMetrics";
@@ -62,14 +61,6 @@ async function rankFetchedImageAsync(
   };
 }
 
-function isAcceptableCoverFetch(
-  ranked: RankedFetch,
-): ranked is RankedFetch & { shortestEdge: number } {
-  return (
-    ranked.shortestEdge === 0 || ranked.shortestEdge >= MIN_COVER_SHORTEST_EDGE
-  );
-}
-
 function pickBetterFetch(
   current: RankedFetch | null,
   next: RankedFetch,
@@ -97,9 +88,6 @@ async function fetchBestFromCandidates(
         }
 
         const ranked = await rankFetchedImageAsync(fetched);
-        if (isAcceptableCoverFetch(ranked)) {
-          return ranked;
-        }
         best = pickBetterFetch(best, ranked);
         break;
       } catch {

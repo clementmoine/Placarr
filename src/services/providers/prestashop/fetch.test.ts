@@ -13,6 +13,7 @@ import axios from "axios";
 import {
   APRILOSHOP_CONFIG,
   MONSIEURDE_CONFIG,
+  NETGAMESRETRO_CONFIG,
   TOKYOGAMESTORY_CONFIG,
 } from "./configs";
 import { searchPrestashopProduct } from "./fetch";
@@ -174,6 +175,43 @@ describe("searchPrestashopProduct", () => {
       barcode: "4589794580661",
       priceCents: 3499,
       source: "tokyogamestory",
+    });
+  });
+
+  it("trouve MX vs ATV sur NetGamesRetro via le JSON products[]", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        products: [
+          {
+            name: "MX vs ATV : Extrême limite Xbox 360",
+            link: "https://www.netgamesretro.com/fr/jeux-video-netgamesretrocom/3947-mx-vs-atv-extreme-limite-xbox-360-4005209102735.html",
+            reference: "1C63979A6E18",
+            price: "17,50 €",
+            cover: {
+              bySize: {
+                large_default: {
+                  url: "https://www.netgamesretro.com/17755-large_default/mx-vs-atv-extreme-limite-xbox-360.jpg",
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const product = await searchPrestashopProduct(
+      NETGAMESRETRO_CONFIG,
+      "MX vs ATV : Extrême limite Xbox 360",
+      "4005209102735",
+    );
+
+    expect(product).toMatchObject({
+      title: "MX vs ATV : Extrême limite Xbox 360",
+      barcode: "4005209102735",
+      priceCents: 1750,
+      source: "netgamesretro",
+      imageUrl:
+        "https://www.netgamesretro.com/17755-large_default/mx-vs-atv-extreme-limite-xbox-360.jpg",
     });
   });
 });

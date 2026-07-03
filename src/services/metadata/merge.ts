@@ -25,6 +25,10 @@ import {
 } from "@/lib/title/displayScore";
 import { refineCatalogDisplayTitle } from "@/lib/title/refineCatalogDisplayTitle";
 import {
+  bundleTitlePartsMatchCatalogTitle,
+  isBundleTitle,
+} from "@/lib/metadata/bundleTitle";
+import {
   isMetadataTitleAligned,
   descriptionMatchesRequestedTitle,
   metadataTitleSimilarity,
@@ -472,11 +476,23 @@ function providerMetadataAlignsForGallery(
   const catalogTitle = metadata.title?.trim();
   if (!catalogTitle) return false;
 
-  return isMetadataTitleAligned(
-    { title: catalogTitle },
-    [requested, ...buildEditionPhraseEquivalentVariants(requested)],
-    0.58,
-  );
+  const alignmentNames = [
+    requested,
+    ...buildEditionPhraseEquivalentVariants(requested),
+  ];
+  if (isMetadataTitleAligned({ title: catalogTitle }, alignmentNames, 0.58)) {
+    return true;
+  }
+
+  if (isBundleTitle(requested)) {
+    return bundleTitlePartsMatchCatalogTitle(
+      requested,
+      catalogTitle,
+      metadata.aliases ?? [],
+    );
+  }
+
+  return false;
 }
 
 function bookCoverPriorityFor(providerId: string) {

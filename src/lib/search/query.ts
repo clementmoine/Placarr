@@ -1,5 +1,13 @@
+/** Registered/trademark/copyright marks — decorative in catalog titles, noisy for search. */
+export function stripLegalMarkSymbols(name: string): string {
+  return name
+    .replace(/[\u00AE\u2122\u00A9\u2120\u2117]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function cleanSearchQuery(name: string): string {
-  let cleaned = name;
+  let cleaned = stripLegalMarkSymbols(name);
   cleaned = cleaned.replace(/\b\d{12,13}\b/g, "");
   cleaned = cleaned.replace(
     /^\s*(microsoft|nintendo|sony|sega|atari|capcom|konami|namco|bandai|ubisoft|square\s*enix|disney|ea|electronic\s*arts|warner\s*bros|wb|activision|mojang|rockstar|valve|blizzard)\b\s*[-–—:|]*\s*/gi,

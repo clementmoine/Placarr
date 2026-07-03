@@ -2,6 +2,7 @@ export * from "./coverResolution";
 export * from "./attachmentDisplayScore";
 export * from "./attachmentDisplayLabels";
 export * from "./coverDownloadCandidates";
+export * from "./coverUrlUpgrades";
 export * from "./imageBuffer";
 export * from "./imageMetrics";
 export * from "./remoteFetch";

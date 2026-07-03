@@ -411,6 +411,18 @@ describe("buildScreenScraperSearchQueries", () => {
     expect(queries[0]).toBe("New Super Mario Bros. Wii");
   });
 
+  it("never searches with legal mark symbols", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "You Suck at Parking® - Complete Edition",
+      (value) => value.replace(/[\u00AE\u2122\u00A9\u2120\u2117]/g, "").trim(),
+    );
+
+    expect(queries[0]).toBe("You Suck at Parking - Complete Edition");
+    for (const query of queries) {
+      expect(query).not.toMatch(/[\u00AE\u2122\u00A9\u2120\u2117]/);
+    }
+  });
+
   it("adds the base franchise title before subtitle for colon titles", () => {
     const queries = buildScreenScraperSearchQueries(
       "Syphon Filter : Dark Mirror",

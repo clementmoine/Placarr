@@ -8,13 +8,7 @@ import {
   sortProviderLinkFacts,
 } from "@/lib/metadata/facts/displayFacts";
 
-function faviconHost(url: string): string | null {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return null;
-  }
-}
+import { faviconDomainForUrl, googleFaviconUrl } from "@/lib/url/favicon";
 
 type ProviderLinksBarProps = {
   facts: DetailFact[];
@@ -37,7 +31,7 @@ export function ProviderLinksBar({
       </span>
       <div className="flex flex-wrap gap-2">
         {links.map((fact) => {
-          const host = fact.url ? faviconHost(fact.url) : null;
+          const host = fact.url ? faviconDomainForUrl(fact.url) : null;
           const label = providerLinkDisplayLabel(fact);
 
           return (
@@ -57,7 +51,7 @@ export function ProviderLinksBar({
               {host ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`}
+                  src={googleFaviconUrl(host)}
                   alt=""
                   width={16}
                   height={16}

@@ -68,8 +68,11 @@ import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
 } from "@/lib/media/attachmentDisplayLabels";
-import { hasGameMediaGalleryAttachment } from "@/lib/metadata/galleries";
-import { isMissingMusicGallery } from "@/lib/metadata/galleries";
+import {
+  hasGameMediaGalleryAttachment,
+  isMissingGameMediaGallery,
+  isMissingMusicGallery,
+} from "@/lib/metadata/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
@@ -1459,13 +1462,17 @@ export default function ItemDetailsPage() {
     const isMissingMusicGalleryRefresh =
       shelf?.type === "musics" &&
       isMissingMusicGallery("musics", item?.barcode, attachments);
+    const isMissingGameGalleryRefresh =
+      shelf?.type === "games" &&
+      isMissingGameMediaGallery("games", item?.barcode, attachments);
     return {
       needsRefresh:
         isPreEnrichmentMetadata ||
         isMissingGameEnrichment ||
         isMissingGameAgeRating ||
         isMissingHltbCompletion ||
-        isMissingMusicGalleryRefresh,
+        isMissingMusicGalleryRefresh ||
+        isMissingGameGalleryRefresh,
       staleAfterMs: hasValidLastFetched
         ? lastFetched.getTime() + METADATA_REFRESH_TTL_MS
         : null,

@@ -21,6 +21,10 @@ import {
   type EbayProduct,
 } from "./fetch";
 import { fetchFromEbayCatalog } from "./catalog";
+import { ebayCoverDownloadCandidates } from "./coverUrl";
+import { prepareEbayProductsForGameShelf } from "./platformFilter";
+import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
+import { resolveGameMetadataPlatform } from "@/lib/metadata/platform";
 
 export {
   fetchEbayProductsByQuery,
@@ -143,6 +147,7 @@ export const ebayModule: ProviderModule = {
     notes:
       "eBay Browse API (listings/prix) + Catalog API (produit canonique GTIN/ePID). OAuth client-credentials.",
   },
+  expandCoverDownloadCandidates: ebayCoverDownloadCandidates,
   evidence: {
     label: "eBay",
     sourceWeight: 0.1,
@@ -170,10 +175,16 @@ export const ebayModule: ProviderModule = {
         barcode,
         name,
         lookupQueries,
+        platform,
+        shelfName,
+        type,
       }: {
         barcode?: string | null;
         name?: string | null;
         lookupQueries?: string[];
+        platform?: string | null;
+        shelfName?: string | null;
+        type?: string | null;
       }) {
         const normalizedBarcode = normalizeProductBarcode(barcode);
         const queries =
@@ -183,15 +194,37 @@ export const ebayModule: ProviderModule = {
         const expectedNames = Array.from(
           new Set([String(name || "").trim(), ...queries].filter(Boolean)),
         );
+        const productTitle = expectedNames[0] ?? "";
+        const platformKey =
+          type === "games"
+            ? detectVideoGamePlatformKey(
+                resolveGameMetadataPlatform(platform, shelfName, "games"),
+              )
+            : null;
 
-        let products: EbayProduct[] = [];
+        const merged: EbayProduct[] = [];
+        const seenNames = new Set<string>();
+        const addProducts = (batch: EbayProduct[]) => {
+          for (const product of batch) {
+            const key = product.name.trim().toLowerCase();
+            if (!key || seenNames.has(key)) continue;
+            seenNames.add(key);
+            merged.push(product);
+          }
+        };
+
         if (normalizedBarcode) {
-          products = await fetchFromEbay(normalizedBarcode, expectedNames);
+          addProducts(await fetchFromEbay(normalizedBarcode, expectedNames));
         }
         for (const query of queries) {
-          if (products.length > 0) break;
-          products = await fetchEbayProductsByQuery(query, expectedNames);
+          addProducts(await fetchEbayProductsByQuery(query, expectedNames));
         }
+
+        const products = prepareEbayProductsForGameShelf(
+          merged,
+          platformKey,
+          productTitle,
+        );
 
         return mapEbayMetadata(products, normalizedBarcode);
       },

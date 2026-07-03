@@ -3,6 +3,9 @@ import { rawProbe } from "@/lib/dev/mappingProbe";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
+import { structuralCoverDownloadCandidates } from "@/lib/media/coverUrlUpgrades";
+import { stripLegalMarkSymbols } from "@/lib/search/query";
+
 import { fetchFromGeedie, fetchGeedieGallery, pingGeedie } from "./fetch";
 
 export { fetchFromGeedie, fetchGeedieGallery, pingGeedie } from "./fetch";
@@ -50,19 +53,18 @@ export const geedieModule: ProviderModule = {
     notes: "Photos de boîtes du marketplace Geedie (PS/Xbox/Nintendo).",
   },
   expandCoverDownloadCandidates(url) {
-    const candidates = [url];
-    if (url.includes("imagedelivery.net") && url.includes("/thumbnail")) {
-      candidates.push(url.replace("/thumbnail", "/public"));
-    }
+    const candidates = [...structuralCoverDownloadCandidates(url)];
     if (url.includes("/storage/products/") && url.includes("-cover.webp")) {
-      candidates.push(url.replace(/-\d+x\d+-cover\.webp$/, "-cover.webp"));
+      const larger = url.replace(/-\d+x\d+-cover\.webp$/, "-cover.webp");
+      return [larger, ...candidates.filter((entry) => entry !== larger)];
     }
-    return [...new Set(candidates)];
+    return candidates;
   },
   createMetadataAdapter: () => ({
     id: "geedie",
     async resolve({ name, platform, lookupQueries, barcode }) {
-      const queries = lookupQueries?.length ? lookupQueries : [name];
+      const fallback = stripLegalMarkSymbols(name.trim()) || name.trim();
+      const queries = lookupQueries?.length ? lookupQueries : [fallback];
       const gallery = await fetchGeedieGallery(
         queries,
         platform ?? undefined,

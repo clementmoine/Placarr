@@ -58,6 +58,16 @@ function formatDuration(seconds?: number): string | null {
   return `${minutes}:${String(remaining).padStart(2, "0")}`;
 }
 
+function formatDeezerCatalogTitle(album: DeezerAlbum): string {
+  const albumTitle = String(album.title || "").trim();
+  if (!albumTitle) return "";
+  const artistName =
+    String(album.artist?.name || "").trim() ||
+    String(album.contributors?.[0]?.name || "").trim();
+  if (!artistName) return albumTitle;
+  return `${artistName} - ${albumTitle}`;
+}
+
 function buildDeezerFacts(album: DeezerAlbum): MetadataFact[] | undefined {
   const facts: MetadataFact[] = [];
   if (album?.link) {
@@ -290,14 +300,14 @@ function mapDeezerMetadata(
     album.upc || options.barcodeInput,
   );
   const canonicalTitle = String(album.title || "").trim();
-  const resolvedTitle = title.trim();
+  const catalogTitle = formatDeezerCatalogTitle(album) || title.trim();
   const externalId = normalizeDeezerId(album);
 
   const metadata: MetadataResult = {
-    title: resolvedTitle,
+    title: catalogTitle,
     barcode: normalizedBarcode,
     aliases:
-      canonicalTitle && canonicalTitle !== resolvedTitle
+      canonicalTitle && canonicalTitle !== catalogTitle
         ? [canonicalTitle]
         : undefined,
     authors: buildDeezerAuthors(album),
@@ -339,18 +349,18 @@ export function createDeezerResolver() {
         );
         const album = res.data as DeezerAlbum;
         if (album && album.title && !album.error) {
-          const artistName = String(album.artist?.name || "").trim();
-          const title = artistName
-            ? `${artistName} - ${album.title}`
-            : album.title;
           const albumDetailsRes = await axios.get(
             `https://api.deezer.com/album/${album.id}`,
           );
           const bestMatch = albumDetailsRes.data as DeezerAlbum;
           if (bestMatch && bestMatch.title) {
-            return mapDeezerMetadata(bestMatch, String(title), {
-              barcodeInput: normalizedBarcode,
-            });
+            return mapDeezerMetadata(
+              bestMatch,
+              formatDeezerCatalogTitle(bestMatch),
+              {
+                barcodeInput: normalizedBarcode,
+              },
+            );
           }
         }
       } catch (error) {
@@ -398,7 +408,7 @@ export function createDeezerResolver() {
 
     if (!bestMatch) return null;
 
-    return mapDeezerMetadata(bestMatch, String(bestMatch.title), {
+    return mapDeezerMetadata(bestMatch, formatDeezerCatalogTitle(bestMatch), {
       barcodeInput: normalizedBarcode,
       includeTitleMatch: true,
     });

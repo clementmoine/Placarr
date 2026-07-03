@@ -49,6 +49,7 @@ import {
   screenScraperMediaAttachmentSemantics,
 } from "./mediaUrl";
 import { areLikelySameProduct } from "@/lib/barcode/titleUtils";
+import { stripLegalMarkSymbols } from "@/lib/search/query";
 import { isWeakMetadataSearchFragment } from "@/lib/title/searchVariants";
 import { metadataHasDisplayImage } from "@/lib/metadata/displayImage";
 import { resolveAttachmentDisplayRegion } from "@/lib/media/attachmentDisplayLabels";
@@ -284,7 +285,9 @@ async function resolveScreenScraperGameIdFromBarcodeCache(
 }
 
 function normalizeScreenScraperSearchQuery(value: string): string {
-  return value.replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim();
+  return stripLegalMarkSymbols(
+    value.replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim(),
+  );
 }
 
 function uniqueScreenScraperSearchQueries(values: string[]): string[] {
@@ -394,9 +397,10 @@ export function buildScreenScraperSearchQueries(
   name: string,
   cleanSearchQuery: (name: string) => string,
 ): string[] {
-  const cleanedName = cleanSearchQuery(name);
-  const bases = uniqueScreenScraperSearchQueries([name, cleanedName]);
-  const variants: string[] = [name];
+  const searchName = stripLegalMarkSymbols(name.trim()) || name.trim();
+  const cleanedName = cleanSearchQuery(searchName);
+  const bases = uniqueScreenScraperSearchQueries([searchName, cleanedName]);
+  const variants: string[] = [searchName];
 
   for (const base of bases) {
     const licensedEdition = base.match(/^(club football\s+\d{4})\s+(.+)$/i);

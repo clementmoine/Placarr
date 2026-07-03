@@ -66,14 +66,45 @@ function buildDiscogsAttachments(
 
 function buildDiscogsFacts(discogs: DiscogsResult): MetadataFact[] | undefined {
   const facts: MetadataFact[] = [];
+  if (discogs.id != null) {
+    facts.push({
+      kind: "external-link",
+      label: "Discogs",
+      value: "Voir la release",
+      url: `https://www.discogs.com/release/${discogs.id}`,
+      source: DISCOGS_PROVIDER_ID,
+      confidence: 0.72,
+      priority: 42,
+    });
+  }
   if (discogs.country) {
     facts.push({
       kind: "release-region",
       label: "Pays",
       value: discogs.country,
       source: DISCOGS_PROVIDER_ID,
-      confidence: 0.68,
-      priority: 35,
+      confidence: 0.74,
+      priority: 52,
+    });
+  }
+  if (discogs.edition) {
+    facts.push({
+      kind: "release-type",
+      label: "Édition",
+      value: discogs.edition,
+      source: DISCOGS_PROVIDER_ID,
+      confidence: 0.7,
+      priority: 44,
+    });
+  }
+  if (discogs.catalogNumber) {
+    facts.push({
+      kind: "identifier",
+      label: "N° catalogue",
+      value: discogs.catalogNumber,
+      source: DISCOGS_PROVIDER_ID,
+      confidence: 0.71,
+      priority: 43,
     });
   }
   if (discogs.format) {
@@ -185,8 +216,11 @@ function buildDiscogsObservations(
     "structured_data",
     "external_id",
   ];
-  const sourceId = String(discogs.id);
-  const sourceUrl = `https://www.discogs.com/release/${sourceId}`;
+  const sourceId = discogs.id != null ? String(discogs.id) : undefined;
+  const sourceUrl =
+    discogs.id != null
+      ? `https://www.discogs.com/release/${discogs.id}`
+      : undefined;
   const observations = observationsFromMetadataResult(
     {
       ...metadata,
@@ -301,7 +335,8 @@ function mapDiscogsMetadata(
     imageUrl: discogs.imageUrl || undefined,
     attachments: attachments.length > 0 ? attachments : undefined,
     facts: buildDiscogsFacts(discogs),
-    externalIds: { discogs: String(discogs.id) },
+    externalIds:
+      discogs.id != null ? { discogs: String(discogs.id) } : undefined,
   };
   return {
     ...metadata,

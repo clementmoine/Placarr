@@ -1,3 +1,5 @@
+import { stripLegalMarkSymbols } from "@/lib/search/query";
+
 function normalizedShelfName(shelfName?: string | null): string {
   return (shelfName || "")
     .normalize("NFD")
@@ -27,7 +29,7 @@ export function buildPriceSearchQueries(
   const seen = new Set<string>();
 
   const add = (value: string) => {
-    const trimmed = value.trim();
+    const trimmed = stripLegalMarkSymbols(value.trim()) || value.trim();
     if (!trimmed) return;
     const key = trimmed.toLowerCase();
     if (seen.has(key)) return;
@@ -36,7 +38,7 @@ export function buildPriceSearchQueries(
   };
 
   for (const name of names) {
-    const trimmed = name.trim();
+    const trimmed = stripLegalMarkSymbols(name.trim()) || name.trim();
     if (!trimmed) continue;
     for (const hint of hints) {
       if (!trimmed.toLowerCase().includes(hint)) {

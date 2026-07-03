@@ -11,6 +11,7 @@ import { discogsModule } from "@/services/providers/discogs";
 import { ebayModule } from "@/services/providers/ebay";
 import { freakxyModule } from "@/services/providers/freakxy";
 import { geedieModule } from "@/services/providers/geedie";
+import { hdjvModule } from "@/services/providers/hdjv";
 import { howlongtobeatModule } from "@/services/providers/howlongtobeat";
 import { icollectModule } from "@/services/providers/icollect";
 import { igdbModule } from "@/services/providers/igdb";
@@ -85,6 +86,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   ledenicheurModule,
   chocobonplanModule,
   geedieModule,
+  hdjvModule,
   freakxyModule,
   ebayModule,
   scandexModule,
@@ -134,6 +136,7 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
       isRealBoxCover: true,
       isSecondary: true,
       collectorCoverRegionFromAgeRating: true,
+      imageScoreAdjustment: -320,
     },
     tmdb: { defaultLanguage: "fr" },
     omdb: { defaultLanguage: "en", isSecondary: true },
@@ -173,6 +176,14 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
       isRealBoxCover: true,
       isSecondary: true,
     },
+    netgamesretro: {
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+      isSecondary: true,
+      retailCatalogImageTitles: true,
+      strictShelfPlatformCover: true,
+      coverDefaultRegion: "fr",
+    },
     geedie: {
       defaultLanguage: "en",
       isRealBoxCover: true,
@@ -180,6 +191,13 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
       isSecondary: true,
       retailCatalogImageTitles: true,
       strictShelfPlatformCover: true,
+    },
+    hdjv: {
+      defaultLanguage: "fr",
+      isRealBoxCover: true,
+      isSecondary: true,
+      coverDefaultRegion: "fr",
+      imageScoreAdjustment: 140,
     },
     freakxy: { defaultLanguage: "fr", isRealBoxCover: true },
     ebay: {

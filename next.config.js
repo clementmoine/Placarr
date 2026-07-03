@@ -12,6 +12,44 @@ const withSerwist = withSerwistInit({
   additionalPrecacheEntries: [{ url: "/", revision }],
 });
 
+/** Next.js 16 caps images.remotePatterns at 50 — one entry per host, no apex duplicates. */
+const IMAGE_REMOTE_WILDCARD_HOSTS = [
+  "achatmoinscher.com",
+  "apriloshop.fr",
+  "bcd-jeux.fr",
+  "bedetheque.com",
+  "booknode.com",
+  "chasse-aux-livres.fr",
+  "ebayimg.com",
+  "fnac-static.com",
+  "freakxy.fr",
+  "geedie.lt",
+  "geekdo-images.com",
+  "googleapis.com",
+  "historiquedesjeuxvideo.com",
+  "icollecteverything.com",
+  "igdb.com",
+  "imagedelivery.net",
+  "netgamesretro.com",
+  "okkazeo.com",
+  "openlibrary.org",
+  "philibertnet.com",
+  "picclickimg.com",
+  "pji.nu",
+  "prisjakt.nu",
+  "rawg.io",
+  "screenscraper.fr",
+  "steamgriddb.com",
+  "tmdb.org",
+];
+
+/** Hostnames that are not covered by **.{parent-domain} patterns. */
+const IMAGE_REMOTE_EXACT_HOSTS = [
+  "cdn-images.dzcdn.net",
+  "coverproject.sfo2.cdn.digitaloceanspaces.com",
+  "upload.wikimedia.org",
+];
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -28,110 +66,18 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      {
+      ...IMAGE_REMOTE_WILDCARD_HOSTS.map((hostname) => ({
         protocol: "https",
-        hostname: "**.rawg.io",
-      },
-      {
+        hostname: `**.${hostname}`,
+      })),
+      ...IMAGE_REMOTE_EXACT_HOSTS.map((hostname) => ({
         protocol: "https",
-        hostname: "**.tmdb.org",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn-images.dzcdn.net",
-      },
-      {
-        protocol: "https",
-        hostname: "**.geekdo-images.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.openlibrary.org",
-      },
-      {
-        protocol: "https",
-        hostname: "**.booknode.com",
-      },
-      {
-        protocol: "https",
-        hostname: "coverproject.sfo2.cdn.digitaloceanspaces.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.chasse-aux-livres.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "**.googleapis.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.achatmoinscher.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.igdb.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.screenscraper.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "**.achatmoinscher.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.fnac-static.com",
-      },
-      {
-        protocol: "https",
-        hostname: "apriloshop.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "**.freakxy.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "**.picclickimg.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.steamgriddb.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.pji.nu",
-      },
-      {
-        protocol: "https",
-        hostname: "**.prisjakt.nu",
-      },
+        hostname,
+      })),
       {
         protocol: "https",
         hostname: "i.discogs.com",
         pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "**.booknode.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.okkazeo.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.bcd-jeux.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "**.philibertnet.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.icollecteverything.com",
       },
     ],
   },

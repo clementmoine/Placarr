@@ -766,4 +766,37 @@ describe("mergeMetadata generic function", () => {
     expect(merged.title).toBe("Black stories - Autour du monde");
     expect(merged.aliases).toContain("0087169139499");
   });
+
+  it("keeps bundle provider covers when catalog title uses + instead of &", () => {
+    const merged = mergeMetadata(
+      "games",
+      [
+        {
+          providerId: "geedie",
+          metadata: {
+            title: "LEGO Indiana Jones + Kung Fu Panda - Xbox 360",
+            imageUrl: "https://example.test/geedie.jpg",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/geedie.jpg",
+                source: "geedie",
+              },
+            ],
+          },
+        },
+      ],
+      {
+        requestedTitle:
+          "LEGO Indiana Jones: The Original Adventures & Kung Fu Panda",
+        requestedPlatformKey: "xbox-360",
+      },
+    );
+
+    expect(
+      merged.attachments?.some((attachment) =>
+        attachment.url?.includes("geedie"),
+      ),
+    ).toBe(true);
+  });
 });

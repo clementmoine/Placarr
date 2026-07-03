@@ -6,13 +6,13 @@ import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
 import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/lib/retailer/titleMatch";
 
 import {
-  extractBarcodeFromProductUrl,
   extractEditionYearFromProductName,
   parseFrenchPriceCents,
   parseIqitRenderedProducts,
   parsePrestashopProductPageBarcode,
   parsePrestashopShortDescription,
   pickPrestashopCoverUrl,
+  resolvePrestashopSearchProductBarcode,
   stripHtml,
 } from "./parse";
 
@@ -95,10 +95,7 @@ export function mapPrestashopSearchProduct(
     title,
     description: description || undefined,
     imageUrl: pickPrestashopCoverUrl(product),
-    barcode:
-      normalizeProductBarcode(product.ean13) ||
-      normalizeProductBarcode(product.reference) ||
-      extractBarcodeFromProductUrl(product.link),
+    barcode: resolvePrestashopSearchProductBarcode(product),
     reference: product.reference?.trim() || undefined,
     releaseDate: extractEditionYearFromProductName(title),
     manufacturer: product.manufacturer_name?.trim() || undefined,
@@ -120,11 +117,8 @@ function pickBestPrestashopHit(
   const normalizedBarcode = normalizeProductBarcode(options?.barcode);
   if (normalizedBarcode) {
     const barcodeHit = products.find((product) => {
-      const productBarcode =
-        normalizeProductBarcode(product.ean13) ||
-        normalizeProductBarcode(product.reference) ||
-        extractBarcodeFromProductUrl(product.link);
-      return productBarcode === normalizedBarcode;
+      const productBarcode = resolvePrestashopSearchProductBarcode(product);
+      return normalizeProductBarcode(productBarcode) === normalizedBarcode;
     });
     if (barcodeHit) return barcodeHit;
   }

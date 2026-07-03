@@ -3,6 +3,7 @@ import axios from "axios";
 import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
 
 import { fetchFromEbayCatalog } from "./catalog";
+import { bestEbayCoverUrl } from "./coverUrl";
 import {
   EBAY_BROWSE_SEARCH_URL,
   EBAY_REQUEST_TIMEOUT_MS,
@@ -93,8 +94,9 @@ function listingsToProducts(
     ) {
       continue;
     }
-    const coverUrl =
-      item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || null;
+    const coverUrl = bestEbayCoverUrl(
+      item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || null,
+    );
     if (!out.some((p) => p.name.toLowerCase() === title.toLowerCase())) {
       out.push({ name: title, coverUrl, catalog: false });
     }

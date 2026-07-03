@@ -7,6 +7,7 @@ export {
   LEPASSETEMPS_CONFIG,
   LUDIFOLIE_CONFIG,
   MONSIEURDE_CONFIG,
+  NETGAMESRETRO_CONFIG,
 } from "./configs";
 export { mapPrestashopSearchProduct, searchPrestashopProduct } from "./fetch";
 export {

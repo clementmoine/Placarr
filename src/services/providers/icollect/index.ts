@@ -195,6 +195,8 @@ export const icollectModule: ProviderModule = {
     coverProvenanceRules: {
       listingPhoto: ["icollecteverything.com/images/"],
     },
+    // Catalogue box photos are often capped around 140px; rank below catalog art.
+    imageScoreAdjustment: -320,
     websiteUrl: "https://www.icollecteverything.com/games/",
     mappingProbeRetry: true,
     rateLimited: true,

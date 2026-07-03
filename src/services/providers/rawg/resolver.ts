@@ -1,5 +1,9 @@
 import axios from "axios";
-import levenshtein from "fast-levenshtein";
+
+import {
+  isMetadataTitleAligned,
+  metadataTitleSimilarity,
+} from "@/lib/metadata/titleMatching";
 
 type RawgNamedEntry = { name?: string };
 type RawgGame = {
@@ -96,24 +100,24 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     if (!data?.results || data.results.length === 0) return null;
 
+    const query = name.trim();
     let bestMatch = data.results[0];
-    let minDistance = levenshtein.get(
-      name.toLowerCase(),
-      bestMatch.name.toLowerCase(),
-    );
+    let bestScore = metadataTitleSimilarity(query, bestMatch.name);
 
     for (const game of data.results) {
-      const distance = levenshtein.get(
-        name.toLowerCase(),
-        game.name.toLowerCase(),
-      );
-      if (distance < minDistance) {
-        minDistance = distance;
+      const score = metadataTitleSimilarity(query, game.name);
+      if (score > bestScore) {
+        bestScore = score;
         bestMatch = game;
       }
     }
 
-    if (!bestMatch) return null;
+    if (
+      !bestMatch ||
+      !isMetadataTitleAligned({ title: bestMatch.name }, [query], 0.58)
+    ) {
+      return null;
+    }
 
     let detailedDescription: string | undefined;
     let detailWebsite: string | undefined;

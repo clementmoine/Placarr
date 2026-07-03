@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
 import { buildLaunchBoxAttachments, pickLaunchBoxCoverUrl } from "./images";
+import { stripLegalMarkSymbols } from "@/lib/search/query";
 import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
 import { ensureLaunchBoxIndex } from "./indexStore";
 import {
@@ -533,7 +534,9 @@ export async function fetchFromLaunchBoxWithLookupQueries(
 ): Promise<MetadataResult | null> {
   const seen = new Set<string>();
   for (const query of [name, ...lookupQueries]) {
-    const cleanQuery = query.replace(/\s+/g, " ").trim();
+    const cleanQuery =
+      stripLegalMarkSymbols(query.replace(/\s+/g, " ").trim()) ||
+      query.replace(/\s+/g, " ").trim();
     const key = cleanQuery.toLowerCase();
     if (!cleanQuery || seen.has(key)) continue;
     seen.add(key);

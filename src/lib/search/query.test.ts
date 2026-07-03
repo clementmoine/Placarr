@@ -21,4 +21,11 @@ describe("cleanSearchQuery", () => {
       "Club Football 2005 Olympique de Marseille",
     );
   });
+
+  it("strips legal mark symbols from provider search queries", () => {
+    expect(cleanSearchQuery("You Suck at Parking® - Complete Edition")).toBe(
+      "You Suck at Parking - Complete Edition",
+    );
+    expect(cleanSearchQuery("Parking™ Deluxe©")).toBe("Parking Deluxe");
+  });
 });

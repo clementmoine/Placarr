@@ -42,4 +42,10 @@ describe("coverProvenance", () => {
     expect(resolveCoverProvenance({ provenance: null })).toBe("catalog");
     expect(resolveCoverProvenance({ provenance: "garbage" })).toBe("catalog");
   });
+
+  it("reads persisted coverProvenance from attachments", () => {
+    expect(resolveCoverProvenance({ coverProvenance: "listing_photo" })).toBe(
+      "listing_photo",
+    );
+  });
 });

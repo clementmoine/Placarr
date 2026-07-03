@@ -6,7 +6,9 @@ export function formatScore(value: number, max: number): string | null {
   })}/${max}`;
 }
 
-export { cleanSearchQuery } from "@/lib/search/query";
+import { cleanSearchQuery, stripLegalMarkSymbols } from "@/lib/search/query";
+
+export { cleanSearchQuery, stripLegalMarkSymbols };
 
 /** Try provider lookups in query order until one succeeds. */
 export async function resolveWithLookupQueries<T>(
@@ -18,10 +20,12 @@ export async function resolveWithLookupQueries<T>(
   const seen = new Set<string>();
   const queries: string[] = [];
   for (const candidate of lookupQueries?.length ? lookupQueries : [name]) {
-    const key = candidate.trim().toLowerCase();
-    if (!key || seen.has(key)) continue;
+    const sanitized =
+      stripLegalMarkSymbols(candidate.trim()) || candidate.trim();
+    const key = sanitized.toLowerCase();
+    if (!sanitized || seen.has(key)) continue;
     seen.add(key);
-    queries.push(candidate.trim());
+    queries.push(sanitized);
   }
   const limit = options?.limit ?? queries.length;
   for (const query of queries.slice(0, limit)) {

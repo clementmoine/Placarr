@@ -52,6 +52,89 @@ describe("getCoverImage", () => {
     ).toBe("/uploads/my-choice.jpg");
   });
 
+  it("honors a low-res gallery pick saved after the last enrichment", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/icollect-lowres.jpg",
+        updatedAt: "2026-07-03T19:00:00.000Z",
+        metadata: {
+          imageUrl: "/uploads/ebay-hires.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "ebay",
+              url: "/uploads/ebay-hires.jpg",
+              width: 640,
+              height: 900,
+            },
+            {
+              type: "cover",
+              source: "icollect",
+              url: "/uploads/icollect-lowres.jpg",
+              width: 261,
+              height: 366,
+            },
+          ],
+        },
+        shelf: { type: "games", name: "Xbox 360" },
+      }),
+    ).toBe("/uploads/icollect-lowres.jpg");
+  });
+
+  it("prefers metadata cover over orphan low-res listing thumbs", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/ebay-thumb.jpg",
+        metadata: {
+          imageUrl: "/uploads/geedie-cover.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "ebay",
+              url: "/uploads/ebay-thumb.jpg",
+              width: 160,
+              height: 225,
+            },
+            {
+              type: "cover",
+              source: "geedie",
+              url: "/uploads/geedie-cover.jpg",
+              width: 454,
+              height: 640,
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/geedie-cover.jpg");
+  });
+
+  it("does not pin a background banner as the default cover", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/choco-banner.jpg",
+        metadata: {
+          imageUrl: "/uploads/choco-banner.jpg",
+          attachments: [
+            {
+              type: "background",
+              source: "chocobonplan",
+              url: "/uploads/choco-banner.jpg",
+              width: 1500,
+              height: 900,
+            },
+            {
+              type: "logo",
+              source: "screenscraper",
+              url: "/uploads/logo.jpg",
+            },
+          ],
+        },
+        shelf: { type: "games", name: "Xbox 360" },
+      }),
+    ).toBeNull();
+  });
+
   it("scores front box art above back covers", () => {
     expect(
       getCoverImage({

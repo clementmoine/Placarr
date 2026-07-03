@@ -1,5 +1,6 @@
 import { decode as decodeHTMLEntities } from "html-entities";
 
+import { pickDiscoveredBarcode } from "@/lib/barcode/normalize";
 import {
   formatBoardGamePlayerCount,
   normalizeBoardGamePlayerCount,
@@ -54,6 +55,19 @@ export function extractBarcodeFromProductUrl(url?: string): string | undefined {
   if (!url) return undefined;
   const match = url.match(/(?:^|[-_/])(\d{12,13})(?:\.html|$)/i);
   return match?.[1];
+}
+
+/** Résout l'EAN d'un hit AJAX sans confondre référence interne et code produit. */
+export function resolvePrestashopSearchProductBarcode(
+  product: PrestashopSearchProduct,
+): string | undefined {
+  return (
+    pickDiscoveredBarcode([
+      product.ean13,
+      extractBarcodeFromProductUrl(product.link),
+      product.reference,
+    ]) ?? undefined
+  );
 }
 
 export function pickPrestashopCoverUrl(

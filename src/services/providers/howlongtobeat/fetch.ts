@@ -1,5 +1,6 @@
 import levenshtein from "fast-levenshtein";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 
 interface HLTBInitResponse {
   token?: string;
@@ -66,7 +67,9 @@ function titleSimilarity(a: string, b?: string | null): number {
   const normB = normalizeForComparison(b);
   if (!normA || !normB) return 0;
   if (normA === normB) return 1;
-  if (normA.includes(normB) || normB.includes(normA)) return 0.9;
+  const shorter = normA.length <= normB.length ? normA : normB;
+  const longer = normA.length <= normB.length ? normB : normA;
+  if (shorter.length >= 4 && longer.includes(shorter)) return 0.9;
 
   const dist = levenshtein.get(normA, normB);
   const maxLen = Math.max(normA.length, normB.length);
@@ -108,6 +111,19 @@ function pickBestResult(
 
   const best = ranked[0];
   if (!best || best.score < MIN_HLTB_SCORE || !hasUsableTime(best.entry)) {
+    return null;
+  }
+
+  const aliases = [best.entry.game_alias].filter((alias): alias is string =>
+    Boolean(alias?.trim()),
+  );
+  if (
+    !isMetadataTitleAligned(
+      { title: best.entry.game_name, aliases },
+      [query],
+      MIN_HLTB_SCORE,
+    )
+  ) {
     return null;
   }
 

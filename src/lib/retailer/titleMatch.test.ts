@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   catalogTitleOmitsRequestedProductIdentity,
   isNameOnlyRetailerTitleMatch,
+  priceListingSharesItemIdentity,
 } from "./titleMatch";
 
 describe("catalogTitleOmitsRequestedProductIdentity", () => {
@@ -34,6 +35,26 @@ describe("catalogTitleOmitsRequestedProductIdentity", () => {
         "Black Stories Musique d'Enfer",
       ),
     ).toBe(false);
+  });
+});
+
+describe("priceListingSharesItemIdentity", () => {
+  it("rejects listings that introduce a different product lead with only a shared subtitle", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "Black stories - Autour du monde",
+        "Expéditions Autour du Monde",
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps aligned franchise listings", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "Black stories - Autour du monde",
+        "Black Stories Autour du Monde",
+      ),
+    ).toBe(true);
   });
 });
 

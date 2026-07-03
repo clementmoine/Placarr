@@ -16,6 +16,7 @@ import {
   volumeNumberFromTitle,
 } from "@/lib/title/volumeNumber";
 import { parseRomanToken } from "@/lib/title/romanNumeral";
+import { priceListingSharesItemIdentity } from "@/lib/retailer/titleMatch";
 
 export { moveTrailingSortArticleToFront } from "@/lib/title/sort";
 
@@ -652,10 +653,14 @@ export function priceListingMatchesAnyItemName(
   listingName?: string | null,
 ): boolean {
   if (!listingName?.trim()) return true;
-  if (barcodeListingMatchesAnyItemName(itemNames, listingName)) return true;
 
   const listing = listingName.trim();
   return itemNames.some((name) => {
+    if (!priceListingSharesItemIdentity(name, listing)) {
+      return false;
+    }
+    if (barcodeListingMatchesItem(name, listing)) return true;
+
     const itemIssue = volumeNumberFromTitle(name);
     const listingIssue = volumeNumberFromTitle(listing);
     if (itemIssue && listingIssue && itemIssue !== listingIssue) return false;

@@ -6,7 +6,10 @@ import {
   metadataTitleSimilarity,
   hasUnrequestedVariantMarker,
 } from "@/lib/metadata/titleMatching";
-import { titleTokenPresentInSet } from "@/lib/title/tokenEquivalents";
+import {
+  titleTokenPresentInSet,
+  titleTokensEquivalent,
+} from "@/lib/title/tokenEquivalents";
 
 /** Same floor as metadataFetch title alignment for name-only provider hits. */
 export const NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY = 0.58;
@@ -129,6 +132,41 @@ export function retailerCatalogSharesRequestedIdentity(
   return identityTokens.some((token) =>
     titleTokenPresentInSet(token, catalogTokenSet),
   );
+}
+
+export function priceListingSharesItemIdentity(
+  itemName: string,
+  listingName: string,
+): boolean {
+  if (catalogTitleOmitsRequestedProductIdentity(itemName, listingName)) {
+    return false;
+  }
+
+  const itemTokens = distinctiveProductTokens(itemName);
+  const listingTokens = distinctiveProductTokens(listingName);
+  if (itemTokens.length === 0 || listingTokens.length === 0) return true;
+  if (itemTokens.length === 1 || listingTokens.length === 1) return true;
+
+  let prefixLen = 0;
+  while (
+    prefixLen < itemTokens.length &&
+    prefixLen < listingTokens.length &&
+    titleTokensEquivalent(itemTokens[prefixLen], listingTokens[prefixLen])
+  ) {
+    prefixLen++;
+  }
+  if (prefixLen >= 1) return true;
+
+  const itemTokenSet = new Set(itemTokens);
+  const listingTokenSet = new Set(listingTokens);
+  const onlyItem = itemTokens.filter(
+    (token) => !titleTokenPresentInSet(token, listingTokenSet),
+  );
+  const onlyListing = listingTokens.filter(
+    (token) => !titleTokenPresentInSet(token, itemTokenSet),
+  );
+
+  return !(onlyItem.length > 0 && onlyListing.length > 0);
 }
 
 export function isNameOnlyRetailerTitleMatch(

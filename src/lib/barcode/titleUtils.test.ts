@@ -301,6 +301,21 @@ describe("priceListingMatchesAnyItemName", () => {
     ).toBe(true);
   });
 
+  it("rejects marketplace listings that only share a geographic subtitle", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Black stories - Autour du monde"],
+        "Expéditions Autour du Monde",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Black stories - Autour du monde"],
+        "Black Stories Autour du Monde",
+      ),
+    ).toBe(true);
+  });
+
   it("rejects manga lots, booster boxes, and homonym tome listings", () => {
     expect(
       priceListingMatchesAnyItemName(

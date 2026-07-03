@@ -63,6 +63,11 @@ COPY --from=builder /app/prisma/migrations ./prisma/migrations
 # Create directory for config and set permissions
 RUN mkdir -p /config
 
+# Points de montage des données runtime (volumes compose) : uploads utilisateur
+# et index SQLite providers (.cache). Créés vides pour que l'app fonctionne
+# aussi sans volume.
+RUN mkdir -p /app/public/uploads /app/.cache
+
 # Create directory for prisma and set permissions
 RUN mkdir -p /app/prisma 
 

@@ -16,6 +16,13 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  // Les données runtime ne font pas partie du build : sans cette exclusion le
+  // tracing standalone recopiait tout public/uploads (plusieurs Go) et .cache
+  // (index SQLite providers) dans .next/standalone à chaque build. Elles sont
+  // écrites/servies au runtime et persistées par des volumes Docker.
+  outputFileTracingExcludes: {
+    "*": ["./public/uploads/**", "./.cache/**"],
+  },
   typescript: {
     ignoreBuildErrors: false,
   },

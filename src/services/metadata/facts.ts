@@ -28,6 +28,47 @@ export function dedupeFacts(
   return deduped.length > 0 ? deduped : undefined;
 }
 
+const TIME_FACT_KINDS = new Set([
+  "duration",
+  "time-to-beat",
+  "completion-time",
+]);
+
+/** Fact de la famille « temps de jeu » (durée / time-to-beat / complétion). */
+export function isTimeToBeatFamilyFact(fact: MetadataFact): boolean {
+  return TIME_FACT_KINDS.has(fact.kind);
+}
+
+function timeFactSlot(fact: MetadataFact): "main" | "completion" | null {
+  if (!isTimeToBeatFamilyFact(fact)) return null;
+  return fact.kind === "completion-time" || /compl/i.test(fact.label || "")
+    ? "completion"
+    : "main";
+}
+
+/**
+ * Un seul fact temps par créneau sémantique (principal / complétion), priorité
+ * max. Plusieurs générations d'enrichissement peuvent coexister en base
+ * (kinds/labels divergents : « Complétion » en time-to-beat ET en
+ * completion-time) — sans ce dédup l'UI affiche deux durées.
+ */
+function dedupeTimeFactSlots(facts: MetadataFact[]): MetadataFact[] {
+  const bestBySlot = new Map<string, MetadataFact>();
+  for (const fact of facts) {
+    const slot = timeFactSlot(fact);
+    if (!slot) continue;
+    const current = bestBySlot.get(slot);
+    if (!current || (fact.priority ?? 0) > (current.priority ?? 0)) {
+      bestBySlot.set(slot, fact);
+    }
+  }
+  if (bestBySlot.size === 0) return facts;
+  return facts.filter((fact) => {
+    const slot = timeFactSlot(fact);
+    return !slot || bestBySlot.get(slot) === fact;
+  });
+}
+
 export function normalizeMetadataFacts(facts: MetadataFact[]): MetadataFact[] {
   const gameClassificationLabels = new Set([
     "PEGI",
@@ -68,7 +109,7 @@ export function normalizeMetadataFacts(facts: MetadataFact[]): MetadataFact[] {
   const pegi = pickBestRating("PEGI");
   const esrb = pickBestRating("ESRB");
 
-  return normalized
+  return dedupeTimeFactSlots(normalized)
     .filter((fact) => {
       if (fact.kind !== "age-rating") return true;
       if (!gameClassificationLabels.has(fact.label)) return true;

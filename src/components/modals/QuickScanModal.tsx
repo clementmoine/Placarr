@@ -23,6 +23,7 @@ import {
   ManualBarcodeEntry,
 } from "@/components/ManualBarcodeEntry";
 import { itemMatchesBarcodeQuery } from "@/lib/item/search";
+import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
@@ -150,7 +151,38 @@ export function QuickScanModal({
     enabled: isOpen && !!activeBarcode,
   });
 
-  const ownedCandidates = useMemo(() => existingItems ?? [], [existingItems]);
+  // Items possédés retrouvés par le TITRE résolu du scan : couvre les ajouts
+  // faits SANS code-barres, invisibles au match barcodeExact ci-dessus. La
+  // recherche `q=` du serveur matche nom + aliases + titre metadata.
+  const primaryResultTitle = results[0]?.title?.trim() || null;
+  const { data: titleMatchedItems } = useQuery<ExistingQuickItem[]>({
+    queryKey: ["existingItemsByTitle", primaryResultTitle],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/items", {
+        params: {
+          q: primaryResultTitle,
+          includeMetadata: "false",
+        },
+      });
+      return data as ExistingQuickItem[];
+    },
+    enabled: isOpen && !!primaryResultTitle,
+  });
+
+  const ownedCandidates = useMemo(() => {
+    const byId = new Map<string, ExistingQuickItem>();
+    for (const item of existingItems ?? []) {
+      byId.set(item.id, item);
+    }
+    for (const item of titleMatchedItems ?? []) {
+      // Seuls les items SANS code-barres sont candidats via le titre : un item
+      // avec un autre code-barres est un autre exemplaire/édition.
+      if (!item.barcode?.trim() && !byId.has(item.id)) {
+        byId.set(item.id, item);
+      }
+    }
+    return [...byId.values()];
+  }, [existingItems, titleMatchedItems]);
 
   const defaultShelf = defaultShelfId
     ? shelves?.find(
@@ -617,11 +649,11 @@ export function QuickScanModal({
     );
     if (barcodeMatch) return barcodeMatch;
 
-    const titleNorm = productTitle.toLowerCase().trim();
     return (
       ownedCandidates.find(
         (item) =>
-          !item.barcode?.trim() && item.name.toLowerCase().trim() === titleNorm,
+          !item.barcode?.trim() &&
+          isMetadataTitleAligned({ title: item.name }, [productTitle], 0.58),
       ) ?? null
     );
   };

@@ -1,4 +1,5 @@
 import { AttachmentType } from "@prisma/client";
+import { isHowLongToBeatFactSource } from "@/services/provider/sourceTraits";
 import type { MediaType } from "@/types/providerRegistry";
 import { PROVIDERS } from "@/services/provider/registry";
 import { withProviderAttachmentTraits } from "@/services/provider/sourceTraits";
@@ -33,7 +34,11 @@ import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
 } from "@/lib/locale/preference";
-import { dedupeFacts, dedupeFieldEvidence } from "@/services/metadata/facts";
+import {
+  dedupeFacts,
+  isTimeToBeatFamilyFact,
+  dedupeFieldEvidence,
+} from "@/services/metadata/facts";
 import {
   factObservationRankScore,
   pickBestFactObservationsByGroup,
@@ -702,9 +707,17 @@ export function mergeMetadata(
   const observedFacts = pickBestMetadataFactsFromObservations(orderedResults);
   let finalFacts =
     observedFacts.length > 0 ? [...observedFacts, ...rawFacts] : rawFacts;
-  const hasTimeToBeat = finalFacts.some((f) => f.kind === "time-to-beat");
-  if (hasTimeToBeat) {
-    finalFacts = finalFacts.filter((f) => f.kind !== "duration");
+  // Arbitrage temps de jeu : si une source time-to-beat AUTORITAIRE (trait
+  // registry `timeToBeatSource`, ex. How Long to Beat) fournit des durées, les
+  // durées des autres sources (IGDB…) sont écartées — l'ancien filtre par
+  // `kind` gardait la mauvaise génération.
+  const hasAuthoritativeTime = finalFacts.some(
+    (f) => isTimeToBeatFamilyFact(f) && isHowLongToBeatFactSource(f.source),
+  );
+  if (hasAuthoritativeTime) {
+    finalFacts = finalFacts.filter(
+      (f) => !isTimeToBeatFamilyFact(f) || isHowLongToBeatFactSource(f.source),
+    );
   }
   const facts = finalFacts.length > 0 ? dedupeFacts(finalFacts) : undefined;
 

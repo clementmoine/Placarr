@@ -768,7 +768,7 @@ function buildTimeToBeatFacts(
       kind: "time-to-beat",
       label: "Histoire",
       value: hastily,
-      source: "How Long to Beat",
+      source: "IGDB",
       confidence: 0.74,
       priority: 80,
     });
@@ -778,7 +778,7 @@ function buildTimeToBeatFacts(
       kind: "time-to-beat",
       label: "Histoire + extras",
       value: normally,
-      source: "How Long to Beat",
+      source: "IGDB",
       confidence: 0.74,
       priority: 78,
     });
@@ -788,7 +788,7 @@ function buildTimeToBeatFacts(
       kind: "time-to-beat",
       label: "Durée",
       value: completely,
-      source: "How Long to Beat",
+      source: "IGDB",
       confidence: 0.68,
       priority: 77,
     });
@@ -798,7 +798,7 @@ function buildTimeToBeatFacts(
       kind: "time-to-beat",
       label: "Complétion",
       value: completely,
-      source: "How Long to Beat",
+      source: "IGDB",
       confidence: 0.74,
       priority: 76,
     });

@@ -1,4 +1,6 @@
 import { after, NextRequest, NextResponse } from "next/server";
+
+import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import type { Prisma } from "@prisma/client";
 
 import { requireAdmin } from "@/lib/auth";
@@ -105,16 +107,18 @@ export async function POST(req: NextRequest) {
     for (const item of items) {
       try {
         const lookupQuery = item.metadata?.title || item.name;
-        await fetchAndStoreMetadata(
-          item.id,
-          lookupQuery,
-          item.shelf.type,
-          item.barcode || undefined,
-          true,
-          undefined,
-          true,
-          true,
-          item.shelf.name,
+        await runBackgroundWork(() =>
+          fetchAndStoreMetadata(
+            item.id,
+            lookupQuery,
+            item.shelf.type,
+            item.barcode || undefined,
+            true,
+            undefined,
+            true,
+            true,
+            item.shelf.name,
+          ),
         );
       } catch (error) {
         console.error(

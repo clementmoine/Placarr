@@ -3,6 +3,7 @@ import { after } from "next/server";
 import path from "path";
 
 import { prisma } from "@/lib/db/prisma";
+import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import {
   beginItemMetadataRefresh,
   finishItemMetadataRefresh,
@@ -30,8 +31,6 @@ export type ScheduleItemMetadataRefreshInput = {
   bypassMetadataCache?: boolean;
   forceRefresh?: boolean;
 };
-
-const BATCH_METADATA_CONCURRENCY = 8;
 
 export type BatchMetadataRefreshItem = {
   itemId: string;
@@ -162,7 +161,7 @@ async function refreshItemWithSession(
   }
 }
 
-/** Plex-style queue: one background job, limited parallel provider lookups. */
+/** Plex-style : chaque item passe par la file globale d'arrière-plan. */
 export function scheduleBatchItemMetadataRefresh(
   items: BatchMetadataRefreshItem[],
   shelf: { type: Type; name: string },
@@ -170,42 +169,32 @@ export function scheduleBatchItemMetadataRefresh(
   if (items.length === 0) return;
 
   after(async () => {
-    const queue = [...items];
-
-    const worker = async () => {
-      while (queue.length > 0) {
-        const next = queue.shift();
-        if (!next) return;
-
-        await refreshItemWithSession(next.itemId, async (session) => {
-          const platform = resolveGameMetadataPlatform(
-            undefined,
-            shelf.name,
-            shelf.type,
-          );
-          const stored = await fetchAndStoreMetadata(
-            next.itemId,
-            next.lookupQuery,
-            shelf.type,
-            next.barcode || undefined,
-            true,
-            platform,
-            true,
-            true,
-            shelf.name,
-            session,
-          );
-          if (stored) {
-            await refreshPricesAfterMetadata(next.itemId);
-          }
-        });
-      }
-    };
-
     await Promise.all(
-      Array.from(
-        { length: Math.min(BATCH_METADATA_CONCURRENCY, items.length) },
-        () => worker(),
+      items.map((next) =>
+        runBackgroundWork(() =>
+          refreshItemWithSession(next.itemId, async (session) => {
+            const platform = resolveGameMetadataPlatform(
+              undefined,
+              shelf.name,
+              shelf.type,
+            );
+            const stored = await fetchAndStoreMetadata(
+              next.itemId,
+              next.lookupQuery,
+              shelf.type,
+              next.barcode || undefined,
+              true,
+              platform,
+              true,
+              true,
+              shelf.name,
+              session,
+            );
+            if (stored) {
+              await refreshPricesAfterMetadata(next.itemId);
+            }
+          }),
+        ),
       ),
     );
   });
@@ -215,20 +204,22 @@ export function scheduleItemMetadataRefresh(
   input: ScheduleItemMetadataRefreshInput,
   session: ItemMetadataRefreshSession,
 ): void {
-  after(async () => {
-    try {
-      await runItemMetadataRefresh(input, session);
-    } catch (error) {
-      if (!isAbortError(error)) {
-        console.error(
-          `[MetadataRefresh] Background refresh failed for ${input.itemId}:`,
-          error,
-        );
+  after(() =>
+    runBackgroundWork(async () => {
+      try {
+        await runItemMetadataRefresh(input, session);
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(
+            `[MetadataRefresh] Background refresh failed for ${input.itemId}:`,
+            error,
+          );
+        }
+      } finally {
+        await finishItemMetadataRefresh(input.itemId, session.generation);
       }
-    } finally {
-      await finishItemMetadataRefresh(input.itemId, session.generation);
-    }
-  });
+    }),
+  );
 }
 
 export async function startItemMetadataRefresh(

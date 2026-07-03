@@ -1,5 +1,7 @@
 import { after } from "next/server";
 
+import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
+
 import { cleanCode } from "@/lib/barcode/query";
 import { shouldRefreshPriceCache } from "@/lib/pricing/cachePolicy";
 import {
@@ -13,8 +15,6 @@ import {
   type RefreshBarcodePricesInput,
   type RefreshItemPricesInput,
 } from "@/services/pricing/resolver";
-
-const PRICE_REFRESH_CONCURRENCY = 4;
 
 export type ItemPricesContext = {
   id: string;
@@ -147,16 +147,18 @@ export async function refreshItemPricesFromContext(
 }
 
 export function scheduleItemPricesRefresh(context: ItemPricesContext): void {
-  after(async () => {
-    try {
-      await refreshItemPricesFromContext(context);
-    } catch (error) {
-      console.error(
-        `[Prices] Background refresh failed for item ${context.id}:`,
-        error,
-      );
-    }
-  });
+  after(() =>
+    runBackgroundWork(async () => {
+      try {
+        await refreshItemPricesFromContext(context);
+      } catch (error) {
+        console.error(
+          `[Prices] Background refresh failed for item ${context.id}:`,
+          error,
+        );
+      }
+    }),
+  );
 }
 
 export function scheduleItemPricesRefreshBatch(
@@ -178,26 +180,18 @@ export function scheduleItemPricesRefreshBatch(
     }
     if (needingRefresh.length === 0) return;
 
-    const queue = [...needingRefresh];
-    const worker = async () => {
-      while (queue.length > 0) {
-        const next = queue.shift();
-        if (!next) return;
-        try {
-          await refreshItemPricesFromContext(next);
-        } catch (error) {
-          console.error(
-            `[Prices] Background batch refresh failed for item ${next.id}:`,
-            error,
-          );
-        }
-      }
-    };
-
     await Promise.all(
-      Array.from(
-        { length: Math.min(PRICE_REFRESH_CONCURRENCY, needingRefresh.length) },
-        () => worker(),
+      needingRefresh.map((next) =>
+        runBackgroundWork(async () => {
+          try {
+            await refreshItemPricesFromContext(next);
+          } catch (error) {
+            console.error(
+              `[Prices] Background batch refresh failed for item ${next.id}:`,
+              error,
+            );
+          }
+        }),
       ),
     );
   });

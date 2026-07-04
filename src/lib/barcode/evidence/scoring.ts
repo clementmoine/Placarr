@@ -40,6 +40,14 @@ export const TYPE_SCORE = {
   boardGameSignal: { boardgames: 0.35, games: -0.3 },
   videoFormatSignal: { movies: 0.35, musics: -0.3 },
   videoGameSignal: { games: 0.2, musics: -0.5, movies: -0.3 },
+  /**
+   * A music-specialist provider (registry: single-type `musics`, e.g. Discogs /
+   * MusicBrainz / Deezer) anchored the compiled result — authoritative proof the
+   * scan is an album. Promotes `musics` and suppresses the video-game type it is
+   * most often confused with on audio-range barcodes. Registry-driven signal that
+   * replaces the former hardcoded `orchestra|soundtrack|ost|album|cd` word-list.
+   */
+  musicSpecialistSignal: { musics: 0.35, games: -0.3 },
 } as const;
 
 /** Reserved barcode ranges that identify a product type on their own. */

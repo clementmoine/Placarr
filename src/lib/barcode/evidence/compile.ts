@@ -653,6 +653,7 @@ export function scoreTypeCandidate(
   boardGameSignal = 0,
   videoFormatSignal = 0,
   videoGameSignal = 0,
+  musicSpecialistSignal = 0,
 ): number {
   const topMatch = result.matches[0];
   if (!topMatch) return 0;
@@ -699,6 +700,12 @@ export function scoreTypeCandidate(
       score += videoGameSignal * TYPE_SCORE.videoGameSignal.musics;
     if (candidateType === "movies")
       score += videoGameSignal * TYPE_SCORE.videoGameSignal.movies;
+  }
+  if (musicSpecialistSignal > 0) {
+    if (candidateType === "musics")
+      score += musicSpecialistSignal * TYPE_SCORE.musicSpecialistSignal.musics;
+    if (candidateType === "games")
+      score += musicSpecialistSignal * TYPE_SCORE.musicSpecialistSignal.games;
   }
 
   return score;

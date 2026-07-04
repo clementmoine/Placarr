@@ -107,7 +107,7 @@ export function detectMediaFormat(names: string[]): string | null {
  * old hand-maintained publisher list was removed: a publisher is a never-complete
  * entity list. The authoritative replacement is provider-as-signal — a board-game
  * SPECIALIST source identifying the barcode — computed from the registry in
- * `barcodeResolver` (see `detectBoardGameSpecialistSignal`), not from names.
+ * `barcodeResolver` (see `detectSpecialistSignal`), not from names.
  */
 export function detectBoardGameSignal(names: string[]): number {
   for (const raw of names) {

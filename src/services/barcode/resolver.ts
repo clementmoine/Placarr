@@ -31,32 +31,40 @@ import { persistBarcodePrices } from "@/services/pricing/resolver";
 import { PROVIDER_MODULES } from "@/services/provider/registry";
 import type { BarcodeCache } from "@prisma/client";
 
-// Providers whose ONLY media type is board games (Philibert, Okkazeo,
-// BoardGameGeek…) — derived from the registry, never a hand-kept name list. Such
-// a specialist identifying a barcode is authoritative proof it is a board game,
-// the agnostic replacement for the old publisher-name guessing.
-const BOARD_GAME_SPECIALIST_LABELS = new Set(
-  PROVIDER_MODULES.filter(
-    (m) => m.info.types.length === 1 && m.info.types[0] === "boardgames",
-  ).map((m) => (m.evidence?.label ?? m.info.id).toLowerCase()),
-);
+// Registry-derived evidence labels of providers whose ONLY media type is the
+// given one (board games: Philibert, Okkazeo, BoardGameGeek…; music: Discogs,
+// MusicBrainz, Deezer). Such a specialist identifying a barcode is authoritative
+// proof of the type — the agnostic replacement for the old publisher-name /
+// word-list guessing. Never a hand-kept list.
+function specialistLabelsForSingleType(mediaType: string): Set<string> {
+  return new Set(
+    PROVIDER_MODULES.filter(
+      (m) => m.info.types.length === 1 && m.info.types[0] === mediaType,
+    ).map((m) => (m.evidence?.label ?? m.info.id).toLowerCase()),
+  );
+}
+
+const BOARD_GAME_SPECIALIST_LABELS =
+  specialistLabelsForSingleType("boardgames");
+const MUSIC_SPECIALIST_LABELS = specialistLabelsForSingleType("musics");
 
 /**
- * 1 when the compiled board-game result is anchored (canonical/trusted) by a
- * board-game-specialist provider, else 0 — a strong, registry-driven type signal
- * that needs no publisher list.
+ * 1 when the compiled result for a type is anchored (canonical/trusted) by a
+ * provider that specialises in that single type, else 0 — a strong,
+ * registry-driven type signal that needs no publisher or keyword list.
  */
-function detectBoardGameSpecialistSignal(
-  boardgamesResult: CompiledResult | null,
+function detectSpecialistSignal(
+  result: CompiledResult | null,
+  specialistLabels: Set<string>,
 ): number {
-  if (!boardgamesResult) return 0;
-  const anchors = boardgamesResult.matches.flatMap((match) => [
+  if (!result) return 0;
+  const anchors = result.matches.flatMap((match) => [
     ...match.evidence.canonicalProviders,
     ...match.evidence.trustedRetailerProviders,
   ]);
   const isSpecialist = (providerName: string) => {
     const norm = providerName.toLowerCase();
-    for (const label of BOARD_GAME_SPECIALIST_LABELS) {
+    for (const label of specialistLabels) {
       if (norm.includes(label) || label.includes(norm)) return true;
     }
     return false;
@@ -216,6 +224,7 @@ function selectBarcodeTypeResult(
   cleanedBarcode: string,
   boardGameSignal = 0,
   videoFormatSignal = 0,
+  musicSpecialistSignal = 0,
 ): { selectedType: string | null; selectedResult: CompiledResult | null } {
   if (type && typeResults[type]) {
     return { selectedType: type, selectedResult: typeResults[type] };
@@ -227,41 +236,24 @@ function selectBarcodeTypeResult(
       ([candidateType]) => !(isAudioLikeBarcode && candidateType === "games"),
     )
     .filter((entry): entry is [string, CompiledResult] => Boolean(entry[1]));
-  candidates.sort(
-    (a, b) =>
-      scoreTypeCandidate(
-        b[0],
-        b[1],
-        cleanedBarcode,
-        boardGameSignal,
-        videoFormatSignal,
-      ) -
-      scoreTypeCandidate(
-        a[0],
-        a[1],
-        cleanedBarcode,
-        boardGameSignal,
-        videoFormatSignal,
-      ),
-  );
+  const scoreCandidate = (entry: [string, CompiledResult]) =>
+    scoreTypeCandidate(
+      entry[0],
+      entry[1],
+      cleanedBarcode,
+      boardGameSignal,
+      videoFormatSignal,
+      0,
+      musicSpecialistSignal,
+    );
+  candidates.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
 
   const best = candidates[0];
   if (!best) {
     return { selectedType: null, selectedResult: null };
   }
 
-  let selectedType = best[0];
-  const selectedResult = best[1];
-
-  if (
-    !type &&
-    AUDIO_LIKE_BARCODE_PREFIX.test(cleanedBarcode) &&
-    /\b(?:orchestra|soundtrack|ost|album|cd)\b/i.test(selectedResult.cleanName)
-  ) {
-    selectedType = "musics";
-  }
-
-  return { selectedType, selectedResult };
+  return { selectedType: best[0], selectedResult: best[1] };
 }
 
 export async function resolveBarcode(
@@ -313,15 +305,23 @@ export async function resolveBarcode(
   const listingNames = collectPayloadListingNames(payload);
   const boardGameSignal = Math.max(
     detectBoardGameSignal(listingNames),
-    detectBoardGameSpecialistSignal(typeResults.boardgames),
+    detectSpecialistSignal(
+      typeResults.boardgames,
+      BOARD_GAME_SPECIALIST_LABELS,
+    ),
   );
   const videoFormatSignal = detectVideoFormatSignal(listingNames);
+  const musicSpecialistSignal = detectSpecialistSignal(
+    typeResults.musics,
+    MUSIC_SPECIALIST_LABELS,
+  );
   const { selectedType, selectedResult } = selectBarcodeTypeResult(
     type,
     typeResults,
     cleanedBarcode,
     boardGameSignal,
     videoFormatSignal,
+    musicSpecialistSignal,
   );
 
   const mediaFormat = detectMediaFormat(listingNames);

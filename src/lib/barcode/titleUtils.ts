@@ -594,7 +594,10 @@ export function listingLooksLikeGameAccessory(name: string): boolean {
 // est remplacée par les alternate names providers + normalisation structurelle
 // (accents, consonnes doublées) ; le matching retailer/board-game devient plus
 // permissif. Bump pour que les scans cachés re-résolvent avec la nouvelle règle.
-export const BARCODE_CACHE_VERSION = "canonical-v41";
+// v42: classification du type "musics" pilotée par un signal registry (provider
+// mono-type musique anchoré) au lieu du word-list orchestra|soundtrack|ost|…
+// dans le resolver. Bump pour re-résoudre les scans cachés sans type explicite.
+export const BARCODE_CACHE_VERSION = "canonical-v42";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider
@@ -839,7 +842,10 @@ const FRANCHISE_TITLE_PREFIX_TOKENS = new Set([
   "hyper",
 ]);
 
-function listingAddsDistinctSpinoffLead(itemNorm: string, listingNorm: string): boolean {
+function listingAddsDistinctSpinoffLead(
+  itemNorm: string,
+  listingNorm: string,
+): boolean {
   if (!listingNorm.startsWith(`${itemNorm} `)) return false;
   const firstExtra = listingNorm.slice(itemNorm.length + 1).split(/\s+/)[0];
   if (!firstExtra || firstExtra.length < 4) return false;

@@ -275,6 +275,88 @@ describe("scoreTypeCandidate — signal jeu vidéo", () => {
   });
 });
 
+/**
+ * Régression "album classé en jeu vidéo". Sur un code-barres de la plage audio,
+ * un match jeu vidéo coïncident (plateforme détectée) pouvait l'emporter sur
+ * l'album réel. Le signal registry (un provider spécialiste musique — Discogs /
+ * MusicBrainz / Deezer — a ancré le résultat) remplace l'ancien word-list
+ * `orchestra|soundtrack|ost|album|cd` : il doit promouvoir `musics` et pénaliser
+ * `games`.
+ */
+describe("scoreTypeCandidate — signal spécialiste musique", () => {
+  const barcode = "6025375409100"; // plage audio (préfixe 602)
+
+  const gamesResult = makeResult({
+    platformKey: "switch",
+    match: {
+      evidence: makeEvidence({
+        providers: ["PriceCharting", "eBay"],
+        canonicalProviders: [],
+        canonicalCount: 0,
+        marketplaceCount: 3,
+        hasCover: true,
+        confidence: 0.9,
+      }),
+    },
+  });
+
+  // L'album ancré par un spécialiste musique (Discogs).
+  const musicsResult = makeResult({
+    platformKey: null,
+    match: {
+      evidence: makeEvidence({
+        providers: ["Discogs", "eBay"],
+        canonicalProviders: ["Discogs"],
+        canonicalCount: 1,
+        marketplaceCount: 1,
+        hasCover: true,
+        confidence: 0.6,
+      }),
+    },
+  });
+
+  it("sans signal, le match jeu vidéo (avec plateforme) peut l'emporter", () => {
+    const gamesScore = scoreTypeCandidate("games", gamesResult, barcode);
+    const musicsScore = scoreTypeCandidate("musics", musicsResult, barcode);
+    expect(gamesScore).toBeGreaterThan(musicsScore);
+  });
+
+  it("avec un signal spécialiste musique, l'album l'emporte", () => {
+    const gamesScore = scoreTypeCandidate(
+      "games",
+      gamesResult,
+      barcode,
+      0,
+      0,
+      0,
+      1,
+    );
+    const musicsScore = scoreTypeCandidate(
+      "musics",
+      musicsResult,
+      barcode,
+      0,
+      0,
+      0,
+      1,
+    );
+    expect(musicsScore).toBeGreaterThan(gamesScore);
+  });
+
+  it("le signal promeut `musics` et pénalise `games`", () => {
+    expect(
+      scoreTypeCandidate("musics", musicsResult, barcode, 0, 0, 0, 1),
+    ).toBeGreaterThan(
+      scoreTypeCandidate("musics", musicsResult, barcode, 0, 0, 0, 0),
+    );
+    expect(
+      scoreTypeCandidate("games", gamesResult, barcode, 0, 0, 0, 1),
+    ).toBeLessThan(
+      scoreTypeCandidate("games", gamesResult, barcode, 0, 0, 0, 0),
+    );
+  });
+});
+
 describe("buildProductEvidence — plateforme depuis une annonce marketplace", () => {
   it("détecte xbox même quand le suffixe plateforme est nettoyé du titre", () => {
     const evidence = buildProductEvidence("eBay", {

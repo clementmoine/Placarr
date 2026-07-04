@@ -78,7 +78,7 @@ describe("detectBoardGameSignal", () => {
   it("does NOT fire on a publisher name alone (no hardcoded publisher list)", () => {
     // The publisher list was removed: a publisher name is a never-complete entity
     // list. Authoritative board-game identity now comes from a specialist provider
-    // (see detectBoardGameSpecialistSignal in barcodeResolver), not from names.
+    // (see detectSpecialistSignal in barcodeResolver), not from names.
     expect(detectBoardGameSignal(["Mille Sabords FR Gigamic"])).toBe(0);
     expect(
       detectBoardGameSignal(["Les Aventuriers du Rail Days of Wonder"]),

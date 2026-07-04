@@ -201,6 +201,20 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
      musique devrait venir d'un signal (comme `detectBoardGameSpecialistSignal` le fait
      déjà pour les jeux de société via le registry), pas d'un regex de mots.
 
+   > **✅ Exécuté le 2026-07-04.** Le préfixe dupliqué est extrait dans une const
+   > (`AUDIO_LIKE_BARCODE_PREFIX`). La word-list musique est **supprimée** et remplacée
+   > par un signal registry : `detectSpecialistSignal` (helper généralisé, partagé avec
+   > les jeux de société) alimente `scoreTypeCandidate` via
+   > `TYPE_SCORE.musicSpecialistSignal` — un provider mono-type musique (Discogs /
+   > MusicBrainz / Deezer) anchoré promeut `musics` et pénalise `games`. Test unitaire
+   > ajouté (`compile.typeSelection.test.ts`), `BARCODE_CACHE_VERSION` bumpé v41→v42.
+   > 1555 tests ✅ · build ✅. Reste à réconcilier les 2 définitions divergentes de
+   > préfixe audio (`AUDIO_LIKE_BARCODE_PREFIX` vs `scoring.AUDIO_BARCODE_PREFIX`) et à
+   > câbler `detectVideoGameSignal`, défini mais non passé par le resolver.
+
+   La **dedup #2** (`steamdb`/`pcgamingwiki`) est faite (repliée sur le set) ; le label
+   `"BGG (Bayes)"` et les **sous-titres produit #3** restent (voir ci-dessous).
+
 2. **Sources fantômes hardcodées** dans
    [sourceTraits.ts](src/services/provider/sourceTraits.ts) :
    `PC_SPECIFIC_FACT_SOURCE_KEYS = ["steamdb","pcgamingwiki"]` (L66), **redupliqué** en dur

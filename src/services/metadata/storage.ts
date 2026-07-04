@@ -42,7 +42,6 @@ import {
 import { resolveCoverAttachmentRole } from "@/lib/media/coverPerspective";
 import { isMissingArtImageUrl } from "@/lib/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/lib/media/coverPlaceholder.server";
-import { applyConsensus } from "@/lib/metadata/consensus";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 import { barcodeListingMatchesItem } from "@/lib/barcode/titleUtils";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
@@ -58,11 +57,7 @@ import {
   withProviderAttachmentTraits,
 } from "@/services/provider/sourceTraits";
 import { prisma } from "@/lib/db/prisma";
-import {
-  dedupeFacts,
-  metadataFieldEvidence,
-  normalizeMetadataFacts,
-} from "@/services/metadata/facts";
+import { metadataFieldEvidence } from "@/services/metadata/facts";
 import {
   trimLightImageMargins,
   cropImageIfNeeded,
@@ -70,7 +65,6 @@ import {
 import { runCpuBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import type {
   MetadataAttachment,
-  MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
 import type { Item } from "@prisma/client";
@@ -83,9 +77,14 @@ import {
 } from "@/services/metadata/imageAssets";
 
 import { providerOriginalImageUrl } from "@/services/metadata/imageUrls";
+import {
+  formatMetadataForStorage,
+  toAttachmentCreateData,
+} from "@/services/metadata/dbMapping";
 
 // Re-exported for existing consumers of `@/services/metadata/storage` (and its
-// index barrel) after the image helpers moved to ./imageAssets and ./imageUrls.
+// index barrel) after the helpers moved to ./imageAssets, ./imageUrls and
+// ./dbMapping.
 export {
   dedupeByPerceptualHash,
   hammingDistance,
@@ -95,76 +94,10 @@ export {
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
 } from "@/services/metadata/imageUrls";
-
-const mapAuthors = (authors?: MetadataResult["authors"]) =>
-  authors && authors.length > 0
-    ? {
-        connectOrCreate: authors.map((author) => ({
-          where: { name: author.name },
-          create: { name: author.name, imageUrl: author.imageUrl },
-        })),
-      }
-    : undefined;
-
-const mapPublishers = (publishers?: MetadataResult["publishers"]) =>
-  publishers && publishers.length > 0
-    ? {
-        connectOrCreate: publishers.map((publisher) => ({
-          where: { name: publisher.name },
-          create: { name: publisher.name, imageUrl: publisher.imageUrl },
-        })),
-      }
-    : undefined;
-
-const mapAttachments = (attachments?: Attachment[]) =>
-  attachments?.map((attachment) =>
-    withProviderAttachmentTraits({
-      type: attachment.type,
-      title: attachment.title ?? undefined,
-      duration: attachment.duration ?? undefined,
-      url: attachment.url,
-      role: attachment.role ?? undefined,
-      source: attachment.source ?? undefined,
-      coverProvenance: attachment.coverProvenance ?? undefined,
-      // Persisted image metrics → read-time cover ranking (no re-decode on load).
-      width: attachment.width ?? undefined,
-      height: attachment.height ?? undefined,
-      meanLuminance: attachment.meanLuminance ?? undefined,
-      darkPixelRatio: attachment.darkPixelRatio ?? undefined,
-    }),
-  ) ?? [];
-
-/**
- * Project a scored/ranked attachment down to the columns the `Attachment` table
- * actually has, dropping derived display-only fields (e.g. the provider cover
- * trait flags) so Prisma `create` does not reject unknown args.
- */
-const toAttachmentCreateData = (
-  attachment: {
-    type: AttachmentType;
-    title?: string | null;
-    duration?: number | null;
-    url: string;
-    role?: string | null;
-    source?: string | null;
-    coverProvenance?: string | null;
-  },
-  metrics?: AttachmentImageMetrics | null,
-) => ({
-  type: attachment.type,
-  title: attachment.title ?? undefined,
-  duration: attachment.duration ?? undefined,
-  url: attachment.url,
-  role: attachment.role ?? undefined,
-  source: attachment.source ?? undefined,
-  coverProvenance: attachment.coverProvenance ?? undefined,
-  // Persist the metrics measured during this enrichment so the read-time cover
-  // ranking can reorder the gallery from stored data (no refresh required).
-  width: metrics?.width ?? null,
-  height: metrics?.height ?? null,
-  meanLuminance: metrics?.meanLuminance ?? null,
-  darkPixelRatio: metrics?.darkPixelRatio ?? null,
-});
+export {
+  formatMetadataForStorage,
+  formatMetadataFromStorage,
+} from "@/services/metadata/dbMapping";
 
 function isDisplayImageAttachment(attachment: {
   type?: AttachmentType | string | null;
@@ -262,86 +195,6 @@ export function canKeepRemoteImageOnDownloadFailure(
 
 export { isMissingMusicGallery } from "@/lib/metadata/galleries";
 
-export function formatMetadataForStorage(
-  metadata: MetadataResult,
-  sourceType: Type,
-  sourceQuery: string,
-) {
-  return {
-    title: metadata.title ?? null,
-    authors: mapAuthors(metadata.authors),
-    publishers: mapPublishers(metadata.publishers),
-    duration: metadata.duration ?? null,
-    pageCount: metadata.pageCount ?? null,
-    tracksCount: metadata.tracksCount ?? null,
-    description: metadata.description ?? null,
-    releaseDate: metadata.releaseDate ?? null,
-    imageUrl: metadata.imageUrl ?? null,
-    aliases: metadata.aliases ? JSON.stringify(metadata.aliases) : null,
-    facts: dedupeFacts(metadata.facts)
-      ? JSON.stringify(dedupeFacts(metadata.facts))
-      : null,
-    sourceType,
-    sourceQuery,
-    lastFetched: new Date(),
-  };
-}
-
-export function formatMetadataFromStorage(
-  metadata: Metadata & {
-    attachments?: Attachment[];
-    authors?: Author[];
-    publishers?: Publisher[];
-  },
-): MetadataResult {
-  let aliases: string[] = [];
-  if (metadata.aliases) {
-    try {
-      aliases = JSON.parse(metadata.aliases);
-    } catch (e) {
-      console.error("Failed to parse aliases from storage:", e);
-    }
-  }
-
-  let facts: MetadataFact[] = [];
-  if (metadata.facts) {
-    try {
-      const parsed = JSON.parse(metadata.facts);
-      facts = Array.isArray(parsed)
-        ? normalizeMetadataFacts(applyConsensus(parsed))
-        : [];
-    } catch (e) {
-      console.error("Failed to parse facts from storage:", e);
-    }
-  }
-
-  return {
-    title: metadata.title || undefined,
-    authors:
-      metadata.authors?.map((author: Author) => ({
-        name: author.name,
-        imageUrl: author.imageUrl,
-      })) || undefined,
-    publishers:
-      metadata.publishers?.map((publisher: Publisher) => ({
-        name: publisher.name,
-        imageUrl: publisher.imageUrl,
-      })) || undefined,
-    duration: metadata.duration || undefined,
-    pageCount: metadata.pageCount || undefined,
-    tracksCount: metadata.tracksCount || undefined,
-    description: metadata.description || undefined,
-    releaseDate: metadata.releaseDate || undefined,
-    imageUrl: metadata.imageUrl || undefined,
-    heroImageUrl: metadata.heroImageUrl || undefined,
-    attachments: mapAttachments(metadata.attachments),
-    aliases: aliases.length > 0 ? aliases : undefined,
-    facts: facts.length > 0 ? facts : undefined,
-    lastFetched: metadata.lastFetched
-      ? new Date(metadata.lastFetched).toISOString()
-      : undefined,
-  };
-}
 export async function getCachedMetadata(
   itemId: Item["id"],
 ): Promise<(Metadata & { attachments: Attachment[] }) | null> {

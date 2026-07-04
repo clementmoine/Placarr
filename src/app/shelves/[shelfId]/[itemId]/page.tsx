@@ -91,7 +91,7 @@ import { cn } from "@/lib/core/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
-import { itemPath, shelfPath } from "@/lib/routing/slugs";
+import { itemPath, itemSlugLookupVariants, shelfPath } from "@/lib/routing/slugs";
 import { compareTitlesForSort } from "@/lib/title/sort";
 import { seriesSiblings } from "@/lib/title/series";
 import { FRANCHISE_FACT_KIND } from "@/lib/metadata/facts/franchiseFact";
@@ -1096,10 +1096,13 @@ export default function ItemDetailsPage() {
     queryKey: ["shelf", shelfId, "items", itemId],
     queryFn: () => getItem(itemId, shelfId),
     initialData: () => {
+      const slugVariants = new Set(itemSlugLookupVariants(itemId));
       const cached = queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
         ?.items?.find(
-          (i) => i.id === itemId || i.slug === itemId,
+          (i) =>
+            i.id === itemId ||
+            (i.slug ? slugVariants.has(i.slug) : false),
         ) as ItemWithMetadata | undefined;
       if (!cached) return undefined;
       // Instant cover/title from the grid, but never treat shelf cache as a

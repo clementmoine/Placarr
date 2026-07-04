@@ -154,6 +154,7 @@ function parseKindFromTitle(
   if (/box\s*-\s*spine/.test(normalized)) return "spine";
   if (/\bspine\b|spine\s*\/\s*sides\b/.test(normalized)) return "spine";
   if (/\bdisc\b|fanart\s*-\s*disc/.test(normalized)) return "disc";
+  if (/\bdisque\b/.test(normalized)) return "disc";
   if (/box\s*-\s*3d|cart\s*-\s*3d/.test(normalized)) return "cover3d";
   if (
     /box\s*-\s*front|cart\s*-\s*front|fanart\s*-\s*box\s*-\s*front/.test(

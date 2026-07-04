@@ -36,6 +36,16 @@ export interface ProviderInfo {
    */
   referencePriceSource?: boolean;
   /**
+   * Price rows from this provider are resolved from the barcode/product page
+   * (not a broad marketplace search), so unnamed offers are still item-specific.
+   */
+  barcodeScopedPriceSource?: boolean;
+  /**
+   * Price rows come from a broad marketplace title search (noisy homonyms,
+   * accessories, wrong platform). Named offers need extra title filtering.
+   */
+  marketplaceSearchPriceSource?: boolean;
+  /**
    * Provider supplies authoritative time-to-beat / playtime facts for games.
    */
   timeToBeatSource?: boolean;

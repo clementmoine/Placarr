@@ -65,6 +65,15 @@ const GALLERY_VERSO_FIXTURE = `
 <TR><TD id="texte_galerie" align="center">Verso de la pochette</TD></TR><TR><TD id="texte_galerie" align="center"><img border="1" src="//www.HISTORIQUEDESJEUXVIDEO.COM/bdd/jeu/img/XBox-360/1944.jpg"></TD></TR>
 `;
 
+const GALLERY_DISC_FIXTURE = `
+<TR><td id="texte_galerie" align="center"><a href="galerie_jeu.php?page=0&code=9299">1</a> <a href="galerie_jeu.php?page=1&code=9299">2</a><b>&nbsp 3</b></TD></TR>
+<TR><TD id="texte_galerie" align="center">Media du jeu</TD></TR><TR><TD id="texte_galerie" align="center"><img border="1" src="//www.HISTORIQUEDESJEUXVIDEO.COM/bdd/jeu/img/XBox-360/1859.jpg"></TD></TR>
+`;
+
+const GALLERY_DISQUE_LABEL_FIXTURE = `
+<TR><TD id="texte_galerie" align="center">Disque du jeu</TD></TR><TR><TD id="texte_galerie" align="center"><img border="1" src="//www.HISTORIQUEDESJEUXVIDEO.COM/bdd/jeu/img/XBox-360/1860.jpg"></TD></TR>
+`;
+
 describe("hdjv fetch", () => {
   it("parses ajax search results", () => {
     const hits = parseHdjvSearchResults(SEARCH_FIXTURE);
@@ -106,6 +115,15 @@ describe("hdjv fetch", () => {
 
     const verso = parseHdjvGalleryPage(GALLERY_VERSO_FIXTURE);
     expect(verso.items[0]?.role).toBe("back-fr");
+
+    const disc = parseHdjvGalleryPage(GALLERY_DISC_FIXTURE);
+    expect(disc.items).toHaveLength(1);
+    expect(disc.items[0]?.label).toBe("Media du jeu");
+    expect(disc.items[0]?.type).toBe("image");
+    expect(disc.items[0]?.role).toBeUndefined();
+
+    const disque = parseHdjvGalleryPage(GALLERY_DISQUE_LABEL_FIXTURE);
+    expect(disque.items[0]?.role).toBe("disc-fr");
   });
 
   it("normalizes protocol-relative URLs and upgrades miniatures", () => {

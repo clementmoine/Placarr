@@ -170,6 +170,7 @@ export const achatmoinscherModule: ProviderModule = {
     canonical: false,
     requiresTitleAlignment: true,
     websiteUrl: "https://www.achatmoinscher.com/",
+    barcodeScopedPriceSource: true,
   },
   evidence: {
     label: "AchatMoinsCher",

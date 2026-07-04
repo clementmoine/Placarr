@@ -12,7 +12,7 @@ import {
 } from "@/services/metadata/storage";
 import { presentItemFromStorage } from "@/lib/item/present";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
-import { slugifyItemName } from "@/lib/routing/slugs";
+import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
 import { resolveItemMetadataLookupQuery } from "@/lib/item/metadataLookupQuery";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
@@ -274,11 +274,16 @@ export async function POST(req: NextRequest) {
         localBackgroundImageUrl = await downloadRemoteImage(backgroundImageUrl);
       }
 
+      const itemSlug = await allocateUniqueItemSlug(
+        resolvedShelfId,
+        resolvedName,
+      );
+
       const item = await prisma.item.create({
         data: {
           shelfId: resolvedShelfId,
           name: resolvedName,
-          slug: slugifyItemName(resolvedName),
+          slug: itemSlug,
           description,
           imageUrl: localImageUrl,
           backgroundImageUrl: localBackgroundImageUrl,
@@ -355,9 +360,6 @@ export async function PATCH(req: NextRequest) {
         );
       }
 
-      if (typeof data.name === "string") {
-        data.slug = slugifyItemName(data.name);
-      }
       if (typeof data.shelfId === "string") {
         data.shelfId = await resolveShelfId(data.shelfId, auth.user.id);
       }
@@ -397,6 +399,14 @@ export async function PATCH(req: NextRequest) {
 
       const shelfChanged =
         typeof data.shelfId === "string" && data.shelfId !== item.shelfId;
+
+      if (typeof data.name === "string") {
+        data.slug = await allocateUniqueItemSlug(
+          typeof data.shelfId === "string" ? data.shelfId : item.shelfId,
+          data.name,
+          { excludeItemId: resolvedId },
+        );
+      }
 
       if (shelfChanged) {
         Object.assign(data, shelfMoveMetadataResetData(item, data));

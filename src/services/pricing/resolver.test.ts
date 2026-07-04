@@ -22,6 +22,7 @@ import {
   filterItemPriceOffers,
   getCachedBarcodePrices,
   getCachedItemPrices,
+  summarizeObservedPrices,
   summarizeShelfItemPrices,
   type BarcodePricesResult,
 } from "@/services/pricing/resolver";
@@ -259,7 +260,7 @@ describe("summarizeShelfItemPrices", () => {
       "PlayStation 4",
     );
 
-    expect(map.get("item-1")?.priceUsed).toBe(1482);
+    expect(map.get("item-1")?.priceUsed).toBe(1272);
   });
 
   it("does not fall back to stale barcode cache when offers were all filtered", async () => {
@@ -828,5 +829,48 @@ describe("filterItemPriceOffers", () => {
     expect(filtered.map((row) => `${row.source}:${row.condition}`)).toEqual([
       "ChasseAuxLivres:used",
     ]);
+  });
+
+  it("drops game accessory listings and prefers barcode-scoped shop prices", () => {
+    const filtered = filterItemPriceOffers(
+      "games",
+      "Xbox 360",
+      ["Assassin's Creed IV: Black Flag"],
+      [
+        {
+          source: "AchatMoinsCher",
+          condition: "used",
+          priceCents: 340,
+        },
+        {
+          source: "eBay",
+          productName: "Fourreau personnalisé Assassin's Creed IV Black Flag",
+          condition: "used",
+          priceCents: 7200,
+        },
+      ],
+    );
+
+    expect(filtered.map((row) => `${row.source}:${row.condition}`)).toEqual([
+      "AchatMoinsCher:used",
+    ]);
+  });
+
+  it("ignores isolated eBay used prices when barcode shops are available", () => {
+    const summary = summarizeObservedPrices("games", [
+      {
+        source: "AchatMoinsCher",
+        condition: "used",
+        priceCents: 162,
+      },
+      {
+        source: "eBay",
+        productName: "Assassin's Creed II",
+        condition: "used",
+        priceCents: 6199,
+      },
+    ]);
+
+    expect(summary.priceUsed).toBe(162);
   });
 });

@@ -4,11 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { resolveItemId, resolveShelfId } from "@/lib/routing/resolveIds";
+import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import {
   scheduleBatchItemMetadataRefresh,
   shelfMoveMetadataResetData,
 } from "@/lib/jobs/scheduleMetadataRefresh";
-import { slugifyItemName } from "@/lib/routing/slugs";
 
 const VALID_CONDITIONS = new Set<string>(Object.values(Condition));
 const CREATE_CHUNK_SIZE = 100;
@@ -161,16 +161,26 @@ async function createItemsInChunks(
   },
 ): Promise<CreatedBatchItem[]> {
   const created: CreatedBatchItem[] = [];
+  const reservedSlugs = new Set<string>();
 
   for (let offset = 0; offset < names.length; offset += CREATE_CHUNK_SIZE) {
     const chunk = names.slice(offset, offset + CREATE_CHUNK_SIZE);
+    const rows: Array<{ name: string; slug: string }> = [];
+    for (const name of chunk) {
+      const slug = await allocateUniqueItemSlug(data.shelfId, name, {
+        reserved: reservedSlugs,
+      });
+      reservedSlugs.add(slug);
+      rows.push({ name, slug });
+    }
+
     const batch = await prisma.$transaction(
-      chunk.map((name) =>
+      rows.map((row) =>
         prisma.item.create({
           data: {
             shelfId: data.shelfId,
-            name,
-            slug: slugifyItemName(name),
+            name: row.name,
+            slug: row.slug,
             condition: data.condition,
             userId: data.userId,
           },

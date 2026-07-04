@@ -50,7 +50,7 @@ export interface HdjvFiche {
 export interface HdjvGalleryItem {
   url: string;
   label: string;
-  type: "cover" | "screenshot";
+  type: "cover" | "screenshot" | "image";
   role?: string;
 }
 
@@ -221,7 +221,10 @@ function galleryLabelToAttachment(
   if (normalized.includes("screen")) {
     return { type: "screenshot" };
   }
-  return { type: "cover", role: "fr" };
+  if (normalized.includes("disque")) {
+    return { type: "image", role: "disc-fr" };
+  }
+  return { type: "image" };
 }
 
 export function parseHdjvGalleryPage(html: string): {

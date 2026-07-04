@@ -314,6 +314,46 @@ export function isReferencePriceSource(source: string): boolean {
   );
 }
 
+const BARCODE_SCOPED_PRICE_SOURCE_KEYS = new Set<string>();
+for (const providerModule of PROVIDER_MODULES) {
+  if (!providerModule.info.barcodeScopedPriceSource) continue;
+  for (const key of [
+    providerModule.info.id,
+    providerModule.info.label,
+    ...(providerModule.info.sourceAliases ?? []),
+  ]) {
+    if (key) BARCODE_SCOPED_PRICE_SOURCE_KEYS.add(normalizeSourceKey(key));
+  }
+}
+
+/** Whether a price row was fetched from the item barcode, not a search hit. */
+export function isBarcodeScopedPriceSource(source: string): boolean {
+  return (
+    !!source &&
+    BARCODE_SCOPED_PRICE_SOURCE_KEYS.has(normalizeSourceKey(source))
+  );
+}
+
+const MARKETPLACE_SEARCH_PRICE_SOURCE_KEYS = new Set<string>();
+for (const providerModule of PROVIDER_MODULES) {
+  if (!providerModule.info.marketplaceSearchPriceSource) continue;
+  for (const key of [
+    providerModule.info.id,
+    providerModule.info.label,
+    ...(providerModule.info.sourceAliases ?? []),
+  ]) {
+    if (key) MARKETPLACE_SEARCH_PRICE_SOURCE_KEYS.add(normalizeSourceKey(key));
+  }
+}
+
+/** Whether a price row comes from a broad marketplace search listing. */
+export function isMarketplaceSearchPriceSource(source: string): boolean {
+  return (
+    !!source &&
+    MARKETPLACE_SEARCH_PRICE_SOURCE_KEYS.has(normalizeSourceKey(source))
+  );
+}
+
 // Providers that tag their cover URLs with a recognisable host, with whether
 // those covers are real box art — registry-driven, so cover ranking names no
 // provider in core.

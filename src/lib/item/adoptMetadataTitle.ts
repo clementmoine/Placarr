@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
-import { slugifyItemName } from "@/lib/routing/slugs";
+import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import {
   areDisplayTitlesSameProduct,
   scoreDisplayTitle,
@@ -11,12 +11,15 @@ import { isBarcodePlaceholderItemName } from "./placeholderName";
 async function updateItemDisplayName(
   itemId: string,
   title: string,
+  shelfId: string,
 ): Promise<boolean> {
   await prisma.item.update({
     where: { id: itemId },
     data: {
       name: title,
-      slug: slugifyItemName(title),
+      slug: await allocateUniqueItemSlug(shelfId, title, {
+        excludeItemId: itemId,
+      }),
     },
   });
   return true;
@@ -39,8 +42,14 @@ export async function syncItemNameFromEnrichedMetadata(input: {
   if (!itemName) return false;
   if (metadataTitle.toLowerCase() === itemName.toLowerCase()) return false;
 
+  const item = await prisma.item.findUnique({
+    where: { id: input.itemId },
+    select: { shelfId: true },
+  });
+  if (!item) return false;
+
   if (isBarcodePlaceholderItemName(itemName, input.barcode)) {
-    return updateItemDisplayName(input.itemId, metadataTitle);
+    return updateItemDisplayName(input.itemId, metadataTitle, item.shelfId);
   }
 
   const sameProduct =
@@ -53,7 +62,7 @@ export async function syncItemNameFromEnrichedMetadata(input: {
     return false;
   }
 
-  return updateItemDisplayName(input.itemId, metadataTitle);
+  return updateItemDisplayName(input.itemId, metadataTitle, item.shelfId);
 }
 
 /** @deprecated Use syncItemNameFromEnrichedMetadata */

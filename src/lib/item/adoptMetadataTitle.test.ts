@@ -4,18 +4,34 @@ vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     item: {
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
+}));
+
+vi.mock("@/lib/routing/itemSlug", () => ({
+  allocateUniqueItemSlug: vi.fn(
+    async (_shelfId: string, title: string) =>
+      title
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, ""),
+  ),
 }));
 
 import { prisma } from "@/lib/db/prisma";
 import { adoptItemNameFromMetadataIfPlaceholder } from "./adoptMetadataTitle";
 
 const mockedUpdate = vi.mocked(prisma.item.update);
+const mockedFindUnique = vi.mocked(prisma.item.findUnique);
 
 describe("adoptItemNameFromMetadataIfPlaceholder", () => {
   beforeEach(() => {
     mockedUpdate.mockClear();
+    mockedFindUnique.mockReset();
+    mockedFindUnique.mockResolvedValue({ shelfId: "shelf-1" } as never);
   });
 
   it("promotes metadata title when the stored name is still a placeholder", async () => {

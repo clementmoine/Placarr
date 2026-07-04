@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import {
   hasExplicitVolumeMarker,
   isLotListing,
+  listingLooksLikeGameAccessory,
   listingLooksLikeNonBookProduct,
   priceListingMatchesAnyItemName,
   priceListingVolumeConflictsWithItem,
@@ -27,6 +28,8 @@ import {
 } from "@/services/provider/barcodePrices";
 import {
   isReferencePriceSource,
+  isBarcodeScopedPriceSource,
+  isMarketplaceSearchPriceSource,
   formatProviderSourceLabel,
 } from "@/services/provider/registry";
 
@@ -96,6 +99,43 @@ function gameUsedConditions(shelfType: string) {
   return shelfType === "games" ? ["loose", "used"] : ["used"];
 }
 
+function trustedGameUsedOffers(
+  shelfType: string,
+  offers: PriceObservation[],
+): PriceObservation[] {
+  if (shelfType !== "games") return offers;
+
+  const usedConditions = new Set(gameUsedConditions(shelfType));
+  const used = offers.filter(
+    (offer) => offer.condition && usedConditions.has(offer.condition),
+  );
+  const hasNamedNonMarketplaceUsed = used.some(
+    (offer) =>
+      !isMarketplaceSearchPriceSource(offer.source ?? "") &&
+      Boolean(offer.productName?.trim()),
+  );
+  const trusted = used.filter((offer) => {
+    if (isReferencePriceSource(offer.source ?? "")) return true;
+    if (isMarketplaceSearchPriceSource(offer.source ?? "")) return false;
+    if (offer.productName?.trim()) return true;
+    return (
+      isBarcodeScopedPriceSource(offer.source ?? "") &&
+      !hasNamedNonMarketplaceUsed
+    );
+  });
+  return trusted.length > 0 ? trusted : used;
+}
+
+function dropAccessoryListings(
+  offers: PriceObservation[],
+): PriceObservation[] {
+  return offers.filter((offer) => {
+    const listing = offer.productName?.trim();
+    if (!listing) return true;
+    return !listingLooksLikeGameAccessory(listing);
+  });
+}
+
 function trimObservedPriceOutliers(
   shelfType: string,
   offers: PriceObservation[],
@@ -124,9 +164,27 @@ function dropUnnamedMarketplaceNoise(
     );
   }
 
+  const namedMarketplace = namedMatches.filter(
+    (offer) => !isReferencePriceSource(offer.source ?? ""),
+  );
+  const onlyMarketplaceSearchNamed =
+    namedMarketplace.length > 0 &&
+    namedMarketplace.every((offer) =>
+      isMarketplaceSearchPriceSource(offer.source ?? ""),
+    );
+  const hasCatalogReferenceOffer = offers.some(
+    (offer) =>
+      isReferencePriceSource(offer.source ?? "") &&
+      offer.condition !== "estimated",
+  );
+
   return offers.filter(
     (offer) =>
-      offer.productName?.trim() || isReferencePriceSource(offer.source ?? ""),
+      offer.productName?.trim() ||
+      isReferencePriceSource(offer.source ?? "") ||
+      (isBarcodeScopedPriceSource(offer.source ?? "") &&
+        onlyMarketplaceSearchNamed &&
+        !hasCatalogReferenceOffer),
   );
 }
 
@@ -149,6 +207,7 @@ function relaxedOffersForPriceFallback(
     const listing = offer.productName?.trim() ?? "";
     if (listing && isLotListing(listing)) return false;
     if (listing && listingLooksLikeNonBookProduct(listing)) return false;
+    if (listing && listingLooksLikeGameAccessory(listing)) return false;
 
     if (!listing) {
       if (numberedBook) return false;
@@ -216,15 +275,17 @@ function pricesForCondition(offers: PriceObservation[], conditions: string[]) {
     .map((offer) => offer.priceCents);
 }
 
-function summarizeObservedPrices(
+export function summarizeObservedPrices(
   shelfType: string,
   offers: PriceObservation[],
 ) {
+  const usedOffers =
+    shelfType === "games" ? trustedGameUsedOffers(shelfType, offers) : offers;
   return {
     priceNew: averageCents(pricesForCondition(offers, ["new"])),
     priceUsed: averageCents(
       pricesForCondition(
-        offers,
+        usedOffers,
         shelfType === "games" ? ["loose", "used"] : ["used"],
       ),
     ),
@@ -331,10 +392,13 @@ export function filterItemPriceOffers(
   const names = [
     ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
   ];
+  const accessoryFiltered = dropAccessoryListings(offers);
   const identityFiltered =
-    names.length === 0 ? offers : dropIdentityConflictingListings(names, offers);
+    names.length === 0
+      ? accessoryFiltered
+      : dropIdentityConflictingListings(names, accessoryFiltered);
   const hadIdentityConflicts =
-    names.length > 0 && identityFiltered.length < offers.length;
+    names.length > 0 && identityFiltered.length < accessoryFiltered.length;
 
   const platformFiltered = identityFiltered.filter((offer) =>
     priceListingMatchesShelfPlatform(shelfType, shelfName, offer.productName),
@@ -364,6 +428,15 @@ export function filterItemPriceOffers(
         ),
     );
     if (titleMatchedInInput && !titleAndPlatformMatched) {
+      const barcodeFallback = trimObservedPriceOutliers(
+        shelfType,
+        platformFiltered.filter(
+          (offer) =>
+            isBarcodeScopedPriceSource(offer.source ?? "") ||
+            isReferencePriceSource(offer.source ?? ""),
+        ),
+      );
+      if (barcodeFallback.length > 0) return barcodeFallback;
       return trimObservedPriceOutliers(shelfType, []);
     }
   }

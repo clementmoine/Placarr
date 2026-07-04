@@ -118,4 +118,20 @@ describe("resolveItemId", () => {
       resolveItemId("dragon-ball-z-n-1", "mangas", "user-1"),
     ).resolves.toBe("item-dbz-1");
   });
+
+  it("resolves disambiguated duplicate slugs to distinct items", async () => {
+    prismaMock.item.findUnique.mockResolvedValue(null);
+    prismaMock.item.findFirst.mockResolvedValue({
+      id: "item-nfs-2",
+    });
+    prismaMock.shelf.findFirst.mockResolvedValue({ id: "shelf-xbox" });
+
+    await expect(
+      resolveItemId(
+        "need-for-speed-most-wanted-copy-2",
+        "xbox-360",
+        "user-1",
+      ),
+    ).resolves.toBe("item-nfs-2");
+  });
 });

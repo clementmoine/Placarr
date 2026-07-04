@@ -11,6 +11,7 @@ import {
 } from "@/lib/item/present";
 import { seriesDisplayTitles } from "@/lib/title/series";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
+import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
 import { slugify } from "@/lib/routing/slugs";
 import { buildItemSearchConditions } from "@/lib/item/search";
 import { bestRatingRatioFromFacts } from "@/lib/item/rating";
@@ -200,8 +201,24 @@ export async function GET(req: NextRequest) {
             );
           }
 
+          await reconcileDuplicateItemSlugsOnShelf(shelf.id);
+          const refreshedShelf = await prisma.shelf.findUnique({
+            where: { id: resolvedId },
+            include: {
+              items: {
+                where: {
+                  OR: buildItemSearchConditions(searchTerm),
+                },
+                include: {
+                  metadata: itemListMetadataInclude,
+                },
+                orderBy: { name: "asc" },
+              },
+            },
+          });
+
           return NextResponse.json(
-            await formatShelfWithItemPrices(shelf, uiLocale),
+            await formatShelfWithItemPrices(refreshedShelf ?? shelf, uiLocale),
           );
         }
 
@@ -229,8 +246,21 @@ export async function GET(req: NextRequest) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
+        await reconcileDuplicateItemSlugsOnShelf(shelf.id);
+        const refreshedShelf = await prisma.shelf.findUnique({
+          where: { id: resolvedId },
+          include: {
+            items: {
+              include: {
+                metadata: itemListMetadataInclude,
+              },
+              orderBy: { name: "asc" },
+            },
+          },
+        });
+
         return NextResponse.json(
-          await formatShelfWithItemPrices(shelf, uiLocale),
+          await formatShelfWithItemPrices(refreshedShelf ?? shelf, uiLocale),
         );
       }
 

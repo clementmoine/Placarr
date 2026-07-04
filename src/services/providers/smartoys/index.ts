@@ -56,6 +56,7 @@ export const smartoysModule: ProviderModule = {
     canonical: false,
     websiteUrl: "https://www.smartoys.be/",
     notes: "Prix détaillant BE (jeux rétro).",
+    barcodeScopedPriceSource: true,
   },
   mappingProbe: {
     sampleInput: "0045496365226",

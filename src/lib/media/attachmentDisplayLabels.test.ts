@@ -75,6 +75,22 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("normalise HDJV media du jeu sans inventer disque ni jaquette", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        title: "Media du jeu",
+        source: "hdjv",
+        providerLabel: "HDJV",
+      }),
+    ).toMatchObject({
+      provider: "HDJV",
+      kind: "Image",
+      region: null,
+      detail: "Image",
+    });
+  });
+
   it("normalise LaunchBox Europe cover", () => {
     expect(
       getAttachmentGalleryLabels({

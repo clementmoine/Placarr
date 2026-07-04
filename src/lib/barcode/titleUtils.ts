@@ -576,6 +576,16 @@ export function listingLooksLikeNonBookProduct(name: string): boolean {
   );
 }
 
+/** Game accessories and merch listings that share a franchise title. */
+export function listingLooksLikeGameAccessory(name: string): boolean {
+  const n = normalizeForTokens(name);
+  if (!n) return false;
+  if (listingLooksLikeNonBookProduct(name)) return true;
+  return /\b(?:fourreau|housse|coque|etui|sleeve|case|skin|poster|affiche|artbook|soundtrack|ost|guide|manette|controller|joycon|amiibo|steelbook|boitier\s+vierge|empty\s+case|replacement\s+case|custom\s+case|personnalise)\b/.test(
+    n,
+  );
+}
+
 // v40: persist the compile step's structured title decision (cleanName/
 // displayName/edition) in the cache so reads stop re-stripping integral edition
 // terms ("Gottlieb Pinball Classics" → "Gottlieb Pinball"). Bumped so pre-v40

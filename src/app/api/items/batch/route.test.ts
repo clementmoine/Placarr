@@ -38,6 +38,11 @@ vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: h.resolveShelfId,
   resolveItemId: h.resolveItemId,
 }));
+vi.mock("@/lib/routing/itemSlug", () => ({
+  allocateUniqueItemSlug: vi.fn(async (_shelfId: string, name: string) =>
+    `slug-${name}`,
+  ),
+}));
 vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (value: string) => `slug-${value}`,
 }));

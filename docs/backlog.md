@@ -184,15 +184,15 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
 
-#### KISS-1 — Découper `storage.ts` _(largement fait — 1511 → 995 lignes)_
+#### KISS-1 — Découper `storage.ts` _(FAIT — 1511 → 807 lignes)_
 
-- **État 2026-07-04** : **3 extractions faites** (comportement préservé, re-exports pour compat) :
+- **État 2026-07-04** : **4 extractions faites** (comportement préservé, re-exports pour compat, `storeMetadata` reste l'orchestrateur) :
   - `services/metadata/imageAssets.ts` — perceptual-hash dedupe + métriques image locales + détection placeholder plat (`387075c`).
   - `services/metadata/imageUrls.ts` — helpers purs de résolution d'URL image originale (`c6385d9`).
   - `services/metadata/dbMapping.ts` — mappers Prisma `MetadataResult` ↔ rows + `formatMetadataFor/FromStorage` (`060ff90`).
-- **Reste — PAS un pure move (évalué 2026-07-04, non fait)** : extraire `downloadRemoteImage` demande de déplacer **toute une chaîne** pour éviter un import circulaire — `downloadRemoteImage` → `canKeepRemoteImageOnDownloadFailure` (exporté) → `remoteImageFallbackProviderFor` → `providerMatchesImageUrl` — et le cluster est **entrelacé** dans le fichier avec des fonctions sans rapport (`syncCroppedCoverAttachment`, `getCachedMetadata`, re-exports). Chemin cœur, lourdement mocké (`route.test.ts`, `cache.test.ts`). Valeur marginale (995 → ~880). Si repris : déplacer les 4 fonctions de la chaîne ensemble vers `storage/imageDownload.ts`, re-exporter `downloadRemoteImage` + `canKeepRemoteImageOnDownloadFailure` depuis `storage.ts`, vérifier qu'aucun mock de test ne casse.
-  - Le reste = `storeMetadata` (l'orchestrateur) — le laisser dans `storage.ts`.
-- **Pièges** : `coverProvenance` doit rester dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; garder les re-exports depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests).
+  - `services/metadata/imageDownload.ts` — acquisition d'image distante (`downloadRemoteImage` + chaîne `canKeep…`/`remoteImageFallback…`/`providerMatches…` + `existingLocalizedUploadForUrl`) déplacée en bloc pour éviter l'import circulaire ; mocks `route.test.ts`/`cache.test.ts` intacts (`d909d6c`).
+- **Reste = rien d'évident.** `storeMetadata` est l'orchestrateur, à laisser dans `storage.ts`. Extractions suivantes = rendement quasi nul.
+- **Pièges (si on continue quand même)** : `coverProvenance` dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; toujours re-exporter depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests) ; nettoyer les imports orphelins (eslint les liste).
 
 #### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(valeur réelle, risqué)_
 

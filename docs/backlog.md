@@ -184,15 +184,15 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
 
-#### KISS-1 — Découper `storage.ts` _(en cours — 1511 → 1137 lignes)_
+#### KISS-1 — Découper `storage.ts` _(largement fait — 1511 → 995 lignes)_
 
-- **État 2026-07-04** : **2 extractions faites** (comportement préservé, re-exports pour compat) :
+- **État 2026-07-04** : **3 extractions faites** (comportement préservé, re-exports pour compat) :
   - `services/metadata/imageAssets.ts` — perceptual-hash dedupe + métriques image locales + détection placeholder plat (`387075c`).
   - `services/metadata/imageUrls.ts` — helpers purs de résolution d'URL image originale (`c6385d9`).
-- **Reste** (mêmes règles : extraction pure, `storage.test.ts` vert, `pnpm build` vert, 0 changement de comportement) :
-  - `downloadRemoteImage` + `existingLocalizedUploadForUrl` + `LOCAL_IMAGE_EXTENSIONS` → un `storage/download.ts` (dépend de `coverDownloadCandidates`, `fetchRemoteImageBuffer`, `crypto`/`fs`).
-  - Les mappers Prisma (`mapAuthors`/`mapPublishers`/`mapAttachments`/`toAttachmentCreateData`) + `formatMetadataForStorage`/`formatMetadataFromStorage` → `storage/dbMapping.ts`.
-  - Le reste = `storeMetadata` (l'orchestrateur, ~500 l.) — le laisser dans `storage.ts` ; extraire seulement des helpers PURS qu'il appelle, jamais son état.
+  - `services/metadata/dbMapping.ts` — mappers Prisma `MetadataResult` ↔ rows + `formatMetadataFor/FromStorage` (`060ff90`).
+- **Reste optionnel** (rendement décroissant ; mêmes règles : extraction pure, `storage.test.ts` vert, `pnpm build` vert, 0 changement) :
+  - `downloadRemoteImage` + `existingLocalizedUploadForUrl` + `LOCAL_IMAGE_EXTENSIONS` → un `storage/download.ts` (dépend de `coverDownloadCandidates`, `fetchRemoteImageBuffer`, `crypto`/`fs`). Attention : `downloadRemoteImage` fait du crop/trim (`imageTrim`) + fallback distant — plus entremêlé, à faire prudemment.
+  - Le reste = `storeMetadata` (l'orchestrateur) — le laisser dans `storage.ts` ; n'extraire que des helpers PURS qu'il appelle, jamais son état.
 - **Pièges** : `coverProvenance` doit rester dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; garder les re-exports depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests).
 
 #### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(valeur réelle, risqué)_

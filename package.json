@@ -21,12 +21,7 @@
     "test:record:one": "RECORD=1 BARCODE_RECORD_SLIM=1 RECORD_CASE_ID=mario-kart-wii vitest run src/services/barcode/resolver.fresh.test.ts",
     "test:record:all": "tsx scripts/record-all-barcode-fixtures.ts",
     "providers:audit:mapping": "tsx scripts/providerMappingAudit.ts",
-    "providers:health": "tsx scripts/providerHealth.ts",
-    "providers:runtime": "tsx scripts/providerRuntimeCheck.ts",
-    "providers:live-audit": "tsx scripts/providerLiveAudit.ts",
-    "icollect:build-index": "tsx scripts/buildICollectIndex.ts",
-    "providers:boardgame-live": "tsx scripts/boardGameSourceLiveTest.ts",
-    "backfill:slugs": "tsx scripts/backfill-slugs.ts"
+    "icollect:build-index": "tsx scripts/buildICollectIndex.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

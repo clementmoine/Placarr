@@ -180,6 +180,46 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 ~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** (`metadata/`, `item/`, `media/`, `pricing/`, …) — ne pas fusionner `services/providers/*`.
 
+### Audit fonctionnement — reste à faire (2026-07-04)
+
+Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
+
+#### KISS-1 — Découper `storage.ts` (1511 lignes) _(valeur réelle, gros refactor)_
+
+- **État** : non commencé. Le plus gros fichier du repo ; fait persistance + localisation d'images (`sharp`) + métriques + hero + provenance + facts + prix dans un seul module.
+- **Pourquoi pas fait** : refactor délicat de code de persistance très testé — un découpage bâclé introduit des bugs subtils. Classé « surveiller, pas urgent ».
+- **Reprendre** :
+  1. Lire tout `src/services/metadata/storage.ts` et cartographier les fonctions + l'état partagé (closures, `imageMetricsByUrl`, etc.).
+  2. Extraire par frontières SANS état partagé, un module à la fois, en re-testant à chaque : viser `storage/images.ts` (localisation + métriques + `reorderAttachmentsCoverFirst`/`pickBestCoverFromAttachments`/`pickBestBackgroundFromAttachments`), `storage/facts.ts`, `storage/prices.ts`. `storage.ts` devient l'orchestrateur.
+  3. Ne PAS changer le comportement (aucun bump de cache attendu) ; garder `storage.test.ts` + `storage.test` verts. Vérifier `pnpm build` (fichier dans le graphe).
+- **Pièges** : `coverProvenance` doit rester dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display.
+
+#### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(valeur réelle, risqué)_
+
+- **État** : non commencé. `fetchMetadata` (1135 l.) est générique mais saturé de branches games (gallery, plateforme, édition, web-only console).
+- **Reprendre** : extraire une stratégie « games » (objet de hooks de gating : `shouldFetchGallery`, `rejectsWebOnly`, `supplementEdition`…) pour que `fetchMetadata` reste lisible, **sans** recréer un fetcher par type. Beaucoup de conditions interdépendantes → avancer par petites extractions pures + `fetch.test.ts`/`fetchByType.test.ts` verts à chaque pas. 0 changement de comportement.
+
+#### AUDIO-1 — Vraie détection audio GS1 _(résiduel du « trou #1 »)_
+
+- **État** : les 2 préfixes sont co-localisés + documentés (`d9bdddc`), mais restent des heuristiques **sans couverture golden-master** (aucun fixture ne les matche, même Daft Punk `0724…`).
+- **Reprendre** : trouver la vraie sémantique GS1 des ranges audio (ou une source de données), remplacer les 2 regex par une détection correcte, et **ajouter des fixtures barcode audio** qui exercent réellement `AUDIO_BARCODE_PREFIX` (bonus score) et `AUDIO_LIKE_GAME_SUPPRESSION_PREFIX` (filtre games). Changement decide-late → **bump `BARCODE_CACHE_VERSION`** (v43→v44) + re-record fixtures concernées.
+
+#### WORDLIST-1 — Sous-titres produit dans `tokenEquivalents` _(bloqué sur données)_
+
+- **État** : `TITLE_PHRASE_EQUIVALENT_GROUPS` contient 2 sous-titres produit (`birth of a new world` = AC III, `the american saga` = Star Wars) — annotés comme dette (`8825672`), pas supprimés.
+- **Pourquoi bloqué** : `searchVariants.test.ts` en dépend ; les retirer régresse le matching cross-langue de ces produits.
+- **Reprendre** : vérifier **en live** (record fixtures ou probe providers) que les `regionalTitles`/aliases de IGDB/ScreenScraper/LaunchBox couvrent ces titres FR↔EN. Si oui : retirer les 2 groupes de `tokenEquivalents.ts` + mettre à jour `searchVariants.test.ts` pour tester la voie data-driven, corriger `word_list_audit.md`. Si non : documenter pourquoi ils restent load-bearing.
+
+#### POLL-1 — Poll idle de `BackgroundJobsMenu` _(nit perf mineur)_
+
+- **État** : `src/components/BackgroundJobsMenu.tsx` poll toutes les 10 s au repos, sans jamais s'arrêter (utilisateur connecté). TanStack met déjà le poll en pause quand l'onglet perd le focus.
+- **Reprendre** : pour arrêter le poll idle (`refetchInterval: false` quand `count===0`), il faut d'abord câbler `queryClient.invalidateQueries(["backgroundJobs"])` sur **tous les sites qui créent un job** (ajout d'item, refresh, bulk). Sinon le menu ne verra plus les nouveaux jobs. Alternative low-effort : ralentir l'intervalle idle (10 s → 30–60 s).
+
+#### CONFIG-1 — `PROVIDER_METADATA_EXTENSIONS` (self-declaration) _(évalué → NON retenu)_
+
+- **Décision 2026-07-04** : **ne pas migrer** les ~28 entrées dans les modules. C'est de la **config déclarative centralisée, explicitement autorisée** par `placarr-principles.mdc` ; le registry est le point d'assemblage légitime et une table centrale est souvent plus lisible que 28 fichiers dispersés. Ne pas rouvrir sans raison produit.
+- **Seul sous-item éventuel** : les 2 retailers PrestaShop (`chipweld`, `netgamesretro`) sont décrits à 2 endroits (traits dans le registry, reste dans `prestashop/configs.ts`). Pour consolider : ajouter les champs traits au type de config retailer + les spread dans `info` de `scrapeCatalogModuleFactory`, déplacer les valeurs depuis `PROVIDER_METADATA_EXTENSIONS` vers `configs.ts`. Gain marginal (2 entrées).
+
 ---
 
 ## Terminé / vérifié (ne pas rouvrir sans raison)
@@ -210,6 +250,16 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - **TheGamesDB probe quota** : `blocked` si cooldown quota actif (**fait 2026-06-29**)
 - **ScreenScraper resilience** : timeout 15s, retry search foreground, health `jeuRecherche` (**fait 2026-06-29**)
 - **Barcode platform pick** : `pickPlatformKeyFromEvidence` via `barcodeEvidenceObservationSourceWeight` (**fait 2026-06-29**)
+
+### Audit fonctionnement (2026-07-04) — voir [audit_fonctionnement.md](audit_fonctionnement.md)
+
+- **Cartographie + audit complet** : `docs/audit_fonctionnement.md` (diagramme Mermaid 2 plans identification/enrichissement, 5 logiques uniques vérifiées provider-blind, constats classés P1–P6) (**fait 2026-07-04**)
+- **Dead code sweep** : 27 fichiers morts supprimés — 3 composants (`ItemCarousel`, `ShelfBadge`, `BulkSeriesModal`), `lib/api/user.ts`, **16 barrels `index.ts` jamais importés en dossier**, 7 primitives UI shadcn (`alert-dialog`/`breadcrumb`/`pagination`/`popover`/`scroll-area`/`separator`/`table`) + 2 fns `@deprecated`. Vérifié par scan d'imports repo-wide (alias+relatif+dynamique+JSX) (**fait 2026-07-04**, `8b02366`)
+- **Build préexistant réparé** : la branche était **déjà rouge** avant le nettoyage — 3 erreurs de type sans lien (`attachmentDisplayScore` trait `isGameMediaGallerySource` absent du type ; `coverPlaceholder.server` namespace `sharp` ; `metadataPriceFallback` champs `BarcodePricesResult` manquants) corrigées (**fait 2026-07-04**, `8b02366`)
+- **Music word-list → signal registry** : helper `detectBoardGameSpecialistSignal` généralisé en `detectSpecialistSignal(result, labels)` (partagé board-game + musique) ; `TYPE_SCORE.musicSpecialistSignal { musics:+0.35, games:-0.3 }` ; word-list `orchestra|soundtrack|ost|album|cd` **supprimée** ; test `compile.typeSelection` ; `BARCODE_CACHE_VERSION` v42 (**fait 2026-07-04**, `3b83e6a`)
+- **`detectVideoGameSignal` câblé** (vrai bug) : signal défini + testé au niveau `scoreTypeCandidate` (régression Ghost Recon) mais **jamais passé** par `resolveBarcode` → fix jeu-vidéo→pas-musique **inactif en prod**. Câblé ; cache v43 (**fait 2026-07-04**, `92f61a6`)
+- **Préfixes audio co-localisés** : les 2 regex divergents (`scoring.AUDIO_BARCODE_PREFIX` vs local resolver) réunis dans `evidence/scoring.ts` (`AUDIO_BARCODE_PREFIX` + `AUDIO_LIKE_GAME_SUPPRESSION_PREFIX`), divergence documentée comme intentionnelle (buts opposés). 0 changement de comportement (**fait 2026-07-04**, `d9bdddc`)
+- **Literals/dedup core** : préfixe audio dupliqué → 1 const ; `steamdb`/`pcgamingwiki` label repliés sur `PC_SPECIFIC_FACT_SOURCE_KEYS` ; literal mort `"BGG (Bayes)"` supprimé (aucun fact ne le porte — BGG émet `label:"BoardGameGeek"`) ; ligne « FIXED » inexacte de `word_list_audit.md` corrigée (**fait 2026-07-04**, `8825672` + `c8c6cd5`)
 
 ---
 

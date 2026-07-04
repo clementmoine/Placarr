@@ -190,9 +190,8 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
   - `services/metadata/imageAssets.ts` — perceptual-hash dedupe + métriques image locales + détection placeholder plat (`387075c`).
   - `services/metadata/imageUrls.ts` — helpers purs de résolution d'URL image originale (`c6385d9`).
   - `services/metadata/dbMapping.ts` — mappers Prisma `MetadataResult` ↔ rows + `formatMetadataFor/FromStorage` (`060ff90`).
-- **Reste optionnel** (rendement décroissant ; mêmes règles : extraction pure, `storage.test.ts` vert, `pnpm build` vert, 0 changement) :
-  - `downloadRemoteImage` + `existingLocalizedUploadForUrl` + `LOCAL_IMAGE_EXTENSIONS` → un `storage/download.ts` (dépend de `coverDownloadCandidates`, `fetchRemoteImageBuffer`, `crypto`/`fs`). Attention : `downloadRemoteImage` fait du crop/trim (`imageTrim`) + fallback distant — plus entremêlé, à faire prudemment.
-  - Le reste = `storeMetadata` (l'orchestrateur) — le laisser dans `storage.ts` ; n'extraire que des helpers PURS qu'il appelle, jamais son état.
+- **Reste — PAS un pure move (évalué 2026-07-04, non fait)** : extraire `downloadRemoteImage` demande de déplacer **toute une chaîne** pour éviter un import circulaire — `downloadRemoteImage` → `canKeepRemoteImageOnDownloadFailure` (exporté) → `remoteImageFallbackProviderFor` → `providerMatchesImageUrl` — et le cluster est **entrelacé** dans le fichier avec des fonctions sans rapport (`syncCroppedCoverAttachment`, `getCachedMetadata`, re-exports). Chemin cœur, lourdement mocké (`route.test.ts`, `cache.test.ts`). Valeur marginale (995 → ~880). Si repris : déplacer les 4 fonctions de la chaîne ensemble vers `storage/imageDownload.ts`, re-exporter `downloadRemoteImage` + `canKeepRemoteImageOnDownloadFailure` depuis `storage.ts`, vérifier qu'aucun mock de test ne casse.
+  - Le reste = `storeMetadata` (l'orchestrateur) — le laisser dans `storage.ts`.
 - **Pièges** : `coverProvenance` doit rester dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; garder les re-exports depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests).
 
 #### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(valeur réelle, risqué)_

@@ -8,6 +8,7 @@ import {
 import {
   cancelAndClearItemMetadataRefresh,
   getInMemoryMetadataRefreshItemIds,
+  reconcileOrphanedMetadataRefreshesForUser,
 } from "@/lib/jobs/metadataRefreshSession";
 
 export type BackgroundJobKind = "metadataRefresh" | "metadataEnrich";
@@ -86,6 +87,8 @@ function toBackgroundJobRow(
 export async function listBackgroundJobsForUser(
   userId: string,
 ): Promise<BackgroundJobRow[]> {
+  await reconcileOrphanedMetadataRefreshesForUser(userId);
+
   const inMemoryIds = new Set(getInMemoryMetadataRefreshItemIds());
   const items = await prisma.item.findMany({
     where: activeBackgroundJobsWhere(userId),

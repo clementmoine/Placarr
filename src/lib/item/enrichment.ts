@@ -11,6 +11,12 @@ export const ITEM_ENRICH_WINDOW_MS = 3 * 60 * 1000;
 /** Max time we keep showing a manual metadata refresh as in-flight. */
 export const METADATA_REFRESH_MAX_MS = 15 * 60 * 1000;
 
+/**
+ * When `metadataRefreshStartedAt` is set but no in-memory worker owns the
+ * item (dev-server restart, crashed `after()`), clear the flag after this grace.
+ */
+export const METADATA_REFRESH_ORPHAN_GRACE_MS = 2 * 60 * 1000;
+
 type ItemEnrichmentFields = {
   metadataId?: string | null;
   createdAt?: string | Date | null;

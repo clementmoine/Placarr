@@ -1,4 +1,4 @@
-import { AsyncQueue } from "@/lib/async/asyncQueue";
+import { AsyncQueue, type QueuePriority } from "@/lib/async/asyncQueue";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
@@ -17,7 +17,7 @@ class ProviderQueue {
     this.queue = new AsyncQueue(concurrency);
   }
 
-  run<T>(fn: () => Promise<T>): Promise<T> {
+  run<T>(fn: () => Promise<T>, priority: QueuePriority = "normal"): Promise<T> {
     return this.queue.run(async () => {
       if (this.minIntervalMs > 0) {
         const waitMs = this.lastStartedAt + this.minIntervalMs - Date.now();
@@ -27,7 +27,7 @@ class ProviderQueue {
         this.lastStartedAt = Date.now();
       }
       return fn();
-    });
+    }, priority);
   }
 }
 
@@ -64,8 +64,9 @@ function getProviderQueue(providerId: string): ProviderQueue {
 export function runQueuedMetadataProviderCall<T>(
   providerId: string,
   fn: () => Promise<T>,
+  priority: QueuePriority = "normal",
 ): Promise<T> {
-  return getProviderQueue(providerId).run(fn);
+  return getProviderQueue(providerId).run(fn, priority);
 }
 
 export function wrapMetadataProviderAdapter(
@@ -75,10 +76,16 @@ export function wrapMetadataProviderAdapter(
     id: adapter.id,
     resolve: (ctx) => {
       throwIfAborted(ctx.signal);
-      return runQueuedMetadataProviderCall(adapter.id, () => {
-        throwIfAborted(ctx.signal);
-        return adapter.resolve(ctx);
-      });
+      const priority =
+        ctx.queuePriority ?? (ctx.isBackground ? "normal" : "high");
+      return runQueuedMetadataProviderCall(
+        adapter.id,
+        () => {
+          throwIfAborted(ctx.signal);
+          return adapter.resolve(ctx);
+        },
+        priority,
+      );
     },
   };
 }

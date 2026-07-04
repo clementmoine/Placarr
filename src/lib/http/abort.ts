@@ -25,6 +25,13 @@ export function throwIfAborted(signal?: AbortSignal): void {
   }
 }
 
+/**
+ * A single signal that aborts as soon as any of the inputs does. Returns the
+ * lone signal unchanged when only one is defined, and `undefined` when none are,
+ * so callers can pass it straight through to fetch/axios. Backed by the native
+ * `AbortSignal.any`, which cleans up its listeners when the result is collected
+ * (the previous hand-rolled version leaked a listener per still-pending source).
+ */
 export function mergeAbortSignals(
   ...signals: Array<AbortSignal | undefined>
 ): AbortSignal | undefined {
@@ -33,17 +40,5 @@ export function mergeAbortSignals(
   );
   if (defined.length === 0) return undefined;
   if (defined.length === 1) return defined[0];
-
-  const controller = new AbortController();
-  const abort = () => controller.abort();
-
-  for (const signal of defined) {
-    if (signal.aborted) {
-      abort();
-      return controller.signal;
-    }
-    signal.addEventListener("abort", abort, { once: true });
-  }
-
-  return controller.signal;
+  return AbortSignal.any(defined);
 }

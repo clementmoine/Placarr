@@ -1,5 +1,25 @@
 import axios from "axios";
 
+import { isAbortError, throwIfAborted } from "@/lib/http/abort";
+
+/** Sleeps `delayMs`, but rejects immediately if `signal` aborts meanwhile. */
+function abortableDelay(delayMs: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, delayMs);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DOMException("Retry aborted", "AbortError"));
+    };
+    if (signal) {
+      if (signal.aborted) return onAbort();
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+  });
+}
+
 /**
  * Détermine si une erreur vaut la peine d'être réessayée.
  * On réessaie sur les erreurs réseau/timeout et les 5xx (transitoires),
@@ -21,14 +41,20 @@ export async function retry<T>(
   fn: () => Promise<T>,
   retries = 5,
   delayMs = 300,
+  signal?: AbortSignal,
 ): Promise<T> {
+  throwIfAborted(signal);
   try {
     return await fn();
   } catch (err) {
+    // A cancelled request (session abort) must never be retried: axios surfaces
+    // it as ERR_CANCELED, which has no response and would otherwise look like a
+    // retryable network error — turning one abort into five.
+    if (isAbortError(err)) throw err;
     if (retries <= 1 || !isRetryableError(err)) throw err;
     console.warn(`Retrying... (${retries - 1} left)`);
 
-    await new Promise((res) => setTimeout(res, delayMs));
-    return retry(fn, retries - 1, delayMs * 2); // Backoff exponentiel
+    await abortableDelay(delayMs, signal);
+    return retry(fn, retries - 1, delayMs * 2, signal); // Backoff exponentiel
   }
 }

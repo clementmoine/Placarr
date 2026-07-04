@@ -47,6 +47,45 @@ describe("metadataProviderQueue", () => {
     expect(ssFinished).toBe(true);
   });
 
+  it("prioritizes interactive provider calls over background ones", async () => {
+    resetMetadataProviderQueuesForTests();
+    const order: string[] = [];
+
+    const blocking = runQueuedMetadataProviderCall(
+      "screenscraper",
+      async () => {
+        order.push("block-start");
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        order.push("block-end");
+        return "block";
+      },
+      "normal",
+    );
+
+    const normal = runQueuedMetadataProviderCall(
+      "screenscraper",
+      async () => {
+        order.push("normal");
+        return "normal";
+      },
+      "normal",
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    const interactive = runQueuedMetadataProviderCall(
+      "screenscraper",
+      async () => {
+        order.push("high");
+        return "interactive";
+      },
+      "high",
+    );
+
+    await Promise.all([blocking, normal, interactive]);
+    expect(order).toEqual(["block-start", "block-end", "high", "normal"]);
+  });
+
   it("resolves selected providers concurrently while preserving result order", async () => {
     const started: string[] = [];
     let fastFinished = false;

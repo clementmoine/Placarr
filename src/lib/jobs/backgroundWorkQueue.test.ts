@@ -1,7 +1,29 @@
 import { describe, expect, it } from "vitest";
 
 import { AsyncQueue } from "@/lib/async/asyncQueue";
-import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
+import {
+  runBackgroundWork,
+  runCpuBackgroundWork,
+} from "@/lib/jobs/backgroundWorkQueue";
+
+async function measurePeakConcurrency(
+  run: (fn: () => Promise<void>) => Promise<void>,
+  jobs: number,
+): Promise<number> {
+  let active = 0;
+  let maxActive = 0;
+  await Promise.all(
+    Array.from({ length: jobs }, () =>
+      run(async () => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        active--;
+      }),
+    ),
+  );
+  return maxActive;
+}
 
 /**
  * Le « background » de Next (`after()`) partage l'event loop du serveur : sans
@@ -51,22 +73,17 @@ describe("AsyncQueue", () => {
   });
 });
 
-describe("runBackgroundWork", () => {
-  it("sérialise au-delà du plafond global (défaut 2)", async () => {
-    let active = 0;
-    let maxActive = 0;
+describe("runBackgroundWork (pool I/O)", () => {
+  it("laisse plusieurs jobs I/O tourner en parallèle (défaut 8)", async () => {
+    const maxActive = await measurePeakConcurrency(runBackgroundWork, 8);
+    expect(maxActive).toBeGreaterThan(2);
+    expect(maxActive).toBeLessThanOrEqual(8);
+  });
+});
 
-    await Promise.all(
-      Array.from({ length: 8 }, () =>
-        runBackgroundWork(async () => {
-          active++;
-          maxActive = Math.max(maxActive, active);
-          await new Promise((resolve) => setTimeout(resolve, 5));
-          active--;
-        }),
-      ),
-    );
-
+describe("runCpuBackgroundWork (pool CPU)", () => {
+  it("borne le travail CPU pour ne pas saturer l'event loop (défaut 2)", async () => {
+    const maxActive = await measurePeakConcurrency(runCpuBackgroundWork, 8);
     expect(maxActive).toBeLessThanOrEqual(2);
   });
 });

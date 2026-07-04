@@ -109,7 +109,9 @@ async function refreshPricesAfterMetadata(itemId: string): Promise<void> {
   if (!item) return;
 
   try {
-    await refreshItemPricesFromContext(itemPricesContextFromRecord(item));
+    await refreshItemPricesFromContext(itemPricesContextFromRecord(item), {
+      force: true,
+    });
   } catch (error) {
     console.error(
       `[Prices] Post-metadata refresh failed for item ${itemId}:`,
@@ -141,7 +143,7 @@ async function runItemMetadataRefresh(
     session,
   );
   if (stored) {
-    await refreshPricesAfterMetadata(input.itemId);
+    void runBackgroundWork(() => refreshPricesAfterMetadata(input.itemId));
   }
 }
 
@@ -185,13 +187,15 @@ export function scheduleBatchItemMetadataRefresh(
               next.barcode || undefined,
               true,
               platform,
-              true,
+              false,
               true,
               shelf.name,
               session,
             );
             if (stored) {
-              await refreshPricesAfterMetadata(next.itemId);
+              void runBackgroundWork(() =>
+                refreshPricesAfterMetadata(next.itemId),
+              );
             }
           }),
         ),

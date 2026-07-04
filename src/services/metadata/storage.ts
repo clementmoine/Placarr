@@ -6,8 +6,6 @@ import {
   Publisher,
   Type,
 } from "@prisma/client";
-import crypto from "crypto";
-import fs from "fs";
 import path from "path";
 import {
   shouldShowCoverAttachmentOnShelf,
@@ -29,39 +27,24 @@ import {
   urlsReferToSameLocalizedImage,
   isUrlEligibleDefaultCover,
 } from "@/lib/media/coverUrl";
-import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
-import { fetchRemoteImageBuffer } from "@/lib/media/remoteFetch";
 import {
-  MIN_COVER_SHORTEST_EDGE,
-  coverUrlExpectsHighResolution,
   readFileImageMetrics,
-  readBufferImageMetrics,
-  shortestImageEdge,
   isCoverResolutionAcceptable,
 } from "@/lib/media/imageMetrics";
 import { resolveCoverAttachmentRole } from "@/lib/media/coverPerspective";
-import { isMissingArtImageUrl } from "@/lib/media/coverPlaceholder";
-import { isUnavailableCoverPlaceholderBuffer } from "@/lib/media/coverPlaceholder.server";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 import { barcodeListingMatchesItem } from "@/lib/barcode/titleUtils";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import {
-  PROVIDERS,
-  inferImageAttachmentFromMediaUrl,
-} from "@/services/provider/registry";
+import { inferImageAttachmentFromMediaUrl } from "@/services/provider/registry";
 import {
   authoritative3dCoverRoleSource,
-  canonicalProviderIdForSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
   withProviderAttachmentTraits,
 } from "@/services/provider/sourceTraits";
 import { prisma } from "@/lib/db/prisma";
 import { metadataFieldEvidence } from "@/services/metadata/facts";
-import {
-  trimLightImageMargins,
-  cropImageIfNeeded,
-} from "@/lib/media/imageTrim";
+import { cropImageIfNeeded } from "@/lib/media/imageTrim";
 import { runCpuBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import type {
   MetadataAttachment,
@@ -76,15 +59,15 @@ import {
   shouldReadImageMetricsForAttachment,
 } from "@/services/metadata/imageAssets";
 
-import { providerOriginalImageUrl } from "@/services/metadata/imageUrls";
 import {
   formatMetadataForStorage,
   toAttachmentCreateData,
 } from "@/services/metadata/dbMapping";
+import { downloadRemoteImage } from "@/services/metadata/imageDownload";
 
 // Re-exported for existing consumers of `@/services/metadata/storage` (and its
-// index barrel) after the helpers moved to ./imageAssets, ./imageUrls and
-// ./dbMapping.
+// index barrel) after the helpers moved to ./imageAssets, ./imageUrls,
+// ./dbMapping and ./imageDownload.
 export {
   dedupeByPerceptualHash,
   hammingDistance,
@@ -98,6 +81,10 @@ export {
   formatMetadataForStorage,
   formatMetadataFromStorage,
 } from "@/services/metadata/dbMapping";
+export {
+  canKeepRemoteImageOnDownloadFailure,
+  downloadRemoteImage,
+} from "@/services/metadata/imageDownload";
 
 function isDisplayImageAttachment(attachment: {
   type?: AttachmentType | string | null;
@@ -159,40 +146,6 @@ function canUseBarcodeCacheCover(
   return Boolean(inferredCoverSemantics?.source && inferredCoverSemantics.role);
 }
 
-function providerMatchesImageUrl(
-  provider: { coverUrlHost?: string | null },
-  url: string,
-): boolean {
-  if (!provider.coverUrlHost) return false;
-  return url.includes(provider.coverUrlHost);
-}
-
-function remoteImageFallbackProviderFor(url: string, source?: string | null) {
-  const sourceProviderId = canonicalProviderIdForSource(source);
-  if (sourceProviderId) {
-    const provider = PROVIDERS.find((p) => p.id === sourceProviderId);
-    if (
-      provider?.remoteImageFallback &&
-      providerMatchesImageUrl(provider, url)
-    ) {
-      return provider;
-    }
-  }
-
-  return PROVIDERS.find(
-    (provider) =>
-      provider.remoteImageFallback && providerMatchesImageUrl(provider, url),
-  );
-}
-
-export function canKeepRemoteImageOnDownloadFailure(
-  url: string,
-  source?: string | null,
-): boolean {
-  if (!url || url.startsWith("/") || !/^https?:\/\//i.test(url)) return false;
-  return Boolean(remoteImageFallbackProviderFor(url, source));
-}
-
 export { isMissingMusicGallery } from "@/lib/metadata/galleries";
 
 export async function getCachedMetadata(
@@ -206,37 +159,6 @@ export async function getCachedMetadata(
 }
 
 export { looksLikeImageBuffer } from "@/lib/media/imageBuffer";
-
-const LOCAL_IMAGE_EXTENSIONS = [
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".gif",
-  ".webp",
-  ".svg",
-];
-
-async function existingLocalizedUploadForUrl(
-  url: string,
-): Promise<string | null> {
-  const targetDir = path.join(process.cwd(), "public", "uploads");
-  const candidates = coverDownloadCandidates(url);
-
-  for (const candidate of candidates) {
-    const hash = crypto.createHash("md5").update(candidate).digest("hex");
-    for (const ext of LOCAL_IMAGE_EXTENSIONS) {
-      const targetPath = path.join(targetDir, `${hash}${ext}`);
-      if (!fs.existsSync(targetPath)) continue;
-      const metrics = await readFileImageMetrics(targetPath);
-      const shortest = shortestImageEdge(metrics);
-      if (shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE) {
-        return `/uploads/${hash}${ext}`;
-      }
-    }
-  }
-
-  return null;
-}
 
 export async function syncCroppedCoverAttachment(
   metadataId: string,
@@ -275,116 +197,6 @@ export async function syncCroppedCoverAttachment(
       where: { id: metadataId },
       data: { imageUrl: croppedImageUrl },
     });
-  }
-}
-
-export async function downloadRemoteImage(
-  url: string,
-  options: {
-    trim?: boolean;
-    minMarginPixels?: number;
-    source?: string | null;
-  } = {},
-): Promise<string | null> {
-  if (!url) return null;
-  if (isMissingArtImageUrl(url)) return null;
-  if (url.startsWith("file://")) {
-    return url;
-  }
-  if (url.startsWith("/")) {
-    return url.startsWith("/uploads/") ? url : null;
-  }
-  if (!url.startsWith("http")) {
-    return null;
-  }
-
-  const persistRemoteFallback = () =>
-    canKeepRemoteImageOnDownloadFailure(url, options.source) ? url : null;
-
-  const existingLocalized = await existingLocalizedUploadForUrl(url);
-  if (existingLocalized) {
-    return existingLocalized;
-  }
-
-  try {
-    const hash = crypto.createHash("md5").update(url).digest("hex");
-    const targetDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-
-    const original = providerOriginalImageUrl(url);
-    const fetched =
-      (await fetchRemoteImageBuffer(url)) ||
-      (original && original !== url
-        ? await fetchRemoteImageBuffer(original)
-        : null);
-    if (!fetched) {
-      return (
-        (await existingLocalizedUploadForUrl(url)) ?? persistRemoteFallback()
-      );
-    }
-
-    const fetchedMetrics = await readBufferImageMetrics(fetched.buffer);
-    if (
-      coverUrlExpectsHighResolution(url) &&
-      !isCoverResolutionAcceptable(fetchedMetrics)
-    ) {
-      console.info(
-        `[ImageLocalizer] Rejected sub-threshold cover (${fetched.sourceUrl}) for ${url}`,
-      );
-      return persistRemoteFallback();
-    }
-
-    const parsedUrl = new URL(fetched.sourceUrl);
-    let ext = path.extname(parsedUrl.pathname);
-    if (
-      !ext ||
-      ![".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"].includes(
-        ext.toLowerCase(),
-      )
-    ) {
-      ext = ".jpg";
-    }
-
-    const filename = `${hash}${ext}`;
-    const targetPath = path.join(targetDir, filename);
-    if (fs.existsSync(targetPath)) {
-      const existingBuffer = fs.readFileSync(targetPath);
-      if (await isUnavailableCoverPlaceholderBuffer(existingBuffer)) {
-        fs.unlinkSync(targetPath);
-      } else {
-        const metrics = await readFileImageMetrics(targetPath);
-        const shortest = shortestImageEdge(metrics);
-        if (shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE) {
-          return `/uploads/${filename}`;
-        }
-      }
-    }
-
-    let imageBuffer = fetched.buffer;
-    if (await isUnavailableCoverPlaceholderBuffer(imageBuffer)) {
-      console.info(
-        `[ImageLocalizer] Rejected unavailable-art placeholder from ${fetched.sourceUrl}`,
-      );
-      return persistRemoteFallback();
-    }
-    if (options.trim) {
-      imageBuffer = await trimLightImageMargins(imageBuffer, {
-        minMarginPixels: options.minMarginPixels,
-      });
-    }
-    fs.writeFileSync(targetPath, imageBuffer);
-    console.log(
-      `[ImageLocalizer] Downloaded ${fetched.sourceUrl} -> ${targetPath}`,
-    );
-    return `/uploads/${filename}`;
-  } catch (err) {
-    console.error(
-      `[ImageLocalizer] Failed to download image from ${url}:`,
-      err instanceof Error ? err.message : String(err),
-    );
-    return persistRemoteFallback();
   }
 }
 

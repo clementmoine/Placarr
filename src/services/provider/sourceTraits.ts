@@ -352,7 +352,7 @@ export function isPcSpecificFactSource(
     return true;
   }
   const normalizedLabel = (label || "").toLowerCase();
-  return normalizedLabel === "steamdb" || normalizedLabel === "pcgamingwiki";
+  return PC_SPECIFIC_FACT_SOURCE_KEYS.has(normalizedLabel);
 }
 
 export function isHowLongToBeatFactSource(source?: string | null): boolean {

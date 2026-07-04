@@ -24,7 +24,17 @@ export const TITLE_TOKEN_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
   ["legende", "legend"],
 ];
 
-/** Multi-word FR/EN phrases — dictionary-level only, same rule as above. */
+/**
+ * Multi-word FR/EN phrases. `movie video game` is a generic category descriptor
+ * (dictionary-level, OK per the rule above).
+ *
+ * DETTE : les 2 groupes suivants sont des SOUS-TITRES PRODUIT (AC III « Birth of a
+ * New World », Star Wars « The American Saga »), ce que la règle interdit. Ils
+ * restent parce que `searchVariants.test.ts` en dépend et que les retirer
+ * régresserait le matching cross-langue de ces produits tant que les
+ * `regionalTitles`/aliases providers ne les couvrent pas. À remplacer par la
+ * donnée, pas à supprimer à l'aveugle. Voir docs/word_list_audit.md.
+ */
 export const TITLE_PHRASE_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
   ["le film : le jeu vidéo", "le film le jeu video", "movie video game"],
   [

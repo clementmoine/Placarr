@@ -204,6 +204,12 @@ async function cacheBarcodeResult(
   }
 }
 
+// Audio-like GS1 prefixes used only to break a type tie at selection time.
+// NOTE: intentionally distinct from evidence/scoring's AUDIO_BARCODE_PREFIX
+// (which feeds the per-type score) — reconciling the two divergent prefix sets
+// is tracked separately (changes decide-late identification → cache bump).
+const AUDIO_LIKE_BARCODE_PREFIX = /^(0?(498|499)|45|88)/;
+
 function selectBarcodeTypeResult(
   type: string | null,
   typeResults: Record<string, CompiledResult | null>,
@@ -215,7 +221,7 @@ function selectBarcodeTypeResult(
     return { selectedType: type, selectedResult: typeResults[type] };
   }
 
-  const isAudioLikeBarcode = /^(0?(498|499)|45|88)/.test(cleanedBarcode);
+  const isAudioLikeBarcode = AUDIO_LIKE_BARCODE_PREFIX.test(cleanedBarcode);
   const candidates = Object.entries(typeResults)
     .filter(
       ([candidateType]) => !(isAudioLikeBarcode && candidateType === "games"),
@@ -249,7 +255,7 @@ function selectBarcodeTypeResult(
 
   if (
     !type &&
-    /^(0?(498|499)|45|88)/.test(cleanedBarcode) &&
+    AUDIO_LIKE_BARCODE_PREFIX.test(cleanedBarcode) &&
     /\b(?:orchestra|soundtrack|ost|album|cd)\b/i.test(selectedResult.cleanName)
   ) {
     selectedType = "musics";

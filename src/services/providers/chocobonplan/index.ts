@@ -1,5 +1,9 @@
 import { createMetadataHealthCheck } from "@/lib/provider/healthUtils";
 import { rawProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/lib/provider/priceOffers";
 import { inferCover3dRoleFromHints } from "@/lib/media/coverPerspective";
 import type { ProviderModule } from "@/types/providerModule";
@@ -176,5 +180,9 @@ export const chocobonplanModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     rawProbe(await fetchFromChocoBonPlan("Ball x Pit PS5")),
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, { name: "Ball x Pit PS5" });
+    return mappingRawKeysFromFetch(() => fetchFromChocoBonPlan(ctx.name));
+  },
   refreshBarcodePriceOffers: refreshChocoBonPlanOffers,
 };

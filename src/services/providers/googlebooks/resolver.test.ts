@@ -1,7 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 import axios from "axios";
+import * as remoteFetch from "@/lib/media/remoteFetch";
+import * as coverPlaceholderServer from "@/lib/media/coverPlaceholder.server";
 
 import { createGoogleBooksResolver } from "./resolver";
 
@@ -9,6 +11,20 @@ const mockedGet = vi.mocked(axios.get);
 
 beforeEach(() => {
   mockedGet.mockReset();
+  vi.spyOn(remoteFetch, "fetchRemoteImageBuffer").mockImplementation(
+    async (url) => ({
+      buffer: Buffer.from("cover-bytes"),
+      sourceUrl: url,
+    }),
+  );
+  vi.spyOn(
+    coverPlaceholderServer,
+    "isUnavailableCoverPlaceholderBuffer",
+  ).mockResolvedValue(false);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("createGoogleBooksResolver", () => {
@@ -91,5 +107,33 @@ describe("createGoogleBooksResolver", () => {
     mockedGet.mockResolvedValue({ data: { items: [] } } as never);
     const fetchFromGoogleBooks = createGoogleBooksResolver();
     expect(await fetchFromGoogleBooks("Unknown Book")).toBeNull();
+  });
+
+  it("ignore les couvertures Google Books placeholder", async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: "abc123",
+            volumeInfo: {
+              title: "Sans couverture",
+              imageLinks: {
+                thumbnail: "https://books.google.com/books/content?id=xsXn",
+              },
+            },
+          },
+        ],
+      },
+    } as never);
+    vi.spyOn(
+      coverPlaceholderServer,
+      "isUnavailableCoverPlaceholderBuffer",
+    ).mockResolvedValue(true);
+
+    const result = await createGoogleBooksResolver()("Sans couverture");
+
+    expect(result?.title).toBe("Sans couverture");
+    expect(result?.imageUrl).toBeUndefined();
+    expect(result?.attachments).toEqual([]);
   });
 });

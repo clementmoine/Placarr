@@ -150,3 +150,9 @@ export function normalizeBooknodeCoverUrl(
     ) || url
   );
 }
+
+/** Dedupes thumbnails and /full/ JPEG variants of the same Booknode upload. */
+export function booknodeCoverMediaKey(url: string): string | null {
+  const parts = booknodeCoverPartsFromUrl(url);
+  return parts ? `${parts.seriesId}:${parts.mediaId}` : null;
+}

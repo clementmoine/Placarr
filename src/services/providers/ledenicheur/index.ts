@@ -1,6 +1,10 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { rawProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/lib/provider/priceOffers";
 import {
   createTeardownBarcodeTask,
@@ -138,6 +142,12 @@ export const ledenicheurModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     rawProbe(await fetchPricesFromLeDenicheur("hades switch")),
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, { name: "hades switch" });
+    return mappingRawKeysFromFetch(() =>
+      fetchPricesFromLeDenicheur(ctx.name),
+    );
+  },
   buildBarcodeSources(payload, ctx) {
     return gatedContributions(
       "LeDenicheur",

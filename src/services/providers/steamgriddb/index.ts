@@ -3,6 +3,10 @@ import {
   createUnconfiguredHealthCheck,
 } from "@/lib/provider/healthUtils";
 import { fetchFromSteamGridDB, pingSteamGridDB } from "./fetch";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -66,5 +70,9 @@ export const steamgriddbModule: ProviderModule = {
   mappingProbe: {
     sampleInput: "Hades",
     context: { name: "Hades" },
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, { name: "Hades" });
+    return mappingRawKeysFromFetch(() => fetchFromSteamGridDB(ctx.name));
   },
 };

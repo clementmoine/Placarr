@@ -1,4 +1,8 @@
 import { metadataProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { pricedOffer } from "@/lib/provider/priceOffers";
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
@@ -13,9 +17,10 @@ import type {
 import {
   fetchPhilibertBarcodeProduct,
   fetchPhilibertProduct,
+  resolvePhilibertBackgroundUrl,
   searchPhilibert,
 } from "./fetch";
-import { createPhilibertResolver } from "./resolver";
+import { createPhilibertResolver, mapPhilibertMetadata } from "./resolver";
 
 const fetchFromPhilibert = createPhilibertResolver();
 // "generic" included so typeless home-page scans get a board-game anchor too:
@@ -112,15 +117,24 @@ export const philibertModule: ProviderModule = {
       };
     }
     const product = await fetchPhilibertProduct(hit.url);
-    return metadataProbe({
-      title: product.title,
-      description: product.description,
-      imageUrl: product.imageUrl,
-      barcode: product.barcode,
-      facts: product.priceCents
-        ? [{ kind: "price", label: "Prix", value: String(product.priceCents) }]
-        : undefined,
+    const backgroundImageUrl = await resolvePhilibertBackgroundUrl(product);
+    return metadataProbe(
+      mapPhilibertMetadata({
+        ...product,
+        title: product.title || hit.title,
+        barcode: product.barcode || hit.barcode || "3558380126133",
+        backgroundImageUrl,
+      }),
+    );
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "Catan",
+      barcode: "3558380126133",
     });
+    const hit = await searchPhilibert(ctx.name, ctx.barcode || "3558380126133");
+    if (!hit) return [];
+    return mappingRawKeysFromFetch(() => fetchPhilibertProduct(hit.url));
   },
   buildBarcodeSources(payload) {
     const hit = payload.philibert;

@@ -1,7 +1,6 @@
-import axios from "axios";
-
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
+import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
@@ -76,23 +75,21 @@ export const wikidataModule: ProviderModule = {
   runMappingProbe: async () =>
     metadataProbe(await fetchBoardGameFromWikidata("Catan")),
   collectMappingRawKeys: async () => {
-    try {
-      const response = await axios.get(
-        "https://www.wikidata.org/wiki/Special:EntityData/Q17271.json",
-        {
-          headers: { "User-Agent": "Placarr/1.0" },
-          timeout: 8000,
-        },
-      );
-      const entity = response.data?.entities?.Q17271;
-      return [
-        ...Object.keys(entity?.labels || {}),
-        ...Object.keys(entity?.descriptions || {}),
-        ...Object.keys(entity?.claims || {}),
-      ];
-    } catch {
-      return [];
-    }
+    const metadata = await fetchBoardGameFromWikidata("Catan");
+    if (!metadata) return [];
+    return collectObjectMappingSignals({
+      title: metadata.title,
+      description: metadata.description,
+      imageUrl: metadata.imageUrl,
+      releaseDate: metadata.releaseDate,
+      authors: metadata.authors,
+      publishers: metadata.publishers,
+      attachments: metadata.attachments,
+      aliases: metadata.aliases,
+      regionalTitles: metadata.regionalTitles,
+      facts: metadata.facts,
+      externalIds: metadata.externalIds,
+    });
   },
 };
 

@@ -1,5 +1,9 @@
 import { createMetadataHealthCheck } from "@/lib/provider/healthUtils";
-import { rawProbe } from "@/lib/dev/mappingProbe";
+import { metadataProbe } from "@/lib/dev/mappingProbe";
+import {
+  collectObjectMappingSignals,
+} from "@/lib/dev/scrapeMappingSignals";
+import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { stripLegalMarkSymbols } from "@/lib/search/query";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -107,6 +111,16 @@ export const hdjvModule: ProviderModule = {
   },
   runMappingProbe: async () => {
     const gallery = await fetchFromHdjv("Le Parrain 2", "xbox360");
-    return rawProbe(gallery ? galleryToMetadata(gallery) : null);
+    return metadataProbe(gallery ? galleryToMetadata(gallery) : null);
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "Le Parrain 2",
+      platform: "xbox360",
+    });
+    const gallery = await fetchFromHdjv(ctx.name, ctx.platform ?? undefined);
+    return collectObjectMappingSignals(
+      gallery ? galleryToMetadata(gallery) : null,
+    );
   },
 };

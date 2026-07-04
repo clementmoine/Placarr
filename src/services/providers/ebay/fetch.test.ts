@@ -4,8 +4,9 @@ vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
 import axios from "axios";
 
 import { fetchFromEbayCatalog } from "./catalog";
-import { fetchFromEbay, fetchPricesFromEbay, pingEbay } from "./fetch";
+import { fetchFromEbay, fetchEbayProductsByQuery, fetchPricesFromEbay, pingEbay } from "./fetch";
 import { resetEbayTokenCache } from "./oauth";
+import { resetEbayResponseCacheForTests } from "./cache";
 
 const mockedGet = vi.mocked(axios.get);
 const mockedPost = vi.mocked(axios.post);
@@ -68,6 +69,7 @@ beforeEach(() => {
   mockedGet.mockReset();
   mockedPost.mockReset();
   resetEbayTokenCache();
+  resetEbayResponseCacheForTests();
   process.env.EBAY_CLIENT_ID = "id";
   process.env.EBAY_CLIENT_SECRET = "secret";
 });
@@ -109,6 +111,25 @@ describe("fetchFromEbay", () => {
         catalog: false,
       },
     ]);
+  });
+
+  it("reuses GTIN responses within the in-memory cache window", async () => {
+    mockCatalogThenBrowse(
+      [
+        {
+          epid: "999",
+          title: "1984",
+          image: { imageUrl: "https://i.ebayimg.com/catalog.jpg" },
+        },
+      ],
+      [itemSummary("1984 - Occasion")],
+    );
+
+    await fetchFromEbay("9782070368228");
+    await fetchFromEbay("9782070368228");
+
+    expect(mockedGet).toHaveBeenCalledTimes(2);
+    expect(mockedPost).toHaveBeenCalledTimes(2);
   });
 
   it("falls back to Browse ePID when GTIN listings are empty", async () => {

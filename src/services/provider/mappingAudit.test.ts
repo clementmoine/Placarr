@@ -98,25 +98,10 @@ describe("provider mapping probes", () => {
     );
   });
 
-  it("registers raw-key collectors for metadata providers with live APIs", () => {
-    const collectorIds = PROVIDER_MODULES.flatMap((mdl) =>
-      mdl.collectMappingRawKeys ? [mdl.info.id] : [],
-    );
-    expect(collectorIds.sort()).toEqual(
-      [
-        "deezer",
-        "discogs",
-        "boardgamegeek",
-        "googlebooks",
-        "musicbrainz",
-        "omdb",
-        "openlibrary",
-        "rawg",
-        "scandex",
-        "steam",
-        "tmdb",
-        "wikidata",
-      ].sort(),
-    );
+  it("registers raw-key collectors for every provider module", () => {
+    const missing = PROVIDER_MODULES.filter(
+      (mdl) => !mdl.collectMappingRawKeys,
+    ).map((mdl) => mdl.info.id);
+    expect(missing).toEqual([]);
   });
 });

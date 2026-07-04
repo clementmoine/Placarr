@@ -1,4 +1,8 @@
 import { rawProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
 import type { ProviderModule } from "@/types/providerModule";
@@ -78,6 +82,19 @@ export const coverprojectModule: ProviderModule = {
     const url = await fetchCoverFromCoverProject(title, "Nintendo Wii");
     if (!url) return null;
     return rawProbe({ url, title });
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "The Legend of Zelda: Skyward Sword",
+      platform: "Nintendo Wii",
+    });
+    return mappingRawKeysFromFetch(async () => {
+      const url = await fetchCoverFromCoverProject(
+        ctx.name,
+        ctx.platform || "Nintendo Wii",
+      );
+      return url ? { title: ctx.name, imageUrl: url } : null;
+    });
   },
 };
 

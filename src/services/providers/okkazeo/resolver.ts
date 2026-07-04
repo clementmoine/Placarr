@@ -179,6 +179,7 @@ function mapOkkazeoMetadata(game: OkkazeoGame): MetadataResult {
     regionalTitles: game.title
       ? [{ region: OKKAZEO_REGION, text: game.title }]
       : undefined,
+    aliases: game.listingTitles?.length ? game.listingTitles : undefined,
     attachments: buildOkkazeoAttachments(game),
     facts: buildOkkazeoFacts(game),
   };

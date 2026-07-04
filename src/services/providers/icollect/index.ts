@@ -4,6 +4,10 @@ import {
   probeErrorResult,
   rawProbe,
 } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/lib/provider/priceOffers";
 import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
@@ -268,6 +272,15 @@ export const icollectModule: ProviderModule = {
     if (result?.mappedKeys.length) return result;
     return probeErrorResult(
       `iCollect Everything: no data for known samples (${FALLBACK_BARCODES.join(", ")})`,
+    );
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: FALLBACK_BARCODES[0],
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchICollectMetadataByBarcode(ctx.barcode || FALLBACK_BARCODES[0]),
     );
   },
   buildBarcodeSources(payload: BarcodeLookupPayload) {

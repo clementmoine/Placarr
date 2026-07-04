@@ -1,4 +1,8 @@
 import { metadataProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
@@ -15,7 +19,7 @@ import {
   fetchOkkazeoGame,
   searchOkkazeo,
 } from "./fetch";
-import { createOkkazeoResolver } from "./resolver";
+import { createOkkazeoResolver, mapOkkazeoMetadata } from "./resolver";
 
 const fetchFromOkkazeo = createOkkazeoResolver();
 // "generic" included so typeless home-page scans get this board-game anchor too
@@ -110,15 +114,21 @@ export const okkazeoModule: ProviderModule = {
       };
     }
     const game = await fetchOkkazeoGame(hit.url);
-    return metadataProbe({
-      title: game.title,
-      description: game.description,
-      imageUrl: game.imageUrl,
-      barcode: game.barcode,
-      facts: game.priceCents
-        ? [{ kind: "price", label: "Prix", value: String(game.priceCents) }]
-        : undefined,
+    return metadataProbe(
+      mapOkkazeoMetadata({
+        ...game,
+        barcode: game.barcode || "3421272109517",
+      }),
+    );
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "Mille Sabords",
+      barcode: "3421272109517",
     });
+    const hit = await searchOkkazeo(ctx.name, ctx.barcode || "3421272109517");
+    if (!hit) return [];
+    return mappingRawKeysFromFetch(() => fetchOkkazeoGame(hit.url));
   },
   buildBarcodeSources(payload) {
     const hit = payload.okkazeo;

@@ -5,6 +5,10 @@ import {
   rawProbe,
   type BarcodeMetadataProbeSample,
 } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/lib/provider/priceOffers";
 
 import {
@@ -252,6 +256,22 @@ export const pricechartingModule: ProviderModule = {
       rawProbe,
       "PriceCharting",
     ),
+  collectMappingRawKeys: async (context) => {
+    const sample = METADATA_PROBE_SAMPLES[0];
+    const ctx = probeContextOrDefault(context, {
+      name: sample.fallbackName || "",
+      barcode: sample.barcode,
+      platform: sample.fallbackPlatform,
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchMetadataFromPriceCharting(
+        ctx.barcode || sample.barcode,
+        ctx.name || sample.fallbackName,
+        ctx.platform || sample.fallbackPlatform,
+        sample.isPal,
+      ),
+    );
+  },
   buildBarcodeSources(payload: BarcodeLookupPayload) {
     const pc = payload.pc;
     if (!pc?.title) return [];

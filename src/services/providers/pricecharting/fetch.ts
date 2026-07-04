@@ -7,7 +7,11 @@ import type {
 import { parsePriceChartingBarcode } from "@/lib/barcode/lookup/priceChartingParse";
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
-import { getPriceChartingPlatformSlugs } from "@/lib/games/platforms";
+import {
+  getPriceChartingPlatformSlugs,
+  priceChartingNeoGeoVariantMatchesShelf,
+  resolvePriceChartingPlatformSlug,
+} from "@/lib/games/platforms";
 import { franchiseSequelNumbersConflict } from "@/lib/metadata/titleMatching";
 import { slugify } from "@/lib/routing/slugs";
 import {
@@ -146,8 +150,18 @@ function buildTitleSlugCandidates(title: string): string[] {
   );
 }
 
-function getPlatformSlug(platform?: string, isPal?: boolean): string | null {
+function getPlatformSlug(
+  platform?: string,
+  isPal?: boolean,
+  barcode?: string,
+): string | null {
   if (!platform) return null;
+  const resolved = resolvePriceChartingPlatformSlug(platform, {
+    barcode,
+    isPal,
+  });
+  if (resolved) return resolved;
+
   const platformKey = detectPlatformKey(platform);
   const slugs = getPriceChartingPlatformSlugs(platformKey);
   if (!slugs) return null;
@@ -159,6 +173,11 @@ export function priceChartingPlatformMatchesTarget(
   fallbackPlatform?: string,
 ): boolean {
   if (!fallbackPlatform) return true;
+  if (
+    !priceChartingNeoGeoVariantMatchesShelf(parsedPlatform, fallbackPlatform)
+  ) {
+    return false;
+  }
   const targetKey = detectPlatformKey(fallbackPlatform);
   if (!targetKey) return true;
   const parsedKey = detectPlatformKey(parsedPlatform || "");
@@ -206,8 +225,9 @@ function buildDirectDetailUrls(
   title: string,
   fallbackPlatform?: string,
   isPal?: boolean,
+  barcode?: string,
 ): string[] {
-  const platformSlug = getPlatformSlug(fallbackPlatform, isPal);
+  const platformSlug = getPlatformSlug(fallbackPlatform, isPal, barcode);
   if (!platformSlug) return [];
   return buildTitleSlugCandidates(title).map(
     (titleSlug) =>
@@ -222,9 +242,14 @@ function isSearchUrl(url: string): boolean {
 function isDetailUrlForPlatform(
   url: string,
   fallbackPlatform?: string,
+  barcode?: string,
 ): boolean {
   if (!url.includes("/game/")) return false;
-  const platformSlug = getPlatformSlug(fallbackPlatform, url.includes("/pal-"));
+  const platformSlug = getPlatformSlug(
+    fallbackPlatform,
+    url.includes("/pal-"),
+    barcode,
+  );
   return !platformSlug || url.includes(`/game/${platformSlug}/`);
 }
 
@@ -322,6 +347,13 @@ function pickBestRow(
     );
     if (platformRows.length === 0) return null;
     matchingRows = platformRows;
+  }
+
+  if (fallbackPlatform) {
+    matchingRows = matchingRows.filter((row) =>
+      priceChartingNeoGeoVariantMatchesShelf(row.platform, fallbackPlatform),
+    );
+    if (matchingRows.length === 0) return null;
   }
 
   if (isPal) {
@@ -449,6 +481,7 @@ async function fetchDirectDetailHtmlFromNameFallback(
   headers: Record<string, string>,
   fallbackPlatform?: string,
   isPal?: boolean,
+  barcode?: string,
 ): Promise<string | null> {
   const seen = new Set<string>();
   for (const fallbackName of fallbackNames) {
@@ -456,6 +489,7 @@ async function fetchDirectDetailHtmlFromNameFallback(
       fallbackName,
       fallbackPlatform,
       isPal,
+      barcode,
     )) {
       if (seen.has(directUrl)) continue;
       seen.add(directUrl);
@@ -465,7 +499,7 @@ async function fetchDirectDetailHtmlFromNameFallback(
         const finalUrl = detailRes.request.res.responseUrl || directUrl;
         if (
           !isSearchUrl(finalUrl) &&
-          isDetailUrlForPlatform(finalUrl, fallbackPlatform)
+          isDetailUrlForPlatform(finalUrl, fallbackPlatform, barcode)
         ) {
           return detailRes.data;
         }
@@ -520,12 +554,14 @@ async function fetchDetailHtmlFromNameFallback(
   fallbackPlatform?: string,
   isPal?: boolean,
   isClassics?: boolean,
+  barcode?: string,
 ): Promise<string | null> {
   const directHtml = await fetchDirectDetailHtmlFromNameFallback(
     fallbackNames,
     headers,
     fallbackPlatform,
     isPal,
+    barcode,
   );
   if (directHtml) return directHtml;
 
@@ -809,6 +845,7 @@ export async function fetchPricesFromPriceCharting(
         fallbackPlatform,
         isPal,
         isClassics,
+        cleanedBarcode,
       );
       if (!fallbackHtml) return null;
       const priceFallbackName = fallbackNames[0];
@@ -863,6 +900,7 @@ export async function fetchPricesFromPriceCharting(
           fallbackPlatform,
           isPal,
           isClassics,
+          cleanedBarcode,
         );
         if (!fallbackHtml) return null;
         html = fallbackHtml;
@@ -893,6 +931,7 @@ export async function fetchPricesFromPriceCharting(
         fallbackPlatform,
         isPal,
         isClassics,
+        cleanedBarcode,
       );
       if (!fallbackHtml) return null;
       html = fallbackHtml;
@@ -956,6 +995,7 @@ export async function fetchMetadataFromPriceCharting(
           fallbackPlatform,
           isPal,
           isClassics,
+          cleanedBarcode,
         );
         if (!fallbackHtml) return null;
         html = fallbackHtml;
@@ -988,6 +1028,7 @@ export async function fetchMetadataFromPriceCharting(
         fallbackPlatform,
         isPal,
         isClassics,
+        cleanedBarcode,
       );
       if (!fallbackHtml) return null;
       html = fallbackHtml;

@@ -529,7 +529,9 @@ export async function fetchGeedieGallery(
   platform?: string,
   barcode?: string | null,
 ): Promise<GeedieGalleryResult | null> {
-  const queries = uniqueQueries(queryOrQueries);
+  const cleanedBarcode = (barcode || "").replace(/\D/g, "");
+  const hasBarcode = cleanedBarcode.length >= 12;
+  const queries = uniqueQueries(queryOrQueries).slice(0, hasBarcode ? 1 : 3);
   if (queries.length === 0) return null;
 
   const alignmentNames = buildGeedieAlignmentNames(
@@ -566,6 +568,18 @@ export async function fetchGeedieGallery(
       role: inferGeedieAttachmentRole(hit, product),
       barcode: product.barcode ?? null,
     });
+  }
+
+  if (items.length > 0) {
+    const primary = items[0];
+    return {
+      title: primary.title,
+      productUrl: primary.productUrl,
+      coverUrl: primary.coverUrl,
+      barcode: primary.barcode ?? undefined,
+      productId: primary.productUrl.split("/").pop(),
+      items,
+    };
   }
 
   const searchHits: GeedieSearchHit[] = [];

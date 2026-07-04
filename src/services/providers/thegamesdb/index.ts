@@ -1,5 +1,9 @@
 import { createKeyHealthCheck } from "@/lib/provider/healthUtils";
 import { metadataProbe, probeErrorResult } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -109,5 +113,14 @@ export const thegamesdbModule: ProviderModule = {
       "PlayStation 2",
     );
     return metadataProbe(metadata);
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "GoldenEye: Au Service Du Mal",
+      platform: "PlayStation 2",
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromTheGamesDB(ctx.name, ctx.platform ?? undefined),
+    );
   },
 };

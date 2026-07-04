@@ -5,6 +5,10 @@ import type {
 } from "@/types/providerModule";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
 import {
   createMetadataHealthCheck,
@@ -95,7 +99,10 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  for (const query of [ctx.cleanedBarcode, ...ctx.fallbackNames]) {
+  const priceQueries = Array.from(
+    new Set([ctx.cleanedBarcode, ctx.primaryName].filter(Boolean)),
+  ).slice(0, 2);
+  for (const query of priceQueries) {
     const result = await fetchPricesFromEbay(query, expectedNames);
     if (!result) continue;
     const extra = {
@@ -214,10 +221,22 @@ export const ebayModule: ProviderModule = {
         };
 
         if (normalizedBarcode) {
-          addProducts(await fetchFromEbay(normalizedBarcode, expectedNames));
-        }
-        for (const query of queries) {
-          addProducts(await fetchEbayProductsByQuery(query, expectedNames));
+          const gtinProducts = await fetchFromEbay(
+            normalizedBarcode,
+            expectedNames,
+          );
+          addProducts(gtinProducts);
+          if (gtinProducts.length === 0 && merged.length === 0) {
+            for (const query of queries.slice(0, 1)) {
+              addProducts(
+                await fetchEbayProductsByQuery(query, expectedNames),
+              );
+            }
+          }
+        } else {
+          for (const query of queries) {
+            addProducts(await fetchEbayProductsByQuery(query, expectedNames));
+          }
         }
 
         const products = prepareEbayProductsForGameShelf(
@@ -258,6 +277,16 @@ export const ebayModule: ProviderModule = {
       }
       return probeErrorResult(message);
     }
+  },
+  collectMappingRawKeys: async (context) => {
+    if (!getEbayEnv()) return [];
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: PROBE_BARCODE,
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromEbay(ctx.barcode || PROBE_BARCODE),
+    );
   },
   healthCheck: getEbayEnv()
     ? createMetadataHealthCheck("ebay", "eBay", async () => {

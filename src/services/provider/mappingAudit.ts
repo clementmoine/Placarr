@@ -265,20 +265,23 @@ async function runProbe(
 ): Promise<ProbeExecution> {
   const providerModule = getProviderModule(providerId);
   const hasAdapter = !!getMetadataProviderAdapter(providerId);
-  if (providerModule?.runMappingProbe) {
-    const customProbe = await providerModule.runMappingProbe();
-    if (hasAdapter) {
-      const adapterExecution = await runMetadataAdapterProbe(
-        providerId,
-        contextOverride,
-      );
-      return {
-        probe: customProbe ?? adapterExecution.probe,
-        metadata: adapterExecution.metadata,
-      };
+
+  // When a metadata adapter exists, its mapped output is the source of truth.
+  // Custom runMappingProbe stubs often under-map (price-only, rawProbe, etc.)
+  // and would falsely inflate unusedKeys vs collectMappingRawKeys.
+  if (hasAdapter) {
+    const adapterExecution = await runMetadataAdapterProbe(
+      providerId,
+      contextOverride,
+    );
+    if (adapterExecution.probe) {
+      return adapterExecution;
     }
+  }
+
+  if (providerModule?.runMappingProbe) {
     return {
-      probe: customProbe,
+      probe: await providerModule.runMappingProbe(),
       metadata: null,
     };
   }

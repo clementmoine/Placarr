@@ -24,6 +24,8 @@ export type MetadataAdapterContext = {
   externalIds?: Record<string, string | null>;
   fallbackNames?: string[];
   isBackground?: boolean;
+  /** Interactive lookups (preview API) jump ahead of background enrichment. */
+  queuePriority?: "high" | "normal";
   signal?: AbortSignal;
 };
 

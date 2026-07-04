@@ -6,7 +6,10 @@ import { parseScreenScraperMediaUrl } from "./mediaUrl";
 
 const MEMORY_GAME_TTL_MS = 24 * 60 * 60 * 1000;
 const MEMORY_SEARCH_TTL_MS = 6 * 60 * 60 * 1000;
+/** Empty search results are cached briefly so retry loops don't hammer the API. */
+const MEMORY_SEARCH_MISS_TTL_MS = 15 * 60 * 1000;
 const MEMORY_LOOKUP_TTL_MS = 45 * 60 * 1000;
+const MEMORY_LOOKUP_MISS_TTL_MS = 15 * 60 * 1000;
 const PERSISTENT_GAME_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const PERSISTENT_LOOKUP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const QUOTA_COOLDOWN_MS = 20 * 60 * 1000;
@@ -16,6 +19,7 @@ type TimedEntry<T> = { expires: number; value: T };
 const gameByIdMemory = new Map<number, TimedEntry<SSGame>>();
 const searchMemory = new Map<string, TimedEntry<SSGame[]>>();
 const lookupMemory = new Map<string, TimedEntry<MetadataResult>>();
+const lookupMissMemory = new Map<string, TimedEntry<true>>();
 const inFlightLookups = new Map<string, Promise<MetadataResult | null>>();
 
 let quotaBlockedUntil = 0;
@@ -38,12 +42,15 @@ export function buildScreenScraperLookupKey(
   barcode?: string | null,
   platform?: string | null,
 ): string {
-  return [
-    SCREENSCRAPER_LOOKUP_CACHE_VERSION,
-    normalizeLookupPart(barcode),
-    normalizeLookupPart(name),
-    normalizeLookupPart(platform),
-  ].join("|");
+  const normalizedBarcode = normalizeLookupPart(barcode);
+  const parts = [SCREENSCRAPER_LOOKUP_CACHE_VERSION, normalizedBarcode];
+  // Same barcode resolves to the same game regardless of title variant — key
+  // without the name so fallback / recheck / lookup-query passes share one cache.
+  if (!normalizedBarcode) {
+    parts.push(normalizeLookupPart(name));
+  }
+  parts.push(normalizeLookupPart(platform));
+  return parts.join("|");
 }
 
 function gameSettingKey(gameId: number): string {
@@ -156,11 +163,33 @@ export function cacheScreenScraperSearch(
   systemeid: number | undefined,
   results: SSGame[],
 ): void {
-  if (results.length === 0) return;
   searchMemory.set(searchMemoryKey(query, systemeid), {
-    expires: Date.now() + MEMORY_SEARCH_TTL_MS,
+    expires:
+      Date.now() +
+      (results.length > 0 ? MEMORY_SEARCH_TTL_MS : MEMORY_SEARCH_MISS_TTL_MS),
     value: results,
   });
+}
+
+export function isScreenScraperLookupMissCached(lookupKey: string): boolean {
+  const entry = lookupMissMemory.get(lookupKey);
+  return Boolean(entry && entry.expires > Date.now());
+}
+
+export function markScreenScraperLookupMiss(lookupKey: string): void {
+  lookupMissMemory.set(lookupKey, {
+    expires: Date.now() + MEMORY_LOOKUP_MISS_TTL_MS,
+    value: true,
+  });
+}
+
+export function resetScreenScraperCachesForTests(): void {
+  gameByIdMemory.clear();
+  searchMemory.clear();
+  lookupMemory.clear();
+  lookupMissMemory.clear();
+  inFlightLookups.clear();
+  quotaBlockedUntil = 0;
 }
 
 export function getCachedScreenScraperLookup(

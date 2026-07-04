@@ -1,5 +1,7 @@
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
+import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
+import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -74,6 +76,17 @@ export const launchboxModule: ProviderModule = {
       "PlayStation 2",
     );
     return metadataProbe(metadata);
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "GoldenEye: Rogue Agent",
+      platform: "PlayStation 2",
+    });
+    const metadata = await fetchFromLaunchBox(
+      ctx.name,
+      ctx.platform ?? undefined,
+    );
+    return collectObjectMappingSignals(metadata);
   },
 };
 

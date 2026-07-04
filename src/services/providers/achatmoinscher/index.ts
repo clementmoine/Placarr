@@ -9,6 +9,10 @@ import {
   observationsFromMetadataResult,
 } from "@/lib/metadata/observations";
 import { listProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataObservation,
@@ -256,6 +260,15 @@ export const achatmoinscherModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     listProbe(await fetchFromAchatMoinsCher("9782070368228")),
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: "9782070368228",
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromAchatMoinsCher(ctx.barcode || "9782070368228"),
+    );
+  },
   buildBarcodeSources(payload, ctx) {
     return marketplaceContributions("AchatMoinsCher", payload.amc, ctx, [
       "games",

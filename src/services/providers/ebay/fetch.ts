@@ -3,6 +3,14 @@ import axios from "axios";
 import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
 
 import { fetchFromEbayCatalog } from "./catalog";
+import {
+  cacheEbayGtinProducts,
+  cacheEbaySearchProducts,
+  cacheEbayPrices,
+  getCachedEbayGtinProducts,
+  getCachedEbaySearchProducts,
+  getCachedEbayPrices,
+} from "./cache";
 import { bestEbayCoverUrl } from "./coverUrl";
 import {
   EBAY_BROWSE_SEARCH_URL,
@@ -16,6 +24,7 @@ import type { EbayPrices, EbayProduct } from "./types";
 
 export type { EbayPrices, EbayProduct } from "./types";
 export { resetEbayTokenCache } from "./oauth";
+export { resetEbayResponseCacheForTests } from "./cache";
 
 type EbayItemSummary = {
   title?: string | null;
@@ -176,9 +185,20 @@ export async function fetchFromEbay(
   barcode: string,
   expectedNames: string[] = [],
 ): Promise<EbayProduct[]> {
-  console.log(`[eBay] Querying GTIN: ${barcode.replace(/[^\d]/g, "").trim()}`);
+  const cleaned = barcode.replace(/[^\d]/g, "").trim();
+  if (!cleaned) return [];
+
+  const cached = getCachedEbayGtinProducts(cleaned);
+  if (cached) {
+    console.info(`[eBay] GTIN cache hit for ${cleaned}`);
+    return cached;
+  }
+
+  console.log(`[eBay] Querying GTIN: ${cleaned}`);
   try {
-    return await fetchEbayProductsByGtin(barcode, expectedNames);
+    const products = await fetchEbayProductsByGtin(barcode, expectedNames);
+    cacheEbayGtinProducts(cleaned, products);
+    return products;
   } catch (error: unknown) {
     console.error(
       `[eBay] Error querying GTIN ${barcode}:`,
@@ -198,10 +218,18 @@ export async function fetchEbayProductsByQuery(
   const credentials = getEbayEnv();
   if (!credentials) return [];
 
+  const cached = getCachedEbaySearchProducts(cleaned);
+  if (cached) {
+    console.info(`[eBay] Search cache hit for "${cleaned}"`);
+    return cached;
+  }
+
   console.log(`[eBay] Querying search: ${cleaned}`);
   try {
     const items = await searchEbayBrowse({ q: cleaned }, credentials);
-    return listingsToProducts(items, expectedNames);
+    const products = listingsToProducts(items, expectedNames);
+    cacheEbaySearchProducts(cleaned, products);
+    return products;
   } catch (error: unknown) {
     console.error(
       `[eBay] Error querying ${cleaned}:`,
@@ -220,6 +248,12 @@ export async function fetchPricesFromEbay(
   if (!cleaned) return null;
   const credentials = getEbayEnv();
   if (!credentials) return null;
+
+  const cached = getCachedEbayPrices(cleaned);
+  if (cached !== undefined) {
+    console.info(`[eBay] Price cache hit for "${cleaned}"`);
+    return cached;
+  }
 
   try {
     const isBarcode = isBarcodeLike(cleaned);
@@ -248,15 +282,20 @@ export async function fetchPricesFromEbay(
 
     const priceNew = median(newPrices);
     const priceUsed = median(usedPrices);
-    if (priceNew === null && priceUsed === null) return null;
+    if (priceNew === null && priceUsed === null) {
+      cacheEbayPrices(cleaned, null);
+      return null;
+    }
 
-    return {
+    const result = {
       priceNew: priceNew ?? undefined,
       priceUsed: priceUsed ?? undefined,
       productName: firstTitle || undefined,
       sourceUrl: firstHref || undefined,
       offerCount,
     };
+    cacheEbayPrices(cleaned, result);
+    return result;
   } catch (error: unknown) {
     console.error(
       `[eBay Prices] Error querying ${cleaned}:`,

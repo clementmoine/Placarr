@@ -1,4 +1,9 @@
 import { metadataProbe } from "@/lib/dev/mappingProbe";
+import {
+  collectObjectMappingSignals,
+  mergeMappingSignalSets,
+} from "@/lib/dev/scrapeMappingSignals";
+import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
@@ -132,6 +137,12 @@ export function createScrapeCatalogModule<
         context: { name: sample.name, barcode: sample.barcode },
       },
       runMappingProbe: async () => {
+        const metadata = await resolver({
+          name: sample.name,
+          barcode: sample.barcode,
+        });
+        if (metadata) return metadataProbe(metadata);
+
         const product = await deps.searchProduct(
           config,
           sample.name,
@@ -164,6 +175,33 @@ export function createScrapeCatalogModule<
               ]
             : undefined,
         });
+      },
+      collectMappingRawKeys: async (context) => {
+        const ctx = probeContextOrDefault(context, {
+          name: sample.name,
+          barcode: sample.barcode,
+        });
+        const product = await deps.searchProduct(
+          config,
+          ctx.name,
+          ctx.barcode || sample.barcode,
+        );
+        let rawSearch: unknown = product;
+        try {
+          const barcodeHit = await deps.fetchBarcodeProduct(
+            config,
+            ctx.barcode || sample.barcode,
+          );
+          if (barcodeHit && typeof barcodeHit === "object") {
+            rawSearch = barcodeHit;
+          }
+        } catch {
+          // Search payload alone is enough for the audit.
+        }
+        return mergeMappingSignalSets(
+          collectObjectMappingSignals(product),
+          collectObjectMappingSignals(rawSearch),
+        );
       },
     };
   };

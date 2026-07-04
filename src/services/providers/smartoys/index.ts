@@ -1,6 +1,10 @@
 import type { ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { rawProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/lib/provider/priceOffers";
 
 import { fetchPricesFromSmartoys } from "./fetch";
@@ -59,5 +63,14 @@ export const smartoysModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     rawProbe(await fetchPricesFromSmartoys("0045496365226")),
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: "0045496365226",
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchPricesFromSmartoys(ctx.barcode || "0045496365226"),
+    );
+  },
   refreshBarcodePriceOffers: refreshSmartoysOffers,
 };

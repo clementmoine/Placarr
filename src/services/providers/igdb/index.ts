@@ -3,6 +3,10 @@ import {
   createUnconfiguredHealthCheck,
 } from "@/lib/provider/healthUtils";
 import { fetchFromIGDB, pingIGDB } from "./fetch";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { getIGDBDatabaseSuggestions } from "./suggestions";
 import { resolveWithLookupQueries } from "@/services/metadata/searchUtils";
 
@@ -91,5 +95,9 @@ export const igdbModule: ProviderModule = {
   mappingProbe: {
     sampleInput: "Hades",
     context: { name: "Hades" },
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, { name: "Hades" });
+    return mappingRawKeysFromFetch(() => fetchFromIGDB(ctx.name));
   },
 };

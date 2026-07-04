@@ -1,6 +1,7 @@
 import levenshtein from "fast-levenshtein";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
+import { mergeAbortSignals } from "@/lib/http/abort";
 
 interface HLTBInitResponse {
   token?: string;
@@ -347,11 +348,16 @@ async function fetchJson<T>(
 async function fetchJsonWithTimeout<T>(
   url: string,
   init: RequestInit,
+  signal?: AbortSignal,
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), HLTB_REQUEST_TIMEOUT_MS);
   try {
-    return await fetchJson<T>(url, init, controller.signal);
+    return await fetchJson<T>(
+      url,
+      init,
+      mergeAbortSignals(signal, controller.signal) ?? controller.signal,
+    );
   } finally {
     clearTimeout(timeout);
   }
@@ -360,13 +366,14 @@ async function fetchJsonWithTimeout<T>(
 async function fetchTextWithTimeout(
   url: string,
   init: RequestInit,
+  signal?: AbortSignal,
 ): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), HLTB_REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch(url, {
       ...init,
-      signal: controller.signal,
+      signal: mergeAbortSignals(signal, controller.signal) ?? controller.signal,
     });
     if (!response.ok) return null;
     return await response.text();
@@ -378,6 +385,7 @@ async function fetchTextWithTimeout(
 async function searchHowLongToBeat(
   query: string,
   platform?: string | null,
+  signal?: AbortSignal,
 ): Promise<HLTBSearchGame[]> {
   const baseHeaders = {
     "User-Agent": HLTB_USER_AGENT,
@@ -390,6 +398,7 @@ async function searchHowLongToBeat(
     {
       headers: baseHeaders,
     },
+    signal,
   );
   if (!init.token) return [];
 
@@ -408,6 +417,7 @@ async function searchHowLongToBeat(
         buildSearchPayload(query, normalizePlatformForHLTB(platform), init),
       ),
     },
+    signal,
   );
 
   return response.data || [];
@@ -429,14 +439,19 @@ function extractDetailData(html: string): HLTBDetailData | null {
 
 async function fetchHowLongToBeatDetail(
   gameId: number,
+  signal?: AbortSignal,
 ): Promise<HLTBDetailData | null> {
-  const html = await fetchTextWithTimeout(`${HLTB_BASE_URL}/game/${gameId}`, {
-    headers: {
-      "User-Agent": HLTB_USER_AGENT,
-      Accept: "text/html",
-      Referer: `${HLTB_BASE_URL}/`,
+  const html = await fetchTextWithTimeout(
+    `${HLTB_BASE_URL}/game/${gameId}`,
+    {
+      headers: {
+        "User-Agent": HLTB_USER_AGENT,
+        Accept: "text/html",
+        Referer: `${HLTB_BASE_URL}/`,
+      },
     },
-  });
+    signal,
+  );
   if (!html) return null;
   return extractDetailData(html);
 }
@@ -460,14 +475,15 @@ function pickPlatformData(
 export async function fetchFromHowLongToBeat(
   name: string,
   platform?: string | null,
+  signal?: AbortSignal,
 ): Promise<MetadataResult | null> {
   const query = name.trim();
   if (!query) return null;
 
   try {
-    let results = await searchHowLongToBeat(query, platform);
+    let results = await searchHowLongToBeat(query, platform, signal);
     if (results.length === 0 && normalizePlatformForHLTB(platform)) {
-      results = await searchHowLongToBeat(query, null);
+      results = await searchHowLongToBeat(query, null, signal);
     }
     if (results.length === 0) return null;
 
@@ -477,7 +493,7 @@ export async function fetchFromHowLongToBeat(
     let detail: HLTBDetailData | null = null;
     if (best.game_id > 0) {
       try {
-        detail = await fetchHowLongToBeatDetail(best.game_id);
+        detail = await fetchHowLongToBeatDetail(best.game_id, signal);
       } catch {
         // Detail page is optional — search results already carry playtime data.
       }

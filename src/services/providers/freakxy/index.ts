@@ -1,5 +1,9 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import { probeBarcodesWithFallback, listProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { marketplaceContributions } from "@/lib/barcode/lookup/sourceContribution";
 
 import { fetchFromFreakxy } from "./fetch";
@@ -54,6 +58,15 @@ export const freakxyModule: ProviderModule = {
       "Freakxy",
       { retryAttempts: 2, unreachableStatus: "blocked" },
     ),
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: FALLBACK_QUERIES[0],
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromFreakxy(ctx.barcode || FALLBACK_QUERIES[0]),
+    );
+  },
   buildBarcodeSources(payload, ctx) {
     return marketplaceContributions("Freakxy", payload.freakxy, ctx, ["games"]);
   },

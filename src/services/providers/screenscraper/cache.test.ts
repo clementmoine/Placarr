@@ -25,7 +25,9 @@ import {
   getCachedScreenScraperLookup,
   getCachedScreenScraperSearch,
   getScreenScraperInFlightLookup,
+  isScreenScraperLookupMissCached,
   isScreenScraperQuotaBlocked,
+  markScreenScraperLookupMiss,
   markScreenScraperQuotaHit,
   setScreenScraperInFlightLookup,
 } from "./cache";
@@ -51,12 +53,46 @@ describe("ScreenScraper cache", () => {
     );
   });
 
+  it("ignores name in lookup keys when barcode is present", () => {
+    const barcode = "5030931097140";
+    const platform = "Xbox 360";
+    expect(
+      buildScreenScraperLookupKey(
+        "Alice Retour Au Pays de la Folie",
+        barcode,
+        platform,
+      ),
+    ).toBe(
+      buildScreenScraperLookupKey(
+        "Alice: Madness Returns",
+        barcode,
+        platform,
+      ),
+    );
+  });
+
   it("stores and retrieves search results in memory", () => {
     const results = [{ id: 42, noms: [{ region: "fr", text: "Test" }] }];
     cacheScreenScraperSearch("goldeneye", 58, results);
 
     expect(getCachedScreenScraperSearch("goldeneye", 58)).toEqual(results);
     expect(getCachedScreenScraperSearch("missing", 58)).toBeNull();
+  });
+
+  it("caches empty search results briefly to avoid retry storms", () => {
+    cacheScreenScraperSearch("alice retour", 12, []);
+    expect(getCachedScreenScraperSearch("alice retour", 12)).toEqual([]);
+  });
+
+  it("caches lookup misses to dedupe failed resolutions", () => {
+    const key = buildScreenScraperLookupKey(
+      "Alice",
+      "5030931097140",
+      "Xbox 360",
+    );
+    expect(isScreenScraperLookupMissCached(key)).toBe(false);
+    markScreenScraperLookupMiss(key);
+    expect(isScreenScraperLookupMissCached(key)).toBe(true);
   });
 
   it("stores and retrieves lookup results in memory", () => {

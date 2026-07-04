@@ -52,6 +52,41 @@ function secureImageUrl(url?: string): string | undefined {
   return url.replace(/^http:/i, "https:");
 }
 
+async function resolveGoogleBooksCoverUrl(
+  imageLinks?: GoogleBooksVolumeInfo["imageLinks"],
+): Promise<string | undefined> {
+  if (!imageLinks) return undefined;
+
+  const { fetchRemoteImageBuffer } = await import("@/lib/media/remoteFetch");
+  const { isUnavailableCoverPlaceholderBuffer } = await import(
+    "@/lib/media/coverPlaceholder.server"
+  );
+
+  const candidates = [
+    imageLinks.extraLarge,
+    imageLinks.large,
+    imageLinks.medium,
+    imageLinks.small,
+    imageLinks.thumbnail,
+    imageLinks.smallThumbnail,
+  ]
+    .map(secureImageUrl)
+    .filter((url): url is string => Boolean(url));
+
+  const seen = new Set<string>();
+  for (const url of candidates) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+
+    const fetched = await fetchRemoteImageBuffer(url);
+    if (!fetched) continue;
+    if (await isUnavailableCoverPlaceholderBuffer(fetched.buffer)) continue;
+    return url;
+  }
+
+  return undefined;
+}
+
 function parsePublishedDate(value?: string): string | undefined {
   if (!value) return undefined;
   if (/^\d{4}$/.test(value)) return `${value}-01-01`;
@@ -262,10 +297,10 @@ function buildGoogleBooksFacts(
   return facts;
 }
 
-function mapVolumeToMetadata(
+async function mapVolumeToMetadata(
   volume: GoogleBooksVolume,
   barcode?: string | null,
-): MetadataResult | null {
+): Promise<MetadataResult | null> {
   const volumeInfo = volume.volumeInfo;
   if (!volumeInfo?.title?.trim()) return null;
 
@@ -273,11 +308,7 @@ function mapVolumeToMetadata(
     ? `${volumeInfo.title.trim()}: ${volumeInfo.subtitle.trim()}`
     : volumeInfo.title.trim();
 
-  const imageUrl =
-    secureImageUrl(volumeInfo.imageLinks?.large) ||
-    secureImageUrl(volumeInfo.imageLinks?.medium) ||
-    secureImageUrl(volumeInfo.imageLinks?.thumbnail) ||
-    secureImageUrl(volumeInfo.imageLinks?.smallThumbnail);
+  const imageUrl = await resolveGoogleBooksCoverUrl(volumeInfo.imageLinks);
 
   const discoveredBarcode =
     normalizeProductBarcode(barcode) ||
@@ -371,7 +402,7 @@ export function createGoogleBooksResolver() {
       const best = pickBestVolume(items, name, cleanedBarcode);
       if (!best) return null;
 
-      return mapVolumeToMetadata(best, cleanedBarcode);
+      return await mapVolumeToMetadata(best, cleanedBarcode);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
         throw new Error(

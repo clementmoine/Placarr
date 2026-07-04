@@ -1,5 +1,8 @@
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
-import { getPriceChartingPlatformSlugs } from "@/lib/games/platforms";
+import {
+  getPriceChartingPlatformSlugs,
+  resolvePriceChartingPlatformSlug,
+} from "@/lib/games/platforms";
 import { slugify } from "@/lib/routing/slugs";
 
 import type { CatalogExternalLinkContext } from "@/types/providerModule";
@@ -84,13 +87,22 @@ export function buildPriceChartingCatalogLink({
   }
 
   const platformKey = detectPlatformKey(shelfName);
-  const platform = getPriceChartingPlatformSlugs(platformKey);
-  if (!platform) {
-    return { url: searchUrl, isDirect: false };
+  const platformSlug = resolvePriceChartingPlatformSlug(shelfName, {
+    barcode,
+    isPal: looksPal({ barcode, shelfName, title: cleanTitle, aliases }),
+  });
+  if (!platformSlug) {
+    const platform = getPriceChartingPlatformSlugs(platformKey);
+    if (!platform) {
+      return { url: searchUrl, isDirect: false };
+    }
+    const isPal = looksPal({ barcode, shelfName, title: cleanTitle, aliases });
+    const fallbackSlug = isPal && platform.pal ? platform.pal : platform.default;
+    return {
+      url: `https://www.pricecharting.com/game/${fallbackSlug}/${titleSlug}`,
+      isDirect: true,
+    };
   }
-
-  const isPal = looksPal({ barcode, shelfName, title: cleanTitle, aliases });
-  const platformSlug = isPal && platform.pal ? platform.pal : platform.default;
 
   return {
     url: `https://www.pricecharting.com/game/${platformSlug}/${titleSlug}`,

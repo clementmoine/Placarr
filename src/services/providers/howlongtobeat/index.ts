@@ -1,5 +1,9 @@
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { fetchFromHowLongToBeat } from "./fetch";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -22,10 +26,11 @@ export const howlongtobeatModule: ProviderModule = {
   },
   createMetadataAdapter: () => ({
     id: "howlongtobeat",
-    async resolve({ name, platform }) {
+    async resolve({ name, platform, signal }) {
       return (await fetchFromHowLongToBeat(
         name,
         platform,
+        signal,
       )) as MetadataResult | null;
     },
   }),
@@ -63,5 +68,14 @@ export const howlongtobeatModule: ProviderModule = {
       name: "The Legend of Zelda: Skyward Sword",
       platform: "wii",
     },
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "The Legend of Zelda: Skyward Sword",
+      platform: "wii",
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromHowLongToBeat(ctx.name, ctx.platform ?? undefined),
+    );
   },
 };

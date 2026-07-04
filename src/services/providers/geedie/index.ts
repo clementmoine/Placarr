@@ -1,5 +1,9 @@
 import { createMetadataHealthCheck } from "@/lib/provider/healthUtils";
 import { rawProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -102,5 +106,14 @@ export const geedieModule: ProviderModule = {
       "ps4",
     );
     return rawProbe(product);
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "Trine 4: The Nightmare Prince",
+      platform: "ps4",
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromGeedie(ctx.name, ctx.platform ?? undefined),
+    );
   },
 };

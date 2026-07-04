@@ -10,7 +10,6 @@ import type { SourceProduct } from "@/lib/barcode/evidence/types";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { formatScore } from "@/services/metadata/searchUtils";
 import { cleanSearchQuery } from "@/services/metadata/searchUtils";
-import { resolveWithLookupQueries } from "@/services/metadata/searchUtils";
 import { createScreenScraperResolver } from "./resolver";
 import {
   buildScreenScraperBaseParams,
@@ -22,6 +21,28 @@ import { isScreenScraperQuotaBlocked } from "./cache";
 import { screenScraperAttachmentFromMediaUrl } from "./mediaUrl";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 import { metadataProbe, probeErrorResult } from "@/lib/dev/mappingProbe";
+import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
+import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
+import { getCachedScreenScraperGame } from "./cache";
+
+function screenScraperExtractableRawKeys(
+  game: Record<string, unknown> | null | undefined,
+): string[] {
+  if (!game) return [];
+  return collectObjectMappingSignals({
+    noms: game.noms,
+    synopsis: game.synopsis,
+    medias: game.medias,
+    dates: game.dates,
+    editeur: game.editeur,
+    developpeur: game.developpeur,
+    classifications: game.classifications,
+    note: game.note,
+    joueurs: game.joueurs,
+    modes: game.modes,
+    id: game.id,
+  });
+}
 
 const fetchFromScreenScraper = createScreenScraperResolver({
   cleanSearchQuery,
@@ -109,12 +130,19 @@ export const screenscraperModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "screenscraper",
-      async resolve({ name, barcode, platform, isBackground, lookupQueries }) {
-        return resolveWithLookupQueries(lookupQueries, name, (query) =>
-          fetchFromScreenScraper(query, barcode, platform, {
-            isBackground,
-          }),
-        );
+      async resolve({
+        name,
+        barcode,
+        platform,
+        isBackground,
+        lookupQueries,
+        signal,
+      }) {
+        return fetchFromScreenScraper(name, barcode, platform, {
+          isBackground,
+          signal,
+          lookupQueries,
+        });
       },
     } satisfies MetadataProviderAdapter;
   },
@@ -169,8 +197,9 @@ export const screenscraperModule: ProviderModule = {
   })(),
   testHandlers: {
     "screenscraper-barcode": {
-      label: "ScreenScraper - Barcode",
+      label: "ScreenScraper - Barcode cache",
       kind: "metadata-barcode",
+      // SS has no EAN index — only resolves when a prior title lookup pinned a gameId.
       run: (query) => fetchFromScreenScraper("", query),
     },
     "screenscraper-metadata": {
@@ -216,6 +245,24 @@ export const screenscraperModule: ProviderModule = {
       "No ScreenScraper match for probe sample — quota or title mismatch",
       "empty",
     );
+  },
+  collectMappingRawKeys: async (context) => {
+    if (isScreenScraperQuotaBlocked()) return [];
+    const ctx = probeContextOrDefault(context, {
+      name: "The Legend of Zelda: Skyward Sword",
+      platform: "wii",
+    });
+    const metadata = await fetchFromScreenScraper(
+      ctx.name,
+      ctx.barcode ?? null,
+      ctx.platform ?? undefined,
+    );
+    const gameId = metadata?.externalIds?.screenscraper;
+    const cached =
+      gameId != null ? await getCachedScreenScraperGame(Number(gameId)) : null;
+    return cached
+      ? screenScraperExtractableRawKeys(cached as Record<string, unknown>)
+      : collectObjectMappingSignals(metadata);
   },
   buildBarcodeSources(payload) {
     if (!payload.ss?.title) return [];

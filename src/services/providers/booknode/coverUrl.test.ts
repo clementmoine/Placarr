@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   booknodeCoverDownloadCandidates,
+  booknodeCoverMediaKey,
   normalizeBooknodeCoverUrl,
 } from "./coverUrl";
 
@@ -65,5 +66,15 @@ describe("booknode coverUrl", () => {
     expect(normalizeBooknodeCoverUrl(thumb)).toBe(
       "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n2-1691462.jpg",
     );
+  });
+
+  it("dedupes thumbnail and full JPEG variants of the same upload", () => {
+    const full =
+      "https://cdn1.booknode.com/book_cover/987/full/death-note-tome-1-986958.jpg";
+    const thumb =
+      "https://cdn1.booknode.com/book_cover/987/death_note_tome_1-986958-264-432.webp";
+
+    expect(booknodeCoverMediaKey(full)).toBe("987:986958");
+    expect(booknodeCoverMediaKey(thumb)).toBe("987:986958");
   });
 });

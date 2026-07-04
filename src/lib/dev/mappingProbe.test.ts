@@ -16,7 +16,7 @@ describe("mappingProbeUtils", () => {
     expect(inferMappingProbeStatus(result)).toBe("partial");
   });
 
-  it("marks rich metadata as ok", () => {
+  it("marks rich metadata as ok when nothing is left unmapped", () => {
     const result = metadataProbe({
       title: "Hades",
       description: "Roguelike",
@@ -24,6 +24,18 @@ describe("mappingProbeUtils", () => {
       attachments: [{ type: "cover", url: "https://example.com/cover.jpg" }],
     });
     expect(inferMappingProbeStatus(result)).toBe("ok");
+  });
+
+  it("marks probes with unused raw signals as partial", () => {
+    const result = mergeMappingProbeRawKeys(
+      metadataProbe({
+        title: "Dragon Ball Z",
+        attachments: [{ type: "cover", url: "https://example.com/cover.jpg" }],
+      }),
+      ["image:cover", "image:versos", "image:planches"],
+    );
+    expect(result?.unusedKeys.length).toBeGreaterThan(0);
+    expect(inferMappingProbeStatus(result)).toBe("partial");
   });
 
   it("detects unused raw keys via aliases", () => {
@@ -80,7 +92,7 @@ describe("mappingProbeUtils", () => {
     expect(merged?.unusedKeys).toContain("Videos");
   });
 
-  it("preserves the primary sample's statusHint (never degrades)", () => {
+  it("preserves the primary sample's statusHint unless raw keys remain unused", () => {
     // A sparse probe would infer "partial"…
     expect(inferMappingProbeStatus(metadataProbe({ title: "Sparse" }))).toBe(
       "partial",
@@ -94,6 +106,15 @@ describe("mappingProbeUtils", () => {
     ]);
     expect(merged?.statusHint).toBe("ok");
     expect(inferMappingProbeStatus(merged)).toBe("ok");
+
+    const mergedWithGap = mergeMappingProbeSamples([
+      {
+        probe: primary,
+        rawKeys: ["image:versos", "image:planches"],
+      },
+      { probe: metadataProbe({ title: "Other" }), rawKeys: [] },
+    ]);
+    expect(inferMappingProbeStatus(mergedWithGap)).toBe("partial");
   });
 
   it("extracts list probe examples", () => {

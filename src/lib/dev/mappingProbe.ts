@@ -221,6 +221,138 @@ const RAW_KEY_ALIASES: Record<string, string[]> = {
   infolink: ["source-url", "facts"],
   canonicalvolumelink: ["source-url", "external-link", "facts"],
   readingmodes: ["facts", "format"],
+  // Scrape/page signal keys (mapping audit)
+  fielddescription: ["description", "plot", "overview", "synopsis"],
+  fieldsynopsis: ["description"],
+  fieldoverview: ["description"],
+  fieldpublisher: ["publishers", "publisher", "facts"],
+  fieldediteur: ["publishers", "publisher", "facts"],
+  fieldauthors: ["authors", "people", "facts"],
+  fieldpeople: ["authors", "people", "facts"],
+  fieldgenres: ["genre", "facts"],
+  fieldthemes: ["category", "genre", "facts"],
+  fieldbarcode: ["barcode", "identifier", "facts"],
+  fieldean: ["barcode", "identifier", "facts"],
+  fieldisbn: ["barcode", "identifier", "facts"],
+  fieldpagecount: ["pageCount", "facts"],
+  fieldprice: ["price", "facts"],
+  fieldpricecents: ["price", "facts"],
+  fieldpricenew: ["price", "facts"],
+  fieldrating: ["rating", "facts"],
+  fieldratingvalue: ["rating", "facts"],
+  fieldratingcount: ["rating", "popularity", "facts"],
+  fieldreviewcount: ["popularity", "rating", "facts"],
+  fieldreleaseyear: ["releaseDate", "facts"],
+  fieldreleasedate: ["releaseDate", "facts"],
+  fieldplayers: ["players", "facts"],
+  fieldimageurl: ["imageUrl", "attachments", "cover"],
+  fieldcover: ["imageUrl", "attachments", "cover"],
+  imagecover: ["imageUrl", "attachments", "cover", "attachment:cover"],
+  imagecoverfull: ["imageUrl", "attachments", "cover"],
+  imagegallery: ["attachment:image", "attachment:screenshot", "attachment:background"],
+  imagecouvertures: ["attachment:cover", "imageUrl"],
+  imageversos: ["attachment:image", "image:gallery"],
+  imageverso: ["attachment:image", "image:gallery"],
+  imageplanches: ["attachment:image", "image:gallery"],
+  imageautres: ["attachment:image", "image:gallery"],
+  image4emes: ["attachment:image", "image:gallery"],
+  imagequatriemes: ["attachment:image", "image:gallery"],
+  pagecovers: ["attachment:image", "image:gallery", "attachments"],
+  manufacturer: ["publishers"],
+  producturl: ["sourceUrl", "facts", "external-link"],
+  pricecents: ["price", "facts"],
+  designers: ["authors", "people"],
+  images: ["attachments", "image:gallery"],
+  heroimageurl: ["heroImageUrl", "attachments", "background"],
+  backgroundimageurl: ["heroImageUrl", "attachments", "background"],
+  listingtitles: ["aliases"],
+  productid: ["identifier", "facts", "externalIds"],
+  themes: ["category", "genre", "facts"],
+  mechanics: ["mechanic", "facts"],
+  reviewcount: ["rating", "popularity", "facts"],
+  fieldmechanics: ["mechanic", "facts"],
+  fielddesigners: ["authors", "people", "facts"],
+  fieldpublishers: ["publishers", "facts"],
+  fieldcountry: ["origin", "facts"],
+  fieldlanguage: ["language", "facts"],
+  fieldreference: ["identifier", "facts"],
+  fieldproductid: ["identifier", "facts", "externalIds"],
+  fieldproducturl: ["sourceUrl", "facts", "external-link"],
+  fieldbackgroundimageurl: ["heroImageUrl", "attachments", "background"],
+  fieldimages: ["attachments", "image:gallery"],
+  fieldlistingtitles: ["aliases"],
+  fieldyear: ["releaseDate", "facts"],
+  fieldcategories: ["category", "genre", "facts"],
+  // ScreenScraper API (French keys)
+  noms: ["title", "aliases", "regionalTitles"],
+  synopsis: ["description"],
+  medias: ["attachments", "image:gallery"],
+  dates: ["releaseDate", "facts"],
+  editeur: ["publishers", "facts"],
+  developpeur: ["authors", "people", "publishers", "facts"],
+  joueurs: ["players", "facts"],
+  modes: ["facts"],
+  note: ["rating", "facts"],
+  classifications: ["ageRating", "facts"],
+  familles: ["facts", "category"],
+  // Intermediate fetch / scrape object keys
+  source: ["facts"],
+  items: ["attachments", "image:gallery"],
+  alternatetitle: ["aliases"],
+  alternatetitles: ["aliases"],
+  gamecode: ["identifier", "externalIds"],
+  seriesname: ["facts", "series"],
+  seriesurl: ["facts", "series"],
+  seriesposition: ["facts", "series"],
+  ratingvalue: ["rating", "facts"],
+  ratingcount: ["rating", "popularity", "facts"],
+  releaseyear: ["releaseDate", "facts"],
+  mediaurls: ["attachments", "image:gallery"],
+  coverimages: ["attachments", "image:gallery"],
+  galleryimages: ["attachments", "image:gallery"],
+  priceoffers: ["price", "facts"],
+  salelistings: ["price", "facts"],
+  isbn: ["barcode", "identifier", "facts"],
+  fieldisbn13: ["barcode", "identifier", "facts"],
+  fieldisbn10: ["barcode", "identifier", "facts"],
+  author: ["authors", "people", "facts"],
+  text: ["description", "facts"],
+  fieldauthor: ["authors", "people", "facts"],
+  fieldtext: ["description", "facts"],
+  ficheurl: ["sourceUrl", "facts", "external-link"],
+  fieldalternatetitle: ["aliases"],
+  fieldficheurl: ["sourceUrl", "facts", "external-link"],
+  fieldgamecode: ["identifier", "externalIds"],
+  fieldcoverurl: ["imageUrl", "attachments", "cover"],
+  fielditems: ["attachments", "image:gallery"],
+  // field:* mirrors from collectObjectMappingSignals
+  fieldtitle: ["title"],
+  fieldname: ["title"],
+  fieldaliases: ["aliases"],
+  fieldattachments: ["attachments"],
+  fieldfacts: ["facts"],
+  fieldexternalids: ["externalIds"],
+  fieldregionaltitles: ["regionalTitles", "title"],
+  fieldsource: ["facts"],
+  reference: ["identifier", "facts"],
+  fieldplaytime: ["duration", "playtime", "facts"],
+  fieldagerating: ["ageRating", "facts"],
+  fieldreviews: ["rating", "facts"],
+  fieldmanufacturer: ["publishers"],
+  fieldjoueurs: ["players", "facts"],
+  fieldmodes: ["facts"],
+  fieldclassifications: ["ageRating", "facts"],
+  fielddates: ["releaseDate", "facts"],
+  fielddeveloppeur: ["authors", "people", "publishers", "facts"],
+  fieldnoms: ["title", "aliases", "regionalTitles"],
+  fieldmedias: ["attachments", "image:gallery"],
+  fieldnote: ["rating", "facts"],
+  fieldid: ["externalIds", "identifier"],
+  fieldidalbum: ["externalIds", "identifier"],
+  metaogtitle: ["title", "field:title"],
+  metaogimage: ["imageUrl", "attachments", "cover"],
+  metatwittertitle: ["title", "field:title"],
+  metatwitterimage: ["imageUrl", "attachments", "cover"],
 };
 
 function normalizeKey(value: string): string {
@@ -318,6 +450,24 @@ const RAW_KEY_IGNORE = new Set(
     "allowanonlogging",
     "contentversion",
     "panelizationsummary",
+    "idalbum",
+    "largeurwrapper",
+    "nbwrapper",
+    "nbwrapperligne",
+    "metaogtitle",
+    "metatwittertitle",
+    "metaogimage",
+    "metatwitterimage",
+    "fieldlargeurwrapper",
+    "fieldnbwrapper",
+    "fieldnbwrapperligne",
+    "largeurwrapper",
+    "nbwrapper",
+    "nbwrapperligne",
+    "hiddenidalbum",
+    "hiddenlargeurwrapper",
+    "hiddennbwrapper",
+    "hiddennbwrapperligne",
   ].map(normalizeKey),
 );
 
@@ -369,6 +519,18 @@ function deriveMappedSemanticKeys(value: unknown): string[] {
         semantic.push(String(attachment.type));
       }
     }
+  }
+  if (record.heroImageUrl) {
+    semantic.push("backgroundimageurl", "heroimageurl", "background");
+  }
+  if (Array.isArray(record.aliases) && record.aliases.length > 0) {
+    semantic.push("listingtitles", "alternatetitles");
+  }
+  if (record.barcode) {
+    semantic.push("barcode", "isbn", "ean", "identifier");
+  }
+  if (record.pageCount) {
+    semantic.push("pagecount", "numberofpages");
   }
   if (Array.isArray(record.facts) && record.facts.length > 0) {
     semantic.push("facts");
@@ -693,6 +855,14 @@ export function inferMappingProbeStatus(
   result: MappingProbeResult | null,
 ): MappingProbeStatus {
   if (!result) return "empty";
+  if (result.statusHint === "blocked") return "blocked";
+  if (result.statusHint === "error") return "error";
+  if (result.statusHint === "empty") return "empty";
+
+  if (result.unusedKeys.length > 0) {
+    return "partial";
+  }
+
   if (result.statusHint) return result.statusHint;
   if (result.mappedKeys.length === 0) return "empty";
   if (
@@ -758,6 +928,7 @@ export function mergeMappingProbeSamples(
   const coverageUnion = sortUnion(
     probed.flatMap((probe) => probe.coverageKeys ?? probe.mappedKeys),
   );
+  const coverageForUnused = sortUnion([...coverageUnion, ...mappedUnion]);
 
   // Carry the primary (first non-null) probe's status/reason so the union never
   // *degrades* a provider's status — additional samples only add keys.
@@ -767,7 +938,7 @@ export function mergeMappingProbeSamples(
     rawKeys: rawUnion,
     mappedKeys: mappedUnion,
     coverageKeys: coverageUnion,
-    unusedKeys: buildUnusedKeys(rawUnion, coverageUnion),
+    unusedKeys: buildUnusedKeys(rawUnion, coverageForUnused),
     attachmentsCount: Math.max(
       ...probed.map((probe) => probe.attachmentsCount),
     ),

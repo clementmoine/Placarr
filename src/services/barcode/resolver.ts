@@ -10,6 +10,7 @@ import {
   type CompiledResult,
   type ResolvedMatch,
 } from "@/lib/barcode/evidence";
+import { AUDIO_LIKE_GAME_SUPPRESSION_PREFIX } from "@/lib/barcode/evidence/scoring";
 import { runBarcodeLookups } from "@/lib/barcode/lookup/lookups";
 import {
   collectPayloadListingNames,
@@ -213,12 +214,6 @@ async function cacheBarcodeResult(
   }
 }
 
-// Audio-like GS1 prefixes used only to break a type tie at selection time.
-// NOTE: intentionally distinct from evidence/scoring's AUDIO_BARCODE_PREFIX
-// (which feeds the per-type score) — reconciling the two divergent prefix sets
-// is tracked separately (changes decide-late identification → cache bump).
-const AUDIO_LIKE_BARCODE_PREFIX = /^(0?(498|499)|45|88)/;
-
 function selectBarcodeTypeResult(
   type: string | null,
   typeResults: Record<string, CompiledResult | null>,
@@ -232,7 +227,8 @@ function selectBarcodeTypeResult(
     return { selectedType: type, selectedResult: typeResults[type] };
   }
 
-  const isAudioLikeBarcode = AUDIO_LIKE_BARCODE_PREFIX.test(cleanedBarcode);
+  const isAudioLikeBarcode =
+    AUDIO_LIKE_GAME_SUPPRESSION_PREFIX.test(cleanedBarcode);
   const candidates = Object.entries(typeResults)
     .filter(
       ([candidateType]) => !(isAudioLikeBarcode && candidateType === "games"),

@@ -214,8 +214,17 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    > défini + testé au niveau `scoreTypeCandidate` (régression Ghost Recon) mais jamais
    > passé par le resolver, donc **le fix jeu-vidéo→pas-musique était inactif en prod**.
    > `resolveBarcode` calcule et passe désormais `videoGameSignal` ; `BARCODE_CACHE_VERSION`
-   > bumpé v42→v43. Reste : réconcilier les 2 définitions divergentes de préfixe audio
-   > (`AUDIO_LIKE_BARCODE_PREFIX` vs `scoring.AUDIO_BARCODE_PREFIX`).
+   > bumpé v42→v43.
+   >
+   > **✅ Suite 2026-07-04 (préfixes audio).** Investigation : **aucun** barcode de fixture
+   > ne matche l'un ou l'autre préfixe (même le Daft Punk `0724…`) — ce ne sont pas un
+   > doublon mais **deux heuristiques à buts opposés** (bonus de score musique vs filtre
+   > dur anti-`games`, où `45`=Japon est volontairement large), sans couverture golden-master.
+   > Les fusionner introduirait des faux positifs. Résolution sûre appliquée :
+   > **co-localisées dans `scoring.ts`** (`AUDIO_BARCODE_PREFIX` + `AUDIO_LIKE_GAME_SUPPRESSION_PREFIX`)
+   > avec doc expliquant la divergence intentionnelle ; le resolver importe la seconde au
+   > lieu de la redéfinir. Zéro changement de comportement. Le vrai fix (détection audio
+   > GS1-exacte + cas de test) reste un chantier data, pas un merge mécanique.
 
    La **dedup #2** (`steamdb`/`pcgamingwiki`) est faite (repliée sur le set) ; le label
    `"BGG (Bayes)"` et les **sous-titres produit #3** restent (voir ci-dessous).

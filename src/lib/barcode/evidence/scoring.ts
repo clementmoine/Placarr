@@ -52,7 +52,21 @@ export const TYPE_SCORE = {
 
 /** Reserved barcode ranges that identify a product type on their own. */
 export const BOOK_BARCODE_PREFIX = /^(978|979)/;
+
+// Two DELIBERATELY different "audio-range" heuristics, co-located so the
+// divergence reads as intentional (not an accidental bug), with opposite risk
+// profiles:
+//  - AUDIO_BARCODE_PREFIX only *nudges* the music score (+audioBarcode). A false
+//    positive is cheap, so it stays a tight curated set.
+//  - AUDIO_LIKE_GAME_SUPPRESSION_PREFIX *drops* the `games` candidate outright in
+//    selectBarcodeTypeResult, so it errs broad (leading-zero + JP `45`/`88`) to
+//    catch audio scans a game listing might otherwise hijack.
+// Both are hand-curated heuristics with no golden-master coverage (no fixture
+// barcode matches either). A real fix = GS1-accurate audio detection + cases;
+// until then, keep them distinct rather than merging and shifting either
+// behaviour blindly.
 export const AUDIO_BARCODE_PREFIX = /^(498|602|724|731|886|888)/;
+export const AUDIO_LIKE_GAME_SUPPRESSION_PREFIX = /^(0?(498|499)|45|88)/;
 
 // ── Cluster confidence ───────────────────────────────────────────────────────
 // `scoreEvidenceCluster` turns one cluster of agreeing evidence into a [0,1]

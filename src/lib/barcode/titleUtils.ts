@@ -597,7 +597,10 @@ export function listingLooksLikeGameAccessory(name: string): boolean {
 // v42: classification du type "musics" pilotée par un signal registry (provider
 // mono-type musique anchoré) au lieu du word-list orchestra|soundtrack|ost|…
 // dans le resolver. Bump pour re-résoudre les scans cachés sans type explicite.
-export const BARCODE_CACHE_VERSION = "canonical-v42";
+// v43: câblage du signal jeu-vidéo (detectVideoGameSignal) — plateforme console
+// nommée dans les annonces — jusqu'ici défini mais jamais passé par le resolver ;
+// promeut `games` et écrase un faux album/film homonyme. Bump pour re-résoudre.
+export const BARCODE_CACHE_VERSION = "canonical-v43";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider

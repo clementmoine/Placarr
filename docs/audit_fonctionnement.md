@@ -208,9 +208,14 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    > `TYPE_SCORE.musicSpecialistSignal` — un provider mono-type musique (Discogs /
    > MusicBrainz / Deezer) anchoré promeut `musics` et pénalise `games`. Test unitaire
    > ajouté (`compile.typeSelection.test.ts`), `BARCODE_CACHE_VERSION` bumpé v41→v42.
-   > 1555 tests ✅ · build ✅. Reste à réconcilier les 2 définitions divergentes de
-   > préfixe audio (`AUDIO_LIKE_BARCODE_PREFIX` vs `scoring.AUDIO_BARCODE_PREFIX`) et à
-   > câbler `detectVideoGameSignal`, défini mais non passé par le resolver.
+   > 1555 tests ✅ · build ✅.
+   >
+   > **✅ Suite 2026-07-04.** `detectVideoGameSignal` est maintenant **câblé** : il était
+   > défini + testé au niveau `scoreTypeCandidate` (régression Ghost Recon) mais jamais
+   > passé par le resolver, donc **le fix jeu-vidéo→pas-musique était inactif en prod**.
+   > `resolveBarcode` calcule et passe désormais `videoGameSignal` ; `BARCODE_CACHE_VERSION`
+   > bumpé v42→v43. Reste : réconcilier les 2 définitions divergentes de préfixe audio
+   > (`AUDIO_LIKE_BARCODE_PREFIX` vs `scoring.AUDIO_BARCODE_PREFIX`).
 
    La **dedup #2** (`steamdb`/`pcgamingwiki`) est faite (repliée sur le set) ; le label
    `"BGG (Bayes)"` et les **sous-titres produit #3** restent (voir ci-dessous).

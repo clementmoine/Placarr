@@ -16,6 +16,7 @@ import {
   detectBoardGameSignal,
   detectMediaFormat,
   detectVideoFormatSignal,
+  detectVideoGameSignal,
 } from "@/lib/barcode/boardGameSignal";
 import { compileAllBarcodeTypeResults } from "@/lib/barcode/lookup/sourceAssembly";
 import {
@@ -224,6 +225,7 @@ function selectBarcodeTypeResult(
   cleanedBarcode: string,
   boardGameSignal = 0,
   videoFormatSignal = 0,
+  videoGameSignal = 0,
   musicSpecialistSignal = 0,
 ): { selectedType: string | null; selectedResult: CompiledResult | null } {
   if (type && typeResults[type]) {
@@ -243,7 +245,7 @@ function selectBarcodeTypeResult(
       cleanedBarcode,
       boardGameSignal,
       videoFormatSignal,
-      0,
+      videoGameSignal,
       musicSpecialistSignal,
     );
   candidates.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
@@ -311,6 +313,7 @@ export async function resolveBarcode(
     ),
   );
   const videoFormatSignal = detectVideoFormatSignal(listingNames);
+  const videoGameSignal = detectVideoGameSignal(listingNames);
   const musicSpecialistSignal = detectSpecialistSignal(
     typeResults.musics,
     MUSIC_SPECIALIST_LABELS,
@@ -321,6 +324,7 @@ export async function resolveBarcode(
     cleanedBarcode,
     boardGameSignal,
     videoFormatSignal,
+    videoGameSignal,
     musicSpecialistSignal,
   );
 

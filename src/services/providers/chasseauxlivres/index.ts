@@ -1,4 +1,5 @@
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
+import { throwIfAborted } from "@/lib/http/abort";
 import {
   CHASSE_AUX_LIVRES_CATALOG_BY_TYPE,
   catalogForShelfType,
@@ -6,6 +7,10 @@ import {
 import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
 import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
 import { scopedContribution } from "@/lib/barcode/lookup/sourceContribution";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
@@ -279,7 +284,7 @@ export const chasseauxlivresModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "chasseauxlivres",
-      async resolve({ type, name, barcode, lookupQueries }) {
+      async resolve({ type, name, barcode, lookupQueries, signal }) {
         const normalizedBarcode = String(barcode || "").trim();
         const queries =
           lookupQueries && lookupQueries.length > 0
@@ -294,6 +299,7 @@ export const chasseauxlivresModule: ProviderModule = {
             {
               validateProduct: (candidate) =>
                 !name || isChasseTitleAligned(name, candidate.name),
+              signal,
             },
           );
           if (product) return mapChasseAuxLivresMetadata(product);
@@ -301,6 +307,7 @@ export const chasseauxlivresModule: ProviderModule = {
 
         for (const query of queries) {
           if (!query?.trim()) continue;
+          throwIfAborted(signal);
           const product = await fetchChasseAuxLivresMetadataProduct(
             query.trim(),
             catalog,
@@ -310,6 +317,7 @@ export const chasseauxlivresModule: ProviderModule = {
                   String(name || query).trim(),
                   candidate.name,
                 ),
+              signal,
             },
           );
           if (product) return mapChasseAuxLivresMetadata(product);
@@ -389,6 +397,15 @@ export const chasseauxlivresModule: ProviderModule = {
         ? "No listing for sample ISBN — site HTML may have changed or blocked the request"
         : "No listing for sample ISBN — set FLARESOLVERR_URL for server-side scrape or run probe from an unblocked network",
       "empty",
+    );
+  },
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: "9780140328721",
+    });
+    return mappingRawKeysFromFetch(() =>
+      fetchFromChasseAuxLivres(ctx.barcode || "9780140328721", "fr"),
     );
   },
   buildBarcodeSources(payload, ctx) {

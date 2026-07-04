@@ -2,7 +2,17 @@ import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { finalizeGamePriceProviders } from "@/lib/pricing/cachePolicy";
 import type { PriceOfferInput } from "@/services/metadata/evidence";
 import { PROVIDER_MODULES } from "@/services/provider/registry";
-import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import type {
+  BarcodeLookupType,
+  BarcodePriceRefreshContext,
+} from "@/types/providerModule";
+
+function moduleSupportsShelfType(
+  types: readonly string[],
+  shelfType: string,
+): shelfType is BarcodeLookupType {
+  return (types as readonly string[]).includes(shelfType);
+}
 
 export function collectScanPriceOffers(
   payload: BarcodeLookupPayload,
@@ -17,7 +27,9 @@ export async function collectRefreshBarcodePriceOffers(
   ctx: BarcodePriceRefreshContext,
 ): Promise<PriceOfferInput[]> {
   const modules = PROVIDER_MODULES.filter(
-    (module) => module.refreshBarcodePriceOffers,
+    (module) =>
+      module.refreshBarcodePriceOffers &&
+      moduleSupportsShelfType(module.info.types, ctx.shelfType),
   );
   const settled = await Promise.allSettled(
     modules.map((module) => module.refreshBarcodePriceOffers!(ctx)),

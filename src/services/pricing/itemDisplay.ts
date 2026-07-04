@@ -1,9 +1,11 @@
 import { after } from "next/server";
 
 import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
-
 import { cleanCode } from "@/lib/barcode/query";
+import { isItemMetadataRefreshing } from "@/lib/item/enrichment";
 import { shouldRefreshPriceCache } from "@/lib/pricing/cachePolicy";
+import { metadataPriceFallback } from "@/lib/pricing/metadataPriceFallback";
+import type { MetadataFact } from "@/types/metadataProvider";
 import {
   alignBarcodePricesForItemNames,
   getCachedBarcodePrices,
@@ -23,9 +25,46 @@ export type ItemPricesContext = {
   metadataId?: string | null;
   metadataTitle?: string | null;
   metadataAliases?: string | null;
+  metadataFacts?: MetadataFact[];
+  metadataRefreshStartedAt?: Date | string | null;
   shelfType: string;
   shelfName: string;
 };
+
+const inFlightPriceRefresh = new Map<string, Promise<BarcodePricesResult>>();
+const scheduledPriceRefreshKeys = new Set<string>();
+/** Avoid hammering marketplace APIs when the item page polls every 2.5s. */
+const lastPriceRefreshStartedAt = new Map<string, number>();
+const MIN_PRICE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
+export type RefreshItemPricesOptions = {
+  /** Bypass the min-interval guard (post-metadata refresh). */
+  force?: boolean;
+};
+
+function priceRefreshKey(context: ItemPricesContext): string {
+  const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
+  if (cleanedBarcode) {
+    return `barcode:${cleanedBarcode}:${context.shelfType}`;
+  }
+  return `item:${context.id}:${context.shelfType}`;
+}
+
+function shouldDeferPriceRefresh(context: ItemPricesContext): boolean {
+  return isItemMetadataRefreshing(context);
+}
+
+export function resetPriceRefreshStateForTests(): void {
+  inFlightPriceRefresh.clear();
+  scheduledPriceRefreshKeys.clear();
+  lastPriceRefreshStartedAt.clear();
+}
+
+function isWithinPriceRefreshCooldown(key: string): boolean {
+  const lastStarted = lastPriceRefreshStartedAt.get(key);
+  if (!lastStarted) return false;
+  return Date.now() - lastStarted < MIN_PRICE_REFRESH_INTERVAL_MS;
+}
 
 export function parseMetadataAliases(raw: string | null | undefined): string[] {
   if (!raw) return [];
@@ -60,7 +99,7 @@ function refreshBarcodeInput(
   context: ItemPricesContext,
   cleanedBarcode: string,
 ): RefreshBarcodePricesInput {
-  const itemNames = itemNamesFromContext(context);
+  const itemNames = primaryItemNamesFromContext(context);
   return {
     cleanedBarcode,
     shelfType: context.shelfType,
@@ -71,7 +110,7 @@ function refreshBarcodeInput(
 }
 
 function refreshItemInput(context: ItemPricesContext): RefreshItemPricesInput {
-  const itemNames = itemNamesFromContext(context);
+  const itemNames = primaryItemNamesFromContext(context);
   return {
     shelfType: context.shelfType,
     shelfName: context.shelfName,
@@ -97,9 +136,11 @@ function alignPricesForContext(
 
 async function readCachedItemPrices(
   context: ItemPricesContext,
+  options: { summaryOnly?: boolean } = {},
 ): Promise<BarcodePricesResult | null> {
   const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
   if (!cleanedBarcode) {
+    if (options.summaryOnly) return null;
     return getCachedItemPrices(context.shelfType, {
       itemId: context.id,
       metadataId: context.metadataId,
@@ -113,6 +154,7 @@ async function readCachedItemPrices(
     metadataId: context.metadataId,
     itemNames: primaryItemNamesFromContext(context),
     shelfName: context.shelfName,
+    summaryOnly: options.summaryOnly,
   });
 }
 
@@ -138,15 +180,50 @@ export async function itemPricesCacheIsEmpty(
 
 export async function refreshItemPricesFromContext(
   context: ItemPricesContext,
+  options: RefreshItemPricesOptions = {},
 ): Promise<BarcodePricesResult> {
-  const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
-  if (!cleanedBarcode) {
-    return refreshItemPrices(refreshItemInput(context));
+  const key = priceRefreshKey(context);
+  const inFlight = inFlightPriceRefresh.get(key);
+  if (inFlight) return inFlight;
+
+  if (!options.force && isWithinPriceRefreshCooldown(key)) {
+    const cached = await readCachedItemPrices(context);
+    if (cached) {
+      return alignPricesForContext(context, cached) ?? cached;
+    }
   }
-  return refreshBarcodePrices(refreshBarcodeInput(context, cleanedBarcode));
+
+  lastPriceRefreshStartedAt.set(key, Date.now());
+
+  const promise = (async () => {
+    const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
+    if (!cleanedBarcode) {
+      return refreshItemPrices(refreshItemInput(context));
+    }
+    return refreshBarcodePrices(refreshBarcodeInput(context, cleanedBarcode));
+  })();
+
+  inFlightPriceRefresh.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    inFlightPriceRefresh.delete(key);
+  }
 }
 
 export function scheduleItemPricesRefresh(context: ItemPricesContext): void {
+  if (shouldDeferPriceRefresh(context)) return;
+
+  const key = priceRefreshKey(context);
+  if (
+    isWithinPriceRefreshCooldown(key) ||
+    inFlightPriceRefresh.has(key) ||
+    scheduledPriceRefreshKeys.has(key)
+  ) {
+    return;
+  }
+  scheduledPriceRefreshKeys.add(key);
+
   after(() =>
     runBackgroundWork(async () => {
       try {
@@ -156,6 +233,8 @@ export function scheduleItemPricesRefresh(context: ItemPricesContext): void {
           `[Prices] Background refresh failed for item ${context.id}:`,
           error,
         );
+      } finally {
+        scheduledPriceRefreshKeys.delete(key);
       }
     }),
   );
@@ -202,6 +281,25 @@ export type ReadItemPricesOptions = {
   blockWhenMissing?: boolean;
 };
 
+function hasPriceSummary(prices: BarcodePricesResult | null | undefined): boolean {
+  if (!prices) return false;
+  return (
+    prices.priceNew != null ||
+    prices.priceUsed != null ||
+    prices.priceUsedCIB != null
+  );
+}
+
+function withMetadataPriceFallback(
+  context: ItemPricesContext,
+  prices: BarcodePricesResult | null,
+): BarcodePricesResult | null {
+  if (hasPriceSummary(prices)) return prices;
+  const fallback = metadataPriceFallback(context.metadataFacts);
+  if (!fallback) return prices;
+  return alignPricesForContext(context, fallback);
+}
+
 /**
  * Stale-while-revalidate read used by item APIs: return cached prices when
  * available, refresh in the background when stale, and only block on a cold
@@ -212,22 +310,60 @@ export async function readItemPrices(
   options: ReadItemPricesOptions = {},
 ): Promise<BarcodePricesResult | null> {
   const blockWhenMissing = options.blockWhenMissing ?? true;
-  const cached = await readCachedItemPrices(context);
+  const deferNetwork = shouldDeferPriceRefresh(context);
+  const cached = await readCachedItemPrices(context, {
+    summaryOnly: deferNetwork,
+  });
 
   if (cached) {
-    if (shouldRefreshPriceCache(context.shelfType, cached)) {
+    if (
+      shouldRefreshPriceCache(context.shelfType, cached) &&
+      !deferNetwork
+    ) {
       scheduleItemPricesRefresh(context);
     }
-    return alignPricesForContext(context, cached);
+    return withMetadataPriceFallback(
+      context,
+      alignPricesForContext(context, cached),
+    );
   }
 
   if (!blockWhenMissing) {
-    scheduleItemPricesRefresh(context);
-    return null;
+    if (!deferNetwork) {
+      scheduleItemPricesRefresh(context);
+    }
+    return withMetadataPriceFallback(context, null);
+  }
+
+  if (deferNetwork) {
+    return withMetadataPriceFallback(context, null);
   }
 
   const fresh = await refreshItemPricesFromContext(context);
-  return alignPricesForContext(context, fresh);
+  return withMetadataPriceFallback(
+    context,
+    alignPricesForContext(context, fresh),
+  );
+}
+
+export function parseMetadataFacts(
+  raw: string | null | undefined,
+): MetadataFact[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (fact): fact is MetadataFact =>
+            !!fact &&
+            typeof fact === "object" &&
+            typeof fact.kind === "string" &&
+            typeof fact.value === "string",
+        )
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 export function itemPricesContextFromRecord(item: {
@@ -235,7 +371,12 @@ export function itemPricesContextFromRecord(item: {
   name: string;
   barcode?: string | null;
   metadataId?: string | null;
-  metadata?: { title?: string | null; aliases?: string | null } | null;
+  metadataRefreshStartedAt?: Date | string | null;
+  metadata?: {
+    title?: string | null;
+    aliases?: string | null;
+    facts?: string | null;
+  } | null;
   shelf: { type: string; name: string };
 }): ItemPricesContext {
   return {
@@ -245,6 +386,8 @@ export function itemPricesContextFromRecord(item: {
     metadataId: item.metadataId,
     metadataTitle: item.metadata?.title,
     metadataAliases: item.metadata?.aliases,
+    metadataFacts: parseMetadataFacts(item.metadata?.facts),
+    metadataRefreshStartedAt: item.metadataRefreshStartedAt,
     shelfType: item.shelf.type,
     shelfName: item.shelf.name,
   };

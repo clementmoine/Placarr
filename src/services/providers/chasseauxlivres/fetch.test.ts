@@ -218,6 +218,7 @@ describe("fetchFromChasseAuxLivres", () => {
     expect(mockedFlare).toHaveBeenCalledWith(
       "https://www.chasse-aux-livres.fr/search?query=9780140328721&catalog=fr",
       25_000,
+      undefined,
     );
     expect(mockedGet).toHaveBeenNthCalledWith(
       2,

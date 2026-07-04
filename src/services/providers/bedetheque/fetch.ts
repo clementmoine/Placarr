@@ -8,12 +8,17 @@ import {
   metadataTitleSimilarity,
   hasUnrequestedVariantMarker,
 } from "@/lib/metadata/titleMatching";
+import {
+  collectHtmlMappingSignals,
+} from "@/lib/dev/scrapeMappingSignals";
 
 export interface BedethequeAlbum {
   id: string;
   title: string;
   sourceUrl: string;
   imageUrl?: string;
+  /** Extra media from /media/{Couvertures,Versos,Planches,...} on the album page. */
+  media?: Array<{ url: string; mediaKind: string }>;
   publisher?: string;
   releaseYear?: number;
   ratingValue?: number;
@@ -24,6 +29,21 @@ export interface BedethequeAlbum {
   seriesPosition?: number;
   alternateTitles?: string[];
   barcode?: string;
+  /** C2C marketplace listings from the album page (prix-annonce). */
+  saleListings?: BedethequeSaleListing[];
+  /** Partner retail prices when present in static HTML (BDfugue widget). */
+  retailPrices?: BedethequeRetailPrices;
+}
+
+export type BedethequeRetailPrices = {
+  priceNewCents?: number;
+};
+
+export interface BedethequeSaleListing {
+  listingId?: string;
+  seller?: string;
+  condition?: string;
+  priceCents: number;
 }
 
 type BedethequeSeriesCandidate = {
@@ -84,6 +104,79 @@ export function absoluteBedethequeUrl(
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith("/")) return `${BEDETHEQUE_BASE_URL}${value}`;
   return `${BEDETHEQUE_BASE_URL}/${value}`;
+}
+
+const BEDETHEQUE_MEDIA_URL_RE =
+  /https?:\/\/(?:www\.)?bedetheque\.com\/media\/([^/"'\s?)]+)\/([^"'\s?)]+)/gi;
+
+export function parseBedethequeMediaUrls(
+  html: string,
+): Array<{ url: string; mediaKind: string }> {
+  const seen = new Set<string>();
+  const media: Array<{ url: string; mediaKind: string }> = [];
+
+  for (const match of html.matchAll(BEDETHEQUE_MEDIA_URL_RE)) {
+    const mediaKind = match[1]?.trim();
+    const fileName = match[2]?.trim();
+    if (!mediaKind || !fileName) continue;
+    const url = absoluteBedethequeUrl(`/media/${mediaKind}/${fileName}`);
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    media.push({ url, mediaKind });
+  }
+
+  return media;
+}
+
+function parseEuroPriceCents(label?: string | null): number | undefined {
+  if (!label) return undefined;
+  const match = String(label).match(/([0-9]+(?:[.,][0-9]{1,2})?)/);
+  if (!match) return undefined;
+  const amount = Number.parseFloat(match[1].replace(",", "."));
+  if (!Number.isFinite(amount) || amount <= 0) return undefined;
+  return Math.round(amount * 100);
+}
+
+export function parseBedethequeSaleListings(
+  html: string,
+): BedethequeSaleListing[] {
+  const listings: BedethequeSaleListing[] = [];
+
+  for (const match of html.matchAll(
+    /<tr[^>]+id=["']Vente_(\d+)["'][^>]*>([\s\S]*?)<\/tr>/gi,
+  )) {
+    const listingId = match[1];
+    const row = match[2];
+    const seller = cleanText(
+      row.match(/RechVendeur=[^"']+["'][^>]*><u>([^<]+)<\/u>/i)?.[1] ||
+        row.match(/class=["'][^"']*vendeur[^"']*["'][^>]*>[\s\S]*?<u>([^<]+)<\/u>/i)?.[1],
+    );
+    const condition = cleanText(row.match(/<td class="tdv"><b>([^<]+)<\/b>/i)?.[1]);
+    const priceText = row.match(/prix-annonce[^>]*>([^<]+)/i)?.[1];
+    const priceCents = parseEuroPriceCents(priceText);
+    if (!priceCents) continue;
+    listings.push({ listingId, seller, condition, priceCents });
+  }
+
+  return listings.sort((a, b) => a.priceCents - b.priceCents);
+}
+
+/** BDfugue partner price when the server renders it into the album HTML. */
+export function parseBedethequeRetailPrices(
+  html: string,
+): BedethequeRetailPrices | undefined {
+  const hiddenNew = html.match(
+    /id=["']prix_bdfugue["'][^>]*value=["']([^"']*)["']/i,
+  )?.[1];
+  const panierNew = html.match(
+    /<span[^>]*class=["'][^"']*PrixAlbumPanier[^"']*["'][^>]*>([^<]+)</i,
+  )?.[1];
+
+  const priceNewCents =
+    parseEuroPriceCents(hiddenNew) ?? parseEuroPriceCents(panierNew);
+  if (!priceNewCents) return undefined;
+
+  return { priceNewCents };
 }
 
 export function isBedethequeAlbumUrl(value: string): boolean {
@@ -254,11 +347,18 @@ export function parseBedethequeAlbumPage(
     hiddenInputValue(html, "EANs") ||
     undefined;
 
+  const media = parseBedethequeMediaUrls(html);
+  const saleListings = parseBedethequeSaleListings(html);
+  const retailPrices = parseBedethequeRetailPrices(html);
+
   return {
     id,
     title,
     sourceUrl,
     imageUrl,
+    media: media.length > 0 ? media : undefined,
+    saleListings: saleListings.length > 0 ? saleListings : undefined,
+    retailPrices,
     publisher,
     releaseYear: Number.isFinite(releaseYear) ? releaseYear : undefined,
     ratingValue: Number.isFinite(ratingValue) ? ratingValue : undefined,
@@ -485,4 +585,25 @@ export async function getBedethequeSuggestions(
   }
 
   return titles;
+}
+
+export function collectBedethequeMappingSignals(html: string): string[] {
+  return collectHtmlMappingSignals(html);
+}
+
+export async function collectBedethequeMappingRawKeys(
+  query: string,
+): Promise<string[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  if (isBedethequeAlbumUrl(trimmed)) {
+    const html = await fetchBedethequeHtml(trimmed);
+    return html ? collectBedethequeMappingSignals(html) : [];
+  }
+
+  const album = await fetchBedethequeMetadata(trimmed);
+  if (!album?.sourceUrl) return [];
+  const html = await fetchBedethequeHtml(album.sourceUrl);
+  return html ? collectBedethequeMappingSignals(html) : [];
 }

@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchBedethequeMetadata,
   parseBedethequeAlbumPage,
+  parseBedethequeMediaUrls,
+  parseBedethequeSaleListings,
+  parseBedethequeRetailPrices,
   parseBedethequeSeriesAlbumLinks,
   pickBedethequeAlbumLink,
   pickBedethequeSeriesCandidate,
@@ -44,6 +47,91 @@ describe("bedetheque fetch", () => {
       ratingCount: 5,
     });
     expect(album?.title).toBe("Super Picsou Géant n°7");
+  });
+
+  it("extrait les URLs media (couverture, verso, planches) depuis la fiche", () => {
+    const html = albumHtml({
+      extraMedia: `
+        <a href="https://www.bedetheque.com/media/Versos/Verso_56641.jpg">verso</a>
+        <a href="https://www.bedetheque.com/media/Planches/PlancheA_56641.jpg">planche</a>
+      `,
+    });
+    const media = parseBedethequeMediaUrls(html);
+    expect(media).toEqual(
+      expect.arrayContaining([
+        {
+          url: "https://www.bedetheque.com/media/Couvertures/Couv_56641.jpg",
+          mediaKind: "Couvertures",
+        },
+        {
+          url: "https://www.bedetheque.com/media/Versos/Verso_56641.jpg",
+          mediaKind: "Versos",
+        },
+        {
+          url: "https://www.bedetheque.com/media/Planches/PlancheA_56641.jpg",
+          mediaKind: "Planches",
+        },
+      ]),
+    );
+
+    const album = parseBedethequeAlbumPage(
+      html,
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-7-Numero-7-56641.html",
+    );
+    expect(album?.media?.length).toBe(3);
+  });
+
+  it("extrait les annonces marketplace depuis une fiche album", () => {
+    const html = albumHtml({
+      saleRows: `
+        <tr role="row" id="Vente_123">
+          <td class="tdv">1. Tome 1</td>
+          <td class="tdv"><a href="https://www.bedetheque.com/ventes/search?RechVendeur=rcdb"><u>rcdb</u></a></td>
+          <td class="tdv"><b>Comme neuf</b></td>
+          <td class="tdv dt-right prix-annonce">19.99€</td>
+        </tr>
+        <tr role="row" id="Vente_456">
+          <td class="tdv">1. Tome 1</td>
+          <td class="tdv"><a href="https://www.bedetheque.com/ventes/search?RechVendeur=alice"><u>alice</u></a></td>
+          <td class="tdv"><b>Très bon état</b></td>
+          <td class="tdv dt-right prix-annonce">14.00€</td>
+        </tr>
+      `,
+    });
+    const listings = parseBedethequeSaleListings(html);
+    expect(listings).toEqual([
+      {
+        listingId: "456",
+        seller: "alice",
+        condition: "Très bon état",
+        priceCents: 1400,
+      },
+      {
+        listingId: "123",
+        seller: "rcdb",
+        condition: "Comme neuf",
+        priceCents: 1999,
+      },
+    ]);
+
+    const album = parseBedethequeAlbumPage(
+      html,
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-7-Numero-7-56641.html",
+    );
+    expect(album?.saleListings?.length).toBe(2);
+  });
+
+  it("extrait le prix neuf BDfugue quand il est rendu dans le HTML", () => {
+    const retail = parseBedethequeRetailPrices(
+      albumHtml({ retailNewPrice: "7.90" }),
+    );
+    expect(retail).toEqual({ priceNewCents: 790 });
+
+    const album = parseBedethequeAlbumPage(
+      albumHtml({ retailNewPrice: "7.90" }),
+      "https://www.bedetheque.com/BD-Dragon-Ball-Z-Tome-1-1re-partie-Les-Saiyens-1-110422.html",
+    );
+    expect(album?.retailPrices).toEqual({ priceNewCents: 790 });
   });
 
   it("extrait un titre original depuis le nom de série entre parenthèses", () => {
@@ -190,9 +278,20 @@ describe("bedetheque fetch", () => {
   });
 });
 
-function albumHtml(options: { ean?: string; seriesTitle?: string } = {}) {
+function albumHtml(
+  options: {
+    ean?: string;
+    seriesTitle?: string;
+    extraMedia?: string;
+    saleRows?: string;
+    retailNewPrice?: string;
+  } = {},
+) {
   const ean = options.ean ?? "";
   const seriesTitle = options.seriesTitle ?? "Super Picsou Géant";
+  const extraMedia = options.extraMedia ?? "";
+  const saleRows = options.saleRows ?? "";
+  const retailNewPrice = options.retailNewPrice ?? "";
   return `
     <title>Super Picsou Géant -7- Numéro 7</title>
     <meta property="og:title" content="Super Picsou Géant -7- Numéro 7" />
@@ -206,8 +305,11 @@ function albumHtml(options: { ean?: string; seriesTitle?: string } = {}) {
     <span class='annee'>1984</span>
     <span itemprop="ratingValue">4.0</span>
     <span itemprop="ratingCount">5</span>
+    <input type="hidden" id="prix_bdfugue" value="${retailNewPrice}">
     <div class='liste-auteurs'>
       <a href="#" title="Voir la fiche de Barosso, Abramo">Barosso, Abramo</a>
     </div>
+    ${extraMedia}
+    ${saleRows}
   `;
 }

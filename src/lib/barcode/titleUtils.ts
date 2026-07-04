@@ -821,12 +821,33 @@ export function barcodeListingMatchesItem(
   return areLikelySameProduct(itemName, listing);
 }
 
+const FRANCHISE_TITLE_PREFIX_TOKENS = new Set([
+  "super",
+  "ultra",
+  "mega",
+  "mini",
+  "hyper",
+]);
+
+function listingAddsDistinctSpinoffLead(itemNorm: string, listingNorm: string): boolean {
+  if (!listingNorm.startsWith(`${itemNorm} `)) return false;
+  const firstExtra = listingNorm.slice(itemNorm.length + 1).split(/\s+/)[0];
+  if (!firstExtra || firstExtra.length < 4) return false;
+  if (FRANCHISE_TITLE_PREFIX_TOKENS.has(firstExtra)) return false;
+  if (getSequelIndicators(firstExtra).size > 0) return false;
+  return true;
+}
+
 export function areLikelySameProduct(a: string, b: string): boolean {
   const aNorm = normalizeForTokens(cleanSearchQuery(a) || a);
   const bNorm = normalizeForTokens(cleanSearchQuery(b) || b);
   if (!aNorm || !bNorm) return false;
   if (aNorm === bNorm) {
     return true;
+  }
+
+  if (listingAddsDistinctSpinoffLead(aNorm, bNorm)) {
+    return false;
   }
 
   // "Game 1" names the first/base game, i.e. the same product as the unnumbered

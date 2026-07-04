@@ -8,6 +8,7 @@ import {
 } from "@/lib/barcode/titleUtils";
 import { detectPlatformKey } from "@/lib/barcode/query";
 import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
+import { priceListingSharesItemIdentity } from "@/lib/retailer/titleMatch";
 import {
   mergePriceOffers,
   type PriceOfferInput,
@@ -70,6 +71,8 @@ type GetCachedBarcodePricesOptions = {
   metadataId?: string | null;
   itemNames?: string[];
   shelfName?: string | null;
+  /** Barcode-cache summary only — skip PriceOffer reads (metadata refresh polling). */
+  summaryOnly?: boolean;
 };
 
 export type RefreshItemPricesInput = {
@@ -111,9 +114,15 @@ function trimObservedPriceOutliers(
 /** Unnamed shop rows are kept only when no titled listing matched. */
 function dropUnnamedMarketplaceNoise(
   offers: PriceObservation[],
+  options: { strictReferenceOnly?: boolean } = {},
 ): PriceObservation[] {
   const namedMatches = offers.filter((offer) => offer.productName?.trim());
-  if (namedMatches.length === 0) return offers;
+  if (namedMatches.length === 0) {
+    if (!options.strictReferenceOnly) return offers;
+    return offers.filter((offer) =>
+      isReferencePriceSource(offer.source ?? ""),
+    );
+  }
 
   return offers.filter(
     (offer) =>
@@ -297,19 +306,40 @@ function priceListingMatchesShelfPlatform(
   return listingPlatform === shelfPlatform;
 }
 
+/** Drops listings that share item identity tokens but fail title alignment. */
+function dropIdentityConflictingListings(
+  names: string[],
+  offers: PriceObservation[],
+): PriceObservation[] {
+  return offers.filter((offer) => {
+    const listing = offer.productName?.trim();
+    if (!listing) return true;
+    const sharesIdentity = names.some((name) =>
+      priceListingSharesItemIdentity(name, listing),
+    );
+    if (!sharesIdentity) return true;
+    return priceListingMatchesAnyItemName(names, listing);
+  });
+}
+
 export function filterItemPriceOffers(
   shelfType: string,
   shelfName: string | null | undefined,
   itemNames: string[],
   offers: PriceObservation[],
 ): PriceObservation[] {
-  const platformFiltered = offers.filter((offer) =>
-    priceListingMatchesShelfPlatform(shelfType, shelfName, offer.productName),
-  );
-
   const names = [
     ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
   ];
+  const identityFiltered =
+    names.length === 0 ? offers : dropIdentityConflictingListings(names, offers);
+  const hadIdentityConflicts =
+    names.length > 0 && identityFiltered.length < offers.length;
+
+  const platformFiltered = identityFiltered.filter((offer) =>
+    priceListingMatchesShelfPlatform(shelfType, shelfName, offer.productName),
+  );
+
   const titleFiltered =
     names.length === 0
       ? platformFiltered
@@ -317,11 +347,34 @@ export function filterItemPriceOffers(
           priceListingMatchesAnyItemName(names, offer.productName),
         );
 
+  if (names.length > 0) {
+    const titleMatchedInInput = identityFiltered.some(
+      (offer) =>
+        offer.productName?.trim() &&
+        priceListingMatchesAnyItemName(names, offer.productName),
+    );
+    const titleAndPlatformMatched = identityFiltered.some(
+      (offer) =>
+        offer.productName?.trim() &&
+        priceListingMatchesAnyItemName(names, offer.productName) &&
+        priceListingMatchesShelfPlatform(
+          shelfType,
+          shelfName,
+          offer.productName,
+        ),
+    );
+    if (titleMatchedInInput && !titleAndPlatformMatched) {
+      return trimObservedPriceOutliers(shelfType, []);
+    }
+  }
+
   const baseOffers = names.length === 0 ? platformFiltered : titleFiltered;
 
   return trimObservedPriceOutliers(
     shelfType,
-    dropUnnamedMarketplaceNoise(baseOffers),
+    dropUnnamedMarketplaceNoise(baseOffers, {
+      strictReferenceOnly: hadIdentityConflicts && shelfType === "games",
+    }),
   );
 }
 
@@ -400,6 +453,22 @@ export function alignBarcodePricesForItemNames(
       ) {
         return emptyBarcodePrices();
       }
+
+      const titleMatchedOffers = namedOffers.filter((offer) =>
+        priceListingMatchesAnyItemName(names, offer.productName),
+      );
+      if (titleMatchedOffers.length > 0) {
+        const platformMatchedOffers = titleMatchedOffers.filter((offer) =>
+          priceListingMatchesShelfPlatform(
+            shelfType,
+            shelfName,
+            offer.productName,
+          ),
+        );
+        if (platformMatchedOffers.length === 0) {
+          return emptyBarcodePrices();
+        }
+      }
     }
 
     const hasSummary =
@@ -453,6 +522,23 @@ export async function getCachedBarcodePrices(
       ? cached
       : null;
 
+  const hasSummary =
+    usableBarcodeCache?.priceNew != null ||
+    usableBarcodeCache?.priceUsed != null ||
+    usableBarcodeCache?.priceUsedCIB != null;
+
+  if (options.summaryOnly) {
+    if (!hasSummary) return null;
+    return withPriceSourceTraits({
+      priceNew: usableBarcodeCache!.priceNew,
+      priceUsed: usableBarcodeCache!.priceUsed,
+      priceUsedCIB: usableBarcodeCache!.priceUsedCIB,
+      priceLastUpdated: usableBarcodeCache!.priceLastUpdated,
+      priceSources: parsePriceProviderSources(usableBarcodeCache!.provider),
+      priceObservations: [],
+    });
+  }
+
   const offerScopes = [
     ...(usableBarcodeCache ? [{ barcodeCacheId: usableBarcodeCache.id }] : []),
     ...(options.itemId ? [{ itemId: options.itemId }] : []),
@@ -465,10 +551,6 @@ export async function getCachedBarcodePrices(
     orderBy: { observedAt: "desc" },
     take: 24,
   });
-  const hasSummary =
-    usableBarcodeCache?.priceNew != null ||
-    usableBarcodeCache?.priceUsed != null ||
-    usableBarcodeCache?.priceUsedCIB != null;
   if (offers.length === 0 && !hasSummary) return null;
 
   const sourceOffers = toPriceObservations(offers);

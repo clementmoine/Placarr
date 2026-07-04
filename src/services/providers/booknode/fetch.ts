@@ -7,15 +7,23 @@ import {
 } from "@/lib/metadata/titleMatching";
 import { volumeNumberFromTitle } from "@/lib/title/volumeNumber";
 import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
-import { normalizeBooknodeCoverUrl } from "./coverUrl";
+import { isAbortError, throwIfAborted } from "@/lib/http/abort";
+import {
+  collectMarkdownMappingSignals,
+  mergeMappingSignalSets,
+} from "@/lib/dev/scrapeMappingSignals";
+import { booknodeCoverMediaKey, normalizeBooknodeCoverUrl } from "./coverUrl";
 
 export interface BooknodeBook {
   id?: string;
   title: string;
   sourceUrl: string;
   imageUrl?: string;
+  /** Additional cover URLs from the /covers gallery page. */
+  coverImages?: string[];
   description?: string;
   authors?: string[];
+  publisher?: string;
   genres?: string[];
   ratingValue?: number;
   ratingCount?: number;
@@ -23,6 +31,17 @@ export interface BooknodeBook {
   seriesName?: string;
   seriesUrl?: string;
   seriesPosition?: number;
+  /** Affiliate buy links scraped from the book page (neuf / occasion). */
+  priceOffers?: BooknodePriceOffer[];
+}
+
+export type BooknodePriceCondition = "new" | "used" | "unknown";
+
+export interface BooknodePriceOffer {
+  retailer: string;
+  priceCents: number;
+  condition: BooknodePriceCondition;
+  url: string;
 }
 
 type BooknodeSearchCandidate = {
@@ -210,6 +229,80 @@ function parseFrenchInteger(value?: string | null): number | undefined {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+function parseEuroPriceCents(label?: string | null): number | undefined {
+  if (!label) return undefined;
+  const match = String(label).match(/([0-9]+(?:[.,][0-9]{1,2})?)/);
+  if (!match) return undefined;
+  const amount = Number.parseFloat(match[1].replace(",", "."));
+  if (!Number.isFinite(amount) || amount <= 0) return undefined;
+  return Math.round(amount * 100);
+}
+
+function booknodePriceConditionFromState(
+  state?: string | null,
+): BooknodePriceCondition {
+  if (state === "1") return "new";
+  if (state === "0") return "used";
+  return "unknown";
+}
+
+export function parseBooknodePriceOffers(
+  content: string,
+): BooknodePriceOffer[] {
+  const offers: BooknodePriceOffer[] = [];
+  const seen = new Set<string>();
+
+  const push = (offer: BooknodePriceOffer) => {
+    const key = `${offer.condition}:${offer.retailer}:${offer.priceCents}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    offers.push(offer);
+  };
+
+  for (const match of content.matchAll(
+    /\[([0-9]+(?:[.,][0-9]{1,2})?)\s*€\s*([^\]]+)\]\((https:\/\/booknode\.com\/modules\/buylink_redirect\.php[^)\s"]+)/gi,
+  )) {
+    const retailer = cleanMarkdownText(match[2]);
+    if (!retailer || /voir les prix/i.test(retailer)) continue;
+    const priceCents = parseEuroPriceCents(`${match[1]}€`);
+    const url = match[3];
+    const state = url.match(/[?&]state=(-?\d+)/)?.[1];
+    if (!priceCents) continue;
+    push({
+      retailer,
+      priceCents,
+      condition: booknodePriceConditionFromState(state),
+      url,
+    });
+  }
+
+  for (const match of content.matchAll(
+    /<a[^>]+href=["'](https:\/\/booknode\.com\/modules\/buylink_redirect\.php[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+  )) {
+    const url = match[1];
+    const label = cleanMarkdownText(
+      match[2]
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    );
+    if (!label || /voir les prix/i.test(label)) continue;
+    const priceMatch = label.match(/^([0-9]+(?:[.,][0-9]{1,2})?)\s*€\s*(.+)$/i);
+    if (!priceMatch) continue;
+    const priceCents = parseEuroPriceCents(`${priceMatch[1]}€`);
+    const state = url.match(/[?&]state=(-?\d+)/)?.[1];
+    if (!priceCents) continue;
+    push({
+      retailer: cleanMarkdownText(priceMatch[2]) || "Boutique",
+      priceCents,
+      condition: booknodePriceConditionFromState(state),
+      url,
+    });
+  }
+
+  return offers.sort((a, b) => a.priceCents - b.priceCents);
+}
+
 function markdownRatingCount(html: string): number | undefined {
   return parseFrenchInteger(
     html.match(/\b(\d[\d\s]*)\s+notes?\s*\|/i)?.[1] ||
@@ -279,6 +372,68 @@ function markdownAuthors(html: string): string[] | undefined {
     .map((match) => cleanMarkdownText(match[1]))
     .filter((value): value is string => Boolean(value));
   return authors.length ? Array.from(new Set(authors)).slice(0, 5) : undefined;
+}
+
+function markdownPublisher(html: string): string | undefined {
+  const publisherSection =
+    markdownSectionRaw(html, "Éditeur") || markdownSectionRaw(html, "Editeur");
+  const source = publisherSection || html;
+  const match = source.match(
+    /\[([^\]]+)\]\(https:\/\/booknode\.com\/editeur\/[^)]+\)/i,
+  );
+  return cleanMarkdownText(match?.[1]);
+}
+
+const BOOKNODE_COVER_URL_RE =
+  /https:\/\/cdn1\.booknode\.com\/book_cover\/[^\s"'<>)\]]+/gi;
+
+function isBooknodeCoverAssetUrl(url: string): boolean {
+  return (
+    url.includes("cdn1.booknode.com/book_cover/") &&
+    !url.includes("/version/") &&
+    !url.includes("/global/img/")
+  );
+}
+
+export function parseBooknodeCoverUrls(content: string): string[] {
+  const urls: string[] = [];
+  const seenUrls = new Set<string>();
+  const seenMediaKeys = new Set<string>();
+
+  const pushRaw = (raw?: string | null) => {
+    const trimmed = raw?.split("?")[0]?.trim();
+    if (!trimmed || !isBooknodeCoverAssetUrl(trimmed)) return;
+
+    const normalized = normalizeBooknodeCoverUrl(trimmed);
+    if (!normalized || seenUrls.has(normalized)) return;
+
+    const mediaKey = booknodeCoverMediaKey(normalized);
+    if (mediaKey) {
+      if (seenMediaKeys.has(mediaKey)) return;
+      seenMediaKeys.add(mediaKey);
+    }
+
+    seenUrls.add(normalized);
+    urls.push(normalized);
+  };
+
+  for (const match of content.matchAll(
+    /!\[[^\]]*\]\((https:\/\/cdn1\.booknode\.com\/book_cover\/[^)\s]+)\)/gi,
+  )) {
+    pushRaw(match[1]);
+  }
+
+  for (const match of content.matchAll(BOOKNODE_COVER_URL_RE)) {
+    pushRaw(match[0]);
+  }
+
+  for (const match of content.matchAll(
+    /(?:src|href)=["'](https:\/\/cdn1\.booknode\.com\/book_cover\/[^"']+)["']/gi,
+  )) {
+    pushRaw(match[1]);
+  }
+
+  return urls;
 }
 
 function markdownGenres(html: string): string[] | undefined {
@@ -352,6 +507,10 @@ export function parseBooknodeBookPage(
     )?.[1] ||
     markdownCoverUrl(html);
   const markdownSeriesData = markdownSeries(html);
+  const schemaPublisher = firstSchemaValue(
+    (book?.publisher as { name?: unknown } | undefined)?.name ??
+      book?.publisher,
+  );
 
   return {
     id:
@@ -365,6 +524,7 @@ export function parseBooknodeBookPage(
     authors: schemaNames(book?.author).length
       ? schemaNames(book?.author)
       : markdownAuthors(html),
+    publisher: schemaPublisher || markdownPublisher(html),
     genres: schemaNames(book?.genre).length
       ? schemaNames(book?.genre)
       : markdownGenres(html),
@@ -378,6 +538,10 @@ export function parseBooknodeBookPage(
     seriesPosition:
       parseNumber(series?.position) ||
       parseNumber(volumeNumberFromTitle(cleanTitle)),
+    priceOffers: (() => {
+      const offers = parseBooknodePriceOffers(html);
+      return offers.length > 0 ? offers : undefined;
+    })(),
   };
 }
 
@@ -418,25 +582,33 @@ export function parseBooknodeSearchCandidates(
   return candidates;
 }
 
-async function fetchWithReader(url: string): Promise<string | null> {
+async function fetchWithReader(
+  url: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
   try {
     const response = await axios.get(`${BOOKNODE_READER_URL_PREFIX}${url}`, {
       responseType: "text",
       transformResponse: [(data) => data],
       timeout: 12_000,
       validateStatus: () => true,
+      signal,
     });
     const markdown = String(response.data || "");
     if (response.status < 400 && markdown.includes("URL Source:")) {
       return markdown;
     }
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     return null;
   }
   return null;
 }
 
-async function fetchBooknodePage(url: string): Promise<string | null> {
+async function fetchBooknodePage(
+  url: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
   try {
     const response = await axios.get(url, {
       headers: BOOKNODE_HEADERS,
@@ -444,15 +616,35 @@ async function fetchBooknodePage(url: string): Promise<string | null> {
       transformResponse: [(data) => data],
       timeout: 6000,
       validateStatus: () => true,
+      signal,
     });
     const html = String(response.data || "");
     if (response.status < 400 && !isCloudflareBlock(html)) return html;
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     // Fall through to reader/FlareSolverr when direct access fails.
   }
-  const readerHtml = await fetchWithReader(url);
+  const readerHtml = await fetchWithReader(url, signal);
   if (readerHtml) return readerHtml;
-  return fetchWithFlareSolverr(url);
+  return fetchWithFlareSolverr(url, undefined, signal);
+}
+
+async function enrichBooknodeWithCovers(
+  book: BooknodeBook,
+  signal?: AbortSignal,
+): Promise<BooknodeBook> {
+  const coversUrl = `${book.sourceUrl.replace(/\/$/, "")}/covers`;
+  const coversHtml = await fetchBooknodePage(coversUrl, signal);
+  if (!coversHtml) return book;
+
+  const coverImages = parseBooknodeCoverUrls(coversHtml);
+  if (coverImages.length === 0) return book;
+
+  return {
+    ...book,
+    coverImages,
+    imageUrl: book.imageUrl || coverImages[0],
+  };
 }
 
 function searchUrlFor(query: string): string {
@@ -466,21 +658,26 @@ function booknodePageUrlAlternates(url: string): string[] {
 
 export async function fetchBooknodeMetadata(
   query: string,
+  signal?: AbortSignal,
 ): Promise<BooknodeBook | null> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
 
   if (isBooknodeUrl(trimmedQuery) && isBooknodeBookUrl(trimmedQuery)) {
     for (const url of booknodePageUrlAlternates(trimmedQuery)) {
-      const html = await fetchBooknodePage(url);
+      const html = await fetchBooknodePage(url, signal);
       const book = html ? parseBooknodeBookPage(html, url) : null;
-      if (book) return book;
+      if (book) return enrichBooknodeWithCovers(book, signal);
     }
     return null;
   }
 
   for (const searchQuery of buildSearchQueries(trimmedQuery)) {
-    const searchHtml = await fetchBooknodePage(searchUrlFor(searchQuery));
+    throwIfAborted(signal);
+    const searchHtml = await fetchBooknodePage(
+      searchUrlFor(searchQuery),
+      signal,
+    );
     if (!searchHtml) continue;
 
     const candidates = parseBooknodeSearchCandidates(searchHtml).filter(
@@ -489,7 +686,7 @@ export async function fetchBooknodeMetadata(
 
     for (const candidate of candidates.slice(0, 8)) {
       for (const url of booknodePageUrlAlternates(candidate.url)) {
-        const html = await fetchBooknodePage(url);
+        const html = await fetchBooknodePage(url, signal);
         if (!html) continue;
         const product = parseBooknodeBookPage(html, url);
         if (product && isCandidateAligned(trimmedQuery, product.title)) {
@@ -499,7 +696,7 @@ export async function fetchBooknodeMetadata(
           ) {
             continue;
           }
-          return product;
+          return enrichBooknodeWithCovers(product, signal);
         }
       }
     }
@@ -532,4 +729,38 @@ export async function getBooknodeSuggestions(name: string): Promise<string[]> {
   }
 
   return titles;
+}
+
+export function collectBooknodeMappingSignals(content: string): string[] {
+  return collectMarkdownMappingSignals(content);
+}
+
+export async function collectBooknodeMappingRawKeys(
+  query: string,
+): Promise<string[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  let urls: string[] = [];
+  if (isBooknodeBookUrl(trimmed)) {
+    urls = booknodePageUrlAlternates(trimmed);
+  } else {
+    const searchHtml = await fetchBooknodePage(searchUrlFor(trimmed));
+    const candidate = searchHtml
+      ? parseBooknodeSearchCandidates(searchHtml)[0]?.url
+      : undefined;
+    if (candidate) urls = booknodePageUrlAlternates(candidate);
+  }
+
+  const signalSets: string[][] = [];
+  for (const url of urls.slice(0, 2)) {
+    const html = await fetchBooknodePage(url);
+    if (html) signalSets.push(collectBooknodeMappingSignals(html));
+    const coversHtml = await fetchBooknodePage(
+      `${url.replace(/\/$/, "")}/covers`,
+    );
+    if (coversHtml) signalSets.push(collectBooknodeMappingSignals(coversHtml));
+  }
+
+  return mergeMappingSignalSets(...signalSets);
 }

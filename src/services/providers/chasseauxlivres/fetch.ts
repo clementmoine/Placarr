@@ -2,6 +2,7 @@ import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
+import { isAbortError } from "@/lib/http/abort";
 
 export interface ChasseAuxLivresProduct {
   name: string;
@@ -34,6 +35,7 @@ const CHASSE_FLARESOLVERR_TIMEOUT_MS = 25_000;
 
 async function fetchChassePageHtml(
   url: string,
+  signal?: AbortSignal,
 ): Promise<{ html: string; finalUrl: string } | null> {
   try {
     const response = await axios.get(url, {
@@ -41,19 +43,22 @@ async function fetchChassePageHtml(
       timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
       responseType: "text",
       transformResponse: [(body) => body],
+      signal,
     });
     const html = String(response.data || "");
     const finalUrl = response.request?.res?.responseUrl || url;
     if (!isProtectedLoginPage(html, finalUrl)) {
       return { html, finalUrl };
     }
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     // Fall through to FlareSolverr when direct access is blocked.
   }
 
   const flareHtml = await fetchWithFlareSolverr(
     url,
     CHASSE_FLARESOLVERR_TIMEOUT_MS,
+    signal,
   );
   if (!flareHtml || isProtectedLoginPage(flareHtml, url)) {
     return null;
@@ -372,21 +377,26 @@ function searchResultCandidates(
 async function fetchSearchResults(
   hash: string,
   limit: number,
+  signal?: AbortSignal,
 ): Promise<ChasseSearchPayload> {
   const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=${limit}`;
   const resultsRes = await axios.get(resultsUrl, {
     headers: CHASSE_AUX_LIVRES_HEADERS,
     timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
+    signal,
   });
   return resultsRes.data as ChasseSearchPayload;
 }
 
-async function fetchProductPage(productUrl: string): Promise<{
+async function fetchProductPage(
+  productUrl: string,
+  signal?: AbortSignal,
+): Promise<{
   url: string;
   html: string;
   product: ChasseAuxLivresProduct;
 } | null> {
-  const page = await fetchChassePageHtml(productUrl);
+  const page = await fetchChassePageHtml(productUrl, signal);
   if (!page) return null;
   const product = parseChasseAuxLivresProductPage(page.html, page.finalUrl);
   return product ? { url: page.finalUrl, html: page.html, product } : null;
@@ -396,6 +406,7 @@ async function resolveChasseAuxLivresProductPage(
   query: string,
   catalog: string,
   validateProduct?: ChasseProductValidator,
+  signal?: AbortSignal,
 ): Promise<{
   url: string;
   html: string;
@@ -403,7 +414,7 @@ async function resolveChasseAuxLivresProductPage(
 } | null> {
   const directProductUrl = chasseProductUrlFromQuery(query);
   if (directProductUrl) {
-    const page = await fetchProductPage(directProductUrl);
+    const page = await fetchProductPage(directProductUrl, signal);
     if (!page) return null;
     if (validateProduct && !validateProduct(page.product)) return null;
     return page;
@@ -415,6 +426,7 @@ async function resolveChasseAuxLivresProductPage(
     responseType: "text",
     transformResponse: [(data) => data],
     timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
+    signal,
   });
   const html = String(initialRes.data || "");
   const finalUrl = initialRes.request?.res?.responseUrl || "";
@@ -433,9 +445,9 @@ async function resolveChasseAuxLivresProductPage(
   for (const limit of [8, 1]) {
     let data: ChasseSearchPayload;
     try {
-      data = await fetchSearchResults(hashMatch[1], limit);
+      data = await fetchSearchResults(hashMatch[1], limit, signal);
     } catch (error) {
-      if (limit === 1) throw error;
+      if (isAbortError(error) || limit === 1) throw error;
       continue;
     }
     for (const url of searchResultCandidates(data)) {
@@ -445,7 +457,7 @@ async function resolveChasseAuxLivresProductPage(
   }
 
   for (const productUrl of candidateUrls) {
-    const page = await fetchProductPage(productUrl);
+    const page = await fetchProductPage(productUrl, signal);
     if (!page) continue;
     if (!validateProduct || validateProduct(page.product)) return page;
   }
@@ -456,7 +468,10 @@ async function resolveChasseAuxLivresProductPage(
 export async function fetchChasseAuxLivresMetadataProduct(
   query: string,
   catalog = "fr",
-  options: { validateProduct?: ChasseProductValidator } = {},
+  options: {
+    validateProduct?: ChasseProductValidator;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<ChasseAuxLivresProduct | null> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
@@ -466,10 +481,12 @@ export async function fetchChasseAuxLivresMetadataProduct(
       trimmedQuery,
       catalog,
       options.validateProduct,
+      options.signal,
     );
     if (!page) return null;
     return page.product || parseChasseAuxLivresProductPage(page.html, page.url);
   } catch (error) {
+    if (isAbortError(error)) throw error;
     console.warn(
       `[ChasseAuxLivres] Metadata lookup failed for query ${trimmedQuery}: ${describeChasseError(error)}`,
     );

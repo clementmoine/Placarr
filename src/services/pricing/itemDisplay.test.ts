@@ -8,10 +8,15 @@ const h = vi.hoisted(() => ({
   shouldRefreshPriceCache: vi.fn(),
   alignBarcodePricesForItemNames: vi.fn((_type, _names, prices) => prices),
   after: vi.fn(),
+  runBackgroundWork: vi.fn((task: () => Promise<unknown>) => task()),
 }));
 
 vi.mock("next/server", () => ({
   after: h.after,
+}));
+
+vi.mock("@/lib/jobs/backgroundWorkQueue", () => ({
+  runBackgroundWork: h.runBackgroundWork,
 }));
 
 vi.mock("@/lib/pricing/cachePolicy", () => ({
@@ -30,6 +35,8 @@ vi.mock("@/services/pricing/resolver", () => ({
 import {
   itemPricesContextFromRecord,
   readItemPrices,
+  refreshItemPricesFromContext,
+  resetPriceRefreshStateForTests,
   scheduleItemPricesRefresh,
   scheduleItemPricesRefreshBatch,
   summarizeListItemPrices,
@@ -48,6 +55,7 @@ const CONTEXT = itemPricesContextFromRecord({
 describe("readItemPrices", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    resetPriceRefreshStateForTests();
   });
 
   it("returns cached prices and schedules refresh when stale", async () => {
@@ -89,6 +97,37 @@ describe("readItemPrices", () => {
     expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
   });
 
+  it("reads barcode summary only while metadata refresh is active", async () => {
+    h.getCachedBarcodePrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-01-01"),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    await readItemPrices(
+      itemPricesContextFromRecord({
+        id: "alice-1",
+        name: "Alice : Retour au pays de la folie",
+        barcode: "5030931097140",
+        metadataRefreshStartedAt: new Date().toISOString(),
+        shelf: { type: "games", name: "Xbox 360" },
+      }),
+    );
+
+    expect(h.getCachedBarcodePrices).toHaveBeenCalledWith(
+      "5030931097140",
+      "games",
+      expect.objectContaining({ summaryOnly: true }),
+    );
+    expect(h.refreshBarcodePrices).not.toHaveBeenCalled();
+    expect(h.after).not.toHaveBeenCalled();
+  });
+
   it("does not block shelf reads when cache is missing", async () => {
     h.getCachedItemPrices.mockResolvedValue(null);
 
@@ -98,11 +137,61 @@ describe("readItemPrices", () => {
     expect(h.refreshItemPrices).not.toHaveBeenCalled();
     expect(h.after).toHaveBeenCalledTimes(1);
   });
+
+  it("does not schedule price refresh while metadata refresh is active", async () => {
+    h.getCachedItemPrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-01-01"),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+    h.shouldRefreshPriceCache.mockReturnValue(true);
+
+    await readItemPrices({
+      ...CONTEXT,
+      metadataRefreshStartedAt: new Date().toISOString(),
+    });
+
+    expect(h.after).not.toHaveBeenCalled();
+  });
+
+  it("falls back to metadata price facts when the price cache is empty", async () => {
+    h.getCachedItemPrices.mockResolvedValue(null);
+
+    const prices = await readItemPrices(
+      {
+        ...CONTEXT,
+        metadataFacts: [
+          {
+            kind: "price",
+            label: "Neuf dès",
+            value: "7,30 €",
+            source: "booknode",
+          },
+          {
+            kind: "price",
+            label: "Occasion dès",
+            value: "1,98 €",
+            source: "booknode",
+          },
+        ],
+      },
+      { blockWhenMissing: false },
+    );
+
+    expect(prices?.priceNew).toBe(730);
+    expect(prices?.priceUsed).toBe(198);
+  });
 });
 
 describe("scheduleItemPricesRefresh", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    resetPriceRefreshStateForTests();
   });
 
   it("runs the refresh inside after()", async () => {
@@ -124,11 +213,180 @@ describe("scheduleItemPricesRefresh", () => {
     await task();
     expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
   });
+
+  it("dedupes repeated schedules for the same item", async () => {
+    h.refreshItemPrices.mockResolvedValue({
+      priceNew: 1500,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    scheduleItemPricesRefresh(CONTEXT);
+    scheduleItemPricesRefresh(CONTEXT);
+
+    expect(h.after).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips scheduling while metadata refresh is active", () => {
+    scheduleItemPricesRefresh({
+      ...CONTEXT,
+      metadataRefreshStartedAt: new Date().toISOString(),
+    });
+
+    expect(h.after).not.toHaveBeenCalled();
+  });
+
+  it("skips scheduling when marketplace refresh started recently", async () => {
+    h.getCachedItemPrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-01-01"),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+    h.refreshItemPrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    await refreshItemPricesFromContext(CONTEXT);
+    h.after.mockClear();
+    scheduleItemPricesRefresh(CONTEXT);
+    expect(h.after).not.toHaveBeenCalled();
+  });
+});
+
+describe("refreshItemPricesFromContext", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    resetPriceRefreshStateForTests();
+  });
+
+  it("dedupes concurrent refreshes for the same barcode", async () => {
+    let resolveRefresh!: (value: Awaited<ReturnType<typeof h.refreshBarcodePrices>>) => void;
+    const refreshPromise = new Promise<
+      Awaited<ReturnType<typeof h.refreshBarcodePrices>>
+    >((resolve) => {
+      resolveRefresh = resolve;
+    });
+    h.refreshBarcodePrices.mockReturnValue(refreshPromise);
+
+    const barcodeContext = itemPricesContextFromRecord({
+      id: "alice-1",
+      name: "Alice : Retour au pays de la folie",
+      barcode: "5030931097140",
+      metadata: {
+        title: "Alice: Madness Returns",
+        aliases: JSON.stringify([
+          "Alice: Madness Returns",
+          "Alice 2",
+          "Return of American McGee's Alice",
+        ]),
+      },
+      shelf: { type: "games", name: "Xbox 360" },
+    });
+
+    const first = refreshItemPricesFromContext(barcodeContext);
+    const second = refreshItemPricesFromContext(barcodeContext);
+
+    expect(h.refreshBarcodePrices).toHaveBeenCalledTimes(1);
+    expect(h.refreshBarcodePrices).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraNames: ["Alice: Madness Returns"],
+      }),
+    );
+
+    resolveRefresh({
+      priceNew: 1200,
+      priceUsed: 600,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    await Promise.all([first, second]);
+  });
+
+  it("returns cached prices instead of re-querying marketplaces within five minutes", async () => {
+    h.getCachedItemPrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-01-01"),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+    h.refreshItemPrices.mockResolvedValue({
+      priceNew: 2499,
+      priceUsed: 1299,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    await refreshItemPricesFromContext(CONTEXT);
+    expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
+
+    h.refreshItemPrices.mockClear();
+    const cached = await refreshItemPricesFromContext(CONTEXT);
+    expect(h.refreshItemPrices).not.toHaveBeenCalled();
+    expect(cached?.priceNew).toBe(1999);
+  });
+
+  it("force refresh bypasses the five-minute marketplace cooldown", async () => {
+    h.getCachedItemPrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-01-01"),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+    h.refreshItemPrices.mockResolvedValue({
+      priceNew: 2499,
+      priceUsed: 1299,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    await refreshItemPricesFromContext(CONTEXT);
+    await refreshItemPricesFromContext(CONTEXT, { force: true });
+    expect(h.refreshItemPrices).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("summarizeListItemPrices", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    resetPriceRefreshStateForTests();
   });
 
   it("groups items by shelf type and merges batch price summaries", async () => {
@@ -185,6 +443,7 @@ describe("summarizeListItemPrices", () => {
 describe("scheduleItemPricesRefreshBatch", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    resetPriceRefreshStateForTests();
   });
 
   it("refreshes only items whose cache is missing or stale", async () => {

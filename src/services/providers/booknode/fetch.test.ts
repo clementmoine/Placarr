@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchBooknodeMetadata,
   parseBooknodeBookPage,
+  parseBooknodeCoverUrls,
+  parseBooknodePriceOffers,
   parseBooknodeSearchCandidates,
 } from "./fetch";
 
@@ -76,6 +78,56 @@ describe("Booknode provider", () => {
       seriesUrl: "https://booknode.com/serie/super-picsou-geant",
       seriesPosition: 1,
     });
+  });
+
+  it("extrait les liens d'achat neuf et occasion depuis le markdown Booknode", () => {
+    const offers = parseBooknodePriceOffers(bookMarkdown());
+    expect(offers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          retailer: "Amazon",
+          priceCents: 730,
+          condition: "new",
+        }),
+        expect.objectContaining({
+          retailer: "Fnac",
+          priceCents: 836,
+          condition: "new",
+        }),
+        expect.objectContaining({
+          retailer: "Amazon",
+          priceCents: 206,
+          condition: "used",
+        }),
+      ]),
+    );
+  });
+
+  it("extrait les prix depuis le markdown Booknode dans parseBooknodeBookPage", () => {
+    const book = parseBooknodeBookPage(
+      bookMarkdown(),
+      "https://booknode.com/super_picsou_geant_n_1_0379552",
+    );
+    expect(book?.priceOffers?.length).toBeGreaterThan(0);
+  });
+
+  it("extrait toutes les couvertures /covers depuis les URLs brutes du markdown", () => {
+    const covers = parseBooknodeCoverUrls(deathNoteCoversMarkdown());
+    expect(covers.length).toBeGreaterThanOrEqual(3);
+    expect(covers).toEqual(
+      expect.arrayContaining([
+        "https://cdn1.booknode.com/book_cover/987/full/death-note-tome-1-986958.jpg",
+        "https://cdn1.booknode.com/book_cover/3183/full/death-note-tome-1-3183443.jpg",
+        "https://cdn1.booknode.com/book_cover/553/full/death-note-tome-1-552530.jpg",
+      ]),
+    );
+    expect(
+      covers.filter(
+        (url) =>
+          url ===
+          "https://cdn1.booknode.com/book_cover/987/full/death-note-tome-1-986958.jpg",
+      ),
+    ).toHaveLength(1);
   });
 
   it("ignore les liens image et conserve les fiches livres dans les resultats de recherche", () => {
@@ -178,6 +230,14 @@ describe("Booknode provider", () => {
       .mockResolvedValueOnce({
         status: 200,
         data: bookMarkdown(),
+      })
+      .mockResolvedValueOnce({
+        status: 403,
+        data: "Attention Required! | Cloudflare",
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: "URL Source: https://booknode.com/super_picsou_geant_n_1_0379552/covers",
       });
 
     const book = await fetchBooknodeMetadata(
@@ -296,6 +356,25 @@ Picsou et les mousquetaires de l'espace
 
 Attention... Donald travaille !
 
+#### Acheter neuf
+
+[7.30 €Amazon](https://booknode.com/modules/buylink_redirect.php?idstore=2&idbook=379552&state=1&context=bookpage)
+[8.36 €Fnac](https://booknode.com/modules/buylink_redirect.php?idstore=32&idbook=379552&state=1&context=bookpage)
+
+#### Acheter d'occasion
+
+[2.06 €Amazon](https://booknode.com/modules/buylink_redirect.php?idstore=2&idbook=379552&state=0&context=bookpage)
+
 [Afficher en entier](javascript:void(0))
+  `;
+}
+
+function deathNoteCoversMarkdown() {
+  return `
+![Image 5](https://cdn1.booknode.com/book_cover/987/death_note_tome_1-986958-264-432.webp)
+https://cdn1.booknode.com/book_cover/987/full/death-note-tome-1-986958.jpg
+https://cdn1.booknode.com/book_cover/3183/full/death-note-tome-1-3183443.jpg
+https://cdn1.booknode.com/book_cover/553/full/death-note-tome-1-552530.jpg
+https://cdn1.booknode.com/book_cover/987/death_note_tome_1-986958-264-432.webp
   `;
 }

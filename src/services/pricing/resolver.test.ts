@@ -557,6 +557,42 @@ describe("alignBarcodePricesForItemNames", () => {
     expect(aligned.priceObservations[0]?.source).toBe("Smartoys");
   });
 
+  it("drops a PC digital listing matched only through Neo Geo body text", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "games",
+      ["Shock Troopers"],
+      cachedBarcodePrices({
+        priceNew: 182,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceLastUpdated: new Date("2026-07-04T07:16:38.882Z"),
+        priceSources: ["LeDenicheur", "ChasseAuxLivres"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "LeDenicheur",
+            productName: "Shock Troopers Neo Geo (PC)",
+            condition: "new",
+            priceCents: 182,
+            observedAt: "2026-07-04T07:16:38.882Z",
+          }),
+          serializedPriceObservation({
+            source: "ChasseAuxLivres",
+            productName: null,
+            condition: "new",
+            priceCents: 7999,
+            observedAt: "2026-07-04T07:16:38.882Z",
+          }),
+        ],
+      }),
+      "NEO GEO AES+",
+    );
+
+    expect(aligned.priceNew).toBeNull();
+    expect(aligned.priceUsed).toBeNull();
+    expect(aligned.priceUsedCIB).toBeNull();
+    expect(aligned.priceObservations).toHaveLength(0);
+  });
+
   it("trims an isolated high outlier among aligned new prices", () => {
     const aligned = alignBarcodePricesForItemNames(
       "games",
@@ -677,6 +713,37 @@ describe("filterItemPriceOffers", () => {
     expect(filtered.map((row) => `${row.source}:${row.condition}`)).toEqual([
       "PriceCharting:loose",
       "ChocoBonPlan:new",
+    ]);
+  });
+
+  it("drops Metal Slug Tactics when the item is the Neo Geo base game", () => {
+    const filtered = filterItemPriceOffers(
+      "games",
+      "NEO GEO AES+",
+      ["Metal Slug"],
+      [
+        {
+          source: "PriceCharting",
+          condition: "loose",
+          priceCents: 13999,
+        },
+        {
+          source: "ChocoBonPlan",
+          productName: "Metal Slug Tactics sur Switch",
+          condition: "new",
+          priceCents: 1999,
+        },
+        {
+          source: "AchatMoinsCher",
+          productName: null,
+          condition: "new",
+          priceCents: 7350,
+        },
+      ],
+    );
+
+    expect(filtered.map((row) => `${row.source}:${row.condition}`)).toEqual([
+      "PriceCharting:loose",
     ]);
   });
 

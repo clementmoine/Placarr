@@ -286,6 +286,21 @@ describe("priceListingMatchesAnyItemName", () => {
     ).toBe(true);
   });
 
+  it("rejects franchise spinoff listings for the base game title", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Metal Slug"],
+        "Metal Slug Tactics sur Switch",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Metal Slug"],
+        "Metal Slug Super Vehicle-001",
+      ),
+    ).toBe(true);
+  });
+
   it("rejects a higher edition tier than the item names", () => {
     expect(
       priceListingMatchesAnyItemName(

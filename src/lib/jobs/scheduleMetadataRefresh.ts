@@ -233,23 +233,3 @@ export async function startItemMetadataRefresh(
   scheduleItemMetadataRefresh(input, session);
   return { startedAt: session.startedAt, generation: session.generation };
 }
-
-/** @deprecated Use beginItemMetadataRefresh */
-export async function markItemMetadataRefreshStarted(
-  itemId: string,
-): Promise<Date> {
-  const session = await beginItemMetadataRefresh(itemId);
-  return session.startedAt;
-}
-
-/** @deprecated Use finishItemMetadataRefresh */
-export async function clearItemMetadataRefreshStarted(
-  itemId: string,
-): Promise<void> {
-  const item = await prisma.item.findUnique({
-    where: { id: itemId },
-    select: { metadataRefreshGeneration: true },
-  });
-  if (!item) return;
-  await finishItemMetadataRefresh(itemId, item.metadataRefreshGeneration);
-}

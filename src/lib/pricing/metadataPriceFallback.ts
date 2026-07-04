@@ -28,10 +28,7 @@ function minCents(values: number[]): number | null {
 
 export function priceSummaryFromMetadataFacts(
   facts: MetadataFact[] | undefined,
-): Pick<
-  BarcodePricesResult,
-  "priceNew" | "priceUsed" | "priceUsedCIB"
-> | null {
+): Pick<BarcodePricesResult, "priceNew" | "priceUsed" | "priceUsedCIB"> | null {
   if (!facts?.length) return null;
 
   const newPrices: number[] = [];
@@ -76,6 +73,8 @@ export function metadataPriceFallback(
     ...summary,
     priceLastUpdated: null,
     priceSources: [],
+    priceSourceDisplayNames: [],
+    isReferencePriceOnly: false,
     priceObservations: [],
   };
 }

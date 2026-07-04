@@ -10,12 +10,10 @@ export async function isUnavailableCoverPlaceholderBuffer(
 ): Promise<boolean> {
   if (!buffer.length || buffer.length > 24_000) return false;
 
-  let meta: sharp.Metadata;
-  try {
-    meta = await sharp(buffer).metadata();
-  } catch {
-    return false;
-  }
+  const meta = await sharp(buffer)
+    .metadata()
+    .catch(() => null);
+  if (!meta) return false;
 
   const width = meta.width ?? 0;
   const height = meta.height ?? 0;

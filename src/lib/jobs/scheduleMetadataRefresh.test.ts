@@ -2,8 +2,6 @@ import { after } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  clearItemMetadataRefreshStarted,
-  markItemMetadataRefreshStarted,
   scheduleItemMetadataRefresh,
   shelfMoveMetadataResetData,
   startItemMetadataRefresh,
@@ -78,21 +76,6 @@ describe("scheduleItemMetadataRefresh", () => {
     });
     expect(mockedAfter).toHaveBeenCalledTimes(1);
     expect(mockedFetchAndStore).not.toHaveBeenCalled();
-  });
-
-  it("can mark and clear refresh state independently", async () => {
-    mockRefreshSession(2);
-    const startedAt = await markItemMetadataRefreshStarted("item-2");
-    mockedFindUnique.mockResolvedValueOnce({
-      metadataRefreshGeneration: 2,
-    } as never);
-    await clearItemMetadataRefreshStarted("item-2");
-
-    expect(startedAt).toBeInstanceOf(Date);
-    expect(mockedUpdateMany).toHaveBeenCalledWith({
-      where: { id: "item-2", metadataRefreshGeneration: 2 },
-      data: { metadataRefreshStartedAt: null },
-    });
   });
 
   it("schedules background work without blocking the caller", () => {

@@ -96,6 +96,8 @@ export type ScoredAttachmentInput = {
    */
   isFullWrapCoverSource?: boolean;
   strictShelfPlatformCoverSource?: boolean;
+  /** Provider-declared game-media gallery source; kept visible on platform shelves. */
+  isGameMediaGallerySource?: boolean;
   providerImageScoreAdjustment?: number;
   /**
    * Provider-declared, URL-derived source context of the image

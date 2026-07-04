@@ -729,4 +729,29 @@ describe("attachmentDisplayScore", () => {
       ]),
     ).toBe(true);
   });
+
+  it("keeps game-media gallery covers when a marketplace listing anchors the shelf platform", () => {
+    const icollectCover = {
+      type: "cover" as const,
+      source: "icollect",
+      role: "marketplace",
+      url: "/uploads/icollect-xbox360.jpg",
+      title:
+        "Alice: Retour Au Pays De La Folie - Microsoft Xbox 360 (Boite Et Notice) - Main Image 1",
+    };
+    const screenScraperCover = {
+      type: "cover" as const,
+      source: "screenscraper",
+      role: "eu",
+      url: "/uploads/ss-eu.jpg",
+      isGameMediaGallerySource: true,
+    };
+
+    expect(
+      shouldShowCoverAttachmentOnShelf(screenScraperCover, "xbox360", [
+        icollectCover,
+        screenScraperCover,
+      ]),
+    ).toBe(true);
+  });
 });

@@ -5,6 +5,7 @@ import {
   metadataCandidatesForType,
 } from "@/services/metadata/selection";
 import { resolveMetadataProvidersInOrder } from "@/lib/metadata/providerQueue";
+import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { metadataProviderResolverMap } from "@/services/provider/bootstrap";
 import { loadBarcodeAlternateNames } from "@/lib/barcode/alternateNames";
 import { pickDiscoveredBarcode } from "@/lib/barcode/normalize";
@@ -47,7 +48,7 @@ import { buildBoardGameMetadataSearchQueries } from "@/lib/metadata/boardGame";
 import { buildBookMetadataSearchQueries } from "@/lib/metadata/bookSearch";
 import { buildPriceSearchQueries } from "@/lib/pricing/searchQueries";
 import { preferredMetadataLanguagesFromShelfName } from "@/lib/metadata/shelfContentLocale";
-import { resolveGameMetadataPlatform } from "@/lib/metadata/platform";
+import { resolveGameMetadataPlatform, detectShelfGamePlatformKey } from "@/lib/metadata/platform";
 import { inferTextLanguage } from "@/lib/locale/preference";
 import { throwIfAborted, isAbortError } from "@/lib/http/abort";
 
@@ -57,8 +58,98 @@ import {
   metadataResultsHaveGameGallerySource,
 } from "@/lib/metadata/galleryEnrichment";
 
+// Independent providers in the fallback / recheck / edition-supplement passes
+// run concurrently under this cap. Each call is still serialized by its own
+// per-provider queue (rate limits and min-intervals are honoured); the cap only
+// bounds how many providers we await — and parse — at once, so a single item
+// can't spike the event loop the way a full parallel fan-out would.
+const METADATA_RESOLVE_CONCURRENCY = 5;
+
 function metadataHasDescription(metadata: MetadataResult): boolean {
   return Boolean(metadata.description?.trim());
+}
+
+/** Provider already pinned a record — title recheck / fallback names won't help. */
+function metadataResultIsPinnedForRecheck(result: MetadataResult): boolean {
+  const externalIds = result.externalIds;
+  if (
+    !externalIds ||
+    !Object.values(externalIds).some(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    )
+  ) {
+    return false;
+  }
+  if (metadataHasDisplayImage(result)) return true;
+  return metadataResultsHaveGameGallerySource([result]);
+}
+
+function metadataResultHasTitleAndCover(result: MetadataResult): boolean {
+  return Boolean(result.title?.trim()) && metadataHasDisplayImage(result);
+}
+
+function metadataSnapshotHasTitleAndCover(
+  results: Array<MetadataResult | null | undefined>,
+): boolean {
+  return results.some(
+    (result) => result && metadataResultHasTitleAndCover(result),
+  );
+}
+
+function metadataSnapshotHasPinnedGame(
+  results: Array<MetadataResult | null | undefined>,
+): boolean {
+  return results.some((result) => {
+    const externalIds = result?.externalIds;
+    if (!externalIds) return false;
+    return Object.values(externalIds).some(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    );
+  });
+}
+
+/** Max title-variant attempts in the metadata fallback pass (traits, not provider ids). */
+function metadataFallbackQueryLimit(
+  provider: ProviderInfo,
+  cleanedBarcode: string,
+): number {
+  const throttleFallbackNames =
+    provider.rateLimited ||
+    provider.requiresTitleAlignment ||
+    provider.slowScanScrape ||
+    provider.isSecondary === true;
+
+  if (cleanedBarcode) {
+    return throttleFallbackNames ? 1 : 2;
+  }
+  return throttleFallbackNames ? 2 : 6;
+}
+
+/** Stage-1 canonical providers with strict quotas must not re-run the fallback pass. */
+function shouldSkipRateLimitedStageOneFallback(
+  provider: ProviderInfo,
+  existing: MetadataResult | null | undefined,
+  type: MediaType,
+  activeResults: MetadataResult[],
+  cleanedBarcode: string,
+): boolean {
+  if (provider.isSecondary || !provider.rateLimited) return false;
+  if (existing && metadataResultIsPinnedForRecheck(existing)) {
+    return true;
+  }
+  if (
+    existing &&
+    shouldResolveProviderForGallery(
+      type,
+      provider,
+      existing,
+      activeResults,
+      cleanedBarcode,
+    )
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function stage1HasMetadataCapability(
@@ -205,6 +296,88 @@ function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
   );
 }
 
+function isPlatformSpecificGameShelf(
+  shelfName?: string | null,
+): boolean {
+  return Boolean(detectShelfGamePlatformKey(shelfName));
+}
+
+function shouldFetchGameGallerySourceInStage2(
+  type: MediaType,
+  provider: ProviderInfo,
+  stage1NeedsGallery: boolean,
+  stage1ActiveResults: MetadataResult[],
+  existing: MetadataResult | null | undefined,
+  cleanedBarcode: string,
+  shelfName?: string | null,
+): boolean {
+  if (!shouldAlwaysFetchGameGallerySource(provider)) return false;
+  if (type === "games" && isPlatformSpecificGameShelf(shelfName)) return true;
+  if (!stage1NeedsGallery) return false;
+  return shouldResolveProviderForGallery(
+    type,
+    provider,
+    existing,
+    stage1ActiveResults,
+    cleanedBarcode,
+  );
+}
+
+function shouldSkipRedundantGameScrapeRound(
+  type: MediaType,
+  provider: ProviderInfo,
+  activeResults: MetadataResult[],
+  needsGallery: boolean,
+  shelfName?: string | null,
+  cleanedBarcode?: string,
+): boolean {
+  if (type !== "games") return false;
+  if (needsGallery) return false;
+
+  if (shouldAlwaysFetchGameGallerySource(provider)) {
+    if (!isPlatformSpecificGameShelf(shelfName)) {
+      if (metadataResultsHaveGameGallerySource(activeResults)) return true;
+    }
+  }
+
+  const caps = metadataCapabilitiesOf(provider);
+  if (caps.includes("duration")) return false;
+  if (!metadataSnapshotHasTitleAndCover(activeResults)) return false;
+  if (cleanedBarcode && !metadataSnapshotHasPinnedGame(activeResults)) {
+    return false;
+  }
+  if (provider.auth.kind !== "scrape") return false;
+
+  if (provider.isSecondary) return true;
+
+  return !shouldAlwaysFetchGameGallerySource(provider);
+}
+
+/** Secondary providers need not retry title variants when the merge snapshot is complete. */
+function shouldSkipMetadataFallbackProvider(
+  type: MediaType,
+  provider: ProviderInfo,
+  existing: MetadataResult | null | undefined,
+  activeResults: MetadataResult[],
+  needsGallery: boolean,
+  shelfName?: string | null,
+  cleanedBarcode?: string,
+): boolean {
+  if (existing && metadataResultIsPinnedForRecheck(existing)) {
+    return true;
+  }
+  if (existing) return false;
+
+  return shouldSkipRedundantGameScrapeRound(
+    type,
+    provider,
+    activeResults,
+    needsGallery,
+    shelfName,
+    cleanedBarcode,
+  );
+}
+
 function shouldResolveProviderForGallery(
   type: MediaType,
   provider: ProviderInfo,
@@ -280,55 +453,61 @@ async function supplementGameEditionProviderResults(
 
   const alignmentNames = [requestedName, baseTitle];
 
-  for (const providerInfo of providers) {
-    if (!providerInfo.capabilities.includes("identify")) continue;
-    if (isMetadataProviderQuotaBlocked(providerInfo.id)) continue;
+  // Each provider re-searches the base title independently and writes only its
+  // own entry, so run them concurrently under the shared cap.
+  await runWithConcurrency(
+    providers,
+    METADATA_RESOLVE_CONCURRENCY,
+    async (providerInfo) => {
+      if (!providerInfo.capabilities.includes("identify")) return;
+      if (isMetadataProviderQuotaBlocked(providerInfo.id)) return;
 
-    const providerId = providerInfo.id;
-    const adapter = metadataProviderResolverMap.get(providerId);
-    if (!adapter) continue;
+      const providerId = providerInfo.id;
+      const adapter = metadataProviderResolverMap.get(providerId);
+      if (!adapter) return;
 
-    throwIfAborted(context.signal);
+      throwIfAborted(context.signal);
 
-    const editionMetadata = byProvider.get(providerId) ?? null;
-    if (
-      editionMetadata &&
-      !isMetadataTitleAligned(editionMetadata, alignmentNames, 0.58)
-    ) {
-      continue;
-    }
+      const editionMetadata = byProvider.get(providerId) ?? null;
+      if (
+        editionMetadata &&
+        !isMetadataTitleAligned(editionMetadata, alignmentNames, 0.58)
+      ) {
+        return;
+      }
 
-    let baseResult: MetadataResult | null = null;
-    try {
-      baseResult = await adapter.resolve({
-        ...adapterContextBase,
-        name: baseTitle,
-        lookupQueries: lookupQueriesForName(baseTitle),
-        imdbId: context.imdbId,
-        externalIds: context.externalIds,
-        fallbackNames: context.fallbackNames,
-      });
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      continue;
-    }
+      let baseResult: MetadataResult | null = null;
+      try {
+        baseResult = await adapter.resolve({
+          ...adapterContextBase,
+          name: baseTitle,
+          lookupQueries: lookupQueriesForName(baseTitle),
+          imdbId: context.imdbId,
+          externalIds: context.externalIds,
+          fallbackNames: context.fallbackNames,
+        });
+      } catch (error) {
+        if (isAbortError(error)) throw error;
+        return;
+      }
 
-    if (
-      !baseResult ||
-      !isMetadataTitleAligned(baseResult, alignmentNames, 0.58)
-    ) {
-      continue;
-    }
+      if (
+        !baseResult ||
+        !isMetadataTitleAligned(baseResult, alignmentNames, 0.58)
+      ) {
+        return;
+      }
 
-    const editionStub: MetadataResult = editionMetadata ?? {
-      title: requestedName.trim(),
-    };
+      const editionStub: MetadataResult = editionMetadata ?? {
+        title: requestedName.trim(),
+      };
 
-    byProvider.set(
-      providerId,
-      supplementGameEditionMetadata(requestedName, editionStub, baseResult),
-    );
-  }
+      byProvider.set(
+        providerId,
+        supplementGameEditionMetadata(requestedName, editionStub, baseResult),
+      );
+    },
+  );
 }
 
 function metadataAlignmentNames(
@@ -371,6 +550,7 @@ export async function fetchMetadata(
   options?: {
     isBackground?: boolean;
     shelfName?: string | null;
+    queuePriority?: "high" | "normal";
     signal?: AbortSignal;
   },
 ): Promise<MetadataResult | null> {
@@ -422,6 +602,8 @@ export async function fetchMetadata(
     shelfName: options?.shelfName,
     lookupQueries,
     isBackground: options?.isBackground,
+    queuePriority:
+      options?.queuePriority ?? (options?.isBackground ? "normal" : "high"),
     signal: options?.signal,
   };
 
@@ -493,7 +675,19 @@ export async function fetchMetadata(
 
     const toResolve = secondaryProviders.filter((p) => {
       if (isMetadataProviderQuotaBlocked(p.id)) return false;
-      if (shouldAlwaysFetchGameGallerySource(p)) return true;
+      if (
+        shouldFetchGameGallerySourceInStage2(
+          type,
+          p,
+          stage1NeedsGallery,
+          stage1ActiveResults,
+          byProvider.get(p.id) ?? null,
+          cleanedBarcode,
+          options?.shelfName,
+        )
+      ) {
+        return true;
+      }
       if (
         stage1NeedsGallery &&
         shouldResolveProviderForGallery(
@@ -507,6 +701,18 @@ export async function fetchMetadata(
         return true;
       }
       if (p.auth.kind !== "scrape") return true;
+      if (
+        shouldSkipRedundantGameScrapeRound(
+          type,
+          p,
+          stage1ActiveResults,
+          stage1NeedsGallery,
+          options?.shelfName,
+          cleanedBarcode,
+        )
+      ) {
+        return false;
+      }
       const caps = metadataCapabilitiesOf(p);
       return caps.some(
         (cap) => !stage1HasMetadataCapability(stage1Results, cap),
@@ -559,125 +765,148 @@ export async function fetchMetadata(
   }
   const finalImdbId = finalExternalIds.imdb;
 
-  // 5. Fallback Pass: retry missing search-capable providers using fallback names
-  for (const providerId of providers.map((p) => p.id)) {
-    throwIfAborted(options?.signal);
-    const existing = byProvider.get(providerId);
-    const providerInfo = providers.find((p) => p.id === providerId);
-    if (!providerInfo?.capabilities.includes("identify")) continue;
-    if (isMetadataProviderQuotaBlocked(providerId)) continue;
+  // 5. Fallback Pass: retry missing search-capable providers using fallback
+  // names. Gating (which providers to run) is decided once against the
+  // post-stage-2 snapshot; the providers themselves are independent, so they run
+  // concurrently and their results are applied in registry order to keep the
+  // downstream merge deterministic regardless of completion order.
+  const fallbackSnapshot = Array.from(byProvider.values()).filter(
+    Boolean,
+  ) as MetadataResult[];
+  const fallbackNeedsGallery = metadataResultsNeedGalleryEnrichment(
+    type,
+    fallbackSnapshot,
+    cleanedBarcode,
+  );
 
-    const activeForGallery = Array.from(byProvider.values()).filter(
-      Boolean,
-    ) as MetadataResult[];
-    const needsGallery = metadataResultsNeedGalleryEnrichment(
-      type,
-      activeForGallery,
-      cleanedBarcode,
-    );
+  const fallbackProviderIds = providers
+    .filter((providerInfo) => {
+      if (!providerInfo.capabilities.includes("identify")) return false;
+      if (isMetadataProviderQuotaBlocked(providerInfo.id)) return false;
+      if (!metadataProviderResolverMap.get(providerInfo.id)) return false;
 
-    if (
-      existing &&
-      !shouldResolveProviderForGallery(
-        type,
-        providerInfo,
-        existing,
-        activeForGallery,
-        cleanedBarcode,
-      )
-    ) {
-      continue;
-    }
+      const existing = byProvider.get(providerInfo.id);
+      if (
+        shouldSkipRateLimitedStageOneFallback(
+          providerInfo,
+          existing,
+          type,
+          fallbackSnapshot,
+          cleanedBarcode,
+        )
+      ) {
+        return false;
+      }
+      if (
+        existing &&
+        !shouldResolveProviderForGallery(
+          type,
+          providerInfo,
+          existing,
+          fallbackSnapshot,
+          cleanedBarcode,
+        )
+      ) {
+        return false;
+      }
 
-    const hasTitleAndCover = activeForGallery.some(
-      (res) => res.title && res.imageUrl,
-    );
-    const hasPrice = activeForGallery.some((res) =>
-      res.facts?.some(
-        (f) =>
-          f.kind === "price" ||
-          f.kind === "estimated-value" ||
-          f.kind === "observed-price",
-      ),
-    );
+      if (
+        shouldSkipMetadataFallbackProvider(
+          type,
+          providerInfo,
+          existing,
+          fallbackSnapshot,
+          fallbackNeedsGallery,
+          options?.shelfName,
+          cleanedBarcode,
+        )
+      ) {
+        return false;
+      }
 
-    if (providerInfo.auth.kind === "scrape") {
-      const caps = metadataCapabilitiesOf(providerInfo);
-      // Duration providers (HowLongToBeat) always run for games so their
-      // playtimes are fetched and can be cross-checked against other sources —
-      // notably the 100% completion that IGDB's game_time_to_beats often omits.
-      // They are therefore never short-circuited by an existing time-to-beat.
-      const skip =
-        !shouldAlwaysFetchGameGallerySource(providerInfo) &&
-        hasTitleAndCover &&
-        !needsGallery &&
-        !caps.includes("duration") &&
-        (!caps.includes("price") || hasPrice);
-      if (skip) continue;
-    }
+      return true;
+    })
+    .map((providerInfo) => providerInfo.id);
 
-    const adapter = metadataProviderResolverMap.get(providerId);
-    if (!adapter) continue;
+  // adapter.resolve already routes through the per-provider queue
+  // (wrapMetadataProviderAdapter). Do NOT wrap it again in
+  // runQueuedMetadataProviderCall: on a concurrency-1 provider queue the outer
+  // task would hold the only slot while awaiting the inner task, which can never
+  // start — a re-entrant deadlock that hangs the request.
+  const fallbackResults = await runWithConcurrency(
+    fallbackProviderIds,
+    METADATA_RESOLVE_CONCURRENCY,
+    async (providerId) => {
+      throwIfAborted(options?.signal);
+      const providerInfo = providers.find((p) => p.id === providerId);
+      const adapter = metadataProviderResolverMap.get(providerId);
+      if (!providerInfo || !adapter) return { providerId, resolved: null };
 
-    // adapter.resolve already routes through the per-provider queue
-    // (wrapMetadataProviderAdapter). Do NOT wrap it again in
-    // runQueuedMetadataProviderCall: on a concurrency-1 provider queue the
-    // outer task would hold the only slot while awaiting the inner task,
-    // which can never start — a re-entrant deadlock that hangs the request.
-    const resolved = await resolveWithFallbackNames(
-      finalFallbackNames,
-      (fallbackName) =>
-        adapter.resolve({
-          ...adapterContextBase,
-          name: fallbackName,
-          lookupQueries: lookupQueriesForName(fallbackName),
-          imdbId: finalImdbId,
-          externalIds: finalExternalIds,
-          fallbackNames: finalFallbackNames,
-        }),
-      {
-        limit: providerInfo?.rateLimited ? 6 : 12,
-        validate: (candidate, fallbackName) =>
-          isMetadataTitleAligned(
-            candidate,
-            providerInfo.requiresTitleAlignment
-              ? [name, ...barcodeAlternateNames]
-              : [name, fallbackName, ...finalFallbackNames],
-            0.58,
-          ),
-      },
-    );
+      const resolved = await resolveWithFallbackNames(
+        finalFallbackNames,
+        (fallbackName) =>
+          adapter.resolve({
+            ...adapterContextBase,
+            name: fallbackName,
+            lookupQueries: lookupQueriesForName(fallbackName),
+            imdbId: finalImdbId,
+            externalIds: finalExternalIds,
+            fallbackNames: finalFallbackNames,
+          }),
+        {
+          limit: metadataFallbackQueryLimit(providerInfo, cleanedBarcode),
+          validate: (candidate, fallbackName) =>
+            isMetadataTitleAligned(
+              candidate,
+              providerInfo.requiresTitleAlignment
+                ? [name, ...barcodeAlternateNames]
+                : [name, fallbackName, ...finalFallbackNames],
+              0.58,
+            ),
+        },
+      );
 
-    if (resolved) {
-      byProvider.set(providerId, resolved);
-    }
+      return { providerId, resolved };
+    },
+  );
+
+  for (const { providerId, resolved } of fallbackResults) {
+    if (resolved) byProvider.set(providerId, resolved);
   }
 
-  for (const providerInfo of providers.filter((p) => p.metadataMatchRecheck)) {
-    const current = byProvider.get(providerInfo.id);
-    if (
-      !current ||
-      isMetadataProviderQuotaBlocked(providerInfo.id) ||
-      !shouldRecheckMetadataMatch(name, current, finalFallbackNames)
-    ) {
-      continue;
-    }
-    const adapter = metadataProviderResolverMap.get(providerInfo.id);
-    if (!adapter) continue;
-    const improved = await findBetterMetadataMatch(
-      name,
-      current,
-      finalFallbackNames,
-      (fallbackName) =>
-        adapter.resolve({
-          ...adapterContextBase,
-          name: fallbackName,
-          lookupQueries: lookupQueriesForName(fallbackName),
-        }),
-    );
-    if (improved) {
-      byProvider.set(providerInfo.id, improved);
-    }
+  const recheckResults = await runWithConcurrency(
+    providers.filter((p) => p.metadataMatchRecheck).map((p) => p.id),
+    METADATA_RESOLVE_CONCURRENCY,
+    async (providerId) => {
+      throwIfAborted(options?.signal);
+      const current = byProvider.get(providerId);
+      if (
+        !current ||
+        isMetadataProviderQuotaBlocked(providerId) ||
+        metadataResultIsPinnedForRecheck(current) ||
+        !shouldRecheckMetadataMatch(name, current, finalFallbackNames)
+      ) {
+        return { providerId, improved: null };
+      }
+      const adapter = metadataProviderResolverMap.get(providerId);
+      if (!adapter) return { providerId, improved: null };
+      const improved = await findBetterMetadataMatch(
+        name,
+        current,
+        finalFallbackNames,
+        (fallbackName) =>
+          adapter.resolve({
+            ...adapterContextBase,
+            name: fallbackName,
+            lookupQueries: lookupQueriesForName(fallbackName),
+          }),
+      );
+      return { providerId, improved };
+    },
+  );
+
+  for (const { providerId, improved } of recheckResults) {
+    if (improved) byProvider.set(providerId, improved);
   }
 
   if (type === "games") {
@@ -897,6 +1126,7 @@ export async function fetchMetadataByType(
   options?: {
     isBackground?: boolean;
     shelfName?: string | null;
+    queuePriority?: "high" | "normal";
     signal?: AbortSignal;
   },
 ): Promise<MetadataResult | null> {

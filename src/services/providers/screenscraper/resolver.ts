@@ -7,6 +7,7 @@ import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
 } from "@/lib/metadata/observations";
+import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
 import {
   detectScreenScraperSystemId,
   getPlatformKeyByScreenScraperSystemId,
@@ -39,7 +40,9 @@ import {
   getCachedScreenScraperSearch,
   getPersistedScreenScraperLookup,
   getScreenScraperInFlightLookup,
+  isScreenScraperLookupMissCached,
   isScreenScraperQuotaBlocked,
+  markScreenScraperLookupMiss,
   markScreenScraperQuotaHit,
   persistScreenScraperGameIdForBarcode,
   setScreenScraperInFlightLookup,
@@ -82,6 +85,9 @@ export interface SSMedia {
 // spine/side seen is ~8.7 KB), so a small `size` is a reliable, download-free
 // signal to drop these before they reach the gallery or cover picker.
 const SS_PLACEHOLDER_MAX_SIZE_BYTES = 4096;
+/** Hard cap on jeuRecherche calls per metadata lookup (fallback loops add up fast). */
+const MAX_SCREENSCRAPER_SEARCH_ATTEMPTS = 10;
+const MAX_CACHED_BARCODE_SUGGESTION_CANDIDATES = 3;
 
 export function isScreenScraperPlaceholderMedia(media: SSMedia): boolean {
   const size = Number(media.size);
@@ -143,6 +149,50 @@ function pickSSTitle(noms?: SSGame["noms"]): string | undefined {
     .sort((a, b) => regionRank(a.region) - regionRank(b.region))[0]?.text;
 }
 
+/** Pick the regional title that best matches what we searched for. */
+function pickSSTitleForTarget(
+  noms: SSGame["noms"] | undefined,
+  targetName: string,
+): string | undefined {
+  if (!noms?.length) return undefined;
+
+  const regionOrder = ["fr", "eu", "wor", "uk", "us", "jp"];
+  const regionRank = (region?: string) => {
+    const index = regionOrder.indexOf((region || "").toLowerCase());
+    return index === -1 ? regionOrder.length : index;
+  };
+
+  let best = noms[0];
+  let bestScore = -1;
+  for (const nom of noms) {
+    const score = metadataTitleSimilarity(targetName, nom.text);
+    if (
+      score > bestScore ||
+      (score === bestScore &&
+        regionRank(nom.region) < regionRank(best.region))
+    ) {
+      bestScore = score;
+      best = nom;
+    }
+  }
+
+  return best.text;
+}
+
+const SCREENSCRAPER_TITLE_MATCH_MIN_SCORE = 0.55;
+
+export function scoreScreenScraperGameTitleMatch(
+  targetName: string,
+  noms?: SSGame["noms"],
+): number {
+  if (!noms?.length) return 0;
+  let best = 0;
+  for (const nom of noms) {
+    best = Math.max(best, metadataTitleSimilarity(targetName, nom.text));
+  }
+  return best;
+}
+
 function pickSSSynopsis(synopsis?: SSGame["synopsis"]): string | undefined {
   if (!synopsis || synopsis.length === 0) return undefined;
   const langOrder = ["fr", "en"];
@@ -187,7 +237,7 @@ async function fetchScreenScraperGameById(
   baseParams: Record<string, string>,
   gameId: number,
   credentials: ScreenScraperEnv,
-  options?: { isBackground?: boolean },
+  options?: { isBackground?: boolean; signal?: AbortSignal },
 ): Promise<SSGame | null> {
   const cached = await getCachedScreenScraperGame(gameId);
   if (cached) {
@@ -213,14 +263,16 @@ async function fetchScreenScraperGameById(
             ...getScreenScraperDebugParams(credentials),
           },
           timeout: SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
+          signal: options?.signal,
         },
       );
 
-    const attempts = options?.isBackground ? 3 : 2;
+    const attempts = options?.isBackground ? 2 : 1;
     const infoRes = await retry(
       queryFn,
       attempts,
       options?.isBackground ? 1500 : 1000,
+      options?.signal,
     );
 
     const jeu = infoRes.data?.response?.jeu;
@@ -290,6 +342,21 @@ function normalizeScreenScraperSearchQuery(value: string): string {
   );
 }
 
+/** Collapse subtitle separators so "Alice : Foo" and "Alice - Foo" dedupe. */
+export function collapseScreenScraperTitlePunctuation(value: string): string {
+  return normalizeScreenScraperSearchQuery(value)
+    .replace(/\s*[:\-–—]\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function screenScraperSearchQueryKey(value: string): string {
+  return collapseScreenScraperTitlePunctuation(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function uniqueScreenScraperSearchQueries(values: string[]): string[] {
   const seen = new Set<string>();
   const queries: string[] = [];
@@ -298,10 +365,7 @@ function uniqueScreenScraperSearchQueries(values: string[]): string[] {
     const normalized = normalizeScreenScraperSearchQuery(value);
     if (normalized.length < 2) continue;
 
-    const key = normalized
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
+    const key = screenScraperSearchQueryKey(normalized);
     if (seen.has(key)) continue;
 
     seen.add(key);
@@ -366,6 +430,13 @@ export function isPlausibleScreenScraperFallbackResult(
   resultName: string,
   cleanSearchQuery: (name: string) => string,
 ): boolean {
+  if (
+    metadataTitleSimilarity(originalName, resultName) >=
+    SCREENSCRAPER_TITLE_MATCH_MIN_SCORE
+  ) {
+    return true;
+  }
+
   const originalTokens = screenScraperSignificantTokens(
     originalName,
     cleanSearchQuery,
@@ -391,6 +462,121 @@ export function shouldUseCachedScreenScraperSuggestions(
     cleanSearchQuery,
   ).size;
   return tokenCount <= 4;
+}
+
+/** Pinned ScreenScraper games should expose a box cover, not only screenshots. */
+export function screenScraperLookupHasCanonicalCover(
+  cached: MetadataResult,
+): boolean {
+  const gameId = cached.externalIds?.screenscraper?.trim();
+  if (!gameId) return true;
+
+  const hasCoverAttachment = cached.attachments?.some(
+    (attachment) =>
+      attachment.source === "screenscraper" &&
+      attachment.type === "cover" &&
+      Boolean(attachment.url?.trim()),
+  );
+  if (hasCoverAttachment) return true;
+
+  const imageUrl = cached.imageUrl?.trim();
+  if (imageUrl) {
+    const parsed = parseScreenScraperMediaUrl(imageUrl);
+    if (
+      parsed?.mediaType === "box-2D" ||
+      parsed?.mediaType === "box-3D"
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function screenScraperLookupNeedsCoverHydration(
+  cached: MetadataResult,
+): boolean {
+  if (!cached.externalIds?.screenscraper?.trim()) return false;
+  return !screenScraperLookupHasCanonicalCover(cached);
+}
+
+export function mergeScreenScraperLookupWithGame(
+  cached: MetadataResult,
+  gameData: SSGame,
+  requestedName?: string,
+): MetadataResult {
+  const resolvedName = requestedName?.trim() || cached.title || "";
+  const title =
+    pickSSTitleForTarget(gameData.noms, resolvedName) ||
+    pickSSTitle(gameData.noms) ||
+    cached.title;
+  const coverFromGame = gameData.medias ? pickSSCover(gameData.medias) : null;
+
+  const attachmentByUrl = new Map<string, MetadataAttachment>();
+  for (const attachment of cached.attachments ?? []) {
+    const url = attachment.url?.trim();
+    if (url) attachmentByUrl.set(url, attachment);
+  }
+  if (gameData.medias) {
+    for (const media of gameData.medias) {
+      if (isScreenScraperPlaceholderMedia(media)) continue;
+      const semantics = screenScraperMediaAttachmentSemantics(media);
+      if (!semantics) continue;
+      const url = media.url?.trim();
+      if (!url || attachmentByUrl.has(url)) continue;
+      attachmentByUrl.set(url, {
+        type: semantics.type,
+        role: semantics.role,
+        url: media.url,
+        source: "screenscraper",
+      });
+    }
+  }
+
+  const imageUrl =
+    screenScraperLookupHasCanonicalCover(cached) && cached.imageUrl?.trim()
+      ? cached.imageUrl
+      : coverFromGame || cached.imageUrl || undefined;
+
+  return {
+    ...cached,
+    title: title || cached.title,
+    description: cached.description ?? pickSSSynopsis(gameData.synopsis),
+    imageUrl,
+    attachments: [...attachmentByUrl.values()],
+    releaseDate: cached.releaseDate ?? gameData.dates?.[0]?.text ?? undefined,
+    publishers:
+      cached.publishers ??
+      (gameData.editeur?.text || gameData.developpeur?.text
+        ? [{ name: gameData.editeur?.text ?? gameData.developpeur?.text! }]
+        : undefined),
+    externalIds: cached.externalIds ?? {
+      screenscraper: String(gameData.id),
+    },
+  };
+}
+
+export async function hydrateScreenScraperLookupFromGameCache(
+  cached: MetadataResult,
+  requestedName?: string,
+): Promise<MetadataResult> {
+  const gameId = Number(cached.externalIds?.screenscraper);
+  if (!Number.isFinite(gameId) || gameId <= 0) return cached;
+
+  const game = await getCachedScreenScraperGame(gameId);
+  if (!game) return cached;
+
+  return mergeScreenScraperLookupWithGame(cached, game, requestedName);
+}
+
+function screenScraperLookupAttachmentSignature(
+  result: MetadataResult,
+): string {
+  return (result.attachments ?? [])
+    .map((attachment) => attachment.url?.trim() ?? "")
+    .filter(Boolean)
+    .sort()
+    .join("|");
 }
 
 export function buildScreenScraperSearchQueries(
@@ -421,12 +607,7 @@ export function buildScreenScraperSearchQueries(
 
     variants.push(
       base,
-      base.replace(/\s*:\s*/g, " : "),
-      base.replace(/\s*:\s*/g, ": "),
-      base.replace(/\s*[-–—]\s*/g, " : "),
-      base.replace(/\s*[-–—]\s*/g, ": "),
-      base.replace(/\s*:\s*/g, " - "),
-      base.replace(/\s*[:\-–—]\s*/g, " "),
+      collapseScreenScraperTitlePunctuation(base),
       base.replace(/\s*[!?]+$/g, ""),
       base.replace(/[!?]+/g, " "),
       base.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
@@ -440,7 +621,7 @@ async function searchScreenScraperGames(
   baseParams: Record<string, string>,
   query: string,
   systemeid?: number,
-  options?: { isBackground?: boolean },
+  options?: { isBackground?: boolean; signal?: AbortSignal },
 ): Promise<SSGame[]> {
   if (isScreenScraperQuotaBlocked()) {
     const cached = getCachedScreenScraperSearch(query, systemeid);
@@ -465,13 +646,15 @@ async function searchScreenScraperGames(
           ...(systemeid ? { systemeid: String(systemeid) } : {}),
         },
         timeout: SCREEN_SCRAPER_REQUEST_TIMEOUT_MS,
+        signal: options?.signal,
       });
 
-    const attempts = options?.isBackground ? 3 : 2;
+    const attempts = options?.isBackground ? 2 : 1;
     const searchRes = await retry(
       queryFn,
       attempts,
       options?.isBackground ? 1500 : 1000,
+      options?.signal,
     );
 
     let results = searchRes.data?.response?.jeux;
@@ -748,7 +931,11 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
     name: string,
     barcode?: string | null,
     platform?: string | null,
-    options?: { isBackground?: boolean },
+    options?: {
+      isBackground?: boolean;
+      signal?: AbortSignal;
+      lookupQueries?: string[];
+    },
   ): Promise<MetadataResult | null> {
     const credentials = getScreenScraperEnv();
 
@@ -806,66 +993,6 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         }
       }
 
-      if (!gameData && barcode && systemeid !== undefined && systemeid > 0) {
-        const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
-        if (cleanedBarcode.length > 0) {
-          try {
-            const barcodeResults = await searchScreenScraperGames(
-              baseParams,
-              cleanedBarcode,
-              systemeid,
-              options,
-            );
-            if (barcodeResults.length === 1 && barcodeResults[0]?.id) {
-              const jeu = await fetchScreenScraperGameById(
-                baseParams,
-                Number(barcodeResults[0].id),
-                credentials,
-                options,
-              );
-              if (jeu) {
-                // ScreenScraper's serial/barcode index can return a different
-                // game than the one being identified (a wrong barcode→game
-                // mapping). Only trust the hit when its title matches the
-                // requested one; otherwise fall through to the title-driven
-                // name search below, so a bad mapping never wins.
-                const jeuTitle = pickSSTitle(jeu.noms) || "";
-                if (name && jeuTitle && !areLikelySameProduct(name, jeuTitle)) {
-                  console.info(
-                    `[ScreenScraper] Ignoring barcode-search hit "${jeuTitle}" — does not match requested "${name}"`,
-                  );
-                } else {
-                  gameData = jeu;
-                  resolvedSystemId = systemeid;
-                  resolvedFromBarcodeEvidence = true;
-                  console.info(
-                    `[ScreenScraper] Successfully found game by barcode search "${cleanedBarcode}"`,
-                  );
-                }
-              }
-            }
-          } catch (error) {
-            if (isScreenScraperQuotaError(error)) {
-              console.warn(
-                `[ScreenScraper] Quota exceeded during barcode search for "${cleanedBarcode}"`,
-              );
-            } else if (
-              axios.isAxiosError(error) &&
-              error.response?.status === 404
-            ) {
-              console.info(
-                `[ScreenScraper] No barcode search match for "${cleanedBarcode}"`,
-              );
-            } else {
-              console.error(
-                `[ScreenScraper] Error searching barcode "${cleanedBarcode}":`,
-                error,
-              );
-            }
-          }
-        }
-      }
-
       if (!gameData) {
         if (!name) return null;
         const cleanedName = deps.cleanSearchQuery(name);
@@ -877,12 +1004,16 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           );
 
         let validResults: SSGame[] = [];
-        for (const query of buildScreenScraperSearchQueries(
-          name,
-          deps.cleanSearchQuery,
-        )) {
+        const searchQueries = uniqueScreenScraperSearchQueries([
+          ...(options?.lookupQueries ?? []),
+          ...buildScreenScraperSearchQueries(name, deps.cleanSearchQuery),
+        ]).slice(0, MAX_SCREENSCRAPER_SEARCH_ATTEMPTS);
+        let searchAttempts = 0;
+        for (const query of searchQueries) {
           if (isScreenScraperQuotaBlocked()) break;
+          if (searchAttempts >= MAX_SCREENSCRAPER_SEARCH_ATTEMPTS) break;
           try {
+            searchAttempts += 1;
             validResults = await searchScreenScraperGames(
               baseParams,
               query,
@@ -930,7 +1061,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                     )
                     .filter((v, i, self) => v && self.indexOf(v) === i);
 
-                  for (const cand of candidates) {
+                  for (const cand of candidates.slice(
+                    0,
+                    MAX_CACHED_BARCODE_SUGGESTION_CANDIDATES,
+                  )) {
                     if (cand.toLowerCase() === cleanedName.toLowerCase())
                       continue;
                     console.log(
@@ -941,7 +1075,11 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                       deps.cleanSearchQuery,
                     )) {
                       if (isScreenScraperQuotaBlocked()) break;
+                      if (searchAttempts >= MAX_SCREENSCRAPER_SEARCH_ATTEMPTS) {
+                        break;
+                      }
                       try {
+                        searchAttempts += 1;
                         const newValid = await searchScreenScraperGames(
                           baseParams,
                           query,
@@ -999,12 +1137,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
                 systemeid,
                 options,
               );
-              validResults = fallbackResults.filter((result) =>
-                isPlausibleScreenScraperFallbackResult(
-                  cleanedName,
-                  pickSSTitle(result.noms) || "",
-                  deps.cleanSearchQuery,
-                ),
+              validResults = fallbackResults.filter(
+                (result) =>
+                  scoreScreenScraperGameTitleMatch(cleanedName, result.noms) >=
+                  SCREENSCRAPER_TITLE_MATCH_MIN_SCORE,
               );
               if (validResults.length > 0) {
                 searchNameUsed = firstWord;
@@ -1027,6 +1163,19 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
           return null;
         }
 
+        const targetNameForRanking =
+          name.trim() || cleanedName || searchNameUsed;
+        const titleMatchedResults = validResults.filter(
+          (result) =>
+            scoreScreenScraperGameTitleMatch(
+              targetNameForRanking,
+              result.noms,
+            ) >= SCREENSCRAPER_TITLE_MATCH_MIN_SCORE,
+        );
+        if (titleMatchedResults.length > 0) {
+          validResults = titleMatchedResults;
+        }
+
         const platformCompatibleResults = systemeid
           ? validResults.filter((r) => {
               if (r.systeme?.id) {
@@ -1041,44 +1190,43 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             ? platformCompatibleResults
             : validResults;
 
-        const targetNameForRanking =
-          name.trim() || cleanedName || searchNameUsed;
         let bestId = rankedResults[0].id;
         let minDist = Infinity;
-        let bestOverlap = -1;
-        const rankingTokens = screenScraperSignificantTokens(
-          targetNameForRanking,
-          deps.cleanSearchQuery,
-        );
+        let bestMatchScore = -1;
         for (const r of rankedResults) {
-          const rTitle = pickSSTitle(r.noms) || "";
-          const resultTokens = screenScraperSignificantTokens(
-            rTitle,
-            deps.cleanSearchQuery,
+          const rTitle =
+            pickSSTitleForTarget(r.noms, targetNameForRanking) ||
+            pickSSTitle(r.noms) ||
+            "";
+          const matchScore = scoreScreenScraperGameTitleMatch(
+            targetNameForRanking,
+            r.noms,
           );
-          const overlap = [...rankingTokens].filter((token) =>
-            resultTokens.has(token),
-          ).length;
           const dist = levenshtein.get(
-            targetNameForRanking.toLowerCase(),
-            rTitle.toLowerCase(),
+            collapseScreenScraperTitlePunctuation(
+              targetNameForRanking,
+            ).toLowerCase(),
+            collapseScreenScraperTitlePunctuation(rTitle).toLowerCase(),
           );
           if (
-            overlap > bestOverlap ||
-            (overlap === bestOverlap && dist < minDist)
+            matchScore > bestMatchScore ||
+            (matchScore === bestMatchScore && dist < minDist)
           ) {
-            bestOverlap = overlap;
+            bestMatchScore = matchScore;
             minDist = dist;
             bestId = r.id;
           }
         }
 
         if (
-          rankingTokens.size >= 2 &&
-          bestOverlap < Math.min(2, rankingTokens.size)
+          bestMatchScore < SCREENSCRAPER_TITLE_MATCH_MIN_SCORE &&
+          screenScraperSignificantTokens(
+            targetNameForRanking,
+            deps.cleanSearchQuery,
+          ).size >= 2
         ) {
           console.info(
-            `[ScreenScraper] No sufficiently specific match for "${name}" (best overlap ${bestOverlap}/${rankingTokens.size})`,
+            `[ScreenScraper] No sufficiently specific match for "${name}" (best score ${bestMatchScore.toFixed(2)})`,
           );
           return null;
         }
@@ -1100,7 +1248,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         return null;
       }
 
-      const title = pickSSTitle(gameData.noms) || name;
+      const title =
+        pickSSTitleForTarget(gameData.noms, name) ||
+        pickSSTitle(gameData.noms) ||
+        name;
       const description = pickSSSynopsis(gameData.synopsis);
       const imageUrl = gameData.medias ? pickSSCover(gameData.medias) : null;
       const releaseDate = gameData.dates?.[0]?.text ?? undefined;
@@ -1200,25 +1351,63 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
     ) {
       return false;
     }
-    return metadataHasDisplayImage(cached);
+    return (
+      metadataHasDisplayImage(cached) ||
+      Boolean(cached.externalIds?.screenscraper?.trim())
+    );
+  };
+
+  const serveCachedScreenScraperLookup = async (
+    cached: MetadataResult,
+    lookupKey: string,
+    requestedName: string,
+    label: string,
+  ): Promise<MetadataResult> => {
+    const signatureBefore = screenScraperLookupAttachmentSignature(cached);
+    const hydrated = await hydrateScreenScraperLookupFromGameCache(
+      cached,
+      requestedName,
+    );
+    const normalized = withScreenScraperObservations(hydrated);
+    const signatureAfter = screenScraperLookupAttachmentSignature(normalized);
+    if (signatureAfter !== signatureBefore) {
+      cacheScreenScraperLookup(lookupKey, normalized);
+      console.info(
+        `[ScreenScraper] Upgraded lookup cache for game ${cached.externalIds?.screenscraper} (${label})`,
+      );
+    } else {
+      console.info(`[ScreenScraper] Lookup cache hit for "${label}"`);
+    }
+    return normalized;
   };
 
   return async function fetchFromScreenScraper(
     name: string,
     barcode?: string | null,
     platform?: string | null,
-    options?: { isBackground?: boolean },
+    options?: {
+      isBackground?: boolean;
+      signal?: AbortSignal;
+      lookupQueries?: string[];
+    },
   ): Promise<MetadataResult | null> {
     const lookupKey = buildScreenScraperLookupKey(name, barcode, platform);
+    const cleanedBarcode = (barcode || "").replace(/[^\d]/g, "").trim();
+
+    if (isScreenScraperLookupMissCached(lookupKey)) {
+      return null;
+    }
 
     const persisted = await getPersistedScreenScraperLookup(lookupKey);
     if (persisted) {
       const normalizedPersisted = withScreenScraperObservations(persisted);
       if (isCachedLookupAcceptable(name, normalizedPersisted)) {
-        console.info(
-          `[ScreenScraper] Lookup cache hit for "${name || barcode}"`,
+        return serveCachedScreenScraperLookup(
+          normalizedPersisted,
+          lookupKey,
+          name,
+          name || barcode || lookupKey,
         );
-        return normalizedPersisted;
       }
       console.info(
         `[ScreenScraper] Ignoring cached lookup "${persisted.title}" — does not match requested "${name}"`,
@@ -1232,11 +1421,19 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       const normalizedStale = stale
         ? withScreenScraperObservations(stale)
         : null;
-      if (normalizedStale && isCachedLookupAcceptable(name, normalizedStale)) {
+      if (
+        normalizedStale &&
+        isCachedLookupAcceptable(name, normalizedStale)
+      ) {
         console.warn(
           `[ScreenScraper] Quota cooldown — serving stale lookup for "${name || barcode}"`,
         );
-        return normalizedStale;
+        return serveCachedScreenScraperLookup(
+          normalizedStale,
+          lookupKey,
+          name,
+          name || barcode || lookupKey,
+        );
       }
     }
 
@@ -1258,6 +1455,8 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         : null;
       if (normalizedResult) {
         cacheScreenScraperLookup(lookupKey, normalizedResult);
+      } else {
+        markScreenScraperLookupMiss(lookupKey);
       }
       return normalizedResult;
     } finally {

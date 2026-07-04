@@ -33,6 +33,12 @@ export function screenScraperMediaAttachmentSemantics(media: {
   if (mediaType === "wheel") {
     return { type: "logo" };
   }
+  if (mediaType === "fanart") {
+    return { type: "background" };
+  }
+  if (mediaType === "steamgrid") {
+    return { type: "artwork" };
+  }
 
   return null;
 }

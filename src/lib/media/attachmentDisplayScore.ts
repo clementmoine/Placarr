@@ -328,6 +328,9 @@ export function shouldSuppressCoverOnPlatformShelf(
   if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
     return false;
   }
+  if (attachment.isGameMediaGallerySource) {
+    return false;
+  }
   if (isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)) {
     return true;
   }

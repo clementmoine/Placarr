@@ -260,4 +260,164 @@ describe("fetchMetadataByType generic routing", () => {
       ),
     ).toBe(true);
   });
+
+  it("skips gameMediaGallerySource providers when stage 1 already has a rich gallery", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "screenscraper") {
+        return {
+          title: "The Legend of Zelda: Twilight Princess",
+          imageUrl: "https://img.example/ss-cover.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/ss-cover.jpg",
+              source: "screenscraper",
+            },
+            {
+              type: "cover",
+              url: "https://img.example/ss-cover-3d.jpg",
+              source: "screenscraper",
+            },
+            {
+              type: "screenshot",
+              url: "https://img.example/ss-shot.jpg",
+              source: "screenscraper",
+            },
+          ],
+        } as MetadataResult;
+      }
+      if (id === "chocobonplan") {
+        return {
+          title: "Zelda Twilight Princess sur GameCube",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/cbp-cover.png",
+              source: "chocobonplan",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    await fetchMetadataByType(
+      "The Legend of Zelda: Twilight Princess",
+      "games",
+      null,
+      "gamecube",
+      { shelfName: "Jeux vidéo" },
+    );
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "chocobonplan"),
+    ).toBe(false);
+  });
+
+  it("still queries gameMediaGallerySource providers on platform-specific shelves with a rich gallery", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "screenscraper") {
+        return {
+          title: "Shock Troopers",
+          imageUrl: "https://img.example/ss-cover.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/ss-cover.jpg",
+              source: "screenscraper",
+            },
+            {
+              type: "cover",
+              url: "https://img.example/ss-cover-3d.jpg",
+              source: "screenscraper",
+            },
+            {
+              type: "screenshot",
+              url: "https://img.example/ss-shot.jpg",
+              source: "screenscraper",
+            },
+          ],
+        } as MetadataResult;
+      }
+      if (id === "chocobonplan") {
+        return {
+          title: "[Précommande] Shock Troopers sur NEOGEO AES+",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/cbp-cover.png",
+              source: "chocobonplan",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    await fetchMetadataByType("Shock Troopers", "games", null, "neogeo", {
+      shelfName: "NEO GEO AES+",
+    });
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "chocobonplan"),
+    ).toBe(true);
+  });
+
+  it("does not fan out secondary scrape fallbacks when a barcode game is already pinned", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "screenscraper") {
+        return {
+          title: "Alice : Retour au Pays de la Folie",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/ss-cover.jpg",
+              source: "screenscraper",
+            },
+            {
+              type: "screenshot",
+              url: "https://img.example/ss-shot.jpg",
+              source: "screenscraper",
+            },
+          ],
+          externalIds: { screenscraper: "16056" },
+        } as MetadataResult;
+      }
+      if (id === "ebay") {
+        return {
+          title: "Alice: Madness Returns",
+          imageUrl: "https://img.example/ebay.jpg",
+        } as MetadataResult;
+      }
+      if (id === "geedie") {
+        return {
+          title: "Alice",
+          imageUrl: "https://img.example/geedie.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/geedie.jpg",
+              source: "geedie",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    await fetchMetadataByType(
+      "Alice : Retour au Pays de la Folie",
+      "games",
+      "5030931097140",
+      "xbox360",
+      { shelfName: "Xbox 360" },
+    );
+
+    const ebayCalls = mockResolve.mock.calls.filter((call) => call[1] === "ebay");
+    const geedieCalls = mockResolve.mock.calls.filter(
+      (call) => call[1] === "geedie",
+    );
+    expect(ebayCalls.length).toBeLessThanOrEqual(1);
+    expect(geedieCalls.length).toBeLessThanOrEqual(1);
+  });
 });

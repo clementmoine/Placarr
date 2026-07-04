@@ -4,11 +4,17 @@ import {
   buildScreenScraperFacts,
   buildScreenScraperObservations,
   buildScreenScraperSearchQueries,
+  collapseScreenScraperTitlePunctuation,
   createScreenScraperResolver,
   isPlausibleScreenScraperFallbackResult,
   parseScreenScraperMediaUrl,
   isScreenScraperPlaceholderMedia,
+  hydrateScreenScraperLookupFromGameCache,
+  mergeScreenScraperLookupWithGame,
+  screenScraperLookupHasCanonicalCover,
+  screenScraperLookupNeedsCoverHydration,
   pickSSCover,
+  scoreScreenScraperGameTitleMatch,
   shouldUseCachedScreenScraperSuggestions,
   type SSMedia,
 } from "./resolver";
@@ -333,6 +339,17 @@ describe("isPlausibleScreenScraperFallbackResult", () => {
       ),
     ).toBe(true);
   });
+
+  it("accepts punctuation variants via fuzzy title similarity", () => {
+    const cleanSearchQuery = (value: string) => value;
+    expect(
+      isPlausibleScreenScraperFallbackResult(
+        "Alice : Retour au Pays de la Folie",
+        "Alice - Retour Au Pays De La Folie",
+        cleanSearchQuery,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("shouldUseCachedScreenScraperSuggestions", () => {
@@ -442,5 +459,194 @@ describe("buildScreenScraperSearchQueries", () => {
     expect(queries).toContain("Alan Wake II - Deluxe Edition");
     expect(queries).toContain("Alan Wake II");
     expect(queries).not.toContain("Deluxe Edition");
+  });
+
+  it("dedupes colon, dash and spacing variants into one search", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "Alice : Retour au Pays de la Folie",
+      (value) => value,
+    );
+
+    expect(queries).toContain("Alice : Retour au Pays de la Folie");
+    expect(queries).not.toContain("Alice - Retour au Pays de la Folie");
+    expect(queries).not.toContain("Alice :  Retour au Pays de la Folie");
+    expect(
+      queries.filter(
+        (query) =>
+          collapseScreenScraperTitlePunctuation(query) ===
+          "Alice Retour au Pays de la Folie",
+      ),
+    ).toHaveLength(1);
+  });
+});
+
+describe("scoreScreenScraperGameTitleMatch", () => {
+  it("matches Alice despite ScreenScraper dash spelling and US regional title", () => {
+    const noms = [
+      { region: "wor", text: "Alice - Retour Au Pays De La Folie" },
+      { region: "us", text: "Alice: Madness Returns" },
+    ];
+
+    expect(
+      scoreScreenScraperGameTitleMatch(
+        "Alice : Retour au Pays de la Folie",
+        noms,
+      ),
+    ).toBeGreaterThanOrEqual(0.99);
+  });
+
+  it("rejects unrelated games that only share the franchise name", () => {
+    expect(
+      scoreScreenScraperGameTitleMatch("Alice : Retour au Pays de la Folie", [
+        { region: "us", text: "Alice: Madness Returns" },
+      ]),
+    ).toBeLessThan(0.55);
+  });
+
+  it("rejects homonym titles that only share Alice", () => {
+    expect(
+      scoreScreenScraperGameTitleMatch("Alice : Retour au Pays de la Folie", [
+        { region: "wor", text: "Alice in Wonderland" },
+      ]),
+    ).toBeLessThan(0.55);
+  });
+});
+
+describe("screenScraperLookupHasCanonicalCover", () => {
+  it("accepts unpinned lookups regardless of attachment mix", () => {
+    expect(
+      screenScraperLookupHasCanonicalCover({
+        title: "Some Game",
+        imageUrl: "https://example.com/cover.jpg",
+      }),
+    ).toBe(true);
+  });
+
+  it("detects pinned games cached with only screenshots", () => {
+    expect(
+      screenScraperLookupHasCanonicalCover({
+        title: "Alice : Retour au Pays de la Folie",
+        externalIds: { screenscraper: "16056" },
+        attachments: [
+          {
+            source: "screenscraper",
+            type: "screenshot",
+            url: "https://www.screenscraper.fr/media/ss/16056/ss.jpg",
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("detects pinned games with a box cover attachment", () => {
+    expect(
+      screenScraperLookupHasCanonicalCover({
+        title: "Alice : Retour au Pays de la Folie",
+        externalIds: { screenscraper: "16056" },
+        attachments: [
+          {
+            source: "screenscraper",
+            type: "cover",
+            url: "https://www.screenscraper.fr/media/ss/16056/box-2D/fr.png",
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it("detects pinned games when imageUrl is a box cover", () => {
+    expect(
+      screenScraperLookupHasCanonicalCover({
+        title: "Alice : Retour au Pays de la Folie",
+        externalIds: { screenscraper: "16056" },
+        imageUrl:
+          "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=box-2D(eu)",
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("mergeScreenScraperLookupWithGame", () => {
+  it("adds box cover attachments from cached game data without dropping screenshots", () => {
+    const merged = mergeScreenScraperLookupWithGame(
+      {
+        title: "Alice : Retour au Pays de la Folie",
+        externalIds: { screenscraper: "16056" },
+        attachments: [
+          {
+            source: "screenscraper",
+            type: "screenshot",
+            url: "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=ss(wor)",
+          },
+        ],
+      },
+      {
+        id: 16056,
+        noms: [{ region: "wor", text: "Alice - Retour Au Pays De La Folie" }],
+        medias: [
+          {
+            type: "box-2D",
+            region: "eu",
+            url: "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=box-2D(eu)",
+            size: "571174",
+          },
+          {
+            type: "ss",
+            region: "wor",
+            url: "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=ss(wor)",
+            size: "120000",
+          },
+        ],
+      },
+      "Alice : Retour au Pays de la Folie",
+    );
+
+    expect(screenScraperLookupHasCanonicalCover(merged)).toBe(true);
+    expect(merged.imageUrl).toContain("box-2D(eu)");
+    expect(merged.attachments).toHaveLength(2);
+  });
+});
+
+describe("hydrateScreenScraperLookupFromGameCache", () => {
+  it("returns the same lookup when no game cache is available", async () => {
+    const lookup = {
+      title: "Alice : Retour au Pays de la Folie",
+      externalIds: { screenscraper: "99999999" },
+      attachments: [
+        {
+          source: "screenscraper" as const,
+          type: "screenshot" as const,
+          url: "https://example.com/ss.jpg",
+        },
+      ],
+    };
+
+    await expect(
+      hydrateScreenScraperLookupFromGameCache(lookup),
+    ).resolves.toBe(lookup);
+  });
+
+  it("merges cached game medias even when the lookup already has a canonical cover", async () => {
+    const lookup = {
+      title: "Alice : Retour au Pays de la Folie",
+      imageUrl:
+        "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=box-2D(eu)",
+      externalIds: { screenscraper: "16056" },
+      attachments: [
+        {
+          source: "screenscraper" as const,
+          type: "cover" as const,
+          role: "eu",
+          url: "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=box-2D(eu)",
+        },
+      ],
+    };
+
+    const merged = await hydrateScreenScraperLookupFromGameCache(lookup);
+
+    expect(merged.attachments?.some((attachment) => attachment.role === "3d-eu"))
+      .toBe(true);
+    expect(merged.attachments?.some((attachment) => attachment.type === "screenshot"))
+      .toBe(true);
   });
 });

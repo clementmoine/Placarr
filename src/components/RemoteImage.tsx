@@ -2,6 +2,10 @@ import type { SyntheticEvent } from "react";
 import Image from "next/image";
 
 import { cn } from "@/lib/core/utils";
+import {
+  remoteImageDisplaySrc,
+  remoteImageNeedsProxy,
+} from "@/lib/media/remoteImageDisplay";
 
 function isBlobImageSrc(src: string) {
   return src.startsWith("blob:");
@@ -54,6 +58,9 @@ export function RemoteImage({
   priority?: boolean;
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
 }) {
+  const displaySrc = remoteImageDisplaySrc(src);
+  const proxied = remoteImageNeedsProxy(src);
+
   if (isBlobImageSrc(src)) {
     return (
       // Aperçus locaux blob:/data: — hors optimiseur next/image.
@@ -73,11 +80,12 @@ export function RemoteImage({
   if (useFill) {
     return (
       <Image
-        src={src}
+        src={displaySrc}
         alt={alt}
         fill
         sizes={sizes}
         priority={priority}
+        unoptimized={proxied}
         className={className}
         onLoad={onLoad}
         draggable={false}
@@ -87,11 +95,12 @@ export function RemoteImage({
 
   return (
     <Image
-      src={src}
+      src={displaySrc}
       alt={alt}
       width={width}
       height={height}
       priority={priority}
+      unoptimized={proxied}
       className={cn(aspectRatioClassName(className), className)}
       onLoad={onLoad}
       draggable={false}

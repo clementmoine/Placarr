@@ -1,7 +1,11 @@
 import axios from "axios";
 
 import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
-import { flareSolverrCookiesFor } from "@/lib/http/flareSolverr";
+import {
+  coverUrlExpectsHighResolution,
+  MIN_COVER_SHORTEST_EDGE,
+} from "@/lib/media/coverResolution";
+import { flareSolverrCookiesFor, flareSolverrDownloadImages } from "@/lib/http/flareSolverr";
 import {
   readBufferImageMetrics,
   shortestImageEdge,
@@ -16,6 +20,14 @@ export type RemoteImageFetchResult = {
   buffer: Buffer;
   contentType?: string;
   sourceUrl: string;
+};
+
+export type FetchRemoteImageOptions = {
+  /**
+   * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
+   * Localization keeps this false so /full/ URLs are not persisted as thumbnails.
+   */
+  allowSubThresholdFallback?: boolean;
 };
 
 function sleep(ms: number) {
@@ -75,7 +87,7 @@ function pickBetterFetch(
 async function fetchBestFromCandidates(
   candidates: string[],
   fetchOne: (candidate: string) => Promise<RemoteImageFetchResult | null>,
-): Promise<RemoteImageFetchResult | null> {
+): Promise<RankedFetch | null> {
   let best: RankedFetch | null = null;
 
   for (const candidate of candidates) {
@@ -99,42 +111,104 @@ async function fetchBestFromCandidates(
   return best;
 }
 
+function expectsHighResolution(url: string): boolean {
+  if (coverUrlExpectsHighResolution(url)) return true;
+  return remoteImageDownloadCandidates(url).some(coverUrlExpectsHighResolution);
+}
+
+function isAcceptableForRequest(
+  ranked: RankedFetch | null,
+  url: string,
+  options: FetchRemoteImageOptions,
+): ranked is RankedFetch {
+  if (!ranked) return false;
+  if (options.allowSubThresholdFallback) return true;
+  if (!expectsHighResolution(url)) return true;
+  return ranked.shortestEdge >= MIN_COVER_SHORTEST_EDGE;
+}
+
+async function fetchWithOptionalFlare(
+  url: string,
+  candidates: string[],
+  referer: string,
+  flareTimeoutMs?: number,
+): Promise<RankedFetch | null> {
+  const timeout = flareTimeoutMs ?? 60_000;
+  const fullCandidates = candidates.filter((candidate) =>
+    coverUrlExpectsHighResolution(candidate),
+  );
+  let cookieFetch: RankedFetch | null = null;
+
+  const flare = await flareSolverrCookiesFor(referer, timeout);
+  if (flare) {
+    cookieFetch = await fetchBestFromCandidates(candidates, (candidate) =>
+      tryFetchUrl(candidate, {
+        Cookie: flare.cookie,
+        "User-Agent": flare.userAgent,
+      }),
+    );
+    const cookieFetchIsFullEnough =
+      cookieFetch &&
+      (!fullCandidates.length ||
+        cookieFetch.shortestEdge >= MIN_COVER_SHORTEST_EDGE);
+    if (cookieFetchIsFullEnough) return cookieFetch;
+  }
+
+  if (fullCandidates.length === 0) {
+    return cookieFetch;
+  }
+
+  const downloads = await flareSolverrDownloadImages(
+    referer,
+    fullCandidates.slice(0, 4),
+    timeout,
+  );
+  let best: RankedFetch | null = cookieFetch;
+  for (const download of downloads) {
+    const ranked = await rankFetchedImageAsync({
+      buffer: download.buffer,
+      contentType: download.contentType,
+      sourceUrl: download.url,
+    });
+    best = pickBetterFetch(best, ranked);
+  }
+  return best;
+}
+
 export async function fetchRemoteImageBuffer(
   url: string,
+  options: FetchRemoteImageOptions = {},
 ): Promise<RemoteImageFetchResult | null> {
   const candidates = remoteImageDownloadCandidates(url);
   const referer = remoteImageRequestHeaders(url).Referer;
   const proxyProvider = remoteImageProxyProviderFor(url);
+  const highResExpected =
+    !options.allowSubThresholdFallback && expectsHighResolution(url);
 
   const direct = await fetchBestFromCandidates(candidates, (candidate) =>
     tryFetchUrl(candidate),
   );
-  if (direct) return direct;
 
-  if (!referer) return null;
-
-  const shortFlareTimeoutMs = proxyProvider?.remoteImageFlareTimeoutMs;
-  if (shortFlareTimeoutMs !== undefined) {
-    const flare = await flareSolverrCookiesFor(referer, shortFlareTimeoutMs);
-    if (flare) {
-      const proxied = await fetchBestFromCandidates(candidates, (candidate) =>
-        tryFetchUrl(candidate, {
-          Cookie: flare.cookie,
-          "User-Agent": flare.userAgent,
-        }),
-      );
-      if (proxied) return proxied;
-    }
-    return null;
+  if (isAcceptableForRequest(direct, url, options)) {
+    return direct;
   }
 
-  const flare = await flareSolverrCookiesFor(referer);
-  if (!flare) return null;
+  if (!referer) {
+    return highResExpected ? null : direct;
+  }
 
-  return fetchBestFromCandidates(candidates, (candidate) =>
-    tryFetchUrl(candidate, {
-      Cookie: flare.cookie,
-      "User-Agent": flare.userAgent,
-    }),
+  const shortFlareTimeoutMs = proxyProvider?.remoteImageFlareTimeoutMs;
+  const proxied = await fetchWithOptionalFlare(
+    url,
+    candidates,
+    referer,
+    shortFlareTimeoutMs,
   );
+
+  if (isAcceptableForRequest(proxied, url, options)) {
+    return proxied;
+  }
+
+  if (highResExpected) return null;
+  return proxied ?? direct;
 }

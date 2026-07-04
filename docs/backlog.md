@@ -194,10 +194,13 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 - **Reste = rien d'évident.** `storeMetadata` est l'orchestrateur, à laisser dans `storage.ts`. Extractions suivantes = rendement quasi nul.
 - **Pièges (si on continue quand même)** : `coverProvenance` dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; toujours re-exporter depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests) ; nettoyer les imports orphelins (eslint les liste).
 
-#### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(valeur réelle, risqué)_
+#### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(passe dédiée requise)_
 
-- **État** : non commencé. `fetchMetadata` (1135 l.) est générique mais saturé de branches games (gallery, plateforme, édition, web-only console).
-- **Reprendre** : extraire une stratégie « games » (objet de hooks de gating : `shouldFetchGallery`, `rejectsWebOnly`, `supplementEdition`…) pour que `fetchMetadata` reste lisible, **sans** recréer un fetcher par type. Beaucoup de conditions interdépendantes → avancer par petites extractions pures + `fetch.test.ts`/`fetchByType.test.ts` verts à chaque pas. 0 changement de comportement.
+- **État** : non commencé. `fetchMetadata` (1135 l.) est générique mais saturé de branches games.
+- **Constat 2026-07-04 (map des dépendances)** : ce n'est **pas** un pure move comme storage. Deux couches :
+  - **Extractibles proprement (~65 l., mais faible valeur)** : 7 helpers purs/plateforme — `isLivingRoomConsolePlatformKey`, `consoleShelfRejectsWebOnlyGameMetadata`, `normalizeMetadataPlatformKey`, `isMetadataPlatformCompatible`, `metadataFallbackQueryLimit`, `shouldAlwaysFetchGameGallerySource`, `isPlatformSpecificGameShelf` (n'appellent que des imports + eux-mêmes → pas de cycle).
+  - **Le vrai poids (gating games dense) est tissé avec des helpers GÉNÉRIQUES** partagés avec le chemin non-games : `shouldFetchGameGallerySourceInStage2` / `shouldSkipRedundantGameScrapeRound` / `shouldSkipMetadataFallbackProvider` / `shouldResolveProviderForGallery` / `supplementGameEditionProviderResults` appellent `metadataCapabilitiesOf`, `metadataResultsNeedGalleryEnrichment`, `metadataSnapshotHasTitleAndCover`, `metadataResultIsPinnedForRecheck`… → les sortir crée un **import circulaire** (fetch ↔ gameStrategy).
+- **Reprendre (proprement)** : d'abord extraire les helpers génériques partagés dans un `fetch/gating.ts` (importé par fetch.ts ET la future stratégie games), PUIS déplacer le cluster games dans `fetch/gameStrategy.ts`. `fetch.test.ts`/`fetchByType.test.ts` + golden-masters barcode verts à chaque pas, 0 changement. Ne PAS faire un token-extract des 65 l. pures seules — ça ajoute de l'indirection sans réduire la complexité réelle.
 
 #### AUDIO-1 — Vraie détection audio GS1 _(résiduel du « trou #1 »)_
 

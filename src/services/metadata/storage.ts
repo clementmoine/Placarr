@@ -35,7 +35,9 @@ import { coverDownloadCandidates } from "@/lib/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/lib/media/remoteFetch";
 import {
   MIN_COVER_SHORTEST_EDGE,
+  coverUrlExpectsHighResolution,
   readFileImageMetrics,
+  readBufferImageMetrics,
   shortestImageEdge,
   isCoverResolutionAcceptable,
 } from "@/lib/media/imageMetrics";
@@ -45,6 +47,7 @@ import {
   isMissingArtImageUrl,
   isPlaceholderCoverImage,
 } from "@/lib/media/coverPlaceholder";
+import { isUnavailableCoverPlaceholderBuffer } from "@/lib/media/coverPlaceholder.server";
 import { regionRank } from "@/lib/locale/preference";
 import { applyConsensus } from "@/lib/metadata/consensus";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
@@ -71,6 +74,7 @@ import {
   trimLightImageMargins,
   cropImageIfNeeded,
 } from "@/lib/media/imageTrim";
+import { runCpuBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import type {
   MetadataAttachment,
   MetadataFact,
@@ -510,7 +514,11 @@ export async function syncCroppedCoverAttachment(
 
 export async function downloadRemoteImage(
   url: string,
-  options: { trim?: boolean; minMarginPixels?: number } = {},
+  options: {
+    trim?: boolean;
+    minMarginPixels?: number;
+    source?: string | null;
+  } = {},
 ): Promise<string | null> {
   if (!url) return null;
   if (isMissingArtImageUrl(url)) return null;
@@ -523,6 +531,9 @@ export async function downloadRemoteImage(
   if (!url.startsWith("http")) {
     return null;
   }
+
+  const persistRemoteFallback = () =>
+    canKeepRemoteImageOnDownloadFailure(url, options.source) ? url : null;
 
   const existingLocalized = await existingLocalizedUploadForUrl(url);
   if (existingLocalized) {
@@ -543,7 +554,20 @@ export async function downloadRemoteImage(
         ? await fetchRemoteImageBuffer(original)
         : null);
     if (!fetched) {
-      return (await existingLocalizedUploadForUrl(url)) ?? null;
+      return (
+        (await existingLocalizedUploadForUrl(url)) ?? persistRemoteFallback()
+      );
+    }
+
+    const fetchedMetrics = await readBufferImageMetrics(fetched.buffer);
+    if (
+      coverUrlExpectsHighResolution(url) &&
+      !isCoverResolutionAcceptable(fetchedMetrics)
+    ) {
+      console.info(
+        `[ImageLocalizer] Rejected sub-threshold cover (${fetched.sourceUrl}) for ${url}`,
+      );
+      return persistRemoteFallback();
     }
 
     const parsedUrl = new URL(fetched.sourceUrl);
@@ -560,14 +584,25 @@ export async function downloadRemoteImage(
     const filename = `${hash}${ext}`;
     const targetPath = path.join(targetDir, filename);
     if (fs.existsSync(targetPath)) {
-      const metrics = await readFileImageMetrics(targetPath);
-      const shortest = shortestImageEdge(metrics);
-      if (shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE) {
-        return `/uploads/${filename}`;
+      const existingBuffer = fs.readFileSync(targetPath);
+      if (await isUnavailableCoverPlaceholderBuffer(existingBuffer)) {
+        fs.unlinkSync(targetPath);
+      } else {
+        const metrics = await readFileImageMetrics(targetPath);
+        const shortest = shortestImageEdge(metrics);
+        if (shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE) {
+          return `/uploads/${filename}`;
+        }
       }
     }
 
     let imageBuffer = fetched.buffer;
+    if (await isUnavailableCoverPlaceholderBuffer(imageBuffer)) {
+      console.info(
+        `[ImageLocalizer] Rejected unavailable-art placeholder from ${fetched.sourceUrl}`,
+      );
+      return persistRemoteFallback();
+    }
     if (options.trim) {
       imageBuffer = await trimLightImageMargins(imageBuffer, {
         minMarginPixels: options.minMarginPixels,
@@ -583,14 +618,107 @@ export async function downloadRemoteImage(
       `[ImageLocalizer] Failed to download image from ${url}:`,
       err instanceof Error ? err.message : String(err),
     );
-    return null;
+    return persistRemoteFallback();
   }
 }
+
+export type StoreMetadataOptions = {
+  /** Persist remote URLs immediately; localize images in a background job. */
+  deferImageLocalization?: boolean;
+};
+
+function cloneMetadataForImageLocalization(
+  metadata: MetadataResult,
+): MetadataResult {
+  return {
+    ...metadata,
+    attachments: metadata.attachments?.map((attachment) => ({
+      ...attachment,
+    })),
+    aliases: metadata.aliases ? [...metadata.aliases] : metadata.aliases,
+    facts: metadata.facts ? [...metadata.facts] : metadata.facts,
+    fieldEvidence: metadata.fieldEvidence
+      ? metadata.fieldEvidence.map((entry) => ({ ...entry }))
+      : metadata.fieldEvidence,
+    authors: metadata.authors?.map((author) => ({ ...author })),
+    publishers: metadata.publishers?.map((publisher) => ({ ...publisher })),
+  };
+}
+
+function prepareDeferredAttachments(
+  attachments: MetadataAttachment[],
+): MetadataAttachment[] {
+  return attachments.map((attachment) => {
+    const sourceUrl = attachment.url;
+    let role = attachment.role;
+    if (attachment.type === "cover") {
+      role =
+        resolveCoverAttachmentRole({
+          type: attachment.type,
+          url: sourceUrl,
+          title: attachment.title,
+          role: attachment.role,
+          source: attachment.source,
+          authoritative3dCoverRoleSource: authoritative3dCoverRoleSource(
+            attachment.source,
+          ),
+          gridStyleCoverLabelsSource: gridStyleCoverLabelSource(
+            attachment.source,
+          ),
+        }) ?? role;
+    }
+
+    return {
+      ...attachment,
+      role,
+      coverProvenance:
+        coverProvenanceForSource(attachment.source, sourceUrl) ??
+        attachment.coverProvenance,
+    };
+  });
+}
+
+function scheduleDeferredMetadataImageLocalization(
+  itemId: Item["id"],
+  metadata: MetadataResult,
+  type: Type,
+  name: string,
+  metadataId: string,
+  fetchedAt: Date,
+): void {
+  // Image localization runs sharp (resize/analysis) — CPU-bound work that must
+  // stay on the low-concurrency pool so it never blocks interactive requests.
+  void runCpuBackgroundWork(async () => {
+    const current = await prisma.metadata.findUnique({
+      where: { id: metadataId },
+      select: { lastFetched: true },
+    });
+    if (
+      !current?.lastFetched ||
+      current.lastFetched.getTime() !== fetchedAt.getTime()
+    ) {
+      return;
+    }
+
+    try {
+      await storeMetadata(itemId, metadata, type, name, {
+        deferImageLocalization: false,
+      });
+    } catch (error) {
+      console.error(
+        `[MetadataStorage] Deferred image localization failed for item ${itemId}:`,
+        error,
+      );
+    }
+  });
+}
+
 export async function storeMetadata(
   itemId: Item["id"],
   metadata: MetadataResult,
   type: Type,
   name: string,
+  options: StoreMetadataOptions = {},
 ): Promise<
   Metadata & {
     attachments?: Attachment[];
@@ -598,12 +726,16 @@ export async function storeMetadata(
     publishers?: Publisher[];
   }
 > {
+  const deferImageLocalization = options.deferImageLocalization ?? false;
+  const metadataSnapshotForLocalization = deferImageLocalization
+    ? cloneMetadataForImageLocalization(metadata)
+    : null;
   const originalMetadataImageUrl = metadata.imageUrl;
   const metadataImageSemantics = originalMetadataImageUrl
     ? metadataImageAttachmentSemantics(metadata, originalMetadataImageUrl)
     : null;
 
-  if (metadata.imageUrl) {
+  if (metadata.imageUrl && !deferImageLocalization) {
     metadata.imageUrl =
       (await downloadRemoteImage(metadata.imageUrl)) || undefined;
   }
@@ -696,61 +828,59 @@ export async function storeMetadata(
   );
 
   // Localize all attachments before database save, filtering out failures (e.g. 404)
-  const downloadedAttachments = (
-    await Promise.all(
-      uniqueAttachments.map(async (attachment) => {
-        const sourceUrl = attachment.url;
-        const localizedUrl = await downloadRemoteImage(attachment.url);
-        if (!localizedUrl) {
-          return null;
-        }
-
-        let role = attachment.role;
-        if (attachment.type === "cover") {
-          role =
-            resolveCoverAttachmentRole({
-              type: attachment.type,
-              url: sourceUrl,
-              title: attachment.title,
-              role: attachment.role,
+  let attachmentsForRanking = deferImageLocalization
+    ? prepareDeferredAttachments(uniqueAttachments)
+    : (
+        await Promise.all(
+          uniqueAttachments.map(async (attachment) => {
+            const sourceUrl = attachment.url;
+            const localizedUrl = await downloadRemoteImage(attachment.url, {
               source: attachment.source,
-              authoritative3dCoverRoleSource: authoritative3dCoverRoleSource(
-                attachment.source,
-              ),
-              gridStyleCoverLabelsSource: gridStyleCoverLabelSource(
-                attachment.source,
-              ),
-            }) ?? role;
-        }
+            });
+            if (!localizedUrl) {
+              return null;
+            }
 
-        return {
-          ...attachment,
-          url: localizedUrl,
-          role,
-          // Resolve provenance from the ORIGINAL provider URL before it is
-          // replaced by the local /uploads path, then persist it: the localized
-          // URL no longer reveals the source bucket (catalog vs seller/user
-          // photo), so it cannot be recomputed on read.
-          coverProvenance:
-            coverProvenanceForSource(attachment.source, sourceUrl) ??
-            attachment.coverProvenance,
-        };
-      }),
-    )
-  ).filter((a): a is NonNullable<typeof a> => a !== null);
+            let role = attachment.role;
+            if (attachment.type === "cover") {
+              role =
+                resolveCoverAttachmentRole({
+                  type: attachment.type,
+                  url: sourceUrl,
+                  title: attachment.title,
+                  role: attachment.role,
+                  source: attachment.source,
+                  authoritative3dCoverRoleSource:
+                    authoritative3dCoverRoleSource(attachment.source),
+                  gridStyleCoverLabelsSource: gridStyleCoverLabelSource(
+                    attachment.source,
+                  ),
+                }) ?? role;
+            }
 
-  // Reject solid-colour / near-uniform placeholder images (e.g. ScreenScraper
-  // fillers, Geedie "no artwork" glyphs) so they never pollute the gallery or
-  // get picked as the cover.
-  let localizedAttachments = await filterOutFlatImageAttachments(
-    downloadedAttachments,
-  );
+            return {
+              ...attachment,
+              url: localizedUrl,
+              role,
+              coverProvenance:
+                coverProvenanceForSource(attachment.source, sourceUrl) ??
+                attachment.coverProvenance,
+            };
+          }),
+        )
+      ).filter((a): a is NonNullable<typeof a> => a !== null);
+
+  if (!deferImageLocalization) {
+    attachmentsForRanking = await filterOutFlatImageAttachments(
+      attachmentsForRanking,
+    );
+  }
 
   if (
-    localizedAttachments.length === 0 &&
+    attachmentsForRanking.length === 0 &&
     item?.metadata?.attachments?.length
   ) {
-    localizedAttachments = item.metadata.attachments
+    attachmentsForRanking = item.metadata.attachments
       .filter((attachment) => attachment.url.startsWith("/uploads/"))
       .map((attachment) => ({
         type: attachment.type,
@@ -780,18 +910,20 @@ export async function storeMetadata(
       : null;
 
   const imageMetricsByUrl = new Map<string, AttachmentImageMetrics | null>();
-  await Promise.all(
-    localizedAttachments
-      .filter((attachment) =>
-        shouldReadImageMetricsForAttachment(attachment.type),
-      )
-      .map(async (attachment) => {
-        imageMetricsByUrl.set(
-          attachment.url,
-          await readAttachmentImageMetrics(attachment.url),
-        );
-      }),
-  );
+  if (!deferImageLocalization) {
+    await Promise.all(
+      attachmentsForRanking
+        .filter((attachment) =>
+          shouldReadImageMetricsForAttachment(attachment.type),
+        )
+        .map(async (attachment) => {
+          imageMetricsByUrl.set(
+            attachment.url,
+            await readAttachmentImageMetrics(attachment.url),
+          );
+        }),
+    );
+  }
 
   // Stamp the provider-declared cover traits onto each attachment so the display
   // scorer (and the client, via the stored payload) ranks the box cover / full
@@ -799,7 +931,7 @@ export async function storeMetadata(
   const rankedLocalizedAttachments = await dedupeLocalizedAttachmentsByContent(
     reorderAttachmentsCoverFirst(
       rankAttachmentsForDisplay(
-        localizedAttachments.map(withProviderAttachmentTraits),
+        attachmentsForRanking.map(withProviderAttachmentTraits),
         imageMetricsByUrl,
         { requestedPlatformKey },
       ),
@@ -850,9 +982,10 @@ export async function storeMetadata(
   );
   const canonicalCover =
     canonicalCoverCandidate &&
-    isCoverResolutionAcceptable(
-      imageMetricsByUrl.get(canonicalCoverCandidate.url) ?? null,
-    )
+    (deferImageLocalization ||
+      isCoverResolutionAcceptable(
+        imageMetricsByUrl.get(canonicalCoverCandidate.url) ?? null,
+      ))
       ? canonicalCoverCandidate
       : undefined;
   const metadataCoverFallback =
@@ -869,7 +1002,7 @@ export async function storeMetadata(
     (previousLocalCover &&
     requestedPlatformKey &&
     shouldSuppressCoverOnPlatformShelf(
-      localizedAttachments.find(
+      attachmentsForRanking.find(
         (attachment) => attachment.url === previousLocalCover,
       ) ?? { type: "cover", url: previousLocalCover },
       storableAttachments.filter((attachment) =>
@@ -1015,7 +1148,7 @@ export async function storeMetadata(
       item.imageUrl === previousMetadataImage ||
       item.imageUrl === croppedImageUrl ||
       (itemCoverIsLowRes && !userCoverSavedAfterEnrichment) ||
-      localizedAttachments.some(
+      attachmentsForRanking.some(
         (attachment) =>
           attachment.source === "barcode" && attachment.url === item.imageUrl,
       ) ||
@@ -1075,6 +1208,21 @@ export async function storeMetadata(
       itemName: item.name?.trim() || name.trim(),
       barcode: item.barcode,
     });
+  }
+
+  if (
+    deferImageLocalization &&
+    metadataSnapshotForLocalization &&
+    storedMetadata.lastFetched
+  ) {
+    scheduleDeferredMetadataImageLocalization(
+      itemId,
+      metadataSnapshotForLocalization,
+      type,
+      name,
+      storedMetadata.id,
+      storedMetadata.lastFetched,
+    );
   }
 
   return storedMetadata;
@@ -1309,6 +1457,9 @@ async function isFlatImageAsset(url: string): Promise<boolean> {
     if (!filePath || !fs.existsSync(filePath)) return false;
     try {
       const buffer = fs.readFileSync(filePath);
+      if (await isUnavailableCoverPlaceholderBuffer(buffer)) {
+        return true;
+      }
       const stats = await sharp(buffer).stats();
       const metadata = await sharp(buffer).metadata();
       const exposure = await measureCoverExposureFromBuffer(buffer);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  filterPlaceholderCoverAttachments,
   isDegenerateFlatImage,
   isMissingArtImageUrl,
   isPlaceholderCoverFromPersistedMetrics,
@@ -83,6 +84,16 @@ describe("isPlaceholderCoverFromPersistedMetrics", () => {
     ).toBe(true);
   });
 
+  it("filtre une tuile Google Books sans couverture (fond noir)", () => {
+    expect(
+      isPlaceholderCoverFromPersistedMetrics({
+        width: 257,
+        height: 389,
+        darkPixelRatio: 0.67,
+      }),
+    ).toBe(true);
+  });
+
   it("conserve une jaquette portrait avec de la profondeur", () => {
     expect(
       isPlaceholderCoverFromPersistedMetrics({
@@ -92,5 +103,22 @@ describe("isPlaceholderCoverFromPersistedMetrics", () => {
         darkPixelRatio: 0.47,
       }),
     ).toBe(false);
+  });
+});
+
+describe("filterPlaceholderCoverAttachments", () => {
+  it("conserve une jaquette localisée sombre ressemblant à une tuile Google", () => {
+    const attachment = {
+      type: "cover" as const,
+      url: "/uploads/alice-xbox360.jpg",
+      width: 261,
+      height: 366,
+      meanLuminance: 88.5,
+      darkPixelRatio: 0.595,
+    };
+    expect(isPlaceholderCoverFromPersistedMetrics(attachment)).toBe(true);
+    expect(filterPlaceholderCoverAttachments([attachment])).toEqual([
+      attachment,
+    ]);
   });
 });

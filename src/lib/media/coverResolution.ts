@@ -28,3 +28,9 @@ export function isCoverResolutionAcceptable(
   const shortest = shortestImageEdge(metrics);
   return shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE;
 }
+
+/** CDN paths like Booknode `/full/*.jpg` should not be satisfied by tiny fallbacks. */
+export function coverUrlExpectsHighResolution(url: string): boolean {
+  if (!url.startsWith("http")) return false;
+  return /\/full\/[^/?#]+\.jpe?g(?:[?#]|$)/i.test(url);
+}

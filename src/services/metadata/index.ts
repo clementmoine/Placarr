@@ -98,6 +98,7 @@ export async function getMetadata(
     bypassCache?: boolean;
     isBackground?: boolean;
     shelfName?: string | null;
+    queuePriority?: "high" | "normal";
     signal?: AbortSignal;
   } = {},
 ): Promise<MetadataResult | null> {
@@ -140,6 +141,7 @@ export async function getMetadata(
         {
           isBackground: options.isBackground,
           shelfName: options.shelfName,
+          queuePriority: options.queuePriority,
           signal: options.signal,
         },
       );
@@ -251,7 +253,9 @@ export async function fetchAndStoreMetadata(
 
   try {
     // Store the metadata without updating the item's name
-    const storedMetadata = await storeMetadata(itemId, metadata, type, name);
+    const storedMetadata = await storeMetadata(itemId, metadata, type, name, {
+      deferImageLocalization: isBackground,
+    });
     return formatMetadataFromStorage(storedMetadata);
   } catch (error) {
     console.error("Error storing metadata:", error);

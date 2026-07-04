@@ -94,6 +94,8 @@ export function isPlaceholderCoverImage(
 export function isPlaceholderCoverFromPersistedMetrics(
   signals: PlaceholderCoverSignals,
 ): boolean {
+  if (isUnavailableCoverPlaceholderFromPersistedMetrics(signals)) return true;
+
   const width = signals.width;
   const height = signals.height;
   if (!width || !height || width < 1 || height < 1) return false;
@@ -114,12 +116,74 @@ export function isPlaceholderCoverFromPersistedMetrics(
   );
 }
 
+/** Read-path filter for Google-style "no cover" tiles persisted with metrics. */
+export function isUnavailableCoverPlaceholderFromPersistedMetrics(
+  signals: PlaceholderCoverSignals,
+): boolean {
+  const width = signals.width;
+  const height = signals.height;
+  if (!width || !height) return false;
+
+  if (
+    width >= 100 &&
+    width <= 135 &&
+    height >= 150 &&
+    height <= 185
+  ) {
+    return true;
+  }
+
+  const darkPixelRatio = signals.darkPixelRatio;
+  if (darkPixelRatio == null || darkPixelRatio < 0.55) return false;
+
+  const aspect = width / height;
+  return (
+    width >= 200 &&
+    width <= 320 &&
+    height >= 350 &&
+    height <= 450 &&
+    aspect >= 0.55 &&
+    aspect <= 0.75
+  );
+}
+
+function isBrightSquarePlaceholderFromPersistedMetrics(
+  signals: PlaceholderCoverSignals,
+): boolean {
+  const width = signals.width;
+  const height = signals.height;
+  if (!width || !height || width < 1 || height < 1) return false;
+
+  const shortest = Math.min(width, height);
+  const aspect = width / height;
+  const meanLuminance = signals.meanLuminance;
+  const darkPixelRatio = signals.darkPixelRatio;
+
+  return (
+    shortest <= 640 &&
+    aspect >= 0.9 &&
+    aspect <= 1.11 &&
+    meanLuminance != null &&
+    meanLuminance >= 170 &&
+    darkPixelRatio != null &&
+    darkPixelRatio < 0.04
+  );
+}
+
+function isPersistedLocalizedUpload(url?: string | null): boolean {
+  return Boolean(url?.startsWith("/uploads/"));
+}
+
 export function filterPlaceholderCoverAttachments<
   T extends PlaceholderCoverSignals & { url?: string | null },
 >(attachments: T[]): T[] {
-  return attachments.filter(
-    (attachment) =>
-      !isMissingArtImageUrl(attachment.url) &&
-      !isPlaceholderCoverFromPersistedMetrics(attachment),
-  );
+  return attachments.filter((attachment) => {
+    if (isMissingArtImageUrl(attachment.url)) return false;
+    // Localized assets skip dark "unavailable tile" heuristics, but bright
+    // square placeholders (e.g. Geedie 500×500) are still dropped.
+    if (isPersistedLocalizedUpload(attachment.url)) {
+      return !isBrightSquarePlaceholderFromPersistedMetrics(attachment);
+    }
+    return !isPlaceholderCoverFromPersistedMetrics(attachment);
+  });
 }

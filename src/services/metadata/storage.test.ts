@@ -310,10 +310,10 @@ describe("canKeepRemoteImageOnDownloadFailure", () => {
   it("conserve les images distantes seulement pour les hosts déclarés", () => {
     expect(
       canKeepRemoteImageOnDownloadFailure(
-        "https://cdn1.booknode.com/book_cover/1691/super-picsou.webp",
+        "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n2-1691462.jpg",
         "booknode",
       ),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       canKeepRemoteImageOnDownloadFailure(
         "https://img.chasse-aux-livres.fr/covers/super-picsou.jpg",

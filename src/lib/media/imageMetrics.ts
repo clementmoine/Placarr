@@ -5,6 +5,7 @@ import sharp from "sharp";
 export {
   MIN_COVER_SHORTEST_EDGE,
   type ImageDimensions,
+  coverUrlExpectsHighResolution,
   isCoverResolutionAcceptable,
   shortestImageEdge,
 } from "@/lib/media/coverResolution";

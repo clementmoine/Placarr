@@ -7,6 +7,7 @@ import {
   Search,
   Link2,
   RefreshCw,
+  X,
   ChevronLeft,
   ChevronRight,
   Coins,
@@ -59,6 +60,7 @@ import {
   refreshItemMetadata,
   type ItemPrices,
 } from "@/lib/api/items";
+import { cancelBackgroundJob } from "@/lib/api/backgroundJobs";
 import {
   getHeroImage,
   getGalleryImages,
@@ -1093,14 +1095,21 @@ export default function ItemDetailsPage() {
   const { data: item, isPending } = useQuery({
     queryKey: ["shelf", shelfId, "items", itemId],
     queryFn: () => getItem(itemId, shelfId),
-    initialData: () =>
-      queryClient
+    initialData: () => {
+      const cached = queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
         ?.items?.find(
           (i) => i.id === itemId || i.slug === itemId,
-        ) as ItemWithMetadata,
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
+        ) as ItemWithMetadata | undefined;
+      if (!cached) return undefined;
+      // Instant cover/title from the grid, but never treat shelf cache as a
+      // complete metadata payload (attachments are omitted on list routes).
+      return cached;
+    },
+    // Shelf snapshots omit attachment galleries — refetch the full item
+    // immediately on detail mount instead of inheriting the 60s staleTime.
+    initialDataUpdatedAt: 0,
+    staleTime: 0,
     placeholderData: (previousData) => previousData,
     // Metadata is enriched in the background after an item is added, so poll
     // while this item is still being enriched (no metadataId yet) — survives a
@@ -1116,6 +1125,7 @@ export default function ItemDetailsPage() {
     !item?.metadata &&
     !isMetadataBusy;
   const wasMetadataRefreshingRef = useRef(false);
+  const cancelledMetadataRefreshRef = useRef(false);
 
   useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
 
@@ -1155,7 +1165,10 @@ export default function ItemDetailsPage() {
   useEffect(() => {
     const refreshing = isItemMetadataRefreshing(item);
     if (wasMetadataRefreshingRef.current && !refreshing) {
-      toast.success(t("items.refreshMetadataSuccess"));
+      if (!cancelledMetadataRefreshRef.current) {
+        toast.success(t("items.refreshMetadataSuccess"));
+      }
+      cancelledMetadataRefreshRef.current = false;
     }
     wasMetadataRefreshingRef.current = refreshing;
   }, [item?.metadataRefreshStartedAt, item, t]);
@@ -1347,6 +1360,42 @@ export default function ItemDetailsPage() {
       },
     });
   }, [refreshMetadata, t]);
+
+  const { mutate: cancelMetadataRefresh, isPending: isCancellingMetadataRefresh } =
+    useMutation({
+      mutationFn: () => cancelBackgroundJob(item!.id),
+      onMutate: () => {
+        cancelledMetadataRefreshRef.current = true;
+        if (item?.id) {
+          patchCachedItem(queryClient, {
+            id: item.id,
+            shelfId: item.shelfId ?? shelfId,
+            metadataRefreshStartedAt: null,
+          });
+        }
+      },
+      onSuccess: () => {
+        void invalidateItemQueries(queryClient, item!.id, [
+          shelfId,
+          item?.shelfId,
+        ]);
+        void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
+        toast.success(t("items.cancelMetadataRefreshSuccess"));
+      },
+      onError: () => {
+        cancelledMetadataRefreshRef.current = false;
+        toast.error(t("items.cancelMetadataRefreshFailed"));
+      },
+    });
+
+  const handleCancelMetadataRefresh = useCallback(() => {
+    if (!item?.id) return;
+    cancelMetadataRefresh();
+  }, [cancelMetadataRefresh, item?.id]);
+
+  const isMetadataRefreshing =
+    isItemMetadataRefreshing(item) || isRefreshingMetadata;
+  const isEnrichingOnly = isMetadataBusy && !isMetadataRefreshing;
 
   const handleModalClose = useCallback(() => {
     setModalVisible(false);
@@ -2074,17 +2123,37 @@ export default function ItemDetailsPage() {
                     <Button
                       variant="secondary"
                       className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
-                      onClick={handleRefreshMetadata}
-                      disabled={isMetadataBusy || isRefreshingMetadata}
+                      onClick={
+                        isMetadataRefreshing
+                          ? handleCancelMetadataRefresh
+                          : handleRefreshMetadata
+                      }
+                      disabled={
+                        isEnrichingOnly ||
+                        isCancellingMetadataRefresh ||
+                        (isRefreshingMetadata && !item?.id)
+                      }
                     >
-                      <RefreshCw
-                        className={cn(
-                          "size-4 mr-1.5",
-                          (isMetadataBusy || isRefreshingMetadata) &&
-                            "animate-spin",
-                        )}
-                      />
-                      {t("items.refreshMetadata")}
+                      {isMetadataRefreshing ? (
+                        <>
+                          {isCancellingMetadataRefresh ? (
+                            <Loader2 className="size-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <X className="size-4 mr-1.5" />
+                          )}
+                          {t("items.cancelMetadataRefresh")}
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw
+                            className={cn(
+                              "size-4 mr-1.5",
+                              isEnrichingOnly && "animate-spin",
+                            )}
+                          />
+                          {t("items.refreshMetadata")}
+                        </>
+                      )}
                     </Button>
                   </div>
                 )}

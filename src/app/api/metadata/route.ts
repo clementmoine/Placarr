@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
 
     const metadata = await getMetadata(name, type, barcode, platform, {
       shelfName,
+      queuePriority: "high",
     });
     return NextResponse.json(metadata);
   } catch (error) {

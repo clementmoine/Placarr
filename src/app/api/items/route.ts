@@ -24,6 +24,7 @@ import {
   startItemMetadataRefresh,
   shelfMoveMetadataResetData,
 } from "@/lib/jobs/scheduleMetadataRefresh";
+import { clearStaleMetadataRefreshStartedAtIfNeeded } from "@/lib/jobs/metadataRefreshSession";
 import {
   itemPricesContextFromRecord,
   readItemPrices,
@@ -108,6 +109,11 @@ export async function GET(req: NextRequest) {
       if (!isAdmin && item.userId !== auth.user.id && !item.shelf.isPublic) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
+
+      void clearStaleMetadataRefreshStartedAtIfNeeded(
+        item.id,
+        item.metadataRefreshStartedAt,
+      );
 
       const prices = await readItemPrices(itemPricesContextFromRecord(item));
       return NextResponse.json({

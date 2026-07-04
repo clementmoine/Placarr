@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 
 import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
+import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import type { Prisma } from "@prisma/client";
 
 import { requireAdmin } from "@/lib/auth";
@@ -9,8 +10,9 @@ import { fetchAndStoreMetadata } from "@/services/metadata";
 
 import { PROVIDERS } from "@/services/provider/registry";
 
-const DEFAULT_BATCH_LIMIT = 5;
-const MAX_BATCH_LIMIT = 10;
+const DEFAULT_BATCH_LIMIT = 10;
+const MAX_BATCH_LIMIT = 25;
+const ENRICH_ITEM_CONCURRENCY = 2;
 
 // A game item counts as enriched once it has a cover from the primary canonical
 // box-art source for games: the first canonical real-box-cover provider in the
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
   });
 
   scheduleAfterResponse(async () => {
-    for (const item of items) {
+    await runWithConcurrency(items, ENRICH_ITEM_CONCURRENCY, async (item) => {
       try {
         const lookupQuery = item.metadata?.title || item.name;
         await runBackgroundWork(() =>
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
             item.barcode || undefined,
             true,
             undefined,
-            true,
+            false,
             true,
             item.shelf.name,
           ),
@@ -126,7 +128,7 @@ export async function POST(req: NextRequest) {
           error,
         );
       }
-    }
+    });
   });
 
   return NextResponse.json(

@@ -1628,8 +1628,8 @@ function AdminDashboardComponent() {
                         </CardTitle>
                         <CardDescription>
                           {locale === "fr"
-                            ? "Détecte les retours vides / partiels sur des requêtes exemples. Aucun blocage automatique."
-                            : "Highlights empty/partial probe results on sample queries. Never blocks builds."}
+                            ? "Compare les signaux disponibles (page/API) au mapping réel. Les champs inutilisés remontent en partial."
+                            : "Compares available page/API signals with mapped output. Unused fields surface as partial."}
                         </CardDescription>
                       </div>
                       <Button

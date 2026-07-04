@@ -27,6 +27,7 @@ import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
+import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { getShelves } from "@/lib/api/shelves";
 import { getCoverImage } from "@/lib/item/media";
 import { RemoteImage } from "@/components/RemoteImage";
@@ -229,55 +230,51 @@ export function QuickScanModal({
       initialResults: QuickScanResult[],
     ) => {
       const toHydrate = initialResults;
-      await Promise.all(
-        toHydrate.map(async (result) => {
-          try {
-            const metadata = await getMetadataPreview(
-              result.title,
-              type,
-              code,
-              platform,
-              shelfName,
-            );
-            if (activeLookupKeyRef.current !== lookupKey) return;
-            const hydratedImageUrl = metadata
-              ? getCoverImage({ metadata })
-              : null;
-            setResults((prev) =>
-              prev.map((entry) => {
-                if (entry.id !== result.id) return entry;
-                if (hydratedImageUrl) {
-                  return {
-                    ...entry,
-                    imageUrl: hydratedImageUrl,
-                    imageSource: "metadata",
-                    isHydrating: false,
-                    metadataPreview: metadata || null,
-                  };
-                }
+      await runWithConcurrency(toHydrate, 2, async (result) => {
+        try {
+          const metadata = await getMetadataPreview(
+            result.title,
+            type,
+            code,
+            platform,
+            shelfName,
+          );
+          if (activeLookupKeyRef.current !== lookupKey) return;
+          const hydratedImageUrl = metadata ? getCoverImage({ metadata }) : null;
+          setResults((prev) =>
+            prev.map((entry) => {
+              if (entry.id !== result.id) return entry;
+              if (hydratedImageUrl) {
                 return {
                   ...entry,
+                  imageUrl: hydratedImageUrl,
+                  imageSource: "metadata",
                   isHydrating: false,
                   metadataPreview: metadata || null,
                 };
-              }),
-            );
-          } catch (error) {
-            if (activeLookupKeyRef.current !== lookupKey) return;
-            console.warn(
-              `[QuickScan] Metadata preview failed for "${result.title}"`,
-              error,
-            );
-            setResults((prev) =>
-              prev.map((entry) =>
-                entry.id === result.id
-                  ? { ...entry, isHydrating: false }
-                  : entry,
-              ),
-            );
-          }
-        }),
-      );
+              }
+              return {
+                ...entry,
+                isHydrating: false,
+                metadataPreview: metadata || null,
+              };
+            }),
+          );
+        } catch (error) {
+          if (activeLookupKeyRef.current !== lookupKey) return;
+          console.warn(
+            `[QuickScan] Metadata preview failed for "${result.title}"`,
+            error,
+          );
+          setResults((prev) =>
+            prev.map((entry) =>
+              entry.id === result.id
+                ? { ...entry, isHydrating: false }
+                : entry,
+            ),
+          );
+        }
+      });
     },
     [],
   );

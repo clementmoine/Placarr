@@ -213,8 +213,9 @@ describe("withProviderFactTraits", () => {
     expect(
       withProviderFactTraits({
         kind: "rating",
-        label: "BGG (Bayes)",
+        label: "BoardGameGeek",
         value: "7.8",
+        source: "BGG",
       }),
     ).toMatchObject({
       isBoardGameRatingSource: true,

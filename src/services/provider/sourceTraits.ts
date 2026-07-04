@@ -65,8 +65,6 @@ const BOARD_GAME_RATING_PROVIDER_IDS = new Set(
 
 const PC_SPECIFIC_FACT_SOURCE_KEYS = new Set(["steamdb", "pcgamingwiki"]);
 
-const BOARD_GAME_CONSENSUS_RATING_LABEL = "BGG (Bayes)";
-
 const HOW_LONG_TO_BEAT_PROVIDER_IDS = new Set(
   PROVIDERS.filter((provider) => provider.timeToBeatSource).map(
     (provider) => provider.id,
@@ -334,7 +332,6 @@ export function isBoardGameRatingFactSource(
   if (id !== null && BOARD_GAME_RATING_PROVIDER_IDS.has(id)) return true;
   const normalizedLabel = label?.trim();
   if (!normalizedLabel) return false;
-  if (normalizedLabel === BOARD_GAME_CONSENSUS_RATING_LABEL) return true;
   for (const providerId of BOARD_GAME_RATING_PROVIDER_IDS) {
     const providerLabel = PROVIDER_LABEL_BY_ID.get(providerId);
     if (providerLabel && normalizedLabel === providerLabel) return true;

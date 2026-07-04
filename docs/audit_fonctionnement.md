@@ -226,8 +226,11 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    > lieu de la redéfinir. Zéro changement de comportement. Le vrai fix (détection audio
    > GS1-exacte + cas de test) reste un chantier data, pas un merge mécanique.
 
-   La **dedup #2** (`steamdb`/`pcgamingwiki`) est faite (repliée sur le set) ; le label
-   `"BGG (Bayes)"` et les **sous-titres produit #3** restent (voir ci-dessous).
+   La **dedup #2** (`steamdb`/`pcgamingwiki`) est faite (repliée sur le set). Le label
+   **`"BGG (Bayes)"` est supprimé** : investigation → aucun fact ne porte ce label (le
+   provider BGG émet `label: "BoardGameGeek", source: "BGG"`), la comparaison était
+   **morte**, maintenue par son seul test ; retirée, test réécrit sur la vraie forme.
+   Restent les **sous-titres produit #3** (voir ci-dessous, bloqués sur données).
 
 2. **Sources fantômes hardcodées** dans
    [sourceTraits.ts](src/services/provider/sourceTraits.ts) :

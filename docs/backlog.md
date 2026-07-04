@@ -184,15 +184,16 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
 
-#### KISS-1 — Découper `storage.ts` (1511 lignes) _(valeur réelle, gros refactor)_
+#### KISS-1 — Découper `storage.ts` _(en cours — 1511 → 1137 lignes)_
 
-- **État** : non commencé. Le plus gros fichier du repo ; fait persistance + localisation d'images (`sharp`) + métriques + hero + provenance + facts + prix dans un seul module.
-- **Pourquoi pas fait** : refactor délicat de code de persistance très testé — un découpage bâclé introduit des bugs subtils. Classé « surveiller, pas urgent ».
-- **Reprendre** :
-  1. Lire tout `src/services/metadata/storage.ts` et cartographier les fonctions + l'état partagé (closures, `imageMetricsByUrl`, etc.).
-  2. Extraire par frontières SANS état partagé, un module à la fois, en re-testant à chaque : viser `storage/images.ts` (localisation + métriques + `reorderAttachmentsCoverFirst`/`pickBestCoverFromAttachments`/`pickBestBackgroundFromAttachments`), `storage/facts.ts`, `storage/prices.ts`. `storage.ts` devient l'orchestrateur.
-  3. Ne PAS changer le comportement (aucun bump de cache attendu) ; garder `storage.test.ts` + `storage.test` verts. Vérifier `pnpm build` (fichier dans le graphe).
-- **Pièges** : `coverProvenance` doit rester dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display.
+- **État 2026-07-04** : **2 extractions faites** (comportement préservé, re-exports pour compat) :
+  - `services/metadata/imageAssets.ts` — perceptual-hash dedupe + métriques image locales + détection placeholder plat (`387075c`).
+  - `services/metadata/imageUrls.ts` — helpers purs de résolution d'URL image originale (`c6385d9`).
+- **Reste** (mêmes règles : extraction pure, `storage.test.ts` vert, `pnpm build` vert, 0 changement de comportement) :
+  - `downloadRemoteImage` + `existingLocalizedUploadForUrl` + `LOCAL_IMAGE_EXTENSIONS` → un `storage/download.ts` (dépend de `coverDownloadCandidates`, `fetchRemoteImageBuffer`, `crypto`/`fs`).
+  - Les mappers Prisma (`mapAuthors`/`mapPublishers`/`mapAttachments`/`toAttachmentCreateData`) + `formatMetadataForStorage`/`formatMetadataFromStorage` → `storage/dbMapping.ts`.
+  - Le reste = `storeMetadata` (l'orchestrateur, ~500 l.) — le laisser dans `storage.ts` ; extraire seulement des helpers PURS qu'il appelle, jamais son état.
+- **Pièges** : `coverProvenance` doit rester dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; garder les re-exports depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests).
 
 #### KISS-2 — Alléger le branching `type === "games"` de `fetch.ts` _(valeur réelle, risqué)_
 
@@ -213,7 +214,8 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 #### POLL-1 — Poll idle de `BackgroundJobsMenu` _(nit perf mineur)_
 
 - **État** : `src/components/BackgroundJobsMenu.tsx` poll toutes les 10 s au repos, sans jamais s'arrêter (utilisateur connecté). TanStack met déjà le poll en pause quand l'onglet perd le focus.
-- **Reprendre** : pour arrêter le poll idle (`refetchInterval: false` quand `count===0`), il faut d'abord câbler `queryClient.invalidateQueries(["backgroundJobs"])` sur **tous les sites qui créent un job** (ajout d'item, refresh, bulk). Sinon le menu ne verra plus les nouveaux jobs. Alternative low-effort : ralentir l'intervalle idle (10 s → 30–60 s).
+- **Constat 2026-07-04** : `["backgroundJobs"]` n'est invalidé qu'à **un seul endroit** (`shelves/[shelfId]/[itemId]/page.tsx`). Les sites de création (`QuickScanModal`, `BulkAddModal`, `ScanFAB`, ajout via `lib/api/items`) ne l'invalident pas → stopper le poll idle sans plomberie régresserait la détection des nouveaux jobs. **Non fait** (ratio risque/valeur faible).
+- **Reprendre** : câbler `queryClient.invalidateQueries(["backgroundJobs"])` dans le `onSuccess` de chaque mutation créant un job, PUIS passer `refetchInterval: false` quand `count===0`. Alternative low-effort sans plomberie : ralentir l'intervalle idle (10 s → 30–60 s).
 
 #### CONFIG-1 — `PROVIDER_METADATA_EXTENSIONS` (self-declaration) _(évalué → NON retenu)_
 

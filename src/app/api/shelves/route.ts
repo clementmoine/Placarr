@@ -15,6 +15,7 @@ import { slugify } from "@/lib/routing/slugs";
 import { buildItemSearchConditions } from "@/lib/item/search";
 import { bestRatingRatioFromFacts } from "@/lib/item/rating";
 import { summarizeShelfItemPrices } from "@/services/pricing/resolver";
+import { reconcileOrphanedMetadataRefreshesForUser } from "@/lib/jobs/metadataRefreshSession";
 import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
 
@@ -155,6 +156,10 @@ export async function GET(req: NextRequest) {
   return withRequestUiLocale(req, async (uiLocale) => {
     const auth = await requireGuestOrHigher(req);
     if (auth instanceof NextResponse) return auth;
+
+    if (auth.user.role !== "guest") {
+      await reconcileOrphanedMetadataRefreshesForUser(auth.user.id);
+    }
 
     try {
       const { searchParams } = new URL(req.url);

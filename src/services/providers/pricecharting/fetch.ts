@@ -18,6 +18,11 @@ import {
   pickPriceChartingPrimaryCoverUrl,
   priceChartingGalleryLabelIsRecognized,
 } from "./imageLabels";
+import {
+  isPriceChartingQuotaBlocked,
+  markPriceChartingQuotaHit,
+  PriceChartingRateLimitedError,
+} from "./quota";
 
 export type {
   PriceChartingMetadata,
@@ -37,6 +42,10 @@ async function priceChartingGet(
   url: string,
   headers: Record<string, string> = PRICECHARTING_HEADERS,
 ) {
+  if (isPriceChartingQuotaBlocked()) {
+    throw new PriceChartingRateLimitedError();
+  }
+
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       return await axios.get<string>(url, { headers, maxRedirects: 5 });
@@ -44,11 +53,14 @@ async function priceChartingGet(
       const status = axios.isAxiosError(error)
         ? error.response?.status
         : undefined;
-      if (status === 429 && attempt < 2) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, 1500 * (attempt + 1)),
-        );
-        continue;
+      if (status === 429) {
+        markPriceChartingQuotaHit();
+        if (attempt < 2) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1500 * (attempt + 1)),
+          );
+          continue;
+        }
       }
       throw error;
     }

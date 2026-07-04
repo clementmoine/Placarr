@@ -1,7 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("axios", () => ({ default: { get: vi.fn(), isAxiosError: vi.fn() } }));
+vi.mock("axios", () => ({
+  default: { get: vi.fn(), isAxiosError: vi.fn() },
+}));
 import axios from "axios";
+
+import {
+  isPriceChartingQuotaBlocked,
+  resetPriceChartingQuotaBlockForTests,
+} from "./quota";
 
 import {
   decodePriceChartingHtmlEntities,
@@ -47,6 +54,8 @@ function detailResponse(html = DETAIL_HTML) {
 
 beforeEach(() => {
   mockedGet.mockReset();
+  resetPriceChartingQuotaBlockForTests();
+  vi.mocked(axios.isAxiosError).mockReturnValue(false);
 });
 
 describe("priceChartingPlatformMatchesTarget", () => {
@@ -383,5 +392,37 @@ describe("fetchPricesFromPriceCharting", () => {
       priceUsedCIB: 1800,
       priceNew: 2499,
     });
+  });
+
+  it("enters a module cooldown after HTTP 429 and skips further calls", async () => {
+    vi.useFakeTimers();
+    const rateLimitError = Object.assign(new Error("429"), {
+      response: { status: 429 },
+    });
+    vi.mocked(axios.isAxiosError).mockImplementation(
+      (error) => error === rateLimitError,
+    );
+    mockedGet.mockRejectedValue(rateLimitError);
+
+    const first = fetchPricesFromPriceCharting(
+      "0045496365226",
+      "Super Monkey Ball",
+      "Wii",
+    );
+    await vi.runAllTimersAsync();
+    await expect(first).resolves.toBeNull();
+    expect(isPriceChartingQuotaBlocked()).toBe(true);
+
+    mockedGet.mockClear();
+    const second = fetchPricesFromPriceCharting(
+      "5030917191690",
+      "Mario",
+      "Wii",
+    );
+    await vi.runAllTimersAsync();
+    await expect(second).resolves.toBeNull();
+    expect(mockedGet).not.toHaveBeenCalled();
+
+    vi.useRealTimers();
   });
 });

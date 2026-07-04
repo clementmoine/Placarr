@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const h = vi.hoisted(() => ({
   requireGuestOrHigher: vi.fn(),
   summarizeShelfItemPrices: vi.fn(),
+  reconcileOrphanedMetadataRefreshesForUser: vi.fn(),
   shelf: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
@@ -15,6 +16,10 @@ const h = vi.hoisted(() => ({
   barcodeCache: { findMany: vi.fn() },
 }));
 
+vi.mock("@/lib/jobs/metadataRefreshSession", () => ({
+  reconcileOrphanedMetadataRefreshesForUser:
+    h.reconcileOrphanedMetadataRefreshesForUser,
+}));
 vi.mock("@/services/pricing/resolver", () => ({
   summarizeShelfItemPrices: h.summarizeShelfItemPrices,
 }));
@@ -58,6 +63,7 @@ beforeEach(() => {
   for (const fn of [
     h.requireGuestOrHigher,
     h.summarizeShelfItemPrices,
+    h.reconcileOrphanedMetadataRefreshesForUser,
     h.shelf.findUnique,
     h.shelf.findMany,
     h.shelf.create,
@@ -71,6 +77,7 @@ beforeEach(() => {
   h.barcodeCache.findMany.mockResolvedValue([]);
   h.item.findMany.mockResolvedValue([]);
   h.summarizeShelfItemPrices.mockResolvedValue(new Map());
+  h.reconcileOrphanedMetadataRefreshesForUser.mockResolvedValue(0);
 });
 
 describe("GET /api/shelves — autorisation & cloisonnement", () => {
@@ -91,6 +98,9 @@ describe("GET /api/shelves — autorisation & cloisonnement", () => {
     const res = await GET(get("/api/shelves?id=s1"));
 
     expect(res.status).toBe(403);
+    expect(h.reconcileOrphanedMetadataRefreshesForUser).toHaveBeenCalledWith(
+      "u1",
+    );
   });
 
   it("autorise le propriétaire", async () => {

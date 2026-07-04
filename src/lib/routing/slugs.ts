@@ -1,4 +1,8 @@
-import { unpaddedVolumeNumbersInTitle } from "@/lib/title/volumeNumber";
+import {
+  normalizeVolumeNumber,
+  unpaddedVolumeNumbersInTitle,
+  volumeNumberFromTitle,
+} from "@/lib/title/volumeNumber";
 
 export function slugify(value?: string | null): string {
   if (!value) return "";
@@ -36,6 +40,61 @@ export function itemSlugLookupVariants(slug: string): string[] {
   }
 
   return [...variants];
+}
+
+/** Parses `dragon-ball-z-n-1` → `{ seriesPrefix: "dragon-ball-z", volume: "1" }`. */
+export function parseVolumeItemSlug(
+  slug: string,
+): { seriesPrefix: string; volume: string } | null {
+  const volumeTail = slug.match(ITEM_SLUG_VOLUME_TAIL);
+  if (!volumeTail) return null;
+
+  const [, prefix, digits] = volumeTail;
+  const volume = normalizeVolumeNumber(digits);
+  if (volume === "NaN") return null;
+
+  const seriesPrefix = prefix.replace(
+    /-(?:n|no|tome|vol|num|chapitre|chapter|partie|part|pt)-$/i,
+    "",
+  );
+  if (!seriesPrefix) return null;
+
+  return { seriesPrefix, volume };
+}
+
+export function itemMatchesVolumeItemSlug(
+  slug: string,
+  item: {
+    name?: string | null;
+    slug?: string | null;
+    metadata?: { title?: string | null; aliases?: string | null } | null;
+  },
+): boolean {
+  const parsed = parseVolumeItemSlug(slug);
+  if (!parsed) return false;
+
+  const labels = [
+    item.name,
+    item.metadata?.title,
+    ...parseMetadataAliasLabels(item.metadata?.aliases),
+  ].filter((label): label is string => Boolean(label?.trim()));
+
+  const volumeMatches = labels.some(
+    (label) => volumeNumberFromTitle(label) === parsed.volume,
+  );
+  if (!volumeMatches) return false;
+
+  const primarySlugs = [
+    item.slug,
+    item.name ? slugifyItemName(item.name) : null,
+    item.metadata?.title ? slugifyItemName(item.metadata.title) : null,
+  ].filter((value): value is string => Boolean(value?.trim()));
+
+  return primarySlugs.some(
+    (candidate) =>
+      candidate === parsed.seriesPrefix ||
+      candidate.startsWith(`${parsed.seriesPrefix}-`),
+  );
 }
 
 function parseMetadataAliasLabels(raw?: string | null): string[] {

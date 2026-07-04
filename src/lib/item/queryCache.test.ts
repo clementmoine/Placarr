@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 
-import { patchCachedItem, patchCachedShelf } from "./queryCache";
+import { patchCachedItem, patchCachedShelf, shelfListItemMissingAttachments } from "./queryCache";
 
 describe("patchCachedItem", () => {
   it("inserts a newly created item into the cached shelf immediately", () => {
@@ -126,5 +126,23 @@ describe("patchCachedShelf", () => {
 
     expect(shelf?.cardFormat).toBe("bluray");
     expect(items?.[0]?.shelf?.cardFormat).toBe("bluray");
+  });
+});
+
+describe("shelfListItemMissingAttachments", () => {
+  it("flags enriched list items that omit the attachment gallery", () => {
+    expect(
+      shelfListItemMissingAttachments({
+        metadataId: "meta-1",
+        metadata: { attachments: [] },
+      }),
+    ).toBe(true);
+    expect(
+      shelfListItemMissingAttachments({
+        metadataId: "meta-1",
+        metadata: { attachments: [{ url: "/uploads/x.jpg" }] },
+      }),
+    ).toBe(false);
+    expect(shelfListItemMissingAttachments({ metadataId: null })).toBe(false);
   });
 });

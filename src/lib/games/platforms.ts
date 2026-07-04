@@ -506,12 +506,9 @@ export function getVideoGamePlatform(
   return PLATFORM_BY_KEY.get(key) || null;
 }
 
-export function detectVideoGamePlatformKey(
-  value?: string | null,
+function detectVideoGamePlatformKeyInNormalizedText(
+  normalized: string,
 ): VideoGamePlatformKey | null {
-  if (!value?.trim()) return null;
-
-  const normalized = normalizeVideoGamePlatformText(value);
   if (!normalized) return null;
   const padded = ` ${normalized} `;
 
@@ -522,6 +519,26 @@ export function detectVideoGamePlatformKey(
   }
 
   return null;
+}
+
+export function detectVideoGamePlatformKey(
+  value?: string | null,
+): VideoGamePlatformKey | null {
+  if (!value?.trim()) return null;
+
+  // Marketplace titles often carry the SKU platform in parentheses, e.g.
+  // "Shock Troopers Neo Geo (PC)". Prefer that over body text such as "Neo Geo".
+  const parentheticalMatches = [...value.matchAll(/\(([^)]+)\)/g)];
+  for (let index = parentheticalMatches.length - 1; index >= 0; index -= 1) {
+    const fromGroup = detectVideoGamePlatformKeyInNormalizedText(
+      normalizeVideoGamePlatformText(parentheticalMatches[index]?.[1] ?? ""),
+    );
+    if (fromGroup) return fromGroup;
+  }
+
+  return detectVideoGamePlatformKeyInNormalizedText(
+    normalizeVideoGamePlatformText(value),
+  );
 }
 
 export function detectKnownVideoGamePlatformName(
@@ -632,6 +649,58 @@ export function getPriceChartingPlatformSlugs(
   key: VideoGamePlatformKey | string | null | undefined,
 ): PriceChartingPlatformSlugs | null {
   return getVideoGamePlatform(key)?.priceCharting ?? null;
+}
+
+/** Neo Geo AES/MVS/CD share one canonical key but PriceCharting uses separate slugs. */
+export function resolvePriceChartingPlatformSlug(
+  platformOrShelf: string | null | undefined,
+  options?: { barcode?: string | null; isPal?: boolean },
+): string | null {
+  const platformKey = detectVideoGamePlatformKey(platformOrShelf || "");
+  if (platformKey !== "neogeo") {
+    const slugs = getPriceChartingPlatformSlugs(platformKey);
+    if (!slugs) return null;
+    return options?.isPal && slugs.pal ? slugs.pal : slugs.default;
+  }
+
+  const norm = normalizeVideoGamePlatformText(platformOrShelf || "");
+  if (/\bmvs\b/.test(norm)) return "neo-geo-mvs";
+  if (/\bcd\b/.test(norm)) return "neo-geo-cd";
+
+  const cleanedBarcode = options?.barcode?.replace(/\D/g, "") ?? "";
+  const isJapaneseBarcode = /^49/.test(cleanedBarcode);
+  const isJapaneseLabel = /\b(jp|jpn|japan)\b/.test(norm);
+
+  if (/\baes\b/.test(norm) || platformKey === "neogeo") {
+    return isJapaneseBarcode || isJapaneseLabel
+      ? "jp-neo-geo-aes"
+      : "neo-geo-aes";
+  }
+
+  return null;
+}
+
+export function priceChartingNeoGeoVariantMatchesShelf(
+  parsedPlatform: string | undefined,
+  shelfOrPlatform: string | null | undefined,
+): boolean {
+  const targetNorm = normalizeVideoGamePlatformText(shelfOrPlatform || "");
+  const parsedNorm = normalizeVideoGamePlatformText(parsedPlatform || "");
+  if (!/\bneo\s*geo\b/.test(targetNorm) && !/\bneo\s*geo\b/.test(parsedNorm)) {
+    return true;
+  }
+
+  const targetAes = /\baes\b/.test(targetNorm);
+  const targetMvs = /\bmvs\b/.test(targetNorm);
+  const targetCd = /\bcd\b/.test(targetNorm);
+  const parsedAes = /\baes\b/.test(parsedNorm);
+  const parsedMvs = /\bmvs\b/.test(parsedNorm);
+  const parsedCd = /\bcd\b/.test(parsedNorm);
+
+  if (targetAes) return parsedAes && !parsedMvs && !parsedCd;
+  if (targetMvs) return parsedMvs && !parsedAes && !parsedCd;
+  if (targetCd) return parsedCd && !parsedAes && !parsedMvs;
+  return true;
 }
 
 export function getCoverProjectPlatformSpecs(

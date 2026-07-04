@@ -933,6 +933,26 @@ function isVariantMarkerToken(token: string): boolean {
   return false;
 }
 
+/** Parallel manga/game series lines sharing a franchise root (Super, Kai…). */
+const FRANCHISE_LINE_SUFFIX_TOKENS = new Set([
+  "super",
+  "kai",
+  "heroes",
+  "ultra",
+]);
+
+function isNamedFranchiseLineSuffixToken(token: string): boolean {
+  return FRANCHISE_LINE_SUFFIX_TOKENS.has(token.toLowerCase());
+}
+
+/** French/English articles split from elisions in album subtitles (l'univers). */
+const SUBTITLE_ARTICLE_TOKENS = new Set(["l", "d", "a"]);
+
+function isSpinoffSuffixToken(token: string): boolean {
+  if (SUBTITLE_ARTICLE_TOKENS.has(token.toLowerCase())) return false;
+  return isNamedFranchiseLineSuffixToken(token) || isVariantMarkerToken(token);
+}
+
 function isStylizedTitleConnector(
   token: string,
   candidateTitle: string,
@@ -978,7 +998,7 @@ export function hasUnrequestedVariantMarker(
   return extra.some(
     (token) =>
       !isNeutralListingToken(token) &&
-      isVariantMarkerToken(token) &&
+      isSpinoffSuffixToken(token) &&
       !isStylizedTitleConnector(token, candidateTitle),
   );
 }
@@ -1000,6 +1020,22 @@ export function hasUnrequestedSeriesSuffixToken(
   );
   if (requested.length === 0 || candidate.length === 0) return false;
 
+  const requestedLineTokens = requested.filter(isNamedFranchiseLineSuffixToken);
+  if (requestedLineTokens.length > 0) {
+    const missingLineToken = requestedLineTokens.some(
+      (token) =>
+        !candidate.some((other) => titleTokensEquivalent(token, other)),
+    );
+    if (missingLineToken) return true;
+  }
+
+  if (
+    requestedLineTokens.length === 0 &&
+    candidate.some(isNamedFranchiseLineSuffixToken)
+  ) {
+    return true;
+  }
+
   let prefixLen = 0;
   while (
     prefixLen < requested.length &&
@@ -1020,7 +1056,7 @@ export function hasUnrequestedSeriesSuffixToken(
   if (requestedSuffix.length === 0) {
     return candidateSuffix.some(
       (token) =>
-        isVariantMarkerToken(token) &&
+        isSpinoffSuffixToken(token) &&
         !isStylizedTitleConnector(token, candidateTitle),
     );
   }

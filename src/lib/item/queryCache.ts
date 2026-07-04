@@ -369,3 +369,21 @@ export async function syncItemQueries(
     ...shelfIds,
   ]);
 }
+
+/**
+ * Shelf/list API payloads use `itemListMetadataInclude` (no attachment gallery).
+ * When an item already has persisted metadata, treat shelf-cache snapshots as
+ * incomplete for gallery UI until `/api/items?id=…` refetches.
+ */
+export function shelfListItemMissingAttachments(
+  item:
+    | {
+        metadataId?: string | null;
+        metadata?: { attachments?: unknown[] | null } | null;
+      }
+    | null
+    | undefined,
+): boolean {
+  if (!item?.metadataId) return false;
+  return (item.metadata?.attachments?.length ?? 0) === 0;
+}

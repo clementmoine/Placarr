@@ -228,6 +228,21 @@ describe("hasUnrequestedSeriesSuffixToken", () => {
       ),
     ).toBe(false);
   });
+
+  it("rejette la série de base quand Super est demandé", () => {
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball Super n°01",
+        "Dragon Ball, Tome 1 : Sangoku",
+      ),
+    ).toBe(true);
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball Super n°01",
+        "Dragon Ball n°01",
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("isMetadataTitleAligned", () => {
@@ -440,6 +455,23 @@ describe("isMetadataTitleAligned", () => {
         0.58,
       ),
     ).toBe(false);
+  });
+
+  it("rejects the base franchise when a spinoff line is requested", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "Dragon Ball, Tome 1 : Sangoku" },
+        ["Dragon Ball Super n°01"],
+        0.58,
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Dragon Ball Super, Tome 1 : La guerre de l'univers 6" },
+        ["Dragon Ball Super n°01"],
+        0.58,
+      ),
+    ).toBe(true);
   });
 
   it("accepts bedetheque album subtitles for the requested volume", () => {

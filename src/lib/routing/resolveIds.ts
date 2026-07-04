@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 import {
-  itemSlugLookupVariants,
   itemLookupSlugs,
+  itemMatchesVolumeItemSlug,
+  itemSlugLookupVariants,
   slugify,
   slugifyItemName,
 } from "@/lib/routing/slugs";
@@ -94,6 +95,11 @@ export async function resolveItemId(
       return slug === value || slug.startsWith(`${value}-`);
     });
     if (prefixMatches.length === 1) return prefixMatches[0].id;
+
+    const volumeSlugMatches = candidates.filter((candidate) =>
+      itemMatchesVolumeItemSlug(value, candidate),
+    );
+    if (volumeSlugMatches.length === 1) return volumeSlugMatches[0].id;
   }
 
   return value;

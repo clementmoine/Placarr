@@ -11,7 +11,9 @@ import {
   getScreenScraperSystemId,
   getTheGamesDbPlatformId,
   LAUNCHBOX_PLATFORM_REFERENCES,
+  priceChartingNeoGeoVariantMatchesShelf,
   resolveLaunchBoxPlatformNames,
+  resolvePriceChartingPlatformSlug,
   SCREEN_SCRAPER_PLATFORM_REFERENCES,
 } from "@/lib/games/platforms";
 
@@ -22,6 +24,13 @@ describe("videoGamePlatforms", () => {
     expect(detectVideoGamePlatformKey("PC (Windows)")).toBe("pc");
     expect(detectVideoGamePlatformKey("Switch 2")).toBe("switch2");
     expect(detectVideoGamePlatformKey("Nintendo Switch 2")).toBe("switch2");
+  });
+
+  it("prefers parenthetical marketplace platform markers over body text", () => {
+    expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo (PC)")).toBe("pc");
+    expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo AES")).toBe(
+      "neogeo",
+    );
   });
 
   it("builds a shared matcher for UI/admin text highlighting", () => {
@@ -38,6 +47,26 @@ describe("videoGamePlatforms", () => {
     expect(getScreenScraperSystemId("switch2")).toBe(296);
     expect(getPriceChartingPlatformSlugs("wii")?.pal).toBe("pal-wii");
     expect(getCoverProjectPlatformSpecs("wii")[0]?.folder).toBe("nintendo_wii");
+  });
+
+  it("resolves Neo Geo AES PriceCharting slugs from shelf labels and barcodes", () => {
+    expect(
+      resolvePriceChartingPlatformSlug("NEO GEO AES+", {
+        barcode: "4964808100880",
+      }),
+    ).toBe("jp-neo-geo-aes");
+    expect(
+      resolvePriceChartingPlatformSlug("Neo Geo AES", {
+        barcode: "4012927150101",
+      }),
+    ).toBe("neo-geo-aes");
+    expect(resolvePriceChartingPlatformSlug("Neo Geo MVS")).toBe("neo-geo-mvs");
+    expect(
+      priceChartingNeoGeoVariantMatchesShelf(
+        "Neo Geo MVS",
+        "NEO GEO AES+",
+      ),
+    ).toBe(false);
   });
 
   it("uses source snapshots for provider platform names without runtime fetches", () => {

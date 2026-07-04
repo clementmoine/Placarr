@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   itemPath,
+  itemMatchesVolumeItemSlug,
   itemSlugLookupVariants,
+  parseVolumeItemSlug,
   shelfPath,
   slugifyItemName,
 } from "./slugs";
@@ -35,6 +37,32 @@ describe("itemSlugLookupVariants", () => {
         "super-picsou-geant-n-36",
       ]),
     );
+  });
+});
+
+describe("parseVolumeItemSlug", () => {
+  it("extracts series prefix and volume from canonical manga URLs", () => {
+    expect(parseVolumeItemSlug("dragon-ball-z-n-1")).toEqual({
+      seriesPrefix: "dragon-ball-z",
+      volume: "1",
+    });
+  });
+});
+
+describe("itemMatchesVolumeItemSlug", () => {
+  it("matches a long stored slug when the URL uses the short volume form", () => {
+    expect(
+      itemMatchesVolumeItemSlug("dragon-ball-z-n-1", {
+        name: "Dragon Ball Z 1 . \r\n 1re partie : Les Saïyens 1",
+        slug: "dragon-ball-z-1-1re-partie-les-saiyens-1",
+        metadata: {
+          title: "Dragon Ball Z 1 . \r\n 1re partie : Les Saïyens 1",
+          aliases: JSON.stringify([
+            "Dragon Ball Z - 1re partie - Tome 01: Les Saïyens - Toriyama, Akira",
+          ]),
+        },
+      }),
+    ).toBe(true);
   });
 });
 

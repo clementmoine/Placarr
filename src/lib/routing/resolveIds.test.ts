@@ -95,4 +95,27 @@ describe("resolveItemId", () => {
       ),
     ).resolves.toBe("item-guardians");
   });
+
+  it("resolves canonical volume slugs against long stored manga slugs", async () => {
+    prismaMock.item.findUnique.mockResolvedValue(null);
+    prismaMock.item.findFirst.mockResolvedValue(null);
+    prismaMock.shelf.findFirst.mockResolvedValue({ id: "shelf-mangas" });
+    prismaMock.item.findMany.mockResolvedValue([
+      {
+        id: "item-dbz-1",
+        name: "Dragon Ball Z 1 . \r\n 1re partie : Les Saïyens 1",
+        slug: "dragon-ball-z-1-1re-partie-les-saiyens-1",
+        metadata: {
+          title: "Dragon Ball Z 1 . \r\n 1re partie : Les Saïyens 1",
+          aliases: JSON.stringify([
+            "Dragon Ball Z - 1re partie - Tome 01: Les Saïyens - Toriyama, Akira",
+          ]),
+        },
+      },
+    ]);
+
+    await expect(
+      resolveItemId("dragon-ball-z-n-1", "mangas", "user-1"),
+    ).resolves.toBe("item-dbz-1");
+  });
 });

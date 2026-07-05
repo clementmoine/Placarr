@@ -363,6 +363,59 @@ describe("fetchMetadataByType generic routing", () => {
     ).toBe(true);
   });
 
+  it("still queries chocobonplan for books when stage 1 only has catalog covers", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "booknode") {
+        return {
+          title: "L'Art et la Création de Arcane",
+          imageUrl: "https://cdn1.booknode.com/book_cover/5518/full.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://cdn1.booknode.com/book_cover/5518/full.jpg",
+              source: "booknode",
+            },
+          ],
+        } as MetadataResult;
+      }
+      if (id === "chocobonplan") {
+        return {
+          title: "Artbook L'art et la création de Arcane",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://chocobonplan.com/wp-content/uploads/cover.png",
+              source: "chocobonplan",
+            },
+            {
+              type: "screenshot",
+              url: "https://chocobonplan.com/wp-content/uploads/screen.jpg",
+              source: "chocobonplan",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    const res = await fetchMetadataByType(
+      "L'Art et la Création de Arcane",
+      "books",
+      "9791035505677",
+      null,
+      { shelfName: "Livres" },
+    );
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "chocobonplan"),
+    ).toBe(true);
+    expect(
+      res?.attachments?.some(
+        (attachment) => attachment.source === "chocobonplan",
+      ),
+    ).toBe(true);
+  });
+
   it("does not fan out secondary scrape fallbacks when a barcode game is already pinned", async () => {
     mockResolve.mockImplementation(async (_ctx, id) => {
       if (id === "screenscraper") {
@@ -413,7 +466,9 @@ describe("fetchMetadataByType generic routing", () => {
       { shelfName: "Xbox 360" },
     );
 
-    const ebayCalls = mockResolve.mock.calls.filter((call) => call[1] === "ebay");
+    const ebayCalls = mockResolve.mock.calls.filter(
+      (call) => call[1] === "ebay",
+    );
     const geedieCalls = mockResolve.mock.calls.filter(
       (call) => call[1] === "geedie",
     );

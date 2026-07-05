@@ -63,11 +63,7 @@ describe("ScreenScraper cache", () => {
         platform,
       ),
     ).toBe(
-      buildScreenScraperLookupKey(
-        "Alice: Madness Returns",
-        barcode,
-        platform,
-      ),
+      buildScreenScraperLookupKey("Alice: Madness Returns", barcode, platform),
     );
   });
 

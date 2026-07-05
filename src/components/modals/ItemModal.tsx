@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { z } from "zod";
@@ -6,17 +5,14 @@ import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
 import {
   SparklesIcon,
-  XIcon,
   Loader2,
   Upload,
   Link as LinkIcon,
   Check,
   Settings,
   Image as ImageIcon,
-  Info,
   Maximize2,
 } from "lucide-react";
-import Image from "next/image";
 import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,10 +35,8 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
@@ -60,8 +54,6 @@ import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
-  scannerBarcodePlaceholderKey,
-  scannerEnterBarcodeKey,
 } from "@/lib/barcode/shelfLabels";
 import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
 import { isAbortError } from "@/lib/http/abort";
@@ -92,7 +84,10 @@ import { cn } from "@/lib/core/utils";
 import type { ItemWithMetadata } from "@/types/items";
 import { isBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
 import { collectMetadataTitleSuggestions } from "@/lib/item/titleSuggestions";
-import type { MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataResult,
+  MetadataAttachment,
+} from "@/types/metadataProvider";
 import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
 import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
 import { invalidateItemQueries } from "@/lib/item/queryCache";
@@ -336,8 +331,6 @@ export function ItemModal({
   const initializedItemIdRef = useRef<string | null | undefined>(undefined);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState("");
-  const [showGenUrlInput, setShowGenUrlInput] = useState(false);
-  const [genUrlInputValue, setGenUrlInputValue] = useState("");
 
   const [showBgUrlInput, setShowBgUrlInput] = useState(false);
   const [bgUrlInputValue, setBgUrlInputValue] = useState("");
@@ -760,7 +753,7 @@ export function ItemModal({
     // their crop-normalized URL so the cover still inherits its real provenance
     // (source + region role) instead of looking like an orphan.
     const stripCrop = stripCropSuffixFromUrl;
-    const attachmentByNormalizedUrl = new Map<string, any>();
+    const attachmentByNormalizedUrl = new Map<string, MetadataAttachment>();
     for (const attachment of metadata?.attachments || []) {
       if (attachment.url) {
         attachmentByNormalizedUrl.set(stripCrop(attachment.url), attachment);
@@ -817,7 +810,7 @@ export function ItemModal({
     if (metadata) {
       if (metadata.imageUrl && !isRedundantTwinOfCover(metadata.imageUrl)) {
         const matchingAttachment = metadata.attachments?.find(
-          (a: any) => a.url === metadata.imageUrl,
+          (a) => a.url === metadata.imageUrl,
         );
         addAttachment({
           url: metadata.imageUrl,
@@ -1012,7 +1005,7 @@ export function ItemModal({
 
         // Set guessed shelf
         if (shelves && shelves.length > 0) {
-          const matches = data?.matches || [];
+          const matches: GameMatch[] = data?.matches || [];
           const suggestions = data?.suggestions || [];
           const cleanName = data?.cleanName;
           const rawNames = data?.rawNames || [];
@@ -1028,7 +1021,7 @@ export function ItemModal({
               ...(cleanName ? [cleanName] : []),
               ...rawNames,
               ...suggestions,
-              ...matches.map((m: any) => m.name),
+              ...matches.map((m) => m.name),
             ]),
           ).filter(Boolean) as string[];
 
@@ -1047,12 +1040,13 @@ export function ItemModal({
           Array.isArray(data.matches) &&
           data.matches.length > 1
         ) {
-          setMatches(data.matches);
+          const dataMatches = data.matches as GameMatch[];
+          setMatches(dataMatches);
 
-          let chosenMatch = data.matches[0];
+          let chosenMatch = dataMatches[0];
           if (prefilledValues?.name) {
-            const matchByName = data.matches.find(
-              (m: any) =>
+            const matchByName = dataMatches.find(
+              (m) =>
                 m.name.toLowerCase().trim() ===
                   prefilledValues.name?.toLowerCase().trim() ||
                 m.suggestions?.some(
@@ -1180,6 +1174,11 @@ export function ItemModal({
         backgroundImageUrl = await uploadImage(backgroundImageUrl);
       }
 
+      // Form payload forwarded to the parent's onSubmit. It carries a scalar
+      // `shelfId` (and a raw `id`), which Prisma's *checked* create/update input
+      // types don't accept (they expect `shelf: { connect }`); the parent
+      // adapts it before hitting Prisma. `any` is load-bearing at that boundary.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedItem: any = {
         ...values,
         id: item ? item?.id : undefined,
@@ -1737,7 +1736,7 @@ export function ItemModal({
                                         "",
                                     );
                                   }}
-                                  onBlur={(e) => {
+                                  onBlur={() => {
                                     field.onBlur();
                                     setTimeout(
                                       () => setShowDropdown(false),

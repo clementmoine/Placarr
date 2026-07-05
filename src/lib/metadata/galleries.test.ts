@@ -5,6 +5,7 @@ import {
   hasMusicGalleryAttachment,
   isMissingGameMediaGallery,
   isMissingMusicGallery,
+  isMissingBookGallery,
 } from "./galleries";
 
 describe("metadataGameGallery", () => {
@@ -88,5 +89,37 @@ describe("isMissingMusicGallery", () => {
         { type: "cover", isMusicGallerySource: false },
       ]),
     ).toBe(true);
+  });
+});
+
+describe("isMissingBookGallery", () => {
+  it("returns false when a stamped retailer gallery attachment is present", () => {
+    expect(
+      isMissingBookGallery("books", "9791035505677", [
+        { type: "screenshot", isGameMediaGallerySource: true },
+      ]),
+    ).toBe(false);
+    expect(
+      isMissingBookGallery("books", "9791035505677", [
+        { type: "image", isBookGallerySource: true },
+      ]),
+    ).toBe(false);
+  });
+
+  it("returns true when only catalog covers exist", () => {
+    expect(
+      isMissingBookGallery("books", "9791035505677", [
+        { type: "cover", isBookGallerySource: false },
+        { type: "cover", isGameMediaGallerySource: false },
+      ]),
+    ).toBe(true);
+  });
+
+  it("ignores non-book types", () => {
+    expect(
+      isMissingBookGallery("games", "9791035505677", [
+        { type: "cover", isBookGallerySource: false },
+      ]),
+    ).toBe(false);
   });
 });

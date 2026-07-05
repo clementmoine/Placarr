@@ -32,8 +32,35 @@ export function parseAgeFromFactValue(value: string): number | null {
   return Number.isFinite(age) && age > 0 ? age : null;
 }
 
+function normalizeProviderLinkOwnerKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/** Client-safe owner key — prefers server-stamped providerLabel over raw source tokens. */
+function providerLinkOwnerKey(fact: DetailFact): string {
+  const stamped = fact.providerLabel?.trim();
+  if (stamped) return normalizeProviderLinkOwnerKey(stamped);
+  const token = fact.source ?? fact.label ?? "";
+  return token ? normalizeProviderLinkOwnerKey(token) : "";
+}
+
 export function extractProviderLinkFacts(facts: DetailFact[]): DetailFact[] {
-  return facts.filter((fact) => fact.kind === "external-link" && fact.url);
+  const links = facts.filter(
+    (fact) => fact.kind === "external-link" && fact.url,
+  );
+  const bestByProvider = new Map<string, DetailFact>();
+
+  for (const fact of links) {
+    const ownerKey = providerLinkOwnerKey(fact);
+    if (!ownerKey) continue;
+
+    const existing = bestByProvider.get(ownerKey);
+    if (!existing || (fact.priority ?? 0) > (existing.priority ?? 0)) {
+      bestByProvider.set(ownerKey, fact);
+    }
+  }
+
+  return Array.from(bestByProvider.values());
 }
 
 function mergeFactSources(

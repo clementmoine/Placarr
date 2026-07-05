@@ -268,6 +268,7 @@ function metadataCapabilitiesOf(provider: ProviderInfo): Capability[] {
 function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
   return Boolean(
     provider.gameMediaGallerySource ||
+      provider.bookGallerySource ||
       (provider.isRealBoxCover &&
         provider.capabilities.includes("cover") &&
         provider.isSecondary),
@@ -289,6 +290,16 @@ function shouldFetchGameGallerySourceInStage2(
 ): boolean {
   if (!shouldAlwaysFetchGameGallerySource(provider)) return false;
   if (type === "games" && isPlatformSpecificGameShelf(shelfName)) return true;
+  if (type === "books") {
+    if (!stage1NeedsGallery) return false;
+    return shouldResolveProviderForGallery(
+      type,
+      provider,
+      existing,
+      stage1ActiveResults,
+      cleanedBarcode,
+    );
+  }
   if (!stage1NeedsGallery) return false;
   return shouldResolveProviderForGallery(
     type,
@@ -361,7 +372,7 @@ function shouldResolveProviderForGallery(
   activeResults: MetadataResult[],
   barcode: string,
 ): boolean {
-  if (type !== "games") return false;
+  if (type !== "games" && type !== "books") return false;
   if (!metadataResultsNeedGalleryEnrichment(type, activeResults, barcode)) {
     return false;
   }

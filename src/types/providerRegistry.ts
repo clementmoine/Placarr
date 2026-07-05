@@ -204,6 +204,11 @@ export interface ProviderInfo {
    * Provider supplies the canonical music release gallery (Discogs covers/images).
    */
   musicGallerySource?: boolean;
+  /**
+   * Provider supplies retailer gallery assets for books (marketplace screenshots,
+   * Chasse aux Livres product photos, artbook spreads).
+   */
+  bookGallerySource?: boolean;
   /** Retry metadata adapter probes on transient scrape/API failures. */
   mappingProbeRetry?: boolean;
   /**

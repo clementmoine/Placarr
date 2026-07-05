@@ -33,6 +33,32 @@ describe("displayFacts", () => {
 
       expect(extractProviderLinkFacts(facts)).toHaveLength(1);
     });
+
+    it("dedupes provider aliases for the same storefront", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "external-link",
+          label: "BoardGameGeek",
+          value: "Fiche BGG",
+          url: "https://boardgamegeek.com/boardgame/18803",
+          source: "boardgamegeek",
+          providerLabel: "BoardGameGeek",
+          priority: 303,
+        },
+        {
+          kind: "external-link",
+          label: "BoardGameGeek",
+          value: "Voir la fiche",
+          url: "https://boardgamegeek.com/boardgame/18803",
+          source: "bgg",
+          providerLabel: "BoardGameGeek",
+          priority: 42,
+        },
+      ];
+
+      expect(extractProviderLinkFacts(facts)).toHaveLength(1);
+      expect(extractProviderLinkFacts(facts)[0]?.priority).toBe(303);
+    });
   });
 
   describe("filterRedundantDisplayFacts", () => {

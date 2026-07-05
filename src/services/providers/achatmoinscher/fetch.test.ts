@@ -132,6 +132,25 @@ describe("fetchFromAchatMoinsCher", () => {
     expect(products[0]?.name).toContain("Outer Wilds");
     expect(products[0]?.coverUrl).toBeNull();
   });
+
+  it("rejette Sirènes quand Femmes Fatales est attendu", async () => {
+    const wrongProductHtml = `
+      <h1>Sirènes : femmes fatales</h1>
+      <div class="col-md-12 imgIco">
+        <img src="//cdn.example.com/photoProd/zoom/sirenes-femmes-fatales.jpg" alt="Sirènes" />
+      </div>
+    `;
+
+    mockedPost.mockResolvedValue({ data: "294939463" } as never);
+    mockedGet.mockResolvedValue({ data: wrongProductHtml } as never);
+    mockedHead.mockResolvedValue({ status: 200 } as never);
+
+    await expect(
+      fetchFromAchatMoinsCher("0721450083770", [
+        "Black Stories - Femmes Fatales",
+      ]),
+    ).resolves.toEqual([]);
+  });
 });
 
 describe("fetchPricesFromAchatMoinsCher", () => {

@@ -109,24 +109,35 @@ export async function flareSolverrDownloadImages(
   }
 }
 
-export async function fetchWithFlareSolverr(
+export type FlareSolverrRequestGetOptions = {
+  maxTimeoutMs?: number;
+  waitInSeconds?: number;
+  session?: string;
+  signal?: AbortSignal;
+};
+
+export async function flareSolverrRequestGet(
   url: string,
-  maxTimeoutMs = 45_000,
-  signal?: AbortSignal,
+  options: FlareSolverrRequestGetOptions = {},
 ): Promise<string | null> {
   const baseUrl = flareSolverrBaseUrl();
   if (!baseUrl) return null;
 
+  const maxTimeoutMs = options.maxTimeoutMs ?? 45_000;
+  const body: Record<string, unknown> = {
+    cmd: "request.get",
+    url,
+    maxTimeout: maxTimeoutMs,
+  };
+  if (options.session) body.session = options.session;
+  if (options.waitInSeconds) body.waitInSeconds = options.waitInSeconds;
+
   try {
-    const response = await axios.post(
-      `${baseUrl}/v1`,
-      {
-        cmd: "request.get",
-        url,
-        maxTimeout: maxTimeoutMs,
-      },
-      { timeout: maxTimeoutMs + 5_000, validateStatus: () => true, signal },
-    );
+    const response = await axios.post(`${baseUrl}/v1`, body, {
+      timeout: maxTimeoutMs + 5_000,
+      validateStatus: () => true,
+      signal: options.signal,
+    });
     const html = response.data?.solution?.response;
     const status = Number(response.data?.solution?.status || 0);
     if (typeof html !== "string" || status >= 400) return null;
@@ -135,4 +146,30 @@ export async function fetchWithFlareSolverr(
     if (isAbortError(error)) throw error;
     return null;
   }
+}
+
+export async function flareSolverrDestroySession(
+  session: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  const baseUrl = flareSolverrBaseUrl();
+  if (!baseUrl || !session) return;
+
+  try {
+    await axios.post(
+      `${baseUrl}/v1`,
+      { cmd: "sessions.destroy", session },
+      { timeout: 10_000, validateStatus: () => true, signal },
+    );
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+  }
+}
+
+export async function fetchWithFlareSolverr(
+  url: string,
+  maxTimeoutMs = 45_000,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  return flareSolverrRequestGet(url, { maxTimeoutMs, signal });
 }

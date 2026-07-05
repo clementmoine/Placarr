@@ -4,6 +4,7 @@ import {
   catalogTitleOmitsRequestedProductIdentity,
   isNameOnlyRetailerTitleMatch,
   priceListingSharesItemIdentity,
+  retailerCatalogSharesRequestedIdentity,
 } from "./titleMatch";
 
 describe("catalogTitleOmitsRequestedProductIdentity", () => {
@@ -55,6 +56,26 @@ describe("priceListingSharesItemIdentity", () => {
         "Black Stories Autour du Monde",
       ),
     ).toBe(true);
+  });
+
+  it("rejects Sirènes when the item is Black Stories Femmes Fatales", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "Black Stories - Femmes Fatales",
+        "Sirènes : femmes fatales",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("retailerCatalogSharesRequestedIdentity", () => {
+  it("rejects Sirènes when the item is Black Stories Femmes Fatales", () => {
+    expect(
+      retailerCatalogSharesRequestedIdentity(
+        "Black Stories - Femmes Fatales",
+        "Sirènes : femmes fatales",
+      ),
+    ).toBe(false);
   });
 });
 

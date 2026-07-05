@@ -1,5 +1,14 @@
 import axios from "axios";
 
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
+import {
+  catalogTitleAlignedWithItem,
+  retailerCatalogTitleContradictsItem,
+} from "@/lib/retailer/catalogTitleAlignment";
+import { retailerBarcodeContradictsItem } from "@/lib/retailer/productUrl";
 import type { LeDenicheurPrices } from "@/lib/barcode/lookup/providerTypes";
 
 export type { LeDenicheurPrices } from "@/lib/barcode/lookup/providerTypes";
@@ -183,8 +192,12 @@ function isBarcodeLike(query: string) {
   return /^\d{8,14}$/.test(query.replace(/[^\d]/g, ""));
 }
 
-function isProbablyRelevant(query: string, productName?: string | null) {
-  if (isBarcodeLike(query)) return true;
+function isProbablyRelevant(
+  query: string,
+  productName?: string | null,
+  options?: LeDenicheurFetchOptions,
+) {
+  if (isBarcodeLike(query)) return !options?.itemBarcode;
   if (hasConflictingSeason(query, productName)) return false;
 
   const tokens = meaningfulTokens(query);
@@ -257,6 +270,7 @@ export function parseLeDenicheurPriceSummary(
 function buildProductPrices(
   product: LeDenicheurProductNode,
   detail: LeDenicheurProductNode | null,
+  productGtin?: string | null,
 ): LeDenicheurPrices | null {
   const summary = detail?.priceSummary ?? product.priceSummary;
   const { priceNew, priceUsed } = parseLeDenicheurPriceSummary(summary);
@@ -267,6 +281,7 @@ function buildProductPrices(
     priceUsed,
     sourceUrl: absoluteLeDenicheurUrl(detail?.pathName ?? product.pathName),
     productName: detail?.name ?? product.name ?? undefined,
+    productGtin: productGtin ?? undefined,
     offerCount: summary?.count ?? undefined,
     coverUrl: detail?.media?.first ?? product.media?.first ?? null,
   };
@@ -283,6 +298,199 @@ function parseOfferNode(node: LeDenicheurOfferNode): LeDenicheurPrices | null {
     offerCount: 1,
     coverUrl: node.media?.first || null,
   };
+}
+
+export function extractLeDenicheurProductGtinsFromHtml(html: string): string[] {
+  const seen = new Set<string>();
+  const add = (raw: string | null | undefined) => {
+    const normalized = normalizeProductBarcode(raw);
+    if (normalized) seen.add(normalized);
+  };
+
+  const rscBlock = html.match(
+    /\\"children\\":\\"GTIN\\"[\s\S]{0,2000}?\\"children\\":\\"([^"\\]+)\\"/,
+  );
+  if (rscBlock?.[1]) {
+    for (const part of rscBlock[1].split(/[,\s]+/)) {
+      add(part);
+    }
+  }
+
+  const commaSeparatedGtins =
+    html.match(/>\s*((?:\d{12,14}\s*,\s*)+\d{12,14})\s*</) ??
+    html.match(/GTIN[\s\S]{0,800}?((?:\d{12,14}\s*,\s*)+\d{12,14})/i);
+  if (commaSeparatedGtins?.[1]) {
+    for (const part of commaSeparatedGtins[1].split(/,\s*/)) {
+      add(part);
+    }
+  }
+
+  for (const match of html.matchAll(/"gtin\d*"\s*:\s*"(\d{8,14})"/gi)) {
+    add(match[1]);
+  }
+
+  const labelProximity = html.match(
+    /GTIN[\s\S]{0,400}?>\s*([\d,\s]{12,})\s*</i,
+  );
+  if (labelProximity?.[1]) {
+    for (const part of labelProximity[1].split(/[,\s]+/)) {
+      if (part.length >= 12) add(part);
+    }
+  }
+
+  return [...seen];
+}
+
+export function leDenicheurGtinForItem(
+  html: string,
+  itemBarcode: string,
+): string | null {
+  const normalizedItem = normalizeProductBarcode(itemBarcode);
+  if (!normalizedItem) return null;
+
+  for (const gtin of extractLeDenicheurProductGtinsFromHtml(html)) {
+    if (barcodesEquivalent(gtin, normalizedItem)) {
+      return gtin;
+    }
+  }
+  return null;
+}
+
+export type LeDenicheurGtinAlignment = "confirmed" | "contradicted" | "unknown";
+
+export function leDenicheurProductGtinAlignment(
+  html: string,
+  itemBarcode: string,
+): LeDenicheurGtinAlignment {
+  const gtins = extractLeDenicheurProductGtinsFromHtml(html);
+  if (gtins.length === 0) return "unknown";
+  return leDenicheurGtinForItem(html, itemBarcode)
+    ? "confirmed"
+    : "contradicted";
+}
+
+export function extractLeDenicheurProductGtinFromHtml(
+  html: string,
+): string | null {
+  return extractLeDenicheurProductGtinsFromHtml(html)[0] ?? null;
+}
+
+type ProductPageGtinProbe = {
+  productGtin: string | null;
+  gtinAlignment: LeDenicheurGtinAlignment;
+};
+
+async function fetchLeDenicheurProductPageHtml(
+  productId: number,
+): Promise<string | null> {
+  try {
+    const response = await axios.get(`${BASE_URL}/product.php?p=${productId}`, {
+      headers: {
+        "User-Agent": HEADERS["User-Agent"],
+        "Accept-Language": HEADERS["Accept-Language"],
+      },
+      timeout: 6000,
+      validateStatus: (status) => status >= 200 && status < 500,
+    });
+    if (response.status >= 400 || typeof response.data !== "string") {
+      return null;
+    }
+    return response.data;
+  } catch {
+    return null;
+  }
+}
+
+async function probeLeDenicheurProductPageGtin(
+  productId: number,
+  itemBarcode?: string | null,
+): Promise<ProductPageGtinProbe> {
+  const html = await fetchLeDenicheurProductPageHtml(productId);
+  if (!html) {
+    return { productGtin: null, gtinAlignment: "unknown" };
+  }
+  if (!itemBarcode?.trim()) {
+    return {
+      productGtin: extractLeDenicheurProductGtinFromHtml(html),
+      gtinAlignment: "unknown",
+    };
+  }
+  const gtinAlignment = leDenicheurProductGtinAlignment(html, itemBarcode);
+  return {
+    productGtin: leDenicheurGtinForItem(html, itemBarcode),
+    gtinAlignment,
+  };
+}
+
+async function fetchLeDenicheurProductGtinAlignment(
+  productId: number,
+  itemBarcode: string,
+): Promise<LeDenicheurGtinAlignment> {
+  const probe = await probeLeDenicheurProductPageGtin(productId, itemBarcode);
+  return probe.gtinAlignment;
+}
+
+/** Fetches the product-page GTIN and checks it against the item barcode. */
+export async function leDenicheurProductUrlContradictsItem(
+  sourceUrl: string,
+  itemBarcode: string,
+  itemTitle?: string | null,
+): Promise<boolean> {
+  const productId = extractLeDenicheurProductId(sourceUrl);
+  if (!productId) return false;
+  const alignment = await fetchLeDenicheurProductGtinAlignment(
+    productId,
+    itemBarcode,
+  );
+  if (alignment === "contradicted") return true;
+  if (alignment === "confirmed") return false;
+  if (!itemTitle?.trim()) return false;
+
+  const detail = await fetchProductDetail(productId);
+  return retailerCatalogTitleContradictsItem({
+    productTitle: detail?.name,
+    itemTitle,
+  });
+}
+
+function productPassesItemBarcodeGate(input: {
+  product: LeDenicheurProductNode;
+  productGtin?: string | null;
+  gtinAlignment?: LeDenicheurGtinAlignment;
+  query: string;
+  options?: LeDenicheurFetchOptions;
+}): boolean {
+  const { product, productGtin, gtinAlignment, query, options } = input;
+  const itemBarcode = options?.itemBarcode;
+  if (!itemBarcode?.trim()) return true;
+
+  if (
+    retailerBarcodeContradictsItem({
+      productUrl: product.pathName,
+      productBarcode: productGtin,
+      itemBarcode,
+    })
+  ) {
+    return false;
+  }
+
+  if (gtinAlignment === "contradicted") return false;
+  if (gtinAlignment === "confirmed" || productGtin) return true;
+
+  const anchorTitle = options?.itemTitle?.trim() || query;
+  if (
+    retailerCatalogTitleContradictsItem({
+      productTitle: product.name,
+      itemTitle: anchorTitle,
+    })
+  ) {
+    return false;
+  }
+
+  return (
+    catalogTitleAlignedWithItem(anchorTitle, product.name ?? "") &&
+    isProbablyRelevant(anchorTitle, product.name, options)
+  );
 }
 
 async function fetchProductDetail(
@@ -327,18 +535,39 @@ function searchNodeHasCompletePricing(
 
 async function resolveProductNode(
   product: LeDenicheurProductNode,
+  options?: LeDenicheurFetchOptions,
+  query = "",
+  probe?: ProductPageGtinProbe,
 ): Promise<LeDenicheurPrices | null> {
-  if (searchNodeHasCompletePricing(product)) {
-    return buildProductPrices(product, null);
-  }
   const productId = extractLeDenicheurProductId(product.pathName);
+  const resolvedProbe =
+    probe ??
+    (productId
+      ? await probeLeDenicheurProductPageGtin(productId, options?.itemBarcode)
+      : { productGtin: null, gtinAlignment: "unknown" as const });
+  if (
+    !productPassesItemBarcodeGate({
+      product,
+      productGtin: resolvedProbe.productGtin,
+      gtinAlignment: resolvedProbe.gtinAlignment,
+      query,
+      options,
+    })
+  ) {
+    return null;
+  }
+
+  if (searchNodeHasCompletePricing(product)) {
+    return buildProductPrices(product, null, resolvedProbe.productGtin);
+  }
   const detail = productId ? await fetchProductDetail(productId) : null;
-  return buildProductPrices(product, detail);
+  return buildProductPrices(product, detail, resolvedProbe.productGtin);
 }
 
 async function parseSearchResponse(
   data: unknown,
   query: string,
+  options?: LeDenicheurFetchOptions,
 ): Promise<LeDenicheurPrices | null> {
   const envelope = data as LeDenicheurSearchEnvelope;
   const nodes =
@@ -346,14 +575,60 @@ async function parseSearchResponse(
     envelope?.newSearch?.results?.products?.nodes;
   if (!Array.isArray(nodes)) return null;
 
+  const productNodes = nodes.filter(
+    (node) => (node as LeDenicheurNode).__typename !== "Offer",
+  ) as LeDenicheurProductNode[];
+
+  if (options?.itemBarcode) {
+    const probeCache = new Map<number, ProductPageGtinProbe>();
+
+    const loadProbe = async (productId: number) => {
+      const cached = probeCache.get(productId);
+      if (cached) return cached;
+      const probe = await probeLeDenicheurProductPageGtin(
+        productId,
+        options.itemBarcode,
+      );
+      probeCache.set(productId, probe);
+      return probe;
+    };
+
+    for (const product of productNodes) {
+      const productId = extractLeDenicheurProductId(product.pathName);
+      if (!productId) continue;
+      const probe = await loadProbe(productId);
+      if (probe.gtinAlignment !== "confirmed") continue;
+      const result = await resolveProductNode(product, options, query, probe);
+      if (result) return { ...result, matchedQuery: query };
+    }
+
+    for (const product of productNodes) {
+      const productId = extractLeDenicheurProductId(product.pathName);
+      if (!productId) continue;
+      const probe = await loadProbe(productId);
+      if (probe.gtinAlignment === "contradicted") continue;
+      const result = await resolveProductNode(product, options, query, probe);
+      if (result) return { ...result, matchedQuery: query };
+    }
+
+    return null;
+  }
+
   for (const node of nodes) {
     const productName = (node as LeDenicheurNode).name;
-    if (!isProbablyRelevant(query, productName)) continue;
+    if ((node as LeDenicheurNode).__typename === "Offer") {
+      if (!isProbablyRelevant(query, productName, options)) continue;
+      const result = parseOfferNode(node as LeDenicheurOfferNode);
+      if (result) return { ...result, matchedQuery: query };
+      continue;
+    }
 
-    const result =
-      (node as LeDenicheurNode).__typename === "Offer"
-        ? parseOfferNode(node as LeDenicheurOfferNode)
-        : await resolveProductNode(node as LeDenicheurProductNode);
+    const product = node as LeDenicheurProductNode;
+    if (!isProbablyRelevant(query, productName, options)) {
+      continue;
+    }
+
+    const result = await resolveProductNode(product, options, query);
     if (result) return { ...result, matchedQuery: query };
   }
 
@@ -362,6 +637,7 @@ async function parseSearchResponse(
 
 async function fetchSingleQuery(
   query: string,
+  options?: LeDenicheurFetchOptions,
 ): Promise<LeDenicheurPrices | null> {
   const response = await axios.post(
     BFF_URL,
@@ -370,7 +646,7 @@ async function fetchSingleQuery(
       variables: {
         query,
         offset: 0,
-        limit: 5,
+        limit: options?.itemBarcode ? 24 : 5,
       },
     },
     {
@@ -387,11 +663,17 @@ async function fetchSingleQuery(
     return null;
   }
 
-  return parseSearchResponse(response.data, query);
+  return parseSearchResponse(response.data, query, options);
 }
+
+export type LeDenicheurFetchOptions = {
+  itemBarcode?: string | null;
+  itemTitle?: string | null;
+};
 
 export async function fetchPricesFromLeDenicheur(
   queryOrQueries: string | string[],
+  options?: LeDenicheurFetchOptions,
 ): Promise<LeDenicheurPrices | null> {
   const queries = uniqueQueries(queryOrQueries);
   if (queries.length === 0) return null;
@@ -399,7 +681,7 @@ export async function fetchPricesFromLeDenicheur(
   for (const query of queries) {
     try {
       console.log(`[LeDenicheur] Querying: ${query}`);
-      const result = await fetchSingleQuery(query);
+      const result = await fetchSingleQuery(query, options);
       if (result) return result;
     } catch (error) {
       console.error(

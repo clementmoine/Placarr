@@ -1,5 +1,43 @@
 import sharp from "sharp";
 
+const UNAVAILABLE_TILE_MIN_DARK_RATIO = 0.55;
+/** Google "no cover" tiles are flat; real dark art stays above this. */
+const UNAVAILABLE_TILE_MAX_ENTROPY = 4.5;
+
+function luminanceEntropy(
+  data: Buffer,
+  width: number,
+  height: number,
+  channels: number,
+): number {
+  const histogram = new Array<number>(256).fill(0);
+  let counted = 0;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const offset = (y * width + x) * channels;
+      const alpha = data[offset + 3] ?? 255;
+      if (alpha < 12) continue;
+      const red = data[offset] ?? 0;
+      const green = data[offset + 1] ?? 0;
+      const blue = data[offset + 2] ?? 0;
+      const luminance = Math.round(0.299 * red + 0.587 * green + 0.114 * blue);
+      histogram[luminance] += 1;
+      counted += 1;
+    }
+  }
+
+  if (counted === 0) return 0;
+
+  let entropy = 0;
+  for (const count of histogram) {
+    if (count <= 0) continue;
+    const probability = count / counted;
+    entropy -= probability * Math.log2(probability);
+  }
+  return entropy;
+}
+
 /**
  * Google Books (and lookalikes) serve a portrait tile with a black field and
  * localized "image not available" artwork (~257×389, ≤ ~20 KB). Pixel stats
@@ -59,5 +97,9 @@ export async function isUnavailableCoverPlaceholderBuffer(
     }
   }
 
-  return darkPixels / total >= 0.55;
+  return (
+    darkPixels / total >= UNAVAILABLE_TILE_MIN_DARK_RATIO &&
+    luminanceEntropy(data, width, height, channels) <
+      UNAVAILABLE_TILE_MAX_ENTROPY
+  );
 }

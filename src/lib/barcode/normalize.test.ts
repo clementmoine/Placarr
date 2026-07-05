@@ -3,8 +3,22 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeProductBarcode,
   pickDiscoveredBarcode,
+  barcodesEquivalent,
+  barcodeMatchKey,
 } from "@/lib/barcode/normalize";
 import { parsePriceChartingBarcode } from "@/lib/barcode/lookup/priceChartingParse";
+
+describe("barcodesEquivalent", () => {
+  it("treats EAN variants with leading zeros as the same product", () => {
+    expect(barcodesEquivalent("0827912079678", "827912079678")).toBe(true);
+    expect(barcodesEquivalent("0827912079678", "087169139338")).toBe(false);
+  });
+
+  it("normalizes via barcodeMatchKey for comparison", () => {
+    expect(barcodeMatchKey("0827912079678")).toBe("827912079678");
+    expect(barcodeMatchKey("000827912079678")).toBe("827912079678");
+  });
+});
 
 describe("normalizeProductBarcode", () => {
   it("normalise les codes produits valides", () => {

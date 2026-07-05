@@ -70,6 +70,8 @@ describe("achatmoinscherModule metadata adapter", () => {
         url: "https://cdn.example.com/photoProd/zoom/wheelman.jpg",
         role: "fr",
         source: "achatmoinscher",
+        title: "Wheelman (PlayStation 3)",
+        retailCatalogImageTitlesSource: true,
       },
     ]);
     expect(result?.observations).toEqual(

@@ -20,6 +20,9 @@ export type NamedListing = {
   /** New/used price (cents) when the source resolved to a single product (e.g. ChasseAuxLivres). */
   priceNew?: number;
   priceUsed?: number;
+  productUrl?: string;
+  shippingNew?: number;
+  shippingUsed?: number;
 };
 
 export type GameLookupInputs = {

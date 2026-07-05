@@ -32,10 +32,9 @@ describe("flareSolverrDownloadImages", () => {
       },
     });
 
-    const results = await flareSolverrDownloadImages(
-      "https://booknode.com/",
-      ["https://cdn1.booknode.com/book_cover/1037/full/cover.jpg"],
-    );
+    const results = await flareSolverrDownloadImages("https://booknode.com/", [
+      "https://cdn1.booknode.com/book_cover/1037/full/cover.jpg",
+    ]);
 
     expect(results).toHaveLength(1);
     expect(results[0]?.buffer.toString()).toBe("jpeg-bytes");

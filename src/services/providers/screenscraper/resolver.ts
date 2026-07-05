@@ -168,8 +168,7 @@ function pickSSTitleForTarget(
     const score = metadataTitleSimilarity(targetName, nom.text);
     if (
       score > bestScore ||
-      (score === bestScore &&
-        regionRank(nom.region) < regionRank(best.region))
+      (score === bestScore && regionRank(nom.region) < regionRank(best.region))
     ) {
       bestScore = score;
       best = nom;
@@ -482,10 +481,7 @@ export function screenScraperLookupHasCanonicalCover(
   const imageUrl = cached.imageUrl?.trim();
   if (imageUrl) {
     const parsed = parseScreenScraperMediaUrl(imageUrl);
-    if (
-      parsed?.mediaType === "box-2D" ||
-      parsed?.mediaType === "box-3D"
-    ) {
+    if (parsed?.mediaType === "box-2D" || parsed?.mediaType === "box-3D") {
       return true;
     }
   }
@@ -548,7 +544,7 @@ export function mergeScreenScraperLookupWithGame(
     publishers:
       cached.publishers ??
       (gameData.editeur?.text || gameData.developpeur?.text
-        ? [{ name: gameData.editeur?.text ?? gameData.developpeur?.text! }]
+        ? [{ name: (gameData.editeur?.text ?? gameData.developpeur?.text)! }]
         : undefined),
     externalIds: cached.externalIds ?? {
       screenscraper: String(gameData.id),
@@ -1392,7 +1388,6 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
     },
   ): Promise<MetadataResult | null> {
     const lookupKey = buildScreenScraperLookupKey(name, barcode, platform);
-    const cleanedBarcode = (barcode || "").replace(/[^\d]/g, "").trim();
 
     if (isScreenScraperLookupMissCached(lookupKey)) {
       return null;
@@ -1421,10 +1416,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       const normalizedStale = stale
         ? withScreenScraperObservations(stale)
         : null;
-      if (
-        normalizedStale &&
-        isCachedLookupAcceptable(name, normalizedStale)
-      ) {
+      if (normalizedStale && isCachedLookupAcceptable(name, normalizedStale)) {
         console.warn(
           `[ScreenScraper] Quota cooldown — serving stale lookup for "${name || barcode}"`,
         );

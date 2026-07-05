@@ -38,6 +38,12 @@ const GAME_MEDIA_GALLERY_PROVIDER_IDS = new Set(
   ),
 );
 
+const BOOK_GALLERY_PROVIDER_IDS = new Set(
+  PROVIDERS.filter((provider) => provider.bookGallerySource).map(
+    (provider) => provider.id,
+  ),
+);
+
 const MUSIC_GALLERY_PROVIDER_IDS = new Set(
   PROVIDERS.filter((provider) => provider.musicGallerySource).map(
     (provider) => provider.id,
@@ -163,6 +169,11 @@ export function isGameMediaGallerySource(source?: string | null): boolean {
   return id !== null && GAME_MEDIA_GALLERY_PROVIDER_IDS.has(id);
 }
 
+export function isBookGallerySource(source?: string | null): boolean {
+  const id = canonicalProviderIdForSource(source);
+  return id !== null && BOOK_GALLERY_PROVIDER_IDS.has(id);
+}
+
 export function isMusicGallerySource(source?: string | null): boolean {
   const id = canonicalProviderIdForSource(source);
   return id !== null && MUSIC_GALLERY_PROVIDER_IDS.has(id);
@@ -276,6 +287,7 @@ export function withProviderAttachmentTraits<
 ): T & {
   isFullWrapCoverSource: boolean;
   isGameMediaGallerySource: boolean;
+  isBookGallerySource: boolean;
   isMusicGallerySource: boolean;
   isCanonicalCoverSource: boolean;
   retailCatalogImageTitlesSource: boolean;
@@ -297,6 +309,7 @@ export function withProviderAttachmentTraits<
       coverProvenanceForSource(attachment.source, attachment.url),
     isFullWrapCoverSource: isFullWrapCoverSource(attachment.source),
     isGameMediaGallerySource: isGameMediaGallerySource(attachment.source),
+    isBookGallerySource: isBookGallerySource(attachment.source),
     isMusicGallerySource: isMusicGallerySource(attachment.source),
     isCanonicalCoverSource: isCanonicalCoverSource(attachment.source),
     retailCatalogImageTitlesSource: retailCatalogImageTitleSource(

@@ -5,7 +5,10 @@ import {
   coverUrlExpectsHighResolution,
   MIN_COVER_SHORTEST_EDGE,
 } from "@/lib/media/coverResolution";
-import { flareSolverrCookiesFor, flareSolverrDownloadImages } from "@/lib/http/flareSolverr";
+import {
+  flareSolverrCookiesFor,
+  flareSolverrDownloadImages,
+} from "@/lib/http/flareSolverr";
 import {
   readBufferImageMetrics,
   shortestImageEdge,

@@ -26,4 +26,13 @@ describe("isChasseTitleAligned", () => {
       ),
     ).toBe(true);
   });
+
+  it("refuse une variante avec suffixe quand la requete est le titre de base", () => {
+    expect(
+      isChasseTitleAligned("Black Stories", "Black Stories Fantastique"),
+    ).toBe(false);
+    expect(isChasseTitleAligned("Black Stories", "Iello Black Stories")).toBe(
+      true,
+    );
+  });
 });

@@ -22,6 +22,9 @@ import { googlebooksModule } from "@/services/providers/googlebooks";
 import { openlibraryModule } from "@/services/providers/openlibrary";
 import { philibertModule } from "@/services/providers/philibert";
 import { okkazeoModule } from "@/services/providers/okkazeo";
+import { espritjeuModule } from "@/services/providers/espritjeu";
+import { myludoModule } from "@/services/providers/myludo";
+import { playinModule } from "@/services/providers/playin";
 import { PRESTASHOP_RETAILER_MODULES } from "@/services/providers/prestashop";
 import { SHOPIFY_RETAILER_MODULES } from "@/services/providers/shopify";
 import { wikidataModule } from "@/services/providers/wikidata";
@@ -38,7 +41,9 @@ import { tmdbModule } from "@/services/providers/tmdb";
 import type {
   InferredImageAttachmentSemantics,
   ProviderModule,
+  ProviderProductUrlRef,
 } from "@/types/providerModule";
+import type { MetadataFact } from "@/types/metadataProvider";
 import type {
   Capability,
   MediaType,
@@ -79,6 +84,9 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   wikidataModule,
   philibertModule,
   okkazeoModule,
+  espritjeuModule,
+  myludoModule,
+  playinModule,
   ...PRESTASHOP_RETAILER_MODULES,
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,
@@ -153,14 +161,19 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
     boardgamegeek: { defaultLanguage: "en", isRealBoxCover: true },
     philibert: { defaultLanguage: "fr", isRealBoxCover: true },
     okkazeo: { defaultLanguage: "fr", isRealBoxCover: true },
+    espritjeu: { defaultLanguage: "fr", isRealBoxCover: true },
+    myludo: { defaultLanguage: "fr", isRealBoxCover: true },
+    playin: { defaultLanguage: "fr", isRealBoxCover: true },
     chasseauxlivres: {
       defaultLanguage: "fr",
       imageScoreAdjustment: -25,
       remoteImageFallback: true,
+      bookGallerySource: true,
     },
     achatmoinscher: {
       defaultLanguage: "fr",
       isSecondary: true,
+      retailCatalogImageTitles: true,
     },
     ledenicheur: { defaultLanguage: "fr" },
     chocobonplan: {
@@ -170,6 +183,7 @@ const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
       retailCatalogImageTitles: true,
       strictShelfPlatformCover: true,
       coverDefaultRegion: "fr",
+      bookGallerySource: true,
     },
     chipweld: {
       defaultLanguage: "fr",
@@ -268,6 +282,7 @@ export function providerEvidenceLabelFor(providerId: string): string {
 // provider's own declared name, built once from the registry. Replaces the
 // per-provider switch that used to live in core (playerFacts).
 const SOURCE_LABEL_BY_KEY = new Map<string, string>();
+const PROVIDER_ID_BY_SOURCE_KEY = new Map<string, string>();
 const normalizeSourceKey = (value: string): string =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 for (const mdl of PROVIDER_MODULES) {
@@ -277,8 +292,23 @@ for (const mdl of PROVIDER_MODULES) {
     mdl.info.label,
     ...(mdl.info.sourceAliases ?? []),
   ]) {
-    if (key) SOURCE_LABEL_BY_KEY.set(normalizeSourceKey(key), display);
+    if (!key) continue;
+    const normalized = normalizeSourceKey(key);
+    SOURCE_LABEL_BY_KEY.set(normalized, display);
+    PROVIDER_ID_BY_SOURCE_KEY.set(normalized, mdl.info.id);
   }
+}
+
+/**
+ * Canonical provider module id for any source token (id, alias, label, offer source).
+ * Falls back to a normalized token when no module claims it.
+ */
+export function providerIdForSourceToken(source: string): string {
+  if (!source) return "";
+  return (
+    PROVIDER_ID_BY_SOURCE_KEY.get(normalizeSourceKey(source)) ??
+    normalizeSourceKey(source)
+  );
 }
 
 /**
@@ -329,8 +359,7 @@ for (const providerModule of PROVIDER_MODULES) {
 /** Whether a price row was fetched from the item barcode, not a search hit. */
 export function isBarcodeScopedPriceSource(source: string): boolean {
   return (
-    !!source &&
-    BARCODE_SCOPED_PRICE_SOURCE_KEYS.has(normalizeSourceKey(source))
+    !!source && BARCODE_SCOPED_PRICE_SOURCE_KEYS.has(normalizeSourceKey(source))
   );
 }
 
@@ -448,4 +477,89 @@ export function capabilityCoverage(
     .filter((p) => p.capabilities.includes(capability))
     .map((p) => p.id);
   return { providers, count: providers.length };
+}
+
+function providerSourceKeysForProductUrls(module: ProviderModule): string[] {
+  return [
+    module.info.id,
+    module.info.label,
+    ...(module.info.sourceAliases ?? []),
+  ]
+    .map((key) => key.toLowerCase().replace(/[^a-z0-9]+/g, ""))
+    .filter(Boolean);
+}
+
+function providerWebsiteHostForProductUrls(
+  module: ProviderModule,
+): string | null {
+  const websiteUrl = module.info.websiteUrl?.trim();
+  if (!websiteUrl) return null;
+  try {
+    return new URL(websiteUrl).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function factMatchesPriceProviderModule(
+  fact: MetadataFact,
+  url: string,
+  module: ProviderModule,
+): boolean {
+  if (!module.info.capabilities.includes("price")) return false;
+  if (!module.refreshBarcodePriceOffers) return false;
+
+  const factSource = (fact.source ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+  if (
+    factSource &&
+    providerSourceKeysForProductUrls(module).includes(factSource)
+  ) {
+    return true;
+  }
+
+  const websiteHost = providerWebsiteHostForProductUrls(module);
+  if (!websiteHost) return false;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./i, "").toLowerCase();
+    return host === websiteHost || host.endsWith(`.${websiteHost}`);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Product-page URLs already resolved during metadata enrichment. Price refresh
+ * reuses them before barcode/title search so providers are not queried twice.
+ */
+export function providerProductUrlsFromMetadataFacts(
+  facts: MetadataFact[] | undefined,
+): ProviderProductUrlRef[] {
+  if (!facts?.length) return [];
+
+  const linkFacts = facts
+    .filter(
+      (fact) =>
+        (fact.kind === "external-link" || fact.kind === "source-url") &&
+        fact.url?.trim(),
+    )
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+
+  const results: ProviderProductUrlRef[] = [];
+  const seen = new Set<string>();
+
+  for (const fact of linkFacts) {
+    const url = fact.url!.trim();
+    for (const providerModule of PROVIDER_MODULES) {
+      if (!factMatchesPriceProviderModule(fact, url, providerModule)) continue;
+
+      const dedupeKey = `${providerModule.info.id}\0${url}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      results.push({ providerKey: providerModule.info.id, url });
+    }
+  }
+
+  return results;
 }

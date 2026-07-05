@@ -28,6 +28,7 @@ import {
   attachmentTitleMediaTypeConflicts,
   catalogAttachmentTitleConflicts,
 } from "@/lib/metadata/titleMatching";
+import { priceListingSharesItemIdentity } from "@/lib/retailer/titleMatch";
 import {
   filterPlaceholderCoverAttachments,
   isMissingArtImageUrl,
@@ -261,23 +262,59 @@ function filterAttachmentsForProductTitle<
 
   const attachments = withoutPlaceholders.filter((attachment) => {
     if (!COVER_GALLERY_TYPES.has(attachment.type)) return true;
-    if (!attachment.title?.trim()) return true;
+    const attachmentTitle = attachment.title?.trim();
+    if (!attachmentTitle) return true;
     if (
-      attachmentTitleMediaTypeConflicts(productTitle, attachment.title, {
+      attachmentTitleMediaTypeConflicts(productTitle, attachmentTitle, {
         mediaType: shelf?.type,
       })
+    ) {
+      return false;
+    }
+    if (
+      attachment.retailCatalogImageTitlesSource &&
+      !priceListingSharesItemIdentity(productTitle, attachmentTitle)
     ) {
       return false;
     }
     if (!attachment.retailCatalogImageTitlesSource) {
       return true;
     }
-    return !catalogAttachmentTitleConflicts(productTitle, attachment.title, {
+    return !catalogAttachmentTitleConflicts(productTitle, attachmentTitle, {
       mediaType: shelf?.type,
     });
   });
 
   return { ...metadata, attachments };
+}
+
+function reconcileImageUrlAfterAttachmentFilter<
+  T extends {
+    imageUrl?: string | null;
+    attachments?: MediaItem[] | null;
+  },
+>(metadata: T, attachments: MediaItem[], options: AttachmentDisplayScoreOptions): T {
+  const pinned = metadata.imageUrl?.trim();
+  const stillValid =
+    pinned &&
+    attachments.some(
+      (attachment) =>
+        attachment.url &&
+        urlsReferToSameLocalizedImage(attachment.url, pinned),
+    );
+
+  const rawImageUrl =
+    stillValid && isUrlEligibleDefaultCover(pinned, attachments)
+      ? pinned
+      : (pickBestCoverFromAttachments(attachments, undefined, options) ?? null);
+  const imageUrl =
+    rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
+
+  return {
+    ...metadata,
+    attachments,
+    imageUrl: imageUrl ?? undefined,
+  };
 }
 
 export function filterMetadataForShelfPlatform<
@@ -313,10 +350,11 @@ export function filterMetadataForShelfPlatform<
 
   const options = coverDisplayOptions({ shelf });
   if (!options.requestedPlatformKey) {
-    return {
-      ...metadataForTitle,
-      attachments: attachmentsWithSanitizedICollect,
-    };
+    return reconcileImageUrlAfterAttachmentFilter(
+      { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect },
+      attachmentsWithSanitizedICollect,
+      options,
+    );
   }
 
   const filteredAttachments = coverAttachmentsMatchingShelfPlatform(

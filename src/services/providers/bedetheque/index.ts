@@ -4,17 +4,18 @@ import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { pricedOffers } from "@/lib/provider/priceOffers";
 
-import type { MetadataAttachment, MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
 
-import {
-  fetchBedethequeMetadata,
-  getBedethequeSuggestions,
-} from "./fetch";
+import { fetchBedethequeMetadata, getBedethequeSuggestions } from "./fetch";
 import { collectBedethequeMappingRawKeys } from "./fetch";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 
@@ -31,9 +32,7 @@ function formatEuroPrice(cents: number): string {
 }
 
 function buildBedethequePriceFacts(
-  album: NonNullable<
-    Awaited<ReturnType<typeof fetchBedethequeMetadata>>
-  >,
+  album: NonNullable<Awaited<ReturnType<typeof fetchBedethequeMetadata>>>,
 ): MetadataFact[] {
   const facts: MetadataFact[] = [];
 
@@ -54,7 +53,9 @@ function buildBedethequePriceFacts(
   facts.push({
     kind: "price",
     label: "Marketplace dès",
-    value: formatEuroPrice(Math.min(...listings.map((entry) => entry.priceCents))),
+    value: formatEuroPrice(
+      Math.min(...listings.map((entry) => entry.priceCents)),
+    ),
     source: "bedetheque",
     confidence: 0.62,
     priority: 54,
@@ -285,7 +286,14 @@ export const bedethequeModule: ProviderModule = {
     label: "Bédéthèque",
     types: ["books"],
     nameDatabase: true,
-    capabilities: ["identify", "cover", "rating", "people", "releaseDate", "price"],
+    capabilities: [
+      "identify",
+      "cover",
+      "rating",
+      "people",
+      "releaseDate",
+      "price",
+    ],
     auth: { kind: "scrape" },
     canonical: false,
     defaultLanguage: "fr",

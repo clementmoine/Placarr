@@ -2,7 +2,10 @@ import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import { isRetailerCoverUrlAlignedWithTitle } from "@/lib/retailer/coverUrlMatch";
-import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
+import {
+  isNameOnlyRetailerTitleMatch,
+  priceListingSharesItemIdentity,
+} from "@/lib/retailer/titleMatch";
 
 export interface AchatMoinsCherProduct {
   name: string;
@@ -75,7 +78,7 @@ export async function fetchFromAchatMoinsCher(
       if (byName.length > 0) return byName;
     }
 
-    return expectedNames.length === 0 && product ? [product] : [];
+    return [];
   } catch (error) {
     console.error(
       `[AchatMoinsCher] Error fetching barcode ${cleanedBarcode}:`,
@@ -307,7 +310,11 @@ function achatMoinsCherTitleMatchesExpectedNames(
 ): boolean {
   const names = expectedNames.filter(Boolean);
   if (names.length === 0) return true;
-  return names.some((name) => isNameOnlyRetailerTitleMatch(name, title));
+  return names.some(
+    (name) =>
+      isNameOnlyRetailerTitleMatch(name, title) &&
+      priceListingSharesItemIdentity(name, title),
+  );
 }
 
 async function parseAchatMoinsCherProductPage(

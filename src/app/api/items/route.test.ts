@@ -41,8 +41,8 @@ vi.mock("@/lib/routing/resolveIds", () => ({
   resolveItemId: h.resolveItemId,
 }));
 vi.mock("@/lib/routing/itemSlug", () => ({
-  allocateUniqueItemSlug: vi.fn(async (_shelfId: string, name: string) =>
-    `slug-${name}`,
+  allocateUniqueItemSlug: vi.fn(
+    async (_shelfId: string, name: string) => `slug-${name}`,
   ),
 }));
 vi.mock("@/lib/routing/slugs", () => ({

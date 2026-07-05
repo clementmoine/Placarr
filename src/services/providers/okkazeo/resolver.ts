@@ -2,7 +2,14 @@ import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
 } from "@/lib/retailer/metadataLookup";
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
+import {
+  retailerProductBarcodeConfirmed,
+  retailerProductUrlBarcodeConflicts,
+} from "@/lib/retailer/productUrl";
 import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
@@ -233,15 +240,31 @@ export function createOkkazeoResolver() {
           if (!title) continue;
 
           const resolvedBarcode = normalizeProductBarcode(game.barcode);
-          const barcodeConfirmed =
-            !!normalizedBarcode &&
-            (!resolvedBarcode || resolvedBarcode === normalizedBarcode);
+          const urlBarcodeConfirmed = retailerProductBarcodeConfirmed(
+            hit.url,
+            resolvedBarcode,
+            normalizedBarcode,
+          );
+          const catalogBarcodeConfirmed =
+            (!!normalizedBarcode &&
+              resolvedBarcode &&
+              barcodesEquivalent(resolvedBarcode, normalizedBarcode)) ||
+            urlBarcodeConfirmed;
           const barcodeContradicted =
             !!normalizedBarcode &&
             !!resolvedBarcode &&
-            resolvedBarcode !== normalizedBarcode;
+            !barcodesEquivalent(resolvedBarcode, normalizedBarcode);
 
           if (barcodeContradicted) continue;
+
+          if (
+            normalizedBarcode &&
+            retailerProductUrlBarcodeConflicts(hit.url, normalizedBarcode)
+          ) {
+            continue;
+          }
+
+          if (normalizedBarcode && !catalogBarcodeConfirmed) continue;
 
           if (
             !acceptRetailerCatalogCandidate({
@@ -250,7 +273,8 @@ export function createOkkazeoResolver() {
               shelfName: ctx.shelfName,
               catalogTitle: title,
               catalogAliases: game.listingTitles,
-              barcodeConfirmed,
+              barcodeConfirmed: catalogBarcodeConfirmed,
+              trustConfirmedProductBarcode: true,
               itemBarcode: normalizedBarcode,
             })
           ) {

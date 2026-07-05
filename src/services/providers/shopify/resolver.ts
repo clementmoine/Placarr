@@ -3,6 +3,7 @@ import {
   retailerSearchHitLimit,
 } from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { retailerCatalogBarcodeGate } from "@/lib/retailer/productUrl";
 
 import type {
   MetadataAttachment,
@@ -94,6 +95,41 @@ export function createShopifyResolver(config: ShopifyRetailerConfig) {
         : [requestedName].filter(Boolean);
     if (queries.length === 0 && !normalizedBarcode) return null;
 
+    const acceptProduct = (
+      product: ShopifyProduct,
+      input: {
+        searchQuery?: string;
+        shelfName?: string | null;
+      },
+    ): MetadataResult | null => {
+      if (!product.title) return null;
+
+      const gate = retailerCatalogBarcodeGate({
+        productUrl: product.productUrl,
+        productBarcode: product.barcode,
+        itemBarcode: normalizedBarcode,
+      });
+
+      if (gate.barcodeContradicted || gate.urlBarcodeConflicts) return null;
+      if (normalizedBarcode && !gate.catalogBarcodeConfirmed) return null;
+
+      if (
+        !acceptRetailerCatalogCandidate({
+          requestedName,
+          searchQuery: input.searchQuery,
+          shelfName: input.shelfName,
+          catalogTitle: product.title,
+          barcodeConfirmed: gate.catalogBarcodeConfirmed,
+          trustConfirmedProductBarcode: true,
+          itemBarcode: normalizedBarcode,
+        })
+      ) {
+        return null;
+      }
+
+      return mapShopifyMetadata(product, config.label);
+    };
+
     try {
       if (normalizedBarcode) {
         const product = await searchShopifyProduct(
@@ -101,21 +137,26 @@ export function createShopifyResolver(config: ShopifyRetailerConfig) {
           requestedName,
           normalizedBarcode,
         );
-        if (!product?.title) return null;
-
-        const barcodeConfirmed =
-          normalizeProductBarcode(product.barcode) === normalizedBarcode;
-        if (
-          !acceptRetailerCatalogCandidate({
-            requestedName,
-            catalogTitle: product.title,
-            barcodeConfirmed,
-          })
-        ) {
-          return null;
+        if (product) {
+          const result = acceptProduct(product, { shelfName: ctx.shelfName });
+          if (result) return result;
         }
 
-        return mapShopifyMetadata(product, config.label);
+        const barcodeHitLimit = retailerSearchHitLimit({
+          requestedName,
+          searchQuery: requestedName,
+          shelfName: ctx.shelfName,
+        });
+        const hits = await searchShopifyHits(
+          config,
+          normalizedBarcode,
+          normalizedBarcode,
+          barcodeHitLimit,
+        );
+        for (const hit of hits) {
+          const hitResult = acceptProduct(hit, { shelfName: ctx.shelfName });
+          if (hitResult) return hitResult;
+        }
       }
 
       const seenUrls = new Set<string>();
@@ -128,25 +169,22 @@ export function createShopifyResolver(config: ShopifyRetailerConfig) {
           searchQuery: query,
           shelfName: ctx.shelfName,
         });
-        const hits = await searchShopifyHits(config, query, null, hitLimit);
+        const hits = await searchShopifyHits(
+          config,
+          query,
+          normalizedBarcode,
+          hitLimit,
+        );
 
         for (const product of hits) {
           if (seenUrls.has(product.productUrl)) continue;
           seenUrls.add(product.productUrl);
-          if (!product.title) continue;
 
-          if (
-            !acceptRetailerCatalogCandidate({
-              requestedName,
-              searchQuery: query,
-              shelfName: ctx.shelfName,
-              catalogTitle: product.title,
-            })
-          ) {
-            continue;
-          }
-
-          return mapShopifyMetadata(product, config.label);
+          const result = acceptProduct(product, {
+            searchQuery: query,
+            shelfName: ctx.shelfName,
+          });
+          if (result) return result;
         }
       }
 

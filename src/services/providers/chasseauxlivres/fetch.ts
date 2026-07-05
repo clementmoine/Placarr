@@ -1,12 +1,19 @@
+import { randomUUID } from "node:crypto";
+
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
+import { retailerCatalogBarcodeGate } from "@/lib/retailer/productUrl";
+import {
+  flareSolverrDestroySession,
+  flareSolverrRequestGet,
+} from "@/lib/http/flareSolverr";
 import { isAbortError } from "@/lib/http/abort";
 
 export interface ChasseAuxLivresProduct {
   name: string;
   coverUrl?: string;
+  images?: string[];
   productUrl?: string;
   sku?: string;
   barcode?: string | null;
@@ -16,11 +23,124 @@ export interface ChasseAuxLivresProduct {
   category?: string;
   ratingValue?: number;
   ratingCount?: number;
-  priceNew?: number; // cents, only when a single product is resolved
-  priceUsed?: number; // cents, only when a single product is resolved
+  priceNew?: number; // landed cents (item + shipping), single-product resolution
+  priceUsed?: number; // landed cents (item + shipping), single-product resolution
+  priceNewItem?: number;
+  priceUsedItem?: number;
+  shippingNew?: number;
+  shippingUsed?: number;
 }
 
 type ChasseProductValidator = (product: ChasseAuxLivresProduct) => boolean;
+
+type ChasseResolveOptions = {
+  validateProduct?: ChasseProductValidator;
+  anchoredItemBarcode?: string | null;
+  signal?: AbortSignal;
+};
+
+function chasseCatalogBarcodeConfirmed(
+  product: ChasseAuxLivresProduct,
+  itemBarcode: string,
+): boolean {
+  const gate = retailerCatalogBarcodeGate({
+    productUrl: product.productUrl,
+    productBarcode: product.barcode,
+    itemBarcode,
+  });
+  return (
+    gate.catalogBarcodeConfirmed &&
+    !gate.barcodeContradicted &&
+    !gate.urlBarcodeConflicts
+  );
+}
+
+const CHASSE_SEARCH_PAGE_BATCH = 1;
+const CHASSE_SEARCH_MAX_PAGES = 3;
+const CHASSE_SEARCH_MAX_PAGES_ANCHORED = 8;
+
+type ChassePageHtml = {
+  html: string;
+  finalUrl: string;
+  flareSession?: string;
+};
+
+function chasseSearchMaxPages(anchoredItemBarcode?: string | null): number {
+  return normalizeProductBarcode(anchoredItemBarcode)
+    ? CHASSE_SEARCH_MAX_PAGES_ANCHORED
+    : CHASSE_SEARCH_MAX_PAGES;
+}
+
+function extractChasseSearchContext(
+  html: string,
+): { hash: string; duih: string } | null {
+  const hashContMatch = html.match(
+    /id="hash-cont"[^>]*data-hash="([^"]+)"[^>]*data-duih="([^"]*)"/i,
+  );
+  if (hashContMatch) {
+    return { hash: hashContMatch[1], duih: hashContMatch[2] ?? "" };
+  }
+
+  const hash = html.match(/data-hash="([^"]+)"/)?.[1];
+  if (!hash) return null;
+  const duih = html.match(/data-duih="([^"]*)"/)?.[1] ?? "";
+  return { hash, duih };
+}
+
+function buildChasseSearchResultsUrl(
+  hash: string,
+  page: number,
+  duih: string,
+): string {
+  const params = new URLSearchParams({
+    h: hash,
+    p: String(page),
+    l: String(CHASSE_SEARCH_PAGE_BATCH),
+    duih,
+  });
+  return `https://www.chasse-aux-livres.fr/rest/search-results?${params.toString()}`;
+}
+
+function parseChasseSearchResultsPayload(
+  raw: unknown,
+): ChasseSearchPayload | null {
+  if (raw && typeof raw === "object") return raw as ChasseSearchPayload;
+  if (typeof raw !== "string") return null;
+
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("{")) {
+    try {
+      return JSON.parse(trimmed) as ChasseSearchPayload;
+    } catch {
+      return null;
+    }
+  }
+
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return null;
+  try {
+    return JSON.parse(jsonMatch[0]) as ChasseSearchPayload;
+  } catch {
+    return null;
+  }
+}
+
+async function createChasseFlareSession(
+  searchUrl: string,
+  signal?: AbortSignal,
+): Promise<{ session: string; html: string } | null> {
+  const session = `placarr-chasse-${randomUUID()}`;
+  const html = await flareSolverrRequestGet(searchUrl, {
+    session,
+    maxTimeoutMs: CHASSE_FLARESOLVERR_TIMEOUT_MS,
+    signal,
+  });
+  if (!html || isProtectedLoginPage(html, searchUrl)) {
+    await flareSolverrDestroySession(session, signal);
+    return null;
+  }
+  return { session, html };
+}
 
 const CHASSE_AUX_LIVRES_HEADERS = {
   "User-Agent":
@@ -33,10 +153,48 @@ const CHASSE_AUX_LIVRES_HEADERS = {
 const CHASSE_AUX_LIVRES_TIMEOUT_MS = 8_000;
 const CHASSE_FLARESOLVERR_TIMEOUT_MS = 25_000;
 
+function chasseDirectSearchPageIsUsable(
+  html: string,
+  finalUrl: string,
+): boolean {
+  if (finalUrl.includes("/prix/")) return true;
+  return extractChasseSearchContext(html) !== null;
+}
+
+function chasseDirectPageIsUsable(
+  html: string,
+  finalUrl: string,
+  requestUrl: string,
+): boolean {
+  if (finalUrl.includes("/prix/") || requestUrl.includes("/prix/")) {
+    const product = parseChasseAuxLivresProductPage(html, finalUrl);
+    return Boolean(product?.name && product?.sku);
+  }
+  if (requestUrl.includes("/search?")) {
+    return chasseDirectSearchPageIsUsable(html, finalUrl);
+  }
+  return true;
+}
+
 async function fetchChassePageHtml(
   url: string,
   signal?: AbortSignal,
-): Promise<{ html: string; finalUrl: string } | null> {
+  options: { flareSession?: string } = {},
+): Promise<ChassePageHtml | null> {
+  if (options.flareSession) {
+    const flareHtml = await flareSolverrRequestGet(url, {
+      session: options.flareSession,
+      maxTimeoutMs: CHASSE_FLARESOLVERR_TIMEOUT_MS,
+      signal,
+    });
+    if (!flareHtml || isProtectedLoginPage(flareHtml, url)) return null;
+    return {
+      html: flareHtml,
+      finalUrl: url,
+      flareSession: options.flareSession,
+    };
+  }
+
   try {
     const response = await axios.get(url, {
       headers: CHASSE_AUX_LIVRES_HEADERS,
@@ -47,7 +205,11 @@ async function fetchChassePageHtml(
     });
     const html = String(response.data || "");
     const finalUrl = response.request?.res?.responseUrl || url;
-    if (!isProtectedLoginPage(html, finalUrl)) {
+    if (
+      html &&
+      !isProtectedLoginPage(html, finalUrl) &&
+      chasseDirectPageIsUsable(html, finalUrl, url)
+    ) {
       return { html, finalUrl };
     }
   } catch (error) {
@@ -55,15 +217,17 @@ async function fetchChassePageHtml(
     // Fall through to FlareSolverr when direct access is blocked.
   }
 
-  const flareHtml = await fetchWithFlareSolverr(
-    url,
-    CHASSE_FLARESOLVERR_TIMEOUT_MS,
+  const session = `placarr-chasse-${randomUUID()}`;
+  const flareHtml = await flareSolverrRequestGet(url, {
+    session,
+    maxTimeoutMs: CHASSE_FLARESOLVERR_TIMEOUT_MS,
     signal,
-  );
+  });
   if (!flareHtml || isProtectedLoginPage(flareHtml, url)) {
+    await flareSolverrDestroySession(session, signal);
     return null;
   }
-  return { html: flareHtml, finalUrl: url };
+  return { html: flareHtml, finalUrl: url, flareSession: session };
 }
 
 function describeChasseError(error: unknown): string {
@@ -212,6 +376,84 @@ function parsePublisherFromHtml(html: string): string | undefined {
   return cleanText(publisher);
 }
 
+const CHASSE_PRODUCT_MEDIA_PATH =
+  /\/v7\/(?:_zmx1_|_fns2_|_xkp3_|photo)\//i;
+
+function isChasseProductMediaUrl(url: string): boolean {
+  if (!CHASSE_PRODUCT_MEDIA_PATH.test(url)) return false;
+  if (/\/v7\/_c_\//i.test(url)) return false;
+  return /\.(?:jpe?g|png|webp)$/i.test(url);
+}
+
+/** Product header only — marketplace offer rows live under `#offers`. */
+function extractChasseProductHeaderHtml(html: string): string {
+  const offersIdx = html.search(/\bid=["']offers["']/i);
+  return offersIdx >= 0 ? html.slice(0, offersIdx) : html;
+}
+
+function pushUniqueChasseImage(
+  images: string[],
+  seen: Set<string>,
+  rawUrl?: string | null,
+): void {
+  const normalized = absoluteChasseUrl(rawUrl?.split("?")[0]);
+  if (!normalized || !isChasseProductMediaUrl(normalized)) return;
+  const key = normalized.toLowerCase();
+  if (seen.has(key)) return;
+  seen.add(key);
+  images.push(normalized);
+}
+
+function extractChasseDataThumbsGallery(html: string): string[] {
+  const match =
+    html.match(
+      /\bid=["']book-details["'][^>]*\bdata-thumbs=["'](\[[\s\S]*?\])["']/i,
+    ) ??
+    html.match(
+      /\bdata-thumbs=["'](\[[\s\S]*?\])["'][^>]*\bid=["']book-details["']/i,
+    );
+  if (!match?.[1]) return [];
+
+  try {
+    const parsed = JSON.parse(decodeHTMLEntities(match[1])) as Array<{
+      thumb?: string;
+      full?: string;
+    }>;
+    if (!Array.isArray(parsed)) return [];
+
+    const seen = new Set<string>();
+    const images: string[] = [];
+    for (const entry of parsed) {
+      pushUniqueChasseImage(images, seen, entry.full || entry.thumb);
+    }
+    return images;
+  } catch {
+    return [];
+  }
+}
+
+function extractChasseHeaderImgGallery(html: string): string[] {
+  const header = extractChasseProductHeaderHtml(html);
+  const seen = new Set<string>();
+  const images: string[] = [];
+
+  for (const match of header.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = match[0];
+    const src =
+      tag.match(/\bsrc=["']([^"']+)["']/i)?.[1] ||
+      tag.match(/\bdata-forhisto=["']([^"']+)["']/i)?.[1];
+    pushUniqueChasseImage(images, seen, src);
+  }
+
+  return images;
+}
+
+export function extractChasseAuxLivresProductImages(html: string): string[] {
+  const fromThumbs = extractChasseDataThumbsGallery(html);
+  if (fromThumbs.length > 0) return fromThumbs;
+  return extractChasseHeaderImgGallery(html);
+}
+
 export function parseChasseAuxLivresProductPage(
   html: string,
   productUrl?: string,
@@ -238,6 +480,11 @@ export function parseChasseAuxLivresProductPage(
     metaContent(html, "og:image") ||
     metaContent(html, "twitter:image") ||
     html.match(/<img[^>]*id=["']book-cover["'][^>]*src=["']([^"']+)["']/i)?.[1];
+  const galleryImages = extractChasseAuxLivresProductImages(html);
+  const coverUrl =
+    absoluteChasseUrl(
+      (Array.isArray(image) ? image[0] : image)?.split("?")[0],
+    ) || galleryImages[0];
   const aggregateRating = productSchema?.aggregateRating as
     | { ratingValue?: unknown; ratingCount?: unknown }
     | undefined;
@@ -253,7 +500,13 @@ export function parseChasseAuxLivresProductPage(
 
   return {
     name: cleanName,
-    coverUrl: absoluteChasseUrl(image?.split("?")[0]),
+    coverUrl,
+    images:
+      galleryImages.length > 0
+        ? galleryImages
+        : coverUrl
+          ? [coverUrl]
+          : undefined,
     productUrl,
     sku: cleanText(sku),
     barcode,
@@ -362,7 +615,7 @@ function uniqueProductUrls(products: ChasseAuxLivresProduct[]): string[] {
   return urls;
 }
 
-type ChasseSearchPayload = { redir?: unknown; d?: unknown };
+type ChasseSearchPayload = { redir?: unknown; d?: unknown; c?: number };
 
 function searchResultCandidates(
   data: ChasseSearchPayload | null | undefined,
@@ -374,29 +627,231 @@ function searchResultCandidates(
   ]);
 }
 
-async function fetchSearchResults(
-  hash: string,
-  limit: number,
-  signal?: AbortSignal,
-): Promise<ChasseSearchPayload> {
-  const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=${limit}`;
-  const resultsRes = await axios.get(resultsUrl, {
-    headers: CHASSE_AUX_LIVRES_HEADERS,
-    timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
-    signal,
-  });
-  return resultsRes.data as ChasseSearchPayload;
+async function fetchChasseSearchResultsPage(
+  searchUrl: string,
+  context: { hash: string; duih: string },
+  page: number,
+  options: { flareSession?: string; signal?: AbortSignal } = {},
+): Promise<ChasseSearchPayload | null> {
+  const resultsUrl = buildChasseSearchResultsUrl(
+    context.hash,
+    page,
+    context.duih,
+  );
+
+  if (options.flareSession) {
+    const html = await flareSolverrRequestGet(resultsUrl, {
+      session: options.flareSession,
+      maxTimeoutMs: CHASSE_FLARESOLVERR_TIMEOUT_MS,
+      signal: options.signal,
+    });
+    return parseChasseSearchResultsPayload(html);
+  }
+
+  try {
+    const resultsRes = await axios.get(resultsUrl, {
+      headers: {
+        ...CHASSE_AUX_LIVRES_HEADERS,
+        Referer: searchUrl,
+      },
+      timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
+      signal: options.signal,
+      validateStatus: () => true,
+    });
+    const payload = parseChasseSearchResultsPayload(resultsRes.data);
+    if (payload && (payload.c ?? 0) > 0) return payload;
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+  }
+
+  return null;
 }
 
-async function fetchProductPage(
-  productUrl: string,
-  signal?: AbortSignal,
+async function resolveChasseSearchProductPage(
+  searchUrl: string,
+  html: string,
+  options: {
+    validateProduct?: ChasseProductValidator;
+    anchoredBarcode?: string;
+    flareSession?: string;
+    signal?: AbortSignal;
+  },
 ): Promise<{
   url: string;
   html: string;
   product: ChasseAuxLivresProduct;
 } | null> {
-  const page = await fetchChassePageHtml(productUrl, signal);
+  const context = extractChasseSearchContext(html);
+  if (!context) return null;
+
+  let flareSession = options.flareSession;
+  let ownedFlareSession = false;
+  const maxPages = chasseSearchMaxPages(options.anchoredBarcode);
+  let firstUnanchoredMatch: {
+    url: string;
+    html: string;
+    product: ChasseAuxLivresProduct;
+  } | null = null;
+
+  try {
+    for (let page = 1; page <= maxPages; page += 1) {
+      let data = await fetchChasseSearchResultsPage(searchUrl, context, page, {
+        flareSession,
+        signal: options.signal,
+      });
+
+      if (!data && page === 1 && !flareSession) {
+        const flareBootstrap = await createChasseFlareSession(
+          searchUrl,
+          options.signal,
+        );
+        if (flareBootstrap) {
+          flareSession = flareBootstrap.session;
+          ownedFlareSession = true;
+          data = await fetchChasseSearchResultsPage(searchUrl, context, page, {
+            flareSession,
+            signal: options.signal,
+          });
+        }
+      }
+
+      if (!data || (data.c ?? 0) < 1) break;
+
+      if (typeof data.redir === "string" && data.redir.trim()) {
+        const redirUrl = absoluteChasseUrl(data.redir.trim());
+        if (redirUrl) {
+          const redirPage = await fetchProductPage(
+            redirUrl,
+            options.signal,
+            flareSession,
+          );
+          if (redirPage) {
+            if (
+              !options.validateProduct ||
+              options.validateProduct(redirPage.product)
+            ) {
+              if (
+                !options.anchoredBarcode ||
+                chasseCatalogBarcodeConfirmed(
+                  redirPage.product,
+                  options.anchoredBarcode,
+                )
+              ) {
+                return redirPage;
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      const seenUrls = new Set<string>();
+      const candidateUrls = searchResultCandidates(data).filter((url) => {
+        if (seenUrls.has(url)) return false;
+        seenUrls.add(url);
+        return true;
+      });
+      for (const productUrl of candidateUrls) {
+        const productPage = await fetchProductPage(
+          productUrl,
+          options.signal,
+          flareSession,
+        );
+        if (!productPage) continue;
+        if (
+          options.validateProduct &&
+          !options.validateProduct(productPage.product)
+        ) {
+          continue;
+        }
+        if (
+          options.anchoredBarcode &&
+          !chasseCatalogBarcodeConfirmed(
+            productPage.product,
+            options.anchoredBarcode,
+          )
+        ) {
+          continue;
+        }
+        if (options.anchoredBarcode) {
+          return productPage;
+        }
+        if (!firstUnanchoredMatch) {
+          firstUnanchoredMatch = productPage;
+        }
+      }
+    }
+  } finally {
+    if (ownedFlareSession && flareSession) {
+      await flareSolverrDestroySession(flareSession, options.signal);
+    }
+  }
+
+  return firstUnanchoredMatch;
+}
+
+async function collectChasseSearchPayloads(
+  searchUrl: string,
+  html: string,
+  options: {
+    flareSession?: string;
+    maxPages?: number;
+    signal?: AbortSignal;
+  } = {},
+): Promise<ChasseSearchPayload[]> {
+  const context = extractChasseSearchContext(html);
+  if (!context) return [];
+
+  let flareSession = options.flareSession;
+  let ownedFlareSession = false;
+  const payloads: ChasseSearchPayload[] = [];
+  const maxPages = options.maxPages ?? CHASSE_SEARCH_MAX_PAGES;
+
+  try {
+    for (let page = 1; page <= maxPages; page += 1) {
+      let data = await fetchChasseSearchResultsPage(searchUrl, context, page, {
+        flareSession,
+        signal: options.signal,
+      });
+
+      if (!data && page === 1 && !flareSession) {
+        const flareBootstrap = await createChasseFlareSession(
+          searchUrl,
+          options.signal,
+        );
+        if (flareBootstrap) {
+          flareSession = flareBootstrap.session;
+          ownedFlareSession = true;
+          data = await fetchChasseSearchResultsPage(searchUrl, context, page, {
+            flareSession,
+            signal: options.signal,
+          });
+        }
+      }
+
+      if (!data || (data.c ?? 0) < 1) break;
+      payloads.push(data);
+      if (typeof data.redir === "string" && data.redir.trim()) break;
+    }
+  } finally {
+    if (ownedFlareSession && flareSession) {
+      await flareSolverrDestroySession(flareSession, options.signal);
+    }
+  }
+
+  return payloads;
+}
+
+async function fetchProductPage(
+  productUrl: string,
+  signal?: AbortSignal,
+  flareSession?: string,
+): Promise<{
+  url: string;
+  html: string;
+  product: ChasseAuxLivresProduct;
+} | null> {
+  const page = await fetchChassePageHtml(productUrl, signal, { flareSession });
   if (!page) return null;
   const product = parseChasseAuxLivresProductPage(page.html, page.finalUrl);
   return product ? { url: page.finalUrl, html: page.html, product } : null;
@@ -405,13 +860,15 @@ async function fetchProductPage(
 async function resolveChasseAuxLivresProductPage(
   query: string,
   catalog: string,
-  validateProduct?: ChasseProductValidator,
-  signal?: AbortSignal,
+  options: ChasseResolveOptions = {},
 ): Promise<{
   url: string;
   html: string;
   product?: ChasseAuxLivresProduct;
 } | null> {
+  const { validateProduct, anchoredItemBarcode, signal } = options;
+  const anchoredBarcode = normalizeProductBarcode(anchoredItemBarcode);
+
   const directProductUrl = chasseProductUrlFromQuery(query);
   if (directProductUrl) {
     const page = await fetchProductPage(directProductUrl, signal);
@@ -421,48 +878,41 @@ async function resolveChasseAuxLivresProductPage(
   }
 
   const searchUrl = buildSearchUrl(query, catalog);
-  const initialRes = await axios.get(searchUrl, {
-    headers: CHASSE_AUX_LIVRES_HEADERS,
-    responseType: "text",
-    transformResponse: [(data) => data],
-    timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
-    signal,
-  });
-  const html = String(initialRes.data || "");
-  const finalUrl = initialRes.request?.res?.responseUrl || "";
+  const initialPage = await fetchChassePageHtml(searchUrl, signal);
+  if (!initialPage) return null;
+  const html = initialPage.html;
+  const finalUrl = initialPage.finalUrl;
   if (isProtectedLoginPage(html, finalUrl)) return null;
 
-  if (finalUrl.includes("/prix/")) {
-    const product = parseChasseAuxLivresProductPage(html, finalUrl);
-    if (validateProduct && product && !validateProduct(product)) return null;
-    return { url: finalUrl, html, product: product || undefined };
-  }
+  const flareSession = initialPage.flareSession;
 
-  const hashMatch = html.match(/data-hash="([^"]+)"/);
-  if (!hashMatch) return null;
-
-  const candidateUrls: string[] = [];
-  for (const limit of [8, 1]) {
-    let data: ChasseSearchPayload;
-    try {
-      data = await fetchSearchResults(hashMatch[1], limit, signal);
-    } catch (error) {
-      if (isAbortError(error) || limit === 1) throw error;
-      continue;
+  try {
+    if (finalUrl.includes("/prix/")) {
+      const redirected = parseChasseAuxLivresProductPage(html, finalUrl);
+      if (
+        redirected &&
+        (!validateProduct || validateProduct(redirected)) &&
+        (!anchoredBarcode ||
+          chasseCatalogBarcodeConfirmed(redirected, anchoredBarcode))
+      ) {
+        return { url: finalUrl, html, product: redirected };
+      }
     }
-    for (const url of searchResultCandidates(data)) {
-      if (!candidateUrls.includes(url)) candidateUrls.push(url);
+
+    const resolved = await resolveChasseSearchProductPage(searchUrl, html, {
+      validateProduct,
+      anchoredBarcode: anchoredBarcode || undefined,
+      flareSession,
+      signal,
+    });
+    if (resolved) return resolved;
+
+    return null;
+  } finally {
+    if (flareSession) {
+      await flareSolverrDestroySession(flareSession, signal);
     }
-    if (candidateUrls.length > 1 || limit === 1) break;
   }
-
-  for (const productUrl of candidateUrls) {
-    const page = await fetchProductPage(productUrl, signal);
-    if (!page) continue;
-    if (!validateProduct || validateProduct(page.product)) return page;
-  }
-
-  return null;
 }
 
 export async function fetchChasseAuxLivresMetadataProduct(
@@ -470,6 +920,7 @@ export async function fetchChasseAuxLivresMetadataProduct(
   catalog = "fr",
   options: {
     validateProduct?: ChasseProductValidator;
+    anchoredItemBarcode?: string | null;
     signal?: AbortSignal;
   } = {},
 ): Promise<ChasseAuxLivresProduct | null> {
@@ -480,8 +931,11 @@ export async function fetchChasseAuxLivresMetadataProduct(
     const page = await resolveChasseAuxLivresProductPage(
       trimmedQuery,
       catalog,
-      options.validateProduct,
-      options.signal,
+      {
+        validateProduct: options.validateProduct,
+        anchoredItemBarcode: options.anchoredItemBarcode,
+        signal: options.signal,
+      },
     );
     if (!page) return null;
     return page.product || parseChasseAuxLivresProductPage(page.html, page.url);
@@ -500,6 +954,7 @@ export async function fetchFromChasseAuxLivres(
   opts: { withPrices?: boolean } = {},
 ): Promise<ChasseAuxLivresProduct[]> {
   const searchUrl = buildSearchUrl(barcode, catalog);
+  let flareSession: string | undefined;
   try {
     const initialPage = await fetchChassePageHtml(searchUrl);
     if (!initialPage) {
@@ -508,6 +963,7 @@ export async function fetchFromChasseAuxLivres(
       );
       return [];
     }
+    flareSession = initialPage.flareSession;
     const html = initialPage.html;
     const finalUrl = initialPage.finalUrl;
 
@@ -549,46 +1005,42 @@ export async function fetchFromChasseAuxLivres(
       );
       return [];
     }
-    const hash = hashMatch[1];
 
-    // Step 2: Fetch search results
-    const resultsUrl = `https://www.chasse-aux-livres.fr/rest/search-results?h=${hash}&p=1&l=1`;
-    const resultsRes = await axios.get(resultsUrl, {
-      headers: CHASSE_AUX_LIVRES_HEADERS,
-      timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
+    const searchPayloads = await collectChasseSearchPayloads(searchUrl, html, {
+      flareSession: initialPage.flareSession,
+      maxPages: CHASSE_SEARCH_MAX_PAGES,
     });
-    const data = resultsRes.data;
 
-    if (typeof data.redir === "string" && data.redir.trim()) {
-      const product = parseRedirProduct(data.redir.trim());
-      if (product) {
-        const coverUrl = extractCoverFromListing(
-          String(data.d || ""),
-          data.redir.trim(),
-        );
-        const productUrl = absoluteChasseUrl(data.redir.trim());
-        // Single product resolved: capture its prices in the same pass.
-        const prices = opts.withPrices
-          ? await fetchChasseAuxLivresOffers(
-              productUrl ||
-                `https://www.chasse-aux-livres.fr${data.redir.trim()}`,
-            )
-          : null;
-        return [
-          {
-            ...product,
-            productUrl,
-            coverUrl: absoluteChasseUrl(coverUrl),
-            ...(prices ?? {}),
-          },
-        ];
+    for (const data of searchPayloads) {
+      if (typeof data.redir === "string" && data.redir.trim()) {
+        const product = parseRedirProduct(data.redir.trim());
+        if (product) {
+          const coverUrl = extractCoverFromListing(
+            String(data.d || ""),
+            data.redir.trim(),
+          );
+          const productUrl = absoluteChasseUrl(data.redir.trim());
+          const prices = opts.withPrices
+            ? await fetchChasseAuxLivresOffers(
+                productUrl ||
+                  `https://www.chasse-aux-livres.fr${data.redir.trim()}`,
+              )
+            : null;
+          return [
+            {
+              ...product,
+              productUrl,
+              coverUrl: absoluteChasseUrl(coverUrl),
+              ...(prices ?? {}),
+            },
+          ];
+        }
       }
-    }
 
-    const products = parseListingProducts(String(data.d || ""));
-
-    if (products.length > 0) {
-      return products;
+      const products = parseListingProducts(String(data.d || ""));
+      if (products.length > 0) {
+        return products;
+      }
     }
 
     return [];
@@ -597,6 +1049,10 @@ export async function fetchFromChasseAuxLivres(
       `[ChasseAuxLivres] Barcode lookup failed for ${barcode}: ${describeChasseError(error)}`,
     );
     return [];
+  } finally {
+    if (flareSession) {
+      await flareSolverrDestroySession(flareSession);
+    }
   }
 }
 
@@ -609,10 +1065,69 @@ export async function isChasseAuxLivresSearchProtected(
   return isProtectedLoginPage(page.html, page.finalUrl);
 }
 
+type ChasseLookupOffer = {
+  condition?: { _name?: string | null };
+  price?: { amount?: number | null };
+  shippingCost?: { amount?: number | null };
+  fees?: { amount?: number | null };
+  totalPrice?: { amount?: number | null };
+};
+
+type ChasseBestOfferTotals = {
+  landedCents: number;
+  itemCents: number;
+  shippingCents: number;
+};
+
+/** Landed price (item + shipping + fees), matching CAL's recap "Meilleur prix". */
+export function chasseOfferLandedPriceCents(
+  offer: ChasseLookupOffer,
+): number | null {
+  if (
+    typeof offer.totalPrice?.amount === "number" &&
+    offer.totalPrice.amount > 0
+  ) {
+    return offer.totalPrice.amount;
+  }
+  if (typeof offer.price?.amount !== "number" || offer.price.amount <= 0) {
+    return null;
+  }
+  const shipping =
+    typeof offer.shippingCost?.amount === "number"
+      ? offer.shippingCost.amount
+      : 0;
+  const fees = typeof offer.fees?.amount === "number" ? offer.fees.amount : 0;
+  return offer.price.amount + shipping + fees;
+}
+
+function chasseBestOfferTotals(
+  offer: ChasseLookupOffer,
+): ChasseBestOfferTotals | null {
+  const landedCents = chasseOfferLandedPriceCents(offer);
+  if (landedCents == null) return null;
+  const itemCents =
+    typeof offer.price?.amount === "number" && offer.price.amount > 0
+      ? offer.price.amount
+      : landedCents;
+  const shippingCents =
+    typeof offer.shippingCost?.amount === "number"
+      ? offer.shippingCost.amount
+      : 0;
+  return { landedCents, itemCents, shippingCents };
+}
+
+function pickLowerChasseOffer(
+  current: ChasseBestOfferTotals | null,
+  candidate: ChasseBestOfferTotals,
+): ChasseBestOfferTotals {
+  if (!current || candidate.landedCents < current.landedCents) return candidate;
+  return current;
+}
+
 /**
  * Continue from a resolved product page to its marketplace offers and return the
- * cheapest new/used prices (cents). Shared by the dedicated price fetch and the
- * scan-time combined lookup so a single product resolution serves both.
+ * cheapest new/used landed prices (cents, shipping included). Shared by the
+ * dedicated price fetch and the scan-time combined lookup.
  */
 async function fetchChasseAuxLivresOffers(
   redirUrl: string,
@@ -719,27 +1234,41 @@ async function fetchChasseAuxLivresOffers(
 
     if (!offersData) return null;
 
-    let minNew = Infinity;
-    let minUsed = Infinity;
+    let minNew: ChasseBestOfferTotals | null = null;
+    let minUsed: ChasseBestOfferTotals | null = null;
 
     for (const engineOffers of Object.values(offersData)) {
       if (!Array.isArray(engineOffers)) continue;
-      for (const offer of engineOffers) {
-        const cond = offer.condition ? offer.condition._name : null;
-        const amt = offer.price ? offer.price.amount : null;
-        if (typeof amt === "number") {
-          if (cond === "NEW") {
-            if (amt < minNew) minNew = amt;
-          } else if (cond === "USED") {
-            if (amt < minUsed) minUsed = amt;
-          }
+      for (const offer of engineOffers as ChasseLookupOffer[]) {
+        const cond = offer.condition?._name ?? null;
+        const totals = chasseBestOfferTotals(offer);
+        if (!totals) continue;
+        if (cond === "NEW") {
+          minNew = pickLowerChasseOffer(minNew, totals);
+        } else if (cond === "USED") {
+          minUsed = pickLowerChasseOffer(minUsed, totals);
         }
       }
     }
 
-    const result: { priceNew?: number; priceUsed?: number } = {};
-    if (minNew !== Infinity) result.priceNew = minNew;
-    if (minUsed !== Infinity) result.priceUsed = minUsed;
+    const result: {
+      priceNew?: number;
+      priceUsed?: number;
+      priceNewItem?: number;
+      priceUsedItem?: number;
+      shippingNew?: number;
+      shippingUsed?: number;
+    } = {};
+    if (minNew) {
+      result.priceNew = minNew.landedCents;
+      result.priceNewItem = minNew.itemCents;
+      result.shippingNew = minNew.shippingCents;
+    }
+    if (minUsed) {
+      result.priceUsed = minUsed.landedCents;
+      result.priceUsedItem = minUsed.itemCents;
+      result.shippingUsed = minUsed.shippingCents;
+    }
 
     return Object.keys(result).length > 0 ? result : null;
   } catch (error) {
@@ -750,11 +1279,26 @@ async function fetchChasseAuxLivresOffers(
   }
 }
 
+export type ChasseAuxLivresPrices = {
+  /** Landed price in cents (item + shipping + fees). */
+  priceNew?: number;
+  priceUsed?: number;
+  priceNewItem?: number;
+  priceUsedItem?: number;
+  shippingNew?: number;
+  shippingUsed?: number;
+  productName?: string;
+  sourceUrl?: string;
+};
+
 export async function fetchPricesFromChasseAuxLivres(
   query: string,
   catalog = "fr",
-  options: { validateProduct?: ChasseProductValidator } = {},
-): Promise<{ priceNew?: number; priceUsed?: number } | null> {
+  options: {
+    validateProduct?: ChasseProductValidator;
+    anchoredItemBarcode?: string | null;
+  } = {},
+): Promise<ChasseAuxLivresPrices | null> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
 
@@ -762,10 +1306,19 @@ export async function fetchPricesFromChasseAuxLivres(
     const page = await resolveChasseAuxLivresProductPage(
       trimmedQuery,
       catalog,
-      options.validateProduct,
+      {
+        validateProduct: options.validateProduct,
+        anchoredItemBarcode: options.anchoredItemBarcode,
+      },
     );
     if (!page) return null;
-    return fetchChasseAuxLivresOffers(page.url, page.html);
+    const prices = await fetchChasseAuxLivresOffers(page.url, page.html);
+    if (!prices) return null;
+    return {
+      ...prices,
+      productName: page.product?.name,
+      sourceUrl: page.url,
+    };
   } catch (error) {
     console.warn(
       `[ChasseAuxLivres] Prices lookup failed for query ${trimmedQuery}: ${describeChasseError(error)}`,

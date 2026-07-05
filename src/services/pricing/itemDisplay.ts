@@ -4,6 +4,7 @@ import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import { cleanCode } from "@/lib/barcode/query";
 import { isItemMetadataRefreshing } from "@/lib/item/enrichment";
 import { shouldRefreshPriceCache } from "@/lib/pricing/cachePolicy";
+import { providerProductUrlsFromMetadataFacts } from "@/services/provider/registry";
 import { metadataPriceFallback } from "@/lib/pricing/metadataPriceFallback";
 import type { MetadataFact } from "@/types/metadataProvider";
 import {
@@ -17,6 +18,7 @@ import {
   type RefreshBarcodePricesInput,
   type RefreshItemPricesInput,
 } from "@/services/pricing/resolver";
+import { repairProviderExternalLinksForItem } from "@/services/metadata/persistProviderExternalLinks";
 
 export type ItemPricesContext = {
   id: string;
@@ -95,6 +97,12 @@ export function primaryItemNamesFromContext(
   );
 }
 
+function priceRefreshProviderProductUrls(
+  context: ItemPricesContext,
+): ReturnType<typeof providerProductUrlsFromMetadataFacts> {
+  return providerProductUrlsFromMetadataFacts(context.metadataFacts);
+}
+
 function refreshBarcodeInput(
   context: ItemPricesContext,
   cleanedBarcode: string,
@@ -106,6 +114,7 @@ function refreshBarcodeInput(
     shelfName: context.shelfName,
     primaryName: context.name,
     extraNames: itemNames.filter((name) => name !== context.name),
+    providerProductUrls: priceRefreshProviderProductUrls(context),
   };
 }
 
@@ -118,6 +127,7 @@ function refreshItemInput(context: ItemPricesContext): RefreshItemPricesInput {
     extraNames: itemNames.filter((name) => name !== context.name),
     itemId: context.id,
     metadataId: context.metadataId,
+    providerProductUrls: priceRefreshProviderProductUrls(context),
   };
 }
 
@@ -186,9 +196,22 @@ export async function refreshItemPricesFromContext(
   const inFlight = inFlightPriceRefresh.get(key);
   if (inFlight) return inFlight;
 
+  async function repairExternalLinksWhenPossible() {
+    if (!context.metadataId) return;
+    try {
+      await repairProviderExternalLinksForItem(context.id);
+    } catch (error) {
+      console.warn(
+        `[Prices] External-link repair failed for item ${context.id}:`,
+        error,
+      );
+    }
+  }
+
   if (!options.force && isWithinPriceRefreshCooldown(key)) {
     const cached = await readCachedItemPrices(context);
     if (cached) {
+      await repairExternalLinksWhenPossible();
       return alignPricesForContext(context, cached) ?? cached;
     }
   }
@@ -196,6 +219,16 @@ export async function refreshItemPricesFromContext(
   lastPriceRefreshStartedAt.set(key, Date.now());
 
   const promise = (async () => {
+    if (context.metadataId) {
+      try {
+        await repairProviderExternalLinksForItem(context.id);
+      } catch (error) {
+        console.warn(
+          `[Prices] External-link repair failed for item ${context.id}:`,
+          error,
+        );
+      }
+    }
     const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
     if (!cleanedBarcode) {
       return refreshItemPrices(refreshItemInput(context));
@@ -281,7 +314,9 @@ export type ReadItemPricesOptions = {
   blockWhenMissing?: boolean;
 };
 
-function hasPriceSummary(prices: BarcodePricesResult | null | undefined): boolean {
+function hasPriceSummary(
+  prices: BarcodePricesResult | null | undefined,
+): boolean {
   if (!prices) return false;
   return (
     prices.priceNew != null ||
@@ -316,10 +351,7 @@ export async function readItemPrices(
   });
 
   if (cached) {
-    if (
-      shouldRefreshPriceCache(context.shelfType, cached) &&
-      !deferNetwork
-    ) {
+    if (shouldRefreshPriceCache(context.shelfType, cached) && !deferNetwork) {
       scheduleItemPricesRefresh(context);
     }
     return withMetadataPriceFallback(

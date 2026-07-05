@@ -74,6 +74,7 @@ import {
   hasGameMediaGalleryAttachment,
   isMissingGameMediaGallery,
   isMissingMusicGallery,
+  isMissingBookGallery,
 } from "@/lib/metadata/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
@@ -91,7 +92,11 @@ import { cn } from "@/lib/core/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
-import { itemPath, itemSlugLookupVariants, shelfPath } from "@/lib/routing/slugs";
+import {
+  itemPath,
+  itemSlugLookupVariants,
+  shelfPath,
+} from "@/lib/routing/slugs";
 import { compareTitlesForSort } from "@/lib/title/sort";
 import { seriesSiblings } from "@/lib/title/series";
 import { FRANCHISE_FACT_KIND } from "@/lib/metadata/facts/franchiseFact";
@@ -1100,9 +1105,7 @@ export default function ItemDetailsPage() {
       const cached = queryClient
         .getQueryData<ShelfWithItems>(["shelf", shelfId])
         ?.items?.find(
-          (i) =>
-            i.id === itemId ||
-            (i.slug ? slugVariants.has(i.slug) : false),
+          (i) => i.id === itemId || (i.slug ? slugVariants.has(i.slug) : false),
         ) as ItemWithMetadata | undefined;
       if (!cached) return undefined;
       // Instant cover/title from the grid, but never treat shelf cache as a
@@ -1364,32 +1367,34 @@ export default function ItemDetailsPage() {
     });
   }, [refreshMetadata, t]);
 
-  const { mutate: cancelMetadataRefresh, isPending: isCancellingMetadataRefresh } =
-    useMutation({
-      mutationFn: () => cancelBackgroundJob(item!.id),
-      onMutate: () => {
-        cancelledMetadataRefreshRef.current = true;
-        if (item?.id) {
-          patchCachedItem(queryClient, {
-            id: item.id,
-            shelfId: item.shelfId ?? shelfId,
-            metadataRefreshStartedAt: null,
-          });
-        }
-      },
-      onSuccess: () => {
-        void invalidateItemQueries(queryClient, item!.id, [
-          shelfId,
-          item?.shelfId,
-        ]);
-        void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
-        toast.success(t("items.cancelMetadataRefreshSuccess"));
-      },
-      onError: () => {
-        cancelledMetadataRefreshRef.current = false;
-        toast.error(t("items.cancelMetadataRefreshFailed"));
-      },
-    });
+  const {
+    mutate: cancelMetadataRefresh,
+    isPending: isCancellingMetadataRefresh,
+  } = useMutation({
+    mutationFn: () => cancelBackgroundJob(item!.id),
+    onMutate: () => {
+      cancelledMetadataRefreshRef.current = true;
+      if (item?.id) {
+        patchCachedItem(queryClient, {
+          id: item.id,
+          shelfId: item.shelfId ?? shelfId,
+          metadataRefreshStartedAt: null,
+        });
+      }
+    },
+    onSuccess: () => {
+      void invalidateItemQueries(queryClient, item!.id, [
+        shelfId,
+        item?.shelfId,
+      ]);
+      void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
+      toast.success(t("items.cancelMetadataRefreshSuccess"));
+    },
+    onError: () => {
+      cancelledMetadataRefreshRef.current = false;
+      toast.error(t("items.cancelMetadataRefreshFailed"));
+    },
+  });
 
   const handleCancelMetadataRefresh = useCallback(() => {
     if (!item?.id) return;
@@ -1514,6 +1519,9 @@ export default function ItemDetailsPage() {
     const isMissingMusicGalleryRefresh =
       shelf?.type === "musics" &&
       isMissingMusicGallery("musics", item?.barcode, attachments);
+    const isMissingBookGalleryRefresh =
+      shelf?.type === "books" &&
+      isMissingBookGallery("books", item?.barcode, attachments);
     const isMissingGameGalleryRefresh =
       shelf?.type === "games" &&
       isMissingGameMediaGallery("games", item?.barcode, attachments);
@@ -1524,6 +1532,7 @@ export default function ItemDetailsPage() {
         isMissingGameAgeRating ||
         isMissingHltbCompletion ||
         isMissingMusicGalleryRefresh ||
+        isMissingBookGalleryRefresh ||
         isMissingGameGalleryRefresh,
       staleAfterMs: hasValidLastFetched
         ? lastFetched.getTime() + METADATA_REFRESH_TTL_MS

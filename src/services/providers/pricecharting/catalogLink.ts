@@ -97,7 +97,8 @@ export function buildPriceChartingCatalogLink({
       return { url: searchUrl, isDirect: false };
     }
     const isPal = looksPal({ barcode, shelfName, title: cleanTitle, aliases });
-    const fallbackSlug = isPal && platform.pal ? platform.pal : platform.default;
+    const fallbackSlug =
+      isPal && platform.pal ? platform.pal : platform.default;
     return {
       url: `https://www.pricecharting.com/game/${fallbackSlug}/${titleSlug}`,
       isDirect: true,

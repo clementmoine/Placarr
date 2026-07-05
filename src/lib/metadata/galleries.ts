@@ -37,6 +37,33 @@ export function isMissingGameMediaGallery(
   return displayAttachments.length <= 1;
 }
 
+export type BookGalleryAttachment = {
+  type: string;
+  isBookGallerySource?: boolean;
+  isGameMediaGallerySource?: boolean;
+};
+
+export function hasBookGalleryAttachment(
+  attachments: readonly BookGalleryAttachment[],
+): boolean {
+  return attachments.some(
+    (attachment) =>
+      attachment.isBookGallerySource === true ||
+      attachment.isGameMediaGallerySource === true,
+  );
+}
+
+/** Book items without retailer gallery assets may need re-enrichment. */
+export function isMissingBookGallery(
+  type: string,
+  _barcode: string | null | undefined,
+  attachments: readonly BookGalleryAttachment[],
+): boolean {
+  if (type !== "books") return false;
+  if (hasBookGalleryAttachment(attachments)) return false;
+  return true;
+}
+
 export function hasMusicGalleryAttachment(
   attachments: readonly MusicGalleryAttachment[],
 ): boolean {

@@ -1,7 +1,11 @@
 import axios from "axios";
 
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
 import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
+import { retailerCatalogBarcodeGate } from "@/lib/retailer/productUrl";
 
 import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/lib/retailer/titleMatch";
 
@@ -118,7 +122,7 @@ function pickBestPrestashopHit(
   if (normalizedBarcode) {
     const barcodeHit = products.find((product) => {
       const productBarcode = resolvePrestashopSearchProductBarcode(product);
-      return normalizeProductBarcode(productBarcode) === normalizedBarcode;
+      return barcodesEquivalent(productBarcode, normalizedBarcode);
     });
     if (barcodeHit) return barcodeHit;
   }
@@ -274,7 +278,12 @@ export async function fetchPrestashopBarcodeProduct(
       normalizedBarcode,
     );
     if (!product?.title) return null;
-    if (normalizeProductBarcode(product.barcode) !== normalizedBarcode) {
+    const gate = retailerCatalogBarcodeGate({
+      productUrl: product.productUrl,
+      productBarcode: product.barcode,
+      itemBarcode: normalizedBarcode,
+    });
+    if (!gate.catalogBarcodeConfirmed || gate.barcodeContradicted) {
       return null;
     }
 

@@ -6,6 +6,7 @@ import {
   getHeroImage,
   filterMetadataForShelfPlatform,
 } from "@/lib/item/media";
+import { purgeContradictedProviderExternalLinks } from "@/lib/metadata/providerExternalLinks";
 import {
   buildCatalogExternalLink,
   metadataAliases,
@@ -83,12 +84,20 @@ function isStoredMetadata(
 
 function formatItemMetadata(
   metadata?: StoredItemMetadata | MetadataResult | null,
+  item?: { name?: string; barcode?: string | null },
 ): MetadataResult | undefined {
   if (!metadata) return undefined;
-  if (isStoredMetadata(metadata)) {
-    return formatMetadataFromStorage(metadata);
-  }
-  return metadata;
+  const formatted = isStoredMetadata(metadata)
+    ? formatMetadataFromStorage(metadata)
+    : metadata;
+  if (!formatted.facts?.length) return formatted;
+  const facts = purgeContradictedProviderExternalLinks(
+    formatted.facts,
+    item?.barcode,
+    item?.name,
+  );
+  if (facts.length === formatted.facts.length) return formatted;
+  return { ...formatted, facts };
 }
 
 function mediaInput(item: PresentableItemInput) {
@@ -177,7 +186,10 @@ export function presentItemFromStorage<
     shelf?: PresentableItemInput["shelf"];
   },
 >(item: T, options?: PresentOptions): T {
-  const formatted = formatItemMetadata(item.metadata);
+  const formatted = formatItemMetadata(item.metadata, {
+    name: item.name,
+    barcode: item.barcode,
+  });
   const filteredMetadata =
     formatted && item.shelf
       ? filterMetadataForShelfPlatform(formatted, item.shelf)

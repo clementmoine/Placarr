@@ -1,11 +1,17 @@
+import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  retailerCatalogBarcodeGate,
+  retailerProductUrlBarcodeConflicts,
+  retailerProductBarcodeConfirmed,
+} from "@/lib/retailer/productUrl";
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { throwIfAborted } from "@/lib/http/abort";
 import {
   CHASSE_AUX_LIVRES_CATALOG_BY_TYPE,
   catalogForShelfType,
 } from "@/lib/provider/catalog";
-import { metadataTitleSimilarity } from "@/lib/metadata/titleMatching";
 import { isNameOnlyRetailerTitleMatch } from "@/lib/retailer/titleMatch";
+import { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/lib/retailer/catalogTitleAlignment";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -15,14 +21,13 @@ import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
 import { scopedContribution } from "@/lib/barcode/lookup/sourceContribution";
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { pricedOffers } from "@/lib/provider/priceOffers";
-import {
-  normalizeVolumeTitleText,
-  hasExplicitVolumeMarker,
-} from "@/lib/title/volumeNumber";
+import { providerProductUrlsForKey } from "@/lib/pricing/providerProductUrls";
+
+export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/lib/retailer/catalogTitleAlignment";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type { MetadataAttachment, MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
@@ -59,6 +64,7 @@ const CATALOG: Record<BarcodeLookupType, string> = {
   generic: "",
 };
 const PRICE_SOURCE = "ChasseAuxLivres";
+const CHASSE_PROVIDER_KEY = "chasseauxlivres";
 
 function chasseCatalogLists(payload: BarcodeLookupPayload) {
   return [
@@ -77,13 +83,116 @@ function extractChasseScanOffers(payload: BarcodeLookupPayload) {
       (entry) => entry.priceNew != null || entry.priceUsed != null,
     );
     if (priced) {
+      const extra = {
+        productName: priced.name,
+        sourceUrl: priced.productUrl,
+        shippingCents: priced.shippingUsed ?? priced.shippingNew ?? null,
+        totalCents: priced.priceUsed ?? priced.priceNew ?? null,
+      };
       return pricedOffers(PRICE_SOURCE, [
-        { condition: "new", priceCents: priced.priceNew, rawValue: priced },
-        { condition: "used", priceCents: priced.priceUsed, rawValue: priced },
+        {
+          condition: "new",
+          priceCents: priced.priceNew,
+          rawValue: priced,
+          extra,
+        },
+        {
+          condition: "used",
+          priceCents: priced.priceUsed,
+          rawValue: priced,
+          extra,
+        },
       ]);
     }
   }
   return [];
+}
+
+function chassePriceOfferExtras(
+  result: Awaited<ReturnType<typeof fetchPricesFromChasseAuxLivres>>,
+) {
+  return {
+    productName: result?.productName,
+    sourceUrl: result?.sourceUrl,
+  };
+}
+
+function chassePricedOffersFromResult(
+  result: NonNullable<
+    Awaited<ReturnType<typeof fetchPricesFromChasseAuxLivres>>
+  >,
+) {
+  const extra = chassePriceOfferExtras(result);
+  return pricedOffers(PRICE_SOURCE, [
+    {
+      condition: "used",
+      priceCents: result.priceUsed,
+      rawValue: result,
+      extra: {
+        ...extra,
+        shippingCents: result.shippingUsed ?? null,
+        totalCents: result.priceUsed ?? null,
+      },
+    },
+    {
+      condition: "new",
+      priceCents: result.priceNew,
+      rawValue: result,
+      extra: {
+        ...extra,
+        shippingCents: result.shippingNew ?? null,
+        totalCents: result.priceNew ?? null,
+      },
+    },
+  ]);
+}
+
+function chasseProductBarcodeConfirmed(
+  product: ChasseAuxLivresProduct,
+  itemBarcode?: string | null,
+): boolean {
+  const normalizedItemBarcode = normalizeProductBarcode(itemBarcode);
+  if (!normalizedItemBarcode) return true;
+
+  const gate = retailerCatalogBarcodeGate({
+    productUrl: product.productUrl,
+    productBarcode: product.barcode,
+    itemBarcode: normalizedItemBarcode,
+  });
+
+  return (
+    gate.catalogBarcodeConfirmed &&
+    !gate.barcodeContradicted &&
+    !gate.urlBarcodeConflicts
+  );
+}
+
+function buildChasseProductValidator(input: {
+  itemBarcode?: string | null;
+  expectedNames: string[];
+  shelfType: string;
+}): (product: ChasseAuxLivresProduct) => boolean {
+  const normalizedItemBarcode = normalizeProductBarcode(input.itemBarcode);
+  return (product: ChasseAuxLivresProduct) => {
+    if (
+      normalizedItemBarcode &&
+      !chasseProductBarcodeConfirmed(product, normalizedItemBarcode)
+    ) {
+      return false;
+    }
+
+    if (normalizedItemBarcode) {
+      return true;
+    }
+
+    if (input.expectedNames.length === 0) return true;
+
+    return input.expectedNames.some((name) =>
+      input.shelfType === "games"
+        ? isNameOnlyRetailerTitleMatch(name, product.name)
+        : isChasseTitleAligned(name, product.name),
+    );
+  };
 }
 
 async function refreshChasseAuxLivresOffers(ctx: BarcodePriceRefreshContext) {
@@ -91,64 +200,63 @@ async function refreshChasseAuxLivresOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  const validateProduct =
-    expectedNames.length > 0
-      ? (product: ChasseAuxLivresProduct) =>
-          expectedNames.some((name) =>
-            ctx.shelfType === "games"
-              ? isNameOnlyRetailerTitleMatch(name, product.name)
-              : isChasseTitleAligned(name, product.name),
-          )
-      : undefined;
+  const validateProduct = buildChasseProductValidator({
+    itemBarcode: ctx.cleanedBarcode,
+    expectedNames,
+    shelfType: ctx.shelfType,
+  });
 
-  for (const query of [ctx.cleanedBarcode, ...ctx.fallbackNames]) {
-    if (!query.trim()) continue;
+  const resolvedProductUrls = providerProductUrlsForKey(
+    CHASSE_PROVIDER_KEY,
+    ctx.providerProductUrls,
+  ).filter((url) => {
+    if (!ctx.cleanedBarcode) return true;
+    if (retailerProductUrlBarcodeConflicts(url, ctx.cleanedBarcode)) {
+      return false;
+    }
+    return retailerProductBarcodeConfirmed(url, null, ctx.cleanedBarcode);
+  });
+
+  for (const productUrl of resolvedProductUrls) {
+    const result = await fetchPricesFromChasseAuxLivres(productUrl, catalog, {
+      validateProduct,
+      anchoredItemBarcode: ctx.cleanedBarcode,
+    });
+    if (result) return chassePricedOffersFromResult(result);
+  }
+
+  for (const query of ctx.cleanedBarcode
+    ? [ctx.cleanedBarcode, ...ctx.fallbackNames]
+    : ctx.fallbackNames) {
+    if (!query?.trim()) continue;
     const result = await fetchPricesFromChasseAuxLivres(query, catalog, {
       validateProduct,
+      anchoredItemBarcode: ctx.cleanedBarcode,
     });
-    if (result) {
-      return pricedOffers(PRICE_SOURCE, [
-        { condition: "used", priceCents: result.priceUsed, rawValue: result },
-        { condition: "new", priceCents: result.priceNew, rawValue: result },
-      ]);
-    }
+    if (result) return chassePricedOffersFromResult(result);
   }
   return [];
 }
 
-function titleNumbers(value: string): string[] {
-  return Array.from(
-    new Set(normalizeVolumeTitleText(value).match(/\d+/g) || []),
-  );
-}
+function buildChasseAuxLivresAttachments(
+  product: NonNullable<
+    Awaited<ReturnType<typeof fetchChasseAuxLivresMetadataProduct>>
+  >,
+): MetadataAttachment[] | undefined {
+  const urls =
+    product.images?.length > 0
+      ? product.images
+      : product.coverUrl
+        ? [product.coverUrl]
+        : [];
+  if (urls.length === 0) return undefined;
 
-export function isChasseTitleAligned(query: string, title: string) {
-  const cleanQuery = query.trim();
-  const cleanTitle = title.trim();
-  if (!cleanQuery || !cleanTitle) return true;
-
-  const queryNumbers = titleNumbers(cleanQuery);
-  const titleNumberSet = new Set(titleNumbers(cleanTitle));
-  if (
-    queryNumbers.length > 0 &&
-    queryNumbers.some((number) => !titleNumberSet.has(number))
-  ) {
-    return false;
-  }
-
-  if (
-    queryNumbers.length === 0 &&
-    !hasExplicitVolumeMarker(cleanQuery) &&
-    hasExplicitVolumeMarker(cleanTitle)
-  ) {
-    return false;
-  }
-
-  const q = normalizeVolumeTitleText(cleanQuery);
-  const t = normalizeVolumeTitleText(cleanTitle);
-  return (
-    q.includes(t) || t.includes(q) || metadataTitleSimilarity(q, t) >= 0.45
-  );
+  return urls.map((url, index) => ({
+    type: index === 0 ? ("cover" as const) : ("image" as const),
+    url,
+    role: "fr",
+    source: "chasseauxlivres",
+  }));
 }
 
 function mapChasseAuxLivresMetadata(
@@ -217,16 +325,7 @@ function mapChasseAuxLivresMetadata(
     description: product.description,
     imageUrl: product.coverUrl,
     regionalTitles: [{ region: "fr", text: product.name }],
-    attachments: product.coverUrl
-      ? [
-          {
-            type: "cover",
-            url: product.coverUrl,
-            role: "fr",
-            source: "chasseauxlivres",
-          },
-        ]
-      : undefined,
+    attachments: buildChasseAuxLivresAttachments(product),
     facts: facts.length > 0 ? facts : undefined,
     externalIds: product.sku ? { chasseauxlivres: product.sku } : undefined,
   };
@@ -291,18 +390,26 @@ export const chasseauxlivresModule: ProviderModule = {
             ? lookupQueries
             : [String(name || "").trim()];
         const catalog = catalogForShelfType(type || "books");
+        const validateProduct = buildChasseProductValidator({
+          itemBarcode: normalizedBarcode,
+          expectedNames: [String(name || "").trim(), ...queries].filter(
+            Boolean,
+          ),
+          shelfType: type || "boardgames",
+        });
 
         if (normalizedBarcode) {
           const product = await fetchChasseAuxLivresMetadataProduct(
             normalizedBarcode,
             catalog,
             {
-              validateProduct: (candidate) =>
-                !name || isChasseTitleAligned(name, candidate.name),
+              validateProduct,
+              anchoredItemBarcode: normalizedBarcode,
               signal,
             },
           );
           if (product) return mapChasseAuxLivresMetadata(product);
+          return null;
         }
 
         for (const query of queries) {
@@ -312,11 +419,7 @@ export const chasseauxlivresModule: ProviderModule = {
             query.trim(),
             catalog,
             {
-              validateProduct: (candidate) =>
-                isChasseTitleAligned(
-                  String(name || query).trim(),
-                  candidate.name,
-                ),
+              validateProduct,
               signal,
             },
           );

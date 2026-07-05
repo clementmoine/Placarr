@@ -10,14 +10,13 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 vi.mock("@/lib/routing/itemSlug", () => ({
-  allocateUniqueItemSlug: vi.fn(
-    async (_shelfId: string, title: string) =>
-      title
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, ""),
+  allocateUniqueItemSlug: vi.fn(async (_shelfId: string, title: string) =>
+    title
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, ""),
   ),
 }));
 

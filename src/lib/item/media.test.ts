@@ -12,6 +12,8 @@ import {
   presentItem,
   presentItemFromStorage,
 } from "./present";
+import { formatMetadataFromStorage } from "@/services/metadata/dbMapping";
+import { withProviderAttachmentTraits } from "@/services/provider/sourceTraits";
 
 describe("getCoverImage", () => {
   it("uses canonical metadata.imageUrl when present", () => {
@@ -532,6 +534,110 @@ describe("filterMetadataForShelfPlatform", () => {
     expect(filtered?.imageUrl).toBe("/uploads/real-cover.jpg");
     expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
       "/uploads/real-cover.jpg",
+    ]);
+  });
+
+  it("retire la jaquette AchatMoinsCher Sirènes pour Black Stories Femmes Fatales", () => {
+    const attachments = [
+      withProviderAttachmentTraits({
+        type: "cover" as const,
+        source: "achatmoinscher",
+        role: "fr",
+        url: "/uploads/amc-sirenes.jpg",
+        title: "Sirènes : femmes fatales",
+      }),
+      withProviderAttachmentTraits({
+        type: "cover" as const,
+        source: "philibert",
+        role: "fr",
+        url: "/uploads/philibert-femmes-fatales.jpg",
+        title: "Black Stories Femmes Fatales",
+      }),
+    ];
+    expect(attachments[0].retailCatalogImageTitlesSource).toBe(true);
+
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        title: "Black Stories - Femmes Fatales",
+        imageUrl: "/uploads/amc-sirenes.jpg",
+        attachments,
+      },
+      { type: "boardgames", name: "Jeux de société" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/philibert-femmes-fatales.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/philibert-femmes-fatales.jpg");
+  });
+
+  it("filtre Sirènes via formatMetadataFromStorage + presentItemFromStorage", () => {
+    const formatted = formatMetadataFromStorage({
+      id: "meta-bs-ff",
+      title: "Black Stories - Femmes Fatales",
+      description: null,
+      duration: null,
+      pageCount: null,
+      tracksCount: null,
+      releaseDate: null,
+      imageUrl: "/uploads/amc-sirenes.jpg",
+      heroImageUrl: null,
+      aliases: null,
+      facts: null,
+      sourceType: "boardgames",
+      sourceQuery: "",
+      lastFetched: new Date("2026-01-01T00:00:00.000Z"),
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      attachments: [
+        {
+          id: "att-amc",
+          metadataId: "meta-bs-ff",
+          type: "cover",
+          url: "/uploads/amc-sirenes.jpg",
+          source: "achatmoinscher",
+          title: "Sirènes : femmes fatales",
+          duration: null,
+          role: "fr",
+          coverProvenance: null,
+          width: null,
+          height: null,
+          meanLuminance: null,
+          darkPixelRatio: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+        {
+          id: "att-philibert",
+          metadataId: "meta-bs-ff",
+          type: "cover",
+          url: "/uploads/philibert-femmes-fatales.jpg",
+          source: "philibert",
+          title: "Black Stories Femmes Fatales",
+          duration: null,
+          role: "fr",
+          coverProvenance: null,
+          width: null,
+          height: null,
+          meanLuminance: null,
+          darkPixelRatio: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      ],
+    });
+
+    const presented = presentItemFromStorage({
+      id: "item-bs-ff",
+      name: "Black Stories Femmes Fatales",
+      imageUrl: "/uploads/amc-sirenes.jpg",
+      metadata: formatted,
+      shelf: { type: "boardgames", name: "Jeux de société" },
+    });
+
+    expect(presented.imageUrl).toBe("/uploads/philibert-femmes-fatales.jpg");
+    expect(presented.metadata?.attachments?.map((a) => a.url)).toEqual([
+      "/uploads/philibert-femmes-fatales.jpg",
     ]);
   });
 });

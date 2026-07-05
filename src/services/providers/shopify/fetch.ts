@@ -1,6 +1,10 @@
 import axios from "axios";
 
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
+import { retailerCatalogBarcodeGate } from "@/lib/retailer/productUrl";
 
 import type { ShopifyProduct, ShopifyRetailerConfig } from "./types";
 
@@ -77,8 +81,8 @@ function pickVariant(
   if (!variants || variants.length === 0) return undefined;
   const normalized = normalizeProductBarcode(barcode);
   if (normalized) {
-    const exact = variants.find(
-      (variant) => normalizeProductBarcode(variant.barcode) === normalized,
+    const exact = variants.find((variant) =>
+      barcodesEquivalent(variant.barcode, normalized),
     );
     if (exact) return exact;
   }
@@ -195,9 +199,8 @@ export async function searchShopifyProduct(
 
   if (normalizedBarcode) {
     return (
-      hits.find(
-        (product) =>
-          normalizeProductBarcode(product.barcode) === normalizedBarcode,
+      hits.find((product) =>
+        barcodesEquivalent(product.barcode, normalizedBarcode),
       ) ?? null
     );
   }
@@ -219,11 +222,13 @@ export async function fetchShopifyBarcodeProduct(
 
   try {
     const product = await searchShopifyProduct(config, "", normalizedBarcode);
-    // Trust only a barcode the product's own variant confirms.
-    if (
-      !product?.title ||
-      normalizeProductBarcode(product.barcode) !== normalizedBarcode
-    ) {
+    if (!product?.title) return null;
+    const gate = retailerCatalogBarcodeGate({
+      productUrl: product.productUrl,
+      productBarcode: product.barcode,
+      itemBarcode: normalizedBarcode,
+    });
+    if (!gate.catalogBarcodeConfirmed || gate.barcodeContradicted) {
       return null;
     }
     return { title: product.title, imageUrl: product.imageUrl || null };

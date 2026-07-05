@@ -20,6 +20,7 @@ import {
   itemPricesContextFromRecord,
   refreshItemPricesFromContext,
 } from "@/services/pricing/itemDisplay";
+import { repairProviderExternalLinksForItem } from "@/services/metadata/persistProviderExternalLinks";
 
 export type ScheduleItemMetadataRefreshInput = {
   itemId: string;
@@ -109,6 +110,7 @@ async function refreshPricesAfterMetadata(itemId: string): Promise<void> {
   if (!item) return;
 
   try {
+    await repairProviderExternalLinksForItem(itemId);
     await refreshItemPricesFromContext(itemPricesContextFromRecord(item), {
       force: true,
     });

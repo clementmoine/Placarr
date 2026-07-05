@@ -64,4 +64,24 @@ describe("createShopifyResolver", () => {
 
     expect(result).toBeNull();
   });
+
+  it("rejects title-only hits when the item barcode is not confirmed", async () => {
+    vi.mocked(searchShopifyHits).mockResolvedValue([
+      {
+        title: "Mille Sabords",
+        productUrl: "https://example.com/products/mille-sabords",
+        galleryImages: [],
+        source: CONFIG.id,
+      },
+    ]);
+
+    const resolve = createShopifyResolver(CONFIG);
+    const result = await resolve({
+      name: "Mille Sabords",
+      barcode: "3421272109517",
+      lookupQueries: ["Mille Sabords"],
+    });
+
+    expect(result).toBeNull();
+  });
 });

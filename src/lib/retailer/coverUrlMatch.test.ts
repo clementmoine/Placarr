@@ -29,4 +29,13 @@ describe("isRetailerCoverUrlAlignedWithTitle", () => {
       ),
     ).toBe(false);
   });
+
+  it("rejects a Sirènes cover slug for Black Stories Femmes Fatales", () => {
+    expect(
+      isRetailerCoverUrlAlignedWithTitle(
+        "https://cdn.example.com/photoProd/zoom/sirenes-femmes-fatales.jpg",
+        "Black Stories - Femmes Fatales",
+      ),
+    ).toBe(false);
+  });
 });

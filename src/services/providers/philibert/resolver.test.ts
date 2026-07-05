@@ -89,7 +89,7 @@ describe("createPhilibertResolver — garde barcode→item", () => {
     expect(result).toBeNull();
   });
 
-  it("accepte un produit non confirmé si le titre correspond à la requête", async () => {
+  it("rejette un titre proche si l'EAN de l'item n'est pas confirmé", async () => {
     mockedSearchHits.mockResolvedValue([hit({ barcode: undefined })]);
     mockedFetch.mockResolvedValue(
       product({ title: "Catan", barcode: undefined }),
@@ -97,7 +97,7 @@ describe("createPhilibertResolver — garde barcode→item", () => {
 
     const result = await resolve({ name: "Catan", barcode: BARCODE });
 
-    expect(result?.title).toBe("Catan");
+    expect(result).toBeNull();
   });
 
   it("rejette un faux positif proche mais différent (La Maison du Lac)", async () => {
@@ -120,6 +120,62 @@ describe("createPhilibertResolver — garde barcode→item", () => {
     const result = await resolve({ name: "", barcode: BARCODE });
 
     expect(result).toBeNull();
+  });
+
+  it("rejette Black Stories Suspect quand l'item porte l'EAN du classique", async () => {
+    const itemBarcode = "0827912079678";
+    mockedSearchHits.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      hit({
+        url: "https://www.philibertnet.com/fr/kikigagne/41476-black-stories-suspect-087169139338.html",
+        title: "Black Stories Suspect",
+        barcode: "087169139338",
+      }),
+    ]);
+    mockedFetch.mockResolvedValue(
+      product({
+        title: "Black Stories Suspect",
+        barcode: "087169139338",
+        productUrl:
+          "https://www.philibertnet.com/fr/kikigagne/41476-black-stories-suspect-087169139338.html",
+      }),
+    );
+
+    const result = await resolve({
+      name: "Black Stories",
+      barcode: itemBarcode,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("accepte la fiche Philibert dont le slug embarque le même EAN", async () => {
+    const itemBarcode = "0827912079678";
+    mockedSearchHits.mockResolvedValue([
+      hit({
+        url: "https://www.philibertnet.com/fr/kikigagne/8940-black-stories-vf-827912079678.html",
+        title: "Black Stories Vf",
+        barcode: "827912079678",
+      }),
+    ]);
+    mockedFetch.mockResolvedValue(
+      product({
+        title: "Black Stories Vf",
+        barcode: "827912079678",
+        productUrl:
+          "https://www.philibertnet.com/fr/kikigagne/8940-black-stories-vf-827912079678.html",
+      }),
+    );
+
+    const result = await resolve({
+      name: "Black Stories",
+      barcode: itemBarcode,
+    });
+
+    expect(
+      result?.facts?.find((fact) => fact.kind === "external-link")?.url,
+    ).toBe(
+      "https://www.philibertnet.com/fr/kikigagne/8940-black-stories-vf-827912079678.html",
+    );
   });
 
   it("retourne null quand la recherche ne renvoie aucun résultat", async () => {

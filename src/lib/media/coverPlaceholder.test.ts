@@ -90,8 +90,20 @@ describe("isPlaceholderCoverFromPersistedMetrics", () => {
         width: 257,
         height: 389,
         darkPixelRatio: 0.67,
+        entropy: 3.14,
       }),
     ).toBe(true);
+  });
+
+  it("conserve une jaquette sombre avec une entropie élevée (faux positif évité)", () => {
+    expect(
+      isPlaceholderCoverFromPersistedMetrics({
+        width: 263,
+        height: 359,
+        darkPixelRatio: 0.56,
+        entropy: 6.13,
+      }),
+    ).toBe(false);
   });
 
   it("conserve une jaquette portrait avec de la profondeur", () => {

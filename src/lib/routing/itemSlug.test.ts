@@ -106,7 +106,9 @@ describe("reconcileDuplicateItemSlugsOnShelf", () => {
       },
     ]);
 
-    await expect(reconcileDuplicateItemSlugsOnShelf("shelf-1")).resolves.toBe(1);
+    await expect(reconcileDuplicateItemSlugsOnShelf("shelf-1")).resolves.toBe(
+      1,
+    );
     expect(prismaMock.item.update).toHaveBeenCalledWith({
       where: { id: "item-2" },
       data: { slug: "need-for-speed-most-wanted-copy-2" },
@@ -135,7 +137,9 @@ describe("reconcileDuplicateItemSlugsOnShelf", () => {
       },
     ]);
 
-    await expect(reconcileDuplicateItemSlugsOnShelf("shelf-1")).resolves.toBe(1);
+    await expect(reconcileDuplicateItemSlugsOnShelf("shelf-1")).resolves.toBe(
+      1,
+    );
     expect(prismaMock.item.update).toHaveBeenCalledWith({
       where: { id: "item-2" },
       data: { slug: "need-for-speed-most-wanted-copy-2" },

@@ -229,9 +229,7 @@ export const ebayModule: ProviderModule = {
           addProducts(gtinProducts);
           if (gtinProducts.length === 0 && merged.length === 0) {
             for (const query of queries.slice(0, 1)) {
-              addProducts(
-                await fetchEbayProductsByQuery(query, expectedNames),
-              );
+              addProducts(await fetchEbayProductsByQuery(query, expectedNames));
             }
           }
         } else {

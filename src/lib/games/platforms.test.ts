@@ -27,7 +27,9 @@ describe("videoGamePlatforms", () => {
   });
 
   it("prefers parenthetical marketplace platform markers over body text", () => {
-    expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo (PC)")).toBe("pc");
+    expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo (PC)")).toBe(
+      "pc",
+    );
     expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo AES")).toBe(
       "neogeo",
     );
@@ -62,10 +64,7 @@ describe("videoGamePlatforms", () => {
     ).toBe("neo-geo-aes");
     expect(resolvePriceChartingPlatformSlug("Neo Geo MVS")).toBe("neo-geo-mvs");
     expect(
-      priceChartingNeoGeoVariantMatchesShelf(
-        "Neo Geo MVS",
-        "NEO GEO AES+",
-      ),
+      priceChartingNeoGeoVariantMatchesShelf("Neo Geo MVS", "NEO GEO AES+"),
     ).toBe(false);
   });
 

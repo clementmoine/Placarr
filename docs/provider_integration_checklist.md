@@ -117,6 +117,12 @@ drop a noisy observation just because today's display engine will rank it low.
   - [ ] `buildBarcodeTasks` gated by `BARCODE_TYPES` — **include `"generic"`** so
         typeless home-page scans get this anchor (parity).
   - [ ] `mappingProbe` + `runMappingProbe` (`metadataProbe`).
+- [ ] **External link** (retailers / comparateurs avec fiche produit) :
+  - [ ] `provenance.sourceUrl` sur observations catalogue / offer ;
+  - [ ] offers prix avec `sourceUrl` ;
+  - [ ] `refreshBarcodePriceOffers` lit `ctx.providerProductUrls` avant seek ;
+  - [ ] gate EAN si slug URL ou barcode page peut diverger.
+  - [ ] Voir [provider_external_links.md](provider_external_links.md).
 
 ---
 
@@ -136,7 +142,10 @@ drop a noisy observation just because today's display engine will rank it low.
 
 - [ ] **Unit** parser tests with a **real captured fixture** (from Phase 0):
       structured-data parse, field extraction, **gtin/barcode confirmation guard**,
-      title-match guard, search-hit parse.
+  - [ ] title-match guard, search-hit parse.
+- [ ] **External-link** : hit barcode/metadata produit un `external-link` (ou
+      `source-url` mirrored) ; refresh prix avec URL stockée ne re-seek pas (mock
+      fetch). Voir [provider_external_links.md](provider_external_links.md).
 - [ ] **Contract tests** shared by all providers:
   - [ ] every emitted candidate/observation has provider id, source URL or stable
         source id when available, source-document role, field role, observed-at/cache

@@ -127,11 +127,7 @@ describe("resolveItemId", () => {
     prismaMock.shelf.findFirst.mockResolvedValue({ id: "shelf-xbox" });
 
     await expect(
-      resolveItemId(
-        "need-for-speed-most-wanted-copy-2",
-        "xbox-360",
-        "user-1",
-      ),
+      resolveItemId("need-for-speed-most-wanted-copy-2", "xbox-360", "user-1"),
     ).resolves.toBe("item-nfs-2");
   });
 });

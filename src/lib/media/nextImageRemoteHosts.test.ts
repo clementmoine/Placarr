@@ -3,13 +3,25 @@ import { describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db/prisma";
 import { PROVIDERS } from "@/services/provider/registry";
 
+import { PRESTASHOP_RETAILER_CONFIGS } from "@/services/providers/prestashop/configs";
+import { SHOPIFY_RETAILER_CONFIGS } from "@/services/providers/shopify/configs";
+import { DEDICATED_CATALOG_IMAGE_HOSTS } from "@/lib/media/dedicatedCatalogImageHosts";
+
 import {
-  IMAGE_REMOTE_EXACT_HOSTS,
-  IMAGE_REMOTE_WILDCARD_HOSTS,
+  buildImageRemoteHostLists,
+  catalogRetailerImageHosts,
   isNextImageRemoteHostAllowed,
   looksLikeRemoteImageUrl,
   nextImageRemotePatternCount,
 } from "./nextImageRemoteHosts";
+
+const CATALOG_IMAGE_HOSTS = catalogRetailerImageHosts([
+  ...PRESTASHOP_RETAILER_CONFIGS,
+  ...SHOPIFY_RETAILER_CONFIGS,
+  ...DEDICATED_CATALOG_IMAGE_HOSTS,
+]);
+
+const IMAGE_REMOTE_HOST_LISTS = buildImageRemoteHostLists(CATALOG_IMAGE_HOSTS);
 
 function hostFromUrl(url: string): string | null {
   try {
@@ -32,7 +44,9 @@ function hostFromCoverUrlHost(fragment: string): string | null {
 
 describe("nextImageRemoteHosts", () => {
   it("stays within the Next.js remotePatterns budget", () => {
-    expect(nextImageRemotePatternCount()).toBeLessThanOrEqual(50);
+    expect(
+      nextImageRemotePatternCount(IMAGE_REMOTE_HOST_LISTS),
+    ).toBeLessThanOrEqual(50);
   });
 
   it("allows known provider image CDNs", () => {
@@ -45,13 +59,42 @@ describe("nextImageRemoteHosts", () => {
       "https://cdn.thegamesdb.net/images/original/boxart/front/1.jpg",
       "https://chocobonplan.com/wp-content/uploads/cover.png",
       "https://www.okkazeo.com/images/jeux/1_1.jpg",
+      "https://www.espritjeu.com/upload/image/sample-grande.jpg",
+      "https://www.myludo.fr/img/jeux/1680490604/300/ae/4503.png",
+      "https://media.play-in.com/img/product/sample.png",
       "https://upload.wikimedia.org/wikipedia/fr/cover.png",
       "https://i.discogs.com/primary.jpeg",
+      "https://www.monsieurde.com/1218-large_default/black-stories.jpg",
+      "https://lesgentlemendujeu.com/6805-home_default/black-stories.jpg",
     ];
     for (const url of samples) {
       const host = hostFromUrl(url);
       expect(host, url).not.toBeNull();
-      expect(isNextImageRemoteHostAllowed(host!), url).toBe(true);
+      expect(
+        isNextImageRemoteHostAllowed(host!, IMAGE_REMOTE_HOST_LISTS),
+        url,
+      ).toBe(true);
+    }
+  });
+
+  it("covers catalog retailer shop domains (PrestaShop / Shopify)", () => {
+    const { wildcards, exacts } = catalogRetailerImageHosts([
+      ...PRESTASHOP_RETAILER_CONFIGS,
+      ...SHOPIFY_RETAILER_CONFIGS,
+    ]);
+
+    expect(wildcards).toContain("monsieurde.com");
+    expect(exacts).toContain("lesgentlemendujeu.com");
+
+    for (const config of [
+      ...PRESTASHOP_RETAILER_CONFIGS,
+      ...SHOPIFY_RETAILER_CONFIGS,
+    ]) {
+      const host = new URL(config.baseUrl).hostname.toLowerCase();
+      expect(
+        isNextImageRemoteHostAllowed(host, IMAGE_REMOTE_HOST_LISTS),
+        `uncovered catalog retailer host: ${host} (${config.id})`,
+      ).toBe(true);
     }
   });
 
@@ -69,7 +112,7 @@ describe("nextImageRemoteHosts", () => {
     expect(hosts.length).toBeGreaterThan(0);
     for (const host of hosts) {
       expect(
-        isNextImageRemoteHostAllowed(host),
+        isNextImageRemoteHostAllowed(host, IMAGE_REMOTE_HOST_LISTS),
         `uncovered cover host: ${host}`,
       ).toBe(true);
     }
@@ -97,7 +140,9 @@ describe("nextImageRemoteHosts", () => {
         item.backgroundImageUrl,
         item.metadata?.imageUrl,
         item.metadata?.heroImageUrl,
-        ...(item.metadata?.attachments ?? []).map((attachment) => attachment.url),
+        ...(item.metadata?.attachments ?? []).map(
+          (attachment) => attachment.url,
+        ),
       ]) {
         if (candidate && looksLikeRemoteImageUrl(candidate)) {
           urls.add(candidate);
@@ -110,7 +155,8 @@ describe("nextImageRemoteHosts", () => {
       select: { value: true },
     });
     for (const setting of settings) {
-      for (const match of setting.value?.matchAll(/https?:\/\/[^\s"'<>\\]+/g) ?? []) {
+      for (const match of setting.value?.matchAll(/https?:\/\/[^\s"'<>\\]+/g) ??
+        []) {
         if (looksLikeRemoteImageUrl(match[0])) urls.add(match[0]);
       }
     }
@@ -120,14 +166,15 @@ describe("nextImageRemoteHosts", () => {
       .map((url) => ({ url, host: hostFromUrl(url) }))
       .filter(
         (entry): entry is { url: string; host: string } =>
-          Boolean(entry.host) && !isNextImageRemoteHostAllowed(entry.host),
+          entry.host !== null &&
+          !isNextImageRemoteHostAllowed(entry.host, IMAGE_REMOTE_HOST_LISTS),
       );
 
     expect(uncovered).toEqual([]);
   });
 
   it("documents wildcard and exact host lists without overlap confusion", () => {
-    expect(IMAGE_REMOTE_WILDCARD_HOSTS).toContain("screenscraper.fr");
-    expect(IMAGE_REMOTE_EXACT_HOSTS).toContain("imagedelivery.net");
+    expect(IMAGE_REMOTE_HOST_LISTS.wildcards).toContain("screenscraper.fr");
+    expect(IMAGE_REMOTE_HOST_LISTS.exacts).toContain("imagedelivery.net");
   });
 });

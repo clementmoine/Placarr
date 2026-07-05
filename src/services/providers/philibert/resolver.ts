@@ -2,8 +2,14 @@ import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
 } from "@/lib/retailer/metadataLookup";
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { retailerProductUrlBarcodeConflicts } from "@/lib/retailer/productUrl";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
+import {
+  retailerProductBarcodeConfirmed,
+  retailerProductUrlBarcodeConflicts,
+} from "@/lib/retailer/productUrl";
 import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
@@ -302,11 +308,19 @@ async function resolvePhilibertHit(
     normalizeProductBarcode(product.barcode) ||
     normalizeProductBarcode(hit.barcode);
   const barcodeConfirmed =
-    !!normalizedBarcode && resolvedBarcode === normalizedBarcode;
+    !!normalizedBarcode &&
+    !!resolvedBarcode &&
+    barcodesEquivalent(resolvedBarcode, normalizedBarcode);
+  const urlBarcodeConfirmed = retailerProductBarcodeConfirmed(
+    hit.url,
+    resolvedBarcode,
+    normalizedBarcode,
+  );
+  const catalogBarcodeConfirmed = barcodeConfirmed || urlBarcodeConfirmed;
   const barcodeContradicted =
     !!normalizedBarcode &&
     !!resolvedBarcode &&
-    resolvedBarcode !== normalizedBarcode;
+    !barcodesEquivalent(resolvedBarcode, normalizedBarcode);
 
   if (barcodeContradicted) return null;
 
@@ -317,14 +331,17 @@ async function resolvePhilibertHit(
     return null;
   }
 
+  if (normalizedBarcode && !catalogBarcodeConfirmed) return null;
+
   if (
     !acceptRetailerCatalogCandidate({
       requestedName,
       searchQuery: input.searchQuery,
       shelfName: input.shelfName,
       catalogTitle: title,
-      barcodeConfirmed,
+      barcodeConfirmed: catalogBarcodeConfirmed,
       trustConfirmedProductBarcode: true,
+      itemBarcode: normalizedBarcode,
     })
   ) {
     return null;
@@ -394,10 +411,15 @@ export function createPhilibertResolver() {
           if (seenUrls.has(hit.url)) continue;
           seenUrls.add(hit.url);
 
-          const result = await resolvePhilibertHit(hit, requestedName, null, {
-            searchQuery: query,
-            shelfName: ctx.shelfName,
-          });
+          const result = await resolvePhilibertHit(
+            hit,
+            requestedName,
+            normalizedBarcode,
+            {
+              searchQuery: query,
+              shelfName: ctx.shelfName,
+            },
+          );
           if (result) return result;
         }
       }

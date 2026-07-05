@@ -36,6 +36,10 @@ import {
   isTimeToBeatFamilyFact,
   dedupeFieldEvidence,
 } from "@/services/metadata/facts";
+import {
+  appendMissingProviderExternalLinkFacts,
+  dedupeProviderExternalLinkFacts,
+} from "@/lib/metadata/providerExternalLinks";
 import type { MetadataResult } from "@/types/metadataProvider";
 import {
   orderResultsByObservationStrength,
@@ -405,6 +409,9 @@ export function mergeMetadata(
       (f) => !isTimeToBeatFamilyFact(f) || isHowLongToBeatFactSource(f.source),
     );
   }
+  finalFacts = dedupeProviderExternalLinkFacts(
+    appendMissingProviderExternalLinkFacts(finalFacts, orderedResults),
+  );
   const facts = finalFacts.length > 0 ? dedupeFacts(finalFacts) : undefined;
 
   const aliases = collectMergedSearchAliases(

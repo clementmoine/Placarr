@@ -799,4 +799,65 @@ describe("mergeMetadata generic function", () => {
       ),
     ).toBe(true);
   });
+
+  it("persists provider external-link facts from provider metadata hits", () => {
+    const merged = mergeMetadata("boardgames", [
+      {
+        providerId: "philibert",
+        metadata: {
+          observations: [
+            {
+              kind: "title",
+              role: "catalog_title",
+              value: "Black Stories",
+              provenance: {
+                providerId: "philibert",
+                sourceUrl: "https://www.philibertnet.com/fr/black-stories.html",
+                sourceDocumentRole: "catalog_product",
+                evidenceSignals: [],
+              },
+              usage: makeObservationUsage({
+                displayCandidate: true,
+                searchAlias: "strong",
+                evidence: "strong",
+              }),
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(
+      merged.facts?.some(
+        (fact) =>
+          fact.kind === "external-link" &&
+          fact.source === "philibert" &&
+          fact.url === "https://www.philibertnet.com/fr/black-stories.html",
+      ),
+    ).toBe(true);
+  });
+
+  it("mirrors source-url facts into external-link during merge", () => {
+    const merged = mergeMetadata("boardgames", [
+      {
+        providerId: "chasseauxlivres",
+        metadata: {
+          facts: [
+            {
+              kind: "source-url",
+              label: "Chasse aux Livres",
+              value:
+                "https://www.chasse-aux-livres.fr/prix/B01/black-stories.html",
+              url: "https://www.chasse-aux-livres.fr/prix/B01/black-stories.html",
+              source: "chasseauxlivres",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(
+      merged.facts?.filter((fact) => fact.kind === "external-link"),
+    ).toHaveLength(1);
+  });
 });

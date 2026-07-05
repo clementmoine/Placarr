@@ -144,6 +144,8 @@ export type OfferObservationRole =
 export interface OfferObservation extends MetadataObservationBase {
   kind: "offer";
   role: OfferObservationRole;
+  /** Direct product/listing URL for the offer, when the source exposes one. */
+  url?: string | null;
   condition?: string | null;
   priceCents?: number | null;
   currency?: string | null;

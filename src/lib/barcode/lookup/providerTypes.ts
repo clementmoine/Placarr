@@ -29,6 +29,7 @@ export interface LeDenicheurPrices {
   priceUsed?: number;
   sourceUrl?: string;
   productName?: string;
+  productGtin?: string;
   merchantName?: string;
   offerCount?: number;
   coverUrl?: string | null;

@@ -63,6 +63,7 @@ import {
   formatMetadataForStorage,
   toAttachmentCreateData,
 } from "@/services/metadata/dbMapping";
+import { syncPriceOfferExternalLinksForMetadata } from "@/services/metadata/persistProviderExternalLinks";
 import { downloadRemoteImage } from "@/services/metadata/imageDownload";
 
 // Re-exported for existing consumers of `@/services/metadata/storage` (and its
@@ -800,6 +801,19 @@ export async function storeMetadata(
       name,
       storedMetadata.id,
       storedMetadata.lastFetched,
+    );
+  }
+
+  try {
+    await syncPriceOfferExternalLinksForMetadata({
+      metadataId: storedMetadata.id,
+      itemBarcode: item?.barcode,
+      itemTitle: item?.name?.trim() || name.trim() || undefined,
+    });
+  } catch (error) {
+    console.warn(
+      `[Metadata] Price-offer external-link sync failed for item ${itemId}:`,
+      error,
     );
   }
 

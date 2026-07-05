@@ -1,5 +1,5 @@
-import Image from "next/image";
 import React, { useMemo } from "react";
+import { RemoteImage } from "@/components/RemoteImage";
 import colorLib from "color";
 import { cn } from "@/lib/core/utils";
 import type { ShelfWithItemCount } from "@/types/shelves";
@@ -42,13 +42,12 @@ export function ShelfCard(props: ShelfWithItemCount) {
       style={{ backgroundColor }}
     >
       {backgroundImageUrl && (
-        <Image
+        <RemoteImage
           src={backgroundImageUrl}
           alt=""
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
           className="absolute inset-0 object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
-          draggable={false}
         />
       )}
 
@@ -73,7 +72,7 @@ export function ShelfCard(props: ShelfWithItemCount) {
           )}
         >
           {imageUrl ? (
-            <Image
+            <RemoteImage
               src={imageUrl}
               width={128}
               height={128}
@@ -82,7 +81,6 @@ export function ShelfCard(props: ShelfWithItemCount) {
                 "max-h-full w-auto max-w-full object-contain object-left drop-shadow-md",
                 "max-w-[10rem] min-[400px]:max-w-[5.5rem] md:max-w-[6.5rem]",
               )}
-              draggable={false}
             />
           ) : (
             <span

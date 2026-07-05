@@ -240,7 +240,9 @@ export function QuickScanModal({
             shelfName,
           );
           if (activeLookupKeyRef.current !== lookupKey) return;
-          const hydratedImageUrl = metadata ? getCoverImage({ metadata }) : null;
+          const hydratedImageUrl = metadata
+            ? getCoverImage({ metadata })
+            : null;
           setResults((prev) =>
             prev.map((entry) => {
               if (entry.id !== result.id) return entry;
@@ -268,9 +270,7 @@ export function QuickScanModal({
           );
           setResults((prev) =>
             prev.map((entry) =>
-              entry.id === result.id
-                ? { ...entry, isHydrating: false }
-                : entry,
+              entry.id === result.id ? { ...entry, isHydrating: false } : entry,
             ),
           );
         }

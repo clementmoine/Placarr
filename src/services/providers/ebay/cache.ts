@@ -74,7 +74,9 @@ export function cacheEbaySearchProducts(
   });
 }
 
-export function getCachedEbayPrices(query: string): EbayPrices | null | undefined {
+export function getCachedEbayPrices(
+  query: string,
+): EbayPrices | null | undefined {
   const key = normalizeSearchKey(query);
   if (!key) return undefined;
   const cached = priceCache.get(key);

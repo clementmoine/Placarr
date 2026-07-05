@@ -4,7 +4,7 @@ vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
 import axios from "axios";
 
 import { fetchFromEbayCatalog } from "./catalog";
-import { fetchFromEbay, fetchEbayProductsByQuery, fetchPricesFromEbay, pingEbay } from "./fetch";
+import { fetchFromEbay, fetchPricesFromEbay, pingEbay } from "./fetch";
 import { resetEbayTokenCache } from "./oauth";
 import { resetEbayResponseCacheForTests } from "./cache";
 

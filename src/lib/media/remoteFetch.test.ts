@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import sharp from "sharp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -32,13 +32,14 @@ vi.mock("@/lib/media/remoteProxy", () => ({
         }
       : null,
   remoteImageRequestHeaders: (url: string) =>
-    url.includes("booknode.com")
-      ? { Referer: "https://booknode.com/" }
-      : {},
+    url.includes("booknode.com") ? { Referer: "https://booknode.com/" } : {},
 }));
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 
-import { flareSolverrCookiesFor, flareSolverrDownloadImages } from "@/lib/http/flareSolverr";
+import {
+  flareSolverrCookiesFor,
+  flareSolverrDownloadImages,
+} from "@/lib/http/flareSolverr";
 import { fetchRemoteImageBuffer } from "./remoteFetch";
 
 const mockedGet = vi.mocked(axios.get);
@@ -102,7 +103,7 @@ describe("fetchRemoteImageBuffer", () => {
     const full = await jpegBuffer(1723, 2320);
 
     mockedGet.mockImplementation(
-      async (url: string, config?: { headers?: Record<string, string> }) => {
+      async (url: string, config?: AxiosRequestConfig) => {
         const hasCookie = Boolean(config?.headers?.Cookie);
         if (url.includes("/full/") && hasCookie) {
           return {

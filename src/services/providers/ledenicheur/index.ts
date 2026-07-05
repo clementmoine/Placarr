@@ -16,6 +16,7 @@ import { gatedContributions } from "@/lib/barcode/lookup/sourceContribution";
 import type { SourceProduct } from "@/lib/barcode/evidence/types";
 import {
   fetchPricesFromLeDenicheur,
+  leDenicheurProductUrlContradictsItem,
   pingLeDenicheur,
   type LeDenicheurPrices,
 } from "./fetch";
@@ -74,7 +75,10 @@ function leDenicheurPriceOfferRows(result: LeDenicheurPrices) {
 }
 
 async function refreshLeDenicheurOffers(ctx: BarcodePriceRefreshContext) {
-  const result = await fetchPricesFromLeDenicheur(ctx.leDenicheurQueries);
+  const result = await fetchPricesFromLeDenicheur(ctx.leDenicheurQueries, {
+    itemBarcode: ctx.cleanedBarcode,
+    itemTitle: ctx.primaryName,
+  });
   if (!result?.priceNew && !result?.priceUsed) return [];
   return pricedOffers(PRICE_SOURCE, leDenicheurPriceOfferRows(result));
 }
@@ -99,7 +103,11 @@ export const ledenicheurModule: ProviderModule = {
     if (!BARCODE_TYPES.includes(type)) {
       return {} as Record<string, Promise<unknown>>;
     }
-    return { leDenicheur: deps.fetchPricesFromLeDenicheur(barcode) };
+    return {
+      leDenicheur: deps.fetchPricesFromLeDenicheur(barcode, {
+        itemBarcode: barcode,
+      }),
+    };
   },
   buildTeardownBarcodeTasks(ctx, deps) {
     const queries = dedupeTeardownQueries([
@@ -144,9 +152,7 @@ export const ledenicheurModule: ProviderModule = {
     rawProbe(await fetchPricesFromLeDenicheur("hades switch")),
   collectMappingRawKeys: async (context) => {
     const ctx = probeContextOrDefault(context, { name: "hades switch" });
-    return mappingRawKeysFromFetch(() =>
-      fetchPricesFromLeDenicheur(ctx.name),
-    );
+    return mappingRawKeysFromFetch(() => fetchPricesFromLeDenicheur(ctx.name));
   },
   buildBarcodeSources(payload, ctx) {
     return gatedContributions(
@@ -164,4 +170,6 @@ export const ledenicheurModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshLeDenicheurOffers,
+  validateStoredExternalLinkAgainstBarcode: async (url, itemBarcode, itemTitle) =>
+    leDenicheurProductUrlContradictsItem(url, itemBarcode, itemTitle),
 };

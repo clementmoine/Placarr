@@ -47,6 +47,11 @@ export type BarcodeLookupContext = {
   platformKey?: string | null;
 };
 
+export type ProviderProductUrlRef = {
+  providerKey: string;
+  url: string;
+};
+
 export type BarcodePriceRefreshContext = {
   cleanedBarcode: string;
   shelfType: string;
@@ -56,6 +61,8 @@ export type BarcodePriceRefreshContext = {
   leDenicheurQueries: string[];
   isPal: boolean;
   isClassics: boolean;
+  /** Product-page URLs already resolved during metadata enrichment. */
+  providerProductUrls?: readonly ProviderProductUrlRef[];
 };
 
 export type CatalogExternalLinkContext = {
@@ -134,6 +141,7 @@ export type BarcodeLookupDeps = {
   fetchFromEbay: (barcode: string) => Promise<unknown>;
   fetchPricesFromLeDenicheur: (
     queryOrQueries: string | string[],
+    options?: { itemBarcode?: string | null },
   ) => Promise<unknown>;
   fetchFromOpenLibrary: (
     name: string,
@@ -324,6 +332,16 @@ export interface ProviderModule {
   inferImageAttachmentFromMediaUrl?: (
     url: string,
   ) => InferredImageAttachmentSemantics | null;
+  /**
+   * When an item barcode is known, validate a stored product-page URL against
+   * GTIN/EAN read from the live page. Return true when the page contradicts
+   * the item (the external link should be dropped).
+   */
+  validateStoredExternalLinkAgainstBarcode?: (
+    url: string,
+    itemBarcode: string,
+    itemTitle?: string | null,
+  ) => Promise<boolean>;
 }
 
 export type TeardownProviderTaskPhase = "barcode" | "metadata" | "merged";

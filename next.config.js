@@ -1,7 +1,19 @@
 // @ts-check
 import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
-import { nextImageRemotePatterns } from "./src/lib/media/nextImageRemoteHosts.ts";
+import { PRESTASHOP_RETAILER_CONFIGS } from "./src/services/providers/prestashop/configs.ts";
+import { SHOPIFY_RETAILER_CONFIGS } from "./src/services/providers/shopify/configs.ts";
+import { DEDICATED_CATALOG_IMAGE_HOSTS } from "./src/lib/media/dedicatedCatalogImageHosts.ts";
+import {
+  catalogRetailerImageHosts,
+  nextImageRemotePatterns,
+} from "./src/lib/media/nextImageRemoteHosts.ts";
+
+const catalogImageHosts = catalogRetailerImageHosts([
+  ...PRESTASHOP_RETAILER_CONFIGS,
+  ...SHOPIFY_RETAILER_CONFIGS,
+  ...DEDICATED_CATALOG_IMAGE_HOSTS,
+]);
 
 const revision = crypto.randomUUID();
 
@@ -28,7 +40,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    remotePatterns: nextImageRemotePatterns(),
+    remotePatterns: nextImageRemotePatterns(catalogImageHosts),
   },
 };
 

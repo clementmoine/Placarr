@@ -124,17 +124,14 @@ export function isUnavailableCoverPlaceholderFromPersistedMetrics(
   const height = signals.height;
   if (!width || !height) return false;
 
-  if (
-    width >= 100 &&
-    width <= 135 &&
-    height >= 150 &&
-    height <= 185
-  ) {
+  if (width >= 100 && width <= 135 && height >= 150 && height <= 185) {
     return true;
   }
 
   const darkPixelRatio = signals.darkPixelRatio;
   if (darkPixelRatio == null || darkPixelRatio < 0.55) return false;
+
+  if (signals.entropy != null && signals.entropy >= 4.5) return false;
 
   const aspect = width / height;
   return (

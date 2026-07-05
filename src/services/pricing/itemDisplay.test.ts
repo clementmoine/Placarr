@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   refreshBarcodePrices: vi.fn(),
   shouldRefreshPriceCache: vi.fn(),
   alignBarcodePricesForItemNames: vi.fn((_type, _names, prices) => prices),
+  repairProviderExternalLinksForItem: vi.fn(),
   after: vi.fn(),
   runBackgroundWork: vi.fn((task: () => Promise<unknown>) => task()),
 }));
@@ -30,6 +31,10 @@ vi.mock("@/services/pricing/resolver", () => ({
   refreshBarcodePrices: h.refreshBarcodePrices,
   alignBarcodePricesForItemNames: h.alignBarcodePricesForItemNames,
   summarizeShelfItemPrices: vi.fn(),
+}));
+
+vi.mock("@/services/metadata/persistProviderExternalLinks", () => ({
+  repairProviderExternalLinksForItem: h.repairProviderExternalLinksForItem,
 }));
 
 import {
@@ -277,7 +282,10 @@ describe("refreshItemPricesFromContext", () => {
   });
 
   it("dedupes concurrent refreshes for the same barcode", async () => {
-    let resolveRefresh!: (value: Awaited<ReturnType<typeof h.refreshBarcodePrices>>) => void;
+    h.getCachedBarcodePrices.mockResolvedValue(null);
+    let resolveRefresh!: (
+      value: Awaited<ReturnType<typeof h.refreshBarcodePrices>>,
+    ) => void;
     const refreshPromise = new Promise<
       Awaited<ReturnType<typeof h.refreshBarcodePrices>>
     >((resolve) => {
@@ -322,6 +330,52 @@ describe("refreshItemPricesFromContext", () => {
     });
 
     await Promise.all([first, second]);
+  });
+
+  it("passes provider product URLs from metadata external-link facts to refresh", async () => {
+    h.refreshBarcodePrices.mockResolvedValue({
+      priceNew: 730,
+      priceUsed: 198,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    const barcodeContext = itemPricesContextFromRecord({
+      id: "black-stories-1",
+      name: "Black Stories",
+      barcode: "0827912079678",
+      metadata: {
+        title: "Black Stories",
+        aliases: null,
+        facts: JSON.stringify([
+          {
+            kind: "external-link",
+            label: "Chasse aux Livres",
+            value: "Voir la fiche",
+            url: "https://www.chasse-aux-livres.fr/prix/B01/black-stories.html",
+            source: "chasseauxlivres",
+          },
+        ]),
+      },
+      shelf: { type: "boardgames", name: "Jeux de société" },
+    });
+
+    await refreshItemPricesFromContext(barcodeContext, { force: true });
+
+    expect(h.refreshBarcodePrices).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerProductUrls: [
+          {
+            providerKey: "chasseauxlivres",
+            url: "https://www.chasse-aux-livres.fr/prix/B01/black-stories.html",
+          },
+        ],
+      }),
+    );
   });
 
   it("returns cached prices instead of re-querying marketplaces within five minutes", async () => {
@@ -380,6 +434,37 @@ describe("refreshItemPricesFromContext", () => {
     await refreshItemPricesFromContext(CONTEXT);
     await refreshItemPricesFromContext(CONTEXT, { force: true });
     expect(h.refreshItemPrices).toHaveBeenCalledTimes(2);
+  });
+
+  it("repairs retailer external links even when price refresh is on cooldown", async () => {
+    h.getCachedItemPrices.mockResolvedValue({
+      priceNew: 1999,
+      priceUsed: 999,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-01-01"),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+    h.refreshItemPrices.mockResolvedValue({
+      priceNew: 2499,
+      priceUsed: 1299,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date(),
+      priceSources: [],
+      priceSourceDisplayNames: [],
+      isReferencePriceOnly: false,
+      priceObservations: [],
+    });
+
+    await refreshItemPricesFromContext(CONTEXT);
+    h.repairProviderExternalLinksForItem.mockClear();
+    await refreshItemPricesFromContext(CONTEXT);
+
+    expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
+    expect(h.repairProviderExternalLinksForItem).toHaveBeenCalledTimes(1);
+    expect(h.repairProviderExternalLinksForItem).toHaveBeenCalledWith("item-1");
   });
 });
 

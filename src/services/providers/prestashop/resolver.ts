@@ -3,7 +3,7 @@ import {
   retailerSearchHitLimit,
 } from "@/lib/retailer/metadataLookup";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { retailerProductUrlBarcodeConflicts } from "@/lib/retailer/productUrl";
+import { retailerCatalogBarcodeGate } from "@/lib/retailer/productUrl";
 import { normalizeBoardGamePlayerCount } from "@/lib/metadata/boardGame";
 import {
   makeObservationUsage,
@@ -232,6 +232,45 @@ export function mapPrestashopMetadata(
   };
 }
 
+async function acceptPrestashopCatalogProduct(
+  config: PrestashopRetailerConfig,
+  product: PrestashopProduct,
+  requestedName: string,
+  normalizedBarcode: string | null,
+  input: {
+    searchQuery?: string;
+    shelfName?: string | null;
+  },
+): Promise<MetadataResult | null> {
+  if (!product.title) return null;
+
+  const gate = retailerCatalogBarcodeGate({
+    productUrl: product.productUrl,
+    productBarcode: product.barcode,
+    itemBarcode: normalizedBarcode,
+  });
+
+  if (gate.barcodeContradicted || gate.urlBarcodeConflicts) return null;
+  if (normalizedBarcode && !gate.catalogBarcodeConfirmed) return null;
+
+  if (
+    !acceptRetailerCatalogCandidate({
+      requestedName,
+      searchQuery: input.searchQuery,
+      shelfName: input.shelfName,
+      catalogTitle: product.title,
+      barcodeConfirmed: gate.catalogBarcodeConfirmed,
+      trustConfirmedProductBarcode: true,
+      itemBarcode: normalizedBarcode,
+    })
+  ) {
+    return null;
+  }
+
+  const galleryImages = await fetchPrestashopGallery(product.productUrl);
+  return mapPrestashopMetadata(product, config.label, galleryImages);
+}
+
 export function createPrestashopResolver(config: PrestashopRetailerConfig) {
   return async function fetchFromPrestashopRetailer(
     ctx: MetadataAdapterContext,
@@ -245,37 +284,58 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
     if (queries.length === 0 && !normalizedBarcode) return null;
 
     try {
+      const seenProductKeys = new Set<string>();
+
+      const tryProduct = async (
+        product: PrestashopProduct | null,
+        input: {
+          searchQuery?: string;
+          shelfName?: string | null;
+        },
+      ): Promise<MetadataResult | null> => {
+        if (!product?.title) return null;
+        const key =
+          product.productUrl || product.title.trim().toLowerCase() || "";
+        if (!key || seenProductKeys.has(key)) return null;
+        seenProductKeys.add(key);
+        return acceptPrestashopCatalogProduct(
+          config,
+          product,
+          requestedName,
+          normalizedBarcode,
+          input,
+        );
+      };
+
       if (normalizedBarcode) {
-        const product = await searchPrestashopProduct(
+        const fromSearch = await searchPrestashopProduct(
           config,
           requestedName,
           normalizedBarcode,
           queries,
         );
-        if (product?.title) {
-          const barcodeConfirmed =
-            normalizeProductBarcode(product.barcode) === normalizedBarcode;
-          if (
-            !retailerProductUrlBarcodeConflicts(
-              product.productUrl,
-              normalizedBarcode,
-            ) &&
-            acceptRetailerCatalogCandidate({
-              requestedName,
-              shelfName: ctx.shelfName,
-              catalogTitle: product.title,
-              barcodeConfirmed,
-            })
-          ) {
-            const galleryImages = await fetchPrestashopGallery(
-              product.productUrl,
-            );
-            return mapPrestashopMetadata(product, config.label, galleryImages);
-          }
+        const searchResult = await tryProduct(fromSearch, {
+          shelfName: ctx.shelfName,
+        });
+        if (searchResult) return searchResult;
+
+        const barcodeHitLimit = retailerSearchHitLimit({
+          requestedName,
+          searchQuery: requestedName,
+          shelfName: ctx.shelfName,
+        });
+        const barcodeHits = (
+          await searchPrestashopHits(config, normalizedBarcode)
+        ).slice(0, barcodeHitLimit);
+
+        for (const hit of barcodeHits) {
+          const mapped = mapPrestashopSearchProduct(config, hit);
+          const result = await tryProduct(mapped, {
+            shelfName: ctx.shelfName,
+          });
+          if (result) return result;
         }
       }
-
-      const seenProductKeys = new Set<string>();
 
       for (const query of queries) {
         if (!query) continue;
@@ -291,39 +351,12 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
         );
 
         for (const hit of hits) {
-          const key =
-            hit.id_product?.toString() || hit.link || hit.name?.trim() || "";
-          if (!key || seenProductKeys.has(key)) continue;
-          seenProductKeys.add(key);
-
           const product = mapPrestashopSearchProduct(config, hit);
-          if (!product?.title) continue;
-
-          if (
-            normalizedBarcode &&
-            retailerProductUrlBarcodeConflicts(
-              product.productUrl,
-              normalizedBarcode,
-            )
-          ) {
-            continue;
-          }
-
-          if (
-            !acceptRetailerCatalogCandidate({
-              requestedName,
-              searchQuery: query,
-              shelfName: ctx.shelfName,
-              catalogTitle: product.title,
-            })
-          ) {
-            continue;
-          }
-
-          const galleryImages = await fetchPrestashopGallery(
-            product.productUrl,
-          );
-          return mapPrestashopMetadata(product, config.label, galleryImages);
+          const result = await tryProduct(product, {
+            searchQuery: query,
+            shelfName: ctx.shelfName,
+          });
+          if (result) return result;
         }
       }
 

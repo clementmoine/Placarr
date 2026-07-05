@@ -5,7 +5,9 @@ import { runWithConcurrency } from "./runWithConcurrency";
 describe("runWithConcurrency", () => {
   it("preserves result order", async () => {
     const results = await runWithConcurrency([1, 2, 3, 4], 2, async (value) => {
-      await new Promise((resolve) => setTimeout(resolve, value % 2 === 0 ? 5 : 0));
+      await new Promise((resolve) =>
+        setTimeout(resolve, value % 2 === 0 ? 5 : 0),
+      );
       return value * 2;
     });
 

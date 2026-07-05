@@ -12,6 +12,7 @@ import {
 import {
   isMissingGameMediaGallery,
   isMissingMusicGallery,
+  isMissingBookGallery,
 } from "@/lib/metadata/galleries";
 import { resolveGameMetadataPlatform } from "@/lib/metadata/platform";
 import { filterMetadataForShelfPlatform } from "@/lib/item/media";
@@ -205,12 +206,17 @@ export async function fetchAndStoreMetadata(
         barcode,
         cachedMetadata.attachments.map(withProviderAttachmentTraits),
       );
+      const staleBookGallery = isMissingBookGallery(
+        type,
+        barcode,
+        cachedMetadata.attachments.map(withProviderAttachmentTraits),
+      );
       const staleGameGallery = isMissingGameMediaGallery(
         type,
         barcode,
         cachedMetadata.attachments.map(withProviderAttachmentTraits),
       );
-      if (!staleMusicGallery && !staleGameGallery) {
+      if (!staleMusicGallery && !staleBookGallery && !staleGameGallery) {
         return formatMetadataFromStorage(cachedMetadata);
       }
     }

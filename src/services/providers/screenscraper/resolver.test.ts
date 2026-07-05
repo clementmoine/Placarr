@@ -12,7 +12,6 @@ import {
   hydrateScreenScraperLookupFromGameCache,
   mergeScreenScraperLookupWithGame,
   screenScraperLookupHasCanonicalCover,
-  screenScraperLookupNeedsCoverHydration,
   pickSSCover,
   scoreScreenScraperGameTitleMatch,
   shouldUseCachedScreenScraperSuggestions,
@@ -621,9 +620,9 @@ describe("hydrateScreenScraperLookupFromGameCache", () => {
       ],
     };
 
-    await expect(
-      hydrateScreenScraperLookupFromGameCache(lookup),
-    ).resolves.toBe(lookup);
+    await expect(hydrateScreenScraperLookupFromGameCache(lookup)).resolves.toBe(
+      lookup,
+    );
   });
 
   it("merges cached game medias even when the lookup already has a canonical cover", async () => {
@@ -644,9 +643,13 @@ describe("hydrateScreenScraperLookupFromGameCache", () => {
 
     const merged = await hydrateScreenScraperLookupFromGameCache(lookup);
 
-    expect(merged.attachments?.some((attachment) => attachment.role === "3d-eu"))
-      .toBe(true);
-    expect(merged.attachments?.some((attachment) => attachment.type === "screenshot"))
-      .toBe(true);
+    expect(
+      merged.attachments?.some((attachment) => attachment.role === "3d-eu"),
+    ).toBe(true);
+    expect(
+      merged.attachments?.some(
+        (attachment) => attachment.type === "screenshot",
+      ),
+    ).toBe(true);
   });
 });

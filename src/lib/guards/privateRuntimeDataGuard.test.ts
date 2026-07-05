@@ -14,7 +14,10 @@ describe("privateRuntimeDataGuard", () => {
       if (filePath.startsWith("public/uploads/")) {
         return filePath !== "public/uploads/.gitkeep";
       }
-      if (filePath === "prisma/dev.db" || filePath.startsWith("prisma/dev.db-")) {
+      if (
+        filePath === "prisma/dev.db" ||
+        filePath.startsWith("prisma/dev.db-")
+      ) {
         return true;
       }
       if (/\.(sqlite3?|db-journal)$/.test(filePath)) {

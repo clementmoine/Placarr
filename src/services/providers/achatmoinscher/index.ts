@@ -224,6 +224,8 @@ export const achatmoinscherModule: ProviderModule = {
                   url: product.coverUrl,
                   role: ACHATMOINSCHER_LANGUAGE,
                   source: "achatmoinscher",
+                  title: product.name,
+                  retailCatalogImageTitlesSource: true,
                 },
               ]
             : undefined,

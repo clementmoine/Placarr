@@ -2,6 +2,8 @@ import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  chasseOfferLandedPriceCents,
+  extractChasseAuxLivresProductImages,
   fetchChasseAuxLivresMetadataProduct,
   fetchFromChasseAuxLivres,
   parseChasseAuxLivresProductPage,
@@ -9,19 +11,26 @@ import {
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 vi.mock("@/lib/http/flareSolverr", () => ({
-  fetchWithFlareSolverr: vi.fn().mockResolvedValue(null),
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+  flareSolverrDestroySession: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
+import {
+  flareSolverrDestroySession,
+  flareSolverrRequestGet,
+} from "@/lib/http/flareSolverr";
 
 const mockedGet = vi.mocked(axios.get);
-const mockedFlare = vi.mocked(fetchWithFlareSolverr);
+const mockedFlare = vi.mocked(flareSolverrRequestGet);
+const mockedFlareDestroy = vi.mocked(flareSolverrDestroySession);
 
 describe("parseChasseAuxLivresProductPage", () => {
   beforeEach(() => {
     mockedGet.mockReset();
     mockedFlare.mockReset();
     mockedFlare.mockResolvedValue(null);
+    mockedFlareDestroy.mockReset();
+    mockedFlareDestroy.mockResolvedValue(undefined);
   });
 
   it("exploite les donnees structurees JSON-LD d'une fiche produit", () => {
@@ -75,6 +84,66 @@ describe("parseChasseAuxLivresProductPage", () => {
     );
   });
 
+  it("collects all img.chasse-aux-livres.fr gallery photos from a product page", () => {
+    const html = `
+      <html><head>
+        <meta property="og:title" content="L'Art et la Création de Arcane"/>
+      </head><body>
+        <div id="book-details" data-thumbs="[{&quot;thumb&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg?w=96&quot;,&quot;full&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg?w=1000&quot;},{&quot;thumb&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/51B-AlWhOgL.jpg?w=96&quot;,&quot;full&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/51B-AlWhOgL.jpg?w=1000&quot;},{&quot;thumb&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg?w=96&quot;,&quot;full&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg?w=1000&quot;}]">
+          <img id="book-cover" src="https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg?w=1000"/>
+        </div>
+      </body></html>`;
+
+    expect(extractChasseAuxLivresProductImages(html)).toEqual([
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg",
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/51B-AlWhOgL.jpg",
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg",
+    ]);
+
+    const product = parseChasseAuxLivresProductPage(
+      html,
+      "https://www.chasse-aux-livres.fr/prix/B0D6XT35F8/l-art-et-la-creation-de-arcane-league-of-legends",
+    );
+    expect(product?.images).toHaveLength(3);
+    expect(product?.coverUrl).toBe(
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg",
+    );
+  });
+
+  it("ignore les vignettes marketplace dans #offers", () => {
+    const html = `
+      <html><body>
+        <div id="book-details" data-thumbs="[{&quot;thumb&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/51WWyFcJVlL.jpg?w=96&quot;,&quot;full&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/51WWyFcJVlL.jpg?w=1000&quot;},{&quot;thumb&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg?w=96&quot;,&quot;full&quot;:&quot;https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg?w=1000&quot;}]">
+          <img id="book-cover" src="https://img.chasse-aux-livres.fr/v7/_zmx1_/51WWyFcJVlL.jpg?w=300"/>
+        </div>
+        <div id="offers">
+          <img src="https://img.chasse-aux-livres.fr/v7/_zmx1_/41uJb6LmGjL.jpg?w=96" alt="Roman Arcane/League of Legends - Ambessa"/>
+          <img src="https://img.chasse-aux-livres.fr/v7/_zmx1_/41gMxwr+9bL.jpg?w=96" alt="Le monde du Studio Ghibli"/>
+          <img src="https://img.chasse-aux-livres.fr/v7/_c_/images/v2/dark-logo-440.png" alt="logo"/>
+        </div>
+      </body></html>`;
+
+    expect(extractChasseAuxLivresProductImages(html)).toEqual([
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/51WWyFcJVlL.jpg",
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg",
+    ]);
+  });
+
+  it("retombe sur les img du header quand data-thumbs est absent", () => {
+    const html = `
+      <html><body>
+        <img src="https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg?w=1000&h=1000"/>
+        <img src="https://img.chasse-aux-livres.fr/v7/_zmx1_/51B-AlWhOgL.jpg?w=1000&h=1000"/>
+        <img id="book-cover" src="https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg?w=1000"/>
+      </body></html>`;
+
+    expect(extractChasseAuxLivresProductImages(html)).toEqual([
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/61+3VWwlrqL.jpg",
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/51B-AlWhOgL.jpg",
+      "https://img.chasse-aux-livres.fr/v7/_zmx1_/51dD1--GPBL.jpg",
+    ]);
+  });
+
   it("parcourt les candidats de recherche jusqu'a trouver le numero demande", async () => {
     mockedGet.mockImplementation(async (url: string) => {
       if (url.includes("/search?")) {
@@ -83,9 +152,10 @@ describe("parseChasseAuxLivresProductPage", () => {
           request: { res: { responseUrl: url } },
         };
       }
-      if (url.includes("l=8")) {
+      if (url.includes("/rest/search-results") && url.includes("p=1")) {
         return {
           data: {
+            c: 2,
             d: `
               <a href="/prix/2092662422/super-picsou-geant-walt-disney-company">
                 <img src="https://img.example/generic.jpg" alt="Super Picsou géant"/>
@@ -136,6 +206,87 @@ describe("parseChasseAuxLivresProductPage", () => {
     });
   });
 
+  it("prefere un candidat barcode-confirme pour Black Stories", async () => {
+    const itemBarcode = "0827912079678";
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url.includes("/search?")) {
+        return {
+          data: '<html><body><div id="hash-cont" data-hash="hash-bs" data-duih=""></div></body></html>',
+          request: { res: { responseUrl: url } },
+        };
+      }
+      if (url.includes("/rest/search-results") && url.includes("p=1")) {
+        return {
+          data: {
+            c: 1,
+            d: `
+              <a href="/prix/B071ZXH7MV/black-stories-fantastique">
+                <img src="https://img.example/fantastique.jpg" alt="Black Stories Fantastique"/>
+              </a>
+            `,
+          },
+        };
+      }
+      if (url.includes("/rest/search-results") && url.includes("p=2")) {
+        return {
+          data: {
+            c: 1,
+            d: `
+              <a href="/prix/B001K9E2SQ/iello-black-stories">
+                <img src="https://img.example/classic.jpg" alt="Iello Black Stories"/>
+              </a>
+            `,
+          },
+        };
+      }
+      if (url.includes("black-stories-fantastique")) {
+        return {
+          data: productHtml({
+            name: "Black Stories Fantastique",
+            sku: "B071ZXH7MV",
+            image: "https://img.example/fantastique.jpg",
+          }),
+          request: {
+            res: {
+              responseUrl:
+                "https://www.chasse-aux-livres.fr/prix/B071ZXH7MV/black-stories-fantastique",
+            },
+          },
+        };
+      }
+      if (url.includes("iello-black-stories")) {
+        return {
+          data: productHtml({
+            name: "Iello Black Stories",
+            sku: "B001K9E2SQ",
+            image: "https://img.example/classic.jpg",
+            gtin13: itemBarcode,
+          }),
+          request: {
+            res: {
+              responseUrl:
+                "https://www.chasse-aux-livres.fr/prix/B001K9E2SQ/iello-black-stories",
+            },
+          },
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    const product = await fetchChasseAuxLivresMetadataProduct(
+      itemBarcode,
+      "toys",
+      { anchoredItemBarcode: itemBarcode },
+    );
+
+    expect(product).toMatchObject({
+      name: "Iello Black Stories",
+      barcode: itemBarcode,
+      productUrl:
+        "https://www.chasse-aux-livres.fr/prix/B001K9E2SQ/iello-black-stories",
+    });
+  });
+
   it("exploite directement une URL produit Chasse aux Livres", async () => {
     mockedGet.mockResolvedValueOnce({
       data: productHtml({
@@ -177,9 +328,8 @@ describe("parseChasseAuxLivresProductPage", () => {
         "https://www.chasse-aux-livres.fr/search?query=Super%20Picsou%20G%C3%A9ant%20n%C2%B001&catalog=fr",
         expect.objectContaining({ timeout: 8000 }),
       );
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[ChasseAuxLivres] Metadata lookup failed"),
-      );
+      expect(mockedFlare).toHaveBeenCalled();
+      expect(warnSpy).not.toHaveBeenCalled();
       expect(errorSpy).not.toHaveBeenCalled();
     } finally {
       warnSpy.mockRestore();
@@ -193,38 +343,106 @@ describe("fetchFromChasseAuxLivres", () => {
     mockedGet.mockReset();
     mockedFlare.mockReset();
     mockedFlare.mockResolvedValue(null);
+    mockedFlareDestroy.mockReset();
+    mockedFlareDestroy.mockResolvedValue(undefined);
+  });
+
+  it("retombe sur FlareSolverr quand la page recherche directe n'expose pas de hash", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: "<html><body>anti-bot shell without hash</body></html>",
+      request: {
+        res: {
+          responseUrl:
+            "https://www.chasse-aux-livres.fr/search?query=Black%20Stories&catalog=toys",
+        },
+      },
+    });
+    mockedFlare
+      .mockResolvedValueOnce(
+        '<html><body><div id="hash-cont" data-hash="flare-hash" data-duih=""></div></body></html>',
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          c: 1,
+          d: '<a href="/prix/B001K9E2SQ/iello-black-stories"><img src="https://img.example/classic.jpg" alt="Iello Black Stories"/></a>',
+        }),
+      )
+      .mockResolvedValueOnce(
+        productHtml({
+          name: "Iello Black Stories",
+          sku: "B001K9E2SQ",
+          image: "https://img.example/classic.jpg",
+          gtin13: "0827912079678",
+        }),
+      );
+
+    const product = await fetchChasseAuxLivresMetadataProduct(
+      "Black Stories",
+      "toys",
+      { anchoredItemBarcode: "0827912079678" },
+    );
+
+    expect(product?.sku).toBe("B001K9E2SQ");
+    expect(mockedFlare).toHaveBeenCalled();
   });
 
   it("utilise FlareSolverr quand la recherche directe renvoie une page login", async () => {
-    mockedGet
-      .mockResolvedValueOnce({
-        data: "<html><title>Connexion - Chasse aux livres</title></html>",
-        request: {
-          res: {
-            responseUrl: "https://www.chasse-aux-livres.fr/login?protect=true",
-          },
+    mockedGet.mockResolvedValueOnce({
+      data: "<html><title>Connexion - Chasse aux livres</title></html>",
+      request: {
+        res: {
+          responseUrl: "https://www.chasse-aux-livres.fr/login?protect=true",
         },
-      })
-      .mockResolvedValueOnce({
-        data: { d: "" },
-      });
-    mockedFlare.mockResolvedValue(
-      '<html><body data-hash="flare-hash"></body></html>',
-    );
+      },
+    });
+    mockedFlare
+      .mockResolvedValueOnce(
+        '<html><body><div id="hash-cont" data-hash="flare-hash" data-duih=""></div></body></html>',
+      )
+      .mockResolvedValueOnce('{"c":0,"d":""}');
 
     const products = await fetchFromChasseAuxLivres("9780140328721", "fr");
 
     expect(products).toEqual([]);
-    expect(mockedFlare).toHaveBeenCalledWith(
+    expect(mockedFlare).toHaveBeenNthCalledWith(
+      1,
       "https://www.chasse-aux-livres.fr/search?query=9780140328721&catalog=fr",
-      25_000,
-      undefined,
+      expect.objectContaining({
+        maxTimeoutMs: 25_000,
+        session: expect.any(String),
+      }),
     );
-    expect(mockedGet).toHaveBeenNthCalledWith(
+    expect(mockedFlare).toHaveBeenNthCalledWith(
       2,
-      "https://www.chasse-aux-livres.fr/rest/search-results?h=flare-hash&p=1&l=1",
-      expect.objectContaining({ timeout: 8000 }),
+      "https://www.chasse-aux-livres.fr/rest/search-results?h=flare-hash&p=1&l=1&duih=",
+      expect.objectContaining({
+        maxTimeoutMs: 25_000,
+        session: expect.any(String),
+      }),
     );
+    expect(mockedFlareDestroy).toHaveBeenCalled();
+  });
+});
+
+describe("chasseOfferLandedPriceCents", () => {
+  it("prefers totalPrice when present (recap Meilleur prix)", () => {
+    expect(
+      chasseOfferLandedPriceCents({
+        price: { amount: 1745 },
+        shippingCost: { amount: 299 },
+        totalPrice: { amount: 2044 },
+      }),
+    ).toBe(2044);
+  });
+
+  it("sums item price, shipping and fees when totalPrice is absent", () => {
+    expect(
+      chasseOfferLandedPriceCents({
+        price: { amount: 580 },
+        shippingCost: { amount: 399 },
+        fees: { amount: 0 },
+      }),
+    ).toBe(979);
   });
 });
 
@@ -232,11 +450,14 @@ function productHtml({
   name,
   sku,
   image,
+  gtin13,
 }: {
   name: string;
   sku: string;
   image: string;
+  gtin13?: string;
 }) {
+  const gtinField = gtin13 ? `,"gtin13": ${JSON.stringify(gtin13)}` : "";
   return `
     <html>
       <head>
@@ -246,7 +467,7 @@ function productHtml({
             "@type": ["Product", "Book"],
             "name": ${JSON.stringify(name)},
             "sku": ${JSON.stringify(sku)},
-            "image": ${JSON.stringify(image)}
+            "image": ${JSON.stringify(image)}${gtinField}
           }
         </script>
       </head>

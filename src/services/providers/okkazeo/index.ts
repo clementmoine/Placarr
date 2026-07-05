@@ -6,9 +6,17 @@ import {
 import { createMetadataHealthCheck, pingUrl } from "@/lib/provider/healthUtils";
 import { teardownMetadataWhen } from "@/lib/provider/teardownHelpers";
 
+import { pricedOffers } from "@/lib/provider/priceOffers";
+import { providerProductUrlsForKey } from "@/lib/pricing/providerProductUrls";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
 import { barcodeSourceFactsFromFields } from "@/lib/barcode/evidence/sourceFacts";
+import { retailerProductUrlBarcodeConflicts } from "@/lib/retailer/productUrl";
 import type {
   BarcodeLookupType,
+  BarcodePriceRefreshContext,
   MetadataAdapterContext,
   MetadataProviderAdapter,
   ProviderModule,
@@ -25,6 +33,71 @@ const fetchFromOkkazeo = createOkkazeoResolver();
 // "generic" included so typeless home-page scans get this board-game anchor too
 // (parity with the video-game stack, which already fires in the generic branch).
 const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
+const OKKAZEO_PROVIDER_KEY = "okkazeo";
+const PRICE_SOURCE = "Okkazeo";
+
+async function refreshOkkazeoOffers(
+  ctx: BarcodePriceRefreshContext,
+): Promise<ReturnType<typeof pricedOffers>> {
+  const resolvedProductUrls = providerProductUrlsForKey(
+    OKKAZEO_PROVIDER_KEY,
+    ctx.providerProductUrls,
+  ).filter(
+    (url) =>
+      !ctx.cleanedBarcode ||
+      !retailerProductUrlBarcodeConflicts(url, ctx.cleanedBarcode),
+  );
+
+  for (const productUrl of resolvedProductUrls) {
+    const game = await fetchOkkazeoGame(productUrl);
+    if (game.priceCents != null && game.priceCents > 0) {
+      return pricedOffers(PRICE_SOURCE, [
+        {
+          condition: "used",
+          priceCents: game.priceCents,
+          rawValue: game,
+          extra: {
+            productName: game.title,
+            sourceUrl: game.productUrl,
+            totalCents: game.priceCents,
+          },
+        },
+      ]);
+    }
+  }
+
+  if (ctx.cleanedBarcode) {
+    const hit = await searchOkkazeo("", ctx.cleanedBarcode);
+    if (hit) {
+      const game = await fetchOkkazeoGame(hit.url);
+      const resolvedBarcode = normalizeProductBarcode(game.barcode);
+      const itemBarcode = normalizeProductBarcode(ctx.cleanedBarcode);
+      if (
+        resolvedBarcode &&
+        itemBarcode &&
+        !barcodesEquivalent(resolvedBarcode, itemBarcode)
+      ) {
+        return [];
+      }
+      if (game.priceCents != null && game.priceCents > 0) {
+        return pricedOffers(PRICE_SOURCE, [
+          {
+            condition: "used",
+            priceCents: game.priceCents,
+            rawValue: game,
+            extra: {
+              productName: game.title,
+              sourceUrl: game.productUrl,
+              totalCents: game.priceCents,
+            },
+          },
+        ]);
+      }
+    }
+  }
+
+  return [];
+}
 
 export const okkazeoModule: ProviderModule = {
   info: {
@@ -147,6 +220,7 @@ export const okkazeoModule: ProviderModule = {
       },
     ];
   },
+  refreshBarcodePriceOffers: refreshOkkazeoOffers,
 };
 
 export { createOkkazeoResolver, fetchOkkazeoGame, searchOkkazeo };

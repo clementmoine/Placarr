@@ -30,8 +30,13 @@ import {
 } from "@/services/metadata/merge";
 import {
   dedupeFieldEvidence,
+  dedupeFacts,
   metadataFieldEvidence,
 } from "@/services/metadata/facts";
+import {
+  dedupeProviderExternalLinkFacts,
+  externalLinkFactsFromFieldEvidence,
+} from "@/lib/metadata/providerExternalLinks";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { buildBoardGameMetadataSearchQueries } from "@/lib/metadata/boardGame";
 import { buildBookMetadataSearchQueries } from "@/lib/metadata/bookSearch";
@@ -599,11 +604,28 @@ export async function fetchMetadata(
         )
       : [];
 
+  const aggregatedFieldEvidence = dedupeFieldEvidence([
+    ...fieldEvidence,
+    ...catalogTitleEvidence,
+  ]);
+  const factsWithProviderLinks = dedupeProviderExternalLinkFacts(
+    dedupeFacts([
+      ...(finalMerged.facts ?? []),
+      ...externalLinkFactsFromFieldEvidence(
+        aggregatedFieldEvidence,
+        finalMerged.facts ?? [],
+      ),
+    ]) ?? [],
+  );
+
   const mergedWithEvidence: MetadataResult = {
     ...finalMerged,
+    facts:
+      factsWithProviderLinks.length > 0
+        ? factsWithProviderLinks
+        : finalMerged.facts,
     fieldEvidence: dedupeFieldEvidence([
-      ...fieldEvidence,
-      ...catalogTitleEvidence,
+      ...aggregatedFieldEvidence,
       ...metadataFieldEvidence("MergedEngine", finalMerged, {
         confidence: 0.8,
         priority: 200,

@@ -1,7 +1,10 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
 
 const BASE_URL = "https://www.okkazeo.com";
 const HEADERS = {
@@ -298,7 +301,12 @@ export async function fetchOkkazeoBarcodeProduct(
     // it. Reject only on an explicit mismatch so barcode→item is never
     // confidently wrong.
     const resolvedBarcode = normalizeProductBarcode(game.barcode);
-    if (resolvedBarcode && resolvedBarcode !== normalizedBarcode) return null;
+    if (
+      resolvedBarcode &&
+      !barcodesEquivalent(resolvedBarcode, normalizedBarcode)
+    ) {
+      return null;
+    }
 
     return {
       title: game.title,

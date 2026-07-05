@@ -124,14 +124,18 @@ export function retailerCatalogSharesRequestedIdentity(
   if (franchiseSequelNumbersConflict([requestedName], catalogTitle)) {
     return false;
   }
+
   const requestedBase = extractBaseTitleVariant(requestedName) ?? requestedName;
   const identityTokens = distinctiveProductTokens(requestedBase);
   if (identityTokens.length === 0) return false;
 
-  const catalogTokenSet = new Set(distinctiveTokens(catalogTitle));
-  return identityTokens.some((token) =>
+  const catalogTokenSet = new Set(distinctiveProductTokens(catalogTitle));
+  const leadMatch = identityTokens.some((token) =>
     titleTokenPresentInSet(token, catalogTokenSet),
   );
+  if (!leadMatch) return false;
+
+  return priceListingSharesItemIdentity(requestedName, catalogTitle);
 }
 
 export function priceListingSharesItemIdentity(

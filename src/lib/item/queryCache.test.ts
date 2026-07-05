@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 
-import { patchCachedItem, patchCachedShelf, shelfListItemMissingAttachments } from "./queryCache";
+import {
+  patchCachedItem,
+  patchCachedShelf,
+  shelfListItemMissingAttachments,
+} from "./queryCache";
 
 describe("patchCachedItem", () => {
   it("inserts a newly created item into the cached shelf immediately", () => {

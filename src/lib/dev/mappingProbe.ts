@@ -249,7 +249,11 @@ const RAW_KEY_ALIASES: Record<string, string[]> = {
   fieldcover: ["imageUrl", "attachments", "cover"],
   imagecover: ["imageUrl", "attachments", "cover", "attachment:cover"],
   imagecoverfull: ["imageUrl", "attachments", "cover"],
-  imagegallery: ["attachment:image", "attachment:screenshot", "attachment:background"],
+  imagegallery: [
+    "attachment:image",
+    "attachment:screenshot",
+    "attachment:background",
+  ],
   imagecouvertures: ["attachment:cover", "imageUrl"],
   imageversos: ["attachment:image", "image:gallery"],
   imageverso: ["attachment:image", "image:gallery"],

@@ -1,8 +1,6 @@
 import { createMetadataHealthCheck } from "@/lib/provider/healthUtils";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
-import {
-  collectObjectMappingSignals,
-} from "@/lib/dev/scrapeMappingSignals";
+import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { stripLegalMarkSymbols } from "@/lib/search/query";
 import type { ProviderModule } from "@/types/providerModule";

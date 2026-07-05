@@ -1,6 +1,9 @@
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { MediaType } from "@/types/providerRegistry";
-import { isGameMediaGallerySource } from "@/services/provider/sourceTraits";
+import {
+  isBookGallerySource,
+  isGameMediaGallerySource,
+} from "@/services/provider/sourceTraits";
 import { isMissingGameMediaGallery } from "@/lib/metadata/galleries";
 
 /** True when at least one attachment comes from a game-media gallery provider. */
@@ -14,21 +17,41 @@ export function metadataResultsHaveGameGallerySource(
   );
 }
 
+/** True when at least one attachment comes from a book gallery provider. */
+export function metadataResultsHaveBookGallerySource(
+  results: Array<MetadataResult | null | undefined>,
+): boolean {
+  return results.some((result) =>
+    result?.attachments?.some(
+      (attachment) =>
+        isBookGallerySource(attachment.source) ||
+        isGameMediaGallerySource(attachment.source),
+    ),
+  );
+}
+
 /**
- * Games still need provider round-trips when the merge would only expose a
- * single listing thumbnail instead of a real multi-source gallery.
+ * Items still need provider round-trips when the merge would only expose catalog
+ * thumbnails instead of a real multi-source retailer gallery.
  */
 export function metadataResultsNeedGalleryEnrichment(
   type: MediaType,
   results: Array<MetadataResult | null | undefined>,
   barcode?: string | null,
 ): boolean {
-  if (type !== "games") return false;
-
   const active = results.filter(Boolean) as MetadataResult[];
-  if (active.length === 0) return true;
-  if (metadataResultsHaveGameGallerySource(active)) return false;
+  if (type === "games") {
+    if (active.length === 0) return true;
+    if (metadataResultsHaveGameGallerySource(active)) return false;
 
-  const attachments = active.flatMap((result) => result.attachments ?? []);
-  return isMissingGameMediaGallery(type, barcode, attachments);
+    const attachments = active.flatMap((result) => result.attachments ?? []);
+    return isMissingGameMediaGallery(type, barcode, attachments);
+  }
+
+  if (type === "books") {
+    if (active.length === 0) return true;
+    return !metadataResultsHaveBookGallerySource(active);
+  }
+
+  return false;
 }

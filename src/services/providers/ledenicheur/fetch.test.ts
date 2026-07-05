@@ -1,15 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("axios", () => ({ default: { post: vi.fn() } }));
+vi.mock("axios", () => ({
+  default: {
+    post: vi.fn(),
+    get: vi.fn(),
+  },
+}));
 import axios from "axios";
 
 import {
+  extractLeDenicheurProductGtinFromHtml,
   extractLeDenicheurProductId,
   fetchPricesFromLeDenicheur,
+  leDenicheurGtinForItem,
   parseLeDenicheurPriceSummary,
 } from "./fetch";
 
 const mockedPost = vi.mocked(axios.post);
+const mockedGet = vi.mocked(axios.get);
 
 function productNode(
   name: string,
@@ -73,6 +81,26 @@ function productDetailResponse(
 
 beforeEach(() => {
   mockedPost.mockReset();
+  mockedGet.mockReset();
+});
+
+describe("extractLeDenicheurProductGtinFromHtml", () => {
+  it("lit le GTIN depuis le payload RSC de la fiche produit", () => {
+    expect(
+      extractLeDenicheurProductGtinFromHtml(
+        'payload \\"children\\":\\"GTIN\\" foo \\"children\\":\\"05906395350148\\" tail',
+      ),
+    ).toBe("05906395350148");
+  });
+
+  it("choisit le GTIN qui matche l'EAN item quand la page en liste plusieurs", () => {
+    expect(
+      leDenicheurGtinForItem(
+        "<div>00827912079678, 00721450083817, 0403347790057</div>",
+        "0827912079678",
+      ),
+    ).toBe("00827912079678");
+  });
 });
 
 describe("parseLeDenicheurPriceSummary", () => {
@@ -217,7 +245,7 @@ describe("fetchPricesFromLeDenicheur", () => {
     expect(result?.priceNew).toBe(3450);
   });
 
-  it("accepte un code-barres sans filtrage de pertinence", async () => {
+  it("accepte un code-barres sans filtrage de pertinence hors ancrage EAN", async () => {
     mockedPost
       .mockResolvedValueOnce(
         bffResponse([productNode("Produit générique", 12)]),
@@ -228,6 +256,109 @@ describe("fetchPricesFromLeDenicheur", () => {
 
     const result = await fetchPricesFromLeDenicheur("5021290082728");
     expect(result?.productName).toBe("Produit générique");
+    expect(result?.priceNew).toBe(1200);
+  });
+
+  it("rejette un produit dont le GTIN de page contredit l'EAN item", async () => {
+    mockedPost.mockResolvedValueOnce(
+      bffResponse([
+        productNode(
+          "Black Stories: Funny Death Edition 2",
+          12,
+          "/product.php?p=4955683",
+        ),
+      ]),
+    );
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: "<p>GTIN</p><div>05906395350148</div>",
+    } as never);
+
+    const result = await fetchPricesFromLeDenicheur("Black Stories", {
+      itemBarcode: "0827912079678",
+    });
+    expect(result).toBeNull();
+    expect(mockedGet).toHaveBeenCalled();
+  });
+
+  it("retient le bon produit quand le GTIN confirmé est plus loin dans les résultats", async () => {
+    const wrongEdition = (id: number, name: string) =>
+      productNode(name, 12, `/product.php?p=${id}`);
+    mockedPost.mockResolvedValueOnce(
+      bffResponse([
+        wrongEdition(4955676, "Black Stories 10"),
+        wrongEdition(4955683, "Black Stories: Funny Death Edition 2"),
+        productNode("Black Stories", 15.9, "/product.php?p=2608098"),
+      ]),
+    );
+    mockedGet
+      .mockResolvedValueOnce({
+        status: 200,
+        data: 'payload \\"children\\":\\"GTIN\\" foo \\"children\\":\\"1111111111111\\"',
+      } as never)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: 'payload \\"children\\":\\"GTIN\\" foo \\"children\\":\\"05906395350148\\"',
+      } as never)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: "<div>00827912079678, 00721450083817, 0403347790057</div>",
+      } as never);
+    mockedPost.mockResolvedValueOnce(
+      productDetailResponse(2608098, "Black Stories", 15.9, null),
+    );
+
+    const result = await fetchPricesFromLeDenicheur("Black Stories", {
+      itemBarcode: "0827912079678",
+    });
+    expect(result?.sourceUrl).toBe(
+      "https://ledenicheur.fr/product.php?p=2608098",
+    );
+    expect(result?.productGtin).toBe("00827912079678");
+  });
+
+  it("rejects a wrong edition when GTIN is unknown but the item title is specific", async () => {
+    mockedPost.mockResolvedValueOnce(
+      bffResponse([
+        productNode(
+          "Black Stories: Funny Death Edition 2",
+          12,
+          "/product.php?p=4955683",
+        ),
+      ]),
+    );
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: "<html><body><p>Pas de GTIN ici</p></body></html>",
+    } as never);
+
+    const result = await fetchPricesFromLeDenicheur(
+      ["0721450083770", "Black Stories - Femmes Fatales"],
+      {
+        itemBarcode: "0721450083770",
+        itemTitle: "Black Stories - Femmes Fatales",
+      },
+    );
+    expect(result).toBeNull();
+  });
+
+  it("accepte un produit sans GTIN de page quand le titre est aligné", async () => {
+    mockedPost
+      .mockResolvedValueOnce(
+        bffResponse([productNode("Black Stories", 12, "/product.php?p=9999")]),
+      )
+      .mockResolvedValueOnce(
+        productDetailResponse(9999, "Black Stories", 12, null),
+      );
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: "<html><body>Informations produit</body></html>",
+    } as never);
+
+    const result = await fetchPricesFromLeDenicheur("Black Stories", {
+      itemBarcode: "0827912079678",
+    });
+    expect(result?.productName).toBe("Black Stories");
     expect(result?.priceNew).toBe(1200);
   });
 

@@ -15,6 +15,7 @@ import {
   type PriceOfferInput,
 } from "@/services/metadata/evidence";
 import { buildPriceSearchQueries } from "@/lib/pricing/searchQueries";
+import type { ProviderProductUrlRef } from "@/types/providerModule";
 import { parsePriceProviderSources } from "@/lib/pricing/cachePolicy";
 import { containsGameClassicsKeyword } from "@/lib/barcode/listingTerms";
 import {
@@ -26,6 +27,10 @@ import {
   collectRefreshBarcodePriceOffers,
   priceProviderTokenFromOffers,
 } from "@/services/provider/barcodePrices";
+import {
+  persistProviderExternalLinksForBarcodeItems,
+  persistProviderExternalLinksForMetadata,
+} from "@/services/metadata/persistProviderExternalLinks";
 import {
   isReferencePriceSource,
   isBarcodeScopedPriceSource,
@@ -67,6 +72,8 @@ export type RefreshBarcodePricesInput = {
   primaryName: string;
   /** Extra query names (metadata title, aliases…) merged ahead of cached raw names. */
   extraNames?: string[];
+  /** Product-page URLs from metadata facts, keyed by provider id. */
+  providerProductUrls?: readonly ProviderProductUrlRef[];
 };
 
 type GetCachedBarcodePricesOptions = {
@@ -85,6 +92,7 @@ export type RefreshItemPricesInput = {
   extraNames?: string[];
   itemId: string;
   metadataId?: string | null;
+  providerProductUrls?: readonly ProviderProductUrlRef[];
 };
 
 function averageCents(values: number[]) {
@@ -126,9 +134,7 @@ function trustedGameUsedOffers(
   return trusted.length > 0 ? trusted : used;
 }
 
-function dropAccessoryListings(
-  offers: PriceObservation[],
-): PriceObservation[] {
+function dropAccessoryListings(offers: PriceObservation[]): PriceObservation[] {
   return offers.filter((offer) => {
     const listing = offer.productName?.trim();
     if (!listing) return true;
@@ -159,9 +165,7 @@ function dropUnnamedMarketplaceNoise(
   const namedMatches = offers.filter((offer) => offer.productName?.trim());
   if (namedMatches.length === 0) {
     if (!options.strictReferenceOnly) return offers;
-    return offers.filter((offer) =>
-      isReferencePriceSource(offer.source ?? ""),
-    );
+    return offers.filter((offer) => isReferencePriceSource(offer.source ?? ""));
   }
 
   const namedMarketplace = namedMatches.filter(
@@ -1038,6 +1042,8 @@ export async function persistBarcodePrices(params: {
     data: { priceNew, priceUsed, priceUsedCIB, priceLastUpdated: now },
   });
 
+  await persistProviderExternalLinksForBarcodeItems(cleanedBarcode, merged);
+
   return withPriceSourceTraits({
     priceNew,
     priceUsed,
@@ -1081,6 +1087,18 @@ export async function persistItemPrices(params: {
   );
   const now = new Date();
 
+  if (metadataId) {
+    const item = await prisma.item.findUnique({
+      where: { id: itemId },
+      select: { barcode: true, name: true },
+    });
+    await persistProviderExternalLinksForMetadata(metadataId, {
+      itemBarcode: item?.barcode,
+      itemTitle: item?.name,
+      priceOffers: merged,
+    });
+  }
+
   return withPriceSourceTraits({
     priceNew,
     priceUsed,
@@ -1105,6 +1123,7 @@ export async function refreshBarcodePrices(
     shelfName,
     primaryName,
     extraNames = [],
+    providerProductUrls = [],
   } = input;
 
   const cached = await prisma.barcodeCache.findUnique({
@@ -1147,6 +1166,7 @@ export async function refreshBarcodePrices(
     leDenicheurQueries,
     isPal,
     isClassics,
+    providerProductUrls,
   });
 
   return persistBarcodePrices({
@@ -1170,6 +1190,7 @@ export async function refreshItemPrices(
     extraNames = [],
     itemId,
     metadataId,
+    providerProductUrls = [],
   } = input;
 
   console.log(
@@ -1199,6 +1220,7 @@ export async function refreshItemPrices(
     leDenicheurQueries: fallbackNames,
     isPal: !hasNtscIndicator,
     isClassics: false,
+    providerProductUrls,
   });
 
   return persistItemPrices({

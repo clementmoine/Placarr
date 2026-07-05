@@ -113,7 +113,7 @@ export const chocobonplanModule: ProviderModule = {
   info: {
     id: "chocobonplan",
     label: "ChocoBonPlan",
-    types: ["games", "movies", "musics", "boardgames"],
+    types: ["games", "movies", "musics", "boardgames", "books"],
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
     canonical: false,

@@ -58,3 +58,47 @@ describe("metadataResultsNeedGalleryEnrichment", () => {
     ).toBe(true);
   });
 });
+
+describe("metadataResultsNeedGalleryEnrichment for books", () => {
+  it("keeps chasing retailer galleries while only catalog covers exist", () => {
+    expect(
+      metadataResultsNeedGalleryEnrichment(
+        "books",
+        [
+          {
+            title: "Arcane",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://cdn1.booknode.com/book_cover/full.jpg",
+                source: "booknode",
+              },
+            ],
+          },
+        ],
+        "9791035505677",
+      ),
+    ).toBe(true);
+  });
+
+  it("stops once a book gallery source contributed images", () => {
+    expect(
+      metadataResultsNeedGalleryEnrichment(
+        "books",
+        [
+          {
+            title: "Arcane",
+            attachments: [
+              {
+                type: "screenshot",
+                url: "https://chocobonplan.com/wp-content/uploads/screen.jpg",
+                source: "chocobonplan",
+              },
+            ],
+          },
+        ],
+        "9791035505677",
+      ),
+    ).toBe(false);
+  });
+});

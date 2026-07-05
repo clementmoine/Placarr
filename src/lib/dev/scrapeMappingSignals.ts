@@ -29,13 +29,28 @@ export function collectCapabilityExpectedSignals(
         pushUnique(signals, "image:cover", "field:imageurl", "field:cover");
         break;
       case "screenshots":
-        pushUnique(signals, "image:gallery", "image:screenshot", "field:screenshots");
+        pushUnique(
+          signals,
+          "image:gallery",
+          "image:screenshot",
+          "field:screenshots",
+        );
         break;
       case "description":
-        pushUnique(signals, "field:description", "field:synopsis", "field:overview");
+        pushUnique(
+          signals,
+          "field:description",
+          "field:synopsis",
+          "field:overview",
+        );
         break;
       case "price":
-        pushUnique(signals, "field:price", "field:pricecents", "field:pricenew");
+        pushUnique(
+          signals,
+          "field:price",
+          "field:pricecents",
+          "field:pricenew",
+        );
         break;
       case "rating":
         pushUnique(signals, "field:rating", "field:ratingvalue");
@@ -44,7 +59,12 @@ export function collectCapabilityExpectedSignals(
         pushUnique(signals, "field:agerating", "field:certification");
         break;
       case "releaseDate":
-        pushUnique(signals, "field:releasedate", "field:year", "field:released");
+        pushUnique(
+          signals,
+          "field:releasedate",
+          "field:year",
+          "field:released",
+        );
         break;
       case "people":
         pushUnique(signals, "field:authors", "field:people", "field:director");
@@ -53,7 +73,12 @@ export function collectCapabilityExpectedSignals(
         pushUnique(signals, "field:players", "field:maxplayers");
         break;
       case "duration":
-        pushUnique(signals, "field:duration", "field:playtime", "field:runtime");
+        pushUnique(
+          signals,
+          "field:duration",
+          "field:playtime",
+          "field:runtime",
+        );
         break;
       case "identify":
         pushUnique(signals, "field:title", "field:name", "field:barcode");
@@ -73,9 +98,12 @@ export function collectHtmlMappingSignals(html: string): string[] {
     /<meta[^>]+(?:property|name)=["']([^"']+)["'][^>]+content=["']([^"']+)["']/gi,
   )) {
     const key = match[1]?.toLowerCase();
-    if (key?.includes("image")) pushUnique(signals, "image:cover", `meta:${key}`);
-    if (key?.includes("description")) pushUnique(signals, "field:description", `meta:${key}`);
-    if (key?.includes("title")) pushUnique(signals, "field:title", `meta:${key}`);
+    if (key?.includes("image"))
+      pushUnique(signals, "image:cover", `meta:${key}`);
+    if (key?.includes("description"))
+      pushUnique(signals, "field:description", `meta:${key}`);
+    if (key?.includes("title"))
+      pushUnique(signals, "field:title", `meta:${key}`);
   }
 
   for (const match of html.matchAll(
@@ -84,8 +112,13 @@ export function collectHtmlMappingSignals(html: string): string[] {
     const id = match[1]?.trim();
     const value = match[2]?.trim();
     if (!id || !value) continue;
-    pushUnique(signals, `field:${normalizeSignal(id)}`, `hidden:${normalizeSignal(id)}`);
-    if (/ean|isbn|barcode/i.test(id)) pushUnique(signals, "field:barcode", "field:ean");
+    pushUnique(
+      signals,
+      `field:${normalizeSignal(id)}`,
+      `hidden:${normalizeSignal(id)}`,
+    );
+    if (/ean|isbn|barcode/i.test(id))
+      pushUnique(signals, "field:barcode", "field:ean");
     if (/couverture|cover/i.test(id)) pushUnique(signals, "image:cover");
     if (/page/i.test(id)) pushUnique(signals, "field:pagecount");
   }
@@ -112,9 +145,7 @@ export function collectHtmlMappingSignals(html: string): string[] {
     "Quatriemes",
   ];
   for (const kind of mediaKinds) {
-    if (
-      new RegExp(`/media/${kind}/[^"'\\s?)]+`, "i").test(html)
-    ) {
+    if (new RegExp(`/media/${kind}/[^"'\\s?)]+`, "i").test(html)) {
       pushUnique(signals, `image:${normalizeSignal(kind)}`, "image:gallery");
     }
   }
@@ -163,7 +194,9 @@ export function collectMarkdownMappingSignals(markdown: string): string[] {
     if (match[1]?.includes("/full/")) pushUnique(signals, "image:cover-full");
   }
 
-  const coversLink = markdown.match(/Couver[^\]]+\]\([^)]+\/covers[^)]*"([^"]+)"/i);
+  const coversLink = markdown.match(
+    /Couver[^\]]+\]\([^)]+\/covers[^)]*"([^"]+)"/i,
+  );
   if (coversLink) {
     const count = coversLink[1]?.match(/(\d+)/)?.[1];
     pushUnique(signals, "page:covers", "image:gallery");
@@ -210,7 +243,8 @@ export function collectObjectMappingSignals(
   }
 
   if (typeof value !== "object") {
-    if (typeof value === "string" && IMAGE_URL.test(value)) return ["image:cover"];
+    if (typeof value === "string" && IMAGE_URL.test(value))
+      return ["image:cover"];
     return [];
   }
 
@@ -230,7 +264,11 @@ export function collectObjectMappingSignals(
     }
 
     if (typeof raw === "object") {
-      for (const nested of collectObjectMappingSignals(raw, depth + 1, maxDepth)) {
+      for (const nested of collectObjectMappingSignals(
+        raw,
+        depth + 1,
+        maxDepth,
+      )) {
         pushUnique(signals, nested);
       }
     }

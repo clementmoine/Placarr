@@ -2,7 +2,11 @@ import axios from "axios";
 import sharp from "sharp";
 import { decode as decodeHTMLEntities } from "html-entities";
 
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import {
+  barcodesEquivalent,
+  normalizeProductBarcode,
+} from "@/lib/barcode/normalize";
+import { retailerCatalogBarcodeGate } from "@/lib/retailer/productUrl";
 
 const BASE_URL = "https://www.philibertnet.com";
 
@@ -446,7 +450,9 @@ function parseProductLinks(
   }
 
   if (preferredBarcode) {
-    const exact = hits.filter((hit) => hit.barcode === preferredBarcode);
+    const exact = hits.filter((hit) =>
+      barcodesEquivalent(hit.barcode, preferredBarcode),
+    );
     if (exact.length > 0) return exact;
   }
 
@@ -528,7 +534,12 @@ export async function fetchPhilibertBarcodeProduct(
     const resolvedBarcode =
       normalizeProductBarcode(product.barcode) ||
       normalizeProductBarcode(hit.barcode);
-    if (resolvedBarcode !== normalizedBarcode) return null;
+    const gate = retailerCatalogBarcodeGate({
+      productUrl: hit.url,
+      productBarcode: resolvedBarcode,
+      itemBarcode: normalizedBarcode,
+    });
+    if (!gate.catalogBarcodeConfirmed || gate.barcodeContradicted) return null;
 
     return {
       title,

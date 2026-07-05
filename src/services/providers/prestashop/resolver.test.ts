@@ -57,7 +57,7 @@ beforeEach(() => {
 describe("createPrestashopResolver — garde barcode→item", () => {
   const resolve = createPrestashopResolver(CONFIG);
 
-  it("rejette un ean13 confirmé quand le titre catalogue ne correspond pas au produit demandé", async () => {
+  it("accepte un ean13 confirmé même si le titre catalogue diffère du nom demandé", async () => {
     mockedSearch.mockResolvedValue(
       product({ title: "Catan — Édition FR", barcode: BARCODE }),
     );
@@ -67,7 +67,7 @@ describe("createPrestashopResolver — garde barcode→item", () => {
       barcode: BARCODE,
     });
 
-    expect(result).toBeNull();
+    expect(result?.title).toBe("Catan — Édition FR");
   });
 
   it("accepte un ean13 confirmé quand le titre catalogue correspond au produit demandé", async () => {
@@ -90,14 +90,53 @@ describe("createPrestashopResolver — garde barcode→item", () => {
     expect(result).toBeNull();
   });
 
-  it("accepte un produit non confirmé par l'ean13 si le titre correspond à la requête", async () => {
+  it("rejette un produit non confirmé par l'ean13 même si le titre correspond", async () => {
     mockedSearch.mockResolvedValue(
       product({ title: "Catan", barcode: undefined }),
     );
 
     const result = await resolve({ name: "Catan", barcode: BARCODE });
 
-    expect(result?.title).toBe("Catan");
+    expect(result).toBeNull();
+  });
+
+  it("accepte Black Stories VF quand seul le slug confirme l'EAN", async () => {
+    const itemBarcode = "0827912079678";
+    mockedSearch.mockResolvedValue(null);
+    mockedHits.mockResolvedValue([
+      {
+        name: "Black Stories Vf",
+        link: "https://lesgentlemendujeu.com/jeux-d-enquetes/6805-black-stories-827912079678.html",
+        ean13: "827912079678",
+      },
+    ]);
+
+    const result = await resolve({
+      name: "Black Stories",
+      barcode: itemBarcode,
+    });
+
+    expect(result?.title).toBe("Black Stories Vf");
+    expect(result?.barcode).toBe("827912079678");
+  });
+
+  it("rejette Black Stories Suspect quand l'item porte l'EAN du classique", async () => {
+    const itemBarcode = "0827912079678";
+    mockedSearch.mockResolvedValue(null);
+    mockedHits.mockResolvedValue([
+      {
+        name: "Black Stories Suspect",
+        link: "https://www.monsieurde.com/famille/999-black-stories-suspect-087169139338.html",
+        ean13: "087169139338",
+      },
+    ]);
+
+    const result = await resolve({
+      name: "Black Stories",
+      barcode: itemBarcode,
+    });
+
+    expect(result).toBeNull();
   });
 
   it("rejette une recherche par code-barres seul quand l'ean13 du résultat ne confirme pas", async () => {

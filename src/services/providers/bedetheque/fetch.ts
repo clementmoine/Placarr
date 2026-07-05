@@ -8,9 +8,7 @@ import {
   metadataTitleSimilarity,
   hasUnrequestedVariantMarker,
 } from "@/lib/metadata/titleMatching";
-import {
-  collectHtmlMappingSignals,
-} from "@/lib/dev/scrapeMappingSignals";
+import { collectHtmlMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 
 export interface BedethequeAlbum {
   id: string;
@@ -149,9 +147,13 @@ export function parseBedethequeSaleListings(
     const row = match[2];
     const seller = cleanText(
       row.match(/RechVendeur=[^"']+["'][^>]*><u>([^<]+)<\/u>/i)?.[1] ||
-        row.match(/class=["'][^"']*vendeur[^"']*["'][^>]*>[\s\S]*?<u>([^<]+)<\/u>/i)?.[1],
+        row.match(
+          /class=["'][^"']*vendeur[^"']*["'][^>]*>[\s\S]*?<u>([^<]+)<\/u>/i,
+        )?.[1],
     );
-    const condition = cleanText(row.match(/<td class="tdv"><b>([^<]+)<\/b>/i)?.[1]);
+    const condition = cleanText(
+      row.match(/<td class="tdv"><b>([^<]+)<\/b>/i)?.[1],
+    );
     const priceText = row.match(/prix-annonce[^>]*>([^<]+)/i)?.[1];
     const priceCents = parseEuroPriceCents(priceText);
     if (!priceCents) continue;

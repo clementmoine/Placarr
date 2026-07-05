@@ -49,7 +49,7 @@ import { isUrl } from "@/lib/core/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
-import { uploadImage } from "@/lib/api/upload";
+import { localizeImageFieldForSubmit } from "@/lib/media/localizeImageForSubmit";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
@@ -1163,16 +1163,11 @@ export function ItemModal({
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      let imageUrl: FormValues["imageUrl"] = values.imageUrl;
-      if (imageUrl && imageUrl instanceof File) {
-        imageUrl = await uploadImage(imageUrl);
-      }
-
-      let backgroundImageUrl: FormValues["backgroundImageUrl"] =
-        values.backgroundImageUrl;
-      if (backgroundImageUrl && backgroundImageUrl instanceof File) {
-        backgroundImageUrl = await uploadImage(backgroundImageUrl);
-      }
+      const imageUrl = await localizeImageFieldForSubmit(values.imageUrl);
+      const backgroundImageUrl = await localizeImageFieldForSubmit(
+        values.backgroundImageUrl,
+        { trim: false },
+      );
 
       // Form payload forwarded to the parent's onSubmit. It carries a scalar
       // `shelfId` (and a raw `id`), which Prisma's *checked* create/update input

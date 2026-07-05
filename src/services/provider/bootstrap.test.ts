@@ -75,6 +75,20 @@ describe("createMetadataAdapters", () => {
       expect(provider).toBeDefined();
     }
   });
+
+  it("reads metadata traits from PrestaShop configs and modules (not registry extensions)", () => {
+    const chipweld = PROVIDERS.find((p) => p.id === "chipweld");
+    const netgamesretro = PROVIDERS.find((p) => p.id === "netgamesretro");
+    const chocobonplan = PROVIDERS.find((p) => p.id === "chocobonplan");
+    const chasseauxlivres = PROVIDERS.find((p) => p.id === "chasseauxlivres");
+
+    expect(chipweld?.isSecondary).toBe(true);
+    expect(chipweld?.isRealBoxCover).toBe(true);
+    expect(netgamesretro?.strictShelfPlatformCover).toBe(true);
+    expect(netgamesretro?.retailCatalogImageTitles).toBe(true);
+    expect(chocobonplan?.bookGallerySource).toBe(true);
+    expect(chasseauxlivres?.bookGallerySource).toBe(true);
+  });
 });
 
 describe("getMetadataProviderAdapter", () => {

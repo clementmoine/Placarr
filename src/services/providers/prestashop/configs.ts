@@ -76,6 +76,11 @@ export const CHIPWELD_CONFIG: PrestashopRetailerConfig = {
     name: "Trine: Ultimate Collection",
     barcode: "5016488132497",
   },
+  metadataInfo: {
+    defaultLanguage: "fr",
+    isRealBoxCover: true,
+    isSecondary: true,
+  },
 };
 
 export const LESGENTLEMENDUJEU_CONFIG: PrestashopRetailerConfig = {
@@ -155,6 +160,14 @@ export const NETGAMESRETRO_CONFIG: PrestashopRetailerConfig = {
   sample: {
     name: "MX vs ATV : Extrême limite Xbox 360",
     barcode: "4005209102735",
+  },
+  metadataInfo: {
+    defaultLanguage: "fr",
+    isRealBoxCover: true,
+    isSecondary: true,
+    retailCatalogImageTitles: true,
+    strictShelfPlatformCover: true,
+    coverDefaultRegion: "fr",
   },
 };
 

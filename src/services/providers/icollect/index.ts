@@ -240,8 +240,10 @@ export const icollectModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: false,
+    defaultLanguage: "en",
     isSecondary: true,
     isRealBoxCover: true,
+    collectorCoverRegionFromAgeRating: true,
     coverUrlHost: "icollecteverything.com",
     // iCollect's images are photographs of physical boxes (its own catalogue
     // shots), not clean publisher renders, so they rank below catalog art but

@@ -1,6 +1,8 @@
 import type { BarcodeLookupType } from "@/types/providerModule";
 import type { Capability, MediaType } from "@/types/providerRegistry";
 
+import type { ScrapeCatalogMetadataInfo } from "@/services/providers/shared/scrapeCatalogModuleFactory";
+
 export type PrestashopSearchParam = "search_query" | "s";
 
 /** Native PrestaShop AJAX (`products[]`) vs IQIT themes (`rendered_products` HTML). */
@@ -30,6 +32,8 @@ export interface PrestashopRetailerConfig {
   capabilities?: Capability[];
   /** Representative product for the mapping probe. Defaults to a board game. */
   sample?: { name: string; barcode: string };
+  /** Metadata traits (cover scoring, secondary retailer, …) declared with the shop. */
+  metadataInfo?: ScrapeCatalogMetadataInfo;
 }
 
 export interface PrestashopSearchProduct {

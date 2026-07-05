@@ -122,6 +122,10 @@ export const chocobonplanModule: ProviderModule = {
     defaultLanguage: "fr",
     gameMediaGallerySource: true,
     isRealBoxCover: true,
+    retailCatalogImageTitles: true,
+    strictShelfPlatformCover: true,
+    coverDefaultRegion: "fr",
+    bookGallerySource: true,
     websiteUrl: "https://chocobonplan.com/",
     notes:
       "Bons plans FR (Algolia + fiches produit) : titre, description, visuels HD et meilleur prix observé.",

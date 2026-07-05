@@ -14,7 +14,22 @@ import type {
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
-import type { Capability, MediaType } from "@/types/providerRegistry";
+import type { Capability, MediaType, ProviderInfo } from "@/types/providerRegistry";
+
+/** Optional metadata traits merged into `ProviderModule.info` at factory build time. */
+export type ScrapeCatalogMetadataInfo = Partial<
+  Pick<
+    ProviderInfo,
+    | "defaultLanguage"
+    | "isRealBoxCover"
+    | "imageScoreAdjustment"
+    | "remoteImageFallback"
+    | "isSecondary"
+    | "retailCatalogImageTitles"
+    | "strictShelfPlatformCover"
+    | "coverDefaultRegion"
+  >
+>;
 
 export type ScrapeCatalogRetailerConfig = {
   id: string;
@@ -24,6 +39,7 @@ export type ScrapeCatalogRetailerConfig = {
   barcodeTypes?: BarcodeLookupType[];
   capabilities?: Capability[];
   sample?: { name: string; barcode: string };
+  metadataInfo?: ScrapeCatalogMetadataInfo;
 };
 
 export type ScrapeCatalogProduct = {
@@ -75,6 +91,7 @@ export function createScrapeCatalogModule<
         canonical: false,
         websiteUrl: config.baseUrl,
         notes: `Recherche ${deps.platformLabel} par EAN (${config.label}).`,
+        ...config.metadataInfo,
       },
       evidence: {
         label: config.label,

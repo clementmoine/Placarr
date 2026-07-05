@@ -40,10 +40,14 @@ export const geedieModule: ProviderModule = {
     capabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
     canonical: false,
+    defaultLanguage: "en",
     isSecondary: true,
     requiresTitleAlignment: true,
     gameMediaGallerySource: true,
     isRealBoxCover: true,
+    imageScoreAdjustment: 120,
+    retailCatalogImageTitles: true,
+    strictShelfPlatformCover: true,
     coverUrlHost: "geedie.lt",
     // `/storage/collectables/` images are a seller's photo of their own used
     // copy (case glare, perspective); `/storage/products/` and the Cloudflare

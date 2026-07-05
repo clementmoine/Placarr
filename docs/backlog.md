@@ -187,7 +187,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 ~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** (`metadata/`, `item/`, `media/`, `pricing/`, …) — ne pas fusionner `services/providers/*`.
 
-### Audit fonctionnement — reste à faire (2026-07-04)
+### Audit fonctionnement _(clos 2026-07-05 — maintenance opportuniste)_
 
 Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
 
@@ -225,10 +225,10 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 
 - **Fait 2026-07-05** : `refetchInterval` = `false` quand `count === 0` (plus de poll 10 s au repos). Poll 2,5 s uniquement pendant des jobs actifs. Invalidation existante depuis la page item (`shelves/.../[itemId]/page.tsx`) suffit pour afficher le menu au démarrage d'un refresh.
 
-#### CONFIG-1 — `PROVIDER_METADATA_EXTENSIONS` (self-declaration) _(évalué → NON retenu)_
+#### CONFIG-1 — `PROVIDER_METADATA_EXTENSIONS` (self-declaration) _(évalué → NON retenu ; dédup partielle **fait 2026-07-05**)_
 
-- **Décision 2026-07-04** : **ne pas migrer** les ~28 entrées dans les modules. C'est de la **config déclarative centralisée, explicitement autorisée** par `placarr-principles.mdc` ; le registry est le point d'assemblage légitime et une table centrale est souvent plus lisible que 28 fichiers dispersés. Ne pas rouvrir sans raison produit.
-- **Seul sous-item éventuel** : les 2 retailers PrestaShop (`chipweld`, `netgamesretro`) sont décrits à 2 endroits (traits dans le registry, reste dans `prestashop/configs.ts`). Pour consolider : ajouter les champs traits au type de config retailer + les spread dans `info` de `scrapeCatalogModuleFactory`, déplacer les valeurs depuis `PROVIDER_METADATA_EXTENSIONS` vers `configs.ts`. Gain marginal (2 entrées).
+- **Décision 2026-07-04** : **ne pas migrer** les ~28 entrées dans les modules. Config déclarative centralisée, explicitement autorisée ; le registry reste le point d'assemblage légitime.
+- **Fait 2026-07-05** : traits déplacés dans les modules / `prestashop/configs.ts` (`metadataInfo`) pour les providers qui étaient **dupliqués** : icollect, chasseauxlivres, chocobonplan, achatmoinscher, geedie, hdjv, myludo, chipweld, netgamesretro. Fix : `bookGallerySource` était dans les extensions mais **jamais mergé** dans `PROVIDERS` → corrigé via déclaration module. Entrées registry retirées pour ces ids ; ~19 entrées centrales conservées (ScreenScraper, IGDB, retailers sans module dédié, …).
 
 ---
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getMessages, locales, defaultLocale } from "@/lib/locale/i18n";
-import { getBestLocale, setStoredLocale } from "@/lib/locale/utils";
+import { getMessages, locales, defaultLocale } from "@/core/locale/i18n";
+import { getBestLocale, setStoredLocale } from "@/core/locale/utils";
 import type { Locale, Messages } from "@/types/i18n";
 
 export function useTranslations() {

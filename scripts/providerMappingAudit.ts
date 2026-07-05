@@ -70,7 +70,7 @@ function printMigrationSection(
 
 async function main() {
   const { runProviderMappingAudit } = await import(
-    "@/services/provider/mappingAudit"
+    "@/core/catalog/mappingAudit"
   );
   const payload = await runProviderMappingAudit();
 

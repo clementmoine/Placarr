@@ -11,7 +11,7 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: vi.fn(async () => h.authReturn),
 }));
-vi.mock("@/lib/jobs/backgroundJobs", () => ({
+vi.mock("@/core/jobs/backgroundJobs", () => ({
   listBackgroundJobsForUser: h.listBackgroundJobsForUser,
   cancelAllBackgroundJobsForUser: h.cancelAllBackgroundJobsForUser,
   cancelBackgroundJobForUser: h.cancelBackgroundJobForUser,

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import type { CarouselApi } from "@/components/ui/carousel";
 
 interface CarouselDotsProps {

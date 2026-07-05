@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/core/utils";
-import { isUrl } from "@/lib/core/isUrl";
+import { cn } from "@/lib/shared/utils";
+import { isUrl } from "@/lib/shared/isUrl";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { RemoteImage } from "@/components/RemoteImage";

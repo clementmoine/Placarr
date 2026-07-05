@@ -9,7 +9,7 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: vi.fn(async () => h.authReturn),
 }));
-vi.mock("@/lib/media/remoteFetch", () => ({
+vi.mock("@/core/media/remoteFetch", () => ({
   fetchRemoteImageBuffer: h.fetchRemoteImageBuffer,
 }));
 

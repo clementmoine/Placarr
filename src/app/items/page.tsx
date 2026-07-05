@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import { getItems } from "@/lib/api/items";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -33,7 +33,7 @@ import {
   sumCollectionEstimatedValue,
   type ItemCollectionFilters,
   type ItemCollectionSort,
-} from "@/lib/item/collectionQuery";
+} from "@/core/item/collectionQuery";
 
 import type { ItemWithMetadata } from "@/types/items";
 

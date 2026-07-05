@@ -24,7 +24,7 @@ import {
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath } from "@/lib/routing/slugs";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 
 function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   return job.kind === "metadataRefresh"

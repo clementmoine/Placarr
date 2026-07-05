@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { withRequestUiLocale } from "@/lib/locale/serverPreference";
-import { presentItemFromStorage } from "@/lib/item/present";
+import { withRequestUiLocale } from "@/core/locale/serverPreference";
+import { presentItemFromStorage } from "@/core/item/present";
 import { prisma } from "@/lib/db/prisma";
-import { startItemMetadataRefresh } from "@/lib/jobs/scheduleMetadataRefresh";
+import { startItemMetadataRefresh } from "@/core/jobs/scheduleMetadataRefresh";
 
 export async function POST(
   req: NextRequest,

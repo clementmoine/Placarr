@@ -38,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { hasGameMediaGalleryAttachment } from "@/lib/metadata/galleries";
+import { hasGameMediaGalleryAttachment } from "@/core/metadata/galleries";
 
 type RefreshableType = "games" | "movies" | "musics" | "books" | "boardgames";
 type RefreshState =

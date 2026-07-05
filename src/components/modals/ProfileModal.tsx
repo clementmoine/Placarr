@@ -22,7 +22,7 @@ import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 
 import { useAccount } from "@/lib/client/hooks/useAccount";
-import { isUrl } from "@/lib/core/isUrl";
+import { isUrl } from "@/lib/shared/isUrl";
 import { uploadImage } from "@/lib/api/upload";
 
 interface ProfileModalProps {

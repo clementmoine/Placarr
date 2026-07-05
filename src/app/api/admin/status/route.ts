@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { providerHealthChecks } from "@/services/provider/runtime";
+import { providerHealthChecks } from "@/core/catalog/runtime";
 
 export async function GET() {
   const auth = await requireAdmin();

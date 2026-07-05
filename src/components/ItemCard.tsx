@@ -13,10 +13,10 @@ import {
 import { RemoteImage } from "@/components/RemoteImage";
 
 import { getAspectRatio } from "@/lib/text/cardFormat";
-import { getEstimatedItemValueCents } from "@/lib/item/value";
-import { isItemMetadataBusy } from "@/lib/item/enrichment";
+import { getEstimatedItemValueCents } from "@/core/item/value";
+import { isItemMetadataBusy } from "@/core/item/enrichment";
 import type { Condition } from "@prisma/client";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
   switch (condition) {

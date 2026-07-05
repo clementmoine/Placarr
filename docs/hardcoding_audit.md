@@ -2,7 +2,7 @@
 
 > **STATUS 2026-06-29 — provider-literal migration COMPLETE.** The blindness guard
 > (`src/services/provider/blindnessGuard.test.ts`) now ships an **empty** allowlist:
-> **zero** provider-id literals remain outside `src/services/providers/`. The
+> **zero** provider-id literals remain outside `src/providers/`. The
 > "current violations" tables, per-file allowlist notes and the `P2*` progress log
 > below are **historical** — kept for rationale, no longer the live surface.
 >

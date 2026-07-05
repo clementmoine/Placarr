@@ -1,10 +1,10 @@
 import type { AttachmentType } from "@prisma/client";
 
-import type { SourceProduct } from "@/lib/barcode/evidence/types";
+import type { SourceProduct } from "@/core/barcode/evidence/types";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { ProviderInfo } from "@/types/providerRegistry";
-import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
-import type { PriceOfferInput } from "@/services/metadata/evidence";
+import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
+import type { PriceOfferInput } from "@/core/metadata/evidence";
 
 export type InferredImageAttachmentSemantics = {
   type: AttachmentType;

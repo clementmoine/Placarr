@@ -2,7 +2,7 @@ import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({ default: { post: vi.fn() } }));
-vi.mock("@/lib/media/imageBuffer", () => ({
+vi.mock("@/core/media/imageBuffer", () => ({
   looksLikeImageBuffer: () => true,
 }));
 

@@ -23,8 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { cn } from "@/lib/core/utils";
-import { getHeroImage, getGalleryImages } from "@/lib/item/media";
+import { cn } from "@/lib/shared/utils";
+import { getHeroImage, getGalleryImages } from "@/core/item/media";
 import { getExploreDetailCoverClass } from "@/lib/text/cardFormat";
 
 interface ExploreItemModalProps {

@@ -24,11 +24,11 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DialogFooter } from "@/components/ui/dialog";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { isBookShelfType } from "@/lib/barcode/shelfLabels";
+import { isBookShelfType } from "@/core/barcode/shelfLabels";
 import { saveItem, saveItemsBatch } from "@/lib/api/items";
-import { parseNameList } from "@/lib/title/parseNameList";
-import { syncItemQueries } from "@/lib/item/queryCache";
-import { cn } from "@/lib/core/utils";
+import { parseNameList } from "@/core/title/parseNameList";
+import { syncItemQueries } from "@/core/item/queryCache";
+import { cn } from "@/lib/shared/utils";
 import { cleanManualBarcode } from "@/components/ManualBarcodeEntry";
 
 import { Condition, type Shelf } from "@prisma/client";

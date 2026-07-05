@@ -83,7 +83,7 @@ Deux concepts **distincts**, sourcés différemment :
 | **P3**   | Rétention des observations rejetées (barcode) | **Fait 2026-06-30** | `compile.ts` : listings bruit / contexte non-canonique / hors-ancre émis en observations `evidence: "reject"` + `retainForReprojection: true` via `rejectedObservationsFromProductEvidence`.                                                    |
 | **P3**   | Décision cap canonique seul / DB-fallback     | **Documenté**       | Un barcode confirmé par une source canonique (ou DB-fallback honnête) est une ancre légitime — le plafond `listingOnlyCap` ne s'applique pas. Comportement voulu, encodé dans `compile.confidenceLock.test.ts` + `compile.honestEmpty.test.ts`. |
 
-> **Provider-blindness : migration TERMINÉE** — allowlist du guard `blindnessGuard.test.ts` **vide** (0 littéral provider hors `services/providers/`). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
+> **Provider-blindness : migration TERMINÉE** — allowlist du guard `blindnessGuard.test.ts` **vide** (0 littéral provider hors `providers/`). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
 
 **P1 providers / probes** : file migration metadata **vide** (PicClick→eBay, ScreenScraper, TheGamesDB, Apriloshop IQIT — faits). **TheGamesDB** : si audit `map:blocked`, quota API épuisé (12–20 min cooldown) — pas une régression code ; probe classée `blocked` sur message quota.
 
@@ -185,7 +185,7 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 
 ### P6 — Architecture lib (optionnel)
 
-~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** (`metadata/`, `item/`, `media/`, `pricing/`, …) — ne pas fusionner `services/providers/*`.
+~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** (`metadata/`, `item/`, `media/`, `pricing/`, …) — ne pas fusionner `providers/*`.
 
 ### Audit fonctionnement _(clos 2026-07-05 — maintenance opportuniste)_
 
@@ -228,7 +228,7 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 #### CONFIG-1 — Self-declaration providers _(fait 2026-07-05)_
 
 - **`registry.ts`** = manifeste seul (import + ligne dans `PROVIDER_MODULES`) — **seul fichier à éditer pour ajouter un provider**.
-- **`catalog.ts`** = découverte générique (`discoverProviderModules`, `providersForType`, `capabilityCoverage`, …) ; le core importe `@/services/provider/catalog` ou `@/services/provider`.
+- **`catalog.ts`** = découverte générique (`discoverProviderModules`, `providersForType`, `capabilityCoverage`, …) ; le core importe `@/core/catalog/catalog` ou `@/services/provider`.
 - Chaque module auto-déclare `info` (types, capabilities, traits metadata).
 
 ---

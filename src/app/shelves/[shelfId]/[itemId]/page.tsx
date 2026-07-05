@@ -65,17 +65,17 @@ import {
   getHeroImage,
   getGalleryImages,
   getCoverImage,
-} from "@/lib/item/media";
+} from "@/core/item/media";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
-} from "@/lib/media/attachmentDisplayLabels";
+} from "@/core/media/attachmentDisplayLabels";
 import {
   hasGameMediaGalleryAttachment,
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/lib/metadata/galleries";
+} from "@/core/metadata/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
@@ -86,9 +86,9 @@ import {
   isItemEnriching,
   isItemMetadataBusy,
   isItemMetadataRefreshing,
-} from "@/lib/item/enrichment";
-import { itemsBarcodeLabelKey } from "@/lib/barcode/shelfLabels";
-import { cn } from "@/lib/core/utils";
+} from "@/core/item/enrichment";
+import { itemsBarcodeLabelKey } from "@/core/barcode/shelfLabels";
+import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
@@ -97,16 +97,16 @@ import {
   itemSlugLookupVariants,
   shelfPath,
 } from "@/lib/routing/slugs";
-import { compareTitlesForSort } from "@/lib/title/sort";
-import { seriesSiblings } from "@/lib/title/series";
-import { FRANCHISE_FACT_KIND } from "@/lib/metadata/facts/franchiseFact";
+import { compareTitlesForSort } from "@/core/title/sort";
+import { seriesSiblings } from "@/core/title/series";
+import { FRANCHISE_FACT_KIND } from "@/core/metadata/facts/franchiseFact";
 import {
   invalidateItemQueries,
   patchCachedItem,
   syncItemQueries,
-} from "@/lib/item/queryCache";
-import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
-import { getEstimatedItemValueCents } from "@/lib/item/value";
+} from "@/core/item/queryCache";
+import { useRefetchItemWhenMetadataIdle } from "@/core/item/useRefetchItemWhenMetadataIdle";
+import { getEstimatedItemValueCents } from "@/core/item/value";
 
 import {
   type DetailFact,
@@ -115,11 +115,11 @@ import {
   parsePlayerFactRange,
   parseFactSourceList,
   formatDetailFactSourceToken,
-} from "@/lib/metadata/facts/playerFacts";
+} from "@/core/metadata/facts/playerFacts";
 import {
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
-} from "@/lib/metadata/facts/displayFacts";
+} from "@/core/metadata/facts/displayFacts";
 import { ProviderLinksBar } from "@/components/ProviderLinksBar";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
+import { cleanCode, detectPlatformKey } from "@/core/barcode/query";
 import {
   createGameEditionMatcher,
   createTermMatcher,
@@ -10,19 +10,19 @@ import {
   LISTING_FORMAT_TERMS,
   LISTING_NOISE_TERMS,
   LISTING_REGION_TERMS,
-} from "@/lib/barcode/listingTerms";
-import { resolveBarcode } from "@/services/barcode/resolver";
-import { createVideoGamePlatformMatcher } from "@/lib/games/platforms";
+} from "@/core/barcode/listingTerms";
+import { resolveBarcode } from "@/core/barcode/resolver";
+import { createVideoGamePlatformMatcher } from "@/core/games/platforms";
 import {
   cleanSearchQuery,
   explainAttachmentScoreForDisplay,
   readAttachmentImageMetrics,
   type MetadataResult,
-} from "@/services/metadata";
+} from "@/core/metadata";
 import {
   buildTeardownBarcodeProviderTasks,
   buildTeardownMetadataProviderTasks,
-} from "@/services/provider/teardown";
+} from "@/core/catalog/teardown";
 
 type ProviderPhase = "barcode" | "metadata" | "merged";
 type ProviderStatus = "hit" | "empty" | "error" | "skipped";

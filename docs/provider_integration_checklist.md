@@ -5,7 +5,7 @@ tested, and verified against the live source** — never under-used, never a hid
 bias. Companion to [unbiased_ranking.md](unbiased_ranking.md),
 [word_list_audit.md](word_list_audit.md),
 [provider_agnostic_architecture.md](provider_agnostic_architecture.md). Worked
-example: `src/services/providers/okkazeo/`.
+example: `src/providers/okkazeo/`.
 
 Golden rule: a provider may hardcode what is specific to **its own** API/format;
 it must never inject app-global logic (language, shelf type, provider privilege).
@@ -174,7 +174,7 @@ Don't trust the fixture alone — confront the **live** source and your extracti
 - [ ] One-off live call of the resolver and **every** webservice:
   ```ts
   process.loadEnvFile(".env");
-  const { create<X>Resolver } = await import("@/services/providers/<id>/resolver");
+  const { create<X>Resolver } = await import("@/providers/<id>/resolver");
   console.log(await create<X>Resolver()("", "<barcode>"));
   ```
 - [ ] **Diff extracted vs raw**: re-open the raw Phase-0 capture and check, field

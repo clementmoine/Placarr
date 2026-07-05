@@ -3,34 +3,34 @@ import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { withRequestUiLocale } from "@/lib/locale/serverPreference";
+import { withRequestUiLocale } from "@/core/locale/serverPreference";
 
-import { cropImageIfNeeded } from "@/lib/media/imageTrim";
+import { cropImageIfNeeded } from "@/core/media/imageTrim";
 import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
-} from "@/services/metadata/storage";
-import { presentItemFromStorage } from "@/lib/item/present";
+} from "@/core/metadata/storage";
+import { presentItemFromStorage } from "@/core/item/present";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
-import { buildBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
-import { resolveItemMetadataLookupQuery } from "@/lib/item/metadataLookupQuery";
-import { normalizeProductBarcode } from "@/lib/barcode/normalize";
+import { buildBarcodePlaceholderItemName } from "@/core/item/placeholderName";
+import { resolveItemMetadataLookupQuery } from "@/core/item/metadataLookupQuery";
+import { normalizeProductBarcode } from "@/core/barcode/normalize";
 import {
   buildExactBarcodeSearchCondition,
   buildItemSearchConditions,
-} from "@/lib/item/search";
+} from "@/core/item/search";
 import {
   startItemMetadataRefresh,
   shelfMoveMetadataResetData,
-} from "@/lib/jobs/scheduleMetadataRefresh";
-import { clearStaleMetadataRefreshStartedAtIfNeeded } from "@/lib/jobs/metadataRefreshSession";
+} from "@/core/jobs/scheduleMetadataRefresh";
+import { clearStaleMetadataRefreshStartedAtIfNeeded } from "@/core/jobs/metadataRefreshSession";
 import {
   itemPricesContextFromRecord,
   readItemPrices,
   summarizeListItemPrices,
   EMPTY_LIST_ITEM_PRICES,
-} from "@/services/pricing/itemDisplay";
+} from "@/core/pricing/itemDisplay";
 
 const VALID_SHELF_TYPES = new Set<string>(Object.values(Type));
 

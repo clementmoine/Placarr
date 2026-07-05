@@ -45,7 +45,7 @@ import { ConditionIcon } from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 
-import { isUrl } from "@/lib/core/isUrl";
+import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useItemModalMetadataMutations } from "@/lib/client/hooks/useItemModalMetadataMutations";
 import {
@@ -54,13 +54,13 @@ import {
 } from "@/lib/client/itemModalSession";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
-import { localizeImageFieldForSubmit } from "@/lib/media/localizeImageForSubmit";
+import { localizeImageFieldForSubmit } from "@/core/media/localizeImageForSubmit";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
-} from "@/lib/barcode/shelfLabels";
-import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
+} from "@/core/barcode/shelfLabels";
+import { guessShelfFromBarcodeLookup } from "@/core/barcode/query";
 import { isAbortError } from "@/lib/http/abort";
 import { shelfPath } from "@/lib/routing/slugs";
 
@@ -76,24 +76,24 @@ import {
   resolveMetadataCoverUrl,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
-} from "@/lib/item/media";
+} from "@/core/item/media";
 import {
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
-} from "@/lib/media/coverUrl";
+} from "@/core/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
-} from "@/lib/media/attachmentDisplayLabels";
-import { cn } from "@/lib/core/utils";
+} from "@/core/media/attachmentDisplayLabels";
+import { cn } from "@/lib/shared/utils";
 import type { ItemWithMetadata } from "@/types/items";
-import { collectMetadataTitleSuggestions } from "@/lib/item/titleSuggestions";
+import { collectMetadataTitleSuggestions } from "@/core/item/titleSuggestions";
 import type {
   MetadataResult,
   MetadataAttachment,
 } from "@/types/metadataProvider";
-import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
-import { invalidateItemQueries } from "@/lib/item/queryCache";
+import { useRefetchItemWhenMetadataIdle } from "@/core/item/useRefetchItemWhenMetadataIdle";
+import { invalidateItemQueries } from "@/core/item/queryCache";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,

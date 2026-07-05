@@ -21,7 +21,7 @@ This document presents the findings of our codebase audit regarding provider-spe
 
 ## 0. Core invariant — the app is provider-blind
 
-> Outside `src/services/providers/`, **no code may name a specific provider.** The
+> Outside `src/providers/`, **no code may name a specific provider.** The
 > app is not aware of which providers exist; it discovers them only through the
 > registry, and consumes only their **self-declared** data.
 
@@ -48,7 +48,7 @@ The contract:
   projection over stored observations. Weak marketplace/user observations can rank
   low or be excluded from public search, but they remain available for audit,
   debugging, and future ranking-engine reprojection.
-- **Scope = everything except `src/services/providers/`** — the **core _and_ the
+- **Scope = everything except `src/providers/`** — the **core _and_ the
   admin**. A connector may hardcode what is specific to _its own_ API/format
   (legitimate, encapsulated); the rest of the app may not.
 
@@ -56,7 +56,7 @@ The contract:
 
 > **RESOLVED 2026-06-29.** Every leak in the two tables below has been removed; the
 > blindness guard (`src/services/provider/blindnessGuard.test.ts`) enforces an
-> **empty** allowlist (zero provider literals outside `src/services/providers/`).
+> **empty** allowlist (zero provider literals outside `src/providers/`).
 > The tables are kept as the historical record of what was migrated — not an open
 > to-do list.
 
@@ -86,7 +86,7 @@ The contract:
 
 ### Enforcement — make the invariant mechanical
 
-A **guard test** scans every file outside `src/services/providers/` and **fails the
+A **guard test** scans every file outside `src/providers/` and **fails the
 build** on a provider-id literal (`"screenscraper"`, `providerId === …`) or a
 hardcoded provider-name set / noise list. The violations above are seeded as a
 **shrinking allowlist**; each cleanup removes one entry; new leaks fail immediately.

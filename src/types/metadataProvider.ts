@@ -1,6 +1,6 @@
 import type { AttachmentType } from "@prisma/client";
 
-import type { FieldEvidenceInput } from "@/services/metadata/evidence";
+import type { FieldEvidenceInput } from "@/core/metadata/evidence";
 import type { MetadataObservation } from "@/types/metadataObservation";
 
 export interface MetadataAttachment {
@@ -15,13 +15,13 @@ export interface MetadataAttachment {
    * user_photo). Unlike the trait flags below this IS persisted: it is derived
    * from the provider's original image URL, which is rewritten to a local path on
    * download, so it cannot be recomputed on load. See
-   * `@/lib/media/coverProvenance`.
+   * `@/core/media/coverProvenance`.
    */
   coverProvenance?: string;
   /**
    * Image metrics measured once at enrichment (sharp) and persisted, so the
    * read-time cover ranking can sort by resolution + exposure without
-   * re-decoding files. See `@/lib/media/attachmentDisplayScore`.
+   * re-decoding files. See `@/core/media/attachmentDisplayScore`.
    */
   width?: number;
   height?: number;
@@ -30,7 +30,7 @@ export interface MetadataAttachment {
   /**
    * Provider-derived display fields, computed from `source` server-side so the
    * client-safe scorer/label formatter can read them. Not persisted (recomputed
-   * on load). See `@/services/provider/sourceTraits`.
+   * on load). See `@/core/catalog/sourceTraits`.
    */
   isFullWrapCoverSource?: boolean;
   isGameMediaGallerySource?: boolean;
@@ -53,7 +53,7 @@ export interface MetadataFact {
   /**
    * Provider-derived display fields, computed from `source`/`label` server-side so
    * the client can filter facts without importing the registry. Not persisted
-   * (recomputed on load). See `@/services/provider/sourceTraits`.
+   * (recomputed on load). See `@/core/catalog/sourceTraits`.
    */
   isBoardGameRatingSource?: boolean;
   isPcSpecificFact?: boolean;

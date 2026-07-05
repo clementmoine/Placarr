@@ -3,8 +3,8 @@ import {
   ensureICollectIndex,
   countICollectBarcodeIndex,
   countICollectItemCatalog,
-} from "@/services/providers/icollect/indexStore";
-import { runICollectFullSitemapSync } from "@/services/providers/icollect/catalogSync";
+} from "@/providers/icollect/indexStore";
+import { runICollectFullSitemapSync } from "@/providers/icollect/catalogSync";
 
 async function main() {
   const db = await ensureICollectIndex();

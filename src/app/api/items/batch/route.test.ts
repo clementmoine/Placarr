@@ -26,9 +26,9 @@ vi.mock("@/lib/db/prisma", () => ({
     $transaction: h.transaction,
   },
 }));
-vi.mock("@/lib/jobs/scheduleMetadataRefresh", async (importOriginal) => {
+vi.mock("@/core/jobs/scheduleMetadataRefresh", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@/lib/jobs/scheduleMetadataRefresh")>();
+    await importOriginal<typeof import("@/core/jobs/scheduleMetadataRefresh")>();
   return {
     ...actual,
     scheduleBatchItemMetadataRefresh: h.scheduleBatchItemMetadataRefresh,

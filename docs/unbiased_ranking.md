@@ -178,7 +178,7 @@ a field the provider gets to assert globally.
   (`localeBonusForAttachmentRole`).
 
   > **STATUS 2026-06-29.** The **provenance** layer of this tier shipped:
-  > `@/lib/media/coverProvenance.ts` (`catalog < listing_photo < user_photo`) is
+  > `@/core/media/coverProvenance.ts` (`catalog < listing_photo < user_photo`) is
   > a lexicographic rung in `rankCoversForDisplay` inserted **after region** (so a
   > photographed copy sinks below catalog art of the same region, never above a
   > better-region cover). Provenance is observed, not privileged: providers

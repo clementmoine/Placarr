@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { isAbortError } from "@/lib/http/abort";
-import { looksLikeImageBuffer } from "@/lib/media/imageBuffer";
+import { looksLikeImageBuffer } from "@/core/media/imageBuffer";
 
 export type FlareSolverrCookies = {
   cookie: string;

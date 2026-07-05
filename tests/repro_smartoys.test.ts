@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { fetchPricesFromSmartoys } from "@/services/providers/smartoys";
+import { fetchPricesFromSmartoys } from "@/providers/smartoys";
 
 describe("repro smartoys price fetch", () => {
   it("parses prices for the star wars xbox barcode and rejects bogus ones", async () => {

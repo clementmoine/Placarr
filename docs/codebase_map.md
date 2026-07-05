@@ -1,50 +1,59 @@
 # Cartographie codebase — où aller quand…
 
-> Complète [audit_fonctionnement.md](audit_fonctionnement.md) (audit 2026-07-04).
-> Dernière mise à jour : **2026-07-05** (split `registry.ts` / `catalog.ts`).
+> Complète [audit_fonctionnement.md](audit_fonctionnement.md).
+> Dernière mise à jour : **2026-07-05** (big-bang `src/core/` + `src/providers/`).
 
 ## Taille réelle (hors UI)
 
-| Zone | Fichiers `.ts` | Dont tests | Rôle |
-|------|----------------|------------|------|
-| `services/providers/` | ~204 | ~40 | **Plugins** — un dossier = un provider |
-| `services/` (hors providers) | ~68 | ~32 | **Orchestration** I/O (fetch, merge, persist, barcode resolve) |
-| `lib/` | ~279 | ~113 | **Logique pure** (score, compile, titre, images, policy) |
-| `components/` + `app/` | ~108 | — | UI + routes API |
+| Zone | Rôle |
+|------|------|
+| `src/providers/` | **Plugins** — un dossier = un provider (plug-and-play) |
+| `src/core/` | **Cœur métier** — barcode, metadata, pricing, catalog, item, media… |
+| `src/lib/` | **Infra transverse** — auth, db, http, client, dev, routing, shared |
+| `src/components/` + `src/app/` | UI + routes API |
 
-**Le cœur métier ≈ 270 fichiers non-test** (lib + services hors providers). Ce n’est pas aberrant pour une app multi-types avec barcode + enrichissement + prix — mais la **frontière lib/services** est peu intuitive.
+**Principe** : un domaine = un dossier sous `core/`. Plus de split artificiel `lib/` vs `services/` pour le métier.
 
 ---
 
-## Deux plans (ne jamais les fusionner)
+## Arborescence `src/core/`
 
-| Plan | Question | Entrée utilisateur | Dossiers | Persistance |
-|------|----------|-------------------|----------|-------------|
-| **Identification** | « Ce barcode = quoi ? » | Scan sans type | `lib/barcode/**`, `services/barcode/` | `BarcodeCache` |
-| **Enrichissement** | « Ce produit → metadata + prix » | Item / refresh | `services/metadata/**`, `lib/metadata/**` (helpers) | `Metadata`, `PriceOffer` |
-
-```mermaid
-flowchart LR
-  scan[Scan barcode] --> id[Identification]
-  id --> cache[(BarcodeCache)]
-  cache --> item[Item créé / complété]
-  item --> enrich[Enrichissement background]
-  enrich --> meta[(Metadata + prix)]
-  meta --> ui[Page item / étagère]
+```
+core/
+  barcode/     ← scan, evidence, compile, resolveBarcode
+  metadata/    ← fetch, merge, storage, gating, helpers (ex-lib)
+  pricing/     ← résolution prix + policy cache
+  catalog/     ← registry (manifeste), catalog (découverte), bootstrap
+  item/        ← modèle collection, enrichment polling
+  media/       ← images, proxy, placeholder, cover scoring
+  title/       ← séries, variantes recherche
+  locale/      ← préférences langue/région UI
+  jobs/        ← file background (refresh, enrich)
+  games/       ← plateformes, slugs
+  retailer/    ← URL produit, alignement titre catalogue
+  search/      ← requêtes recherche normalisées
 ```
 
----
+## `src/providers/` (inchangé conceptuellement)
 
-## Règle `lib/` vs `services/` (aujourd’hui)
+```
+providers/
+  <id>/        ← module complet (index.ts + fetch/resolver…)
+  shared/      ← factories scrape catalog
+  prestashop/  ← configs multi-boutiques
+  shopify/
+```
 
-| Mettre dans… | Quand… | Exemples |
-|--------------|--------|----------|
-| **`lib/`** | Fonction **pure**, pas d’I/O réseau/DB, testable sans mock | `compile.ts`, `platformPick.ts`, `titleMatching.ts`, `cachePolicy.ts` |
-| **`services/`** | **Orchestration** : appels providers, Prisma, fichiers, `after()` jobs | `fetch.ts`, `storage.ts`, `resolver.ts`, `merge.ts` |
-| **`services/providers/`** | Tout ce qui connaît **une source externe** | `screenscraper/`, `prestashop/` |
-| **`services/provider/`** | **Registry** + bootstrap providers (pas les providers eux-mêmes) | `registry.ts`, `catalog.ts`, `bootstrap.ts` |
+**Ajouter un provider** : implémenter `providers/<id>/` + **une ligne** dans `core/catalog/registry.ts`.
 
-**Piège fréquent** : le même mot (`barcode`, `metadata`, `pricing`) existe dans `lib/` **et** `services/` — ce n’est pas un doublon, c’est **moteur** vs **pipeline**.
+## `src/lib/` (infra seulement)
+
+```
+lib/
+  auth/        db/        http/       client/
+  dev/         routing/   text/       url/
+  async/       guards/    api/        shared/   ← cn(), isUrl()
+```
 
 ---
 
@@ -54,141 +63,60 @@ flowchart LR
 
 | Symptôme | Aller voir |
 |----------|------------|
-| Mauvais type (jeu vs musique vs livre) | `lib/barcode/evidence/compile.ts`, `scoring.ts`, `services/barcode/resolver.ts` |
-| Mauvaise plateforme (PS2 vs PS3…) | `lib/barcode/platformPick.ts`, `lib/games/platforms.ts` |
+| Mauvais type (jeu vs musique vs livre) | `core/barcode/evidence/compile.ts`, `scoring.ts`, `core/barcode/resolver.ts` |
+| Mauvaise plateforme (PS2 vs PS3…) | `core/barcode/platformPick.ts`, `core/games/platforms.ts` |
 | Faux positif confiant / vide honnête | `compile.confidenceLock.test.ts`, `compile.honestEmpty.test.ts` |
-| Titre barcode incorrect | `lib/barcode/evidence/consensusTitle.ts`, `lib/barcode/titleUtils.ts` |
-| Cache barcode stale | `lib/barcode/lookup/cachePayload.ts`, version cache dans `compile.ts` |
+| Titre barcode incorrect | `core/barcode/evidence/consensusTitle.ts`, `core/barcode/titleUtils.ts` |
+| Cache barcode stale | `core/barcode/lookup/cachePayload.ts` |
 
 ### Metadata & couvertures
 
 | Symptôme | Aller voir |
 |----------|------------|
-| Refresh metadata ne part pas / bloqué | `lib/jobs/backgroundWorkQueue.ts`, `lib/item/enrichment.ts` |
-| Provider pas appelé au enrich | `services/metadata/metadataFetchGating.ts`, `fetch.ts` |
-| Mauvaise cover affichée | `services/metadata/merge.ts`, `mergeObservationRanking.ts`, `lib/item/media.ts` |
-| Merge titre / région | `lib/metadata/displayScore.ts`, `lib/locale/preference.ts` |
-| Facts dupliqués (durée IGDB…) | `services/metadata/facts/*`, `normalizeMetadataFacts` |
-| Observations manquantes | `services/provider/bootstrap.ts` (`withProviderObservations`) |
+| Refresh metadata ne part pas / bloqué | `core/jobs/backgroundWorkQueue.ts`, `core/item/enrichment.ts` |
+| Provider pas appelé au enrich | `core/metadata/metadataFetchGating.ts`, `fetch.ts` |
+| Mauvaise cover affichée | `core/metadata/merge.ts`, `mergeObservationRanking.ts`, `core/item/media.ts` |
+| Merge titre / région | `core/metadata/displayScore.ts`, `core/locale/preference.ts` |
+| Facts dupliqués | `core/metadata/facts/*` |
+| Observations manquantes | `core/catalog/bootstrap.ts` |
 
 ### Prix
 
 | Symptôme | Aller voir |
 |----------|------------|
-| Prix absents / cache | `services/pricing/resolver.ts`, `lib/pricing/cachePolicy.ts` |
-| Mauvaise annonce (volume manga…) | `lib/pricing/metadataPriceFallback.ts`, listing filters |
-| Refresh prix URL-first | `services/metadata/persistProviderExternalLinks.ts`, `lib/metadata/providerExternalLinks.ts` |
+| Prix absents / cache | `core/pricing/resolver.ts`, `core/pricing/cachePolicy.ts` |
+| Refresh prix URL-first | `core/metadata/persistProviderExternalLinks.ts` |
 
 ### Providers (plugin)
 
 | Symptôme | Aller voir |
 |----------|------------|
-| Ajouter / retirer un provider | **`services/provider/registry.ts`** (manifeste seul) |
-| Comportement d’un provider | `services/providers/<id>/` |
-| Découverte types/capabilities | `services/provider/catalog.ts` |
-| Audit mapping champs | `pnpm providers:audit:mapping`, `services/provider/mappingAudit.ts` |
-
-### UI & API
-
-| Symptôme | Aller voir |
-|----------|------------|
-| Modal ajout item | `components/modals/ItemModal.tsx`, hooks metadata react-query |
-| Scan caméra | composants scan + `QuickScanModal` |
-| Route API item/shelf | `src/app/api/items/**`, `src/app/api/shelves/**` |
-| Admin providers | `src/app/api/admin/providers/route.ts`, `app/admin/page.tsx` |
+| Ajouter / retirer un provider | **`core/catalog/registry.ts`** |
+| Comportement d'un provider | `providers/<id>/` |
+| Découverte types/capabilities | `core/catalog/catalog.ts` |
+| Audit mapping | `pnpm providers:audit:mapping`, `core/catalog/mappingAudit.ts` |
+| Provider-blind guard | `core/catalog/blindnessGuard.test.ts` |
 
 ---
 
-## Arborescence `lib/` (mémo)
+## Checklist « j'ajoute un provider »
 
-```
-lib/
-  barcode/     ← identification (evidence, compile, lookup, scoring)
-  metadata/    ← helpers merge/display (observations, titres, platform)
-  item/        ← modèle item côté client + enrichment polling
-  media/       ← images, proxy, placeholder, cover scoring
-  pricing/     ← policy cache, fallback prix metadata
-  title/       ← séries, variantes recherche, tokenEquivalents
-  locale/      ← préférences langue/région UI
-  jobs/        ← file background (refresh, enrich)
-  provider/    ← petits helpers partagés providers (health, priceOffers)
-  games/       ← plateformes, slugs
-  …            ← auth, db, http, dev (outils)
-```
-
-## Arborescence `services/` (hors providers)
-
-```
-services/
-  barcode/     ← resolveBarcode (orchestrateur scan)
-  metadata/    ← fetch, merge, storage, selection, gating
-  pricing/     ← résolution prix item + affichage étagère
-  provider/    ← registry (manifeste), catalog (découverte), bootstrap, barcode fan-out
-  app/         ← glue app-level (si présent)
-```
-
----
-
-## Proposition de rangement « core » (phased — **pas fait**)
-
-Objectif : **une entrée mentale**, pas fusionner les pipelines.
-
-### Option A — Renommer / regrouper (faible risque)
-
-```
-src/
-  core/                    ← alias documentaire (pas de gros move)
-    identification/        ← symlink doc → lib/barcode + services/barcode
-    enrichment/            ← services/metadata + lib/metadata helpers
-    catalog/               ← services/provider (registry, catalog, bootstrap)
-    pricing/               ← lib/pricing + services/pricing
-  providers/               ← move services/providers → src/providers (cosmétique)
-  app/ + components/       ← inchangé
-```
-
-### Option B — `src/core/` physique (moyen risque, 1 PR dédiée)
-
-Déplacer **sans fusionner** :
-
-| Actuel | Cible |
-|--------|-------|
-| `lib/barcode/**` | `core/identification/**` |
-| `services/barcode/**` | `core/identification/pipeline/**` |
-| `services/metadata/**` | `core/enrichment/**` |
-| `lib/metadata/**` (helpers) | `core/enrichment/lib/**` |
-| `services/provider/**` | `core/catalog/**` |
-| `lib/pricing/**` + `services/pricing/**` | `core/pricing/**` |
-
-Garder dans `lib/` : `auth`, `db`, `http`, `client`, `dev` (infra transverse).
-
-**Ne pas fusionner** (principes Placarr) : pipelines barcode evidence vs compile ; fetch vs merge metadata.
-
-### Option C — Réduire le *nombre* de fichiers (limité)
-
-| Action | Gain | Risque |
-|--------|------|--------|
-| Supprimer barrels `index.ts` morts | faible | déjà fait (audit dead code) |
-| Regrouper petits helpers même domaine | ~10–20 fichiers | lisibilité ↓ |
-| Fusionner `lib/` + `services/` par domaine | confusion ↓ | imports massifs, PR énorme |
-| Supprimer tests | compte ↓ | **interdit** |
-
-La vraie réduction vient surtout de **moins de dossiers à comprendre**, pas de moins de fichiers.
-
----
-
-## Checklist « j’ajoute un provider »
-
-1. `services/providers/<id>/` — module complet
-2. **Une ligne** dans `services/provider/registry.ts`
+1. `providers/<id>/` — module complet
+2. **Une ligne** dans `core/catalog/registry.ts`
 3. `pnpm test` + `pnpm providers:audit:mapping`
-4. **Rien d’autre** (pas de test avec liste d’ids hardcodée — utiliser `PROVIDER_MODULES`)
+4. Rien d'autre (pas de liste d'ids hardcodée — utiliser `PROVIDER_MODULES`)
 
 ---
 
-## Prochaines actions suggérées
+## Migration (2026-07-05)
 
-1. **Court terme** : utiliser ce doc + `audit_fonctionnement.md` comme carte (déjà suffisant pour naviguer).
-2. **Moyen terme** : PR « rename only » → `src/core/` avec re-exports `@/core/...` pour compat imports.
-3. **Long terme** : diagramme par **feature produit** dans le README dev (scan, shelf, loan, explore).
+| Ancien | Nouveau |
+|--------|---------|
+| `lib/barcode/` + `services/barcode/` | `core/barcode/` |
+| `lib/metadata/` + `services/metadata/` | `core/metadata/` |
+| `lib/pricing/` + `services/pricing/` | `core/pricing/` |
+| `services/provider/` + `lib/provider/` | `core/catalog/` |
+| `services/providers/` | `providers/` |
+| `lib/core/` (utils UI) | `lib/shared/` |
 
-Ne pas lancer un big-bang merge avant d’avoir une **carte stable** — c’est ce document.
+Scripts : `scripts/migrate-core-structure.sh`, `scripts/rewrite-core-imports.mjs` (historique one-shot).

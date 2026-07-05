@@ -1,11 +1,11 @@
 import type { SyntheticEvent } from "react";
 import Image from "next/image";
 
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import {
   remoteImageDisplaySrc,
   remoteImageNeedsProxy,
-} from "@/lib/media/remoteImageDisplay";
+} from "@/core/media/remoteImageDisplay";
 
 function isBlobImageSrc(src: string) {
   return src.startsWith("blob:");

@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { saveItemsBatch } from "@/lib/api/items";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import {
   countSeriesVolumes,
   expandSeriesVolumeNames,
@@ -38,7 +38,7 @@ import {
   previewSeriesPatternLabel,
   SERIES_VOLUME_PATTERNS,
   type SeriesVolumePatternKey,
-} from "@/lib/title/seriesVolumeNames";
+} from "@/core/title/seriesVolumeNames";
 
 import { Condition, type Shelf } from "@prisma/client";
 

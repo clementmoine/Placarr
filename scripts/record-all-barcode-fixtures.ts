@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-import { DEFAULT_BARCODE_REGRESSION_CASES } from "../src/lib/barcode/lookup/regressionCases";
+import { DEFAULT_BARCODE_REGRESSION_CASES } from "../src/core/barcode/lookup/regressionCases";
 
 const delayMs = 4_000;
 
@@ -21,7 +21,7 @@ async function main() {
 
     const result = spawnSync(
       "pnpm",
-      ["exec", "vitest", "run", "src/services/barcode/resolver.fresh.test.ts"],
+      ["exec", "vitest", "run", "src/core/barcode/resolver.fresh.test.ts"],
       {
         stdio: "inherit",
         env: {

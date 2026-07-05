@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
-import { ICE_HEADERS } from "@/services/providers/icollect/fetch";
+import { ICE_HEADERS } from "@/providers/icollect/fetch";
 import {
   countICollectItemCatalog,
   countICollectPageCatalog,
   ensureICollectIndex,
   listDistinctICollectItems,
-} from "@/services/providers/icollect/indexStore";
-import { runICollectPageScrapeBatch } from "@/services/providers/icollect/catalogSync";
+} from "@/providers/icollect/indexStore";
+import { runICollectPageScrapeBatch } from "@/providers/icollect/catalogSync";
 
 function parseArgs(argv: string[]) {
   const args = argv.filter((arg) => arg !== "--");

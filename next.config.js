@@ -1,13 +1,13 @@
 // @ts-check
 import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
-import { PRESTASHOP_RETAILER_CONFIGS } from "./src/services/providers/prestashop/configs.ts";
-import { SHOPIFY_RETAILER_CONFIGS } from "./src/services/providers/shopify/configs.ts";
-import { DEDICATED_CATALOG_IMAGE_HOSTS } from "./src/lib/media/dedicatedCatalogImageHosts.ts";
+import { PRESTASHOP_RETAILER_CONFIGS } from "./src/providers/prestashop/configs.ts";
+import { SHOPIFY_RETAILER_CONFIGS } from "./src/providers/shopify/configs.ts";
+import { DEDICATED_CATALOG_IMAGE_HOSTS } from "./src/core/media/dedicatedCatalogImageHosts.ts";
 import {
   catalogRetailerImageHosts,
   nextImageRemotePatterns,
-} from "./src/lib/media/nextImageRemoteHosts.ts";
+} from "./src/core/media/nextImageRemoteHosts.ts";
 
 const catalogImageHosts = catalogRetailerImageHosts([
   ...PRESTASHOP_RETAILER_CONFIGS,

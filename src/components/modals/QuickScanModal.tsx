@@ -22,21 +22,21 @@ import {
   cleanManualBarcode,
   ManualBarcodeEntry,
 } from "@/components/ManualBarcodeEntry";
-import { itemMatchesBarcodeQuery } from "@/lib/item/search";
-import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
+import { itemMatchesBarcodeQuery } from "@/core/item/search";
+import { isMetadataTitleAligned } from "@/core/metadata/titleMatching";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { getShelves } from "@/lib/api/shelves";
-import { getCoverImage } from "@/lib/item/media";
+import { getCoverImage } from "@/core/item/media";
 import { RemoteImage } from "@/components/RemoteImage";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { guessShelfFromBarcodeLookup } from "@/lib/barcode/query";
-import { buildBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
+import { guessShelfFromBarcodeLookup } from "@/core/barcode/query";
+import { buildBarcodePlaceholderItemName } from "@/core/item/placeholderName";
 import { saveItem } from "@/lib/api/items";
-import { syncItemQueries } from "@/lib/item/queryCache";
-import { cn } from "@/lib/core/utils";
+import { syncItemQueries } from "@/core/item/queryCache";
+import { cn } from "@/lib/shared/utils";
 import { itemPath, slugify } from "@/lib/routing/slugs";
 import type { MetadataResult } from "@/types/metadataProvider";
 

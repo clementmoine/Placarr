@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { RemoteImage } from "@/components/RemoteImage";
 import colorLib from "color";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import type { ShelfWithItemCount } from "@/types/shelves";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 

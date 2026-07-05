@@ -2,21 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { withRequestUiLocale } from "@/lib/locale/serverPreference";
+import { withRequestUiLocale } from "@/core/locale/serverPreference";
 
 import {
   itemListMetadataInclude,
   presentItemFromStorage,
   type StoredItemMetadata,
-} from "@/lib/item/present";
-import { seriesDisplayTitles } from "@/lib/title/series";
+} from "@/core/item/present";
+import { seriesDisplayTitles } from "@/core/title/series";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
 import { slugify } from "@/lib/routing/slugs";
-import { buildItemSearchConditions } from "@/lib/item/search";
-import { bestRatingRatioFromFacts } from "@/lib/item/rating";
-import { summarizeShelfItemPrices } from "@/services/pricing/resolver";
-import { reconcileOrphanedMetadataRefreshesForUser } from "@/lib/jobs/metadataRefreshSession";
+import { buildItemSearchConditions } from "@/core/item/search";
+import { bestRatingRatioFromFacts } from "@/core/item/rating";
+import { summarizeShelfItemPrices } from "@/core/pricing/resolver";
+import { reconcileOrphanedMetadataRefreshesForUser } from "@/core/jobs/metadataRefreshSession";
 import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
 

@@ -1,12 +1,12 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { cn } from "@/lib/core/utils";
-import type { DetailFact } from "@/lib/metadata/facts/playerFacts";
+import { cn } from "@/lib/shared/utils";
+import type { DetailFact } from "@/core/metadata/facts/playerFacts";
 import {
   providerLinkDisplayLabel,
   sortProviderLinkFacts,
-} from "@/lib/metadata/facts/displayFacts";
+} from "@/core/metadata/facts/displayFacts";
 
 import { faviconDomainForUrl, googleFaviconUrl } from "@/lib/url/favicon";
 

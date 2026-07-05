@@ -25,11 +25,11 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/db/prisma", () => ({
   prisma: { item: h.item, shelf: h.shelf, metadata: h.metadata },
 }));
-vi.mock("@/services/metadata", () => ({
+vi.mock("@/core/metadata", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
   downloadRemoteImage: h.downloadRemoteImage,
 }));
-vi.mock("@/lib/item/present", () => ({
+vi.mock("@/core/item/present", () => ({
   presentItem: (i: { id: string }) => ({ presented: "full", id: i.id }),
   presentItemFromStorage: (i: { id: string }) => ({
     presented: "storage",
@@ -48,16 +48,16 @@ vi.mock("@/lib/routing/itemSlug", () => ({
 vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (s: string) => `slug-${s}`,
 }));
-vi.mock("@/lib/item/search", () => ({ buildItemSearchConditions: () => [] }));
-vi.mock("@/lib/jobs/scheduleMetadataRefresh", async (importOriginal) => {
+vi.mock("@/core/item/search", () => ({ buildItemSearchConditions: () => [] }));
+vi.mock("@/core/jobs/scheduleMetadataRefresh", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@/lib/jobs/scheduleMetadataRefresh")>();
+    await importOriginal<typeof import("@/core/jobs/scheduleMetadataRefresh")>();
   return {
     ...actual,
     startItemMetadataRefresh: h.startItemMetadataRefresh,
   };
 });
-vi.mock("@/services/pricing/itemDisplay", () => ({
+vi.mock("@/core/pricing/itemDisplay", () => ({
   itemPricesContextFromRecord: (item: { id: string }) => ({ id: item.id }),
   readItemPrices: vi.fn().mockResolvedValue({
     priceNew: null,
@@ -214,7 +214,7 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
 
   it("attache les prix aux listes d'items", async () => {
     const { summarizeListItemPrices } = await import(
-      "@/services/pricing/itemDisplay"
+      "@/core/pricing/itemDisplay"
     );
 
     h.requireGuestOrHigher.mockResolvedValue(USER);

@@ -245,7 +245,7 @@ Expected titles:
 - **Provider additions (clean, config/factory-driven):** 5 PrestaShop board-game
   shops (`prestashop/configs.ts`: lesgentlemendujeu, didacto, fairplayjeux,
   cestlejeu, ludocortex) + a **new generic Shopify factory**
-  (`src/services/providers/shopify/`, first shop latelierdesjeux). Adding a shop
+  (`src/providers/shopify/`, first shop latelierdesjeux). Adding a shop
   = one config. See `barcode-extra-sources-evaluated` memory for the sites
   evaluated + rejected (Cloudflare-blocked / not barcode-addressable).
 - **Image download validation** (`metadataStorage.ts`, `looksLikeImageBuffer`):

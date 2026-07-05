@@ -1,8 +1,8 @@
 import type { Condition } from "@prisma/client";
 
-import { isBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
-import { filterMetadataForShelfPlatform } from "@/lib/item/media";
-import { collectMetadataTitleSuggestions } from "@/lib/item/titleSuggestions";
+import { isBarcodePlaceholderItemName } from "@/core/item/placeholderName";
+import { filterMetadataForShelfPlatform } from "@/core/item/media";
+import { collectMetadataTitleSuggestions } from "@/core/item/titleSuggestions";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 

@@ -4,12 +4,12 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import {
   uiLocaleFromRequest,
   withRequestUiLocale,
-} from "@/lib/locale/serverPreference";
+} from "@/core/locale/serverPreference";
 import type { Locale } from "@/types/i18n";
 import {
   itemWithMetadataInclude,
   presentItemFromStorage,
-} from "@/lib/item/present";
+} from "@/core/item/present";
 
 function presentLoanRequest<
   T extends {

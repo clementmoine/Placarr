@@ -6,7 +6,7 @@ import { resolveItemId } from "@/lib/routing/resolveIds";
 import {
   itemPricesContextFromRecord,
   readItemPrices,
-} from "@/services/pricing/itemDisplay";
+} from "@/core/pricing/itemDisplay";
 
 export async function GET(
   req: NextRequest,

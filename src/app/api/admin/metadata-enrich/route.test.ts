@@ -17,7 +17,7 @@ vi.mock("@/lib/db/prisma", () => ({
     item: h.item,
   },
 }));
-vi.mock("@/services/metadata", () => ({
+vi.mock("@/core/metadata", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
 }));
 

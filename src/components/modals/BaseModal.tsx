@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
 interface BaseModalProps {

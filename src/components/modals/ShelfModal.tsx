@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
-import { isUrl } from "@/lib/core/isUrl";
+import { isUrl } from "@/lib/shared/isUrl";
 import { uploadImage } from "@/lib/api/upload";
 
 import { type Prisma, type Shelf, Type } from "@prisma/client";

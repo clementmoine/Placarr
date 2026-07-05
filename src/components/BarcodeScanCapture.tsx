@@ -11,7 +11,7 @@ import {
 } from "@/components/BarcodeScannerView";
 import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 
 export function BarcodeScanCapture({

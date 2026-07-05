@@ -17,10 +17,10 @@ vi.mock("@/lib/db/prisma", () => ({
     item: h.item,
   },
 }));
-vi.mock("@/lib/jobs/scheduleMetadataRefresh", () => ({
+vi.mock("@/core/jobs/scheduleMetadataRefresh", () => ({
   startItemMetadataRefresh: h.startItemMetadataRefresh,
 }));
-vi.mock("@/lib/item/present", () => ({
+vi.mock("@/core/item/present", () => ({
   presentItemFromStorage: (item: { id: string }) => ({
     id: item.id,
     presented: true,

@@ -7,8 +7,8 @@ import {
   confrontWithDatabase,
   getDatabaseSuggestions,
   type MetadataResult,
-} from "@/services/metadata";
-import { testProviderHandlers } from "@/services/provider/runtime";
+} from "@/core/metadata";
+import { testProviderHandlers } from "@/core/catalog/runtime";
 
 async function processScrapedNames(
   rawNames: string[] | undefined,

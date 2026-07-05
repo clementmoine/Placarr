@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { isAllowedRemoteImageProxyTarget } from "@/lib/media/remoteImageProxyValidation.server";
-import { fetchRemoteImageBuffer } from "@/lib/media/remoteFetch";
+import { isAllowedRemoteImageProxyTarget } from "@/core/media/remoteImageProxyValidation.server";
+import { fetchRemoteImageBuffer } from "@/core/media/remoteFetch";
 
 const CACHE_MAX_AGE_SECONDS = 60 * 60;
 

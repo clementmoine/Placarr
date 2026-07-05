@@ -16,11 +16,11 @@ const h = vi.hoisted(() => ({
   barcodeCache: { findMany: vi.fn() },
 }));
 
-vi.mock("@/lib/jobs/metadataRefreshSession", () => ({
+vi.mock("@/core/jobs/metadataRefreshSession", () => ({
   reconcileOrphanedMetadataRefreshesForUser:
     h.reconcileOrphanedMetadataRefreshesForUser,
 }));
-vi.mock("@/services/pricing/resolver", () => ({
+vi.mock("@/core/pricing/resolver", () => ({
   summarizeShelfItemPrices: h.summarizeShelfItemPrices,
 }));
 
@@ -30,7 +30,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/db/prisma", () => ({
   prisma: { shelf: h.shelf, item: h.item, barcodeCache: h.barcodeCache },
 }));
-vi.mock("@/lib/item/present", () => ({
+vi.mock("@/core/item/present", () => ({
   itemListMetadataInclude: { select: { id: true } },
   presentItemFromStorage: (i: { id: string; name?: string }) => ({
     id: i.id,
@@ -41,7 +41,7 @@ vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: async (id: string) => id,
 }));
 vi.mock("@/lib/routing/slugs", () => ({ slugify: (s: string) => `slug-${s}` }));
-vi.mock("@/lib/item/search", () => ({ buildItemSearchConditions: () => [] }));
+vi.mock("@/core/item/search", () => ({ buildItemSearchConditions: () => [] }));
 
 import { GET, POST, PATCH, DELETE } from "./route";
 

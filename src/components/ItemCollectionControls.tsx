@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/core/utils";
+import { cn } from "@/lib/shared/utils";
 import {
   DEFAULT_ITEM_COLLECTION_FILTERS,
   ITEM_COLLECTION_RATING_MIN_OPTIONS,
@@ -17,7 +17,7 @@ import {
   hasActiveCollectionFilters,
   type ItemCollectionFilters,
   type ItemCollectionSort,
-} from "@/lib/item/collectionQuery";
+} from "@/core/item/collectionQuery";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 import type { Condition } from "@prisma/client";

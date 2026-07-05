@@ -48,6 +48,10 @@ import { Badge } from "@/components/ui/badge";
 import { isUrl } from "@/lib/core/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useItemModalMetadataMutations } from "@/lib/client/hooks/useItemModalMetadataMutations";
+import {
+  buildItemModalSessionInit,
+  itemModalSessionKey,
+} from "@/lib/client/itemModalSession";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { localizeImageFieldForSubmit } from "@/lib/media/localizeImageForSubmit";
@@ -83,7 +87,6 @@ import {
 } from "@/lib/media/attachmentDisplayLabels";
 import { cn } from "@/lib/core/utils";
 import type { ItemWithMetadata } from "@/types/items";
-import { isBarcodePlaceholderItemName } from "@/lib/item/placeholderName";
 import { collectMetadataTitleSuggestions } from "@/lib/item/titleSuggestions";
 import type {
   MetadataResult,
@@ -218,7 +221,6 @@ export function ItemModal({
     resolver: zodResolver(itemSchema),
     defaultValues,
   });
-  const { isDirty } = form.formState;
 
   const debounce = useDebounce(1000);
 
@@ -324,16 +326,12 @@ export function ItemModal({
     "general" | "poster" | "background" | "info"
   >("general");
 
-  // Tenue de livre de l'init (jamais rendue) : refs, pas des states — évite
-  // des setState synchrones dans l'effect d'orchestration.
-  const initializedItemIdRef = useRef<string | null | undefined>(undefined);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState("");
 
   const [showBgUrlInput, setShowBgUrlInput] = useState(false);
   const [bgUrlInputValue, setBgUrlInputValue] = useState("");
   const lastInitializedShelfIdRef = useRef<string | null>(null);
-  const lastMetadataStampRef = useRef<string | null>(null);
   const prefilledPreviewRequestRef = useRef<string | null>(null);
 
   const [fetchedMetadata, setFetchedMetadata] = useState<MetadataResult | null>(
@@ -342,35 +340,37 @@ export function ItemModal({
   const [posterPage, setPosterPage] = useState(1);
   const [bgPage, setBgPage] = useState(1);
 
-  // Remises à zéro à l'ouverture/fermeture — ajustées pendant le render
-  // (pattern « adjust state when props change »), pas dans un effect. Les
-  // resets de refs restent dans un effect dédié plus bas (mutation de ref
-  // interdite pendant le render).
-  const openResetKey = isOpen
-    ? `${prefilledValues?.shelfId ?? ""}|${prefilledValues?.name ?? ""}`
-    : null;
-  const [prevOpenResetKey, setPrevOpenResetKey] = useState(openResetKey);
-  if (prevOpenResetKey !== openResetKey) {
-    setPrevOpenResetKey(openResetKey);
-    if (openResetKey !== null) {
+  const sessionKey = itemModalSessionKey({
+    isOpen,
+    itemId,
+    item,
+    prefilledValues,
+    shelfId,
+  });
+  const [sessionState, setSessionState] = useState<{
+    key: string;
+    init: ReturnType<typeof buildItemModalSessionInit>;
+  } | null>(null);
+  if (sessionKey !== sessionState?.key) {
+    if (sessionKey) {
+      const init = buildItemModalSessionInit({
+        item,
+        prefilledValues,
+        shelfId,
+        activeShelfForMedia,
+      });
+      setSessionState({ key: sessionKey, init });
+      setSuggestions(init.suggestions);
+      setNameSuggestion(init.nameSuggestion);
+      setActiveTab(defaultTab || "general");
+      setFetchedMetadata(init.fetchedMetadata);
+      setGuessedShelfId(null);
+      setMatches([]);
+      setSelectedMatch(null);
       setPosterPage(1);
       setBgPage(1);
-      setGuessedShelfId(prefilledValues?.shelfId ?? null);
-      setNameSuggestion(prefilledValues?.name ?? null);
-    } else {
-      setFetchedMetadata(null);
-    }
-  }
-
-  // La préview fetchée manuellement s'efface quand la metadata stockée de
-  // l'item arrive ou change.
-  const storedMetadataKey = `${item?.id ?? ""}|${item?.metadata?.lastFetched ?? ""}`;
-  const [prevStoredMetadataKey, setPrevStoredMetadataKey] =
-    useState(storedMetadataKey);
-  if (prevStoredMetadataKey !== storedMetadataKey) {
-    setPrevStoredMetadataKey(storedMetadataKey);
-    if (item?.metadata) {
-      setFetchedMetadata(null);
+    } else if (!isOpen) {
+      setSessionState(null);
     }
   }
 
@@ -468,45 +468,6 @@ export function ItemModal({
       prefilledPreviewRequestRef.current = null;
     }
   }, [isOpen, cancelMetadataRequests]);
-
-  const seedTitleSuggestionsFromItemMetadata = useCallback(
-    (
-      sourceItem: ItemWithMetadata,
-      options: { adoptPlaceholderName?: boolean } = {},
-    ) => {
-      const metadata = filterMetadataForShelfPlatform(
-        sourceItem.metadata || null,
-        sourceItem.shelf || activeShelfForMedia,
-      );
-      if (!metadata) return;
-
-      applyMetadataPreviewToForm(metadata, {
-        barcodeContext: sourceItem.barcode || undefined,
-      });
-
-      const storedName = (
-        sourceItem.storedName ??
-        sourceItem.name ??
-        ""
-      ).trim();
-      const titleSuggestions = collectMetadataTitleSuggestions(metadata, {
-        itemName: storedName,
-        barcode: sourceItem.barcode,
-      });
-      if (titleSuggestions.length === 0) return;
-
-      setSuggestions(titleSuggestions);
-      setNameSuggestion(titleSuggestions[0]);
-
-      if (
-        options.adoptPlaceholderName &&
-        isBarcodePlaceholderItemName(storedName, sourceItem.barcode)
-      ) {
-        form.setValue("name", titleSuggestions[0], { shouldDirty: false });
-      }
-    },
-    [activeShelfForMedia, applyMetadataPreviewToForm, form],
-  );
 
   const handleNameChange = useCallback(
     (name: string) => {
@@ -1157,127 +1118,33 @@ export function ItemModal({
     setSuggestions([]);
     setNameSuggestion(null);
     setActiveTab(defaultTab || "general");
-    initializedItemIdRef.current = undefined;
+    setSessionState(null);
     setFetchedMetadata(null);
     lastInitializedShelfIdRef.current = null;
-    lastMetadataStampRef.current = null;
     onClose();
   };
 
-  // Effect d'orchestration de l'init du modal : reset react-hook-form (store
-  // externe), déclenchement des fetches metadata et états de suggestion posés
-  // en synchrone. L'éliminer = migrer ces fetches vers react-query (états de
-  // chargement fournis par la lib) — suivi au backlog (« ItemModal
-  // orchestration → react-query »).
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!isOpen) {
-      // Le reset de fetchedMetadata est géré par l'ajustement au render
-      // (openResetKey) ; ici uniquement la tenue de livre en refs.
-      initializedItemIdRef.current = undefined;
-      lastInitializedShelfIdRef.current = null;
-      lastMetadataStampRef.current = null;
-      return;
-    }
+    if (!sessionState) return;
 
-    // If editing (itemId is defined) but item is still loading, wait for it
-    if (itemId && !item) {
-      return;
-    }
+    reset(sessionState.init.formValues);
+    lastInitializedShelfIdRef.current =
+      sessionState.init.lastInitializedShelfId;
 
-    const currentId = itemId || null;
-    const isAlreadyInitialized = initializedItemIdRef.current === currentId;
-    const metadataStamp = item?.metadata?.lastFetched
-      ? new Date(item.metadata.lastFetched).toISOString()
-      : (item?.metadataId ?? "none");
-    const metadataChanged =
-      isAlreadyInitialized &&
-      lastMetadataStampRef.current !== null &&
-      lastMetadataStampRef.current !== metadataStamp;
+    const asyncInit = sessionState.init.asyncInit;
+    if (!asyncInit) return;
 
-    if (isAlreadyInitialized && (isDirty || !item) && !metadataChanged) {
-      return;
-    }
-
-    if (item) {
-      const storedName = item.storedName || item.name || defaultValues.name;
-      reset({
-        shelfId: item.shelfId || defaultValues.shelfId,
-        name: storedName,
-        description:
-          item.description ||
-          item.metadata?.description ||
-          defaultValues.description,
-        condition: item.condition || defaultValues.condition,
-        imageUrl: item.imageUrl || defaultValues.imageUrl,
-        backgroundImageUrl:
-          item.backgroundImageUrl || defaultValues.backgroundImageUrl,
-        barcode: item.barcode || defaultValues.barcode,
-      });
-      lastInitializedShelfIdRef.current = item.shelfId || defaultValues.shelfId;
-      lastMetadataStampRef.current = metadataStamp;
-
-      if (item.metadata) {
-        seedTitleSuggestionsFromItemMetadata(item, {
-          adoptPlaceholderName: true,
-        });
-      } else if (item.barcode) {
-        handleBarcodeChange(item.barcode);
+    void Promise.resolve().then(() => {
+      if (asyncInit.kind === "barcode") {
+        return handleBarcodeChange(asyncInit.barcode);
       }
-    } else {
-      reset(defaultValues);
-      setSuggestions(prefilledValues?.name ? [prefilledValues.name] : []);
-      setNameSuggestion(prefilledValues?.name || null);
-      lastInitializedShelfIdRef.current = defaultValues.shelfId;
-      const prefilledMetadata = prefilledValues?.metadataPreview || null;
-
-      if (prefilledMetadata) {
-        applyMetadataPreviewToForm(prefilledMetadata, {
-          barcodeContext: prefilledValues?.barcode,
-        });
-      }
-
-      // If we have prefilled values with barcode/name, let's fetch metadata preview!
-      if (
-        !prefilledMetadata &&
-        (prefilledValues?.barcode || prefilledValues?.name)
-      ) {
-        if (prefilledValues.barcode) {
-          handleBarcodeChange(prefilledValues.barcode);
-        } else if (prefilledValues.name) {
-          fetchMetadataPreview(prefilledValues.name, "");
-        }
-      }
-    }
-
-    if (!isAlreadyInitialized) {
-      setActiveTab(defaultTab || "general");
-    }
-
-    initializedItemIdRef.current = currentId;
-  }, [
-    isOpen,
-    itemId,
-    item,
-    defaultValues,
-    applyMetadataPreviewToForm,
-    handleBarcodeChange,
-    fetchMetadataPreview,
-    seedTitleSuggestionsFromItemMetadata,
-    reset,
-    defaultTab,
-    isDirty,
-    prefilledValues,
-  ]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+      fetchMetadataPreview(asyncInit.name, "");
+    });
+  }, [sessionState, fetchMetadataPreview, handleBarcodeChange, reset]);
 
   // Re-fetch metadata preview when shelf/platform changes.
   useEffect(() => {
-    if (
-      !isOpen ||
-      initializedItemIdRef.current === undefined ||
-      !lastInitializedShelfIdRef.current
-    )
+    if (!isOpen || !sessionState?.key || !lastInitializedShelfIdRef.current)
       return;
     if (currentShelfId !== lastInitializedShelfIdRef.current) {
       lastInitializedShelfIdRef.current = currentShelfId;
@@ -1287,7 +1154,7 @@ export function ItemModal({
         fetchMetadataPreview(name, barcode, true);
       }
     }
-  }, [currentShelfId, isOpen, fetchMetadataPreview, form]);
+  }, [currentShelfId, isOpen, sessionState?.key, fetchMetadataPreview, form]);
 
   // Barcode-prefilled items can initialize before shelves are loaded. Once the
   // shelf type/platform is known, fetch the full metadata image set.

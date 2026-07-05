@@ -9,6 +9,7 @@ import {
 import { cleanSearchQuery } from "@/lib/search/query";
 import {
   isCanonicalProvider,
+  isCatalogTitleAnchorProvider,
   isTrustedRetailerProvider,
   sourceWeightForProvider,
 } from "@/services/provider/evidence";
@@ -203,16 +204,20 @@ export function buildProductEvidence(
 ): ProductEvidence | null {
   const isTrustedRetailer =
     canonicalOverride == null && isTrustedRetailerProvider(providerName);
+  const catalogTitleAnchor =
+    canonicalOverride == null && isCatalogTitleAnchorProvider(providerName);
   const isCanonical =
     canonicalOverride === true ||
     (canonicalOverride == null &&
       isCanonicalProvider(providerName) &&
-      !isTrustedRetailer);
+      !isTrustedRetailer &&
+      !catalogTitleAnchor);
   // A marketplace lot ("… 1,2,3", "Lot de 3 jeux") sells several games at once;
   // it doesn't identify the scanned product and its name collapses to a bare
   // franchise, so drop it. Canonical databases never return lots.
   if (!isCanonical && isLotListing(product.name)) return null;
-  const preserveDisplayTitle = isCanonical || isTrustedRetailer;
+  const preserveDisplayTitle =
+    isCanonical || isTrustedRetailer || catalogTitleAnchor;
   const parsedBase = parseProductName(product.name, preserveDisplayTitle);
   const parsed = product.platformKey
     ? { ...parsedBase, platformKey: product.platformKey }
@@ -234,6 +239,7 @@ export function buildProductEvidence(
     coverUrl: product.coverUrl || null,
     isCanonical,
     isTrustedRetailer,
+    catalogTitleAnchor: catalogTitleAnchor || undefined,
     isAlias: !!product.isAlias,
     region: product.region || null,
     priority,

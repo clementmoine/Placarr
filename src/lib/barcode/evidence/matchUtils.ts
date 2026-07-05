@@ -196,11 +196,13 @@ export function pickPreferredClusterDisplayName(
         name: item.title,
         isCanonical: item.isCanonical,
         isTrustedRetailer: item.isTrustedRetailer,
+        catalogTitleAnchor: item.catalogTitleAnchor,
       },
       {
         name: item.cleanName,
         isCanonical: item.isCanonical,
         isTrustedRetailer: item.isTrustedRetailer,
+        catalogTitleAnchor: item.catalogTitleAnchor,
       },
     ]),
   ];
@@ -210,7 +212,8 @@ export function pickPreferredClusterDisplayName(
     .map((candidate) => ({
       ...candidate,
       name: cleanTitleForDisplay(candidate.name, {
-        preservePlatformSuffix: candidate.isCanonical,
+        preservePlatformSuffix:
+          candidate.isCanonical || candidate.catalogTitleAnchor,
         preserveEditionTerms: candidate.isCanonical,
       }),
     }))
@@ -230,12 +233,23 @@ export function pickPreferredClusterDisplayName(
   // (publisher/edition junk) must never become the display name: a trusted /
   // canonical source's clean name wins over a noisier marketplace superset of it.
   const anchorNames = validCandidates
-    .filter((candidate) => candidate.isCanonical || candidate.isTrustedRetailer)
+    .filter(
+      (candidate) =>
+        candidate.isCanonical ||
+        candidate.isTrustedRetailer ||
+        candidate.catalogTitleAnchor,
+    )
     .map((candidate) => candidate.name);
   const deNoisedCandidates =
     anchorNames.length > 0
       ? validCandidates.filter((candidate) => {
-          if (candidate.isCanonical || candidate.isTrustedRetailer) return true;
+          if (
+            candidate.isCanonical ||
+            candidate.isTrustedRetailer ||
+            candidate.catalogTitleAnchor
+          ) {
+            return true;
+          }
           return !anchorNames.some(
             (anchorName) =>
               anchorName !== candidate.name &&

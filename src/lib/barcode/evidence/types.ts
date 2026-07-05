@@ -37,6 +37,7 @@ export interface ProductEvidence {
   coverUrl: string | null;
   isCanonical: boolean;
   isTrustedRetailer: boolean;
+  catalogTitleAnchor?: boolean;
   isAlias: boolean;
   region: string | null;
   priority: number;

@@ -147,6 +147,21 @@ describe("selectConsensusTitle", () => {
     ).toBe("The Legend of Zelda : Skyward Sword");
   });
 
+  it("garde la plateforme en suffixe quand le canonique l'affirme (Mario Kart Wii)", () => {
+    expect(
+      selectConsensusTitle({
+        canonical: ["Mario Kart Wii"],
+        marketplace: [
+          "Mario Kart",
+          "Mario Kart",
+          "Mario Kart",
+          "Mario Kart",
+          "Mario Kart Wii",
+        ],
+      }),
+    ).toBe("Mario Kart Wii");
+  });
+
   it("renvoie null sans aucun titre", () => {
     expect(selectConsensusTitle({ canonical: [], marketplace: [] })).toBeNull();
   });

@@ -200,14 +200,19 @@ describe("buildStructuralTitleSearchVariants", () => {
     );
   });
 
-  it("swaps dictionary-level french subtitle phrases for provider indexes", () => {
-    expect(
-      buildStructuralTitleSearchVariants(
-        "Assassin's Creed: Naissance d'un Nouveau Monde - La Saga américaine",
-      ),
-    ).toEqual(
+  it("extracts subtitle fragments without hardcoded product phrase swaps", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "Assassin's Creed III: Naissance d'un Nouveau Monde",
+    );
+    expect(variants).toEqual(
       expect.arrayContaining([
-        "Assassin's Creed: Birth of a new world - The american saga",
+        "Assassin's Creed III",
+        "Naissance d'un Nouveau Monde",
+      ]),
+    );
+    expect(variants).toEqual(
+      expect.not.arrayContaining([
+        expect.stringMatching(/birth of a new world/i),
       ]),
     );
   });

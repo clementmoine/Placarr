@@ -1,16 +1,19 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { Readable } from "node:stream";
+import type { DatabaseSync } from "node:sqlite";
 
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import {
   ensureICollectIndex,
-  lookupICollectItemUrlByBarcodeKey,
+  lookupICollectItemRefByBarcodeKey,
   readCachedICollectMetadata,
   rememberICollectBarcodeMapping,
-  writeCachedICollectMetadata,
+  rememberICollectItemCatalog,
+  shouldRefreshICollectItemPage,
 } from "./indexStore";
+import type { ICollectMetadata } from "./types";
 import { icollectCoverRegionFromAgeRating } from "./imageLabels";
 
 const ICE_BASE = "https://www.icollecteverything.com";
@@ -30,27 +33,7 @@ const ICE_TIMEOUT_MS = 20_000;
 const SITEMAP_STREAM_TIMEOUT_MS = 45_000;
 const SITEMAP_SCAN_OVERLAP = 256;
 
-export interface ICollectMetadata {
-  itemId: string;
-  itemUrl: string;
-  title: string;
-  barcode?: string | null;
-  platform?: string | null;
-  publisher?: string | null;
-  developer?: string | null;
-  description?: string | null;
-  releaseDate?: string | null;
-  coverUrl?: string | null;
-  images: Array<{ url: string; label?: string }>;
-  players?: string | null;
-  ageRating?: string | null;
-  estimatedValueCents?: number | null;
-  estimatedValueDate?: string | null;
-  series?: string | null;
-  ignScore?: string | null;
-  genres?: string[];
-  countryOfPurchase?: string | null;
-}
+export type { ICollectMetadata } from "./types";
 
 export function barcodeMatchKey(value?: string | null): string {
   return cleanCode(value).replace(/^0+/, "");
@@ -213,6 +196,16 @@ export function sanitizeICollectPublisher(
   return text;
 }
 
+export function sanitizeICollectCountry(
+  value?: string | null,
+): string | undefined {
+  const text = cleanText(value);
+  if (!text || looksLikeCurrency(text)) return undefined;
+  if (looksLikeIsoDate(text) || isEpochSentinelDate(text)) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return undefined;
+  return text;
+}
+
 export function sanitizeICollectMetadata(
   metadata: ICollectMetadata,
 ): ICollectMetadata {
@@ -223,6 +216,10 @@ export function sanitizeICollectMetadata(
     releaseDate: sanitizeICollectReleaseDate(metadata.releaseDate) ?? null,
     publisher:
       sanitizeICollectPublisher(metadata.publisher, metadata.barcode) ?? null,
+    countryOfPurchase:
+      sanitizeICollectCountry(metadata.countryOfPurchase) ?? null,
+    genres:
+      metadata.genres && metadata.genres.length > 0 ? metadata.genres : undefined,
   };
 }
 
@@ -295,14 +292,69 @@ function parseMainImages(html: string): Array<{ url: string; label?: string }> {
   return images;
 }
 
-function parseHtmlField(html: string, fieldKey: string): string | undefined {
-  const match = html.match(
+function extractHtmlFieldBlock(html: string, fieldKey: string): string | undefined {
+  const start = html.search(
     new RegExp(
-      `<div class="field-entry" data-field-key="${fieldKey}">[\\s\\S]*?<div class="value">([^<]+)</div>`,
+      `<div class="field-entry" data-field-key="${fieldKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`,
       "i",
     ),
   );
-  return cleanText(match?.[1]);
+  if (start < 0) return undefined;
+  const slice = html.slice(start);
+  const next = slice.slice(1).search(/<div class="field-entry" data-field-key="/i);
+  return next < 0 ? slice : slice.slice(0, next + 1);
+}
+
+function parseHtmlFieldList(html: string, fieldKey: string): string[] {
+  const block = extractHtmlFieldBlock(html, fieldKey);
+  if (!block) return [];
+
+  const multi = [
+    ...block.matchAll(/<div class="one_value">([\s\S]*?)<\/div>/gi),
+  ]
+    .map((match) => cleanText(match[1]))
+    .filter((value): value is string => Boolean(value));
+  if (multi.length > 0) return multi;
+
+  const single = cleanText(
+    block.match(/<div class="value">([\s\S]*?)<\/div>/i)?.[1],
+  );
+  return single ? [single] : [];
+}
+
+function parseHtmlFieldScalar(html: string, fieldKey: string): string | undefined {
+  const values = parseHtmlFieldList(html, fieldKey);
+  return values.length > 0 ? values.join(", ") : undefined;
+}
+
+/** @deprecated use parseHtmlFieldScalar */
+function parseHtmlField(html: string, fieldKey: string): string | undefined {
+  return parseHtmlFieldScalar(html, fieldKey);
+}
+
+function readScalarField(
+  properties: unknown,
+  html: string,
+  jsonLdNames: string[],
+  htmlKey: string,
+): string | undefined {
+  for (const name of jsonLdNames) {
+    const value = readAdditionalProperty(properties, name);
+    if (value) return value;
+  }
+  return parseHtmlFieldScalar(html, htmlKey);
+}
+
+function parseGenres(properties: unknown, html: string): string[] {
+  const values = [
+    ...parseHtmlFieldList(html, "genre"),
+    ...parseHtmlFieldList(html, "sub_genre"),
+    readAdditionalProperty(properties, "Genre"),
+    readAdditionalProperty(properties, "Sub-Genre"),
+  ]
+    .map((value) => cleanText(value))
+    .filter((value): value is string => Boolean(value));
+  return [...new Set(values)];
 }
 
 export function parseICollectVideoGameItemPage(
@@ -339,8 +391,10 @@ export function parseICollectVideoGameItemPage(
     title.match(/\[Barcode\s+([0-9]+)\]/i)?.[1];
 
   const estimatedValueRaw =
-    readAdditionalProperty(properties, "Automatic Estimated Value") ||
-    parseHtmlField(html, "automatic_estimated_value");
+    readScalarField(properties, html, ["Automatic Estimated Value"], "automatic_estimated_value") ||
+    undefined;
+
+  const inputDevices = parseHtmlFieldList(html, "input_device");
 
   return {
     itemId,
@@ -348,59 +402,90 @@ export function parseICollectVideoGameItemPage(
     title,
     barcode: barcode || null,
     platform:
-      readAdditionalProperty(properties, "Platform") ||
-      parseHtmlField(html, "platform") ||
-      null,
+      readScalarField(properties, html, ["Platform"], "platform") || null,
     publisher:
       sanitizeICollectPublisher(
-        readAdditionalProperty(properties, "Publisher") ||
-          parseHtmlField(html, "publisher") ||
-          null,
+        readScalarField(properties, html, ["Publisher"], "publisher") || null,
         barcode,
       ) || null,
-    developer: readAdditionalProperty(properties, "Developers") || null,
+    developer:
+      readScalarField(
+        properties,
+        html,
+        ["Developers", "Developer"],
+        "developer",
+      ) || null,
     description:
-      readAdditionalProperty(properties, "Game Summary") ||
-      parseHtmlField(html, "game_summary") ||
-      null,
+      readScalarField(
+        properties,
+        html,
+        ["Game Summary"],
+        "game_summary",
+      ) || null,
     releaseDate:
       sanitizeICollectReleaseDate(
-        readAdditionalProperty(properties, "Release Date") ||
-          parseHtmlField(html, "release_date") ||
+        readScalarField(properties, html, ["Release Date"], "release_date") ||
           null,
       ) || null,
     coverUrl: coverUrl || null,
     images,
     players:
       sanitizeICollectPlayers(
-        readAdditionalProperty(properties, "Players") ||
-          parseHtmlField(html, "players") ||
-          null,
+        readScalarField(properties, html, ["Players"], "players") || null,
       ) || null,
     ageRating:
       sanitizeICollectAgeRating(
-        readAdditionalProperty(properties, "Rating") ||
-          parseHtmlField(html, "rating") ||
-          null,
+        readScalarField(properties, html, ["Rating"], "rating") || null,
       ) || null,
     estimatedValueCents: parseEstimatedValueCents(estimatedValueRaw),
     estimatedValueDate:
-      readAdditionalProperty(properties, "Automatic Estimated Date") ||
-      parseHtmlField(html, "automatic_estimated_date") ||
-      null,
-    series: readAdditionalProperty(properties, "Series") || null,
-    ignScore: readAdditionalProperty(properties, "IGN Score") || null,
+      readScalarField(
+        properties,
+        html,
+        ["Automatic Estimated Date"],
+        "automatic_estimated_date",
+      ) || null,
+    series: readScalarField(properties, html, ["Series"], "series") || null,
+    ignScore:
+      readScalarField(properties, html, ["IGN Score"], "ign_score") || null,
     countryOfPurchase:
-      readAdditionalProperty(properties, "Country of Purchase") ||
-      parseHtmlField(html, "country") ||
+      sanitizeICollectCountry(
+        readScalarField(
+          properties,
+          html,
+          ["Country of Purchase"],
+          "country",
+        ) || null,
+      ) || null,
+    genres: parseGenres(properties, html),
+    gameMode:
+      readScalarField(properties, html, ["Game Mode"], "game_mode") || null,
+    mediaType:
+      readScalarField(properties, html, ["Media Type"], "media_type") || null,
+    packaging:
+      readScalarField(properties, html, ["Packaging"], "packaging") || null,
+    discCount:
+      readScalarField(properties, html, ["Discs", "Disc"], "discs") || null,
+    graphics:
+      readScalarField(properties, html, ["Graphics"], "graphics") || null,
+    inputDevices: inputDevices.length > 0 ? inputDevices : undefined,
+    in3d: readScalarField(properties, html, ["In 3D", "3D"], "in_3d") || null,
+    vr: readScalarField(properties, html, ["VR"], "vr") || null,
+    specialEdition:
+      readScalarField(
+        properties,
+        html,
+        ["Special Edition"],
+        "special_edition",
+      ) || null,
+    seriesOrder:
+      readScalarField(properties, html, ["Series Order"], "series_order") ||
       null,
-    genres: [
-      ...html.matchAll(
-        /<div class="field-entry" data-field-key="genre">[\s\S]*?<div class="one_value">([^<]+)<\/div>/gi,
-      ),
-    ]
-      .map((match) => cleanText(match[1]))
-      .filter((value): value is string => Boolean(value)),
+    dateAdded:
+      sanitizeICollectReleaseDate(
+        readScalarField(properties, html, ["Date Added"], "date_added") ||
+          null,
+      ) || null,
   };
 }
 
@@ -468,6 +553,13 @@ const memoryItemUrlByBarcodeKey = new Map<
 >();
 const MEMORY_ITEM_URL_TTL_MS = 60 * 60 * 1000;
 
+function touchICollectCatalogSync(): void {
+  void import("./catalogSync").then((mod) => {
+    mod.startICollectCatalogSyncLoop();
+    mod.maybeScheduleICollectCatalogSync();
+  });
+}
+
 async function listVideoGameSitemapUrls(): Promise<string[]> {
   if (cachedVideoGameSitemapUrls) return cachedVideoGameSitemapUrls;
   const response = await axios.get<string>(ICE_SITEMAP_MASTER, {
@@ -515,8 +607,9 @@ export async function resolveICollectVideoGameItemUrlByBarcode(
   }
 
   const db = await ensureICollectIndex();
+  touchICollectCatalogSync();
   if (db) {
-    const cachedUrl = lookupICollectItemUrlByBarcodeKey(db, barcodeKey);
+    const cachedUrl = lookupICollectItemRefByBarcodeKey(db, barcodeKey)?.itemUrl;
     if (cachedUrl) {
       memoryItemUrlByBarcodeKey.set(barcodeKey, {
         itemUrl: cachedUrl,
@@ -541,13 +634,33 @@ export async function resolveICollectVideoGameItemUrlByBarcode(
   return itemUrl;
 }
 
+function readLocalICollectMetadata(
+  db: DatabaseSync,
+  barcodeKey: string,
+): ICollectMetadata | null {
+  const itemRef = lookupICollectItemRefByBarcodeKey(db, barcodeKey);
+  if (!itemRef) return null;
+
+  const payload = readCachedICollectMetadata(db, itemRef.itemId);
+  if (!payload) return null;
+
+  try {
+    const metadata = JSON.parse(payload) as ICollectMetadata;
+    if (!metadata.title?.trim()) return null;
+    return sanitizeICollectMetadata(metadata);
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchICollectVideoGameItem(
   itemUrl: string,
+  options?: { bypassCache?: boolean; timeoutMs?: number },
 ): Promise<ICollectMetadata | null> {
   const itemId = itemUrl.match(/\/videogame\/(\d+)\/?$/i)?.[1];
   const db = itemId ? await ensureICollectIndex() : null;
 
-  if (db && itemId && !process.env.RECORD) {
+  if (db && itemId && !process.env.RECORD && !options?.bypassCache) {
     const cachedPayload = readCachedICollectMetadata(db, itemId);
     if (cachedPayload) {
       try {
@@ -562,12 +675,15 @@ export async function fetchICollectVideoGameItem(
 
   const response = await axios.get<string>(itemUrl, {
     headers: ICE_HEADERS,
-    timeout: ICE_TIMEOUT_MS,
+    timeout: options?.timeoutMs ?? ICE_TIMEOUT_MS,
     validateStatus: (status) => status >= 200 && status < 400,
   });
   const metadata = parseICollectVideoGameItemPage(response.data, itemUrl);
-  if (metadata && db && itemId) {
-    writeCachedICollectMetadata(db, itemId, JSON.stringify(metadata));
+  if (metadata) {
+    metadata.catalogSource = "page";
+    if (db && itemId) {
+      rememberICollectItemCatalog(db, metadata);
+    }
   }
   return metadata ? sanitizeICollectMetadata(metadata) : null;
 }
@@ -579,10 +695,48 @@ export async function fetchICollectMetadataByBarcode(
   const normalized = normalizeProductBarcode(barcode);
   if (!normalized) return null;
 
-  const itemUrl = await resolveICollectVideoGameItemUrlByBarcode(normalized);
+  const barcodeKey = barcodeMatchKey(normalized);
+  const db = await ensureICollectIndex();
+  touchICollectCatalogSync();
+
+  const itemRef = db
+    ? lookupICollectItemRefByBarcodeKey(db, barcodeKey)
+    : null;
+  const local =
+    db && !process.env.RECORD
+      ? readLocalICollectMetadata(db, barcodeKey)
+      : null;
+
+  const itemId =
+    itemRef?.itemId ??
+    local?.itemId ??
+    undefined;
+  const needsPageRefresh = Boolean(
+    db &&
+      itemId &&
+      !process.env.RECORD &&
+      shouldRefreshICollectItemPage(db, itemId),
+  );
+
+  if (local && !needsPageRefresh) {
+    if (
+      options?.requireBarcodeMatch !== false &&
+      local.barcode &&
+      !barcodesEquivalent(local.barcode, normalized)
+    ) {
+      return null;
+    }
+    return local;
+  }
+
+  const itemUrl =
+    itemRef?.itemUrl ??
+    (await resolveICollectVideoGameItemUrlByBarcode(normalized));
   if (!itemUrl) return null;
 
-  const metadata = await fetchICollectVideoGameItem(itemUrl);
+  const metadata = await fetchICollectVideoGameItem(itemUrl, {
+    bypassCache: needsPageRefresh,
+  });
   if (!metadata) return null;
 
   if (

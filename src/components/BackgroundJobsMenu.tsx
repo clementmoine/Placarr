@@ -42,7 +42,7 @@ export function BackgroundJobsMenu() {
     queryFn: getBackgroundJobs,
     enabled: !isGuest,
     refetchInterval: (query) =>
-      (query.state.data?.count ?? 0) > 0 ? 2500 : 10000,
+      (query.state.data?.count ?? 0) > 0 ? 2500 : false,
   });
 
   const invalidate = () => {

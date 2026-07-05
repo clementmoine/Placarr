@@ -1,27 +1,10 @@
 #!/usr/bin/env tsx
-import axios from "axios";
-
 import {
-  ICE_HEADERS,
-  parseVideoGameSitemapUrls,
-} from "@/services/providers/icollect/fetch";
-import {
-  countICollectBarcodeIndex,
   ensureICollectIndex,
-  ingestICollectSitemapXml,
+  countICollectBarcodeIndex,
+  countICollectItemCatalog,
 } from "@/services/providers/icollect/indexStore";
-
-const ICE_SITEMAP_MASTER =
-  "https://www.icollecteverything.com/sitemaps/sitemap-master.xml";
-
-async function fetchSitemapUrls(): Promise<string[]> {
-  const response = await axios.get<string>(ICE_SITEMAP_MASTER, {
-    headers: ICE_HEADERS,
-    timeout: 20_000,
-    validateStatus: (status) => status >= 200 && status < 400,
-  });
-  return parseVideoGameSitemapUrls(response.data);
-}
+import { runICollectFullSitemapSync } from "@/services/providers/icollect/catalogSync";
 
 async function main() {
   const db = await ensureICollectIndex();
@@ -30,30 +13,24 @@ async function main() {
     process.exit(1);
   }
 
-  const before = countICollectBarcodeIndex(db);
-  const sitemapUrls = await fetchSitemapUrls();
+  const beforeBarcodes = countICollectBarcodeIndex(db);
+  const beforeCatalog = countICollectItemCatalog(db);
   console.log(
-    `Building iCollect videogame barcode index from ${sitemapUrls.length} sitemaps (${before} rows already cached)...`,
+    `Building iCollect catalog (${beforeBarcodes} barcodes, ${beforeCatalog} catalog rows)...`,
   );
 
-  let ingested = 0;
-  for (const [index, sitemapUrl] of sitemapUrls.entries()) {
-    const started = Date.now();
-    const response = await axios.get<string>(sitemapUrl, {
-      headers: ICE_HEADERS,
-      timeout: 120_000,
-      validateStatus: (status) => status >= 200 && status < 400,
-    });
-    const added = await ingestICollectSitemapXml(db, response.data);
-    ingested += added;
-    console.log(
-      `[${index + 1}/${sitemapUrls.length}] ${sitemapUrl} +${added} rows (${Date.now() - started}ms)`,
-    );
-  }
+  const result = await runICollectFullSitemapSync(db, {
+    onProgress: ({ index, total, url, stats }) => {
+      console.log(
+        `[${index}/${total}] ${url} +${stats.barcodeUpserts} barcodes, +${stats.catalogUpserts} catalog rows`,
+      );
+    },
+  });
 
-  const after = countICollectBarcodeIndex(db);
+  const afterBarcodes = countICollectBarcodeIndex(db);
+  const afterCatalog = countICollectItemCatalog(db);
   console.log(
-    `Done. Indexed ${after} unique barcodes (+${after - before} net new, ${ingested} upserts).`,
+    `Done. ${result.sitemaps} sitemaps, ${afterBarcodes} barcodes (+${afterBarcodes - beforeBarcodes}), ${afterCatalog} catalog rows (+${afterCatalog - beforeCatalog}).`,
   );
 }
 

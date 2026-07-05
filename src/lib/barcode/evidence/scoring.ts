@@ -27,9 +27,8 @@ export const TYPE_SCORE = {
   canonicalProvider: 0.05,
   /** The leader carries a cover image. */
   cover: 0.03,
-  /** Barcode sits in a reserved ISBN / audio range matching the candidate type. */
+  /** Barcode sits in the GS1 Bookland ISBN range (978/979). */
   bookBarcode: 0.45,
-  audioBarcode: 0.3,
   /** A `games` result that resolved a platform key. */
   gamePlatform: 0.25,
   /**
@@ -44,29 +43,14 @@ export const TYPE_SCORE = {
    * A music-specialist provider (registry: single-type `musics`, e.g. Discogs /
    * MusicBrainz / Deezer) anchored the compiled result — authoritative proof the
    * scan is an album. Promotes `musics` and suppresses the video-game type it is
-   * most often confused with on audio-range barcodes. Registry-driven signal that
-   * replaces the former hardcoded `orchestra|soundtrack|ost|album|cd` word-list.
+   * most often confused with. Registry-driven signal that replaces the former
+   * hardcoded `orchestra|soundtrack|ost|album|cd` word-list.
    */
   musicSpecialistSignal: { musics: 0.35, games: -0.3 },
 } as const;
 
-/** Reserved barcode ranges that identify a product type on their own. */
+/** GS1 Bookland — ISBN-13 encoded as EAN (978/979). Reliable type signal for books. */
 export const BOOK_BARCODE_PREFIX = /^(978|979)/;
-
-// Two DELIBERATELY different "audio-range" heuristics, co-located so the
-// divergence reads as intentional (not an accidental bug), with opposite risk
-// profiles:
-//  - AUDIO_BARCODE_PREFIX only *nudges* the music score (+audioBarcode). A false
-//    positive is cheap, so it stays a tight curated set.
-//  - AUDIO_LIKE_GAME_SUPPRESSION_PREFIX *drops* the `games` candidate outright in
-//    selectBarcodeTypeResult, so it errs broad (leading-zero + JP `45`/`88`) to
-//    catch audio scans a game listing might otherwise hijack.
-// Both are hand-curated heuristics with no golden-master coverage (no fixture
-// barcode matches either). A real fix = GS1-accurate audio detection + cases;
-// until then, keep them distinct rather than merging and shifting either
-// behaviour blindly.
-export const AUDIO_BARCODE_PREFIX = /^(498|602|724|731|886|888)/;
-export const AUDIO_LIKE_GAME_SUPPRESSION_PREFIX = /^(0?(498|499)|45|88)/;
 
 // ── Cluster confidence ───────────────────────────────────────────────────────
 // `scoreEvidenceCluster` turns one cluster of agreeing evidence into a [0,1]

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isAnchorProvider,
+  isCatalogTitleAnchorProvider,
   isTrustedRetailerProvider,
   sourceWeightForProvider,
 } from "@/services/provider/evidence";
@@ -15,6 +16,12 @@ describe("providerEvidence — trusted retailers", () => {
   it("reconnaît les boutiques PrestaShop comme revendeurs de confiance", () => {
     expect(isTrustedRetailerProvider("Ludifolie")).toBe(true);
     expect(isTrustedRetailerProvider("Monsieur de")).toBe(true);
+  });
+
+  it("reconnaît iCollect comme ancre de titre catalogue offline", () => {
+    expect(isCatalogTitleAnchorProvider("iCollect Everything")).toBe(true);
+    expect(isAnchorProvider("iCollect Everything")).toBe(true);
+    expect(isCatalogTitleAnchorProvider("eBay")).toBe(false);
   });
 
   it("donne un poids intermédiaire aux revendeurs de confiance", () => {

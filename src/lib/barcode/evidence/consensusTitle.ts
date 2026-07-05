@@ -2,6 +2,10 @@ import {
   getSequelIndicators,
   normalizeForTokens,
 } from "@/lib/barcode/titleUtils";
+import {
+  detectVideoGamePlatformKey,
+  getVideoGamePlatform,
+} from "@/lib/games/platforms";
 
 import { GENERIC_TITLE_TOKENS } from "./parse";
 
@@ -96,11 +100,44 @@ function listingTokenCounts(listings: string[]): Map<string, number> {
   return counts;
 }
 
+/** Platform suffix tokens in canonical titles (e.g. "wii" in Mario Kart Wii). */
+function canonicalPlatformSuffixTokens(canonical: string[]): Set<string> {
+  const tokens = new Set<string>();
+  for (const title of canonical) {
+    const key = detectVideoGamePlatformKey(title);
+    if (!key) continue;
+    const platform = getVideoGamePlatform(key);
+    if (!platform) continue;
+
+    const titleTokens = normalizeForTokens(title)
+      .replace(/&/g, " and ")
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
+    if (titleTokens.length === 0) continue;
+
+    const suffixCandidates = new Set<string>([
+      platform.key,
+      ...platform.aliases.flatMap((alias) =>
+        normalizeForTokens(alias)
+          .split(/[^a-z0-9]+/)
+          .filter((token) => token.length >= 2 || /^\d+$/.test(token)),
+      ),
+    ]);
+
+    const lastToken = titleTokens[titleTokens.length - 1];
+    if (lastToken && suffixCandidates.has(lastToken)) {
+      tokens.add(lastToken);
+    }
+  }
+  return tokens;
+}
+
 function scoreCandidate(
   title: string,
   counts: Map<string, number>,
   majority: number,
   isCanonical: boolean,
+  affirmedPlatformSuffixTokens: Set<string>,
 ): number {
   let score = isCanonical ? CANONICAL_BONUS : 0;
   for (const token of new Set(significantTokens(title))) {
@@ -109,6 +146,8 @@ function scoreCandidate(
       score += COVER_REWARD; // the marketplace agrees on this token
     else if (count >= 1)
       score -= MINORITY_PENALTY; // real but minority token — mild
+    else if (affirmedPlatformSuffixTokens.has(token))
+      continue; // official platform suffix — sellers often omit it
     else score -= ZERO_CORROBORATION_PENALTY; // no listing has it — fabrication
   }
   return score;
@@ -141,6 +180,8 @@ export function selectConsensusTitle(
     MARKETPLACE_MIN_COUNT,
     Math.ceil(listings.length * MARKETPLACE_MAJORITY_RATIO),
   );
+  const affirmedPlatformSuffixTokens =
+    canonicalPlatformSuffixTokens(canonical);
 
   const candidates = [
     ...canonical.map((title) => ({ title, isCanonical: true })),
@@ -155,7 +196,13 @@ export function selectConsensusTitle(
   } | null = null;
   for (const { title, isCanonical } of candidates) {
     const trimmed = title.trim();
-    const score = scoreCandidate(title, counts, majority, isCanonical);
+    const score = scoreCandidate(
+      title,
+      counts,
+      majority,
+      isCanonical,
+      affirmedPlatformSuffixTokens,
+    );
     const casing = casingRank(trimmed);
     const length = trimmed.length;
     // Tie-breaks, in order: better display casing first (so a clean

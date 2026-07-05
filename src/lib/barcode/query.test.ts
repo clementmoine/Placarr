@@ -92,7 +92,7 @@ describe("guessShelfByPlatformKey — routage zéro-input", () => {
   const shelves = [
     { id: "s-wii", name: "Jeux Wii", type: "games" },
     { id: "s-ps4", name: "PS4", type: "games" },
-    { id: "s-steam", name: "Steam", type: "games" },
+    { id: "s-pc", name: "PC", type: "games" },
     { id: "s-books", name: "Mes livres", type: "books" },
   ];
 
@@ -102,7 +102,7 @@ describe("guessShelfByPlatformKey — routage zéro-input", () => {
       isGuessed: true,
     });
     expect(guessShelfByPlatformKey("pc", shelves)).toEqual({
-      shelfId: "s-steam",
+      shelfId: "s-pc",
       isGuessed: true,
     });
     expect(guessShelfByPlatformKey("ps4", shelves)).toEqual({

@@ -10,7 +10,6 @@ import {
   type CompiledResult,
   type ResolvedMatch,
 } from "@/lib/barcode/evidence";
-import { AUDIO_LIKE_GAME_SUPPRESSION_PREFIX } from "@/lib/barcode/evidence/scoring";
 import { runBarcodeLookups } from "@/lib/barcode/lookup/lookups";
 import {
   collectPayloadListingNames,
@@ -227,13 +226,9 @@ function selectBarcodeTypeResult(
     return { selectedType: type, selectedResult: typeResults[type] };
   }
 
-  const isAudioLikeBarcode =
-    AUDIO_LIKE_GAME_SUPPRESSION_PREFIX.test(cleanedBarcode);
-  const candidates = Object.entries(typeResults)
-    .filter(
-      ([candidateType]) => !(isAudioLikeBarcode && candidateType === "games"),
-    )
-    .filter((entry): entry is [string, CompiledResult] => Boolean(entry[1]));
+  const candidates = Object.entries(typeResults).filter(
+    (entry): entry is [string, CompiledResult] => Boolean(entry[1]),
+  );
   const scoreCandidate = (entry: [string, CompiledResult]) =>
     scoreTypeCandidate(
       entry[0],

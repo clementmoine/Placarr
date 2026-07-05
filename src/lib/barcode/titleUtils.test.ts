@@ -91,16 +91,25 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
     ).toBe("Super Paper Mario Nintendo Selects");
   });
 
-  it("conserve un préfixe « Wii » intégral au titre officiel", () => {
-    // "Wii Sports/Play/Fit…" : "Wii" fait partie du nom (sinon "Sports" seul est
-    // faux). Jamais strippé.
-    expect(cleanTitleForDisplay("Wii Play")).toBe("Wii Play");
-    expect(cleanTitleForDisplay("Wii Sports")).toBe("Wii Sports");
-    expect(cleanTitleForDisplay("Wii Sports Resort")).toBe("Wii Sports Resort");
-    expect(cleanTitleForDisplay("Wii Fit")).toBe("Wii Fit");
-    // …mais un préfixe « Wii » NON intégral (autre jeu) reste retiré.
+  it("retire un préfixe plateforme marketplace sauf si le canonique l'affirme", () => {
+    // Marketplace seul : préfixe plateforme = bruit listing (comme Xbox, PS…).
+    expect(cleanTitleForDisplay("Wii Play")).toBe("Play");
+    expect(cleanTitleForDisplay("Wii Sports")).toBe("Sports");
     expect(cleanTitleForDisplay("Wii Mario Kart")).toBe("Mario Kart");
     expect(cleanTitleForDisplay("Nintendo Wii Zelda")).toBe("Zelda");
+    // Canonique autoritaire : titre officiel intact.
+    expect(
+      cleanTitleForDisplay("Wii Sports", { preservePlatformSuffix: true }),
+    ).toBe("Wii Sports");
+    expect(
+      cleanTitleForDisplay("Wii Sports Resort", { preservePlatformSuffix: true }),
+    ).toBe("Wii Sports Resort");
+    // Annonce marketplace alignée sur le canonique.
+    expect(
+      cleanTitleForDisplay("Wii Sports Resort", {
+        preserveLeadingPrefixesAffirmedBy: ["Wii Sports Resort"],
+      }),
+    ).toBe("Wii Sports Resort");
   });
 
   it("retire un préfixe plateforme en tête de titre marketplace", () => {

@@ -163,6 +163,11 @@ export interface ProviderEvidenceConfig {
   canonical?: boolean;
   /** Official retailer product pages (barcode-confirmed), below catalog sources. */
   trustedRetailer?: boolean;
+  /**
+   * Local barcode catalog rows (e.g. offline index) may anchor official display
+   * titles without full canonical weight.
+   */
+  catalogTitleAnchor?: boolean;
   cleanCachedNames?: boolean;
 }
 

@@ -791,4 +791,42 @@ describe("metadataTitleSimilarity", () => {
       ),
     ).toBe(true);
   });
+
+  it("aligns AC III FR packaging via ScreenScraper-style regionalTitles", () => {
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "Assassin's Creed III",
+          regionalTitles: [
+            {
+              region: "fr",
+              text: "Assassin's Creed III : Naissance d'un Nouveau Monde",
+            },
+            {
+              region: "wor",
+              text: "Assassin's Creed III: Birth of a New World",
+            },
+          ],
+        },
+        ["Assassin's Creed III: Naissance d'un Nouveau Monde"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("aligns Star Wars collection FR/EN via provider regionalTitles", () => {
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "Star Wars : La Saga américaine",
+          regionalTitles: [
+            { region: "fr", text: "Star Wars : La Saga américaine" },
+            { region: "wor", text: "Star Wars: The American Saga" },
+          ],
+        },
+        ["Star Wars: La Saga américaine"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
 });

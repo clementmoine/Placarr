@@ -213,6 +213,8 @@ export function cleanTitleForDisplay(
     // part of an authoritative title ("Gottlieb Pinball Classics"), instead of
     // stripping them as listing noise. Set for canonical/trusted sources.
     preserveEditionTerms?: boolean;
+    /** Canonical/trusted clean titles that affirm a leading platform prefix as integral. */
+    preserveLeadingPrefixesAffirmedBy?: string[];
   } = {},
 ): string {
   if (!name) return name;
@@ -331,14 +333,6 @@ export function cleanTitleForDisplay(
         "",
       )
       .replace(
-        /^wii\s+(?=(?!sports\b|fit\b|play\b|party\b|music\b|chess\b).{4,})/i,
-        "",
-      )
-      .replace(
-        /^wii\s*u\s+(?=(?!sports\b|fit\b|play\b|party\b|music\b|chess\b|panorama\b).{4,})/i,
-        "",
-      )
-      .replace(
         /\s+\b(?:complet|complete)?\s*(?:sur|pour|for)\s+(?:nintendo\s+)?(?:wii|switch|ds|3ds|gamecube|game\s+cube)\b.*$/i,
         "",
       )
@@ -377,7 +371,11 @@ export function cleanTitleForDisplay(
       cleaned = cleaned.slice(1, -1).trim();
     }
     cleaned = moveTrailingSortArticleToFront(cleaned);
-    cleaned = stripLeadingPlatformPrefix(cleaned);
+    cleaned = stripLeadingPlatformPrefix(cleaned, {
+      preservePlatformSuffix: options.preservePlatformSuffix,
+      preserveLeadingPrefixesAffirmedBy:
+        options.preserveLeadingPrefixesAffirmedBy,
+    });
 
     // Strip trailing suffix
     cleaned = cleaned
@@ -412,16 +410,44 @@ export function cleanTitleForDisplay(
 
 const PLATFORMS = VIDEO_GAME_PLATFORM_TERMS;
 
-function stripLeadingPlatformPrefix(value: string): string {
+function leadingPlatformPrefixAffirmedByTitles(
+  title: string,
+  platform: string,
+  affirmedTitles: string[],
+): boolean {
+  if (affirmedTitles.length === 0) return false;
+  const prefixRegex = new RegExp(`^${escapeRegExp(platform)}\\s+(?=\\S)`, "i");
+  if (!prefixRegex.test(title)) return false;
+  const titleNorm = normalizeForTokens(title);
+  return affirmedTitles.some((canonical) => {
+    const canonicalTrimmed = canonical.trim();
+    if (!canonicalTrimmed) return false;
+    if (canonicalTrimmed.toLowerCase() === title.trim().toLowerCase()) {
+      return true;
+    }
+    if (!prefixRegex.test(canonicalTrimmed)) return false;
+    return normalizeForTokens(canonicalTrimmed) === titleNorm;
+  });
+}
+
+function stripLeadingPlatformPrefix(
+  value: string,
+  options: {
+    preservePlatformSuffix?: boolean;
+    preserveLeadingPrefixesAffirmedBy?: string[];
+  } = {},
+): string {
   const normalized = value.trim();
   if (!normalized) return normalized;
+  // Authoritative titles keep their official spelling — no leading platform strip.
+  if (options.preservePlatformSuffix) return normalized;
 
+  const affirmedBy = options.preserveLeadingPrefixesAffirmedBy ?? [];
   const sortedPlatforms = [...PLATFORMS].sort((a, b) => b.length - a.length);
   for (const platform of sortedPlatforms) {
-    // Wii prefixes are handled earlier, where the "Wii Sports/Play/Fit…" titles
-    // (the platform word is integral to the official name) are already excluded
-    // from stripping — don't re-strip them here (single source of truth).
-    if (/\bwii\b/.test(platform)) continue;
+    if (leadingPlatformPrefixAffirmedByTitles(normalized, platform, affirmedBy)) {
+      continue;
+    }
     const regex = new RegExp(`^${escapeRegExp(platform)}\\s+(?=\\S)`, "i");
     if (regex.test(normalized)) {
       return normalized.replace(regex, "").trim();

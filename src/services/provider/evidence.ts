@@ -38,6 +38,7 @@ type ProviderEvidenceProfile = {
   sourceWeight: number;
   canonical: boolean;
   trustedRetailer: boolean;
+  catalogTitleAnchor: boolean;
   cleanCachedNames: boolean;
 };
 
@@ -52,6 +53,7 @@ for (const providerModule of PROVIDER_MODULES) {
     canonical:
       providerModule.evidence.canonical ?? providerModule.info.canonical,
     trustedRetailer: providerModule.evidence.trustedRetailer ?? false,
+    catalogTitleAnchor: providerModule.evidence.catalogTitleAnchor ?? false,
     cleanCachedNames: providerModule.evidence.cleanCachedNames ?? false,
   });
   evidenceLabelToProviderId.set(
@@ -69,6 +71,7 @@ for (const [label, config] of Object.entries(INTERNAL_EVIDENCE)) {
     sourceWeight: config.sourceWeight,
     canonical: config.canonical ?? false,
     trustedRetailer: config.trustedRetailer ?? false,
+    catalogTitleAnchor: config.catalogTitleAnchor ?? false,
     cleanCachedNames: config.cleanCachedNames ?? false,
   });
 }
@@ -114,9 +117,24 @@ export function isTrustedRetailerProvider(providerName: string): boolean {
   );
 }
 
+export function isCatalogTitleAnchorProvider(providerName: string): boolean {
+  if (evidenceByLabel.get(providerName)?.catalogTitleAnchor) return true;
+  return [...evidenceByLabel.entries()].some(
+    ([label, config]) =>
+      config.catalogTitleAnchor &&
+      matchesProviderLabel(
+        providerName,
+        label,
+        (entry) => entry.catalogTitleAnchor,
+      ),
+  );
+}
+
 export function isAnchorProvider(providerName: string): boolean {
   return (
-    isCanonicalProvider(providerName) || isTrustedRetailerProvider(providerName)
+    isCanonicalProvider(providerName) ||
+    isTrustedRetailerProvider(providerName) ||
+    isCatalogTitleAnchorProvider(providerName)
   );
 }
 

@@ -11,7 +11,7 @@ import {
   getPriceChartingPlatformSlugs,
   priceChartingNeoGeoVariantMatchesShelf,
   resolvePriceChartingPlatformSlug,
-} from "@/lib/games/platforms";
+} from "./platformSlugs";
 import { franchiseSequelNumbersConflict } from "@/lib/metadata/titleMatching";
 import { slugify } from "@/lib/routing/slugs";
 import {

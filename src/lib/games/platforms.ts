@@ -8,11 +8,6 @@ export {
   SCREEN_SCRAPER_PLATFORM_REFERENCES,
 } from "@/lib/games/platformSources";
 
-export type PriceChartingPlatformSlugs = {
-  default: string;
-  pal?: string;
-};
-
 export type CoverProjectPlatformSpec = {
   folder: string;
   prefix: string;
@@ -25,13 +20,17 @@ type VideoGamePlatformDefinition = {
   launchBoxNames?: readonly string[];
   theGamesDbId?: number;
   screenScraperSystemId?: number;
-  priceCharting?: PriceChartingPlatformSlugs;
   coverProject?: readonly CoverProjectPlatformSpec[];
   /**
    * Marketplace titles naming this platform as a type signal (see
    * `detectVideoGameSignal`). Low = token is ambiguous outside game listings.
    */
   listingTypeSignalPrecision?: "low" | "high";
+  /**
+   * Physical retail release (cartridge/disc). False for PC/digital store shelves
+   * — used when filtering web-only catalog hits on console-targeted fetches.
+   */
+  physicalMediaRelease?: boolean;
 };
 
 export const VIDEO_GAME_PLATFORMS = [
@@ -65,7 +64,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Microsoft Xbox 360"],
     theGamesDbId: 15,
     screenScraperSystemId: 33,
-    priceCharting: { pal: "pal-xbox-360", default: "xbox-360" },
     coverProject: [{ folder: "xbox_360", prefix: "xbox360_" }],
   },
   {
@@ -75,7 +73,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Microsoft Xbox"],
     theGamesDbId: 14,
     screenScraperSystemId: 32,
-    priceCharting: { pal: "pal-xbox", default: "xbox" },
     coverProject: [{ folder: "xbox", prefix: "xbox_" }],
   },
   {
@@ -103,7 +100,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Sony Playstation 3", "Sony PlayStation 3"],
     theGamesDbId: 12,
     screenScraperSystemId: 59,
-    priceCharting: { pal: "pal-playstation-3", default: "playstation-3" },
     coverProject: [{ folder: "playstation_3", prefix: "ps3_" }],
   },
   {
@@ -113,7 +109,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Sony Playstation 2", "Sony PlayStation 2"],
     theGamesDbId: 11,
     screenScraperSystemId: 58,
-    priceCharting: { pal: "pal-playstation-2", default: "playstation-2" },
     coverProject: [{ folder: "playstation_2", prefix: "ps2_" }],
   },
   {
@@ -139,7 +134,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Sony Playstation", "Sony PlayStation"],
     theGamesDbId: 10,
     screenScraperSystemId: 57,
-    priceCharting: { pal: "pal-playstation", default: "playstation" },
     coverProject: [
       { folder: "playstation", prefix: "ps_" },
       { folder: "playstation_1", prefix: "ps1_" },
@@ -164,7 +158,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Nintendo Wii"],
     theGamesDbId: 9,
     screenScraperSystemId: 16,
-    priceCharting: { pal: "pal-wii", default: "wii" },
     coverProject: [{ folder: "nintendo_wii", prefix: "wii_" }],
   },
   {
@@ -190,7 +183,6 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Nintendo GameCube"],
     theGamesDbId: 2,
     screenScraperSystemId: 13,
-    priceCharting: { pal: "pal-gamecube", default: "gamecube" },
     coverProject: [
       { folder: "gamecube", prefix: "gc_" },
       { folder: "nintendo_gamecube", prefix: "gc_" },
@@ -280,6 +272,7 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Microsoft Windows", "Windows"],
     screenScraperSystemId: 138,
     listingTypeSignalPrecision: "low",
+    physicalMediaRelease: false,
   },
   {
     key: "dreamcast",
@@ -522,6 +515,16 @@ export function videoGamePlatformListingTypeSignal(
   return platform.listingTypeSignalPrecision === "low" ? 0 : 1;
 }
 
+/** True when metadata fetch should target a physical retail release (not PC/digital). */
+export function videoGamePlatformTargetsPhysicalMedia(
+  key: VideoGamePlatformKey | string | null | undefined,
+): boolean {
+  if (!key || !isVideoGamePlatformKey(key)) return false;
+  const platform = getVideoGamePlatform(key);
+  if (!platform) return false;
+  return platform.physicalMediaRelease !== false;
+}
+
 function detectVideoGamePlatformKeyInNormalizedText(
   normalized: string,
 ): VideoGamePlatformKey | null {
@@ -659,64 +662,6 @@ export function detectScreenScraperSystemId(
     padded,
     SCREEN_SCRAPER_SOURCE_PLATFORM_TERMS,
   );
-}
-
-export function getPriceChartingPlatformSlugs(
-  key: VideoGamePlatformKey | string | null | undefined,
-): PriceChartingPlatformSlugs | null {
-  return getVideoGamePlatform(key)?.priceCharting ?? null;
-}
-
-/** Neo Geo AES/MVS/CD share one canonical key but PriceCharting uses separate slugs. */
-export function resolvePriceChartingPlatformSlug(
-  platformOrShelf: string | null | undefined,
-  options?: { barcode?: string | null; isPal?: boolean },
-): string | null {
-  const platformKey = detectVideoGamePlatformKey(platformOrShelf || "");
-  if (platformKey !== "neogeo") {
-    const slugs = getPriceChartingPlatformSlugs(platformKey);
-    if (!slugs) return null;
-    return options?.isPal && slugs.pal ? slugs.pal : slugs.default;
-  }
-
-  const norm = normalizeVideoGamePlatformText(platformOrShelf || "");
-  if (/\bmvs\b/.test(norm)) return "neo-geo-mvs";
-  if (/\bcd\b/.test(norm)) return "neo-geo-cd";
-
-  const cleanedBarcode = options?.barcode?.replace(/\D/g, "") ?? "";
-  const isJapaneseBarcode = /^49/.test(cleanedBarcode);
-  const isJapaneseLabel = /\b(jp|jpn|japan)\b/.test(norm);
-
-  if (/\baes\b/.test(norm) || platformKey === "neogeo") {
-    return isJapaneseBarcode || isJapaneseLabel
-      ? "jp-neo-geo-aes"
-      : "neo-geo-aes";
-  }
-
-  return null;
-}
-
-export function priceChartingNeoGeoVariantMatchesShelf(
-  parsedPlatform: string | undefined,
-  shelfOrPlatform: string | null | undefined,
-): boolean {
-  const targetNorm = normalizeVideoGamePlatformText(shelfOrPlatform || "");
-  const parsedNorm = normalizeVideoGamePlatformText(parsedPlatform || "");
-  if (!/\bneo\s*geo\b/.test(targetNorm) && !/\bneo\s*geo\b/.test(parsedNorm)) {
-    return true;
-  }
-
-  const targetAes = /\baes\b/.test(targetNorm);
-  const targetMvs = /\bmvs\b/.test(targetNorm);
-  const targetCd = /\bcd\b/.test(targetNorm);
-  const parsedAes = /\baes\b/.test(parsedNorm);
-  const parsedMvs = /\bmvs\b/.test(parsedNorm);
-  const parsedCd = /\bcd\b/.test(parsedNorm);
-
-  if (targetAes) return parsedAes && !parsedMvs && !parsedCd;
-  if (targetMvs) return parsedMvs && !parsedAes && !parsedCd;
-  if (targetCd) return parsedCd && !parsedAes && !parsedMvs;
-  return true;
 }
 
 export function getCoverProjectPlatformSpecs(

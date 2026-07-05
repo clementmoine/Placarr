@@ -7,6 +7,10 @@ import {
 } from "@/services/provider/registry";
 import { metadataProviderResolverMap } from "@/services/provider/bootstrap";
 import { withProviderEvidence } from "@/services/metadata/facts";
+import {
+  detectVideoGamePlatformKey,
+  isVideoGamePlatformKey,
+} from "@/lib/games/platforms";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 const metadataSelectionCapabilities: Capability[] = [
@@ -21,12 +25,10 @@ const metadataSelectionCapabilities: Capability[] = [
 ];
 
 export function isPcLikeGamePlatform(platform?: string | null): boolean {
-  if (!platform) return false;
-  const normalized = platform
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  return /\b(pc|windows|steam)\b/.test(normalized);
+  if (!platform?.trim()) return false;
+  const trimmed = platform.trim();
+  if (isVideoGamePlatformKey(trimmed)) return trimmed === "pc";
+  return detectVideoGamePlatformKey(trimmed) === "pc";
 }
 
 export function isMediaType(value: string): value is MediaType {

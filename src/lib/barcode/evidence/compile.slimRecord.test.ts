@@ -95,4 +95,29 @@ describe("compileResultForType — slim RECORD", () => {
     expect(typeResults.games?.platformKey).toBe("wii");
     expect(typeResults.games?.cleanName).toBeTruthy();
   });
+
+  it("ancre le titre iCollect offline (catalogTitleAnchor) contre le consensus marketplace", async () => {
+    const result = await compileResultForType(
+      "games",
+      [
+        {
+          providerName: "iCollect Everything",
+          products: [{ name: "Mario Kart Wii", platformKey: "wii" }],
+        },
+        {
+          providerName: "eBay",
+          products: [
+            { name: "Mario Kart", platformKey: "wii" },
+            { name: "Mario Kart", platformKey: "wii" },
+            { name: "Mario Kart", platformKey: "wii" },
+          ],
+        },
+      ],
+      "0045496365226",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.cleanName).toBe("Mario Kart Wii");
+    expect(result?.platformKey).toBe("wii");
+  });
 });

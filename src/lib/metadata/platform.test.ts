@@ -23,8 +23,8 @@ describe("resolveGameMetadataPlatform", () => {
     expect(resolveGameMetadataPlatform(undefined, "Switch 2", "games")).toBe(
       "switch2",
     );
-    expect(resolveGameMetadataPlatform(undefined, "Steam", "games")).toBe("pc");
-    expect(resolveGameMetadataPlatform(undefined, "GOG", "games")).toBe("pc");
+    expect(resolveGameMetadataPlatform(undefined, "GOG", "games")).toBeUndefined();
+    expect(resolveGameMetadataPlatform(undefined, "Steam", "games")).toBeUndefined();
   });
 
   it("returns undefined for generic game shelves", () => {

@@ -3,7 +3,13 @@ import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { metadataProviderResolverMap } from "@/services/provider/bootstrap";
 import { pickDiscoveredBarcode } from "@/lib/barcode/normalize";
 import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
-import { isVideoGamePlatformKey } from "@/lib/games/platforms";
+import {
+  detectVideoGamePlatformKey,
+  isVideoGamePlatformKey,
+  videoGamePlatformTargetsPhysicalMedia,
+} from "@/lib/games/platforms";
+import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
+import { throwIfAborted, isAbortError } from "@/lib/http/abort";
 import {
   buildMetadataAlignmentNames,
   extractBaseTitleVariant,
@@ -19,8 +25,6 @@ import type {
   MetadataProviderAdapter,
 } from "@/types/providerModule";
 import { bookIsbnBootstrapProviderIds } from "@/services/provider/registry";
-import { detectShelfGamePlatformKey } from "@/lib/metadata/platform";
-import { throwIfAborted, isAbortError } from "@/lib/http/abort";
 
 import { metadataHasDisplayImage } from "@/lib/metadata/displayImage";
 import {
@@ -236,17 +240,12 @@ function isMetadataPlatformCompatible(
   return requestedPlatformKey === resultPlatformKey;
 }
 
-function isLivingRoomConsolePlatformKey(key: string | null): boolean {
-  if (!key || !isVideoGamePlatformKey(key)) return false;
-  return key !== "pc" && key !== ("web" as typeof key);
-}
-
-/** Drops web-only catalog hits when the shelf targets a console release. */
+/** Drops web-only catalog hits when the shelf targets a physical release. */
 function consoleShelfRejectsWebOnlyGameMetadata(
   metadata: MetadataResult,
   requestedPlatformKey: string | null,
 ): boolean {
-  if (!isLivingRoomConsolePlatformKey(requestedPlatformKey)) return false;
+  if (!videoGamePlatformTargetsPhysicalMedia(requestedPlatformKey)) return false;
   const platformFacts = (metadata.facts ?? []).filter(
     (fact) => fact.kind === "platform",
   );

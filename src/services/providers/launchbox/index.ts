@@ -30,13 +30,7 @@ export const launchboxModule: ProviderModule = {
     canonical: true,
     websiteUrl: "https://gamesdb.launchbox-app.com/",
     notes:
-      "Base communautaire LaunchBox (Metadata.zip). Index local: jeux, nombre de joueurs max, titres alternatifs regionaux, images (box, fanart, screenshots).",
-  },
-  evidence: {
-    label: "LaunchBox",
-    sourceWeight: 0.42,
-    canonical: true,
-    cleanCachedNames: true,
+      "Base communautaire LaunchBox (Metadata.zip). Index local: jeux, nombre de joueurs max, titres alternatifs regionaux, images (box, fanart, screenshots). Enrichissement metadata par titre — pas de barcode GTIN.",
   },
   createMetadataAdapter: () => ({
     id: "launchbox",

@@ -22,6 +22,24 @@ const MARIO_KART_ITEM_HTML = `
     <div class="field-entry" data-field-key="country"><div class="attribute">Country of Purchase:</div><div class="value">France</div></div>
     <div class="field-entry" data-field-key="automatic_estimated_value"><div class="attribute">Automatic Estimated Value:</div><div class="value">~€18.75</div></div>
     <div class="field-entry" data-field-key="genre"><div class="many_values"><div class="one_value">Racing</div></div></div>
+    <div class="field-entry" data-field-key="developer"><div class="many_values"><div class="one_value">Nintendo EAD</div></div></div>
+    <div class="field-entry" data-field-key="game_mode"><div class="value">Multiplayer</div></div>
+    <div class="field-entry" data-field-key="media_type"><div class="value">Physical</div></div>
+  </body>
+</html>
+`;
+
+const YOSHI_HTML = `
+<html>
+  <body>
+    <h1 class="important_value">Yoshi No Tamago</h1>
+    <div class="field-entry" data-field-key="developer"><div class="many_values"><div class="one_value">Nintendo</div></div></div>
+    <div class="field-entry" data-field-key="game_summary"><div class="value">Egg puzzle game.</div></div>
+    <div class="field-entry" data-field-key="platform"><div class="value">Nintendo Game Boy</div></div>
+    <div class="field-entry" data-field-key="genre"><div class="many_values"><div class="one_value">Puzzle</div></div></div>
+    <div class="field-entry" data-field-key="sub_genre"><div class="many_values"><div class="one_value">Arcade</div></div></div>
+    <div class="field-entry" data-field-key="graphics"><div class="value">8-bit</div></div>
+    <div class="field-entry" data-field-key="input_device"><div class="many_values"><div class="one_value">Handheld Console</div></div></div>
   </body>
 </html>
 `;
@@ -125,6 +143,27 @@ describe("parseICollectVideoGameItemPage", () => {
     });
     expect(metadata?.images).toHaveLength(2);
     expect(metadata?.genres).toEqual(["Racing"]);
+    expect(metadata?.developer).toBe("Nintendo EAD");
+    expect(metadata?.gameMode).toBe("Multiplayer");
+    expect(metadata?.mediaType).toBe("Physical");
+  });
+
+  it("parses HTML-only fields when JSON-LD is absent", () => {
+    const metadata = parseICollectVideoGameItemPage(
+      YOSHI_HTML,
+      "https://www.icollecteverything.com/db/item/videogame/1002281/",
+    );
+
+    expect(metadata).toMatchObject({
+      itemId: "1002281",
+      title: "Yoshi No Tamago",
+      developer: "Nintendo",
+      platform: "Nintendo Game Boy",
+      description: "Egg puzzle game.",
+      graphics: "8-bit",
+      inputDevices: ["Handheld Console"],
+    });
+    expect(metadata?.genres).toEqual(["Puzzle", "Arcade"]);
   });
 
   it("drops misaligned collector fields instead of emitting price/date as players/rating", () => {
@@ -146,5 +185,17 @@ describe("parseICollectVideoGameItemPage", () => {
       releaseDate: null,
       publisher: null,
     });
+  });
+
+  it("rejects country values that are actually timestamps", () => {
+    const metadata = parseICollectVideoGameItemPage(
+      `<html><body>
+        <h1 class="important_value">Test Game</h1>
+        <div class="field-entry" data-field-key="country"><div class="value">2018-07-03 12:39:54</div></div>
+      </body></html>`,
+      "https://www.icollecteverything.com/db/item/videogame/1/",
+    );
+
+    expect(metadata?.countryOfPurchase).toBeNull();
   });
 });

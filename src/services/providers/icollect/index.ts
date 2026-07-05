@@ -142,6 +142,56 @@ function metadataToResult(metadata: ICollectMetadata): MetadataResult {
     });
   }
 
+  const collectorFacts: Array<{
+    value?: string | null;
+    kind: string;
+    label: string;
+    priority: number;
+  }> = [
+    { value: metadata.gameMode, kind: "game-mode", label: "Game mode", priority: 44 },
+    { value: metadata.mediaType, kind: "format", label: "Media", priority: 43 },
+    { value: metadata.packaging, kind: "packaging", label: "Packaging", priority: 42 },
+    { value: metadata.discCount, kind: "disc-count", label: "Discs", priority: 41 },
+    { value: metadata.graphics, kind: "graphics", label: "Graphics", priority: 40 },
+    { value: metadata.in3d, kind: "feature", label: "3D", priority: 39 },
+    { value: metadata.vr, kind: "feature", label: "VR", priority: 38 },
+    {
+      value: metadata.specialEdition,
+      kind: "edition",
+      label: "Special edition",
+      priority: 46,
+    },
+    {
+      value: metadata.seriesOrder,
+      kind: "series-order",
+      label: "Series order",
+      priority: 45,
+    },
+  ];
+
+  for (const entry of metadata.inputDevices || []) {
+    facts.push({
+      kind: "input-device",
+      label: "Input",
+      value: entry,
+      source: "icollect",
+      confidence: 0.5,
+      priority: 37,
+    });
+  }
+
+  for (const entry of collectorFacts) {
+    if (!entry.value?.trim()) continue;
+    facts.push({
+      kind: entry.kind,
+      label: entry.label,
+      value: entry.value.trim(),
+      source: "icollect",
+      confidence: 0.52,
+      priority: entry.priority,
+    });
+  }
+
   return {
     title: metadata.title,
     platformKey: icollectPlatformKey(metadata.platform) || undefined,
@@ -209,6 +259,7 @@ export const icollectModule: ProviderModule = {
   evidence: {
     label: "iCollect Everything",
     sourceWeight: 0.42,
+    catalogTitleAnchor: true,
   },
   createMetadataAdapter() {
     return {

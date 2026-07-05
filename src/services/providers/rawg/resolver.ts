@@ -6,6 +6,7 @@ import {
 } from "@/lib/metadata/titleMatching";
 
 type RawgNamedEntry = { name?: string };
+type RawgClipEntry = { clip?: string; preview?: string; video?: string };
 type RawgGame = {
   id?: number;
   slug?: string;
@@ -25,6 +26,7 @@ type RawgGame = {
   description?: string;
   description_raw?: string;
   website?: string;
+  clips?: { clips?: RawgClipEntry[] };
 };
 type RawgSearchResponse = { results?: RawgGame[] };
 
@@ -43,6 +45,26 @@ function readAxiosStatus(error: unknown): number | undefined {
   return typeof error === "object" && error !== null && "response" in error
     ? (error as { response?: { status?: number } }).response?.status
     : undefined;
+}
+
+/** First gameplay / trailer clip from a RAWG game detail payload. */
+export function readRawgGameplayClip(
+  detail: Pick<RawgGame, "clips"> | null | undefined,
+): { url: string; label: string } | null {
+  const entries = detail?.clips?.clips;
+  if (!Array.isArray(entries)) return null;
+
+  for (const entry of entries) {
+    const url = typeof entry.clip === "string" ? entry.clip.trim() : "";
+    if (!url || !/^https?:\/\//i.test(url)) continue;
+    const label =
+      typeof entry.video === "string" && entry.video.trim()
+        ? entry.video.trim()
+        : "Gameplay";
+    return { url, label };
+  }
+
+  return null;
 }
 
 export function createRawgResolver(deps: RawgResolverDeps) {
@@ -122,12 +144,14 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     let detailedDescription: string | undefined;
     let detailWebsite: string | undefined;
     let detailTags: string[] = [];
+    let gameplayClip: { url: string; label: string } | null = null;
     if (bestMatch.slug) {
       try {
         const detail = await fetchWithRetry<RawgGame>(
           `https://api.rawg.io/api/games/${bestMatch.slug}?key=${process.env.RAWG_API_KEY}`,
           2,
         );
+        gameplayClip = readRawgGameplayClip(detail);
         detailTags = Array.isArray(detail?.tags)
           ? detail.tags
               .map((entry: { name?: unknown }) =>
@@ -328,6 +352,18 @@ export function createRawgResolver(deps: RawgResolverDeps) {
         source: "RAWG",
         confidence: 0.57,
         priority: 21,
+      });
+    }
+
+    if (gameplayClip) {
+      facts.push({
+        kind: "video",
+        label: "Vidéo",
+        value: gameplayClip.label,
+        url: gameplayClip.url,
+        source: "RAWG",
+        confidence: 0.54,
+        priority: 30,
       });
     }
 

@@ -11,6 +11,8 @@ import {
   compareBarcodeEvidenceByImageObservationRank,
   observationsFromProductEvidence,
   rejectedObservationsFromProductEvidence,
+  barcodeEvidencePlatformAmbiguityWeight,
+  barcodeEvidencePlatformPickWeight,
 } from "./observations";
 
 function evidence(
@@ -217,5 +219,48 @@ describe("observationsFromProductEvidence", () => {
     expect(rows.every((row) => row.usage.displayCandidate === false)).toBe(
       true,
     );
+  });
+});
+
+describe("platform pick weights — decide-late tier (P2)", () => {
+  it("pass 2 adds only a small tier step; canonical bonus applies to both passes", () => {
+    const canonical = evidence({
+      providerName: "ScreenScraper",
+      isCanonical: true,
+      sourceWeight: 0.45,
+      parsed: {
+        rawName: "Game",
+        cleanName: "Game",
+        title: "Game",
+        normalizedTitle: "game",
+        tokens: new Set(["game"]),
+        indicators: new Set(),
+        platformKey: "xbox",
+      },
+    });
+    const marketplace = evidence({
+      providerName: "eBay",
+      sourceWeight: 0.25,
+      parsed: {
+        rawName: "Game",
+        cleanName: "Game",
+        title: "Game",
+        normalizedTitle: "game",
+        tokens: new Set(["game"]),
+        indicators: new Set(),
+        platformKey: "pc",
+      },
+    });
+
+    const ambiguityGap =
+      barcodeEvidencePlatformAmbiguityWeight(canonical) -
+      barcodeEvidencePlatformAmbiguityWeight(marketplace);
+    const pickGap =
+      barcodeEvidencePlatformPickWeight(canonical) -
+      barcodeEvidencePlatformPickWeight(marketplace);
+
+    expect(ambiguityGap).toBeCloseTo(0.42, 5);
+    expect(pickGap - ambiguityGap).toBeCloseTo(0.1, 5);
+    expect(pickGap).toBeLessThan(ambiguityGap + 0.11);
   });
 });

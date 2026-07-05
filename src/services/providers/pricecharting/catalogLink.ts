@@ -2,7 +2,7 @@ import { cleanCode, detectPlatformKey } from "@/lib/barcode/query";
 import {
   getPriceChartingPlatformSlugs,
   resolvePriceChartingPlatformSlug,
-} from "@/lib/games/platforms";
+} from "./platformSlugs";
 import { slugify } from "@/lib/routing/slugs";
 
 import type { CatalogExternalLinkContext } from "@/types/providerModule";

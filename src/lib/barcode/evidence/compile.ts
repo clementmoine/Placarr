@@ -31,7 +31,6 @@ import {
 import { applyEditionToCompiledResult } from "./edition";
 import type { CompiledResult, ProductEvidence, SourceProduct } from "./types";
 import {
-  AUDIO_BARCODE_PREFIX,
   BOOK_BARCODE_PREFIX,
   CONSENSUS,
   TYPE_SCORE,
@@ -496,14 +495,21 @@ export async function compileResultForType(
   // marketplace votes are re-cleaned keeping edition words ("Classics", years,
   // sequel numbers) but dropping platform/seller noise, so corroboration is
   // measured on the meaningful tokens.
+  const affirmedLeadingPrefixes = sourceEvidence
+    .filter(
+      (e) => e.isCanonical || e.isTrustedRetailer || e.catalogTitleAnchor,
+    )
+    .map((e) => e.cleanName)
+    .filter(Boolean);
   const consensusTitleValue = selectConsensusTitle({
-    canonical: sourceEvidence
-      .filter((e) => e.isCanonical || e.isTrustedRetailer)
-      .map((e) => e.cleanName),
+    canonical: affirmedLeadingPrefixes,
     marketplace: sourceEvidence
       .filter((e) => !e.isCanonical && !e.isTrustedRetailer)
       .map((e) =>
-        cleanTitleForDisplay(e.rawName, { preserveEditionTerms: true }),
+        cleanTitleForDisplay(e.rawName, {
+          preserveEditionTerms: true,
+          preserveLeadingPrefixesAffirmedBy: affirmedLeadingPrefixes,
+        }),
       ),
   });
 
@@ -518,11 +524,24 @@ export async function compileResultForType(
   const trustedRetailerEvidence = sourceEvidence.filter(
     (item) => item.isTrustedRetailer,
   );
-  const anchorEvidence = [...canonicalEvidence, ...trustedRetailerEvidence];
+  const catalogTitleAnchorEvidence = sourceEvidence.filter(
+    (item) => item.catalogTitleAnchor,
+  );
+  const anchorEvidence = [
+    ...canonicalEvidence,
+    ...trustedRetailerEvidence,
+    ...catalogTitleAnchorEvidence,
+  ];
   const hasAnchorSignals = anchorEvidence.length > 0;
   const trustedEvidence = hasAnchorSignals
     ? sourceEvidence.filter((evidence) => {
-        if (evidence.isCanonical || evidence.isTrustedRetailer) return true;
+        if (
+          evidence.isCanonical ||
+          evidence.isTrustedRetailer ||
+          evidence.catalogTitleAnchor
+        ) {
+          return true;
+        }
         const isRelatedToAnchor = anchorEvidence.some((anchor) =>
           areEvidenceSameProduct(anchor, evidence),
         );
@@ -536,16 +555,12 @@ export async function compileResultForType(
       })
     : sourceEvidence;
 
-  const looksLikeAudioBarcode = /^(0?(498|499)|45|88)/.test(cleanedBarcode);
-  const skipGameDatabaseFallback = type === "games" && looksLikeAudioBarcode;
-
   // The database fallback only exists to anchor marketplace-only results. When a
   // trusted retailer already confirmed the barcode (e.g. Philibert/Okkazeo for a
   // board game), skip it: its echo of an unmatched name would otherwise become a
   // fake canonical that outranks the clean trusted-retailer title.
   const databaseEvidence =
     hasAnchorSignals ||
-    skipGameDatabaseFallback ||
     isBarcodeRecordSlimMode() ||
     process.env.RECORD
       ? []
@@ -659,7 +674,6 @@ export function scoreTypeCandidate(
   if (!topMatch) return 0;
   const evidence = topMatch.evidence;
   const isBookBarcode = BOOK_BARCODE_PREFIX.test(barcode);
-  const isAudioBarcode = AUDIO_BARCODE_PREFIX.test(barcode);
 
   let score = topMatch.confidence;
   // Canonical corroboration is about *distinct* sources agreeing, not the raw
@@ -673,8 +687,6 @@ export function scoreTypeCandidate(
   score += evidence.hasCover ? TYPE_SCORE.cover : 0;
   if (candidateType === "books" && isBookBarcode)
     score += TYPE_SCORE.bookBarcode;
-  if (candidateType === "musics" && isAudioBarcode)
-    score += TYPE_SCORE.audioBarcode;
   if (candidateType === "games" && (result.platformKey || "").length > 0)
     score += TYPE_SCORE.gamePlatform;
 

@@ -7,15 +7,13 @@ import {
   detectVideoGamePlatformKey,
   getCoverProjectPlatformSpecs,
   getPlatformKeyByScreenScraperSystemId,
-  getPriceChartingPlatformSlugs,
   getScreenScraperSystemId,
   getTheGamesDbPlatformId,
   LAUNCHBOX_PLATFORM_REFERENCES,
-  priceChartingNeoGeoVariantMatchesShelf,
   resolveLaunchBoxPlatformNames,
-  resolvePriceChartingPlatformSlug,
   SCREEN_SCRAPER_PLATFORM_REFERENCES,
   videoGamePlatformListingTypeSignal,
+  videoGamePlatformTargetsPhysicalMedia,
 } from "@/lib/games/platforms";
 
 describe("videoGamePlatforms", () => {
@@ -42,6 +40,12 @@ describe("videoGamePlatforms", () => {
     expect(videoGamePlatformListingTypeSignal(null)).toBe(0);
   });
 
+  it("marks physical vs digital release on the platform row", () => {
+    expect(videoGamePlatformTargetsPhysicalMedia("xbox")).toBe(true);
+    expect(videoGamePlatformTargetsPhysicalMedia("pc")).toBe(false);
+    expect(videoGamePlatformTargetsPhysicalMedia("web")).toBe(false);
+  });
+
   it("builds a shared matcher for UI/admin text highlighting", () => {
     const matcher = createVideoGamePlatformMatcher();
     expect(
@@ -54,25 +58,7 @@ describe("videoGamePlatforms", () => {
     expect(detectScreenScraperSystemId("Nintendo Wii")).toBe(16);
     expect(getPlatformKeyByScreenScraperSystemId(34)).toBe("xboxone");
     expect(getScreenScraperSystemId("switch2")).toBe(296);
-    expect(getPriceChartingPlatformSlugs("wii")?.pal).toBe("pal-wii");
     expect(getCoverProjectPlatformSpecs("wii")[0]?.folder).toBe("nintendo_wii");
-  });
-
-  it("resolves Neo Geo AES PriceCharting slugs from shelf labels and barcodes", () => {
-    expect(
-      resolvePriceChartingPlatformSlug("NEO GEO AES+", {
-        barcode: "4964808100880",
-      }),
-    ).toBe("jp-neo-geo-aes");
-    expect(
-      resolvePriceChartingPlatformSlug("Neo Geo AES", {
-        barcode: "4012927150101",
-      }),
-    ).toBe("neo-geo-aes");
-    expect(resolvePriceChartingPlatformSlug("Neo Geo MVS")).toBe("neo-geo-mvs");
-    expect(
-      priceChartingNeoGeoVariantMatchesShelf("Neo Geo MVS", "NEO GEO AES+"),
-    ).toBe(false);
   });
 
   it("uses source snapshots for provider platform names without runtime fetches", () => {

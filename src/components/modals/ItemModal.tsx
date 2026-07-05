@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { isUrl } from "@/lib/core/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
+import { useItemModalMetadataMutations } from "@/lib/client/hooks/useItemModalMetadataMutations";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { localizeImageFieldForSubmit } from "@/lib/media/localizeImageForSubmit";
@@ -88,7 +89,6 @@ import type {
   MetadataResult,
   MetadataAttachment,
 } from "@/types/metadataProvider";
-import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
 import { useRefetchItemWhenMetadataIdle } from "@/lib/item/useRefetchItemWhenMetadataIdle";
 import { invalidateItemQueries } from "@/lib/item/queryCache";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -303,8 +303,6 @@ export function ItemModal({
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
-  const metadataPreviewRequestRef = useRef<string | null>(null);
-  const metadataSuggestionsRequestRef = useRef<string | null>(null);
 
   const watchedName = useWatch({ control: form.control, name: "name" });
   const isNameMatchingSuggestion = useMemo(() => {
@@ -336,11 +334,11 @@ export function ItemModal({
   const [bgUrlInputValue, setBgUrlInputValue] = useState("");
   const lastInitializedShelfIdRef = useRef<string | null>(null);
   const lastMetadataStampRef = useRef<string | null>(null);
+  const prefilledPreviewRequestRef = useRef<string | null>(null);
 
   const [fetchedMetadata, setFetchedMetadata] = useState<MetadataResult | null>(
     null,
   );
-  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
   const [posterPage, setPosterPage] = useState(1);
   const [bgPage, setBgPage] = useState(1);
 
@@ -376,12 +374,6 @@ export function ItemModal({
     }
   }
 
-  useEffect(() => {
-    if (isOpen) {
-      metadataPreviewRequestRef.current = null;
-      metadataSuggestionsRequestRef.current = null;
-    }
-  }, [isOpen]);
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   const applyMetadataPreviewToForm = useCallback(
@@ -455,77 +447,27 @@ export function ItemModal({
     ],
   );
 
-  const fetchMetadataPreview = useCallback(
-    async (name: string, barcode?: string, forceOverwrite = false) => {
-      if (!name || !activeShelfType) return;
-      const requestKey = [
-        activeShelfType,
-        activeShelf?.name || "",
-        name.trim().toLowerCase(),
-        (barcode || "").trim(),
-      ].join("|");
-      metadataPreviewRequestRef.current = requestKey;
-      setIsFetchingMetadata(true);
-      try {
-        const metadata = await getMetadataPreview(
-          name,
-          activeShelfType,
-          barcode || null,
-          null,
-          activeShelf?.name || null,
-        );
-        if (metadataPreviewRequestRef.current !== requestKey) return;
-        if (metadata) {
-          applyMetadataPreviewToForm(metadata, {
-            forceOverwrite,
-            barcodeContext: barcode,
-          });
-        }
-      } catch (err) {
-        if (!isAbortError(err)) {
-          console.error("Error fetching metadata preview:", err);
-        }
-      } finally {
-        if (metadataPreviewRequestRef.current === requestKey) {
-          setIsFetchingMetadata(false);
-        }
-      }
+  const {
+    fetchMetadataPreview,
+    fetchNameSuggestions,
+    isFetchingMetadata,
+    cancelMetadataRequests,
+  } = useItemModalMetadataMutations({
+    activeShelfType,
+    activeShelfName: activeShelf?.name ?? null,
+    applyMetadataPreviewToForm,
+    onSuggestionsLoaded: (cleanSuggestions, primary) => {
+      setSuggestions(cleanSuggestions);
+      setNameSuggestion(primary);
     },
-    [activeShelfType, activeShelf, applyMetadataPreviewToForm],
-  );
+  });
 
-  const fetchNameSuggestions = useCallback(
-    async (name: string) => {
-      const trimmed = name.trim();
-      if (!trimmed || trimmed.length < 2 || !activeShelfType) return;
-
-      const requestKey = `${activeShelfType}|${trimmed.toLowerCase()}`;
-      metadataSuggestionsRequestRef.current = requestKey;
-
-      try {
-        const nextSuggestions = await getMetadataSuggestions(
-          trimmed,
-          activeShelfType,
-          null,
-          activeShelf?.name || null,
-        );
-
-        if (metadataSuggestionsRequestRef.current !== requestKey) return;
-        if (!nextSuggestions || nextSuggestions.length === 0) return;
-
-        const cleanSuggestions = Array.from(
-          new Set(nextSuggestions.filter((suggestion) => suggestion.trim())),
-        );
-        setSuggestions(cleanSuggestions);
-        setNameSuggestion(cleanSuggestions[0] || null);
-      } catch (err) {
-        if (!isAbortError(err)) {
-          console.error("Error fetching name suggestions:", err);
-        }
-      }
-    },
-    [activeShelf, activeShelfType],
-  );
+  useEffect(() => {
+    if (!isOpen) {
+      cancelMetadataRequests();
+      prefilledPreviewRequestRef.current = null;
+    }
+  }, [isOpen, cancelMetadataRequests]);
 
   const seedTitleSuggestionsFromItemMetadata = useCallback(
     (
@@ -1211,8 +1153,7 @@ export function ItemModal({
 
   const handleClose = () => {
     reset();
-    metadataPreviewRequestRef.current = null;
-    metadataSuggestionsRequestRef.current = null;
+    cancelMetadataRequests();
     setSuggestions([]);
     setNameSuggestion(null);
     setActiveTab(defaultTab || "general");
@@ -1331,9 +1272,6 @@ export function ItemModal({
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Re-fetch metadata preview when shelf/platform changes.
-  // (fetchMetadataPreview pose son état de chargement en synchrone — même
-  // chantier react-query que l'effect d'init, suivi au backlog.)
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (
       !isOpen ||
@@ -1375,10 +1313,11 @@ export function ItemModal({
       barcode.trim(),
     ].join("|");
 
-    if (metadataPreviewRequestRef.current === requestKey) return;
+    if (prefilledPreviewRequestRef.current === requestKey) return;
+    prefilledPreviewRequestRef.current = requestKey;
     fetchMetadataPreview(name, barcode, false);
   }, [
-    activeShelf,
+    activeShelf?.name,
     activeShelfType,
     fetchedMetadata,
     fetchMetadataPreview,
@@ -1389,7 +1328,6 @@ export function ItemModal({
     prefilledValues?.barcode,
     prefilledValues?.name,
   ]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <>

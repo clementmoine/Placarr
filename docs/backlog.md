@@ -198,6 +198,11 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 
 - **État 2026-07-04** : le constat « 2 couches / import circulaire » a été résolu par une solution **plus simple** que le plan gating+gameStrategy : comme **aucun** helper n'appelle `fetchMetadata`, tous les helpers de gating/shaping (les 28 + le cap concurrence) partent dans **un seul** `services/metadata/metadataFetchGating.ts`, sans cycle. `fetch.ts` ne garde que l'orchestrateur `fetchMetadata`/`fetchMetadataByType` (importe les 21 helpers qu'il utilise ; les 9 autres restent internes au module). Imports orphelins élagués des deux côtés. Comportement inchangé (`63a4a74`). 1555 tests ✅ · build ✅.
 
+#### KISS-3 — Alléger `merge.ts` _(FAIT — 785 → 455 lignes)_
+
+- **État 2026-07-04** : le cluster de ranking par observations (meilleur titre/facts/cover depuis les observations typées) + le type `ProviderMetadataInput` partent dans `services/metadata/mergeObservationRanking.ts` (aucun appel retour à `mergeMetadata` → pas de cycle). `merge.ts` importe les 6 symboles utilisés + re-exporte l'ancienne surface publique. Comportement inchangé (`7428e93`). 1555 tests ✅ · build ✅.
+- **Reste** : `merge.ts` (455 l.) = `mergeMetadata` orchestrateur + helpers cover/book — cohérent, à laisser.
+
 #### AUDIO-1 — Vraie détection audio GS1 _(résiduel du « trou #1 »)_
 
 - **État** : les 2 préfixes sont co-localisés + documentés (`d9bdddc`), mais restent des heuristiques **sans couverture golden-master** (aucun fixture ne les matche, même Daft Punk `0724…`).

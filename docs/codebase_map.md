@@ -29,9 +29,9 @@ src/
 |----------|--------|---------------|
 | Mauvais type au scan | identify | `evidence/compile.ts`, `resolver.ts` |
 | Mauvaise plateforme | identify | `platformPick.ts`, `platforms/platforms.ts` |
-| Metadata / cover | enrich | `fetch.ts`, `merge.ts`, `storage.ts`, `media/attachmentDisplayScore.ts` |
+| Metadata / cover | enrich | `fetch.ts` (incl. merge), `storage.ts`, `media/attachmentDisplayScore.ts` |
 | Refresh bloqué | collect | `jobs/backgroundWorkQueue.ts`, `enrichment.ts` |
-| Prix | commerce | `pricing/resolver.ts`, `pricing/cachePolicy.ts` |
+| Prix | commerce | `pricing/resolver.ts` (incl. cache policy), `pricing/itemDisplay.ts` |
 | Ajouter un provider | catalog + providers | `catalog/registry.ts`, `providers/<id>/` |
 
 ---

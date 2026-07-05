@@ -3,7 +3,7 @@
 Self-contained brief so a fresh session can execute this cold. Part of the
 **provider-blind core** invariant (see [provider_agnostic_architecture.md](provider_agnostic_architecture.md) §0
 and [backlog.md](backlog.md) §"Provider-blind core"): outside `src/providers/`,
-no code may name a provider. Enforced by `src/services/providerBlindnessGuard.test.ts`
+no code may name a provider. Enforced by `src/core/catalog/blindnessGuard.test.ts`
 (an exact, shrinking allowlist of quoted provider literals).
 
 ## Why this one is special (read first)

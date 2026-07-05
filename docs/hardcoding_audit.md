@@ -1,7 +1,7 @@
 # Hardcoding audit — core must be agnostic, data-driven, provider-neutral
 
 > **STATUS 2026-06-29 — provider-literal migration COMPLETE.** The blindness guard
-> (`src/services/provider/blindnessGuard.test.ts`) now ships an **empty** allowlist:
+> (`src/core/catalog/blindnessGuard.test.ts`) now ships an **empty** allowlist:
 > **zero** provider-id literals remain outside `src/providers/`. The
 > "current violations" tables, per-file allowlist notes and the `P2*` progress log
 > below are **historical** — kept for rationale, no longer the live surface.
@@ -16,7 +16,7 @@
 > names providers ; boosts FR de `title/displayScore.ts` pilotés par la
 > locale). Détail : [word_list_audit.md](word_list_audit.md).
 
-> **Enforcement already exists:** `src/services/providerBlindnessGuard.test.ts`
+> **Enforcement already exists:** `src/core/catalog/blindnessGuard.test.ts`
 > inventories every quoted provider literal in `src/`+`scripts/` (excluding
 > provider modules + tests) against a **shrinking allowlist**. Removing a provider
 > literal from core = shrink its allowlist entry. This is the regression guard for

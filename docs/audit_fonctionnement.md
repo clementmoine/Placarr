@@ -1,5 +1,11 @@
 # Audit de fonctionnement — Placarr
 
+> **Chemins obsolètes (2026-07-05)** — Ce document décrit l’audit du **2026-07-04**
+> (`lib/barcode`, `services/metadata`, …). La structure actuelle est **`src/core/`**
+> (5 piliers) + **`src/providers/`**. Voir [core_architecture.md](core_architecture.md)
+> et [codebase_map.md](codebase_map.md) pour la cartographie à jour. Le contenu ci-dessous
+> reste utile pour la logique métier ; remplacer mentalement `services/*` → pilier `core/*`.
+
 > Audit réalisé le 2026-07-04 sur la branche `feat/foundation-postgres-tests`.
 > Objectif : cartographier le fonctionnement réel, vérifier que le cœur est
 > **provider-blind / data-driven / DRY / KISS**, et lister ce qui est **hors-piste**
@@ -40,7 +46,7 @@ est **globalement bien tenu**.
 - Comportement piloté par **traits déclarés** (`isSecondary`, `rateLimited`,
   `canonicalCover`, `isRealBoxCover`, `digitalStorefrontArt`, `nameDatabase`,
   `coverProvenanceRules`, …), jamais par `if (providerId === "…")`.
-- **Garde-fou mécanique** : [blindnessGuard.test.ts](src/services/provider/blindnessGuard.test.ts)
+- **Garde-fou mécanique** : [blindnessGuard.test.ts](src/core/catalog/blindnessGuard.test.ts)
   scanne `src/` + `scripts/` et échoue le build sur tout literal de provider.
   **L'allowlist est vide (`{}`)** — l'invariant est donc réellement enforced, pas juste
   documenté. C'est un point fort remarquable du projet.

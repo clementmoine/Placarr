@@ -249,11 +249,7 @@ function buildChasseAuxLivresAttachments(
 ): MetadataAttachment[] | undefined {
   const images = product.images ?? [];
   const urls =
-    images.length > 0
-      ? images
-      : product.coverUrl
-        ? [product.coverUrl]
-        : [];
+    images.length > 0 ? images : product.coverUrl ? [product.coverUrl] : [];
   if (urls.length === 0) return undefined;
 
   return urls.map((url, index) => ({

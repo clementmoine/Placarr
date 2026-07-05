@@ -94,14 +94,13 @@ barcode/titre seulement en fallback.
 
 | Fichier | Rôle |
 | ------- | ---- |
-| `src/lib/metadata/providerExternalLinks.ts` | Heuristiques URL, factories de facts |
-| `src/services/metadata/persistProviderExternalLinks.ts` | Persistance Prisma |
-| `src/services/metadata/merge.ts` | Hook merge |
-| `src/services/metadata/fetch.ts` | Hook fieldEvidence |
-| `src/services/provider/registry.ts` | `providerProductUrlsFromMetadataFacts` |
-| `src/lib/pricing/providerProductUrls.ts` | Filtre par `providerKey` |
-| `src/services/pricing/itemDisplay.ts` | Injecte URLs dans le refresh |
-| `src/lib/metadata/facts/displayFacts.ts` | UI : `external-link` only |
+| `src/core/enrich/providerExternalLinks.ts` | Heuristiques URL, factories de facts |
+| `src/core/enrich/persistProviderExternalLinks.ts` | Persistance Prisma |
+| `src/core/enrich/fetch.ts` | Hook merge + fieldEvidence |
+| `src/core/catalog/registry.ts` | `providerProductUrlsFromMetadataFacts` |
+| `src/core/commerce/pricing/providerProductUrls.ts` | Filtre par `providerKey` |
+| `src/core/commerce/pricing/itemDisplay.ts` | Injecte URLs dans le refresh |
+| `src/core/enrich/facts/displayFacts.ts` | UI : `external-link` only |
 
 ---
 
@@ -109,7 +108,7 @@ barcode/titre seulement en fallback.
 
 ### Gate EAN retailers
 
-`src/lib/retailer/productUrl.ts` :
+`src/core/commerce/retailer/productUrl.ts` :
 
 - `barcodesEquivalent` / `barcodeMatchKey` (`normalize.ts`) — EAN avec/sans zéro
   leading ;
@@ -156,14 +155,14 @@ Budget ≤ 50 patterns Next.js.
 
 | Zone | Fichier |
 | ---- | ------- |
-| External-link factories | `src/lib/metadata/providerExternalLinks.test.ts` |
-| Persistance DB | `src/services/metadata/persistProviderExternalLinks.test.ts` |
-| Merge | `src/services/metadata/merge.test.ts` |
-| URLs → refresh ctx | `src/lib/pricing/providerProductUrls.test.ts` |
-| Item display inject | `src/services/pricing/itemDisplay.test.ts` |
-| EAN gate | `src/lib/retailer/productUrl.test.ts` |
-| EAN équivalence | `src/lib/barcode/normalize.test.ts` |
+| External-link factories | `src/core/enrich/providerExternalLinks.test.ts` |
+| Persistance DB | `src/core/enrich/persistProviderExternalLinks.test.ts` |
+| Merge | `src/core/enrich/merge.test.ts` |
+| URLs → refresh ctx | `src/core/commerce/pricing/providerProductUrls.test.ts` |
+| Item display inject | `src/core/commerce/pricing/itemDisplay.test.ts` |
+| EAN gate | `src/core/commerce/retailer/productUrl.test.ts` |
+| EAN équivalence | `src/core/identify/normalize.test.ts` |
 | Philibert / PrestaShop / Shopify | `resolver.test.ts` respectifs |
 | CAL landed | `chasseauxlivres/fetch.test.ts` |
 | Refresh URL-first | `okkazeo/refresh.test.ts`, `chasseauxlivres/refresh.test.ts` |
-| next/image hosts | `src/lib/media/nextImageRemoteHosts.test.ts` |
+| next/image hosts | `src/core/enrich/media/nextImageRemoteHosts.test.ts` |

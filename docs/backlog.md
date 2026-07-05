@@ -1,18 +1,17 @@
 # Backlog
 
-> Dernière vérification : **2026-07-05** (`pnpm test` **1714** OK / 4 skipped,
-> `pnpm lint` **0 erreur**, `tsc --noEmit` OK, `pnpm build` OK, `pnpm format:check` OK,
-> `pnpm providers:audit:mapping`, `pnpm providers:health`).
+> Dernière vérification : **2026-07-05** (`pnpm test` **1722** OK / 4 skipped,
+> `pnpm lint` **0 erreur**, `pnpm build` OK, `pnpm providers:audit:mapping`).
 
 ## État actuel (snapshot)
 
 | Métrique                  | Valeur                                                              |
 | ------------------------- | ------------------------------------------------------------------- |
 | Providers audités         | **46**                                                              |
-| Mapping `ok`              | **45** · `empty` 0 · `blocked` 1 · `error` 0                        |
-| Observations `enabled`    | **42** · `legacy` 0 · `unknown` 5                                   |
+| Mapping `ok`              | **45** · `empty` 1 · `partial` 1 · `blocked` 1 · `error` 0        |
+| Observations `enabled`    | **42** · `legacy` 0 · `unknown` 3 (adapter metadata)                |
 | Health-check              | **38** modules · **0 down**                                         |
-| Tests                     | **1714** passent (1718 total, 4 skipped)                            |
+| Tests                     | **1722** passent (1726 total, 4 skipped)                            |
 | Corpus barcode régression | **21** cas (jeux + livre + musique + film + JdS dont Mille Sabords) |
 | Fixtures replay barcode   | **21/21**                                                           |
 
@@ -21,10 +20,11 @@
 1. ~~`picclick` — probe listing souvent `empty` (timeout scrape)~~ **hint `blocked` + retry** (`runMappingProbe`)
 2. ~~`screenscraper` — probe `empty` si quota API dépassé~~ **hint `blocked` quota/credentials** (`runMappingProbe`)
 3. ~~`thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé~~ **hint `blocked` clé/quota** (`runMappingProbe`)
-4. `apriloshop` — ~~search vide~~ **IQIT OK** (`searchStrategy: iqit`, probe live `rendered_products` + `product-miniature`)
+4. **`chasseauxlivres`** — `obs:unknown` / `map:partial` : stabiliser probe observations (scrape live + FlareSolverr si besoin)
+5. **`apriloshop`** — `obs:unknown` / `map:empty` : IQIT search OK en prod mais probe sample vide — vérifier index EAN + sample probe
 
 **Hors scope adapter metadata** (probe custom seulement — normal) :
-`freakxy`, `ledenicheur`, `scandex`
+`freakxy`, `ledenicheur`, `scandex`, `smartoys`
 
 **Providers avec adapter + observations** : inclut désormais `chasseauxlivres`
 (`obs:enabled`, probe listing souvent `empty` côté scrape), `bedetheque`, `booknode`,
@@ -83,7 +83,7 @@ Deux concepts **distincts**, sourcés différemment :
 | **P3**   | Rétention des observations rejetées (barcode) | **Fait 2026-06-30** | `compile.ts` : listings bruit / contexte non-canonique / hors-ancre émis en observations `evidence: "reject"` + `retainForReprojection: true` via `rejectedObservationsFromProductEvidence`.                                                    |
 | **P3**   | Décision cap canonique seul / DB-fallback     | **Documenté**       | Un barcode confirmé par une source canonique (ou DB-fallback honnête) est une ancre légitime — le plafond `listingOnlyCap` ne s'applique pas. Comportement voulu, encodé dans `compile.confidenceLock.test.ts` + `compile.honestEmpty.test.ts`. |
 
-> **Provider-blindness : migration TERMINÉE** — allowlist du guard `blindnessGuard.test.ts` **vide** (0 littéral provider hors `providers/`). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
+> **Provider-blindness : migration TERMINÉE** — allowlist du guard `src/core/catalog/blindnessGuard.test.ts` **vide** (0 littéral provider hors `providers/` ; liste des ids **dérivée du registry**). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
 
 **P1 providers / probes** : file migration metadata **vide** (PicClick→eBay, ScreenScraper, TheGamesDB, Apriloshop IQIT — faits). **TheGamesDB** : si audit `map:blocked`, quota API épuisé (12–20 min cooldown) — pas une régression code ; probe classée `blocked` sur message quota.
 
@@ -135,6 +135,8 @@ Règles persistantes dans `.cursor/rules/` :
 | ~~**PicClick probe timeout**~~          | **fait** — retry probe + `blocked` sur timeout scrape                                              | `picclick/index.ts`        |
 | ~~**ScreenScraper probe quota**~~       | **fait** — `blocked` si quota/credentials ; timeout 15s + retry search ; health via `jeuRecherche` | `screenscraper/`           |
 | ~~**TheGamesDB audit**~~                | **fait** — `blocked` clé absente ou quota + `mappingProbeConfigHint`                               | `thegamesdb/index.ts`      |
+| **Chasse aux Livres probe `partial`**   | **Ouvert** — `obs:unknown` au audit mapping : smoke scrape live, observations probe, hint probe si FlareSolverr requis | `chasseauxlivres/`         |
+| **Apriloshop probe `empty`**            | **Ouvert** — IQIT en prod OK mais sample probe vide : index EAN IQIT, `additionalSamples`, re-run `pnpm providers:audit:mapping` | `prestashop/` (apriloshop) |
 
 ### P2 — Ranking sans biais (gros chantier)
 
@@ -147,7 +149,7 @@ Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_lis
 
 ### P3 — Provider-blind core
 
-Guard : `src/services/providerBlindnessGuard.test.ts` — **allowlist vide** (`src/` + `scripts/`, 2026-06-27).
+Guard : `src/core/catalog/blindnessGuard.test.ts` — **allowlist vide** ; `PROVIDER_TERMS` sync registry (`src/` + `scripts/`).
 
 Prochaines cibles optionnelles :
 
@@ -183,15 +185,24 @@ Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'his
 - ~~**Fixtures replay** (`resolver.fresh.test.ts`)~~ — **fait 2026-07-02** : **21/21** enregistrées (`pnpm test:record:all`, un process par cas) ; rejeu déterministe via intercepteur partagé (`tests/helpers/httpReplay.ts`).
 - ~~**Pricing manga** — lots/bundles filtrés ; mauvais volume PicClick quand seules annonces hors-sujet~~ **fait** (`priceListingVolumeConflictsWithItem`)
 
-### P6 — Architecture lib (optionnel)
+### P6 — Architecture core _(fait 2026-07-05)_
 
-~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** (`metadata/`, `item/`, `media/`, `pricing/`, …) — ne pas fusionner `providers/*`.
+Réorganisation **`src/core/`** en 5 piliers (`identify`, `enrich`, `collect`, `commerce`, `catalog`) + coalescing modules couplés. Voir [core_architecture.md](core_architecture.md). Scripts de migration one-shot supprimés.
+
+| Priorité | Item | État | Détail |
+| -------- | ---- | ---- | ------ |
+| **P3** | Découper `enrich/storage.ts` | **Ouvert** | Persist / images / format (3 fichiers, même pilier) |
+| **P3** | DRY titres identify ↔ enrich | **Ouvert** | `titleUtils` vs `titleMatching` |
+| **P4** | `platformSources.ts` → data file | **Ouvert** | ~3500 L inline → loader déclaratif |
+| **P2** | Imports core → `@/providers/icollect/*` | **Ouvert** | `collect/media.ts`, `lookup/payload.ts` — traits registry |
+
+~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** puis **big-bang → core** 2026-07-05.
 
 ### Audit fonctionnement _(clos 2026-07-05 — maintenance opportuniste)_
 
 Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
 
-#### KISS-1 — Découper `storage.ts` _(FAIT — 1511 → 807 lignes)_
+#### KISS-1 — Découper `storage.ts` _(partiel — coalesce 2026-07-05 → ~1300 L)_
 
 - **État 2026-07-04** : **4 extractions faites** (comportement préservé, re-exports pour compat, `storeMetadata` reste l'orchestrateur) :
   - `services/metadata/imageAssets.ts` — perceptual-hash dedupe + métriques image locales + détection placeholder plat (`387075c`).
@@ -201,11 +212,11 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 - **Reste = rien d'évident.** `storeMetadata` est l'orchestrateur, à laisser dans `storage.ts`. Extractions suivantes = rendement quasi nul.
 - **Pièges (si on continue quand même)** : `coverProvenance` dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; toujours re-exporter depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests) ; nettoyer les imports orphelins (eslint les liste).
 
-#### KISS-2 — Alléger `fetch.ts` _(FAIT — 1135 → 660 lignes)_
+#### KISS-2 — Alléger `fetch.ts` _(partiel — coalesce 2026-07-05 → ~2300 L dans `enrich/fetch.ts`)_
 
 - **État 2026-07-04** : le constat « 2 couches / import circulaire » a été résolu par une solution **plus simple** que le plan gating+gameStrategy : comme **aucun** helper n'appelle `fetchMetadata`, tous les helpers de gating/shaping (les 28 + le cap concurrence) partent dans **un seul** `services/metadata/metadataFetchGating.ts`, sans cycle. `fetch.ts` ne garde que l'orchestrateur `fetchMetadata`/`fetchMetadataByType` (importe les 21 helpers qu'il utilise ; les 9 autres restent internes au module). Imports orphelins élagués des deux côtés. Comportement inchangé (`63a4a74`). 1555 tests ✅ · build ✅.
 
-#### KISS-3 — Alléger `merge.ts` _(FAIT — 785 → 455 lignes)_
+#### KISS-3 — Alléger `merge.ts` _(fusionné dans `enrich/fetch.ts` — 2026-07-05)_
 
 - **État 2026-07-04** : le cluster de ranking par observations (meilleur titre/facts/cover depuis les observations typées) + le type `ProviderMetadataInput` partent dans `services/metadata/mergeObservationRanking.ts` (aucun appel retour à `mergeMetadata` → pas de cycle). `merge.ts` importe les 6 symboles utilisés + re-exporte l'ancienne surface publique. Comportement inchangé (`7428e93`). 1555 tests ✅ · build ✅.
 - **Reste** : `merge.ts` (455 l.) = `mergeMetadata` orchestrateur + helpers cover/book — cohérent, à laisser.
@@ -292,7 +303,7 @@ Waves A–D : largement couvertes ; ajouts récents `bedetheque`, `booknode` hor
 
 ### Provider-blind core
 
-[provider_agnostic_architecture.md](provider_agnostic_architecture.md) §0 · Guard `providerBlindnessGuard.test.ts`.
+[provider_agnostic_architecture.md](provider_agnostic_architecture.md) §0 · Guard `src/core/catalog/blindnessGuard.test.ts`.
 
 ### Observation migration & exploitation
 

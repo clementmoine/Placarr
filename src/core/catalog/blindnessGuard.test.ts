@@ -3,47 +3,17 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { PROVIDER_MODULES } from "./registry";
+
+/** Short aliases still quoted outside provider modules (e.g. tests, legacy strings). */
+const PROVIDER_ALIAS_TERMS = ["bgg", "boardgamegeek"] as const;
+
 const PROVIDER_TERMS = [
-  "achatmoinscher",
-  "apriloshop",
-  "chipweld",
-  "archichouette",
-  "bcdjeux",
-  "bedetheque",
-  "bgg",
-  "boardgamegeek",
-  "chasseauxlivres",
-  "chocobonplan",
-  "geedie",
-  "coverproject",
-  "deezer",
-  "discogs",
-  "ebay",
-  "freakxy",
-  "googlebooks",
-  "howlongtobeat",
-  "icollect",
-  "igdb",
-  "launchbox",
-  "ledenicheur",
-  "lepassetemps",
-  "ludifolie",
-  "monsieurde",
-  "musicbrainz",
-  "okkazeo",
-  "omdb",
-  "openlibrary",
-  "philibert",
-  "pricecharting",
-  "rawg",
-  "scandex",
-  "screenscraper",
-  "steam",
-  "steamgriddb",
-  "thegamesdb",
-  "tmdb",
-  "wikidata",
-] as const;
+  ...new Set([
+    ...PROVIDER_MODULES.map((module) => module.info.id),
+    ...PROVIDER_ALIAS_TERMS,
+  ]),
+].sort();
 
 type ProviderTerm = (typeof PROVIDER_TERMS)[number];
 type ProviderLiteralInventory = Record<
@@ -146,6 +116,13 @@ function diffInventory(
 }
 
 describe("provider-blind core guard", () => {
+  it("tracks every registry provider id plus known aliases", () => {
+    const registryIds = PROVIDER_MODULES.map((module) => module.info.id);
+    for (const id of registryIds) {
+      expect(PROVIDER_TERMS).toContain(id);
+    }
+  });
+
   it("keeps provider literals outside provider modules on a shrinking allowlist", () => {
     const actual = inventoryProviderLiterals();
     const differences = diffInventory(actual, ALLOWED_PROVIDER_LITERALS);

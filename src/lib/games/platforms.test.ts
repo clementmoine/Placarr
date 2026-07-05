@@ -15,6 +15,7 @@ import {
   resolveLaunchBoxPlatformNames,
   resolvePriceChartingPlatformSlug,
   SCREEN_SCRAPER_PLATFORM_REFERENCES,
+  videoGamePlatformListingTypeSignal,
 } from "@/lib/games/platforms";
 
 describe("videoGamePlatforms", () => {
@@ -33,6 +34,12 @@ describe("videoGamePlatforms", () => {
     expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo AES")).toBe(
       "neogeo",
     );
+  });
+
+  it("marks low listing-type-signal precision on the platform row, not in core logic", () => {
+    expect(videoGamePlatformListingTypeSignal("pc")).toBe(0);
+    expect(videoGamePlatformListingTypeSignal("xbox")).toBe(1);
+    expect(videoGamePlatformListingTypeSignal(null)).toBe(0);
   });
 
   it("builds a shared matcher for UI/admin text highlighting", () => {

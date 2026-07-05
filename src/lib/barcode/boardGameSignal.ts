@@ -1,6 +1,9 @@
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { normalizeForTokens } from "@/lib/barcode/titleUtils";
-import { detectVideoGamePlatformKey } from "@/lib/games/platforms";
+import {
+  detectVideoGamePlatformKey,
+  videoGamePlatformListingTypeSignal,
+} from "@/lib/games/platforms";
 
 /**
  * A board game scanned without a type (home-page scan → generic branch) competes
@@ -59,23 +62,22 @@ export function detectVideoFormatSignal(names: string[]): number {
 }
 
 /**
- * A video-game signal harvested from the listings: a console platform named in a
- * listing ("… Xbox", "… Nintendo NES", "… PS2") is strong evidence the physical
- * item is a video game, never a music CD or film. Used to bias the type scoring
- * towards `games` and away from `musics`/`movies`, so a coincidental same-named
- * canonical — most often a music album the DATABASE fallback fabricates from a
- * game listing name (e.g. "Ghost Recon — Classics") — cannot hijack the type of
- * a scanned game whose own canonical was demoted. See scoreTypeCandidate.
+ * A video-game signal harvested from the listings: a platform named in a listing
+ * ("… Xbox", "… Nintendo NES", "… PS2") is strong evidence the physical item is a
+ * video game, never a music CD or film. Used to bias the type scoring towards
+ * `games` and away from `musics`/`movies`, so a coincidental same-named canonical
+ * — most often a music album the DATABASE fallback fabricates from a game listing
+ * name (e.g. "Ghost Recon — Classics") — cannot hijack the type of a scanned game
+ * whose own canonical was demoted. See scoreTypeCandidate.
  *
- * PC is excluded as the one ambiguous platform (a bare "PC"/"Windows" token can
- * appear outside video-game contexts); a console alias has to match as a whole
- * token, which keeps precision high.
+ * Platforms marked `listingTypeSignalPrecision: "low"` in the platform table are
+ * skipped — their token can appear outside video-game contexts.
  */
 export function detectVideoGameSignal(names: string[]): number {
   for (const raw of names) {
     if (!raw) continue;
     const key = detectVideoGamePlatformKey(raw);
-    if (key && key !== "pc") return 1;
+    if (videoGamePlatformListingTypeSignal(key) > 0) return 1;
   }
   return 0;
 }

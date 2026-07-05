@@ -43,8 +43,14 @@ describe("pickPlatformKeyFromSignals — distinct providers", () => {
     expect(pickPlatformKeyFromSignals(signals)).toBe("pc");
   });
 
-  it("3307210117168 — Classics stays ambiguous when PC and Xbox tie on the same marketplace source", () => {
+  it("3307210117168 — Classics stays ambiguous when two platforms tie on the same source", () => {
     const signals = [w("pc", 0.25, "eBay"), w("xbox", 0.25, "eBay")];
+
+    expect(pickPlatformKeyFromSignals(signals)).toBeNull();
+  });
+
+  it("3307210117168 — close scores between any two platforms stay ambiguous", () => {
+    const signals = [w("wii", 0.3, "eBay"), w("xbox", 0.28, "AchatMoinsCher")];
 
     expect(pickPlatformKeyFromSignals(signals)).toBeNull();
   });
@@ -64,7 +70,7 @@ describe("pickPlatformKeyFromSignals — distinct providers", () => {
 });
 
 describe("pickPlatformKeyFromSignals — decide-late tier pass", () => {
-  it("does not let tier weights override a pass-1 PC/console ambiguity null", () => {
+  it("does not let tier weights override a pass-1 ambiguity null", () => {
     const signals = [
       w("pc", 0.25, "eBay", { pickWeight: 2.1 }),
       w("xbox", 0.25, "eBay", { pickWeight: 4.2 }),

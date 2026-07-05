@@ -12,8 +12,6 @@ export type PlatformSignal = {
   pickWeight?: number;
 };
 
-const PC_KEY = "pc";
-
 function signalAmbiguityWeight(signal: PlatformSignal): number {
   return signal.ambiguityWeight ?? signal.weight;
 }
@@ -50,51 +48,20 @@ export function aggregatePlatformScores(
   return scores;
 }
 
-function bestConsoleScore(scores: Map<string, number>): number {
-  let best = 0;
-  for (const [platformKey, score] of scores) {
-    if (platformKey === PC_KEY) continue;
-    best = Math.max(best, score);
-  }
-  return best;
-}
-
-/**
- * PC and console both have credible support with a close score → honest null
- * (Ghost Recon Classics). Does not fire when one family clearly dominates
- * (Island Thunder: one stray PC listing vs many console sources).
- */
-export function hasPcConsoleAmbiguity(scores: Map<string, number>): boolean {
-  const pcScore = scores.get(PC_KEY) ?? 0;
-  if (pcScore <= 0) return false;
-
-  const consoleScore = bestConsoleScore(scores);
-  if (consoleScore <= 0) return false;
-
-  return (
-    Math.abs(consoleScore - pcScore) < PLATFORM_PICK.winnerMargin
-  );
-}
-
-function pickWinnerFromScores(
-  scores: Map<string, number>,
-): string | null {
+function pickWinnerFromScores(scores: Map<string, number>): string | null {
   const ranked = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
   const [best, second] = ranked;
   if (!best) return null;
-  if (
-    second &&
-    best[1] - second[1] < PLATFORM_PICK.winnerMargin
-  ) {
+  if (second && best[1] - second[1] < PLATFORM_PICK.winnerMargin) {
     return null;
   }
   return best[0];
 }
 
 /**
- * Decide-late platform pick:
- * 1. Tier-agnostic aggregation → PC/console ambiguity → null
- * 2. Tier-aware aggregation → winner within the surviving family
+ * Decide-late platform pick (provider-blind, any platform key):
+ * 1. Tier-agnostic aggregation — if top scores are too close → null
+ * 2. Tier-aware aggregation — winner when pass 1 was decisive
  */
 export function pickPlatformKeyFromSignals(
   signals: PlatformSignal[],
@@ -106,7 +73,7 @@ export function pickPlatformKeyFromSignals(
     })),
   );
   if (ambiguityScores.size === 0) return null;
-  if (hasPcConsoleAmbiguity(ambiguityScores)) return null;
+  if (pickWinnerFromScores(ambiguityScores) === null) return null;
 
   const pickScores = aggregatePlatformScores(
     signals.map((signal) => ({

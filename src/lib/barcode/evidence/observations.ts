@@ -318,7 +318,7 @@ function barcodeEvidencePlatformCanonicalBonus(
   return evidence.isCanonical ? PLATFORM_PICK.canonicalBonus : 0;
 }
 
-/** Pass 1 — tier-agnostic; drives PC vs console ambiguity only. */
+/** Pass 1 — tier-agnostic; close scores among any platforms → honest null. */
 export function barcodeEvidencePlatformAmbiguityWeight(
   evidence: ProductEvidence,
 ): number {

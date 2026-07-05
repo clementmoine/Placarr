@@ -27,6 +27,11 @@ type VideoGamePlatformDefinition = {
   screenScraperSystemId?: number;
   priceCharting?: PriceChartingPlatformSlugs;
   coverProject?: readonly CoverProjectPlatformSpec[];
+  /**
+   * Marketplace titles naming this platform as a type signal (see
+   * `detectVideoGameSignal`). Low = token is ambiguous outside game listings.
+   */
+  listingTypeSignalPrecision?: "low" | "high";
 };
 
 export const VIDEO_GAME_PLATFORMS = [
@@ -274,6 +279,7 @@ export const VIDEO_GAME_PLATFORMS = [
     aliases: ["pc windows", "pc", "windows", "microsoft windows"],
     launchBoxNames: ["Microsoft Windows", "Windows"],
     screenScraperSystemId: 138,
+    listingTypeSignalPrecision: "low",
   },
   {
     key: "dreamcast",
@@ -504,6 +510,16 @@ export function getVideoGamePlatform(
 ): VideoGamePlatform | null {
   if (!isVideoGamePlatformKey(key)) return null;
   return PLATFORM_BY_KEY.get(key) || null;
+}
+
+/** 0 or 1 — whether a detected platform in a listing title signals "video game". */
+export function videoGamePlatformListingTypeSignal(
+  key: VideoGamePlatformKey | null,
+): number {
+  if (!key) return 0;
+  const platform = getVideoGamePlatform(key);
+  if (!platform) return 0;
+  return platform.listingTypeSignalPrecision === "low" ? 0 : 1;
 }
 
 function detectVideoGamePlatformKeyInNormalizedText(

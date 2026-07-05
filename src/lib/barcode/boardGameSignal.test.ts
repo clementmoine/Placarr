@@ -41,7 +41,7 @@ describe("detectVideoGameSignal", () => {
     expect(detectVideoGameSignal(["Mario Kart Wii"])).toBe(1);
   });
 
-  it("n'invente pas de signal sans plateforme console (PC exclu, CD/album)", () => {
+  it("n'invente pas de signal sans plateforme fiable (précision basse, CD/album)", () => {
     expect(detectVideoGameSignal(["Ghost Recon — Classics"])).toBe(0);
     expect(detectVideoGameSignal(["Best of PC Music"])).toBe(0);
     expect(detectVideoGameSignal(["Toy Story Bande Originale CD"])).toBe(0);

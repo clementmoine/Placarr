@@ -30,7 +30,7 @@ export const TYPE_SCORE = {
   /** Barcode sits in a reserved ISBN / audio range matching the candidate type. */
   bookBarcode: 0.45,
   audioBarcode: 0.3,
-  /** A `games` result that captured a console platform key. */
+  /** A `games` result that resolved a platform key. */
   gamePlatform: 0.25,
   /**
    * Type signals harvested from the listings. Each promotes its own type and
@@ -97,9 +97,9 @@ export const CLUSTER_CONFIDENCE = {
 } as const;
 
 // ── Platform pick (decide-late) ──────────────────────────────────────────────
-// Pass 1 uses tier-agnostic source weights (+ distinct providers + PC/console
-// guard). Pass 2 may apply a small tier nudge to break ties within one family
-// (canonical vs marketplace) — never to override an ambiguity null.
+// Pass 1 uses tier-agnostic source weights (+ distinct providers). Pass 2 may
+// apply a small tier nudge when pass 1 found a decisive winner — never to
+// override a pass-1 ambiguity null.
 export const PLATFORM_PICK = {
   winnerMargin: 0.4,
   /** Tier scale for pass 2 only — kept well below a full tier step (~3). */

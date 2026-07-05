@@ -28,6 +28,8 @@ export const launchboxModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: true,
+    defaultLanguage: "en",
+    isRealBoxCover: true,
     websiteUrl: "https://gamesdb.launchbox-app.com/",
     notes:
       "Base communautaire LaunchBox (Metadata.zip). Index local: jeux, nombre de joueurs max, titres alternatifs regionaux, images (box, fanart, screenshots). Enrichissement metadata par titre — pas de barcode GTIN.",

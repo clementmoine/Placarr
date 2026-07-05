@@ -225,10 +225,11 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 
 - **Fait 2026-07-05** : `refetchInterval` = `false` quand `count === 0` (plus de poll 10 s au repos). Poll 2,5 s uniquement pendant des jobs actifs. Invalidation existante depuis la page item (`shelves/.../[itemId]/page.tsx`) suffit pour afficher le menu au démarrage d'un refresh.
 
-#### CONFIG-1 — `PROVIDER_METADATA_EXTENSIONS` (self-declaration) _(évalué → NON retenu ; dédup partielle **fait 2026-07-05**)_
+#### CONFIG-1 — Self-declaration providers _(fait 2026-07-05)_
 
-- **Décision 2026-07-04** : **ne pas migrer** les ~28 entrées dans les modules. Config déclarative centralisée, explicitement autorisée ; le registry reste le point d'assemblage légitime.
-- **Fait 2026-07-05** : traits déplacés dans les modules / `prestashop/configs.ts` (`metadataInfo`) pour les providers qui étaient **dupliqués** : icollect, chasseauxlivres, chocobonplan, achatmoinscher, geedie, hdjv, myludo, chipweld, netgamesretro. Fix : `bookGallerySource` était dans les extensions mais **jamais mergé** dans `PROVIDERS` → corrigé via déclaration module. Entrées registry retirées pour ces ids ; ~19 entrées centrales conservées (ScreenScraper, IGDB, retailers sans module dédié, …).
+- **`PROVIDER_METADATA_EXTENSIONS` supprimée** — chaque module déclare ses traits dans `info` (ou `prestashop/configs.ts` → `metadataInfo`).
+- **Découverte** : `discoverProviderModules()` + `materializeProviderInfo()` appliquent les defaults booléens ; le core consomme `PROVIDERS` / `providersForType` / `capabilityCoverage` sans map keyée par id.
+- Factory PrestaShop : defaults `boardgames`-only (`fr`, `isRealBoxCover`, `isSecondary`) ; override explicite via `metadataInfo`.
 
 ---
 

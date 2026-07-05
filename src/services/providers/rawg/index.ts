@@ -35,6 +35,7 @@ export const rawgModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["RAWG_API_KEY"], free: true },
     canonical: true,
+    defaultLanguage: "en",
     websiteUrl: "https://rawg.io/",
     apiKeyDashboardUrl: "https://rawg.io/apikeys",
   },

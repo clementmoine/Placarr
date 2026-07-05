@@ -87,6 +87,8 @@ export const espritjeuModule: ProviderModule = {
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
     canonical: false,
+    defaultLanguage: "fr",
+    isRealBoxCover: true,
     websiteUrl: "https://www.espritjeu.com/",
     notes: "Catalogue FR jeux de société (fiche produit, EAN, galerie).",
   },

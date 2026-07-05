@@ -80,6 +80,14 @@ export function createScrapeCatalogModule<
     ];
     const sample = config.sample ?? deps.defaultSample;
     const capabilities = config.capabilities ?? deps.defaultCapabilities;
+    const boardGameShopDefaults: ScrapeCatalogMetadataInfo | undefined =
+      config.types.length === 1 && config.types[0] === "boardgames"
+        ? {
+            defaultLanguage: "fr",
+            isRealBoxCover: true,
+            isSecondary: true,
+          }
+        : undefined;
 
     return {
       info: {
@@ -91,6 +99,7 @@ export function createScrapeCatalogModule<
         canonical: false,
         websiteUrl: config.baseUrl,
         notes: `Recherche ${deps.platformLabel} par EAN (${config.label}).`,
+        ...boardGameShopDefaults,
         ...config.metadataInfo,
       },
       evidence: {

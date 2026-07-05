@@ -129,6 +129,8 @@ export const pricechartingModule: ProviderModule = {
     capabilities: ["identify", "price", "cover"],
     auth: { kind: "none" },
     canonical: false,
+    isRealBoxCover: true,
+    imageScoreAdjustment: 160,
     websiteUrl: "https://www.pricecharting.com/",
     notes: "Prix de référence.",
   },

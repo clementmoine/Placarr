@@ -286,6 +286,7 @@ export const booknodeModule: ProviderModule = {
     auth: { kind: "scrape" },
     canonical: false,
     defaultLanguage: "fr",
+    isRealBoxCover: true,
     coverUrlHost: "cdn1.booknode.com/book_cover/",
     remoteImageReferer: "https://booknode.com/",
     remoteImageFallback: true,

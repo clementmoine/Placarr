@@ -22,6 +22,8 @@ export const steamgriddbModule: ProviderModule = {
     capabilities: ["cover"],
     auth: { kind: "key", env: ["STEAMGRIDDB_API_KEY"], free: true },
     canonical: true,
+    authoritative3dCoverRole: true,
+    gridStyleCoverLabels: true,
     requiresTitleAlignment: true,
     websiteUrl: "https://www.steamgriddb.com/",
     notes: "Artworks communautaires ; grille verticale = format boîte.",

@@ -47,6 +47,8 @@ export const philibertModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: false,
+    defaultLanguage: "fr",
+    isRealBoxCover: true,
     websiteUrl: "https://www.philibertnet.com/",
     notes: "Fiches produit FR (description, couverture, prix, avis).",
   },

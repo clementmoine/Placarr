@@ -1,7 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { PROVIDERS, providersForType, capabilityCoverage } from "./registry";
+import {
+  PROVIDERS,
+  discoverProviderModules,
+  providersForType,
+  capabilityCoverage,
+} from "./registry";
 
 describe("providerRegistry", () => {
+  it("découvre les modules via discoverProviderModules()", () => {
+    const modules = discoverProviderModules();
+    expect(modules.length).toBeGreaterThan(40);
+    expect(modules.every((mdl) => mdl.info.id && mdl.info.types.length > 0)).toBe(
+      true,
+    );
+    expect(PROVIDERS.length).toBe(modules.length);
+  });
+
+  it("matérialise les traits depuis l'auto-déclaration module (sans table centrale)", () => {
+    const screenscraper = PROVIDERS.find((p) => p.id === "screenscraper");
+    expect(screenscraper?.defaultLanguage).toBe("fr");
+    expect(screenscraper?.isRealBoxCover).toBe(true);
+    expect(screenscraper?.authoritative3dCoverRole).toBe(true);
+  });
+
   it("a des ids uniques", () => {
     const ids = PROVIDERS.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);

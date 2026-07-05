@@ -258,18 +258,15 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    > **✅ Exécuté le 2026-07-05.** Renommage sans changement de comportement ;
    > seul `bgg/resolver.ts` consommateur. Tests `preference.test.ts` mis à jour.
 
-### 🟡 P3 — Config centralisée vs auto-déclaration (tension d'architecture)
+### 🟡 P3 — Config centralisée vs auto-déclaration _(résolu 2026-07-05)_
 
-[registry.ts](src/services/provider/registry.ts) contient `PROVIDER_METADATA_EXTENSIONS`,
-une **grande map keyée par provider id** (`screenscraper: {...}`, `chocobonplan: {...}`,
-`geedie: {...}`, `chipweld`, `netgamesretro`…). Le code lit `mdl.info.X ?? ext.X`, donc
-les modules **peuvent** déjà s'auto-déclarer — mais beaucoup de traits vivent encore dans
-cette map centrale. Conséquence concrète : pour les retailers PrestaShop, certains traits
-sont dans `prestashop/configs.ts` et d'autres dans la map du registry → **deux endroits
-pour décrire un même provider**. Ce n'est pas un leak (le principe autorise la config
-déclarative), mais c'est une migration à moitié faite qui brouille « le module se déclare
-lui-même ». **Action** : pousser ces extensions dans le `info` de chaque module (ou dans
-`configs.ts` pour les retailers), et supprimer la map.
+> **✅ Exécuté le 2026-07-05.** `PROVIDER_METADATA_EXTENSIONS` supprimée. Chaque module
+> auto-déclare ses traits metadata dans `info` (ou `prestashop/configs.ts` → `metadataInfo`) ;
+> `discoverProviderModules()` + `materializeProviderInfo()` remplacent la map centrale.
+> Le registry liste les modules et applique des defaults booléens — plus de map keyée par id.
+
+Historique : une map centrale keyée par provider id (`screenscraper: {...}`, …) dupliquait
+souvent `mdl.info`. Migration terminée — une source de vérité par module.
 
 ### 🟢 P4 — KISS / complexité (surveiller, pas urgent)
 

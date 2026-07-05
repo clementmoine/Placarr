@@ -26,6 +26,8 @@ export const omdbModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["OMDB_API_KEY"], free: true },
     canonical: true,
+    defaultLanguage: "en",
+    isSecondary: true,
     websiteUrl: "https://www.omdbapi.com/",
     notes: "Ratings complémentaires (IMDb/Rotten) + classification.",
   },

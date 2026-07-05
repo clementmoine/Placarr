@@ -31,6 +31,7 @@ export const googlebooksModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["GOOGLE_BOOKS_API_KEY"], free: true },
     canonical: true,
+    defaultLanguage: "en",
     mappingProbeRetry: true,
     mappingProbeConfigHint:
       "GOOGLE_BOOKS_API_KEY missing — free key via Google Cloud Console (Books API)",

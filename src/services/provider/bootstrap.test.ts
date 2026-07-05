@@ -76,7 +76,7 @@ describe("createMetadataAdapters", () => {
     }
   });
 
-  it("reads metadata traits from PrestaShop configs and modules (not registry extensions)", () => {
+  it("reads metadata traits from module self-declaration (PrestaShop configs + modules)", () => {
     const chipweld = PROVIDERS.find((p) => p.id === "chipweld");
     const netgamesretro = PROVIDERS.find((p) => p.id === "netgamesretro");
     const chocobonplan = PROVIDERS.find((p) => p.id === "chocobonplan");

@@ -33,6 +33,7 @@ export const openlibraryModule: ProviderModule = {
     ],
     auth: { kind: "none" },
     canonical: true,
+    defaultLanguage: "en",
     websiteUrl: "https://openlibrary.org/",
     apiKeyDashboardUrl: "https://openlibrary.org/",
     mappingProbeRetry: true,

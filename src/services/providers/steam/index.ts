@@ -28,6 +28,7 @@ export const steamModule: ProviderModule = {
     ],
     auth: { kind: "none" },
     canonical: true,
+    defaultLanguage: "en",
     // PC capsule/header art, not the physical console box being scanned.
     digitalStorefrontArt: true,
     websiteUrl: "https://store.steampowered.com/",

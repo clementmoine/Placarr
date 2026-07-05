@@ -19,6 +19,7 @@ export const howlongtobeatModule: ProviderModule = {
     capabilities: ["identify", "duration"],
     auth: { kind: "scrape" },
     canonical: true,
+    imageScoreAdjustment: -500,
     websiteUrl: "https://howlongtobeat.com/",
     timeToBeatSource: true,
     timeToBeatFactSourcePrefix: "How Long to Beat",

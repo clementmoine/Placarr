@@ -100,6 +100,8 @@ export const playinModule: ProviderModule = {
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
     canonical: false,
+    defaultLanguage: "fr",
+    isRealBoxCover: true,
     websiteUrl: "https://www.play-in.com/fr/",
     notes:
       "Boutique FR jeux de société : catalogue gamme 5 + fiche JSON-LD (gtin14).",

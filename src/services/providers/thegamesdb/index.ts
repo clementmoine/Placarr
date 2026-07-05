@@ -36,6 +36,8 @@ export const thegamesdbModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    defaultLanguage: "en",
+    isRealBoxCover: true,
     websiteUrl: "https://thegamesdb.net/",
     apiKeyDashboardUrl: "https://api.thegamesdb.net/key.php",
     mappingProbeConfigHint:

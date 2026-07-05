@@ -40,6 +40,7 @@ export const igdbModule: ProviderModule = {
       free: true,
     },
     canonical: true,
+    defaultLanguage: "en",
     websiteUrl: "https://www.igdb.com/",
     apiKeyDashboardUrl: "https://dev.twitch.tv/console/apps",
   },

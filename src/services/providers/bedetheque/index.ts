@@ -297,6 +297,7 @@ export const bedethequeModule: ProviderModule = {
     auth: { kind: "scrape" },
     canonical: false,
     defaultLanguage: "fr",
+    isRealBoxCover: true,
     coverUrlHost: "bedetheque.com/media/Couvertures/",
     remoteImageReferer: "https://www.bedetheque.com/",
     remoteImageFallback: true,

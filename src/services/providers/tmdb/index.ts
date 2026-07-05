@@ -32,6 +32,7 @@ export const tmdbModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["TMDB_API_KEY"], free: true },
     canonical: true,
+    defaultLanguage: "fr",
     websiteUrl: "https://www.themoviedb.org/",
     apiKeyDashboardUrl: "https://www.themoviedb.org/settings/api",
     notes: "Films + séries (certifications = public conseillé).",

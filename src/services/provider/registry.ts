@@ -51,6 +51,8 @@ import type {
 } from "@/types/providerRegistry";
 import { cleanCode } from "@/lib/barcode/query";
 
+import { materializeProviderInfo } from "./materializeProviderInfo";
+
 export type {
   Capability,
   MediaType,
@@ -100,115 +102,14 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   scandexModule,
 ];
 
-type ProviderMetadataExtension = Partial<
-  Pick<
-    ProviderInfo,
-    | "defaultLanguage"
-    | "isRealBoxCover"
-    | "imageScoreAdjustment"
-    | "remoteImageFallback"
-    | "isSecondary"
-    | "retailCatalogImageTitles"
-    | "strictShelfPlatformCover"
-    | "authoritative3dCoverRole"
-    | "gridStyleCoverLabels"
-    | "collectorCoverRegionFromAgeRating"
-    | "coverDefaultRegion"
-  >
->;
+/** Every registered provider module — single discovery entry for the core. */
+export function discoverProviderModules(): readonly ProviderModule[] {
+  return PROVIDER_MODULES;
+}
 
-const PROVIDER_METADATA_EXTENSIONS: Record<string, ProviderMetadataExtension> =
-  {
-    screenscraper: {
-      defaultLanguage: "fr",
-      isRealBoxCover: true,
-      authoritative3dCoverRole: true,
-    },
-    igdb: { defaultLanguage: "en" },
-    thegamesdb: { defaultLanguage: "en", isRealBoxCover: true },
-    launchbox: { defaultLanguage: "en", isRealBoxCover: true },
-    coverproject: { isRealBoxCover: true },
-    howlongtobeat: { imageScoreAdjustment: -500 },
-    steam: { defaultLanguage: "en" },
-    rawg: { defaultLanguage: "en" },
-    steamgriddb: {
-      authoritative3dCoverRole: true,
-      gridStyleCoverLabels: true,
-    },
-    pricecharting: {
-      isRealBoxCover: true,
-      imageScoreAdjustment: 160,
-    },
-    tmdb: { defaultLanguage: "fr" },
-    omdb: { defaultLanguage: "en", isSecondary: true },
-    openlibrary: { defaultLanguage: "en" },
-    googlebooks: { defaultLanguage: "en" },
-    booknode: {
-      defaultLanguage: "fr",
-      isRealBoxCover: true,
-    },
-    bedetheque: {
-      defaultLanguage: "fr",
-      isRealBoxCover: true,
-    },
-    boardgamegeek: { defaultLanguage: "en", isRealBoxCover: true },
-    philibert: { defaultLanguage: "fr", isRealBoxCover: true },
-    okkazeo: { defaultLanguage: "fr", isRealBoxCover: true },
-    espritjeu: { defaultLanguage: "fr", isRealBoxCover: true },
-    playin: { defaultLanguage: "fr", isRealBoxCover: true },
-    ledenicheur: { defaultLanguage: "fr" },
-    freakxy: { defaultLanguage: "fr", isRealBoxCover: true },
-    ebay: {
-      imageScoreAdjustment: -280,
-      remoteImageFallback: true,
-      isSecondary: true,
-    },
-  };
-
-export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((mdl) => {
-  const ext = PROVIDER_METADATA_EXTENSIONS[mdl.info.id] || {};
-  return {
-    ...mdl.info,
-    defaultLanguage:
-      mdl.info.defaultLanguage ?? ext.defaultLanguage ?? "unknown",
-    isRealBoxCover: mdl.info.isRealBoxCover ?? ext.isRealBoxCover ?? false,
-    imageScoreAdjustment:
-      mdl.info.imageScoreAdjustment ?? ext.imageScoreAdjustment,
-    coverUrlHost: mdl.info.coverUrlHost,
-    remoteImageFallback:
-      mdl.info.remoteImageFallback ?? ext.remoteImageFallback ?? false,
-    remoteImageReferer: mdl.info.remoteImageReferer,
-    remoteImageFlareTimeoutMs: mdl.info.remoteImageFlareTimeoutMs,
-    bookCoverPriority: mdl.info.bookCoverPriority,
-    sourceAliases: mdl.info.sourceAliases ?? [],
-    fullWrapCover: mdl.info.fullWrapCover ?? false,
-    isSecondary: mdl.info.isSecondary ?? ext.isSecondary ?? false,
-    digitalStorefrontArt: mdl.info.digitalStorefrontArt ?? false,
-    canonicalCover: mdl.info.canonicalCover ?? false,
-    nameDatabase: mdl.info.nameDatabase ?? false,
-    rateLimited: mdl.info.rateLimited ?? false,
-    requiresTitleAlignment: mdl.info.requiresTitleAlignment ?? false,
-    retailCatalogImageTitles:
-      mdl.info.retailCatalogImageTitles ??
-      ext.retailCatalogImageTitles ??
-      false,
-    strictShelfPlatformCover:
-      mdl.info.strictShelfPlatformCover ??
-      ext.strictShelfPlatformCover ??
-      false,
-    authoritative3dCoverRole:
-      mdl.info.authoritative3dCoverRole ??
-      ext.authoritative3dCoverRole ??
-      false,
-    gridStyleCoverLabels:
-      mdl.info.gridStyleCoverLabels ?? ext.gridStyleCoverLabels ?? false,
-    collectorCoverRegionFromAgeRating:
-      mdl.info.collectorCoverRegionFromAgeRating ??
-      ext.collectorCoverRegionFromAgeRating ??
-      false,
-    coverDefaultRegion: mdl.info.coverDefaultRegion ?? ext.coverDefaultRegion,
-  };
-});
+export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((mdl) =>
+  materializeProviderInfo(mdl.info),
+);
 
 export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((mdl) => mdl.info.id === id);

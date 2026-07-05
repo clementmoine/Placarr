@@ -40,6 +40,8 @@ export const bggModule: ProviderModule = {
     ],
     auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
     canonical: true,
+    defaultLanguage: "en",
+    isRealBoxCover: true,
     websiteUrl: "https://boardgamegeek.com/",
     apiKeyDashboardUrl: "https://boardgamegeek.com/",
     mappingProbeRetry: true,

@@ -3,16 +3,16 @@ import levenshtein from "fast-levenshtein";
 import type {
   PriceChartingMetadata,
   PriceChartingPrices,
-} from "@/core/barcode/lookup/providerTypes";
-import { parsePriceChartingBarcode } from "@/core/barcode/lookup/priceChartingParse";
-import { detectPlatformKey } from "@/core/barcode/query";
-import { containsGameClassicsKeyword } from "@/core/barcode/listingTerms";
+} from "@/core/identify/lookup/providerTypes";
+import { parsePriceChartingBarcode } from "@/core/identify/lookup/priceChartingParse";
+import { detectPlatformKey } from "@/core/identify/query";
+import { containsGameClassicsKeyword } from "@/core/identify/listingTerms";
 import {
   getPriceChartingPlatformSlugs,
   priceChartingNeoGeoVariantMatchesShelf,
   resolvePriceChartingPlatformSlug,
 } from "./platformSlugs";
-import { franchiseSequelNumbersConflict } from "@/core/metadata/titleMatching";
+import { franchiseSequelNumbersConflict } from "@/core/enrich/titleMatching";
 import { slugify } from "@/lib/routing/slugs";
 import {
   pickPriceChartingPrimaryCoverUrl,
@@ -27,8 +27,8 @@ import {
 export type {
   PriceChartingMetadata,
   PriceChartingPrices,
-} from "@/core/barcode/lookup/providerTypes";
-export { parsePriceChartingBarcode } from "@/core/barcode/lookup/priceChartingParse";
+} from "@/core/identify/lookup/providerTypes";
+export { parsePriceChartingBarcode } from "@/core/identify/lookup/priceChartingParse";
 
 const PRICECHARTING_HEADERS = {
   "User-Agent":

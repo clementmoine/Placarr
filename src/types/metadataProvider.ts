@@ -1,6 +1,6 @@
 import type { AttachmentType } from "@prisma/client";
 
-import type { FieldEvidenceInput } from "@/core/metadata/evidence";
+import type { FieldEvidenceInput } from "@/core/enrich/evidence";
 import type { MetadataObservation } from "@/types/metadataObservation";
 
 export interface MetadataAttachment {
@@ -15,13 +15,13 @@ export interface MetadataAttachment {
    * user_photo). Unlike the trait flags below this IS persisted: it is derived
    * from the provider's original image URL, which is rewritten to a local path on
    * download, so it cannot be recomputed on load. See
-   * `@/core/media/coverProvenance`.
+   * `@/core/enrich/media/coverProvenance`.
    */
   coverProvenance?: string;
   /**
    * Image metrics measured once at enrichment (sharp) and persisted, so the
    * read-time cover ranking can sort by resolution + exposure without
-   * re-decoding files. See `@/core/media/attachmentDisplayScore`.
+   * re-decoding files. See `@/core/enrich/media/attachmentDisplayScore`.
    */
   width?: number;
   height?: number;
@@ -36,6 +36,8 @@ export interface MetadataAttachment {
   isGameMediaGallerySource?: boolean;
   isMusicGallerySource?: boolean;
   isCanonicalCoverSource?: boolean;
+  /** Retail catalog titles may differ from the product title; filter on shelf. */
+  retailCatalogImageTitlesSource?: boolean;
   providerImageScoreAdjustment?: number;
   providerLabel?: string;
 }

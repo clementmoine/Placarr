@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { cleanCode } from "@/core/barcode/query";
-import { resolveBarcode } from "@/core/barcode/resolver";
+import { cleanCode } from "@/core/identify/query";
+import { resolveBarcode } from "@/core/identify/resolver";
 
 export async function GET(req: NextRequest) {
   // Proxy vers des API tierces (souvent payantes) → auth obligatoire.

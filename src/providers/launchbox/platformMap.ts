@@ -1,7 +1,7 @@
 import {
   normalizeVideoGamePlatformText,
   resolveLaunchBoxPlatformNames,
-} from "@/core/games/platforms";
+} from "@/core/identify/platforms/platforms";
 
 export { resolveLaunchBoxPlatformNames };
 

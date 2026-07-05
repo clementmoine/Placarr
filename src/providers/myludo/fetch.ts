@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 
 const BASE_URL = "https://www.myludo.fr";
 const HEADERS = {
@@ -95,8 +95,7 @@ async function bootstrapMyLudoSession(): Promise<MyLudoSession> {
   const response = await axios.get(`${BASE_URL}/`, {
     headers: {
       ...HEADERS,
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
     timeout: 10_000,
   });
@@ -155,9 +154,7 @@ export function mapMyLudoGamePayload(payload: MyLudoGamePayload): MyLudoGame {
   }
 
   const coverFromImage =
-    payload.image?.S300 ||
-    payload.image?.S160 ||
-    undefined;
+    payload.image?.S300 || payload.image?.S160 || undefined;
   const coverFromMeta =
     payload.meta?.image && isMyLudoOfficialCoverUrl(payload.meta.image)
       ? payload.meta.image

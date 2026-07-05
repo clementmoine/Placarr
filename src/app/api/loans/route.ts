@@ -9,7 +9,7 @@ import type { Locale } from "@/types/i18n";
 import {
   itemWithMetadataInclude,
   presentItemFromStorage,
-} from "@/core/item/present";
+} from "@/core/collect/present";
 
 function presentLoanRequest<
   T extends {

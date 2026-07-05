@@ -1,9 +1,9 @@
 import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
-} from "@/core/retailer/metadataLookup";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { retailerCatalogBarcodeGate } from "@/core/retailer/productUrl";
+} from "@/core/commerce/retailer/metadataLookup";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 
 import type {
   MetadataAttachment,

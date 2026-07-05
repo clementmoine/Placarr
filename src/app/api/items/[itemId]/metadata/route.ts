@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
-import { presentItemFromStorage } from "@/core/item/present";
-import { resolveItemMetadataLookupQuery } from "@/core/item/metadataLookupQuery";
+import { presentItemFromStorage } from "@/core/collect/present";
+import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
 import { resolveItemId } from "@/lib/routing/resolveIds";
-import { startItemMetadataRefresh } from "@/core/jobs/scheduleMetadataRefresh";
+import { startItemMetadataRefresh } from "@/core/collect/jobs/scheduleMetadataRefresh";
 
 export async function POST(
   req: NextRequest,

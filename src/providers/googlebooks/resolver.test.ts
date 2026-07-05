@@ -2,8 +2,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 import axios from "axios";
-import * as remoteFetch from "@/core/media/remoteFetch";
-import * as coverPlaceholderServer from "@/core/media/coverPlaceholder.server";
+import * as remoteFetch from "@/core/enrich/media/remoteFetch";
+import * as coverPlaceholderServer from "@/core/enrich/media/coverPlaceholder.server";
 
 import { createGoogleBooksResolver } from "./resolver";
 

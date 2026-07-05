@@ -1,14 +1,14 @@
 import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
-} from "@/core/retailer/metadataLookup";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { retailerProductUrlBarcodeConflicts } from "@/core/retailer/productUrl";
-import { normalizeBoardGamePlayerCount } from "@/core/metadata/boardGame";
+} from "@/core/commerce/retailer/metadataLookup";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
+import { normalizeBoardGamePlayerCount } from "@/core/enrich/boardGame";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 import type {
   MetadataAttachment,
   MetadataFact,
@@ -20,11 +20,7 @@ import type {
   ObservationEvidenceSignal,
 } from "@/types/metadataObservation";
 
-import {
-  fetchMyLudoGame,
-  searchMyLudoHits,
-  type MyLudoGame,
-} from "./fetch";
+import { fetchMyLudoGame, searchMyLudoHits, type MyLudoGame } from "./fetch";
 
 const MYLUDO_REGION = "fr";
 

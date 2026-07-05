@@ -2,7 +2,7 @@ import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import { cleanCode } from "@/core/barcode/query";
+import { cleanCode } from "@/core/identify/query";
 
 import type { ICollectMetadata } from "./types";
 import { mergeICollectCatalogMetadata } from "./mergeCatalog";
@@ -137,15 +137,16 @@ function parseSitemapImages(
       .match(/<image:caption>([^<]*)<\/image:caption>/i)?.[1]
       ?.trim();
     const label =
-      caption?.replace(/\s*-\s*Main Image\s+\d+\s*$/i, "").trim() ||
-      undefined;
+      caption?.replace(/\s*-\s*Main Image\s+\d+\s*$/i, "").trim() || undefined;
     images.push({ url, ...(label ? { label } : {}) });
   }
 
   return images;
 }
 
-export function extractSitemapCatalogBlocks(xml: string): ICollectSitemapBlock[] {
+export function extractSitemapCatalogBlocks(
+  xml: string,
+): ICollectSitemapBlock[] {
   const blocks: ICollectSitemapBlock[] = [];
 
   for (const urlMatch of xml.matchAll(/<url>([\s\S]*?)<\/url>/gi)) {
@@ -460,7 +461,7 @@ export function countICollectItemCatalog(db: DatabaseSync): number {
 export function countICollectPageCatalog(db: DatabaseSync): number {
   const row = db
     .prepare(
-      "SELECT COUNT(*) AS count FROM item_metadata WHERE payload LIKE '%\"catalogSource\":\"page\"%'",
+      'SELECT COUNT(*) AS count FROM item_metadata WHERE payload LIKE \'%"catalogSource":"page"%\'',
     )
     .get() as { count?: number } | undefined;
   return Number(row?.count || 0);

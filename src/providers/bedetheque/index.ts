@@ -1,6 +1,6 @@
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
-import { bookIdentifierLabel } from "@/core/barcode/shelfLabels";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 

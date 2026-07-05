@@ -74,7 +74,7 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
-import { syncItemQueries, syncShelfQueries } from "@/core/item/queryCache";
+import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
 import {
   collectionFiltersToSearchParams,
   parseItemCollectionFilters,
@@ -83,10 +83,10 @@ import {
   sumCollectionEstimatedValue,
   type ItemCollectionFilters,
   type ItemCollectionSort,
-} from "@/core/item/collectionQuery";
-import { useRefetchShelfItemsWhenMetadataIdle } from "@/core/item/useRefetchItemWhenMetadataIdle";
+} from "@/core/collect/collectionQuery";
+import { useRefetchShelfItemsWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { cn } from "@/lib/shared/utils";
-import { isItemMetadataBusy } from "@/core/item/enrichment";
+import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
 import type { Shelf, Prisma, Item } from "@prisma/client";

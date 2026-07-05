@@ -2,8 +2,8 @@ import {
   detectVideoGamePlatformKey,
   isVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/games/platforms";
-import { attachmentTitleMediaTypeConflicts } from "@/core/metadata/titleMatching";
+} from "@/core/identify/platforms/platforms";
+import { attachmentTitleMediaTypeConflicts } from "@/core/enrich/titleMatching";
 
 import type { EbayProduct } from "./types";
 

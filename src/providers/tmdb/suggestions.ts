@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { cleanSearchQuery } from "@/core/search/query";
+import { cleanSearchQuery } from "@/core/enrich/search/query";
 import { parseTMDBSeriesIntent } from "./resolver";
 
 export async function getTMDBSuggestions(name: string): Promise<string[]> {

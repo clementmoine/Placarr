@@ -5,8 +5,8 @@ import {
   gameProductIdentityMismatch,
   isMetadataTitleAligned,
   metadataTitleMatchScore,
-} from "@/core/metadata/titleMatching";
-import { detectVideoGamePlatformKey } from "@/core/games/platforms";
+} from "@/core/enrich/titleMatching";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import { resolveLocaleRegion } from "@/core/locale/preference";
 
 const GEEDIE_BASE_URL = "https://geedie.lt";

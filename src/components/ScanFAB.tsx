@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { saveItem } from "@/lib/api/items";
 import { itemPath } from "@/lib/routing/slugs";
-import { syncItemQueries } from "@/core/item/queryCache";
+import { syncItemQueries } from "@/core/collect/queryCache";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 import { BarcodeScanCapture } from "@/components/BarcodeScanCapture";
 import { ItemModal } from "./modals/ItemModal";

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
   scannerBarcodePlaceholderKey,
   scannerEnterBarcodeKey,
-} from "@/core/barcode/shelfLabels";
+} from "@/core/identify/shelfLabels";
 
 export function cleanManualBarcode(value: string): string {
   return value.replace(/[^\d]/g, "").trim();

@@ -26,14 +26,19 @@ vi.mock("@/lib/db/prisma", () => ({
     $transaction: h.transaction,
   },
 }));
-vi.mock("@/core/jobs/scheduleMetadataRefresh", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/core/jobs/scheduleMetadataRefresh")>();
-  return {
-    ...actual,
-    scheduleBatchItemMetadataRefresh: h.scheduleBatchItemMetadataRefresh,
-  };
-});
+vi.mock(
+  "@/core/collect/jobs/scheduleMetadataRefresh",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("@/core/collect/jobs/scheduleMetadataRefresh")
+      >();
+    return {
+      ...actual,
+      scheduleBatchItemMetadataRefresh: h.scheduleBatchItemMetadataRefresh,
+    };
+  },
+);
 vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: h.resolveShelfId,
   resolveItemId: h.resolveItemId,

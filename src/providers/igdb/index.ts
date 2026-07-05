@@ -8,7 +8,7 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { getIGDBDatabaseSuggestions } from "./suggestions";
-import { resolveWithLookupQueries } from "@/core/metadata/searchUtils";
+import { resolveWithLookupQueries } from "@/core/enrich/searchUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";

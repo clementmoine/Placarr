@@ -122,8 +122,7 @@ describe("fetchICollectMetadataByBarcode", () => {
       catalogSource: "page",
     });
 
-    const staleAt =
-      Date.now() - DEFAULT_PAGE_CATALOG_REFRESH_MS - 60_000;
+    const staleAt = Date.now() - DEFAULT_PAGE_CATALOG_REFRESH_MS - 60_000;
     db.prepare("UPDATE item_metadata SET fetched_at = ? WHERE item_id = ?").run(
       staleAt,
       "892033",

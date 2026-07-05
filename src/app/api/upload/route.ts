@@ -3,7 +3,7 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
-import { trimLightImageMargins } from "@/core/media/imageTrim";
+import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 
 // Allowed MIME types for images
 const ALLOWED_MIMETYPES = [

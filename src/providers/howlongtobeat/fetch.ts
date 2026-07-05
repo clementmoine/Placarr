@@ -1,6 +1,6 @@
 import levenshtein from "fast-levenshtein";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
-import { isMetadataTitleAligned } from "@/core/metadata/titleMatching";
+import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { mergeAbortSignals } from "@/lib/http/abort";
 
 interface HLTBInitResponse {

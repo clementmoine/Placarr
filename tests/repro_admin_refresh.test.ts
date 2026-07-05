@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fetchFromAllGameSources } from "@/core/metadata/fetchByType";
+import { fetchFromAllGameSources } from "@/core/enrich/fetchByType";
 
 const ADMIN_REFRESH_CASES = [
   {

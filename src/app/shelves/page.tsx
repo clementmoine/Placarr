@@ -47,7 +47,7 @@ import { ItemCard } from "@/components/ItemCard";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath, shelfPath } from "@/lib/routing/slugs";
-import { syncItemQueries, syncShelfQueries } from "@/core/item/queryCache";
+import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
 import axios from "axios";
 import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";

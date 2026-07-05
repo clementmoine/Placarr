@@ -6,12 +6,12 @@ import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
-import { metadataTitleSimilarity } from "@/core/metadata/titleMatching";
+} from "@/core/enrich/observations";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
 import {
   detectScreenScraperSystemId,
   getPlatformKeyByScreenScraperSystemId,
-} from "@/core/games/platforms";
+} from "@/core/identify/platforms/platforms";
 
 import type {
   MetadataAttachment,
@@ -51,11 +51,11 @@ import {
   parseScreenScraperMediaUrl,
   screenScraperMediaAttachmentSemantics,
 } from "./mediaUrl";
-import { areLikelySameProduct } from "@/core/barcode/titleUtils";
-import { stripLegalMarkSymbols } from "@/core/search/query";
-import { isWeakMetadataSearchFragment } from "@/core/title/searchVariants";
-import { metadataHasDisplayImage } from "@/core/metadata/displayImage";
-import { resolveAttachmentDisplayRegion } from "@/core/media/attachmentDisplayLabels";
+import { areLikelySameProduct } from "@/core/identify/titleUtils";
+import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
+import { isWeakMetadataSearchFragment } from "@/core/enrich/titles/searchVariants";
+import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
+import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
 

@@ -55,13 +55,19 @@ describe("runICollectPageScrapeBatch", () => {
     ]);
 
     h.fetchICollectVideoGameItem.mockRejectedValue(
-      new AxiosError("Too Many Requests", "ERR_BAD_REQUEST", undefined, undefined, {
-        status: 429,
-        statusText: "Too Many Requests",
-        headers: { "retry-after": "60" },
-        config: {} as never,
-        data: "",
-      }),
+      new AxiosError(
+        "Too Many Requests",
+        "ERR_BAD_REQUEST",
+        undefined,
+        undefined,
+        {
+          status: 429,
+          statusText: "Too Many Requests",
+          headers: { "retry-after": "60" },
+          config: {} as never,
+          data: "",
+        },
+      ),
     );
 
     const result = await runICollectPageScrapeBatch(db, {

@@ -17,7 +17,7 @@ import {
   hasActiveCollectionFilters,
   type ItemCollectionFilters,
   type ItemCollectionSort,
-} from "@/core/item/collectionQuery";
+} from "@/core/collect/collectionQuery";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 import type { Condition } from "@prisma/client";

@@ -1,12 +1,12 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 import type {
   MetadataAttachment,
   MetadataFact,

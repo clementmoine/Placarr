@@ -4,8 +4,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import {
   hasUnrequestedVariantMarker,
   isMetadataTitleAligned,
-} from "@/core/metadata/titleMatching";
-import { volumeNumberFromTitle } from "@/core/title/volumeNumber";
+} from "@/core/enrich/titleMatching";
+import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
 import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import {

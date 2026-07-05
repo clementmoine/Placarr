@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getCoverImage } from "@/core/item/media";
+import { getCoverImage } from "@/core/collect/media";
 import {
   inferTextLanguage,
   localeBonusForAttachmentRole,

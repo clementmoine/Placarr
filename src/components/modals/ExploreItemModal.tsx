@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { cn } from "@/lib/shared/utils";
-import { getHeroImage, getGalleryImages } from "@/core/item/media";
+import { getHeroImage, getGalleryImages } from "@/core/collect/media";
 import { getExploreDetailCoverClass } from "@/lib/text/cardFormat";
 
 interface ExploreItemModalProps {

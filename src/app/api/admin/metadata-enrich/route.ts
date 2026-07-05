@@ -1,12 +1,12 @@
 import { after, NextRequest, NextResponse } from "next/server";
 
-import { runBackgroundWork } from "@/core/jobs/backgroundWorkQueue";
+import { runBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import type { Prisma } from "@prisma/client";
 
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { fetchAndStoreMetadata } from "@/core/metadata";
+import { fetchAndStoreMetadata } from "@/core/enrich";
 
 import { PROVIDERS } from "@/core/catalog/catalog";
 

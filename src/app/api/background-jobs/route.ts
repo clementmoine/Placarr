@@ -4,7 +4,7 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import {
   cancelAllBackgroundJobsForUser,
   listBackgroundJobsForUser,
-} from "@/core/jobs/backgroundJobs";
+} from "@/core/collect/jobs/backgroundJobs";
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);

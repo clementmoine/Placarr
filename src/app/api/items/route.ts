@@ -5,32 +5,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 
-import { cropImageIfNeeded } from "@/core/media/imageTrim";
+import { cropImageIfNeeded } from "@/core/enrich/media/imageTrim";
 import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
-} from "@/core/metadata/storage";
-import { presentItemFromStorage } from "@/core/item/present";
+} from "@/core/enrich/storage";
+import { presentItemFromStorage } from "@/core/collect/present";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
-import { buildBarcodePlaceholderItemName } from "@/core/item/placeholderName";
-import { resolveItemMetadataLookupQuery } from "@/core/item/metadataLookupQuery";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
+import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   buildExactBarcodeSearchCondition,
   buildItemSearchConditions,
-} from "@/core/item/search";
+} from "@/core/collect/search";
 import {
   startItemMetadataRefresh,
   shelfMoveMetadataResetData,
-} from "@/core/jobs/scheduleMetadataRefresh";
-import { clearStaleMetadataRefreshStartedAtIfNeeded } from "@/core/jobs/metadataRefreshSession";
+} from "@/core/collect/jobs/scheduleMetadataRefresh";
+import { clearStaleMetadataRefreshStartedAtIfNeeded } from "@/core/collect/jobs/metadataRefreshSession";
 import {
   itemPricesContextFromRecord,
   readItemPrices,
   summarizeListItemPrices,
   EMPTY_LIST_ITEM_PRICES,
-} from "@/core/pricing/itemDisplay";
+} from "@/core/commerce/pricing/itemDisplay";
 
 const VALID_SHELF_TYPES = new Set<string>(Object.values(Type));
 

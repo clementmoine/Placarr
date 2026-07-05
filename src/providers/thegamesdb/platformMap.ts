@@ -1,5 +1,5 @@
-import { detectPlatformKey } from "@/core/barcode/query";
-import { getTheGamesDbPlatformId } from "@/core/games/platforms";
+import { detectPlatformKey } from "@/core/identify/query";
+import { getTheGamesDbPlatformId } from "@/core/identify/platforms/platforms";
 
 export function resolveTheGamesDbPlatformId(
   platform?: string | null,

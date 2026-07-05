@@ -4,7 +4,7 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
+} from "@/core/identify/normalize";
 
 const BASE_URL = "https://www.okkazeo.com";
 const HEADERS = {

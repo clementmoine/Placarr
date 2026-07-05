@@ -4,7 +4,7 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions } from "@/core/barcode/lookup/sourceContribution";
+import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
 
 import { fetchFromFreakxy } from "./fetch";
 

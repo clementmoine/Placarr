@@ -14,7 +14,11 @@ import type {
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
-import type { Capability, MediaType, ProviderInfo } from "@/types/providerRegistry";
+import type {
+  Capability,
+  MediaType,
+  ProviderInfo,
+} from "@/types/providerRegistry";
 
 /** Optional metadata traits merged into `ProviderModule.info` at factory build time. */
 export type ScrapeCatalogMetadataInfo = Partial<

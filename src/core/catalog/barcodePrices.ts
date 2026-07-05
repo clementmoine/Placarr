@@ -1,6 +1,6 @@
-import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
-import { finalizeGamePriceProviders } from "@/core/pricing/cachePolicy";
-import type { PriceOfferInput } from "@/core/metadata/evidence";
+import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { finalizeGamePriceProviders } from "@/core/commerce/pricing/resolver";
+import type { PriceOfferInput } from "@/core/enrich/evidence";
 import { PROVIDER_MODULES } from "./registry";
 import type {
   BarcodeLookupType,

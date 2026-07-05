@@ -1,20 +1,20 @@
 import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
-} from "@/core/retailer/metadataLookup";
+} from "@/core/commerce/retailer/metadataLookup";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
+} from "@/core/identify/normalize";
 import {
   retailerProductBarcodeConfirmed,
   retailerProductUrlBarcodeConflicts,
-} from "@/core/retailer/productUrl";
+} from "@/core/commerce/retailer/productUrl";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 import type {
   MetadataAttachment,
   MetadataFact,

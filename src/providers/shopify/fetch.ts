@@ -3,8 +3,8 @@ import axios from "axios";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
-import { retailerCatalogBarcodeGate } from "@/core/retailer/productUrl";
+} from "@/core/identify/normalize";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 
 import type { ShopifyProduct, ShopifyRetailerConfig } from "./types";
 

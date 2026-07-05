@@ -1,5 +1,5 @@
 import axios from "axios";
-import { isMetadataTitleAligned } from "@/core/metadata/titleMatching";
+import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import type {
   MetadataAttachment,
   MetadataResult,

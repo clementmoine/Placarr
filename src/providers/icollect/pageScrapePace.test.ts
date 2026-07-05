@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  FILL_PAGE_SCRAPE_PACE,
   PAGE_SCRAPE_PACE,
   PageScrapePace,
   classifyICollectFetchError,
@@ -11,13 +10,19 @@ import { AxiosError } from "axios";
 
 describe("classifyICollectFetchError", () => {
   it("detects rate-limit responses", () => {
-    const error = new AxiosError("Too Many Requests", "ERR_BAD_REQUEST", undefined, undefined, {
-      status: 429,
-      statusText: "Too Many Requests",
-      headers: {},
-      config: {} as never,
-      data: "",
-    });
+    const error = new AxiosError(
+      "Too Many Requests",
+      "ERR_BAD_REQUEST",
+      undefined,
+      undefined,
+      {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: {},
+        config: {} as never,
+        data: "",
+      },
+    );
     expect(classifyICollectFetchError(error)).toBe("rate_limited");
   });
 
@@ -29,13 +34,19 @@ describe("classifyICollectFetchError", () => {
 
 describe("readICollectRetryAfterMs", () => {
   it("parses Retry-After seconds", () => {
-    const error = new AxiosError("Too Many Requests", "ERR_BAD_REQUEST", undefined, undefined, {
-      status: 429,
-      statusText: "Too Many Requests",
-      headers: { "retry-after": "120" },
-      config: {} as never,
-      data: "",
-    });
+    const error = new AxiosError(
+      "Too Many Requests",
+      "ERR_BAD_REQUEST",
+      undefined,
+      undefined,
+      {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: { "retry-after": "120" },
+        config: {} as never,
+        data: "",
+      },
+    );
     expect(readICollectRetryAfterMs(error)).toBe(120_000);
   });
 });

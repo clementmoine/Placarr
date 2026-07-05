@@ -1,4 +1,4 @@
-import type { PriceOfferInput } from "@/core/metadata/evidence";
+import type { PriceOfferInput } from "@/core/enrich/evidence";
 
 export function pricedOffer(
   source: string,

@@ -4,7 +4,7 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
+} from "@/core/identify/normalize";
 
 const BASE_URL = "https://www.play-in.com";
 const BOARDGAME_CATALOGUE_PATH = "/fr/gamme/5/jeux-de-societe/catalogue";
@@ -58,7 +58,9 @@ function parsePriceCents(raw: unknown): number | undefined {
   return Math.round(amount * 100);
 }
 
-function parseJsonLdProductNode(product: Record<string, unknown>): PlayInJsonLd {
+function parseJsonLdProductNode(
+  product: Record<string, unknown>,
+): PlayInJsonLd {
   const offers = (product.offers as Record<string, unknown>) || {};
   const lowPriceRaw = offers.lowPrice ?? offers.price;
   const imageRaw = product.image;
@@ -121,10 +123,7 @@ export function parsePlayInProductJsonLd(html: string): PlayInJsonLd {
   const markerIndex = html.indexOf(escapedMarker);
   if (markerIndex === -1) return {};
 
-  const chunk = html.slice(
-    Math.max(0, markerIndex - 120),
-    markerIndex + 3500,
-  );
+  const chunk = html.slice(Math.max(0, markerIndex - 120), markerIndex + 3500);
   const name = chunk.match(/\\"name\\":\\"([^"\\]+)\\"/)?.[1];
   const description = chunk.match(/\\"description\\":\\"([^"\\]+)\\"/)?.[1];
   const gtin14 = chunk.match(/\\"gtin14\\":\\"(\d+)\\"/)?.[1];

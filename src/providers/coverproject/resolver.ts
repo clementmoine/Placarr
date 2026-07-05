@@ -2,7 +2,7 @@ import axios from "axios";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { ObservationEvidenceSignal } from "@/types/metadataObservation";

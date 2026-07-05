@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { materializeProviderInfo } from "./materializeProviderInfo";
+import { materializeProviderInfo } from "./catalog";
 
 describe("materializeProviderInfo", () => {
   it("applies boolean defaults without overriding declared traits", () => {

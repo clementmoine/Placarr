@@ -19,6 +19,7 @@ const INTERNAL_EVIDENCE: Record<
     sourceWeight: number;
     canonical?: boolean;
     trustedRetailer?: boolean;
+    catalogTitleAnchor?: boolean;
     cleanCachedNames?: boolean;
   }
 > = {

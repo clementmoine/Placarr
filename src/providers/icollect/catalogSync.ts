@@ -2,7 +2,7 @@ import axios from "axios";
 import type { DatabaseSync } from "node:sqlite";
 
 import { createSerializeAsync } from "@/lib/async/serializeAsync";
-import { runBackgroundWork } from "@/core/jobs/backgroundWorkQueue";
+import { runBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
 
 import {
   fetchICollectVideoGameItem,
@@ -60,16 +60,13 @@ type GlobalSyncState = {
 };
 
 function globalSyncState(): GlobalSyncState {
-  const root = globalThis as typeof globalThis & Record<string, GlobalSyncState>;
+  const root = globalThis as typeof globalThis &
+    Record<string, GlobalSyncState>;
   if (!root[globalStateKey]) root[globalStateKey] = {};
   return root[globalStateKey];
 }
 
-function readPositiveInt(
-  envName: string,
-  fallback: number,
-  min = 1,
-): number {
+function readPositiveInt(envName: string, fallback: number, min = 1): number {
   const raw = Number.parseInt(process.env[envName] || "", 10);
   if (!Number.isFinite(raw) || raw < min) return fallback;
   return raw;
@@ -101,7 +98,8 @@ function writePageBackoffUntil(db: DatabaseSync, untilMs: number): void {
 
 export function isICollectCatalogSyncEnabled(): boolean {
   if (process.env.ICOLLECT_CATALOG_SYNC === "0") return false;
-  if (process.env.RECORD || process.env.BARCODE_RECORD_SLIM === "1") return false;
+  if (process.env.RECORD || process.env.BARCODE_RECORD_SLIM === "1")
+    return false;
   if (process.env.VITEST) return false;
   return true;
 }
@@ -147,7 +145,11 @@ export async function runICollectFullSitemapSync(
       stats: ICollectIngestStats;
     }) => void;
   } = {},
-): Promise<{ sitemaps: number; barcodeUpserts: number; catalogUpserts: number }> {
+): Promise<{
+  sitemaps: number;
+  barcodeUpserts: number;
+  catalogUpserts: number;
+}> {
   const sitemapUrls = await fetchICollectVideoGameSitemapUrls();
   writeMetaInt(db, META_SITEMAP_TOTAL, sitemapUrls.length);
   writeMetaInt(db, META_SITEMAP_CURSOR, 0);
@@ -181,7 +183,7 @@ export async function runICollectFullSitemapSync(
 }
 
 async function ensureSitemapUrlList(db: DatabaseSync): Promise<string[]> {
-  let total = readMetaInt(db, META_SITEMAP_TOTAL, 0);
+  const total = readMetaInt(db, META_SITEMAP_TOTAL, 0);
   if (total <= 0) {
     const urls = await fetchICollectVideoGameSitemapUrls();
     writeMetaInt(db, META_SITEMAP_TOTAL, urls.length);
@@ -263,16 +265,28 @@ export async function runICollectPageScrapeBatch(
   rateLimited: boolean;
   backoffMs: number;
 }> {
-  const batchSize = options.batchSize ??
+  const batchSize =
+    options.batchSize ??
     readBatchSize("ICOLLECT_PAGE_SCRAPE_BATCH", DEFAULT_PAGE_SCRAPE_BATCH);
   const items = listDistinctICollectItems(db);
   if (items.length === 0) {
-    return { scraped: 0, failed: 0, skipped: 0, rateLimited: false, backoffMs: 0 };
+    return {
+      scraped: 0,
+      failed: 0,
+      skipped: 0,
+      rateLimited: false,
+      backoffMs: 0,
+    };
   }
 
-  const baseDelayMs = options.delayMs ??
-    readNonNegativeInt("ICOLLECT_PAGE_SCRAPE_DELAY_MS", DEFAULT_PAGE_SCRAPE_DELAY_MS);
-  const concurrency = options.concurrency ??
+  const baseDelayMs =
+    options.delayMs ??
+    readNonNegativeInt(
+      "ICOLLECT_PAGE_SCRAPE_DELAY_MS",
+      DEFAULT_PAGE_SCRAPE_DELAY_MS,
+    );
+  const concurrency =
+    options.concurrency ??
     readPositiveInt(
       "ICOLLECT_PAGE_SCRAPE_CONCURRENCY",
       DEFAULT_PAGE_SCRAPE_CONCURRENCY,
@@ -285,12 +299,14 @@ export async function runICollectPageScrapeBatch(
         ? Math.max(baseDelayMs, DEFAULT_PARALLEL_START_GAP_MS)
         : baseDelayMs,
     );
-  const tickBudgetMs = options.tickBudgetMs ??
+  const tickBudgetMs =
+    options.tickBudgetMs ??
     readPositiveInt(
       "ICOLLECT_PAGE_SCRAPE_TICK_BUDGET_MS",
       DEFAULT_PAGE_SCRAPE_TICK_BUDGET_MS,
     );
-  const refreshMaxAgeMs = options.refreshMaxAgeMs ??
+  const refreshMaxAgeMs =
+    options.refreshMaxAgeMs ??
     readPositiveInt(
       "ICOLLECT_PAGE_CATALOG_REFRESH_MS",
       DEFAULT_PAGE_CATALOG_REFRESH_MS,
@@ -364,9 +380,7 @@ export async function runICollectPageScrapeBatch(
   );
 
   const shouldStopBatch = () =>
-    Date.now() >= deadline ||
-    attempts >= maxAttempts ||
-    rateLimited;
+    Date.now() >= deadline || attempts >= maxAttempts || rateLimited;
 
   const logSkipHeartbeat = () => {
     if (
@@ -564,6 +578,7 @@ export function startICollectCatalogSyncLoop(): void {
 
 /** @internal */
 export function resetICollectCatalogSyncForTests(): void {
-  const root = globalThis as typeof globalThis & Record<string, GlobalSyncState>;
+  const root = globalThis as typeof globalThis &
+    Record<string, GlobalSyncState>;
   delete root[globalStateKey];
 }

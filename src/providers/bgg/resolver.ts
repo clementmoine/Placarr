@@ -5,17 +5,17 @@ import { convertXML } from "simple-xml-to-json";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import { buildFranchiseFact } from "@/core/metadata/facts/franchiseFact";
-import { pickBestCoverFromAttachments } from "@/core/media/attachmentDisplayScore";
-import { acceptRetailerCatalogCandidate } from "@/core/retailer/metadataLookup";
-import { formatBoardGamePlayerCount } from "@/core/metadata/boardGame";
+import { buildFranchiseFact } from "@/core/enrich/facts/franchiseFact";
+import { pickBestCoverFromAttachments } from "@/core/enrich/media/attachmentDisplayScore";
+import { acceptRetailerCatalogCandidate } from "@/core/commerce/retailer/metadataLookup";
+import { formatBoardGamePlayerCount } from "@/core/enrich/boardGame";
 import { mapLanguageNameToAttachmentRole } from "@/core/locale/preference";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 

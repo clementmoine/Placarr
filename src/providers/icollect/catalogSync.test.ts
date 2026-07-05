@@ -5,7 +5,7 @@ const h = vi.hoisted(() => ({
   ensureICollectIndex: vi.fn(async () => null),
 }));
 
-vi.mock("@/core/jobs/backgroundWorkQueue", () => ({
+vi.mock("@/core/collect/jobs/backgroundWorkQueue", () => ({
   runBackgroundWork: h.runBackgroundWork,
 }));
 

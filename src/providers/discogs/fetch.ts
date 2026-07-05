@@ -4,7 +4,7 @@ import {
   regionRank,
   type LocalePreferenceOptions,
 } from "@/core/locale/preference";
-import { createGameEditionMatcher } from "@/core/barcode/listingTerms";
+import { createGameEditionMatcher } from "@/core/identify/listingTerms";
 
 /**
  * Discogs — base musicale de référence (vinyles/CD), recherche par code-barres.

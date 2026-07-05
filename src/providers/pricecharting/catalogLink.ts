@@ -1,4 +1,4 @@
-import { cleanCode, detectPlatformKey } from "@/core/barcode/query";
+import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import {
   getPriceChartingPlatformSlugs,
   resolvePriceChartingPlatformSlug,

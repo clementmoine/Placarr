@@ -6,7 +6,7 @@ vi.mock("simple-xml-to-json", () => ({ convertXML: vi.fn() }));
 import axios from "axios";
 import { convertXML } from "simple-xml-to-json";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/metadata/observations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/enrich/observations";
 import { createBGGResolver } from "./resolver";
 
 const mockedGet = vi.mocked(axios.get);

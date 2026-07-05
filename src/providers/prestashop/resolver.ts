@@ -1,15 +1,15 @@
 import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
-} from "@/core/retailer/metadataLookup";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { retailerCatalogBarcodeGate } from "@/core/retailer/productUrl";
-import { normalizeBoardGamePlayerCount } from "@/core/metadata/boardGame";
+} from "@/core/commerce/retailer/metadataLookup";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
+import { normalizeBoardGamePlayerCount } from "@/core/enrich/boardGame";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 import type {
   MetadataAttachment,
   MetadataFact,

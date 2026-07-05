@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { retailerCatalogBarcodeGate } from "@/core/retailer/productUrl";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 import {
   flareSolverrDestroySession,
   flareSolverrRequestGet,
@@ -376,8 +376,7 @@ function parsePublisherFromHtml(html: string): string | undefined {
   return cleanText(publisher);
 }
 
-const CHASSE_PRODUCT_MEDIA_PATH =
-  /\/v7\/(?:_zmx1_|_fns2_|_xkp3_|photo)\//i;
+const CHASSE_PRODUCT_MEDIA_PATH = /\/v7\/(?:_zmx1_|_fns2_|_xkp3_|photo)\//i;
 
 function isChasseProductMediaUrl(url: string): boolean {
   if (!CHASSE_PRODUCT_MEDIA_PATH.test(url)) return false;

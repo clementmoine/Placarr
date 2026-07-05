@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { isNameOnlyRetailerTitleMatch } from "@/core/retailer/titleMatch";
+import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
 
 /**
  * Smartoys (https://www.smartoys.be) is a Belgian retro-gaming retailer whose

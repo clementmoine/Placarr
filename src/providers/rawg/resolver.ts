@@ -3,7 +3,7 @@ import axios from "axios";
 import {
   isMetadataTitleAligned,
   metadataTitleSimilarity,
-} from "@/core/metadata/titleMatching";
+} from "@/core/enrich/titleMatching";
 
 type RawgNamedEntry = { name?: string };
 type RawgClipEntry = { clip?: string; preview?: string; video?: string };

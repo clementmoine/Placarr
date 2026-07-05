@@ -1,10 +1,10 @@
-import { cleanCode } from "@/core/barcode/query";
+import { cleanCode } from "@/core/identify/query";
 import { inferTextLanguage } from "@/core/locale/preference";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 import { scoreLaunchBoxTitleMatch } from "@/providers/launchbox/matchScore";
 import {
   fetchTheGamesDbById,
@@ -13,7 +13,7 @@ import {
   type TheGamesDbSearchGame,
 } from "./fetch";
 import { resolveTheGamesDbPlatformId } from "./platformMap";
-import { getPlatformKeyByTheGamesDbPlatformId } from "@/core/games/platforms";
+import { getPlatformKeyByTheGamesDbPlatformId } from "@/core/identify/platforms/platforms";
 import { isPalRegionId, regionIdToAttachmentRole } from "./regions";
 import type {
   MetadataAttachment,

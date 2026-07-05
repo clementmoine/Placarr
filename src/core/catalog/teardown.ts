@@ -1,4 +1,4 @@
-import { getMetadata } from "@/core/metadata";
+import { getMetadata } from "@/core/enrich";
 import { createBarcodeLookupDeps } from "@/core/catalog/barcode";
 import { PROVIDER_MODULES } from "./registry";
 import {

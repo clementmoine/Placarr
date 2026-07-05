@@ -3,7 +3,7 @@ import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 
 import type {
   MetadataAttachment,
@@ -24,7 +24,7 @@ import {
   createTeardownMetadataTask,
   metadataTeardownLabel,
 } from "@/lib/dev/teardownUtils";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 
 export { fetchFromDiscogs, getDiscogsAuthParams };
 export type { DiscogsResult, DiscogsImage } from "./fetch";

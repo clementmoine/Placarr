@@ -171,7 +171,7 @@ par analyse d'imports (alias + relatifs + barrels) :
 | Composant mort | [ShelfBadge.tsx](src/components/ShelfBadge.tsx) | 0 référence |
 | Modale morte | [BulkSeriesModal.tsx](src/components/modals/BulkSeriesModal.tsx) | 0 référence (le form `BulkSeriesForm` est utilisé, pas la modale) |
 | Client API mort | [lib/api/user.ts](src/lib/api/user.ts) | 0 référence |
-| **16 barrels `index.ts` jamais importés en dossier** | `lib/{core,item,title,jobs,db,http,pricing,provider,retailer,routing,text,games,dev}`, `services/{app,pricing,provider}` | le code importe toujours les chemins concrets (`@/core/title/displayScore`), jamais `@/lib/title` — vérifié : 0 import-dossier |
+| **16 barrels `index.ts` jamais importés en dossier** | `lib/{core,item,title,jobs,db,http,pricing,provider,retailer,routing,text,games,dev}`, `services/{app,pricing,provider}` | le code importe toujours les chemins concrets (`@/core/enrich/titles/displayScore`), jamais `@/lib/title` — vérifié : 0 import-dossier |
 | 2 fonctions `@deprecated` | `markItemMetadataRefreshStarted`, `clearItemMetadataRefreshStarted` dans [scheduleMetadataRefresh.ts](src/lib/jobs/scheduleMetadataRefresh.ts) | utilisées uniquement par leur propre test |
 | Primitives UI shadcn probablement inutilisées | `ui/{alert-dialog,breadcrumb,pagination,popover,scroll-area,separator,table}.tsx` | 0 import applicatif (à confirmer au cas par cas) |
 

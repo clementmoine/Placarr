@@ -13,7 +13,11 @@ function pickNumber(
   incoming: number | null | undefined,
   existing: number | null | undefined,
 ): number | null | undefined {
-  if (typeof incoming === "number" && Number.isFinite(incoming) && incoming > 0) {
+  if (
+    typeof incoming === "number" &&
+    Number.isFinite(incoming) &&
+    incoming > 0
+  ) {
     return incoming;
   }
   return existing ?? null;
@@ -54,9 +58,7 @@ export function mergeICollectCatalogMetadata(
   existing: ICollectMetadata,
   incoming: ICollectMetadata,
 ): ICollectMetadata {
-  const title = incoming.title?.trim()
-    ? incoming.title.trim()
-    : existing.title;
+  const title = incoming.title?.trim() ? incoming.title.trim() : existing.title;
 
   return {
     itemId: existing.itemId || incoming.itemId,
@@ -72,10 +74,9 @@ export function mergeICollectCatalogMetadata(
     images: mergeImages(existing.images, incoming.images),
     players: pickString(incoming.players, existing.players) ?? null,
     ageRating: pickString(incoming.ageRating, existing.ageRating) ?? null,
-    estimatedValueCents: pickNumber(
-      incoming.estimatedValueCents,
-      existing.estimatedValueCents,
-    ) ?? null,
+    estimatedValueCents:
+      pickNumber(incoming.estimatedValueCents, existing.estimatedValueCents) ??
+      null,
     estimatedValueDate:
       pickString(incoming.estimatedValueDate, existing.estimatedValueDate) ??
       null,

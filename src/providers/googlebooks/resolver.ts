@@ -1,7 +1,7 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
 const BASE_URL = "https://www.googleapis.com/books/v1/volumes";
@@ -57,9 +57,11 @@ async function resolveGoogleBooksCoverUrl(
 ): Promise<string | undefined> {
   if (!imageLinks) return undefined;
 
-  const { fetchRemoteImageBuffer } = await import("@/core/media/remoteFetch");
+  const { fetchRemoteImageBuffer } = await import(
+    "@/core/enrich/media/remoteFetch"
+  );
   const { isUnavailableCoverPlaceholderBuffer } = await import(
-    "@/core/media/coverPlaceholder.server"
+    "@/core/enrich/media/coverPlaceholder.server"
   );
 
   const candidates = [

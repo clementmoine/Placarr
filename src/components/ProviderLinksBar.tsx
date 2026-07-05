@@ -2,11 +2,11 @@
 
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/shared/utils";
-import type { DetailFact } from "@/core/metadata/facts/playerFacts";
+import type { DetailFact } from "@/core/enrich/facts/playerFacts";
 import {
   providerLinkDisplayLabel,
   sortProviderLinkFacts,
-} from "@/core/metadata/facts/displayFacts";
+} from "@/core/enrich/facts/displayFacts";
 
 import { faviconDomainForUrl, googleFaviconUrl } from "@/lib/url/favicon";
 

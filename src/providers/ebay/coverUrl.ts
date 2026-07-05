@@ -1,4 +1,4 @@
-import { structuralCoverDownloadCandidates } from "@/core/media/coverUrlUpgrades";
+import { structuralCoverDownloadCandidates } from "@/core/enrich/media/coverUrlUpgrades";
 
 /** eBay Browse / Catalog image URLs — prefer largest i.ebayimg.com rendition. */
 export function ebayCoverDownloadCandidates(url: string): string[] {

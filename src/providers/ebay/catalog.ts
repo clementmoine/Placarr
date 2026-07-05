@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { isNameOnlyRetailerTitleMatch } from "@/core/retailer/titleMatch";
+import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
 
 import {
   EBAY_CATALOG_SEARCH_URL,

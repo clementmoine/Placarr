@@ -2,7 +2,7 @@ import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
-import { stripLegalMarkSymbols } from "@/core/search/query";
+import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 

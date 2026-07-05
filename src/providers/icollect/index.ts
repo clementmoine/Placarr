@@ -9,11 +9,11 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { barcodeSourceFactsFromFields } from "@/core/barcode/evidence/sourceFacts";
+import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
+import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 
 import {
   fetchICollectMetadataByBarcode,
@@ -148,11 +148,31 @@ function metadataToResult(metadata: ICollectMetadata): MetadataResult {
     label: string;
     priority: number;
   }> = [
-    { value: metadata.gameMode, kind: "game-mode", label: "Game mode", priority: 44 },
+    {
+      value: metadata.gameMode,
+      kind: "game-mode",
+      label: "Game mode",
+      priority: 44,
+    },
     { value: metadata.mediaType, kind: "format", label: "Media", priority: 43 },
-    { value: metadata.packaging, kind: "packaging", label: "Packaging", priority: 42 },
-    { value: metadata.discCount, kind: "disc-count", label: "Discs", priority: 41 },
-    { value: metadata.graphics, kind: "graphics", label: "Graphics", priority: 40 },
+    {
+      value: metadata.packaging,
+      kind: "packaging",
+      label: "Packaging",
+      priority: 42,
+    },
+    {
+      value: metadata.discCount,
+      kind: "disc-count",
+      label: "Discs",
+      priority: 41,
+    },
+    {
+      value: metadata.graphics,
+      kind: "graphics",
+      label: "Graphics",
+      priority: 40,
+    },
     { value: metadata.in3d, kind: "feature", label: "3D", priority: 39 },
     { value: metadata.vr, kind: "feature", label: "VR", priority: 38 },
     {

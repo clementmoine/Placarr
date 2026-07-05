@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createEmptyBarcodeLookupPayload } from "@/core/barcode/lookup/payload";
+import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { collectScanPriceOffers } from "@/core/catalog/barcodePrices";
 
 describe("collectScanPriceOffers", () => {

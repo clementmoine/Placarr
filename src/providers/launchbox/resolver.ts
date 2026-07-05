@@ -3,8 +3,8 @@ import type { DatabaseSync } from "node:sqlite";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
 import { buildLaunchBoxAttachments, pickLaunchBoxCoverUrl } from "./images";
-import { stripLegalMarkSymbols } from "@/core/search/query";
-import { detectVideoGamePlatformKey } from "@/core/games/platforms";
+import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import { ensureLaunchBoxIndex } from "./indexStore";
 import {
   decodeLaunchBoxTitle,

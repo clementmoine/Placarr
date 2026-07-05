@@ -1,9 +1,6 @@
 import axios from "axios";
 
-export type ICollectFetchErrorKind =
-  | "rate_limited"
-  | "transient"
-  | "fatal";
+export type ICollectFetchErrorKind = "rate_limited" | "transient" | "fatal";
 
 export type PageScrapePaceConfig = {
   baseDelayMs: number;
@@ -49,7 +46,9 @@ function parseRetryAfterMs(value: unknown): number | null {
   return null;
 }
 
-export function classifyICollectFetchError(error: unknown): ICollectFetchErrorKind {
+export function classifyICollectFetchError(
+  error: unknown,
+): ICollectFetchErrorKind {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     if (status === 429 || status === 403) return "rate_limited";

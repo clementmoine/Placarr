@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 
 import axios from "axios";
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/metadata/observations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/enrich/observations";
 
 import {
   createWikidataResolver,

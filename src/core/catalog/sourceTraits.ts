@@ -1,14 +1,11 @@
-import { parseFactSourceList } from "@/core/metadata/facts/playerFacts";
-import type { CoverProvenance } from "@/core/media/coverProvenance";
-import {
-  formatProviderSourceLabel,
-  PROVIDERS,
-} from "@/core/catalog/catalog";
+import { parseFactSourceList } from "@/core/enrich/facts/playerFacts";
+import type { CoverProvenance } from "@/core/enrich/media/coverProvenance";
+import { formatProviderSourceLabel, PROVIDERS } from "@/core/catalog/catalog";
 
 /**
  * Provider-blind cover traits for an attachment `source`.
  *
- * The display scorer (`@/core/media/attachmentDisplayScore`) is imported client-side and
+ * The display scorer (`@/core/enrich/media/attachmentDisplayScore`) is imported client-side and
  * must not pull in the provider registry, so it cannot read provider-declared
  * cover traits directly. Instead the server stamps those traits onto each
  * attachment (flag-on-attachment) using the helpers here, and the scorer reads

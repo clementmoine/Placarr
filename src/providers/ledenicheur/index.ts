@@ -12,8 +12,8 @@ import {
 } from "@/lib/dev/teardownUtils";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { gatedContributions } from "@/core/barcode/lookup/sourceContribution";
-import type { SourceProduct } from "@/core/barcode/evidence/types";
+import { gatedContributions } from "@/core/identify/lookup/sourceContribution";
+import type { SourceProduct } from "@/core/identify/evidence/types";
 import {
   fetchPricesFromLeDenicheur,
   leDenicheurProductUrlContradictsItem,
@@ -171,6 +171,9 @@ export const ledenicheurModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshLeDenicheurOffers,
-  validateStoredExternalLinkAgainstBarcode: async (url, itemBarcode, itemTitle) =>
-    leDenicheurProductUrlContradictsItem(url, itemBarcode, itemTitle),
+  validateStoredExternalLinkAgainstBarcode: async (
+    url,
+    itemBarcode,
+    itemTitle,
+  ) => leDenicheurProductUrlContradictsItem(url, itemBarcode, itemTitle),
 };

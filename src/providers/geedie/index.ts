@@ -7,8 +7,8 @@ import {
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
-import { structuralCoverDownloadCandidates } from "@/core/media/coverUrlUpgrades";
-import { stripLegalMarkSymbols } from "@/core/search/query";
+import { structuralCoverDownloadCandidates } from "@/core/enrich/media/coverUrlUpgrades";
+import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 
 import { fetchFromGeedie, fetchGeedieGallery, pingGeedie } from "./fetch";
 

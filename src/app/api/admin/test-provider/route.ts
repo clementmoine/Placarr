@@ -7,7 +7,7 @@ import {
   confrontWithDatabase,
   getDatabaseSuggestions,
   type MetadataResult,
-} from "@/core/metadata";
+} from "@/core/enrich";
 import { testProviderHandlers } from "@/core/catalog/runtime";
 
 async function processScrapedNames(

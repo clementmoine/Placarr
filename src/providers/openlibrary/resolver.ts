@@ -3,9 +3,9 @@ import levenshtein from "fast-levenshtein";
 import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { volumeNumberFromTitle } from "@/core/title/volumeNumber";
-import { metadataTitleSimilarity } from "@/core/metadata/titleMatching";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
 function openLibraryTitleAligned(

@@ -1,11 +1,11 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 
-import { isRetailerCoverUrlAlignedWithTitle } from "@/core/retailer/coverUrlMatch";
+import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
 import {
   isNameOnlyRetailerTitleMatch,
   priceListingSharesItemIdentity,
-} from "@/core/retailer/titleMatch";
+} from "@/core/commerce/retailer/titleMatch";
 
 export interface AchatMoinsCherProduct {
   name: string;

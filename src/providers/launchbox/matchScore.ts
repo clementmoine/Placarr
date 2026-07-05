@@ -1,5 +1,5 @@
-import { metadataTitleSimilarity } from "@/core/metadata/titleMatching";
-import { parseRomanToken } from "@/core/title/romanNumeral";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 
 import {
   platformMatchesLaunchBoxEntry,

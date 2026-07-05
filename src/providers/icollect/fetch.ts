@@ -3,8 +3,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import { Readable } from "node:stream";
 import type { DatabaseSync } from "node:sqlite";
 
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { cleanCode, detectPlatformKey } from "@/core/barcode/query";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import {
   ensureICollectIndex,
   lookupICollectItemRefByBarcodeKey,
@@ -219,7 +219,9 @@ export function sanitizeICollectMetadata(
     countryOfPurchase:
       sanitizeICollectCountry(metadata.countryOfPurchase) ?? null,
     genres:
-      metadata.genres && metadata.genres.length > 0 ? metadata.genres : undefined,
+      metadata.genres && metadata.genres.length > 0
+        ? metadata.genres
+        : undefined,
   };
 }
 
@@ -292,7 +294,10 @@ function parseMainImages(html: string): Array<{ url: string; label?: string }> {
   return images;
 }
 
-function extractHtmlFieldBlock(html: string, fieldKey: string): string | undefined {
+function extractHtmlFieldBlock(
+  html: string,
+  fieldKey: string,
+): string | undefined {
   const start = html.search(
     new RegExp(
       `<div class="field-entry" data-field-key="${fieldKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`,
@@ -301,7 +306,9 @@ function extractHtmlFieldBlock(html: string, fieldKey: string): string | undefin
   );
   if (start < 0) return undefined;
   const slice = html.slice(start);
-  const next = slice.slice(1).search(/<div class="field-entry" data-field-key="/i);
+  const next = slice
+    .slice(1)
+    .search(/<div class="field-entry" data-field-key="/i);
   return next < 0 ? slice : slice.slice(0, next + 1);
 }
 
@@ -322,7 +329,10 @@ function parseHtmlFieldList(html: string, fieldKey: string): string[] {
   return single ? [single] : [];
 }
 
-function parseHtmlFieldScalar(html: string, fieldKey: string): string | undefined {
+function parseHtmlFieldScalar(
+  html: string,
+  fieldKey: string,
+): string | undefined {
   const values = parseHtmlFieldList(html, fieldKey);
   return values.length > 0 ? values.join(", ") : undefined;
 }
@@ -391,8 +401,12 @@ export function parseICollectVideoGameItemPage(
     title.match(/\[Barcode\s+([0-9]+)\]/i)?.[1];
 
   const estimatedValueRaw =
-    readScalarField(properties, html, ["Automatic Estimated Value"], "automatic_estimated_value") ||
-    undefined;
+    readScalarField(
+      properties,
+      html,
+      ["Automatic Estimated Value"],
+      "automatic_estimated_value",
+    ) || undefined;
 
   const inputDevices = parseHtmlFieldList(html, "input_device");
 
@@ -416,12 +430,8 @@ export function parseICollectVideoGameItemPage(
         "developer",
       ) || null,
     description:
-      readScalarField(
-        properties,
-        html,
-        ["Game Summary"],
-        "game_summary",
-      ) || null,
+      readScalarField(properties, html, ["Game Summary"], "game_summary") ||
+      null,
     releaseDate:
       sanitizeICollectReleaseDate(
         readScalarField(properties, html, ["Release Date"], "release_date") ||
@@ -450,12 +460,8 @@ export function parseICollectVideoGameItemPage(
       readScalarField(properties, html, ["IGN Score"], "ign_score") || null,
     countryOfPurchase:
       sanitizeICollectCountry(
-        readScalarField(
-          properties,
-          html,
-          ["Country of Purchase"],
-          "country",
-        ) || null,
+        readScalarField(properties, html, ["Country of Purchase"], "country") ||
+          null,
       ) || null,
     genres: parseGenres(properties, html),
     gameMode:
@@ -483,8 +489,7 @@ export function parseICollectVideoGameItemPage(
       null,
     dateAdded:
       sanitizeICollectReleaseDate(
-        readScalarField(properties, html, ["Date Added"], "date_added") ||
-          null,
+        readScalarField(properties, html, ["Date Added"], "date_added") || null,
       ) || null,
   };
 }
@@ -609,7 +614,10 @@ export async function resolveICollectVideoGameItemUrlByBarcode(
   const db = await ensureICollectIndex();
   touchICollectCatalogSync();
   if (db) {
-    const cachedUrl = lookupICollectItemRefByBarcodeKey(db, barcodeKey)?.itemUrl;
+    const cachedUrl = lookupICollectItemRefByBarcodeKey(
+      db,
+      barcodeKey,
+    )?.itemUrl;
     if (cachedUrl) {
       memoryItemUrlByBarcodeKey.set(barcodeKey, {
         itemUrl: cachedUrl,
@@ -699,18 +707,13 @@ export async function fetchICollectMetadataByBarcode(
   const db = await ensureICollectIndex();
   touchICollectCatalogSync();
 
-  const itemRef = db
-    ? lookupICollectItemRefByBarcodeKey(db, barcodeKey)
-    : null;
+  const itemRef = db ? lookupICollectItemRefByBarcodeKey(db, barcodeKey) : null;
   const local =
     db && !process.env.RECORD
       ? readLocalICollectMetadata(db, barcodeKey)
       : null;
 
-  const itemId =
-    itemRef?.itemId ??
-    local?.itemId ??
-    undefined;
+  const itemId = itemRef?.itemId ?? local?.itemId ?? undefined;
   const needsPageRefresh = Boolean(
     db &&
       itemId &&

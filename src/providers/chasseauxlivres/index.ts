@@ -1,33 +1,37 @@
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   retailerCatalogBarcodeGate,
   retailerProductUrlBarcodeConflicts,
   retailerProductBarcodeConfirmed,
-} from "@/core/retailer/productUrl";
+} from "@/core/commerce/retailer/productUrl";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { throwIfAborted } from "@/lib/http/abort";
 import {
   CHASSE_AUX_LIVRES_CATALOG_BY_TYPE,
   catalogForShelfType,
 } from "@/core/catalog/shelfCatalogSlug";
-import { isNameOnlyRetailerTitleMatch } from "@/core/retailer/titleMatch";
-import { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/retailer/catalogTitleAlignment";
+import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
+import { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
-import { scopedContribution } from "@/core/barcode/lookup/sourceContribution";
-import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
+import { scopedContribution } from "@/core/identify/lookup/sourceContribution";
+import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { providerProductUrlsForKey } from "@/core/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 
-export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/retailer/catalogTitleAlignment";
+export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
-import type { MetadataAttachment, MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
@@ -243,9 +247,10 @@ function buildChasseAuxLivresAttachments(
     Awaited<ReturnType<typeof fetchChasseAuxLivresMetadataProduct>>
   >,
 ): MetadataAttachment[] | undefined {
+  const images = product.images ?? [];
   const urls =
-    product.images?.length > 0
-      ? product.images
+    images.length > 0
+      ? images
       : product.coverUrl
         ? [product.coverUrl]
         : [];
@@ -358,7 +363,6 @@ export const chasseauxlivresModule: ProviderModule = {
     remoteImageFallback: true,
     bookGallerySource: true,
     coverUrlHost: "img.chasse-aux-livres.fr",
-    remoteImageFallback: true,
     remoteImageReferer: "https://www.chasse-aux-livres.fr/",
     bookCoverPriority: "primary",
     requiresTitleAlignment: true,

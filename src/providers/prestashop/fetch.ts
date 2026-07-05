@@ -3,11 +3,11 @@ import axios from "axios";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
-import { metadataTitleSimilarity } from "@/core/metadata/titleMatching";
-import { retailerCatalogBarcodeGate } from "@/core/retailer/productUrl";
+} from "@/core/identify/normalize";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 
-import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/core/retailer/titleMatch";
+import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/core/commerce/retailer/titleMatch";
 
 import {
   extractEditionYearFromProductName,

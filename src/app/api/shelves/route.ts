@@ -8,15 +8,15 @@ import {
   itemListMetadataInclude,
   presentItemFromStorage,
   type StoredItemMetadata,
-} from "@/core/item/present";
-import { seriesDisplayTitles } from "@/core/title/series";
+} from "@/core/collect/present";
+import { seriesDisplayTitles } from "@/core/enrich/titles/series";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
 import { slugify } from "@/lib/routing/slugs";
-import { buildItemSearchConditions } from "@/core/item/search";
-import { bestRatingRatioFromFacts } from "@/core/item/rating";
-import { summarizeShelfItemPrices } from "@/core/pricing/resolver";
-import { reconcileOrphanedMetadataRefreshesForUser } from "@/core/jobs/metadataRefreshSession";
+import { buildItemSearchConditions } from "@/core/collect/search";
+import { bestRatingRatioFromFacts } from "@/core/collect/rating";
+import { summarizeShelfItemPrices } from "@/core/commerce/pricing/resolver";
+import { reconcileOrphanedMetadataRefreshesForUser } from "@/core/collect/jobs/metadataRefreshSession";
 import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
 

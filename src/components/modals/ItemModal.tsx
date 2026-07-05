@@ -54,13 +54,13 @@ import {
 } from "@/lib/client/itemModalSession";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
-import { localizeImageFieldForSubmit } from "@/core/media/localizeImageForSubmit";
+import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
-} from "@/core/barcode/shelfLabels";
-import { guessShelfFromBarcodeLookup } from "@/core/barcode/query";
+} from "@/core/identify/shelfLabels";
+import { guessShelfFromBarcodeLookup } from "@/core/identify/query";
 import { isAbortError } from "@/lib/http/abort";
 import { shelfPath } from "@/lib/routing/slugs";
 
@@ -76,24 +76,24 @@ import {
   resolveMetadataCoverUrl,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
-} from "@/core/item/media";
+} from "@/core/collect/media";
 import {
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
-} from "@/core/media/coverUrl";
+} from "@/core/enrich/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
-} from "@/core/media/attachmentDisplayLabels";
+} from "@/core/enrich/media/attachmentDisplayLabels";
 import { cn } from "@/lib/shared/utils";
 import type { ItemWithMetadata } from "@/types/items";
-import { collectMetadataTitleSuggestions } from "@/core/item/titleSuggestions";
+import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
 import type {
   MetadataResult,
   MetadataAttachment,
 } from "@/types/metadataProvider";
-import { useRefetchItemWhenMetadataIdle } from "@/core/item/useRefetchItemWhenMetadataIdle";
-import { invalidateItemQueries } from "@/core/item/queryCache";
+import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
+import { invalidateItemQueries } from "@/core/collect/queryCache";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,
@@ -369,7 +369,7 @@ export function ItemModal({
       setSelectedMatch(null);
       setPosterPage(1);
       setBgPage(1);
-    } else if (!isOpen) {
+    } else if (!isOpen && sessionState !== null) {
       setSessionState(null);
     }
   }

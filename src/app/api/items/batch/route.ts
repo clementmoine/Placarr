@@ -8,7 +8,7 @@ import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import {
   scheduleBatchItemMetadataRefresh,
   shelfMoveMetadataResetData,
-} from "@/core/jobs/scheduleMetadataRefresh";
+} from "@/core/collect/jobs/scheduleMetadataRefresh";
 
 const VALID_CONDITIONS = new Set<string>(Object.values(Condition));
 const CREATE_CHUNK_SIZE = 100;

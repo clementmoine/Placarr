@@ -3,10 +3,10 @@ import levenshtein from "fast-levenshtein";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
-import { buildFranchiseFact } from "@/core/metadata/facts/franchiseFact";
+import { buildFranchiseFact } from "@/core/enrich/facts/franchiseFact";
 
 const USER_AGENT = "Placarr/1.0 (+https://github.com/clementmoine/Placarr)";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";

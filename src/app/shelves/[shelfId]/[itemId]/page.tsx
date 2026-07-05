@@ -65,17 +65,17 @@ import {
   getHeroImage,
   getGalleryImages,
   getCoverImage,
-} from "@/core/item/media";
+} from "@/core/collect/media";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
-} from "@/core/media/attachmentDisplayLabels";
+} from "@/core/enrich/media/attachmentDisplayLabels";
 import {
   hasGameMediaGalleryAttachment,
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/core/metadata/galleries";
+} from "@/core/enrich/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
@@ -86,8 +86,8 @@ import {
   isItemEnriching,
   isItemMetadataBusy,
   isItemMetadataRefreshing,
-} from "@/core/item/enrichment";
-import { itemsBarcodeLabelKey } from "@/core/barcode/shelfLabels";
+} from "@/core/collect/enrichment";
+import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
@@ -97,16 +97,16 @@ import {
   itemSlugLookupVariants,
   shelfPath,
 } from "@/lib/routing/slugs";
-import { compareTitlesForSort } from "@/core/title/sort";
-import { seriesSiblings } from "@/core/title/series";
-import { FRANCHISE_FACT_KIND } from "@/core/metadata/facts/franchiseFact";
+import { compareTitlesForSort } from "@/core/enrich/titles/sort";
+import { seriesSiblings } from "@/core/enrich/titles/series";
+import { FRANCHISE_FACT_KIND } from "@/core/enrich/facts/franchiseFact";
 import {
   invalidateItemQueries,
   patchCachedItem,
   syncItemQueries,
-} from "@/core/item/queryCache";
-import { useRefetchItemWhenMetadataIdle } from "@/core/item/useRefetchItemWhenMetadataIdle";
-import { getEstimatedItemValueCents } from "@/core/item/value";
+} from "@/core/collect/queryCache";
+import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
+import { getEstimatedItemValueCents } from "@/core/collect/value";
 
 import {
   type DetailFact,
@@ -115,11 +115,11 @@ import {
   parsePlayerFactRange,
   parseFactSourceList,
   formatDetailFactSourceToken,
-} from "@/core/metadata/facts/playerFacts";
+} from "@/core/enrich/facts/playerFacts";
 import {
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
-} from "@/core/metadata/facts/displayFacts";
+} from "@/core/enrich/facts/displayFacts";
 import { ProviderLinksBar } from "@/components/ProviderLinksBar";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;

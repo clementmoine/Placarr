@@ -7,7 +7,7 @@ import { pricedOffer } from "@/core/catalog/priceOffers";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
-import { barcodeSourceFactsFromFields } from "@/core/barcode/evidence/sourceFacts";
+import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import type {
   BarcodeLookupType,
   MetadataProviderAdapter,

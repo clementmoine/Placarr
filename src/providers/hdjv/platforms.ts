@@ -1,4 +1,4 @@
-import { detectVideoGamePlatformKey } from "@/core/games/platforms";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 
 export type HdjvPlatformSpec = {
   supportCode: string;

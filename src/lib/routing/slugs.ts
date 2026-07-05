@@ -2,7 +2,7 @@ import {
   normalizeVolumeNumber,
   unpaddedVolumeNumbersInTitle,
   volumeNumberFromTitle,
-} from "@/core/title/volumeNumber";
+} from "@/core/enrich/titles/volumeNumber";
 
 export function slugify(value?: string | null): string {
   if (!value) return "";

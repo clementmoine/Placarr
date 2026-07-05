@@ -10,9 +10,9 @@ describe("providerCatalog", () => {
   it("découvre les modules via discoverProviderModules()", () => {
     const modules = discoverProviderModules();
     expect(modules.length).toBeGreaterThan(40);
-    expect(modules.every((mdl) => mdl.info.id && mdl.info.types.length > 0)).toBe(
-      true,
-    );
+    expect(
+      modules.every((mdl) => mdl.info.id && mdl.info.types.length > 0),
+    ).toBe(true);
     expect(PROVIDERS.length).toBe(modules.length);
   });
 

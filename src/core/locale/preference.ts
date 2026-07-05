@@ -1,4 +1,4 @@
-import { scoreMetadataDisplayTitle } from "@/core/title/displayScore";
+import { scoreMetadataDisplayTitle } from "@/core/enrich/titles/displayScore";
 import type { Locale } from "@/types/i18n";
 
 export const LOCALE_REGION_ORDER = [
@@ -245,7 +245,9 @@ export function mapLanguageNameToAttachmentRole(
       return LANGUAGE_NAME_TO_ATTACHMENT_ROLE[normalized];
     }
 
-    for (const [label, role] of Object.entries(LANGUAGE_NAME_TO_ATTACHMENT_ROLE)) {
+    for (const [label, role] of Object.entries(
+      LANGUAGE_NAME_TO_ATTACHMENT_ROLE,
+    )) {
       if (normalized.includes(label)) return role;
     }
   }

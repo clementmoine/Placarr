@@ -3,7 +3,7 @@ import {
   isVideoGamePlatformKey,
   normalizeVideoGamePlatformText,
   type VideoGamePlatformKey,
-} from "@/core/games/platforms";
+} from "@/core/identify/platforms/platforms";
 
 export type PriceChartingPlatformSlugs = {
   default: string;

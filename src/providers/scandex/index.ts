@@ -6,8 +6,8 @@ import {
 } from "@/lib/dev/mappingProbe";
 
 import { fetchFromScanDex } from "./fetch";
-import { detectPlatformKey } from "@/core/barcode/query";
-import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
+import { detectPlatformKey } from "@/core/identify/query";
+import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import type { BarcodeSourceContribution } from "@/types/providerModule";
 
 export { fetchFromScanDex };

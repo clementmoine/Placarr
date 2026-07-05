@@ -1,8 +1,8 @@
 import type { Condition } from "@prisma/client";
 
-import { isBarcodePlaceholderItemName } from "@/core/item/placeholderName";
-import { filterMetadataForShelfPlatform } from "@/core/item/media";
-import { collectMetadataTitleSuggestions } from "@/core/item/titleSuggestions";
+import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
+import { filterMetadataForShelfPlatform } from "@/core/collect/media";
+import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -166,7 +166,7 @@ export function buildItemModalSessionInit(input: {
       formValues,
       suggestions: titleSuggestions,
       nameSuggestion: titleSuggestions[0] ?? null,
-      fetchedMetadata: metadata,
+      fetchedMetadata: metadata ?? null,
       lastInitializedShelfId: formValues.shelfId,
       asyncInit:
         !metadata && item.barcode?.trim()

@@ -6,7 +6,7 @@ import {
   formatMusicTitle,
   artistFromCredit,
 } from "./fetch";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";

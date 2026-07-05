@@ -1,10 +1,10 @@
 import { decode as decodeHTMLEntities } from "html-entities";
 
-import { pickDiscoveredBarcode } from "@/core/barcode/normalize";
+import { pickDiscoveredBarcode } from "@/core/identify/normalize";
 import {
   formatBoardGamePlayerCount,
   normalizeBoardGamePlayerCount,
-} from "@/core/metadata/boardGame";
+} from "@/core/enrich/boardGame";
 
 import type { PrestashopSearchProduct } from "./types";
 

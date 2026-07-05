@@ -7,13 +7,13 @@ import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { providerProductUrlsForKey } from "@/core/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
-import { barcodeSourceFactsFromFields } from "@/core/barcode/evidence/sourceFacts";
-import { retailerProductUrlBarcodeConflicts } from "@/core/retailer/productUrl";
+} from "@/core/identify/normalize";
+import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
+import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
 import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,

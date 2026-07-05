@@ -1,13 +1,13 @@
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
-import { marketplaceContributions } from "@/core/barcode/lookup/sourceContribution";
+import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
+} from "@/core/enrich/observations";
 import { listProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,

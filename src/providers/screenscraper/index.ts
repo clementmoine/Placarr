@@ -6,10 +6,10 @@ import axios from "axios";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import type { SourceProduct } from "@/core/barcode/evidence/types";
-import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
-import { formatScore } from "@/core/metadata/searchUtils";
-import { cleanSearchQuery } from "@/core/metadata/searchUtils";
+import type { SourceProduct } from "@/core/identify/evidence/types";
+import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { formatScore } from "@/core/enrich/searchUtils";
+import { cleanSearchQuery } from "@/core/enrich/searchUtils";
 import { createScreenScraperResolver } from "./resolver";
 import {
   buildScreenScraperBaseParams,

@@ -10,10 +10,16 @@ import { runICollectPageScrapeBatch } from "@/providers/icollect/catalogSync";
 
 function parseArgs(argv: string[]) {
   const args = argv.filter((arg) => arg !== "--");
-  let batchSize = Number.parseInt(process.env.ICOLLECT_PAGE_SCRAPE_BATCH || "", 10);
+  let batchSize = Number.parseInt(
+    process.env.ICOLLECT_PAGE_SCRAPE_BATCH || "",
+    10,
+  );
   if (!Number.isFinite(batchSize) || batchSize < 1) batchSize = 0;
 
-  let delayMs = Number.parseInt(process.env.ICOLLECT_PAGE_SCRAPE_DELAY_MS || "", 10);
+  let delayMs = Number.parseInt(
+    process.env.ICOLLECT_PAGE_SCRAPE_DELAY_MS || "",
+    10,
+  );
   if (!Number.isFinite(delayMs) || delayMs < 0) delayMs = 0;
 
   let concurrency = Number.parseInt(

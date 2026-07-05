@@ -9,9 +9,9 @@ import {
   gameProductIdentityMismatch,
   franchiseSequelNumbersConflict,
   isMetadataTitleAligned,
-} from "@/core/metadata/titleMatching";
-import { resolveGameMetadataPlatform } from "@/core/metadata/platform";
-import { detectVideoGamePlatformKey } from "@/core/games/platforms";
+} from "@/core/enrich/titleMatching";
+import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 
 const ALGOLIA_APP_ID = "MQTBESKZQM";
 const ALGOLIA_SEARCH_KEY = "b8aee761e824091520134191a14d5adc";

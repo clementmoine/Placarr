@@ -2,7 +2,7 @@ import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
-import { buildFranchiseFact } from "@/core/metadata/facts/franchiseFact";
+import { buildFranchiseFact } from "@/core/enrich/facts/franchiseFact";
 
 export type TMDBSeriesIntent = {
   isSeriesLike: boolean;

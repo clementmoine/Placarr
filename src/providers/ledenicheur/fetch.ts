@@ -3,15 +3,15 @@ import axios from "axios";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
+} from "@/core/identify/normalize";
 import {
   catalogTitleAlignedWithItem,
   retailerCatalogTitleContradictsItem,
-} from "@/core/retailer/catalogTitleAlignment";
-import { retailerBarcodeContradictsItem } from "@/core/retailer/productUrl";
-import type { LeDenicheurPrices } from "@/core/barcode/lookup/providerTypes";
+} from "@/core/commerce/retailer/catalogTitleAlignment";
+import { retailerBarcodeContradictsItem } from "@/core/commerce/retailer/productUrl";
+import type { LeDenicheurPrices } from "@/core/identify/lookup/providerTypes";
 
-export type { LeDenicheurPrices } from "@/core/barcode/lookup/providerTypes";
+export type { LeDenicheurPrices } from "@/core/identify/lookup/providerTypes";
 
 const BASE_URL = "https://ledenicheur.fr";
 const BFF_URL = `${BASE_URL}/_internal/bff`;

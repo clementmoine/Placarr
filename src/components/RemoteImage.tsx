@@ -5,7 +5,7 @@ import { cn } from "@/lib/shared/utils";
 import {
   remoteImageDisplaySrc,
   remoteImageNeedsProxy,
-} from "@/core/media/remoteImageDisplay";
+} from "@/core/enrich/media/remoteImageDisplay";
 
 function isBlobImageSrc(src: string) {
   return src.startsWith("blob:");

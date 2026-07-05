@@ -24,10 +24,10 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DialogFooter } from "@/components/ui/dialog";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { isBookShelfType } from "@/core/barcode/shelfLabels";
+import { isBookShelfType } from "@/core/identify/shelfLabels";
 import { saveItem, saveItemsBatch } from "@/lib/api/items";
-import { parseNameList } from "@/core/title/parseNameList";
-import { syncItemQueries } from "@/core/item/queryCache";
+import { parseNameList } from "@/core/enrich/titles/parseNameList";
+import { syncItemQueries } from "@/core/collect/queryCache";
 import { cn } from "@/lib/shared/utils";
 import { cleanManualBarcode } from "@/components/ManualBarcodeEntry";
 

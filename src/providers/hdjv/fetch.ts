@@ -1,14 +1,14 @@
 import axios from "axios";
 import { decode as decodeHtmlEntities } from "html-entities";
 
-import { cleanCode } from "@/core/barcode/query";
-import { detectVideoGamePlatformKey } from "@/core/games/platforms";
+import { cleanCode } from "@/core/identify/query";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import {
   extractBaseTitleVariant,
   gameProductIdentityMismatch,
   isMetadataTitleAligned,
   metadataTitleMatchScore,
-} from "@/core/metadata/titleMatching";
+} from "@/core/enrich/titleMatching";
 import { slugify } from "@/lib/routing/slugs";
 
 import { HDJV_PLATFORM_BY_KEY, resolveHdjvPlatform } from "./platforms";

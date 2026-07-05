@@ -2,7 +2,7 @@ import { PROVIDER_MODULES } from "./registry";
 import {
   isBarcodeRecordSlimMode,
   shouldSkipBarcodeTaskInSlimRecord,
-} from "@/core/barcode/lookup/recordMode";
+} from "@/core/identify/lookup/recordMode";
 
 import type {
   BarcodeLookupContext,

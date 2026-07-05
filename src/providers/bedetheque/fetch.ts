@@ -1,13 +1,13 @@
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
-import { volumeNumberFromTitle } from "@/core/title/volumeNumber";
-import { stripVolumeMarkersFromTitle } from "@/core/title/volumeNumber";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
+import { stripVolumeMarkersFromTitle } from "@/core/enrich/titles/volumeNumber";
 import {
   metadataTitleSimilarity,
   hasUnrequestedVariantMarker,
-} from "@/core/metadata/titleMatching";
+} from "@/core/enrich/titleMatching";
 import { collectHtmlMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 
 export interface BedethequeAlbum {

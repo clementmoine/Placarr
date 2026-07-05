@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { getMetadata, getDatabaseSuggestions } from "@/core/metadata";
-import { resolveGameMetadataPlatform } from "@/core/metadata/platform";
+import { getMetadata, getDatabaseSuggestions } from "@/core/enrich";
+import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 
 export async function GET(req: NextRequest) {
   // Proxy vers des API tierces (souvent payantes) → auth obligatoire.

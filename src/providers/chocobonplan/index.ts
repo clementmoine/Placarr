@@ -5,7 +5,7 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { inferCover3dRoleFromHints } from "@/core/media/coverPerspective";
+import { inferCover3dRoleFromHints } from "@/core/enrich/media/coverPerspective";
 import type { ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";

@@ -38,7 +38,7 @@ import {
   previewSeriesPatternLabel,
   SERIES_VOLUME_PATTERNS,
   type SeriesVolumePatternKey,
-} from "@/core/title/seriesVolumeNames";
+} from "@/core/enrich/titles/seriesVolumeNames";
 
 import { Condition, type Shelf } from "@prisma/client";
 

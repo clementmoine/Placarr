@@ -3,11 +3,11 @@ import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
 import { PRESTASHOP_RETAILER_CONFIGS } from "./src/providers/prestashop/configs.ts";
 import { SHOPIFY_RETAILER_CONFIGS } from "./src/providers/shopify/configs.ts";
-import { DEDICATED_CATALOG_IMAGE_HOSTS } from "./src/core/media/dedicatedCatalogImageHosts.ts";
+import { DEDICATED_CATALOG_IMAGE_HOSTS } from "./src/core/enrich/media/dedicatedCatalogImageHosts.ts";
 import {
   catalogRetailerImageHosts,
   nextImageRemotePatterns,
-} from "./src/core/media/nextImageRemoteHosts.ts";
+} from "./src/core/enrich/media/nextImageRemoteHosts.ts";
 
 const catalogImageHosts = catalogRetailerImageHosts([
   ...PRESTASHOP_RETAILER_CONFIGS,

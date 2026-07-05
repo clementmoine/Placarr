@@ -21,11 +21,11 @@ import {
   priceChartingAttachmentRole,
   priceChartingGalleryLabelIsRecognized,
 } from "./imageLabels";
-import { cleanCode, detectPlatformKey } from "@/core/barcode/query";
-import { barcodeSourceFactsFromFields } from "@/core/barcode/evidence/sourceFacts";
+import { cleanCode, detectPlatformKey } from "@/core/identify/query";
+import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import type { MetadataFact } from "@/types/metadataProvider";
-import type { PriceChartingMetadata } from "@/core/barcode/lookup/providerTypes";
-import type { BarcodeLookupPayload } from "@/core/barcode/lookup/payload";
+import type { PriceChartingMetadata } from "@/core/identify/lookup/providerTypes";
+import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 
 export { fetchMetadataFromPriceCharting, fetchPricesFromPriceCharting };
 

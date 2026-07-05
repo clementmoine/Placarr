@@ -15,7 +15,7 @@ import type {
   MetadataAttachment,
   MetadataFact,
 } from "@/types/metadataProvider";
-import { buildFranchiseFact } from "@/core/metadata/facts/franchiseFact";
+import { buildFranchiseFact } from "@/core/enrich/facts/franchiseFact";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";

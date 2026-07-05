@@ -25,11 +25,11 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/db/prisma", () => ({
   prisma: { item: h.item, shelf: h.shelf, metadata: h.metadata },
 }));
-vi.mock("@/core/metadata", () => ({
+vi.mock("@/core/enrich", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
   downloadRemoteImage: h.downloadRemoteImage,
 }));
-vi.mock("@/core/item/present", () => ({
+vi.mock("@/core/collect/present", () => ({
   presentItem: (i: { id: string }) => ({ presented: "full", id: i.id }),
   presentItemFromStorage: (i: { id: string }) => ({
     presented: "storage",
@@ -48,16 +48,23 @@ vi.mock("@/lib/routing/itemSlug", () => ({
 vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (s: string) => `slug-${s}`,
 }));
-vi.mock("@/core/item/search", () => ({ buildItemSearchConditions: () => [] }));
-vi.mock("@/core/jobs/scheduleMetadataRefresh", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/core/jobs/scheduleMetadataRefresh")>();
-  return {
-    ...actual,
-    startItemMetadataRefresh: h.startItemMetadataRefresh,
-  };
-});
-vi.mock("@/core/pricing/itemDisplay", () => ({
+vi.mock("@/core/collect/search", () => ({
+  buildItemSearchConditions: () => [],
+}));
+vi.mock(
+  "@/core/collect/jobs/scheduleMetadataRefresh",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("@/core/collect/jobs/scheduleMetadataRefresh")
+      >();
+    return {
+      ...actual,
+      startItemMetadataRefresh: h.startItemMetadataRefresh,
+    };
+  },
+);
+vi.mock("@/core/commerce/pricing/itemDisplay", () => ({
   itemPricesContextFromRecord: (item: { id: string }) => ({ id: item.id }),
   readItemPrices: vi.fn().mockResolvedValue({
     priceNew: null,
@@ -214,7 +221,7 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
 
   it("attache les prix aux listes d'items", async () => {
     const { summarizeListItemPrices } = await import(
-      "@/core/pricing/itemDisplay"
+      "@/core/commerce/pricing/itemDisplay"
     );
 
     h.requireGuestOrHigher.mockResolvedValue(USER);

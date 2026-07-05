@@ -1,10 +1,10 @@
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
-} from "@/core/metadata/observations";
-import { wrapMetadataProviderAdapter } from "@/core/metadata/providerQueue";
+} from "@/core/enrich/observations";
+import { wrapMetadataProviderAdapter } from "@/core/enrich/providerQueue";
 import { PROVIDER_MODULES } from "./registry";
 
 import type { MetadataResult } from "@/types/metadataProvider";

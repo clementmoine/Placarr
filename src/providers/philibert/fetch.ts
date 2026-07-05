@@ -5,8 +5,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
-} from "@/core/barcode/normalize";
-import { retailerCatalogBarcodeGate } from "@/core/retailer/productUrl";
+} from "@/core/identify/normalize";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 
 const BASE_URL = "https://www.philibertnet.com";
 

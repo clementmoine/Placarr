@@ -33,7 +33,7 @@ import {
   sumCollectionEstimatedValue,
   type ItemCollectionFilters,
   type ItemCollectionSort,
-} from "@/core/item/collectionQuery";
+} from "@/core/collect/collectionQuery";
 
 import type { ItemWithMetadata } from "@/types/items";
 

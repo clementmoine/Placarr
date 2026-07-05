@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/metadata/observations";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/enrich/observations";
 
 vi.mock("./fetch", () => ({
   fetchFromAchatMoinsCher: vi.fn(),

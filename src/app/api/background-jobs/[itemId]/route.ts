@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { cancelBackgroundJobForUser } from "@/core/jobs/backgroundJobs";
+import { cancelBackgroundJobForUser } from "@/core/collect/jobs/backgroundJobs";
 
 export async function DELETE(
   req: NextRequest,

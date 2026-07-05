@@ -3,13 +3,13 @@ import type {
   BarcodeLookupType,
   ProviderModule,
 } from "@/types/providerModule";
-import { normalizeProductBarcode } from "@/core/barcode/normalize";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions } from "@/core/barcode/lookup/sourceContribution";
+import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
@@ -27,8 +27,8 @@ import {
 import { fetchFromEbayCatalog } from "./catalog";
 import { ebayCoverDownloadCandidates } from "./coverUrl";
 import { prepareEbayProductsForGameShelf } from "./platformFilter";
-import { detectVideoGamePlatformKey } from "@/core/games/platforms";
-import { resolveGameMetadataPlatform } from "@/core/metadata/platform";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 
 export {
   fetchEbayProductsByQuery,

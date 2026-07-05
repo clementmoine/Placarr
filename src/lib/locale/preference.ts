@@ -211,7 +211,7 @@ export function languageRank(
   return index === -1 ? order.length : index;
 }
 
-const BGG_LANGUAGE_ROLE_MAP: Record<string, string> = {
+const LANGUAGE_NAME_TO_ATTACHMENT_ROLE: Record<string, string> = {
   french: "fr",
   francais: "fr",
   english: "wor",
@@ -228,7 +228,7 @@ const BGG_LANGUAGE_ROLE_MAP: Record<string, string> = {
   korean: "jp",
 };
 
-export function mapBggLanguageToAttachmentRole(
+export function mapLanguageNameToAttachmentRole(
   language?: string | null,
   editionName?: string | null,
 ): string {
@@ -241,11 +241,11 @@ export function mapBggLanguageToAttachmentRole(
       .toLowerCase()
       .trim();
 
-    if (BGG_LANGUAGE_ROLE_MAP[normalized]) {
-      return BGG_LANGUAGE_ROLE_MAP[normalized];
+    if (LANGUAGE_NAME_TO_ATTACHMENT_ROLE[normalized]) {
+      return LANGUAGE_NAME_TO_ATTACHMENT_ROLE[normalized];
     }
 
-    for (const [label, role] of Object.entries(BGG_LANGUAGE_ROLE_MAP)) {
+    for (const [label, role] of Object.entries(LANGUAGE_NAME_TO_ATTACHMENT_ROLE)) {
       if (normalized.includes(label)) return role;
     }
   }

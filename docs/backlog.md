@@ -56,7 +56,7 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | **P2**     | External-link systématique + refresh prix URL-first          | **Fait 2026-07-05** | À chaque hit provider : `external-link` persisté (merge + write-back prix). Refresh réutilise `providerProductUrlsFromMetadataFacts` avant seek. Gate EAN retailers (Philibert/PrestaShop/Shopify/Okkazeo/CAL). Doc : [provider_external_links.md](provider_external_links.md). |
 | **P2**     | Titres multilingues + région utilisateur                   | **Fait 2026-06-30** | `regionOrderForUiLocale` / `languageOrderForUiLocale` dans `preference.ts` ; cookie `preferred-locale` sync client→API ; `withRequestUiLocale` sur routes items/shelves/explore/loans ; couverture read-time via `getCoverImage(item, locale)`.                                                                                                                                                                                                                                                                                                                                  |
 | **P4**     | Wikidata / Google Books champs ciblés                      | **Fait 2026-07-02** | Wikidata : P136/P178/P123/P856 mappés (`resolver.ts` + tests). Google Books : champs étendus (`resolver.ts` + tests). Relancer `pnpm providers:audit:mapping` après cooldown quota TheGamesDB.                                                                                                                                                                                                                                                                                                                                                                                   |
-| **P4**     | Provider **TricTrac** (`trictrac.net`)                     | **Reporté**         | Base communautaire FR (EAN, notes, avis, joueurs/durée/âge, images). **Pas d’API publique** ; nouveau site Next.js + auth CNRL (routes `/api/*`, sitemap → login). Scraping fragile + déconseillé par la communauté TT. **Prochaine action** : contacter l’équipe TricTrac/CNRL pour une API read-only ou flux export ; réévaluer après ouverture d’un accès public stable. Checklist : `docs/provider_integration_checklist.md`.                                                                                                                                                |
+| **P4**     | Provider **TricTrac** (`trictrac.net`)                     | **Abandonné 2026-07-05** | Base FR intéressante mais **inaccessible sans auth CNRL** (toutes les routes `/api/*` → `login-silent`). Pas d’API publique, scrape déconseillé. **MyLudo** couvre le besoin metadata FR ; réouvrir seulement si TricTrac/CNRL propose un accès read-only officiel. |
 | **P4**     | Provider **MyLudo** (`myludo.fr`)                          | **Fait 2026-07-05 (partiel)** | Module `boardgames` metadata : recherche titre + détail jeu (`fetch.ts`, `resolver.ts`), `external-link`, observations joueurs/durée/âge/note, `trustedRetailer`. **Barcode** : endpoint mobile existant mais résultats incohérents sans session → pas d’ancrage scan fiable ; reste metadata-only. Contact éditeur pour API officielle si besoin EAN. |
 | ~~**P1**~~ | ~~Golden-master « vide honnête »~~                         | **Fait 2026-06-29** | `compile.honestEmpty.test.ts` : marketplace-only sans ancre + DB miss (`confrontWithDatabase` mocké `null`) ⇒ `compileResultForType` renvoie `null`, même sur consensus de 3 marketplaces (majority noise). Encode la moitié manquante de la règle produit (l'autre moitié = `confidenceLock`).                                                                                                                                                                                                                                                                                  |
 
@@ -154,22 +154,28 @@ Prochaines cibles optionnelles :
 - P1 ~~**Apriloshop IQIT**~~ — fait
 - P2 barcode observations (`compile.ts`) — cluster confidence `sourceScore` + tier ([Roadmap](#roadmap-prochaines-étapes))
 
-### P4 — Exploitation champs provider
+### P4 — Exploitation champs provider _(clos 2026-07-05 — maintenance opportuniste)_
+
+Champs ciblés livrés (Wikidata, Google Books, RAWG clips, MyLudo). Ne pas chasser le compte `unused` brut.
 
 | Provider    | unused | Piste                                                 |
 | ----------- | ------ | ----------------------------------------------------- |
-| wikidata    | ~72    | Variantes langue = bruit ; cibler P136/P178/P123/P856 |
-| googlebooks | 9      | Repasser mapping (régression audit ?)                 |
-| rawg        | ~7     | ~~`clip` gameplay~~ **fait 2026-07-05** (`readRawgGameplayClip` → fact `video`) ; reste bruit |
+| wikidata    | ~11    | Champs ciblés **faits** ; reste = variantes langue (bruit) |
+| googlebooks | 9      | Repasser mapping si régression suspectée (optionnel)  |
+| rawg        | ~7     | ~~`clip` gameplay~~ **fait 2026-07-05** ; reste bruit |
 
-**Providers communautaires FR (reportés — voir [Roadmap](#roadmap-prochaines-étapes))** :
+**Providers communautaires FR** :
 
 | Provider | Type visé                         | Statut                                                                         |
 | -------- | --------------------------------- | ------------------------------------------------------------------------------ |
-| trictrac | metadata FR (rating, EAN, avis)   | **Reporté** — pas d’API publique ; site derrière auth CNRL                     |
+| trictrac | metadata FR (rating, EAN, avis)   | **Abandonné** — auth CNRL obligatoire ; MyLudo suffit pour metadata FR |
 | myludo   | metadata FR (+ barcode si API OK) | **Fait partiel** — module metadata titre ; barcode non fiable sans session API |
 
 Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'historique.
+
+#### P2-audit — Couplage nommage locale _(fait 2026-07-05)_
+
+- `BGG_LANGUAGE_ROLE_MAP` / `mapBggLanguageToAttachmentRole` → `LANGUAGE_NAME_TO_ATTACHMENT_ROLE` / `mapLanguageNameToAttachmentRole` (`preference.ts`) — logique générique langue → rôle attachment, plus de nom provider dans le core.
 
 ### P5 — Qualité / tests
 

@@ -246,10 +246,17 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    **inexact** : ce ne sont pas des mots de dictionnaire, ce sont des équivalences par
    produit qui devraient venir des `regionalTitles`/aliases des providers.
 
+   > **✅ Exécuté le 2026-07-05 (WORDLIST-1).** Sous-titres AC III / Star Wars retirés ;
+   > seul `movie video game` (descripteur catégorie) reste. Tests `searchVariants.test.ts`,
+   > `titleMatching.test.ts`. `word_list_audit.md` corrigé.
+
 4. **Couplage de nommage** : `BGG_LANGUAGE_ROLE_MAP` / `mapBggLanguageToAttachmentRole`
    dans [locale/preference.ts](src/lib/locale/preference.ts). La *logique* est générique
    (langue → région), mais le *nom* porte un provider dans le core. Renommer en
-   `LANGUAGE_NAME_TO_REGION` / `mapLanguageNameToAttachmentRole`.
+   `LANGUAGE_NAME_TO_ATTACHMENT_ROLE` / `mapLanguageNameToAttachmentRole`.
+
+   > **✅ Exécuté le 2026-07-05.** Renommage sans changement de comportement ;
+   > seul `bgg/resolver.ts` consommateur. Tests `preference.test.ts` mis à jour.
 
 ### 🟡 P3 — Config centralisée vs auto-déclaration (tension d'architecture)
 
@@ -287,6 +294,8 @@ enrich 3 min, refresh 15 min, grâce orphelin 2 min). C'est du bon travail.
 en permanence (2.5s si jobs actifs, **10s au repos, sans jamais s'arrêter**) pour tout
 utilisateur connecté. Ce n'est pas une fuite, mais un trafic de fond permanent évitable.
 Piste : `refetchInterval: false` au repos + invalidation événementielle après mutation.
+
+> **✅ Exécuté le 2026-07-05 (POLL-1).** `refetchInterval: false` au repos.
 
 ### ⚪ P6 — Résidus de migration (hygiène dépôt)
 

@@ -16,7 +16,7 @@ import { buildFranchiseFact } from "@/lib/metadata/facts/franchiseFact";
 import { pickBestCoverFromAttachments } from "@/lib/media/attachmentDisplayScore";
 import { acceptRetailerCatalogCandidate } from "@/lib/retailer/metadataLookup";
 import { formatBoardGamePlayerCount } from "@/lib/metadata/boardGame";
-import { mapBggLanguageToAttachmentRole } from "@/lib/locale/preference";
+import { mapLanguageNameToAttachmentRole } from "@/lib/locale/preference";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 
 // Nœuds statistiques BGG (XML→JSON) : clé dynamique (ratings/ranks/average…)
@@ -215,7 +215,7 @@ function buildBggAttachments(game: {
     const editionName = versionChildren.find(
       (child) => child.name?.type === "primary",
     )?.name?.value;
-    const role = mapBggLanguageToAttachmentRole(languages[0], editionName);
+    const role = mapLanguageNameToAttachmentRole(languages[0], editionName);
     const before = seenUrls.size;
     addCover(image, role);
     if (seenUrls.size > before) versionCoverCount++;

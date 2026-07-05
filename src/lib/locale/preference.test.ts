@@ -4,7 +4,7 @@ import { getCoverImage } from "@/lib/item/media";
 import {
   inferTextLanguage,
   localeBonusForAttachmentRole,
-  mapBggLanguageToAttachmentRole,
+  mapLanguageNameToAttachmentRole,
   parseRegionFromRole,
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
@@ -118,10 +118,10 @@ describe("localePreference", () => {
   });
 
   it("maps BGG edition languages to attachment locale roles", () => {
-    expect(mapBggLanguageToAttachmentRole("French")).toBe("fr");
-    expect(mapBggLanguageToAttachmentRole("English")).toBe("wor");
-    expect(mapBggLanguageToAttachmentRole(null, "French edition")).toBe("fr");
-    expect(mapBggLanguageToAttachmentRole("Korean")).toBe("jp");
+    expect(mapLanguageNameToAttachmentRole("French")).toBe("fr");
+    expect(mapLanguageNameToAttachmentRole("English")).toBe("wor");
+    expect(mapLanguageNameToAttachmentRole(null, "French edition")).toBe("fr");
+    expect(mapLanguageNameToAttachmentRole("Korean")).toBe("jp");
   });
 
   it("only treats plain region roles as cover locales", () => {

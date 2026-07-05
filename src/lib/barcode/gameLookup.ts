@@ -1,5 +1,9 @@
 import { detectPlatformKey } from "@/lib/barcode/query";
 import {
+  pickPlatformKeyFromSignals,
+  type PlatformSignal,
+} from "@/lib/barcode/platformPick";
+import {
   containsGameClassicsKeyword,
   GAME_CLASSICS_KEYWORDS,
 } from "@/lib/barcode/listingTerms";
@@ -10,10 +14,8 @@ import type { GameBarcodeEnrichmentDeps } from "@/types/providerModule";
 
 export const CLASSICS_KEYWORDS = GAME_CLASSICS_KEYWORDS;
 
-export type PlatformSignal = {
-  value?: string | null;
-  weight: number;
-};
+export type { PlatformSignal } from "@/lib/barcode/platformPick";
+export { pickPlatformKeyFromSignals } from "@/lib/barcode/platformPick";
 
 export type NamedListing = {
   name: string;
@@ -42,35 +44,16 @@ export type GameLookupInputs = {
   contextPlatformKey: string | null;
 };
 
-export function pickPlatformKeyFromSignals(
-  signals: PlatformSignal[],
-): string | null {
-  const scores = new Map<string, number>();
-
-  for (const signal of signals) {
-    if (!signal.value) continue;
-    const platformKey = detectPlatformKey(signal.value);
-    if (!platformKey) continue;
-    scores.set(platformKey, (scores.get(platformKey) || 0) + signal.weight);
-  }
-
-  const ranked = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
-  const [best, second] = ranked;
-  if (!best) return null;
-  if (second && best[1] - second[1] < 0.4) return null;
-
-  return best[0];
-}
-
 function pushListingSignals(
   listings: NamedListing[],
   candidates: string[],
   platformSignals: PlatformSignal[],
   weight: number,
+  providerKey: string,
 ) {
   listings.forEach((listing) => {
     candidates.push(listing.name);
-    platformSignals.push({ value: listing.name, weight });
+    platformSignals.push({ value: listing.name, weight, providerKey });
   });
 }
 
@@ -86,6 +69,7 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
     productPlatformSignals.push({
       value,
       weight: inputs.pc.platform ? 3.5 : 1.2,
+      providerKey: "referencePrice",
     });
   }
   if (inputs.sd?.igdb_metadata?.name) {
@@ -94,7 +78,11 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
       ? `${inputs.sd.igdb_metadata.name} (${sdPlatform})`
       : inputs.sd.igdb_metadata.name;
     candidates.push(value);
-    productPlatformSignals.push({ value, weight: sdPlatform ? 1.4 : 0.8 });
+    productPlatformSignals.push({
+      value,
+      weight: sdPlatform ? 1.4 : 0.8,
+      providerKey: "screenDatabase",
+    });
   }
   if (inputs.ice?.title) {
     const icePlatformKey = inputs.ice.platform
@@ -113,6 +101,7 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
       productPlatformSignals.push({
         value,
         weight: inputs.ice.platform ? 2.6 : 1,
+        providerKey: "catalogIce",
       });
     }
   }
@@ -122,6 +111,7 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
       productPlatformSignals.push({
         value: inputs.contextPlatformKey,
         weight: 2.4,
+        providerKey: "catalogHint",
       });
     }
   }
@@ -131,10 +121,29 @@ export function buildGameLookupContext(inputs: GameLookupInputs) {
     candidates,
     productPlatformSignals,
     0.9,
+    "calListings",
   );
-  pushListingSignals(inputs.amc, candidates, productPlatformSignals, 1.1);
-  pushListingSignals(inputs.freakxy, candidates, productPlatformSignals, 0.8);
-  pushListingSignals(inputs.ebay, candidates, productPlatformSignals, 0.9);
+  pushListingSignals(
+    inputs.amc,
+    candidates,
+    productPlatformSignals,
+    1.1,
+    "amcListings",
+  );
+  pushListingSignals(
+    inputs.freakxy,
+    candidates,
+    productPlatformSignals,
+    0.8,
+    "freakxyListings",
+  );
+  pushListingSignals(
+    inputs.ebay,
+    candidates,
+    productPlatformSignals,
+    0.9,
+    "ebayListings",
+  );
 
   const detectedPlatform =
     pickPlatformKeyFromSignals(productPlatformSignals) ||

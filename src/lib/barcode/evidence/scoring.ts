@@ -96,6 +96,18 @@ export const CLUSTER_CONFIDENCE = {
   observationTierScale: 0.01,
 } as const;
 
+// ── Platform pick (decide-late) ──────────────────────────────────────────────
+// Pass 1 uses tier-agnostic source weights (+ distinct providers + PC/console
+// guard). Pass 2 may apply a small tier nudge to break ties within one family
+// (canonical vs marketplace) — never to override an ambiguity null.
+export const PLATFORM_PICK = {
+  winnerMargin: 0.4,
+  /** Tier scale for pass 2 only — kept well below a full tier step (~3). */
+  observationTierScale: 0.05,
+  /** Extra nudge when a canonical row carries an explicit platform fact. */
+  canonicalBonus: 0.22,
+} as const;
+
 // ── Alternate visibility ─────────────────────────────────────────────────────
 // Once the leader is chosen, which OTHER clusters are worth offering the user as
 // distinct, pickable alternates — vs. folded away as noise of the same product.

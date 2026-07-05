@@ -214,6 +214,19 @@ export const DEFAULT_BARCODE_REGRESSION_CASES: BarcodeRegressionCase[] = [
     },
   },
   {
+    id: "ghost-recon-classics-ambiguous-platform",
+    label:
+      "Tom Clancy's Ghost Recon (3307210117168 — pas le « 2 », pas album)",
+    barcode: "3307210117168",
+    type: "games",
+    expected: {
+      cleanNameIncludes: ["Ghost Recon"],
+      shelfType: "games",
+      maxMatches: 2,
+      suggestionsExclude: ["Ghost Recon 2"],
+    },
+  },
+  {
     id: "star-wars-revenge-sith-xbox-untyped",
     label:
       "Star Wars Episode III : La Revanche des Sith (Xbox, scan sans étagère)",

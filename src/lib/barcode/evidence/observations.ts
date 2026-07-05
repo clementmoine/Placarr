@@ -15,6 +15,7 @@ import type {
 } from "@/types/metadataObservation";
 
 import { pickPlatformKeyFromSignals } from "@/lib/barcode/gameLookup";
+import type { PlatformSignal } from "@/lib/barcode/platformPick";
 
 import {
   imageObservationRankScore,
@@ -26,6 +27,7 @@ import {
   CLUSTER_CONFIDENCE,
   OBSERVATION_RANK_SOURCE_WEIGHT_SCALE,
   OBSERVATION_ROLE_CLUSTER_WEIGHT,
+  PLATFORM_PICK,
 } from "./scoring";
 import type { ProductEvidence } from "./types";
 
@@ -310,23 +312,58 @@ export function parseBarcodeCacheObservations(
   return value as MetadataObservation[];
 }
 
+function barcodeEvidencePlatformCanonicalBonus(
+  evidence: ProductEvidence,
+): number {
+  return evidence.isCanonical ? PLATFORM_PICK.canonicalBonus : 0;
+}
+
+/** Pass 1 — tier-agnostic; drives PC vs console ambiguity only. */
+export function barcodeEvidencePlatformAmbiguityWeight(
+  evidence: ProductEvidence,
+): number {
+  return (
+    barcodeEvidenceObservationSourceWeight(evidence) +
+    barcodeEvidencePlatformCanonicalBonus(evidence)
+  );
+}
+
+/** Pass 2 — small tier nudge breaks canonical vs marketplace within one family. */
+export function barcodeEvidencePlatformPickWeight(
+  evidence: ProductEvidence,
+): number {
+  return (
+    barcodeEvidenceTier(evidence) * PLATFORM_PICK.observationTierScale +
+    barcodeEvidenceObservationSourceWeight(evidence) +
+    barcodeEvidencePlatformCanonicalBonus(evidence)
+  );
+}
+
 export function pickPlatformKeyFromEvidence(
   evidence: ProductEvidence[],
 ): string | null {
   const signals = evidence.flatMap((item) => {
-    const weight =
-      barcodeEvidenceObservationSourceWeight(item) +
-      (item.isCanonical ? 0.22 : 0);
     const platformValue =
       item.parsed.platformKey ??
       item.facts?.find((fact) => fact.kind === "platform")?.value?.trim();
     if (!platformValue) return [];
 
-    return [{ value: platformValue, weight }];
+    const ambiguityWeight = barcodeEvidencePlatformAmbiguityWeight(item);
+    const pickWeight = barcodeEvidencePlatformPickWeight(item);
+
+    return [
+      {
+        value: platformValue,
+        weight: ambiguityWeight,
+        ambiguityWeight,
+        pickWeight,
+        providerKey: item.providerName,
+      },
+    ];
   });
 
   return pickPlatformKeyFromSignals(
-    signals.filter((signal): signal is { value: string; weight: number } =>
+    signals.filter((signal): signal is PlatformSignal & { value: string } =>
       Boolean(signal.value?.trim()),
     ),
   );

@@ -1,4 +1,4 @@
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "./registry";
 
 // Fallback source weights, by evidence role, for a provider that does not
 // declare its own `sourceWeight`. A provider normally sets this in its module

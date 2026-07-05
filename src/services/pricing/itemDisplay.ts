@@ -4,7 +4,7 @@ import { runBackgroundWork } from "@/lib/jobs/backgroundWorkQueue";
 import { cleanCode } from "@/lib/barcode/query";
 import { isItemMetadataRefreshing } from "@/lib/item/enrichment";
 import { shouldRefreshPriceCache } from "@/lib/pricing/cachePolicy";
-import { providerProductUrlsFromMetadataFacts } from "@/services/provider/registry";
+import { providerProductUrlsFromMetadataFacts } from "@/services/provider/catalog";
 import { metadataPriceFallback } from "@/lib/pricing/metadataPriceFallback";
 import type { MetadataFact } from "@/types/metadataProvider";
 import {

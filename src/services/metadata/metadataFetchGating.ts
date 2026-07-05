@@ -24,7 +24,7 @@ import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
 } from "@/types/providerModule";
-import { bookIsbnBootstrapProviderIds } from "@/services/provider/registry";
+import { bookIsbnBootstrapProviderIds } from "@/services/provider/catalog";
 
 import { metadataHasDisplayImage } from "@/lib/metadata/displayImage";
 import {

@@ -26,7 +26,7 @@ import { isCleanCachedProvider } from "@/services/provider/evidence";
 import {
   coverUrlQualityRank,
   isbnCoverUrlForBarcode,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 import type { BarcodeCache, RawName } from "@prisma/client";
 
 type CachedBarcodeRecord = BarcodeCache & {

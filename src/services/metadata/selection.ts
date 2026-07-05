@@ -4,7 +4,7 @@ import {
   type Capability,
   type MediaType,
   type ProviderInfo,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 import { metadataProviderResolverMap } from "@/services/provider/bootstrap";
 import { withProviderEvidence } from "@/services/metadata/facts";
 import {

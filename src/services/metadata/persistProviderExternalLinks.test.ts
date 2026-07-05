@@ -24,9 +24,9 @@ vi.mock("@/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/services/provider/registry", async (importOriginal) => {
+vi.mock("@/services/provider/catalog", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@/services/provider/registry")>();
+    await importOriginal<typeof import("@/services/provider/catalog")>();
   return {
     ...actual,
     getProviderModule: vi.fn(actual.getProviderModule),
@@ -38,7 +38,7 @@ import {
   persistProviderExternalLinksForMetadata,
   repairProviderExternalLinksForItem,
 } from "./persistProviderExternalLinks";
-import { getProviderModule } from "@/services/provider/registry";
+import { getProviderModule } from "@/services/provider/catalog";
 
 const mockedGetProviderModule = vi.mocked(getProviderModule);
 

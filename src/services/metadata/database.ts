@@ -5,7 +5,7 @@ import { getMetadataProviderAdapter } from "@/services/provider/bootstrap";
 import {
   getProviderModule,
   nameDatabaseProviderForType,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 
 export async function confrontWithDatabase(
   name: string,

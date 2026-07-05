@@ -1,4 +1,4 @@
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "./registry";
 import {
   isBarcodeRecordSlimMode,
   shouldSkipBarcodeTaskInSlimRecord,

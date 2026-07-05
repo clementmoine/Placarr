@@ -1,5 +1,5 @@
 import { makeObservationUsage } from "@/lib/metadata/observations";
-import { coverUrlQualityRank } from "@/services/provider/registry";
+import { coverUrlQualityRank } from "@/services/provider/catalog";
 import {
   providerDisplayLabelForEvidenceLabel,
   providerIdForEvidenceLabel,

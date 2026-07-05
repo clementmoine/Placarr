@@ -1,7 +1,7 @@
 import type { BarcodeLookupPayload } from "@/lib/barcode/lookup/payload";
 import { finalizeGamePriceProviders } from "@/lib/pricing/cachePolicy";
 import type { PriceOfferInput } from "@/services/metadata/evidence";
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "./registry";
 import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,

@@ -36,7 +36,7 @@ import {
   isBarcodeScopedPriceSource,
   isMarketplaceSearchPriceSource,
   formatProviderSourceLabel,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 
 export type PriceObservation = {
   source: string;

@@ -3,7 +3,7 @@ import type { CoverProvenance } from "@/lib/media/coverProvenance";
 import {
   formatProviderSourceLabel,
   PROVIDERS,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 
 /**
  * Provider-blind cover traits for an attachment `source`.

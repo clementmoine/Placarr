@@ -13,7 +13,7 @@ import { formatMetadataFromStorage } from "@/services/metadata/dbMapping";
 import {
   getProviderModule,
   providerIdForSourceToken,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 import type { FieldEvidenceInput } from "@/services/metadata/evidence";
 import type { MetadataFact } from "@/types/metadataProvider";
 

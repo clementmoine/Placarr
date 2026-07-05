@@ -6,7 +6,7 @@ import {
   type CompiledResult,
   type SourceProduct,
 } from "@/lib/barcode/evidence";
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "@/services/provider/catalog";
 
 type EvidenceSource = {
   providerName: string;

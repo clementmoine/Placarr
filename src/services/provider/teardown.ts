@@ -1,6 +1,6 @@
 import { getMetadata } from "@/services/metadata";
 import { createBarcodeLookupDeps } from "@/services/provider/barcode";
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "./registry";
 import {
   createTeardownBarcodeTask,
   metadataTeardownLabel,

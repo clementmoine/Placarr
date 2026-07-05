@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { fetchAndStoreMetadata } from "@/services/metadata";
 
-import { PROVIDERS } from "@/services/provider/registry";
+import { PROVIDERS } from "@/services/provider/catalog";
 
 const DEFAULT_BATCH_LIMIT = 10;
 const MAX_BATCH_LIMIT = 25;

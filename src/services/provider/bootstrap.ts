@@ -5,7 +5,7 @@ import {
   observationsFromMetadataResult,
 } from "@/lib/metadata/observations";
 import { wrapMetadataProviderAdapter } from "@/lib/metadata/providerQueue";
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "./registry";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {

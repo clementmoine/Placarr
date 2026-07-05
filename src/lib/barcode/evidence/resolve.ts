@@ -10,7 +10,7 @@ import { getRepresentativeScore } from "@/lib/title/displayScore";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
 import { isBarcodeRecordSlimMode } from "@/lib/barcode/lookup/recordMode";
 import { confrontWithDatabase } from "@/services/metadata/database";
-import { isbnCoverUrlForBarcode } from "@/services/provider/registry";
+import { isbnCoverUrlForBarcode } from "@/services/provider/catalog";
 
 import {
   isStrictTitleSubset,

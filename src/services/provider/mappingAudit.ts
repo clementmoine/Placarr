@@ -4,7 +4,7 @@ import {
   isProviderConfigured,
   PROVIDERS,
   type ProviderInfo,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/lib/metadata/observations";
 import {
   inferMappingProbeStatus,

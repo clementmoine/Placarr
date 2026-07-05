@@ -21,7 +21,7 @@ const h = vi.hoisted(() => ({
   ],
 }));
 
-vi.mock("@/services/provider/registry", () => ({
+vi.mock("@/services/provider/catalog", () => ({
   PROVIDERS: h.mockProviders,
   nameDatabaseProviderForType: (type: string) =>
     h.mockProviders

@@ -11,7 +11,7 @@ import {
   pickBestFactObservationsByGroup,
   pickCoverUrlFromObservations,
 } from "@/lib/barcode/evidence/ranking";
-import { coverUrlQualityRank } from "@/services/provider/registry";
+import { coverUrlQualityRank } from "@/services/provider/catalog";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type {
   TitleObservation,

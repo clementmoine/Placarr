@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-const { PROVIDERS } = await import("@/services/provider/registry");
+const { PROVIDERS } = await import("@/services/provider/catalog");
 
 import { providerHealthChecks } from "@/services/provider/runtime";
 

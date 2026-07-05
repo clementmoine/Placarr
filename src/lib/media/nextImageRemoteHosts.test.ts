@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db/prisma";
-import { PROVIDERS } from "@/services/provider/registry";
+import { PROVIDERS } from "@/services/provider/catalog";
 
 import { PRESTASHOP_RETAILER_CONFIGS } from "@/services/providers/prestashop/configs";
 import { SHOPIFY_RETAILER_CONFIGS } from "@/services/providers/shopify/configs";

@@ -11,7 +11,7 @@ vi.mock("./fetch", async (importOriginal) => {
   };
 });
 
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "@/services/provider/catalog";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 const chasseModule = PROVIDER_MODULES.find(

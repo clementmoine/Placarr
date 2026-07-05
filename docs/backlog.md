@@ -227,9 +227,9 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 
 #### CONFIG-1 — Self-declaration providers _(fait 2026-07-05)_
 
-- **`PROVIDER_METADATA_EXTENSIONS` supprimée** — chaque module déclare ses traits dans `info` (ou `prestashop/configs.ts` → `metadataInfo`).
-- **Découverte** : `discoverProviderModules()` + `materializeProviderInfo()` appliquent les defaults booléens ; le core consomme `PROVIDERS` / `providersForType` / `capabilityCoverage` sans map keyée par id.
-- Factory PrestaShop : defaults `boardgames`-only (`fr`, `isRealBoxCover`, `isSecondary`) ; override explicite via `metadataInfo`.
+- **`registry.ts`** = manifeste seul (import + ligne dans `PROVIDER_MODULES`) — **seul fichier à éditer pour ajouter un provider**.
+- **`catalog.ts`** = découverte générique (`discoverProviderModules`, `providersForType`, `capabilityCoverage`, …) ; le core importe `@/services/provider/catalog` ou `@/services/provider`.
+- Chaque module auto-déclare `info` (types, capabilities, traits metadata).
 
 ---
 

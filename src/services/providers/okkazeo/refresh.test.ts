@@ -11,7 +11,7 @@ vi.mock("./fetch", () => ({
   searchOkkazeo: (...args: unknown[]) => searchOkkazeo(...args),
 }));
 
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "@/services/provider/catalog";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 const okkazeoModule = PROVIDER_MODULES.find(

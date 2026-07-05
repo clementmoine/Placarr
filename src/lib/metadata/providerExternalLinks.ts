@@ -1,7 +1,7 @@
 import {
   formatProviderSourceLabel,
   providerIdForSourceToken,
-} from "@/services/provider/registry";
+} from "@/services/provider/catalog";
 import {
   retailerBarcodeContradictsItem,
   retailerProductBarcodeConfirmed,

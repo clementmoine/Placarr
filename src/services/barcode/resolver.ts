@@ -29,7 +29,7 @@ import { createBarcodeLookupDeps } from "@/services/provider/barcode";
 import { createBarcodeLookupTaskBuilders } from "@/services/provider/barcode";
 import { collectScanPriceOffers } from "@/services/provider/barcodePrices";
 import { persistBarcodePrices } from "@/services/pricing/resolver";
-import { PROVIDER_MODULES } from "@/services/provider/registry";
+import { PROVIDER_MODULES } from "@/services/provider/catalog";
 import type { BarcodeCache } from "@prisma/client";
 
 // Registry-derived evidence labels of providers whose ONLY media type is the

@@ -1,4 +1,4 @@
-import { isReferencePriceSource } from "@/services/provider/registry";
+import { isReferencePriceSource } from "@/services/provider/catalog";
 
 type PriceCacheRecord = {
   priceUsed?: number | null;

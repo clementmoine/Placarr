@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { providerProductUrlsFromMetadataFacts } from "@/services/provider/registry";
+import { providerProductUrlsFromMetadataFacts } from "@/services/provider/catalog";
 import { providerProductUrlsForKey } from "@/lib/pricing/providerProductUrls";
 import type { MetadataFact } from "@/types/metadataProvider";
 

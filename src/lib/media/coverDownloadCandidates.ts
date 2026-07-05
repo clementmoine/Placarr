@@ -1,6 +1,6 @@
 import { remoteImageProxyProviderFor } from "@/lib/media/remoteProxy";
 import { structuralCoverDownloadCandidates } from "@/lib/media/coverUrlUpgrades";
-import { getProviderModule } from "@/services/provider/registry";
+import { getProviderModule } from "@/services/provider/catalog";
 
 function mergeCoverDownloadCandidates(
   url: string,

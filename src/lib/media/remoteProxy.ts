@@ -1,4 +1,4 @@
-import { PROVIDERS } from "@/services/provider/registry";
+import { PROVIDERS } from "@/services/provider/catalog";
 
 const PROXY_PROVIDERS = PROVIDERS.filter(
   (provider) => provider.remoteImageReferer && provider.coverUrlHost,

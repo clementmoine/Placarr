@@ -15,7 +15,7 @@ import {
 import { isMissingArtImageUrl } from "@/lib/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/lib/media/coverPlaceholder.server";
 import { trimLightImageMargins } from "@/lib/media/imageTrim";
-import { PROVIDERS } from "@/services/provider/registry";
+import { PROVIDERS } from "@/services/provider/catalog";
 import { canonicalProviderIdForSource } from "@/services/provider/sourceTraits";
 import { providerOriginalImageUrl } from "@/services/metadata/imageUrls";
 

@@ -35,7 +35,7 @@ import { resolveCoverAttachmentRole } from "@/lib/media/coverPerspective";
 import { isMetadataTitleAligned } from "@/lib/metadata/titleMatching";
 import { barcodeListingMatchesItem } from "@/lib/barcode/titleUtils";
 import { normalizeProductBarcode } from "@/lib/barcode/normalize";
-import { inferImageAttachmentFromMediaUrl } from "@/services/provider/registry";
+import { inferImageAttachmentFromMediaUrl } from "@/services/provider/catalog";
 import {
   authoritative3dCoverRoleSource,
   coverProvenanceForSource,

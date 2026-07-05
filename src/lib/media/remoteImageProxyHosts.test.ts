@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PROVIDERS } from "@/services/provider/registry";
+import { PROVIDERS } from "@/services/provider/catalog";
 
 import { REMOTE_IMAGE_PROXY_HOST_FRAGMENTS } from "./remoteImageProxyHosts";
 

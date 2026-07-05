@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { nameDatabaseProviderForType } from "@/services/provider/registry";
+import { nameDatabaseProviderForType } from "@/services/provider/catalog";
 
 /**
  * Épingle la sélection du name-database par type depuis les traits déclarés

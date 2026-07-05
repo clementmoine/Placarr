@@ -13,7 +13,7 @@ import {
   rejectedObservationsFromProductEvidence,
 } from "./observations";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/lib/games/platforms";
-import { isReferencePriceSource } from "@/services/provider/registry";
+import { isReferencePriceSource } from "@/services/provider/catalog";
 
 import {
   areEvidenceSameProduct,

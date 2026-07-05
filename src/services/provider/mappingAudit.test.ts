@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getMetadataProviderAdapter } from "@/services/provider/bootstrap";
 
-const { PROVIDER_MODULES } = await import("@/services/provider/registry");
+const { PROVIDER_MODULES } = await import("@/services/provider/catalog");
 
 describe("provider mapping probes", () => {
   it("registers a probe path for every provider module", () => {

@@ -1,7 +1,7 @@
 import { AttachmentType } from "@prisma/client";
 import { isHowLongToBeatFactSource } from "@/services/provider/sourceTraits";
 import type { MediaType } from "@/types/providerRegistry";
-import { PROVIDERS } from "@/services/provider/registry";
+import { PROVIDERS } from "@/services/provider/catalog";
 import { withProviderAttachmentTraits } from "@/services/provider/sourceTraits";
 import {
   pickBestCoverFromAttachments,

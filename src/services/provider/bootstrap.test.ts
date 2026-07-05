@@ -5,64 +5,16 @@ import {
   getMetadataProviderAdapter,
 } from "@/services/provider/bootstrap";
 
-const { PROVIDERS } = await import("@/services/provider/registry");
+const { PROVIDERS, PROVIDER_MODULES } = await import("@/services/provider/catalog");
 
 describe("createMetadataAdapters", () => {
-  it("exposes stable ids for metadata providers", () => {
+  it("creates one adapter per module that exports createMetadataAdapter", () => {
     const adapters = createMetadataAdapters();
+    const expectedIds = PROVIDER_MODULES.flatMap((mdl) =>
+      mdl.createMetadataAdapter ? [mdl.info.id] : [],
+    ).sort();
 
-    expect(adapters.map((adapter) => adapter.id).sort()).toEqual(
-      [
-        "achatmoinscher",
-        "apriloshop",
-        "chipweld",
-        "archichouette",
-        "bcdjeux",
-        "bedetheque",
-        "booknode",
-        "boardgamegeek",
-        "cestlejeu",
-        "chasseauxlivres",
-        "chocobonplan",
-        "geedie",
-        "hdjv",
-        "coverproject",
-        "deezer",
-        "didacto",
-        "discogs",
-        "ebay",
-        "espritjeu",
-        "fairplayjeux",
-        "googlebooks",
-        "howlongtobeat",
-        "icollect",
-        "igdb",
-        "latelierdesjeux",
-        "launchbox",
-        "lepassetemps",
-        "lesgentlemendujeu",
-        "ludifolie",
-        "ludocortex",
-        "monsieurde",
-        "netgamesretro",
-        "musicbrainz",
-        "myludo",
-        "okkazeo",
-        "omdb",
-        "openlibrary",
-        "philibert",
-        "playin",
-        "pricecharting",
-        "rawg",
-        "screenscraper",
-        "steam",
-        "steamgriddb",
-        "thegamesdb",
-        "tmdb",
-        "tokyogamestory",
-        "wikidata",
-      ].sort(),
-    );
+    expect(adapters.map((adapter) => adapter.id).sort()).toEqual(expectedIds);
   });
 
   it("maps every adapter to a declared provider", () => {

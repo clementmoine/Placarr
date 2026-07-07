@@ -10,6 +10,7 @@ import {
   inferMappingProbeStatus,
   mergeMappingProbeSamples,
   metadataProbe,
+  probeErrorResult,
   retry,
 } from "@/lib/dev/mappingProbe";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -245,18 +246,31 @@ async function runMetadataAdapterProbe(
   const resolveWithPolicy = (context: typeof ctx) =>
     shouldRetry ? retry(() => resolve(context), 2) : resolve(context);
 
-  let metadata = await resolveWithPolicy(ctx);
-  if (!metadata && ctx.barcode && ctx.name.trim()) {
-    metadata = await resolveWithPolicy({
-      ...ctx,
-      barcode: null,
-    });
-  }
+  try {
+    let metadata = await resolveWithPolicy(ctx);
+    if (!metadata && ctx.barcode && ctx.name.trim()) {
+      metadata = await resolveWithPolicy({
+        ...ctx,
+        barcode: null,
+      });
+    }
 
-  return {
-    probe: metadataProbe(metadata),
-    metadata,
-  };
+    return {
+      probe: metadataProbe(metadata),
+      metadata,
+    };
+  } catch (error) {
+    const { PrestashopAccessDeniedError } = await import(
+      "@/providers/prestashop/fetch"
+    );
+    if (error instanceof PrestashopAccessDeniedError) {
+      return {
+        probe: probeErrorResult(error.message, "blocked"),
+        metadata: null,
+      };
+    }
+    throw error;
+  }
 }
 
 async function runProbe(
@@ -325,11 +339,25 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
 
         const sampleResults = await Promise.all(
           sampleContexts.map(async (context) => {
-            const execution = await runProbe(provider.id, context);
-            const rawKeys = providerModule?.collectMappingRawKeys
-              ? await providerModule.collectMappingRawKeys(context)
-              : [];
-            return { ...execution, rawKeys };
+            try {
+              const execution = await runProbe(provider.id, context);
+              const rawKeys = providerModule?.collectMappingRawKeys
+                ? await providerModule.collectMappingRawKeys(context)
+                : [];
+              return { ...execution, rawKeys };
+            } catch (error) {
+              const { PrestashopAccessDeniedError } = await import(
+                "@/providers/prestashop/fetch"
+              );
+              if (error instanceof PrestashopAccessDeniedError) {
+                return {
+                  probe: probeErrorResult(error.message, "blocked"),
+                  metadata: null,
+                  rawKeys: [],
+                };
+              }
+              throw error;
+            }
           }),
         );
 

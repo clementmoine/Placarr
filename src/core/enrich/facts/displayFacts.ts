@@ -9,6 +9,7 @@ const HIDDEN_DISPLAY_KINDS = new Set([
   "review",
 ]);
 
+
 const TAG_LIKE_KINDS = new Set([
   "category",
   "family",
@@ -17,6 +18,20 @@ const TAG_LIKE_KINDS = new Set([
   "mechanic",
   "tag",
 ]);
+
+/** genre + tag share one editorial row (chips, merged sources). */
+function tagLikeConsolidationSlot(fact: DetailFact): string {
+  if (fact.kind === "genre" || fact.kind === "tag") return "theme";
+  return fact.kind;
+}
+
+function normalizeThemeDisplayFact(fact: DetailFact): DetailFact {
+  return {
+    ...fact,
+    kind: "tag",
+    label: "Thème",
+  };
+}
 
 function splitTagValues(value: string): string[] {
   return value
@@ -113,14 +128,16 @@ export function consolidateTagLikeFactsByKind(
       continue;
     }
 
-    const group = groups.get(fact.kind) ?? [];
+    const slot = tagLikeConsolidationSlot(fact);
+    const group = groups.get(slot) ?? [];
     group.push(fact);
-    groups.set(fact.kind, group);
+    groups.set(slot, group);
   }
 
-  for (const kindFacts of groups.values()) {
+  for (const [slot, kindFacts] of groups.entries()) {
     if (kindFacts.length === 1) {
-      result.push(kindFacts[0]!);
+      const fact = kindFacts[0]!;
+      result.push(slot === "theme" ? normalizeThemeDisplayFact(fact) : fact);
       continue;
     }
 
@@ -144,13 +161,14 @@ export function consolidateTagLikeFactsByKind(
     );
     const lead = orderedFacts[0]!;
 
-    result.push({
+    const merged: DetailFact = {
       ...lead,
       value: tags.join(" • "),
       source: undefined,
       sourceCount: sourceNames.length > 0 ? sourceNames.length : undefined,
       sourceNames: sourceNames.length > 0 ? sourceNames : undefined,
-    });
+    };
+    result.push(slot === "theme" ? normalizeThemeDisplayFact(merged) : merged);
   }
 
   return result;

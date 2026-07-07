@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
 import {
   extractBaseTitleVariant,
@@ -503,7 +503,7 @@ export async function searchGeedieProducts(
 ): Promise<GeedieSearchHit[]> {
   const category = marketplaceCategory(platform);
   const url = `${GEEDIE_BASE_URL}/en/marketplace/${category}?search=${encodeURIComponent(query)}`;
-  const response = await axios.get<string>(url, {
+  const response = await fetchGetWithFlareFallback(url, {
     headers: HEADERS,
     timeout: 12_000,
     validateStatus: (status) => status < 500,
@@ -515,7 +515,7 @@ export async function searchGeedieProducts(
 export async function fetchGeedieProduct(
   productUrl: string,
 ): Promise<GeedieProduct | null> {
-  const response = await axios.get<string>(productUrl, {
+  const response = await fetchGetWithFlareFallback(productUrl, {
     headers: HEADERS,
     timeout: 12_000,
     validateStatus: (status) => status < 500,
@@ -633,7 +633,7 @@ export async function fetchFromGeedie(
 
 export async function pingGeedie(): Promise<boolean> {
   try {
-    const response = await axios.get(
+    const response = await fetchGetWithFlareFallback(
       `${GEEDIE_BASE_URL}/en/marketplace/playstation`,
       {
         headers: HEADERS,

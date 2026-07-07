@@ -164,6 +164,10 @@ export interface ItemPrices {
     observedAt?: string | null;
     isReferencePriceSource?: boolean;
     sourceDisplayLabel?: string;
+    metadataScoped?: boolean;
+    catalogEstimateMinCents?: number;
+    catalogEstimateMaxCents?: number;
+    catalogEstimateDisplayValue?: string;
   }>;
 }
 

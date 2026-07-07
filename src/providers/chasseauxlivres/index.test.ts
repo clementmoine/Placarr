@@ -1,4 +1,40 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import { chasseauxlivresModule } from "./index";
+
+vi.mock("./fetch", () => ({
+  fetchChasseAuxLivresMetadataProduct: vi.fn(),
+  fetchFromChasseAuxLivres: vi.fn(),
+  fetchPricesFromChasseAuxLivres: vi.fn(),
+  isChasseAuxLivresSearchProtected: vi.fn(),
+}));
+
+import { fetchChasseAuxLivresMetadataProduct } from "./fetch";
+
+const mockedMetadataProduct = vi.mocked(fetchChasseAuxLivresMetadataProduct);
+
+describe("chasseauxlivres metadata adapter", () => {
+  it("accepts page EAN when /prix/ slug uses an internal id", async () => {
+    mockedMetadataProduct.mockResolvedValue({
+      name: "Fantastic Mr Fox",
+      barcode: "9780140328721",
+      productUrl:
+        "https://www.chasse-aux-livres.fr/prix/0140328726/fantastic-mr-fox-roald-dahl",
+      coverUrl: "https://img.chasse-aux-livres.fr/cover.jpg",
+    });
+
+    const adapter = chasseauxlivresModule.createMetadataAdapter!();
+    const metadata = await adapter.resolve({
+      name: "",
+      barcode: "9780140328721",
+      type: "books",
+    });
+
+    expect(metadata?.title).toBe("Fantastic Mr Fox");
+    expect(metadata?.observations?.length).toBeGreaterThan(0);
+    expect(metadata?.observationSchemaVersion).toBeTruthy();
+  });
+});
 
 import { isChasseTitleAligned } from "./index";
 

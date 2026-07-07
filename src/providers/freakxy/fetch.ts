@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 export interface FreakxyProduct {
@@ -26,7 +26,7 @@ export async function fetchFromFreakxy(
   console.log(`[Freakxy] Querying search: ${url}`);
 
   try {
-    const res = await axios.get(url, {
+    const res = await fetchGetWithFlareFallback(url, {
       headers: HEADERS,
       timeout: REQUEST_TIMEOUT_MS,
     });

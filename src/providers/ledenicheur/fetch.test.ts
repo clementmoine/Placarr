@@ -82,6 +82,8 @@ function productDetailResponse(
 beforeEach(() => {
   mockedPost.mockReset();
   mockedGet.mockReset();
+  mockedGet.mockResolvedValue({ status: 404, data: "" });
+  delete process.env.FLARESOLVERR_URL;
 });
 
 describe("extractLeDenicheurProductGtinFromHtml", () => {

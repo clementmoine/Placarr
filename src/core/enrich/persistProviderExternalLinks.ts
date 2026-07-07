@@ -1,15 +1,18 @@
 import { cleanCode } from "@/core/identify/query";
 import { prisma } from "@/lib/db/prisma";
+import { reconcileLegacyPriceOfferSources } from "@/core/enrich/evidence";
 import {
   appendMissingProviderExternalLinkFacts,
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
+  mirrorSourceUrlFactsAsExternalLinks,
   purgeContradictedProviderExternalLinks,
   reconcileExternalLinksFromPriceOffers,
   type ProviderMetadataLinkInput,
 } from "@/core/enrich/providerExternalLinks";
 import { dedupeFacts } from "@/core/enrich/facts";
 import { formatMetadataFromStorage } from "@/core/enrich/dbMapping";
+import { syncMetadataDisplayFactsFromFieldEvidence } from "@/core/enrich/metadataFactsProjection";
 import {
   getProviderModule,
   providerIdForSourceToken,
@@ -105,14 +108,13 @@ export async function persistProviderExternalLinksForMetadata(
     input.itemTitle,
   );
 
+  const mirrored = mirrorSourceUrlFactsAsExternalLinks(next);
+  if (mirrored.length > 0) {
+    next = [...next, ...mirrored];
+  }
+
   if (input.providerInputs?.length) {
     next = appendMissingProviderExternalLinkFacts(next, input.providerInputs);
-  }
-  if (input.fieldEvidence?.length) {
-    next = [
-      ...next,
-      ...externalLinkFactsFromFieldEvidence(input.fieldEvidence, next),
-    ];
   }
   if (input.priceOffers?.length) {
     next = reconcileExternalLinksFromPriceOffers(
@@ -121,6 +123,12 @@ export async function persistProviderExternalLinksForMetadata(
       input.itemBarcode,
       input.itemTitle,
     );
+  }
+  if (input.fieldEvidence?.length) {
+    next = [
+      ...next,
+      ...externalLinkFactsFromFieldEvidence(input.fieldEvidence, next),
+    ];
   }
 
   const deduped = dedupeFacts(dedupeProviderExternalLinkFacts(next));
@@ -154,35 +162,142 @@ async function loadCachedPriceOffersForBarcode(barcode: string) {
   return cache?.priceOffers ?? [];
 }
 
+async function loadItemScopedPriceOffers(input: {
+  itemId?: string;
+  metadataId?: string | null;
+}) {
+  const scopes: Array<{ itemId: string } | { metadataId: string }> = [];
+  if (input.itemId) scopes.push({ itemId: input.itemId });
+  if (input.metadataId) scopes.push({ metadataId: input.metadataId });
+  if (scopes.length === 0) return [];
+
+  return prisma.priceOffer.findMany({
+    where: scopes.length === 1 ? scopes[0] : { OR: scopes },
+    orderBy: { observedAt: "desc" },
+    take: 24,
+    select: { source: true, sourceUrl: true, rawValue: true },
+  });
+}
+
+function dedupePriceOfferLinks<
+  T extends { source: string; sourceUrl?: string | null },
+>(offers: T[]): T[] {
+  const seen = new Set<string>();
+  const deduped: T[] = [];
+  for (const offer of offers) {
+    const key = `${offer.source}\0${offer.sourceUrl ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(offer);
+  }
+  return deduped;
+}
+
+async function loadPriceOffersForExternalLinkSync(input: {
+  itemId?: string;
+  metadataId?: string | null;
+  itemBarcode?: string | null;
+}) {
+  const [barcodeOffers, itemOffers] = await Promise.all([
+    input.itemBarcode?.trim()
+      ? loadCachedPriceOffersForBarcode(input.itemBarcode)
+      : Promise.resolve([]),
+    loadItemScopedPriceOffers(input),
+  ]);
+  return dedupePriceOfferLinks([...barcodeOffers, ...itemOffers]);
+}
+
+async function loadFieldEvidenceForExternalLinkSync(
+  metadataId: string,
+): Promise<FieldEvidenceInput[]> {
+  const rows = await prisma.fieldEvidence.findMany({
+    where: { metadataId },
+    select: {
+      field: true,
+      source: true,
+      value: true,
+      sourceUrl: true,
+      priority: true,
+      confidence: true,
+    },
+  });
+
+  return rows.map((row) => ({
+    field: row.field,
+    source: row.source,
+    value: row.value,
+    sourceUrl: row.sourceUrl,
+    priority: row.priority,
+    confidence: row.confidence,
+  }));
+}
+
 export async function repairProviderExternalLinksForItem(
   itemId: string,
 ): Promise<void> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
-    select: { name: true, barcode: true, metadataId: true },
+    select: { id: true, name: true, barcode: true, metadataId: true },
   });
   if (!item?.metadataId) return;
 
+  const scopes: Array<{
+    itemId?: string;
+    metadataId?: string;
+    barcodeCacheId?: number;
+  }> = [{ itemId: item.id, metadataId: item.metadataId }];
+  const cleanedBarcode = item.barcode ? cleanCode(item.barcode) : "";
+  if (cleanedBarcode) {
+    const cache = await prisma.barcodeCache.findUnique({
+      where: { barcode: cleanedBarcode },
+      select: { id: true },
+    });
+    if (cache) {
+      scopes.push({ barcodeCacheId: cache.id });
+    }
+  }
+
+  await Promise.all(
+    scopes.map((scope) => reconcileLegacyPriceOfferSources(scope)),
+  );
+
   await syncPriceOfferExternalLinksForMetadata({
     metadataId: item.metadataId,
+    itemId: item.id,
     itemBarcode: item.barcode,
     itemTitle: item.name,
   });
+
+  try {
+    await syncMetadataDisplayFactsFromFieldEvidence({
+      metadataId: item.metadataId,
+      itemBarcode: item.barcode,
+      itemTitle: item.name,
+    });
+  } catch (error) {
+    console.warn(
+      `[Metadata] Field-evidence fact projection failed for item ${itemId}:`,
+      error,
+    );
+  }
 }
 
 export async function syncPriceOfferExternalLinksForMetadata(input: {
   metadataId: string;
+  itemId?: string;
   itemBarcode?: string | null;
   itemTitle?: string | null;
 }): Promise<void> {
-  const priceOffers = input.itemBarcode
-    ? await loadCachedPriceOffersForBarcode(input.itemBarcode)
-    : [];
+  const [priceOffers, fieldEvidence] = await Promise.all([
+    loadPriceOffersForExternalLinkSync(input),
+    loadFieldEvidenceForExternalLinkSync(input.metadataId),
+  ]);
 
   await persistProviderExternalLinksForMetadata(input.metadataId, {
     itemBarcode: input.itemBarcode,
     itemTitle: input.itemTitle,
     priceOffers,
+    fieldEvidence,
   });
 }
 

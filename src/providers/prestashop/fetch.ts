@@ -1,13 +1,14 @@
-import axios from "axios";
-
+import {
+  fetchGetWithFlareFallback,
+  scrapeAccessBlocked,
+} from "@/lib/http/scrapeFetch";
+import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/core/commerce/retailer/titleMatch";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
 } from "@/core/identify/normalize";
-import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
-import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
-
-import { NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY } from "@/core/commerce/retailer/titleMatch";
 
 import {
   extractEditionYearFromProductName,
@@ -38,6 +39,30 @@ const HTML_HEADERS = {
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "fr-FR,fr;q=0.9",
 };
+
+export class PrestashopAccessDeniedError extends Error {
+  readonly retailerId: string;
+
+  constructor(retailerId: string, message: string) {
+    super(message);
+    this.name = "PrestashopAccessDeniedError";
+    this.retailerId = retailerId;
+  }
+}
+
+function prestashopAccessDeniedMessage(
+  config: PrestashopRetailerConfig,
+  status: number,
+  body: unknown,
+): string | null {
+  if (scrapeAccessBlocked(status, body)) {
+    if (status === 401 || status === 403) {
+      return `${config.label} search blocked (HTTP ${status}) — set FLARESOLVERR_URL or run from an unblocked network`;
+    }
+    return `${config.label} search blocked by storefront protection — set FLARESOLVERR_URL or run from an unblocked network`;
+  }
+  return null;
+}
 
 /** Identifiant numérique d'une image dans une URL PrestaShop (`/{id}[-{size}]/`). */
 export function prestashopImageId(url?: string | null): string | null {
@@ -72,7 +97,7 @@ export async function fetchPrestashopGallery(
 ): Promise<string[]> {
   if (!productUrl || !/^https?:\/\//i.test(productUrl)) return [];
   try {
-    const response = await axios.get(productUrl, {
+    const response = await fetchGetWithFlareFallback(productUrl, {
       headers: HTML_HEADERS,
       timeout: 10000,
       validateStatus: (status) => status >= 200 && status < 400,
@@ -159,7 +184,7 @@ async function enrichPrestashopSearchProductsWithEan(
     products.map(async (product) => {
       if (product.ean13 || !product.link) return product;
       try {
-        const response = await axios.get(product.link, {
+        const response = await fetchGetWithFlareFallback(product.link, {
           headers: HTML_HEADERS,
           timeout: config.requestTimeoutMs ?? 10000,
           validateStatus: (status) => status >= 200 && status < 400,
@@ -183,20 +208,34 @@ async function fetchPrestashopSearchProducts(
   url.searchParams.set(config.searchParam, searchValue);
   url.searchParams.set("ajax", "1");
 
-  const response = await axios.get(url.toString(), {
+  const response = await fetchGetWithFlareFallback(url.toString(), {
     headers: HEADERS,
     timeout: timeoutMs,
     validateStatus: (status) => status >= 200 && status < 500,
   });
 
+  const denied = prestashopAccessDeniedMessage(
+    config,
+    response.status,
+    response.data,
+  );
+  if (denied) {
+    throw new PrestashopAccessDeniedError(config.id, denied);
+  }
+
+  const payload =
+    response.data && typeof response.data === "object"
+      ? (response.data as Record<string, unknown>)
+      : null;
+
   if (config.searchStrategy === "iqit") {
-    const rendered = response.data?.rendered_products;
+    const rendered = payload?.rendered_products;
     return typeof rendered === "string"
       ? parseIqitRenderedProducts(rendered)
       : [];
   }
 
-  const products = response.data?.products;
+  const products = payload?.products;
   return Array.isArray(products) ? products : [];
 }
 

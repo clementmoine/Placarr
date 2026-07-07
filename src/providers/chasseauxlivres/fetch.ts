@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
+import { retailerProductBarcodeConfirmed } from "@/core/commerce/retailer/productUrl";
 import {
   flareSolverrDestroySession,
   flareSolverrRequestGet,
@@ -43,15 +43,10 @@ function chasseCatalogBarcodeConfirmed(
   product: ChasseAuxLivresProduct,
   itemBarcode: string,
 ): boolean {
-  const gate = retailerCatalogBarcodeGate({
-    productUrl: product.productUrl,
-    productBarcode: product.barcode,
+  return retailerProductBarcodeConfirmed(
+    product.productUrl,
+    product.barcode,
     itemBarcode,
-  });
-  return (
-    gate.catalogBarcodeConfirmed &&
-    !gate.barcodeContradicted &&
-    !gate.urlBarcodeConflicts
   );
 }
 

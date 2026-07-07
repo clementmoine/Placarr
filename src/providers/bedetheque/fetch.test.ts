@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   fetchBedethequeMetadata,
+  parseBedethequeAlbumInfoFields,
   parseBedethequeAlbumPage,
+  parseBedethequeCreditedRoles,
   parseBedethequeMediaUrls,
   parseBedethequeSaleListings,
   parseBedethequeRetailPrices,
@@ -11,6 +13,7 @@ import {
   pickBedethequeAlbumLink,
   pickBedethequeSeriesCandidate,
   bedethequeAlbumMatchesBarcode,
+  isKnownBedethequePriceEstimate,
 } from "./fetch";
 
 vi.mock("axios", () => ({
@@ -42,11 +45,78 @@ describe("bedetheque fetch", () => {
       seriesPosition: 7,
       publisher: "EDI-Monde",
       releaseYear: 1984,
+      pageCount: 192,
+      format: "Format normal",
+      weight: "390 g",
+      priceEstimate: "de 5 à 10 euros",
+      legalDeposit: "05/1983",
+      genre: "Europe - Jeunesse",
       imageUrl: "https://www.bedetheque.com/media/Couvertures/Couv_56641.jpg",
       ratingValue: 4,
       ratingCount: 5,
     });
     expect(album?.title).toBe("Super Picsou Géant n°7");
+    expect(album?.description).toContain("Picsou et les mousquetaires");
+    expect(album?.credits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: "Scénario",
+          names: expect.arrayContaining(["Barosso, Abramo"]),
+        }),
+        expect.objectContaining({
+          role: "Dessin",
+          names: expect.arrayContaining(["Croci, Patrice"]),
+        }),
+      ]),
+    );
+  });
+
+  it("parse les champs label de la fiche album", () => {
+    expect(parseBedethequeAlbumInfoFields(albumHtml())).toMatchObject({
+      planches: "192",
+      format: "Format normal",
+      poids: "390 g",
+      estimation: "de 5 à 10 euros",
+      "dépot légal": "05/1983",
+      editeur: "EDI-Monde",
+    });
+  });
+
+  it("ignore les estimations « non coté » (absence de cote marché)", () => {
+    expect(isKnownBedethequePriceEstimate("non coté")).toBe(false);
+    expect(isKnownBedethequePriceEstimate("non côté")).toBe(false);
+    expect(isKnownBedethequePriceEstimate("de 5 à 10 euros")).toBe(true);
+
+    const album = parseBedethequeAlbumPage(
+      albumHtml({ priceEstimate: "non coté" }),
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-7-Numero-7-56641.html",
+    );
+
+    expect(album?.priceEstimate).toBeUndefined();
+  });
+
+  it("parse le numéro d'album des tomes récents sans « Numéro » dans l'URL", () => {
+    const album = parseBedethequeAlbumPage(
+      modernTomeAlbumHtml(),
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-178-Picsou-Contre-Gripsou-204343.html",
+    );
+
+    expect(album).toMatchObject({
+      id: "204343",
+      title: "Super Picsou Géant n°178",
+      seriesPosition: 178,
+    });
+  });
+
+  it("groupe les auteurs par métier BD", () => {
+    const credits = parseBedethequeCreditedRoles(albumHtml());
+    expect(credits.find((entry) => entry.role === "Scénario")?.names).toEqual([
+      "Barosso, Abramo",
+    ]);
+    expect(credits.find((entry) => entry.role === "Couverture")?.names).toEqual([
+      "Croci, Patrice",
+      "Guillaume, René",
+    ]);
   });
 
   it("extrait les URLs media (couverture, verso, planches) depuis la fiche", () => {
@@ -285,6 +355,7 @@ function albumHtml(
     extraMedia?: string;
     saleRows?: string;
     retailNewPrice?: string;
+    priceEstimate?: string;
   } = {},
 ) {
   const ean = options.ean ?? "";
@@ -292,6 +363,7 @@ function albumHtml(
   const extraMedia = options.extraMedia ?? "";
   const saleRows = options.saleRows ?? "";
   const retailNewPrice = options.retailNewPrice ?? "";
+  const priceEstimate = options.priceEstimate ?? "de 5 à 10 euros";
   return `
     <title>Super Picsou Géant -7- Numéro 7</title>
     <meta property="og:title" content="Super Picsou Géant -7- Numéro 7" />
@@ -305,11 +377,43 @@ function albumHtml(
     <span class='annee'>1984</span>
     <span itemprop="ratingValue">4.0</span>
     <span itemprop="ratingCount">5</span>
+    <meta itemprop="genre" content="Europe - Jeunesse">
+    <span itemprop="numberOfPages">192</span> pages
+    <p id="p-serie"><span itemprop="description">Histoires Inclues :
+1 Picsou et les mousquetaires de l'espace
+2 Sir Lock à la chasse au renard
+ </span></p>
     <input type="hidden" id="prix_bdfugue" value="${retailNewPrice}">
     <div class='liste-auteurs'>
-      <a href="#" title="Voir la fiche de Barosso, Abramo">Barosso, Abramo</a>
+      <span class='metier'>(Scénario)</span><a href="#" title="Voir la fiche de Barosso, Abramo">Barosso, Abramo</a>
+      <span class='metier'>(Dessin)</span><a href="#" title="Voir la fiche de Croci, Patrice">Croci, Patrice</a>
+      <span class='metier'>(Couverture)</span><a href="#" title="Voir la fiche de Croci, Patrice">Croci, Patrice</a>
+      <span class='metier'>(Couverture)</span><a href="#" title="Voir la fiche de Guillaume, René">Guillaume, René</a>
     </div>
+    <ul>
+      <li><label>Dépot légal : </label>05/1983</li>
+      <li><label>Estimation : </label>${priceEstimate}</li>
+      <li><label>Editeur : </label>EDI-Monde</li>
+      <li><label>Format : </label>Format normal</li>
+      <li><label>Planches :</label>192</li>
+      <li><label>Poids :</label>390 g</li>
+    </ul>
     ${extraMedia}
     ${saleRows}
+  `;
+}
+
+function modernTomeAlbumHtml() {
+  return `
+    <title>Super Picsou Géant -178- Picsou Contre Gripsou !</title>
+    <meta property="og:title" content="Super Picsou Géant -178- Picsou Contre Gripsou !" />
+    <meta property="og:url" content="https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-178-Picsou-Contre-Gripsou-204343.html" />
+    <input type="hidden" id="IdAlbum" value="204343" />
+    <h1><a href="https://www.bedetheque.com/serie-11795-BD-Super-Picsou-Geant.html" title="Super Picsou Géant">Super Picsou Géant</a></h1>
+    <h2>178<span class="numa"></span>. Picsou Contre Gripsou !</h2>
+    <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-1-Numero-1-478946.html">1</a>
+    <ul>
+      <li><label>Estimation : </label>non coté</li>
+    </ul>
   `;
 }

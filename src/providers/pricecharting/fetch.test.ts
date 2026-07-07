@@ -43,6 +43,7 @@ const DETAIL_HTML = `
 
 function detailResponse(html = DETAIL_HTML) {
   return {
+    status: 200,
     data: html,
     request: {
       res: {
@@ -260,6 +261,7 @@ describe("fetchMetadataFromPriceCharting", () => {
 
   it("ignore une fiche barcode redirigée vers une autre plateforme", async () => {
     mockedGet.mockResolvedValue({
+      status: 200,
       data: `<html><body><h1>Club Football 2005 <a>PAL Xbox</a></h1></body></html>`,
       request: {
         res: {
@@ -280,6 +282,7 @@ describe("fetchMetadataFromPriceCharting", () => {
 
   it("renvoie null quand la recherche barcode reste vide sans fallback", async () => {
     mockedGet.mockResolvedValue({
+      status: 200,
       data: "<html>Buy & Sell Search Results</html>",
       request: {
         res: {
@@ -396,13 +399,7 @@ describe("fetchPricesFromPriceCharting", () => {
 
   it("enters a module cooldown after HTTP 429 and skips further calls", async () => {
     vi.useFakeTimers();
-    const rateLimitError = Object.assign(new Error("429"), {
-      response: { status: 429 },
-    });
-    vi.mocked(axios.isAxiosError).mockImplementation(
-      (error) => error === rateLimitError,
-    );
-    mockedGet.mockRejectedValue(rateLimitError);
+    mockedGet.mockResolvedValue({ status: 429, data: "Too Many Requests" });
 
     const first = fetchPricesFromPriceCharting(
       "0045496365226",

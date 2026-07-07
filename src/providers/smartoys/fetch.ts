@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
 import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
 
@@ -135,7 +135,7 @@ async function fetchSmartoysProductPage(
   expectedNames: string[],
   options: { requireBarcode?: string } = {},
 ): Promise<SmartoysPrices | null> {
-  const res = await axios.get<string>(productUrl, {
+  const res = await fetchGetWithFlareFallback(productUrl, {
     headers: {
       "User-Agent": SMARTOYS_USER_AGENT,
       "Accept-Language": "fr-BE,fr;q=0.9",
@@ -148,10 +148,7 @@ async function fetchSmartoysProductPage(
   const html = typeof res.data === "string" ? res.data : "";
   if (!html) return null;
 
-  const finalUrl: string =
-    (res.request?.res?.responseUrl as string) ||
-    (res.request?.responseURL as string) ||
-    productUrl;
+  const finalUrl = productUrl;
 
   if (options.requireBarcode) {
     const urlBarcode = finalUrl.match(/-p-(\d+)\.html/i)?.[1];
@@ -193,7 +190,7 @@ async function fetchSmartoysByName(
   const searchUrl = `${SMARTOYS_BASE}/catalog/advanced_search_result.php?keywords=${encodeURIComponent(cleanedQuery)}`;
   console.info(`[Smartoys] Querying search: ${cleanedQuery}`);
 
-  const res = await axios.get<string>(searchUrl, {
+  const res = await fetchGetWithFlareFallback(searchUrl, {
     headers: {
       "User-Agent": SMARTOYS_USER_AGENT,
       "Accept-Language": "fr-BE,fr;q=0.9",

@@ -6,6 +6,8 @@ const h = vi.hoisted(() => ({
   itemFindMany: vi.fn(),
   itemFindUnique: vi.fn(),
   barcodeCacheFindUnique: vi.fn(),
+  priceOfferFindMany: vi.fn(),
+  fieldEvidenceFindMany: vi.fn(),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -20,6 +22,12 @@ vi.mock("@/lib/db/prisma", () => ({
     },
     barcodeCache: {
       findUnique: h.barcodeCacheFindUnique,
+    },
+    priceOffer: {
+      findMany: h.priceOfferFindMany,
+    },
+    fieldEvidence: {
+      findMany: h.fieldEvidenceFindMany,
     },
   },
 }));
@@ -45,6 +53,7 @@ const mockedGetProviderModule = vi.mocked(getProviderModule);
 describe("persistProviderExternalLinksForMetadata", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    h.fieldEvidenceFindMany.mockResolvedValue([]);
   });
 
   it("persists a new external-link from price offer sourceUrl", async () => {
@@ -135,6 +144,47 @@ describe("persistProviderExternalLinksForMetadata", () => {
     ).toBe(false);
   });
 
+  it("persists external-links from fieldEvidence sourceUrl", async () => {
+    h.metadataFindUnique.mockResolvedValue({
+      facts: JSON.stringify([]),
+    });
+    h.metadataUpdate.mockResolvedValue({});
+
+    await persistProviderExternalLinksForMetadata("meta-1", {
+      fieldEvidence: [
+        {
+          field: "title",
+          source: "Bédéthèque",
+          value: "Super Picsou Géant n°1",
+          sourceUrl: "https://www.bedetheque.com/album-12345.html",
+          priority: 34,
+        },
+        {
+          field: "title",
+          source: "Booknode",
+          value: "Super Picsou Géant n°1",
+          sourceUrl: "https://booknode.com/super_picsou_geant_n_1",
+          priority: 34,
+        },
+      ],
+    });
+
+    expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);
+    expect(
+      payload.some(
+        (fact: { kind: string; url: string }) =>
+          fact.kind === "external-link" && fact.url.includes("bedetheque.com"),
+      ),
+    ).toBe(true);
+    expect(
+      payload.some(
+        (fact: { kind: string; url: string }) =>
+          fact.kind === "external-link" && fact.url.includes("booknode.com"),
+      ),
+    ).toBe(true);
+  });
+
   it("adds links from provider metadata inputs", async () => {
     h.metadataFindUnique.mockResolvedValue({
       facts: JSON.stringify([]),
@@ -201,10 +251,12 @@ describe("persistProviderExternalLinksForBarcodeItems", () => {
 describe("repairProviderExternalLinksForItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    h.fieldEvidenceFindMany.mockResolvedValue([]);
   });
 
   it("reconciles cached barcode price offers into item metadata", async () => {
     h.itemFindUnique.mockResolvedValue({
+      id: "item-1",
       name: "Black Stories",
       barcode: "0827912079678",
       metadataId: "meta-1",
@@ -218,6 +270,7 @@ describe("repairProviderExternalLinksForItem", () => {
         },
       ],
     });
+    h.priceOfferFindMany.mockResolvedValue([]);
     h.metadataFindUnique.mockResolvedValue({ facts: JSON.stringify([]) });
     h.metadataUpdate.mockResolvedValue({});
 
@@ -231,12 +284,157 @@ describe("repairProviderExternalLinksForItem", () => {
         },
       },
     });
+    expect(h.priceOfferFindMany).toHaveBeenCalledWith({
+      where: { OR: [{ itemId: "item-1" }, { metadataId: "meta-1" }] },
+      orderBy: { observedAt: "desc" },
+      take: 24,
+      select: { source: true, sourceUrl: true, rawValue: true },
+    });
     expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);
     expect(
       payload.some(
         (fact: { source?: string; url?: string }) =>
           fact.url === "https://ledenicheur.fr/product.php?p=2608098",
+      ),
+    ).toBe(true);
+  });
+
+  it("reconciles fieldEvidence product pages into metadata external-links", async () => {
+    h.itemFindUnique.mockResolvedValue({
+      id: "item-picsou",
+      name: "Super Picsou Géant n°1",
+      barcode: "",
+      metadataId: "meta-picsou",
+    });
+    h.priceOfferFindMany.mockResolvedValue([]);
+    h.fieldEvidenceFindMany.mockResolvedValue([
+      {
+        field: "external-link:Booknode",
+        source: "Booknode",
+        value: "Super Picsou Géant n°1",
+        sourceUrl: "https://booknode.com/super_picsou_geant_n_1",
+        priority: 34,
+        confidence: null,
+      },
+      {
+        field: "external-link:Bédéthèque",
+        source: "Bédéthèque",
+        value: "Super Picsou Géant n°1",
+        sourceUrl: "https://www.bedetheque.com/album-99999.html",
+        priority: 34,
+        confidence: null,
+      },
+    ]);
+    h.metadataFindUnique.mockResolvedValue({ facts: JSON.stringify([]) });
+    h.metadataUpdate.mockResolvedValue({});
+
+    await repairProviderExternalLinksForItem("item-picsou");
+
+    expect(h.fieldEvidenceFindMany).toHaveBeenCalledWith({
+      where: { metadataId: "meta-picsou" },
+      select: {
+        field: true,
+        source: true,
+        value: true,
+        sourceUrl: true,
+        priority: true,
+        confidence: true,
+      },
+    });
+    expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);
+    expect(
+      payload.filter((fact: { kind: string }) => fact.kind === "external-link"),
+    ).toHaveLength(2);
+  });
+
+  it("keeps booknode and bedetheque links when price offers are reconciled", async () => {
+    h.itemFindUnique.mockResolvedValue({
+      id: "item-picsou",
+      name: "Super Picsou Géant n°01",
+      barcode: "",
+      metadataId: "meta-picsou",
+    });
+    h.priceOfferFindMany.mockResolvedValue([
+      {
+        source: "eBay",
+        sourceUrl: "https://www.ebay.fr/itm/298306332354",
+        rawValue: null,
+      },
+    ]);
+    h.fieldEvidenceFindMany.mockResolvedValue([
+      {
+        field: "external-link:Booknode",
+        source: "booknode",
+        value: "Voir la fiche",
+        sourceUrl: "https://booknode.com/super_picsou_geant_n_1_0379552",
+        priority: 34,
+        confidence: null,
+      },
+      {
+        field: "external-link:Bédéthèque",
+        source: "bedetheque",
+        value: "Voir la fiche",
+        sourceUrl:
+          "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-1-Numero-1-478946.html",
+        priority: 34,
+        confidence: null,
+      },
+    ]);
+    h.metadataFindUnique.mockResolvedValue({
+      facts: JSON.stringify([
+        {
+          kind: "external-link",
+          label: "eBay",
+          value: "Voir la fiche",
+          url: "https://www.ebay.fr/itm/298306332354",
+          source: "eBay",
+        },
+      ]),
+    });
+    h.metadataUpdate.mockResolvedValue({});
+
+    await repairProviderExternalLinksForItem("item-picsou");
+
+    expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);
+    expect(
+      payload
+        .filter((fact: { kind: string }) => fact.kind === "external-link")
+        .map((fact: { source?: string }) => fact.source)
+        .sort(),
+    ).toEqual(["bedetheque", "booknode", "eBay"]);
+  });
+
+  it("reconciles item-scoped price offers when item has no barcode", async () => {
+    h.itemFindUnique.mockResolvedValue({
+      id: "item-picsou",
+      name: "Black Stories",
+      barcode: "",
+      metadataId: "meta-picsou",
+    });
+    h.priceOfferFindMany.mockResolvedValue([
+      {
+        source: "okkazeo",
+        sourceUrl: "https://www.okkazeo.com/jeu/black-stories/123.html",
+        rawValue: null,
+      },
+    ]);
+    h.metadataFindUnique.mockResolvedValue({ facts: JSON.stringify([]) });
+    h.metadataUpdate.mockResolvedValue({});
+
+    await repairProviderExternalLinksForItem("item-picsou");
+
+    expect(h.barcodeCacheFindUnique).not.toHaveBeenCalled();
+    expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);
+    expect(
+      payload.some(
+        (fact: { source?: string; url?: string }) =>
+          fact.kind === "external-link" &&
+          fact.source === "okkazeo" &&
+          fact.url?.includes("okkazeo.com"),
       ),
     ).toBe(true);
   });

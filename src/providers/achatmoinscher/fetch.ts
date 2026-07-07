@@ -1,4 +1,6 @@
 import axios from "axios";
+
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
@@ -198,7 +200,7 @@ async function extractBestCover(
       }
     } catch {
       try {
-        const res = await axios.get(url, {
+        const res = await fetchGetWithFlareFallback(url, {
           headers: {
             "User-Agent": HEADERS["User-Agent"],
             Referer: "https://www.achatmoinscher.com/",
@@ -292,7 +294,7 @@ async function fetchAchatMoinsCherProductPrices(
 ): Promise<AchatMoinsCherPrices | null> {
   const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
   console.log(`[AchatMoinsCher Prices] Fetching product page: ${productUrl}`);
-  const getRes = await axios.get(productUrl, {
+  const getRes = await fetchGetWithFlareFallback(productUrl, {
     headers: HEADERS,
     timeout: 5000,
   });
@@ -385,7 +387,7 @@ async function fetchAchatMoinsCherProductById(
 ): Promise<AchatMoinsCherProduct | null> {
   const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
   console.log(`[AchatMoinsCher] Fetching product page: ${productUrl}`);
-  const getRes = await axios.get(productUrl, {
+  const getRes = await fetchGetWithFlareFallback(productUrl, {
     headers: HEADERS,
     timeout: 5000,
   });
@@ -402,7 +404,7 @@ export async function fetchFromAchatMoinsCherByQuery(
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
   console.log(`[AchatMoinsCher] Querying search: ${cleanedQuery}`);
-  const searchRes = await axios.get(searchUrl, {
+  const searchRes = await fetchGetWithFlareFallback(searchUrl, {
     headers: HEADERS,
     timeout: 5000,
   });
@@ -444,7 +446,7 @@ async function fetchPricesFromAchatMoinsCherByName(
 
   const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
   console.log(`[AchatMoinsCher Prices] Querying search: ${cleanedQuery}`);
-  const searchRes = await axios.get(searchUrl, {
+  const searchRes = await fetchGetWithFlareFallback(searchUrl, {
     headers: HEADERS,
     timeout: 5000,
   });

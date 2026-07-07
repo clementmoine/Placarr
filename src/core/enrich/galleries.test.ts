@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  hasDetailMetadataAttachments,
   hasGameMediaGalleryAttachment,
   hasMusicGalleryAttachment,
   isMissingGameMediaGallery,
@@ -92,6 +93,16 @@ describe("isMissingMusicGallery", () => {
   });
 });
 
+describe("hasDetailMetadataAttachments", () => {
+  it("detects shelf snapshots that omit attachment galleries", () => {
+    expect(hasDetailMetadataAttachments({ facts: [] })).toBe(false);
+    expect(hasDetailMetadataAttachments({ attachments: [] })).toBe(true);
+    expect(
+      hasDetailMetadataAttachments({ attachments: [{ type: "cover" }] }),
+    ).toBe(true);
+  });
+});
+
 describe("isMissingBookGallery", () => {
   it("returns false when a stamped retailer gallery attachment is present", () => {
     expect(
@@ -113,6 +124,15 @@ describe("isMissingBookGallery", () => {
         { type: "cover", isGameMediaGallerySource: false },
       ]),
     ).toBe(true);
+  });
+
+  it("treats stamped bedetheque/booknode gallery attachments as sufficient", () => {
+    expect(
+      isMissingBookGallery("books", "9791035505677", [
+        { type: "cover", source: "bedetheque", isBookGallerySource: true },
+        { type: "image", source: "booknode", isBookGallerySource: true },
+      ]),
+    ).toBe(false);
   });
 
   it("ignores non-book types", () => {

@@ -147,6 +147,7 @@ export const ebayModule: ProviderModule = {
     imageScoreAdjustment: -280,
     isSecondary: true,
     websiteUrl: "https://www.ebay.fr/",
+    sourceAliases: ["PicClick", "picclick"],
     marketplaceSearchPriceSource: true,
     apiKeyDashboardUrl: "https://developer.ebay.com/my/keys",
     mappingProbeRetry: true,

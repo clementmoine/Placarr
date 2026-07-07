@@ -197,14 +197,18 @@ function mapBooknodeMetadata(
   ];
 
   if (book.genres?.length) {
-    facts.push({
-      kind: "genre",
-      label: "Thèmes Booknode",
-      value: book.genres.join(" • "),
-      source: "booknode",
-      confidence: 0.58,
-      priority: 26,
-    });
+    for (const theme of book.genres) {
+      const trimmed = theme.trim();
+      if (!trimmed) continue;
+      facts.push({
+        kind: "tag",
+        label: "Thème",
+        value: trimmed,
+        source: "booknode",
+        confidence: 0.58,
+        priority: 26,
+      });
+    }
   }
   if (book.publisher) {
     facts.push({
@@ -244,9 +248,7 @@ function mapBooknodeMetadata(
     facts.push({
       kind: "series",
       label: "Série",
-      value: book.seriesPosition
-        ? `${book.seriesName} n°${book.seriesPosition}`
-        : book.seriesName,
+      value: book.seriesName,
       url: book.seriesUrl,
       source: "booknode",
       confidence: 0.64,
@@ -292,6 +294,7 @@ export const booknodeModule: ProviderModule = {
     remoteImageFallback: true,
     remoteImageFlareTimeoutMs: 20_000,
     bookCoverPriority: "primary",
+    bookGallerySource: true,
     requiresTitleAlignment: true,
     websiteUrl: "https://booknode.com/",
     notes:

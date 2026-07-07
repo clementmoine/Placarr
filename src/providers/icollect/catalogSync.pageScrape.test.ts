@@ -179,4 +179,55 @@ describe("runICollectPageScrapeBatch", () => {
     expect(maxInFlight).toBe(2);
     expect(h.fetchICollectVideoGameItem).toHaveBeenCalledTimes(2);
   });
+
+  it("does not wrap to the first item before a pass completes", async () => {
+    const db = await ensureICollectIndex();
+    expect(db).not.toBeNull();
+    if (!db) return;
+
+    rememberICollectBarcodeMappings(db, [
+      {
+        barcodeKey: "111",
+        rawBarcode: "111",
+        itemId: "1",
+        itemUrl: "https://www.icollecteverything.com/db/item/videogame/1/",
+      },
+      {
+        barcodeKey: "222",
+        rawBarcode: "222",
+        itemId: "2",
+        itemUrl: "https://www.icollecteverything.com/db/item/videogame/2/",
+      },
+      {
+        barcodeKey: "333",
+        rawBarcode: "333",
+        itemId: "3",
+        itemUrl: "https://www.icollecteverything.com/db/item/videogame/3/",
+      },
+    ]);
+
+    writeICollectIndexMeta(db, "sync_page_cursor", "2");
+    writeICollectIndexMeta(db, "sync_page_backoff_until", "");
+
+    h.fetchICollectVideoGameItem.mockResolvedValue({
+      itemId: "3",
+      itemUrl: "https://www.icollecteverything.com/db/item/videogame/3/",
+      title: "Third Game",
+      catalogSource: "page",
+    });
+
+    const result = await runICollectPageScrapeBatch(db, {
+      batchSize: 0,
+      delayMs: 0,
+      tickBudgetMs: 60_000,
+    });
+
+    expect(result.scraped).toBe(1);
+    expect(result.passCompleted).toBe(true);
+    expect(h.fetchICollectVideoGameItem).toHaveBeenCalledTimes(1);
+    expect(h.fetchICollectVideoGameItem).toHaveBeenCalledWith(
+      "https://www.icollecteverything.com/db/item/videogame/3/",
+      expect.any(Object),
+    );
+  });
 });

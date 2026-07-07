@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
+
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
@@ -149,7 +151,7 @@ async function fetchShopifySearchHandles(
   url.searchParams.set("q", searchValue);
   url.searchParams.set("type", "product");
 
-  const response = await axios.get(url.toString(), {
+  const response = await fetchGetWithFlareFallback(url.toString(), {
     headers: HTML_HEADERS,
     timeout: 12000,
     validateStatus: (status) => status >= 200 && status < 500,

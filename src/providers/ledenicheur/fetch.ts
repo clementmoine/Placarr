@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
+
 import {
   barcodesEquivalent,
   normalizeProductBarcode,
@@ -384,14 +386,17 @@ async function fetchLeDenicheurProductPageHtml(
   productId: number,
 ): Promise<string | null> {
   try {
-    const response = await axios.get(`${BASE_URL}/product.php?p=${productId}`, {
-      headers: {
-        "User-Agent": HEADERS["User-Agent"],
-        "Accept-Language": HEADERS["Accept-Language"],
+    const response = await fetchGetWithFlareFallback(
+      `${BASE_URL}/product.php?p=${productId}`,
+      {
+        headers: {
+          "User-Agent": HEADERS["User-Agent"],
+          "Accept-Language": HEADERS["Accept-Language"],
+        },
+        timeout: 6000,
+        validateStatus: (status) => status >= 200 && status < 500,
       },
-      timeout: 6000,
-      validateStatus: (status) => status >= 200 && status < 500,
-    });
+    );
     if (response.status >= 400 || typeof response.data !== "string") {
       return null;
     }

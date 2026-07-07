@@ -1,3 +1,10 @@
+/** Detail API always returns `attachments` (possibly empty); shelf/list snapshots omit it. */
+export function hasDetailMetadataAttachments(
+  metadata: { attachments?: unknown } | null | undefined,
+): boolean {
+  return Array.isArray(metadata?.attachments);
+}
+
 export type GameMediaGalleryAttachment = {
   type: string;
   isGameMediaGallerySource?: boolean;

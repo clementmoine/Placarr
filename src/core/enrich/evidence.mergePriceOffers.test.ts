@@ -100,4 +100,25 @@ describe("mergePriceOffers", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0].source).toBe("PriceCharting");
   });
+
+  it("rewrites legacy PicClick rows to eBay when merging", async () => {
+    prismaMock.priceOffer.findMany.mockResolvedValue([
+      dbOffer({
+        source: "PicClick",
+        condition: "used",
+        priceCents: 1100,
+        sourceUrl:
+          "https://picclick.fr/Super-Picsou-geant-magazine-n1-298306332354.html",
+      }),
+    ]);
+
+    const merged = await mergePriceOffers({ barcodeCacheId: 42 }, []);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.source).toBe("eBay");
+    expect(merged[0]?.sourceUrl).toBe("https://www.ebay.fr/itm/298306332354");
+
+    const rows = lastCreatedRows();
+    expect(rows[0]?.source).toBe("eBay");
+  });
 });

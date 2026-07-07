@@ -25,6 +25,7 @@ import {
   fetchPrestashopGallery,
   mapPrestashopSearchProduct,
   prestashopImageId,
+  PrestashopAccessDeniedError,
   searchPrestashopHits,
   searchPrestashopProduct,
 } from "./fetch";
@@ -362,6 +363,7 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
 
       return null;
     } catch (error) {
+      if (error instanceof PrestashopAccessDeniedError) throw error;
       console.error(`[${config.label}] Metadata lookup failed:`, error);
       return null;
     }

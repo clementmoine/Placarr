@@ -72,6 +72,7 @@ import {
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import {
   hasGameMediaGalleryAttachment,
+  hasDetailMetadataAttachments,
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
@@ -98,7 +99,10 @@ import {
   shelfPath,
 } from "@/lib/routing/slugs";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
-import { seriesSiblings } from "@/core/enrich/titles/series";
+import {
+  resolveSeriesDisplayTitle,
+  seriesSiblings,
+} from "@/core/enrich/titles/series";
 import { FRANCHISE_FACT_KIND } from "@/core/enrich/facts/franchiseFact";
 import {
   invalidateItemQueries,
@@ -107,6 +111,7 @@ import {
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { getEstimatedItemValueCents } from "@/core/collect/value";
+import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 
 import {
   type DetailFact,
@@ -524,21 +529,26 @@ function isPrimaryInfoFact(fact: DetailFact) {
 function isDetailTableFact(fact: DetailFact) {
   return [
     "artist",
-    "category",
-    "cooperative",
-    "family",
-    "franchise",
-    "genre",
-    "mechanic",
-    "modes",
-    "platform",
-    "store",
-    "tag",
-  ].includes(fact.kind);
+      "category",
+      "cooperative",
+      "family",
+      "format",
+      "franchise",
+      "genre",
+      "mechanic",
+      "modes",
+      "platform",
+      "series",
+      "store",
+      "tag",
+      "weight",
+    ].includes(fact.kind);
 }
 
 function isTagLikeDetailFact(fact: DetailFact) {
-  return ["tag", "category", "mechanic", "family", "modes"].includes(fact.kind);
+  return ["tag", "category", "genre", "mechanic", "family", "modes"].includes(
+    fact.kind,
+  );
 }
 
 function splitTagFactValue(value: string) {
@@ -975,6 +985,8 @@ function localizeDisplayFact(
     pages: t("items.info.pages"),
     playtime: t("items.info.playtime"),
     tracks: t("items.info.tracks"),
+    tag: t("items.info.themes"),
+    genre: t("items.info.themes"),
   };
 
   if (fact.value.includes("|")) {
@@ -1097,7 +1109,7 @@ export default function ItemDetailsPage() {
     queryFn: () => getShelf(shelfId),
   });
 
-  const { data: item, isPending } = useQuery({
+  const { data: item, isPending, isFetched, isPlaceholderData } = useQuery({
     queryKey: ["shelf", shelfId, "items", itemId],
     queryFn: () => getItem(itemId, shelfId),
     initialData: () => {
@@ -1472,6 +1484,8 @@ export default function ItemDetailsPage() {
     const attachments = Array.isArray(metadata.attachments)
       ? metadata.attachments
       : [];
+    const canEvaluateGalleryRefresh =
+      hasDetailMetadataAttachments(metadata);
     const lastFetched = metadata.lastFetched
       ? new Date(metadata.lastFetched)
       : null;
@@ -1504,6 +1518,7 @@ export default function ItemDetailsPage() {
     const isBeforeHltbCompletionEnrichment =
       !hasValidLastFetched || lastFetched < HLTB_COMPLETION_FEATURE_RELEASE;
     const isMissingGameEnrichment =
+      canEvaluateGalleryRefresh &&
       shelf?.type === "games" &&
       isBeforeCurrentEnrichment &&
       (!hasHowLongToBeat || !hasGameMediaGallery || !hasRating);
@@ -1517,12 +1532,15 @@ export default function ItemDetailsPage() {
       hasHowLongToBeat &&
       !hasHowLongToBeatCompletion;
     const isMissingMusicGalleryRefresh =
+      canEvaluateGalleryRefresh &&
       shelf?.type === "musics" &&
       isMissingMusicGallery("musics", item?.barcode, attachments);
     const isMissingBookGalleryRefresh =
+      canEvaluateGalleryRefresh &&
       shelf?.type === "books" &&
       isMissingBookGallery("books", item?.barcode, attachments);
     const isMissingGameGalleryRefresh =
+      canEvaluateGalleryRefresh &&
       shelf?.type === "games" &&
       isMissingGameMediaGallery("games", item?.barcode, attachments);
     return {
@@ -1541,11 +1559,18 @@ export default function ItemDetailsPage() {
   }, [canEdit, isAuthenticated, isGuest, item, shelf?.name, shelf?.type]);
 
   useEffect(() => {
+    autoMetadataRefreshAttemptedRef.current = false;
+  }, [itemId]);
+
+  useEffect(() => {
     const shouldAutoRefreshMetadata =
       metadataRefreshNeed.needsRefresh ||
       (metadataRefreshNeed.staleAfterMs !== null &&
         Date.now() > metadataRefreshNeed.staleAfterMs);
     if (
+      item?.id !== itemId ||
+      !isFetched ||
+      isPlaceholderData ||
       !shouldAutoRefreshMetadata ||
       autoMetadataRefreshAttemptedRef.current ||
       isPending
@@ -1555,7 +1580,15 @@ export default function ItemDetailsPage() {
 
     autoMetadataRefreshAttemptedRef.current = true;
     refreshMetadata();
-  }, [isPending, refreshMetadata, metadataRefreshNeed]);
+  }, [
+    isFetched,
+    isPending,
+    isPlaceholderData,
+    item?.id,
+    itemId,
+    refreshMetadata,
+    metadataRefreshNeed,
+  ]);
 
   const heroImage = useMemo(() => {
     return (
@@ -1618,6 +1651,20 @@ export default function ItemDetailsPage() {
   // lone numbered title never renders a phantom series. seriesBaseKey strips the
   // marker + number, so padded shelf names and the unpadded detail name align.
   const resolvedItemId = item?.id;
+
+  const itemDisplayName = useMemo(() => {
+    if (!item?.name || !item.id) return item?.name;
+    const canonicalTitle = item.storedName ?? item.name;
+    if (!shelf?.items?.length) return canonicalTitle;
+    const entries = (shelf.items as ItemWithMetadata[]).map((shelfItem) => ({
+      id: shelfItem.id,
+      title:
+        shelfItem.id === item.id
+          ? canonicalTitle
+          : (shelfItem.storedName ?? shelfItem.name ?? ""),
+    }));
+    return resolveSeriesDisplayTitle(item.id, entries, canonicalTitle);
+  }, [item, shelf?.items]);
 
   const seriesVolumes = useMemo(() => {
     if (!shelf?.items || !item || !resolvedItemId) return [];
@@ -1857,16 +1904,31 @@ export default function ItemDetailsPage() {
       providerLinkFacts: providerLinks,
     };
   }, [item?.metadata, locale, shelf?.name, shelf?.type, t]);
+  const catalogEstimateDisplay = useMemo(() => {
+    const estimateObservation = prices?.priceObservations?.find(
+      (observation) =>
+        observation.condition === "estimated" &&
+        (observation.catalogEstimateMinCents != null ||
+          observation.catalogEstimateMaxCents != null ||
+          observation.catalogEstimateDisplayValue),
+    );
+    if (!estimateObservation) return null;
+    return formatCatalogEstimateObservationRange(estimateObservation, locale);
+  }, [locale, prices?.priceObservations]);
+
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
-    if (formattedCopyValue) {
-      const priceLabel = priceSourceSummary.isReferencePriceOnly
-        ? t("items.info.estimatedValue")
-        : t("items.info.observedPrice");
+    const priceDisplayValue = formattedCopyValue ?? catalogEstimateDisplay;
+
+    if (priceDisplayValue) {
+      const priceLabel =
+        formattedCopyValue && !priceSourceSummary.isReferencePriceOnly
+          ? t("items.info.observedPrice")
+          : t("items.info.estimatedValue");
       facts.push({
         kind: "estimated-value",
         label: priceLabel,
-        value: formattedCopyValue,
+        value: priceDisplayValue,
         url: priceChartingLink?.url,
         sourceCount: priceSourceSummary.count,
         sourceNames: priceSourceSummary.sourceDisplayNames,
@@ -1876,6 +1938,7 @@ export default function ItemDetailsPage() {
     facts.push(...usefulFacts.filter(isPrimaryInfoFact));
     return facts.sort(sortDetailFacts);
   }, [
+    catalogEstimateDisplay,
     formattedCopyValue,
     priceChartingLink?.url,
     priceSourceSummary.count,
@@ -1902,7 +1965,8 @@ export default function ItemDetailsPage() {
   }, [item?.metadata]);
 
   const showInfoStrip =
-    primaryInfoFacts.length > 0 || Boolean(prices && !formattedCopyValue);
+    primaryInfoFacts.length > 0 ||
+    Boolean(prices && !formattedCopyValue && !catalogEstimateDisplay);
 
   const shelfHref = shelf ? shelfPath(shelf) : `/shelves/${shelfId}`;
   const backToShelfLabel = shelf?.name
@@ -1922,7 +1986,7 @@ export default function ItemDetailsPage() {
         </div>
       )}
 
-      {prices && !formattedCopyValue && (
+      {prices && !formattedCopyValue && !catalogEstimateDisplay && (
         <span className="text-xs text-zinc-500 italic">
           {t("items.noPricesFound")}
         </span>
@@ -2039,7 +2103,7 @@ export default function ItemDetailsPage() {
                   <>
                     <RemoteImage
                       src={coverImage}
-                      alt={item?.name ?? ""}
+                      alt={itemDisplayName ?? ""}
                       width={768}
                       height={1152}
                       sizes="(max-width: 768px) 240px, 480px"
@@ -2073,7 +2137,7 @@ export default function ItemDetailsPage() {
               <div className="flex-1 w-full flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
                   <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground dark:text-white leading-none">
-                    {item?.name}
+                    {itemDisplayName}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {isMetadataBusy && (
@@ -2286,6 +2350,7 @@ export default function ItemDetailsPage() {
                           {fact.value}
                         </span>
                       )}
+                      <FactSourceFooter fact={fact} />
                     </div>
                   ))}
 

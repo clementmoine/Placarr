@@ -153,11 +153,13 @@ describe("readItemPrices", () => {
     });
     h.shouldRefreshPriceCache.mockReturnValue(true);
 
-    await readItemPrices({
+    const prices = await readItemPrices({
       ...CONTEXT,
       metadataRefreshStartedAt: new Date().toISOString(),
     });
 
+    expect(prices?.priceUsed).toBe(999);
+    expect(h.getCachedItemPrices).toHaveBeenCalled();
     expect(h.after).not.toHaveBeenCalled();
   });
 

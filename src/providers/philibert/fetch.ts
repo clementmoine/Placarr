@@ -1,4 +1,6 @@
 import axios from "axios";
+
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import sharp from "sharp";
 import { decode as decodeHTMLEntities } from "html-entities";
 
@@ -308,7 +310,7 @@ export async function fetchPhilibertReviews(
   productId: string,
 ): Promise<PhilibertReview[]> {
   try {
-    const response = await axios.get(
+    const response = await fetchGetWithFlareFallback(
       `${BASE_URL}/fr/ajax/product/${productId}/reviews`,
       {
         headers: {
@@ -470,11 +472,14 @@ export async function searchPhilibertHits(
   if (!searchTerm) return [];
 
   try {
-    const response = await axios.get(`${BASE_URL}/fr/recherche`, {
-      params: { search_query: searchTerm },
-      headers: HEADERS,
-      timeout: 10000,
-    });
+    const response = await fetchGetWithFlareFallback(
+      `${BASE_URL}/fr/recherche`,
+      {
+        params: { search_query: searchTerm },
+        headers: HEADERS,
+        timeout: 10000,
+      },
+    );
     const hits = parseProductLinks(response.data, cleanedBarcode || undefined);
     return hits.slice(0, hitLimit);
   } catch (error) {
@@ -494,7 +499,7 @@ export async function searchPhilibert(
 export async function fetchPhilibertProduct(
   url: string,
 ): Promise<PhilibertProduct> {
-  const response = await axios.get(url, {
+  const response = await fetchGetWithFlareFallback(url, {
     headers: HEADERS,
     timeout: 10000,
   });

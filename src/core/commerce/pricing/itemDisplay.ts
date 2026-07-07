@@ -16,6 +16,7 @@ import {
   type RefreshBarcodePricesInput,
   type RefreshItemPricesInput,
 } from "@/core/commerce/pricing/resolver";
+import { mergeMetadataPricesIntoResult } from "@/core/commerce/pricing/metadataPriceObservations";
 import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProviderExternalLinks";
 
 export type ItemPricesContext = {
@@ -148,7 +149,7 @@ async function readCachedItemPrices(
 ): Promise<BarcodePricesResult | null> {
   const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
   if (!cleanedBarcode) {
-    if (options.summaryOnly) return null;
+    // Item-scoped cache is DB-only — still serve it during metadata refresh.
     return getCachedItemPrices(context.shelfType, {
       itemId: context.id,
       metadataId: context.metadataId,
@@ -323,6 +324,19 @@ function hasPriceSummary(
   );
 }
 
+function finalizeItemPrices(
+  context: ItemPricesContext,
+  prices: BarcodePricesResult | null,
+): BarcodePricesResult | null {
+  return mergeMetadataPricesIntoResult({
+    shelfType: context.shelfType,
+    shelfName: context.shelfName,
+    itemNames: primaryItemNamesFromContext(context),
+    metadataFacts: context.metadataFacts,
+    prices,
+  });
+}
+
 function withMetadataPriceFallback(
   context: ItemPricesContext,
   prices: BarcodePricesResult | null,
@@ -352,9 +366,12 @@ export async function readItemPrices(
     if (shouldRefreshPriceCache(context.shelfType, cached) && !deferNetwork) {
       scheduleItemPricesRefresh(context);
     }
-    return withMetadataPriceFallback(
+    return finalizeItemPrices(
       context,
-      alignPricesForContext(context, cached),
+      withMetadataPriceFallback(
+        context,
+        alignPricesForContext(context, cached),
+      ),
     );
   }
 
@@ -362,17 +379,26 @@ export async function readItemPrices(
     if (!deferNetwork) {
       scheduleItemPricesRefresh(context);
     }
-    return withMetadataPriceFallback(context, null);
+    return finalizeItemPrices(
+      context,
+      withMetadataPriceFallback(context, null),
+    );
   }
 
   if (deferNetwork) {
-    return withMetadataPriceFallback(context, null);
+    return finalizeItemPrices(
+      context,
+      withMetadataPriceFallback(context, null),
+    );
   }
 
   const fresh = await refreshItemPricesFromContext(context);
-  return withMetadataPriceFallback(
+  return finalizeItemPrices(
     context,
-    alignPricesForContext(context, fresh),
+    withMetadataPriceFallback(
+      context,
+      alignPricesForContext(context, fresh),
+    ),
   );
 }
 
@@ -540,6 +566,8 @@ export function priceSummaryFromMetadataFacts(
 
     const cents = parseEuroCents(fact.value);
     if (cents == null) continue;
+    if (/\s+à\s+/i.test(fact.value)) continue;
+    if (/^estimation$/i.test((fact.label ?? "").trim())) continue;
 
     const bucket = factConditionBucket(fact);
     if (bucket === "new") newPrices.push(cents);

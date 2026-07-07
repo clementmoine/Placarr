@@ -20,14 +20,14 @@
 1. ~~`picclick` — probe listing souvent `empty` (timeout scrape)~~ **hint `blocked` + retry** (`runMappingProbe`)
 2. ~~`screenscraper` — probe `empty` si quota API dépassé~~ **hint `blocked` quota/credentials** (`runMappingProbe`)
 3. ~~`thegamesdb` — probe `error` sans `THEGAMESDB_API_KEY` ou quota dépassé~~ **hint `blocked` clé/quota** (`runMappingProbe`)
-4. **`chasseauxlivres`** — `obs:unknown` / `map:partial` : stabiliser probe observations (scrape live + FlareSolverr si besoin)
-5. **`apriloshop`** — `obs:unknown` / `map:empty` : IQIT search OK en prod mais probe sample vide — vérifier index EAN + sample probe
+4. ~~`chasseauxlivres` — `obs:unknown` / `map:partial`~~ **fait** — metadata adapter + observations (`map:ok`), gate EAN page vs slug `/prix/` interne, hint FlareSolverr
+5. ~~`apriloshop`~~ — **retiré** — search PrestaShop 403 côté boutique (non contournable proprement) ; jeux vidéo couverts par Chipweld / Tokyo Game Story / NetGamesRetro
 
 **Hors scope adapter metadata** (probe custom seulement — normal) :
 `freakxy`, `ledenicheur`, `scandex`, `smartoys`
 
-**Providers avec adapter + observations** : inclut désormais `chasseauxlivres`
-(`obs:enabled`, probe listing souvent `empty` côté scrape), `bedetheque`, `booknode`,
+**Providers avec adapter + observations** : inclut `chasseauxlivres`
+(`obs:enabled`, `map:ok` au audit mapping), `bedetheque`, `booknode`,
 tous les PrestaShop/Shopify, etc.
 
 Commandes utiles :
@@ -135,8 +135,8 @@ Règles persistantes dans `.cursor/rules/` :
 | ~~**PicClick probe timeout**~~          | **fait** — retry probe + `blocked` sur timeout scrape                                              | `picclick/index.ts`        |
 | ~~**ScreenScraper probe quota**~~       | **fait** — `blocked` si quota/credentials ; timeout 15s + retry search ; health via `jeuRecherche` | `screenscraper/`           |
 | ~~**TheGamesDB audit**~~                | **fait** — `blocked` clé absente ou quota + `mappingProbeConfigHint`                               | `thegamesdb/index.ts`      |
-| **Chasse aux Livres probe `partial`**   | **Ouvert** — `obs:unknown` au audit mapping : smoke scrape live, observations probe, hint probe si FlareSolverr requis | `chasseauxlivres/`         |
-| **Apriloshop probe `empty`**            | **Ouvert** — IQIT en prod OK mais sample probe vide : index EAN IQIT, `additionalSamples`, re-run `pnpm providers:audit:mapping` | `prestashop/` (apriloshop) |
+| ~~**Chasse aux Livres probe `partial`**~~ | **fait** — metadata adapter `map:ok`, observations typées ; gate EAN page vs slug interne ; hint FlareSolverr | `chasseauxlivres/`         |
+| ~~**Apriloshop**~~                        | **retiré** — search/controller 403 côté boutique ; stack IQIT couverte par Chipweld | —                          |
 
 ### P2 — Ranking sans biais (gros chantier)
 
@@ -319,7 +319,7 @@ Site sur **IQIT Search** ; AJAX PrestaShop natif renvoie `products: 0`.
 
 **Reste** : ~~`searchStrategy: iqit`~~ fait ; vérifier index barcode IQIT en prod si résolution EAN échoue encore (enrichissement page produit).
 
-Pas d'autre boutique PrestaShop à migrer (audit plateformes 2026-06-22 : seul apriloshop = PrestaShop+IQIT).
+Pas d'autre boutique PrestaShop IQIT à migrer ; Apriloshop retiré (search 403). Chipweld = référence IQIT jeux.
 
 ### Open studies
 

@@ -1,4 +1,6 @@
 import axios from "axios";
+
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import type { AttachmentType } from "@prisma/client";
@@ -788,7 +790,7 @@ export function parseChocoBonPlanProductPage(html: string): {
 export async function fetchChocoBonPlanProductPage(
   url: string,
 ): Promise<ReturnType<typeof parseChocoBonPlanProductPage>> {
-  const response = await axios.get(url, {
+  const response = await fetchGetWithFlareFallback(url, {
     headers: HEADERS,
     timeout: 8000,
     validateStatus: (status) => status >= 200 && status < 400,

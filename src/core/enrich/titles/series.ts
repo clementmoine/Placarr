@@ -101,6 +101,15 @@ export function seriesDisplayTitles(
   return display;
 }
 
+/** Series-aware display title for one item within a shelf context. */
+export function resolveSeriesDisplayTitle(
+  itemId: string,
+  entries: SeriesTitleEntry[],
+  fallback: string,
+): string {
+  return seriesDisplayTitles(entries).get(itemId) ?? fallback;
+}
+
 /**
  * Items belonging to the same series as `title` (same base key, each carrying a
  * volume marker), sorted by ascending volume. Powers the "other volumes in this

@@ -1,4 +1,4 @@
-import { metadataProbe } from "@/lib/dev/mappingProbe";
+import { metadataProbe, probeErrorResult } from "@/lib/dev/mappingProbe";
 import {
   collectObjectMappingSignals,
   mergeMappingSignalSets,
@@ -44,6 +44,7 @@ export type ScrapeCatalogRetailerConfig = {
   capabilities?: Capability[];
   sample?: { name: string; barcode: string };
   metadataInfo?: ScrapeCatalogMetadataInfo;
+  mappingProbeConfigHint?: string;
 };
 
 export type ScrapeCatalogProduct = {
@@ -103,6 +104,9 @@ export function createScrapeCatalogModule<
         canonical: false,
         websiteUrl: config.baseUrl,
         notes: `Recherche ${deps.platformLabel} par EAN (${config.label}).`,
+        ...(config.mappingProbeConfigHint
+          ? { mappingProbeConfigHint: config.mappingProbeConfigHint }
+          : {}),
         ...boardGameShopDefaults,
         ...config.metadataInfo,
       },
@@ -167,44 +171,54 @@ export function createScrapeCatalogModule<
         context: { name: sample.name, barcode: sample.barcode },
       },
       runMappingProbe: async () => {
-        const metadata = await resolver({
-          name: sample.name,
-          barcode: sample.barcode,
-        });
-        if (metadata) return metadataProbe(metadata);
+        try {
+          const metadata = await resolver({
+            name: sample.name,
+            barcode: sample.barcode,
+          });
+          if (metadata) return metadataProbe(metadata);
 
-        const product = await deps.searchProduct(
-          config,
-          sample.name,
-          sample.barcode,
-        );
-        if (!product) {
-          return {
-            rawKeys: [],
-            mappedKeys: [],
-            unusedKeys: [],
-            attachmentsCount: 0,
-            factsCount: 0,
-            example: null,
-            statusHint: "empty",
-            reason: `Aucun produit ${config.label} trouvé`,
-          };
+          const product = await deps.searchProduct(
+            config,
+            sample.name,
+            sample.barcode,
+          );
+          if (!product) {
+            return {
+              rawKeys: [],
+              mappedKeys: [],
+              unusedKeys: [],
+              attachmentsCount: 0,
+              factsCount: 0,
+              example: null,
+              statusHint: "empty",
+              reason: `Aucun produit ${config.label} trouvé`,
+            };
+          }
+          return metadataProbe({
+            title: product.title,
+            description: product.description,
+            imageUrl: product.imageUrl,
+            barcode: product.barcode,
+            facts: product.priceCents
+              ? [
+                  {
+                    kind: "price",
+                    label: "Prix",
+                    value: String(product.priceCents),
+                  },
+                ]
+              : undefined,
+          });
+        } catch (error) {
+          const { PrestashopAccessDeniedError } = await import(
+            "@/providers/prestashop/fetch"
+          );
+          if (error instanceof PrestashopAccessDeniedError) {
+            return probeErrorResult(error.message, "blocked");
+          }
+          throw error;
         }
-        return metadataProbe({
-          title: product.title,
-          description: product.description,
-          imageUrl: product.imageUrl,
-          barcode: product.barcode,
-          facts: product.priceCents
-            ? [
-                {
-                  kind: "price",
-                  label: "Prix",
-                  value: String(product.priceCents),
-                },
-              ]
-            : undefined,
-        });
       },
       collectMappingRawKeys: async (context) => {
         const ctx = probeContextOrDefault(context, {

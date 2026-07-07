@@ -65,6 +65,15 @@ describe("seriesDisplayTitles", () => {
     expect(display.get("v3")).toBe("Super Picsou Géant n°102");
   });
 
+  it("pads n°01 to n°001 when the series reaches three-digit volumes", () => {
+    const display = seriesDisplayTitles([
+      { id: "v1", title: "Super Picsou Géant n°01" },
+      { id: "v163", title: "Super Picsou Géant n°163" },
+    ]);
+    expect(display.get("v1")).toBe("Super Picsou Géant n°001");
+    expect(display.get("v163")).toBe("Super Picsou Géant n°163");
+  });
+
   it("pads an odd-marker member but keeps its own marker (editorial preserved)", () => {
     const entries = [
       { id: "a", title: "Spirou n°1" },

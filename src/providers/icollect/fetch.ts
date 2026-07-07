@@ -1,4 +1,6 @@
 import axios from "axios";
+
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { Readable } from "node:stream";
 import type { DatabaseSync } from "node:sqlite";
@@ -567,7 +569,7 @@ function touchICollectCatalogSync(): void {
 
 async function listVideoGameSitemapUrls(): Promise<string[]> {
   if (cachedVideoGameSitemapUrls) return cachedVideoGameSitemapUrls;
-  const response = await axios.get<string>(ICE_SITEMAP_MASTER, {
+  const response = await fetchGetWithFlareFallback(ICE_SITEMAP_MASTER, {
     headers: ICE_HEADERS,
     timeout: ICE_TIMEOUT_MS,
     validateStatus: (status) => status >= 200 && status < 400,
@@ -681,7 +683,7 @@ export async function fetchICollectVideoGameItem(
     }
   }
 
-  const response = await axios.get<string>(itemUrl, {
+  const response = await fetchGetWithFlareFallback(itemUrl, {
     headers: ICE_HEADERS,
     timeout: options?.timeoutMs ?? ICE_TIMEOUT_MS,
     validateStatus: (status) => status >= 200 && status < 400,
@@ -755,7 +757,7 @@ export async function fetchICollectMetadataByBarcode(
 
 export async function pingICollect(): Promise<boolean> {
   try {
-    const response = await axios.get(`${ICE_BASE}/games/`, {
+    const response = await fetchGetWithFlareFallback(`${ICE_BASE}/games/`, {
       headers: ICE_HEADERS,
       timeout: ICE_TIMEOUT_MS,
       validateStatus: (status) => status >= 200 && status < 400,

@@ -8,6 +8,8 @@ import {
   looksLikeProviderProductPageUrl,
   mirrorSourceUrlFactsAsExternalLinks,
   pickBestProviderDocumentUrl,
+  purgeContradictedProviderExternalLinks,
+  reconcileExternalLinksFromPriceOffers,
 } from "@/core/enrich/providerExternalLinks";
 import { makeObservationUsage } from "@/core/enrich/observations";
 import type { MetadataFact } from "@/types/metadataProvider";
@@ -336,6 +338,99 @@ describe("externalLinkFactsFromPriceOffers", () => {
 
     expect(facts).toHaveLength(1);
     expect(facts[0]?.url).toContain("827912079678");
+  });
+});
+
+describe("purgeContradictedProviderExternalLinks", () => {
+  it("keeps name-database catalog links when slug ids would false-positive", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "Booknode",
+        value: "Voir la fiche",
+        url: "https://booknode.com/super_picsou_geant_n_1_0379552",
+        source: "booknode",
+      },
+      {
+        kind: "external-link",
+        label: "Bédéthèque",
+        value: "Voir la fiche",
+        url: "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-1-Numero-1-478946.html",
+        source: "bedetheque",
+      },
+    ];
+
+    const kept = purgeContradictedProviderExternalLinks(
+      facts,
+      "",
+      "Super Picsou Géant n°01",
+    );
+
+    expect(kept.map((fact) => fact.source)).toEqual(["booknode", "bedetheque"]);
+  });
+
+  it("still purges retailer slug contradictions", () => {
+    const kept = purgeContradictedProviderExternalLinks(
+      [
+        {
+          kind: "external-link",
+          label: "Chasse aux Livres",
+          value: "Voir la fiche",
+          url: "https://www.chasse-aux-livres.fr/prix/B071ZXH7MV/black-stories-fantastique",
+          source: "chasseauxlivres",
+        },
+      ],
+      "",
+      "Black Stories",
+    );
+
+    expect(kept).toHaveLength(0);
+  });
+});
+
+describe("reconcileExternalLinksFromPriceOffers", () => {
+  it("does not purge trusted catalog links added before price reconciliation", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "eBay",
+        value: "Voir la fiche",
+        url: "https://www.ebay.fr/itm/298306332354",
+        source: "eBay",
+      },
+      {
+        kind: "external-link",
+        label: "Booknode",
+        value: "Voir la fiche",
+        url: "https://booknode.com/super_picsou_geant_n_1_0379552",
+        source: "booknode",
+      },
+      {
+        kind: "external-link",
+        label: "Bédéthèque",
+        value: "Voir la fiche",
+        url: "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-1-Numero-1-478946.html",
+        source: "bedetheque",
+      },
+    ];
+
+    const reconciled = reconcileExternalLinksFromPriceOffers(
+      facts,
+      [
+        {
+          source: "eBay",
+          sourceUrl: "https://www.ebay.fr/itm/298306332354",
+        },
+      ],
+      "",
+      "Super Picsou Géant n°01",
+    );
+
+    expect(reconciled.map((fact) => fact.source).sort()).toEqual([
+      "bedetheque",
+      "booknode",
+      "eBay",
+    ]);
   });
 });
 

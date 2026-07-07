@@ -34,6 +34,8 @@ export interface PrestashopRetailerConfig {
   sample?: { name: string; barcode: string };
   /** Metadata traits (cover scoring, secondary retailer, …) declared with the shop. */
   metadataInfo?: ScrapeCatalogMetadataInfo;
+  /** Shown in mapping audit when live scrape is blocked (WAF, geo, …). */
+  mappingProbeConfigHint?: string;
 }
 
 export interface PrestashopSearchProduct {

@@ -139,7 +139,7 @@ describe("observationsFromProductEvidence", () => {
   it("émet titre catalogue pour un retailer de confiance", () => {
     const rows = observationsFromProductEvidence(
       evidence({
-        providerName: "Apriloshop",
+        providerName: "ChipWeld",
         isTrustedRetailer: true,
         coverUrl: "https://example.com/cover.jpg",
       }),
@@ -151,8 +151,8 @@ describe("observationsFromProductEvidence", () => {
       role: "catalog_title",
       value: "Test Game",
       provenance: {
-        providerId: "apriloshop",
-        providerLabel: "Apriloshop",
+        providerId: "chipweld",
+        providerLabel: "ChipWeld",
         sourceDocumentRole: "catalog_product",
       },
     });

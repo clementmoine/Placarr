@@ -17,6 +17,7 @@ const STATIC_IMAGE_REMOTE_WILDCARD_HOSTS = [
   "ebayimg.com",
   "geekdo-images.com",
   "google.com",
+  "icollecteverything.com",
   "igdb.com",
   "launchbox-app.com",
   "ledenicheur.fr",

@@ -48,21 +48,6 @@ export const ARCHICHOUETTE_CONFIG: PrestashopRetailerConfig = {
   types: ["boardgames"],
 };
 
-export const APRILOSHOP_CONFIG: PrestashopRetailerConfig = {
-  id: "apriloshop",
-  label: "Apriloshop",
-  baseUrl: "https://apriloshop.fr",
-  searchPath: "/recherche",
-  searchParam: "s",
-  searchStrategy: "iqit",
-  types: ["games"],
-  capabilities: ["identify", "description", "cover", "price", "releaseDate"],
-  sample: {
-    name: "Star Wars Jedi Survivor XBOX SERIES X",
-    barcode: "5035224124367",
-  },
-};
-
 export const CHIPWELD_CONFIG: PrestashopRetailerConfig = {
   id: "chipweld",
   label: "ChipWeld",
@@ -177,7 +162,6 @@ export const PRESTASHOP_RETAILER_CONFIGS: PrestashopRetailerConfig[] = [
   BCDJEUX_CONFIG,
   LEPASSETEMPS_CONFIG,
   ARCHICHOUETTE_CONFIG,
-  APRILOSHOP_CONFIG,
   CHIPWELD_CONFIG,
   LESGENTLEMENDUJEU_CONFIG,
   DIDACTO_CONFIG,

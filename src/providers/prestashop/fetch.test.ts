@@ -11,23 +11,23 @@ vi.mock("axios", () => ({
 import axios from "axios";
 
 import {
-  APRILOSHOP_CONFIG,
+  CHIPWELD_CONFIG,
   MONSIEURDE_CONFIG,
   NETGAMESRETRO_CONFIG,
   TOKYOGAMESTORY_CONFIG,
 } from "./configs";
-import { searchPrestashopProduct } from "./fetch";
+import { PrestashopAccessDeniedError, searchPrestashopProduct } from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
 
 const IQIT_MINIATURE = `
   <div class="product-miniature js-product-miniature">
     <h5 class="product-name">
-      <a href="https://apriloshop.fr/jeux-xbox-one/star-wars-jedi-survivor">
-        Star Wars Jedi Survivor XBOX SERIES X [NEUF]
+      <a href="https://www.chipweld.fr/jeux-xbox-one/trine-ultimate-collection">
+        Trine: Ultimate Collection XBOX ONE [NEUF]
       </a>
     </h5>
-    <img src="https://apriloshop.fr/40143-home_default/star-wars.jpg" />
+    <img src="https://www.chipweld.fr/40143-home_default/trine.jpg" />
     <span class="price product-price">19,90&nbsp;€</span>
   </div>
 `;
@@ -113,21 +113,21 @@ describe("searchPrestashopProduct", () => {
         },
       })
       .mockResolvedValueOnce({
-        data: `<script>"gtin13": "5035224124367"</script>`,
+        data: `<script>"gtin13": "5016488132497"</script>`,
         status: 200,
       });
 
     const product = await searchPrestashopProduct(
-      APRILOSHOP_CONFIG,
+      CHIPWELD_CONFIG,
       "",
-      "5035224124367",
+      "5016488132497",
     );
 
     expect(product).toMatchObject({
-      title: "Star Wars Jedi Survivor XBOX SERIES X [NEUF]",
-      barcode: "5035224124367",
+      title: "Trine: Ultimate Collection XBOX ONE [NEUF]",
+      barcode: "5016488132497",
       priceCents: 1990,
-      source: "apriloshop",
+      source: "chipweld",
     });
     expect(mockedGet).toHaveBeenCalledTimes(2);
   });
@@ -138,7 +138,7 @@ describe("searchPrestashopProduct", () => {
     });
 
     await expect(
-      searchPrestashopProduct(APRILOSHOP_CONFIG, "zelda"),
+      searchPrestashopProduct(CHIPWELD_CONFIG, "zelda"),
     ).resolves.toBeNull();
   });
 
@@ -213,5 +213,16 @@ describe("searchPrestashopProduct", () => {
       imageUrl:
         "https://www.netgamesretro.com/17755-large_default/mx-vs-atv-extreme-limite-xbox-360.jpg",
     });
+  });
+
+  it("signale un accès storefront bloqué (HTTP 403)", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 403,
+      data: "Forbidden",
+    });
+
+    await expect(
+      searchPrestashopProduct(CHIPWELD_CONFIG, "", "5016488132497"),
+    ).rejects.toBeInstanceOf(PrestashopAccessDeniedError);
   });
 });

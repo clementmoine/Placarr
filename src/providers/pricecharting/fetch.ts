@@ -1,5 +1,7 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
+
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import type {
   PriceChartingMetadata,
   PriceChartingPrices,
@@ -48,12 +50,11 @@ async function priceChartingGet(
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      return await axios.get<string>(url, { headers, maxRedirects: 5 });
-    } catch (error) {
-      const status = axios.isAxiosError(error)
-        ? error.response?.status
-        : undefined;
-      if (status === 429) {
+      const response = await fetchGetWithFlareFallback(url, {
+        headers,
+        maxRedirects: 5,
+      });
+      if (response.status === 429) {
         markPriceChartingQuotaHit();
         if (attempt < 2) {
           await new Promise((resolve) =>
@@ -62,6 +63,12 @@ async function priceChartingGet(
           continue;
         }
       }
+      return {
+        status: response.status,
+        data: response.data as string,
+        request: { res: { responseUrl: response.responseUrl ?? url } },
+      };
+    } catch (error) {
       throw error;
     }
   }

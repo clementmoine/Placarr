@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import { normalizeProductBarcode } from "@/core/identify/normalize";
@@ -10,18 +10,31 @@ import {
 } from "@/core/enrich/titleMatching";
 import { collectHtmlMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 
+export type BedethequeCreditEntry = {
+  role: string;
+  names: string[];
+};
+
 export interface BedethequeAlbum {
   id: string;
   title: string;
   sourceUrl: string;
   imageUrl?: string;
+  description?: string;
   /** Extra media from /media/{Couvertures,Versos,Planches,...} on the album page. */
   media?: Array<{ url: string; mediaKind: string }>;
   publisher?: string;
   releaseYear?: number;
+  legalDeposit?: string;
   ratingValue?: number;
   ratingCount?: number;
   authors?: string[];
+  credits?: BedethequeCreditEntry[];
+  pageCount?: number;
+  format?: string;
+  weight?: string;
+  priceEstimate?: string;
+  genre?: string;
   seriesName?: string;
   seriesUrl?: string;
   seriesPosition?: number;
@@ -104,8 +117,76 @@ export function absoluteBedethequeUrl(
   return `${BEDETHEQUE_BASE_URL}/${value}`;
 }
 
+export function parseBedethequeAlbumInfoFields(
+  html: string,
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+
+  for (const match of html.matchAll(
+    /<li>\s*<label>\s*([^:<]+)\s*:?\s*<\/label>\s*([\s\S]*?)<\/li>/gi,
+  )) {
+    const label = cleanText(match[1])?.toLowerCase();
+    const value = cleanText(match[2]);
+    if (!label || !value) continue;
+    fields[label] = value;
+  }
+
+  return fields;
+}
+
+/** Bédéthèque uses « non coté » when the album has no market estimate. */
+export function isKnownBedethequePriceEstimate(
+  value?: string | null,
+): value is string {
+  const trimmed = value?.trim();
+  if (!trimmed) return false;
+
+  const normalized = trimmed
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  return !/^non\s+cotee?$/.test(normalized);
+}
+
 const BEDETHEQUE_MEDIA_URL_RE =
   /https?:\/\/(?:www\.)?bedetheque\.com\/media\/([^/"'\s?)]+)\/([^"'\s?)]+)/gi;
+
+export function parseBedethequeCreditedRoles(
+  html: string,
+): BedethequeCreditEntry[] {
+  const block = html.match(
+    /<div[^>]+class=['"]liste-auteurs['"][\s\S]*?<\/div>/i,
+  )?.[0];
+  if (!block) return [];
+
+  const byRole = new Map<string, string[]>();
+
+  for (const match of block.matchAll(
+    /<span class=['"]metier['"]>\(([^)]+)\)<\/span>\s*<a[^>]+title=["']Voir la fiche de ([^"']+)["']/gi,
+  )) {
+    const role = cleanText(match[1]);
+    const name = cleanText(match[2]);
+    if (!role || !name) continue;
+    const names = byRole.get(role) ?? [];
+    if (!names.includes(name)) names.push(name);
+    byRole.set(role, names);
+  }
+
+  return Array.from(byRole.entries()).map(([role, names]) => ({ role, names }));
+}
+
+function parseBedethequePageCount(html: string, infoFields: Record<string, string>) {
+  const fromSchema = Number.parseInt(
+    html.match(/itemprop=["']numberOfPages["'][^>]*>(\d+)/i)?.[1] || "",
+    10,
+  );
+  if (Number.isFinite(fromSchema) && fromSchema > 0) return fromSchema;
+
+  const fromLabel = Number.parseInt(infoFields.planches || "", 10);
+  if (Number.isFinite(fromLabel) && fromLabel > 0) return fromLabel;
+
+  return undefined;
+}
 
 export function parseBedethequeMediaUrls(
   html: string,
@@ -226,15 +307,31 @@ function parseBedethequeAlternateTitles(
   return Array.from(alternates);
 }
 
-function issueNumberFromBedethequeHtml(html: string): string | null {
+function issueNumberFromBedethequeHtml(
+  html: string,
+  sourceUrl?: string,
+): string | null {
   const h2 = html.match(/<h2>[\s\S]*?<\/h2>/i)?.[0] || "";
-  const raw =
-    volumeNumberFromTitle(h2) ||
-    volumeNumberFromTitle(metaContent(html, "og:title") || "") ||
-    h2.match(/Num[ée]ro\s+(\d+)/i)?.[1] ||
-    html.match(/-Tome-(\d+)-Numero-/i)?.[1] ||
-    null;
-  return raw ? String(Number.parseInt(raw, 10)) : null;
+  const h2Plain = cleanText(h2.replace(/<[^>]+>/g, " "));
+
+  const h2Leading = h2Plain?.match(/^(\d+)\s*\./)?.[1];
+  if (h2Leading) return String(Number.parseInt(h2Leading, 10));
+
+  const fromTitle =
+    volumeNumberFromTitle(h2Plain || "") ||
+    volumeNumberFromTitle(metaContent(html, "og:title") || "");
+  if (fromTitle) return fromTitle;
+
+  const numeroInH2 = h2.match(/Num[ée]ro\s+(\d+)/i)?.[1];
+  if (numeroInH2) return String(Number.parseInt(numeroInH2, 10));
+
+  const url = sourceUrl || metaContent(html, "og:url") || "";
+  const fromUrl =
+    url.match(/-Tome-(\d+)-Numero-/i)?.[1] ||
+    url.match(/-Tome-(\d+)-/i)?.[1];
+  if (fromUrl) return String(Number.parseInt(fromUrl, 10));
+
+  return null;
 }
 
 function buildSeriesSearchQueries(query: string): string[] {
@@ -297,7 +394,7 @@ export function parseBedethequeAlbumPage(
   );
   const seriesName = cleanText(seriesMatch?.[2]);
   const seriesUrl = absoluteBedethequeUrl(seriesMatch?.[1]);
-  const seriesPositionRaw = issueNumberFromBedethequeHtml(html);
+  const seriesPositionRaw = issueNumberFromBedethequeHtml(html, sourceUrl);
 
   const title =
     cleanText(
@@ -325,18 +422,26 @@ export function parseBedethequeAlbumPage(
     10,
   );
 
-  const authorsBlock = html.match(
-    /<div[^>]+class=['"]liste-auteurs['"][\s\S]*?<\/div>/i,
-  )?.[0];
-  const authors = authorsBlock
-    ? Array.from(
-        authorsBlock.matchAll(
-          /<a[^>]+title=["']Voir la fiche de ([^"']+)["']/gi,
-        ),
-      )
-        .map((match) => cleanText(match[1]))
-        .filter((name): name is string => Boolean(name))
+  const credits = parseBedethequeCreditedRoles(html);
+  const authors = credits.length
+    ? Array.from(new Set(credits.flatMap((entry) => entry.names)))
     : [];
+
+  const infoFields = parseBedethequeAlbumInfoFields(html);
+  const pageCount = parseBedethequePageCount(html, infoFields);
+  const description = cleanText(
+    html.match(/itemprop=["']description["'][^>]*>([\s\S]*?)<\//i)?.[1],
+  );
+  const genre = cleanText(
+    html.match(/itemprop=["']genre["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
+      html.match(/itemprop=["']genre["'][^>]*>([^<]+)</i)?.[1],
+  );
+  const legalDeposit =
+    infoFields["dépot légal"] ||
+    infoFields["depot legal"] ||
+    cleanText(
+      html.match(/title=["']Dépot légal["'][^>]*>[\s\S]*?(\d{2}\/\d{4})/i)?.[1],
+    );
 
   const imageUrl = absoluteBedethequeUrl(
     hiddenInputValue(html, "Couverture") ||
@@ -358,14 +463,24 @@ export function parseBedethequeAlbumPage(
     title,
     sourceUrl,
     imageUrl,
+    description,
     media: media.length > 0 ? media : undefined,
     saleListings: saleListings.length > 0 ? saleListings : undefined,
     retailPrices,
     publisher,
     releaseYear: Number.isFinite(releaseYear) ? releaseYear : undefined,
+    legalDeposit,
     ratingValue: Number.isFinite(ratingValue) ? ratingValue : undefined,
     ratingCount: Number.isFinite(ratingCount) ? ratingCount : undefined,
-    authors: authors.length ? Array.from(new Set(authors)) : undefined,
+    authors: authors.length ? authors : undefined,
+    credits: credits.length ? credits : undefined,
+    pageCount,
+    format: infoFields.format,
+    weight: infoFields.poids,
+    priceEstimate: isKnownBedethequePriceEstimate(infoFields.estimation)
+      ? infoFields.estimation
+      : undefined,
+    genre,
     seriesName,
     seriesUrl,
     seriesPosition: seriesPositionRaw
@@ -433,7 +548,7 @@ export function pickBedethequeAlbumLink(
 
 async function fetchBedethequeHtml(url: string): Promise<string | null> {
   try {
-    const response = await axios.get(url, {
+    const response = await fetchGetWithFlareFallback(url, {
       headers: BEDETHEQUE_HEADERS,
       responseType: "text",
       transformResponse: [(data) => data],
@@ -452,12 +567,15 @@ export async function searchBedethequeSeries(
   query: string,
 ): Promise<BedethequeSeriesCandidate[]> {
   try {
-    const response = await axios.get(`${BEDETHEQUE_BASE_URL}/ajax/tout`, {
-      params: { term: query },
-      headers: BEDETHEQUE_HEADERS,
-      timeout: 10_000,
-      validateStatus: () => true,
-    });
+    const response = await fetchGetWithFlareFallback(
+      `${BEDETHEQUE_BASE_URL}/ajax/tout`,
+      {
+        params: { term: query },
+        headers: BEDETHEQUE_HEADERS,
+        timeout: 10_000,
+        validateStatus: () => true,
+      },
+    );
     if (response.status >= 400 || !Array.isArray(response.data)) return [];
 
     return response.data.flatMap((entry: { id?: string; label?: string }) => {

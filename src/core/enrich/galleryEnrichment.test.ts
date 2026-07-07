@@ -60,7 +60,28 @@ describe("metadataResultsNeedGalleryEnrichment", () => {
 });
 
 describe("metadataResultsNeedGalleryEnrichment for books", () => {
-  it("keeps chasing retailer galleries while only catalog covers exist", () => {
+  it("keeps chasing retailer galleries while only non-gallery covers exist", () => {
+    expect(
+      metadataResultsNeedGalleryEnrichment(
+        "books",
+        [
+          {
+            title: "Arcane",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/cover.jpg",
+                source: "merged",
+              },
+            ],
+          },
+        ],
+        "9791035505677",
+      ),
+    ).toBe(true);
+  });
+
+  it("stops once booknode or bedetheque contributed gallery images", () => {
     expect(
       metadataResultsNeedGalleryEnrichment(
         "books",
@@ -78,7 +99,7 @@ describe("metadataResultsNeedGalleryEnrichment for books", () => {
         ],
         "9791035505677",
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("stops once a book gallery source contributed images", () => {

@@ -41,12 +41,13 @@ beforeEach(() => {
   mockedPost.mockReset();
   mockedGet.mockReset();
   mockedHead.mockReset();
+  delete process.env.FLARESOLVERR_URL;
 });
 
 describe("fetchFromAchatMoinsCher", () => {
   it("parse le titre, la plateforme, la jaquette et les prix depuis la page produit", async () => {
     mockedPost.mockResolvedValue({ data: "12345" } as never);
-    mockedGet.mockResolvedValue({ data: PRODUCT_HTML } as never);
+    mockedGet.mockResolvedValue({ status: 200, data: PRODUCT_HTML } as never);
     mockedHead.mockResolvedValue({ status: 200 } as never);
 
     // A single barcode resolves to one product page, so the identify call also
@@ -66,7 +67,7 @@ describe("fetchFromAchatMoinsCher", () => {
 
   it("renvoie une liste vide quand le scanner ne retourne pas d'id produit", async () => {
     mockedPost.mockResolvedValue({ data: "not-found" } as never);
-    mockedGet.mockResolvedValue({ data: "" } as never);
+    mockedGet.mockResolvedValue({ status: 200, data: "" } as never);
 
     expect(
       await fetchFromAchatMoinsCher("5021290082728", ["Wheelman PS3"]),
@@ -89,15 +90,16 @@ describe("fetchFromAchatMoinsCher", () => {
 
     mockedPost.mockResolvedValue({ data: "99999" } as never);
     mockedGet
-      .mockResolvedValueOnce({ data: wrongProductHtml } as never)
+      .mockResolvedValueOnce({ status: 200, data: wrongProductHtml } as never)
       .mockResolvedValueOnce({
+        status: 200,
         data: `
           <div class="product">
             <img alt="Little Nightmares PS4" onclick="ia(1); vProd('12345');" />
           </div>
         `,
       } as never)
-      .mockResolvedValueOnce({ data: goodProductHtml } as never);
+      .mockResolvedValueOnce({ status: 200, data: goodProductHtml } as never);
     mockedHead.mockResolvedValue({ status: 200 } as never);
 
     await expect(
@@ -119,6 +121,7 @@ describe("fetchFromAchatMoinsCher", () => {
   it("ignore une jaquette dont le nom de fichier ne correspond pas au titre produit", async () => {
     mockedPost.mockResolvedValue({ data: "491080872" } as never);
     mockedGet.mockResolvedValue({
+      status: 200,
       data: `
         <h1>Outer Wilds Archaeologist Edition PS5</h1>
         <div class="col-md-12 imgIco">
@@ -142,7 +145,10 @@ describe("fetchFromAchatMoinsCher", () => {
     `;
 
     mockedPost.mockResolvedValue({ data: "294939463" } as never);
-    mockedGet.mockResolvedValue({ data: wrongProductHtml } as never);
+    mockedGet.mockResolvedValue({
+      status: 200,
+      data: wrongProductHtml,
+    } as never);
     mockedHead.mockResolvedValue({ status: 200 } as never);
 
     await expect(
@@ -156,7 +162,7 @@ describe("fetchFromAchatMoinsCher", () => {
 describe("fetchPricesFromAchatMoinsCher", () => {
   it("extrait le prix neuf minimum et le prix occasion", async () => {
     mockedPost.mockResolvedValue({ data: "12345" } as never);
-    mockedGet.mockResolvedValue({ data: PRODUCT_HTML } as never);
+    mockedGet.mockResolvedValue({ status: 200, data: PRODUCT_HTML } as never);
 
     await expect(
       fetchPricesFromAchatMoinsCher("5021290082728"),
@@ -169,13 +175,14 @@ describe("fetchPricesFromAchatMoinsCher", () => {
   it("recherche par titre quand le barcode est absent", async () => {
     mockedGet
       .mockResolvedValueOnce({
+        status: 200,
         data: `
           <div class="product">
             <img alt="Wheelman PS3" onclick="ia(1); vProd('12345');" />
           </div>
         `,
       } as never)
-      .mockResolvedValueOnce({ data: PRODUCT_HTML } as never);
+      .mockResolvedValueOnce({ status: 200, data: PRODUCT_HTML } as never);
 
     await expect(
       fetchPricesFromAchatMoinsCher("Wheelman PS3", ["Wheelman PS3"]),

@@ -30,6 +30,7 @@ function parseArgs(argv: string[]) {
 
   let limit = Infinity;
   let force = false;
+  let loop = false;
   for (const arg of args) {
     if (arg.startsWith("--batch=")) {
       const value = Number.parseInt(arg.slice("--batch=".length), 10);
@@ -45,14 +46,16 @@ function parseArgs(argv: string[]) {
       if (Number.isFinite(value) && value > 0) limit = value;
     } else if (arg === "--force") {
       force = true;
+    } else if (arg === "--loop") {
+      loop = true;
     }
   }
 
-  return { batchSize, delayMs, concurrency, limit, force };
+  return { batchSize, delayMs, concurrency, limit, force, loop };
 }
 
 async function main() {
-  const { batchSize, delayMs, concurrency, limit, force } = parseArgs(
+  const { batchSize, delayMs, concurrency, limit, force, loop } = parseArgs(
     process.argv.slice(2),
   );
   const db = await ensureICollectIndex();
@@ -103,6 +106,12 @@ async function main() {
         `Rate limited — waiting ${Math.ceil(result.backoffMs / 1000)}s before continuing...`,
       );
       await new Promise((resolve) => setTimeout(resolve, result.backoffMs));
+    }
+    if (result.passCompleted) {
+      console.log(
+        `Full catalog pass complete (${items.length} indexed items).`,
+      );
+      if (!loop) break;
     }
     if (result.scraped === 0 && result.failed === 0 && !result.rateLimited) {
       if (result.skipped > 0) {

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -178,7 +178,7 @@ export async function searchEspritJeuHits(
   if (!searchTerm) return [];
 
   try {
-    const response = await axios.get(
+    const response = await fetchGetWithFlareFallback(
       `${BASE_URL}/dhtml/resultat_recherche.php`,
       {
         params: { keywords: searchTerm },
@@ -196,7 +196,10 @@ export async function searchEspritJeuHits(
 export async function fetchEspritJeuProduct(
   url: string,
 ): Promise<EspritJeuProduct> {
-  const response = await axios.get(url, { headers: HEADERS, timeout: 10_000 });
+  const response = await fetchGetWithFlareFallback(url, {
+    headers: HEADERS,
+    timeout: 10_000,
+  });
   return parseEspritJeuProductHtml(response.data as string, url);
 }
 

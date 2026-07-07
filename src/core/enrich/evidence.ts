@@ -1,6 +1,11 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import {
+  isLegacyPicClickPriceSource,
+  normalizeLegacyPriceOffer,
+  needsLegacyPriceOfferNormalization,
+} from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
 
 type EvidenceScope = {
   itemId?: string | null;
@@ -169,20 +174,21 @@ export async function mergePriceOffers(
 
   const byKey = new Map<string, MergedPriceOffer>();
   for (const offer of existing) {
-    byKey.set(offerKey(offer), {
-      source: offer.source,
-      productName: offer.productName,
-      merchantName: offer.merchantName,
-      condition: offer.condition,
-      priceCents: offer.priceCents,
-      currency: offer.currency,
-      shippingCents: offer.shippingCents,
-      totalCents: offer.totalCents,
-      sourceUrl: offer.sourceUrl,
-      availability: offer.availability,
-      offerCount: offer.offerCount,
-      rawValue: offer.rawValue,
-      observedAt: offer.observedAt,
+    const normalized = normalizeLegacyPriceOffer(offer);
+    byKey.set(offerKey(normalized), {
+      source: normalized.source,
+      productName: normalized.productName,
+      merchantName: normalized.merchantName,
+      condition: normalized.condition,
+      priceCents: normalized.priceCents,
+      currency: normalized.currency,
+      shippingCents: normalized.shippingCents,
+      totalCents: normalized.totalCents,
+      sourceUrl: normalized.sourceUrl,
+      availability: normalized.availability,
+      offerCount: normalized.offerCount,
+      rawValue: normalized.rawValue,
+      observedAt: normalized.observedAt,
     });
   }
   for (const offer of offers) {
@@ -193,20 +199,21 @@ export async function mergePriceOffers(
     ) {
       continue;
     }
-    byKey.set(offerKey(offer), {
-      source: offer.source,
-      productName: offer.productName ?? null,
-      merchantName: offer.merchantName ?? null,
-      condition: offer.condition ?? null,
-      priceCents: offer.priceCents,
-      currency: offer.currency ?? "EUR",
-      shippingCents: offer.shippingCents ?? null,
-      totalCents: offer.totalCents ?? null,
-      sourceUrl: offer.sourceUrl ?? null,
-      availability: offer.availability ?? null,
-      offerCount: offer.offerCount ?? null,
-      rawValue: offer.rawValue ?? null,
-      observedAt: offer.observedAt ?? new Date(),
+    const normalized = normalizeLegacyPriceOffer(offer);
+    byKey.set(offerKey(normalized), {
+      source: normalized.source,
+      productName: normalized.productName ?? null,
+      merchantName: normalized.merchantName ?? null,
+      condition: normalized.condition ?? null,
+      priceCents: normalized.priceCents,
+      currency: normalized.currency ?? "EUR",
+      shippingCents: normalized.shippingCents ?? null,
+      totalCents: normalized.totalCents ?? null,
+      sourceUrl: normalized.sourceUrl ?? null,
+      availability: normalized.availability ?? null,
+      offerCount: normalized.offerCount ?? null,
+      rawValue: normalized.rawValue ?? null,
+      observedAt: normalized.observedAt ?? new Date(),
     });
   }
 
@@ -223,4 +230,14 @@ export async function mergePriceOffers(
   ]);
 
   return merged;
+}
+
+/** Rewrites stale PicClick rows to eBay the next time offers are merged or repaired. */
+export async function reconcileLegacyPriceOfferSources(
+  scope: EvidenceScope,
+): Promise<void> {
+  if (!hasScope(scope)) return;
+  const existing = await prisma.priceOffer.findMany({ where: scopeWhere(scope) });
+  if (!existing.some(needsLegacyPriceOfferNormalization)) return;
+  await mergePriceOffers(scope, []);
 }

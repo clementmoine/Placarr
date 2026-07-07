@@ -11,7 +11,7 @@ import {
   buildCatalogExternalLink,
   metadataAliases,
 } from "@/core/enrich/catalogLink";
-import { formatMetadataFromStorage } from "@/core/enrich/storage";
+import { formatMetadataFromStorage } from "@/core/enrich/dbMapping";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";

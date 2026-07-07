@@ -264,6 +264,7 @@ export async function runICollectPageScrapeBatch(
   skipped: number;
   rateLimited: boolean;
   backoffMs: number;
+  passCompleted: boolean;
 }> {
   const batchSize =
     options.batchSize ??
@@ -276,6 +277,7 @@ export async function runICollectPageScrapeBatch(
       skipped: 0,
       rateLimited: false,
       backoffMs: 0,
+      passCompleted: false,
     };
   }
 
@@ -320,6 +322,7 @@ export async function runICollectPageScrapeBatch(
       skipped: 0,
       rateLimited: true,
       backoffMs: backoffUntil - Date.now(),
+      passCompleted: false,
     };
   }
   writePageBackoffUntil(db, 0);
@@ -398,7 +401,9 @@ export async function runICollectPageScrapeBatch(
   const claimNextScrapeItem = () =>
     coordGate.run(async () => {
       while (!shouldStopBatch()) {
-        const item = items[cursor % items.length];
+        if (cursor >= items.length) return null;
+
+        const item = items[cursor];
         cursor += 1;
         attempts += 1;
         if (!item) continue;
@@ -514,7 +519,14 @@ export async function runICollectPageScrapeBatch(
     );
   }
 
-  return { scraped, failed, skipped, rateLimited, backoffMs };
+  return {
+    scraped,
+    failed,
+    skipped,
+    rateLimited,
+    backoffMs,
+    passCompleted: wrapped,
+  };
 }
 
 export async function runICollectCatalogSyncTick(): Promise<void> {

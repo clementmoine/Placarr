@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -220,11 +220,14 @@ export async function searchPlayInHits(
   if (!cleanedQuery) return [];
 
   try {
-    const response = await axios.get(`${BASE_URL}${BOARDGAME_CATALOGUE_PATH}`, {
-      params: { search: cleanedQuery },
-      headers: HEADERS,
-      timeout: 10_000,
-    });
+    const response = await fetchGetWithFlareFallback(
+      `${BASE_URL}${BOARDGAME_CATALOGUE_PATH}`,
+      {
+        params: { search: cleanedQuery },
+        headers: HEADERS,
+        timeout: 10_000,
+      },
+    );
     return parsePlayInCatalogueHits(response.data as string, limit);
   } catch (error) {
     console.error("[Play-In] Search failed:", error);
@@ -233,7 +236,10 @@ export async function searchPlayInHits(
 }
 
 export async function fetchPlayInProduct(url: string): Promise<PlayInProduct> {
-  const response = await axios.get(url, { headers: HEADERS, timeout: 10_000 });
+  const response = await fetchGetWithFlareFallback(url, {
+    headers: HEADERS,
+    timeout: 10_000,
+  });
   return parsePlayInProductHtml(response.data as string, url);
 }
 

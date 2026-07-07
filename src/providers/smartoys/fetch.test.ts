@@ -33,12 +33,14 @@ describe("fetchPricesFromSmartoys", () => {
   it("recherche par titre dans le catalogue jeux-video", async () => {
     mockedGet
       .mockResolvedValueOnce({
+        status: 200,
         data: `
           <a href="https://www.smartoys.be/catalog/jeux-video-playstation-the-last-part-p-0711719405191.html">TLOU</a>
         `,
         request: { res: { responseUrl: "https://www.smartoys.be/search" } },
       } as never)
       .mockResolvedValueOnce({
+        status: 200,
         data: PRODUCT_HTML,
         request: {
           res: {

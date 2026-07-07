@@ -66,6 +66,7 @@ describe("nextImageRemoteHosts", () => {
       "https://i.discogs.com/primary.jpeg",
       "https://www.monsieurde.com/1218-large_default/black-stories.jpg",
       "https://lesgentlemendujeu.com/6805-home_default/black-stories.jpg",
+      "https://www.icollecteverything.com/images/videogame/main/89/898294_1.jpg",
     ];
     for (const url of samples) {
       const host = hostFromUrl(url);

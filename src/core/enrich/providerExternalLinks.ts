@@ -1,5 +1,6 @@
 import {
   formatProviderSourceLabel,
+  getProviderModule,
   providerIdForSourceToken,
 } from "@/core/catalog/catalog";
 import {
@@ -204,6 +205,16 @@ function productPageUrlFromPriceOffer(
   return null;
 }
 
+function externalLinkFromTrustedCatalogProvider(
+  fact: MetadataFact,
+): boolean {
+  const providerId = providerIdForSourceToken(fact.source ?? fact.label ?? "");
+  if (!providerId) return false;
+  const info = getProviderModule(providerId)?.info;
+  if (!info) return false;
+  return Boolean(info.nameDatabase);
+}
+
 /** Drops retailer external-links contradicted by GTIN or catalog title. */
 export function purgeContradictedProviderExternalLinks(
   facts: MetadataFact[],
@@ -214,6 +225,7 @@ export function purgeContradictedProviderExternalLinks(
 
   return facts.filter((fact) => {
     if (fact.kind !== "external-link" || !fact.url?.trim()) return true;
+    if (externalLinkFromTrustedCatalogProvider(fact)) return true;
     if (
       retailerBarcodeContradictsItem({
         productUrl: fact.url,

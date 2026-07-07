@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -252,11 +252,14 @@ export async function searchOkkazeoHits(
     : { ean: "", titre_jeu: cleanedQuery, action: "Rechercher" };
 
   try {
-    const response = await axios.get(`${BASE_URL}/jeux/resultats`, {
-      params,
-      headers: HEADERS,
-      timeout: 10000,
-    });
+    const response = await fetchGetWithFlareFallback(
+      `${BASE_URL}/jeux/resultats`,
+      {
+        params,
+        headers: HEADERS,
+        timeout: 10000,
+      },
+    );
     return parseOkkazeoSearchHits(response.data as string, limit);
   } catch (error) {
     console.error("[Okkazeo] Search failed:", error);
@@ -273,7 +276,10 @@ export async function searchOkkazeo(
 }
 
 export async function fetchOkkazeoGame(url: string): Promise<OkkazeoGame> {
-  const response = await axios.get(url, { headers: HEADERS, timeout: 10000 });
+  const response = await fetchGetWithFlareFallback(url, {
+    headers: HEADERS,
+    timeout: 10000,
+  });
   return parseOkkazeoGameHtml(response.data as string, url);
 }
 

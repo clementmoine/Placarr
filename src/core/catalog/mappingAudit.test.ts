@@ -59,7 +59,6 @@ describe("provider mapping probes", () => {
     expect(customProbeIds.sort()).toEqual(
       [
         "achatmoinscher",
-        "apriloshop",
         "chipweld",
         "archichouette",
         "bcdjeux",

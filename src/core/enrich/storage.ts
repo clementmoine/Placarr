@@ -81,6 +81,12 @@ import {
   toAttachmentCreateData,
 } from "@/core/enrich/dbMapping";
 import { syncPriceOfferExternalLinksForMetadata } from "@/core/enrich/persistProviderExternalLinks";
+import { syncMetadataDisplayFactsFromFieldEvidence } from "@/core/enrich/metadataFactsProjection";
+import {
+  mergeMetadataFactsForStorage,
+  parseMetadataFactsJson,
+} from "@/core/enrich/metadataFactsMerge";
+import { dedupeFacts } from "@/core/enrich/facts";
 
 function isDisplayImageAttachment(attachment: {
   type?: AttachmentType | string | null;
@@ -618,8 +624,24 @@ export async function storeMetadata(
   );
   metadata.heroImageUrl = heroImageUrl || undefined;
 
+  const mergedFacts = item?.metadata
+    ? mergeMetadataFactsForStorage(
+        parseMetadataFactsJson(item.metadata.facts),
+        metadata.facts ?? [],
+        {
+          itemBarcode: item.barcode,
+          itemTitle: item.name?.trim() || name.trim() || undefined,
+        },
+      )
+    : (metadata.facts ?? []);
+  const dedupedMergedFacts = dedupeFacts(mergedFacts);
+  const mergedFactsJson = dedupedMergedFacts
+    ? JSON.stringify(dedupedMergedFacts)
+    : null;
+
   const metadataData = {
     ...formattedMetadata,
+    facts: mergedFactsJson,
     imageUrl: croppedImageUrl,
     heroImageUrl,
     lastFetched: now,
@@ -802,12 +824,26 @@ export async function storeMetadata(
   try {
     await syncPriceOfferExternalLinksForMetadata({
       metadataId: storedMetadata.id,
+      itemId,
       itemBarcode: item?.barcode,
       itemTitle: item?.name?.trim() || name.trim() || undefined,
     });
   } catch (error) {
     console.warn(
       `[Metadata] Price-offer external-link sync failed for item ${itemId}:`,
+      error,
+    );
+  }
+
+  try {
+    await syncMetadataDisplayFactsFromFieldEvidence({
+      metadataId: storedMetadata.id,
+      itemBarcode: item?.barcode,
+      itemTitle: item?.name?.trim() || name.trim() || undefined,
+    });
+  } catch (error) {
+    console.warn(
+      `[Metadata] Field-evidence fact projection failed for item ${itemId}:`,
       error,
     );
   }

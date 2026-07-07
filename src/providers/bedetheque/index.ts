@@ -15,7 +15,7 @@ import type {
   ProviderModule,
 } from "@/types/providerModule";
 
-import { fetchBedethequeMetadata, getBedethequeSuggestions } from "./fetch";
+import { fetchBedethequeMetadata, getBedethequeSuggestions, isKnownBedethequePriceEstimate } from "./fetch";
 import { collectBedethequeMappingRawKeys } from "./fetch";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 
@@ -25,6 +25,7 @@ export {
   parseBedethequeSeriesAlbumLinks,
   parseBedethequeSaleListings,
   parseBedethequeRetailPrices,
+  isKnownBedethequePriceEstimate,
 } from "./fetch";
 
 function formatEuroPrice(cents: number): string {
@@ -44,6 +45,17 @@ function buildBedethequePriceFacts(
       source: "bedetheque",
       confidence: 0.64,
       priority: 56,
+    });
+  }
+
+  if (album.priceEstimate && isKnownBedethequePriceEstimate(album.priceEstimate)) {
+    facts.push({
+      kind: "price",
+      label: "Estimation",
+      value: album.priceEstimate,
+      source: "bedetheque",
+      confidence: 0.52,
+      priority: 50,
     });
   }
 
@@ -253,13 +265,67 @@ function mapBedethequeMetadata(
     facts.push({
       kind: "series",
       label: "Série",
-      value: album.seriesPosition
-        ? `${album.seriesName} n°${album.seriesPosition}`
-        : album.seriesName,
+      value: album.seriesName,
       url: album.seriesUrl,
       source: "bedetheque",
       confidence: 0.64,
       priority: 30,
+    });
+  }
+
+  if (album.genre) {
+    facts.push({
+      kind: "tag",
+      label: "Thème",
+      value: album.genre,
+      source: "bedetheque",
+      confidence: 0.56,
+      priority: 24,
+    });
+  }
+
+  if (album.format) {
+    facts.push({
+      kind: "format",
+      label: "Format",
+      value: album.format,
+      source: "bedetheque",
+      confidence: 0.58,
+      priority: 20,
+    });
+  }
+
+  if (album.weight) {
+    facts.push({
+      kind: "weight",
+      label: "Poids",
+      value: album.weight,
+      source: "bedetheque",
+      confidence: 0.54,
+      priority: 18,
+    });
+  }
+
+  if (album.legalDeposit) {
+    facts.push({
+      kind: "release-date",
+      label: "Dépot légal",
+      value: album.legalDeposit,
+      source: "bedetheque",
+      confidence: 0.6,
+      priority: 21,
+    });
+  }
+
+  for (const credit of album.credits ?? []) {
+    if (!credit.names.length) continue;
+    facts.push({
+      kind: "artist",
+      label: credit.role,
+      value: credit.names.join(" • "),
+      source: "bedetheque",
+      confidence: 0.62,
+      priority: 28,
     });
   }
 
@@ -269,7 +335,9 @@ function mapBedethequeMetadata(
     title: album.title,
     authors: album.authors?.map((name) => ({ name })),
     publishers: album.publisher ? [{ name: album.publisher }] : undefined,
+    description: album.description,
     releaseDate: album.releaseYear ? String(album.releaseYear) : undefined,
+    pageCount: album.pageCount,
     imageUrl: album.imageUrl,
     barcode: album.barcode,
     aliases: album.alternateTitles?.length ? album.alternateTitles : undefined,
@@ -303,6 +371,7 @@ export const bedethequeModule: ProviderModule = {
     remoteImageFallback: true,
     websiteUrl: "https://www.bedetheque.com/",
     bookCoverPriority: "primary",
+    bookGallerySource: true,
     requiresTitleAlignment: true,
     notes:
       "Encyclopédie BD FR (BDGest). Recherche par titre/série ; l'EAN est validé quand présent sur la fiche. Pas de lookup ISBN seul côté site.",

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHtmlEntities } from "html-entities";
 
 import { cleanCode } from "@/core/identify/query";
@@ -389,19 +389,19 @@ function barcodeMatchesFiche(
 }
 
 async function hdjvGet(url: string): Promise<string> {
-  const response = await axios.get<string>(url, {
+  const response = await fetchGetWithFlareFallback(url, {
     headers: HEADERS,
     timeout: 15000,
     maxRedirects: 5,
   });
-  return response.data;
+  return response.data as string;
 }
 
 async function searchHdjv(
   query: string,
   supportCode: string,
 ): Promise<HdjvSearchHit[]> {
-  const response = await axios.get<unknown>(HDJV_SEARCH_URL, {
+  const response = await fetchGetWithFlareFallback(HDJV_SEARCH_URL, {
     headers: HEADERS,
     params: { q: query, support: supportCode },
     timeout: 12000,
@@ -533,7 +533,7 @@ export async function fetchFromHdjv(
 
 export async function pingHdjv(): Promise<boolean> {
   try {
-    const response = await axios.get(`${HDJV_BASE_URL}/`, {
+    const response = await fetchGetWithFlareFallback(`${HDJV_BASE_URL}/`, {
       headers: HEADERS,
       timeout: 8000,
       validateStatus: (status) => status < 500,

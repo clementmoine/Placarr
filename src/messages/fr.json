@@ -394,6 +394,7 @@
       "playersRange": "{min} à {max}",
       "sourcesCount": "{count} sources",
       "tracks": "Tracks",
+      "themes": "Thèmes",
       "upToPlayers": "Jusqu'à {count}"
     }
   },

@@ -6,7 +6,10 @@ import {
   isMetadataTitleAligned,
 } from "@/core/enrich/titleMatching";
 import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
-import { fetchWithFlareSolverr } from "@/lib/http/flareSolverr";
+import {
+  fetchGetWithFlareFallback,
+  scrapeAccessBlocked,
+} from "@/lib/http/scrapeFetch";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import {
   collectMarkdownMappingSignals,
@@ -619,14 +622,41 @@ async function fetchBooknodePage(
       signal,
     });
     const html = String(response.data || "");
-    if (response.status < 400 && !isCloudflareBlock(html)) return html;
+    if (
+      response.status < 400 &&
+      !isCloudflareBlock(html) &&
+      !scrapeAccessBlocked(response.status, html)
+    ) {
+      return html;
+    }
   } catch (error) {
     if (isAbortError(error)) throw error;
     // Fall through to reader/FlareSolverr when direct access fails.
   }
   const readerHtml = await fetchWithReader(url, signal);
   if (readerHtml) return readerHtml;
-  return fetchWithFlareSolverr(url, undefined, signal);
+  try {
+    const response = await fetchGetWithFlareFallback(url, {
+      skipDirect: true,
+      headers: BOOKNODE_HEADERS,
+      responseType: "text",
+      transformResponse: [(data) => data],
+      timeout: 6000,
+      validateStatus: () => true,
+      signal,
+    });
+    const html = String(response.data || "");
+    if (
+      response.status < 400 &&
+      !isCloudflareBlock(html) &&
+      !scrapeAccessBlocked(response.status, html)
+    ) {
+      return html;
+    }
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+  }
+  return null;
 }
 
 async function enrichBooknodeWithCovers(

@@ -153,6 +153,66 @@ describe("displayFacts", () => {
       expect(filtered).toHaveLength(1);
       expect(filtered[0]?.sourceCount).toBe(2);
     });
+
+    it("hides catalog price facts from the detail table", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "price",
+          label: "Estimation",
+          value: "de 5 à 10 euros",
+          source: "bedetheque",
+          providerLabel: "Bédéthèque",
+        },
+        {
+          kind: "price",
+          label: "Occasion dès",
+          value: "11,00 €",
+          source: "booknode",
+        },
+        {
+          kind: "genre",
+          label: "Genre",
+          value: "Humour",
+          source: "bedetheque",
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0]).toMatchObject({
+        kind: "tag",
+        label: "Thème",
+        value: "Humour",
+      });
+    });
+
+    it("merges booknode tags and bedetheque genres into one theme row", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "genre",
+          label: "Thèmes Booknode",
+          value: "Humour • Walt Disney",
+          source: "booknode",
+          providerLabel: "Booknode",
+        },
+        {
+          kind: "tag",
+          label: "Thème",
+          value: "Europe - Jeunesse",
+          source: "bedetheque",
+          providerLabel: "Bédéthèque",
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0]).toMatchObject({
+        kind: "tag",
+        label: "Thème",
+        value: "Humour • Walt Disney • Europe - Jeunesse",
+        sourceCount: 2,
+      });
+    });
   });
 
   describe("consolidateTagLikeFactsByKind", () => {

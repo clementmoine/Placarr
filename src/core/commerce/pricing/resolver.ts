@@ -12,6 +12,7 @@ import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 import { mergePriceOffers, type PriceOfferInput } from "@/core/enrich/evidence";
 import { buildPriceSearchQueries } from "@/core/commerce/pricing/searchQueries";
+import { normalizeLegacyPriceOffer } from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
 import type { ProviderProductUrlRef } from "@/types/providerModule";
 import { containsGameClassicsKeyword } from "@/core/identify/listingTerms";
 import {
@@ -39,6 +40,29 @@ export type PriceObservation = {
   sourceUrl?: string | null;
   offerCount?: number | null;
   observedAt?: Date | string | null;
+  /** Metadata-derived catalog price — skip marketplace listing title filters. */
+  metadataScoped?: boolean;
+  catalogEstimateMinCents?: number;
+  catalogEstimateMaxCents?: number;
+  catalogEstimateDisplayValue?: string;
+};
+
+export type SerializedPriceObservation = {
+  source: string;
+  productName?: string | null;
+  merchantName?: string | null;
+  condition?: string | null;
+  priceCents: number;
+  currency?: string | null;
+  sourceUrl?: string | null;
+  offerCount?: number | null;
+  observedAt?: string | null;
+  isReferencePriceSource?: boolean;
+  sourceDisplayLabel?: string;
+  metadataScoped?: boolean;
+  catalogEstimateMinCents?: number;
+  catalogEstimateMaxCents?: number;
+  catalogEstimateDisplayValue?: string;
 };
 
 export type BarcodePricesResult = {
@@ -51,7 +75,7 @@ export type BarcodePricesResult = {
   priceSourceDisplayNames: string[];
   /** True when the only price source is a reference/catalog database provider. */
   isReferencePriceOnly: boolean;
-  priceObservations: ReturnType<typeof serializePriceOffers>;
+  priceObservations: SerializedPriceObservation[];
 };
 
 export type RefreshBarcodePricesInput = {
@@ -318,6 +342,10 @@ function serializePriceOffers(offers: PriceObservation[]) {
       : null,
     isReferencePriceSource: isReferencePriceSource(offer.source),
     sourceDisplayLabel: formatProviderSourceLabel(offer.source),
+    metadataScoped: offer.metadataScoped ?? false,
+    catalogEstimateMinCents: offer.catalogEstimateMinCents,
+    catalogEstimateMaxCents: offer.catalogEstimateMaxCents,
+    catalogEstimateDisplayValue: offer.catalogEstimateDisplayValue,
   }));
 }
 
@@ -402,8 +430,10 @@ export function filterItemPriceOffers(
   const titleFiltered =
     names.length === 0
       ? platformFiltered
-      : platformFiltered.filter((offer) =>
-          priceListingMatchesAnyItemName(names, offer.productName),
+      : platformFiltered.filter(
+          (offer) =>
+            offer.metadataScoped ||
+            priceListingMatchesAnyItemName(names, offer.productName),
         );
 
   if (names.length > 0) {
@@ -696,17 +726,20 @@ function toPriceObservations(
     observedAt?: Date | string | null;
   }>,
 ): PriceObservation[] {
-  return offers.map((offer) => ({
-    source: offer.source,
-    productName: offer.productName,
-    merchantName: offer.merchantName,
-    condition: offer.condition,
-    priceCents: offer.priceCents,
-    currency: offer.currency,
-    sourceUrl: offer.sourceUrl,
-    offerCount: offer.offerCount,
-    observedAt: offer.observedAt,
-  }));
+  return offers.map((offer) => {
+    const normalized = normalizeLegacyPriceOffer(offer);
+    return {
+      source: normalized.source,
+      productName: normalized.productName,
+      merchantName: normalized.merchantName,
+      condition: normalized.condition,
+      priceCents: normalized.priceCents,
+      currency: normalized.currency,
+      sourceUrl: normalized.sourceUrl,
+      offerCount: normalized.offerCount,
+      observedAt: normalized.observedAt,
+    };
+  });
 }
 
 function priceLastUpdatedFromOffers(
@@ -723,7 +756,7 @@ function priceLastUpdatedFromOffers(
  * relaxed fallback, then align with cache / unfiltered offer aggregates (same
  * as {@link alignBarcodePricesForItemNames} after a fresh provider refresh).
  */
-function resolveItemDisplayPrices(
+export function resolveItemDisplayPrices(
   shelfType: string,
   shelfName: string | null | undefined,
   itemNames: string[],

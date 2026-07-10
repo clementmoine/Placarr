@@ -130,11 +130,13 @@ confirmation EAN positive (champ `gtin13`/`isbn` sur la fiche ou slug URL). La
 recherche parcours jusqu’à 24 candidats ; pas de fallback titre si barcode connu.
 Les `external-link` CAL déjà stockés sans EAN confirmé sont ignorés au refresh.
 
-### next/image — hosts boutiques
+### next/image — hosts distants
 
-`nextImageRemoteHosts.ts` : hosts dérivés de `PRESTASHOP_RETAILER_CONFIGS` +
-`SHOPIFY_RETAILER_CONFIGS` (imports relatifs — `next.config.js` hors alias TS).
-Budget ≤ 50 patterns Next.js.
+`next.config.js` : un seul `remotePatterns` wildcard (`hostname: "**"`) — plafond
+Next.js à 50 patterns. La vraie allowlist est **runtime** dans `proxy.ts` via
+`nextImageRemoteGuard.ts` : registry (`coverUrlHost`, templates,
+`coverProvenanceRules`) + boutiques PrestaShop/Shopify + liste supplémentaire
+pour CDNs pas encore déclarés sur un module.
 
 ---
 

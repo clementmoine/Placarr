@@ -256,6 +256,16 @@ describe("isMetadataTitleAligned", () => {
     ).toBe(true);
   });
 
+  it("accepts a slash bundle against a PriceCharting double-pack listing", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "Halo Reach & Fable 3 [Double Pack]" },
+        ["Halo Reach / Fable III"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
   it("accepts IGDB English title against French request and barcode alternates", () => {
     expect(
       isMetadataTitleAligned(

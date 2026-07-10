@@ -12,8 +12,10 @@ import {
   catalogRetailerImageHosts,
   isNextImageRemoteHostAllowed,
   looksLikeRemoteImageUrl,
-  nextImageRemotePatternCount,
+  registryCoverImageHosts,
+  REGISTRY_COVER_IMAGE_EXACT_HOSTS,
 } from "./nextImageRemoteHosts";
+import { resolveImageRemoteHostLists } from "./nextImageRemoteGuard";
 
 const CATALOG_IMAGE_HOSTS = catalogRetailerImageHosts([
   ...PRESTASHOP_RETAILER_CONFIGS,
@@ -21,7 +23,12 @@ const CATALOG_IMAGE_HOSTS = catalogRetailerImageHosts([
   ...DEDICATED_CATALOG_IMAGE_HOSTS,
 ]);
 
-const IMAGE_REMOTE_HOST_LISTS = buildImageRemoteHostLists(CATALOG_IMAGE_HOSTS);
+const IMAGE_REMOTE_HOST_LISTS = buildImageRemoteHostLists(
+  CATALOG_IMAGE_HOSTS,
+  registryCoverImageHosts(PROVIDERS),
+);
+
+const MIDDLEWARE_IMAGE_REMOTE_HOST_LISTS = resolveImageRemoteHostLists();
 
 function hostFromUrl(url: string): string | null {
   try {
@@ -43,10 +50,22 @@ function hostFromCoverUrlHost(fragment: string): string | null {
 }
 
 describe("nextImageRemoteHosts", () => {
-  it("stays within the Next.js remotePatterns budget", () => {
-    expect(
-      nextImageRemotePatternCount(IMAGE_REMOTE_HOST_LISTS),
-    ).toBeLessThanOrEqual(50);
+  it("keeps the middleware guard list aligned with registry cover hosts", () => {
+    const registryHosts = registryCoverImageHosts(PROVIDERS);
+    expect([...REGISTRY_COVER_IMAGE_EXACT_HOSTS].sort()).toEqual(
+      [...registryHosts.exacts].sort(),
+    );
+  });
+
+  it("includes registry-declared cover hosts in the allowlist", () => {
+    const registryHosts = registryCoverImageHosts(PROVIDERS);
+    expect(registryHosts.exacts.length).toBeGreaterThan(0);
+    for (const host of registryHosts.exacts) {
+      expect(
+        isNextImageRemoteHostAllowed(host, MIDDLEWARE_IMAGE_REMOTE_HOST_LISTS),
+        `registry host not allowed: ${host}`,
+      ).toBe(true);
+    }
   });
 
   it("allows known provider image CDNs", () => {

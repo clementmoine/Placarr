@@ -2,8 +2,26 @@ import { UserRole } from "@prisma/client";
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+import { isAllowedNextImageRemoteUrl } from "@/core/enrich/media/nextImageRemoteGuard";
+
+function guardNextImageOptimization(req: {
+  nextUrl: { pathname: string; searchParams: URLSearchParams };
+}) {
+  if (req.nextUrl.pathname !== "/_next/image") return null;
+
+  const rawUrl = req.nextUrl.searchParams.get("url")?.trim();
+  if (!rawUrl || !isAllowedNextImageRemoteUrl(rawUrl)) {
+    return new NextResponse("Image host not allowed", { status: 400 });
+  }
+
+  return NextResponse.next();
+}
+
 export default withAuth(
   function middleware(req) {
+    const imageGuard = guardNextImageOptimization(req);
+    if (imageGuard) return imageGuard;
+
     const token = req.nextauth.token;
     const isAdmin = token?.role === UserRole.admin;
     const isGuest = token?.role === UserRole.guest;
@@ -24,18 +42,19 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ req, token }) =>
+        req.nextUrl.pathname === "/_next/image" || !!token,
     },
   },
 );
 
 export const config = {
   matcher: [
+    "/_next/image",
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
      * - _next/static (static files)
-     * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - manifest.json (manifest file)
      * - robots.txt (robots file)

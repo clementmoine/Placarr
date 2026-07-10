@@ -1,5 +1,10 @@
 import axios from "axios";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
+import {
+  resolveGameAttachmentPlatformKey,
+  withMetadataPlatformKeys,
+} from "@/core/enrich/media/platformKeyStamp";
+import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import type {
   MetadataAttachment,
   MetadataResult,
@@ -150,6 +155,10 @@ function buildLogoAttachments(logos?: SteamGridDbAsset[] | null) {
 
 export async function fetchFromSteamGridDB(
   name: string,
+  context: {
+    platform?: string | null;
+    shelfName?: string | null;
+  } = {},
 ): Promise<MetadataResult | null> {
   if (!getSteamGridDbApiKey()) return null;
 
@@ -193,11 +202,25 @@ export async function fetchFromSteamGridDB(
       (attachment) => attachment.type === "background",
     );
 
-    return {
-      title: game.name || undefined,
-      imageUrl: cover?.url || background?.url,
-      attachments: attachments.length > 0 ? attachments : undefined,
-    };
+    const platformKey = resolveGameAttachmentPlatformKey({
+      requestedPlatform:
+        context.platform ??
+        (context.shelfName
+          ? detectShelfGamePlatformKey(context.shelfName)
+          : undefined),
+      shelfName: context.shelfName,
+      title: game.name,
+    });
+
+    return withMetadataPlatformKeys(
+      {
+        title: game.name || undefined,
+        imageUrl: cover?.url || background?.url,
+        attachments: attachments.length > 0 ? attachments : undefined,
+        platformKey: platformKey || undefined,
+      },
+      platformKey,
+    );
   } catch (error) {
     console.error(
       `[SteamGridDB] Error fetching artwork for "${name}": ${

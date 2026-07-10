@@ -4,6 +4,7 @@ import {
   resolveGameAttachmentPlatformKey,
   solePlatformKeyFromNames,
   stampAttachmentPlatformKeys,
+  stampAttachmentsMissingPlatformKey,
   withMetadataPlatformKeys,
 } from "./platformKeyStamp";
 
@@ -36,6 +37,48 @@ describe("platformKeyStamp", () => {
         platformKey: "ps3",
       },
     ]);
+  });
+
+  it("stamps attachments missing platformKey but skips strict shelf-platform sources", () => {
+    const attachments = stampAttachmentsMissingPlatformKey(
+      [
+        {
+          type: "cover",
+          url: "/uploads/ss.jpg",
+          source: "screenscraper",
+          role: "fr",
+        },
+        {
+          type: "cover",
+          url: "/uploads/geedie.jpg",
+          source: "geedie",
+          role: "eu",
+          title: "Angry Birds",
+          strictShelfPlatformCoverSource: true,
+        },
+      ],
+      "gb",
+    );
+
+    expect(attachments[0]?.platformKey).toBe("gb");
+    expect(attachments[1]?.platformKey).toBeUndefined();
+  });
+
+  it("does not stamp shelf platform when title names another console", () => {
+    const attachments = stampAttachmentsMissingPlatformKey(
+      [
+        {
+          type: "cover",
+          url: "/uploads/ps5.jpg",
+          source: "chocobonplan",
+          role: "fr",
+          title: "Metal Gear Solid Master Collection Volume 1 ps5",
+        },
+      ],
+      "ps4",
+    );
+
+    expect(attachments[0]?.platformKey).toBeUndefined();
   });
 
   it("propagates metadata.platformKey onto attachments", () => {

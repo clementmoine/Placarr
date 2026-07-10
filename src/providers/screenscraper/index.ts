@@ -89,7 +89,7 @@ export const screenscraperModule: ProviderModule = {
     id: "screenscraper",
     label: "ScreenScraper",
     factLabel: "SS",
-    coverUrlHost: "screenscraper",
+    coverUrlHost: "screenscraper.fr",
     types: ["games"],
     rateLimited: true,
     capabilities: [

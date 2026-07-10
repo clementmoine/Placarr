@@ -14,6 +14,37 @@ export function normalizeVideoGamePlatformKey(
   return detectVideoGamePlatformKey(value);
 }
 
+/**
+ * Stamp a fallback platform key onto attachments that lack one, except strict
+ * shelf-platform catalog sources whose remote URL no longer carries a signal
+ * (localized /uploads paths).
+ */
+export function stampAttachmentsMissingPlatformKey<T extends MetadataAttachment>(
+  attachments: readonly T[],
+  fallbackPlatformKey?: string | null,
+): T[] {
+  const normalized = normalizeVideoGamePlatformKey(fallbackPlatformKey);
+  if (!normalized) return [...attachments];
+  return attachments.map((attachment) => {
+    if (attachment.platformKey) return attachment;
+    const explicitPlatform =
+      (attachment.title
+        ? detectVideoGamePlatformKey(attachment.title)
+        : undefined) ??
+      (attachment.role
+        ? detectVideoGamePlatformKey(attachment.role)
+        : undefined);
+    if (explicitPlatform && explicitPlatform !== normalized) return attachment;
+    if (
+      attachment.strictShelfPlatformCoverSource === true &&
+      !deriveAttachmentPlatformKeyFromUrl(attachment.url)
+    ) {
+      return attachment;
+    }
+    return { ...attachment, platformKey: normalized };
+  });
+}
+
 /** Stamp a resolved platform key onto attachments that do not already have one. */
 export function stampAttachmentPlatformKeys<T extends MetadataAttachment>(
   attachments: readonly T[] | undefined,

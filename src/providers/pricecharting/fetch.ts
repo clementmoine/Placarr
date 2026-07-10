@@ -15,7 +15,13 @@ import {
   resolvePriceChartingPlatformSlug,
 } from "./platformSlugs";
 import { franchiseSequelNumbersConflict } from "@/core/enrich/titleMatching";
+import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 import { slugify } from "@/lib/routing/slugs";
+import { expandPriceChartingLookupTitles } from "./lookupTitles";
+import {
+  priceChartingAmpersandTitleSlug,
+  priceChartingTitleSlug,
+} from "./titleSlug";
 import {
   pickPriceChartingPrimaryCoverUrl,
   priceChartingGalleryLabelIsRecognized,
@@ -111,6 +117,9 @@ function normalizeTitleForComparison(value: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\s*\/\s*/g, " and ")
+    .replace(/\s*&\s*/g, " and ")
+    .replace(/\s*\|\s*/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -119,6 +128,10 @@ function normalizeTitleForComparison(value: string): string {
 function titleTokens(value: string): string[] {
   return normalizeTitleForComparison(value)
     .split(/\s+/)
+    .map((token) => {
+      const roman = parseRomanToken(token);
+      return roman != null ? String(roman) : token;
+    })
     .filter((token) => token && !TITLE_STOP_WORDS.has(token));
 }
 
@@ -160,7 +173,17 @@ function buildTitleSlugCandidates(title: string): string[] {
     .replace(/\s+/g, " ")
     .trim();
 
-  const compactSlugs = [cleanedTitle, withoutArticles, withoutSequelBeforeEdition]
+  const titleVariants = expandPriceChartingLookupTitles(cleanedTitle);
+  const slugSourceTitles = Array.from(
+    new Set([
+      cleanedTitle,
+      withoutArticles,
+      withoutSequelBeforeEdition,
+      ...titleVariants,
+    ]),
+  );
+
+  const compactSlugs = slugSourceTitles
     .map((value) =>
       value
         .normalize("NFD")
@@ -170,11 +193,25 @@ function buildTitleSlugCandidates(title: string): string[] {
     )
     .filter(Boolean);
 
-  const hyphenSlugs = [cleanedTitle, withoutArticles, withoutSequelBeforeEdition]
-    .map((value) => slugify(value))
+  const hyphenSlugs = slugSourceTitles
+    .flatMap((value) => [
+      priceChartingAmpersandTitleSlug(value),
+      priceChartingTitleSlug(value),
+      slugify(value),
+    ])
     .filter(Boolean);
 
-  return Array.from(new Set([...hyphenSlugs, ...compactSlugs]));
+  const slugPriority = (slug: string) => {
+    let score = 0;
+    if (slug.includes("double-pack")) score += 40;
+    if (slug.includes("&")) score += 20;
+    if (/\d/.test(slug)) score += 10;
+    return score;
+  };
+
+  return Array.from(new Set([...hyphenSlugs, ...compactSlugs])).sort(
+    (left, right) => slugPriority(right) - slugPriority(left),
+  );
 }
 
 function getPlatformSlug(
@@ -583,8 +620,13 @@ async function fetchDetailHtmlFromNameFallback(
   isClassics?: boolean,
   barcode?: string,
 ): Promise<string | null> {
+  const expandedNames = Array.from(
+    new Set(
+      fallbackNames.flatMap((name) => expandPriceChartingLookupTitles(name)),
+    ),
+  );
   const directHtml = await fetchDirectDetailHtmlFromNameFallback(
-    fallbackNames,
+    expandedNames,
     headers,
     fallbackPlatform,
     isPal,
@@ -593,7 +635,7 @@ async function fetchDetailHtmlFromNameFallback(
   if (directHtml) return directHtml;
 
   const seen = new Set<string>();
-  for (const fallbackName of fallbackNames) {
+  for (const fallbackName of expandedNames) {
     const normalized = fallbackName.toLowerCase().trim();
     if (!normalized || seen.has(normalized)) continue;
     seen.add(normalized);
@@ -823,8 +865,9 @@ export async function fetchMetadataFromPriceChartingByName(
   if (!cleanedName) return null;
 
   try {
+    const lookupNames = expandPriceChartingLookupTitles(cleanedName);
     const html = await fetchDetailHtmlFromNameFallback(
-      [cleanedName],
+      lookupNames,
       PRICECHARTING_HEADERS,
       fallbackPlatform,
       isPal,

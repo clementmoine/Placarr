@@ -370,6 +370,55 @@ describe("fetchMetadataFromPriceCharting", () => {
       title: "Borderlands [Game of the Year]",
     });
   });
+
+  it("résout un double pack slash via le slug ampersand PriceCharting", async () => {
+    const haloDetailHtml = `
+      <html><body>
+        <h1>Halo Reach &amp; Fable 3 [Double Pack] <a>PAL Xbox 360</a></h1>
+        <div class="cover"><img src='https://example.com/halo-fable.jpg'/></div>
+        <div id="extra-images">
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/abc/240.jpg" />
+              </a>
+            </div>
+            <p>Main Image</p>
+          </div>
+          <div class="spacer">&nbsp;</div>
+        </div>
+        <div id="full-prices"></div>
+      </body></html>`;
+
+    mockedGet.mockResolvedValue({
+      status: 200,
+      data: haloDetailHtml,
+      request: {
+        res: {
+          responseUrl:
+            "https://www.pricecharting.com/game/pal-xbox-360/halo-reach-&-fable-3-double-pack",
+        },
+      },
+    } as never);
+
+    await expect(
+      fetchMetadataFromPriceChartingByName(
+        "Halo Reach / Fable III",
+        "Xbox 360",
+        true,
+      ),
+    ).resolves.toMatchObject({
+      title: "Halo Reach & Fable 3 [Double Pack]",
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg",
+      images: [
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/abc/1600.jpg",
+          label: "Main Image",
+        },
+      ],
+    });
+  });
 });
 
 describe("fetchPricesFromPriceCharting", () => {

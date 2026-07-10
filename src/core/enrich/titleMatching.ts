@@ -28,7 +28,7 @@ import {
   isWeakMetadataSearchFragment,
 } from "@/core/enrich/titles/searchVariants";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
-import { buildBundleMetadataSearchQueries } from "@/core/enrich/bundleTitle";
+import { buildBundleMetadataSearchQueries, bundleTitlePartsMatchCatalogTitle, isBundleTitle } from "@/core/enrich/bundleTitle";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import type {
   MetadataAttachment,
@@ -1254,6 +1254,19 @@ export function isMetadataTitleAligned(
 ): boolean {
   if (!result.title) return true;
   if (isGenericTitleFragment(result.title, comparisonNames)) return false;
+  if (
+    comparisonNames.some(
+      (name) =>
+        isBundleTitle(name) &&
+        bundleTitlePartsMatchCatalogTitle(
+          name,
+          result.title || "",
+          result.aliases ?? [],
+        ),
+    )
+  ) {
+    return true;
+  }
   const primaryComparisonName =
     comparisonNames.find((name) => name.trim())?.trim() || "";
   if (

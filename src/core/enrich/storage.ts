@@ -23,7 +23,7 @@ import {
   isVideoGamePlatformKey,
 } from "@/core/identify/platforms/platforms";
 import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPreservation";
-import { normalizeVideoGamePlatformKey } from "@/core/enrich/media/platformKeyStamp";
+import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
 import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
 import {
@@ -58,7 +58,6 @@ import {
   authoritative3dCoverRoleSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
-  strictShelfPlatformCoverSource,
 } from "@/core/catalog/sourceTraits";
 import sharp from "sharp";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
@@ -113,23 +112,6 @@ function hasMetadataImageCandidate(metadata: MetadataResult) {
   return Boolean(metadata.attachments?.some(isDisplayImageAttachment));
 }
 
-function stampAttachmentsForStorage(
-  attachments: MetadataAttachment[],
-  platformKey?: string | null,
-): MetadataAttachment[] {
-  const normalized = normalizeVideoGamePlatformKey(platformKey);
-  if (!normalized) return [...attachments];
-  return attachments.map((attachment) => {
-    if (attachment.platformKey) return attachment;
-    if (
-      strictShelfPlatformCoverSource(attachment.source) &&
-      !deriveAttachmentPlatformKeyFromUrl(attachment.url)
-    ) {
-      return attachment;
-    }
-    return { ...attachment, platformKey: normalized };
-  });
-}
 
 export function metadataImageAttachmentSemantics(
   metadata: MetadataResult,
@@ -373,9 +355,11 @@ export async function storeMetadata(
       ? detectShelfGamePlatformKey(item?.shelf?.name)
       : undefined;
 
-  const attachmentsList = stampAttachmentsForStorage(
-    [...(metadata.attachments || [])],
-    metadata.platformKey,
+  const attachmentsList = stampAttachmentsMissingPlatformKey(
+    (metadata.attachments || []).map((attachment) =>
+      withProviderAttachmentTraits(attachment),
+    ),
+    metadata.platformKey ?? requestedPlatformKey,
   );
   if (metadata.imageUrl) {
     const exists = attachmentsList.some(
@@ -506,6 +490,7 @@ export async function storeMetadata(
         source: attachment.source ?? "merged",
         title: attachment.title ?? undefined,
         coverProvenance: attachment.coverProvenance ?? undefined,
+        platformKey: attachment.platformKey ?? undefined,
       }));
   }
 

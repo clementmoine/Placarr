@@ -628,7 +628,10 @@ export function listingLooksLikeGameAccessory(name: string): boolean {
 // v43: câblage du signal jeu-vidéo (detectVideoGameSignal) — plateforme console
 // nommée dans les annonces — jusqu'ici défini mais jamais passé par le resolver ;
 // promeut `games` et écrase un faux album/film homonyme. Bump pour re-résoudre.
-export const BARCODE_CACHE_VERSION = "canonical-v43";
+// v44: slugs PriceCharting avec apostrophe encodée %27 (assassin%27s-creed-iii) —
+// les titres à apostrophe rataient la fiche directe (404) et résolvaient sans
+// les données PriceCharting. Bump pour re-résoudre ces scans.
+export const BARCODE_CACHE_VERSION = "canonical-v44";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider

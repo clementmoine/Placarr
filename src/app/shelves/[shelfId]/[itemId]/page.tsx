@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Coins,
+  Compass,
   Maximize2,
   Clock3,
   Trophy,
@@ -1128,6 +1129,7 @@ export default function ItemDetailsPage() {
   const {
     data: item,
     isPending,
+    isError,
     isFetched,
     isPlaceholderData,
   } = useQuery({
@@ -1151,7 +1153,8 @@ export default function ItemDetailsPage() {
     initialDataUpdatedAt: 0,
     staleTime: 0,
     refetchOnMount: "always",
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey[3] === itemId ? previousData : undefined,
     // Metadata is enriched in the background after an item is added, so poll
     // while this item is still being enriched (no metadataId yet) — survives a
     // page refresh since the state is derived from the persisted item.
@@ -2015,6 +2018,30 @@ export default function ItemDetailsPage() {
       )}
     </div>
   ) : null;
+
+  if (!isPending && isFetched && (isError || !item?.id)) {
+    return (
+      <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">
+        <Header />
+        <div className="overflow-y-auto">
+          <div className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-6 p-6 text-center">
+            <Compass className="size-10 text-muted-foreground" />
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("errors.notFoundTitle")}
+              </h1>
+              <p className="max-w-md text-sm text-muted-foreground">
+                {t("errors.notFoundMessage")}
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={shelfHref}>{backToShelfLabel}</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-background text-foreground z-0">

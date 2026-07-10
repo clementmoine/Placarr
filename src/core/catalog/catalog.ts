@@ -31,9 +31,9 @@ export function discoverProviderModules(): readonly ProviderModule[] {
   return PROVIDER_MODULES;
 }
 
-export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.map((mdl) =>
-  materializeProviderInfo(mdl.info),
-);
+export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.filter(
+  (mdl): mdl is ProviderModule => Boolean(mdl?.info),
+).map((mdl) => materializeProviderInfo(mdl.info));
 
 export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((mdl) => mdl.info.id === id);

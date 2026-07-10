@@ -723,6 +723,48 @@ export function pickBestBackgroundFromAttachments<
   return best?.url ?? null;
 }
 
+function coverDisplayTypeRank(
+  semantics: ReturnType<typeof attachmentSemantics>,
+  attachment: ScoredAttachmentInput,
+): number {
+  const isFrontCover =
+    isCoverCandidateKind(semantics.kind) &&
+    !isPhysicalNonCoverKind(semantics.kind);
+  if (!isFrontCover) {
+    return 5;
+  }
+  if (semantics.kind === "grid") return 3;
+  if (semantics.kind === "grid3d") return 4;
+  if (semantics.kind === "cover3d") return 1;
+  if (attachment.isFullWrapCoverSource === true) return 2;
+  if (semantics.kind === "cover") return 0;
+  return 3;
+}
+
+function compareCoverDisplayRank<
+  T extends {
+    platformMismatchRank: number;
+    typeRank: number;
+    regionRankValue: number;
+    platformMatchRank: number;
+    provenanceRank: number;
+    shortestEdge: number;
+    score: number;
+    index: number;
+  },
+>(a: T, b: T): number {
+  return (
+    a.platformMismatchRank - b.platformMismatchRank ||
+    a.typeRank - b.typeRank ||
+    a.platformMatchRank - b.platformMatchRank ||
+    a.regionRankValue - b.regionRankValue ||
+    a.provenanceRank - b.provenanceRank ||
+    b.score - a.score ||
+    b.shortestEdge - a.shortestEdge ||
+    a.index - b.index
+  );
+}
+
 export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
   attachments: T[],
   imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
@@ -730,22 +772,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
 ): T[] {
   const scored = attachments.map((attachment, index) => {
     const semantics = attachmentSemantics(attachment);
-    const is3d = semantics.kind === "cover3d";
-    const isFullWrap = attachment.isFullWrapCoverSource === true;
-    const isFrontCover =
-      isCoverCandidateKind(semantics.kind) &&
-      !isPhysicalNonCoverKind(semantics.kind);
-
-    let typeRank = 3; // default for non-front covers (back, disc, spine, etc.)
-    if (isFrontCover) {
-      if (is3d) {
-        typeRank = 1; // 3D
-      } else if (isFullWrap) {
-        typeRank = 2; // full wrap (front+back spread)
-      } else {
-        typeRank = 0; // 2D Standard
-      }
-    }
+    const typeRank = coverDisplayTypeRank(semantics, attachment);
 
     const metrics = imageMetricsByUrl?.get(attachment.url);
     return {
@@ -815,24 +842,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       };
 
       const keepExisting =
-        existing.platformMismatchRank < entry.platformMismatchRank ||
-        (existing.platformMismatchRank === entry.platformMismatchRank &&
-          existing.typeRank < entry.typeRank) ||
-        (existing.platformMismatchRank === entry.platformMismatchRank &&
-          existing.typeRank === entry.typeRank &&
-          existing.platformMatchRank < entry.platformMatchRank) ||
-        (existing.platformMismatchRank === entry.platformMismatchRank &&
-          existing.typeRank === entry.typeRank &&
-          existing.platformMatchRank === entry.platformMatchRank &&
-          (existing.regionRankValue < entry.regionRankValue ||
-            (existing.regionRankValue === entry.regionRankValue &&
-              (existing.provenanceRank < entry.provenanceRank ||
-                (existing.provenanceRank === entry.provenanceRank &&
-                  (existing.score > entry.score ||
-                    (existing.score === entry.score &&
-                      (existing.shortestEdge > entry.shortestEdge ||
-                        (existing.shortestEdge === entry.shortestEdge &&
-                          existing.index < entry.index)))))))));
+        compareCoverDisplayRank(existing, entry) < 0;
 
       if (source) existing.sources.add(source);
 
@@ -864,17 +874,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       ...entry,
       score: entry.score + crossSourceConsensusBonus(entry.sources.size),
     }))
-    .sort(
-      (a, b) =>
-        a.platformMismatchRank - b.platformMismatchRank ||
-        a.typeRank - b.typeRank ||
-        a.platformMatchRank - b.platformMatchRank ||
-        a.regionRankValue - b.regionRankValue ||
-        a.provenanceRank - b.provenanceRank ||
-        b.score - a.score ||
-        b.shortestEdge - a.shortestEdge ||
-        a.index - b.index,
-    )
+    .sort(compareCoverDisplayRank)
     .map((entry) => entry.attachment);
 }
 

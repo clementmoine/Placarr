@@ -3,6 +3,7 @@ import {
   stripLegalMarkSymbols,
 } from "@/core/enrich/search/query";
 import { normalizeDisplayTitle } from "@/core/enrich/titles/displayScore";
+import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 import { titleTokenPresentInSet } from "@/core/enrich/titles/tokenEquivalents";
 
 const TITLE_STOP_WORDS = new Set([
@@ -31,6 +32,32 @@ function distinctiveTokens(value: string): string[] {
   return normalizeDisplayTitle(value).filter(
     (token) => token.length >= 3 && !TITLE_STOP_WORDS.has(token),
   );
+}
+
+function catalogMatchTokens(value: string): Set<string> {
+  const tokens = new Set(distinctiveTokens(value));
+  for (const match of value.matchAll(/\b(\d{1,2})\b/g)) {
+    tokens.add(match[1]!);
+  }
+  for (const match of value.matchAll(/\b([IVXLCDM]{1,4})\b/gi)) {
+    const roman = parseRomanToken(match[1]!);
+    if (roman != null) tokens.add(String(roman));
+    tokens.add(match[1]!.toLowerCase());
+  }
+  return tokens;
+}
+
+function partMatchTokens(part: string): string[] {
+  const tokens = distinctiveTokens(part);
+  const expanded = new Set(tokens);
+  for (const token of tokens) {
+    const roman = parseRomanToken(token);
+    if (roman != null) expanded.add(String(roman));
+  }
+  for (const match of part.matchAll(/\b(\d{1,2})\b/g)) {
+    expanded.add(match[1]!);
+  }
+  return [...expanded];
 }
 
 function shelfAlreadyInTitle(shelfName: string, title: string): boolean {
@@ -76,7 +103,7 @@ export function bundleTitlePartsMatchCatalogTitle(
   if (parts.length < 2) return false;
 
   return candidates.some((candidate) => {
-    const titleTokenSet = new Set(distinctiveTokens(candidate));
+    const titleTokenSet = catalogMatchTokens(candidate);
     return parts.every((part) => bundlePartMatchesCatalog(part, titleTokenSet));
   });
 }
@@ -85,7 +112,7 @@ function bundlePartMatchesCatalog(
   part: string,
   titleTokenSet: Set<string>,
 ): boolean {
-  const partTokens = distinctiveTokens(part);
+  const partTokens = partMatchTokens(part);
   if (partTokens.length === 0) return true;
 
   const hits = partTokens.filter((token) =>

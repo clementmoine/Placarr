@@ -3,7 +3,11 @@ import {
   getPriceChartingPlatformSlugs,
   resolvePriceChartingPlatformSlug,
 } from "./platformSlugs";
-import { slugify } from "@/lib/routing/slugs";
+import { expandPriceChartingLookupTitles } from "./lookupTitles";
+import {
+  priceChartingAmpersandTitleSlug,
+  priceChartingTitleSlug,
+} from "./titleSlug";
 
 import type { CatalogExternalLinkContext } from "@/types/providerModule";
 
@@ -79,6 +83,30 @@ function shouldUsePriceChartingSearchUrl(title: string) {
   return /\bclub football\b/i.test(title);
 }
 
+function priceChartingCatalogSlugScore(slug: string): number {
+  let score = 0;
+  if (slug.includes("double-pack")) score += 40;
+  if (slug.includes("&")) score += 20;
+  if (/\d/.test(slug)) score += 10;
+  return score;
+}
+
+function pickPriceChartingCatalogTitleSlug(title: string): string {
+  const variants = expandPriceChartingLookupTitles(title);
+  const slugs = variants.flatMap((variant) => [
+    priceChartingAmpersandTitleSlug(variant),
+    priceChartingTitleSlug(variant),
+  ]);
+  const ranked = slugs
+    .filter(Boolean)
+    .sort(
+      (left, right) =>
+        priceChartingCatalogSlugScore(right) -
+        priceChartingCatalogSlugScore(left),
+    );
+  return ranked[0] ?? priceChartingTitleSlug(title);
+}
+
 export function buildPriceChartingCatalogLink({
   title,
   fallbackTitle,
@@ -87,7 +115,7 @@ export function buildPriceChartingCatalogLink({
   aliases,
 }: CatalogExternalLinkContext) {
   const cleanTitle = pickPriceChartingTitle({ title, fallbackTitle, aliases });
-  const titleSlug = slugify(cleanTitle);
+  const titleSlug = pickPriceChartingCatalogTitleSlug(cleanTitle);
   const searchUrl = `https://www.pricecharting.com/fr/search-products?type=videogames&q=${encodeURIComponent(cleanTitle || cleanCode(barcode))}`;
 
   if (!titleSlug || !shelfName || shouldUsePriceChartingSearchUrl(cleanTitle)) {

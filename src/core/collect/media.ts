@@ -24,6 +24,8 @@ import {
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/core/enrich/media/attachmentDisplayScore";
+import type { MetadataAttachment } from "@/types/metadataProvider";
+import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
@@ -134,9 +136,25 @@ function coverDisplayOptions(
 type DisplayAttachment = ScoredAttachmentInput & PlaceholderCoverSignals;
 
 function attachments(item: MediaInput): DisplayAttachment[] {
-  return filterPlaceholderCoverAttachments(
+  const list = filterPlaceholderCoverAttachments(
     (item.metadata?.attachments ?? []) as DisplayAttachment[],
   );
+  const shelfPlatformKey =
+    item.shelf?.type === "games"
+      ? detectShelfGamePlatformKey(item.shelf.name)
+      : undefined;
+  if (!shelfPlatformKey) return list;
+
+  return list.map((attachment) => {
+    if (attachment.platformKey || !attachment.isGameMediaGallerySource) {
+      return attachment;
+    }
+    const [stamped] = stampAttachmentsMissingPlatformKey(
+      [attachment as MetadataAttachment],
+      shelfPlatformKey,
+    );
+    return (stamped ?? attachment) as DisplayAttachment;
+  });
 }
 
 /**
@@ -341,7 +359,10 @@ function reconcileImageUrlAfterAttachmentFilter<
   const pinnedSupersededByPlatformMatch =
     !!pinnedAttachment &&
     isVideoGamePlatformKey(requestedPlatformKey) &&
-    isCoverAmbiguousForShelfPlatform(pinnedAttachment, requestedPlatformKey) &&
+    isCoverAmbiguousForShelfPlatform(
+      pinnedAttachment as ScoredAttachmentInput,
+      requestedPlatformKey,
+    ) &&
     coverListHasShelfPlatformSignal(
       attachments as ScoredAttachmentInput[],
       requestedPlatformKey,

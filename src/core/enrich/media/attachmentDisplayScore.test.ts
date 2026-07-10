@@ -26,6 +26,14 @@ describe("attachmentDisplayScore", () => {
       ),
     ).toBe("xbox360");
   });
+  it("deriveAttachmentPlatformKeyFromUrl resolves ScreenScraper mediaJeu systemeid", () => {
+    expect(
+      deriveAttachmentPlatformKeyFromUrl(
+        "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=9&jeuid=14825&media=box-2D(fr)",
+      ),
+    ).toBe("gb");
+  });
+
   it("applique l'ajustement de score image déclaré par le provider", () => {
     const details = explainAttachmentScoreForDisplay({
       type: "cover",
@@ -842,6 +850,43 @@ describe("attachmentDisplayScore", () => {
     });
 
     expect(ranked[0]).toBe(vita2d);
+  });
+
+  it("ranks localized ScreenScraper FR with platformKey alongside Launchbox FR on a GB shelf", () => {
+    const launchboxFr = {
+      type: "cover" as const,
+      source: "launchbox",
+      role: "fr",
+      url: "/uploads/lb-fr.jpg",
+      title: "Box - Front",
+      platformKey: "gb",
+    };
+    const screenScraperFr = {
+      type: "cover" as const,
+      source: "screenscraper",
+      role: "fr",
+      url: "/uploads/ss-fr.jpg",
+      platformKey: "gb",
+    };
+    const launchboxEu = {
+      type: "cover" as const,
+      source: "launchbox",
+      role: "eu",
+      url: "/uploads/lb-eu.jpg",
+      title: "Box - Front",
+      platformKey: "gb",
+    };
+
+    const ranked = rankCoverGalleryAttachments(
+      [launchboxEu, screenScraperFr, launchboxFr],
+      undefined,
+      { requestedPlatformKey: "gb", uiLocale: "fr" },
+    );
+
+    expect(ranked.slice(0, 2).every((attachment) => attachment.role === "fr")).toBe(
+      true,
+    );
+    expect(ranked[2]?.url).toBe("/uploads/lb-eu.jpg");
   });
 
   it("does not infer platform from localized upload filenames", () => {

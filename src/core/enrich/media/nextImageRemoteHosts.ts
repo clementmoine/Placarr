@@ -1,15 +1,15 @@
 /**
- * Remote hosts allowed by `next/image` (see `next.config.js`).
+ * Runtime allowlist for remote images served through `/_next/image`.
  *
- * Next.js 16 caps `images.remotePatterns` at 50 entries. Wildcard patterns use
- * `**.parent.tld` and only match subdomains — apex hosts (e.g. `imagedelivery.net`,
- * `chocobonplan.com`) must be listed in `IMAGE_REMOTE_EXACT_HOSTS`.
+ * `next.config.js` uses a single `hostname: "**"` pattern (Next.js caps
+ * `remotePatterns` at 50). Host validation runs in `proxy.ts` via
+ * `nextImageRemoteGuard.ts`.
  *
- * PrestaShop/Shopify hosts are merged at the call site (`next.config.js`, tests)
- * so this module stays free of provider config imports (Node loads it from
- * `next.config.js` without TS path aliases).
+ * Hosts are derived from the provider registry (`coverUrlHost`, templates,
+ * `coverProvenanceRules`) plus PrestaShop/Shopify shop domains. Supplemental
+ * lists cover CDNs not yet declared on a provider module.
  */
-const STATIC_IMAGE_REMOTE_WILDCARD_HOSTS = [
+const SUPPLEMENTAL_IMAGE_REMOTE_WILDCARD_HOSTS = [
   "achatmoinscher.com",
   "bedetheque.com",
   "booknode.com",
@@ -30,8 +30,8 @@ const STATIC_IMAGE_REMOTE_WILDCARD_HOSTS = [
   "tmdb.org",
 ] as const;
 
-/** Apex or single-label hosts not covered by `**.parent.tld`. */
-const STATIC_IMAGE_REMOTE_EXACT_HOSTS = [
+/** Apex or CDN hosts not covered by `**.parent.tld` alone. */
+const SUPPLEMENTAL_IMAGE_REMOTE_EXACT_HOSTS = [
   "bedetheque.com",
   "cdn-images.dzcdn.net",
   "chocobonplan.com",
@@ -42,12 +42,31 @@ const STATIC_IMAGE_REMOTE_EXACT_HOSTS = [
   "i.discogs.com",
   "icollecteverything.com",
   "imagedelivery.net",
+  "media.senscritique.com",
   "rawg.io",
   "storage.googleapis.com",
   "upload.wikimedia.org",
 ] as const;
 
-const IMAGE_REMOTE_PATTERN_LIMIT = 50;
+/**
+ * Exact hosts from provider `coverUrlHost` / ISBN templates / provenance rules.
+ * Kept in sync with the registry via `nextImageRemoteHosts.test.ts` (no runtime
+ * `PROVIDERS` import — middleware and client bundles must stay registry-free).
+ */
+export const REGISTRY_COVER_IMAGE_EXACT_HOSTS = [
+  "bedetheque.com",
+  "cdn1.booknode.com",
+  "covers.openlibrary.org",
+  "geedie.lt",
+  "historiquedesjeuxvideo.com",
+  "i.ebayimg.com",
+  "icollecteverything.com",
+  "imagedelivery.net",
+  "img.chasse-aux-livres.fr",
+  "media.senscritique.com",
+  "rawg.io",
+  "screenscraper.fr",
+] as const;
 
 const REMOTE_IMAGE_EXTENSION_RE = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?|$)/i;
 
@@ -84,6 +103,58 @@ function dedupeSorted(hosts: readonly string[]): readonly string[] {
   return [...new Set(hosts.map(normalizeImageRemoteHost))].sort();
 }
 
+export function hostFromCoverUrlFragment(fragment: string): string | null {
+  const trimmed = fragment.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("http")) {
+    try {
+      return normalizeImageRemoteHost(new URL(trimmed).hostname);
+    } catch {
+      return null;
+    }
+  }
+  const candidate = trimmed.split("/")[0]?.trim();
+  if (!candidate || !candidate.includes(".")) return null;
+  return normalizeImageRemoteHost(candidate);
+}
+
+/**
+ * Hosts declared on provider modules (`coverUrlHost`, ISBN templates,
+ * `coverProvenanceRules`). Returns exact hosts only — wildcard parents live in
+ * the supplemental list until migrated to per-provider declarations.
+ */
+export function registryCoverImageHosts(
+  providers: ReadonlyArray<{
+    coverUrlHost?: string;
+    isbnCoverUrlTemplate?: string;
+    coverProvenanceRules?: Readonly<Record<string, readonly string[]>>;
+  }>,
+): CatalogRetailerImageHosts {
+  const exacts = new Set<string>();
+
+  for (const provider of providers) {
+    const fragments: string[] = [];
+    if (provider.coverUrlHost) fragments.push(provider.coverUrlHost);
+    if (provider.isbnCoverUrlTemplate) {
+      fragments.push(provider.isbnCoverUrlTemplate);
+    }
+    if (provider.coverProvenanceRules) {
+      for (const rules of Object.values(provider.coverProvenanceRules)) {
+        fragments.push(...rules);
+      }
+    }
+    for (const fragment of fragments) {
+      const host = hostFromCoverUrlFragment(fragment);
+      if (host) exacts.add(host);
+    }
+  }
+
+  return {
+    wildcards: [],
+    exacts: dedupeSorted([...exacts]),
+  };
+}
+
 /**
  * PrestaShop/Shopify shops serve product images on their own domain
  * (`/{id}-large_default/...`). www shops → wildcard parent; apex shops → exact.
@@ -112,18 +183,29 @@ export function catalogRetailerImageHosts(
 
 export function buildImageRemoteHostLists(
   catalog: CatalogRetailerImageHosts = { wildcards: [], exacts: [] },
+  registry: CatalogRetailerImageHosts = { wildcards: [], exacts: [] },
 ): ImageRemoteHostLists {
   return {
     wildcards: dedupeSorted([
-      ...STATIC_IMAGE_REMOTE_WILDCARD_HOSTS,
+      ...SUPPLEMENTAL_IMAGE_REMOTE_WILDCARD_HOSTS,
+      ...registry.wildcards,
       ...catalog.wildcards,
     ]),
     exacts: dedupeSorted([
-      ...STATIC_IMAGE_REMOTE_EXACT_HOSTS,
+      ...SUPPLEMENTAL_IMAGE_REMOTE_EXACT_HOSTS,
+      ...registry.exacts,
       ...catalog.exacts,
     ]),
   };
 }
+
+/** `next.config.js` — single wildcard entry; runtime guard enforces the allowlist. */
+export const NEXT_IMAGE_CONFIG_REMOTE_PATTERNS = [
+  {
+    protocol: "https" as const,
+    hostname: "**",
+  },
+];
 
 /** Heuristic: URL likely points at image bytes (not a page, video, or wiki link). */
 export function looksLikeRemoteImageUrl(url: string): boolean {
@@ -144,7 +226,7 @@ function hostMatchesWildcardParent(host: string, parent: string): boolean {
   return normalized.endsWith(`.${parentNorm}`);
 }
 
-/** True when `next/image` may optimize a remote `https://` asset on this host. */
+/** True when `/_next/image` may optimize a remote `https://` asset on this host. */
 export function isNextImageRemoteHostAllowed(
   host: string,
   lists: ImageRemoteHostLists,
@@ -158,42 +240,4 @@ export function isNextImageRemoteHostAllowed(
   return lists.wildcards.some((parent) =>
     hostMatchesWildcardParent(normalized, parent),
   );
-}
-
-export function nextImageRemotePatternCount(
-  lists: ImageRemoteHostLists,
-): number {
-  return lists.wildcards.length + lists.exacts.length;
-}
-
-export function assertNextImageRemotePatternBudget(
-  lists: ImageRemoteHostLists,
-): void {
-  const count = nextImageRemotePatternCount(lists);
-  if (count > IMAGE_REMOTE_PATTERN_LIMIT) {
-    throw new Error(
-      `next/image remotePatterns budget exceeded: ${count}/${IMAGE_REMOTE_PATTERN_LIMIT}`,
-    );
-  }
-}
-
-export function nextImageRemotePatterns(
-  catalog: CatalogRetailerImageHosts = { wildcards: [], exacts: [] },
-): Array<{
-  protocol: "https";
-  hostname: string;
-  pathname?: string;
-}> {
-  const lists = buildImageRemoteHostLists(catalog);
-  assertNextImageRemotePatternBudget(lists);
-  return [
-    ...lists.wildcards.map((hostname) => ({
-      protocol: "https" as const,
-      hostname: `**.${hostname}`,
-    })),
-    ...lists.exacts.map((hostname) => ({
-      protocol: "https" as const,
-      hostname,
-    })),
-  ];
 }

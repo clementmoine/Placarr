@@ -12,10 +12,7 @@ import { LayoutGrid, Search } from "lucide-react";
 import Header from "@/components/Header";
 import { ScanFAB } from "@/components/ScanFAB";
 import { ItemCard } from "@/components/ItemCard";
-import {
-  ItemCollectionFilterBar,
-  ItemCollectionSortSelect,
-} from "@/components/ItemCollectionControls";
+import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -26,12 +23,10 @@ import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath } from "@/lib/routing/slugs";
 import {
-  collectionFiltersToSearchParams,
-  parseItemCollectionFilters,
+  DEFAULT_ITEM_COLLECTION_FILTERS,
   parseItemCollectionSort,
   queryCollectionItems,
   sumCollectionEstimatedValue,
-  type ItemCollectionFilters,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 
@@ -68,10 +63,6 @@ function ItemsPageComponent() {
   const [sortBy, setSortBy] = useState<ItemCollectionSort>(
     parseItemCollectionSort(sortParam),
   );
-  const [filters, setFilters] = useState<ItemCollectionFilters>(() =>
-    parseItemCollectionFilters(searchParams),
-  );
-
   const form = useForm<FormValues>({
     resolver: zodResolver(searchSchema),
     defaultValues: { search: q },
@@ -95,19 +86,19 @@ function ItemsPageComponent() {
 
     return queryCollectionItems(items, {
       sortBy,
-      filters,
+      filters: DEFAULT_ITEM_COLLECTION_FILTERS,
     });
-  }, [items, sortBy, filters]);
+  }, [items, sortBy]);
 
   const totalValue = useMemo(() => {
     if (!items?.length) return 0;
     return sumCollectionEstimatedValue(
       queryCollectionItems(items, {
         sortBy: "name_asc",
-        filters,
+        filters: DEFAULT_ITEM_COLLECTION_FILTERS,
       }),
     );
-  }, [items, filters]);
+  }, [items]);
 
   const replaceParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(window.location.search);
@@ -142,7 +133,6 @@ function ItemsPageComponent() {
     setSearchQuery(q);
     setTypeFilter(typeParam);
     setSortBy(parseItemCollectionSort(sortParam));
-    setFilters(parseItemCollectionFilters(searchParams));
   }
   useEffect(() => {
     form.setValue("search", q);
@@ -208,14 +198,6 @@ function ItemsPageComponent() {
               placeholderKey="items.collection.sortBy"
             />
           </div>
-
-          <ItemCollectionFilterBar
-            filters={filters}
-            onChange={(next) => {
-              setFilters(next);
-              replaceParams(collectionFiltersToSearchParams(next));
-            }}
-          />
 
           <div className="flex flex-wrap gap-2">
             <button

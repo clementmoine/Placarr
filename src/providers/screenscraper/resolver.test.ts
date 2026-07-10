@@ -615,6 +615,11 @@ describe("mergeScreenScraperLookupWithGame", () => {
     expect(screenScraperLookupHasCanonicalCover(merged)).toBe(true);
     expect(merged.imageUrl).toContain("box-2D(eu)");
     expect(merged.attachments).toHaveLength(2);
+    expect(merged.platformKey).toBe("xbox");
+    expect(
+      merged.attachments?.find((attachment) => attachment.type === "cover")
+        ?.platformKey,
+    ).toBe("xbox");
   });
 });
 

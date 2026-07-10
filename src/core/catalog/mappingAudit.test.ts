@@ -44,6 +44,7 @@ describe("provider mapping probes", () => {
       [
         "boardgamegeek",
         "ebay",
+        "fullset",
         "googlebooks",
         "icollect",
         "openlibrary",
@@ -75,6 +76,7 @@ describe("provider mapping probes", () => {
         "espritjeu",
         "fairplayjeux",
         "freakxy",
+        "fullset",
         "icollect",
         "latelierdesjeux",
         "launchbox",
@@ -92,6 +94,7 @@ describe("provider mapping probes", () => {
         "pricecharting",
         "scandex",
         "screenscraper",
+        "senscritique",
         "smartoys",
         "thegamesdb",
         "tokyogamestory",

@@ -18,6 +18,7 @@ import { deezerModule } from "@/providers/deezer";
 import { discogsModule } from "@/providers/discogs";
 import { ebayModule } from "@/providers/ebay";
 import { freakxyModule } from "@/providers/freakxy";
+import { fullsetModule } from "@/providers/fullset";
 import { geedieModule } from "@/providers/geedie";
 import { hdjvModule } from "@/providers/hdjv";
 import { howlongtobeatModule } from "@/providers/howlongtobeat";
@@ -40,6 +41,7 @@ import { pricechartingModule } from "@/providers/pricecharting";
 import { rawgModule } from "@/providers/rawg";
 import { scandexModule } from "@/providers/scandex";
 import { screenscraperModule } from "@/providers/screenscraper";
+import { senscritiqueModule } from "@/providers/senscritique";
 import { smartoysModule } from "@/providers/smartoys";
 import { steamModule } from "@/providers/steam";
 import { steamgriddbModule } from "@/providers/steamgriddb";
@@ -77,6 +79,8 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   espritjeuModule,
   myludoModule,
   playinModule,
+  senscritiqueModule,
+  fullsetModule,
   ...PRESTASHOP_RETAILER_MODULES,
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,

@@ -56,4 +56,13 @@ describe("bundleTitlePartsMatchCatalogTitle", () => {
       ),
     ).toBe(true);
   });
+
+  it("accepts slash bundles with roman sequel numbers in catalog titles", () => {
+    expect(
+      bundleTitlePartsMatchCatalogTitle(
+        "Halo Reach / Fable III",
+        "Halo Reach & Fable 3 [Double Pack]",
+      ),
+    ).toBe(true);
+  });
 });

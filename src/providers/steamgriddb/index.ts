@@ -30,8 +30,11 @@ export const steamgriddbModule: ProviderModule = {
   },
   createMetadataAdapter: () => ({
     id: "steamgriddb",
-    async resolve({ name }) {
-      return (await fetchFromSteamGridDB(name)) as MetadataResult | null;
+    async resolve({ name, platform, shelfName }) {
+      return (await fetchFromSteamGridDB(name, {
+        platform,
+        shelfName,
+      })) as MetadataResult | null;
     },
   }),
   healthCheck: (() => {

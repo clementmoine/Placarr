@@ -22,7 +22,9 @@ import type {
 } from "@/types/providerModule";
 
 export function createMetadataAdapters(): MetadataProviderAdapter[] {
-  return PROVIDER_MODULES.flatMap((module) => {
+  return PROVIDER_MODULES.filter(
+    (module): module is ProviderModule => Boolean(module?.info),
+  ).flatMap((module) => {
     if (!module.createMetadataAdapter) return [];
     const adapter = module.createMetadataAdapter();
     return adapter ? [withProviderObservations(module, adapter)] : [];

@@ -12,6 +12,7 @@ import {
   detectScreenScraperSystemId,
   getPlatformKeyByScreenScraperSystemId,
 } from "@/core/identify/platforms/platforms";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 
 import type {
   MetadataAttachment,
@@ -470,6 +471,11 @@ export function mergeScreenScraperLookupWithGame(
     cached.title;
   const coverFromGame = gameData.medias ? pickSSCover(gameData.medias) : null;
 
+  const resolvedPlatformKey =
+    getPlatformKeyFromSSSystemId(Number(gameData.systeme?.id)) ||
+    getPlatformKeyFromSSMediaUrl(coverFromGame) ||
+    getPlatformKeyFromSSMediaUrl(cached.imageUrl);
+
   const attachmentByUrl = new Map<string, MetadataAttachment>();
   for (const attachment of cached.attachments ?? []) {
     const url = attachment.url?.trim();
@@ -487,6 +493,8 @@ export function mergeScreenScraperLookupWithGame(
         role: semantics.role,
         url: media.url,
         source: "screenscraper",
+        platformKey:
+          resolvedPlatformKey || getPlatformKeyFromSSMediaUrl(media.url),
       });
     }
   }
@@ -496,22 +504,26 @@ export function mergeScreenScraperLookupWithGame(
       ? cached.imageUrl
       : coverFromGame || cached.imageUrl || undefined;
 
-  return {
-    ...cached,
-    title: title || cached.title,
-    description: cached.description ?? pickSSSynopsis(gameData.synopsis),
-    imageUrl,
-    attachments: [...attachmentByUrl.values()],
-    releaseDate: cached.releaseDate ?? gameData.dates?.[0]?.text ?? undefined,
-    publishers:
-      cached.publishers ??
-      (gameData.editeur?.text || gameData.developpeur?.text
-        ? [{ name: (gameData.editeur?.text ?? gameData.developpeur?.text)! }]
-        : undefined),
-    externalIds: cached.externalIds ?? {
-      screenscraper: String(gameData.id),
+  return withMetadataPlatformKeys(
+    {
+      ...cached,
+      title: title || cached.title,
+      description: cached.description ?? pickSSSynopsis(gameData.synopsis),
+      imageUrl,
+      attachments: [...attachmentByUrl.values()],
+      releaseDate: cached.releaseDate ?? gameData.dates?.[0]?.text ?? undefined,
+      publishers:
+        cached.publishers ??
+        (gameData.editeur?.text || gameData.developpeur?.text
+          ? [{ name: (gameData.editeur?.text ?? gameData.developpeur?.text)! }]
+          : undefined),
+      externalIds: cached.externalIds ?? {
+        screenscraper: String(gameData.id),
+      },
+      platformKey: cached.platformKey ?? resolvedPlatformKey,
     },
-  };
+    resolvedPlatformKey,
+  );
 }
 
 export async function hydrateScreenScraperLookupFromGameCache(
@@ -1230,7 +1242,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
       const attachments: MetadataAttachment[] = [];
 
-      const resolvedPlatformKey = getPlatformKeyFromSSSystemId(resolvedSystemId);
+      const resolvedPlatformKey =
+        getPlatformKeyFromSSSystemId(resolvedSystemId) ||
+        getPlatformKeyFromSSSystemId(Number(gameData.systeme?.id)) ||
+        getPlatformKeyFromSSMediaUrl(imageUrl);
 
       if (gameData.medias) {
         gameData.medias.forEach((m) => {
@@ -1245,7 +1260,8 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               role: semantics.role,
               url: m.url,
               source: "screenscraper",
-              platformKey: resolvedPlatformKey,
+              platformKey:
+                resolvedPlatformKey || getPlatformKeyFromSSMediaUrl(m.url),
             });
           }
         });
@@ -1262,22 +1278,25 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             .map((n) => ({ region: n.region, text: n.text }))
         : undefined;
 
-      const result: MetadataResult = {
-        title,
-        platformKey:
-          resolvedPlatformKey || getPlatformKeyFromSSMediaUrl(imageUrl),
-        description,
-        imageUrl: imageUrl ?? undefined,
-        releaseDate,
-        publishers: publisherName ? [{ name: publisherName }] : undefined,
-        attachments,
-        aliases,
-        regionalTitles,
-        facts: facts.length > 0 ? facts : undefined,
-        externalIds: gameData.id
-          ? { screenscraper: String(gameData.id) }
-          : undefined,
-      };
+      const result: MetadataResult = withMetadataPlatformKeys(
+        {
+          title,
+          platformKey:
+            resolvedPlatformKey || getPlatformKeyFromSSMediaUrl(imageUrl),
+          description,
+          imageUrl: imageUrl ?? undefined,
+          releaseDate,
+          publishers: publisherName ? [{ name: publisherName }] : undefined,
+          attachments,
+          aliases,
+          regionalTitles,
+          facts: facts.length > 0 ? facts : undefined,
+          externalIds: gameData.id
+            ? { screenscraper: String(gameData.id) }
+            : undefined,
+        },
+        resolvedPlatformKey,
+      );
 
       if (gameData.id) {
         await persistScreenScraperGameIdForBarcode(

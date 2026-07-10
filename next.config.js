@@ -1,19 +1,7 @@
 // @ts-check
 import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
-import { PRESTASHOP_RETAILER_CONFIGS } from "./src/providers/prestashop/configs.ts";
-import { SHOPIFY_RETAILER_CONFIGS } from "./src/providers/shopify/configs.ts";
-import { DEDICATED_CATALOG_IMAGE_HOSTS } from "./src/core/enrich/media/dedicatedCatalogImageHosts.ts";
-import {
-  catalogRetailerImageHosts,
-  nextImageRemotePatterns,
-} from "./src/core/enrich/media/nextImageRemoteHosts.ts";
-
-const catalogImageHosts = catalogRetailerImageHosts([
-  ...PRESTASHOP_RETAILER_CONFIGS,
-  ...SHOPIFY_RETAILER_CONFIGS,
-  ...DEDICATED_CATALOG_IMAGE_HOSTS,
-]);
+import { NEXT_IMAGE_CONFIG_REMOTE_PATTERNS } from "./src/core/enrich/media/nextImageRemoteHosts.ts";
 
 const revision = crypto.randomUUID();
 
@@ -40,7 +28,8 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    remotePatterns: nextImageRemotePatterns(catalogImageHosts),
+    // Next.js caps remotePatterns at 50 — runtime host guard in `src/proxy.ts`.
+    remotePatterns: NEXT_IMAGE_CONFIG_REMOTE_PATTERNS,
   },
 };
 

@@ -19,6 +19,13 @@ export interface MetadataAttachment {
    */
   coverProvenance?: string;
   /**
+   * Platform this cover belongs to, derived from the provider's original image URL
+   * (ScreenScraper `systemeid`, hdjv `/PS3/` path, …). Persisted like
+   * `coverProvenance` because localization rewrites the URL and drops the signal.
+   * See `@/core/enrich/media/attachmentDisplayScore`.
+   */
+  platformKey?: string;
+  /**
    * Image metrics measured once at enrichment (sharp) and persisted, so the
    * read-time cover ranking can sort by resolution + exposure without
    * re-decoding files. See `@/core/enrich/media/attachmentDisplayScore`.

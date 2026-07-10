@@ -8,6 +8,7 @@ import {
 } from "@prisma/client";
 import path from "path";
 import {
+  deriveAttachmentPlatformKeyFromUrl,
   shouldShowCoverAttachmentOnShelf,
   shouldSuppressCoverOnPlatformShelf,
   pickBestBackgroundFromAttachments,
@@ -17,6 +18,12 @@ import {
   type AttachmentImageMetrics,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import {
+  detectVideoGamePlatformKey,
+  isVideoGamePlatformKey,
+} from "@/core/identify/platforms/platforms";
+import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPreservation";
+import { normalizeVideoGamePlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
 import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
 import {
@@ -51,6 +58,7 @@ import {
   authoritative3dCoverRoleSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
+  strictShelfPlatformCoverSource,
 } from "@/core/catalog/sourceTraits";
 import sharp from "sharp";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
@@ -103,6 +111,24 @@ function isDisplayImageAttachment(attachment: {
 function hasMetadataImageCandidate(metadata: MetadataResult) {
   if (metadata.imageUrl) return true;
   return Boolean(metadata.attachments?.some(isDisplayImageAttachment));
+}
+
+function stampAttachmentsForStorage(
+  attachments: MetadataAttachment[],
+  platformKey?: string | null,
+): MetadataAttachment[] {
+  const normalized = normalizeVideoGamePlatformKey(platformKey);
+  if (!normalized) return [...attachments];
+  return attachments.map((attachment) => {
+    if (attachment.platformKey) return attachment;
+    if (
+      strictShelfPlatformCoverSource(attachment.source) &&
+      !deriveAttachmentPlatformKeyFromUrl(attachment.url)
+    ) {
+      return attachment;
+    }
+    return { ...attachment, platformKey: normalized };
+  });
 }
 
 export function metadataImageAttachmentSemantics(
@@ -254,6 +280,9 @@ function prepareDeferredAttachments(
       coverProvenance:
         coverProvenanceForSource(attachment.source, sourceUrl) ??
         attachment.coverProvenance,
+      platformKey:
+        deriveAttachmentPlatformKeyFromUrl(sourceUrl) ??
+        attachment.platformKey,
     };
   });
 }
@@ -344,7 +373,10 @@ export async function storeMetadata(
       ? detectShelfGamePlatformKey(item?.shelf?.name)
       : undefined;
 
-  const attachmentsList = [...(metadata.attachments || [])];
+  const attachmentsList = stampAttachmentsForStorage(
+    [...(metadata.attachments || [])],
+    metadata.platformKey,
+  );
   if (metadata.imageUrl) {
     const exists = attachmentsList.some(
       (attachment) => attachment.url === metadata.imageUrl,
@@ -445,6 +477,11 @@ export async function storeMetadata(
               coverProvenance:
                 coverProvenanceForSource(attachment.source, sourceUrl) ??
                 attachment.coverProvenance,
+              // Derive from the *original* remote URL — the local /uploads path it
+              // is about to become no longer carries the platform signal.
+              platformKey:
+                deriveAttachmentPlatformKeyFromUrl(sourceUrl) ??
+                attachment.platformKey,
             };
           }),
         )
@@ -556,7 +593,14 @@ export async function storeMetadata(
       mediaType: type,
     });
   });
-  const canonicalCoverCandidate = storableAttachments.find(
+
+  const finalStorableAttachments = preserveGalleryAttachmentsOnRegression(
+    item?.metadata?.attachments,
+    storableAttachments,
+    requestedPlatformKey,
+  );
+
+  const canonicalCoverCandidate = finalStorableAttachments.find(
     (attachment) =>
       attachment.isCanonicalCoverSource && attachment.type === "cover",
   );
@@ -570,12 +614,12 @@ export async function storeMetadata(
       : undefined;
   const metadataCoverFallback =
     formattedMetadata.imageUrl &&
-    isUrlEligibleDefaultCover(formattedMetadata.imageUrl, storableAttachments)
+    isUrlEligibleDefaultCover(formattedMetadata.imageUrl, finalStorableAttachments)
       ? formattedMetadata.imageUrl
       : null;
   const selectedImageUrl =
     canonicalCover?.url ??
-    pickBestCoverFromAttachments(storableAttachments, imageMetricsByUrl, {
+    pickBestCoverFromAttachments(finalStorableAttachments, imageMetricsByUrl, {
       requestedPlatformKey,
     }) ??
     metadataCoverFallback ??
@@ -585,7 +629,7 @@ export async function storeMetadata(
       attachmentsForRanking.find(
         (attachment) => attachment.url === previousLocalCover,
       ) ?? { type: "cover", url: previousLocalCover },
-      storableAttachments.filter((attachment) =>
+      finalStorableAttachments.filter((attachment) =>
         ["cover", "artwork", "image"].includes(attachment.type),
       ),
       requestedPlatformKey,
@@ -607,7 +651,7 @@ export async function storeMetadata(
     selectedImageUrl &&
     croppedImageUrl !== selectedImageUrl
   ) {
-    const coverAttachment = storableAttachments.find(
+    const coverAttachment = finalStorableAttachments.find(
       (attachment) => attachment.url === selectedImageUrl,
     );
     if (coverAttachment) coverAttachment.url = croppedImageUrl;
@@ -619,7 +663,7 @@ export async function storeMetadata(
   // the display scorer + the metrics already gathered above). Null when nothing
   // high-resolution qualifies, so the UI falls back to the legacy heuristic.
   const heroImageUrl = pickBestBackgroundFromAttachments(
-    storableAttachments,
+    finalStorableAttachments,
     imageMetricsByUrl,
   );
   metadata.heroImageUrl = heroImageUrl || undefined;
@@ -655,18 +699,13 @@ export async function storeMetadata(
   };
 
   if (item?.metadata) {
-    // Delete existing attachments
-    await prisma.attachment.deleteMany({
-      where: { metadataId: item.metadata.id },
-    });
-
-    // Update existing metadata with new authors and publishers
     storedMetadata = await prisma.metadata.update({
       where: { id: item.metadata.id },
       data: {
         ...metadataData,
         attachments: {
-          create: storableAttachments.map((attachment) =>
+          deleteMany: {},
+          create: finalStorableAttachments.map((attachment) =>
             toAttachmentCreateData(
               attachment,
               imageMetricsByUrl.get(attachment.url),
@@ -693,7 +732,7 @@ export async function storeMetadata(
           connect: { id: itemId },
         },
         attachments: {
-          create: storableAttachments.map((attachment) =>
+          create: finalStorableAttachments.map((attachment) =>
             toAttachmentCreateData(
               attachment,
               imageMetricsByUrl.get(attachment.url),
@@ -723,7 +762,7 @@ export async function storeMetadata(
 
   if (item && croppedImageUrl) {
     const previousMetadataImage = item.metadata?.imageUrl || null;
-    const itemCoverStillInGallery = storableAttachments.some(
+    const itemCoverStillInGallery = finalStorableAttachments.some(
       (attachment) => attachment.url === item.imageUrl,
     );
     const itemCoverMetrics = item.imageUrl?.startsWith("/uploads/")
@@ -750,7 +789,7 @@ export async function storeMetadata(
       ) ||
       (type === "musics" &&
         !itemCoverStillInGallery &&
-        storableAttachments.some(
+        finalStorableAttachments.some(
           (attachment) => attachment.isCanonicalCoverSource,
         ));
     if (shouldSyncItemCover) {
@@ -768,10 +807,24 @@ export async function storeMetadata(
 
   const discoveredBarcode = normalizeProductBarcode(metadata.barcode);
   const itemName = name.trim() || item?.name?.trim() || "";
+  // Defensive backstop to the platform-aware barcode selection in the merge step
+  // (see fetch.ts): never adopt a discovered barcode whose known platform conflicts
+  // with the shelf's. A barcode is a platform-specific physical identifier, so a
+  // wrong-console EAN poisons downstream price + cover aggregation.
+  const metadataPlatformKey =
+    metadata.platformKey && isVideoGamePlatformKey(metadata.platformKey)
+      ? metadata.platformKey
+      : detectVideoGamePlatformKey(metadata.platformKey ?? "");
+  const discoveredBarcodePlatformConflicts = Boolean(
+    requestedPlatformKey &&
+      metadataPlatformKey &&
+      metadataPlatformKey !== requestedPlatformKey,
+  );
   if (
     item &&
     discoveredBarcode &&
     !normalizeProductBarcode(item.barcode) &&
+    !discoveredBarcodePlatformConflicts &&
     itemName &&
     metadata.title &&
     isMetadataTitleAligned({ title: metadata.title }, [itemName], 0.58)

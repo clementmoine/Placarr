@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { SSGame } from "./resolver";
-import { parseScreenScraperMediaUrl } from "./mediaUrl";
+import { parseScreenScraperMediaUrl, pickSSCover } from "./mediaUrl";
 
 const MEMORY_GAME_TTL_MS = 24 * 60 * 60 * 1000;
 const MEMORY_SEARCH_TTL_MS = 6 * 60 * 60 * 1000;
@@ -259,7 +259,6 @@ export function cacheScreenScraperLookup(
 export async function persistScreenScraperGameIdForBarcode(
   barcode: string | null | undefined,
   gameId: number,
-  systemId?: number,
   coverUrl?: string | null,
 ): Promise<void> {
   const cleanedBarcode = (barcode || "").replace(/[^\d]/g, "").trim();
@@ -271,12 +270,19 @@ export async function persistScreenScraperGameIdForBarcode(
   });
   if (!cached?.rawNames.length) return;
 
-  const targetCoverUrl =
+  let targetCoverUrl =
     coverUrl && parseScreenScraperMediaUrl(coverUrl)?.gameId === gameId
       ? coverUrl
-      : systemId
-        ? `https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=${systemId}&jeuid=${gameId}&media=box-2D(eu)`
-        : null;
+      : null;
+
+  // No usable cover was passed in: recover the real one from the cached game
+  // rather than fabricating a region (e.g. box-2D(eu)) that ScreenScraper may
+  // report as NOMEDIA — which would surface as a broken image. pickSSCover
+  // returns an existing region's box URL, or null when the game has no cover.
+  if (!targetCoverUrl) {
+    const cachedGame = await getCachedScreenScraperGame(gameId);
+    targetCoverUrl = cachedGame?.medias ? pickSSCover(cachedGame.medias) : null;
+  }
 
   if (!targetCoverUrl) return;
 

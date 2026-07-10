@@ -24,7 +24,7 @@ import {
   ListPlus,
   ScanLine,
   Layers,
-  CheckSquare,
+  Check,
   ArrowRightLeft,
   RefreshCw,
   Loader2,
@@ -53,10 +53,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
-import {
-  ItemCollectionFilterBar,
-  ItemCollectionSortSelect,
-} from "@/components/ItemCollectionControls";
+import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { ItemModal } from "@/components/modals/ItemModal";
 import {
   BulkAddModal,
@@ -76,12 +73,9 @@ import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
 import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
 import {
-  collectionFiltersToSearchParams,
-  parseItemCollectionFilters,
   parseItemCollectionSort,
   queryCollectionItems,
   sumCollectionEstimatedValue,
-  type ItemCollectionFilters,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useRefetchShelfItemsWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
@@ -106,7 +100,8 @@ type ShelfGridItemProps = {
   resolvedShelfId: string;
   selectionMode: boolean;
   isSelected: boolean;
-  onToggleSelect: (itemId: string) => void;
+  canSelect: boolean;
+  onSelect: (itemId: string) => void;
 };
 
 const ShelfGridItem = memo(function ShelfGridItem({
@@ -116,8 +111,10 @@ const ShelfGridItem = memo(function ShelfGridItem({
   resolvedShelfId,
   selectionMode,
   isSelected,
-  onToggleSelect,
+  canSelect,
+  onSelect,
 }: ShelfGridItemProps) {
+  const { t } = useLocale();
   const queryClient = useQueryClient();
   const cardItem = useMemo(() => {
     const cached = queryClient.getQueryData<ItemWithMetadata>([
@@ -144,25 +141,56 @@ const ShelfGridItem = memo(function ShelfGridItem({
     />
   );
 
+  // Checkbox affordance: hidden until hover on pointer devices, always shown on
+  // touch and whenever selecting. Clicking it starts/continues selection —
+  // there is no separate "enter selection mode" button.
+  const checkbox = canSelect ? (
+    <button
+      type="button"
+      aria-pressed={isSelected}
+      aria-label={
+        isSelected
+          ? t("items.bulkMove.clearSelection")
+          : t("items.bulkMove.selectMode")
+      }
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onSelect(item.id);
+      }}
+      className={cn(
+        "absolute top-2 left-2 z-30 flex size-6 items-center justify-center rounded-full border-2 shadow-md transition-all duration-200",
+        isSelected
+          ? "border-primary bg-primary text-primary-foreground scale-100"
+          : "border-white/90 bg-black/45 text-transparent backdrop-blur-sm hover:bg-black/65",
+        selectionMode || isSelected
+          ? "opacity-100"
+          : "opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100",
+      )}
+    >
+      <Check className="size-3.5" strokeWidth={3} />
+    </button>
+  ) : null;
+
   if (selectionMode) {
     return (
-      <button
-        type="button"
-        aria-pressed={isSelected}
-        onClick={() => onToggleSelect(item.id)}
+      <div
         className={cn(
-          "relative block w-full rounded-2xl text-left transition-[box-shadow,transform]",
+          "group relative block w-full rounded-2xl transition-[box-shadow,transform]",
           isSelected &&
             "ring-2 ring-primary ring-offset-2 ring-offset-background",
         )}
       >
-        {card}
-        {isSelected && (
-          <span className="absolute top-2 right-2 z-20 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
-            <CheckSquare className="size-3.5" />
-          </span>
-        )}
-      </button>
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          onClick={() => onSelect(item.id)}
+          className="block w-full text-left"
+        >
+          {card}
+        </button>
+        {checkbox}
+      </div>
     );
   }
 
@@ -175,10 +203,12 @@ const ShelfGridItem = memo(function ShelfGridItem({
         stiffness: 300,
         damping: 30,
       }}
+      className="group relative"
     >
       <Link href={itemPath(shelf || { id: resolvedShelfId }, item)}>
         {card}
       </Link>
+      {checkbox}
     </motion.div>
   );
 });
@@ -197,9 +227,6 @@ function ShelfComponent() {
   const sortParam = searchParams.get("sort");
   const [sortBy, setSortBy] = useState<ItemCollectionSort>(
     parseItemCollectionSort(sortParam),
-  );
-  const [filters, setFilters] = useState<ItemCollectionFilters>(() =>
-    parseItemCollectionFilters(searchParams),
   );
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
@@ -229,7 +256,6 @@ function ShelfComponent() {
     setPrevParamsKey(paramsKey);
     setSearchQuery(q);
     setSortBy(parseItemCollectionSort(searchParams.get("sort")));
-    setFilters(parseItemCollectionFilters(searchParams));
   }
   useEffect(() => {
     form.setValue("search", q);
@@ -346,10 +372,9 @@ function ShelfComponent() {
 
     return queryCollectionItems(items, {
       sortBy,
-      filters,
       shelfType: shelf.type,
     });
-  }, [shelf, sortBy, filters]);
+  }, [shelf, sortBy]);
 
   const totalValue = useMemo(() => {
     if (!shelf?.items) return 0;
@@ -357,12 +382,11 @@ function ShelfComponent() {
     return sumCollectionEstimatedValue(
       queryCollectionItems(items, {
         sortBy: "name_asc",
-        filters,
         shelfType: shelf.type,
       }),
       shelf.type,
     );
-  }, [shelf, filters]);
+  }, [shelf]);
 
   const handleModalClose = useCallback(() => {
     setVisibleModal(undefined);
@@ -484,6 +508,16 @@ function ShelfComponent() {
     setMoveModalOpen(false);
   }, []);
 
+  // Escape mirrors the single "close" affordance in the selection bar.
+  useEffect(() => {
+    if (!selectionMode) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") exitSelectionMode();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectionMode, exitSelectionMode]);
+
   const toggleItemSelection = useCallback((itemId: string) => {
     setSelectedItemIds((current) => {
       const next = new Set(current);
@@ -496,11 +530,28 @@ function ShelfComponent() {
     });
   }, []);
 
+  // Single entry point: (re)enter selection and toggle the item. Used by both
+  // the first checkbox click (which turns the mode on) and later toggles.
+  const beginSelection = useCallback(
+    (itemId: string) => {
+      setSelectionMode(true);
+      toggleItemSelection(itemId);
+    },
+    [toggleItemSelection],
+  );
+
   const selectAllVisibleItems = useCallback(() => {
     setSelectedItemIds(
       new Set(sortedItems.map((item) => item.id).filter(Boolean)),
     );
   }, [sortedItems]);
+
+  const selectableItemCount = useMemo(
+    () => sortedItems.filter((item) => item.id).length,
+    [sortedItems],
+  );
+  const allVisibleSelected =
+    selectableItemCount > 0 && selectedItemIds.size >= selectableItemCount;
 
   const handleBulkMoveSuccess = useCallback(
     (result: {
@@ -640,99 +691,76 @@ function ShelfComponent() {
             selectionMode ? "pb-36 md:pb-28" : "pb-24 md:pb-6",
           )}
         >
-          {/* Clean Shelf Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 w-full">
-            <div className="flex items-center gap-3">
+          {/* Shelf header — title + primary actions only */}
+          <div className="flex items-center justify-between gap-3 mt-2 w-full">
+            <div className="flex min-w-0 items-center gap-3">
               <span className="shrink-0 text-foreground dark:text-white">
                 <ShelfTypeIcon type={shelf?.type} className="size-8" />
               </span>
-
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
-                    {shelf?.name || "..."}
-                  </h1>
-                </div>
-              </div>
+              <h1 className="truncate text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
+                {shelf?.name || "..."}
+              </h1>
             </div>
 
-            {/* Action Buttons */}
-            {isAuthenticated && !isGuest && canEdit && (
+            {/* Primary actions — hidden while selecting to keep focus */}
+            {isAuthenticated && !isGuest && canEdit && !selectionMode && (
               <div className="flex items-center gap-2 shrink-0 select-none">
-                {selectionMode ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-semibold text-primary">
-                    <CheckSquare className="size-4 shrink-0" />
-                    <span>{t("items.bulkMove.selectMode")}</span>
-                  </div>
-                ) : (
-                  <>
-                    <Button
-                      variant="secondary"
-                      className="rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5 bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800"
-                      onClick={() => setSelectionMode(true)}
-                    >
-                      <CheckSquare className="size-4" />
-                      {t("items.bulkMove.selectMode")}
-                    </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                  onClick={() => handleModalOpen("shelf")}
+                >
+                  <Wrench className="size-4" />
+                  <span className="hidden sm:inline">
+                    {t("shelves.editShelf")}
+                  </span>
+                </Button>
 
-                    <Button
-                      variant="secondary"
-                      className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
-                      onClick={() => handleModalOpen("shelf")}
-                    >
-                      <Wrench className="size-4" />
-                      {t("shelves.editShelf")}
+                <DropdownMenu
+                  open={addMenuOpen}
+                  onOpenChange={setAddMenuOpen}
+                  modal={false}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5">
+                      <Plus className="size-4" />
+                      {t("items.addItem")}
+                      <ChevronDown className="size-4 opacity-80" />
                     </Button>
-
-                    <DropdownMenu
-                      open={addMenuOpen}
-                      onOpenChange={setAddMenuOpen}
-                      modal={false}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium"
+                      onSelect={() => openModalFromAddMenu("item")}
                     >
-                      <DropdownMenuTrigger asChild>
-                        <Button className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5">
-                          <Plus className="size-4" />
-                          {t("items.addItem")}
-                          <ChevronDown className="size-4 opacity-80" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-xl">
-                        <DropdownMenuItem
-                          className="cursor-pointer font-medium"
-                          onSelect={() => openModalFromAddMenu("item")}
-                        >
-                          <Plus className="size-4 mr-2" />
-                          {t("items.addItem")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="cursor-pointer font-medium"
-                          onSelect={() => openModalFromAddMenu("bulk", "names")}
-                        >
-                          <ListPlus className="size-4 mr-2" />
-                          {t("items.bulkAdd.menuLabel")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="cursor-pointer font-medium"
-                          onSelect={() => openModalFromAddMenu("bulk", "scan")}
-                        >
-                          <ScanLine className="size-4 mr-2" />
-                          {t("items.bulkAdd.tabScan")}
-                        </DropdownMenuItem>
-                        {shelf?.type === "books" && (
-                          <DropdownMenuItem
-                            className="cursor-pointer font-medium"
-                            onSelect={() =>
-                              openModalFromAddMenu("bulk", "series")
-                            }
-                          >
-                            <Layers className="size-4 mr-2" />
-                            {t("items.bulkSeries.menuLabel")}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </>
-                )}
+                      <Plus className="size-4 mr-2" />
+                      {t("items.addItem")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium"
+                      onSelect={() => openModalFromAddMenu("bulk", "names")}
+                    >
+                      <ListPlus className="size-4 mr-2" />
+                      {t("items.bulkAdd.menuLabel")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium"
+                      onSelect={() => openModalFromAddMenu("bulk", "scan")}
+                    >
+                      <ScanLine className="size-4 mr-2" />
+                      {t("items.bulkAdd.tabScan")}
+                    </DropdownMenuItem>
+                    {shelf?.type === "books" && (
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("bulk", "series")}
+                      >
+                        <Layers className="size-4 mr-2" />
+                        {t("items.bulkSeries.menuLabel")}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>
@@ -790,14 +818,6 @@ function ShelfComponent() {
             </div>
           </div>
 
-          <ItemCollectionFilterBar
-            filters={filters}
-            onChange={(next) => {
-              setFilters(next);
-              replaceCollectionParams(collectionFiltersToSearchParams(next));
-            }}
-          />
-
           {/* Items Grid */}
           <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
             <h2 className="text-xl font-semibold">
@@ -834,7 +854,8 @@ function ShelfComponent() {
                     resolvedShelfId={resolvedShelfId}
                     selectionMode={selectionMode}
                     isSelected={selectedItemIds.has(item.id)}
-                    onToggleSelect={toggleItemSelection}
+                    canSelect={Boolean(isAuthenticated && !isGuest && canEdit)}
+                    onSelect={beginSelection}
                   />
                 ),
               )}
@@ -875,77 +896,67 @@ function ShelfComponent() {
 
       {selectionMode && canEdit && (
         <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 backdrop-blur-md shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto flex max-w-7xl flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-            <div className="flex min-w-0 items-center gap-2">
+          <div className="mx-auto flex max-w-7xl items-center gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 rounded-full"
+              onClick={exitSelectionMode}
+              aria-label={t("items.bulkMove.cancelSelection")}
+            >
+              <X className="size-5" />
+            </Button>
+            <span className="text-sm font-semibold text-foreground tabular-nums">
+              {t("items.bulkMove.selectedCount").replace(
+                "{count}",
+                String(selectedItemIds.size),
+              )}
+            </span>
+
+            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-xl px-2.5 sm:px-3"
+                onClick={() =>
+                  allVisibleSelected
+                    ? setSelectedItemIds(new Set())
+                    : selectAllVisibleItems()
+                }
+              >
+                {allVisibleSelected
+                  ? t("items.bulkMove.clearSelection")
+                  : t("items.bulkMove.selectAll")}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="shrink-0 rounded-xl gap-1.5 font-semibold"
-                onClick={exitSelectionMode}
+                className="rounded-xl gap-1.5 px-2.5 sm:px-3"
+                disabled={selectedItemIds.size === 0 || isBulkRefreshing}
+                onClick={handleBulkRefresh}
               >
-                <X className="size-4" />
-                {t("items.bulkMove.cancelSelection")}
-              </Button>
-              <span className="truncate text-sm font-semibold text-foreground">
-                {t("items.bulkMove.selectedCount").replace(
-                  "{count}",
-                  String(selectedItemIds.size),
+                {isBulkRefreshing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
                 )}
-              </span>
-            </div>
-
-            <div className="flex min-w-0 flex-1 items-center justify-between gap-2 sm:justify-end">
-              <div className="flex items-center gap-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl px-3"
-                  onClick={selectAllVisibleItems}
-                >
-                  {t("items.bulkMove.selectAll")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl px-3"
-                  onClick={() => setSelectedItemIds(new Set())}
-                >
-                  {t("items.bulkMove.clearSelection")}
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl gap-1.5 px-3"
-                  disabled={selectedItemIds.size === 0 || isBulkRefreshing}
-                  onClick={handleBulkRefresh}
-                >
-                  {isBulkRefreshing ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="size-4" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {t("items.bulkRefresh.action")}
-                  </span>
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="rounded-xl gap-1.5 px-3 font-semibold"
-                  disabled={selectedItemIds.size === 0}
-                  onClick={() => setMoveModalOpen(true)}
-                >
-                  <ArrowRightLeft className="size-4" />
-                  {t("items.bulkMove.moveAction")}
-                </Button>
-              </div>
+                <span className="hidden sm:inline">
+                  {t("items.bulkRefresh.action")}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="rounded-xl gap-1.5 px-3 font-semibold"
+                disabled={selectedItemIds.size === 0}
+                onClick={() => setMoveModalOpen(true)}
+              >
+                <ArrowRightLeft className="size-4" />
+                {t("items.bulkMove.moveAction")}
+              </Button>
             </div>
           </div>
         </div>

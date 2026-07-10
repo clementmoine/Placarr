@@ -14,7 +14,11 @@ import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { metadataProviderResolverMap } from "@/core/catalog/bootstrap";
 import { loadBarcodeAlternateNames } from "@/core/identify/alternateNames";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
-import { pickDiscoveredBarcode } from "@/core/identify/normalize";
+import {
+  normalizeProductBarcode,
+  pickDiscoveredBarcode,
+} from "@/core/identify/normalize";
+import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
 import {
   buildGameMetadataFallbackNames,
   buildGameMetadataSearchQueries,
@@ -1746,18 +1750,32 @@ export function mergeMetadata(
   const releaseDate = orderedResults.find((r) => r.metadata.releaseDate)
     ?.metadata.releaseDate;
 
+  const scannedBarcode = normalizeProductBarcode(options.itemBarcode ?? null);
   const barcodeCandidates =
     options.requestedTitle?.trim() && mediaType === "games"
-      ? orderedResults.filter(
-          (r) =>
-            r.metadata.barcode &&
-            r.metadata.title &&
-            isMetadataTitleAligned(
+      ? orderedResults.filter((r) => {
+          if (!r.metadata.barcode || !r.metadata.title) return false;
+          if (
+            !isMetadataTitleAligned(
               { title: r.metadata.title },
               [options.requestedTitle!.trim()],
               0.58,
-            ),
-        )
+            )
+          ) {
+            return false;
+          }
+          // The user's own scan is ground truth — never platform-gate it.
+          if (
+            scannedBarcode &&
+            normalizeProductBarcode(r.metadata.barcode) === scannedBarcode
+          ) {
+            return true;
+          }
+          return discoveredBarcodeMatchesRequestedPlatform(
+            r.metadata,
+            options.requestedPlatformKey,
+          );
+        })
       : orderedResults;
   const barcode = pickDiscoveredBarcode(
     barcodeCandidates.map((r) => r.metadata.barcode),

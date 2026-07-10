@@ -12,18 +12,21 @@ import type { Locale } from "@/types/i18n";
 import { getBestLocale } from "@/core/locale/utils";
 
 import {
+  coverListHasShelfPlatformSignal,
   isAttachmentCoverPlatformMismatch,
+  isCoverAmbiguousForShelfPlatform,
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
   rankCoverGalleryAttachments,
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
-  shouldSuppressCoverOnPlatformShelf,
   type AttachmentDisplayScoreOptions,
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/core/enrich/media/attachmentDisplayScore";
+import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
 import {
   attachmentTitleMediaTypeConflicts,
   catalogAttachmentTitleConflicts,
@@ -65,6 +68,9 @@ export interface MediaItem {
   strictShelfPlatformCoverSource?: boolean;
   collectorCoverRegionFromAgeRatingSource?: boolean;
   coverProvenance?: string | null;
+  // Persisted at enrichment from the original image URL; the platform-aware cover
+  // ranking's load-bearing signal once the URL is a local /uploads path.
+  platformKey?: string | null;
   providerLabel?: string | null;
   // Persisted image metrics (computed once at enrichment) so the read-time cover
   // ranking can sort by resolution + exposure without re-decoding image files.
@@ -288,6 +294,25 @@ function filterAttachmentsForProductTitle<
   return { ...metadata, attachments };
 }
 
+/**
+ * metadata.imageUrl can outlive its gallery row (legacy rows, partial writes).
+ * Keep the pin only when it never had a backing attachment — never resurrect a
+ * cover that was deliberately dropped for wrong-platform shelf mismatch.
+ */
+function orphanMetadataImageUrlFallback(
+  pin: string | null | undefined,
+  originalAttachments: readonly { url?: string | null }[],
+): string | null {
+  const trimmedPin = pin?.trim();
+  if (!trimmedPin || isMissingArtImageUrl(trimmedPin)) return null;
+  const hasBacking = originalAttachments.some(
+    (attachment) =>
+      attachment.url &&
+      urlsReferToSameLocalizedImage(attachment.url, trimmedPin),
+  );
+  return hasBacking ? null : trimmedPin;
+}
+
 function reconcileImageUrlAfterAttachmentFilter<
   T extends {
     imageUrl?: string | null;
@@ -297,23 +322,42 @@ function reconcileImageUrlAfterAttachmentFilter<
   metadata: T,
   attachments: MediaItem[],
   options: AttachmentDisplayScoreOptions,
+  originalAttachments: readonly { url?: string | null }[] = attachments,
 ): T {
   const pinned = metadata.imageUrl?.trim();
-  const stillValid =
-    pinned &&
-    attachments.some(
-      (attachment) =>
-        attachment.url && urlsReferToSameLocalizedImage(attachment.url, pinned),
+  const pinnedAttachment = pinned
+    ? attachments.find(
+        (attachment) =>
+          attachment.url &&
+          urlsReferToSameLocalizedImage(attachment.url, pinned),
+      )
+    : undefined;
+  const stillValid = Boolean(pinned && pinnedAttachment);
+
+  // A platform-ambiguous pin yields the default slot to a shelf-platform-matched
+  // cover when one exists (the ambiguous cover stays in `attachments`, just no
+  // longer the default). Known-mismatch pins were already filtered out upstream.
+  const requestedPlatformKey = options.requestedPlatformKey;
+  const pinnedSupersededByPlatformMatch =
+    !!pinnedAttachment &&
+    isVideoGamePlatformKey(requestedPlatformKey) &&
+    isCoverAmbiguousForShelfPlatform(pinnedAttachment, requestedPlatformKey) &&
+    coverListHasShelfPlatformSignal(
+      attachments as ScoredAttachmentInput[],
+      requestedPlatformKey,
     );
 
   const rawImageUrl =
-    stillValid && isUrlEligibleDefaultCover(pinned, attachments)
+    stillValid &&
+    !pinnedSupersededByPlatformMatch &&
+    isUrlEligibleDefaultCover(pinned, attachments)
       ? pinned
       : (pickBestCoverFromAttachments(
           attachments as ScoredAttachmentInput[],
           undefined,
           options,
-        ) ?? null);
+        ) ??
+        orphanMetadataImageUrlFallback(pinned, originalAttachments));
   const imageUrl =
     rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
 
@@ -324,10 +368,27 @@ function reconcileImageUrlAfterAttachmentFilter<
   };
 }
 
+function sanitizeDiscoveredBarcodeForShelf<
+  T extends { barcode?: string | null; platformKey?: string | null },
+>(metadata: T, options: AttachmentDisplayScoreOptions): T {
+  if (!metadata.barcode || !options.requestedPlatformKey) return metadata;
+  if (
+    discoveredBarcodeMatchesRequestedPlatform(
+      metadata,
+      options.requestedPlatformKey,
+    )
+  ) {
+    return metadata;
+  }
+  return { ...metadata, barcode: undefined };
+}
+
 export function filterMetadataForShelfPlatform<
   T extends {
     title?: string | null;
     imageUrl?: string | null;
+    barcode?: string | null;
+    platformKey?: string | null;
     attachments?: MediaItem[] | null;
   },
 >(metadata: T | null | undefined, shelf?: MediaInput["shelf"]): T | undefined {
@@ -357,9 +418,12 @@ export function filterMetadataForShelfPlatform<
 
   const options = coverDisplayOptions({ shelf });
   if (!options.requestedPlatformKey) {
-    return reconcileImageUrlAfterAttachmentFilter(
-      { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect },
-      attachmentsWithSanitizedICollect,
+    return sanitizeDiscoveredBarcodeForShelf(
+      reconcileImageUrlAfterAttachmentFilter(
+        { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect },
+        attachmentsWithSanitizedICollect,
+        options,
+      ),
       options,
     );
   }
@@ -369,35 +433,15 @@ export function filterMetadataForShelfPlatform<
     options,
   );
 
-  const pinStillValid =
-    !metadataForTitle.imageUrl ||
-    filteredAttachments.some(
-      (attachment) =>
-        attachment.url &&
-        urlsReferToSameLocalizedImage(
-          attachment.url,
-          metadataForTitle.imageUrl!,
-        ),
-    );
-
-  const rawImageUrl =
-    pinStillValid &&
-    metadataForTitle.imageUrl &&
-    isUrlEligibleDefaultCover(metadataForTitle.imageUrl, filteredAttachments)
-      ? metadataForTitle.imageUrl
-      : (pickBestCoverFromAttachments(
-          filteredAttachments,
-          undefined,
-          options,
-        ) ?? null);
-  const imageUrl =
-    rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
-
-  return {
-    ...metadataForTitle,
-    attachments: filteredAttachments,
-    imageUrl: imageUrl ?? undefined,
-  };
+  return sanitizeDiscoveredBarcodeForShelf(
+    reconcileImageUrlAfterAttachmentFilter(
+      { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect },
+      filteredAttachments,
+      options,
+      attachmentsWithSanitizedICollect,
+    ),
+    options,
+  );
 }
 
 function shelfCoverCandidates(
@@ -461,10 +505,17 @@ function pinnedCoverNeedsPlatformFallback(
   ) {
     return true;
   }
-  return shouldSuppressCoverOnPlatformShelf(
-    attachment,
-    shelfCoverCandidates(attachments(item)),
-    options.requestedPlatformKey,
+  // Promote a shelf-platform-matched cover to the default even when the current pin
+  // is only platform-*ambiguous* (unidentified). The ambiguous cover stays in the
+  // gallery — it just stops being the default. Known-mismatch pins were dropped above.
+  const requestedPlatformKey = options.requestedPlatformKey;
+  return (
+    isVideoGamePlatformKey(requestedPlatformKey) &&
+    isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey) &&
+    coverListHasShelfPlatformSignal(
+      shelfCoverCandidates(attachments(item)),
+      requestedPlatformKey,
+    )
   );
 }
 

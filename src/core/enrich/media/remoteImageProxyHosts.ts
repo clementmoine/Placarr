@@ -14,10 +14,22 @@ export const REMOTE_IMAGE_PROXY_HOST_FRAGMENTS = [
 const BLOCKED_PROXY_HOSTS =
   /^(localhost|127(?:\.\d+){3}|0\.0\.0\.0|\[::1\])$|^(10\.|192\.168\.|169\.254\.)/i;
 
+/**
+ * ScreenScraper media (`mediaJeu.php`) returns a login error unless developer
+ * credentials are attached — so it must be fetched through our server proxy
+ * (which injects them), never hotlinked by the client. Distinct from the
+ * Referer-based CDNs above, hence not part of the registry-synced fragments.
+ */
+export function isScreenScraperMediaUrl(url: string): boolean {
+  return /^https?:\/\/[^/]*screenscraper\.fr\/api2\/mediaJeu\.php/i.test(url);
+}
+
 export function remoteImageUrlMatchesProxyHost(url: string): boolean {
   if (!url || !/^https?:\/\//i.test(url)) return false;
-  return REMOTE_IMAGE_PROXY_HOST_FRAGMENTS.some((fragment) =>
-    url.includes(fragment),
+  return (
+    REMOTE_IMAGE_PROXY_HOST_FRAGMENTS.some((fragment) =>
+      url.includes(fragment),
+    ) || isScreenScraperMediaUrl(url)
   );
 }
 

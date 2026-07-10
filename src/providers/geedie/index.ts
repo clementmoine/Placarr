@@ -6,6 +6,11 @@ import {
 } from "@/lib/dev/mappingRawKeys";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
+import {
+  resolveGameAttachmentPlatformKey,
+  withMetadataPlatformKeys,
+} from "@/core/enrich/media/platformKeyStamp";
+import { deriveAttachmentPlatformKeyFromUrl } from "@/core/enrich/media/attachmentDisplayScore";
 
 import { structuralCoverDownloadCandidates } from "@/core/enrich/media/coverUrlUpgrades";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
@@ -16,20 +21,36 @@ export { fetchFromGeedie, fetchGeedieGallery, pingGeedie } from "./fetch";
 
 function galleryToMetadata(
   gallery: NonNullable<Awaited<ReturnType<typeof fetchGeedieGallery>>>,
+  platform?: string | null,
 ): MetadataResult {
-  return {
-    title: gallery.title,
-    barcode: gallery.barcode || undefined,
-    imageUrl: gallery.coverUrl || undefined,
-    attachments: gallery.items.map((item) => ({
-      type: "cover" as const,
-      url: item.coverUrl,
-      source: "geedie",
-      role: item.role,
-      title: item.title,
-    })),
-    externalIds: gallery.productId ? { geedie: gallery.productId } : undefined,
-  };
+  const platformKey =
+    deriveAttachmentPlatformKeyFromUrl(gallery.productUrl) ??
+    resolveGameAttachmentPlatformKey({
+      requestedPlatform: platform,
+      title: gallery.title,
+      productUrl: gallery.productUrl,
+    });
+
+  return withMetadataPlatformKeys(
+    {
+      title: gallery.title,
+      barcode: gallery.barcode || undefined,
+      imageUrl: gallery.coverUrl || undefined,
+      attachments: gallery.items.map((item) => ({
+        type: "cover" as const,
+        url: item.coverUrl,
+        source: "geedie",
+        role: item.role,
+        title: item.title,
+        platformKey:
+          deriveAttachmentPlatformKeyFromUrl(item.productUrl) ??
+          platformKey ??
+          undefined,
+      })),
+      externalIds: gallery.productId ? { geedie: gallery.productId } : undefined,
+    },
+    platformKey,
+  );
 }
 
 export const geedieModule: ProviderModule = {
@@ -78,7 +99,7 @@ export const geedieModule: ProviderModule = {
         platform ?? undefined,
         barcode ?? undefined,
       );
-      return gallery ? galleryToMetadata(gallery) : null;
+      return gallery ? galleryToMetadata(gallery, platform) : null;
     },
   }),
   healthCheck: createMetadataHealthCheck("geedie", "Geedie", async () => {

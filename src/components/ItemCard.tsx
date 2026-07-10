@@ -6,7 +6,6 @@ import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
-  ShelfTypeIcon,
   DEFAULT_SHELF_TYPE_ICON,
   SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
@@ -113,35 +112,38 @@ function ItemCardInner(props: ItemCardProps) {
 
   return (
     <div
-      className="group relative flex flex-col w-full select-none overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
+      className="cv-card-item group relative flex flex-col w-full select-none overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
       style={{
         aspectRatio,
       }}
     >
-      {/* Badges container */}
-      <div className="absolute top-2 left-2 z-10 pointer-events-none select-none flex flex-wrap gap-1">
-        {condition && (
-          <span
-            className={cn(
-              "text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/75 backdrop-blur-md border shadow-sm",
-              conditionBadgeClass(condition),
-            )}
-          >
-            {t(`items.conditions.${condition}`) || condition}
-          </span>
-        )}
-        {estimatedPrice !== null && (
-          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-950/85 backdrop-blur-md text-emerald-400 border border-emerald-500/20 shadow-sm">
-            {estimatedPrice.toFixed(2)} €
-          </span>
-        )}
-        {isEnriching && (
-          <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/75 backdrop-blur-md text-sky-300 border border-sky-400/20 shadow-sm">
-            <Loader2 className="size-2.5 animate-spin" />
-            {t("items.fetching")}
-          </span>
-        )}
-      </div>
+      {/* Top-right badges — price + condition, opaque for legibility */}
+      {(estimatedPrice !== null || condition || isEnriching) && (
+        <div className="absolute top-2 right-2 z-10 pointer-events-none select-none flex flex-col items-end gap-1">
+          {estimatedPrice !== null && (
+            <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full bg-zinc-950/90 text-emerald-300 border border-emerald-400/30 shadow-sm">
+              {estimatedPrice.toFixed(2)} €
+            </span>
+          )}
+          {isEnriching ? (
+            <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/90 text-sky-300 border border-sky-400/30 shadow-sm">
+              <Loader2 className="size-2.5 animate-spin" />
+              {t("items.fetching")}
+            </span>
+          ) : (
+            condition && (
+              <span
+                className={cn(
+                  "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border bg-zinc-950/90 shadow-sm",
+                  conditionBadgeClass(condition),
+                )}
+              >
+                {t(`items.conditions.${condition}`) || condition}
+              </span>
+            )
+          )}
+        </div>
+      )}
 
       {imageUrl ? (
         <div className="w-full h-full bg-white relative overflow-hidden">
@@ -169,14 +171,9 @@ function ItemCardInner(props: ItemCardProps) {
         </div>
       )}
 
-      {/* Glassmorphic Bottom Title Bar (cohesive with ShelfCard) */}
-      <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-zinc-950/75 backdrop-blur-md border-t border-white/10 flex justify-center items-center gap-1.5 text-center">
-        {shelfType && (
-          <span className="flex items-center shrink-0 text-white/80">
-            <ShelfTypeIcon type={shelfType} className="size-3.5" />
-          </span>
-        )}
-        <span className="text-[10px] font-extrabold px-1 flex-1 line-clamp-2 text-white leading-tight">
+      {/* Glassmorphic bottom panel — title */}
+      <div className="absolute bottom-0 left-0 right-0 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
+        <span className="text-[10px] font-extrabold line-clamp-2 text-white leading-tight">
           {name.trim().length > 0 ? name : t("common.noName")}
         </span>
       </div>

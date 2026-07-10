@@ -96,7 +96,7 @@ describe("orderedCoverAttachmentsForDisplay", () => {
     ).toEqual(["geedie", "icollect"]);
   });
 
-  it("hides Geedie covers without an explicit PS4 signal on a PS4 shelf", () => {
+  it("keeps Geedie covers visible but ranks explicit PS4 art first on a PS4 shelf", () => {
     const item = {
       metadata: {
         attachments: [
@@ -122,7 +122,7 @@ describe("orderedCoverAttachmentsForDisplay", () => {
       orderedCoverAttachmentsForDisplay(item).map(
         (attachment) => attachment.source,
       ),
-    ).toEqual(["icollect"]);
+    ).toEqual(["icollect", "geedie"]);
   });
 
   it("collapses duplicate local files referenced by multiple providers", () => {

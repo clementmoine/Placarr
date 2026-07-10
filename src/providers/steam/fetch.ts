@@ -5,6 +5,7 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 
 interface SteamSearchItem {
   id: number;
@@ -523,25 +524,29 @@ export async function fetchFromSteam(
     const data = details.data;
     const title = data.name || best.name;
 
-    return {
-      title,
-      description: stripHtml(
-        data.short_description ||
-          data.about_the_game ||
-          data.detailed_description,
-      ),
-      releaseDate: data.release_date?.date || undefined,
-      imageUrl: data.capsule_imagev5 || data.capsule_image || data.header_image,
-      publishers: (data.publishers || []).map((publisher) => ({
-        name: publisher,
-      })),
-      authors: (data.developers || []).map((developer) => ({
-        name: developer,
-      })),
-      attachments: buildSteamAttachments(data),
-      facts: buildSteamFacts(best.id, data),
-      externalIds: { steam: String(best.id) },
-    };
+    return withMetadataPlatformKeys(
+      {
+        title,
+        platformKey: "pc",
+        description: stripHtml(
+          data.short_description ||
+            data.about_the_game ||
+            data.detailed_description,
+        ),
+        releaseDate: data.release_date?.date || undefined,
+        imageUrl: data.capsule_imagev5 || data.capsule_image || data.header_image,
+        publishers: (data.publishers || []).map((publisher) => ({
+          name: publisher,
+        })),
+        authors: (data.developers || []).map((developer) => ({
+          name: developer,
+        })),
+        attachments: buildSteamAttachments(data),
+        facts: buildSteamFacts(best.id, data),
+        externalIds: { steam: String(best.id) },
+      },
+      "pc",
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[Steam] Error fetching metadata for "${name}":`, message);

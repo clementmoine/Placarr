@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
-import { getMetadata, getDatabaseSuggestions } from "@/core/enrich";
+import {
+  getMetadata,
+  getDatabaseSuggestions,
+  filterMetadataForShelfPlatform,
+} from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 
 export async function GET(req: NextRequest) {
@@ -44,7 +48,14 @@ export async function GET(req: NextRequest) {
       shelfName,
       queuePriority: "high",
     });
-    return NextResponse.json(metadata);
+    const filtered =
+      metadata && shelfName
+        ? filterMetadataForShelfPlatform(metadata, {
+            type,
+            name: shelfName,
+          })
+        : metadata;
+    return NextResponse.json(filtered);
   } catch (error) {
     console.error("Error in GET request:", error);
     return NextResponse.json(

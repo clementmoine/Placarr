@@ -587,8 +587,8 @@ function ShelvesComponent() {
                             shelfType={item.shelf?.type}
                             cardFormat={item.shelf?.cardFormat}
                           />
-                          {/* Owner badge top right */}
-                          <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/85 backdrop-blur text-white shadow-sm border border-white/10 max-w-[80px] select-none pointer-events-none">
+                          {/* Owner badge top left */}
+                          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/85 backdrop-blur text-white shadow-sm border border-white/10 max-w-[80px] select-none pointer-events-none">
                             <Avatar className="size-3.5 shrink-0 border border-white/20 select-none pointer-events-none">
                               <AvatarImage
                                 src={item.user?.image || undefined}

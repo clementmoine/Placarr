@@ -49,9 +49,9 @@ export const rawgModule: ProviderModule = {
   createMetadataAdapter() {
     return {
       id: "rawg",
-      async resolve({ name, lookupQueries }) {
+      async resolve({ name, lookupQueries, platform }) {
         return resolveWithLookupQueries(lookupQueries, name, (query) =>
-          fetchFromRawg(query),
+          fetchFromRawg(query, platform),
         );
       },
     } satisfies MetadataProviderAdapter;

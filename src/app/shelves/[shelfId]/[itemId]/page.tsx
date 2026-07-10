@@ -108,6 +108,7 @@ import {
   invalidateItemQueries,
   patchCachedItem,
   syncItemQueries,
+  shelfListItemMissingAttachments,
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { getEstimatedItemValueCents } from "@/core/collect/value";
@@ -529,20 +530,20 @@ function isPrimaryInfoFact(fact: DetailFact) {
 function isDetailTableFact(fact: DetailFact) {
   return [
     "artist",
-      "category",
-      "cooperative",
-      "family",
-      "format",
-      "franchise",
-      "genre",
-      "mechanic",
-      "modes",
-      "platform",
-      "series",
-      "store",
-      "tag",
-      "weight",
-    ].includes(fact.kind);
+    "category",
+    "cooperative",
+    "family",
+    "format",
+    "franchise",
+    "genre",
+    "mechanic",
+    "modes",
+    "platform",
+    "series",
+    "store",
+    "tag",
+    "weight",
+  ].includes(fact.kind);
 }
 
 function isTagLikeDetailFact(fact: DetailFact) {
@@ -902,16 +903,31 @@ function localizeDisplayFact(
       const parts = value.split("|");
       const orSeparator = ` ${t("items.info.or") || "ou"} `;
 
-      const allMax = parts.every((p) => p.endsWith(" max"));
-      if (allMax) {
-        const numbers = parts
-          .map((p) => Number(p.slice(0, -4)))
-          .sort((a, b) => a - b);
-        const countString = numbers.join(orSeparator);
+      // Collapse "upper-bound" parts into a single "up to X or Y". A part is an
+      // upper bound when it's "N max", or — in compact video-game mode — a
+      // "1-N" range that we already render as "up to N".
+      const caps = parts.map((p) => {
+        if (p.endsWith(" max")) return Number(p.slice(0, -4));
+        const rangeMatch = p.match(/^(\d+)-(\d+)$/);
+        if (
+          rangeMatch &&
+          options.compactVideoGamePlayers &&
+          Number(rangeMatch[1]) === 1
+        ) {
+          return Number(rangeMatch[2]);
+        }
+        return null;
+      });
+      if (caps.every((c) => c !== null)) {
+        const numbers = Array.from(new Set(caps as number[])).sort(
+          (a, b) => a - b,
+        );
         return {
           ...fact,
           label: t("items.info.players"),
-          value: t("items.info.upToPlayers", { count: countString }),
+          value: t("items.info.upToPlayers", {
+            count: numbers.join(orSeparator),
+          }),
         };
       }
 
@@ -1109,7 +1125,12 @@ export default function ItemDetailsPage() {
     queryFn: () => getShelf(shelfId),
   });
 
-  const { data: item, isPending, isFetched, isPlaceholderData } = useQuery({
+  const {
+    data: item,
+    isPending,
+    isFetched,
+    isPlaceholderData,
+  } = useQuery({
     queryKey: ["shelf", shelfId, "items", itemId],
     queryFn: () => getItem(itemId, shelfId),
     initialData: () => {
@@ -1122,12 +1143,14 @@ export default function ItemDetailsPage() {
       if (!cached) return undefined;
       // Instant cover/title from the grid, but never treat shelf cache as a
       // complete metadata payload (attachments are omitted on list routes).
+      if (shelfListItemMissingAttachments(cached)) return undefined;
       return cached;
     },
     // Shelf snapshots omit attachment galleries — refetch the full item
     // immediately on detail mount instead of inheriting the 60s staleTime.
     initialDataUpdatedAt: 0,
     staleTime: 0,
+    refetchOnMount: "always",
     placeholderData: (previousData) => previousData,
     // Metadata is enriched in the background after an item is added, so poll
     // while this item is still being enriched (no metadataId yet) — survives a
@@ -1484,8 +1507,7 @@ export default function ItemDetailsPage() {
     const attachments = Array.isArray(metadata.attachments)
       ? metadata.attachments
       : [];
-    const canEvaluateGalleryRefresh =
-      hasDetailMetadataAttachments(metadata);
+    const canEvaluateGalleryRefresh = hasDetailMetadataAttachments(metadata);
     const lastFetched = metadata.lastFetched
       ? new Date(metadata.lastFetched)
       : null;
@@ -2036,7 +2058,7 @@ export default function ItemDetailsPage() {
         onTouchEnd={handleTouchEnd}
       >
         <div className="flex-1 p-4 md:p-6 pb-24 md:pb-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-row items-center justify-between gap-3">
             <Link
               href={shelfHref}
               className="group inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3.5 py-2 text-sm font-semibold text-muted-foreground shadow-sm backdrop-blur-md transition-colors hover:border-primary/30 hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -2056,7 +2078,9 @@ export default function ItemDetailsPage() {
                   className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ChevronLeft className="size-4 shrink-0" />
-                  <span>{t("items.previousItem")}</span>
+                  <span className="hidden sm:inline">
+                    {t("items.previousItem")}
+                  </span>
                 </Link>
                 <Link
                   href={nextItemHref}
@@ -2066,7 +2090,9 @@ export default function ItemDetailsPage() {
                   title={nextShelfItem?.name}
                   className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <span>{t("items.nextItem")}</span>
+                  <span className="hidden sm:inline">
+                    {t("items.nextItem")}
+                  </span>
                   <ChevronRight className="size-4 shrink-0" />
                 </Link>
               </div>
@@ -2183,55 +2209,64 @@ export default function ItemDetailsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                {isAuthenticated && !isGuest && canEdit && (
-                  <div className="flex flex-wrap gap-2.5 mt-1 select-none">
-                    <Button
-                      variant="default"
-                      className="bg-primary hover:bg-primary/95 text-primary-foreground border-none rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
-                      onClick={() => {
-                        setModalActiveTab("general");
-                        setModalVisible(true);
-                      }}
-                    >
-                      <Wrench className="size-4 mr-1.5" />
-                      {t("items.editItem")}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
-                      onClick={
-                        isMetadataRefreshing
-                          ? handleCancelMetadataRefresh
-                          : handleRefreshMetadata
-                      }
-                      disabled={
-                        isEnrichingOnly ||
-                        isCancellingMetadataRefresh ||
-                        (isRefreshingMetadata && !item?.id)
-                      }
-                    >
-                      {isMetadataRefreshing ? (
-                        <>
-                          {isCancellingMetadataRefresh ? (
-                            <Loader2 className="size-4 mr-1.5 animate-spin" />
-                          ) : (
-                            <X className="size-4 mr-1.5" />
-                          )}
-                          {t("items.cancelMetadataRefresh")}
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw
-                            className={cn(
-                              "size-4 mr-1.5",
-                              isEnrichingOnly && "animate-spin",
-                            )}
-                          />
-                          {t("items.refreshMetadata")}
-                        </>
-                      )}
-                    </Button>
+                {isPending ? (
+                  <div className="flex flex-wrap gap-2.5 mt-1">
+                    <Skeleton className="h-10 w-28 rounded-xl" />
+                    <Skeleton className="h-10 w-36 rounded-xl" />
                   </div>
+                ) : (
+                  isAuthenticated &&
+                  !isGuest &&
+                  canEdit && (
+                    <div className="flex flex-wrap gap-2.5 mt-1 select-none">
+                      <Button
+                        variant="default"
+                        className="bg-primary hover:bg-primary/95 text-primary-foreground border-none rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                        onClick={() => {
+                          setModalActiveTab("general");
+                          setModalVisible(true);
+                        }}
+                      >
+                        <Wrench className="size-4 mr-1.5" />
+                        {t("items.editItem")}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                        onClick={
+                          isMetadataRefreshing
+                            ? handleCancelMetadataRefresh
+                            : handleRefreshMetadata
+                        }
+                        disabled={
+                          isEnrichingOnly ||
+                          isCancellingMetadataRefresh ||
+                          (isRefreshingMetadata && !item?.id)
+                        }
+                      >
+                        {isMetadataRefreshing ? (
+                          <>
+                            {isCancellingMetadataRefresh ? (
+                              <Loader2 className="size-4 mr-1.5 animate-spin" />
+                            ) : (
+                              <X className="size-4 mr-1.5" />
+                            )}
+                            {t("items.cancelMetadataRefresh")}
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw
+                              className={cn(
+                                "size-4 mr-1.5",
+                                isEnrichingOnly && "animate-spin",
+                              )}
+                            />
+                            {t("items.refreshMetadata")}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )
                 )}
 
                 {infoStrip}

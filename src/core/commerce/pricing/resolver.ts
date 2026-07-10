@@ -396,6 +396,7 @@ function dropIdentityConflictingListings(
   offers: PriceObservation[],
 ): PriceObservation[] {
   return offers.filter((offer) => {
+    if (offer.metadataScoped) return true;
     const listing = offer.productName?.trim();
     if (!listing) return true;
     const sharesIdentity = names.some((name) =>
@@ -566,6 +567,8 @@ export function alignBarcodePricesForItemNames(
         if (platformMatchedOffers.length === 0) {
           return emptyBarcodePrices();
         }
+      } else if (priceSummaryMatchesOffers(shelfType, prices, namedOffers)) {
+        return emptyBarcodePrices();
       }
     }
 
@@ -751,6 +754,44 @@ function priceLastUpdatedFromOffers(
   return first instanceof Date ? first : new Date(first);
 }
 
+function observedSummaryFromAlignedOffers(
+  shelfType: string,
+  shelfName: string | null | undefined,
+  itemNames: string[],
+  offers: PriceObservation[],
+) {
+  if (offers.length === 0) return null;
+  if (itemNames.length === 0) {
+    return summarizeObservedPrices(shelfType, offers);
+  }
+
+  const aligned = filterItemPriceOffers(
+    shelfType,
+    shelfName,
+    itemNames,
+    offers,
+  );
+  if (aligned.length === 0) return null;
+  return summarizeObservedPrices(shelfType, aligned);
+}
+
+function priceSummaryMatchesOffers(
+  shelfType: string,
+  summary: Pick<
+    CacheSummaryFields,
+    "priceNew" | "priceUsed" | "priceUsedCIB"
+  >,
+  offers: PriceObservation[],
+): boolean {
+  if (offers.length === 0) return false;
+  const fromOffers = summarizeObservedPrices(shelfType, offers);
+  return (
+    (summary.priceNew ?? null) === (fromOffers.priceNew ?? null) &&
+    (summary.priceUsed ?? null) === (fromOffers.priceUsed ?? null) &&
+    (summary.priceUsedCIB ?? null) === (fromOffers.priceUsedCIB ?? null)
+  );
+}
+
 /**
  * Single price resolution path for shelf cards and item pages: strict filter,
  * relaxed fallback, then align with cache / unfiltered offer aggregates (same
@@ -763,8 +804,12 @@ export function resolveItemDisplayPrices(
   offers: PriceObservation[],
   cacheSummary: CacheSummaryFields | null,
 ): BarcodePricesResult | null {
-  const observedSummary =
-    offers.length > 0 ? summarizeObservedPrices(shelfType, offers) : null;
+  const observedSummary = observedSummaryFromAlignedOffers(
+    shelfType,
+    shelfName,
+    itemNames,
+    offers,
+  );
   const summaryInput: CacheSummaryFields = {
     priceNew: cacheSummary?.priceNew ?? observedSummary?.priceNew ?? null,
     priceUsed: cacheSummary?.priceUsed ?? observedSummary?.priceUsed ?? null,

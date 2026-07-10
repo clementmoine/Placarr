@@ -38,6 +38,7 @@ const STATIC_IMAGE_REMOTE_EXACT_HOSTS = [
   "coverproject.sfo2.cdn.digitaloceanspaces.com",
   "geedie.lt",
   "historiquedesjeuxvideo.com",
+  "howlongtobeat.com",
   "i.discogs.com",
   "icollecteverything.com",
   "imagedelivery.net",

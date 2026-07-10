@@ -28,4 +28,11 @@ describe("cleanSearchQuery", () => {
     );
     expect(cleanSearchQuery("Parking™ Deluxe©")).toBe("Parking Deluxe");
   });
+
+  it("strips trailing French video-game suffix without leaving a dangling article", () => {
+    expect(cleanSearchQuery("LEGO La Grande Aventure Le Jeu Vidéo")).toBe(
+      "LEGO La Grande Aventure",
+    );
+    expect(cleanSearchQuery("SOS Fantômes, le jeu vidéo")).toBe("SOS Fantômes");
+  });
 });

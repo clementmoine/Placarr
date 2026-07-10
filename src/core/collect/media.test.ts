@@ -293,7 +293,7 @@ describe("backgroundPickerAttachments", () => {
 });
 
 describe("filterMetadataForShelfPlatform", () => {
-  it("removes ambiguous marketplace covers from a PS3 metadata payload when PS3 art exists", () => {
+  it("keeps ambiguous marketplace covers but pins the PS3 art as default", () => {
     const filtered = filterMetadataForShelfPlatform(
       {
         imageUrl: "/uploads/amc-oblivion.jpg",
@@ -316,9 +316,12 @@ describe("filterMetadataForShelfPlatform", () => {
       { type: "games", name: "PlayStation 3" },
     );
 
+    // The platform-ambiguous cover is NOT removed — it stays available…
     expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/amc-oblivion.jpg",
       "/uploads/geedie-ps3-oblivion.jpg",
     ]);
+    // …but the shelf-platform box art becomes the default cover.
     expect(filtered?.imageUrl).toBe("/uploads/geedie-ps3-oblivion.jpg");
   });
 
@@ -509,6 +512,144 @@ describe("filterMetadataForShelfPlatform", () => {
     expect(filtered?.imageUrl).toBe("/uploads/bourne-game.jpg");
   });
 
+  it("keeps metadata.imageUrl on a platform shelf when gallery rows are missing", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl: "/uploads/vita-angry-birds.jpg",
+        attachments: [],
+      },
+      { type: "games", name: "PlayStation Vita" },
+    );
+
+    expect(filtered?.imageUrl).toBe("/uploads/vita-angry-birds.jpg");
+    expect(filtered?.attachments).toEqual([]);
+  });
+
+  it("does not resurrect a wrong-platform cover dropped from the gallery", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl: "/uploads/geedie-ps5.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "geedie",
+            role: "eu",
+            url: "/uploads/geedie-ps5.jpg",
+            title: "PS5 Metal Gear Solid: Master Collection Vol. 1",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation 4" },
+    );
+
+    expect(filtered?.attachments).toEqual([]);
+    expect(filtered?.imageUrl).toBeUndefined();
+  });
+
+  it("drops a NetGamesRetro Wii cover from a PlayStation Vita shelf", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl: "/uploads/netgamesretro-wii.jpg",
+        attachments: [
+          withProviderAttachmentTraits({
+            type: "cover" as const,
+            source: "netgamesretro",
+            role: "fr",
+            url: "/uploads/netgamesretro-wii.jpg",
+            platformKey: "wii",
+          }),
+          {
+            type: "cover" as const,
+            source: "screenscraper",
+            role: "us",
+            url: "/uploads/vita-2d.jpg",
+            platformKey: "psvita",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation Vita" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/vita-2d.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/vita-2d.jpg");
+  });
+
+  it("drops an HDJV Xbox 360 cover from a PlayStation Vita shelf", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl:
+          "https://www.historiquedesjeuxvideo.com/bdd/jeu/img/XBox-360/2734.jpg",
+        attachments: [
+          withProviderAttachmentTraits({
+            type: "cover" as const,
+            source: "hdjv",
+            role: "fr",
+            url: "https://www.historiquedesjeuxvideo.com/bdd/jeu/img/XBox-360/2734.jpg",
+            platformKey: "xbox360",
+          }),
+          {
+            type: "cover" as const,
+            source: "screenscraper",
+            role: "us",
+            url: "/uploads/vita-2d.jpg",
+            platformKey: "psvita",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation Vita" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/vita-2d.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/vita-2d.jpg");
+  });
+
+  it("drops a PS4 barcode from metadata on a PlayStation Vita shelf", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        title: "La Grande Aventure LEGO Le Jeu Vidéo",
+        barcode: "5051889325581",
+        platformKey: "ps4",
+      },
+      { type: "games", name: "PlayStation Vita" },
+    );
+
+    expect(filtered?.barcode).toBeUndefined();
+  });
+
+  it("drops a NetGamesRetro 3DS cover from a PlayStation Vita shelf", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        imageUrl: "/uploads/netgamesretro-3ds.jpg",
+        attachments: [
+          withProviderAttachmentTraits({
+            type: "cover" as const,
+            source: "netgamesretro",
+            role: "fr",
+            url: "/uploads/netgamesretro-3ds.jpg",
+            platformKey: "3ds",
+          }),
+          {
+            type: "cover" as const,
+            source: "screenscraper",
+            role: "us",
+            url: "/uploads/vita-2d.jpg",
+            platformKey: "psvita",
+          },
+        ],
+      },
+      { type: "games", name: "PlayStation Vita" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/vita-2d.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/vita-2d.jpg");
+  });
+
   it("drops PriceCharting no-art placeholders from gallery and default cover", () => {
     const filtered = filterMetadataForShelfPlatform(
       {
@@ -600,6 +741,7 @@ describe("filterMetadataForShelfPlatform", () => {
           duration: null,
           role: "fr",
           coverProvenance: null,
+platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -617,6 +759,7 @@ describe("filterMetadataForShelfPlatform", () => {
           duration: null,
           role: "fr",
           coverProvenance: null,
+platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -729,6 +872,7 @@ describe("presentItem", () => {
             url: "/uploads/base-pop.jpg",
             title: "PS3 Prince of Persia",
             coverProvenance: null,
+platformKey: null,
             width: null,
             height: null,
             meanLuminance: null,
@@ -746,6 +890,7 @@ describe("presentItem", () => {
             url: "/uploads/trilogy-pop.jpg",
             title: "PS3 Prince of Persia Trilogy: 3 Full Games",
             coverProvenance: null,
+platformKey: null,
             width: null,
             height: null,
             meanLuminance: null,

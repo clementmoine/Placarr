@@ -53,6 +53,7 @@ describe("formatMetadataFromStorage attachment traits", () => {
           duration: null,
           role: null,
           coverProvenance: null,
+platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,

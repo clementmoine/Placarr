@@ -50,6 +50,9 @@ import {
 import {
   parseScreenScraperMediaUrl,
   screenScraperMediaAttachmentSemantics,
+  isScreenScraperPlaceholderMedia,
+  pickSSCover,
+  type SSMedia,
 } from "./mediaUrl";
 import { areLikelySameProduct } from "@/core/identify/titleUtils";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
@@ -58,6 +61,11 @@ import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
+export {
+  pickSSCover,
+  isScreenScraperPlaceholderMedia,
+  type SSMedia,
+} from "./mediaUrl";
 
 function getPlatformKeyFromSSSystemId(systemId?: number): string | undefined {
   if (!systemId) return undefined;
@@ -71,30 +79,9 @@ function getPlatformKeyFromSSMediaUrl(url?: string | null): string | undefined {
   return getPlatformKeyFromSSSystemId(systemId);
 }
 
-export interface SSMedia {
-  type: string;
-  url: string;
-  region?: string;
-  format?: string;
-  size?: string | number;
-}
-
-// ScreenScraper lists media it doesn't really have and serves a tiny solid
-// "no image" placeholder for them (observed at 2742 bytes, e.g. box-2D-back(jp)
-// on jeuid 14825). Real box art is always far larger (the smallest legitimate
-// spine/side seen is ~8.7 KB), so a small `size` is a reliable, download-free
-// signal to drop these before they reach the gallery or cover picker.
-const SS_PLACEHOLDER_MAX_SIZE_BYTES = 4096;
 /** Hard cap on jeuRecherche calls per metadata lookup (fallback loops add up fast). */
 const MAX_SCREENSCRAPER_SEARCH_ATTEMPTS = 10;
 const MAX_CACHED_BARCODE_SUGGESTION_CANDIDATES = 3;
-
-export function isScreenScraperPlaceholderMedia(media: SSMedia): boolean {
-  const size = Number(media.size);
-  return (
-    Number.isFinite(size) && size > 0 && size < SS_PLACEHOLDER_MAX_SIZE_BYTES
-  );
-}
 
 export interface SSGame {
   id?: number;
@@ -109,31 +96,6 @@ export interface SSGame {
   note?: { text: string };
   classifications?: { type?: string; text?: string }[];
   medias?: SSMedia[];
-}
-
-/**
- * Picks the best cover image URL from ScreenScraper medias array.
- * Prefers a true front cover first, then the best region inside that type.
- * This keeps box-2D(eu) above decorative mix images such as mixrbv2(fr).
- */
-export function pickSSCover(allMedias: SSMedia[]): string | null {
-  const medias = allMedias.filter((m) => !isScreenScraperPlaceholderMedia(m));
-  const preferredTypes = ["box-2D", "box-3D"];
-  const regionOrder = ["fr", "eu", "wor", "us", "jp"];
-
-  for (const type of preferredTypes) {
-    for (const region of regionOrder) {
-      const found = medias.find((m) => m.type === type && m.region === region);
-      if (found) return found.url;
-    }
-  }
-
-  for (const type of preferredTypes) {
-    const found = medias.find((m) => m.type === type);
-    if (found) return found.url;
-  }
-
-  return null;
 }
 
 function pickSSTitle(noms?: SSGame["noms"]): string | undefined {
@@ -599,6 +561,17 @@ export function buildScreenScraperSearchQueries(
       const trailing = subtitleSplit[2].trim();
       if (!isWeakMetadataSearchFragment(leading)) variants.push(leading);
       if (!isWeakMetadataSearchFragment(trailing)) variants.push(trailing);
+    }
+
+    const withoutVideoGameSuffix = base
+      .replace(/\s*,?\s*le\s+jeu\s+vid[eé]o\s*$/i, "")
+      .replace(/\s+\b(le|la|les)\s*$/i, "")
+      .trim();
+    if (
+      withoutVideoGameSuffix.length >= 3 &&
+      withoutVideoGameSuffix.toLowerCase() !== base.toLowerCase()
+    ) {
+      variants.push(withoutVideoGameSuffix);
     }
 
     variants.push(
@@ -1257,6 +1230,8 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
       const attachments: MetadataAttachment[] = [];
 
+      const resolvedPlatformKey = getPlatformKeyFromSSSystemId(resolvedSystemId);
+
       if (gameData.medias) {
         gameData.medias.forEach((m) => {
           // Drop ScreenScraper's tiny "no image" placeholders (see helper).
@@ -1270,6 +1245,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
               role: semantics.role,
               url: m.url,
               source: "screenscraper",
+              platformKey: resolvedPlatformKey,
             });
           }
         });
@@ -1289,8 +1265,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       const result: MetadataResult = {
         title,
         platformKey:
-          getPlatformKeyFromSSSystemId(resolvedSystemId) ||
-          getPlatformKeyFromSSMediaUrl(imageUrl),
+          resolvedPlatformKey || getPlatformKeyFromSSMediaUrl(imageUrl),
         description,
         imageUrl: imageUrl ?? undefined,
         releaseDate,
@@ -1308,7 +1283,6 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
         await persistScreenScraperGameIdForBarcode(
           barcode,
           gameData.id,
-          resolvedSystemId,
           result.imageUrl,
         );
       }

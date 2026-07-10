@@ -33,7 +33,7 @@ export function ShelfCard(props: ShelfWithItemCount) {
   return (
     <div
       className={cn(
-        "group relative w-full select-none overflow-hidden rounded-2xl shadow-md",
+        "cv-card-shelf group relative w-full select-none overflow-hidden rounded-2xl shadow-md",
         "bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md",
         "border border-border dark:border-zinc-800/65",
         "cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out",

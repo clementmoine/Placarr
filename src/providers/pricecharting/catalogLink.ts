@@ -22,6 +22,14 @@ function looksPal({
   if (/\b(ntsc|usa?|jp|jpn|japan)\b/i.test(evidence)) return false;
   if (/\b(pal|eur?|europe|fr|fra|fre|uk)\b/i.test(evidence)) return true;
 
+  const shelfPlatformKey = detectPlatformKey(shelfName ?? "");
+  if (
+    shelfPlatformKey &&
+    getPriceChartingPlatformSlugs(shelfPlatformKey)?.pal
+  ) {
+    return true;
+  }
+
   const code = cleanCode(barcode);
   return code.length === 13 && !code.startsWith("0");
 }

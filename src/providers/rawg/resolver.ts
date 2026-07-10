@@ -31,6 +31,11 @@ type RawgGame = {
 type RawgSearchResponse = { results?: RawgGame[] };
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import {
+  resolveGameAttachmentPlatformKey,
+  solePlatformKeyFromNames,
+  withMetadataPlatformKeys,
+} from "@/core/enrich/media/platformKeyStamp";
 import { isRawgQuotaBlocked, markRawgQuotaHit } from "./quota";
 
 type RawgResolverDeps = {
@@ -70,6 +75,7 @@ export function readRawgGameplayClip(
 export function createRawgResolver(deps: RawgResolverDeps) {
   return async function fetchFromRawg(
     name: string,
+    platform?: string | null,
   ): Promise<MetadataResult | null> {
     if (!process.env.RAWG_API_KEY?.trim() || isRawgQuotaBlocked()) {
       return null;
@@ -234,13 +240,17 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
-    const platformNames = Array.isArray(bestMatch.platforms)
-      ? bestMatch.platforms
-          .map((entry) => entry?.platform?.name)
-          .filter(
-            (entry: unknown): entry is string => typeof entry === "string",
-          )
-      : [];
+    const platformNames = [
+      ...(Array.isArray(bestMatch.platforms)
+        ? bestMatch.platforms
+            .map((entry: { platform?: { name?: unknown } }) =>
+              typeof entry?.platform?.name === "string"
+                ? entry.platform.name.trim()
+                : "",
+            )
+            .filter(Boolean)
+        : []),
+    ];
     if (platformNames.length > 0) {
       facts.push({
         kind: "platform",
@@ -329,6 +339,13 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
+    const allPlatformNames = [...platformNames, ...parentPlatformNames];
+    const platformKey =
+      resolveGameAttachmentPlatformKey({
+        requestedPlatform: platform,
+        title: bestMatch.name,
+      }) ?? solePlatformKeyFromNames(allPlatformNames);
+
     if (
       typeof bestMatch.reviews_count === "number" &&
       bestMatch.reviews_count > 0
@@ -367,29 +384,33 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
-    return {
-      title: bestMatch.name,
-      description: detailedDescription,
-      releaseDate: bestMatch.released,
-      imageUrl,
-      attachments: [
-        ...(imageUrl
-          ? [
-              {
-                type: "cover" as const,
-                url: imageUrl,
-                source: coverSource,
-              },
-            ]
-          : []),
-        ...(bestMatch.short_screenshots?.map((s: { image: string }) => ({
-          type: "screenshot" as const,
-          url: s.image,
-          source: "rawg",
-        })) || []),
-      ],
-      facts: facts.length > 0 ? facts : undefined,
-      externalIds: { rawg: String(bestMatch.id) },
-    };
+    return withMetadataPlatformKeys(
+      {
+        title: bestMatch.name,
+        platformKey: platformKey || undefined,
+        description: detailedDescription,
+        releaseDate: bestMatch.released,
+        imageUrl,
+        attachments: [
+          ...(imageUrl
+            ? [
+                {
+                  type: "cover" as const,
+                  url: imageUrl,
+                  source: coverSource,
+                },
+              ]
+            : []),
+          ...(bestMatch.short_screenshots?.map((s: { image: string }) => ({
+            type: "screenshot" as const,
+            url: s.image,
+            source: "rawg",
+          })) || []),
+        ],
+        facts: facts.length > 0 ? facts : undefined,
+        externalIds: { rawg: String(bestMatch.id) },
+      },
+      platformKey,
+    );
   };
 }

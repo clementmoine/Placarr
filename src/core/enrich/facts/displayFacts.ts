@@ -55,6 +55,10 @@ function normalizeProviderLinkOwnerKey(value: string): string {
 function providerLinkOwnerKey(fact: DetailFact): string {
   const stamped = fact.providerLabel?.trim();
   if (stamped) return normalizeProviderLinkOwnerKey(stamped);
+  const label = fact.label?.trim();
+  if (fact.kind === "external-link" && label) {
+    return normalizeProviderLinkOwnerKey(label);
+  }
   const token = fact.source ?? fact.label ?? "";
   return token ? normalizeProviderLinkOwnerKey(token) : "";
 }

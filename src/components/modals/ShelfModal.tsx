@@ -7,7 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LibraryBig, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -250,23 +250,18 @@ export function ShelfModal({
         isOpen={isOpen}
         onClose={handleClose}
         title={
-          <div className="flex items-center gap-2">
-            {shelf ? (
-              <ShelfTypeIcon type={shelf.type} className="size-5" />
-            ) : (
-              <LibraryBig className="size-5" />
-            )}
-            <span>
-              {shelf
-                ? `${t("shelves.editShelf")} : ${shelf.name}`
-                : t("shelves.addShelf")}
-            </span>
-          </div>
+          <span className="block text-left">
+            {shelf
+              ? `${t("shelves.editShelf")} : ${shelf.name}`
+              : t("shelves.addShelf")}
+          </span>
         }
         description={
-          shelf
-            ? t("shelves.editShelfDetails")
-            : t("shelves.createNewShelfDetails")
+          <span className="block text-left">
+            {shelf
+              ? t("shelves.editShelfDetails")
+              : t("shelves.createNewShelfDetails")}
+          </span>
         }
         size="xl-auto"
         customChildren={true}

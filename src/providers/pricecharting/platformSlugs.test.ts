@@ -9,6 +9,12 @@ import {
 describe("priceCharting platform slugs", () => {
   it("maps canonical platform keys to PriceCharting URL segments", () => {
     expect(getPriceChartingPlatformSlugs("wii")?.pal).toBe("pal-wii");
+    expect(getPriceChartingPlatformSlugs("psvita")?.pal).toBe(
+      "pal-playstation-vita",
+    );
+    expect(
+      resolvePriceChartingPlatformSlug("PlayStation Vita", { isPal: true }),
+    ).toBe("pal-playstation-vita");
   });
 
   it("resolves Neo Geo AES/MVS/CD slugs from shelf labels and barcodes", () => {

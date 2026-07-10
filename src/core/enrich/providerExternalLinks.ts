@@ -26,6 +26,17 @@ export function normalizeProviderSourceKey(source: string): string {
   return providerIdForSourceToken(source);
 }
 
+function normalizeProviderLinkOwnerKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function providerLinkOwnerKeyFromFact(fact: MetadataFact): string {
+  const label = fact.label?.trim();
+  if (label) return normalizeProviderLinkOwnerKey(label);
+  const token = fact.source ?? "";
+  return token ? normalizeProviderSourceKey(token) : "";
+}
+
 /** True when a URL likely points at a provider product/listing page (not a CDN asset). */
 export function looksLikeProviderProductPageUrl(url: string): boolean {
   if (!/^https?:\/\//i.test(url.trim())) return false;
@@ -140,7 +151,7 @@ function providerHasExternalLink(
     (fact) =>
       fact.kind === "external-link" &&
       fact.url?.trim() &&
-      normalizeProviderSourceKey(fact.source ?? fact.label ?? "") === sourceKey,
+      providerLinkOwnerKeyFromFact(fact) === sourceKey,
   );
 }
 
@@ -152,7 +163,7 @@ function findProviderExternalLink(
     (fact) =>
       fact.kind === "external-link" &&
       fact.url?.trim() &&
-      normalizeProviderSourceKey(fact.source ?? fact.label ?? "") === sourceKey,
+      providerLinkOwnerKeyFromFact(fact) === sourceKey,
   );
 }
 
@@ -451,6 +462,29 @@ export function externalLinkFactsFromFieldEvidence(
     const url = entry.sourceUrl?.trim();
     if (!url || !looksLikeProviderProductPageUrl(url)) continue;
 
+    const field = entry.field?.trim() ?? "";
+    if (field.startsWith("external-link:")) {
+      const label =
+        field.slice("external-link:".length).trim() ||
+        formatProviderSourceLabel(entry.source);
+      const ownerKey = normalizeProviderLinkOwnerKey(label);
+      if (
+        !ownerKey ||
+        providerHasExternalLink([...existingFacts, ...additions], ownerKey)
+      ) {
+        continue;
+      }
+      additions.push(
+        makeProviderExternalLinkFact({
+          source: entry.source,
+          url,
+          label,
+          priority: entry.priority ?? 36,
+        }),
+      );
+      continue;
+    }
+
     const sourceKey = normalizeProviderSourceKey(entry.source);
     if (
       !sourceKey ||
@@ -483,7 +517,7 @@ export function dedupeProviderExternalLinkFacts(
   for (const fact of facts) {
     if (fact.kind !== "external-link" || !fact.url?.trim()) continue;
 
-    const ownerKey = providerIdForSourceToken(fact.source ?? fact.label ?? "");
+    const ownerKey = providerLinkOwnerKeyFromFact(fact);
     if (!ownerKey) continue;
 
     const existing = bestByProvider.get(ownerKey);
@@ -493,4 +527,95 @@ export function dedupeProviderExternalLinkFacts(
   }
 
   return [...nonLinks, ...Array.from(bestByProvider.values())];
+}
+
+const INTERNAL_PROFILE_CONTRIBUTOR_KEYS = new Set(["consensus", "mergedengine"]);
+
+function collectProfileContributorProviderIds(input: {
+  facts?: MetadataFact[];
+  fieldEvidence?: ReadonlyArray<{ source?: string | null }>;
+  attachments?: ReadonlyArray<{ source?: string | null }>;
+}): string[] {
+  const keys = new Set<string>();
+  const add = (source?: string | null) => {
+    const id = providerIdForSourceToken(source ?? "");
+    if (!id || INTERNAL_PROFILE_CONTRIBUTOR_KEYS.has(id)) return;
+    keys.add(id);
+  };
+
+  for (const fact of input.facts ?? []) {
+    if (fact.kind === "external-link") continue;
+    add(fact.source);
+  }
+  for (const attachment of input.attachments ?? []) add(attachment.source);
+  for (const entry of input.fieldEvidence ?? []) add(entry.source);
+
+  return [...keys];
+}
+
+/** Every provider that contributed to the profile, with the best URL we have. */
+export function buildProfileProviderLinkFacts(input: {
+  facts?: MetadataFact[];
+  fieldEvidence?: readonly FieldEvidenceInput[];
+  attachments?: readonly { source?: string | null }[];
+  priceOffers?: readonly ProviderPriceOfferLinkInput[];
+  itemBarcode?: string | null;
+  itemTitle?: string | null;
+  catalogLink?: { url: string; providerLabel?: string } | null;
+}): MetadataFact[] {
+  let links = (input.facts ?? []).filter(
+    (fact) => fact.kind === "external-link" && fact.url?.trim(),
+  );
+
+  const fromEvidence = externalLinkFactsFromFieldEvidence(
+    input.fieldEvidence ?? [],
+    links,
+  );
+  if (fromEvidence.length > 0) {
+    links = dedupeProviderExternalLinkFacts([...links, ...fromEvidence]).filter(
+      (fact) => fact.kind === "external-link" && fact.url?.trim(),
+    );
+  }
+
+  links = reconcileExternalLinksFromPriceOffers(
+    links,
+    input.priceOffers ?? [],
+    input.itemBarcode,
+    input.itemTitle,
+  ).filter((fact) => fact.kind === "external-link" && fact.url?.trim());
+
+  if (input.catalogLink?.url?.trim()) {
+    const providerLabel = input.catalogLink.providerLabel ?? "Catalog";
+    const ownerKey = normalizeProviderLinkOwnerKey(providerLabel);
+    if (!providerHasExternalLink(links, ownerKey)) {
+      links.push(
+        makeProviderExternalLinkFact({
+          source: providerIdForSourceToken(providerLabel) || providerLabel,
+          url: input.catalogLink.url.trim(),
+          label: providerLabel,
+          priority: 40,
+        }),
+      );
+    }
+  }
+
+  for (const providerId of collectProfileContributorProviderIds(input)) {
+    const ownerKey = normalizeProviderSourceKey(providerId);
+    if (!ownerKey || providerHasExternalLink(links, ownerKey)) continue;
+
+    const websiteUrl = getProviderModule(providerId)?.info.websiteUrl?.trim();
+    if (!websiteUrl || !looksLikeProviderProductPageUrl(websiteUrl)) continue;
+
+    links.push(
+      makeProviderExternalLinkFact({
+        source: providerId,
+        url: websiteUrl,
+        priority: 18,
+      }),
+    );
+  }
+
+  return dedupeProviderExternalLinkFacts(links).filter(
+    (fact) => fact.kind === "external-link" && fact.url?.trim(),
+  );
 }

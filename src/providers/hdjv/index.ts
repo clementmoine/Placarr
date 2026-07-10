@@ -5,6 +5,12 @@ import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
+import {
+  normalizeVideoGamePlatformKey,
+  resolveGameAttachmentPlatformKey,
+  withMetadataPlatformKeys,
+} from "@/core/enrich/media/platformKeyStamp";
+import { deriveAttachmentPlatformKeyFromUrl } from "@/core/enrich/media/attachmentDisplayScore";
 
 import { fetchFromHdjv, fetchHdjvGallery, pingHdjv } from "./fetch";
 
@@ -12,6 +18,7 @@ export { fetchFromHdjv, fetchHdjvGallery, pingHdjv } from "./fetch";
 
 function galleryToMetadata(
   gallery: NonNullable<Awaited<ReturnType<typeof fetchHdjvGallery>>>,
+  platform?: string | null,
 ): MetadataResult {
   const facts: NonNullable<MetadataResult["facts"]> = [];
 
@@ -26,22 +33,37 @@ function galleryToMetadata(
     });
   }
 
-  return {
-    title: gallery.title,
-    barcode: gallery.barcode || undefined,
-    imageUrl: gallery.coverUrl || undefined,
-    releaseDate: gallery.releaseDate || undefined,
-    aliases: gallery.alternateTitle ? [gallery.alternateTitle] : undefined,
-    attachments: gallery.items.map((item) => ({
-      type: item.type,
-      url: item.url,
-      source: "hdjv",
-      ...(item.role ? { role: item.role } : {}),
-      title: item.label,
-    })),
-    facts: facts.length > 0 ? facts : undefined,
-    externalIds: gallery.gameCode ? { hdjv: gallery.gameCode } : undefined,
-  };
+  const platformKey =
+    normalizeVideoGamePlatformKey(gallery.platformLabel) ??
+    resolveGameAttachmentPlatformKey({
+      requestedPlatform: platform ?? gallery.platformLabel,
+      title: gallery.title,
+      productUrl: gallery.ficheUrl,
+    });
+
+  return withMetadataPlatformKeys(
+    {
+      title: gallery.title,
+      barcode: gallery.barcode || undefined,
+      imageUrl: gallery.coverUrl || undefined,
+      releaseDate: gallery.releaseDate || undefined,
+      aliases: gallery.alternateTitle ? [gallery.alternateTitle] : undefined,
+      attachments: gallery.items.map((item) => ({
+        type: item.type,
+        url: item.url,
+        source: "hdjv",
+        ...(item.role ? { role: item.role } : {}),
+        title: item.label,
+        platformKey:
+          deriveAttachmentPlatformKeyFromUrl(item.url) ??
+          platformKey ??
+          undefined,
+      })),
+      facts: facts.length > 0 ? facts : undefined,
+      externalIds: gallery.gameCode ? { hdjv: gallery.gameCode } : undefined,
+    },
+    platformKey,
+  );
 }
 
 export const hdjvModule: ProviderModule = {
@@ -83,7 +105,7 @@ export const hdjvModule: ProviderModule = {
         barcode ?? undefined,
         [name, ...queries],
       );
-      return gallery ? galleryToMetadata(gallery) : null;
+      return gallery ? galleryToMetadata(gallery, platform) : null;
     },
   }),
   healthCheck: createMetadataHealthCheck("hdjv", "HDJV", async () => {

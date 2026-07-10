@@ -19,6 +19,8 @@ const PRICE_CHARTING_PLATFORM_SLUGS: Partial<
   ps3: { pal: "pal-playstation-3", default: "playstation-3" },
   ps2: { pal: "pal-playstation-2", default: "playstation-2" },
   ps1: { pal: "pal-playstation", default: "playstation" },
+  psp: { pal: "pal-psp", default: "psp" },
+  psvita: { pal: "pal-playstation-vita", default: "playstation-vita" },
   wii: { pal: "pal-wii", default: "wii" },
   gamecube: { pal: "pal-gamecube", default: "gamecube" },
 };

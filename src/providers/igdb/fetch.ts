@@ -16,6 +16,11 @@ import type {
   MetadataFact,
 } from "@/types/metadataProvider";
 import { buildFranchiseFact } from "@/core/enrich/facts/franchiseFact";
+import {
+  normalizeVideoGamePlatformKey,
+  solePlatformKeyFromNames,
+  withMetadataPlatformKeys,
+} from "@/core/enrich/media/platformKeyStamp";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -456,7 +461,7 @@ async function fetchFromIGDBWithToken(
     candidates[0];
 
   const timeToBeat = await fetchIGDBTimeToBeat(game.id, headers);
-  return parseIGDBGame(game, timeToBeat);
+  return parseIGDBGame(game, timeToBeat, platform);
 }
 
 async function fetchIGDBSuggestionsWithToken(
@@ -807,9 +812,23 @@ function buildTimeToBeatFacts(
   return facts;
 }
 
+function resolveIGDBPlatformKey(
+  game: IGDBGame,
+  requestedPlatform?: string | null,
+): string | undefined {
+  const requested = normalizeVideoGamePlatformKey(requestedPlatform);
+  if (requested && isPlatformCompatible(game, requestedPlatform)) {
+    return requested;
+  }
+  return solePlatformKeyFromNames(
+    (game.platforms ?? []).map((platform) => platform.name),
+  );
+}
+
 function parseIGDBGame(
   game: IGDBGame,
   timeToBeat: IGDBTimeToBeat | null,
+  requestedPlatform?: string | null,
 ): IGDBGameResult {
   const attachments: MetadataAttachment[] = [];
 
@@ -859,19 +878,23 @@ function parseIGDBGame(
       )
     : undefined;
 
-  return {
-    title: game.name,
-    description: game.summary,
-    releaseDate,
-    publishers: publishers.length > 0 ? publishers : undefined,
-    attachments,
-    aliases,
-    facts: [
-      ...buildFranchiseFacts(game),
-      ...buildAgeRatingFacts(game),
-      ...buildRatingFacts(game),
-      ...buildTimeToBeatFacts(timeToBeat),
-    ],
-    externalIds: { igdb: String(game.id) },
-  };
+  return withMetadataPlatformKeys(
+    {
+      title: game.name,
+      platformKey: resolveIGDBPlatformKey(game, requestedPlatform),
+      description: game.summary,
+      releaseDate,
+      publishers: publishers.length > 0 ? publishers : undefined,
+      attachments,
+      aliases,
+      facts: [
+        ...buildFranchiseFacts(game),
+        ...buildAgeRatingFacts(game),
+        ...buildRatingFacts(game),
+        ...buildTimeToBeatFacts(timeToBeat),
+      ],
+      externalIds: { igdb: String(game.id) },
+    },
+    resolveIGDBPlatformKey(game, requestedPlatform),
+  );
 }

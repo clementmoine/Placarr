@@ -1,4 +1,4 @@
-import type { Attachment, Author, Metadata, Publisher } from "@prisma/client";
+import type { Attachment, Author, Metadata, PriceOffer, Publisher } from "@prisma/client";
 
 import {
   getCoverImage,
@@ -6,12 +6,17 @@ import {
   getHeroImage,
   filterMetadataForShelfPlatform,
 } from "@/core/collect/media";
-import { purgeContradictedProviderExternalLinks } from "@/core/enrich/providerExternalLinks";
+import {
+  buildProfileProviderLinkFacts,
+  purgeContradictedProviderExternalLinks,
+  type ProviderPriceOfferLinkInput,
+} from "@/core/enrich/providerExternalLinks";
 import {
   buildCatalogExternalLink,
   metadataAliases,
 } from "@/core/enrich/catalogLink";
 import { formatMetadataFromStorage } from "@/core/enrich/dbMapping";
+import type { FieldEvidenceInput } from "@/core/enrich/evidence";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
@@ -43,7 +48,44 @@ export type StoredItemMetadata = Metadata & {
   attachments?: Attachment[];
   authors?: Author[];
   publishers?: Publisher[];
+  fieldEvidence?: Array<{
+    field: string;
+    source: string;
+    value: string;
+    sourceUrl?: string | null;
+    priority?: number | null;
+    confidence?: number | null;
+  }>;
+  priceOffers?: Array<
+    Pick<PriceOffer, "source" | "sourceUrl" | "productName" | "rawValue">
+  >;
 };
+
+const itemDetailMetadataInclude = {
+  include: {
+    attachments: true,
+    authors: true,
+    publishers: true,
+    fieldEvidence: {
+      select: {
+        field: true,
+        source: true,
+        value: true,
+        sourceUrl: true,
+        priority: true,
+        confidence: true,
+      },
+    },
+    priceOffers: {
+      select: {
+        source: true,
+        sourceUrl: true,
+        productName: true,
+        rawValue: true,
+      },
+    },
+  },
+} as const;
 
 const itemWithMetadataInclude = {
   shelf: { select: { type: true, name: true } },
@@ -82,22 +124,97 @@ function isStoredMetadata(
   return "sourceType" in metadata && "sourceQuery" in metadata;
 }
 
+function mapStoredFieldEvidence(
+  rows?: StoredItemMetadata["fieldEvidence"],
+): FieldEvidenceInput[] | undefined {
+  if (!rows?.length) return undefined;
+  return rows.map((row) => ({
+    field: row.field,
+    source: row.source,
+    value: row.value,
+    sourceUrl: row.sourceUrl,
+    priority: row.priority ?? undefined,
+    confidence: row.confidence ?? undefined,
+  }));
+}
+
+function mapStoredPriceOffers(
+  rows?: StoredItemMetadata["priceOffers"],
+): ProviderPriceOfferLinkInput[] | undefined {
+  if (!rows?.length) return undefined;
+  return rows.map((row) => ({
+    source: row.source,
+    sourceUrl: row.sourceUrl,
+    rawValue: row.rawValue,
+    productBarcode: undefined,
+  }));
+}
+
+function enrichMetadataProviderLinks(
+  metadata: MetadataResult,
+  input: {
+    fieldEvidence?: FieldEvidenceInput[];
+    priceOffers?: ProviderPriceOfferLinkInput[];
+    itemBarcode?: string | null;
+    itemTitle?: string | null;
+    catalogLink?: { url: string; providerLabel?: string } | null;
+  },
+): MetadataResult {
+  const nonLinkFacts = (metadata.facts ?? []).filter(
+    (fact) => fact.kind !== "external-link",
+  );
+  const linkFacts = buildProfileProviderLinkFacts({
+    facts: metadata.facts,
+    fieldEvidence: input.fieldEvidence,
+    attachments: metadata.attachments,
+    priceOffers: input.priceOffers,
+    itemBarcode: input.itemBarcode,
+    itemTitle: input.itemTitle,
+    catalogLink: input.catalogLink,
+  });
+  const facts = purgeContradictedProviderExternalLinks(
+    [...nonLinkFacts, ...linkFacts],
+    input.itemBarcode,
+    input.itemTitle,
+  );
+  if (!facts.length) {
+    const { facts: _facts, ...rest } = metadata;
+    return rest;
+  }
+  return { ...metadata, facts };
+}
+
 function formatItemMetadata(
   metadata?: StoredItemMetadata | MetadataResult | null,
-  item?: { name?: string; barcode?: string | null },
+  item?: {
+    name?: string;
+    barcode?: string | null;
+    catalogLink?: { url: string; providerLabel?: string } | null;
+  },
 ): MetadataResult | undefined {
   if (!metadata) return undefined;
   const formatted = isStoredMetadata(metadata)
     ? formatMetadataFromStorage(metadata)
     : metadata;
-  if (!formatted.facts?.length) return formatted;
+
+  const enriched = isStoredMetadata(metadata)
+    ? enrichMetadataProviderLinks(formatted, {
+        fieldEvidence: mapStoredFieldEvidence(metadata.fieldEvidence),
+        priceOffers: mapStoredPriceOffers(metadata.priceOffers),
+        itemBarcode: item?.barcode,
+        itemTitle: item?.name,
+        catalogLink: item?.catalogLink,
+      })
+    : formatted;
+
+  if (!enriched.facts?.length) return enriched;
   const facts = purgeContradictedProviderExternalLinks(
-    formatted.facts,
+    enriched.facts,
     item?.barcode,
     item?.name,
   );
-  if (facts.length === formatted.facts.length) return formatted;
-  return { ...formatted, facts };
+  if (facts.length === enriched.facts.length) return enriched;
+  return { ...enriched, facts };
 }
 
 function mediaInput(item: PresentableItemInput) {
@@ -186,9 +303,20 @@ export function presentItemFromStorage<
     shelf?: PresentableItemInput["shelf"];
   },
 >(item: T, options?: PresentOptions): T {
+  const referenceCatalogLink = item.shelf?.type
+    ? buildCatalogExternalLink({
+        mediaType: item.shelf.type,
+        title: item.metadata?.title,
+        fallbackTitle: item.name,
+        shelfName: item.shelf?.name,
+        barcode: item.barcode,
+        aliases: metadataAliases(item.metadata?.aliases),
+      })
+    : null;
   const formatted = formatItemMetadata(item.metadata, {
     name: item.name,
     barcode: item.barcode,
+    catalogLink: referenceCatalogLink,
   });
   const filteredMetadata =
     formatted && item.shelf
@@ -226,4 +354,4 @@ export function presentItemWithMedia<T extends PresentableItemInput>(
   };
 }
 
-export { itemWithMetadataInclude };
+export { itemWithMetadataInclude, itemDetailMetadataInclude };

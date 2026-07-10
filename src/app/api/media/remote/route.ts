@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { isAllowedRemoteImageProxyTarget } from "@/core/enrich/media/remoteImageProxyValidation.server";
 import { fetchRemoteImageBuffer } from "@/core/enrich/media/remoteFetch";
+import {
+  resolveScreenScraperCoverFallback,
+  screenScraperMediaFetchUrl,
+} from "@/providers/screenscraper/mediaProxy.server";
 
 const CACHE_MAX_AGE_SECONDS = 60 * 60;
 
@@ -19,9 +23,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "URL not allowed" }, { status: 400 });
   }
 
-  const fetched = await fetchRemoteImageBuffer(rawUrl, {
-    allowSubThresholdFallback: true,
-  });
+  let fetched = await fetchRemoteImageBuffer(
+    screenScraperMediaFetchUrl(rawUrl),
+    {
+      allowSubThresholdFallback: true,
+    },
+  );
+
+  // A stored ScreenScraper cover may point at a region the game doesn't have
+  // (NOMEDIA): fall back to an actually-available cover so old items self-heal.
+  if (!fetched) {
+    const altUrl = await resolveScreenScraperCoverFallback(rawUrl);
+    if (altUrl) {
+      fetched = await fetchRemoteImageBuffer(
+        screenScraperMediaFetchUrl(altUrl),
+        {
+          allowSubThresholdFallback: true,
+        },
+      );
+    }
+  }
+
   if (!fetched) {
     return NextResponse.json({ error: "Image unavailable" }, { status: 404 });
   }

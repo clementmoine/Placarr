@@ -14,6 +14,7 @@ import {
 } from "./fetch";
 import { resolveTheGamesDbPlatformId } from "./platformMap";
 import { getPlatformKeyByTheGamesDbPlatformId } from "@/core/identify/platforms/platforms";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { isPalRegionId, regionIdToAttachmentRole } from "./regions";
 import type {
   MetadataAttachment,
@@ -485,7 +486,7 @@ export async function fetchFromTheGamesDB(
     });
   }
 
-  const result: MetadataResult = {
+  const result: MetadataResult = withMetadataPlatformKeys({
     title,
     platformKey:
       getPlatformKeyByTheGamesDbPlatformId(game.platform) ||
@@ -500,7 +501,7 @@ export async function fetchFromTheGamesDB(
     regionalTitles: regionalTitles.length > 0 ? regionalTitles : undefined,
     facts: facts.length > 0 ? facts : undefined,
     externalIds: { thegamesdb: String(game.id || selected.id) },
-  };
+  });
   return {
     ...result,
     observations: buildTheGamesDbObservations(result, game.id || selected.id, {

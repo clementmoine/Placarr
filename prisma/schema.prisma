@@ -54,6 +54,14 @@ model Attachment {
   // cannot be recomputed from the stored URL. Drives the provenance tier in the
   // cover ranking (see @/lib/media/coverProvenance).
   coverProvenance String?
+  // Platform this cover belongs to, derived from the provider's original image URL
+  // (ScreenScraper `systemeid`, hdjv `/PS3/` path segment, …) at enrichment time.
+  // Persisted because localization rewrites the URL to a local /uploads path, which
+  // drops the platform signal — so it cannot be recomputed at read time. Drives the
+  // platform-aware cover ranking: a cover on a foreign console is dropped, an
+  // unidentified one sinks, the shelf-platform one leads. See
+  // @/core/enrich/media/attachmentDisplayScore.
+  platformKey     String?
   // Image metrics measured once at enrichment (sharp) and persisted so the
   // read-time cover ranking can sort by resolution + exposure without
   // re-decoding files on every page render. See @/lib/media/attachmentDisplayScore.

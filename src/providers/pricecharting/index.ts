@@ -22,6 +22,7 @@ import {
   priceChartingGalleryLabelIsRecognized,
 } from "./imageLabels";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import type { MetadataFact } from "@/types/metadataProvider";
 import type { PriceChartingMetadata } from "@/core/identify/lookup/providerTypes";
@@ -179,7 +180,7 @@ export const pricechartingModule: ProviderModule = {
           });
         }
 
-        return {
+        return withMetadataPlatformKeys({
           title: pcMeta.title,
           platformKey: pcMeta.platform
             ? detectPlatformKey(pcMeta.platform) || undefined
@@ -188,7 +189,7 @@ export const pricechartingModule: ProviderModule = {
           imageUrl: pcMeta.coverUrl || undefined,
           attachments: buildPriceChartingAttachments(pcMeta, isPal),
           facts: facts.length > 0 ? facts : undefined,
-        };
+        });
       },
     };
   },

@@ -369,7 +369,7 @@ describe("summarizeShelfItemPrices", () => {
     expect(map.get("item-1")?.priceUsed).toBeUndefined();
   });
 
-  it("falls back to unfiltered aggregates when title filters reject every listing", async () => {
+  it("clears aggregates when every named listing is unrelated to the item", async () => {
     h.barcodeCache.findMany.mockResolvedValue([]);
     h.priceOffer.findMany.mockResolvedValue([
       {
@@ -403,7 +403,7 @@ describe("summarizeShelfItemPrices", () => {
       "PlayStation 4",
     );
 
-    expect(map.get("item-1")?.priceNew).toBe(1416);
+    expect(map.get("item-1")?.priceNew).toBeUndefined();
   });
 });
 
@@ -513,6 +513,72 @@ describe("alignBarcodePricesForItemNames", () => {
 
     expect(aligned.priceNew).toBe(5101);
     expect(aligned.priceObservations).toHaveLength(1);
+  });
+
+  it("clears short-title game prices when every named listing is unrelated", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "games",
+      ["Minecraft"],
+      cachedBarcodePrices({
+        priceNew: 3357,
+        priceUsed: 49990,
+        priceUsedCIB: null,
+        priceLastUpdated: new Date("2026-07-09T17:47:13.430Z"),
+        priceSources: ["LeDenicheur", "ChocoBonPlan"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "LeDenicheur",
+            productName:
+              "LEGO Minecraft 21273 L'attaque du village de ballons Ghast",
+            condition: "new",
+            priceCents: 5290,
+          }),
+          serializedPriceObservation({
+            source: "LeDenicheur",
+            productName: "Nintendo New 2DS XL - Minecraft Creeper Edition",
+            condition: "used",
+            priceCents: 49990,
+          }),
+          serializedPriceObservation({
+            source: "ChocoBonPlan",
+            productName: "Minecraft Legends Deluxe Edition sur PS5",
+            condition: "new",
+            priceCents: 1424,
+          }),
+        ],
+      }),
+      "PlayStation Vita",
+    );
+
+    expect(aligned.priceNew).toBeNull();
+    expect(aligned.priceUsed).toBeNull();
+    expect(aligned.priceObservations).toEqual([]);
+  });
+
+  it("clears vinyl merch prices for short franchise game titles", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "games",
+      ["Little Big Planet"],
+      cachedBarcodePrices({
+        priceNew: 5999,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceLastUpdated: new Date("2026-07-09T18:04:59.361Z"),
+        priceSources: ["ChocoBonPlan"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "ChocoBonPlan",
+            productName: "[Précommande] Vinyle Little Big Planet 2LP",
+            condition: "new",
+            priceCents: 5999,
+          }),
+        ],
+      }),
+      "PlayStation Vita",
+    );
+
+    expect(aligned.priceNew).toBeNull();
+    expect(aligned.priceObservations).toEqual([]);
   });
 
   it("drops game listings on the wrong platform for the shelf", () => {

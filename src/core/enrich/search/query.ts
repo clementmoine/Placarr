@@ -21,10 +21,12 @@ export function cleanSearchQuery(name: string): string {
     /\b(ps1|ps2|ps3|ps4|ps5|playstation\s*\d?|xbox\s*(one|series\s*[xs]|\d{360})?|nintendo\s*switch|wii\s*u?|switch|ds|3ds|pc|dvd|vhs|blu\s*ray|bluray)\b/gi,
     "",
   );
+  cleaned = cleaned.replace(/\s*,?\s*le\s+jeu\s+vid[eé]o\s*$/gi, "");
   cleaned = cleaned.replace(
     /\b(good\s+condition|condition|pal|ntsc|fr|fra|fre|us|usa|uk|eu|eur|jp|jpn|import|jeu\s+vid[eé]o|jeu|game|jeux(?!\s+olympiques?)|sans\s+notice|avec\s+notice|boite\s+avec\s+notice|sans\s+boite|notice|boite|vf|vo|vost|vostfr|eng|ger|ita|spa)\b/gi,
     "",
   );
+  cleaned = cleaned.replace(/\s+\b(le|la|les)\s*$/gi, "");
   cleaned = cleaned.replace(
     /\s+\b(used|occasion|neuf|new|loose|cib|complet|complete)\s*$/gi,
     "",

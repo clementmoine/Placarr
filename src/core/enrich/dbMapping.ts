@@ -49,6 +49,7 @@ const mapAttachments = (attachments?: Attachment[]) =>
       role: attachment.role ?? undefined,
       source: attachment.source ?? undefined,
       coverProvenance: attachment.coverProvenance ?? undefined,
+      platformKey: attachment.platformKey ?? undefined,
       // Persisted image metrics → read-time cover ranking (no re-decode on load).
       width: attachment.width ?? undefined,
       height: attachment.height ?? undefined,
@@ -71,6 +72,7 @@ export const toAttachmentCreateData = (
     role?: string | null;
     source?: string | null;
     coverProvenance?: string | null;
+    platformKey?: string | null;
   },
   metrics?: AttachmentImageMetrics | null,
 ) => ({
@@ -81,6 +83,7 @@ export const toAttachmentCreateData = (
   role: attachment.role ?? undefined,
   source: attachment.source ?? undefined,
   coverProvenance: attachment.coverProvenance ?? undefined,
+  platformKey: attachment.platformKey ?? undefined,
   // Persist the metrics measured during this enrichment so the read-time cover
   // ranking can reorder the gallery from stored data (no refresh required).
   width: metrics?.width ?? null,

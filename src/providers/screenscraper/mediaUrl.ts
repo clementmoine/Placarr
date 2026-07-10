@@ -1,5 +1,52 @@
 import type { AttachmentType } from "@prisma/client";
 
+export interface SSMedia {
+  type: string;
+  url: string;
+  region?: string;
+  format?: string;
+  size?: string | number;
+}
+
+// ScreenScraper lists media it doesn't really have and serves a tiny solid
+// "no image" placeholder for them (observed at 2742 bytes, e.g. box-2D-back(jp)
+// on jeuid 14825). Real box art is always far larger (the smallest legitimate
+// spine/side seen is ~8.7 KB), so a small `size` is a reliable, download-free
+// signal to drop these before they reach the gallery or cover picker.
+const SS_PLACEHOLDER_MAX_SIZE_BYTES = 4096;
+
+export function isScreenScraperPlaceholderMedia(media: SSMedia): boolean {
+  const size = Number(media.size);
+  return (
+    Number.isFinite(size) && size > 0 && size < SS_PLACEHOLDER_MAX_SIZE_BYTES
+  );
+}
+
+/**
+ * Picks the best cover image URL from ScreenScraper medias array.
+ * Prefers a true front cover first, then the best region inside that type.
+ * This keeps box-2D(eu) above decorative mix images such as mixrbv2(fr).
+ */
+export function pickSSCover(allMedias: SSMedia[]): string | null {
+  const medias = allMedias.filter((m) => !isScreenScraperPlaceholderMedia(m));
+  const preferredTypes = ["box-2D", "box-3D"];
+  const regionOrder = ["fr", "eu", "wor", "us", "jp"];
+
+  for (const type of preferredTypes) {
+    for (const region of regionOrder) {
+      const found = medias.find((m) => m.type === type && m.region === region);
+      if (found) return found.url;
+    }
+  }
+
+  for (const type of preferredTypes) {
+    const found = medias.find((m) => m.type === type);
+    if (found) return found.url;
+  }
+
+  return null;
+}
+
 export type ScreenScraperMediaAttachmentSemantics = {
   type: AttachmentType;
   role?: string;

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendMissingProviderExternalLinkFacts,
+  buildProfileProviderLinkFacts,
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
   externalLinkFactsFromPriceOffers,
@@ -451,5 +452,88 @@ describe("externalLinkFactsFromFieldEvidence", () => {
     expect(facts[0]?.url).toBe(
       "https://www.philibertnet.com/fr/black-stories.html",
     );
+  });
+
+  it("uses external-link field suffix as a distinct owner label", () => {
+    const facts = externalLinkFactsFromFieldEvidence(
+      [
+        {
+          field: "external-link:Wikipedia",
+          value: "LittleBigPlanet",
+          source: "wikidata",
+          sourceUrl: "https://en.wikipedia.org/wiki/LittleBigPlanet",
+        },
+        {
+          field: "external-link:Wikidata",
+          value: "Q123",
+          source: "wikidata",
+          sourceUrl: "https://www.wikidata.org/wiki/Q123",
+        },
+      ],
+      [
+        {
+          kind: "external-link",
+          label: "Wikidata",
+          value: "Voir la fiche",
+          url: "https://www.wikidata.org/wiki/Q123",
+          source: "wikidata",
+        },
+      ],
+    );
+
+    expect(facts).toHaveLength(1);
+    expect(facts[0]?.label).toBe("Wikipedia");
+  });
+});
+
+describe("buildProfileProviderLinkFacts", () => {
+  it("aggregates contributors from facts, evidence, offers, and catalog link", () => {
+    const links = buildProfileProviderLinkFacts({
+      facts: [
+        {
+          kind: "external-link",
+          label: "HowLongToBeat",
+          value: "Voir la fiche",
+          url: "https://howlongtobeat.com/game/123",
+          source: "howlongtobeat",
+        },
+        {
+          kind: "players",
+          label: "Joueurs",
+          value: "1",
+          source: "rawg",
+        },
+      ],
+      fieldEvidence: [
+        {
+          field: "external-link:NetGamesRetro",
+          value: "LittleBigPlanet",
+          source: "netgamesretro",
+          sourceUrl: "https://www.netgamesretro.com/jeu/little-big-planet",
+        },
+      ],
+      attachments: [{ source: "steamgriddb" }, { source: "rawg" }],
+      priceOffers: [
+        {
+          source: "pricecharting",
+          sourceUrl:
+            "https://www.pricecharting.com/game/pal-playstation-vita/littlebigplanet",
+        },
+      ],
+      catalogLink: {
+        url: "https://www.pricecharting.com/game/pal-playstation-vita/littlebigplanet",
+        providerLabel: "PriceCharting",
+      },
+      itemBarcode: "1234567890123",
+      itemTitle: "LittleBigPlanet",
+    });
+
+    expect(links.map((fact) => fact.label).sort()).toEqual([
+      "HowLongToBeat",
+      "NetGamesRetro",
+      "PriceCharting",
+      "RAWG",
+      "SteamGridDB",
+    ]);
   });
 });

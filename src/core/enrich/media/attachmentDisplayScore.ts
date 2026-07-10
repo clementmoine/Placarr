@@ -107,6 +107,14 @@ export type ScoredAttachmentInput = {
    * same region. See `@/core/enrich/media/coverProvenance`.
    */
   coverProvenance?: string | null;
+  /**
+   * Platform this cover belongs to, persisted at enrichment from the provider's
+   * original image URL (before localization strips the signal). Read as an
+   * authoritative platform signal by the mismatch/alignment detection so a
+   * foreign-console cover is recognised even after its URL became a local path.
+   * See the `platformKey` column in `prisma/schema.prisma`.
+   */
+  platformKey?: string | null;
 };
 
 import type { Locale } from "@/types/i18n";
@@ -172,6 +180,35 @@ export function isDiscOrSupportCoverCandidate(
   return /\b(support|texture)\b/.test(signal);
 }
 
+/**
+ * Platform a cover belongs to, derived from its (original, pre-localization)
+ * provider URL. Returns a key only when the URL yields exactly one platform, so a
+ * noisy path can't mis-tag a cover. Used at enrichment to persist
+ * `Attachment.platformKey` while the remote URL still carries the signal
+ * (ScreenScraper `systemeid`, hdjv `/PS3/` path segment, …).
+ */
+export function deriveAttachmentPlatformKeyFromUrl(
+  url?: string | null,
+): VideoGamePlatformKey | null {
+  if (!url) return null;
+  let decoded = url;
+  try {
+    decoded = decodeURIComponent(url);
+  } catch {
+    decoded = url;
+  }
+  // Prefer whole-string detection so compound paths like HDJV `/XBox-360/`
+  // resolve to xbox360 instead of conflicting with a bare `xbox` segment.
+  const direct = detectVideoGamePlatformKey(decoded);
+  if (direct) return direct;
+  const detected = detectPlatformKeysInText(decoded);
+  return detected.size === 1 ? [...detected][0] : null;
+}
+
+function isRemoteAttachmentUrl(url?: string | null): boolean {
+  return Boolean(url && /^https?:\/\//i.test(url));
+}
+
 function detectPlatformKeysInText(text: string): Set<VideoGamePlatformKey> {
   const keys = new Set<VideoGamePlatformKey>();
   const direct = detectVideoGamePlatformKey(text);
@@ -202,10 +239,14 @@ function detectAttachmentPlatformKeys(
   attachment: ScoredAttachmentInput,
 ): Set<VideoGamePlatformKey> {
   const haystack = [
-    attachment.url,
     attachment.title,
     attachment.role,
     attachment.source,
+    // Persisted platform survives localization (the URL no longer carries it).
+    attachment.platformKey,
+    // Only remote URLs carry trustworthy platform path segments — localized
+    // `/uploads/*.jpg` hashes false-positive on substrings like "vita".
+    ...(isRemoteAttachmentUrl(attachment.url) ? [attachment.url] : []),
   ]
     .filter(Boolean)
     .join(" ");
@@ -232,8 +273,14 @@ function detectAttachmentPlatformKeysForMismatchRank(
   const parts: Array<string | null | undefined> = [
     attachment.title,
     attachment.role,
+    // Authoritative platform persisted at enrichment — the load-bearing signal
+    // once the URL has been localized to a signal-less /uploads path.
+    attachment.platformKey,
   ];
-  if (attachment.strictShelfPlatformCoverSource) {
+  if (
+    attachment.strictShelfPlatformCoverSource &&
+    isRemoteAttachmentUrl(attachment.url)
+  ) {
     parts.push(attachment.url);
   }
   const haystack = parts.filter(Boolean).join(" ");
@@ -247,6 +294,18 @@ function platformMismatchRank(
   return isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)
     ? 1
     : 0;
+}
+
+/** Explicit shelf-platform match sorts ahead of ambiguous covers on game shelves. */
+function platformMatchRank(
+  attachment: ScoredAttachmentInput,
+  requestedPlatformKey?: string | null,
+): number {
+  if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
+    return 0;
+  }
+  const detected = detectAttachmentPlatformKeysForMismatchRank(attachment);
+  return detected.has(requestedPlatformKey) ? 0 : 1;
 }
 
 /** True when title/role explicitly names a platform that differs from the shelf. */
@@ -281,18 +340,6 @@ export function coverListHasShelfPlatformSignal(
   );
 }
 
-/** True when a cover explicitly names a different console than the shelf. */
-function coverListHasForeignPlatformSignal(
-  attachments: ScoredAttachmentInput[],
-  requestedPlatformKey: VideoGamePlatformKey,
-): boolean {
-  return attachments.some((attachment) => {
-    if (!isCoverGalleryAttachment(attachment)) return false;
-    const detected = detectAttachmentPlatformKeysForMismatchRank(attachment);
-    return detected.size > 0 && !detected.has(requestedPlatformKey);
-  });
-}
-
 /** Cover with no platform in title/role (and URL when strict) on a platform shelf. */
 export function isCoverAmbiguousForShelfPlatform(
   attachment: ScoredAttachmentInput,
@@ -307,24 +354,18 @@ export function isCoverAmbiguousForShelfPlatform(
   return detectAttachmentPlatformKeysForMismatchRank(attachment).size === 0;
 }
 
-function isAmbiguousMarketplaceCover(
-  attachment: ScoredAttachmentInput,
-  requestedPlatformKey: VideoGamePlatformKey,
-): boolean {
-  if (!isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey)) {
-    return false;
-  }
-  if (resolveCoverProvenance(attachment) === "listing_photo") return true;
-  return (attachment.role || "").toLowerCase() === "marketplace";
-}
-
 /**
- * Hide marketplace / secondary covers that carry no platform signal when
- * shelf-aligned box art exists — avoids PC listings winning on a PS3 shelf.
+ * Whether a cover is removed (not merely demoted) on a platform-specific shelf.
+ *
+ * Rule: only a cover *positively identified* on a different console is dropped. A
+ * cover whose platform we cannot identify is kept — it sinks via ranking rather
+ * than disappearing (see `platformAlignmentScore`). `allCovers` is unused now that
+ * an unidentified cover no longer depends on whether the set has shelf-platform box
+ * art; it is kept for call-site compatibility.
  */
 export function shouldSuppressCoverOnPlatformShelf(
   attachment: ScoredAttachmentInput,
-  allCovers: ScoredAttachmentInput[],
+  _allCovers: ScoredAttachmentInput[],
   requestedPlatformKey?: string | null,
 ): boolean {
   if (!requestedPlatformKey || !isVideoGamePlatformKey(requestedPlatformKey)) {
@@ -333,20 +374,7 @@ export function shouldSuppressCoverOnPlatformShelf(
   if (attachment.isGameMediaGallerySource) {
     return false;
   }
-  if (isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey)) {
-    return true;
-  }
-  if (
-    !coverListHasShelfPlatformSignal(allCovers, requestedPlatformKey) &&
-    coverListHasForeignPlatformSignal(allCovers, requestedPlatformKey) &&
-    isAmbiguousMarketplaceCover(attachment, requestedPlatformKey)
-  ) {
-    return true;
-  }
-  if (!coverListHasShelfPlatformSignal(allCovers, requestedPlatformKey)) {
-    return false;
-  }
-  return isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey);
+  return isAttachmentCoverPlatformMismatch(attachment, requestedPlatformKey);
 }
 
 /** Gallery visibility on a platform-specific game shelf. */
@@ -374,12 +402,7 @@ export function shouldShowCoverAttachmentOnShelf(
     return false;
   }
 
-  if (!attachment.strictShelfPlatformCoverSource) {
-    return true;
-  }
-
-  const detected = detectAttachmentPlatformKeysForMismatchRank(attachment);
-  return detected.has(requestedPlatformKey);
+  return true;
 }
 
 function buildAttachmentDisplayScoreDetails(
@@ -733,6 +756,10 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         attachment,
         options?.requestedPlatformKey,
       ),
+      platformMatchRank: platformMatchRank(
+        attachment,
+        options?.requestedPlatformKey,
+      ),
       regionRankValue: regionRank(semantics.region, options),
       provenanceRank: coverProvenanceRank(
         resolveCoverProvenance({
@@ -752,6 +779,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       index: number;
       typeRank: number;
       platformMismatchRank: number;
+      platformMatchRank: number;
       regionRankValue: number;
       provenanceRank: number;
       shortestEdge: number;
@@ -787,11 +815,15 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       };
 
       const keepExisting =
-        existing.typeRank < entry.typeRank ||
-        (existing.typeRank === entry.typeRank &&
-          existing.platformMismatchRank < entry.platformMismatchRank) ||
-        (existing.typeRank === entry.typeRank &&
-          existing.platformMismatchRank === entry.platformMismatchRank &&
+        existing.platformMismatchRank < entry.platformMismatchRank ||
+        (existing.platformMismatchRank === entry.platformMismatchRank &&
+          existing.typeRank < entry.typeRank) ||
+        (existing.platformMismatchRank === entry.platformMismatchRank &&
+          existing.typeRank === entry.typeRank &&
+          existing.platformMatchRank < entry.platformMatchRank) ||
+        (existing.platformMismatchRank === entry.platformMismatchRank &&
+          existing.typeRank === entry.typeRank &&
+          existing.platformMatchRank === entry.platformMatchRank &&
           (existing.regionRankValue < entry.regionRankValue ||
             (existing.regionRankValue === entry.regionRankValue &&
               (existing.provenanceRank < entry.provenanceRank ||
@@ -813,6 +845,9 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         platformMismatchRank: keepExisting
           ? existing.platformMismatchRank
           : entry.platformMismatchRank,
+        platformMatchRank: keepExisting
+          ? existing.platformMatchRank
+          : entry.platformMatchRank,
         regionRankValue: keepExisting
           ? existing.regionRankValue
           : entry.regionRankValue,
@@ -831,8 +866,9 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
     }))
     .sort(
       (a, b) =>
-        a.typeRank - b.typeRank ||
         a.platformMismatchRank - b.platformMismatchRank ||
+        a.typeRank - b.typeRank ||
+        a.platformMatchRank - b.platformMatchRank ||
         a.regionRankValue - b.regionRankValue ||
         a.provenanceRank - b.provenanceRank ||
         b.score - a.score ||

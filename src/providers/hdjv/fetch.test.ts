@@ -96,6 +96,7 @@ describe("hdjv fetch", () => {
     );
     expect(fiche?.title).toBe("Le Parrain 2");
     expect(fiche?.gameCode).toBe("12852");
+    expect(fiche?.platformLabel).toBe("Xbox 360");
     expect(fiche?.barcode).toBe("5030931066214");
     expect(fiche?.developer).toBe("Electronic Arts");
     expect(fiche?.releaseDate).toBe("Apr 2009");

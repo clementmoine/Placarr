@@ -29,13 +29,18 @@ vi.mock("@/core/enrich", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
   downloadRemoteImage: h.downloadRemoteImage,
 }));
-vi.mock("@/core/collect/present", () => ({
-  presentItem: (i: { id: string }) => ({ presented: "full", id: i.id }),
-  presentItemFromStorage: (i: { id: string }) => ({
-    presented: "storage",
-    id: i.id,
-  }),
-}));
+vi.mock("@/core/collect/present", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/core/collect/present")>();
+  return {
+    ...actual,
+    presentItem: (i: { id: string }) => ({ presented: "full", id: i.id }),
+    presentItemFromStorage: (i: { id: string }) => ({
+      presented: "storage",
+      id: i.id,
+    }),
+  };
+});
 vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: h.resolveShelfId,
   resolveItemId: h.resolveItemId,

@@ -59,6 +59,27 @@ describe("displayFacts", () => {
       expect(extractProviderLinkFacts(facts)).toHaveLength(1);
       expect(extractProviderLinkFacts(facts)[0]?.priority).toBe(303);
     });
+
+    it("keeps distinct labels such as Wikipedia and Wikidata", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "external-link",
+          label: "Wikidata",
+          value: "Voir",
+          url: "https://www.wikidata.org/wiki/Q123",
+          source: "wikidata",
+        },
+        {
+          kind: "external-link",
+          label: "Wikipedia",
+          value: "Voir",
+          url: "https://en.wikipedia.org/wiki/LittleBigPlanet",
+          source: "wikidata",
+        },
+      ];
+
+      expect(extractProviderLinkFacts(facts)).toHaveLength(2);
+    });
   });
 
   describe("filterRedundantDisplayFacts", () => {

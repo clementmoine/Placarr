@@ -23,6 +23,7 @@ import {
   type ICollectMetadata,
 } from "./fetch";
 import { icollectAttachmentRole } from "./imageLabels";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 
 export {
   fetchICollectMetadataByBarcode,
@@ -212,7 +213,7 @@ function metadataToResult(metadata: ICollectMetadata): MetadataResult {
     });
   }
 
-  return {
+  return withMetadataPlatformKeys({
     title: metadata.title,
     platformKey: icollectPlatformKey(metadata.platform) || undefined,
     barcode: metadata.barcode || undefined,
@@ -224,7 +225,7 @@ function metadataToResult(metadata: ICollectMetadata): MetadataResult {
     authors: metadata.developer ? [{ name: metadata.developer }] : undefined,
     facts: facts.length > 0 ? facts : undefined,
     externalIds: { icollect: metadata.itemId },
-  };
+  });
 }
 
 function icollectScanOffers(metadata: ICollectMetadata) {

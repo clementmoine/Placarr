@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { cleanSearchQuery } from "@/core/enrich/search/query";
 import {
   buildScreenScraperFacts,
   buildScreenScraperObservations,
@@ -476,6 +477,17 @@ describe("buildScreenScraperSearchQueries", () => {
           "Alice Retour au Pays de la Folie",
       ),
     ).toHaveLength(1);
+  });
+
+  it("searches the franchise title when the French name ends with le jeu vidéo", () => {
+    const queries = buildScreenScraperSearchQueries(
+      "LEGO La Grande Aventure Le Jeu Vidéo",
+      cleanSearchQuery,
+    );
+
+    expect(queries).toContain("LEGO La Grande Aventure Le Jeu Vidéo");
+    expect(queries).toContain("LEGO La Grande Aventure");
+    expect(queries).not.toContain("LEGO La Grande Aventure Le");
   });
 });
 

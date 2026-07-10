@@ -16,6 +16,7 @@ import {
 } from "@/core/enrich/galleries";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { filterMetadataForShelfPlatform } from "@/core/collect/media";
+export { filterMetadataForShelfPlatform };
 import {
   assertRefreshCanPersist,
   type ItemMetadataRefreshSession,
@@ -117,14 +118,6 @@ export async function getMetadata(
   );
   const now = Date.now();
 
-  const applyLookupFilter = (result: MetadataResult | null) =>
-    result
-      ? (filterMetadataForShelfPlatform(result, {
-          type,
-          name: options.shelfName,
-        }) ?? null)
-      : null;
-
   if (!options.bypassCache) {
     const cached = metadataCache.get(key);
     if (cached && cached.expires > now) {
@@ -146,7 +139,7 @@ export async function getMetadata(
           signal: options.signal,
         },
       );
-      return applyLookupFilter(result);
+      return result;
     } catch (err) {
       if (isAbortError(err)) throw err;
       console.error("Failed to fetch metadata:", err);

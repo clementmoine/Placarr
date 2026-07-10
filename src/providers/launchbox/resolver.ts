@@ -5,6 +5,7 @@ import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { buildLaunchBoxAttachments, pickLaunchBoxCoverUrl } from "./images";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { ensureLaunchBoxIndex } from "./indexStore";
 import {
   decodeLaunchBoxTitle,
@@ -391,7 +392,7 @@ export function mapLaunchBoxGameToMetadata(
   const attachments = buildLaunchBoxAttachments(game.images);
   const imageUrl = pickLaunchBoxCoverUrl(game.images);
 
-  return {
+  return withMetadataPlatformKeys({
     title: decodedTitle,
     platformKey: detectVideoGamePlatformKey(game.platform) || undefined,
     description: game.overview,
@@ -405,7 +406,7 @@ export function mapLaunchBoxGameToMetadata(
     regionalTitles: regionalTitles.length > 0 ? regionalTitles : undefined,
     facts: facts.length > 0 ? facts : undefined,
     externalIds: { launchbox: String(game.databaseId) },
-  };
+  });
 }
 
 function hydrateLaunchBoxGame(

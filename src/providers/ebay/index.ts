@@ -28,6 +28,10 @@ import { fetchFromEbayCatalog } from "./catalog";
 import { ebayCoverDownloadCandidates } from "./coverUrl";
 import { prepareEbayProductsForGameShelf } from "./platformFilter";
 import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import {
+  normalizeVideoGamePlatformKey,
+  resolveGameAttachmentPlatformKey,
+} from "@/core/enrich/media/platformKeyStamp";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 
 export {
@@ -52,6 +56,7 @@ const PROBE_BARCODE = "9782070368228";
 function mapEbayMetadata(
   products: EbayProduct[],
   normalizedBarcode: string | null,
+  platformKey?: string | null,
 ) {
   const catalogProduct = products.find(
     (product) => product.catalog && product.name,
@@ -68,8 +73,15 @@ function mapEbayMetadata(
     catalogProduct?.epid ?? products.find((product) => product.epid)?.epid;
   const brand = catalogProduct?.brand?.trim();
 
+  const resolvedPlatformKey =
+    normalizeVideoGamePlatformKey(platformKey) ??
+    resolveGameAttachmentPlatformKey({
+      title: catalogProduct?.name ?? titledProduct?.name,
+    });
+
   return {
     title: catalogProduct?.name ?? titledProduct?.name,
+    platformKey: resolvedPlatformKey,
     barcode: normalizedBarcode,
     imageUrl,
     externalIds: epid ? { ebay: epid } : undefined,
@@ -79,6 +91,7 @@ function mapEbayMetadata(
       source: "ebay",
       title: product.name,
       role: product.catalog ? "catalog" : "marketplace",
+      ...(resolvedPlatformKey ? { platformKey: resolvedPlatformKey } : {}),
     })),
     facts: brand
       ? [
@@ -245,7 +258,7 @@ export const ebayModule: ProviderModule = {
           productTitle,
         );
 
-        return mapEbayMetadata(products, normalizedBarcode);
+        return mapEbayMetadata(products, normalizedBarcode, platformKey);
       },
     };
   },

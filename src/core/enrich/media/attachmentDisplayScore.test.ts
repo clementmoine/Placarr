@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseRegionFromRole } from "@/core/locale/preference";
 
 import {
+  deriveAttachmentPlatformKeyFromUrl,
   explainAttachmentScoreForDisplay,
   pickBestBackgroundFromAttachments,
   pickBestCoverFromAttachments,
@@ -13,6 +14,18 @@ import {
 } from "./attachmentDisplayScore";
 
 describe("attachmentDisplayScore", () => {
+  it("deriveAttachmentPlatformKeyFromUrl resolves HDJV XBox-360 image paths", () => {
+    expect(
+      deriveAttachmentPlatformKeyFromUrl(
+        "https://www.historiquedesjeuxvideo.com/bdd/jeu/img/XBox-360/2734.jpg",
+      ),
+    ).toBe("xbox360");
+    expect(
+      deriveAttachmentPlatformKeyFromUrl(
+        "https://www.historiquedesjeuxvideo.com/fiches/Xbox%20360/le-parrain-2.html",
+      ),
+    ).toBe("xbox360");
+  });
   it("applique l'ajustement de score image déclaré par le provider", () => {
     const details = explainAttachmentScoreForDisplay({
       type: "cover",
@@ -702,7 +715,7 @@ describe("attachmentDisplayScore", () => {
     expect(ranked[0]).toBe(ps4Cover);
   });
 
-  it("hides ambiguous marketplace covers when shelf-aligned box art exists", () => {
+  it("keeps platform-ambiguous covers visible but ranks them below matching box art", () => {
     const marketplaceCover = {
       type: "cover" as const,
       source: "achatmoinscher",
@@ -717,17 +730,135 @@ describe("attachmentDisplayScore", () => {
       title: "PS3 The Elder Scrolls IV: Oblivion 5th Anniversary Edition",
     };
 
+    // Rule: an unidentified-platform cover is never hidden — with or without
+    // shelf-aligned box art present — it only sinks in the ranking.
     expect(
       shouldShowCoverAttachmentOnShelf(marketplaceCover, "ps3", [
         marketplaceCover,
         ps3Cover,
       ]),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       shouldShowCoverAttachmentOnShelf(marketplaceCover, "ps3", [
         marketplaceCover,
       ]),
     ).toBe(true);
+
+    const ranked = rankCoverGalleryAttachments(
+      [marketplaceCover, ps3Cover],
+      undefined,
+      { requestedPlatformKey: "ps3" },
+    );
+    expect(ranked[0]).toBe(ps3Cover);
+    expect(ranked).toContain(marketplaceCover);
+  });
+
+  it("drops a cover positively identified on another console", () => {
+    const xboxCover = {
+      type: "cover" as const,
+      source: "geedie",
+      role: "eu",
+      url: "/uploads/xbox.jpg",
+      platformKey: "xbox-360",
+    };
+    expect(shouldShowCoverAttachmentOnShelf(xboxCover, "ps3", [xboxCover])).toBe(
+      false,
+    );
+  });
+
+  it("keeps strict retail covers without a platform tag in the gallery", () => {
+    const geedieCover = {
+      type: "cover" as const,
+      source: "geedie",
+      role: "eu",
+      url: "/uploads/78e2afc0409d9fdb969fd5acb2b9f3de.webp",
+      strictShelfPlatformCoverSource: true,
+    };
+    const ps4Cover = {
+      type: "cover" as const,
+      source: "icollect",
+      url: "/uploads/icollect-ps4.jpg",
+      title: "PS4 Metal Gear Solid Master Collection Vol. 1",
+    };
+
+    expect(
+      shouldShowCoverAttachmentOnShelf(geedieCover, "ps4", [
+        geedieCover,
+        ps4Cover,
+      ]),
+    ).toBe(true);
+  });
+
+  it("ranks a shelf-platform 2D cover ahead of a higher-scoring ambiguous FR box", () => {
+    const marketplaceCover = {
+      type: "cover" as const,
+      source: "netgamesretro",
+      role: "fr",
+      url: "/uploads/marketplace-2d.jpg",
+      width: 1200,
+      height: 1600,
+    };
+    const vitaCover = {
+      type: "cover" as const,
+      source: "screenscraper",
+      role: "us",
+      url: "/uploads/vita-2d.jpg",
+      platformKey: "psvita",
+      width: 800,
+      height: 1200,
+    };
+
+    const ranked = rankCoverGalleryAttachments(
+      [marketplaceCover, vitaCover],
+      new Map([
+        [marketplaceCover.url, { width: 1200, height: 1600 }],
+        [vitaCover.url, { width: 800, height: 1200 }],
+      ]),
+      { requestedPlatformKey: "psvita", uiLocale: "fr" },
+    );
+
+    expect(ranked[0]).toBe(vitaCover);
+  });
+
+  it("prefers a platform-matched 2D cover over a platform-matched 3D cover", () => {
+    const vita3d = {
+      type: "cover" as const,
+      source: "screenscraper",
+      role: "3d-us",
+      url: "/uploads/vita-3d.jpg",
+      platformKey: "psvita",
+    };
+    const vita2d = {
+      type: "cover" as const,
+      source: "screenscraper",
+      role: "us",
+      url: "/uploads/vita-2d.jpg",
+      platformKey: "psvita",
+    };
+
+    const ranked = rankCoverGalleryAttachments([vita3d, vita2d], undefined, {
+      requestedPlatformKey: "psvita",
+      uiLocale: "fr",
+    });
+
+    expect(ranked[0]).toBe(vita2d);
+  });
+
+  it("does not infer platform from localized upload filenames", () => {
+    const cover = {
+      type: "cover" as const,
+      source: "geedie",
+      role: "eu",
+      url: "/uploads/vita.jpg",
+      title: "Angry Birds Star Wars",
+      strictShelfPlatformCoverSource: true,
+    };
+    expect(shouldShowCoverAttachmentOnShelf(cover, "psvita", [cover])).toBe(true);
+    expect(
+      rankCoverGalleryAttachments([cover], undefined, {
+        requestedPlatformKey: "psvita",
+      }),
+    ).toContain(cover);
   });
 
   it("keeps game-media gallery covers when a marketplace listing anchors the shelf platform", () => {

@@ -160,13 +160,21 @@ function buildTitleSlugCandidates(title: string): string[] {
     .replace(/\s+/g, " ")
     .trim();
 
-  return Array.from(
-    new Set(
-      [cleanedTitle, withoutArticles, withoutSequelBeforeEdition]
-        .map((value) => slugify(value))
-        .filter(Boolean),
-    ),
-  );
+  const compactSlugs = [cleanedTitle, withoutArticles, withoutSequelBeforeEdition]
+    .map((value) =>
+      value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ""),
+    )
+    .filter(Boolean);
+
+  const hyphenSlugs = [cleanedTitle, withoutArticles, withoutSequelBeforeEdition]
+    .map((value) => slugify(value))
+    .filter(Boolean);
+
+  return Array.from(new Set([...hyphenSlugs, ...compactSlugs]));
 }
 
 function getPlatformSlug(

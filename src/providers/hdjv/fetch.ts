@@ -58,6 +58,7 @@ export interface HdjvGalleryResult {
   title: string;
   ficheUrl: string;
   gameCode: string;
+  platformLabel?: string | null;
   barcode?: string | null;
   coverUrl?: string | null;
   releaseDate?: string | null;
@@ -504,6 +505,7 @@ export async function fetchHdjvGallery(
     title: fiche.title,
     ficheUrl: fiche.ficheUrl,
     gameCode: fiche.gameCode,
+    platformLabel: fiche.platformLabel,
     barcode: fiche.barcode,
     coverUrl: coverItem?.url,
     releaseDate: fiche.releaseDate ?? undefined,

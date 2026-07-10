@@ -609,7 +609,7 @@ export function listingLooksLikeGameAccessory(name: string): boolean {
   const n = normalizeForTokens(name);
   if (!n) return false;
   if (listingLooksLikeNonBookProduct(name)) return true;
-  return /\b(?:fourreau|housse|coque|etui|sleeve|case|skin|poster|affiche|artbook|soundtrack|ost|guide|manette|controller|joycon|amiibo|steelbook|boitier\s+vierge|empty\s+case|replacement\s+case|custom\s+case|personnalise)\b/.test(
+  return /\b(?:fourreau|housse|coque|etui|sleeve|case|skin|poster|affiche|artbook|soundtrack|ost|vinyle?|vinyl|\d+lp|guide|manette|controller|joycon|amiibo|steelbook|boitier\s+vierge|empty\s+case|replacement\s+case|custom\s+case|personnalise)\b/.test(
     n,
   );
 }
@@ -694,6 +694,8 @@ export function priceListingMatchesAnyItemName(
   if (!listingName?.trim()) return true;
 
   const listing = listingName.trim();
+  if (listingLooksLikeGameAccessory(listing)) return false;
+
   return itemNames.some((name) => {
     if (!priceListingSharesItemIdentity(name, listing)) {
       return false;

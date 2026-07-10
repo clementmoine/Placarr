@@ -10,7 +10,7 @@ import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
 } from "@/core/enrich/storage";
-import { presentItemFromStorage } from "@/core/collect/present";
+import { presentItemFromStorage, itemDetailMetadataInclude } from "@/core/collect/present";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
@@ -89,13 +89,7 @@ export async function GET(req: NextRequest) {
         include: {
           shelf: true,
           metadata: includeMetadata
-            ? {
-                include: {
-                  attachments: true,
-                  authors: true,
-                  publishers: true,
-                },
-              }
+            ? itemDetailMetadataInclude
             : false,
         },
       });

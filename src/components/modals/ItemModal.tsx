@@ -54,7 +54,7 @@ import {
 } from "@/lib/client/itemModalSession";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
-import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
+import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
@@ -81,6 +81,7 @@ import {
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
+import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -397,7 +398,17 @@ export function ItemModal({
         form.getValues("barcode") ||
         ""
       ).trim();
-      if (metadata.barcode && !currentBarcode) {
+      const shelfPlatformKey =
+        activeShelfType === "games"
+          ? detectShelfGamePlatformKey(activeShelfForMedia?.name)
+          : undefined;
+      const userInitiatedBarcodeLookup = Boolean(barcodeContext?.trim());
+
+      if (
+        metadata.barcode &&
+        !currentBarcode &&
+        (!shelfPlatformKey || userInitiatedBarcodeLookup)
+      ) {
         form.setValue("barcode", metadata.barcode, {
           shouldDirty: true,
         });
@@ -1202,17 +1213,16 @@ export function ItemModal({
         isOpen={isOpen}
         onClose={handleClose}
         title={
-          <div className="flex items-center gap-2">
-            {shelf && <ShelfTypeIcon type={shelf.type} className="size-5" />}
-            <span>
-              {item
-                ? `${t("items.editItem")} : ${item.name}`
-                : t("items.addNewItem")}
-            </span>
-          </div>
+          <span className="block text-left">
+            {item
+              ? `${t("items.editItem")} : ${item.name}`
+              : t("items.addNewItem")}
+          </span>
         }
         description={
-          item ? t("items.editItemDetails") : t("items.createNewItem")
+          <span className="block text-left">
+            {item ? t("items.editItemDetails") : t("items.createNewItem")}
+          </span>
         }
         size="xl"
         customChildren={true}

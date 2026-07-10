@@ -10,6 +10,11 @@ import type { ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
+import {
+  resolveGameAttachmentPlatformKey,
+  withMetadataPlatformKeys,
+} from "@/core/enrich/media/platformKeyStamp";
+import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 
 import {
   fetchFromChocoBonPlan,
@@ -44,6 +49,7 @@ function chocoBonPlanCoverRole(image: {
 
 function productToMetadata(
   product: NonNullable<Awaited<ReturnType<typeof fetchFromChocoBonPlan>>>,
+  context?: { platform?: string | null; shelfName?: string | null },
 ): MetadataResult {
   const facts =
     product.priceNew != null
@@ -57,39 +63,50 @@ function productToMetadata(
         ]
       : undefined;
 
-  return {
+  const platformKey = resolveGameAttachmentPlatformKey({
+    requestedPlatform:
+      context?.platform ??
+      detectShelfGamePlatformKey(context?.shelfName ?? undefined),
     title: product.title,
-    description: product.description || undefined,
-    imageUrl: product.coverUrl || undefined,
-    heroImageUrl: product.backgroundImageUrl || undefined,
-    regionalTitles: [{ region: LANGUAGE, text: product.title }],
-    attachments:
-      product.attachments && product.attachments.length > 0
-        ? product.attachments.map((image) => ({
-            type: image.type,
-            url: image.url,
-            source: "chocobonplan",
-            role: chocoBonPlanCoverRole(image),
-            title: image.title,
-          }))
-        : product.coverUrl
-          ? [
-              {
-                type: "cover" as const,
-                url: product.coverUrl,
-                source: "chocobonplan",
-                role: chocoBonPlanCoverRole({
+    imageUrl: product.coverUrl,
+  });
+
+  return withMetadataPlatformKeys(
+    {
+      title: product.title,
+      description: product.description || undefined,
+      imageUrl: product.coverUrl || undefined,
+      heroImageUrl: product.backgroundImageUrl || undefined,
+      regionalTitles: [{ region: LANGUAGE, text: product.title }],
+      attachments:
+        product.attachments && product.attachments.length > 0
+          ? product.attachments.map((image) => ({
+              type: image.type,
+              url: image.url,
+              source: "chocobonplan",
+              role: chocoBonPlanCoverRole(image),
+              title: image.title,
+            }))
+          : product.coverUrl
+            ? [
+                {
+                  type: "cover" as const,
                   url: product.coverUrl,
-                  type: "cover",
-                }),
-              },
-            ]
-          : undefined,
-    facts,
-    externalIds: product.objectId
-      ? { chocobonplan: product.objectId }
-      : undefined,
-  };
+                  source: "chocobonplan",
+                  role: chocoBonPlanCoverRole({
+                    url: product.coverUrl,
+                    type: "cover",
+                  }),
+                },
+              ]
+            : undefined,
+      facts,
+      externalIds: product.objectId
+        ? { chocobonplan: product.objectId }
+        : undefined,
+    },
+    platformKey,
+  );
 }
 
 async function refreshChocoBonPlanOffers(ctx: BarcodePriceRefreshContext) {
@@ -149,7 +166,7 @@ export const chocobonplanModule: ProviderModule = {
           shelfName,
         });
         if (!product) return null;
-        return productToMetadata(product);
+        return productToMetadata(product, { platform, shelfName });
       },
     };
     return adapter;

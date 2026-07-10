@@ -314,6 +314,93 @@ describe("mergeMetadata generic function", () => {
     expect(merged.barcode).toBe("0711719405399");
   });
 
+  it("n'adopte pas l'ean d'une autre console sur une shelf plateforme spécifique", () => {
+    // Same franchise title ships on many consoles, so a title-only gate would
+    // wrongly pin the PS3 EAN onto a PS Vita item. The PS3-confirmed barcode must
+    // be dropped, and an unknown-platform EAN must not be adopted either.
+    const ps3Listing: MetadataResult = {
+      title: "Angry Birds Star Wars",
+      barcode: "5030917132322",
+      platformKey: "ps3",
+    };
+    const marketplace: MetadataResult = {
+      title: "Angry Birds Star Wars",
+      barcode: "5030917140099",
+    };
+
+    const merged = mergeMetadata(
+      "games",
+      [
+        { providerId: "geedie", metadata: ps3Listing },
+        { providerId: "smartoys", metadata: marketplace },
+      ],
+      {
+        requestedTitle: "Angry Birds Star Wars",
+        requestedPlatformKey: "psvita",
+      },
+    );
+
+    expect(merged.barcode).toBeFalsy();
+  });
+
+  it("n'adopte pas l'ean PS4 d'un marketplace sur une shelf PS Vita", () => {
+    const ps4Listing: MetadataResult = {
+      title: "La Grande Aventure LEGO Le Jeu Vidéo",
+      barcode: "5051889325581",
+      platformKey: "ps4",
+    };
+
+    const merged = mergeMetadata(
+      "games",
+      [{ providerId: "geedie", metadata: ps4Listing }],
+      {
+        requestedTitle: "La Grande Aventure LEGO Le Jeu Vidéo",
+        requestedPlatformKey: "psvita",
+      },
+    );
+
+    expect(merged.barcode).toBeFalsy();
+  });
+
+  it("adopte l'ean d'un provider confirmé sur la plateforme de la shelf", () => {
+    const vitaListing: MetadataResult = {
+      title: "Angry Birds Star Wars",
+      barcode: "5030917135125",
+      platformKey: "psvita",
+    };
+
+    const merged = mergeMetadata(
+      "games",
+      [{ providerId: "screenscraper", metadata: vitaListing }],
+      {
+        requestedTitle: "Angry Birds Star Wars",
+        requestedPlatformKey: "psvita",
+      },
+    );
+
+    expect(merged.barcode).toBe("5030917135125");
+  });
+
+  it("garde l'ean scanné même sans plateforme confirmée sur une shelf console", () => {
+    // The user's own scan is ground truth and must never be platform-gated.
+    const scanned: MetadataResult = {
+      title: "Angry Birds Star Wars",
+      barcode: "5030917135125",
+    };
+
+    const merged = mergeMetadata(
+      "games",
+      [{ providerId: "smartoys", metadata: scanned }],
+      {
+        requestedTitle: "Angry Birds Star Wars",
+        requestedPlatformKey: "psvita",
+        itemBarcode: "5030917135125",
+      },
+    );
+
+    expect(merged.barcode).toBe("5030917135125");
+  });
+
   it("merges book metadata correctly matching legacy outcomes", () => {
     const openlibrary: MetadataResult = {
       title: "Fantastic Mr. Fox",

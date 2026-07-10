@@ -8,9 +8,13 @@ vi.mock("axios", () => ({
   },
 }));
 
-vi.mock("./cdnLookup", () => ({
-  fetchCoverFromCoverProjectCdn: vi.fn(),
-}));
+vi.mock("./cdnLookup", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./cdnLookup")>();
+  return {
+    ...actual,
+    fetchCoverFromCoverProjectCdn: vi.fn(),
+  };
+});
 
 import axios from "axios";
 
@@ -88,6 +92,7 @@ describe("fetchFromCoverProject", () => {
         url: "https://coverproject.sfo2.cdn.digitaloceanspaces.com/nintendo_wii/wii_skyward_cover.jpg",
         source: "coverproject",
         role: "eu",
+        platformKey: "wii",
       },
     ]);
     expect(metadata?.observations).toEqual(

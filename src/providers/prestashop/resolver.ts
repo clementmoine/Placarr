@@ -15,6 +15,7 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import { resolveGameAttachmentPlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 import type {
   MetadataObservation,
@@ -189,8 +190,14 @@ export function mapPrestashopMetadata(
   product: PrestashopProduct,
   label: string,
   galleryImages: string[] = [],
+  context?: { shelfName?: string | null },
 ): MetadataResult {
   const coverId = prestashopImageId(product.imageUrl);
+  const platformKey = resolveGameAttachmentPlatformKey({
+    title: product.title,
+    productUrl: product.productUrl,
+    imageUrl: product.imageUrl,
+  });
   const attachments: MetadataAttachment[] = [];
   if (product.imageUrl) {
     attachments.push({
@@ -198,6 +205,7 @@ export function mapPrestashopMetadata(
       url: product.imageUrl,
       role: PRESTASHOP_LANGUAGE,
       source: product.source,
+      ...(platformKey ? { platformKey } : {}),
     });
   }
   for (const url of galleryImages) {
@@ -208,11 +216,13 @@ export function mapPrestashopMetadata(
       url,
       role: PRESTASHOP_LANGUAGE,
       source: product.source,
+      ...(platformKey ? { platformKey } : {}),
     });
   }
 
   const metadata: MetadataResult = {
     title: product.title,
+    platformKey: platformKey || undefined,
     description: product.description,
     imageUrl: product.imageUrl,
     barcode: normalizeProductBarcode(product.barcode),
@@ -269,7 +279,9 @@ async function acceptPrestashopCatalogProduct(
   }
 
   const galleryImages = await fetchPrestashopGallery(product.productUrl);
-  return mapPrestashopMetadata(product, config.label, galleryImages);
+  return mapPrestashopMetadata(product, config.label, galleryImages, {
+    shelfName: input.shelfName,
+  });
 }
 
 export function createPrestashopResolver(config: PrestashopRetailerConfig) {

@@ -6,7 +6,11 @@ import {
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
-import { fetchCoverFromCoverProjectCdn } from "./cdnLookup";
+import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
+import {
+  fetchCoverFromCoverProjectCdn,
+  resolveCoverProjectPlatformKey,
+} from "./cdnLookup";
 
 const SEARCH_HEADERS = {
   "User-Agent":
@@ -86,17 +90,22 @@ export async function fetchFromCoverProject(
   const coverUrl = await fetchCoverFromCoverProject(name, platform || "");
   if (!coverUrl) return null;
 
-  const metadata: MetadataResult = {
-    imageUrl: coverUrl,
-    attachments: [
-      {
-        type: "cover",
-        url: coverUrl,
-        source: "coverproject",
-        role: COVERPROJECT_REGION,
-      },
-    ],
-  };
+  const platformKey = resolveCoverProjectPlatformKey(name, platform || "");
+  const metadata: MetadataResult = withMetadataPlatformKeys(
+    {
+      imageUrl: coverUrl,
+      platformKey: platformKey || undefined,
+      attachments: [
+        {
+          type: "cover",
+          url: coverUrl,
+          source: "coverproject",
+          role: COVERPROJECT_REGION,
+        },
+      ],
+    },
+    platformKey,
+  );
   const evidenceSignals: ObservationEvidenceSignal[] = [
     "structured_data",
     "title_match",

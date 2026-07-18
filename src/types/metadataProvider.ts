@@ -45,8 +45,15 @@ export interface MetadataAttachment {
   isCanonicalCoverSource?: boolean;
   /** Retail catalog titles may differ from the product title; filter on shelf. */
   retailCatalogImageTitlesSource?: boolean;
+  /** Catalog/database cover rows carry a resolved product title. */
+  catalogCoverTitlesSource?: boolean;
   providerImageScoreAdjustment?: number;
   providerLabel?: string;
+  /**
+   * Contributor sources when several providers share this image URL.
+   * Display-only (recomputed on load / ranking).
+   */
+  sourceNames?: string[];
 }
 
 export interface MetadataFact {

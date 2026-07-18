@@ -61,16 +61,17 @@ import {
   refreshItemMetadata,
   type ItemPrices,
 } from "@/lib/api/items";
-import { cancelBackgroundJob } from "@/lib/api/backgroundJobs";
+import { cancelBackgroundJob, upsertBackgroundJobInCache } from "@/lib/api/backgroundJobs";
 import {
   getHeroImage,
   getGalleryImages,
-  getCoverImage,
 } from "@/core/collect/media";
+import { findAttachmentForUrl } from "@/core/enrich/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
 } from "@/core/enrich/media/attachmentDisplayLabels";
+import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
 import {
   hasGameMediaGalleryAttachment,
   hasDetailMetadataAttachments,
@@ -83,11 +84,14 @@ import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
 import type { Shelf, Prisma, Item } from "@prisma/client";
 import { useAccount } from "@/lib/client/hooks/useAccount";
+import { useDocumentTitle } from "@/lib/client/hooks/useDocumentTitle";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
   isItemEnriching,
   isItemMetadataBusy,
   isItemMetadataRefreshing,
+  preserveActiveMetadataRefreshStamp,
+  metadataBusyRefetchInterval,
 } from "@/core/collect/enrichment";
 import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
@@ -100,10 +104,7 @@ import {
   shelfPath,
 } from "@/lib/routing/slugs";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
-import {
-  resolveSeriesDisplayTitle,
-  seriesSiblings,
-} from "@/core/enrich/titles/series";
+import { seriesSiblings } from "@/core/enrich/titles/series";
 import { FRANCHISE_FACT_KIND } from "@/core/enrich/facts/franchiseFact";
 import {
   invalidateItemQueries,
@@ -112,7 +113,8 @@ import {
   shelfListItemMissingAttachments,
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
-import { getEstimatedItemValueCents } from "@/core/collect/value";
+import { getItemValueEstimate } from "@/core/collect/value";
+import { marketOfferConditionsForItem } from "@/core/collect/condition";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 
 import {
@@ -500,16 +502,7 @@ function priceObservationConditions(
     priceUsedCIB?: number | null;
   } | null,
 ) {
-  if (condition === "new") return ["new"];
-
-  if (condition === "used" || condition === "damaged") {
-    if (shelfType === "games") {
-      return prices?.priceUsedCIB ? ["cib"] : ["loose", "used"];
-    }
-    return ["used"];
-  }
-
-  return [];
+  return marketOfferConditionsForItem(condition, shelfType, prices);
 }
 
 function isPrimaryInfoFact(fact: DetailFact) {
@@ -1134,7 +1127,16 @@ export default function ItemDetailsPage() {
     isPlaceholderData,
   } = useQuery({
     queryKey: ["shelf", shelfId, "items", itemId],
-    queryFn: () => getItem(itemId, shelfId),
+    queryFn: async () => {
+      const fetched = await getItem(itemId, shelfId);
+      const previous = queryClient.getQueryData<ItemWithMetadata>([
+        "shelf",
+        shelfId,
+        "items",
+        itemId,
+      ]);
+      return preserveActiveMetadataRefreshStamp(fetched, previous);
+    },
     initialData: () => {
       const slugVariants = new Set(itemSlugLookupVariants(itemId));
       const cached = queryClient
@@ -1159,7 +1161,10 @@ export default function ItemDetailsPage() {
     // while this item is still being enriched (no metadataId yet) — survives a
     // page refresh since the state is derived from the persisted item.
     refetchInterval: (query) =>
-      isItemMetadataBusy(query.state.data) ? 2500 : false,
+      metadataBusyRefetchInterval(
+        query.state.data ? [query.state.data] : null,
+      ),
+    refetchIntervalInBackground: true,
   });
 
   const isMetadataBusy = isItemMetadataBusy(item);
@@ -1170,6 +1175,7 @@ export default function ItemDetailsPage() {
     !isMetadataBusy;
   const wasMetadataRefreshingRef = useRef(false);
   const cancelledMetadataRefreshRef = useRef(false);
+  const metadataRefreshToastArmedRef = useRef(false);
 
   useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
 
@@ -1208,14 +1214,48 @@ export default function ItemDetailsPage() {
 
   useEffect(() => {
     const refreshing = isItemMetadataRefreshing(item);
-    if (wasMetadataRefreshingRef.current && !refreshing) {
-      if (!cancelledMetadataRefreshRef.current) {
-        toast.success(t("items.refreshMetadataSuccess"));
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    if (
+      metadataRefreshToastArmedRef.current &&
+      wasMetadataRefreshingRef.current &&
+      !refreshing
+    ) {
+      if (cancelledMetadataRefreshRef.current) {
+        metadataRefreshToastArmedRef.current = false;
+        cancelledMetadataRefreshRef.current = false;
+      } else {
+        // Debounce: a concurrent GET can briefly clear the optimistic stamp
+        // before the API/worker persists it — don't toast on that flicker.
+        idleTimer = setTimeout(() => {
+          if (
+            !metadataRefreshToastArmedRef.current ||
+            cancelledMetadataRefreshRef.current ||
+            isItemMetadataRefreshing(
+              queryClient.getQueryData<ItemWithMetadata>([
+                "shelf",
+                shelfId,
+                "items",
+                itemId,
+              ]),
+            )
+          ) {
+            cancelledMetadataRefreshRef.current = false;
+            return;
+          }
+          toast.success(t("items.refreshMetadataSuccess"));
+          metadataRefreshToastArmedRef.current = false;
+          cancelledMetadataRefreshRef.current = false;
+        }, 750);
       }
-      cancelledMetadataRefreshRef.current = false;
     }
+
     wasMetadataRefreshingRef.current = refreshing;
-  }, [item?.metadataRefreshStartedAt, item, t]);
+
+    return () => {
+      if (idleTimer) clearTimeout(idleTimer);
+    };
+  }, [item?.metadataRefreshStartedAt, item, itemId, queryClient, shelfId, t]);
 
   const prices = useMemo<ItemPrices | null>(() => {
     if (!item?.id) return null;
@@ -1223,6 +1263,7 @@ export default function ItemDetailsPage() {
       item.priceNew == null &&
       item.priceUsed == null &&
       item.priceUsedCIB == null &&
+      item.priceEstimated == null &&
       !item.priceObservations?.length
     ) {
       return null;
@@ -1231,6 +1272,7 @@ export default function ItemDetailsPage() {
       priceNew: item.priceNew ?? null,
       priceUsed: item.priceUsed ?? null,
       priceUsedCIB: item.priceUsedCIB ?? null,
+      priceEstimated: item.priceEstimated ?? null,
       priceLastUpdated: item.priceLastUpdated ?? null,
       priceSources: item.priceSources,
       priceSourceDisplayNames: item.priceSourceDisplayNames,
@@ -1361,15 +1403,48 @@ export default function ItemDetailsPage() {
       void syncItemQueries(queryClient, item, [shelfId, actualShelfId]);
     },
     onError: () => {
-      toast.error(t("shelves.createUpdateError"));
+      toast.error(t("items.saveFailed"));
     },
   });
 
   const { mutate: refreshMetadata, isPending: isRefreshingMetadata } =
     useMutation({
       mutationFn: () => refreshItemMetadata(itemId, shelfId),
+      onMutate: () => {
+        metadataRefreshToastArmedRef.current = true;
+        cancelledMetadataRefreshRef.current = false;
+        const startedAt = new Date().toISOString();
+        if (item?.id) {
+          patchCachedItem(queryClient, {
+            id: item.id,
+            shelfId: item.shelfId ?? shelfId,
+            metadataRefreshStartedAt: startedAt,
+          });
+          const shelf = item.shelf;
+          if (shelf?.id && shelf.name && shelf.type) {
+            upsertBackgroundJobInCache(queryClient, {
+              id: item.id,
+              name: item.name,
+              slug: item.slug ?? "",
+              kind: "metadataRefresh",
+              startedAt,
+              cancellable: true,
+              shelf: {
+                id: shelf.id,
+                name: shelf.name,
+                slug: shelf.slug ?? "",
+                type: shelf.type,
+              },
+            });
+          }
+        }
+        // Don't invalidate backgroundJobs here — a refetch can wipe the
+        // optimistic job before the API has enqueued it.
+      },
       onSuccess: (response) => {
         const actualShelfId = item?.shelfId;
+
+        void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
 
         if (response.item) {
           void syncItemQueries(queryClient, response.item, [
@@ -1377,6 +1452,14 @@ export default function ItemDetailsPage() {
             actualShelfId,
           ]);
           return;
+        }
+
+        if (response.metadataRefreshStartedAt && item?.id) {
+          patchCachedItem(queryClient, {
+            id: item.id,
+            shelfId: actualShelfId || shelfId,
+            metadataRefreshStartedAt: response.metadataRefreshStartedAt,
+          });
         }
 
         if (response.metadata) {
@@ -1394,6 +1477,15 @@ export default function ItemDetailsPage() {
       },
       onError: (error) => {
         console.warn("[Metadata] Refresh failed:", error);
+        metadataRefreshToastArmedRef.current = false;
+        if (item?.id) {
+          patchCachedItem(queryClient, {
+            id: item.id,
+            shelfId: item.shelfId ?? shelfId,
+            metadataRefreshStartedAt: null,
+          });
+        }
+        void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
       },
     });
 
@@ -1412,6 +1504,7 @@ export default function ItemDetailsPage() {
     mutationFn: () => cancelBackgroundJob(item!.id),
     onMutate: () => {
       cancelledMetadataRefreshRef.current = true;
+      metadataRefreshToastArmedRef.current = false;
       if (item?.id) {
         patchCachedItem(queryClient, {
           id: item.id,
@@ -1621,9 +1714,31 @@ export default function ItemDetailsPage() {
     );
   }, [item, locale]);
 
-  const coverImage = useMemo(() => {
-    return item ? getCoverImage(item, locale) : null;
-  }, [item, locale]);
+  const coverImage = item?.imageUrl ?? null;
+
+  const coverSourceChip = useMemo(() => {
+    if (!item || !coverImage) return null;
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
+    const match = findAttachmentForUrl(getGalleryImages(item), coverImage);
+    if (!match) return null;
+    const gallery = getAttachmentGalleryLabels(
+      {
+        type: match.type,
+        role: match.role,
+        title: match.title,
+        source: match.source,
+        providerLabel: match.providerLabel,
+        sourceNames: match.sourceNames,
+        gridStyleCoverLabelsSource: match.gridStyleCoverLabelsSource,
+      },
+      displayLocale,
+    );
+    return {
+      sourceNames: gallery.sourceNames,
+      detail: gallery.detail,
+    };
+  }, [item, coverImage, locale]);
 
   // Réinitialisation quand la cover change — ajustée pendant le render.
   const [prevCoverImage, setPrevCoverImage] = useState(coverImage);
@@ -1661,12 +1776,15 @@ export default function ItemDetailsPage() {
             title: img.title,
             source: img.source,
             providerLabel: img.providerLabel,
+            sourceNames: img.sourceNames,
+            gridStyleCoverLabelsSource: img.gridStyleCoverLabelsSource,
           },
           displayLocale,
         );
         return {
           ...img,
           galleryProvider: gallery.provider,
+          gallerySourceNames: gallery.sourceNames,
           galleryDetail: gallery.detail,
         };
       });
@@ -1677,19 +1795,8 @@ export default function ItemDetailsPage() {
   // marker + number, so padded shelf names and the unpadded detail name align.
   const resolvedItemId = item?.id;
 
-  const itemDisplayName = useMemo(() => {
-    if (!item?.name || !item.id) return item?.name;
-    const canonicalTitle = item.storedName ?? item.name;
-    if (!shelf?.items?.length) return canonicalTitle;
-    const entries = (shelf.items as ItemWithMetadata[]).map((shelfItem) => ({
-      id: shelfItem.id,
-      title:
-        shelfItem.id === item.id
-          ? canonicalTitle
-          : (shelfItem.storedName ?? shelfItem.name ?? ""),
-    }));
-    return resolveSeriesDisplayTitle(item.id, entries, canonicalTitle);
-  }, [item, shelf?.items]);
+  const itemDisplayName = item?.name;
+  useDocumentTitle(itemDisplayName);
 
   const seriesVolumes = useMemo(() => {
     if (!shelf?.items || !item || !resolvedItemId) return [];
@@ -1761,21 +1868,23 @@ export default function ItemDetailsPage() {
 
   const copyValue = useMemo(() => {
     if (!prices || !item?.condition) return null;
-    return getEstimatedItemValueCents({
+    return getItemValueEstimate({
       condition: item.condition,
       shelfType: shelf?.type,
       priceNew: prices.priceNew,
       priceUsed: prices.priceUsed,
       priceUsedCIB: prices.priceUsedCIB,
+      priceEstimated: prices.priceEstimated,
     });
   }, [prices, item, shelf?.type]);
 
   const formattedCopyValue = useMemo(() => {
     if (copyValue === null) return null;
-    return new Intl.NumberFormat(locale, {
+    const amount = new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "EUR",
-    }).format(copyValue / 100);
+    }).format(copyValue.cents / 100);
+    return copyValue.isEstimate ? `~${amount}` : amount;
   }, [copyValue, locale]);
 
   const priceSourceSummary = useMemo(() => {
@@ -1789,33 +1898,25 @@ export default function ItemDetailsPage() {
       (observation) =>
         observation.condition && conditions.includes(observation.condition),
     );
-    const relevantSources = Array.from(
+    // Only sources that actually feed the grade shown — not every offer on the
+    // item (avoids attributing NetGamesRetro retail to a PriceCharting link).
+    const sources = Array.from(
       new Set(
         relevantObservations
           .map((observation) => observation.source)
           .filter(Boolean),
       ),
     );
-    const observationSources = Array.from(
-      new Set(
-        observations.map((observation) => observation.source).filter(Boolean),
-      ),
-    );
-    const apiSources = Array.from(
-      new Set((prices?.priceSources || []).filter(Boolean)),
-    );
-    const sources = Array.from(
-      new Set([...observationSources, ...apiSources, ...relevantSources]),
-    );
 
     const soleSource = sources[0];
     const stampedReferenceOnly =
       soleSource &&
-      observations.find((observation) => observation.source === soleSource)
-        ?.isReferencePriceSource;
+      relevantObservations.find(
+        (observation) => observation.source === soleSource,
+      )?.isReferencePriceSource;
 
     const sourceDisplayNames = sources.map((source) => {
-      const fromObservation = observations.find(
+      const fromObservation = relevantObservations.find(
         (observation) => observation.source === source,
       )?.sourceDisplayLabel;
       if (fromObservation) return fromObservation;
@@ -1826,17 +1927,26 @@ export default function ItemDetailsPage() {
       return source;
     });
 
+    const sourceUrls = Array.from(
+      new Set(
+        relevantObservations
+          .map((observation) => observation.sourceUrl?.trim())
+          .filter((url): url is string => Boolean(url)),
+      ),
+    );
+
     return {
       count: sources.length,
       sources,
       sourceDisplayNames,
+      /** Prefer the contributing offer URL; never invent a PriceCharting link. */
+      sourceUrl: sourceUrls.length === 1 ? sourceUrls[0] : null,
       isReferencePriceOnly:
         sources.length === 1 &&
-        (stampedReferenceOnly ?? prices?.isReferencePriceOnly ?? false),
+        (Boolean(stampedReferenceOnly) ||
+          (prices?.isReferencePriceOnly ?? false)),
     };
   }, [item?.condition, prices, shelf?.type]);
-
-  const priceChartingLink = item?.referenceCatalogLink ?? null;
 
   const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -1954,7 +2064,7 @@ export default function ItemDetailsPage() {
         kind: "estimated-value",
         label: priceLabel,
         value: priceDisplayValue,
-        url: priceChartingLink?.url,
+        url: priceSourceSummary.sourceUrl ?? undefined,
         sourceCount: priceSourceSummary.count,
         sourceNames: priceSourceSummary.sourceDisplayNames,
         priority: 110,
@@ -1965,10 +2075,10 @@ export default function ItemDetailsPage() {
   }, [
     catalogEstimateDisplay,
     formattedCopyValue,
-    priceChartingLink?.url,
     priceSourceSummary.count,
     priceSourceSummary.isReferencePriceOnly,
     priceSourceSummary.sourceDisplayNames,
+    priceSourceSummary.sourceUrl,
     t,
     usefulFacts,
   ]);
@@ -2175,6 +2285,19 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
+                    {coverSourceChip &&
+                      (coverSourceChip.sourceNames.length > 0 ||
+                        coverSourceChip.detail) && (
+                        <div
+                          className="absolute top-2 right-2 z-30"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <AttachmentSourceChip
+                            sourceNames={coverSourceChip.sourceNames}
+                            detail={coverSourceChip.detail}
+                          />
+                        </div>
+                      )}
                   </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-950 text-muted-foreground p-6 gap-3 min-h-[300px]">
@@ -2535,23 +2658,11 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10 select-none">
-                      {img.galleryProvider && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded"
-                        >
-                          {img.galleryProvider}
-                        </Badge>
-                      )}
-                      {img.galleryDetail && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-black/75 backdrop-blur text-[9px] font-bold border-none text-zinc-100 uppercase px-1.5 py-0.5 rounded"
-                        >
-                          {img.galleryDetail}
-                        </Badge>
-                      )}
+                    <div className="absolute top-2 right-2 z-30" onClick={(event) => event.stopPropagation()}>
+                      <AttachmentSourceChip
+                        sourceNames={img.gallerySourceNames ?? []}
+                        detail={img.galleryDetail}
+                      />
                     </div>
                   </div>
                 ))}

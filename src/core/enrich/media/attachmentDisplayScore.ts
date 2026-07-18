@@ -17,7 +17,7 @@ import {
 } from "@/core/enrich/media/coverProvenance";
 import { isCoverEligibleAttachmentType } from "@/core/enrich/media/coverUrl";
 import {
-  MIN_COVER_SHORTEST_EDGE,
+  coverUrlExpectsHighResolution,
   isCoverResolutionAcceptable,
   shortestImageEdge,
 } from "@/core/enrich/media/coverResolution";
@@ -90,6 +90,11 @@ export type ScoredAttachmentInput = {
   title?: string | null;
   providerLabel?: string | null;
   /**
+   * Contributor source ids collected when several providers share this URL.
+   * Display-only — formatted by `getAttachmentGalleryLabels`.
+   */
+  sourceNames?: string[] | null;
+  /**
    * Provider-declared cover traits, stamped server-side (the scorer is client-safe
    * and cannot read the registry). `isFullWrapCoverSource` marks a full front+back
    * wrap (penalised). See `@/core/catalog/sourceTraits`.
@@ -123,6 +128,11 @@ export type AttachmentDisplayScoreOptions = LocalePreferenceOptions & {
   /** Shelf / requested game platform — boosts matching covers, penalises mismatches. */
   requestedPlatformKey?: string | null;
   uiLocale?: Locale | null;
+  /**
+   * Loose game copies: prefer disc / support art as the default cover instead of
+   * the box front (display-time only — catalog metadata.imageUrl stays the box).
+   */
+  preferDiscCover?: boolean;
 };
 
 export interface AttachmentDisplayScoreDetails {
@@ -178,6 +188,13 @@ export function isDiscOrSupportCoverCandidate(
   const url = (attachment.url || "").toLowerCase();
   const signal = `${role} ${url}`;
   return /\b(support|texture)\b/.test(signal);
+}
+
+/** True when this attachment is disc / cartouche art (not box back or spine). */
+export function isDiscCoverAttachment(
+  attachment: ScoredAttachmentInput,
+): boolean {
+  return attachmentSemantics(attachment).kind === "disc";
 }
 
 /**
@@ -340,6 +357,33 @@ export function coverListHasShelfPlatformSignal(
   );
 }
 
+/** True when a shelf-compatible physical box cover exists in the list. */
+export function coverListHasShelfCompatibleBoxCover(
+  attachments: ScoredAttachmentInput[],
+  requestedPlatformKey: VideoGamePlatformKey,
+): boolean {
+  return attachments.some((attachment) => {
+    if (!isCoverGalleryAttachment(attachment)) return false;
+    const semantics = attachmentSemantics(attachment);
+    if (
+      !isCoverCandidateKind(semantics.kind) ||
+      isPhysicalNonCoverKind(semantics.kind)
+    ) {
+      return false;
+    }
+    if (
+      semantics.kind === "grid" ||
+      semantics.kind === "grid3d" ||
+      semantics.kind === "artwork"
+    ) {
+      return false;
+    }
+    const detected = detectAttachmentPlatformKeysForMismatchRank(attachment);
+    if (detected.size === 0) return false;
+    return detected.has(requestedPlatformKey);
+  });
+}
+
 /** Cover with no platform in title/role (and URL when strict) on a platform shelf. */
 export function isCoverAmbiguousForShelfPlatform(
   attachment: ScoredAttachmentInput,
@@ -428,9 +472,17 @@ function buildAttachmentDisplayScoreDetails(
   }
 
   if (isPhysicalNonCoverKind(semantics.kind)) {
-    addSignal(-320, `${semantics.kind} media`);
+    if (options?.preferDiscCover && semantics.kind === "disc") {
+      addSignal(280, "loose prefers disc");
+    } else {
+      addSignal(-320, `${semantics.kind} media`);
+    }
   } else if (isDiscOrSupportCoverCandidate(attachment)) {
-    addSignal(-320, "disc/support media");
+    if (options?.preferDiscCover) {
+      addSignal(280, "loose prefers disc/support");
+    } else {
+      addSignal(-320, "disc/support media");
+    }
   }
 
   if (COVER_FRIENDLY_TYPES.has(attachment.type)) {
@@ -454,16 +506,24 @@ function buildAttachmentDisplayScoreDetails(
         signal,
       )
     ) {
-      addSignal(90, "front/cover signal");
+      if (options?.preferDiscCover) {
+        addSignal(-40, "box front demoted for loose");
+      } else {
+        addSignal(90, "front/cover signal");
+      }
     }
     if (
       !isPhysicalNonCoverKind(semantics.kind) &&
       /\b(?:back|rear|verso|spine|disc|inside)\b/.test(signal)
     ) {
-      addSignal(-220, "back/disc signal");
+      if (!(options?.preferDiscCover && /\bdisc\b/.test(signal))) {
+        addSignal(-220, "back/disc signal");
+      }
     }
     if (/\bmedia\b(?!=)/.test(signal)) {
-      addSignal(-220, "back/disc media signal");
+      if (!(options?.preferDiscCover && isDiscOrSupportCoverCandidate(attachment))) {
+        addSignal(-220, "back/disc media signal");
+      }
     }
     if (
       /(thumb|tiny|small|icon|avatar|capsule|header|banner|preview|sprite)/.test(
@@ -518,10 +578,6 @@ function buildAttachmentDisplayScoreDetails(
     else if (area >= 500_000) addSignal(45, ">=0.5MP");
     else if (area >= 200_000) addSignal(10, ">=0.2MP");
     else addSignal(-120, "<0.2MP");
-
-    if (Math.min(width, height) < MIN_COVER_SHORTEST_EDGE) {
-      addSignal(-140, "small shortest edge");
-    }
 
     const ratio = width / height;
     if (COVER_FRIENDLY_TYPES.has(attachment.type)) {
@@ -580,19 +636,41 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
 ): T[] {
   const bestByUrl = new Map<
     string,
-    { attachment: T; score: number; index: number; sources: Set<string> }
+    {
+      attachment: T;
+      score: number;
+      index: number;
+      sources: Set<string>;
+      sourceLabels: Set<string>;
+    }
   >();
+
+  const rememberSource = (
+    bucket: { sources: Set<string>; sourceLabels: Set<string> },
+    attachment: T,
+    source: string | null,
+  ) => {
+    if (!source) return;
+    bucket.sources.add(source);
+    const label = attachment.providerLabel?.trim();
+    if (label) bucket.sourceLabels.add(label);
+    else bucket.sourceLabels.add(source);
+  };
 
   for (const entry of scoredEntries) {
     if (!entry.attachment.url) continue;
     const source = normalizeAttachmentSource(entry.attachment.source);
     const existing = bestByUrl.get(entry.attachment.url);
     if (!existing) {
+      const sources = new Set<string>();
+      const sourceLabels = new Set<string>();
+      rememberSource({ sources, sourceLabels }, entry.attachment, source);
       bestByUrl.set(entry.attachment.url, {
         attachment: entry.attachment,
         score: entry.score,
         index: entry.index,
-        sources: new Set(source ? [source] : []),
+        sources,
+        sourceLabels,
       });
     } else {
       const mergedRole = mergeRolesByRegion(
@@ -600,39 +678,55 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
         entry.attachment.role,
         options,
       );
-      const mergedSource =
-        existing.attachment.source || entry.attachment.source || null;
-      const mergedTitle =
-        existing.attachment.title || entry.attachment.title || null;
-
-      const mergedAttachment: T = {
-        ...existing.attachment,
-        role: mergedRole,
-        source: mergedSource,
-        title: mergedTitle,
-      };
 
       const keepExisting =
         existing.score > entry.score ||
         (existing.score === entry.score && existing.index < entry.index);
 
-      if (source) existing.sources.add(source);
+      rememberSource(existing, entry.attachment, source);
+
+      const winner = keepExisting ? existing.attachment : entry.attachment;
+      const mergedAttachment: T = {
+        ...winner,
+        role: mergedRole,
+        source:
+          winner.source ||
+          existing.attachment.source ||
+          entry.attachment.source ||
+          null,
+        title:
+          winner.title ||
+          existing.attachment.title ||
+          entry.attachment.title ||
+          null,
+      };
 
       bestByUrl.set(entry.attachment.url, {
         attachment: mergedAttachment,
         score: keepExisting ? existing.score : entry.score,
         index: keepExisting ? existing.index : entry.index,
         sources: existing.sources,
+        sourceLabels: existing.sourceLabels,
       });
     }
   }
 
   return Array.from(bestByUrl.values())
-    .map((entry) => ({
-      attachment: entry.attachment,
-      index: entry.index,
-      score: entry.score + crossSourceConsensusBonus(entry.sources.size),
-    }))
+    .map((entry) => {
+      const sourceNames =
+        entry.sourceLabels.size > 1
+          ? Array.from(entry.sourceLabels)
+          : entry.attachment.sourceNames;
+      const attachment =
+        sourceNames && sourceNames !== entry.attachment.sourceNames
+          ? { ...entry.attachment, sourceNames }
+          : entry.attachment;
+      return {
+        attachment,
+        index: entry.index,
+        score: entry.score + crossSourceConsensusBonus(entry.sources.size),
+      };
+    })
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map((entry) => entry.attachment);
 }
@@ -726,12 +820,23 @@ export function pickBestBackgroundFromAttachments<
 function coverDisplayTypeRank(
   semantics: ReturnType<typeof attachmentSemantics>,
   attachment: ScoredAttachmentInput,
+  options?: AttachmentDisplayScoreOptions,
 ): number {
+  if (options?.preferDiscCover && semantics.kind === "disc") {
+    return 0;
+  }
   const isFrontCover =
     isCoverCandidateKind(semantics.kind) &&
     !isPhysicalNonCoverKind(semantics.kind);
   if (!isFrontCover) {
     return 5;
+  }
+  // Box fronts rank after disc art when showing a loose copy.
+  if (options?.preferDiscCover) {
+    if (semantics.kind === "cover3d") return 3;
+    if (attachment.isFullWrapCoverSource === true) return 4;
+    if (semantics.kind === "cover") return 2;
+    return 3;
   }
   if (semantics.kind === "grid") return 3;
   if (semantics.kind === "grid3d") return 4;
@@ -741,11 +846,40 @@ function coverDisplayTypeRank(
   return 3;
 }
 
+/** Marketplace listing photos rank after every regional catalog cover. */
+export const MARKETPLACE_COVER_LOCALE_PENALTY = 100;
+
+export function isMarketplaceCoverRole(role?: string | null): boolean {
+  const normalized = (role || "").toLowerCase().trim();
+  return (
+    normalized === "marketplace" ||
+    normalized === "marketplace_offer" ||
+    normalized.startsWith("3d-marketplace")
+  );
+}
+
+/**
+ * Locale/region tier for cover ranking. Regional tags (fr, eu, …) always beat
+ * marketplace roles and unknown regions — quality (score) is compared only
+ * within the same locale tier (see `compareCoverDisplayRank`).
+ */
+export function coverLocaleRank(
+  semantics: ReturnType<typeof attachmentSemantics>,
+  role?: string | null,
+  options?: AttachmentDisplayScoreOptions,
+): number {
+  const base = regionRank(semantics.region, options);
+  if (isMarketplaceCoverRole(role)) {
+    return base + MARKETPLACE_COVER_LOCALE_PENALTY;
+  }
+  return base;
+}
+
 function compareCoverDisplayRank<
   T extends {
     platformMismatchRank: number;
     typeRank: number;
-    regionRankValue: number;
+    localeRankValue: number;
     platformMatchRank: number;
     provenanceRank: number;
     shortestEdge: number;
@@ -757,7 +891,7 @@ function compareCoverDisplayRank<
     a.platformMismatchRank - b.platformMismatchRank ||
     a.typeRank - b.typeRank ||
     a.platformMatchRank - b.platformMatchRank ||
-    a.regionRankValue - b.regionRankValue ||
+    a.localeRankValue - b.localeRankValue ||
     a.provenanceRank - b.provenanceRank ||
     b.score - a.score ||
     b.shortestEdge - a.shortestEdge ||
@@ -772,7 +906,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
 ): T[] {
   const scored = attachments.map((attachment, index) => {
     const semantics = attachmentSemantics(attachment);
-    const typeRank = coverDisplayTypeRank(semantics, attachment);
+    const typeRank = coverDisplayTypeRank(semantics, attachment, options);
 
     const metrics = imageMetricsByUrl?.get(attachment.url);
     return {
@@ -787,7 +921,11 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         attachment,
         options?.requestedPlatformKey,
       ),
-      regionRankValue: regionRank(semantics.region, options),
+      localeRankValue: coverLocaleRank(
+        semantics,
+        attachment.role,
+        options,
+      ),
       provenanceRank: coverProvenanceRank(
         resolveCoverProvenance({
           provenance: attachment.coverProvenance,
@@ -807,21 +945,38 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       typeRank: number;
       platformMismatchRank: number;
       platformMatchRank: number;
-      regionRankValue: number;
+      localeRankValue: number;
       provenanceRank: number;
       shortestEdge: number;
       sources: Set<string>;
+      sourceLabels: Set<string>;
     }
   >();
+
+  const rememberCoverSource = (
+    bucket: { sources: Set<string>; sourceLabels: Set<string> },
+    attachment: T,
+    source: string | null,
+  ) => {
+    if (!source) return;
+    bucket.sources.add(source);
+    const label = attachment.providerLabel?.trim();
+    if (label) bucket.sourceLabels.add(label);
+    else bucket.sourceLabels.add(source);
+  };
 
   for (const entry of scored) {
     if (!entry.attachment.url) continue;
     const source = normalizeAttachmentSource(entry.attachment.source);
     const existing = bestByUrl.get(entry.attachment.url);
     if (!existing) {
+      const sources = new Set<string>();
+      const sourceLabels = new Set<string>();
+      rememberCoverSource({ sources, sourceLabels }, entry.attachment, source);
       bestByUrl.set(entry.attachment.url, {
         ...entry,
-        sources: new Set(source ? [source] : []),
+        sources,
+        sourceLabels,
       });
     } else {
       const mergedRole = mergeRolesByRegion(
@@ -829,26 +984,30 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         entry.attachment.role,
         options,
       );
-      const mergedSource =
-        existing.attachment.source || entry.attachment.source || null;
-      const mergedTitle =
-        existing.attachment.title || entry.attachment.title || null;
 
+      const keepExisting = compareCoverDisplayRank(existing, entry) < 0;
+      rememberCoverSource(existing, entry.attachment, source);
+
+      const winner = keepExisting ? existing.attachment : entry.attachment;
       const mergedAttachment: T = {
-        ...existing.attachment,
+        ...winner,
         role: mergedRole,
-        source: mergedSource,
-        title: mergedTitle,
+        source:
+          winner.source ||
+          existing.attachment.source ||
+          entry.attachment.source ||
+          null,
+        title:
+          winner.title ||
+          existing.attachment.title ||
+          entry.attachment.title ||
+          null,
       };
-
-      const keepExisting =
-        compareCoverDisplayRank(existing, entry) < 0;
-
-      if (source) existing.sources.add(source);
 
       bestByUrl.set(entry.attachment.url, {
         attachment: mergedAttachment,
         sources: existing.sources,
+        sourceLabels: existing.sourceLabels,
         score: keepExisting ? existing.score : entry.score,
         index: keepExisting ? existing.index : entry.index,
         typeRank: keepExisting ? existing.typeRank : entry.typeRank,
@@ -858,9 +1017,9 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         platformMatchRank: keepExisting
           ? existing.platformMatchRank
           : entry.platformMatchRank,
-        regionRankValue: keepExisting
-          ? existing.regionRankValue
-          : entry.regionRankValue,
+        localeRankValue: keepExisting
+          ? existing.localeRankValue
+          : entry.localeRankValue,
         provenanceRank: keepExisting
           ? existing.provenanceRank
           : entry.provenanceRank,
@@ -870,10 +1029,21 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
   }
 
   return Array.from(bestByUrl.values())
-    .map((entry) => ({
-      ...entry,
-      score: entry.score + crossSourceConsensusBonus(entry.sources.size),
-    }))
+    .map((entry) => {
+      const sourceNames =
+        entry.sourceLabels.size > 1
+          ? Array.from(entry.sourceLabels)
+          : entry.attachment.sourceNames;
+      const attachment =
+        sourceNames && sourceNames !== entry.attachment.sourceNames
+          ? { ...entry.attachment, sourceNames }
+          : entry.attachment;
+      return {
+        ...entry,
+        attachment,
+        score: entry.score + crossSourceConsensusBonus(entry.sources.size),
+      };
+    })
     .sort(compareCoverDisplayRank)
     .map((entry) => entry.attachment);
 }
@@ -898,8 +1068,9 @@ export function pickBestAcceptableCoverFromAttachments<
     if (!isCoverResolutionAcceptable(metrics)) continue;
 
     const semantics = attachmentSemantics(attachment);
-    if (isPhysicalNonCoverKind(semantics.kind)) continue;
-    if (
+    if (isPhysicalNonCoverKind(semantics.kind)) {
+      if (!(options?.preferDiscCover && semantics.kind === "disc")) continue;
+    } else if (
       !isCoverCandidateKind(semantics.kind) &&
       attachment.type !== "image" &&
       attachment.type !== "artwork"
@@ -958,6 +1129,38 @@ export function pickBestCoverFromAttachments<T extends ScoredAttachmentInput>(
   return fallback?.url ?? null;
 }
 
+/**
+ * Pick the metadata default cover after scoring. A remote regional catalog
+ * cover (Booknode FR, …) is kept even when a localized marketplace photo exists
+ * in /uploads/.
+ */
+export function resolveStoredMetadataCoverUrl(
+  scoredImageUrl: string | null,
+  coverAttachments: ScoredAttachmentInput[],
+  imageMetricsByUrl?: Map<string, AttachmentImageMetrics | null>,
+  options?: AttachmentDisplayScoreOptions,
+): string | null {
+  if (!scoredImageUrl) return null;
+  if (scoredImageUrl.startsWith("/uploads/")) return scoredImageUrl;
+
+  const scoredAttachment = coverAttachments.find(
+    (attachment) => attachment.url === scoredImageUrl,
+  );
+  if (scoredAttachment && !isMarketplaceCoverRole(scoredAttachment.role)) {
+    return scoredImageUrl;
+  }
+
+  const localized = coverAttachments.filter((attachment) =>
+    attachment.url?.startsWith("/uploads/"),
+  );
+  if (localized.length === 0) return scoredImageUrl;
+
+  return (
+    pickBestCoverFromAttachments(localized, imageMetricsByUrl, options) ??
+    scoredImageUrl
+  );
+}
+
 /** Shared cover ordering for the default picker and gallery UIs. */
 export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
   attachments: T[],
@@ -970,7 +1173,13 @@ export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
   for (const attachment of attachments) {
     if (!attachment.url) continue;
     const semantics = attachmentSemantics(attachment);
-    if (isPhysicalNonCoverKind(semantics.kind)) continue;
+    // Disc / support art belongs in the cover tab (picker + gallery). Default
+    // ranking still puts box fronts first; preferDiscCover promotes discs.
+    if (semantics.kind === "disc") {
+      coverCandidates.push(attachment);
+      continue;
+    }
+    if (isPhysicalNonCoverKind(semantics.kind)) continue; // back / spine
     if (isCoverCandidateKind(semantics.kind)) {
       coverCandidates.push(attachment);
       continue;
@@ -1004,10 +1213,19 @@ export function reorderAttachmentsCoverFirst<T extends ScoredAttachmentInput>(
   );
   if (covers.length === 0) return attachments;
 
+  // Cover-picker ranking omits box backs / spines (and used to omit discs).
+  // Re-append anything dropped so persist matches merge's trailing recovery —
+  // otherwise LaunchBox disc/back/spine never reach Prisma Attachment rows.
   const rankedCovers = rankCoverGalleryAttachments(
     covers,
     imageMetricsByUrl,
     options,
   );
-  return [...rankedCovers, ...nonCovers];
+  const rankedUrls = new Set(
+    rankedCovers.map((attachment) => attachment.url).filter(Boolean),
+  );
+  const omittedFromRanking = covers.filter(
+    (attachment) => attachment.url && !rankedUrls.has(attachment.url),
+  );
+  return [...rankedCovers, ...omittedFromRanking, ...nonCovers];
 }

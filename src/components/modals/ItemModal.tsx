@@ -41,9 +41,9 @@ import {
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ConditionIcon } from "@/components/ConditionIcon";
+import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Badge } from "@/components/ui/badge";
+import { itemConditionsForShelfType } from "@/core/collect/condition";
 
 import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -73,7 +73,7 @@ import {
 } from "@prisma/client";
 import {
   mergeCoverAttachmentsForPicker,
-  resolveMetadataCoverUrl,
+  getCoverImage,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
 } from "@/core/collect/media";
@@ -86,8 +86,10 @@ import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
 } from "@/core/enrich/media/attachmentDisplayLabels";
+import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
 import { cn } from "@/lib/shared/utils";
 import type { ItemWithMetadata } from "@/types/items";
+import type { ShelfWithItemCount } from "@/types/shelves";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
 import type {
   MetadataResult,
@@ -119,6 +121,7 @@ function attachmentTraitsOf(attachment: unknown) {
         providerImageScoreAdjustment?: number;
         coverProvenance?: string | null;
         providerLabel?: string | null;
+        gridStyleCoverLabelsSource?: boolean;
       }
     | null
     | undefined;
@@ -129,6 +132,7 @@ function attachmentTraitsOf(attachment: unknown) {
     providerImageScoreAdjustment: traits?.providerImageScoreAdjustment,
     coverProvenance: traits?.coverProvenance,
     providerLabel: traits?.providerLabel,
+    gridStyleCoverLabelsSource: traits?.gridStyleCoverLabelsSource,
   };
 }
 
@@ -246,13 +250,18 @@ export function ItemModal({
   const { data: shelf } = useQuery<Shelf>({
     queryKey: ["shelf", shelfId],
     queryFn: () => getShelf(shelfId),
-    enabled: !!shelfId,
+    enabled: Boolean(isOpen && shelfId),
+    initialData: () => queryClient.getQueryData<Shelf>(["shelf", shelfId]),
   });
 
-  const { data: shelves } = useQuery<Shelf[]>({
-    queryKey: ["shelves"],
-    queryFn: () => getShelves(),
+  // Lite list for the picker — skip bestItem; reuse grid cache while it loads.
+  const { data: shelves } = useQuery<ShelfWithItemCount[]>({
+    queryKey: ["shelves", "picker"],
+    queryFn: () => getShelves(null, { lite: true }),
     enabled: isOpen,
+    placeholderData: () =>
+      queryClient.getQueryData<ShelfWithItemCount[]>(["shelves", "picker"]) ??
+      queryClient.getQueryData<ShelfWithItemCount[]>(["shelves"]),
   });
 
   const hasPrefilledScanImage =
@@ -266,6 +275,63 @@ export function ItemModal({
   // useWatch (abonnement par champ) au lieu de form.watch : API compatible
   // avec le compilateur React et re-rendus limités au champ concerné.
   const currentShelfId = useWatch({ control: form.control, name: "shelfId" });
+
+  // Radix SelectValue stays blank until a matching SelectItem exists — seed the
+  // current shelf so the trigger never flashes empty while the list loads.
+  const shelfOptions = useMemo(() => {
+    type Opt = { id: string; name: string; type?: Shelf["type"] | null };
+    const byId = new Map<string, Opt>();
+    for (const entry of shelves ?? []) {
+      byId.set(entry.id, {
+        id: entry.id,
+        name: entry.name,
+        type: entry.type,
+      });
+    }
+    const cachedCurrent =
+      queryClient.getQueryData<Shelf>(["shelf", shelfId]) ??
+      queryClient
+        .getQueryData<ShelfWithItemCount[]>(["shelves"])
+        ?.find((entry) => entry.id === shelfId);
+    const seed = (
+      id: string | null | undefined,
+      name?: string | null,
+      type?: Shelf["type"] | null,
+    ) => {
+      if (!id || byId.has(id)) return;
+      byId.set(id, {
+        id,
+        name: name?.trim() || id,
+        type: type ?? null,
+      });
+    };
+    seed(
+      shelfId,
+      shelf?.name ?? cachedCurrent?.name,
+      shelf?.type ?? cachedCurrent?.type ?? shelfType,
+    );
+    seed(
+      currentShelfId,
+      shelf?.name ?? cachedCurrent?.name,
+      shelf?.type ?? cachedCurrent?.type ?? shelfType,
+    );
+    seed(item?.shelfId, item?.shelf?.name, item?.shelf?.type);
+    return Array.from(byId.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+  }, [
+    shelves,
+    shelfId,
+    shelf?.name,
+    shelf?.type,
+    shelfType,
+    currentShelfId,
+    item?.shelfId,
+    item?.shelf?.name,
+    item?.shelf?.type,
+    queryClient,
+  ]);
+
   const selectedShelf = shelves?.find((s) => s.id === currentShelfId);
   const activeShelfType = selectedShelf?.type || shelfType;
   const activeShelf = selectedShelf || shelf;
@@ -308,6 +374,7 @@ export function ItemModal({
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
 
   const watchedName = useWatch({ control: form.control, name: "name" });
+  const watchedCondition = useWatch({ control: form.control, name: "condition" });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
     const val = (watchedName || "").trim().toLowerCase();
@@ -480,6 +547,12 @@ export function ItemModal({
     }
   }, [isOpen, cancelMetadataRequests]);
 
+  useEffect(() => {
+    if (watchedCondition !== "loose") return;
+    if (itemConditionsForShelfType(activeShelfType).includes("loose")) return;
+    form.setValue("condition", "used");
+  }, [activeShelfType, form, watchedCondition]);
+
   const handleNameChange = useCallback(
     (name: string) => {
       if (!name.trim()) {
@@ -511,6 +584,7 @@ export function ItemModal({
       source?: string | null;
       role?: string | null;
       galleryProvider?: string | null;
+      gallerySourceNames?: string[];
       galleryDetail?: string | null;
     }[] = [];
 
@@ -531,6 +605,8 @@ export function ItemModal({
           title: a.title,
           source: a.source,
           providerLabel: a.providerLabel,
+          sourceNames: a.sourceNames,
+          gridStyleCoverLabelsSource: a.gridStyleCoverLabelsSource,
         },
         displayLocale,
       );
@@ -541,6 +617,7 @@ export function ItemModal({
         source: a.source,
         role: a.role,
         galleryProvider: gallery.provider,
+        gallerySourceNames: gallery.sourceNames,
         galleryDetail: gallery.detail,
       });
     });
@@ -603,6 +680,7 @@ export function ItemModal({
       providerImageScoreAdjustment?: number;
       coverProvenance?: string | null;
       providerLabel?: string | null;
+      sourceNames?: string[] | null;
       width?: number | null;
       height?: number | null;
       meanLuminance?: number | null;
@@ -624,6 +702,7 @@ export function ItemModal({
       providerImageScoreAdjustment?: number;
       coverProvenance?: string | null;
       providerLabel?: string | null;
+      sourceNames?: string[] | null;
       width?: number | null;
       height?: number | null;
       meanLuminance?: number | null;
@@ -643,6 +722,7 @@ export function ItemModal({
         providerImageScoreAdjustment: entry.providerImageScoreAdjustment,
         coverProvenance: entry.coverProvenance,
         providerLabel: entry.providerLabel,
+        sourceNames: entry.sourceNames,
         width: entry.width,
         height: entry.height,
         meanLuminance: entry.meanLuminance,
@@ -754,19 +834,27 @@ export function ItemModal({
       }
     }
 
-    const defaultCoverUrl = resolveMetadataCoverUrl({
+    const mediaForCover = {
+      imageUrl: item?.imageUrl ?? prefilledValues?.imageUrl ?? null,
+      updatedAt: item?.updatedAt,
+      condition: watchedCondition ?? item?.condition ?? null,
       metadata,
       shelf: activeShelfForMedia,
-    });
+    };
 
-    return mergeCoverAttachmentsForPicker(
-      {
-        imageUrl: item?.imageUrl ?? prefilledValues?.imageUrl ?? null,
-        metadata,
-        shelf: activeShelfForMedia,
-      },
+    const orderedCovers = mergeCoverAttachmentsForPicker(
+      mediaForCover,
       attachments,
-    ).map((attachment) => {
+      locale,
+    );
+
+    // "Par défaut" = top of the dynamic gallery ranking (same as displayed cover
+    // when the user has not explicitly picked one).
+    const defaultCoverUrl =
+      orderedCovers[0]?.url ??
+      getCoverImage({ ...mediaForCover, imageUrl: null }, locale);
+
+    return orderedCovers.map((attachment) => {
       const gallery = getAttachmentGalleryLabels(
         {
           type: attachment.type,
@@ -774,6 +862,10 @@ export function ItemModal({
           title: attachment.title,
           source: attachment.source,
           providerLabel: attachment.providerLabel,
+          sourceNames: attachment.sourceNames,
+          gridStyleCoverLabelsSource:
+            attachment.gridStyleCoverLabelsSource ??
+            attachmentTraitsOf(attachment).gridStyleCoverLabelsSource,
         },
         displayLocale,
       );
@@ -792,6 +884,7 @@ export function ItemModal({
         source: attachment.source,
         role: attachment.role,
         galleryProvider: gallery.provider,
+        gallerySourceNames: gallery.sourceNames,
         galleryDetail: gallery.detail,
       };
     });
@@ -802,6 +895,7 @@ export function ItemModal({
     prefilledValues?.imageUrl,
     activeShelfForMedia,
     activeShelfType,
+    watchedCondition,
     locale,
     t,
   ]);
@@ -841,6 +935,8 @@ export function ItemModal({
               title: provenance.title,
               source: provenance.source,
               providerLabel: attachmentTraitsOf(provenance).providerLabel,
+              gridStyleCoverLabelsSource:
+                attachmentTraitsOf(provenance).gridStyleCoverLabelsSource,
             },
             displayLocale,
           )
@@ -853,6 +949,7 @@ export function ItemModal({
         source: provenance?.source ?? null,
         role: provenance?.role ?? null,
         galleryProvider: gallery?.provider ?? null,
+        gallerySourceNames: gallery?.sourceNames ?? [],
         galleryDetail: gallery?.detail ?? null,
       });
     }
@@ -1345,7 +1442,7 @@ export function ItemModal({
                                 </div>
                               </SelectTrigger>
                               <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
-                                {shelves?.map((s) => {
+                                {shelfOptions.map((s) => {
                                   const isGuessed = s.id === guessedShelfId;
                                   return (
                                     <SelectItem
@@ -1624,25 +1721,16 @@ export function ItemModal({
                               size="sm"
                               type="single"
                               variant="outline"
-                              className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                              onValueChange={field.onChange}
-                              {...field}
+                              className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                              value={field.value}
+                              onValueChange={(value) => {
+                                // Radix allows clearing a single toggle — keep one grade selected.
+                                if (value) field.onChange(value);
+                              }}
                             >
-                              {Object.values(Condition).map((condition) => {
+                              {itemConditionsForShelfType(activeShelfType).map(
+                                (condition) => {
                                 const isActive = field.value === condition;
-                                let activeStyles = "";
-                                if (isActive) {
-                                  if (condition === "new") {
-                                    activeStyles =
-                                      "bg-white text-emerald-600 dark:bg-zinc-800 dark:text-emerald-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-emerald-500/10";
-                                  } else if (condition === "used") {
-                                    activeStyles =
-                                      "bg-white text-amber-600 dark:bg-zinc-800 dark:text-amber-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-amber-500/10";
-                                  } else if (condition === "damaged") {
-                                    activeStyles =
-                                      "bg-white text-rose-600 dark:bg-zinc-800 dark:text-rose-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-rose-500/10";
-                                  }
-                                }
                                 return (
                                   <ToggleGroupItem
                                     key={condition}
@@ -1651,7 +1739,7 @@ export function ItemModal({
                                     className={cn(
                                       "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
                                       isActive
-                                        ? activeStyles
+                                        ? conditionToggleActiveClass(condition)
                                         : "bg-transparent hover:text-foreground",
                                     )}
                                   >
@@ -1661,7 +1749,8 @@ export function ItemModal({
                                     </span>
                                   </ToggleGroupItem>
                                 );
-                              })}
+                              },
+                              )}
                             </ToggleGroup>
                           </FormControl>
                           <FormMessage />
@@ -1836,6 +1925,7 @@ export function ItemModal({
                                     <RemoteImage
                                       src={img.url}
                                       alt={img.label}
+                                      sizes="180px"
                                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                     />
 
@@ -1859,23 +1949,22 @@ export function ItemModal({
                                     )}
 
                                     {/* Source & Type Badges */}
-                                    <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none select-none">
-                                      {img.galleryProvider && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-extrabold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded leading-none tracking-wider"
-                                        >
-                                          {img.galleryProvider}
-                                        </Badge>
-                                      )}
-                                      {img.galleryDetail && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-bold border-none text-zinc-300 uppercase px-1.5 py-0.5 rounded leading-none"
-                                        >
-                                          {img.galleryDetail}
-                                        </Badge>
-                                      )}
+                                    <div
+                                      className="absolute top-1.5 left-1.5 z-30"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <AttachmentSourceChip
+                                        className="items-start"
+                                        badgeClassName="text-[8px] font-extrabold bg-black/85 tracking-wider leading-none"
+                                        detailClassName="text-[8px] bg-black/85 text-zinc-300 leading-none"
+                                        sourceNames={
+                                          img.gallerySourceNames ??
+                                          (img.galleryProvider
+                                            ? [img.galleryProvider]
+                                            : [])
+                                        }
+                                        detail={img.galleryDetail}
+                                      />
                                     </div>
 
                                     {/* Source label */}
@@ -2081,6 +2170,7 @@ export function ItemModal({
                                     <RemoteImage
                                       src={img.url}
                                       alt={img.label}
+                                      sizes="180px"
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
 
@@ -2104,23 +2194,22 @@ export function ItemModal({
                                     )}
 
                                     {/* Source & Type Badges */}
-                                    <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none select-none">
-                                      {img.galleryProvider && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-extrabold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded leading-none tracking-wider"
-                                        >
-                                          {img.galleryProvider}
-                                        </Badge>
-                                      )}
-                                      {img.galleryDetail && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-bold border-none text-zinc-300 uppercase px-1.5 py-0.5 rounded leading-none"
-                                        >
-                                          {img.galleryDetail}
-                                        </Badge>
-                                      )}
+                                    <div
+                                      className="absolute top-1.5 left-1.5 z-30"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <AttachmentSourceChip
+                                        className="items-start"
+                                        badgeClassName="text-[8px] font-extrabold bg-black/85 tracking-wider leading-none"
+                                        detailClassName="text-[8px] bg-black/85 text-zinc-300 leading-none"
+                                        sourceNames={
+                                          img.gallerySourceNames ??
+                                          (img.galleryProvider
+                                            ? [img.galleryProvider]
+                                            : [])
+                                        }
+                                        detail={img.galleryDetail}
+                                      />
                                     </div>
 
                                     {/* Source label */}

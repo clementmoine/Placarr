@@ -33,17 +33,25 @@ export type AttachmentLabelInput = {
    * non-provider tags (handled below) and for unknown sources (title-cased).
    */
   providerLabel?: string | null;
+  /**
+   * All contributor source ids/labels collected when the same image URL was
+   * seen from several providers. Display-ready names preferred; raw ids are
+   * title-cased as a fallback.
+   */
+  sourceNames?: string[] | null;
   gridStyleCoverLabelsSource?: boolean;
 };
 
 // Synthetic, non-provider attachment sources (not registry providers, so no
-// `info.label`); these keep an explicit display label here.
+// `info.label`); these keep an explicit display label here — except `merged`,
+// which must not appear as a fake "provider" in the sources tooltip.
 const SOURCE_TAG_LABELS: Record<string, string> = {
   barcode: "Scan",
   metadata: "Metadata",
-  merged: "Fusion",
   user: "Perso",
 };
+
+const HIDDEN_PROVIDER_SOURCE_TAGS = new Set(["merged"]);
 
 const KIND_LABELS: Record<
   AttachmentDisplayLocale,
@@ -133,6 +141,62 @@ function normalizeToken(value?: string | null): string {
     .trim();
 }
 
+function isHiddenProviderSourceTag(source?: string | null): boolean {
+  const normalized = normalizeToken(source);
+  return Boolean(normalized && HIDDEN_PROVIDER_SOURCE_TAGS.has(normalized));
+}
+
+function titleCaseSourceToken(source: string): string {
+  return source
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+/** Display-ready contributor labels for the sources tooltip (never "Fusion"). */
+export function formatAttachmentSourceNames(
+  input: AttachmentLabelInput,
+): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (value: string | null | undefined) => {
+    const trimmed = value?.trim();
+    if (!trimmed) return;
+    if (isHiddenProviderSourceTag(trimmed)) return;
+    if (HIDDEN_PROVIDER_SOURCE_TAGS.has(normalizeToken(trimmed))) return;
+    if (normalizeToken(trimmed) === "fusion") return;
+    const key = normalizeToken(trimmed);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    names.push(trimmed);
+  };
+
+  for (const entry of input.sourceNames || []) {
+    const normalized = normalizeToken(entry);
+    if (SOURCE_TAG_LABELS[normalized]) {
+      push(SOURCE_TAG_LABELS[normalized]);
+      continue;
+    }
+    if (isHiddenProviderSourceTag(entry)) continue;
+    if (
+      normalizeToken(input.source) === normalized &&
+      input.providerLabel?.trim()
+    ) {
+      push(input.providerLabel);
+      continue;
+    }
+    // Raw provider ids → title-case; already-pretty labels pass through.
+    push(
+      entry.includes(" ") || /[A-Z]/.test(entry)
+        ? entry.trim()
+        : titleCaseSourceToken(entry),
+    );
+  }
+
+  push(formatProviderDisplayName(input));
+  return names;
+}
+
 function parseKindFromTitle(
   title?: string | null,
 ): AttachmentDisplayKind | null {
@@ -155,6 +219,8 @@ function parseKindFromTitle(
   if (/\bspine\b|spine\s*\/\s*sides\b/.test(normalized)) return "spine";
   if (/\bdisc\b|fanart\s*-\s*disc/.test(normalized)) return "disc";
   if (/\bdisque\b/.test(normalized)) return "disc";
+  // HDJV gallery label for optical disc / cartridge face art.
+  if (/\bmedia\s+du\s+jeu\b/.test(normalized)) return "disc";
   if (/box\s*-\s*3d|cart\s*-\s*3d/.test(normalized)) return "cover3d";
   if (
     /box\s*-\s*front|cart\s*-\s*front|fanart\s*-\s*box\s*-\s*front/.test(
@@ -329,13 +395,15 @@ export function formatProviderDisplayName(
   if (!source) return null;
   const normalized = normalizeToken(source);
   if (!normalized) return null;
+  // Orphan / consensus placeholder — not a real provider for the tooltip.
+  if (isHiddenProviderSourceTag(source)) return null;
 
   // Synthetic tag → its fixed label; otherwise the registry label stamped on the
   // attachment; otherwise a best-effort title-cased fallback for unknown sources.
   return (
     SOURCE_TAG_LABELS[normalized] ||
     input.providerLabel ||
-    source.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+    titleCaseSourceToken(source)
   );
 }
 
@@ -359,6 +427,7 @@ export function getAttachmentGalleryLabels(
   locale: AttachmentDisplayLocale = "fr",
 ): {
   provider: string | null;
+  sourceNames: string[];
   kind: string;
   region: string | null;
   detail: string | null;
@@ -368,7 +437,8 @@ export function getAttachmentGalleryLabels(
   const regionKey = resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
   const region = formatAttachmentRegionLabel(regionKey, locale);
-  const provider = formatProviderDisplayName(input);
+  const sourceNames = formatAttachmentSourceNames(input);
+  const provider = sourceNames[0] ?? null;
   const styleLabel =
     input.gridStyleCoverLabelsSource &&
     (kindKey === "grid" || kindKey === "grid3d")
@@ -378,6 +448,7 @@ export function getAttachmentGalleryLabels(
 
   return {
     provider,
+    sourceNames,
     kind,
     region,
     detail,

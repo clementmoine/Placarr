@@ -15,8 +15,8 @@ const APP_DESCRIPTION = "All your inventory, always in your pocket.";
 export const metadata: Metadata = {
   applicationName: APP_NAME,
   title: {
-    default: APP_NAME,
-    template: "%s - NJS App",
+    default: "Placarr",
+    template: "%s · Placarr",
   },
   description: APP_DESCRIPTION,
   manifest: "/manifest.json",

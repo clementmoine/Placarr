@@ -15,6 +15,7 @@ import {
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
   reorderAttachmentsCoverFirst,
+  resolveStoredMetadataCoverUrl,
   type AttachmentImageMetrics,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
@@ -29,6 +30,7 @@ import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogD
 import {
   attachmentTitleMediaTypeConflicts,
   catalogAttachmentTitleConflicts,
+  isMetadataTitleAligned,
 } from "@/core/enrich/titleMatching";
 import {
   urlsReferToSameLocalizedImage,
@@ -36,11 +38,7 @@ import {
 } from "@/core/enrich/media/coverUrl";
 import {
   readFileImageMetrics,
-  readBufferImageMetrics,
   isCoverResolutionAcceptable,
-  MIN_COVER_SHORTEST_EDGE,
-  coverUrlExpectsHighResolution,
-  shortestImageEdge,
 } from "@/core/enrich/media/imageMetrics";
 import {
   isMissingArtImageUrl,
@@ -51,7 +49,7 @@ import {
   trimLightImageMargins,
   cropImageIfNeeded,
 } from "@/core/enrich/media/imageTrim";
-import { PROVIDERS } from "@/core/catalog/catalog";
+import { PROVIDERS, providerModuleForCoverDownload } from "@/core/catalog/catalog";
 import {
   canonicalProviderIdForSource,
   withProviderAttachmentTraits,
@@ -64,7 +62,6 @@ import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDi
 import { measureCoverExposureFromBuffer } from "@/core/enrich/media/coverExposure.server";
 import { regionRank } from "@/core/locale/preference";
 import { resolveCoverAttachmentRole } from "@/core/enrich/media/coverPerspective";
-import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { barcodeListingMatchesItem } from "@/core/identify/titleUtils";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { inferImageAttachmentFromMediaUrl } from "@/core/catalog/catalog";
@@ -328,7 +325,7 @@ export async function storeMetadata(
 
   if (metadata.imageUrl && !deferImageLocalization) {
     metadata.imageUrl =
-      (await downloadRemoteImage(metadata.imageUrl)) || undefined;
+      (await downloadRemoteImage(metadata.imageUrl, { itemId })) || undefined;
   }
 
   const formattedMetadata = await formatMetadataForStorage(
@@ -366,13 +363,15 @@ export async function storeMetadata(
       (attachment) => attachment.url === metadata.imageUrl,
     );
     if (!exists) {
-      attachmentsList.unshift({
-        type: metadataImageSemantics?.type ?? "cover",
-        url: metadata.imageUrl,
-        role: metadataImageSemantics?.role,
-        source: metadataImageSemantics?.source ?? "merged",
-        title: metadataImageSemantics?.title,
-      });
+      attachmentsList.unshift(
+        withProviderAttachmentTraits({
+          type: metadataImageSemantics?.type ?? "cover",
+          url: metadata.imageUrl,
+          role: metadataImageSemantics?.role,
+          source: metadataImageSemantics?.source ?? undefined,
+          title: metadataImageSemantics?.title,
+        }),
+      );
     }
   }
   if (item?.barcode) {
@@ -404,13 +403,16 @@ export async function storeMetadata(
         ) {
           const exists = attachmentsList.some((a) => a.url === barcodeCover);
           if (!exists) {
-            attachmentsList.unshift({
-              type: barcodeCoverSemantics?.type ?? ("cover" as AttachmentType),
-              url: barcodeCover,
-              role: barcodeCoverSemantics?.role,
-              source: barcodeCoverSemantics?.source ?? "barcode",
-              title: barcodeCoverSemantics?.title,
-            });
+            attachmentsList.unshift(
+              withProviderAttachmentTraits({
+                type:
+                  barcodeCoverSemantics?.type ?? ("cover" as AttachmentType),
+                url: barcodeCover,
+                role: barcodeCoverSemantics?.role,
+                source: barcodeCoverSemantics?.source ?? "barcode",
+                title: barcodeCoverSemantics?.title,
+              }),
+            );
           }
         }
       }
@@ -432,6 +434,8 @@ export async function storeMetadata(
             const sourceUrl = attachment.url;
             const localizedUrl = await downloadRemoteImage(attachment.url, {
               source: attachment.source,
+              itemId,
+              metadataId: item?.metadata?.id,
             });
             if (!localizedUrl) {
               return null;
@@ -487,7 +491,7 @@ export async function storeMetadata(
         type: attachment.type,
         url: attachment.url,
         role: attachment.role ?? undefined,
-        source: attachment.source ?? "merged",
+        source: attachment.source ?? undefined,
         title: attachment.title ?? undefined,
         coverProvenance: attachment.coverProvenance ?? undefined,
         platformKey: attachment.platformKey ?? undefined,
@@ -602,7 +606,7 @@ export async function storeMetadata(
     isUrlEligibleDefaultCover(formattedMetadata.imageUrl, finalStorableAttachments)
       ? formattedMetadata.imageUrl
       : null;
-  const selectedImageUrl =
+  const scoredImageUrl =
     canonicalCover?.url ??
     pickBestCoverFromAttachments(finalStorableAttachments, imageMetricsByUrl, {
       requestedPlatformKey,
@@ -622,6 +626,13 @@ export async function storeMetadata(
       ? null
       : previousLocalCover) ??
     null;
+
+  const selectedImageUrl = resolveStoredMetadataCoverUrl(
+    scoredImageUrl,
+    finalStorableAttachments,
+    imageMetricsByUrl,
+    { requestedPlatformKey },
+  );
 
   const croppedImageUrl = selectedImageUrl
     ? await cropImageIfNeeded(selectedImageUrl, { minMarginPixels: 30 })
@@ -790,12 +801,11 @@ export async function storeMetadata(
     });
   }
 
+  // Fill item.barcode only when the collector left it empty and the discovered
+  // EAN is identity-safe (title-aligned + no platform conflict on games shelves).
+  // Never overwrite a user-entered barcode.
   const discoveredBarcode = normalizeProductBarcode(metadata.barcode);
   const itemName = name.trim() || item?.name?.trim() || "";
-  // Defensive backstop to the platform-aware barcode selection in the merge step
-  // (see fetch.ts): never adopt a discovered barcode whose known platform conflicts
-  // with the shelf's. A barcode is a platform-specific physical identifier, so a
-  // wrong-console EAN poisons downstream price + cover aggregation.
   const metadataPlatformKey =
     metadata.platformKey && isVideoGamePlatformKey(metadata.platformKey)
       ? metadata.platformKey
@@ -805,10 +815,11 @@ export async function storeMetadata(
       metadataPlatformKey &&
       metadataPlatformKey !== requestedPlatformKey,
   );
+  let effectiveBarcode = normalizeProductBarcode(item?.barcode);
   if (
     item &&
     discoveredBarcode &&
-    !normalizeProductBarcode(item.barcode) &&
+    !effectiveBarcode &&
     !discoveredBarcodePlatformConflicts &&
     itemName &&
     metadata.title &&
@@ -818,6 +829,7 @@ export async function storeMetadata(
       where: { id: itemId },
       data: { barcode: discoveredBarcode },
     });
+    effectiveBarcode = discoveredBarcode;
   }
 
   if (item && heroImageUrl) {
@@ -834,13 +846,14 @@ export async function storeMetadata(
     }
   }
 
+  // Fill item.name only when empty / barcode placeholder and a barcode is set.
   if (item) {
-    const displayTitle = resolveMetadataDisplayTitle(metadata, item.barcode);
+    const displayTitle = resolveMetadataDisplayTitle(metadata, effectiveBarcode);
     await adoptItemNameFromMetadataIfPlaceholder({
       itemId,
       metadataTitle: displayTitle,
       itemName: item.name?.trim() || name.trim(),
-      barcode: item.barcode,
+      barcode: effectiveBarcode,
     });
   }
 
@@ -953,11 +966,7 @@ async function existingLocalizedUploadForUrl(
     for (const ext of LOCAL_IMAGE_EXTENSIONS) {
       const targetPath = path.join(targetDir, `${hash}${ext}`);
       if (!fs.existsSync(targetPath)) continue;
-      const metrics = await readFileImageMetrics(targetPath);
-      const shortest = shortestImageEdge(metrics);
-      if (shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE) {
-        return `/uploads/${hash}${ext}`;
-      }
+      return `/uploads/${hash}${ext}`;
     }
   }
 
@@ -970,6 +979,8 @@ export async function downloadRemoteImage(
     trim?: boolean;
     minMarginPixels?: number;
     source?: string | null;
+    itemId?: string;
+    metadataId?: string;
   } = {},
 ): Promise<string | null> {
   if (!url) return null;
@@ -986,6 +997,18 @@ export async function downloadRemoteImage(
 
   const persistRemoteFallback = () =>
     canKeepRemoteImageOnDownloadFailure(url, options.source) ? url : null;
+
+  const coverOwner = providerModuleForCoverDownload(url);
+  if (coverOwner?.localizeCoverDownload) {
+    return (
+      (await coverOwner.localizeCoverDownload(url, {
+        source: options.source,
+        itemId: options.itemId,
+        metadataId: options.metadataId,
+        trim: options.trim,
+      })) ?? persistRemoteFallback()
+    );
+  }
 
   const existingLocalized = await existingLocalizedUploadForUrl(url);
   if (existingLocalized) {
@@ -1011,17 +1034,6 @@ export async function downloadRemoteImage(
       );
     }
 
-    const fetchedMetrics = await readBufferImageMetrics(fetched.buffer);
-    if (
-      coverUrlExpectsHighResolution(url) &&
-      !isCoverResolutionAcceptable(fetchedMetrics)
-    ) {
-      console.info(
-        `[ImageLocalizer] Rejected sub-threshold cover (${fetched.sourceUrl}) for ${url}`,
-      );
-      return persistRemoteFallback();
-    }
-
     const parsedUrl = new URL(fetched.sourceUrl);
     let ext = path.extname(parsedUrl.pathname);
     if (
@@ -1040,11 +1052,7 @@ export async function downloadRemoteImage(
       if (await isUnavailableCoverPlaceholderBuffer(existingBuffer)) {
         fs.unlinkSync(targetPath);
       } else {
-        const metrics = await readFileImageMetrics(targetPath);
-        const shortest = shortestImageEdge(metrics);
-        if (shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE) {
-          return `/uploads/${filename}`;
-        }
+        return `/uploads/${filename}`;
       }
     }
 

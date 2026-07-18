@@ -10,6 +10,7 @@ import {
   Suspense,
   useCallback,
   useMemo,
+  useRef,
   useState,
   useEffect,
   memo,
@@ -29,6 +30,7 @@ import {
   RefreshCw,
   Loader2,
   X,
+  Trash2,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -60,27 +62,31 @@ import {
   type BulkAddTab,
 } from "@/components/modals/BulkAddModal";
 import { BulkMoveModal } from "@/components/modals/BulkMoveModal";
+import { BulkDeleteModal } from "@/components/modals/BulkDeleteModal";
 import { ScannerButton } from "@/components/ScannerButton";
 import { ShelfModal } from "@/components/modals/ShelfModal";
 import { ScanFAB } from "@/components/ScanFAB";
 
 import { saveItem, refreshItemsBatch } from "@/lib/api/items";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
+import { useDocumentTitle } from "@/lib/client/hooks/useDocumentTitle";
 import { getShelf, saveShelf } from "@/lib/api/shelves";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
 import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
+import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
   parseItemCollectionSort,
   queryCollectionItems,
-  sumCollectionEstimatedValue,
+  summarizeCollectionEstimatedValue,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useRefetchShelfItemsWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { cn } from "@/lib/shared/utils";
-import { isItemMetadataBusy } from "@/core/collect/enrichment";
+import { metadataBusyRefetchInterval } from "@/core/collect/enrichment";
+import type { ItemMetadataIdleFields } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
 import type { Shelf, Prisma, Item } from "@prisma/client";
@@ -101,7 +107,7 @@ type ShelfGridItemProps = {
   selectionMode: boolean;
   isSelected: boolean;
   canSelect: boolean;
-  onSelect: (itemId: string) => void;
+  onSelect: (itemId: string, options?: { shiftKey?: boolean }) => void;
 };
 
 const ShelfGridItem = memo(function ShelfGridItem({
@@ -115,27 +121,12 @@ const ShelfGridItem = memo(function ShelfGridItem({
   onSelect,
 }: ShelfGridItemProps) {
   const { t } = useLocale();
-  const queryClient = useQueryClient();
-  const cardItem = useMemo(() => {
-    const cached = queryClient.getQueryData<ItemWithMetadata>([
-      "shelf",
-      resolvedShelfId,
-      "items",
-      item.id,
-    ]);
-    if (!cached) return item;
-    return {
-      ...item,
-      priceNew: item.priceNew ?? cached.priceNew ?? null,
-      priceUsed: item.priceUsed ?? cached.priceUsed ?? null,
-      priceUsedCIB: item.priceUsedCIB ?? cached.priceUsedCIB ?? null,
-    };
-  }, [item, queryClient, resolvedShelfId]);
 
   const card = (
     <ItemCard
-      {...cardItem}
+      {...item}
       shelfType={shelf?.type}
+      shelfName={shelf?.name}
       cardFormat={shelf?.cardFormat}
       priority={index < 4}
     />
@@ -143,7 +134,8 @@ const ShelfGridItem = memo(function ShelfGridItem({
 
   // Checkbox affordance: hidden until hover on pointer devices, always shown on
   // touch and whenever selecting. Clicking it starts/continues selection —
-  // there is no separate "enter selection mode" button.
+  // there is no separate "enter selection mode" button. Shift+click selects
+  // the contiguous range from the last clicked item.
   const checkbox = canSelect ? (
     <button
       type="button"
@@ -156,7 +148,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        onSelect(item.id);
+        onSelect(item.id, { shiftKey: event.shiftKey });
       }}
       className={cn(
         "absolute top-2 left-2 z-30 flex size-6 items-center justify-center rounded-full border-2 shadow-md transition-all duration-200",
@@ -172,42 +164,39 @@ const ShelfGridItem = memo(function ShelfGridItem({
     </button>
   ) : null;
 
-  if (selectionMode) {
-    return (
-      <div
-        className={cn(
-          "group relative block w-full rounded-2xl transition-[box-shadow,transform]",
-          isSelected &&
-            "ring-2 ring-primary ring-offset-2 ring-offset-background",
-        )}
-      >
-        <button
-          type="button"
-          aria-pressed={isSelected}
-          onClick={() => onSelect(item.id)}
-          className="block w-full text-left"
-        >
-          {card}
-        </button>
-        {checkbox}
-      </div>
-    );
-  }
-
+  // Keep one outer shell in both modes so entering selection does not remount
+  // the grid (framer-motion layout + Link→button swap was scrolling to top).
   return (
     <motion.div
       layoutId={`item-card-${item.id}`}
-      layout
+      layout={!selectionMode}
       transition={{
         type: "spring",
         stiffness: 300,
         damping: 30,
       }}
-      className="group relative"
+      className={cn(
+        "group relative block w-full rounded-2xl",
+        isSelected &&
+          "ring-2 ring-primary ring-offset-2 ring-offset-background",
+      )}
     >
-      <Link href={itemPath(shelf || { id: resolvedShelfId }, item)}>
-        {card}
-      </Link>
+      {selectionMode ? (
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          onClick={(event) =>
+            onSelect(item.id, { shiftKey: event.shiftKey })
+          }
+          className="block w-full text-left"
+        >
+          {card}
+        </button>
+      ) : (
+        <Link href={itemPath(shelf || { id: resolvedShelfId }, item)}>
+          {card}
+        </Link>
+      )}
       {checkbox}
     </motion.div>
   );
@@ -232,7 +221,10 @@ function ShelfComponent() {
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
     () => new Set(),
   );
+  // Anchor for Shift+click range select (last plain click). Cleared on exit.
+  const selectionAnchorIdRef = useRef<string | null>(null);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const router = useRouter();
   const q = searchParams.get("q") || "";
@@ -288,12 +280,11 @@ function ShelfComponent() {
       const items = (query.state.data as { items?: unknown[] } | undefined)
         ?.items;
       if (!Array.isArray(items)) return false;
-      return items.some((item) =>
-        isItemMetadataBusy(item as Parameters<typeof isItemMetadataBusy>[0]),
-      )
-        ? 2500
-        : false;
+      return metadataBusyRefetchInterval(
+        items as ItemMetadataIdleFields[],
+      );
     },
+    refetchIntervalInBackground: true,
     placeholderData: (previousData) => {
       if (previousData) return previousData;
 
@@ -334,6 +325,7 @@ function ShelfComponent() {
     },
   });
 
+  useDocumentTitle(shelf?.name);
   useRefetchShelfItemsWhenMetadataIdle(queryClient, shelf?.items, shelfId);
 
   const { mutate: shelfMutate } = useMutation<
@@ -358,7 +350,12 @@ function ShelfComponent() {
     mutationFn: saveItem,
     onSuccess: (item, variables) => {
       const isCreate = !("id" in variables && variables.id);
-      void syncItemQueries(queryClient, item, [item.shelfId], { isCreate });
+      void syncItemQueries(
+        queryClient,
+        item,
+        [item.shelfId, shelfId, item.shelf?.slug],
+        { isCreate },
+      );
     },
     onError: () => {
       toast.error(t("items.saveFailed"));
@@ -377,9 +374,9 @@ function ShelfComponent() {
   }, [shelf, sortBy]);
 
   const totalValue = useMemo(() => {
-    if (!shelf?.items) return 0;
+    if (!shelf?.items) return { total: 0, includesEstimates: false };
     const items = shelf.items as unknown as ItemWithMetadata[];
-    return sumCollectionEstimatedValue(
+    return summarizeCollectionEstimatedValue(
       queryCollectionItems(items, {
         sortBy: "name_asc",
         shelfType: shelf.type,
@@ -505,7 +502,9 @@ function ShelfComponent() {
   const exitSelectionMode = useCallback(() => {
     setSelectionMode(false);
     setSelectedItemIds(new Set());
+    selectionAnchorIdRef.current = null;
     setMoveModalOpen(false);
+    setDeleteModalOpen(false);
   }, []);
 
   // Escape mirrors the single "close" affordance in the selection bar.
@@ -518,38 +517,51 @@ function ShelfComponent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectionMode, exitSelectionMode]);
 
-  const toggleItemSelection = useCallback((itemId: string) => {
-    setSelectedItemIds((current) => {
-      const next = new Set(current);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
-      return next;
-    });
-  }, []);
+  const visibleItemIds = useMemo(
+    () => sortedItems.map((item) => item.id).filter(Boolean) as string[],
+    [sortedItems],
+  );
 
-  // Single entry point: (re)enter selection and toggle the item. Used by both
-  // the first checkbox click (which turns the mode on) and later toggles.
+  // Single entry point: (re)enter selection and toggle / range-select.
+  // Plain click toggles and sets the Shift anchor; Shift+click selects the
+  // contiguous visible range from the anchor to the clicked item.
   const beginSelection = useCallback(
-    (itemId: string) => {
+    (itemId: string, options?: { shiftKey?: boolean }) => {
+      setAddMenuOpen(false);
       setSelectionMode(true);
-      toggleItemSelection(itemId);
+
+      if (options?.shiftKey && selectionAnchorIdRef.current) {
+        const rangeIds = itemIdsInVisibleRange(
+          visibleItemIds,
+          selectionAnchorIdRef.current,
+          itemId,
+        );
+        if (rangeIds.length > 0) {
+          setSelectedItemIds((current) => {
+            const next = new Set(current);
+            for (const id of rangeIds) next.add(id);
+            return next;
+          });
+          return;
+        }
+      }
+
+      selectionAnchorIdRef.current = itemId;
+      setSelectedItemIds((current) => {
+        const next = new Set(current);
+        if (next.has(itemId)) next.delete(itemId);
+        else next.add(itemId);
+        return next;
+      });
     },
-    [toggleItemSelection],
+    [visibleItemIds],
   );
 
   const selectAllVisibleItems = useCallback(() => {
-    setSelectedItemIds(
-      new Set(sortedItems.map((item) => item.id).filter(Boolean)),
-    );
-  }, [sortedItems]);
+    setSelectedItemIds(new Set(visibleItemIds));
+  }, [visibleItemIds]);
 
-  const selectableItemCount = useMemo(
-    () => sortedItems.filter((item) => item.id).length,
-    [sortedItems],
-  );
+  const selectableItemCount = visibleItemIds.length;
   const allVisibleSelected =
     selectableItemCount > 0 && selectedItemIds.size >= selectableItemCount;
 
@@ -564,6 +576,19 @@ function ShelfComponent() {
         ...result.sourceShelfIds,
         result.targetShelfId,
       ])) {
+        queryClient.invalidateQueries({ queryKey: ["shelf", id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["shelves"] });
+      queryClient.invalidateQueries({ queryKey: ["collectionItems"] });
+      queryClient.invalidateQueries({ queryKey: ["searchItems"] });
+    },
+    [exitSelectionMode, queryClient],
+  );
+
+  const handleBulkDeleteSuccess = useCallback(
+    (result: { count: number; sourceShelfIds: string[] }) => {
+      exitSelectionMode();
+      for (const id of result.sourceShelfIds) {
         queryClient.invalidateQueries({ queryKey: ["shelf", id] });
       }
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
@@ -680,6 +705,13 @@ function ShelfComponent() {
             sourceShelfId={resolvedShelfId}
             onSuccess={handleBulkMoveSuccess}
           />
+          <BulkDeleteModal
+            isOpen={deleteModalOpen}
+            onClose={() => setDeleteModalOpen(false)}
+            itemIds={selectedItemIdsArray}
+            sourceShelfId={resolvedShelfId}
+            onSuccess={handleBulkDeleteSuccess}
+          />
         </>
       )}
 
@@ -688,7 +720,11 @@ function ShelfComponent() {
         <div
           className={cn(
             "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
-            selectionMode ? "pb-36 md:pb-28" : "pb-24 md:pb-6",
+            // Always reserve space for the fixed selection bar when the user can
+            // edit — toggling pb-* on first select was shifting the scrollport.
+            isAuthenticated && !isGuest && canEdit
+              ? "pb-36 md:pb-28"
+              : "pb-24 md:pb-6",
           )}
         >
           {/* Shelf header — title + primary actions only */}
@@ -702,13 +738,21 @@ function ShelfComponent() {
               </h1>
             </div>
 
-            {/* Primary actions — hidden while selecting to keep focus */}
-            {isAuthenticated && !isGuest && canEdit && !selectionMode && (
-              <div className="flex items-center gap-2 shrink-0 select-none">
+            {/* Primary actions — keep in layout while selecting (invisible) so
+                the header height does not collapse and jump scroll to top. */}
+            {isAuthenticated && !isGuest && canEdit && (
+              <div
+                className={cn(
+                  "flex items-center gap-2 shrink-0 select-none",
+                  selectionMode && "invisible pointer-events-none",
+                )}
+                aria-hidden={selectionMode || undefined}
+              >
                 <Button
                   variant="secondary"
                   className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
                   onClick={() => handleModalOpen("shelf")}
+                  tabIndex={selectionMode ? -1 : undefined}
                 >
                   <Wrench className="size-4" />
                   <span className="hidden sm:inline">
@@ -722,7 +766,10 @@ function ShelfComponent() {
                   modal={false}
                 >
                   <DropdownMenuTrigger asChild>
-                    <Button className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5">
+                    <Button
+                      className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                      tabIndex={selectionMode ? -1 : undefined}
+                    >
                       <Plus className="size-4" />
                       {t("items.addItem")}
                       <ChevronDown className="size-4 opacity-80" />
@@ -825,16 +872,17 @@ function ShelfComponent() {
               {sortedItems.length === 1 ? "item" : "items"}
             </h2>
 
-            {totalValue > 0 && (
+            {totalValue.total > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
                 <span>Valeur estimée :</span>
                 <span className="font-extrabold text-sm">
-                  {totalValue.toFixed(2)} €
+                  {totalValue.includesEstimates ? "~" : ""}
+                  {totalValue.total.toFixed(2)} €
                 </span>
               </div>
             )}
           </div>
-          <LayoutGroup id={selectionMode ? "shelf-select" : "shelf-grid"}>
+          <LayoutGroup id="shelf-grid">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
               {sortedItems.map((item, index) =>
                 isLoading || !item.id ? (
@@ -860,17 +908,22 @@ function ShelfComponent() {
                 ),
               )}
 
-              {/* Plus Add Item Card in the items grid */}
+              {/* Plus Add Item Card in the items grid — keep the slot while
+                  selecting so layout animations do not reflow the whole grid. */}
               {!isLoading &&
                 isAuthenticated &&
                 !isGuest &&
-                canEdit &&
-                !selectionMode && (
+                canEdit && (
                   <motion.button
-                    layout
+                    layout={!selectionMode}
                     layoutId="add-item-btn"
                     onClick={() => handleModalOpen("item")}
-                    className="w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none"
+                    tabIndex={selectionMode ? -1 : undefined}
+                    aria-hidden={selectionMode || undefined}
+                    className={cn(
+                      "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
+                      selectionMode && "invisible pointer-events-none",
+                    )}
                     style={{ aspectRatio: skeletonAspectRatio }}
                   >
                     <Plus className="size-5 text-primary" />
@@ -945,6 +998,19 @@ function ShelfComponent() {
                 )}
                 <span className="hidden sm:inline">
                   {t("items.bulkRefresh.action")}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-xl gap-1.5 px-2.5 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                disabled={selectedItemIds.size === 0}
+                onClick={() => setDeleteModalOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                <span className="hidden sm:inline">
+                  {t("items.bulkDelete.action")}
                 </span>
               </Button>
               <Button

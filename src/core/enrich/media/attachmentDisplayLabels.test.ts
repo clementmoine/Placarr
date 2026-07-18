@@ -75,7 +75,7 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
-  it("normalise HDJV media du jeu sans inventer disque ni jaquette", () => {
+  it("normalise HDJV Media du jeu en disque", () => {
     expect(
       getAttachmentGalleryLabels({
         type: "image",
@@ -85,9 +85,26 @@ describe("attachmentDisplayLabels", () => {
       }),
     ).toMatchObject({
       provider: "HDJV",
-      kind: "Image",
+      kind: "Disque",
       region: null,
-      detail: "Image",
+      detail: "Disque",
+    });
+  });
+
+  it("normalise HDJV Media du jeu avec role disc-fr", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        role: "disc-fr",
+        title: "Media du jeu",
+        source: "hdjv",
+        providerLabel: "HDJV",
+      }),
+    ).toMatchObject({
+      provider: "HDJV",
+      kind: "Disque",
+      region: "France",
+      detail: "Disque · France",
     });
   });
 
@@ -260,5 +277,29 @@ describe("attachmentDisplayLabels", () => {
       kind: "Grille 3D",
       detail: "Grille 3D · Material",
     });
+  });
+
+  it("n'affiche pas Fusion pour une source merged orpheline", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        source: "merged",
+      }),
+    ).toMatchObject({
+      provider: null,
+      sourceNames: [],
+      kind: "Jaquette",
+    });
+  });
+
+  it("liste tous les contributeurs quand sourceNames est fourni", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+        sourceNames: ["screenscraper", "launchbox"],
+      }).sourceNames,
+    ).toEqual(["ScreenScraper", "Launchbox"]);
   });
 });

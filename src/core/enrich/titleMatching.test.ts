@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildGameMetadataFallbackNames,
+  buildGameMetadataSearchQueries,
+  buildMetadataAlignmentNames,
   buildRequestedTitleFallbackVariants,
   catalogAttachmentTitleConflicts,
   collectCanonicalFallbackNames,
@@ -12,6 +14,8 @@ import {
   isGenericTitleFragment,
   isMetadataTitleAligned,
   isGameEditionVariant,
+  catalogLabelSimilarity,
+  distinctiveTokenCoverage,
   metadataTitleSimilarity,
   orderFallbackNamesForLocale,
   supplementGameEditionMetadata,
@@ -243,6 +247,33 @@ describe("hasUnrequestedSeriesSuffixToken", () => {
       ),
     ).toBe(true);
   });
+
+  it("rejette la série de base quand Z ou GT est demandé", () => {
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball Z - Tome 2",
+        "Dragon Ball, tome 2",
+      ),
+    ).toBe(true);
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball Z n°02",
+        "Dragon Ball, Tome 2 : Kaméhaméha",
+      ),
+    ).toBe(true);
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball GT Tome 2",
+        "Dragon Ball, tome 2",
+      ),
+    ).toBe(true);
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball Z n°02",
+        "Dragon Ball Z - Tome 2",
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("isMetadataTitleAligned", () => {
@@ -251,6 +282,25 @@ describe("isMetadataTitleAligned", () => {
       isMetadataTitleAligned(
         { title: "Ni no Kuni II: Revenant Kingdom" },
         ["Ni No Kuni 2 - L’avénement d’un nouveau royaume"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts LaunchBox English primary when a French regional title matches the shelf", () => {
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "Tomb Raider: The Last Revelation",
+          aliases: [
+            "Tomb Raider IV: The Last Revelation",
+            "Tomb Raider: La Révélation Finale",
+          ],
+          regionalTitles: [
+            { region: "France", text: "Tomb Raider: La Révélation Finale" },
+          ],
+        },
+        ["Tomb Raider La Revelation Finale"],
         0.58,
       ),
     ).toBe(true);
@@ -335,6 +385,45 @@ describe("isMetadataTitleAligned", () => {
       franchiseSequelNumbersConflict(
         ["Little Nightmares"],
         "Little Nightmares PS4",
+      ),
+    ).toBe(false);
+    expect(
+      franchiseSequelNumbersConflict(
+        ["Elden Ring sur Xbox"],
+        "elden ring xbox series x one visuel produit",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not treat numbered BD albums as franchise sequel conflicts", () => {
+    expect(
+      franchiseSequelNumbersConflict(
+        ["WAKFU 3 Les Mines de Lamororia"],
+        "Wakfu, Tome 3 : Les mines de Lamororia",
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Wakfu, Tome 3 : Les mines de Lamororia" },
+        ["WAKFU 3 Les Mines de Lamororia"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects a same-volume BD sibling that drops the album subtitle", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "Wakfu, Tome 3 : Shak Shaka" },
+        ["WAKFU 3 Les Mines de Lamororia"],
+        0.58,
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Wakfu Tome 3" },
+        ["Wakfu, Tome 3 : Les mines de Lamororia"],
+        0.58,
       ),
     ).toBe(false);
   });
@@ -479,6 +568,30 @@ describe("isMetadataTitleAligned", () => {
       isMetadataTitleAligned(
         { title: "Dragon Ball Super, Tome 1 : La guerre de l'univers 6" },
         ["Dragon Ball Super n°01"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects classic Dragon Ball ISBN titles when Dragon Ball Z is requested", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "Dragon Ball, tome 2" },
+        ["Dragon Ball Z - Tome 2"],
+        0.58,
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Dragon Ball, Tome 2 : Kaméhaméha" },
+        ["Dragon Ball Z n°02"],
+        0.58,
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Dragon Ball Z - Tome 2" },
+        ["Dragon Ball Z n°02"],
         0.58,
       ),
     ).toBe(true);
@@ -666,6 +779,16 @@ describe("catalogAttachmentTitleConflicts", () => {
     ).toBe(false);
   });
 
+  it("rejects another comic line that only shares a franchise token", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Les Trésors de Picsou n°1",
+        "Les âges d'or de Picsou, Tome 1",
+        { mediaType: "books" },
+      ),
+    ).toBe(true);
+  });
+
   it("rejects generic base art when a specific subtitle is requested", () => {
     expect(
       catalogAttachmentTitleConflicts(
@@ -751,6 +874,71 @@ describe("findBetterMetadataMatch", () => {
           : { title: "Pokemon Yellow" },
     );
     expect(result?.title).toBe("Pokemon Jaune");
+  });
+
+  it("prefers the remake whose releaseDate matches Title (YYYY)", async () => {
+    const result = await findBetterMetadataMatch(
+      "Resident Evil 4 (2023)",
+      {
+        title: "Resident Evil 4",
+        releaseDate: "2005-01-11",
+      },
+      ["Resident Evil 4"],
+      async () => ({
+        title: "Resident Evil 4",
+        releaseDate: "2023-03-24",
+      }),
+    );
+    expect(result?.releaseDate).toBe("2023-03-24");
+  });
+});
+
+describe("buildGameMetadataSearchQueries year disambiguators", () => {
+  it("searches without parenthetical years and keeps them for alignment", () => {
+    const queries = buildGameMetadataSearchQueries(
+      "Resident Evil 4 (2023)",
+      "playstation-4",
+      "PlayStation 4",
+    );
+    expect(queries[0]).toBe("Resident Evil 4");
+    expect(queries.some((q) => q.includes("2023"))).toBe(false);
+    expect(buildMetadataAlignmentNames("Resident Evil 4 (2023)")).toEqual(
+      expect.arrayContaining([
+        "Resident Evil 4 (2023)",
+        "Resident Evil 4",
+      ]),
+    );
+  });
+});
+
+describe("catalogLabelSimilarity", () => {
+  it("boosts a long catalog label that embeds every distinctive query token", () => {
+    expect(
+      catalogLabelSimilarity(
+        "les tresors de picsou",
+        "Picsou Magazine (hors-série, les trésors de Picsou)",
+      ),
+    ).toBeGreaterThan(
+      catalogLabelSimilarity("les tresors de picsou", "Les âges d'or de Picsou"),
+    );
+    expect(
+      catalogLabelSimilarity(
+        "les tresors de picsou",
+        "Picsou Magazine (hors-série, les trésors de Picsou)",
+      ),
+    ).toBeGreaterThanOrEqual(0.85);
+  });
+
+  it("reports full distinctive token coverage for embedded sub-series labels", () => {
+    expect(
+      distinctiveTokenCoverage(
+        "les tresors de picsou",
+        "Picsou Magazine (hors-série, les trésors de Picsou)",
+      ),
+    ).toBe(1);
+    expect(
+      distinctiveTokenCoverage("les tresors de picsou", "Les âges d'or de Picsou"),
+    ).toBe(0.5);
   });
 });
 

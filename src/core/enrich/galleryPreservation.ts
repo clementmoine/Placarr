@@ -20,7 +20,7 @@ function toStorableAttachment(attachment: Attachment): MetadataAttachment {
     type: attachment.type,
     url: attachment.url,
     role: attachment.role ?? undefined,
-    source: attachment.source ?? "merged",
+    source: attachment.source ?? undefined,
     title: attachment.title ?? undefined,
     coverProvenance: attachment.coverProvenance ?? undefined,
     platformKey: attachment.platformKey ?? undefined,

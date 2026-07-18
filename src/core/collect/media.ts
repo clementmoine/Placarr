@@ -12,18 +12,22 @@ import type { Locale } from "@/types/i18n";
 import { getBestLocale } from "@/core/locale/utils";
 
 import {
+  coverListHasShelfCompatibleBoxCover,
   coverListHasShelfPlatformSignal,
   isAttachmentCoverPlatformMismatch,
   isCoverAmbiguousForShelfPlatform,
+  isDiscCoverAttachment,
   pickBestCoverFromAttachments,
   rankAttachmentsForDisplay,
   rankCoverGalleryAttachments,
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
+  isMarketplaceCoverRole,
   type AttachmentDisplayScoreOptions,
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/core/enrich/media/attachmentDisplayScore";
+import { resolveAttachmentSemantics } from "@/core/enrich/media/attachmentDisplayLabels";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
@@ -42,10 +46,11 @@ import {
 } from "@/core/enrich/media/coverPlaceholder";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/coverResolution";
 import {
-  stripCropSuffixFromUrl,
-  urlsReferToSameLocalizedImage,
+  findAttachmentForUrl,
   isCoverEligibleAttachmentType,
   isUrlEligibleDefaultCover,
+  stripCropSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import {
   icollectCoverRegionFromAgeRating,
@@ -67,6 +72,7 @@ export interface MediaItem {
   isMusicGallerySource?: boolean;
   isCanonicalCoverSource?: boolean;
   retailCatalogImageTitlesSource?: boolean;
+  catalogCoverTitlesSource?: boolean;
   strictShelfPlatformCoverSource?: boolean;
   collectorCoverRegionFromAgeRatingSource?: boolean;
   coverProvenance?: string | null;
@@ -74,6 +80,10 @@ export interface MediaItem {
   // ranking's load-bearing signal once the URL is a local /uploads path.
   platformKey?: string | null;
   providerLabel?: string | null;
+  /** Contributor source ids when several providers share this URL. */
+  sourceNames?: string[] | null;
+  /** SteamGridDB-style cover sources — enables style/variant chip labels. */
+  gridStyleCoverLabelsSource?: boolean;
   // Persisted image metrics (computed once at enrichment) so the read-time cover
   // ranking can sort by resolution + exposure without re-decoding image files.
   width?: number | null;
@@ -85,6 +95,8 @@ export interface MediaItem {
 export interface MediaInput {
   imageUrl?: string | null;
   updatedAt?: Date | string | null;
+  /** Item grade — loose games prefer disc art as the displayed cover. */
+  condition?: string | null;
   metadata?: {
     imageUrl?: string | null;
     heroImageUrl?: string | null;
@@ -109,7 +121,19 @@ export function isExplicitUserCoverOverride(item: MediaInput): boolean {
   const lastFetched = item.metadata?.lastFetched;
   const updatedAt = item.updatedAt;
   if (!lastFetched || !updatedAt) return false;
-  return new Date(updatedAt).getTime() > new Date(lastFetched).getTime();
+  if (new Date(updatedAt).getTime() <= new Date(lastFetched).getTime()) {
+    return false;
+  }
+  // Enrichment often syncs item.imageUrl to metadata.imageUrl right after
+  // writing lastFetched, which bumps updatedAt — that is not a gallery pick.
+  const metadataCover = item.metadata?.imageUrl?.trim();
+  if (
+    metadataCover &&
+    urlsReferToSameLocalizedImage(item.imageUrl, metadataCover)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function resolveCoverUiLocale(uiLocale?: Locale | null): Locale | undefined {
@@ -123,12 +147,15 @@ function coverDisplayOptions(
   uiLocale?: Locale | null,
 ): AttachmentDisplayScoreOptions {
   const resolvedLocale = resolveCoverUiLocale(uiLocale);
+  const preferDiscCover =
+    item.condition === "loose" && item.shelf?.type === "games";
   return {
     requestedPlatformKey:
       item.shelf?.type === "games"
         ? detectShelfGamePlatformKey(item.shelf?.name)
         : undefined,
     ...(resolvedLocale ? { uiLocale: resolvedLocale } : {}),
+    ...(preferDiscCover ? { preferDiscCover: true } : {}),
   };
 }
 
@@ -301,12 +328,15 @@ function filterAttachmentsForProductTitle<
     ) {
       return false;
     }
-    if (!attachment.retailCatalogImageTitlesSource) {
-      return true;
+    if (
+      attachment.retailCatalogImageTitlesSource ||
+      attachment.catalogCoverTitlesSource
+    ) {
+      return !catalogAttachmentTitleConflicts(productTitle, attachmentTitle, {
+        mediaType: shelf?.type,
+      });
     }
-    return !catalogAttachmentTitleConflicts(productTitle, attachmentTitle, {
-      mediaType: shelf?.type,
-    });
+    return true;
   });
 
   return { ...metadata, attachments };
@@ -490,6 +520,16 @@ function coverAttachmentsMatchingShelfPlatform(
   });
 }
 
+function isGridStylePinnedCover(attachment: ScoredAttachmentInput): boolean {
+  const { kind } = resolveAttachmentSemantics({
+    type: attachment.type,
+    role: attachment.role,
+    title: attachment.title,
+    source: attachment.source,
+  });
+  return kind === "grid" || kind === "grid3d" || kind === "artwork";
+}
+
 function pinnedCoverNeedsPlatformFallback(
   item: MediaInput,
   pin: string,
@@ -526,10 +566,20 @@ function pinnedCoverNeedsPlatformFallback(
   ) {
     return true;
   }
+  const requestedPlatformKey = options.requestedPlatformKey;
+  if (
+    isVideoGamePlatformKey(requestedPlatformKey) &&
+    isGridStylePinnedCover(attachment) &&
+    coverListHasShelfCompatibleBoxCover(
+      shelfCoverCandidates(attachments(item)),
+      requestedPlatformKey,
+    )
+  ) {
+    return true;
+  }
   // Promote a shelf-platform-matched cover to the default even when the current pin
   // is only platform-*ambiguous* (unidentified). The ambiguous cover stays in the
   // gallery — it just stops being the default. Known-mismatch pins were dropped above.
-  const requestedPlatformKey = options.requestedPlatformKey;
   return (
     isVideoGamePlatformKey(requestedPlatformKey) &&
     isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey) &&
@@ -557,6 +607,40 @@ function dedupeAttachmentsByImageUrl(
   return result;
 }
 
+function orderRankedCoversWithMetadataPin(
+  ranked: ScoredAttachmentInput[],
+  pin: string | null,
+): ScoredAttachmentInput[] {
+  if (!pin) return dedupeAttachmentsByImageUrl(ranked);
+
+  const pinned = ranked.filter(
+    (attachment) =>
+      attachment.url && urlsReferToSameLocalizedImage(attachment.url, pin),
+  );
+  const pinAttachment = pinned[0];
+  const hasRegionalCatalog = ranked.some(
+    (attachment) =>
+      attachment.url &&
+      attachment !== pinAttachment &&
+      !isMarketplaceCoverRole(attachment.role) &&
+      COVER_GALLERY_TYPES.has(attachment.type),
+  );
+
+  if (
+    pinAttachment &&
+    isMarketplaceCoverRole(pinAttachment.role) &&
+    hasRegionalCatalog
+  ) {
+    return dedupeAttachmentsByImageUrl(ranked);
+  }
+
+  const rest = ranked.filter(
+    (attachment) =>
+      !attachment.url || !urlsReferToSameLocalizedImage(attachment.url, pin),
+  );
+  return dedupeAttachmentsByImageUrl([...pinned, ...rest]);
+}
+
 function attachmentForUrl(
   item: MediaInput,
   url: string,
@@ -576,17 +660,46 @@ export function resolveMetadataCoverUrl(
   if (!pin || isMissingArtImageUrl(pin)) return null;
 
   const options = coverDisplayOptions(item, uiLocale);
+  const list = attachments(item);
+  const pinAttachment = findAttachmentForUrl(list, pin);
+  const coverPool = coverAttachmentsMatchingShelfPlatform(
+    list.filter((attachment) => COVER_GALLERY_TYPES.has(attachment.type)),
+    options,
+  );
+  const itemPin = item.imageUrl?.trim();
+  const itemPinStale =
+    !!itemPin &&
+    !findAttachmentForUrl(list, itemPin) &&
+    itemPin.startsWith("/uploads/") &&
+    coverPool.length > 0;
+
   if (
-    !isUrlEligibleDefaultCover(pin, attachments(item)) ||
-    pinnedCoverNeedsPlatformFallback(item, pin, options)
+    !isUrlEligibleDefaultCover(pin, list) ||
+    pinnedCoverNeedsPlatformFallback(item, pin, options) ||
+    (!pinAttachment && coverPool.length > 0 && itemPinStale)
   ) {
     return (
       pickBestCoverFromAttachments(
-        coverAttachmentsMatchingShelfPlatform(attachments(item), options),
+        coverPool,
         persistedImageMetricsByUrl(item),
         options,
       ) ?? null
     );
+  }
+
+  if (
+    pinAttachment &&
+    isMarketplaceCoverRole(pinAttachment.role) &&
+    coverPool.length > 0
+  ) {
+    const bestRegional = pickBestCoverFromAttachments(
+      coverPool.filter(
+        (attachment) => !isMarketplaceCoverRole(attachment.role),
+      ),
+      persistedImageMetricsByUrl(item),
+      options,
+    );
+    if (bestRegional) return bestRegional;
   }
 
   return pin;
@@ -613,19 +726,13 @@ export function orderedCoverAttachmentsForDisplay(
     persistedImageMetricsByUrl(item),
     options,
   );
+  // Loose copies: keep the disc-first ranking — don't re-pin the catalog box.
+  if (options.preferDiscCover) {
+    return ranked;
+  }
   const pin = resolveMetadataCoverUrl(item, uiLocale);
 
-  if (!pin) return dedupeAttachmentsByImageUrl(ranked);
-
-  const pinned = ranked.filter(
-    (attachment) =>
-      attachment.url && urlsReferToSameLocalizedImage(attachment.url, pin),
-  );
-  const rest = ranked.filter(
-    (attachment) =>
-      !attachment.url || !urlsReferToSameLocalizedImage(attachment.url, pin),
-  );
-  return dedupeAttachmentsByImageUrl([...pinned, ...rest]);
+  return orderRankedCoversWithMetadataPin(ranked, pin);
 }
 
 /** Merge enrichment order with transient picker entries (scan / local crop). */
@@ -635,27 +742,33 @@ export function mergeCoverAttachmentsForPicker(
   uiLocale?: Locale | null,
 ): ScoredAttachmentInput[] {
   const options = coverDisplayOptions(item, uiLocale);
-  const ordered = orderedCoverAttachmentsForDisplay(item, uiLocale);
-  const orderedUrls = new Set(
-    ordered.map((attachment) =>
-      attachment.url ? stripCropSuffixFromUrl(attachment.url) : "",
+  const itemCovers = coverAttachmentsMatchingShelfPlatform(
+    attachments(item).filter((attachment) =>
+      COVER_GALLERY_TYPES.has(attachment.type),
     ),
+    options,
   );
-  const shelfCovers = coverAttachmentsMatchingShelfPlatform(
+  const pickerCovers = coverAttachmentsMatchingShelfPlatform(
     pickerAttachments.filter((attachment) =>
       COVER_GALLERY_TYPES.has(attachment.type),
     ),
     options,
   );
-  const extras = shelfCovers.filter(
-    (attachment) =>
-      attachment.url &&
-      !orderedUrls.has(stripCropSuffixFromUrl(attachment.url)),
+  const ranked = rankCoverGalleryAttachments(
+    dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
+    persistedImageMetricsByUrl(item),
+    options,
   );
+  const ordered = options.preferDiscCover
+    ? ranked
+    : orderRankedCoversWithMetadataPin(
+        ranked,
+        resolveMetadataCoverUrl(item, uiLocale),
+      );
   const nonCovers = pickerAttachments.filter(
     (attachment) => !COVER_GALLERY_TYPES.has(attachment.type),
   );
-  return [...extras, ...ordered, ...nonCovers];
+  return [...ordered, ...nonCovers];
 }
 
 function rankedAttachments(
@@ -671,8 +784,10 @@ function rankedAttachments(
 
 /**
  * Retourne l'URL de la jaquette affichée partout dans l'app.
- * item.imageUrl = choix explicite utilisateur (upload ou galerie).
- * metadata.imageUrl = défaut calculé à l'enrichissement.
+ * item.imageUrl = choix explicite utilisateur (upload ou galerie) uniquement
+ * lorsque `isExplicitUserCoverOverride` — sinon le classement dynamique /
+ * metadata.imageUrl gagne (évite un pin d'enrichissement obsolète).
+ * Loose games prefer disc/support art when available (unless the user overrode).
  */
 export function getCoverImage(
   item: MediaInput,
@@ -680,15 +795,58 @@ export function getCoverImage(
 ): string | null {
   const options = coverDisplayOptions(item, uiLocale);
   const honorUserOverride = isExplicitUserCoverOverride(item);
+  const list = attachments(item);
+  const coverList = list.filter((attachment) =>
+    COVER_GALLERY_TYPES.has(attachment.type),
+  );
+  const coverPool = coverAttachmentsMatchingShelfPlatform(coverList, options);
+  const metrics = persistedImageMetricsByUrl(item);
 
+  if (options.preferDiscCover && !honorUserOverride) {
+    const hasDisc = coverPool.some((attachment) =>
+      isDiscCoverAttachment(attachment),
+    );
+    if (hasDisc) {
+      const discCover = pickBestCoverFromAttachments(
+        coverPool,
+        metrics,
+        options,
+      );
+      if (discCover) return discCover;
+    }
+  }
+
+  const pin = item.imageUrl?.trim();
+  const pinBacked = pin ? Boolean(findAttachmentForUrl(list, pin)) : false;
+  const metadataPin = item.metadata?.imageUrl?.trim();
+  const metadataPinBackedInPool =
+    !!metadataPin &&
+    coverList.some(
+      (attachment) =>
+        attachment.url &&
+        urlsReferToSameLocalizedImage(attachment.url, metadataPin),
+    );
+  const pinIsStaleEnrichmentOrphan =
+    !!pin &&
+    !pinBacked &&
+    pin.startsWith("/uploads/") &&
+    coverList.length > 0 &&
+    (!metadataPin ||
+      !urlsReferToSameLocalizedImage(pin, metadataPin) ||
+      !metadataPinBackedInPool);
+
+  // Only a real user gallery/upload choice may override the dynamic default.
+  // Enrichment-synced item.imageUrl must not stick once ranking / metadata moves on.
   if (
-    item.imageUrl &&
-    isUrlEligibleDefaultCover(item.imageUrl, attachments(item)) &&
-    !pinnedCoverNeedsPlatformFallback(item, item.imageUrl, options, {
+    pin &&
+    honorUserOverride &&
+    isUrlEligibleDefaultCover(pin, list) &&
+    !pinnedCoverNeedsPlatformFallback(item, pin, options, {
       honorUserOverride,
-    })
+    }) &&
+    (!pinIsStaleEnrichmentOrphan || honorUserOverride)
   ) {
-    return item.imageUrl;
+    return pin;
   }
 
   const metadataCover = resolveMetadataCoverUrl(item, uiLocale);
@@ -697,11 +855,16 @@ export function getCoverImage(
   }
 
   const bestFromAttachments = pickBestCoverFromAttachments(
-    coverAttachmentsMatchingShelfPlatform(attachments(item), options),
-    persistedImageMetricsByUrl(item),
+    coverPool,
+    metrics,
     options,
   );
   if (bestFromAttachments) return bestFromAttachments;
+
+  // Scan / pre-metadata cover: keep whatever is stored until a ranked default exists.
+  if (pin && isUrlEligibleDefaultCover(pin, list)) {
+    return pin;
+  }
 
   return null;
 }

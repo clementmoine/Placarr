@@ -66,6 +66,20 @@ function normalizeAttachmentSource(source?: string | null): string | null {
   return normalized || null;
 }
 
+/** Prefer catalog provenance over a synthetic honor pin for the same file. */
+function preferredDisplaySource(
+  ...candidates: Array<string | null | undefined>
+): string | null {
+  for (const candidate of candidates) {
+    const normalized = normalizeAttachmentSource(candidate);
+    if (normalized && normalized !== "user") return candidate ?? null;
+  }
+  for (const candidate of candidates) {
+    if (candidate?.trim()) return candidate;
+  }
+  return null;
+}
+
 function crossSourceConsensusBonus(distinctSourceCount: number): number {
   if (distinctSourceCount <= 1) return 0;
   const extraSources = Math.min(distinctSourceCount, MAX_CONSENSUS_SOURCES) - 1;
@@ -652,6 +666,9 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
   ) => {
     if (!source) return;
     bucket.sources.add(source);
+    // Honor pins are not a visual provenance — omit "Perso" when a real
+    // provider also contributed this same file.
+    if (source === "user") return;
     const label = attachment.providerLabel?.trim();
     if (label) bucket.sourceLabels.add(label);
     else bucket.sourceLabels.add(source);
@@ -679,9 +696,14 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
         options,
       );
 
+      const preferIncomingProvider =
+        normalizeAttachmentSource(existing.attachment.source) === "user" &&
+        source != null &&
+        source !== "user";
       const keepExisting =
-        existing.score > entry.score ||
-        (existing.score === entry.score && existing.index < entry.index);
+        !preferIncomingProvider &&
+        (existing.score > entry.score ||
+          (existing.score === entry.score && existing.index < entry.index));
 
       rememberSource(existing, entry.attachment, source);
 
@@ -689,15 +711,20 @@ export function rankScoredAttachments<T extends ScoredAttachmentInput>(
       const mergedAttachment: T = {
         ...winner,
         role: mergedRole,
-        source:
-          winner.source ||
-          existing.attachment.source ||
-          entry.attachment.source ||
-          null,
+        source: preferredDisplaySource(
+          winner.source,
+          entry.attachment.source,
+          existing.attachment.source,
+        ),
         title:
           winner.title ||
           existing.attachment.title ||
           entry.attachment.title ||
+          null,
+        providerLabel:
+          winner.providerLabel ||
+          entry.attachment.providerLabel ||
+          existing.attachment.providerLabel ||
           null,
       };
 
@@ -875,6 +902,18 @@ export function coverLocaleRank(
   return base;
 }
 
+/** Locale tier for a gallery row — used when deciding whether to keep a metadata pin. */
+export function coverLocaleRankForAttachment(
+  attachment: ScoredAttachmentInput,
+  options?: AttachmentDisplayScoreOptions,
+): number {
+  return coverLocaleRank(
+    attachmentSemantics(attachment),
+    attachment.role,
+    options,
+  );
+}
+
 function compareCoverDisplayRank<
   T extends {
     platformMismatchRank: number;
@@ -960,6 +999,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
   ) => {
     if (!source) return;
     bucket.sources.add(source);
+    if (source === "user") return;
     const label = attachment.providerLabel?.trim();
     if (label) bucket.sourceLabels.add(label);
     else bucket.sourceLabels.add(source);
@@ -985,22 +1025,32 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         options,
       );
 
-      const keepExisting = compareCoverDisplayRank(existing, entry) < 0;
+      const preferIncomingProvider =
+        normalizeAttachmentSource(existing.attachment.source) === "user" &&
+        source != null &&
+        source !== "user";
+      const keepExisting =
+        !preferIncomingProvider && compareCoverDisplayRank(existing, entry) < 0;
       rememberCoverSource(existing, entry.attachment, source);
 
       const winner = keepExisting ? existing.attachment : entry.attachment;
       const mergedAttachment: T = {
         ...winner,
         role: mergedRole,
-        source:
-          winner.source ||
-          existing.attachment.source ||
-          entry.attachment.source ||
-          null,
+        source: preferredDisplaySource(
+          winner.source,
+          entry.attachment.source,
+          existing.attachment.source,
+        ),
         title:
           winner.title ||
           existing.attachment.title ||
           entry.attachment.title ||
+          null,
+        providerLabel:
+          winner.providerLabel ||
+          entry.attachment.providerLabel ||
+          existing.attachment.providerLabel ||
           null,
       };
 

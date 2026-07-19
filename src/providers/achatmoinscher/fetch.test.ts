@@ -20,7 +20,10 @@ const PRODUCT_HTML = `
     <h1>Sony Wheelman</h1>
     <table>
       <tr><td>Plateforme</td><td>PlayStation 3</td></tr>
+      <tr><td>Marque</td><td><b>Sony</b></td></tr>
+      <tr><td>Catégorie</td><td><b>Jeux vidéo</b></td></tr>
     </table>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","brand":{"@type":"Brand","name":"Sony"},"category":"Jeux vidéo","name":"Wheelman"}</script>
     <div class="col-md-12 imgIco">
       <img src="//cdn.example.com/photoProd/zoom/wheelman.jpg" alt="Wheelman" />
     </div>
@@ -59,10 +62,33 @@ describe("fetchFromAchatMoinsCher", () => {
         productId: "12345",
         productUrl: "https://www.achatmoinscher.com/12345.html",
         coverUrl: "https://cdn.example.com/photoProd/zoom/wheelman.jpg",
+        category: "Jeux vidéo",
+        brand: "Sony",
         priceNew: 3999,
         priceUsed: 1999,
       },
     ]);
+  });
+
+  it("extrait catégorie DVD et marque Disney depuis la fiche film", async () => {
+    const dvdHtml = `
+      <h1>Tout le monde aime Tic &amp; Tac - Volume 2</h1>
+      <table class="tableauCarac">
+        <tr><td>Marque</td><td><b>DISNEY JUNIOR</b></td></tr>
+        <tr><td>Catégorie</td><td><b>DVD</b></td></tr>
+      </table>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","brand":{"@type":"Brand","name":"DISNEY JUNIOR"},"category":"DVD","name":"Tout le monde aime Tic & Tac - Volume 2","gtin13":"8717418035617"}</script>
+      <div id="tabBestPrix"><div id="neuf232875"><p class="prix">9,99&nbsp;€</p></div></div>
+    `;
+    mockedPost.mockResolvedValue({ data: "232875" } as never);
+    mockedGet.mockResolvedValue({ status: 200, data: dvdHtml } as never);
+
+    const products = await fetchFromAchatMoinsCher("8717418035617");
+    expect(products[0]).toMatchObject({
+      name: "Tout le monde aime Tic & Tac - Volume 2",
+      category: "DVD",
+      brand: "DISNEY JUNIOR",
+    });
   });
 
   it("renvoie une liste vide quand le scanner ne retourne pas d'id produit", async () => {

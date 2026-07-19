@@ -387,6 +387,25 @@ describe("purgeContradictedProviderExternalLinks", () => {
 
     expect(kept).toHaveLength(0);
   });
+
+  it("keeps PriceCharting search catalog chips (path is not a product slug)", () => {
+    const kept = purgeContradictedProviderExternalLinks(
+      [
+        {
+          kind: "external-link",
+          label: "PriceCharting",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/fr/search-products?type=videogames&q=Wrc%204",
+          source: "pricecharting",
+        },
+      ],
+      "",
+      "WRC 4: FIA World Rally Championship",
+    );
+
+    expect(kept).toHaveLength(1);
+    expect(kept[0]?.source).toBe("pricecharting");
+  });
 });
 
 describe("reconcileExternalLinksFromPriceOffers", () => {

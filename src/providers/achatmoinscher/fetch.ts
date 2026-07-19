@@ -14,6 +14,10 @@ export interface AchatMoinsCherProduct {
   productId?: string | null;
   productUrl?: string | null;
   coverUrl?: string | null;
+  /** Physical media / catalog category from the product sheet ("DVD", "Bluray"…). */
+  category?: string | null;
+  /** Brand / label from schema.org or fiche technique ("DISNEY JUNIOR"…). */
+  brand?: string | null;
   priceNew?: number; // cents — parsed from the same product page
   priceUsed?: number; // cents — parsed from the same product page
 }
@@ -221,6 +225,74 @@ async function extractBestCover(
   return null;
 }
 
+function cleanAmcSheetValue(raw: string): string {
+  return decodeHTMLEntities(
+    raw
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
+}
+
+/**
+ * Category + brand from JSON-LD / fiche technique — used as shelf-estimation
+ * hints (DVD + Disney → "DVD Disney") without polluting the display title.
+ */
+export function parseAchatMoinsCherCatalogHints(html: string): {
+  category: string | null;
+  brand: string | null;
+} {
+  let category: string | null = null;
+  let brand: string | null = null;
+
+  const jsonLdBlocks = html.match(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  );
+  for (const block of jsonLdBlocks || []) {
+    const raw = block.replace(/^[\s\S]*?>/, "").replace(/<\/script>$/i, "");
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      if (parsed?.["@type"] !== "Product") continue;
+      if (typeof parsed.category === "string" && parsed.category.trim()) {
+        category ??= cleanAmcSheetValue(parsed.category);
+      }
+      const brandNode = parsed.brand;
+      if (typeof brandNode === "string" && brandNode.trim()) {
+        brand ??= cleanAmcSheetValue(brandNode);
+      } else if (
+        brandNode &&
+        typeof brandNode === "object" &&
+        typeof (brandNode as { name?: unknown }).name === "string"
+      ) {
+        brand ??= cleanAmcSheetValue(
+          String((brandNode as { name: string }).name),
+        );
+      }
+    } catch {
+      // ignore malformed JSON-LD
+    }
+  }
+
+  const categoryRow = html.match(
+    /<td>\s*Cat[ée]gorie\s*<\/td>\s*<td>\s*([\s\S]*?)\s*<\/td>/i,
+  );
+  if (categoryRow?.[1]) {
+    category ??= cleanAmcSheetValue(categoryRow[1]);
+  }
+
+  const brandRow = html.match(
+    /<td>\s*Marque\s*<\/td>\s*<td>\s*([\s\S]*?)\s*<\/td>/i,
+  );
+  if (brandRow?.[1]) {
+    brand ??= cleanAmcSheetValue(brandRow[1]);
+  }
+
+  return {
+    category: category || null,
+    brand: brand || null,
+  };
+}
+
 /**
  * Parse new/used prices (cents) from an already-fetched AchatMoinsCher product
  * page. Shared by the dedicated price fetch and the scan-time identify call so a
@@ -298,7 +370,7 @@ async function fetchAchatMoinsCherProductPrices(
     headers: HEADERS,
     timeout: 5000,
   });
-  return parseAchatMoinsCherPrices(getRes.data, productId);
+  return parseAchatMoinsCherPrices(String(getRes.data ?? ""), productId);
 }
 
 function isBarcodeOnlyQuery(query: string) {
@@ -368,6 +440,7 @@ async function parseAchatMoinsCherProductPage(
   }
 
   const prices = parseAchatMoinsCherPrices(html, productId);
+  const catalogHints = parseAchatMoinsCherCatalogHints(html);
 
   return {
     name: title,
@@ -378,6 +451,8 @@ async function parseAchatMoinsCherProductPage(
       (!title || isRetailerCoverUrlAlignedWithTitle(coverUrl, title))
         ? coverUrl
         : null,
+    ...(catalogHints.category ? { category: catalogHints.category } : {}),
+    ...(catalogHints.brand ? { brand: catalogHints.brand } : {}),
     ...(prices ?? {}),
   };
 }
@@ -391,7 +466,7 @@ async function fetchAchatMoinsCherProductById(
     headers: HEADERS,
     timeout: 5000,
   });
-  return parseAchatMoinsCherProductPage(getRes.data, productId);
+  return parseAchatMoinsCherProductPage(String(getRes.data ?? ""), productId);
 }
 
 export async function fetchFromAchatMoinsCherByQuery(
@@ -409,7 +484,7 @@ export async function fetchFromAchatMoinsCherByQuery(
     timeout: 5000,
   });
 
-  for (const hit of parseAchatMoinsCherSearchHits(searchRes.data)) {
+  for (const hit of parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""))) {
     if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) continue;
     const product = await fetchAchatMoinsCherProductById(hit.productId);
     if (product) return [product];
@@ -452,7 +527,7 @@ async function fetchPricesFromAchatMoinsCherByName(
   });
 
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
-  for (const hit of parseAchatMoinsCherSearchHits(searchRes.data)) {
+  for (const hit of parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""))) {
     if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) {
       continue;
     }

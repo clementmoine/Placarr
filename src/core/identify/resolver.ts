@@ -13,10 +13,12 @@ import {
 import { runBarcodeLookups } from "@/core/identify/lookup/lookups";
 import {
   collectPayloadListingNames,
+  collectPayloadShelfHints,
   detectBoardGameSignal,
   detectMediaFormat,
   detectVideoFormatSignal,
   detectVideoGameSignal,
+  shelfHintObservationsFromHints,
 } from "@/core/identify/boardGameSignal";
 import { compileAllBarcodeTypeResults } from "@/core/identify/lookup/sourceAssembly";
 import {
@@ -31,6 +33,7 @@ import { collectScanPriceOffers } from "@/core/catalog/barcodePrices";
 import { persistBarcodePrices } from "@/core/commerce/pricing/resolver";
 import { PROVIDER_MODULES } from "@/core/catalog/catalog";
 import type { BarcodeCache } from "@prisma/client";
+import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/enrich/observations";
 
 // Registry-derived evidence labels of providers whose ONLY media type is the
 // given one (board games: Philibert, Okkazeo, BoardGameGeek…; music: Discogs,
@@ -320,19 +323,33 @@ export async function resolveBarcode(
   );
 
   const mediaFormat = detectMediaFormat(listingNames);
+  const shelfHintObservations = shelfHintObservationsFromHints(
+    collectPayloadShelfHints(payload),
+    mediaFormat,
+  );
 
   if (selectedResult && selectedType) {
+    const resultWithShelfHints: CompiledResult = {
+      ...selectedResult,
+      observations: [
+        ...(selectedResult.observations || []),
+        ...shelfHintObservations,
+      ],
+      observationSchemaVersion:
+        selectedResult.observationSchemaVersion ??
+        METADATA_OBSERVATION_SCHEMA_VERSION,
+    };
     recordStep("cache:start");
     await cacheBarcodeResult(
       cleanedBarcode,
-      selectedResult,
+      resultWithShelfHints,
       selectedType,
       cachedResult,
       mediaFormat,
     );
     recordStep("cache:done");
     const cleaned = cleanCompiledResultForResponse(
-      selectedResult,
+      resultWithShelfHints,
       selectedType,
     );
 

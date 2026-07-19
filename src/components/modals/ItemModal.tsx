@@ -60,7 +60,7 @@ import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
 } from "@/core/identify/shelfLabels";
-import { guessShelfFromBarcodeLookup } from "@/core/identify/query";
+import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
 import { isAbortError } from "@/lib/http/abort";
 import { shelfPath } from "@/lib/routing/slugs";
 
@@ -708,7 +708,28 @@ export function ItemModal({
       meanLuminance?: number | null;
       darkPixelRatio?: number | null;
     }) => {
-      if (!entry.url || urls.has(entry.url)) return;
+      if (!entry.url) return;
+      const existingIndex = attachments.findIndex((attachment) =>
+        urlsReferToSameLocalizedImage(attachment.url, entry.url),
+      );
+      if (existingIndex >= 0) {
+        const existing = attachments[existingIndex]!;
+        // Honor pin (`user`) often shares the provider file URL — upgrade the
+        // row so the chip shows Booknode / SensCritique, not "Perso".
+        if (
+          existing.source === "user" &&
+          entry.source &&
+          entry.source !== "user"
+        ) {
+          attachments[existingIndex] = {
+            ...existing,
+            ...entry,
+            type: entry.type as AttachmentType,
+            url: entry.url,
+          };
+        }
+        return;
+      }
       urls.add(entry.url);
       attachments.push({
         type: entry.type as AttachmentType,
@@ -901,6 +922,19 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
+  const [pendingUploadPreviewUrl, setPendingUploadPreviewUrl] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    if (!(currentImageUrl instanceof File)) {
+      setPendingUploadPreviewUrl(null);
+      return;
+    }
+    const previewUrl = URL.createObjectURL(currentImageUrl);
+    setPendingUploadPreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [currentImageUrl]);
 
   const finalImages = useMemo(() => {
     const rawMetadata =
@@ -914,6 +948,20 @@ export function ItemModal({
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
     const list = [...availableImages];
+
+    if (pendingUploadPreviewUrl) {
+      list.unshift({
+        url: pendingUploadPreviewUrl,
+        type: "image",
+        label: t("items.editTabs.chooseImage"),
+        source: "user",
+        role: null,
+        galleryProvider: "Perso",
+        gallerySourceNames: ["Perso"],
+        galleryDetail: null,
+      });
+      return list;
+    }
 
     if (
       currentImageUrl &&
@@ -946,10 +994,12 @@ export function ItemModal({
         url: currentImageUrl,
         type: provenance?.type ?? "image",
         label: gallery?.caption ?? t("items.editTabs.chooseImage"),
-        source: provenance?.source ?? null,
+        source: provenance?.source ?? "user",
         role: provenance?.role ?? null,
-        galleryProvider: gallery?.provider ?? null,
-        gallerySourceNames: gallery?.sourceNames ?? [],
+        galleryProvider: gallery?.provider ?? "Perso",
+        gallerySourceNames: gallery?.sourceNames?.length
+          ? gallery.sourceNames
+          : ["Perso"],
         galleryDetail: gallery?.detail ?? null,
       });
     }
@@ -958,6 +1008,7 @@ export function ItemModal({
   }, [
     availableImages,
     currentImageUrl,
+    pendingUploadPreviewUrl,
     itemId,
     item?.metadata,
     fetchedMetadata,
@@ -1021,13 +1072,13 @@ export function ItemModal({
           const cleanName = data?.cleanName;
           const rawNames = data?.rawNames || [];
           const platformKey = data?.platformKey;
-          // Physical-format clue ("LaserDisc"…) leads so a matching format shelf
-          // is recommended over a generic same-type one.
-          const mediaFormat = data?.mediaFormat as string | undefined;
+          // Physical-format + brand clues ("DVD", "DISNEY JUNIOR") lead so a
+          // matching format shelf is recommended over a generic same-type one.
+          const shelfHints = shelfSearchHintsFromBarcodePayload(data || {});
 
           const allSearchNames = Array.from(
             new Set([
-              ...(mediaFormat ? [mediaFormat] : []),
+              ...shelfHints,
               ...(displayName ? [displayName] : []),
               ...(cleanName ? [cleanName] : []),
               ...rawNames,
@@ -1888,11 +1939,13 @@ export function ItemModal({
                               .map((img, i) => {
                                 const selectedCoverUrl = currentImageUrl;
                                 const isSelected =
-                                  typeof selectedCoverUrl === "string" &&
-                                  urlsReferToSameLocalizedImage(
-                                    selectedCoverUrl,
-                                    img.url,
-                                  );
+                                  pendingUploadPreviewUrl != null
+                                    ? img.url === pendingUploadPreviewUrl
+                                    : typeof selectedCoverUrl === "string" &&
+                                      urlsReferToSameLocalizedImage(
+                                        selectedCoverUrl,
+                                        img.url,
+                                      );
                                 return (
                                   <div
                                     key={i}

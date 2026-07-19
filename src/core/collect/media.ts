@@ -23,6 +23,7 @@ import {
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
   isMarketplaceCoverRole,
+  coverLocaleRankForAttachment,
   type AttachmentDisplayScoreOptions,
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
@@ -53,11 +54,9 @@ import {
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import {
-  icollectCoverRegionFromAgeRating,
-  icollectRoleWithoutCollectorRegion,
-  isICollectAgeRatingFact,
-  isICollectAttachmentSource,
-} from "@/providers/icollect/imageLabels";
+  coverRegionFromAgeRatingBoard,
+  roleWithoutCollectorRegion,
+} from "@/core/enrich/media/collectorCoverRegion";
 
 export interface MediaItem {
   url: string;
@@ -134,6 +133,41 @@ export function isExplicitUserCoverOverride(item: MediaInput): boolean {
     return false;
   }
   return true;
+}
+
+/**
+ * Durable user cover: either a persisted `source: "user"` gallery attachment, or
+ * a post-enrichment override. Survives metadata refresh (unlike timestamp-only).
+ */
+export function isHonoredUserCoverPin(item: MediaInput): boolean {
+  const pin = item.imageUrl?.trim();
+  if (!pin) return false;
+  const list = attachments(item);
+  // Prefer an explicit user pin even when a provider row shares the same crop.
+  if (
+    list.some(
+      (attachment) =>
+        attachment.source === "user" &&
+        attachment.url &&
+        urlsReferToSameLocalizedImage(attachment.url, pin),
+    )
+  ) {
+    return true;
+  }
+  return isExplicitUserCoverOverride(item);
+}
+
+/** User uploads always lead the cover picker / gallery, ahead of catalog art. */
+function pinUserCoversFirst(
+  ranked: ScoredAttachmentInput[],
+): ScoredAttachmentInput[] {
+  const users: ScoredAttachmentInput[] = [];
+  const rest: ScoredAttachmentInput[] = [];
+  for (const attachment of ranked) {
+    if (attachment.source === "user") users.push(attachment);
+    else rest.push(attachment);
+  }
+  return users.length === 0 ? ranked : [...users, ...rest];
 }
 
 function resolveCoverUiLocale(uiLocale?: Locale | null): Locale | undefined {
@@ -407,8 +441,7 @@ function reconcileImageUrlAfterAttachmentFilter<
           attachments as ScoredAttachmentInput[],
           undefined,
           options,
-        ) ??
-        orphanMetadataImageUrlFallback(pinned, originalAttachments));
+        ) ?? orphanMetadataImageUrlFallback(pinned, originalAttachments));
   const imageUrl =
     rawImageUrl && isMissingArtImageUrl(rawImageUrl) ? null : rawImageUrl;
 
@@ -446,22 +479,32 @@ export function filterMetadataForShelfPlatform<
   if (!metadata) return undefined;
 
   const metadataForTitle = filterAttachmentsForProductTitle(metadata, shelf);
-  const icollectAgeRating =
+  const collectorAgeRating =
     (
       metadataForTitle as {
         facts?: Array<{ kind?: string; source?: string; value?: string }>;
       }
-    ).facts?.find((fact) => isICollectAgeRatingFact(fact))?.value ?? null;
-  const icollectRegionFromRating =
-    icollectCoverRegionFromAgeRating(icollectAgeRating);
-  const attachmentsWithSanitizedICollect = (
+    ).facts?.find((fact) => {
+      if (fact.kind !== "age-rating" || !fact.source) return false;
+      return (metadataForTitle.attachments ?? []).some(
+        (attachment) =>
+          attachment.collectorCoverRegionFromAgeRatingSource &&
+          attachment.source === fact.source,
+      );
+    })?.value ?? null;
+  const collectorRegionFromRating =
+    coverRegionFromAgeRatingBoard(collectorAgeRating);
+  const attachmentsWithSanitizedCollectorRoles = (
     metadataForTitle.attachments ?? []
   ).map((attachment) => {
-    if (!isICollectAttachmentSource(attachment.source) || !attachment.role) {
+    if (
+      !attachment.collectorCoverRegionFromAgeRatingSource ||
+      !attachment.role
+    ) {
       return attachment;
     }
-    if (icollectRegionFromRating) return attachment;
-    const stripped = icollectRoleWithoutCollectorRegion(attachment.role);
+    if (collectorRegionFromRating) return attachment;
+    const stripped = roleWithoutCollectorRegion(attachment.role);
     return stripped
       ? { ...attachment, role: stripped }
       : { ...attachment, role: undefined };
@@ -471,8 +514,11 @@ export function filterMetadataForShelfPlatform<
   if (!options.requestedPlatformKey) {
     return sanitizeDiscoveredBarcodeForShelf(
       reconcileImageUrlAfterAttachmentFilter(
-        { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect },
-        attachmentsWithSanitizedICollect,
+        {
+          ...metadataForTitle,
+          attachments: attachmentsWithSanitizedCollectorRoles,
+        },
+        attachmentsWithSanitizedCollectorRoles,
         options,
       ),
       options,
@@ -480,16 +526,19 @@ export function filterMetadataForShelfPlatform<
   }
 
   const filteredAttachments = coverAttachmentsMatchingShelfPlatform(
-    attachmentsWithSanitizedICollect as ScoredAttachmentInput[],
+    attachmentsWithSanitizedCollectorRoles as ScoredAttachmentInput[],
     options,
   );
 
   return sanitizeDiscoveredBarcodeForShelf(
     reconcileImageUrlAfterAttachmentFilter(
-      { ...metadataForTitle, attachments: attachmentsWithSanitizedICollect },
+      {
+        ...metadataForTitle,
+        attachments: attachmentsWithSanitizedCollectorRoles,
+      },
       filteredAttachments,
       options,
-      attachmentsWithSanitizedICollect,
+      attachmentsWithSanitizedCollectorRoles,
     ),
     options,
   );
@@ -536,8 +585,18 @@ function pinnedCoverNeedsPlatformFallback(
   options: AttachmentDisplayScoreOptions,
   { honorUserOverride = false }: { honorUserOverride?: boolean } = {},
 ): boolean {
+  const list = attachments(item);
+  if (
+    list.some(
+      (attachment) =>
+        attachment.source === "user" &&
+        attachment.url &&
+        urlsReferToSameLocalizedImage(attachment.url, pin),
+    )
+  ) {
+    return false;
+  }
   const attachment = attachmentForUrl(item, pin);
-  if (attachment?.source === "user") return false;
   if (!attachment) {
     if (isUserUploadedImage(pin)) return false;
     if (
@@ -566,12 +625,15 @@ function pinnedCoverNeedsPlatformFallback(
   ) {
     return true;
   }
+  // Explicit gallery/upload picks must stick — do not auto-heal to a box cover
+  // when the collector chose a SteamGridDB grid (or an ambiguous regional pin).
+  if (honorUserOverride) return false;
   const requestedPlatformKey = options.requestedPlatformKey;
   if (
     isVideoGamePlatformKey(requestedPlatformKey) &&
     isGridStylePinnedCover(attachment) &&
     coverListHasShelfCompatibleBoxCover(
-      shelfCoverCandidates(attachments(item)),
+      shelfCoverCandidates(list),
       requestedPlatformKey,
     )
   ) {
@@ -584,7 +646,7 @@ function pinnedCoverNeedsPlatformFallback(
     isVideoGamePlatformKey(requestedPlatformKey) &&
     isCoverAmbiguousForShelfPlatform(attachment, requestedPlatformKey) &&
     coverListHasShelfPlatformSignal(
-      shelfCoverCandidates(attachments(item)),
+      shelfCoverCandidates(list),
       requestedPlatformKey,
     )
   );
@@ -593,18 +655,36 @@ function pinnedCoverNeedsPlatformFallback(
 function dedupeAttachmentsByImageUrl(
   list: ScoredAttachmentInput[],
 ): ScoredAttachmentInput[] {
-  const seen = new Set<string>();
-  const result: ScoredAttachmentInput[] = [];
+  const byKey = new Map<string, ScoredAttachmentInput>();
 
   for (const attachment of list) {
     if (!attachment.url) continue;
     const key = stripCropSuffixFromUrl(attachment.url);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(attachment);
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, attachment);
+      continue;
+    }
+    // Synthetic honor pins (`source: user`) share the provider file URL after a
+    // gallery pick — keep the catalog row for badges (Booknode, not "Perso").
+    if (
+      normalizeSourceKey(existing.source) === "user" &&
+      normalizeSourceKey(attachment.source) !== "user"
+    ) {
+      byKey.set(key, {
+        ...attachment,
+        // Preserve any picker-only fields already on the user row.
+        sourceNames: attachment.sourceNames ?? existing.sourceNames,
+        providerLabel: attachment.providerLabel ?? existing.providerLabel,
+      });
+    }
   }
 
-  return result;
+  return Array.from(byKey.values());
+}
+
+function normalizeSourceKey(source?: string | null): string {
+  return (source || "").split(/[·/]/)[0].toLowerCase().trim();
 }
 
 function orderRankedCoversWithMetadataPin(
@@ -651,6 +731,26 @@ function attachmentForUrl(
   );
 }
 
+/**
+ * `source: "user"` pins only apply when they match `item.imageUrl`. Orphan user
+ * rows (left behind after a failed / partial save) must not win automatic
+ * ranking — especially when a marketplace metadata pin is demoted.
+ */
+function catalogCoverAttachments(
+  item: MediaInput,
+  list: DisplayAttachment[],
+): DisplayAttachment[] {
+  const pin = item.imageUrl?.trim();
+  return list.filter((attachment) => {
+    if (attachment.source !== "user") return true;
+    return (
+      !!pin &&
+      !!attachment.url &&
+      urlsReferToSameLocalizedImage(attachment.url, pin)
+    );
+  });
+}
+
 /** metadata.imageUrl unless it explicitly targets another console than the shelf. */
 export function resolveMetadataCoverUrl(
   item: MediaInput,
@@ -660,7 +760,7 @@ export function resolveMetadataCoverUrl(
   if (!pin || isMissingArtImageUrl(pin)) return null;
 
   const options = coverDisplayOptions(item, uiLocale);
-  const list = attachments(item);
+  const list = catalogCoverAttachments(item, attachments(item));
   const pinAttachment = findAttachmentForUrl(list, pin);
   const coverPool = coverAttachmentsMatchingShelfPlatform(
     list.filter((attachment) => COVER_GALLERY_TYPES.has(attachment.type)),
@@ -702,6 +802,24 @@ export function resolveMetadataCoverUrl(
     if (bestRegional) return bestRegional;
   }
 
+  // Enrichment may stamp metadata.imageUrl to a high-scoring NTSC box (Geedie US)
+  // while the gallery already has a better locale match (HDJV FR). Prefer the
+  // locale-ranked catalog cover over that stale regional pin.
+  if (pinAttachment && coverPool.length > 0) {
+    const metrics = persistedImageMetricsByUrl(item);
+    const bestUrl = pickBestCoverFromAttachments(coverPool, metrics, options);
+    if (bestUrl && !urlsReferToSameLocalizedImage(bestUrl, pin)) {
+      const bestAttachment = findAttachmentForUrl(coverPool, bestUrl);
+      if (
+        bestAttachment &&
+        coverLocaleRankForAttachment(bestAttachment, options) <
+          coverLocaleRankForAttachment(pinAttachment, options)
+      ) {
+        return bestUrl;
+      }
+    }
+  }
+
   return pin;
 }
 
@@ -728,11 +846,13 @@ export function orderedCoverAttachmentsForDisplay(
   );
   // Loose copies: keep the disc-first ranking — don't re-pin the catalog box.
   if (options.preferDiscCover) {
-    return ranked;
+    return pinUserCoversFirst(ranked);
   }
   const pin = resolveMetadataCoverUrl(item, uiLocale);
 
-  return orderRankedCoversWithMetadataPin(ranked, pin);
+  return pinUserCoversFirst(
+    orderRankedCoversWithMetadataPin(ranked, pin),
+  );
 }
 
 /** Merge enrichment order with transient picker entries (scan / local crop). */
@@ -759,12 +879,14 @@ export function mergeCoverAttachmentsForPicker(
     persistedImageMetricsByUrl(item),
     options,
   );
-  const ordered = options.preferDiscCover
-    ? ranked
-    : orderRankedCoversWithMetadataPin(
-        ranked,
-        resolveMetadataCoverUrl(item, uiLocale),
-      );
+  const ordered = pinUserCoversFirst(
+    options.preferDiscCover
+      ? ranked
+      : orderRankedCoversWithMetadataPin(
+          ranked,
+          resolveMetadataCoverUrl(item, uiLocale),
+        ),
+  );
   const nonCovers = pickerAttachments.filter(
     (attachment) => !COVER_GALLERY_TYPES.has(attachment.type),
   );
@@ -785,7 +907,7 @@ function rankedAttachments(
 /**
  * Retourne l'URL de la jaquette affichée partout dans l'app.
  * item.imageUrl = choix explicite utilisateur (upload ou galerie) uniquement
- * lorsque `isExplicitUserCoverOverride` — sinon le classement dynamique /
+ * lorsque `isHonoredUserCoverPin` — sinon le classement dynamique /
  * metadata.imageUrl gagne (évite un pin d'enrichissement obsolète).
  * Loose games prefer disc/support art when available (unless the user overrode).
  */
@@ -794,9 +916,10 @@ export function getCoverImage(
   uiLocale?: Locale | null,
 ): string | null {
   const options = coverDisplayOptions(item, uiLocale);
-  const honorUserOverride = isExplicitUserCoverOverride(item);
+  const honorUserOverride = isHonoredUserCoverPin(item);
   const list = attachments(item);
-  const coverList = list.filter((attachment) =>
+  const catalogList = catalogCoverAttachments(item, list);
+  const coverList = catalogList.filter((attachment) =>
     COVER_GALLERY_TYPES.has(attachment.type),
   );
   const coverPool = coverAttachmentsMatchingShelfPlatform(coverList, options);

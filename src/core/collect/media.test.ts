@@ -15,6 +15,71 @@ import {
 import { formatMetadataFromStorage } from "@/core/enrich/dbMapping";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
 
+describe("resolveMetadataCoverUrl", () => {
+  it("prefers a FR catalog cover over a stale marketplace metadata.imageUrl", () => {
+    const booknode =
+      "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg";
+
+    expect(
+      resolveMetadataCoverUrl({
+        metadata: {
+          imageUrl: "/uploads/ebay-listing.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "ebay",
+              role: "marketplace",
+              url: "/uploads/ebay-listing.jpg",
+            },
+            {
+              type: "cover",
+              source: "booknode",
+              role: "fr",
+              url: booknode,
+            },
+          ],
+        },
+        shelf: { type: "books", name: "Les Trésors de Picsou" },
+      }),
+    ).toBe(booknode);
+  });
+
+  it("prefers a FR catalog cover over a stale US metadata.imageUrl pin", () => {
+    expect(
+      resolveMetadataCoverUrl(
+        {
+          metadata: {
+            imageUrl: "/uploads/us-geedie.jpg",
+            attachments: [
+              {
+                type: "cover",
+                source: "geedie",
+                role: "us",
+                url: "/uploads/us-geedie.jpg",
+                providerImageScoreAdjustment: 120,
+              },
+              {
+                type: "cover",
+                source: "hdjv",
+                role: "fr",
+                url: "/uploads/fr-hdjv.jpg",
+              },
+              {
+                type: "cover",
+                source: "pricecharting",
+                role: "eu",
+                url: "/uploads/eu-pc.jpg",
+              },
+            ],
+          },
+          shelf: { type: "games", name: "Xbox 360" },
+        },
+        "fr",
+      ),
+    ).toBe("/uploads/fr-hdjv.jpg");
+  });
+});
+
 describe("getCoverImage", () => {
   it("uses canonical metadata.imageUrl when present", () => {
     expect(
@@ -29,29 +94,164 @@ describe("getCoverImage", () => {
     ).toBe("/uploads/canonical-cover.jpg");
   });
 
+  it("drops a stale localized crop when metadata.imageUrl no longer has a gallery row", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/ages-or-crop.jpg",
+        metadata: {
+          imageUrl: "/uploads/ages-or.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "bdovore",
+              url: "/uploads/tresors.jpg",
+              title: "Les trésors de Picsou n°3 : La jeunesse de Picsou",
+              catalogCoverTitlesSource: true,
+            },
+          ],
+        },
+        shelf: { type: "books", name: "Les Trésors de Picsou" },
+      }),
+    ).toBe("/uploads/tresors.jpg");
+  });
+
   it("prefers user local upload over metadata cover", () => {
     expect(
       getCoverImage({
         imageUrl: "/uploads/my-photo.jpg",
+        updatedAt: "2026-07-03T19:00:00.000Z",
         metadata: {
           imageUrl: "/uploads/canonical-cover.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
         },
       }),
     ).toBe("/uploads/my-photo.jpg");
+  });
+
+  it("keeps a source=user cover after enrichment refreshes lastFetched", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/my-disc.jpg",
+        updatedAt: "2026-07-03T12:00:00.000Z",
+        metadata: {
+          imageUrl: "/uploads/grid.jpg",
+          lastFetched: "2026-07-19T10:00:00.000Z",
+          attachments: [
+            {
+              type: "image",
+              source: "user",
+              url: "/uploads/my-disc.jpg",
+            },
+            {
+              type: "cover",
+              source: "steamgriddb",
+              url: "/uploads/grid.jpg",
+              width: 600,
+              height: 900,
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/my-disc.jpg");
   });
 
   it("prefers an explicit item cover over metadata.imageUrl", () => {
     expect(
       getCoverImage({
         imageUrl: "/uploads/my-choice.jpg",
+        updatedAt: "2026-07-03T19:00:00.000Z",
         metadata: {
           imageUrl: "/uploads/canonical-cover.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
           attachments: [
             { type: "cover", source: "bgg", url: "/uploads/my-choice.jpg" },
           ],
         },
       }),
     ).toBe("/uploads/my-choice.jpg");
+  });
+
+  it("prefers disc art for loose games over the catalog box pin", () => {
+    expect(
+      getCoverImage({
+        condition: "loose",
+        imageUrl: "/uploads/box-eu.jpg",
+        shelf: { type: "games", name: "PlayStation 2" },
+        metadata: {
+          imageUrl: "/uploads/box-eu.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "eu",
+              url: "/uploads/box-eu.jpg",
+            },
+            {
+              type: "image",
+              source: "screenscraper",
+              role: "disc-fr",
+              url: "/uploads/disc-fr.jpg",
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/disc-fr.jpg");
+  });
+
+  it("keeps the box cover for used games even when a disc exists", () => {
+    expect(
+      getCoverImage({
+        condition: "used",
+        imageUrl: "/uploads/box-eu.jpg",
+        shelf: { type: "games", name: "PlayStation 2" },
+        metadata: {
+          imageUrl: "/uploads/box-eu.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "eu",
+              url: "/uploads/box-eu.jpg",
+            },
+            {
+              type: "image",
+              source: "screenscraper",
+              role: "disc-fr",
+              url: "/uploads/disc-fr.jpg",
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/box-eu.jpg");
+  });
+
+  it("keeps an explicit user cover override on loose games", () => {
+    expect(
+      getCoverImage({
+        condition: "loose",
+        imageUrl: "/uploads/my-box-pick.jpg",
+        updatedAt: "2026-07-18T20:00:00.000Z",
+        shelf: { type: "games", name: "PlayStation 2" },
+        metadata: {
+          imageUrl: "/uploads/box-eu.jpg",
+          lastFetched: "2026-07-18T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "eu",
+              url: "/uploads/my-box-pick.jpg",
+            },
+            {
+              type: "image",
+              source: "screenscraper",
+              role: "disc-fr",
+              url: "/uploads/disc-fr.jpg",
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/my-box-pick.jpg");
   });
 
   it("honors a low-res gallery pick saved after the last enrichment", () => {
@@ -84,12 +284,16 @@ describe("getCoverImage", () => {
     ).toBe("/uploads/icollect-lowres.jpg");
   });
 
-  it("prefers metadata cover over orphan low-res listing thumbs", () => {
+  it("ignores a stale enrichment item.imageUrl when metadata default moved on", () => {
+    // Without an explicit user pick (updatedAt > lastFetched), display follows
+    // the dynamic metadata default — not a leftover enrichment-synced pin.
     expect(
       getCoverImage({
         imageUrl: "/uploads/ebay-thumb.jpg",
+        updatedAt: "2026-07-03T10:00:00.000Z",
         metadata: {
           imageUrl: "/uploads/geedie-cover.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
           attachments: [
             {
               type: "cover",
@@ -109,6 +313,184 @@ describe("getCoverImage", () => {
         },
       }),
     ).toBe("/uploads/geedie-cover.jpg");
+  });
+
+  it("keeps an explicit gallery pick even when a higher-res catalog cover exists", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/ebay-thumb.jpg",
+        updatedAt: "2026-07-03T19:00:00.000Z",
+        metadata: {
+          imageUrl: "/uploads/geedie-cover.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "ebay",
+              url: "/uploads/ebay-thumb.jpg",
+              width: 160,
+              height: 225,
+            },
+            {
+              type: "cover",
+              source: "geedie",
+              url: "/uploads/geedie-cover.jpg",
+              width: 454,
+              height: 640,
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/ebay-thumb.jpg");
+  });
+
+  it("honors an explicit SteamGridDB gallery pick even when a shelf box cover exists", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/grid-alt.jpg",
+        updatedAt: "2026-07-19T18:00:00.000Z",
+        shelf: { type: "games", name: "PlayStation 3" },
+        metadata: {
+          imageUrl: "/uploads/grid-default.jpg",
+          lastFetched: "2026-07-19T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "steamgriddb",
+              role: "grid-vertical",
+              url: "/uploads/grid-default.jpg",
+              width: 600,
+              height: 900,
+            },
+            {
+              type: "cover",
+              source: "steamgriddb",
+              role: "grid-vertical",
+              url: "/uploads/grid-alt.jpg",
+              width: 600,
+              height: 900,
+            },
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "eu",
+              url: "/uploads/box-eu.jpg",
+              width: 600,
+              height: 900,
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/grid-alt.jpg");
+  });
+
+  it("honors a source=user gallery pick after enrichment refreshes lastFetched", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/grid-alt_crop.jpg",
+        updatedAt: "2026-07-19T12:00:00.000Z",
+        shelf: { type: "games", name: "PlayStation 3" },
+        metadata: {
+          imageUrl: "/uploads/grid-default.jpg",
+          lastFetched: "2026-07-19T18:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "steamgriddb",
+              role: "grid-vertical",
+              url: "/uploads/grid-alt.jpg",
+              width: 600,
+              height: 900,
+            },
+            {
+              type: "image",
+              source: "user",
+              url: "/uploads/grid-alt_crop.jpg",
+            },
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "eu",
+              url: "/uploads/box-eu.jpg",
+              width: 600,
+              height: 900,
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/grid-alt_crop.jpg");
+  });
+
+  it("does not let an orphan source=user pin override a marketplace item cover", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/ebay_crop.jpg",
+        updatedAt: "2026-07-19T12:00:00.000Z",
+        shelf: { type: "games", name: "PlayStation Vita" },
+        metadata: {
+          imageUrl: "/uploads/ebay_crop.jpg",
+          lastFetched: "2026-07-19T18:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "ebay",
+              role: "marketplace",
+              url: "/uploads/ebay_crop.jpg",
+              width: 400,
+              height: 560,
+            },
+            {
+              type: "cover",
+              source: "merged",
+              url: "/uploads/merged.jpg",
+              width: 600,
+              height: 900,
+            },
+            {
+              type: "image",
+              source: "user",
+              url: "/uploads/merged.jpg",
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/merged.jpg");
+  });
+
+  it("honors a marketplace cover once the user pin matches it", () => {
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/ebay_crop.jpg",
+        updatedAt: "2026-07-19T19:00:00.000Z",
+        shelf: { type: "games", name: "PlayStation Vita" },
+        metadata: {
+          imageUrl: "/uploads/ebay_crop.jpg",
+          lastFetched: "2026-07-19T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "ebay",
+              role: "marketplace",
+              url: "/uploads/ebay_crop.jpg",
+              width: 400,
+              height: 560,
+            },
+            {
+              type: "cover",
+              source: "merged",
+              url: "/uploads/merged.jpg",
+              width: 600,
+              height: 900,
+            },
+            {
+              type: "image",
+              source: "user",
+              url: "/uploads/ebay_crop.jpg",
+            },
+          ],
+        },
+      }),
+    ).toBe("/uploads/ebay_crop.jpg");
   });
 
   it("does not pin a background banner as the default cover", () => {
@@ -179,6 +561,38 @@ describe("getCoverImage", () => {
         },
       }),
     ).toBe("/uploads/box-front-large.jpg");
+  });
+
+  it("keeps a pinned SteamGridDB grid when only Xbox One box art exists on an Xbox Series shelf", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/uploads/grid.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "steamgriddb",
+            role: "grid-vertical",
+            url: "/uploads/grid.jpg",
+            platformKey: "xboxseries",
+            width: 900,
+            height: 1200,
+          },
+          {
+            type: "cover" as const,
+            source: "screenscraper",
+            role: "eu",
+            url: "/uploads/xboxone-box.jpg",
+            platformKey: "xboxone",
+            width: 800,
+            height: 1200,
+          },
+        ],
+      },
+      shelf: { type: "games", name: "Xbox Series" },
+    };
+
+    expect(resolveMetadataCoverUrl(item)).toBe("/uploads/grid.jpg");
+    expect(getCoverImage(item)).toBe("/uploads/grid.jpg");
   });
 
   it("skips platform-mismatched metadata.imageUrl on a PS4 shelf", () => {
@@ -398,13 +812,13 @@ describe("filterMetadataForShelfPlatform", () => {
     const filtered = filterMetadataForShelfPlatform(
       {
         attachments: [
-          {
+          withProviderAttachmentTraits({
             type: "cover" as const,
             source: "icollect",
             role: "jp",
             url: "/uploads/icollect-eu-pegi.jpg",
             title: "Metal Gear Solid Master Collection Vol. 1 - Main Image 1",
-          },
+          }),
         ],
         facts: [
           {
@@ -510,6 +924,35 @@ describe("filterMetadataForShelfPlatform", () => {
       "/uploads/bourne-game.jpg",
     ]);
     expect(filtered?.imageUrl).toBe("/uploads/bourne-game.jpg");
+  });
+
+  it("drops a mismatched BDovore catalog cover for another comic line", () => {
+    const filtered = filterMetadataForShelfPlatform(
+      {
+        title: "Les Trésors de Picsou n°1",
+        imageUrl: "/uploads/ages-or.jpg",
+        attachments: [
+          withProviderAttachmentTraits({
+            type: "cover" as const,
+            source: "bdovore",
+            url: "/uploads/ages-or.jpg",
+            title: "Les âges d'or de Picsou, Tome 1",
+          }),
+          withProviderAttachmentTraits({
+            type: "cover" as const,
+            source: "bdovore",
+            url: "/uploads/tresors.jpg",
+            title: "Les trésors de Picsou n°1 : La jeunesse de Picsou",
+          }),
+        ],
+      },
+      { type: "books", name: "Les Trésors de Picsou" },
+    );
+
+    expect(filtered?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/tresors.jpg",
+    ]);
+    expect(filtered?.imageUrl).toBe("/uploads/tresors.jpg");
   });
 
   it("keeps metadata.imageUrl on a platform shelf when gallery rows are missing", () => {
@@ -786,7 +1229,7 @@ platformKey: null,
 });
 
 describe("presentItem", () => {
-  it("applies canonical title and cover across the payload", () => {
+  it("keeps the collector title and applies cover across the payload", () => {
     const presented = presentItem({
       name: "Super Monkey Ball Banana Blitz Complet VF",
       imageUrl: null,
@@ -797,10 +1240,9 @@ describe("presentItem", () => {
       shelf: { type: "games" },
     });
 
-    expect(presented.name).toBe("Super Monkey Ball: Banana Blitz");
-    expect(presented.storedName).toBe(
-      "Super Monkey Ball Banana Blitz Complet VF",
-    );
+    expect(presented.name).toBe("Super Monkey Ball Banana Blitz Complet VF");
+    expect(presented.storedName).toBeUndefined();
+    expect(presented.metadata?.title).toBe("Super Monkey Ball: Banana Blitz");
     expect(presented.imageUrl).toBe("/uploads/cover.jpg");
   });
 
@@ -814,11 +1256,20 @@ describe("presentItem", () => {
     expect(presented.storedName).toBeUndefined();
   });
 
-  it("falls back to item name when metadata has no title", () => {
+  it("prefers the collector name over metadata title", () => {
     expect(
       getDisplayTitle({
-        name: "Mon jeu",
-        metadata: {},
+        name: "Alice 19th Tome 2",
+        metadata: { title: "L'Académie Alice, tome 2" },
+      }),
+    ).toBe("Alice 19th Tome 2");
+  });
+
+  it("falls back to metadata title when the item has no name", () => {
+    expect(
+      getDisplayTitle({
+        name: "",
+        metadata: { title: "Mon jeu" },
       }),
     ).toBe("Mon jeu");
   });
@@ -901,5 +1352,113 @@ platformKey: null,
     } as Parameters<typeof presentItemFromStorage>[0]);
 
     expect(presented.imageUrl).toBe("/uploads/trilogy-pop.jpg");
+  });
+
+  it("keeps the catalog metadata.title when it differs from the item name", () => {
+    const now = new Date("2026-01-01T00:00:00.000Z");
+    const presented = presentItemFromStorage({
+      id: "item-wrc-4",
+      name: "WRC 4: FIA World Rally Championship",
+      imageUrl: "/uploads/wrc.jpg",
+      shelf: { type: "games", name: "PlayStation Vita" },
+      metadata: {
+        id: "meta-wrc-4",
+        title: "Wrc 4",
+        description: null,
+        releaseDate: null,
+        imageUrl: "/uploads/wrc.jpg",
+        heroImageUrl: null,
+        duration: null,
+        pageCount: null,
+        tracksCount: null,
+        aliases: null,
+        facts: null,
+        sourceType: "games",
+        sourceQuery: "WRC 4",
+        lastFetched: now,
+        createdAt: now,
+        updatedAt: now,
+        authors: [],
+        publishers: [],
+        attachments: [],
+      },
+    } as Parameters<typeof presentItemFromStorage>[0]);
+
+    expect(presented.name).toBe("WRC 4: FIA World Rally Championship");
+    expect(presented.metadata?.title).toBe("Wrc 4");
+  });
+
+  it("aligns shelf list cover with detail when a stale item.imageUrl conflicts", () => {
+    const now = new Date("2026-01-01T00:00:00.000Z");
+    const presented = presentItemFromStorage({
+      id: "item-tresors-1",
+      name: "Les Trésors de Picsou n°1",
+      imageUrl: "/uploads/ages-or-crop.jpg",
+      metadata: {
+        id: "meta-tresors-1",
+        title: "Les Trésors de Picsou n°1",
+        description: null,
+        releaseDate: null,
+        imageUrl: "/uploads/ages-or.jpg",
+        heroImageUrl: null,
+        duration: null,
+        pageCount: null,
+        tracksCount: null,
+        aliases: null,
+        facts: null,
+        sourceType: "books",
+        sourceQuery: "Les Trésors de Picsou n°1",
+        lastFetched: now,
+        createdAt: now,
+        updatedAt: now,
+        authors: [],
+        publishers: [],
+        attachments: [
+          {
+            id: "att-ages-or",
+            metadataId: "meta-tresors-1",
+            type: "cover",
+            url: "/uploads/ages-or.jpg",
+            title: "Les âges d'or de Picsou, Tome 1",
+            source: "bdovore",
+            role: null,
+            duration: null,
+            coverProvenance: null,
+            platformKey: null,
+            width: 400,
+            height: 600,
+            meanLuminance: 0.5,
+            darkPixelRatio: 0.1,
+            createdAt: now,
+            updatedAt: now,
+          },
+          {
+            id: "att-tresors",
+            metadataId: "meta-tresors-1",
+            type: "cover",
+            url: "/uploads/tresors.jpg",
+            title: "Les trésors de Picsou n°1 : La jeunesse de Picsou",
+            source: "bdovore",
+            role: null,
+            duration: null,
+            coverProvenance: null,
+            platformKey: null,
+            width: 420,
+            height: 620,
+            meanLuminance: 0.52,
+            darkPixelRatio: 0.1,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+      },
+      shelf: { type: "books", name: "Les Trésors de Picsou" },
+    });
+
+    expect(presented.metadata?.attachments?.map((attachment) => attachment.url)).toEqual([
+      "/uploads/tresors.jpg",
+    ]);
+    expect(presented.imageUrl).toBe("/uploads/tresors.jpg");
+    expect(presented.imageUrl).not.toBe("/uploads/ages-or-crop.jpg");
   });
 });

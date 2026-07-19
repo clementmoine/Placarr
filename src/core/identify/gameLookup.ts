@@ -25,6 +25,10 @@ export type NamedListing = {
   productUrl?: string;
   shippingNew?: number;
   shippingUsed?: number;
+  /** Catalog category / physical format ("DVD") when the source sheet exposes it. */
+  category?: string | null;
+  /** Brand / label ("DISNEY JUNIOR") for shelf estimation. */
+  brand?: string | null;
 };
 
 export type GameLookupInputs = {

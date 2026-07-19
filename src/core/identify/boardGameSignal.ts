@@ -4,6 +4,8 @@ import {
   detectVideoGamePlatformKey,
   videoGamePlatformListingTypeSignal,
 } from "@/core/identify/platforms/platforms";
+import { makeObservationUsage } from "@/core/enrich/observations";
+import type { MetadataObservation } from "@/types/metadataObservation";
 
 /**
  * A board game scanned without a type (home-page scan → generic branch) competes
@@ -133,8 +135,17 @@ export function collectPayloadListingNames(
       if (listing?.name) names.push(listing.name);
     }
   };
+  const pushCatalogHints = (
+    listings: Array<{ category?: string | null; brand?: string | null }>,
+  ) => {
+    for (const listing of listings) {
+      if (listing.category?.trim()) names.push(listing.category.trim());
+      if (listing.brand?.trim()) names.push(listing.brand.trim());
+    }
+  };
 
   pushListings(payload.amc);
+  pushCatalogHints(payload.amc);
   pushListings(payload.ebay);
   pushListings(payload.freakxy);
   pushListings(payload.calGeneric);
@@ -149,4 +160,62 @@ export function collectPayloadListingNames(
   }
 
   return names;
+}
+
+/** Brand / category clues from marketplace listings for shelf estimation. */
+export function collectPayloadShelfHints(
+  payload: BarcodeLookupPayload,
+): string[] {
+  const hints: string[] = [];
+  const push = (value?: string | null) => {
+    const trimmed = value?.trim();
+    if (!trimmed) return;
+    if (
+      hints.some(
+        (hint) => hint.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      return;
+    }
+    hints.push(trimmed);
+  };
+
+  for (const listing of payload.amc || []) {
+    push(listing.category);
+    push(listing.brand);
+  }
+  return hints;
+}
+
+/** Persist format/brand shelf clues as non-display fact observations. */
+export function shelfHintObservationsFromHints(
+  hints: string[],
+  mediaFormat?: string | null,
+): MetadataObservation[] {
+  return hints.map((hint) => {
+    const isFormatHint =
+      mediaFormat != null &&
+      hint.toLowerCase() === mediaFormat.toLowerCase();
+    return {
+      kind: "fact" as const,
+      role: "listing_fact" as const,
+      factKind: isFormatHint ? "media-format" : "brand",
+      label: isFormatHint ? "Format" : "Marque",
+      value: hint,
+      provenance: {
+        providerId: "marketplace",
+        providerLabel: "Marketplace",
+        sourceDocumentRole: "structured_data" as const,
+        evidenceSignals: [
+          "structured_data" as const,
+          "barcode_match" as const,
+        ],
+      },
+      usage: makeObservationUsage({
+        displayCandidate: false,
+        searchAlias: isFormatHint ? "none" : "weak",
+        evidence: "strong",
+      }),
+    };
+  });
 }

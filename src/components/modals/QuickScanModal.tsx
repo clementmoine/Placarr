@@ -32,7 +32,7 @@ import { getShelves } from "@/lib/api/shelves";
 import { getCoverImage } from "@/core/collect/media";
 import { RemoteImage } from "@/components/RemoteImage";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { guessShelfFromBarcodeLookup } from "@/core/identify/query";
+import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { saveItem } from "@/lib/api/items";
 import { syncItemQueries } from "@/core/collect/queryCache";
@@ -129,10 +129,10 @@ export function QuickScanModal({
   const activeLookupKeyRef = useRef<string>("");
   const skipNextLookupForAutoShelfRef = useRef(false);
 
-  // Get user's shelves
+  // Get user's shelves (lite — picker doesn't need bestItem covers)
   const { data: shelves } = useQuery({
-    queryKey: ["shelves"],
-    queryFn: () => getShelves(),
+    queryKey: ["shelves", "picker"],
+    queryFn: () => getShelves(null, { lite: true }),
     enabled: isOpen,
   });
 
@@ -361,12 +361,12 @@ export function QuickScanModal({
       // Try to guess shelf from rawNames, cleanName, suggestions. The backend
       // surfaces the physical-format clue ("LaserDisc"/"VHS"…) as a separate
       // cached `mediaFormat` field (NOT in rawNames, so it never shows as a
-      // candidate item); it leads here so a matching format shelf is recommended
-      // over a generic same-type one.
-      const mediaFormat = payload?.mediaFormat as string | undefined;
+      // candidate item); brand/category facts (Disney Junior, DVD) join it so a
+      // matching format shelf is recommended over a generic same-type one.
+      const shelfHints = shelfSearchHintsFromBarcodePayload(payload || {});
       const allSearchNames = Array.from(
         new Set([
-          ...(mediaFormat ? [mediaFormat] : []),
+          ...shelfHints,
           ...(cleanName ? [cleanName] : []),
           ...rawNames,
           ...suggestions,

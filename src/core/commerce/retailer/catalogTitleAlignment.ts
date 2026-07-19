@@ -52,11 +52,24 @@ export function catalogTitleAlignedWithItem(
   );
 }
 
+/** Path segments that are search/list chrome, not a product title slug. */
+const NON_PRODUCT_PATH_SEGMENTS = new Set([
+  "search",
+  "search-products",
+  "search-results",
+  "results",
+  "query",
+]);
+
 export function catalogTitleFromProductUrl(url: string): string | null {
   try {
     const pathname = new URL(url.trim()).pathname;
     const slug = pathname.split("/").filter(Boolean).pop();
     if (!slug || /^\d+$/.test(slug)) return null;
+    // PriceCharting catalog chips use /fr/search-products?q=… — the last path
+    // segment is "search-products", not a game title. Treating it as one made
+    // purgeContradictedProviderExternalLinks drop the honest search link.
+    if (NON_PRODUCT_PATH_SEGMENTS.has(slug.toLowerCase())) return null;
     return slug
       .replace(/^\d+-/, "")
       .replace(/\.[a-z0-9]+$/i, "")

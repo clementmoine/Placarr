@@ -302,4 +302,19 @@ describe("attachmentDisplayLabels", () => {
       }).sourceNames,
     ).toEqual(["ScreenScraper", "Launchbox"]);
   });
+
+  it("n'affiche pas Perso quand un vrai provider partage le même fichier", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        source: "booknode",
+        providerLabel: "Booknode",
+        sourceNames: ["Perso", "Booknode"],
+      }),
+    ).toMatchObject({
+      provider: "Booknode",
+      sourceNames: ["Booknode"],
+      kind: "Jaquette",
+    });
+  });
 });

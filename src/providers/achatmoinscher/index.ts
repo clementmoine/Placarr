@@ -1,6 +1,7 @@
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import {
@@ -47,7 +48,7 @@ async function refreshAchatMoinsCherOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  for (const query of [ctx.cleanedBarcode, ...ctx.fallbackNames]) {
+  for (const query of matchPriceSeekQueries(ctx)) {
     if (!query.trim()) continue;
     const result = await fetchPricesFromAchatMoinsCher(query, expectedNames);
     if (!result) continue;
@@ -150,6 +151,52 @@ function buildAchatMoinsCherObservations(
         evidenceSignals,
       },
       usage: makeObservationUsage({ evidence: "strong" }),
+    });
+  }
+
+  if (product.category?.trim()) {
+    observations.push({
+      kind: "fact",
+      role: "listing_fact",
+      factKind: "media-format",
+      label: "Format",
+      value: product.category.trim(),
+      provenance: {
+        providerId: "achatmoinscher",
+        providerLabel: "AchatMoinsCher",
+        sourceDocumentRole: "structured_data",
+        sourceUrl: product.productUrl ?? undefined,
+        sourceId: product.productId ?? undefined,
+        evidenceSignals,
+      },
+      usage: makeObservationUsage({
+        displayCandidate: false,
+        searchAlias: "none",
+        evidence: "strong",
+      }),
+    });
+  }
+
+  if (product.brand?.trim()) {
+    observations.push({
+      kind: "fact",
+      role: "listing_fact",
+      factKind: "brand",
+      label: "Marque",
+      value: product.brand.trim(),
+      provenance: {
+        providerId: "achatmoinscher",
+        providerLabel: "AchatMoinsCher",
+        sourceDocumentRole: "structured_data",
+        sourceUrl: product.productUrl ?? undefined,
+        sourceId: product.productId ?? undefined,
+        evidenceSignals,
+      },
+      usage: makeObservationUsage({
+        displayCandidate: false,
+        searchAlias: "weak",
+        evidence: "strong",
+      }),
     });
   }
 

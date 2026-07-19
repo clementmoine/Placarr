@@ -194,7 +194,14 @@ export function formatAttachmentSourceNames(
   }
 
   push(formatProviderDisplayName(input));
-  return names;
+
+  // Synthetic honor pins should not hide the real catalog provider when both
+  // contributed the same file ("Perso" + "Booknode" → Booknode only).
+  const withoutHonorPin =
+    names.length > 1
+      ? names.filter((name) => normalizeToken(name) !== "perso")
+      : names;
+  return withoutHonorPin.length > 0 ? withoutHonorPin : names;
 }
 
 function parseKindFromTitle(

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getGalleryImages, orderedCoverAttachmentsForDisplay } from "./media";
+import { getGalleryImages, mergeCoverAttachmentsForPicker, orderedCoverAttachmentsForDisplay } from "./media";
 
 describe("orderedCoverAttachmentsForDisplay", () => {
   it("pins metadata.imageUrl first then keeps storage order", () => {
@@ -20,6 +20,64 @@ describe("orderedCoverAttachmentsForDisplay", () => {
         (attachment) => attachment.url,
       ),
     ).toEqual(["/uploads/b.jpg", "/uploads/a.jpg", "/uploads/c.jpg"]);
+  });
+
+  it("keeps disc art in the cover gallery after box fronts", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/uploads/box-eu.jpg",
+        attachments: [
+          {
+            type: "cover",
+            source: "screenscraper",
+            role: "eu",
+            url: "/uploads/box-eu.jpg",
+          },
+          {
+            type: "image",
+            source: "screenscraper",
+            role: "disc-fr",
+            url: "/uploads/disc-fr.jpg",
+          },
+        ],
+      },
+    };
+
+    expect(
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.url,
+      ),
+    ).toEqual(["/uploads/box-eu.jpg", "/uploads/disc-fr.jpg"]);
+  });
+
+  it("lists disc art first in the cover gallery for loose games", () => {
+    const item = {
+      condition: "loose",
+      shelf: { type: "games", name: "PlayStation 2" },
+      metadata: {
+        imageUrl: "/uploads/box-eu.jpg",
+        attachments: [
+          {
+            type: "cover",
+            source: "screenscraper",
+            role: "eu",
+            url: "/uploads/box-eu.jpg",
+          },
+          {
+            type: "image",
+            source: "screenscraper",
+            role: "disc-fr",
+            url: "/uploads/disc-fr.jpg",
+          },
+        ],
+      },
+    };
+
+    expect(
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.url,
+      ),
+    ).toEqual(["/uploads/disc-fr.jpg", "/uploads/box-eu.jpg"]);
   });
 
   it("hides covers that explicitly target another console than the shelf", () => {
@@ -123,6 +181,155 @@ describe("orderedCoverAttachmentsForDisplay", () => {
         (attachment) => attachment.source,
       ),
     ).toEqual(["icollect", "geedie"]);
+  });
+
+  it("ranks FR catalog covers before marketplace extras in the picker merge", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/uploads/bdovore.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "bdovore",
+            role: "fr",
+            url: "/uploads/bdovore.jpg",
+            width: 640,
+            height: 900,
+          },
+          {
+            type: "cover" as const,
+            source: "ebay",
+            role: "marketplace",
+            url: "/uploads/ebay.jpg",
+            width: 1400,
+            height: 2000,
+          },
+        ],
+      },
+    };
+    const pickerExtras = [
+      {
+        type: "cover" as const,
+        source: "booknode",
+        role: "fr",
+        url: "https://cdn1.booknode.com/example/mod11.webp",
+        width: 400,
+        height: 600,
+      },
+    ];
+
+    expect(
+      mergeCoverAttachmentsForPicker(item, pickerExtras).map(
+        (attachment) => attachment.source,
+      ),
+    ).toEqual(["bdovore", "booknode", "ebay"]);
+  });
+
+  it("does not pin a marketplace metadata default ahead of FR catalog covers", () => {
+    const booknode =
+      "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg";
+    const item = {
+      metadata: {
+        imageUrl: "/uploads/ebay-listing.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "ebay",
+            role: "marketplace",
+            url: "/uploads/ebay-listing.jpg",
+            width: 1400,
+            height: 2000,
+          },
+          {
+            type: "cover" as const,
+            source: "booknode",
+            role: "fr",
+            url: booknode,
+            width: 400,
+            height: 600,
+          },
+        ],
+      },
+      shelf: { type: "books", name: "Les Trésors de Picsou" },
+    };
+
+    expect(
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.source,
+      ),
+    ).toEqual(["booknode", "ebay"]);
+  });
+
+  it("lists user uploads first in the cover picker ahead of catalog grids", () => {
+    const item = {
+      imageUrl: "/uploads/my-disc.jpg",
+      metadata: {
+        imageUrl: "/uploads/grid.jpg",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "steamgriddb",
+            role: "grid-vertical",
+            url: "/uploads/grid.jpg",
+            title: "SteamGridDB - white_logo",
+            width: 600,
+            height: 900,
+          },
+          {
+            type: "image" as const,
+            source: "user",
+            url: "/uploads/my-disc.jpg",
+            width: 800,
+            height: 800,
+          },
+        ],
+      },
+      shelf: { type: "games", name: "Xbox One" },
+    };
+
+    expect(
+      mergeCoverAttachmentsForPicker(item, []).map(
+        (attachment) => attachment.source,
+      ),
+    ).toEqual(["user", "steamgriddb"]);
+  });
+
+  it("keeps Booknode provenance when an honor pin shares the same upload URL", () => {
+    const item = {
+      imageUrl: "/uploads/wakfu-cover.jpg",
+      metadata: {
+        imageUrl: "/uploads/wakfu-cover.jpg",
+        attachments: [
+          {
+            type: "image" as const,
+            source: "user",
+            url: "/uploads/wakfu-cover.jpg",
+          },
+          {
+            type: "cover" as const,
+            source: "booknode",
+            role: "fr",
+            url: "/uploads/wakfu-cover.jpg",
+            providerLabel: "Booknode",
+          },
+          {
+            type: "cover" as const,
+            source: "senscritique",
+            role: "fr",
+            url: "/uploads/other.jpg",
+            providerLabel: "SensCritique",
+          },
+        ],
+      },
+      shelf: { type: "books", name: "Mangas" },
+    };
+
+    const ranked = mergeCoverAttachmentsForPicker(item, []);
+    const wakfu = ranked.find((attachment) =>
+      attachment.url.includes("wakfu-cover"),
+    );
+    expect(wakfu?.source).toBe("booknode");
+    expect(wakfu?.providerLabel ?? "Booknode").toBe("Booknode");
   });
 
   it("collapses duplicate local files referenced by multiple providers", () => {

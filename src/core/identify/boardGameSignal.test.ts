@@ -65,6 +65,10 @@ describe("detectMediaFormat", () => {
     expect(detectMediaFormat(["Toy Story"])).toBeNull();
     expect(detectMediaFormat([])).toBeNull();
   });
+
+  it("accepte une catégorie marketplace isolée (fiche AMC)", () => {
+    expect(detectMediaFormat(["DVD", "DISNEY JUNIOR"])).toBe("DVD");
+  });
 });
 
 describe("detectBoardGameSignal", () => {

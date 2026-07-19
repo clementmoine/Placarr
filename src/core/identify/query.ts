@@ -82,6 +82,41 @@ function normalizeShelfName(value: string): string {
     .trim();
 }
 
+/** Physical-format tokens — used both as search clues and shelf-name prefixes. */
+const PHYSICAL_FORMAT_TOKENS = [
+  "dvd",
+  "blu ray",
+  "bluray",
+  "vhs",
+  "laserdisc",
+  "laser disc",
+  "uhd",
+  "4k",
+] as const;
+
+function compactShelfName(value: string): string {
+  return normalizeShelfName(value).replace(/\s+/g, "");
+}
+
+function physicalFormatTokenIn(value: string): string | null {
+  const normalized = normalizeShelfName(value);
+  const compact = compactShelfName(value);
+  for (const token of PHYSICAL_FORMAT_TOKENS) {
+    const normalizedToken = normalizeShelfName(token);
+    const compactToken = normalizedToken.replace(/\s+/g, "");
+    if (
+      normalized === normalizedToken ||
+      compact === compactToken ||
+      normalized.startsWith(`${normalizedToken} `) ||
+      normalized.endsWith(` ${normalizedToken}`) ||
+      ` ${normalized} `.includes(` ${normalizedToken} `)
+    ) {
+      return normalizedToken;
+    }
+  }
+  return null;
+}
+
 function scoreGenericShelfName(shelfName: string, shelfType: string): number {
   const normalizedName = normalizeShelfName(shelfName);
   if (!normalizedName) return 0;
@@ -97,8 +132,10 @@ function scoreGenericShelfName(shelfName: string, shelfType: string): number {
       score = Math.max(score, 3);
       continue;
     }
+    // Short format tokens ("dvd", "vhs") must still match branded shelves
+    // ("DVD Disney") via word containment.
     if (
-      normalizedHint.length >= 4 &&
+      normalizedHint.length >= 3 &&
       paddedName.includes(` ${normalizedHint} `)
     ) {
       score = Math.max(score, 2);
@@ -111,13 +148,48 @@ function scoreGenericShelfName(shelfName: string, shelfType: string): number {
 export function guessGenericShelfByType(
   shelfType: string | null | undefined,
   shelves: ShelfLike[],
+  options?: { formatToken?: string | null },
 ): { shelfId: string; isGuessed: boolean } | null {
   if (!shelfType || !shelves.length) return null;
+
+  const formatToken = options?.formatToken
+    ? normalizeShelfName(options.formatToken)
+    : null;
 
   let best: { shelfId: string; score: number } | null = null;
   for (const shelf of shelves) {
     if (shelf.type !== shelfType) continue;
-    const score = scoreGenericShelfName(shelf.name, shelfType);
+    const shelfFormat = physicalFormatTokenIn(shelf.name);
+    // When the scan knows the physical format, never recommend a competing
+    // format shelf via the soft "movies" generic scorer (Bluray vs DVD).
+    if (
+      formatToken &&
+      shelfFormat &&
+      compactShelfName(shelfFormat) !== compactShelfName(formatToken) &&
+      !(
+        compactShelfName(formatToken).includes(compactShelfName(shelfFormat)) ||
+        compactShelfName(shelfFormat).includes(compactShelfName(formatToken))
+      )
+    ) {
+      continue;
+    }
+    if (formatToken && !shelfFormat) {
+      // Soft category shelves ("Films") stay eligible as a last resort.
+    } else if (formatToken && shelfFormat) {
+      const normalizedShelf = normalizeShelfName(shelf.name);
+      if (
+        !normalizedShelf.includes(formatToken) &&
+        !compactShelfName(shelf.name).includes(compactShelfName(formatToken))
+      ) {
+        continue;
+      }
+    }
+
+    let score = scoreGenericShelfName(shelf.name, shelfType);
+    if (formatToken && shelfFormat) {
+      // Prefer the format-aligned shelf, and the more specific branded one.
+      score += 10 + normalizeShelfName(shelf.name).length / 100;
+    }
     if (score > 0 && (!best || score > best.score)) {
       best = { shelfId: shelf.id, score };
     }
@@ -135,28 +207,95 @@ export function guessShelfByStrongNameMatch(
 
   // Spacing/punctuation-insensitive form so a "LaserDisc" clue matches a
   // "Laser Disc" / "Laser-Disc" shelf (and vice-versa).
-  const compactTitle = normalizedTitle.replace(/\s+/g, "");
-  let best: { shelfId: string; score: number } | null = null;
+  const compactTitle = compactShelfName(productTitle);
+  let best: { shelfId: string; score: number; nameLength: number } | null =
+    null;
   for (const shelf of shelves) {
     const normalizedShelfName = normalizeShelfName(shelf.name);
     if (normalizedShelfName.length < 3) continue;
+    const compactShelf = compactShelfName(shelf.name);
 
     let score = 0;
     if (
       normalizedTitle === normalizedShelfName ||
-      compactTitle === normalizedShelfName.replace(/\s+/g, "")
+      compactTitle === compactShelf
     ) {
       score = 3;
     } else if (normalizedTitle.startsWith(`${normalizedShelfName} `)) {
+      // Title is more specific than the shelf ("DVD Disney Collection" → "DVD").
       score = 2;
+    } else if (normalizedShelfName.startsWith(`${normalizedTitle} `)) {
+      // Format clue "DVD" → branded shelf "DVD Disney".
+      score = 2.5;
+    } else if (
+      compactShelf.startsWith(compactTitle) &&
+      compactTitle.length >= 3 &&
+      compactShelf.length > compactTitle.length
+    ) {
+      score = 2.5;
     }
 
+    if (
+      score > 0 &&
+      (!best ||
+        score > best.score ||
+        (score === best.score &&
+          normalizedShelfName.length > best.nameLength))
+    ) {
+      best = {
+        shelfId: shelf.id,
+        score,
+        nameLength: normalizedShelfName.length,
+      };
+    }
+  }
+
+  return best ? { shelfId: best.shelfId, isGuessed: true } : null;
+}
+
+/**
+ * Prefer shelves whose non-format name tokens appear in search clues
+ * (brand "DISNEY JUNIOR" → shelf "DVD Disney").
+ */
+export function guessShelfBySearchTokenOverlap(
+  searchNames: string[],
+  shelves: ShelfLike[],
+): { shelfId: string; isGuessed: boolean } | null {
+  if (!searchNames.length || !shelves.length) return null;
+
+  const searchBlob = normalizeShelfName(searchNames.join(" "));
+  if (!searchBlob) return null;
+  const paddedSearch = ` ${searchBlob} `;
+
+  let best: { shelfId: string; score: number } | null = null;
+  for (const shelf of shelves) {
+    const normalizedShelf = normalizeShelfName(shelf.name);
+    const tokens = normalizedShelf
+      .split(/\s+/)
+      .filter((token) => token.length >= 4)
+      .filter((token) => !physicalFormatTokenIn(token));
+    if (tokens.length === 0) continue;
+
+    let score = 0;
+    for (const token of tokens) {
+      if (paddedSearch.includes(` ${token} `)) {
+        score += token.length;
+      }
+    }
     if (score > 0 && (!best || score > best.score)) {
       best = { shelfId: shelf.id, score };
     }
   }
 
   return best ? { shelfId: best.shelfId, isGuessed: true } : null;
+}
+
+function formatTokenFromSearchNames(searchNames: string[]): string | null {
+  for (const name of searchNames) {
+    const token = physicalFormatTokenIn(name);
+    if (token) return token;
+  }
+  return null;
 }
 
 function guessFirstShelfByType(
@@ -210,6 +349,14 @@ export function guessShelfFromBarcodeLookup(params: {
   const platformGuess = guessShelfByPlatformKey(platformKey, shelves);
   if (platformGuess) return platformGuess;
 
+  // Brand / studio tokens ("DISNEY JUNIOR") → branded format shelves
+  // ("DVD Disney") before a bare "DVD" exact match or soft "Bluray" generic.
+  const tokenOverlapGuess = guessShelfBySearchTokenOverlap(
+    searchNames,
+    typeCompatibleShelves,
+  );
+  if (tokenOverlapGuess) return tokenOverlapGuess;
+
   for (const name of searchNames) {
     const guess = guessShelfByStrongNameMatch(name, typeCompatibleShelves);
     if (guess) return guess;
@@ -220,7 +367,10 @@ export function guessShelfFromBarcodeLookup(params: {
     if (guess) return guess;
   }
 
-  const genericTypeGuess = guessGenericShelfByType(shelfType, shelves);
+  const formatToken = formatTokenFromSearchNames(searchNames);
+  const genericTypeGuess = guessGenericShelfByType(shelfType, shelves, {
+    formatToken,
+  });
   if (genericTypeGuess) return genericTypeGuess;
 
   for (const name of searchNames) {
@@ -306,4 +456,39 @@ export function guessShelfByPlatformKey(
   });
 
   return matchingShelf ? { shelfId: matchingShelf.id, isGuessed: true } : null;
+}
+
+/**
+ * Extra shelf-estimation clues from a barcode payload: physical format plus
+ * marketplace brand/category facts (e.g. "DISNEY JUNIOR" → "DVD Disney").
+ */
+export function shelfSearchHintsFromBarcodePayload(payload: {
+  mediaFormat?: string | null;
+  observations?: Array<{
+    kind?: string;
+    factKind?: string;
+    value?: string;
+  }> | null;
+}): string[] {
+  const hints: string[] = [];
+  const push = (value?: string | null) => {
+    const trimmed = value?.trim();
+    if (!trimmed) return;
+    if (hints.some((hint) => normalizeShelfName(hint) === normalizeShelfName(trimmed))) {
+      return;
+    }
+    hints.push(trimmed);
+  };
+
+  push(payload.mediaFormat);
+  for (const observation of payload.observations || []) {
+    if (observation.kind !== "fact") continue;
+    if (
+      observation.factKind === "brand" ||
+      observation.factKind === "media-format"
+    ) {
+      push(observation.value);
+    }
+  }
+  return hints;
 }

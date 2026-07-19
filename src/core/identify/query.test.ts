@@ -225,6 +225,41 @@ describe("guessShelfFromBarcodeLookup — étagère par format physique", () => 
   });
 });
 
+describe("guessShelfFromBarcodeLookup — DVD Disney vs Bluray", () => {
+  const shelves = [
+    { id: "s-bluray", name: "Bluray", type: "movies" },
+    { id: "s-dvd-disney", name: "DVD Disney", type: "movies" },
+    { id: "s-dvd", name: "DVD", type: "movies" },
+  ];
+
+  it("préfère DVD Disney quand format DVD + marque Disney sont connus", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "movies",
+        searchNames: [
+          "DVD",
+          "DISNEY JUNIOR",
+          "Tout le monde aime Tic & Tac, Volume 2",
+        ],
+        shelves,
+      }),
+    ).toEqual({ shelfId: "s-dvd-disney", isGuessed: true });
+  });
+
+  it("ne choisit pas Bluray quand le format connu est DVD (même sans marque)", () => {
+    expect(
+      guessShelfFromBarcodeLookup({
+        shelfType: "movies",
+        searchNames: ["DVD", "Tout le monde aime Tic & Tac, Volume 2"],
+        shelves: [
+          { id: "s-bluray", name: "Bluray", type: "movies" },
+          { id: "s-dvd-disney", name: "DVD Disney", type: "movies" },
+        ],
+      }),
+    ).toEqual({ shelfId: "s-dvd-disney", isGuessed: true });
+  });
+});
+
 describe("guessShelfFromBarcodeLookup — match par type résolu", () => {
   const shelves = [
     { id: "s-games", name: "Jeux Switch", type: "games" },

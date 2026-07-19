@@ -64,6 +64,16 @@ describe("retailerCatalogTitleContradictsItem", () => {
       }),
     ).toBe(false);
   });
+
+  it("does not reject PriceCharting search-product catalog chips", () => {
+    expect(
+      retailerCatalogTitleContradictsItem({
+        productUrl:
+          "https://www.pricecharting.com/fr/search-products?type=videogames&q=Wrc%204",
+        itemTitle: "WRC 4: FIA World Rally Championship",
+      }),
+    ).toBe(false);
+  });
 });
 
 describe("catalogTitleFromProductUrl", () => {
@@ -81,5 +91,13 @@ describe("catalogTitleFromProductUrl", () => {
         "https://www.le-passe-temps.com/defis-rigolades-delires/3740-black-stories.html",
       ),
     ).toBe("black stories");
+  });
+
+  it("ignores search-products path segments", () => {
+    expect(
+      catalogTitleFromProductUrl(
+        "https://www.pricecharting.com/fr/search-products?type=videogames&q=Wrc%204",
+      ),
+    ).toBeNull();
   });
 });

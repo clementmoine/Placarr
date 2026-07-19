@@ -64,10 +64,10 @@ function resolveConcurrency(): number {
       "",
     10,
   );
-  // Interactive enrich is I/O-bound (HTTP providers). 4 parallel items drains
+  // Interactive enrich is I/O-bound (HTTP providers). 6 parallel items drains
   // manga/game backlogs without drowning FlareSolverr (still serial per host).
   if (Number.isFinite(raw) && raw > 0) return raw;
-  return 4;
+  return 6;
 }
 
 function sleep(ms: number): Promise<void> {

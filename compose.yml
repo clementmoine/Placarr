@@ -66,7 +66,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
       - WORKER_ID=placarr-worker-1
       - WORKER_KINDS=interactive
-      - WORKER_CONCURRENCY=4
+      - WORKER_CONCURRENCY=6
     volumes:
       - ${ROOT:-.}/config/placarr:/config
       - placarr-uploads:/app/public/uploads

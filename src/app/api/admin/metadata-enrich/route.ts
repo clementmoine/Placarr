@@ -1,12 +1,11 @@
-import { after, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { runBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import type { Prisma } from "@prisma/client";
 
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { fetchAndStoreMetadata } from "@/core/enrich";
+import { startItemMetadataRefresh } from "@/core/collect/jobs/scheduleMetadataRefresh";
 
 import { PROVIDERS } from "@/core/catalog/catalog";
 
@@ -40,22 +39,6 @@ function parseBatchLimit(req: NextRequest): number {
   const parsed = rawLimit ? Number.parseInt(rawLimit, 10) : DEFAULT_BATCH_LIMIT;
   if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_BATCH_LIMIT;
   return Math.min(parsed, MAX_BATCH_LIMIT);
-}
-
-function scheduleAfterResponse(task: () => Promise<void>): void {
-  try {
-    after(task);
-  } catch (error) {
-    if (process.env.NODE_ENV === "test") return;
-    console.warn(
-      "[Admin Metadata Enrich] Falling back to timer scheduling",
-      error,
-    );
-    const timer = setTimeout(() => {
-      void task();
-    }, 0);
-    if (typeof timer.unref === "function") timer.unref();
-  }
 }
 
 export async function GET() {
@@ -105,30 +88,26 @@ export async function POST(req: NextRequest) {
     take: limit,
   });
 
-  scheduleAfterResponse(async () => {
-    await runWithConcurrency(items, ENRICH_ITEM_CONCURRENCY, async (item) => {
-      try {
-        const lookupQuery = item.metadata?.title || item.name;
-        await runBackgroundWork(() =>
-          fetchAndStoreMetadata(
-            item.id,
-            lookupQuery,
-            item.shelf.type,
-            item.barcode || undefined,
-            true,
-            undefined,
-            false,
-            true,
-            item.shelf.name,
-          ),
-        );
-      } catch (error) {
-        console.error(
-          `[Admin Metadata Enrich] Failed to refresh ${item.id}:`,
-          error,
-        );
-      }
-    });
+  // Stamp + enqueue only — worker runs enrich off the Next event loop.
+  await runWithConcurrency(items, ENRICH_ITEM_CONCURRENCY, async (item) => {
+    try {
+      const lookupQuery = item.metadata?.title || item.name;
+      await startItemMetadataRefresh({
+        itemId: item.id,
+        lookupQuery,
+        shelfType: item.shelf.type,
+        barcode: item.barcode,
+        shelfName: item.shelf.name,
+        bypassMetadataCache: false,
+        forceRefresh: true,
+        userId: item.userId,
+      });
+    } catch (error) {
+      console.error(
+        `[Admin Metadata Enrich] Failed to enqueue refresh for ${item.id}:`,
+        error,
+      );
+    }
   });
 
   return NextResponse.json(

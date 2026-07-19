@@ -8,8 +8,12 @@ import {
   hammingDistance,
   looksLikeImageBuffer,
   metadataImageAttachmentSemantics,
+  pickVisuallyMatchingCatalogCoverUrl,
+  planCroppedCoverAttachmentSync,
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
+  retargetUserHonorPinIfCatalogTwin,
+  selectAttachmentsForLocalization,
 } from "./storage";
 import { isDegenerateFlatImage } from "@/core/enrich/media/coverPlaceholder";
 
@@ -22,6 +26,218 @@ const att = (url: string, source: string): Att => ({
 });
 
 const bits = (s: string) => s.padEnd(64, "0");
+
+describe("pickVisuallyMatchingCatalogCoverUrl", () => {
+  it("remaps an orphan scan upload to the matching catalog provider cover", () => {
+    const pinHash = bits("10101010");
+    expect(
+      pickVisuallyMatchingCatalogCoverUrl(pinHash, [
+        {
+          url: "/uploads/user-pin.png",
+          type: "image",
+          source: "user",
+          hash: pinHash,
+        },
+        {
+          url: "/uploads/screenscraper-hash.png",
+          type: "cover",
+          source: "screenscraper",
+          hash: pinHash,
+        },
+      ]),
+    ).toBe("/uploads/screenscraper-hash.png");
+  });
+
+  it("prefers HDJV over inventing Perso for a UUID re-upload of the same box art", () => {
+    const artHash = bits("1100110011001100");
+    expect(
+      pickVisuallyMatchingCatalogCoverUrl(artHash, [
+        {
+          url: "/uploads/59441f26fe239fb668cbef240d966de1.jpg",
+          type: "cover",
+          source: "hdjv",
+          hash: artHash,
+        },
+        {
+          url: "/uploads/fadedf0fc669aaefadb2cfc3d4ac65ef.jpg",
+          type: "cover",
+          source: "screenscraper",
+          hash: bits("0011001100110011"),
+        },
+      ]),
+    ).toBe("/uploads/59441f26fe239fb668cbef240d966de1.jpg");
+  });
+
+  it("leaves a visually unique personal photo alone", () => {
+    expect(
+      pickVisuallyMatchingCatalogCoverUrl(bits("1111111111111111"), [
+        {
+          url: "/uploads/catalog.png",
+          type: "cover",
+          source: "screenscraper",
+          hash: bits("0000000000000000"),
+        },
+      ]),
+    ).toBeNull();
+  });
+});
+
+describe("retargetUserHonorPinIfCatalogTwin", () => {
+  it("retargets a Perso UUID pin onto the Canal BD visual twin", () => {
+    const artHash = bits("1010101010101010");
+    const gallery = [
+      {
+        type: "image" as const,
+        url: "/uploads/uuid-perso.jpg",
+        source: "user",
+      },
+      {
+        type: "cover" as const,
+        url: "/uploads/canalbd-naruto.jpg",
+        source: "canalbd",
+      },
+    ];
+    const hashByUrl = new Map([
+      ["/uploads/uuid-perso.jpg", artHash],
+      ["/uploads/canalbd-naruto.jpg", artHash],
+    ]);
+    expect(
+      retargetUserHonorPinIfCatalogTwin(gallery[0], gallery, hashByUrl),
+    ).toEqual({
+      type: "image",
+      url: "/uploads/canalbd-naruto.jpg",
+      source: "user",
+    });
+  });
+
+  it("keeps a real personal photo that does not match catalog art", () => {
+    const gallery = [
+      {
+        type: "image" as const,
+        url: "/uploads/my-photo.jpg",
+        source: "user",
+      },
+      {
+        type: "cover" as const,
+        url: "/uploads/canalbd.jpg",
+        source: "canalbd",
+      },
+    ];
+    const hashByUrl = new Map([
+      ["/uploads/my-photo.jpg", bits("1111111111111111")],
+      ["/uploads/canalbd.jpg", bits("0000000000000000")],
+    ]);
+    expect(
+      retargetUserHonorPinIfCatalogTwin(gallery[0], gallery, hashByUrl),
+    ).toEqual(gallery[0]);
+  });
+});
+
+describe("planCroppedCoverAttachmentSync", () => {
+  it("does not rewrite the previous cover when the user picks a different image", () => {
+    expect(
+      planCroppedCoverAttachmentSync(
+        [
+          {
+            id: "att-a",
+            url: "/uploads/cover-a_crop.jpg",
+            source: "steamgriddb",
+          },
+          {
+            id: "att-b",
+            url: "/uploads/cover-b.jpg",
+            source: "steamgriddb",
+          },
+        ],
+        "/uploads/cover-b_crop.jpg",
+        "/uploads/cover-a_crop.jpg",
+      ),
+    ).toEqual([
+      {
+        action: "update",
+        attachmentId: "att-b",
+        url: "/uploads/cover-b_crop.jpg",
+      },
+      { action: "create-user", url: "/uploads/cover-b_crop.jpg" },
+    ]);
+  });
+
+  it("creates a user pin when a newly localized gallery pick has no matching row", () => {
+    expect(
+      planCroppedCoverAttachmentSync(
+        [
+          {
+            id: "att-a",
+            url: "/uploads/cover-a_crop.jpg",
+            source: "steamgriddb",
+          },
+          {
+            id: "att-b",
+            url: "https://cdn.example.com/cover-b.jpg",
+            source: "steamgriddb",
+          },
+        ],
+        "/uploads/new-local_crop.jpg",
+        "/uploads/cover-a_crop.jpg",
+      ),
+    ).toEqual([{ action: "create-user", url: "/uploads/new-local_crop.jpg" }]);
+  });
+
+  it("only updates the matching row when re-cropping the same cover", () => {
+    expect(
+      planCroppedCoverAttachmentSync(
+        [
+          {
+            id: "att-a",
+            url: "/uploads/cover-a.jpg",
+            source: "steamgriddb",
+          },
+        ],
+        "/uploads/cover-a_crop.jpg",
+        "/uploads/cover-a.jpg",
+      ),
+    ).toEqual([
+      {
+        action: "update",
+        attachmentId: "att-a",
+        url: "/uploads/cover-a_crop.jpg",
+      },
+      { action: "create-user", url: "/uploads/cover-a_crop.jpg" },
+    ]);
+  });
+
+  it("realigns an orphan user pin when re-saving the stored cover", () => {
+    expect(
+      planCroppedCoverAttachmentSync(
+        [
+          {
+            id: "att-ebay",
+            url: "/uploads/ebay_crop.jpg",
+            source: "ebay",
+          },
+          {
+            id: "att-merged",
+            url: "/uploads/merged.jpg",
+            source: "merged",
+          },
+          {
+            id: "att-user",
+            url: "/uploads/merged.jpg",
+            source: "user",
+          },
+        ],
+        "/uploads/ebay_crop.jpg",
+        "/uploads/ebay_crop.jpg",
+      ),
+    ).toEqual([
+      {
+        action: "update",
+        attachmentId: "att-user",
+        url: "/uploads/ebay_crop.jpg",
+      },
+    ]);
+  });
+});
 
 describe("formatMetadataFromStorage attachment traits", () => {
   it("re-derives provider gallery and cover traits when loading from storage", () => {
@@ -417,5 +633,43 @@ describe("looksLikeImageBuffer", () => {
     ).toBe(false);
     expect(looksLikeImageBuffer(Buffer.from("<!DOCTYPE html>"))).toBe(false);
     expect(looksLikeImageBuffer(Buffer.from([]))).toBe(false);
+  });
+});
+
+describe("selectAttachmentsForLocalization", () => {
+  it("prefers covers over screenshot grids and caps the download set", () => {
+    const attachments = [
+      ...Array.from({ length: 20 }, (_, i) => ({
+        type: "screenshot" as const,
+        url: `https://cdn.example/shot-${i}.png`,
+      })),
+      {
+        type: "cover" as const,
+        url: "https://cdn.example/box.png",
+      },
+      {
+        type: "hero" as const,
+        url: "https://cdn.example/hero.png",
+      },
+    ];
+
+    const selected = selectAttachmentsForLocalization(attachments, 5);
+    expect(selected).toHaveLength(5);
+    expect(selected[0]?.url).toBe("https://cdn.example/box.png");
+    expect(selected[1]?.url).toBe("https://cdn.example/hero.png");
+    expect(selected.some((a) => a.url.includes("shot-"))).toBe(true);
+  });
+
+  it("ignores already-local uploads when counting the remote budget", () => {
+    const selected = selectAttachmentsForLocalization(
+      [
+        { type: "cover", url: "/uploads/local.png" },
+        { type: "cover", url: "https://cdn.example/a.png" },
+      ],
+      12,
+    );
+    expect(selected).toEqual([
+      { type: "cover", url: "https://cdn.example/a.png" },
+    ]);
   });
 });

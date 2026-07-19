@@ -9,10 +9,13 @@ import {
   scheduleBatchItemMetadataRefresh,
   shelfMoveMetadataResetData,
 } from "@/core/collect/jobs/scheduleMetadataRefresh";
+import { stampItemMetadataRefresh } from "@/core/collect/jobs/metadataRefreshSession";
+import { ITEM_CONDITIONS } from "@/core/collect/condition";
 
-const VALID_CONDITIONS = new Set<string>(Object.values(Condition));
+const VALID_CONDITIONS = new Set<string>(ITEM_CONDITIONS);
 const CREATE_CHUNK_SIZE = 100;
 const MOVE_CHUNK_SIZE = 100;
+const DELETE_CHUNK_SIZE = 100;
 
 function normalizeItemIds(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null;
@@ -411,6 +414,56 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+
+  if (auth.user.role === "guest") {
+    return NextResponse.json(
+      { error: "Guests cannot delete items" },
+      { status: 403 },
+    );
+  }
+
+  try {
+    const body = await req.json();
+    const { itemIds, sourceShelfId } = body;
+
+    const resolved = await resolveBatchItems(
+      itemIds,
+      sourceShelfId,
+      auth.user.id,
+      auth.user.role,
+    );
+    if ("error" in resolved) return resolved.error;
+
+    const { items } = resolved;
+    const ids = items.map((item) => item.id);
+
+    for (let offset = 0; offset < ids.length; offset += DELETE_CHUNK_SIZE) {
+      const chunk = ids.slice(offset, offset + DELETE_CHUNK_SIZE);
+      await prisma.item.deleteMany({
+        where: { id: { in: chunk } },
+      });
+    }
+
+    const sourceShelfIds = Array.from(
+      new Set(items.map((item) => item.shelfId).filter(Boolean)),
+    );
+
+    return NextResponse.json({
+      count: items.length,
+      sourceShelfIds,
+    });
+  } catch (error) {
+    console.error("[API Items Batch Delete] Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function PUT(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
@@ -435,6 +488,12 @@ export async function PUT(req: NextRequest) {
     if ("error" in resolved) return resolved.error;
 
     const { items } = resolved;
+
+    // Persist in-flight flags before enqueue so client polling can start
+    // immediately (batch refresh targets items that already have metadata).
+    for (const item of items) {
+      await stampItemMetadataRefresh(item.id);
+    }
 
     scheduleMetadataRefreshByShelf(items);
 

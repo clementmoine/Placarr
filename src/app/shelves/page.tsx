@@ -48,6 +48,7 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath, shelfPath } from "@/lib/routing/slugs";
 import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
+import { compareTitlesForSort } from "@/core/enrich/titles/sort";
 import axios from "axios";
 import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -152,7 +153,7 @@ function ShelvesComponent() {
   });
 
   const sortedShelves = useMemo(
-    () => shelves?.sort((a, b) => a.name.localeCompare(b.name)) || [],
+    () => shelves?.sort((a, b) => compareTitlesForSort(a.name, b.name)) || [],
     [shelves],
   );
 

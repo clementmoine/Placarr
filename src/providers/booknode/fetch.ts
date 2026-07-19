@@ -6,6 +6,7 @@ import {
   isMetadataTitleAligned,
 } from "@/core/enrich/titleMatching";
 import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   fetchGetWithFlareFallback,
   scrapeAccessBlocked,
@@ -28,6 +29,9 @@ export interface BooknodeBook {
   authors?: string[];
   publisher?: string;
   genres?: string[];
+  barcode?: string;
+  releaseDate?: string;
+  pageCount?: number;
   ratingValue?: number;
   ratingCount?: number;
   reviewCount?: number;
@@ -514,6 +518,14 @@ export function parseBooknodeBookPage(
     (book?.publisher as { name?: unknown } | undefined)?.name ??
       book?.publisher,
   );
+  const barcode =
+    normalizeProductBarcode(firstSchemaValue(book?.isbn)) ||
+    normalizeProductBarcode(firstSchemaValue(book?.gtin13)) ||
+    normalizeProductBarcode(firstSchemaValue(book?.gtin));
+  const releaseDate =
+    firstSchemaValue(book?.datePublished) ||
+    firstSchemaValue(book?.dateCreated);
+  const pageCount = parseNumber(book?.numberOfPages);
 
   return {
     id:
@@ -531,6 +543,9 @@ export function parseBooknodeBookPage(
     genres: schemaNames(book?.genre).length
       ? schemaNames(book?.genre)
       : markdownGenres(html),
+    barcode,
+    releaseDate,
+    pageCount,
     ratingValue: parseNumber(rating?.ratingValue),
     ratingCount: parseNumber(rating?.ratingCount) || markdownRatingCount(html),
     reviewCount: parseNumber(rating?.reviewCount) || markdownReviewCount(html),

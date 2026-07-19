@@ -9,9 +9,12 @@ import {
   parseBedethequeMediaUrls,
   parseBedethequeSaleListings,
   parseBedethequeRetailPrices,
+  parseBedethequeSeriesAlbumEntries,
   parseBedethequeSeriesAlbumLinks,
   pickBedethequeAlbumLink,
+  pickBedethequeHorsSerieAlbumPath,
   pickBedethequeSeriesCandidate,
+  rankBedethequeSeriesCandidates,
   bedethequeAlbumMatchesBarcode,
   isKnownBedethequePriceEstimate,
 } from "./fetch";
@@ -258,6 +261,155 @@ describe("bedetheque fetch", () => {
     ]);
   });
 
+  it("extrait les liens d'albums bis (Tome-100Bis / Numero-100-Bis)", () => {
+    const links = parseBedethequeSeriesAlbumLinks(`
+      <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-100Bis-Numero-100-Bis-75048.html">100 Bis</a>
+      <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-97Bis-Numero-97-Bis-87680.html">97 Bis</a>
+    `);
+
+    expect(links).toEqual([
+      {
+        issue: "100bis",
+        albumId: "75048",
+        albumPath:
+          "BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-100Bis-Numero-100-Bis-75048.html",
+      },
+      {
+        issue: "97bis",
+        albumId: "87680",
+        albumPath:
+          "BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-97Bis-Numero-97-Bis-87680.html",
+      },
+    ]);
+    expect(pickBedethequeAlbumLink(links, "100bis")).toBe(
+      "BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-100Bis-Numero-100-Bis-75048.html",
+    );
+    expect(pickBedethequeAlbumLink(links, "100")).toBeNull();
+  });
+
+  it("parse la fiche d'un numéro bis (h2 « 100Bis. ») sans le confondre avec le 100", () => {
+    const album = parseBedethequeAlbumPage(
+      bisAlbumHtml(),
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-100Bis-Numero-100-Bis-75048.html",
+    );
+
+    expect(album?.issueNumber).toBe("100bis");
+    expect(album?.seriesPosition).toBe(100);
+    expect(album?.title).toBe(
+      "Super Picsou Géant (Supplément Picsou Magazine) n°100bis",
+    );
+  });
+
+  it("extrait les entrées titrées d'une fiche série (label + titre complet)", () => {
+    const entries = parseBedethequeSeriesAlbumEntries(hsSeriesListingHtml());
+
+    expect(entries).toEqual([
+      {
+        albumPath:
+          "https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-1-Numero-1-478946.html",
+        albumId: "478946",
+        label: "1",
+        title: "Super Picsou Géant -1- Numéro 1",
+      },
+      {
+        albumPath:
+          "https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-HDP1-497308.html",
+        albumId: "497308",
+        label: "HS-HDP1",
+        title:
+          "Super Picsou Géant -HS-HDP1- L'histoire de la dynastie Picsou Tome 1",
+      },
+      {
+        albumPath:
+          "https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SPM1-468192.html",
+        albumId: "468192",
+        label: "HS-SPM1",
+        title:
+          "Super Picsou Géant -HS-SPM1- Picsou - Des souvenirs par millions Tome 1",
+      },
+    ]);
+  });
+
+  it("choisit le bon hors-série par similarité même quand deux HS partagent « Tome 1 »", () => {
+    const entries = parseBedethequeSeriesAlbumEntries(hsSeriesListingHtml());
+
+    expect(
+      pickBedethequeHorsSerieAlbumPath(
+        entries,
+        "Super Picsou Géant - Hors-Série - Picsou - Des souvenirs par millions - Tome 1",
+      ),
+    ).toBe("https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SPM1-468192.html");
+
+    expect(
+      pickBedethequeHorsSerieAlbumPath(
+        entries,
+        "Super Picsou Géant - Hors-Série - L'histoire de la dynastie Picsou - Tome 1",
+      ),
+    ).toBe("https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-HDP1-497308.html");
+  });
+
+  it("choisit les hors-série codés HS2017 (sans tiret après HS)", () => {
+    const entries = parseBedethequeSeriesAlbumEntries(`
+      <li>
+        <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SJ2-Picsou-et-l-enigme-de-l-Atlanduck-451487.html" title="Voir la fiche Album de Super Picsou Géant -HS-SJ2- Picsou et l'enigme de l'Atlanduck">
+          <img src="https://www.bedetheque.com/cache/thb_couv/Couv_451487.jpg" alt="Super Picsou Géant -HS-SJ2- Picsou et l'enigme de l'Atlanduck">
+        </a>
+        <div class="sous-titre"><span class="numa-serie"><b>HS-SJ2</b> - </span> Picsou et l'enigme de l'Atlanduck</div>
+      </li>
+      <li>
+        <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-HS2017-Tout-Picsou-de-A-a-Z-315785.html" title="Voir la fiche Album de Super Picsou Géant -HS2017- Tout Picsou de A à Z">
+          <img src="https://www.bedetheque.com/cache/thb_couv/Couv_315785.jpg" alt="Super Picsou Géant -HS2017- Tout Picsou de A à Z">
+        </a>
+        <div class="sous-titre"><span class="numa-serie"><b>HS2017</b> - </span> Tout Picsou de A à Z</div>
+      </li>
+    `);
+
+    expect(
+      pickBedethequeHorsSerieAlbumPath(
+        entries,
+        "Super Picsou Géant - Hors-Série - Tout Picsou de A à Z",
+      ),
+    ).toBe(
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-HS2017-Tout-Picsou-de-A-a-Z-315785.html",
+    );
+  });
+
+  it("ne choisit jamais un numéro ordinaire pour une demande hors-série", () => {
+    const entries = parseBedethequeSeriesAlbumEntries(hsSeriesListingHtml());
+    // Aucun HS ne colle : la Tome-1 ordinaire ne doit pas servir de repli.
+    expect(
+      pickBedethequeHorsSerieAlbumPath(
+        entries,
+        "Une toute autre série - Hors-Série - Sujet inconnu",
+      ),
+    ).toBeNull();
+  });
+
+  it("parse la fiche d'un hors-série sans confondre le « Tome 1 » du sous-titre", () => {
+    const album = parseBedethequeAlbumPage(
+      hsAlbumHtml(),
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SPM1-468192.html",
+    );
+
+    expect(album?.issueNumber).toBe("hs-spm1");
+    expect(album?.seriesPosition).toBeUndefined();
+    expect(album?.title).toBe(
+      "Super Picsou Géant - Picsou - Des souvenirs par millions Tome 1",
+    );
+  });
+
+  it("garde la série variante en fallback derrière la série principale", () => {
+    const ranked = rankBedethequeSeriesCandidates("Super Picsou Géant n°100bis", [
+      { id: 11795, label: "Super Picsou Géant" },
+      {
+        id: 18476,
+        label: "Super Picsou Géant (Supplément Picsou Magazine)",
+      },
+    ]);
+
+    expect(ranked.map((candidate) => candidate.id)).toEqual([11795, 18476]);
+  });
+
   it("écarte une série spinoff quand le tome demandé ne la mentionne pas", () => {
     const picked = pickBedethequeSeriesCandidate("One Piece n°02", [
       { id: 4594, label: "One Piece" },
@@ -319,6 +471,102 @@ describe("bedetheque fetch", () => {
     const album = await fetchBedethequeMetadata("Super Picsou Géant n°7");
     expect(album?.id).toBe("56641");
     expect(album?.imageUrl).toContain("Couv_56641.jpg");
+  });
+
+  it("résout un numéro bis via la série variante quand la principale ne l'a pas", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url.includes("/ajax/tout")) {
+        return {
+          status: 200,
+          data: [
+            { id: "S11795", label: "Super Picsou Géant" },
+            {
+              id: "S18476",
+              label: "Super Picsou Géant (Supplément Picsou Magazine)",
+            },
+          ],
+        };
+      }
+      if (url.includes("/albums-11795-")) {
+        return {
+          status: 200,
+          data: `<a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-100-Numero-100-56800.html">100</a>`,
+        };
+      }
+      if (url.includes("/albums-18476-")) {
+        return {
+          status: 200,
+          data: `<a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-Supplement-Picsou-Magazine-Tome-100Bis-Numero-100-Bis-75048.html">100 Bis</a>`,
+        };
+      }
+      if (url.includes("Tome-100Bis-Numero-100-Bis-75048.html")) {
+        return { status: 200, data: bisAlbumHtml() };
+      }
+      return { status: 404, data: "" };
+    });
+
+    const album = await fetchBedethequeMetadata("Super Picsou Géant n°100bis");
+    expect(album?.id).toBe("75048");
+    expect(album?.issueNumber).toBe("100bis");
+    expect(album?.title).toBe(
+      "Super Picsou Géant (Supplément Picsou Magazine) n°100bis",
+    );
+  });
+
+  it("résout un hors-série via la partie série du titre + similarité de sous-titre", async () => {
+    mockedGet.mockImplementation(
+      async (url: string, config?: { params?: { term?: string } }) => {
+        if (url.includes("/ajax/tout")) {
+          // Comme en réel : l'autocomplete ne répond qu'au nom de série seul,
+          // pas au titre complet contenant « Hors-Série » et le sous-titre.
+          const term = String(config?.params?.term ?? "").toLowerCase();
+          if (term.includes("hors") || term.includes("souvenirs")) {
+            return { status: 200, data: [] };
+          }
+          return {
+            status: 200,
+            data: [{ id: "S11795", label: "Super Picsou Géant" }],
+          };
+        }
+        if (url.includes("/albums-11795-")) {
+          return { status: 200, data: hsSeriesListingHtml() };
+        }
+        if (url.includes("BD-Super-Picsou-Geant-HS-SPM1-468192.html")) {
+          return { status: 200, data: hsAlbumHtml() };
+        }
+        return { status: 404, data: "" };
+      },
+    );
+
+    const album = await fetchBedethequeMetadata(
+      "Super Picsou Géant - Hors-Série - Picsou - Des souvenirs par millions - Tome 1",
+    );
+    expect(album?.id).toBe("468192");
+    expect(album?.issueNumber).toBe("hs-spm1");
+  });
+
+  it("une demande numérotée ordinaire ne suit jamais un lien hors-série", async () => {
+    const fetchedUrls: string[] = [];
+    mockedGet.mockImplementation(async (url: string) => {
+      fetchedUrls.push(url);
+      if (url.includes("/ajax/tout")) {
+        return {
+          status: 200,
+          data: [{ id: "S11795", label: "Super Picsou Géant" }],
+        };
+      }
+      if (url.includes("/albums-11795-")) {
+        return { status: 200, data: hsSeriesListingHtml() };
+      }
+      return { status: 404, data: "" };
+    });
+
+    await fetchBedethequeMetadata("Super Picsou Géant n°1");
+
+    expect(
+      fetchedUrls.some((url) => url.includes("Tome-1-Numero-1-478946")),
+    ).toBe(true);
+    expect(fetchedUrls.some((url) => url.includes("-HS-"))).toBe(false);
   });
 
   it("écarte un hit titre si l'EAN de la fiche contredit le barcode", async () => {
@@ -400,6 +648,61 @@ function albumHtml(
     </ul>
     ${extraMedia}
     ${saleRows}
+  `;
+}
+
+function hsSeriesListingHtml() {
+  return `
+    <li>
+      <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-Tome-1-Numero-1-478946.html" title="Voir la fiche Album de Super Picsou Géant -1- Numéro 1">
+        <img src="https://www.bedetheque.com/cache/thb_couv/Couv_478946.jpg" alt="Super Picsou Géant -1- Numéro 1">
+      </a>
+      <div class="sous-titre"><span class="numa-serie"><b>1</b> - </span> Numéro 1</div>
+    </li>
+    <li>
+      <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-HDP1-497308.html" title="Voir la fiche Album de Super Picsou Géant -HS-HDP1- L&#039;histoire de la dynastie Picsou Tome 1">
+        <img src="https://www.bedetheque.com/cache/thb_couv/Couv_497308.jpg" alt="Super Picsou Géant -HS-HDP1- L'histoire de la dynastie Picsou Tome 1">
+      </a>
+      <div class="sous-titre"><span class="numa-serie"><b>HS-HDP1</b> - </span> L'histoire de la dynastie Picsou Tome 1</div>
+    </li>
+    <li>
+      <a href="https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SPM1-468192.html" title="Voir la fiche Album de Super Picsou Géant -HS-SPM1- Picsou - Des souvenirs par millions Tome 1">
+        <img src="https://www.bedetheque.com/cache/thb_couv/Couv_468192.jpg" alt="Super Picsou Géant -HS-SPM1- Picsou - Des souvenirs par millions Tome 1">
+      </a>
+      <div class="sous-titre"><span class="numa-serie"><b>HS-SPM1</b> - </span> Picsou - Des souvenirs par millions Tome 1</div>
+    </li>
+  `;
+}
+
+function hsAlbumHtml() {
+  return `
+    <title>Super Picsou Géant -HS-SPM1- Picsou - Des souvenirs par millions Tome 1</title>
+    <meta property="og:title" content="Super Picsou Géant -HS-SPM1- Picsou - Des souvenirs par millions Tome 1" />
+    <meta property="og:image" content="https://www.bedetheque.com/media/Couvertures/Couv_468192.jpg" />
+    <input type="hidden" id="IdAlbum" value="468192" />
+    <h1><a href="https://www.bedetheque.com/serie-11795-BD-Super-Picsou-Geant.html" title="Super Picsou Géant">Super Picsou Géant</a></h1>
+    <h2><span class="numa">HS-SPM1</span>. Picsou - Des souvenirs par millions Tome 1</h2>
+    <span itemprop="publisher" class='editeur'>Unique Héritage Media</span>
+    <span class='annee'>2023</span>
+    <ul>
+      <li><label>Estimation : </label>non coté</li>
+    </ul>
+  `;
+}
+
+function bisAlbumHtml() {
+  return `
+    <title>Super Picsou Géant (Supplément Picsou Magazine) -100Bis- Numéro 100 Bis</title>
+    <meta property="og:title" content="Super Picsou Géant (Supplément Picsou Magazine) -100Bis- Numéro 100 Bis" />
+    <meta property="og:image" content="https://www.bedetheque.com/media/Couvertures/Couv_75048.jpg" />
+    <input type="hidden" id="IdAlbum" value="75048" />
+    <h1><a href="https://www.bedetheque.com/serie-18476-BD-Super-Picsou-Geant-Supplement-Picsou-Magazine.html" title="Super Picsou Géant (Supplément Picsou Magazine)">Super Picsou Géant (Supplément Picsou Magazine)</a></h1>
+    <h2>100<span class="numa">Bis</span>. Numéro 100 Bis</h2>
+    <span itemprop="publisher" class='editeur'>EDI-Monde</span>
+    <span class='annee'>2000</span>
+    <ul>
+      <li><label>Estimation : </label>non coté</li>
+    </ul>
   `;
 }
 

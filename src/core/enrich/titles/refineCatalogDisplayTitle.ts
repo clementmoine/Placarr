@@ -36,21 +36,26 @@ export function refineCatalogDisplayTitle(
     trimmed,
     resolvedBarcode,
   );
+  // Retailer SKU noise on the preliminary title (e.g. "… FR KikiGagne?SKU")
+  // must not require alignment against clean aliases — the noise tokens fail
+  // series-suffix / fragment gates even when the editorial core matches.
+  const hasListingNoise = hasCatalogReferenceListingNoise(trimmed);
 
   const nonEmpty = candidates.filter((candidate): candidate is string =>
     Boolean(candidate?.trim()),
   );
-  const filtered = isBarcodePlaceholder
-    ? nonEmpty.filter(
-        (candidate) =>
-          !isBarcodePlaceholderItemName(candidate, resolvedBarcode) &&
-          !hasCatalogReferenceListingNoise(candidate),
-      )
-    : nonEmpty.filter(
-        (candidate) =>
-          isMetadataTitleAligned({ title: candidate }, [trimmed], 0.58) ||
-          isMetadataTitleAligned({ title: trimmed }, [candidate], 0.58),
-      );
+  const filtered =
+    isBarcodePlaceholder || hasListingNoise
+      ? nonEmpty.filter(
+          (candidate) =>
+            !isBarcodePlaceholderItemName(candidate, resolvedBarcode) &&
+            !hasCatalogReferenceListingNoise(candidate),
+        )
+      : nonEmpty.filter(
+          (candidate) =>
+            isMetadataTitleAligned({ title: candidate }, [trimmed], 0.58) ||
+            isMetadataTitleAligned({ title: trimmed }, [candidate], 0.58),
+        );
 
   return pickBestCatalogDisplayTitle(filtered) ?? trimmed;
 }

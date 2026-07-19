@@ -21,6 +21,10 @@ import {
   solePlatformKeyFromNames,
   withMetadataPlatformKeys,
 } from "@/core/enrich/media/platformKeyStamp";
+import {
+  extractTitleIntentYear,
+  titleIntentYearScoreDelta,
+} from "@/core/enrich/titles/intentYear";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -203,6 +207,8 @@ interface IGDBTimeToBeat {
 
 export interface IGDBGameResult {
   title: string;
+  /** Resolved platform for the requested context (stamped on attachments too). */
+  platformKey?: string;
   description?: string;
   releaseDate?: string;
   publishers?: { name: string }[];
@@ -305,6 +311,7 @@ function scoreIGDBCandidate(
   game: IGDBGame,
   query: string,
   platform?: string | null,
+  intentYear?: number | null,
 ): number {
   const normalizedQuery = normalizeTitleForCompare(query);
   const normalizedName = normalizeTitleForCompare(game.name);
@@ -328,6 +335,13 @@ function scoreIGDBCandidate(
     score -= 400;
   }
 
+  if (intentYear != null && game.first_release_date) {
+    const releaseDate = new Date(game.first_release_date * 1000)
+      .toISOString()
+      .slice(0, 10);
+    score += titleIntentYearScoreDelta(intentYear, releaseDate);
+  }
+
   return score;
 }
 
@@ -335,14 +349,15 @@ function rankIGDBGames(
   games: IGDBGame[],
   query: string,
   platform?: string | null,
+  intentYear?: number | null,
 ): IGDBGame[] {
   return games
     .filter((game) => isPrimaryGameCategory(game))
     .filter((game) => isPlatformCompatible(game, platform))
     .sort(
       (a, b) =>
-        scoreIGDBCandidate(b, query, platform) -
-        scoreIGDBCandidate(a, query, platform),
+        scoreIGDBCandidate(b, query, platform, intentYear) -
+        scoreIGDBCandidate(a, query, platform, intentYear),
     );
 }
 
@@ -365,9 +380,15 @@ function getIGDBSearchKeywords(name: string): string[] {
     .filter((w) => w.length >= 2);
 }
 
+export type IGDBFetchOptions = {
+  /** Shelf disambiguator year from "Title (2023)" — not part of the search string. */
+  intentYear?: number | null;
+};
+
 export async function fetchFromIGDB(
   name: string,
   platform?: string | null,
+  options?: IGDBFetchOptions,
 ): Promise<IGDBGameResult | null> {
   const token = await getToken();
   if (!token) {
@@ -377,14 +398,22 @@ export async function fetchFromIGDB(
     return null;
   }
 
+  const intentYear =
+    options?.intentYear ?? extractTitleIntentYear(name) ?? null;
+
   try {
-    return await fetchFromIGDBWithToken(name, platform, token);
+    return await fetchFromIGDBWithToken(name, platform, token, intentYear);
   } catch (err) {
     if (isUnauthorizedIGDBError(err)) {
       const freshToken = await refreshTokenAfterUnauthorized();
       if (freshToken) {
         try {
-          return await fetchFromIGDBWithToken(name, platform, freshToken);
+          return await fetchFromIGDBWithToken(
+            name,
+            platform,
+            freshToken,
+            intentYear,
+          );
         } catch (retryErr) {
           console.error(
             `[IGDB] Error searching for "${name}" after token refresh: ${describeIGDBError(retryErr)}`,
@@ -405,6 +434,7 @@ async function fetchFromIGDBWithToken(
   name: string,
   platform: string | null | undefined,
   token: string,
+  intentYear?: number | null,
 ): Promise<IGDBGameResult | null> {
   const headers = igdbHeaders(token);
 
@@ -443,7 +473,7 @@ async function fetchFromIGDBWithToken(
 
   // Pick best match by normalized name comparison
   const normSearchName = normalizeTitleForCompare(name);
-  const rankedResults = rankIGDBGames(results, name, platform);
+  const rankedResults = rankIGDBGames(results, name, platform, intentYear);
   const candidates = rankedResults.length > 0 ? rankedResults : results;
   const game =
     candidates.find(
@@ -878,23 +908,29 @@ function parseIGDBGame(
       )
     : undefined;
 
-  return withMetadataPlatformKeys(
-    {
-      title: game.name,
-      platformKey: resolveIGDBPlatformKey(game, requestedPlatform),
-      description: game.summary,
-      releaseDate,
-      publishers: publishers.length > 0 ? publishers : undefined,
-      attachments,
-      aliases,
-      facts: [
-        ...buildFranchiseFacts(game),
-        ...buildAgeRatingFacts(game),
-        ...buildRatingFacts(game),
-        ...buildTimeToBeatFacts(timeToBeat),
-      ],
-      externalIds: { igdb: String(game.id) },
-    },
+  const result: IGDBGameResult = {
+    title: game.name,
+    platformKey: resolveIGDBPlatformKey(game, requestedPlatform),
+    description: game.summary,
+    releaseDate,
+    publishers: publishers.length > 0 ? publishers : undefined,
+    attachments,
+    aliases,
+    facts: [
+      ...buildFranchiseFacts(game),
+      ...buildAgeRatingFacts(game),
+      ...buildRatingFacts(game),
+      ...buildTimeToBeatFacts(timeToBeat),
+    ],
+    externalIds: { igdb: String(game.id) },
+  };
+  const stamped = withMetadataPlatformKeys(
+    result,
     resolveIGDBPlatformKey(game, requestedPlatform),
   );
+  return {
+    ...result,
+    platformKey: stamped.platformKey,
+    attachments: stamped.attachments ?? result.attachments,
+  };
 }

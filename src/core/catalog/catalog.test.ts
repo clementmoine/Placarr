@@ -21,6 +21,17 @@ describe("providerCatalog", () => {
     expect(screenscraper?.defaultLanguage).toBe("fr");
     expect(screenscraper?.isRealBoxCover).toBe(true);
     expect(screenscraper?.authoritative3dCoverRole).toBe(true);
+
+    // Local SQLite index — must stay auth.none so the API pass always runs it
+    // (scrape pass is skipped once ScreenScraper/IGDB already have title+cover).
+    const launchbox = PROVIDERS.find((p) => p.id === "launchbox");
+    expect(launchbox?.auth.kind).toBe("none");
+    expect(launchbox?.isRealBoxCover).toBe(true);
+
+    // Same for iCollect's barcode SQLite cache (secondary, but not HTTP scrape).
+    const icollect = PROVIDERS.find((p) => p.id === "icollect");
+    expect(icollect?.auth.kind).toBe("none");
+    expect(icollect?.isSecondary).toBe(true);
   });
 
   it("a des ids uniques", () => {
@@ -95,11 +106,20 @@ describe("providerCatalog", () => {
   it("films : TMDB/OMDb couvrent note ET public conseillé", () => {
     expect(capabilityCoverage("movies", "rating").providers).toContain("tmdb");
     expect(capabilityCoverage("movies", "rating").providers).toContain("omdb");
+    expect(capabilityCoverage("movies", "rating").providers).toContain(
+      "senscritique",
+    );
     expect(capabilityCoverage("movies", "ageRating").providers).toContain(
       "tmdb",
     );
     expect(capabilityCoverage("movies", "ageRating").providers).toContain(
       "omdb",
+    );
+  });
+
+  it("musiques : SensCritique couvre la note communautaire FR", () => {
+    expect(capabilityCoverage("musics", "rating").providers).toContain(
+      "senscritique",
     );
   });
 

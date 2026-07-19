@@ -10,6 +10,8 @@ import {
   rankCoverGalleryAttachments,
   rankAttachmentsForDisplay,
   rankCoversForDisplay,
+  reorderAttachmentsCoverFirst,
+  resolveStoredMetadataCoverUrl,
   shouldShowCoverAttachmentOnShelf,
 } from "./attachmentDisplayScore";
 
@@ -264,6 +266,34 @@ describe("attachmentDisplayScore", () => {
         metrics,
       ),
     ).toBe("/uploads/box-eu.jpg");
+  });
+
+  it("priorise le disque quand preferDiscCover (jeu loose)", () => {
+    const metrics = new Map([
+      ["/uploads/disc.jpg", { width: 1200, height: 1200, format: "jpeg" }],
+      ["/uploads/box-eu.jpg", { width: 754, height: 1355, format: "jpeg" }],
+    ]);
+
+    expect(
+      pickBestCoverFromAttachments(
+        [
+          {
+            type: "image",
+            source: "screenscraper",
+            role: "disc-fr",
+            url: "/uploads/disc.jpg",
+          },
+          {
+            type: "cover",
+            source: "screenscraper",
+            role: "eu",
+            url: "/uploads/box-eu.jpg",
+          },
+        ],
+        metrics,
+        { preferDiscCover: true },
+      ),
+    ).toBe("/uploads/disc.jpg");
   });
 
   it("priorise une cover 2D Europe sur une cover 3D France", () => {
@@ -558,6 +588,68 @@ describe("attachmentDisplayScore", () => {
     expect(rankCoversForDisplay([catalogEu, userPhotoFr])[0].url).toBe(
       "/uploads/photo-fr.jpg",
     );
+  });
+
+  it("garde une jaquette FR devant une photo marketplace plus nette", () => {
+    const frCover = {
+      type: "cover" as const,
+      source: "bdovore",
+      role: "fr",
+      url: "/uploads/bdovore-small.jpg",
+      width: 320,
+      height: 480,
+    };
+    const marketplaceCover = {
+      type: "cover" as const,
+      source: "ebay",
+      role: "marketplace",
+      url: "/uploads/ebay-hd.jpg",
+      width: 1600,
+      height: 2400,
+    };
+    const metrics = new Map([
+      [frCover.url, { width: 320, height: 480, format: "jpeg" as const }],
+      [
+        marketplaceCover.url,
+        { width: 1600, height: 2400, format: "jpeg" as const },
+      ],
+    ]);
+
+    expect(
+      rankCoverGalleryAttachments([marketplaceCover, frCover], metrics).map(
+        (attachment) => attachment.url,
+      ),
+    ).toEqual([frCover.url, marketplaceCover.url]);
+  });
+
+  it("garde une jaquette FR remote plutôt qu'une photo marketplace localisée", () => {
+    const frRemote = {
+      type: "cover" as const,
+      source: "booknode",
+      role: "fr",
+      url: "https://cdn1.booknode.com/book_cover/1691/full/cover.jpg",
+    };
+    const marketplaceLocal = {
+      type: "cover" as const,
+      source: "ebay",
+      role: "marketplace",
+      url: "/uploads/ebay-listing.jpg",
+      width: 1600,
+      height: 2400,
+    };
+
+    expect(
+      resolveStoredMetadataCoverUrl(
+        frRemote.url,
+        [marketplaceLocal, frRemote],
+        new Map([
+          [
+            marketplaceLocal.url,
+            { width: 1600, height: 2400, format: "jpeg" as const },
+          ],
+        ]),
+      ),
+    ).toBe(frRemote.url);
   });
 
   describe("pickBestBackgroundFromAttachments", () => {
@@ -906,6 +998,40 @@ describe("attachmentDisplayScore", () => {
     ).toContain(cover);
   });
 
+  it("drops Xbox One box art on an Xbox Series shelf", () => {
+    const xboxOneBox = {
+      type: "cover" as const,
+      source: "screenscraper",
+      role: "eu",
+      url: "/uploads/xboxone-box.jpg",
+      platformKey: "xboxone",
+    };
+    const xboxSeriesGrid = {
+      type: "cover" as const,
+      source: "steamgriddb",
+      role: "grid-vertical",
+      url: "/uploads/grid.jpg",
+      platformKey: "xboxseries",
+    };
+    const metrics = new Map([
+      [xboxOneBox.url, { width: 800, height: 1200, format: "jpeg" }],
+      [xboxSeriesGrid.url, { width: 900, height: 1200, format: "png" }],
+    ]);
+
+    expect(
+      shouldShowCoverAttachmentOnShelf(xboxOneBox, "xboxseries", [
+        xboxOneBox,
+        xboxSeriesGrid,
+      ]),
+    ).toBe(false);
+
+    expect(
+      pickBestCoverFromAttachments([xboxSeriesGrid, xboxOneBox], metrics, {
+        requestedPlatformKey: "xboxseries",
+      }),
+    ).toBe(xboxSeriesGrid.url);
+  });
+
   it("keeps game-media gallery covers when a marketplace listing anchors the shelf platform", () => {
     const icollectCover = {
       type: "cover" as const,
@@ -929,5 +1055,60 @@ describe("attachmentDisplayScore", () => {
         screenScraperCover,
       ]),
     ).toBe(true);
+  });
+
+  it("keeps LaunchBox disc/back/spine when reordering for persist", () => {
+    // rankCoverGalleryAttachments omits backs/spines from the cover-picker
+    // order; persist must still keep them (same trailing recovery as merge).
+    const front = {
+      type: "cover" as const,
+      source: "launchbox",
+      role: "us",
+      title: "Box - Front",
+      url: "/uploads/lb-front.jpg",
+    };
+    const back = {
+      type: "image" as const,
+      source: "launchbox",
+      role: "back-us",
+      title: "Box - Back",
+      url: "/uploads/lb-back.jpg",
+    };
+    const spine = {
+      type: "image" as const,
+      source: "launchbox",
+      role: "spine-us",
+      title: "Box - Spine",
+      url: "/uploads/lb-spine.jpg",
+    };
+    const disc = {
+      type: "image" as const,
+      source: "launchbox",
+      role: "disc-us",
+      title: "Disc",
+      url: "/uploads/lb-disc.png",
+    };
+    const logo = {
+      type: "logo" as const,
+      source: "launchbox",
+      title: "Clear Logo",
+      url: "/uploads/lb-logo.png",
+    };
+
+    const ordered = reorderAttachmentsCoverFirst([
+      front,
+      back,
+      spine,
+      disc,
+      logo,
+    ]);
+    const urls = ordered.map((attachment) => attachment.url);
+
+    expect(urls).toContain(front.url);
+    expect(urls).toContain(disc.url);
+    expect(urls).toContain(back.url);
+    expect(urls).toContain(spine.url);
+    expect(urls).toContain(logo.url);
+    expect(urls.indexOf(front.url)).toBeLessThan(urls.indexOf(back.url));
   });
 });

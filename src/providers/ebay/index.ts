@@ -3,6 +3,9 @@ import type {
   BarcodeLookupType,
   ProviderModule,
 } from "@/types/providerModule";
+import {
+  matchPrimaryBarcode,
+} from "@/core/catalog/matchContext";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import {
@@ -27,6 +30,7 @@ import {
 import { fetchFromEbayCatalog } from "./catalog";
 import { ebayCoverDownloadCandidates } from "./coverUrl";
 import { prepareEbayProductsForGameShelf } from "./platformFilter";
+import { ebayPriceSearchQueries } from "./searchQueries";
 import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import {
   normalizeVideoGamePlatformKey,
@@ -112,9 +116,11 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  const priceQueries = Array.from(
-    new Set([ctx.cleanedBarcode, ctx.primaryName].filter(Boolean)),
-  ).slice(0, 2);
+  const priceQueries = ebayPriceSearchQueries(
+    ctx.primaryName,
+    ctx.fallbackNames,
+    matchPrimaryBarcode(ctx) || ctx.cleanedBarcode,
+  );
   for (const query of priceQueries) {
     const result = await fetchPricesFromEbay(query, expectedNames);
     if (!result) continue;

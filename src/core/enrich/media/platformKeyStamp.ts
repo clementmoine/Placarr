@@ -11,7 +11,7 @@ export function normalizeVideoGamePlatformKey(
 ): VideoGamePlatformKey | undefined {
   if (!value) return undefined;
   if (isVideoGamePlatformKey(value)) return value;
-  return detectVideoGamePlatformKey(value);
+  return detectVideoGamePlatformKey(value) ?? undefined;
 }
 
 /**
@@ -19,7 +19,9 @@ export function normalizeVideoGamePlatformKey(
  * shelf-platform catalog sources whose remote URL no longer carries a signal
  * (localized /uploads paths).
  */
-export function stampAttachmentsMissingPlatformKey<T extends MetadataAttachment>(
+export function stampAttachmentsMissingPlatformKey<
+  T extends MetadataAttachment & { strictShelfPlatformCoverSource?: boolean },
+>(
   attachments: readonly T[],
   fallbackPlatformKey?: string | null,
 ): T[] {

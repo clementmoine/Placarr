@@ -1,4 +1,9 @@
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
+import {
+  hasExplicitVolumeMarker,
+  stripVolumeMarkersKeepingNumber,
+} from "@/core/enrich/titles/volumeNumber";
+import { stripTitleIntentYear } from "@/core/enrich/titles/intentYear";
 
 function normalizedShelfName(shelfName?: string | null): string {
   return (shelfName || "")
@@ -38,12 +43,29 @@ export function buildPriceSearchQueries(
   };
 
   for (const name of names) {
-    const trimmed = stripLegalMarkSymbols(name.trim()) || name.trim();
-    if (!trimmed) continue;
+    const raw = stripLegalMarkSymbols(name.trim()) || name.trim();
+    if (!raw) continue;
+    // "(2023)" is a shelf disambiguator — search the catalog title without it.
+    const trimmed = stripTitleIntentYear(raw) || raw;
     for (const hint of hints) {
       if (!trimmed.toLowerCase().includes(hint)) {
         add(`${trimmed} ${hint}`);
       }
+    }
+    if (hasExplicitVolumeMarker(trimmed)) {
+      const bareIssue = stripVolumeMarkersKeepingNumber(trimmed);
+      add(bareIssue);
+      // Marketplace copy usually spaces French interim suffixes ("100 bis").
+      const spacedBare = bareIssue.replace(
+        /(\d+)(bis|ter|quater)\b/gi,
+        "$1 $2",
+      );
+      add(spacedBare);
+      const spacedMarked = trimmed.replace(
+        /(n[°º]\s*\d+)(bis|ter|quater)\b/gi,
+        "$1 $2",
+      );
+      add(spacedMarked);
     }
     add(trimmed);
   }

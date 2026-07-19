@@ -1,10 +1,10 @@
-import type { SyntheticEvent } from "react";
+import type { CSSProperties, SyntheticEvent } from "react";
 import Image from "next/image";
 
 import { cn } from "@/lib/shared/utils";
 import {
   remoteImageDisplaySrc,
-  remoteImageNeedsProxy,
+  remoteImageShouldSkipOptimizer,
 } from "@/core/enrich/media/remoteImageDisplay";
 
 function isBlobImageSrc(src: string) {
@@ -41,8 +41,11 @@ export function RemoteImage({
   src,
   alt,
   className,
+  style,
   width = 512,
   height = 512,
+  // Thumbnails / cards: keep requested widths small. Without a tight `sizes`,
+  // `fill` can pick `w=3840` and sharp blocks the Next event loop.
   sizes = "(max-width: 640px) 50vw, 384px",
   fill,
   priority,
@@ -51,6 +54,7 @@ export function RemoteImage({
   src: string;
   alt: string;
   className?: string;
+  style?: CSSProperties;
   width?: number;
   height?: number;
   sizes?: string;
@@ -59,7 +63,9 @@ export function RemoteImage({
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
 }) {
   const displaySrc = remoteImageDisplaySrc(src);
-  const proxied = remoteImageNeedsProxy(src);
+  const unoptimized =
+    remoteImageShouldSkipOptimizer(src) ||
+    remoteImageShouldSkipOptimizer(displaySrc);
 
   if (isBlobImageSrc(src)) {
     return (
@@ -69,6 +75,7 @@ export function RemoteImage({
         src={src}
         alt={alt}
         className={className}
+        style={style}
         onLoad={onLoad}
         draggable={false}
       />
@@ -85,8 +92,9 @@ export function RemoteImage({
         fill
         sizes={sizes}
         priority={priority}
-        unoptimized={proxied}
+        unoptimized={unoptimized}
         className={className}
+        style={style}
         onLoad={onLoad}
         draggable={false}
       />
@@ -100,8 +108,9 @@ export function RemoteImage({
       width={width}
       height={height}
       priority={priority}
-      unoptimized={proxied}
+      unoptimized={unoptimized}
       className={cn(aspectRatioClassName(className), className)}
+      style={style}
       onLoad={onLoad}
       draggable={false}
     />

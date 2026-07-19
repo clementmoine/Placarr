@@ -3,6 +3,7 @@ import {
   METADATA_REFRESH_MAX_MS,
   METADATA_REFRESH_ORPHAN_GRACE_MS,
 } from "@/core/collect/enrichment";
+import { hasActiveBackgroundWorkJobForItem, cancelBackgroundWorkJobsForItem } from "@/core/collect/jobs/workQueue";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 
 export type ItemMetadataRefreshSession = {
@@ -17,14 +18,14 @@ type ActiveRefreshSession = ItemMetadataRefreshSession & {
 
 const activeSessions = new Map<string, ActiveRefreshSession>();
 
-export async function beginItemMetadataRefresh(
+/**
+ * Persist the in-flight refresh flag (API process). Does not register a local
+ * AbortController — the worker adopts the generation when it claims the job.
+ */
+export async function stampItemMetadataRefresh(
   itemId: string,
-): Promise<ItemMetadataRefreshSession> {
-  const previous = activeSessions.get(itemId);
-  if (previous) {
-    previous.controller.abort();
-    activeSessions.delete(itemId);
-  }
+): Promise<{ generation: number; startedAt: Date }> {
+  cancelItemMetadataRefresh(itemId);
 
   const startedAt = new Date();
   const updated = await prisma.item.update({
@@ -36,10 +37,25 @@ export async function beginItemMetadataRefresh(
     select: { metadataRefreshGeneration: true },
   });
 
-  const controller = new AbortController();
-  const session: ActiveRefreshSession = {
+  return {
     generation: updated.metadataRefreshGeneration,
     startedAt,
+  };
+}
+
+/**
+ * Test / same-process helper: stamp + local AbortController.
+ * Production API paths use `stampItemMetadataRefresh` + worker `adopt*`.
+ * @internal
+ */
+export async function beginItemMetadataRefresh(
+  itemId: string,
+): Promise<ItemMetadataRefreshSession> {
+  const stamped = await stampItemMetadataRefresh(itemId);
+  const controller = new AbortController();
+  const session: ActiveRefreshSession = {
+    generation: stamped.generation,
+    startedAt: stamped.startedAt,
     signal: controller.signal,
     controller,
   };
@@ -50,6 +66,45 @@ export async function beginItemMetadataRefresh(
     startedAt: session.startedAt,
     signal: session.signal,
   };
+}
+
+/**
+ * Worker-only: attach a local AbortController to a refresh already stamped in DB
+ * by the API process (generation must still match).
+ */
+export async function adoptItemMetadataRefreshOnWorker(
+  itemId: string,
+  generation: number,
+): Promise<(ItemMetadataRefreshSession & { controller: AbortController }) | null> {
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: {
+      metadataRefreshGeneration: true,
+      metadataRefreshStartedAt: true,
+    },
+  });
+  if (
+    !item?.metadataRefreshStartedAt ||
+    item.metadataRefreshGeneration !== generation
+  ) {
+    return null;
+  }
+
+  const previous = activeSessions.get(itemId);
+  if (previous) {
+    previous.controller.abort();
+    activeSessions.delete(itemId);
+  }
+
+  const controller = new AbortController();
+  const session: ActiveRefreshSession = {
+    generation,
+    startedAt: item.metadataRefreshStartedAt,
+    signal: controller.signal,
+    controller,
+  };
+  activeSessions.set(itemId, session);
+  return session;
 }
 
 export async function isItemMetadataRefreshCurrent(
@@ -98,18 +153,21 @@ function metadataRefreshElapsedMs(
   return now - started;
 }
 
-/** True when a persisted refresh flag should be cleared by the orphan guard. */
+/**
+ * True when a persisted refresh flag should be cleared by the orphan guard.
+ * Pass `hasActiveWork` when the out-of-process worker owns the item (DB job).
+ */
 export function shouldReconcileMetadataRefreshFlag(
   itemId: string,
   startedAt: Date | string | null | undefined,
   now = Date.now(),
+  hasActiveWork = activeSessions.has(itemId),
 ): boolean {
   if (!startedAt) return false;
   const elapsedMs = metadataRefreshElapsedMs(startedAt, now);
   if (elapsedMs === null) return false;
 
-  const hasActiveSession = activeSessions.has(itemId);
-  if (hasActiveSession) {
+  if (hasActiveWork) {
     return elapsedMs >= METADATA_REFRESH_MAX_MS;
   }
   return elapsedMs >= METADATA_REFRESH_ORPHAN_GRACE_MS;
@@ -134,7 +192,19 @@ export async function reconcileMetadataRefreshFlag(
   itemId: string,
   startedAt: Date | string | null | undefined,
 ): Promise<boolean> {
-  if (!startedAt || !shouldReconcileMetadataRefreshFlag(itemId, startedAt)) {
+  const hasActiveWork =
+    activeSessions.has(itemId) ||
+    (await hasActiveBackgroundWorkJobForItem(itemId));
+
+  if (
+    !startedAt ||
+    !shouldReconcileMetadataRefreshFlag(
+      itemId,
+      startedAt,
+      Date.now(),
+      hasActiveWork,
+    )
+  ) {
     return false;
   }
 
@@ -145,13 +215,17 @@ export async function reconcileMetadataRefreshFlag(
     cancelItemMetadataRefresh(itemId);
   }
 
+  // Max-duration / orphan: drop DB jobs so the worker cannot "complete" a no-op.
+  await cancelBackgroundWorkJobsForItem(itemId);
+
   const cleared = await clearPersistedMetadataRefreshFlag(itemId, started);
   if (cleared) {
     console.warn("[MetadataRefresh] Reconciled stale refresh flag", {
       itemId,
       elapsedMs,
       hadActiveSession,
-      reason: hadActiveSession ? "max-duration" : "orphan",
+      hasActiveWork,
+      reason: hasActiveWork ? "max-duration" : "orphan",
     });
   }
   return cleared;
@@ -208,6 +282,7 @@ export async function cancelAndClearItemMetadataRefresh(
   itemId: string,
 ): Promise<void> {
   cancelItemMetadataRefresh(itemId);
+  await cancelBackgroundWorkJobsForItem(itemId);
   await prisma.item.updateMany({
     where: { id: itemId },
     data: { metadataRefreshStartedAt: null },

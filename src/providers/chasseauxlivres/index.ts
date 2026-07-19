@@ -35,6 +35,7 @@ export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/comm
 
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -254,9 +255,7 @@ async function refreshChasseAuxLivresOffers(ctx: BarcodePriceRefreshContext) {
     if (result) return chassePricedOffersFromResult(result);
   }
 
-  for (const query of ctx.cleanedBarcode
-    ? [ctx.cleanedBarcode, ...ctx.fallbackNames]
-    : ctx.fallbackNames) {
+  for (const query of matchPriceSeekQueries(ctx)) {
     if (!query?.trim()) continue;
     const result = await fetchPricesFromChasseAuxLivres(query, catalog, {
       validateProduct,
@@ -283,6 +282,10 @@ function buildChasseAuxLivresAttachments(
     role: "fr",
     source: "chasseauxlivres",
   }));
+}
+
+function formatChasseEuroPrice(cents: number): string {
+  return `${(cents / 100).toFixed(2).replace(".", ",")} €`;
 }
 
 function buildChasseAuxLivresObservations(
@@ -372,6 +375,36 @@ function mapChasseAuxLivresMetadata(
       source: "chasseauxlivres",
       confidence: 0.58,
       priority: 24,
+    });
+  }
+  if (product.publisher) {
+    facts.push({
+      kind: "publisher",
+      label: "Éditeur",
+      value: product.publisher,
+      source: "chasseauxlivres",
+      confidence: 0.6,
+      priority: 24,
+    });
+  }
+  if (product.priceNew != null) {
+    facts.push({
+      kind: "price",
+      label: "Neuf (port inclus)",
+      value: formatChasseEuroPrice(product.priceNew),
+      source: "chasseauxlivres",
+      confidence: 0.58,
+      priority: 50,
+    });
+  }
+  if (product.priceUsed != null) {
+    facts.push({
+      kind: "price",
+      label: "Occasion (port inclus)",
+      value: formatChasseEuroPrice(product.priceUsed),
+      source: "chasseauxlivres",
+      confidence: 0.56,
+      priority: 48,
     });
   }
   if (product.ratingValue && product.ratingCount) {
@@ -473,6 +506,7 @@ export const chasseauxlivresModule: ProviderModule = {
     ],
     auth: { kind: "scrape" },
     canonical: false,
+    isSecondary: true,
     defaultLanguage: "fr",
     imageScoreAdjustment: -25,
     remoteImageFallback: true,

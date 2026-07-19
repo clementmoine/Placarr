@@ -32,6 +32,19 @@ describe("refineCatalogDisplayTitle", () => {
       ),
     ).toBe("Mille Sabords - Complet Boite Notice");
   });
+
+  it("prefers a clean alias when the preliminary title is retailer SKU noise", () => {
+    expect(
+      refineCatalogDisplayTitle(
+        "Black Stories Morts de Rire FR KikiGagne?KIKIBS06F",
+        [
+          "Black Stories Morts de Rire FR KikiGagne?KIKIBS06F",
+          "Black Stories - Morts de Rire",
+          "Black Stories : Morts de Rire",
+        ],
+      ),
+    ).toBe("Black Stories - Morts de Rire");
+  });
 });
 
 describe("resolveMetadataDisplayTitle", () => {

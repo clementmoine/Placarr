@@ -98,7 +98,7 @@ describe("fetchRemoteImageBuffer", () => {
     expect(result?.buffer.equals(large)).toBe(true);
   });
 
-  it("escalates to FlareSolverr when direct fetch only yields sub-threshold fallbacks", async () => {
+  it("escalates to FlareSolverr when direct fetch only yields non-/full/ fallbacks", async () => {
     const tiny = await jpegBuffer(264, 432);
     const full = await jpegBuffer(1723, 2320);
 
@@ -137,7 +137,7 @@ describe("fetchRemoteImageBuffer", () => {
     expect(result?.buffer.equals(full)).toBe(true);
   });
 
-  it("returns null for /full/ URLs when only tiny fallbacks are reachable", async () => {
+  it("returns null for /full/ URLs when only non-/full/ fallbacks are reachable", async () => {
     const tiny = await jpegBuffer(264, 432);
 
     mockedGet.mockImplementation(async (url: string) => {

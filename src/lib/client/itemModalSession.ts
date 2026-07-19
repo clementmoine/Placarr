@@ -1,7 +1,11 @@
 import type { Condition } from "@prisma/client";
 
 import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
-import { filterMetadataForShelfPlatform } from "@/core/collect/media";
+import {
+  filterMetadataForShelfPlatform,
+  getCoverImage,
+  isExplicitUserCoverOverride,
+} from "@/core/collect/media";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -131,13 +135,25 @@ export function buildItemModalSessionInit(input: {
 
   if (item) {
     const storedName = (item.storedName || item.name || defaults.name).trim();
+    const mediaForCover = {
+      imageUrl: item.imageUrl,
+      updatedAt: item.updatedAt,
+      condition: item.condition,
+      metadata: item.metadata,
+      shelf: item.shelf || activeShelfForMedia,
+    };
+    // Without an explicit user gallery pick, seed the form on the dynamic
+    // default (same ranking as cards / "Par défaut") — not a stale item.imageUrl.
+    const seededCoverUrl = isExplicitUserCoverOverride(mediaForCover)
+      ? item.imageUrl || defaults.imageUrl
+      : getCoverImage(mediaForCover) || item.imageUrl || defaults.imageUrl;
     let formValues: ItemModalFormValues = {
       shelfId: item.shelfId || defaults.shelfId,
       name: storedName,
       description:
         item.description || item.metadata?.description || defaults.description,
       condition: item.condition || defaults.condition,
-      imageUrl: item.imageUrl || defaults.imageUrl,
+      imageUrl: seededCoverUrl,
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,

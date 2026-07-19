@@ -1,11 +1,16 @@
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { finalizeGamePriceProviders } from "@/core/commerce/pricing/resolver";
 import type { PriceOfferInput } from "@/core/enrich/evidence";
+import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
 import { PROVIDER_MODULES } from "./registry";
 import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,
 } from "@/types/providerModule";
+
+/** Parallel price scrapers also share the Next event loop — keep this low and yield. */
+const BARCODE_PRICE_REFRESH_CONCURRENCY = 2;
 
 function moduleSupportsShelfType(
   types: readonly string[],
@@ -31,12 +36,21 @@ export async function collectRefreshBarcodePriceOffers(
       module.refreshBarcodePriceOffers &&
       moduleSupportsShelfType(module.info.types, ctx.shelfType),
   );
-  const settled = await Promise.allSettled(
-    modules.map((module) => module.refreshBarcodePriceOffers!(ctx)),
+  const settled = await runWithConcurrency(
+    modules,
+    BARCODE_PRICE_REFRESH_CONCURRENCY,
+    async (module) => {
+      await yieldToEventLoop();
+      try {
+        return await module.refreshBarcodePriceOffers!(ctx);
+      } catch {
+        return [] as PriceOfferInput[];
+      } finally {
+        await yieldToEventLoop();
+      }
+    },
   );
-  return settled.flatMap((result) =>
-    result.status === "fulfilled" ? result.value : [],
-  );
+  return settled.flat();
 }
 
 export function priceProviderTokenFromOffers(

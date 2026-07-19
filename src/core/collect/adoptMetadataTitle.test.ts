@@ -33,7 +33,7 @@ describe("adoptItemNameFromMetadataIfPlaceholder", () => {
     mockedFindUnique.mockResolvedValue({ shelfId: "shelf-1" } as never);
   });
 
-  it("promotes metadata title when the stored name is still a placeholder", async () => {
+  it("promotes metadata title when the stored name is still a barcode placeholder", async () => {
     const adopted = await adoptItemNameFromMetadataIfPlaceholder({
       itemId: "item-1",
       metadataTitle: "Black stories - Autour du monde",
@@ -51,7 +51,7 @@ describe("adoptItemNameFromMetadataIfPlaceholder", () => {
     });
   });
 
-  it("promotes metadata title when the stored name uses the Objet prefix", async () => {
+  it("promotes metadata title for Objet-prefixed placeholders when a barcode is set", async () => {
     const adopted = await adoptItemNameFromMetadataIfPlaceholder({
       itemId: "item-1",
       metadataTitle: "Black stories - Autour du monde",
@@ -60,28 +60,52 @@ describe("adoptItemNameFromMetadataIfPlaceholder", () => {
     });
 
     expect(adopted).toBe(true);
+    expect(mockedUpdate).toHaveBeenCalled();
+  });
+
+  it("promotes metadata title when the name is empty but a barcode is set", async () => {
+    const adopted = await adoptItemNameFromMetadataIfPlaceholder({
+      itemId: "item-1",
+      metadataTitle: "Alice 19th Tome 2",
+      itemName: "",
+      barcode: "9784091354327",
+    });
+
+    expect(adopted).toBe(true);
     expect(mockedUpdate).toHaveBeenCalledWith({
       where: { id: "item-1" },
       data: {
-        name: "Black stories - Autour du monde",
-        slug: "black-stories-autour-du-monde",
+        name: "Alice 19th Tome 2",
+        slug: "alice-19th-tome-2",
       },
     });
   });
 
-  it("does not overwrite a user-provided title", async () => {
+  it("does not adopt a title without a barcode", async () => {
     const adopted = await adoptItemNameFromMetadataIfPlaceholder({
       itemId: "item-1",
-      metadataTitle: "Catan",
-      itemName: "Mon Catan préféré",
-      barcode: "3421272109517",
+      metadataTitle: "Alice 19th Tome 2",
+      itemName: "",
+      barcode: null,
     });
 
     expect(adopted).toBe(false);
     expect(mockedUpdate).not.toHaveBeenCalled();
   });
 
-  it("promotes a cleaner catalog title over a noisy retailer listing", async () => {
+  it("does not overwrite a user-provided title", async () => {
+    const adopted = await adoptItemNameFromMetadataIfPlaceholder({
+      itemId: "item-1",
+      metadataTitle: "L'Académie Alice, tome 2",
+      itemName: "Alice 19th Tome 2",
+      barcode: "9784091354327",
+    });
+
+    expect(adopted).toBe(false);
+    expect(mockedUpdate).not.toHaveBeenCalled();
+  });
+
+  it("does not rewrite a noisy user listing title", async () => {
     const adopted = await adoptItemNameFromMetadataIfPlaceholder({
       itemId: "item-1",
       metadataTitle: "Black Stories - Morts de Rire",
@@ -89,13 +113,7 @@ describe("adoptItemNameFromMetadataIfPlaceholder", () => {
       barcode: "0626570614616",
     });
 
-    expect(adopted).toBe(true);
-    expect(mockedUpdate).toHaveBeenCalledWith({
-      where: { id: "item-1" },
-      data: {
-        name: "Black Stories - Morts de Rire",
-        slug: "black-stories-morts-de-rire",
-      },
-    });
+    expect(adopted).toBe(false);
+    expect(mockedUpdate).not.toHaveBeenCalled();
   });
 });

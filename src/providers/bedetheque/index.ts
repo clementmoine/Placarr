@@ -1,6 +1,10 @@
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
+import {
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/core/enrich/observations";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 
@@ -14,13 +18,18 @@ import type {
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
+import { matchBarcodes, matchPrimaryBarcode } from "@/core/catalog/matchContext";
 
-import { fetchBedethequeMetadata, getBedethequeSuggestions, isKnownBedethequePriceEstimate } from "./fetch";
+import { fetchBedethequeMetadata, fetchBedethequeAlbumByUrl, getBedethequeSuggestions, isKnownBedethequePriceEstimate } from "./fetch";
 import { collectBedethequeMappingRawKeys } from "./fetch";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
+import {
+  pinnedProviderRecordUrl,
+} from "@/providers/shared/pinnedRecord";
 
 export {
   fetchBedethequeMetadata,
+  fetchBedethequeAlbumByUrl,
   parseBedethequeAlbumPage,
   parseBedethequeSeriesAlbumLinks,
   parseBedethequeSaleListings,
@@ -94,15 +103,17 @@ const PRICE_SOURCE = "Bedetheque";
 async function refreshBedethequeOffers(ctx: BarcodePriceRefreshContext) {
   if (ctx.shelfType !== "books") return [];
 
+  const barcodes = matchBarcodes(ctx);
   const queries = Array.from(
     new Set(
-      [ctx.primaryName, ...ctx.fallbackNames, ctx.cleanedBarcode].filter(
+      [ctx.primaryName, ...ctx.fallbackNames, ...barcodes].filter(
         (query) => query?.trim(),
       ),
     ),
   );
-  const normalizedBarcode = ctx.cleanedBarcode
-    ? normalizeProductBarcode(ctx.cleanedBarcode)
+  const primaryBarcode = matchPrimaryBarcode(ctx) || ctx.cleanedBarcode;
+  const normalizedBarcode = primaryBarcode
+    ? normalizeProductBarcode(primaryBarcode)
     : undefined;
 
   for (const query of queries) {
@@ -273,6 +284,17 @@ function mapBedethequeMetadata(
     });
   }
 
+  if (album.issueNumber) {
+    facts.push({
+      kind: "tag",
+      label: "Tome",
+      value: album.issueNumber,
+      source: "bedetheque",
+      confidence: 0.62,
+      priority: 28,
+    });
+  }
+
   if (album.genre) {
     facts.push({
       kind: "tag",
@@ -331,7 +353,7 @@ function mapBedethequeMetadata(
 
   facts.push(...buildBedethequePriceFacts(album));
 
-  return {
+  const metadata: MetadataResult = {
     title: album.title,
     authors: album.authors?.map((name) => ({ name })),
     publishers: album.publisher ? [{ name: album.publisher }] : undefined,
@@ -345,6 +367,26 @@ function mapBedethequeMetadata(
     attachments: buildBedethequeAttachments(album),
     facts,
     externalIds: { bedetheque: album.id },
+  };
+
+  return {
+    ...metadata,
+    observations: observationsFromMetadataResult(metadata, {
+      providerId: "bedetheque",
+      providerLabel: "Bédéthèque",
+      sourceDocumentRole: "reference_record",
+      sourceUrl: album.sourceUrl,
+      sourceId: album.id,
+      evidenceSignals: album.barcode
+        ? ["structured_data", "barcode_match"]
+        : ["structured_data", "title_match"],
+      titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
+      imageRole: "cover_front",
+      factRole: "structured_fact",
+      language: "fr",
+    }),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
 }
 
@@ -373,6 +415,7 @@ export const bedethequeModule: ProviderModule = {
     bookCoverPriority: "primary",
     bookGallerySource: true,
     requiresTitleAlignment: true,
+    catalogCoverTitles: true,
     notes:
       "Encyclopédie BD FR (BDGest). Recherche par titre/série ; l'EAN est validé quand présent sur la fiche. Pas de lookup ISBN seul côté site.",
   },
@@ -381,23 +424,34 @@ export const bedethequeModule: ProviderModule = {
     sourceWeight: 0.36,
     cleanCachedNames: true,
   },
+  parseMetadataRecordIdFromUrl(url) {
+    try {
+      const parsed = new URL(url);
+      if (!/bedetheque\.com$/i.test(parsed.hostname.replace(/^www\./i, ""))) {
+        return null;
+      }
+      return parsed.pathname.match(/\/BD-[^/]+-(\d+)\.html$/i)?.[1] ?? null;
+    } catch {
+      return null;
+    }
+  },
   createMetadataAdapter() {
     return {
       id: "bedetheque",
-      async resolve({
-        name,
-        barcode,
-        lookupQueries,
-      }: {
-        name?: string | null;
-        barcode?: string | null;
-        lookupQueries?: string[];
-      }) {
+      async resolve(ctx) {
+        const pinnedUrl = pinnedProviderRecordUrl(ctx, "bedetheque");
+        if (pinnedUrl) {
+          const pinned = mapBedethequeMetadata(
+            await fetchBedethequeAlbumByUrl(pinnedUrl),
+          );
+          if (pinned) return pinned;
+        }
+
         const queries =
-          lookupQueries && lookupQueries.length > 0
-            ? lookupQueries
-            : [String(name || "").trim()];
-        const normalizedBarcode = normalizeProductBarcode(barcode);
+          ctx.lookupQueries && ctx.lookupQueries.length > 0
+            ? ctx.lookupQueries
+            : [String(ctx.name || "").trim()];
+        const normalizedBarcode = normalizeProductBarcode(ctx.barcode);
         for (const query of queries) {
           if (!query?.trim() && !normalizedBarcode) continue;
           const metadata = mapBedethequeMetadata(
@@ -441,7 +495,7 @@ export const bedethequeModule: ProviderModule = {
   },
   mappingProbe: {
     sampleInput: "Super Picsou Géant n°7",
-    context: { name: "Super Picsou Géant n°7" },
+    context: { name: "Super Picsou Géant n°7", type: "books" },
   },
   runMappingProbe: async () =>
     metadataProbe(

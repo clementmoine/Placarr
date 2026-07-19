@@ -9,6 +9,7 @@ import {
 } from "@/lib/dev/mappingRawKeys";
 import { getIGDBDatabaseSuggestions } from "./suggestions";
 import { resolveWithLookupQueries } from "@/core/enrich/searchUtils";
+import { extractTitleIntentYear } from "@/core/enrich/titles/intentYear";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -52,8 +53,9 @@ export const igdbModule: ProviderModule = {
   createMetadataAdapter: () => ({
     id: "igdb",
     async resolve({ name, platform, lookupQueries }) {
+      const intentYear = extractTitleIntentYear(name);
       return resolveWithLookupQueries(lookupQueries, name, (query) =>
-        fetchFromIGDB(query, platform),
+        fetchFromIGDB(query, platform, { intentYear }),
       ) as Promise<MetadataResult | null>;
     },
   }),

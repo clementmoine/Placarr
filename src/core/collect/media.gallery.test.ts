@@ -387,4 +387,51 @@ describe("getGalleryImages", () => {
         .map((image) => image.url),
     ).toEqual(["/uploads/b.jpg", "/uploads/a.jpg", "/uploads/c.jpg"]);
   });
+
+  it("does not invent Perso for a provider cover localized to /uploads before metadata", () => {
+    const item = {
+      imageUrl: "/uploads/screenscraper-fr.png",
+      metadata: null,
+    };
+
+    expect(getGalleryImages(item)).toEqual([
+      {
+        url: "/uploads/screenscraper-fr.png",
+        type: "image",
+        source: null,
+        role: undefined,
+        title: undefined,
+        providerLabel: undefined,
+        sourceNames: undefined,
+      },
+    ]);
+  });
+
+  it("keeps ScreenScraper when an honor pin shares the same local cover URL", () => {
+    const item = {
+      imageUrl: "/uploads/clone-wars.png",
+      metadata: {
+        imageUrl: "/uploads/clone-wars.png",
+        attachments: [
+          {
+            type: "image" as const,
+            source: "user",
+            url: "/uploads/clone-wars.png",
+          },
+          {
+            type: "cover" as const,
+            source: "screenscraper",
+            role: "fr",
+            url: "/uploads/clone-wars.png",
+            providerLabel: "ScreenScraper",
+          },
+        ],
+      },
+      shelf: { type: "games", name: "Xbox 360" },
+    };
+
+    const cover = getGalleryImages(item)[0];
+    expect(cover?.source).toBe("screenscraper");
+    expect(cover?.providerLabel).toBe("ScreenScraper");
+  });
 });

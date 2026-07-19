@@ -27,6 +27,7 @@ describe("getTitleSortKey", () => {
     expect(getTitleSortKey("The Dwarves")).toBe("Dwarves");
     expect(getTitleSortKey("A Hat in Time")).toBe("Hat in Time");
     expect(getTitleSortKey("Le Roi Lion")).toBe("Roi Lion");
+    expect(getTitleSortKey("Les Trésors de Picsou")).toBe("Trésors de Picsou");
     expect(getTitleSortKey("L'Age de Glace")).toBe("Age de Glace");
   });
 
@@ -38,6 +39,15 @@ describe("getTitleSortKey", () => {
 });
 
 describe("compareTitlesForSort", () => {
+  it("classe Les Trésors de Picsou sous T plutôt que sous L", () => {
+    const titles = ["Zelda", "Les Trésors de Picsou", "Banjo-Kazooie"];
+    expect(titles.sort(compareTitlesForSort)).toEqual([
+      "Banjo-Kazooie",
+      "Les Trésors de Picsou",
+      "Zelda",
+    ]);
+  });
+
   it("classe The Dwarves sous D plutôt que sous T", () => {
     const titles = ["Zelda", "The Dwarves", "Banjo-Kazooie"];
     expect(titles.sort(compareTitlesForSort)).toEqual([

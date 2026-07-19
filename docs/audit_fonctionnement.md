@@ -65,7 +65,7 @@ flowchart TD
 
     subgraph api["API routes (src/app/api)"]
         RBAR["/api/barcode"]
-        RITEMS["POST /api/items — enrichit en after()"]
+        RITEMS["POST /api/items — stamp + enqueue BackgroundWorkJob"]
         RMETA["/api/metadata, /api/items/[id]/metadata"]
         RPRICE["/api/items/[id]/prices"]
     end
@@ -93,7 +93,7 @@ flowchart TD
     end
 
     subgraph jobs["Arrière-plan (borné)"]
-        IOQ["ioQueue AsyncQueue cap 8"]
+        IOQ["ioQueue AsyncQueue cap 2"]
         CPUQ["cpuQueue AsyncQueue cap 2 (sharp)"]
         SESS["session + generation — anti-chevauchement"]
     end
@@ -288,7 +288,7 @@ souvent `mdl.info`. Migration terminée — une source de vérité par module.
 ### 🔵 P5 — Boucles / garde-fous (globalement sain, une exception)
 
 Bonne nouvelle : **pas de boucle sans garde-fou côté serveur**. Les pools sont bornés
-(`ioQueue` cap 8, `cpuQueue` cap 2), les refresh sont sérialisés par session+génération
+(`ioQueue` cap 2, `cpuQueue` cap 2), les refresh sont sérialisés par session+génération
 (anti-chevauchement), le retry HTTP est borné (5 essais, backoff exp, abort-aware), et les
 polls client s'arrêtent sur borne temporelle ([enrichment.ts](src/lib/item/enrichment.ts) :
 enrich 3 min, refresh 15 min, grâce orphelin 2 min). C'est du bon travail.

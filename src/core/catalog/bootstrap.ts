@@ -15,6 +15,7 @@ import type {
   ObservationSourceDocumentRole,
   TitleObservationRole,
 } from "@/types/metadataObservation";
+import { normalizeMetadataAdapterContext } from "@/core/catalog/matchContext";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
@@ -131,7 +132,7 @@ function inferEvidenceSignals(
     signals.add("external_id");
   }
 
-  const query = ctx.name.trim().toLowerCase();
+  const query = (ctx.name ?? "").trim().toLowerCase();
   const title = String(metadata.title || "")
     .trim()
     .toLowerCase();
@@ -212,7 +213,9 @@ function withProviderObservations(
   return {
     id: adapter.id,
     async resolve(ctx: MetadataAdapterContext) {
-      const metadata = await adapter.resolve(ctx);
+      const metadata = await adapter.resolve(
+        normalizeMetadataAdapterContext(ctx),
+      );
       if (!metadata) return null;
       if (metadata.observations && metadata.observations.length > 0) {
         if (metadata.observationSchemaVersion) return metadata;

@@ -78,6 +78,7 @@ import {
   backgroundPickerAttachmentsForItem,
 } from "@/core/collect/media";
 import {
+  findAttachmentForUrl,
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
@@ -805,7 +806,9 @@ export function ItemModal({
         url: persistedCover,
         type:
           matching?.type || (activeShelfType === "games" ? "image" : "cover"),
-        source: matching?.source || "user",
+        // Provider covers are localized to `/uploads` before metadata lands —
+        // do not invent "user"/"Perso" without a real gallery row.
+        source: matching?.source || null,
         role: matching?.role,
         title: matching?.title,
         ...attachmentTraitsOf(matching),
@@ -970,10 +973,9 @@ export function ItemModal({
         urlsReferToSameLocalizedImage(img.url, currentImageUrl),
       )
     ) {
-      const provenance = (metadata?.attachments || []).find(
-        (attachment: { url?: string | null }) =>
-          attachment.url &&
-          urlsReferToSameLocalizedImage(attachment.url, currentImageUrl),
+      const provenance = findAttachmentForUrl(
+        metadata?.attachments || [],
+        currentImageUrl,
       );
       const gallery = provenance
         ? getAttachmentGalleryLabels(
@@ -994,12 +996,10 @@ export function ItemModal({
         url: currentImageUrl,
         type: provenance?.type ?? "image",
         label: gallery?.caption ?? t("items.editTabs.chooseImage"),
-        source: provenance?.source ?? "user",
+        source: provenance?.source ?? null,
         role: provenance?.role ?? null,
-        galleryProvider: gallery?.provider ?? "Perso",
-        gallerySourceNames: gallery?.sourceNames?.length
-          ? gallery.sourceNames
-          : ["Perso"],
+        galleryProvider: gallery?.provider ?? null,
+        gallerySourceNames: gallery?.sourceNames ?? [],
         galleryDetail: gallery?.detail ?? null,
       });
     }
@@ -1241,6 +1241,11 @@ export function ItemModal({
         id: item ? item?.id : undefined,
         imageUrl: imageUrl,
         backgroundImageUrl: backgroundImageUrl,
+        // Create-from-scan: persist the preview so the item page keeps gallery /
+        // facts while background enrichment runs (otherwise only the chosen cover survives).
+        ...(item
+          ? {}
+          : { metadataPreview: fetchedMetadata ?? prefilledValues?.metadataPreview ?? null }),
       };
 
       await onSubmit(updatedItem);

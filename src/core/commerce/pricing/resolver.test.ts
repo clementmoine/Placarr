@@ -167,9 +167,45 @@ describe("summarizeShelfItemPrices", () => {
 
     expect(map.get("item-1")).toEqual({
       priceNew: null,
-      priceUsed: 3499,
-      priceUsedCIB: null,
+      priceUsed: null,
+      priceUsedCIB: 3499,
       priceLastUpdated: new Date("2026-06-20T12:00:00.000Z"),
+    });
+  });
+
+  it("matches Bomber Man 64 eBay copy with version française noise", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([
+      {
+        itemId: "item-bomber",
+        source: "eBay",
+        productName:
+          "Bomber Man 64 - version française FAH PAL - Nintendo 64 N64",
+        condition: "used",
+        priceCents: 6999,
+        observedAt: new Date("2026-07-16T10:18:23.313Z"),
+      },
+    ]);
+
+    const map = await summarizeShelfItemPrices(
+      "games",
+      [
+        {
+          id: "item-bomber",
+          barcode: null,
+          name: "Bomber Man 64",
+          metadataTitle: "Bomber Man 64",
+          aliases: ["Bomberman 64"],
+        },
+      ],
+      "Nintendo 64",
+    );
+
+    expect(map.get("item-bomber")).toEqual({
+      priceNew: null,
+      priceUsed: null,
+      priceUsedCIB: 6999,
+      priceLastUpdated: new Date("2026-07-16T10:18:23.313Z"),
     });
   });
 
@@ -260,7 +296,8 @@ describe("summarizeShelfItemPrices", () => {
       "PlayStation 4",
     );
 
-    expect(map.get("item-1")?.priceUsed).toBe(1272);
+    expect(map.get("item-1")?.priceUsed).toBeNull();
+    expect(map.get("item-1")?.priceUsedCIB).toBe(1272);
   });
 
   it("does not fall back to stale barcode cache when offers were all filtered", async () => {
@@ -483,6 +520,77 @@ describe("alignBarcodePricesForItemNames", () => {
     expect(aligned.priceObservations).toEqual([]);
   });
 
+  it("keeps PriceCharting aggregates when FR primary misses EN catalog title", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "games",
+      ["Medal of Honor: Le soleil Levant"],
+      cachedBarcodePrices({
+        priceNew: 3621,
+        priceUsed: 263,
+        priceUsedCIB: 502,
+        priceLastUpdated: new Date("2026-07-19T12:00:00.000Z"),
+        priceSources: ["PriceCharting"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "Medal of Honor Rising Sun",
+            condition: "loose",
+            priceCents: 263,
+          }),
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "Medal of Honor Rising Sun",
+            condition: "cib",
+            priceCents: 502,
+          }),
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "Medal of Honor Rising Sun",
+            condition: "new",
+            priceCents: 3621,
+          }),
+        ],
+      }),
+      "PlayStation 2",
+    );
+
+    expect(aligned.priceUsed).toBe(263);
+    expect(aligned.priceUsedCIB).toBe(502);
+    expect(aligned.priceObservations).toHaveLength(3);
+  });
+
+  it("still clears PriceCharting spinoff aggregates that only share a franchise lead", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "games",
+      ["FIFA 2002"],
+      cachedBarcodePrices({
+        priceNew: 1000,
+        priceUsed: 500,
+        priceUsedCIB: null,
+        priceLastUpdated: new Date("2026-07-19T12:00:00.000Z"),
+        priceSources: ["PriceCharting"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "FIFA 2002: Road to FIFA World Cup",
+            condition: "loose",
+            priceCents: 500,
+          }),
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "FIFA 2002: Road to FIFA World Cup",
+            condition: "new",
+            priceCents: 1000,
+          }),
+        ],
+      }),
+      "PlayStation 2",
+    );
+
+    expect(aligned.priceUsed).toBeNull();
+    expect(aligned.priceObservations).toEqual([]);
+  });
+
   it("recomputes from aligned listings and drops unrelated rows", () => {
     const aligned = alignBarcodePricesForItemNames(
       "books",
@@ -521,8 +629,8 @@ describe("alignBarcodePricesForItemNames", () => {
       ["Minecraft"],
       cachedBarcodePrices({
         priceNew: 3357,
-        priceUsed: 49990,
-        priceUsedCIB: null,
+        priceUsed: null,
+        priceUsedCIB: 49990,
         priceLastUpdated: new Date("2026-07-09T17:47:13.430Z"),
         priceSources: ["LeDenicheur", "ChocoBonPlan"],
         priceObservations: [
@@ -587,8 +695,8 @@ describe("alignBarcodePricesForItemNames", () => {
       ["Les Gardiens de la Galaxie - The Telltale Series"],
       cachedBarcodePrices({
         priceNew: 2355,
-        priceUsed: 26081,
-        priceUsedCIB: null,
+        priceUsed: null,
+        priceUsedCIB: 26081,
         priceLastUpdated: new Date("2026-06-28T12:00:00.000Z"),
         priceSources: ["Smartoys", "LeDenicheur", "eBay"],
         priceObservations: [
@@ -619,7 +727,8 @@ describe("alignBarcodePricesForItemNames", () => {
       "PlayStation 4",
     );
 
-    expect(aligned.priceUsed).toBe(1200);
+    expect(aligned.priceUsed).toBeNull();
+    expect(aligned.priceUsedCIB).toBe(1200);
     expect(aligned.priceObservations).toHaveLength(1);
     expect(aligned.priceObservations[0]?.source).toBe("Smartoys");
   });
@@ -743,6 +852,34 @@ describe("filterItemPriceOffers", () => {
       "PriceCharting:new",
       "eBay:used",
     ]);
+  });
+
+  it("aligns unnamed PriceCharting rows via sourceUrl slug", () => {
+    const filtered = filterItemPriceOffers(
+      "games",
+      "PlayStation 2",
+      ["FIFA 2002"],
+      [
+        {
+          source: "PriceCharting",
+          condition: "cib",
+          priceCents: 874,
+          sourceUrl:
+            "https://www.pricecharting.com/game/jp-playstation-2/fifa-2002-road-to-fifa-world-cup",
+        },
+        {
+          source: "PriceCharting",
+          condition: "loose",
+          priceCents: 278,
+          sourceUrl:
+            "https://www.pricecharting.com/game/pal-playstation-2/fifa-football-2002",
+        },
+      ],
+    );
+
+    expect(filtered.map((row) => `${row.condition}:${row.priceCents}`)).toEqual(
+      ["loose:278"],
+    );
   });
 
   it("drops homonym marketplace rows for short single-word game titles", () => {
@@ -937,6 +1074,27 @@ describe("filterItemPriceOffers", () => {
       },
     ]);
 
-    expect(summary.priceUsed).toBe(162);
+    // Shop "used" is a complete/boxed proxy — it feeds CIB, not loose.
+    expect(summary.priceUsed).toBeNull();
+    expect(summary.priceUsedCIB).toBe(162);
+  });
+
+  it("keeps PriceCharting loose separate from retail used stock", () => {
+    const summary = summarizeObservedPrices("games", [
+      {
+        source: "PriceCharting",
+        condition: "loose",
+        priceCents: 800,
+      },
+      {
+        source: "NetGamesRetro",
+        condition: "used",
+        priceCents: 5000,
+        productName: "Agassi Tennis Generation",
+      },
+    ]);
+
+    expect(summary.priceUsed).toBe(800);
+    expect(summary.priceUsedCIB).toBe(5000);
   });
 });

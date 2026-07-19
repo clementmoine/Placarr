@@ -1,5 +1,6 @@
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { matchPrimaryBarcode } from "@/core/catalog/matchContext";
 import {
   probeBarcodeMetadataSamples,
   rawProbe,
@@ -22,6 +23,7 @@ import {
   priceChartingGalleryLabelIsRecognized,
 } from "./imageLabels";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
+import { barcodeSuggestsPalRegion } from "@/core/identify/normalize";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import type { MetadataFact } from "@/types/metadataProvider";
@@ -59,10 +61,29 @@ const PRICE_SOURCE = "PriceCharting";
 function priceChartingScanOffers(
   prices: NonNullable<NonNullable<PriceChartingMetadata>["prices"]>,
 ) {
+  const sourceExtra = {
+    ...(prices.sourceUrl ? { sourceUrl: prices.sourceUrl } : {}),
+    ...(prices.productName ? { productName: prices.productName } : {}),
+  };
   return pricedOffers(PRICE_SOURCE, [
-    { condition: "loose", priceCents: prices.priceUsed, rawValue: prices },
-    { condition: "cib", priceCents: prices.priceUsedCIB, rawValue: prices },
-    { condition: "new", priceCents: prices.priceNew, rawValue: prices },
+    {
+      condition: "loose",
+      priceCents: prices.priceUsed,
+      rawValue: prices,
+      extra: sourceExtra,
+    },
+    {
+      condition: "cib",
+      priceCents: prices.priceUsedCIB,
+      rawValue: prices,
+      extra: sourceExtra,
+    },
+    {
+      condition: "new",
+      priceCents: prices.priceNew,
+      rawValue: prices,
+      extra: sourceExtra,
+    },
   ]);
 }
 
@@ -106,17 +127,36 @@ function buildPriceChartingAttachments(
 async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
   if (ctx.shelfType !== "games") return [];
   const result = await fetchPricesFromPriceCharting(
-    ctx.cleanedBarcode,
+    matchPrimaryBarcode(ctx) || ctx.cleanedBarcode,
     [ctx.primaryName, ...ctx.fallbackNames].filter(Boolean),
     ctx.shelfName ?? "",
     ctx.isPal,
     ctx.isClassics,
   );
   if (!result) return [];
+  const sourceExtra = {
+    ...(result.sourceUrl ? { sourceUrl: result.sourceUrl } : {}),
+    ...(result.productName ? { productName: result.productName } : {}),
+  };
   return pricedOffers(PRICE_SOURCE, [
-    { condition: "loose", priceCents: result.priceUsed, rawValue: result },
-    { condition: "cib", priceCents: result.priceUsedCIB, rawValue: result },
-    { condition: "new", priceCents: result.priceNew, rawValue: result },
+    {
+      condition: "loose",
+      priceCents: result.priceUsed,
+      rawValue: result,
+      extra: sourceExtra,
+    },
+    {
+      condition: "cib",
+      priceCents: result.priceUsedCIB,
+      rawValue: result,
+      extra: sourceExtra,
+    },
+    {
+      condition: "new",
+      priceCents: result.priceNew,
+      rawValue: result,
+      extra: sourceExtra,
+    },
   ]);
 }
 
@@ -144,9 +184,7 @@ export const pricechartingModule: ProviderModule = {
       id: "pricecharting",
       async resolve({ name, barcode, platform }) {
         const cleanedBarcode = barcode ? cleanCode(barcode) : "";
-        const isPal = cleanedBarcode
-          ? cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0")
-          : true;
+        const isPal = barcodeSuggestsPalRegion(cleanedBarcode);
         let pcMeta: PriceChartingMetadata | null = null;
         if (cleanedBarcode) {
           pcMeta = await fetchMetadataFromPriceCharting(
@@ -179,6 +217,17 @@ export const pricechartingModule: ProviderModule = {
             priority: 58,
           });
         }
+        if (pcMeta.url?.includes("/game/")) {
+          facts.push({
+            kind: "external-link",
+            label: "PriceCharting",
+            value: "Voir la fiche",
+            url: pcMeta.url,
+            source: "pricecharting",
+            confidence: 0.7,
+            priority: 42,
+          });
+        }
 
         return withMetadataPlatformKeys({
           title: pcMeta.title,
@@ -197,7 +246,7 @@ export const pricechartingModule: ProviderModule = {
     if (!BARCODE_TYPES.includes(type)) {
       return {} as Record<string, Promise<unknown>>;
     }
-    const isPal = barcode.length === 13 && !barcode.startsWith("0");
+    const isPal = barcodeSuggestsPalRegion(barcode);
     return {
       pc: deps.fetchMetadataFromPriceCharting(
         barcode,
@@ -229,6 +278,15 @@ export const pricechartingModule: ProviderModule = {
   buildCatalogExternalLink(ctx) {
     if (ctx.mediaType !== "games") return null;
     return buildPriceChartingCatalogLink(ctx);
+  },
+  isVerifiedCatalogProductUrl(url) {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, "");
+      if (host !== "pricecharting.com") return false;
+    } catch {
+      return false;
+    }
+    return url.includes("/game/") && !url.includes("search-products");
   },
   testHandlers: {
     "pricecharting-barcode": {

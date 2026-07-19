@@ -121,7 +121,7 @@ describe("hdjv fetch", () => {
     expect(disc.items).toHaveLength(1);
     expect(disc.items[0]?.label).toBe("Media du jeu");
     expect(disc.items[0]?.type).toBe("image");
-    expect(disc.items[0]?.role).toBeUndefined();
+    expect(disc.items[0]?.role).toBe("disc-fr");
 
     const disque = parseHdjvGalleryPage(GALLERY_DISQUE_LABEL_FIXTURE);
     expect(disque.items[0]?.role).toBe("disc-fr");

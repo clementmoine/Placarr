@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 
 import {
+  clearFinishedMetadataRefreshStamps,
   patchCachedItem,
   patchCachedShelf,
   shelfListItemMissingAttachments,
 } from "./queryCache";
+import { METADATA_REFRESH_STAMP_PRESERVE_MS } from "./enrichment";
 
 describe("patchCachedItem", () => {
   it("inserts a newly created item into the cached shelf immediately", () => {
@@ -32,6 +34,39 @@ describe("patchCachedItem", () => {
 
     expect(shelf?.items).toHaveLength(2);
     expect(shelf?.items[0]?.id).toBe("item-2");
+  });
+
+  it("inserts into a slug-keyed shelf query when the item has the shelf cuid", () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["shelf", "sega-dreamcast", ""], {
+      id: "cuid-dreamcast",
+      slug: "sega-dreamcast",
+      name: "Sega Dreamcast",
+      items: [{ id: "item-1", name: "Sonic", shelfId: "cuid-dreamcast" }],
+    });
+
+    patchCachedItem(
+      queryClient,
+      {
+        id: "item-2",
+        shelfId: "cuid-dreamcast",
+        name: "NBA 2K2",
+        shelf: {
+          id: "cuid-dreamcast",
+          slug: "sega-dreamcast",
+          name: "Sega Dreamcast",
+          type: "games",
+        },
+      },
+      { isCreate: true },
+    );
+
+    const shelf = queryClient.getQueryData<{
+      items: Array<{ id: string; name: string }>;
+    }>(["shelf", "sega-dreamcast", ""]);
+
+    expect(shelf?.items).toHaveLength(2);
+    expect(shelf?.items[0]).toMatchObject({ id: "item-2", name: "NBA 2K2" });
   });
 
   it("does not insert into a filtered shelf query when the name does not match", () => {
@@ -134,7 +169,7 @@ describe("patchCachedShelf", () => {
 });
 
 describe("shelfListItemMissingAttachments", () => {
-  it("flags enriched list items that omit the attachment gallery", () => {
+  it("flags enriched list items that omit every attachment row", () => {
     expect(
       shelfListItemMissingAttachments({
         metadataId: "meta-1",
@@ -148,5 +183,74 @@ describe("shelfListItemMissingAttachments", () => {
       }),
     ).toBe(false);
     expect(shelfListItemMissingAttachments({ metadataId: null })).toBe(false);
+  });
+});
+
+describe("clearFinishedMetadataRefreshStamps", () => {
+  it("clears a finished refresh stamp when the item is no longer in jobs", () => {
+    const queryClient = new QueryClient();
+    const startedAt = new Date(
+      Date.now() - METADATA_REFRESH_STAMP_PRESERVE_MS - 1,
+    ).toISOString();
+    queryClient.setQueryData(["shelf", "ps3", "items", "item-1"], {
+      id: "item-1",
+      shelfId: "ps3",
+      metadataRefreshStartedAt: startedAt,
+    });
+
+    clearFinishedMetadataRefreshStamps(queryClient, new Set());
+
+    expect(
+      queryClient.getQueryData<{ metadataRefreshStartedAt: string | null }>([
+        "shelf",
+        "ps3",
+        "items",
+        "item-1",
+      ])?.metadataRefreshStartedAt,
+    ).toBeNull();
+  });
+
+  it("keeps a stamp still inside the optimistic race window", () => {
+    const queryClient = new QueryClient();
+    const startedAt = new Date().toISOString();
+    queryClient.setQueryData(["shelf", "ps3", "items", "item-1"], {
+      id: "item-1",
+      shelfId: "ps3",
+      metadataRefreshStartedAt: startedAt,
+    });
+
+    clearFinishedMetadataRefreshStamps(queryClient, new Set());
+
+    expect(
+      queryClient.getQueryData<{ metadataRefreshStartedAt: string | null }>([
+        "shelf",
+        "ps3",
+        "items",
+        "item-1",
+      ])?.metadataRefreshStartedAt,
+    ).toBe(startedAt);
+  });
+
+  it("keeps a stamp while the item is still listed as an active job", () => {
+    const queryClient = new QueryClient();
+    const startedAt = new Date(
+      Date.now() - METADATA_REFRESH_STAMP_PRESERVE_MS - 1,
+    ).toISOString();
+    queryClient.setQueryData(["shelf", "ps3", "items", "item-1"], {
+      id: "item-1",
+      shelfId: "ps3",
+      metadataRefreshStartedAt: startedAt,
+    });
+
+    clearFinishedMetadataRefreshStamps(queryClient, new Set(["item-1"]));
+
+    expect(
+      queryClient.getQueryData<{ metadataRefreshStartedAt: string | null }>([
+        "shelf",
+        "ps3",
+        "items",
+        "item-1",
+      ])?.metadataRefreshStartedAt,
+    ).toBe(startedAt);
   });
 });

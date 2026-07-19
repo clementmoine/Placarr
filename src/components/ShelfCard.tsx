@@ -2,11 +2,42 @@ import React, { useMemo } from "react";
 import { RemoteImage } from "@/components/RemoteImage";
 import colorLib from "color";
 import { cn } from "@/lib/shared/utils";
-import type { ShelfWithItemCount } from "@/types/shelves";
+import type { ShelfBestItem, ShelfWithItemCount } from "@/types/shelves";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
-export function ShelfCard(props: ShelfWithItemCount) {
-  const { color, imageUrl, name, bestItem } = props;
+export type ShelfCardDisplay = {
+  name: string;
+  color?: string | null;
+  imageUrl?: string | null;
+  bestItem?: ShelfBestItem | null;
+};
+
+/** Shared logo sizing — keep modal preview + grid cards in sync. */
+export const SHELF_CARD_LOGO_CLASSNAME = cn(
+  "max-h-full w-auto max-w-full object-contain object-left drop-shadow-md",
+  "max-w-[10rem] min-[400px]:max-w-[5.5rem] md:max-w-[6.5rem]",
+);
+
+type ShelfCardProps = (ShelfCardDisplay | ShelfWithItemCount) & {
+  className?: string;
+  /** Grid cards lift on hover; modal preview stays still. Default true. */
+  interactive?: boolean;
+  /** Replaces the logo/initials band (upload control in the shelf modal). */
+  logoAccessory?: React.ReactNode;
+  /** Absolute overlay (drag hint, error ring content, etc.). */
+  children?: React.ReactNode;
+};
+
+export function ShelfCard({
+  color,
+  imageUrl,
+  name,
+  bestItem,
+  className,
+  interactive = true,
+  logoAccessory,
+  children,
+}: ShelfCardProps) {
   const { t } = useLocale();
   const backgroundImageUrl =
     bestItem?.backgroundImageUrl || bestItem?.imageUrl || null;
@@ -36,8 +67,10 @@ export function ShelfCard(props: ShelfWithItemCount) {
         "cv-card-shelf group relative w-full select-none overflow-hidden rounded-2xl shadow-md",
         "bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md",
         "border border-border dark:border-zinc-800/65",
-        "cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out",
         "aspect-[3/2] md:aspect-[1.618/1]",
+        interactive &&
+          "cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out",
+        className,
       )}
       style={{ backgroundColor }}
     >
@@ -61,38 +94,40 @@ export function ShelfCard(props: ShelfWithItemCount) {
       {/* Foreground: flex keeps logo + title in separate bands (no overlap). */}
       <div
         className={cn(
-          "absolute inset-0 z-1 flex min-h-0 flex-col justify-between",
+          "pointer-events-none absolute inset-0 z-1 flex min-h-0 flex-col justify-between",
           "p-3 sm:p-4 md:p-6",
         )}
       >
         <div
           className={cn(
-            "flex min-h-0 items-start justify-start overflow-hidden",
-            "max-h-[38%] min-[400px]:max-h-[34%] md:max-h-[40%]",
+            "flex min-h-0 items-start justify-start",
+            // Grid: clip tall logos. Edit: let the padded hit target breathe.
+            logoAccessory ? "overflow-visible" : "overflow-hidden",
+            logoAccessory
+              ? "h-[38%] min-[400px]:h-[34%] md:h-[40%]"
+              : "max-h-[38%] min-[400px]:max-h-[34%] md:max-h-[40%]",
           )}
         >
-          {imageUrl ? (
-            <RemoteImage
-              src={imageUrl}
-              width={128}
-              height={128}
-              alt="Shelf Logo"
-              className={cn(
-                "max-h-full w-auto max-w-full object-contain object-left drop-shadow-md",
-                "max-w-[10rem] min-[400px]:max-w-[5.5rem] md:max-w-[6.5rem]",
-              )}
-            />
-          ) : (
-            <span
-              className={cn(
-                "font-extrabold leading-none tracking-wide drop-shadow-md",
-                "text-xl min-[400px]:text-base md:text-lg",
-              )}
-              style={{ color: foregroundColor }}
-            >
-              {name.trim().substring(0, 2).toUpperCase()}
-            </span>
-          )}
+          {logoAccessory ??
+            (imageUrl ? (
+              <RemoteImage
+                src={imageUrl}
+                width={128}
+                height={128}
+                alt="Shelf Logo"
+                className={SHELF_CARD_LOGO_CLASSNAME}
+              />
+            ) : (
+              <span
+                className={cn(
+                  "font-extrabold leading-none tracking-wide drop-shadow-md",
+                  "text-xl min-[400px]:text-base md:text-lg",
+                )}
+                style={{ color: foregroundColor }}
+              >
+                {name.trim().substring(0, 2).toUpperCase()}
+              </span>
+            ))}
         </div>
 
         <span
@@ -104,6 +139,8 @@ export function ShelfCard(props: ShelfWithItemCount) {
           {name.trim().length > 1 ? name : t("common.noName")}
         </span>
       </div>
+
+      {children}
     </div>
   );
 }

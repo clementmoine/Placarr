@@ -116,6 +116,7 @@ import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhe
 import { getItemValueEstimate } from "@/core/collect/value";
 import { marketOfferConditionsForItem } from "@/core/collect/condition";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
+import { displayAliasesForItem } from "@/core/enrich/aliases";
 
 import {
   type DetailFact,
@@ -1798,6 +1799,14 @@ export default function ItemDetailsPage() {
   const itemDisplayName = item?.name;
   useDocumentTitle(itemDisplayName);
 
+  const displayAliases = useMemo(() => {
+    return displayAliasesForItem({
+      name: itemDisplayName,
+      metadataTitle: item?.metadata?.title,
+      aliases: item?.metadata?.aliases,
+    });
+  }, [item?.metadata?.aliases, item?.metadata?.title, itemDisplayName]);
+
   const seriesVolumes = useMemo(() => {
     if (!shelf?.items || !item || !resolvedItemId) return [];
     const seriesTitle = item.storedName ?? item.name ?? "";
@@ -2466,6 +2475,25 @@ export default function ItemDetailsPage() {
 
                 {/* Key Details Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 max-w-3xl bg-zinc-50/40 dark:bg-zinc-950/10 backdrop-blur-sm border border-border dark:border-zinc-800/40 p-5 rounded-2xl shadow-sm mt-3">
+                  {displayAliases.length > 0 && (
+                    <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                        {t("items.info.alsoKnownAs")}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {displayAliases.map((alias) => (
+                          <Badge
+                            key={alias}
+                            variant="secondary"
+                            className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
+                          >
+                            {alias}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {item?.storedName && (
                     <div className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:border-b-0 sm:pb-0">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">

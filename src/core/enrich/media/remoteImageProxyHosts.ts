@@ -4,11 +4,22 @@
  * `remoteImageProxyHosts.test.ts` against registry `remoteImageReferer` providers.
  */
 export const REMOTE_IMAGE_PROXY_HOST_FRAGMENTS = [
-  "cdn1.booknode.com/book_cover/",
+  "bdovore.com/images/couv/",
   "bedetheque.com/media/Couvertures/",
-  "img.chasse-aux-livres.fr",
-  "historiquedesjeuxvideo.com",
+  "canalbd.b-cdn.net",
+  "cdn.vivlio.com",
+  "cdn1.booknode.com/book_cover/",
   "geedie.lt",
+  "historiquedesjeuxvideo.com",
+  "image.izneo.com",
+  "img.chasse-aux-livres.fr",
+  "pictures.abebooks.com",
+  "products-images.di-static.com",
+  "static.bdphile.fr",
+  "static.planetebd.com",
+  "www.babelio.com",
+  "www.bdfugue.com",
+  "www.gibert.com",
 ] as const;
 
 const BLOCKED_PROXY_HOSTS =

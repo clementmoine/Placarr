@@ -15,13 +15,23 @@ import {
   resolvePriceChartingPlatformSlug,
 } from "./platformSlugs";
 import { franchiseSequelNumbersConflict } from "@/core/enrich/titleMatching";
+import { titleSeasonYearsConflict } from "@/core/enrich/titles/intentYear";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
+import { listingIsDistinctProductSpinoff } from "@/core/identify/titleUtils";
 import { slugify } from "@/lib/routing/slugs";
 import { expandPriceChartingLookupTitles } from "./lookupTitles";
+import {
+  priceChartingAcceptanceTitleBag,
+  priceChartingSeekTitleSpecificity,
+  rankPriceChartingSeekTitles,
+  catalogIsLeadingFranchiseStem,
+  catalogIsTokenSubsetOfTitle,
+} from "./seekTitles";
 import {
   priceChartingAmpersandTitleSlug,
   priceChartingTitleSlug,
 } from "./titleSlug";
+import { productNameFromPriceChartingGameUrl } from "./offerProductName";
 import {
   pickPriceChartingPrimaryCoverUrl,
   priceChartingGalleryLabelIsRecognized,
@@ -97,6 +107,36 @@ const TITLE_STOP_WORDS = new Set([
   "une",
 ]);
 
+/** Prefer a verified `/game/…` URL from HTML (canonical) or the final request URL. */
+export function resolvePriceChartingGamePageUrl(
+  html: string,
+  finalUrl?: string | null,
+): string | undefined {
+  const candidates = [
+    finalUrl,
+    html.match(
+      /rel=["']canonical["'][^>]*href=["']([^"']+)["']/i,
+    )?.[1],
+    html.match(
+      /href=["']([^"']+)["'][^>]*rel=["']canonical["']/i,
+    )?.[1],
+    html.match(
+      /property=["']og:url["'][^>]*content=["']([^"']+)["']/i,
+    )?.[1],
+  ];
+
+  for (const raw of candidates) {
+    if (!raw?.trim()) continue;
+    const url = decodePriceChartingHtmlEntities(raw.trim()).replace(
+      /&amp;/g,
+      "&",
+    );
+    if (!url.includes("/game/") || isSearchUrl(url)) continue;
+    return url.split(/[?#]/)[0];
+  }
+  return undefined;
+}
+
 export function decodePriceChartingHtmlEntities(value: string): string {
   return value
     .replace(/&amp;/g, "&")
@@ -120,6 +160,8 @@ function normalizeTitleForComparison(value: string): string {
     .replace(/\s*\/\s*/g, " and ")
     .replace(/\s*&\s*/g, " and ")
     .replace(/\s*\|\s*/g, " and ")
+    // Keep franchise compounds aligned: Spider-Man ↔ Spiderman.
+    .replace(/-/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -132,7 +174,13 @@ function titleTokens(value: string): string[] {
       const roman = parseRomanToken(token);
       return roman != null ? String(roman) : token;
     })
-    .filter((token) => token && !TITLE_STOP_WORDS.has(token));
+    .filter(
+      (token) =>
+        token &&
+        !TITLE_STOP_WORDS.has(token) &&
+        // Keep sequel numbers ("2") but drop stray single letters ("d").
+        (token.length > 1 || /^\d+$/.test(token)),
+    );
 }
 
 function titleSimilarityScore(a: string, b: string): number {
@@ -249,10 +297,104 @@ export function priceChartingPlatformMatchesTarget(
   return parsedKey === targetKey;
 }
 
+function priceChartingTitleIdentityConflicts(
+  requestedNames: readonly string[],
+  catalogTitle: string,
+): boolean {
+  return (
+    franchiseSequelNumbersConflict([...requestedNames], catalogTitle) ||
+    titleSeasonYearsConflict(requestedNames, catalogTitle)
+  );
+}
+
+function priceChartingTitleScore(
+  requestedName: string,
+  catalogTitle: string,
+): number {
+  return (
+    titleSimilarityScore(requestedName, catalogTitle) +
+    priceChartingEditionKeywordBonus(requestedName, catalogTitle)
+  );
+}
+
+/**
+ * Accept a PriceCharting catalog title only when it aligns with the MatchContext
+ * title bag (primary + in-family aliases) — not merely the single query that
+ * surfaced the search row.
+ *
+ * `allowFranchiseStem` is for search/slug-confirmed hits: PriceCharting often
+ * stores only the franchise stem ("Baten Kaitos") while the bag carries the
+ * regional subtitle. Unit tests that guard bare-franchise false friends leave
+ * this off.
+ */
+export function priceChartingCatalogAlignsWithTitles(
+  catalogTitle: string,
+  titleBag: readonly string[],
+  options?: { allowFranchiseStem?: boolean },
+): boolean {
+  const cleanedCatalog = catalogTitle.replace(/\s+/g, " ").trim();
+  if (!cleanedCatalog) return false;
+
+  const acceptance = priceChartingAcceptanceTitleBag(titleBag);
+  if (acceptance.length === 0) return false;
+  if (priceChartingTitleIdentityConflicts(acceptance, cleanedCatalog)) {
+    return false;
+  }
+
+  const scored = acceptance.map((name) => ({
+    name,
+    score: priceChartingTitleScore(name, cleanedCatalog),
+    specificity: priceChartingSeekTitleSpecificity(name),
+  }));
+  const bestEntry = scored.reduce((best, entry) =>
+    entry.score > best.score ? entry : best,
+  );
+  if (bestEntry.score < 0.62) return false;
+
+  // Reject longer catalog spinoffs that share a leading title even when the
+  // similarity score is high ("FIFA 2002" vs "FIFA 2002: Road to FIFA World Cup").
+  if (
+    acceptance.some((name) =>
+      listingIsDistinctProductSpinoff(name, cleanedCatalog),
+    )
+  ) {
+    return false;
+  }
+
+  const specific = scored.filter((entry) => entry.specificity >= 4);
+  if (specific.length > 0) {
+    const bestSpecific = specific.reduce((best, entry) =>
+      entry.score > best.score ? entry : best,
+    );
+    if (bestSpecific.score < 0.55) return false;
+
+    // A short catalog title must not win via a partial franchise match when we
+    // already know a more specific edition name in the bag.
+    const catalogSpecificity =
+      priceChartingSeekTitleSpecificity(cleanedCatalog);
+    if (catalogSpecificity + 1 < bestSpecific.specificity) {
+      const stemAllowed =
+        options?.allowFranchiseStem === true &&
+        bestSpecific.score >= 0.9 &&
+        catalogIsLeadingFranchiseStem(cleanedCatalog, bestSpecific.name);
+      // Non-leading short forms that still carry the product tokens
+      // ("007 Nightfire" for "James Bond 007 Nightfire") — not bare franchise stems.
+      const subsetShortForm =
+        bestSpecific.score >= 0.9 &&
+        catalogIsTokenSubsetOfTitle(cleanedCatalog, bestSpecific.name) &&
+        !catalogIsLeadingFranchiseStem(cleanedCatalog, bestSpecific.name);
+      if (!stemAllowed && !subsetShortForm) return false;
+    }
+  }
+
+  return true;
+}
+
 function rejectMismatchedPriceChartingMetadata(
   metadata: PriceChartingMetadata | null,
-  fallbackName?: string,
+  fallbackNames?: string | string[] | null,
   fallbackPlatform?: string,
+  options?: { allowFranchiseStem?: boolean },
 ): PriceChartingMetadata | null {
   if (!metadata) return null;
   if (
@@ -260,9 +402,16 @@ function rejectMismatchedPriceChartingMetadata(
   ) {
     return null;
   }
+  const names = Array.isArray(fallbackNames)
+    ? fallbackNames.filter(Boolean)
+    : fallbackNames
+      ? [fallbackNames]
+      : [];
   if (
-    fallbackName &&
-    franchiseSequelNumbersConflict([fallbackName], metadata.title || "")
+    names.length > 0 &&
+    !priceChartingCatalogAlignsWithTitles(metadata.title || "", names, {
+      allowFranchiseStem: options?.allowFranchiseStem,
+    })
   ) {
     return null;
   }
@@ -344,6 +493,30 @@ function preferSpecificFallbackTitle(
   return title;
 }
 
+/** @internal exported for unit tests */
+export function parsePriceChartingSearchRowsForTests(html: string) {
+  return parseSearchRows(html);
+}
+
+/** @internal exported for unit tests */
+export function pickBestPriceChartingSearchRowForTests(
+  rows: { id: string; gamePath: string; title: string; platform: string }[],
+  fallbackName: string,
+  fallbackPlatform?: string,
+  isPal?: boolean,
+  isClassics?: boolean,
+  additionalQueryNames: readonly string[] = [],
+) {
+  return pickBestRow(
+    rows,
+    fallbackName,
+    fallbackPlatform,
+    isPal,
+    isClassics,
+    additionalQueryNames,
+  );
+}
+
 function parseSearchRows(
   html: string,
 ): { id: string; gamePath: string; title: string; platform: string }[] {
@@ -353,35 +526,49 @@ function parseSearchRows(
     title: string;
     platform: string;
   }[] = [];
-  const rowRegex =
-    /<tr class=\"offer\" id=\"product-(\d+)\">([\s\S]*?)<\/tr>/gi;
+  // Legacy: <tr class="offer" id="product-N">…</tr>
+  // Current: <tr id="product-N" data-product="N">…</tr>
+  const rowRegex = /<tr\b[^>]*\bid=["']product-(\d+)["'][^>]*>([\s\S]*?)<\/tr>/gi;
   let rMatch;
   while ((rMatch = rowRegex.exec(html)) !== null) {
     const id = rMatch[1];
     const content = rMatch[2];
-    const titleMatch = content.match(
-      /class=\"product_name\">[\s\S]*?<a[^>]*href=\"([^\"]+)\"[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+
+    const legacyTitleMatch = content.match(
+      /class=["']product_name["'][\s\S]*?<a[^>]*href=["']([^"']+)["'][^>]*>\s*([\s\S]*?)\s*<\/a>/i,
     );
-    const legacyTitleMatch = titleMatch
-      ? null
-      : content.match(
-          /class=\"product_name\">[\s\S]*?<a[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
-        );
-    const platformMatch = content.match(/<br>\s*([\s\S]*?)\s*<\/h2>/i);
-    const title = (titleMatch?.[2] ?? legacyTitleMatch?.[1])
-      ?.replace(/\s+/g, " ")
+    const modernTitleMatch = content.match(
+      /<td\b[^>]*class=["'][^"']*\btitle\b[^"']*["'][^>]*>[\s\S]*?<a[^>]*href=["']([^"']*\/game\/[^"']+)["'][^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+    );
+    const titleMatch = legacyTitleMatch ?? modernTitleMatch;
+    const title = titleMatch?.[2]
+      ? decodePriceChartingHtmlEntities(titleMatch[2])
+          .replace(/\s+/g, " ")
+          .trim()
+      : "";
+    if (!title) continue;
+
+    const legacyPlatformMatch = content.match(/<br>\s*([\s\S]*?)\s*<\/h2>/i);
+    const modernPlatformMatch =
+      content.match(
+        /class=["']console-in-title["'][\s\S]*?<a[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+      ) ||
+      content.match(
+        /<td\b[^>]*class=["'][^"']*\bconsole\b[^"']*["'][^>]*>[\s\S]*?<a[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+      );
+    const platformRaw =
+      legacyPlatformMatch?.[1] ?? modernPlatformMatch?.[1] ?? "";
+    const platform = decodePriceChartingHtmlEntities(platformRaw)
+      .replace(/\s+/g, " ")
       .trim();
-    if (title) {
-      const href = titleMatch?.[1]?.trim();
-      rows.push({
-        id,
-        gamePath: href || `/game/${id}`,
-        title,
-        platform: platformMatch
-          ? platformMatch[1].replace(/\s+/g, " ").trim()
-          : "",
-      });
-    }
+
+    const href = titleMatch?.[1]?.trim();
+    rows.push({
+      id,
+      gamePath: href || `/game/${id}`,
+      title,
+      platform,
+    });
   }
   return rows;
 }
@@ -391,22 +578,107 @@ function priceChartingGameUrl(gamePath: string): string {
   return `https://www.pricecharting.com${gamePath.startsWith("/") ? gamePath : `/${gamePath}`}`;
 }
 
+/**
+ * Search rows often link to `/offers?product=N` instead of `/game/…`.
+ * The offers page has the cover/title but not the price table — follow to the
+ * real game URL when present.
+ */
+async function resolvePriceChartingGamePath(
+  gamePath: string,
+  headers: Record<string, string>,
+): Promise<string> {
+  if (!/\/offers\?/i.test(gamePath)) return gamePath;
+  try {
+    const offersRes = await priceChartingGet(
+      priceChartingGameUrl(gamePath),
+      headers,
+    );
+    const gameLink = String(offersRes.data).match(
+      /href=["'](\/game\/[^"'#?]+)/i,
+    )?.[1];
+    return gameLink?.trim() || gamePath;
+  } catch {
+    return gamePath;
+  }
+}
+
+function priceChartingQueryTitleVariants(
+  fallbackName: string,
+  additionalNames: readonly string[] = [],
+): string[] {
+  return Array.from(
+    new Set(
+      [fallbackName, ...additionalNames]
+        .filter((name) => name.trim().length > 0)
+        .flatMap((name) => expandPriceChartingLookupTitles(name)),
+    ),
+  );
+}
+
+function priceChartingRowTitleScore(
+  queryVariants: readonly string[],
+  rowTitle: string,
+): number {
+  if (queryVariants.length === 0) return 0;
+  return Math.max(
+    ...queryVariants.map(
+      (variant) =>
+        titleSimilarityScore(variant, rowTitle) +
+        priceChartingEditionKeywordBonus(variant, rowTitle),
+    ),
+  );
+}
+
+function priceChartingRowLooksLikeNonGameCatalog(row: {
+  title: string;
+  platform: string;
+}): boolean {
+  const platform = row.platform.toLowerCase();
+  const title = row.title.toLowerCase();
+  if (
+    /\bstrategy\s*guide\b/.test(platform) ||
+    /\bnintendo\s*power\b/.test(platform)
+  ) {
+    return true;
+  }
+  if (
+    /\[(?:prima|bradygames|perfect\s*guide|player'?s?\s*guide)\]/i.test(
+      row.title,
+    )
+  ) {
+    return true;
+  }
+  return (
+    /\bperfect\s+guide\b/.test(title) ||
+    /\btrainer'?s?\s+guide\b/.test(title) ||
+    /\bstrategy\s+guide\b/.test(title)
+  );
+}
+
 function pickBestRow(
   rows: { id: string; gamePath: string; title: string; platform: string }[],
   fallbackName: string,
   fallbackPlatform?: string,
   isPal?: boolean,
   isClassics?: boolean,
+  additionalQueryNames: readonly string[] = [],
 ) {
   if (rows.length === 0) return null;
 
+  const queryVariants = priceChartingQueryTitleVariants(
+    fallbackName,
+    additionalQueryNames,
+  );
   const targetPlatformKey = fallbackPlatform
     ? detectPlatformKey(fallbackPlatform)
     : null;
-  let matchingRows = rows;
+  let matchingRows = rows.filter(
+    (row) => !priceChartingRowLooksLikeNonGameCatalog(row),
+  );
+  if (matchingRows.length === 0) return null;
 
   if (targetPlatformKey) {
-    const platformRows = rows.filter(
+    const platformRows = matchingRows.filter(
       (row) => detectPlatformKey(row.platform) === targetPlatformKey,
     );
     if (platformRows.length === 0) return null;
@@ -451,21 +723,37 @@ function pickBestRow(
   }
 
   const alignedRows = matchingRows.filter(
-    (row) => !franchiseSequelNumbersConflict([fallbackName], row.title),
+    (row) => !priceChartingTitleIdentityConflicts(queryVariants, row.title),
   );
-  if (alignedRows.length > 0) matchingRows = alignedRows;
+  if (alignedRows.length > 0) {
+    matchingRows = alignedRows;
+  } else if (
+    matchingRows.some((row) =>
+      priceChartingTitleIdentityConflicts(queryVariants, row.title),
+    )
+  ) {
+    // Every candidate conflicts on sequel/season year — do not fall through
+    // to a known-wrong hit (e.g. Bundesliga Stars 2000 for a 2001 request).
+    return null;
+  }
+
+  if (matchingRows.length === 0) return null;
 
   const best = matchingRows.reduce((currentBest, row) => {
-    const score =
-      titleSimilarityScore(fallbackName, row.title) +
-      priceChartingEditionKeywordBonus(fallbackName, row.title);
-    const bestScore =
-      titleSimilarityScore(fallbackName, currentBest.title) +
-      priceChartingEditionKeywordBonus(fallbackName, currentBest.title);
-    return score > bestScore ? row : currentBest;
+    const score = priceChartingRowTitleScore(queryVariants, row.title);
+    const bestScore = priceChartingRowTitleScore(
+      queryVariants,
+      currentBest.title,
+    );
+    if (score !== bestScore) return score > bestScore ? row : currentBest;
+    // Prefer the shorter catalog title when scores tie ("Tony Hawk 4" over
+    // "Tony Hawk 4 [Platinum]").
+    return row.title.length < currentBest.title.length ? row : currentBest;
   }, matchingRows[0]);
 
-  return titleSimilarityScore(fallbackName, best.title) >= 0.62 ? best : null;
+  return priceChartingRowTitleScore(queryVariants, best.title) >= 0.62
+    ? best
+    : null;
 }
 
 /** Barcode search hit a results page with no title hint — pick one NTSC/PAL row. */
@@ -524,7 +812,9 @@ async function fetchDetailHtmlFromBarcodeSearchResults(
   });
   if (!bestRow) return null;
 
-  const gameUrl = priceChartingGameUrl(bestRow.gamePath);
+  const gameUrl = priceChartingGameUrl(
+    await resolvePriceChartingGamePath(bestRow.gamePath, headers),
+  );
   const detailRes = await priceChartingGet(gameUrl, headers);
   const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
   if (
@@ -584,14 +874,27 @@ async function fetchDirectDetailHtmlFromNameFallback(
 function isAcceptedPriceChartingDetailHtml(
   html: string,
   finalUrl: string,
-  fallbackName: string | undefined,
+  fallbackNames: string | string[] | undefined,
   fallbackPlatform?: string,
+  options?: { allowFranchiseStem?: boolean },
 ): boolean {
+  // Barcode-only seeks have no shelf platform — keep historic behaviour
+  // (row pick already chose the product; do not invent title gates here).
   if (!fallbackPlatform) return true;
 
-  const parsed = parsePriceChartingDetailHtml(html, fallbackName);
-  if (parsed?.title && fallbackName) {
-    if (franchiseSequelNumbersConflict([fallbackName], parsed.title)) {
+  const names = Array.isArray(fallbackNames)
+    ? fallbackNames.filter(Boolean)
+    : fallbackNames
+      ? [fallbackNames]
+      : [];
+
+  const parsed = parsePriceChartingDetailHtml(html, names[0]);
+  if (parsed?.title && names.length > 0) {
+    if (
+      !priceChartingCatalogAlignsWithTitles(parsed.title, names, {
+        allowFranchiseStem: options?.allowFranchiseStem,
+      })
+    ) {
       return false;
     }
   }
@@ -620,11 +923,17 @@ async function fetchDetailHtmlFromNameFallback(
   isClassics?: boolean,
   barcode?: string,
 ): Promise<string | null> {
-  const expandedNames = Array.from(
-    new Set(
-      fallbackNames.flatMap((name) => expandPriceChartingLookupTitles(name)),
-    ),
-  );
+  const primaryTitle = fallbackNames[0] ?? "";
+  const rankedNames = rankPriceChartingSeekTitles(fallbackNames, primaryTitle);
+  // Cap expanded seeks — Nightfire-style alias bags otherwise explode into
+  // dozens of sequential direct-URL + search GETs.
+  const MAX_PRICECHARTING_NAME_SEEKS = 5;
+  const expandedNames = rankPriceChartingSeekTitles(
+    rankedNames.flatMap((name) => expandPriceChartingLookupTitles(name)),
+    primaryTitle,
+  ).slice(0, MAX_PRICECHARTING_NAME_SEEKS);
+  const acceptanceNames = priceChartingAcceptanceTitleBag(fallbackNames);
+
   const directHtml = await fetchDirectDetailHtmlFromNameFallback(
     expandedNames,
     headers,
@@ -632,7 +941,19 @@ async function fetchDetailHtmlFromNameFallback(
     isPal,
     barcode,
   );
-  if (directHtml) return directHtml;
+  if (directHtml) {
+    if (
+      isAcceptedPriceChartingDetailHtml(
+        directHtml,
+        "",
+        acceptanceNames.length > 0 ? acceptanceNames : fallbackNames,
+        fallbackPlatform,
+        { allowFranchiseStem: true },
+      )
+    ) {
+      return directHtml;
+    }
+  }
 
   const seen = new Set<string>();
   for (const fallbackName of expandedNames) {
@@ -655,18 +976,22 @@ async function fetchDetailHtmlFromNameFallback(
         fallbackPlatform,
         isPal,
         isClassics,
+        expandedNames,
       );
       if (!bestRow) continue;
 
-      const gameUrl = priceChartingGameUrl(bestRow.gamePath);
+      const gameUrl = priceChartingGameUrl(
+        await resolvePriceChartingGamePath(bestRow.gamePath, headers),
+      );
       const detailRes = await priceChartingGet(gameUrl, headers);
       const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
       if (
         !isAcceptedPriceChartingDetailHtml(
           detailRes.data,
           detailFinalUrl,
-          fallbackName,
+          acceptanceNames.length > 0 ? acceptanceNames : fallbackNames,
           fallbackPlatform,
+          { allowFranchiseStem: true },
         )
       ) {
         continue;
@@ -678,8 +1003,9 @@ async function fetchDetailHtmlFromNameFallback(
       !isAcceptedPriceChartingDetailHtml(
         html,
         nameFinalUrl,
-        fallbackName,
+        acceptanceNames.length > 0 ? acceptanceNames : fallbackNames,
         fallbackPlatform,
+        { allowFranchiseStem: true },
       )
     ) {
       continue;
@@ -813,6 +1139,7 @@ export function parsePriceChartingDetailHtml(
  */
 export function parsePriceChartingPricesFromHtml(
   html: string,
+  finalUrl?: string | null,
 ): PriceChartingPrices | null {
   let eurRate = 1.0;
   const forexMatch = html.match(/VGPC\.forex_rates\s*=\s*({[^}]+})/);
@@ -852,7 +1179,23 @@ export function parsePriceChartingPricesFromHtml(
   if (cib !== undefined) result.priceUsedCIB = cib;
   if (priceNew !== undefined) result.priceNew = priceNew;
 
-  return Object.keys(result).length > 0 ? result : null;
+  if (Object.keys(result).length === 0) return null;
+  const sourceUrl = resolvePriceChartingGamePageUrl(html, finalUrl);
+  if (sourceUrl) result.sourceUrl = sourceUrl;
+
+  const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  const h1Content = h1Match?.[1] ?? "";
+  const titleMatch = h1Content.match(/^([\s\S]*?)(?:<a|<span|$)/i);
+  const rawTitle = titleMatch
+    ? decodePriceChartingHtmlEntities(
+        titleMatch[1].replace(/\s+/g, " ").trim(),
+      )
+    : "";
+  const fromUrl = productNameFromPriceChartingGameUrl(sourceUrl);
+  const productName = rawTitle || fromUrl || undefined;
+  if (productName) result.productName = productName;
+
+  return result;
 }
 
 export async function fetchMetadataFromPriceChartingByName(
@@ -874,11 +1217,20 @@ export async function fetchMetadataFromPriceChartingByName(
       isClassics,
     );
     if (!html) return null;
-    return rejectMismatchedPriceChartingMetadata(
+    const parsed = rejectMismatchedPriceChartingMetadata(
       parsePriceChartingDetailHtml(html, cleanedName),
       cleanedName,
       fallbackPlatform,
+      { allowFranchiseStem: true },
     );
+    if (!parsed) return null;
+    const url = resolvePriceChartingGamePageUrl(html);
+    const prices = parsePriceChartingPricesFromHtml(html);
+    return {
+      ...parsed,
+      ...(url ? { url } : {}),
+      ...(prices ? { prices } : {}),
+    };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(
@@ -909,28 +1261,43 @@ export async function fetchPricesFromPriceCharting(
       console.log(
         `[PriceCharting Prices] Querying by name: ${fallbackNames.join(" | ")}`,
       );
-      const fallbackHtml = await fetchDetailHtmlFromNameFallback(
-        fallbackNames,
-        PRICECHARTING_HEADERS,
-        fallbackPlatform,
-        isPal,
-        isClassics,
-        cleanedBarcode,
-      );
-      if (!fallbackHtml) return null;
-      const priceFallbackName = fallbackNames[0];
-      if (
-        fallbackPlatform &&
-        !isAcceptedPriceChartingDetailHtml(
-          fallbackHtml,
-          "",
-          priceFallbackName,
+      const loadPricedHtml = async (preferPal: boolean | undefined) => {
+        const html = await fetchDetailHtmlFromNameFallback(
+          fallbackNames,
+          PRICECHARTING_HEADERS,
           fallbackPlatform,
-        )
-      ) {
-        return null;
+          preferPal,
+          isClassics,
+          cleanedBarcode,
+        );
+        if (!html) return null;
+        if (
+          fallbackPlatform &&
+          !isAcceptedPriceChartingDetailHtml(
+            html,
+            "",
+            fallbackNames,
+            fallbackPlatform,
+            { allowFranchiseStem: true },
+          )
+        ) {
+          return null;
+        }
+        return html;
+      };
+
+      let html = await loadPricedHtml(isPal);
+      let prices = html ? parsePriceChartingPricesFromHtml(html) : null;
+      // EU shelves default to PAL, but older catalogs (Atari 2600, …) often have
+      // empty PAL market tables ("-") while NTSC siblings are priced.
+      if (!prices && isPal) {
+        console.log(
+          `[PriceCharting Prices] PAL page has no market prices for "${fallbackNames[0]}", trying NTSC`,
+        );
+        html = await loadPricedHtml(false);
+        prices = html ? parsePriceChartingPricesFromHtml(html) : null;
       }
-      return parsePriceChartingPricesFromHtml(fallbackHtml);
+      return prices;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(
@@ -949,6 +1316,7 @@ export async function fetchPricesFromPriceCharting(
 
     let html = res.data;
     const finalUrl = res.request.res.responseUrl || "";
+    let resolvedViaNameFallback = false;
 
     if (
       finalUrl.includes("/search-products") ||
@@ -974,6 +1342,7 @@ export async function fetchPricesFromPriceCharting(
         );
         if (!fallbackHtml) return null;
         html = fallbackHtml;
+        resolvedViaNameFallback = true;
       } else {
         return null;
       }
@@ -982,15 +1351,14 @@ export async function fetchPricesFromPriceCharting(
       !isAcceptedPriceChartingDetailHtml(
         html,
         finalUrl,
-        Array.isArray(fallbackName) ? fallbackName[0] : fallbackName,
+        fallbackNames.length > 0
+          ? fallbackNames
+          : Array.isArray(fallbackName)
+            ? fallbackName
+            : fallbackName,
         fallbackPlatform,
       )
     ) {
-      const fallbackNames = Array.isArray(fallbackName)
-        ? fallbackName
-        : fallbackName
-          ? [fallbackName]
-          : [];
       if (fallbackNames.length === 0) return null;
       console.log(
         `[PriceCharting Prices] Barcode ${cleanedBarcode} resolved to a different platform, trying name fallback(s)`,
@@ -1005,24 +1373,54 @@ export async function fetchPricesFromPriceCharting(
       );
       if (!fallbackHtml) return null;
       html = fallbackHtml;
+      resolvedViaNameFallback = true;
     }
 
-    const priceFallbackName = Array.isArray(fallbackName)
-      ? fallbackName[0]
-      : fallbackName;
     if (
       fallbackPlatform &&
       !isAcceptedPriceChartingDetailHtml(
         html,
         finalUrl,
-        priceFallbackName,
+        fallbackNames.length > 0 ? fallbackNames : undefined,
         fallbackPlatform,
+        resolvedViaNameFallback ? { allowFranchiseStem: true } : undefined,
       )
     ) {
       return null;
     }
 
-    return parsePriceChartingPricesFromHtml(html);
+    const sourceUrl = resolvePriceChartingGamePageUrl(
+      html,
+      finalUrl.includes("/game/") ? finalUrl : null,
+    );
+    let prices = parsePriceChartingPricesFromHtml(html, sourceUrl);
+    if (!prices && isPal && fallbackNames.length > 0) {
+      console.log(
+        `[PriceCharting Prices] PAL page has no market prices for barcode ${cleanedBarcode}, trying NTSC name fallback`,
+      );
+      const ntscHtml = await fetchDetailHtmlFromNameFallback(
+        fallbackNames,
+        PRICECHARTING_HEADERS,
+        fallbackPlatform,
+        false,
+        isClassics,
+        cleanedBarcode,
+      );
+      if (
+        ntscHtml &&
+        (!fallbackPlatform ||
+          isAcceptedPriceChartingDetailHtml(
+            ntscHtml,
+            "",
+            fallbackNames,
+            fallbackPlatform,
+            { allowFranchiseStem: true },
+          ))
+      ) {
+        prices = parsePriceChartingPricesFromHtml(ntscHtml);
+      }
+    }
+    return prices;
   } catch (error) {
     console.error(
       `[PriceCharting Prices] Error fetching for barcode ${cleanedBarcode}:`,
@@ -1050,6 +1448,7 @@ export async function fetchMetadataFromPriceCharting(
 
     let html = res.data;
     const finalUrl = res.request.res.responseUrl || "";
+    let resolvedViaNameFallback = false;
 
     if (
       finalUrl.includes("/search-products") ||
@@ -1069,6 +1468,7 @@ export async function fetchMetadataFromPriceCharting(
         );
         if (!fallbackHtml) return null;
         html = fallbackHtml;
+        resolvedViaNameFallback = true;
       } else {
         const detailHtml = await fetchDetailHtmlFromBarcodeSearchResults(
           html,
@@ -1102,20 +1502,27 @@ export async function fetchMetadataFromPriceCharting(
       );
       if (!fallbackHtml) return null;
       html = fallbackHtml;
+      resolvedViaNameFallback = true;
     }
 
     const parsed = rejectMismatchedPriceChartingMetadata(
       parsePriceChartingDetailHtml(html, fallbackName),
       fallbackName,
       fallbackPlatform,
+      resolvedViaNameFallback ? { allowFranchiseStem: true } : undefined,
     );
     if (!parsed) return null;
 
-    const prices = parsePriceChartingPricesFromHtml(html);
+    const url = resolvePriceChartingGamePageUrl(
+      html,
+      finalUrl.includes("/game/") ? finalUrl : null,
+    );
+    const prices = parsePriceChartingPricesFromHtml(html, url);
 
     return {
       ...parsed,
       barcode: parsed.barcode || cleanedBarcode,
+      ...(url ? { url } : {}),
       ...(prices ? { prices } : {}),
     };
   } catch (error) {

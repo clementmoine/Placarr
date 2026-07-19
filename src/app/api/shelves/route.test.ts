@@ -160,6 +160,20 @@ describe("GET /api/shelves — autorisation & cloisonnement", () => {
     });
   });
 
+  it("lite=1 saute l'enrichissement bestItem", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.shelf.findMany.mockResolvedValue([
+      { id: "s1", name: "S", _count: { items: 2 } },
+    ]);
+
+    const res = await GET(get("/api/shelves?lite=1"));
+    const body = await res.json();
+
+    expect(body[0]).toMatchObject({ id: "s1", name: "S" });
+    expect(body[0].bestItem).toBeUndefined();
+    expect(h.item.findMany).not.toHaveBeenCalled();
+  });
+
   it("aligne les numéros de volume d'une série, sans toucher aux items isolés", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.shelf.findUnique.mockResolvedValue({
@@ -205,10 +219,17 @@ describe("POST /api/shelves — autorisation", () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.shelf.create.mockResolvedValue({ id: "s1", items: [] });
 
-    const res = await POST(withBody("POST", { name: "S", type: "games" }));
+    const res = await POST(
+      withBody("POST", {
+        name: "S",
+        type: "games",
+        cardFormat: "portrait",
+      }),
+    );
 
     expect(res.status).toBe(200);
     expect(h.shelf.create.mock.calls[0][0].data.userId).toBe("u1");
+    expect(h.shelf.create.mock.calls[0][0].data.cardFormat).toBe("portrait");
   });
 });
 

@@ -35,6 +35,7 @@ import {
 import {
   urlsReferToSameLocalizedImage,
   isUrlEligibleDefaultCover,
+  isCoverEligibleAttachmentType,
 } from "@/core/enrich/media/coverUrl";
 import {
   readFileImageMetrics,
@@ -167,49 +168,320 @@ export async function getCachedMetadata(
 
 export { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
 
+export type CroppedCoverAttachmentSyncPlan =
+  | { action: "update"; attachmentId: string; url: string }
+  | { action: "create-user"; url: string }
+  | { action: "noop" };
+
+/**
+ * Decide how to persist a newly cropped cover into the attachment gallery.
+ * Never rewrite the *previous* cover row when the crop is a different image
+ * (e.g. user picked gallery #2 that localized to a new /uploads path) — that
+ * used to steal the old attachment URL and leave the displayed cover stuck.
+ *
+ * Always keep a durable `source: "user"` pin on the saved cover so display
+ * honors the pick (including marketplace listings that ranking would otherwise
+ * demote, and after enrichment bumps `lastFetched`).
+ */
+export function planCroppedCoverAttachmentSync(
+  attachments: ReadonlyArray<{
+    id: string;
+    url: string;
+    source: string | null;
+  }>,
+  croppedImageUrl: string,
+  previousImageUrl?: string | null,
+): CroppedCoverAttachmentSyncPlan[] {
+  if (!croppedImageUrl.startsWith("/uploads/")) return [{ action: "noop" }];
+
+  const plans: CroppedCoverAttachmentSyncPlan[] = [];
+  const sameImageAsPrevious =
+    !!previousImageUrl &&
+    urlsReferToSameLocalizedImage(previousImageUrl, croppedImageUrl);
+
+  const matchSameImage = attachments.find((attachment) =>
+    urlsReferToSameLocalizedImage(attachment.url, croppedImageUrl),
+  );
+  if (matchSameImage && matchSameImage.url !== croppedImageUrl) {
+    plans.push({
+      action: "update",
+      attachmentId: matchSameImage.id,
+      url: croppedImageUrl,
+    });
+  } else if (!matchSameImage && sameImageAsPrevious && previousImageUrl) {
+    // Re-crop of the current pin when the gallery row still has a remote /
+    // pre-crop URL that stripCrop cannot equate to the new local file.
+    const previousMatch = attachments.find((attachment) =>
+      urlsReferToSameLocalizedImage(attachment.url, previousImageUrl),
+    );
+    if (previousMatch) {
+      plans.push({
+        action: "update",
+        attachmentId: previousMatch.id,
+        url: croppedImageUrl,
+      });
+    }
+  }
+
+  const existingUserPin = attachments.find(
+    (attachment) => attachment.source === "user",
+  );
+  if (existingUserPin) {
+    if (
+      !urlsReferToSameLocalizedImage(existingUserPin.url, croppedImageUrl) &&
+      !plans.some(
+        (plan) =>
+          plan.action === "update" && plan.attachmentId === existingUserPin.id,
+      )
+    ) {
+      plans.push({
+        action: "update",
+        attachmentId: existingUserPin.id,
+        url: croppedImageUrl,
+      });
+    }
+  } else if (matchSameImage?.source !== "user") {
+    plans.push({ action: "create-user", url: croppedImageUrl });
+  }
+
+  return plans.length > 0 ? plans : [{ action: "noop" }];
+}
+
+/**
+ * When a scan/create cover was client-localized to a UUID `/uploads` path, enrichment
+ * later stores the same art under a provider-stamped hash path. Remap the pin to that
+ * catalog row so the detail chip keeps ScreenScraper / Booknode instead of an orphan.
+ */
+export function pickVisuallyMatchingCatalogCoverUrl(
+  pinHash: string,
+  candidates: ReadonlyArray<{
+    url: string;
+    type?: string | null;
+    source?: string | null;
+    hash: string | null;
+  }>,
+  maxDistance: number = 8,
+): string | null {
+  for (const candidate of candidates) {
+    const sourceKey = (candidate.source || "")
+      .split(/[·/]/)[0]
+      .toLowerCase()
+      .trim();
+    if (sourceKey === "user") continue;
+    if (!isCoverEligibleAttachmentType(candidate.type)) continue;
+    if (!candidate.hash) continue;
+    if (hammingDistance(pinHash, candidate.hash) <= maxDistance) {
+      return candidate.url;
+    }
+  }
+  return null;
+}
+
 export async function syncCroppedCoverAttachment(
   metadataId: string,
   croppedImageUrl: string,
   previousImageUrl?: string | null,
-): Promise<void> {
-  if (!croppedImageUrl.startsWith("/uploads/")) return;
+): Promise<{ preferredImageUrl?: string }> {
+  if (!croppedImageUrl.startsWith("/uploads/")) return {};
 
   const attachments = await prisma.attachment.findMany({
     where: { metadataId },
   });
 
-  const match = attachments.find(
-    (attachment) =>
-      urlsReferToSameLocalizedImage(attachment.url, croppedImageUrl) ||
-      (previousImageUrl &&
-        urlsReferToSameLocalizedImage(attachment.url, previousImageUrl)),
+  const plans = planCroppedCoverAttachmentSync(
+    attachments,
+    croppedImageUrl,
+    previousImageUrl,
   );
 
-  if (!match || match.url === croppedImageUrl) return;
+  let preferredImageUrl: string | undefined;
 
-  await prisma.attachment.update({
-    where: { id: match.id },
-    data: { url: croppedImageUrl },
+  for (const plan of plans) {
+    if (plan.action === "update") {
+      await prisma.attachment.update({
+        where: { id: plan.attachmentId },
+        data: { url: plan.url },
+      });
+      continue;
+    }
+
+    if (plan.action !== "create-user") continue;
+
+    // Client-localized provider covers land as UUID `/uploads` files that do not
+    // URL-match the catalog hash path. Remap the honor pin onto the visual twin
+    // so the picker keeps HDJV / ScreenScraper instead of inventing "Perso".
+    const alreadyOnCatalogRow = attachments.some(
+      (attachment) =>
+        attachment.source !== "user" &&
+        urlsReferToSameLocalizedImage(attachment.url, plan.url),
+    );
+    let pinUrl = plan.url;
+    if (!alreadyOnCatalogRow) {
+      const pinHash = await perceptualHashForAsset(plan.url);
+      if (pinHash) {
+        const candidates = await Promise.all(
+          attachments
+            .filter((attachment) => attachment.source !== "user")
+            .map(async (attachment) => ({
+              url: attachment.url,
+              type: attachment.type,
+              source: attachment.source,
+              hash: await perceptualHashForAsset(attachment.url),
+            })),
+        );
+        const catalogUrl = pickVisuallyMatchingCatalogCoverUrl(
+          pinHash,
+          candidates,
+          PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+        );
+        if (catalogUrl) {
+          pinUrl = catalogUrl;
+          preferredImageUrl = catalogUrl;
+        }
+      }
+    }
+
+    const existingUserPin = attachments.find(
+      (attachment) => attachment.source === "user",
+    );
+    if (existingUserPin) {
+      if (!urlsReferToSameLocalizedImage(existingUserPin.url, pinUrl)) {
+        await prisma.attachment.update({
+          where: { id: existingUserPin.id },
+          data: { url: pinUrl },
+        });
+      }
+    } else {
+      await prisma.attachment.create({
+        data: {
+          metadataId,
+          type: "image",
+          url: pinUrl,
+          source: "user",
+        },
+      });
+    }
+  }
+
+  // Enrichment may have added a catalog twin under another /uploads path after the
+  // honor pin was created — collapse Perso onto that provider URL.
+  const galleryAfter = await prisma.attachment.findMany({
+    where: { metadataId },
   });
+  const retargeted = await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
+  for (const attachment of retargeted) {
+    const previous = galleryAfter.find((row) => row.id === attachment.id);
+    if (!previous || previous.url === attachment.url) continue;
+    await prisma.attachment.update({
+      where: { id: attachment.id },
+      data: { url: attachment.url },
+    });
+    preferredImageUrl = attachment.url;
+  }
 
   const metadata = await prisma.metadata.findUnique({
     where: { id: metadataId },
     select: { imageUrl: true },
   });
+  const coverForMetadata = preferredImageUrl ?? croppedImageUrl;
   if (
     metadata?.imageUrl &&
     urlsReferToSameLocalizedImage(metadata.imageUrl, croppedImageUrl)
   ) {
     await prisma.metadata.update({
       where: { id: metadataId },
-      data: { imageUrl: croppedImageUrl },
+      data: { imageUrl: coverForMetadata },
     });
   }
+
+  return preferredImageUrl ? { preferredImageUrl } : {};
+}
+
+/**
+ * If the collector's item.imageUrl is a personal /uploads file that enrichment
+ * did not emit, fold it into the gallery as `source: "user"` so the next
+ * deleteMany+create does not drop it.
+ */
+function injectOrphanUserCoverAttachment(
+  item: {
+    imageUrl?: string | null;
+    updatedAt?: Date | string | null;
+    metadata?: {
+      imageUrl?: string | null;
+      lastFetched?: Date | string | null;
+      attachments?: Attachment[] | null;
+    } | null;
+  } | null,
+  attachments: MetadataAttachment[],
+): MetadataAttachment[] {
+  const pin = item?.imageUrl?.trim();
+  if (!pin?.startsWith("/uploads/")) return attachments;
+  if (
+    attachments.some((attachment) =>
+      urlsReferToSameLocalizedImage(attachment.url, pin),
+    )
+  ) {
+    return attachments;
+  }
+
+  const previous = item?.metadata?.attachments ?? [];
+  const previousUser = previous.find(
+    (attachment) =>
+      attachment.source === "user" &&
+      urlsReferToSameLocalizedImage(attachment.url, pin),
+  );
+  const previousProviderHadPin = previous.some(
+    (attachment) =>
+      attachment.source !== "user" &&
+      urlsReferToSameLocalizedImage(attachment.url, pin),
+  );
+  const metadataCover = item?.metadata?.imageUrl?.trim();
+  const matchesMetadataCover =
+    !!metadataCover && urlsReferToSameLocalizedImage(pin, metadataCover);
+
+  // Stale enrichment crop / provider localize — do not relabel as user.
+  if (previousProviderHadPin || matchesMetadataCover) {
+    return attachments;
+  }
+
+  const savedAfterEnrichment =
+    !!item?.updatedAt &&
+    !!item?.metadata?.lastFetched &&
+    new Date(item.updatedAt).getTime() >
+      new Date(item.metadata.lastFetched).getTime();
+
+  if (!previousUser && !savedAfterEnrichment) {
+    return attachments;
+  }
+
+  return [
+    {
+      type: (previousUser?.type as MetadataAttachment["type"]) || "image",
+      url: pin,
+      source: "user",
+      role: previousUser?.role ?? undefined,
+      title: previousUser?.title ?? undefined,
+      coverProvenance: previousUser?.coverProvenance ?? undefined,
+      platformKey: previousUser?.platformKey ?? undefined,
+    },
+    ...attachments,
+  ];
 }
 
 export type StoreMetadataOptions = {
   /** Persist remote URLs immediately; localize images in a background job. */
   deferImageLocalization?: boolean;
+  /**
+   * Progressive Pass-1 stores defer remote URLs for the UI but must not
+   * schedule localization — a stale Pass-1 job can finish after Pass-2 and
+   * wipe the richer gallery (LaunchBox discs, etc.).
+   */
+  skipDeferredLocalizationSchedule?: boolean;
+  /**
+   * When set (deferred localize jobs), abort the write if `lastFetched` moved
+   * since this generation was scheduled.
+   */
+  expectLastFetched?: Date;
 };
 
 function cloneMetadataForImageLocalization(
@@ -266,6 +538,51 @@ function prepareDeferredAttachments(
   });
 }
 
+/** Prefer covers/heroes over screenshot grids when capping downloads. */
+function attachmentLocalizationPriority(
+  attachment: MetadataAttachment,
+): number {
+  const type = (attachment.type || "").toLowerCase();
+  const role = (attachment.role || "").toLowerCase();
+  if (type === "cover" || role.includes("cover") || role.includes("box")) {
+    return 0;
+  }
+  if (
+    type === "hero" ||
+    role.includes("hero") ||
+    role.includes("background")
+  ) {
+    return 1;
+  }
+  if (type === "logo" || role.includes("logo")) return 2;
+  if (type === "screenshot" || role.includes("screenshot")) return 4;
+  return 3;
+}
+
+/**
+ * Cap remote downloads per metadata store. Full provider galleries (SteamGridDB,
+ * ScreenScraper, …) routinely exceed 30 assets and dominated worker wall time.
+ * Non-selected remotes stay as https URLs in the gallery.
+ */
+export const MAX_ATTACHMENTS_TO_LOCALIZE = 12;
+
+export function selectAttachmentsForLocalization(
+  attachments: MetadataAttachment[],
+  limit = MAX_ATTACHMENTS_TO_LOCALIZE,
+): MetadataAttachment[] {
+  const remote = attachments.filter((attachment) =>
+    /^https?:\/\//i.test(attachment.url),
+  );
+  if (remote.length <= limit) return remote;
+  return [...remote]
+    .sort(
+      (left, right) =>
+        attachmentLocalizationPriority(left) -
+        attachmentLocalizationPriority(right),
+    )
+    .slice(0, limit);
+}
+
 function scheduleDeferredMetadataImageLocalization(
   itemId: Item["id"],
   metadata: MetadataResult,
@@ -277,20 +594,26 @@ function scheduleDeferredMetadataImageLocalization(
   // Image localization runs sharp (resize/analysis) — CPU-bound work that must
   // stay on the low-concurrency pool so it never blocks interactive requests.
   void runCpuBackgroundWork(async () => {
-    const current = await prisma.metadata.findUnique({
-      where: { id: metadataId },
-      select: { lastFetched: true },
-    });
-    if (
-      !current?.lastFetched ||
-      current.lastFetched.getTime() !== fetchedAt.getTime()
-    ) {
+    const stillCurrentGeneration = async () => {
+      const current = await prisma.metadata.findUnique({
+        where: { id: metadataId },
+        select: { lastFetched: true },
+      });
+      return (
+        Boolean(current?.lastFetched) &&
+        current!.lastFetched!.getTime() === fetchedAt.getTime()
+      );
+    };
+
+    if (!(await stillCurrentGeneration())) {
       return;
     }
 
     try {
       await storeMetadata(itemId, metadata, type, name, {
         deferImageLocalization: false,
+        // Refuse to commit if a newer store landed while we were downloading.
+        expectLastFetched: fetchedAt,
       });
     } catch (error) {
       console.error(
@@ -425,20 +748,32 @@ export async function storeMetadata(
       index === self.findIndex((a) => a.url === attachment.url),
   );
 
-  // Localize all attachments before database save, filtering out failures (e.g. 404)
+  // Localize a ranked subset — full SteamGridDB/SS galleries (30+ assets) used
+  // to dominate metadata wall time. Non-selected remotes stay as https URLs.
+  const localizeUrls = new Set(
+    selectAttachmentsForLocalization(uniqueAttachments).map(
+      (attachment) => attachment.url,
+    ),
+  );
+
   let attachmentsForRanking = deferImageLocalization
     ? prepareDeferredAttachments(uniqueAttachments)
     : (
         await Promise.all(
           uniqueAttachments.map(async (attachment) => {
             const sourceUrl = attachment.url;
-            const localizedUrl = await downloadRemoteImage(attachment.url, {
-              source: attachment.source,
-              itemId,
-              metadataId: item?.metadata?.id,
-            });
-            if (!localizedUrl) {
-              return null;
+            const shouldLocalize =
+              localizeUrls.has(sourceUrl) && /^https?:\/\//i.test(sourceUrl);
+
+            let nextUrl = sourceUrl;
+            if (shouldLocalize) {
+              const localizedUrl = await downloadRemoteImage(sourceUrl, {
+                source: attachment.source,
+                itemId,
+                metadataId: item?.metadata?.id,
+              });
+              if (!localizedUrl) return null;
+              nextUrl = localizedUrl;
             }
 
             let role = attachment.role;
@@ -460,7 +795,7 @@ export async function storeMetadata(
 
             return {
               ...attachment,
-              url: localizedUrl,
+              url: nextUrl,
               role,
               coverProvenance:
                 coverProvenanceForSource(attachment.source, sourceUrl) ??
@@ -583,11 +918,13 @@ export async function storeMetadata(
     });
   });
 
-  const finalStorableAttachments = preserveGalleryAttachmentsOnRegression(
+  const withOrphanUserPins = preserveGalleryAttachmentsOnRegression(
     item?.metadata?.attachments,
-    storableAttachments,
+    injectOrphanUserCoverAttachment(item, storableAttachments),
     requestedPlatformKey,
   );
+  const finalStorableAttachments =
+    await retargetUserHonorPinsInAttachmentGallery(withOrphanUserPins);
 
   const canonicalCoverCandidate = finalStorableAttachments.find(
     (attachment) =>
@@ -694,6 +1031,25 @@ export async function storeMetadata(
     publishers?: Publisher[];
   };
 
+  if (options.expectLastFetched && item?.metadata) {
+    const current = await prisma.metadata.findUnique({
+      where: { id: item.metadata.id },
+      select: { lastFetched: true },
+    });
+    if (
+      !current?.lastFetched ||
+      current.lastFetched.getTime() !== options.expectLastFetched.getTime()
+    ) {
+      // A newer store landed while we localized — keep it.
+      return {
+        ...item.metadata,
+        attachments: item.metadata.attachments,
+        authors: item.metadata.authors,
+        publishers: item.metadata.publishers,
+      };
+    }
+  }
+
   if (item?.metadata) {
     storedMetadata = await prisma.metadata.update({
       where: { id: item.metadata.id },
@@ -774,24 +1130,56 @@ export async function storeMetadata(
       item.metadata?.lastFetched &&
       new Date(item.updatedAt).getTime() >
         new Date(item.metadata.lastFetched).getTime();
+    const itemCoverIsUserAttachment = finalStorableAttachments.some(
+      (attachment) =>
+        attachment.source === "user" &&
+        item.imageUrl &&
+        urlsReferToSameLocalizedImage(attachment.url, item.imageUrl),
+    );
+    let visualCatalogMatchUrl: string | null = null;
+    if (
+      item.imageUrl?.startsWith("/uploads/") &&
+      !itemCoverStillInGallery &&
+      !itemCoverIsUserAttachment
+    ) {
+      const pinHash = await perceptualHashForAsset(item.imageUrl);
+      if (pinHash) {
+        const candidates = await Promise.all(
+          finalStorableAttachments.map(async (attachment) => ({
+            url: attachment.url,
+            type: attachment.type,
+            source: attachment.source,
+            hash: await perceptualHashForAsset(attachment.url),
+          })),
+        );
+        visualCatalogMatchUrl = pickVisuallyMatchingCatalogCoverUrl(
+          pinHash,
+          candidates,
+          PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+        );
+      }
+    }
     const shouldSyncItemCover =
-      !item.imageUrl ||
-      item.imageUrl === previousMetadataImage ||
-      item.imageUrl === croppedImageUrl ||
-      (itemCoverIsLowRes && !userCoverSavedAfterEnrichment) ||
-      attachmentsForRanking.some(
-        (attachment) =>
-          attachment.source === "barcode" && attachment.url === item.imageUrl,
-      ) ||
-      (type === "musics" &&
-        !itemCoverStillInGallery &&
-        finalStorableAttachments.some(
-          (attachment) => attachment.isCanonicalCoverSource,
-        ));
+      !itemCoverIsUserAttachment &&
+      (!item.imageUrl ||
+        item.imageUrl === previousMetadataImage ||
+        item.imageUrl === croppedImageUrl ||
+        (itemCoverIsLowRes && !userCoverSavedAfterEnrichment) ||
+        Boolean(visualCatalogMatchUrl) ||
+        attachmentsForRanking.some(
+          (attachment) =>
+            attachment.source === "barcode" &&
+            attachment.url === item.imageUrl,
+        ) ||
+        (type === "musics" &&
+          !itemCoverStillInGallery &&
+          finalStorableAttachments.some(
+            (attachment) => attachment.isCanonicalCoverSource,
+          )));
     if (shouldSyncItemCover) {
       await prisma.item.update({
         where: { id: itemId },
-        data: { imageUrl: croppedImageUrl },
+        data: { imageUrl: visualCatalogMatchUrl ?? croppedImageUrl },
       });
     }
   } else if (item && previousLocalCover && !item.imageUrl) {
@@ -859,6 +1247,7 @@ export async function storeMetadata(
 
   if (
     deferImageLocalization &&
+    !options.skipDeferredLocalizationSchedule &&
     metadataSnapshotForLocalization &&
     storedMetadata.lastFetched
   ) {
@@ -1241,7 +1630,82 @@ export async function dedupeLocalizedAttachmentsByContent<
       );
     },
     (item) => item.source ?? "merged",
+  ).map((attachment) =>
+    retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),
   );
+}
+
+/** Re-hash local gallery rows and retarget `source: user` pins onto catalog twins. */
+export async function retargetUserHonorPinsInAttachmentGallery<
+  T extends {
+    type: AttachmentType;
+    url: string;
+    source?: string | null;
+  },
+>(attachments: T[]): Promise<T[]> {
+  if (!attachments.some((attachment) => attachmentSourceKey(attachment.source) === "user")) {
+    return attachments;
+  }
+  const hashByUrl = new Map<string, string>();
+  await Promise.all(
+    attachments.map(async (attachment) => {
+      if (!shouldReadImageMetricsForAttachment(attachment.type)) return;
+      const hash = await perceptualHashForAsset(attachment.url);
+      if (hash !== null) hashByUrl.set(attachment.url, hash);
+    }),
+  );
+  return attachments.map((attachment) =>
+    retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),
+  );
+}
+
+function attachmentSourceKey(source?: string | null): string {
+  return (source || "").split(/[·/]/)[0].toLowerCase().trim();
+}
+
+/**
+ * Honor pins (`source: user`) often keep a client-localized UUID path while the
+ * catalog row lands under a provider hash path — same art, two picker cards
+ * ("Perso" + "Canal BD"). Retarget the pin onto the catalog URL so URL dedupe
+ * keeps the provider badge.
+ */
+export function retargetUserHonorPinIfCatalogTwin<
+  T extends {
+    type: AttachmentType;
+    url: string;
+    source?: string | null;
+  },
+>(
+  attachment: T,
+  gallery: readonly T[],
+  hashByUrl: ReadonlyMap<string, string>,
+  maxDistance: number = PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+): T {
+  if (attachmentSourceKey(attachment.source) !== "user") return attachment;
+  const hash = hashByUrl.get(attachment.url);
+  if (!hash) return attachment;
+
+  let best: T | null = null;
+  let bestDistance = maxDistance + 1;
+  for (const other of gallery) {
+    if (other === attachment) continue;
+    if (attachmentSourceKey(other.source) === "user") continue;
+    if (!isCoverEligibleAttachmentType(other.type)) continue;
+    if (urlsReferToSameLocalizedImage(other.url, attachment.url)) {
+      return { ...attachment, url: other.url };
+    }
+    const otherHash = hashByUrl.get(other.url);
+    if (!otherHash) continue;
+    const distance = hammingDistance(hash, otherHash);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = other;
+    }
+  }
+  if (best && bestDistance <= maxDistance) {
+    return { ...attachment, url: best.url };
+  }
+  return attachment;
 }
 
 const imageMetricsCache = new Map<

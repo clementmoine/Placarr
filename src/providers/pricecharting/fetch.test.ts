@@ -17,6 +17,8 @@ import {
   fetchPricesFromPriceCharting,
   parsePriceChartingDetailHtml,
   parsePriceChartingGalleryImages,
+  parsePriceChartingSearchRowsForTests,
+  pickBestPriceChartingSearchRowForTests,
   priceChartingPlatformMatchesTarget,
   upgradePriceChartingImageUrl,
 } from "./fetch";
@@ -25,6 +27,9 @@ const mockedGet = vi.mocked(axios.get);
 
 const DETAIL_HTML = `
 <html>
+  <head>
+    <link rel="canonical" href="https://www.pricecharting.com/game/wii/super-monkey-ball" />
+  </head>
   <body>
     <h1>Super Monkey Ball <a>Wii</a></h1>
     <div class="cover"><img src='https://example.com/monkey.jpg'/></div>
@@ -57,6 +62,125 @@ beforeEach(() => {
   mockedGet.mockReset();
   resetPriceChartingQuotaBlockForTests();
   vi.mocked(axios.isAxiosError).mockReturnValue(false);
+});
+
+describe("parsePriceChartingSearchRows + pickBestRow", () => {
+  it("parses the modern search markup and fuzzy-matches Pro Skater 4 → Tony Hawk 4", () => {
+    const html = `
+      <table>
+        <tr id="product-45633" data-product="45633">
+          <td class="title">
+            <a href="https://www.pricecharting.com/game/pal-gamecube/tony-hawk-4">Tony Hawk 4</a>
+            <div class="console-in-title"><a href="/console/pal-gamecube">PAL Gamecube</a></div>
+          </td>
+        </tr>
+        <tr id="product-8756608" data-product="8756608">
+          <td class="title">
+            <a href="https://www.pricecharting.com/game/xbox-series-x/tony-hawk%27s-pro-skater-3-%2B-4">Tony Hawk&#39;s Pro Skater 3 + 4</a>
+            <div class="console-in-title"><a href="/console/xbox-series-x">Xbox Series X</a></div>
+          </td>
+        </tr>
+        <tr id="product-49450" data-product="49450">
+          <td class="title">
+            <a href="https://www.pricecharting.com/game/pal-playstation/tony-hawk-4">Tony Hawk 4</a>
+            <div class="console-in-title"><a href="/console/pal-playstation">PAL Playstation</a></div>
+          </td>
+        </tr>
+        <tr id="product-68401" data-product="68401">
+          <td class="title">
+            <a href="https://www.pricecharting.com/game/pal-playstation/tony-hawk-4-platinum">Tony Hawk 4 [Platinum]</a>
+            <div class="console-in-title"><a href="/console/pal-playstation">PAL Playstation</a></div>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    const rows = parsePriceChartingSearchRowsForTests(html);
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "49450",
+          title: "Tony Hawk 4",
+          platform: "PAL Playstation",
+          gamePath:
+            "https://www.pricecharting.com/game/pal-playstation/tony-hawk-4",
+        }),
+      ]),
+    );
+
+    const best = pickBestPriceChartingSearchRowForTests(
+      rows,
+      "Tony Hawk's Pro Skater 4",
+      "PlayStation 1",
+      true,
+    );
+    expect(best?.gamePath).toContain("/pal-playstation/tony-hawk-4");
+    expect(best?.title).toBe("Tony Hawk 4");
+  });
+
+  it("scores metadata aliases as alternate query titles", () => {
+    const rows = [
+      {
+        id: "1",
+        gamePath: "/game/pal-playstation/tony-hawk-4",
+        title: "Tony Hawk 4",
+        platform: "PAL Playstation",
+      },
+      {
+        id: "2",
+        gamePath: "/game/pal-playstation/unrelated",
+        title: "Crash Bandicoot",
+        platform: "PAL Playstation",
+      },
+    ];
+    // Primary title alone would still match via synthetic variants; an explicit
+    // alias must also be enough when the primary string is weak/noisy.
+    expect(
+      pickBestPriceChartingSearchRowForTests(
+        rows,
+        "THPS4 (disc only)",
+        "PlayStation 1",
+        true,
+        false,
+        ["Tony Hawk 4"],
+      )?.title,
+    ).toBe("Tony Hawk 4");
+  });
+
+  it("rejects wrong season year (Stars 2001 must not pick Stars 2000)", () => {
+    const rows = [
+      {
+        id: "2000",
+        gamePath: "/game/pal-playstation/bundesliga-stars-2000",
+        title: "Bundesliga Stars 2000",
+        platform: "PAL Playstation",
+      },
+      {
+        id: "2001",
+        gamePath: "/game/pal-playstation/bundesliga-stars-2001",
+        title: "Bundesliga Stars 2001",
+        platform: "PAL Playstation",
+      },
+    ];
+    expect(
+      pickBestPriceChartingSearchRowForTests(
+        rows,
+        "Bundesliga Stars 2001",
+        "PlayStation 1",
+        true,
+      )?.title,
+    ).toBe("Bundesliga Stars 2001");
+    expect(
+      pickBestPriceChartingSearchRowForTests(
+        rows.filter((row) => row.id === "2000"),
+        "LNF Stars 2001",
+        "PlayStation 1",
+        true,
+        false,
+        ["Bundesliga Stars 2001"],
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("priceChartingPlatformMatchesTarget", () => {
@@ -251,10 +375,13 @@ describe("fetchMetadataFromPriceCharting", () => {
       coverUrl: "https://example.com/monkey.jpg",
       ageRating: "PEGI 3",
       barcode: "0045496365226",
+      url: "https://www.pricecharting.com/game/wii/super-monkey-ball",
       prices: {
         priceUsed: 1250,
         priceUsedCIB: 1800,
         priceNew: 2499,
+        sourceUrl: "https://www.pricecharting.com/game/wii/super-monkey-ball",
+        productName: "Super Monkey Ball",
       },
     });
   });
@@ -336,29 +463,48 @@ describe("fetchMetadataFromPriceCharting", () => {
       </body></html>`;
     const gotyDetailHtml = `
       <html><body>
+        <link rel="canonical" href="https://www.pricecharting.com/game/ps4/borderlands-goty" />
         <h1>Borderlands [Game of the Year] <a>PlayStation 4</a></h1>
         <div class="cover"><img src='https://example.com/borderlands-goty.jpg'/></div>
       </body></html>`;
 
-    mockedGet
-      .mockResolvedValueOnce({
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("/search-products")) {
+        return {
+          status: 200,
+          data: searchHtml,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?q=Borderlands+1",
+            },
+          },
+        } as never;
+      }
+      if (String(url).includes("borderlands-goty")) {
+        return {
+          status: 200,
+          data: gotyDetailHtml,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/ps4/borderlands-goty",
+            },
+          },
+        } as never;
+      }
+      // Direct slug guesses soft-404 to search.
+      return {
+        status: 200,
         data: searchHtml,
         request: {
           res: {
             responseUrl:
-              "https://www.pricecharting.com/search-products?q=Borderlands+1",
+              "https://www.pricecharting.com/search-products?q=borderlands",
           },
         },
-      } as never)
-      .mockResolvedValueOnce({
-        data: gotyDetailHtml,
-        request: {
-          res: {
-            responseUrl:
-              "https://www.pricecharting.com/game/ps4/borderlands-goty",
-          },
-        },
-      } as never);
+      } as never;
+    });
 
     await expect(
       fetchMetadataFromPriceChartingByName(
@@ -368,6 +514,7 @@ describe("fetchMetadataFromPriceCharting", () => {
       ),
     ).resolves.toMatchObject({
       title: "Borderlands [Game of the Year]",
+      url: "https://www.pricecharting.com/game/ps4/borderlands-goty",
     });
   });
 
@@ -431,6 +578,8 @@ describe("fetchPricesFromPriceCharting", () => {
       priceUsed: 1250,
       priceUsedCIB: 1800,
       priceNew: 2499,
+      sourceUrl: "https://www.pricecharting.com/game/wii/super-monkey-ball",
+      productName: "Super Monkey Ball",
     });
   });
 
@@ -443,6 +592,81 @@ describe("fetchPricesFromPriceCharting", () => {
       priceUsed: 1250,
       priceUsedCIB: 1800,
       priceNew: 2499,
+      sourceUrl: "https://www.pricecharting.com/game/wii/super-monkey-ball",
+      productName: "Super Monkey Ball",
+    });
+  });
+
+  it("falls back to NTSC when the PAL page has empty market prices", async () => {
+    const palEmptyHtml = `
+      <html><body>
+        <h1>Millipede <a>PAL Atari 2600</a></h1>
+        <script>VGPC.forex_rates = {"EUR": 1.0}</script>
+        <td id="used_price"><span class="price js-price"> - </span></td>
+        <td id="complete_price"><span class="price js-price"> - </span></td>
+        <td id="new_price"><span class="price js-price"> - </span></td>
+      </body></html>`;
+    const ntscHtml = `
+      <html>
+        <head>
+          <link rel="canonical" href="https://www.pricecharting.com/game/atari-2600/millipede" />
+        </head>
+        <body>
+          <h1>Millipede <a>Atari 2600</a></h1>
+          <script>VGPC.forex_rates = {"EUR": 1.0}</script>
+          <td id="used_price"><span class="price js-price">$11.50</span></td>
+          <td id="complete_price"><span class="price js-price">$20.00</span></td>
+          <td id="new_price"><span class="price js-price">$39.99</span></td>
+        </body>
+      </html>`;
+
+    mockedGet.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (href.includes("/pal-atari-2600/")) {
+        return {
+          status: 200,
+          data: palEmptyHtml,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/pal-atari-2600/millipede",
+            },
+          },
+        } as never;
+      }
+      if (href.includes("/atari-2600/millipede")) {
+        return {
+          status: 200,
+          data: ntscHtml,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/atari-2600/millipede",
+            },
+          },
+        } as never;
+      }
+      // Soft-404 search for other slug guesses.
+      return {
+        status: 200,
+        data: "<html><body>Buy & Sell Search Results</body></html>",
+        request: {
+          res: {
+            responseUrl:
+              "https://www.pricecharting.com/search-products?q=Millipede",
+          },
+        },
+      } as never;
+    });
+
+    await expect(
+      fetchPricesFromPriceCharting("", ["Millipede"], "ATARI 2600", true),
+    ).resolves.toEqual({
+      priceUsed: 1150,
+      priceUsedCIB: 2000,
+      priceNew: 3999,
+      sourceUrl: "https://www.pricecharting.com/game/atari-2600/millipede",
+      productName: "Millipede",
     });
   });
 

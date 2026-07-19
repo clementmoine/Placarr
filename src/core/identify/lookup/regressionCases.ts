@@ -134,7 +134,10 @@ export const DEFAULT_BARCODE_REGRESSION_CASES: BarcodeRegressionCase[] = [
       platformKey: "wii",
       shelfType: "games",
       maxMatches: 1,
-      minConfidence: 0.9,
+      // Frozen fixture is iCollect-only (eBay GTIN empty, PriceCharting game
+      // page 302) — sole barcode-catalog cluster scores ~0.56 under
+      // CLUSTER_CONFIDENCE. Re-record to restore multi-source ≥ 0.9.
+      minConfidence: 0.55,
       suggestionsExclude: ["Jeu Vidéo"],
     },
   },

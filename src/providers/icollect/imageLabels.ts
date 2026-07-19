@@ -1,3 +1,8 @@
+import {
+  coverRegionFromAgeRatingBoard,
+  roleWithoutCollectorRegion,
+} from "@/core/enrich/media/collectorCoverRegion";
+
 export type ICollectImageKind = "cover" | "back" | "disc";
 
 function normalizeICollectLabel(value?: string | null): string {
@@ -52,47 +57,14 @@ export function icollectAttachmentRole(
   return region;
 }
 
-/** Drop collector-inferred region tokens when the rating board does not confirm them. */
 export function icollectRoleWithoutCollectorRegion(
   role?: string | null,
 ): string | undefined {
-  if (!role) return undefined;
-  if (role === "back" || role === "disc") return role;
-  if (role.startsWith("back-")) return "back";
-  if (role.startsWith("disc-")) return "disc";
-  return undefined;
-}
-
-function cleanICollectAgeRating(value?: string | null): string | undefined {
-  const trimmed = (value || "").replace(/\s+/g, " ").trim();
-  return trimmed || undefined;
+  return roleWithoutCollectorRegion(role);
 }
 
 export function icollectCoverRegionFromAgeRating(
   ageRating?: string | null,
 ): string | undefined {
-  const value = cleanICollectAgeRating(ageRating);
-  if (!value) return undefined;
-  // iCollect occasionally stores timestamps in the Rating field.
-  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return undefined;
-
-  const normalized = value.toLowerCase();
-  if (/\bpegi\b/.test(normalized)) return "eu";
-  if (/\besrb\b/.test(normalized)) return "us";
-  if (/\bcero\b/.test(normalized)) return "jp";
-  if (/\busk\b/.test(normalized)) return "eu";
-  if (/\bacb\b/.test(normalized)) return "wor";
-
-  return undefined;
-}
-
-export function isICollectAgeRatingFact(fact: {
-  kind?: string;
-  source?: string | null;
-}): boolean {
-  return fact.kind === "age-rating" && fact.source === "icollect";
-}
-
-export function isICollectAttachmentSource(source?: string | null): boolean {
-  return source === "icollect";
+  return coverRegionFromAgeRatingBoard(ageRating);
 }

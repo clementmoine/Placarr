@@ -28,7 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ConditionIcon } from "@/components/ConditionIcon";
+import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
+import { Condition, type Shelf } from "@prisma/client";
+import { itemConditionsForShelfType } from "@/core/collect/condition";
 import { saveItemsBatch } from "@/lib/api/items";
 import { cn } from "@/lib/shared/utils";
 import {
@@ -40,8 +42,6 @@ import {
   type SeriesVolumePatternKey,
 } from "@/core/enrich/titles/seriesVolumeNames";
 
-import { Condition, type Shelf } from "@prisma/client";
-
 const fieldInputClassName =
   "bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 w-full text-xs sm:text-sm h-10";
 
@@ -51,12 +51,14 @@ function volumeFieldSchema(message: string) {
 
 export function BulkSeriesForm({
   shelfId,
+  shelfType,
   isActive = true,
   onSuccess,
   onCancel,
   showFooter = true,
 }: {
   shelfId: Shelf["id"];
+  shelfType?: Shelf["type"];
   isActive?: boolean;
   onSuccess: (count: number) => void;
   onCancel: () => void;
@@ -300,27 +302,14 @@ export function BulkSeriesForm({
                     size="sm"
                     type="single"
                     variant="outline"
-                    className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                    className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
                     value={field.value}
                     onValueChange={(value) => {
                       if (value) field.onChange(value as Condition);
                     }}
                   >
-                    {Object.values(Condition).map((condition) => {
+                    {itemConditionsForShelfType(shelfType).map((condition) => {
                       const isActiveCondition = field.value === condition;
-                      let activeStyles = "";
-                      if (isActiveCondition) {
-                        if (condition === "new") {
-                          activeStyles =
-                            "bg-white text-emerald-600 dark:bg-zinc-800 dark:text-emerald-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-emerald-500/10";
-                        } else if (condition === "used") {
-                          activeStyles =
-                            "bg-white text-amber-600 dark:bg-zinc-800 dark:text-amber-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-amber-500/10";
-                        } else if (condition === "damaged") {
-                          activeStyles =
-                            "bg-white text-rose-600 dark:bg-zinc-800 dark:text-rose-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-rose-500/10";
-                        }
-                      }
                       return (
                         <ToggleGroupItem
                           key={condition}
@@ -329,7 +318,7 @@ export function BulkSeriesForm({
                           className={cn(
                             "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
                             isActiveCondition
-                              ? activeStyles
+                              ? conditionToggleActiveClass(condition)
                               : "bg-transparent hover:text-foreground",
                           )}
                         >

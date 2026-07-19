@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   seriesBaseKey,
   seriesDisplayTitles,
+  applySeriesDisplayNames,
+  seriesTitleEntryFromItemRow,
   seriesMaxVolumeByKey,
   seriesSiblings,
   seriesVolumeDisplayWidth,
@@ -96,6 +98,15 @@ describe("seriesDisplayTitles", () => {
     expect(display.get("a")).toBe("Akira Tome 1");
     expect(display.get("b")).toBe("Akira Tome 6");
   });
+
+  it("preserves editorial casing from the canonical stored title", () => {
+    const display = seriesDisplayTitles([
+      { id: "v1", title: "Les Trésors de Picsou n°1" },
+      { id: "v10", title: "Les Trésors de Picsou n°10" },
+      { id: "v3", title: "Les Trésors de Picsou n°3" },
+    ]);
+    expect(display.get("v3")).toBe("Les Trésors de Picsou n°03");
+  });
 });
 
 describe("seriesSiblings", () => {
@@ -151,5 +162,31 @@ describe("franchise vs series (Final Fantasy stress test)", () => {
         (entry) => entry.id,
       ),
     ).toEqual(["rem1", "rem2"]);
+  });
+});
+
+describe("applySeriesDisplayNames", () => {
+  it("pads presented shelf items the same way as seriesDisplayTitles", () => {
+    const items = applySeriesDisplayNames([
+      { id: "a", name: "Les Trésors de Picsou n°2" },
+      { id: "b", name: "Les Trésors de Picsou n°12" },
+    ]);
+    expect(items[0]?.name).toBe("Les Trésors de Picsou n°02");
+    expect(items[1]?.name).toBe("Les Trésors de Picsou n°12");
+  });
+});
+
+describe("seriesTitleEntryFromItemRow", () => {
+  it("uses the stored DB name when metadata title differs", () => {
+    expect(
+      seriesTitleEntryFromItemRow({
+        id: "a",
+        name: "Les Trésors de Picsou n°02",
+        metadata: { title: "Les trésors de Picsou" },
+      }),
+    ).toEqual({
+      id: "a",
+      title: "Les Trésors de Picsou n°02",
+    });
   });
 });

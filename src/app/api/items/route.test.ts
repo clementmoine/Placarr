@@ -16,6 +16,8 @@ const h = vi.hoisted(() => ({
   resolveItemId: vi.fn(),
   fetchAndStoreMetadata: vi.fn(),
   downloadRemoteImage: vi.fn(),
+  storeMetadata: vi.fn(),
+  syncCroppedCoverAttachment: vi.fn(),
   startItemMetadataRefresh: vi.fn(),
 }));
 
@@ -23,11 +25,25 @@ vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: h.requireGuestOrHigher,
 }));
 vi.mock("@/lib/db/prisma", () => ({
-  prisma: { item: h.item, shelf: h.shelf, metadata: h.metadata },
+  prisma: {
+    item: h.item,
+    shelf: h.shelf,
+    metadata: h.metadata,
+    backgroundWorkJob: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      create: vi.fn(),
+    },
+  },
 }));
 vi.mock("@/core/enrich", () => ({
   fetchAndStoreMetadata: h.fetchAndStoreMetadata,
   downloadRemoteImage: h.downloadRemoteImage,
+}));
+vi.mock("@/core/enrich/storage", () => ({
+  downloadRemoteImage: h.downloadRemoteImage,
+  syncCroppedCoverAttachment: h.syncCroppedCoverAttachment,
+  storeMetadata: h.storeMetadata,
 }));
 vi.mock("@/core/collect/present", async (importOriginal) => {
   const actual =
@@ -35,9 +51,10 @@ vi.mock("@/core/collect/present", async (importOriginal) => {
   return {
     ...actual,
     presentItem: (i: { id: string }) => ({ presented: "full", id: i.id }),
-    presentItemFromStorage: (i: { id: string }) => ({
+    presentItemFromStorage: (i: { id: string; name?: string }) => ({
       presented: "storage",
       id: i.id,
+      name: i.name ?? "",
     }),
   };
 });
@@ -71,6 +88,9 @@ vi.mock(
 );
 vi.mock("@/core/commerce/pricing/itemDisplay", () => ({
   itemPricesContextFromRecord: (item: { id: string }) => ({ id: item.id }),
+  itemPricesContextFromPresentedShelfItem: (item: { id: string }) => ({
+    id: item.id,
+  }),
   readItemPrices: vi.fn().mockResolvedValue({
     priceNew: null,
     priceUsed: null,
@@ -78,12 +98,13 @@ vi.mock("@/core/commerce/pricing/itemDisplay", () => ({
     priceLastUpdated: null,
   }),
   summarizeListItemPrices: vi.fn().mockResolvedValue(new Map()),
-  EMPTY_LIST_ITEM_PRICES: {
-    priceNew: null,
-    priceUsed: null,
-    priceUsedCIB: null,
-    priceLastUpdated: null,
-  },
+  shelfGridItemPriceFields: vi.fn((_context, batch) => ({
+    priceNew: batch?.priceNew ?? null,
+    priceUsed: batch?.priceUsed ?? null,
+    priceUsedCIB: batch?.priceUsedCIB ?? null,
+    priceEstimated: null,
+    priceLastUpdated: batch?.priceLastUpdated ?? null,
+  })),
 }));
 
 import { GET, POST, PATCH, DELETE } from "./route";
@@ -116,16 +137,21 @@ beforeEach(() => {
     h.startItemMetadataRefresh,
     h.fetchAndStoreMetadata,
     h.downloadRemoteImage,
+    h.storeMetadata,
+    h.syncCroppedCoverAttachment,
   ]) {
     fn.mockReset();
   }
   h.resolveShelfId.mockImplementation(async (id: string) => id);
   h.resolveItemId.mockImplementation(async (id: string) => id);
   h.downloadRemoteImage.mockImplementation(async (u: string) => u);
+  h.storeMetadata.mockResolvedValue({ id: "meta-seed" });
+  h.syncCroppedCoverAttachment.mockResolvedValue({});
   h.startItemMetadataRefresh.mockResolvedValue({
     startedAt: new Date("2026-06-27T12:00:00.000Z"),
     generation: 1,
   });
+  h.item.findMany.mockResolvedValue([]);
 });
 
 describe("GET /api/items — autorisation & cloisonnement", () => {
@@ -157,6 +183,7 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     h.item.findUnique.mockResolvedValue({
       id: "i1",
       userId: "u2",
+      shelfId: "s1",
       shelf: { isPublic: true },
     });
 
@@ -231,7 +258,12 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
 
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findMany.mockResolvedValue([
-      { id: "i1", shelf: { type: "games", name: "PS4" } },
+      {
+        id: "i1",
+        name: "Game One",
+        shelfId: "s1",
+        shelf: { type: "games", name: "PS4" },
+      },
     ]);
     vi.mocked(summarizeListItemPrices).mockResolvedValue(
       new Map([
@@ -303,6 +335,53 @@ describe("POST /api/items — autorisation", () => {
     expect(res.status).toBe(200);
     expect(h.item.create.mock.calls[0][0].data.userId).toBe("u1");
   });
+
+  it("seed le metadataPreview du scan puis enqueue le refresh", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.shelf.findUnique.mockResolvedValue({
+      type: "games",
+      userId: "u1",
+      name: "PlayStation 4",
+    });
+    h.item.create.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
+    h.item.findUnique.mockResolvedValue({
+      id: "i1",
+      name: "Giana Sisters",
+      shelf: { type: "games" },
+      metadata: { title: "Giana Sisters", attachments: [] },
+    });
+
+    const preview = {
+      title: "Giana Sisters",
+      imageUrl: "https://example.com/cover.jpg",
+      attachments: [
+        { type: "cover", source: "screenscraper", url: "https://example.com/cover.jpg" },
+      ],
+    };
+
+    const res = await POST(
+      withBody("POST", {
+        shelfId: "s1",
+        name: "Giana Sisters",
+        barcode: "8718591181450",
+        metadataPreview: preview,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.storeMetadata).toHaveBeenCalledWith(
+      "i1",
+      preview,
+      "games",
+      "Giana Sisters",
+      expect.objectContaining({
+        deferImageLocalization: true,
+        skipDeferredLocalizationSchedule: true,
+      }),
+    );
+    expect(h.startItemMetadataRefresh).toHaveBeenCalled();
+    expect(h.item.findUnique).toHaveBeenCalled();
+  });
 });
 
 describe("PATCH /api/items — autorisation", () => {
@@ -340,6 +419,29 @@ describe("PATCH /api/items — autorisation", () => {
 
     expect(res.status).toBe(200);
     expect(h.item.update).toHaveBeenCalled();
+  });
+
+  it("mappe les états retirés (likeNew) et refuse les valeurs inconnues", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelfId: "s1",
+      shelf: { type: "games" },
+    });
+    h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
+
+    const legacy = await PATCH(
+      withBody("PATCH", { id: "i1", condition: "likeNew" }),
+    );
+    expect(legacy.status).toBe(200);
+    expect(h.item.update.mock.calls[0][0].data.condition).toBe("new");
+
+    h.item.update.mockClear();
+    const invalid = await PATCH(
+      withBody("PATCH", { id: "i1", condition: "mint" }),
+    );
+    expect(invalid.status).toBe(400);
+    expect(h.item.update).not.toHaveBeenCalled();
   });
 
   it("met à jour le titre dans les métadonnées de l'item si elles existent", async () => {

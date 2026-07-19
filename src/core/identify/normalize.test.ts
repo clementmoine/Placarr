@@ -5,8 +5,27 @@ import {
   pickDiscoveredBarcode,
   barcodesEquivalent,
   barcodeMatchKey,
+  barcodeSuggestsPalRegion,
 } from "@/core/identify/normalize";
 import { parsePriceChartingBarcode } from "@/core/identify/lookup/priceChartingParse";
+
+describe("barcodeSuggestsPalRegion", () => {
+  it("defaults to PAL when no barcode is provided", () => {
+    expect(barcodeSuggestsPalRegion(null)).toBe(true);
+    expect(barcodeSuggestsPalRegion("")).toBe(true);
+  });
+
+  it("treats UPC / leading-zero EAN as NTSC", () => {
+    expect(barcodeSuggestsPalRegion("0045496365226")).toBe(false);
+    expect(barcodeSuggestsPalRegion("045496365226")).toBe(false);
+  });
+
+  it("treats EU EAN-13 and 12-digit non-UPC codes as PAL", () => {
+    expect(barcodeSuggestsPalRegion("5030917191690")).toBe(true);
+    // Voodoo Vince PAL Xbox — Italy GS1 prefix, 12 digits (no check digit)
+    expect(barcodeSuggestsPalRegion("805529493537")).toBe(true);
+  });
+});
 
 describe("barcodesEquivalent", () => {
   it("treats EAN variants with leading zeros as the same product", () => {

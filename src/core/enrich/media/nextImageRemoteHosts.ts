@@ -11,6 +11,8 @@
  */
 const SUPPLEMENTAL_IMAGE_REMOTE_WILDCARD_HOSTS = [
   "achatmoinscher.com",
+  "amazon.com",
+  "bdovore.com",
   "bedetheque.com",
   "booknode.com",
   "chasse-aux-livres.fr",
@@ -54,18 +56,31 @@ const SUPPLEMENTAL_IMAGE_REMOTE_EXACT_HOSTS = [
  * `PROVIDERS` import — middleware and client bundles must stay registry-free).
  */
 export const REGISTRY_COVER_IMAGE_EXACT_HOSTS = [
+  "babelio.com",
+  "bdovore.com",
   "bedetheque.com",
+  "canalbd.b-cdn.net",
+  "cdn.vivlio.com",
   "cdn1.booknode.com",
   "covers.openlibrary.org",
   "geedie.lt",
   "historiquedesjeuxvideo.com",
   "i.ebayimg.com",
   "icollecteverything.com",
+  "image.izneo.com",
   "imagedelivery.net",
   "img.chasse-aux-livres.fr",
   "media.senscritique.com",
+  "pictures.abebooks.com",
+  "products-images.di-static.com",
   "rawg.io",
   "screenscraper.fr",
+  "static.bdphile.fr",
+  "static.planetebd.com",
+  "www.babelio.com",
+  "www.bdfugue.com",
+  "www.bdovore.com",
+  "www.gibert.com",
 ] as const;
 
 const REMOTE_IMAGE_EXTENSION_RE = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?|$)/i;

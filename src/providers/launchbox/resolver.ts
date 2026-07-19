@@ -126,13 +126,15 @@ function collectLaunchBoxCandidateIds(
   try {
     for (const tokenSet of buildLaunchBoxSearchTokenSets(name)) {
       const ftsQueries = buildLaunchBoxFtsQueries(tokenSet);
+      // Union every FTS relaxation. Stopping at the first non-empty AND query
+      // misses platform entries whose alternate-name index is thinner (e.g.
+      // PS2 "007: Nightfire" absent from "james AND bond AND nightfire" hits
+      // that only return GameCube/GBA rows with richer Bond aliases).
       for (const ftsQuery of ftsQueries) {
         const rows = stmtFts.all(ftsQuery) as { databaseId: number }[];
-        if (rows.length === 0) continue;
         for (const row of rows) {
           candidateIdSet.add(row.databaseId);
         }
-        break;
       }
     }
   } catch (error) {

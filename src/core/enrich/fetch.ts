@@ -10,6 +10,10 @@ import {
   metadataCandidatesForType,
 } from "@/core/enrich/selection";
 import { resolveMetadataProvidersInOrder } from "@/core/enrich/providerQueue";
+import {
+  orderProviderIdsForResolve,
+  recordContributionsFromMergedMetadata,
+} from "@/core/enrich/providerRuntimeStats";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { metadataProviderResolverMap } from "@/core/catalog/bootstrap";
 import { loadBarcodeAlternateNames } from "@/core/identify/alternateNames";
@@ -67,10 +71,16 @@ import {
   videoGamePlatformTargetsPhysicalMedia,
 } from "@/core/identify/platforms/platforms";
 import { throwIfAborted, isAbortError } from "@/lib/http/abort";
+import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
 } from "@/types/providerModule";
+import {
+  buildMatchContext,
+  matchInputsFromMetadataResults,
+  withMatchOnAdapterContext,
+} from "@/core/catalog/matchContext";
 import { bookIsbnBootstrapProviderIds } from "@/core/catalog/catalog";
 import type { LocaleLanguage } from "@/core/locale/preference";
 import {
@@ -126,18 +136,119 @@ import {
   metadataResultsNeedGalleryEnrichment,
   metadataResultsHaveGameGallerySource,
 } from "@/core/enrich/galleryEnrichment";
+import {
+  preferPinnedProviderIds,
+  shouldRunScrapeMetadataPass,
+} from "@/core/enrich/scrapePassGate";
+
+export type FetchMetadataOptions = {
+  isBackground?: boolean;
+  shelfName?: string | null;
+  queuePriority?: "high" | "normal";
+  signal?: AbortSignal;
+  existingScrapeProviderIds?: readonly string[];
+  existingExternalIds?: Record<string, string | null>;
+  existingProviderRecordUrls?: Record<string, string>;
+  /**
+   * Progressive store: called after the API pass and again mid-batch when the
+   * merged cover (or first title snapshot) improves — does not skip providers.
+   */
+  onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
+};
+
+function pinnedProviderIdsFromOptions(
+  options?: FetchMetadataOptions,
+): string[] {
+  return [
+    ...Object.keys(options?.existingExternalIds ?? {}),
+    ...Object.keys(options?.existingProviderRecordUrls ?? {}),
+  ];
+}
+
+/** Pinned fiche ids first, then dynamic runtime priority — never drops ids. */
+function orderMetadataResolveIds(
+  providerIds: readonly string[],
+  type: MediaType,
+  options?: FetchMetadataOptions,
+): string[] {
+  const pinned = pinnedProviderIdsFromOptions(options);
+  return orderProviderIdsForResolve(
+    preferPinnedProviderIds([...providerIds], pinned),
+    { mediaType: type, pinnedIds: pinned },
+  );
+}
+
+function createProgressiveMergePersister(input: {
+  type: MediaType;
+  name: string;
+  barcode?: string | null;
+  cleanedBarcode: string;
+  resolvedPlatform?: string | null;
+  shelfName?: string | null;
+  providers: ProviderInfo[];
+  getAlignmentNames: () => string[];
+  onProgressive?: (partial: MetadataResult) => Promise<void>;
+}): {
+  persistFromByProvider: (
+    byProvider: Map<string, MetadataResult | null>,
+  ) => Promise<void>;
+} {
+  let lastImageUrl = "";
+  let didInitialSnapshot = false;
+  let chain: Promise<void> = Promise.resolve();
+
+  const persistFromByProvider = async (
+    byProvider: Map<string, MetadataResult | null>,
+  ) => {
+    if (!input.onProgressive) return;
+
+    const run = async () => {
+      const merged = await buildMergedMetadataFromByProvider({
+        type: input.type,
+        name: input.name,
+        barcode: input.barcode,
+        cleanedBarcode: input.cleanedBarcode,
+        resolvedPlatform: input.resolvedPlatform,
+        shelfName: input.shelfName,
+        byProvider,
+        providers: input.providers,
+        alignmentNames: input.getAlignmentNames(),
+      });
+      if (!merged) return;
+
+      const imageUrl = merged.imageUrl?.trim() || "";
+      const hasTitle = Boolean(merged.title?.trim());
+      const improvedCover = Boolean(imageUrl) && imageUrl !== lastImageUrl;
+      const firstSnapshot =
+        !didInitialSnapshot && (hasTitle || Boolean(imageUrl));
+      if (!improvedCover && !firstSnapshot) return;
+
+      didInitialSnapshot = true;
+      lastImageUrl = imageUrl;
+      recordContributionsFromMergedMetadata(merged, input.type);
+      try {
+        await input.onProgressive(merged);
+      } catch (error) {
+        console.warn(
+          "[MetadataFetch] Progressive mid-batch store failed; continuing",
+          error,
+        );
+      }
+    };
+
+    chain = chain.then(run, run);
+    await chain;
+  };
+
+  return { persistFromByProvider };
+}
 
 export async function fetchMetadata(
   name: string,
   type: MediaType,
   barcode?: string | null,
   platform?: string | null,
-  options?: {
-    isBackground?: boolean;
-    shelfName?: string | null;
-    queuePriority?: "high" | "normal";
-    signal?: AbortSignal;
-  },
+  options?: FetchMetadataOptions,
 ): Promise<MetadataResult | null> {
   throwIfAborted(options?.signal);
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -179,28 +290,90 @@ export async function fetchMetadata(
                 options?.shelfName,
               )
             : [queryName.trim()].filter(Boolean);
-  const adapterContextBase = {
+  const adapterContextBase = withMatchOnAdapterContext(
+    {
+      type,
+      name,
+      barcode,
+      platform: resolvedPlatform,
+      shelfName: options?.shelfName,
+      lookupQueries,
+      // Steam (and other PC storefront adapters) gate on this; mergeMetadata also
+      // uses the same flag to keep digital capsules off console shelves.
+      includePcSources: isPcLikeGamePlatform(resolvedPlatform),
+      isBackground: options?.isBackground,
+      queuePriority:
+        options?.queuePriority ?? (options?.isBackground ? "normal" : "high"),
+      signal: options?.signal,
+      externalIds: options?.existingExternalIds
+        ? { ...options.existingExternalIds }
+        : undefined,
+      providerRecordUrls: options?.existingProviderRecordUrls
+        ? { ...options.existingProviderRecordUrls }
+        : undefined,
+    },
+    buildMatchContext({
+      shelfType: type,
+      shelfName: options?.shelfName,
+      primaryTitle: name,
+      titles: lookupQueries,
+      barcodes: [barcode],
+      platformKey: resolvedPlatform,
+      externalIds: options?.existingExternalIds,
+    }),
+  );
+
+  // 1. Pass 1 — API / key / none. Persist ASAP via onApiPassComplete;
+  // Pass 2 scrapes only when useful fields are missing or the fiche cites scrapes.
+  const apiProviders = canonicalProviders.filter(
+    (p) => p.auth.kind !== "scrape",
+  );
+  const scrapeCanonicalProviders = canonicalProviders.filter(
+    (p) => p.auth.kind === "scrape",
+  );
+
+  let alignmentNames = metadataAlignmentNames(name, []);
+  const progressive = createProgressiveMergePersister({
     type,
     name,
     barcode,
-    platform: resolvedPlatform,
+    cleanedBarcode,
+    resolvedPlatform,
     shelfName: options?.shelfName,
-    lookupQueries,
-    isBackground: options?.isBackground,
-    queuePriority:
-      options?.queuePriority ?? (options?.isBackground ? "normal" : "high"),
-    signal: options?.signal,
+    providers,
+    getAlignmentNames: () => alignmentNames,
+    onProgressive: options?.onApiPassComplete,
+  });
+
+  const resolvePassOptions = {
+    mediaType: type,
+    onProviderResult: options?.onApiPassComplete
+      ? async ({
+          providerId,
+          result,
+        }: {
+          providerId: string;
+          result: MetadataResult | null;
+        }) => {
+          byProvider.set(providerId, result);
+          await progressive.persistFromByProvider(byProvider);
+        }
+      : undefined,
   };
 
-  // 1. Stage 1: Resolve canonical providers concurrently
-  if (canonicalProviders.length > 0) {
+  if (apiProviders.length > 0) {
     throwIfAborted(options?.signal);
-    const canonicalResults = await resolveMetadataProvidersInOrder(
-      metadataProvidersReadyToResolve(canonicalProviders.map((p) => p.id)),
+    const apiResults = await resolveMetadataProvidersInOrder(
+      orderMetadataResolveIds(
+        metadataProvidersReadyToResolve(apiProviders.map((p) => p.id)),
+        type,
+        options,
+      ),
       adapterContextBase,
       metadataProviderResolverMap,
+      resolvePassOptions,
     );
-    for (const [id, res] of canonicalResults.entries()) {
+    for (const [id, res] of apiResults.entries()) {
       byProvider.set(id, res);
     }
   }
@@ -222,18 +395,74 @@ export async function fetchMetadata(
     ) as MetadataResult[];
   }
 
-  // 2. Build accumulated context from Stage 1 results
   const barcodeAlternateNames = cleanedBarcode
     ? await loadBarcodeAlternateNames(cleanedBarcode)
     : [];
-  const alignmentNames = metadataAlignmentNames(name, barcodeAlternateNames);
+  alignmentNames = metadataAlignmentNames(name, barcodeAlternateNames);
+
+  if (options?.onApiPassComplete && stage1Active.length > 0) {
+    await progressive.persistFromByProvider(byProvider);
+  }
+
+  const scrapeCandidateIds = [
+    ...scrapeCanonicalProviders,
+    ...secondaryProviders.filter((p) => p.auth.kind === "scrape"),
+  ].map((p) => p.id);
+
+  const runScrapePass = shouldRunScrapeMetadataPass({
+    type,
+    activeResults: stage1Active,
+    existingScrapeProviderIds: options?.existingScrapeProviderIds,
+    candidateScrapeProviderIds: scrapeCandidateIds,
+    hasCapability: stage1HasMetadataCapability,
+  });
+
+  if (runScrapePass && scrapeCanonicalProviders.length > 0) {
+    throwIfAborted(options?.signal);
+    const activeSoFar = Array.from(byProvider.values()).filter(
+      Boolean,
+    ) as MetadataResult[];
+    const toResolve = scrapeCanonicalProviders.filter(
+      (p) =>
+        !shouldSkipRedundantBookScrapeRound(
+          type,
+          p,
+          activeSoFar,
+          options?.isBackground,
+        ),
+    );
+    const orderedIds = orderMetadataResolveIds(
+      toResolve.map((p) => p.id),
+      type,
+      options,
+    );
+    if (orderedIds.length > 0) {
+      const scrapeResults = await resolveMetadataProvidersInOrder(
+        metadataProvidersReadyToResolve(orderedIds),
+        adapterContextBase,
+        metadataProviderResolverMap,
+        resolvePassOptions,
+      );
+      for (const [id, res] of scrapeResults.entries()) {
+        byProvider.set(id, res);
+      }
+    }
+  }
+
+  stage1Active = Array.from(byProvider.values()).filter(
+    Boolean,
+  ) as MetadataResult[];
+
+  // 2. Build accumulated context from Stage 1 results
   const stage1FallbackNames = buildGameMetadataFallbackNames(
     name,
     barcodeAlternateNames,
     alignedProviderResultsForFallback(byProvider, providers, alignmentNames),
   );
 
-  const stage1ExternalIds: Record<string, string | null> = {};
+  const stage1ExternalIds: Record<string, string | null> = {
+    ...(options?.existingExternalIds ?? {}),
+  };
   for (const s of stage1Active) {
     if (s.externalIds) {
       for (const [key, value] of Object.entries(s.externalIds)) {
@@ -244,6 +473,26 @@ export async function fetchMetadata(
     }
   }
   const imdbId = stage1ExternalIds.imdb;
+  const stage1MatchContributions = matchInputsFromMetadataResults(stage1Active);
+  const stage1AdapterContext = withMatchOnAdapterContext(
+    {
+      ...adapterContextBase,
+      imdbId,
+      externalIds: stage1ExternalIds,
+      fallbackNames: stage1FallbackNames,
+    },
+    buildMatchContext({
+      shelfType: type,
+      shelfName: options?.shelfName,
+      primaryTitle: name,
+      titles: [name, ...stage1FallbackNames, ...(stage1MatchContributions.titles ?? [])],
+      barcodes: [barcode, ...(stage1MatchContributions.barcodes ?? [])],
+      platformKey:
+        stage1MatchContributions.platformKey ?? resolvedPlatform,
+      releaseDate: stage1MatchContributions.releaseDate,
+      externalIds: stage1ExternalIds,
+    }),
+  );
 
   // 3. Stage 2: Resolve secondary providers concurrently with Stage 1 context
   if (secondaryProviders.length > 0) {
@@ -287,6 +536,16 @@ export async function fetchMetadata(
       }
       if (p.auth.kind !== "scrape") return true;
       if (
+        shouldSkipRedundantBookScrapeRound(
+          type,
+          p,
+          stage1ActiveResults,
+          options?.isBackground,
+        )
+      ) {
+        return false;
+      }
+      if (
         shouldSkipRedundantGameScrapeRound(
           type,
           p,
@@ -306,14 +565,14 @@ export async function fetchMetadata(
 
     if (toResolve.length > 0) {
       const secondaryResults = await resolveMetadataProvidersInOrder(
-        toResolve.map((p) => p.id),
-        {
-          ...adapterContextBase,
-          imdbId,
-          externalIds: stage1ExternalIds,
-          fallbackNames: stage1FallbackNames,
-        },
+        orderMetadataResolveIds(
+          toResolve.map((p) => p.id),
+          type,
+          options,
+        ),
+        stage1AdapterContext,
         metadataProviderResolverMap,
+        resolvePassOptions,
       );
       for (const [id, res] of secondaryResults.entries()) {
         byProvider.set(id, res);
@@ -338,7 +597,9 @@ export async function fetchMetadata(
     alignedProviderResultsForFallback(byProvider, providers, alignmentNames),
   );
 
-  const finalExternalIds: Record<string, string | null> = {};
+  const finalExternalIds: Record<string, string | null> = {
+    ...(options?.existingExternalIds ?? {}),
+  };
   for (const s of allActive) {
     if (s.externalIds) {
       for (const [key, value] of Object.entries(s.externalIds)) {
@@ -349,6 +610,26 @@ export async function fetchMetadata(
     }
   }
   const finalImdbId = finalExternalIds.imdb;
+  const finalMatchContributions = matchInputsFromMetadataResults(allActive);
+  const finalAdapterContext = withMatchOnAdapterContext(
+    {
+      ...adapterContextBase,
+      imdbId: finalImdbId,
+      externalIds: finalExternalIds,
+      fallbackNames: finalFallbackNames,
+    },
+    buildMatchContext({
+      shelfType: type,
+      shelfName: options?.shelfName,
+      primaryTitle: name,
+      titles: [name, ...finalFallbackNames, ...(finalMatchContributions.titles ?? [])],
+      barcodes: [barcode, ...(finalMatchContributions.barcodes ?? [])],
+      platformKey:
+        finalMatchContributions.platformKey ?? resolvedPlatform,
+      releaseDate: finalMatchContributions.releaseDate,
+      externalIds: finalExternalIds,
+    }),
+  );
 
   // 5. Fallback Pass: retry missing search-capable providers using fallback
   // names. Gating (which providers to run) is decided once against the
@@ -404,6 +685,7 @@ export async function fetchMetadata(
           fallbackNeedsGallery,
           options?.shelfName,
           cleanedBarcode,
+          options?.isBackground,
         )
       ) {
         return false;
@@ -419,7 +701,7 @@ export async function fetchMetadata(
   // task would hold the only slot while awaiting the inner task, which can never
   // start — a re-entrant deadlock that hangs the request.
   const fallbackResults = await runWithConcurrency(
-    fallbackProviderIds,
+    orderMetadataResolveIds(fallbackProviderIds, type, options),
     METADATA_RESOLVE_CONCURRENCY,
     async (providerId) => {
       throwIfAborted(options?.signal);
@@ -431,12 +713,9 @@ export async function fetchMetadata(
         finalFallbackNames,
         (fallbackName) =>
           adapter.resolve({
-            ...adapterContextBase,
+            ...finalAdapterContext,
             name: fallbackName,
             lookupQueries: lookupQueriesForName(fallbackName),
-            imdbId: finalImdbId,
-            externalIds: finalExternalIds,
-            fallbackNames: finalFallbackNames,
           }),
         {
           limit: metadataFallbackQueryLimit(providerInfo, cleanedBarcode),
@@ -457,6 +736,10 @@ export async function fetchMetadata(
 
   for (const { providerId, resolved } of fallbackResults) {
     if (resolved) byProvider.set(providerId, resolved);
+  }
+
+  if (options?.onApiPassComplete) {
+    await progressive.persistFromByProvider(byProvider);
   }
 
   const recheckResults = await runWithConcurrency(
@@ -481,7 +764,7 @@ export async function fetchMetadata(
         finalFallbackNames,
         (fallbackName) =>
           adapter.resolve({
-            ...adapterContextBase,
+            ...finalAdapterContext,
             name: fallbackName,
             lookupQueries: lookupQueriesForName(fallbackName),
           }),
@@ -500,7 +783,7 @@ export async function fetchMetadata(
       name,
       byProvider,
       providers,
-      adapterContextBase,
+      finalAdapterContext,
       lookupQueriesForName,
       metadataProviderResolverMap,
       {
@@ -513,30 +796,66 @@ export async function fetchMetadata(
   }
 
   // 6. Merge results generically
+  const merged = await buildMergedMetadataFromByProvider({
+    type,
+    name,
+    barcode,
+    cleanedBarcode,
+    resolvedPlatform,
+    shelfName: options?.shelfName,
+    byProvider,
+    providers,
+    alignmentNames,
+  });
+  recordContributionsFromMergedMetadata(merged, type);
+  return merged;
+}
+
+async function buildMergedMetadataFromByProvider(input: {
+  type: MediaType;
+  name: string;
+  barcode?: string | null;
+  cleanedBarcode: string;
+  resolvedPlatform?: string | null;
+  shelfName?: string | null;
+  byProvider: Map<string, MetadataResult | null>;
+  providers: ProviderInfo[];
+  alignmentNames: string[];
+}): Promise<MetadataResult | null> {
+  const {
+    type,
+    name,
+    barcode,
+    cleanedBarcode,
+    resolvedPlatform,
+    shelfName,
+    byProvider,
+    providers,
+    alignmentNames,
+  } = input;
+
   const preferredBookLanguages =
     type === "books"
-      ? preferredMetadataLanguagesFromShelfName(options?.shelfName)
+      ? preferredMetadataLanguagesFromShelfName(shelfName)
       : null;
   const alignedMergeInputs = Array.from(byProvider.entries()).flatMap(
     ([providerId, metadata]) => {
       if (!metadata) return [];
-      if (!isMetadataPlatformCompatible(type, metadata, resolvedPlatform)) {
-        if (
-          type === "games" &&
-          metadataHasDisplayImage(metadata) &&
-          isMetadataTitleAligned(metadata, alignmentNames, 0.58)
-        ) {
-          return [
-            {
-              providerId,
-              metadata: {
-                title: metadata.title,
-                imageUrl: metadata.imageUrl,
-                attachments: metadata.attachments,
-              },
-            },
-          ];
-        }
+      if (
+        metadata.title?.trim() &&
+        listingLooksLikeMerchAccessory(metadata.title) &&
+        !listingLooksLikeMerchAccessory(name)
+      ) {
+        return [];
+      }
+      if (
+        !isMetadataPlatformCompatible(type, metadata, resolvedPlatform, {
+          allowMissingPlatformKey:
+            providers.find((p) => p.id === providerId)
+              ?.platformAgnosticMetadata === true,
+        })
+      ) {
+        // Never leak foreign-console covers/facts onto a platform shelf.
         return [];
       }
       if (preferredBookLanguages && metadata.description?.trim()) {
@@ -725,12 +1044,7 @@ export async function fetchMetadataByType(
   type: string,
   barcode?: string | null,
   platform?: string | null,
-  options?: {
-    isBackground?: boolean;
-    shelfName?: string | null;
-    queuePriority?: "high" | "normal";
-    signal?: AbortSignal;
-  },
+  options?: FetchMetadataOptions,
 ): Promise<MetadataResult | null> {
   if (!isMediaType(type)) return null;
   return fetchMetadata(name, type, barcode, platform, options);
@@ -937,11 +1251,16 @@ function isMetadataPlatformCompatible(
   type: string,
   metadata: MetadataResult,
   platform?: string | null,
+  options?: { allowMissingPlatformKey?: boolean },
 ): boolean {
   if (type !== "games") return true;
   const requestedPlatformKey = normalizeMetadataPlatformKey(platform);
   const resultPlatformKey = normalizeMetadataPlatformKey(metadata.platformKey);
-  if (!requestedPlatformKey || !resultPlatformKey) return true;
+  if (!requestedPlatformKey) return true;
+  if (!resultPlatformKey) {
+    // Title-only hits must not inherit a shelf console by omission.
+    return options?.allowMissingPlatformKey === true;
+  }
   return requestedPlatformKey === resultPlatformKey;
 }
 
@@ -1045,6 +1364,24 @@ function shouldSkipRedundantGameScrapeRound(
   return !shouldAlwaysFetchGameGallerySource(provider);
 }
 
+/**
+ * Book previews/enriches must not wait on secondary Flare/scrape retailers
+ * once title+cover are already available — Decitre/Furet/Gibert/… belong in the
+ * dedicated price refresh path. Holding stage slots on Flare (45–90s each)
+ * makes Next's shared event loop unresponsive (Axios Network Error).
+ */
+function shouldSkipRedundantBookScrapeRound(
+  type: MediaType,
+  provider: ProviderInfo,
+  activeResults: MetadataResult[],
+  _isBackground?: boolean,
+): boolean {
+  if (type !== "books") return false;
+  if (provider.auth.kind !== "scrape") return false;
+  if (!provider.isSecondary) return false;
+  return metadataSnapshotHasTitleAndCover(activeResults);
+}
+
 /** Secondary providers need not retry title variants when the merge snapshot is complete. */
 function shouldSkipMetadataFallbackProvider(
   type: MediaType,
@@ -1054,11 +1391,23 @@ function shouldSkipMetadataFallbackProvider(
   needsGallery: boolean,
   shelfName?: string | null,
   cleanedBarcode?: string,
+  isBackground?: boolean,
 ): boolean {
   if (existing && metadataResultIsPinnedForRecheck(existing)) {
     return true;
   }
   if (existing) return false;
+
+  if (
+    shouldSkipRedundantBookScrapeRound(
+      type,
+      provider,
+      activeResults,
+      isBackground,
+    )
+  ) {
+    return true;
+  }
 
   return shouldSkipRedundantGameScrapeRound(
     type,
@@ -1253,6 +1602,7 @@ export {
   shouldResolveProviderForGallery,
   shouldSkipMetadataFallbackProvider,
   shouldSkipRateLimitedStageOneFallback,
+  shouldSkipRedundantBookScrapeRound,
   shouldSkipRedundantGameScrapeRound,
   stage1HasMetadataCapability,
   supplementGameEditionProviderResults,
@@ -1633,7 +1983,10 @@ function providerMetadataAlignsForGallery(
     requested,
     ...buildEditionPhraseEquivalentVariants(requested),
   ];
-  if (isMetadataTitleAligned({ title: catalogTitle }, alignmentNames, 0.58)) {
+  // Use aliases + regionalTitles too — LaunchBox often keeps the EN primary
+  // title while the FR shelf name only appears as an alternate (Oddworld,
+  // Atlantide, Need for Speed "Road & Track Presents…").
+  if (isMetadataTitleAligned(metadata, alignmentNames, 0.58)) {
     return true;
   }
 
@@ -1729,6 +2082,10 @@ export function mergeMetadata(
   const descriptionCandidates = orderedResults.flatMap((r) => {
     const text = r.metadata.description;
     if (!text?.trim()) return [];
+    const provider = PROVIDERS.find((p) => p.id === r.providerId);
+    // Price / identify scrapers may invent empty prose in tests; only merge
+    // descriptions from providers that declare the capability.
+    if (!provider?.capabilities.includes("description")) return [];
     if (
       mediaType === "games" &&
       options.requestedTitle &&
@@ -1736,11 +2093,10 @@ export function mergeMetadata(
     ) {
       return [];
     }
-    const provider = PROVIDERS.find((p) => p.id === r.providerId);
     return [
       {
         text,
-        language: provider?.defaultLanguage === "fr" ? "fr" : undefined,
+        language: provider.defaultLanguage === "fr" ? "fr" : undefined,
         source: r.providerId,
       },
     ];
@@ -1910,6 +2266,7 @@ export function mergeMetadata(
   const aliases = collectMergedSearchAliases(
     orderedResults.map((r) => r.metadata),
     title ?? "",
+    options.requestedTitle,
   );
 
   const externalIdsList = orderedResults

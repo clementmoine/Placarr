@@ -18,6 +18,36 @@ describe("expandPriceChartingLookupTitles", () => {
       ]),
     );
   });
+
+  it("emits possessive-stripped and Pro Skater short titles for PC slugs", () => {
+    expect(
+      expandPriceChartingLookupTitles("Tony Hawk's American Wasteland"),
+    ).toEqual(
+      expect.arrayContaining([
+        "Tony Hawk's American Wasteland",
+        "Tony Hawk American Wasteland",
+      ]),
+    );
+    expect(expandPriceChartingLookupTitles("Tony Hawk's Pro Skater 4")).toEqual(
+      expect.arrayContaining([
+        "Tony Hawk's Pro Skater 4",
+        "Tony Hawk Pro Skater 4",
+        "Tony Hawk 4",
+      ]),
+    );
+  });
+
+  it("collapses decimal versions for PriceCharting slugs (2.0 → 20)", () => {
+    expect(expandPriceChartingLookupTitles("Colin McRae Rally 2.0")).toEqual(
+      expect.arrayContaining([
+        "Colin McRae Rally 2.0",
+        "Colin McRae Rally 20",
+      ]),
+    );
+    expect(expandPriceChartingLookupTitles("Colin McRae Rally 2.0")).not.toEqual(
+      expect.arrayContaining(["Colin McRae Rally II.0"]),
+    );
+  });
 });
 
 describe("priceChartingAmpersandTitleSlug", () => {
@@ -55,31 +85,28 @@ describe("priceChartingTitleSlug", () => {
 });
 
 describe("buildPriceChartingCatalogLink", () => {
-  it("construit l'URL directe avec l'apostrophe encodée", () => {
-    expect(
-      buildPriceChartingCatalogLink({
-        mediaType: "games",
-        title: "Assassin's Creed III",
-        shelfName: "Xbox 360",
-        barcode: "3307215659290",
-      }),
-    ).toEqual({
-      url: "https://www.pricecharting.com/game/pal-xbox-360/assassin%27s-creed-iii",
-      isDirect: true,
+  it("ne invente plus d'URL /game/ — search jusqu'à scrape vérifié", () => {
+    const link = buildPriceChartingCatalogLink({
+      mediaType: "games",
+      title: "Assassin's Creed III",
+      shelfName: "Xbox 360",
+      barcode: "3307215659290",
     });
+    expect(link.isDirect).toBe(false);
+    expect(link.url).toContain("search-products");
+    expect(link.url).toContain("videogames");
+    expect(decodeURIComponent(link.url)).toContain("Assassin's Creed III");
   });
 
-  it("utilise le slug ampersand pour un double pack Xbox 360", () => {
-    expect(
-      buildPriceChartingCatalogLink({
-        mediaType: "games",
-        title: "Halo Reach / Fable III",
-        fallbackTitle: "Halo Reach / Fable III",
-        shelfName: "Xbox 360",
-      }),
-    ).toEqual({
-      url: "https://www.pricecharting.com/game/pal-xbox-360/halo-reach-&-fable-3-double-pack",
-      isDirect: true,
+  it("utilise une recherche pour un double pack Xbox 360", () => {
+    const link = buildPriceChartingCatalogLink({
+      mediaType: "games",
+      title: "Halo Reach / Fable III",
+      fallbackTitle: "Halo Reach / Fable III",
+      shelfName: "Xbox 360",
     });
+    expect(link.isDirect).toBe(false);
+    expect(link.url).toContain("search-products");
+    expect(decodeURIComponent(link.url)).toContain("Halo Reach / Fable III");
   });
 });

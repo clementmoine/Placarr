@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -24,12 +24,16 @@ export function BulkMoveModal({
   onClose,
   itemIds,
   sourceShelfId,
+  excludeShelfIds,
   onSuccess,
 }: {
   isOpen: boolean;
   onClose: () => void;
   itemIds: string[];
-  sourceShelfId: Shelf["id"];
+  /** When set, scopes the move; omit on the collection page. */
+  sourceShelfId?: Shelf["id"];
+  /** Shelves to hide from the destination picker (e.g. current sources). */
+  excludeShelfIds?: readonly string[];
   onSuccess?: (result: {
     count: number;
     targetShelfId: string;
@@ -47,13 +51,19 @@ export function BulkMoveModal({
   }
 
   const { data: shelves } = useQuery({
-    queryKey: ["shelves"],
-    queryFn: () => getShelves(),
+    queryKey: ["shelves", "picker"],
+    queryFn: () => getShelves(null, { lite: true }),
     enabled: isOpen,
   });
 
+  const excluded = useMemo(() => {
+    const ids = new Set(excludeShelfIds ?? []);
+    if (sourceShelfId) ids.add(sourceShelfId);
+    return ids;
+  }, [excludeShelfIds, sourceShelfId]);
+
   const destinationShelves =
-    shelves?.filter((shelf) => shelf.id !== sourceShelfId) ?? [];
+    shelves?.filter((shelf) => !excluded.has(shelf.id)) ?? [];
 
   const moveMutation = useMutation({
     mutationFn: moveItemsBatch,
@@ -78,7 +88,7 @@ export function BulkMoveModal({
     moveMutation.mutate({
       itemIds,
       targetShelfId,
-      sourceShelfId,
+      ...(sourceShelfId ? { sourceShelfId } : {}),
     });
   };
 

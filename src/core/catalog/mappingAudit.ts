@@ -237,8 +237,15 @@ async function runMetadataAdapterProbe(
 ): Promise<ProbeExecution> {
   const providerModule = getProviderModule(providerId);
   const adapter = getMetadataProviderAdapter(providerId);
-  const ctx = contextOverride ?? providerModule?.mappingProbe?.context;
-  if (!adapter || !ctx) return { probe: null, metadata: null };
+  const rawCtx = contextOverride ?? providerModule?.mappingProbe?.context;
+  if (!adapter || !rawCtx) return { probe: null, metadata: null };
+
+  // Adapters that branch on media type (SensCritique universes, book ISBN
+  // bootstrap, …) need a type even when the sample context only set a name.
+  const ctx: MetadataAdapterContext =
+    rawCtx.type || !providerModule?.info.types[0]
+      ? rawCtx
+      : { ...rawCtx, type: providerModule.info.types[0] };
 
   const resolve = (context: typeof ctx) => adapter.resolve(context);
   const shouldRetry = !!providerModule?.info.mappingProbeRetry;
@@ -248,7 +255,7 @@ async function runMetadataAdapterProbe(
 
   try {
     let metadata = await resolveWithPolicy(ctx);
-    if (!metadata && ctx.barcode && ctx.name.trim()) {
+    if (!metadata && ctx.barcode && ctx.name?.trim()) {
       metadata = await resolveWithPolicy({
         ...ctx,
         barcode: null,

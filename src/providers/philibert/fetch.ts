@@ -321,8 +321,8 @@ export async function fetchPhilibertReviews(
         timeout: 10000,
       },
     );
-    const html =
-      typeof response.data?.html === "string" ? response.data.html : "";
+    const payload = response.data as { html?: unknown } | null | undefined;
+    const html = typeof payload?.html === "string" ? payload.html : "";
     return parsePhilibertReviewsHtml(html).slice(0, 5);
   } catch (error) {
     console.error("[Philibert] Reviews fetch failed:", error);
@@ -480,7 +480,10 @@ export async function searchPhilibertHits(
         timeout: 10000,
       },
     );
-    const hits = parseProductLinks(response.data, cleanedBarcode || undefined);
+    const hits = parseProductLinks(
+      String(response.data ?? ""),
+      cleanedBarcode || undefined,
+    );
     return hits.slice(0, hitLimit);
   } catch (error) {
     console.error("[Philibert] Search failed:", error);

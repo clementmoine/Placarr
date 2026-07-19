@@ -16,7 +16,7 @@ const MOD11_SUPER_PICSOU_N2 = [
 ];
 
 describe("booknode coverUrl", () => {
-  it("prefers the /full/ JPEG variant for Booknode thumbnails", () => {
+  it("prefers the /full/ JPEG variant for Booknode download upgrades", () => {
     const thumb =
       "https://cdn1.booknode.com/book_cover/5518/lart_et_la_creation_de_arcane-5517967-264-432.webp";
 
@@ -26,7 +26,7 @@ describe("booknode coverUrl", () => {
       "https://cdn1.booknode.com/book_cover/5518/mod11/lart-et-la-creation-de-arcane-5517967-264-432.webp",
     ]);
     expect(normalizeBooknodeCoverUrl(thumb)).toBe(
-      "https://cdn1.booknode.com/book_cover/5518/full/lart-et-la-creation-de-arcane-5517967.jpg",
+      "https://cdn1.booknode.com/book_cover/5518/mod11/lart-et-la-creation-de-arcane-5517967-264-432.webp",
     );
   });
 
@@ -41,7 +41,7 @@ describe("booknode coverUrl", () => {
     expect(candidates).toContain(underscore);
     expect(candidates).toContain(MOD11_SUPER_PICSOU_N2[0]);
     expect(normalizeBooknodeCoverUrl(underscore)).toBe(
-      "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n2-1691462.jpg",
+      MOD11_SUPER_PICSOU_N2[0],
     );
   });
 
@@ -63,9 +63,7 @@ describe("booknode coverUrl", () => {
     const thumb =
       "https://cdn1.booknode.com/book_cover/1691/super_picsou_geant_n2-1691462-264-432.webp";
 
-    expect(normalizeBooknodeCoverUrl(thumb)).toBe(
-      "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n2-1691462.jpg",
-    );
+    expect(normalizeBooknodeCoverUrl(thumb)).toBe(MOD11_SUPER_PICSOU_N2[0]);
   });
 
   it("dedupes thumbnail and full JPEG variants of the same upload", () => {

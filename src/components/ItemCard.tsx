@@ -12,7 +12,7 @@ import {
 import { RemoteImage } from "@/components/RemoteImage";
 
 import { getAspectRatio } from "@/lib/text/cardFormat";
-import { getEstimatedItemValueCents } from "@/core/collect/value";
+import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import type { Condition } from "@prisma/client";
 import { cn } from "@/lib/shared/utils";
@@ -23,6 +23,8 @@ function conditionBadgeClass(condition: Condition) {
       return "text-emerald-300 border-emerald-400/25";
     case "used":
       return "text-amber-400 border-white/10";
+    case "loose":
+      return "text-sky-300 border-sky-400/25";
     case "damaged":
       return "text-red-300 border-red-400/25";
     default:
@@ -32,11 +34,13 @@ function conditionBadgeClass(condition: Condition) {
 
 interface ItemCardProps extends Item {
   shelfType?: string | null;
+  shelfName?: string | null;
   cardFormat?: string | null;
   metadata?: MetadataResult | null;
   priceNew?: number | null;
   priceUsed?: number | null;
   priceUsedCIB?: number | null;
+  priceEstimated?: number | null;
   priority?: boolean;
 }
 
@@ -47,22 +51,30 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.name === next.name &&
     prev.condition === next.condition &&
     prev.shelfType === next.shelfType &&
+    prev.shelfName === next.shelfName &&
     prev.cardFormat === next.cardFormat &&
     prev.priceNew === next.priceNew &&
     prev.priceUsed === next.priceUsed &&
     prev.priceUsedCIB === next.priceUsedCIB &&
+    prev.priceEstimated === next.priceEstimated &&
     prev.priority === next.priority &&
     prev.metadataId === next.metadataId &&
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
+    prev.metadata?.imageUrl === next.metadata?.imageUrl &&
+    (prev.metadata?.attachments?.length ?? 0) ===
+      (next.metadata?.attachments?.length ?? 0) &&
     prev.createdAt === next.createdAt
   );
 }
 
 function ItemCardInner(props: ItemCardProps) {
-  const { imageUrl, name, shelfType, cardFormat, condition, priority } = props;
-  const { t } = useLocale();
+  const { imageUrl, name, shelfType, shelfName, cardFormat, condition, priority } =
+    props;
+  const { locale, t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
+
+  const displayImageUrl = imageUrl;
 
   // Determine aspect ratio based on shelf type or card format
   const aspectRatio = useMemo(() => {
@@ -81,9 +93,9 @@ function ItemCardInner(props: ItemCardProps) {
 
   // Réinitialisation quand l'URL change — ajustée pendant le render (pattern
   // React « adjust state when props change »), pas dans un effect.
-  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
-  if (prevImageUrl !== imageUrl) {
-    setPrevImageUrl(imageUrl);
+  const [prevImageUrl, setPrevImageUrl] = useState(displayImageUrl);
+  if (prevImageUrl !== displayImageUrl) {
+    setPrevImageUrl(displayImageUrl);
     setImageFit("contain");
   }
 
@@ -91,23 +103,25 @@ function ItemCardInner(props: ItemCardProps) {
     setImageFit("contain");
   };
 
-  // Calculate estimated price in Euros
+  // Calculate estimated price in Euros — a catalog-estimate fallback shows ~.
   const estimatedPrice = useMemo(() => {
-    const priceCents = getEstimatedItemValueCents({
+    const value = getItemValueEstimate({
       condition: props.condition,
       shelfType: props.shelfType,
       priceNew: props.priceNew,
       priceUsed: props.priceUsed,
       priceUsedCIB: props.priceUsedCIB,
+      priceEstimated: props.priceEstimated,
     });
-    if (priceCents === null || priceCents === 0) return null;
-    return priceCents / 100;
+    if (!value || value.cents === 0) return null;
+    return { euros: value.cents / 100, isEstimate: value.isEstimate };
   }, [
     props.condition,
     props.shelfType,
     props.priceNew,
     props.priceUsed,
     props.priceUsedCIB,
+    props.priceEstimated,
   ]);
 
   return (
@@ -117,39 +131,43 @@ function ItemCardInner(props: ItemCardProps) {
         aspectRatio,
       }}
     >
-      {/* Top-right badges — price + condition, opaque for legibility */}
-      {(estimatedPrice !== null || condition || isEnriching) && (
-        <div className="absolute top-2 right-2 z-10 pointer-events-none select-none flex flex-col items-end gap-1">
+      {/* Top-right badges — price + condition stay visible even while enriching */}
+      {(estimatedPrice !== null || condition) && (
+        <div className="absolute top-2 right-2 z-20 pointer-events-none select-none flex flex-col items-end gap-1">
           {estimatedPrice !== null && (
             <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full bg-zinc-950/90 text-emerald-300 border border-emerald-400/30 shadow-sm">
-              {estimatedPrice.toFixed(2)} €
+              {estimatedPrice.isEstimate ? "~" : ""}
+              {estimatedPrice.euros.toFixed(2)} €
             </span>
           )}
-          {isEnriching ? (
-            <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/90 text-sky-300 border border-sky-400/30 shadow-sm">
-              <Loader2 className="size-2.5 animate-spin" />
-              {t("items.fetching")}
+          {condition && (
+            <span
+              className={cn(
+                "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border bg-zinc-950/90 shadow-sm",
+                conditionBadgeClass(condition),
+              )}
+            >
+              {t(`items.conditions.${condition}`) || condition}
             </span>
-          ) : (
-            condition && (
-              <span
-                className={cn(
-                  "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border bg-zinc-950/90 shadow-sm",
-                  conditionBadgeClass(condition),
-                )}
-              >
-                {t(`items.conditions.${condition}`) || condition}
-              </span>
-            )
           )}
         </div>
       )}
 
-      {imageUrl ? (
+      {/* Enriching overlay — centered spinner; badges & title remain on top */}
+      {isEnriching && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/45 backdrop-blur-[1px] pointer-events-none">
+          <Loader2 className="size-7 animate-spin text-white/90" />
+          <span className="text-[9px] font-black uppercase tracking-wider text-white/80">
+            {t("items.fetching")}
+          </span>
+        </div>
+      )}
+
+      {displayImageUrl ? (
         <div className="w-full h-full bg-white relative overflow-hidden">
           {/* Main Cover Image */}
           <RemoteImage
-            src={imageUrl}
+            src={displayImageUrl}
             alt={name}
             priority={priority}
             onLoad={handleImageLoad}
@@ -171,8 +189,8 @@ function ItemCardInner(props: ItemCardProps) {
         </div>
       )}
 
-      {/* Glassmorphic bottom panel — title */}
-      <div className="absolute bottom-0 left-0 right-0 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
+      {/* Glassmorphic bottom panel — title (stays above the enriching overlay) */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
         <span className="text-[10px] font-extrabold line-clamp-2 text-white leading-tight">
           {name.trim().length > 0 ? name : t("common.noName")}
         </span>

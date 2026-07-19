@@ -14,15 +14,42 @@ export type PriceChartingPlatformSlugs = {
 const PRICE_CHARTING_PLATFORM_SLUGS: Partial<
   Record<VideoGamePlatformKey, PriceChartingPlatformSlugs>
 > = {
+  xboxseries: { pal: "pal-xbox-series-x", default: "xbox-series-x" },
+  xboxone: { pal: "pal-xbox-one", default: "xbox-one" },
   xbox360: { pal: "pal-xbox-360", default: "xbox-360" },
   xbox: { pal: "pal-xbox", default: "xbox" },
+  ps5: { pal: "pal-playstation-5", default: "playstation-5" },
+  ps4: { pal: "pal-playstation-4", default: "playstation-4" },
   ps3: { pal: "pal-playstation-3", default: "playstation-3" },
   ps2: { pal: "pal-playstation-2", default: "playstation-2" },
   ps1: { pal: "pal-playstation", default: "playstation" },
   psp: { pal: "pal-psp", default: "psp" },
   psvita: { pal: "pal-playstation-vita", default: "playstation-vita" },
+  switch2: { pal: "pal-nintendo-switch-2", default: "nintendo-switch-2" },
+  switch: { pal: "pal-nintendo-switch", default: "nintendo-switch" },
+  wiiu: { pal: "pal-wii-u", default: "wii-u" },
   wii: { pal: "pal-wii", default: "wii" },
   gamecube: { pal: "pal-gamecube", default: "gamecube" },
+  n64: { pal: "pal-nintendo-64", default: "nintendo-64" },
+  snes: { pal: "pal-super-nintendo", default: "super-nintendo" },
+  nes: { pal: "pal-nes", default: "nes" },
+  "3ds": { pal: "pal-3ds", default: "3ds" },
+  ds: { pal: "pal-nintendo-ds", default: "nintendo-ds" },
+  gba: { pal: "pal-gameboy-advance", default: "gameboy-advance" },
+  gbc: { pal: "pal-gameboy-color", default: "gameboy-color" },
+  gb: { pal: "pal-gameboy", default: "gameboy" },
+  pc: { default: "pc-games" },
+  dreamcast: { pal: "pal-dreamcast", default: "dreamcast" },
+  megadrive: { pal: "pal-sega-mega-drive", default: "sega-genesis" },
+  mastersystem: {
+    pal: "pal-sega-master-system",
+    default: "sega-master-system",
+  },
+  gamegear: { pal: "pal-sega-game-gear", default: "sega-game-gear" },
+  saturn: { pal: "pal-sega-saturn", default: "sega-saturn" },
+  atari2600: { pal: "pal-atari-2600", default: "atari-2600" },
+  atari5200: { default: "atari-5200" },
+  atari7800: { default: "atari-7800" },
 };
 
 export function getPriceChartingPlatformSlugs(

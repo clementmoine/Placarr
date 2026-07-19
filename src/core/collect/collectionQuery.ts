@@ -1,6 +1,10 @@
 import type { Condition } from "@prisma/client";
 
-import { getEstimatedItemValueCents } from "@/core/collect/value";
+import { isItemCondition } from "@/core/collect/condition";
+import {
+  getItemValueEstimate,
+  type ItemValueEstimate,
+} from "@/core/collect/value";
 import { getItemRatingScore10 } from "@/core/collect/rating";
 import type { MetadataFact } from "@/types/metadataProvider";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
@@ -61,17 +65,25 @@ function itemRatingScore(item: ItemWithMetadata): number | null {
   return getItemRatingScore10(metadataFacts(item.metadata?.facts));
 }
 
-function itemEstimatedPriceCents(
+function itemValueEstimate(
   item: ItemWithMetadata,
   shelfType?: string | null,
-): number | null {
-  return getEstimatedItemValueCents({
+): ItemValueEstimate | null {
+  return getItemValueEstimate({
     condition: item.condition,
     shelfType: shelfType ?? item.shelf?.type,
     priceNew: item.priceNew,
     priceUsed: item.priceUsed,
     priceUsedCIB: item.priceUsedCIB,
+    priceEstimated: item.priceEstimated,
   });
+}
+
+function itemEstimatedPriceCents(
+  item: ItemWithMetadata,
+  shelfType?: string | null,
+): number | null {
+  return itemValueEstimate(item, shelfType)?.cents ?? null;
 }
 
 export function filterCollectionItems(
@@ -176,15 +188,33 @@ export function queryCollectionItems(
   return sortCollectionItems(filtered, options.sortBy, options.shelfType);
 }
 
+export type CollectionValueSummary = {
+  /** Total in euros (not cents), matching the historical return unit. */
+  total: number;
+  /** True when at least one item contributes through a catalog estimate (~). */
+  includesEstimates: boolean;
+};
+
+export function summarizeCollectionEstimatedValue(
+  items: ItemWithMetadata[],
+  shelfType?: string | null,
+): CollectionValueSummary {
+  let totalCents = 0;
+  let includesEstimates = false;
+  for (const item of items) {
+    const value = itemValueEstimate(item, shelfType);
+    if (!value) continue;
+    totalCents += value.cents;
+    if (value.isEstimate) includesEstimates = true;
+  }
+  return { total: totalCents / 100, includesEstimates };
+}
+
 export function sumCollectionEstimatedValue(
   items: ItemWithMetadata[],
   shelfType?: string | null,
 ): number {
-  const totalCents = items.reduce((sum, item) => {
-    const price = itemEstimatedPriceCents(item, shelfType);
-    return sum + (price ?? 0);
-  }, 0);
-  return totalCents / 100;
+  return summarizeCollectionEstimatedValue(items, shelfType).total;
 }
 
 export function parseItemCollectionSort(
@@ -203,12 +233,11 @@ export function parseItemCollectionFilters(searchParams: {
   get: (key: string) => string | null;
 }): ItemCollectionFilters {
   const conditionParam = searchParams.get("condition");
-  const condition: ItemCollectionFilters["condition"] =
-    conditionParam === "new" ||
-    conditionParam === "used" ||
-    conditionParam === "damaged"
-      ? conditionParam
-      : "all";
+  const condition: ItemCollectionFilters["condition"] = isItemCondition(
+    conditionParam,
+  )
+    ? conditionParam
+    : "all";
 
   const ratingParam = searchParams.get("ratingMin");
   const parsedRating = ratingParam ? Number(ratingParam) : NaN;

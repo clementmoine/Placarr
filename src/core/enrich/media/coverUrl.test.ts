@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findAttachmentForUrl,
   isCoverEligibleAttachmentType,
   isUrlEligibleDefaultCover,
 } from "./coverUrl";
@@ -33,5 +34,23 @@ describe("coverUrl eligibility", () => {
     expect(isUrlEligibleDefaultCover("/uploads/unknown.jpg", attachments)).toBe(
       true,
     );
+  });
+});
+
+describe("findAttachmentForUrl", () => {
+  it("prefers catalog provenance over a synthetic user honor pin", () => {
+    const match = findAttachmentForUrl(
+      [
+        { type: "image", source: "user", url: "/uploads/cover.png" },
+        {
+          type: "cover",
+          source: "screenscraper",
+          url: "/uploads/cover.png",
+          providerLabel: "ScreenScraper",
+        },
+      ],
+      "/uploads/cover.png",
+    );
+    expect(match?.source).toBe("screenscraper");
   });
 });

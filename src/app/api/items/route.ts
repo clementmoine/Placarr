@@ -9,13 +9,22 @@ import { cropImageIfNeeded } from "@/core/enrich/media/imageTrim";
 import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
+  storeMetadata,
 } from "@/core/enrich/storage";
 import { presentItemFromStorage, itemDetailMetadataInclude } from "@/core/collect/present";
+import type { MetadataResult } from "@/types/metadataProvider";
+import { asSeedableMetadataPreview } from "@/core/collect/seedMetadataPreview";
+import {
+  applySeriesDisplayName,
+  applySeriesDisplayNamesByShelf,
+  seriesTitleEntryFromItemRow,
+} from "@/core/enrich/titles/series";
 import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { parseItemCondition } from "@/core/collect/condition";
 import {
   buildExactBarcodeSearchCondition,
   buildItemSearchConditions,
@@ -29,7 +38,8 @@ import {
   itemPricesContextFromRecord,
   readItemPrices,
   summarizeListItemPrices,
-  EMPTY_LIST_ITEM_PRICES,
+  itemPricesContextFromPresentedShelfItem,
+  shelfGridItemPriceFields,
 } from "@/core/commerce/pricing/itemDisplay";
 
 const VALID_SHELF_TYPES = new Set<string>(Object.values(Type));
@@ -110,8 +120,21 @@ export async function GET(req: NextRequest) {
       );
 
       const prices = await readItemPrices(itemPricesContextFromRecord(item));
+      const presented = presentItemFromStorage(item, { uiLocale });
+      const siblingRows = await prisma.item.findMany({
+        where: { shelfId: item.shelfId },
+        select: {
+          id: true,
+          name: true,
+          metadata: { select: { title: true } },
+        },
+      });
+      const withSeries = applySeriesDisplayName(
+        presented,
+        siblingRows.map(seriesTitleEntryFromItemRow),
+      );
       return NextResponse.json({
-        ...presentItemFromStorage(item, { uiLocale }),
+        ...withSeries,
         ...(prices ?? {
           priceNew: null,
           priceUsed: null,
@@ -175,10 +198,29 @@ export async function GET(req: NextRequest) {
     if (includeMetadata) {
       const priceByItemId = await summarizeListItemPrices(items);
       return NextResponse.json(
-        items.map((item) => ({
-          ...presentItemFromStorage(item, { uiLocale }),
-          ...(priceByItemId.get(item.id) ?? EMPTY_LIST_ITEM_PRICES),
-        })),
+        applySeriesDisplayNamesByShelf(
+          items.map((item) => {
+            const presented = presentItemFromStorage(item, { uiLocale });
+            const prices = shelfGridItemPriceFields(
+              itemPricesContextFromPresentedShelfItem(
+                {
+                  id: item.id,
+                  name: item.name,
+                  barcode: item.barcode,
+                  metadataId: item.metadataId,
+                  metadataRefreshStartedAt: item.metadataRefreshStartedAt,
+                  metadata: presented.metadata as MetadataResult | null,
+                },
+                item.shelf,
+              ),
+              priceByItemId.get(item.id) ?? null,
+            );
+            return {
+              ...presented,
+              ...prices,
+            };
+          }),
+        ),
       );
     }
 
@@ -210,10 +252,19 @@ export async function POST(req: NextRequest) {
         barcode,
         condition,
         fetchMetadata = true,
+        metadataPreview,
       } = body;
       if (typeof shelfId !== "string" || !shelfId.trim()) {
         return NextResponse.json(
           { error: "Shelf ID is required" },
+          { status: 400 },
+        );
+      }
+
+      const resolvedCondition = parseItemCondition(condition, "used");
+      if (resolvedCondition == null) {
+        return NextResponse.json(
+          { error: "Invalid item condition" },
           { status: 400 },
         );
       }
@@ -282,7 +333,7 @@ export async function POST(req: NextRequest) {
           imageUrl: localImageUrl,
           backgroundImageUrl: localBackgroundImageUrl,
           barcode: normalizedBarcode ?? barcode,
-          condition,
+          condition: resolvedCondition,
           userId: auth.user.id,
         },
         include: {
@@ -296,6 +347,23 @@ export async function POST(req: NextRequest) {
           },
         },
       });
+
+      // Scan/modal already fetched a rich preview — seed it so the item page
+      // is not empty while the background worker deepens enrichment.
+      const seedPreview = asSeedableMetadataPreview(metadataPreview);
+      if (seedPreview) {
+        try {
+          await storeMetadata(item.id, seedPreview, shelf.type, resolvedName, {
+            deferImageLocalization: true,
+            skipDeferredLocalizationSchedule: true,
+          });
+        } catch (error) {
+          console.error(
+            `[Items] Failed to seed metadata preview for ${item.id}:`,
+            error,
+          );
+        }
+      }
 
       if (fetchMetadata) {
         await startItemMetadataRefresh({
@@ -312,7 +380,19 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return NextResponse.json(presentItemFromStorage(item, { uiLocale }));
+      const itemForResponse = seedPreview
+        ? await prisma.item.findUnique({
+            where: { id: item.id },
+            include: {
+              shelf: true,
+              metadata: itemDetailMetadataInclude,
+            },
+          })
+        : item;
+
+      return NextResponse.json(
+        presentItemFromStorage(itemForResponse ?? item, { uiLocale }),
+      );
     } catch (error) {
       console.error("Error in POST request:", error);
       return NextResponse.json(
@@ -339,7 +419,7 @@ export async function PATCH(req: NextRequest) {
     try {
       const searchParams = req.nextUrl.searchParams;
       const body = await req.json();
-      const { id, refreshMetadata, lookupQuery, currentShelfId, ...data } =
+      const { id, refreshMetadata, lookupQuery, currentShelfId, ...raw } =
         body;
       const requestId = typeof id === "string" ? id : searchParams.get("id");
       const sourceShelfId =
@@ -354,8 +434,56 @@ export async function PATCH(req: NextRequest) {
         );
       }
 
-      if (typeof data.shelfId === "string") {
-        data.shelfId = await resolveShelfId(data.shelfId, auth.user.id);
+      const data: {
+        name?: string;
+        description?: string | null;
+        imageUrl?: string | null;
+        backgroundImageUrl?: string | null;
+        barcode?: string | null;
+        condition?: NonNullable<ReturnType<typeof parseItemCondition>>;
+        shelfId?: string;
+        slug?: string;
+        metadataId?: null;
+      } = {};
+
+      if (typeof raw.name === "string") data.name = raw.name;
+      if (
+        "description" in raw &&
+        (typeof raw.description === "string" || raw.description === null)
+      ) {
+        data.description = raw.description;
+      }
+      if (
+        "imageUrl" in raw &&
+        (typeof raw.imageUrl === "string" || raw.imageUrl === null)
+      ) {
+        data.imageUrl = raw.imageUrl;
+      }
+      if (
+        "backgroundImageUrl" in raw &&
+        (typeof raw.backgroundImageUrl === "string" ||
+          raw.backgroundImageUrl === null)
+      ) {
+        data.backgroundImageUrl = raw.backgroundImageUrl;
+      }
+      if (
+        "barcode" in raw &&
+        (typeof raw.barcode === "string" || raw.barcode === null)
+      ) {
+        data.barcode = raw.barcode;
+      }
+      if ("condition" in raw) {
+        const resolvedCondition = parseItemCondition(raw.condition);
+        if (resolvedCondition == null) {
+          return NextResponse.json(
+            { error: "Invalid item condition" },
+            { status: 400 },
+          );
+        }
+        data.condition = resolvedCondition;
+      }
+      if (typeof raw.shelfId === "string") {
+        data.shelfId = await resolveShelfId(raw.shelfId, auth.user.id);
       }
 
       const resolvedId = await resolveItemId(
@@ -414,16 +542,18 @@ export async function PATCH(req: NextRequest) {
             minMarginPixels: 30,
           });
         }
-        if (
-          data.imageUrl &&
-          item.metadataId &&
-          data.imageUrl !== previousImageUrl
-        ) {
-          await syncCroppedCoverAttachment(
+        // Always sync — even when the URL is unchanged — so a source=user pin
+        // realigns to the cover the collector just confirmed (e.g. re-selecting
+        // the stored marketplace pin while display was stuck on another image).
+        if (data.imageUrl && item.metadataId) {
+          const synced = await syncCroppedCoverAttachment(
             item.metadataId,
             data.imageUrl,
             previousImageUrl,
           );
+          if (synced.preferredImageUrl) {
+            data.imageUrl = synced.preferredImageUrl;
+          }
         }
       }
       if (data.backgroundImageUrl) {

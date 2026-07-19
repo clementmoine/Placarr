@@ -7,6 +7,7 @@ import {
   filterMetadataForShelfPlatform,
 } from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import { isAbortError } from "@/lib/http/abort";
 
 export async function GET(req: NextRequest) {
   // Proxy vers des API tierces (souvent payantes) → auth obligatoire.
@@ -57,6 +58,9 @@ export async function GET(req: NextRequest) {
         : metadata;
     return NextResponse.json(filtered);
   } catch (error) {
+    if (isAbortError(error)) {
+      return NextResponse.json(null);
+    }
     console.error("Error in GET request:", error);
     return NextResponse.json(
       { error: "Internal server error" },

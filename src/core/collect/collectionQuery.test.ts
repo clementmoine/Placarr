@@ -6,6 +6,7 @@ import {
   parseItemCollectionFilters,
   queryCollectionItems,
   sortCollectionItems,
+  summarizeCollectionEstimatedValue,
 } from "./collectionQuery";
 import type { ItemWithMetadata } from "@/types/items";
 
@@ -45,6 +46,7 @@ function makeItem(
     priceNew: overrides.priceNew ?? null,
     priceUsed: overrides.priceUsed ?? null,
     priceUsedCIB: overrides.priceUsedCIB ?? null,
+    priceEstimated: overrides.priceEstimated ?? null,
     priceLastUpdated: overrides.priceLastUpdated ?? null,
   } as unknown as ItemWithMetadata;
 }
@@ -154,6 +156,18 @@ describe("collectionQuery", () => {
       ratingMin: 8,
       pricedOnly: true,
     });
+
+    expect(
+      parseItemCollectionFilters({
+        get: (key) => (key === "condition" ? "loose" : null),
+      }).condition,
+    ).toBe("loose");
+
+    expect(
+      parseItemCollectionFilters({
+        get: (key) => (key === "condition" ? "mint" : null),
+      }).condition,
+    ).toBe("all");
   });
 
   it("applies filters then sort", () => {
@@ -188,5 +202,25 @@ describe("collectionQuery", () => {
         shelfType: "games",
       }).map((item) => item.id),
     ).toEqual(["1"]);
+  });
+
+  it("inclut les cotes estimées dans le total et le signale", () => {
+    const items = [
+      makeItem({ id: "1", name: "A", condition: "used", priceUsed: 1000 }),
+      makeItem({ id: "2", name: "B", condition: "used", priceEstimated: 750 }),
+      makeItem({ id: "3", name: "C", condition: "used" }),
+    ];
+
+    expect(summarizeCollectionEstimatedValue(items, "books")).toEqual({
+      total: 17.5,
+      includesEstimates: true,
+    });
+
+    expect(
+      summarizeCollectionEstimatedValue(
+        [makeItem({ id: "1", name: "A", condition: "used", priceUsed: 1000 })],
+        "books",
+      ),
+    ).toEqual({ total: 10, includesEstimates: false });
   });
 });

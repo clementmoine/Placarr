@@ -195,6 +195,7 @@ describe("parseChasseAuxLivresProductPage", () => {
       "fr",
       {
         validateProduct: (candidate) => /n[°º]?\s*1\b/i.test(candidate.name),
+        withPrices: false,
       },
     );
 
@@ -276,7 +277,7 @@ describe("parseChasseAuxLivresProductPage", () => {
     const product = await fetchChasseAuxLivresMetadataProduct(
       itemBarcode,
       "toys",
-      { anchoredItemBarcode: itemBarcode },
+      { anchoredItemBarcode: itemBarcode, withPrices: false },
     );
 
     expect(product).toMatchObject({
@@ -304,6 +305,8 @@ describe("parseChasseAuxLivresProductPage", () => {
 
     const product = await fetchChasseAuxLivresMetadataProduct(
       "https://www.chasse-aux-livres.fr/prix/P005643895/super-picsou-geant-n-4",
+      "fr",
+      { withPrices: false },
     );
 
     expect(product?.name).toBe("Super Picsou géant n° 4");
@@ -379,7 +382,7 @@ describe("fetchFromChasseAuxLivres", () => {
     const product = await fetchChasseAuxLivresMetadataProduct(
       "Black Stories",
       "toys",
-      { anchoredItemBarcode: "0827912079678" },
+      { anchoredItemBarcode: "0827912079678", withPrices: false },
     );
 
     expect(product?.sku).toBe("B001K9E2SQ");
@@ -421,6 +424,68 @@ describe("fetchFromChasseAuxLivres", () => {
       }),
     );
     expect(mockedFlareDestroy).toHaveBeenCalled();
+  });
+
+  it("attache les meilleurs prix marketplace sur le chemin metadata", async () => {
+    const productUrl =
+      "https://www.chasse-aux-livres.fr/prix/P109843183/super-picsou-geant-n-1";
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url === productUrl || url.includes("/prix/P109843183")) {
+        return {
+          data: `
+            <html data-duih="duih1">
+              <body>
+                <div id="book-details" data-asin="P109843183" data-fuzz="false"></div>
+                <div id="offers" data-nbeng="1"></div>
+                <div id="d-tp-lnk" data-ui="ui1"></div>
+                <div data-lvs="lvs1"></div>
+                <script type="application/ld+json">
+                  {
+                    "@type": ["Product", "Book"],
+                    "name": "Super picsou geant N° 1",
+                    "sku": "P109843183",
+                    "publisher": {"name": "Edi Monde"},
+                    "image": "https://img.example/n1.jpg"
+                  }
+                </script>
+              </body>
+            </html>
+          `,
+          request: { res: { responseUrl: productUrl } },
+        };
+      }
+      if (url.includes("/rest/lookup/results")) {
+        return {
+          data: {
+            offers: {
+              eng0: [
+                {
+                  condition: { _name: "NEW" },
+                  price: { amount: 730 },
+                  shippingCost: { amount: 0 },
+                  totalPrice: { amount: 730 },
+                },
+                {
+                  condition: { _name: "USED" },
+                  price: { amount: 198 },
+                  shippingCost: { amount: 0 },
+                  totalPrice: { amount: 198 },
+                },
+              ],
+            },
+          },
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    const product = await fetchChasseAuxLivresMetadataProduct(productUrl, "fr");
+    expect(product).toMatchObject({
+      name: "Super picsou geant N° 1",
+      publisher: "Edi Monde",
+      priceNew: 730,
+      priceUsed: 198,
+    });
   });
 });
 

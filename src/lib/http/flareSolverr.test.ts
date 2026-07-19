@@ -6,7 +6,10 @@ vi.mock("@/core/enrich/media/imageBuffer", () => ({
   looksLikeImageBuffer: () => true,
 }));
 
-import { flareSolverrDownloadImages } from "./flareSolverr";
+import {
+  flareSolverrDownloadImages,
+  flareSolverrRequestGet,
+} from "./flareSolverr";
 
 const mockedPost = vi.mocked(axios.post);
 
@@ -48,5 +51,38 @@ describe("flareSolverrDownloadImages", () => {
       }),
       expect.any(Object),
     );
+  });
+});
+
+describe("flareSolverrRequestGet", () => {
+  beforeEach(() => {
+    mockedPost.mockReset();
+    process.env.FLARESOLVERR_URL = "http://flare.test";
+  });
+
+  it("serializes concurrent FlareSolverr requests", async () => {
+    let active = 0;
+    let peak = 0;
+    mockedPost.mockImplementation(async () => {
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      active--;
+      return {
+        data: {
+          status: "ok",
+          solution: { status: 200, response: "<html/>" },
+        },
+      };
+    });
+
+    await Promise.all([
+      flareSolverrRequestGet("https://example.com/a"),
+      flareSolverrRequestGet("https://example.com/b"),
+      flareSolverrRequestGet("https://example.com/c"),
+    ]);
+
+    expect(peak).toBe(1);
+    expect(mockedPost).toHaveBeenCalledTimes(3);
   });
 });

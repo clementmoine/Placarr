@@ -21,11 +21,8 @@ type ProviderLiteralInventory = Record<
   Partial<Record<ProviderTerm, number>>
 >;
 
-const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
-  "src/core/commerce/pricing/normalizeLegacyPriceOffer.ts": {
-    ebay: 2,
-  },
-};
+/** Empty = zero quoted provider ids outside `src/providers/` (+ tests). */
+const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {};
 
 const SOURCE_ROOTS = ["src", "scripts"];
 const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);

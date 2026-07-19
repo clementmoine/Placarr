@@ -6,6 +6,7 @@ import { PROVIDERS } from "@/core/catalog/catalog";
 import { PRESTASHOP_RETAILER_CONFIGS } from "@/providers/prestashop/configs";
 import { SHOPIFY_RETAILER_CONFIGS } from "@/providers/shopify/configs";
 import { DEDICATED_CATALOG_IMAGE_HOSTS } from "@/core/enrich/media/dedicatedCatalogImageHosts";
+import { SCRAPE_CATALOG_IMAGE_BASE_URLS } from "@/core/enrich/media/scrapeCatalogImageHosts";
 
 import {
   buildImageRemoteHostLists,
@@ -17,11 +18,15 @@ import {
 } from "./nextImageRemoteHosts";
 import { resolveImageRemoteHostLists } from "./nextImageRemoteGuard";
 
-const CATALOG_IMAGE_HOSTS = catalogRetailerImageHosts([
+const PROVIDER_SCRAPE_IMAGE_BASE_URLS = [
   ...PRESTASHOP_RETAILER_CONFIGS,
   ...SHOPIFY_RETAILER_CONFIGS,
   ...DEDICATED_CATALOG_IMAGE_HOSTS,
-]);
+].map((entry) => entry.baseUrl);
+
+const CATALOG_IMAGE_HOSTS = catalogRetailerImageHosts(
+  PROVIDER_SCRAPE_IMAGE_BASE_URLS.map((baseUrl) => ({ baseUrl })),
+);
 
 const IMAGE_REMOTE_HOST_LISTS = buildImageRemoteHostLists(
   CATALOG_IMAGE_HOSTS,
@@ -50,6 +55,12 @@ function hostFromCoverUrlHost(fragment: string): string | null {
 }
 
 describe("nextImageRemoteHosts", () => {
+  it("keeps the middleware scrape-host list aligned with provider configs", () => {
+    expect([...SCRAPE_CATALOG_IMAGE_BASE_URLS].sort()).toEqual(
+      [...PROVIDER_SCRAPE_IMAGE_BASE_URLS].sort(),
+    );
+  });
+
   it("keeps the middleware guard list aligned with registry cover hosts", () => {
     const registryHosts = registryCoverImageHosts(PROVIDERS);
     expect([...REGISTRY_COVER_IMAGE_EXACT_HOSTS].sort()).toEqual(

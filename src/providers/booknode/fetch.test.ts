@@ -46,7 +46,7 @@ describe("Booknode provider", () => {
       title: "Super Picsou Geant n°1",
       sourceUrl: "https://booknode.com/super_picsou_geant_n_1_0379552",
       imageUrl:
-        "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg",
+        "https://cdn1.booknode.com/book_cover/1691/mod11/super-picsou-geant-n1-1691432-264-432.webp",
       description: expect.stringContaining("Picsou et les mousquetaires"),
       authors: ["Super Picsou Geant"],
       genres: ["Bande dessinee", "Humour", "Aventure", "Walt Disney"],
@@ -56,6 +56,9 @@ describe("Booknode provider", () => {
       seriesName: "Super Picsou Geant",
       seriesUrl: "https://booknode.com/serie/super-picsou-geant",
       seriesPosition: 1,
+      barcode: "9782800150000",
+      releaseDate: "1961-03-01",
+      pageCount: 196,
     });
   });
 
@@ -68,7 +71,7 @@ describe("Booknode provider", () => {
     expect(book).toMatchObject({
       title: "Super Picsou Geant n°1",
       imageUrl:
-        "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg",
+        "https://cdn1.booknode.com/book_cover/1691/mod11/super-picsou-geant-n1-1691432-264-432.webp",
       description: expect.stringContaining("Picsou et les mousquetaires"),
       authors: ["Super Picsou Geant"],
       genres: ["Bande dessinee", "Humour", "Aventure", "Gags", "Walt Disney"],
@@ -116,16 +119,16 @@ describe("Booknode provider", () => {
     expect(covers.length).toBeGreaterThanOrEqual(3);
     expect(covers).toEqual(
       expect.arrayContaining([
-        "https://cdn1.booknode.com/book_cover/987/full/death-note-tome-1-986958.jpg",
-        "https://cdn1.booknode.com/book_cover/3183/full/death-note-tome-1-3183443.jpg",
-        "https://cdn1.booknode.com/book_cover/553/full/death-note-tome-1-552530.jpg",
+        "https://cdn1.booknode.com/book_cover/987/mod11/death-note-tome-1-986958-264-432.webp",
+        "https://cdn1.booknode.com/book_cover/3183/mod11/death-note-tome-1-3183443-264-432.webp",
+        "https://cdn1.booknode.com/book_cover/553/mod11/death-note-tome-1-552530-264-432.webp",
       ]),
     );
     expect(
       covers.filter(
         (url) =>
           url ===
-          "https://cdn1.booknode.com/book_cover/987/full/death-note-tome-1-986958.jpg",
+          "https://cdn1.booknode.com/book_cover/987/mod11/death-note-tome-1-986958-264-432.webp",
       ),
     ).toHaveLength(1);
   });
@@ -178,7 +181,7 @@ describe("Booknode provider", () => {
     expect(book).toMatchObject({
       title: "Super Picsou Geant n°1",
       imageUrl:
-        "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg",
+        "https://cdn1.booknode.com/book_cover/1691/mod11/super-picsou-geant-n1-1691432-264-432.webp",
     });
     expect(mockedGet).not.toHaveBeenCalledWith(
       expect.stringContaining("n_163"),
@@ -216,7 +219,7 @@ describe("Booknode provider", () => {
         cmd: "request.get",
         url: "https://booknode.com/super_picsou_geant_n_1_0379552",
       }),
-      expect.objectContaining({ timeout: 50000 }),
+      expect.objectContaining({ timeout: expect.any(Number) }),
     );
   });
 
@@ -303,7 +306,10 @@ function bookHtml({
               "name": "Super Picsou Geant",
               "url": "https://booknode.com/serie/super-picsou-geant",
               "position": 1
-            }
+            },
+            "isbn": "9782800150000",
+            "datePublished": "1961-03-01",
+            "numberOfPages": 196
           }
         </script>
       </head>

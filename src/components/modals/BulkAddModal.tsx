@@ -25,6 +25,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { isBookShelfType } from "@/core/identify/shelfLabels";
+import { itemConditionsForShelfType } from "@/core/collect/condition";
 import { saveItem, saveItemsBatch } from "@/lib/api/items";
 import { parseNameList } from "@/core/enrich/titles/parseNameList";
 import { syncItemQueries } from "@/core/collect/queryCache";
@@ -77,6 +78,13 @@ export function BulkAddModal({
   const [condition, setCondition] = useState<Condition>(Condition.used);
   const [isScanning, setIsScanning] = useState(false);
   const [scannedRows, setScannedRows] = useState<ScannedRow[]>([]);
+  const availableConditions = itemConditionsForShelfType(shelfType);
+  if (
+    condition === "loose" &&
+    !availableConditions.includes("loose")
+  ) {
+    setCondition(Condition.used);
+  }
 
   // Remise à zéro à l'ouverture — ajustée pendant le render, pas en effect.
   const [prevOpen, setPrevOpen] = useState(isOpen);
@@ -281,13 +289,13 @@ export function BulkAddModal({
                 size="sm"
                 type="single"
                 variant="outline"
-                className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
                 value={condition}
                 onValueChange={(value) => {
                   if (value) setCondition(value as Condition);
                 }}
               >
-                {Object.values(Condition).map((entry) => (
+                {availableConditions.map((entry) => (
                   <ToggleGroupItem
                     key={entry}
                     value={entry}
@@ -335,6 +343,7 @@ export function BulkAddModal({
             <div className="pt-4 flex-1 min-h-0 overflow-y-auto">
               <BulkSeriesForm
                 shelfId={shelfId}
+                shelfType={shelfType}
                 isActive={isOpen && tab === "series"}
                 onSuccess={(count) => {
                   onSuccess?.(count);
@@ -372,13 +381,13 @@ export function BulkAddModal({
                 size="sm"
                 type="single"
                 variant="outline"
-                className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
                 value={condition}
                 onValueChange={(value) => {
                   if (value) setCondition(value as Condition);
                 }}
               >
-                {Object.values(Condition).map((entry) => (
+                {availableConditions.map((entry) => (
                   <ToggleGroupItem
                     key={entry}
                     value={entry}

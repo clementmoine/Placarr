@@ -12,6 +12,37 @@ export type InferredImageAttachmentSemantics = {
   source: string;
 };
 
+/**
+ * Shared match inputs: every provider may contribute (aliases, EAN/UPC,
+ * releaseDate, external ids…) and every provider should consume the same bag
+ * for hard match / search decisions. Built once per enrich or price pass.
+ */
+export type MatchContext = {
+  /** Digits-only barcodes known for this item (EAN / UPC / ISBN…). Preferred first. */
+  barcodes: string[];
+  /** Primary display title. */
+  primaryTitle: string;
+  /**
+   * Soft match / search titles (aliases, regional, query expansions).
+   * Deduped; primaryTitle is first when present.
+   */
+  titles: string[];
+  /**
+   * Titles trusted for hard acceptance / marketplace validation
+   * (primary + strong fallbacks — excludes weak alias noise).
+   */
+  acceptanceTitles: string[];
+  shelfType: string;
+  shelfName?: string | null;
+  platformKey?: string | null;
+  /** ISO date `YYYY-MM-DD` when known from metadata consensus. */
+  releaseDate?: string | null;
+  isPal?: boolean;
+  isClassics?: boolean;
+  providerProductUrls?: readonly ProviderProductUrlRef[];
+  externalIds?: Record<string, string | null | undefined>;
+};
+
 export type MetadataAdapterContext = {
   name: string;
   type?: string | null;
@@ -22,7 +53,19 @@ export type MetadataAdapterContext = {
   includePcSources?: boolean;
   imdbId?: string | null;
   externalIds?: Record<string, string | null>;
+  /**
+   * Absolute fiche/product URLs already known for this item (from stored
+   * external-link facts). Prefer over title/barcode seek when present.
+   */
+  providerRecordUrls?: Record<string, string>;
   fallbackNames?: string[];
+  /** ISO release date from prior consensus — soft discriminant for remakes. */
+  releaseDate?: string | null;
+  /**
+   * Shared match bag for this enrich pass. Prefer reading titles / barcodes /
+   * releaseDate from here when present; scalar fields above stay for compat.
+   */
+  match?: MatchContext;
   isBackground?: boolean;
   /** Interactive lookups (preview API) jump ahead of background enrichment. */
   queuePriority?: "high" | "normal";
@@ -52,17 +95,22 @@ export type ProviderProductUrlRef = {
   url: string;
 };
 
-export type BarcodePriceRefreshContext = {
+/**
+ * Price-refresh view of {@link MatchContext} with legacy field aliases used by
+ * existing `refreshBarcodePriceOffers` implementations. Prefer `titles` /
+ * `barcodes` / `releaseDate` / `acceptanceTitles` for new code.
+ */
+export type BarcodePriceRefreshContext = MatchContext & {
+  /** Preferred barcode (`barcodes[0]`), or `""` for title-only refresh. */
   cleanedBarcode: string;
-  shelfType: string;
-  shelfName?: string | null;
+  /** Alias of `primaryTitle`. */
   primaryName: string;
+  /** Search titles excluding primary (`titles` without `primaryTitle`). */
   fallbackNames: string[];
+  /** LeDénicheur-style query list (barcode + title variants). */
   leDenicheurQueries: string[];
   isPal: boolean;
   isClassics: boolean;
-  /** Product-page URLs already resolved during metadata enrichment. */
-  providerProductUrls?: readonly ProviderProductUrlRef[];
 };
 
 export type CatalogExternalLinkContext = {
@@ -101,6 +149,18 @@ export type GameBarcodeEnrichmentDeps = {
     platform: string,
   ) => Promise<unknown>;
   fetchMovieByTitle?: (title: string) => Promise<unknown>;
+};
+
+/** One volume in a publisher series with a discovered barcode (e.g. AbeBooks). */
+export type SeriesVolumeBarcode = {
+  volume: string;
+  barcode: string;
+  title: string;
+  coverUrl?: string;
+};
+
+export type SeriesVolumeBarcodeContext = {
+  seedBarcode: string;
 };
 
 /** Context for turning a barcode lookup payload into per-type evidence sources. */
@@ -278,6 +338,11 @@ export interface ProviderModule {
   /** When set, metadata fetch skips this provider while its quota cooldown is active. */
   isMetadataQuotaBlocked?: () => boolean;
   /**
+   * Parse a durable provider record id from a stored fiche / product URL so
+   * metadata refresh can skip title/barcode seek when the fiche is already known.
+   */
+  parseMetadataRecordIdFromUrl?: (url: string) => string | null;
+  /**
    * Turn this provider's slice of a barcode lookup payload into price offers
    * captured during identification (one network call, single-product match).
    */
@@ -301,8 +366,30 @@ export interface ProviderModule {
   buildCatalogExternalLink?: (
     ctx: CatalogExternalLinkContext,
   ) => CatalogExternalLink | null;
+  /**
+   * True when `url` is a verified product/fiche URL for this provider
+   * (not a search page). Used to prefer scraped links over heuristic search.
+   */
+  isVerifiedCatalogProductUrl?: (url: string) => boolean;
+  /**
+   * Rewrite a stored/scraped URL into the canonical public product page when
+   * needed (e.g. API endpoints that should never be shown to collectors).
+   * Return null when the URL is not owned by this provider.
+   */
+  normalizeCatalogProductUrl?: (
+    url: string,
+    ctx?: { platformKey?: string | null },
+  ) => string | null;
   /** Registers post-barcode enrichment fetchers (reference price, game media, movies). */
   contributeGameBarcodeEnrichment?: () => Partial<GameBarcodeEnrichmentDeps>;
+  /**
+   * From a seed ISBN/EAN that hit this provider's series catalog, return other
+   * volumes in the same series with their barcodes (for filling barcode-less
+   * shelf siblings). Empty when the seed is not in a series.
+   */
+  contributeSeriesVolumeBarcodes?: (
+    ctx: SeriesVolumeBarcodeContext,
+  ) => Promise<SeriesVolumeBarcode[]>;
   buildBarcodeTasks?: (
     deps: BarcodeLookupDeps,
     type: BarcodeLookupType,
@@ -330,6 +417,20 @@ export interface ProviderModule {
    * variants, slug forms, size fallbacks). Used during image localization.
    */
   expandCoverDownloadCandidates?: (url: string) => string[];
+  /**
+   * Provider-owned cover localization (CDN-specific download / upgrade). When
+   * set, core calls this instead of the generic remote download path for URLs
+   * matching `info.coverUrlHost`.
+   */
+  localizeCoverDownload?: (
+    url: string,
+    options?: {
+      source?: string;
+      itemId?: string;
+      metadataId?: string;
+      trim?: boolean;
+    },
+  ) => Promise<string | null>;
   /**
    * Infer attachment type/role/source from a remote media URL owned by this
    * provider (e.g. ScreenScraper mediaJeu.php query params).

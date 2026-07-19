@@ -79,12 +79,14 @@ describe("GET /api/admin/providers", () => {
     const movies = payload.coverage.find(
       (entry: { type: string }) => entry.type === "movies",
     );
-    const screenshots = movies.capabilities.find(
-      (entry: { capability: string }) => entry.capability === "screenshots",
+    // screenshots is covered by SensCritique; pick a movies capability still
+    // without any declared provider.
+    const players = movies.capabilities.find(
+      (entry: { capability: string }) => entry.capability === "players",
     );
 
-    expect(screenshots.providers).toHaveLength(0);
-    expect(screenshots.risk).toBe("n/a");
+    expect(players.providers).toHaveLength(0);
+    expect(players.risk).toBe("n/a");
   });
 
   it("couvre duration pour les jeux via HLTB, IGDB et RAWG", async () => {
@@ -109,7 +111,7 @@ describe("GET /api/admin/providers", () => {
     expect(duration.risk).toBe("ok");
   });
 
-  it("couvre pageCount livres via OpenLibrary et Google Books", async () => {
+  it("couvre pageCount livres via OpenLibrary, Google Books et retailers FR", async () => {
     process.env[GOOGLE_BOOKS_API_KEY] = "fake-key";
 
     const response = await GET();
@@ -122,9 +124,20 @@ describe("GET /api/admin/providers", () => {
     );
 
     expect(pageCount.providers).toEqual(
-      expect.arrayContaining(["openlibrary", "googlebooks"]),
+      expect.arrayContaining([
+        "openlibrary",
+        "googlebooks",
+        "decitre",
+        "bdfugue",
+        "babelio",
+        "booknode",
+        "canalbd",
+        "furet",
+        "gibert",
+        "izneo",
+      ]),
     );
-    expect(pageCount.configuredCount).toBe(2);
+    expect(pageCount.configuredCount).toBe(10);
     expect(pageCount.risk).toBe("ok");
   });
 

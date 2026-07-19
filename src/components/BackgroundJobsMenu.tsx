@@ -23,13 +23,14 @@ import {
 } from "@/lib/api/backgroundJobs";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { METADATA_POLL_INTERVAL_MS } from "@/core/collect/enrichment";
 import { itemPath } from "@/lib/routing/slugs";
 import { cn } from "@/lib/shared/utils";
 
 function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
-  return job.kind === "metadataRefresh"
-    ? t("backgroundJobs.kindRefresh")
-    : t("backgroundJobs.kindEnrich");
+  if (job.kind === "metadataRefresh") return t("backgroundJobs.kindRefresh");
+  if (job.kind === "priceRefresh") return t("backgroundJobs.kindPrice");
+  return t("backgroundJobs.kindEnrich");
 }
 
 export function BackgroundJobsMenu() {
@@ -41,8 +42,10 @@ export function BackgroundJobsMenu() {
     queryKey: ["backgroundJobs"],
     queryFn: getBackgroundJobs,
     enabled: !isGuest,
-    refetchInterval: (query) =>
-      (query.state.data?.count ?? 0) > 0 ? 2500 : false,
+    // Keep polling while idle so a just-started job appears without depending
+    // on every mutation remembering to invalidate this query.
+    refetchInterval: !isGuest ? METADATA_POLL_INTERVAL_MS : false,
+    refetchIntervalInBackground: true,
   });
 
   const invalidate = () => {

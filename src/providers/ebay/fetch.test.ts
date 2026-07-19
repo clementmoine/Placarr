@@ -247,6 +247,57 @@ describe("fetchPricesFromEbay", () => {
     mockedGet.mockResolvedValueOnce(browseResponse([]));
     await expect(fetchPricesFromEbay("0045496365226", [])).resolves.toBeNull();
   });
+
+  it("does not cache null when the Browse API is rate limited", async () => {
+    mockedPost.mockResolvedValue(tokenResponse());
+    mockedGet.mockResolvedValueOnce({
+      status: 429,
+      data: {
+        errors: [{ message: "Too many requests." }],
+      },
+    } as never);
+    await expect(
+      fetchPricesFromEbay("Les Trésors de Picsou n°63", []),
+    ).resolves.toBeNull();
+
+    mockedGet.mockResolvedValueOnce(
+      browseResponse([
+        itemSummary("Les Trésors de Picsou N°63 - Magazine Disney", {
+          price: "12.00",
+          condition: "Used",
+        }),
+      ]),
+    );
+    await expect(
+      fetchPricesFromEbay("Les Trésors de Picsou n°63", [
+        "Les Trésors de Picsou n°63",
+      ]),
+    ).resolves.toMatchObject({
+      priceUsed: 1200,
+      offerCount: 1,
+    });
+  });
+
+  it("keeps magazine listings whose suffix still matches the item identity", async () => {
+    mockedPost.mockResolvedValueOnce(tokenResponse());
+    mockedGet.mockResolvedValueOnce(
+      browseResponse([
+        itemSummary("Les Trésors de Picsou N°63 - Magazine Disney", {
+          price: "8.50",
+          condition: "Used",
+        }),
+      ]),
+    );
+
+    await expect(
+      fetchPricesFromEbay("Les Trésors de Picsou n°63", [
+        "Les Trésors de Picsou n°63",
+      ]),
+    ).resolves.toMatchObject({
+      priceUsed: 850,
+      productName: "Les Trésors de Picsou N°63 - Magazine Disney",
+    });
+  });
 });
 
 describe("pingEbay", () => {

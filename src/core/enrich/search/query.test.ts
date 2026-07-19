@@ -35,4 +35,11 @@ describe("cleanSearchQuery", () => {
     );
     expect(cleanSearchQuery("SOS Fantômes, le jeu vidéo")).toBe("SOS Fantômes");
   });
+
+  it("keeps bracketed magazine issue markers used by book marketplaces", () => {
+    expect(
+      cleanSearchQuery("SUPER PICSOU GEANT [No 120] Walt Disney."),
+    ).toBe("SUPER PICSOU GEANT No 120 Walt Disney.");
+    expect(cleanSearchQuery("Halo [Complete Edition]")).toBe("Halo");
+  });
 });

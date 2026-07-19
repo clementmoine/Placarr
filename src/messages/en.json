@@ -112,6 +112,7 @@
     "empty": "No tasks running",
     "kindRefresh": "Metadata refresh",
     "kindEnrich": "Enrichment",
+    "kindPrice": "Price update",
     "cancelAll": "Cancel all",
     "cancelOne": "Cancel",
     "cancelledOne": "Task cancelled",
@@ -173,10 +174,15 @@
     "editShelfDetails": "Edit the details of your shelf.",
     "createNewShelfDetails": "Fill in the details to create a new shelf.",
     "shelfSubtitle": "Manage and browse your collections across customized shelves.",
-    "cardFormat": "Item Card Format",
+    "previewPlaceholder": "Shelf name",
+    "addLogo": "Add logo",
+    "dropLogo": "Drop logo here",
+    "removeLogo": "Remove logo",
+    "cardFormat": "Card shape",
     "cardFormats": {
       "default": "Default ({type})",
       "square": "Square (1:1 - CD, Vinyl, Board Game)",
+      "tcg": "TCG / Playing Card (5:7 - Pokémon, Magic…)",
       "ds": "Nintendo DS / 3DS Case (1.12:1)",
       "bluray": "Blu-ray / PS3-PS4-PS5 / Xbox One-Series Case (1:1.18)",
       "dvd": "DVD / PS2 / Xbox-Xbox 360 / Wii Case (1:1.41)",
@@ -186,6 +192,21 @@
       "vhs": "VHS Tape Case (1:1.8)",
       "landscape_retro": "Retro Landscape (SNES, N64 - 1.4:1)",
       "landscape": "Wide Landscape (16:9)"
+    },
+    "cardFormatsShort": {
+      "default": "Default",
+      "defaultNamed": "Default ({shape})",
+      "square": "Square",
+      "tcg": "TCG",
+      "ds": "DS / 3DS",
+      "bluray": "Blu-ray",
+      "dvd": "DVD",
+      "book": "Book",
+      "switch": "Switch",
+      "psp": "PSP",
+      "vhs": "VHS",
+      "landscape_retro": "Retro",
+      "landscape": "16:9"
     }
   },
   "items": {
@@ -198,6 +219,7 @@
     "conditions": {
       "new": "New",
       "used": "Used",
+      "loose": "Loose",
       "damaged": "Damaged"
     },
     "location": "Location",
@@ -284,6 +306,14 @@
       "action": "Refresh",
       "success": "{count} item(s) — enrichment restarted",
       "failed": "Could not restart enrichment"
+    },
+    "bulkDelete": {
+      "action": "Delete",
+      "title": "Confirm deletion",
+      "description": "Are you sure you want to delete {count} item(s)? This action cannot be undone.",
+      "submit": "Delete {count} item(s)",
+      "success": "{count} item(s) deleted",
+      "failed": "Could not delete items"
     },
     "multipleMatchesTitle": "Multiple products associated with this code",
     "editTabs": {
@@ -384,6 +414,7 @@
       "gameModes": "Game modes",
       "observedPrice": "Observed price",
       "oneSource": "1 source",
+      "alsoKnownAs": "Also known as",
       "pages": "Pages",
       "players": "Players",
       "playtime": "Play time",
@@ -424,6 +455,7 @@
     "condition.all": "All conditions",
     "condition.new": "New",
     "condition.used": "Used",
+    "condition.loose": "Loose",
     "condition.damaged": "Damaged",
     "ratingMin": "Minimum rating",
     "rating.any": "Any rating",

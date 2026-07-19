@@ -82,4 +82,13 @@ describe("getMetadata — short-lived lookup cache", () => {
     expect(second).toBeNull();
     expect(fetchMetadataByType).toHaveBeenCalledTimes(2);
   });
+
+  it("does not put abort-signaled lookups in the shared cache", async () => {
+    await getMetadata("Sith Game F", "games", "666", "xbox", {
+      signal: new AbortController().signal,
+    });
+    await getMetadata("Sith Game F", "games", "666", "xbox");
+
+    expect(fetchMetadataByType).toHaveBeenCalledTimes(2);
+  });
 });

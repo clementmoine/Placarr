@@ -1,4 +1,4 @@
-import type { Attachment, Author, Metadata, PriceOffer, Publisher } from "@prisma/client";
+import type { Attachment, AttachmentType, Author, Metadata, PriceOffer, Publisher } from "@prisma/client";
 
 import {
   getCoverImage,
@@ -11,12 +11,11 @@ import {
   purgeContradictedProviderExternalLinks,
   type ProviderPriceOfferLinkInput,
 } from "@/core/enrich/providerExternalLinks";
-import {
-  buildCatalogExternalLink,
-  metadataAliases,
-} from "@/core/enrich/catalogLink";
+import { metadataAliases } from "@/core/enrich/aliases";
+import { resolveCatalogExternalLink } from "@/core/enrich/catalogLink";
 import { formatMetadataFromStorage } from "@/core/enrich/dbMapping";
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
@@ -25,6 +24,7 @@ export interface PresentableItemInput {
   name: string;
   barcode?: string | null;
   imageUrl?: string | null;
+  condition?: string | null;
   updatedAt?: Date | string | null;
   metadata?: MetadataResult | null;
   shelf?: {
@@ -98,7 +98,29 @@ const itemWithMetadataInclude = {
   },
 } as const;
 
-/** Lightweight metadata for shelf/collection grids — no attachment gallery. */
+/** Cover rows only — enough for list/detail cover parity without full galleries. */
+const itemListCoverAttachmentInclude = {
+  select: {
+    id: true,
+    type: true,
+    url: true,
+    title: true,
+    source: true,
+    role: true,
+    duration: true,
+    coverProvenance: true,
+    platformKey: true,
+    width: true,
+    height: true,
+    meanLuminance: true,
+    darkPixelRatio: true,
+  },
+  where: {
+    type: { in: ["cover", "artwork", "image"] as AttachmentType[] },
+  },
+};
+
+/** Lightweight metadata for shelf/collection grids — cover attachments only. */
 export const itemListMetadataInclude = {
   select: {
     id: true,
@@ -115,6 +137,7 @@ export const itemListMetadataInclude = {
     tracksCount: true,
     description: true,
     facts: true,
+    attachments: itemListCoverAttachmentInclude,
   },
 } as const;
 
@@ -157,6 +180,7 @@ function enrichMetadataProviderLinks(
     priceOffers?: ProviderPriceOfferLinkInput[];
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    platformKey?: string | null;
     catalogLink?: { url: string; providerLabel?: string } | null;
   },
 ): MetadataResult {
@@ -170,6 +194,7 @@ function enrichMetadataProviderLinks(
     priceOffers: input.priceOffers,
     itemBarcode: input.itemBarcode,
     itemTitle: input.itemTitle,
+    platformKey: input.platformKey ?? metadata.platformKey,
     catalogLink: input.catalogLink,
   });
   const facts = purgeContradictedProviderExternalLinks(
@@ -189,6 +214,8 @@ function formatItemMetadata(
   item?: {
     name?: string;
     barcode?: string | null;
+    shelfName?: string | null;
+    shelfType?: string | null;
     catalogLink?: { url: string; providerLabel?: string } | null;
   },
 ): MetadataResult | undefined {
@@ -197,12 +224,18 @@ function formatItemMetadata(
     ? formatMetadataFromStorage(metadata)
     : metadata;
 
+  const shelfPlatformKey =
+    item?.shelfType === "games"
+      ? detectVideoGamePlatformKey(item.shelfName)
+      : null;
+
   const enriched = isStoredMetadata(metadata)
     ? enrichMetadataProviderLinks(formatted, {
         fieldEvidence: mapStoredFieldEvidence(metadata.fieldEvidence),
         priceOffers: mapStoredPriceOffers(metadata.priceOffers),
         itemBarcode: item?.barcode,
         itemTitle: item?.name,
+        platformKey: formatted?.platformKey ?? shelfPlatformKey,
         catalogLink: item?.catalogLink,
       })
     : formatted;
@@ -220,6 +253,7 @@ function formatItemMetadata(
 function mediaInput(item: PresentableItemInput) {
   return {
     imageUrl: item.imageUrl,
+    condition: item.condition,
     updatedAt: "updatedAt" in item ? item.updatedAt : undefined,
     metadata: item.metadata,
     shelf: item.shelf,
@@ -258,11 +292,14 @@ function itemImageUrlAfterMetadataFilter(
   return filteredMetadata.imageUrl ?? null;
 }
 
-/** Canonical display title for a product across the whole app. */
+/**
+ * Display title is the collector's stored name. Catalog titles stay on
+ * `metadata.title` / aliases for search — enrichment never rewrites `item.name`.
+ */
 export function getDisplayTitle(item: PresentableItemInput): string {
-  const metadataTitle = item.metadata?.title?.trim();
-  if (metadataTitle) return metadataTitle;
-  return item.name;
+  const stored = item.name?.trim();
+  if (stored) return stored;
+  return item.metadata?.title?.trim() || "";
 }
 
 export type PresentOptions = {
@@ -278,14 +315,17 @@ export function presentItem<T extends PresentableItemInput>(
   const displayName = getDisplayTitle(item);
   const input = mediaInput(item);
   const referenceCatalogLink = item.shelf?.type
-    ? buildCatalogExternalLink({
-        mediaType: item.shelf.type,
-        title: item.metadata?.title,
-        fallbackTitle: storedName,
-        shelfName: item.shelf?.name,
-        barcode: item.barcode,
-        aliases: metadataAliases(item.metadata?.aliases),
-      })
+    ? resolveCatalogExternalLink(
+        {
+          mediaType: item.shelf.type,
+          title: item.metadata?.title,
+          fallbackTitle: storedName,
+          shelfName: item.shelf?.name,
+          barcode: item.barcode,
+          aliases: metadataAliases(item.metadata?.aliases),
+        },
+        item.metadata?.facts,
+      )
     : null;
   return {
     ...item,
@@ -304,24 +344,42 @@ export function presentItemFromStorage<
   },
 >(item: T, options?: PresentOptions): T {
   const referenceCatalogLink = item.shelf?.type
-    ? buildCatalogExternalLink({
-        mediaType: item.shelf.type,
-        title: item.metadata?.title,
-        fallbackTitle: item.name,
-        shelfName: item.shelf?.name,
-        barcode: item.barcode,
-        aliases: metadataAliases(item.metadata?.aliases),
-      })
+    ? resolveCatalogExternalLink(
+        {
+          mediaType: item.shelf.type,
+          title: item.metadata?.title,
+          fallbackTitle: item.name,
+          shelfName: item.shelf?.name,
+          barcode: item.barcode,
+          aliases: metadataAliases(item.metadata?.aliases),
+        },
+        item.metadata?.facts,
+      )
     : null;
   const formatted = formatItemMetadata(item.metadata, {
     name: item.name,
     barcode: item.barcode,
+    shelfName: item.shelf?.name,
+    shelfType: item.shelf?.type,
     catalogLink: referenceCatalogLink,
   });
-  const filteredMetadata =
-    formatted && item.shelf
-      ? filterMetadataForShelfPlatform(formatted, item.shelf)
+  // Prefer the user-stored title when filtering covers so grid cards match the
+  // item the collector actually owns (catalog metadata title can be a sibling).
+  const catalogTitle = formatted?.title;
+  const metadataForShelfFilter =
+    formatted && item.name?.trim()
+      ? { ...formatted, title: item.name.trim() }
       : formatted;
+  const filteredMetadata =
+    metadataForShelfFilter && item.shelf
+      ? filterMetadataForShelfPlatform(metadataForShelfFilter, item.shelf)
+      : metadataForShelfFilter;
+  // Restore the catalog title after filtering — the item.name override is only
+  // for cover ranking, not for "Aussi connu sous" / metadata.title display.
+  const metadataForPresent =
+    filteredMetadata && catalogTitle != null
+      ? { ...filteredMetadata, title: catalogTitle }
+      : filteredMetadata;
   const imageUrl = itemImageUrlAfterMetadataFilter(
     item.imageUrl,
     formatted,
@@ -332,7 +390,7 @@ export function presentItemFromStorage<
     {
       ...(item as PresentableItemInput),
       imageUrl,
-      metadata: filteredMetadata ?? null,
+      metadata: metadataForPresent ?? null,
     },
     options,
   ) as T;

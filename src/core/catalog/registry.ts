@@ -6,30 +6,41 @@
  *
  * Discovery, queries, and materialization live in `catalog.ts`.
  */
+import { abebooksModule } from "@/providers/abebooks";
 import { achatmoinscherModule } from "@/providers/achatmoinscher";
+import { babelioModule } from "@/providers/babelio";
+import { bdovoreModule } from "@/providers/bdovore";
+import { bdphileModule } from "@/providers/bdphile";
+import { bdfugueModule } from "@/providers/bdfugue";
 import { bggModule } from "@/providers/bgg";
 import { booknodeModule } from "@/providers/booknode";
 import { bedethequeModule } from "@/providers/bedetheque";
+import { canalbdModule } from "@/providers/canalbd";
 import { chocobonplanModule } from "@/providers/chocobonplan";
 import { chasseauxlivresModule } from "@/providers/chasseauxlivres";
 import { launchboxModule } from "@/providers/launchbox";
 import { coverprojectModule } from "@/providers/coverproject";
+import { decitreModule } from "@/providers/decitre";
 import { deezerModule } from "@/providers/deezer";
 import { discogsModule } from "@/providers/discogs";
 import { ebayModule } from "@/providers/ebay";
 import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
+import { furetModule } from "@/providers/furet";
 import { geedieModule } from "@/providers/geedie";
+import { gibertModule } from "@/providers/gibert";
 import { hdjvModule } from "@/providers/hdjv";
 import { howlongtobeatModule } from "@/providers/howlongtobeat";
 import { icollectModule } from "@/providers/icollect";
 import { igdbModule } from "@/providers/igdb";
+import { izneoModule } from "@/providers/izneo";
 import { ledenicheurModule } from "@/providers/ledenicheur";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
 import { philibertModule } from "@/providers/philibert";
+import { planetebdModule } from "@/providers/planetebd";
 import { okkazeoModule } from "@/providers/okkazeo";
 import { espritjeuModule } from "@/providers/espritjeu";
 import { myludoModule } from "@/providers/myludo";
@@ -47,6 +58,7 @@ import { steamModule } from "@/providers/steam";
 import { steamgriddbModule } from "@/providers/steamgriddb";
 import { thegamesdbModule } from "@/providers/thegamesdb";
 import { tmdbModule } from "@/providers/tmdb";
+import { vivlioModule } from "@/providers/vivlio";
 
 import type { ProviderModule } from "@/types/providerModule";
 
@@ -71,7 +83,15 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   openlibraryModule,
   googlebooksModule,
   booknodeModule,
+  babelioModule,
+  planetebdModule,
+  vivlioModule,
+  izneoModule,
   bedethequeModule,
+  bdovoreModule,
+  bdphileModule,
+  bdfugueModule,
+  canalbdModule,
   bggModule,
   wikidataModule,
   philibertModule,
@@ -85,6 +105,10 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,
   achatmoinscherModule,
+  abebooksModule,
+  decitreModule,
+  furetModule,
+  gibertModule,
   ledenicheurModule,
   chocobonplanModule,
   geedieModule,

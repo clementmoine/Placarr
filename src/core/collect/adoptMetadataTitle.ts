@@ -1,10 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
-import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
-import {
-  areDisplayTitlesSameProduct,
-  scoreDisplayTitle,
-} from "@/core/enrich/titles/displayScore";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
 
 import { isBarcodePlaceholderItemName } from "./placeholderName";
 
@@ -26,8 +22,9 @@ async function updateItemDisplayName(
 }
 
 /**
- * Promotes a cleaner enriched catalog title into `item.name` when it matches
- * the stored product identity (placeholder names or noisy retailer listings).
+ * Fills `item.name` from catalog metadata only when the collector has no real
+ * title yet (empty or barcode placeholder) and a barcode is present.
+ * Never rewrites a user-entered title.
  */
 export async function syncItemNameFromEnrichedMetadata(input: {
   itemId: string;
@@ -38,8 +35,13 @@ export async function syncItemNameFromEnrichedMetadata(input: {
   const metadataTitle = input.metadataTitle?.trim();
   if (!metadataTitle) return false;
 
+  if (!normalizeProductBarcode(input.barcode)) return false;
+
   const itemName = input.itemName.trim();
-  if (!itemName) return false;
+  const mayAdoptTitle =
+    !itemName || isBarcodePlaceholderItemName(itemName, input.barcode);
+  if (!mayAdoptTitle) return false;
+
   if (metadataTitle.toLowerCase() === itemName.toLowerCase()) return false;
 
   const item = await prisma.item.findUnique({
@@ -47,20 +49,6 @@ export async function syncItemNameFromEnrichedMetadata(input: {
     select: { shelfId: true },
   });
   if (!item) return false;
-
-  if (isBarcodePlaceholderItemName(itemName, input.barcode)) {
-    return updateItemDisplayName(input.itemId, metadataTitle, item.shelfId);
-  }
-
-  const sameProduct =
-    areDisplayTitlesSameProduct(itemName, metadataTitle) ||
-    isMetadataTitleAligned({ title: metadataTitle }, [itemName], 0.58) ||
-    isMetadataTitleAligned({ title: itemName }, [metadataTitle], 0.58);
-  if (!sameProduct) return false;
-
-  if (scoreDisplayTitle(metadataTitle) <= scoreDisplayTitle(itemName)) {
-    return false;
-  }
 
   return updateItemDisplayName(input.itemId, metadataTitle, item.shelfId);
 }

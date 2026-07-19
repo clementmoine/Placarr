@@ -1,4 +1,4 @@
-import { DEDICATED_CATALOG_IMAGE_HOSTS } from "@/core/enrich/media/dedicatedCatalogImageHosts";
+import { SCRAPE_CATALOG_IMAGE_BASE_URLS } from "@/core/enrich/media/scrapeCatalogImageHosts";
 import {
   buildImageRemoteHostLists,
   catalogRetailerImageHosts,
@@ -8,8 +8,6 @@ import {
   REGISTRY_COVER_IMAGE_EXACT_HOSTS,
   type ImageRemoteHostLists,
 } from "@/core/enrich/media/nextImageRemoteHosts";
-import { PRESTASHOP_RETAILER_CONFIGS } from "@/providers/prestashop/configs";
-import { SHOPIFY_RETAILER_CONFIGS } from "@/providers/shopify/configs";
 
 const BLOCKED_HOSTS_RE =
   /^(localhost|127(?:\.\d+){3}|0\.0\.0\.0|\[::1\])$|^(10\.|192\.168\.|169\.254\.)/i;
@@ -19,11 +17,9 @@ let cachedLists: ImageRemoteHostLists | undefined;
 export function resolveImageRemoteHostLists(): ImageRemoteHostLists {
   if (!cachedLists) {
     cachedLists = buildImageRemoteHostLists(
-      catalogRetailerImageHosts([
-        ...PRESTASHOP_RETAILER_CONFIGS,
-        ...SHOPIFY_RETAILER_CONFIGS,
-        ...DEDICATED_CATALOG_IMAGE_HOSTS,
-      ]),
+      catalogRetailerImageHosts(
+        SCRAPE_CATALOG_IMAGE_BASE_URLS.map((baseUrl) => ({ baseUrl })),
+      ),
       {
         wildcards: [],
         exacts: REGISTRY_COVER_IMAGE_EXACT_HOSTS,

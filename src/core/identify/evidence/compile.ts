@@ -33,6 +33,12 @@ import {
   GENERIC_TITLE_TOKENS,
   uniqueClean,
 } from "./parse";
+import {
+  LISTING_DISCARD_PACKAGING_NOUNS,
+  LISTING_PUBLISHER_BRAND_TOKENS,
+  NON_CANONICAL_CONTEXT_TOKENS,
+} from "@/core/identify/listingTerms";
+import { BUNDLE_PERIPHERAL_TOKENS } from "@/core/identify/listingMerch";
 import { applyEditionToCompiledResult } from "./edition";
 import type {
   CompiledResult,
@@ -992,29 +998,16 @@ export async function buildDatabaseEvidence(
 const RESOLVER_GENERIC_TOKENS = new Set([
   ...GENERIC_TITLE_TOKENS,
   "video",
-  "volant",
-  "wheel",
-  "notice",
-  "nintendo",
-  "sony",
-  "microsoft",
-  "sega",
+  ...LISTING_PUBLISHER_BRAND_TOKENS,
+  ...BUNDLE_PERIPHERAL_TOKENS,
+  ...LISTING_DISCARD_PACKAGING_NOUNS.filter(
+    (term) => !/\s/.test(term) && term.length >= 2,
+  ),
 ]);
 
 const RESOLVER_PLATFORM_TOKENS = new Set(VIDEO_GAME_PLATFORM_TOKEN_TERMS);
 
-export const NON_CANONICAL_CONTEXT_TOKENS = new Set([
-  "orchestra",
-  "soundtrack",
-  "ost",
-  "album",
-  "vinyl",
-  "cd",
-  "fan",
-  "fanbook",
-  "guide",
-  "book",
-]);
+export { NON_CANONICAL_CONTEXT_TOKENS };
 
 function resolverSignificantTokens(value: string): Set<string> {
   const tokens = normalizeForTokens(

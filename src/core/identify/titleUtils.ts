@@ -2,79 +2,97 @@ import levenshtein from "fast-levenshtein";
 
 import { cleanSearchQuery } from "@/core/enrich/search/query";
 import { moveTrailingSortArticleToFront } from "@/core/enrich/titles/sort";
-import { VIDEO_GAME_PLATFORM_TERMS } from "@/core/identify/platforms/platforms";
+import {
+  createVideoGamePlatformMatcher,
+  VIDEO_GAME_PLATFORM_TERMS,
+} from "@/core/identify/platforms/platforms";
 import {
   GAME_EDITION_TERMS,
+  LISTING_CALENDAR_MONTH_TERMS,
   LISTING_CONDITION_TERMS,
-  LISTING_EXTRA_SUFFIX_TERMS,
+  LISTING_EDITION_PACKAGING_EXTRA_TERMS,
   LISTING_FORMAT_TERMS,
   LISTING_NOISE_TERMS,
+  LISTING_NON_GAME_MEDIA_TERMS,
+  LISTING_PUBLISHER_SUFFIX_TERMS,
   LISTING_REGION_TERMS,
+  containsGameOfTheYearEdition,
 } from "@/core/identify/listingTerms";
+import { isListingMetadataSegment } from "@/core/identify/listingMetadata";
+import { isLotListing } from "@/core/identify/listingLot";
+import {
+  CATALOG_SKU_RE,
+  ERA_ADJECTIVE_TERMS,
+  LEADING_AGE_ADJECTIVE_RE,
+  LEADING_PACK_RE,
+  MARKETING_STICKER_RE,
+  MEDIA_CATEGORY_LEADING_RE,
+  stripSellerListingChrome,
+} from "@/core/identify/listingChrome";
+import {
+  BOARDGAME_CATEGORY_CHROME_RE,
+  BUNDLE_PERIPHERAL_RE,
+  listingLooksLikeGameAccessory,
+  listingLooksLikeMerchAccessory,
+  listingLooksLikeNonBookProduct,
+} from "@/core/identify/listingMerch";
+import {
+  IDENTITY_FUNCTION_WORDS,
+  IDENTITY_PLATFORM_NOISE_TOKENS,
+  IDENTITY_VOLUME_STOP_WORDS,
+} from "@/core/enrich/titles/identityNoise";
 import {
   explicitVolumeNumbers,
+  volumeNumberFromPriceListing,
   volumeNumberFromTitle,
 } from "@/core/enrich/titles/volumeNumber";
+import { normalizeForTokens } from "@/core/enrich/titles/normalize";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
+import { englishNumberWordToDigits } from "@/core/enrich/titles/numberWords";
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 
 export { moveTrailingSortArticleToFront } from "@/core/enrich/titles/sort";
-
-export function normalizeForTokens(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // strip accent marks
-    .toLowerCase();
-}
-
-const NUMBER_WORD_MAP: Record<string, string> = {
-  one: "1",
-  two: "2",
-  three: "3",
-  four: "4",
-  five: "5",
-  six: "6",
-  seven: "7",
-  eight: "8",
-  nine: "9",
-  ten: "10",
-  eleven: "11",
-  twelve: "12",
-  thirteen: "13",
-  fourteen: "14",
-  fifteen: "15",
-  sixteen: "16",
-  seventeen: "17",
-  eighteen: "18",
-  nineteen: "19",
-  twenty: "20",
-  thirty: "30",
-  forty: "40",
-  fifty: "50",
-  sixty: "60",
-  seventy: "70",
-  eighty: "80",
-  ninety: "90",
-  hundred: "100",
-};
+export { normalizeForTokens } from "@/core/enrich/titles/normalize";
+export { isListingDiscardable } from "@/core/identify/listingDiscard";
+export { isLotListing } from "@/core/identify/listingLot";
+export {
+  listingLooksLikeGameAccessory,
+  listingLooksLikeMerchAccessory,
+  listingLooksLikeNonBookProduct,
+} from "@/core/identify/listingMerch";
 
 export function getSequelIndicators(normStr: string): Set<string> {
-  const tokens = normStr.split(/[^a-z0-9]+/);
+  const tokens = normStr.split(/[^a-z0-9]+/).filter(Boolean);
   const indicators = new Set<string>();
-  for (const token of tokens) {
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]!;
+    const next = tokens[i + 1];
+    const gluedSuffix = token.match(/^(\d+)(bis|ter|quater)$/i);
+    if (gluedSuffix) {
+      indicators.add(
+        `${Number.parseInt(gluedSuffix[1]!, 10)}${gluedSuffix[2]!.toLowerCase()}`,
+      );
+      continue;
+    }
     if (/^\d+$/.test(token)) {
-      const num = parseInt(token, 10);
+      const num = Number.parseInt(token, 10);
       if (num >= 1900 && num <= 2099) {
         continue;
       }
-      indicators.add(num.toString());
-    } else {
-      const roman = parseRomanToken(token);
-      if (roman != null && roman >= 1 && roman <= 99) {
-        indicators.add(String(roman));
-      } else if (token in NUMBER_WORD_MAP) {
-        indicators.add(NUMBER_WORD_MAP[token]);
+      if (next && /^(bis|ter|quater)$/i.test(next)) {
+        indicators.add(`${num}${next.toLowerCase()}`);
+        i++;
+        continue;
       }
+      indicators.add(String(num));
+      continue;
+    }
+    const roman = parseRomanToken(token);
+    if (roman != null && roman >= 1 && roman <= 99) {
+      indicators.add(String(roman));
+    } else {
+      const fromWord = englishNumberWordToDigits(token);
+      if (fromWord) indicators.add(fromWord);
     }
   }
   return indicators;
@@ -86,92 +104,33 @@ function escapeRegExp(string: string) {
 
 const SUFFIX_PATTERNS = Array.from(
   new Set([
-    // Phrases & specific terms
-    ...LISTING_EXTRA_SUFFIX_TERMS,
-
-    // Platforms
     ...VIDEO_GAME_PLATFORM_TERMS,
-
-    // 1ère / original Xbox generation patterns
-    "1ere generation",
-    "1e generation",
-    "1ere génération",
-    "1e génération",
-    "1 generation",
-    "1 génération",
-    "1ere gen",
-    "1e gen",
-    "1 gen",
-    "first gen",
-    "1st gen",
-    "original",
-    "vintage",
-    "old",
-
     ...LISTING_FORMAT_TERMS,
     ...LISTING_CONDITION_TERMS,
     ...LISTING_NOISE_TERMS,
-
-    // Publishers/Developers (common listing labels)
-    "codemasters",
-    "atari",
-    "ubisoft",
-    "konami",
-    "sega",
-    "capcom",
-    "lucas arts",
-    "lucasarts",
-    "nintendo",
-    "ea games",
-    "electronic arts",
-    "ea sports",
-    "ea",
-    "microsoft xbox",
-    "microsoft",
-    "sony",
-
+    ...LISTING_PUBLISHER_SUFFIX_TERMS,
     ...GAME_EDITION_TERMS,
+    ...LISTING_EDITION_PACKAGING_EXTRA_TERMS,
     ...LISTING_REGION_TERMS,
+    ...ERA_ADJECTIVE_TERMS,
   ]),
 );
 
 const PLATFORM_SUFFIX_PATTERNS = new Set<string>(VIDEO_GAME_PLATFORM_TERMS);
-const EDITION_SUFFIX_PATTERNS = new Set<string>(GAME_EDITION_TERMS);
+const EDITION_SUFFIX_PATTERNS = new Set<string>([
+  ...GAME_EDITION_TERMS,
+  ...LISTING_EDITION_PACKAGING_EXTRA_TERMS,
+]);
 
-// Noise terms that are valid leading prefixes but meaningful as a trailing word,
-// so they must be excluded from suffix stripping (e.g. "… The Arcade Game").
-const SUFFIX_EXCLUDED_NOISE = new Set(["game", "jeu", "jeux"]);
-
-function isListingMetadataSegment(segment: string): boolean {
-  const normalized = normalizeForTokens(segment)
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-  if (!normalized) return true;
-
-  return [
-    /^(nintendo|sony|microsoft|sega|atari|ubisoft|ea|electronic arts)$/,
-    /^(nintendo\s+)?(wii|switch|ds|3ds)$/,
-    /^jeux?\s+(?:nintendo\s+)?(wii|switch|ds|3ds|gamecube|game\s+cube)$/,
-    /^(playstation|ps[1-5]|xbox|xbox\s+360|xbox\s+one)$/,
-    /^(pal|ntsc|fr|fra|fre|vf|version francaise)$/,
-    /^(complet|complete|mint|cd|disc|disque|dvd|notice|livret|boite|boîte|box)$/,
-    /^(sans|avec)\s+(notice|livret|boite|boîte)$/,
-    /^(teste|testé|tested|working|fonctionnel|tbe|hs)$/,
-    /^(zustand\s+(?:sehr\s+)?gut|zustand\s+neu|neuwertig|gebraucht|ovp)$/,
-    /^von\s+not\s+specified$/,
-    /^(come\s+nuovo|nuovo|usato|sigillato|ottimo|buono)$/,
-    /^(brand\s+new|sealed|like\s+new|very\s+good|good\s+condition|region\s+free)$/,
-    /\bjeu\s+video\b/,
-    /\bjeux?\s+vid[eé]o\b/,
-    /\bjeu\b.*\bnotice\b/,
-    /\bavec\s+notice\b/,
-    /\bsans\s+notice\b/,
-    /\bavec\s+livret\b/,
-    /\bsans\s+livret\b/,
-    /\bversion\s+francaise\b/,
-    /\bpal\s+fr\b/,
-  ].some((pattern) => pattern.test(normalized));
-}
+// Noise terms valid as leading prefixes but meaningful as a trailing title
+// word ("… The Arcade Game"). Short function-word connectors (pour/for) stay
+// stripable as suffixes.
+const SUFFIX_EXCLUDED_NOISE = new Set(
+  LISTING_NOISE_TERMS.filter((term) => {
+    if (/\s/.test(term) || term.length > 4) return false;
+    return !IDENTITY_FUNCTION_WORDS.has(term);
+  }),
+);
 
 function stripListingMetadataSegments(value: string): string {
   const parts = value
@@ -184,21 +143,180 @@ function stripListingMetadataSegments(value: string): string {
   let start = 0;
   let end = parts.length;
 
-  while (start < end && isListingMetadataSegment(parts[start])) start += 1;
-  while (end > start && isListingMetadataSegment(parts[end - 1])) end -= 1;
+  while (start < end && isListingMetadataSegment(parts[start]!)) start += 1;
+  while (end > start && isListingMetadataSegment(parts[end - 1]!)) end -= 1;
 
   const kept = parts.slice(start, end);
   return kept.length > 0 ? kept.join(" - ") : value;
 }
 
-function stripAccessorySegments(value: string): string {
-  return value
+function joinTermAlternation(terms: readonly string[]): string {
+  return [...terms]
+    .map((term) =>
+      term
+        .split(/\s+/)
+        .map(escapeRegExp)
+        .join("\\s+"),
+    )
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .join("|");
+}
+
+const PLATFORM_PHRASE_ALT = joinTermAlternation(VIDEO_GAME_PLATFORM_TERMS);
+const LEADING_JEU_PLATFORM_RE = PLATFORM_PHRASE_ALT
+  ? new RegExp(
+      `^(?:jeux?\\s+(?:video\\s+)?(?:${PLATFORM_PHRASE_ALT})|jeux?\\s+console)\\b\\s*`,
+      "i",
+    )
+  : /$a/;
+const TRAILING_CONNECTOR_ALT = [...IDENTITY_FUNCTION_WORDS]
+  .filter((word) => (LISTING_NOISE_TERMS as readonly string[]).includes(word))
+  .sort((a, b) => b.length - a.length)
+  .map(escapeRegExp)
+  .join("|");
+const TRAILING_FORMAT_CARRIER_ALT = joinTermAlternation(
+  LISTING_NON_GAME_MEDIA_TERMS.filter((term) => !/\s/.test(term)),
+);
+const SHORT_REGION_ALT = joinTermAlternation(
+  LISTING_REGION_TERMS.filter((term) => !/\s/.test(term) && term.length <= 3),
+);
+const PUBLISHER_ALT = joinTermAlternation(LISTING_PUBLISHER_SUFFIX_TERMS);
+
+/**
+ * Strip a leading publisher when enough product identity remains.
+ * Single short remainder ("Nintendo Land" → "Land") is kept intact.
+ */
+function stripLeadingPublisherChrome(value: string): string {
+  if (!PUBLISHER_ALT) return value;
+  const match = value.match(
+    new RegExp(`^(?:${PUBLISHER_ALT})\\s+(.+)$`, "i"),
+  );
+  if (!match?.[1]) return value;
+  const rest = match[1].trim();
+  const tokens = rest.split(/\s+/).filter(Boolean);
+  // Keep "Atari 2600 …" intact so platform-prefix stripping can consume the
+  // full platform phrase (publisher + model number).
+  if (tokens[0] && /^\d{3,}$/.test(tokens[0])) return value;
+  if (tokens.length >= 2) return rest;
+  if (tokens.length === 1 && tokens[0]!.length >= 6) return rest;
+  return value;
+}
+
+/**
+ * Strip a trailing publisher when the stem still has ≥2 tokens.
+ * "… Red Mask Space Cowboys" → drop studio tail without naming it.
+ */
+function stripTrailingPublisherChrome(value: string): string {
+  if (!PUBLISHER_ALT) return value;
+  const match = value.match(
+    new RegExp(`^(.+?)\\s+(?:${PUBLISHER_ALT})\\s*$`, "i"),
+  );
+  if (!match?.[1]) return value;
+  const stem = match[1].trim();
+  const tokens = stem.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 2) return stem;
+  return value;
+}
+
+function stripListingChromeNoise(value: string): string {
+  let cleaned = value;
+  let prev = "";
+  // Publisher / category chrome can be stacked on either side — peel until stable.
+  while (cleaned !== prev) {
+    prev = cleaned;
+    cleaned = cleaned
+      .replace(
+        new RegExp(
+          `^(?:${BOARDGAME_CATEGORY_CHROME_RE.source})\\s*[-–—:|]?\\s*`,
+          "i",
+        ),
+        "",
+      )
+      .replace(
+        new RegExp(
+          `(?:\\s+(?:${BOARDGAME_CATEGORY_CHROME_RE.source}))+$`,
+          "i",
+        ),
+        "",
+      )
+      .replace(LEADING_AGE_ADJECTIVE_RE, "")
+      .trim();
+    cleaned = stripLeadingPublisherChrome(cleaned);
+    cleaned = stripTrailingPublisherChrome(cleaned);
+  }
+
+  cleaned = cleaned
     .replace(
-      /\s*(?:\+|\bet\b|\bavec\b|\bsans\b)\s*(?:wii\s+)?(?:zapper|fusil|gun|volant|wheel|manette|controller|notice|wii\s+wheel)\b.*$/i,
+      SHORT_REGION_ALT
+        ? new RegExp(`\\s+\\b(?:${SHORT_REGION_ALT})\\b\\s*$`, "i")
+        : /$a/,
+      "",
+    )
+    // Completeness + connector + platform (complet required — avoids
+    // "pour PC" mid-title wiping Ghost Recon / Xbox consensus).
+    .replace(
+      new RegExp(
+        `\\s+\\b(?:complet|complete)\\s+(?:sur|pour|for)\\s+(?:nintendo\\s+)?(?:${PLATFORM_PHRASE_ALT})\\b.*$`,
+        "i",
+      ),
       "",
     )
     .replace(
-      /\s*\+\s*jeux?\s+wii\s*\+\s*(?:zapper|fusil|volant|wheel)\b.*$/i,
+      new RegExp(
+        `\\s+\\bjeux?\\s+(?:nintendo\\s+)?(?:${PLATFORM_PHRASE_ALT})\\b.*$`,
+        "i",
+      ),
+      "",
+    )
+    .replace(/\s+\bpal\b\s*(?:jeux?)?\b.*$/i, "")
+    .replace(
+      new RegExp(`\\bnintendo\\s+(?:${PLATFORM_PHRASE_ALT})\\s*$`, "i"),
+      "",
+    )
+    .replace(
+      new RegExp(
+        `\\s+\\bnintendo\\s+(?:${PLATFORM_PHRASE_ALT})\\b\\s*(?:${SHORT_REGION_ALT || "a^"})?\\s*$`,
+        "i",
+      ),
+      "",
+    )
+    .replace(
+      TRAILING_FORMAT_CARRIER_ALT
+        ? new RegExp(
+            `\\s+\\b(?:${TRAILING_FORMAT_CARRIER_ALT})\\b\\s*$`,
+            "i",
+          )
+        : /$a/,
+      "",
+    )
+    .replace(MARKETING_STICKER_RE, "")
+    .replace(
+      TRAILING_CONNECTOR_ALT
+        ? new RegExp(`\\b(?:${TRAILING_CONNECTOR_ALT})\\s*$`, "i")
+        : /$a/,
+      "",
+    )
+    .trim();
+
+  cleaned = cleaned.replace(CATALOG_SKU_RE, "");
+  return cleaned.replace(/\s+/g, " ").trim();
+}
+
+function stripAccessorySegments(value: string): string {
+  return value
+    .replace(
+      new RegExp(
+        `\\s*(?:\\+|\\bet\\b|\\bavec\\b|\\bsans\\b)\\s*(?:wii\\s+)?(?:${BUNDLE_PERIPHERAL_RE.source})\\b.*$`,
+        "i",
+      ),
+      "",
+    )
+    .replace(
+      new RegExp(
+        `\\s*\\+\\s*jeux?\\s+wii\\s*\\+\\s*(?:${BUNDLE_PERIPHERAL_RE.source})\\b.*$`,
+        "i",
+      ),
       " Wii",
     )
     .replace(/\s*\+\s*jeux?\s*$/i, "")
@@ -293,15 +411,15 @@ export function cleanTitleForDisplay(
   );
 
   // Match 4-digit years at the end (optionally preceded by typical separators or publishers)
-  const yearSuffixRegex =
-    /\s*(?:[\-–|/()\[\]]|\b(?:codemasters|ea|atari|ubisoft|sega|nintendo|sony|microsoft|konami|capcom))\s*\b(?:19|20)\d{2}\b\s*$/i;
+  const publisherYearAlt = LISTING_PUBLISHER_SUFFIX_TERMS.map(escapeRegExp).join(
+    "|",
+  );
+  const yearSuffixRegex = new RegExp(
+    `\\s*(?:[\\-–|/()\\[\\]]|\\b(?:${publisherYearAlt}))\\s*\\b(?:19|20)\\d{2}\\b\\s*$`,
+    "i",
+  );
 
-  const PREFIX_PATTERNS = [
-    ...LISTING_NOISE_TERMS,
-    "pack jeu",
-    "pack",
-    ...LISTING_FORMAT_TERMS,
-  ];
+  const PREFIX_PATTERNS = [...LISTING_NOISE_TERMS, ...LISTING_FORMAT_TERMS];
 
   const prefixRegex = new RegExp(
     `^(?:${PREFIX_PATTERNS.map((p) => escapeRegExp(p)).join("|")})\\b`,
@@ -318,50 +436,8 @@ export function cleanTitleForDisplay(
       .trim();
     cleaned = stripAccessorySegments(cleaned);
     cleaned = stripListingMetadataSegments(cleaned);
-    cleaned = cleaned
-      .replace(/^(?:jeu\s+d['']?\s*)?escape\s+game\s*[-–—:|]?\s*/i, "")
-      .replace(/^d['']?escape\s+game\s*[-–—:|]?\s*/i, "")
-      .replace(/^jeu\s+d['']?enqu[eê]te\s*[-–—:|]?\s*/i, "")
-      .replace(/^asmodee\s+(?=unlock!?)/i, "")
-      .replace(/\s+space\s+cowboys.*$/i, "")
-      .replace(/\s+jeu\s+d['']?\s*enqu[eê]te(?:\s+escape\s+game)?\s*$/i, "")
-      .replace(/\s+escape\s+game\s*$/i, "")
-      .replace(/\s+\bFR\b\s*$/i, "")
-      .replace(/\bSCUNL[A-Z0-9]+\b/gi, "")
-      .replace(
-        /^(?:ancien\s+jeu\s+|ancien\s+)?nintendo\s+(?=(?!land\b).{4,})/i,
-        "",
-      )
-      .replace(
-        /\s+\b(?:complet|complete)?\s*(?:sur|pour|for)\s+(?:nintendo\s+)?(?:wii|switch|ds|3ds|gamecube|game\s+cube)\b.*$/i,
-        "",
-      )
-      .replace(
-        /\s+\bjeux?\s+(?:nintendo\s+)?(?:wii|switch|ds|3ds|gamecube|game\s+cube)\b.*$/i,
-        "",
-      )
-      .replace(/\s+\bpal\b\s*(?:jeux?)?\b.*$/i, "")
-      .replace(
-        /\bnintendo\s+(?:wii|switch|ds|3ds|gamecube|game\s+cube)\s*$/i,
-        "",
-      )
-      .replace(
-        /\s+\bnintendo\s+(?:wii|switch|ds|3ds|gamecube|game\s+cube)\b\s*(?:pal|france|fr|vf|eur|eu)?\s*$/i,
-        "",
-      )
-      .replace(
-        /\s+\b(?:cd|album)\b(?:\s+\b(?:walt\s+disney|walt|disney|square\s+enix|japan|jpn|import)\b)*\s*$/i,
-        "",
-      )
-      .replace(
-        /\s+\b(?:walt\s+disney|walt|disney|square\s+enix|japan|jpn|import)\b\s*$/i,
-        "",
-      )
-      .replace(/\s*[-–—|]\s*album\s+cd\b.*$/i, "")
-      .replace(/\bSQEX\d+\b/gi, "")
-      .replace(/\s*\*rare\*\s*$/i, "")
-      .replace(/\b(?:pour|for)\s*$/i, "")
-      .trim();
+    cleaned = stripListingChromeNoise(cleaned);
+    cleaned = stripSellerListingChrome(cleaned);
 
     // Remove wrapping quotes if they match
     if (
@@ -385,7 +461,7 @@ export function cleanTitleForDisplay(
         );
         const suffix = normalizeForTokens(match.trim());
         const isOrdinalEdition =
-          /\b(1ere|1er|1e|premiere|first|2eme|2e|seconde|second|3eme|3e)\s*$/.test(
+          /(?:\d+(?:e|eme|er|re|th|st|nd|rd)?|[ivxlcdm]{1,5})\s*$/i.test(
             beforeMatch,
           ) && /^e?dition\b/.test(suffix);
 
@@ -394,8 +470,13 @@ export function cleanTitleForDisplay(
       .trim();
     // Strip trailing year suffix
     cleaned = cleaned.replace(yearSuffixRegex, "").trim();
-    // Strip leading prefix
-    cleaned = cleaned.replace(prefixRegex, "").trim();
+    // Strip leading prefix (phrase list + structural pack / category / jeu+platform)
+    cleaned = cleaned
+      .replace(LEADING_PACK_RE, "")
+      .replace(MEDIA_CATEGORY_LEADING_RE, "")
+      .replace(LEADING_JEU_PLATFORM_RE, "")
+      .replace(prefixRegex, "")
+      .trim();
   } while (cleaned !== prev);
 
   // Clean any remaining leading/trailing punctuation and double whitespaces
@@ -439,11 +520,26 @@ function stripLeadingPlatformPrefix(
 ): string {
   const normalized = value.trim();
   if (!normalized) return normalized;
+
+  const sortedPlatforms = [...PLATFORMS].sort((a, b) => b.length - a.length);
+
+  // Catalog chrome "WII / Sports Island" — never an official title spelling.
+  // Strip even under preservePlatformSuffix (canonicals are "Wii Sports", not
+  // "Wii / …"). Space-separated prefixes still respect preserve / affirmation.
+  for (const platform of sortedPlatforms) {
+    const slashChrome = new RegExp(
+      `^${escapeRegExp(platform)}\\s*[/|]+\\s*(?=\\S)`,
+      "i",
+    );
+    if (slashChrome.test(normalized)) {
+      return normalized.replace(slashChrome, "").trim();
+    }
+  }
+
   // Authoritative titles keep their official spelling — no leading platform strip.
   if (options.preservePlatformSuffix) return normalized;
 
   const affirmedBy = options.preserveLeadingPrefixesAffirmedBy ?? [];
-  const sortedPlatforms = [...PLATFORMS].sort((a, b) => b.length - a.length);
   for (const platform of sortedPlatforms) {
     if (
       leadingPlatformPrefixAffirmedByTitles(normalized, platform, affirmedBy)
@@ -483,137 +579,6 @@ export function filterPlatformRedundancies(suggestions: string[]): string[] {
   });
 }
 
-const DISCARD_PATTERNS = [
-  /\bcomparateur\s+de\s+prix\s+neutre\s+et\s+ind[ée]pendant\b/i,
-  // No game
-  /\bpas\s+de\s+jeu\b/i,
-  /\bsans\s+jeu\b/i,
-  /\bno\s+game\b/i,
-  /\bjeu\s+non\s+inclus\b/i,
-  /\bjeu\s+non\s+fourni\b/i,
-  /\bno\s+disc\b/i,
-  /\bsans\s+disque\b/i,
-  /\bpas\s+de\s+disque\b/i,
-  /\bsans\s+cartouche\b/i,
-  /\bpas\s+de\s+cartouche\b/i,
-  /\bno\s+cartridge\b/i,
-
-  // Box/Case only
-  /\bboitier\s+seul\b/i,
-  /\bboîtier\s+seul\b/i,
-  /\bcase\s+only\b/i,
-  /\bboitier\s+vide\b/i,
-  /\bboîtier\s+vide\b/i,
-  /\bempty\s+case\b/i,
-  /\bempty\s+box\b/i,
-  /\bboite\s+seule\b/i,
-  /\bboîte\s+seule\b/i,
-  /\bboite\s+vide\b/i,
-  /\bboîte\s+vide\b/i,
-  /\bbox\s+only\b/i,
-
-  // Manual/Notice only
-  /\bnotice\s+seule\b/i,
-  /\bnotice\s+seul\b/i,
-  /\bmanual\s+only\b/i,
-  /\bnotice\s+de\s+jeu\s+seule\b/i,
-  /\bnotice\s+de\s+jeu\s+seul\b/i,
-  /\bmode\s+d'emploi\s+seul\b/i,
-  /\bmode\s+d'emploi\s+seule\b/i,
-  /\blivret\s+seul\b/i,
-  /\binstructions\s+only\b/i,
-
-  // Notice + Case only (no game)
-  /\bnotice\s+(?:et|\+)\s*jaquette\b/i,
-  /\bjaquette\s*(?:et|\+)\s*notice\b/i,
-  /\bboitier\s*(?:et|\+)\s*notice\b/i,
-  /\bnotice\s*(?:et|\+)\s*boitier\b/i,
-  /\bboîtier\s*(?:et|\+)\s*notice\b/i,
-  /\bnotice\s*(?:et|\+)\s*boîtier\b/i,
-  /\bnotice\s+jaquette\b/i,
-  /\bjaquette\s+notice\b/i,
-  /\bboitier\s+notice\b/i,
-  /\bboîtier\s+notice\b/i,
-  /\bnotice\s+boitier\b/i,
-  /\bnotice\s+boîtier\b/i,
-  /\bnotice\s+(?:et|\+)\s*boite\b/i,
-  /\bnotice\s+(?:et|\+)\s*boîte\b/i,
-  /\bboite\s*(?:et|\+)\s*notice\b/i,
-  /\bboîte\s*(?:et|\+)\s*notice\b/i,
-
-  // Multi-item lots are evidence for parsing, not valid single products.
-  /\blot\s+\d+\s+jeux?\b/i,
-  /\bpack\s+\d+\s+jeux?\b/i,
-  /\b\d+\s+jeux?\s+(?:wii|switch|ps[1-5]|xbox|ds|3ds)\b/i,
-
-  // Taglines de sites (pas un produit) — ex. comparateurs de prix
-  /\bcomparateur\s+de\s+prix\b/i,
-  /\bneutre\s+et\s+ind[ée]pendant\b/i,
-  /\bmeilleurs?\s+prix\s+(?:du\s+web|en\s+ligne)\b/i,
-];
-
-export function isListingDiscardable(title: string): boolean {
-  return DISCARD_PATTERNS.some((pattern) => pattern.test(title));
-}
-
-/**
- * A marketplace "lot": a single listing selling several games together
- * ("Teenage Mutant Ninja Turtles 1,2,3 NES", "Lot de 3 jeux", "Spyro 1 2 3").
- * Such a listing does not identify the one product a barcode is for, and its
- * name collapses to a bare franchise that out-ranks the real edition, so it must
- * be discarded before it enters resolution. Run on the RAW listing name (the
- * number run is stripped during cleaning). Deliberately conservative — official
- * collections name themselves "Trilogy"/"1 + 2", which this does NOT match.
- */
-export function isLotListing(name: string): boolean {
-  const n = ` ${name.toLowerCase()} `;
-  // Explicit lot vocabulary.
-  if (/\blot\s+(de\b|d['’]|of\b)/.test(n)) return true;
-  if (/\bbundle\b/.test(n) && /(\d|\bjeux\b|\bgames\b|\bjuegos\b)/.test(n)) {
-    return true;
-  }
-  // A quantity of (plural) games: "3 jeux", "2 games", "5 juegos". Singular
-  // "game"/"jeu" is excluded so a sequel like "Resident Evil 2 game" is kept.
-  if (/\b(?:[2-9]|[1-9]\d+)\s*(?:jeux|games|juegos|giochi|spiele)\b/.test(n)) {
-    return true;
-  }
-  // Manga/comics multi-volume lots ("5 MANGA …", "Tomes 1 à 9", box sets).
-  if (/\b(?:[2-9]|[1-9]\d+)\s+(?:manga|mangas|bd|bds|tomes?)\b/.test(n)) {
-    return true;
-  }
-  if (/\btomes?\s+\d+\s*(?:à|a|to|-)\s*\d+\b/.test(n)) return true;
-  if (/\btomes?\s+\d+\s*(?:et|&)\s*\d+\b/.test(n)) return true;
-  if (/\bvol\.?\s*\d+\s*-\s*\d+\b/.test(n)) return true;
-  if (/\bn[°º]?\s*\d+\s*-\s*\d+\b/.test(n)) return true;
-  if (/\bbox\s+set\b/.test(n)) return true;
-  if (/\bcoffret\b/.test(n) && /\b(?:tomes?|vol\.?|n[°º])\s*\d/.test(n)) {
-    return true;
-  }
-  // A run of installment numbers: "… 1,2,3" / "… 1, 2" / "Spyro 1 2 3".
-  if (/[1-9]\s*,\s*[1-9](?:\s*,\s*[1-9])*/.test(n)) return true;
-  if (/\b[1-9]\s+[1-9]\s+[1-9]\b/.test(n)) return true;
-  return false;
-}
-
-/** TCG, boosters, merch — not a book/manga ISBN listing. */
-export function listingLooksLikeNonBookProduct(name: string): boolean {
-  const n = normalizeForTokens(name);
-  if (!n) return false;
-  return /\b(?:booster|tcg|trading\s+card|cartes?|deck|etb|elite\s+trainer|playmat|figurine|figure|statue|goodies|merchandising|merch|fun\s+ko|funko)\b/.test(
-    n,
-  );
-}
-
-/** Game accessories and merch listings that share a franchise title. */
-export function listingLooksLikeGameAccessory(name: string): boolean {
-  const n = normalizeForTokens(name);
-  if (!n) return false;
-  if (listingLooksLikeNonBookProduct(name)) return true;
-  return /\b(?:fourreau|housse|coque|etui|sleeve|case|skin|poster|affiche|artbook|soundtrack|ost|vinyle?|vinyl|\d+lp|guide|manette|controller|joycon|amiibo|steelbook|boitier\s+vierge|empty\s+case|replacement\s+case|custom\s+case|personnalise)\b/.test(
-    n,
-  );
-}
-
 // v40: persist the compile step's structured title decision (cleanName/
 // displayName/edition) in the cache so reads stop re-stripping integral edition
 // terms ("Gottlieb Pinball Classics" → "Gottlieb Pinball"). Bumped so pre-v40
@@ -631,7 +596,10 @@ export function listingLooksLikeGameAccessory(name: string): boolean {
 // v44: slugs PriceCharting avec apostrophe encodée %27 (assassin%27s-creed-iii) —
 // les titres à apostrophe rataient la fiche directe (404) et résolvaient sans
 // les données PriceCharting. Bump pour re-résoudre ces scans.
-export const BARCODE_CACHE_VERSION = "canonical-v44";
+// v45: numéros de parution suffixés à la française (n°100bis/ter/quater) —
+// volumeNumberFromTitle les ignorait, donc l'alignement de numéro traitait
+// n°100bis comme n°100. Bump pour re-résoudre les titres suffixés.
+export const BARCODE_CACHE_VERSION = "canonical-v45";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider
@@ -642,6 +610,7 @@ export {
   explicitVolumeNumbers,
   hasExplicitVolumeMarker,
   stripVolumeMarkersFromTitle,
+  volumeNumberFromPriceListing,
   volumeNumberFromTitle,
 } from "@/core/enrich/titles/volumeNumber";
 
@@ -667,7 +636,7 @@ export function priceListingVolumeConflictsWithItem(
   if (!listing) return false;
   return itemNames.some((name) => {
     const itemIssue = volumeNumberFromTitle(name);
-    const listingIssue = volumeNumberFromTitle(listing);
+    const listingIssue = volumeNumberFromPriceListing(name, listing);
     return Boolean(itemIssue && listingIssue && itemIssue !== listingIssue);
   });
 }
@@ -689,6 +658,30 @@ function stripEditionSubtitleMarkers(value: string): string {
     .trim();
 }
 
+/** Strip marketplace noise before comparing magazine/comic price listing titles. */
+export function normalizePriceListingForComparison(value: string): string {
+  let text = value
+    .replace(/^\s*(?:\w{3}\d{2}\s*--\s*)+/i, "")
+    .replace(/^\s*-\s*/, "")
+    .replace(/\s*[/|]\s*[^/|]+$/, "")
+    .replace(/^\s*(?:livre|magazine|revue|comic|bd|album)\s+/i, "")
+    // Seller year tags: "annee 2005 - N° 128"
+    .replace(/\bann[eé]e\s+\d{4}\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Keep through the issue marker (n° / Numéro / No.) and drop calendar/seller
+  // tails: "Numéro 87 Octobre 1998", "n°081 - Occasion".
+  const volumeTail = text.match(
+    /^(.*?\b(?:n[°º]|n\s+|#\s*|num(?:e|é)?ro\s+|no\.?\s*)\s*0*\d+(?:\s*bis)?)\b(.*)$/i,
+  );
+  if (volumeTail?.[2]?.trim()) {
+    text = volumeTail[1].trim();
+  }
+
+  return text.replace(/\s+/g, " ").trim();
+}
+
 /** Marketplace price rows: strict match first, then FR/EN edition subtitle variants. */
 export function priceListingMatchesAnyItemName(
   itemNames: string[],
@@ -706,7 +699,7 @@ export function priceListingMatchesAnyItemName(
     if (barcodeListingMatchesItem(name, listing)) return true;
 
     const itemIssue = volumeNumberFromTitle(name);
-    const listingIssue = volumeNumberFromTitle(listing);
+    const listingIssue = volumeNumberFromPriceListing(name, listing);
     if (itemIssue && listingIssue && itemIssue !== listingIssue) return false;
     if (
       listingIssue &&
@@ -716,8 +709,9 @@ export function priceListingMatchesAnyItemName(
       return false;
     }
 
+    const listingForCompare = normalizePriceListingForComparison(listing);
     const itemCore = stripEditionSubtitleMarkers(name);
-    const listingCore = stripEditionSubtitleMarkers(listingName);
+    const listingCore = stripEditionSubtitleMarkers(listingForCompare);
     if (!itemCore || !listingCore) return false;
     if (
       isShortSingleWordTitle(name) &&
@@ -738,23 +732,12 @@ export function priceListingMatchesAnyItemName(
 }
 
 const PRICE_LISTING_LEADING_TOKENS = new Set([
-  "sur",
-  "for",
-  "the",
+  ...IDENTITY_FUNCTION_WORDS,
+  ...IDENTITY_PLATFORM_NOISE_TOKENS,
   "jeu",
   "game",
   "jeux",
   "video",
-  "ps1",
-  "ps2",
-  "ps3",
-  "ps4",
-  "ps5",
-  "xbox",
-  "switch",
-  "wii",
-  "pc",
-  "playstation",
   "edition",
   "ed",
 ]);
@@ -806,9 +789,7 @@ function extractTieredEditionKeys(text: string): string[] {
   const norm = normalizeForTokens(text);
   const keys: string[] = [];
   if (/\bsuper\s+deluxe\b/.test(norm)) keys.push("super deluxe");
-  if (/\bgame\s+of\s+the\s+year\b/.test(norm) || /\bgoty\b/.test(norm)) {
-    keys.push("goty");
-  }
+  if (containsGameOfTheYearEdition(norm)) keys.push("goty");
   if (/\bultimate\b/.test(norm)) keys.push("ultimate");
   if (/\bdefinitive\b/.test(norm)) keys.push("definitive");
   if (/\bcollector/.test(norm)) keys.push("collector");
@@ -870,29 +851,332 @@ export function barcodeListingMatchesItem(
   return areLikelySameProduct(itemName, listing);
 }
 
-const FRANCHISE_TITLE_PREFIX_TOKENS = new Set([
-  "super",
-  "ultra",
-  "mega",
-  "mini",
-  "hyper",
-]);
+/** Console model numbers embedded in platform aliases (2600, 7800, 360…). */
+const PLATFORM_MODEL_NUMBER_TOKENS = new Set(
+  VIDEO_GAME_PLATFORM_TERMS.flatMap((term) =>
+    term.split(/\s+/).filter((part) => /^\d{3,}$/.test(part)),
+  ),
+);
+
+const PRODUCT_COMPARE_NOISE_TOKENS = new Set(
+  [
+    ...LISTING_NOISE_TERMS,
+    ...LISTING_CONDITION_TERMS,
+    ...LISTING_REGION_TERMS,
+    ...LISTING_FORMAT_TERMS,
+    ...ERA_ADJECTIVE_TERMS,
+    ...LISTING_PUBLISHER_SUFFIX_TERMS,
+    ...LISTING_CALENDAR_MONTH_TERMS,
+    ...LISTING_EDITION_PACKAGING_EXTRA_TERMS,
+    ...GAME_EDITION_TERMS,
+    ...IDENTITY_VOLUME_STOP_WORDS,
+    "cartouche",
+    "retro",
+    "vcs",
+    "windows",
+    "walt",
+    "annee",
+    "année",
+  ].flatMap((term) =>
+    normalizeForTokens(term)
+      .split(/\s+/)
+      .filter((token) => token.length >= 3),
+  ),
+);
+
+const PLATFORM_PHRASE_MATCHER = createVideoGamePlatformMatcher("gi");
+
+function stripPlatformPhrasesForProductCompare(value: string): string {
+  return value
+    .replace(PLATFORM_PHRASE_MATCHER, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sequelIndicatorsForProductCompare(normStr: string): Set<string> {
+  const indicators = getSequelIndicators(
+    stripPlatformPhrasesForProductCompare(normStr),
+  );
+  for (const model of PLATFORM_MODEL_NUMBER_TOKENS) {
+    indicators.delete(model);
+  }
+  return indicators;
+}
+
+function significantProductCompareToken(token: string): boolean {
+  // Length 3 catches short product words ("cup") while still ignoring "du"/"de".
+  if (token.length < 3) return false;
+  if (PRODUCT_COMPARE_NOISE_TOKENS.has(token)) return false;
+  if (PLATFORM_MODEL_NUMBER_TOKENS.has(token)) return false;
+  return true;
+}
+
+/** True when `needle` is a leading token prefix of `haystack`, allowing compounds. */
+function productCompareTokensAreLeadingPrefix(
+  needle: string[],
+  haystack: string[],
+): boolean {
+  let i = 0;
+  let j = 0;
+  while (i < needle.length && j < haystack.length) {
+    if (needle[i] === haystack[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    if (
+      i + 1 < needle.length &&
+      `${needle[i]}${needle[i + 1]}` === haystack[j]
+    ) {
+      i += 2;
+      j += 1;
+      continue;
+    }
+    if (
+      j + 1 < haystack.length &&
+      needle[i] === `${haystack[j]}${haystack[j + 1]}`
+    ) {
+      i += 1;
+      j += 2;
+      continue;
+    }
+    return false;
+  }
+  return i === needle.length;
+}
+
+function productCompareSpaceFoldedEqual(a: string, b: string): boolean {
+  return a.replace(/\s+/g, "") === b.replace(/\s+/g, "");
+}
 
 function listingAddsDistinctSpinoffLead(
   itemNorm: string,
   listingNorm: string,
 ): boolean {
   if (!listingNorm.startsWith(`${itemNorm} `)) return false;
-  const firstExtra = listingNorm.slice(itemNorm.length + 1).split(/\s+/)[0];
+  const extras = listingNorm.slice(itemNorm.length + 1).split(/\s+/).filter(Boolean);
+  const firstExtra = extras[0];
   if (!firstExtra || firstExtra.length < 4) return false;
-  if (FRANCHISE_TITLE_PREFIX_TOKENS.has(firstExtra)) return false;
+  // Marketplace region/condition noise ("version française", "PAL", …) is not a
+  // distinct product lead — unlike "Metal Slug Tactics".
+  if (PRODUCT_COMPARE_NOISE_TOKENS.has(firstExtra)) return false;
+  // "Remastered" / "GOTY" / "Deluxe" name the same SKU, not a spinoff product.
+  if (EDITION_SUFFIX_PATTERNS.has(firstExtra)) return false;
   if (getSequelIndicators(firstExtra).size > 0) return false;
+
+  const moreIdentity = extras.slice(1).some(
+    (token) =>
+      token.length >= 3 &&
+      !PRODUCT_COMPARE_NOISE_TOKENS.has(token) &&
+      !EDITION_SUFFIX_PATTERNS.has(token) &&
+      getSequelIndicators(token).size === 0,
+  );
+
+  // Short leading marker + model/code ("Super Vehicle-001") = same SKU alias,
+  // not a spinoff. Short marker alone ("Super") = series line. Longer first
+  // tokens ("Tactics") or short + prose subtitle ("Road to …") = spinoff.
+  if (/^[a-z]+$/i.test(firstExtra) && firstExtra.length <= 5) {
+    if (!moreIdentity) return false;
+    if (extras.slice(1).some((token) => /\d/.test(token))) return false;
+  }
   return true;
 }
 
+/**
+ * True when `longerTitle` starts with `baseTitle` then adds a distinct product
+ * lead ("FIFA 2002: Road to …", "Metal Slug Tactics"). Punctuation is normalized
+ * so a colon after the year does not hide the spinoff.
+ */
+export function listingIsDistinctProductSpinoff(
+  baseTitle: string,
+  longerTitle: string,
+): boolean {
+  const base = normalizeForTokens(cleanSearchQuery(baseTitle) || baseTitle)
+    .replace(/[:;|/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const longer = normalizeForTokens(cleanSearchQuery(longerTitle) || longerTitle)
+    .replace(/[:;|/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!base || !longer) return false;
+  return listingAddsDistinctSpinoffLead(base, longer);
+}
+
+function normalizeTitleForProductCompare(value: string): string {
+  return normalizeForTokens(cleanSearchQuery(value) || value)
+    .replace(/[:;|/]/g, " ")
+    // Join hyphenated compounds so "Spider-Man" ↔ "Spiderman".
+    .replace(/-/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function productCompareTokenSets(a: string, b: string): {
+  onlyA: string[];
+  onlyB: string[];
+  shared: string[];
+} | null {
+  const aNorm = normalizeTitleForProductCompare(a);
+  const bNorm = normalizeTitleForProductCompare(b);
+  if (!aNorm || !bNorm) return null;
+  const aCompare = stripPlatformPhrasesForProductCompare(aNorm)
+    .replace(/[.’']/g, " ")
+    .replace(/\b(\d+)\s*(bis|ter|quater)\b/gi, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
+  const bCompare = stripPlatformPhrasesForProductCompare(bNorm)
+    .replace(/[.’']/g, " ")
+    .replace(/\b(\d+)\s*(bis|ter|quater)\b/gi, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
+  const aTokens = new Set(aCompare.split(/[^a-z0-9]+/).filter(Boolean));
+  const bTokens = new Set(bCompare.split(/[^a-z0-9]+/).filter(Boolean));
+  const onlyA = [...aTokens].filter(
+    (token) =>
+      significantProductCompareToken(token) && !bTokens.has(token),
+  );
+  const onlyB = [...bTokens].filter(
+    (token) =>
+      significantProductCompareToken(token) && !aTokens.has(token),
+  );
+  const shared = [...aTokens].filter(
+    (token) =>
+      significantProductCompareToken(token) && bTokens.has(token),
+  );
+  return { onlyA, onlyB, shared };
+}
+
+/**
+ * True when `alias` only adds product identity on top of `primary` (shared stem
+ * + 2+ exclusive tokens) — e.g. "FIFA Soccer 2002: Major League Soccer" beside
+ * "FIFA 2002". Regional FR/EN pairs keep exclusive tokens on both sides and
+ * return false.
+ */
+export function listingOnlyAddsProductIdentity(
+  primary: string,
+  alias: string,
+): boolean {
+  const exclusives = productCompareTokenSets(primary, alias);
+  if (!exclusives) return false;
+  const onlyBProduct = exclusives.onlyB.filter(
+    (token) => !EDITION_SUFFIX_PATTERNS.has(token),
+  );
+  return exclusives.onlyA.length === 0 && onlyBProduct.length >= 2;
+}
+
+function isEditionOnlyExtension(primary: string, alias: string): boolean {
+  const exclusives = productCompareTokenSets(primary, alias);
+  if (!exclusives) return false;
+  if (exclusives.onlyA.length > 0) return false;
+  if (exclusives.onlyB.length === 0) return false;
+  return exclusives.onlyB.every((token) => EDITION_SUFFIX_PATTERNS.has(token));
+}
+
+/** Shared token beyond the common leading franchise/sequel stem (e.g. "electro"). */
+function aliasesShareDistinctiveProductToken(
+  primary: string,
+  alias: string,
+): boolean {
+  const exclusives = productCompareTokenSets(primary, alias);
+  if (!exclusives) return false;
+  const aNorm = normalizeTitleForProductCompare(primary);
+  const bNorm = normalizeTitleForProductCompare(alias);
+  if (!aNorm || !bNorm) return false;
+  const aTokens = aNorm.split(/\s+/).filter(Boolean);
+  const bTokens = bNorm.split(/\s+/).filter(Boolean);
+  let prefixLen = 0;
+  while (
+    prefixLen < aTokens.length &&
+    prefixLen < bTokens.length &&
+    aTokens[prefixLen] === bTokens[prefixLen]
+  ) {
+    prefixLen++;
+  }
+  const beyondPrefix = new Set([
+    ...aTokens.slice(prefixLen),
+    ...bTokens.slice(prefixLen),
+  ]);
+  return exclusives.shared.some(
+    (token) =>
+      beyondPrefix.has(token) &&
+      token.length >= 5 &&
+      !/^\d+$/.test(token) &&
+      !EDITION_SUFFIX_PATTERNS.has(token),
+  );
+}
+
+/**
+ * FR/EN subtitle pairs share a franchise stem and each side adds its own words
+ * ("Alice : Retour…" ↔ "Alice: Madness Returns"). Numbered siblings that only
+ * share a franchise+sequel stem ("… Electro" vs "… Sinister Six") are rejected.
+ */
+function aliasesLookLikeRegionalTitlePair(
+  primary: string,
+  alias: string,
+): boolean {
+  const exclusives = productCompareTokenSets(primary, alias);
+  if (!exclusives) return false;
+  if (exclusives.shared.length === 0) return false;
+  if (exclusives.onlyA.length === 0 || exclusives.onlyB.length === 0) {
+    return false;
+  }
+  // Sequel digits are length-1 so they never enter `exclusives.shared` — read
+  // them from the raw normalized titles instead.
+  const aTokens = normalizeTitleForProductCompare(primary).split(/\s+/).filter(Boolean);
+  const bTokens = normalizeTitleForProductCompare(alias).split(/\s+/).filter(Boolean);
+  const sharedRaw = aTokens.filter((token) => bTokens.includes(token));
+  if (sharedRaw.some((token) => /^\d+$/.test(token))) return false;
+  return true;
+}
+
+/**
+ * Metadata alias safe to include in marketplace / PriceCharting lookup queries.
+ * Keeps same-product, edition variants (Remastered), and regional titles; drops
+ * spinoffs, one-sided extensions, and bare franchise prefixes.
+ */
+export function aliasBelongsInPriceLookup(
+  primary: string,
+  alias: string,
+): boolean {
+  if (aliasIsLeadingFranchisePrefixOf(primary, alias)) return false;
+  if (isEditionOnlyExtension(primary, alias)) return true;
+  if (areLikelySameProduct(primary, alias)) return true;
+  if (
+    listingIsDistinctProductSpinoff(primary, alias) ||
+    listingIsDistinctProductSpinoff(alias, primary)
+  ) {
+    return false;
+  }
+  if (listingOnlyAddsProductIdentity(primary, alias)) return false;
+  // FR/EN subtitles ("La Revanche d'Electro" ↔ "Enter Electro") share a
+  // distinctive token beyond the franchise stem; siblings ("Sinister Six") do
+  // not. Pure regional pairs without a shared subtitle word still keep.
+  if (aliasesShareDistinctiveProductToken(primary, alias)) return true;
+  if (aliasesLookLikeRegionalTitlePair(primary, alias)) return true;
+  return false;
+}
+
+function aliasIsLeadingFranchisePrefixOf(
+  primary: string,
+  alias: string,
+): boolean {
+  const primaryNorm = normalizeTitleForProductCompare(primary);
+  const aliasNorm = normalizeTitleForProductCompare(alias);
+  if (!primaryNorm || !aliasNorm) return false;
+  // Keep single-digit sequel markers ("2") — length>1 would drop them and
+  // miss "Spider-Man 2" as a bare franchise prefix of the Electro subtitle.
+  const keepToken = (t: string) => t.length > 1 || /^\d+$/.test(t);
+  const primaryTokens = primaryNorm.split(/\s+/).filter(keepToken);
+  const aliasTokens = aliasNorm.split(/\s+/).filter(keepToken);
+  if (aliasTokens.length < 2) return false;
+  if (primaryTokens.length <= aliasTokens.length) return false;
+  return aliasTokens.every((token, index) => primaryTokens[index] === token);
+}
+
 export function areLikelySameProduct(a: string, b: string): boolean {
-  const aNorm = normalizeForTokens(cleanSearchQuery(a) || a);
-  const bNorm = normalizeForTokens(cleanSearchQuery(b) || b);
+  const aNorm = normalizeTitleForProductCompare(a);
+  const bNorm = normalizeTitleForProductCompare(b);
   if (!aNorm || !bNorm) return false;
   if (aNorm === bNorm) {
     return true;
@@ -910,8 +1194,8 @@ export function areLikelySameProduct(a: string, b: string): boolean {
     set.delete("1");
     return set;
   };
-  const aIndicators = dropBaseOne(getSequelIndicators(aNorm));
-  const bIndicators = dropBaseOne(getSequelIndicators(bNorm));
+  const aIndicators = dropBaseOne(sequelIndicatorsForProductCompare(aNorm));
+  const bIndicators = dropBaseOne(sequelIndicatorsForProductCompare(bNorm));
   if (aIndicators.size !== bIndicators.size) return false;
   for (const indicator of aIndicators) {
     if (!bIndicators.has(indicator)) return false;
@@ -921,20 +1205,99 @@ export function areLikelySameProduct(a: string, b: string): boolean {
     return false;
   }
 
-  if (aNorm.includes(bNorm) || bNorm.includes(aNorm)) {
+  const aCompare = stripPlatformPhrasesForProductCompare(aNorm)
+    .replace(/[.’']/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\b(\d+)\s*(bis|ter|quater)\b/gi, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
+  const bCompare = stripPlatformPhrasesForProductCompare(bNorm)
+    .replace(/[.’']/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\b(\d+)\s*(bis|ter|quater)\b/gi, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (aCompare === bCompare) {
     return true;
   }
 
-  const aTokens = new Set(aNorm.split(/[^a-z0-9]+/).filter(Boolean));
-  const bTokens = new Set(bNorm.split(/[^a-z0-9]+/).filter(Boolean));
-  const intersection = [...aTokens].filter(
-    (token) => token.length > 3 && bTokens.has(token),
+  // "Pac-Man" ↔ "Pac Man" / "Spider-Man" ↔ "Spiderman" after hyphen join.
+  if (productCompareSpaceFoldedEqual(aCompare, bCompare)) {
+    return true;
+  }
+
+  if (aCompare.includes(bCompare)) {
+    return true;
+  }
+
+  if (bCompare.includes(aCompare)) {
+    // Listing contains the item title as a substring ("… fifa 2002") — only
+    // accept when the surrounding tokens are marketplace noise, not a sibling
+    // product ("Coupe du Monde Fifa 2002"). Longer official titles that keep
+    // the item as a leading token prefix stay aligned (Metal Slug ⊂ … Vehicle).
+    const aToks = aCompare.split(/[^a-z0-9]+/).filter(Boolean);
+    const bToks = bCompare.split(/[^a-z0-9]+/).filter(Boolean);
+    if (productCompareTokensAreLeadingPrefix(aToks, bToks)) return true;
+
+    const extras = bCompare
+      .replace(aCompare, " ")
+      .split(/[^a-z0-9]+/)
+      .filter((token) => significantProductCompareToken(token));
+    if (extras.length >= 2) return false;
+    if (extras.length === 0) return true;
+  }
+
+  // Compound-aware prefix when space-fold hides a hyphen join
+  // ("jr pacman" ⊂ "jr pac man jeu atari…").
+  {
+    const aToks = aCompare.split(/[^a-z0-9]+/).filter(Boolean);
+    const bToks = bCompare.split(/[^a-z0-9]+/).filter(Boolean);
+    if (
+      aToks.length > 0 &&
+      bToks.length > aToks.length &&
+      productCompareTokensAreLeadingPrefix(aToks, bToks)
+    ) {
+      return true;
+    }
+    if (
+      bToks.length > 0 &&
+      aToks.length > bToks.length &&
+      productCompareTokensAreLeadingPrefix(bToks, aToks)
+    ) {
+      return true;
+    }
+  }
+
+  const aTokens = new Set(aCompare.split(/[^a-z0-9]+/).filter(Boolean));
+  const bTokens = new Set(bCompare.split(/[^a-z0-9]+/).filter(Boolean));
+  const onlyA = [...aTokens].filter(
+    (token) =>
+      significantProductCompareToken(token) && !bTokens.has(token),
   );
-  const dist = levenshtein.get(aNorm, bNorm);
-  const maxLen = Math.max(aNorm.length, bNorm.length);
+  const onlyB = [...bTokens].filter(
+    (token) =>
+      significantProductCompareToken(token) && !aTokens.has(token),
+  );
+  const artBookLike =
+    /\b(?:book|livre|tome|edition|making|art|creation|histoire|manga|bd)\b/i.test(
+      `${a} ${b}`,
+    );
+  // Franchise siblings share a lead ("James Bond 007 …", "FIFA …") but name a
+  // different product. Skip this gate for art-book FR/EN title pairs.
+  if (!artBookLike) {
+    if (onlyA.length > 0 && onlyB.length > 0) return false;
+    if (onlyA.length === 0 && onlyB.length >= 2) return false;
+  }
+
+  const intersection = [...aTokens].filter(
+    (token) => token.length >= 3 && bTokens.has(token),
+  );
+  const dist = levenshtein.get(aCompare, bCompare);
+  const maxLen = Math.max(aCompare.length, bCompare.length);
   const similarity = maxLen > 0 ? 1 - dist / maxLen : 0;
-  const aFirstSig = [...aTokens].find((token) => token.length > 3);
-  const bFirstSig = [...bTokens].find((token) => token.length > 3);
+  const aFirstSig = [...aTokens].find((token) => token.length >= 3);
+  const bFirstSig = [...bTokens].find((token) => token.length >= 3);
 
   if (
     intersection.some((token) => token.length >= 5) &&

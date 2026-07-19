@@ -16,6 +16,7 @@ enum UserRole {
 enum Condition {
   new
   used
+  loose
   damaged
 }
 
@@ -316,4 +317,26 @@ model LoanRequest {
   @@index([ownerId])
   @@index([requesterId])
   @@index([status])
+}
+
+/// Out-of-process work queue — claimed by `pnpm worker`, never run inside Next `after()`.
+model BackgroundWorkJob {
+  id         String    @id @default(cuid())
+  kind       String
+  status     String    @default("pending")
+  itemId     String?
+  userId     String?
+  payload    Json
+  attempts   Int       @default(0)
+  lockedAt   DateTime?
+  lockedBy   String?
+  runAfter   DateTime  @default(now())
+  error      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  finishedAt DateTime?
+
+  @@index([status, runAfter, createdAt])
+  @@index([itemId, kind, status])
+  @@index([userId, status])
 }

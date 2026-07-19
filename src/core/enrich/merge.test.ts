@@ -292,6 +292,82 @@ describe("mergeMetadata generic function", () => {
     ).toBe(true);
   });
 
+  it("keeps LaunchBox discs when the FR shelf title only matches an alias", () => {
+    const merged = mergeMetadata(
+      "games",
+      [
+        {
+          providerId: "launchbox",
+          metadata: {
+            title: "Oddworld: Abe's Oddysee",
+            aliases: ["Oddworld: L'Odyssée D'Abe"],
+            attachments: [
+              {
+                type: "cover",
+                url: "https://images.launchbox-app.com/cover.png",
+                source: "launchbox",
+                title: "Box - Front",
+              },
+              {
+                type: "image",
+                url: "https://images.launchbox-app.com/disc-eu.png",
+                source: "launchbox",
+                role: "disc-eu",
+                title: "Disc",
+              },
+            ],
+          },
+        },
+      ],
+      {
+        requestedTitle: "Oddworld L'odyssée d'Abe",
+        requestedPlatformKey: "ps1",
+      },
+    );
+
+    expect(
+      merged.attachments?.some(
+        (attachment) =>
+          attachment.source === "launchbox" && attachment.role === "disc-eu",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps LaunchBox discs when the catalog title has a Road & Track prefix", () => {
+    const merged = mergeMetadata(
+      "games",
+      [
+        {
+          providerId: "launchbox",
+          metadata: {
+            title: "Road & Track Presents: The Need for Speed",
+            aliases: ["Need for Speed"],
+            attachments: [
+              {
+                type: "image",
+                url: "https://images.launchbox-app.com/nfs-disc.png",
+                source: "launchbox",
+                role: "disc-eu",
+                title: "Disc",
+              },
+            ],
+          },
+        },
+      ],
+      {
+        requestedTitle: "The Need for Speed",
+        requestedPlatformKey: "ps1",
+      },
+    );
+
+    expect(
+      merged.attachments?.some(
+        (attachment) =>
+          attachment.source === "launchbox" && attachment.role === "disc-eu",
+      ),
+    ).toBe(true);
+  });
+
   it("n'emprunte pas l'ean d'un provider dont le titre catalogue diverge", () => {
     const chipweld: MetadataResult = {
       title: "The Last of Us Part II PS4",

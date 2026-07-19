@@ -1,8 +1,9 @@
-import { normalizeForTokens } from "@/core/identify/titleUtils";
 import {
   createDisplayTitleNoiseMatcher,
   createDisplayTitleSuffixNoiseMatcher,
 } from "@/core/identify/listingTerms";
+import { titleHasMediaCategoryChrome } from "@/core/identify/listingChrome";
+import { normalizeForTokens } from "@/core/enrich/titles/normalize";
 import {
   preferredLanguage,
   titleLanguagePreference,
@@ -102,7 +103,10 @@ export function getRepresentativeScore(
     score += 30;
   }
 
-  if (testSharedPattern(DISPLAY_MARKETPLACE_NOISE, normalized)) {
+  if (
+    testSharedPattern(DISPLAY_MARKETPLACE_NOISE, normalized) ||
+    titleHasMediaCategoryChrome(normalized)
+  ) {
     score -= 420;
   }
 
@@ -181,10 +185,7 @@ export function scoreDisplayTitle(
 }
 
 export function normalizeDisplayTitle(value: string): string[] {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
+  return normalizeForTokens(value)
     .replace(/&/g, " and ")
     .split(/[^a-z0-9]+/)
     .filter(

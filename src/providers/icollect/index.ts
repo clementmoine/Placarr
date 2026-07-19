@@ -259,7 +259,7 @@ export const icollectModule: ProviderModule = {
       "ageRating",
       "rating",
     ],
-    auth: { kind: "scrape" },
+    auth: { kind: "none" },
     canonical: false,
     defaultLanguage: "en",
     isSecondary: true,
@@ -277,7 +277,8 @@ export const icollectModule: ProviderModule = {
     websiteUrl: "https://www.icollecteverything.com/games/",
     mappingProbeRetry: true,
     rateLimited: true,
-    notes: "Catalogue jeux vidéo + photos de boîtes + estimation de valeur.",
+    notes:
+      "Catalogue jeux + photos de boîtes + estimation. Résolution metadata par barcode via index SQLite local (.cache/icollect) — auth.none pour ne pas être sauté quand le pass scrape est fermé. Fallback HTTP (Flare) seulement si le barcode n'est pas encore en cache.",
   },
   evidence: {
     label: "iCollect Everything",

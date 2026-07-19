@@ -36,7 +36,7 @@ export function useRefetchItemWhenMetadataIdle(
   }, [item, queryClient, shelfId]);
 }
 
-export function useRefetchShelfItemsWhenMetadataIdle(
+function useRefetchItemsWhenMetadataIdle(
   queryClient: QueryClient,
   items: ItemMetadataIdleFields[] | null | undefined,
   shelfId?: Shelf["id"] | null,
@@ -59,4 +59,19 @@ export function useRefetchShelfItemsWhenMetadataIdle(
       wasBusyByItemRef.current.set(entry.id, busy);
     }
   }, [items, queryClient, shelfId]);
+}
+
+export function useRefetchShelfItemsWhenMetadataIdle(
+  queryClient: QueryClient,
+  items: ItemMetadataIdleFields[] | null | undefined,
+  shelfId?: Shelf["id"] | null,
+) {
+  useRefetchItemsWhenMetadataIdle(queryClient, items, shelfId);
+}
+
+export function useRefetchCollectionItemsWhenMetadataIdle(
+  queryClient: QueryClient,
+  items: ItemMetadataIdleFields[] | null | undefined,
+) {
+  useRefetchItemsWhenMetadataIdle(queryClient, items);
 }

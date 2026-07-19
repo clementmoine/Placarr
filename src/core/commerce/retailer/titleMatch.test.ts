@@ -37,6 +37,30 @@ describe("catalogTitleOmitsRequestedProductIdentity", () => {
       ),
     ).toBe(false);
   });
+
+  it("does not treat padded vs unpadded magazine issues as omitted identity", () => {
+    expect(
+      catalogTitleOmitsRequestedProductIdentity(
+        "Super Picsou Géant n°036",
+        "SUPER PICSOU GEANT n°36",
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps Nightfire when the catalog drops the James Bond franchise lead", () => {
+    expect(
+      catalogTitleOmitsRequestedProductIdentity(
+        "James Bond 007 Nightfire",
+        "007 Nightfire",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingSharesItemIdentity(
+        "James Bond 007 Nightfire",
+        "007 Nightfire",
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("priceListingSharesItemIdentity", () => {
@@ -58,6 +82,30 @@ describe("priceListingSharesItemIdentity", () => {
     ).toBe(true);
   });
 
+  it("treats Spider-Man and Spiderman as the same product identity", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "Spider-Man 2: Enter Electro",
+        "Spiderman 2 Enter Electro",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps padded magazine issues aligned with unpadded eBay titles", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "Super Picsou Géant n°036",
+        "SUPER PICSOU GEANT n°36*",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingSharesItemIdentity(
+        "Super Picsou Géant n°081",
+        "Super Picsou Géant 81",
+      ),
+    ).toBe(true);
+  });
+
   it("rejects Sirènes when the item is Black Stories Femmes Fatales", () => {
     expect(
       priceListingSharesItemIdentity(
@@ -65,6 +113,24 @@ describe("priceListingSharesItemIdentity", () => {
         "Sirènes : femmes fatales",
       ),
     ).toBe(false);
+  });
+
+  it("rejects LEGO kit listings for a short game franchise title", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "Minecraft",
+        "LEGO Minecraft 21273 L'attaque du village de ballons Ghast",
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps identity when the shelf item is itself a LEGO kit", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "LEGO Minecraft 21273",
+        "LEGO Minecraft 21273 L'attaque du village de ballons Ghast",
+      ),
+    ).toBe(true);
   });
 });
 

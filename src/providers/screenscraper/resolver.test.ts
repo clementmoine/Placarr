@@ -5,6 +5,7 @@ import {
   buildScreenScraperFacts,
   buildScreenScraperObservations,
   buildScreenScraperSearchQueries,
+  buildScreenScraperGamePageUrl,
   collapseScreenScraperTitlePunctuation,
   createScreenScraperResolver,
   isPlausibleScreenScraperFallbackResult,
@@ -12,6 +13,7 @@ import {
   isScreenScraperPlaceholderMedia,
   hydrateScreenScraperLookupFromGameCache,
   mergeScreenScraperLookupWithGame,
+  rewriteScreenScraperGameInfoUrl,
   screenScraperLookupHasCanonicalCover,
   pickSSCover,
   scoreScreenScraperGameTitleMatch,
@@ -76,6 +78,25 @@ describe("pickSSCover", () => {
       { type: "box-2D", region: "eu", url: "2d-eu", size: "571174" },
     ];
     expect(pickSSCover(medias)).toBe("2d-eu");
+  });
+});
+
+describe("buildScreenScraperGamePageUrl", () => {
+  it("builds the public gameinfos URL with plateforme when known", () => {
+    expect(buildScreenScraperGamePageUrl(29600, 62)).toBe(
+      "https://www.screenscraper.fr/gameinfos.php?plateforme=62&gameid=29600",
+    );
+  });
+
+  it("rewrites api jeuInfos links to the public fiche", () => {
+    expect(
+      rewriteScreenScraperGameInfoUrl(
+        "https://api.screenscraper.fr/api2/jeuInfos.php?gameid=29600",
+        62,
+      ),
+    ).toBe(
+      "https://www.screenscraper.fr/gameinfos.php?plateforme=62&gameid=29600",
+    );
   });
 });
 
@@ -188,7 +209,7 @@ describe("buildScreenScraperObservations", () => {
       },
       {
         sourceUrl:
-          "https://api.screenscraper.fr/api2/jeuInfos.php?gameid=14825",
+          "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
         hasBarcodeMatch: true,
         hasPlatformMatch: true,
       },

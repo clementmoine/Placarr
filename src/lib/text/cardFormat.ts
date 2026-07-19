@@ -3,6 +3,7 @@ import { Type } from "@prisma/client";
 export type CardFormat =
   | "default"
   | "square"
+  | "tcg"
   | "bluray"
   | "ds"
   | "book"
@@ -13,6 +14,60 @@ export type CardFormat =
   | "landscape_retro"
   | "landscape";
 
+/** Ordered list for format pickers (UI). */
+export const CARD_FORMATS: readonly CardFormat[] = [
+  "default",
+  "square",
+  "tcg",
+  "ds",
+  "bluray",
+  "dvd",
+  "book",
+  "switch",
+  "psp",
+  "vhs",
+  "landscape_retro",
+  "landscape",
+] as const;
+
+/** Named shape that `default` resolves to for a shelf type. */
+export function getDefaultCardFormatAlias(
+  type: Type | string | null | undefined,
+): Exclude<CardFormat, "default"> {
+  switch (type) {
+    case "musics":
+    case "boardgames":
+      return "square";
+    case "books":
+      return "book";
+    case "movies":
+    case "games":
+    default:
+      return "dvd";
+  }
+}
+
+/** Picker list: hide the named shape that Default already covers. */
+export function getCardFormatsForPicker(
+  type: Type | string | null | undefined,
+): CardFormat[] {
+  const alias = getDefaultCardFormatAlias(type);
+  return CARD_FORMATS.filter((format) => format !== alias);
+}
+
+/** Collapse an explicit alias selection into Default (same ratio). */
+export function coerceCardFormatForType(
+  cardFormat: string | null | undefined,
+  type: Type | string | null | undefined,
+): CardFormat {
+  if (!cardFormat || cardFormat === "default") return "default";
+  if (cardFormat === getDefaultCardFormatAlias(type)) return "default";
+  if ((CARD_FORMATS as readonly string[]).includes(cardFormat)) {
+    return cardFormat as CardFormat;
+  }
+  return "default";
+}
+
 export function getAspectRatio(
   cardFormat: string | null | undefined,
   type: Type | string | null | undefined,
@@ -21,6 +76,9 @@ export function getAspectRatio(
     switch (cardFormat) {
       case "square":
         return "1 / 1";
+      case "tcg":
+        // Standard poker / TCG (MTG, Pokémon…): 2.5″ × 3.5″ → 5:7
+        return "5 / 7";
       case "bluray":
         return "1 / 1.18";
       case "ds":
@@ -46,15 +104,14 @@ export function getAspectRatio(
     }
   }
 
-  // Fallback to type
+  // Fallback to type (keep in sync with getDefaultCardFormatAlias)
   switch (type) {
     case "musics":
     case "boardgames":
       return "1 / 1";
-    case "movies":
-      return "1 / 1.5";
     case "books":
       return "1 / 1.5";
+    case "movies":
     case "games":
     default:
       return "1 / 1.414";
@@ -69,6 +126,8 @@ export function getTailwindAspectRatioClass(
     switch (cardFormat) {
       case "square":
         return "aspect-square";
+      case "tcg":
+        return "aspect-[5/7]";
       case "bluray":
         return "aspect-[1/1.18]";
       case "ds":
@@ -94,15 +153,14 @@ export function getTailwindAspectRatioClass(
     }
   }
 
-  // Fallback to type
+  // Fallback to type (keep in sync with getDefaultCardFormatAlias)
   switch (type) {
     case "musics":
     case "boardgames":
       return "aspect-square";
-    case "movies":
-      return "aspect-[1/1.5]";
     case "books":
       return "aspect-[1/1.5]";
+    case "movies":
     case "games":
     default:
       return "aspect-[1/1.414]";
@@ -119,15 +177,17 @@ export function getDetailCoverClass(
     case "boardgames":
     case "square":
       return "aspect-square w-full max-w-[260px]";
+    case "tcg":
+      return "aspect-[5/7] w-full max-w-[220px]";
     case "bluray":
       return "aspect-[1/1.18] w-full max-w-[250px]";
     case "ds":
       return "aspect-[1.12/1] w-full max-w-[280px]";
     case "book":
-    case "movies":
     case "books":
       return "aspect-[1/1.5] w-full max-w-[240px]";
     case "dvd":
+    case "movies":
     case "games":
     case "game":
     case "poster":
@@ -157,15 +217,17 @@ export function getExploreDetailCoverClass(
     case "boardgames":
     case "square":
       return "aspect-square w-full max-w-[200px]";
+    case "tcg":
+      return "aspect-[5/7] w-full max-w-[170px]";
     case "bluray":
       return "aspect-[1/1.18] w-full max-w-[190px]";
     case "ds":
       return "aspect-[1.12/1] w-full max-w-[210px]";
     case "book":
-    case "movies":
     case "books":
       return "aspect-[1/1.5] w-full max-w-[180px]";
     case "dvd":
+    case "movies":
     case "games":
     case "game":
     case "poster":

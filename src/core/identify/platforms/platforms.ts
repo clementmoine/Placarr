@@ -294,12 +294,13 @@ export const VIDEO_GAME_PLATFORMS = [
     ],
     launchBoxNames: ["Sega Genesis", "Sega Mega Drive"],
     theGamesDbId: 36,
-    screenScraperSystemId: 21,
+    screenScraperSystemId: 1,
   },
   {
     key: "mastersystem",
     label: "Master System",
     aliases: ["sega master system", "master system", "mastersystem"],
+    launchBoxNames: ["Sega Master System"],
     theGamesDbId: 35,
     screenScraperSystemId: 2,
   },
@@ -307,20 +308,27 @@ export const VIDEO_GAME_PLATFORMS = [
     key: "gamegear",
     label: "Game Gear",
     aliases: ["sega game gear", "game gear", "gamegear"],
+    launchBoxNames: ["Sega Game Gear"],
     theGamesDbId: 20,
-    screenScraperSystemId: 22,
+    screenScraperSystemId: 21,
   },
   {
     key: "neogeo",
     label: "Neo Geo",
     aliases: ["neo geo", "neogeo"],
+    launchBoxNames: [
+      "SNK Neo Geo AES",
+      "SNK Neo Geo MVS",
+      "SNK Neo Geo CD",
+    ],
     theGamesDbId: 24,
-    screenScraperSystemId: 24,
+    screenScraperSystemId: 142,
   },
   {
     key: "atari2600",
     label: "Atari 2600",
     aliases: ["atari 2600", "atari2600"],
+    launchBoxNames: ["Atari 2600"],
     theGamesDbId: 22,
     screenScraperSystemId: 26,
   },
@@ -328,19 +336,25 @@ export const VIDEO_GAME_PLATFORMS = [
     key: "atari5200",
     label: "Atari 5200",
     aliases: ["atari 5200", "atari5200"],
+    launchBoxNames: ["Atari 5200"],
     theGamesDbId: 26,
+    screenScraperSystemId: 40,
   },
   {
     key: "atari7800",
     label: "Atari 7800",
     aliases: ["atari 7800", "atari7800"],
+    launchBoxNames: ["Atari 7800"],
     theGamesDbId: 27,
+    screenScraperSystemId: 41,
   },
   {
     key: "saturn",
     label: "Saturn",
     aliases: ["sega saturn", "saturn"],
     launchBoxNames: ["Sega Saturn"],
+    theGamesDbId: 17,
+    screenScraperSystemId: 22,
   },
 ] as const satisfies readonly VideoGamePlatformDefinition[];
 
@@ -586,13 +600,44 @@ function platformTermPattern(term: string): string {
   return term.split(/\s+/).map(escapePlatformPattern).join("[\\s._/-]+");
 }
 
-export function createVideoGamePlatformMatcher(flags = "gi"): RegExp {
-  const pattern = [...VIDEO_GAME_PLATFORM_TERMS]
-    .sort((a, b) => b.length - a.length)
-    .map(platformTermPattern)
-    .join("|");
+/** Longest-first alternation of registry platform terms (for embedding in larger regexes). */
+export function videoGamePlatformTermAlternation(): string {
+  return (
+    [...VIDEO_GAME_PLATFORM_TERMS]
+      .sort((a, b) => b.length - a.length)
+      .map(platformTermPattern)
+      .join("|") || "a^"
+  );
+}
 
-  return new RegExp(`\\b(?:${pattern || "a^"})\\b`, flags);
+export function createVideoGamePlatformMatcher(flags = "gi"): RegExp {
+  return new RegExp(
+    `\\b(?:${videoGamePlatformTermAlternation()})\\b`,
+    flags,
+  );
+}
+
+/**
+ * Trailing marketplace platform suffix, optionally preceded by sur/on/for
+ * ("… sur PS5", "… Xbox One").
+ */
+export function createTrailingVideoGamePlatformSuffixMatcher(
+  flags = "i",
+): RegExp {
+  return new RegExp(
+    `\\s+(?:(?:sur|on|for)\\s+)?(?:${videoGamePlatformTermAlternation()})\\s*$`,
+    flags,
+  );
+}
+
+/** Sequel number immediately before a platform tag ("Borderlands 3 PS4"). */
+export function createSequelNumberBeforePlatformMatcher(
+  flags = "gi",
+): RegExp {
+  return new RegExp(
+    `\\b(\\d{1,2})\\s+(?:(?:sur|on|for)\\s+)?(?:${videoGamePlatformTermAlternation()})\\b`,
+    flags,
+  );
 }
 
 export function getTheGamesDbPlatformId(

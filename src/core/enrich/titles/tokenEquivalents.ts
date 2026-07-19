@@ -1,3 +1,5 @@
+import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
+
 /**
  * Vocabulaire d'équivalence FR↔EN pour le matching de titres.
  *
@@ -9,7 +11,8 @@
  *
  * Les variantes d'orthographe (accents, consonnes finales doublées « Pitt » →
  * « Pit ») sont traitées structurellement par `normalizeEquivalentToken`, pas
- * par des paires nommées.
+ * par des paires nommées. Roman ↔ arabic (II ≡ 2) is structural via
+ * `parseRomanToken`.
  */
 export const TITLE_TOKEN_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
   ["jaune", "yellow"],
@@ -57,10 +60,25 @@ function groupHasToken(group: readonly string[], normalized: string): boolean {
   return group.some((entry) => normalizeEquivalentToken(entry) === normalized);
 }
 
+function arabicSequelValue(token: string): number | null {
+  if (!/^\d{1,2}$/.test(token)) return null;
+  const value = Number.parseInt(token, 10);
+  if (!Number.isFinite(value) || value < 1 || value > 99) return null;
+  return value;
+}
+
 export function titleTokensEquivalent(a: string, b: string): boolean {
   const normalizedA = normalizeEquivalentToken(a);
   const normalizedB = normalizeEquivalentToken(b);
   if (normalizedA === normalizedB) return true;
+
+  const romanA = parseRomanToken(normalizedA);
+  const romanB = parseRomanToken(normalizedB);
+  const arabicA = arabicSequelValue(normalizedA);
+  const arabicB = arabicSequelValue(normalizedB);
+  if (romanA != null && arabicB != null && romanA === arabicB) return true;
+  if (romanB != null && arabicA != null && romanB === arabicA) return true;
+
   return TITLE_TOKEN_EQUIVALENT_GROUPS.some(
     (group) =>
       groupHasToken(group, normalizedA) && groupHasToken(group, normalizedB),

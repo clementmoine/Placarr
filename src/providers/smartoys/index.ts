@@ -1,5 +1,6 @@
 import type { ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import { rawProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -18,7 +19,7 @@ async function refreshSmartoysOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  for (const query of [ctx.cleanedBarcode, ...ctx.fallbackNames]) {
+  for (const query of matchPriceSeekQueries(ctx)) {
     if (!query.trim()) continue;
     const result = await fetchPricesFromSmartoys(query, expectedNames);
     if (!result) continue;

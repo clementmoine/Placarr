@@ -76,6 +76,18 @@ describe("scoreLaunchBoxTitleMatch", () => {
     expect(streetFighterV).toBeGreaterThan(xmVsSf);
   });
 
+  it("accepts 007 catalog titles when the shelf uses the James Bond prefix", () => {
+    const score = scoreLaunchBoxTitleMatch(
+      "James Bond 007 Nightfire",
+      "007: Nightfire",
+      "Sony Playstation 2",
+      "Sony Playstation 2",
+    );
+    expect(score).toBeGreaterThanOrEqual(
+      minimumLaunchBoxMatchScore("James Bond 007 Nightfire"),
+    );
+  });
+
   it("decodes html entities before comparing", () => {
     expect(decodeLaunchBoxTitle("Wallace &amp; Gromit in Project Zoo")).toBe(
       "Wallace & Gromit in Project Zoo",

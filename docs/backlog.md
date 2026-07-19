@@ -1,7 +1,7 @@
 # Backlog
 
-> Dernière vérification : **2026-07-05** (`pnpm test` **1722** OK / 4 skipped,
-> `pnpm lint` **0 erreur**, `pnpm build` OK, `pnpm providers:audit:mapping`).
+> Dernière vérification : **2026-07-19** (audit principes + découplage core→providers ;
+> `pnpm test` ciblé sur refine/merge/blindness/nextImage/ebay legacy).
 
 ## État actuel (snapshot)
 
@@ -58,8 +58,9 @@ Items **déjà tentés** ou **bloqués** — à ne pas perdre entre les sessions
 | **P4**     | Wikidata / Google Books champs ciblés                      | **Fait 2026-07-02** | Wikidata : P136/P178/P123/P856 mappés (`resolver.ts` + tests). Google Books : champs étendus (`resolver.ts` + tests). Relancer `pnpm providers:audit:mapping` après cooldown quota TheGamesDB.                                                                                                                                                                                                                                                                                                                                                                                   |
 | **P4**     | Provider **TricTrac** (`trictrac.net`)                     | **Abandonné 2026-07-05** | Base FR intéressante mais **inaccessible sans auth CNRL** (toutes les routes `/api/*` → `login-silent`). Pas d’API publique, scrape déconseillé. **MyLudo** couvre le besoin metadata FR ; réouvrir seulement si TricTrac/CNRL propose un accès read-only officiel. |
 | **P4**     | Provider **MyLudo** (`myludo.fr`)                          | **Fait 2026-07-05 (partiel)** | Module `boardgames` metadata : recherche titre + détail jeu (`fetch.ts`, `resolver.ts`), `external-link`, observations joueurs/durée/âge/note, `trustedRetailer`. **Barcode** : endpoint mobile existant mais résultats incohérents sans session → pas d’ancrage scan fiable ; reste metadata-only. Contact éditeur pour API officielle si besoin EAN. |
-| **P4**     | Provider **SensCritique** (`senscritique.com`)             | **Fait 2026-07-10 (games)** | Module `senscritique/` : GraphQL GET `gql.senscritique.com` (introspection ouverte), `searchResult` + `product(id)`. Apports : note FR + nb votes (fact `rating` « 7,5/10 (10 594 votes) »), synopsis FR, genres FR, covers pleine résolution (`/0/` sur media.senscritique.com — host ajouté à l'allowlist next/image, budget 51), posters + backdrop. `requiresTitleAlignment` + `acceptRetailerCatalogCandidate` : recherche très floue (« wizard of wor » → God of War) → le guard rejette tout et le module rend un **null honnête**. **Extension movies/musics/books** : `SENSCRITIQUE_UNIVERSES_BY_TYPE` couvre déjà movie/tvShow/musicAlbum/book/comicBook — il suffit d'élargir `info.types` + tests. `artists` null même sur les gros jeux (skip conscient). Probe mapping : 13 mapped / 0 unused. |
+| **P4**     | Provider **SensCritique** (`senscritique.com`)             | **Fait 2026-07-19 (multi-types)** | Module `senscritique/` : GraphQL GET `gql.senscritique.com`, `searchResult` + `product(id)`. Apports : note FR + votes, synopsis FR, genres FR, covers `/0/`. `requiresTitleAlignment` + guard catalogue. **Types** : games + books/comics + movies/TV + musics (`SENSCRITIQUE_UNIVERSES_BY_TYPE`). Pas d'EAN — name-search uniquement. `artists` souvent null (skip conscient). |
 | **P4**     | Provider **Full Set** (`full-set.net`)                     | **Fait 2026-07-10** | Module `fullset/` : scraping `recherche.php?q=` + fiche item (⚠️ attributs HTML sur lignes séparées). Facts : **cote médiane FR** (kind `price`, « 15,00 € (177 annonces) »), **indice de rareté** (kind `rarity` inédit, « 18/100 »), genre/année/dev/éditeur. Gate plateforme strict (`fullSetHitMatchesPlatform` via `detectPlatformKey` sur le label console — un shelf console n'adopte jamais la cote d'un autre support, plateforme irrésolue = rejet) + gate catégorie « Jeux » + title alignment. ⚠️ **Pas de jaquettes** (correction vs évaluation) : la galerie fiche = photos d'annonces eBay (parfois d'un autre jeu !) et robots.txt interdit `/visuel/` → facts uniquement, aucun attachment (décision consciente). ⚠️ **429 agressif** sur requêtes rapprochées (ban long) → `rateLimited: true` + `mappingProbeRetry: true`. |
+| **P4**     | Providers livres / BD-manga FR (nationaux)                 | **Fait 2026-07-17** | File close — ~~Decitre~~ → ~~BD Fugue~~ → ~~Babelio~~ → ~~Planète BD~~ → ~~Vivlio~~ → ~~Izneo~~ → ~~Gibert~~ → ~~Canal BD~~ → ~~Furet~~. ~~Momie~~ / ~~Eurolivre~~ abandonnés (search cassé / 429). Exclus : AbeBooks (déjà), Indigo.ca, Walt’s, Hizuku, ActuaBD, boutiques locales. Détail : [§ Providers livres FR](#providers-livres--bd-manga-fr-2026-07-16). |
 | ~~**P1**~~ | ~~Golden-master « vide honnête »~~                         | **Fait 2026-06-29** | `compile.honestEmpty.test.ts` : marketplace-only sans ancre + DB miss (`confrontWithDatabase` mocké `null`) ⇒ `compileResultForType` renvoie `null`, même sur consensus de 3 marketplaces (majority noise). Encode la moitié manquante de la règle produit (l'autre moitié = `confidenceLock`).                                                                                                                                                                                                                                                                                  |
 
 **Séries & franchises 2026-06-29** (display / recherche / regroupement) :
@@ -103,7 +104,9 @@ Deux concepts **distincts**, sourcés différemment :
 | ~~**P3**~~ | ~~ItemModal orchestration → react-query~~                | **Fait 2026-07-05** | `useItemModalMetadataMutations` pour preview/suggestions ; init par `sessionKey` (remount logique) — **0 disable `set-state-in-effect`**. |
 | ~~**P1**~~ | ~~Double « durée » d'une même source~~               | **Fait 2026-07-03** | IGDB émettait ses durées avec `source: "How Long to Beat"` **codé en dur** (187 h ≠ vrais chiffres HLTB) : attribution corrigée (`IGDB`), arbitrage merge trait-driven (`timeToBeatSource` autoritaire écarte les durées des autres sources — l'ancien filtre par `kind` gardait la mauvaise génération), et **dédup par créneau sémantique** (principal/complétion, priorité max) dans `normalizeMetadataFacts` → les items déjà pollués s'auto-réparent à la lecture (vérifié sur 7 Days to Die : 4 facts → 2). Test : `facts.timeSlots.test.ts`.                                                                                                                                                                                                                                                                 |
 | ~~**P1**~~ | ~~Scan : possédé sans code-barres invisible~~        | **Fait 2026-07-03** | `QuickScanModal` ne cherchait l'existant que par `barcodeExact` — la branche « match par titre » était **morte** (le pool ne contenait que des items à code-barres). Second pool par titre résolu (`/api/items?q=` : nom+aliases+titre metadata), fusion des candidats sans code-barres, alignement `isMetadataTitleAligned` (≥0.58) au lieu d'égalité stricte ; « Compléter » pose le code-barres scanné sur l'item existant. Vérifié : « 7 Days to Die » (sans code-barres) remonte sur le scan 711719268369.                                                                                                                                                                                                                                                                                                     |
-| ~~**P1**~~ | ~~Serveur injoignable pendant les refreshs massifs~~ | **Fait 2026-07-03** | `after()` de Next ne détache rien : N enrichissements simultanés (fan-out providers, sharp, parsing) saturaient l'event loop → `Network Error` navigateur. **File globale d'arrière-plan** (`backgroundWorkQueue`, concurrence 2, `BACKGROUND_WORK_CONCURRENCY`) branchée sur TOUS les chemins : refresh unitaire, batch shelf (l'ancien pool local ×8 supprimé), boucle admin metadata-enrich, refreshs de prix (unitaire + batch ×4 supprimé). `AsyncQueue` extraite de providerQueue (partagée). Aucun chemin en file ne ré-entre dans la file (pas de deadlock, tests fetch.deadlock verts). Vérifié live : sondes `/api/shelves` à ~130 ms pendant un enrichissement. Test : `backgroundWorkQueue.test.ts`.                                                                                                    |
+| ~~**P1**~~ | ~~Serveur injoignable pendant les refreshs massifs~~ | **Fait 2026-07-18** | Next n’exécute plus l’enrichissement : stamp + enqueue `BackgroundWorkJob`, process dédié `pnpm worker` (`scripts/backgroundWorker.ts`, SKIP LOCKED). Compose `worker` (dev + prod). Cancel / orphan guard tiennent compte des jobs DB. Ancienne file in-process (`backgroundWorkQueue`) reste pour I/O CPU local (covers) et icollect. |
+| ~~**P2**~~ | ~~Priorité providers dynamique + progressive store~~ | **Fait 2026-07-19** | `providerRuntimeStats` (EMA latence / hit / cover) + cold-start via traits registry (`bookCoverPriority`, `slowScanScrape`…) ; soft timeout par provider ; merge progressif mid-batch quand cover/titre s’améliore. **Pas** d’early-stop ni blacklist. Concurrency worker défaut 4 (`WORKER_CONCURRENCY`). |
+| ~~**P1**~~ | ~~Mesure durée jobs (`lockedAt`)~~ | **Fait 2026-07-19** | `completeBackgroundWorkJob` / fail terminal gardent `lockedAt` (clear `lockedBy` seul) → durée locked→finished mesurable. |
 | **P1**     | Garde-fou taille fixtures                            | **Fait 2026-07-02** | Une capture de sitemap non tronquée (362 Mo) dans un commit local bloquait le push (limite GitHub 100 Mo). Historique local **non publié** réécrit (blob purgé, arbre final identique), poussé en fast-forward ; `tests/fixtureSize.test.ts` verrouille < 25 Mo par fixture.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | **P1**     | Persistance données Docker                           | **Fait 2026-07-02** | Les uploads (`/app/public/uploads`) n'étaient montés sur aucun volume → perdus à chaque recréation du conteneur. Volumes nommés `placarr-uploads` + `placarr-cache` (index SQLite providers) ; `outputFileTracingExcludes` sort uploads/.cache du standalone (cause de l'ENOSPC) ; `.dockerignore` exclut données runtime **et `.env`** (secrets hors layers). Migration : `docker cp` des uploads existants avant recréation.                                                                                                                                                                                                                                                                                                                                                                                      |
 
@@ -128,6 +131,17 @@ Règles persistantes dans `.cursor/rules/` :
 
 ## Priorités ouvertes (ordre suggéré)
 
+### P1 — Match prix / metadata (qualité continue)
+
+| Item | État | Détail |
+| ---- | ---- | ------ |
+| **PriceCharting MatchContext** (aliases + stem + accept) | **Fait 2026-07-19** | Sac titres partagé ; stems franchise génériques (`lookupTitles`) ; accept `allowFranchiseStem` après hit search (sous-titre régional FR/EN vs titre court PC) ; filtre guides ; cas Spider-Man 2 FR, Baten Kaitos, Pokémon Yellow. |
+| **RAWG plateforme shelf + facts** | **Fait 2026-07-19** | `pickRawgSearchMatch` refuse Web-only ; sanitize plateformes (drop Web si consoles), stores (drop itch.io sur cartouche), tags fangame/GameMaker sur étagère console. |
+| **PriceCharting PAL sans cote → NTSC** | **Fait 2026-07-19** | Pages `pal-atari-2600/…` souvent à `-` ; si `isPal` et table vide, retry NTSC (Millipede, Jr Pac-Man, Galaxian, Joust, Football…). |
+| **PriceCharting productName / URL** | **Fait 2026-07-19** | Offres PC stampent le titre fiche ; à la lecture, `sourceUrl` → titre (slug) pour filtrer une mauvaise page (ex. FIFA 2002 → `…/fifa-2002-road-to-fifa-world-cup`). |
+| **Loose sans cote cartouche** | **Fait 2026-07-19** | Match Atari (n° console) ; faux amis FIFA World Cup / Bond ; « Loose » dans le titre → bucket loose ; CIB en ~estimate si pas de loose observé. |
+| ~~ChocoBonPlan / retailers titre faible~~ | **Fait 2026-07-19** | `listingLooksLikeMerchAccessory` étendu (coque/ipod + kits `lego`/`playmobil`/`funko`/`nendoroid`) ; gate dans `isMetadataTitleAligned`, attachments, et `priceListingSharesItemIdentity`. LEGO Minecraft ne matche plus un item « Minecraft » (seuil Choco 0.42 inclus) ; un vrai set LEGO shelf reste accepté. |
+
 ### P1 — Providers / scrape
 
 | Item                                    | Action                                                                                             | Doc                        |
@@ -139,6 +153,30 @@ Règles persistantes dans `.cursor/rules/` :
 | ~~**TheGamesDB audit**~~                | **fait** — `blocked` clé absente ou quota + `mappingProbeConfigHint`                               | `thegamesdb/index.ts`      |
 | ~~**Chasse aux Livres probe `partial`**~~ | **fait** — metadata adapter `map:ok`, observations typées ; gate EAN page vs slug interne ; hint FlareSolverr | `chasseauxlivres/`         |
 | ~~**Apriloshop**~~                        | **retiré** — search/controller 403 côté boutique ; stack IQIT couverte par Chipweld | —                          |
+
+### Providers livres / BD-manga FR (2026-07-16)
+
+Critère : **catalogue national / large**, pas une boutique de quartier. Déjà en place : Booknode, Bedetheque, BDovore, BDphile, Chasse aux livres, Google Books, OpenLibrary, AbeBooks.
+
+| Ordre | Provider | Site | Rôle attendu | État |
+| ----- | -------- | ---- | ------------ | ---- |
+| 1 | **Decitre** | `decitre.fr` | Retailer national — ISBN → résumé, auteurs, éditeur, pages, couverture, prix | **Fait 2026-07-16** — module `decitre/` (JSON-LD Book + attributs, FlareSolverr) |
+| 2 | **BD Fugue** | `bdfugue.com` | Spécialiste BD/manga national — ISBN, stock, prix | **Fait 2026-07-16** — module `bdfugue/` (Magento JSON-LD + attributs, FlareSolverr) |
+| 3 | **Babelio** | `babelio.com` | Catalogue social FR — notes, tags, résumé, covers (scrape anti-bot / cookie) | **Fait 2026-07-17** — module `babelio/` (AJAX `/aj_recherche.php` + fiche microdata ; ISBN = evidence only) |
+| 4 | **Planète BD** | `planetebd.com` | Critiques / notes BD-manga (pas un stock magasin) | **Fait 2026-07-17** — module `planetebd/` (mot-clef + fiche album) |
+| 5 | **Vivlio** | `shop.vivlio.com` | Boutique ebook FR — JSON-LD Product/Book riche (ISBN, auteur, éditeur, série/collection, cover `cdn.vivlio.com`), **sans Cloudflare** sur le shop. ⚠️ Éditions **numériques** : l’ISBN ebook peut différer du print scanné en rayon | **Fait 2026-07-17** — module `vivlio/` (`?search=` + JSON-LD ; ISBN evidence only) |
+| 6 | **Izneo** | `izneo.com` | Plateforme BD/manga numérique — titres, séries, covers | **Fait 2026-07-17** — module `izneo/` (API web search/v2 + volumes + album) |
+| 7 | **Gibert** | `gibert.com` | Chaîne livres nationale neuf/occasion — ISBN + prix | **Fait 2026-07-17** — module `gibert/` (Magento + FlareSolverr) |
+| 8 | **Canal BD** | `canalbd.net` | Portail réseau librairies BD — ISBN BD, série, offres multi-librairies | **Fait 2026-07-17** — module `canalbd/` (recherche + fiche + HTMX offers) |
+| 9 | **Furet du Nord** | `furet.com` | Chaîne livres Nord (stack Decitre / di-static) — ISBN + prix | **Fait 2026-07-17** — module `furet/` (`/rechercher/result` + FlareSolverr) |
+
+**Secondaire abandonné** (2026-07-17) :
+- **Momie** (`momie.fr`) — BD/manga niche ; recherche serveur cassée (POST `/transformsearch` → homepage) ; slug requis pour `/product/show/{isbn}/{slug}` → pas de découverte ISBN.
+- **Eurolivre** (`eurolivre.fr`) — méta-recherche ISBN qui chevauche CAL/AbeBooks ; **HTTP 429** dès la première fiche, payload vide.
+
+**Exclus** : librairies locales (Comptoir du rêve, Garganmots, Mouette à la page, Carnet à spirales, Tours & Détours, Gérard…), Hizuku (Réunion), Walt’s Comic Shop (US), Indigo.ca, ActuaBD (média), AbeBooks (déjà intégré).
+
+Chaque entrée = module `providers/<id>/` + registry + tests + `pnpm providers:audit:mapping` (checklist [provider_integration_checklist.md](provider_integration_checklist.md)).
 
 ### P2 — Ranking sans biais (gros chantier)
 
@@ -174,7 +212,7 @@ Champs ciblés livrés (Wikidata, Google Books, RAWG clips, MyLudo). Ne pas chas
 | ------------ | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | trictrac     | metadata FR (rating, EAN, avis)                  | **Abandonné** — auth CNRL obligatoire ; MyLudo suffit pour metadata FR                                          |
 | myludo       | metadata FR (+ barcode si API OK)                | **Fait partiel** — module metadata titre ; barcode non fiable sans session API                                  |
-| senscritique | metadata FR multi-types (note, titre FR, synopsis) | **Fait 2026-07-10 (games)** — étendre types movies/musics/books = 1 ligne + tests (voir Roadmap) |
+| senscritique | metadata FR multi-types (note, titre FR, synopsis) | **Fait 2026-07-19** — games + books + movies + musics |
 | full-set     | rareté + cote médiane FR (jeux rétro)              | **Fait 2026-07-10** — facts only (pas de jaquette exploitable), rate-limited (voir Roadmap)      |
 
 Ne pas chasser le compte `unused` brut — voir note audit 2026-06-23 dans l'historique.
@@ -196,9 +234,9 @@ Réorganisation **`src/core/`** en 5 piliers (`identify`, `enrich`, `collect`, `
 | Priorité | Item | État | Détail |
 | -------- | ---- | ---- | ------ |
 | **P3** | Découper `enrich/storage.ts` | **Ouvert** | Persist / images / format (3 fichiers, même pilier) |
-| **P3** | DRY titres identify ↔ enrich | **Ouvert** | `titleUtils` vs `titleMatching` |
-| **P4** | `platformSources.ts` → data file | **Ouvert** | ~3500 L inline → loader déclaratif |
-| **P2** | Imports core → `@/providers/icollect/*` | **Ouvert** | `collect/media.ts`, `lookup/payload.ts` — traits registry |
+| ~~**P3**~~ | ~~DRY titres identify ↔ enrich~~ | **Fait 2026-07-19 (partiel)** | `normalizeForTokens` → `enrich/titles/normalize.ts` (casse soft-cycle `displayScore` → `titleUtils` → `commerce/titleMatch` → `titleMatching`) ; romains franchise via `parseRomanToken` ; haystacks catalogue réutilisent le leaf. Matchers `areLikelySameProduct` / `metadataTitleSimilarity` **volontairement séparés**. |
+| ~~**P4**~~ | ~~`platformSources.ts` → data file~~ | **Fait 2026-07-19** | Snapshots SS/LB → `platforms/data/*.json` ; `platformSources.ts` = types + loader (~30 L). |
+| ~~**P2**~~ | ~~Imports core → `@/providers/icollect/*`~~ | **Fait 2026-07-19** | `collect/media.ts` via trait stampé + `collectorCoverRegion` ; `lookup/payload.ts` via `CollectorCatalogBarcodeHit` ; hosts next/image figés (`scrapeCatalogImageHosts`) ; proxy media via `catalog/mediaProxy` ; PicClick→eBay via `catalog/legacyPriceOffer`. Allowlist blindness **vide**. |
 
 ~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** puis **big-bang → core** 2026-07-05.
 

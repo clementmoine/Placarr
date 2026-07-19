@@ -10,8 +10,16 @@ import {
   getInMemoryMetadataRefreshItemIds,
   reconcileOrphanedMetadataRefreshesForUser,
 } from "@/core/collect/jobs/metadataRefreshSession";
+import {
+  BACKGROUND_WORK_KIND,
+  BACKGROUND_WORK_STATUS,
+  cancelBackgroundWorkJobsForUser,
+} from "@/core/collect/jobs/workQueue";
 
-export type BackgroundJobKind = "metadataRefresh" | "metadataEnrich";
+export type BackgroundJobKind =
+  | "metadataRefresh"
+  | "metadataEnrich"
+  | "priceRefresh";
 
 export type BackgroundJobRow = {
   id: string;
@@ -84,6 +92,59 @@ function toBackgroundJobRow(
   };
 }
 
+async function listPriceRefreshJobsForUser(
+  userId: string,
+): Promise<BackgroundJobRow[]> {
+  const jobs = await prisma.backgroundWorkJob.findMany({
+    where: {
+      userId,
+      kind: BACKGROUND_WORK_KIND.priceRefresh,
+      status: {
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+      },
+    },
+    orderBy: [{ createdAt: "asc" }],
+    take: 50,
+    select: {
+      itemId: true,
+      createdAt: true,
+      lockedAt: true,
+    },
+  });
+
+  const itemIds = [
+    ...new Set(
+      jobs
+        .map((job) => job.itemId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  ];
+  if (itemIds.length === 0) return [];
+
+  const items = await prisma.item.findMany({
+    where: { id: { in: itemIds }, userId },
+    select: backgroundJobSelect,
+  });
+  const byId = new Map(items.map((item) => [item.id, item]));
+
+  const rows: BackgroundJobRow[] = [];
+  for (const job of jobs) {
+    if (!job.itemId) continue;
+    const item = byId.get(job.itemId);
+    if (!item) continue;
+    rows.push({
+      id: item.id,
+      name: item.name,
+      slug: item.slug,
+      kind: "priceRefresh",
+      startedAt: job.lockedAt ?? job.createdAt,
+      cancellable: true,
+      shelf: item.shelf,
+    });
+  }
+  return rows;
+}
+
 export async function listBackgroundJobsForUser(
   userId: string,
 ): Promise<BackgroundJobRow[]> {
@@ -97,7 +158,15 @@ export async function listBackgroundJobsForUser(
     take: 50,
   });
 
-  return items.map((item) => toBackgroundJobRow(item, inMemoryIds));
+  const metadataJobs = items.map((item) =>
+    toBackgroundJobRow(item, inMemoryIds),
+  );
+  const metadataIds = new Set(metadataJobs.map((job) => job.id));
+  const priceJobs = (await listPriceRefreshJobsForUser(userId)).filter(
+    (job) => !metadataIds.has(job.id),
+  );
+
+  return [...metadataJobs, ...priceJobs].slice(0, 50);
 }
 
 export async function cancelBackgroundJobForUser(
@@ -117,6 +186,8 @@ export async function cancelBackgroundJobForUser(
 export async function cancelAllBackgroundJobsForUser(
   userId: string,
 ): Promise<number> {
+  const workCancelled = await cancelBackgroundWorkJobsForUser(userId);
+
   const inMemoryIds = getInMemoryMetadataRefreshItemIds();
   const items = await prisma.item.findMany({
     where: {
@@ -137,5 +208,5 @@ export async function cancelAllBackgroundJobsForUser(
     await cancelAndClearItemMetadataRefresh(itemId);
   }
 
-  return itemIds.length;
+  return workCancelled + itemIds.length;
 }

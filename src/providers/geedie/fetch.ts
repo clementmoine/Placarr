@@ -509,7 +509,7 @@ export async function searchGeedieProducts(
     validateStatus: (status) => status < 500,
   });
   if (response.status >= 400 || !response.data) return [];
-  return parseGeedieSearchResults(response.data);
+  return parseGeedieSearchResults(String(response.data));
 }
 
 export async function fetchGeedieProduct(
@@ -521,7 +521,7 @@ export async function fetchGeedieProduct(
     validateStatus: (status) => status < 500,
   });
   if (response.status >= 400 || !response.data) return null;
-  return parseGeedieProductPage(response.data, productUrl);
+  return parseGeedieProductPage(String(response.data), productUrl);
 }
 
 export async function fetchGeedieGallery(

@@ -870,7 +870,7 @@ export function QuickScanModal({
                           {t("scanner.viewExisting") || "Consulter"}
                         </Button>
                       )}
-                      {canComplete && ownedItem ? (
+                      {canComplete && ownedItem && (
                         <Button
                           size="sm"
                           onClick={() =>
@@ -886,18 +886,23 @@ export function QuickScanModal({
                           )}
                           {t("scanner.complete")}
                         </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleSelectProduct(product)}
-                          className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
-                        >
-                          <Plus className="size-4 mr-1.5 shrink-0" />
-                          {isOwned
-                            ? t("scanner.addAnotherCopy")
-                            : t("common.add") || "Ajouter"}
-                        </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant={canComplete ? "outline" : "default"}
+                        onClick={() => handleSelectProduct(product)}
+                        className={cn(
+                          "h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto",
+                          canComplete
+                            ? "border-border/60 bg-background hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                            : "bg-primary text-primary-foreground hover:bg-primary/95",
+                        )}
+                      >
+                        <Plus className="size-4 mr-1.5 shrink-0" />
+                        {isOwned
+                          ? t("scanner.addAnotherCopy")
+                          : t("common.add") || "Ajouter"}
+                      </Button>
                     </div>
                   </div>
                 );

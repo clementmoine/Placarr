@@ -3,7 +3,6 @@ import fs from "node:fs";
 import sharp from "sharp";
 
 export {
-  MIN_COVER_SHORTEST_EDGE,
   type ImageDimensions,
   coverUrlExpectsHighResolution,
   isCoverResolutionAcceptable,

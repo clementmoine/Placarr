@@ -10,7 +10,11 @@ import type { SourceProduct } from "@/core/identify/evidence/types";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { formatScore } from "@/core/enrich/searchUtils";
 import { cleanSearchQuery } from "@/core/enrich/searchUtils";
-import { createScreenScraperResolver } from "./resolver";
+import {
+  createScreenScraperResolver,
+  rewriteScreenScraperGameInfoUrl,
+} from "./resolver";
+import { getScreenScraperSystemId } from "@/core/identify/platforms/platforms";
 import {
   buildScreenScraperBaseParams,
   getScreenScraperEnv,
@@ -276,6 +280,24 @@ export const screenscraperModule: ProviderModule = {
         products: buildScreenScraperProducts(payload.ss),
       },
     ];
+  },
+  isVerifiedCatalogProductUrl(url) {
+    try {
+      const parsed = new URL(url);
+      return (
+        parsed.hostname === "www.screenscraper.fr" &&
+        parsed.pathname.includes("gameinfos.php") &&
+        Boolean(parsed.searchParams.get("gameid"))
+      );
+    } catch {
+      return false;
+    }
+  },
+  normalizeCatalogProductUrl(url, ctx) {
+    return rewriteScreenScraperGameInfoUrl(
+      url,
+      getScreenScraperSystemId(ctx?.platformKey),
+    );
   },
   inferImageAttachmentFromMediaUrl(url) {
     const inferred = screenScraperAttachmentFromMediaUrl(url);

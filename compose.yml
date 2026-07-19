@@ -22,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     container_name: placarr
     depends_on:
       db:
@@ -47,6 +48,49 @@ services:
       # Données runtime — rien ne vit dans le conteneur : les uploads
       # utilisateur et les index providers survivent aux recréations
       # (down/up, nouvelle image). La base a déjà son volume `placarr-db`.
+      - placarr-uploads:/app/public/uploads
+      - placarr-cache:/app/.cache
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: placarr-worker
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_ID=placarr-worker-1
+      - WORKER_KINDS=interactive
+      - WORKER_CONCURRENCY=4
+    volumes:
+      - ${ROOT:-.}/config/placarr:/config
+      - placarr-uploads:/app/public/uploads
+      - placarr-cache:/app/.cache
+    restart: unless-stopped
+
+  worker-icollect:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: placarr-worker-icollect
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_ID=placarr-worker-icollect
+      - WORKER_KINDS=catalog
+      - WORKER_CONCURRENCY=1
+    command: ["pnpm", "worker:icollect"]
+    volumes:
+      - ${ROOT:-.}/config/placarr:/config
       - placarr-uploads:/app/public/uploads
       - placarr-cache:/app/.cache
     restart: unless-stopped

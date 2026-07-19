@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -8,8 +7,9 @@ import {
 } from "./scheduleMetadataRefresh";
 import { resetMetadataRefreshSessionsForTests } from "./metadataRefreshSession";
 
-vi.mock("next/server", () => ({
-  after: vi.fn(),
+const h = vi.hoisted(() => ({
+  enqueueBackgroundWorkJob: vi.fn(),
+  stampItemMetadataRefresh: vi.fn(),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -22,41 +22,40 @@ vi.mock("@/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/core/enrich", () => ({
-  fetchAndStoreMetadata: vi.fn().mockResolvedValue({ id: "meta-1" }),
+vi.mock("@/core/collect/jobs/workQueue", () => ({
+  BACKGROUND_WORK_KIND: {
+    metadataRefresh: "metadataRefresh",
+    priceRefresh: "priceRefresh",
+  },
+  enqueueBackgroundWorkJob: h.enqueueBackgroundWorkJob,
 }));
 
-import { prisma } from "@/lib/db/prisma";
-import { fetchAndStoreMetadata } from "@/core/enrich";
-
-const mockedUpdate = vi.mocked(prisma.item.update);
-const mockedUpdateMany = vi.mocked(prisma.item.updateMany);
-const mockedFindUnique = vi.mocked(prisma.item.findUnique);
-const mockedFetchAndStore = vi.mocked(fetchAndStoreMetadata);
-const mockedAfter = vi.mocked(after);
-
-function mockRefreshSession(generation = 1) {
-  const startedAt = new Date("2026-06-27T12:00:00.000Z");
-  mockedUpdate.mockResolvedValueOnce({
-    metadataRefreshGeneration: generation,
-  } as never);
+vi.mock("./metadataRefreshSession", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./metadataRefreshSession")>();
   return {
-    generation,
-    startedAt,
-    signal: new AbortController().signal,
+    ...actual,
+    stampItemMetadataRefresh: h.stampItemMetadataRefresh,
   };
-}
+});
+
+import { prisma } from "@/lib/db/prisma";
+
+const mockedFindUnique = vi.mocked(prisma.item.findUnique);
 
 describe("scheduleItemMetadataRefresh", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetMetadataRefreshSessionsForTests();
-    mockedUpdate.mockResolvedValue({ metadataRefreshGeneration: 1 } as never);
-    mockedUpdateMany.mockResolvedValue({ count: 1 } as never);
-    mockedFindUnique.mockResolvedValue({ imageUrl: null } as never);
+    h.enqueueBackgroundWorkJob.mockResolvedValue({ id: "job-1" });
+    h.stampItemMetadataRefresh.mockResolvedValue({
+      generation: 1,
+      startedAt: new Date("2026-06-27T12:00:00.000Z"),
+    });
+    mockedFindUnique.mockResolvedValue({ userId: "u1" } as never);
   });
 
-  it("marks refresh started then schedules background work", async () => {
+  it("stamps refresh then enqueues a worker job without running enrich", async () => {
     const result = await startItemMetadataRefresh({
       itemId: "item-1",
       lookupQuery: "Test Book",
@@ -66,32 +65,82 @@ describe("scheduleItemMetadataRefresh", () => {
 
     expect(result.startedAt).toBeInstanceOf(Date);
     expect(result.generation).toBe(1);
-    expect(mockedUpdate).toHaveBeenCalledWith({
-      where: { id: "item-1" },
-      data: {
-        metadataRefreshStartedAt: result.startedAt,
-        metadataRefreshGeneration: { increment: 1 },
-      },
-      select: { metadataRefreshGeneration: true },
+    expect(h.stampItemMetadataRefresh).toHaveBeenCalledWith("item-1");
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "metadataRefresh",
+          itemId: "item-1",
+          userId: "u1",
+          replaceOpenForItem: true,
+          payload: expect.objectContaining({
+            itemId: "item-1",
+            lookupQuery: "Test Book",
+            generation: 1,
+          }),
+        }),
+      );
     });
-    expect(mockedAfter).toHaveBeenCalledTimes(1);
-    expect(mockedFetchAndStore).not.toHaveBeenCalled();
   });
 
-  it("schedules background work without blocking the caller", () => {
-    const session = mockRefreshSession(3);
-    scheduleItemMetadataRefresh(
-      {
-        itemId: "item-3",
-        lookupQuery: "Another Book",
+  it("clears the stamp when enqueue fails", async () => {
+    h.enqueueBackgroundWorkJob.mockRejectedValueOnce(new Error("db down"));
+    const mockedUpdateMany = vi.mocked(prisma.item.updateMany);
+    mockedUpdateMany.mockResolvedValue({ count: 1 } as never);
+
+    await expect(
+      startItemMetadataRefresh({
+        itemId: "item-fail",
+        lookupQuery: "Book",
         shelfType: "books",
         shelfName: "Livres",
+      }),
+    ).rejects.toThrow("db down");
+
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "item-fail",
+        metadataRefreshGeneration: 1,
       },
-      session,
+      data: { metadataRefreshStartedAt: null },
+    });
+  });
+});
+
+describe("scheduleBatchItemMetadataRefresh", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.enqueueBackgroundWorkJob.mockResolvedValue({ id: "job-1" });
+    h.stampItemMetadataRefresh
+      .mockResolvedValueOnce({
+        generation: 2,
+        startedAt: new Date("2026-06-27T12:00:00.000Z"),
+      })
+      .mockResolvedValueOnce({
+        generation: 3,
+        startedAt: new Date("2026-06-27T12:00:01.000Z"),
+      });
+    mockedFindUnique.mockResolvedValue({ userId: "u1" } as never);
+  });
+
+  it("always stamps a new generation even when a refresh flag is already set", async () => {
+    const { scheduleBatchItemMetadataRefresh } = await import(
+      "./scheduleMetadataRefresh"
+    );
+    scheduleBatchItemMetadataRefresh(
+      [
+        { itemId: "item-a", lookupQuery: "A" },
+        { itemId: "item-b", lookupQuery: "B" },
+      ],
+      { type: "books", name: "Livres" },
     );
 
-    expect(mockedAfter).toHaveBeenCalledTimes(1);
-    expect(mockedFetchAndStore).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(h.stampItemMetadataRefresh).toHaveBeenCalledTimes(2);
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(2);
+    });
+    expect(h.stampItemMetadataRefresh).toHaveBeenCalledWith("item-a");
+    expect(h.stampItemMetadataRefresh).toHaveBeenCalledWith("item-b");
   });
 });
 

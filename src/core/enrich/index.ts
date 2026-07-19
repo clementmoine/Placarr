@@ -23,6 +23,13 @@ import {
 } from "@/core/collect/jobs/metadataRefreshSession";
 import { isAbortError } from "@/lib/http/abort";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
+import {
+  scrapeProviderIdsFromStoredSources,
+  externalIdsFromStoredSources,
+  providerRecordUrlsFromStoredSources,
+} from "@/core/enrich/scrapePassGate";
+import { parseMetadataFactsJson } from "@/core/enrich/metadataFactsMerge";
+import { prisma } from "@/lib/db/prisma";
 import type { Item, Type } from "@prisma/client";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -91,6 +98,50 @@ function metadataCacheKey(
   ].join("|");
 }
 
+async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
+  scrapeProviderIds: string[];
+  externalIds: Record<string, string>;
+  providerRecordUrls: Record<string, string>;
+}> {
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    include: {
+      metadata: { include: { attachments: true } },
+      fieldEvidence: { select: { source: true, sourceUrl: true } },
+    },
+  });
+  if (!item) {
+    return { scrapeProviderIds: [], externalIds: {}, providerRecordUrls: {} };
+  }
+
+  const facts = parseMetadataFactsJson(item.metadata?.facts);
+
+  const metadataEvidence = item.metadata
+    ? await prisma.fieldEvidence.findMany({
+        where: { metadataId: item.metadata.id },
+        select: { source: true, sourceUrl: true },
+      })
+    : [];
+
+  const fieldEvidence = [...(item.fieldEvidence ?? []), ...metadataEvidence];
+
+  return {
+    scrapeProviderIds: scrapeProviderIdsFromStoredSources({
+      facts,
+      fieldEvidence,
+      attachments: item.metadata?.attachments ?? [],
+    }),
+    externalIds: externalIdsFromStoredSources({
+      facts,
+      fieldEvidence,
+    }),
+    providerRecordUrls: providerRecordUrlsFromStoredSources({
+      facts,
+      fieldEvidence,
+    }),
+  };
+}
+
 export async function getMetadata(
   name: string,
   type: string,
@@ -102,6 +153,10 @@ export async function getMetadata(
     shelfName?: string | null;
     queuePriority?: "high" | "normal";
     signal?: AbortSignal;
+    existingScrapeProviderIds?: readonly string[];
+    existingExternalIds?: Record<string, string | null>;
+    existingProviderRecordUrls?: Record<string, string>;
+    onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
   } = {},
 ): Promise<MetadataResult | null> {
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -118,7 +173,17 @@ export async function getMetadata(
   );
   const now = Date.now();
 
-  if (!options.bypassCache) {
+  // Abortable lookups / progressive-store callbacks must not enter the shared
+  // cache: a cancelled refresh would otherwise poison concurrent previews.
+  const shareableCache =
+    !options.bypassCache &&
+    !options.signal &&
+    !options.onApiPassComplete &&
+    !options.existingScrapeProviderIds?.length &&
+    !options.existingExternalIds &&
+    !options.existingProviderRecordUrls;
+
+  if (shareableCache) {
     const cached = metadataCache.get(key);
     if (cached && cached.expires > now) {
       return cached.promise;
@@ -137,6 +202,10 @@ export async function getMetadata(
           shelfName: options.shelfName,
           queuePriority: options.queuePriority,
           signal: options.signal,
+          existingScrapeProviderIds: options.existingScrapeProviderIds,
+          existingExternalIds: options.existingExternalIds,
+          existingProviderRecordUrls: options.existingProviderRecordUrls,
+          onApiPassComplete: options.onApiPassComplete,
         },
       );
       return result;
@@ -147,23 +216,25 @@ export async function getMetadata(
     }
   })();
 
-  metadataCache.set(key, {
-    expires:
-      now +
-      (type === "games" ? METADATA_GAME_CACHE_TTL_MS : METADATA_CACHE_TTL_MS),
-    promise,
-  });
-  if (metadataCache.size > METADATA_CACHE_MAX_ENTRIES) {
-    const oldestKey = metadataCache.keys().next().value;
-    if (oldestKey !== undefined) metadataCache.delete(oldestKey);
-  }
+  if (shareableCache) {
+    metadataCache.set(key, {
+      expires:
+        now +
+        (type === "games" ? METADATA_GAME_CACHE_TTL_MS : METADATA_CACHE_TTL_MS),
+      promise,
+    });
+    if (metadataCache.size > METADATA_CACHE_MAX_ENTRIES) {
+      const oldestKey = metadataCache.keys().next().value;
+      if (oldestKey !== undefined) metadataCache.delete(oldestKey);
+    }
 
-  // Never persist a miss: a null may be a transient provider failure.
-  void promise
-    .then((result) => {
-      if (!result) metadataCache.delete(key);
-    })
-    .catch(() => metadataCache.delete(key));
+    // Never persist a miss: a null may be a transient provider failure.
+    void promise
+      .then((result) => {
+        if (!result) metadataCache.delete(key);
+      })
+      .catch(() => metadataCache.delete(key));
+  }
 
   return promise;
 }
@@ -222,6 +293,29 @@ export async function fetchAndStoreMetadata(
     return null;
   }
 
+  const {
+    scrapeProviderIds: existingScrapeProviderIds,
+    externalIds: existingExternalIds,
+    providerRecordUrls: existingProviderRecordUrls,
+  } = await storedProviderMemoryForItem(itemId);
+
+  let progressiveStored = false;
+  const persistPartial = async (partial: MetadataResult) => {
+    if (
+      refreshSession &&
+      !(await assertRefreshCanPersist(itemId, refreshSession))
+    ) {
+      return;
+    }
+    await storeMetadata(itemId, partial, type, name, {
+      deferImageLocalization: isBackground,
+      // Pass-1 must not enqueue localization — a late Pass-1 job overwrites
+      // Pass-2's gallery (drops LaunchBox discs that only survive the final merge).
+      skipDeferredLocalizationSchedule: true,
+    });
+    progressiveStored = true;
+  };
+
   // Fetch new metadata using the name for lookup only
   let metadata: MetadataResult | null;
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -235,29 +329,49 @@ export async function fetchAndStoreMetadata(
       isBackground,
       shelfName,
       signal: refreshSession?.signal,
+      existingScrapeProviderIds,
+      existingExternalIds,
+      existingProviderRecordUrls,
+      onApiPassComplete: persistPartial,
     });
   } catch (error) {
-    if (isAbortError(error)) return null;
+    if (isAbortError(error)) {
+      if (!progressiveStored) return null;
+      const cached = await getCachedMetadata(itemId);
+      return cached ? formatMetadataFromStorage(cached) : null;
+    }
     throw error;
   }
 
-  if (!metadata) return null;
+  if (!metadata) {
+    if (progressiveStored) {
+      const cached = await getCachedMetadata(itemId);
+      return cached ? formatMetadataFromStorage(cached) : null;
+    }
+    return null;
+  }
 
   if (
     refreshSession &&
     !(await assertRefreshCanPersist(itemId, refreshSession))
   ) {
-    return null;
+    if (!progressiveStored) return null;
+    const cached = await getCachedMetadata(itemId);
+    return cached ? formatMetadataFromStorage(cached) : null;
   }
 
   try {
-    // Store the metadata without updating the item's name
+    // Final store (Pass 2 merge, or Pass 1-only when scrapes were skipped).
     const storedMetadata = await storeMetadata(itemId, metadata, type, name, {
       deferImageLocalization: isBackground,
     });
     return formatMetadataFromStorage(storedMetadata);
   } catch (error) {
     console.error("Error storing metadata:", error);
+    if (progressiveStored) {
+      const cached = await getCachedMetadata(itemId);
+      return cached ? formatMetadataFromStorage(cached) : null;
+    }
     return null;
   }
 }

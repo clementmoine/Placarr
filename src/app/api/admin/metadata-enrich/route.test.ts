@@ -6,7 +6,7 @@ const h = vi.hoisted(() => ({
   item: {
     findMany: vi.fn(),
   },
-  fetchAndStoreMetadata: vi.fn(),
+  startItemMetadataRefresh: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -17,8 +17,8 @@ vi.mock("@/lib/db/prisma", () => ({
     item: h.item,
   },
 }));
-vi.mock("@/core/enrich", () => ({
-  fetchAndStoreMetadata: h.fetchAndStoreMetadata,
+vi.mock("@/core/collect/jobs/scheduleMetadataRefresh", () => ({
+  startItemMetadataRefresh: h.startItemMetadataRefresh,
 }));
 
 import { GET, POST } from "./route";
@@ -61,7 +61,11 @@ describe("POST /api/admin/metadata-enrich", () => {
   beforeEach(() => {
     h.authReturn = { user: { role: "admin" } } as unknown;
     h.item.findMany.mockReset();
-    h.fetchAndStoreMetadata.mockReset();
+    h.startItemMetadataRefresh.mockReset();
+    h.startItemMetadataRefresh.mockResolvedValue({
+      generation: 1,
+      startedAt: new Date(),
+    });
   });
 
   it("met en file le rattrapage sur les items admissibles", async () => {
@@ -70,11 +74,11 @@ describe("POST /api/admin/metadata-enrich", () => {
         id: "i1",
         name: "Zelda GC",
         barcode: "123",
+        userId: "u1",
         shelf: { type: "games", name: "GameCube" },
         metadata: { title: "Zelda" },
       },
     ]);
-    h.fetchAndStoreMetadata.mockResolvedValue({ title: "Zelda" });
 
     const response = await POST(post());
     const payload = await response.json();
@@ -82,6 +86,12 @@ describe("POST /api/admin/metadata-enrich", () => {
     expect(response.status).toBe(202);
     expect(payload.acceptedCount).toBe(1);
     expect(payload.itemIds).toEqual(["i1"]);
-    expect(h.fetchAndStoreMetadata).not.toHaveBeenCalled();
+    expect(h.startItemMetadataRefresh).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemId: "i1",
+        lookupQuery: "Zelda",
+        shelfType: "games",
+      }),
+    );
   });
 });

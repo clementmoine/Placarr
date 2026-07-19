@@ -18,6 +18,28 @@ Transverse : `core/locale/` (préférences UI/région).
 
 ## Principes pro (core)
 
+### 0. MatchContext — tous écrivent, tous lisent
+
+Un seul sac de match partagé (`MatchContext` dans `types/providerModule.ts`,
+builder `core/catalog/matchContext.ts`) :
+
+| Champ | Exemples |
+|-------|----------|
+| `barcodes` | EAN / UPC / ISBN contribués par n'importe quel provider |
+| `titles` | Titre + aliases + titres régionaux (soft match / search) |
+| `acceptanceTitles` | Titres fiables pour validation marketplace |
+| `releaseDate` / `platformKey` / `externalIds` | Discriminants soft |
+
+- **Enrich** : chaque passe rebuild le contexte depuis les résultats déjà connus
+  (`ctx.match` sur `MetadataAdapterContext`).
+- **Prix** : `BarcodePriceRefreshContext` *est* un `MatchContext` (+ alias legacy
+  `cleanedBarcode` / `primaryName` / `fallbackNames`). Seek multi-barcode via
+  `matchPriceSeekQueries` — un EAN découvert par un provider est essayé par tous.
+- **Catalog links** : `isVerifiedCatalogProductUrl` sur le module provider (pas de
+  literal id hors `providers/`).
+- Règle : si un provider a les aliases ou l'EAN, **tous** les providers suivants
+  en profitent — pas de silos par module.
+
 ### 1. Couplage d'usage > nombre de fichiers
 
 Si deux modules ne sont importés **que ensemble**, les fusionner. Exemples fusionnés (2026-07-05) :
@@ -36,7 +58,7 @@ Imports publics : `@/core/enrich/fetch` (ex-merge), `@/core/commerce/pricing/res
 ### 2. DRY ≠ moins de fichiers
 
 - **DRY** = une seule source de vérité par règle métier.
-- Un fichier de **3500 lignes de data** (`platformSources.ts`) ou **1400 lignes de matching** (`titleMatching.ts`) est OK si c’est **une cohésion**.
+- Un fichier de **data** (`platforms/data/*.json`) ou **1400 lignes de matching** (`titleMatching.ts`) est OK si c’est **une cohésion**.
 - **Anti-pattern** : fusionner identify + enrich « pour réduire les dossiers » → god modules, tests fragiles.
 
 ### 2. Où mettre du code neuf
@@ -76,9 +98,9 @@ Auth / DB / HTTP             → lib/
 
 **Prochaines réductions utiles** (par valeur, pas par dogme) :
 
-1. Découper `enrich/storage.ts` en persist / images / format (3 fichiers, même pilier).
-2. Extraire `enrich/titles/matching.ts` ← fusion logique titre barcode + metadata (DRY réel).
-3. `platformSources.ts` → JSON/data file + loader (séparer data et code).
+1. Découper `enrich/storage.ts` en persist / images / format (3 fichiers, même pilier) — rendement faible (déjà extrait image*).
+2. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
+3. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
 ## Checklist PR core
 

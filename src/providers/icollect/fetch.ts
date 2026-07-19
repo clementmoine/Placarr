@@ -574,7 +574,9 @@ async function listVideoGameSitemapUrls(): Promise<string[]> {
     timeout: ICE_TIMEOUT_MS,
     validateStatus: (status) => status >= 200 && status < 400,
   });
-  cachedVideoGameSitemapUrls = parseVideoGameSitemapUrls(response.data);
+  cachedVideoGameSitemapUrls = parseVideoGameSitemapUrls(
+    String(response.data ?? ""),
+  );
   return cachedVideoGameSitemapUrls;
 }
 
@@ -688,7 +690,10 @@ export async function fetchICollectVideoGameItem(
     timeout: options?.timeoutMs ?? ICE_TIMEOUT_MS,
     validateStatus: (status) => status >= 200 && status < 400,
   });
-  const metadata = parseICollectVideoGameItemPage(response.data, itemUrl);
+  const metadata = parseICollectVideoGameItemPage(
+    String(response.data ?? ""),
+    itemUrl,
+  );
   if (metadata) {
     metadata.catalogSource = "page";
     if (db && itemId) {
@@ -762,7 +767,7 @@ export async function pingICollect(): Promise<boolean> {
       timeout: ICE_TIMEOUT_MS,
       validateStatus: (status) => status >= 200 && status < 400,
     });
-    return /iCollect Everything/i.test(response.data);
+    return /iCollect Everything/i.test(String(response.data ?? ""));
   } catch {
     return false;
   }

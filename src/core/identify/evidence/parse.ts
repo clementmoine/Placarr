@@ -15,6 +15,7 @@ import {
 } from "@/core/catalog/evidence";
 import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
+import { GENERIC_TITLE_TOKENS } from "@/core/enrich/titles/identityNoise";
 
 import { extractEditionFromText } from "./edition";
 import {
@@ -136,24 +137,7 @@ export function evidenceSimilarity(
   );
 }
 
-export const GENERIC_TITLE_TOKENS = new Set([
-  "the",
-  "and",
-  "for",
-  "with",
-  "le",
-  "la",
-  "les",
-  "des",
-  "de",
-  "du",
-  "un",
-  "une",
-  "jeu",
-  "game",
-  "edition",
-  "version",
-]);
+export { GENERIC_TITLE_TOKENS };
 
 function distinctiveExtraTokens(
   a: ProductEvidence,

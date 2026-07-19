@@ -8,11 +8,20 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+import { repairCatalogColonSubstitute } from "@/core/enrich/titles/normalize";
 import {
   detectScreenScraperSystemId,
   getPlatformKeyByScreenScraperSystemId,
+  getScreenScraperSystemId,
+  VIDEO_GAME_PLATFORM_TOKEN_TERMS,
 } from "@/core/identify/platforms/platforms";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
+import { IDENTITY_FUNCTION_WORDS, GENERIC_TITLE_TOKENS } from "@/core/enrich/titles/identityNoise";
+import {
+  GAME_EDITION_TERMS,
+  LISTING_EDITION_PACKAGING_EXTRA_TERMS,
+  LISTING_NOISE_TERMS,
+} from "@/core/identify/listingTerms";
 
 import type {
   MetadataAttachment,
@@ -80,6 +89,61 @@ function getPlatformKeyFromSSMediaUrl(url?: string | null): string | undefined {
   return getPlatformKeyFromSSSystemId(systemId);
 }
 
+/**
+ * Public ScreenScraper fiche URL (not the authenticated API endpoint).
+ * `plateforme` is the ScreenScraper system id (e.g. 62 = PS Vita).
+ */
+export function buildScreenScraperGamePageUrl(
+  gameId: string | number,
+  systemId?: string | number | null,
+): string {
+  const params = new URLSearchParams();
+  const plateforme =
+    systemId != null && String(systemId).trim() !== ""
+      ? String(systemId).trim()
+      : "";
+  if (/^\d+$/.test(plateforme)) {
+    params.set("plateforme", plateforme);
+  }
+  params.set("gameid", String(gameId).trim());
+  return `https://www.screenscraper.fr/gameinfos.php?${params.toString()}`;
+}
+
+/** Rewrite api.screenscraper.fr/jeuInfos.php links to the public gameinfos page. */
+export function rewriteScreenScraperGameInfoUrl(
+  url: string | null | undefined,
+  systemId?: string | number | null,
+): string | null {
+  if (!url?.trim()) return null;
+  try {
+    const parsed = new URL(url.trim());
+    if (!parsed.hostname.includes("screenscraper.fr")) return null;
+    const gameId =
+      parsed.searchParams.get("gameid") || parsed.searchParams.get("gameId");
+    if (!gameId) return null;
+
+    const fromQuery =
+      parsed.searchParams.get("plateforme") ||
+      parsed.searchParams.get("systemeid");
+    const resolvedSystemId = fromQuery || systemId;
+
+    if (parsed.pathname.includes("gameinfos.php")) {
+      const next = buildScreenScraperGamePageUrl(gameId, resolvedSystemId);
+      return next === parsed.toString() ? null : next;
+    }
+
+    if (
+      parsed.hostname.startsWith("api.") ||
+      parsed.pathname.includes("jeuInfos.php")
+    ) {
+      return buildScreenScraperGamePageUrl(gameId, resolvedSystemId);
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 /** Hard cap on jeuRecherche calls per metadata lookup (fallback loops add up fast). */
 const MAX_SCREENSCRAPER_SEARCH_ATTEMPTS = 10;
 const MAX_CACHED_BARCODE_SUGGESTION_CANDIDATES = 3;
@@ -107,9 +171,10 @@ function pickSSTitle(noms?: SSGame["noms"]): string | undefined {
     return index === -1 ? regionOrder.length : index;
   };
 
-  return noms
+  const text = noms
     .slice()
     .sort((a, b) => regionRank(a.region) - regionRank(b.region))[0]?.text;
+  return text ? repairCatalogColonSubstitute(text) : undefined;
 }
 
 /** Pick the regional title that best matches what we searched for. */
@@ -138,7 +203,7 @@ function pickSSTitleForTarget(
     }
   }
 
-  return best.text;
+  return best.text ? repairCatalogColonSubstitute(best.text) : undefined;
 }
 
 const SCREENSCRAPER_TITLE_MATCH_MIN_SCORE = 0.55;
@@ -160,9 +225,9 @@ function pickSSSynopsis(synopsis?: SSGame["synopsis"]): string | undefined {
   const langOrder = ["fr", "en"];
   for (const lang of langOrder) {
     const found = synopsis.find((s) => s.langue === lang);
-    if (found) return found.text;
+    if (found) return repairCatalogColonSubstitute(found.text);
   }
-  return synopsis[0].text;
+  return repairCatalogColonSubstitute(synopsis[0].text);
 }
 
 function detectSystemIdFromName(name: string): number | undefined {
@@ -337,35 +402,37 @@ function uniqueScreenScraperSearchQueries(values: string[]): string[] {
   return queries;
 }
 
+/**
+ * Ultra-broad first-word queries that must not hit ScreenScraper alone.
+ * Shared generics + a closed provider-local set of title words that are
+ * too common as standalone search seeds (`club`, `star`, `super`).
+ */
 const BROAD_SCREENSCRAPER_FALLBACK_WORDS = new Set([
+  ...GENERIC_TITLE_TOKENS,
+  ...VIDEO_GAME_PLATFORM_TOKEN_TERMS,
   "club",
   "star",
   "super",
-  "the",
-  "les",
-  "des",
-  "jeu",
   "jeux",
-  "wii",
-  "nintendo",
 ]);
 
+/**
+ * Non-distinctive listing/edition chrome for significant-token overlap.
+ * Derived from shared taxonomies + a thin SS-local connector set.
+ */
 const NON_DISTINCTIVE_SCREENSCRAPER_TOKENS = new Set([
+  ...GENERIC_TITLE_TOKENS,
+  ...IDENTITY_FUNCTION_WORDS,
+  ...LISTING_NOISE_TERMS,
+  ...LISTING_EDITION_PACKAGING_EXTRA_TERMS,
+  ...GAME_EDITION_TERMS.filter((term) => !/\s/.test(term)),
   "avec",
+  "sans",
   "bundle",
-  "complete",
-  "complet",
-  "edition",
-  "editions",
-  "force",
   "pack",
   "packs",
-  "pour",
-  "sans",
-  "standard",
-  "sur",
-  "ultimate",
-  "version",
+  "force",
+  "complet",
 ]);
 
 function screenScraperSignificantTokens(
@@ -889,17 +956,43 @@ function withScreenScraperObservations(
   metadata: MetadataResult,
   context: Partial<ScreenScraperObservationContext> = {},
 ): MetadataResult {
+  const systemId =
+    getScreenScraperSystemId(metadata.platformKey) ??
+    detectScreenScraperSystemId(metadata.platformKey) ??
+    null;
+  const gameId = metadata.externalIds?.screenscraper;
+  const sourceUrl =
+    rewriteScreenScraperGameInfoUrl(context.sourceUrl, systemId) ||
+    context.sourceUrl ||
+    (gameId ? buildScreenScraperGamePageUrl(gameId, systemId) : undefined);
+
   if (
     metadata.observationSchemaVersion === METADATA_OBSERVATION_SCHEMA_VERSION &&
     (metadata.observations?.length || 0) > 0
   ) {
-    return metadata;
+    if (!sourceUrl) return metadata;
+    return {
+      ...metadata,
+      observations: metadata.observations!.map((observation) => {
+        const current = observation.provenance?.sourceUrl;
+        const rewritten =
+          rewriteScreenScraperGameInfoUrl(current, systemId) || sourceUrl;
+        if (!rewritten || rewritten === current) return observation;
+        return {
+          ...observation,
+          provenance: {
+            ...observation.provenance,
+            sourceUrl: rewritten,
+          },
+        };
+      }),
+    };
   }
 
   return {
     ...metadata,
     observations: buildScreenScraperObservations(metadata, {
-      sourceUrl: context.sourceUrl,
+      sourceUrl,
       hasBarcodeMatch: context.hasBarcodeMatch ?? false,
       hasPlatformMatch: context.hasPlatformMatch ?? false,
     }),
@@ -1268,14 +1361,21 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
       }
 
       const aliases = gameData.noms
-        ? Array.from(new Set(gameData.noms.map((n) => n.text))).filter(
+        ? Array.from(
+            new Set(
+              gameData.noms.map((n) => repairCatalogColonSubstitute(n.text)),
+            ),
+          ).filter(
             (n) => n.toLowerCase().trim() !== title.toLowerCase().trim(),
           )
         : undefined;
       const regionalTitles = gameData.noms
         ? gameData.noms
             .filter((n) => n.text)
-            .map((n) => ({ region: n.region, text: n.text }))
+            .map((n) => ({
+              region: n.region,
+              text: repairCatalogColonSubstitute(n.text),
+            }))
         : undefined;
 
       const result: MetadataResult = withMetadataPlatformKeys(
@@ -1308,7 +1408,10 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
 
       return withScreenScraperObservations(result, {
         sourceUrl: gameData.id
-          ? `https://api.screenscraper.fr/api2/jeuInfos.php?gameid=${gameData.id}`
+          ? buildScreenScraperGamePageUrl(
+              gameData.id,
+              resolvedSystemId || Number(gameData.systeme?.id) || null,
+            )
           : undefined,
         hasBarcodeMatch: resolvedFromBarcodeEvidence,
         hasPlatformMatch: !!(

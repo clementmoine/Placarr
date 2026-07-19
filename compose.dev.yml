@@ -1,6 +1,6 @@
-# Développement "tout en Docker" : PostgreSQL + Next.js en hot-reload.
+# Développement "tout en Docker" : PostgreSQL + Next.js + worker en hot-reload.
 #
-#   docker compose -f compose.dev.yml up        # démarre db + app
+#   docker compose -f compose.dev.yml up        # démarre db + app + worker
 #   docker compose -f compose.dev.yml down       # arrête
 #
 # L'app est servie sur http://localhost:3000. Le code est monté en bind-mount
@@ -12,7 +12,7 @@
 # TRÈS lent (résolution de modules I/O-bound). C'est natif/rapide sous Linux.
 # Sur Mac, préférer le mode hybride pour le dev quotidien :
 #   docker compose up -d db   # juste Postgres
-#   pnpm dev                  # Next en natif (~1-2s de compile)
+#   pnpm dev                  # Next + worker (concurrent)
 
 services:
   db:
@@ -56,6 +56,54 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  worker:
+    image: node:23.11.0-bookworm-slim
+    working_dir: /app
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm prisma generate &&
+             pnpm worker"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_ID=dev-worker-1
+      - WORKER_KINDS=interactive
+      - WORKER_CONCURRENCY=4
+    volumes:
+      - .:/app
+      - placarr-dev-node-modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
+
+  worker-icollect:
+    image: node:23.11.0-bookworm-slim
+    working_dir: /app
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm prisma generate &&
+             pnpm worker:icollect"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_ID=dev-worker-icollect
+      - WORKER_KINDS=catalog
+      - WORKER_CONCURRENCY=1
+    volumes:
+      - .:/app
+      - placarr-dev-node-modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
 
 volumes:
   placarr-db:

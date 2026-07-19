@@ -196,7 +196,7 @@ export function formatAttachmentSourceNames(
   push(formatProviderDisplayName(input));
 
   // Synthetic honor pins should not hide the real catalog provider when both
-  // contributed the same file ("Perso" + "Booknode" → Booknode only).
+  // contributed the same file ("Perso" + catalog label → catalog only).
   const withoutHonorPin =
     names.length > 1
       ? names.filter((name) => normalizeToken(name) !== "perso")

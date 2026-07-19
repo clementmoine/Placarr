@@ -39,6 +39,18 @@ export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((mdl) => mdl.info.id === id);
 }
 
+/** Provider that owns a custom cover download path for this remote URL. */
+export function providerModuleForCoverDownload(
+  url: string,
+): ProviderModule | undefined {
+  if (!url.startsWith("http")) return undefined;
+  return PROVIDER_MODULES.find((mdl) => {
+    if (!mdl.localizeCoverDownload) return false;
+    const host = mdl.info.coverUrlHost;
+    return Boolean(host && url.includes(host));
+  });
+}
+
 /** Evidence chip label declared by a provider module (server-side). */
 export function providerEvidenceLabelFor(providerId: string): string {
   const providerModule = getProviderModule(providerId);
@@ -309,6 +321,7 @@ export function materializeProviderInfo(info: ProviderInfo): ProviderInfo {
     rateLimited: info.rateLimited ?? false,
     requiresTitleAlignment: info.requiresTitleAlignment ?? false,
     retailCatalogImageTitles: info.retailCatalogImageTitles ?? false,
+    catalogCoverTitles: info.catalogCoverTitles ?? false,
     strictShelfPlatformCover: info.strictShelfPlatformCover ?? false,
     authoritative3dCoverRole: info.authoritative3dCoverRole ?? false,
     gridStyleCoverLabels: info.gridStyleCoverLabels ?? false,

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
+import { priceListingMatchesAnyItemName } from "@/core/identify/titleUtils";
 
 import { fetchFromEbayCatalog } from "./catalog";
 import {
@@ -59,21 +59,24 @@ function matchesExpectedTitle(title: string, expectedNames: string[]) {
   if (names.length === 0) return true;
   const textNames = names.filter((name) => !isBarcodeLike(name));
   if (textNames.length === 0) return true;
-  return textNames.some((expected) =>
-    isNameOnlyRetailerTitleMatch(expected, title),
-  );
+  return priceListingMatchesAnyItemName(textNames, title);
 }
 
 function isNewCondition(condition?: string | null): boolean {
   return /^new/i.test(String(condition ?? "").trim());
 }
 
+type EbayBrowseSearchResult = {
+  items: EbayItemSummary[];
+  retryableFailure: boolean;
+};
+
 async function searchEbayBrowse(
   params: Record<string, string>,
   credentials: EbayCredentials,
-): Promise<EbayItemSummary[]> {
+): Promise<EbayBrowseSearchResult> {
   const token = await getEbayBrowseAccessToken(credentials);
-  if (!token) return [];
+  if (!token) return { items: [], retryableFailure: false };
   const res = await axios.get(EBAY_BROWSE_SEARCH_URL, {
     params: { limit: "10", ...params },
     headers: {
@@ -84,9 +87,18 @@ async function searchEbayBrowse(
     timeout: EBAY_REQUEST_TIMEOUT_MS,
     validateStatus: () => true,
   });
-  if (res.status !== 200) return [];
+  if (res.status === 429 || res.status >= 500) {
+    console.warn(
+      `[eBay] Browse search transient failure (${res.status}) for ${JSON.stringify(params)}`,
+    );
+    return { items: [], retryableFailure: true };
+  }
+  if (res.status !== 200) return { items: [], retryableFailure: false };
   const items = res.data?.itemSummaries;
-  return Array.isArray(items) ? (items as EbayItemSummary[]) : [];
+  return {
+    items: Array.isArray(items) ? (items as EbayItemSummary[]) : [],
+    retryableFailure: false,
+  };
 }
 
 function listingsToProducts(
@@ -132,7 +144,7 @@ async function fetchBrowseListingsByGtin(
   expectedNames: string[],
   credentials: EbayCredentials,
 ): Promise<EbayProduct[]> {
-  const items = await searchEbayBrowse({ gtin }, credentials);
+  const { items } = await searchEbayBrowse({ gtin }, credentials);
   return listingsToProducts(items, expectedNames);
 }
 
@@ -141,7 +153,7 @@ async function fetchBrowseListingsByEpid(
   expectedNames: string[],
   credentials: EbayCredentials,
 ): Promise<EbayProduct[]> {
-  const items = await searchEbayBrowse({ epid }, credentials);
+  const { items } = await searchEbayBrowse({ epid }, credentials);
   return listingsToProducts(items, expectedNames);
 }
 
@@ -226,9 +238,14 @@ export async function fetchEbayProductsByQuery(
 
   console.log(`[eBay] Querying search: ${cleaned}`);
   try {
-    const items = await searchEbayBrowse({ q: cleaned }, credentials);
+    const { items, retryableFailure } = await searchEbayBrowse(
+      { q: cleaned },
+      credentials,
+    );
     const products = listingsToProducts(items, expectedNames);
-    cacheEbaySearchProducts(cleaned, products);
+    if (!retryableFailure) {
+      cacheEbaySearchProducts(cleaned, products);
+    }
     return products;
   } catch (error: unknown) {
     console.error(
@@ -257,10 +274,11 @@ export async function fetchPricesFromEbay(
 
   try {
     const isBarcode = isBarcodeLike(cleaned);
-    const items = await searchEbayBrowse(
+    const { items, retryableFailure } = await searchEbayBrowse(
       isBarcode ? { gtin: cleaned.replace(/[^\d]/g, "") } : { q: cleaned },
       credentials,
     );
+    if (retryableFailure) return null;
 
     const newPrices: number[] = [];
     const usedPrices: number[] = [];

@@ -3,6 +3,7 @@ import {
   type VideoGamePlatformKey,
 } from "@/core/identify/platforms/platforms";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { LISTING_PHYSICAL_SHELF_FORMAT_TERMS } from "@/core/identify/listingTerms";
 
 export type { VideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 
@@ -82,17 +83,8 @@ function normalizeShelfName(value: string): string {
     .trim();
 }
 
-/** Physical-format tokens — used both as search clues and shelf-name prefixes. */
-const PHYSICAL_FORMAT_TOKENS = [
-  "dvd",
-  "blu ray",
-  "bluray",
-  "vhs",
-  "laserdisc",
-  "laser disc",
-  "uhd",
-  "4k",
-] as const;
+/** Physical-format tokens — derived from listing format taxonomy (+ 4k). */
+const PHYSICAL_FORMAT_TOKENS = LISTING_PHYSICAL_SHELF_FORMAT_TERMS;
 
 function compactShelfName(value: string): string {
   return normalizeShelfName(value).replace(/\s+/g, "");

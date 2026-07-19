@@ -113,7 +113,10 @@ describe("persistProviderExternalLinksForMetadata", () => {
   });
 
   it("purge un lien LeDénicheur dont le GTIN de page contredit l'item", async () => {
-    mockedGetProviderModule.mockReturnValueOnce({
+    // Both sync (trusted-catalog check) and async (validateStored…) call
+    // getProviderModule — mock for every call, not once.
+    mockedGetProviderModule.mockReturnValue({
+      info: { nameDatabase: false },
       validateStoredExternalLinkAgainstBarcode: vi.fn(async () => true),
     } as never);
     h.metadataFindUnique.mockResolvedValue({

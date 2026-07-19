@@ -30,7 +30,7 @@ export async function fetchFromFreakxy(
       headers: HEADERS,
       timeout: REQUEST_TIMEOUT_MS,
     });
-    const html = res.data;
+    const html = String(res.data ?? "");
 
     if (
       html.includes("Votre recherche n'a retourné aucun résultat") ||

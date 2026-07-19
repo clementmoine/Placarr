@@ -1,6 +1,3 @@
-/** Covers below this shortest edge look pixelated on the item detail view (~240px wide @2x). */
-export const MIN_COVER_SHORTEST_EDGE = 280;
-
 export type ImageDimensions = {
   width: number;
   height: number;
@@ -22,11 +19,14 @@ export function shortestImageEdge(
   return Math.min(metrics.width, metrics.height);
 }
 
+/**
+ * Any measured (or unknown) cover is acceptable — catalog thumbs like BDovore
+ * (~180px) must not be rejected by a hard pixel floor.
+ */
 export function isCoverResolutionAcceptable(
-  metrics: PartialImageDimensions | null | undefined,
+  _metrics?: PartialImageDimensions | null,
 ): boolean {
-  const shortest = shortestImageEdge(metrics);
-  return shortest === 0 || shortest >= MIN_COVER_SHORTEST_EDGE;
+  return true;
 }
 
 /** CDN paths like Booknode `/full/*.jpg` should not be satisfied by tiny fallbacks. */

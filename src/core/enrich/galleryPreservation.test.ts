@@ -111,4 +111,35 @@ describe("preserveGalleryAttachmentsOnRegression", () => {
       preserveGalleryAttachmentsOnRegression(previous, next, "psvita"),
     ).toEqual(next);
   });
+
+  it("always keeps source=user uploads even when the refresh gallery is healthy", () => {
+    const previous = [
+      storedAttachment("image", "/uploads/my-disc.jpg", { source: "user" }),
+      storedAttachment("cover", "/uploads/old-grid.jpg", {
+        source: "steamgriddb",
+      }),
+    ];
+    const next = [
+      {
+        type: "cover" as const,
+        url: "/uploads/grid-a.jpg",
+        source: "steamgriddb",
+      },
+      {
+        type: "cover" as const,
+        url: "/uploads/grid-b.jpg",
+        source: "steamgriddb",
+      },
+    ];
+
+    expect(
+      preserveGalleryAttachmentsOnRegression(previous, next).map(
+        (attachment) => [attachment.source, attachment.url],
+      ),
+    ).toEqual([
+      ["steamgriddb", "/uploads/grid-a.jpg"],
+      ["steamgriddb", "/uploads/grid-b.jpg"],
+      ["user", "/uploads/my-disc.jpg"],
+    ]);
+  });
 });

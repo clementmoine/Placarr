@@ -161,11 +161,30 @@ export function isHonoredUserCoverPin(item: MediaInput): boolean {
 function pinUserCoversFirst(
   ranked: ScoredAttachmentInput[],
 ): ScoredAttachmentInput[] {
+  const catalogKeys = new Set(
+    ranked
+      .filter((attachment) => normalizeSourceKey(attachment.source) !== "user")
+      .map((attachment) =>
+        attachment.url ? stripCropSuffixFromUrl(attachment.url) : "",
+      )
+      .filter(Boolean),
+  );
   const users: ScoredAttachmentInput[] = [];
   const rest: ScoredAttachmentInput[] = [];
   for (const attachment of ranked) {
-    if (attachment.source === "user") users.push(attachment);
-    else rest.push(attachment);
+    if (attachment.source === "user") {
+      const key = attachment.url
+        ? stripCropSuffixFromUrl(attachment.url)
+        : "";
+      // Honor pin sharing the catalog file must not appear as a leading "Perso"
+      // card — URL dedupe already prefers the provider row.
+      if (key && catalogKeys.has(key)) {
+        continue;
+      }
+      users.push(attachment);
+    } else {
+      rest.push(attachment);
+    }
   }
   return users.length === 0 ? ranked : [...users, ...rest];
 }
@@ -1031,17 +1050,21 @@ export function getGalleryImages(
   };
 
   if (isUserUploadedImage(item.imageUrl) && item.imageUrl) {
-    const provenance = item.metadata?.attachments?.find(
-      (attachment) =>
-        attachment.url &&
-        urlsReferToSameLocalizedImage(attachment.url, item.imageUrl!),
+    // Local `/uploads` paths are often provider downloads (barcode scan /
+    // enrichment), not personal uploads. Only label "user"/"Perso" when a
+    // gallery row (preferring catalog over an honor pin) actually backs the pin.
+    const provenance = findAttachmentForUrl(
+      item.metadata?.attachments ?? [],
+      item.imageUrl,
     );
     add({
       url: item.imageUrl,
       type: provenance?.type ?? "image",
-      source: provenance?.source ?? "user",
+      source: provenance?.source ?? null,
       role: provenance?.role,
       title: provenance?.title,
+      providerLabel: provenance?.providerLabel,
+      sourceNames: provenance?.sourceNames,
     });
   }
 

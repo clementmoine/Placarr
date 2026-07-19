@@ -1,42 +1,6 @@
-import { cleanCode, detectPlatformKey } from "@/core/identify/query";
-import {
-  getPriceChartingPlatformSlugs,
-  resolvePriceChartingPlatformSlug,
-} from "./platformSlugs";
-import { expandPriceChartingLookupTitles } from "./lookupTitles";
-import {
-  priceChartingAmpersandTitleSlug,
-  priceChartingTitleSlug,
-} from "./titleSlug";
+import { cleanCode } from "@/core/identify/query";
 
 import type { CatalogExternalLinkContext } from "@/types/providerModule";
-
-function looksPal({
-  barcode,
-  shelfName,
-  title,
-  aliases = [],
-}: {
-  barcode?: string | null;
-  shelfName?: string | null;
-  title?: string | null;
-  aliases?: string[];
-}) {
-  const evidence = [shelfName, title, ...aliases].filter(Boolean).join(" ");
-  if (/\b(ntsc|usa?|jp|jpn|japan)\b/i.test(evidence)) return false;
-  if (/\b(pal|eur?|europe|fr|fra|fre|uk)\b/i.test(evidence)) return true;
-
-  const shelfPlatformKey = detectPlatformKey(shelfName ?? "");
-  if (
-    shelfPlatformKey &&
-    getPriceChartingPlatformSlugs(shelfPlatformKey)?.pal
-  ) {
-    return true;
-  }
-
-  const code = cleanCode(barcode);
-  return code.length === 13 && !code.startsWith("0");
-}
 
 function scorePriceChartingTitle(value: string) {
   const normalized = value
@@ -79,70 +43,18 @@ function pickPriceChartingTitle({
   )[0];
 }
 
-function shouldUsePriceChartingSearchUrl(title: string) {
-  return /\bclub football\b/i.test(title);
-}
-
-function priceChartingCatalogSlugScore(slug: string): number {
-  let score = 0;
-  if (slug.includes("double-pack")) score += 40;
-  if (slug.includes("&")) score += 20;
-  if (/\d/.test(slug)) score += 10;
-  return score;
-}
-
-function pickPriceChartingCatalogTitleSlug(title: string): string {
-  const variants = expandPriceChartingLookupTitles(title);
-  const slugs = variants.flatMap((variant) => [
-    priceChartingAmpersandTitleSlug(variant),
-    priceChartingTitleSlug(variant),
-  ]);
-  const ranked = slugs
-    .filter(Boolean)
-    .sort(
-      (left, right) =>
-        priceChartingCatalogSlugScore(right) -
-        priceChartingCatalogSlugScore(left),
-    );
-  return ranked[0] ?? priceChartingTitleSlug(title);
-}
-
+/**
+ * Catalog chips must not invent `/game/{platform}/{slug}` URLs: PriceCharting
+ * soft-404s unknown slugs with a 302 to search (still HTTP 200 after follow).
+ * Keep an honest search link; a verified game URL is written after scrape.
+ */
 export function buildPriceChartingCatalogLink({
   title,
   fallbackTitle,
-  shelfName,
   barcode,
   aliases,
 }: CatalogExternalLinkContext) {
   const cleanTitle = pickPriceChartingTitle({ title, fallbackTitle, aliases });
-  const titleSlug = pickPriceChartingCatalogTitleSlug(cleanTitle);
   const searchUrl = `https://www.pricecharting.com/fr/search-products?type=videogames&q=${encodeURIComponent(cleanTitle || cleanCode(barcode))}`;
-
-  if (!titleSlug || !shelfName || shouldUsePriceChartingSearchUrl(cleanTitle)) {
-    return { url: searchUrl, isDirect: false };
-  }
-
-  const platformKey = detectPlatformKey(shelfName);
-  const platformSlug = resolvePriceChartingPlatformSlug(shelfName, {
-    barcode,
-    isPal: looksPal({ barcode, shelfName, title: cleanTitle, aliases }),
-  });
-  if (!platformSlug) {
-    const platform = getPriceChartingPlatformSlugs(platformKey);
-    if (!platform) {
-      return { url: searchUrl, isDirect: false };
-    }
-    const isPal = looksPal({ barcode, shelfName, title: cleanTitle, aliases });
-    const fallbackSlug =
-      isPal && platform.pal ? platform.pal : platform.default;
-    return {
-      url: `https://www.pricecharting.com/game/${fallbackSlug}/${titleSlug}`,
-      isDirect: true,
-    };
-  }
-
-  return {
-    url: `https://www.pricecharting.com/game/${platformSlug}/${titleSlug}`,
-    isDirect: true,
-  };
+  return { url: searchUrl, isDirect: false };
 }

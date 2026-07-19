@@ -130,17 +130,42 @@ export function makeProviderExternalLinkFact(input: {
   url: string;
   label?: string;
   priority?: number;
+  platformKey?: string | null;
 }): MetadataFact {
   const label = input.label ?? formatProviderSourceLabel(input.source);
+  const sourceKey = normalizeProviderSourceKey(input.source);
+  const module = sourceKey ? getProviderModule(sourceKey) : undefined;
+  const normalizedUrl =
+    module
+      ?.normalizeCatalogProductUrl?.(input.url.trim(), {
+        platformKey: input.platformKey,
+      })
+      ?.trim() || input.url.trim();
   return {
     kind: "external-link",
     label,
     value: "Voir la fiche",
-    url: input.url.trim(),
+    url: normalizedUrl,
     source: input.source,
     confidence: 0.66,
     priority: input.priority ?? 38,
   };
+}
+
+function normalizeStoredExternalLinkFact(
+  fact: MetadataFact,
+  platformKey?: string | null,
+): MetadataFact {
+  if (fact.kind !== "external-link" || !fact.url?.trim()) return fact;
+  const sourceKey = normalizeProviderSourceKey(
+    fact.source ?? fact.label ?? fact.providerLabel ?? "",
+  );
+  const module = sourceKey ? getProviderModule(sourceKey) : undefined;
+  const normalizedUrl = module?.normalizeCatalogProductUrl?.(fact.url.trim(), {
+    platformKey,
+  });
+  if (!normalizedUrl || normalizedUrl === fact.url.trim()) return fact;
+  return { ...fact, url: normalizedUrl };
 }
 
 function providerHasExternalLink(
@@ -561,11 +586,12 @@ export function buildProfileProviderLinkFacts(input: {
   priceOffers?: readonly ProviderPriceOfferLinkInput[];
   itemBarcode?: string | null;
   itemTitle?: string | null;
+  platformKey?: string | null;
   catalogLink?: { url: string; providerLabel?: string } | null;
 }): MetadataFact[] {
-  let links = (input.facts ?? []).filter(
-    (fact) => fact.kind === "external-link" && fact.url?.trim(),
-  );
+  let links = (input.facts ?? [])
+    .filter((fact) => fact.kind === "external-link" && fact.url?.trim())
+    .map((fact) => normalizeStoredExternalLinkFact(fact, input.platformKey));
 
   const fromEvidence = externalLinkFactsFromFieldEvidence(
     input.fieldEvidence ?? [],

@@ -161,6 +161,22 @@ describe("mergeMetadataPricesIntoResult", () => {
       ]),
     );
     expect(merged?.priceSources).toContain("bedetheque");
+    // Plafond seul « moins de 5 € » → point médian de la fourchette implicite
+    // 0–5 € (prendre le plafond gonflerait chaque album courant du rayon).
+    expect(merged?.priceEstimated).toBe(250);
+    expect(merged?.priceNew).toBeNull();
+    expect(merged?.priceUsed).toBeNull();
+  });
+
+  it("dérive un prix ponctuel médian par forme de cote", () => {
+    const estimatedFor = (value: string) =>
+      priceObservationsFromMetadataFacts([
+        { kind: "price", label: "Estimation", value, source: "bedetheque" },
+      ]).find((entry) => entry.condition === "estimated")?.priceCents;
+
+    expect(estimatedFor("de 5 à 10 euros")).toBe(750);
+    expect(estimatedFor("moins de 5 euros")).toBe(250);
+    expect(estimatedFor("plus de 5 euros")).toBe(500);
   });
 
   it("keeps marketplace summary while attaching catalog observations as sources", () => {
@@ -202,5 +218,47 @@ describe("mergeMetadataPricesIntoResult", () => {
     expect(merged?.priceUsed).toBe(1100);
     expect(merged?.priceSources).toEqual(["ebay", "bedetheque"]);
     expect(merged?.priceObservations).toHaveLength(2);
+    // L'estimation reste disponible mais le prix observé garde la priorité
+    // à l'affichage (getItemValueEstimate ne l'utilise qu'en dernier recours).
+    expect(merged?.priceEstimated).toBe(750);
+  });
+
+  it("fills missing priceNew from observed-price when cache only has used", () => {
+    const merged = mergeMetadataPricesIntoResult({
+      shelfType: "books",
+      shelfName: "Livres",
+      itemNames: ["L'Art et la Création de Arcane"],
+      metadataFacts: [
+        {
+          kind: "observed-price",
+          label: "ChocoBonPlan",
+          value: "39,90 €",
+          source: "chocobonplan",
+        },
+      ],
+      prices: {
+        priceNew: null,
+        priceUsed: 3947,
+        priceUsedCIB: null,
+        priceLastUpdated: new Date("2026-07-11"),
+        priceSources: ["ebay"],
+        priceSourceDisplayNames: ["eBay"],
+        isReferencePriceOnly: false,
+        priceObservations: [
+          {
+            source: "ebay",
+            productName: "L'Art et la Création de Arcane",
+            condition: "used",
+            priceCents: 3947,
+            currency: "EUR",
+            sourceDisplayLabel: "eBay",
+          },
+        ],
+      },
+    });
+
+    expect(merged?.priceNew).toBe(3990);
+    expect(merged?.priceUsed).toBe(3947);
+    expect(merged?.priceSources).toContain("chocobonplan");
   });
 });

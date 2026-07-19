@@ -137,16 +137,26 @@ function distinctiveTokenAdjustment(
 ): number {
   const requestedTokens = coreTitleTokens(requestedName);
   const candidateText = normalizeLaunchBoxTitle(candidateName);
+  const candidateTokens = coreTitleTokens(candidateName);
+  const requestedText = normalizeLaunchBoxTitle(requestedName);
+  const candidateFullyCovered =
+    candidateTokens.length > 0 &&
+    candidateTokens.every((token) => requestedText.includes(token));
+  // Shelf "James Bond 007 Nightfire" vs catalog "007: Nightfire": every catalog
+  // token is in the request; extra franchise words must not tank the score.
+  const requestMayCarryFranchisePrefix =
+    candidateFullyCovered &&
+    (candidateTokens.length >= 2 ||
+      candidateTokens.some((token) => token.length >= 6));
   let adjustment = 0;
 
   for (const token of requestedTokens) {
     if (!candidateContainsToken(candidateText, token)) {
+      if (requestMayCarryFranchisePrefix) continue;
       adjustment -= token.length >= 4 ? 0.24 : 0.14;
     }
   }
 
-  const candidateTokens = coreTitleTokens(candidateName);
-  const requestedText = normalizeLaunchBoxTitle(requestedName);
   for (const token of candidateTokens) {
     if (requestedText.includes(token)) continue;
     if (token.length >= 4) adjustment -= 0.18;

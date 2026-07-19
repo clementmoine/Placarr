@@ -2,7 +2,12 @@ import axios from "axios";
 import type { DatabaseSync } from "node:sqlite";
 
 import { createSerializeAsync } from "@/lib/async/serializeAsync";
-import { runBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
+import {
+  BACKGROUND_WORK_KIND,
+  BACKGROUND_WORK_STATUS,
+  enqueueBackgroundWorkJob,
+} from "@/core/collect/jobs/workQueue";
+import { prisma } from "@/lib/db/prisma";
 
 import {
   fetchICollectVideoGameItem,
@@ -49,7 +54,7 @@ const DEFAULT_PAGE_SCRAPE_DELAY_MS = 0;
 const DEFAULT_PAGE_SCRAPE_CONCURRENCY = 1;
 /** Min spacing between HTTP starts when concurrency > 1 (avoids instant bursts). */
 const DEFAULT_PARALLEL_START_GAP_MS = 250;
-const DEFAULT_PAGE_SCRAPE_TICK_BUDGET_MS = 60 * 60 * 1000;
+const DEFAULT_PAGE_SCRAPE_TICK_BUDGET_MS = 2 * 60 * 1000;
 
 const globalStateKey = "__placarr_icollect_catalog_sync";
 
@@ -375,6 +380,8 @@ export async function runICollectPageScrapeBatch(
       ? `unlimited (≤${Math.round(tickBudgetMs / 60_000)}min)`
       : String(batchSize);
   let lastHeartbeatAt = Date.now();
+  let lastMetadataYieldCheckAt = 0;
+  let yieldForMetadata = false;
   let scrapeBudgetRemaining =
     batchSize <= 0 ? Number.MAX_SAFE_INTEGER : batchSize;
 
@@ -382,8 +389,29 @@ export async function runICollectPageScrapeBatch(
     `[iCollect scrape] batch start size=${batchLabel} items=${items.length} cursor=${cursor} delay=${baseDelayMs}ms concurrency=${concurrency}${requestStartGapMs > 0 ? ` startGap=${requestStartGapMs}ms` : ""}`,
   );
 
+  const refreshMetadataYieldFlag = async () => {
+    if (Date.now() - lastMetadataYieldCheckAt < 5_000) return;
+    lastMetadataYieldCheckAt = Date.now();
+    const waiting = await prisma.backgroundWorkJob.count({
+      where: {
+        status: BACKGROUND_WORK_STATUS.pending,
+        kind: BACKGROUND_WORK_KIND.metadataRefresh,
+        runAfter: { lte: new Date() },
+      },
+    });
+    if (waiting > 0 && !yieldForMetadata) {
+      console.log(
+        `[iCollect scrape] yielding — ${waiting} metadataRefresh job(s) waiting`,
+      );
+    }
+    yieldForMetadata = waiting > 0;
+  };
+
   const shouldStopBatch = () =>
-    Date.now() >= deadline || attempts >= maxAttempts || rateLimited;
+    Date.now() >= deadline ||
+    attempts >= maxAttempts ||
+    rateLimited ||
+    yieldForMetadata;
 
   const logSkipHeartbeat = () => {
     if (
@@ -400,6 +428,7 @@ export async function runICollectPageScrapeBatch(
 
   const claimNextScrapeItem = () =>
     coordGate.run(async () => {
+      await refreshMetadataYieldFlag();
       while (!shouldStopBatch()) {
         if (cursor >= items.length) return null;
 
@@ -555,18 +584,18 @@ export function maybeScheduleICollectCatalogSync(): void {
   if (state.syncScheduled || state.syncRunning) return;
   state.syncScheduled = true;
 
-  void runBackgroundWork(async () => {
-    state.syncScheduled = false;
-    if (state.syncRunning) return;
-    state.syncRunning = true;
-    try {
-      await runICollectCatalogSyncTick();
-    } catch (error) {
-      console.warn("[iCollect sync] tick failed:", error);
-    } finally {
-      state.syncRunning = false;
-    }
-  });
+  void enqueueBackgroundWorkJob({
+    kind: BACKGROUND_WORK_KIND.icollectCatalogSync,
+    payload: { tick: true },
+    replaceOpenForKind: true,
+  })
+    .then(() => {
+      state.syncScheduled = false;
+    })
+    .catch((error) => {
+      state.syncScheduled = false;
+      console.warn("[iCollect sync] failed to enqueue tick:", error);
+    });
 }
 
 export function startICollectCatalogSyncLoop(): void {

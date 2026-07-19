@@ -718,11 +718,16 @@ export function pickRelevantChocoBonPlanHit(
 function isChocoBonPlanProductPlatformCompatible(
   productTitle: string | undefined,
   platform?: string | null,
+  productUrl?: string | null,
 ): boolean {
   const requested = detectVideoGamePlatformKey(platform || "");
   if (!requested || !productTitle) return true;
 
-  const detected = detectVideoGamePlatformKey(productTitle);
+  const titleKey = detectVideoGamePlatformKey(productTitle);
+  const urlKey = productUrl
+    ? detectVideoGamePlatformKey(productUrl.replace(/-/g, " "))
+    : null;
+  const detected = urlKey ?? titleKey;
   if (!detected) return true;
   if (requested === detected) return true;
   if (
@@ -839,7 +844,13 @@ export async function fetchFromChocoBonPlan(
 
       const page = await fetchChocoBonPlanProductPage(hit.url);
       const resolvedTitle = page.title || hit.title;
-      if (!isChocoBonPlanProductPlatformCompatible(resolvedTitle, platform)) {
+      if (
+        !isChocoBonPlanProductPlatformCompatible(
+          resolvedTitle,
+          platform,
+          hit.url,
+        )
+      ) {
         continue;
       }
       const attachments = page.attachments ?? [];

@@ -107,7 +107,11 @@ function catalogEstimatePriceCents(estimate: CatalogEstimatePricing): number {
   if (minCents != null && maxCents != null) {
     return Math.round((minCents + maxCents) / 2);
   }
-  if (maxCents != null) return maxCents;
+  // Ceiling-only cote (« moins de 5 € ») reads as the implicit 0–max range:
+  // taking the ceiling itself would inflate every common album of a shelf.
+  if (maxCents != null) return Math.round(maxCents / 2);
+  // Floor-only cote (« plus de 5 € ») is open-ended: the floor is the only
+  // defensible point value.
   if (minCents != null) return minCents;
   return parseEuroCents(displayValue) ?? 0;
 }
@@ -333,6 +337,17 @@ function hasCatalogEstimateOffers(offers: PriceObservation[]): boolean {
   );
 }
 
+/** Lowest catalog-estimate point price among the merged observations. */
+export function estimatedPriceCentsFromObservations(
+  offers: Pick<PriceObservation, "condition" | "priceCents">[],
+): number | null {
+  const cents = offers
+    .filter((offer) => offer.condition === "estimated")
+    .map((offer) => offer.priceCents)
+    .filter((value) => Number.isFinite(value) && value > 0);
+  return cents.length > 0 ? Math.min(...cents) : null;
+}
+
 function catalogEstimateOnlyResult(
   offers: PriceObservation[],
 ): BarcodePricesResult {
@@ -347,6 +362,7 @@ function catalogEstimateOnlyResult(
     priceNew: null,
     priceUsed: null,
     priceUsedCIB: null,
+    priceEstimated: estimatedPriceCentsFromObservations(estimateOffers),
     priceLastUpdated: null,
     priceSources: sources,
     priceSourceDisplayNames: sources.map(formatProviderSourceLabel),
@@ -371,6 +387,7 @@ export function mergeMetadataPricesIntoResult(input: {
     ...observationsFromPriceResult(input.prices),
     ...metadataOffers,
   ]);
+  const priceEstimated = estimatedPriceCentsFromObservations(mergedOffers);
 
   if (!hasPriceSummary(input.prices)) {
     const resolved = resolveItemDisplayPrices(
@@ -381,7 +398,10 @@ export function mergeMetadataPricesIntoResult(input: {
       null,
     );
     if (resolved) {
-      return withMergedObservations(resolved, mergedOffers);
+      return {
+        ...withMergedObservations(resolved, mergedOffers),
+        priceEstimated,
+      };
     }
     if (hasCatalogEstimateOffers(mergedOffers)) {
       return catalogEstimateOnlyResult(mergedOffers);
@@ -400,11 +420,48 @@ export function mergeMetadataPricesIntoResult(input: {
     metadataLabels,
   );
 
+  // Partial barcode cache (e.g. used-only) must still pick up metadata
+  // observed-price for the empty buckets — otherwise a "new" card stays blank
+  // while the detail page shows the ChocoBonPlan neuf price from facts.
+  const filled = fillMissingSummaryFromMetadataOffers(
+    input.prices!,
+    metadataOffers,
+  );
+
   return {
     ...input.prices!,
+    priceNew: filled.priceNew,
+    priceUsed: filled.priceUsed,
+    priceUsedCIB: filled.priceUsedCIB,
+    priceEstimated,
     priceSources: mergedSources.sources,
     priceSourceDisplayNames: mergedSources.labels,
     isReferencePriceOnly: false,
     priceObservations: serializeMergedObservations(mergedOffers),
+  };
+}
+
+function fillMissingSummaryFromMetadataOffers(
+  prices: BarcodePricesResult,
+  metadataOffers: PriceObservation[],
+): Pick<BarcodePricesResult, "priceNew" | "priceUsed" | "priceUsedCIB"> {
+  const minFor = (
+    conditions: Array<NonNullable<PriceObservation["condition"]>>,
+  ): number | null => {
+    const values = metadataOffers
+      .filter(
+        (offer) =>
+          offer.condition != null &&
+          conditions.includes(offer.condition) &&
+          offer.priceCents > 0,
+      )
+      .map((offer) => offer.priceCents);
+    return values.length > 0 ? Math.min(...values) : null;
+  };
+
+  return {
+    priceNew: prices.priceNew ?? minFor(["new"]),
+    priceUsed: prices.priceUsed ?? minFor(["used", "loose"]),
+    priceUsedCIB: prices.priceUsedCIB ?? minFor(["cib"]),
   };
 }

@@ -109,6 +109,36 @@ describe("createGoogleBooksResolver", () => {
     expect(await fetchFromGoogleBooks("Unknown Book")).toBeNull();
   });
 
+  it("refuse un volume Boruto quand la recherche cible Naruto", async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: "3aV3EQAAQBAJ",
+            volumeInfo: {
+              title: "Boruto no 03/20",
+              subtitle: "Naruto Next Generations",
+              industryIdentifiers: [
+                { type: "ISBN_13", identifier: "9788413428406" },
+              ],
+              imageLinks: {
+                thumbnail:
+                  "https://books.google.com/books/content?id=3aV3EQAAQBAJ&printsec=frontcover&img=1",
+              },
+            },
+          },
+        ],
+      },
+    } as never);
+
+    const result = await createGoogleBooksResolver()(
+      "Naruto n°03",
+      "9788413428406",
+    );
+
+    expect(result).toBeNull();
+  });
+
   it("ignore les couvertures Google Books placeholder", async () => {
     mockedGet.mockResolvedValue({
       data: {

@@ -1,4 +1,5 @@
 import { cleanCode } from "@/core/identify/query";
+import { barcodeSuggestsPalRegion } from "@/core/identify/normalize";
 import { inferTextLanguage } from "@/core/locale/preference";
 import {
   makeObservationUsage,
@@ -132,8 +133,7 @@ export function pickRegionalSiblingGames(
 ): TheGamesDbSearchGame[] {
   const platformId = resolveTheGamesDbPlatformId(platform);
   const cleanedBarcode = cleanCode(barcode);
-  const preferPal =
-    cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0");
+  const preferPal = barcodeSuggestsPalRegion(cleanedBarcode);
   const selectedPlatform = selected.platform;
   const seenRegions = new Set([
     regionalAttachmentBucket(selected.region_id, selected.id),
@@ -200,8 +200,7 @@ function pickBestSearchCandidate(
 
   const platformId = resolveTheGamesDbPlatformId(platform);
   const cleanedBarcode = cleanCode(barcode);
-  const preferPal =
-    cleanedBarcode.length === 13 && !cleanedBarcode.startsWith("0");
+  const preferPal = barcodeSuggestsPalRegion(cleanedBarcode);
 
   return games
     .slice()

@@ -197,6 +197,16 @@ describe("mapSensCritiqueMetadata", () => {
     expect(metadata.observationSchemaVersion).toBeDefined();
   });
 
+  it("n'hérite pas la plateforme shelf sans signal produit", () => {
+    const product = mapSensCritiqueProductPayload(PRODUCT_PAYLOAD)!;
+    const metadata = mapSensCritiqueMetadata(product, {
+      platform: "atari2600",
+      shelfName: "ATARI 2600",
+    });
+    expect(metadata.platformKey).toBeUndefined();
+    expect(metadata.attachments?.every((att) => !att.platformKey)).toBe(true);
+  });
+
   it("expose original_title et subtitle en aliases (jamais le titre)", () => {
     const product = mapSensCritiqueProductPayload({
       data: {
@@ -220,6 +230,15 @@ describe("mapSensCritiqueMetadata", () => {
 describe("sensCritiqueUniversesForType", () => {
   it("mappe les types Placarr vers les univers SC", () => {
     expect(sensCritiqueUniversesForType("games")).toEqual(["game"]);
+    expect(sensCritiqueUniversesForType("books")).toEqual([
+      "book",
+      "comicBook",
+    ]);
+    expect(sensCritiqueUniversesForType("movies")).toEqual([
+      "movie",
+      "tvShow",
+    ]);
+    expect(sensCritiqueUniversesForType("musics")).toEqual(["musicAlbum"]);
     expect(sensCritiqueUniversesForType("boardgames")).toEqual([]);
     expect(sensCritiqueUniversesForType(null)).toEqual([]);
     expect(sensCritiqueUniversesForType("unknown")).toEqual([]);

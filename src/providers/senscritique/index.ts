@@ -23,7 +23,7 @@ export const senscritiqueModule: ProviderModule = {
   info: {
     id: "senscritique",
     label: "SensCritique",
-    types: ["games"],
+    types: ["games", "books", "movies", "musics"],
     capabilities: [
       "identify",
       "description",
@@ -45,7 +45,7 @@ export const senscritiqueModule: ProviderModule = {
     requiresTitleAlignment: true,
     websiteUrl: "https://www.senscritique.com/",
     notes:
-      "Communauté FR multi-univers (GraphQL non officiel) : note + votes, synopsis FR, jaquettes. Pas d'EAN — name-search uniquement.",
+      "Communauté FR multi-univers (GraphQL non officiel) : note + votes, synopsis FR, jaquettes. Games, books/comics, movies/TV, albums. Pas d'EAN — name-search uniquement.",
   },
   evidence: {
     label: "SensCritique",
@@ -82,16 +82,36 @@ export const senscritiqueModule: ProviderModule = {
     },
   },
   buildTeardownMetadataTasks(ctx) {
-    return teardownMetadataWhen(
-      ctx,
-      "SensCritique",
-      () => fetchFromSensCritique(ctx),
-      "games",
-    );
+    return [
+      ...teardownMetadataWhen(
+        ctx,
+        "SensCritique",
+        () => fetchFromSensCritique(ctx),
+        "games",
+      ),
+      ...teardownMetadataWhen(
+        ctx,
+        "SensCritique",
+        () => fetchFromSensCritique(ctx),
+        "books",
+      ),
+      ...teardownMetadataWhen(
+        ctx,
+        "SensCritique",
+        () => fetchFromSensCritique(ctx),
+        "movies",
+      ),
+      ...teardownMetadataWhen(
+        ctx,
+        "SensCritique",
+        () => fetchFromSensCritique(ctx),
+        "musics",
+      ),
+    ];
   },
   mappingProbe: {
     sampleInput: "Rayman",
-    context: { name: "Rayman" },
+    context: { name: "Rayman", type: "games" },
   },
   runMappingProbe: async () => {
     const hits = await searchSensCritique("Rayman", {
@@ -127,8 +147,11 @@ export const senscritiqueModule: ProviderModule = {
     return metadataProbe(mapSensCritiqueMetadata(product));
   },
   collectMappingRawKeys: async (context) => {
-    const ctx = probeContextOrDefault(context, { name: "Rayman" });
-    const hits = await searchSensCritique(ctx.name, {
+    const ctx = probeContextOrDefault(context, {
+      name: "Rayman",
+      type: "games",
+    });
+    const hits = await searchSensCritique(ctx.name || "Rayman", {
       universe: "game",
       limit: 1,
     });

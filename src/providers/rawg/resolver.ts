@@ -4,6 +4,7 @@ import {
   isMetadataTitleAligned,
   metadataTitleSimilarity,
 } from "@/core/enrich/titleMatching";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 
 type RawgNamedEntry = { name?: string };
 type RawgClipEntry = { clip?: string; preview?: string; video?: string };
@@ -50,6 +51,112 @@ function readAxiosStatus(error: unknown): number | undefined {
   return typeof error === "object" && error !== null && "response" in error
     ? (error as { response?: { status?: number } }).response?.status
     : undefined;
+}
+
+function rawgGamePlatformKeys(game: Pick<RawgGame, "platforms">): Set<string> {
+  const keys = new Set<string>();
+  for (const entry of game.platforms || []) {
+    const name = entry?.platform?.name;
+    if (typeof name !== "string" || !name.trim()) continue;
+    const key = detectVideoGamePlatformKey(name);
+    if (key) keys.add(key);
+  }
+  return keys;
+}
+
+/**
+ * Drop unresolved browser noise ("Web") when RAWG also lists real platforms.
+ * Keep brand parents ("Nintendo") even without a console key.
+ */
+export function preferResolvedRawgPlatformNames(
+  names: readonly string[],
+): string[] {
+  const unique = Array.from(
+    new Set(names.map((name) => name.trim()).filter(Boolean)),
+  ).filter((name) => !/^web$/i.test(name));
+  const resolved = unique.filter((name) => detectVideoGamePlatformKey(name));
+  if (resolved.length === 0) return unique;
+  return unique.filter(
+    (name) => detectVideoGamePlatformKey(name) || !/^web$/i.test(name),
+  );
+}
+
+/** itch.io / mobile storefronts are fangame noise on a cartridge shelf. */
+export function filterRawgStoresForShelf(
+  stores: readonly string[],
+  requestedPlatform?: string | null,
+): string[] {
+  const unique = Array.from(
+    new Set(stores.map((name) => name.trim()).filter(Boolean)),
+  );
+  const requestedKey = requestedPlatform
+    ? detectVideoGamePlatformKey(requestedPlatform)
+    : null;
+  if (!requestedKey || requestedKey === "pc") return unique;
+  return unique.filter((name) => !/\bitch\.io\b/i.test(name));
+}
+
+/**
+ * Drop community fangame tags when the hit is on a retail console shelf.
+ * Structural (shelf platform), not a product-title word list.
+ */
+export function filterRawgTagsForShelf(
+  tags: readonly string[],
+  requestedPlatform?: string | null,
+): string[] {
+  const unique = Array.from(
+    new Set(tags.map((name) => name.trim()).filter(Boolean)),
+  );
+  const requestedKey = requestedPlatform
+    ? detectVideoGamePlatformKey(requestedPlatform)
+    : null;
+  if (!requestedKey || requestedKey === "pc") return unique;
+  return unique.filter(
+    (name) => !/\b(fangame|gamemaker|horror)\b/i.test(name),
+  );
+}
+
+/**
+ * Pick a RAWG search hit by title alignment, preferring the shelf platform.
+ * A Web/itch fangame must not win over a missing retail Game Boy match.
+ */
+export function pickRawgSearchMatch(
+  results: readonly Pick<RawgGame, "name" | "platforms">[],
+  query: string,
+  platform?: string | null,
+): Pick<RawgGame, "name" | "platforms"> | null {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery || results.length === 0) return null;
+
+  const requestedKey = platform
+    ? detectVideoGamePlatformKey(platform)
+    : null;
+
+  const aligned = results.filter((game) =>
+    isMetadataTitleAligned({ title: game.name }, [cleanedQuery], 0.58),
+  );
+  if (aligned.length === 0) return null;
+
+  let pool = aligned;
+  if (requestedKey) {
+    const onShelf = aligned.filter((game) =>
+      rawgGamePlatformKeys(game).has(requestedKey),
+    );
+    // Honest empty beats a confident wrong product (fangame / wrong platform).
+    if (onShelf.length === 0) return null;
+    pool = onShelf;
+  }
+
+  let best = pool[0];
+  let bestScore = metadataTitleSimilarity(cleanedQuery, best.name);
+  for (const game of pool.slice(1)) {
+    const score = metadataTitleSimilarity(cleanedQuery, game.name);
+    if (score > bestScore) {
+      bestScore = score;
+      best = game;
+    }
+  }
+  return best;
 }
 
 /** First gameplay / trailer clip from a RAWG game detail payload. */
@@ -128,24 +235,10 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     if (!data?.results || data.results.length === 0) return null;
 
-    const query = name.trim();
-    let bestMatch = data.results[0];
-    let bestScore = metadataTitleSimilarity(query, bestMatch.name);
-
-    for (const game of data.results) {
-      const score = metadataTitleSimilarity(query, game.name);
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = game;
-      }
-    }
-
-    if (
-      !bestMatch ||
-      !isMetadataTitleAligned({ title: bestMatch.name }, [query], 0.58)
-    ) {
-      return null;
-    }
+    const bestMatch = pickRawgSearchMatch(data.results, name, platform) as
+      | RawgGame
+      | null;
+    if (!bestMatch) return null;
 
     let detailedDescription: string | undefined;
     let detailWebsite: string | undefined;
@@ -240,8 +333,8 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
-    const platformNames = [
-      ...(Array.isArray(bestMatch.platforms)
+    const platformNames = preferResolvedRawgPlatformNames(
+      Array.isArray(bestMatch.platforms)
         ? bestMatch.platforms
             .map((entry: { platform?: { name?: unknown } }) =>
               typeof entry?.platform?.name === "string"
@@ -249,8 +342,8 @@ export function createRawgResolver(deps: RawgResolverDeps) {
                 : "",
             )
             .filter(Boolean)
-        : []),
-    ];
+        : [],
+    );
     if (platformNames.length > 0) {
       facts.push({
         kind: "platform",
@@ -262,13 +355,16 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
-    const storeNames = Array.isArray(bestMatch.stores)
-      ? bestMatch.stores
-          .map((entry) => entry?.store?.name)
-          .filter(
-            (entry: unknown): entry is string => typeof entry === "string",
-          )
-      : [];
+    const storeNames = filterRawgStoresForShelf(
+      Array.isArray(bestMatch.stores)
+        ? bestMatch.stores
+            .map((entry) => entry?.store?.name)
+            .filter(
+              (entry: unknown): entry is string => typeof entry === "string",
+            )
+        : [],
+      platform,
+    );
     if (storeNames.length > 0) {
       facts.push({
         kind: "store",
@@ -298,16 +394,19 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
-    const tagNames = [
-      ...(Array.isArray(bestMatch.tags)
-        ? bestMatch.tags
-            .map((entry: { name?: unknown }) =>
-              typeof entry?.name === "string" ? entry.name.trim() : "",
-            )
-            .filter(Boolean)
-        : []),
-      ...detailTags,
-    ];
+    const tagNames = filterRawgTagsForShelf(
+      [
+        ...(Array.isArray(bestMatch.tags)
+          ? bestMatch.tags
+              .map((entry: { name?: unknown }) =>
+                typeof entry?.name === "string" ? entry.name.trim() : "",
+              )
+              .filter(Boolean)
+          : []),
+        ...detailTags,
+      ],
+      platform,
+    );
     if (tagNames.length > 0) {
       facts.push({
         kind: "tag",
@@ -319,15 +418,17 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       });
     }
 
-    const parentPlatformNames = Array.isArray(bestMatch.parent_platforms)
-      ? bestMatch.parent_platforms
-          .map((entry: { platform?: { name?: unknown } }) =>
-            typeof entry?.platform?.name === "string"
-              ? entry.platform.name.trim()
-              : "",
-          )
-          .filter(Boolean)
-      : [];
+    const parentPlatformNames = preferResolvedRawgPlatformNames(
+      Array.isArray(bestMatch.parent_platforms)
+        ? bestMatch.parent_platforms
+            .map((entry: { platform?: { name?: unknown } }) =>
+              typeof entry?.platform?.name === "string"
+                ? entry.platform.name.trim()
+                : "",
+            )
+            .filter(Boolean)
+        : [],
+    );
     if (parentPlatformNames.length > 0) {
       facts.push({
         kind: "platform",

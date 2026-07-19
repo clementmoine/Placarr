@@ -1,6 +1,7 @@
 import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
+import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 
@@ -338,6 +339,14 @@ async function mapVolumeToMetadata(
   };
 }
 
+function volumeDisplayTitle(volume: GoogleBooksVolume): string {
+  const info = volume.volumeInfo;
+  if (!info?.title) return "";
+  return info.subtitle?.trim()
+    ? `${info.title.trim()}: ${info.subtitle.trim()}`
+    : info.title.trim();
+}
+
 function pickBestVolume(
   volumes: GoogleBooksVolume[],
   name: string,
@@ -345,24 +354,44 @@ function pickBestVolume(
 ): GoogleBooksVolume | null {
   if (volumes.length === 0) return null;
 
-  const cleanName = name.trim().toLowerCase();
+  const trimmedName = name.trim();
+  const cleanName = trimmedName.toLowerCase();
   const cleanedBarcode = normalizeProductBarcode(barcode);
 
   if (cleanedBarcode) {
     for (const volume of volumes) {
       const isbn = pickIsbn(volume.volumeInfo?.industryIdentifiers);
-      if (isbn === cleanedBarcode) return volume;
+      if (isbn !== cleanedBarcode) continue;
+      const title = volumeDisplayTitle(volume);
+      if (
+        trimmedName &&
+        title &&
+        !isMetadataTitleAligned({ title }, [trimmedName], 0.58)
+      ) {
+        // ISBN hit for a different franchise than the shelf name — refuse
+        // rather than ship a confident wrong cover (Naruto label + Boruto ISBN).
+        return null;
+      }
+      return volume;
     }
-    if (volumes.length === 1) return volumes[0];
+    // Honest empty over a lone ISBN miss: barcode queries can return a
+    // single wrong series (Naruto shelf → Boruto ISBN hit).
   }
 
-  if (!cleanName) return volumes[0] || null;
+  if (!cleanName) return null;
 
-  let best = volumes[0];
+  const aligned = volumes.filter((volume) => {
+    const title = volumeDisplayTitle(volume);
+    if (!title) return false;
+    return isMetadataTitleAligned({ title }, [trimmedName], 0.58);
+  });
+  if (aligned.length === 0) return null;
+
+  let best = aligned[0];
   let minDistance = Infinity;
 
-  for (const volume of volumes) {
-    const title = (volume.volumeInfo?.title || "").toLowerCase();
+  for (const volume of aligned) {
+    const title = volumeDisplayTitle(volume).toLowerCase();
     const distance = levenshtein.get(cleanName, title);
     if (distance < minDistance) {
       minDistance = distance;

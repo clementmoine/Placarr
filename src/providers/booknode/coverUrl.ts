@@ -138,7 +138,8 @@ export function booknodeCoverDownloadCandidates(url: string): string[] {
   return sortBooknodeCandidates(candidates);
 }
 
-export function normalizeBooknodeCoverUrl(
+/** Highest-quality target used for async background upgrades. */
+export function booknodeCanonicalCoverUrl(
   url?: string | null,
 ): string | undefined {
   if (!url) return undefined;
@@ -149,6 +150,31 @@ export function normalizeBooknodeCoverUrl(
         candidate.includes("/full/") && /\.jpe?g$/i.test(candidate),
     ) || url
   );
+}
+
+/** Fast-loading preview (/mod11/ webp) for immediate display. */
+export function booknodePreviewCoverUrl(
+  url?: string | null,
+): string | undefined {
+  if (!url) return undefined;
+  const candidates = booknodeCoverDownloadCandidates(url);
+  return (
+    candidates.find(
+      (candidate) =>
+        candidate.includes("/mod11/") && /264-432\.webp$/i.test(candidate),
+    ) ||
+    candidates.find(
+      (candidate) => candidate.includes("/mod11/") && /\.webp$/i.test(candidate),
+    ) ||
+    candidates.find((candidate) => /\.webp$/i.test(candidate)) ||
+    url
+  );
+}
+
+export function normalizeBooknodeCoverUrl(
+  url?: string | null,
+): string | undefined {
+  return booknodePreviewCoverUrl(url);
 }
 
 /** Dedupes thumbnails and /full/ JPEG variants of the same Booknode upload. */

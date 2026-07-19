@@ -1,26 +1,15 @@
 import type { Type } from "@prisma/client";
-import { after } from "next/server";
-import path from "path";
 
 import { prisma } from "@/lib/db/prisma";
-import { runBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
 import {
-  beginItemMetadataRefresh,
-  finishItemMetadataRefresh,
-  isAbortError,
+  stampItemMetadataRefresh,
   type ItemMetadataRefreshSession,
 } from "@/core/collect/jobs/metadataRefreshSession";
 import {
-  isCoverResolutionAcceptable,
-  readFileImageMetrics,
-} from "@/core/enrich/media/imageMetrics";
-import { fetchAndStoreMetadata } from "@/core/enrich";
-import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
-import {
-  itemPricesContextFromRecord,
-  refreshItemPricesFromContext,
-} from "@/core/commerce/pricing/itemDisplay";
-import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProviderExternalLinks";
+  BACKGROUND_WORK_KIND,
+  enqueueBackgroundWorkJob,
+  type MetadataRefreshJobPayload,
+} from "@/core/collect/jobs/workQueue";
 
 export type ScheduleItemMetadataRefreshInput = {
   itemId: string;
@@ -31,6 +20,7 @@ export type ScheduleItemMetadataRefreshInput = {
   clearRemoteCover?: boolean;
   bypassMetadataCache?: boolean;
   forceRefresh?: boolean;
+  userId?: string | null;
 };
 
 export type BatchMetadataRefreshItem = {
@@ -69,169 +59,121 @@ export function shelfMoveMetadataResetData(
   return patch;
 }
 
-async function prepareItemForMetadataRefresh(
-  input: ScheduleItemMetadataRefreshInput,
-): Promise<void> {
-  if (input.clearRemoteCover) {
-    const item = await prisma.item.findUnique({
-      where: { id: input.itemId },
-      select: { imageUrl: true },
-    });
-    if (item?.imageUrl?.startsWith("http")) {
-      await prisma.item.update({
-        where: { id: input.itemId },
-        data: { imageUrl: null },
-      });
-    }
-  }
-
-  const itemForCoverReset = await prisma.item.findUnique({
-    where: { id: input.itemId },
-    select: { imageUrl: true },
-  });
-  if (itemForCoverReset?.imageUrl?.startsWith("/uploads/")) {
-    const metrics = await readFileImageMetrics(
-      path.join(process.cwd(), "public", itemForCoverReset.imageUrl),
-    );
-    if (!isCoverResolutionAcceptable(metrics)) {
-      await prisma.item.update({
-        where: { id: input.itemId },
-        data: { imageUrl: null },
-      });
-    }
-  }
-}
-
-async function refreshPricesAfterMetadata(itemId: string): Promise<void> {
+async function resolveUserIdForItem(
+  itemId: string,
+  explicit?: string | null,
+): Promise<string | null> {
+  if (explicit) return explicit;
   const item = await prisma.item.findUnique({
     where: { id: itemId },
-    include: { shelf: true, metadata: true },
+    select: { userId: true },
   });
-  if (!item) return;
+  return item?.userId ?? null;
+}
 
-  try {
-    await repairProviderExternalLinksForItem(itemId);
-    await refreshItemPricesFromContext(itemPricesContextFromRecord(item), {
-      force: true,
-    });
-  } catch (error) {
+function toMetadataRefreshPayload(
+  input: ScheduleItemMetadataRefreshInput,
+  generation: number,
+): MetadataRefreshJobPayload {
+  return {
+    itemId: input.itemId,
+    lookupQuery: input.lookupQuery,
+    shelfType: input.shelfType,
+    shelfName: input.shelfName,
+    barcode: input.barcode,
+    clearRemoteCover: input.clearRemoteCover,
+    bypassMetadataCache: input.bypassMetadataCache,
+    forceRefresh: input.forceRefresh,
+    generation,
+  };
+}
+
+/** Enqueue for the out-of-process worker — never runs enrich inside Next. */
+export async function enqueueItemMetadataRefresh(
+  input: ScheduleItemMetadataRefreshInput,
+  session: Pick<ItemMetadataRefreshSession, "generation">,
+): Promise<void> {
+  const userId = await resolveUserIdForItem(input.itemId, input.userId);
+  await enqueueBackgroundWorkJob({
+    kind: BACKGROUND_WORK_KIND.metadataRefresh,
+    itemId: input.itemId,
+    userId,
+    replaceOpenForItem: true,
+    payload: toMetadataRefreshPayload(input, session.generation),
+  });
+}
+
+/**
+ * Enqueue after the caller stamped `metadataRefreshStartedAt`.
+ * Prefer `startItemMetadataRefresh` / awaited enqueue from request handlers.
+ */
+export function scheduleItemMetadataRefresh(
+  input: ScheduleItemMetadataRefreshInput,
+  session: Pick<ItemMetadataRefreshSession, "generation">,
+): void {
+  void enqueueItemMetadataRefresh(input, session).catch((error) => {
     console.error(
-      `[Prices] Post-metadata refresh failed for item ${itemId}:`,
+      `[MetadataRefresh] Failed to enqueue refresh for ${input.itemId}:`,
       error,
     );
-  }
+  });
 }
 
-async function runItemMetadataRefresh(
-  input: ScheduleItemMetadataRefreshInput,
-  session: ItemMetadataRefreshSession,
-): Promise<void> {
-  await prepareItemForMetadataRefresh(input);
-  const platform = resolveGameMetadataPlatform(
-    undefined,
-    input.shelfName,
-    input.shelfType,
-  );
-  const stored = await fetchAndStoreMetadata(
-    input.itemId,
-    input.lookupQuery,
-    input.shelfType,
-    input.barcode || undefined,
-    input.forceRefresh ?? true,
-    platform,
-    input.bypassMetadataCache ?? true,
-    true,
-    input.shelfName,
-    session,
-  );
-  if (stored) {
-    void runBackgroundWork(() => refreshPricesAfterMetadata(input.itemId));
-  }
-}
-
-async function refreshItemWithSession(
-  itemId: string,
-  run: (session: ItemMetadataRefreshSession) => Promise<void>,
-): Promise<void> {
-  const session = await beginItemMetadataRefresh(itemId);
-  try {
-    await run(session);
-  } catch (error) {
-    if (!isAbortError(error)) {
-      console.error(`[MetadataRefresh] Refresh failed for ${itemId}:`, error);
-    }
-  } finally {
-    await finishItemMetadataRefresh(itemId, session.generation);
-  }
-}
-
-/** Plex-style : chaque item passe par la file globale d'arrière-plan. */
+/** Plex-style : chaque item est stampé puis enfilé (génération toujours neuve). */
 export function scheduleBatchItemMetadataRefresh(
   items: BatchMetadataRefreshItem[],
   shelf: { type: Type; name: string },
 ): void {
   if (items.length === 0) return;
 
-  after(async () => {
-    await Promise.all(
-      items.map((next) =>
-        runBackgroundWork(() =>
-          refreshItemWithSession(next.itemId, async (session) => {
-            const platform = resolveGameMetadataPlatform(
-              undefined,
-              shelf.name,
-              shelf.type,
-            );
-            const stored = await fetchAndStoreMetadata(
-              next.itemId,
-              next.lookupQuery,
-              shelf.type,
-              next.barcode || undefined,
-              true,
-              platform,
-              false,
-              true,
-              shelf.name,
-              session,
-            );
-            if (stored) {
-              void runBackgroundWork(() =>
-                refreshPricesAfterMetadata(next.itemId),
-              );
-            }
-          }),
-        ),
-      ),
-    );
-  });
-}
-
-export function scheduleItemMetadataRefresh(
-  input: ScheduleItemMetadataRefreshInput,
-  session: ItemMetadataRefreshSession,
-): void {
-  after(() =>
-    runBackgroundWork(async () => {
+  void (async () => {
+    for (const next of items) {
       try {
-        await runItemMetadataRefresh(input, session);
+        const existing = await prisma.item.findUnique({
+          where: { id: next.itemId },
+          select: { userId: true },
+        });
+        // Always stamp: reusing a generation lets a superseded worker finish()
+        // clear the flag of the replacement job.
+        const session = await stampItemMetadataRefresh(next.itemId);
+        await enqueueItemMetadataRefresh(
+          {
+            itemId: next.itemId,
+            lookupQuery: next.lookupQuery,
+            barcode: next.barcode,
+            shelfType: shelf.type,
+            shelfName: shelf.name,
+            bypassMetadataCache: false,
+            forceRefresh: true,
+            userId: existing?.userId,
+          },
+          session,
+        );
       } catch (error) {
-        if (!isAbortError(error)) {
-          console.error(
-            `[MetadataRefresh] Background refresh failed for ${input.itemId}:`,
-            error,
-          );
-        }
-      } finally {
-        await finishItemMetadataRefresh(input.itemId, session.generation);
+        console.error(
+          `[MetadataRefresh] Failed to enqueue batch refresh for ${next.itemId}:`,
+          error,
+        );
       }
-    }),
-  );
+    }
+  })();
 }
 
 export async function startItemMetadataRefresh(
   input: ScheduleItemMetadataRefreshInput,
 ): Promise<{ startedAt: Date; generation: number }> {
-  const session = await beginItemMetadataRefresh(input.itemId);
-  scheduleItemMetadataRefresh(input, session);
+  const session = await stampItemMetadataRefresh(input.itemId);
+  try {
+    await enqueueItemMetadataRefresh(input, session);
+  } catch (error) {
+    await prisma.item.updateMany({
+      where: {
+        id: input.itemId,
+        metadataRefreshGeneration: session.generation,
+      },
+      data: { metadataRefreshStartedAt: null },
+    });
+    throw error;
+  }
   return { startedAt: session.startedAt, generation: session.generation };
 }

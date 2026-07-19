@@ -1,22 +1,19 @@
 import { AsyncQueue } from "@/lib/async/asyncQueue";
+import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
 
 /**
- * Deux pools d'arrière-plan, parce que `after()` de Next ne détache rien : les
- * jobs partagent l'event loop du serveur. Le point clé, c'est que tout n'a pas
- * le même profil :
+ * Residual in-process pools for work that still runs inside Next or the worker
+ * process (not the DB job queue). Metadata enrich + price refresh enqueue to
+ * `BackgroundWorkJob` and run in `pnpm worker`.
  *
- * - Pool I/O (`runBackgroundWork`) : fetch providers et refresh de prix. Le job
- *   passe l'essentiel de son temps à attendre des sockets — on peut donc en
- *   laisser tourner beaucoup sans charger l'event loop, ce qui améliore le débit.
- * - Pool CPU (`runCpuBackgroundWork`) : localisation d'images (redimensionnement
- *   et analyse `sharp`), synchrone et gourmand. Plafond bas : c'est ce travail-là
- *   qui, sans borne, rendait les requêtes interactives injoignables (AxiosError:
- *   Network Error côté navigateur) — la raison d'être du plafond unique à 2.
+ * - Pool I/O (`runBackgroundWork`) : rare same-process tasks.
+ * - Pool CPU (`runCpuBackgroundWork`) : image localization / `sharp`.
  *
- * Les deux plafonds sont ajustables : BACKGROUND_IO_CONCURRENCY (à défaut, l'ancien
- * BACKGROUND_WORK_CONCURRENCY est encore respecté) et BACKGROUND_CPU_CONCURRENCY.
+ * Defaults stay modest; raise via BACKGROUND_IO_CONCURRENCY /
+ * BACKGROUND_CPU_CONCURRENCY only if Flare and the host keep up.
+ * Job-level parallelism lives on `WORKER_CONCURRENCY` (out-of-process worker).
  */
-const DEFAULT_BACKGROUND_IO_CONCURRENCY = 8;
+const DEFAULT_BACKGROUND_IO_CONCURRENCY = 4;
 const DEFAULT_BACKGROUND_CPU_CONCURRENCY = 2;
 
 function resolveConcurrency(envNames: string[], fallback: number): number {
@@ -41,12 +38,21 @@ const cpuQueue = new AsyncQueue(
   ),
 );
 
+async function runYielding<T>(fn: () => Promise<T>): Promise<T> {
+  await yieldToEventLoop();
+  try {
+    return await fn();
+  } finally {
+    await yieldToEventLoop();
+  }
+}
+
 /** Travail d'arrière-plan I/O (fetch providers, refresh de prix). */
 export function runBackgroundWork<T>(fn: () => Promise<T>): Promise<T> {
-  return ioQueue.run(fn);
+  return ioQueue.run(() => runYielding(fn));
 }
 
 /** Travail d'arrière-plan CPU (localisation d'images / `sharp`). */
 export function runCpuBackgroundWork<T>(fn: () => Promise<T>): Promise<T> {
-  return cpuQueue.run(fn);
+  return cpuQueue.run(() => runYielding(fn));
 }

@@ -7,6 +7,24 @@ export function normalizeProductBarcode(value?: string | null): string | null {
   return cleaned;
 }
 
+/**
+ * Whether a product barcode suggests a PAL/EU catalog region (PriceCharting
+ * `pal-*` platforms, EU box art, …).
+ *
+ * - Empty → true (name-only lookups default to PAL for Placarr)
+ * - Leading `0` (UPC-A / UPC written as EAN-13) → NTSC / Americas
+ * - Other 12–13 digit codes (EU GS1 prefixes, EAN without check digit) → PAL
+ *
+ * Example: `805529493537` (12 digits, Italy prefix) must not be treated as
+ * NTSC just because it is not 13 digits — that wrongly linked Voodoo Vince PAL
+ * to `/game/xbox/…` instead of `/game/pal-xbox/…`.
+ */
+export function barcodeSuggestsPalRegion(barcode?: string | null): boolean {
+  const cleaned = cleanCode(barcode);
+  if (!cleaned) return true;
+  return !cleaned.startsWith("0");
+}
+
 /** Compares EAN/UPC variants that differ only by leading zeros. */
 export function barcodeMatchKey(value?: string | null): string {
   return cleanCode(value).replace(/^0+/, "");

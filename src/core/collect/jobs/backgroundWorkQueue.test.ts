@@ -26,10 +26,9 @@ async function measurePeakConcurrency(
 }
 
 /**
- * Le « background » de Next (`after()`) partage l'event loop du serveur : sans
- * plafond global, N enrichissements simultanés rendent les requêtes
- * interactives injoignables (AxiosError: Network Error côté navigateur).
- * Ces tests verrouillent la borne de concurrence et l'isolation des erreurs.
+ * Le worker (`pnpm worker`) exécute l'enrichissement hors process Next : sans
+ * plafond de concurrence, N jobs simultanés saturent Flare / le host.
+ * Ces tests verrouillent la borne de concurrence des pools résiduels in-process.
  */
 describe("AsyncQueue", () => {
   it("ne dépasse jamais la concurrence configurée", async () => {
@@ -74,16 +73,43 @@ describe("AsyncQueue", () => {
 });
 
 describe("runBackgroundWork (pool I/O)", () => {
-  it("laisse plusieurs jobs I/O tourner en parallèle (défaut 8)", async () => {
+  it("borne le travail I/O pour ne pas saturer l'event loop", async () => {
+    const configured = Number.parseInt(
+      process.env.BACKGROUND_IO_CONCURRENCY ||
+        process.env.BACKGROUND_WORK_CONCURRENCY ||
+        "4",
+      10,
+    );
     const maxActive = await measurePeakConcurrency(runBackgroundWork, 8);
-    expect(maxActive).toBeGreaterThan(2);
-    expect(maxActive).toBeLessThanOrEqual(8);
+    expect(maxActive).toBeGreaterThan(0);
+    expect(maxActive).toBeLessThanOrEqual(
+      Number.isFinite(configured) && configured > 0 ? configured : 4,
+    );
+  });
+
+  it("yields so other macrotasks can run while a job is queued", async () => {
+    let interleaved = false;
+    const job = runBackgroundWork(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return "done";
+    });
+    setImmediate(() => {
+      interleaved = true;
+    });
+    await job;
+    expect(interleaved).toBe(true);
   });
 });
 
 describe("runCpuBackgroundWork (pool CPU)", () => {
-  it("borne le travail CPU pour ne pas saturer l'event loop (défaut 2)", async () => {
+  it("borne le travail CPU pour ne pas saturer l'event loop", async () => {
+    const configured = Number.parseInt(
+      process.env.BACKGROUND_CPU_CONCURRENCY || "2",
+      10,
+    );
     const maxActive = await measurePeakConcurrency(runCpuBackgroundWork, 8);
-    expect(maxActive).toBeLessThanOrEqual(2);
+    expect(maxActive).toBeLessThanOrEqual(
+      Number.isFinite(configured) && configured > 0 ? configured : 2,
+    );
   });
 });

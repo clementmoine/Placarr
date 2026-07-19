@@ -2,6 +2,7 @@ import axios from "axios";
 
 import type { Prisma, Item, Condition } from "@prisma/client";
 import type { ItemWithMetadata } from "@/types/items";
+import type { MetadataResult } from "@/types/metadataProvider";
 
 export const getItem = (
   id?: Item["id"],
@@ -26,12 +27,14 @@ export const saveItem = (
         refreshMetadata?: boolean;
         lookupQuery?: string;
         currentShelfId?: string | null;
+        metadataPreview?: MetadataResult | null;
       })
     | (Prisma.ItemUpdateInput & {
         refreshMetadata?: boolean;
         lookupQuery?: string;
         shelfId?: string;
         currentShelfId?: string | null;
+        metadataPreview?: MetadataResult | null;
       }),
 ): Promise<ItemWithMetadata> => {
   const url = new URL("/api/items", window.location.origin);
@@ -104,6 +107,24 @@ export const refreshItemsBatch = (
   return axios.put("/api/items/batch", data).then((response) => response.data);
 };
 
+export type DeleteItemsBatchInput = {
+  itemIds: string[];
+  sourceShelfId?: string;
+};
+
+export type DeleteItemsBatchResult = {
+  count: number;
+  sourceShelfIds: string[];
+};
+
+export const deleteItemsBatch = (
+  data: DeleteItemsBatchInput,
+): Promise<DeleteItemsBatchResult> => {
+  return axios
+    .delete("/api/items/batch", { data })
+    .then((response) => response.data);
+};
+
 export const deleteItem = (id: Item["id"]): Promise<void> => {
   if (id == null) {
     throw new Error("Id was not given to deleteItem");
@@ -148,6 +169,8 @@ export interface ItemPrices {
   priceNew: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
+  /** Point price derived from catalog estimates — display fallback, shown as ~. */
+  priceEstimated?: number | null;
   priceLastUpdated: string | null;
   priceSources?: string[];
   priceSourceDisplayNames?: string[];

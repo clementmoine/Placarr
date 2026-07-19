@@ -84,3 +84,14 @@ ENV PORT=3000
 # https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
 CMD ["/app/init.sh"]
+
+# Out-of-process background worker (metadata + prices). Needs source + tsx.
+FROM base AS worker
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=builder /app /app
+RUN mkdir -p /config /app/public/uploads /app/.cache
+
+CMD ["./node_modules/.bin/tsx", "scripts/backgroundWorker.ts"]

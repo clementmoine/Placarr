@@ -5,6 +5,8 @@ import {
   itemMatchesSearchQuery,
   itemSearchHaystacks,
 } from "@/core/collect/search";
+import { METADATA_REFRESH_STAMP_PRESERVE_MS } from "@/core/collect/enrichment";
+import { upsertBackgroundJobInCache } from "@/lib/api/backgroundJobs";
 
 type ItemPatch = Partial<Item> & {
   id: Item["id"];
@@ -79,12 +81,40 @@ function shouldInsertItemIntoQuery(
     return itemMatchesSearch(patch, querySearchTerm(queryKey));
   }
   if (root === "shelf") {
-    const shelfId = queryKey[1];
-    const targetShelfId = shelfIdForPatch(patch);
-    if (typeof shelfId !== "string" || shelfId !== targetShelfId) return false;
+    const shelfKey = queryKey[1];
+    if (typeof shelfKey !== "string") return false;
+    // queryKey[1] is often the URL slug; patch.shelfId is the cuid. Match either.
+    if (!shelfKeyMatchesPatch(shelfKey, patch)) return false;
     return itemMatchesSearch(patch, querySearchTerm(queryKey));
   }
   return false;
+}
+
+/** URL shelf segment may be cuid, persisted slug, or slugify(name). */
+function shelfKeyMatchesPatch(shelfKey: string, patch: ItemPatch): boolean {
+  const targetShelfId = shelfIdForPatch(patch);
+  if (shelfKey === targetShelfId) return true;
+  const shelf = isRecord(patch.shelf) ? patch.shelf : null;
+  if (!shelf) return false;
+  if (typeof shelf.id === "string" && shelfKey === shelf.id) return true;
+  if (typeof shelf.slug === "string" && shelfKey === shelf.slug) return true;
+  return false;
+}
+
+/**
+ * Insert into a shelf detail payload when the cached shelf cuid matches the
+ * item — even if the React Query key used the URL slug.
+ */
+function shouldInsertItemIntoShelfRecord(
+  queryKey: QueryKey,
+  patch: ItemPatch,
+  options: PatchCachedItemOptions,
+  shelfRecordId: string,
+): boolean {
+  if (!options.isCreate) return false;
+  const targetShelfId = shelfIdForPatch(patch);
+  if (!targetShelfId || shelfRecordId !== targetShelfId) return false;
+  return itemMatchesSearch(patch, querySearchTerm(queryKey));
 }
 
 function bumpShelfItemCount(
@@ -145,7 +175,12 @@ function patchItemInData<T>(
     record.id === targetShelfId
   ) {
     if (
-      shouldInsertItemIntoQuery(queryKey, patch, options) &&
+      shouldInsertItemIntoShelfRecord(
+        queryKey,
+        patch,
+        options,
+        String(record.id),
+      ) &&
       !itemExistsInList(record.items, patch.id)
     ) {
       next = {
@@ -330,8 +365,32 @@ export async function invalidateItemQueries(
     queryClient.invalidateQueries({ queryKey: ["shelves"] }),
     queryClient.invalidateQueries({ queryKey: ["recentItems"] }),
     queryClient.invalidateQueries({ queryKey: ["searchItems"] }),
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        if (query.queryKey[0] !== "shelf") return false;
+        const key = query.queryKey[1];
+        if (typeof key === "string" && uniqueShelfIds.includes(key)) {
+          return true;
+        }
+        // Shelf pages key by URL slug; match the cached shelf cuid/slug too.
+        const data = query.state.data;
+        if (!isRecord(data)) return false;
+        if (
+          typeof data.id === "string" &&
+          uniqueShelfIds.includes(data.id)
+        ) {
+          return true;
+        }
+        if (
+          typeof data.slug === "string" &&
+          uniqueShelfIds.includes(data.slug)
+        ) {
+          return true;
+        }
+        return false;
+      },
+    }),
     ...uniqueShelfIds.flatMap((shelfId) => [
-      queryClient.invalidateQueries({ queryKey: ["shelf", shelfId] }),
       queryClient.invalidateQueries({
         queryKey: ["shelf", shelfId, "items", itemId],
       }),
@@ -371,10 +430,53 @@ export async function syncItemQueries(
     item.shelf?.id,
     ...shelfIds,
   ]);
+
+  // Create (async enrich) or manual refresh: surface the header job list now,
+  // don't wait for the idle poll that only runs once count > 0.
+  if (options.isCreate || item.metadataRefreshStartedAt) {
+    const shelf = item.shelf as
+      | {
+          id?: string | null;
+          name?: string | null;
+          slug?: string | null;
+          type?: string | null;
+        }
+      | null
+      | undefined;
+    const shelfId = shelf?.id ?? item.shelfId ?? null;
+    if (
+      typeof item.name === "string" &&
+      shelfId &&
+      shelf?.name &&
+      shelf?.type
+    ) {
+      upsertBackgroundJobInCache(queryClient, {
+        id: item.id,
+        name: item.name,
+        slug: typeof item.slug === "string" ? item.slug : "",
+        kind: item.metadataRefreshStartedAt
+          ? "metadataRefresh"
+          : "metadataEnrich",
+        startedAt: item.metadataRefreshStartedAt
+          ? new Date(item.metadataRefreshStartedAt as string | Date).toISOString()
+          : new Date(
+              (item.createdAt as string | Date | undefined) ?? Date.now(),
+            ).toISOString(),
+        cancellable: Boolean(item.metadataRefreshStartedAt),
+        shelf: {
+          id: shelfId,
+          name: shelf.name,
+          slug: shelf.slug ?? "",
+          type: shelf.type,
+        },
+      });
+    }
+    void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
+  }
 }
 
 /**
- * Shelf/list API payloads use `itemListMetadataInclude` (no attachment gallery).
+ * Shelf/list API payloads include cover attachments only (not full galleries).
  * When an item already has persisted metadata, treat shelf-cache snapshots as
  * incomplete for gallery UI until `/api/items?id=…` refetches.
  */
@@ -389,4 +491,68 @@ export function shelfListItemMissingAttachments(
 ): boolean {
   if (!item?.metadataId) return false;
   return (item.metadata?.attachments?.length ?? 0) === 0;
+}
+
+/**
+ * Drop client-side refresh stamps for items that are no longer in the live
+ * background-jobs list (DB flag already cleared). Skips stamps still inside the
+ * optimistic race window so a concurrent GET cannot wipe a just-started refresh.
+ */
+export function clearFinishedMetadataRefreshStamps(
+  queryClient: QueryClient,
+  activeJobItemIds: ReadonlySet<string>,
+) {
+  const clearIfFinished = <T extends Record<string, unknown>>(
+    entry: T,
+  ): T => {
+    const itemId = entry.id;
+    const stamp = entry.metadataRefreshStartedAt;
+    if (typeof itemId !== "string" || !stamp) return entry;
+    if (activeJobItemIds.has(itemId)) return entry;
+    const started = new Date(stamp as string | Date).getTime();
+    if (
+      !Number.isNaN(started) &&
+      Date.now() - started < METADATA_REFRESH_STAMP_PRESERVE_MS
+    ) {
+      return entry;
+    }
+    return { ...entry, metadataRefreshStartedAt: null };
+  };
+
+  queryClient.setQueriesData(
+    {
+      predicate: (query) =>
+        query.queryKey[0] === "shelf" && query.queryKey[2] === "items",
+    },
+    (current) => {
+      if (!isRecord(current) || typeof current.id !== "string") return current;
+      return clearIfFinished(current);
+    },
+  );
+
+  queryClient.setQueriesData(
+    { queryKey: ["item"] },
+    (current) => {
+      if (!isRecord(current) || typeof current.id !== "string") return current;
+      return clearIfFinished(current);
+    },
+  );
+
+  queryClient.setQueriesData(
+    {
+      predicate: (query) =>
+        query.queryKey[0] === "shelf" && query.queryKey.length === 2,
+    },
+    (current) => {
+      if (!isRecord(current) || !Array.isArray(current.items)) return current;
+      let changed = false;
+      const items = current.items.map((entry) => {
+        if (!isRecord(entry)) return entry;
+        const next = clearIfFinished(entry);
+        if (next !== entry) changed = true;
+        return next;
+      });
+      return changed ? { ...current, items } : current;
+    },
+  );
 }

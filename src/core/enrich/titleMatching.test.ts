@@ -16,6 +16,9 @@ import {
   isGameEditionVariant,
   catalogLabelSimilarity,
   distinctiveTokenCoverage,
+  franchiseLeadTokens,
+  franchiseLeadTokensConflict,
+  gameProductIdentityMismatch,
   metadataTitleSimilarity,
   orderFallbackNamesForLocale,
   supplementGameEditionMetadata,
@@ -277,6 +280,48 @@ describe("hasUnrequestedSeriesSuffixToken", () => {
 });
 
 describe("isMetadataTitleAligned", () => {
+  it("rejects iPod/phone case merch for a manga shelf volume", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "Coque compatible pour Ipod TOUCH 7 MANGA NARUTO 51" },
+        ["Naruto n°51"],
+        0.58,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects LEGO kit listings for a short game franchise title", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "LEGO Minecraft 21273 L'attaque du village de ballons Ghast" },
+        ["Minecraft"],
+        0.42,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects Boruto catalog titles for a Naruto shelf volume", () => {
+    expect(
+      franchiseLeadTokens("Naruto n°03"),
+    ).toEqual(["naruto"]);
+    expect(
+      franchiseLeadTokens("Boruto no 03/20: Naruto Next Generations"),
+    ).toEqual(["boruto"]);
+    expect(
+      franchiseLeadTokensConflict(
+        "Naruto n°03",
+        "Boruto no 03/20: Naruto Next Generations",
+      ),
+    ).toBe(true);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Boruto no 03/20: Naruto Next Generations" },
+        ["Naruto n°03"],
+        0.58,
+      ),
+    ).toBe(false);
+  });
+
   it("accepts Ni no Kuni II english catalog title against french shelf name", () => {
     expect(
       isMetadataTitleAligned(
@@ -395,6 +440,42 @@ describe("isMetadataTitleAligned", () => {
     ).toBe(false);
   });
 
+  it("aligns Burnout 3 TakeDown with the colon catalog form", () => {
+    expect(
+      franchiseSequelNumbersConflict(
+        ["Burnout 3 TakeDown"],
+        "Burnout 3: Takedown",
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "Burnout 3: Takedown" },
+        ["Burnout 3 TakeDown"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps Bond 007 catalog titles when the shelf uses the full franchise name", () => {
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "007: Agent Under Fire",
+          aliases: ["James Bond 007: Agent Under Fire"],
+        },
+        ["James Bond 007 Agent Under Fire"],
+        0.58,
+      ),
+    ).toBe(true);
+    expect(
+      isMetadataTitleAligned(
+        { title: "007: Nightfire" },
+        ["James Bond 007 Nightfire"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
   it("does not treat numbered BD albums as franchise sequel conflicts", () => {
     expect(
       franchiseSequelNumbersConflict(
@@ -475,6 +556,38 @@ describe("isMetadataTitleAligned", () => {
     ).toBe(true);
   });
 
+  it("rejects sibling DLC lines via shared franchise prefix, not a product vocabulary", () => {
+    expect(
+      gameProductIdentityMismatch(
+        ["Alan Wake II - Night Springs"],
+        "Alan Wake II - The Lake House",
+      ),
+    ).toBe(true);
+    expect(
+      gameProductIdentityMismatch(
+        ["The Binding of Isaac Repentance"],
+        "The Binding of Isaac Afterbirth+",
+      ),
+    ).toBe(true);
+    // Shorter catalog title / base SKU is not a conflicting sibling line.
+    expect(
+      gameProductIdentityMismatch(
+        ["Lollipop Chainsaw RePOP"],
+        "Lollipop Chainsaw",
+      ),
+    ).toBe(false);
+    expect(
+      gameProductIdentityMismatch(
+        ["Alan Wake II"],
+        "Alan Wake II - Night Springs",
+      ),
+    ).toBe(false);
+    // Single-token series names are not treated as expansion roots.
+    expect(
+      gameProductIdentityMismatch(["Pokemon Yellow"], "Pokemon Snap"),
+    ).toBe(false);
+  });
+
   it("rejects another game's deluxe edition that only shares the qualifier", () => {
     expect(
       isMetadataTitleAligned(
@@ -542,6 +655,36 @@ describe("isMetadataTitleAligned", () => {
         { title: "One Piece Z, tome 2" },
         ["One Piece n°02"],
         0.58,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects parallel product lines inserted before the volume marker", () => {
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "The Promised Neverland Tome 1",
+        "The Promised Neverland : Gag Manga, Tome 1",
+      ),
+    ).toBe(true);
+    expect(
+      isMetadataTitleAligned(
+        { title: "The Promised Neverland Gag Manga" },
+        ["The Promised Neverland"],
+        0.58,
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        { title: "The Promised Neverland : Gag Manga, Tome 1" },
+        ["The Promised Neverland Tome 1"],
+        0.58,
+      ),
+    ).toBe(false);
+    // Chapter subtitle after the volume stays allowed.
+    expect(
+      hasUnrequestedSeriesSuffixToken(
+        "Dragon Ball n°01",
+        "Dragon Ball 1 . Le nuage supersonique",
       ),
     ).toBe(false);
   });
@@ -745,6 +888,16 @@ describe("isMetadataTitleAligned", () => {
 });
 
 describe("catalogAttachmentTitleConflicts", () => {
+  it("rejects merch case listings that only share a franchise token", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Naruto n°51",
+        "Coque compatible pour Ipod TOUCH 7 MANGA NARUTO 51",
+        { mediaType: "books" },
+      ),
+    ).toBe(true);
+  });
+
   it("rejects base-game catalog art for an official trilogy collection", () => {
     expect(
       catalogAttachmentTitleConflicts(
@@ -846,6 +999,22 @@ describe("isGenericTitleFragment", () => {
 
   it("returns false when there is no title", () => {
     expect(isGenericTitleFragment(undefined, ["Anything"])).toBe(false);
+  });
+
+  it("still flags subtitle-only fragments missing franchise identity", () => {
+    expect(
+      isGenericTitleFragment("Retour vers le passé", [
+        "The Lapins Crétins : Retour vers le passé",
+      ]),
+    ).toBe(true);
+  });
+
+  it("does not flag 007 catalog titles that keep the series code", () => {
+    expect(
+      isGenericTitleFragment("007: Agent Under Fire", [
+        "James Bond 007 Agent Under Fire",
+      ]),
+    ).toBe(false);
   });
 });
 
@@ -955,6 +1124,19 @@ describe("metadataTitleSimilarity", () => {
     );
     expect(
       isMetadataTitleAligned({ title: "Parkan II" }, ["Le Parrain 2"], 0.58),
+    ).toBe(false);
+  });
+
+  it("rejects Bakuman ↔ Batman / Bat Man false friends", () => {
+    expect(metadataTitleSimilarity("Bakuman", "Batman")).toBeLessThan(0.55);
+    expect(metadataTitleSimilarity("Bakuman n°01", "Bat Man n°1")).toBeLessThan(
+      0.55,
+    );
+    expect(
+      isMetadataTitleAligned({ title: "Bat Man n°1" }, ["Bakuman n°01"], 0.55),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned({ title: "Batman" }, ["Bakuman n°01"], 0.55),
     ).toBe(false);
   });
 

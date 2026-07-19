@@ -8,11 +8,13 @@ const h = vi.hoisted(() => ({
     findMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
+    deleteMany: vi.fn(),
   },
   shelf: { findUnique: vi.fn() },
   resolveShelfId: vi.fn(),
   resolveItemId: vi.fn(),
   scheduleBatchItemMetadataRefresh: vi.fn(),
+  stampItemMetadataRefresh: vi.fn(),
   transaction: vi.fn(),
 }));
 
@@ -43,6 +45,9 @@ vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: h.resolveShelfId,
   resolveItemId: h.resolveItemId,
 }));
+vi.mock("@/core/collect/jobs/metadataRefreshSession", () => ({
+  stampItemMetadataRefresh: h.stampItemMetadataRefresh,
+}));
 vi.mock("@/lib/routing/itemSlug", () => ({
   allocateUniqueItemSlug: vi.fn(
     async (_shelfId: string, name: string) => `slug-${name}`,
@@ -52,11 +57,14 @@ vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (value: string) => `slug-${value}`,
 }));
 
-import { POST, PATCH, PUT } from "./route";
+import { POST, PATCH, PUT, DELETE } from "./route";
 
 const USER = { user: { id: "u1", role: "user" } };
 
-function withBody(body: unknown, method: "POST" | "PATCH" | "PUT" = "POST") {
+function withBody(
+  body: unknown,
+  method: "POST" | "PATCH" | "PUT" | "DELETE" = "POST",
+) {
   return new NextRequest("http://localhost/api/items/batch", {
     method,
     body: JSON.stringify(body),
@@ -70,10 +78,12 @@ beforeEach(() => {
     h.item.findMany,
     h.item.update,
     h.item.updateMany,
+    h.item.deleteMany,
     h.shelf.findUnique,
     h.resolveShelfId,
     h.resolveItemId,
     h.scheduleBatchItemMetadataRefresh,
+    h.stampItemMetadataRefresh,
     h.transaction,
   ]) {
     fn.mockReset();
@@ -241,6 +251,10 @@ describe("PUT /api/items/batch", () => {
       },
     ]);
     h.item.updateMany.mockResolvedValue({ count: 1 });
+    h.stampItemMetadataRefresh.mockResolvedValue({
+      generation: 1,
+      startedAt: new Date(),
+    });
 
     const res = await PUT(
       withBody(
@@ -254,9 +268,92 @@ describe("PUT /api/items/batch", () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ count: 1 });
+    expect(h.stampItemMetadataRefresh).toHaveBeenCalledWith("i1");
     expect(h.scheduleBatchItemMetadataRefresh).toHaveBeenCalledWith(
       [{ itemId: "i1", lookupQuery: "Marvel's Spider-Man 2", barcode: "123" }],
       { type: "games", name: "PlayStation 5" },
     );
+  });
+});
+
+describe("DELETE /api/items/batch", () => {
+  it("deletes selected items", async () => {
+    h.resolveItemId.mockImplementation(async (id: string) => id);
+    h.item.findMany.mockResolvedValue([
+      {
+        id: "i1",
+        userId: "u1",
+        shelfId: "shelf-1",
+        name: "Tome 01",
+        barcode: null,
+        imageUrl: null,
+        backgroundImageUrl: null,
+        metadata: null,
+        shelf: { type: "books", name: "Mangas" },
+      },
+      {
+        id: "i2",
+        userId: "u1",
+        shelfId: "shelf-1",
+        name: "Tome 02",
+        barcode: null,
+        imageUrl: null,
+        backgroundImageUrl: null,
+        metadata: null,
+        shelf: { type: "books", name: "Mangas" },
+      },
+    ]);
+    h.item.deleteMany.mockResolvedValue({ count: 2 });
+
+    const res = await DELETE(
+      withBody(
+        {
+          itemIds: ["i1", "i2"],
+          sourceShelfId: "shelf-1",
+        },
+        "DELETE",
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      count: 2,
+      sourceShelfIds: ["shelf-1"],
+    });
+    expect(h.item.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ["i1", "i2"] } },
+    });
+  });
+
+  it("rejects empty item lists", async () => {
+    const res = await DELETE(
+      withBody(
+        {
+          itemIds: [],
+          sourceShelfId: "shelf-1",
+        },
+        "DELETE",
+      ),
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("blocks guests", async () => {
+    h.requireGuestOrHigher.mockResolvedValue({
+      user: { id: "g1", role: "guest" },
+    });
+
+    const res = await DELETE(
+      withBody(
+        {
+          itemIds: ["i1"],
+          sourceShelfId: "shelf-1",
+        },
+        "DELETE",
+      ),
+    );
+
+    expect(res.status).toBe(403);
   });
 });

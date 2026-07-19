@@ -7,7 +7,6 @@ import {
   resolveGameAttachmentPlatformKey,
   withMetadataPlatformKeys,
 } from "@/core/enrich/media/platformKeyStamp";
-import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -167,10 +166,8 @@ export function mapSensCritiqueMetadata(
   } = {},
 ): MetadataResult {
   const platformKey = resolveGameAttachmentPlatformKey({
-    requestedPlatform:
-      ctx.platform ??
-      (ctx.shelfName ? detectShelfGamePlatformKey(ctx.shelfName) : undefined),
-    shelfName: ctx.shelfName,
+    // Never pass shelf/request platform: SensCritique search is title-only and
+    // must not masquerade as the shelf console (Atari item ≠ SNES Schtroumpfs).
     title: product.title,
     imageUrl: product.coverUrl,
     productUrl: product.productUrl,
@@ -208,7 +205,7 @@ export function createSensCritiqueResolver() {
   return async function fetchFromSensCritique(
     ctx: MetadataAdapterContext,
   ): Promise<MetadataResult | null> {
-    const requestedName = ctx.name.trim();
+    const requestedName = ctx.name?.trim() ?? "";
     // No EAN anywhere on SensCritique: name search only, never a barcode anchor.
     const universes = sensCritiqueUniversesForType(ctx.type);
     if (!requestedName || universes.length === 0) return null;

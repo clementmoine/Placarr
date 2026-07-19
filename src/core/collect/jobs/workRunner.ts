@@ -1,0 +1,319 @@
+import type { Prisma, Type } from "@prisma/client";
+
+import {
+  adoptItemMetadataRefreshOnWorker,
+  finishItemMetadataRefresh,
+  isAbortError,
+  type ItemMetadataRefreshSession,
+} from "@/core/collect/jobs/metadataRefreshSession";
+import {
+  BACKGROUND_WORK_KIND,
+  enqueueBackgroundWorkJob,
+  isBackgroundWorkJobCancelled,
+  type BackgroundWorkJobRow,
+  type MetadataRefreshJobPayload,
+  type PriceRefreshJobPayload,
+} from "@/core/collect/jobs/workQueue";
+import { BackgroundWorkAbandonedError } from "@/core/collect/jobs/workJobOutcome";
+import {
+  isCoverResolutionAcceptable,
+  readFileImageMetrics,
+} from "@/core/enrich/media/imageMetrics";
+import { fetchAndStoreMetadata } from "@/core/enrich";
+import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import {
+  itemPricesContextFromRecord,
+  itemPricesNeedRefresh,
+  refreshItemPricesFromContext,
+  type ItemPricesContext,
+} from "@/core/commerce/pricing/itemDisplay";
+import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProviderExternalLinks";
+import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesSiblingBarcodes";
+import { prisma } from "@/lib/db/prisma";
+import path from "path";
+
+const CANCEL_POLL_MS = 2_000;
+/** Hard ceiling: spinner must not sit forever behind Flare scrapes. */
+const METADATA_JOB_TIMEOUT_MS = 90_000;
+/** Price scrapes must not monopolize every worker slot for minutes. */
+const PRICE_JOB_TIMEOUT_MS = 60_000;
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  onTimeout: () => void,
+): Promise<T | undefined> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      onTimeout();
+      resolve(undefined);
+    }, timeoutMs);
+    if (typeof timer.unref === "function") timer.unref();
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
+async function prepareItemForMetadataRefresh(input: {
+  itemId: string;
+  clearRemoteCover?: boolean;
+}): Promise<void> {
+  if (input.clearRemoteCover) {
+    const item = await prisma.item.findUnique({
+      where: { id: input.itemId },
+      select: { imageUrl: true },
+    });
+    if (item?.imageUrl?.startsWith("http")) {
+      await prisma.item.update({
+        where: { id: input.itemId },
+        data: { imageUrl: null },
+      });
+    }
+  }
+
+  const itemForCoverReset = await prisma.item.findUnique({
+    where: { id: input.itemId },
+    select: { imageUrl: true },
+  });
+  if (itemForCoverReset?.imageUrl?.startsWith("/uploads/")) {
+    const metrics = await readFileImageMetrics(
+      path.join(process.cwd(), "public", itemForCoverReset.imageUrl),
+    );
+    if (!isCoverResolutionAcceptable(metrics)) {
+      await prisma.item.update({
+        where: { id: input.itemId },
+        data: { imageUrl: null },
+      });
+    }
+  }
+}
+
+async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    include: { shelf: true, metadata: true },
+  });
+  if (!item) return;
+
+  try {
+    await repairProviderExternalLinksForItem(itemId);
+    const context = itemPricesContextFromRecord(item);
+    // Soft enqueue only when cache is missing/stale — never force. A metadata
+    // wave used to stamp force:true on every item and flood the worker for hours.
+    if (!(await itemPricesNeedRefresh(context))) return;
+
+    await enqueueBackgroundWorkJob({
+      kind: BACKGROUND_WORK_KIND.priceRefresh,
+      itemId: context.id,
+      userId: item.userId,
+      replaceOpenForItem: true,
+      payload: {
+        id: context.id,
+        barcode: context.barcode,
+        name: context.name,
+        metadataId: context.metadataId,
+        metadataTitle: context.metadataTitle,
+        metadataAliases: context.metadataAliases,
+        metadataReleaseDate: context.metadataReleaseDate,
+        metadataPlatformKey: context.metadataPlatformKey,
+        metadataExternalIds: context.metadataExternalIds,
+        metadataBarcodes: context.metadataBarcodes,
+        metadataFacts: context.metadataFacts,
+        shelfType: context.shelfType,
+        shelfName: context.shelfName,
+        force: false,
+      } as unknown as Prisma.InputJsonValue,
+    });
+  } catch (error) {
+    console.error(
+      `[Prices] Failed to enqueue post-metadata refresh for item ${itemId}:`,
+      error,
+    );
+  }
+}
+
+/** Seed ISBN → series siblings EANs → soft price enqueue for newly barcoded. */
+async function attachSeriesBarcodesAfterMetadata(itemId: string): Promise<void> {
+  try {
+    const { attached } = await attachSeriesSiblingBarcodesFromProviders(itemId);
+    for (const row of attached) {
+      await enqueuePricesAfterMetadata(row.itemId);
+    }
+  } catch (error) {
+    console.error(
+      `[SeriesBarcodes] Failed to attach sibling EANs for item ${itemId}:`,
+      error,
+    );
+  }
+}
+
+function watchJobCancellation(
+  jobId: string,
+  session: ItemMetadataRefreshSession & { controller: AbortController },
+): () => void {
+  const timer = setInterval(() => {
+    void (async () => {
+      if (session.signal.aborted) return;
+      if (await isBackgroundWorkJobCancelled(jobId)) {
+        session.controller.abort();
+      }
+    })();
+  }, CANCEL_POLL_MS);
+  if (typeof timer.unref === "function") timer.unref();
+  return () => clearInterval(timer);
+}
+
+export async function executeMetadataRefreshJob(
+  job: BackgroundWorkJobRow,
+  payload: MetadataRefreshJobPayload,
+): Promise<void> {
+  if (await isBackgroundWorkJobCancelled(job.id)) {
+    await finishItemMetadataRefresh(payload.itemId, payload.generation);
+    throw new BackgroundWorkAbandonedError("cancelled");
+  }
+
+  const adopted = await adoptItemMetadataRefreshOnWorker(
+    payload.itemId,
+    payload.generation,
+  );
+  if (!adopted) {
+    throw new BackgroundWorkAbandonedError(
+      "superseded",
+      `Metadata refresh superseded for item ${payload.itemId} generation ${payload.generation}`,
+    );
+  }
+
+  const stopWatch = watchJobCancellation(job.id, adopted);
+  const jobTimeout = setTimeout(() => {
+    if (!adopted.signal.aborted) {
+      console.warn(
+        `[MetadataRefresh] Job timeout after ${METADATA_JOB_TIMEOUT_MS}ms for item ${payload.itemId}`,
+      );
+      adopted.controller.abort();
+    }
+  }, METADATA_JOB_TIMEOUT_MS);
+  if (typeof jobTimeout.unref === "function") jobTimeout.unref();
+
+  let stored = false;
+  let abandoned: BackgroundWorkAbandonedError | null = null;
+  try {
+    await prepareItemForMetadataRefresh(payload);
+    const platform = resolveGameMetadataPlatform(
+      undefined,
+      payload.shelfName,
+      payload.shelfType as Type,
+    );
+    const result = await fetchAndStoreMetadata(
+      payload.itemId,
+      payload.lookupQuery,
+      payload.shelfType as Type,
+      payload.barcode || undefined,
+      payload.forceRefresh ?? true,
+      platform,
+      payload.bypassMetadataCache ?? true,
+      true,
+      payload.shelfName,
+      adopted,
+    );
+    stored = Boolean(result);
+    if (adopted.signal.aborted && !stored) {
+      abandoned = new BackgroundWorkAbandonedError("cancelled");
+    }
+  } catch (error) {
+    if (!isAbortError(error)) {
+      console.error(
+        `[MetadataRefresh] Worker refresh failed for ${payload.itemId}:`,
+        error,
+      );
+      throw error;
+    }
+    // Soft timeout / cancel: keep any partial store; finish still clears spinner.
+    abandoned = new BackgroundWorkAbandonedError("cancelled");
+  } finally {
+    clearTimeout(jobTimeout);
+    stopWatch();
+    await finishItemMetadataRefresh(payload.itemId, payload.generation);
+  }
+
+  // Prices run as a separate queue job so metadata spinner can clear first.
+  if (stored) {
+    await attachSeriesBarcodesAfterMetadata(payload.itemId);
+    await enqueuePricesAfterMetadata(payload.itemId);
+  }
+
+  if (abandoned && !stored) {
+    throw abandoned;
+  }
+}
+
+export async function executePriceRefreshJob(
+  payload: PriceRefreshJobPayload,
+): Promise<void> {
+  const context: ItemPricesContext = {
+    id: payload.id,
+    barcode: payload.barcode,
+    name: payload.name,
+    metadataId: payload.metadataId,
+    metadataTitle: payload.metadataTitle,
+    metadataAliases: payload.metadataAliases,
+    metadataReleaseDate: payload.metadataReleaseDate,
+    metadataPlatformKey: payload.metadataPlatformKey,
+    metadataExternalIds: payload.metadataExternalIds,
+    metadataBarcodes: payload.metadataBarcodes,
+    metadataFacts: payload.metadataFacts as ItemPricesContext["metadataFacts"],
+    shelfType: payload.shelfType,
+    shelfName: payload.shelfName,
+  };
+
+  const result = await withTimeout(
+    refreshItemPricesFromContext(context, { force: payload.force }),
+    PRICE_JOB_TIMEOUT_MS,
+    () => {
+      console.warn(
+        `[PriceRefresh] Job timeout after ${PRICE_JOB_TIMEOUT_MS}ms for item ${payload.id}`,
+      );
+    },
+  );
+  if (result === undefined) {
+    // Timed out: keep whatever offers were already persisted; free the slot.
+    return;
+  }
+
+  if (payload.shelfType === "books" && payload.barcode) {
+    await attachSeriesBarcodesAfterMetadata(payload.id);
+  }
+}
+
+export async function executeBackgroundWorkJob(
+  job: BackgroundWorkJobRow,
+): Promise<void> {
+  const payload = job.payload as unknown;
+
+  if (job.kind === BACKGROUND_WORK_KIND.metadataRefresh) {
+    await executeMetadataRefreshJob(job, payload as MetadataRefreshJobPayload);
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.priceRefresh) {
+    await executePriceRefreshJob(payload as PriceRefreshJobPayload);
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync) {
+    const { runICollectCatalogSyncTick } = await import(
+      "@/providers/icollect/catalogSync"
+    );
+    await runICollectCatalogSyncTick();
+    return;
+  }
+
+  throw new Error(`Unknown background work kind: ${job.kind}`);
+}

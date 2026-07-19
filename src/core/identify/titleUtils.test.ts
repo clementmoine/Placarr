@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  aliasBelongsInPriceLookup,
   areLikelySameProduct,
   barcodeListingMatchesItem,
   BARCODE_CACHE_VERSION,
@@ -8,6 +9,8 @@ import {
   filterPlatformRedundancies,
   isListingDiscardable,
   isLotListing,
+  listingOnlyAddsProductIdentity,
+  listingIsDistinctProductSpinoff,
   moveTrailingSortArticleToFront,
   priceListingMatchesAnyItemName,
   priceListingVolumeConflictsWithItem,
@@ -121,6 +124,17 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
     expect(cleanTitleForDisplay("Xbox One Halo 3")).toBe("Halo 3");
   });
 
+  it("peels catalog slash chrome even when preserving platform spelling", () => {
+    expect(
+      cleanTitleForDisplay("WII / Sports Island", {
+        preservePlatformSuffix: true,
+      }),
+    ).toBe("Sports Island");
+    expect(
+      cleanTitleForDisplay("Wii Sports", { preservePlatformSuffix: true }),
+    ).toBe("Wii Sports");
+  });
+
   it("gère les entrées vides sans planter", () => {
     expect(cleanTitleForDisplay("")).toBe("");
   });
@@ -144,6 +158,53 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
         "Asmodee Unlock Short Adventures Red Mask Space Cowboys Jeu D Enquete Escape Game",
       ),
     ).toBe("Unlock Short Adventures Red Mask");
+  });
+
+  it("peels structural chrome (age adjective, sticker, SKU, format combo)", () => {
+    expect(cleanTitleForDisplay("Ancien jeu Zelda Twilight Princess")).toBe(
+      "Zelda Twilight Princess",
+    );
+    expect(cleanTitleForDisplay("Metal Gear Solid *rare*")).toBe(
+      "Metal Gear Solid",
+    );
+    expect(cleanTitleForDisplay("Final Fantasy VII SCUNL1234")).toBe(
+      "Final Fantasy VII",
+    );
+    expect(cleanTitleForDisplay("Dark Side of the Moon - album cd")).toBe(
+      "Dark Side of the Moon",
+    );
+  });
+
+  it("peels pack / jeu+platform / seller chrome without word lists", () => {
+    expect(cleanTitleForDisplay("Pack jeu Mario Kart Wii")).toBe("Mario Kart");
+    expect(cleanTitleForDisplay("Jeu Xbox Halo 3")).toBe("Halo 3");
+    expect(
+      cleanTitleForDisplay("Sonic Adventure envoi rapide et suivi"),
+    ).toBe("Sonic Adventure");
+    expect(cleanTitleForDisplay("Resident Evil 4 code vip")).toBe(
+      "Resident Evil 4",
+    );
+  });
+
+  it("peels first-gen / era chrome structurally", () => {
+    expect(cleanTitleForDisplay("Halo 1ere generation")).toBe("Halo");
+    expect(cleanTitleForDisplay("Crash Bandicoot first gen")).toBe(
+      "Crash Bandicoot",
+    );
+    expect(cleanTitleForDisplay("Zelda vintage")).toBe("Zelda");
+  });
+
+  it("peels media-category chrome structurally", () => {
+    expect(cleanTitleForDisplay("Jeu video Mario Kart")).toBe("Mario Kart");
+    expect(cleanTitleForDisplay("Les Lapins Cretins jeu video")).toBe(
+      "Les Lapins Cretins",
+    );
+  });
+
+  it("peels version française region compounds", () => {
+    expect(
+      cleanTitleForDisplay("Tom Clancy's Ghost Recon Version Française"),
+    ).toBe("Tom Clancy's Ghost Recon");
   });
 });
 
@@ -282,6 +343,27 @@ describe("priceListingMatchesAnyItemName", () => {
     ).toBe(false);
   });
 
+  it("aligns padded n°087 with marketplace Numéro + month/year tails", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°087"],
+        "Super picsou Géant Numéro 87 Octobre 1998",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°128"],
+        "super picsou geant annee 2005 - N° 128",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°077"],
+        "SUPER PICSOU GEANT N 77 bis",
+      ),
+    ).toBe(false);
+  });
+
   it("rejects unrelated short-title homonyms and component listings", () => {
     expect(
       priceListingMatchesAnyItemName(["Transistor"], "Transistor BD139"),
@@ -295,6 +377,144 @@ describe("priceListingMatchesAnyItemName", () => {
     expect(
       priceListingMatchesAnyItemName(["Transistor"], "Transistor sur PS4"),
     ).toBe(true);
+  });
+
+  it("matches Atari titles despite console model numbers in the listing", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Jr. Pac-man"],
+        "Jeu Atari 2600 JR Pac-Man Loose",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Jr. Pac-man"],
+        "Jr Pac Man jeu Atari 2600 VCS 7800 cartouche rétro vintage",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects FIFA World Cup / Bond franchise siblings", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["FIFA 2002"],
+        "2002 FIFA World Cup (PC)",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["FIFA 2002"],
+        "Coupe du Monde Fifa 2002 PlayStation 1 Sony PS1",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["FIFA 2002"],
+        "FIFA 2002: Road to FIFA World Cup",
+      ),
+    ).toBe(false);
+    expect(
+      areLikelySameProduct(
+        "FIFA 2002",
+        "FIFA Soccer 2002: Major League Soccer",
+      ),
+    ).toBe(false);
+    expect(
+      listingOnlyAddsProductIdentity(
+        "FIFA 2002",
+        "FIFA Soccer 2002: Major League Soccer",
+      ),
+    ).toBe(true);
+    expect(
+      aliasBelongsInPriceLookup(
+        "FIFA 2002",
+        "FIFA Soccer 2002: Major League Soccer",
+      ),
+    ).toBe(false);
+    expect(
+      aliasBelongsInPriceLookup(
+        "Alice : Retour au pays de la folie",
+        "Alice: Madness Returns",
+      ),
+    ).toBe(true);
+    expect(
+      aliasBelongsInPriceLookup(
+        "James Bond 007 Nightfire",
+        "James Bond 007",
+      ),
+    ).toBe(false);
+    expect(
+      aliasBelongsInPriceLookup(
+        "James Bond 007 Nightfire",
+        "007: Nightfire",
+      ),
+    ).toBe(true);
+    expect(
+      aliasBelongsInPriceLookup(
+        "Castle Crashers",
+        "Castle Crashers Remastered",
+      ),
+    ).toBe(true);
+    expect(
+      aliasBelongsInPriceLookup(
+        "Spider-Man 2 : La Revanche d'Electro",
+        "Spider-Man 2: Enter Electro",
+      ),
+    ).toBe(true);
+    expect(
+      aliasBelongsInPriceLookup(
+        "Spider-Man 2 : La Revanche d'Electro",
+        "Spiderman 2 Enter Electro",
+      ),
+    ).toBe(true);
+    expect(
+      aliasBelongsInPriceLookup(
+        "Spider-Man 2 : La Revanche d'Electro",
+        "Spider-Man 2: The Sinister Six",
+      ),
+    ).toBe(false);
+    expect(
+      aliasBelongsInPriceLookup(
+        "Spider-Man 2 : La Revanche d'Electro",
+        "Spider-man 2",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        [
+          "Spider-Man 2 : La Revanche d'Electro",
+          "Spider-Man 2: Enter Electro",
+        ],
+        "Spiderman 2 Enter Electro Playstation",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["James Bond 007 Nightfire"],
+        "James Bond 007 Les Diamants sont éternels 4K",
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["James Bond 007 Nightfire"],
+        "007 Nightfire",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps regional marketplace copy after the title (version française)", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Bomber Man 64"],
+        "Bomber Man 64 - version française FAH PAL - Nintendo 64 N64",
+      ),
+    ).toBe(true);
+    expect(
+      listingIsDistinctProductSpinoff(
+        "Bomber Man 64",
+        "Bomber Man 64 - version française FAH PAL",
+      ),
+    ).toBe(false);
   });
 
   it("rejects franchise spinoff listings for the base game title", () => {
@@ -338,6 +558,57 @@ describe("priceListingMatchesAnyItemName", () => {
       priceListingMatchesAnyItemName(
         ["Black stories - Autour du monde"],
         "Black Stories Autour du Monde",
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts eBay magazine listings with leading Livre or publisher suffixes", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°037"],
+        "Livre Super Picsou Geant N 37",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°038"],
+        "Super Picsou Geant N°38 / Edimonde  10-1990",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°150"],
+        "SUPER PICSOU GEANT n°150 Numéro vert !*",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°036"],
+        "SUPER PICSOU GEANT n°36*",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°120"],
+        "SUPER PICSOU GEANT [No 120] Walt Disney.",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°081"],
+        "Super Picsou Géant 81",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°062"],
+        "PETIT FORMAT BD SUPER PICSOU GEANT 62 1994 disney",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Super Picsou Géant n°100bis"],
+        "Super Picsou Géant n°100 BIS",
       ),
     ).toBe(true);
   });

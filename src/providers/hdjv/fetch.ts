@@ -212,7 +212,10 @@ export function parseHdjvFichePage(
 function galleryLabelToAttachment(
   label: string,
 ): Pick<HdjvGalleryItem, "type" | "role"> {
-  const normalized = label.toLowerCase();
+  const normalized = label
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   if (normalized.includes("verso")) {
     return { type: "cover", role: "back-fr" };
   }
@@ -222,7 +225,11 @@ function galleryLabelToAttachment(
   if (normalized.includes("screen")) {
     return { type: "screenshot" };
   }
-  if (normalized.includes("disque")) {
+  // HDJV uses both "Disque du jeu" and "Media du jeu" for optical/cart art.
+  if (
+    normalized.includes("disque") ||
+    /\bmedia\s+du\s+jeu\b/.test(normalized)
+  ) {
     return { type: "image", role: "disc-fr" };
   }
   return { type: "image" };

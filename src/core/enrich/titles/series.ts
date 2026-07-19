@@ -145,3 +145,67 @@ export function seriesSiblings<T extends SeriesTitleEntry>(
 
   return members;
 }
+
+/** Mirror post-present `storedName ?? name` using raw DB rows only. */
+export function seriesTitleEntryFromItemRow(row: {
+  id: string;
+  name: string;
+  metadata?: { title?: string | null } | null;
+}): SeriesTitleEntry {
+  const metadataTitle = row.metadata?.title?.trim();
+  const displayName = metadataTitle || row.name;
+  return {
+    id: row.id,
+    title: displayName !== row.name ? row.name : displayName,
+  };
+}
+
+/** Apply series volume padding to one presented item. */
+export function applySeriesDisplayName<
+  T extends { id: string; name: string; storedName?: string },
+>(item: T, entries: SeriesTitleEntry[]): T {
+  const padded = seriesDisplayTitles(entries).get(item.id);
+  if (!padded || padded === item.name) return item;
+  return { ...item, name: padded };
+}
+
+/** Apply series volume padding across a shelf's presented items. */
+export function applySeriesDisplayNames<
+  T extends { id: string; name: string; storedName?: string },
+>(items: T[]): T[] {
+  if (items.length === 0) return items;
+  const entries = items.map((item) => ({
+    id: item.id,
+    title: item.storedName ?? item.name,
+  }));
+  const map = seriesDisplayTitles(entries);
+  return items.map((item) => {
+    const padded = map.get(item.id);
+    if (!padded || padded === item.name) return item;
+    return { ...item, name: padded };
+  });
+}
+
+/** Series padding per shelf when items span multiple shelves (global lists). */
+export function applySeriesDisplayNamesByShelf<
+  T extends {
+    id: string;
+    shelfId: string;
+    name: string;
+    storedName?: string;
+  },
+>(items: T[]): T[] {
+  const byShelf = new Map<string, T[]>();
+  for (const item of items) {
+    const group = byShelf.get(item.shelfId) ?? [];
+    group.push(item);
+    byShelf.set(item.shelfId, group);
+  }
+  const paddedById = new Map<string, T>();
+  for (const group of byShelf.values()) {
+    for (const item of applySeriesDisplayNames(group)) {
+      paddedById.set(item.id, item);
+    }
+  }
+  return items.map((item) => paddedById.get(item.id) ?? item);
+}

@@ -35,7 +35,16 @@ export function cleanSearchQuery(name: string): string {
     /\b(microsoft|sony|nintendo|sega|atari|capcom|konami|ubisoft|ea)\b\s*$/gi,
     "",
   );
-  cleaned = cleaned.replace(/\[[^\]]*\]/g, "");
+  // Keep bracketed volume markers ([No 120], [n°36]) — ChasseAuxLivres etc.
+  // encode the issue there. Drop other bracket noise (editions, SKUs).
+  cleaned = cleaned.replace(/\[([^\]]*)\]/g, (_match, inner: string) => {
+    if (
+      /\b(?:no\.?|n[°º]?|num(?:[eé]ro)?|vol(?:ume)?|tome|#)\s*\d+/i.test(inner)
+    ) {
+      return ` ${inner} `;
+    }
+    return " ";
+  });
   cleaned = cleaned.replace(/\([^)]*\)/g, "");
   cleaned = cleaned.replace(/\s*[-–—:|]+\s*$/g, "");
   cleaned = cleaned.replace(/^\s*[-–—:|]+\s*/g, "");

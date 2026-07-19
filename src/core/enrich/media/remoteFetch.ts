@@ -3,7 +3,6 @@ import axios from "axios";
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
 import {
   coverUrlExpectsHighResolution,
-  MIN_COVER_SHORTEST_EDGE,
 } from "@/core/enrich/media/coverResolution";
 import {
   flareSolverrCookiesFor,
@@ -27,10 +26,10 @@ export type RemoteImageFetchResult = {
 
 export type FetchRemoteImageOptions = {
   /**
-   * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
-   * Localization keeps this false so /full/ URLs are not persisted as thumbnails.
-   */
-  allowSubThresholdFallback?: boolean;
+ * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
+ * Localization keeps this false so /full/ URLs are not persisted as CDN thumbs.
+ */
+allowSubThresholdFallback?: boolean;
 };
 
 function sleep(ms: number) {
@@ -127,7 +126,8 @@ function isAcceptableForRequest(
   if (!ranked) return false;
   if (options.allowSubThresholdFallback) return true;
   if (!expectsHighResolution(url)) return true;
-  return ranked.shortestEdge >= MIN_COVER_SHORTEST_EDGE;
+  // Prefer a real /full/ asset over a CDN thumb when the request URL promised one.
+  return coverUrlExpectsHighResolution(ranked.sourceUrl);
 }
 
 async function fetchWithOptionalFlare(
@@ -150,11 +150,13 @@ async function fetchWithOptionalFlare(
         "User-Agent": flare.userAgent,
       }),
     );
-    const cookieFetchIsFullEnough =
+    if (
       cookieFetch &&
       (!fullCandidates.length ||
-        cookieFetch.shortestEdge >= MIN_COVER_SHORTEST_EDGE);
-    if (cookieFetchIsFullEnough) return cookieFetch;
+        coverUrlExpectsHighResolution(cookieFetch.sourceUrl))
+    ) {
+      return cookieFetch;
+    }
   }
 
   if (fullCandidates.length === 0) {

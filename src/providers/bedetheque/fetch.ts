@@ -2,8 +2,16 @@ import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
-import { stripVolumeMarkersFromTitle } from "@/core/enrich/titles/volumeNumber";
+import {
+  normalizeVolumeNumber,
+  stripVolumeMarkersFromTitle,
+  volumeNumberFromTitle,
+  VOLUME_NUMBER_SUFFIX_PATTERN,
+} from "@/core/enrich/titles/volumeNumber";
+import {
+  hasHorsSerieMarker,
+  horsSerieSeriesPart,
+} from "@/core/enrich/titles/horsSerie";
 import {
   metadataTitleSimilarity,
   hasUnrequestedVariantMarker,
@@ -38,6 +46,11 @@ export interface BedethequeAlbum {
   seriesName?: string;
   seriesUrl?: string;
   seriesPosition?: number;
+  /**
+   * Normalized issue label ("36", "100bis"); unlike seriesPosition it keeps
+   * French interim suffixes, so n°100bis never passes for n°100.
+   */
+  issueNumber?: string;
   alternateTitles?: string[];
   barcode?: string;
   /** C2C marketplace listings from the album page (prix-annonce). */
@@ -71,8 +84,16 @@ const BEDETHEQUE_HEADERS = {
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
 };
 
-const ALBUM_ISSUE_LINK_RE = /BD-[^"'\s]*-Numero-(\d+)-(\d+)\.html/gi;
-const ALBUM_TOME_LINK_RE = /BD-[^"'\s]+-Tome-(\d+)-[^"'\s]+-(\d+)\.html/gi;
+/** Album slugs write suffixed issues as `Tome-100Bis` / `Numero-100-Bis`. */
+const ALBUM_URL_ISSUE_PATTERN = `\\d+(?:-?${VOLUME_NUMBER_SUFFIX_PATTERN})?`;
+const ALBUM_ISSUE_LINK_RE = new RegExp(
+  `BD-[^"'\\s]*-Numero-(${ALBUM_URL_ISSUE_PATTERN})-(\\d+)\\.html`,
+  "gi",
+);
+const ALBUM_TOME_LINK_RE = new RegExp(
+  `BD-[^"'\\s]+-Tome-(${ALBUM_URL_ISSUE_PATTERN})-[^"'\\s]+-(\\d+)\\.html`,
+  "gi",
+);
 
 function cleanText(value?: string | null): string | undefined {
   const text = decodeHTMLEntities(String(value || ""))
@@ -275,7 +296,9 @@ export function isBedethequeAlbumUrl(value: string): boolean {
 }
 
 function seriesQueryFromTitle(title: string): string {
-  return stripVolumeMarkersFromTitle(title);
+  // A hors-série title names the series before the marker; the subtitle
+  // after it never matches the catalog's series autocomplete.
+  return stripVolumeMarkersFromTitle(horsSerieSeriesPart(title) ?? title);
 }
 
 function parentheticalFragments(value?: string | null): string[] {
@@ -307,6 +330,39 @@ function parseBedethequeAlternateTitles(
   return Array.from(alternates);
 }
 
+const H2_LEADING_ISSUE_RE = new RegExp(
+  `^(\\d+(?:\\s?${VOLUME_NUMBER_SUFFIX_PATTERN})?)\\s*\\.`,
+  "i",
+);
+const H2_NUMERO_ISSUE_RE = new RegExp(
+  `Num[ée]ro\\s+(\\d+(?:\\s?${VOLUME_NUMBER_SUFFIX_PATTERN})?)`,
+  "i",
+);
+const URL_TOME_NUMERO_ISSUE_RE = new RegExp(
+  `-Tome-(${ALBUM_URL_ISSUE_PATTERN})-Numero-`,
+  "i",
+);
+const URL_TOME_ISSUE_RE = new RegExp(`-Tome-(${ALBUM_URL_ISSUE_PATTERN})-`, "i");
+
+/**
+ * Composite h2 position label: `{pre}<span class="numa">{label}</span>` gives
+ * "7" (empty numa), "100Bis" or "HS-SPM1". Returns the label only when it is
+ * NOT a volume number — those special issues (hors-série…) have no series
+ * position, and their subtitle's own "Tome N" must not be mistaken for one.
+ */
+function specialIssueLabelFromBedethequeHtml(html: string): string | null {
+  const match = html.match(
+    /<h2>\s*([^<]*)<span[^>]+class=["']numa["'][^>]*>([^<]*)<\/span>/i,
+  );
+  if (!match) return null;
+  const composite = cleanText(`${match[1] ?? ""}${match[2] ?? ""}`)?.replace(
+    /\s+/g,
+    "",
+  );
+  if (!composite) return null;
+  return normalizeVolumeNumber(composite) === "NaN" ? composite : null;
+}
+
 function issueNumberFromBedethequeHtml(
   html: string,
   sourceUrl?: string,
@@ -314,22 +370,22 @@ function issueNumberFromBedethequeHtml(
   const h2 = html.match(/<h2>[\s\S]*?<\/h2>/i)?.[0] || "";
   const h2Plain = cleanText(h2.replace(/<[^>]+>/g, " "));
 
-  const h2Leading = h2Plain?.match(/^(\d+)\s*\./)?.[1];
-  if (h2Leading) return String(Number.parseInt(h2Leading, 10));
+  const h2Leading = h2Plain?.match(H2_LEADING_ISSUE_RE)?.[1];
+  if (h2Leading) return normalizeVolumeNumber(h2Leading);
 
   const fromTitle =
     volumeNumberFromTitle(h2Plain || "") ||
     volumeNumberFromTitle(metaContent(html, "og:title") || "");
   if (fromTitle) return fromTitle;
 
-  const numeroInH2 = h2.match(/Num[ée]ro\s+(\d+)/i)?.[1];
-  if (numeroInH2) return String(Number.parseInt(numeroInH2, 10));
+  const numeroInH2 = h2.match(H2_NUMERO_ISSUE_RE)?.[1];
+  if (numeroInH2) return normalizeVolumeNumber(numeroInH2);
 
   const url = sourceUrl || metaContent(html, "og:url") || "";
   const fromUrl =
-    url.match(/-Tome-(\d+)-Numero-/i)?.[1] ||
-    url.match(/-Tome-(\d+)-/i)?.[1];
-  if (fromUrl) return String(Number.parseInt(fromUrl, 10));
+    url.match(URL_TOME_NUMERO_ISSUE_RE)?.[1] ||
+    url.match(URL_TOME_ISSUE_RE)?.[1];
+  if (fromUrl) return normalizeVolumeNumber(fromUrl);
 
   return null;
 }
@@ -357,14 +413,75 @@ export function parseBedethequeSeriesAlbumLinks(html: string): Array<{
   };
 
   for (const match of html.matchAll(ALBUM_ISSUE_LINK_RE)) {
-    pushMatch(match[0], String(Number.parseInt(match[1], 10)), match[2]);
+    pushMatch(match[0], normalizeVolumeNumber(match[1]), match[2]);
   }
 
   for (const match of html.matchAll(ALBUM_TOME_LINK_RE)) {
-    pushMatch(match[0], String(Number.parseInt(match[1], 10)), match[2]);
+    pushMatch(match[0], normalizeVolumeNumber(match[1]), match[2]);
   }
 
   return links;
+}
+
+/** Listing anchors carry the full album title: `title="Voir la fiche Album de {Série} -{label}- {Sous-titre}"`. */
+const ALBUM_TITLED_LINK_RE =
+  /<a[^>]+href=["']([^"']*BD-[^"']*-(\d+)\.html)["'][^>]+title=["']Voir la fiche Album de ([^"']+)["']/gi;
+
+export type BedethequeSeriesAlbumEntry = {
+  albumPath: string;
+  albumId: string;
+  /** Position label between dashes ("7", "100Bis", "HS-SPM1"). */
+  label?: string;
+  title: string;
+};
+
+export function parseBedethequeSeriesAlbumEntries(
+  html: string,
+): BedethequeSeriesAlbumEntry[] {
+  const seen = new Set<string>();
+  const entries: BedethequeSeriesAlbumEntry[] = [];
+
+  for (const match of html.matchAll(ALBUM_TITLED_LINK_RE)) {
+    const albumPath = match[1];
+    const albumId = match[2];
+    const title = cleanText(match[3]);
+    if (!title || seen.has(albumId)) continue;
+    seen.add(albumId);
+    const label = title.match(/\s-(\S+)-\s/)?.[1];
+    entries.push({ albumPath, albumId, label, title });
+  }
+
+  return entries;
+}
+
+// Bédéthèque codes HS as "HS-SPM1", "HS2017", "HS2022/11", … — all start
+// with "HS"; regular tomes are bare numbers ("1", "178").
+const HORS_SERIE_LABEL_RE = /^hs/i;
+const ALBUM_TITLE_MIN_SIMILARITY = 0.5;
+
+/**
+ * Hors-série issues live outside the numbered sequence, so the requested
+ * "Tome N" (part of the special issue's own subtitle) must never be matched
+ * against series positions — the album is chosen by title similarity among
+ * HS-labelled entries instead.
+ */
+export function pickBedethequeHorsSerieAlbumPath(
+  entries: BedethequeSeriesAlbumEntry[],
+  query: string,
+): string | null {
+  let best: BedethequeSeriesAlbumEntry | null = null;
+  let bestScore = 0;
+
+  for (const entry of entries) {
+    if (!entry.label || !HORS_SERIE_LABEL_RE.test(entry.label)) continue;
+    const score = metadataTitleSimilarity(query, entry.title);
+    if (score > bestScore) {
+      best = entry;
+      bestScore = score;
+    }
+  }
+
+  return bestScore >= ALBUM_TITLE_MIN_SIMILARITY ? (best?.albumPath ?? null) : null;
 }
 
 function bedethequeAlbumsPageUrl(series: BedethequeSeriesCandidate): string {
@@ -394,15 +511,26 @@ export function parseBedethequeAlbumPage(
   );
   const seriesName = cleanText(seriesMatch?.[2]);
   const seriesUrl = absoluteBedethequeUrl(seriesMatch?.[1]);
-  const seriesPositionRaw = issueNumberFromBedethequeHtml(html, sourceUrl);
+  const specialIssueLabel = specialIssueLabelFromBedethequeHtml(html);
+  const seriesPositionRaw = specialIssueLabel
+    ? null
+    : issueNumberFromBedethequeHtml(html, sourceUrl);
+  const specialIssueSubtitle =
+    specialIssueLabel && issueTitle
+      ? cleanText(
+          issueTitle.replace(specialIssueLabel, "").replace(/^\s*\.\s*/, ""),
+        )
+      : undefined;
 
   const title =
     cleanText(
       seriesName && seriesPositionRaw
         ? `${seriesName} n°${seriesPositionRaw}`
-        : seriesName && issueTitle
-          ? `${seriesName} ${issueTitle}`
-          : ogTitle || issueTitle,
+        : seriesName && specialIssueSubtitle
+          ? `${seriesName} - ${specialIssueSubtitle}`
+          : seriesName && issueTitle
+            ? `${seriesName} ${issueTitle}`
+            : ogTitle || issueTitle,
     ) || ogTitle;
   if (!title) return null;
 
@@ -486,36 +614,64 @@ export function parseBedethequeAlbumPage(
     seriesPosition: seriesPositionRaw
       ? Number.parseInt(seriesPositionRaw, 10)
       : undefined,
+    issueNumber:
+      seriesPositionRaw ?? specialIssueLabel?.toLowerCase() ?? undefined,
     alternateTitles: parseBedethequeAlternateTitles(html, seriesName),
     barcode: barcode || undefined,
   };
+}
+
+const SERIES_CANDIDATE_MIN_SIMILARITY = 0.55;
+
+function withoutParentheticalQualifier(label: string): string {
+  return label
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Series candidates ordered by similarity to the requested title. Variant
+ * series ("Super Picsou Géant (Supplément Picsou Magazine)") score on their
+ * qualifier-free base name too, so they stay reachable as fallbacks when the
+ * requested issue only exists in the variant series — album-level issue and
+ * title guards still decide the final match.
+ */
+export function rankBedethequeSeriesCandidates(
+  query: string,
+  candidates: BedethequeSeriesCandidate[],
+): BedethequeSeriesCandidate[] {
+  if (!candidates.length) return [];
+
+  const eligible = candidates.filter(
+    (candidate) => !hasUnrequestedVariantMarker(query, candidate.label),
+  );
+  const pool = eligible.length > 0 ? eligible : candidates;
+  if (pool.length === 1) return pool;
+
+  const target = seriesQueryFromTitle(query);
+  return pool
+    .map((candidate) => {
+      const direct = metadataTitleSimilarity(target, candidate.label);
+      const base = withoutParentheticalQualifier(candidate.label);
+      const score = Math.max(
+        direct,
+        base && base !== candidate.label
+          ? metadataTitleSimilarity(target, base)
+          : 0,
+      );
+      return { candidate, score, direct };
+    })
+    .filter((entry) => entry.score >= SERIES_CANDIDATE_MIN_SIMILARITY)
+    .sort((a, b) => b.score - a.score || b.direct - a.direct)
+    .map((entry) => entry.candidate);
 }
 
 export function pickBedethequeSeriesCandidate(
   query: string,
   candidates: BedethequeSeriesCandidate[],
 ): BedethequeSeriesCandidate | null {
-  if (!candidates.length) return null;
-
-  const eligible = candidates.filter(
-    (candidate) => !hasUnrequestedVariantMarker(query, candidate.label),
-  );
-  const pool = eligible.length > 0 ? eligible : candidates;
-  if (pool.length === 1) return pool[0];
-
-  const target = seriesQueryFromTitle(query);
-  let best: BedethequeSeriesCandidate | null = null;
-  let bestScore = -1;
-
-  for (const candidate of pool) {
-    const score = metadataTitleSimilarity(target, candidate.label);
-    if (score > bestScore) {
-      best = candidate;
-      bestScore = score;
-    }
-  }
-
-  return bestScore >= 0.55 ? best : null;
+  return rankBedethequeSeriesCandidates(query, candidates)[0] ?? null;
 }
 
 export function isBedethequeBarcodeQuery(value: string): boolean {
@@ -597,50 +753,60 @@ async function fetchBedethequeAlbumByUrl(
   return parseBedethequeAlbumPage(html, url);
 }
 
+export { fetchBedethequeAlbumByUrl };
+
+const MAX_SERIES_CANDIDATES_PER_QUERY = 3;
+
 async function fetchBedethequeAlbumForTitle(
   query: string,
 ): Promise<BedethequeAlbum | null> {
-  const issueNumber = volumeNumberFromTitle(query);
+  const horsSerie = hasHorsSerieMarker(query);
+  // A hors-série subtitle's "Tome N" is not a series position; matching it
+  // against the numbered sequence would return the regular n°N album.
+  const issueNumber = horsSerie ? null : volumeNumberFromTitle(query);
 
   for (const seriesQuery of buildSeriesSearchQueries(query)) {
     const candidates = await searchBedethequeSeries(seriesQuery);
-    const series = pickBedethequeSeriesCandidate(query, candidates);
-    if (!series) continue;
+    const rankedSeries = rankBedethequeSeriesCandidates(
+      query,
+      candidates,
+    ).slice(0, MAX_SERIES_CANDIDATES_PER_QUERY);
 
-    const seriesHtml = await fetchBedethequeHtml(
-      bedethequeAlbumsPageUrl(series),
-    );
-    if (!seriesHtml) continue;
+    for (const series of rankedSeries) {
+      const seriesHtml = await fetchBedethequeHtml(
+        bedethequeAlbumsPageUrl(series),
+      );
+      if (!seriesHtml) continue;
 
-    const albumPath = pickBedethequeAlbumLink(
-      parseBedethequeSeriesAlbumLinks(seriesHtml),
-      issueNumber,
-    );
-    if (!albumPath) continue;
+      const albumPath = horsSerie
+        ? pickBedethequeHorsSerieAlbumPath(
+            parseBedethequeSeriesAlbumEntries(seriesHtml),
+            query,
+          )
+        : pickBedethequeAlbumLink(
+            parseBedethequeSeriesAlbumLinks(seriesHtml),
+            issueNumber,
+          );
+      if (!albumPath) continue;
 
-    const album = await fetchBedethequeAlbumByUrl(
-      absoluteBedethequeUrl(albumPath)!,
-    );
-    if (!album) continue;
+      const album = await fetchBedethequeAlbumByUrl(
+        absoluteBedethequeUrl(albumPath)!,
+      );
+      if (!album) continue;
 
-    if (
-      issueNumber &&
-      album.seriesPosition &&
-      String(album.seriesPosition) !== issueNumber
-    ) {
-      continue;
+      if (issueNumber && album.issueNumber && album.issueNumber !== issueNumber) {
+        continue;
+      }
+
+      if (
+        horsSerie &&
+        metadataTitleSimilarity(query, album.title) < ALBUM_TITLE_MIN_SIMILARITY
+      ) {
+        continue;
+      }
+
+      return album;
     }
-
-    if (
-      metadataTitleSimilarity(query, album.title) < 0.5 &&
-      issueNumber &&
-      album.seriesPosition &&
-      String(album.seriesPosition) !== issueNumber
-    ) {
-      continue;
-    }
-
-    return album;
   }
 
   return null;

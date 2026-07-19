@@ -6,6 +6,8 @@ import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { UserNav } from "./UserNav";
 import { BottomNav } from "./BottomNav";
 import { BackgroundJobsMenu } from "./BackgroundJobsMenu";
+import { useBackgroundJobsIdleSync } from "@/core/collect/useBackgroundJobsIdleSync";
+import { useAccount } from "@/lib/client/hooks/useAccount";
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -13,6 +15,8 @@ interface HeaderProps {
 
 export default function Header(props: HeaderProps) {
   const { t } = useLocale();
+  const { isGuest } = useAccount();
+  useBackgroundJobsIdleSync(!isGuest);
 
   return (
     <>

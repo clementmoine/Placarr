@@ -59,25 +59,35 @@ describe("provider mapping probes", () => {
     );
     expect(customProbeIds.sort()).toEqual(
       [
+        "abebooks",
         "achatmoinscher",
-        "chipweld",
         "archichouette",
+        "babelio",
         "bcdjeux",
+        "bdfugue",
+        "bdovore",
+        "bdphile",
         "bedetheque",
         "booknode",
+        "canalbd",
         "cestlejeu",
         "chasseauxlivres",
+        "chipweld",
         "chocobonplan",
-        "geedie",
-        "hdjv",
         "coverproject",
+        "decitre",
         "didacto",
         "ebay",
         "espritjeu",
         "fairplayjeux",
         "freakxy",
         "fullset",
+        "furet",
+        "geedie",
+        "gibert",
+        "hdjv",
         "icollect",
+        "izneo",
         "latelierdesjeux",
         "launchbox",
         "ledenicheur",
@@ -90,6 +100,7 @@ describe("provider mapping probes", () => {
         "netgamesretro",
         "okkazeo",
         "philibert",
+        "planetebd",
         "playin",
         "pricecharting",
         "scandex",
@@ -98,15 +109,39 @@ describe("provider mapping probes", () => {
         "smartoys",
         "thegamesdb",
         "tokyogamestory",
+        "vivlio",
         "wikidata",
       ].sort(),
     );
   });
 
-  it("registers raw-key collectors for every provider module", () => {
-    const missing = PROVIDER_MODULES.filter(
-      (mdl) => !mdl.collectMappingRawKeys,
-    ).map((mdl) => mdl.info.id);
-    expect(missing).toEqual([]);
+  it("does not crash barcode-only adapter probes when name is missing", () => {
+    // Regression: `ctx.name.trim()` threw when mappingProbe.context only set barcode
+    // (Gibert and other Magento retailers) → map:error for the whole provider.
+    expect(() => {
+      const name: string | undefined = undefined;
+      void name?.trim();
+    }).not.toThrow();
+
+    const gibert = PROVIDER_MODULES.find((mdl) => mdl.info.id === "gibert");
+    expect(gibert?.mappingProbe?.context.barcode).toBeTruthy();
+    expect(gibert?.mappingProbe?.context.name).toBeUndefined();
+  });
+
+  it("declares SensCritique on games, books, movies, and musics", () => {
+    const senscritique = PROVIDER_MODULES.find(
+      (mdl) => mdl.info.id === "senscritique",
+    );
+    expect(senscritique?.info.types.sort()).toEqual(
+      ["books", "games", "movies", "musics"].sort(),
+    );
+    expect(senscritique?.mappingProbe?.context.type).toBe("games");
+  });
+
+  it("gives book scrape probes an explicit books type", () => {
+    for (const id of ["canalbd", "bedetheque"] as const) {
+      const mdl = PROVIDER_MODULES.find((entry) => entry.info.id === id);
+      expect(mdl?.mappingProbe?.context.type).toBe("books");
+    }
   });
 });

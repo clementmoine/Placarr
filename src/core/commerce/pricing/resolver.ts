@@ -1,20 +1,26 @@
 import { prisma } from "@/lib/db/prisma";
 import {
+  aliasBelongsInPriceLookup,
   hasExplicitVolumeMarker,
   isLotListing,
+  listingIsDistinctProductSpinoff,
   listingLooksLikeGameAccessory,
   listingLooksLikeNonBookProduct,
+  normalizeForTokens,
   priceListingMatchesAnyItemName,
   priceListingVolumeConflictsWithItem,
 } from "@/core/identify/titleUtils";
+import { cleanSearchQuery } from "@/core/enrich/search/query";
 import { detectPlatformKey } from "@/core/identify/query";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 import { mergePriceOffers, type PriceOfferInput } from "@/core/enrich/evidence";
-import { buildPriceSearchQueries } from "@/core/commerce/pricing/searchQueries";
 import { normalizeLegacyPriceOffer } from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
 import type { ProviderProductUrlRef } from "@/types/providerModule";
-import { containsGameClassicsKeyword } from "@/core/identify/listingTerms";
+import {
+  buildMatchContext,
+  toBarcodePriceRefreshContext,
+} from "@/core/catalog/matchContext";
 import {
   collectRefreshBarcodePriceOffers,
   priceProviderTokenFromOffers,
@@ -69,6 +75,12 @@ export type BarcodePricesResult = {
   priceNew: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
+  /**
+   * Point price derived from catalog estimates (cote « de 5 à 10 € » →
+   * médian 7,50 €). Lowest-priority value: display and totals only fall
+   * back to it when no observed price exists, and mark it as an estimate.
+   */
+  priceEstimated?: number | null;
   priceLastUpdated: Date | null;
   priceSources: string[];
   /** Display labels aligned with `priceSources` (registry-derived, server-stamped). */
@@ -87,6 +99,13 @@ export type RefreshBarcodePricesInput = {
   primaryName: string;
   /** Extra query names (metadata title, aliases…) merged ahead of cached raw names. */
   extraNames?: string[];
+  /** Titles trusted for hard marketplace validation (no weak aliases). */
+  acceptanceNames?: string[];
+  /** Extra barcodes contributed by metadata (EAN/UPC/ISBN…). */
+  extraBarcodes?: string[];
+  platformKey?: string | null;
+  releaseDate?: string | null;
+  externalIds?: Record<string, string | null | undefined>;
   /** Product-page URLs from metadata facts, keyed by provider id. */
   providerProductUrls?: readonly ProviderProductUrlRef[];
 };
@@ -105,6 +124,11 @@ export type RefreshItemPricesInput = {
   shelfName?: string | null;
   primaryName: string;
   extraNames?: string[];
+  acceptanceNames?: string[];
+  extraBarcodes?: string[];
+  platformKey?: string | null;
+  releaseDate?: string | null;
+  externalIds?: Record<string, string | null | undefined>;
   itemId: string;
   metadataId?: string | null;
   providerProductUrls?: readonly ProviderProductUrlRef[];
@@ -290,8 +314,29 @@ function resolveItemPriceFromOffers(
 function pricesForCondition(offers: PriceObservation[], conditions: string[]) {
   const wanted = new Set(conditions);
   return offers
-    .filter((offer) => offer.condition && wanted.has(offer.condition))
+    .filter((offer) => {
+      const condition = effectiveGameOfferCondition(offer);
+      return condition && wanted.has(condition);
+    })
     .map((offer) => offer.priceCents);
+}
+
+/** Marketplace "used" rows whose title says cartridge/disc-only are true loose. */
+function listingTitleImpliesLoose(name?: string | null): boolean {
+  if (!name?.trim()) return false;
+  return /\b(?:loose|cartouche\s+seule|disque\s+seul|cd\s+seul|sans\s+boite|boite\s+vide|empty\s+case)\b/i.test(
+    name,
+  );
+}
+
+function effectiveGameOfferCondition(
+  offer: PriceObservation,
+): string | undefined {
+  const condition = offer.condition ?? undefined;
+  if (condition === "used" && listingTitleImpliesLoose(offer.productName)) {
+    return "loose";
+  }
+  return condition;
 }
 
 export function summarizeObservedPrices(
@@ -300,18 +345,26 @@ export function summarizeObservedPrices(
 ) {
   const usedOffers =
     shelfType === "games" ? trustedGameUsedOffers(shelfType, offers) : offers;
+  if (shelfType === "games") {
+    // Loose = cartridge/disc only. Shop "used" / retail listings are complete-in-box
+    // proxies and must not inflate a loose copy's observed price (e.g. NetGamesRetro
+    // boxed stock vs PriceCharting loose). Titles that explicitly say "Loose" are
+    // remapped above via {@link effectiveGameOfferCondition}.
+    const looseCents = pricesForCondition(usedOffers, ["loose"]);
+    const cibCents = [
+      ...pricesForCondition(offers, ["cib"]),
+      ...pricesForCondition(usedOffers, ["used"]),
+    ];
+    return {
+      priceNew: averageCents(pricesForCondition(offers, ["new"])),
+      priceUsed: averageCents(looseCents),
+      priceUsedCIB: averageCents(cibCents),
+    };
+  }
   return {
     priceNew: averageCents(pricesForCondition(offers, ["new"])),
-    priceUsed: averageCents(
-      pricesForCondition(
-        usedOffers,
-        shelfType === "games" ? ["loose", "used"] : ["used"],
-      ),
-    ),
-    priceUsedCIB:
-      shelfType === "games"
-        ? averageCents(pricesForCondition(offers, ["cib"]))
-        : null,
+    priceUsed: averageCents(pricesForCondition(usedOffers, ["used"])),
+    priceUsedCIB: null,
   };
 }
 
@@ -403,7 +456,10 @@ function dropIdentityConflictingListings(
       priceListingSharesItemIdentity(name, listing),
     );
     if (!sharesIdentity) return true;
-    return priceListingMatchesAnyItemName(names, listing);
+    return (
+      priceListingMatchesAnyItemName(names, listing) ||
+      referenceOfferSurvivesRegionalTitleMiss(names, offer)
+    );
   });
 }
 
@@ -413,10 +469,19 @@ export function filterItemPriceOffers(
   itemNames: string[],
   offers: PriceObservation[],
 ): PriceObservation[] {
+  const enrichedOffers = offers.map((offer) => {
+    const normalized = normalizeLegacyPriceOffer(offer);
+    return {
+      ...offer,
+      source: normalized.source ?? offer.source,
+      productName: normalized.productName ?? offer.productName,
+      sourceUrl: normalized.sourceUrl ?? offer.sourceUrl,
+    };
+  });
   const names = [
     ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
   ];
-  const accessoryFiltered = dropAccessoryListings(offers);
+  const accessoryFiltered = dropAccessoryListings(enrichedOffers);
   const identityFiltered =
     names.length === 0
       ? accessoryFiltered
@@ -434,7 +499,8 @@ export function filterItemPriceOffers(
       : platformFiltered.filter(
           (offer) =>
             offer.metadataScoped ||
-            priceListingMatchesAnyItemName(names, offer.productName),
+            priceListingMatchesAnyItemName(names, offer.productName) ||
+            referenceOfferSurvivesRegionalTitleMiss(names, offer),
         );
 
   if (names.length > 0) {
@@ -478,7 +544,7 @@ export function filterItemPriceOffers(
 }
 
 function observationsFromFilteredOffers(
-  sourceObservations: ReturnType<typeof serializePriceOffers>,
+  sourceObservations: SerializedPriceObservation[],
   filtered: PriceObservation[],
 ) {
   return sourceObservations.filter((offer) =>
@@ -568,6 +634,20 @@ export function alignBarcodePricesForItemNames(
           return emptyBarcodePrices();
         }
       } else if (priceSummaryMatchesOffers(shelfType, prices, namedOffers)) {
+        // FR primary vs EN PriceCharting title: keep reference aggregates when
+        // the catalog still shares the franchise family (not a spinoff / bare stem).
+        if (shouldKeepReferencePricesOnTitleMiss(names, namedOffers)) {
+          const referenceOffers = namedOffers.filter((offer) =>
+            isReferencePriceSource(offer.source ?? ""),
+          );
+          return {
+            ...prices,
+            priceObservations: observationsFromFilteredOffers(
+              prices.priceObservations,
+              referenceOffers,
+            ),
+          };
+        }
         return emptyBarcodePrices();
       }
     }
@@ -593,6 +673,74 @@ export function alignBarcodePricesForItemNames(
       filtered,
     ),
   });
+}
+
+function significantTitleTokens(value: string): string[] {
+  return normalizeForTokens(cleanSearchQuery(value) || value)
+    .replace(/[:;|/]/g, " ")
+    // Match product-compare: Spider-Man ↔ Spiderman.
+    .replace(/-/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length >= 3);
+}
+
+function listingIsBareFranchiseStemOf(itemName: string, listing: string): boolean {
+  const itemTokens = significantTitleTokens(itemName);
+  const listingTokens = significantTitleTokens(listing);
+  if (listingTokens.length < 2 || itemTokens.length <= listingTokens.length) {
+    return false;
+  }
+  return listingTokens.every((token, index) => itemTokens[index] === token);
+}
+
+function listingSharesFranchiseFamily(
+  itemNames: string[],
+  listing: string,
+): boolean {
+  const listingTokens = new Set(significantTitleTokens(listing));
+  return itemNames.some((name) => {
+    const shared = significantTitleTokens(name).filter((token) =>
+      listingTokens.has(token),
+    );
+    return shared.length >= 2;
+  });
+}
+
+/**
+ * Keep PriceCharting (reference) aggregates when primary FR titles fail a hard
+ * match against an EN catalog page that still names the same franchise family.
+ */
+export function shouldKeepReferencePricesOnTitleMiss(
+  itemNames: string[],
+  namedOffers: PriceObservation[],
+): boolean {
+  if (namedOffers.length === 0) return false;
+  if (
+    !namedOffers.every((offer) => isReferencePriceSource(offer.source ?? ""))
+  ) {
+    return false;
+  }
+  return namedOffers.every((offer) =>
+    referenceOfferSurvivesRegionalTitleMiss(itemNames, offer),
+  );
+}
+
+function referenceOfferSurvivesRegionalTitleMiss(
+  itemNames: string[],
+  offer: PriceObservation,
+): boolean {
+  if (!isReferencePriceSource(offer.source ?? "")) return false;
+  const listing = offer.productName?.trim();
+  if (!listing) return true;
+  if (itemNames.some((name) => listingIsDistinctProductSpinoff(name, listing))) {
+    return false;
+  }
+  if (itemNames.some((name) => listingIsBareFranchiseStemOf(name, listing))) {
+    return false;
+  }
+  return listingSharesFranchiseFamily(itemNames, listing);
 }
 
 /**
@@ -922,6 +1070,8 @@ export async function summarizeShelfItemPrices(
     barcode?: string | null;
     name?: string | null;
     metadataTitle?: string | null;
+    /** Soft aliases (filtered before title-match validation). */
+    aliases?: string[] | null;
   }>,
   shelfName?: string | null,
 ): Promise<Map<string, ShelfItemPriceFields>> {
@@ -987,7 +1137,14 @@ export async function summarizeShelfItemPrices(
         ? cache
         : null;
     const itemOffers = offersByItemId.get(item.id) ?? [];
-    const itemNames = [item.name, item.metadataTitle].filter(
+    const primary = item.name?.trim() || item.metadataTitle?.trim() || "";
+    const aliasNames = (item.aliases ?? []).filter(
+      (alias): alias is string =>
+        typeof alias === "string" &&
+        !!alias.trim() &&
+        (!primary || aliasBelongsInPriceLookup(primary, alias)),
+    );
+    const itemNames = [item.name, item.metadataTitle, ...aliasNames].filter(
       (name): name is string => !!name?.trim(),
     );
     const sourceOffers = toPriceObservations(itemOffers);
@@ -1192,6 +1349,11 @@ export async function refreshBarcodePrices(
     shelfName,
     primaryName,
     extraNames = [],
+    acceptanceNames,
+    extraBarcodes = [],
+    platformKey,
+    releaseDate,
+    externalIds,
     providerProductUrls = [],
   } = input;
 
@@ -1205,38 +1367,24 @@ export async function refreshBarcodePrices(
   );
 
   const rawNamesList = cached?.rawNames?.map((rn) => rn.value) || [];
-  const namePool = Array.from(
-    new Set(
-      [...extraNames, primaryName, ...rawNamesList].filter(
-        (name): name is string => !!name && name.trim().length > 0,
-      ),
-    ),
-  );
-  const fallbackNames = buildPriceSearchQueries(namePool, shelfName);
-  const leDenicheurQueries = cleanedBarcode
-    ? [cleanedBarcode, ...fallbackNames]
-    : fallbackNames;
-
-  const regionHaystacks = [primaryName, shelfName ?? "", ...rawNamesList];
-  const hasNtscIndicator = regionHaystacks.some((value) =>
-    /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(value),
-  );
-  const isPal = !hasNtscIndicator;
-  const isClassics = [primaryName, ...rawNamesList].some((value) =>
-    containsGameClassicsKeyword(value),
-  );
-
-  const priceOffers = await collectRefreshBarcodePriceOffers({
-    cleanedBarcode,
+  const match = buildMatchContext({
     shelfType,
     shelfName,
-    primaryName,
-    fallbackNames,
-    leDenicheurQueries,
-    isPal,
-    isClassics,
+    primaryTitle: primaryName,
+    titles: [...extraNames, primaryName, ...rawNamesList],
+    acceptanceTitles: acceptanceNames?.length
+      ? acceptanceNames
+      : [primaryName],
+    barcodes: [cleanedBarcode, ...extraBarcodes],
+    platformKey,
+    releaseDate,
+    externalIds,
     providerProductUrls,
+    regionHints: rawNamesList,
   });
+  const priceOffers = await collectRefreshBarcodePriceOffers(
+    toBarcodePriceRefreshContext(match, { expandSearchQueries: true }),
+  );
 
   return persistBarcodePrices({
     cleanedBarcode,
@@ -1257,6 +1405,11 @@ export async function refreshItemPrices(
     shelfName,
     primaryName,
     extraNames = [],
+    acceptanceNames,
+    extraBarcodes = [],
+    platformKey,
+    releaseDate,
+    externalIds,
     itemId,
     metadataId,
     providerProductUrls = [],
@@ -1266,31 +1419,23 @@ export async function refreshItemPrices(
     `[Prices] Fetching title-based prices for item ${itemId} (shelf type: ${shelfType})`,
   );
 
-  const namePool = Array.from(
-    new Set(
-      [...extraNames, primaryName].filter(
-        (name): name is string => !!name && name.trim().length > 0,
-      ),
-    ),
-  );
-  const fallbackNames = buildPriceSearchQueries(namePool, shelfName);
-
-  const regionHaystacks = [primaryName, shelfName ?? ""];
-  const hasNtscIndicator = regionHaystacks.some((value) =>
-    /\b(ntsc|us|usa|jp|jpn|japan)\b/i.test(value),
-  );
-
-  const priceOffers = await collectRefreshBarcodePriceOffers({
-    cleanedBarcode: "",
+  const match = buildMatchContext({
     shelfType,
     shelfName,
-    primaryName,
-    fallbackNames,
-    leDenicheurQueries: fallbackNames,
-    isPal: !hasNtscIndicator,
-    isClassics: false,
+    primaryTitle: primaryName,
+    titles: [...extraNames, primaryName],
+    acceptanceTitles: acceptanceNames?.length
+      ? acceptanceNames
+      : [primaryName],
+    barcodes: extraBarcodes,
+    platformKey,
+    releaseDate,
+    externalIds,
     providerProductUrls,
   });
+  const priceOffers = await collectRefreshBarcodePriceOffers(
+    toBarcodePriceRefreshContext(match, { expandSearchQueries: true }),
+  );
 
   return persistItemPrices({
     itemId,

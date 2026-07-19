@@ -916,10 +916,13 @@ export async function fetchChasseAuxLivresMetadataProduct(
     validateProduct?: ChasseProductValidator;
     anchoredItemBarcode?: string | null;
     signal?: AbortSignal;
+    /** When true (default), also resolve marketplace best new/used prices. */
+    withPrices?: boolean;
   } = {},
 ): Promise<ChasseAuxLivresProduct | null> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
+  const withPrices = options.withPrices !== false;
 
   try {
     const page = await resolveChasseAuxLivresProductPage(
@@ -932,7 +935,14 @@ export async function fetchChasseAuxLivresMetadataProduct(
       },
     );
     if (!page) return null;
-    return page.product || parseChasseAuxLivresProductPage(page.html, page.url);
+    const product =
+      page.product || parseChasseAuxLivresProductPage(page.html, page.url);
+    if (!product) return null;
+
+    if (!withPrices || !page.url) return product;
+
+    const prices = await fetchChasseAuxLivresOffers(page.url, page.html);
+    return prices ? { ...product, ...prices } : product;
   } catch (error) {
     if (isAbortError(error)) throw error;
     console.warn(

@@ -94,6 +94,12 @@ const RETAIL_CATALOG_IMAGE_TITLE_PROVIDER_IDS = new Set(
   ),
 );
 
+const CATALOG_COVER_TITLE_PROVIDER_IDS = new Set(
+  PROVIDERS.filter((provider) => provider.catalogCoverTitles).map(
+    (provider) => provider.id,
+  ),
+);
+
 const STRICT_SHELF_PLATFORM_COVER_PROVIDER_IDS = new Set(
   PROVIDERS.filter((provider) => provider.strictShelfPlatformCover).map(
     (provider) => provider.id,
@@ -205,6 +211,12 @@ export function retailCatalogImageTitleSource(source?: string | null): boolean {
   return id !== null && RETAIL_CATALOG_IMAGE_TITLE_PROVIDER_IDS.has(id);
 }
 
+/** Catalog/database providers whose cover rows carry a product title. */
+export function catalogCoverTitleSource(source?: string | null): boolean {
+  const id = canonicalProviderIdForSource(source);
+  return id !== null && CATALOG_COVER_TITLE_PROVIDER_IDS.has(id);
+}
+
 export function strictShelfPlatformCoverSource(
   source?: string | null,
 ): boolean {
@@ -288,6 +300,7 @@ export function withProviderAttachmentTraits<
   isMusicGallerySource: boolean;
   isCanonicalCoverSource: boolean;
   retailCatalogImageTitlesSource: boolean;
+  catalogCoverTitlesSource: boolean;
   strictShelfPlatformCoverSource: boolean;
   authoritative3dCoverRoleSource: boolean;
   gridStyleCoverLabelsSource: boolean;
@@ -312,6 +325,7 @@ export function withProviderAttachmentTraits<
     retailCatalogImageTitlesSource: retailCatalogImageTitleSource(
       attachment.source,
     ),
+    catalogCoverTitlesSource: catalogCoverTitleSource(attachment.source),
     strictShelfPlatformCoverSource: strictShelfPlatformCoverSource(
       attachment.source,
     ),

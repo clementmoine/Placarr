@@ -26,12 +26,23 @@ vi.mock("@/lib/db/prisma", () => ({
   },
 }));
 
+vi.mock("@/core/collect/jobs/workQueue", () => ({
+  hasActiveBackgroundWorkJobForItem: vi.fn().mockResolvedValue(false),
+  cancelBackgroundWorkJobsForItem: vi.fn().mockResolvedValue(0),
+}));
+
 import { prisma } from "@/lib/db/prisma";
+import {
+  cancelBackgroundWorkJobsForItem,
+  hasActiveBackgroundWorkJobForItem,
+} from "@/core/collect/jobs/workQueue";
 
 const mockedUpdate = vi.mocked(prisma.item.update);
 const mockedUpdateMany = vi.mocked(prisma.item.updateMany);
 const mockedFindUnique = vi.mocked(prisma.item.findUnique);
 const mockedFindMany = vi.mocked(prisma.item.findMany);
+const mockedHasActiveJob = vi.mocked(hasActiveBackgroundWorkJobForItem);
+const mockedCancelJobs = vi.mocked(cancelBackgroundWorkJobsForItem);
 
 describe("metadataRefreshSession", () => {
   beforeEach(() => {
@@ -39,6 +50,8 @@ describe("metadataRefreshSession", () => {
     vi.useRealTimers();
     resetMetadataRefreshSessionsForTests();
     mockedUpdateMany.mockResolvedValue({ count: 1 } as never);
+    mockedHasActiveJob.mockResolvedValue(false);
+    mockedCancelJobs.mockResolvedValue(0);
   });
 
   it("aborts the previous in-flight refresh when a new one starts", async () => {
@@ -118,6 +131,24 @@ describe("metadataRefreshSession", () => {
       ).toBe(true);
     });
 
+    it("keeps worker-owned jobs until the hard max duration", () => {
+      const beforeMax =
+        startedAt.getTime() + METADATA_REFRESH_ORPHAN_GRACE_MS + 60_000;
+      expect(
+        shouldReconcileMetadataRefreshFlag(
+          "worker-1",
+          startedAt,
+          beforeMax,
+          true,
+        ),
+      ).toBe(false);
+
+      const atMax = startedAt.getTime() + METADATA_REFRESH_MAX_MS;
+      expect(
+        shouldReconcileMetadataRefreshFlag("worker-1", startedAt, atMax, true),
+      ).toBe(true);
+    });
+
     it("clears orphan flags from the database", async () => {
       vi.useFakeTimers();
       vi.setSystemTime(
@@ -127,6 +158,7 @@ describe("metadataRefreshSession", () => {
       const cleared = await reconcileMetadataRefreshFlag("orphan-2", startedAt);
 
       expect(cleared).toBe(true);
+      expect(mockedCancelJobs).toHaveBeenCalledWith("orphan-2");
       expect(mockedUpdateMany).toHaveBeenCalledWith({
         where: { id: "orphan-2", metadataRefreshStartedAt: startedAt },
         data: { metadataRefreshStartedAt: null },

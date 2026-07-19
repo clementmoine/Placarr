@@ -59,6 +59,20 @@ const BROKEN_SWORD_HTML = `
 <p><!-- END_DESCRIPTION --></p>
 `;
 
+const ELDEN_RING_HTML = `
+<article class="box-corner box-corner--max box-bp">
+  <div class="box-corner__content">
+    <div class=" box-corner__img">
+      <img width="300" height="300" data-lazy-srcset="https://chocobonplan.com/wp-content/uploads/2021/06/elden-ring-xbox-series-x-one-visuel-produit-300x300.png 300w, https://chocobonplan.com/wp-content/uploads/2021/06/elden-ring-xbox-series-x-one-visuel-produit.png 700w" data-lazy-src="https://chocobonplan.com/wp-content/uploads/2021/06/elden-ring-xbox-series-x-one-visuel-produit-300x300.png" alt="elden ring xbox series x one visuel produit" />
+    </div>
+    <h1 class="box-corner__title">Elden Ring sur Xbox</h1>
+    <span class="price__promotion ">39.61 €</span>
+  </div>
+</article>
+<meta property="og:image" content="https://chocobonplan.com/wp-content/uploads/2026/07/elden-ring-sur-xbox-visuel-slider_20260703185726.jpg" />
+<p>Vous êtes à la recherche de Elden Ring Xbox One pas cher?</p>
+`;
+
 describe("parseChocoBonPlanProductPage", () => {
   it("extrait titre, description, image et prix promotion", () => {
     const parsed = parseChocoBonPlanProductPage(SAMPLE_HTML);
@@ -99,6 +113,17 @@ describe("parseChocoBonPlanProductPage", () => {
     expect(
       parsed.attachments?.some((image) => image.url.includes("5cf52553")),
     ).toBe(false);
+  });
+
+  it("prend la jaquette produit Elden Ring malgré Series X dans l'alt et un titre Xbox générique", () => {
+    const parsed = parseChocoBonPlanProductPage(ELDEN_RING_HTML);
+    expect(parsed.coverUrl).toBe(
+      "https://chocobonplan.com/wp-content/uploads/2021/06/elden-ring-xbox-series-x-one-visuel-produit.png",
+    );
+    expect(parsed.attachments?.[0]).toMatchObject({
+      type: "cover",
+      title: "elden ring xbox series x one visuel produit",
+    });
   });
 
   it("prend la jaquette produit quand elle est dans box-corner__img avant le h1", () => {
@@ -448,6 +473,40 @@ describe("fetchFromChocoBonPlan", () => {
         expect.objectContaining({ type: "background" }),
         expect.objectContaining({ type: "screenshot" }),
       ]),
+    });
+  });
+
+  it("récupère Elden Ring Xbox One malgré un titre h1 générique", async () => {
+    mockedPost.mockResolvedValue({
+      status: 200,
+      data: {
+        hits: [
+          {
+            title: "Elden Ring sur Xbox",
+            url: "https://chocobonplan.com/bons-plans/jeux-video-pas-cher/jeux-video-xbox-one/elden-ring-sur-xbox-one/",
+            image:
+              "https://chocobonplan.com/wp-content/uploads/2021/06/elden-ring-xbox-series-x-one-visuel-produit-300x300.png",
+            objectID: "163267",
+          },
+        ],
+      },
+    } as never);
+    mockedGet.mockResolvedValue({
+      status: 200,
+      data: ELDEN_RING_HTML,
+    } as never);
+
+    const result = await fetchFromChocoBonPlan(["Elden Ring"], ["Elden Ring"], {
+      platform: "xboxone",
+    });
+    expect(result).toMatchObject({
+      title: "Elden Ring sur Xbox",
+      productUrl:
+        "https://chocobonplan.com/bons-plans/jeux-video-pas-cher/jeux-video-xbox-one/elden-ring-sur-xbox-one/",
+      coverUrl:
+        "https://chocobonplan.com/wp-content/uploads/2021/06/elden-ring-xbox-series-x-one-visuel-produit.png",
+      priceNew: 3961,
+      objectId: "163267",
     });
   });
 });

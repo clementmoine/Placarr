@@ -41,14 +41,31 @@ const h = vi.hoisted(() => ({
     >(),
 }));
 
-vi.mock("@/core/catalog/bootstrap", () => ({
+vi.mock("@/core/catalog/bootstrap", async () => {
+  const { detectPlatformKey } = await import("@/core/identify/query");
+
+  function stamp(result: unknown, platform?: string | null) {
+    if (!result || typeof result !== "object") return result ?? null;
+    const record = result as { platformKey?: string | null };
+    if (record.platformKey?.trim()) return result;
+    const key = platform?.trim()
+      ? (detectPlatformKey(platform) ?? platform.trim().toLowerCase())
+      : null;
+    return key ? { ...record, platformKey: key } : result;
+  }
+
+  return {
   metadataProviderResolverMap: new Map<
     string,
     { id: string; resolve: (ctx: MetadataAdapterContext) => unknown }
   >([
     [
       "igdb",
-      { id: "igdb", resolve: (ctx) => h.igdbResolve(ctx.name, ctx.platform) },
+      {
+        id: "igdb",
+        resolve: async (ctx) =>
+          stamp(await h.igdbResolve(ctx.name, ctx.platform), ctx.platform),
+      },
     ],
     [
       "screenscraper",
@@ -61,12 +78,15 @@ vi.mock("@/core/catalog/bootstrap", () => ({
             ctx.platform,
             ctx,
           );
-          if (first) return first;
-          return h.fetchFromScreenScraper(
-            ctx.name,
-            ctx.barcode,
+          if (first) return stamp(first, ctx.platform);
+          return stamp(
+            await h.fetchFromScreenScraper(
+              ctx.name,
+              ctx.barcode,
+              ctx.platform,
+              ctx,
+            ),
             ctx.platform,
-            ctx,
           );
         },
       },
@@ -75,45 +95,68 @@ vi.mock("@/core/catalog/bootstrap", () => ({
       "howlongtobeat",
       {
         id: "howlongtobeat",
-        resolve: (ctx) => h.hltbResolve(ctx.name, ctx.platform),
+        resolve: async (ctx) =>
+          stamp(await h.hltbResolve(ctx.name, ctx.platform), ctx.platform),
       },
     ],
-    ["steam", { id: "steam", resolve: (ctx) => h.steamResolve(ctx.name) }],
+    [
+      "steam",
+      {
+        id: "steam",
+        resolve: async (ctx) =>
+          stamp(await h.steamResolve(ctx.name), ctx.platform),
+      },
+    ],
     [
       "rawg",
       {
         id: "rawg",
         resolve: async (ctx) => {
           const first = await h.rawgResolve(ctx.name);
-          if (first) return first;
-          return h.fetchFromRawg(ctx.name);
+          if (first) return stamp(first, ctx.platform);
+          return stamp(await h.fetchFromRawg(ctx.name), ctx.platform);
         },
       },
     ],
     [
       "steamgriddb",
-      { id: "steamgriddb", resolve: (ctx) => h.steamgridResolve(ctx.name) },
+      {
+        id: "steamgriddb",
+        resolve: async (ctx) =>
+          stamp(await h.steamgridResolve(ctx.name), ctx.platform),
+      },
     ],
     [
       "coverproject",
       {
         id: "coverproject",
-        resolve: (ctx) => h.fetchFromCoverProject(ctx.name, ctx.platform),
+        resolve: async (ctx) =>
+          stamp(
+            await h.fetchFromCoverProject(ctx.name, ctx.platform),
+            ctx.platform,
+          ),
       },
     ],
     [
       "launchbox",
       {
         id: "launchbox",
-        resolve: (ctx) => h.fetchFromLaunchBox(ctx.name, ctx.platform),
+        resolve: async (ctx) =>
+          stamp(
+            await h.fetchFromLaunchBox(ctx.name, ctx.platform),
+            ctx.platform,
+          ),
       },
     ],
     [
       "thegamesdb",
       {
         id: "thegamesdb",
-        resolve: (ctx) =>
-          h.fetchFromTheGamesDB(ctx.name, ctx.platform, ctx.barcode),
+        resolve: async (ctx) =>
+          stamp(
+            await h.fetchFromTheGamesDB(ctx.name, ctx.platform, ctx.barcode),
+            ctx.platform,
+          ),
       },
     ],
     [
@@ -132,27 +175,30 @@ vi.mock("@/core/catalog/bootstrap", () => ({
               isPal,
             );
             if (!pcMeta) return null;
-            return {
-              title: pcMeta.title || ctx.name,
-              barcode: pcMeta.barcode || ctx.barcode,
-              imageUrl: pcMeta.coverUrl || undefined,
-              facts: pcMeta.ageRating
-                ? [
-                    {
-                      kind: "age-rating",
-                      label: pcMeta.ageRating.startsWith("PEGI")
-                        ? "PEGI"
-                        : "PriceCharting",
-                      value:
-                        pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() ||
-                        pcMeta.ageRating,
-                      source: "pricecharting",
-                      confidence: 0.62,
-                      priority: 58,
-                    },
-                  ]
-                : undefined,
-            };
+            return stamp(
+              {
+                title: pcMeta.title || ctx.name,
+                barcode: pcMeta.barcode || ctx.barcode,
+                imageUrl: pcMeta.coverUrl || undefined,
+                facts: pcMeta.ageRating
+                  ? [
+                      {
+                        kind: "age-rating",
+                        label: pcMeta.ageRating.startsWith("PEGI")
+                          ? "PEGI"
+                          : "PriceCharting",
+                        value:
+                          pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() ||
+                          pcMeta.ageRating,
+                        source: "pricecharting",
+                        confidence: 0.62,
+                        priority: 58,
+                      },
+                    ]
+                  : undefined,
+              },
+              ctx.platform,
+            );
           } else {
             const pcMeta = await h.fetchMetadataFromPriceChartingByName(
               ctx.name,
@@ -160,27 +206,30 @@ vi.mock("@/core/catalog/bootstrap", () => ({
               isPal,
             );
             if (!pcMeta) return null;
-            return {
-              title: pcMeta.title || ctx.name,
-              barcode: pcMeta.barcode,
-              imageUrl: pcMeta.coverUrl || undefined,
-              facts: pcMeta.ageRating
-                ? [
-                    {
-                      kind: "age-rating",
-                      label: pcMeta.ageRating.startsWith("PEGI")
-                        ? "PEGI"
-                        : "PriceCharting",
-                      value:
-                        pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() ||
-                        pcMeta.ageRating,
-                      source: "pricecharting",
-                      confidence: 0.62,
-                      priority: 58,
-                    },
-                  ]
-                : undefined,
-            };
+            return stamp(
+              {
+                title: pcMeta.title || ctx.name,
+                barcode: pcMeta.barcode,
+                imageUrl: pcMeta.coverUrl || undefined,
+                facts: pcMeta.ageRating
+                  ? [
+                      {
+                        kind: "age-rating",
+                        label: pcMeta.ageRating.startsWith("PEGI")
+                          ? "PEGI"
+                          : "PriceCharting",
+                        value:
+                          pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() ||
+                          pcMeta.ageRating,
+                        source: "pricecharting",
+                        confidence: 0.62,
+                        priority: 58,
+                      },
+                    ]
+                  : undefined,
+              },
+              ctx.platform,
+            );
           }
         },
       },
@@ -193,38 +242,49 @@ vi.mock("@/core/catalog/bootstrap", () => ({
     ["discogs", { id: "discogs", resolve: h.discogsResolve }],
     ["deezer", { id: "deezer", resolve: h.deezerResolve }],
     ["boardgamegeek", { id: "boardgamegeek", resolve: h.bggResolve }],
-    ["wikidata", { id: "wikidata", resolve: h.wikidataResolve }],
+    [
+      "wikidata",
+      {
+        id: "wikidata",
+        resolve: async (ctx) =>
+          stamp(await h.wikidataResolve(ctx), ctx.platform),
+      },
+    ],
     ["philibert", { id: "philibert", resolve: h.philibertResolve }],
     [
       "achatmoinscher",
       {
         id: "achatmoinscher",
-        resolve: async ({ barcode }) => {
+        resolve: async ({ barcode, platform }) => {
           if (!barcode) return null;
           const products = await h.scraperFetch(barcode);
           const product = products[0];
           if (!product?.name) return null;
-          return {
-            title: product.name,
-            barcode,
-            imageUrl: product.coverUrl || undefined,
-            attachments: product.coverUrl
-              ? [
-                  {
-                    type: "cover",
-                    url: product.coverUrl,
-                    source: "achatmoinscher",
-                  },
-                ]
-              : undefined,
-          };
+          return stamp(
+            {
+              title: product.name,
+              barcode,
+              imageUrl: product.coverUrl || undefined,
+              attachments: product.coverUrl
+                ? [
+                    {
+                      type: "cover",
+                      url: product.coverUrl,
+                      source: "achatmoinscher",
+                    },
+                  ]
+                : undefined,
+            },
+            platform,
+          );
         },
       },
     ],
   ]),
   fetchFromScreenScraper: h.fetchFromScreenScraper,
   fetchFromRawg: h.fetchFromRawg,
-}));
+  };
+});
 vi.mock("@/core/enrich/selection", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/core/enrich/selection")>();

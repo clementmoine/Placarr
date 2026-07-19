@@ -8,13 +8,13 @@ import { pricedOffers } from "@/core/catalog/priceOffers";
 import { inferCover3dRoleFromHints } from "@/core/enrich/media/coverPerspective";
 import type { ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import {
   resolveGameAttachmentPlatformKey,
   withMetadataPlatformKeys,
 } from "@/core/enrich/media/platformKeyStamp";
-import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 
 import {
   fetchFromChocoBonPlan,
@@ -64,11 +64,10 @@ function productToMetadata(
       : undefined;
 
   const platformKey = resolveGameAttachmentPlatformKey({
-    requestedPlatform:
-      context?.platform ??
-      detectShelfGamePlatformKey(context?.shelfName ?? undefined),
+    // Title-only / ambiguous retailer hits must not inherit the shelf console.
     title: product.title,
     imageUrl: product.coverUrl,
+    productUrl: product.productUrl,
   });
 
   return withMetadataPlatformKeys(
@@ -110,7 +109,7 @@ function productToMetadata(
 }
 
 async function refreshChocoBonPlanOffers(ctx: BarcodePriceRefreshContext) {
-  const queries = [ctx.cleanedBarcode, ...ctx.fallbackNames].filter(Boolean);
+  const queries = matchPriceSeekQueries(ctx);
   const result = await fetchPricesFromChocoBonPlan(queries);
   if (!result?.priceNew) return [];
   return pricedOffers(PRICE_SOURCE, [

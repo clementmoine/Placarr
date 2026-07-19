@@ -72,4 +72,106 @@ describe("itemModalSession", () => {
       barcode: "0721450083770",
     });
   });
+
+  it("keeps scan metadataPreview on the create session (no second barcode fetch)", () => {
+    const init = buildItemModalSessionInit({
+      shelfId: "shelf-ps4",
+      activeShelfForMedia: { type: "games", name: "PlayStation 4" },
+      prefilledValues: {
+        name: "Giana Sisters",
+        barcode: "8718591181450",
+        shelfId: "shelf-ps4",
+        metadataPreview: {
+          title: "Giana Sisters - Twisted Dreams - Director's Cut",
+          description: "Platformer",
+          imageUrl: "https://example.com/giana.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "screenscraper",
+              url: "https://example.com/giana.jpg",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(init.asyncInit).toBeNull();
+    expect(init.fetchedMetadata?.title).toContain("Giana Sisters");
+    expect(init.formValues.description).toBe("Platformer");
+  });
+
+  it("seeds edit cover from the dynamic default when item.imageUrl is a stale enrichment pin", () => {
+    const init = buildItemModalSessionInit({
+      shelfId: "shelf-1",
+      activeShelfForMedia: { type: "games", name: "PlayStation 2" },
+      item: {
+        id: "item-1",
+        shelfId: "shelf-1",
+        name: "Demo",
+        storedName: "Demo",
+        condition: "used",
+        updatedAt: "2026-07-03T10:00:00.000Z",
+        imageUrl: "/uploads/pricecharting-eu.jpg",
+        metadata: {
+          imageUrl: "/uploads/screenscraper-fr.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "pricecharting",
+              role: "eu",
+              url: "/uploads/pricecharting-eu.jpg",
+            },
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "fr",
+              url: "/uploads/screenscraper-fr.jpg",
+            },
+          ],
+        },
+        shelf: { type: "games", name: "PlayStation 2" },
+      } as never,
+    });
+
+    expect(init.formValues.imageUrl).toBe("/uploads/screenscraper-fr.jpg");
+  });
+
+  it("keeps an explicit user gallery cover when seeding the edit session", () => {
+    const init = buildItemModalSessionInit({
+      shelfId: "shelf-1",
+      activeShelfForMedia: { type: "games", name: "PlayStation 2" },
+      item: {
+        id: "item-1",
+        shelfId: "shelf-1",
+        name: "Demo",
+        storedName: "Demo",
+        condition: "used",
+        updatedAt: "2026-07-03T19:00:00.000Z",
+        imageUrl: "/uploads/pricecharting-eu.jpg",
+        metadata: {
+          imageUrl: "/uploads/screenscraper-fr.jpg",
+          lastFetched: "2026-07-03T12:00:00.000Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "pricecharting",
+              role: "eu",
+              url: "/uploads/pricecharting-eu.jpg",
+            },
+            {
+              type: "cover",
+              source: "screenscraper",
+              role: "fr",
+              url: "/uploads/screenscraper-fr.jpg",
+            },
+          ],
+        },
+        shelf: { type: "games", name: "PlayStation 2" },
+      } as never,
+    });
+
+    expect(init.formValues.imageUrl).toBe("/uploads/pricecharting-eu.jpg");
+  });
 });

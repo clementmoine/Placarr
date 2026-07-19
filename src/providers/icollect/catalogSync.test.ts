@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
-  runBackgroundWork: vi.fn((fn: () => Promise<unknown>) => fn()),
+  enqueueBackgroundWorkJob: vi.fn().mockResolvedValue({ id: "job-1" }),
   ensureICollectIndex: vi.fn(async () => null),
 }));
 
-vi.mock("@/core/collect/jobs/backgroundWorkQueue", () => ({
-  runBackgroundWork: h.runBackgroundWork,
+vi.mock("@/core/collect/jobs/workQueue", () => ({
+  BACKGROUND_WORK_KIND: {
+    metadataRefresh: "metadataRefresh",
+    priceRefresh: "priceRefresh",
+    icollectCatalogSync: "icollectCatalogSync",
+  },
+  enqueueBackgroundWorkJob: h.enqueueBackgroundWorkJob,
 }));
 
 vi.mock("./indexStore", async (importOriginal) => {
@@ -42,7 +47,7 @@ describe("isICollectCatalogSyncEnabled", () => {
 
 describe("maybeScheduleICollectCatalogSync", () => {
   beforeEach(() => {
-    h.runBackgroundWork.mockClear();
+    h.enqueueBackgroundWorkJob.mockClear();
     h.ensureICollectIndex.mockClear();
     resetICollectCatalogSyncForTests();
     delete process.env.VITEST;
@@ -54,11 +59,18 @@ describe("maybeScheduleICollectCatalogSync", () => {
     process.env.VITEST = "true";
   });
 
-  it("queues a single background tick", async () => {
+  it("enqueues a single worker tick", async () => {
     maybeScheduleICollectCatalogSync();
     maybeScheduleICollectCatalogSync();
-    expect(h.runBackgroundWork).toHaveBeenCalledTimes(1);
-    await Promise.resolve();
-    expect(h.ensureICollectIndex).toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
+    expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "icollectCatalogSync",
+        replaceOpenForKind: true,
+      }),
+    );
+    expect(h.ensureICollectIndex).not.toHaveBeenCalled();
   });
 });

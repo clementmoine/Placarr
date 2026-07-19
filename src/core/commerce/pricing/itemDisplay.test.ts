@@ -8,16 +8,15 @@ const h = vi.hoisted(() => ({
   shouldRefreshPriceCache: vi.fn(),
   alignBarcodePricesForItemNames: vi.fn((_type, _names, prices) => prices),
   repairProviderExternalLinksForItem: vi.fn(),
-  after: vi.fn(),
-  runBackgroundWork: vi.fn((task: () => Promise<unknown>) => task()),
+  enqueueBackgroundWorkJob: vi.fn().mockResolvedValue({ id: "job-1" }),
 }));
 
-vi.mock("next/server", () => ({
-  after: h.after,
-}));
-
-vi.mock("@/core/collect/jobs/backgroundWorkQueue", () => ({
-  runBackgroundWork: h.runBackgroundWork,
+vi.mock("@/core/collect/jobs/workQueue", () => ({
+  BACKGROUND_WORK_KIND: {
+    metadataRefresh: "metadataRefresh",
+    priceRefresh: "priceRefresh",
+  },
+  enqueueBackgroundWorkJob: h.enqueueBackgroundWorkJob,
 }));
 
 vi.mock("@/core/commerce/pricing/resolver", () => ({
@@ -30,17 +29,28 @@ vi.mock("@/core/commerce/pricing/resolver", () => ({
   summarizeShelfItemPrices: vi.fn(),
 }));
 
+vi.mock("@/lib/db/prisma", () => ({
+  prisma: {
+    item: {
+      findUnique: vi.fn().mockResolvedValue({ userId: "u1" }),
+    },
+  },
+}));
+
 vi.mock("@/core/enrich/persistProviderExternalLinks", () => ({
   repairProviderExternalLinksForItem: h.repairProviderExternalLinksForItem,
 }));
 
 import {
   itemPricesContextFromRecord,
+  itemPricesContextFromPresentedShelfItem,
+  priceLookupNamesFromContext,
   readItemPrices,
   refreshItemPricesFromContext,
   resetPriceRefreshStateForTests,
   scheduleItemPricesRefresh,
   scheduleItemPricesRefreshBatch,
+  shelfGridItemPriceFields,
   summarizeListItemPrices,
 } from "./itemDisplay";
 import { summarizeShelfItemPrices } from "@/core/commerce/pricing/resolver";
@@ -77,26 +87,21 @@ describe("readItemPrices", () => {
 
     expect(prices?.priceNew).toBe(1999);
     expect(h.refreshItemPrices).not.toHaveBeenCalled();
-    expect(h.after).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it("blocks on a cold cache for detail reads", async () => {
+  it("enqueues a worker refresh on cold cache instead of blocking Next", async () => {
     h.getCachedItemPrices.mockResolvedValue(null);
-    h.refreshItemPrices.mockResolvedValue({
-      priceNew: 2499,
-      priceUsed: 1299,
-      priceUsedCIB: null,
-      priceLastUpdated: new Date(),
-      priceSources: ["PriceCharting"],
-      priceSourceDisplayNames: ["PriceCharting"],
-      isReferencePriceOnly: true,
-      priceObservations: [],
-    });
 
     const prices = await readItemPrices(CONTEXT);
 
-    expect(prices?.priceNew).toBe(2499);
-    expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
+    expect(prices).toBeNull();
+    expect(h.refreshItemPrices).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("reads barcode summary only while metadata refresh is active", async () => {
@@ -127,7 +132,7 @@ describe("readItemPrices", () => {
       expect.objectContaining({ summaryOnly: true }),
     );
     expect(h.refreshBarcodePrices).not.toHaveBeenCalled();
-    expect(h.after).not.toHaveBeenCalled();
+    expect(h.enqueueBackgroundWorkJob).not.toHaveBeenCalled();
   });
 
   it("does not block shelf reads when cache is missing", async () => {
@@ -137,7 +142,9 @@ describe("readItemPrices", () => {
 
     expect(prices).toBeNull();
     expect(h.refreshItemPrices).not.toHaveBeenCalled();
-    expect(h.after).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("does not schedule price refresh while metadata refresh is active", async () => {
@@ -160,7 +167,7 @@ describe("readItemPrices", () => {
 
     expect(prices?.priceUsed).toBe(999);
     expect(h.getCachedItemPrices).toHaveBeenCalled();
-    expect(h.after).not.toHaveBeenCalled();
+    expect(h.enqueueBackgroundWorkJob).not.toHaveBeenCalled();
   });
 
   it("falls back to metadata price facts when the price cache is empty", async () => {
@@ -198,51 +205,37 @@ describe("scheduleItemPricesRefresh", () => {
     resetPriceRefreshStateForTests();
   });
 
-  it("runs the refresh inside after()", async () => {
-    h.refreshItemPrices.mockResolvedValue({
-      priceNew: 1500,
-      priceUsed: null,
-      priceUsedCIB: null,
-      priceLastUpdated: new Date(),
-      priceSources: [],
-      priceSourceDisplayNames: [],
-      isReferencePriceOnly: false,
-      priceObservations: [],
-    });
-
+  it("enqueues a worker price-refresh job", async () => {
     scheduleItemPricesRefresh(CONTEXT);
 
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
     expect(h.refreshItemPrices).not.toHaveBeenCalled();
-    const task = h.after.mock.calls[0]?.[0] as () => Promise<void>;
-    await task();
-    expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
+    expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "priceRefresh",
+        itemId: CONTEXT.id,
+        payload: expect.objectContaining({ id: CONTEXT.id }),
+      }),
+    );
   });
 
   it("dedupes repeated schedules for the same item", async () => {
-    h.refreshItemPrices.mockResolvedValue({
-      priceNew: 1500,
-      priceUsed: null,
-      priceUsedCIB: null,
-      priceLastUpdated: new Date(),
-      priceSources: [],
-      priceSourceDisplayNames: [],
-      isReferencePriceOnly: false,
-      priceObservations: [],
+    scheduleItemPricesRefresh(CONTEXT);
+    scheduleItemPricesRefresh(CONTEXT);
+
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
     });
-
-    scheduleItemPricesRefresh(CONTEXT);
-    scheduleItemPricesRefresh(CONTEXT);
-
-    expect(h.after).toHaveBeenCalledTimes(1);
   });
-
   it("skips scheduling while metadata refresh is active", () => {
     scheduleItemPricesRefresh({
       ...CONTEXT,
       metadataRefreshStartedAt: new Date().toISOString(),
     });
 
-    expect(h.after).not.toHaveBeenCalled();
+    expect(h.enqueueBackgroundWorkJob).not.toHaveBeenCalled();
   });
 
   it("skips scheduling when marketplace refresh started recently", async () => {
@@ -268,9 +261,9 @@ describe("scheduleItemPricesRefresh", () => {
     });
 
     await refreshItemPricesFromContext(CONTEXT);
-    h.after.mockClear();
+    h.enqueueBackgroundWorkJob.mockClear();
     scheduleItemPricesRefresh(CONTEXT);
-    expect(h.after).not.toHaveBeenCalled();
+    expect(h.enqueueBackgroundWorkJob).not.toHaveBeenCalled();
   });
 });
 
@@ -313,8 +306,19 @@ describe("refreshItemPricesFromContext", () => {
     expect(h.refreshBarcodePrices).toHaveBeenCalledTimes(1);
     expect(h.refreshBarcodePrices).toHaveBeenCalledWith(
       expect.objectContaining({
-        extraNames: ["Alice: Madness Returns"],
+        extraNames: expect.arrayContaining([
+          "Alice: Madness Returns",
+          "Return of American McGee's Alice",
+        ]),
+        acceptanceNames: expect.arrayContaining([
+          "Alice : Retour au pays de la folie",
+          "Alice: Madness Returns",
+          "Return of American McGee's Alice",
+        ]),
       }),
+    );
+    expect(h.refreshBarcodePrices.mock.calls[0]?.[0]?.extraNames).not.toEqual(
+      expect.arrayContaining(["Alice 2"]),
     );
 
     resolveRefresh({
@@ -520,7 +524,7 @@ describe("summarizeListItemPrices", () => {
     expect(summarizeShelfItemPrices).toHaveBeenCalledTimes(2);
     expect(prices.get("game-1")?.priceUsed).toBe(1200);
     expect(prices.get("book-1")?.priceNew).toBe(1500);
-    expect(h.after).toHaveBeenCalledTimes(1);
+    expect(h.enqueueBackgroundWorkJob).not.toHaveBeenCalled();
   });
 });
 
@@ -542,16 +546,6 @@ describe("scheduleItemPricesRefreshBatch", () => {
       priceObservations: [],
     });
     h.shouldRefreshPriceCache.mockReturnValue(false);
-    h.refreshItemPrices.mockResolvedValue({
-      priceNew: 1500,
-      priceUsed: null,
-      priceUsedCIB: null,
-      priceLastUpdated: new Date(),
-      priceSources: [],
-      priceSourceDisplayNames: [],
-      isReferencePriceOnly: false,
-      priceObservations: [],
-    });
 
     scheduleItemPricesRefreshBatch([
       CONTEXT,
@@ -561,10 +555,16 @@ describe("scheduleItemPricesRefreshBatch", () => {
       },
     ]);
 
-    const task = h.after.mock.calls[0]?.[0] as () => Promise<void>;
-    await task();
-
-    expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
+    expect(h.refreshItemPrices).not.toHaveBeenCalled();
+    expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemId: CONTEXT.id,
+        kind: "priceRefresh",
+      }),
+    );
   });
 
   it("with onlyWhenEmpty skips items that already have cached prices", async () => {
@@ -578,25 +578,151 @@ describe("scheduleItemPricesRefreshBatch", () => {
       isReferencePriceOnly: false,
       priceObservations: [],
     });
-    h.refreshItemPrices.mockResolvedValue({
-      priceNew: 1500,
-      priceUsed: null,
-      priceUsedCIB: null,
-      priceLastUpdated: new Date(),
-      priceSources: [],
-      priceSourceDisplayNames: [],
-      isReferencePriceOnly: false,
-      priceObservations: [],
-    });
 
     scheduleItemPricesRefreshBatch([CONTEXT, { ...CONTEXT, id: "item-2" }], {
       onlyWhenEmpty: true,
     });
 
-    const task = h.after.mock.calls[0]?.[0] as () => Promise<void>;
-    await task();
-
-    expect(h.refreshItemPrices).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledTimes(1);
+    });
+    expect(h.refreshItemPrices).not.toHaveBeenCalled();
     expect(h.shouldRefreshPriceCache).not.toHaveBeenCalled();
+  });
+});
+
+describe("priceLookupNamesFromContext", () => {
+  it("drops sibling FIFA spinoff aliases that poison PriceCharting search", () => {
+    const context = itemPricesContextFromRecord({
+      id: "item-fifa",
+      name: "FIFA 2002",
+      barcode: "5030930027285",
+      metadataId: "meta-fifa",
+      metadata: {
+        title: "FIFA 2002",
+        aliases: JSON.stringify([
+          "Fifa Football 2002",
+          "FIFA Soccer 2002",
+          "FIFA 2002: Road to FIFA World Cup",
+          "FIFA Soccer 2002: Major League Soccer",
+          "PS2 FIFA 2002",
+        ]),
+      },
+      shelf: { type: "games", name: "PlayStation 2" },
+    });
+
+    expect(priceLookupNamesFromContext(context)).toEqual([
+      "FIFA 2002",
+      "FIFA 2002",
+      "Fifa Football 2002",
+      "FIFA Soccer 2002",
+      "PS2 FIFA 2002",
+    ]);
+  });
+
+  it("keeps Enter Electro aliases and drops Sinister Six for FR Spider-Man 2", () => {
+    const context = itemPricesContextFromRecord({
+      id: "item-electro",
+      name: "Spider-Man 2 : La Revanche d'Electro",
+      barcode: "711719148825",
+      metadataId: "meta-electro",
+      metadata: {
+        title: "Spider-Man 2 : La Revanche d'Electro",
+        aliases: JSON.stringify([
+          "Spider-Man 2: Enter Electro",
+          "Spiderman 2 Enter Electro",
+          "Spider-man 2",
+          "Spider-Man 2: The Sinister Six",
+        ]),
+      },
+      shelf: { type: "games", name: "PlayStation 1" },
+    });
+
+    expect(priceLookupNamesFromContext(context)).toEqual([
+      "Spider-Man 2 : La Revanche d'Electro",
+      "Spider-Man 2 : La Revanche d'Electro",
+      "Spider-Man 2: Enter Electro",
+      "Spiderman 2 Enter Electro",
+    ]);
+  });
+
+  it("keeps Remastered edition aliases for Castle Crashers", () => {
+    const context = itemPricesContextFromRecord({
+      id: "item-cc",
+      name: "Castle Crashers",
+      barcode: null,
+      metadataId: "meta-cc",
+      metadata: {
+        title: "Castle Crashers",
+        aliases: JSON.stringify(["Castle Crashers Remastered"]),
+      },
+      shelf: { type: "games", name: "Nintendo Switch" },
+    });
+
+    expect(priceLookupNamesFromContext(context)).toEqual([
+      "Castle Crashers",
+      "Castle Crashers",
+      "Castle Crashers Remastered",
+    ]);
+  });
+});
+
+describe("shelfGridItemPriceFields", () => {
+  it("fills used price from metadata facts when batch cache is empty", () => {
+    const context = itemPricesContextFromPresentedShelfItem(
+      {
+        id: "item-hs-2",
+        name: "Les Trésors de Picsou n°02",
+        metadata: {
+          title: "Les trésors de Picsou",
+          facts: [
+            {
+              kind: "price",
+              source: "bdovore",
+              value: "8,95 €",
+              label: "Occasion",
+            },
+          ],
+        },
+      },
+      { type: "comics", name: "BD" },
+    );
+
+    const prices = shelfGridItemPriceFields(context, null);
+
+    expect(prices.priceUsed).toBe(895);
+    expect(prices.priceNew).toBeNull();
+  });
+
+  it("fills priceNew from observed-price when batch only has used", () => {
+    const context = itemPricesContextFromPresentedShelfItem(
+      {
+        id: "item-arcane",
+        name: "L'Art et la Création de Arcane",
+        barcode: "9791035505677",
+        metadata: {
+          title: "L'art et la création de Arcane",
+          facts: [
+            {
+              kind: "observed-price",
+              label: "ChocoBonPlan",
+              value: "39,90 €",
+              source: "chocobonplan",
+            },
+          ],
+        },
+      },
+      { type: "books", name: "Livres" },
+    );
+
+    const prices = shelfGridItemPriceFields(context, {
+      priceNew: null,
+      priceUsed: 3947,
+      priceUsedCIB: null,
+      priceLastUpdated: new Date("2026-07-11"),
+    });
+
+    expect(prices.priceNew).toBe(3990);
+    expect(prices.priceUsed).toBe(3947);
   });
 });

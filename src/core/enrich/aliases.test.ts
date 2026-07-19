@@ -7,6 +7,73 @@ import {
 } from "@/core/enrich/aliases";
 
 describe("metadataAliases", () => {
+  it("parses JSON string aliases and array aliases", async () => {
+    const { metadataAliases } = await import("@/core/enrich/aliases");
+    expect(metadataAliases('["Enter Electro","Sinister Six"]')).toEqual([
+      "Enter Electro",
+      "Sinister Six",
+    ]);
+    expect(metadataAliases(["Enter Electro"])).toEqual(["Enter Electro"]);
+    expect(metadataAliases(null)).toBeUndefined();
+  });
+
+  it("repairs ScreenScraper-style Main ? Subtitle aliases", async () => {
+    const { metadataAliases } = await import("@/core/enrich/aliases");
+    expect(
+      metadataAliases('["Lego La Grande Aventure ? Le Jeu Vidéo"]'),
+    ).toEqual(["Lego La Grande Aventure : Le Jeu Vidéo"]);
+  });
+
+  it("surfaces catalog metadata.title when it differs from the display name", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "WRC 4: FIA World Rally Championship",
+        metadataTitle: "Wrc 4",
+        aliases: null,
+      }),
+    ).toEqual(["Wrc 4"]);
+  });
+
+  it("does not repeat the display name as an alias", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Wrc 4",
+        metadataTitle: "Wrc 4",
+        aliases: ["WRC 4"],
+      }),
+    ).toEqual([]);
+  });
+
+  it("drops placeholder, platform-prefixed, and bracket stub aliases", async () => {
+    const { displayAliasesForItem, aliasesExcludingTitle } = await import(
+      "@/core/enrich/aliases"
+    );
+    expect(
+      displayAliasesForItem({
+        name: "Prototype",
+        metadataTitle: "Prototype",
+        aliases: [
+          "[Grand Prototype]",
+          "Xbox 360 Prototype",
+          "n/c",
+          "Prototype®",
+        ],
+      }),
+    ).toEqual([]);
+
+    expect(
+      aliasesExcludingTitle(
+        "Prototype",
+        "[Grand Prototype]",
+        "Xbox 360 Prototype",
+        "n/c",
+        "Прототип",
+      ),
+    ).toEqual(["Прототип"]);
+  });
+
   it("drops the promoted title from aliases", () => {
     expect(
       promoteTitleKeepingAliases(
@@ -36,5 +103,23 @@ describe("metadataAliases", () => {
         "L'Attaque des Titans n°1",
       ),
     ).toEqual(["Shingeki no Kyojin", "Attack on Titan"]);
+  });
+
+  it("écarte les alias de ligne produit intercalée avant le tome", () => {
+    expect(
+      collectMergedSearchAliases(
+        [
+          {
+            title: "The Promised Neverland T01",
+            aliases: [
+              "The Promised Neverland : Gag Manga, Tome 1",
+              "Yakusoku no Neverland",
+            ],
+          },
+        ],
+        "The Promised Neverland Tome 1",
+        "The Promised Neverland Tome 1",
+      ),
+    ).toEqual(["The Promised Neverland T01", "Yakusoku no Neverland"]);
   });
 });

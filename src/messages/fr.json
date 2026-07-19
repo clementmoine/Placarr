@@ -112,6 +112,7 @@
     "empty": "Aucune tâche en cours",
     "kindRefresh": "Rafraîchissement metadata",
     "kindEnrich": "Enrichissement",
+    "kindPrice": "Mise à jour des prix",
     "cancelAll": "Tout annuler",
     "cancelOne": "Annuler",
     "cancelledOne": "Tâche annulée",
@@ -173,10 +174,15 @@
     "editShelfDetails": "Modifiez les détails de votre étagère.",
     "createNewShelfDetails": "Remplissez les détails pour créer une nouvelle étagère.",
     "shelfSubtitle": "Gérez et parcourez vos collections dans des étagères personnalisées.",
-    "cardFormat": "Format des cartes d'objets",
+    "previewPlaceholder": "Nom de l'étagère",
+    "addLogo": "Ajouter un logo",
+    "dropLogo": "Déposez le logo ici",
+    "removeLogo": "Retirer le logo",
+    "cardFormat": "Forme des cartes",
     "cardFormats": {
       "default": "Par défaut ({type})",
       "square": "Carré (1:1 - CD, Vinyle, Société)",
+      "tcg": "Carte TCG (5:7 - Pokémon, Magic…)",
       "ds": "Boîtier Nintendo DS / 3DS (1.12:1)",
       "bluray": "Boîtier Blu-ray / PS3-PS4-PS5 / Xbox One-Series (1:1.18)",
       "dvd": "Boîtier DVD / PS2 / Xbox-Xbox 360 / Wii (1:1.41)",
@@ -186,6 +192,21 @@
       "vhs": "Boîtier VHS (1:1.8)",
       "landscape_retro": "Paysage Rétro (SNES, N64 - 1.4:1)",
       "landscape": "Paysage Large (16:9)"
+    },
+    "cardFormatsShort": {
+      "default": "Défaut",
+      "defaultNamed": "Défaut ({shape})",
+      "square": "Carré",
+      "tcg": "TCG",
+      "ds": "DS / 3DS",
+      "bluray": "Blu-ray",
+      "dvd": "DVD",
+      "book": "Livre",
+      "switch": "Switch",
+      "psp": "PSP",
+      "vhs": "VHS",
+      "landscape_retro": "Rétro",
+      "landscape": "16:9"
     }
   },
   "items": {
@@ -198,7 +219,8 @@
     "conditions": {
       "new": "Neuf",
       "used": "Occasion",
-      "damaged": "Endommagé"
+      "loose": "Loose",
+      "damaged": "Abîmé"
     },
     "location": "Emplacement",
     "noItems": "Aucun objet dans cette étagère",
@@ -284,6 +306,14 @@
       "action": "Rafraîchir",
       "success": "{count} objet(s) — enrichissement relancé",
       "failed": "Impossible de relancer l'enrichissement"
+    },
+    "bulkDelete": {
+      "action": "Supprimer",
+      "title": "Confirmer la suppression",
+      "description": "Êtes-vous sûr de vouloir supprimer {count} objet(s) ? Cette action ne peut pas être annulée.",
+      "submit": "Supprimer {count} objet(s)",
+      "success": "{count} objet(s) supprimé(s)",
+      "failed": "Impossible de supprimer les objets"
     },
     "multipleMatchesTitle": "Plusieurs produits associés à ce code",
     "editTabs": {
@@ -384,6 +414,7 @@
       "gameModes": "Modes de jeu",
       "observedPrice": "Prix constaté",
       "oneSource": "1 source",
+      "alsoKnownAs": "Aussi connu sous",
       "pages": "Pages",
       "players": "Joueurs",
       "playtime": "Durée d'une partie",
@@ -424,6 +455,7 @@
     "condition.all": "Tous les états",
     "condition.new": "Neuf",
     "condition.used": "Occasion",
+    "condition.loose": "Loose",
     "condition.damaged": "Abîmé",
     "ratingMin": "Note minimale",
     "rating.any": "Toutes les notes",

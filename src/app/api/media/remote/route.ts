@@ -4,11 +4,33 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import { isAllowedRemoteImageProxyTarget } from "@/core/enrich/media/remoteImageProxyValidation.server";
 import { fetchRemoteImageBuffer } from "@/core/enrich/media/remoteFetch";
 import {
+  findCachedRemoteImageUpload,
+  persistRemoteImageUpload,
+} from "@/core/enrich/media/remoteImageDiskCache";
+import {
   resolveScreenScraperCoverFallback,
   screenScraperMediaFetchUrl,
-} from "@/providers/screenscraper/mediaProxy.server";
+} from "@/core/catalog/mediaProxy";
 
-const CACHE_MAX_AGE_SECONDS = 60 * 60;
+/** Browser may keep a private copy; disk cache is the real win across requests. */
+const CACHE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+
+function imageResponse(
+  buffer: Buffer,
+  contentType: string,
+  cacheHit: boolean,
+): NextResponse {
+  return new NextResponse(new Uint8Array(buffer), {
+    status: 200,
+    headers: {
+      "Content-Type": contentType.startsWith("image/")
+        ? contentType
+        : "image/jpeg",
+      "Cache-Control": `private, max-age=${CACHE_MAX_AGE_SECONDS}, immutable`,
+      "X-Placarr-Image-Cache": cacheHit ? "HIT" : "MISS",
+    },
+  });
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
@@ -23,6 +45,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "URL not allowed" }, { status: 400 });
   }
 
+  const cached = findCachedRemoteImageUpload(rawUrl);
+  if (cached) {
+    return imageResponse(cached.buffer, cached.contentType, true);
+  }
+
   let fetched = await fetchRemoteImageBuffer(
     screenScraperMediaFetchUrl(rawUrl),
     {
@@ -35,6 +62,10 @@ export async function GET(req: NextRequest) {
   if (!fetched) {
     const altUrl = await resolveScreenScraperCoverFallback(rawUrl);
     if (altUrl) {
+      const altCached = findCachedRemoteImageUpload(altUrl);
+      if (altCached) {
+        return imageResponse(altCached.buffer, altCached.contentType, true);
+      }
       fetched = await fetchRemoteImageBuffer(
         screenScraperMediaFetchUrl(altUrl),
         {
@@ -48,15 +79,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Image unavailable" }, { status: 404 });
   }
 
-  const contentType = fetched.contentType?.startsWith("image/")
-    ? fetched.contentType
-    : "image/jpeg";
-
-  return new NextResponse(new Uint8Array(fetched.buffer), {
-    status: 200,
-    headers: {
-      "Content-Type": contentType,
-      "Cache-Control": `private, max-age=${CACHE_MAX_AGE_SECONDS}`,
-    },
+  const persisted = persistRemoteImageUpload(rawUrl, fetched.buffer, {
+    contentType: fetched.contentType,
+    sourceUrl: fetched.sourceUrl,
   });
+
+  return imageResponse(persisted.buffer, persisted.contentType, false);
 }

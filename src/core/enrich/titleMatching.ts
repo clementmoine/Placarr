@@ -1,6 +1,8 @@
 import {
+  CATALOG_REQUIRED_TITLE_MARKER_GROUPS,
   containsGameOfTheYearEdition,
   createGameEditionMatcher,
+  createNonGameMediaMatcher,
 } from "@/core/identify/listingTerms";
 import { normalizeDisplayTitle } from "@/core/enrich/titles/displayScore";
 import {
@@ -30,6 +32,22 @@ import {
   isWeakMetadataSearchFragment,
 } from "@/core/enrich/titles/searchVariants";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
+import { normalizeForTokens } from "@/core/enrich/titles/normalize";
+import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
+import {
+  createSequelNumberBeforePlatformMatcher,
+  createTrailingVideoGamePlatformSuffixMatcher,
+} from "@/core/identify/platforms/platforms";
+import {
+  IDENTITY_EDITION_PACKAGING_TOKENS,
+  IDENTITY_FUNCTION_WORDS,
+  IDENTITY_LEADING_ARTICLES,
+  IDENTITY_LISTING_PACKAGING_NOISE,
+  IDENTITY_PLATFORM_NOISE_TOKENS,
+  IDENTITY_VOLUME_STOP_WORDS,
+  isIdentityNeutralListingToken,
+  isIdentityVolumeStopWord,
+} from "@/core/enrich/titles/identityNoise";
 import { buildBundleMetadataSearchQueries, bundleTitlePartsMatchCatalogTitle, isBundleTitle } from "@/core/enrich/bundleTitle";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import {
@@ -38,6 +56,10 @@ import {
   stripTitleIntentYear,
   titleIntentYearAlignment,
 } from "@/core/enrich/titles/intentYear";
+import {
+  authorNamesFromMetadata,
+  residualIdentityMatch,
+} from "@/core/enrich/titles/residualIdentity";
 import type {
   MetadataAttachment,
   MetadataFact,
@@ -337,62 +359,104 @@ export function catalogEditionIdentityMismatch(
   return editionIdentityBasesMismatch(requestedName, catalogTitle);
 }
 
-const GAME_PRODUCT_IDENTITY_TERMS = [
-  "afterbirth+",
-  "afterbirth",
-  "repentance",
-  "rebirth",
-  "wrath of the lamb",
-  "antibirth",
-  "repop",
-  "night springs",
-  "the lake house",
-] as const;
+const PRODUCT_LINE_LEADING_ARTICLES = IDENTITY_LEADING_ARTICLES;
 
-function normalizeProductIdentityHaystack(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\+/g, " plus ")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+/** Edition taxonomy — shared with residual (`identityNoise` / listingTerms). */
+const PRODUCT_LINE_EDITION_TOKENS = IDENTITY_EDITION_PACKAGING_TOKENS;
+
+/**
+ * Platform tokens from the shared platform registry (keys + single-token /
+ * compacted aliases). No parallel xboxone/ps5 list here.
+ */
+const PLATFORM_PRODUCT_LINE_NOISE_TOKENS = IDENTITY_PLATFORM_NOISE_TOKENS;
+
+const TRAILING_PLATFORM_SUFFIX_MATCHER =
+  createTrailingVideoGamePlatformSuffixMatcher("i");
+const SEQUEL_NUMBER_BEFORE_PLATFORM_MATCHER =
+  createSequelNumberBeforePlatformMatcher("gi");
+
+function stripTrailingPlatformSuffix(title: string): string {
+  return title.replace(TRAILING_PLATFORM_SUFFIX_MATCHER, "").trim();
 }
 
-/** Distinctive expansion / sequel markers (Repentance, Afterbirth+, RePOP…). */
-export function extractGameProductIdentityTerms(text: string): string[] {
-  const haystack = normalizeProductIdentityHaystack(text);
-  const found: string[] = [];
-  for (const term of GAME_PRODUCT_IDENTITY_TERMS) {
-    const normalizedTerm = normalizeProductIdentityHaystack(term);
-    if (haystack.includes(normalizedTerm)) {
-      found.push(normalizedTerm);
-    }
-  }
-  return found;
+/** Region / listing-art packaging (not franchise product lines). */
+const PRODUCT_LINE_PACKAGING_NOISE = IDENTITY_LISTING_PACKAGING_NOISE;
+
+function isProductLineContextNoiseToken(token: string): boolean {
+  const lower = token.toLowerCase();
+  if (isNeutralListingToken(lower)) return true;
+  if (PRODUCT_LINE_LEADING_ARTICLES.has(lower)) return true;
+  if (PRODUCT_LINE_EDITION_TOKENS.has(lower)) return true;
+  if (PLATFORM_PRODUCT_LINE_NOISE_TOKENS.has(lower)) return true;
+  if (PRODUCT_LINE_PACKAGING_NOISE.has(lower)) return true;
+  return false;
+}
+
+/** Drop Day One / GOTY / Deluxe packaging before comparing product-line suffixes. */
+function stripProductLinePackaging(title: string): string {
+  const withoutPackaging = title
+    .replace(/\b(?:day\s+one|first\s+day)(?:\s+edition)?\b/gi, " ")
+    .replace(/\b(?:game\s+of\s+the\s+year|goty)(?:\s+edition)?\b/gi, " ");
+  return extractBaseTitleVariant(withoutPackaging) || withoutPackaging;
+}
+
+function productLineIdentityTokens(title: string): string[] {
+  return variantIdentityTokens(stripProductLinePackaging(title)).filter(
+    (token) => !isProductLineContextNoiseToken(token),
+  );
 }
 
 /**
- * True when the request names a specific product identity (Repentance, RePOP…)
- * but the catalog row names a different one (Afterbirth+, base game only…).
+ * True when the request names a specific product line after a shared franchise
+ * root (Repentance, Night Springs, RePOP…) that the catalog row does not share
+ * (Afterbirth+, base game, The Lake House…).
+ *
+ * Structural: ordered token prefix ≥ 2, then unshared request suffix — no
+ * per-product vocabulary.
  */
 export function gameProductIdentityMismatch(
   requestedNames: string[],
   catalogTitle: string,
 ): boolean {
-  const requestedTerms = new Set(
-    requestedNames.flatMap(extractGameProductIdentityTerms),
-  );
-  if (requestedTerms.size === 0) return false;
+  const catalog = productLineIdentityTokens(catalogTitle);
+  if (catalog.length === 0) return false;
 
-  const catalogTerms = new Set(extractGameProductIdentityTerms(catalogTitle));
-  if (catalogTerms.size === 0) return true;
+  return requestedNames.some((name) => {
+    const requested = productLineIdentityTokens(name);
+    if (requested.length === 0) return false;
 
-  for (const term of requestedTerms) {
-    if (catalogTerms.has(term)) return false;
-  }
-  return true;
+    let prefix = 0;
+    while (
+      prefix < requested.length &&
+      prefix < catalog.length &&
+      titleTokensEquivalent(requested[prefix], catalog[prefix])
+    ) {
+      prefix += 1;
+    }
+    // Cross-language / unrelated titles share no root — defer to similarity.
+    if (prefix === 0) return false;
+    // Require a multi-token franchise root so "Pokemon Yellow" vs "Pokemon"
+    // is not treated as an expansion mismatch (single-token series names).
+    if (prefix < 2) return false;
+
+    const requestSuffix = requested.slice(prefix);
+    if (requestSuffix.length === 0) return false;
+
+    const catalogSuffix = catalog.slice(prefix);
+    // Only sibling product lines conflict (Repentance vs Afterbirth+). A shorter
+    // catalog title with no suffix is incomplete marketing text / base SKU — not
+    // a conflicting expansion (and must not wipe retailer galleries).
+    if (catalogSuffix.length === 0) return false;
+
+    // Short DLC/expansion tags only. Longer unshared suffixes are often
+    // cross-language subtitles ("Revenant Kingdom" vs "L'avénement…"), not
+    // sibling product lines.
+    if (requestSuffix.length > 2 || catalogSuffix.length > 2) return false;
+
+    return !requestSuffix.some((token) =>
+      catalogSuffix.some((other) => titleTokensEquivalent(token, other)),
+    );
+  });
 }
 
 /** Requested title ends with a known edition qualifier (Limited, Deluxe, etc.). */
@@ -448,25 +512,21 @@ function mergeEditionFacts(
   return merged.length > 0 ? merged : undefined;
 }
 
-const FRANCHISE_SEQUEL_ROMAN = new Map<string, string>([
-  ["ii", "2"],
-  ["iii", "3"],
-  ["iv", "4"],
-  ["v", "5"],
-  ["vi", "6"],
-  ["vii", "7"],
-  ["viii", "8"],
-  ["ix", "9"],
-  ["x", "10"],
-  ["xi", "11"],
-  ["xii", "12"],
-]);
-
 function pushFranchiseSequelNumber(target: string[], raw: string | undefined) {
   if (!raw) return;
   const normalized = normalizeVolumeNumber(raw);
   if (normalized === "NaN") return;
   target.push(normalized);
+}
+
+function pushFranchiseSequelRoman(
+  target: string[],
+  raw: string | undefined,
+): void {
+  if (!raw) return;
+  const value = parseRomanToken(raw);
+  if (value == null) return;
+  target.push(String(value));
 }
 
 function isGalleryIndexCaption(title: string): boolean {
@@ -485,11 +545,7 @@ function stripPlatformRomanNoisePhrases(value: string): string {
 
 /** Sequel markers in game franchises ("Baldur's Gate 3", "Resident Evil 2"). */
 function franchiseSequelTokens(title: string): string[] {
-  const separatorSource = title
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[’‘']/g, "'");
+  const separatorSource = normalizeForTokens(title).replace(/[’‘']/g, "'");
   const text = normalizeVolumeTitleText(title);
   if (!text && !separatorSource) return [];
 
@@ -514,26 +570,32 @@ function franchiseSequelTokens(title: string): string[] {
   for (const match of romanText.matchAll(
     /\b(ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii)\b/gi,
   )) {
-    const mapped = FRANCHISE_SEQUEL_ROMAN.get(match[1].toLowerCase());
-    if (mapped) numbers.push(mapped);
+    pushFranchiseSequelRoman(numbers, match[1]);
   }
 
   for (const match of romanSeparator.matchAll(
     /\b(ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii)\s*(?::|(?:-\s))/gi,
   )) {
-    const mapped = FRANCHISE_SEQUEL_ROMAN.get(match[1].toLowerCase());
-    if (mapped) numbers.push(mapped);
+    pushFranchiseSequelRoman(numbers, match[1]);
   }
 
   // "Borderlands 3 PS4", "Tekken 7 sur PS4", "Halo 4 Xbox One"
-  for (const match of text.matchAll(
-    /\b(\d{1,2})\s+(?:(?:sur|on|for)\s+)?(?:ps[1-5]|xbox(?:\s+(?:one|series(?:\s+[xs])?|360))?|switch(?:\s+2)?|pc|playstation(?:\s+[1-5])?)\b/gi,
-  )) {
+  for (const match of text.matchAll(SEQUEL_NUMBER_BEFORE_PLATFORM_MATCHER)) {
     pushFranchiseSequelNumber(numbers, match[1]);
   }
 
   // "Borderlands 3 [Deluxe Edition]"
   for (const match of text.matchAll(/\b(\d{1,2})\s*(?=\s*[\[(])/g)) {
+    pushFranchiseSequelNumber(numbers, match[1]);
+  }
+
+  // "Burnout 3 Takedown" / "Burnout 3 TakeDown" — installment before a subtitle
+  // word. Without this, only the colon form ("Burnout 3: Takedown") yields a
+  // sequel token and shelf titles without ":" false-conflict against catalog.
+  // Skip quantity/edition tails ("Trilogy: 3 Full Games", "3 Deluxe Edition").
+  for (const match of text.matchAll(
+    /\b(\d{1,2})\s+(?!(?:full|games?|discs?|vols?|volumes?|pack|in|deluxe|limited|edition|goty|complete|definitive|ultimate|standard|collection|bundle|remastered|remaster|director|anniversary|gold|platinum|game of the year)\b)(?=[a-z\u00c0-\u024f])/gi,
+  )) {
     pushFranchiseSequelNumber(numbers, match[1]);
   }
 
@@ -596,10 +658,7 @@ export function franchiseSequelNumbersConflict(
 }
 
 function normalizeCatalogTitleText(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
+  return normalizeForTokens(value)
     .replace(/&/g, " and ")
     .replace(/[^\p{L}\p{N}\s]+/gu, " ")
     .replace(/\s+/g, " ")
@@ -614,15 +673,6 @@ function textContainsCatalogPhrase(text: string, phrase: string): boolean {
   );
 }
 
-const CATALOG_REQUIRED_TITLE_MARKER_GROUPS: readonly (readonly string[])[] = [
-  ["trilogy", "trilogie"],
-  ["collection"],
-  ["saga"],
-  ["compilation", "anthology", "anthologie"],
-  ["special edition", "edition speciale"],
-  ["game of the year", "goty"],
-];
-
 function catalogAttachmentDropsRequiredTitleMarker(
   productTitle: string,
   attachmentTitle: string,
@@ -634,8 +684,7 @@ function catalogAttachmentDropsRequiredTitleMarker(
   );
 }
 
-const NON_GAME_MEDIA_TITLE_PATTERN =
-  /\b(?:blu[\s-]*ray|bluray|dvd|uhd|ultra[\s-]+hd|vhs|cd|vinyl|vinyle|livre)\b/i;
+const NON_GAME_MEDIA_TITLE_PATTERN = createNonGameMediaMatcher("i");
 
 function attachmentTitleLooksLikeNonGameMedia(
   attachmentTitle: string,
@@ -660,23 +709,8 @@ export function attachmentTitleMediaTypeConflicts(
 }
 
 const VOLUME_LABEL_NOISE_TOKENS = new Set([
-  "tome",
-  "volume",
-  "vol",
-  "numero",
-  "num",
-  "chapitre",
-  "chapter",
-  "partie",
-  "part",
-  "edition",
-  "special",
-  "deluxe",
-  "limited",
-  "collector",
-  "complete",
-  "definitive",
-  "standard",
+  ...IDENTITY_VOLUME_STOP_WORDS,
+  ...IDENTITY_EDITION_PACKAGING_TOKENS,
 ]);
 
 function specificSubtitleTokens(title: string): string[] {
@@ -808,6 +842,12 @@ export function catalogAttachmentTitleConflicts(
 ): boolean {
   if (!productTitle?.trim() || !attachmentTitle?.trim()) return false;
   if (
+    listingLooksLikeMerchAccessory(attachmentTitle) &&
+    !listingLooksLikeMerchAccessory(productTitle)
+  ) {
+    return true;
+  }
+  if (
     attachmentTitleMediaTypeConflicts(productTitle, attachmentTitle, options)
   ) {
     return true;
@@ -913,24 +953,7 @@ function phraseEquivalentSubtitlesAlign(a: string, b: string): boolean {
   });
 }
 
-const CATALOG_LABEL_STOP_WORDS = new Set([
-  "le",
-  "la",
-  "les",
-  "l",
-  "du",
-  "de",
-  "des",
-  "d",
-  "un",
-  "une",
-  "au",
-  "aux",
-  "the",
-  "and",
-  "or",
-  "a",
-]);
+const CATALOG_LABEL_STOP_WORDS = IDENTITY_FUNCTION_WORDS;
 
 function catalogMatchTokenSet(value: string): Set<string> {
   const tokens = new Set(
@@ -983,6 +1006,33 @@ export function catalogLabelSimilarity(query: string, label: string): number {
   return similarity;
 }
 
+/**
+ * False friends like Bakuman ↔ Batman / Bat Man: short franchise leads that
+ * share no root but look close once spaces are ignored. Cap similarity so
+ * provider floors at 0.55 cannot adopt the wrong series.
+ */
+function compactedFranchiseNearMiss(a: string, b: string): boolean {
+  const aLead = franchiseLeadTokens(a);
+  const bLead = franchiseLeadTokens(b);
+  if (aLead.length === 0 || bLead.length === 0) return false;
+  if (franchiseLeadsShareRoot(aLead, bLead)) return false;
+  if (aLead.length > 2 || bLead.length > 2) return false;
+
+  const compactA = aLead.join("");
+  const compactB = bLead.join("");
+  if (compactA.length < 5 || compactB.length < 5) return false;
+  if (titleTokensEquivalent(compactA, compactB)) return false;
+
+  const distance = levenshtein.get(compactA, compactB);
+  const maxLen = Math.max(compactA.length, compactB.length);
+  if (distance <= 0) return false;
+  // Bakuman/Batman = 2 edits on 7 chars; keep translations (unrelated strings) out.
+  return distance <= 3 && distance / maxLen <= 0.4;
+}
+
+/** Below typical provider revue/series floors (0.55) for honest non-matches. */
+const NON_EQUIVALENT_FRANCHISE_SIMILARITY_CAP = 0.49;
+
 export function metadataTitleSimilarity(a: string, b: string): number {
   const aTokens = normalizeDisplayTitle(a);
   const bTokens = normalizeDisplayTitle(b);
@@ -1002,12 +1052,25 @@ export function metadataTitleSimilarity(a: string, b: string): number {
 
   // Single-token titles ("Parrain" vs "Parkan") must not align on string distance
   // alone when the sequel marker was stripped by normalizeDisplayTitle.
+  // Cap strictly below provider floors (0.55) so near-misses cannot pass.
   if (
     aTokens.length === 1 &&
     bTokens.length === 1 &&
     !titleTokensEquivalent(aTokens[0], bTokens[0])
   ) {
-    return Math.min(Math.max(tokenScore, distanceScore), 0.55);
+    return Math.min(
+      Math.max(tokenScore, distanceScore),
+      NON_EQUIVALENT_FRANCHISE_SIMILARITY_CAP,
+    );
+  }
+
+  // "Bakuman" (1 token) vs "Bat Man" (2) escapes the single-token branch but
+  // collapses to the same near-miss once spaces are removed.
+  if (compactedFranchiseNearMiss(a, b)) {
+    return Math.min(
+      Math.max(tokenScore, distanceScore),
+      NON_EQUIVALENT_FRANCHISE_SIMILARITY_CAP,
+    );
   }
 
   if (
@@ -1068,49 +1131,42 @@ export function metadataTitleSimilarity(a: string, b: string): number {
     }
   }
 
+  // Covered subset: catalog "007 nightfire" inside shelf "james bond 007 nightfire".
+  // Jaccard over the longer side undersells these. Do NOT boost a bare leading
+  // franchise stem ("Black Stories" ⊆ "Black Stories - Faits vécus") — that is
+  // how wrong retailer covers used to leak back into the gallery.
+  const aSubsetOfB = aTokens.every((token) => bSet.has(token));
+  const bSubsetOfA = bTokens.every((token) => aSet.has(token));
+  if (aSubsetOfB || bSubsetOfA) {
+    const shorter = aTokens.length <= bTokens.length ? aTokens : bTokens;
+    const longer = aTokens.length <= bTokens.length ? bTokens : aTokens;
+    const isLeadingPrefix =
+      shorter.length < longer.length &&
+      shorter.every((token, index) =>
+        titleTokensEquivalent(token, longer[index]),
+      );
+    if (
+      shorter.length < longer.length &&
+      !isLeadingPrefix &&
+      (shorter.length >= 2 ||
+        shorter.some((token) => token.length >= 6 || /^\d{3}$/.test(token)))
+    ) {
+      return Math.max(tokenScore, distanceScore, 0.62);
+    }
+  }
+
   return Math.max(tokenScore, distanceScore);
 }
 
-const VARIANT_ALIGNMENT_STOP_WORDS = new Set([
-  "tome",
-  "vol",
-  "volume",
-  "numero",
-  "num",
-  "no",
-  "n",
-  "edition",
-  "ed",
-]);
+const VARIANT_ALIGNMENT_STOP_WORDS = IDENTITY_VOLUME_STOP_WORDS;
 
-/** Listing/platform tokens that do not change which product is meant. */
-const NEUTRAL_LISTING_TOKENS = new Set([
-  "dlc",
-  "expansion",
-  "addon",
-  "season",
-  "pass",
-  "sur",
-  "ps4",
-  "ps5",
-  "xbox",
-  "switch",
-  "series",
-  "pc",
-  "one",
-  "nintendo",
-]);
-
+/** Listing tokens that do not change which product is meant (not platforms). */
 function isNeutralListingToken(token: string): boolean {
-  return NEUTRAL_LISTING_TOKENS.has(token.toLowerCase());
+  return isIdentityNeutralListingToken(token);
 }
 
 function normalizeMetadataCandidateTitle(title: string): string {
-  return title
-    .replace(
-      /\s+sur\s+(?:PS\d+|Xbox(?:\s+One|\s+Series)?|Switch|PC|Nintendo\s+Switch)\s*$/i,
-      "",
-    )
+  return stripTrailingPlatformSuffix(title)
     .replace(/\bdlc\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -1144,178 +1200,212 @@ function variantIdentityTokens(title: string): string[] {
     );
 }
 
-function isVariantMarkerToken(token: string): boolean {
-  const lower = token.toLowerCase();
-  if (isNeutralListingToken(lower)) return false;
-  if (lower.length === 1 && /[a-z]/.test(lower)) return true;
-  if (lower.length >= 2 && lower.length <= 3) {
-    return /^[bcdfghjklmnpqrstvwxyz]{2,3}$/i.test(lower);
-  }
-  return false;
-}
-
-/** Parallel manga/game series lines sharing a franchise root (Super, Kai…). */
-const FRANCHISE_LINE_SUFFIX_TOKENS = new Set([
-  "super",
-  "kai",
-  "heroes",
-  "ultra",
+const SERIES_LINE_REJECT_REASONS = new Set([
+  "request_series_line_unexplained",
+  "series_suffix_mismatch",
+  "series_line_extended_on_candidate",
+  "short_series_marker_residual",
 ]);
 
-function isNamedFranchiseLineSuffixToken(token: string): boolean {
-  return FRANCHISE_LINE_SUFFIX_TOKENS.has(token.toLowerCase());
-}
-
-/** French/English articles split from elisions in album subtitles (l'univers). */
-const SUBTITLE_ARTICLE_TOKENS = new Set(["l", "d", "a"]);
-
-function isSpinoffSuffixToken(token: string): boolean {
-  if (SUBTITLE_ARTICLE_TOKENS.has(token.toLowerCase())) return false;
-  return isNamedFranchiseLineSuffixToken(token) || isVariantMarkerToken(token);
-}
-
-function isStylizedTitleConnector(
-  token: string,
-  candidateTitle: string,
-): boolean {
-  return (
-    token.toLowerCase() === "x" &&
-    /\b\w+\s+x\s+\w+\b/i.test(candidateTitle.trim())
-  );
-}
-
-function requestedIdentityTokens(requestedName: string): string[] {
-  const tokens = new Set(variantIdentityTokens(requestedName));
-  for (const variant of buildStructuralTitleSearchVariants(requestedName)) {
-    for (const token of variantIdentityTokens(variant)) {
-      tokens.add(token);
-    }
-  }
-  return [...tokens];
-}
-
-function suffixTokenAllowed(token: string, allowedSuffix: string[]): boolean {
-  return allowedSuffix.some((allowed) => titleTokensEquivalent(token, allowed));
-}
-
 /**
- * Detects spinoff/variant markers present in a catalog title but absent from
- * the requested name (SD, Z, GT, …). Keeps legitimate series names intact
- * when the marker is part of the request ("Dragon Ball Z n°01").
+ * Series / spin-off line conflict via residual identity (no spin-off word list).
+ * Volume / merch / product-subtitle rejects stay on `isMetadataTitleAligned`.
  */
 export function hasUnrequestedVariantMarker(
   requestedName: string,
   candidateTitle: string,
 ): boolean {
-  const requested = new Set(requestedIdentityTokens(requestedName));
-  if (requested.size === 0) return false;
-
-  const extra = variantIdentityTokens(
-    normalizeMetadataCandidateTitle(candidateTitle),
-  ).filter(
-    (token) =>
-      ![...requested].some((known) => titleTokensEquivalent(token, known)),
-  );
-  return extra.some(
-    (token) =>
-      !isNeutralListingToken(token) &&
-      isSpinoffSuffixToken(token) &&
-      !isStylizedTitleConnector(token, candidateTitle),
+  const result = residualIdentityMatch({
+    requestTitles: [requestedName],
+    candidateTitles: [candidateTitle],
+  });
+  return (
+    result.decision === "reject" &&
+    result.reasons.some((reason) => SERIES_LINE_REJECT_REASONS.has(reason))
   );
 }
 
 /**
- * When the request names a series suffix ("Super", "Z"…), rejects candidates
- * that insert extra identity tokens into that suffix ("super livre", "Z Kai").
- * When the request only names the base franchise ("Dragon Ball n°01"), still
- * rejects spinoff markers (SD, GT…) but allows album/chapter subtitles after
- * the shared prefix ("Le nuage supersonique").
+ * Parallel product lines insert identity *before* the volume marker
+ * ("Neverland Gag Manga Tome 1"). Chapter/album subtitles put identity *after*
+ * the volume ("Dragon Ball 1 . Le nuage"). No vocabulary list — only token
+ * order relative to the first volume-like token.
+ */
+export function hasUnrequestedPreVolumeProductLine(
+  requestedName: string,
+  candidateTitle: string,
+): boolean {
+  const requestSeries = variantIdentityTokens(
+    stripProductLinePackaging(requestedName),
+  ).filter((token) => !isProductLineContextNoiseToken(token));
+  if (requestSeries.length === 0) return false;
+
+  const tokens = normalizeMetadataCandidateTitle(
+    stripProductLinePackaging(candidateTitle),
+  )
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  if (tokens.length === 0) return false;
+
+  const isVolumeLike = (token: string): boolean => {
+    if (isIdentityVolumeStopWord(token)) return true;
+    if (/^\d+$/.test(token)) return true;
+    // Booknode / FR shorthand: T01, T4, tome-less volume tokens.
+    if (/^t\d+[a-z]*$/i.test(token)) return true;
+    return new RegExp(
+      `^(?:n|no|nr|num|numero)?\\d+(?:${VOLUME_NUMBER_SUFFIX_PATTERN})?$`,
+      "i",
+    ).test(token);
+  };
+
+  const isSkippableNoise = (token: string): boolean =>
+    isProductLineContextNoiseToken(token);
+
+  let reqIdx = 0;
+  let i = 0;
+  while (i < tokens.length && reqIdx < requestSeries.length) {
+    const token = tokens[i];
+    if (isVolumeLike(token)) {
+      // Volume before the request series finished — not a series+line pattern.
+      return false;
+    }
+    if (isSkippableNoise(token)) {
+      i += 1;
+      continue;
+    }
+    if (titleTokensEquivalent(token, requestSeries[reqIdx])) {
+      reqIdx += 1;
+      i += 1;
+      continue;
+    }
+    if (reqIdx === 0) {
+      i += 1;
+      continue;
+    }
+    break;
+  }
+  if (reqIdx < requestSeries.length) return false;
+
+  const inserted: string[] = [];
+  while (i < tokens.length) {
+    const token = tokens[i];
+    if (isVolumeLike(token)) break;
+    if (isSkippableNoise(token)) {
+      i += 1;
+      continue;
+    }
+    inserted.push(token);
+    i += 1;
+  }
+  // One label before the volume ("Cycle") is a section marker, not a parallel
+  // product line. Parallel lines need ≥2 identity tokens ("Gag Manga").
+  const identityInserted = inserted.filter((token) => !/^\d+$/.test(token));
+  return identityInserted.length >= 2;
+}
+
+/**
+ * Series-line / suffix conflicts without spin-off vocabularies:
+ * residual identity + pre-volume product lines.
  */
 export function hasUnrequestedSeriesSuffixToken(
   requestedName: string,
   candidateTitle: string,
 ): boolean {
-  const requested = variantIdentityTokens(requestedName);
-  const candidate = variantIdentityTokens(
-    normalizeMetadataCandidateTitle(candidateTitle),
-  );
-  if (requested.length === 0 || candidate.length === 0) return false;
-
-  // Named lines (Super, Kai…) and short markers (Z, GT, SD) are identity —
-  // missing on the candidate means a sibling series, even with a valid ISBN.
-  // Stylized "x" connectors ("Ball X Pit") are not series-line identity.
-  const requestedLineTokens = requested.filter(
-    (token) =>
-      isSpinoffSuffixToken(token) &&
-      !isStylizedTitleConnector(token, requestedName),
-  );
-  if (requestedLineTokens.length > 0) {
-    const missingLineToken = requestedLineTokens.some(
-      (token) =>
-        !candidate.some((other) => titleTokensEquivalent(token, other)),
-    );
-    if (missingLineToken) return true;
+  if (hasUnrequestedPreVolumeProductLine(requestedName, candidateTitle)) {
+    return true;
   }
+  return hasUnrequestedVariantMarker(requestedName, candidateTitle);
+}
 
-  // Named franchise lines only on the reverse path: short markers like "x"
-  // can be stylized connectors ("Ball x Pit") and are handled below with
-  // isStylizedTitleConnector after the shared prefix.
+const VOLUME_LEAD_STOP_TOKENS = IDENTITY_VOLUME_STOP_WORDS;
+
+/**
+ * Leading franchise identity before the first volume/issue marker
+ * ("Naruto n°03" → ["naruto"], "Boruto no 03: Naruto Next Generations" → ["boruto"]).
+ * Uses volume-aware normalization so markers are not stripped before the cut
+ * (variantIdentityTokens would leak subtitle tokens like "Naruto" after "no 03").
+ */
+export function franchiseLeadTokens(title: string): string[] {
+  const tokens = normalizeVolumeTitleText(
+    normalizeMetadataCandidateTitle(title),
+  )
+    .split(/\s+/)
+    .filter(Boolean);
+  const lead: string[] = [];
+  for (const token of tokens) {
+    if (/^\d/.test(token)) break;
+    if (VOLUME_LEAD_STOP_TOKENS.has(token.toLowerCase())) break;
+    lead.push(token);
+  }
+  return lead;
+}
+
+function franchiseLeadsShareRoot(
+  requested: string[],
+  candidate: string[],
+): boolean {
+  if (requested.length === 0 || candidate.length === 0) return true;
+
+  const shorter =
+    requested.length <= candidate.length ? requested : candidate;
+  const longer =
+    requested.length <= candidate.length ? candidate : requested;
+
+  // Ordered prefix: "Dragon Ball" ⊆ "Dragon Ball Super".
   if (
-    requestedLineTokens.length === 0 &&
-    candidate.some(isNamedFranchiseLineSuffixToken)
+    shorter.every((token, index) =>
+      titleTokensEquivalent(token, longer[index]),
+    )
   ) {
     return true;
   }
 
-  let prefixLen = 0;
-  while (
-    prefixLen < requested.length &&
-    prefixLen < candidate.length &&
-    (requested[prefixLen] === candidate[prefixLen] ||
-      titleTokensEquivalent(requested[prefixLen], candidate[prefixLen]))
+  // Single-token franchise inside a longer lead ("Zelda" ⊆ "legend of zelda").
+  // Do not treat subtitle reuse ("Naruto" inside a Boruto lead) as agreement:
+  // first tokens must still be reconcilable via containment of the short lead.
+  if (
+    shorter.length === 1 &&
+    longer.some((other) => titleTokensEquivalent(shorter[0], other))
   ) {
-    prefixLen++;
+    return true;
   }
 
-  // Cross-language or differently tokenized titles (LOTR FR vs EN) share no
-  // prefix — defer to similarity scoring instead of suffix-token rules.
-  if (prefixLen === 0) return false;
+  return false;
+}
 
-  const requestedSuffix = requested.slice(prefixLen);
-  const candidateSuffix = candidate.slice(prefixLen);
+/**
+ * Rejects parallel series that share a subtitle token but not the lead
+ * franchise ("Naruto n°03" must not accept "Boruto … Naruto Next Generations").
+ * Cross-language titles with no shared lead vocabulary (LOTR FR vs EN) are
+ * left to similarity scoring — conflict only when both leads are short
+ * franchise names and the requested lead still appears later in the candidate
+ * (subtitle / spin-off pollution). Longer leads (multi-word titles) stay out
+ * so provider-prefixed catalog titles ("chasseauxlivres - Fantastic Mr. Fox")
+ * are not false-conflicted.
+ */
+export function franchiseLeadTokensConflict(
+  requestedName: string,
+  candidateTitle: string,
+): boolean {
+  const requested = franchiseLeadTokens(requestedName);
+  const candidate = franchiseLeadTokens(candidateTitle);
+  if (requested.length === 0 || candidate.length === 0) return false;
+  if (franchiseLeadsShareRoot(requested, candidate)) return false;
+  // Single-token (or very short) franchise labels only — multi-word titles
+  // use similarity / other gates instead of spin-off pollution.
+  if (requested.length > 2 || candidate.length > 2) return false;
 
-  if (requestedSuffix.length === 0) {
-    return candidateSuffix.some(
-      (token) =>
-        isSpinoffSuffixToken(token) &&
-        !isStylizedTitleConnector(token, candidateTitle),
-    );
-  }
-
-  // Require a multi-token franchise root before comparing series lines
-  // ("Dragon Ball Super" vs "Dragon Ball super livre"). Single-token roots
-  // defer to similarity scoring (e.g. "Zapper" FR vs EN subtitles).
-  if (prefixLen < 2) return false;
-
-  if (requestedSuffix.length > 0 && candidateSuffix.length > 0) {
-    const sharesSuffixToken = requestedSuffix.some((token) =>
-      candidateSuffix.some((other) => titleTokensEquivalent(token, other)),
-    );
-    if (!sharesSuffixToken) {
-      const requestedSequel = franchiseSequelTokens(requestedName);
-      const candidateSequel = franchiseSequelTokens(candidateTitle);
-      if (
-        requestedSequel.length > 0 &&
-        candidateSequel.some((number) => requestedSequel.includes(number))
-      ) {
-        return false;
-      }
-    }
-  }
-
-  return candidateSuffix
-    .filter((token) => !isNeutralListingToken(token))
-    .some((token) => !suffixTokenAllowed(token, requestedSuffix));
+  const candidateAll = normalizeVolumeTitleText(
+    normalizeMetadataCandidateTitle(candidateTitle),
+  )
+    .split(/\s+/)
+    .filter(Boolean);
+  return requested.every((token) =>
+    candidateAll.some((other) => titleTokensEquivalent(token, other)),
+  );
 }
 
 function hasUnrequestedTrailingQualifier(
@@ -1408,11 +1498,8 @@ function compactVolumeTitleForMatch(title: string): string {
   return title.trim();
 }
 
-const TRAILING_PLATFORM_COMPARISON_SUFFIX =
-  /\s+(?:ps5|ps4|ps3|ps2|ps1|psp|psvita|switch2?|xbox(?:\s+one|\s+series(?:\s+x)?)?|wiiu?|3ds|nes|snes|n64|gamecube|gba|gbc|gb|ds|pc)\s*$/i;
-
 function stripTrailingPlatformFromComparisonName(name: string): string {
-  return name.replace(TRAILING_PLATFORM_COMPARISON_SUFFIX, "").trim();
+  return stripTrailingPlatformSuffix(name);
 }
 
 export function metadataTitleMatchScore(
@@ -1494,7 +1581,6 @@ export function isMetadataTitleAligned(
   minScore: number,
 ): boolean {
   if (!result.title) return true;
-  if (isGenericTitleFragment(result.title, comparisonNames)) return false;
   if (
     comparisonNames.some(
       (name) =>
@@ -1517,10 +1603,24 @@ export function isMetadataTitleAligned(
   const catalogNames = namesFromMetadataSource(result);
   const catalogTitlesForIdentity =
     catalogNames.length > 0 ? catalogNames : [result.title || ""];
+
+  // Fact-based residual: consume known title/volume blocks, judge leftovers
+  // (author, merch, volume, series line, unexplained candidate identity…).
+  const residual = residualIdentityMatch({
+    requestTitles: comparisonNames,
+    candidateTitles: catalogTitlesForIdentity,
+    candidateAuthors: authorNamesFromMetadata(result.authors),
+  });
+  if (residual.decision === "accept") return true;
+  if (residual.decision === "reject") return false;
+
+  // Merch / volume / series-line variant markers: handled by residual above.
+  // "007: Agent Under Fire" looks like a generic fragment of "James Bond 007…"
+  // when judged alone, but LaunchBox also declares the full Bond alias — only
+  // reject when *every* declared name is a fragment.
   if (
-    primaryComparisonName &&
     catalogTitlesForIdentity.every((catalogTitle) =>
-      hasUnrequestedVariantMarker(primaryComparisonName, catalogTitle),
+      isGenericTitleFragment(catalogTitle, comparisonNames),
     )
   ) {
     return false;
@@ -1536,7 +1636,15 @@ export function isMetadataTitleAligned(
   if (
     primaryComparisonName &&
     catalogTitlesForIdentity.every((catalogTitle) =>
-      hasUnrequestedSeriesSuffixToken(primaryComparisonName, catalogTitle),
+      franchiseLeadTokensConflict(primaryComparisonName, catalogTitle),
+    )
+  ) {
+    return false;
+  }
+  if (
+    primaryComparisonName &&
+    catalogTitlesForIdentity.every((catalogTitle) =>
+      compactedFranchiseNearMiss(primaryComparisonName, catalogTitle),
     )
   ) {
     return false;
@@ -1558,19 +1666,12 @@ export function isMetadataTitleAligned(
   ) {
     return false;
   }
-  const stripChocoBonPlanPlatformSuffix = (title: string) =>
-    title
-      .replace(
-        /\s+sur\s+(?:PS\d+|Xbox(?:\s+One|\s+Series)?|Switch|PC|Nintendo\s+Switch)\s*$/i,
-        "",
-      )
-      .trim();
 
   if (
     comparisonNames.some((name) => {
       const base = extractBaseTitleVariant(name);
       if (!base) return false;
-      const normalizedCandidate = stripChocoBonPlanPlatformSuffix(
+      const normalizedCandidate = stripTrailingPlatformSuffix(
         result.title || "",
       );
       return normalizedCandidate.toLowerCase() === base.toLowerCase();
@@ -1582,7 +1683,7 @@ export function isMetadataTitleAligned(
     comparisonNames.some((name) => {
       const trimmed = name.trim();
       if (!trimmed) return false;
-      const normalizedCandidate = stripChocoBonPlanPlatformSuffix(
+      const normalizedCandidate = stripTrailingPlatformSuffix(
         result.title || "",
       );
       return normalizedCandidate.toLowerCase() === trimmed.toLowerCase();
@@ -1590,18 +1691,34 @@ export function isMetadataTitleAligned(
   ) {
     return true;
   }
-  if (!editionNumbersAreAligned(result.title, comparisonNames)) return false;
-  if (!franchiseSequelNumbersAreAligned(result.title, comparisonNames)) {
-    return false;
-  }
   if (
-    comparisonNames.some((name) =>
-      numeralRangesMismatch(name, result.title || ""),
+    !catalogTitlesForIdentity.some((catalogTitle) =>
+      editionNumbersAreAligned(catalogTitle, comparisonNames),
     )
   ) {
     return false;
   }
-  if (franchiseSequelNumbersConflict(comparisonNames, result.title || "")) {
+  if (
+    !catalogTitlesForIdentity.some((catalogTitle) =>
+      franchiseSequelNumbersAreAligned(catalogTitle, comparisonNames),
+    )
+  ) {
+    return false;
+  }
+  if (
+    comparisonNames.some((name) =>
+      catalogTitlesForIdentity.every((catalogTitle) =>
+        numeralRangesMismatch(name, catalogTitle),
+      ),
+    )
+  ) {
+    return false;
+  }
+  if (
+    catalogTitlesForIdentity.every((catalogTitle) =>
+      franchiseSequelNumbersConflict(comparisonNames, catalogTitle),
+    )
+  ) {
     return false;
   }
   return metadataTitleMatchScore(result, comparisonNames) >= minScore;
@@ -1637,6 +1754,13 @@ export function isGenericTitleFragment(
     if (candTokens.length >= nameTokens.length) return false; // equal/exact → aligned
     isStrictSubsetOfSome = true;
     if (candSet.has(nameTokens[0])) return false; // keeps the leading identity token
+    // Catalog "007: Nightfire" keeps the Bond series code from a "James Bond 007…"
+    // shelf title — that code is the franchise identity, not a generic subtitle.
+    if (
+      candTokens.some((token) => /^\d{3}$/.test(token) && nameSet.has(token))
+    ) {
+      return false;
+    }
   }
   return isStrictSubsetOfSome;
 }

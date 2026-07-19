@@ -86,7 +86,7 @@ describe("provider platformKey stamping", () => {
     );
   });
 
-  it("stamps SensCritique covers from shelf context", () => {
+  it("does not stamp SensCritique covers from shelf context alone", () => {
     const metadata = mapSensCritiqueMetadata(
       {
         id: 1,
@@ -97,8 +97,9 @@ describe("provider platformKey stamping", () => {
       { shelfName: "Nintendo Gameboy" },
     );
 
-    expect(metadata.platformKey).toBe("gb");
-    expect(metadata.attachments?.[0]?.platformKey).toBe("gb");
+    // Title-only search must not inherit the shelf console (Atari ≠ SNES).
+    expect(metadata.platformKey).toBeUndefined();
+    expect(metadata.attachments?.[0]?.platformKey).toBeUndefined();
   });
 
   it("covers every game provider that declares isRealBoxCover", () => {

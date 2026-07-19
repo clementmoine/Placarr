@@ -7,6 +7,7 @@ import {
   stripVolumeMarkersFromTitle,
   stripVolumeMarkersKeepingNumber,
   unpaddedVolumeNumbersInTitle,
+  volumeNumberFromPriceListing,
   volumeNumberFromTitle,
 } from "@/core/enrich/titles/volumeNumber";
 
@@ -25,8 +26,18 @@ describe("volumeNumberFromTitle", () => {
     ["Fullmetal Alchemist - Tome 17", "17"],
     ["Saga Part 3", "3"],
     ["Bleach Pt 74", "74"],
+    ["Super Picsou Géant n°100bis", "100bis"],
+    ["Super Picsou Géant n°100 Bis", "100bis"],
+    ["Picsou Magazine Numéro 65 bis", "65bis"],
+    ["Gaston Tome 5ter", "5ter"],
+    ["SUPER PICSOU GEANT 65 BIS - VRAI N° 1", "65bis"],
   ])("reads %s as volume %s", (title, expected) => {
     expect(volumeNumberFromTitle(title)).toBe(expected);
+  });
+
+  it("does not read an unrelated word after the number as a suffix", () => {
+    expect(volumeNumberFromTitle("Chapitre 3 Bison Ravi")).toBe("3");
+    expect(volumeNumberFromTitle("Tome 2 Terminus")).toBe("2");
   });
 
   it.each([
@@ -48,6 +59,32 @@ describe("explicitVolumeNumbers", () => {
   });
 });
 
+describe("volumeNumberFromPriceListing", () => {
+  it("matches a bare trailing issue to the item's marked volume", () => {
+    expect(
+      volumeNumberFromPriceListing(
+        "Super Picsou Géant n°081",
+        "Super Picsou Géant 81",
+      ),
+    ).toBe("81");
+    expect(
+      volumeNumberFromPriceListing(
+        "Super Picsou Géant n°062",
+        "PETIT FORMAT BD SUPER PICSOU GEANT 62 1994 disney",
+      ),
+    ).toBe("62");
+  });
+
+  it("does not invent a volume when the listing digit disagrees", () => {
+    expect(
+      volumeNumberFromPriceListing(
+        "Super Picsou Géant n°081",
+        "Super Picsou Géant 82",
+      ),
+    ).toBeNull();
+  });
+});
+
 describe("hasExplicitVolumeMarker", () => {
   it("detects marked volumes only", () => {
     expect(hasExplicitVolumeMarker("Naruto Tome 12")).toBe(true);
@@ -59,6 +96,15 @@ describe("stripVolumeMarkersFromTitle", () => {
   it("removes volume markers for series search", () => {
     expect(stripVolumeMarkersFromTitle("Naruto Tome 52")).toBe("naruto");
     expect(stripVolumeMarkersFromTitle("Death Note Vol. 1")).toBe("death note");
+  });
+
+  it("removes French suffixed issue markers (bis/ter)", () => {
+    expect(stripVolumeMarkersFromTitle("Super Picsou Géant n°100bis")).toBe(
+      "super picsou geant",
+    );
+    expect(stripVolumeMarkersFromTitle("Picsou Magazine Numéro 65 bis")).toBe(
+      "picsou magazine",
+    );
   });
 });
 
@@ -72,6 +118,7 @@ describe("stripVolumeMarkersKeepingNumber", () => {
     ["Naruto Tome 1", "Naruto 1"],
     ["One Piece Volume 01", "One Piece 1"],
     ["01", "1"],
+    ["Super Picsou Géant n°100bis", "Super Picsou Géant 100bis"],
   ])("collapses %s to %s", (input, expected) => {
     expect(stripVolumeMarkersKeepingNumber(input)).toBe(expected);
   });
@@ -99,6 +146,15 @@ describe("unpaddedVolumeNumbersInTitle", () => {
       "Astérix Numéro 38",
     );
   });
+
+  it("keeps French issue suffixes while removing zeros", () => {
+    expect(unpaddedVolumeNumbersInTitle("Super Picsou Géant n°0100bis")).toBe(
+      "Super Picsou Géant n°100bis",
+    );
+    expect(unpaddedVolumeNumbersInTitle("Picsou Numéro 065 Bis")).toBe(
+      "Picsou Numéro 65 Bis",
+    );
+  });
 });
 
 describe("padVolumeNumbersInTitle", () => {
@@ -115,6 +171,12 @@ describe("padVolumeNumbersInTitle", () => {
     );
     expect(padVolumeNumbersInTitle("Attack on Titan #5", 2)).toBe(
       "Attack on Titan #05",
+    );
+    expect(padVolumeNumbersInTitle("Super Picsou Géant n°100bis", 3)).toBe(
+      "Super Picsou Géant n°100bis",
+    );
+    expect(padVolumeNumbersInTitle("Picsou n°65bis", 3)).toBe(
+      "Picsou n°065bis",
     );
   });
 

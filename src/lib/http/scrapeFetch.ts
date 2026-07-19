@@ -2,6 +2,7 @@ import axios, { type AxiosRequestConfig } from "axios";
 
 import { isAbortError } from "@/lib/http/abort";
 import { flareSolverrRequestGet } from "@/lib/http/flareSolverr";
+import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
 
 export type ScrapeFetchResponse = {
   status: number;
@@ -100,6 +101,9 @@ export async function fetchGetWithFlareFallback(
     maxTimeoutMs: flareMaxTimeoutMs,
     signal,
   });
+  // Flare returns a large HTML string; yield before sync parse/return so
+  // interactive API routes can run on the shared Next event loop.
+  await yieldToEventLoop();
   if (
     flareBody != null &&
     !scrapeAccessBlocked(200, flareBody) &&

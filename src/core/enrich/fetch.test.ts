@@ -9,8 +9,10 @@ const defaultImplementation = async (
   id: string,
 ) => {
   if (ctx.name === "failing") return null;
+  // Use the requested title so providers with requiresTitleAlignment survive
+  // residual gates (provider-id prefixes are unexplained candidate identity).
   return {
-    title: `${id} - ${ctx.name}`,
+    title: ctx.name,
     description: `Description from ${id}`,
   } as MetadataResult;
 };
@@ -163,6 +165,7 @@ describe("fetchMetadataByType generic routing", () => {
           title: "Pokemon Yellow",
           platformKey: "gbc",
           description: "Wrong platform",
+          imageUrl: "https://img.example/pokemon-yellow-gbc.jpg",
         } as MetadataResult;
       }
       if (id === "pricecharting") {
@@ -170,6 +173,7 @@ describe("fetchMetadataByType generic routing", () => {
           title: "Pokemon Yellow",
           platformKey: "gb",
           imageUrl: "https://img.example/pokemon-yellow-gb.jpg",
+          description: "Correct Game Boy",
         } as MetadataResult;
       }
       return null;
@@ -182,8 +186,83 @@ describe("fetchMetadataByType generic routing", () => {
       "Nintendo Game Boy",
     );
 
-    expect(res?.description).toBeUndefined();
     expect(res?.imageUrl).toBe("https://img.example/pokemon-yellow-gb.jpg");
+    // pricecharting has no `description` capability — merge must not adopt
+    // marketplace prose from price-only providers.
+    expect(res?.description).not.toBe("Wrong platform");
+  });
+
+  it("n'adopte pas une jaquette SensCritique sans plateforme sur un shelf console", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "screenscraper") {
+        return {
+          title: "Schtroumpfs",
+          platformKey: "atari2600",
+          description: "Rescue in Gargamel's Castle",
+          imageUrl: "https://img.example/schtroumpfs-atari.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/schtroumpfs-atari.jpg",
+              source: "screenscraper",
+              platformKey: "atari2600",
+            },
+          ],
+        } as MetadataResult;
+      }
+      if (id === "senscritique") {
+        return {
+          title: "Les Schtroumpfs",
+          // Title-only hit: no platformKey (must not inherit Atari).
+          description: "SNES 1994",
+          imageUrl: "https://img.example/schtroumpfs-snes.png",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/schtroumpfs-snes.png",
+              source: "senscritique",
+            },
+          ],
+          facts: [
+            {
+              kind: "release-year",
+              label: "Année",
+              value: "1994",
+              source: "senscritique",
+            },
+          ],
+        } as MetadataResult;
+      }
+      if (id === "wikidata") {
+        return {
+          title: "Schtroumpfs Kart",
+          description: "Kart racing",
+          facts: [
+            {
+              kind: "genre",
+              label: "Genres",
+              value: "jeu de course de karting",
+              source: "wikidata",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    const res = await fetchMetadataByType(
+      "Schtroumpfs",
+      "games",
+      null,
+      "ATARI 2600",
+    );
+
+    expect(res?.imageUrl).toBe("https://img.example/schtroumpfs-atari.jpg");
+    expect(res?.description).toBe("Rescue in Gargamel's Castle");
+    expect(res?.facts?.some((f) => f.value === "1994") ?? false).toBe(false);
+    expect(
+      res?.facts?.some((f) => /karting/i.test(f.value ?? "")) ?? false,
+    ).toBe(false);
   });
 
   it("propagates externalIds from Stage 1 to Stage 2 and fallback resolvers", async () => {
@@ -218,12 +297,14 @@ describe("fetchMetadataByType generic routing", () => {
       if (id === "igdb") {
         return {
           title: "Assassin's Creed Valhalla l'Aube du Ragnarok",
+          platformKey: "ps4",
           imageUrl: "https://img.example/igdb-cover.jpg",
           attachments: [
             {
               type: "cover",
               url: "https://img.example/igdb-cover.jpg",
               source: "igdb",
+              platformKey: "ps4",
             },
           ],
         } as MetadataResult;
@@ -231,11 +312,13 @@ describe("fetchMetadataByType generic routing", () => {
       if (id === "chocobonplan") {
         return {
           title: "Assassin's Creed Valhalla DLC Aube du Ragnarok sur PS4",
+          platformKey: "ps4",
           attachments: [
             {
               type: "cover",
               url: "https://img.example/cbp-cover.png",
               source: "chocobonplan",
+              platformKey: "ps4",
             },
           ],
         } as MetadataResult;
@@ -365,15 +448,16 @@ describe("fetchMetadataByType generic routing", () => {
 
   it("still queries chocobonplan for books when stage 1 only has catalog covers", async () => {
     mockResolve.mockImplementation(async (_ctx, id) => {
-      if (id === "booknode") {
+      if (id === "openlibrary") {
         return {
           title: "L'Art et la Création de Arcane",
-          imageUrl: "https://cdn1.booknode.com/book_cover/5518/full.jpg",
+          description: "Artbook Arcane",
+          imageUrl: "https://covers.openlibrary.org/b/id/123-L.jpg",
           attachments: [
             {
               type: "cover",
-              url: "https://cdn1.booknode.com/book_cover/5518/full.jpg",
-              source: "booknode",
+              url: "https://covers.openlibrary.org/b/id/123-L.jpg",
+              source: "openlibrary",
             },
           ],
         } as MetadataResult;
@@ -474,5 +558,132 @@ describe("fetchMetadataByType generic routing", () => {
     );
     expect(ebayCalls.length).toBeLessThanOrEqual(1);
     expect(geedieCalls.length).toBeLessThanOrEqual(1);
+  });
+
+  it("invokes onApiPassComplete after the API pass before scrapes continue", async () => {
+    const apiPassTitles: string[] = [];
+    let scrapeStarted = false;
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "openlibrary") {
+        return {
+          title: "Wakfu Tome 3",
+          description: "Les mines de Lamororia",
+          imageUrl: "https://covers.openlibrary.org/b/id/1-L.jpg",
+        } as MetadataResult;
+      }
+      if (id === "booknode" || id === "bedetheque" || id === "bdovore") {
+        scrapeStarted = true;
+        expect(apiPassTitles).toEqual(["Wakfu Tome 3"]);
+        return {
+          title: `scrape-${id}`,
+          description: "from scrape",
+          imageUrl: "https://cdn.example/scrape.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://cdn.example/scrape.jpg",
+              source: id,
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    const res = await fetchMetadataByType(
+      "Wakfu Tome 3",
+      "books",
+      "9782331045678",
+      null,
+      {
+        isBackground: true,
+        onApiPassComplete: async (partial) => {
+          apiPassTitles.push(partial.title ?? "");
+        },
+      },
+    );
+
+    expect(apiPassTitles).toEqual(["Wakfu Tome 3"]);
+    expect(scrapeStarted).toBe(true);
+    expect(res?.title).toBe("Wakfu Tome 3");
+  });
+
+  it("passes rebuilt externalIds and fiche URLs so providers can refresh by pin", async () => {
+    mockResolve.mockImplementation(async (ctx, id) => {
+      if (id === "bdovore") {
+        expect(ctx.externalIds?.bdovore).toBe("51068");
+        expect(ctx.providerRecordUrls?.bdovore).toContain("id_tome=51068");
+        return {
+          title: "Wakfu Tome 3",
+          description: "from bdovore",
+          imageUrl: "https://www.bdovore.com/images/couv/CV-051068-050605.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://www.bdovore.com/images/couv/CV-051068-050605.jpg",
+              source: "bdovore",
+            },
+          ],
+          externalIds: { bdovore: "51068" },
+        } as MetadataResult;
+      }
+      if (id === "openlibrary") {
+        return {
+          title: "Wakfu Tome 3",
+          description: "Synopsis",
+          imageUrl: "https://covers.openlibrary.org/b/id/1-L.jpg",
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    await fetchMetadataByType("Wakfu Tome 3", "books", "9782331045678", null, {
+      isBackground: true,
+      existingExternalIds: { bdovore: "51068" },
+      existingProviderRecordUrls: {
+        bdovore: "https://www.bdovore.com/Album?id_tome=51068",
+      },
+      existingScrapeProviderIds: ["bdovore"],
+    });
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "bdovore"),
+    ).toBe(true);
+  });
+
+  it("still runs scrapes when existing scrape sources are attached to the fiche", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "openlibrary") {
+        return {
+          title: "Wakfu Tome 3",
+          description: "Synopsis",
+          imageUrl: "https://covers.openlibrary.org/b/id/1-L.jpg",
+        } as MetadataResult;
+      }
+      if (id === "bedetheque") {
+        return {
+          title: "Wakfu Tome 3",
+          description: "Synopsis Bedetheque",
+          imageUrl: "https://cdn.bedetheque.com/cover.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://cdn.bedetheque.com/cover.jpg",
+              source: "bedetheque",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    await fetchMetadataByType("Wakfu Tome 3", "books", "9782331045678", null, {
+      isBackground: true,
+      existingScrapeProviderIds: ["bedetheque"],
+    });
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "bedetheque"),
+    ).toBe(true);
   });
 });

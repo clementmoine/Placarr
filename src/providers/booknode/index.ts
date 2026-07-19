@@ -1,4 +1,10 @@
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
+import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import {
+  METADATA_OBSERVATION_SCHEMA_VERSION,
+  observationsFromMetadataResult,
+} from "@/core/enrich/observations";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { throwIfAborted } from "@/lib/http/abort";
 import { pricedOffers } from "@/core/catalog/priceOffers";
@@ -13,6 +19,7 @@ import type {
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
+import { matchBarcodes } from "@/core/catalog/matchContext";
 
 import { fetchBooknodeMetadata, getBooknodeSuggestions } from "./fetch";
 import type { BooknodePriceOffer } from "./fetch";
@@ -23,6 +30,7 @@ import {
   booknodeCoverMediaKey,
   normalizeBooknodeCoverUrl,
 } from "./coverUrl";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 export {
   fetchBooknodeMetadata,
@@ -117,7 +125,7 @@ async function refreshBooknodeOffers(ctx: BarcodePriceRefreshContext) {
 
   const queries = Array.from(
     new Set(
-      [ctx.primaryName, ...ctx.fallbackNames, ctx.cleanedBarcode].filter(
+      [ctx.primaryName, ...ctx.fallbackNames, ...matchBarcodes(ctx)].filter(
         (query) => query?.trim(),
       ),
     ),
@@ -151,35 +159,42 @@ async function refreshBooknodeOffers(ctx: BarcodePriceRefreshContext) {
   return [];
 }
 
+/**
+ * Fiche Booknode: only the featured cover (`imageUrl`) is a real `cover`
+ * (jaquette). Extra uploads from `/covers` are community alternates — keep
+ * them as `image` so the Affiche picker does not label every variant « Jaquette ».
+ */
 function buildBooknodeAttachments(
   book: NonNullable<Awaited<ReturnType<typeof fetchBooknodeMetadata>>>,
 ): MetadataAttachment[] | undefined {
   const attachments: MetadataAttachment[] = [];
   const seenMediaKeys = new Set<string>();
 
-  const pushCover = (url: string) => {
+  const push = (url: string, type: "cover" | "image") => {
     const normalized = normalizeBooknodeCoverUrl(url);
     if (!normalized) return;
     const mediaKey = booknodeCoverMediaKey(normalized) || normalized;
     if (seenMediaKeys.has(mediaKey)) return;
     seenMediaKeys.add(mediaKey);
     attachments.push({
-      type: "cover",
+      type,
       url: normalized,
-      role: "fr",
+      title: book.title,
+      ...(type === "cover" ? { role: "fr" as const } : {}),
       source: "booknode",
     });
   };
 
-  if (book.imageUrl) pushCover(book.imageUrl);
+  if (book.imageUrl) push(book.imageUrl, "cover");
   for (const url of book.coverImages ?? []) {
-    pushCover(url);
+    push(url, "image");
   }
 
   return attachments.length > 0 ? attachments : undefined;
 }
 
-function mapBooknodeMetadata(
+/** @internal exported for unit tests */
+export function mapBooknodeMetadata(
   book: Awaited<ReturnType<typeof fetchBooknodeMetadata>>,
 ): MetadataResult | null {
   if (!book?.title) return null;
@@ -255,19 +270,72 @@ function mapBooknodeMetadata(
       priority: 30,
     });
   }
+  if (book.seriesPosition != null) {
+    facts.push({
+      kind: "tag",
+      label: "Tome",
+      value: String(book.seriesPosition),
+      source: "booknode",
+      confidence: 0.6,
+      priority: 28,
+    });
+  }
+  if (book.barcode) {
+    facts.push({
+      kind: "identifier",
+      label: bookIdentifierLabel(book.barcode),
+      value: book.barcode,
+      source: "booknode",
+      confidence: 0.64,
+      priority: 40,
+    });
+  }
+  if (book.releaseDate) {
+    facts.push({
+      kind: "release-date",
+      label: "Parution",
+      value: book.releaseDate,
+      source: "booknode",
+      confidence: 0.58,
+      priority: 22,
+    });
+  }
 
   facts.push(...buildBooknodePriceFacts(book.priceOffers));
 
-  return {
+  const metadata: MetadataResult = {
     title: book.title,
     authors: book.authors?.map((name) => ({ name })),
     publishers: book.publisher ? [{ name: book.publisher }] : undefined,
     description: book.description,
+    releaseDate: book.releaseDate,
+    pageCount: book.pageCount,
     imageUrl: book.imageUrl,
+    barcode: book.barcode,
     regionalTitles: [{ region: "fr", text: book.title }],
     attachments: buildBooknodeAttachments(book),
     facts,
     externalIds: book.id ? { booknode: book.id } : undefined,
+  };
+
+  return {
+    ...metadata,
+    observations: observationsFromMetadataResult(metadata, {
+      providerId: "booknode",
+      providerLabel: "Booknode",
+      sourceDocumentRole: "reference_record",
+      sourceUrl: book.sourceUrl,
+      sourceId: book.id,
+      evidenceSignals: book.barcode
+        ? ["structured_data", "barcode_match"]
+        : ["structured_data", "title_match"],
+      titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
+      imageRole: "cover_front",
+      factRole: "structured_fact",
+      language: "fr",
+    }),
+    observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
 }
 
@@ -284,6 +352,8 @@ export const booknodeModule: ProviderModule = {
       "rating",
       "people",
       "price",
+      "releaseDate",
+      "pageCount",
     ],
     auth: { kind: "scrape" },
     canonical: false,
@@ -298,26 +368,46 @@ export const booknodeModule: ProviderModule = {
     requiresTitleAlignment: true,
     websiteUrl: "https://booknode.com/",
     notes:
-      "Fiches livres communautaires FR; couvertures localisées dans /uploads (fallback /mod11/ si /full/ bloque).",
+      "Fiches livres communautaires FR; seule la couverture de la fiche est typée `cover` (jaquette), les variantes `/covers` restent en `image`. Prefetch `/mod11/` webp puis upgrade async `/full/` JPEG dans `/uploads/`.",
   },
   evidence: {
     label: "Booknode",
     sourceWeight: 0.34,
     cleanCachedNames: true,
   },
+  parseMetadataRecordIdFromUrl(url) {
+    try {
+      const parsed = new URL(url);
+      if (!/booknode\.com$/i.test(parsed.hostname.replace(/^www\./i, ""))) {
+        return null;
+      }
+      return parsed.pathname.match(/(?:_|media\/)(\d+)(?:[/?#]|$)/)?.[1] ?? null;
+    } catch {
+      return null;
+    }
+  },
   createMetadataAdapter() {
     return {
       id: "booknode",
-      async resolve({ name, lookupQueries, signal }) {
+      async resolve(ctx) {
+        const pinnedUrl = pinnedProviderRecordUrl(ctx, "booknode");
+        if (pinnedUrl) {
+          throwIfAborted(ctx.signal);
+          const pinned = mapBooknodeMetadata(
+            await fetchBooknodeMetadata(pinnedUrl, ctx.signal),
+          );
+          if (pinned) return pinned;
+        }
+
         const queries =
-          lookupQueries && lookupQueries.length > 0
-            ? lookupQueries
-            : [String(name || "").trim()];
+          ctx.lookupQueries && ctx.lookupQueries.length > 0
+            ? ctx.lookupQueries
+            : [String(ctx.name || "").trim()];
         for (const query of queries) {
           if (!query?.trim()) continue;
-          throwIfAborted(signal);
+          throwIfAborted(ctx.signal);
           const metadata = mapBooknodeMetadata(
-            await fetchBooknodeMetadata(query.trim(), signal),
+            await fetchBooknodeMetadata(query.trim(), ctx.signal),
           );
           if (metadata) return metadata;
         }
@@ -360,5 +450,9 @@ export const booknodeModule: ProviderModule = {
     return collectBooknodeMappingRawKeys(ctx.name);
   },
   expandCoverDownloadCandidates: booknodeCoverDownloadCandidates,
+  localizeCoverDownload: async (url, options) => {
+    const { downloadBooknodeCoverImage } = await import("./coverDownload");
+    return downloadBooknodeCoverImage(url, options);
+  },
   refreshBarcodePriceOffers: refreshBooknodeOffers,
 };

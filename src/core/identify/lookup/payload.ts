@@ -1,9 +1,9 @@
 import type { NamedListing } from "@/core/identify/gameLookup";
 import type {
+  CollectorCatalogBarcodeHit,
   LeDenicheurPrices,
   PriceChartingMetadata,
 } from "@/core/identify/lookup/providerTypes";
-import type { ICollectMetadata } from "@/providers/icollect/fetch";
 import { scrapeCatalogRetailerLookupEntries } from "@/core/catalog/scrapeRetailers";
 import { detectPlatformKey } from "@/core/identify/query";
 import type { MediaType } from "@/types/providerRegistry";
@@ -54,7 +54,7 @@ export type BarcodeLookupPayload = {
   freakxy: NamedListing[];
   ebay: NamedListing[];
   leDenicheur: LeDenicheurPrices | null;
-  ice: ICollectMetadata | null;
+  ice: CollectorCatalogBarcodeHit | null;
 };
 
 export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
@@ -174,21 +174,26 @@ export function asLeDenicheurHit(value: unknown): LeDenicheurPrices | null {
   return value as LeDenicheurPrices;
 }
 
-export function asICollectHit(value: unknown): ICollectMetadata | null {
+export function asICollectHit(
+  value: unknown,
+): CollectorCatalogBarcodeHit | null {
   if (!value || typeof value !== "object") return null;
-  const hit = value as ICollectMetadata;
+  const hit = value as CollectorCatalogBarcodeHit;
   return typeof hit.title === "string" && hit.title.trim() ? hit : null;
 }
 
-/** Drop cross-generation iCollect hits; keep a title hint for PC fallback. */
+/** Drop cross-generation collector hits; keep a title hint for PC fallback. */
 export function catalogIceBarcodeHit(
-  hit: ICollectMetadata | null,
+  hit: CollectorCatalogBarcodeHit | null,
   contextPlatformKey: string | null,
-): { ice: ICollectMetadata | null; catalogTitleHint: string | null } {
+): {
+  ice: CollectorCatalogBarcodeHit | null;
+  catalogTitleHint: string | null;
+} {
   if (!hit?.title) return { ice: null, catalogTitleHint: null };
 
   const catalogPlatformKey = hit.platform
-    ? detectPlatformKey(hit.platform)
+    ? detectPlatformKey(String(hit.platform))
     : null;
   const platformConflict =
     contextPlatformKey &&

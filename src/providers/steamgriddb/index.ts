@@ -25,6 +25,7 @@ export const steamgriddbModule: ProviderModule = {
     authoritative3dCoverRole: true,
     gridStyleCoverLabels: true,
     requiresTitleAlignment: true,
+    platformAgnosticMetadata: true,
     websiteUrl: "https://www.steamgriddb.com/",
     notes: "Artworks communautaires ; grille verticale = format boîte.",
   },

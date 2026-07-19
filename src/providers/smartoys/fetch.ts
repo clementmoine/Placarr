@@ -200,7 +200,7 @@ async function fetchSmartoysByName(
   });
 
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
-  for (const productUrl of parseSmartoysSearchUrls(res.data)) {
+  for (const productUrl of parseSmartoysSearchUrls(String(res.data ?? ""))) {
     const result = await fetchSmartoysProductPage(productUrl, names);
     if (result) return result;
   }

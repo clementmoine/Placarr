@@ -1,12 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import {
+  PROVIDER_RESOLVE_TIMEOUT_INTERACTIVE_MS,
   resetMetadataProviderQueuesForTests,
   resolveMetadataProvidersInOrder,
   runQueuedMetadataProviderCall,
+  STAGE_RESOLVE_CONCURRENCY_BACKGROUND,
 } from "@/core/enrich/providerQueue";
+import { resetProviderRuntimeStatsForTests } from "@/core/enrich/providerRuntimeStats";
 
 describe("metadataProviderQueue", () => {
+  beforeEach(() => {
+    resetMetadataProviderQueuesForTests();
+    resetProviderRuntimeStatsForTests();
+  });
   it("serializes calls for the same provider", async () => {
     resetMetadataProviderQueuesForTests();
     const order: number[] = [];
@@ -124,5 +131,111 @@ describe("metadataProviderQueue", () => {
     expect(started).toEqual(["slow", "fast"]);
     expect(Array.from(byProvider.keys())).toEqual(["slow", "fast"]);
     expect(byProvider.get("fast")?.title).toBe("fast");
+  });
+
+  it("caps background stage fan-out so scrapes do not all start at once", async () => {
+    let active = 0;
+    let peak = 0;
+    const adapters = new Map(
+      ["a", "b", "c", "d", "e", "f"].map((id) => [
+        id,
+        {
+          id,
+          resolve: async () => {
+            active++;
+            peak = Math.max(peak, active);
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            active--;
+            return { title: id };
+          },
+        },
+      ]),
+    );
+
+    await resolveMetadataProvidersInOrder(
+      ["a", "b", "c", "d", "e", "f"],
+      { name: "Test", isBackground: true },
+      adapters,
+    );
+
+    expect(peak).toBeLessThanOrEqual(STAGE_RESOLVE_CONCURRENCY_BACKGROUND);
+  });
+
+  it("returns null when a provider exceeds the soft timeout without aborting the stage", async () => {
+    vi.useFakeTimers();
+    try {
+      const adapters = new Map([
+        [
+          "slow",
+          {
+            id: "slow",
+            resolve: async (ctx: { signal?: AbortSignal }) => {
+              await new Promise<void>((_resolve, reject) => {
+                ctx.signal?.addEventListener(
+                  "abort",
+                  () => {
+                    reject(new DOMException("Aborted", "AbortError"));
+                  },
+                  { once: true },
+                );
+              });
+              return { title: "slow" };
+            },
+          },
+        ],
+        [
+          "fast",
+          {
+            id: "fast",
+            resolve: async () => ({ title: "fast" }),
+          },
+        ],
+      ]);
+
+      // Interactive path avoids setImmediate yields that fake timers do not flush.
+      const pending = resolveMetadataProvidersInOrder(
+        ["slow", "fast"],
+        { name: "Test", isBackground: false },
+        adapters,
+      );
+      await vi.advanceTimersByTimeAsync(PROVIDER_RESOLVE_TIMEOUT_INTERACTIVE_MS);
+      const byProvider = await pending;
+      expect(byProvider.get("slow")).toBeNull();
+      expect(byProvider.get("fast")?.title).toBe("fast");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("invokes onProviderResult as each provider finishes without skipping the rest", async () => {
+    resetMetadataProviderQueuesForTests();
+    const seen: string[] = [];
+    const adapters = new Map(
+      ["a", "b", "c"].map((id) => [
+        id,
+        {
+          id,
+          resolve: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            return { title: id };
+          },
+        },
+      ]),
+    );
+
+    const byProvider = await resolveMetadataProvidersInOrder(
+      ["a", "b", "c"],
+      { name: "Test", isBackground: false },
+      adapters,
+      {
+        onProviderResult: ({ providerId, result }) => {
+          seen.push(providerId);
+          expect(result?.title).toBe(providerId);
+        },
+      },
+    );
+
+    expect(seen.sort()).toEqual(["a", "b", "c"]);
+    expect(Array.from(byProvider.keys())).toEqual(["a", "b", "c"]);
   });
 });

@@ -4,6 +4,10 @@ export interface PriceChartingPrices {
   priceUsed?: number;
   priceUsedCIB?: number;
   priceNew?: number;
+  /** Verified `/game/…` detail URL when the scrape landed on a real page. */
+  sourceUrl?: string;
+  /** Catalog title from the detail page (or URL slug) for offer alignment. */
+  productName?: string;
 }
 
 export interface PriceChartingMetadata {
@@ -14,6 +18,8 @@ export interface PriceChartingMetadata {
   images?: PriceChartingImage[];
   ageRating?: string;
   barcode?: string;
+  /** Verified PriceCharting `/game/…` URL for this product. */
+  url?: string;
   /** Parsed from the same detail page as metadata (single network call). */
   prices?: PriceChartingPrices;
 }
@@ -34,4 +40,14 @@ export interface LeDenicheurPrices {
   offerCount?: number;
   coverUrl?: string | null;
   matchedQuery?: string;
+}
+
+/**
+ * Collector-catalog barcode hit (structural). Provider modules may use a richer
+ * typed shape; lookup assembly only needs title + optional platform.
+ */
+export interface CollectorCatalogBarcodeHit {
+  title: string;
+  platform?: string | null;
+  [key: string]: unknown;
 }

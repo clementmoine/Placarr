@@ -217,9 +217,21 @@ export interface ProviderInfo {
    */
   retailCatalogImageTitles?: boolean;
   /**
+   * Catalog/database cover images carry the resolved product title (not a
+   * generic box-face role label). Used to filter mismatched gallery rows.
+   */
+  catalogCoverTitles?: boolean;
+  /**
    * Cover platform must match the shelf — detected from URL/title, not just role.
    */
   strictShelfPlatformCover?: boolean;
+  /**
+   * Game metadata may omit `platformKey` on a platform shelf (community art /
+   * grids). Without this trait, unstamped hits are rejected when the shelf has
+   * a resolved platform — stops title-only providers from masquerading as the
+   * shelf console.
+   */
+  platformAgnosticMetadata?: boolean;
   /** Provider-declared 3D box roles are authoritative (never demoted). */
   authoritative3dCoverRole?: boolean;
   /** Grid-style cover labels include a style token in attachment title. */

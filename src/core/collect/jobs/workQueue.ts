@@ -49,7 +49,8 @@ export function resolveWorkerKinds(
     .split(",")
     .map((part) => part.trim())
     .filter((part): part is BackgroundWorkKind => KNOWN_WORKER_KINDS.has(part));
-  return kinds.length > 0 ? kinds : null;
+  // Unknown alias (e.g. stale `icollect`) must not silently mean "all kinds".
+  return kinds;
 }
 
 export const BACKGROUND_WORK_STATUS = {
@@ -228,6 +229,10 @@ export async function claimNextBackgroundWorkJob(
   workerId = randomUUID(),
   kinds: readonly BackgroundWorkKind[] | null = null,
 ): Promise<BackgroundWorkJobRow | null> {
+  // Empty array = misconfigured pool (never claim). null = all kinds.
+  if (kinds && kinds.length === 0) {
+    return null;
+  }
   const kindsFilter =
     kinds && kinds.length > 0
       ? Prisma.sql`AND candidate."kind" IN (${Prisma.join(kinds)})`

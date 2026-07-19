@@ -10,7 +10,7 @@
     "dev:docker": "docker compose -f compose.dev.yml up",
     "dev:docker:down": "docker compose -f compose.dev.yml down",
     "worker": "WORKER_CONCURRENCY=4 tsx scripts/backgroundWorker.ts",
-    "worker:icollect": "WORKER_KINDS=icollect WORKER_CONCURRENCY=1 tsx scripts/backgroundWorker.ts",
+    "worker:icollect": "WORKER_KINDS=catalog WORKER_CONCURRENCY=1 tsx scripts/backgroundWorker.ts",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",

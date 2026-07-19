@@ -144,6 +144,7 @@ describe("workQueue", () => {
     ]);
     expect(resolveWorkerKinds("all")).toBeNull();
     expect(resolveWorkerKinds(undefined)).toBeNull();
+    expect(resolveWorkerKinds("icollect")).toEqual([]);
   });
 
   it("reports active jobs for orphan reconcile", async () => {

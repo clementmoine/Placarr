@@ -124,6 +124,13 @@ async function runSlot(slot: number): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if (claimKinds && claimKinds.length === 0) {
+    console.error(
+      `[Worker ${WORKER_ID}] WORKER_KINDS matched no known kinds — refusing to start (use interactive, catalog, all, or kind ids)`,
+    );
+    process.exit(1);
+  }
+
   const concurrency = resolveConcurrency();
   const kindsLabel = claimKinds?.join(",") ?? "all";
   console.info(

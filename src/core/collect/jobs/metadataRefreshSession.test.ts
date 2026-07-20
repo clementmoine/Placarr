@@ -113,7 +113,7 @@ describe("metadataRefreshSession", () => {
       ).toBe(false);
     });
 
-    it("keeps active sessions until the hard max duration", async () => {
+    it("keeps active sessions (spinner) without stamp-age cancel", async () => {
       mockedUpdate.mockResolvedValueOnce({
         metadataRefreshGeneration: 7,
       } as never);
@@ -128,10 +128,10 @@ describe("metadataRefreshSession", () => {
       const atMax = startedAt.getTime() + METADATA_REFRESH_MAX_MS;
       expect(
         shouldReconcileMetadataRefreshFlag("active-1", startedAt, atMax),
-      ).toBe(true);
+      ).toBe(false);
     });
 
-    it("keeps worker-owned jobs until the hard max duration", () => {
+    it("keeps worker-owned jobs past the old 15m stamp max (mass refresh queue)", () => {
       const beforeMax =
         startedAt.getTime() + METADATA_REFRESH_ORPHAN_GRACE_MS + 60_000;
       expect(
@@ -146,10 +146,10 @@ describe("metadataRefreshSession", () => {
       const atMax = startedAt.getTime() + METADATA_REFRESH_MAX_MS;
       expect(
         shouldReconcileMetadataRefreshFlag("worker-1", startedAt, atMax, true),
-      ).toBe(true);
+      ).toBe(false);
     });
 
-    it("clears orphan flags from the database", async () => {
+    it("clears orphan flags from the database without cancelling jobs", async () => {
       vi.useFakeTimers();
       vi.setSystemTime(
         startedAt.getTime() + METADATA_REFRESH_ORPHAN_GRACE_MS + 1_000,
@@ -158,7 +158,7 @@ describe("metadataRefreshSession", () => {
       const cleared = await reconcileMetadataRefreshFlag("orphan-2", startedAt);
 
       expect(cleared).toBe(true);
-      expect(mockedCancelJobs).toHaveBeenCalledWith("orphan-2");
+      expect(mockedCancelJobs).not.toHaveBeenCalled();
       expect(mockedUpdateMany).toHaveBeenCalledWith({
         where: { id: "orphan-2", metadataRefreshStartedAt: startedAt },
         data: { metadataRefreshStartedAt: null },

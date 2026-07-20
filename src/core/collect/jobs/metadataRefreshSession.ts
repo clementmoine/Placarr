@@ -155,7 +155,12 @@ function metadataRefreshElapsedMs(
 
 /**
  * True when a persisted refresh flag should be cleared by the orphan guard.
- * Pass `hasActiveWork` when the out-of-process worker owns the item (DB job).
+ * Pass `hasActiveWork` when a local session or out-of-process worker owns the item.
+ *
+ * Open DB jobs (pending/running) must NOT be cancelled from stamp age: mass
+ * refresh stamps every item at enqueue time, so a 15‑minute max would wipe the
+ * whole queue while most items are still waiting. Stale *running* jobs are
+ * recovered by `recoverStaleRunningBackgroundWorkJobs` on the worker.
  */
 export function shouldReconcileMetadataRefreshFlag(
   itemId: string,
@@ -168,7 +173,7 @@ export function shouldReconcileMetadataRefreshFlag(
   if (elapsedMs === null) return false;
 
   if (hasActiveWork) {
-    return elapsedMs >= METADATA_REFRESH_MAX_MS;
+    return false;
   }
   return elapsedMs >= METADATA_REFRESH_ORPHAN_GRACE_MS;
 }
@@ -185,8 +190,8 @@ async function clearPersistedMetadataRefreshFlag(
 }
 
 /**
- * Clears zombie refresh flags: DB says in-flight but no worker owns the item,
- * or a worker exceeded the hard max duration.
+ * Clears zombie refresh flags: DB says in-flight but no worker owns the item.
+ * Does not cancel open BackgroundWorkJob rows — those are owned by the worker.
  */
 export async function reconcileMetadataRefreshFlag(
   itemId: string,
@@ -215,9 +220,7 @@ export async function reconcileMetadataRefreshFlag(
     cancelItemMetadataRefresh(itemId);
   }
 
-  // Max-duration / orphan: drop DB jobs so the worker cannot "complete" a no-op.
-  await cancelBackgroundWorkJobsForItem(itemId);
-
+  // Orphan stamp only (no open job). Do not cancel queue jobs here.
   const cleared = await clearPersistedMetadataRefreshFlag(itemId, started);
   if (cleared) {
     console.warn("[MetadataRefresh] Reconciled stale refresh flag", {
@@ -225,7 +228,7 @@ export async function reconcileMetadataRefreshFlag(
       elapsedMs,
       hadActiveSession,
       hasActiveWork,
-      reason: hasActiveWork ? "max-duration" : "orphan",
+      reason: "orphan",
     });
   }
   return cleared;

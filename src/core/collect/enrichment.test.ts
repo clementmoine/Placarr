@@ -44,7 +44,7 @@ describe("isItemMetadataRefreshing", () => {
     ).toBe(true);
   });
 
-  it("returns false once the refresh window expires", () => {
+  it("returns true while the refresh stamp is set, even past 15 minutes", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-27T12:00:00.000Z"));
     const startedAt = new Date(
@@ -52,6 +52,12 @@ describe("isItemMetadataRefreshing", () => {
     ).toISOString();
     expect(
       isItemMetadataRefreshing({ metadataRefreshStartedAt: startedAt }),
+    ).toBe(true);
+  });
+
+  it("returns false when the stamp is cleared", () => {
+    expect(
+      isItemMetadataRefreshing({ metadataRefreshStartedAt: null }),
     ).toBe(false);
   });
 });

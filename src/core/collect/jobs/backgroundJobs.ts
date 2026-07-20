@@ -3,7 +3,6 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import {
   ITEM_ENRICH_WINDOW_MS,
-  METADATA_REFRESH_MAX_MS,
 } from "@/core/collect/enrichment";
 import {
   cancelAndClearItemMetadataRefresh,
@@ -58,13 +57,13 @@ type BackgroundJobDbRow = Prisma.ItemGetPayload<{
 }>;
 
 function activeBackgroundJobsWhere(userId: string): Prisma.ItemWhereInput {
-  const refreshCutoff = new Date(Date.now() - METADATA_REFRESH_MAX_MS);
   const enrichCutoff = new Date(Date.now() - ITEM_ENRICH_WINDOW_MS);
 
   return {
     userId,
     OR: [
-      { metadataRefreshStartedAt: { gte: refreshCutoff } },
+      // Stamp stays set for the whole queue wait — no 15m cutoff (mass refresh).
+      { metadataRefreshStartedAt: { not: null } },
       {
         metadataId: null,
         metadataRefreshStartedAt: null,

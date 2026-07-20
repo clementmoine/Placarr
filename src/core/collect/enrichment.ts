@@ -8,7 +8,7 @@
  */
 export const ITEM_ENRICH_WINDOW_MS = 3 * 60 * 1000;
 
-/** Max time we keep showing a manual metadata refresh as in-flight. */
+/** Max time UI may treat a refresh stamp as live when no worker job backs it. */
 export const METADATA_REFRESH_MAX_MS = 15 * 60 * 1000;
 
 /**
@@ -20,8 +20,8 @@ export const METADATA_REFRESH_ORPHAN_GRACE_MS = 2 * 60 * 1000;
 /**
  * How long the client may keep an optimistic refresh stamp when a concurrent
  * GET still returns null (API/worker not persisted yet). Must stay short — using
- * {@link METADATA_REFRESH_MAX_MS} would leave “Récupération” stuck after the job
- * actually finished and cleared the DB flag.
+ * a long window would leave “Récupération” stuck after the job actually finished
+ * and cleared the DB flag.
  */
 export const METADATA_REFRESH_STAMP_PRESERVE_MS = 10_000;
 
@@ -42,13 +42,17 @@ export function isItemEnriching(
   return Date.now() - created < ITEM_ENRICH_WINDOW_MS;
 }
 
+/**
+ * Manual refresh is in-flight while the persisted stamp is set.
+ * The API/worker clear the stamp on completion; orphan reconcile clears zombies
+ * with no open job. Do not time-box here — mass refresh queues outlive 15 min.
+ */
 export function isItemMetadataRefreshing(
   item: ItemEnrichmentFields | null | undefined,
 ): boolean {
   if (!item?.metadataRefreshStartedAt) return false;
   const started = new Date(item.metadataRefreshStartedAt).getTime();
-  if (Number.isNaN(started)) return false;
-  return Date.now() - started < METADATA_REFRESH_MAX_MS;
+  return !Number.isNaN(started);
 }
 
 /** True while metadata is being fetched (initial enrich or manual refresh). */

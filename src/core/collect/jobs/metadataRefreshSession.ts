@@ -1,8 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import {
-  METADATA_REFRESH_MAX_MS,
-  METADATA_REFRESH_ORPHAN_GRACE_MS,
-} from "@/core/collect/enrichment";
+import { METADATA_REFRESH_ORPHAN_GRACE_MS } from "@/core/collect/enrichment";
 import { hasActiveBackgroundWorkJobForItem, cancelBackgroundWorkJobsForItem } from "@/core/collect/jobs/workQueue";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 
@@ -133,7 +130,13 @@ export async function finishItemMetadataRefresh(
   });
 
   if (cleared.count === 0 && !activeSessions.has(itemId)) {
-    const refreshCutoff = new Date(Date.now() - METADATA_REFRESH_MAX_MS);
+    // Generation mismatch (superseded). Never clear a stamp that still has an
+    // open worker job — that would make adopt() fail for mass-refresh queues.
+    if (await hasActiveBackgroundWorkJobForItem(itemId)) return;
+
+    const refreshCutoff = new Date(
+      Date.now() - METADATA_REFRESH_ORPHAN_GRACE_MS,
+    );
     await prisma.item.updateMany({
       where: {
         id: itemId,

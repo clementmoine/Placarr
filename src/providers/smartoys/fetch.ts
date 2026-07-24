@@ -5,6 +5,10 @@ import {
   NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY,
 } from "@/core/commerce/retailer/titleMatch";
 import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+import {
+  promoteSmartoysSearchEvidence,
+  readSmartoysSearchEvidence,
+} from "./durableEvidence";
 
 /**
  * Smartoys (https://www.smartoys.be) is a Belgian retro-gaming retailer whose
@@ -260,6 +264,29 @@ export function pickBestSmartoysSearchHit(
   return null;
 }
 
+async function loadSmartoysSearchHits(
+  searchUrl: string,
+): Promise<SmartoysSearchHit[]> {
+  const fromEvidence = await readSmartoysSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Smartoys] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const res = await fetchGetWithFlareFallback(searchUrl, {
+    headers: {
+      "User-Agent": SMARTOYS_USER_AGENT,
+      "Accept-Language": "fr-BE,fr;q=0.9",
+    },
+    timeout: SMARTOYS_TIMEOUT_MS,
+    responseType: "text",
+  });
+
+  const hits = parseSmartoysSearchHits(String(res.data ?? ""));
+  await promoteSmartoysSearchEvidence(searchUrl, hits);
+  return hits;
+}
+
 async function fetchSmartoysByName(
   query: string,
   expectedNames: string[],
@@ -271,18 +298,9 @@ async function fetchSmartoysByName(
   const searchUrl = `${SMARTOYS_BASE}/catalog/advanced_search_result.php?keywords=${encodeURIComponent(cleanedQuery)}`;
   console.info(`[Smartoys] Querying search: ${cleanedQuery}`);
 
-  const res = await fetchGetWithFlareFallback(searchUrl, {
-    headers: {
-      "User-Agent": SMARTOYS_USER_AGENT,
-      "Accept-Language": "fr-BE,fr;q=0.9",
-    },
-    timeout: SMARTOYS_TIMEOUT_MS,
-    responseType: "text",
-  });
-
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   const best = pickBestSmartoysSearchHit(
-    parseSmartoysSearchHits(String(res.data ?? "")),
+    await loadSmartoysSearchHits(searchUrl),
     names,
   );
   if (!best) return null;

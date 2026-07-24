@@ -1,6 +1,23 @@
 import axios from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const readBooknodeSearchEvidence = vi.fn();
+const promoteBooknodeSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readBooknodeSearchEvidence: (...args: unknown[]) =>
+    readBooknodeSearchEvidence(...args),
+  promoteBooknodeSearchEvidence: (...args: unknown[]) =>
+    promoteBooknodeSearchEvidence(...args),
+}));
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+}));
+
 import {
   fetchBooknodeMetadata,
   parseBooknodeBookPage,
@@ -10,13 +27,6 @@ import {
   pickBestBooknodeSearchCandidate,
 } from "./fetch";
 
-vi.mock("axios", () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-  },
-}));
-
 const mockedGet = vi.mocked(axios.get);
 const mockedPost = vi.mocked(axios.post);
 const ORIGINAL_FLARESOLVERR_URL = process.env.FLARESOLVERR_URL;
@@ -25,6 +35,10 @@ describe("Booknode provider", () => {
   beforeEach(() => {
     mockedGet.mockReset();
     mockedPost.mockReset();
+    readBooknodeSearchEvidence.mockReset();
+    promoteBooknodeSearchEvidence.mockReset();
+    readBooknodeSearchEvidence.mockResolvedValue(null);
+    promoteBooknodeSearchEvidence.mockResolvedValue(undefined);
     delete process.env.FLARESOLVERR_URL;
   });
 
@@ -253,6 +267,76 @@ describe("Booknode provider", () => {
         "Tintin au Tibet",
       )?.url,
     ).toContain("tintin_au_tibet");
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans GET search", async () => {
+    readBooknodeSearchEvidence.mockResolvedValue([
+      {
+        title: "Tintin au Tibet",
+        url: "https://booknode.com/tintin_au_tibet_222",
+      },
+    ]);
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url.includes("/search?")) {
+        throw new Error(`Should not fetch search: ${url}`);
+      }
+      if (url.includes("/covers")) {
+        return { status: 200, data: "" };
+      }
+      if (url.includes("tintin_au_tibet")) {
+        return {
+          status: 200,
+          data: bookHtml({
+            title: "Tintin au Tibet",
+            image:
+              "https://cdn1.booknode.com/book_cover/1/full/tintin-au-tibet.jpg",
+          }),
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    const book = await fetchBooknodeMetadata("Tintin au Tibet");
+    expect(book?.title).toBe("Tintin au Tibet");
+    expect(promoteBooknodeSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url.includes("/search?")) {
+        return {
+          status: 200,
+          data: `
+            [Tintin au Tibet](https://booknode.com/tintin_au_tibet_222)
+          `,
+        };
+      }
+      if (url.includes("/covers")) {
+        return { status: 200, data: "" };
+      }
+      if (url.includes("tintin_au_tibet")) {
+        return {
+          status: 200,
+          data: bookHtml({
+            title: "Tintin au Tibet",
+            image:
+              "https://cdn1.booknode.com/book_cover/1/full/tintin-au-tibet.jpg",
+          }),
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    await fetchBooknodeMetadata("Tintin au Tibet");
+    expect(promoteBooknodeSearchEvidence).toHaveBeenCalledWith(
+      "https://booknode.com/search?q=Tintin%20au%20Tibet",
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "Tintin au Tibet",
+          url: "https://booknode.com/tintin_au_tibet_222",
+        }),
+      ]),
+    );
   });
 
   it("utilise FlareSolverr quand Booknode bloque l'acces direct", async () => {

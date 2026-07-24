@@ -18,6 +18,10 @@ import {
   mergeMappingSignalSets,
 } from "@/lib/dev/scrapeMappingSignals";
 import { booknodeCoverMediaKey, normalizeBooknodeCoverUrl } from "./coverUrl";
+import {
+  promoteBooknodeSearchEvidence,
+  readBooknodeSearchEvidence,
+} from "./durableEvidence";
 
 export interface BooknodeBook {
   id?: string;
@@ -89,6 +93,27 @@ const BOOKNODE_HEADERS = {
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
 };
+
+/**
+ * SearchYield: durable candidates first, else GET + parse + promote.
+ */
+async function loadBooknodeSearchCandidates(
+  searchUrl: string,
+  signal?: AbortSignal,
+): Promise<BooknodeSearchCandidate[]> {
+  const fromEvidence = await readBooknodeSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Booknode] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const searchHtml = await fetchBooknodePage(searchUrl, signal);
+  if (!searchHtml) return [];
+
+  const candidates = parseBooknodeSearchCandidates(searchHtml);
+  await promoteBooknodeSearchEvidence(searchUrl, candidates);
+  return candidates;
+}
 
 function cleanText(value?: string | null): string | undefined {
   const text = decodeHTMLEntities(String(value || ""))
@@ -743,16 +768,11 @@ export async function fetchBooknodeMetadata(
 
   for (const searchQuery of buildSearchQueries(trimmedQuery)) {
     throwIfAborted(signal);
-    const searchHtml = await fetchBooknodePage(
-      searchUrlFor(searchQuery),
-      signal,
-    );
-    if (!searchHtml) continue;
+    const searchUrl = searchUrlFor(searchQuery);
+    const candidates = await loadBooknodeSearchCandidates(searchUrl, signal);
+    if (candidates.length === 0) continue;
 
-    const best = pickBestBooknodeSearchCandidate(
-      parseBooknodeSearchCandidates(searchHtml),
-      trimmedQuery,
-    );
+    const best = pickBestBooknodeSearchCandidate(candidates, trimmedQuery);
     if (!best) continue;
 
     for (const url of booknodePageUrlAlternates(best.url)) {
@@ -782,10 +802,12 @@ export async function getBooknodeSuggestions(name: string): Promise<string[]> {
   const seen = new Set<string>();
 
   for (const searchQuery of buildSearchQueries(trimmedQuery)) {
-    const searchHtml = await fetchBooknodePage(searchUrlFor(searchQuery));
-    if (!searchHtml) continue;
+    const candidates = await loadBooknodeSearchCandidates(
+      searchUrlFor(searchQuery),
+    );
+    if (candidates.length === 0) continue;
 
-    for (const candidate of parseBooknodeSearchCandidates(searchHtml).slice(
+    for (const candidate of candidates.slice(
       0,
       5,
     )) {
@@ -814,10 +836,8 @@ export async function collectBooknodeMappingRawKeys(
   if (isBooknodeBookUrl(trimmed)) {
     urls = booknodePageUrlAlternates(trimmed);
   } else {
-    const searchHtml = await fetchBooknodePage(searchUrlFor(trimmed));
-    const candidate = searchHtml
-      ? parseBooknodeSearchCandidates(searchHtml)[0]?.url
-      : undefined;
+    const candidates = await loadBooknodeSearchCandidates(searchUrlFor(trimmed));
+    const candidate = candidates[0]?.url;
     if (candidate) urls = booknodePageUrlAlternates(candidate);
   }
 

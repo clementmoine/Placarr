@@ -1,6 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readSmartoysSearchEvidence = vi.fn();
+const promoteSmartoysSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readSmartoysSearchEvidence: (...args: unknown[]) =>
+    readSmartoysSearchEvidence(...args),
+  promoteSmartoysSearchEvidence: (...args: unknown[]) =>
+    promoteSmartoysSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import {
@@ -45,6 +56,10 @@ const WRONG_PRODUCT_HTML = `
 
 beforeEach(() => {
   mockedGet.mockReset();
+  readSmartoysSearchEvidence.mockReset();
+  promoteSmartoysSearchEvidence.mockReset();
+  readSmartoysSearchEvidence.mockResolvedValue(null);
+  promoteSmartoysSearchEvidence.mockResolvedValue(undefined);
 });
 
 describe("parseSmartoysSearchHits", () => {
@@ -152,5 +167,59 @@ describe("fetchPricesFromSmartoys", () => {
 
     expect(mockedGet).toHaveBeenCalledTimes(2);
     expect(String(mockedGet.mock.calls[1]?.[0])).toContain("-p-0711719405191.html");
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP search", async () => {
+    readSmartoysSearchEvidence.mockResolvedValueOnce([
+      {
+        url: "https://www.smartoys.be/catalog/jeux-video-tlou-p-0711719405191.html",
+        title: "The Last of Us Part I PS5",
+      },
+    ]);
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: PRODUCT_HTML,
+    } as never);
+
+    await expect(
+      fetchPricesFromSmartoys("The Last of Us Part I", [
+        "The Last of Us Part I",
+      ]),
+    ).resolves.toMatchObject({
+      priceNew: 2999,
+      productName: "The Last of Us Part I PS5",
+    });
+
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+    expect(String(mockedGet.mock.calls[0]?.[0])).toContain("-p-0711719405191.html");
+    expect(promoteSmartoysSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `
+          <a href="https://www.smartoys.be/catalog/jeux-video-tlou-p-0711719405191.html">The Last of Us Part I PS5</a>
+        `,
+      } as never)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: PRODUCT_HTML,
+      } as never);
+
+    await fetchPricesFromSmartoys("The Last of Us Part I", [
+      "The Last of Us Part I",
+    ]);
+
+    expect(promoteSmartoysSearchEvidence).toHaveBeenCalledWith(
+      "https://www.smartoys.be/catalog/advanced_search_result.php?keywords=The%20Last%20of%20Us%20Part%20I",
+      [
+        {
+          url: "https://www.smartoys.be/catalog/jeux-video-tlou-p-0711719405191.html",
+          title: "The Last of Us Part I PS5",
+        },
+      ],
+    );
   });
 });

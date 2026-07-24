@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2q shipped (AMC + Back Market SearchYield durable); corpora = next.
+> Phase 1–2r shipped (Booknode + Smartoys SearchYield durable); Chasse / corpora = next.
 
 ## Principle
 
@@ -153,9 +153,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Back Market: `loadBackMarketSearchHits` reuses typed cards Next↔worker; process HTML cache still covers same-job meta/price
 - Typed yield only (no raw HTML in evidence)
 
+## Phase 2r — Booknode + Smartoys SearchYield durable (done 2026-07-24)
+
+- Booknode: `loadBooknodeSearchCandidates` promote/reuse `{title,url}` for `/search?q=`
+- Smartoys: `loadSmartoysSearchHits` promote/reuse `{url,title}` for `keywords=`
+- Detail GET still only for the locally ranked winner
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Local full-set / dump sync | Closed platforms at home latency |
-| Other Flare peers → durable SearchYield | Same promote pattern (Booknode, Chasse, Smartoys, …) |
+| Chasse (+ `query` identity param) → durable SearchYield | REST search payloads; needs `query` in evidence keys |
+| Remaining Flare peers | Same promote pattern as needed |

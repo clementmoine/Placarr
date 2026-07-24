@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-24** (base clean — résidus optionnels seulement).
+> Dernière vérification : **2026-07-24** (base clean — AUDIO-1/GS1 différé ; résidu optionnel = server dump hashing).
 > Index docs : [README.md](README.md).
 
 ## Ouverts — base clean (2026-07-24)
@@ -17,7 +17,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
 | ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro Tier0 + checksum path + DAT sync + enrich wire + client dump hash 2026-07-24**. |
 | ~~**P3**~~ | ~~LaunchBox / dumps~~ | **LB prebuild 2026-07-24** ; **No-Intro multi-DAT Tier0 2026-07-24** ; **FTS measure 2026-07-24** (`pnpm launchbox:bench-fts`). |
-| **P4** | Optionnel | Table GS1 audio (typage musique). |
+| ~~**P4**~~ | ~~Table GS1 audio~~ | **Différé 2026-07-24** — GS1 n’a pas de plage type « Bookland » pour la musique (seulement des company prefixes). Les heuristiques audio ont été **supprimées** (2026-07-05) ; le typage musique = spécialistes Discogs/MusicBrainz/Deezer. Réouvrir seulement avec une allowlist prouvée + goldens untyped (pas une table GS1 « complète »). |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late, GENERIC→IDENTITY, title-IDF offline index, No-Intro dump path.
 
@@ -283,10 +283,11 @@ Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠
 - **État 2026-07-04** : le cluster de ranking par observations (meilleur titre/facts/cover depuis les observations typées) + le type `ProviderMetadataInput` partent dans `services/metadata/mergeObservationRanking.ts` (aucun appel retour à `mergeMetadata` → pas de cycle). `merge.ts` importe les 6 symboles utilisés + re-exporte l'ancienne surface publique. Comportement inchangé (`7428e93`). 1555 tests ✅ · build ✅.
 - **Reste** : `merge.ts` (455 l.) = `mergeMetadata` orchestrateur + helpers cover/book — cohérent, à laisser.
 
-#### AUDIO-1 — Détection audio GS1 _(résiduel du « trou #1 »)_
+#### ~~AUDIO-1~~ — Détection audio GS1 _(différé 2026-07-24)_
 
-- **État 2026-07-05** : préfixes audio heuristiques (`602`, `498`, `45`…) **supprimés** — pas fiables sans table GS1 complète. Seul **Bookland 978/979** conservé (`BOOK_BARCODE_PREFIX`, test `scoring.prefix.test.ts`). Typage musique repose sur le **signal spécialiste registry** (Discogs/MusicBrainz/Deezer) + `compile.typeSelection.test.ts`.
-- **Reste (optionnel)** : table GS1 prefix → type produit + fixtures golden-master qui exercent la détection ; bump cache si comportement change.
+- **État 2026-07-05** : préfixes audio heuristiques (`602`, `498`, `45`…) **supprimés** — pas fiables. Seul **Bookland 978/979** conservé (`BOOK_BARCODE_PREFIX`, test `scoring.prefix.test.ts`). Typage musique = **signal spécialiste registry** (Discogs/MusicBrainz/Deezer) + `compile.typeSelection.test.ts`.
+- **Pourquoi pas de « table GS1 audio »** : Bookland est une plage GS1 produit pour les livres ; la musique utilise des *company prefixes* ordinaires. Une table serait une allowlist label/distributeur (recherche + risque FP), pas un standard type-range.
+- **Différé** : ne pas réintroduire de regex prefix sans allowlist prouvée (ex. Universal `602…` / Daft Punk `0724…` hit ; Nintendo / Ghost Recon miss) + goldens untyped + bump cache si sélection change.
 
 #### ~~WORDLIST-1~~ — Sous-titres produit dans `tokenEquivalents` _(fait 2026-07-05)_
 

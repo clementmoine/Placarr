@@ -226,11 +226,13 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    > ne matche l'un ou l'autre préfixe (même le Daft Punk `0724…`) — ce ne sont pas un
    > doublon mais **deux heuristiques à buts opposés** (bonus de score musique vs filtre
    > dur anti-`games`, où `45`=Japon est volontairement large), sans couverture golden-master.
-   > Les fusionner introduirait des faux positifs. Résolution sûre appliquée :
-   > **co-localisées dans `scoring.ts`** (`AUDIO_BARCODE_PREFIX` + `AUDIO_LIKE_GAME_SUPPRESSION_PREFIX`)
-   > avec doc expliquant la divergence intentionnelle ; le resolver importe la seconde au
-   > lieu de la redéfinir. Zéro changement de comportement. Le vrai fix (détection audio
-   > GS1-exacte + cas de test) reste un chantier data, pas un merge mécanique.
+   > Les fusionner introduirait des faux positifs. Résolution sûre appliquée à l’époque :
+   > **co-localisées dans `scoring.ts`**.
+   >
+   > **✅ Suite 2026-07-05** : les deux regex audio ont été **supprimées** (pas de plage
+   > GS1 type-range pour la musique — seulement des company prefixes). Typage musique =
+   > spécialistes Discogs/MusicBrainz/Deezer. **AUDIO-1 différé 2026-07-24** (pas de
+   > « table GS1 audio » sans allowlist prouvée + goldens untyped).
 
    La **dedup #2** (`steamdb`/`pcgamingwiki`) est faite (repliée sur le set). Le label
    **`"BGG (Bayes)"` est supprimé** : investigation → aucun fact ne porte ce label (le

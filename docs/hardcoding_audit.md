@@ -228,7 +228,9 @@ These are real lists but hand-maintained and language-incomplete:
 ## ⚪ Keep — real-world standards (cite, don't apologise)
 
 - `VALID_PEGI_AGES = {3,7,12,16,18}` — the actual PEGI rating set.
-- ISBN `978/979` + audio EAN prefixes (`scoring.ts`) — GS1 allocation.
+- ISBN `978/979` (`BOOK_BARCODE_PREFIX` in `scoring.ts`) — GS1 Bookland product range.
+  Audio/music company-prefix heuristics were **removed** (2026-07-05); music typing
+  uses specialist providers, not a fake GS1 type table.
 - `LOCALE_LANGUAGE_ORDER = ["fr","en"]` — a business/locale preference; fine, but
   belongs in config/env, not a code constant.
 

@@ -60,6 +60,8 @@ const EVIDENCE_SEARCH_IDENTITY_PARAMS = [
   "code",
   "universe",
   "platform",
+  "gtin",
+  "epid",
 ] as const;
 
 function shouldDropSearchParam(key: string): boolean {

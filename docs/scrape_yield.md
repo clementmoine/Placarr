@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2ak shipped (Full Set SearchYield); HLTB/Izneo = 2al; No-Intro = later.
+> Phase 1–2am shipped (eBay Browse SearchYield durable); No-Intro / LaunchBox FTS = later.
 
 ## Principle
 
@@ -274,6 +274,12 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `normalizeProviderEvidenceUrl` keeps `platform` (HowLongToBeat)
 - HowLongToBeat: synthetic `/search?q=&platform=` → typed bleed games promote/reuse (skips init+POST)
 - Izneo: synthetic `/search?q=` → typed series hits promote/reuse
+
+## Phase 2am — eBay Browse SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `gtin` + `epid`
+- Browse: RAM L1 → ProviderEvidence L2 → live; promote typed `itemSummaries`
+- Keys: `/item_summary/search?gtin=` / `?q=` / `?epid=` — worker refresh skips repeating Browse
 
 ## Phase 2+ backlog
 

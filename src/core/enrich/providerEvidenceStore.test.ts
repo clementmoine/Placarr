@@ -225,6 +225,30 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps eBay Browse gtin / q / epid identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://api.ebay.com/buy/browse/v1/item_summary/search?gtin=0045496365226&limit=10&utm=1",
+      ),
+    ).toBe(
+      "https://api.ebay.com/buy/browse/v1/item_summary/search?gtin=0045496365226",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://api.ebay.com/buy/browse/v1/item_summary/search?q=Hades+Switch",
+      ),
+    ).toBe(
+      "https://api.ebay.com/buy/browse/v1/item_summary/search?q=hades+switch",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://api.ebay.com/buy/browse/v1/item_summary/search?epid=555",
+      ),
+    ).toBe(
+      "https://api.ebay.com/buy/browse/v1/item_summary/search?epid=555",
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

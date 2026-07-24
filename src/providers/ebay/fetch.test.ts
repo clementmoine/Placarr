@@ -1,6 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+
+const readEbayBrowseSearchEvidence = vi.fn();
+const promoteEbayBrowseSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  ebayBrowseSearchEvidenceUrl: (params: Record<string, string>) => {
+    const url = new URL(
+      "https://api.ebay.com/buy/browse/v1/item_summary/search",
+    );
+    const gtin = params.gtin?.replace(/[^\d]/g, "").trim();
+    const epid = params.epid?.trim();
+    const q = params.q?.trim();
+    if (gtin) url.searchParams.set("gtin", gtin);
+    else if (epid) url.searchParams.set("epid", epid);
+    else if (q) url.searchParams.set("q", q);
+    return url.toString();
+  },
+  readEbayBrowseSearchEvidence: (...args: unknown[]) =>
+    readEbayBrowseSearchEvidence(...args),
+  promoteEbayBrowseSearchEvidence: (...args: unknown[]) =>
+    promoteEbayBrowseSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import { fetchFromEbayCatalog } from "./catalog";
@@ -70,6 +93,10 @@ beforeEach(() => {
   mockedPost.mockReset();
   resetEbayTokenCache();
   resetEbayResponseCacheForTests();
+  readEbayBrowseSearchEvidence.mockReset();
+  promoteEbayBrowseSearchEvidence.mockReset();
+  readEbayBrowseSearchEvidence.mockResolvedValue(null);
+  promoteEbayBrowseSearchEvidence.mockResolvedValue(undefined);
   process.env.EBAY_CLIENT_ID = "id";
   process.env.EBAY_CLIENT_SECRET = "secret";
 });
@@ -223,6 +250,41 @@ describe("fetchFromEbay", () => {
 });
 
 describe("fetchPricesFromEbay", () => {
+  it("réutilise ProviderEvidence Browse SearchYield sans HTTP", async () => {
+    readEbayBrowseSearchEvidence.mockResolvedValueOnce([
+      itemSummary("Hades Switch", { price: "30.00", condition: "New" }),
+      itemSummary("Hades Switch", { price: "20.00", condition: "Used" }),
+    ]);
+
+    await expect(
+      fetchPricesFromEbay("0045496365226", []),
+    ).resolves.toMatchObject({
+      priceNew: 3000,
+      priceUsed: 2000,
+      offerCount: 2,
+    });
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(mockedPost).not.toHaveBeenCalled();
+    expect(promoteEbayBrowseSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes Browse SearchYield after a live search", async () => {
+    mockedPost.mockResolvedValueOnce(tokenResponse());
+    mockedGet.mockResolvedValueOnce(
+      browseResponse([
+        itemSummary("Hades Switch", { price: "30.00", condition: "New" }),
+      ]),
+    );
+
+    await fetchPricesFromEbay("0045496365226", []);
+    expect(promoteEbayBrowseSearchEvidence).toHaveBeenCalledWith(
+      "https://api.ebay.com/buy/browse/v1/item_summary/search?gtin=0045496365226",
+      expect.arrayContaining([
+        expect.objectContaining({ title: "Hades Switch" }),
+      ]),
+    );
+  });
+
   it("reuses Browse GTIN SearchYield after metadata (0 extra Browse HTTP)", async () => {
     mockCatalogThenBrowse(
       [],

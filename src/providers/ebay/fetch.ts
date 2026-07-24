@@ -16,6 +16,11 @@ import {
   getCachedEbayPrices,
   type EbayBrowseSummary,
 } from "./cache";
+import {
+  ebayBrowseSearchEvidenceUrl,
+  promoteEbayBrowseSearchEvidence,
+  readEbayBrowseSearchEvidence,
+} from "./durableEvidence";
 import { bestEbayCoverUrl } from "./coverUrl";
 import {
   EBAY_BROWSE_SEARCH_URL,
@@ -149,7 +154,7 @@ async function searchEbayBrowse(
 }
 
 /**
- * Browse once (or reuse SearchYield): cache raw summaries under a stable key.
+ * Browse once (or reuse SearchYield): RAM L1 → durable L2 → live.
  * Callers mine listings and/or prices from the same array.
  */
 async function searchEbayBrowseCached(
@@ -161,9 +166,19 @@ async function searchEbayBrowseCached(
   if (cached) {
     return { items: cached, retryableFailure: false };
   }
+
+  const searchUrl = ebayBrowseSearchEvidenceUrl(params);
+  const fromEvidence = await readEbayBrowseSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[eBay] Browse evidence hit for ${searchUrl}`);
+    cacheEbayBrowseSummaries(cacheKey, fromEvidence);
+    return { items: fromEvidence, retryableFailure: false };
+  }
+
   const result = await searchEbayBrowse(params, credentials);
   if (!result.retryableFailure) {
     cacheEbayBrowseSummaries(cacheKey, result.items);
+    await promoteEbayBrowseSearchEvidence(searchUrl, result.items);
   }
   return result;
 }

@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2ah shipped (MyLudo + ChocoBonPlan synthetic SearchYield); No-Intro = later.
+> Phase 1–2aj shipped (LeDénicheur SearchYield); Full Set = 2ak; No-Intro = later.
 
 ## Principle
 
@@ -264,9 +264,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - LeDénicheur: synthetic `/search?q=` → typed BFF Product/Offer nodes promote/reuse
 - Price resolve (detail POST / GTIN HTML) still runs from cached nodes when needed
 
+## Phase 2ak — Full Set SearchYield durable (done 2026-07-24)
+
+- Full Set: `/recherche.php?q=` → typed `{url,title,category?,platformLabel?,year?,consoleSlug?}` promote/reuse
+- Rate-limited scrape: refresh reuses SearchYield without repeating the search GET
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
+| HowLongToBeat / Izneo SearchYield durable | Remaining non-scrape/API search peers |

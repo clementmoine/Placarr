@@ -12,7 +12,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | ~~**P0**~~ | ~~SSOT identité / covers / liens~~ | **Fait 2026-07-24** — étapes 1–7 + dead hardware titleMatch + present purge unique. |
 | ~~**P1**~~ | ~~List present sans `priceOffers.rawValue`~~ | **Fait 2026-07-24** — covers persistées à l’écriture prix ; `itemListMetadataInclude` sans priceOffers. |
 | **P2** | Word-lists → consensus / IDF | **First cut 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + in-memory cluster stats. Reste : index RawName offline / cron. |
-| **P2** | Scrape-yield / call efficiency | **… + LeDénicheur SearchYield durable 2026-07-24**. Reste : dumps / LaunchBox FTS. Voir [scrape_yield.md](scrape_yield.md). |
+| **P2** | Scrape-yield / call efficiency | **… + Full Set SearchYield durable 2026-07-24**. Reste : dumps / LaunchBox FTS / HLTB·Izneo. Voir [scrape_yield.md](scrape_yield.md). |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~ | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override. |
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
 | ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect sitemap Tier0 + LaunchBox prebuild (pas de zip au scan). Reste : No-Intro/Redump. |

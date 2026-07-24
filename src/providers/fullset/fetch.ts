@@ -1,5 +1,11 @@
 import axios from "axios";
 
+import {
+  fullSetSearchEvidenceUrl,
+  promoteFullSetSearchEvidence,
+  readFullSetSearchEvidence,
+} from "./durableEvidence";
+
 const BASE_URL = "https://full-set.net";
 const HEADERS = {
   "User-Agent":
@@ -157,6 +163,14 @@ export async function searchFullSet(
   const cleaned = query.trim();
   if (!cleaned) return [];
 
+  const limit = options.limit ?? 8;
+  const searchUrl = fullSetSearchEvidenceUrl(cleaned);
+  const fromEvidence = await readFullSetSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[FullSet] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, limit);
+  }
+
   try {
     const response = await axios.get(`${BASE_URL}/recherche.php`, {
       params: { q: cleaned },
@@ -164,7 +178,9 @@ export async function searchFullSet(
       timeout: 12_000,
       signal: options.signal,
     });
-    return parseFullSetSearchHtml(String(response.data), options.limit ?? 8);
+    const hits = parseFullSetSearchHtml(String(response.data), limit);
+    await promoteFullSetSearchEvidence(searchUrl, hits);
+    return hits;
   } catch (error) {
     if (!axios.isCancel(error)) {
       console.error(

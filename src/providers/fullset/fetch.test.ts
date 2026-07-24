@@ -1,11 +1,42 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+    isCancel: () => false,
+  },
+}));
+
+const readFullSetSearchEvidence = vi.fn();
+const promoteFullSetSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  fullSetSearchEvidenceUrl: (query: string) => {
+    const url = new URL("https://full-set.net/recherche.php");
+    url.searchParams.set("q", query.trim());
+    return url.toString();
+  },
+  readFullSetSearchEvidence: (...args: unknown[]) =>
+    readFullSetSearchEvidence(...args),
+  promoteFullSetSearchEvidence: (...args: unknown[]) =>
+    promoteFullSetSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   fullSetConsoleSlugFromUrl,
   parseFullSetItemHtml,
   parseFullSetSearchHtml,
+  searchFullSet,
 } from "./fetch";
-import { fullSetHitMatchesPlatform, fullSetCategoryMatchesMediaType, mapFullSetMetadata } from "./resolver";
+import {
+  fullSetHitMatchesPlatform,
+  fullSetCategoryMatchesMediaType,
+  mapFullSetMetadata,
+} from "./resolver";
+
+const mockedGet = vi.mocked(axios.get);
 
 // Trimmed from the live capture of recherche.php?q=rayman (2026-07-10) —
 // attributes are on their own lines in the real markup.
@@ -181,5 +212,51 @@ describe("mapFullSetMetadata", () => {
       ["publisher", "Ubisoft"],
     ]);
     expect(metadata.observations?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("searchFullSet", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readFullSetSearchEvidence.mockReset();
+    promoteFullSetSearchEvidence.mockReset();
+    readFullSetSearchEvidence.mockResolvedValue(null);
+    promoteFullSetSearchEvidence.mockResolvedValue(undefined);
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        url: "https://full-set.net/psx/item/rayman.html",
+        title: "Rayman",
+        category: "Jeux",
+        platformLabel: "Playstation",
+        year: "1995",
+        consoleSlug: "psx",
+      },
+    ];
+    readFullSetSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchFullSet("Rayman")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteFullSetSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_HTML,
+    } as never);
+
+    const hits = await searchFullSet("Rayman");
+    expect(hits[0]?.consoleSlug).toBe("psx");
+    expect(promoteFullSetSearchEvidence).toHaveBeenCalledWith(
+      "https://full-set.net/recherche.php?q=Rayman",
+      expect.arrayContaining([
+        expect.objectContaining({
+          url: "https://full-set.net/psx/item/rayman.html",
+        }),
+      ]),
+    );
   });
 });

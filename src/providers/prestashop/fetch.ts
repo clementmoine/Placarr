@@ -176,25 +176,100 @@ function pickBestPrestashopHit(
   return null;
 }
 
+/** SearchYield already has EAN (field, URL slug, or reference) — no fiche GET. */
+function prestashopSearchProductNeedsEanEnrich(
+  product: PrestashopSearchProduct,
+): boolean {
+  return (
+    !resolvePrestashopSearchProductBarcode(product) && Boolean(product.link)
+  );
+}
+
+function prestashopSearchProductKey(product: PrestashopSearchProduct): string {
+  return (
+    product.link ||
+    product.id_product?.toString() ||
+    stripHtml(product.name || "")
+  );
+}
+
+async function enrichPrestashopSearchProductWithEan(
+  config: PrestashopRetailerConfig,
+  product: PrestashopSearchProduct,
+): Promise<PrestashopSearchProduct> {
+  if (!prestashopSearchProductNeedsEanEnrich(product) || !product.link) {
+    return product;
+  }
+  try {
+    const response = await fetchGetWithFlareFallback(product.link, {
+      headers: HTML_HEADERS,
+      timeout: config.requestTimeoutMs ?? 10000,
+      validateStatus: (status) => status >= 200 && status < 400,
+    });
+    const ean13 = parsePrestashopProductPageBarcode(String(response.data));
+    return ean13 ? { ...product, ean13 } : product;
+  } catch {
+    return product;
+  }
+}
+
+/** Cap detail GETs when IQIT/search miniatures omit EAN (1 search → shortlist). */
+const PRESTASHOP_EAN_ENRICH_MAX = 3;
+
+/**
+ * Detail-enrich only rows that lack a SearchYield barcode. Title-rank, sequential,
+ * stop when the target barcode matches — never Promise.all every miniature.
+ */
 async function enrichPrestashopSearchProductsWithEan(
   config: PrestashopRetailerConfig,
   products: PrestashopSearchProduct[],
+  options?: { barcode?: string | null; queries?: string[] },
 ): Promise<PrestashopSearchProduct[]> {
-  return Promise.all(
-    products.map(async (product) => {
-      if (product.ean13 || !product.link) return product;
-      try {
-        const response = await fetchGetWithFlareFallback(product.link, {
-          headers: HTML_HEADERS,
-          timeout: config.requestTimeoutMs ?? 10000,
-          validateStatus: (status) => status >= 200 && status < 400,
-        });
-        const ean13 = parsePrestashopProductPageBarcode(String(response.data));
-        return ean13 ? { ...product, ean13 } : product;
-      } catch {
-        return product;
-      }
-    }),
+  const normalizedBarcode = normalizeProductBarcode(options?.barcode);
+  if (
+    normalizedBarcode &&
+    pickBestPrestashopHit(products, { barcode: normalizedBarcode })
+  ) {
+    return products;
+  }
+
+  const needsEnrich = products.filter(prestashopSearchProductNeedsEanEnrich);
+  if (needsEnrich.length === 0) return products;
+
+  const queries =
+    options?.queries?.map((query) => query.trim()).filter(Boolean) ?? [];
+  const ranked = [...needsEnrich].sort((a, b) => {
+    if (queries.length === 0) return 0;
+    const score = (product: PrestashopSearchProduct) => {
+      const title = stripHtml(product.name || "");
+      if (!title) return -1;
+      return Math.max(
+        ...queries.map((query) => metadataTitleSimilarity(query, title)),
+      );
+    };
+    return score(b) - score(a);
+  });
+
+  const updated = new Map<string, PrestashopSearchProduct>();
+  for (const product of ranked.slice(0, PRESTASHOP_EAN_ENRICH_MAX)) {
+    const enriched = await enrichPrestashopSearchProductWithEan(
+      config,
+      product,
+    );
+    updated.set(prestashopSearchProductKey(product), enriched);
+    if (
+      normalizedBarcode &&
+      barcodesEquivalent(
+        resolvePrestashopSearchProductBarcode(enriched),
+        normalizedBarcode,
+      )
+    ) {
+      break;
+    }
+  }
+
+  return products.map(
+    (product) => updated.get(prestashopSearchProductKey(product)) ?? product,
   );
 }
 
@@ -281,14 +356,22 @@ export async function searchPrestashopProduct(
 
   if (products.length === 0) return null;
 
-  if (normalizedBarcode) {
-    products = await enrichPrestashopSearchProductsWithEan(config, products);
-  }
-
   const queries =
     lookupQueries && lookupQueries.length > 0
       ? lookupQueries
       : [query.trim()].filter(Boolean);
+
+  // SearchYield-first: mine URL/reference/ean13 before any fiche Flare GET.
+  if (
+    normalizedBarcode &&
+    !pickBestPrestashopHit(products, { barcode: normalizedBarcode })
+  ) {
+    products = await enrichPrestashopSearchProductsWithEan(config, products, {
+      barcode: normalizedBarcode,
+      queries,
+    });
+  }
+
   const hit = pickBestPrestashopHit(products, {
     barcode: normalizedBarcode,
     queries,

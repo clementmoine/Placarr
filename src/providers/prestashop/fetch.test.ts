@@ -132,6 +132,61 @@ describe("searchPrestashopProduct", () => {
     expect(mockedGet).toHaveBeenCalledTimes(2);
   });
 
+  it("IQIT multi-hit: enrichit en série et s'arrête au premier EAN match (pas N Flare)", async () => {
+    const multi = `
+      <div class="product-miniature js-product-miniature">
+        <h5 class="product-name">
+          <a href="https://www.chipweld.fr/wrong/other-game">Other Game</a>
+        </h5>
+      </div>
+      <div class="product-miniature js-product-miniature">
+        <h5 class="product-name">
+          <a href="https://www.chipweld.fr/jeux-xbox-one/trine-ultimate-collection">
+            Trine: Ultimate Collection XBOX ONE [NEUF]
+          </a>
+        </h5>
+        <span class="price product-price">19,90&nbsp;€</span>
+      </div>
+      <div class="product-miniature js-product-miniature">
+        <h5 class="product-name">
+          <a href="https://www.chipweld.fr/wrong/third">Third Game</a>
+        </h5>
+      </div>
+    `;
+    mockedGet
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { products: [], rendered_products: multi },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `<html>no barcode here</html>`,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `<script>"gtin13": "5016488132497"</script>`,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `<script>"gtin13": "9999999999999"</script>`,
+      });
+
+    // Barcode-only: preserve miniature order; stop after the matching fiche.
+    const product = await searchPrestashopProduct(
+      CHIPWELD_CONFIG,
+      "",
+      "5016488132497",
+    );
+
+    expect(product).toMatchObject({
+      title: "Trine: Ultimate Collection XBOX ONE [NEUF]",
+      barcode: "5016488132497",
+      source: "chipweld",
+    });
+    // search + Other (miss) + Trine (hit) — Third never fetched
+    expect(mockedGet).toHaveBeenCalledTimes(3);
+  });
+
   it("renvoie null quand IQIT ne renvoie aucune miniature", async () => {
     mockedGet.mockResolvedValueOnce({
       data: { products: [], rendered_products: "<div>aucun résultat</div>" },
@@ -176,9 +231,10 @@ describe("searchPrestashopProduct", () => {
       priceCents: 3499,
       source: "tokyogamestory",
     });
+    expect(mockedGet).toHaveBeenCalledTimes(1);
   });
 
-  it("trouve MX vs ATV sur NetGamesRetro via le JSON products[]", async () => {
+  it("trouve MX vs ATV sur NetGamesRetro via SearchYield (EAN dans l'URL, 0 fiche)", async () => {
     mockedGet.mockResolvedValueOnce({
       data: {
         products: [
@@ -213,6 +269,7 @@ describe("searchPrestashopProduct", () => {
       imageUrl:
         "https://www.netgamesretro.com/17755-large_default/mx-vs-atv-extreme-limite-xbox-360.jpg",
     });
+    expect(mockedGet).toHaveBeenCalledTimes(1);
   });
 
   it("signale un accès storefront bloqué (HTTP 403)", async () => {

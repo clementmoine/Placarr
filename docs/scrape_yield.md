@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2h shipped (eBay Browse SearchYield reuse); corpora / Flare 1→N = next.
+> Phase 1–2i shipped (PrestaShop SearchYield-first EAN enrich); Smartoys / corpora / durable SearchYield = next.
 
 ## Principle
 
@@ -84,10 +84,18 @@ Prices already aggregate from Browse `itemSummaries` (no getItem fan-out). Waste
 - `aggregateEbayPricesFromSummaries` — single mine path for medians
 - `ebayPriceSearchQueries` aligned with `matchPriceSeekQueries` (barcode first, ≤1 title when barcode present, ascii variants, cap 4)
 
+## Phase 2i — PrestaShop SearchYield-first EAN enrich (done 2026-07-24)
+
+Barcode search no longer `Promise.all` fiche Flare GETs for every miniature missing `ean13`:
+
+- Mine URL slug / reference / `ean13` via `resolvePrestashopSearchProductBarcode` first — hit ⇒ **0** detail GET (NetGamesRetro, Tokyo Game Story, …)
+- Else title-rank shortlist (≤3), sequential enrich, **stop** on barcode match (IQIT / ChipWeld)
+- Shared by all `PRESTASHOP_RETAILER_CONFIGS` shops
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
+| Smartoys (and peers): search HTML → rank → 1 detail | Classic 1 search → N fiche spray |
 | Local full-set / dump sync | Closed platforms at home latency |
-| Flare retailers: 1 search → N candidates | Same philosophy as PC |
 | SearchYield durability | Soft-404 / search pages beyond PC detail / eBay process cache |

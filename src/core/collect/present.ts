@@ -8,7 +8,6 @@ import {
 } from "@/core/collect/media";
 import {
   buildProfileProviderLinkFacts,
-  coverAttachmentsFromPriceOffers,
   purgeContradictedProviderExternalLinks,
   type ProviderPriceOfferLinkInput,
 } from "@/core/enrich/providerExternalLinks";
@@ -210,26 +209,13 @@ function enrichMetadataProviderLinks(
     input.shelfType,
   );
 
-  const offerCovers = coverAttachmentsFromPriceOffers(input.priceOffers ?? [], {
-    itemTitle: input.itemTitle,
-    shelfType: input.shelfType,
-    existingAttachments: metadata.attachments,
-  });
-  const attachments =
-    offerCovers.length > 0
-      ? [...(metadata.attachments ?? []), ...offerCovers]
-      : metadata.attachments;
-
-  const withAttachments =
-    attachments !== metadata.attachments
-      ? { ...metadata, attachments }
-      : metadata;
-
+  // Marketplace covers persist as Attachment rows at price-offer write time —
+  // do not re-inject from priceOffers.rawValue on present (list or detail).
   if (!facts.length) {
-    const { facts: _facts, ...rest } = withAttachments;
+    const { facts: _facts, ...rest } = metadata;
     return rest;
   }
-  return { ...withAttachments, facts };
+  return { ...metadata, facts };
 }
 
 function formatItemMetadata(

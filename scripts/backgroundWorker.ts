@@ -40,6 +40,7 @@ import {
   isBackgroundWorkAbandonedError,
 } from "../src/core/collect/jobs/workJobOutcome";
 import { executeBackgroundWorkJob } from "../src/core/collect/jobs/workRunner";
+import { resolveInteractiveWorkerConcurrency } from "../src/core/collect/jobs/workerConcurrency";
 
 const WORKER_ID = process.env.WORKER_ID || `worker-${randomUUID().slice(0, 8)}`;
 const POLL_IDLE_MS = Number.parseInt(process.env.WORKER_POLL_MS || "1000", 10);
@@ -54,20 +55,6 @@ function resolveClaimKinds(): readonly BackgroundWorkKind[] | null {
     return resolveWorkerKinds(process.env.WORKER_KINDS);
   }
   return INTERACTIVE_WORKER_KINDS;
-}
-
-function resolveConcurrency(): number {
-  const raw = Number.parseInt(
-    process.env.WORKER_CONCURRENCY ||
-      process.env.BACKGROUND_IO_CONCURRENCY ||
-      process.env.BACKGROUND_WORK_CONCURRENCY ||
-      "",
-    10,
-  );
-  // Interactive enrich is I/O-bound (HTTP providers). 6 parallel items drains
-  // manga/game backlogs without drowning FlareSolverr (still serial per host).
-  if (Number.isFinite(raw) && raw > 0) return raw;
-  return 6;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -131,11 +118,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const concurrency = resolveConcurrency();
+  const { concurrency, cappedForFlare } =
+    resolveInteractiveWorkerConcurrency();
   const kindsLabel = claimKinds?.join(",") ?? "all";
   console.info(
     `[Worker ${WORKER_ID}] starting (concurrency=${concurrency}, poll=${POLL_IDLE_MS}ms, kinds=${kindsLabel})`,
   );
+  if (cappedForFlare) {
+    console.warn(
+      `[Worker ${WORKER_ID}] capped concurrency for FlareSolverr (serial browser). Set WORKER_CONCURRENCY_FORCE=1 to override.`,
+    );
+  }
 
   const recoverTimer = setInterval(() => {
     void recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS).then(

@@ -22,6 +22,28 @@ export type FlareSolverrDownloadedImage = {
  */
 const flareQueue = new AsyncQueue(1);
 
+/** Rolling outcome counters for operator logs (Flare is serial — watch wait pressure). */
+const flareStats = {
+  attempts: 0,
+  ok: 0,
+  fail: 0,
+  lastLogAt: 0,
+};
+
+function recordFlareOutcome(ok: boolean): void {
+  flareStats.attempts += 1;
+  if (ok) flareStats.ok += 1;
+  else flareStats.fail += 1;
+  const now = Date.now();
+  if (flareStats.attempts % 10 !== 0 && now - flareStats.lastLogAt < 60_000) {
+    return;
+  }
+  flareStats.lastLogAt = now;
+  console.info(
+    `[FlareSolverr] outcomes attempts=${flareStats.attempts} ok=${flareStats.ok} fail=${flareStats.fail} (serial queue depth pressure → lower WORKER_CONCURRENCY if fail climbs)`,
+  );
+}
+
 function flareSolverrBaseUrl(): string | null {
   const flaresolverrUrl = process.env.FLARESOLVERR_URL?.trim();
   return flaresolverrUrl ? flaresolverrUrl.replace(/\/+$/, "") : null;
@@ -50,7 +72,10 @@ export async function flareSolverrCookiesFor(
         },
         { timeout: maxTimeoutMs + 10_000, validateStatus: () => true, signal },
       );
-      if (response.data?.status !== "ok") return null;
+      if (response.data?.status !== "ok") {
+        recordFlareOutcome(false);
+        return null;
+      }
       const solution = response.data.solution;
       const cookie = (solution?.cookies || [])
         .map(
@@ -58,7 +83,11 @@ export async function flareSolverrCookiesFor(
             `${entry.name}=${entry.value}`,
         )
         .join("; ");
-      if (!cookie) return null;
+      if (!cookie) {
+        recordFlareOutcome(false);
+        return null;
+      }
+      recordFlareOutcome(true);
       return {
         cookie,
         userAgent:
@@ -67,6 +96,7 @@ export async function flareSolverrCookiesFor(
       };
     } catch (error) {
       if (isAbortError(error)) throw error;
+      recordFlareOutcome(false);
       return null;
     }
   });
@@ -98,10 +128,16 @@ export async function flareSolverrDownloadImages(
         },
         { timeout: maxTimeoutMs + 10_000, validateStatus: () => true, signal },
       );
-      if (response.data?.status !== "ok") return [];
+      if (response.data?.status !== "ok") {
+        recordFlareOutcome(false);
+        return [];
+      }
 
       const downloads = response.data?.solution?.download;
-      if (!Array.isArray(downloads)) return [];
+      if (!Array.isArray(downloads)) {
+        recordFlareOutcome(false);
+        return [];
+      }
 
       const results: FlareSolverrDownloadedImage[] = [];
       for (const entry of downloads) {
@@ -117,9 +153,11 @@ export async function flareSolverrDownloadImages(
 
         results.push({ url: entryUrl, buffer, contentType });
       }
+      recordFlareOutcome(results.length > 0);
       return results;
     } catch (error) {
       if (isAbortError(error)) throw error;
+      recordFlareOutcome(false);
       return [];
     }
   });
@@ -157,10 +195,15 @@ export async function flareSolverrRequestGet(
       });
       const html = response.data?.solution?.response;
       const status = Number(response.data?.solution?.status || 0);
-      if (typeof html !== "string" || status >= 400) return null;
+      if (typeof html !== "string" || status >= 400) {
+        recordFlareOutcome(false);
+        return null;
+      }
+      recordFlareOutcome(true);
       return html;
     } catch (error) {
       if (isAbortError(error)) throw error;
+      recordFlareOutcome(false);
       return null;
     }
   });

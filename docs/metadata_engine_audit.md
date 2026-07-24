@@ -16,7 +16,7 @@ and purges. Not random bugs — **multiple contracts for one decision**.
 | -------- | ------ |
 | P0 accept→purge | 0 ouvert (3 faits 2026-07-24) |
 | P1 structural | 0 ouvert |
-| P2 cleanup | 1 ouvert (FlareSolverr concurrency — monitor) |
+| P2 cleanup | 0 ouvert (word-list → IDF = long terme hors compteur) |
 | God files >1.5k LOC | 0 (scindés 2026-07-24) |
 
 ## Pipeline: where truth changes
@@ -60,7 +60,7 @@ mutates at stages 3–5.
 | Issue | Symptom | Where | Fix |
 | ----- | ------- | ----- | --- |
 | ~~**Dead hardware soft branches in titleMatch**~~ | — | `titleMatch.ts` | **Fait 2026-07-24** — early-return residual only ; soft token path games/media. |
-| **FlareSolverr serial vs worker concurrency 6** | Jobs wait on Flare; 90s/60s caps → partial progressive stores. | `flareSolverr.ts`; `backgroundWorker.ts` | URL-first pinned scrapes; monitor abandon rate. |
+| ~~**FlareSolverr serial vs worker concurrency 6**~~ | — | `workerConcurrency.ts` ; `flareSolverr.ts` | **Fait 2026-07-24** — cap ≤3 avec Flare ; outcome logs ; force override. |
 | ~~**Docs / TESTING point at deleted paths**~~ | — | — | **Fait 2026-07-24** (cleanup docs). |
 
 Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `fetch` — voir [codebase_map.md](codebase_map.md).
@@ -118,6 +118,5 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 ## Principles verdict
 
 Providers plug-and-play + empty blindness allowlist = healthy. SSOT steps 1–7
-locked (identity / covers / links / prices / god-file splits). List present no
-longer reads marketplace `priceOffers.rawValue`. Remaining debt is opportunistic:
-FlareSolverr concurrency monitoring; long-term word-list → IDF.
+locked. Marketplace covers write-time only (no present inject). FlareSolverr
+worker concurrency capped when configured. Remaining long-term: word-list → IDF.

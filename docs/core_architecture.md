@@ -98,10 +98,10 @@ Auth / DB / HTTP             → lib/
 
 **Prochaines réductions utiles** (voir [metadata_engine_audit.md](metadata_engine_audit.md)) :
 
-1. ~~Découper `enrich/storage.ts` images~~ **partiel 2026-07-24** — `media/imageDownload.ts` + `media/imageAssets.ts` ; persist reste dans `storage.ts`.
+1. ~~Découper `enrich/storage.ts` images / crop / localize select~~ **partiel 2026-07-24** — `media/imageDownload` + `imageAssets` + `croppedCoverSync` + `attachmentLocalization` ; `storeMetadata` reste.
 2. ~~`fetch` book/locale~~ **partiel 2026-07-24** — `bookSearch.ts` / `bookSearchAliases.ts` / `shelfContentLocale.ts`.
 3. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
-4. Découper encore `titleMatching` (attachments ↔ similarity couplés) ; persist dense dans `storage`.
+4. ~~`titleMatching` sequel / edition merge~~ **partiel 2026-07-24** — `titles/franchiseSequel` + `gameEditionSupplement` ; reste align/similarity/attachments.
 5. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
 ## Checklist PR core

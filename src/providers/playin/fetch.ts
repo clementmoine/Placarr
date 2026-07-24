@@ -5,6 +5,10 @@ import {
   barcodesEquivalent,
   normalizeProductBarcode,
 } from "@/core/identify/normalize";
+import {
+  promotePlayInSearchEvidence,
+  readPlayInSearchEvidence,
+} from "./durableEvidence";
 
 const BASE_URL = "https://www.play-in.com";
 const BOARDGAME_CATALOGUE_PATH = "/fr/gamme/5/jeux-de-societe/catalogue";
@@ -219,16 +223,21 @@ export async function searchPlayInHits(
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return [];
 
+  const searchUrl = `${BASE_URL}${BOARDGAME_CATALOGUE_PATH}?search=${encodeURIComponent(cleanedQuery)}`;
+  const fromEvidence = await readPlayInSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Play-In] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, limit);
+  }
+
   try {
-    const response = await fetchGetWithFlareFallback(
-      `${BASE_URL}${BOARDGAME_CATALOGUE_PATH}`,
-      {
-        params: { search: cleanedQuery },
-        headers: HEADERS,
-        timeout: 10_000,
-      },
-    );
-    return parsePlayInCatalogueHits(response.data as string, limit);
+    const response = await fetchGetWithFlareFallback(searchUrl, {
+      headers: HEADERS,
+      timeout: 10_000,
+    });
+    const hits = parsePlayInCatalogueHits(response.data as string, limit);
+    await promotePlayInSearchEvidence(searchUrl, hits);
+    return hits;
   } catch (error) {
     console.error("[Play-In] Search failed:", error);
     return [];

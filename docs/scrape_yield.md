@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2v shipped (Geedie SearchYield durable); No-Intro dumps / remaining peers = later.
+> Phase 1–2w shipped (Esprit Jeu + Play-In SearchYield durable); Philibert / No-Intro = later.
 
 ## Principle
 
@@ -183,10 +183,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Category path + `search=` keep playstation vs nintendo queries distinct
 - Gallery still detail-fetches aligned hits after SearchYield (by design)
 
+## Phase 2w — Esprit Jeu + Play-In SearchYield durable (done 2026-07-24)
+
+- Esprit Jeu: `keywords=` → typed `{url,title?}` promote/reuse
+- Play-In: catalogue `?search=` → typed `{url,productId?}` promote/reuse
+- Detail GETs still verify barcode on winners
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
+| Philibert SearchYield (`search_query` identity) | Needs core identity param first |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| Remaining Flare peers SearchYield | Esprit Jeu / Play-In / Philibert (`search_query` identity) |

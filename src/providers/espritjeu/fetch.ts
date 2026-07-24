@@ -5,6 +5,10 @@ import {
   barcodesEquivalent,
   normalizeProductBarcode,
 } from "@/core/identify/normalize";
+import {
+  promoteEspritJeuSearchEvidence,
+  readEspritJeuSearchEvidence,
+} from "./durableEvidence";
 
 const BASE_URL = "https://www.espritjeu.com";
 const HEADERS = {
@@ -177,16 +181,21 @@ export async function searchEspritJeuHits(
   const searchTerm = normalizedBarcode || cleanedQuery;
   if (!searchTerm) return [];
 
+  const searchUrl = `${BASE_URL}/dhtml/resultat_recherche.php?keywords=${encodeURIComponent(searchTerm)}`;
+  const fromEvidence = await readEspritJeuSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Esprit Jeu] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, limit);
+  }
+
   try {
-    const response = await fetchGetWithFlareFallback(
-      `${BASE_URL}/dhtml/resultat_recherche.php`,
-      {
-        params: { keywords: searchTerm },
-        headers: HEADERS,
-        timeout: 10_000,
-      },
-    );
-    return parseEspritJeuSearchHits(response.data as string, limit);
+    const response = await fetchGetWithFlareFallback(searchUrl, {
+      headers: HEADERS,
+      timeout: 10_000,
+    });
+    const hits = parseEspritJeuSearchHits(response.data as string, limit);
+    await promoteEspritJeuSearchEvidence(searchUrl, hits);
+    return hits;
   } catch (error) {
     console.error("[Esprit Jeu] Search failed:", error);
     return [];

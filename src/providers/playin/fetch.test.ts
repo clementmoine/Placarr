@@ -1,10 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readPlayInSearchEvidence = vi.fn();
+const promotePlayInSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readPlayInSearchEvidence: (...args: unknown[]) =>
+    readPlayInSearchEvidence(...args),
+  promotePlayInSearchEvidence: (...args: unknown[]) =>
+    promotePlayInSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   parsePlayInCatalogueHits,
   parsePlayInProductHtml,
   parsePlayInProductJsonLd,
+  searchPlayInHits,
 } from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
 
 const PRODUCT_URL =
   "https://www.play-in.com/fr/produit/202062/black-stories-morts-de-rire";
@@ -33,6 +50,14 @@ const RSC_HTML = `
 const CATALOGUE_HTML = `
 <a href="/fr/produit/202062/black-stories-morts-de-rire">Black Stories</a>
 <a href="/fr/produit/999999/other-game">Other</a>`;
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readPlayInSearchEvidence.mockReset();
+  promotePlayInSearchEvidence.mockReset();
+  readPlayInSearchEvidence.mockResolvedValue(null);
+  promotePlayInSearchEvidence.mockResolvedValue(undefined);
+});
 
 describe("parsePlayInProductJsonLd", () => {
   it("reads a standard Product JSON-LD block", () => {
@@ -95,5 +120,44 @@ describe("parsePlayInProductHtml", () => {
     expect(product.reference).toBe("202062");
     expect(product.priceCents).toBe(1350);
     expect(product.productUrl).toBe(PRODUCT_URL);
+  });
+});
+
+describe("searchPlayInHits", () => {
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    readPlayInSearchEvidence.mockResolvedValueOnce([
+      { url: PRODUCT_URL, productId: "202062" },
+    ]);
+
+    await expect(searchPlayInHits("Black Stories")).resolves.toEqual([
+      { url: PRODUCT_URL, productId: "202062" },
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promotePlayInSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: CATALOGUE_HTML,
+    } as never);
+
+    await expect(searchPlayInHits("Black Stories")).resolves.toEqual([
+      { url: PRODUCT_URL, productId: "202062" },
+      {
+        url: "https://www.play-in.com/fr/produit/999999/other-game",
+        productId: "999999",
+      },
+    ]);
+    expect(promotePlayInSearchEvidence).toHaveBeenCalledWith(
+      "https://www.play-in.com/fr/gamme/5/jeux-de-societe/catalogue?search=Black%20Stories",
+      [
+        { url: PRODUCT_URL, productId: "202062" },
+        {
+          url: "https://www.play-in.com/fr/produit/999999/other-game",
+          productId: "999999",
+        },
+      ],
+    );
   });
 });

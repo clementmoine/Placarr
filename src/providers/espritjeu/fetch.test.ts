@@ -1,10 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readEspritJeuSearchEvidence = vi.fn();
+const promoteEspritJeuSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readEspritJeuSearchEvidence: (...args: unknown[]) =>
+    readEspritJeuSearchEvidence(...args),
+  promoteEspritJeuSearchEvidence: (...args: unknown[]) =>
+    promoteEspritJeuSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   parseEspritJeuProductHtml,
   parseEspritJeuProductImages,
   parseEspritJeuSearchHits,
+  searchEspritJeuHits,
 } from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
 
 const PRODUCT_URL =
   "https://www.espritjeu.com/jeu-de-societe/black-stories-mort-de-rire.html";
@@ -30,6 +47,14 @@ Black Stories - Mort de Rire
 </a>
 </h3>
 </div>`;
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readEspritJeuSearchEvidence.mockReset();
+  promoteEspritJeuSearchEvidence.mockReset();
+  readEspritJeuSearchEvidence.mockResolvedValue(null);
+  promoteEspritJeuSearchEvidence.mockResolvedValue(undefined);
+});
 
 describe("parseEspritJeuSearchHits", () => {
   it("extracts product URLs and listing titles", () => {
@@ -66,5 +91,34 @@ describe("parseEspritJeuProductImages", () => {
     expect(parseEspritJeuProductImages(html)).toEqual([
       "https://www.espritjeu.com/upload/image/black-stories---mort-de-rire-p-image-99838-grande.jpg",
     ]);
+  });
+});
+
+describe("searchEspritJeuHits", () => {
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    readEspritJeuSearchEvidence.mockResolvedValueOnce([
+      { url: PRODUCT_URL, title: "Black Stories - Mort de Rire" },
+    ]);
+
+    await expect(searchEspritJeuHits("Black Stories")).resolves.toEqual([
+      { url: PRODUCT_URL, title: "Black Stories - Mort de Rire" },
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteEspritJeuSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_HTML,
+    } as never);
+
+    await expect(searchEspritJeuHits("Black Stories")).resolves.toEqual([
+      { url: PRODUCT_URL, title: "Black Stories - Mort de Rire" },
+    ]);
+    expect(promoteEspritJeuSearchEvidence).toHaveBeenCalledWith(
+      "https://www.espritjeu.com/dhtml/resultat_recherche.php?keywords=Black%20Stories",
+      [{ url: PRODUCT_URL, title: "Black Stories - Mort de Rire" }],
+    );
   });
 });

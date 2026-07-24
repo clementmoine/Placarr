@@ -1,8 +1,12 @@
 /**
- * No-Intro Tier0 resolve — title FTS (+ optional platform via DAT name) against
- * the local SQLite index. No covers; identify + catalogue facts only.
+ * No-Intro Tier0 resolve — checksum-first (when known), else title FTS
+ * (+ optional platform via DAT name). No covers; identify + catalogue facts only.
  */
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAdapterContext,
+  RomChecksums,
+} from "@/types/providerModule";
 
 import {
   METADATA_TITLE_ALIGN_FLOOR,
@@ -20,6 +24,44 @@ import {
 } from "./indexStore";
 
 const TITLE_FLOOR = Math.max(METADATA_TITLE_ALIGN_FLOOR, 0.58);
+
+function readExternalId(
+  ids: Record<string, string | null | undefined> | null | undefined,
+  key: string,
+): string | undefined {
+  if (!ids) return undefined;
+  const direct = ids[key]?.trim();
+  if (direct) return direct;
+  const lower = key.toLowerCase();
+  for (const [entryKey, value] of Object.entries(ids)) {
+    if (entryKey.toLowerCase() === lower && value?.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Build a checksum query from explicit `romChecksums` and/or externalIds
+ * (`sha1` / `md5` / `crc` / `crc32`).
+ */
+export function romChecksumsFromMetadataContext(input: {
+  romChecksums?: RomChecksums | null;
+  externalIds?: Record<string, string | null | undefined> | null;
+}): NoIntroChecksumQuery | null {
+  const explicit = input.romChecksums;
+  const ids = input.externalIds;
+  const query: NoIntroChecksumQuery = {
+    sha1: explicit?.sha1?.trim() || readExternalId(ids, "sha1"),
+    md5: explicit?.md5?.trim() || readExternalId(ids, "md5"),
+    crc:
+      explicit?.crc?.trim() ||
+      readExternalId(ids, "crc") ||
+      readExternalId(ids, "crc32"),
+  };
+  if (!query.sha1 && !query.md5 && !query.crc) return null;
+  return query;
+}
 
 /**
  * Strip trailing No-Intro parentheticals (region, language, Rev, Proto…).
@@ -123,13 +165,20 @@ export function mapNoIntroGameToMetadata(
       alias!.toLowerCase().trim() !== game.name.toLowerCase().trim(),
   );
 
+  const externalIds: Record<string, string> = {
+    nointro: String(game.id),
+  };
+  if (primaryRom?.crc) externalIds.crc = primaryRom.crc;
+  if (primaryRom?.md5) externalIds.md5 = primaryRom.md5;
+  if (primaryRom?.sha1) externalIds.sha1 = primaryRom.sha1;
+
   return withMetadataPlatformKeys({
     title: game.name,
     platformKey: detectVideoGamePlatformKey(game.datName) || undefined,
     description: game.description,
     aliases: aliases.length > 0 ? aliases : undefined,
     facts,
-    externalIds: { nointro: String(game.id) },
+    externalIds,
   });
 }
 
@@ -148,7 +197,7 @@ export async function fetchFromNoIntro(
   return best ? mapNoIntroGameToMetadata(best) : null;
 }
 
-/** Checksum path when a ROM hash is known (future dump / file ingest). */
+/** Checksum path when a ROM hash is known (file ingest / prior enrich). */
 export async function fetchFromNoIntroByChecksum(
   checksum: NoIntroChecksumQuery,
   platform?: string | null,
@@ -162,4 +211,27 @@ export async function fetchFromNoIntroByChecksum(
   );
   const best = scoped[0] ?? hits[0];
   return best ? mapNoIntroGameToMetadata(best) : null;
+}
+
+/**
+ * Adapter entry: prefer exact ROM checksum lookup, then title FTS.
+ */
+export async function resolveNoIntroMetadata(
+  ctx: Pick<
+    MetadataAdapterContext,
+    "name" | "platform" | "romChecksums" | "externalIds" | "match"
+  >,
+): Promise<MetadataResult | null> {
+  const checksum = romChecksumsFromMetadataContext({
+    romChecksums: ctx.romChecksums,
+    externalIds: {
+      ...(ctx.match?.externalIds ?? {}),
+      ...(ctx.externalIds ?? {}),
+    },
+  });
+  if (checksum) {
+    const byHash = await fetchFromNoIntroByChecksum(checksum, ctx.platform);
+    if (byHash) return byHash;
+  }
+  return fetchFromNoIntro(ctx.name, ctx.platform);
 }

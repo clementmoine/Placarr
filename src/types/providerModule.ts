@@ -43,6 +43,12 @@ export type MatchContext = {
   externalIds?: Record<string, string | null | undefined>;
 };
 
+export type RomChecksums = {
+  crc?: string | null;
+  md5?: string | null;
+  sha1?: string | null;
+};
+
 export type MetadataAdapterContext = {
   name: string;
   type?: string | null;
@@ -61,6 +67,11 @@ export type MetadataAdapterContext = {
   fallbackNames?: string[];
   /** ISO release date from prior consensus — soft discriminant for remakes. */
   releaseDate?: string | null;
+  /**
+   * ROM dump checksums when known (file ingest / prior No-Intro hit).
+   * Tier0 dump providers prefer sha1 > md5 > crc over title search.
+   */
+  romChecksums?: RomChecksums;
   /**
    * Shared match bag for this enrich pass. Prefer reading titles / barcodes /
    * releaseDate from here when present; scalar fields above stay for compat.

@@ -8,7 +8,7 @@ import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import { ensureNoIntroIndex } from "./indexStore";
-import { fetchFromNoIntro } from "./resolver";
+import { fetchFromNoIntro, resolveNoIntroMetadata } from "./resolver";
 
 export const nointroModule: ProviderModule = {
   info: {
@@ -22,12 +22,12 @@ export const nointroModule: ProviderModule = {
     defaultLanguage: "en",
     websiteUrl: "https://www.no-intro.org/",
     notes:
-      "Dump DAT Logiqx local (`pnpm nointro:build-index`, NOINTRO_DAT_PATH = fichier ou dossier). Index SQLite — pas de download au scan. Titre + CRC/clone ; pas de jaquette.",
+      "Dump DAT Logiqx local (`pnpm nointro:build-index`, NOINTRO_DAT_PATH = fichier ou dossier). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
   },
   createMetadataAdapter: () => ({
     id: "nointro",
-    async resolve({ name, platform }) {
-      return (await fetchFromNoIntro(name, platform)) as MetadataResult | null;
+    async resolve(ctx) {
+      return (await resolveNoIntroMetadata(ctx)) as MetadataResult | null;
     },
   }),
   healthCheck: createMetadataHealthCheck("nointro", "No-Intro", async () => {
@@ -79,7 +79,12 @@ export const nointroModule: ProviderModule = {
   },
 };
 
-export { fetchFromNoIntro, fetchFromNoIntroByChecksum } from "./resolver";
+export {
+  fetchFromNoIntro,
+  fetchFromNoIntroByChecksum,
+  resolveNoIntroMetadata,
+  romChecksumsFromMetadataContext,
+} from "./resolver";
 export {
   ensureNoIntroIndex,
   buildNoIntroIndex,

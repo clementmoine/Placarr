@@ -5,6 +5,9 @@ import {
   fetchFromNoIntro,
   mapNoIntroGameToMetadata,
   pickBestNoIntroGame,
+  resolveNoIntroMetadata,
+  romChecksumsFromMetadataContext,
+  stripNoIntroReleaseFlags,
 } from "./resolver";
 
 const FIXTURE_DAT = `<?xml version="1.0"?>
@@ -47,7 +50,7 @@ describe("nointro resolver", () => {
     });
     expect(metadata.title).toBe("Tetris (World) (Rev 1)");
     expect(metadata.attachments).toBeUndefined();
-    expect(metadata.externalIds).toEqual({ nointro: "1" });
+    expect(metadata.externalIds).toEqual({ nointro: "1", crc: "46df91ad" });
     expect(metadata.facts?.some((fact) => fact.label === "CRC")).toBe(true);
     expect(metadata.platformKey).toBeTruthy();
   });
@@ -72,12 +75,73 @@ describe("nointro resolver", () => {
     expect(best?.name).toBe("Tetris (Japan)");
   });
 
-  it("strip les flags région/rev pour l'alignement", async () => {
-    const { stripNoIntroReleaseFlags } = await import("./resolver");
+  it("strip les flags région/rev pour l'alignement", () => {
     expect(stripNoIntroReleaseFlags("Tetris (World) (Rev 1)")).toBe("Tetris");
     expect(
       stripNoIntroReleaseFlags("Pokémon Red Version (USA, Europe)"),
     ).toBe("Pokémon Red Version");
+  });
+
+  it("lit les checksums depuis romChecksums ou externalIds", () => {
+    expect(
+      romChecksumsFromMetadataContext({
+        romChecksums: { sha1: "EA9BCAE617FDF159B045185467AE58B2E4A48B9A" },
+      }),
+    ).toEqual({
+      sha1: "EA9BCAE617FDF159B045185467AE58B2E4A48B9A",
+      md5: undefined,
+      crc: undefined,
+    });
+    expect(
+      romChecksumsFromMetadataContext({
+        externalIds: { crc32: "46df91ad" },
+      }),
+    ).toEqual({
+      sha1: undefined,
+      md5: undefined,
+      crc: "46df91ad",
+    });
+  });
+
+  it("resolve checksum-first even when the title would not match", async () => {
+    const metadata = await resolveNoIntroMetadata({
+      name: "Completely Unrelated",
+      platform: "Game Boy",
+      romChecksums: { crc: "46df91ad" },
+    });
+    expect(metadata?.title).toContain("Tetris");
+    expect(metadata?.externalIds?.crc).toBe("46df91ad");
+  });
+
+  it("falls back to title FTS when the checksum misses", async () => {
+    const metadata = await resolveNoIntroMetadata({
+      name: "Pokémon Red",
+      platform: "Game Boy",
+      romChecksums: { crc: "deadbeef" },
+    });
+    expect(metadata?.title).toContain("Pokémon Red");
+  });
+
+  it("émet crc/md5/sha1 dans externalIds pour les passes suivantes", () => {
+    const metadata = mapNoIntroGameToMetadata({
+      id: 9,
+      name: "Tetris (World) (Rev 1)",
+      datName: "Nintendo - Game Boy",
+      roms: [
+        {
+          name: "t.gb",
+          crc: "46df91ad",
+          md5: "982ed5d2b12a0377eb14bcdc41237494",
+          sha1: "9306510639ab3d52b27fc5bc5c0f5c4b4c1d3a4e",
+        },
+      ],
+    });
+    expect(metadata.externalIds).toMatchObject({
+      nointro: "9",
+      crc: "46df91ad",
+      md5: "982ed5d2b12a0377eb14bcdc41237494",
+      sha1: "9306510639ab3d52b27fc5bc5c0f5c4b4c1d3a4e",
+    });
   });
 
   it("resolve via index FTS", async () => {

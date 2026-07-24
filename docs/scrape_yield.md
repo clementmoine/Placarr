@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3d No-Intro; Phase P4a LaunchBox FTS measure.
+> Phase 1–2am shipped; Phase 3a–3e No-Intro checksum-first; Phase P4a LaunchBox FTS.
 
 ## Principle
 
@@ -313,9 +313,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Soft keep signal: p95 ≤ 100ms on the measuring machine
 - Unit budget: `LAUNCHBOX_FTS_MATCH_PLAN_BUDGET` (20) + `LAUNCHBOX_FTS_MATCH_LIMIT` (200)
 
+## Phase 3e — No-Intro checksum-first resolve (done 2026-07-24)
+
+- `MetadataAdapterContext.romChecksums` + `externalIds` (`sha1`/`md5`/`crc`/`crc32`)
+- `resolveNoIntroMetadata` prefers exact dump hash, then title FTS
+- Hits emit `crc`/`md5`/`sha1` on `externalIds` for later enrich passes
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| ROM checksum ingest → No-Intro lookup | Wire `fetchFromNoIntroByChecksum` when file hashes exist |
 | Optional DAT download / sync script | Out of band corpus management |
+| File-ingest UI / worker feeding `romChecksums` | Product surface for dump hashes |

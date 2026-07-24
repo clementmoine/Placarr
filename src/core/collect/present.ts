@@ -139,18 +139,8 @@ export const itemListMetadataInclude = {
     description: true,
     facts: true,
     attachments: itemListCoverAttachmentInclude,
-    // Marketplace price rows carry listing coverUrl before metadata scrapes
-    // write gallery attachments — present injects those covers on read.
-    priceOffers: {
-      select: {
-        source: true,
-        sourceUrl: true,
-        productName: true,
-        rawValue: true,
-      },
-      orderBy: { observedAt: "desc" as const },
-      take: 16,
-    },
+    // Marketplace covers are persisted as Attachment rows at price-offer write
+    // time — list grids must not load priceOffers.rawValue JSON.
   },
 } as const;
 
@@ -181,6 +171,7 @@ function mapStoredPriceOffers(
   return rows.map((row) => ({
     source: row.source,
     sourceUrl: row.sourceUrl,
+    productName: row.productName,
     rawValue: row.rawValue,
     productBarcode: undefined,
   }));

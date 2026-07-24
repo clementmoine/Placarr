@@ -87,6 +87,7 @@ export async function persistProviderExternalLinksForMetadata(
     priceOffers?: ReadonlyArray<{
       source: string;
       sourceUrl?: string | null;
+      productName?: string | null;
       rawValue?: unknown;
     }>;
     fieldEvidence?: readonly FieldEvidenceInput[];
@@ -145,16 +146,28 @@ export async function persistProviderExternalLinksForMetadata(
   );
 
   const deduped = dedupeFacts(dedupeProviderExternalLinkFacts(next));
-  if (externalLinkSnapshot(existing) === externalLinkSnapshot(deduped ?? [])) {
-    return deduped ?? null;
+  const factsUnchanged =
+    externalLinkSnapshot(existing) === externalLinkSnapshot(deduped ?? []);
+
+  if (!factsUnchanged) {
+    await prisma.metadata.update({
+      where: { id: metadataId },
+      data: {
+        facts: deduped ? JSON.stringify(deduped) : null,
+      },
+    });
   }
 
-  await prisma.metadata.update({
-    where: { id: metadataId },
-    data: {
-      facts: deduped ? JSON.stringify(deduped) : null,
-    },
-  });
+  // Marketplace covers land at write time so list present never needs
+  // priceOffers.rawValue — even when the external-link facts snapshot is stable.
+  if (input.priceOffers?.length) {
+    await syncMarketplaceCoverAttachmentsFromPriceOffers({
+      metadataId,
+      itemTitle: input.itemTitle,
+      shelfType: input.shelfType,
+      priceOffers: input.priceOffers,
+    });
+  }
 
   return deduped ?? null;
 }
@@ -167,7 +180,12 @@ async function loadCachedPriceOffersForBarcode(barcode: string) {
     where: { barcode: cleanedBarcode },
     select: {
       priceOffers: {
-        select: { source: true, sourceUrl: true, rawValue: true },
+        select: {
+          source: true,
+          sourceUrl: true,
+          productName: true,
+          rawValue: true,
+        },
       },
     },
   });
@@ -188,7 +206,12 @@ async function loadItemScopedPriceOffers(input: {
     where: scopes.length === 1 ? scopes[0] : { OR: scopes },
     orderBy: { observedAt: "desc" },
     take: 24,
-    select: { source: true, sourceUrl: true, rawValue: true },
+    select: {
+      source: true,
+      sourceUrl: true,
+      productName: true,
+      rawValue: true,
+    },
   });
 }
 
@@ -322,13 +345,6 @@ export async function syncPriceOfferExternalLinksForMetadata(input: {
     priceOffers,
     fieldEvidence,
   });
-
-  await syncMarketplaceCoverAttachmentsFromPriceOffers({
-    metadataId: input.metadataId,
-    itemTitle: input.itemTitle,
-    shelfType: input.shelfType,
-    priceOffers,
-  });
 }
 
 async function syncMarketplaceCoverAttachmentsFromPriceOffers(input: {
@@ -338,6 +354,7 @@ async function syncMarketplaceCoverAttachmentsFromPriceOffers(input: {
   priceOffers: ReadonlyArray<{
     source: string;
     sourceUrl?: string | null;
+    productName?: string | null;
     rawValue?: unknown;
   }>;
 }): Promise<void> {
@@ -368,7 +385,12 @@ async function syncMarketplaceCoverAttachmentsFromPriceOffers(input: {
 
 export async function persistProviderExternalLinksForBarcodeItems(
   barcode: string,
-  priceOffers: ReadonlyArray<{ source: string; sourceUrl?: string | null }>,
+  priceOffers: ReadonlyArray<{
+    source: string;
+    sourceUrl?: string | null;
+    productName?: string | null;
+    rawValue?: unknown;
+  }>,
 ): Promise<void> {
   if (!barcode.trim()) return;
 

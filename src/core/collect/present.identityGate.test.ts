@@ -99,7 +99,7 @@ describe("presentItemFromStorage identity gates (golden)", () => {
     ).toBe(false);
   });
 
-  it("accepts enrich-aligned BM Mega Drive cover through present (price-offer inject)", () => {
+  it("keeps write-persisted BM Mega Drive cover without list priceOffers.rawValue", () => {
     const bmCover =
       "https://d2e6ccujb3mkqf.cloudfront.net/d0df7a5d-d274-4cad-948c-c26b697bdd7a-1.jpg";
     const presented = presentItemFromStorage({
@@ -125,20 +125,27 @@ describe("presentItemFromStorage identity gates (golden)", () => {
         lastFetched: new Date("2026-01-01T00:00:00.000Z"),
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-        attachments: [],
-        priceOffers: [
-          {
-            source: "Back Market",
-            sourceUrl:
-              "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
-            productName: "Sega Mega Drive - Noir",
-            rawValue: {
-              productName: "Sega Mega Drive - Noir",
-              coverUrl: bmCover,
-              sourceUrl:
-                "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
-            },
-          },
+        // Cover already persisted at price-offer write — list present has no
+        // priceOffers payload (and must not need rawValue to show the cover).
+        attachments: [
+          withProviderAttachmentTraits({
+            id: "att-bm-md",
+            metadataId: "meta-md",
+            type: "cover",
+            source: "backmarket",
+            url: bmCover,
+            title: "Sega Mega Drive - Noir",
+            duration: null,
+            role: null,
+            coverProvenance: null,
+            platformKey: null,
+            width: null,
+            height: null,
+            meanLuminance: null,
+            darkPixelRatio: null,
+            createdAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          }),
         ],
       },
     } as Parameters<typeof presentItemFromStorage>[0]);

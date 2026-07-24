@@ -15,7 +15,7 @@ and purges. Not random bugs — **multiple contracts for one decision**.
 | Compteur | Valeur |
 | -------- | ------ |
 | P0 accept→purge | 0 ouvert (3 faits 2026-07-24) |
-| P1 structural | 1 ouvert (list `priceOffers`/`rawValue` encore en lecture) |
+| P1 structural | 0 ouvert |
 | P2 cleanup | 1 ouvert (FlareSolverr concurrency — monitor) |
 | God files >1.5k LOC | 0 (scindés 2026-07-24) |
 
@@ -51,7 +51,7 @@ mutates at stages 3–5.
 | ~~**Price offers unfiltered at write**~~ | — | — | **Fait** — `filterPriceOfferInputsForPersist` |
 | ~~**God files**~~ | — | — | **Fait** — facades + leaves |
 | ~~**Parallel TITLE_STOP_WORDS**~~ | — | — | **Fait** — `IDENTITY_*` DRY |
-| ~~**List present loads priceOffers + double purge**~~ | Shelf grids paid residual ×2 | `present.ts` | **Partiel 2026-07-24** — double purge retiré ; `priceOffers`/`rawValue` encore lus pour injecter covers marketplace. |
+| ~~**List present loads priceOffers + double purge**~~ | — | `present.ts` | **Fait 2026-07-24** — purge unique ; list sans priceOffers ; covers marketplace écrites en Attachment. |
 | ~~**Missing present-path integration tests**~~ | — | — | **Fait 2026-07-24** — `present.identityGate.test.ts` + `identityGateParity.test.ts`. |
 | ~~**No locked 0.58 vs 0.45 mismatch scenario**~~ | — | — | **Fait 2026-07-24** — floors 0.58 / 0.42 + parity tests. |
 
@@ -118,6 +118,6 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 ## Principles verdict
 
 Providers plug-and-play + empty blindness allowlist = healthy. SSOT steps 1–7
-locked (identity / covers / links / prices / god-file splits). Remaining debt is
-opportunistic: list-present still reads marketplace `priceOffers.rawValue` for
-cover injection; FlareSolverr concurrency monitoring; long-term word-list → IDF.
+locked (identity / covers / links / prices / god-file splits). List present no
+longer reads marketplace `priceOffers.rawValue`. Remaining debt is opportunistic:
+FlareSolverr concurrency monitoring; long-term word-list → IDF.

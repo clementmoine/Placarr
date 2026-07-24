@@ -212,6 +212,7 @@ function findProviderExternalLink(
 export type ProviderPriceOfferLinkInput = {
   source: string;
   sourceUrl?: string | null;
+  productName?: string | null;
   productBarcode?: string | null;
   rawValue?: unknown;
 };
@@ -230,6 +231,8 @@ function productBarcodeFromPriceOffer(
 function productTitleFromPriceOffer(
   offer: ProviderPriceOfferLinkInput,
 ): string | null {
+  const direct = offer.productName?.trim();
+  if (direct) return direct;
   const raw = offer.rawValue;
   if (!raw || typeof raw !== "object") return null;
   const record = raw as Record<string, unknown>;

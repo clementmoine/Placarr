@@ -132,6 +132,48 @@ describe("persistProviderExternalLinksForMetadata", () => {
     expect(h.metadataUpdate).not.toHaveBeenCalled();
   });
 
+  it("persists marketplace cover attachments from price-offer rawValue at write", async () => {
+    const bmCover =
+      "https://d2e6ccujb3mkqf.cloudfront.net/d0df7a5d-d274-4cad-948c-c26b697bdd7a-1.jpg";
+    h.metadataFindUnique.mockResolvedValue({
+      facts: JSON.stringify([]),
+    });
+    h.metadataUpdate.mockResolvedValue({});
+    h.attachmentFindMany.mockResolvedValue([]);
+
+    await persistProviderExternalLinksForMetadata("meta-md", {
+      itemTitle: "Sega Megadrive",
+      shelfType: "hardware",
+      priceOffers: [
+        {
+          source: "Back Market",
+          sourceUrl:
+            "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
+          productName: "Sega Mega Drive - Noir",
+          rawValue: {
+            productName: "Sega Mega Drive - Noir",
+            coverUrl: bmCover,
+            sourceUrl:
+              "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
+          },
+        },
+      ],
+    });
+
+    expect(h.attachmentCreateMany).toHaveBeenCalledTimes(1);
+    const created = h.attachmentCreateMany.mock.calls[0][0].data;
+    expect(created).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metadataId: "meta-md",
+          type: "cover",
+          url: bmCover,
+          source: "backmarket",
+        }),
+      ]),
+    );
+  });
+
   it("purge un lien LeDénicheur dont le GTIN de page contredit l'item", async () => {
     // Both sync (trusted-catalog check) and async (validateStored…) call
     // getProviderModule — mock for every call, not once.
@@ -313,7 +355,12 @@ describe("repairProviderExternalLinksForItem", () => {
       where: { barcode: "0827912079678" },
       select: {
         priceOffers: {
-          select: { source: true, sourceUrl: true, rawValue: true },
+          select: {
+            source: true,
+            sourceUrl: true,
+            productName: true,
+            rawValue: true,
+          },
         },
       },
     });
@@ -321,7 +368,12 @@ describe("repairProviderExternalLinksForItem", () => {
       where: { OR: [{ itemId: "item-1" }, { metadataId: "meta-1" }] },
       orderBy: { observedAt: "desc" },
       take: 24,
-      select: { source: true, sourceUrl: true, rawValue: true },
+      select: {
+        source: true,
+        sourceUrl: true,
+        productName: true,
+        rawValue: true,
+      },
     });
     expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);

@@ -96,11 +96,13 @@ Auth / DB / HTTP             → lib/
 | commerce | pricing/resolver, retailer/titleMatch |
 | locale | preference |
 
-**Prochaines réductions utiles** (après SSOT identité — voir [metadata_engine_audit.md](metadata_engine_audit.md) + [backlog § Ouverts](backlog.md#ouverts--base-clean-2026-07-24)) :
+**Prochaines réductions utiles** (voir [metadata_engine_audit.md](metadata_engine_audit.md)) :
 
-1. Découper `enrich/storage.ts` en persist / images / format — ROI faible tant que les gates accept→purge divergent.
-2. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
-3. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
+1. ~~Découper `enrich/storage.ts` images~~ **partiel 2026-07-24** — `media/imageDownload.ts` + `media/imageAssets.ts` ; persist reste dans `storage.ts`.
+2. ~~`fetch` book/locale~~ **partiel 2026-07-24** — `bookSearch.ts` / `bookSearchAliases.ts` / `shelfContentLocale.ts`.
+3. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
+4. Découper encore `titleMatching` / `pricing/resolver` / `identify/compile` par raison de changement.
+5. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
 ## Checklist PR core
 

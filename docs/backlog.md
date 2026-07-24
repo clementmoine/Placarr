@@ -9,9 +9,9 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 
 | Priorité | Item | Détail |
 | -------- | ---- | ------ |
-| **P0** | **SSOT identité / covers / liens (accept→purge)** | **Étapes 1–6 faites** — floors 0.58/0.42, store=present covers, shelfType, offer link=cover, purge facts, filter prix write, golden tests. Reste étape 7 (split god files) — reporté. Détail : [metadata_engine_audit.md](metadata_engine_audit.md). |
-| **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme, pas bloquant pour SSOT. |
-| **P3** | Découper `enrich/storage.ts` (persist / images / format) | Faible ROI tant que SSOT n’est pas verrouillé. Idem `fetch.ts` après. |
+| **P0** | **SSOT identité / covers / liens (accept→purge)** | **Étapes 1–6 faites** ; étape 7 **partielle** (images hors storage, book/locale hors fetch). Détail : [metadata_engine_audit.md](metadata_engine_audit.md). |
+| **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme. |
+| **P3** | Finir découpe god files | `titleMatching` / `pricing/resolver` / `identify/compile` ; persist `storage` encore dense. |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.

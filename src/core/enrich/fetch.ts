@@ -43,7 +43,12 @@ import {
   normalizeDisplayTitle,
   scoreMetadataDisplayTitle,
 } from "@/core/enrich/titles/displayScore";
-import { IDENTITY_FUNCTION_WORDS } from "@/core/enrich/titles/identityNoise";
+import { preferredMetadataLanguagesFromShelfName } from "@/core/enrich/shelfContentLocale";
+import { buildBookMetadataSearchQueries } from "@/core/enrich/bookSearch";
+import {
+  supplementBookSearchAliases,
+  withBookSearchAliases,
+} from "@/core/enrich/bookSearchAliases";
 import {
   aliasesExcludingTitle,
   collectMergedSearchAliases,
@@ -86,17 +91,6 @@ import {
   withMatchOnAdapterContext,
 } from "@/core/catalog/matchContext";
 import { bookIsbnBootstrapProviderIds } from "@/core/catalog/catalog";
-import type { LocaleLanguage } from "@/core/locale/preference";
-import {
-  cleanSearchQuery,
-  stripLegalMarkSymbols,
-} from "@/core/enrich/search/query";
-import axios from "axios";
-import {
-  explicitVolumeNumbers,
-  hasExplicitVolumeMarker,
-  stripVolumeMarkersFromTitle,
-} from "@/core/enrich/titles/volumeNumber";
 import { AttachmentType } from "@prisma/client";
 import { isHowLongToBeatFactSource } from "@/core/catalog/sourceTraits";
 import { PROVIDERS } from "@/core/catalog/catalog";
@@ -1679,264 +1673,12 @@ export {
   supplementGameEditionProviderResults,
 };
 
-// ── coalesced from src/core/enrich/shelfContentLocale.ts ──
-/**
- * When a shelf label signals a French-market comics/books collection, metadata
- * descriptions in another language (e.g. a Spanish edition synopsis) are likely
- * the wrong hit. Returns null when the shelf name carries no locale hint.
- */
-export function preferredMetadataLanguagesFromShelfName(
-  shelfName?: string | null,
-): LocaleLanguage[] | null {
-  const tokens = normalizeDisplayTitle(shelfName ?? "");
-  if (tokens.length === 0) return null;
-
-  const frMarketHints = new Set([
-    "manga",
-    "mangas",
-    "livre",
-    "livres",
-    "bd",
-    "bde",
-    "bédé",
-    "bede",
-    "bande",
-    "comic",
-    "comics",
-    "roman",
-    "romans",
-    "album",
-    "albums",
-  ]);
-
-  if (
-    tokens.some(
-      (token) =>
-        frMarketHints.has(token) ||
-        token.startsWith("béd") ||
-        token.startsWith("bede"),
-    )
-  ) {
-    return ["fr"];
-  }
-
-  return null;
-}
-
-// ── coalesced from src/core/enrich/bookSearch.ts ──
-function distinctiveTokens(value: string): string[] {
-  return normalizeDisplayTitle(value).filter(
-    (token) => token.length >= 3 && !IDENTITY_FUNCTION_WORDS.has(token),
-  );
-}
-
-function shelfAlreadyInTitle(shelfName: string, title: string): boolean {
-  const shelfTokens = distinctiveTokens(shelfName);
-  if (shelfTokens.length === 0) return false;
-  const titleTokenSet = new Set(distinctiveTokens(title));
-  if (shelfTokens.every((token) => titleTokenSet.has(token))) {
-    return true;
-  }
-
-  const normalizedShelf = shelfName.trim().toLowerCase();
-  if (normalizedShelf.endsWith("s") && normalizedShelf.length > 4) {
-    const singular = normalizedShelf.slice(0, -1);
-    if (titleTokenSet.has(singular)) return true;
-  }
-
-  return false;
-}
-
-function shelfSearchVariants(shelfName: string): string[] {
-  return [shelfName.trim()].filter(Boolean);
-}
-
-/**
- * Ordered book/manga metadata search queries. Keeps the raw item title first,
- * then prepends the shelf label when it adds context (e.g. « Mangas » + « Naruto
- * n°01 ») without injecting fixed product-line keywords.
- */
-export function buildBookMetadataSearchQueries(
-  name: string,
-  shelfName?: string | null,
-): string[] {
-  const trimmed = name.trim();
-  if (!trimmed) return [];
-
-  const seen = new Set<string>();
-  const ordered: string[] = [];
-
-  const push = (value: string) => {
-    const candidate =
-      stripLegalMarkSymbols(value.replace(/\s+/g, " ").trim()) ||
-      value.replace(/\s+/g, " ").trim();
-    if (!candidate) return;
-    const key = cleanSearchQuery(candidate).toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    ordered.push(candidate);
-  };
-
-  push(stripLegalMarkSymbols(trimmed) || trimmed);
-
-  const shelf = shelfName?.trim();
-  if (shelf && !shelfAlreadyInTitle(shelf, trimmed)) {
-    for (const variant of shelfSearchVariants(shelf)) {
-      push(`${variant} ${trimmed}`);
-    }
-  }
-
-  return ordered;
-}
-
-// ── coalesced from src/core/enrich/bookSearchAliases.ts ──
-const OPENLIBRARY_SEARCH_URL = "https://openlibrary.org/search.json";
-const OPENLIBRARY_TIMEOUT_MS = 12_000;
-const MIN_CROSS_EDITION_SIMILARITY = 0.55;
-const MIN_FRANCHISE_OCCURRENCES = 2;
-
-type OpenLibrarySearchDoc = {
-  title?: string;
-};
-
-type OpenLibrarySearchResponse = {
-  docs?: OpenLibrarySearchDoc[];
-};
-
-function pickLatinAuthorName(
-  authors?: Array<{ name?: string | null }> | null,
-): string | null {
-  if (!authors?.length) return null;
-  for (const author of authors) {
-    const name = author.name?.trim();
-    if (!name) continue;
-    if (/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(name)) continue;
-    if (/[A-Za-z]/.test(name)) return name;
-  }
-  return null;
-}
-
-async function fetchOpenLibraryTitlesByAuthor(
-  authorName: string,
-): Promise<string[]> {
-  try {
-    const response = await axios.get<OpenLibrarySearchResponse>(
-      OPENLIBRARY_SEARCH_URL,
-      {
-        timeout: OPENLIBRARY_TIMEOUT_MS,
-        params: {
-          author: authorName,
-          limit: 40,
-        },
-      },
-    );
-    return (response.data.docs || [])
-      .map((doc) => doc.title?.trim())
-      .filter((title): title is string => Boolean(title));
-  } catch {
-    return [];
-  }
-}
-
-function franchiseRootCounts(
-  titles: string[],
-): Map<string, { count: number; label: string }> {
-  const counts = new Map<string, { count: number; label: string }>();
-  for (const title of titles) {
-    const key = stripVolumeMarkersFromTitle(title);
-    if (key.length < 4) continue;
-    const trimmed = title.trim();
-    const existing = counts.get(key);
-    if (existing) {
-      existing.count += 1;
-      const preferNew =
-        !hasExplicitVolumeMarker(trimmed) &&
-        (hasExplicitVolumeMarker(existing.label) ||
-          trimmed.length < existing.label.length);
-      if (preferNew) {
-        existing.label = trimmed;
-      }
-    } else {
-      counts.set(key, { count: 1, label: trimmed });
-    }
-  }
-  return counts;
-}
-
-/**
- * Cross-language search aliases for books/manga: when providers only return a
- * localized title (e.g. « L'Attaque des Titans »), look up the author's
- * Open Library bibliography and index recurring franchise names + volume-matched
- * editions (« Attack on Titan », « Shingeki no Kyojin », …).
- */
-export async function supplementBookSearchAliases(
-  title: string | null | undefined,
-  authors?: Array<{ name?: string | null }> | null,
-): Promise<string[]> {
-  const displayTitle = title?.trim();
-  if (!displayTitle) return [];
-
-  const authorName = pickLatinAuthorName(authors);
-  if (!authorName) return [];
-
-  const authorTitles = await fetchOpenLibraryTitlesByAuthor(authorName);
-  if (authorTitles.length === 0) return [];
-
-  const displayRoot = stripVolumeMarkersFromTitle(displayTitle);
-  const displayLang = inferTextLanguage(displayRoot);
-  const displayVolume = explicitVolumeNumbers(displayTitle)[0] ?? null;
-  const rootCounts = franchiseRootCounts(authorTitles);
-  const aliases = new Set<string>();
-
-  for (const candidate of authorTitles) {
-    const candidateRoot = stripVolumeMarkersFromTitle(candidate);
-    const candidateVolume = explicitVolumeNumbers(candidate)[0] ?? null;
-    const similarity = metadataTitleSimilarity(displayRoot, candidateRoot);
-
-    if (displayVolume !== null && candidateVolume !== null) {
-      if (candidateVolume !== displayVolume) continue;
-      if (similarity >= MIN_CROSS_EDITION_SIMILARITY && similarity < 0.99) {
-        aliases.add(candidate);
-      }
-      continue;
-    }
-
-    if (candidateRoot === displayRoot) continue;
-    const franchise = rootCounts.get(candidateRoot);
-    if (!franchise || franchise.count < MIN_FRANCHISE_OCCURRENCES) continue;
-
-    const candidateLang = inferTextLanguage(franchise.label);
-    if (candidateLang === displayLang) continue;
-    if (similarity >= 0.99) continue;
-
-    aliases.add(franchise.label);
-  }
-
-  return Array.from(aliases);
-}
-
-export async function withBookSearchAliases<
-  T extends {
-    title?: string | null;
-    aliases?: string[] | null;
-    authors?: Array<{ name?: string | null }> | null;
-  },
->(metadata: T): Promise<T> {
-  const extra = await supplementBookSearchAliases(
-    metadata.title,
-    metadata.authors,
-  );
-  if (extra.length === 0) return metadata;
-
-  const { aliasesExcludingTitle } = await import("@/core/enrich/aliases");
-  const aliases = aliasesExcludingTitle(
-    metadata.title ?? "",
-    ...(metadata.aliases || []),
-    ...extra,
-  );
-  if (!aliases?.length) return metadata;
-  return { ...metadata, aliases };
-}
+export { preferredMetadataLanguagesFromShelfName } from "@/core/enrich/shelfContentLocale";
+export { buildBookMetadataSearchQueries } from "@/core/enrich/bookSearch";
+export {
+  supplementBookSearchAliases,
+  withBookSearchAliases,
+} from "@/core/enrich/bookSearchAliases";
 
 // ── coalesced from src/core/enrich/merge.ts ──
 function dedupePeople(

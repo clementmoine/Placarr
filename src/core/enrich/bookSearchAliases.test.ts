@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 
-import { supplementBookSearchAliases } from "./fetch";
+import { supplementBookSearchAliases } from "./bookSearchAliases";
 
 const mockedGet = vi.mocked(axios.get);
 

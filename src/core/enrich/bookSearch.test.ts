@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildBookMetadataSearchQueries } from "./fetch";
+import { buildBookMetadataSearchQueries } from "./bookSearch";
 import { retailerSearchQueryUsesOnlyInputTokens } from "@/core/commerce/retailer/metadataLookup";
 
 describe("buildBookMetadataSearchQueries", () => {

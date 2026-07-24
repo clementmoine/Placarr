@@ -1,6 +1,10 @@
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
-import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
+import {
+  isNameOnlyRetailerTitleMatch,
+  NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY,
+} from "@/core/commerce/retailer/titleMatch";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
 
 /**
  * Smartoys (https://www.smartoys.be) is a Belgian retro-gaming retailer whose
@@ -12,6 +16,8 @@ import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatc
  * Safety: an unknown id can redirect to an *unrelated* product, so we only
  * trust a page whose canonical URL actually carries our barcode, or whose title
  * aligns with the requested name on a name-based lookup.
+ *
+ * Name path: mine SearchYield (url + title) → local rank → **one** detail GET.
  */
 
 const SMARTOYS_BASE = "https://www.smartoys.be";
@@ -27,6 +33,12 @@ export interface SmartoysPrices {
   coverUrl?: string | null;
   sourceUrl?: string | null;
 }
+
+/** Mined from advanced_search_result HTML — no detail GET yet. */
+export type SmartoysSearchHit = {
+  url: string;
+  title: string;
+};
 
 interface SmartoysJsonLdOffer {
   price?: number | string;
@@ -176,18 +188,76 @@ async function fetchSmartoysProductPage(
   return parsed;
 }
 
-function parseSmartoysSearchUrls(html: string): string[] {
-  const urls: string[] = [];
+function titleFromSmartoysProductUrl(url: string): string {
+  return (
+    url
+      .match(/jeux-video-([^/]+?)-p-\d+\.html/i)?.[1]
+      ?.replace(/-/g, " ")
+      .trim() ?? ""
+  );
+}
+
+/** SearchYield: product URLs + listing titles (anchor text, else slug). */
+export function parseSmartoysSearchHits(html: string): SmartoysSearchHit[] {
+  const hits: SmartoysSearchHit[] = [];
   const seen = new Set<string>();
   for (const match of html.matchAll(
-    /href="(https:\/\/www\.smartoys\.be\/catalog\/jeux-video[^"]*-p-\d+\.html)"/gi,
+    /href="(https:\/\/www\.smartoys\.be\/catalog\/jeux-video[^"]*-p-\d+\.html)"[^>]*>([\s\S]*?)<\/a>/gi,
   )) {
     const url = match[1];
     if (seen.has(url)) continue;
     seen.add(url);
-    urls.push(url);
+    const anchorTitle = match[2]
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    hits.push({
+      url,
+      title: anchorTitle || titleFromSmartoysProductUrl(url),
+    });
   }
-  return urls;
+  return hits;
+}
+
+function smartoysHitRankScore(
+  hit: SmartoysSearchHit,
+  names: string[],
+): number {
+  const titles = [hit.title, titleFromSmartoysProductUrl(hit.url)]
+    .map((title) => title.trim())
+    .filter(Boolean);
+  if (titles.length === 0 || names.length === 0) return -1;
+  return Math.max(
+    ...names.flatMap((name) =>
+      titles.map((title) => metadataTitleSimilarity(name, title)),
+    ),
+  );
+}
+
+/** Local rank on SearchYield — detail GET only for the winner. */
+export function pickBestSmartoysSearchHit(
+  hits: SmartoysSearchHit[],
+  expectedNames: string[],
+): SmartoysSearchHit | null {
+  if (hits.length === 0) return null;
+  const names = expectedNames.map((name) => name.trim()).filter(Boolean);
+  if (names.length === 0) return hits[0] ?? null;
+
+  let best: SmartoysSearchHit | null = null;
+  let bestScore = -1;
+  for (const hit of hits) {
+    const score = smartoysHitRankScore(hit, names);
+    if (score > bestScore) {
+      bestScore = score;
+      best = hit;
+    }
+  }
+  if (best && bestScore >= NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY) {
+    return best;
+  }
+  // Single cryptic listing (e.g. "TLOU") — one detail, fiche title-gate decides.
+  if (hits.length === 1) return hits[0] ?? null;
+  return null;
 }
 
 async function fetchSmartoysByName(
@@ -211,12 +281,13 @@ async function fetchSmartoysByName(
   });
 
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
-  for (const productUrl of parseSmartoysSearchUrls(String(res.data ?? ""))) {
-    const result = await fetchSmartoysProductPage(productUrl, names, options);
-    if (result) return result;
-  }
+  const best = pickBestSmartoysSearchHit(
+    parseSmartoysSearchHits(String(res.data ?? "")),
+    names,
+  );
+  if (!best) return null;
 
-  return null;
+  return fetchSmartoysProductPage(best.url, names, options);
 }
 
 async function fetchSmartoysByBarcode(

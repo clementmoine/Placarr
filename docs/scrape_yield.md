@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2i shipped (PrestaShop SearchYield-first EAN enrich); Smartoys / corpora / durable SearchYield = next.
+> Phase 1–2j shipped (Smartoys search→rank→1 detail); corpora / durable SearchYield / peers = next.
 
 ## Principle
 
@@ -92,10 +92,19 @@ Barcode search no longer `Promise.all` fiche Flare GETs for every miniature miss
 - Else title-rank shortlist (≤3), sequential enrich, **stop** on barcode match (IQIT / ChipWeld)
 - Shared by all `PRESTASHOP_RETAILER_CONFIGS` shops
 
+## Phase 2j — Smartoys search → rank → 1 detail (done 2026-07-24)
+
+Name path no longer walks every search URL until a fiche title matches:
+
+- `parseSmartoysSearchHits` — SearchYield (url + anchor/slug title)
+- `pickBestSmartoysSearchHit` — local title rank ≥ retailer floor
+- **One** `fetchSmartoysProductPage` for the winner
+- Barcode path unchanged (`product_info.php?products_id=` → 1 GET)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Smartoys (and peers): search HTML → rank → 1 detail | Classic 1 search → N fiche spray |
+| Peer Flare name paths (AMC meta↔prix cache, Geedie, …) | Same 1-search philosophy |
 | Local full-set / dump sync | Closed platforms at home latency |
 | SearchYield durability | Soft-404 / search pages beyond PC detail / eBay process cache |

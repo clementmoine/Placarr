@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2f shipped (price gap-fill via retail ProviderEvidence); metadata seed gap-fill / eBay = next.
+> Phase 1–2g shipped (metadata seed gap-fill); eBay batch / corpora = next.
 
 ## Principle
 
@@ -69,11 +69,17 @@ Boardgame retailers no longer slim-and-forget after paying for a fiche GET:
 - Scan promotes evidence; pinned refresh **reuses** fresh rows (zero HTTP) before Flare/product GET
 - PriceCharting already had the multi-condition path; retailers now match that contract
 
+## Phase 2g — Metadata seed gap-fill (done 2026-07-24)
+
+- `apiProvidersForMetadataPass` — seed/prior fiche complete ⇒ skip Tier 0+1 swarm (pinned non-scrape only)
+- `fetchAndStoreMetadata` loads DB snapshot into `seededActiveResults` even when `forceRefresh`
+- Stage-2 non-scrape secondaries + identify fallbacks skip when capabilities already satisfied
+- Pinned scrapes still refresh; incomplete seed still wakes the full API set
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Metadata create/refresh seed gap-fill | Don’t blank-slate Tier 0+1 when fiche already complete |
 | eBay: batch search → aggregate | One Browse search ≫ N item details |
 | Local full-set / dump sync | Closed platforms at home latency |
 | Flare retailers: 1 search → N candidates | Same philosophy as PC |

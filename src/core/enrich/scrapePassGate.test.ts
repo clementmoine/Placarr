@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  apiProvidersForMetadataPass,
   externalIdsFromStoredSources,
   metadataResultsHavePrimaryBookCover,
   preferPinnedProviderIds,
@@ -115,6 +116,48 @@ describe("shouldRunScrapeMetadataPass", () => {
         hasCapability,
       }),
     ).toBe(false);
+  });
+});
+
+describe("apiProvidersForMetadataPass", () => {
+  const completeGame: MetadataResult = {
+    title: "Tony Hawk's American Wasteland",
+    imageUrl: "https://example.com/cover.jpg",
+    description: "Skateboarding open world.",
+  };
+
+  it("returns the full API candidate set when the seed still has gaps", () => {
+    expect(
+      apiProvidersForMetadataPass({
+        type: "games",
+        activeResults: [{ title: "Tony Hawk" }],
+        candidateApiProviderIds: ["igdb", "screenscraper", "launchbox"],
+        hasCapability,
+      }),
+    ).toEqual(["igdb", "screenscraper", "launchbox"]);
+  });
+
+  it("narrows to fiche-pinned non-scrape ids when the seed is complete", () => {
+    expect(
+      apiProvidersForMetadataPass({
+        type: "games",
+        activeResults: [completeGame],
+        pinnedNonScrapeProviderIds: ["igdb"],
+        candidateApiProviderIds: ["igdb", "screenscraper", "launchbox"],
+        hasCapability,
+      }),
+    ).toEqual(["igdb"]);
+  });
+
+  it("skips the entire API pass when complete and nothing is pinned", () => {
+    expect(
+      apiProvidersForMetadataPass({
+        type: "games",
+        activeResults: [completeGame],
+        candidateApiProviderIds: ["igdb", "screenscraper"],
+        hasCapability,
+      }),
+    ).toEqual([]);
   });
 });
 

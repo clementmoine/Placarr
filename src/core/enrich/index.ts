@@ -156,6 +156,7 @@ export async function getMetadata(
     existingScrapeProviderIds?: readonly string[];
     existingExternalIds?: Record<string, string | null>;
     existingProviderRecordUrls?: Record<string, string>;
+    seededActiveResults?: MetadataResult[];
     onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
   } = {},
 ): Promise<MetadataResult | null> {
@@ -181,7 +182,8 @@ export async function getMetadata(
     !options.onApiPassComplete &&
     !options.existingScrapeProviderIds?.length &&
     !options.existingExternalIds &&
-    !options.existingProviderRecordUrls;
+    !options.existingProviderRecordUrls &&
+    !options.seededActiveResults?.length;
 
   if (shareableCache) {
     const cached = metadataCache.get(key);
@@ -205,6 +207,7 @@ export async function getMetadata(
           existingScrapeProviderIds: options.existingScrapeProviderIds,
           existingExternalIds: options.existingExternalIds,
           existingProviderRecordUrls: options.existingProviderRecordUrls,
+          seededActiveResults: options.seededActiveResults,
           onApiPassComplete: options.onApiPassComplete,
         },
       );
@@ -299,6 +302,16 @@ export async function fetchAndStoreMetadata(
     providerRecordUrls: existingProviderRecordUrls,
   } = await storedProviderMemoryForItem(itemId);
 
+  // Even on forceRefresh, seed capability gating from the current fiche so we
+  // gap-fill Tier 0+1 instead of blank-slating IGDB/SS/… every time.
+  let seededActiveResults: MetadataResult[] | undefined;
+  {
+    const prior = await getCachedMetadata(itemId);
+    if (prior) {
+      seededActiveResults = [formatMetadataFromStorage(prior)];
+    }
+  }
+
   let progressiveStored = false;
   const persistPartial = async (partial: MetadataResult) => {
     if (
@@ -332,6 +345,7 @@ export async function fetchAndStoreMetadata(
       existingScrapeProviderIds,
       existingExternalIds,
       existingProviderRecordUrls,
+      seededActiveResults,
       onApiPassComplete: persistPartial,
     });
   } catch (error) {

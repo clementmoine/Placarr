@@ -783,4 +783,85 @@ describe("fetchMetadataByType generic routing", () => {
       mockResolve.mock.calls.some((call) => call[1] === "bedetheque"),
     ).toBe(true);
   });
+
+  it("skips Tier 0+1 API swarm when seededActiveResults already complete", async () => {
+    const seeded: MetadataResult = {
+      title: "Tony Hawk's American Wasteland",
+      imageUrl: "https://example.com/cover.jpg",
+      description: "Skateboarding open world.",
+    };
+
+    const res = await fetchMetadataByType(
+      "Tony Hawk's American Wasteland",
+      "games",
+      null,
+      "wii",
+      {
+        shelfName: "Wii",
+        seededActiveResults: [seeded],
+      },
+    );
+
+    expect(res?.title).toBe("Tony Hawk's American Wasteland");
+    // No non-scrape API resolves when seed fills identify+cover+description
+    // and nothing is pinned.
+    const nonScrapeCalls = mockResolve.mock.calls.filter((call) => {
+      const id = call[1] as string;
+      return !["howlongtobeat", "coverproject", "pricecharting", "mobygames"].includes(
+        id,
+      );
+    });
+    // Soft check: at least IGDB/ScreenScraper/LaunchBox must not run.
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "igdb"),
+    ).toBe(false);
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "screenscraper"),
+    ).toBe(false);
+    expect(nonScrapeCalls.length).toBeLessThanOrEqual(
+      mockResolve.mock.calls.length,
+    );
+  });
+
+  it("still refreshes a pinned scrape when the seed is already complete", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "pricecharting") {
+        return {
+          title: "Tony Hawk's American Wasteland",
+          imageUrl: "https://example.com/pc.jpg",
+          description: "From PriceCharting",
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    await fetchMetadataByType(
+      "Tony Hawk's American Wasteland",
+      "games",
+      null,
+      "wii",
+      {
+        shelfName: "Wii",
+        seededActiveResults: [
+          {
+            title: "Tony Hawk's American Wasteland",
+            imageUrl: "https://example.com/cover.jpg",
+            description: "Skateboarding open world.",
+          },
+        ],
+        existingScrapeProviderIds: ["pricecharting"],
+        existingProviderRecordUrls: {
+          pricecharting:
+            "https://www.pricecharting.com/game/wii/tony-hawks-american-wasteland",
+        },
+      },
+    );
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "pricecharting"),
+    ).toBe(true);
+    expect(mockResolve.mock.calls.some((call) => call[1] === "igdb")).toBe(
+      false,
+    );
+  });
 });

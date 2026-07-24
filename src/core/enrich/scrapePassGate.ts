@@ -228,7 +228,7 @@ export function metadataResultsHavePrimaryBookCover(
   return false;
 }
 
-function metadataPassCapabilitiesIncomplete(options: {
+export function metadataPassCapabilitiesIncomplete(options: {
   type: MediaType;
   activeResults: MetadataResult[];
   hasCapability: MetadataCapabilityProbe;
@@ -251,6 +251,33 @@ function metadataPassCapabilitiesIncomplete(options: {
   }
 
   return false;
+}
+
+/**
+ * Non-scrape (Tier 0+1 API/local) provider ids to resolve.
+ *
+ * - Capability gaps → full candidate set.
+ * - Already complete from seed/prior results → **only** fiche-pinned non-scrape
+ *   ids ∩ candidates (refresh known API pins; never re-swarm IGDB/SS/…).
+ */
+export function apiProvidersForMetadataPass(options: {
+  type: MediaType;
+  activeResults: MetadataResult[];
+  candidateApiProviderIds: readonly string[];
+  pinnedNonScrapeProviderIds?: readonly string[];
+  hasCapability: MetadataCapabilityProbe;
+}): string[] {
+  const candidates = options.candidateApiProviderIds;
+  if (candidates.length === 0) return [];
+
+  if (metadataPassCapabilitiesIncomplete(options)) {
+    return [...candidates];
+  }
+
+  const pinned = new Set(options.pinnedNonScrapeProviderIds ?? []);
+  if (pinned.size === 0) return [];
+
+  return candidates.filter((id) => pinned.has(id));
 }
 
 /**

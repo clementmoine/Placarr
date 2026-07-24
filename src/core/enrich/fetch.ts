@@ -135,9 +135,11 @@ import {
   metadataResultsHaveGameGallerySource,
 } from "@/core/enrich/galleryEnrichment";
 import {
+  apiProvidersForMetadataPass,
   preferPinnedProviderIds,
   scrapeProvidersForMetadataPass,
   shouldRunScrapeMetadataPass,
+  metadataPassCapabilitiesIncomplete,
 } from "@/core/enrich/scrapePassGate";
 
 export type FetchMetadataOptions = {
@@ -149,11 +151,20 @@ export type FetchMetadataOptions = {
   existingExternalIds?: Record<string, string | null>;
   existingProviderRecordUrls?: Record<string, string>;
   /**
+   * Prior fiche snapshot (e.g. DB row on force-refresh). Used for capability
+   * gating so Tier 0+1 does not blank-slate when identify+cover already exist.
+   */
+  seededActiveResults?: MetadataResult[];
+  /**
    * Progressive store: called after the API pass and again mid-batch when the
    * merged cover (or first title snapshot) improves — does not skip providers.
    */
   onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
 };
+
+/** Local merge key for the DB/seed snapshot — not a registry provider id. */
+const CACHED_FICHE_MERGE_KEY = "__cached_fiche__";
+
 
 function pinnedProviderIdsFromOptions(
   options?: FetchMetadataOptions,
@@ -324,7 +335,8 @@ export async function fetchMetadata(
     }),
   );
 
-  // 1. Pass 1 — API / key / none. Persist ASAP via onApiPassComplete;
+  // 1. Pass 1 — API / key / none. Seed from prior fiche when force-refreshing so
+  // we gap-fill instead of blank-slating Tier 0+1. Persist ASAP via onApiPassComplete;
   // Pass 2 scrapes only when useful fields are missing or the fiche cites scrapes.
   const apiProviders = canonicalProviders.filter(
     (p) => p.auth.kind !== "scrape",
@@ -332,6 +344,15 @@ export async function fetchMetadata(
   const scrapeCanonicalProviders = canonicalProviders.filter(
     (p) => p.auth.kind === "scrape",
   );
+  const seededActiveResults = (options?.seededActiveResults ?? []).filter(
+    (result) => Boolean(result?.title?.trim() || result?.imageUrl?.trim()),
+  );
+  const scrapeIdsOf = new Set(
+    providers.filter((p) => p.auth.kind === "scrape").map((p) => p.id),
+  );
+  const pinnedNonScrapeProviderIds = pinnedProviderIdsFromOptions(
+    options,
+  ).filter((id) => !scrapeIdsOf.has(id));
 
   let alignmentNames = metadataAlignmentNames(name, []);
   const progressive = createProgressiveMergePersister({
@@ -362,11 +383,24 @@ export async function fetchMetadata(
       : undefined,
   };
 
-  if (apiProviders.length > 0) {
+  const apiIdsAllowed = new Set(
+    apiProvidersForMetadataPass({
+      type,
+      activeResults: seededActiveResults,
+      candidateApiProviderIds: apiProviders.map((p) => p.id),
+      pinnedNonScrapeProviderIds,
+      hasCapability: stage1HasMetadataCapability,
+    }),
+  );
+  const apiProvidersToResolve = apiProviders.filter((p) =>
+    apiIdsAllowed.has(p.id),
+  );
+
+  if (apiProvidersToResolve.length > 0) {
     throwIfAborted(options?.signal);
     const apiResults = await resolveMetadataProvidersInOrder(
       orderMetadataResolveIds(
-        metadataProvidersReadyToResolve(apiProviders.map((p) => p.id)),
+        metadataProvidersReadyToResolve(apiProvidersToResolve.map((p) => p.id)),
         type,
         options,
       ),
@@ -379,9 +413,10 @@ export async function fetchMetadata(
     }
   }
 
-  let stage1Active = Array.from(byProvider.values()).filter(
-    Boolean,
-  ) as MetadataResult[];
+  let stage1Active = [
+    ...seededActiveResults,
+    ...(Array.from(byProvider.values()).filter(Boolean) as MetadataResult[]),
+  ];
 
   if (!cleanedBarcode && stage1Active.length > 0) {
     await bootstrapBookProvidersWithDiscoveredIsbn(
@@ -391,9 +426,10 @@ export async function fetchMetadata(
       byProvider,
       options,
     );
-    stage1Active = Array.from(byProvider.values()).filter(
-      Boolean,
-    ) as MetadataResult[];
+    stage1Active = [
+      ...seededActiveResults,
+      ...(Array.from(byProvider.values()).filter(Boolean) as MetadataResult[]),
+    ];
   }
 
   const barcodeAlternateNames = cleanedBarcode
@@ -455,9 +491,10 @@ export async function fetchMetadata(
     }
   }
 
-  stage1Active = Array.from(byProvider.values()).filter(
-    Boolean,
-  ) as MetadataResult[];
+  stage1Active = [
+    ...seededActiveResults,
+    ...(Array.from(byProvider.values()).filter(Boolean) as MetadataResult[]),
+  ];
 
   // 2. Build accumulated context from Stage 1 results
   const stage1FallbackNames = buildGameMetadataFallbackNames(
@@ -508,7 +545,10 @@ export async function fetchMetadata(
   // 3. Stage 2: Resolve secondary providers concurrently with Stage 1 context
   if (secondaryProviders.length > 0) {
     throwIfAborted(options?.signal);
-    const stage1Results = Array.from(byProvider.values());
+    const stage1Results = [
+      ...seededActiveResults,
+      ...Array.from(byProvider.values()),
+    ];
     const stage1ActiveResults = stage1Results.filter(
       Boolean,
     ) as MetadataResult[];
@@ -517,6 +557,11 @@ export async function fetchMetadata(
       stage1ActiveResults,
       cleanedBarcode,
     );
+    const stage1CapabilitiesIncomplete = metadataPassCapabilitiesIncomplete({
+      type,
+      activeResults: stage1ActiveResults,
+      hasCapability: stage1HasMetadataCapability,
+    });
 
     const toResolve = secondaryProviders.filter((p) => {
       if (isMetadataProviderQuotaBlocked(p.id)) return false;
@@ -555,7 +600,11 @@ export async function fetchMetadata(
       ) {
         return true;
       }
-      if (p.auth.kind !== "scrape") return true;
+      // Seed/Tier0+1 already complete — do not wake non-scrape secondaries.
+      if (p.auth.kind !== "scrape") {
+        if (!stage1CapabilitiesIncomplete) return false;
+        return true;
+      }
       if (!scrapeIdsAllowed.has(p.id)) return false;
       if (
         shouldSkipRedundantBookScrapeRound(
@@ -606,13 +655,19 @@ export async function fetchMetadata(
     (res) => res !== null,
   );
   if (!hasAnyResult) {
-    return null;
+    // Force-refresh with a complete seed and no pinned scrapes/API pins to hit.
+    return seededActiveResults[0] ?? null;
+  }
+
+  if (seededActiveResults[0]) {
+    byProvider.set(CACHED_FICHE_MERGE_KEY, seededActiveResults[0]);
   }
 
   // 4. Build final canonical fallback names from all successful queries
-  const allActive = Array.from(byProvider.values()).filter(
-    Boolean,
-  ) as MetadataResult[];
+  const allActive = [
+    ...seededActiveResults,
+    ...(Array.from(byProvider.values()).filter(Boolean) as MetadataResult[]),
+  ];
   const finalFallbackNames = buildGameMetadataFallbackNames(
     name,
     barcodeAlternateNames,
@@ -663,14 +718,20 @@ export async function fetchMetadata(
   // post-stage-2 snapshot; the providers themselves are independent, so they run
   // concurrently and their results are applied in registry order to keep the
   // downstream merge deterministic regardless of completion order.
-  const fallbackSnapshot = Array.from(byProvider.values()).filter(
-    Boolean,
-  ) as MetadataResult[];
+  const fallbackSnapshot = [
+    ...seededActiveResults,
+    ...(Array.from(byProvider.values()).filter(Boolean) as MetadataResult[]),
+  ];
   const fallbackNeedsGallery = metadataResultsNeedGalleryEnrichment(
     type,
     fallbackSnapshot,
     cleanedBarcode,
   );
+  const fallbackCapabilitiesIncomplete = metadataPassCapabilitiesIncomplete({
+    type,
+    activeResults: fallbackSnapshot,
+    hasCapability: stage1HasMetadataCapability,
+  });
 
   const fallbackProviderIds = providers
     .filter((providerInfo) => {
@@ -714,6 +775,15 @@ export async function fetchMetadata(
           cleanedBarcode,
           options?.isBackground,
         )
+      ) {
+        return false;
+      }
+
+      // Seed already complete — skip seeker fallbacks (gallery path above still runs).
+      if (
+        !fallbackCapabilitiesIncomplete &&
+        !fallbackNeedsGallery &&
+        providerInfo.auth.kind !== "scrape"
       ) {
         return false;
       }
@@ -880,6 +950,7 @@ async function buildMergedMetadataFromByProvider(input: {
       if (
         !isMetadataPlatformCompatible(type, metadata, resolvedPlatform, {
           allowMissingPlatformKey:
+            providerId === CACHED_FICHE_MERGE_KEY ||
             providers.find((p) => p.id === providerId)
               ?.platformAgnosticMetadata === true,
         })
@@ -911,6 +982,7 @@ async function buildMergedMetadataFromByProvider(input: {
           return [];
         }
       } else if (
+        providerId !== CACHED_FICHE_MERGE_KEY &&
         providers.find((p) => p.id === providerId)?.requiresTitleAlignment
       ) {
         if (

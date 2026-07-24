@@ -597,28 +597,89 @@ function parseListingProducts(html: string): ChasseAuxLivresProduct[] {
   return products;
 }
 
-function uniqueProductUrls(products: ChasseAuxLivresProduct[]): string[] {
-  const urls: string[] = [];
+type ChasseSearchPayload = { redir?: unknown; d?: unknown; c?: number };
+
+/** SearchYield hit from REST listing HTML — title + /prix/ URL before any fiche GET. */
+export type ChasseSearchHit = {
+  name: string;
+  productUrl: string;
+  coverUrl?: string;
+};
+
+export function parseChasseSearchHitsFromPayload(
+  data: ChasseSearchPayload | null | undefined,
+): ChasseSearchHit[] {
+  const hits: ChasseSearchHit[] = [];
   const seen = new Set<string>();
-  for (const product of products) {
+
+  const redir = typeof data?.redir === "string" ? data.redir.trim() : "";
+  if (redir) {
+    const url = absoluteChasseUrl(redir);
+    if (url && !seen.has(url)) {
+      seen.add(url);
+      hits.push({ name: "", productUrl: url });
+    }
+  }
+
+  for (const product of parseListingProducts(String(data?.d || ""))) {
     const url = absoluteChasseUrl(product.productUrl);
     if (!url || seen.has(url)) continue;
     seen.add(url);
-    urls.push(url);
+    hits.push({
+      name: product.name,
+      productUrl: url,
+      ...(product.coverUrl ? { coverUrl: product.coverUrl } : {}),
+    });
   }
-  return urls;
+
+  return hits;
 }
 
-type ChasseSearchPayload = { redir?: unknown; d?: unknown; c?: number };
+/**
+ * Prefer SearchYield rows that already satisfy barcode / soft title validators
+ * so we detail-GET the winner first (and usually only).
+ */
+export function orderChasseSearchHits(
+  hits: ChasseSearchHit[],
+  options: {
+    anchoredBarcode?: string;
+    validateProduct?: ChasseProductValidator;
+  } = {},
+): ChasseSearchHit[] {
+  let list = hits.filter((hit) => hit.productUrl);
+  if (list.length === 0) return [];
 
-function searchResultCandidates(
-  data: ChasseSearchPayload | null | undefined,
-): string[] {
-  const redir = typeof data?.redir === "string" ? data.redir.trim() : "";
-  return uniqueProductUrls([
-    ...(redir ? [{ name: "", productUrl: redir }] : []),
-    ...parseListingProducts(String(data?.d || "")),
-  ]);
+  if (options.validateProduct) {
+    const softPass = list.filter((hit) =>
+      options.validateProduct!({
+        name: hit.name || hit.productUrl,
+        productUrl: hit.productUrl,
+        coverUrl: hit.coverUrl,
+      }),
+    );
+    if (softPass.length > 0) list = softPass;
+  }
+
+  if (options.anchoredBarcode) {
+    const confirmed: ChasseSearchHit[] = [];
+    const rest: ChasseSearchHit[] = [];
+    for (const hit of list) {
+      if (
+        retailerProductBarcodeConfirmed(
+          hit.productUrl,
+          null,
+          options.anchoredBarcode,
+        )
+      ) {
+        confirmed.push(hit);
+      } else {
+        rest.push(hit);
+      }
+    }
+    if (confirmed.length > 0) return [...confirmed, ...rest];
+  }
+
+  return list;
 }
 
 async function fetchChasseSearchResultsPage(
@@ -681,11 +742,6 @@ async function resolveChasseSearchProductPage(
   let flareSession = options.flareSession;
   let ownedFlareSession = false;
   const maxPages = chasseSearchMaxPages(options.anchoredBarcode);
-  let firstUnanchoredMatch: {
-    url: string;
-    html: string;
-    product: ChasseAuxLivresProduct;
-  } | null = null;
 
   try {
     for (let page = 1; page <= maxPages; page += 1) {
@@ -739,15 +795,16 @@ async function resolveChasseSearchProductPage(
         break;
       }
 
-      const seenUrls = new Set<string>();
-      const candidateUrls = searchResultCandidates(data).filter((url) => {
-        if (seenUrls.has(url)) return false;
-        seenUrls.add(url);
-        return true;
-      });
-      for (const productUrl of candidateUrls) {
+      const candidateHits = orderChasseSearchHits(
+        parseChasseSearchHitsFromPayload(data),
+        {
+          validateProduct: options.validateProduct,
+          anchoredBarcode: options.anchoredBarcode,
+        },
+      );
+      for (const hit of candidateHits) {
         const productPage = await fetchProductPage(
-          productUrl,
+          hit.productUrl,
           options.signal,
           flareSession,
         );
@@ -767,12 +824,8 @@ async function resolveChasseSearchProductPage(
         ) {
           continue;
         }
-        if (options.anchoredBarcode) {
-          return productPage;
-        }
-        if (!firstUnanchoredMatch) {
-          firstUnanchoredMatch = productPage;
-        }
+        // SearchYield-ranked winner — stop (no walk of remaining listings/pages).
+        return productPage;
       }
     }
   } finally {
@@ -781,7 +834,7 @@ async function resolveChasseSearchProductPage(
     }
   }
 
-  return firstUnanchoredMatch;
+  return null;
 }
 
 async function collectChasseSearchPayloads(

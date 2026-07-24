@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2k shipped (AMC SearchYield + fiche HTML reuse); corpora / durable SearchYield / peers = next.
+> Phase 1–2l shipped (Chasse SearchYield → 1 fiche); Booknode / corpora / durable SearchYield = next.
 
 ## Principle
 
@@ -109,10 +109,19 @@ Metadata name search and price name search no longer each pay for `recherche.php
 - `pickBestAchatMoinsCherSearchHit` — title-rank among SearchYield matches → **one** detail
 - Barcode scanner path also reuses fiche HTML for the subsequent price parse
 
+## Phase 2l — Chasse aux Livres SearchYield → 1 fiche (done 2026-07-24)
+
+Search REST listings already expose title + `/prix/` URL; resolve no longer walks every candidate:
+
+- `parseChasseSearchHitsFromPayload` / `orderChasseSearchHits` — soft-filter by listing title validator; prefer URL-embedded EAN
+- First accepted fiche **returns immediately** (fixes unanchored “remember but keep walking”)
+- Barcode path still page-walks when SearchYield lacks EAN (Black Stories)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Peer Flare name paths (Geedie, Chasse, …) | Same 1-search / cache philosophy |
+| Booknode rank→1 (and Back Market search cache) | Smartoys / AMC mirrors |
 | Local full-set / dump sync | Closed platforms at home latency |
-| SearchYield durability | Soft-404 / search pages beyond process cache |
+| SearchYield durability | Soft-404 / search beyond process cache |
+| Geedie gallery soft edges only | Multi-region covers need >1 detail by design |

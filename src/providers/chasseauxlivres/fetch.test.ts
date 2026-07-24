@@ -6,6 +6,7 @@ import {
   extractChasseAuxLivresProductImages,
   fetchChasseAuxLivresMetadataProduct,
   fetchFromChasseAuxLivres,
+  orderChasseSearchHits,
   parseChasseAuxLivresProductPage,
 } from "./fetch";
 
@@ -23,6 +24,48 @@ import {
 const mockedGet = vi.mocked(axios.get);
 const mockedFlare = vi.mocked(flareSolverrRequestGet);
 const mockedFlareDestroy = vi.mocked(flareSolverrDestroySession);
+
+describe("orderChasseSearchHits", () => {
+  it("soft-filters listing titles with validateProduct before any fiche GET", () => {
+    const ordered = orderChasseSearchHits(
+      [
+        {
+          name: "Super Picsou géant",
+          productUrl:
+            "https://www.chasse-aux-livres.fr/prix/2092662422/super-picsou-geant",
+        },
+        {
+          name: "Super picsou geant N° 1",
+          productUrl:
+            "https://www.chasse-aux-livres.fr/prix/P109843183/super-picsou-geant-n-1",
+        },
+      ],
+      {
+        validateProduct: (candidate) => /n[°º]?\s*1\b/i.test(candidate.name),
+      },
+    );
+    expect(ordered).toHaveLength(1);
+    expect(ordered[0]?.productUrl).toContain("P109843183");
+  });
+
+  it("prefers listing URLs that already embed the item barcode", () => {
+    const barcode = "9782070368228";
+    const ordered = orderChasseSearchHits(
+      [
+        {
+          name: "Wrong book",
+          productUrl: "https://www.chasse-aux-livres.fr/prix/AAA/wrong-book",
+        },
+        {
+          name: "1984",
+          productUrl: `https://www.chasse-aux-livres.fr/prix/BBB/1984-${barcode}`,
+        },
+      ],
+      { anchoredBarcode: barcode },
+    );
+    expect(ordered[0]?.productUrl).toContain(barcode);
+  });
+});
 
 describe("parseChasseAuxLivresProductPage", () => {
   beforeEach(() => {
@@ -144,7 +187,8 @@ describe("parseChasseAuxLivresProductPage", () => {
     ]);
   });
 
-  it("parcourt les candidats de recherche jusqu'a trouver le numero demande", async () => {
+  it("mine SearchYield puis ne charge que la fiche du gagnant (pas N /prix/)", async () => {
+    const fetchedPrix: string[] = [];
     mockedGet.mockImplementation(async (url: string) => {
       if (url.includes("/search?")) {
         return {
@@ -166,6 +210,9 @@ describe("parseChasseAuxLivresProductPage", () => {
             `,
           },
         };
+      }
+      if (url.includes("/prix/")) {
+        fetchedPrix.push(url);
       }
       if (url.includes("2092662422")) {
         return {
@@ -205,6 +252,8 @@ describe("parseChasseAuxLivresProductPage", () => {
       productUrl:
         "https://www.chasse-aux-livres.fr/prix/P109843183/super-picsou-geant-n-1",
     });
+    expect(fetchedPrix).toHaveLength(1);
+    expect(fetchedPrix[0]).toContain("P109843183");
   });
 
   it("prefere un candidat barcode-confirme pour Black Stories", async () => {

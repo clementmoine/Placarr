@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a No-Intro DAT parser first cut; LaunchBox FTS = P4.
+> Phase 1–2am shipped; Phase 3a–3b No-Intro DAT→SQLite; LaunchBox FTS = P4.
 
 ## Principle
 
@@ -287,9 +287,17 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Fixture covers parent/clone, multi-rom, XML entities, `<machine>` alias
 - **Out of this cut:** SQLite index, registry module, scan Tier0, Redump sync, download pipeline
 
+## Phase 3b — No-Intro SQLite index + checksum/title lookup (done 2026-07-24)
+
+- `providers/nointro/indexStore.ts` — local DAT → `nointro.sqlite` (crc/md5/sha1 indexes + FTS5)
+- `pnpm nointro:build-index` with `NOINTRO_DAT_PATH` (never downloads; scan only opens existing index)
+- Lookups: `lookupNoIntroGamesByChecksum` / `searchNoIntroGamesByTitle`
+- **Out of this cut:** registry ProviderModule, multi-DAT merge, Redump, scan Tier0 wiring
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| No-Intro / Redump local index + Tier0 | Build on 3a parser → SQLite / lookup like LaunchBox |
+| No-Intro / Redump Tier0 provider module | Wire index into metadata resolve like LaunchBox |
+| Multi-DAT / Redump corpus sync | Directory of DATs → one index |
 | LaunchBox local FTS perf measure | P4 backlog |

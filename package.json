@@ -26,7 +26,8 @@
     "providers:audit:mapping": "tsx scripts/providerMappingAudit.ts",
     "icollect:build-index": "tsx scripts/buildICollectIndex.ts",
     "icollect:scrape-pages": "tsx scripts/scrapeICollectPages.ts",
-    "launchbox:build-index": "tsx scripts/buildLaunchBoxIndex.ts"
+    "launchbox:build-index": "tsx scripts/buildLaunchBoxIndex.ts",
+    "nointro:build-index": "tsx scripts/buildNoIntroIndex.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

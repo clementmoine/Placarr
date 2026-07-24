@@ -3,18 +3,18 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { isCorpusGenericToken } from "./tokenCorpusIdf";
+import { isCorpusGenericToken, buildTokenDocumentFrequency } from "./tokenCorpusIdf";
 import {
   __resetTokenCorpusIndexForTests,
   __setTokenCorpusIndexForTests,
   buildTokenCorpusIndexFromTitles,
+  getGlobalCorpusTokenStats,
   loadTokenCorpusIndex,
   parseTokenCorpusStats,
   resolveCorpusTokenStats,
   serializeTokenCorpusStats,
   writeTokenCorpusIndex,
 } from "./tokenCorpusIndex";
-import { buildTokenDocumentFrequency } from "./tokenCorpusIdf";
 
 describe("tokenCorpusIndex", () => {
   const originalPath = process.env.TOKEN_CORPUS_INDEX_PATH;
@@ -87,5 +87,39 @@ describe("tokenCorpusIndex", () => {
     expect(isCorpusGenericToken("blister", batch)).toBe(false);
     const resolved = resolveCorpusTokenStats(batch);
     expect(isCorpusGenericToken("blister", resolved)).toBe(true);
+  });
+
+  it("reloads global stats when the index file mtime changes", async () => {
+    const indexPath = process.env.TOKEN_CORPUS_INDEX_PATH!;
+    const first = buildTokenCorpusIndexFromTitles([
+      "Alpha blister",
+      "Beta blister",
+      "Gamma blister",
+      "Delta unique",
+    ]);
+    await writeTokenCorpusIndex(first);
+    expect(isCorpusGenericToken("blister", getGlobalCorpusTokenStats()!)).toBe(
+      true,
+    );
+
+    // Ensure mtime advances on filesystems with 1s resolution.
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    // Simulate another process rewriting the index without touching our RAM cache.
+    const second = buildTokenCorpusIndexFromTitles([
+      "Alpha special",
+      "Beta special",
+      "Gamma special",
+      "Delta unique",
+    ]);
+    await fs.writeFile(
+      indexPath,
+      `${JSON.stringify(serializeTokenCorpusStats(second))}\n`,
+      "utf8",
+    );
+
+    const reloaded = getGlobalCorpusTokenStats();
+    expect(isCorpusGenericToken("blister", reloaded!)).toBe(false);
+    expect(isCorpusGenericToken("special", reloaded!)).toBe(true);
   });
 });

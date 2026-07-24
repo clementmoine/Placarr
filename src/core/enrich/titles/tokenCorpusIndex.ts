@@ -2,7 +2,7 @@
  * Durable title-token DF index (offline RawName refresh).
  * Scan path loads an existing file only — never queries Prisma at resolve time.
  */
-import { existsSync, readFileSync, promises as fs } from "node:fs";
+import { existsSync, readFileSync, statSync, promises as fs } from "node:fs";
 import path from "node:path";
 
 import {
@@ -22,6 +22,7 @@ type TokenCorpusIndexFile = {
 
 let memoryStats: CorpusTokenStats | null | undefined;
 let loadedPath: string | null = null;
+let loadedMtimeMs: number | null = null;
 
 function cacheDir(): string {
   return (
@@ -81,6 +82,17 @@ export function buildTokenCorpusIndexFromTitles(
   return buildTokenDocumentFrequency(titles);
 }
 
+function rememberLoaded(
+  filePath: string,
+  stats: CorpusTokenStats | null,
+  mtimeMs: number | null,
+): CorpusTokenStats | null {
+  memoryStats = stats;
+  loadedPath = filePath;
+  loadedMtimeMs = mtimeMs;
+  return stats;
+}
+
 export async function writeTokenCorpusIndex(
   stats: CorpusTokenStats,
   filePath = tokenCorpusIndexPath(),
@@ -88,8 +100,8 @@ export async function writeTokenCorpusIndex(
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   const payload = serializeTokenCorpusStats(stats);
   await fs.writeFile(filePath, `${JSON.stringify(payload)}\n`, "utf8");
-  memoryStats = stats;
-  loadedPath = filePath;
+  const mtimeMs = existsSync(filePath) ? statSync(filePath).mtimeMs : null;
+  rememberLoaded(filePath, stats, mtimeMs);
   return filePath;
 }
 
@@ -99,40 +111,53 @@ export async function loadTokenCorpusIndex(
   try {
     const raw = await fs.readFile(filePath, "utf8");
     const stats = parseTokenCorpusStats(JSON.parse(raw));
-    memoryStats = stats;
-    loadedPath = filePath;
-    return stats;
+    const mtimeMs = existsSync(filePath) ? statSync(filePath).mtimeMs : null;
+    return rememberLoaded(filePath, stats, mtimeMs);
   } catch {
-    memoryStats = null;
-    loadedPath = filePath;
-    return null;
+    return rememberLoaded(filePath, null, null);
   }
 }
 
 /**
- * Lazy open of the prebuilt index. Missing / corrupt file ⇒ null (safe:
- * unknown tokens stay as signal).
+ * Lazy open of the prebuilt index. Reloads when the file mtime changes so a
+ * background `title-idf:build-index` is visible without process restart.
+ * Missing / corrupt file ⇒ null (safe: unknown tokens stay as signal).
  */
 export function getGlobalCorpusTokenStats(): CorpusTokenStats | null {
-  if (memoryStats !== undefined) return memoryStats;
+  // In-memory test override (no durable file).
+  if (loadedPath === "memory://test") {
+    return memoryStats ?? null;
+  }
 
   const filePath = tokenCorpusIndexPath();
   if (!existsSync(filePath)) {
-    memoryStats = null;
-    loadedPath = filePath;
-    return null;
+    return rememberLoaded(filePath, null, null);
+  }
+
+  let mtimeMs: number;
+  try {
+    mtimeMs = statSync(filePath).mtimeMs;
+  } catch {
+    return rememberLoaded(filePath, null, null);
+  }
+
+  if (
+    memoryStats !== undefined &&
+    loadedPath === filePath &&
+    loadedMtimeMs === mtimeMs
+  ) {
+    return memoryStats;
   }
 
   try {
-    // Sync read keeps resolve paths free of async; index is small JSON.
     const raw = readFileSync(filePath, "utf8");
-    memoryStats = parseTokenCorpusStats(JSON.parse(raw));
-    loadedPath = filePath;
-    return memoryStats;
+    return rememberLoaded(
+      filePath,
+      parseTokenCorpusStats(JSON.parse(raw)),
+      mtimeMs,
+    );
   } catch {
-    memoryStats = null;
-    loadedPath = filePath;
-    return null;
+    return rememberLoaded(filePath, null, null);
   }
 }
 
@@ -148,6 +173,7 @@ export function resolveCorpusTokenStats(
 export function __resetTokenCorpusIndexForTests(): void {
   memoryStats = undefined;
   loadedPath = null;
+  loadedMtimeMs = null;
 }
 
 export function __setTokenCorpusIndexForTests(
@@ -155,6 +181,7 @@ export function __setTokenCorpusIndexForTests(
 ): void {
   memoryStats = stats;
   loadedPath = "memory://test";
+  loadedMtimeMs = null;
 }
 
 export function __tokenCorpusIndexPathsForTests() {
@@ -162,6 +189,7 @@ export function __tokenCorpusIndexPathsForTests() {
     cacheDir: cacheDir(),
     indexPath: tokenCorpusIndexPath(),
     loadedPath,
+    loadedMtimeMs,
     exists: existsSync,
   };
 }

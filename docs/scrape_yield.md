@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped (eBay Browse SearchYield durable); No-Intro / LaunchBox FTS = later.
+> Phase 1–2am shipped; Phase 3a No-Intro DAT parser first cut; LaunchBox FTS = P4.
 
 ## Principle
 
@@ -281,9 +281,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Browse: RAM L1 → ProviderEvidence L2 → live; promote typed `itemSummaries`
 - Keys: `/item_summary/search?gtin=` / `?q=` / `?epid=` — worker refresh skips repeating Browse
 
-## Phase 2+ backlog
+## Phase 3a — No-Intro DAT parser first cut (done 2026-07-24)
+
+- `providers/nointro/parseDat.ts` — Logiqx XML → typed `{header, games[{name,cloneOf?,roms[]}]}`
+- Fixture covers parent/clone, multi-rom, XML entities, `<machine>` alias
+- **Out of this cut:** SQLite index, registry module, scan Tier0, Redump sync, download pipeline
+
+## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
+| No-Intro / Redump local index + Tier0 | Build on 3a parser → SQLite / lookup like LaunchBox |
 | LaunchBox local FTS perf measure | P4 backlog |

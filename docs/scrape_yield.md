@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2p shipped (SearchYield durability / PC); corpora = next.
+> Phase 1–2q shipped (AMC + Back Market SearchYield durable); corpora = next.
 
 ## Principle
 
@@ -147,9 +147,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `PROVIDER_EVIDENCE_SEARCH_KIND` + 30m TTL
 - PriceCharting: promote/reuse typed search rows Next↔worker; name + sibling seeks use `loadPriceChartingSearchRows`
 
+## Phase 2q — AMC + Back Market SearchYield durable (done 2026-07-24)
+
+- AchatMoinsCher: RAM search hits → ProviderEvidence → Flare; promote typed `{productId,title}` after live search
+- Back Market: `loadBackMarketSearchHits` reuses typed cards Next↔worker; process HTML cache still covers same-job meta/price
+- Typed yield only (no raw HTML in evidence)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Local full-set / dump sync | Closed platforms at home latency |
-| AMC / Back Market / peers → durable SearchYield | Same promote pattern once keys exist |
+| Other Flare peers → durable SearchYield | Same promote pattern (Booknode, Chasse, Smartoys, …) |

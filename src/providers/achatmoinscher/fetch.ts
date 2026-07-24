@@ -18,6 +18,10 @@ import {
   getCachedAchatMoinsCherSearchHits,
   type AchatMoinsCherSearchHit,
 } from "./cache";
+import {
+  promoteAchatMoinsCherSearchEvidence,
+  readAchatMoinsCherSearchEvidence,
+} from "./durableEvidence";
 
 export { resetAchatMoinsCherResponseCacheForTests } from "./cache";
 export type { AchatMoinsCherSearchHit } from "./cache";
@@ -509,6 +513,10 @@ async function fetchAchatMoinsCherProductById(
   return parseAchatMoinsCherProductPage(html, productId);
 }
 
+function achatMoinsCherSearchUrl(query: string): string {
+  return `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(query)}`;
+}
+
 async function fetchAchatMoinsCherSearchHits(
   query: string,
 ): Promise<AchatMoinsCherSearchHit[]> {
@@ -521,7 +529,16 @@ async function fetchAchatMoinsCherSearchHits(
     return cached;
   }
 
-  const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
+  const searchUrl = achatMoinsCherSearchUrl(cleanedQuery);
+  const fromEvidence = await readAchatMoinsCherSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(
+      `[AchatMoinsCher] Search evidence hit for "${cleanedQuery}"`,
+    );
+    cacheAchatMoinsCherSearchHits(cleanedQuery, fromEvidence);
+    return fromEvidence;
+  }
+
   console.log(`[AchatMoinsCher] Querying search: ${cleanedQuery}`);
   const searchRes = await fetchGetWithFlareFallback(searchUrl, {
     headers: HEADERS,
@@ -529,6 +546,7 @@ async function fetchAchatMoinsCherSearchHits(
   });
   const hits = parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""));
   cacheAchatMoinsCherSearchHits(cleanedQuery, hits);
+  await promoteAchatMoinsCherSearchEvidence(searchUrl, hits);
   return hits;
 }
 

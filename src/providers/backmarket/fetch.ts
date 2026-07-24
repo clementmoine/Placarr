@@ -6,6 +6,10 @@ import {
   cacheBackMarketHtml,
   getCachedBackMarketHtml,
 } from "./cache";
+import {
+  promoteBackMarketSearchEvidence,
+  readBackMarketSearchEvidence,
+} from "./durableEvidence";
 
 export { resetBackMarketResponseCacheForTests } from "./cache";
 
@@ -698,6 +702,28 @@ function pickBestHit(
 }
 
 /**
+ * SearchYield: durable cards first, else GET + parse + promote.
+ * Process-local HTML cache still covers same-job meta/price reuse.
+ */
+async function loadBackMarketSearchHits(
+  searchUrl: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<BackMarketHit[]> {
+  const fromEvidence = await readBackMarketSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Back Market] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const html = await fetchBackMarketHtml(searchUrl, options);
+  if (!html) return [];
+
+  const hits = parseBackMarketSearchHits(html);
+  await promoteBackMarketSearchEvidence(searchUrl, hits);
+  return hits;
+}
+
+/**
  * Title search → best identity-aligned refurbished listing (cover + price +
  * grade). Same scrape feeds metadata and price refresh.
  */
@@ -712,10 +738,9 @@ export async function fetchFromBackMarket(
   const searchUrl = backmarketSearchUrl(cleaned);
   console.info(`[Back Market] Querying search: ${cleaned}`);
 
-  const html = await fetchBackMarketHtml(searchUrl, options);
-  if (!html) return null;
+  const hits = await loadBackMarketSearchHits(searchUrl, options);
+  if (hits.length === 0) return null;
 
-  const hits = parseBackMarketSearchHits(html);
   return pickBestHit(
     hits,
     expectedNames.length > 0 ? expectedNames : [cleaned],

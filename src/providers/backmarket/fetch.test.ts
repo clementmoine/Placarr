@@ -9,6 +9,16 @@ vi.mock("@/lib/http/flareSolverr", () => ({
   flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
 }));
 
+const readBackMarketSearchEvidence = vi.fn();
+const promoteBackMarketSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readBackMarketSearchEvidence: (...args: unknown[]) =>
+    readBackMarketSearchEvidence(...args),
+  promoteBackMarketSearchEvidence: (...args: unknown[]) =>
+    promoteBackMarketSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import {
@@ -36,6 +46,10 @@ function fixture(name: string) {
 
 beforeEach(() => {
   mockedGet.mockReset();
+  readBackMarketSearchEvidence.mockReset();
+  promoteBackMarketSearchEvidence.mockReset();
+  readBackMarketSearchEvidence.mockResolvedValue(null);
+  promoteBackMarketSearchEvidence.mockResolvedValue(undefined);
   resetBackMarketResponseCacheForTests();
   delete process.env.FLARESOLVERR_URL;
 });
@@ -189,6 +203,34 @@ describe("fetchFromBackMarket", () => {
       sourceUrl: expect.stringContaining("/fr-fr/p/"),
       coverUrl: expect.stringContaining("cloudfront.net"),
     });
+    expect(promoteBackMarketSearchEvidence).toHaveBeenCalled();
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    readBackMarketSearchEvidence.mockResolvedValueOnce([
+      {
+        title: "Sony PlayStation 3 Slim - Gris",
+        priceCents: 20252,
+        currency: "EUR",
+        grade: "Très bon état",
+        coverUrl: "https://cdn.example.com/ps3.jpg",
+        sourceUrl:
+          "https://www.backmarket.fr/fr-fr/p/sony-playstation-3-slim-gris/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      },
+    ]);
+
+    const result = await fetchFromBackMarket(
+      "PlayStation 3 Slim grise",
+      ["PlayStation 3 Slim grise", "Sony PlayStation 3 Slim - Gris"],
+      { shelfType: "hardware" },
+    );
+
+    expect(result).toMatchObject({
+      title: "Sony PlayStation 3 Slim - Gris",
+      priceCents: 20252,
+    });
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteBackMarketSearchEvidence).not.toHaveBeenCalled();
   });
 });
 

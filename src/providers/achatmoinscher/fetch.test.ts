@@ -3,6 +3,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("axios", () => ({
   default: { post: vi.fn(), get: vi.fn(), head: vi.fn() },
 }));
+
+const readAchatMoinsCherSearchEvidence = vi.fn();
+const promoteAchatMoinsCherSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readAchatMoinsCherSearchEvidence: (...args: unknown[]) =>
+    readAchatMoinsCherSearchEvidence(...args),
+  promoteAchatMoinsCherSearchEvidence: (...args: unknown[]) =>
+    promoteAchatMoinsCherSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import { resetAchatMoinsCherResponseCacheForTests } from "./cache";
@@ -52,6 +63,10 @@ beforeEach(() => {
   mockedPost.mockReset();
   mockedGet.mockReset();
   mockedHead.mockReset();
+  readAchatMoinsCherSearchEvidence.mockReset();
+  promoteAchatMoinsCherSearchEvidence.mockReset();
+  readAchatMoinsCherSearchEvidence.mockResolvedValue(null);
+  promoteAchatMoinsCherSearchEvidence.mockResolvedValue(undefined);
   resetAchatMoinsCherResponseCacheForTests();
   delete process.env.FLARESOLVERR_URL;
 });
@@ -267,5 +282,40 @@ describe("fetchPricesFromAchatMoinsCher", () => {
     });
 
     expect(mockedGet.mock.calls.length).toBe(httpAfterMeta);
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    readAchatMoinsCherSearchEvidence.mockResolvedValueOnce([
+      { productId: "12345", title: "Wheelman PS3" },
+    ]);
+    mockedGet.mockResolvedValue({ status: 200, data: PRODUCT_HTML } as never);
+    mockedHead.mockResolvedValue({ status: 200 } as never);
+
+    await expect(
+      fetchFromAchatMoinsCherByQuery("Wheelman PS3", ["Wheelman PS3"]),
+    ).resolves.toMatchObject([
+      {
+        name: "Wheelman (PlayStation 3)",
+        productId: "12345",
+      },
+    ]);
+
+    expect(mockedGet.mock.calls).toHaveLength(1);
+    expect(mockedGet.mock.calls[0]?.[0]).toContain("12345.html");
+    expect(promoteAchatMoinsCherSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet
+      .mockResolvedValueOnce({ status: 200, data: SEARCH_HTML } as never)
+      .mockResolvedValueOnce({ status: 200, data: PRODUCT_HTML } as never);
+    mockedHead.mockResolvedValue({ status: 200 } as never);
+
+    await fetchFromAchatMoinsCherByQuery("Wheelman PS3", ["Wheelman PS3"]);
+
+    expect(promoteAchatMoinsCherSearchEvidence).toHaveBeenCalledWith(
+      "https://www.achatmoinscher.com/recherche.php?q=Wheelman%20PS3",
+      [{ productId: "12345", title: "Wheelman PS3" }],
+    );
   });
 });

@@ -134,6 +134,30 @@ describe("normalizeProviderEvidenceUrl", () => {
     ).toBe("https://www.planetebd.com/recherche?mot-clef=ast%c3%a9rix");
   });
 
+  it("keeps Bedetheque/Bdovore term (+ data/mode) identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.bedetheque.com/ajax/tout?term=Ast%C3%A9rix&utm_source=x",
+      ),
+    ).toBe("https://www.bedetheque.com/ajax/tout?term=ast%c3%a9rix");
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.bdovore.com/getjson?data=Serie&mode=2&term=Alpha",
+      ),
+    ).toBe(
+      "https://www.bdovore.com/getjson?term=alpha&data=serie&mode=2",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.bdovore.com/getjson?data=Serie&mode=2&term=Alpha",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://www.bdovore.com/getjson?data=Album&mode=1&term=Alpha",
+      ),
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

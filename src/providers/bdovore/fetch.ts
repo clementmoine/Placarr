@@ -17,6 +17,11 @@ import {
   distinctiveTokenCoverage,
 } from "@/core/enrich/titleMatching";
 
+import {
+  promoteBdovoreSeriesEvidence,
+  readBdovoreSeriesEvidence,
+} from "./durableEvidence";
+
 const BDOVORE_BASE_URL = "https://www.bdovore.com";
 const BDOVORE_HEADERS = {
   "User-Agent":
@@ -239,13 +244,30 @@ async function fetchBdovoreJson(
 export async function searchBdovoreSeries(
   term: string,
 ): Promise<BdovoreSeriesCandidate[]> {
-  const rows = await fetchBdovoreJson({ data: "Serie", mode: "2", term });
-  return rows.flatMap((row) => {
+  const trimmed = term.trim();
+  if (!trimmed) return [];
+
+  const searchUrl = new URL(`${BDOVORE_BASE_URL}/getjson`);
+  searchUrl.searchParams.set("data", "Serie");
+  searchUrl.searchParams.set("mode", "2");
+  searchUrl.searchParams.set("term", trimmed);
+  const requestUrl = searchUrl.toString();
+
+  const fromEvidence = await readBdovoreSeriesEvidence(requestUrl);
+  if (fromEvidence) {
+    console.info(`[Bdovore] Series evidence hit for ${requestUrl}`);
+    return fromEvidence;
+  }
+
+  const rows = await fetchBdovoreJson({ data: "Serie", mode: "2", term: trimmed });
+  const hits = rows.flatMap((row) => {
     const id = cleanBdovoreText(row.ID_SERIE);
     const label = cleanBdovoreText(row.NOM_SERIE);
     if (!id || !label) return [];
     return [{ id, label }];
   });
+  await promoteBdovoreSeriesEvidence(requestUrl, hits);
+  return hits;
 }
 
 export async function fetchBdovoreSeriesAlbums(

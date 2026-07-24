@@ -18,6 +18,11 @@ import {
 } from "@/core/enrich/titleMatching";
 import { collectHtmlMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 
+import {
+  promoteBedethequeSeriesEvidence,
+  readBedethequeSeriesEvidence,
+} from "./durableEvidence";
+
 export type BedethequeCreditEntry = {
   role: string;
   names: string[];
@@ -70,7 +75,7 @@ export interface BedethequeSaleListing {
   priceCents: number;
 }
 
-type BedethequeSeriesCandidate = {
+export type BedethequeSeriesCandidate = {
   id: number;
   label: string;
 };
@@ -722,24 +727,37 @@ async function fetchBedethequeHtml(url: string): Promise<string | null> {
 export async function searchBedethequeSeries(
   query: string,
 ): Promise<BedethequeSeriesCandidate[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const searchUrl = new URL(`${BEDETHEQUE_BASE_URL}/ajax/tout`);
+  searchUrl.searchParams.set("term", trimmed);
+  const requestUrl = searchUrl.toString();
+
+  const fromEvidence = await readBedethequeSeriesEvidence(requestUrl);
+  if (fromEvidence) {
+    console.info(`[Bedetheque] Series evidence hit for ${requestUrl}`);
+    return fromEvidence;
+  }
+
   try {
-    const response = await fetchGetWithFlareFallback(
-      `${BEDETHEQUE_BASE_URL}/ajax/tout`,
-      {
-        params: { term: query },
-        headers: BEDETHEQUE_HEADERS,
-        timeout: 10_000,
-        validateStatus: () => true,
-      },
-    );
+    const response = await fetchGetWithFlareFallback(requestUrl, {
+      headers: BEDETHEQUE_HEADERS,
+      timeout: 10_000,
+      validateStatus: () => true,
+    });
     if (response.status >= 400 || !Array.isArray(response.data)) return [];
 
-    return response.data.flatMap((entry: { id?: string; label?: string }) => {
-      const id = entry.id?.match(/^S(\d+)$/)?.[1];
-      const label = cleanText(entry.label);
-      if (!id || !label) return [];
-      return [{ id: Number.parseInt(id, 10), label }];
-    });
+    const hits = response.data.flatMap(
+      (entry: { id?: string; label?: string }) => {
+        const id = entry.id?.match(/^S(\d+)$/)?.[1];
+        const label = cleanText(entry.label);
+        if (!id || !label) return [];
+        return [{ id: Number.parseInt(id, 10), label }];
+      },
+    );
+    await promoteBedethequeSeriesEvidence(requestUrl, hits);
+    return hits;
   } catch {
     return [];
   }

@@ -1,6 +1,22 @@
 import axios from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+const readBedethequeSeriesEvidence = vi.fn();
+const promoteBedethequeSeriesEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readBedethequeSeriesEvidence: (...args: unknown[]) =>
+    readBedethequeSeriesEvidence(...args),
+  promoteBedethequeSeriesEvidence: (...args: unknown[]) =>
+    promoteBedethequeSeriesEvidence(...args),
+}));
+
 import {
   fetchBedethequeMetadata,
   parseBedethequeAlbumInfoFields,
@@ -17,19 +33,18 @@ import {
   rankBedethequeSeriesCandidates,
   bedethequeAlbumMatchesBarcode,
   isKnownBedethequePriceEstimate,
+  searchBedethequeSeries,
 } from "./fetch";
-
-vi.mock("axios", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
 
 const mockedGet = vi.mocked(axios.get);
 
 describe("bedetheque fetch", () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    readBedethequeSeriesEvidence.mockReset();
+    promoteBedethequeSeriesEvidence.mockReset();
+    readBedethequeSeriesEvidence.mockResolvedValue(null);
+    promoteBedethequeSeriesEvidence.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -593,6 +608,32 @@ describe("bedetheque fetch", () => {
       barcode: "9782344072578",
     });
     expect(album).toBeNull();
+  });
+
+  it("réutilise ProviderEvidence series SearchYield sans HTTP", async () => {
+    const hits = [{ id: 11795, label: "Super Picsou Géant" }];
+    readBedethequeSeriesEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchBedethequeSeries("Super Picsou Géant")).resolves.toEqual(
+      hits,
+    );
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteBedethequeSeriesEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes series SearchYield after a live ajax GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: [{ id: "S11795", label: "Super Picsou Géant" }],
+    } as never);
+
+    await expect(searchBedethequeSeries("Super Picsou Géant")).resolves.toEqual([
+      { id: 11795, label: "Super Picsou Géant" },
+    ]);
+    expect(promoteBedethequeSeriesEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("/ajax/tout?term="),
+      [{ id: 11795, label: "Super Picsou Géant" }],
+    );
   });
 });
 

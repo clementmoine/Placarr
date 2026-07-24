@@ -53,6 +53,9 @@ const EVIDENCE_SEARCH_IDENTITY_PARAMS = [
   "titre_jeu",
   "support",
   "mot-clef",
+  "term",
+  "data",
+  "mode",
 ] as const;
 
 function shouldDropSearchParam(key: string): boolean {

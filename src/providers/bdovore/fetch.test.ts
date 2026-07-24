@@ -1,6 +1,22 @@
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+const readBdovoreSeriesEvidence = vi.fn();
+const promoteBdovoreSeriesEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readBdovoreSeriesEvidence: (...args: unknown[]) =>
+    readBdovoreSeriesEvidence(...args),
+  promoteBdovoreSeriesEvidence: (...args: unknown[]) =>
+    promoteBdovoreSeriesEvidence(...args),
+}));
+
 import {
   composeBdovoreTitle,
   effectiveBdovoreSeriesLabel,
@@ -8,13 +24,8 @@ import {
   mapBdovoreAlbumRecord,
   pickBdovoreAlbum,
   rankBdovoreSeriesCandidates,
+  searchBdovoreSeries,
 } from "./fetch";
-
-vi.mock("axios", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -63,6 +74,10 @@ function modernAlbumRecord() {
 describe("bdovore fetch", () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    readBdovoreSeriesEvidence.mockReset();
+    promoteBdovoreSeriesEvidence.mockReset();
+    readBdovoreSeriesEvidence.mockResolvedValue(null);
+    promoteBdovoreSeriesEvidence.mockResolvedValue(undefined);
   });
 
   it("mappe un record d'album (crédits placeholders filtrés, cover, date)", () => {
@@ -444,5 +459,31 @@ describe("bdovore fetch", () => {
       "https://www.bdovore.com/images/couv/CV-051068-050605.jpg",
     );
     expect(album?.sourceUrl).toContain("id_tome=51068");
+  });
+
+  it("réutilise ProviderEvidence series SearchYield sans HTTP", async () => {
+    const hits = [{ id: "59", label: "Alpha" }];
+    readBdovoreSeriesEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchBdovoreSeries("Alpha")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteBdovoreSeriesEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes series SearchYield after a live getjson GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: JSON.stringify([
+        { ID_SERIE: "59", NOM_SERIE: "Alpha" },
+      ]),
+    } as never);
+
+    await expect(searchBdovoreSeries("Alpha")).resolves.toEqual([
+      { id: "59", label: "Alpha" },
+    ]);
+    expect(promoteBdovoreSeriesEvidence).toHaveBeenCalledWith(
+      expect.stringMatching(/getjson\?.*data=Serie/),
+      [{ id: "59", label: "Alpha" }],
+    );
   });
 });

@@ -4,6 +4,19 @@
  */
 import type { RomChecksums } from "@/types/providerModule";
 
+/** Soft UX warn before loading a dump into memory for hashing. */
+export const ROM_HASH_SOFT_WARN_BYTES = 256 * 1024 * 1024;
+
+export function shouldWarnRomHashSize(byteLength: number): boolean {
+  return Number.isFinite(byteLength) && byteLength >= ROM_HASH_SOFT_WARN_BYTES;
+}
+
+/** Whole MiB for toast copy (e.g. 512). */
+export function formatRomHashSizeMiB(byteLength: number): string {
+  if (!Number.isFinite(byteLength) || byteLength < 0) return "0";
+  return String(Math.max(1, Math.round(byteLength / (1024 * 1024))));
+}
+
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let i = 0; i < 256; i++) {

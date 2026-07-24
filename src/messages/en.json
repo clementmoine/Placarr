@@ -343,6 +343,7 @@
     "hashDumpHint": "Hashes the file locally (CRC / MD5 / SHA-1) — nothing is uploaded.",
     "hashDumpDone": "Dump hashed — looking up metadata…",
     "hashDumpFailed": "Could not hash this dump file",
+    "hashDumpLargeWarn": "Large dump ({size} MiB) — hashing stays local but may take a while and use memory.",
     "enterDescription": "Enter description",
     "cover": "Cover",
     "itemCover": "Item cover",

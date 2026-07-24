@@ -4,8 +4,11 @@ import { describe, expect, it } from "vitest";
 import {
   crc32Hex,
   dumpTitleFromFileName,
+  formatRomHashSizeMiB,
   hashRomFile,
   md5Hex,
+  ROM_HASH_SOFT_WARN_BYTES,
+  shouldWarnRomHashSize,
 } from "./hashRomFile";
 
 function utf8(text: string): Uint8Array {
@@ -37,5 +40,12 @@ describe("hashRomFile", () => {
   it("dumpTitleFromFileName strips extension and path", () => {
     expect(dumpTitleFromFileName("Tetris (World).gb")).toBe("Tetris (World)");
     expect(dumpTitleFromFileName("/tmp/roms/Game.n64")).toBe("Game");
+  });
+
+  it("soft-warns at 256 MiB and formats size for toast copy", () => {
+    expect(shouldWarnRomHashSize(ROM_HASH_SOFT_WARN_BYTES - 1)).toBe(false);
+    expect(shouldWarnRomHashSize(ROM_HASH_SOFT_WARN_BYTES)).toBe(true);
+    expect(formatRomHashSizeMiB(ROM_HASH_SOFT_WARN_BYTES)).toBe("256");
+    expect(formatRomHashSizeMiB(ROM_HASH_SOFT_WARN_BYTES * 2)).toBe("512");
   });
 });

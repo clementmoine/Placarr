@@ -343,6 +343,7 @@
     "hashDumpHint": "Hachage local (CRC / MD5 / SHA-1) — le fichier n’est pas envoyé.",
     "hashDumpDone": "Dump haché — recherche des métadonnées…",
     "hashDumpFailed": "Impossible de hacher ce fichier dump",
+    "hashDumpLargeWarn": "Dump volumineux ({size} Mo) — hachage local, peut prendre du temps et de la mémoire.",
     "enterDescription": "Entrer la description",
     "cover": "Couverture",
     "itemCover": "Couverture de l'objet",

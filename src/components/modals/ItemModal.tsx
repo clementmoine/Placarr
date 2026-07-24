@@ -51,7 +51,9 @@ import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useItemModalMetadataMutations } from "@/lib/client/hooks/useItemModalMetadataMutations";
 import {
   dumpTitleFromFileName,
+  formatRomHashSizeMiB,
   hashRomFile,
+  shouldWarnRomHashSize,
 } from "@/lib/client/hashRomFile";
 import {
   buildItemModalSessionInit,
@@ -582,6 +584,15 @@ export function ItemModal({
       const file = event.target.files?.[0];
       event.target.value = "";
       if (!file || activeShelfType !== "games") return;
+
+      if (shouldWarnRomHashSize(file.size)) {
+        toast.warning(
+          t("items.hashDumpLargeWarn").replace(
+            "{size}",
+            formatRomHashSizeMiB(file.size),
+          ),
+        );
+      }
 
       setIsHashingDump(true);
       try {

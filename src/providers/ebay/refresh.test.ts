@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe("ebay refreshBarcodePriceOffers", () => {
-  it("tries fallback and ascii marketplace query variants", async () => {
+  it("tries primary title, distinct fallback, and ascii marketplace variants", async () => {
     mockedFetchPrices.mockResolvedValue(null);
 
     await ebayModule.refreshBarcodePriceOffers!(refreshCtx());
@@ -51,6 +51,27 @@ describe("ebay refreshBarcodePriceOffers", () => {
       "Les Tresors de Picsou N 63",
       "Les Trésors de Picsou 63",
       "Les Tresors de Picsou 63",
+    ]);
+  });
+
+  it("prefers barcode before title seeks", async () => {
+    mockedFetchPrices.mockResolvedValue(null);
+
+    await ebayModule.refreshBarcodePriceOffers!(
+      toBarcodePriceRefreshContext(
+        buildMatchContext({
+          shelfType: "games",
+          shelfName: "Switch",
+          primaryTitle: "Hades",
+          titles: ["Hades"],
+          barcodes: ["0045496365226"],
+        }),
+      ),
+    );
+
+    expect(mockedFetchPrices.mock.calls.map(([query]) => query)).toEqual([
+      "0045496365226",
+      "Hades",
     ]);
   });
 

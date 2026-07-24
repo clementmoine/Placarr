@@ -4,12 +4,17 @@ import { priceListingMatchesAnyItemName } from "@/core/identify/titleUtils";
 
 import { fetchFromEbayCatalog } from "./catalog";
 import {
+  cacheEbayBrowseSummaries,
   cacheEbayGtinProducts,
   cacheEbaySearchProducts,
   cacheEbayPrices,
+  ebayBrowseGtinCacheKey,
+  ebayBrowseQueryCacheKey,
+  getCachedEbayBrowseSummaries,
   getCachedEbayGtinProducts,
   getCachedEbaySearchProducts,
   getCachedEbayPrices,
+  type EbayBrowseSummary,
 } from "./cache";
 import { bestEbayCoverUrl } from "./coverUrl";
 import {
@@ -26,14 +31,7 @@ export type { EbayPrices, EbayProduct } from "./types";
 export { resetEbayTokenCache } from "./oauth";
 export { resetEbayResponseCacheForTests } from "./cache";
 
-type EbayItemSummary = {
-  title?: string | null;
-  image?: { imageUrl?: string | null } | null;
-  thumbnailImages?: Array<{ imageUrl?: string | null }> | null;
-  price?: { value?: string | null; currency?: string | null } | null;
-  condition?: string | null;
-  itemWebUrl?: string | null;
-};
+type EbayItemSummary = EbayBrowseSummary;
 
 function priceToCents(value?: string | null): number | null {
   if (value === undefined || value === null) return null;
@@ -81,6 +79,45 @@ type EbayBrowseSearchResult = {
   retryableFailure: boolean;
 };
 
+/** Aggregate median new/used prices from Browse itemSummaries (no getItem). */
+export function aggregateEbayPricesFromSummaries(
+  items: EbayItemSummary[],
+  expectedNames: string[] = [],
+  options?: EbayTitleMatchOptions,
+): EbayPrices | null {
+  const newPrices: number[] = [];
+  const usedPrices: number[] = [];
+  let firstTitle: string | null = null;
+  let firstHref: string | null = null;
+  let offerCount = 0;
+
+  for (const item of items) {
+    const title = item.title?.trim();
+    if (!title || !matchesExpectedTitle(title, expectedNames, options)) {
+      continue;
+    }
+    const price = priceToCents(item.price?.value);
+    if (price === null) continue;
+    offerCount++;
+    if (isNewCondition(item.condition)) newPrices.push(price);
+    else usedPrices.push(price);
+    firstTitle = firstTitle || title;
+    firstHref = firstHref || item.itemWebUrl || null;
+  }
+
+  const priceNew = median(newPrices);
+  const priceUsed = median(usedPrices);
+  if (priceNew === null && priceUsed === null) return null;
+
+  return {
+    priceNew: priceNew ?? undefined,
+    priceUsed: priceUsed ?? undefined,
+    productName: firstTitle || undefined,
+    sourceUrl: firstHref || undefined,
+    offerCount,
+  };
+}
+
 async function searchEbayBrowse(
   params: Record<string, string>,
   credentials: EbayCredentials,
@@ -109,6 +146,26 @@ async function searchEbayBrowse(
     items: Array.isArray(items) ? (items as EbayItemSummary[]) : [],
     retryableFailure: false,
   };
+}
+
+/**
+ * Browse once (or reuse SearchYield): cache raw summaries under a stable key.
+ * Callers mine listings and/or prices from the same array.
+ */
+async function searchEbayBrowseCached(
+  cacheKey: string,
+  params: Record<string, string>,
+  credentials: EbayCredentials,
+): Promise<EbayBrowseSearchResult> {
+  const cached = getCachedEbayBrowseSummaries(cacheKey);
+  if (cached) {
+    return { items: cached, retryableFailure: false };
+  }
+  const result = await searchEbayBrowse(params, credentials);
+  if (!result.retryableFailure) {
+    cacheEbayBrowseSummaries(cacheKey, result.items);
+  }
+  return result;
 }
 
 function listingsToProducts(
@@ -156,7 +213,12 @@ async function fetchBrowseListingsByGtin(
   credentials: EbayCredentials,
   options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
-  const { items } = await searchEbayBrowse({ gtin }, credentials);
+  const cacheKey = ebayBrowseGtinCacheKey(gtin);
+  const { items } = await searchEbayBrowseCached(
+    cacheKey,
+    { gtin },
+    credentials,
+  );
   return listingsToProducts(items, expectedNames, options);
 }
 
@@ -166,7 +228,12 @@ async function fetchBrowseListingsByEpid(
   credentials: EbayCredentials,
   options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
-  const { items } = await searchEbayBrowse({ epid }, credentials);
+  const cacheKey = ebayBrowseQueryCacheKey(`epid:${epid}`);
+  const { items } = await searchEbayBrowseCached(
+    cacheKey,
+    { epid },
+    credentials,
+  );
   return listingsToProducts(items, expectedNames, options);
 }
 
@@ -260,7 +327,8 @@ export async function fetchEbayProductsByQuery(
 
   console.log(`[eBay] Querying search: ${cleaned}`);
   try {
-    const { items, retryableFailure } = await searchEbayBrowse(
+    const { items, retryableFailure } = await searchEbayBrowseCached(
+      ebayBrowseQueryCacheKey(cleaned),
       { q: cleaned },
       credentials,
     );
@@ -297,46 +365,23 @@ export async function fetchPricesFromEbay(
 
   try {
     const isBarcode = isBarcodeLike(cleaned);
-    const { items, retryableFailure } = await searchEbayBrowse(
-      isBarcode ? { gtin: cleaned.replace(/[^\d]/g, "") } : { q: cleaned },
+    const digits = cleaned.replace(/[^\d]/g, "");
+    const cacheKey = isBarcode
+      ? ebayBrowseGtinCacheKey(digits)
+      : ebayBrowseQueryCacheKey(cleaned);
+    const browseParams = isBarcode ? { gtin: digits } : { q: cleaned };
+    const { items, retryableFailure } = await searchEbayBrowseCached(
+      cacheKey,
+      browseParams,
       credentials,
     );
     if (retryableFailure) return null;
 
-    const newPrices: number[] = [];
-    const usedPrices: number[] = [];
-    let firstTitle: string | null = null;
-    let firstHref: string | null = null;
-    let offerCount = 0;
-
-    for (const item of items) {
-      const title = item.title?.trim();
-      if (!title || !matchesExpectedTitle(title, expectedNames, options)) {
-        continue;
-      }
-      const price = priceToCents(item.price?.value);
-      if (price === null) continue;
-      offerCount++;
-      if (isNewCondition(item.condition)) newPrices.push(price);
-      else usedPrices.push(price);
-      firstTitle = firstTitle || title;
-      firstHref = firstHref || item.itemWebUrl || null;
-    }
-
-    const priceNew = median(newPrices);
-    const priceUsed = median(usedPrices);
-    if (priceNew === null && priceUsed === null) {
-      cacheEbayPrices(cleaned, null);
-      return null;
-    }
-
-    const result = {
-      priceNew: priceNew ?? undefined,
-      priceUsed: priceUsed ?? undefined,
-      productName: firstTitle || undefined,
-      sourceUrl: firstHref || undefined,
-      offerCount,
-    };
+    const result = aggregateEbayPricesFromSummaries(
+      items,
+      expectedNames,
+      options,
+    );
     cacheEbayPrices(cleaned, result);
     return result;
   } catch (error: unknown) {

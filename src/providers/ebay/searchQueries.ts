@@ -1,3 +1,5 @@
+import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
+
 /** Extra marketplace query shapes (accents stripped, n° → N) for Browse API search. */
 export function ebayMarketplaceQueryVariants(queries: string[]): string[] {
   const seen = new Set<string>();
@@ -26,14 +28,21 @@ export function ebayMarketplaceQueryVariants(queries: string[]): string[] {
   return out;
 }
 
+/**
+ * Price seek queries: `matchPriceSeekQueries` (barcode first, ≤1/2 titles)
+ * plus accent/`n°` marketplace variants — still capped at 4 HTTP seeks.
+ */
 export function ebayPriceSearchQueries(
   primaryName: string,
   fallbackNames: string[],
   cleanedBarcode = "",
 ): string[] {
-  return ebayMarketplaceQueryVariants(
-    Array.from(
-      new Set([cleanedBarcode, primaryName, ...fallbackNames].filter(Boolean)),
-    ),
-  ).slice(0, 4);
+  const code = cleanedBarcode.trim();
+  const base = matchPriceSeekQueries({
+    barcodes: code ? [code] : [],
+    cleanedBarcode: code,
+    primaryName,
+    fallbackNames,
+  });
+  return ebayMarketplaceQueryVariants(base).slice(0, 4);
 }

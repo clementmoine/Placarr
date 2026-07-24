@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2g shipped (metadata seed gap-fill); eBay batch / corpora = next.
+> Phase 1–2h shipped (eBay Browse SearchYield reuse); corpora / Flare 1→N = next.
 
 ## Principle
 
@@ -76,11 +76,18 @@ Boardgame retailers no longer slim-and-forget after paying for a fiche GET:
 - Stage-2 non-scrape secondaries + identify fallbacks skip when capabilities already satisfied
 - Pinned scrapes still refresh; incomplete seed still wakes the full API set
 
+## Phase 2h — eBay Browse SearchYield reuse (done 2026-07-24)
+
+Prices already aggregate from Browse `itemSummaries` (no getItem fan-out). Waste was **repeated Browse searches**:
+
+- Shared process-local `browseSummaryCache` keyed `gtin:…` / `q:…` — metadata GTIN + price GTIN mine the same summaries (0 extra HTTP)
+- `aggregateEbayPricesFromSummaries` — single mine path for medians
+- `ebayPriceSearchQueries` aligned with `matchPriceSeekQueries` (barcode first, ≤1 title when barcode present, ascii variants, cap 4)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| eBay: batch search → aggregate | One Browse search ≫ N item details |
 | Local full-set / dump sync | Closed platforms at home latency |
 | Flare retailers: 1 search → N candidates | Same philosophy as PC |
-| SearchYield durability | Soft-404 / search pages beyond PC detail prices |
+| SearchYield durability | Soft-404 / search pages beyond PC detail / eBay process cache |

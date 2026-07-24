@@ -223,6 +223,30 @@ describe("fetchFromEbay", () => {
 });
 
 describe("fetchPricesFromEbay", () => {
+  it("reuses Browse GTIN SearchYield after metadata (0 extra Browse HTTP)", async () => {
+    mockCatalogThenBrowse(
+      [],
+      [
+        itemSummary("Hades Switch", { price: "30.00", condition: "New" }),
+        itemSummary("Hades Switch", { price: "20.00", condition: "Used" }),
+        itemSummary("Hades Switch", { price: "24.00", condition: "Used" }),
+      ],
+    );
+
+    await fetchFromEbay("0045496365226");
+    const browseCallsAfterMetadata = mockedGet.mock.calls.length;
+
+    await expect(
+      fetchPricesFromEbay("0045496365226", []),
+    ).resolves.toMatchObject({
+      priceNew: 3000,
+      priceUsed: 2200,
+      offerCount: 3,
+    });
+
+    expect(mockedGet.mock.calls.length).toBe(browseCallsAfterMetadata);
+  });
+
   it("separates new and used median prices", async () => {
     mockedPost.mockResolvedValueOnce(tokenResponse());
     mockedGet.mockResolvedValueOnce(

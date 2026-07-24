@@ -80,6 +80,36 @@ describe("displayFacts", () => {
 
       expect(extractProviderLinkFacts(facts)).toHaveLength(2);
     });
+
+    it("keeps PriceCharting EUR and US chips despite shared providerLabel", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "external-link",
+          label: "PriceCharting (EUR)",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/pal-xbox-360/xbox-360-slim-250gb",
+          source: "pricecharting",
+          providerLabel: "PriceCharting",
+          priority: 44,
+        },
+        {
+          kind: "external-link",
+          label: "PriceCharting (US)",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/xbox-360/xbox-360-slim-console-250gb",
+          source: "pricecharting",
+          providerLabel: "PriceCharting",
+          priority: 42,
+        },
+      ];
+
+      const links = extractProviderLinkFacts(facts);
+      expect(links).toHaveLength(2);
+      expect(links.map((fact) => fact.label).sort()).toEqual([
+        "PriceCharting (EUR)",
+        "PriceCharting (US)",
+      ]);
+    });
   });
 
   describe("filterRedundantDisplayFacts", () => {

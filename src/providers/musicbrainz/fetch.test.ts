@@ -48,23 +48,31 @@ describe("artistFromCredit", () => {
 
 describe("fetchFromMusicBrainz", () => {
   it("résout un code-barres en nom canonique 'Artiste - Titre'", async () => {
-    mockedGet.mockResolvedValue({
-      data: {
-        releases: [
-          {
-            id: "mbid-1",
-            title: "Kingdom Hearts Orchestra -World Of Tres",
-            score: 100,
-            date: "2020-09-23",
-            "artist-credit": [{ name: "Yoko Shimomura" }],
-          },
-        ],
-      },
-    } as never);
+    mockedGet
+      .mockResolvedValueOnce({
+        data: {
+          releases: [
+            {
+              id: "mbid-1",
+              title: "Kingdom Hearts Orchestra -World Of Tres",
+              score: 100,
+              date: "2020-09-23",
+              "artist-credit": [{ name: "Yoko Shimomura" }],
+            },
+          ],
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          aliases: [{ name: "KH Orchestra World of Tres" }],
+        },
+      } as never);
 
     const r = await fetchFromMusicBrainz("4988601467124");
     expect(r?.title).toContain("Yoko Shimomura");
     expect(r?.title).toContain("Kingdom Hearts Orchestra");
+    expect(r?.releaseTitle).toBe("Kingdom Hearts Orchestra -World Of Tres");
+    expect(r?.aliases).toContain("KH Orchestra World of Tres");
     expect(r?.mbid).toBe("mbid-1");
     expect(r?.imageUrl).toBeNull();
   });

@@ -16,6 +16,8 @@ const USER_AGENT = "Placarr/1.0 (https://github.com/clementmoine/Placarr)";
 
 export interface MusicBrainzResult {
   title: string;
+  /** Bare release title without artist prefix (official MB title). */
+  releaseTitle: string | null;
   artist: string | null;
   releaseDate: string | null;
   imageUrl: string | null;
@@ -35,6 +37,8 @@ export interface MusicBrainzResult {
   tags?: string[];
   mediaSummaries?: string[];
   labels?: string[];
+  /** Official MB aliases (release + release-group when fetched). */
+  aliases?: string[];
 }
 
 /** Construit un nom canonique "Artiste - Titre" sans dupliquer l'artiste. */
@@ -57,6 +61,32 @@ export function artistFromCredit(artistCredit: unknown): string | null {
     )
     .filter(Boolean);
   return names.length > 0 ? names.join(", ") : null;
+}
+
+function aliasNamesFromMbPayload(payload: unknown): string[] {
+  if (!payload || typeof payload !== "object") return [];
+  const aliases = (payload as { aliases?: unknown }).aliases;
+  if (!Array.isArray(aliases)) return [];
+  return aliases
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return "";
+      const name = (entry as { name?: unknown }).name;
+      return typeof name === "string" ? name.trim() : "";
+    })
+    .filter(Boolean);
+}
+
+async function fetchMusicBrainzReleaseAliases(mbid: string): Promise<string[]> {
+  try {
+    const res = await axios.get(`${MB_BASE}/release/${mbid}`, {
+      params: { inc: "aliases", fmt: "json" },
+      headers: { "User-Agent": USER_AGENT },
+      timeout: 8000,
+    });
+    return aliasNamesFromMbPayload(res.data);
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchFromMusicBrainz(
@@ -128,8 +158,13 @@ export async function fetchFromMusicBrainz(
           ? firstMedia["track-count"]
           : null;
 
+    const releaseTitle =
+      typeof best.title === "string" ? best.title.trim() : "";
+    const aliases = await fetchMusicBrainzReleaseAliases(best.id);
+
     return {
-      title: formatMusicTitle(artist, best.title),
+      title: formatMusicTitle(artist, releaseTitle),
+      releaseTitle: releaseTitle || null,
       artist,
       releaseDate: best.date || null,
       imageUrl: null,
@@ -163,6 +198,7 @@ export async function fetchFromMusicBrainz(
       tags: tags.length > 0 ? tags : undefined,
       mediaSummaries: mediaSummaries.length > 0 ? mediaSummaries : undefined,
       labels: labels.length > 0 ? labels : undefined,
+      aliases: aliases.length > 0 ? aliases : undefined,
     };
   } catch {
     return null;

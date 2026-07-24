@@ -4,7 +4,7 @@ import type { Condition } from "@prisma/client";
  * Shelf item grades, ordered best → worst.
  * - new: sealed or opened-mint (no separate blister grade)
  * - used: complete in box when CIB exists
- * - loose: cartouche / disque seul
+ * - loose: cartouche / disque / console seule (sans boîte)
  * - damaged: compromised copy
  *
  * Market `PriceOffer.condition` (new/loose/cib/used) stays separate.
@@ -46,13 +46,22 @@ export function parseItemCondition(
 }
 
 /**
- * Loose (cartouche / disque seul) is a video-game market grade — hide it on
- * books, boardgames, movies, etc.
+ * Games + hardware share PriceCharting-style grades (loose vs CIB/boxed).
+ * Books, boardgames, movies, etc. do not offer "loose".
+ */
+export function shelfSupportsLooseCondition(
+  shelfType?: string | null,
+): boolean {
+  return shelfType === "games" || shelfType === "hardware";
+}
+
+/**
+ * Loose (cartouche / disque / console seule) is a games+hardware market grade.
  */
 export function itemConditionsForShelfType(
   shelfType?: string | null,
 ): readonly ItemCondition[] {
-  if (shelfType === "games") return ITEM_CONDITIONS;
+  if (shelfSupportsLooseCondition(shelfType)) return ITEM_CONDITIONS;
   return ITEM_CONDITIONS.filter((condition) => condition !== "loose");
 }
 
@@ -65,7 +74,7 @@ export function marketOfferConditionsForItem(
   if (condition === "new") return ["new"];
 
   if (condition === "used") {
-    if (shelfType === "games") {
+    if (shelfSupportsLooseCondition(shelfType)) {
       // CIB aggregate includes explicit cib + shop "used" (boxed retail).
       return prices?.priceUsedCIB ? ["cib", "used"] : ["loose", "used"];
     }
@@ -74,12 +83,12 @@ export function marketOfferConditionsForItem(
 
   if (condition === "loose") {
     // Loose copy value only trusts true loose observations — not boxed retail.
-    if (shelfType === "games") return ["loose"];
+    if (shelfSupportsLooseCondition(shelfType)) return ["loose"];
     return ["used"];
   }
 
   if (condition === "damaged") {
-    if (shelfType === "games") {
+    if (shelfSupportsLooseCondition(shelfType)) {
       return prices?.priceUsedCIB ? ["cib", "loose", "used"] : ["loose", "used"];
     }
     return ["used"];

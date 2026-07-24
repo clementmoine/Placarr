@@ -28,7 +28,10 @@ import {
   type AttachmentImageMetrics,
   type ScoredAttachmentInput,
 } from "@/core/enrich/media/attachmentDisplayScore";
-import { resolveAttachmentSemantics } from "@/core/enrich/media/attachmentDisplayLabels";
+import {
+  isPhysicalNonCoverKind,
+  resolveAttachmentSemantics,
+} from "@/core/enrich/media/attachmentDisplayLabels";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
@@ -202,6 +205,8 @@ function coverDisplayOptions(
   const resolvedLocale = resolveCoverUiLocale(uiLocale);
   const preferDiscCover =
     item.condition === "loose" && item.shelf?.type === "games";
+  const preferSystemOnlyCover =
+    item.condition === "loose" && item.shelf?.type === "hardware";
   return {
     requestedPlatformKey:
       item.shelf?.type === "games"
@@ -209,6 +214,7 @@ function coverDisplayOptions(
         : undefined,
     ...(resolvedLocale ? { uiLocale: resolvedLocale } : {}),
     ...(preferDiscCover ? { preferDiscCover: true } : {}),
+    ...(preferSystemOnlyCover ? { preferSystemOnlyCover: true } : {}),
   };
 }
 
@@ -377,7 +383,9 @@ function filterAttachmentsForProductTitle<
     }
     if (
       attachment.retailCatalogImageTitlesSource &&
-      !priceListingSharesItemIdentity(productTitle, attachmentTitle)
+      !priceListingSharesItemIdentity(productTitle, attachmentTitle, {
+        shelfType: shelf?.type,
+      })
     ) {
       return false;
     }
@@ -702,6 +710,93 @@ function dedupeAttachmentsByImageUrl(
   return Array.from(byKey.values());
 }
 
+function isLocalCropUploadUrl(url: string): boolean {
+  return url.startsWith("/uploads/") && /_crop\.[^.]+$/i.test(url);
+}
+
+/**
+ * Affiche picker: a Perso `/uploads/…_crop` pin beside its remote catalog
+ * jaquette (failed remote→local fold) is the same art twice. Keep the crop as
+ * the display URL and inherit catalog provenance; drop the redundant remote.
+ */
+export function collapseCroppedUserPinWithCatalogOriginal(
+  attachments: ScoredAttachmentInput[],
+  activeCoverUrl?: string | null,
+  options?: {
+    metadataImageUrl?: string | null;
+    /** Real post-enrichment personal picks must not be folded onto catalog art. */
+    preserveExplicitUserOverride?: boolean;
+  },
+): ScoredAttachmentInput[] {
+  if (options?.preserveExplicitUserOverride) return attachments;
+
+  const pin = activeCoverUrl?.trim() || null;
+  if (!pin || !isLocalCropUploadUrl(pin)) return attachments;
+
+  const userCrop = attachments.find(
+    (attachment) =>
+      attachment.url &&
+      normalizeSourceKey(attachment.source) === "user" &&
+      urlsReferToSameLocalizedImage(attachment.url, pin),
+  );
+  if (!userCrop?.url) return attachments;
+
+  const remoteCatalog = attachments.filter(
+    (attachment) =>
+      attachment.url &&
+      /^https?:\/\//i.test(attachment.url) &&
+      normalizeSourceKey(attachment.source) !== "user" &&
+      COVER_GALLERY_TYPES.has(attachment.type),
+  );
+  if (remoteCatalog.length === 0) return attachments;
+
+  // Prefer the metadata default remote when several provider URLs remain
+  // (PriceCharting galleries). A lone remote is always the twin.
+  const metadataImageUrl = options?.metadataImageUrl?.trim() || null;
+  const catalog =
+    (metadataImageUrl &&
+      remoteCatalog.find(
+        (attachment) =>
+          attachment.url &&
+          urlsReferToSameLocalizedImage(attachment.url, metadataImageUrl),
+      )) ||
+    (remoteCatalog.length === 1 ? remoteCatalog[0] : null) ||
+    remoteCatalog.find(
+      (attachment) =>
+        attachment.type === "cover" &&
+        /^(main(\s+image)?|box(\s+front)?|front(\s+of\s+box)?)$/i.test(
+          (attachment.title || "").trim(),
+        ),
+    ) ||
+    null;
+  if (!catalog?.url) return attachments;
+
+  const merged: ScoredAttachmentInput = {
+    ...catalog,
+    url: userCrop.url,
+    type: catalog.type === "image" ? "cover" : catalog.type,
+    // Prefer catalog provenance; never keep Perso when folding onto a jaquette.
+    source:
+      catalog.source && normalizeSourceKey(catalog.source) !== "user"
+        ? catalog.source
+        : null,
+    providerLabel: catalog.providerLabel ?? userCrop.providerLabel,
+    sourceNames: catalog.sourceNames ?? userCrop.sourceNames,
+    role: catalog.role ?? userCrop.role,
+    title: catalog.title ?? userCrop.title,
+  };
+
+  const drop = new Set(
+    [userCrop.url, catalog.url].filter(Boolean) as string[],
+  );
+  return [
+    merged,
+    ...attachments.filter(
+      (attachment) => attachment.url && !drop.has(attachment.url),
+    ),
+  ];
+}
+
 function normalizeSourceKey(source?: string | null): string {
   return (source || "").split(/[·/]/)[0].toLowerCase().trim();
 }
@@ -859,12 +954,15 @@ export function orderedCoverAttachmentsForDisplay(
   );
   if (covers.length === 0) return [];
   const ranked = rankCoverGalleryAttachments(
-    covers,
+    collapseCroppedUserPinWithCatalogOriginal(covers, item.imageUrl, {
+      metadataImageUrl: item.metadata?.imageUrl,
+      preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
+    }),
     persistedImageMetricsByUrl(item),
     options,
   );
-  // Loose copies: keep the disc-first ranking — don't re-pin the catalog box.
-  if (options.preferDiscCover) {
+  // Loose copies: keep the disc/system-only ranking — don't re-pin the catalog box.
+  if (options.preferDiscCover || options.preferSystemOnlyCover) {
     return pinUserCoversFirst(ranked);
   }
   const pin = resolveMetadataCoverUrl(item, uiLocale);
@@ -894,12 +992,19 @@ export function mergeCoverAttachmentsForPicker(
     options,
   );
   const ranked = rankCoverGalleryAttachments(
-    dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
+    collapseCroppedUserPinWithCatalogOriginal(
+      dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
+      item.imageUrl,
+      {
+        metadataImageUrl: item.metadata?.imageUrl,
+        preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
+      },
+    ),
     persistedImageMetricsByUrl(item),
     options,
   );
   const ordered = pinUserCoversFirst(
-    options.preferDiscCover
+    options.preferDiscCover || options.preferSystemOnlyCover
       ? ranked
       : orderRankedCoversWithMetadataPin(
           ranked,
@@ -955,6 +1060,20 @@ export function getCoverImage(
         options,
       );
       if (discCover) return discCover;
+    }
+  }
+
+  if (options.preferSystemOnlyCover && !honorUserOverride) {
+    const hasSystemOnly = coverPool.some((attachment) =>
+      /\bsystem\s*only\b|^loose$/i.test((attachment.title || "").trim()),
+    );
+    if (hasSystemOnly) {
+      const systemCover = pickBestCoverFromAttachments(
+        coverPool,
+        metrics,
+        options,
+      );
+      if (systemCover) return systemCover;
     }
   }
 
@@ -1088,6 +1207,28 @@ export function getGalleryImages(
   ranked.filter((attachment) => attachment.type === "background").forEach(add);
   ranked.filter((attachment) => attachment.type === "logo").forEach(add);
   ranked.filter((attachment) => attachment.type === "image").forEach(add);
+
+  // Cover ranking omits box backs/spines so they never win the default cover
+  // slot — still list them in the page gallery (PriceCharting #images, etc.).
+  for (const attachment of attachments(item)) {
+    if (!attachment.url) continue;
+    const { kind } = resolveAttachmentSemantics({
+      type: attachment.type,
+      role: attachment.role,
+      title: attachment.title,
+      source: attachment.source,
+    });
+    if (!isPhysicalNonCoverKind(kind) || kind === "disc") continue;
+    add({
+      url: attachment.url,
+      type: attachment.type,
+      source: attachment.source ?? null,
+      role: attachment.role,
+      title: attachment.title,
+      providerLabel: attachment.providerLabel,
+      sourceNames: attachment.sourceNames,
+    });
+  }
 
   if (item.imageUrl && !seen.has(item.imageUrl)) {
     add({ url: item.imageUrl, type: "image" });

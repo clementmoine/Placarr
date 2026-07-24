@@ -32,7 +32,16 @@ export function isPcLikeGamePlatform(platform?: string | null): boolean {
 }
 
 export function isMediaType(value: string): value is MediaType {
-  return ["games", "movies", "musics", "books", "boardgames"].includes(value);
+  return [
+    "games",
+    "movies",
+    "musics",
+    "books",
+    "boardgames",
+    "hardware",
+    "tcg",
+    "toys",
+  ].includes(value);
 }
 
 export function metadataCandidatesForType(type: MediaType): ProviderInfo[] {

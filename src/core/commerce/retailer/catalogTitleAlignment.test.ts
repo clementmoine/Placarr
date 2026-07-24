@@ -18,6 +18,36 @@ describe("catalogTitleAlignedWithItem", () => {
       catalogTitleAlignedWithItem("Black Stories", "Iello Black Stories"),
     ).toBe(true);
   });
+
+  it("rejects generation upgrades on bare console stems", () => {
+    expect(
+      catalogTitleAlignedWithItem("Nintendo Switch", "Nintendo Switch 2", {
+        shelfType: "hardware",
+      }),
+    ).toBe(false);
+    expect(
+      catalogTitleAlignedWithItem(
+        "PlayStation",
+        "Sony PlayStation 5 Slim Digital",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("accepts System chrome and rejects console packs for bare PS2", () => {
+    expect(
+      catalogTitleAlignedWithItem("PlayStation 2", "Playstation 2 System", {
+        shelfType: "hardware",
+      }),
+    ).toBe(true);
+    expect(
+      catalogTitleAlignedWithItem(
+        "PlayStation 2",
+        "Sony Playstation 2 GT3 Racing Pack",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("retailerCatalogTitleContradictsItem", () => {
@@ -39,6 +69,45 @@ describe("retailerCatalogTitleContradictsItem", () => {
         itemTitle: "Black Stories - Femmes Fatales",
       }),
     ).toBe(true);
+  });
+
+  it("flags a GT3 console pack for bare PlayStation 2 on hardware", () => {
+    expect(
+      retailerCatalogTitleContradictsItem({
+        productUrl:
+          "https://www.pricecharting.com/game/playstation-2/sony-playstation-2-gt3-racing-pack",
+        productTitle: "Sony Playstation 2 GT3 Racing Pack",
+        itemTitle: "PlayStation 2",
+        shelfType: "hardware",
+      }),
+    ).toBe(true);
+    expect(
+      retailerCatalogTitleContradictsItem({
+        productUrl:
+          "https://www.pricecharting.com/game/pal-playstation-2/playstation-2-system",
+        itemTitle: "PlayStation 2",
+        shelfType: "hardware",
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps Xbox 360 Slim 250Go ↔ Slim Console 250GB PriceCharting slugs", () => {
+    expect(
+      retailerCatalogTitleContradictsItem({
+        productUrl:
+          "https://www.pricecharting.com/game/xbox-360/xbox-360-slim-console-250gb",
+        itemTitle: "Xbox 360 Slim 250Go",
+        shelfType: "hardware",
+      }),
+    ).toBe(false);
+    expect(
+      retailerCatalogTitleContradictsItem({
+        productUrl:
+          "https://www.pricecharting.com/game/pal-xbox-360/xbox-360-slim-250gb",
+        itemTitle: "Xbox 360 Slim 250Go",
+        shelfType: "hardware",
+      }),
+    ).toBe(false);
   });
 
   it("flags a LeDénicheur product title for a different edition", () => {
@@ -99,5 +168,26 @@ describe("catalogTitleFromProductUrl", () => {
         "https://www.pricecharting.com/fr/search-products?type=videogames&q=Wrc%204",
       ),
     ).toBeNull();
+  });
+
+  it("uses the Back Market product slug before the trailing UUID", () => {
+    expect(
+      catalogTitleFromProductUrl(
+        "https://www.backmarket.fr/fr-fr/p/console-nintendo-wii-bleu/7383740a-64c1-4b44-aa1c-b65a512979a1?l=11",
+      ),
+    ).toBe("console nintendo wii bleu");
+  });
+});
+
+describe("retailerCatalogTitleContradictsItem Back Market", () => {
+  it("keeps a matching Back Market /p/{slug}/{uuid} fiche for hardware", () => {
+    expect(
+      retailerCatalogTitleContradictsItem({
+        productUrl:
+          "https://www.backmarket.fr/fr-fr/p/console-nintendo-wii-bleu/7383740a-64c1-4b44-aa1c-b65a512979a1?l=11",
+        itemTitle: "Nintendo Wii Bleu",
+        shelfType: "hardware",
+      }),
+    ).toBe(false);
   });
 });

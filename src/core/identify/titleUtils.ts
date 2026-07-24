@@ -37,6 +37,7 @@ import {
   listingLooksLikeNonBookProduct,
 } from "@/core/identify/listingMerch";
 import {
+  foldHardwareCapacityUnitsInTitle,
   IDENTITY_FUNCTION_WORDS,
   IDENTITY_PLATFORM_NOISE_TOKENS,
   IDENTITY_VOLUME_STOP_WORDS,
@@ -56,6 +57,10 @@ export { normalizeForTokens } from "@/core/enrich/titles/normalize";
 export { isListingDiscardable } from "@/core/identify/listingDiscard";
 export { isLotListing } from "@/core/identify/listingLot";
 export {
+  listingAddsUnrequestedControllerAccessory,
+  listingAddsUnrequestedConsoleSystem,
+  listingLooksLikeControllerProduct,
+  listingLooksLikeConsoleSystemProduct,
   listingLooksLikeGameAccessory,
   listingLooksLikeMerchAccessory,
   listingLooksLikeNonBookProduct,
@@ -98,8 +103,47 @@ export function getSequelIndicators(normStr: string): Set<string> {
   return indicators;
 }
 
+function stripEdgePunctuation(value: string): string {
+  let cleaned = value
+    .replace(/^[\s+\-,.:;()/[\]\\]+/, "")
+    // Keep a balancing trailing ")" for platform parentheticals
+    // ("… (Atari 2600)" / "… (Game & Watch)").
+    .replace(/[\s+\-,.:;(/[\]\\]+$/, "");
+  while (cleaned.endsWith(")")) {
+    const opens = (cleaned.match(/\(/g) || []).length;
+    const closes = (cleaned.match(/\)/g) || []).length;
+    if (opens >= closes) break;
+    cleaned = cleaned.slice(0, -1);
+  }
+  return cleaned.trim();
+}
+
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** True when the whole phrase is a known platform label ("Game & Watch"). */
+function isKnownPlatformPhrase(value: string): boolean {
+  const normalized = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) return false;
+  return VIDEO_GAME_PLATFORM_TERMS.some((term) => {
+    const termNorm = term
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return termNorm === normalized;
+  });
 }
 
 const SUFFIX_PATTERNS = Array.from(
@@ -382,6 +426,9 @@ export function cleanTitleForDisplay(
       .replace(/[()[\]]/g, "")
       .toLowerCase()
       .trim();
+    // Keep known device names ("Game & Watch") — "game" is also listing noise
+    // and would otherwise wipe the whole parenthetical.
+    if (isKnownPlatformPhrase(inner)) return match;
     const isMetadata = SUFFIX_PATTERNS.some((p) => {
       const regex = new RegExp(`\\b${escapeRegExp(p)}\\b`, "i");
       return regex.test(inner);
@@ -430,10 +477,7 @@ export function cleanTitleForDisplay(
   do {
     prev = cleaned;
     // Clean leading/trailing punctuation and spaces first
-    cleaned = cleaned
-      .replace(/^[\s+\-,.:;()/[\]\\]+/, "")
-      .replace(/[\s+\-,.:;()/[\]\\]+$/, "")
-      .trim();
+    cleaned = stripEdgePunctuation(cleaned);
     cleaned = stripAccessorySegments(cleaned);
     cleaned = stripListingMetadataSegments(cleaned);
     cleaned = stripListingChromeNoise(cleaned);
@@ -475,14 +519,23 @@ export function cleanTitleForDisplay(
       .replace(LEADING_PACK_RE, "")
       .replace(MEDIA_CATEGORY_LEADING_RE, "")
       .replace(LEADING_JEU_PLATFORM_RE, "")
-      .replace(prefixRegex, "")
+      .replace(prefixRegex, (match) => {
+        // Re-read current string context via the outer `cleaned` — prefixRegex
+        // is ^-anchored so match is always at the start of this pass.
+        const rest = cleaned.slice(match.length);
+        if (
+          /^game$/i.test(match.trim()) &&
+          /^\s*(?:&|and)\s*watch\b/i.test(rest)
+        ) {
+          return match;
+        }
+        return "";
+      })
       .trim();
   } while (cleaned !== prev);
 
   // Clean any remaining leading/trailing punctuation and double whitespaces
-  cleaned = cleaned
-    .replace(/^[\s+\-,.:;()/[\]\\]+/, "")
-    .replace(/[\s+\-,.:;()/[\]\\]+$/, "")
+  cleaned = stripEdgePunctuation(cleaned)
     .replace(/\s+/g, " ")
     .trim();
 
@@ -686,15 +739,29 @@ export function normalizePriceListingForComparison(value: string): string {
 export function priceListingMatchesAnyItemName(
   itemNames: string[],
   listingName?: string | null,
+  options?: { shelfType?: string | null },
 ): boolean {
   if (!listingName?.trim()) return true;
 
   const listing = listingName.trim();
-  if (listingLooksLikeGameAccessory(listing)) return false;
+  if (
+    listingLooksLikeGameAccessory(listing, { shelfType: options?.shelfType })
+  ) {
+    return false;
+  }
 
   return itemNames.some((name) => {
-    if (!priceListingSharesItemIdentity(name, listing)) {
+    if (
+      !priceListingSharesItemIdentity(name, listing, {
+        shelfType: options?.shelfType,
+      })
+    ) {
       return false;
+    }
+    // Hardware: residual (via priceListingSharesItemIdentity) is the single
+    // identity gate — do not re-judge with areLikelySameProduct (Bleu≠Blue).
+    if (options?.shelfType === "hardware") {
+      return true;
     }
     if (barcodeListingMatchesItem(name, listing)) return true;
 
@@ -858,6 +925,17 @@ const PLATFORM_MODEL_NUMBER_TOKENS = new Set(
   ),
 );
 
+/**
+ * Publisher phrase fragments that are also product identity ("Switch Sports",
+ * "EA Games" catalogue lines). Keep them out of the flattened noise bag so
+ * spinoff detection still sees the lead token.
+ */
+const PUBLISHER_FRAGMENT_PRODUCT_IDENTITY = new Set([
+  "sports",
+  "games",
+  "game",
+]);
+
 const PRODUCT_COMPARE_NOISE_TOKENS = new Set(
   [
     ...LISTING_NOISE_TERMS,
@@ -877,10 +955,19 @@ const PRODUCT_COMPARE_NOISE_TOKENS = new Set(
     "walt",
     "annee",
     "année",
+    // PriceCharting hardware chrome ("Nintendo 64 System", "… Console") —
+    // same SKU as the bare console name, not a spinoff lead.
+    "console",
+    "consoles",
+    "system",
+    "systems",
   ].flatMap((term) =>
     normalizeForTokens(term)
       .split(/\s+/)
-      .filter((token) => token.length >= 3),
+      .filter(
+        (token) =>
+          token.length >= 3 && !PUBLISHER_FRAGMENT_PRODUCT_IDENTITY.has(token),
+      ),
   ),
 );
 
@@ -1004,12 +1091,14 @@ export function listingIsDistinctProductSpinoff(
 }
 
 function normalizeTitleForProductCompare(value: string): string {
-  return normalizeForTokens(cleanSearchQuery(value) || value)
-    .replace(/[:;|/]/g, " ")
-    // Join hyphenated compounds so "Spider-Man" ↔ "Spiderman".
-    .replace(/-/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return foldHardwareCapacityUnitsInTitle(
+    normalizeForTokens(cleanSearchQuery(value) || value)
+      .replace(/[:;|/]/g, " ")
+      // Join hyphenated compounds so "Spider-Man" ↔ "Spiderman".
+      .replace(/-/g, "")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 function productCompareTokenSets(a: string, b: string): {

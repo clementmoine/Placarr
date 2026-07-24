@@ -64,7 +64,15 @@ interface ApiStatus {
   credits: { remaining: number; limit: number } | null;
 }
 
-type ProviderType = "games" | "movies" | "musics" | "books" | "boardgames";
+type ProviderType =
+  | "games"
+  | "movies"
+  | "musics"
+  | "books"
+  | "boardgames"
+  | "hardware"
+  | "tcg"
+  | "toys";
 type ProviderCapability =
   | "identify"
   | "price"
@@ -219,6 +227,9 @@ const providerTypesOrder: ProviderType[] = [
   "musics",
   "books",
   "boardgames",
+  "hardware",
+  "tcg",
+  "toys",
 ];
 
 const matrixCapabilities: ProviderCapability[] = [
@@ -413,6 +424,9 @@ function AdminDashboardComponent() {
         musics: "Musique",
         books: "Livres",
         boardgames: "Jeux de societe",
+        hardware: "Materiel",
+        tcg: "Cartes a collectionner",
+        toys: "Jouets",
       };
       return labels[type];
     }
@@ -422,6 +436,9 @@ function AdminDashboardComponent() {
       musics: "Music",
       books: "Books",
       boardgames: "Board games",
+      hardware: "Hardware",
+      tcg: "Trading cards",
+      toys: "Toys",
     };
     return labels[type];
   };
@@ -818,6 +835,15 @@ function AdminDashboardComponent() {
                             </SelectItem>
                             <SelectItem value="boardgames">
                               {t("shelf.type.boardgames")}
+                            </SelectItem>
+                            <SelectItem value="hardware">
+                              {t("shelf.type.hardware")}
+                            </SelectItem>
+                            <SelectItem value="tcg">
+                              {t("shelf.type.tcg")}
+                            </SelectItem>
+                            <SelectItem value="toys">
+                              {t("shelf.type.toys")}
                             </SelectItem>
                           </SelectContent>
                         </Select>

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { selectConsensusTitle } from "./compile";
+import {
+  preferHardwareCatalogConsoleTitle,
+  selectConsensusTitle,
+} from "./compile";
 
 /**
  * One agnostic rule — token corroboration by independent listings — handles every
@@ -164,5 +167,39 @@ describe("selectConsensusTitle", () => {
 
   it("renvoie null sans aucun titre", () => {
     expect(selectConsensusTitle({ canonical: [], marketplace: [] })).toBeNull();
+  });
+});
+
+describe("preferHardwareCatalogConsoleTitle", () => {
+  it("keeps a console catalog anchor when marketplace consensus is a franchise stem", () => {
+    expect(
+      preferHardwareCatalogConsoleTitle(
+        "hardware",
+        "Pac Man Edition",
+        [
+          {
+            cleanName: "PAC Man Atari Console & Ghost Joysticks (Atari 2600)",
+            rawName: "PAC Man Atari Console & Ghost Joysticks (Atari 2600)",
+          },
+        ],
+        ["Pac Man"],
+      ),
+    ).toMatch(/Atari Console/i);
+  });
+
+  it("does not override games shelves", () => {
+    expect(
+      preferHardwareCatalogConsoleTitle(
+        "games",
+        "Pac Man Edition",
+        [
+          {
+            cleanName: "PAC Man Atari Console & Ghost Joysticks",
+            rawName: "PAC Man Atari Console & Ghost Joysticks",
+          },
+        ],
+        ["Pac Man"],
+      ),
+    ).toBe("Pac Man Edition");
   });
 });

@@ -9,6 +9,7 @@
 import { abebooksModule } from "@/providers/abebooks";
 import { achatmoinscherModule } from "@/providers/achatmoinscher";
 import { babelioModule } from "@/providers/babelio";
+import { backmarketModule } from "@/providers/backmarket";
 import { bdovoreModule } from "@/providers/bdovore";
 import { bdphileModule } from "@/providers/bdphile";
 import { bdfugueModule } from "@/providers/bdfugue";
@@ -106,6 +107,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   chasseauxlivresModule,
   achatmoinscherModule,
   abebooksModule,
+  backmarketModule,
   decitreModule,
   furetModule,
   gibertModule,

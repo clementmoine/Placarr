@@ -13,8 +13,9 @@ describe("item conditions", () => {
     expect(ITEM_CONDITIONS).toEqual(["new", "used", "loose", "damaged"]);
   });
 
-  it("hides loose outside game shelves", () => {
+  it("offers loose on games and hardware only", () => {
     expect(itemConditionsForShelfType("games")).toEqual(ITEM_CONDITIONS);
+    expect(itemConditionsForShelfType("hardware")).toEqual(ITEM_CONDITIONS);
     expect(itemConditionsForShelfType("books")).toEqual([
       "new",
       "used",
@@ -44,7 +45,10 @@ describe("item conditions", () => {
     ).toEqual(["cib", "used"]);
   });
 
-  it("maps loose games to loose observations only", () => {
+  it("maps loose games and hardware to loose observations only", () => {
     expect(marketOfferConditionsForItem("loose", "games")).toEqual(["loose"]);
+    expect(marketOfferConditionsForItem("loose", "hardware")).toEqual([
+      "loose",
+    ]);
   });
 });

@@ -130,7 +130,7 @@ export const VIDEO_GAME_PLATFORMS = [
   {
     key: "ps1",
     label: "PlayStation",
-    aliases: ["playstation 1", "ps1", "psone", "playstation"],
+    aliases: ["playstation 1", "ps1", "psone", "ps one", "playstation"],
     launchBoxNames: ["Sony Playstation", "Sony PlayStation"],
     theGamesDbId: 10,
     screenScraperSystemId: 57,
@@ -266,6 +266,23 @@ export const VIDEO_GAME_PLATFORMS = [
     coverProject: [{ folder: "gameboy", prefix: "gb_" }],
   },
   {
+    key: "gameandwatch",
+    label: "Game & Watch",
+    aliases: [
+      "nintendo game & watch",
+      "nintendo game and watch",
+      "game & watch",
+      "game and watch",
+      "game-&-watch",
+      "game'n'watch",
+      "gameandwatch",
+      "g&w",
+      "gw",
+    ],
+    launchBoxNames: ["Nintendo Game & Watch"],
+    screenScraperSystemId: 52,
+  },
+  {
     key: "pc",
     label: "PC",
     aliases: ["pc windows", "pc", "windows", "microsoft windows"],
@@ -315,7 +332,18 @@ export const VIDEO_GAME_PLATFORMS = [
   {
     key: "neogeo",
     label: "Neo Geo",
-    aliases: ["neo geo", "neogeo"],
+    // AES / MVS / CD appear in marketplace titles ("… sur NEOGEO AES+") and
+    // must strip as trailing platform suffixes — not unexplained leftovers.
+    aliases: [
+      "neo geo",
+      "neogeo",
+      "neo geo aes",
+      "neogeo aes",
+      "neo geo mvs",
+      "neogeo mvs",
+      "neo geo cd",
+      "neogeo cd",
+    ],
     launchBoxNames: [
       "SNK Neo Geo AES",
       "SNK Neo Geo MVS",
@@ -574,6 +602,40 @@ export function detectVideoGamePlatformKey(
   );
 }
 
+/**
+ * Rewrite the longest registry alias span to the platform's canonical label.
+ * Hardware residual matching can then treat regional SKUs (Genesis ≡ Mega Drive)
+ * as the same console without inventing FR↔EN word lists.
+ */
+export function canonicalizeVideoGamePlatformAliasSpan(
+  title: string,
+): string {
+  const trimmed = title.trim();
+  if (!trimmed) return title;
+
+  const key = detectVideoGamePlatformKey(trimmed);
+  if (!key) return title;
+  const platform = getVideoGamePlatform(key);
+  if (!platform) return title;
+
+  const aliases = [...platform.aliases]
+    .map((alias) => alias.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+
+  for (const alias of aliases) {
+    const pattern = alias
+      .split(/\s+/)
+      .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("\\s+");
+    const re = new RegExp(pattern, "i");
+    if (!re.test(trimmed)) continue;
+    return trimmed.replace(re, platform.label);
+  }
+
+  return title;
+}
+
 export function detectKnownVideoGamePlatformName(
   value?: string | null,
 ): string | null {
@@ -619,13 +681,14 @@ export function createVideoGamePlatformMatcher(flags = "gi"): RegExp {
 
 /**
  * Trailing marketplace platform suffix, optionally preceded by sur/on/for
- * ("… sur PS5", "… Xbox One").
+ * ("… sur PS5", "… Xbox One"). Optional trailing `+` covers SKUs like
+ * "NEOGEO AES+".
  */
 export function createTrailingVideoGamePlatformSuffixMatcher(
   flags = "i",
 ): RegExp {
   return new RegExp(
-    `\\s+(?:(?:sur|on|for)\\s+)?(?:${videoGamePlatformTermAlternation()})\\s*$`,
+    `\\s+(?:(?:sur|on|for)\\s+)?(?:${videoGamePlatformTermAlternation()})(?:\\s*[+*])?\\s*$`,
     flags,
   );
 }

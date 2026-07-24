@@ -1,4 +1,12 @@
-export type MediaType = "games" | "movies" | "musics" | "books" | "boardgames";
+export type MediaType =
+  | "games"
+  | "movies"
+  | "musics"
+  | "books"
+  | "boardgames"
+  | "hardware"
+  | "tcg"
+  | "toys";
 
 export type Capability =
   | "identify"

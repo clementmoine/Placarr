@@ -18,8 +18,13 @@ export interface PriceChartingMetadata {
   images?: PriceChartingImage[];
   ageRating?: string;
   barcode?: string;
-  /** Verified PriceCharting `/game/…` URL for this product. */
+  /** Verified PriceCharting `/game/…` URL for this product (prefers PAL/EUR). */
   url?: string;
+  /**
+   * PAL↔NTSC sibling fiche when both regions exist for the same catalog slug
+   * (e.g. `/game/gamecube/…` when `url` is `/game/pal-gamecube/…`).
+   */
+  siblingUrl?: string;
   /** Parsed from the same detail page as metadata (single network call). */
   prices?: PriceChartingPrices;
 }
@@ -27,6 +32,8 @@ export interface PriceChartingMetadata {
 export interface PriceChartingImage {
   url: string;
   label?: string;
+  /** Region of the PriceCharting fiche this photo came from. */
+  isPal?: boolean;
 }
 
 export interface LeDenicheurPrices {

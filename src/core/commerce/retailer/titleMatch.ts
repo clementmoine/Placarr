@@ -10,7 +10,14 @@ import {
   normalizeVolumeNumber,
   volumeNumberFromPriceListing,
 } from "@/core/enrich/titles/volumeNumber";
-import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
+import {
+  hardwareProductTitlesAlign,
+} from "@/core/enrich/titles/residualIdentity";
+import {
+  listingAddsUnrequestedControllerAccessory,
+  listingAddsUnrequestedConsoleSystem,
+  listingLooksLikeMerchAccessory,
+} from "@/core/identify/listingMerch";
 import {
   titleTokenPresentInSet,
   titleTokensEquivalent,
@@ -44,6 +51,22 @@ const GENERIC_RETAILER_TOKENS = new Set([
   "for",
   "pc",
 ]);
+
+/** Platform / console tokens that ARE product identity on hardware shelves. */
+const HARDWARE_PLATFORM_IDENTITY_TOKENS = new Set([
+  "ps4",
+  "ps5",
+  "xbox",
+  "switch",
+  "nintendo",
+  "playstation",
+  "series",
+  "pc",
+]);
+
+export type PriceListingIdentityOptions = {
+  shelfType?: string | null;
+};
 
 const TITLE_STOP_WORDS = new Set([
   "le",
@@ -107,15 +130,20 @@ function identityTokenPrefixLength(a: string[], b: string[]): number {
 
 export function retailerIdentityTokenCount(requestedName: string): number {
   const requestedBase = extractBaseTitleVariant(requestedName) ?? requestedName;
-  return distinctiveTokens(requestedBase).filter(
-    (token) => !GENERIC_RETAILER_TOKENS.has(token),
-  ).length;
+  return distinctiveProductTokens(requestedBase).length;
 }
 
-function distinctiveProductTokens(value: string): string[] {
-  return distinctiveTokens(value).filter(
-    (token) => !GENERIC_RETAILER_TOKENS.has(token),
-  );
+function distinctiveProductTokens(
+  value: string,
+  shelfType?: string | null,
+): string[] {
+  return distinctiveTokens(value).filter((token) => {
+    if (!GENERIC_RETAILER_TOKENS.has(token)) return true;
+    // Hardware: console/platform tokens are the product, not disposable chrome.
+    return (
+      shelfType === "hardware" && HARDWARE_PLATFORM_IDENTITY_TOKENS.has(token)
+    );
+  });
 }
 
 const MARKETPLACE_LEADING_PRICE_TOKENS = new Set([
@@ -151,14 +179,21 @@ function volumeDistinctiveTokenMatchesIssue(
 export function catalogTitleOmitsRequestedProductIdentity(
   requestedName: string,
   catalogTitle: string,
+  options?: PriceListingIdentityOptions,
 ): boolean {
   if (franchiseSequelNumbersConflict([requestedName], catalogTitle)) {
     return false;
   }
 
   const requestedBase = extractBaseTitleVariant(requestedName) ?? requestedName;
-  const requestedTokens = distinctiveProductTokens(requestedBase);
-  const catalogTokens = distinctiveProductTokens(catalogTitle);
+  const requestedTokens = distinctiveProductTokens(
+    requestedBase,
+    options?.shelfType,
+  );
+  const catalogTokens = distinctiveProductTokens(
+    catalogTitle,
+    options?.shelfType,
+  );
   if (requestedTokens.length === 0 || catalogTokens.length === 0) {
     return false;
   }
@@ -168,7 +203,7 @@ export function catalogTitleOmitsRequestedProductIdentity(
   const allCatalogTokensInRequest = catalogTokens.every((token) =>
     titleTokenPresentInSet(
       token,
-      new Set(distinctiveProductTokens(requestedBase)),
+      new Set(distinctiveProductTokens(requestedBase, options?.shelfType)),
     ),
   );
   if (!allCatalogTokensInRequest) return false;
@@ -206,8 +241,15 @@ export function catalogTitleOmitsRequestedProductIdentity(
 export function retailerCatalogSharesRequestedIdentity(
   requestedName: string,
   catalogTitle: string,
+  options?: PriceListingIdentityOptions,
 ): boolean {
-  if (catalogTitleOmitsRequestedProductIdentity(requestedName, catalogTitle)) {
+  if (
+    catalogTitleOmitsRequestedProductIdentity(
+      requestedName,
+      catalogTitle,
+      options,
+    )
+  ) {
     return false;
   }
   if (franchiseSequelNumbersConflict([requestedName], catalogTitle)) {
@@ -215,41 +257,96 @@ export function retailerCatalogSharesRequestedIdentity(
   }
 
   const requestedBase = extractBaseTitleVariant(requestedName) ?? requestedName;
-  const identityTokens = distinctiveProductTokens(requestedBase);
+  const identityTokens = distinctiveProductTokens(
+    requestedBase,
+    options?.shelfType,
+  );
   if (identityTokens.length === 0) return false;
 
-  const catalogTokenSet = new Set(distinctiveProductTokens(catalogTitle));
+  const catalogTokenSet = new Set(
+    distinctiveProductTokens(catalogTitle, options?.shelfType),
+  );
   const leadMatch = identityTokens.some((token) =>
     titleTokenPresentInSet(token, catalogTokenSet),
   );
   if (!leadMatch) return false;
 
-  return priceListingSharesItemIdentity(requestedName, catalogTitle);
+  return priceListingSharesItemIdentity(requestedName, catalogTitle, options);
 }
 
 export function priceListingSharesItemIdentity(
   itemName: string,
   listingName: string,
+  options?: PriceListingIdentityOptions,
 ): boolean {
   if (
-    listingLooksLikeMerchAccessory(listingName) &&
-    !listingLooksLikeMerchAccessory(itemName)
+    listingLooksLikeMerchAccessory(listingName, {
+      shelfType: options?.shelfType,
+    }) &&
+    !listingLooksLikeMerchAccessory(itemName, { shelfType: options?.shelfType })
   ) {
     return false;
   }
-  if (catalogTitleOmitsRequestedProductIdentity(itemName, listingName)) {
+  if (
+    listingAddsUnrequestedControllerAccessory(itemName, listingName, {
+      shelfType: options?.shelfType,
+    })
+  ) {
+    return false;
+  }
+  if (
+    listingAddsUnrequestedConsoleSystem(itemName, listingName, {
+      shelfType: options?.shelfType,
+    })
+  ) {
+    return false;
+  }
+  if (
+    catalogTitleOmitsRequestedProductIdentity(itemName, listingName, options)
+  ) {
     return false;
   }
 
-  const itemTokens = distinctiveProductTokens(itemName);
+  // Hardware: one residual gate shared with metadata links + gallery titles.
+  // Residual `uncertain` must NOT fall through to soft brand-token matching —
+  // that accepts "Nintendo DS" ↔ Nintendogs / DSi / 3DS via a lone "nintendo".
+  if (options?.shelfType === "hardware") {
+    return hardwareProductTitlesAlign(itemName, listingName);
+  }
+
+  const itemTokens = distinctiveProductTokens(itemName, options?.shelfType);
   const listingTokens = stripLeadingMarketplacePriceTokens(
-    distinctiveProductTokens(listingName),
+    distinctiveProductTokens(listingName, options?.shelfType),
   );
-  if (itemTokens.length === 0 || listingTokens.length === 0) return true;
-  if (itemTokens.length === 1 || listingTokens.length === 1) return true;
+  // Never treat empty token bags as universal match on hardware — console
+  // names used to collapse to [] after stripping platforms and accept anything.
+  if (itemTokens.length === 0 || listingTokens.length === 0) {
+    return options?.shelfType !== "hardware";
+  }
+  if (options?.shelfType === "hardware") {
+    if (itemTokens.length === 1 || listingTokens.length === 1) {
+      const shorter = itemTokens.length === 1 ? itemTokens : listingTokens;
+      const longerSet = new Set(
+        itemTokens.length === 1 ? listingTokens : itemTokens,
+      );
+      return shorter.every((token) => titleTokenPresentInSet(token, longerSet));
+    }
+  } else if (itemTokens.length === 1 || listingTokens.length === 1) {
+    return true;
+  }
 
   let prefixLen = identityTokenPrefixLength(itemTokens, listingTokens);
-  if (prefixLen >= 1) return true;
+  if (prefixLen >= 1) {
+    if (options?.shelfType === "hardware") {
+      const missingPlatform = itemTokens.filter(
+        (token) =>
+          HARDWARE_PLATFORM_IDENTITY_TOKENS.has(token) &&
+          !titleTokenPresentInSet(token, new Set(listingTokens)),
+      );
+      if (missingPlatform.length > 0) return false;
+    }
+    return true;
+  }
 
   const itemTokenSet = new Set(itemTokens);
   const listingTokenSet = new Set(listingTokens);
@@ -263,12 +360,20 @@ export function priceListingSharesItemIdentity(
     (token) => !titleTokenPresentInSet(token, itemTokenSet),
   );
 
+  if (
+    options?.shelfType === "hardware" &&
+    onlyItem.some((token) => HARDWARE_PLATFORM_IDENTITY_TOKENS.has(token))
+  ) {
+    return false;
+  }
+
   return !(onlyItem.length > 0 && onlyListing.length > 0);
 }
 
 export function isNameOnlyRetailerTitleMatch(
   query: string,
   title: string,
+  options?: PriceListingIdentityOptions,
 ): boolean {
   const trimmedQuery = query.trim();
   const trimmedTitle = title.trim();
@@ -279,6 +384,15 @@ export function isNameOnlyRetailerTitleMatch(
   }
   if (franchiseSequelNumbersConflict([trimmedQuery], trimmedTitle)) {
     return false;
+  }
+  // Hardware: residual identity is the hard gate (games spinoffs, Mini/Classic
+  // remakes, generation upgrades). Soft similarity alone accepts Switch Sports.
+  if (options?.shelfType === "hardware") {
+    if (
+      !priceListingSharesItemIdentity(trimmedQuery, trimmedTitle, options)
+    ) {
+      return false;
+    }
   }
   if (
     metadataTitleSimilarity(trimmedQuery, trimmedTitle) <

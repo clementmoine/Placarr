@@ -8,7 +8,7 @@ const h = vi.hoisted(() => ({
   fetchAndStoreMetadata: vi.fn(),
   repairProviderExternalLinksForItem: vi.fn().mockResolvedValue(undefined),
   itemPricesContextFromRecord: vi.fn(),
-  itemPricesNeedRefresh: vi.fn().mockResolvedValue(true),
+  itemPricesRefreshForceReason: vi.fn().mockResolvedValue("stale"),
   refreshItemPricesFromContext: vi.fn(),
   prismaItemFindUnique: vi.fn(),
   prismaItemUpdate: vi.fn(),
@@ -45,7 +45,7 @@ vi.mock("@/core/enrich/persistProviderExternalLinks", () => ({
 
 vi.mock("@/core/commerce/pricing/itemDisplay", () => ({
   itemPricesContextFromRecord: h.itemPricesContextFromRecord,
-  itemPricesNeedRefresh: h.itemPricesNeedRefresh,
+  itemPricesRefreshForceReason: h.itemPricesRefreshForceReason,
   refreshItemPricesFromContext: h.refreshItemPricesFromContext,
 }));
 
@@ -97,7 +97,7 @@ describe("executeMetadataRefreshJob", () => {
       shelfType: "books",
       shelfName: "Mangas",
     });
-    h.itemPricesNeedRefresh.mockResolvedValue(true);
+    h.itemPricesRefreshForceReason.mockResolvedValue("stale");
   });
 
   it("finishes the metadata stamp then enqueues priceRefresh instead of awaiting prices", async () => {
@@ -156,7 +156,7 @@ describe("executeMetadataRefreshJob", () => {
   });
 
   it("skips post-metadata price enqueue when the cache is still fresh", async () => {
-    h.itemPricesNeedRefresh.mockResolvedValueOnce(false);
+    h.itemPricesRefreshForceReason.mockResolvedValueOnce(null);
 
     await executeMetadataRefreshJob(
       {
@@ -191,7 +191,7 @@ describe("executeMetadataRefreshJob", () => {
   });
 
   it("enqueues a soft priceRefresh (force:false) when prices need refresh", async () => {
-    h.itemPricesNeedRefresh.mockResolvedValueOnce(true);
+    h.itemPricesRefreshForceReason.mockResolvedValueOnce("stale");
 
     await executeMetadataRefreshJob(
       {
@@ -225,6 +225,47 @@ describe("executeMetadataRefreshJob", () => {
       expect.objectContaining({
         kind: "priceRefresh",
         payload: expect.objectContaining({ force: false }),
+      }),
+    );
+  });
+
+  it("force-enqueues priceRefresh when cached reference fiche mismatches the pin", async () => {
+    h.itemPricesRefreshForceReason.mockResolvedValueOnce(
+      "approved-fiche-mismatch",
+    );
+
+    await executeMetadataRefreshJob(
+      {
+        id: "job-4",
+        kind: "metadataRefresh",
+        status: "running",
+        itemId: "item-1",
+        userId: "user-1",
+        payload: {},
+        attempts: 1,
+        lockedAt: new Date(),
+        lockedBy: "worker",
+        runAfter: new Date(),
+        error: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        finishedAt: null,
+      } as BackgroundWorkJobRow,
+      {
+        itemId: "item-1",
+        lookupQuery: "PlayStation 2 Slim Rose",
+        shelfType: "hardware",
+        shelfName: "Consoles",
+        generation: 1,
+        forceRefresh: true,
+        bypassMetadataCache: true,
+      },
+    );
+
+    expect(h.enqueueBackgroundWorkJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "priceRefresh",
+        payload: expect.objectContaining({ force: true }),
       }),
     );
   });

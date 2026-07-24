@@ -50,6 +50,10 @@ import {
 import type { ShelfBestItem, ShelfWithItemCount } from "@/types/shelves";
 
 import { type Prisma, type Shelf, Type } from "@prisma/client";
+import {
+  isShelfTypeComingSoon,
+  isShelfTypeReady,
+} from "@/lib/shelfTypeReadiness";
 
 const FIELD_LABEL_CLASS =
   "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider select-none";
@@ -59,18 +63,28 @@ const LOGO_HIT_PAD_PX = 6;
 /**
  * Same logo box as grid ShelfCard; hit/hover grows via padding cancelled by
  * negative margin so the logo stays top-left (no down/right shift).
+ * Broken / missing images fall back to the dashed “add logo” CTA so the control
+ * never collapses to a 1×1 broken-image glyph.
  */
 function ShelfLogoEditControl({
   src,
   onPick,
   addLabel,
+  onBroken,
 }: {
   src: string | null;
   onPick: () => void;
   addLabel: string;
+  /** Clear a dead URL from the form so save does not persist a broken logo. */
+  onBroken?: () => void;
 }) {
   const bandRef = useRef<HTMLDivElement>(null);
   const [logoMaxHeight, setLogoMaxHeight] = useState<number | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
 
   useLayoutEffect(() => {
     const band = bandRef.current;
@@ -85,17 +99,20 @@ function ShelfLogoEditControl({
     return () => observer.disconnect();
   }, [src]);
 
-  if (!src) {
+  const showAddCta = !src || imageFailed;
+
+  if (showAddCta) {
     return (
       <button
         type="button"
         onClick={onPick}
+        aria-label={addLabel}
         className={cn(
-          "pointer-events-auto flex min-h-[3.25rem] min-w-[3.25rem] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-white/40 bg-white/10 px-2.5 py-2 text-white/90 transition-colors hover:bg-white/15 cursor-pointer",
+          "pointer-events-auto flex min-h-[3.25rem] min-w-[3.25rem] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-white/55 bg-black/25 px-2.5 py-2 text-white shadow-sm backdrop-blur-[1px] transition-colors hover:bg-black/35 cursor-pointer",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
         )}
       >
-        <ImagePlus className="size-4" />
+        <ImagePlus className="size-4 shrink-0" aria-hidden />
         <span className="text-[9px] font-semibold uppercase tracking-wider">
           {addLabel}
         </span>
@@ -113,7 +130,7 @@ function ShelfLogoEditControl({
         onClick={onPick}
         aria-label={addLabel}
         className={cn(
-          "group/logo pointer-events-auto relative inline-flex max-w-full items-start justify-start rounded-lg cursor-pointer",
+          "group/logo pointer-events-auto relative inline-flex min-h-8 min-w-8 max-w-full items-start justify-start rounded-lg cursor-pointer",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
         )}
         style={{
@@ -135,6 +152,10 @@ function ShelfLogoEditControl({
             "max-h-none transition-opacity duration-150",
             "group-hover/logo:opacity-40 group-has-[:focus-visible]/logo:opacity-40",
           )}
+          onError={() => {
+            setImageFailed(true);
+            onBroken?.();
+          }}
         />
         <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-black/35 opacity-0 transition-opacity duration-150 group-hover/logo:opacity-100 group-has-[:focus-visible]/logo:opacity-100">
           <span className="flex size-8 items-center justify-center rounded-full bg-black/45 text-white">
@@ -208,7 +229,11 @@ export function ShelfModal({
           return false;
         }
       }, t("shelves.invalidColorFormat")),
-    type: z.nativeEnum(Type),
+    type: z
+      .nativeEnum(Type)
+      .refine((value) => isShelfTypeReady(value), {
+        message: t("shelf.type.soon"),
+      }),
     cardFormat: z.string().default("default"),
   });
 
@@ -274,7 +299,22 @@ export function ShelfModal({
       handleClose();
       router.push(`/shelves`);
     },
-    onError: () => {
+    onError: (error: unknown) => {
+      const axiosError = error as {
+        response?: { status?: number; data?: { itemCount?: number } };
+      };
+      if (
+        axiosError.response?.status === 409 &&
+        typeof axiosError.response.data?.itemCount === "number"
+      ) {
+        toast.error(
+          t("shelves.deleteNotEmpty").replace(
+            "{count}",
+            String(axiosError.response.data.itemCount),
+          ),
+        );
+        return;
+      }
       toast.error(t("shelves.deleteFailed"));
     },
   });
@@ -326,6 +366,15 @@ export function ShelfModal({
         break;
       case "boardgames":
         typeName = t("shelf.type.boardgames");
+        break;
+      case "hardware":
+        typeName = t("shelf.type.hardware");
+        break;
+      case "tcg":
+        typeName = t("shelf.type.tcg");
+        break;
+      case "toys":
+        typeName = t("shelf.type.toys");
         break;
       case "movies":
         typeName = t("shelf.type.movies");
@@ -541,6 +590,7 @@ export function ShelfModal({
                                 src={previewImageSrc}
                                 onPick={openLogoPicker}
                                 addLabel={t("shelves.addLogo")}
+                                onBroken={() => setLogoFile(null)}
                               />
                             }
                           >
@@ -609,23 +659,42 @@ export function ShelfModal({
                         >
                           {TYPE_OPTIONS.map((type) => {
                             const selected = field.value === type;
+                            const comingSoon = isShelfTypeComingSoon(type);
                             return (
                               <button
                                 key={type}
                                 type="button"
                                 role="radio"
                                 aria-checked={selected}
-                                onClick={() => field.onChange(type)}
+                                aria-disabled={comingSoon}
+                                disabled={comingSoon}
+                                title={
+                                  comingSoon ? t("shelf.type.soon") : undefined
+                                }
+                                onClick={() => {
+                                  if (comingSoon) return;
+                                  field.onChange(type);
+                                }}
                                 className={cn(
-                                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer",
+                                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150",
                                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                                  selected
+                                  comingSoon
+                                    ? "cursor-not-allowed opacity-45 bg-zinc-100 text-muted-foreground dark:bg-zinc-900"
+                                    : "cursor-pointer",
+                                  !comingSoon && selected
                                     ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                                    : "bg-zinc-100 text-muted-foreground hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800",
+                                    : !comingSoon
+                                      ? "bg-zinc-100 text-muted-foreground hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                                      : null,
                                 )}
                               >
                                 <ShelfTypeIcon type={type} className="size-3.5" />
                                 <span>{t(`shelf.type.${type}`)}</span>
+                                {comingSoon ? (
+                                  <span className="rounded-full bg-zinc-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-muted-foreground dark:bg-zinc-800">
+                                    {t("shelf.type.soon")}
+                                  </span>
+                                ) : null}
                               </button>
                             );
                           })}

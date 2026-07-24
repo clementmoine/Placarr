@@ -38,6 +38,7 @@ const PRICE_CHARTING_PLATFORM_SLUGS: Partial<
   gba: { pal: "pal-gameboy-advance", default: "gameboy-advance" },
   gbc: { pal: "pal-gameboy-color", default: "gameboy-color" },
   gb: { pal: "pal-gameboy", default: "gameboy" },
+  gameandwatch: { pal: "pal-game-&-watch", default: "game-&-watch" },
   pc: { default: "pc-games" },
   dreamcast: { pal: "pal-dreamcast", default: "dreamcast" },
   megadrive: { pal: "pal-sega-mega-drive", default: "sega-genesis" },

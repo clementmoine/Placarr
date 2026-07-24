@@ -18,7 +18,7 @@ export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.priceRefresh,
 ];
 
-/** Catalog crawl — dedicated process (`pnpm worker:icollect`). */
+/** Catalog crawl — dedicated process (`pnpm worker:catalog`). */
 export const ICOLLECT_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.icollectCatalogSync,
 ];
@@ -49,7 +49,7 @@ export function resolveWorkerKinds(
     .split(",")
     .map((part) => part.trim())
     .filter((part): part is BackgroundWorkKind => KNOWN_WORKER_KINDS.has(part));
-  // Unknown alias (e.g. stale `icollect`) must not silently mean "all kinds".
+  // Unknown alias must not silently mean "all kinds".
   return kinds;
 }
 

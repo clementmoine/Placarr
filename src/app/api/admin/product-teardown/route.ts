@@ -84,7 +84,16 @@ type NameBlock = {
   reason: string;
 };
 
-const ALL_METADATA_TYPES = ["games", "books", "movies", "musics", "boardgames"];
+const ALL_METADATA_TYPES = [
+  "games",
+  "books",
+  "movies",
+  "musics",
+  "boardgames",
+  "hardware",
+  "tcg",
+  "toys",
+];
 
 function normalizeProviderToken(value: string) {
   return value

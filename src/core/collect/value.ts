@@ -1,4 +1,5 @@
 import type { Condition } from "@prisma/client";
+import { shelfSupportsLooseCondition } from "@/core/collect/condition";
 
 export type ItemPriceValues = {
   condition?: Condition | null;
@@ -26,16 +27,16 @@ function withProvenance(
 }
 
 function usedMarketObserved(item: ItemPriceValues): number | null | undefined {
-  return item.shelfType === "games"
+  return shelfSupportsLooseCondition(item.shelfType)
     ? (item.priceUsedCIB ?? item.priceUsed ?? item.priceNew)
     : (item.priceUsed ?? item.priceNew);
 }
 
-/** Loose / cartouche-disque seul — only true loose market observations. */
+/** Loose / cartouche-disque / console seule — only true loose market observations. */
 function looseMarketObserved(item: ItemPriceValues): number | null | undefined {
-  if (item.shelfType === "games") {
+  if (shelfSupportsLooseCondition(item.shelfType)) {
     // Do not fall back to CIB / new as an *observed* loose price: a boxed retail
-    // listing is not a cartridge-only sale.
+    // listing is not a cartridge-only / console-out-of-box sale.
     return item.priceUsed;
   }
   return item.priceUsed ?? item.priceNew;
@@ -45,7 +46,7 @@ function looseMarketObserved(item: ItemPriceValues): number | null | undefined {
 function looseEstimateFallback(
   item: ItemPriceValues,
 ): number | null | undefined {
-  if (item.shelfType === "games") {
+  if (shelfSupportsLooseCondition(item.shelfType)) {
     return item.priceEstimated ?? item.priceUsedCIB ?? null;
   }
   return item.priceEstimated;

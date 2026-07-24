@@ -140,7 +140,7 @@ export const NETGAMESRETRO_CONFIG: PrestashopRetailerConfig = {
   baseUrl: "https://www.netgamesretro.com",
   searchPath: "/fr/recherche",
   searchParam: "s",
-  types: ["games"],
+  types: ["games", "hardware"],
   capabilities: ["identify", "description", "cover", "price"],
   sample: {
     name: "MX vs ATV : Extrême limite Xbox 360",

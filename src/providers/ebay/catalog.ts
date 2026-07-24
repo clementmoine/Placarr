@@ -25,13 +25,17 @@ function isBarcodeLike(value: string) {
   return /^\d{8,14}$/.test(value.replace(/[^\d]/g, ""));
 }
 
-function matchesExpectedTitle(title: string, expectedNames: string[]) {
+function matchesExpectedTitle(
+  title: string,
+  expectedNames: string[],
+  options?: { shelfType?: string | null },
+) {
   const names = expectedNames.filter(Boolean);
   if (names.length === 0) return true;
   const textNames = names.filter((name) => !isBarcodeLike(name));
   if (textNames.length === 0) return true;
   return textNames.some((expected) =>
-    isNameOnlyRetailerTitleMatch(expected, title),
+    isNameOnlyRetailerTitleMatch(expected, title, options),
   );
 }
 
@@ -86,6 +90,7 @@ async function searchEbayCatalog(
 export async function fetchFromEbayCatalog(
   gtin: string,
   expectedNames: string[] = [],
+  options?: { shelfType?: string | null },
 ): Promise<EbayProduct[]> {
   const cleaned = gtin.replace(/[^\d]/g, "").trim();
   if (!cleaned) return [];
@@ -99,7 +104,7 @@ export async function fetchFromEbayCatalog(
     for (const summary of summaries) {
       const product = summaryToProduct(summary);
       if (!product) continue;
-      if (!matchesExpectedTitle(product.name, expectedNames)) continue;
+      if (!matchesExpectedTitle(product.name, expectedNames, options)) continue;
       if (!out.some((entry) => entry.epid === product.epid)) {
         out.push(product);
       }

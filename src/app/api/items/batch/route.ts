@@ -366,18 +366,35 @@ export async function PATCH(req: NextRequest) {
       (item) => item.shelfId !== resolvedTargetShelfId,
     );
 
-    for (
-      let offset = 0;
-      offset < movableItems.length;
-      offset += MOVE_CHUNK_SIZE
-    ) {
-      const chunk = movableItems.slice(offset, offset + MOVE_CHUNK_SIZE);
+    const reservedSlugs = new Set<string>();
+    const movePlans: Array<{
+      id: string;
+      name: string;
+      barcode: string | null;
+      imageUrl: string | null;
+      backgroundImageUrl: string | null;
+      shelfId: string;
+      slug: string;
+    }> = [];
+    for (const item of movableItems) {
+      const slug = await allocateUniqueItemSlug(
+        resolvedTargetShelfId,
+        item.name,
+        { excludeItemId: item.id, reserved: reservedSlugs },
+      );
+      if (slug) reservedSlugs.add(slug);
+      movePlans.push({ ...item, slug });
+    }
+
+    for (let offset = 0; offset < movePlans.length; offset += MOVE_CHUNK_SIZE) {
+      const chunk = movePlans.slice(offset, offset + MOVE_CHUNK_SIZE);
       await prisma.$transaction(
         chunk.map((item) =>
           prisma.item.update({
             where: { id: item.id },
             data: {
               shelfId: resolvedTargetShelfId,
+              slug: item.slug,
               ...shelfMoveMetadataResetData(item),
             },
           }),

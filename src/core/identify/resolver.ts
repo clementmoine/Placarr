@@ -147,7 +147,8 @@ async function cacheBarcodeResult(
         ...(res.suggestions || []),
       ],
       {
-        preservePlatformSuffix: shelfType === "games",
+        preservePlatformSuffix:
+          shelfType === "games" || shelfType === "hardware",
       },
     ).map((value) => {
       const matchingMatch = res.matches.find(
@@ -225,8 +226,13 @@ function selectBarcodeTypeResult(
   videoGameSignal = 0,
   musicSpecialistSignal = 0,
 ): { selectedType: string | null; selectedResult: CompiledResult | null } {
-  if (type && typeResults[type]) {
-    return { selectedType: type, selectedResult: typeResults[type] };
+  // Shelf-first: when the scan is scoped to a shelf type, never fall back to
+  // another media type (hardware DualSense must not become a "game").
+  if (type) {
+    return {
+      selectedType: type,
+      selectedResult: typeResults[type] ?? null,
+    };
   }
 
   const candidates = Object.entries(typeResults).filter(

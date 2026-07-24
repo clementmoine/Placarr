@@ -3,6 +3,7 @@ import levenshtein from "fast-levenshtein";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { buildFranchiseFact } from "@/core/enrich/facts/franchiseFact";
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 
 export type TMDBSeriesIntent = {
   isSeriesLike: boolean;
@@ -255,16 +256,20 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       );
       aliases = ((titlesRes.data?.titles || []) as TMDBAlternativeTitle[])
         .map((t) => t.title || "")
-        .filter(
-          (t: string) =>
-            t.toLowerCase().trim() !== bestMatch.title.toLowerCase().trim(),
-        );
+        .filter(Boolean);
     } catch (err) {
       console.error(
         `[TMDB] Failed to fetch alternative titles for movie ID ${bestMatch.id}:`,
         err,
       );
     }
+    if (
+      typeof details.original_title === "string" &&
+      details.original_title.trim()
+    ) {
+      aliases.push(details.original_title.trim());
+    }
+    const catalogAliases = catalogAliasesFromNames(bestMatch.title, aliases);
 
     let certification: string | null = null;
     try {
@@ -444,7 +449,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         ...tmdbBackdrops,
         ...tmdbLogos,
       ],
-      aliases,
+      aliases: catalogAliases,
       externalIds: {
         imdb:
           typeof details.imdb_id === "string" && details.imdb_id.trim()
@@ -571,19 +576,24 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       );
       aliases = ((titlesRes.data?.results || []) as TMDBAlternativeTitle[])
         .map((t) => t.title || t.name || "")
-        .filter(Boolean)
-        .filter(
-          (t: string) =>
-            t.toLowerCase().trim() !==
-            String(details.name || bestMatch.name)
-              .toLowerCase()
-              .trim(),
-        );
+        .filter(Boolean);
     } catch (err) {
       console.error(
         `[TMDB] Failed to fetch alternative titles for TV ID ${bestMatch.id}:`,
         err,
       );
+    }
+    if (
+      typeof details.original_name === "string" &&
+      details.original_name.trim()
+    ) {
+      aliases.push(details.original_name.trim());
+    }
+    if (typeof details.name === "string" && details.name.trim()) {
+      aliases.push(details.name.trim());
+    }
+    if (typeof bestMatch.name === "string" && bestMatch.name.trim()) {
+      aliases.push(bestMatch.name.trim());
     }
 
     let certification: string | null = null;
@@ -774,7 +784,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
         ...tmdbBackdrops,
         ...tmdbLogos,
       ],
-      aliases,
+      aliases: catalogAliasesFromNames(displayTitle, aliases),
       facts: facts.length > 0 ? facts : undefined,
     };
   }

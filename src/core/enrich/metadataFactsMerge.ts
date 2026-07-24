@@ -78,6 +78,7 @@ export function mergeMetadataFactsForStorage(
   options: {
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    shelfType?: string | null;
   } = {},
 ): MetadataFact[] {
   const incomingDeduped = dedupeFacts(incoming) ?? [];
@@ -87,6 +88,7 @@ export function mergeMetadataFactsForStorage(
     existing,
     options.itemBarcode,
     options.itemTitle,
+    options.shelfType,
   );
   const incomingKeys = new Set(incomingDeduped.map(factDedupeKey));
   const incomingLinks = incomingProviderLinkKeys(incomingDeduped);

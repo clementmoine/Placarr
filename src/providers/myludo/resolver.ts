@@ -140,7 +140,6 @@ export function mapMyLudoMetadata(game: MyLudoGame): MetadataResult {
     regionalTitles: game.title
       ? [{ region: MYLUDO_REGION, text: game.title }]
       : undefined,
-    aliases: game.listingTitles?.length ? game.listingTitles : undefined,
     attachments: buildMyLudoAttachments(game),
     facts: buildMyLudoFacts(game),
   };

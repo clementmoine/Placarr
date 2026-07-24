@@ -5,6 +5,9 @@ import {
   BookOpen,
   Disc,
   Dices,
+  Joystick,
+  Layers,
+  ToyBrick,
   LucideProps,
 } from "lucide-react";
 
@@ -23,6 +26,9 @@ export const SHELF_TYPE_ICONS: Record<
   books: BookOpen,
   musics: Disc,
   boardgames: Dices,
+  hardware: Joystick,
+  tcg: Layers,
+  toys: ToyBrick,
 };
 
 export const DEFAULT_SHELF_TYPE_ICON = Gamepad2;

@@ -1,4 +1,4 @@
-import { BOARDGAME_CATEGORY_DISPLAY_NOISE } from "@/core/identify/listingMerch";
+import { BOARDGAME_CATEGORY_CHROME_RE } from "@/core/identify/listingMerch";
 import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platforms";
 
 export type GameEditionDefinition = {
@@ -499,11 +499,16 @@ export const DISPLAY_TITLE_NOISE_TERMS = [
   ...LISTING_NOISE_TERMS,
   ...LISTING_CONDITION_TERMS,
   "vintage",
-  ...BOARDGAME_CATEGORY_DISPLAY_NOISE,
 ] as const;
 
 export function createDisplayTitleNoiseMatcher(flags = "gi"): RegExp {
-  return createTermMatcher(DISPLAY_TITLE_NOISE_TERMS, flags);
+  const terms = createTermMatcher(DISPLAY_TITLE_NOISE_TERMS, flags);
+  // Board-game category chrome is a composition RE, not a parallel phrase list.
+  const normalizedFlags = flags.includes("u") ? flags : `${flags}u`;
+  return new RegExp(
+    `(?:${terms.source}|${BOARDGAME_CATEGORY_CHROME_RE.source})`,
+    normalizedFlags.includes("i") ? normalizedFlags : `${normalizedFlags}i`,
+  );
 }
 
 /** Region / manual / platform-brand tokens that usually belong to listings. */

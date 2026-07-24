@@ -75,7 +75,7 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
-import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
+import { syncItemQueries, syncShelfQueries, invalidateShelfQueries } from "@/core/collect/queryCache";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
   parseItemCollectionSort,
@@ -572,12 +572,10 @@ function ShelfComponent() {
       sourceShelfIds: string[];
     }) => {
       exitSelectionMode();
-      for (const id of new Set([
+      void invalidateShelfQueries(queryClient, [
         ...result.sourceShelfIds,
         result.targetShelfId,
-      ])) {
-        queryClient.invalidateQueries({ queryKey: ["shelf", id] });
-      }
+      ]);
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
       queryClient.invalidateQueries({ queryKey: ["collectionItems"] });
       queryClient.invalidateQueries({ queryKey: ["searchItems"] });
@@ -588,9 +586,7 @@ function ShelfComponent() {
   const handleBulkDeleteSuccess = useCallback(
     (result: { count: number; sourceShelfIds: string[] }) => {
       exitSelectionMode();
-      for (const id of result.sourceShelfIds) {
-        queryClient.invalidateQueries({ queryKey: ["shelf", id] });
-      }
+      void invalidateShelfQueries(queryClient, result.sourceShelfIds);
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
       queryClient.invalidateQueries({ queryKey: ["collectionItems"] });
       queryClient.invalidateQueries({ queryKey: ["searchItems"] });

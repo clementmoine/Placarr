@@ -49,6 +49,27 @@ describe("preferRequestedDisplayTitle", () => {
     expect(result.title).toBe("Game Boy Player");
     expect(result.aliases).toContain("Super Blue Boy Planet");
   });
+
+  it("drops a cover whose URL belongs to a different hardware edition", () => {
+    const metadata: MetadataResult = {
+      title:
+        "Console Nintendo Switch Modèle OLED Edition Pokémon Ecarlate & Pokémon Violet",
+      imageUrl:
+        "https://static.fnac-static.com/multimedia/Images/FR/MDM/bb/08/25/19204283/1505-1/tsp20260619170440/Console-Nintendo-Switch-Modele-OLED-Edition-Pokemon-Ecarlate-Pokemon-Violet.jpg",
+      attachments: [
+        {
+          type: "cover",
+          url: "https://static.fnac-static.com/multimedia/Images/FR/MDM/bb/08/25/19204283/1505-1/tsp20260619170440/Console-Nintendo-Switch-Modele-OLED-Edition-Pokemon-Ecarlate-Pokemon-Violet.jpg",
+          source: "achatmoinscher",
+        },
+      ],
+    };
+    const requested = "Nintendo Switch OLED Édition The Legend of Zelda";
+    const result = preferRequestedDisplayTitle(metadata, requested);
+    expect(result.title).toBe(requested);
+    expect(result.imageUrl).toBeUndefined();
+    expect(result.attachments).toBeUndefined();
+  });
 });
 
 describe("mergeMetadata generic function", () => {
@@ -261,7 +282,7 @@ describe("mergeMetadata generic function", () => {
     ).toBe(true);
   });
 
-  it("keeps catalog covers when the requested title is a french edition label", () => {
+  it("keeps catalog covers when the requested title is a french edition alias", () => {
     const merged = mergeMetadata(
       "games",
       [
@@ -269,6 +290,8 @@ describe("mergeMetadata generic function", () => {
           providerId: "geedie",
           metadata: {
             title: "PS3 The Secret of Monkey Island: Special Edition",
+            // FR packaging comes from provider aliases — not a Placarr FR↔EN map.
+            aliases: ["Monkey Island Édition Spéciale Collection"],
             attachments: [
               {
                 type: "cover",
@@ -879,6 +902,62 @@ describe("mergeMetadata generic function", () => {
     expect(merged.attachments?.map((attachment) => attachment.url)).toEqual([
       "https://example.test/faits-vecus.jpg",
     ]);
+  });
+
+  it("keeps hardware PriceCharting gallery when residual finish synonyms align", () => {
+    // Shelf "Slim Rose" ↔ PC "System [Pink]" — without shelfType=hardware the
+    // gallery filter used to drop PC attachments and leave a sourceless cover.
+    const merged = mergeMetadata(
+      "hardware",
+      [
+        {
+          providerId: "pricecharting",
+          metadata: {
+            title: "Slim Playstation 2 System [Pink]",
+            imageUrl: "https://example.test/pc-pink-main.jpg",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/pc-pink-main.jpg",
+                source: "pricecharting",
+                role: "eu",
+                title: "Main Image",
+              },
+            ],
+            facts: [
+              {
+                kind: "external-link",
+                label: "PriceCharting",
+                value: "Voir la fiche",
+                url: "https://www.pricecharting.com/game/pal-playstation-2/slim-playstation-2-system-pink",
+                source: "pricecharting",
+              },
+            ],
+          },
+        },
+        {
+          providerId: "ebay",
+          metadata: {
+            title: "PlayStation 2 Slim Rose",
+            aliases: [
+              "Console PS2 Pink Rose -PlayStation 2 Slim Édition Collector",
+            ],
+          },
+        },
+      ],
+      { requestedTitle: "PlayStation 2 Slim Rose" },
+    );
+
+    expect(merged.attachments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          url: "https://example.test/pc-pink-main.jpg",
+          source: "pricecharting",
+          title: "Main Image",
+        }),
+      ]),
+    );
+    expect(merged.imageUrl).toBe("https://example.test/pc-pink-main.jpg");
   });
 
   it("prefers a clean alias over a noisy retailer object title", () => {

@@ -133,7 +133,6 @@ export function mapPlayInMetadata(product: PlayInProduct): MetadataResult {
     regionalTitles: product.title
       ? [{ region: PLAYIN_REGION, text: product.title }]
       : undefined,
-    aliases: product.listingTitles?.length ? product.listingTitles : undefined,
     attachments: buildPlayInAttachments(product),
     facts: buildPlayInFacts(product),
   };

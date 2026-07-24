@@ -8,6 +8,7 @@ import {
 } from "@/core/collect/media";
 import {
   buildProfileProviderLinkFacts,
+  coverAttachmentsFromPriceOffers,
   purgeContradictedProviderExternalLinks,
   type ProviderPriceOfferLinkInput,
 } from "@/core/enrich/providerExternalLinks";
@@ -138,6 +139,18 @@ export const itemListMetadataInclude = {
     description: true,
     facts: true,
     attachments: itemListCoverAttachmentInclude,
+    // Marketplace price rows carry listing coverUrl before metadata scrapes
+    // write gallery attachments — present injects those covers on read.
+    priceOffers: {
+      select: {
+        source: true,
+        sourceUrl: true,
+        productName: true,
+        rawValue: true,
+      },
+      orderBy: { observedAt: "desc" as const },
+      take: 16,
+    },
   },
 } as const;
 
@@ -180,6 +193,7 @@ function enrichMetadataProviderLinks(
     priceOffers?: ProviderPriceOfferLinkInput[];
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    shelfType?: string | null;
     platformKey?: string | null;
     catalogLink?: { url: string; providerLabel?: string } | null;
   },
@@ -194,6 +208,7 @@ function enrichMetadataProviderLinks(
     priceOffers: input.priceOffers,
     itemBarcode: input.itemBarcode,
     itemTitle: input.itemTitle,
+    shelfType: input.shelfType,
     platformKey: input.platformKey ?? metadata.platformKey,
     catalogLink: input.catalogLink,
   });
@@ -201,12 +216,29 @@ function enrichMetadataProviderLinks(
     [...nonLinkFacts, ...linkFacts],
     input.itemBarcode,
     input.itemTitle,
+    input.shelfType,
   );
+
+  const offerCovers = coverAttachmentsFromPriceOffers(input.priceOffers ?? [], {
+    itemTitle: input.itemTitle,
+    shelfType: input.shelfType,
+    existingAttachments: metadata.attachments,
+  });
+  const attachments =
+    offerCovers.length > 0
+      ? [...(metadata.attachments ?? []), ...offerCovers]
+      : metadata.attachments;
+
+  const withAttachments =
+    attachments !== metadata.attachments
+      ? { ...metadata, attachments }
+      : metadata;
+
   if (!facts.length) {
-    const { facts: _facts, ...rest } = metadata;
+    const { facts: _facts, ...rest } = withAttachments;
     return rest;
   }
-  return { ...metadata, facts };
+  return { ...withAttachments, facts };
 }
 
 function formatItemMetadata(
@@ -235,6 +267,7 @@ function formatItemMetadata(
         priceOffers: mapStoredPriceOffers(metadata.priceOffers),
         itemBarcode: item?.barcode,
         itemTitle: item?.name,
+        shelfType: item?.shelfType,
         platformKey: formatted?.platformKey ?? shelfPlatformKey,
         catalogLink: item?.catalogLink,
       })
@@ -245,6 +278,7 @@ function formatItemMetadata(
     enriched.facts,
     item?.barcode,
     item?.name,
+    item?.shelfType,
   );
   if (facts.length === enriched.facts.length) return enriched;
   return { ...enriched, facts };

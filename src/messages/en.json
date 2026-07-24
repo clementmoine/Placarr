@@ -162,6 +162,7 @@
     "cancel": "Cancel",
     "confirmDeletion": "Confirm deletion",
     "deleteConfirmMessage": "Are you sure you want to delete this shelf? This action cannot be undone.",
+    "deleteNotEmpty": "Cannot delete a shelf that still has {count} item(s). Move them first.",
     "nameRequired": "Name is required",
     "nameNotEmpty": "Name cannot be empty spaces",
     "imageRequired": "Image is required",
@@ -565,7 +566,11 @@
       "games": "Games",
       "movies": "Movies",
       "musics": "Music",
-      "boardgames": "Board Games"
+      "boardgames": "Board Games",
+      "hardware": "Hardware",
+      "tcg": "Trading cards",
+      "toys": "Toys",
+      "soon": "Soon"
     }
   },
   "loans": {

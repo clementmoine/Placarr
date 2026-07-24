@@ -110,7 +110,10 @@ function productToMetadata(
 
 async function refreshChocoBonPlanOffers(ctx: BarcodePriceRefreshContext) {
   const queries = matchPriceSeekQueries(ctx);
-  const result = await fetchPricesFromChocoBonPlan(queries);
+  const result = await fetchPricesFromChocoBonPlan(queries, {
+    platform: ctx.platformKey,
+    shelfName: ctx.shelfName,
+  });
   if (!result?.priceNew) return [];
   return pricedOffers(PRICE_SOURCE, [
     {

@@ -4,6 +4,7 @@ import axios from "axios";
 type OmdbDetails = {
   Response?: string;
   Title?: string;
+  AKA?: string;
   Released?: string;
   Runtime?: string;
   Genre?: string;
@@ -27,6 +28,7 @@ type OmdbDetails = {
 };
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 
 export type OMDbResolveOptions = {
   imdbId?: string | null;
@@ -221,9 +223,11 @@ function buildMetadataFromOmdbDetails(
   const uniqueAuthors = Array.from(new Set([...directors, ...writers])).map(
     (personName) => ({ name: personName }),
   );
+  const title = details.Title || fallbackTitle;
+  const aliases = catalogAliasesFromNames(title, splitOmdbList(details.AKA));
 
   return {
-    title: details.Title || fallbackTitle,
+    title,
     description:
       typeof details.Plot === "string" && details.Plot !== "N/A"
         ? details.Plot
@@ -238,6 +242,7 @@ function buildMetadataFromOmdbDetails(
     authors: uniqueAuthors,
     publishers: productionCompanies.map((company) => ({ name: company })),
     imageUrl: poster || undefined,
+    aliases,
     externalIds: {
       imdb:
         typeof details.imdbID === "string" && details.imdbID !== "N/A"

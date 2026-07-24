@@ -1,7 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
 import { cleanCode } from "@/core/identify/query";
-import { TITLE_TOKEN_EQUIVALENT_GROUPS } from "@/core/enrich/titles/tokenEquivalents";
 import { stripVolumeMarkersKeepingNumber } from "@/core/enrich/titles/volumeNumber";
 
 const MIN_AND_TOKEN_LENGTH = 2;
@@ -20,14 +19,6 @@ function unique(values: string[]): string[] {
   return Array.from(
     new Set(values.map((value) => value.trim()).filter(Boolean)),
   );
-}
-
-function applyTokenCase(source: string, replacement: string): string {
-  if (source === source.toUpperCase()) return replacement.toUpperCase();
-  if (source[0] === source[0]?.toUpperCase()) {
-    return replacement.charAt(0).toUpperCase() + replacement.slice(1);
-  }
-  return replacement;
 }
 
 function buildTokenVariants(token: string): string[] {
@@ -53,14 +44,6 @@ function buildTokenVariants(token: string): string[] {
   }
   if (lower.endsWith("ds") && cleaned.length > 4) {
     variants.add(`${cleaned.slice(0, -2)}ts`);
-  }
-
-  for (const group of TITLE_TOKEN_EQUIVALENT_GROUPS) {
-    if (!group.some((entry) => entry.toLowerCase() === lower)) continue;
-    for (const alt of group) {
-      if (alt.toLowerCase() === lower) continue;
-      variants.add(applyTokenCase(cleaned, alt));
-    }
   }
 
   return Array.from(variants);

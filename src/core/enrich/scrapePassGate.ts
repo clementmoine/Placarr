@@ -10,6 +10,9 @@ const USEFUL_METADATA_CAPABILITIES: Record<MediaType, Capability[]> = {
   boardgames: ["identify", "cover", "description"],
   movies: ["identify", "cover", "description"],
   musics: ["identify", "cover"],
+  hardware: ["identify", "cover"],
+  tcg: ["identify", "cover"],
+  toys: ["identify", "cover"],
 };
 
 export type MetadataCapabilityProbe = (

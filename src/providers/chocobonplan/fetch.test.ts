@@ -382,6 +382,32 @@ describe("pickRelevantChocoBonPlanHit", () => {
     expect(hit?.objectID).toBe("ps5");
   });
 
+  it("prefere Neo Geo AES+ a la reedition PS4 pour Garou", () => {
+    const hit = pickRelevantChocoBonPlanHit(
+      "Garou Mark of the Wolves sur NEOGEO",
+      [
+        {
+          title: "Garou Mark of The Wolves sur PS4",
+          url: "https://chocobonplan.com/bons-plans/jeux-video-pas-cher/jeux-ps4-pas-cher/garou-mark-of-the-wolves-ps4",
+          image: "https://example.com/ps4.png",
+          objectID: "ps4",
+        },
+        {
+          title: "Garou: Mark of the Wolves sur NEOGEO AES+",
+          url: "https://chocobonplan.com/bons-plans/jeux-video-pas-cher/retrogaming/garou-mark-of-the-wolves-sur-neogeo-aes",
+          image: "https://example.com/neogeo.png",
+          objectID: "neogeo",
+        },
+      ],
+      [
+        "Garou Mark of the Wolves",
+        "Garou Mark of the Wolves neogeo",
+        "Garou Mark of the Wolves sur NEOGEO",
+      ],
+    );
+    expect(hit?.objectID).toBe("neogeo");
+  });
+
   it("rejette Afterbirth+ quand Repentance est demande", () => {
     const hit = pickRelevantChocoBonPlanHit(
       "The Binding of Isaac Repentance",

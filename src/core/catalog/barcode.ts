@@ -32,6 +32,9 @@ export function createBarcodeLookupTaskBuilders(
     "musics",
     "movies",
     "boardgames",
+    "hardware",
+    "tcg",
+    "toys",
     "generic",
   ];
 

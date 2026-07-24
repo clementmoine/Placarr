@@ -10,7 +10,16 @@ import {
   capabilityCoverage,
 } from "@/core/catalog/catalog";
 
-const TYPES: MediaType[] = ["games", "movies", "musics", "books", "boardgames"];
+const TYPES: MediaType[] = [
+  "games",
+  "movies",
+  "musics",
+  "books",
+  "boardgames",
+  "hardware",
+  "tcg",
+  "toys",
+];
 const CAPABILITIES: Capability[] = [
   "identify",
   "price",

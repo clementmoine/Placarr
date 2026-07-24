@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   appendMissingProviderExternalLinkFacts,
   buildProfileProviderLinkFacts,
+  coverAttachmentsFromPriceOffers,
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
   externalLinkFactsFromPriceOffers,
@@ -235,6 +236,151 @@ describe("appendMissingProviderExternalLinkFacts", () => {
       ),
     ).toHaveLength(1);
   });
+
+  it("treats PriceCharting (EUR/US) chips as covering the pricecharting provider", () => {
+    const existing: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "PriceCharting (EUR)",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+        source: "pricecharting",
+      },
+      {
+        kind: "external-link",
+        label: "PriceCharting (US)",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/gamecube/black-gamecube-system",
+        source: "pricecharting",
+      },
+    ];
+
+    const merged = appendMissingProviderExternalLinkFacts(existing, [
+      {
+        providerId: "pricecharting",
+        metadata: {
+          observations: [
+            {
+              kind: "title",
+              role: "catalog_title",
+              value: "Black Gamecube System",
+              provenance: {
+                providerId: "pricecharting",
+                sourceUrl:
+                  "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+                sourceDocumentRole: "catalog_product",
+                evidenceSignals: [],
+              },
+              usage: makeObservationUsage(),
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(
+      merged.filter(
+        (fact) =>
+          fact.kind === "external-link" && fact.source === "pricecharting",
+      ),
+    ).toHaveLength(2);
+    expect(
+      merged.some(
+        (fact) =>
+          fact.kind === "external-link" && fact.label === "PriceCharting",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("coverAttachmentsFromPriceOffers", () => {
+  const bmCover =
+    "https://d2e6ccujb3mkqf.cloudfront.net/d0df7a5d-d274-4cad-948c-c26b697bdd7a-1_4ec5a216-179e-4976-9899-9b3362c94cbc.jpg";
+
+  it("surfaces Back Market listing covers when metadata gallery has none", () => {
+    const covers = coverAttachmentsFromPriceOffers(
+      [
+        {
+          source: "Back Market",
+          sourceUrl:
+            "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
+          rawValue: {
+            productName: "Sega Mega Drive - Noir",
+            coverUrl: bmCover,
+            sourceUrl:
+              "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
+          },
+        },
+      ],
+      {
+        itemTitle: "Sega Megadrive",
+        shelfType: "hardware",
+        existingAttachments: [
+          {
+            type: "cover",
+            source: "pricecharting",
+            url: "https://storage.googleapis.com/images.pricecharting.com/example",
+          },
+        ],
+      },
+    );
+
+    expect(covers).toHaveLength(1);
+    expect(covers[0]).toMatchObject({
+      type: "cover",
+      source: "backmarket",
+      url: bmCover,
+      title: "Sega Mega Drive - Noir",
+      retailCatalogImageTitlesSource: true,
+    });
+  });
+
+  it("skips when the provider already contributed a gallery cover", () => {
+    expect(
+      coverAttachmentsFromPriceOffers(
+        [
+          {
+            source: "Back Market",
+            rawValue: {
+              productName: "Sega Mega Drive - Noir",
+              coverUrl: bmCover,
+            },
+          },
+        ],
+        {
+          itemTitle: "Sega Megadrive",
+          shelfType: "hardware",
+          existingAttachments: [
+            {
+              type: "cover",
+              source: "backmarket",
+              url: "https://d2e6ccujb3mkqf.cloudfront.net/already.jpg",
+            },
+          ],
+        },
+      ),
+    ).toEqual([]);
+  });
+
+  it("skips misaligned listing titles (wrong product coverUrl)", () => {
+    expect(
+      coverAttachmentsFromPriceOffers(
+        [
+          {
+            source: "Back Market",
+            rawValue: {
+              productName: "Sega P-47 II",
+              coverUrl: bmCover,
+            },
+          },
+        ],
+        {
+          itemTitle: "Sega Megadrive",
+          shelfType: "hardware",
+        },
+      ),
+    ).toEqual([]);
+  });
 });
 
 describe("externalLinkFactsFromPriceOffers", () => {
@@ -388,6 +534,104 @@ describe("purgeContradictedProviderExternalLinks", () => {
     expect(kept).toHaveLength(0);
   });
 
+  it("keeps PriceCharting PSOne Slim System links for a bare PSOne shelf title", () => {
+    const kept = purgeContradictedProviderExternalLinks(
+      [
+        {
+          kind: "external-link",
+          label: "PriceCharting (EUR)",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/pal-playstation/psone-slim-system",
+          source: "pricecharting",
+        },
+      ],
+      "",
+      "PSOne",
+      "hardware",
+    );
+
+    expect(kept).toHaveLength(1);
+  });
+
+  it("keeps verified PriceCharting /game/ links when hardware residual mismatches edition wording", () => {
+    // Shelf title says “Legend of Zelda”; PC slug says Tears of the Kingdom.
+    // Residual is uncertain → retailer heuristics would purge; verified fiches must stay.
+    const kept = purgeContradictedProviderExternalLinks(
+      [
+        {
+          kind: "external-link",
+          label: "PriceCharting (EUR)",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/pal-nintendo-switch/nintendo-switch-oled-zelda-tears-of-the-kingdom-edition",
+          source: "pricecharting",
+        },
+        {
+          kind: "external-link",
+          label: "PriceCharting (US)",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/nintendo-switch/nintendo-switch-oled-zelda-tears-of-the-kingdom-edition",
+          source: "pricecharting",
+        },
+      ],
+      "045496453572",
+      "Nintendo Switch OLED Édition The Legend of Zelda",
+      "hardware",
+    );
+
+    expect(kept.map((fact) => fact.label)).toEqual([
+      "PriceCharting (EUR)",
+      "PriceCharting (US)",
+    ]);
+  });
+
+  it("purges verified PriceCharting /game/ links after a finish/color rename", () => {
+    const kept = purgeContradictedProviderExternalLinks(
+      [
+        {
+          kind: "external-link",
+          label: "PriceCharting",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/pal-nintendo-3ds/new-nintendo-3ds-xl-pink-+-white",
+          source: "pricecharting",
+        },
+      ],
+      "",
+      "New Nintendo 3DS XL Metallic Blue",
+      "hardware",
+    );
+
+    expect(kept).toHaveLength(0);
+  });
+
+  it("purges marketplace Back Market PS One pins on PS5 / Classic shelves", () => {
+    const psOneUrl =
+      "https://www.backmarket.fr/fr-fr/p/ps-one/8c13cfb2-adef-482c-87bb-8b2384c5fa72?l=11";
+    const fact: MetadataFact = {
+      kind: "external-link",
+      label: "Back Market",
+      value: "Voir la fiche",
+      url: psOneUrl,
+      source: "backmarket",
+    };
+
+    expect(
+      purgeContradictedProviderExternalLinks(
+        [fact],
+        "",
+        "PlayStation 5",
+        "hardware",
+      ),
+    ).toHaveLength(0);
+    expect(
+      purgeContradictedProviderExternalLinks(
+        [fact],
+        "",
+        "PlayStation Classic Console",
+        "hardware",
+      ),
+    ).toHaveLength(0);
+  });
+
   it("keeps PriceCharting search catalog chips (path is not a product slug)", () => {
     const kept = purgeContradictedProviderExternalLinks(
       [
@@ -451,6 +695,95 @@ describe("reconcileExternalLinksFromPriceOffers", () => {
       "booknode",
       "eBay",
     ]);
+  });
+
+  it("does not collapse PriceCharting EUR/US chips into a generic link", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "PriceCharting (EUR)",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+        source: "pricecharting",
+      },
+      {
+        kind: "external-link",
+        label: "PriceCharting (US)",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/gamecube/black-gamecube-system",
+        source: "pricecharting",
+      },
+    ];
+
+    const reconciled = reconcileExternalLinksFromPriceOffers(
+      facts,
+      [
+        {
+          source: "PriceCharting",
+          sourceUrl:
+            "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+        },
+      ],
+      "0045496370039",
+      "Nintendo GameCube Black",
+      "hardware",
+    );
+
+    expect(
+      reconciled.filter((fact) => fact.kind === "external-link").map((fact) => ({
+        label: fact.label,
+        url: fact.url,
+      })),
+    ).toEqual([
+      {
+        label: "PriceCharting (EUR)",
+        url: "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+      },
+      {
+        label: "PriceCharting (US)",
+        url: "https://www.pricecharting.com/game/gamecube/black-gamecube-system",
+      },
+    ]);
+  });
+
+  it("rejects a GT3 pack PriceCharting offer for bare PlayStation 2", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "PriceCharting (EUR)",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/pal-playstation-2/playstation-2-system",
+        source: "pricecharting",
+      },
+      {
+        kind: "external-link",
+        label: "PriceCharting (US)",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/playstation-2/playstation-2-system",
+        source: "pricecharting",
+      },
+    ];
+
+    const reconciled = reconcileExternalLinksFromPriceOffers(
+      facts,
+      [
+        {
+          source: "PriceCharting",
+          sourceUrl:
+            "https://www.pricecharting.com/game/playstation-2/sony-playstation-2-gt3-racing-pack",
+          rawValue: { productName: "Sony Playstation 2 GT3 Racing Pack" },
+        },
+      ],
+      null,
+      "PlayStation 2",
+      "hardware",
+    );
+
+    expect(
+      reconciled
+        .filter((fact) => fact.kind === "external-link")
+        .map((fact) => fact.label),
+    ).toEqual(["PriceCharting (EUR)", "PriceCharting (US)"]);
   });
 });
 

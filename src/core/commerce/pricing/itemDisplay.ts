@@ -6,7 +6,10 @@ import {
 import { cleanCode } from "@/core/identify/query";
 import { isItemMetadataRefreshing } from "@/core/collect/enrichment";
 import { shouldRefreshPriceCache } from "@/core/commerce/pricing/resolver";
-import { providerProductUrlsFromMetadataFacts } from "@/core/catalog/catalog";
+import {
+  isReferencePriceSource,
+  providerProductUrlsFromMetadataFacts,
+} from "@/core/catalog/catalog";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { externalIdsFromStoredSources } from "@/core/enrich/scrapePassGate";
 import type { MetadataFact } from "@/types/metadataProvider";
@@ -210,12 +213,70 @@ async function readCachedItemPrices(
   });
 }
 
+function normalizeProviderProductUrl(url: string): string {
+  try {
+    const parsed = new URL(url.trim());
+    parsed.hash = "";
+    parsed.search = "";
+    return parsed.toString().replace(/\/$/, "").toLowerCase();
+  } catch {
+    return url.trim().replace(/\/$/, "").toLowerCase();
+  }
+}
+
+/**
+ * True when metadata already pins a catalog fiche URL but cached reference
+ * offers point at a different product (e.g. generic PS2 Slim vs Pink).
+ * Soft TTL refresh would leave the wrong cents until the cache aged out.
+ */
+export function cachedReferencePricesMissApprovedFiches(
+  context: ItemPricesContext,
+  cached: BarcodePricesResult,
+): boolean {
+  const approvedUrls = [
+    ...new Set(
+      providerProductUrlsFromMetadataFacts(context.metadataFacts)
+        .map((ref) => normalizeProviderProductUrl(ref.url))
+        .filter(Boolean),
+    ),
+  ];
+  if (approvedUrls.length === 0) return false;
+
+  const cachedReferenceUrls = new Set(
+    (cached.priceObservations ?? [])
+      .filter(
+        (offer) =>
+          offer.source &&
+          isReferencePriceSource(offer.source) &&
+          offer.sourceUrl?.trim(),
+      )
+      .map((offer) => normalizeProviderProductUrl(offer.sourceUrl!)),
+  );
+  if (cachedReferenceUrls.size === 0) return true;
+
+  return approvedUrls.some((url) => !cachedReferenceUrls.has(url));
+}
+
 export async function itemPricesNeedRefresh(
   context: ItemPricesContext,
 ): Promise<boolean> {
   const cached = await readCachedItemPrices(context);
   if (!cached) return true;
-  return shouldRefreshPriceCache(context.shelfType, cached);
+  if (shouldRefreshPriceCache(context.shelfType, cached)) return true;
+  return cachedReferencePricesMissApprovedFiches(context, cached);
+}
+
+/** Soft TTL vs forced pin-mismatch — callers enqueue force when pin drifted. */
+export async function itemPricesRefreshForceReason(
+  context: ItemPricesContext,
+): Promise<"missing" | "stale" | "approved-fiche-mismatch" | null> {
+  const cached = await readCachedItemPrices(context);
+  if (!cached) return "missing";
+  if (shouldRefreshPriceCache(context.shelfType, cached)) return "stale";
+  if (cachedReferencePricesMissApprovedFiches(context, cached)) {
+    return "approved-fiche-mismatch";
+  }
+  return null;
 }
 
 export async function itemPricesCacheIsEmpty(

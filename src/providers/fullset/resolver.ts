@@ -24,6 +24,17 @@ import {
 const FULLSET_REGION = "fr";
 /** Search cards for actual games (vs consoles/accessories/magazines). */
 const GAME_CATEGORY = /^jeux/i;
+/** Console / accessory SKUs on Full Set (hardware shelves). */
+const HARDWARE_CATEGORY = /^(consoles|accessoires)/i;
+
+export function fullSetCategoryMatchesMediaType(
+  category: string | undefined,
+  mediaType: string | null | undefined,
+): boolean {
+  if (!category?.trim()) return true;
+  if (mediaType === "hardware") return HARDWARE_CATEGORY.test(category);
+  return GAME_CATEGORY.test(category);
+}
 
 function buildFullSetFacts(item: FullSetItem): MetadataFact[] {
   const facts: MetadataFact[] = [
@@ -210,8 +221,15 @@ export function createFullSetResolver() {
           if (seenUrls.has(hit.url)) continue;
           seenUrls.add(hit.url);
 
-          if (hit.category && !GAME_CATEGORY.test(hit.category)) continue;
-          if (!fullSetHitMatchesPlatform(hit, requestedPlatformKey)) continue;
+          if (!fullSetCategoryMatchesMediaType(hit.category, ctx.type)) continue;
+          // Console SKUs are the product; platformKey on the card is the
+          // console family — only enforce for game shelves.
+          if (
+            ctx.type !== "hardware" &&
+            !fullSetHitMatchesPlatform(hit, requestedPlatformKey)
+          ) {
+            continue;
+          }
 
           if (
             !acceptRetailerCatalogCandidate({

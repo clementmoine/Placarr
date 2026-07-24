@@ -15,7 +15,7 @@ export { fetchPricesFromSmartoys, type SmartoysPrices } from "./fetch";
 const PRICE_SOURCE = "Smartoys";
 
 async function refreshSmartoysOffers(ctx: BarcodePriceRefreshContext) {
-  if (ctx.shelfType !== "games") return [];
+  if (ctx.shelfType !== "games" && ctx.shelfType !== "hardware") return [];
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
@@ -51,12 +51,12 @@ export const smartoysModule: ProviderModule = {
   info: {
     id: "smartoys",
     label: "Smartoys",
-    types: ["games"],
+    types: ["games", "hardware"],
     capabilities: ["price"],
     auth: { kind: "scrape" },
     canonical: false,
     websiteUrl: "https://www.smartoys.be/",
-    notes: "Prix détaillant BE (jeux rétro).",
+    notes: "Prix détaillant BE (jeux + consoles/manettes rétro).",
     barcodeScopedPriceSource: true,
   },
   mappingProbe: {

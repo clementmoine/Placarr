@@ -69,6 +69,17 @@ describe("priceChartingAcceptanceTitleBag", () => {
     ).toBe(false);
     expect(bag[0]).toMatch(/conduit/i);
   });
+
+  it("keeps a bag-listed color sibling without inventing rose≡pink", () => {
+    const bag = priceChartingAcceptanceTitleBag([
+      "Sony Playstation 2 Slim Rose",
+      "Playstation 2 Slim Pink",
+    ]);
+    expect(bag).toEqual([
+      "Sony Playstation 2 Slim Rose",
+      "Playstation 2 Slim Pink",
+    ]);
+  });
 });
 
 describe("priceChartingCatalogAlignsWithTitles", () => {
@@ -215,6 +226,80 @@ describe("priceChartingCatalogAlignsWithTitles", () => {
         "007: Nightfire",
         "Nightfire",
       ]),
+    ).toBe(true);
+  });
+
+  it("rejects a bare Slim catalog when the bag asks for Slim Rose", () => {
+    expect(
+      priceChartingCatalogAlignsWithTitles("Playstation 2 Slim", [
+        "Sony Playstation 2 Slim Rose",
+      ]),
+    ).toBe(false);
+    expect(
+      priceChartingCatalogAlignsWithTitles("Playstation 2", [
+        "Sony Playstation 2 Slim Rose",
+      ]),
+    ).toBe(false);
+  });
+
+  it("folds rose≡pink on hardware (default finish family)", () => {
+    expect(
+      priceChartingCatalogAlignsWithTitles(
+        "Slim Playstation 2 System Pink",
+        ["PlayStation 2 Slim Rose"],
+        { mediaType: "hardware" },
+      ),
+    ).toBe(true);
+  });
+
+  it("still requires bag-listed pink for non-hardware title bags", () => {
+    expect(
+      priceChartingCatalogAlignsWithTitles("Playstation 2 Slim Pink", [
+        "Sony Playstation 2 Slim Rose",
+      ]),
+    ).toBe(false);
+    expect(
+      priceChartingCatalogAlignsWithTitles("Playstation 2 Slim Pink", [
+        "Sony Playstation 2 Slim Rose",
+        "Playstation 2 Slim Pink",
+      ]),
+    ).toBe(true);
+  });
+
+  it("accepts PS4 Pro hardware against the PAL 1TB Black systems SKU", () => {
+    expect(
+      priceChartingCatalogAlignsWithTitles(
+        "Sony PlayStation 4 Pro 1TB Console Black",
+        ["PlayStation 4 PS4 Pro"],
+        { mediaType: "hardware", allowFranchiseStem: true },
+      ),
+    ).toBe(true);
+  });
+
+  it("still rejects Slim Rose → Slim on hardware mediaType", () => {
+    expect(
+      priceChartingCatalogAlignsWithTitles(
+        "Playstation 2 Slim",
+        ["Sony Playstation 2 Slim Rose"],
+        { mediaType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects White DSi when the bag asks for DS Lite White", () => {
+    expect(
+      priceChartingCatalogAlignsWithTitles(
+        "White Nintendo DSi System",
+        ["Nintendo DS Lite [White]", "Nintendo DS Lite Blanche"],
+        { mediaType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      priceChartingCatalogAlignsWithTitles(
+        "White Nintendo DS Lite",
+        ["Nintendo DS Lite [White]", "Nintendo DS Lite Blanche"],
+        { mediaType: "hardware" },
+      ),
     ).toBe(true);
   });
 });

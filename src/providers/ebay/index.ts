@@ -12,7 +12,7 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
+import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
@@ -52,6 +52,7 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "movies",
   "books",
   "boardgames",
+  "hardware",
   "generic",
 ];
 const PRICE_SOURCE = "eBay";
@@ -116,13 +117,18 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
+  const titleMatch = { shelfType: ctx.shelfType };
   const priceQueries = ebayPriceSearchQueries(
     ctx.primaryName,
     ctx.fallbackNames,
     matchPrimaryBarcode(ctx) || ctx.cleanedBarcode,
   );
   for (const query of priceQueries) {
-    const result = await fetchPricesFromEbay(query, expectedNames);
+    const result = await fetchPricesFromEbay(
+      query,
+      expectedNames,
+      titleMatch,
+    );
     if (!result) continue;
     const extra = {
       productName: result.productName ?? null,
@@ -152,7 +158,7 @@ export const ebayModule: ProviderModule = {
   info: {
     id: "ebay",
     label: "eBay",
-    types: ["games", "movies", "musics", "books", "boardgames"],
+    types: ["games", "movies", "musics", "books", "boardgames", "hardware"],
     capabilities: ["identify", "price", "cover"],
     metadataCapabilities: ["identify", "cover"],
     auth: {
@@ -223,6 +229,7 @@ export const ebayModule: ProviderModule = {
           new Set([String(name || "").trim(), ...queries].filter(Boolean)),
         );
         const productTitle = expectedNames[0] ?? "";
+        const titleMatch = { shelfType: type ?? null };
         const platformKey =
           type === "games"
             ? detectVideoGamePlatformKey(
@@ -245,16 +252,25 @@ export const ebayModule: ProviderModule = {
           const gtinProducts = await fetchFromEbay(
             normalizedBarcode,
             expectedNames,
+            titleMatch,
           );
           addProducts(gtinProducts);
           if (gtinProducts.length === 0 && merged.length === 0) {
             for (const query of queries.slice(0, 1)) {
-              addProducts(await fetchEbayProductsByQuery(query, expectedNames));
+              addProducts(
+                await fetchEbayProductsByQuery(
+                  query,
+                  expectedNames,
+                  titleMatch,
+                ),
+              );
             }
           }
         } else {
           for (const query of queries) {
-            addProducts(await fetchEbayProductsByQuery(query, expectedNames));
+            addProducts(
+              await fetchEbayProductsByQuery(query, expectedNames, titleMatch),
+            );
           }
         }
 
@@ -323,13 +339,16 @@ export const ebayModule: ProviderModule = {
         `eBay credentials missing — set ${EBAY_ENV_NAMES.join(" / ")}`,
       ),
   buildBarcodeSources(payload, ctx) {
-    return marketplaceContributions("eBay", payload.ebay, ctx, [
-      "games",
-      "musics",
-      "movies",
-      "books",
-      "boardgames",
-    ]);
+    return [
+      ...marketplaceContributions("eBay", payload.ebay, ctx, [
+        "games",
+        "musics",
+        "movies",
+        "books",
+        "boardgames",
+      ]),
+      ...typedOnlyContributions("eBay", payload.ebay, ctx, ["hardware"]),
+    ];
   },
   refreshBarcodePriceOffers: refreshEbayOffers,
 };

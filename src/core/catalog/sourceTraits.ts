@@ -144,6 +144,51 @@ const PROVIDER_LABEL_BY_ID = new Map(
 );
 
 /**
+ * Recover a provider id from a remote media URL when the attachment `source`
+ * was never stamped (orphan jaquette rows). Uses registry `coverUrlHost` /
+ * `websiteUrl` — no provider-id literals.
+ */
+export function inferProviderIdFromMediaUrl(url?: string | null): string | null {
+  const trimmed = url?.trim();
+  if (!trimmed || trimmed.startsWith("/")) return null;
+
+  let hostname: string | null = null;
+  try {
+    hostname = new URL(trimmed).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    hostname = null;
+  }
+
+  for (const provider of PROVIDERS) {
+    if (provider.coverUrlHost && trimmed.includes(provider.coverUrlHost)) {
+      return provider.id;
+    }
+    const websiteUrl = provider.websiteUrl?.trim();
+    if (!websiteUrl || !hostname) continue;
+    try {
+      const siteHost = new URL(websiteUrl).hostname
+        .replace(/^www\./i, "")
+        .toLowerCase();
+      if (hostname === siteHost || hostname.endsWith(`.${siteHost}`)) {
+        return provider.id;
+      }
+    } catch {
+      // ignore invalid websiteUrl
+    }
+  }
+  return null;
+}
+
+export function resolveAttachmentSourceForDisplay(
+  source?: string | null,
+  url?: string | null,
+): string | null {
+  const trimmed = source?.trim();
+  if (trimmed) return trimmed;
+  return inferProviderIdFromMediaUrl(url);
+}
+
+/**
  * Resolve an attachment `source` to its canonical provider id. Sources may be a
  * provider id, a declared alias, or carry a "· region" / "/ variant" suffix; the
  * suffix is dropped and the alias resolved. Unknown sources are returned
@@ -309,37 +354,41 @@ export function withProviderAttachmentTraits<
   coverProvenance?: CoverProvenance;
   providerLabel?: string;
 } {
+  const resolvedSource = resolveAttachmentSourceForDisplay(
+    attachment.source,
+    attachment.url,
+  );
   return {
     ...attachment,
+    ...(resolvedSource && !attachment.source?.trim()
+      ? { source: resolvedSource }
+      : {}),
     // Prefer a provenance already derived from the *original* image URL (set
     // before the URL was localized to /uploads); only fall back to re-deriving
     // from the current URL when none is present.
     coverProvenance:
       (attachment.coverProvenance as CoverProvenance | undefined) ??
-      coverProvenanceForSource(attachment.source, attachment.url),
-    isFullWrapCoverSource: isFullWrapCoverSource(attachment.source),
-    isGameMediaGallerySource: isGameMediaGallerySource(attachment.source),
-    isBookGallerySource: isBookGallerySource(attachment.source),
-    isMusicGallerySource: isMusicGallerySource(attachment.source),
-    isCanonicalCoverSource: isCanonicalCoverSource(attachment.source),
-    retailCatalogImageTitlesSource: retailCatalogImageTitleSource(
-      attachment.source,
-    ),
-    catalogCoverTitlesSource: catalogCoverTitleSource(attachment.source),
-    strictShelfPlatformCoverSource: strictShelfPlatformCoverSource(
-      attachment.source,
-    ),
-    authoritative3dCoverRoleSource: authoritative3dCoverRoleSource(
-      attachment.source,
-    ),
-    gridStyleCoverLabelsSource: gridStyleCoverLabelSource(attachment.source),
+      coverProvenanceForSource(resolvedSource, attachment.url),
+    isFullWrapCoverSource: isFullWrapCoverSource(resolvedSource),
+    isGameMediaGallerySource: isGameMediaGallerySource(resolvedSource),
+    isBookGallerySource: isBookGallerySource(resolvedSource),
+    isMusicGallerySource: isMusicGallerySource(resolvedSource),
+    isCanonicalCoverSource: isCanonicalCoverSource(resolvedSource),
+    retailCatalogImageTitlesSource:
+      retailCatalogImageTitleSource(resolvedSource),
+    catalogCoverTitlesSource: catalogCoverTitleSource(resolvedSource),
+    strictShelfPlatformCoverSource:
+      strictShelfPlatformCoverSource(resolvedSource),
+    authoritative3dCoverRoleSource:
+      authoritative3dCoverRoleSource(resolvedSource),
+    gridStyleCoverLabelsSource: gridStyleCoverLabelSource(resolvedSource),
     collectorCoverRegionFromAgeRatingSource:
-      collectorCoverRegionFromAgeRatingSource(attachment.source),
-    coverDefaultRegion: coverDefaultRegionForSource(attachment.source),
+      collectorCoverRegionFromAgeRatingSource(resolvedSource),
+    coverDefaultRegion: coverDefaultRegionForSource(resolvedSource),
     providerImageScoreAdjustment: providerImageScoreAdjustmentForSource(
-      attachment.source,
+      resolvedSource,
     ),
-    providerLabel: providerLabelForSource(attachment.source) ?? undefined,
+    providerLabel: providerLabelForSource(resolvedSource) ?? undefined,
   };
 }
 

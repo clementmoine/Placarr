@@ -12,6 +12,8 @@ import {
 
 import {
   decodePriceChartingHtmlEntities,
+  enrichPriceChartingMetadataWithSiblingRegion,
+  expandPriceChartingHardwareSiblingProductSlugs,
   fetchMetadataFromPriceCharting,
   fetchMetadataFromPriceChartingByName,
   fetchPricesFromPriceCharting,
@@ -20,6 +22,8 @@ import {
   parsePriceChartingSearchRowsForTests,
   pickBestPriceChartingSearchRowForTests,
   priceChartingPlatformMatchesTarget,
+  priceChartingSiblingRegionUrl,
+  resolvePriceChartingGamePathForTests,
   upgradePriceChartingImageUrl,
 } from "./fetch";
 
@@ -116,6 +120,93 @@ describe("parsePriceChartingSearchRows + pickBestRow", () => {
     );
     expect(best?.gamePath).toContain("/pal-playstation/tony-hawk-4");
     expect(best?.title).toBe("Tony Hawk 4");
+  });
+
+  it("prefers Switch OLED console over Zelda game on hardware seeks", () => {
+    const rows = [
+      {
+        id: "nes",
+        gamePath: "/game/pal-nes/legend-of-zelda",
+        title: "The Legend of Zelda",
+        platform: "PAL NES",
+      },
+      {
+        id: "oled",
+        gamePath: "/game/nintendo-switch/nintendo-switch-oled-model",
+        title: "Nintendo Switch OLED Model",
+        platform: "Nintendo Switch",
+      },
+    ];
+    const best = pickBestPriceChartingSearchRowForTests(
+      rows,
+      "Nintendo Switch OLED Édition The Legend of Zelda",
+      "Nintendo Switch",
+      false,
+      false,
+      [],
+      { mediaType: "hardware" },
+    );
+    expect(best?.id).toBe("oled");
+  });
+
+  it("prefers Vita System over Vita game hits on hardware seeks", () => {
+    const rows = [
+      {
+        id: "game",
+        gamePath: "/game/playstation-vita/uncharted-golden-abyss",
+        title: "Uncharted: Golden Abyss",
+        platform: "Playstation Vita",
+      },
+      {
+        id: "slim",
+        gamePath: "/game/playstation-vita/playstation-vita-slim-console",
+        title: "PlayStation Vita Slim Console",
+        platform: "Playstation Vita",
+      },
+      {
+        id: "system",
+        gamePath: "/game/playstation-vita/playstation-vita-system",
+        title: "PlayStation Vita System",
+        platform: "Playstation Vita",
+      },
+    ];
+    const best = pickBestPriceChartingSearchRowForTests(
+      rows,
+      "PlayStation Vita",
+      "PlayStation Vita",
+      false,
+      false,
+      [],
+      { mediaType: "hardware" },
+    );
+    expect(best?.id).toBe("system");
+  });
+
+  it("picks Slim Console 250GB over 4GB for shelf 250Go", () => {
+    const rows = [
+      {
+        id: "4gb",
+        gamePath: "/game/xbox-360/xbox-360-slim-console-4gb",
+        title: "Xbox 360 Slim Console 4GB",
+        platform: "Xbox 360",
+      },
+      {
+        id: "250",
+        gamePath: "/game/xbox-360/xbox-360-slim-console-250gb",
+        title: "Xbox 360 Slim Console 250GB",
+        platform: "Xbox 360",
+      },
+    ];
+    const best = pickBestPriceChartingSearchRowForTests(
+      rows,
+      "Xbox 360 Slim 250Go",
+      "Xbox 360",
+      false,
+      false,
+      [],
+      { mediaType: "hardware" },
+    );
+    expect(best?.id).toBe("250");
   });
 
   it("scores metadata aliases as alternate query titles", () => {
@@ -261,7 +352,436 @@ describe("parsePriceChartingGalleryImages", () => {
   });
 });
 
+describe("priceChartingSiblingRegionUrl", () => {
+  it("toggles PAL ↔ NTSC for the same catalog slug", () => {
+    expect(
+      priceChartingSiblingRegionUrl(
+        "https://www.pricecharting.com/game/pal-playstation-vita/playstation-tv",
+      ),
+    ).toBe(
+      "https://www.pricecharting.com/game/playstation-vita/playstation-tv",
+    );
+    expect(
+      priceChartingSiblingRegionUrl(
+        "https://www.pricecharting.com/game/playstation-vita/playstation-tv",
+      ),
+    ).toBe(
+      "https://www.pricecharting.com/game/pal-playstation-vita/playstation-tv",
+    );
+  });
+});
+
+describe("expandPriceChartingHardwareSiblingProductSlugs", () => {
+  it("adds -system/-console when the primary slug omits catalog chrome", () => {
+    expect(
+      expandPriceChartingHardwareSiblingProductSlugs(
+        "playstation-3-500gb-super-slim",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "playstation-3-500gb-super-slim",
+        "playstation-3-500gb-super-slim-system",
+        "playstation-3-500gb-super-slim-console",
+      ]),
+    );
+  });
+
+  it("also tries the bare slug when primary already has -system", () => {
+    expect(
+      expandPriceChartingHardwareSiblingProductSlugs(
+        "playstation-3-500gb-super-slim-system",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "playstation-3-500gb-super-slim-system",
+        "playstation-3-500gb-super-slim",
+      ]),
+    );
+  });
+
+  it("reorders finish-rear PAL slugs to finish-front NTSC (DS Lite White)", () => {
+    expect(
+      expandPriceChartingHardwareSiblingProductSlugs("nintendo-ds-lite-white"),
+    ).toEqual(
+      expect.arrayContaining([
+        "nintendo-ds-lite-white",
+        "white-nintendo-ds-lite",
+        "white-nintendo-ds-lite-system",
+      ]),
+    );
+  });
+});
+
+describe("enrichPriceChartingMetadataWithSiblingRegion", () => {
+  it("keeps PAL as primary url and stores the NTSC sibling fiche", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("/game/gamecube/black-gamecube-system")) {
+        return {
+          status: 200,
+          data: `
+            <html>
+              <head>
+                <link rel="canonical" href="https://www.pricecharting.com/game/gamecube/black-gamecube-system" />
+              </head>
+              <body>
+                <h1>Black Gamecube System <a>Gamecube</a></h1>
+                <div id="extra-images">
+                  <div class="extra">
+                    <div>
+                      <a href="https://storage.googleapis.com/images.pricecharting.com/ntsc/1600.jpg">
+                        <img src="https://storage.googleapis.com/images.pricecharting.com/ntsc/240.jpg" />
+                      </a>
+                    </div>
+                    <p>Main Image</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/gamecube/black-gamecube-system",
+            },
+          },
+        } as never;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+
+    await expect(
+      enrichPriceChartingMetadataWithSiblingRegion({
+        title: "Black Gamecube System",
+        platform: "PAL Gamecube",
+        url: "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+        coverUrl:
+          "https://storage.googleapis.com/images.pricecharting.com/pal/1600.jpg",
+        images: [
+          {
+            url: "https://storage.googleapis.com/images.pricecharting.com/pal/1600.jpg",
+            label: "Main Image",
+          },
+        ],
+      }),
+    ).resolves.toMatchObject({
+      url: "https://www.pricecharting.com/game/pal-gamecube/black-gamecube-system",
+      siblingUrl:
+        "https://www.pricecharting.com/game/gamecube/black-gamecube-system",
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/pal/1600.jpg",
+      images: [
+        expect.objectContaining({
+          url: "https://storage.googleapis.com/images.pricecharting.com/pal/1600.jpg",
+          isPal: true,
+        }),
+      ],
+    });
+  });
+
+  it("rescues NTSC sibling via title search when same-slug soft-404s", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (href.includes("/game/wii/wii-console-white")) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Wii Console White Prices</h1></body></html>`,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?type=prices&q=wii+console+white",
+            },
+          },
+        } as never;
+      }
+      if (href.includes("search-products") && /White\+Wii\+System|White%20Wii%20System/i.test(href)) {
+        return {
+          status: 200,
+          data: `
+            <table>
+              <tr id="product-1" data-product="1">
+                <td class="title">
+                  <a href="https://www.pricecharting.com/game/wii/white-nintendo-wii-system">White Nintendo Wii System</a>
+                  <div class="console-in-title"><a href="/console/wii">Wii</a></div>
+                </td>
+              </tr>
+              <tr id="product-2" data-product="2">
+                <td class="title">
+                  <a href="https://www.pricecharting.com/game/wii/wii-nunchuk-white">Wii Nunchuk [White]</a>
+                  <div class="console-in-title"><a href="/console/wii">Wii</a></div>
+                </td>
+              </tr>
+            </table>
+          `,
+          request: {
+            res: {
+              responseUrl: href,
+            },
+          },
+        } as never;
+      }
+      if (href.includes("/game/wii/white-nintendo-wii-system")) {
+        return {
+          status: 200,
+          data: `
+            <html>
+              <head>
+                <link rel="canonical" href="https://www.pricecharting.com/game/wii/white-nintendo-wii-system" />
+              </head>
+              <body>
+                <h1>White Nintendo Wii System <a>Wii</a></h1>
+              </body>
+            </html>
+          `,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+            },
+          },
+        } as never;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+
+    await expect(
+      enrichPriceChartingMetadataWithSiblingRegion({
+        title: "Wii Console White",
+        platform: "PAL Wii",
+        url: "https://www.pricecharting.com/game/pal-wii/wii-console-white",
+      }),
+    ).resolves.toMatchObject({
+      url: "https://www.pricecharting.com/game/pal-wii/wii-console-white",
+      siblingUrl:
+        "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+    });
+  });
+
+  it("rescues NTSC finish-front sibling for PAL DS Lite White without landing on DSi", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (href.includes("/game/nintendo-ds/nintendo-ds-lite-white")) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Prices</h1></body></html>`,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?type=prices&q=nintendo+ds+lite+white",
+            },
+          },
+        } as never;
+      }
+      if (
+        href.includes("/game/nintendo-ds/nintendo-ds-lite-white-system") ||
+        href.includes("/game/nintendo-ds/nintendo-ds-lite-white-console")
+      ) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Prices</h1></body></html>`,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?type=prices&q=nintendo+ds+lite+white+system",
+            },
+          },
+        } as never;
+      }
+      if (href.includes("/game/nintendo-ds/white-nintendo-ds-lite")) {
+        return {
+          status: 200,
+          data: `
+            <html>
+              <head>
+                <link rel="canonical" href="https://www.pricecharting.com/game/nintendo-ds/white-nintendo-ds-lite" />
+              </head>
+              <body>
+                <h1>White Nintendo DS Lite <a>Nintendo DS</a></h1>
+              </body>
+            </html>
+          `,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/nintendo-ds/white-nintendo-ds-lite",
+            },
+          },
+        } as never;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+
+    await expect(
+      enrichPriceChartingMetadataWithSiblingRegion(
+        {
+          title: "Nintendo DS Lite [White]",
+          platform: "PAL Nintendo DS",
+          url: "https://www.pricecharting.com/game/pal-nintendo-ds/nintendo-ds-lite-white",
+        },
+        { allowTitleSearchRescue: false },
+      ),
+    ).resolves.toMatchObject({
+      url: "https://www.pricecharting.com/game/pal-nintendo-ds/nintendo-ds-lite-white",
+      siblingUrl:
+        "https://www.pricecharting.com/game/nintendo-ds/white-nintendo-ds-lite",
+    });
+  });
+
+  it("merges Box Front/Back from NTSC -system when same-slug soft-404s", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (
+        href.endsWith("/playstation-3-500gb-super-slim") ||
+        href.includes("/playstation-3-500gb-super-slim?")
+      ) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Prices</h1></body></html>`,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?type=prices&q=playstation+3+500gb+super+slim",
+            },
+          },
+        } as never;
+      }
+      if (href.includes("/playstation-3-500gb-super-slim-system")) {
+        return {
+          status: 200,
+          data: `
+            <html>
+              <head>
+                <link rel="canonical" href="https://www.pricecharting.com/game/playstation-3/playstation-3-500gb-super-slim-system" />
+              </head>
+              <body>
+                <h1>Playstation 3 500GB Super Slim System <a>Playstation 3</a></h1>
+                <div id="extra-images">
+                  <div class="extra">
+                    <div>
+                      <a href="https://storage.googleapis.com/images.pricecharting.com/main/1600.jpg">
+                        <img src="https://storage.googleapis.com/images.pricecharting.com/main/240.jpg" />
+                      </a>
+                    </div>
+                    <p>Main Image</p>
+                  </div>
+                  <div class="extra">
+                    <div>
+                      <a href="https://storage.googleapis.com/images.pricecharting.com/front/1600.jpg">
+                        <img src="https://storage.googleapis.com/images.pricecharting.com/front/240.jpg" />
+                      </a>
+                    </div>
+                    <p>Box Front Art</p>
+                  </div>
+                  <div class="extra">
+                    <div>
+                      <a href="https://storage.googleapis.com/images.pricecharting.com/back/1600.jpg">
+                        <img src="https://storage.googleapis.com/images.pricecharting.com/back/240.jpg" />
+                      </a>
+                    </div>
+                    <p>Box Back Art</p>
+                  </div>
+                </div>
+                <div id="full-prices"></div>
+              </body>
+            </html>
+          `,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/playstation-3/playstation-3-500gb-super-slim-system",
+            },
+          },
+        } as never;
+      }
+      if (href.includes("/playstation-3-500gb-super-slim-console")) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Prices</h1></body></html>`,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?type=prices&q=console",
+            },
+          },
+        } as never;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+
+    const result = await enrichPriceChartingMetadataWithSiblingRegion({
+      title: "Playstation 3 500GB Super Slim",
+      platform: "PAL Playstation 3",
+      url: "https://www.pricecharting.com/game/pal-playstation-3/playstation-3-500gb-super-slim",
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/pal-main/1600.jpg",
+      images: [
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/pal-main/1600.jpg",
+          label: "Main Image",
+        },
+      ],
+    });
+
+    expect(result.siblingUrl).toBe(
+      "https://www.pricecharting.com/game/playstation-3/playstation-3-500gb-super-slim-system",
+    );
+    expect(result.images?.map((image) => image.label)).toEqual([
+      "Main Image",
+      "Main Image",
+      "Box Front Art",
+      "Box Back Art",
+    ]);
+  });
+});
+
 describe("parsePriceChartingDetailHtml", () => {
+  it("rejects search-results chrome that is not a product fiche", () => {
+    expect(
+      parsePriceChartingDetailHtml(`
+        <html><body>
+          <h1>Items matching your search: <i>045496883041</i></h1>
+          <div>Buy & Sell Search Results</div>
+        </body></html>
+      `),
+    ).toBeNull();
+  });
+
+  it("decodes HTML entities in Game & Watch platform chrome", () => {
+    expect(
+      parsePriceChartingDetailHtml(`
+        <h1>Super Mario Bros <a href="/console/game-&amp;-watch">Game &amp; Watch</a></h1>
+        <div class="cover">
+          <img src='https://storage.googleapis.com/images.pricecharting.com/gw/240.jpg' />
+        </div>
+        <div id="extra-images">
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/gw/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/gw/240.jpg" />
+              </a>
+            </div>
+            <p>Main Image</p>
+          </div>
+        </div>
+        <div id="full-prices"></div>
+      `),
+    ).toMatchObject({
+      title: "Super Mario Bros",
+      platform: "Game & Watch",
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/gw/1600.jpg",
+    });
+  });
+
+  it("strips trailing Prices chrome from hardware h1 titles without platform links", () => {
+    expect(
+      parsePriceChartingDetailHtml(`
+        <h1>Psone System Prices</h1>
+        <div id="extra-images"></div>
+        <div id="full-prices"></div>
+      `)?.title,
+    ).toBe("Psone System");
+  });
+
   it("prefers max-resolution cover and gallery images over the 240px thumbnail", () => {
     expect(
       parsePriceChartingDetailHtml(`
@@ -308,7 +828,7 @@ describe("parsePriceChartingDetailHtml", () => {
     });
   });
 
-  it("drops community fan-art gallery labels such as Foxigami", () => {
+  it("keeps every #images gallery photo, including unlabeled community uploads", () => {
     expect(
       parsePriceChartingDetailHtml(`
         <h1>Endling: Extinction is Forever <a>PlayStation 4</a></h1>
@@ -332,6 +852,14 @@ describe("parsePriceChartingDetailHtml", () => {
             </div>
             <p>Foxigami</p>
           </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/bundle/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/bundle/240.jpg" />
+              </a>
+            </div>
+            <p>Forza Motorsport Bundle</p>
+          </div>
         </div>
         <div id="full-prices"></div>
       `),
@@ -345,8 +873,67 @@ describe("parsePriceChartingDetailHtml", () => {
           url: "https://storage.googleapis.com/images.pricecharting.com/main/1600.jpg",
           label: "Main Image",
         },
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/fox/1600.jpg",
+          label: "Foxigami",
+        },
+        {
+          url: "https://storage.googleapis.com/images.pricecharting.com/bundle/1600.jpg",
+          label: "Forza Motorsport Bundle",
+        },
       ],
     });
+  });
+
+  it("keeps Box View / Back / Console gallery photos (hardware catalog chrome)", () => {
+    expect(
+      parsePriceChartingDetailHtml(`
+        <h1>PlayStation 4 Pro <a>PlayStation 4</a></h1>
+        <div id="extra-images">
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/main/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/main/240.jpg" />
+              </a>
+            </div>
+            <p>Main Image</p>
+          </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/box/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/box/240.jpg" />
+              </a>
+            </div>
+            <p>Box View</p>
+          </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/back/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/back/240.jpg" />
+              </a>
+            </div>
+            <p>Back</p>
+          </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/console/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/console/240.jpg" />
+              </a>
+            </div>
+            <p>Console</p>
+          </div>
+          <div class="extra">
+            <div>
+              <a href="https://storage.googleapis.com/images.pricecharting.com/system-only/1600.jpg">
+                <img src="https://storage.googleapis.com/images.pricecharting.com/system-only/240.jpg" />
+              </a>
+            </div>
+            <p>System Only</p>
+          </div>
+        </div>
+        <div id="full-prices"></div>
+      `)?.images?.map((image) => image.label),
+    ).toEqual(["Main Image", "Box View", "Back", "Console", "System Only"]);
   });
 
   it("décode les entités HTML dans le titre", () => {
@@ -694,5 +1281,116 @@ describe("fetchPricesFromPriceCharting", () => {
     expect(mockedGet).not.toHaveBeenCalled();
 
     vi.useRealTimers();
+  });
+});
+
+describe("Game & Watch barcode / offers path with &", () => {
+  it("keeps game-&-watch paths when resolving /offers?product= links", async () => {
+    mockedGet.mockResolvedValue({
+      status: 200,
+      data: `
+        <html><body>
+          <a href="/game/game-&-watch/super-mario-bros">Super Mario Bros</a>
+        </body></html>
+      `,
+      request: {
+        res: {
+          responseUrl: "https://www.pricecharting.com/offers?product=161681",
+        },
+      },
+    } as never);
+
+    await expect(
+      resolvePriceChartingGamePathForTests(
+        "/offers?product=161681",
+        { "User-Agent": "test" },
+      ),
+    ).resolves.toBe("/game/game-&-watch/super-mario-bros");
+  });
+
+  it("resolves barcode 045496883041 via type=prices redirect to Game & Watch", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (
+        href.includes("search-products") &&
+        href.includes("045496883041") &&
+        href.includes("type=prices")
+      ) {
+        return {
+          status: 200,
+          data: `
+            <html>
+              <head>
+                <link rel="canonical" href="https://www.pricecharting.com/game/game-&-watch/super-mario-bros" />
+              </head>
+              <body>
+                <h1>Super Mario Bros <a href="/console/game-&amp;-watch">Game &amp; Watch</a></h1>
+                <div class="cover">
+                  <img src='https://storage.googleapis.com/images.pricecharting.com/gw/240.jpg' />
+                </div>
+                <div id="extra-images">
+                  <div class="extra">
+                    <div>
+                      <a href="https://storage.googleapis.com/images.pricecharting.com/gw/1600.jpg">
+                        <img src="https://storage.googleapis.com/images.pricecharting.com/gw/240.jpg" />
+                      </a>
+                    </div>
+                    <p>Main Image</p>
+                  </div>
+                </div>
+                <div id="full-prices">
+                  <td id="used_price"><span class="price">$50.00</span></td>
+                </div>
+              </body>
+            </html>
+          `,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/game/game-&-watch/super-mario-bros?q=045496883041",
+            },
+          },
+        } as never;
+      }
+      // Sibling soft-404 (no PAL Game & Watch for this SKU)
+      if (href.includes("/game/pal-game-&-watch/")) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Prices</h1></body></html>`,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?type=prices&q=super+mario+bros",
+            },
+          },
+        } as never;
+      }
+      if (href.includes("search-products")) {
+        return {
+          status: 200,
+          data: `<html><body><h1>Items matching your search</h1></body></html>`,
+          request: { res: { responseUrl: href } },
+        } as never;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+
+    await expect(
+      fetchMetadataFromPriceCharting(
+        "045496883041",
+        undefined,
+        undefined,
+        false,
+        undefined,
+        { mediaType: "hardware" },
+      ),
+    ).resolves.toMatchObject({
+      title: "Super Mario Bros",
+      platform: "Game & Watch",
+      url: "https://www.pricecharting.com/game/game-&-watch/super-mario-bros",
+      barcode: "045496883041",
+    });
+
+    expect(String(mockedGet.mock.calls[0]?.[0])).toContain("type=prices");
   });
 });

@@ -5,7 +5,7 @@ import {
   parseFullSetItemHtml,
   parseFullSetSearchHtml,
 } from "./fetch";
-import { fullSetHitMatchesPlatform, mapFullSetMetadata } from "./resolver";
+import { fullSetHitMatchesPlatform, fullSetCategoryMatchesMediaType, mapFullSetMetadata } from "./resolver";
 
 // Trimmed from the live capture of recherche.php?q=rayman (2026-07-10) —
 // attributes are on their own lines in the real markup.
@@ -121,6 +121,19 @@ describe("fullSetConsoleSlugFromUrl", () => {
       fullSetConsoleSlugFromUrl("https://full-set.net/psx/item/rayman.html"),
     ).toBe("psx");
     expect(fullSetConsoleSlugFromUrl("/recherche.php")).toBeUndefined();
+  });
+});
+
+describe("fullSetCategoryMatchesMediaType", () => {
+  it("keeps Jeux for games and Consoles/Accessoires for hardware", () => {
+    expect(fullSetCategoryMatchesMediaType("Jeux", "games")).toBe(true);
+    expect(fullSetCategoryMatchesMediaType("Consoles", "games")).toBe(false);
+    expect(fullSetCategoryMatchesMediaType("Consoles", "hardware")).toBe(true);
+    expect(fullSetCategoryMatchesMediaType("Accessoires", "hardware")).toBe(
+      true,
+    );
+    expect(fullSetCategoryMatchesMediaType("Jeux", "hardware")).toBe(false);
+    expect(fullSetCategoryMatchesMediaType(undefined, "hardware")).toBe(true);
   });
 });
 

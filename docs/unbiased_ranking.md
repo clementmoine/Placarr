@@ -77,7 +77,9 @@ provider.
 
 > **STATUS 2026-06-29.** The literal name hardcodes and the "real box cover"
 > provider set are **gone** (blindness guard allowlist is empty). Per-provider
-> flags/weights no longer drive the **barcode** path. The **only** row still live is
+> flags/weights no longer drive the **barcode** path. Merge weights removed
+> **2026-06-30**. Tables below that still cite `src/services/…` are **historical**
+> (pre big-bang `src/core/`). Live open work: [backlog § Ouverts](backlog.md#ouverts--base-clean-2026-07-24).
 > per-provider `weight` in the metadata **enrichment** merge
 > (`src/services/metadata/merge.ts` `orderResultsByObservationStrength`) — **retiré 2026-06-30**.
 

@@ -1,5 +1,9 @@
 # Barcode title resolution → agnostic consensus refactor (handoff)
 
+> **STATUS 2026-07-24 — DONE (historique).** Consensus titre + observations dans
+> `src/core/identify/evidence/` (`consensusTitle`, `compile.ts`). Chemins
+> `src/lib/barcode/…` ci-dessous = ancienne arborescence (pré big-bang core).
+
 **Status (2026-06, branch `feat/foundation-postgres-tests`, cache `canonical-v38`,
 all tests green):** the barcode _title_ is now chosen by **one agnostic
 token-corroboration engine** instead of N hardcoded override paths. The engine is

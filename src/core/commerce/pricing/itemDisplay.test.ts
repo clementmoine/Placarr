@@ -42,6 +42,7 @@ vi.mock("@/core/enrich/persistProviderExternalLinks", () => ({
 }));
 
 import {
+  cachedReferencePricesMissApprovedFiches,
   itemPricesContextFromRecord,
   itemPricesContextFromPresentedShelfItem,
   priceLookupNamesFromContext,
@@ -62,6 +63,90 @@ const CONTEXT = itemPricesContextFromRecord({
   metadataId: "meta-1",
   metadata: { title: "ABZÛ", aliases: null },
   shelf: { type: "games", name: "Playstation 4" },
+});
+
+describe("cachedReferencePricesMissApprovedFiches", () => {
+  it("detects a PriceCharting pin that disagrees with cached reference offers", () => {
+    const context = {
+      ...CONTEXT,
+      name: "PlayStation 2 Slim Rose",
+      shelfType: "hardware",
+      shelfName: "Consoles",
+      metadataFacts: [
+        {
+          kind: "external-link" as const,
+          label: "PriceCharting",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/pal-playstation-2/slim-playstation-2-system-pink",
+          source: "pricecharting",
+        },
+      ],
+    };
+
+    expect(
+      cachedReferencePricesMissApprovedFiches(context, {
+        priceNew: 48236,
+        priceUsed: 4410,
+        priceUsedCIB: 5412,
+        priceLastUpdated: new Date().toISOString(),
+        priceSources: ["PriceCharting"],
+        priceSourceDisplayNames: ["PriceCharting"],
+        priceObservations: [
+          {
+            source: "PriceCharting",
+            productName: "Playstation 2 Slim System",
+            condition: "loose",
+            priceCents: 4410,
+            sourceUrl:
+              "https://www.pricecharting.com/game/pal-playstation-2/playstation-2-slim-system",
+            observedAt: new Date().toISOString(),
+          },
+        ],
+        isReferencePriceOnly: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts cached offers that already point at the approved fiche", () => {
+    const pink =
+      "https://www.pricecharting.com/game/pal-playstation-2/slim-playstation-2-system-pink";
+    const context = {
+      ...CONTEXT,
+      name: "PlayStation 2 Slim Rose",
+      shelfType: "hardware",
+      metadataFacts: [
+        {
+          kind: "external-link" as const,
+          label: "PriceCharting",
+          value: "Voir la fiche",
+          url: pink,
+          source: "pricecharting",
+        },
+      ],
+    };
+
+    expect(
+      cachedReferencePricesMissApprovedFiches(context, {
+        priceNew: 25824,
+        priceUsed: 8391,
+        priceUsedCIB: 10774,
+        priceLastUpdated: new Date().toISOString(),
+        priceSources: ["PriceCharting"],
+        priceSourceDisplayNames: ["PriceCharting"],
+        priceObservations: [
+          {
+            source: "PriceCharting",
+            productName: "Slim Playstation 2 System [Pink]",
+            condition: "loose",
+            priceCents: 8391,
+            sourceUrl: pink,
+            observedAt: new Date().toISOString(),
+          },
+        ],
+        isReferencePriceOnly: true,
+      }),
+    ).toBe(false);
+  });
 });
 
 describe("readItemPrices", () => {

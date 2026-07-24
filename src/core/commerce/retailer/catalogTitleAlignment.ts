@@ -3,6 +3,7 @@ import {
   hasExplicitVolumeMarker,
   normalizeVolumeTitleText,
 } from "@/core/enrich/titles/volumeNumber";
+import { hardwareProductTitlesAlign } from "@/core/enrich/titles/residualIdentity";
 
 function titleNumbers(value: string): string[] {
   return Array.from(
@@ -10,14 +11,24 @@ function titleNumbers(value: string): string[] {
   );
 }
 
+export type CatalogTitleAlignmentOptions = {
+  shelfType?: string | null;
+};
+
 /** True when a catalog title plausibly refers to the same product as the item name. */
 export function catalogTitleAlignedWithItem(
   query: string,
   title: string,
+  options?: CatalogTitleAlignmentOptions,
 ): boolean {
   const cleanQuery = query.trim();
   const cleanTitle = title.trim();
   if (!cleanQuery || !cleanTitle) return true;
+
+  if (options?.shelfType === "hardware") {
+    // Same residual gate as price listings + gallery titles.
+    return hardwareProductTitlesAlign(cleanQuery, cleanTitle);
+  }
 
   const queryNumbers = titleNumbers(cleanQuery);
   const titleNumberSet = new Set(titleNumbers(cleanTitle));
@@ -40,9 +51,11 @@ export function catalogTitleAlignedWithItem(
   const t = normalizeVolumeTitleText(cleanTitle);
   if (t.includes(q) && t !== q) {
     const suffix = t.slice(t.indexOf(q) + q.length).trim();
+    // Keep generation digits ("Switch 2", "PlayStation 5") — length>2 used to
+    // drop them and accept any sequel of a bare console stem.
     const suffixTokens = suffix
       .split(/\s+/)
-      .filter((token) => token.length > 2);
+      .filter((token) => token.length > 2 || /^\d+$/.test(token));
     if (suffixTokens.length === 1) {
       return false;
     }
@@ -61,22 +74,47 @@ const NON_PRODUCT_PATH_SEGMENTS = new Set([
   "query",
 ]);
 
+const UUID_PATH_SEGMENT =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LOCALE_PATH_SEGMENT = /^[a-z]{2}(-[a-z]{2})?$/i;
+
+function isNonTitlePathSegment(segment: string): boolean {
+  const cleaned = segment.trim().toLowerCase();
+  if (!cleaned) return true;
+  if (/^\d+$/.test(cleaned)) return true;
+  if (UUID_PATH_SEGMENT.test(cleaned)) return true;
+  // `/fr/search-products` and `/fr-fr/p/…` — locale is routing chrome.
+  if (LOCALE_PATH_SEGMENT.test(cleaned)) return true;
+  // Back Market `/p/{slug}/{uuid}` — the lone `p` is routing chrome.
+  if (cleaned.length <= 1) return true;
+  if (NON_PRODUCT_PATH_SEGMENTS.has(cleaned)) return true;
+  return false;
+}
+
+function humanizeProductPathSlug(slug: string): string {
+  return slug
+    .replace(/^\d+-/, "")
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/\d{8,14}/g, " ")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function catalogTitleFromProductUrl(url: string): string | null {
   try {
     const pathname = new URL(url.trim()).pathname;
-    const slug = pathname.split("/").filter(Boolean).pop();
-    if (!slug || /^\d+$/.test(slug)) return null;
-    // PriceCharting catalog chips use /fr/search-products?q=… — the last path
-    // segment is "search-products", not a game title. Treating it as one made
-    // purgeContradictedProviderExternalLinks drop the honest search link.
-    if (NON_PRODUCT_PATH_SEGMENTS.has(slug.toLowerCase())) return null;
-    return slug
-      .replace(/^\d+-/, "")
-      .replace(/\.[a-z0-9]+$/i, "")
-      .replace(/\d{8,14}/g, " ")
-      .replace(/[-_]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    const segments = pathname.split("/").filter(Boolean);
+    // Prefer the rightmost readable slug. Retail PDPs often end with a UUID
+    // (`/p/console-nintendo-wii-bleu/{uuid}`) — treating the UUID as a title
+    // made purge drop honest Back Market fiche links.
+    for (let index = segments.length - 1; index >= 0; index -= 1) {
+      const segment = segments[index]!;
+      if (isNonTitlePathSegment(segment)) continue;
+      const title = humanizeProductPathSlug(segment);
+      if (title) return title;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -155,12 +193,21 @@ export function retailerCatalogTitleContradictsItem(input: {
   productUrl?: string | null;
   productTitle?: string | null;
   itemTitle?: string | null;
+  shelfType?: string | null;
 }): boolean {
   const itemTitle = input.itemTitle?.trim();
   const catalogTitle =
     input.productTitle?.trim() ||
     (input.productUrl ? catalogTitleFromProductUrl(input.productUrl) : null);
   if (!itemTitle || !catalogTitle) return false;
+
+  // Hardware: residual already gates capacity/finish/form-factor (250Go ≡ 250GB,
+  // Console chrome). Edition-suffix heuristics treat Go≠GB as distinct SKUs.
+  if (input.shelfType === "hardware") {
+    return !catalogTitleAlignedWithItem(itemTitle, catalogTitle, {
+      shelfType: input.shelfType,
+    });
+  }
 
   if (itemTitleEditionBeyondCatalog(itemTitle, catalogTitle)) return true;
   if (distinctEditionAfterSharedPrefix(itemTitle, catalogTitle)) return true;
@@ -170,5 +217,7 @@ export function retailerCatalogTitleContradictsItem(input: {
     .filter((token) => token.length > 2 && /[a-z]/i.test(token));
   if (meaningfulTokens.length < 2) return false;
 
-  return !catalogTitleAlignedWithItem(itemTitle, catalogTitle);
+  return !catalogTitleAlignedWithItem(itemTitle, catalogTitle, {
+    shelfType: input.shelfType,
+  });
 }

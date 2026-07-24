@@ -37,9 +37,13 @@ export function getDefaultCardFormatAlias(
   switch (type) {
     case "musics":
     case "boardgames":
+    case "toys":
+    case "hardware":
       return "square";
     case "books":
       return "book";
+    case "tcg":
+      return "tcg";
     case "movies":
     case "games":
     default:
@@ -108,9 +112,13 @@ export function getAspectRatio(
   switch (type) {
     case "musics":
     case "boardgames":
+    case "toys":
+    case "hardware":
       return "1 / 1";
     case "books":
       return "1 / 1.5";
+    case "tcg":
+      return "5 / 7";
     case "movies":
     case "games":
     default:
@@ -157,9 +165,13 @@ export function getTailwindAspectRatioClass(
   switch (type) {
     case "musics":
     case "boardgames":
+    case "toys":
+    case "hardware":
       return "aspect-square";
     case "books":
       return "aspect-[1/1.5]";
+    case "tcg":
+      return "aspect-[5/7]";
     case "movies":
     case "games":
     default:
@@ -175,6 +187,8 @@ export function getDetailCoverClass(
   switch (format) {
     case "musics":
     case "boardgames":
+    case "toys":
+    case "hardware":
     case "square":
       return "aspect-square w-full max-w-[260px]";
     case "tcg":
@@ -215,6 +229,8 @@ export function getExploreDetailCoverClass(
   switch (format) {
     case "musics":
     case "boardgames":
+    case "toys":
+    case "hardware":
     case "square":
       return "aspect-square w-full max-w-[200px]";
     case "tcg":

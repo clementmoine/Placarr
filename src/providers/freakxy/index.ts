@@ -4,7 +4,7 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
+import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
 
 import { fetchFromFreakxy } from "./fetch";
 
@@ -12,13 +12,13 @@ export { fetchFromFreakxy };
 
 const FALLBACK_QUERIES = ["0045496365226", "045496360730", "Mario Kart Wii"];
 
-const BARCODE_TYPES: BarcodeLookupType[] = ["games", "generic"];
+const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 
 export const freakxyModule: ProviderModule = {
   info: {
     id: "freakxy",
     label: "Freakxy",
-    types: ["games"],
+    types: ["games", "hardware"],
     capabilities: ["identify", "price"],
     auth: { kind: "scrape" },
     canonical: false,
@@ -26,6 +26,7 @@ export const freakxyModule: ProviderModule = {
     isRealBoxCover: true,
     slowBarcodeLookup: true,
     websiteUrl: "https://www.freakxy.fr/",
+    notes: "Boutique Magento FR — jeux + consoles/manettes (EAN).",
   },
   evidence: {
     label: "Freakxy",
@@ -70,6 +71,9 @@ export const freakxyModule: ProviderModule = {
     );
   },
   buildBarcodeSources(payload, ctx) {
-    return marketplaceContributions("Freakxy", payload.freakxy, ctx, ["games"]);
+    return [
+      ...marketplaceContributions("Freakxy", payload.freakxy, ctx, ["games"]),
+      ...typedOnlyContributions("Freakxy", payload.freakxy, ctx, ["hardware"]),
+    ];
   },
 };

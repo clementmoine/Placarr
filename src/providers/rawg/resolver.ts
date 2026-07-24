@@ -12,6 +12,8 @@ type RawgGame = {
   id?: number;
   slug?: string;
   name: string;
+  name_original?: string;
+  alternative_names?: Array<string | { name?: string }>;
   released?: string;
   rating?: number;
   reviews_count?: number;
@@ -37,6 +39,7 @@ import {
   solePlatformKeyFromNames,
   withMetadataPlatformKeys,
 } from "@/core/enrich/media/platformKeyStamp";
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import { isRawgQuotaBlocked, markRawgQuotaHit } from "./quota";
 
 type RawgResolverDeps = {
@@ -179,6 +182,35 @@ export function readRawgGameplayClip(
   return null;
 }
 
+/** Official alternate titles from a RAWG game detail payload. */
+export function readRawgCatalogAliases(
+  detail:
+    | Pick<RawgGame, "name_original" | "alternative_names">
+    | null
+    | undefined,
+): string[] {
+  if (!detail) return [];
+  const names: string[] = [];
+  if (typeof detail.name_original === "string" && detail.name_original.trim()) {
+    names.push(detail.name_original.trim());
+  }
+  for (const entry of detail.alternative_names || []) {
+    if (typeof entry === "string" && entry.trim()) {
+      names.push(entry.trim());
+      continue;
+    }
+    if (
+      entry &&
+      typeof entry === "object" &&
+      typeof entry.name === "string" &&
+      entry.name.trim()
+    ) {
+      names.push(entry.name.trim());
+    }
+  }
+  return names;
+}
+
 export function createRawgResolver(deps: RawgResolverDeps) {
   return async function fetchFromRawg(
     name: string,
@@ -243,6 +275,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
     let detailedDescription: string | undefined;
     let detailWebsite: string | undefined;
     let detailTags: string[] = [];
+    let detailAliases: string[] = [];
     let gameplayClip: { url: string; label: string } | null = null;
     if (bestMatch.slug) {
       try {
@@ -258,6 +291,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
               )
               .filter(Boolean)
           : [];
+        detailAliases = readRawgCatalogAliases(detail);
         if (
           typeof detail?.description_raw === "string" &&
           detail.description_raw.trim()
@@ -492,6 +526,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
         description: detailedDescription,
         releaseDate: bestMatch.released,
         imageUrl,
+        aliases: catalogAliasesFromNames(bestMatch.name, detailAliases),
         attachments: [
           ...(imageUrl
             ? [

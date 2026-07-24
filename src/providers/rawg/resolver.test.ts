@@ -5,6 +5,7 @@ import {
   filterRawgTagsForShelf,
   pickRawgSearchMatch,
   preferResolvedRawgPlatformNames,
+  readRawgCatalogAliases,
   readRawgGameplayClip,
 } from "./resolver";
 
@@ -36,6 +37,24 @@ describe("readRawgGameplayClip", () => {
         },
       }),
     ).toBeNull();
+  });
+});
+
+describe("readRawgCatalogAliases", () => {
+  it("collects name_original and alternative_names from detail", () => {
+    expect(
+      readRawgCatalogAliases({
+        name_original: "Pokémon Yellow",
+        alternative_names: [
+          "Pokemon Jaune",
+          { name: "Pocket Monsters Pikachu" },
+        ],
+      }),
+    ).toEqual([
+      "Pokémon Yellow",
+      "Pokemon Jaune",
+      "Pocket Monsters Pikachu",
+    ]);
   });
 });
 

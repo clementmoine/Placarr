@@ -445,6 +445,54 @@ describe("summarizeShelfItemPrices", () => {
 });
 
 describe("alignBarcodePricesForItemNames", () => {
+  it("empties orphan PriceCharting aggregates when a finish edition mismatches", () => {
+    // Generic PS2 Slim cached under the Pink barcode must not keep €44 summary
+    // after observations are filtered out.
+    const aligned = alignBarcodePricesForItemNames(
+      "hardware",
+      ["PlayStation 2 Slim Rose"],
+      cachedBarcodePrices({
+        priceNew: 48236,
+        priceUsed: 4410,
+        priceUsedCIB: 5412,
+        priceLastUpdated: new Date("2026-07-23T12:00:00.000Z"),
+        priceSources: ["PriceCharting"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "Playstation 2 Slim System",
+            condition: "loose",
+            priceCents: 4410,
+            sourceUrl:
+              "https://www.pricecharting.com/game/pal-playstation-2/playstation-2-slim-system",
+          }),
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "Playstation 2 Slim System",
+            condition: "cib",
+            priceCents: 5412,
+            sourceUrl:
+              "https://www.pricecharting.com/game/pal-playstation-2/playstation-2-slim-system",
+          }),
+          serializedPriceObservation({
+            source: "PriceCharting",
+            productName: "Playstation 2 Slim System",
+            condition: "new",
+            priceCents: 48236,
+            sourceUrl:
+              "https://www.pricecharting.com/game/pal-playstation-2/playstation-2-slim-system",
+          }),
+        ],
+      }),
+      "Consoles",
+    );
+
+    expect(aligned.priceUsed).toBeNull();
+    expect(aligned.priceUsedCIB).toBeNull();
+    expect(aligned.priceNew).toBeNull();
+    expect(aligned.priceObservations).toEqual([]);
+  });
+
   it("keeps cached aggregates when every listing title is noisy", () => {
     const aligned = alignBarcodePricesForItemNames(
       "books",
@@ -812,6 +860,194 @@ describe("alignBarcodePricesForItemNames", () => {
 });
 
 describe("filterItemPriceOffers", () => {
+  it("keeps PriceCharting console System chrome on hardware shelves", () => {
+    const filtered = filterItemPriceOffers(
+      "hardware",
+      "Consoles",
+      ["Nintendo 64"],
+      [
+        {
+          source: "PriceCharting",
+          productName: "Nintendo 64 System",
+          condition: "loose",
+          priceCents: 8175,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Nintendo 64 System",
+          condition: "cib",
+          priceCents: 21364,
+        },
+        {
+          source: "LeDenicheur",
+          productName: "Nintendo Switch OLED 64Go",
+          condition: "used",
+          priceCents: 20899,
+        },
+        {
+          source: "AchatMoinsCher",
+          condition: "used",
+          priceCents: 119,
+        },
+      ],
+    );
+
+    expect(
+      filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
+    ).toEqual([
+      "PriceCharting:loose:8175",
+      "PriceCharting:cib:21364",
+    ]);
+  });
+
+  it("keeps Back Market refurbished hardware used near PriceCharting CIB", () => {
+    const filtered = filterItemPriceOffers(
+      "hardware",
+      "Consoles",
+      ["Nintendo Wii Bleu", "Blue Nintendo Wii System"],
+      [
+        {
+          source: "AchatMoinsCher",
+          condition: "new",
+          priceCents: 1599,
+        },
+        {
+          source: "eBay",
+          productName: "Nintendo Wii Bleu",
+          condition: "used",
+          priceCents: 6900,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Blue Nintendo Wii System",
+          condition: "loose",
+          priceCents: 9584,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Blue Nintendo Wii System",
+          condition: "cib",
+          priceCents: 15481,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Blue Nintendo Wii System",
+          condition: "new",
+          priceCents: 37286,
+        },
+        {
+          source: "Back Market",
+          productName: "Nintendo Wii - Bleu",
+          condition: "used",
+          priceCents: 15200,
+        },
+      ],
+    );
+
+    expect(
+      filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
+    ).toEqual([
+      "eBay:used:6900",
+      "PriceCharting:loose:9584",
+      "PriceCharting:cib:15481",
+      "PriceCharting:new:37286",
+      "Back Market:used:15200",
+    ]);
+  });
+
+  it("keeps PC/eBay/BM when the shelf title is FR-only (no EN bag)", () => {
+    // Regression: areLikelySameProduct(Bleu, Blue System) used to drop PC, then
+    // an unnamed AMC “new” ceiling wiped the remaining used offers.
+    const filtered = filterItemPriceOffers(
+      "hardware",
+      "Consoles",
+      ["Nintendo Wii Bleu"],
+      [
+        {
+          source: "AchatMoinsCher",
+          condition: "new",
+          priceCents: 1599,
+        },
+        {
+          source: "eBay",
+          productName: "Nintendo Wii Bleu",
+          condition: "used",
+          priceCents: 6900,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Blue Nintendo Wii System",
+          condition: "loose",
+          priceCents: 9584,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Blue Nintendo Wii System",
+          condition: "cib",
+          priceCents: 15481,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Blue Nintendo Wii System",
+          condition: "new",
+          priceCents: 37286,
+        },
+        {
+          source: "Back Market",
+          productName: "Nintendo Wii - Bleu",
+          condition: "used",
+          priceCents: 15200,
+        },
+      ],
+    );
+
+    expect(
+      filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
+    ).toEqual([
+      "eBay:used:6900",
+      "PriceCharting:loose:9584",
+      "PriceCharting:cib:15481",
+      "PriceCharting:new:37286",
+      "Back Market:used:15200",
+    ]);
+  });
+
+  it("keeps PriceCharting 60GB Console offers for FR 60Go hardware titles", () => {
+    const filtered = filterItemPriceOffers(
+      "hardware",
+      "Consoles",
+      ["PlayStation 3 60Go"],
+      [
+        {
+          source: "PriceCharting",
+          productName: "Playstation 3 60GB Console",
+          condition: "loose",
+          priceCents: 16411,
+        },
+        {
+          source: "PriceCharting",
+          productName: "Playstation 3 60GB Console",
+          condition: "cib",
+          priceCents: 27806,
+        },
+        {
+          source: "LeDenicheur",
+          productName:
+            "Sony PlayStation Plus Essential - Carte d'abonnement de 12 mois",
+          condition: "new",
+          priceCents: 5999,
+        },
+      ],
+    );
+
+    expect(
+      filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
+    ).toEqual([
+      "PriceCharting:loose:16411",
+      "PriceCharting:cib:27806",
+    ]);
+  });
+
   it("drops unnamed shop rows when a titled listing matches", () => {
     const filtered = filterItemPriceOffers(
       "games",
@@ -1096,5 +1332,30 @@ describe("filterItemPriceOffers", () => {
 
     expect(summary.priceUsed).toBe(800);
     expect(summary.priceUsedCIB).toBe(5000);
+  });
+
+  it("splits loose vs CIB for hardware like games", () => {
+    const summary = summarizeObservedPrices("hardware", [
+      {
+        source: "PriceCharting",
+        condition: "loose",
+        priceCents: 18000,
+      },
+      {
+        source: "PriceCharting",
+        condition: "cib",
+        priceCents: 22000,
+      },
+      {
+        source: "eBay",
+        condition: "used",
+        priceCents: 25000,
+        productName: "Nintendo Switch OLED",
+      },
+    ]);
+
+    expect(summary.priceUsed).toBe(18000);
+    // Marketplace "used" is dropped by trust filter; CIB is the boxed grade.
+    expect(summary.priceUsedCIB).toBe(22000);
   });
 });

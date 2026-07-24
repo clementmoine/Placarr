@@ -1205,6 +1205,11 @@ export function ItemModal({
     ],
   );
 
+  const handleBarcodeChangeRef = useRef(handleBarcodeChange);
+  handleBarcodeChangeRef.current = handleBarcodeChange;
+  const fetchMetadataPreviewRef = useRef(fetchMetadataPreview);
+  fetchMetadataPreviewRef.current = fetchMetadataPreview;
+
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
       if (file instanceof File) {
@@ -1300,11 +1305,14 @@ export function ItemModal({
 
     void Promise.resolve().then(() => {
       if (asyncInit.kind === "barcode") {
-        return handleBarcodeChange(asyncInit.barcode);
+        return handleBarcodeChangeRef.current(asyncInit.barcode);
       }
-      fetchMetadataPreview(asyncInit.name, "");
+      fetchMetadataPreviewRef.current(asyncInit.name, "");
     });
-  }, [sessionState, fetchMetadataPreview, handleBarcodeChange, reset]);
+    // Bootstrap only when the modal session identity changes. Do not depend on
+    // fetchMetadataPreview / handleBarcodeChange — those recreate when the
+    // selected shelf type changes and would reset shelfId mid-edit.
+  }, [sessionState, reset]);
 
   // Re-fetch metadata preview when shelf/platform changes.
   useEffect(() => {

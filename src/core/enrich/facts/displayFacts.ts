@@ -53,12 +53,14 @@ function normalizeProviderLinkOwnerKey(value: string): string {
 
 /** Client-safe owner key — prefers server-stamped providerLabel over raw source tokens. */
 function providerLinkOwnerKey(fact: DetailFact): string {
-  const stamped = fact.providerLabel?.trim();
-  if (stamped) return normalizeProviderLinkOwnerKey(stamped);
   const label = fact.label?.trim();
+  // Region chips ("PriceCharting (EUR)" / "(US)") must stay distinct — stamped
+  // providerLabel is the same for both and would collapse them.
   if (fact.kind === "external-link" && label) {
     return normalizeProviderLinkOwnerKey(label);
   }
+  const stamped = fact.providerLabel?.trim();
+  if (stamped) return normalizeProviderLinkOwnerKey(stamped);
   const token = fact.source ?? fact.label ?? "";
   return token ? normalizeProviderLinkOwnerKey(token) : "";
 }

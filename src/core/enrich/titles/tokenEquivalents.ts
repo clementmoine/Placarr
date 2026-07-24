@@ -1,63 +1,20 @@
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 
 /**
- * Vocabulaire d'équivalence FR↔EN pour le matching de titres.
+ * Équivalence de tokens pour le matching de titres.
  *
- * RÈGLE (voir docs/word_list_audit.md) : uniquement des équivalences de
- * DICTIONNAIRE (couleurs, mots communs) — jamais le sous-titre ou le nom d'un
- * produit précis. L'équivalence par-produit vient des DONNÉES : alternate
- * names / regionalTitles des providers (IGDB, ScreenScraper, LaunchBox…),
- * comparés via les jeux d'alias des deux côtés du match.
- *
- * Les variantes d'orthographe (accents, consonnes finales doublées « Pitt » →
- * « Pit ») sont traitées structurellement par `normalizeEquivalentToken`, pas
- * par des paires nommées. Roman ↔ arabic (II ≡ 2) is structural via
- * `parseRomanToken`.
+ * Structurel uniquement : accents / casse, roman ↔ arabic (II ≡ 2).
+ * Pas de dictionnaire FR↔EN inventé (couleurs, criquet/cricket, …) —
+ * l'alias par-produit vient des DONNÉES provider (`regionalTitles` /
+ * alternate names). Compound hyphenation ("Q-Force" ≡ "QForce") vit dans
+ * residual identity.
  */
-export const TITLE_TOKEN_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
-  ["jaune", "yellow"],
-  ["rouge", "red"],
-  ["bleu", "blue"],
-  ["vert", "green"],
-  ["argent", "silver"],
-  ["or", "gold"],
-  ["noir", "black"],
-  ["blanc", "white"],
-  ["criquet", "cricket"],
-  ["legende", "legend"],
-];
 
 /**
- * Multi-word FR/EN phrases at dictionary / category level only.
- * Product subtitles (AC III, Star Wars collections, …) belong in provider
- * `regionalTitles` / aliases — see `metadataTitleMatchScore` and
- * `isMetadataTitleAligned` tests in `titleMatching.test.ts`.
- */
-export const TITLE_PHRASE_EQUIVALENT_GROUPS: readonly (readonly string[])[] = [
-  ["le film : le jeu vidéo", "le film le jeu video", "movie video game"],
-];
-
-/** Dedupe stylized doubled tail consonants ("Pitt" → "Pit", "Zapp" → "Zap"). */
-export function dedupeTokenTailConsonants(word: string): string {
-  return word
-    .replace(/tt$/i, "t")
-    .replace(/pp$/i, "p")
-    .replace(/ff$/i, "f")
-    .replace(/ck$/i, "k");
-}
-
-/**
- * Forme canonique d'un token pour l'équivalence : accents retirés, casse
- * neutralisée, consonne finale dédoublée. Structurel — aucune liste.
+ * Forme canonique d'un token : accents retirés, casse neutralisée.
  */
 function normalizeEquivalentToken(token: string): string {
-  return dedupeTokenTailConsonants(
-    token.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(),
-  );
-}
-
-function groupHasToken(group: readonly string[], normalized: string): boolean {
-  return group.some((entry) => normalizeEquivalentToken(entry) === normalized);
+  return token.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
 function arabicSequelValue(token: string): number | null {
@@ -79,10 +36,7 @@ export function titleTokensEquivalent(a: string, b: string): boolean {
   if (romanA != null && arabicB != null && romanA === arabicB) return true;
   if (romanB != null && arabicA != null && romanB === arabicA) return true;
 
-  return TITLE_TOKEN_EQUIVALENT_GROUPS.some(
-    (group) =>
-      groupHasToken(group, normalizedA) && groupHasToken(group, normalizedB),
-  );
+  return false;
 }
 
 export function titleTokenPresentInSet(

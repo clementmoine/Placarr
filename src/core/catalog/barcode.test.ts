@@ -90,6 +90,20 @@ describe("createBarcodeLookupTaskBuilders", () => {
         "ebay",
       ].sort(),
     );
+    expect(Object.keys(builders.hardware({ barcode: "1" })).sort()).toEqual(
+      [
+        "amc",
+        "cal",
+        "ebay",
+        "freakxy",
+        "ice",
+        "leDenicheur",
+        "netgamesretro",
+        "pc",
+      ].sort(),
+    );
+    expect(Object.keys(builders.tcg({ barcode: "1" })).sort()).toEqual([]);
+    expect(Object.keys(builders.toys({ barcode: "1" })).sort()).toEqual([]);
     expect(Object.keys(builders.generic({ barcode: "1" })).sort()).toEqual(
       [
         "ol",

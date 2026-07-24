@@ -147,6 +147,11 @@ export type AttachmentDisplayScoreOptions = LocalePreferenceOptions & {
    * the box front (display-time only — catalog metadata.imageUrl stays the box).
    */
   preferDiscCover?: boolean;
+  /**
+   * Loose hardware: prefer PriceCharting "System Only" / console shots over box
+   * fronts (display-time only).
+   */
+  preferSystemOnlyCover?: boolean;
 };
 
 export interface AttachmentDisplayScoreDetails {
@@ -496,6 +501,22 @@ function buildAttachmentDisplayScoreDetails(
       addSignal(280, "loose prefers disc/support");
     } else {
       addSignal(-320, "disc/support media");
+    }
+  }
+
+  if (options?.preferSystemOnlyCover) {
+    const title = (attachment.title || "").toLowerCase();
+    if (/\bsystem\s*only\b/.test(title) || /^loose$/.test(title.trim())) {
+      addSignal(280, "loose prefers system-only");
+    } else if (/\bconsole\b/.test(title) && !/\bbox\b/.test(title)) {
+      addSignal(200, "loose prefers console shot");
+    } else if (
+      isCoverCandidateKind(semantics.kind) &&
+      /(front|cover|box[-_\s]?art|box\s*view|main\s*image|jaquette)/.test(
+        `${title} ${signal}`,
+      )
+    ) {
+      addSignal(-40, "box front demoted for loose hardware");
     }
   }
 
@@ -852,6 +873,15 @@ function coverDisplayTypeRank(
   if (options?.preferDiscCover && semantics.kind === "disc") {
     return 0;
   }
+  if (options?.preferSystemOnlyCover) {
+    const title = (attachment.title || "").toLowerCase();
+    if (/\bsystem\s*only\b/.test(title) || /^loose$/.test(title.trim())) {
+      return 0;
+    }
+    if (/\bconsole\b/.test(title) && !/\bbox\b/.test(title)) {
+      return 1;
+    }
+  }
   const isFrontCover =
     isCoverCandidateKind(semantics.kind) &&
     !isPhysicalNonCoverKind(semantics.kind);
@@ -859,7 +889,7 @@ function coverDisplayTypeRank(
     return 5;
   }
   // Box fronts rank after disc art when showing a loose copy.
-  if (options?.preferDiscCover) {
+  if (options?.preferDiscCover || options?.preferSystemOnlyCover) {
     if (semantics.kind === "cover3d") return 3;
     if (attachment.isFullWrapCoverSource === true) return 4;
     if (semantics.kind === "cover") return 2;
@@ -1228,6 +1258,18 @@ export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
     if (semantics.kind === "disc") {
       coverCandidates.push(attachment);
       continue;
+    }
+    // Hardware loose: System Only / console shots compete as cover candidates.
+    if (options?.preferSystemOnlyCover) {
+      const title = (attachment.title || "").toLowerCase();
+      if (
+        /\bsystem\s*only\b/.test(title) ||
+        /^loose$/.test(title.trim()) ||
+        (/\bconsole\b/.test(title) && !/\bbox\b/.test(title))
+      ) {
+        coverCandidates.push(attachment);
+        continue;
+      }
     }
     if (isPhysicalNonCoverKind(semantics.kind)) continue; // back / spine
     if (isCoverCandidateKind(semantics.kind)) {

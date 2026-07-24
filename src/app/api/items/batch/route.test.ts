@@ -207,8 +207,13 @@ describe("PATCH /api/items/batch", () => {
     expect(h.item.update).toHaveBeenCalledTimes(2);
     expect(h.item.update.mock.calls[0][0].data).toMatchObject({
       shelfId: "ps5",
+      slug: "slug-Spider-Man 2",
       metadataId: null,
       imageUrl: null,
+    });
+    expect(h.item.update.mock.calls[1][0].data).toMatchObject({
+      shelfId: "ps5",
+      slug: "slug-Horizon",
     });
     expect(h.scheduleBatchItemMetadataRefresh).toHaveBeenCalledWith(
       [

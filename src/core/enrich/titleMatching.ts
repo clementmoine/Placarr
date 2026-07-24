@@ -13,7 +13,6 @@ import {
 import {
   titleTokenPresentInSet,
   titleTokensEquivalent,
-  TITLE_PHRASE_EQUIVALENT_GROUPS,
 } from "@/core/enrich/titles/tokenEquivalents";
 import levenshtein from "fast-levenshtein";
 import {
@@ -46,6 +45,7 @@ import {
   IDENTITY_PLATFORM_NOISE_TOKENS,
   IDENTITY_VOLUME_STOP_WORDS,
   isIdentityNeutralListingToken,
+  isIdentityPlatformNoiseToken,
   isIdentityVolumeStopWord,
 } from "@/core/enrich/titles/identityNoise";
 import { buildBundleMetadataSearchQueries, bundleTitlePartsMatchCatalogTitle, isBundleTitle } from "@/core/enrich/bundleTitle";
@@ -58,6 +58,7 @@ import {
 } from "@/core/enrich/titles/intentYear";
 import {
   authorNamesFromMetadata,
+  hardwareProductTitlesAlign,
   residualIdentityMatch,
 } from "@/core/enrich/titles/residualIdentity";
 import type {
@@ -253,6 +254,40 @@ export function buildGameMetadataSearchQueries(
       push(`${variant} ${resolvedPlatform}`);
     }
   }
+
+  return queries;
+}
+
+/**
+ * Hardware lookup queries — structural title variants only (no game platform
+ * suffix bag). Console names already carry the platform identity.
+ */
+export function buildHardwareMetadataSearchQueries(name: string): string[] {
+  const trimmed = stripLegalMarkSymbols(name.trim()) || name.trim();
+  if (!trimmed) return [];
+
+  const searchBase = stripTitleIntentYear(trimmed) || trimmed;
+
+  const seen = new Set<string>();
+  const queries: string[] = [];
+  const push = (value: string) => {
+    const candidate =
+      stripLegalMarkSymbols(value.replace(/\s+/g, " ").trim()) ||
+      value.replace(/\s+/g, " ").trim();
+    if (!candidate) return;
+    if (isWeakMetadataSearchFragment(candidate)) return;
+    const key = candidate.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    queries.push(candidate);
+  };
+
+  push(searchBase);
+  for (const variant of buildStructuralTitleSearchVariants(searchBase)) {
+    push(variant);
+  }
+  const baseVariant = extractBaseTitleVariant(searchBase);
+  if (baseVariant) push(baseVariant);
 
   return queries;
 }
@@ -842,8 +877,12 @@ export function catalogAttachmentTitleConflicts(
 ): boolean {
   if (!productTitle?.trim() || !attachmentTitle?.trim()) return false;
   if (
-    listingLooksLikeMerchAccessory(attachmentTitle) &&
-    !listingLooksLikeMerchAccessory(productTitle)
+    listingLooksLikeMerchAccessory(attachmentTitle, {
+      shelfType: options.mediaType,
+    }) &&
+    !listingLooksLikeMerchAccessory(productTitle, {
+      shelfType: options.mediaType,
+    })
   ) {
     return true;
   }
@@ -858,6 +897,25 @@ export function catalogAttachmentTitleConflicts(
     return true;
   }
   if (catalogAttachmentDropsSpecificSubtitle(productTitle, attachmentTitle)) {
+    return true;
+  }
+
+  // Hardware: same residual gate as price listings + catalog URL alignment.
+  // Do not re-run distinctive-token coverage (that treated Bleu≠Blue).
+  if (options.mediaType === "hardware") {
+    return !hardwareProductTitlesAlign(productTitle, attachmentTitle);
+  }
+
+  // Games / books: residual series lines + distinctive tokens.
+  const attachmentResidual = residualIdentityMatch({
+    requestTitles: [productTitle],
+    candidateTitles: [attachmentTitle],
+  });
+  if (
+    attachmentResidual.decision === "reject" &&
+    (attachmentResidual.reasons.includes("request_series_line_unexplained") ||
+      attachmentResidual.reasons.includes("series_suffix_mismatch"))
+  ) {
     return true;
   }
   if (gameProductIdentityMismatch([productTitle], attachmentTitle)) return true;
@@ -935,22 +993,6 @@ function franchiseSubtitleTokensAlign(
   return aTail.some((aToken) =>
     bTail.some((bToken) => titleTokensEquivalent(aToken, bToken)),
   );
-}
-
-function phraseEquivalentSubtitlesAlign(a: string, b: string): boolean {
-  const aLower = a.toLowerCase();
-  const bLower = b.toLowerCase();
-  return TITLE_PHRASE_EQUIVALENT_GROUPS.some((group) => {
-    const aPhrase = group.find((phrase) =>
-      aLower.includes(phrase.toLowerCase()),
-    );
-    const bPhrase = group.find((phrase) =>
-      bLower.includes(phrase.toLowerCase()),
-    );
-    return Boolean(
-      aPhrase && bPhrase && aPhrase.toLowerCase() !== bPhrase.toLowerCase(),
-    );
-  });
 }
 
 const CATALOG_LABEL_STOP_WORDS = IDENTITY_FUNCTION_WORDS;
@@ -1071,14 +1113,6 @@ export function metadataTitleSimilarity(a: string, b: string): number {
       Math.max(tokenScore, distanceScore),
       NON_EQUIVALENT_FRANCHISE_SIMILARITY_CAP,
     );
-  }
-
-  if (
-    aTokens[0] &&
-    aTokens[0] === bTokens[0] &&
-    phraseEquivalentSubtitlesAlign(a, b)
-  ) {
-    return Math.max(tokenScore, distanceScore, 0.65);
   }
 
   const sameLengthFranchisePair =
@@ -1579,6 +1613,7 @@ export function isMetadataTitleAligned(
   result: MetadataResult,
   comparisonNames: string[],
   minScore: number,
+  options?: { shelfType?: string | null },
 ): boolean {
   if (!result.title) return true;
   if (
@@ -1610,9 +1645,14 @@ export function isMetadataTitleAligned(
     requestTitles: comparisonNames,
     candidateTitles: catalogTitlesForIdentity,
     candidateAuthors: authorNamesFromMetadata(result.authors),
+    shelfType: options?.shelfType,
   });
   if (residual.decision === "accept") return true;
   if (residual.decision === "reject") return false;
+  // Hardware: same contract as catalogTitleAlignedWithItem — residual must
+  // positively accept. Soft similarity alone pairs bare consoles with games
+  // that merely share the brand token (Nintendo DS → Nintendogs).
+  if (options?.shelfType === "hardware") return false;
 
   // Merch / volume / series-line variant markers: handled by residual above.
   // "007: Agent Under Fire" looks like a generic fragment of "James Bond 007…"
@@ -1721,7 +1761,17 @@ export function isMetadataTitleAligned(
   ) {
     return false;
   }
-  return metadataTitleMatchScore(result, comparisonNames) >= minScore;
+  // When residual identity is bilaterally unexplained (edition franchise
+  // leftovers on both sides), score only against the primary request title.
+  // Short alignment fragments from buildMetadataAlignmentNames
+  // ("Nintendo Switch OLED") must not rescue a Pokémon OLED hit for a Zelda
+  // OLED request — while FR↔EN subtitle pairs (Ni no Kuni) still pass on the
+  // shared franchise stem.
+  const scoreNames = residual.reasons.includes("bilateral_unexplained")
+    ? [primaryComparisonName].filter(Boolean)
+    : comparisonNames;
+  if (scoreNames.length === 0) return false;
+  return metadataTitleMatchScore(result, scoreNames) >= minScore;
 }
 
 /**
@@ -1754,6 +1804,16 @@ export function isGenericTitleFragment(
     if (candTokens.length >= nameTokens.length) return false; // equal/exact → aligned
     isStrictSubsetOfSome = true;
     if (candSet.has(nameTokens[0])) return false; // keeps the leading identity token
+    // Catalog keeps a platform-registry token from the request ("PlayStation 5"
+    // for "Sony PlayStation 5") — brand prefixes are not generic subtitles.
+    if (
+      candTokens.some(
+        (token) =>
+          isIdentityPlatformNoiseToken(token) && nameSet.has(token),
+      )
+    ) {
+      return false;
+    }
     // Catalog "007: Nightfire" keeps the Bond series code from a "James Bond 007…"
     // shelf title — that code is the franchise identity, not a generic subtitle.
     if (

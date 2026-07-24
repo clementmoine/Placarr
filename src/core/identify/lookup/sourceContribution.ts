@@ -79,3 +79,20 @@ export function scopedContribution<T extends SourceProduct>(
   if (!products.length) return [];
   return [{ mediaType, label, products }];
 }
+
+/**
+ * Contribute products only when the scan requested this exact media type
+ * (no unknown-type fan-out). Used for collectible shelves like hardware so
+ * DualSense listings do not compete with games during auto type selection.
+ */
+export function typedOnlyContributions(
+  label: string,
+  products: SourceProduct[],
+  ctx: BarcodeSourceContext,
+  types: readonly BarcodeLookupType[],
+): BarcodeSourceContribution[] {
+  if (!products.length || !ctx.type) return [];
+  return types
+    .filter((mediaType) => ctx.type === mediaType)
+    .map((mediaType) => ({ mediaType, label, products }));
+}

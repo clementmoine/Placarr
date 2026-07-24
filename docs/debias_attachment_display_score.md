@@ -1,5 +1,11 @@
 # De-bias `attachmentDisplayScore.ts` (`REAL_BOX_COVER_SOURCES`) — focused task spec
 
+> **STATUS 2026-07-24 — DONE.** `REAL_BOX_COVER_SOURCES` / `isRealBoxCoverSource`
+> n’existent plus. Les covers utilisent le trait registry `isRealBoxCover` stampé
+> server-side via `withProviderAttachmentTraits` (`src/core/catalog/sourceTraits.ts`).
+> Blindness allowlist vide. Ce document est un **brief historique** (approche +
+> pièges client-bundle) — ne pas ré-exécuter.
+
 Self-contained brief so a fresh session can execute this cold. Part of the
 **provider-blind core** invariant (see [provider_agnostic_architecture.md](provider_agnostic_architecture.md) §0
 and [backlog.md](backlog.md) §"Provider-blind core"): outside `src/providers/`,

@@ -54,12 +54,22 @@ function isBarcodeLike(value: string) {
   return /^\d{8,14}$/.test(value.replace(/[^\d]/g, ""));
 }
 
-function matchesExpectedTitle(title: string, expectedNames: string[]) {
+export type EbayTitleMatchOptions = {
+  shelfType?: string | null;
+};
+
+function matchesExpectedTitle(
+  title: string,
+  expectedNames: string[],
+  options?: EbayTitleMatchOptions,
+) {
   const names = expectedNames.filter(Boolean);
   if (names.length === 0) return true;
   const textNames = names.filter((name) => !isBarcodeLike(name));
   if (textNames.length === 0) return true;
-  return priceListingMatchesAnyItemName(textNames, title);
+  return priceListingMatchesAnyItemName(textNames, title, {
+    shelfType: options?.shelfType,
+  });
 }
 
 function isNewCondition(condition?: string | null): boolean {
@@ -104,6 +114,7 @@ async function searchEbayBrowse(
 function listingsToProducts(
   items: EbayItemSummary[],
   expectedNames: string[],
+  options?: EbayTitleMatchOptions,
 ): EbayProduct[] {
   const out: EbayProduct[] = [];
   for (const item of items) {
@@ -111,7 +122,7 @@ function listingsToProducts(
     if (!title) continue;
     if (
       expectedNames.length > 0 &&
-      !matchesExpectedTitle(title, expectedNames)
+      !matchesExpectedTitle(title, expectedNames, options)
     ) {
       continue;
     }
@@ -143,18 +154,20 @@ async function fetchBrowseListingsByGtin(
   gtin: string,
   expectedNames: string[],
   credentials: EbayCredentials,
+  options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const { items } = await searchEbayBrowse({ gtin }, credentials);
-  return listingsToProducts(items, expectedNames);
+  return listingsToProducts(items, expectedNames, options);
 }
 
 async function fetchBrowseListingsByEpid(
   epid: string,
   expectedNames: string[],
   credentials: EbayCredentials,
+  options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const { items } = await searchEbayBrowse({ epid }, credentials);
-  return listingsToProducts(items, expectedNames);
+  return listingsToProducts(items, expectedNames, options);
 }
 
 /**
@@ -164,17 +177,19 @@ async function fetchBrowseListingsByEpid(
 async function fetchEbayProductsByGtin(
   barcode: string,
   expectedNames: string[] = [],
+  options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const cleaned = barcode.replace(/[^\d]/g, "").trim();
   if (!cleaned) return [];
   const credentials = getEbayEnv();
   if (!credentials) return [];
 
-  const catalog = await fetchFromEbayCatalog(cleaned, expectedNames);
+  const catalog = await fetchFromEbayCatalog(cleaned, expectedNames, options);
   let listings = await fetchBrowseListingsByGtin(
     cleaned,
     expectedNames,
     credentials,
+    options,
   );
 
   if (listings.length === 0) {
@@ -184,6 +199,7 @@ async function fetchEbayProductsByGtin(
         product.epid,
         expectedNames,
         credentials,
+        options,
       );
       if (listings.length > 0) break;
     }
@@ -196,6 +212,7 @@ async function fetchEbayProductsByGtin(
 export async function fetchFromEbay(
   barcode: string,
   expectedNames: string[] = [],
+  options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const cleaned = barcode.replace(/[^\d]/g, "").trim();
   if (!cleaned) return [];
@@ -208,7 +225,11 @@ export async function fetchFromEbay(
 
   console.log(`[eBay] Querying GTIN: ${cleaned}`);
   try {
-    const products = await fetchEbayProductsByGtin(barcode, expectedNames);
+    const products = await fetchEbayProductsByGtin(
+      barcode,
+      expectedNames,
+      options,
+    );
     cacheEbayGtinProducts(cleaned, products);
     return products;
   } catch (error: unknown) {
@@ -224,6 +245,7 @@ export async function fetchFromEbay(
 export async function fetchEbayProductsByQuery(
   query: string,
   expectedNames: string[] = [],
+  options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const cleaned = query.trim();
   if (!cleaned) return [];
@@ -242,7 +264,7 @@ export async function fetchEbayProductsByQuery(
       { q: cleaned },
       credentials,
     );
-    const products = listingsToProducts(items, expectedNames);
+    const products = listingsToProducts(items, expectedNames, options);
     if (!retryableFailure) {
       cacheEbaySearchProducts(cleaned, products);
     }
@@ -260,6 +282,7 @@ export async function fetchEbayProductsByQuery(
 export async function fetchPricesFromEbay(
   query: string,
   expectedNames: string[] = [],
+  options?: EbayTitleMatchOptions,
 ): Promise<EbayPrices | null> {
   const cleaned = query.trim();
   if (!cleaned) return null;
@@ -288,7 +311,9 @@ export async function fetchPricesFromEbay(
 
     for (const item of items) {
       const title = item.title?.trim();
-      if (!title || !matchesExpectedTitle(title, expectedNames)) continue;
+      if (!title || !matchesExpectedTitle(title, expectedNames, options)) {
+        continue;
+      }
       const price = priceToCents(item.price?.value);
       if (price === null) continue;
       offerCount++;

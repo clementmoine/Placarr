@@ -1,5 +1,11 @@
 # Audit: Hardcoded Word Lists — Can We Stop Naming Them?
 
+> **STATUS 2026-07-24.** Companion to [unbiased_ranking.md](unbiased_ranking.md).
+> Plusieurs lignes « FIXED » ci-dessous sont **faites**. Ce qui reste ouvert est
+> surtout **IDF / consensus pour remplacer les stoplists génériques** (long terme) —
+> suivi dans [backlog § Ouverts](backlog.md#ouverts--base-clean-2026-07-24).
+> Chemins historiques `src/lib/…` → aujourd’hui `src/core/identify/`, `src/core/enrich/titles/`, etc.
+
 Companion to [unbiased_ranking.md](unbiased_ranking.md). Premise: any literal list
 of words ("jeu vidéo", "livret", "ravageur", "blister", platform names…) **will
 never be exhaustive**, and most are video-game-biased. This audit classifies every

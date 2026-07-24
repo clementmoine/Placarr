@@ -38,4 +38,13 @@ describe("isRetailerCoverUrlAlignedWithTitle", () => {
       ),
     ).toBe(false);
   });
+
+  it("keeps PriceCharting content-addressed CDN covers", () => {
+    expect(
+      isRetailerCoverUrlAlignedWithTitle(
+        "https://storage.googleapis.com/images.pricecharting.com/6f4849d5bcf38701de45e381443bcb1276/1600.jpg",
+        "Nintendo Switch OLED Édition The Legend of Zelda",
+      ),
+    ).toBe(true);
+  });
 });

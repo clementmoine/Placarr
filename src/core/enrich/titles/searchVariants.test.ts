@@ -6,16 +6,7 @@ import {
   buildFranchisePrefixTitleVariants,
   buildSeparatorTitleVariants,
   buildStructuralTitleSearchVariants,
-  buildTokenEquivalentTitleVariants,
 } from "./searchVariants";
-
-describe("buildTokenEquivalentTitleVariants", () => {
-  it("swaps colour tokens using shared equivalent groups", () => {
-    expect(buildTokenEquivalentTitleVariants("Pokemon Jaune")).toEqual(
-      expect.arrayContaining(["Pokemon Yellow"]),
-    );
-  });
-});
 
 describe("buildSeparatorTitleVariants", () => {
   it("splits titles on common separators", () => {
@@ -28,17 +19,13 @@ describe("buildSeparatorTitleVariants", () => {
 });
 
 describe("buildCamelCaseTitleVariants", () => {
-  it("splits stylized fused game titles for provider lookup", () => {
-    expect(buildCamelCaseTitleVariants("BallXPitt")).toEqual(
-      expect.arrayContaining([
-        "Ball X Pitt",
-        "Ball x Pitt",
-        "Ball X Pit",
-        "Ball x Pit",
-        "Ball Pitt",
-        "Ball Pit",
-      ]),
+  it("splits camelCase fused titles for provider lookup (no invented spellings)", () => {
+    const variants = buildCamelCaseTitleVariants("BallXPitt");
+    expect(variants).toEqual(
+      expect.arrayContaining(["Ball X Pitt", "Ball x Pitt", "Ball Pitt"]),
     );
+    expect(variants).not.toContain("Ball X Pit");
+    expect(variants).not.toContain("Ball Pit");
   });
 
   it("ignores titles that already contain spaces or are all-caps", () => {
@@ -48,10 +35,12 @@ describe("buildCamelCaseTitleVariants", () => {
 });
 
 describe("buildStructuralTitleSearchVariants", () => {
-  it("extracts the subject from a french legend title", () => {
-    expect(buildStructuralTitleSearchVariants("La Légende Du Dragon")).toEqual(
-      expect.arrayContaining(["Dragon", "Legend of Dragon"]),
-    );
+  it("does not invent Legend of X from La Légende du X", () => {
+    const variants = buildStructuralTitleSearchVariants("La Légende Du Dragon");
+    expect(variants).not.toContain("Dragon");
+    expect(variants).not.toContain("Legend of Dragon");
+    expect(variants).not.toContain("The Legend of Dragon");
+    expect(variants.some((v) => /legend of/i.test(v))).toBe(false);
   });
 
   it("never emits legal mark symbols in search variants", () => {
@@ -121,17 +110,15 @@ describe("buildStructuralTitleSearchVariants", () => {
     }
   });
 
-  it("stays bounded for dictionary phrase swaps", () => {
-    // Les équivalences par-produit (« Baphomet » → « Broken Sword ») viennent
-    // des alternate names providers, plus d'une table codée en dur : seules
-    // les phrases de niveau dictionnaire génèrent des variantes.
+  it("does not invent FR↔EN category phrase swaps", () => {
+    // Les équivalences par-produit (« Baphomet » → « Broken Sword ») et les
+    // phrases catégorie (« movie video game ») viennent des alternate names
+    // providers — plus d'une table codée en dur.
     const variants = buildStructuralTitleSearchVariants(
       "Rio Le Film : Le Jeu Vidéo",
     );
     expect(variants.length).toBeLessThan(40);
-    expect(variants).toEqual(
-      expect.arrayContaining([expect.stringMatching(/movie video game/i)]),
-    );
+    expect(variants.some((v) => /movie video game/i.test(v))).toBe(false);
 
     const baphomet = buildStructuralTitleSearchVariants(
       "Les Chevaliers de Baphomet : La Malédiction du serpent",

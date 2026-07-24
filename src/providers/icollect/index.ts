@@ -10,6 +10,7 @@ import {
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
+import { listingLooksLikeConsoleSystemProduct } from "@/core/identify/listingMerch";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -40,7 +41,7 @@ export {
 } from "./indexStore";
 
 const FALLBACK_BARCODES = ["0045496365226", "5030917191690", "045496360730"];
-const BARCODE_TYPES: BarcodeLookupType[] = ["games", "generic"];
+const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 const PRICE_SOURCE = "iCollect Everything";
 
 function buildICollectAttachments(metadata: ICollectMetadata) {
@@ -248,7 +249,7 @@ export const icollectModule: ProviderModule = {
     id: "icollect",
     label: "iCollect Everything",
     referencePriceSource: true,
-    types: ["games"],
+    types: ["games", "hardware"],
     capabilities: [
       "identify",
       "cover",
@@ -278,7 +279,7 @@ export const icollectModule: ProviderModule = {
     mappingProbeRetry: true,
     rateLimited: true,
     notes:
-      "Catalogue jeux + photos de boîtes + estimation. Résolution metadata par barcode via index SQLite local (.cache/icollect) — auth.none pour ne pas être sauté quand le pass scrape est fermé. Fallback HTTP (Flare) seulement si le barcode n'est pas encore en cache.",
+      "Catalogue jeux + consoles (SKU console/system) + photos de boîtes + estimation. Résolution metadata par barcode via index SQLite local (.cache/icollect) — auth.none pour ne pas être sauté quand le pass scrape est fermé. Fallback HTTP (Flare) seulement si le barcode n'est pas encore en cache.",
   },
   evidence: {
     label: "iCollect Everything",
@@ -361,29 +362,51 @@ export const icollectModule: ProviderModule = {
   buildBarcodeSources(payload: BarcodeLookupPayload) {
     const metadata = payload.ice;
     if (!metadata?.title) return [];
+    const platformKey = icollectPlatformKey(metadata.platform);
+    const product = {
+      name: metadata.platform
+        ? `${metadata.title} (${metadata.platform})`
+        : metadata.title,
+      coverUrl: metadata.coverUrl,
+      platformKey,
+      facts: barcodeSourceFactsFromFields({
+        platformKey,
+        ageRating: metadata.ageRating ?? null,
+        players: metadata.players ?? null,
+      }),
+    };
+    // Collector catalog is games-first, but console/system SKUs (Atari 2600+
+    // Pac-Man Edition, …) must also anchor hardware shelves — otherwise
+    // marketplace-only titles are discarded for lack of a catalog anchor.
+    if (listingLooksLikeConsoleSystemProduct(metadata.title)) {
+      return [
+        {
+          mediaType: "hardware" as const,
+          label: "iCollect Everything",
+          products: [product],
+        },
+        {
+          mediaType: "games" as const,
+          label: "iCollect Everything",
+          products: [product],
+        },
+      ];
+    }
     return [
       {
         mediaType: "games" as const,
         label: "iCollect Everything",
-        products: [
-          {
-            name: metadata.platform
-              ? `${metadata.title} (${metadata.platform})`
-              : metadata.title,
-            coverUrl: metadata.coverUrl,
-            platformKey: icollectPlatformKey(metadata.platform),
-            facts: barcodeSourceFactsFromFields({
-              platformKey: icollectPlatformKey(metadata.platform),
-              ageRating: metadata.ageRating ?? null,
-              players: metadata.players ?? null,
-            }),
-          },
-        ],
+        products: [product],
       },
     ];
   },
   extractScanPriceOffers(payload, shelfType) {
-    if (shelfType !== "games" || !payload.ice) return [];
+    if (
+      (shelfType !== "games" && shelfType !== "hardware") ||
+      !payload.ice
+    ) {
+      return [];
+    }
     return icollectScanOffers(payload.ice);
   },
 };

@@ -4,6 +4,8 @@ export const CHASSE_AUX_LIVRES_CATALOG_BY_TYPE = {
   movies: "dvd",
   musics: "music",
   games: "videogames",
+  /** Consoles / manettes live in the same CAL videogames catalog as games. */
+  hardware: "videogames",
   boardgames: "toys",
 } as const;
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 
 import { requireGuestOrHigher } from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
+import { isShelfTypeReady } from "@/lib/shelfTypeReadiness";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import {
@@ -381,6 +382,17 @@ export async function POST(req: NextRequest) {
 
     const { name, imageUrl, color, type, cardFormat } = body;
 
+    if (
+      typeof type !== "string" ||
+      !(Object.values(Type) as string[]).includes(type) ||
+      !isShelfTypeReady(type)
+    ) {
+      return NextResponse.json(
+        { error: "Shelf type is not available yet" },
+        { status: 400 },
+      );
+    }
+
     const shelf = await prisma.shelf.create({
       data: {
         name,
@@ -459,6 +471,12 @@ export async function PATCH(req: NextRequest) {
       typeof body.type === "string" &&
       (Object.values(Type) as string[]).includes(body.type)
     ) {
+      if (!isShelfTypeReady(body.type)) {
+        return NextResponse.json(
+          { error: "Shelf type is not available yet" },
+          { status: 400 },
+        );
+      }
       data.type = body.type as Type;
     }
     if (typeof body.cardFormat === "string" && body.cardFormat.trim()) {
@@ -545,11 +563,20 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const itemCount = await prisma.item.count({ where: { shelfId: id } });
+    if (itemCount > 0) {
+      return NextResponse.json(
+        {
+          error: "Shelf is not empty",
+          code: "SHELF_NOT_EMPTY",
+          itemCount,
+        },
+        { status: 409 },
+      );
+    }
+
     await prisma.shelf.delete({
       where: { id },
-      include: {
-        items: true,
-      },
     });
 
     return NextResponse.json({ success: true });

@@ -3,13 +3,23 @@ import {
   getProviderModule,
   providerIdForSourceToken,
 } from "@/core/catalog/catalog";
+import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
 import {
   retailerBarcodeContradictsItem,
   retailerProductBarcodeConfirmed,
 } from "@/core/commerce/retailer/productUrl";
-import { retailerCatalogTitleContradictsItem } from "@/core/commerce/retailer/catalogTitleAlignment";
+import {
+  catalogTitleFromProductUrl,
+  retailerCatalogTitleContradictsItem,
+} from "@/core/commerce/retailer/catalogTitleAlignment";
+import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
+import { residualIdentityMatch } from "@/core/enrich/titles/residualIdentity";
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type { MetadataObservation } from "@/types/metadataObservation";
 
 const PRODUCT_PAGE_PATH_DENY = [
@@ -172,24 +182,30 @@ function providerHasExternalLink(
   facts: MetadataFact[],
   sourceKey: string,
 ): boolean {
-  return facts.some(
-    (fact) =>
-      fact.kind === "external-link" &&
-      fact.url?.trim() &&
-      providerLinkOwnerKeyFromFact(fact) === sourceKey,
-  );
+  return facts.some((fact) => {
+    if (fact.kind !== "external-link" || !fact.url?.trim()) return false;
+    if (providerLinkOwnerKeyFromFact(fact) === sourceKey) return true;
+    // Region-qualified chips ("PriceCharting (EUR)") still cover the provider
+    // so we do not append a third generic homepage/search link.
+    const fromSource = normalizeProviderSourceKey(
+      fact.source ?? fact.providerLabel ?? "",
+    );
+    return Boolean(fromSource && fromSource === sourceKey);
+  });
 }
 
 function findProviderExternalLink(
   facts: MetadataFact[],
   sourceKey: string,
 ): MetadataFact | undefined {
-  return facts.find(
-    (fact) =>
-      fact.kind === "external-link" &&
-      fact.url?.trim() &&
-      providerLinkOwnerKeyFromFact(fact) === sourceKey,
-  );
+  return facts.find((fact) => {
+    if (fact.kind !== "external-link" || !fact.url?.trim()) return false;
+    if (providerLinkOwnerKeyFromFact(fact) === sourceKey) return true;
+    const fromSource = normalizeProviderSourceKey(
+      fact.source ?? fact.providerLabel ?? "",
+    );
+    return Boolean(fromSource && fromSource === sourceKey);
+  });
 }
 
 export type ProviderPriceOfferLinkInput = {
@@ -220,6 +236,110 @@ function productTitleFromPriceOffer(
   return typeof title === "string" && title.trim() ? title.trim() : null;
 }
 
+function coverUrlFromPriceOffer(
+  offer: ProviderPriceOfferLinkInput,
+): string | null {
+  const raw = offer.rawValue;
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const direct = record.coverUrl;
+  if (typeof direct === "string" && /^https?:\/\//i.test(direct.trim())) {
+    return direct.trim();
+  }
+  const imageUrls = record.imageUrls;
+  if (Array.isArray(imageUrls)) {
+    for (const entry of imageUrls) {
+      if (typeof entry === "string" && /^https?:\/\//i.test(entry.trim())) {
+        return entry.trim();
+      }
+    }
+  }
+  return null;
+}
+
+function providerAlreadyHasCoverAttachment(
+  attachments: ReadonlyArray<{ source?: string | null; type?: string | null }>,
+  providerId: string,
+): boolean {
+  return attachments.some((attachment) => {
+    const type = attachment.type ?? "cover";
+    if (!["cover", "artwork", "image"].includes(type)) return false;
+    return providerIdForSourceToken(attachment.source ?? "") === providerId;
+  });
+}
+
+/**
+ * Marketplace price refresh often lands a listing coverUrl + fiche before the
+ * slower metadata scrape writes gallery rows. Surface those covers on present
+ * when the provider declares `coverUrlHost` and the listing title still aligns.
+ */
+export function coverAttachmentsFromPriceOffers(
+  offers: ReadonlyArray<ProviderPriceOfferLinkInput>,
+  options: {
+    itemTitle?: string | null;
+    shelfType?: string | null;
+    existingAttachments?: ReadonlyArray<{
+      url?: string | null;
+      source?: string | null;
+      type?: string | null;
+    }>;
+  } = {},
+): MetadataAttachment[] {
+  const existing = options.existingAttachments ?? [];
+  const existingUrls = new Set(
+    existing
+      .map((attachment) => attachment.url?.trim())
+      .filter((url): url is string => Boolean(url)),
+  );
+  const out: MetadataAttachment[] = [];
+  const seenProviders = new Set<string>();
+
+  for (const offer of offers) {
+    const providerId = providerIdForSourceToken(offer.source);
+    if (!providerId || seenProviders.has(providerId)) continue;
+    if (providerAlreadyHasCoverAttachment(existing, providerId)) continue;
+
+    const provider = getProviderModule(providerId);
+    const coverHost = provider?.info.coverUrlHost?.trim();
+    if (!coverHost) continue;
+    if (
+      !provider.info.marketplaceSearchPriceSource &&
+      !provider.info.retailCatalogImageTitles
+    ) {
+      continue;
+    }
+
+    const coverUrl = coverUrlFromPriceOffer(offer);
+    if (!coverUrl || !coverUrl.includes(coverHost)) continue;
+    if (existingUrls.has(coverUrl)) continue;
+
+    const listingTitle = productTitleFromPriceOffer(offer);
+    const itemTitle = options.itemTitle?.trim();
+    if (
+      itemTitle &&
+      listingTitle &&
+      !priceListingSharesItemIdentity(itemTitle, listingTitle, {
+        shelfType: options.shelfType,
+      })
+    ) {
+      continue;
+    }
+
+    seenProviders.add(providerId);
+    existingUrls.add(coverUrl);
+    out.push(
+      withProviderAttachmentTraits({
+        type: "cover",
+        url: coverUrl,
+        title: listingTitle ?? undefined,
+        source: providerId,
+      }),
+    );
+  }
+
+  return out;
+}
+
 function productPageUrlFromPriceOffer(
   offer: ProviderPriceOfferLinkInput,
 ): string | null {
@@ -243,12 +363,72 @@ function productPageUrlFromPriceOffer(
 
 function externalLinkFromTrustedCatalogProvider(
   fact: MetadataFact,
+  itemTitle?: string | null,
+  shelfType?: string | null,
 ): boolean {
   const providerId = providerIdForSourceToken(fact.source ?? fact.label ?? "");
   if (!providerId) return false;
-  const info = getProviderModule(providerId)?.info;
-  if (!info) return false;
-  return Boolean(info.nameDatabase);
+  const providerModule = getProviderModule(providerId);
+  if (!providerModule) return false;
+  // nameDatabase fiches (Booknode, Bédéthèque, …) are identity sources — never
+  // subject to retailer slug heuristics.
+  if (providerModule.info.nameDatabase) return true;
+  // Verified catalog product URLs (PriceCharting /game/…, …) were already
+  // accepted as fiche links; residual hardware title mismatch must not wipe
+  // them on present/refresh (e.g. “Zelda” shelf title vs Tears of the Kingdom
+  // edition slug). Finish conflicts after a rename (Metallic Blue ≠ Pink) are
+  // hard SKU mismatches — those may be purged so the next seek can re-pin.
+  // Marketplace UUID fiches (Back Market, …) can pin the wrong generation
+  // (PS5 → PS One) — any hard residual reject drops the trusted bypass.
+  const url = fact.url?.trim();
+  if (
+    url &&
+    providerModule.isVerifiedCatalogProductUrl?.(url)
+  ) {
+    if (shelfType === "hardware" && itemTitle?.trim()) {
+      const catalogTitle = catalogTitleFromProductUrl(url);
+      if (catalogTitle) {
+        const residual = residualIdentityMatch({
+          requestTitles: [itemTitle.trim()],
+          candidateTitles: [catalogTitle],
+          shelfType: "hardware",
+        });
+        if (residual.decision === "reject") {
+          const marketplace = Boolean(
+            providerModule.info.marketplaceSearchPriceSource,
+          );
+          if (
+            marketplace ||
+            residual.reasons.includes("finish_conflict")
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+/** True when item finish/color clearly conflicts with a catalog product URL. */
+function hardwareFinishConflictsCatalogLink(
+  itemTitle: string | null | undefined,
+  productUrl: string,
+): boolean {
+  const title = itemTitle?.trim();
+  if (!title) return false;
+  const catalogTitle = catalogTitleFromProductUrl(productUrl);
+  if (!catalogTitle) return false;
+  const residual = residualIdentityMatch({
+    requestTitles: [title],
+    candidateTitles: [catalogTitle],
+    shelfType: "hardware",
+  });
+  return (
+    residual.decision === "reject" &&
+    residual.reasons.includes("finish_conflict")
+  );
 }
 
 /** Drops retailer external-links contradicted by GTIN or catalog title. */
@@ -256,12 +436,15 @@ export function purgeContradictedProviderExternalLinks(
   facts: MetadataFact[],
   itemBarcode?: string | null,
   itemTitle?: string | null,
+  shelfType?: string | null,
 ): MetadataFact[] {
   if (!itemBarcode?.trim() && !itemTitle?.trim()) return facts;
 
   return facts.filter((fact) => {
     if (fact.kind !== "external-link" || !fact.url?.trim()) return true;
-    if (externalLinkFromTrustedCatalogProvider(fact)) return true;
+    if (externalLinkFromTrustedCatalogProvider(fact, itemTitle, shelfType)) {
+      return true;
+    }
     if (
       retailerBarcodeContradictsItem({
         productUrl: fact.url,
@@ -274,6 +457,7 @@ export function purgeContradictedProviderExternalLinks(
       retailerCatalogTitleContradictsItem({
         productUrl: fact.url,
         itemTitle,
+        shelfType,
       })
     ) {
       return false;
@@ -287,8 +471,19 @@ function shouldReplaceProviderExternalLink(input: {
   nextUrl: string;
   productBarcode?: string | null;
   itemBarcode?: string | null;
+  itemTitle?: string | null;
+  shelfType?: string | null;
+  productTitle?: string | null;
 }): boolean {
-  const { existingUrl, nextUrl, productBarcode, itemBarcode } = input;
+  const {
+    existingUrl,
+    nextUrl,
+    productBarcode,
+    itemBarcode,
+    itemTitle,
+    shelfType,
+    productTitle,
+  } = input;
   if (existingUrl.trim() === nextUrl.trim()) return false;
   if (
     retailerBarcodeContradictsItem({
@@ -313,6 +508,21 @@ function shouldReplaceProviderExternalLink(input: {
   ) {
     return true;
   }
+  // After a rename, replace a finish-mismatched catalog pin when the new offer
+  // aligns (or at least does not finish-conflict).
+  if (
+    shelfType === "hardware" &&
+    hardwareFinishConflictsCatalogLink(itemTitle, existingUrl) &&
+    !hardwareFinishConflictsCatalogLink(itemTitle, nextUrl) &&
+    !retailerCatalogTitleContradictsItem({
+      productUrl: nextUrl,
+      productTitle,
+      itemTitle,
+      shelfType,
+    })
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -322,9 +532,15 @@ export function reconcileExternalLinksFromPriceOffers(
   offers: ReadonlyArray<ProviderPriceOfferLinkInput>,
   itemBarcode?: string | null,
   itemTitle?: string | null,
+  shelfType?: string | null,
 ): MetadataFact[] {
   let next = [
-    ...purgeContradictedProviderExternalLinks(facts, itemBarcode, itemTitle),
+    ...purgeContradictedProviderExternalLinks(
+      facts,
+      itemBarcode,
+      itemTitle,
+      shelfType,
+    ),
   ];
 
   for (const offer of offers) {
@@ -346,6 +562,7 @@ export function reconcileExternalLinksFromPriceOffers(
         productUrl: url,
         productTitle: productTitleFromPriceOffer(offer),
         itemTitle,
+        shelfType,
       })
     ) {
       continue;
@@ -364,6 +581,9 @@ export function reconcileExternalLinksFromPriceOffers(
         nextUrl: url,
         productBarcode,
         itemBarcode,
+        itemTitle,
+        shelfType,
+        productTitle: productTitleFromPriceOffer(offer),
       })
     ) {
       continue;
@@ -454,13 +674,18 @@ export function appendMissingProviderExternalLinkFacts(
 export function externalLinkFactsFromPriceOffers(
   offers: ReadonlyArray<ProviderPriceOfferLinkInput>,
   existingFacts: MetadataFact[] = [],
-  options?: { itemBarcode?: string | null; itemTitle?: string | null },
+  options?: {
+    itemBarcode?: string | null;
+    itemTitle?: string | null;
+    shelfType?: string | null;
+  },
 ): MetadataFact[] {
   const reconciled = reconcileExternalLinksFromPriceOffers(
     existingFacts,
     offers,
     options?.itemBarcode,
     options?.itemTitle,
+    options?.shelfType,
   );
   const existingKeys = new Set(
     existingFacts
@@ -586,6 +811,7 @@ export function buildProfileProviderLinkFacts(input: {
   priceOffers?: readonly ProviderPriceOfferLinkInput[];
   itemBarcode?: string | null;
   itemTitle?: string | null;
+  shelfType?: string | null;
   platformKey?: string | null;
   catalogLink?: { url: string; providerLabel?: string } | null;
 }): MetadataFact[] {
@@ -608,6 +834,7 @@ export function buildProfileProviderLinkFacts(input: {
     input.priceOffers ?? [],
     input.itemBarcode,
     input.itemTitle,
+    input.shelfType,
   ).filter((fact) => fact.kind === "external-link" && fact.url?.trim());
 
   if (input.catalogLink?.url?.trim()) {
@@ -629,7 +856,13 @@ export function buildProfileProviderLinkFacts(input: {
     const ownerKey = normalizeProviderSourceKey(providerId);
     if (!ownerKey || providerHasExternalLink(links, ownerKey)) continue;
 
-    const websiteUrl = getProviderModule(providerId)?.info.websiteUrl?.trim();
+    const providerModule = getProviderModule(providerId);
+    // Marketplace homes are not product fiches — only keep a link when we still
+    // have a listing URL (already in `links`). Do not re-pin the site root after
+    // a wrong SKU (PS One on PS5) was purged.
+    if (providerModule?.info.marketplaceSearchPriceSource) continue;
+
+    const websiteUrl = providerModule?.info.websiteUrl?.trim();
     if (!websiteUrl || !looksLikeProviderProductPageUrl(websiteUrl)) continue;
 
     links.push(

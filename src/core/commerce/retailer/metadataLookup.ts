@@ -65,6 +65,7 @@ export function acceptRetailerCatalogCandidate(input: {
   requestedName: string;
   searchQuery?: string | null;
   shelfName?: string | null;
+  shelfType?: string | null;
   catalogTitle: string;
   catalogAliases?: string[];
   barcodeConfirmed?: boolean;
@@ -84,6 +85,7 @@ export function acceptRetailerCatalogCandidate(input: {
     requestedName: input.requestedName,
     searchQuery,
     shelfName: input.shelfName,
+    shelfType: input.shelfType,
     catalogTitle: input.catalogTitle,
     catalogAliases: input.catalogAliases,
     barcodeConfirmed: input.barcodeConfirmed,
@@ -186,6 +188,7 @@ export function isRetailerCatalogTitleAccepted(input: {
   requestedName: string;
   searchQuery?: string | null;
   shelfName?: string | null;
+  shelfType?: string | null;
   catalogTitle: string;
   catalogAliases?: string[];
   barcodeConfirmed?: boolean;
@@ -224,13 +227,18 @@ export function isRetailerCatalogTitleAccepted(input: {
     return bundleMatch;
   }
 
-  if (isNameOnlyRetailerTitleMatch(requestedName, catalogTitle)) return true;
+  const nameOnlyOptions = input.shelfType
+    ? { shelfType: input.shelfType }
+    : undefined;
+
+  if (isNameOnlyRetailerTitleMatch(requestedName, catalogTitle, nameOnlyOptions))
+    return true;
 
   const searchQuery = input.searchQuery?.trim();
   if (
     searchQuery &&
     searchQuery.toLowerCase() !== requestedName.toLowerCase() &&
-    isNameOnlyRetailerTitleMatch(searchQuery, catalogTitle)
+    isNameOnlyRetailerTitleMatch(searchQuery, catalogTitle, nameOnlyOptions)
   ) {
     if (isGenericTitleFragment(searchQuery, [requestedName])) {
       return false;

@@ -142,4 +142,33 @@ describe("preserveGalleryAttachmentsOnRegression", () => {
       ["user", "/uploads/my-disc.jpg"],
     ]);
   });
+
+  it("keeps PriceCharting covers when a marketplace-only refresh answers", () => {
+    const previous = [
+      storedAttachment(
+        "cover",
+        "https://storage.googleapis.com/images.pricecharting.com/ds-lite.jpg",
+        { source: "pricecharting" },
+      ),
+    ];
+    const next = [
+      {
+        type: "cover" as const,
+        url: "https://d2e6ccujb3mkqf.cloudfront.net/bm.jpg",
+        source: "backmarket",
+      },
+    ];
+
+    expect(
+      preserveGalleryAttachmentsOnRegression(previous, next).map(
+        (attachment) => [attachment.source, attachment.url],
+      ),
+    ).toEqual([
+      ["backmarket", "https://d2e6ccujb3mkqf.cloudfront.net/bm.jpg"],
+      [
+        "pricecharting",
+        "https://storage.googleapis.com/images.pricecharting.com/ds-lite.jpg",
+      ],
+    ]);
+  });
 });

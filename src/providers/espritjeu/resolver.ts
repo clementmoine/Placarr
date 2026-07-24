@@ -135,7 +135,6 @@ export function mapEspritJeuMetadata(
     regionalTitles: product.title
       ? [{ region: ESPRITJEU_REGION, text: product.title }]
       : undefined,
-    aliases: product.listingTitles?.length ? product.listingTitles : undefined,
     attachments: buildEspritJeuAttachments(product),
     facts: buildEspritJeuFacts(product),
   };

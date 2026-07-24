@@ -12,7 +12,7 @@ const h = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
-  item: { findMany: vi.fn() },
+  item: { findMany: vi.fn(), count: vi.fn() },
   barcodeCache: { findMany: vi.fn() },
 }));
 
@@ -72,12 +72,14 @@ beforeEach(() => {
     h.shelf.update,
     h.shelf.delete,
     h.item.findMany,
+    h.item.count,
     h.barcodeCache.findMany,
   ]) {
     fn.mockReset();
   }
   h.barcodeCache.findMany.mockResolvedValue([]);
   h.item.findMany.mockResolvedValue([]);
+  h.item.count.mockResolvedValue(0);
   h.summarizeShelfItemPrices.mockResolvedValue(new Map());
   h.reconcileOrphanedMetadataRefreshesForUser.mockResolvedValue(0);
 });
@@ -295,11 +297,27 @@ describe("DELETE /api/shelves — autorisation", () => {
   it("supprime l'étagère de son propriétaire", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.shelf.findUnique.mockResolvedValue({ userId: "u1" });
+    h.item.count.mockResolvedValue(0);
     h.shelf.delete.mockResolvedValue({});
 
     const res = await DELETE(get("/api/shelves?id=s1"));
 
     expect(res.status).toBe(200);
     expect(h.shelf.delete).toHaveBeenCalled();
+  });
+
+  it("refuse de supprimer une étagère non vide", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.shelf.findUnique.mockResolvedValue({ userId: "u1" });
+    h.item.count.mockResolvedValue(3);
+
+    const res = await DELETE(get("/api/shelves?id=s1"));
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      code: "SHELF_NOT_EMPTY",
+      itemCount: 3,
+    });
+    expect(h.shelf.delete).not.toHaveBeenCalled();
   });
 });

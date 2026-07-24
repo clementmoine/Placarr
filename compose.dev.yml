@@ -1,7 +1,10 @@
-# Développement "tout en Docker" : PostgreSQL + Next.js + worker en hot-reload.
+# Développement "tout en Docker" : PostgreSQL + Next.js + workers en hot-reload.
 #
-#   docker compose -f compose.dev.yml up        # démarre db + app + worker
+#   docker compose -f compose.dev.yml up        # démarre db + app + workers
 #   docker compose -f compose.dev.yml down       # arrête
+#
+# Prod (`compose.yml`) = **1 conteneur** placarr (Next + workers via init.sh).
+# Ici en dev Docker on garde des services séparés pour hot-reload / logs distincts.
 #
 # L'app est servie sur http://localhost:3000. Le code est monté en bind-mount
 # (hot-reload) ; node_modules et .next vivent dans des volumes dédiés pour ne
@@ -12,7 +15,7 @@
 # TRÈS lent (résolution de modules I/O-bound). C'est natif/rapide sous Linux.
 # Sur Mac, préférer le mode hybride pour le dev quotidien :
 #   docker compose up -d db   # juste Postgres
-#   pnpm dev                  # Next + worker (concurrent)
+#   pnpm dev                  # Next + workers (concurrent)
 
 services:
   db:

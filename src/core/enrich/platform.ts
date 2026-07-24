@@ -18,13 +18,20 @@ export function detectShelfGamePlatformKey(
 /**
  * Resolves the game platform passed to metadata providers. Explicit platform
  * wins; otherwise infer from a platform-specific shelf name (e.g. "PlayStation 5").
+ * Hardware shelves also resolve (console family shelves / title detection).
  */
 export function resolveGameMetadataPlatform(
   platform?: string | null,
   shelfName?: string | null,
   shelfType?: string | null,
 ): string | undefined {
-  if (shelfType && shelfType !== "games") return undefined;
+  if (
+    shelfType &&
+    shelfType !== "games" &&
+    shelfType !== "hardware"
+  ) {
+    return undefined;
+  }
 
   if (platform?.trim()) {
     const trimmed = platform.trim();

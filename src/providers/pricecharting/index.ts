@@ -13,20 +13,27 @@ import {
 import { pricedOffers } from "@/core/catalog/priceOffers";
 
 import {
+  priceChartingAttachmentRole,
+  priceChartingAttachmentType,
+} from "./imageLabels";
+import {
   fetchMetadataFromPriceCharting,
   fetchMetadataFromPriceChartingByName,
+  fetchMetadataFromPriceChartingGameUrl,
   fetchPricesFromPriceCharting,
+  fetchPricesFromPriceChartingGameUrl,
+  priceChartingCatalogAlignsWithTitles,
+  priceChartingUrlIsPal,
 } from "./fetch";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 import { buildPriceChartingCatalogLink } from "./catalogLink";
-import {
-  priceChartingAttachmentRole,
-  priceChartingGalleryLabelIsRecognized,
-} from "./imageLabels";
+import { productNameFromPriceChartingGameUrl } from "./offerProductName";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import { barcodeSuggestsPalRegion } from "@/core/identify/normalize";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
-import type { MetadataFact } from "@/types/metadataProvider";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type { PriceChartingMetadata } from "@/core/identify/lookup/providerTypes";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 
@@ -55,8 +62,34 @@ const METADATA_PROBE_SAMPLES: BarcodeMetadataProbeSample[] = [
   },
 ];
 
-const BARCODE_TYPES: BarcodeLookupType[] = ["games", "generic"];
+const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 const PRICE_SOURCE = "PriceCharting";
+const PRICE_SHELF_TYPES = new Set(["games", "hardware"]);
+
+/**
+ * Hardware catalog titles often already include the device ("Playstation 3
+ * System 60GB"). Game & Watch-style SKUs split device into `platform` and
+ * edition into `title` — prepend the device when missing.
+ */
+function hardwarePriceChartingBarcodeName(
+  title: string,
+  platform?: string | null,
+): string {
+  const cleanedTitle = title.replace(/\s+/g, " ").trim();
+  const cleanedPlatform = (platform || "").replace(/\s+/g, " ").trim();
+  if (!cleanedPlatform) return cleanedTitle;
+  const fold = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/\s*&\s*/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  if (fold(cleanedTitle).includes(fold(cleanedPlatform))) {
+    return cleanedTitle;
+  }
+  return `${cleanedPlatform} ${cleanedTitle}`;
+}
 
 function priceChartingScanOffers(
   prices: NonNullable<NonNullable<PriceChartingMetadata>["prices"]>,
@@ -87,77 +120,182 @@ function priceChartingScanOffers(
   ]);
 }
 
+/** EUR + US catalog chips when both regional fiches were resolved. */
+export function buildPriceChartingRegionLinkFacts(
+  pcMeta: PriceChartingMetadata,
+): MetadataFact[] {
+  const urls = Array.from(
+    new Set(
+      [pcMeta.url, pcMeta.siblingUrl].filter(
+        (url): url is string => Boolean(url?.includes("/game/")),
+      ),
+    ),
+  );
+  if (urls.length === 0) return [];
+
+  const multi = urls.length > 1;
+  return urls.map((url) => {
+    const isPal = priceChartingUrlIsPal(url);
+    return {
+      kind: "external-link" as const,
+      label: multi
+        ? `PriceCharting (${isPal ? "EUR" : "US"})`
+        : "PriceCharting",
+      value: "Voir la fiche",
+      url,
+      source: "pricecharting",
+      confidence: 0.7,
+      // Prefer EUR in UI ordering when both regions exist.
+      priority: isPal ? 44 : 42,
+    };
+  });
+}
+
 function buildPriceChartingAttachments(
   pcMeta: PriceChartingMetadata,
   isPal: boolean,
 ) {
   const seen = new Set<string>();
   const attachments: Array<{
-    type: "cover";
+    type: "cover" | "image";
     url: string;
     source: string;
     role: string;
     title?: string;
   }> = [];
 
-  const push = (url: string | undefined, title?: string) => {
+  const push = (url: string | undefined, title?: string, imageIsPal?: boolean) => {
     if (!url || seen.has(url)) return;
     seen.add(url);
+    const regionIsPal = imageIsPal ?? isPal;
     attachments.push({
-      type: "cover",
+      type: priceChartingAttachmentType(title),
       url,
       source: "pricecharting",
-      role: priceChartingAttachmentRole(title, isPal),
+      role: priceChartingAttachmentRole(title, regionIsPal),
       ...(title ? { title } : {}),
     });
   };
 
   for (const image of pcMeta.images || []) {
-    if (!priceChartingGalleryLabelIsRecognized(image.label)) continue;
-    push(image.url, image.label);
+    push(image.url, image.label, image.isPal);
   }
   const primaryImage = pcMeta.images?.find((image) =>
     /main image/i.test(image.label || ""),
   );
-  push(pcMeta.coverUrl, primaryImage?.label ?? pcMeta.images?.[0]?.label);
+  push(
+    pcMeta.coverUrl,
+    primaryImage?.label ?? pcMeta.images?.[0]?.label,
+    primaryImage?.isPal ?? pcMeta.images?.[0]?.isPal,
+  );
 
   return attachments.length > 0 ? attachments : undefined;
 }
 
+/** Stable record id for a PriceCharting `/game/{platform}/{slug}` fiche. */
+export function parsePriceChartingRecordIdFromUrl(
+  url: string,
+): string | null {
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.replace(/^www\./i, "");
+    if (host !== "pricecharting.com") return null;
+    const match = parsed.pathname.match(/^\/game\/([^/]+)\/([^/]+)\/?$/i);
+    if (!match?.[1] || !match[2]) return null;
+    if (/search-products/i.test(match[2])) return null;
+    return `${match[1]}/${match[2]}`.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function mapPriceChartingMetadataResult(
+  pcMeta: PriceChartingMetadata,
+  options: { isPal: boolean; barcode?: string },
+): MetadataResult {
+  const facts: MetadataFact[] = [];
+  if (pcMeta.ageRating) {
+    facts.push({
+      kind: "age-rating",
+      label: pcMeta.ageRating.startsWith("PEGI") ? "PEGI" : "PriceCharting",
+      value:
+        pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() || pcMeta.ageRating,
+      source: "pricecharting",
+      confidence: 0.62,
+      priority: 58,
+    });
+  }
+  facts.push(...buildPriceChartingRegionLinkFacts(pcMeta));
+
+  return withMetadataPlatformKeys({
+    title: pcMeta.title,
+    platformKey: pcMeta.platform
+      ? detectPlatformKey(pcMeta.platform) || undefined
+      : undefined,
+    barcode: pcMeta.barcode || options.barcode || undefined,
+    imageUrl: pcMeta.coverUrl || undefined,
+    attachments: buildPriceChartingAttachments(pcMeta, options.isPal),
+    facts: facts.length > 0 ? facts : undefined,
+  });
+}
+
 async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
-  if (ctx.shelfType !== "games") return [];
+  if (!PRICE_SHELF_TYPES.has(ctx.shelfType)) return [];
+  const mediaType = ctx.shelfType === "hardware" ? "hardware" : "games";
+  const acceptanceTitles = [
+    ctx.primaryName,
+    ...ctx.fallbackNames,
+    ...ctx.acceptanceTitles,
+  ].filter(Boolean);
+
+  // Prefer already-resolved /game/ fiches from metadata links (no second seek).
+  const storedUrls = providerProductUrlsForKey(
+    "pricecharting",
+    ctx.providerProductUrls,
+  ).filter(
+    (url) => url.includes("/game/") && !url.includes("search-products"),
+  );
+  const orderedUrls = [...storedUrls].sort((left, right) => {
+    const leftPal = priceChartingUrlIsPal(left) ? 1 : 0;
+    const rightPal = priceChartingUrlIsPal(right) ? 1 : 0;
+    return ctx.isPal ? rightPal - leftPal : leftPal - rightPal;
+  });
+  for (const url of orderedUrls) {
+    const fromUrl = await fetchPricesFromPriceChartingGameUrl(url);
+    if (!fromUrl) continue;
+    const productName =
+      fromUrl.productName?.trim() ||
+      productNameFromPriceChartingGameUrl(fromUrl.sourceUrl || url);
+    // Stale pin after rename (Metallic Blue item still pointing at Pink+White).
+    if (
+      productName &&
+      acceptanceTitles.length > 0 &&
+      !priceChartingCatalogAlignsWithTitles(productName, acceptanceTitles, {
+        mediaType,
+        allowFranchiseStem: mediaType === "games",
+      })
+    ) {
+      continue;
+    }
+    return priceChartingScanOffers(fromUrl);
+  }
+
+  // Hardware shelves ("Consoles") are not a PriceCharting platform slug — omit
+  // shelfName so we don't invent a platform gate; title residual uses mediaType.
+  const fallbackPlatform =
+    mediaType === "hardware"
+      ? undefined
+      : (ctx.shelfName ?? ctx.platformKey ?? undefined);
   const result = await fetchPricesFromPriceCharting(
     matchPrimaryBarcode(ctx) || ctx.cleanedBarcode,
     [ctx.primaryName, ...ctx.fallbackNames].filter(Boolean),
-    ctx.shelfName ?? "",
+    fallbackPlatform,
     ctx.isPal,
     ctx.isClassics,
+    { mediaType },
   );
   if (!result) return [];
-  const sourceExtra = {
-    ...(result.sourceUrl ? { sourceUrl: result.sourceUrl } : {}),
-    ...(result.productName ? { productName: result.productName } : {}),
-  };
-  return pricedOffers(PRICE_SOURCE, [
-    {
-      condition: "loose",
-      priceCents: result.priceUsed,
-      rawValue: result,
-      extra: sourceExtra,
-    },
-    {
-      condition: "cib",
-      priceCents: result.priceUsedCIB,
-      rawValue: result,
-      extra: sourceExtra,
-    },
-    {
-      condition: "new",
-      priceCents: result.priceNew,
-      rawValue: result,
-      extra: sourceExtra,
-    },
-  ]);
+  return priceChartingScanOffers(result);
 }
 
 export const pricechartingModule: ProviderModule = {
@@ -166,78 +304,104 @@ export const pricechartingModule: ProviderModule = {
     label: "PriceCharting",
     referencePriceSource: true,
     catalogDisplayTitleFallback: true,
-    types: ["games"],
+    types: ["games", "hardware"],
     capabilities: ["identify", "price", "cover"],
     auth: { kind: "none" },
     canonical: false,
     isRealBoxCover: true,
     imageScoreAdjustment: 160,
+    // GCS CDN host — lets orphan /uploads remaps recover `source` via
+    // inferProviderIdFromMediaUrl when the attachment row lost its stamp.
+    coverUrlHost: "images.pricecharting.com",
     websiteUrl: "https://www.pricecharting.com/",
-    notes: "Prix de référence.",
+    notes:
+      "Prix de référence (jeux + systems/hardware PriceCharting).",
   },
   evidence: {
     label: "PriceCharting",
     sourceWeight: 0.38,
+    // UPC/EAN → /game/ redirect is a catalog barcode hit (same role as iCollect
+    // offline index). Without this, hardware-only PC hits are discarded as
+    // "no canonical resolver" when marketplaces are empty.
+    catalogTitleAnchor: true,
   },
+  parseMetadataRecordIdFromUrl: parsePriceChartingRecordIdFromUrl,
   createMetadataAdapter() {
     return {
       id: "pricecharting",
-      async resolve({ name, barcode, platform }) {
-        const cleanedBarcode = barcode ? cleanCode(barcode) : "";
+      async resolve(ctx) {
+        const cleanedBarcode = ctx.barcode ? cleanCode(ctx.barcode) : "";
         const isPal = barcodeSuggestsPalRegion(cleanedBarcode);
+        const mediaType = ctx.type === "hardware" ? "hardware" : "games";
+        const platform =
+          ctx.type === "hardware" ? undefined : ctx.platform || undefined;
+        const name = String(ctx.name || "").trim();
+
         let pcMeta: PriceChartingMetadata | null = null;
-        if (cleanedBarcode) {
+
+        // Prefer a memorized /game/ fiche (same pattern as BDovore pinned tome),
+        // but drop it when the item was renamed away from that SKU (finish /
+        // platform mismatch) so name/barcode seek can re-pin.
+        const pinnedUrl = pinnedProviderRecordUrl(ctx, "pricecharting");
+        if (pinnedUrl) {
+          pcMeta = await fetchMetadataFromPriceChartingGameUrl(pinnedUrl, {
+            fallbackName: name || undefined,
+            mediaType,
+          });
+          if (pcMeta?.title) {
+            const acceptanceTitles = Array.from(
+              new Set(
+                [
+                  name,
+                  ...(ctx.lookupQueries ?? []),
+                  ...(ctx.fallbackNames ?? []),
+                  ...(ctx.match?.titles ?? []),
+                ].filter(Boolean),
+              ),
+            );
+            if (
+              acceptanceTitles.length > 0 &&
+              !priceChartingCatalogAlignsWithTitles(
+                pcMeta.title,
+                acceptanceTitles,
+                {
+                  mediaType,
+                  allowFranchiseStem: mediaType === "games",
+                },
+              )
+            ) {
+              console.log(
+                `[PriceCharting Metadata] Ignoring stale pinned fiche (title mismatch): ${pinnedUrl}`,
+              );
+              pcMeta = null;
+            }
+          }
+        }
+
+        if (!pcMeta && cleanedBarcode) {
           pcMeta = await fetchMetadataFromPriceCharting(
             cleanedBarcode,
-            name,
-            platform || undefined,
+            name || undefined,
+            platform,
             isPal,
+            undefined,
+            { mediaType },
           );
-        } else {
+        }
+        if (!pcMeta && name) {
           pcMeta = await fetchMetadataFromPriceChartingByName(
             name,
-            platform || undefined,
+            platform,
             isPal,
+            undefined,
+            { mediaType },
           );
         }
         if (!pcMeta) return null;
 
-        const facts: MetadataFact[] = [];
-        if (pcMeta.ageRating) {
-          facts.push({
-            kind: "age-rating",
-            label: pcMeta.ageRating.startsWith("PEGI")
-              ? "PEGI"
-              : "PriceCharting",
-            value:
-              pcMeta.ageRating.replace(/^PEGI\s*/i, "").trim() ||
-              pcMeta.ageRating,
-            source: "pricecharting",
-            confidence: 0.62,
-            priority: 58,
-          });
-        }
-        if (pcMeta.url?.includes("/game/")) {
-          facts.push({
-            kind: "external-link",
-            label: "PriceCharting",
-            value: "Voir la fiche",
-            url: pcMeta.url,
-            source: "pricecharting",
-            confidence: 0.7,
-            priority: 42,
-          });
-        }
-
-        return withMetadataPlatformKeys({
-          title: pcMeta.title,
-          platformKey: pcMeta.platform
-            ? detectPlatformKey(pcMeta.platform) || undefined
-            : undefined,
-          barcode: pcMeta.barcode || barcode || undefined,
-          imageUrl: pcMeta.coverUrl || undefined,
-          attachments: buildPriceChartingAttachments(pcMeta, isPal),
-          facts: facts.length > 0 ? facts : undefined,
+        return mapPriceChartingMetadataResult(pcMeta, {
+          isPal,
+          barcode: cleanedBarcode || undefined,
         });
       },
     };
@@ -247,12 +411,15 @@ export const pricechartingModule: ProviderModule = {
       return {} as Record<string, Promise<unknown>>;
     }
     const isPal = barcodeSuggestsPalRegion(barcode);
+    const mediaType = type === "hardware" ? "hardware" : undefined;
     return {
       pc: deps.fetchMetadataFromPriceCharting(
         barcode,
         undefined,
         type === "games" ? platformKey || undefined : undefined,
         isPal,
+        undefined,
+        mediaType ? { mediaType } : undefined,
       ),
     };
   },
@@ -276,7 +443,7 @@ export const pricechartingModule: ProviderModule = {
       ),
   }),
   buildCatalogExternalLink(ctx) {
-    if (ctx.mediaType !== "games") return null;
+    if (ctx.mediaType !== "games" && ctx.mediaType !== "hardware") return null;
     return buildPriceChartingCatalogLink(ctx);
   },
   isVerifiedCatalogProductUrl(url) {
@@ -333,20 +500,28 @@ export const pricechartingModule: ProviderModule = {
       ),
     );
   },
-  buildBarcodeSources(payload: BarcodeLookupPayload) {
+  buildBarcodeSources(payload, ctx) {
     const pc = payload.pc;
     if (!pc?.title) return [];
+    const mediaType = ctx.type === "hardware" ? "hardware" : "games";
+    const platformKey = pc.platform ? detectPlatformKey(pc.platform) : null;
+    const name =
+      mediaType === "hardware"
+        ? hardwarePriceChartingBarcodeName(pc.title, pc.platform)
+        : pc.platform
+          ? `${pc.title} (${pc.platform})`
+          : pc.title;
     return [
       {
-        mediaType: "games" as const,
+        mediaType,
         label: "PriceCharting",
         products: [
           {
-            name: pc.platform ? `${pc.title} (${pc.platform})` : pc.title,
+            name,
             coverUrl: pc.coverUrl,
-            platformKey: pc.platform ? detectPlatformKey(pc.platform) : null,
+            platformKey,
             facts: barcodeSourceFactsFromFields({
-              platformKey: pc.platform ? detectPlatformKey(pc.platform) : null,
+              platformKey,
               ageRating: pc.ageRating ?? null,
             }),
           },
@@ -355,7 +530,7 @@ export const pricechartingModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload, shelfType) {
-    if (shelfType !== "games" || !payload.pc?.prices) return [];
+    if (!PRICE_SHELF_TYPES.has(shelfType) || !payload.pc?.prices) return [];
     return priceChartingScanOffers(payload.pc.prices);
   },
   refreshBarcodePriceOffers: refreshPriceChartingOffers,

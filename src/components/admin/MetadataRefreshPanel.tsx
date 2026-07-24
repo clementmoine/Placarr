@@ -40,7 +40,15 @@ import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { hasGameMediaGalleryAttachment } from "@/core/enrich/galleries";
 
-type RefreshableType = "games" | "movies" | "musics" | "books" | "boardgames";
+type RefreshableType =
+  | "games"
+  | "movies"
+  | "musics"
+  | "books"
+  | "boardgames"
+  | "hardware"
+  | "tcg"
+  | "toys";
 type RefreshState =
   | "idle"
   | "queued"
@@ -97,6 +105,9 @@ const refreshTypes: Array<"all" | RefreshableType> = [
   "movies",
   "books",
   "musics",
+  "hardware",
+  "tcg",
+  "toys",
 ];
 
 function statusClass(status: RefreshState) {
@@ -173,6 +184,9 @@ export function MetadataRefreshPanel() {
         musics: "Musique",
         books: "Livres",
         boardgames: "Jeux de société",
+        hardware: "Matériel",
+        tcg: "Cartes",
+        toys: "Jouets",
       };
       return labels[type];
     }
@@ -183,6 +197,9 @@ export function MetadataRefreshPanel() {
       musics: "Music",
       books: "Books",
       boardgames: "Board games",
+      hardware: "Hardware",
+      tcg: "Trading cards",
+      toys: "Toys",
     };
     return labels[type];
   };

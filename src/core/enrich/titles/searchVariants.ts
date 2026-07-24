@@ -6,106 +6,11 @@ import {
   createGameEditionMatcher,
   GAME_EDITION_DEFINITIONS,
 } from "@/core/identify/listingTerms";
-import {
-  dedupeTokenTailConsonants,
-  TITLE_PHRASE_EQUIVALENT_GROUPS,
-  TITLE_TOKEN_EQUIVALENT_GROUPS,
-} from "@/core/enrich/titles/tokenEquivalents";
 import { isBundleTitle, splitBundleTitle } from "@/core/enrich/bundleTitle";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function applyTokenCase(source: string, replacement: string): string {
-  if (source === source.toUpperCase()) return replacement.toUpperCase();
-  if (source[0] === source[0]?.toUpperCase()) {
-    return replacement.charAt(0).toUpperCase() + replacement.slice(1);
-  }
-  return replacement;
-}
-
-/** Swaps equivalent tokens (colours, etc.) using shared title-token groups. */
-export function buildTokenEquivalentTitleVariants(title: string): string[] {
-  const trimmed = title.trim();
-  if (!trimmed) return [];
-
-  const variants = new Set<string>();
-  const seen = new Set([trimmed.toLowerCase()]);
-  const frontier = [trimmed];
-
-  while (frontier.length > 0) {
-    const current = frontier.pop()!;
-    const lower = current.toLowerCase();
-
-    for (const group of TITLE_TOKEN_EQUIVALENT_GROUPS) {
-      for (const token of group) {
-        const pattern = new RegExp(`\\b${escapeRegExp(token)}\\b`, "gi");
-        if (!pattern.test(lower)) continue;
-
-        for (const alt of group) {
-          if (alt.toLowerCase() === token.toLowerCase()) continue;
-          const swapped = current.replace(pattern, (match) =>
-            applyTokenCase(match, alt),
-          );
-          const key = swapped.toLowerCase();
-          if (key === trimmed.toLowerCase() || seen.has(key)) continue;
-          seen.add(key);
-          variants.add(swapped);
-          frontier.push(swapped);
-        }
-      }
-    }
-  }
-
-  return [...variants];
-}
-
-const MAX_PHRASE_EQUIVALENT_VARIANTS = 48;
-
-/** Swaps multi-word FR/EN subtitle phrases for provider search retries. */
-export function buildPhraseEquivalentTitleVariants(title: string): string[] {
-  const trimmed = title.trim();
-  if (!trimmed) return [];
-
-  const variants = new Set<string>();
-  const seen = new Set([trimmed.toLowerCase()]);
-  // Depth 2 only: phrase swaps chain once (FR subtitle + EN subtitle) but never recurse further.
-  const frontier: Array<{ value: string; depth: number }> = [
-    { value: trimmed, depth: 0 },
-  ];
-
-  while (
-    frontier.length > 0 &&
-    variants.size < MAX_PHRASE_EQUIVALENT_VARIANTS
-  ) {
-    const { value: current, depth } = frontier.pop()!;
-    const lower = current.toLowerCase();
-
-    for (const group of TITLE_PHRASE_EQUIVALENT_GROUPS) {
-      for (const phrase of group) {
-        const pattern = new RegExp(escapeRegExp(phrase), "gi");
-        if (!pattern.test(lower)) continue;
-
-        for (const alt of group) {
-          if (alt.toLowerCase() === phrase.toLowerCase()) continue;
-          const swapped = current.replace(pattern, (match) =>
-            applyTokenCase(match, alt),
-          );
-          const key = swapped.toLowerCase();
-          if (key === trimmed.toLowerCase() || seen.has(key)) continue;
-          seen.add(key);
-          variants.add(swapped);
-          if (depth < 1) {
-            frontier.push({ value: swapped, depth: depth + 1 });
-          }
-        }
-      }
-    }
-  }
-
-  return [...variants];
 }
 
 /** FR/EN edition label swaps from shared edition definitions (provider search retries). */
@@ -202,16 +107,6 @@ export function buildFranchisePrefixTitleVariants(title: string): string[] {
   return [...variants].filter((v) => v.toLowerCase() !== trimmed.toLowerCase());
 }
 
-function buildLegendTitleVariants(title: string): string[] {
-  const match = title.match(/^La\s+L[éeè]gende\s+(?:du|de|d')\s+(.+)$/i);
-  if (!match) return [];
-
-  const subject = match[1].trim();
-  if (!subject) return [];
-
-  return [subject, `Legend of ${subject}`, `The Legend of ${subject}`];
-}
-
 function buildApostropheTitleVariants(title: string): string[] {
   const variants = [
     title.replace(/\bde\s+([A-Za-zÀ-ÿ])/g, "d'$1"),
@@ -295,26 +190,10 @@ export function buildSeparatorTitleVariants(title: string): string[] {
   return [...variants];
 }
 
-function deDuplicateWordTailConsonants(title: string): string | null {
-  const normalized = title.replace(/\s+/g, " ").trim();
-  const rewritten = normalized
-    .split(/\s+/)
-    .map((word) => dedupeTokenTailConsonants(word))
-    .join(" ");
-  if (rewritten === normalized) return null;
-  return rewritten;
-}
-
 /** Accent-stripped form ("Pokémon" → "Pokemon") for accent-less provider indexes. */
 function buildAccentInsensitiveVariants(title: string): string[] {
   const stripped = title.normalize("NFD").replace(/[̀-ͯ]/g, "");
   return stripped !== title ? [stripped] : [];
-}
-
-/** Common stylized spellings ("Pitt") -> indexed forms ("Pit"). */
-export function buildStylizedSpellingVariants(title: string): string[] {
-  const deduped = deDuplicateWordTailConsonants(title);
-  return deduped ? [deduped] : [];
 }
 
 function splitCamelCaseWords(title: string): string | null {
@@ -346,20 +225,12 @@ export function buildCamelCaseTitleVariants(title: string): string[] {
 
   const variants = new Set<string>([split, split.replace(/\bX\b/g, "x")]);
 
-  for (const spelling of buildStylizedSpellingVariants(split)) {
-    variants.add(spelling);
-    variants.add(spelling.replace(/\bX\b/g, "x"));
-  }
-
   const withoutX = split
     .replace(/\s+[xX]\s+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (withoutX && withoutX.toLowerCase() !== split.toLowerCase()) {
     variants.add(withoutX);
-    for (const spelling of buildStylizedSpellingVariants(withoutX)) {
-      variants.add(spelling);
-    }
   }
 
   return [...variants].filter(
@@ -385,12 +256,9 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
   };
 
   // Les transformations par-variante s'appliquent aussi au titre demandé
-  // lui-même (forme « Sous-titre: » et graphies dé-stylisées).
+  // lui-même (forme « Sous-titre: »).
   for (const colon of buildSubtitleColonVariants(trimmed)) {
     push(colon);
-  }
-  for (const spelling of buildStylizedSpellingVariants(trimmed)) {
-    push(spelling);
   }
   for (const fused of buildFranchisePrefixTitleVariants(trimmed)) {
     push(fused);
@@ -400,14 +268,11 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
     ...buildCamelCaseTitleVariants(trimmed),
     ...buildRomanRangeTitleVariants(trimmed),
     ...buildRomanNumeralTitleVariants(trimmed),
-    ...buildTokenEquivalentTitleVariants(trimmed),
-    ...buildPhraseEquivalentTitleVariants(trimmed),
     ...buildEditionPhraseEquivalentVariants(trimmed),
     ...buildAccentInsensitiveVariants(trimmed),
     ...buildApostropheTitleVariants(trimmed),
     ...buildSeparatorTitleVariants(trimmed),
     ...buildBundleTitleSearchVariants(trimmed),
-    ...buildLegendTitleVariants(trimmed),
   ]) {
     push(value);
     // Chaque variante existe aussi sans accents (indexes providers accent-less)
@@ -417,9 +282,6 @@ export function buildStructuralTitleSearchVariants(title: string): string[] {
     }
     for (const colon of buildSubtitleColonVariants(value)) {
       push(colon);
-    }
-    for (const spelling of buildStylizedSpellingVariants(value)) {
-      push(spelling);
     }
   }
 

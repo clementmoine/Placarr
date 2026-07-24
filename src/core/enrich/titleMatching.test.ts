@@ -96,21 +96,21 @@ describe("buildRequestedTitleFallbackVariants", () => {
     ).toEqual(expect.arrayContaining(["Monopoly"]));
   });
 
-  it("maps french colour names to english equivalents", () => {
-    expect(buildRequestedTitleFallbackVariants("Pokemon Jaune")).toEqual(
-      expect.arrayContaining(["Pokemon Yellow"]),
+  it("does not invent FR↔EN colour aliases for search variants", () => {
+    expect(buildRequestedTitleFallbackVariants("Pokemon Jaune")).not.toContain(
+      "Pokemon Yellow",
     );
-    // Le sens accents → sans-accents est structurel (aucune paire nommée) ;
-    // l'orthographe accentuée officielle vient des alternate names providers.
-    expect(buildRequestedTitleFallbackVariants("Pokémon Jaune")).toEqual(
-      expect.arrayContaining(["Pokémon Yellow", "Pokemon Yellow"]),
-    );
+    // Accents → sans-accents reste structurel.
+    const accented = buildRequestedTitleFallbackVariants("Pokémon Jaune");
+    expect(accented).toEqual(expect.arrayContaining(["Pokemon Jaune"]));
+    expect(accented).not.toContain("Pokemon Yellow");
+    expect(accented).not.toContain("Pokémon Yellow");
   });
 
-  it("splits subtitles on colon separators", () => {
-    expect(buildRequestedTitleFallbackVariants("La Légende Du Dragon")).toEqual(
-      expect.arrayContaining(["Dragon"]),
-    );
+  it("does not invent Legend of X from La Légende du X", () => {
+    const variants = buildRequestedTitleFallbackVariants("La Légende Du Dragon");
+    expect(variants).not.toContain("Dragon");
+    expect(variants).not.toContain("Legend of Dragon");
   });
 });
 
@@ -632,7 +632,7 @@ describe("isMetadataTitleAligned", () => {
     expect(supplemented.facts).toHaveLength(2);
   });
 
-  it("accepts stylized fused titles against their spaced catalog names", () => {
+  it("accepts fused titles when the bag already carries the spaced catalog form", () => {
     expect(
       isMetadataTitleAligned(
         { title: "Ball x Pit" },
@@ -640,6 +640,12 @@ describe("isMetadataTitleAligned", () => {
         0.58,
       ),
     ).toBe(true);
+  });
+
+  it("does not invent Pitt≡Pit — fused bag alone is not enough for Pit catalog", () => {
+    expect(
+      isMetadataTitleAligned({ title: "Ball x Pit" }, ["BallXPitt"], 0.58),
+    ).toBe(false);
   });
 
   it("rejects spinoff markers absent from the requested title", () => {
@@ -820,10 +826,20 @@ describe("isMetadataTitleAligned", () => {
     ).toBe(false);
   });
 
-  it("accepts cross-language pokemon version titles", () => {
+  it("does not invent jaune≡yellow — Yellow only aligns via provider alias in bag", () => {
     expect(
       isMetadataTitleAligned(
         { title: "Pokemon Yellow" },
+        ["Pokemon Jaune"],
+        0.58,
+      ),
+    ).toBe(false);
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "Pokemon Yellow",
+          regionalTitles: [{ region: "fr", text: "Pokemon Jaune" }],
+        },
         ["Pokemon Jaune"],
         0.58,
       ),
@@ -838,6 +854,16 @@ describe("isMetadataTitleAligned", () => {
       isMetadataTitleAligned(
         { title: "Tekken 7 sur PS4" },
         ["Tekken 7 Deluxe Edition"],
+        0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts chocobonplan titles with a trailing sur NEOGEO AES+ suffix", () => {
+    expect(
+      isMetadataTitleAligned(
+        { title: "Garou: Mark of the Wolves sur NEOGEO AES+" },
+        ["Garou Mark of the Wolves"],
         0.58,
       ),
     ).toBe(true);
@@ -894,6 +920,43 @@ describe("catalogAttachmentTitleConflicts", () => {
         "Naruto n°51",
         "Coque compatible pour Ipod TOUCH 7 MANGA NARUTO 51",
         { mediaType: "books" },
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects a generic Slim cover when the product is Slim Rose", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Sony Playstation 2 Slim Rose",
+        "Sony Playstation 2 Slim",
+        { mediaType: "hardware" },
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps Back Market FR finish titles against PriceCharting EN catalog titles", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Blue Nintendo Wii System",
+        "Nintendo Wii - Bleu",
+        { mediaType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Slim Playstation 2 System [Pink]",
+        "Sony PlayStation 2 Slim - Rose",
+        { mediaType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a finish-mismatched hardware gallery title", () => {
+    expect(
+      catalogAttachmentTitleConflicts(
+        "Blue Nintendo Wii System",
+        "Nintendo Wii - Rose",
+        { mediaType: "hardware" },
       ),
     ).toBe(true);
   });
@@ -1140,10 +1203,21 @@ describe("metadataTitleSimilarity", () => {
     ).toBe(false);
   });
 
-  it("keeps cross-language pokemon version titles aligned", () => {
+  it("does not invent jaune≡yellow without a provider alias", () => {
     expect(
       metadataTitleSimilarity("Pokemon Jaune", "Pokemon Yellow"),
-    ).toBeGreaterThanOrEqual(0.58);
+    ).toBeLessThan(0.58);
+
+    expect(
+      isMetadataTitleAligned(
+        {
+          title: "Pokemon Yellow",
+          regionalTitles: [{ region: "fr", text: "Pokemon Jaune" }],
+        },
+        ["Pokemon Jaune"],
+        0.58,
+      ),
+    ).toBe(true);
   });
 
   it("aligns FR retail titles via provider alternate names, not a hand map", () => {
@@ -1206,6 +1280,36 @@ describe("metadataTitleSimilarity", () => {
         },
         ["Star Wars: La Saga américaine"],
         0.58,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects Pokémon OLED console for a Zelda OLED edition request", () => {
+    const requested = "Nintendo Switch OLED Édition The Legend of Zelda";
+    expect(
+      isMetadataTitleAligned(
+        {
+          title:
+            "Console Nintendo Switch Modèle OLED Edition Pokémon Ecarlate & Pokémon Violet",
+        },
+        buildMetadataAlignmentNames(requested),
+        0.58,
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("accepts FR Modèle OLED Zelda edition against the same request", () => {
+    const requested = "Nintendo Switch OLED Édition The Legend of Zelda";
+    expect(
+      isMetadataTitleAligned(
+        {
+          title:
+            "Console Nintendo Switch Modèle OLED Édition The Legend of Zelda",
+        },
+        buildMetadataAlignmentNames(requested),
+        0.58,
+        { shelfType: "hardware" },
       ),
     ).toBe(true);
   });

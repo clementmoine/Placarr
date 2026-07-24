@@ -2,7 +2,7 @@ import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
-import { marketplaceContributions } from "@/core/identify/lookup/sourceContribution";
+import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import {
   makeObservationUsage,
@@ -40,6 +40,7 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "musics",
   "movies",
   "boardgames",
+  "hardware",
   "generic",
 ];
 const PRICE_SOURCE = "AchatMoinsCher";
@@ -207,7 +208,7 @@ export const achatmoinscherModule: ProviderModule = {
   info: {
     id: "achatmoinscher",
     label: "AchatMoinsCher",
-    types: ["games", "movies", "musics", "books", "boardgames"],
+    types: ["games", "movies", "musics", "books", "boardgames", "hardware"],
     capabilities: ["identify", "price", "cover"],
     // The metadata adapter only returns title + cover; price is served by the
     // separate barcode/price-task flow. Without this, the metadata price-chase
@@ -323,13 +324,18 @@ export const achatmoinscherModule: ProviderModule = {
     );
   },
   buildBarcodeSources(payload, ctx) {
-    return marketplaceContributions("AchatMoinsCher", payload.amc, ctx, [
-      "games",
-      "musics",
-      "movies",
-      "boardgames",
-      "books",
-    ]);
+    return [
+      ...marketplaceContributions("AchatMoinsCher", payload.amc, ctx, [
+        "games",
+        "musics",
+        "movies",
+        "boardgames",
+        "books",
+      ]),
+      ...typedOnlyContributions("AchatMoinsCher", payload.amc, ctx, [
+        "hardware",
+      ]),
+    ];
   },
   extractScanPriceOffers(payload) {
     const priced = payload.amc.find(

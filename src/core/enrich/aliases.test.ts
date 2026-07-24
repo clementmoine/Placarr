@@ -2,9 +2,26 @@ import { describe, expect, it } from "vitest";
 
 import {
   aliasesExcludingTitle,
+  catalogAliasesFromNames,
   collectMergedSearchAliases,
   promoteTitleKeepingAliases,
 } from "@/core/enrich/aliases";
+
+describe("catalogAliasesFromNames", () => {
+  it("keeps official alternates distinct from the display title", () => {
+    expect(
+      catalogAliasesFromNames("Pokemon Yellow", [
+        "Pokemon Yellow",
+        "Pokemon Jaune",
+        "Pocket Monsters Pikachu",
+      ]),
+    ).toEqual(["Pokemon Jaune", "Pocket Monsters Pikachu"]);
+  });
+
+  it("drops noise placeholders", () => {
+    expect(catalogAliasesFromNames("Catan", ["n/c", "Catan"])).toBeUndefined();
+  });
+});
 
 describe("metadataAliases", () => {
   it("parses JSON string aliases and array aliases", async () => {

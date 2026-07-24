@@ -94,6 +94,21 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
     ).toBe("Super Paper Mario Nintendo Selects");
   });
 
+  it("keeps Game & Watch device names (bare 'game' noise must not eat them)", () => {
+    expect(
+      cleanTitleForDisplay("Game & Watch Super Mario Bros", {
+        preservePlatformSuffix: true,
+      }),
+    ).toBe("Game & Watch Super Mario Bros");
+    // Parenthetical form retains the device name (trailing ')' may be trimmed
+    // by punctuation cleanup — the identity phrase must survive).
+    expect(
+      cleanTitleForDisplay("Super Mario Bros (Game & Watch)", {
+        preservePlatformSuffix: true,
+      }),
+    ).toMatch(/Game\s*&\s*Watch/i);
+  });
+
   it("retire un préfixe plateforme marketplace sauf si le canonique l'affirme", () => {
     // Marketplace seul : préfixe plateforme = bruit listing (comme Xbox, PS…).
     expect(cleanTitleForDisplay("Wii Play")).toBe("Play");
@@ -240,6 +255,42 @@ describe("areLikelySameProduct", () => {
 
   it("sépare les produits différents", () => {
     expect(areLikelySameProduct("Tetris", "Final Fantasy VII")).toBe(false);
+  });
+
+  it("treats PriceCharting System/Console chrome as the same console SKU", () => {
+    expect(areLikelySameProduct("Nintendo 64", "Nintendo 64 System")).toBe(
+      true,
+    );
+    expect(
+      listingIsDistinctProductSpinoff("Nintendo 64", "Nintendo 64 System"),
+    ).toBe(false);
+    expect(
+      aliasBelongsInPriceLookup("Nintendo 64", "Nintendo 64 System"),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(["Nintendo 64"], "Nintendo 64 System", {
+        shelfType: "hardware",
+      }),
+    ).toBe(true);
+  });
+
+  it("folds FR console capacity units for PriceCharting EN listings (60Go ≡ 60GB)", () => {
+    expect(
+      areLikelySameProduct(
+        "PlayStation 3 60Go",
+        "Playstation 3 60GB Console",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["PlayStation 3 60Go"],
+        "Playstation 3 60GB Console",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(true);
+    expect(
+      areLikelySameProduct("PlayStation 3 60Go", "Playstation 3 80GB Console"),
+    ).toBe(false);
   });
 });
 
@@ -644,6 +695,61 @@ describe("priceListingMatchesAnyItemName", () => {
         "The Bittersweet Symphony Duet Tome 1 Drive (Grand format)",
       ),
     ).toBe(false);
+  });
+
+  it("rejects hardware false friends (game / remake / kit / generation)", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Nintendo Switch"],
+        "Nintendo Switch Sports",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Nintendo Switch"],
+        "Nintendo Switch 2",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Nintendo NES"],
+        "Kit restauration condensateurs - Nintendo NES",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Nintendo NES"],
+        "Nintendo Classic Mini NES 2016 512Mo",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["PlayStation"],
+        "Sony PlayStation 5 Slim Digital Edition 1To",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps honest hardware catalog titles", () => {
+    expect(
+      priceListingMatchesAnyItemName(
+        ["PlayStation 4 Pro"],
+        "Sony PlayStation 4 (PS4) Pro 1To",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(true);
+    expect(
+      priceListingMatchesAnyItemName(
+        ["Nintendo NES"],
+        "Nintendo NES Deluxe Set Console",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(true);
   });
 });
 

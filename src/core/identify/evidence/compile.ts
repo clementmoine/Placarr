@@ -8,6 +8,7 @@ import {
   isListingDiscardable,
   normalizeForTokens,
 } from "@/core/identify/titleUtils";
+import { listingLooksLikeConsoleSystemProduct } from "@/core/identify/listingMerch";
 import {
   compareBarcodeEvidenceByObservationRank,
   observationsFromBarcodeEvidenceList,
@@ -38,7 +39,7 @@ import {
   LISTING_PUBLISHER_BRAND_TOKENS,
   NON_CANONICAL_CONTEXT_TOKENS,
 } from "@/core/identify/listingTerms";
-import { BUNDLE_PERIPHERAL_TOKENS } from "@/core/identify/listingMerch";
+import { HARDWARE_CONTROLLER_FAMILY_TOKENS } from "@/core/enrich/titles/identityNoise";
 import { applyEditionToCompiledResult } from "./edition";
 import type {
   CompiledResult,
@@ -525,17 +526,30 @@ export async function compileResultForType(
     .filter((e) => e.isCanonical || e.isTrustedRetailer || e.catalogTitleAnchor)
     .map((e) => e.cleanName)
     .filter(Boolean);
-  const consensusTitleValue = selectConsensusTitle({
+  // Catalog anchors already vote via `canonical` — do not also count them as
+  // marketplace listings, or a lone noisy seller can strip console identity
+  // ("PAC Man Atari Console…" → "Pac Man Edition").
+  const marketplaceConsensusTitles = sourceEvidence
+    .filter(
+      (e) =>
+        !e.isCanonical && !e.isTrustedRetailer && !e.catalogTitleAnchor,
+    )
+    .map((e) =>
+      cleanTitleForDisplay(e.rawName, {
+        preserveEditionTerms: true,
+        preserveLeadingPrefixesAffirmedBy: affirmedLeadingPrefixes,
+      }),
+    );
+  let consensusTitleValue = selectConsensusTitle({
     canonical: affirmedLeadingPrefixes,
-    marketplace: sourceEvidence
-      .filter((e) => !e.isCanonical && !e.isTrustedRetailer)
-      .map((e) =>
-        cleanTitleForDisplay(e.rawName, {
-          preserveEditionTerms: true,
-          preserveLeadingPrefixesAffirmedBy: affirmedLeadingPrefixes,
-        }),
-      ),
+    marketplace: marketplaceConsensusTitles,
   });
+  consensusTitleValue = preferHardwareCatalogConsoleTitle(
+    type,
+    consensusTitleValue,
+    sourceEvidence.filter((e) => e.catalogTitleAnchor),
+    marketplaceConsensusTitles,
+  );
 
   // Let a strong, independent marketplace consensus lead when it contradicts
   // the lone canonical source (see helper above).
@@ -645,20 +659,20 @@ export async function compileResultForType(
   const finalSuggestions = filterPlatformRedundancies(
     uniqueClean(
       matches.flatMap((match) => [match.name, ...match.suggestions]),
-      { preservePlatformSuffix: type === "games" },
+      { preservePlatformSuffix: type === "games" || type === "hardware" },
     ),
   ).slice(0, 15);
   const rawNames = uniqueClean(
     displayEvidence
       .sort(compareBarcodeEvidenceByObservationRank)
       .flatMap((evidence) => [evidence.title, evidence.cleanName]),
-    { preservePlatformSuffix: type === "games" },
+    { preservePlatformSuffix: type === "games" || type === "hardware" },
   ).slice(0, 15);
   const platformEvidence = allEvidence.filter(
     (evidence) => !evidence.contradictedByConsensus,
   );
   const platformKey =
-    type === "games"
+    type === "games" || type === "hardware"
       ? matches[0]?.platformKey ||
         pickPlatformKeyFromEvidence(
           platformEvidence.length > 0 ? platformEvidence : allEvidence,
@@ -770,6 +784,35 @@ export type ConsensusTitleInput = {
   /** Clean titles from independent marketplace listings — ONE per listing (vote). */
   marketplace: string[];
 };
+
+/**
+ * Hardware catalog anchors that name a console/system must not collapse to a
+ * franchise stem when marketplace corroboration is thin (e.g. one "Pac Man"
+ * lot title against "PAC Man Atari Console & Ghost Joysticks").
+ */
+export function preferHardwareCatalogConsoleTitle(
+  type: string,
+  consensus: string | null,
+  catalogAnchors: Array<{ cleanName: string; rawName: string }>,
+  marketplaceTitles: string[],
+): string | null {
+  if (type !== "hardware") return consensus;
+  const consoleAnchor = catalogAnchors.find(
+    (entry) =>
+      listingLooksLikeConsoleSystemProduct(entry.cleanName) ||
+      listingLooksLikeConsoleSystemProduct(entry.rawName),
+  );
+  if (!consoleAnchor?.cleanName) return consensus;
+
+  const anchorTokenCount = significantTokens(consoleAnchor.cleanName).length;
+  const consensusTokenCount = significantTokens(consensus || "").length;
+  const thinMarketplace = marketplaceTitles.length < 2;
+  const consensusIsStem = consensusTokenCount + 1 < anchorTokenCount;
+  if (thinMarketplace || consensusIsStem) {
+    return consoleAnchor.cleanName;
+  }
+  return consensus;
+}
 
 // A token must reach this share of listings (and at least this count) to be a
 // marketplace-AGREED part of the title — so one noisy listing can't inject a
@@ -966,7 +1009,7 @@ export async function buildDatabaseEvidence(
   // Confront a wider slice so a specific edition the marketplace names ("… II:
   // The Arcade Game") is resolved even when noisier base-ish listings come first.
   const uniqueNames = uniqueClean(names, {
-    preservePlatformSuffix: type === "games",
+    preservePlatformSuffix: type === "games" || type === "hardware",
   }).slice(0, 8);
   const resolved = await Promise.all(
     uniqueNames.map(async (name) => {
@@ -999,7 +1042,7 @@ const RESOLVER_GENERIC_TOKENS = new Set([
   ...GENERIC_TITLE_TOKENS,
   "video",
   ...LISTING_PUBLISHER_BRAND_TOKENS,
-  ...BUNDLE_PERIPHERAL_TOKENS,
+  ...HARDWARE_CONTROLLER_FAMILY_TOKENS,
   ...LISTING_DISCARD_PACKAGING_NOUNS.filter(
     (term) => !/\s/.test(term) && term.length >= 2,
   ),
@@ -1375,7 +1418,7 @@ export function resolveEvidenceToMatches(
             .sort(compareBarcodeEvidenceByObservationRank)
             .flatMap((e) => [e.title, e.cleanName]),
         ],
-        { preservePlatformSuffix: type === "games" },
+        { preservePlatformSuffix: type === "games" || type === "hardware" },
       ),
     );
 

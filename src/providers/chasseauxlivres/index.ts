@@ -70,6 +70,7 @@ export {
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",
+  "hardware",
   "books",
   "musics",
   "movies",
@@ -79,10 +80,13 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
 
 const CATALOG: Record<BarcodeLookupType, string> = {
   games: CHASSE_AUX_LIVRES_CATALOG_BY_TYPE.games,
+  hardware: CHASSE_AUX_LIVRES_CATALOG_BY_TYPE.hardware,
   books: CHASSE_AUX_LIVRES_CATALOG_BY_TYPE.books,
   musics: CHASSE_AUX_LIVRES_CATALOG_BY_TYPE.musics,
   movies: CHASSE_AUX_LIVRES_CATALOG_BY_TYPE.movies,
   boardgames: CHASSE_AUX_LIVRES_CATALOG_BY_TYPE.boardgames,
+  tcg: "",
+  toys: "",
   generic: "",
 };
 const PRICE_SOURCE = "ChasseAuxLivres";
@@ -218,7 +222,7 @@ function buildChasseProductValidator(input: {
     if (input.expectedNames.length === 0) return true;
 
     return input.expectedNames.some((name) =>
-      input.shelfType === "games"
+      input.shelfType === "games" || input.shelfType === "hardware"
         ? isNameOnlyRetailerTitleMatch(name, product.name)
         : isChasseTitleAligned(name, product.name),
     );
@@ -488,7 +492,7 @@ export const chasseauxlivresModule: ProviderModule = {
   info: {
     id: "chasseauxlivres",
     label: "Chasse aux Livres",
-    types: ["books", "musics", "movies", "boardgames"],
+    types: ["books", "musics", "movies", "boardgames", "hardware"],
     capabilities: [
       "identify",
       "price",
@@ -649,6 +653,13 @@ export const chasseauxlivresModule: ProviderModule = {
       ...scopedContribution(
         L,
         "games",
+        payload.calJeuxVideo,
+        payload.calGeneric,
+        ctx,
+      ),
+      ...scopedContribution(
+        L,
+        "hardware",
         payload.calJeuxVideo,
         payload.calGeneric,
         ctx,

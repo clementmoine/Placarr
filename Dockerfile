@@ -42,56 +42,30 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-# Production image, copy all the files and run next
+# All-in-one production image: Next + background workers (Plex-style).
 FROM base AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Uncomment the following line in case you want to disable telemetry during runtime.
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+# DATABASE_URL is provided at runtime (PostgreSQL) via compose/env.
 
-COPY --from=builder /app/public ./public
+# Full tree so tsx can run scripts/backgroundWorker.ts beside the standalone server.
+COPY --from=builder /app /app
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Standalone Next expects static + public next to server.js.
+RUN mkdir -p .next/standalone/.next \
+  && cp -R .next/static .next/standalone/.next/static \
+  && cp -R public .next/standalone/public
 
-# Copy Prisma schema and migrations
-COPY --from=builder /app/prisma/schema.prisma ./prisma/
-COPY --from=builder /app/prisma/migrations ./prisma/migrations
+RUN mkdir -p /config /app/public/uploads /app/.cache /app/prisma
 
-# Create directory for config and set permissions
-RUN mkdir -p /config
-
-# Points de montage des données runtime (volumes compose) : uploads utilisateur
-# et index SQLite providers (.cache). Créés vides pour que l'app fonctionne
-# aussi sans volume.
-RUN mkdir -p /app/public/uploads /app/.cache
-
-# Create directory for prisma and set permissions
-RUN mkdir -p /app/prisma 
-
-# Copy start script
 COPY init.sh /app/init.sh
 RUN chmod +x /app/init.sh
 
 EXPOSE 3000
 
-ENV PORT=3000
-# DATABASE_URL est fournie à l'exécution (PostgreSQL) via compose/env.
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-ENV HOSTNAME="0.0.0.0"
 CMD ["/app/init.sh"]
-
-# Out-of-process background worker (metadata + prices). Needs source + tsx.
-FROM base AS worker
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-COPY --from=builder /app /app
-RUN mkdir -p /config /app/public/uploads /app/.cache
-
-CMD ["./node_modules/.bin/tsx", "scripts/backgroundWorker.ts"]

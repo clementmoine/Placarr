@@ -7,6 +7,7 @@ import {
   artistFromCredit,
 } from "./fetch";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -178,6 +179,10 @@ function createMusicBrainzAdapter(): MetadataProviderAdapter {
         authors: mb.artist ? [{ name: mb.artist }] : [],
         tracksCount: mb.tracksCount || undefined,
         imageUrl: mb.imageUrl || undefined,
+        aliases: catalogAliasesFromNames(mb.title, [
+          mb.releaseTitle,
+          ...(mb.aliases || []),
+        ]),
         facts: facts.length > 0 ? facts : undefined,
         externalIds: mb.mbid ? { musicbrainz: mb.mbid } : undefined,
       } satisfies MetadataResult;

@@ -17,19 +17,33 @@ describe("itemModalSession", () => {
     ).toBeNull();
   });
 
-  it("builds a stable edit session key from metadata stamp", () => {
-    const key = itemModalSessionKey({
-      isOpen: true,
-      itemId: "item-1",
-      item: {
-        id: "item-1",
-        metadataId: "meta-1",
-        metadata: { lastFetched: new Date("2026-07-05T12:00:00.000Z") },
-      } as never,
-      shelfId: "shelf-1",
-    });
+  it("builds a stable edit session key that ignores metadata refresh stamps", () => {
+    const item = {
+      id: "item-1",
+      metadataId: "meta-1",
+      metadata: { lastFetched: new Date("2026-07-05T12:00:00.000Z") },
+    } as never;
 
-    expect(key).toBe("edit:item-1:2026-07-05T12:00:00.000Z");
+    expect(
+      itemModalSessionKey({
+        isOpen: true,
+        itemId: "item-1",
+        item,
+        shelfId: "shelf-1",
+      }),
+    ).toBe("edit:item-1");
+
+    expect(
+      itemModalSessionKey({
+        isOpen: true,
+        itemId: "item-1",
+        item: {
+          ...item,
+          metadata: { lastFetched: new Date("2026-07-05T13:00:00.000Z") },
+        } as never,
+        shelfId: "shelf-1",
+      }),
+    ).toBe("edit:item-1");
   });
 
   it("seeds edit sessions from stored item metadata", () => {

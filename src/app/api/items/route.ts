@@ -522,10 +522,10 @@ export async function PATCH(req: NextRequest) {
       const shelfChanged =
         typeof data.shelfId === "string" && data.shelfId !== item.shelfId;
 
-      if (typeof data.name === "string") {
+      if (typeof data.name === "string" || shelfChanged) {
         data.slug = await allocateUniqueItemSlug(
           typeof data.shelfId === "string" ? data.shelfId : item.shelfId,
-          data.name,
+          typeof data.name === "string" ? data.name : item.name,
           { excludeItemId: resolvedId },
         );
       }
@@ -536,6 +536,8 @@ export async function PATCH(req: NextRequest) {
 
       if (data.imageUrl) {
         const previousImageUrl = item.imageUrl;
+        const selectedImageUrl =
+          typeof data.imageUrl === "string" ? data.imageUrl : null;
         data.imageUrl = await downloadRemoteImage(data.imageUrl);
         if (data.imageUrl) {
           data.imageUrl = await cropImageIfNeeded(data.imageUrl, {
@@ -550,6 +552,7 @@ export async function PATCH(req: NextRequest) {
             item.metadataId,
             data.imageUrl,
             previousImageUrl,
+            selectedImageUrl,
           );
           if (synced.preferredImageUrl) {
             data.imageUrl = synced.preferredImageUrl;

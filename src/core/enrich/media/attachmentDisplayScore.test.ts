@@ -296,6 +296,36 @@ describe("attachmentDisplayScore", () => {
     ).toBe("/uploads/disc.jpg");
   });
 
+  it("priorise System Only quand preferSystemOnlyCover (console loose)", () => {
+    const metrics = new Map([
+      ["/uploads/system-only.jpg", { width: 1200, height: 900, format: "jpeg" }],
+      ["/uploads/box.jpg", { width: 800, height: 1100, format: "jpeg" }],
+    ]);
+
+    expect(
+      pickBestCoverFromAttachments(
+        [
+          {
+            type: "cover",
+            source: "pricecharting",
+            role: "us",
+            title: "Main Image",
+            url: "/uploads/box.jpg",
+          },
+          {
+            type: "image",
+            source: "pricecharting",
+            role: "us",
+            title: "System Only",
+            url: "/uploads/system-only.jpg",
+          },
+        ],
+        metrics,
+        { preferSystemOnlyCover: true },
+      ),
+    ).toBe("/uploads/system-only.jpg");
+  });
+
   it("priorise une cover 2D Europe sur une cover 3D France", () => {
     const eu2dCover = {
       type: "cover" as const,

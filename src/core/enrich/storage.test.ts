@@ -6,6 +6,7 @@ import {
   canKeepRemoteImageOnDownloadFailure,
   formatMetadataFromStorage,
   hammingDistance,
+  keepSourcelessCoverOnlyWithoutCatalogTwin,
   looksLikeImageBuffer,
   metadataImageAttachmentSemantics,
   pickVisuallyMatchingCatalogCoverUrl,
@@ -134,7 +135,7 @@ describe("retargetUserHonorPinIfCatalogTwin", () => {
 });
 
 describe("planCroppedCoverAttachmentSync", () => {
-  it("does not rewrite the previous cover when the user picks a different image", () => {
+  it("updates the picked provider cover without inventing a Perso pin", () => {
     expect(
       planCroppedCoverAttachmentSync(
         [
@@ -158,11 +159,10 @@ describe("planCroppedCoverAttachmentSync", () => {
         attachmentId: "att-b",
         url: "/uploads/cover-b_crop.jpg",
       },
-      { action: "create-user", url: "/uploads/cover-b_crop.jpg" },
     ]);
   });
 
-  it("creates a user pin when a newly localized gallery pick has no matching row", () => {
+  it("creates a user pin only when a newly localized pick has no gallery twin", () => {
     expect(
       planCroppedCoverAttachmentSync(
         [
@@ -183,7 +183,7 @@ describe("planCroppedCoverAttachmentSync", () => {
     ).toEqual([{ action: "create-user", url: "/uploads/new-local_crop.jpg" }]);
   });
 
-  it("only updates the matching row when re-cropping the same cover", () => {
+  it("only updates the matching provider row when re-cropping the same cover", () => {
     expect(
       planCroppedCoverAttachmentSync(
         [
@@ -202,8 +202,23 @@ describe("planCroppedCoverAttachmentSync", () => {
         attachmentId: "att-a",
         url: "/uploads/cover-a_crop.jpg",
       },
-      { action: "create-user", url: "/uploads/cover-a_crop.jpg" },
     ]);
+  });
+
+  it("does not invent Perso when the crop already URL-matches a provider row", () => {
+    expect(
+      planCroppedCoverAttachmentSync(
+        [
+          {
+            id: "att-amc",
+            url: "/uploads/amc-switch_crop.jpg",
+            source: "achatmoinscher",
+          },
+        ],
+        "/uploads/amc-switch_crop.jpg",
+        "/uploads/amc-switch_crop.jpg",
+      ),
+    ).toEqual([{ action: "noop" }]);
   });
 
   it("realigns an orphan user pin when re-saving the stored cover", () => {
@@ -234,6 +249,29 @@ describe("planCroppedCoverAttachmentSync", () => {
         action: "update",
         attachmentId: "att-user",
         url: "/uploads/ebay_crop.jpg",
+      },
+    ]);
+  });
+
+  it("folds a remote PrestaShop jaquette onto its local crop without inventing Perso", () => {
+    expect(
+      planCroppedCoverAttachmentSync(
+        [
+          {
+            id: "att-ngr",
+            url: "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg",
+            source: null,
+          },
+        ],
+        "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_crop.jpg",
+        null,
+        "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg",
+      ),
+    ).toEqual([
+      {
+        action: "update",
+        attachmentId: "att-ngr",
+        url: "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_crop.jpg",
       },
     ]);
   });
@@ -497,6 +535,23 @@ describe("metadataImageAttachmentSemantics", () => {
     });
   });
 
+  it("récupère PriceCharting via coverUrlHost quand la galerie n'a pas l'attachment", () => {
+    expect(
+      metadataImageAttachmentSemantics(
+        {
+          imageUrl:
+            "https://storage.googleapis.com/images.pricecharting.com/pink/1600.jpg",
+        },
+        "https://storage.googleapis.com/images.pricecharting.com/pink/1600.jpg",
+      ),
+    ).toEqual({
+      type: "cover",
+      role: undefined,
+      source: "pricecharting",
+      title: undefined,
+    });
+  });
+
   it("garde les métadonnées d'attachment explicites quand elles existent", () => {
     expect(
       metadataImageAttachmentSemantics(
@@ -520,6 +575,48 @@ describe("metadataImageAttachmentSemantics", () => {
       source: "bgg",
       title: "Box front",
     });
+  });
+});
+
+describe("keepSourcelessCoverOnlyWithoutCatalogTwin", () => {
+  it("drops a sourceless orphan when a stamped catalog twin shares the URL", () => {
+    const gallery = [
+      { type: "cover" as AttachmentType, url: "/uploads/a.jpg", source: null },
+      {
+        type: "cover" as AttachmentType,
+        url: "/uploads/a.jpg",
+        source: "pricecharting",
+      },
+    ];
+    const hashByUrl = new Map<string, string>();
+    expect(
+      gallery.filter((attachment) =>
+        keepSourcelessCoverOnlyWithoutCatalogTwin(
+          attachment,
+          gallery,
+          hashByUrl,
+        ),
+      ),
+    ).toEqual([
+      {
+        type: "cover",
+        url: "/uploads/a.jpg",
+        source: "pricecharting",
+      },
+    ]);
+  });
+
+  it("keeps a sourceless cover when no catalog twin exists", () => {
+    const gallery = [
+      { type: "cover" as AttachmentType, url: "/uploads/only.jpg", source: null },
+    ];
+    expect(
+      keepSourcelessCoverOnlyWithoutCatalogTwin(
+        gallery[0],
+        gallery,
+        new Map(),
+      ),
+    ).toBe(true);
   });
 });
 

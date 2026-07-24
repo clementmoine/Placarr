@@ -12,7 +12,7 @@ import {
 } from "@/lib/dev/teardownUtils";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { gatedContributions } from "@/core/identify/lookup/sourceContribution";
+import { gatedContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import {
   fetchPricesFromLeDenicheur,
@@ -37,6 +37,7 @@ const BARCODE_TYPES: BarcodeLookupType[] = [
   "musics",
   "movies",
   "boardgames",
+  "hardware",
   "generic",
 ];
 const PRICE_SOURCE = "LeDenicheur";
@@ -78,6 +79,7 @@ async function refreshLeDenicheurOffers(ctx: BarcodePriceRefreshContext) {
   const result = await fetchPricesFromLeDenicheur(ctx.leDenicheurQueries, {
     itemBarcode: ctx.cleanedBarcode,
     itemTitle: ctx.primaryName,
+    shelfType: ctx.shelfType,
   });
   if (!result?.priceNew && !result?.priceUsed) return [];
   return pricedOffers(PRICE_SOURCE, leDenicheurPriceOfferRows(result));
@@ -87,7 +89,7 @@ export const ledenicheurModule: ProviderModule = {
   info: {
     id: "ledenicheur",
     label: "LeDénicheur",
-    types: ["games", "movies", "musics", "books", "boardgames"],
+    types: ["games", "movies", "musics", "books", "boardgames", "hardware"],
     capabilities: ["price", "identify", "cover"],
     auth: { kind: "scrape" },
     canonical: false,
@@ -156,12 +158,17 @@ export const ledenicheurModule: ProviderModule = {
     return mappingRawKeysFromFetch(() => fetchPricesFromLeDenicheur(ctx.name));
   },
   buildBarcodeSources(payload, ctx) {
-    return gatedContributions(
-      "LeDenicheur",
-      leDenicheurProducts(payload.leDenicheur),
-      ctx,
-      ["games", "musics", "movies", "boardgames", "books"],
-    );
+    const products = leDenicheurProducts(payload.leDenicheur);
+    return [
+      ...gatedContributions("LeDenicheur", products, ctx, [
+        "games",
+        "musics",
+        "movies",
+        "boardgames",
+        "books",
+      ]),
+      ...typedOnlyContributions("LeDenicheur", products, ctx, ["hardware"]),
+    ];
   },
   extractScanPriceOffers(payload) {
     if (!payload.leDenicheur) return [];

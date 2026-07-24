@@ -434,4 +434,41 @@ describe("getGalleryImages", () => {
     expect(cover?.source).toBe("screenscraper");
     expect(cover?.providerLabel).toBe("ScreenScraper");
   });
+
+  it("lists PriceCharting back covers omitted from cover-slot ranking", () => {
+    const item = {
+      metadata: {
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "pricecharting",
+            title: "Main Image",
+            role: "us",
+            url: "/uploads/n64-main.jpg",
+          },
+          {
+            type: "image" as const,
+            source: "pricecharting",
+            title: "N64 System As It Comes In Box.",
+            role: "us",
+            url: "/uploads/n64-inbox.jpg",
+          },
+          {
+            type: "cover" as const,
+            source: "pricecharting",
+            title: "Back Cover",
+            role: "back-us",
+            url: "/uploads/n64-back.jpg",
+          },
+        ],
+      },
+      shelf: { type: "hardware", name: "Consoles" },
+    };
+
+    expect(getGalleryImages(item).map((image) => image.url)).toEqual([
+      "/uploads/n64-main.jpg",
+      "/uploads/n64-inbox.jpg",
+      "/uploads/n64-back.jpg",
+    ]);
+  });
 });

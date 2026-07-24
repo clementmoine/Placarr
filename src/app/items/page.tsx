@@ -53,6 +53,7 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath } from "@/lib/routing/slugs";
+import { invalidateShelfQueries } from "@/core/collect/queryCache";
 import {
   DEFAULT_ITEM_COLLECTION_FILTERS,
   parseItemCollectionSort,
@@ -78,6 +79,9 @@ const COLLECTION_SHELF_TYPES = [
   "musics",
   "books",
   "boardgames",
+  "hardware",
+  "tcg",
+  "toys",
 ] as const;
 
 type CollectionShelfType = (typeof COLLECTION_SHELF_TYPES)[number];
@@ -329,12 +333,11 @@ function ItemsPageComponent() {
 
   const invalidateAfterBulk = useCallback(
     (sourceShelfIds: string[], targetShelfId?: string) => {
-      for (const id of new Set([
+      const ids = [
         ...sourceShelfIds,
         ...(targetShelfId ? [targetShelfId] : []),
-      ])) {
-        queryClient.invalidateQueries({ queryKey: ["shelf", id] });
-      }
+      ];
+      void invalidateShelfQueries(queryClient, ids);
       queryClient.invalidateQueries({ queryKey: ["shelves"] });
       queryClient.invalidateQueries({ queryKey: ["collectionItems"] });
       queryClient.invalidateQueries({ queryKey: ["searchItems"] });

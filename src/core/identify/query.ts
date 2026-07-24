@@ -72,6 +72,37 @@ const GENERIC_SHELF_NAME_HINTS: Record<string, string[]> = {
     "tabletop games",
     "jds",
   ],
+  hardware: [
+    "consoles",
+    "console",
+    "manettes",
+    "manette",
+    "controllers",
+    "controller",
+    "hardware",
+    "peripheriques",
+    "peripherique",
+    "accessoires console",
+  ],
+  tcg: [
+    "cartes",
+    "carte",
+    "tcg",
+    "trading cards",
+    "trading card",
+    "pokemon",
+    "lorcana",
+  ],
+  toys: [
+    "jouets",
+    "jouet",
+    "toys",
+    "toy",
+    "figurines",
+    "figurine",
+    "amiibo",
+    "lego",
+  ],
 };
 
 function normalizeShelfName(value: string): string {

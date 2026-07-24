@@ -403,6 +403,7 @@ describe("guessShelfFromBarcodeLookup — match par type résolu", () => {
     ["movies", "Films"],
     ["musics", "CD"],
     ["boardgames", "Jeux de société"],
+    ["hardware", "Consoles"],
   ])("reconnaît une étagère générique pour %s", (shelfType, shelfName) => {
     expect(
       guessShelfFromBarcodeLookup({

@@ -20,7 +20,7 @@ export const fullsetModule: ProviderModule = {
   info: {
     id: "fullset",
     label: "Full Set",
-    types: ["games"],
+    types: ["games", "hardware"],
     capabilities: ["identify", "price", "releaseDate"],
     auth: { kind: "scrape" },
     canonical: false,
@@ -33,7 +33,7 @@ export const fullsetModule: ProviderModule = {
     mappingProbeRetry: true,
     websiteUrl: "https://full-set.net/",
     notes:
-      "Full sets rétro FR : indice de rareté + cote médiane (annonces eBay) + fiche (console, sortie, dev, éditeur). Pas d'EAN ni de jaquette propre — facts uniquement.",
+      "Full sets rétro FR : jeux + consoles/accessoires (cote médiane eBay, rareté). Pas d'EAN ni de jaquette propre — facts uniquement.",
   },
   evidence: {
     label: "Full Set",
@@ -64,12 +64,20 @@ export const fullsetModule: ProviderModule = {
     },
   },
   buildTeardownMetadataTasks(ctx) {
-    return teardownMetadataWhen(
-      ctx,
-      "Full Set",
-      () => fetchFromFullSet(ctx),
-      "games",
-    );
+    return [
+      ...teardownMetadataWhen(
+        ctx,
+        "Full Set",
+        () => fetchFromFullSet(ctx),
+        "games",
+      ),
+      ...teardownMetadataWhen(
+        ctx,
+        "Full Set",
+        () => fetchFromFullSet(ctx),
+        "hardware",
+      ),
+    ];
   },
   mappingProbe: {
     sampleInput: "Rayman",

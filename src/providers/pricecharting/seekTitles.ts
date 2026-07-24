@@ -5,6 +5,7 @@
  */
 
 import { franchiseSequelNumbersConflict } from "@/core/enrich/titleMatching";
+import { residualIdentityMatch } from "@/core/enrich/titles/residualIdentity";
 
 function normalizeTitleTokens(value: string): string[] {
   return value
@@ -13,6 +14,10 @@ function normalizeTitleTokens(value: string): string[] {
     .toLowerCase()
     // Keep franchise compounds aligned: Spider-Man ↔ Spiderman.
     .replace(/-/g, "")
+    // FR console capacity units ≡ PriceCharting EN (250Go ≡ 250GB).
+    .replace(/\b(\d+)\s*(go|gb)\b/g, "$1gb")
+    .replace(/\b(\d+)\s*(to|tb)\b/g, "$1tb")
+    .replace(/\b(\d+)\s*(mo|mb)\b/g, "$1mb")
     .split(/[^a-z0-9]+/)
     .filter((token) => token.length > 1);
 }
@@ -93,6 +98,22 @@ export function titleFamilyAffinity(a: string, b: string): number {
 }
 
 /**
+ * Bag-listed compact sibling lines (Rose vs Pink): residual would reject them
+ * as `series_suffix_mismatch` without an invented FR↔EN alias. If the
+ * MatchContext already carries both, keep the alias for catalog accept.
+ */
+function isBagListedCompactSibling(primary: string, alias: string): boolean {
+  const result = residualIdentityMatch({
+    requestTitles: [primary],
+    candidateTitles: [alias],
+  });
+  return (
+    result.decision === "reject" &&
+    result.reasons.includes("series_suffix_mismatch")
+  );
+}
+
+/**
  * Rank lookup titles for PriceCharting seek: prefer titles close to the primary
  * and specific enough to disambiguate sequels/regional editions.
  * Short franchise-only labels ("Need for Speed") sink to the end.
@@ -132,6 +153,8 @@ export function rankPriceChartingSeekTitles(
  * Titles trusted when accepting a catalog hit.
  * - Always keep the primary.
  * - Keep specific aliases (4+ tokens) that still share family tokens with primary.
+ * - Keep bag-listed compact siblings (`series_suffix_mismatch` without invented
+ *   FR↔EN aliases — e.g. Rose vs Pink only when both are already in the bag).
  * - Drop short franchise-only labels unless they are nearly identical to primary.
  * - Drop long outlier aliases (wrong generation) with weak affinity.
  */
@@ -153,6 +176,7 @@ export function priceChartingAcceptanceTitleBag(
     // Drop sequel/generation outliers even when they share a franchise stem
     // ("Baten Kaitos II" next to the FR Eternal Wings primary).
     if (franchiseSequelNumbersConflict([primary], title)) return false;
+    if (isBagListedCompactSibling(primary, title)) return true;
     const affinity = titleFamilyAffinity(title, primary);
     const specificity = priceChartingSeekTitleSpecificity(title);
     if (specificity <= 3) return affinity >= 0.5;

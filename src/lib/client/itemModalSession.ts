@@ -62,11 +62,11 @@ export function itemModalSessionKey({
 }: ItemModalSessionKeyInput): string | null {
   if (!isOpen) return null;
   if (itemId) {
+    // Wait until the item query has resolved, then keep one stable session for
+    // the whole edit. Do not key on metadata.lastFetched — enrich completion
+    // would re-bootstrap and wipe in-progress form edits (e.g. shelf moves).
     if (!item) return null;
-    const metadataStamp = item.metadata?.lastFetched
-      ? new Date(item.metadata.lastFetched).toISOString()
-      : (item.metadataId ?? "none");
-    return `edit:${itemId}:${metadataStamp}`;
+    return `edit:${itemId}`;
   }
 
   const prefilledShelfId = prefilledValues?.shelfId ?? shelfId;

@@ -23,7 +23,7 @@ import { fetchAndStoreMetadata } from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import {
   itemPricesContextFromRecord,
-  itemPricesNeedRefresh,
+  itemPricesRefreshForceReason,
   refreshItemPricesFromContext,
   type ItemPricesContext,
 } from "@/core/commerce/pricing/itemDisplay";
@@ -106,9 +106,12 @@ async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
   try {
     await repairProviderExternalLinksForItem(itemId);
     const context = itemPricesContextFromRecord(item);
-    // Soft enqueue only when cache is missing/stale — never force. A metadata
-    // wave used to stamp force:true on every item and flood the worker for hours.
-    if (!(await itemPricesNeedRefresh(context))) return;
+    const forceReason = await itemPricesRefreshForceReason(context);
+    if (!forceReason) return;
+
+    // Soft for age/missing; force when an approved fiche URL disagrees with the
+    // cached reference offer (generic Slim vs Pink pin).
+    const force = forceReason === "approved-fiche-mismatch";
 
     await enqueueBackgroundWorkJob({
       kind: BACKGROUND_WORK_KIND.priceRefresh,
@@ -129,7 +132,7 @@ async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
         metadataFacts: context.metadataFacts,
         shelfType: context.shelfType,
         shelfName: context.shelfName,
-        force: false,
+        force,
       } as unknown as Prisma.InputJsonValue,
     });
   } catch (error) {

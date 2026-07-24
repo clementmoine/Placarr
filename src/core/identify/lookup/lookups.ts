@@ -149,6 +149,32 @@ export async function runBarcodeLookups(params: {
     return payload;
   }
 
+  if (type === "hardware") {
+    const lookups = await resolveBarcodeLookupTasks(
+      taskBuilders.hardware({ barcode: cleanedBarcode }),
+    );
+    payload.pc = asPriceChartingHit(lookups.pc);
+    // Collector catalog can name console SKUs ("… Console …"); keep the hit so
+    // catalogTitleAnchor can confirm hardware when PriceCharting misses the UPC.
+    const iceCatalog = catalogIceBarcodeHit(
+      asICollectHit(lookups.ice),
+      contextPlatformKey,
+    );
+    payload.ice = iceCatalog.ice;
+    payload.calJeuxVideo = asNamedListings(lookups.cal);
+    payload.amc = asNamedListings(lookups.amc);
+    payload.freakxy = asNamedListings(lookups.freakxy);
+    payload.ebay = asNamedListings(lookups.ebay);
+    payload.leDenicheur = asLeDenicheurHit(lookups.leDenicheur);
+    payload.retailers = collectRetailerBarcodeHits(lookups);
+    return payload;
+  }
+
+  // tcg / toys: no specialist barcode path yet — honest empty (UI blocked).
+  if (type === "tcg" || type === "toys") {
+    return payload;
+  }
+
   const lookups = await resolveBarcodeLookupTasks(
     taskBuilders.generic({ barcode: cleanedBarcode }),
   );

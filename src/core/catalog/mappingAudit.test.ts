@@ -63,6 +63,7 @@ describe("provider mapping probes", () => {
         "achatmoinscher",
         "archichouette",
         "babelio",
+        "backmarket",
         "bcdjeux",
         "bdfugue",
         "bdovore",

@@ -122,6 +122,29 @@ export function aliasesExcludingTitle(
   return aliases.length > 0 ? aliases : undefined;
 }
 
+/**
+ * Official catalog alternate names from a provider payload → MetadataResult.aliases.
+ * Marketplace listing titles must not go through here.
+ */
+export function catalogAliasesFromNames(
+  title: string | null | undefined,
+  names: readonly (string | null | undefined)[],
+): string[] | undefined {
+  const display = title?.trim() || "";
+  if (!display) {
+    const cleaned = Array.from(
+      new Set(
+        names
+          .filter((value): value is string => Boolean(value?.trim()))
+          .map(normalizeAliasValue)
+          .filter((alias) => !isNoiseDisplayAlias(alias)),
+      ),
+    );
+    return cleaned.length > 0 ? cleaned : undefined;
+  }
+  return aliasesExcludingTitle(display, ...names);
+}
+
 export function promoteTitleKeepingAliases(
   metadata: { title?: string | null; aliases?: string[] | null },
   newTitle: string,

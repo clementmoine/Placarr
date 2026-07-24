@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { providerIdForSourceToken } from "@/core/catalog/catalog";
 import {
   isLegacyPicClickPriceSource,
   normalizeLegacyPriceOffer,
@@ -95,6 +96,33 @@ export async function replaceFieldEvidence(
       ? [prisma.fieldEvidence.createMany({ data: rows })]
       : []),
   ]);
+}
+
+/**
+ * Incoming sources fully replace their own prior rows; sources absent from this
+ * refresh are preserved. Prevents a marketplace-only enrich from wiping catalog
+ * evidence (covers, titles, external links) gathered earlier.
+ */
+export function mergeFieldEvidenceForStorage(
+  existing: readonly FieldEvidenceInput[],
+  incoming: readonly FieldEvidenceInput[],
+): FieldEvidenceInput[] {
+  if (existing.length === 0) return [...incoming];
+  if (incoming.length === 0) return [...existing];
+
+  const incomingSources = new Set(
+    incoming
+      .map((entry) => providerIdForSourceToken(entry.source))
+      .filter(Boolean),
+  );
+
+  const preserved = existing.filter((entry) => {
+    const sourceKey = providerIdForSourceToken(entry.source);
+    if (!sourceKey) return true;
+    return !incomingSources.has(sourceKey);
+  });
+
+  return [...incoming, ...preserved];
 }
 
 export async function replacePriceOffers(

@@ -172,7 +172,7 @@ function ItemCardInner(props: ItemCardProps) {
             priority={priority}
             onLoad={handleImageLoad}
             className={[
-              "w-full h-full select-none transition-transform duration-500 ease-out object-top",
+              "w-full h-full select-none transition-transform duration-500 ease-out object-center",
               imageFit === "contain" ? "object-contain" : "object-cover",
             ].join(" ")}
           />

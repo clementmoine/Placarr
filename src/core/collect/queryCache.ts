@@ -365,31 +365,8 @@ export async function invalidateItemQueries(
     queryClient.invalidateQueries({ queryKey: ["shelves"] }),
     queryClient.invalidateQueries({ queryKey: ["recentItems"] }),
     queryClient.invalidateQueries({ queryKey: ["searchItems"] }),
-    queryClient.invalidateQueries({
-      predicate: (query) => {
-        if (query.queryKey[0] !== "shelf") return false;
-        const key = query.queryKey[1];
-        if (typeof key === "string" && uniqueShelfIds.includes(key)) {
-          return true;
-        }
-        // Shelf pages key by URL slug; match the cached shelf cuid/slug too.
-        const data = query.state.data;
-        if (!isRecord(data)) return false;
-        if (
-          typeof data.id === "string" &&
-          uniqueShelfIds.includes(data.id)
-        ) {
-          return true;
-        }
-        if (
-          typeof data.slug === "string" &&
-          uniqueShelfIds.includes(data.slug)
-        ) {
-          return true;
-        }
-        return false;
-      },
-    }),
+    queryClient.invalidateQueries({ queryKey: ["collectionItems"] }),
+    invalidateShelfQueries(queryClient, uniqueShelfIds),
     ...uniqueShelfIds.flatMap((shelfId) => [
       queryClient.invalidateQueries({
         queryKey: ["shelf", shelfId, "items", itemId],
@@ -399,6 +376,42 @@ export async function invalidateItemQueries(
       }),
     ]),
   ]);
+}
+
+/**
+ * Shelf pages key queries by URL slug (`["shelf", "consoles", q]`), while APIs
+ * return cuids. Invalidate by matching the key *or* the cached shelf id/slug.
+ */
+export function invalidateShelfQueries(
+  queryClient: QueryClient,
+  shelfIds: Array<Shelf["id"] | null | undefined> = [],
+) {
+  const uniqueShelfIds = compactShelfIds(shelfIds);
+  if (uniqueShelfIds.length === 0) {
+    return queryClient.invalidateQueries({ queryKey: ["shelf"] });
+  }
+
+  return queryClient.invalidateQueries({
+    predicate: (query) => {
+      if (query.queryKey[0] !== "shelf") return false;
+      const key = query.queryKey[1];
+      if (typeof key === "string" && uniqueShelfIds.includes(key)) {
+        return true;
+      }
+      const data = query.state.data;
+      if (!isRecord(data)) return false;
+      if (typeof data.id === "string" && uniqueShelfIds.includes(data.id)) {
+        return true;
+      }
+      if (
+        typeof data.slug === "string" &&
+        uniqueShelfIds.includes(data.slug)
+      ) {
+        return true;
+      }
+      return false;
+    },
+  });
 }
 
 export async function refetchItemQueries(

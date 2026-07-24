@@ -10,6 +10,7 @@ import {
   catalogTitleAlignedWithItem,
   retailerCatalogTitleContradictsItem,
 } from "@/core/commerce/retailer/catalogTitleAlignment";
+import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 import { retailerBarcodeContradictsItem } from "@/core/commerce/retailer/productUrl";
 import type { LeDenicheurPrices } from "@/core/identify/lookup/providerTypes";
 
@@ -205,7 +206,19 @@ function isProbablyRelevant(
   const tokens = meaningfulTokens(query);
   if (tokens.length === 0) return true;
   const normalizedProduct = normalizeForMatch(productName || "");
-  return tokens.some((token) => normalizedProduct.includes(token));
+  if (!tokens.some((token) => normalizedProduct.includes(token))) {
+    return false;
+  }
+
+  // Hardware: token overlap alone accepts Switch 2 / PS5 for bare console stems.
+  if (options?.shelfType === "hardware" && productName?.trim()) {
+    const anchor = options.itemTitle?.trim() || query;
+    return priceListingSharesItemIdentity(anchor, productName, {
+      shelfType: "hardware",
+    });
+  }
+
+  return true;
 }
 
 function uniqueQueries(queryOrQueries: string | string[]) {
@@ -487,14 +500,16 @@ function productPassesItemBarcodeGate(input: {
     retailerCatalogTitleContradictsItem({
       productTitle: product.name,
       itemTitle: anchorTitle,
+      shelfType: options?.shelfType,
     })
   ) {
     return false;
   }
 
   return (
-    catalogTitleAlignedWithItem(anchorTitle, product.name ?? "") &&
-    isProbablyRelevant(anchorTitle, product.name, options)
+    catalogTitleAlignedWithItem(anchorTitle, product.name ?? "", {
+      shelfType: options?.shelfType,
+    }) && isProbablyRelevant(anchorTitle, product.name, options)
   );
 }
 
@@ -674,6 +689,7 @@ async function fetchSingleQuery(
 export type LeDenicheurFetchOptions = {
   itemBarcode?: string | null;
   itemTitle?: string | null;
+  shelfType?: string | null;
 };
 
 export async function fetchPricesFromLeDenicheur(

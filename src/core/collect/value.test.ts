@@ -78,6 +78,18 @@ describe("getItemValueEstimate", () => {
     ).toEqual({ cents: 900, isEstimate: false });
   });
 
+  it("prefers PriceCharting loose for hardware consoles out of box", () => {
+    expect(
+      getItemValueEstimate({
+        condition: "loose",
+        shelfType: "hardware",
+        priceNew: 30000,
+        priceUsed: 18000,
+        priceUsedCIB: 22000,
+      }),
+    ).toEqual({ cents: 18000, isEstimate: false });
+  });
+
   it("does not treat CIB / retail used as a loose observed price", () => {
     expect(
       getItemValueEstimate({

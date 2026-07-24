@@ -26,6 +26,7 @@ import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discove
 import {
   buildGameMetadataFallbackNames,
   buildGameMetadataSearchQueries,
+  buildHardwareMetadataSearchQueries,
   buildMetadataAlignmentNames,
   extractBaseTitleVariant,
   isMetadataTitleAligned,
@@ -68,10 +69,12 @@ import {
 import { inferTextLanguage } from "@/core/locale/preference";
 import {
   isVideoGamePlatformKey,
+  detectVideoGamePlatformKey,
   videoGamePlatformTargetsPhysicalMedia,
 } from "@/core/identify/platforms/platforms";
 import { throwIfAborted, isAbortError } from "@/lib/http/abort";
 import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
+import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
@@ -251,11 +254,9 @@ export async function fetchMetadata(
   options?: FetchMetadataOptions,
 ): Promise<MetadataResult | null> {
   throwIfAborted(options?.signal);
-  const resolvedPlatform = resolveGameMetadataPlatform(
-    platform,
-    options?.shelfName,
-    type,
-  );
+  const resolvedPlatform =
+    resolveGameMetadataPlatform(platform, options?.shelfName, type) ??
+    (type === "hardware" ? detectVideoGamePlatformKey(name) ?? undefined : undefined);
   const providers = metadataCandidatesForType(type);
   const canonicalProviders = providers.filter((p) => !p.isSecondary);
   const secondaryProviders = providers.filter((p) => p.isSecondary);
@@ -275,7 +276,9 @@ export async function fetchMetadata(
                 resolvedPlatform,
                 options?.shelfName,
               )
-            : [name.trim()].filter(Boolean);
+            : type === "hardware"
+              ? buildHardwareMetadataSearchQueries(name)
+              : [name.trim()].filter(Boolean);
   const lookupQueriesForName = (queryName: string) =>
     type === "boardgames"
       ? buildBoardGameMetadataSearchQueries(queryName, options?.shelfName)
@@ -289,7 +292,9 @@ export async function fetchMetadata(
                 resolvedPlatform,
                 options?.shelfName,
               )
-            : [queryName.trim()].filter(Boolean);
+            : type === "hardware"
+              ? buildHardwareMetadataSearchQueries(queryName)
+              : [queryName.trim()].filter(Boolean);
   const adapterContextBase = withMatchOnAdapterContext(
     {
       type,
@@ -457,7 +462,12 @@ export async function fetchMetadata(
   const stage1FallbackNames = buildGameMetadataFallbackNames(
     name,
     barcodeAlternateNames,
-    alignedProviderResultsForFallback(byProvider, providers, alignmentNames),
+    alignedProviderResultsForFallback(
+      byProvider,
+      providers,
+      alignmentNames,
+      type,
+    ),
   );
 
   const stage1ExternalIds: Record<string, string | null> = {
@@ -518,6 +528,15 @@ export async function fetchMetadata(
           byProvider.get(p.id) ?? null,
           cleanedBarcode,
           options?.shelfName,
+        )
+      ) {
+        return true;
+      }
+      if (
+        shouldFetchMarketplaceListingInStage2(
+          type,
+          p,
+          byProvider.get(p.id) ?? null,
         )
       ) {
         return true;
@@ -594,7 +613,12 @@ export async function fetchMetadata(
   const finalFallbackNames = buildGameMetadataFallbackNames(
     name,
     barcodeAlternateNames,
-    alignedProviderResultsForFallback(byProvider, providers, alignmentNames),
+    alignedProviderResultsForFallback(
+      byProvider,
+      providers,
+      alignmentNames,
+      type,
+    ),
   );
 
   const finalExternalIds: Record<string, string | null> = {
@@ -726,6 +750,7 @@ export async function fetchMetadata(
                 ? [name, ...barcodeAlternateNames]
                 : [name, fallbackName, ...finalFallbackNames],
               0.58,
+              { shelfType: type },
             ),
         },
       );
@@ -843,8 +868,8 @@ async function buildMergedMetadataFromByProvider(input: {
       if (!metadata) return [];
       if (
         metadata.title?.trim() &&
-        listingLooksLikeMerchAccessory(metadata.title) &&
-        !listingLooksLikeMerchAccessory(name)
+        listingLooksLikeMerchAccessory(metadata.title, { shelfType: type }) &&
+        !listingLooksLikeMerchAccessory(name, { shelfType: type })
       ) {
         return [];
       }
@@ -868,10 +893,15 @@ async function buildMergedMetadataFromByProvider(input: {
         }
       }
       // Name-searched retailers can return a different sequel/edition; validate
-      // title alignment for games before merging any provider payload.
-      if (type === "games" && metadata.title?.trim()) {
+      // title alignment for games and hardware before merging any provider payload.
+      if (
+        (type === "games" || type === "hardware") &&
+        metadata.title?.trim()
+      ) {
         if (
-          !isMetadataTitleAligned(metadata, alignmentNames, 0.58) ||
+          !isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
+            shelfType: type,
+          }) ||
           isGenericTitleFragment(metadata.title, alignmentNames)
         ) {
           return [];
@@ -880,7 +910,9 @@ async function buildMergedMetadataFromByProvider(input: {
         providers.find((p) => p.id === providerId)?.requiresTitleAlignment
       ) {
         if (
-          !isMetadataTitleAligned(metadata, alignmentNames, 0.58) ||
+          !isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
+            shelfType: type,
+          }) ||
           isGenericTitleFragment(metadata.title, alignmentNames)
         ) {
           return [];
@@ -936,11 +968,17 @@ async function buildMergedMetadataFromByProvider(input: {
     const catalogTitle = catalogMetadata?.title;
     if (
       catalogTitle &&
-      isMetadataTitleAligned({ title: catalogTitle }, alignmentNames, 0.58)
+      isMetadataTitleAligned({ title: catalogTitle }, alignmentNames, 0.58, {
+        shelfType: type,
+      })
     ) {
       if (!merged.title?.trim()) {
         finalMerged = { ...merged, title: catalogTitle };
-      } else if (!isMetadataTitleAligned(merged, alignmentNames, 0.58)) {
+      } else if (
+        !isMetadataTitleAligned(merged, alignmentNames, 0.58, {
+          shelfType: type,
+        })
+      ) {
         const aliases = aliasesExcludingTitle(
           catalogTitle,
           merged.title,
@@ -1299,6 +1337,25 @@ function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
   );
 }
 
+/**
+ * Marketplace scrapes (Back Market, …) still contribute a product fiche link +
+ * listing photo after stage 1 already has identify/cover from a catalog/API
+ * source. Key-auth marketplaces (eBay) already bypass the scrape-cap gate;
+ * keep title-search scrapes in the same boat for hardware/games.
+ */
+function shouldFetchMarketplaceListingInStage2(
+  type: MediaType,
+  provider: ProviderInfo,
+  existing: MetadataResult | null | undefined,
+): boolean {
+  if (existing) return false;
+  if (!provider.marketplaceSearchPriceSource) return false;
+  if (type !== "hardware" && type !== "games") return false;
+  if (provider.auth.kind !== "scrape") return false;
+  const caps = metadataCapabilitiesOf(provider);
+  return caps.includes("cover") || caps.includes("identify");
+}
+
 function isPlatformSpecificGameShelf(shelfName?: string | null): boolean {
   return Boolean(detectShelfGamePlatformKey(shelfName));
 }
@@ -1562,6 +1619,7 @@ function alignedProviderResultsForFallback(
   byProvider: Map<string, MetadataResult | null>,
   providers: ProviderInfo[],
   alignmentNames: string[],
+  shelfType?: string | null,
 ): MetadataResult[] {
   return Array.from(byProvider.entries()).flatMap(([providerId, metadata]) => {
     if (!metadata) return [];
@@ -1570,7 +1628,9 @@ function alignedProviderResultsForFallback(
     );
     if (
       providerInfo?.requiresTitleAlignment &&
-      (!isMetadataTitleAligned(metadata, alignmentNames, 0.58) ||
+      (!isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
+        shelfType,
+      }) ||
         isGenericTitleFragment(metadata.title, alignmentNames))
     ) {
       return [];
@@ -1599,6 +1659,7 @@ export {
   normalizeMetadataPlatformKey,
   resolveWithFallbackNames,
   shouldFetchGameGallerySourceInStage2,
+  shouldFetchMarketplaceListingInStage2,
   shouldResolveProviderForGallery,
   shouldSkipMetadataFallbackProvider,
   shouldSkipRateLimitedStageOneFallback,
@@ -1908,6 +1969,34 @@ function dedupePeople(
   return merged.length > 0 ? merged : undefined;
 }
 
+function stripCoversMisalignedWithRequestedTitle(
+  metadata: MetadataResult,
+  requestedTitle: string,
+): MetadataResult {
+  const imageUrl = metadata.imageUrl?.trim();
+  const keepImageUrl =
+    imageUrl && isRetailerCoverUrlAlignedWithTitle(imageUrl, requestedTitle)
+      ? imageUrl
+      : undefined;
+  const attachments = metadata.attachments?.filter((attachment) => {
+    if (!attachment.url) return false;
+    if (
+      attachment.type === "cover" ||
+      attachment.type === "image" ||
+      !attachment.type
+    ) {
+      return isRetailerCoverUrlAlignedWithTitle(attachment.url, requestedTitle);
+    }
+    return true;
+  });
+  return {
+    ...metadata,
+    imageUrl: keepImageUrl,
+    attachments:
+      attachments && attachments.length > 0 ? attachments : undefined,
+  };
+}
+
 export function preferRequestedDisplayTitle(
   metadata: MetadataResult,
   requestedName: string,
@@ -1926,11 +2015,16 @@ export function preferRequestedDisplayTitle(
   if (
     !isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58)
   ) {
-    return {
-      ...metadata,
-      title: requestedTitle,
-      aliases: promoteTitleKeepingAliases(metadata, requestedTitle),
-    };
+    // Provider hit a different product (e.g. Pokémon OLED for a Zelda OLED
+    // request). Keep the catalog name, drop covers that belong to the wrong SKU.
+    return stripCoversMisalignedWithRequestedTitle(
+      {
+        ...metadata,
+        title: requestedTitle,
+        aliases: promoteTitleKeepingAliases(metadata, requestedTitle),
+      },
+      requestedTitle,
+    );
   }
 
   if (
@@ -1972,6 +2066,7 @@ function metadataHasCover(metadata: MetadataResult): boolean {
 function providerMetadataAlignsForGallery(
   requestedTitle: string | null | undefined,
   metadata: MetadataResult,
+  shelfType?: string | null,
 ): boolean {
   const requested = requestedTitle?.trim();
   if (!requested) return true;
@@ -1986,7 +2081,13 @@ function providerMetadataAlignsForGallery(
   // Use aliases + regionalTitles too — LaunchBox often keeps the EN primary
   // title while the FR shelf name only appears as an alternate (Oddworld,
   // Atlantide, Need for Speed "Road & Track Presents…").
-  if (isMetadataTitleAligned(metadata, alignmentNames, 0.58)) {
+  // Pass shelfType so hardware residual accepts finish synonyms
+  // ("Slim Rose" ↔ "System [Pink]") the same way merge title gates do.
+  if (
+    isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
+      shelfType,
+    })
+  ) {
     return true;
   }
 
@@ -2161,6 +2262,7 @@ export function mergeMetadata(
         providerMetadataAlignsForGallery(
           options.requestedTitle,
           result.metadata,
+          mediaType,
         ),
       )
     : orderedResults;
@@ -2215,10 +2317,14 @@ export function mergeMetadata(
   );
   const attachments = [...rankedCovers, ...trailing];
 
-  const leadingResultWithImage = orderedResults.find(
+  const leadingCoverResults = options.requestedTitle?.trim()
+    ? galleryResults
+    : orderedResults;
+  const leadingResultWithImage = leadingCoverResults.find(
     (r) => r.metadata.imageUrl,
   );
-  const observedImageUrl = pickBestMetadataObservationImageUrl(orderedResults);
+  const observedImageUrl =
+    pickBestMetadataObservationImageUrl(leadingCoverResults);
   // A provider whose cover is canonical for its media type (e.g. Discogs album
   // art) is trusted as-is when it leads, rather than re-ranked.
   const imageUrl =

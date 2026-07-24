@@ -162,6 +162,7 @@
     "cancel": "Annuler",
     "confirmDeletion": "Confirmer la suppression",
     "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer cette étagère ? Cette action ne peut pas être annulée.",
+    "deleteNotEmpty": "Impossible de supprimer une étagère qui contient encore {count} objet(s). Déplacez-les d'abord.",
     "nameRequired": "Le nom est requis",
     "nameNotEmpty": "Le nom ne peut pas être composé uniquement d'espaces",
     "imageRequired": "L'image est requise",
@@ -565,7 +566,11 @@
       "games": "Jeux",
       "movies": "Films",
       "musics": "Musique",
-      "boardgames": "Jeux de société"
+      "boardgames": "Jeux de société",
+      "hardware": "Matériel",
+      "tcg": "Cartes à collectionner",
+      "toys": "Jouets",
+      "soon": "Bientôt"
     }
   },
   "loans": {

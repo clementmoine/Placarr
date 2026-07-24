@@ -37,6 +37,27 @@ describe("filterObservationsByOutlierTrim", () => {
 
     expect(filtered.map((row) => row.source)).toEqual(["A", "B", "C", "E"]);
   });
+
+  it("keeps used marketplace prices at or below a CIB quote", () => {
+    const filtered = filterObservationsByOutlierTrim(
+      [
+        { source: "eBay", condition: "used", priceCents: 6900 },
+        { source: "PriceCharting", condition: "loose", priceCents: 9584 },
+        { source: "Back Market", condition: "used", priceCents: 15200 },
+        { source: "PriceCharting", condition: "cib", priceCents: 15481 },
+      ],
+      ["used", "loose"],
+    );
+
+    expect(
+      filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
+    ).toEqual([
+      "eBay:used:6900",
+      "PriceCharting:loose:9584",
+      "Back Market:used:15200",
+      "PriceCharting:cib:15481",
+    ]);
+  });
 });
 
 describe("filterUsedPricesAboveNew", () => {

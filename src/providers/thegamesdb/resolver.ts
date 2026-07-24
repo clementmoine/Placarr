@@ -16,6 +16,7 @@ import {
 import { resolveTheGamesDbPlatformId } from "./platformMap";
 import { getPlatformKeyByTheGamesDbPlatformId } from "@/core/identify/platforms/platforms";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import { isPalRegionId, regionIdToAttachmentRole } from "./regions";
 import type {
   MetadataAttachment,
@@ -417,9 +418,10 @@ export async function fetchFromTheGamesDB(
   ];
   const attachments = mergeTheGamesDbAttachments(attachmentBundles);
   const regionalTitles = buildRegionalTitles(games, game.id);
-  const aliases = regionalTitles
-    .map((entry) => entry.text)
-    .filter((value) => value.toLowerCase() !== title.toLowerCase());
+  const aliases = catalogAliasesFromNames(title, [
+    ...regionalTitles.map((entry) => entry.text),
+    ...(game.alternates || []),
+  ]);
 
   const publishers = details?.include?.publishers?.data
     ? Object.values(details.include.publishers.data)
@@ -496,7 +498,7 @@ export async function fetchFromTheGamesDB(
     imageUrl,
     attachments: attachments.length > 0 ? attachments : undefined,
     publishers: publishers?.length ? publishers : undefined,
-    aliases: aliases.length > 0 ? Array.from(new Set(aliases)) : undefined,
+    aliases,
     regionalTitles: regionalTitles.length > 0 ? regionalTitles : undefined,
     facts: facts.length > 0 ? facts : undefined,
     externalIds: { thegamesdb: String(game.id || selected.id) },

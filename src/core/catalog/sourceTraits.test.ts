@@ -11,6 +11,7 @@ import {
   providerImageScoreAdjustmentForSource,
   withProviderAttachmentTraits,
   withProviderFactTraits,
+  inferProviderIdFromMediaUrl,
 } from "./sourceTraits";
 
 describe("providerSourceTraits", () => {
@@ -230,6 +231,38 @@ describe("withProviderFactTraits", () => {
       }),
     ).toMatchObject({
       isHowLongToBeatSource: true,
+    });
+  });
+
+  it("infers NetGamesRetro from a remote cover URL when source was never stamped", () => {
+    const url =
+      "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg";
+    expect(inferProviderIdFromMediaUrl(url)).toBe("netgamesretro");
+    expect(
+      withProviderAttachmentTraits({
+        type: "cover",
+        url,
+        source: null,
+      }),
+    ).toMatchObject({
+      source: "netgamesretro",
+      providerLabel: "NetGamesRetro",
+    });
+  });
+
+  it("infers PriceCharting from its GCS cover host when source was never stamped", () => {
+    const url =
+      "https://storage.googleapis.com/images.pricecharting.com/pink/1600.jpg";
+    expect(inferProviderIdFromMediaUrl(url)).toBe("pricecharting");
+    expect(
+      withProviderAttachmentTraits({
+        type: "cover",
+        url,
+        source: null,
+      }),
+    ).toMatchObject({
+      source: "pricecharting",
+      providerLabel: "PriceCharting",
     });
   });
 });

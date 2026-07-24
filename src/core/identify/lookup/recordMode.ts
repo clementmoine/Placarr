@@ -13,6 +13,9 @@ const RECORD_SLIM_BARCODE_TYPES: BarcodeLookupType[] = [
   "musics",
   "movies",
   "boardgames",
+  "hardware",
+  "tcg",
+  "toys",
   "generic",
 ];
 

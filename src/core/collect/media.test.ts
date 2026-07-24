@@ -6,6 +6,8 @@ import {
   filterMetadataForShelfPlatform,
   backgroundPickerAttachments,
   backgroundPickerAttachmentsForItem,
+  collapseCroppedUserPinWithCatalogOriginal,
+  mergeCoverAttachmentsForPicker,
 } from "./media";
 import {
   getDisplayTitle,
@@ -1460,5 +1462,154 @@ platformKey: null,
     ]);
     expect(presented.imageUrl).toBe("/uploads/tresors.jpg");
     expect(presented.imageUrl).not.toBe("/uploads/ages-or-crop.jpg");
+  });
+});
+
+describe("collapseCroppedUserPinWithCatalogOriginal", () => {
+  it("folds Perso crop + remote jaquette into one catalog-provenance card", () => {
+    const crop = "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_crop.jpg";
+    const remote =
+      "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg";
+
+    const collapsed = collapseCroppedUserPinWithCatalogOriginal(
+      [
+        {
+          type: "image",
+          url: crop,
+          source: "user",
+        },
+        {
+          type: "cover",
+          url: remote,
+          source: "netgamesretro",
+          providerLabel: "NetGamesRetro",
+        },
+      ],
+      crop,
+    );
+
+    expect(collapsed).toHaveLength(1);
+    expect(collapsed[0]).toMatchObject({
+      url: crop,
+      type: "cover",
+      source: "netgamesretro",
+      providerLabel: "NetGamesRetro",
+    });
+  });
+
+  it("keeps distinct remote covers when more than one catalog jaquette exists", () => {
+    const crop = "/uploads/pin_crop.jpg";
+    const list = collapseCroppedUserPinWithCatalogOriginal(
+      [
+        { type: "image", url: crop, source: "user" },
+        {
+          type: "cover",
+          url: "https://cdn.example.com/a.jpg",
+          source: "ebay",
+        },
+        {
+          type: "cover",
+          url: "https://cdn.example.com/b.jpg",
+          source: "pricecharting",
+        },
+      ],
+      crop,
+    );
+    expect(list).toHaveLength(3);
+  });
+
+  it("folds Perso onto the metadata default among several remote covers", () => {
+    const crop = "/uploads/da99c92ff8141242c04338d2cddcc64a_crop.jpg";
+    const main =
+      "https://storage.googleapis.com/images.pricecharting.com/labbsm5tagjpm2lr/1600.jpg";
+    const collapsed = collapseCroppedUserPinWithCatalogOriginal(
+      [
+        { type: "image", url: crop, source: "user" },
+        {
+          type: "cover",
+          url: main,
+          source: "pricecharting",
+          title: "Main Image",
+          providerLabel: "PriceCharting",
+        },
+        {
+          type: "cover",
+          url: "https://storage.googleapis.com/images.pricecharting.com/other/1600.jpg",
+          source: "pricecharting",
+          title: "FRONT OF BOX",
+        },
+      ],
+      crop,
+      { metadataImageUrl: main },
+    );
+
+    expect(collapsed.map((attachment) => attachment.source)).toEqual([
+      "pricecharting",
+      "pricecharting",
+    ]);
+    expect(collapsed[0]).toMatchObject({
+      url: crop,
+      source: "pricecharting",
+      title: "Main Image",
+      providerLabel: "PriceCharting",
+    });
+  });
+
+  it("does not fold an explicit post-enrichment personal pick onto catalog art", () => {
+    const crop = "/uploads/my-disc_crop.jpg";
+    const main = "https://cdn.example.com/main.jpg";
+    const list = collapseCroppedUserPinWithCatalogOriginal(
+      [
+        { type: "image", url: crop, source: "user" },
+        { type: "cover", url: main, source: "pricecharting" },
+      ],
+      crop,
+      { metadataImageUrl: main, preserveExplicitUserOverride: true },
+    );
+    expect(list).toHaveLength(2);
+    expect(list[0]?.source).toBe("user");
+  });
+});
+
+describe("mergeCoverAttachmentsForPicker Perso/jaquette twin", () => {
+  it("does not show Perso and Jaquette for the same cropped NetGamesRetro cover", () => {
+    const crop = "/uploads/gamecube_crop.jpg";
+    const remote =
+      "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg";
+
+    const picker = mergeCoverAttachmentsForPicker(
+      {
+        imageUrl: crop,
+        metadata: {
+          imageUrl: remote,
+          attachments: [
+            { type: "image", url: crop, source: "user" },
+            {
+              type: "cover",
+              url: remote,
+              source: "netgamesretro",
+              providerLabel: "NetGamesRetro",
+            },
+          ],
+        },
+        shelf: { type: "hardware", name: "Consoles" },
+      },
+      [
+        { type: "image", url: crop, source: "user" },
+        {
+          type: "cover",
+          url: remote,
+          source: "netgamesretro",
+          providerLabel: "NetGamesRetro",
+        },
+      ],
+      "fr",
+    );
+
+    expect(picker.filter((a) => a.type === "cover" || a.type === "image")).toHaveLength(
+      1,
+    );
+    expect(picker[0]?.source).toBe("netgamesretro");
+    expect(picker[0]?.url).toBe(crop);
   });
 });

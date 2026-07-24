@@ -13,7 +13,10 @@ import {
   isMetadataTitleAligned,
 } from "@/core/enrich/titleMatching";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
-import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import {
+  createTrailingVideoGamePlatformSuffixMatcher,
+  detectVideoGamePlatformKey,
+} from "@/core/identify/platforms/platforms";
 
 const ALGOLIA_APP_ID = "MQTBESKZQM";
 const ALGOLIA_SEARCH_KEY = "b8aee761e824091520134191a14d5adc";
@@ -373,13 +376,11 @@ export async function searchChocoBonPlanDeals(
   );
 }
 
+const TRAILING_PLATFORM_SUFFIX_MATCHER =
+  createTrailingVideoGamePlatformSuffixMatcher("i");
+
 function normalizeChocoBonPlanDealTitle(title: string): string {
-  return title
-    .replace(
-      /\s+sur\s+(?:PS\d+|Xbox(?:\s+One|\s+Series)?|Switch|PC|Nintendo\s+Switch)\s*$/i,
-      "",
-    )
-    .trim();
+  return title.replace(TRAILING_PLATFORM_SUFFIX_MATCHER, "").trim();
 }
 
 function expandChocoBonPlanAbbreviations(name: string): string[] {
@@ -886,12 +887,13 @@ export async function fetchFromChocoBonPlan(
 
 export async function fetchPricesFromChocoBonPlan(
   queryOrQueries: string | string[],
+  options?: { platform?: string | null; shelfName?: string | null },
 ): Promise<ChocoBonPlanPrices | null> {
   const queries = uniqueQueries(queryOrQueries);
   if (queries.length === 0) return null;
 
   for (const query of queries) {
-    const product = await fetchFromChocoBonPlan(query, queries);
+    const product = await fetchFromChocoBonPlan(query, queries, options);
     if (!product?.priceNew) continue;
     return {
       priceNew: product.priceNew,

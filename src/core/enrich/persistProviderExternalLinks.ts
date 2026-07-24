@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { reconcileLegacyPriceOfferSources } from "@/core/enrich/evidence";
 import {
   appendMissingProviderExternalLinkFacts,
+  coverAttachmentsFromPriceOffers,
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
   mirrorSourceUrlFactsAsExternalLinks,
@@ -81,6 +82,7 @@ export async function persistProviderExternalLinksForMetadata(
   input: {
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    shelfType?: string | null;
     providerInputs?: readonly ProviderMetadataLinkInput[];
     priceOffers?: ReadonlyArray<{
       source: string;
@@ -101,6 +103,7 @@ export async function persistProviderExternalLinksForMetadata(
     existing,
     input.itemBarcode,
     input.itemTitle,
+    input.shelfType,
   );
   next = await purgeValidatedRetailerExternalLinks(
     next,
@@ -122,6 +125,7 @@ export async function persistProviderExternalLinksForMetadata(
       input.priceOffers,
       input.itemBarcode,
       input.itemTitle,
+      input.shelfType,
     );
   }
   if (input.fieldEvidence?.length) {
@@ -237,7 +241,13 @@ export async function repairProviderExternalLinksForItem(
 ): Promise<void> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
-    select: { id: true, name: true, barcode: true, metadataId: true },
+    select: {
+      id: true,
+      name: true,
+      barcode: true,
+      metadataId: true,
+      shelf: { select: { type: true } },
+    },
   });
   if (!item?.metadataId) return;
 
@@ -266,6 +276,7 @@ export async function repairProviderExternalLinksForItem(
     itemId: item.id,
     itemBarcode: item.barcode,
     itemTitle: item.name,
+    shelfType: item.shelf?.type,
   });
 
   try {
@@ -287,6 +298,7 @@ export async function syncPriceOfferExternalLinksForMetadata(input: {
   itemId?: string;
   itemBarcode?: string | null;
   itemTitle?: string | null;
+  shelfType?: string | null;
 }): Promise<void> {
   const [priceOffers, fieldEvidence] = await Promise.all([
     loadPriceOffersForExternalLinkSync(input),
@@ -296,8 +308,51 @@ export async function syncPriceOfferExternalLinksForMetadata(input: {
   await persistProviderExternalLinksForMetadata(input.metadataId, {
     itemBarcode: input.itemBarcode,
     itemTitle: input.itemTitle,
+    shelfType: input.shelfType,
     priceOffers,
     fieldEvidence,
+  });
+
+  await syncMarketplaceCoverAttachmentsFromPriceOffers({
+    metadataId: input.metadataId,
+    itemTitle: input.itemTitle,
+    shelfType: input.shelfType,
+    priceOffers,
+  });
+}
+
+async function syncMarketplaceCoverAttachmentsFromPriceOffers(input: {
+  metadataId: string;
+  itemTitle?: string | null;
+  shelfType?: string | null;
+  priceOffers: ReadonlyArray<{
+    source: string;
+    sourceUrl?: string | null;
+    rawValue?: unknown;
+  }>;
+}): Promise<void> {
+  if (input.priceOffers.length === 0) return;
+
+  const existing = await prisma.attachment.findMany({
+    where: { metadataId: input.metadataId },
+    select: { url: true, source: true, type: true },
+  });
+  const covers = coverAttachmentsFromPriceOffers(input.priceOffers, {
+    itemTitle: input.itemTitle,
+    shelfType: input.shelfType,
+    existingAttachments: existing,
+  });
+  if (covers.length === 0) return;
+
+  await prisma.attachment.createMany({
+    data: covers.map((cover) => ({
+      metadataId: input.metadataId,
+      type: cover.type,
+      url: cover.url,
+      title: cover.title ?? null,
+      source: cover.source ?? null,
+      role: cover.role ?? null,
+    })),
   });
 }
 
@@ -309,7 +364,11 @@ export async function persistProviderExternalLinksForBarcodeItems(
 
   const items = await prisma.item.findMany({
     where: { barcode, metadataId: { not: null } },
-    select: { metadataId: true, name: true },
+    select: {
+      metadataId: true,
+      name: true,
+      shelf: { select: { type: true } },
+    },
   });
   if (items.length === 0) return;
 
@@ -323,12 +382,11 @@ export async function persistProviderExternalLinksForBarcodeItems(
 
   await Promise.all(
     metadataIds.map((metadataId) => {
-      const itemTitle = items.find(
-        (item) => item.metadataId === metadataId,
-      )?.name;
+      const item = items.find((row) => row.metadataId === metadataId);
       return persistProviderExternalLinksForMetadata(metadataId, {
         itemBarcode: barcode,
-        itemTitle,
+        itemTitle: item?.name,
+        shelfType: item?.shelf?.type,
         priceOffers,
       });
     }),

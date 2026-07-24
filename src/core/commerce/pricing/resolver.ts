@@ -14,6 +14,7 @@ import { cleanSearchQuery } from "@/core/enrich/search/query";
 import { detectPlatformKey } from "@/core/identify/query";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
+import { shelfSupportsLooseCondition } from "@/core/collect/condition";
 import { mergePriceOffers, type PriceOfferInput } from "@/core/enrich/evidence";
 import { normalizeLegacyPriceOffer } from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
 import type { ProviderProductUrlRef } from "@/types/providerModule";
@@ -143,14 +144,14 @@ function averageCents(values: number[]) {
 }
 
 function gameUsedConditions(shelfType: string) {
-  return shelfType === "games" ? ["loose", "used"] : ["used"];
+  return shelfSupportsLooseCondition(shelfType) ? ["loose", "used"] : ["used"];
 }
 
 function trustedGameUsedOffers(
   shelfType: string,
   offers: PriceObservation[],
 ): PriceObservation[] {
-  if (shelfType !== "games") return offers;
+  if (!shelfSupportsLooseCondition(shelfType)) return offers;
 
   const usedConditions = new Set(gameUsedConditions(shelfType));
   const used = offers.filter(
@@ -173,11 +174,14 @@ function trustedGameUsedOffers(
   return trusted.length > 0 ? trusted : used;
 }
 
-function dropAccessoryListings(offers: PriceObservation[]): PriceObservation[] {
+function dropAccessoryListings(
+  offers: PriceObservation[],
+  shelfType?: string | null,
+): PriceObservation[] {
   return offers.filter((offer) => {
     const listing = offer.productName?.trim();
     if (!listing) return true;
-    return !listingLooksLikeGameAccessory(listing);
+    return !listingLooksLikeGameAccessory(listing, { shelfType });
   });
 }
 
@@ -186,12 +190,15 @@ function trimObservedPriceOutliers(
   offers: PriceObservation[],
 ): PriceObservation[] {
   let trimmed = filterObservationsByOutlierTrim(offers, ["new"]);
-  trimmed = filterObservationsByOutlierTrim(
-    trimmed,
-    gameUsedConditions(shelfType),
-  );
-  if (shelfType === "games") {
+  // Trim loose and used separately: marketplace "used" (refurbished, warranty)
+  // often sits near CIB, while reference "loose" clusters much lower. Mixing the
+  // two wrongly flags a valid Back Market / eBay used hit as a high outlier.
+  if (shelfSupportsLooseCondition(shelfType)) {
+    trimmed = filterObservationsByOutlierTrim(trimmed, ["loose"]);
+    trimmed = filterObservationsByOutlierTrim(trimmed, ["used"]);
     trimmed = filterObservationsByOutlierTrim(trimmed, ["cib"]);
+  } else {
+    trimmed = filterObservationsByOutlierTrim(trimmed, ["used"]);
   }
   return filterUsedPricesAboveNew(trimmed, shelfType, isReferencePriceSource);
 }
@@ -249,14 +256,26 @@ function relaxedOffersForPriceFallback(
   return platformFiltered.filter((offer) => {
     const listing = offer.productName?.trim() ?? "";
     if (listing && isLotListing(listing)) return false;
-    if (listing && listingLooksLikeNonBookProduct(listing)) return false;
-    if (listing && listingLooksLikeGameAccessory(listing)) return false;
+    if (
+      listing &&
+      listingLooksLikeNonBookProduct(listing, { shelfType })
+    ) {
+      return false;
+    }
+    if (
+      listing &&
+      listingLooksLikeGameAccessory(listing, { shelfType })
+    ) {
+      return false;
+    }
 
     if (!listing) {
       if (numberedBook) return false;
       return isReferencePriceSource(offer.source ?? "");
     }
-    return priceListingMatchesAnyItemName(itemNames, offer.productName);
+    return priceListingMatchesAnyItemName(itemNames, offer.productName, {
+      shelfType,
+    });
   });
 }
 
@@ -343,13 +362,14 @@ export function summarizeObservedPrices(
   shelfType: string,
   offers: PriceObservation[],
 ) {
-  const usedOffers =
-    shelfType === "games" ? trustedGameUsedOffers(shelfType, offers) : offers;
-  if (shelfType === "games") {
-    // Loose = cartridge/disc only. Shop "used" / retail listings are complete-in-box
-    // proxies and must not inflate a loose copy's observed price (e.g. NetGamesRetro
-    // boxed stock vs PriceCharting loose). Titles that explicitly say "Loose" are
-    // remapped above via {@link effectiveGameOfferCondition}.
+  const usedOffers = shelfSupportsLooseCondition(shelfType)
+    ? trustedGameUsedOffers(shelfType, offers)
+    : offers;
+  if (shelfSupportsLooseCondition(shelfType)) {
+    // Loose = cartridge/disc/console only. Shop "used" / retail listings are
+    // complete-in-box proxies and must not inflate a loose copy's observed price
+    // (e.g. NetGamesRetro boxed stock vs PriceCharting loose). Titles that
+    // explicitly say "Loose" are remapped above via {@link effectiveGameOfferCondition}.
     const looseCents = pricesForCondition(usedOffers, ["loose"]);
     const cibCents = [
       ...pricesForCondition(offers, ["cib"]),
@@ -447,17 +467,18 @@ function priceListingMatchesShelfPlatform(
 function dropIdentityConflictingListings(
   names: string[],
   offers: PriceObservation[],
+  shelfType?: string | null,
 ): PriceObservation[] {
   return offers.filter((offer) => {
     if (offer.metadataScoped) return true;
     const listing = offer.productName?.trim();
     if (!listing) return true;
     const sharesIdentity = names.some((name) =>
-      priceListingSharesItemIdentity(name, listing),
+      priceListingSharesItemIdentity(name, listing, { shelfType }),
     );
     if (!sharesIdentity) return true;
     return (
-      priceListingMatchesAnyItemName(names, listing) ||
+      priceListingMatchesAnyItemName(names, listing, { shelfType }) ||
       referenceOfferSurvivesRegionalTitleMiss(names, offer)
     );
   });
@@ -481,11 +502,11 @@ export function filterItemPriceOffers(
   const names = [
     ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
   ];
-  const accessoryFiltered = dropAccessoryListings(enrichedOffers);
+  const accessoryFiltered = dropAccessoryListings(enrichedOffers, shelfType);
   const identityFiltered =
     names.length === 0
       ? accessoryFiltered
-      : dropIdentityConflictingListings(names, accessoryFiltered);
+      : dropIdentityConflictingListings(names, accessoryFiltered, shelfType);
   const hadIdentityConflicts =
     names.length > 0 && identityFiltered.length < accessoryFiltered.length;
 
@@ -499,7 +520,9 @@ export function filterItemPriceOffers(
       : platformFiltered.filter(
           (offer) =>
             offer.metadataScoped ||
-            priceListingMatchesAnyItemName(names, offer.productName) ||
+            priceListingMatchesAnyItemName(names, offer.productName, {
+              shelfType,
+            }) ||
             referenceOfferSurvivesRegionalTitleMiss(names, offer),
         );
 
@@ -507,12 +530,16 @@ export function filterItemPriceOffers(
     const titleMatchedInInput = identityFiltered.some(
       (offer) =>
         offer.productName?.trim() &&
-        priceListingMatchesAnyItemName(names, offer.productName),
+        priceListingMatchesAnyItemName(names, offer.productName, {
+          shelfType,
+        }),
     );
     const titleAndPlatformMatched = identityFiltered.some(
       (offer) =>
         offer.productName?.trim() &&
-        priceListingMatchesAnyItemName(names, offer.productName) &&
+        priceListingMatchesAnyItemName(names, offer.productName, {
+          shelfType,
+        }) &&
         priceListingMatchesShelfPlatform(
           shelfType,
           shelfName,
@@ -606,7 +633,9 @@ export function alignBarcodePricesForItemNames(
         namedOffers.every(
           (offer) =>
             isLotListing(offer.productName!) ||
-            listingLooksLikeNonBookProduct(offer.productName!),
+            listingLooksLikeNonBookProduct(offer.productName!, {
+              shelfType,
+            }),
         )
       ) {
         return emptyBarcodePrices();
@@ -620,7 +649,9 @@ export function alignBarcodePricesForItemNames(
       }
 
       const titleMatchedOffers = namedOffers.filter((offer) =>
-        priceListingMatchesAnyItemName(names, offer.productName),
+        priceListingMatchesAnyItemName(names, offer.productName, {
+          shelfType,
+        }),
       );
       if (titleMatchedOffers.length > 0) {
         const platformMatchedOffers = titleMatchedOffers.filter((offer) =>
@@ -648,6 +679,16 @@ export function alignBarcodePricesForItemNames(
             ),
           };
         }
+        return emptyBarcodePrices();
+      } else if (
+        namedOffers.every((offer) =>
+          isReferencePriceSource(offer.source ?? ""),
+        ) &&
+        !shouldKeepReferencePricesOnTitleMiss(names, namedOffers)
+      ) {
+        // Wrong catalog fiche (generic Slim vs Pink) whose cents no longer
+        // equal the mixed barcode summary — still drop the contradicted
+        // reference, do not keep orphan aggregates.
         return emptyBarcodePrices();
       }
     }
@@ -1321,6 +1362,7 @@ export async function persistItemPrices(params: {
     await persistProviderExternalLinksForMetadata(metadataId, {
       itemBarcode: item?.barcode,
       itemTitle: item?.name,
+      shelfType,
       priceOffers: merged,
     });
   }
@@ -1505,7 +1547,7 @@ export function shouldReturnCachedPrices(
   cacheRecord: PriceCacheRecord,
   offers: CachedPriceOffer[],
 ) {
-  if (shelfType !== "games") return true;
+  if (!shelfSupportsLooseCondition(shelfType)) return true;
   if (hasGameUsedPricing(cacheRecord, offers)) return true;
   if (hasReferencePriceOffers(offers)) return true;
   return false;
@@ -1521,7 +1563,10 @@ export function getPriceCacheLifetimeMs(
     cacheRecord.priceNew != null;
 
   if (!hasAnyPrice) return FRESH_INCOMPLETE_GAME_PRICE_MS;
-  if (shelfType === "games" && !hasGameUsedPricing(cacheRecord, [])) {
+  if (
+    shelfSupportsLooseCondition(shelfType) &&
+    !hasGameUsedPricing(cacheRecord, [])
+  ) {
     return FRESH_INCOMPLETE_GAME_PRICE_MS;
   }
   return FRESH_USED_GAME_PRICE_MS;
@@ -1610,7 +1655,9 @@ export function filterUsedPricesAboveNew<
   const pool = credibleNew.length > 0 ? credibleNew : newOffers;
 
   const usedConditions = new Set(
-    shelfType === "games" ? ["used", "loose", "cib"] : ["used"],
+    shelfSupportsLooseCondition(shelfType)
+      ? ["used", "loose", "cib"]
+      : ["used"],
   );
   const hasUsed = observations.some(
     (row) => row.condition && usedConditions.has(row.condition),
@@ -1634,6 +1681,18 @@ export function filterObservationsByOutlierTrim<
   );
   if (grouped.length < 3) return observations;
 
+  // Used/loose rows at or below a known CIB quote are not high-tail noise —
+  // they are typically refurbished / complete-adjacent marketplace stock.
+  const cibCeiling = Math.max(
+    0,
+    ...observations
+      .filter((row) => row.condition === "cib" && row.priceCents > 0)
+      .map((row) => row.priceCents),
+  );
+  const protectUsedNearCib = conditions.some((condition) =>
+    ["used", "loose"].includes(condition),
+  );
+
   const trimmed = trimPriceOutlierCents(grouped.map((row) => row.priceCents));
   const remaining = new Map<number, number>();
   for (const priceCents of trimmed) {
@@ -1642,6 +1701,13 @@ export function filterObservationsByOutlierTrim<
 
   return observations.filter((observation) => {
     if (!observation.condition || !conditions.includes(observation.condition)) {
+      return true;
+    }
+    if (
+      protectUsedNearCib &&
+      cibCeiling > 0 &&
+      observation.priceCents <= cibCeiling
+    ) {
       return true;
     }
     const count = remaining.get(observation.priceCents) ?? 0;

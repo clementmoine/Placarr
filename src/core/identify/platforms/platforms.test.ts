@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canonicalizeVideoGamePlatformAliasSpan,
   createSequelNumberBeforePlatformMatcher,
   createTrailingVideoGamePlatformSuffixMatcher,
   createVideoGamePlatformMatcher,
@@ -25,6 +26,18 @@ describe("videoGamePlatforms", () => {
     expect(detectVideoGamePlatformKey("PC (Windows)")).toBe("pc");
     expect(detectVideoGamePlatformKey("Switch 2")).toBe("switch2");
     expect(detectVideoGamePlatformKey("Nintendo Switch 2")).toBe("switch2");
+    expect(detectVideoGamePlatformKey("Game & Watch")).toBe("gameandwatch");
+    expect(detectVideoGamePlatformKey("game-&-watch")).toBe("gameandwatch");
+  });
+
+  it("canonicalizes regional console aliases to the registry label", () => {
+    expect(canonicalizeVideoGamePlatformAliasSpan("Sega Genesis")).toBe(
+      "Mega Drive",
+    );
+    expect(
+      canonicalizeVideoGamePlatformAliasSpan("Sega Mega Drive - Noir"),
+    ).toBe("Mega Drive - Noir");
+    expect(detectVideoGamePlatformKey("Sega Genesis")).toBe("megadrive");
   });
 
   it("prefers parenthetical marketplace platform markers over body text", () => {
@@ -34,6 +47,11 @@ describe("videoGamePlatforms", () => {
     expect(detectVideoGamePlatformKey("Shock Troopers Neo Geo AES")).toBe(
       "neogeo",
     );
+    expect(
+      detectVideoGamePlatformKey(
+        "Garou: Mark of the Wolves sur NEOGEO AES+",
+      ),
+    ).toBe("neogeo");
   });
 
   it("marks low listing-type-signal precision on the platform row, not in core logic", () => {
@@ -59,6 +77,11 @@ describe("videoGamePlatforms", () => {
     expect(
       createTrailingVideoGamePlatformSuffixMatcher().test(
         "Tekken 7 sur PS4",
+      ),
+    ).toBe(true);
+    expect(
+      createTrailingVideoGamePlatformSuffixMatcher().test(
+        "Garou: Mark of the Wolves sur NEOGEO AES+",
       ),
     ).toBe(true);
     expect(

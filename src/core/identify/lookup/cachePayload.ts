@@ -119,7 +119,9 @@ export async function buildCachedBarcodePayload(
   );
 
   const mergedMatches = mergeDuplicateMatches(enrichedMatches);
-  const preservePlatformSuffix = (type || cachedResult.shelfType) === "games";
+  const preservePlatformSuffix =
+    (type || cachedResult.shelfType) === "games" ||
+    (type || cachedResult.shelfType) === "hardware";
   const cleanNameStr = cleanTitleForDisplay(
     decodeHTMLEntities(filteredNames[0] || rawNames[0] || ""),
     { preservePlatformSuffix },
@@ -244,7 +246,8 @@ export function cleanCompiledResultForResponse(
   },
   selectedType: string,
 ) {
-  const preservePlatformSuffix = selectedType === "games";
+  const preservePlatformSuffix =
+    selectedType === "games" || selectedType === "hardware";
   // The compiled cleanName is already the consensus engine's final base/title:
   // when it keeps an edition term ("Gottlieb Pinball Classics", edition null) the
   // word is part of the title, not a re-release suffix. Re-stripping it here is

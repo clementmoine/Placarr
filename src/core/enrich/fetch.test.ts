@@ -179,8 +179,9 @@ describe("fetchMetadataByType generic routing", () => {
       return null;
     });
 
+    // Same-language title: this case asserts platform filtering, not FR↔EN invent.
     const res = await fetchMetadataByType(
-      "Pokemon Jaune",
+      "Pokemon Yellow",
       "games",
       null,
       "Nintendo Game Boy",
@@ -340,6 +341,61 @@ describe("fetchMetadataByType generic routing", () => {
     expect(
       res?.attachments?.some(
         (attachment) => attachment.source === "chocobonplan",
+      ),
+    ).toBe(true);
+  });
+
+  it("still queries marketplace listing scrapes for hardware when stage 1 already has a cover", async () => {
+    mockResolve.mockImplementation(async (_ctx, id) => {
+      if (id === "pricecharting") {
+        return {
+          title: "Nintendo Wii Bleu",
+          imageUrl: "https://img.example/pc-wii.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/pc-wii.jpg",
+              source: "pricecharting",
+            },
+          ],
+        } as MetadataResult;
+      }
+      if (id === "backmarket") {
+        return {
+          title: "Nintendo Wii - Bleu",
+          imageUrl: "https://img.example/bm-wii.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.example/bm-wii.jpg",
+              source: "backmarket",
+            },
+          ],
+          facts: [
+            {
+              kind: "external-link",
+              label: "Back Market",
+              value: "Voir la fiche",
+              url: "https://www.backmarket.fr/fr-fr/p/console-nintendo-wii-bleu/7383740a-64c1-4b44-aa1c-b65a512979a1",
+              source: "backmarket",
+            },
+          ],
+        } as MetadataResult;
+      }
+      return null;
+    });
+
+    const res = await fetchMetadataByType("Nintendo Wii Bleu", "hardware", null, null, {
+      shelfName: "Consoles",
+    });
+
+    expect(
+      mockResolve.mock.calls.some((call) => call[1] === "backmarket"),
+    ).toBe(true);
+    expect(
+      res?.facts?.some(
+        (fact) =>
+          fact.source === "backmarket" && fact.kind === "external-link",
       ),
     ).toBe(true);
   });

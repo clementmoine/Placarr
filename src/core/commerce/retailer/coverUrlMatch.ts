@@ -17,8 +17,13 @@ export function isRetailerCoverUrlAlignedWithTitle(
   const lowerUrl = coverUrl.toLowerCase();
   if (lowerUrl.includes("achatmoinscher.com/img/")) return false;
 
+  // Content-addressed catalog CDNs (PriceCharting) put no product identity in
+  // the path — hashing them against the title would drop every honest cover.
+  if (/images\.pricecharting\.com/i.test(lowerUrl)) return true;
+
   const slug = coverSlugFromUrl(coverUrl);
   if (!slug || slug.length < 4) return true;
+  if (/^[a-f0-9]{16,}$/i.test(slug.replace(/\s+/g, ""))) return true;
 
   return retailerCatalogSharesRequestedIdentity(catalogTitle, slug);
 }

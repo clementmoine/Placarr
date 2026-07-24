@@ -85,20 +85,20 @@ Auth / DB / HTTP             → lib/
 - ~~Ne pas fusionner les pipelines barcode~~ → **identify/** est un pipeline, **enrich/** un autre ; on peut les **regrouper sous un pilier**, pas les mélanger en un seul fichier.
 - Les providers restent **hors core** — seule contrainte non négociable.
 
-## Taille actuelle (~156 fichiers prod)
+## Taille actuelle (~186 fichiers prod sous `src/core/`)
 
-| Pilier | Fichiers prod | Gros morceaux |
-|--------|---------------|---------------|
-| enrich | ~70 | storage, fetch, titleMatching, attachmentDisplayScore |
-| identify | ~37 | compile, resolve, titleUtils, platformSources |
-| collect | ~17 | queryCache, media |
-| catalog | ~18 | mappingAudit, sourceTraits |
-| commerce | ~13 | pricing/resolver |
-| locale | ~6 | preference |
+| Pilier | Gros morceaux |
+|--------|---------------|
+| enrich | storage, fetch, titleMatching, attachmentDisplayScore, residualIdentity |
+| identify | compile, resolver, titleUtils, platforms |
+| collect | present, media, jobs/workRunner |
+| catalog | registry, sourceTraits, mappingAudit |
+| commerce | pricing/resolver, retailer/titleMatch |
+| locale | preference |
 
-**Prochaines réductions utiles** (par valeur, pas par dogme) :
+**Prochaines réductions utiles** (après SSOT identité — voir [backlog § Ouverts](backlog.md#ouverts--base-clean-2026-07-24)) :
 
-1. Découper `enrich/storage.ts` en persist / images / format (3 fichiers, même pilier) — rendement faible (déjà extrait image*).
+1. Découper `enrich/storage.ts` en persist / images / format — ROI faible tant que les gates accept→purge divergent.
 2. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
 3. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 

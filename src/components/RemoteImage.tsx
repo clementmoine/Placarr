@@ -50,6 +50,7 @@ export function RemoteImage({
   fill,
   priority,
   onLoad,
+  onError,
 }: {
   src: string;
   alt: string;
@@ -61,6 +62,7 @@ export function RemoteImage({
   fill?: boolean;
   priority?: boolean;
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
+  onError?: (event: SyntheticEvent<HTMLImageElement>) => void;
 }) {
   const displaySrc = remoteImageDisplaySrc(src);
   const unoptimized =
@@ -77,6 +79,7 @@ export function RemoteImage({
         className={className}
         style={style}
         onLoad={onLoad}
+        onError={onError}
         draggable={false}
       />
     );
@@ -96,6 +99,7 @@ export function RemoteImage({
         className={className}
         style={style}
         onLoad={onLoad}
+        onError={onError}
         draggable={false}
       />
     );
@@ -112,6 +116,7 @@ export function RemoteImage({
       className={cn(aspectRatioClassName(className), className)}
       style={style}
       onLoad={onLoad}
+      onError={onError}
       draggable={false}
     />
   );

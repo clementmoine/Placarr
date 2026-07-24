@@ -47,6 +47,26 @@ describe("retailer metadata lookup policy", () => {
     ).toBe(true);
   });
 
+  it("rejects Nintendogs for a Nintendo DS hardware shelf", () => {
+    expect(
+      acceptRetailerCatalogCandidate({
+        requestedName: "Nintendo DS",
+        shelfName: "Consoles",
+        shelfType: "hardware",
+        catalogTitle:
+          "Nintendogs + cats Caniche Toy & ses nouveaux amis Nintendo 3DS",
+      }),
+    ).toBe(false);
+    expect(
+      acceptRetailerCatalogCandidate({
+        requestedName: "Nintendo DS",
+        shelfName: "Consoles",
+        shelfType: "hardware",
+        catalogTitle: "Black Nintendo DS System",
+      }),
+    ).toBe(true);
+  });
+
   it("rejects generic edition/platform search queries that match another game", () => {
     const cultOfTheLamb = "Cult of the Lamb Deluxe Edition PS5";
     const genericQuery = "Deluxe Edition PS5";

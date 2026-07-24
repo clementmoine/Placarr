@@ -62,6 +62,7 @@ export async function compileAllBarcodeTypeResults(params: {
   const musicSources: EvidenceSource[] = [];
   const movieSources: EvidenceSource[] = [];
   const boardgameSources: EvidenceSource[] = [];
+  const hardwareSources: EvidenceSource[] = [];
 
   for (const retailer of payload.retailers) {
     const products = sourceProductsFromMetadataHit(retailer);
@@ -70,6 +71,9 @@ export async function compileAllBarcodeTypeResults(params: {
     }
     if (retailer.types.includes("boardgames")) {
       pushSource(boardgameSources, retailer.providerName, products);
+    }
+    if (retailer.types.includes("hardware")) {
+      pushSource(hardwareSources, retailer.providerName, products);
     }
   }
 
@@ -81,6 +85,7 @@ export async function compileAllBarcodeTypeResults(params: {
     musics: musicSources,
     movies: movieSources,
     boardgames: boardgameSources,
+    hardware: hardwareSources,
   };
   const sourceContext = { type, isBook, cleanedBarcode };
   for (const providerModule of PROVIDER_MODULES) {
@@ -94,13 +99,15 @@ export async function compileAllBarcodeTypeResults(params: {
     }
   }
 
-  const [books, games, musics, movies, boardgames] = await Promise.all([
-    compileResultForType("books", bookSources, cleanedBarcode),
-    compileResultForType("games", gameSources, cleanedBarcode),
-    compileResultForType("musics", musicSources, cleanedBarcode),
-    compileResultForType("movies", movieSources, cleanedBarcode),
-    compileResultForType("boardgames", boardgameSources, cleanedBarcode),
-  ]);
+  const [books, games, musics, movies, boardgames, hardware] =
+    await Promise.all([
+      compileResultForType("books", bookSources, cleanedBarcode),
+      compileResultForType("games", gameSources, cleanedBarcode),
+      compileResultForType("musics", musicSources, cleanedBarcode),
+      compileResultForType("movies", movieSources, cleanedBarcode),
+      compileResultForType("boardgames", boardgameSources, cleanedBarcode),
+      compileResultForType("hardware", hardwareSources, cleanedBarcode),
+    ]);
 
-  return { books, games, musics, movies, boardgames };
+  return { books, games, musics, movies, boardgames, hardware };
 }

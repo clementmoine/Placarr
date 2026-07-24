@@ -83,6 +83,9 @@ export type BarcodeLookupType =
   | "musics"
   | "movies"
   | "boardgames"
+  | "hardware"
+  | "tcg"
+  | "toys"
   | "generic";
 
 export type BarcodeLookupContext = {

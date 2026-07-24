@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { isListingMetadataSegment } from "@/core/identify/listingMetadata";
 import {
+  listingAddsUnrequestedControllerAccessory,
+  listingAddsUnrequestedConsoleSystem,
   listingLooksLikeGameAccessory,
   listingLooksLikeMerchAccessory,
   listingLooksLikeNonBookProduct,
@@ -62,5 +64,110 @@ describe("listing merch taxonomies", () => {
 
   it("detects artbook as game companion media", () => {
     expect(listingLooksLikeGameAccessory("Zelda Artbook")).toBe(true);
+  });
+
+  it("treats DualSense as merch on games shelves but identity on hardware", () => {
+    const title = "Manette DualSense PS5 Midnight Black";
+    expect(listingLooksLikeMerchAccessory(title)).toBe(true);
+    expect(listingLooksLikeGameAccessory(title)).toBe(true);
+    expect(
+      listingLooksLikeMerchAccessory(title, { shelfType: "hardware" }),
+    ).toBe(false);
+    expect(
+      listingLooksLikeGameAccessory(title, { shelfType: "hardware" }),
+    ).toBe(false);
+  });
+
+  it("keeps posters as merch even on hardware shelves", () => {
+    expect(
+      listingLooksLikeMerchAccessory("Poster Zelda Tears of the Kingdom", {
+        shelfType: "hardware",
+      }),
+    ).toBe(true);
+  });
+
+  it("detects console repair kits and docks as merch", () => {
+    expect(
+      listingLooksLikeMerchAccessory(
+        "Kit restauration condensateurs - Nintendo NES",
+      ),
+    ).toBe(true);
+    expect(
+      listingLooksLikeMerchAccessory(
+        "Station D'accueil Axagon Adsa-sn Noir Plug And Play Uasp",
+      ),
+    ).toBe(true);
+    expect(
+      listingLooksLikeMerchAccessory("Nintendo Switch OLED", {
+        shelfType: "hardware",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects a controller listing for a console request on hardware", () => {
+    expect(
+      listingAddsUnrequestedControllerAccessory(
+        "Nintendo GameCube Black",
+        "GameCube Controller Black",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(true);
+    expect(
+      listingAddsUnrequestedControllerAccessory(
+        "Manette DualSense PS5",
+        "DualSense Wireless Controller",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("allows console + included-pad marketplace bundles for a bare console", () => {
+    expect(
+      listingAddsUnrequestedControllerAccessory(
+        "Nintendo NES",
+        "Nintendo NES - Manette Gris",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      listingAddsUnrequestedControllerAccessory(
+        "Nintendo Switch",
+        "Nintendo Switch with Gray Joy-Con",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+  });
+
+  it("allows a console bundle for a platform+Joy-Con shelf name on hardware", () => {
+    expect(
+      listingAddsUnrequestedConsoleSystem(
+        "Nintendo Switch Joycon Gris",
+        "Nintendo Switch with Gray Joy-Con",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(false);
+    expect(
+      listingAddsUnrequestedConsoleSystem(
+        "Joy-Con Gray",
+        "Nintendo Switch with Gray Joy-Con",
+        { shelfType: "hardware" },
+      ),
+    ).toBe(true);
+  });
+
+  it("treats amiibo as merch on games but identity on toys", () => {
+    const title = "Amiibo Link Tears of the Kingdom";
+    expect(listingLooksLikeMerchAccessory(title)).toBe(true);
+    expect(
+      listingLooksLikeMerchAccessory(title, { shelfType: "toys" }),
+    ).toBe(false);
+  });
+
+  it("treats TCG boosters as identity on tcg shelves", () => {
+    const title = "Pokemon Booster ETB";
+    expect(listingLooksLikeNonBookProduct(title)).toBe(true);
+    expect(
+      listingLooksLikeNonBookProduct(title, { shelfType: "tcg" }),
+    ).toBe(false);
   });
 });

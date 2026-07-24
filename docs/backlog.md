@@ -1,7 +1,22 @@
 # Backlog
 
-> Dernière vérification : **2026-07-19** (audit principes + découplage core→providers ;
-> `pnpm test` ciblé sur refine/merge/blindness/nextImage/ebay legacy).
+> Dernière vérification : **2026-07-24** (cleanup docs — base clean avant chantier SSOT identité).
+> Index docs : [README.md](README.md).
+
+## Ouverts — base clean (2026-07-24)
+
+Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
+
+| Priorité | Item | Détail |
+| -------- | ---- | ------ |
+| **P0** | **SSOT identité / covers / liens (accept→purge)** | Une règle bout-en-bout : `residualIdentity` (+ `shelfType` obligatoire games/hardware) ; même filtre covers store=present ; liens marketplace vs PC trusted ; prix filtrés à l’écriture. |
+| **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme, pas bloquant pour SSOT. |
+| **P3** | Découper `enrich/storage.ts` (persist / images / format) | Faible ROI tant que SSOT n’est pas verrouillé. Idem `fetch.ts` après. |
+| **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
+
+**Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.
+
+---
 
 ## État actuel (snapshot)
 
@@ -131,6 +146,10 @@ Règles persistantes dans `.cursor/rules/` :
 
 ## Priorités ouvertes (ordre suggéré)
 
+> **2026-07-24** — la file active est en tête du fichier
+> ([§ Ouverts](#ouverts--base-clean-2026-07-24)). Les tableaux ci-dessous sont
+> surtout **historique** (beaucoup de ~~Fait~~) ; ne pas les traiter comme TODO.
+
 ### P1 — Match prix / metadata (qualité continue)
 
 | Item | État | Détail |
@@ -233,10 +252,10 @@ Réorganisation **`src/core/`** en 5 piliers (`identify`, `enrich`, `collect`, `
 
 | Priorité | Item | État | Détail |
 | -------- | ---- | ---- | ------ |
-| **P3** | Découper `enrich/storage.ts` | **Ouvert** | Persist / images / format (3 fichiers, même pilier) |
-| ~~**P3**~~ | ~~DRY titres identify ↔ enrich~~ | **Fait 2026-07-19 (partiel)** | `normalizeForTokens` → `enrich/titles/normalize.ts` (casse soft-cycle `displayScore` → `titleUtils` → `commerce/titleMatch` → `titleMatching`) ; romains franchise via `parseRomanToken` ; haystacks catalogue réutilisent le leaf. Matchers `areLikelySameProduct` / `metadataTitleSimilarity` **volontairement séparés**. |
-| ~~**P4**~~ | ~~`platformSources.ts` → data file~~ | **Fait 2026-07-19** | Snapshots SS/LB → `platforms/data/*.json` ; `platformSources.ts` = types + loader (~30 L). |
-| ~~**P2**~~ | ~~Imports core → `@/providers/icollect/*`~~ | **Fait 2026-07-19** | `collect/media.ts` via trait stampé + `collectorCoverRegion` ; `lookup/payload.ts` via `CollectorCatalogBarcodeHit` ; hosts next/image figés (`scrapeCatalogImageHosts`) ; proxy media via `catalog/mediaProxy` ; PicClick→eBay via `catalog/legacyPriceOffer`. Allowlist blindness **vide**. |
+| ~~**P3**~~ | ~~Découper `enrich/storage.ts`~~ | **Reporté** | Faible ROI ; reprendre seulement après SSOT identité (voir § Ouverts) |
+| ~~**P3**~~ | ~~DRY titres identify ↔ enrich~~ | **Fait 2026-07-19 (partiel)** | `normalizeForTokens` → `enrich/titles/normalize.ts` ; matchers volontairement séparés. |
+| ~~**P4**~~ | ~~`platformSources.ts` → data file~~ | **Fait 2026-07-19** | Snapshots SS/LB → `platforms/data/*.json`. |
+| ~~**P2**~~ | ~~Imports core → `@/providers/icollect/*`~~ | **Fait 2026-07-19** | Traits stampés ; allowlist blindness vide. |
 
 ~~Réorganiser `src/lib/` en sous-dossiers thématiques~~ **fait 2026-06-28** puis **big-bang → core** 2026-07-05.
 
@@ -393,7 +412,9 @@ Pas d'autre boutique PrestaShop IQIT à migrer ; Apriloshop retiré (search 403)
 
 #### I. Cluster confidence calibration (barcode P2)
 
-**Ouvert 2026-06-29** — `scoreEvidenceCluster` somme encore `barcodeEvidenceObservationSourceWeight` (~0.05–0.45/row). Introduire une contribution tier-aware (`barcodeClusterObservationContribution` ou `observationTierScale` dans `CLUSTER_CONFIDENCE`) impose de **mettre à jour** `compile.confidenceLock.test.ts` en même commit (6 locks Ghost Recon / de Blob / TMNT). Ne pas shipper sans recalibration : un essai à `0.01`/tier a déplacé les confidences de +0.06 à +0.08.
+**Fait** (voir Roadmap « Cluster confidence `sourceScore` + tier ») —
+`barcodeClusterObservationContribution` + `observationTierScale: 0.01` dans
+`scoring.ts` / `compile.ts`. Ne pas rouvrir sans recalibrer `compile.confidenceLock.test.ts`.
 
 #### G. Observation contract TypeScript
 

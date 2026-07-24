@@ -57,6 +57,7 @@ import {
   authoritative3dCoverRoleSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
+  inferProviderIdFromMediaUrl,
 } from "@/core/catalog/sourceTraits";
 import sharp from "sharp";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
@@ -74,7 +75,7 @@ import type {
   MetadataResult,
 } from "@/types/metadataProvider";
 import type { Item } from "@prisma/client";
-import { replaceFieldEvidence } from "@/core/enrich/evidence";
+import { replaceFieldEvidence, mergeFieldEvidenceForStorage } from "@/core/enrich/evidence";
 import crypto from "crypto";
 import fs from "fs";
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
@@ -119,13 +120,14 @@ export function metadataImageAttachmentSemantics(
     (attachment) => attachment.url === originalImageUrl,
   );
   const inferred = inferImageAttachmentFromMediaUrl(originalImageUrl);
+  const inferredSource = inferProviderIdFromMediaUrl(originalImageUrl);
 
-  if (!direct && !inferred) return null;
+  if (!direct && !inferred && !inferredSource) return null;
 
   return {
     type: direct?.type ?? inferred?.type ?? "cover",
     role: direct?.role ?? inferred?.role,
-    source: direct?.source ?? inferred?.source,
+    source: direct?.source ?? inferred?.source ?? inferredSource ?? undefined,
     title: direct?.title,
   };
 }
@@ -173,15 +175,37 @@ export type CroppedCoverAttachmentSyncPlan =
   | { action: "create-user"; url: string }
   | { action: "noop" };
 
+function findAttachmentForCandidateUrl(
+  attachments: ReadonlyArray<{
+    id: string;
+    url: string;
+    source: string | null;
+  }>,
+  candidateUrl: string | null | undefined,
+) {
+  const candidate = candidateUrl?.trim();
+  if (!candidate) return undefined;
+  return attachments.find(
+    (attachment) =>
+      attachment.url === candidate ||
+      urlsReferToSameLocalizedImage(attachment.url, candidate),
+  );
+}
+
 /**
  * Decide how to persist a newly cropped cover into the attachment gallery.
  * Never rewrite the *previous* cover row when the crop is a different image
  * (e.g. user picked gallery #2 that localized to a new /uploads path) — that
  * used to steal the old attachment URL and leave the displayed cover stuck.
  *
- * Always keep a durable `source: "user"` pin on the saved cover so display
- * honors the pick (including marketplace listings that ranking would otherwise
- * demote, and after enrichment bumps `lastFetched`).
+ * `source: "user"` / Perso is only for true personal art (file upload or URL
+ * with no gallery twin). Selecting a provider cover — even after crop /
+ * remote→local download — updates that provider row; it must not invent a
+ * Perso duplicate beside the original jaquette.
+ *
+ * @param selectedImageUrl Gallery / form URL *before* `downloadRemoteImage`
+ *   rewrote it to a UUID `/uploads` path. Remote PrestaShop covers only match
+ *   via this argument.
  */
 export function planCroppedCoverAttachmentSync(
   attachments: ReadonlyArray<{
@@ -191,6 +215,7 @@ export function planCroppedCoverAttachmentSync(
   }>,
   croppedImageUrl: string,
   previousImageUrl?: string | null,
+  selectedImageUrl?: string | null,
 ): CroppedCoverAttachmentSyncPlan[] {
   if (!croppedImageUrl.startsWith("/uploads/")) return [{ action: "noop" }];
 
@@ -208,18 +233,31 @@ export function planCroppedCoverAttachmentSync(
       attachmentId: matchSameImage.id,
       url: croppedImageUrl,
     });
-  } else if (!matchSameImage && sameImageAsPrevious && previousImageUrl) {
-    // Re-crop of the current pin when the gallery row still has a remote /
-    // pre-crop URL that stripCrop cannot equate to the new local file.
-    const previousMatch = attachments.find((attachment) =>
-      urlsReferToSameLocalizedImage(attachment.url, previousImageUrl),
+  } else if (!matchSameImage) {
+    // Prefer the URL the collector just picked (pre-download). Falling back to
+    // previousImageUrl alone used to miss remote→UUID folds and invent Perso.
+    const selectedMatch = findAttachmentForCandidateUrl(
+      attachments,
+      selectedImageUrl,
     );
-    if (previousMatch) {
+    if (selectedMatch && selectedMatch.url !== croppedImageUrl) {
       plans.push({
         action: "update",
-        attachmentId: previousMatch.id,
+        attachmentId: selectedMatch.id,
         url: croppedImageUrl,
       });
+    } else if (sameImageAsPrevious && previousImageUrl) {
+      const previousMatch = findAttachmentForCandidateUrl(
+        attachments,
+        previousImageUrl,
+      );
+      if (previousMatch && previousMatch.url !== croppedImageUrl) {
+        plans.push({
+          action: "update",
+          attachmentId: previousMatch.id,
+          url: croppedImageUrl,
+        });
+      }
     }
   }
 
@@ -240,8 +278,22 @@ export function planCroppedCoverAttachmentSync(
         url: croppedImageUrl,
       });
     }
-  } else if (matchSameImage?.source !== "user") {
-    plans.push({ action: "create-user", url: croppedImageUrl });
+  } else {
+    const touchesProviderRow = plans.some((plan) => {
+      if (plan.action !== "update") return false;
+      const row = attachments.find(
+        (attachment) => attachment.id === plan.attachmentId,
+      );
+      return Boolean(row && row.source !== "user");
+    });
+    const providerAlreadyHoldsCrop = attachments.some(
+      (attachment) =>
+        attachment.source !== "user" &&
+        urlsReferToSameLocalizedImage(attachment.url, croppedImageUrl),
+    );
+    if (!touchesProviderRow && !providerAlreadyHoldsCrop) {
+      plans.push({ action: "create-user", url: croppedImageUrl });
+    }
   }
 
   return plans.length > 0 ? plans : [{ action: "noop" }];
@@ -281,6 +333,7 @@ export async function syncCroppedCoverAttachment(
   metadataId: string,
   croppedImageUrl: string,
   previousImageUrl?: string | null,
+  selectedImageUrl?: string | null,
 ): Promise<{ preferredImageUrl?: string }> {
   if (!croppedImageUrl.startsWith("/uploads/")) return {};
 
@@ -292,6 +345,7 @@ export async function syncCroppedCoverAttachment(
     attachments,
     croppedImageUrl,
     previousImageUrl,
+    selectedImageUrl,
   );
 
   let preferredImageUrl: string | undefined;
@@ -308,14 +362,15 @@ export async function syncCroppedCoverAttachment(
     if (plan.action !== "create-user") continue;
 
     // Client-localized provider covers land as UUID `/uploads` files that do not
-    // URL-match the catalog hash path. Remap the honor pin onto the visual twin
-    // so the picker keeps HDJV / ScreenScraper instead of inventing "Perso".
+    // URL-match the catalog hash path. Fold the crop onto the visual twin —
+    // never invent a Perso row for a gallery pick.
     const alreadyOnCatalogRow = attachments.some(
       (attachment) =>
         attachment.source !== "user" &&
         urlsReferToSameLocalizedImage(attachment.url, plan.url),
     );
-    let pinUrl = plan.url;
+    let catalogTwinId: string | null = null;
+    let catalogTwinUrl: string | null = null;
     if (!alreadyOnCatalogRow) {
       const pinHash = await perceptualHashForAsset(plan.url);
       if (pinHash) {
@@ -323,6 +378,7 @@ export async function syncCroppedCoverAttachment(
           attachments
             .filter((attachment) => attachment.source !== "user")
             .map(async (attachment) => ({
+              id: attachment.id,
               url: attachment.url,
               type: attachment.type,
               source: attachment.source,
@@ -335,20 +391,37 @@ export async function syncCroppedCoverAttachment(
           PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
         );
         if (catalogUrl) {
-          pinUrl = catalogUrl;
-          preferredImageUrl = catalogUrl;
+          const twin = candidates.find((candidate) => candidate.url === catalogUrl);
+          catalogTwinId = twin?.id ?? null;
+          catalogTwinUrl = catalogUrl;
         }
       }
+    }
+
+    if (catalogTwinId && catalogTwinUrl) {
+      if (catalogTwinUrl !== plan.url) {
+        await prisma.attachment.update({
+          where: { id: catalogTwinId },
+          data: { url: plan.url },
+        });
+      }
+      preferredImageUrl = plan.url;
+      continue;
+    }
+
+    if (alreadyOnCatalogRow) {
+      preferredImageUrl = plan.url;
+      continue;
     }
 
     const existingUserPin = attachments.find(
       (attachment) => attachment.source === "user",
     );
     if (existingUserPin) {
-      if (!urlsReferToSameLocalizedImage(existingUserPin.url, pinUrl)) {
+      if (!urlsReferToSameLocalizedImage(existingUserPin.url, plan.url)) {
         await prisma.attachment.update({
           where: { id: existingUserPin.id },
-          data: { url: pinUrl },
+          data: { url: plan.url },
         });
       }
     } else {
@@ -356,7 +429,7 @@ export async function syncCroppedCoverAttachment(
         data: {
           metadataId,
           type: "image",
-          url: pinUrl,
+          url: plan.url,
           source: "user",
         },
       });
@@ -365,9 +438,83 @@ export async function syncCroppedCoverAttachment(
 
   // Enrichment may have added a catalog twin under another /uploads path after the
   // honor pin was created — collapse Perso onto that provider URL.
-  const galleryAfter = await prisma.attachment.findMany({
+  let galleryAfter = await prisma.attachment.findMany({
     where: { metadataId },
   });
+
+  // Perso crop beside a still-remote catalog default (failed remote→UUID fold):
+  // move that catalog row onto the crop path and drop the Perso duplicate —
+  // even when the gallery has several remotes (PriceCharting box set).
+  const userCropPin = galleryAfter.find(
+    (attachment) =>
+      attachment.source === "user" &&
+      urlsReferToSameLocalizedImage(attachment.url, croppedImageUrl),
+  );
+  const remoteCatalogCovers = galleryAfter.filter(
+    (attachment) =>
+      /^https?:\/\//i.test(attachment.url) &&
+      attachment.source !== "user" &&
+      ["cover", "artwork", "image"].includes(attachment.type),
+  );
+  const metadataCoverUrl = (
+    await prisma.metadata.findUnique({
+      where: { id: metadataId },
+      select: { imageUrl: true },
+    })
+  )?.imageUrl;
+  const remoteTwin =
+    (metadataCoverUrl &&
+      remoteCatalogCovers.find((attachment) =>
+        urlsReferToSameLocalizedImage(attachment.url, metadataCoverUrl),
+      )) ||
+    (remoteCatalogCovers.length === 1 ? remoteCatalogCovers[0] : null) ||
+    remoteCatalogCovers.find(
+      (attachment) =>
+        attachment.type === "cover" &&
+        /^(main(\s+image)?|box(\s+front)?|front(\s+of\s+box)?)$/i.test(
+          (attachment.title || "").trim(),
+        ),
+    ) ||
+    null;
+  if (userCropPin && remoteTwin) {
+    const inferredSource =
+      remoteTwin.source?.trim() || inferProviderIdFromMediaUrl(remoteTwin.url);
+    await prisma.attachment.update({
+      where: { id: remoteTwin.id },
+      data: {
+        url: croppedImageUrl,
+        type: remoteTwin.type === "image" ? "cover" : remoteTwin.type,
+        ...(inferredSource && !remoteTwin.source?.trim()
+          ? { source: inferredSource }
+          : {}),
+      },
+    });
+    await prisma.attachment.delete({ where: { id: userCropPin.id } });
+    preferredImageUrl = croppedImageUrl;
+    galleryAfter = await prisma.attachment.findMany({
+      where: { metadataId },
+    });
+  } else {
+    // Catalog row already holds the crop — delete orphan Perso twins.
+    const catalogHoldingCrop = galleryAfter.find(
+      (attachment) =>
+        attachment.source !== "user" &&
+        urlsReferToSameLocalizedImage(attachment.url, croppedImageUrl),
+    );
+    if (catalogHoldingCrop) {
+      for (const orphan of galleryAfter.filter(
+        (attachment) =>
+          attachment.source === "user" &&
+          urlsReferToSameLocalizedImage(attachment.url, croppedImageUrl),
+      )) {
+        await prisma.attachment.delete({ where: { id: orphan.id } });
+      }
+      galleryAfter = await prisma.attachment.findMany({
+        where: { metadataId },
+      });
+    }
+  }
+
   const retargeted = await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
   for (const attachment of retargeted) {
     const previous = galleryAfter.find((row) => row.id === attachment.id);
@@ -772,8 +919,9 @@ export async function storeMetadata(
                 itemId,
                 metadataId: item?.metadata?.id,
               });
-              if (!localizedUrl) return null;
-              nextUrl = localizedUrl;
+              // Keep the remote URL when localize fails (CloudFront / Flare
+              // blips) so marketplace covers still appear in the gallery.
+              if (localizedUrl) nextUrl = localizedUrl;
             }
 
             let role = attachment.role;
@@ -1008,6 +1156,7 @@ export async function storeMetadata(
         {
           itemBarcode: item.barcode,
           itemTitle: item.name?.trim() || name.trim() || undefined,
+          shelfType: type,
         },
       )
     : (metadata.facts ?? []);
@@ -1096,13 +1245,37 @@ export async function storeMetadata(
     });
   }
 
-  const evidence =
+  const incomingEvidence =
     metadata.fieldEvidence && metadata.fieldEvidence.length > 0
       ? metadata.fieldEvidence
       : metadataFieldEvidence("MergedEngine", metadata, {
           confidence: 0.72,
           priority: 100,
         });
+
+  const previousEvidence =
+    item?.metadata?.id
+      ? await prisma.fieldEvidence.findMany({
+          where: { metadataId: item.metadata.id },
+        })
+      : [];
+
+  const evidence = mergeFieldEvidenceForStorage(
+    previousEvidence.map((row) => ({
+      field: row.field,
+      source: row.source,
+      value: row.value,
+      normalizedValue: row.normalizedValue,
+      rawValue: row.rawValue,
+      confidence: row.confidence,
+      priority: row.priority,
+      sourceUrl: row.sourceUrl,
+      locale: row.locale,
+      region: row.region,
+      observedAt: row.observedAt,
+    })),
+    incomingEvidence,
+  );
 
   await replaceFieldEvidence(
     {
@@ -1267,6 +1440,7 @@ export async function storeMetadata(
       itemId,
       itemBarcode: item?.barcode,
       itemTitle: item?.name?.trim() || name.trim() || undefined,
+      shelfType: type,
     });
   } catch (error) {
     console.warn(
@@ -1630,9 +1804,52 @@ export async function dedupeLocalizedAttachmentsByContent<
       );
     },
     (item) => item.source ?? "merged",
-  ).map((attachment) =>
-    retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),
-  );
+  )
+    .map((attachment) =>
+      retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),
+    )
+    .filter((attachment, _index, gallery) =>
+      keepSourcelessCoverOnlyWithoutCatalogTwin(
+        attachment,
+        gallery,
+        hashByUrl,
+      ),
+    );
+}
+
+/**
+ * Per-provider perceptual dedupe keeps a sourceless orphan beside its stamped
+ * twin (groups differ: empty/"merged" vs a catalog provider id). Drop the orphan
+ * so the picker shows the provider chip instead of a bare "JAQUETTE / Par défaut".
+ */
+export function keepSourcelessCoverOnlyWithoutCatalogTwin<
+  T extends {
+    type: AttachmentType;
+    url: string;
+    source?: string | null;
+  },
+>(
+  attachment: T,
+  gallery: readonly T[],
+  hashByUrl: ReadonlyMap<string, string>,
+  maxDistance: number = PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+): boolean {
+  const sourceKey = attachmentSourceKey(attachment.source);
+  if (sourceKey && sourceKey !== "merged") return true;
+  if (!isCoverEligibleAttachmentType(attachment.type)) return true;
+
+  const hash = hashByUrl.get(attachment.url) ?? null;
+  return !gallery.some((other) => {
+    if (other === attachment) return false;
+    const otherKey = attachmentSourceKey(other.source);
+    if (!otherKey || otherKey === "merged" || otherKey === "user") return false;
+    if (!isCoverEligibleAttachmentType(other.type)) return false;
+    if (urlsReferToSameLocalizedImage(other.url, attachment.url)) return true;
+    if (!hash) return false;
+    const otherHash = hashByUrl.get(other.url);
+    if (!otherHash) return false;
+    return hammingDistance(hash, otherHash) <= maxDistance;
+  });
 }
 
 /** Re-hash local gallery rows and retarget `source: user` pins onto catalog twins. */

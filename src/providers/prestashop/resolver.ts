@@ -251,6 +251,7 @@ async function acceptPrestashopCatalogProduct(
   input: {
     searchQuery?: string;
     shelfName?: string | null;
+    shelfType?: string | null;
   },
 ): Promise<MetadataResult | null> {
   if (!product.title) return null;
@@ -269,6 +270,7 @@ async function acceptPrestashopCatalogProduct(
       requestedName,
       searchQuery: input.searchQuery,
       shelfName: input.shelfName,
+      shelfType: input.shelfType,
       catalogTitle: product.title,
       barcodeConfirmed: gate.catalogBarcodeConfirmed,
       trustConfirmedProductBarcode: true,
@@ -304,6 +306,7 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
         input: {
           searchQuery?: string;
           shelfName?: string | null;
+          shelfType?: string | null;
         },
       ): Promise<MetadataResult | null> => {
         if (!product?.title) return null;
@@ -329,6 +332,7 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
         );
         const searchResult = await tryProduct(fromSearch, {
           shelfName: ctx.shelfName,
+          shelfType: ctx.type,
         });
         if (searchResult) return searchResult;
 
@@ -345,6 +349,7 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
           const mapped = mapPrestashopSearchProduct(config, hit);
           const result = await tryProduct(mapped, {
             shelfName: ctx.shelfName,
+            shelfType: ctx.type,
           });
           if (result) return result;
         }
@@ -368,6 +373,7 @@ export function createPrestashopResolver(config: PrestashopRetailerConfig) {
           const result = await tryProduct(product, {
             searchQuery: query,
             shelfName: ctx.shelfName,
+            shelfType: ctx.type,
           });
           if (result) return result;
         }

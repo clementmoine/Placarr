@@ -26,6 +26,9 @@ enum Type {
   musics
   books
   boardgames
+  hardware
+  tcg
+  toys
 }
 
 enum AttachmentType {

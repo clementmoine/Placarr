@@ -5,6 +5,10 @@ import {
   barcodesEquivalent,
   normalizeProductBarcode,
 } from "@/core/identify/normalize";
+import {
+  promoteOkkazeoSearchEvidence,
+  readOkkazeoSearchEvidence,
+} from "./durableEvidence";
 
 const BASE_URL = "https://www.okkazeo.com";
 const HEADERS = {
@@ -247,20 +251,26 @@ export async function searchOkkazeoHits(
   const cleanedQuery = query.trim();
   if (!ean && !cleanedQuery) return [];
 
-  const params = ean
-    ? { ean, titre_jeu: "", action: "Rechercher" }
-    : { ean: "", titre_jeu: cleanedQuery, action: "Rechercher" };
+  const searchUrl = new URL(`${BASE_URL}/jeux/resultats`);
+  if (ean) searchUrl.searchParams.set("ean", ean);
+  else searchUrl.searchParams.set("titre_jeu", cleanedQuery);
+  searchUrl.searchParams.set("action", "Rechercher");
+  const requestUrl = searchUrl.toString();
+
+  const fromEvidence = await readOkkazeoSearchEvidence(requestUrl);
+  if (fromEvidence) {
+    console.info(`[Okkazeo] Search evidence hit for ${requestUrl}`);
+    return fromEvidence.slice(0, limit);
+  }
 
   try {
-    const response = await fetchGetWithFlareFallback(
-      `${BASE_URL}/jeux/resultats`,
-      {
-        params,
-        headers: HEADERS,
-        timeout: 10000,
-      },
-    );
-    return parseOkkazeoSearchHits(response.data as string, limit);
+    const response = await fetchGetWithFlareFallback(requestUrl, {
+      headers: HEADERS,
+      timeout: 10000,
+    });
+    const hits = parseOkkazeoSearchHits(response.data as string, limit);
+    await promoteOkkazeoSearchEvidence(requestUrl, hits);
+    return hits;
   } catch (error) {
     console.error("[Okkazeo] Search failed:", error);
     return [];

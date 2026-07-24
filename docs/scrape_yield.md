@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2y shipped (PrestaShop factory SearchYield durable); No-Intro = later.
+> Phase 1–2z shipped (Okkazeo SearchYield + ean/titre_jeu keys); HDJV / No-Intro = later.
 
 ## Principle
 
@@ -200,10 +200,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Native `products[]` and IQIT `rendered_products` both covered
 - Evidence keys use `search_query` / `s` (controller/ajax stripped by normalize)
 
+## Phase 2z — Okkazeo SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `ean` + `titre_jeu` (drops empty + `action`)
+- `/jeux/resultats` → typed `{url,gameId?}` promote/reuse
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
+| HDJV SearchYield (`support` identity) | `q` kept; needs `support` to avoid platform collisions |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| Remaining niche Flare peers | Okkazeo / HDJV / Bedetheque multi-hop as needed |
+| Bedetheque multi-hop / Freakxy | Not thin SearchYield→detail |

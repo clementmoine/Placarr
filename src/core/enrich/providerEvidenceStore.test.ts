@@ -90,6 +90,23 @@ describe("normalizeProviderEvidenceUrl", () => {
     ).toBe("https://shop.example/recherche?s=ticket+to+ride");
   });
 
+  it("keeps Okkazeo ean / titre_jeu identity (drops empty + action)", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.okkazeo.com/jeux/resultats?ean=3421272109517&titre_jeu=&action=Rechercher",
+      ),
+    ).toBe(
+      "https://www.okkazeo.com/jeux/resultats?ean=3421272109517",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.okkazeo.com/jeux/resultats?ean=&titre_jeu=Mille+Sabords&action=Rechercher",
+      ),
+    ).toBe(
+      "https://www.okkazeo.com/jeux/resultats?titre_jeu=mille+sabords",
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

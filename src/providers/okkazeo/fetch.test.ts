@@ -1,4 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readOkkazeoSearchEvidence = vi.fn();
+const promoteOkkazeoSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readOkkazeoSearchEvidence: (...args: unknown[]) =>
+    readOkkazeoSearchEvidence(...args),
+  promoteOkkazeoSearchEvidence: (...args: unknown[]) =>
+    promoteOkkazeoSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   parseOkkazeoCategoriesFromDescription,
@@ -7,7 +21,18 @@ import {
   parseOkkazeoListingTitles,
   parseOkkazeoSearchHit,
   parseOkkazeoSearchHits,
+  searchOkkazeoHits,
 } from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readOkkazeoSearchEvidence.mockReset();
+  promoteOkkazeoSearchEvidence.mockReset();
+  readOkkazeoSearchEvidence.mockResolvedValue(null);
+  promoteOkkazeoSearchEvidence.mockResolvedValue(undefined);
+});
 
 const GAME_HTML = `
 <html><head>
@@ -130,6 +155,54 @@ describe("parseOkkazeoSearchHits", () => {
         gameId: "40446",
       },
     ]);
+  });
+});
+
+describe("searchOkkazeoHits", () => {
+  const SEARCH_HTML = `
+    <a href="/jeux/10267/mille-sabords">Mille Sabords</a>`;
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    readOkkazeoSearchEvidence.mockResolvedValueOnce([
+      {
+        url: "https://www.okkazeo.com/jeux/10267/mille-sabords",
+        gameId: "10267",
+      },
+    ]);
+
+    await expect(
+      searchOkkazeoHits("", "3421272109517"),
+    ).resolves.toEqual([
+      {
+        url: "https://www.okkazeo.com/jeux/10267/mille-sabords",
+        gameId: "10267",
+      },
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteOkkazeoSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_HTML,
+    } as never);
+
+    await expect(searchOkkazeoHits("Mille Sabords")).resolves.toEqual([
+      {
+        url: "https://www.okkazeo.com/jeux/10267/mille-sabords",
+        gameId: "10267",
+      },
+    ]);
+    expect(promoteOkkazeoSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("titre_jeu=Mille"),
+      [
+        {
+          url: "https://www.okkazeo.com/jeux/10267/mille-sabords",
+          gameId: "10267",
+        },
+      ],
+    );
   });
 });
 

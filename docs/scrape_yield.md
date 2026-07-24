@@ -252,11 +252,17 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - MyLudo: synthetic `datas.php?type=search|barcode` → typed `{url,gameId,title?}` promote/reuse
 - ChocoBonPlan: synthetic `/search?q=` → typed Algolia `{title,url,image,objectID}` promote/reuse
 
+## Phase 2ai — Babelio + SensCritique SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `universe` (SensCritique)
+- Babelio: synthetic `/recherche.php?term=` → typed merged AJAX+HTML hits promote/reuse
+- SensCritique: synthetic `/search?keywords=&universe=` → typed GraphQL hits promote/reuse
+- LeDénicheur skipped this cut (search immediately resolves to prices/detail)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| Babelio dual AJAX+HTML POST search | Needs body-keyed / synthetic evidence URL |
-| LeDénicheur GraphQL | Synthetic query key |
+| LeDénicheur GraphQL | Extract product-node SearchYield from BFF, then price resolve |

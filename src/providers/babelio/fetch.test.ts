@@ -1,6 +1,32 @@
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+}));
+
+const readBabelioSearchEvidence = vi.fn();
+const promoteBabelioSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  babelioSearchEvidenceUrl: (term: string) => {
+    const url = new URL("https://www.babelio.com/recherche.php");
+    url.searchParams.set("term", term.trim());
+    return url.toString();
+  },
+  readBabelioSearchEvidence: (...args: unknown[]) =>
+    readBabelioSearchEvidence(...args),
+  promoteBabelioSearchEvidence: (...args: unknown[]) =>
+    promoteBabelioSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
+
 import {
   normalizeBabelioCoverUrl,
   parseBabelioAjaxHits,
@@ -10,17 +36,6 @@ import {
   searchBabelioHits,
 } from "./fetch";
 import { mapBabelioMetadata } from "./index";
-
-vi.mock("axios", () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/http/flareSolverr", () => ({
-  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
-}));
 
 const mockedPost = vi.mocked(axios.post);
 const mockedGet = vi.mocked(axios.get);
@@ -131,6 +146,10 @@ describe("babelio fetch", () => {
   beforeEach(() => {
     mockedPost.mockReset();
     mockedGet.mockReset();
+    readBabelioSearchEvidence.mockReset();
+    promoteBabelioSearchEvidence.mockReset();
+    readBabelioSearchEvidence.mockResolvedValue(null);
+    promoteBabelioSearchEvidence.mockResolvedValue(undefined);
   });
 
   it("normalise les miniatures Amazon en HTTPS plus large", () => {
@@ -356,6 +375,33 @@ describe("babelio fetch", () => {
       name: "WAKFU 3 Les Mines de Lamororia",
     });
     expect(book?.title).toBe("Wakfu, tome 3 : Les mines de Lamororia");
+  });
+
+  it("reuses SearchYield evidence without POSTs", async () => {
+    readBabelioSearchEvidence.mockResolvedValueOnce([
+      {
+        id: "53653",
+        title: "Dragon Ball Z - Cycle 1, tome 2",
+        url: "https://www.babelio.com/livres/Toriyama-Dragon-Ball-Z-Cycle-1-tome-2/53653",
+      },
+    ]);
+
+    const hits = await searchBabelioHits("Dragon Ball Z");
+    expect(hits).toHaveLength(1);
+    expect(hits[0]?.id).toBe("53653");
+    expect(mockedPost).not.toHaveBeenCalled();
+    expect(promoteBabelioSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after dual-POST search", async () => {
+    mockSearchPosts();
+    await searchBabelioHits("Dragon Ball Z");
+    expect(promoteBabelioSearchEvidence).toHaveBeenCalledWith(
+      "https://www.babelio.com/recherche.php?term=Dragon+Ball+Z",
+      expect.arrayContaining([
+        expect.objectContaining({ id: "53653" }),
+      ]),
+    );
   });
 
   it("searchBabelioHits fusionne HTML puis AJAX", async () => {

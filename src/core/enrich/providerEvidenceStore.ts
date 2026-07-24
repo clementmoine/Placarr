@@ -58,6 +58,7 @@ const EVIDENCE_SEARCH_IDENTITY_PARAMS = [
   "mode",
   "words",
   "code",
+  "universe",
 ] as const;
 
 function shouldDropSearchParam(key: string): boolean {

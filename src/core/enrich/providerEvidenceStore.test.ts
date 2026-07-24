@@ -182,6 +182,30 @@ describe("normalizeProviderEvidenceUrl", () => {
     ).toBe("https://www.chocobonplan.com/search?q=ball+x+pit");
   });
 
+  it("keeps Babelio term and SensCritique keywords+universe identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.babelio.com/recherche.php?term=Dragon+Ball&utm=1",
+      ),
+    ).toBe("https://www.babelio.com/recherche.php?term=dragon+ball");
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.senscritique.com/search?keywords=Rayman&universe=game",
+      ),
+    ).toBe(
+      "https://www.senscritique.com/search?keywords=rayman&universe=game",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.senscritique.com/search?keywords=Rayman&universe=game",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://www.senscritique.com/search?keywords=Rayman&universe=movie",
+      ),
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

@@ -1,8 +1,39 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+    isCancel: () => false,
+  },
+}));
+
+const readSensCritiqueSearchEvidence = vi.fn();
+const promoteSensCritiqueSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  sensCritiqueSearchEvidenceUrl: (input: {
+    keywords: string;
+    universe?: string;
+  }) => {
+    const url = new URL("https://www.senscritique.com/search");
+    url.searchParams.set("keywords", input.keywords.trim());
+    if (input.universe?.trim()) {
+      url.searchParams.set("universe", input.universe.trim());
+    }
+    return url.toString();
+  },
+  readSensCritiqueSearchEvidence: (...args: unknown[]) =>
+    readSensCritiqueSearchEvidence(...args),
+  promoteSensCritiqueSearchEvidence: (...args: unknown[]) =>
+    promoteSensCritiqueSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   mapSensCritiqueProductPayload,
   mapSensCritiqueSearchPayload,
+  searchSensCritique,
   upgradeSensCritiqueImageUrl,
 } from "./fetch";
 import {
@@ -10,6 +41,8 @@ import {
   sensCritiqueAliases,
   sensCritiqueUniversesForType,
 } from "./resolver";
+
+const mockedGet = vi.mocked(axios.get);
 
 // Captured live from gql.senscritique.com on 2026-07-10 (product id 35074).
 const PRODUCT_PAYLOAD = {
@@ -224,6 +257,50 @@ describe("mapSensCritiqueMetadata", () => {
     expect(mapSensCritiqueMetadata(product).aliases).toEqual([
       "Le Magicien de Wor",
     ]);
+  });
+});
+
+describe("searchSensCritique", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readSensCritiqueSearchEvidence.mockReset();
+    promoteSensCritiqueSearchEvidence.mockReset();
+    readSensCritiqueSearchEvidence.mockResolvedValue(null);
+    promoteSensCritiqueSearchEvidence.mockResolvedValue(undefined);
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        id: 415352,
+        title: "Rayman Origins",
+        universe: "game",
+        url: "https://www.senscritique.com/jeuvideo/rayman_origins/415352",
+      },
+    ];
+    readSensCritiqueSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(
+      searchSensCritique("Rayman", { universe: "game" }),
+    ).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteSensCritiqueSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live GraphQL search", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_PAYLOAD,
+    } as never);
+
+    const hits = await searchSensCritique("Rayman", { universe: "game" });
+    expect(hits[0]?.id).toBe(415352);
+    expect(promoteSensCritiqueSearchEvidence).toHaveBeenCalledWith(
+      "https://www.senscritique.com/search?keywords=Rayman&universe=game",
+      expect.arrayContaining([
+        expect.objectContaining({ id: 415352 }),
+      ]),
+    );
   });
 });
 

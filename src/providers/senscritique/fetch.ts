@@ -2,6 +2,12 @@ import axios from "axios";
 
 import type { MediaType } from "@/types/providerRegistry";
 
+import {
+  promoteSensCritiqueSearchEvidence,
+  readSensCritiqueSearchEvidence,
+  sensCritiqueSearchEvidenceUrl,
+} from "./durableEvidence";
+
 const GRAPHQL_URL = "https://gql.senscritique.com/graphql";
 const SITE_URL = "https://www.senscritique.com";
 const HEADERS = {
@@ -265,13 +271,25 @@ export async function searchSensCritique(
   if (!cleaned) return [];
 
   const limit = options.limit ?? 8;
+  const searchUrl = sensCritiqueSearchEvidenceUrl({
+    keywords: cleaned,
+    universe: options.universe,
+  });
+  const fromEvidence = await readSensCritiqueSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[SensCritique] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, limit);
+  }
+
   const universeArg = options.universe
     ? `, universe: ${JSON.stringify(options.universe)}`
     : "";
   const query = `{ searchResult(keywords: ${JSON.stringify(cleaned)}${universeArg}, limit: ${limit}) { total_count results { universe products_list { ${SEARCH_PRODUCT_FIELDS} } } } }`;
 
   const data = await fetchSensCritiqueGraphql(query, options.signal);
-  return mapSensCritiqueSearchPayload(data, limit);
+  const hits = mapSensCritiqueSearchPayload(data, limit);
+  await promoteSensCritiqueSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 const PRODUCT_FIELDS =

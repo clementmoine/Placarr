@@ -16,6 +16,12 @@ import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
+import {
+  babelioSearchEvidenceUrl,
+  promoteBabelioSearchEvidence,
+  readBabelioSearchEvidence,
+} from "./durableEvidence";
+
 const BABELIO_BASE_URL = "https://www.babelio.com";
 const BABELIO_SEARCH_URL = `${BABELIO_BASE_URL}/aj_recherche.php`;
 
@@ -536,6 +542,13 @@ export async function searchBabelioHits(
   const trimmed = term.trim();
   if (!trimmed) return [];
 
+  const searchUrl = babelioSearchEvidenceUrl(trimmed);
+  const fromEvidence = await readBabelioSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Babelio] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
   let ajaxHits: BabelioSearchHit[] = [];
   try {
     const response = await axios.post(
@@ -562,7 +575,9 @@ export async function searchBabelioHits(
   // HTML search ranks real albums ahead of side products and keeps full titles
   // (AJAX often truncates with "…" or returns a single noisy hit).
   const htmlHits = await searchBabelioHtmlHits(trimmed, signal);
-  return mergeBabelioHits(htmlHits, ajaxHits);
+  const hits = mergeBabelioHits(htmlHits, ajaxHits);
+  await promoteBabelioSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchBabelioBook(

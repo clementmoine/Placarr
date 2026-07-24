@@ -142,6 +142,9 @@ describe("nointro resolver", () => {
       md5: "982ed5d2b12a0377eb14bcdc41237494",
       sha1: "9306510639ab3d52b27fc5bc5c0f5c4b4c1d3a4e",
     });
+    expect(
+      metadata.facts?.filter((fact) => fact.kind === "identifier").map((f) => f.label),
+    ).toEqual(["CRC", "MD5", "SHA1"]);
   });
 
   it("resolve via index FTS", async () => {

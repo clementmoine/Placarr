@@ -84,6 +84,7 @@ import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/cov
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
+  RomChecksums,
 } from "@/types/providerModule";
 import {
   buildMatchContext,
@@ -141,6 +142,7 @@ import {
   shouldRunScrapeMetadataPass,
   metadataPassCapabilitiesIncomplete,
 } from "@/core/enrich/scrapePassGate";
+import { normalizeRomChecksums } from "@/core/enrich/romChecksums";
 
 export type FetchMetadataOptions = {
   isBackground?: boolean;
@@ -150,6 +152,11 @@ export type FetchMetadataOptions = {
   existingScrapeProviderIds?: readonly string[];
   existingExternalIds?: Record<string, string | null>;
   existingProviderRecordUrls?: Record<string, string>;
+  /**
+   * ROM dump hashes when known (API preview / prior identifier facts).
+   * Tier0 dump providers prefer these over title search.
+   */
+  romChecksums?: RomChecksums;
   /**
    * Prior fiche snapshot (e.g. DB row on force-refresh). Used for capability
    * gating so Tier 0+1 does not blank-slate when identify+cover already exist.
@@ -323,6 +330,7 @@ export async function fetchMetadata(
       providerRecordUrls: options?.existingProviderRecordUrls
         ? { ...options.existingProviderRecordUrls }
         : undefined,
+      romChecksums: normalizeRomChecksums(options?.romChecksums),
     },
     buildMatchContext({
       shelfType: type,

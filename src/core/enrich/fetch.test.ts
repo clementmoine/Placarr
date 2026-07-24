@@ -748,6 +748,18 @@ describe("fetchMetadataByType generic routing", () => {
     ).toBe(true);
   });
 
+  it("passes romChecksums on the initial Pass1 adapter context", async () => {
+    await fetchMetadataByType("Completely Unrelated", "games", null, "gb", {
+      romChecksums: { crc: "46DF91AD" },
+    });
+
+    expect(
+      mockResolve.mock.calls.some(
+        (call) => call[0]?.romChecksums?.crc === "46df91ad",
+      ),
+    ).toBe(true);
+  });
+
   it("still runs scrapes when existing scrape sources are attached to the fiche", async () => {
     mockResolve.mockImplementation(async (_ctx, id) => {
       if (id === "openlibrary") {

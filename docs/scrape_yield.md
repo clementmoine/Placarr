@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3f No-Intro (checksum + DAT pack sync); Phase P4a LaunchBox FTS.
+> Phase 1–2am shipped; Phase 3a–3g No-Intro (checksum wire + DAT sync); Phase P4a LaunchBox FTS.
 
 ## Principle
 
@@ -325,8 +325,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Flat `.dat`/`.xml` into `NOINTRO_DAT_PATH` (or `.cache/nointro/dats`), then rebuild index
 - No default mirror URL — bring your own pack (DAT-o-MATIC export, etc.); scan still never downloads
 
+## Phase 3g — ROM checksums into enrich context (done 2026-07-24)
+
+- `FetchMetadataOptions.romChecksums` → Pass1 `MetadataAdapterContext` (No-Intro checksum-first)
+- `GET /api/metadata?crc=&md5=&sha1=` for scriptable preview (no ROM upload)
+- Refresh rehydrates CRC/MD5/SHA1 from stored identifier facts; No-Intro emits those facts
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| File-ingest UI / worker feeding `romChecksums` | Product surface for dump hashes |
+| Client-side dump hash → API (no binary upload) | Product surface once preview path is proven |
+| File-ingest UI / worker hashing binaries | Only if dumps must live on server |

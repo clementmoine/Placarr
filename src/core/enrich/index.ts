@@ -28,6 +28,11 @@ import {
   externalIdsFromStoredSources,
   providerRecordUrlsFromStoredSources,
 } from "@/core/enrich/scrapePassGate";
+import {
+  mergeRomChecksums,
+  romChecksumsFromIdentifierFacts,
+} from "@/core/enrich/romChecksums";
+import type { RomChecksums } from "@/types/providerModule";
 import { parseMetadataFactsJson } from "@/core/enrich/metadataFactsMerge";
 import { prisma } from "@/lib/db/prisma";
 import type { Item, Type } from "@prisma/client";
@@ -102,6 +107,7 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
   scrapeProviderIds: string[];
   externalIds: Record<string, string>;
   providerRecordUrls: Record<string, string>;
+  romChecksums?: RomChecksums;
 }> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
@@ -139,6 +145,7 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
       facts,
       fieldEvidence,
     }),
+    romChecksums: romChecksumsFromIdentifierFacts(facts),
   };
 }
 
@@ -156,6 +163,7 @@ export async function getMetadata(
     existingScrapeProviderIds?: readonly string[];
     existingExternalIds?: Record<string, string | null>;
     existingProviderRecordUrls?: Record<string, string>;
+    romChecksums?: RomChecksums;
     seededActiveResults?: MetadataResult[];
     onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
   } = {},
@@ -183,6 +191,7 @@ export async function getMetadata(
     !options.existingScrapeProviderIds?.length &&
     !options.existingExternalIds &&
     !options.existingProviderRecordUrls &&
+    !options.romChecksums &&
     !options.seededActiveResults?.length;
 
   if (shareableCache) {
@@ -207,6 +216,7 @@ export async function getMetadata(
           existingScrapeProviderIds: options.existingScrapeProviderIds,
           existingExternalIds: options.existingExternalIds,
           existingProviderRecordUrls: options.existingProviderRecordUrls,
+          romChecksums: options.romChecksums,
           seededActiveResults: options.seededActiveResults,
           onApiPassComplete: options.onApiPassComplete,
         },
@@ -300,6 +310,7 @@ export async function fetchAndStoreMetadata(
     scrapeProviderIds: existingScrapeProviderIds,
     externalIds: existingExternalIds,
     providerRecordUrls: existingProviderRecordUrls,
+    romChecksums: storedRomChecksums,
   } = await storedProviderMemoryForItem(itemId);
 
   // Even on forceRefresh, seed capability gating from the current fiche so we
@@ -345,6 +356,10 @@ export async function fetchAndStoreMetadata(
       existingScrapeProviderIds,
       existingExternalIds,
       existingProviderRecordUrls,
+      romChecksums: mergeRomChecksums(
+        storedRomChecksums,
+        romChecksumsFromIdentifierFacts(seededActiveResults?.[0]?.facts),
+      ),
       seededActiveResults,
       onApiPassComplete: persistPartial,
     });

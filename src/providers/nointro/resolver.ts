@@ -158,6 +158,26 @@ export function mapNoIntroGameToMetadata(
       priority: 50,
     });
   }
+  if (primaryRom?.md5) {
+    facts.push({
+      kind: "identifier",
+      label: "MD5",
+      value: primaryRom.md5,
+      source: "nointro",
+      confidence: 0.8,
+      priority: 50,
+    });
+  }
+  if (primaryRom?.sha1) {
+    facts.push({
+      kind: "identifier",
+      label: "SHA1",
+      value: primaryRom.sha1,
+      source: "nointro",
+      confidence: 0.8,
+      priority: 50,
+    });
+  }
 
   const aliases = [game.cloneOf].filter(
     (alias): alias is string =>

@@ -7,6 +7,7 @@ import {
   filterMetadataForShelfPlatform,
 } from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import { normalizeRomChecksums } from "@/core/enrich/romChecksums";
 import { isAbortError } from "@/lib/http/abort";
 
 export async function GET(req: NextRequest) {
@@ -22,6 +23,11 @@ export async function GET(req: NextRequest) {
     const platform = searchParams.get("platform");
     const shelfName = searchParams.get("shelfName");
     const suggestions = searchParams.get("suggestions") === "true";
+    const romChecksums = normalizeRomChecksums({
+      crc: searchParams.get("crc") || searchParams.get("crc32"),
+      md5: searchParams.get("md5"),
+      sha1: searchParams.get("sha1"),
+    });
 
     if (!name || !type) {
       return NextResponse.json(
@@ -48,6 +54,7 @@ export async function GET(req: NextRequest) {
     const metadata = await getMetadata(name, type, barcode, platform, {
       shelfName,
       queuePriority: "high",
+      romChecksums,
     });
     const filtered =
       metadata && shelfName

@@ -112,7 +112,25 @@ export function buildLaunchBoxSearchTokenSets(name: string): string[][] {
   return [tokens];
 }
 
-function collectLaunchBoxCandidateIds(
+/** Per-MATCH row cap inside `collectLaunchBoxCandidateIds`. */
+export const LAUNCHBOX_FTS_MATCH_LIMIT = 200;
+
+/**
+ * Soft budget on how many FTS MATCH plans a title may expand to
+ * (token-set variants × relaxation ladder). Used by the P4 bench/tests —
+ * not a hard runtime abort.
+ */
+export const LAUNCHBOX_FTS_MATCH_PLAN_BUDGET = 20;
+
+export function countLaunchBoxFtsMatchPlans(name: string): number {
+  let plans = 0;
+  for (const tokenSet of buildLaunchBoxSearchTokenSets(name)) {
+    plans += buildLaunchBoxFtsQueries(tokenSet).length;
+  }
+  return plans;
+}
+
+export function collectLaunchBoxCandidateIds(
   db: DatabaseSync,
   name: string,
 ): number[] {
@@ -120,7 +138,7 @@ function collectLaunchBoxCandidateIds(
   const stmtFts = db.prepare(`
     SELECT databaseId FROM games_fts
     WHERE games_fts MATCH ?
-    LIMIT 200
+    LIMIT ${LAUNCHBOX_FTS_MATCH_LIMIT}
   `);
 
   try {

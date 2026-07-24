@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3d No-Intro multi-DAT index; LaunchBox FTS = P4.
+> Phase 1–2am shipped; Phase 3a–3d No-Intro; Phase P4a LaunchBox FTS measure.
 
 ## Principle
 
@@ -307,10 +307,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `resolveNoIntroDatFiles` + merge into one SQLite (distinct `datName` per set)
 - Still never downloads; Redump DATs load the same path when placed in the folder
 
+## Phase P4a — LaunchBox local FTS perf measure (done 2026-07-24)
+
+- `pnpm launchbox:bench-fts` — p50/p95 over sample titles against prebuilt index (no download)
+- Soft keep signal: p95 ≤ 100ms on the measuring machine
+- Unit budget: `LAUNCHBOX_FTS_MATCH_PLAN_BUDGET` (20) + `LAUNCHBOX_FTS_MATCH_LIMIT` (200)
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| LaunchBox local FTS perf measure | P4 backlog |
 | ROM checksum ingest → No-Intro lookup | Wire `fetchFromNoIntroByChecksum` when file hashes exist |
 | Optional DAT download / sync script | Out of band corpus management |

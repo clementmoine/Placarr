@@ -8,10 +8,15 @@ import {
   tokenizeLaunchBoxQuery,
   buildLaunchBoxFtsQueries,
   buildLaunchBoxSearchTokenSets,
+  collectLaunchBoxCandidateIds,
+  countLaunchBoxFtsMatchPlans,
+  LAUNCHBOX_FTS_MATCH_PLAN_BUDGET,
+  LAUNCHBOX_FTS_MATCH_LIMIT,
 } from "@/providers/launchbox/resolver";
 import {
   __resetLaunchBoxIndexForTests,
   __setLaunchBoxIndexForTests,
+  ensureLaunchBoxIndex,
 } from "@/providers/launchbox/indexStore";
 import type { LaunchBoxGameRecord } from "@/providers/launchbox/parse";
 
@@ -58,6 +63,60 @@ describe("buildLaunchBoxSearchTokenSets", () => {
       ["alan", "wake", "ii", "deluxe", "edition"],
       ["alan", "wake", "ii"],
     ]);
+  });
+});
+
+describe("LaunchBox FTS match-plan budget (P4)", () => {
+  beforeEach(() => {
+    __resetLaunchBoxIndexForTests();
+  });
+
+  afterEach(() => {
+    __resetLaunchBoxIndexForTests();
+  });
+
+  it.each([
+    "GoldenEye: Rogue Agent",
+    "Mario Kart",
+    "Tom Clancy's Rainbow Six 3",
+    "Alan Wake II Deluxe Edition",
+    "The Legend of Zelda: Breath of the Wild",
+  ])("keeps match plans for %s within budget", (title) => {
+    expect(countLaunchBoxFtsMatchPlans(title)).toBeLessThanOrEqual(
+      LAUNCHBOX_FTS_MATCH_PLAN_BUDGET,
+    );
+  });
+
+  it("limits each MATCH to LAUNCHBOX_FTS_MATCH_LIMIT rows", () => {
+    expect(LAUNCHBOX_FTS_MATCH_LIMIT).toBe(200);
+  });
+
+  it("collects candidates from an in-memory index without blowing the plan budget", async () => {
+    __setLaunchBoxIndexForTests([
+      {
+        databaseId: 1,
+        name: "GoldenEye: Rogue Agent",
+        platform: "Sony Playstation 2",
+        alternateNames: [{ databaseId: 1, name: "GoldenEye Rogue Agent" }],
+        images: [],
+      },
+      {
+        databaseId: 2,
+        name: "Mario Kart: Double Dash!!",
+        platform: "Nintendo GameCube",
+        alternateNames: [],
+        images: [],
+      },
+    ]);
+
+    const db = await ensureLaunchBoxIndex();
+    expect(db).not.toBeNull();
+    const ids = collectLaunchBoxCandidateIds(db!, "GoldenEye Rogue Agent");
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.length).toBeLessThanOrEqual(LAUNCHBOX_FTS_MATCH_LIMIT);
+    expect(
+      countLaunchBoxFtsMatchPlans("GoldenEye Rogue Agent"),
+    ).toBeLessThanOrEqual(LAUNCHBOX_FTS_MATCH_PLAN_BUDGET);
   });
 });
 

@@ -484,6 +484,81 @@ function dropIdentityConflictingListings(
   });
 }
 
+function productNameFromPriceOfferInput(
+  offer: PriceOfferInput,
+): string | null {
+  const direct = offer.productName?.trim();
+  if (direct) return direct;
+  const raw = offer.rawValue;
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  for (const key of ["productName", "title", "name"] as const) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function priceOfferPersistKey(offer: {
+  source: string;
+  condition?: string | null;
+  priceCents: number;
+  sourceUrl?: string | null;
+  productName?: string | null;
+}): string {
+  return [
+    offer.source,
+    offer.condition ?? "",
+    offer.priceCents,
+    offer.sourceUrl ?? "",
+    offer.productName ?? "",
+  ].join("\0");
+}
+
+/**
+ * Drop identity-mismatched listings before merge so wrong prices never land
+ * in DB (display filter alone used to hide them only at read time).
+ */
+export function filterPriceOfferInputsForPersist(
+  shelfType: string,
+  shelfName: string | null | undefined,
+  itemNames: string[],
+  offers: PriceOfferInput[],
+): PriceOfferInput[] {
+  const names = itemNames.map((name) => name.trim()).filter(Boolean);
+  if (names.length === 0) return offers;
+
+  const observations: PriceObservation[] = offers.map((offer) => ({
+    source: offer.source,
+    productName: productNameFromPriceOfferInput(offer),
+    merchantName: offer.merchantName,
+    condition: offer.condition,
+    priceCents: offer.priceCents,
+    currency: offer.currency,
+    sourceUrl: offer.sourceUrl,
+    offerCount: offer.offerCount,
+    observedAt: offer.observedAt,
+  }));
+
+  const kept = new Set(
+    filterItemPriceOffers(shelfType, shelfName, names, observations).map(
+      priceOfferPersistKey,
+    ),
+  );
+
+  return offers.filter((offer) =>
+    kept.has(
+      priceOfferPersistKey({
+        source: offer.source,
+        condition: offer.condition,
+        priceCents: offer.priceCents,
+        sourceUrl: offer.sourceUrl,
+        productName: productNameFromPriceOfferInput(offer),
+      }),
+    ),
+  );
+}
+
 export function filterItemPriceOffers(
   shelfType: string,
   shelfName: string | null | undefined,
@@ -1263,14 +1338,29 @@ export async function persistBarcodePrices(params: {
    * where `provider` carries the identification-cache version).
    */
   provider?: string | null;
+  /** When set, reject listings that fail the same identity gate as display. */
+  itemNames?: string[];
+  shelfName?: string | null;
 }): Promise<BarcodePricesResult> {
-  const { cleanedBarcode, shelfType, priceOffers, provider } = params;
+  const {
+    cleanedBarcode,
+    shelfType,
+    priceOffers,
+    provider,
+    itemNames = [],
+    shelfName,
+  } = params;
 
-  const incoming = priceOffers.filter(
-    (offer) =>
-      offer.source &&
-      Number.isInteger(offer.priceCents) &&
-      offer.priceCents > 0,
+  const incoming = filterPriceOfferInputsForPersist(
+    shelfType,
+    shelfName,
+    itemNames,
+    priceOffers.filter(
+      (offer) =>
+        offer.source &&
+        Number.isInteger(offer.priceCents) &&
+        offer.priceCents > 0,
+    ),
   );
 
   // Nothing new (e.g. all providers failed): never erase what we already have.
@@ -1329,15 +1419,38 @@ export async function persistItemPrices(params: {
   metadataId?: string | null;
   shelfType: string;
   priceOffers: PriceOfferInput[];
+  itemNames?: string[];
+  shelfName?: string | null;
 }): Promise<BarcodePricesResult> {
-  const { itemId, metadataId, shelfType, priceOffers } = params;
+  const {
+    itemId,
+    metadataId,
+    shelfType,
+    priceOffers,
+    itemNames = [],
+    shelfName,
+  } = params;
   const scope = metadataId ? { itemId, metadataId } : { itemId };
 
-  const incoming = priceOffers.filter(
-    (offer) =>
-      offer.source &&
-      Number.isInteger(offer.priceCents) &&
-      offer.priceCents > 0,
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: {
+      barcode: true,
+      name: true,
+      shelf: { select: { name: true } },
+    },
+  });
+
+  const incoming = filterPriceOfferInputsForPersist(
+    shelfType,
+    shelfName ?? item?.shelf?.name,
+    itemNames.length > 0 ? itemNames : [item?.name ?? ""],
+    priceOffers.filter(
+      (offer) =>
+        offer.source &&
+        Number.isInteger(offer.priceCents) &&
+        offer.priceCents > 0,
+    ),
   );
 
   if (incoming.length === 0) {
@@ -1355,10 +1468,6 @@ export async function persistItemPrices(params: {
   const now = new Date();
 
   if (metadataId) {
-    const item = await prisma.item.findUnique({
-      where: { id: itemId },
-      select: { barcode: true, name: true },
-    });
     await persistProviderExternalLinksForMetadata(metadataId, {
       itemBarcode: item?.barcode,
       itemTitle: item?.name,
@@ -1428,9 +1537,24 @@ export async function refreshBarcodePrices(
     toBarcodePriceRefreshContext(match, { expandSearchQueries: true }),
   );
 
+  const persistNames = Array.from(
+    new Set(
+      [
+        primaryName,
+        ...extraNames,
+        ...(acceptanceNames ?? []),
+        ...rawNamesList,
+      ]
+        .map((name) => name.trim())
+        .filter(Boolean),
+    ),
+  );
+
   return persistBarcodePrices({
     cleanedBarcode,
     shelfType,
+    shelfName,
+    itemNames: persistNames,
     priceOffers,
     provider: priceProviderTokenFromOffers(shelfType, priceOffers),
   });
@@ -1479,10 +1603,20 @@ export async function refreshItemPrices(
     toBarcodePriceRefreshContext(match, { expandSearchQueries: true }),
   );
 
+  const persistNames = Array.from(
+    new Set(
+      [primaryName, ...extraNames, ...(acceptanceNames ?? [])]
+        .map((name) => name.trim())
+        .filter(Boolean),
+    ),
+  );
+
   return persistItemPrices({
     itemId,
     metadataId,
     shelfType,
+    shelfName,
+    itemNames: persistNames,
     priceOffers,
   });
 }

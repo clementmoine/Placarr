@@ -20,6 +20,7 @@ vi.mock("@/lib/db/prisma", () => ({
 import {
   alignBarcodePricesForItemNames,
   filterItemPriceOffers,
+  filterPriceOfferInputsForPersist,
   getCachedBarcodePrices,
   getCachedItemPrices,
   summarizeObservedPrices,
@@ -856,6 +857,34 @@ describe("alignBarcodePricesForItemNames", () => {
 
     expect(aligned.priceNew).toBe(2637);
     expect(aligned.priceObservations).toHaveLength(2);
+  });
+});
+
+describe("filterPriceOfferInputsForPersist", () => {
+  it("drops wrong-edition listings before write using the display identity gate", () => {
+    const filtered = filterPriceOfferInputsForPersist(
+      "boardgames",
+      null,
+      ["Black Stories - Femmes Fatales"],
+      [
+        {
+          source: "LeDenicheur",
+          productName: "Black Stories: Funny Death Edition 2",
+          condition: "new",
+          priceCents: 1999,
+          sourceUrl: "https://ledenicheur.fr/product.php?p=4955683",
+        },
+        {
+          source: "LeDenicheur",
+          productName: "Black Stories - Femmes Fatales",
+          condition: "new",
+          priceCents: 1499,
+          sourceUrl: "https://ledenicheur.fr/product.php?p=111",
+        },
+      ],
+    );
+
+    expect(filtered.map((offer) => offer.priceCents)).toEqual([1499]);
   });
 });
 

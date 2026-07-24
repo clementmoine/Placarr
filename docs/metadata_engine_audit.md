@@ -91,8 +91,8 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | File | LOC (approx.) | Mix |
 | ---- | ------------- | --- |
 | `enrich/fetch.ts` | ~1160 | orchestrator (+ gating / merge / observationRanking / book*) |
-| `enrich/storage.ts` | ~1015 | persist (+ image*, croppedCoverSync, attachmentLocalization) |
-| `enrich/titleMatching.ts` | ~1718 | similarity + align + attachments (+ franchiseSequel / editionSupplement) |
+| `enrich/storage.ts` | ~889 | persist (+ image*/crop/localize/coverBootstrap) |
+| `enrich/titleMatching.ts` | ~1514 | align/similarity (+ tokens / album / edition / sequel leaves) |
 | `commerce/pricing/resolver.ts` | ~1655 | resolve + shelf summarize (+ cachePolicy/outlierTrim extracted) |
 | `identify/evidence/compile.ts` | ~750 | compile + confidence (+ consensusTitle/resolve extracted) |
 
@@ -110,7 +110,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
-| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch → `metadataFetchGating` + `merge` + `mergeObservationRanking` + book* ; storage → image*/crop/localize ; pricing → cache/outlier ; compile → consensus/resolve ; titleMatching → sequel/edition. Reste : cœur `titleMatching` align/attachments. |
+| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch/gating/merge scindés ; storage → image*/crop/localize/coverBootstrap ; titleMatching → tokens/album/edition/sequel. Reste : cœur align/`catalogAttachmentTitleConflicts` / `isMetadataTitleAligned`. |
 
 ## Principles verdict
 

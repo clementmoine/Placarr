@@ -1,7 +1,5 @@
 import {
   CATALOG_REQUIRED_TITLE_MARKER_GROUPS,
-  createGameEditionMatcher,
-  createNonGameMediaMatcher,
 } from "@/core/identify/listingTerms";
 import { normalizeDisplayTitle } from "@/core/enrich/titles/displayScore";
 import {
@@ -35,7 +33,6 @@ import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
 import { createTrailingVideoGamePlatformSuffixMatcher } from "@/core/identify/platforms/platforms";
 import {
   IDENTITY_EDITION_PACKAGING_TOKENS,
-  IDENTITY_FUNCTION_WORDS,
   IDENTITY_LEADING_ARTICLES,
   IDENTITY_LISTING_PACKAGING_NOISE,
   IDENTITY_PLATFORM_NOISE_TOKENS,
@@ -58,6 +55,41 @@ import {
   residualIdentityMatch,
 } from "@/core/enrich/titles/residualIdentity";
 import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import {
+  distinctiveTitleTokens,
+  distinctiveTokenCoverage,
+} from "@/core/enrich/titles/catalogTitleTokens";
+import {
+  allNumbers,
+  normalizeEditionNumber,
+} from "@/core/enrich/titles/titleNumbers";
+import { attachmentTitleMediaTypeConflicts } from "@/core/enrich/titles/attachmentMediaTypeConflicts";
+import {
+  albumSpecificDistinctiveTokens,
+  sameVolumeAlbumSubtitleConflicts,
+  specificSubtitleTokens,
+} from "@/core/enrich/titles/albumSubtitleConflicts";
+import {
+  EDITION_QUALIFIER,
+  extractBaseTitleVariant,
+  isGameEditionVariant,
+} from "@/core/enrich/titles/gameEditionVariant";
+
+export {
+  catalogMatchTokenSet,
+  distinctiveTitleTokens,
+  distinctiveTokenCoverage,
+} from "@/core/enrich/titles/catalogTitleTokens";
+export { allNumbers } from "@/core/enrich/titles/titleNumbers";
+export { attachmentTitleMediaTypeConflicts } from "@/core/enrich/titles/attachmentMediaTypeConflicts";
+export {
+  albumSpecificDistinctiveTokens,
+  sameVolumeAlbumSubtitleConflicts,
+} from "@/core/enrich/titles/albumSubtitleConflicts";
+export {
+  extractBaseTitleVariant,
+  isGameEditionVariant,
+} from "@/core/enrich/titles/gameEditionVariant";
 import {
   franchiseSequelNumbersAreAligned,
   franchiseSequelNumbersConflict,
@@ -297,50 +329,6 @@ export function buildHardwareMetadataSearchQueries(name: string): string[] {
   return queries;
 }
 
-/**
- * Edition/reprint qualifiers that describe a *variant* of a game rather than a
- * distinct title. Kept deliberately narrow (strong markers only) so a real
- * subtitle is never mistaken for an edition.
- */
-const EDITION_QUALIFIER = createGameEditionMatcher("i");
-
-/**
- * Strips a *trailing* edition qualifier so providers that only index the base
- * game can still match:
- *   "Monopoly - Editions Classique Et Monde"            -> "Monopoly"
- *   "The Legend of Zelda: Skyward Sword - Edition Lim." -> "The Legend of Zelda: Skyward Sword"
- *
- * Splits on the LAST top-level separator (a colon or a spaced dash) so a
- * meaningful subtitle ("Skyward Sword") is preserved, and only when the trailing
- * part is an edition qualifier — never a distinct subtitle. Used as a
- * last-resort fallback name, after the full title and aliases have failed.
- */
-export function extractBaseTitleVariant(requestedName: string): string | null {
-  const trimmed = requestedName.trim();
-  // Greedy leading group => the separator captured is the last one in the title.
-  const match = trimmed.match(/^(.+)(?::\s+|\s+[-–—]\s+)(\S.*)$/);
-  if (match) {
-    const base = match[1].trim();
-    const trailing = match[2].trim();
-    if (base.length < 3) return null;
-    if (base.toLowerCase() === trimmed.toLowerCase()) return null;
-    if (!EDITION_QUALIFIER.test(trailing)) return null;
-    return base;
-  }
-
-  const trailingEdition = trimmed.match(
-    /^(.+?)\s+(deluxe|collector|ultimate|legendary|premium|gold|platinum|complete|definitive|anniversary)(?:\s+edition)?$/i,
-  );
-  if (trailingEdition) {
-    const base = trailingEdition[1].trim();
-    if (base.length >= 3 && base.toLowerCase() !== trimmed.toLowerCase()) {
-      return base;
-    }
-  }
-
-  return null;
-}
-
 function splitEditionBaseTitle(title: string): {
   base: string;
   hasEditionSuffix: boolean;
@@ -498,10 +486,6 @@ export function gameProductIdentityMismatch(
 }
 
 /** Requested title ends with a known edition qualifier (Limited, Deluxe, etc.). */
-export function isGameEditionVariant(requestedName: string): boolean {
-  return extractBaseTitleVariant(requestedName) !== null;
-}
-
 function normalizeCatalogTitleText(value: string): string {
   return normalizeForTokens(value)
     .replace(/&/g, " and ")
@@ -527,130 +511,6 @@ function catalogAttachmentDropsRequiredTitleMarker(
       group.some((term) => textContainsCatalogPhrase(productTitle, term)) &&
       !group.some((term) => textContainsCatalogPhrase(attachmentTitle, term)),
   );
-}
-
-const NON_GAME_MEDIA_TITLE_PATTERN = createNonGameMediaMatcher("i");
-
-function attachmentTitleLooksLikeNonGameMedia(
-  attachmentTitle: string,
-  productTitle: string,
-): boolean {
-  return (
-    NON_GAME_MEDIA_TITLE_PATTERN.test(attachmentTitle) &&
-    !NON_GAME_MEDIA_TITLE_PATTERN.test(productTitle)
-  );
-}
-
-export function attachmentTitleMediaTypeConflicts(
-  productTitle: string | undefined,
-  attachmentTitle: string | undefined,
-  options: { mediaType?: string | null } = {},
-): boolean {
-  if (!productTitle?.trim() || !attachmentTitle?.trim()) return false;
-  return (
-    options.mediaType === "games" &&
-    attachmentTitleLooksLikeNonGameMedia(attachmentTitle, productTitle)
-  );
-}
-
-const VOLUME_LABEL_NOISE_TOKENS = new Set([
-  ...IDENTITY_VOLUME_STOP_WORDS,
-  ...IDENTITY_EDITION_PACKAGING_TOKENS,
-]);
-
-function specificSubtitleTokens(title: string): string[] {
-  const segments = title
-    .split(/\s*(?::|[-–—])\s*/g)
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-  if (segments.length < 2) return [];
-
-  return Array.from(
-    new Set(
-      segments
-        .slice(1)
-        .flatMap((segment) => normalizeDisplayTitle(segment))
-        .filter(
-          (token) =>
-            token.length > 3 && !VOLUME_LABEL_NOISE_TOKENS.has(token),
-        ),
-    ),
-  );
-}
-
-/**
- * Album/issue-specific tokens beyond the franchise stem (e.g. "mines",
- * "lamororia" in "WAKFU 3 Les Mines de Lamororia"). Empty when the request is
- * only franchise + volume ("Wakfu Tome 3").
- */
-export function albumSpecificDistinctiveTokens(title: string): string[] {
-  const fromSubtitle = specificSubtitleTokens(title);
-  if (fromSubtitle.length > 0) return fromSubtitle;
-
-  const tokens = distinctiveTitleTokens(title).filter(
-    (token) => !VOLUME_LABEL_NOISE_TOKENS.has(token) && !/^\d+$/.test(token),
-  );
-  if (tokens.length <= 1) return [];
-  return tokens.slice(1);
-}
-
-function albumTokenCoverage(required: string[], candidateTitle: string): number {
-  if (required.length === 0) return 1;
-  const candidateTokens = catalogMatchTokenSet(candidateTitle);
-  const matched = required.filter((token) =>
-    titleTokenPresentInSet(token, candidateTokens),
-  ).length;
-  return matched / required.length;
-}
-
-/**
- * Same numbered album (tome/n°/bare N) but a different album subtitle — the
- * Wakfu "tome 3 : Mines" vs "tome 3 : Shak Shaka" case. Cross-language game
- * subtitles (FR vs EN) are out of scope: they lack explicit volume markers.
- */
-export function sameVolumeAlbumSubtitleConflicts(
-  comparisonNames: string[],
-  candidateNames: string[],
-): boolean {
-  const requestedExplicit = Array.from(
-    new Set(comparisonNames.flatMap(explicitVolumeNumbers)),
-  );
-  const requestedBare = Array.from(
-    new Set(comparisonNames.flatMap(allNumbers)),
-  );
-
-  const reqAlbumGroups = comparisonNames
-    .map(albumSpecificDistinctiveTokens)
-    .filter((tokens) => tokens.length >= 2);
-  if (reqAlbumGroups.length === 0) return false;
-
-  let sawVolumeAlignedCandidate = false;
-  for (const candidate of candidateNames) {
-    const candidateExplicit = explicitVolumeNumbers(candidate);
-    const volumeAligned =
-      (requestedExplicit.length > 0 &&
-        candidateExplicit.some((number) =>
-          requestedExplicit.includes(number),
-        )) ||
-      (requestedExplicit.length === 0 &&
-        candidateExplicit.length > 0 &&
-        candidateExplicit.every((number) => requestedBare.includes(number)));
-    if (!volumeAligned) continue;
-    sawVolumeAlignedCandidate = true;
-
-    const candAlbum = albumSpecificDistinctiveTokens(candidate);
-    if (candAlbum.length < 2) continue;
-
-    if (
-      reqAlbumGroups.some(
-        (required) => albumTokenCoverage(required, candidate) >= 0.75,
-      )
-    ) {
-      return false;
-    }
-  }
-
-  return sawVolumeAlignedCandidate;
 }
 
 function catalogAttachmentDropsSpecificSubtitle(
@@ -763,51 +623,6 @@ function franchiseSubtitleTokensAlign(
   );
 }
 
-const CATALOG_LABEL_STOP_WORDS = IDENTITY_FUNCTION_WORDS;
-
-function catalogMatchTokenSet(value: string): Set<string> {
-  const tokens = new Set(
-    normalizeDisplayTitle(value).filter(
-      (token) => token.length >= 3 && !CATALOG_LABEL_STOP_WORDS.has(token),
-    ),
-  );
-  for (const match of value.matchAll(/\b(\d{1,2})\b/g)) {
-    tokens.add(match[1]!);
-  }
-  for (const match of value.matchAll(/\b([IVXLCDM]{1,4})\b/gi)) {
-    const roman = parseRomanToken(match[1]!);
-    if (roman != null) tokens.add(String(roman));
-    tokens.add(match[1]!.toLowerCase());
-  }
-  return tokens;
-}
-
-/** Distinctive tokens for catalog label overlap (articles stripped). */
-export function distinctiveTitleTokens(value: string): string[] {
-  return normalizeDisplayTitle(value).filter(
-    (token) => token.length >= 3 && !CATALOG_LABEL_STOP_WORDS.has(token),
-  );
-}
-
-/**
- * Share of query distinctive tokens found in a catalog label (series name,
- * parenthetical segment, album title). Rewards embedded sub-series labels
- * without product-specific literals.
- */
-export function distinctiveTokenCoverage(query: string, candidate: string): number {
-  const queryTokens = distinctiveTitleTokens(query);
-  if (queryTokens.length === 0) return 0;
-  const candidateTokens = catalogMatchTokenSet(candidate);
-  const matched = queryTokens.filter((token) =>
-    titleTokenPresentInSet(token, candidateTokens),
-  ).length;
-  return matched / queryTokens.length;
-}
-
-/**
- * Similarity for ranking catalog labels (series search, album pick) when the
- * query is a short series stem inside a longer provider label.
- */
 export function catalogLabelSimilarity(query: string, label: string): number {
   const coverage = distinctiveTokenCoverage(query, label);
   const similarity = metadataTitleSimilarity(query, label);
@@ -1225,25 +1040,6 @@ function hasUnrequestedTrailingQualifier(
   if (trailingTokens.length === 0) return false;
 
   return trailingTokens.every((token) => !requestedTokens.has(token));
-}
-
-function normalizeEditionNumber(value: string): string {
-  return String(Number.parseInt(value, 10));
-}
-
-const SUFFIXED_NUMBER_RE = new RegExp(
-  `\\d+(?:\\s?${VOLUME_NUMBER_SUFFIX_PATTERN})?`,
-  "g",
-);
-
-function allNumbers(value: string): string[] {
-  return Array.from(
-    new Set(
-      (normalizeVolumeTitleText(value).match(SUFFIXED_NUMBER_RE) || [])
-        .map(normalizeVolumeNumber)
-        .filter((number) => number !== "NaN"),
-    ),
-  );
 }
 
 function editionNumbersAreAligned(

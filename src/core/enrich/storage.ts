@@ -48,14 +48,11 @@ import {
   authoritative3dCoverRoleSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
-  inferProviderIdFromMediaUrl,
 } from "@/core/catalog/sourceTraits";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 import { regionRank } from "@/core/locale/preference";
 import { resolveCoverAttachmentRole } from "@/core/enrich/media/coverPerspective";
-import { barcodeListingMatchesItem } from "@/core/identify/titleUtils";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { inferImageAttachmentFromMediaUrl } from "@/core/catalog/catalog";
 import { prisma } from "@/lib/db/prisma";
 import { metadataFieldEvidence } from "@/core/enrich/facts";
 import { runCpuBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
@@ -78,6 +75,18 @@ import {
 } from "@/core/enrich/metadataFactsMerge";
 import { dedupeFacts } from "@/core/enrich/facts";
 import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
+import {
+  canUseBarcodeCacheCover,
+  getCachedMetadata,
+  injectOrphanUserCoverAttachment,
+  metadataImageAttachmentSemantics,
+} from "@/core/enrich/media/metadataCoverBootstrap";
+
+export {
+  canUseBarcodeCacheCover,
+  getCachedMetadata,
+  metadataImageAttachmentSemantics,
+} from "@/core/enrich/media/metadataCoverBootstrap";
 import {
   dedupeLocalizedAttachmentsByContent,
   filterOutFlatImageAttachments,
@@ -105,147 +114,9 @@ export {
   selectAttachmentsForLocalization,
 } from "@/core/enrich/media/attachmentLocalization";
 
-function isDisplayImageAttachment(attachment: {
-  type?: AttachmentType | string | null;
-  url?: string | null;
-}) {
-  return (
-    Boolean(attachment.url) &&
-    ["cover", "artwork", "image", "screenshot", "background"].includes(
-      String(attachment.type || ""),
-    )
-  );
-}
-
-function hasMetadataImageCandidate(metadata: MetadataResult) {
-  if (metadata.imageUrl) return true;
-  return Boolean(metadata.attachments?.some(isDisplayImageAttachment));
-}
-
-
-export function metadataImageAttachmentSemantics(
-  metadata: MetadataResult,
-  originalImageUrl: string,
-): Pick<MetadataAttachment, "type" | "role" | "source" | "title"> | null {
-  const direct = metadata.attachments?.find(
-    (attachment) => attachment.url === originalImageUrl,
-  );
-  const inferred = inferImageAttachmentFromMediaUrl(originalImageUrl);
-  const inferredSource = inferProviderIdFromMediaUrl(originalImageUrl);
-
-  if (!direct && !inferred && !inferredSource) return null;
-
-  return {
-    type: direct?.type ?? inferred?.type ?? "cover",
-    role: direct?.role ?? inferred?.role,
-    source: direct?.source ?? inferred?.source ?? inferredSource ?? undefined,
-    title: direct?.title,
-  };
-}
-
-function canUseBarcodeCacheCover(
-  cached: {
-    shelfType?: string | null;
-    rawNames?: Array<{ value: string; coverUrl?: string | null }>;
-  } | null,
-  type: Type,
-  metadata: MetadataResult,
-  itemName: string,
-  inferredCoverSemantics?: Pick<
-    MetadataAttachment,
-    "type" | "role" | "source" | "title"
-  > | null,
-) {
-  if (cached?.shelfType !== type) return false;
-  const barcodeListing = cached?.rawNames?.find(
-    (entry) => entry.coverUrl,
-  )?.value;
-  if (barcodeListing && !barcodeListingMatchesItem(itemName, barcodeListing)) {
-    return false;
-  }
-  if (!hasMetadataImageCandidate(metadata)) return true;
-  return Boolean(inferredCoverSemantics?.source && inferredCoverSemantics.role);
-}
-
 export { isMissingMusicGallery } from "@/core/enrich/galleries";
 
-export async function getCachedMetadata(
-  itemId: Item["id"],
-): Promise<(Metadata & { attachments: Attachment[] }) | null> {
-  const item = await prisma.item.findUnique({
-    where: { id: itemId },
-    include: { metadata: { include: { attachments: true } } },
-  });
-  return item?.metadata || null;
-}
-
 export { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
-
-function injectOrphanUserCoverAttachment(
-  item: {
-    imageUrl?: string | null;
-    updatedAt?: Date | string | null;
-    metadata?: {
-      imageUrl?: string | null;
-      lastFetched?: Date | string | null;
-      attachments?: Attachment[] | null;
-    } | null;
-  } | null,
-  attachments: MetadataAttachment[],
-): MetadataAttachment[] {
-  const pin = item?.imageUrl?.trim();
-  if (!pin?.startsWith("/uploads/")) return attachments;
-  if (
-    attachments.some((attachment) =>
-      urlsReferToSameLocalizedImage(attachment.url, pin),
-    )
-  ) {
-    return attachments;
-  }
-
-  const previous = item?.metadata?.attachments ?? [];
-  const previousUser = previous.find(
-    (attachment) =>
-      attachment.source === "user" &&
-      urlsReferToSameLocalizedImage(attachment.url, pin),
-  );
-  const previousProviderHadPin = previous.some(
-    (attachment) =>
-      attachment.source !== "user" &&
-      urlsReferToSameLocalizedImage(attachment.url, pin),
-  );
-  const metadataCover = item?.metadata?.imageUrl?.trim();
-  const matchesMetadataCover =
-    !!metadataCover && urlsReferToSameLocalizedImage(pin, metadataCover);
-
-  // Stale enrichment crop / provider localize — do not relabel as user.
-  if (previousProviderHadPin || matchesMetadataCover) {
-    return attachments;
-  }
-
-  const savedAfterEnrichment =
-    !!item?.updatedAt &&
-    !!item?.metadata?.lastFetched &&
-    new Date(item.updatedAt).getTime() >
-      new Date(item.metadata.lastFetched).getTime();
-
-  if (!previousUser && !savedAfterEnrichment) {
-    return attachments;
-  }
-
-  return [
-    {
-      type: (previousUser?.type as MetadataAttachment["type"]) || "image",
-      url: pin,
-      source: "user",
-      role: previousUser?.role ?? undefined,
-      title: previousUser?.title ?? undefined,
-      coverProvenance: previousUser?.coverProvenance ?? undefined,
-      platformKey: previousUser?.platformKey ?? undefined,
-    },
-    ...attachments,
-  ];
-}
 
 export type StoreMetadataOptions = {
   /** Persist remote URLs immediately; localize images in a background job. */

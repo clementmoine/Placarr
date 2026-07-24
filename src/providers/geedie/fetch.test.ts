@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readGeedieSearchEvidence = vi.fn();
+const promoteGeedieSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readGeedieSearchEvidence: (...args: unknown[]) =>
+    readGeedieSearchEvidence(...args),
+  promoteGeedieSearchEvidence: (...args: unknown[]) =>
+    promoteGeedieSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import {
@@ -12,6 +23,7 @@ import {
   pickAlignedGeedieSearchHits,
   pickBestGeedieSearchHit,
   preferGeedieHitsWithBarcode,
+  searchGeedieProducts,
   upgradeGeedieImageUrl,
 } from "./fetch";
 
@@ -19,6 +31,10 @@ const mockedGet = vi.mocked(axios.get);
 
 beforeEach(() => {
   mockedGet.mockReset();
+  readGeedieSearchEvidence.mockReset();
+  promoteGeedieSearchEvidence.mockReset();
+  readGeedieSearchEvidence.mockResolvedValue(null);
+  promoteGeedieSearchEvidence.mockResolvedValue(undefined);
   delete process.env.FLARESOLVERR_URL;
 });
 
@@ -408,6 +424,68 @@ describe("geedie fetch", () => {
     // Old spray also guessed bare /en/ps5-{slug} without going through search.
     expect(urls.some((u) => /\/en\/ps5-lollipop-chainsaw-repop$/.test(u))).toBe(
       false,
+    );
+    expect(promoteGeedieSearchEvidence).toHaveBeenCalled();
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP search", async () => {
+    const barcode = "4580699041234";
+    readGeedieSearchEvidence.mockResolvedValueOnce([
+      {
+        title: "PS5 Lollipop Chainsaw RePOP",
+        productUrl: `https://geedie.lt/en/ps5-lollipop-chainsaw-repop-${barcode}`,
+        thumbnailUrl: "https://geedie.lt/storage/products/ps5-lollipop/cover.webp",
+      },
+    ]);
+    mockedGet.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/marketplace/") && u.includes("search=")) {
+        throw new Error(`Should not fetch search: ${u}`);
+      }
+      if (u.includes("/en/ps5-lollipop-chainsaw-repop")) {
+        return {
+          status: 200,
+          data: `
+            <script type="application/ld+json">
+            {"@type":"Product","name":"PS5 Lollipop Chainsaw RePOP","image":"https://imagedelivery.net/x/eu-public","gtin13":"${barcode}"}
+            </script>
+            <div class="text-xs font-bold capitalize">Country of release</div>
+            <div class="text-sm"><a title="Europe">Europe</a></div>
+            <div x-data="{ currentImage: 'https://imagedelivery.net/x/eu-public' }">
+          `,
+        };
+      }
+      throw new Error(`Unexpected Geedie URL ${url}`);
+    });
+
+    const gallery = await fetchGeedieGallery(
+      "Lollipop Chainsaw RePOP",
+      "ps5",
+      barcode,
+    );
+
+    expect(gallery?.title).toContain("Lollipop");
+    expect(mockedGet.mock.calls.every(([url]) => !String(url).includes("search="))).toBe(
+      true,
+    );
+    expect(promoteGeedieSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_FIXTURE,
+    } as never);
+
+    await searchGeedieProducts("Trine 4", "ps4");
+
+    expect(promoteGeedieSearchEvidence).toHaveBeenCalledWith(
+      "https://geedie.lt/en/marketplace/playstation?search=Trine%204",
+      expect.arrayContaining([
+        expect.objectContaining({
+          productUrl: expect.stringContaining("trine-4"),
+        }),
+      ]),
     );
   });
 });

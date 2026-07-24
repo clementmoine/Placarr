@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2u shipped (LaunchBox prebuild / no zip at scan); No-Intro dumps = later.
+> Phase 1–2v shipped (Geedie SearchYield durable); No-Intro dumps / remaining peers = later.
 
 ## Principle
 
@@ -177,10 +177,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `pnpm launchbox:build-index` → `buildLaunchBoxIndex({ allowDownload: true })`
 - Env override: `LAUNCHBOX_ALLOW_DOWNLOAD=1`
 
+## Phase 2v — Geedie SearchYield durable (done 2026-07-24)
+
+- `searchGeedieProducts` promote/reuse typed `{title,productUrl,thumbnailUrl}` for `/marketplace/…?search=`
+- Category path + `search=` keep playstation vs nintendo queries distinct
+- Gallery still detail-fetches aligned hits after SearchYield (by design)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| Remaining Flare peers SearchYield | Same promote pattern as needed |
+| Remaining Flare peers SearchYield | Esprit Jeu / Play-In / Philibert (`search_query` identity) |

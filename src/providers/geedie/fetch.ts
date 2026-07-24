@@ -8,6 +8,10 @@ import {
 } from "@/core/enrich/titleMatching";
 import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import { resolveLocaleRegion } from "@/core/locale/preference";
+import {
+  promoteGeedieSearchEvidence,
+  readGeedieSearchEvidence,
+} from "./durableEvidence";
 
 const GEEDIE_BASE_URL = "https://geedie.lt";
 const MAX_GEEDIE_GALLERY_FETCHES = 6;
@@ -485,13 +489,22 @@ export async function searchGeedieProducts(
 ): Promise<GeedieSearchHit[]> {
   const category = marketplaceCategory(platform);
   const url = `${GEEDIE_BASE_URL}/en/marketplace/${category}?search=${encodeURIComponent(query)}`;
+
+  const fromEvidence = await readGeedieSearchEvidence(url);
+  if (fromEvidence) {
+    console.info(`[Geedie] Search evidence hit for ${url}`);
+    return fromEvidence;
+  }
+
   const response = await fetchGetWithFlareFallback(url, {
     headers: HEADERS,
     timeout: 12_000,
     validateStatus: (status) => status < 500,
   });
   if (response.status >= 400 || !response.data) return [];
-  return parseGeedieSearchResults(String(response.data));
+  const hits = parseGeedieSearchResults(String(response.data));
+  await promoteGeedieSearchEvidence(url, hits);
+  return hits;
 }
 
 export async function fetchGeedieProduct(

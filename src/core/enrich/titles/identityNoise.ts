@@ -211,18 +211,51 @@ export function isIdentityFunctionWord(token: string): boolean {
 }
 
 /**
- * Stoplist for “distinctive” title tokens — function words + thin domain chrome.
- * Shared by evidence + ScreenScraper (lives here to avoid provider↔evidence cycles).
+ * Residual media chrome not yet folded into a dedicated IDENTITY_* set.
+ * Keep until warm IDF (or LISTING_NOISE) can cover the same cold gates.
  */
-export const GENERIC_TITLE_TOKENS: ReadonlySet<string> = new Set([
-  ...IDENTITY_FUNCTION_WORDS,
-  "with",
+const GENERIC_TITLE_DOMAIN_CHROME = [
   "jeu",
   "game",
   "jeux",
   "games",
-  "edition",
-  "version",
+] as const;
+
+/**
+ * Packaging atoms already present in IDENTITY taxonomies — re-exported so
+ * evidence / ScreenScraper cold paths keep dropping them without scanning
+ * the larger edition / region sets.
+ */
+function identityBackedGenericPackagingTokens(): string[] {
+  const tokens: string[] = [];
+  if (
+    IDENTITY_EDITION_PACKAGING_TOKENS.has("edition") ||
+    IDENTITY_VOLUME_STOP_WORDS.has("edition")
+  ) {
+    tokens.push("edition");
+  }
+  if (
+    IDENTITY_EDITION_PACKAGING_TOKENS.has("editions") ||
+    IDENTITY_VOLUME_STOP_WORDS.has("editions")
+  ) {
+    tokens.push("editions");
+  }
+  if (IDENTITY_LISTING_PACKAGING_NOISE.has("version")) {
+    tokens.push("version");
+  }
+  return tokens;
+}
+
+/**
+ * Stoplist for “distinctive” title tokens — function words + IDENTITY-backed
+ * packaging atoms + residual media chrome.
+ * Shared by evidence + ScreenScraper (lives here to avoid provider↔evidence cycles).
+ * `"with"` is only in `IDENTITY_FUNCTION_WORDS` (no duplicate literal).
+ */
+export const GENERIC_TITLE_TOKENS: ReadonlySet<string> = new Set([
+  ...IDENTITY_FUNCTION_WORDS,
+  ...GENERIC_TITLE_DOMAIN_CHROME,
+  ...identityBackedGenericPackagingTokens(),
 ]);
 
 export function isIdentityPlatformNoiseToken(token: string): boolean {

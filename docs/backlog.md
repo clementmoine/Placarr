@@ -11,7 +11,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | -------- | ---- | ------ |
 | ~~**P0**~~ | ~~SSOT identité / covers / liens~~ | **Fait 2026-07-24** — étapes 1–7 + dead hardware titleMatch + present purge unique. |
 | ~~**P1**~~ | ~~List present sans `priceOffers.rawValue`~~ | **Fait 2026-07-24** — covers persistées à l’écriture prix ; `itemListMetadataInclude` sans priceOffers. |
-| **P2** | Word-lists → consensus / IDF | **First cut 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + in-memory cluster stats. **Offline RawName DF + boot/cron rebuild 2026-07-24** (`pnpm title-idf:build-index`, `ENABLE_TITLE_IDF_*` in `init.sh`). Reste : shrink `GENERIC_TITLE_TOKENS` when warm index is normal. |
+| **P2** | Word-lists → consensus / IDF | **First cut 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + in-memory cluster stats. **Offline RawName DF + boot/cron rebuild 2026-07-24**. **SAFE micro-shrink 2026-07-24**: `edition`/`version` derived from IDENTITY sets; residual `jeu/game*`. Reste : fold `jeu/game*` when warm IDF is normal. |
 | **P2** | Scrape-yield / call efficiency | **… + eBay Browse SearchYield durable 2026-07-24**. LaunchBox FTS measured 2026-07-24 (`pnpm launchbox:bench-fts`). Voir [scrape_yield.md](scrape_yield.md). |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~ | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override. |
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |

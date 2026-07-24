@@ -111,7 +111,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
-| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch/gating/merge scindés ; storage → image*/crop/localize/coverBootstrap ; titleMatching → tokens/album/edition/sequel. Reste : cœur align/`catalogAttachmentTitleConflicts` / `isMetadataTitleAligned`. |
+| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch/storage leaves scindés ; `titleMatching` → facade + `titles/*` (search, similarity, variant, align, attachments…). Reste dense : `metadataTitleAlign` / `residualIdentity` / `storeMetadata`. |
 
 ## Principles verdict
 

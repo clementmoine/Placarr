@@ -11,7 +11,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | -------- | ---- | ------ |
 | **P0** | **SSOT identité / covers / liens (accept→purge)** | **Étapes 1–6 faites** ; étape 7 **partielle** (voir audit). Détail : [metadata_engine_audit.md](metadata_engine_audit.md). |
 | **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme. |
-| **P3** | Finir découpe god files | Cœur `titleMatching` (`isMetadataTitleAligned` / attachment conflicts) ; `storeMetadata` encore dense. |
+| **P3** | Finir découpe god files | `storeMetadata` encore dense ; `metadataTitleAlign` / `residualIdentity` restent gros mais cohésifs. |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.

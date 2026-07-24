@@ -13,7 +13,7 @@ import {
   readCachedICollectMetadata,
   rememberICollectBarcodeMapping,
   rememberICollectItemCatalog,
-  shouldRefreshICollectItemPage,
+  shouldFetchICollectItemPageOnLookup,
 } from "./indexStore";
 import type { ICollectMetadata } from "./types";
 import { icollectCoverRegionFromAgeRating } from "./imageLabels";
@@ -725,7 +725,7 @@ export async function fetchICollectMetadataByBarcode(
     db &&
       itemId &&
       !process.env.RECORD &&
-      shouldRefreshICollectItemPage(db, itemId),
+      shouldFetchICollectItemPageOnLookup(db, itemId, local),
   );
 
   if (local && !needsPageRefresh) {

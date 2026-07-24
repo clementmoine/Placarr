@@ -14,6 +14,7 @@ import {
   rememberICollectItemCatalog,
   resetICollectIndexForTests,
   shouldRefreshICollectItemPage,
+  shouldFetchICollectItemPageOnLookup,
   sitemapBlockToMetadata,
 } from "./indexStore";
 
@@ -212,5 +213,26 @@ describe("rememberICollectItemCatalog", () => {
 
     expect(isICollectItemPageCatalogStale(db, "892033")).toBe(false);
     expect(shouldRefreshICollectItemPage(db, "892033")).toBe(false);
+  });
+
+  it("lookup gate treats sitemap title as Tier0 (sync still refreshes)", async () => {
+    const db = await ensureICollectIndex();
+    expect(db).not.toBeNull();
+    if (!db) return;
+
+    rememberICollectItemCatalog(db, {
+      itemId: "892033",
+      itemUrl: "https://www.icollecteverything.com/db/item/videogame/892033/",
+      title: "Mario Kart Wii",
+      catalogSource: "sitemap",
+    });
+
+    expect(shouldRefreshICollectItemPage(db, "892033")).toBe(true);
+    expect(
+      shouldFetchICollectItemPageOnLookup(db, "892033", {
+        title: "Mario Kart Wii",
+        catalogSource: "sitemap",
+      }),
+    ).toBe(false);
   });
 });

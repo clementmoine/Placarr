@@ -399,6 +399,26 @@ export function shouldRefreshICollectItemPage(
   );
 }
 
+/**
+ * Hot-path gate for barcode lookup (identify / enrich).
+ * Sitemap title(+cover) is Tier0 — sufficient without Flare.
+ * Background `catalogSync` still uses `shouldRefreshICollectItemPage` to upgrade
+ * sitemap → page (platform, publisher, prices).
+ */
+export function shouldFetchICollectItemPageOnLookup(
+  db: DatabaseSync,
+  itemId: string,
+  local: Pick<ICollectMetadata, "title" | "catalogSource"> | null,
+): boolean {
+  if (!local?.title?.trim()) return true;
+  if (local.catalogSource === "sitemap") return false;
+  if (local.catalogSource === "page") {
+    return isICollectItemPageCatalogStale(db, itemId);
+  }
+  // Legacy / non-catalog rows: keep existing refresh semantics.
+  return shouldRefreshICollectItemPage(db, itemId);
+}
+
 export function rememberICollectItemCatalog(
   db: DatabaseSync,
   metadata: ICollectMetadata,

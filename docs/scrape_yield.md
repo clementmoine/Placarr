@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2s shipped (Chasse SearchYield durable + query/catalog keys); corpora = next.
+> Phase 1–2t shipped (iCollect sitemap Tier0 on lookup); dump syncs / No-Intro = later.
 
 ## Principle
 
@@ -165,9 +165,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Promote typed `{name,productUrl,coverUrl?}` after REST SearchYield; reuse skips search HTML + REST pages → fiche only
 - Soft-filter / barcode order still applied on reused hits
 
+## Phase 2t — iCollect sitemap Tier0 (done 2026-07-24)
+
+- Lookup hot path: sitemap title(+cover) is enough — **no Flare** (`shouldFetchICollectItemPageOnLookup`)
+- Background `catalogSync` still uses `shouldRefreshICollectItemPage` to upgrade sitemap → page
+- Aligns module notes with behavior (Flare only when barcode absent from local index)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Local full-set / dump sync | Closed platforms at home latency |
-| Remaining Flare peers | Same promote pattern as needed |
+| LaunchBox prebuild / no zip at scan | Align with backlog note; measure local FTS |
+| No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
+| Remaining Flare peers SearchYield | Same promote pattern as needed |

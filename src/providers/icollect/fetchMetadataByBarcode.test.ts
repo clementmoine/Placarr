@@ -66,7 +66,7 @@ describe("fetchICollectMetadataByBarcode", () => {
     expect(axios.get).not.toHaveBeenCalled();
   });
 
-  it("fetches and merges when only sitemap metadata exists", async () => {
+  it("returns sitemap catalog as Tier0 without hitting the network", async () => {
     const db = await seedBarcodeIndex();
     if (!db) return;
 
@@ -84,29 +84,20 @@ describe("fetchICollectMetadataByBarcode", () => {
       catalogSource: "sitemap",
     });
 
-    vi.mocked(axios.get).mockResolvedValueOnce({
-      data: MARIO_KART_ITEM_HTML,
-      status: 200,
-    });
-
     const metadata = await fetchICollectMetadataByBarcode("045496365226");
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(metadata?.platform).toBe("Nintendo Wii");
-    expect(metadata?.publisher).toBe("Nintendo");
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(metadata).toMatchObject({
+      title: "Mario Kart Wii",
+      catalogSource: "sitemap",
+      coverUrl:
+        "https://www.icollecteverything.com/images/videogame/main/89/892033_1.jpg",
+    });
 
     const row = db
       .prepare("SELECT payload FROM item_metadata WHERE item_id = ?")
       .get("892033") as { payload?: string } | undefined;
     const payload = JSON.parse(row?.payload || "{}");
-    expect(payload.catalogSource).toBe("page");
-    expect(payload.platform).toBe("Nintendo Wii");
-    expect(payload.images).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          url: "https://www.icollecteverything.com/images/videogame/main/89/892033_1.jpg",
-        }),
-      ]),
-    );
+    expect(payload.catalogSource).toBe("sitemap");
   });
 
   it("refreshes stale page rows on lookup", async () => {

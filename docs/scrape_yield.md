@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3c No-Intro DAT→SQLite→Tier0 module; LaunchBox FTS = P4.
+> Phase 1–2am shipped; Phase 3a–3d No-Intro multi-DAT index; LaunchBox FTS = P4.
 
 ## Principle
 
@@ -301,10 +301,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Health = local index open; checksum resolve exported for future file ingest
 - **Out of this cut:** multi-DAT / Redump, ROM-hash scan wiring, LaunchBox FTS measure
 
+## Phase 3d — No-Intro multi-DAT directory index (done 2026-07-24)
+
+- `NOINTRO_DAT_PATH` accepts a file **or** directory of `.dat`/`.xml` (Logiqx / Redump-compatible)
+- `resolveNoIntroDatFiles` + merge into one SQLite (distinct `datName` per set)
+- Still never downloads; Redump DATs load the same path when placed in the folder
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Multi-DAT / Redump corpus sync | Directory of DATs → one index |
 | LaunchBox local FTS perf measure | P4 backlog |
 | ROM checksum ingest → No-Intro lookup | Wire `fetchFromNoIntroByChecksum` when file hashes exist |
+| Optional DAT download / sync script | Out of band corpus management |

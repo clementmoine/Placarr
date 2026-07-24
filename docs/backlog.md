@@ -15,8 +15,8 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | **P2** | Scrape-yield / call efficiency | **… + eBay Browse SearchYield durable 2026-07-24**. Reste : LaunchBox FTS (P4). Voir [scrape_yield.md](scrape_yield.md). |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~ | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override. |
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
-| ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro parse+index+Tier0 2026-07-24**. Reste : multi-DAT / Redump. |
-| ~~**P3**~~ | ~~LaunchBox / dumps~~ | **LB prebuild 2026-07-24** ; **No-Intro Tier0 2026-07-24**. Reste : multi-DAT ; mesure FTS (P4). |
+| ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro Tier0 + multi-DAT 2026-07-24**. Reste : ROM-hash ingest / optional DAT sync. |
+| ~~**P3**~~ | ~~LaunchBox / dumps~~ | **LB prebuild 2026-07-24** ; **No-Intro multi-DAT Tier0 2026-07-24**. Reste : mesure FTS (P4). |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.

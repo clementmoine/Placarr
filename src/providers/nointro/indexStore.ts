@@ -226,27 +226,56 @@ export function loadNoIntroDatIntoDb(
 }
 
 export type NoIntroIndexBuildOptions = {
-  /** Path to a Logiqx `.dat` / `.xml` file. Defaults to `NOINTRO_DAT_PATH`. */
+  /**
+   * Path to a Logiqx `.dat` / `.xml` file **or** a directory of them.
+   * Defaults to `NOINTRO_DAT_PATH`.
+   */
   datPath?: string;
 };
 
-/** Prebuild SQLite from a local DAT file. Never downloads. */
+const DAT_FILE_RE = /\.(dat|xml)$/i;
+
+/** Resolve one DAT file or every `.dat`/`.xml` in a directory (sorted). */
+export async function resolveNoIntroDatFiles(
+  rootPath: string,
+): Promise<string[]> {
+  const trimmed = rootPath.trim();
+  if (!trimmed) return [];
+  if (!(await fileExists(trimmed))) return [];
+
+  const stat = await fs.stat(trimmed);
+  if (stat.isFile()) {
+    return DAT_FILE_RE.test(trimmed) ? [trimmed] : [];
+  }
+  if (!stat.isDirectory()) return [];
+
+  const entries = await fs.readdir(trimmed);
+  return entries
+    .filter((entry) => DAT_FILE_RE.test(entry))
+    .map((entry) => path.join(trimmed, entry))
+    .sort((a, b) => a.localeCompare(b, "en"));
+}
+
+/** Prebuild SQLite from a local DAT file or directory. Never downloads. */
 export async function buildNoIntroIndex(
   options?: NoIntroIndexBuildOptions,
 ): Promise<DatabaseSync | null> {
   const datPath = options?.datPath?.trim() || configuredDatPath();
   if (!datPath) {
     console.warn(
-      "[No-Intro] No DAT path — set NOINTRO_DAT_PATH or pass datPath",
+      "[No-Intro] No DAT path — set NOINTRO_DAT_PATH to a file or directory",
     );
     return null;
   }
-  if (!(await fileExists(datPath))) {
-    console.warn(`[No-Intro] DAT file not found: ${datPath}`);
+
+  const files = await resolveNoIntroDatFiles(datPath);
+  if (files.length === 0) {
+    console.warn(
+      `[No-Intro] No .dat/.xml files found at ${datPath}`,
+    );
     return null;
   }
 
-  const xml = await fs.readFile(datPath, "utf8");
   const file = indexPath();
   await fs.mkdir(path.dirname(file), { recursive: true });
   try {
@@ -256,11 +285,36 @@ export async function buildNoIntroIndex(
   }
 
   try {
-    console.info(`[No-Intro] Building SQLite index from ${datPath}...`);
-    const db = new DatabaseSync(file);
-    const stats = loadNoIntroDatIntoDb(db, xml);
     console.info(
-      `[No-Intro] SQLite index ready (${stats.games} games, ${stats.roms} roms)`,
+      `[No-Intro] Building SQLite index from ${files.length} DAT file(s)...`,
+    );
+    const db = new DatabaseSync(file);
+    createIndexSchema(db);
+
+    let nextId = 1;
+    let totalGames = 0;
+    let totalRoms = 0;
+    for (const datFile of files) {
+      console.info(`[No-Intro] Loading ${datFile}`);
+      const xml = await fs.readFile(datFile, "utf8");
+      const stats = loadNoIntroDatIntoDb(db, xml, {
+        replaceSchema: false,
+        startId: nextId,
+      });
+      nextId = stats.nextId;
+      totalGames += stats.games;
+      totalRoms += stats.roms;
+    }
+
+    db.exec("BEGIN TRANSACTION");
+    rebuildGamesFts(db);
+    db.prepare(
+      "INSERT INTO index_meta (key, value) VALUES ('schema_version', ?)",
+    ).run(NOINTRO_INDEX_SCHEMA_VERSION);
+    db.exec("COMMIT");
+
+    console.info(
+      `[No-Intro] SQLite index ready (${totalGames} games, ${totalRoms} roms from ${files.length} DAT(s))`,
     );
     activeDbConnection = db;
     return db;

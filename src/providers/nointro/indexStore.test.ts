@@ -9,6 +9,7 @@ import {
   buildNoIntroIndex,
   ensureNoIntroIndex,
   lookupNoIntroGamesByChecksum,
+  resolveNoIntroDatFiles,
   searchNoIntroGamesByTitle,
 } from "./indexStore";
 
@@ -100,6 +101,75 @@ describe("No-Intro indexStore", () => {
     expect(opened).not.toBeNull();
     const hits = lookupNoIntroGamesByChecksum(opened!, { crc: "11111111" });
     expect(hits[0]?.name).toBe("Tetris (Japan)");
+
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it("resolveNoIntroDatFiles lists .dat/.xml in a directory", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "placarr-nointro-list-"));
+    await fs.writeFile(path.join(dir, "gb.dat"), "<datafile/>", "utf8");
+    await fs.writeFile(path.join(dir, "nes.XML"), "<datafile/>", "utf8");
+    await fs.writeFile(path.join(dir, "readme.txt"), "nope", "utf8");
+
+    const files = await resolveNoIntroDatFiles(dir);
+    expect(files.map((file) => path.basename(file).toLowerCase()).sort()).toEqual(
+      ["gb.dat", "nes.xml"],
+    );
+
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it("buildNoIntroIndex merges multiple DATs from a directory", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "placarr-nointro-multi-"));
+    const sqliteFile = path.join(dir, "nointro.sqlite");
+    await fs.writeFile(
+      path.join(dir, "gb.dat"),
+      `<?xml version="1.0"?>
+<datafile>
+  <header><name>Nintendo - Game Boy</name></header>
+  <game name="Tetris (World)">
+    <rom name="tetris.gb" size="32768" crc="46df91ad"/>
+  </game>
+</datafile>`,
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(dir, "nes.dat"),
+      `<?xml version="1.0"?>
+<datafile>
+  <header><name>Nintendo - Nintendo Entertainment System</name></header>
+  <game name="Super Mario Bros. (World)">
+    <rom name="smb.nes" size="40960" crc="3337ec46"/>
+  </game>
+</datafile>`,
+      "utf8",
+    );
+
+    process.env.NOINTRO_CACHE_DIR = dir;
+    process.env.NOINTRO_INDEX_PATH = sqliteFile;
+    process.env.NOINTRO_DAT_PATH = dir;
+
+    const built = await buildNoIntroIndex();
+    expect(built).not.toBeNull();
+    const datSets = built!
+      .prepare("SELECT DISTINCT datName FROM games ORDER BY datName")
+      .all() as Array<{ datName: string }>;
+    expect(datSets.map((row) => row.datName)).toEqual([
+      "Nintendo - Game Boy",
+      "Nintendo - Nintendo Entertainment System",
+    ]);
+
+    __resetNoIntroIndexForTests();
+    const opened = await ensureNoIntroIndex();
+    expect(
+      lookupNoIntroGamesByChecksum(opened!, { crc: "46df91ad" })[0]?.datName,
+    ).toBe("Nintendo - Game Boy");
+    expect(
+      lookupNoIntroGamesByChecksum(opened!, { crc: "3337ec46" })[0]?.name,
+    ).toBe("Super Mario Bros. (World)");
+    expect(
+      searchNoIntroGamesByTitle(opened!, "super mario")[0]?.datName,
+    ).toContain("Nintendo Entertainment System");
 
     await fs.rm(dir, { recursive: true, force: true });
   });

@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2o shipped (Geedie search-first); corpora / durable SearchYield = next.
+> Phase 1–2p shipped (SearchYield durability / PC); corpora = next.
 
 ## Principle
 
@@ -141,9 +141,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Marketplace SearchYield first; `preferGeedieHitsWithBarcode` ranks EAN-in-slug rows ahead
 - Multi-region gallery still detail-fetches aligned hits (by design)
 
+## Phase 2p — SearchYield durability (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps search identity params (`q` / `search` / `type` / `keywords`), strips UTM; fiche URLs still strip query
+- `PROVIDER_EVIDENCE_SEARCH_KIND` + 30m TTL
+- PriceCharting: promote/reuse typed search rows Next↔worker; name + sibling seeks use `loadPriceChartingSearchRows`
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Local full-set / dump sync | Closed platforms at home latency |
-| SearchYield durability | Needs search-aware URL keying (`?q=` / `?search=`) |
+| AMC / Back Market / peers → durable SearchYield | Same promote pattern once keys exist |

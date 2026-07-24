@@ -6,12 +6,18 @@ vi.mock("axios", () => ({
 
 const readPriceChartingPriceEvidence = vi.fn();
 const promotePriceChartingPriceEvidence = vi.fn();
+const readPriceChartingSearchEvidence = vi.fn();
+const promotePriceChartingSearchEvidence = vi.fn();
 
 vi.mock("./durableEvidence", () => ({
   readPriceChartingPriceEvidence: (...args: unknown[]) =>
     readPriceChartingPriceEvidence(...args),
   promotePriceChartingPriceEvidence: (...args: unknown[]) =>
     promotePriceChartingPriceEvidence(...args),
+  readPriceChartingSearchEvidence: (...args: unknown[]) =>
+    readPriceChartingSearchEvidence(...args),
+  promotePriceChartingSearchEvidence: (...args: unknown[]) =>
+    promotePriceChartingSearchEvidence(...args),
 }));
 
 import axios from "axios";
@@ -80,8 +86,12 @@ beforeEach(() => {
   vi.mocked(axios.isAxiosError).mockReturnValue(false);
   readPriceChartingPriceEvidence.mockReset();
   promotePriceChartingPriceEvidence.mockReset();
+  readPriceChartingSearchEvidence.mockReset();
+  promotePriceChartingSearchEvidence.mockReset();
   readPriceChartingPriceEvidence.mockResolvedValue(null);
   promotePriceChartingPriceEvidence.mockResolvedValue(undefined);
+  readPriceChartingSearchEvidence.mockResolvedValue(null);
+  promotePriceChartingSearchEvidence.mockResolvedValue(undefined);
 });
 
 describe("parsePriceChartingSearchRows + pickBestRow", () => {

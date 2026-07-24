@@ -30,6 +30,32 @@ describe("normalizeProviderEvidenceUrl", () => {
     ).toBe("https://www.pricecharting.com/game/wii/super-monkey-ball");
   });
 
+  it("keeps distinct search identity params (q/type) and strips UTM", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.pricecharting.com/search-products?utm_source=x&type=prices&q=Wii+U",
+      ),
+    ).toBe(
+      "https://www.pricecharting.com/search-products?q=wii+u&type=prices",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.pricecharting.com/search-products?q=Wii%20U&type=prices",
+      ),
+    ).toBe(
+      "https://www.pricecharting.com/search-products?q=wii+u&type=prices",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.pricecharting.com/search-products?q=borderlands&type=prices",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://www.pricecharting.com/search-products?q=monkey&type=prices",
+      ),
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

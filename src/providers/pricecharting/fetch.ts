@@ -57,7 +57,10 @@ import {
 } from "./fetchStore";
 import {
   promotePriceChartingPriceEvidence,
+  promotePriceChartingSearchEvidence,
   readPriceChartingPriceEvidence,
+  readPriceChartingSearchEvidence,
+  type PriceChartingSearchRow,
 } from "./durableEvidence";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 
@@ -124,6 +127,44 @@ async function priceChartingGet(
     return store.getOrFetch(url, (u) => priceChartingGetRaw(u, headers));
   }
   return priceChartingGetRaw(url, headers);
+}
+
+/**
+ * SearchYield: durable rows first, else GET + parse + promote.
+ * Callers that still need HTML when the response is a fiche redirect receive
+ * `html` / `finalUrl` from the network path only.
+ */
+async function loadPriceChartingSearchRows(
+  searchUrl: string,
+  headers: Record<string, string> = PRICECHARTING_HEADERS,
+): Promise<{
+  rows: PriceChartingSearchRow[];
+  html: string | null;
+  finalUrl: string;
+  fromEvidence: boolean;
+}> {
+  const cached = await readPriceChartingSearchEvidence(searchUrl);
+  if (cached) {
+    console.info(`[PriceCharting] Search evidence hit for ${searchUrl}`);
+    return {
+      rows: cached,
+      html: null,
+      finalUrl: searchUrl,
+      fromEvidence: true,
+    };
+  }
+
+  const res = await priceChartingGet(searchUrl, headers);
+  const finalUrl = res.request.res.responseUrl || searchUrl;
+  const html = String(res.data ?? "");
+  const onSearch =
+    isSearchUrl(finalUrl) || html.includes("Buy & Sell Search Results");
+  const rows = onSearch ? parseSearchRows(html) : [];
+  if (onSearch) {
+    const evidenceUrl = isSearchUrl(finalUrl) ? finalUrl : searchUrl;
+    await promotePriceChartingSearchEvidence(evidenceUrl, rows);
+  }
+  return { rows, html, finalUrl, fromEvidence: false };
 }
 
 function isRateLimitedError(error: unknown): boolean {
@@ -538,8 +579,8 @@ async function fetchPriceChartingSiblingViaTitleSearch(
       console.log(
         `[PriceCharting Metadata] Sibling region title search: ${seekTitle}`,
       );
-      const searchRes = await priceChartingGet(searchUrl);
-      const rows = parseSearchRows(String(searchRes.data)).filter((row) =>
+      const { rows: allRows } = await loadPriceChartingSearchRows(searchUrl);
+      const rows = allRows.filter((row) =>
         priceChartingRowMatchesPlatformSlug(row.gamePath, platformSlug, wantPal),
       );
       if (rows.length === 0) continue;
@@ -1541,8 +1582,34 @@ async function detailHtmlFromParsedSearchRows(
     preferMarketPrices?: boolean;
   },
 ): Promise<string | null> {
-  const bestRow = pickBestRow(
+  return detailHtmlFromSearchRows(
     parseSearchRows(searchHtml),
+    queryName,
+    headers,
+    fallbackPlatform,
+    isPal,
+    isClassics,
+    seekTitles,
+    options,
+  );
+}
+
+async function detailHtmlFromSearchRows(
+  rows: PriceChartingSearchRow[],
+  queryName: string,
+  headers: Record<string, string>,
+  fallbackPlatform: string | undefined,
+  isPal: boolean | undefined,
+  isClassics: boolean | undefined,
+  seekTitles: readonly string[],
+  options?: {
+    mediaType?: string | null;
+    acceptHtml?: (html: string, finalUrl: string) => boolean;
+    preferMarketPrices?: boolean;
+  },
+): Promise<string | null> {
+  const bestRow = pickBestRow(
+    rows,
     queryName,
     fallbackPlatform,
     isPal,
@@ -1662,13 +1729,18 @@ async function fetchDetailHtmlFromNameFallback(
       seen.add(normalized);
 
       const nameSearchUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(fallbackName)}&type=prices`;
-      const nameRes = await priceChartingGet(nameSearchUrl, headers);
-      const html = nameRes.data;
-      const nameFinalUrl = nameRes.request.res.responseUrl || "";
+      const loaded = await loadPriceChartingSearchRows(nameSearchUrl, headers);
+      const html = loaded.html ?? "";
+      const nameFinalUrl = loaded.finalUrl;
 
-      if (isSearchUrl(nameFinalUrl) || isPriceChartingSearchHtml(html)) {
-        const fromRows = await detailHtmlFromParsedSearchRows(
-          html,
+      if (
+        loaded.rows.length > 0 ||
+        loaded.fromEvidence ||
+        isSearchUrl(nameFinalUrl) ||
+        (html && isPriceChartingSearchHtml(html))
+      ) {
+        const fromRows = await detailHtmlFromSearchRows(
+          loaded.rows.length > 0 ? loaded.rows : parseSearchRows(html),
           fallbackName,
           headers,
           fallbackPlatform,
@@ -1692,6 +1764,7 @@ async function fetchDetailHtmlFromNameFallback(
       }
 
       if (
+        !html ||
         !isAcceptedPriceChartingDetailHtml(
           html,
           nameFinalUrl,

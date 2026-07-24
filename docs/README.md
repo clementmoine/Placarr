@@ -7,6 +7,7 @@
 | [provider_external_links.md](provider_external_links.md) | Politique liens + URL-first prix | **Vivant** |
 | [provider_integration_checklist.md](provider_integration_checklist.md) | Ajouter un provider | **Vivant** |
 | [backlog.md](backlog.md) | Journal + **ouverts** en tête | Mixte (voir § Ouverts) |
+| [metadata_engine_audit.md](metadata_engine_audit.md) | Audit accept→purge / SSOT / séquence chantier | **Vivant** (file active) |
 | [../TESTING.md](../TESTING.md) | Comment tester | **Vivant** |
 
 ## Historique / audit (ne pas traiter comme TODO)
@@ -26,7 +27,8 @@ rationale, pas comme file active.
 
 ## Ouverts réels (2026-07-24)
 
-Voir [backlog.md § Ouverts](backlog.md#ouverts--base-clean-2026-07-24) — résumé :
+Détail findings + séquence : [metadata_engine_audit.md](metadata_engine_audit.md).
+File courte : [backlog.md § Ouverts](backlog.md#ouverts--base-clean-2026-07-24).
 
 1. **SSOT identité / covers / liens** (accept→purge) — chantier produit suivant
 2. Découpage god files (`storage` / `fetch`) — faible priorité, après SSOT

@@ -96,7 +96,7 @@ Auth / DB / HTTP             → lib/
 | commerce | pricing/resolver, retailer/titleMatch |
 | locale | preference |
 
-**Prochaines réductions utiles** (après SSOT identité — voir [backlog § Ouverts](backlog.md#ouverts--base-clean-2026-07-24)) :
+**Prochaines réductions utiles** (après SSOT identité — voir [metadata_engine_audit.md](metadata_engine_audit.md) + [backlog § Ouverts](backlog.md#ouverts--base-clean-2026-07-24)) :
 
 1. Découper `enrich/storage.ts` en persist / images / format — ROI faible tant que les gates accept→purge divergent.
 2. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).

@@ -1609,10 +1609,17 @@ export function descriptionMatchesRequestedTitle(
   return tokens.some((token) => lower.includes(token));
 }
 
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
+
+export {
+  BARCODE_CONFIRMED_TITLE_FLOOR,
+  METADATA_TITLE_ALIGN_FLOOR,
+} from "@/core/enrich/titles/identityThresholds";
+
 export function isMetadataTitleAligned(
   result: MetadataResult,
   comparisonNames: string[],
-  minScore: number,
+  minScore: number = METADATA_TITLE_ALIGN_FLOOR,
   options?: { shelfType?: string | null },
 ): boolean {
   if (!result.title) return true;

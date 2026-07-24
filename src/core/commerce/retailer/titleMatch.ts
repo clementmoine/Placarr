@@ -7,6 +7,7 @@ import {
   hasUnrequestedVariantMarker,
 } from "@/core/enrich/titleMatching";
 import { IDENTITY_FUNCTION_WORDS } from "@/core/enrich/titles/identityNoise";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 import {
   normalizeVolumeNumber,
   volumeNumberFromPriceListing,
@@ -25,7 +26,8 @@ import {
 } from "@/core/enrich/titles/tokenEquivalents";
 
 /** Same floor as metadataFetch title alignment for name-only provider hits. */
-export const NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY = 0.58;
+export const NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY =
+  METADATA_TITLE_ALIGN_FLOOR;
 
 const GENERIC_RETAILER_TOKENS = new Set([
   "deluxe",

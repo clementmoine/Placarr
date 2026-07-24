@@ -5,6 +5,7 @@ import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms"
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import {
+  BARCODE_CONFIRMED_TITLE_FLOOR,
   catalogEditionIdentityMismatch,
   franchiseSequelNumbersConflict,
   gameProductIdentityMismatch,
@@ -177,16 +178,22 @@ function isBarcodeConfirmedCatalogTitleAccepted(
     return true;
   }
   if (
-    isMetadataTitleAligned({ title: catalogTitle }, [requestedName], 0.42, {
-      shelfType,
-    })
+    isMetadataTitleAligned(
+      { title: catalogTitle },
+      [requestedName],
+      BARCODE_CONFIRMED_TITLE_FLOOR,
+      { shelfType },
+    )
   ) {
     return true;
   }
   if (retailerCatalogSharesRequestedIdentity(requestedName, catalogTitle)) {
     return true;
   }
-  return metadataTitleSimilarity(requestedName, catalogTitle) >= 0.42;
+  return (
+    metadataTitleSimilarity(requestedName, catalogTitle) >=
+    BARCODE_CONFIRMED_TITLE_FLOOR
+  );
 }
 
 export function isRetailerCatalogTitleAccepted(input: {

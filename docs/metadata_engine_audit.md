@@ -108,8 +108,8 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 2 | Thread `shelfType` everywhere (games/hardware) | Kills soft-accept → residual-reject | **Fait 2026-07-24** — fetch/storage/AMC/chasse/smartoys/metadataLookup (+ remaining providers as found) |
 | 3 | Align offer link + offer cover on residual SSOT | One marketplace product decision | **Fait 2026-07-24** — listing title + cover share `priceListingSharesItemIdentity` |
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
-| 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Partiel** — `TITLE_STOP_WORDS` → `IDENTITY_FUNCTION_WORDS` (fetch/bundle/titleMatch); seuils 0.42/0.45/0.58 encore ouverts |
-| 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | Ouvert (unit gate tests added) |
+| 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
+| 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
 | 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | Reporté |
 
 ## Principles verdict

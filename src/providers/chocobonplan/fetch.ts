@@ -6,6 +6,8 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import type { AttachmentType } from "@prisma/client";
 
 import {
+  BARCODE_CONFIRMED_TITLE_FLOOR,
+  METADATA_TITLE_ALIGN_FLOOR,
   metadataTitleMatchScore,
   extractBaseTitleVariant,
   gameProductIdentityMismatch,
@@ -444,17 +446,19 @@ function chocoBonPlanHitIsEligible(
     return false;
   }
   if (sequelPenalty <= -0.9) return false;
-  if (isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.58)) {
+  if (isMetadataTitleAligned({ title: hitTitle }, alignmentNames)) {
     return true;
   }
+  // Abbreviated listings (DmC…) are a Choco-specific title shape, not a soft
+  // identity floor — still require an explicit abbreviated match + score.
   if (
     chocoBonPlanAbbreviatedListingMatch(hitTitle, alignmentNames) &&
-    titleScore >= 0.42
+    titleScore >= BARCODE_CONFIRMED_TITLE_FLOOR
   ) {
     return true;
   }
   if (sequelPenalty < 0) return false;
-  return isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.42);
+  return false;
 }
 
 function chocoBonPlanHitMatchesRequestedTitle(
@@ -479,16 +483,16 @@ function chocoBonPlanMinimumScore(
   alignmentNames: string[],
   titleScore: number,
 ): number {
-  if (isMetadataTitleAligned({ title: hitTitle }, alignmentNames, 0.58)) {
-    return 0.42;
+  if (isMetadataTitleAligned({ title: hitTitle }, alignmentNames)) {
+    return BARCODE_CONFIRMED_TITLE_FLOOR;
   }
   if (
     chocoBonPlanAbbreviatedListingMatch(hitTitle, alignmentNames) &&
-    titleScore >= 0.42
+    titleScore >= BARCODE_CONFIRMED_TITLE_FLOOR
   ) {
-    return 0.42;
+    return BARCODE_CONFIRMED_TITLE_FLOOR;
   }
-  return 0.58;
+  return METADATA_TITLE_ALIGN_FLOOR;
 }
 
 function chocoBonPlanMainlineSequelPenalty(

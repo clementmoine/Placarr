@@ -1,4 +1,5 @@
 import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 import {
   hasExplicitVolumeMarker,
   normalizeVolumeTitleText,
@@ -61,7 +62,9 @@ export function catalogTitleAlignedWithItem(
     }
   }
   return (
-    q.includes(t) || t.includes(q) || metadataTitleSimilarity(q, t) >= 0.45
+    q.includes(t) ||
+    t.includes(q) ||
+    metadataTitleSimilarity(q, t) >= METADATA_TITLE_ALIGN_FLOOR
   );
 }
 

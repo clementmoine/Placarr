@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2m shipped (Booknode SearchYield → 1 fiche); Back Market cache / corpora / durable SearchYield = next.
+> Phase 1–2n shipped (Back Market HTML cache); corpora / durable SearchYield = next.
 
 ## Principle
 
@@ -125,11 +125,18 @@ Name search no longer walks up to 8 aligned candidates × URL alts:
 - **One** winner → `booknodePageUrlAlternates` (slug `_n1_` ↔ `_n_1_`) then `/covers`
 - Direct book URL path unchanged
 
+## Phase 2n — Back Market SearchYield + fiche HTML reuse (done 2026-07-24)
+
+Metadata search and price search no longer each pay for the same Cloudflare HTML:
+
+- Process-local HTML cache keyed `search:q` / `p:canonicalUrl`
+- `fetchFromBackMarket` then `fetchPricesFromBackMarket` → **0** extra search HTTP
+- Gallery enrich then pinned product URL → **0** extra fiche GET
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Back Market search/fiche process cache | AMC-style meta↔prix reuse |
 | Local full-set / dump sync | Closed platforms at home latency |
 | SearchYield durability | Soft-404 / search beyond process cache |
 | Geedie gallery soft edges only | Multi-region covers need >1 detail by design |

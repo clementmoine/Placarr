@@ -13,6 +13,7 @@ import axios from "axios";
 
 import {
   backmarketSearchUrl,
+  enrichBackMarketProductGallery,
   parseBackMarketProductGallery,
   parseBackMarketProductPage,
   parseBackMarketProductUuidFromUrl,
@@ -20,6 +21,7 @@ import {
   fetchFromBackMarket,
   fetchFromBackMarketProductUrl,
   fetchPricesFromBackMarket,
+  resetBackMarketResponseCacheForTests,
 } from "./fetch";
 import { mapBackMarketMetadata } from "./index";
 
@@ -34,6 +36,7 @@ function fixture(name: string) {
 
 beforeEach(() => {
   mockedGet.mockReset();
+  resetBackMarketResponseCacheForTests();
   delete process.env.FLARESOLVERR_URL;
 });
 
@@ -266,6 +269,64 @@ describe("fetchPricesFromBackMarket", () => {
       grade: "Très bon état",
       sourceUrl: expect.stringContaining("/fr-fr/p/"),
     });
+  });
+
+  it("réutilise le SearchYield HTML après metadata (0 HTTP extra)", async () => {
+    mockedGet.mockResolvedValue({
+      status: 200,
+      data: fixture("ps3-slim-grise-search.html"),
+    } as never);
+
+    await fetchFromBackMarket(
+      "PlayStation 3 Slim grise",
+      ["PlayStation 3 Slim grise", "Sony PlayStation 3 Slim - Gris"],
+      { shelfType: "hardware" },
+    );
+    const httpAfterMeta = mockedGet.mock.calls.length;
+
+    await expect(
+      fetchPricesFromBackMarket(
+        "PlayStation 3 Slim grise",
+        ["PlayStation 3 Slim grise", "Sony PlayStation 3 Slim - Gris"],
+        { shelfType: "hardware" },
+      ),
+    ).resolves.toMatchObject({
+      priceUsed: 20252,
+      productName: "Sony PlayStation 3 Slim - Gris",
+    });
+
+    expect(mockedGet.mock.calls.length).toBe(httpAfterMeta);
+  });
+
+  it("réutilise le HTML fiche après enrich gallery (0 GET extra)", async () => {
+    const productUrl =
+      "https://www.backmarket.fr/fr-fr/p/console-nintendo-2ds-2go-noirbleu/6edd4848-1dec-4060-bb16-fe0c3b9e7df2";
+    const pdpHtml = fixture("2ds-bleu-product.html");
+
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: pdpHtml,
+    } as never);
+
+    await enrichBackMarketProductGallery({
+      title: "Nintendo 2DS - Bleu",
+      priceCents: 16570,
+      currency: "EUR",
+      sourceUrl: productUrl,
+      coverUrl: "https://example.com/thumb.jpg",
+    });
+    const httpAfterEnrich = mockedGet.mock.calls.length;
+
+    await expect(
+      fetchFromBackMarketProductUrl(productUrl, ["Nintendo 2DS - Bleu"], {
+        shelfType: "hardware",
+      }),
+    ).resolves.toMatchObject({
+      title: "Nintendo 2DS - Bleu",
+      priceCents: 16570,
+    });
+
+    expect(mockedGet.mock.calls.length).toBe(httpAfterEnrich);
   });
 
   it("returns null when no listing shares hardware identity", async () => {

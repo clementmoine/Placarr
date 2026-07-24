@@ -2,6 +2,13 @@ import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 
+import {
+  cacheBackMarketHtml,
+  getCachedBackMarketHtml,
+} from "./cache";
+
+export { resetBackMarketResponseCacheForTests } from "./cache";
+
 /**
  * Back Market (https://www.backmarket.fr) — refurbished hardware marketplace.
  * Search pages are Cloudflare-protected Nuxt apps; product cards live in the
@@ -606,6 +613,12 @@ async function fetchBackMarketHtml(
   url: string,
   options: { signal?: AbortSignal } = {},
 ): Promise<string | null> {
+  const cached = getCachedBackMarketHtml(url);
+  if (cached !== undefined) {
+    console.info(`[Back Market] HTML cache hit for ${url}`);
+    return cached || null;
+  }
+
   const res = await fetchGetWithFlareFallback(url, {
     headers: {
       "User-Agent": BACKMARKET_USER_AGENT,
@@ -618,6 +631,7 @@ async function fetchBackMarketHtml(
     flareMaxTimeoutMs: 90_000,
   });
   const html = typeof res.data === "string" ? res.data : "";
+  if (html) cacheBackMarketHtml(url, html);
   return html || null;
 }
 

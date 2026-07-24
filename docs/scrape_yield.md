@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2c + boardgame slim-and-forget fix shipped; factories / eBay batch = next.
+> Phase 1–2e shipped (incl. Presta/Shopify factory DetailYield); gap-fill / eBay = next.
 
 ## Principle
 
@@ -56,13 +56,17 @@ Boardgame retailers no longer slim-and-forget after paying for a fiche GET:
 - **Philibert / Okkazeo / Esprit Jeu / Play-In** — barcode hits keep `productUrl`
 - Scan offers set `sourceUrl` (write-back → external-link pins)
 - Philibert gained URL-first `refreshBarcodePriceOffers`; Esprit/Play-In barcode fallback also keeps `sourceUrl`
-- PrestaShop / Shopify factories = later slice (shared factory)
+
+## Phase 2e — PrestaShop / Shopify factory DetailYield (done 2026-07-24)
+
+- `scrapeCatalogModuleFactory` — barcode hits keep `productUrl` + `priceCents`; shared `extractScanPriceOffers` + `refreshBarcodePriceOffers`
+- `RetailerBarcodeHit.providerId` for scan offer routing
+- Shopify: `fetchShopifyProductByUrl` for URL-first refresh; PrestaShop: barcode refresh with `sourceUrl`
 
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| PrestaShop / Shopify factory DetailYield | Same pattern ×14 modules via scrapeCatalogModuleFactory |
 | Create/refresh = gap-fill | Don’t force full fan-out when evidence fresh |
 | eBay: batch search → aggregate | One Browse search ≫ N item details |
 | Local full-set / dump sync | Closed platforms at home latency |

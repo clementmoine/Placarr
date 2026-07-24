@@ -5,11 +5,15 @@ import {
 } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
+import { pricedOffers } from "@/core/catalog/priceOffers";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   BarcodeLookupType,
+  BarcodePriceRefreshContext,
   MetadataAdapterContext,
   MetadataProviderAdapter,
   ProviderModule,
@@ -53,6 +57,15 @@ export type ScrapeCatalogProduct = {
   imageUrl?: string;
   barcode?: string;
   priceCents?: number;
+  productUrl?: string;
+};
+
+/** Slim barcode hit — keep URL + price so scan offers can pin external links. */
+export type ScrapeCatalogBarcodeHit = {
+  title: string;
+  imageUrl?: string | null;
+  productUrl?: string | null;
+  priceCents?: number | null;
 };
 
 type CatalogResolver = (
@@ -71,8 +84,48 @@ export type ScrapeCatalogModuleFactoryDeps<
     name: string,
     barcode: string,
   ) => Promise<ScrapeCatalogProduct | null>;
-  fetchBarcodeProduct: (config: T, barcode: string) => Promise<unknown>;
+  fetchBarcodeProduct: (
+    config: T,
+    barcode: string,
+  ) => Promise<ScrapeCatalogBarcodeHit | null>;
+  /** Optional URL-first price refresh (e.g. Shopify `/products/{handle}`). */
+  fetchProductByUrl?: (
+    config: T,
+    productUrl: string,
+    barcode?: string | null,
+  ) => Promise<ScrapeCatalogProduct | null>;
 };
+
+function moduleSupportsShelfType(
+  types: readonly string[],
+  shelfType: string,
+): boolean {
+  return types.includes(shelfType as MediaType);
+}
+
+function offersFromPricedProduct(
+  label: string,
+  product: {
+    title?: string | null;
+    priceCents?: number | null;
+    productUrl?: string | null;
+  },
+  rawValue: unknown,
+) {
+  if (product.priceCents == null || product.priceCents <= 0) return [];
+  return pricedOffers(label, [
+    {
+      condition: "new",
+      priceCents: product.priceCents,
+      rawValue,
+      extra: {
+        productName: product.title ?? undefined,
+        sourceUrl: product.productUrl ?? undefined,
+        totalCents: product.priceCents,
+      },
+    },
+  ]);
+}
 
 export function createScrapeCatalogModule<
   T extends ScrapeCatalogRetailerConfig,
@@ -93,6 +146,48 @@ export function createScrapeCatalogModule<
             isSecondary: true,
           }
         : undefined;
+
+    async function refreshCatalogOffers(
+      ctx: BarcodePriceRefreshContext,
+    ): Promise<ReturnType<typeof pricedOffers>> {
+      if (!moduleSupportsShelfType(config.types, ctx.shelfType)) return [];
+
+      const pinnedUrls = providerProductUrlsForKey(
+        config.id,
+        ctx.providerProductUrls,
+      ).filter(
+        (url) =>
+          !ctx.cleanedBarcode ||
+          !retailerProductUrlBarcodeConflicts(url, ctx.cleanedBarcode),
+      );
+
+      if (deps.fetchProductByUrl) {
+        for (const productUrl of pinnedUrls) {
+          const product = await deps.fetchProductByUrl(
+            config,
+            productUrl,
+            ctx.cleanedBarcode,
+          );
+          const offers = offersFromPricedProduct(
+            config.label,
+            {
+              title: product?.title,
+              priceCents: product?.priceCents,
+              productUrl: product?.productUrl || productUrl,
+            },
+            product,
+          );
+          if (offers.length > 0) return offers;
+        }
+      }
+
+      if (ctx.cleanedBarcode) {
+        const hit = await deps.fetchBarcodeProduct(config, ctx.cleanedBarcode);
+        return offersFromPricedProduct(config.label, hit ?? {}, hit);
+      }
+
+      return [];
+    }
 
     return {
       info: {
@@ -247,6 +342,14 @@ export function createScrapeCatalogModule<
           collectObjectMappingSignals(rawSearch),
         );
       },
+      extractScanPriceOffers(payload, shelfType) {
+        if (!moduleSupportsShelfType(config.types, shelfType)) return [];
+        const hit = payload.retailers.find(
+          (retailer) => retailer.providerId === config.id,
+        );
+        return offersFromPricedProduct(config.label, hit ?? {}, hit);
+      },
+      refreshBarcodePriceOffers: refreshCatalogOffers,
     };
   };
 }

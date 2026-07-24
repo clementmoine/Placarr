@@ -224,6 +224,7 @@ export function asNamedListings(value: unknown): NamedListing[] {
 }
 
 export type RetailerBarcodeHit = BarcodeMetadataHit & {
+  providerId: string;
   providerName: string;
   types: MediaType[];
 };
@@ -240,6 +241,13 @@ export function collectRetailerBarcodeHits(
   return scrapeCatalogRetailerLookupEntries().flatMap((entry) => {
     const hit = asMetadataHit(lookups[entry.lookupKey]);
     if (!hit?.title) return [];
-    return [{ ...hit, providerName: entry.providerName, types: entry.types }];
+    return [
+      {
+        ...hit,
+        providerId: entry.lookupKey,
+        providerName: entry.providerName,
+        types: entry.types,
+      },
+    ];
   });
 }

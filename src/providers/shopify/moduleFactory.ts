@@ -1,6 +1,10 @@
 import { createScrapeCatalogModule } from "@/providers/shared/scrapeCatalogModuleFactory";
 
-import { fetchShopifyBarcodeProduct, searchShopifyProduct } from "./fetch";
+import {
+  fetchShopifyBarcodeProduct,
+  fetchShopifyProductByUrl,
+  searchShopifyProduct,
+} from "./fetch";
 import { createShopifyResolver } from "./resolver";
 import type { ShopifyRetailerConfig } from "./types";
 
@@ -23,4 +27,5 @@ export const createShopifyModule =
     searchProduct: (config, name, barcode) =>
       searchShopifyProduct(config, name, barcode),
     fetchBarcodeProduct: fetchShopifyBarcodeProduct,
+    fetchProductByUrl: fetchShopifyProductByUrl,
   });

@@ -121,6 +121,7 @@ describe("collectPayloadListingNames", () => {
     payload.philibert = { title: "Mille Sabords" };
     payload.retailers = [
       {
+        providerId: "monsieurde",
         providerName: "Monsieur de",
         title: "Mille Sabords - Gigamic",
         types: ["boardgames"],

@@ -6,6 +6,7 @@ export {
   extractProductHandles,
   fetchShopifyBarcodeProduct,
   fetchShopifyProductByHandle,
+  fetchShopifyProductByUrl,
   searchShopifyHits,
   searchShopifyProduct,
   stripHtml,

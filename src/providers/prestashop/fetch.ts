@@ -301,6 +301,8 @@ export async function searchPrestashopProduct(
 export type BarcodeProductHit = {
   title: string;
   imageUrl?: string | null;
+  productUrl?: string | null;
+  priceCents?: number | null;
 };
 
 export async function fetchPrestashopBarcodeProduct(
@@ -329,6 +331,8 @@ export async function fetchPrestashopBarcodeProduct(
     return {
       title: product.title,
       imageUrl: product.imageUrl || null,
+      productUrl: product.productUrl,
+      priceCents: product.priceCents ?? null,
     };
   } catch (error) {
     console.error(`[${config.label}] Barcode lookup failed:`, error);

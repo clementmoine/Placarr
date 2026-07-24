@@ -213,6 +213,8 @@ export async function searchShopifyProduct(
 export type ShopifyBarcodeHit = {
   title: string;
   imageUrl?: string | null;
+  productUrl?: string | null;
+  priceCents?: number | null;
 };
 
 export async function fetchShopifyBarcodeProduct(
@@ -233,9 +235,27 @@ export async function fetchShopifyBarcodeProduct(
     if (!gate.catalogBarcodeConfirmed || gate.barcodeContradicted) {
       return null;
     }
-    return { title: product.title, imageUrl: product.imageUrl || null };
+    return {
+      title: product.title,
+      imageUrl: product.imageUrl || null,
+      productUrl: product.productUrl,
+      priceCents: product.priceCents ?? null,
+    };
   } catch (error) {
     console.error(`[${config.label}] Barcode lookup failed:`, error);
     return null;
   }
+}
+
+/** URL-first refresh: `/products/{handle}` → product JSON (no search). */
+export async function fetchShopifyProductByUrl(
+  config: ShopifyRetailerConfig,
+  productUrl: string,
+  barcode?: string | null,
+): Promise<ShopifyProduct | null> {
+  const handle = productUrl.match(
+    /\/products\/([a-z0-9][a-z0-9_-]*)/i,
+  )?.[1];
+  if (!handle) return null;
+  return fetchShopifyProductByHandle(config, handle, barcode);
 }

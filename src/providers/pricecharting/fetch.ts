@@ -55,6 +55,10 @@ import {
   runWithPriceChartingFetchStore,
   type PriceChartingHttpResponse,
 } from "./fetchStore";
+import {
+  promotePriceChartingPriceEvidence,
+  readPriceChartingPriceEvidence,
+} from "./durableEvidence";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 
 export type {
@@ -1971,6 +1975,15 @@ export function parsePriceChartingPricesFromHtml(
   return result;
 }
 
+async function parsePriceChartingPricesFromHtmlAndPromote(
+  html: string,
+  finalUrl?: string | null,
+): Promise<PriceChartingPrices | null> {
+  const prices = parsePriceChartingPricesFromHtml(html, finalUrl);
+  if (prices) await promotePriceChartingPriceEvidence(prices);
+  return prices;
+}
+
 export async function fetchMetadataFromPriceChartingByName(
   name: string,
   fallbackPlatform?: string,
@@ -2023,7 +2036,7 @@ async function fetchMetadataFromPriceChartingByNameUncached(
     if (!parsed) return null;
     const url = resolvePriceChartingGamePageUrl(html);
     // Same HTML serves metadata + prices (stage reuse via store for sibling GETs).
-    const prices = parsePriceChartingPricesFromHtml(html);
+    const prices = await parsePriceChartingPricesFromHtmlAndPromote(html);
     const base: PriceChartingMetadata = {
       ...parsed,
       ...(url ? { url } : {}),
@@ -2092,7 +2105,10 @@ async function fetchMetadataFromPriceChartingGameUrlUncached(
     if (!parsed) return null;
     const url =
       resolvePriceChartingGamePageUrl(res.data, finalUrl) || cleaned;
-    const prices = parsePriceChartingPricesFromHtml(res.data, url);
+    const prices = await parsePriceChartingPricesFromHtmlAndPromote(
+      res.data,
+      url,
+    );
     const base: PriceChartingMetadata = {
       ...parsed,
       url,
@@ -2136,6 +2152,14 @@ async function fetchPricesFromPriceChartingGameUrlUncached(
   const cleaned = gameUrl.trim();
   if (!cleaned.includes("/game/") || isSearchUrl(cleaned)) return null;
 
+  const cached = await readPriceChartingPriceEvidence(cleaned);
+  if (cached) {
+    console.log(
+      `[PriceCharting Prices] Reusing durable evidence: ${cleaned}`,
+    );
+    return cached;
+  }
+
   try {
     console.log(`[PriceCharting Prices] Fetching stored fiche: ${cleaned}`);
     const res = await priceChartingGet(cleaned);
@@ -2145,7 +2169,10 @@ async function fetchPricesFromPriceChartingGameUrlUncached(
     if (isSearchUrl(finalUrl) || !String(finalUrl).includes("/game/")) {
       return null;
     }
-    let prices = parsePriceChartingPricesFromHtml(res.data, finalUrl);
+    let prices = await parsePriceChartingPricesFromHtmlAndPromote(
+      res.data,
+      finalUrl,
+    );
     // Empty PAL market tables — try the NTSC sibling when we started on PAL.
     if (!prices && priceChartingUrlIsPal(finalUrl)) {
       const sibling = priceChartingSiblingRegionUrl(finalUrl);
@@ -2157,7 +2184,7 @@ async function fetchPricesFromPriceChartingGameUrlUncached(
         const siblingFinal =
           (siblingRes.request as { res?: { responseUrl?: string } } | undefined)
             ?.res?.responseUrl || sibling;
-        prices = parsePriceChartingPricesFromHtml(
+        prices = await parsePriceChartingPricesFromHtmlAndPromote(
           siblingRes.data,
           siblingFinal,
         );
@@ -2246,7 +2273,9 @@ async function fetchPricesFromPriceChartingUncached(
       };
 
       let html = await loadPricedHtml(isPal);
-      let prices = html ? parsePriceChartingPricesFromHtml(html) : null;
+      let prices = html
+        ? await parsePriceChartingPricesFromHtmlAndPromote(html)
+        : null;
       // EU shelves default to PAL, but older catalogs (Atari 2600, …) often have
       // empty PAL market tables ("-") while NTSC siblings are priced.
       if (!prices && isPal) {
@@ -2254,7 +2283,9 @@ async function fetchPricesFromPriceChartingUncached(
           `[PriceCharting Prices] PAL page has no market prices for "${fallbackNames[0]}", trying NTSC`,
         );
         html = await loadPricedHtml(false);
-        prices = html ? parsePriceChartingPricesFromHtml(html) : null;
+        prices = html
+          ? await parsePriceChartingPricesFromHtmlAndPromote(html)
+          : null;
       }
       return prices;
     } catch (error: unknown) {
@@ -2363,7 +2394,10 @@ async function fetchPricesFromPriceChartingUncached(
       html,
       finalUrl.includes("/game/") ? finalUrl : null,
     );
-    let prices = parsePriceChartingPricesFromHtml(html, sourceUrl);
+    let prices = await parsePriceChartingPricesFromHtmlAndPromote(
+      html,
+      sourceUrl,
+    );
     if (!prices && isPal && fallbackNames.length > 0) {
       console.log(
         `[PriceCharting Prices] PAL page has no market prices for barcode ${cleanedBarcode}, trying NTSC name fallback`,
@@ -2388,7 +2422,7 @@ async function fetchPricesFromPriceChartingUncached(
             { allowFranchiseStem: true, mediaType: options?.mediaType },
           ))
       ) {
-        prices = parsePriceChartingPricesFromHtml(ntscHtml);
+        prices = await parsePriceChartingPricesFromHtmlAndPromote(ntscHtml);
       }
     }
     return prices;
@@ -2520,7 +2554,7 @@ async function fetchMetadataFromPriceChartingUncached(
       html,
       finalUrl.includes("/game/") ? finalUrl : null,
     );
-    const prices = parsePriceChartingPricesFromHtml(html, url);
+    const prices = await parsePriceChartingPricesFromHtmlAndPromote(html, url);
 
     const base: PriceChartingMetadata = {
       ...parsed,

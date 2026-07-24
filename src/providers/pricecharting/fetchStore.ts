@@ -1,7 +1,7 @@
 /**
  * In-job PriceCharting HTTP singleflight + memo.
  * Same URL/query asked twice in one resolve ⇒ one network GET.
- * Does not bridge Next↔worker (durable evidence = later phase).
+ * Cross-process reuse (Next↔worker) uses ProviderEvidence — see durableEvidence.ts.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
 

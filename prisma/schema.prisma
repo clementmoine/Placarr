@@ -343,3 +343,21 @@ model BackgroundWorkJob {
   @@index([itemId, kind, status])
   @@index([userId, status])
 }
+
+/// Durable scrape yield shared Next ↔ worker (typed JSON, not raw HTML).
+/// Keyed by registry provider id + normalized URL; TTL via expiresAt.
+model ProviderEvidence {
+  id         String   @id @default(cuid())
+  providerId String
+  url        String
+  kind       String
+  yieldJson  Json
+  fetchedAt  DateTime @default(now())
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([providerId, url])
+  @@index([expiresAt])
+  @@index([providerId, kind])
+}

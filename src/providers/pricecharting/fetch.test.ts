@@ -3,6 +3,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("axios", () => ({
   default: { get: vi.fn(), isAxiosError: vi.fn() },
 }));
+
+const readPriceChartingPriceEvidence = vi.fn();
+const promotePriceChartingPriceEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readPriceChartingPriceEvidence: (...args: unknown[]) =>
+    readPriceChartingPriceEvidence(...args),
+  promotePriceChartingPriceEvidence: (...args: unknown[]) =>
+    promotePriceChartingPriceEvidence(...args),
+}));
+
 import axios from "axios";
 
 import {
@@ -17,6 +28,7 @@ import {
   fetchMetadataFromPriceCharting,
   fetchMetadataFromPriceChartingByName,
   fetchPricesFromPriceCharting,
+  fetchPricesFromPriceChartingGameUrl,
   parsePriceChartingDetailHtml,
   parsePriceChartingGalleryImages,
   parsePriceChartingSearchRowsForTests,
@@ -66,6 +78,10 @@ beforeEach(() => {
   mockedGet.mockReset();
   resetPriceChartingQuotaBlockForTests();
   vi.mocked(axios.isAxiosError).mockReturnValue(false);
+  readPriceChartingPriceEvidence.mockReset();
+  promotePriceChartingPriceEvidence.mockReset();
+  readPriceChartingPriceEvidence.mockResolvedValue(null);
+  promotePriceChartingPriceEvidence.mockResolvedValue(undefined);
 });
 
 describe("parsePriceChartingSearchRows + pickBestRow", () => {
@@ -1274,6 +1290,31 @@ describe("fetchMetadataFromPriceCharting", () => {
 });
 
 describe("fetchPricesFromPriceCharting", () => {
+  it("reuses durable ProviderEvidence for a pinned /game/ URL without HTTP", async () => {
+    readPriceChartingPriceEvidence.mockResolvedValueOnce({
+      priceUsed: 6820,
+      priceUsedCIB: 21246,
+      priceNew: 114110,
+      sourceUrl:
+        "https://www.pricecharting.com/game/pal-nintendo-64/nintendo-64-system",
+      productName: "Nintendo 64 System",
+    });
+
+    await expect(
+      fetchPricesFromPriceChartingGameUrl(
+        "https://www.pricecharting.com/game/pal-nintendo-64/nintendo-64-system",
+      ),
+    ).resolves.toEqual({
+      priceUsed: 6820,
+      priceUsedCIB: 21246,
+      priceNew: 114110,
+      sourceUrl:
+        "https://www.pricecharting.com/game/pal-nintendo-64/nintendo-64-system",
+      productName: "Nintendo 64 System",
+    });
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promotePriceChartingPriceEvidence).not.toHaveBeenCalled();
+  });
   it("extrait les prix loose/CIB/new en centimes EUR", async () => {
     mockedGet.mockResolvedValue(detailResponse());
 

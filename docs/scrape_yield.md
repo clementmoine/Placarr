@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1 (PriceCharting) + 2a (job abort) + 2b (scrape gate) shipped; durable evidence = next.
+> Phase 1–2b + durable PC ProviderEvidence shipped; slim-and-forget / eBay batch = next.
 
 ## Principle
 
@@ -10,7 +10,7 @@ We are not a single-catalog app (Plex/TMDB). Many providers run **in parallel by
 1. **SearchYield** — list/search/soft-404 pages: titles, thumbs, price snippets, **real** detail paths.
 2. **DetailYield** — fiche pages: gallery, facts, full prices, canonical URL.
 3. **In-job store** (singleflight) — same URL in one resolve ⇒ one GET.
-4. **Durable evidence** (Phase 2) — `(provider, url)` + typed yield + TTL shared Next↔worker.
+4. **Durable evidence** — `(provider, url)` + typed yield + TTL shared Next↔worker.
 
 Soft-404 to a search page is **not** a miss: mine the rows, pick a winner, fetch **one** detail. Do not invent more slugs.
 
@@ -42,13 +42,20 @@ Soft-404 to a search page is **not** a miss: mine the rows, pick a winner, fetch
 - Capability gaps (incl. books lacking a *primary* cover) still wake the full candidate set
 - Marketplace stage-2 (Back Market, …) skipped once title+cover exist — price refresh owns listing photos
 
+## Phase 2c — Durable ProviderEvidence (done 2026-07-24)
+
+- Prisma `ProviderEvidence` — `(providerId, url)` + `kind` + `yieldJson` + TTL (`expiresAt`)
+- Core helpers: `getFreshProviderEvidence` / `putProviderEvidence` (no provider-id literals)
+- PriceCharting: promote DetailYield prices after successful parse; URL-first refresh **reuses** fresh evidence (zero HTTP)
+- In-job `PriceChartingFetchStore` unchanged for same-process singleflight
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Durable ProviderEvidence | Bridge Next scan ↔ worker refresh |
-| Barcode adapters keep DetailYield | Kill slim-and-forget (title-only) |
+| Barcode adapters keep DetailYield | Kill slim-and-forget (title-only) — Philibert, Okkazeo, … |
 | Create/refresh = gap-fill | Don’t force full fan-out when evidence fresh |
 | eBay: batch search → aggregate | One Browse search ≫ N item details |
 | Local full-set / dump sync | Closed platforms at home latency |
 | Flare retailers: 1 search → N candidates | Same philosophy as PC |
+| SearchYield durability | Soft-404 / search pages beyond PC detail prices |

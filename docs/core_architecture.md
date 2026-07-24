@@ -46,14 +46,14 @@ Si deux modules ne sont importés **que ensemble**, les fusionner. Exemples fusi
 
 | Avant | Après |
 |-------|-------|
-| `fetch.ts` + `metadataFetchGating` + `merge` + `mergeObservationRanking` + `bookSearch*` | **`enrich/fetch.ts`** (~2300 L) |
-| `storage.ts` + `imageDownload` + `imageAssets` | **`enrich/storage.ts`** |
-| `compile.ts` + `consensusTitle` + `resolve.ts` | **`identify/evidence/compile.ts`** |
-| `resolver.ts` + `cachePolicy` + `outlierTrim` | **`commerce/pricing/resolver.ts`** |
+| `fetch.ts` + gating + merge | **`enrich/fetch.ts`** (+ `bookSearch*` / `shelfContentLocale` re-extraits 2026-07-24) |
+| `storage.ts` persist | **`enrich/storage.ts`** (+ `media/imageDownload` / `imageAssets` re-extraits) |
+| `compile.ts` consensus override | **`identify/evidence/compile.ts`** (+ `consensusTitle` / `resolve` re-extraits) |
+| `resolver.ts` prix | **`commerce/pricing/resolver.ts`** (+ `cachePolicy` / `outlierTrim` re-extraits) |
 | `itemDisplay.ts` + `metadataPriceFallback` | **`commerce/pricing/itemDisplay.ts`** |
 | `catalog.ts` + `materializeProviderInfo` | **`catalog/catalog.ts`** |
 
-Imports publics : `@/core/enrich/fetch` (ex-merge), `@/core/commerce/pricing/resolver` (ex-cachePolicy).
+Imports publics stables : `@/core/enrich/fetch`, `@/core/commerce/pricing/resolver` (re-exporte cachePolicy), `@/core/identify/evidence/compile` (re-exporte consensusTitle/resolve).
 
 ### 2. DRY ≠ moins de fichiers
 
@@ -101,7 +101,7 @@ Auth / DB / HTTP             → lib/
 1. ~~Découper `enrich/storage.ts` images~~ **partiel 2026-07-24** — `media/imageDownload.ts` + `media/imageAssets.ts` ; persist reste dans `storage.ts`.
 2. ~~`fetch` book/locale~~ **partiel 2026-07-24** — `bookSearch.ts` / `bookSearchAliases.ts` / `shelfContentLocale.ts`.
 3. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
-4. Découper encore `titleMatching` / `pricing/resolver` / `identify/compile` par raison de changement.
+4. Découper encore `titleMatching` (attachments ↔ similarity couplés) ; persist dense dans `storage`.
 5. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
 ## Checklist PR core

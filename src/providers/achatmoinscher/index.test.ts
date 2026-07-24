@@ -57,6 +57,7 @@ describe("achatmoinscherModule metadata adapter", () => {
     expect(mockedFetchFromAchatMoinsCher).toHaveBeenCalledWith(
       "5021290082728",
       ["Wheelman PS3"],
+      { shelfType: undefined },
     );
     expect(result).toMatchObject({
       title: "Wheelman (PlayStation 3)",

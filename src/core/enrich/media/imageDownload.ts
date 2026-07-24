@@ -103,7 +103,7 @@ export async function downloadRemoteImage(
   if (coverOwner?.localizeCoverDownload) {
     return (
       (await coverOwner.localizeCoverDownload(url, {
-        source: options.source,
+        source: options.source ?? undefined,
         itemId: options.itemId,
         metadataId: options.metadataId,
         trim: options.trim,

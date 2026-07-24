@@ -8,6 +8,9 @@ const h = vi.hoisted(() => ({
   barcodeCacheFindUnique: vi.fn(),
   priceOfferFindMany: vi.fn(),
   fieldEvidenceFindMany: vi.fn(),
+  attachmentFindMany: vi.fn(),
+  attachmentCreateMany: vi.fn(),
+  actualGetProviderModule: null as null | ((id: string) => unknown),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -29,12 +32,17 @@ vi.mock("@/lib/db/prisma", () => ({
     fieldEvidence: {
       findMany: h.fieldEvidenceFindMany,
     },
+    attachment: {
+      findMany: h.attachmentFindMany,
+      createMany: h.attachmentCreateMany,
+    },
   },
 }));
 
 vi.mock("@/core/catalog/catalog", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/core/catalog/catalog")>();
+  h.actualGetProviderModule = actual.getProviderModule;
   return {
     ...actual,
     getProviderModule: vi.fn(actual.getProviderModule),
@@ -50,10 +58,22 @@ import { getProviderModule } from "@/core/catalog/catalog";
 
 const mockedGetProviderModule = vi.mocked(getProviderModule);
 
+function resetProviderModuleMock() {
+  mockedGetProviderModule.mockReset();
+  if (h.actualGetProviderModule) {
+    mockedGetProviderModule.mockImplementation(
+      h.actualGetProviderModule as typeof mockedGetProviderModule,
+    );
+  }
+}
+
 describe("persistProviderExternalLinksForMetadata", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetProviderModuleMock();
     h.fieldEvidenceFindMany.mockResolvedValue([]);
+    h.attachmentFindMany.mockResolvedValue([]);
+    h.attachmentCreateMany.mockResolvedValue({ count: 0 });
   });
 
   it("persists a new external-link from price offer sourceUrl", async () => {
@@ -224,6 +244,9 @@ describe("persistProviderExternalLinksForMetadata", () => {
 describe("persistProviderExternalLinksForBarcodeItems", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetProviderModuleMock();
+    h.attachmentFindMany.mockResolvedValue([]);
+    h.attachmentCreateMany.mockResolvedValue({ count: 0 });
   });
 
   it("fans out price offer links to every item metadata for the barcode", async () => {
@@ -244,7 +267,11 @@ describe("persistProviderExternalLinksForBarcodeItems", () => {
 
     expect(h.itemFindMany).toHaveBeenCalledWith({
       where: { barcode: "0827912079678", metadataId: { not: null } },
-      select: { metadataId: true, name: true },
+      select: {
+        metadataId: true,
+        name: true,
+        shelf: { select: { type: true } },
+      },
     });
     expect(h.metadataFindUnique).toHaveBeenCalledTimes(2);
     expect(h.metadataUpdate).toHaveBeenCalledTimes(2);
@@ -254,7 +281,10 @@ describe("persistProviderExternalLinksForBarcodeItems", () => {
 describe("repairProviderExternalLinksForItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetProviderModuleMock();
     h.fieldEvidenceFindMany.mockResolvedValue([]);
+    h.attachmentFindMany.mockResolvedValue([]);
+    h.attachmentCreateMany.mockResolvedValue({ count: 0 });
   });
 
   it("reconciles cached barcode price offers into item metadata", async () => {

@@ -28,7 +28,7 @@ export function hammingDistance(a: string, b: string): number {
 // Au-delà de cette distance, deux images sont considérées distinctes. Les copies
 // d'une même jaquette (tailles/encodages différents) tombent bien en dessous ;
 // deux visuels réellement différents sont très au-dessus.
-const PERCEPTUAL_DUPLICATE_MAX_DISTANCE = 8;
+export const PERCEPTUAL_DUPLICATE_MAX_DISTANCE = 8;
 
 /**
  * Déduplique des images visuellement identiques même servies à des URLs, des

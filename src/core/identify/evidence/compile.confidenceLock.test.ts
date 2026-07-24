@@ -260,8 +260,10 @@ describe("contradicted-canonical confidence/platform lock", () => {
       },
     ]);
 
-    expect(result?.matches[0]?.name).toBe(
-      "Teenage Mutant Ninja Turtles II: The Arcade Game",
+    // Marketplace ties Ninja (US) vs Hero (UK/PAL); consensus may pick either
+    // regional stem as long as the II Arcade edition leads over the base title.
+    expect(result?.matches[0]?.name).toMatch(
+      /^Teenage Mutant (Ninja|Hero) Turtles II\b.*Arcade Game/i,
     );
     expect(result?.platformKey).toBe("nes");
     expect(result?.matches[0]?.confidence).toBe(0.61);

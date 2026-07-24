@@ -36,6 +36,21 @@ import {
   isMarketplaceSearchPriceSource,
   formatProviderSourceLabel,
 } from "@/core/catalog/catalog";
+import {
+  finalizeGamePriceProviders,
+  getPriceCacheLifetimeMs,
+  hasGameUsedPricing,
+  hasReferencePriceOffers,
+  isPriceCacheFresh,
+  parsePriceProviderSources,
+  shouldRefreshPriceCache,
+  shouldReturnCachedPrices,
+} from "@/core/commerce/pricing/cachePolicy";
+import {
+  filterObservationsByOutlierTrim,
+  filterUsedPricesAboveNew,
+  trimPriceOutlierCents,
+} from "@/core/commerce/pricing/outlierTrim";
 
 export type PriceObservation = {
   source: string;
@@ -1621,232 +1636,19 @@ export async function refreshItemPrices(
   });
 }
 
-// ── coalesced from src/core/commerce/pricing/cachePolicy.ts ──
-type PriceCacheRecord = {
-  priceUsed?: number | null;
-  priceUsedCIB?: number | null;
-  priceNew?: number | null;
-  provider?: string | null;
-  priceLastUpdated?: Date | string | null;
-};
 
-type CachedPriceOffer = {
-  source?: string | null;
-  condition?: string | null;
-  priceCents?: number | null;
-};
-
-const GAME_USED_CONDITIONS = new Set(["loose", "cib", "used"]);
-const FRESH_USED_GAME_PRICE_MS = 24 * 60 * 60 * 1000;
-/** Games with only new/catalog prices — retry used providers, but not every page load. */
-const FRESH_INCOMPLETE_GAME_PRICE_MS = 6 * 60 * 60 * 1000;
-
-export function parsePriceProviderSources(provider?: string | null) {
-  return Array.from(
-    new Set(
-      (provider || "")
-        .replace(/\+?canonical-v\d+/g, "")
-        .split("+")
-        .map((source) => source.trim())
-        .filter((source) => source && source !== "None"),
-    ),
-  );
-}
-
-export function hasGameUsedPricing(
-  cacheRecord: PriceCacheRecord,
-  offers: CachedPriceOffer[],
-) {
-  if (cacheRecord.priceUsed != null || cacheRecord.priceUsedCIB != null) {
-    return true;
-  }
-
-  return offers.some(
-    (offer) =>
-      typeof offer.priceCents === "number" &&
-      offer.priceCents > 0 &&
-      offer.condition &&
-      GAME_USED_CONDITIONS.has(offer.condition),
-  );
-}
-
-export function hasReferencePriceOffers(offers: CachedPriceOffer[]) {
-  return offers.some(
-    (offer) => !!offer.source && isReferencePriceSource(offer.source),
-  );
-}
-
-export function shouldReturnCachedPrices(
-  shelfType: string,
-  cacheRecord: PriceCacheRecord,
-  offers: CachedPriceOffer[],
-) {
-  if (!shelfSupportsLooseCondition(shelfType)) return true;
-  if (hasGameUsedPricing(cacheRecord, offers)) return true;
-  if (hasReferencePriceOffers(offers)) return true;
-  return false;
-}
-
-export function getPriceCacheLifetimeMs(
-  shelfType: string,
-  cacheRecord: PriceCacheRecord,
-) {
-  const hasAnyPrice =
-    cacheRecord.priceUsed != null ||
-    cacheRecord.priceUsedCIB != null ||
-    cacheRecord.priceNew != null;
-
-  if (!hasAnyPrice) return FRESH_INCOMPLETE_GAME_PRICE_MS;
-  if (
-    shelfSupportsLooseCondition(shelfType) &&
-    !hasGameUsedPricing(cacheRecord, [])
-  ) {
-    return FRESH_INCOMPLETE_GAME_PRICE_MS;
-  }
-  return FRESH_USED_GAME_PRICE_MS;
-}
-
-export function isPriceCacheFresh(
-  shelfType: string,
-  cacheRecord: PriceCacheRecord,
-  now = Date.now(),
-) {
-  if (!cacheRecord.priceLastUpdated) return false;
-  const ageInMs = now - new Date(cacheRecord.priceLastUpdated).getTime();
-  return ageInMs < getPriceCacheLifetimeMs(shelfType, cacheRecord);
-}
-
-/**
- * Whether cached prices are old enough to warrant a background refresh. Used
- * for stale-while-revalidate: the caller may still serve the cached value
- * immediately, but the refresh cadence stays aligned with the cache quality.
- */
-export function shouldRefreshPriceCache(
-  shelfType: string,
-  cacheRecord: PriceCacheRecord,
-  now = Date.now(),
-) {
-  return !isPriceCacheFresh(shelfType, cacheRecord, now);
-}
-
-export function finalizeGamePriceProviders(providers: string[]) {
-  return providers;
-}
-
-// ── coalesced from src/core/commerce/pricing/outlierTrim.ts ──
-/**
- * Drops isolated high price samples when several observations exist for the same
- * condition. Only trims the upper tail — a lone cheap listing is kept because
- * it may still be a valid marketplace hit.
- */
-export function trimPriceOutlierCents(values: number[]): number[] {
-  let sorted = [...values].filter((value) => value > 0).sort((a, b) => a - b);
-  if (sorted.length < 3) return sorted;
-
-  while (sorted.length >= 3) {
-    const trimmed = dropHighTailOutlier(sorted);
-    if (!trimmed) break;
-    sorted = trimmed;
-  }
-
-  return sorted;
-}
-
-function dropHighTailOutlier(sorted: number[]): number[] | null {
-  if (sorted.length < 3) return null;
-
-  const previous = sorted[sorted.length - 2];
-  const max = sorted[sorted.length - 1];
-  const clusterSpread = previous - sorted[0];
-  const tailGap = max - previous;
-  const minTailGap = Math.max(clusterSpread * 1.5, previous * 0.35, 1500);
-
-  if (tailGap < minTailGap) return null;
-  return sorted.slice(0, -1);
-}
-
-export function filterUsedPricesAboveNew<
-  T extends {
-    condition?: string | null;
-    priceCents: number;
-    source?: string | null;
-    productName?: string | null;
-  },
->(
-  observations: T[],
-  shelfType: string,
-  isReferencePriceSource: (source: string) => boolean = () => false,
-): T[] {
-  const newOffers = observations.filter(
-    (row) => row.condition === "new" && row.priceCents > 0,
-  );
-  if (newOffers.length === 0) return observations;
-
-  const credibleNew = newOffers.filter(
-    (row) =>
-      !!row.productName?.trim() || isReferencePriceSource(row.source ?? ""),
-  );
-  const pool = credibleNew.length > 0 ? credibleNew : newOffers;
-
-  const usedConditions = new Set(
-    shelfSupportsLooseCondition(shelfType)
-      ? ["used", "loose", "cib"]
-      : ["used"],
-  );
-  const hasUsed = observations.some(
-    (row) => row.condition && usedConditions.has(row.condition),
-  );
-  if (!hasUsed) return observations;
-
-  const newCeiling = Math.min(...pool.map((row) => row.priceCents));
-  return observations.filter((row) => {
-    if (!row.condition || !usedConditions.has(row.condition)) return true;
-    if (isReferencePriceSource(row.source ?? "")) return true;
-    return row.priceCents <= newCeiling;
-  });
-}
-
-export function filterObservationsByOutlierTrim<
-  T extends { condition?: string | null; priceCents: number },
->(observations: T[], conditions: string[]): T[] {
-  const grouped = observations.filter(
-    (observation) =>
-      observation.condition && conditions.includes(observation.condition),
-  );
-  if (grouped.length < 3) return observations;
-
-  // Used/loose rows at or below a known CIB quote are not high-tail noise —
-  // they are typically refurbished / complete-adjacent marketplace stock.
-  const cibCeiling = Math.max(
-    0,
-    ...observations
-      .filter((row) => row.condition === "cib" && row.priceCents > 0)
-      .map((row) => row.priceCents),
-  );
-  const protectUsedNearCib = conditions.some((condition) =>
-    ["used", "loose"].includes(condition),
-  );
-
-  const trimmed = trimPriceOutlierCents(grouped.map((row) => row.priceCents));
-  const remaining = new Map<number, number>();
-  for (const priceCents of trimmed) {
-    remaining.set(priceCents, (remaining.get(priceCents) ?? 0) + 1);
-  }
-
-  return observations.filter((observation) => {
-    if (!observation.condition || !conditions.includes(observation.condition)) {
-      return true;
-    }
-    if (
-      protectUsedNearCib &&
-      cibCeiling > 0 &&
-      observation.priceCents <= cibCeiling
-    ) {
-      return true;
-    }
-    const count = remaining.get(observation.priceCents) ?? 0;
-    if (count <= 0) return false;
-    remaining.set(observation.priceCents, count - 1);
-    return true;
-  });
-}
+export {
+  finalizeGamePriceProviders,
+  getPriceCacheLifetimeMs,
+  hasGameUsedPricing,
+  hasReferencePriceOffers,
+  isPriceCacheFresh,
+  parsePriceProviderSources,
+  shouldRefreshPriceCache,
+  shouldReturnCachedPrices,
+} from "@/core/commerce/pricing/cachePolicy";
+export {
+  filterObservationsByOutlierTrim,
+  filterUsedPricesAboveNew,
+  trimPriceOutlierCents,
+} from "@/core/commerce/pricing/outlierTrim";

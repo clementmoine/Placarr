@@ -83,8 +83,10 @@ import {
   filterOutFlatImageAttachments,
   hammingDistance,
   perceptualHashForAsset,
+  PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
   readAttachmentImageMetrics,
   retargetUserHonorPinsInAttachmentGallery,
+  shouldReadImageMetricsForAttachment,
 } from "@/core/enrich/media/imageAssets";
 
 function isDisplayImageAttachment(attachment: {

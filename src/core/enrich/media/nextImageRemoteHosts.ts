@@ -15,6 +15,7 @@ const SUPPLEMENTAL_IMAGE_REMOTE_WILDCARD_HOSTS = [
   "bdovore.com",
   "bedetheque.com",
   "booknode.com",
+  "cdiscount.com",
   "chasse-aux-livres.fr",
   "ebayimg.com",
   "fnac-static.com",

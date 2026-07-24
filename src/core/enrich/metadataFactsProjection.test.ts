@@ -199,4 +199,42 @@ describe("syncMetadataDisplayFactsFromFieldEvidence", () => {
     expect(estimates).toHaveLength(1);
     expect(estimates?.[0]?.kind).toBe("price");
   });
+
+  it("purges contradicted marketplace links already on the metadata row", async () => {
+    h.metadataFindUnique.mockResolvedValue({
+      facts: JSON.stringify([
+        {
+          kind: "external-link",
+          label: "Back Market",
+          value: "Voir la fiche",
+          url: "https://www.backmarket.fr/fr-fr/p/console-sony-playstation-1/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          source: "backmarket",
+        },
+        {
+          kind: "genre",
+          label: "Type",
+          value: "Console",
+          source: "backmarket",
+        },
+      ]),
+    });
+    h.fieldEvidenceFindMany.mockResolvedValue([]);
+    h.metadataUpdate.mockResolvedValue({});
+
+    const merged = await syncMetadataDisplayFactsFromFieldEvidence({
+      metadataId: "meta-1",
+      itemTitle: "PlayStation 5",
+      shelfType: "hardware",
+    });
+
+    expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
+    expect(
+      merged?.some(
+        (fact) =>
+          fact.kind === "external-link" &&
+          fact.url?.includes("playstation-1"),
+      ),
+    ).toBe(false);
+    expect(merged?.some((fact) => fact.kind === "genre")).toBe(true);
+  });
 });

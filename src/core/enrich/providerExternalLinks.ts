@@ -12,6 +12,7 @@ import {
   catalogTitleFromProductUrl,
   retailerCatalogTitleContradictsItem,
 } from "@/core/commerce/retailer/catalogTitleAlignment";
+import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 import { residualIdentityMatch } from "@/core/enrich/titles/residualIdentity";
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
@@ -315,10 +316,16 @@ export function coverAttachmentsFromPriceOffers(
 
     const listingTitle = productTitleFromPriceOffer(offer);
     const itemTitle = options.itemTitle?.trim();
+    const candidate = withProviderAttachmentTraits({
+      type: "cover",
+      url: coverUrl,
+      title: listingTitle ?? undefined,
+      source: providerId,
+    });
     if (
       itemTitle &&
       listingTitle &&
-      !priceListingSharesItemIdentity(itemTitle, listingTitle, {
+      !attachmentTitleAllowedForItem(itemTitle, candidate, {
         shelfType: options.shelfType,
       })
     ) {
@@ -327,14 +334,7 @@ export function coverAttachmentsFromPriceOffers(
 
     seenProviders.add(providerId);
     existingUrls.add(coverUrl);
-    out.push(
-      withProviderAttachmentTraits({
-        type: "cover",
-        url: coverUrl,
-        title: listingTitle ?? undefined,
-        source: providerId,
-      }),
-    );
+    out.push(candidate);
   }
 
   return out;
@@ -510,16 +510,20 @@ function shouldReplaceProviderExternalLink(input: {
   }
   // After a rename, replace a finish-mismatched catalog pin when the new offer
   // aligns (or at least does not finish-conflict).
+  const nextTitleContradicts =
+    productTitle?.trim() && itemTitle?.trim()
+      ? !priceListingSharesItemIdentity(itemTitle, productTitle, { shelfType })
+      : retailerCatalogTitleContradictsItem({
+          productUrl: nextUrl,
+          productTitle,
+          itemTitle,
+          shelfType,
+        });
   if (
     shelfType === "hardware" &&
     hardwareFinishConflictsCatalogLink(itemTitle, existingUrl) &&
     !hardwareFinishConflictsCatalogLink(itemTitle, nextUrl) &&
-    !retailerCatalogTitleContradictsItem({
-      productUrl: nextUrl,
-      productTitle,
-      itemTitle,
-      shelfType,
-    })
+    !nextTitleContradicts
   ) {
     return true;
   }
@@ -557,10 +561,23 @@ export function reconcileExternalLinksFromPriceOffers(
     ) {
       continue;
     }
+    const offerProductTitle = productTitleFromPriceOffer(offer);
+    // Listing-title path shares the cover identity gate
+    // (`priceListingSharesItemIdentity`); keep URL/edition contradict as a
+    // second hard reject so Funny Death ≠ Femmes Fatales still drops.
+    if (
+      itemTitle?.trim() &&
+      offerProductTitle &&
+      !priceListingSharesItemIdentity(itemTitle, offerProductTitle, {
+        shelfType,
+      })
+    ) {
+      continue;
+    }
     if (
       retailerCatalogTitleContradictsItem({
         productUrl: url,
-        productTitle: productTitleFromPriceOffer(offer),
+        productTitle: offerProductTitle,
         itemTitle,
         shelfType,
       })

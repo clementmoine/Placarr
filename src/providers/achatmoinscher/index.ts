@@ -51,7 +51,9 @@ async function refreshAchatMoinsCherOffers(ctx: BarcodePriceRefreshContext) {
   );
   for (const query of matchPriceSeekQueries(ctx)) {
     if (!query.trim()) continue;
-    const result = await fetchPricesFromAchatMoinsCher(query, expectedNames);
+    const result = await fetchPricesFromAchatMoinsCher(query, expectedNames, {
+      shelfType: ctx.shelfType,
+    });
     if (!result) continue;
     return pricedOffers(PRICE_SOURCE, [
       { condition: "used", priceCents: result.priceUsed, rawValue: result },
@@ -230,7 +232,7 @@ export const achatmoinscherModule: ProviderModule = {
   createMetadataAdapter() {
     const adapter: MetadataProviderAdapter = {
       id: "achatmoinscher",
-      async resolve({ barcode, name, lookupQueries, fallbackNames }) {
+      async resolve({ barcode, name, lookupQueries, fallbackNames, type }) {
         const normalizedBarcode = normalizeProductBarcode(barcode);
         const expectedNames = Array.from(
           new Set(
@@ -241,12 +243,14 @@ export const achatmoinscherModule: ProviderModule = {
             ].filter(Boolean),
           ),
         );
+        const matchOptions = { shelfType: type };
 
         let products: AchatMoinsCherProduct[] = [];
         if (normalizedBarcode) {
           products = await fetchFromAchatMoinsCher(
             normalizedBarcode,
             expectedNames,
+            matchOptions,
           );
         }
         if (products.length === 0) {
@@ -254,6 +258,7 @@ export const achatmoinscherModule: ProviderModule = {
             products = await fetchFromAchatMoinsCherByQuery(
               query,
               expectedNames,
+              matchOptions,
             );
             if (products.length > 0) break;
           }

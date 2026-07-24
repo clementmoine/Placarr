@@ -153,6 +153,7 @@ function isBarcodeConfirmedCatalogTitleAccepted(
   shelfName?: string | null,
   trustConfirmedProductBarcode = false,
   itemBarcode?: string | null,
+  shelfType?: string | null,
 ): boolean {
   if (retailerCatalogPlatformMismatch(shelfName, catalogTitle)) {
     return false;
@@ -175,7 +176,11 @@ function isBarcodeConfirmedCatalogTitleAccepted(
   ) {
     return true;
   }
-  if (isMetadataTitleAligned({ title: catalogTitle }, [requestedName], 0.42)) {
+  if (
+    isMetadataTitleAligned({ title: catalogTitle }, [requestedName], 0.42, {
+      shelfType,
+    })
+  ) {
     return true;
   }
   if (retailerCatalogSharesRequestedIdentity(requestedName, catalogTitle)) {
@@ -214,6 +219,7 @@ export function isRetailerCatalogTitleAccepted(input: {
       input.shelfName,
       input.trustConfirmedProductBarcode,
       input.itemBarcode,
+      input.shelfType,
     );
   }
 

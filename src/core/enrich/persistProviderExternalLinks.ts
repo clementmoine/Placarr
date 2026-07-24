@@ -135,6 +135,15 @@ export async function persistProviderExternalLinksForMetadata(
     ];
   }
 
+  // Field-evidence / append paths can reintroduce contradicted marketplace
+  // fiches — purge again so DB matches present defense.
+  next = purgeContradictedProviderExternalLinks(
+    next,
+    input.itemBarcode,
+    input.itemTitle,
+    input.shelfType,
+  );
+
   const deduped = dedupeFacts(dedupeProviderExternalLinkFacts(next));
   if (externalLinkSnapshot(existing) === externalLinkSnapshot(deduped ?? [])) {
     return deduped ?? null;
@@ -284,6 +293,7 @@ export async function repairProviderExternalLinksForItem(
       metadataId: item.metadataId,
       itemBarcode: item.barcode,
       itemTitle: item.name,
+      shelfType: item.shelf?.type,
     });
   } catch (error) {
     console.warn(

@@ -122,18 +122,22 @@ function parseSmartoysPricesFromHtml(
 function titleMatchesExpected(
   productName: string | null | undefined,
   expectedNames: string[],
+  options: { shelfType?: string | null } = {},
 ) {
   const title = productName?.trim();
   if (!title || expectedNames.length === 0) return true;
+  const identityOptions = options.shelfType
+    ? { shelfType: options.shelfType }
+    : undefined;
   return expectedNames.some((name) =>
-    isNameOnlyRetailerTitleMatch(name, title),
+    isNameOnlyRetailerTitleMatch(name, title, identityOptions),
   );
 }
 
 async function fetchSmartoysProductPage(
   productUrl: string,
   expectedNames: string[],
-  options: { requireBarcode?: string } = {},
+  options: { requireBarcode?: string; shelfType?: string | null } = {},
 ): Promise<SmartoysPrices | null> {
   const res = await fetchGetWithFlareFallback(productUrl, {
     headers: {
@@ -162,7 +166,13 @@ async function fetchSmartoysProductPage(
 
   const parsed = parseSmartoysPricesFromHtml(html, finalUrl);
   if (!parsed) return null;
-  if (!titleMatchesExpected(parsed.productName, expectedNames)) return null;
+  if (
+    !titleMatchesExpected(parsed.productName, expectedNames, {
+      shelfType: options.shelfType,
+    })
+  ) {
+    return null;
+  }
   return parsed;
 }
 
@@ -183,6 +193,7 @@ function parseSmartoysSearchUrls(html: string): string[] {
 async function fetchSmartoysByName(
   query: string,
   expectedNames: string[],
+  options: { shelfType?: string | null } = {},
 ): Promise<SmartoysPrices | null> {
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return null;
@@ -201,7 +212,7 @@ async function fetchSmartoysByName(
 
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   for (const productUrl of parseSmartoysSearchUrls(String(res.data ?? ""))) {
-    const result = await fetchSmartoysProductPage(productUrl, names);
+    const result = await fetchSmartoysProductPage(productUrl, names, options);
     if (result) return result;
   }
 
@@ -224,6 +235,7 @@ async function fetchSmartoysByBarcode(
 export async function fetchPricesFromSmartoys(
   query: string,
   expectedNames: string[] = [],
+  options: { shelfType?: string | null } = {},
 ): Promise<SmartoysPrices | null> {
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return null;
@@ -234,7 +246,7 @@ export async function fetchPricesFromSmartoys(
       if (byBarcode) return byBarcode;
     }
 
-    return await fetchSmartoysByName(cleanedQuery, expectedNames);
+    return await fetchSmartoysByName(cleanedQuery, expectedNames, options);
   } catch (error) {
     console.error(
       `[Smartoys] Price lookup failed for "${cleanedQuery}":`,

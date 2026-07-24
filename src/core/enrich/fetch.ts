@@ -816,6 +816,7 @@ export async function fetchMetadata(
         externalIds: finalExternalIds,
         fallbackNames: finalFallbackNames,
         signal: options?.signal,
+        shelfType: type,
       },
     );
   }
@@ -1074,7 +1075,9 @@ async function buildMergedMetadataFromByProvider(input: {
     };
   }
 
-  return preferRequestedDisplayTitle(mergedForReturn, name);
+  return preferRequestedDisplayTitle(mergedForReturn, name, {
+    shelfType: type,
+  });
 }
 
 export async function fetchMetadataByType(
@@ -1544,12 +1547,14 @@ async function supplementGameEditionProviderResults(
     externalIds?: Record<string, string | null>;
     fallbackNames?: string[];
     signal?: AbortSignal;
+    shelfType?: string | null;
   } = {},
 ): Promise<void> {
   const baseTitle = extractBaseTitleVariant(requestedName);
   if (!baseTitle) return;
 
   const alignmentNames = [requestedName, baseTitle];
+  const shelfType = context.shelfType ?? adapterContextBase.type ?? "games";
 
   // Each provider re-searches the base title independently and writes only its
   // own entry, so run them concurrently under the shared cap.
@@ -1569,7 +1574,9 @@ async function supplementGameEditionProviderResults(
       const editionMetadata = byProvider.get(providerId) ?? null;
       if (
         editionMetadata &&
-        !isMetadataTitleAligned(editionMetadata, alignmentNames, 0.58)
+        !isMetadataTitleAligned(editionMetadata, alignmentNames, 0.58, {
+          shelfType,
+        })
       ) {
         return;
       }
@@ -1591,7 +1598,9 @@ async function supplementGameEditionProviderResults(
 
       if (
         !baseResult ||
-        !isMetadataTitleAligned(baseResult, alignmentNames, 0.58)
+        !isMetadataTitleAligned(baseResult, alignmentNames, 0.58, {
+          shelfType,
+        })
       ) {
         return;
       }
@@ -2000,6 +2009,7 @@ function stripCoversMisalignedWithRequestedTitle(
 export function preferRequestedDisplayTitle(
   metadata: MetadataResult,
   requestedName: string,
+  options?: { shelfType?: string | null },
 ): MetadataResult {
   const currentTitle = metadata.title;
   const requestedTitle = requestedName.trim();
@@ -2013,7 +2023,9 @@ export function preferRequestedDisplayTitle(
   }
 
   if (
-    !isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58)
+    !isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58, {
+      shelfType: options?.shelfType,
+    })
   ) {
     // Provider hit a different product (e.g. Pokémon OLED for a Zelda OLED
     // request). Keep the catalog name, drop covers that belong to the wrong SKU.
@@ -2217,6 +2229,7 @@ export function mergeMetadata(
               { title: r.metadata.title },
               [options.requestedTitle!.trim()],
               0.58,
+              { shelfType: mediaType },
             )
           ) {
             return false;

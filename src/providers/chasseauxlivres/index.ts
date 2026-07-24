@@ -223,7 +223,9 @@ function buildChasseProductValidator(input: {
 
     return input.expectedNames.some((name) =>
       input.shelfType === "games" || input.shelfType === "hardware"
-        ? isNameOnlyRetailerTitleMatch(name, product.name)
+        ? isNameOnlyRetailerTitleMatch(name, product.name, {
+            shelfType: input.shelfType,
+          })
         : isChasseTitleAligned(name, product.name),
     );
   };

@@ -4,6 +4,7 @@ import {
   dedupeProviderExternalLinkFacts,
   looksLikeProviderProductPageUrl,
   normalizeProviderSourceKey,
+  purgeContradictedProviderExternalLinks,
 } from "@/core/enrich/providerExternalLinks";
 import { formatProviderSourceLabel } from "@/core/catalog/catalog";
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
@@ -186,6 +187,7 @@ export async function syncMetadataDisplayFactsFromFieldEvidence(input: {
   metadataId: string;
   itemBarcode?: string | null;
   itemTitle?: string | null;
+  shelfType?: string | null;
 }): Promise<MetadataFact[] | null> {
   const row = await prisma.metadata.findUnique({
     where: { id: input.metadataId },
@@ -209,12 +211,17 @@ export async function syncMetadataDisplayFactsFromFieldEvidence(input: {
   const existing = normalizeMiscTagFacts(rawExisting);
   const additions = displayFactsFromFieldEvidence(evidence, existing);
 
-  const merged = dropSupersededMiscTagFacts(
-    dedupeFacts(
-      dedupeProviderExternalLinkFacts(
-        additions.length > 0 ? [...existing, ...additions] : existing,
-      ),
-    ) ?? [],
+  const merged = purgeContradictedProviderExternalLinks(
+    dropSupersededMiscTagFacts(
+      dedupeFacts(
+        dedupeProviderExternalLinkFacts(
+          additions.length > 0 ? [...existing, ...additions] : existing,
+        ),
+      ) ?? [],
+    ),
+    input.itemBarcode,
+    input.itemTitle,
+    input.shelfType,
   );
 
   if (factsSnapshot(rawExisting) === factsSnapshot(merged)) {

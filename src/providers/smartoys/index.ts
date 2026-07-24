@@ -21,7 +21,9 @@ async function refreshSmartoysOffers(ctx: BarcodePriceRefreshContext) {
   );
   for (const query of matchPriceSeekQueries(ctx)) {
     if (!query.trim()) continue;
-    const result = await fetchPricesFromSmartoys(query, expectedNames);
+    const result = await fetchPricesFromSmartoys(query, expectedNames, {
+      shelfType: ctx.shelfType,
+    });
     if (!result) continue;
     return pricedOffers(PRICE_SOURCE, [
       {

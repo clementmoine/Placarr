@@ -27,11 +27,8 @@ import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPre
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
 import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
 import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import {
-  attachmentTitleMediaTypeConflicts,
-  catalogAttachmentTitleConflicts,
-  isMetadataTitleAligned,
-} from "@/core/enrich/titleMatching";
+import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
+import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import {
   urlsReferToSameLocalizedImage,
   isUrlEligibleDefaultCover,
@@ -1047,24 +1044,13 @@ export async function storeMetadata(
           });
         })()
       : rankedLocalizedAttachments
-  ).filter((attachment) => {
-    if (!["cover", "artwork", "image"].includes(attachment.type)) return true;
-    if (!attachment.title?.trim()) return true;
-    const catalogTitle = formattedMetadata.title || name;
-    if (
-      attachmentTitleMediaTypeConflicts(catalogTitle, attachment.title, {
-        mediaType: type,
-      })
-    ) {
-      return false;
-    }
-    if (!attachment.retailCatalogImageTitlesSource) {
-      return true;
-    }
-    return !catalogAttachmentTitleConflicts(catalogTitle, attachment.title, {
-      mediaType: type,
-    });
-  });
+  ).filter((attachment) =>
+    attachmentTitleAllowedForItem(
+      formattedMetadata.title || name,
+      attachment,
+      { mediaType: type },
+    ),
+  );
 
   const withOrphanUserPins = preserveGalleryAttachmentsOnRegression(
     item?.metadata?.attachments,
@@ -1384,7 +1370,9 @@ export async function storeMetadata(
     !discoveredBarcodePlatformConflicts &&
     itemName &&
     metadata.title &&
-    isMetadataTitleAligned({ title: metadata.title }, [itemName], 0.58)
+    isMetadataTitleAligned({ title: metadata.title }, [itemName], 0.58, {
+      shelfType: type,
+    })
   ) {
     await prisma.item.update({
       where: { id: itemId },
@@ -1454,6 +1442,7 @@ export async function storeMetadata(
       metadataId: storedMetadata.id,
       itemBarcode: item?.barcode,
       itemTitle: item?.name?.trim() || name.trim() || undefined,
+      shelfType: type,
     });
   } catch (error) {
     console.warn(

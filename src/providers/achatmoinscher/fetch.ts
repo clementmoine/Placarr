@@ -38,6 +38,7 @@ const HEADERS = {
 export async function fetchFromAchatMoinsCher(
   barcode: string,
   expectedNames: string[] = [],
+  options: { shelfType?: string | null } = {},
 ): Promise<AchatMoinsCherProduct[]> {
   const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
   if (!cleanedBarcode) return [];
@@ -62,13 +63,21 @@ export async function fetchFromAchatMoinsCher(
       console.log(
         `[AchatMoinsCher] No product ID found for barcode: ${cleanedBarcode}`,
       );
-      return fetchFromAchatMoinsCherByQuery(cleanedBarcode, expectedNames);
+      return fetchFromAchatMoinsCherByQuery(
+        cleanedBarcode,
+        expectedNames,
+        options,
+      );
     }
 
     const product = await fetchAchatMoinsCherProductById(productId);
     if (
       product &&
-      achatMoinsCherTitleMatchesExpectedNames(product.name, expectedNames)
+      achatMoinsCherTitleMatchesExpectedNames(
+        product.name,
+        expectedNames,
+        options,
+      )
     ) {
       return [product];
     }
@@ -80,7 +89,11 @@ export async function fetchFromAchatMoinsCher(
     }
 
     for (const query of expectedNames) {
-      const byName = await fetchFromAchatMoinsCherByQuery(query, expectedNames);
+      const byName = await fetchFromAchatMoinsCherByQuery(
+        query,
+        expectedNames,
+        options,
+      );
       if (byName.length > 0) return byName;
     }
 
@@ -381,13 +394,17 @@ function isBarcodeOnlyQuery(query: string) {
 function achatMoinsCherTitleMatchesExpectedNames(
   title: string,
   expectedNames: string[],
+  options: { shelfType?: string | null } = {},
 ): boolean {
   const names = expectedNames.filter(Boolean);
   if (names.length === 0) return true;
+  const identityOptions = options.shelfType
+    ? { shelfType: options.shelfType }
+    : undefined;
   return names.some(
     (name) =>
-      isNameOnlyRetailerTitleMatch(name, title) &&
-      priceListingSharesItemIdentity(name, title),
+      isNameOnlyRetailerTitleMatch(name, title, identityOptions) &&
+      priceListingSharesItemIdentity(name, title, identityOptions),
   );
 }
 
@@ -472,6 +489,7 @@ async function fetchAchatMoinsCherProductById(
 export async function fetchFromAchatMoinsCherByQuery(
   query: string,
   expectedNames: string[] = [],
+  options: { shelfType?: string | null } = {},
 ): Promise<AchatMoinsCherProduct[]> {
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return [];
@@ -485,7 +503,9 @@ export async function fetchFromAchatMoinsCherByQuery(
   });
 
   for (const hit of parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""))) {
-    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) continue;
+    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names, options)) {
+      continue;
+    }
     const product = await fetchAchatMoinsCherProductById(hit.productId);
     if (product) return [product];
   }
@@ -515,6 +535,7 @@ export function parseAchatMoinsCherSearchHits(html: string) {
 async function fetchPricesFromAchatMoinsCherByName(
   query: string,
   expectedNames: string[],
+  options: { shelfType?: string | null } = {},
 ): Promise<AchatMoinsCherPrices | null> {
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return null;
@@ -528,7 +549,7 @@ async function fetchPricesFromAchatMoinsCherByName(
 
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
   for (const hit of parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""))) {
-    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names)) {
+    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names, options)) {
       continue;
     }
     const prices = await fetchAchatMoinsCherProductPrices(hit.productId);
@@ -541,6 +562,7 @@ async function fetchPricesFromAchatMoinsCherByName(
 export async function fetchPricesFromAchatMoinsCher(
   query: string,
   expectedNames: string[] = [],
+  options: { shelfType?: string | null } = {},
 ): Promise<AchatMoinsCherPrices | null> {
   const cleanedBarcode = query.replace(/[^\d]/g, "").trim();
   if (isBarcodeOnlyQuery(query) && cleanedBarcode) {
@@ -569,6 +591,7 @@ export async function fetchPricesFromAchatMoinsCher(
           achatMoinsCherTitleMatchesExpectedNames(
             product.name,
             expectedNames,
+            options,
           ) &&
           (product.priceNew != null || product.priceUsed != null)
         ) {
@@ -587,7 +610,11 @@ export async function fetchPricesFromAchatMoinsCher(
   }
 
   try {
-    return await fetchPricesFromAchatMoinsCherByName(query, expectedNames);
+    return await fetchPricesFromAchatMoinsCherByName(
+      query,
+      expectedNames,
+      options,
+    );
   } catch (error) {
     console.error(
       `[AchatMoinsCher Prices] Error fetching for query "${query}":`,

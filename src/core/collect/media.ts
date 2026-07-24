@@ -37,11 +37,7 @@ import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platform
 import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
-import {
-  attachmentTitleMediaTypeConflicts,
-  catalogAttachmentTitleConflicts,
-} from "@/core/enrich/titleMatching";
-import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
+import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
 import {
   filterPlaceholderCoverAttachments,
   isMissingArtImageUrl,
@@ -370,35 +366,11 @@ function filterAttachmentsForProductTitle<
     return { ...metadata, attachments: withoutPlaceholders };
   }
 
-  const attachments = withoutPlaceholders.filter((attachment) => {
-    if (!COVER_GALLERY_TYPES.has(attachment.type)) return true;
-    const attachmentTitle = attachment.title?.trim();
-    if (!attachmentTitle) return true;
-    if (
-      attachmentTitleMediaTypeConflicts(productTitle, attachmentTitle, {
-        mediaType: shelf?.type,
-      })
-    ) {
-      return false;
-    }
-    if (
-      attachment.retailCatalogImageTitlesSource &&
-      !priceListingSharesItemIdentity(productTitle, attachmentTitle, {
-        shelfType: shelf?.type,
-      })
-    ) {
-      return false;
-    }
-    if (
-      attachment.retailCatalogImageTitlesSource ||
-      attachment.catalogCoverTitlesSource
-    ) {
-      return !catalogAttachmentTitleConflicts(productTitle, attachmentTitle, {
-        mediaType: shelf?.type,
-      });
-    }
-    return true;
-  });
+  const attachments = withoutPlaceholders.filter((attachment) =>
+    attachmentTitleAllowedForItem(productTitle, attachment, {
+      mediaType: shelf?.type,
+    }),
+  );
 
   return { ...metadata, attachments };
 }

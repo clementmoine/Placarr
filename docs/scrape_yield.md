@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2ag shipped (Bedetheque + Bdovore series SearchYield); No-Intro = later.
+> Phase 1–2ah shipped (MyLudo + ChocoBonPlan synthetic SearchYield); No-Intro = later.
 
 ## Principle
 
@@ -246,6 +246,12 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Bdovore: `/getjson?data=Serie&mode=2&term=` → typed `{id,label}` promote/reuse
 - Album/detail multi-hop unchanged after series SearchYield
 
+## Phase 2ah — MyLudo + ChocoBonPlan SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `words` + `code` (MyLudo)
+- MyLudo: synthetic `datas.php?type=search|barcode` → typed `{url,gameId,title?}` promote/reuse
+- ChocoBonPlan: synthetic `/search?q=` → typed Algolia `{title,url,image,objectID}` promote/reuse
+
 ## Phase 2+ backlog
 
 | Item | Why |
@@ -253,4 +259,4 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
 | Babelio dual AJAX+HTML POST search | Needs body-keyed / synthetic evidence URL |
-| MyLudo / ChocoBonPlan / LeDénicheur | POST/Algolia/GraphQL — synthetic URLs |
+| LeDénicheur GraphQL | Synthetic query key |

@@ -2,6 +2,12 @@ import axios from "axios";
 
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 
+import {
+  myLudoSearchEvidenceUrl,
+  promoteMyLudoSearchEvidence,
+  readMyLudoSearchEvidence,
+} from "./durableEvidence";
+
 const BASE_URL = "https://www.myludo.fr";
 const HEADERS = {
   "User-Agent":
@@ -235,21 +241,44 @@ export async function searchMyLudoHits(
 ): Promise<MyLudoSearchHit[]> {
   const normalizedBarcode = normalizeProductBarcode(barcode);
   if (normalizedBarcode) {
+    const searchUrl = myLudoSearchEvidenceUrl({
+      type: "barcode",
+      code: normalizedBarcode,
+    });
+    const fromEvidence = await readMyLudoSearchEvidence(searchUrl);
+    if (fromEvidence) {
+      console.info(`[MyLudo] Search evidence hit for ${searchUrl}`);
+      return fromEvidence.slice(0, limit);
+    }
     const data = await fetchMyLudoApi<{ list?: MyLudoSearchRow[] }>(
       "/views/search/datas.php",
       { type: "barcode", code: normalizedBarcode },
     );
-    return parseMyLudoSearchList(data, limit);
+    const hits = parseMyLudoSearchList(data, limit);
+    await promoteMyLudoSearchEvidence(searchUrl, hits);
+    return hits;
   }
 
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return [];
 
+  const searchUrl = myLudoSearchEvidenceUrl({
+    type: "search",
+    words: cleanedQuery,
+  });
+  const fromEvidence = await readMyLudoSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[MyLudo] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, limit);
+  }
+
   const data = await fetchMyLudoApi<{ list?: MyLudoSearchRow[] }>(
     "/views/search/datas.php",
     { type: "search", words: cleanedQuery },
   );
-  return parseMyLudoSearchList(data, limit);
+  const hits = parseMyLudoSearchList(data, limit);
+  await promoteMyLudoSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchMyLudoGameById(gameId: string): Promise<MyLudoGame> {

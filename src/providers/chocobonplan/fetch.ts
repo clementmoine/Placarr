@@ -20,6 +20,12 @@ import {
   detectVideoGamePlatformKey,
 } from "@/core/identify/platforms/platforms";
 
+import {
+  chocoBonPlanSearchEvidenceUrl,
+  promoteChocoBonPlanSearchEvidence,
+  readChocoBonPlanSearchEvidence,
+} from "./durableEvidence";
+
 const ALGOLIA_APP_ID = "MQTBESKZQM";
 const ALGOLIA_SEARCH_KEY = "b8aee761e824091520134191a14d5adc";
 const ALGOLIA_INDEX = "prod_DEALS";
@@ -352,6 +358,13 @@ export async function searchChocoBonPlanDeals(
   const cleaned = cleanQuery(query);
   if (!cleaned) return [];
 
+  const searchUrl = chocoBonPlanSearchEvidenceUrl(cleaned);
+  const fromEvidence = await readChocoBonPlanSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[ChocoBonPlan] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, hitsPerPage);
+  }
+
   const response = await axios.post<{ hits?: ChocoBonPlanDealHit[] }>(
     ALGOLIA_URL,
     { query: cleaned, hitsPerPage },
@@ -373,9 +386,11 @@ export async function searchChocoBonPlanDeals(
     return [];
   }
 
-  return (response.data?.hits ?? []).filter(
+  const hits = (response.data?.hits ?? []).filter(
     (hit) => hit.title?.trim() && hit.url?.trim(),
   );
+  await promoteChocoBonPlanSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 const TRAILING_PLATFORM_SUFFIX_MATCHER =

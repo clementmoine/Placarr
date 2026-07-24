@@ -1,7 +1,41 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { mapMyLudoGamePayload, parseMyLudoSearchList } from "./fetch";
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readMyLudoSearchEvidence = vi.fn();
+const promoteMyLudoSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  myLudoSearchEvidenceUrl: (params: {
+    type: "search" | "barcode";
+    words?: string;
+    code?: string;
+  }) => {
+    const url = new URL("https://www.myludo.fr/views/search/datas.php");
+    url.searchParams.set("type", params.type);
+    if (params.type === "barcode" && params.code) {
+      url.searchParams.set("code", params.code);
+    } else if (params.words) {
+      url.searchParams.set("words", params.words);
+    }
+    return url.toString();
+  },
+  readMyLudoSearchEvidence: (...args: unknown[]) =>
+    readMyLudoSearchEvidence(...args),
+  promoteMyLudoSearchEvidence: (...args: unknown[]) =>
+    promoteMyLudoSearchEvidence(...args),
+}));
+
+import axios from "axios";
+
+import {
+  mapMyLudoGamePayload,
+  parseMyLudoSearchList,
+  searchMyLudoHits,
+} from "./fetch";
 import { mapMyLudoMetadata } from "./resolver";
+
+const mockedGet = vi.mocked(axios.get);
 
 const GAME_PAYLOAD = {
   id: "4503",
@@ -33,6 +67,14 @@ const GAME_PAYLOAD = {
     },
   ],
 };
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readMyLudoSearchEvidence.mockReset();
+  promoteMyLudoSearchEvidence.mockReset();
+  readMyLudoSearchEvidence.mockResolvedValue(null);
+  promoteMyLudoSearchEvidence.mockResolvedValue(undefined);
+});
 
 describe("parseMyLudoSearchList", () => {
   it("maps API search rows to product URLs", () => {
@@ -127,5 +169,52 @@ describe("mapMyLudoMetadata attachments", () => {
         coverProvenance: "user_photo",
       },
     ]);
+  });
+});
+
+describe("searchMyLudoHits", () => {
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        gameId: "4503",
+        url: "https://www.myludo.fr/#!/game/black-stories-morts-de-rire-4503",
+        title: "Black Stories - Morts de rire",
+      },
+    ];
+    readMyLudoSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchMyLudoHits("Black Stories")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteMyLudoSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet
+      .mockResolvedValueOnce({
+        status: 200,
+        data: '<meta name="csrf-token" content="token">',
+        headers: { "set-cookie": ["MYLUDO_SESSID=abc"] },
+      } as never)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: {
+          list: [
+            {
+              id: "4503",
+              code: "black-stories-morts-de-rire",
+              title: "Black Stories - Morts de rire...",
+            },
+          ],
+        },
+      } as never);
+
+    const hits = await searchMyLudoHits("Black Stories");
+    expect(hits[0]?.gameId).toBe("4503");
+    expect(promoteMyLudoSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("type=search"),
+      expect.arrayContaining([
+        expect.objectContaining({ gameId: "4503" }),
+      ]),
+    );
   });
 });

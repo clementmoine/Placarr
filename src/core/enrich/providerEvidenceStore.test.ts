@@ -158,6 +158,30 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps MyLudo type+words/code and ChocoBonPlan q synthetic identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.myludo.fr/views/search/datas.php?type=search&words=Catan&utm=1",
+      ),
+    ).toBe(
+      "https://www.myludo.fr/views/search/datas.php?type=search&words=catan",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.myludo.fr/views/search/datas.php?type=barcode&code=3421272109517",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://www.myludo.fr/views/search/datas.php?type=search&words=3421272109517",
+      ),
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.chocobonplan.com/search?q=Ball+x+Pit&hitsPerPage=8",
+      ),
+    ).toBe("https://www.chocobonplan.com/search?q=ball+x+pit");
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

@@ -1,6 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("axios", () => ({ default: { post: vi.fn(), get: vi.fn() } }));
+
+const readChocoBonPlanSearchEvidence = vi.fn();
+const promoteChocoBonPlanSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  chocoBonPlanSearchEvidenceUrl: (query: string) => {
+    const url = new URL("https://www.chocobonplan.com/search");
+    url.searchParams.set("q", query.trim());
+    return url.toString();
+  },
+  readChocoBonPlanSearchEvidence: (...args: unknown[]) =>
+    readChocoBonPlanSearchEvidence(...args),
+  promoteChocoBonPlanSearchEvidence: (...args: unknown[]) =>
+    promoteChocoBonPlanSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import {
@@ -35,6 +51,10 @@ const SAMPLE_HTML = `
 beforeEach(() => {
   mockedPost.mockReset();
   mockedGet.mockReset();
+  readChocoBonPlanSearchEvidence.mockReset();
+  promoteChocoBonPlanSearchEvidence.mockReset();
+  readChocoBonPlanSearchEvidence.mockResolvedValue(null);
+  promoteChocoBonPlanSearchEvidence.mockResolvedValue(undefined);
 });
 
 const TEKKEN_HTML = `
@@ -461,6 +481,24 @@ describe("pickRelevantChocoBonPlanHit", () => {
 });
 
 describe("fetchFromChocoBonPlan", () => {
+  it("réutilise ProviderEvidence SearchYield sans Algolia POST", async () => {
+    const hits = [
+      {
+        title: "Ball x Pit sur PS5",
+        url: "https://chocobonplan.com/ball-x-pit/",
+        image: "https://chocobonplan.com/wp-content/uploads/ball-300x300.png",
+        objectID: "299830",
+      },
+    ];
+    readChocoBonPlanSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchChocoBonPlanDeals("Ball x Pit PS5")).resolves.toEqual(
+      hits,
+    );
+    expect(mockedPost).not.toHaveBeenCalled();
+    expect(promoteChocoBonPlanSearchEvidence).not.toHaveBeenCalled();
+  });
+
   it("combine Algolia et la fiche produit", async () => {
     mockedPost.mockResolvedValue({
       status: 200,

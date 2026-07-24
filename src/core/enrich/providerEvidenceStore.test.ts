@@ -126,6 +126,14 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps Planetebd mot-clef identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.planetebd.com/recherche?mot-clef=Ast%C3%A9rix&utm_source=x",
+      ),
+    ).toBe("https://www.planetebd.com/recherche?mot-clef=ast%c3%a9rix");
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

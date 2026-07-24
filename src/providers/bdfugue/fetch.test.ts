@@ -1,6 +1,26 @@
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+const readBdFugueSearchEvidence = vi.fn();
+const promoteBdFugueSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readBdFugueSearchEvidence: (...args: unknown[]) =>
+    readBdFugueSearchEvidence(...args),
+  promoteBdFugueSearchEvidence: (...args: unknown[]) =>
+    promoteBdFugueSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
+
 import {
   bdfugueAttributeValue,
   bdfugueSearchUrl,
@@ -10,18 +30,9 @@ import {
   parseBdFugueProductPage,
   parseBdFugueSearchHits,
   resolveBdFugueMetadata,
+  searchBdFugueHits,
 } from "./fetch";
 import { mapBdFugueMetadata } from "./index";
-
-vi.mock("axios", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/http/flareSolverr", () => ({
-  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
-}));
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -109,6 +120,10 @@ function searchHtml() {
 describe("bdfugue fetch", () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    readBdFugueSearchEvidence.mockReset();
+    promoteBdFugueSearchEvidence.mockReset();
+    readBdFugueSearchEvidence.mockResolvedValue(null);
+    promoteBdFugueSearchEvidence.mockResolvedValue(undefined);
   });
 
   it("construit l'URL de recherche Magento", () => {
@@ -230,5 +245,36 @@ describe("bdfugue fetch", () => {
     );
     expect(metadata?.observations?.length).toBeGreaterThan(0);
     expect(metadata?.externalIds?.bdfugue).toBe(SAMPLE_EAN);
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        title: "alice 19th tome 1",
+        productUrl: "https://www.bdfugue.com/alice-19th-t-1",
+        barcode: "9782723442381",
+      },
+    ];
+    readBdFugueSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchBdFugueHits("alice")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteBdFugueSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: searchHtml(),
+    } as never);
+
+    const hits = await searchBdFugueHits("alice");
+    expect(hits[0]?.productUrl).toContain("alice-19th");
+    expect(promoteBdFugueSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("/catalogsearch/result/?q=alice"),
+      expect.arrayContaining([
+        expect.objectContaining({ barcode: "9782723442381" }),
+      ]),
+    );
   });
 });

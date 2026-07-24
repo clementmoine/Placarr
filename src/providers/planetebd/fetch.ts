@@ -1,4 +1,3 @@
-import axios from "axios";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -13,6 +12,11 @@ import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
+
+import {
+  promotePlanetebdSearchEvidence,
+  readPlanetebdSearchEvidence,
+} from "./durableEvidence";
 
 const PLANETEBD_BASE_URL = "https://www.planetebd.com";
 const PLANETEBD_HEADERS = {
@@ -259,8 +263,19 @@ export async function searchPlanetebdHits(
 ): Promise<PlanetebdSearchHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const html = await fetchHtml(planetebdSearchUrl(trimmed), signal);
-  return html ? parsePlanetebdSearchHits(html) : [];
+  const searchUrl = planetebdSearchUrl(trimmed);
+
+  const fromEvidence = await readPlanetebdSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Planète BD] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const html = await fetchHtml(searchUrl, signal);
+  if (!html) return [];
+  const hits = parsePlanetebdSearchHits(html);
+  await promotePlanetebdSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchPlanetebdAlbum(

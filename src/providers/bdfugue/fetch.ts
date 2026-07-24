@@ -19,6 +19,11 @@ import {
   schemaTypes,
 } from "@/providers/shared/jsonLdHtml";
 
+import {
+  promoteBdFugueSearchEvidence,
+  readBdFugueSearchEvidence,
+} from "./durableEvidence";
+
 const BDFUGUE_BASE_URL = "https://www.bdfugue.com";
 const BDFUGUE_HEADERS = { ...BROWSER_HTML_HEADERS };
 
@@ -375,17 +380,23 @@ export async function searchBdFugueHits(
 ): Promise<BdFugueSearchHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const page = await fetchBdFugueHtml(
-    bdfugueSearchUrl(trimmed),
-    options.signal,
-  );
+  const searchUrl = bdfugueSearchUrl(trimmed);
+
+  const fromEvidence = await readBdFugueSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[BD Fugue] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const page = await fetchBdFugueHtml(searchUrl, options.signal);
   if (!page) return [];
 
+  let hits: BdFugueSearchHit[];
   // Exact ISBN often redirects straight to the product page.
   if (isProductPage(page.html, page.finalUrl)) {
     const product = parseBdFugueProductPage(page.html, page.finalUrl);
     if (product?.title) {
-      return [
+      hits = [
         {
           title: product.title,
           productUrl: product.productUrl,
@@ -393,10 +404,15 @@ export async function searchBdFugueHits(
           coverUrl: product.coverUrl,
         },
       ];
+    } else {
+      hits = [];
     }
+  } else {
+    hits = parseBdFugueSearchHits(page.html);
   }
 
-  return parseBdFugueSearchHits(page.html);
+  await promoteBdFugueSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 function productMatchesBarcode(

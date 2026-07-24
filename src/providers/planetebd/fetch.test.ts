@@ -1,17 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
 
+vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+
+const readPlanetebdSearchEvidence = vi.fn();
+const promotePlanetebdSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readPlanetebdSearchEvidence: (...args: unknown[]) =>
+    readPlanetebdSearchEvidence(...args),
+  promotePlanetebdSearchEvidence: (...args: unknown[]) =>
+    promotePlanetebdSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
+
 import {
   parsePlanetebdAlbumPage,
   parsePlanetebdSearchHits,
   planetebdSearchUrl,
+  searchPlanetebdHits,
 } from "./fetch";
 import { mapPlanetebdMetadata } from "./index";
-
-vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
-vi.mock("@/lib/http/flareSolverr", () => ({
-  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
-}));
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -58,7 +70,13 @@ function albumHtml() {
 }
 
 describe("planetebd", () => {
-  beforeEach(() => mockedGet.mockReset());
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readPlanetebdSearchEvidence.mockReset();
+    promotePlanetebdSearchEvidence.mockReset();
+    readPlanetebdSearchEvidence.mockResolvedValue(null);
+    promotePlanetebdSearchEvidence.mockResolvedValue(undefined);
+  });
 
   it("construit l'URL mot-clef", () => {
     expect(planetebdSearchUrl("Astérix")).toContain("mot-clef=Ast%C3%A9rix");
@@ -106,5 +124,37 @@ describe("planetebd", () => {
       "CHEF D'ŒUVRE",
     );
     expect(metadata?.barcode).toBe("9782017253709");
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        id: "58791",
+        title: "Astérix T41 : Astérix en Lusitanie",
+        url: "https://www.planetebd.com/bd/albert-rene/asterix/asterix-en-lusitanie/58791.html",
+        ratingStars: 4,
+      },
+    ];
+    readPlanetebdSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchPlanetebdHits("Astérix")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promotePlanetebdSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: searchHtml(),
+    } as never);
+
+    const hits = await searchPlanetebdHits("Astérix");
+    expect(hits).toHaveLength(1);
+    expect(promotePlanetebdSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("mot-clef="),
+      expect.arrayContaining([
+        expect.objectContaining({ id: "58791" }),
+      ]),
+    );
   });
 });

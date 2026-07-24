@@ -1153,6 +1153,124 @@ describe("fetchMetadataFromPriceCharting", () => {
       ],
     });
   });
+
+  it("searches before inventing /game/ slugs on name seek", async () => {
+    const searchHtml = `
+      <html><body>Buy & Sell Search Results
+        <tr class="offer" id="product-1">
+          <td class="product_name"><a href="/game/pal-wii-u/wii-u-console-deluxe-black-32gb">Wii U Console Deluxe Black 32GB</a><h2><br>PAL Wii U</h2></td>
+        </tr>
+      </body></html>`;
+    const detailHtml = `
+      <html><body>
+        <link rel="canonical" href="https://www.pricecharting.com/game/pal-wii-u/wii-u-console-deluxe-black-32gb" />
+        <h1>Wii U Console Deluxe Black 32GB <a>PAL Wii U</a></h1>
+        <div class="cover"><img src='https://example.com/wiiu.jpg'/></div>
+      </body></html>`;
+
+    const urls: string[] = [];
+    mockedGet.mockImplementation(async (url: string) => {
+      urls.push(String(url));
+      if (String(url).includes("/search-products")) {
+        return {
+          status: 200,
+          data: searchHtml,
+          request: {
+            res: {
+              responseUrl: String(url),
+            },
+          },
+        } as never;
+      }
+      return {
+        status: 200,
+        data: detailHtml,
+        request: {
+          res: {
+            responseUrl:
+              "https://www.pricecharting.com/game/pal-wii-u/wii-u-console-deluxe-black-32gb",
+          },
+        },
+      } as never;
+    });
+
+    await expect(
+      fetchMetadataFromPriceChartingByName(
+        "Nintendo Wii U Black 32Go",
+        "Wii U",
+        true,
+        false,
+        { mediaType: "hardware" },
+      ),
+    ).resolves.toMatchObject({
+      title: "Wii U Console Deluxe Black 32GB",
+    });
+
+    expect(urls[0]).toContain("/search-products");
+    expect(urls[0]).toContain("type=prices");
+    expect(urls.some((u) => /\/game\/[^/]+\/nintendo/.test(u))).toBe(false);
+  });
+
+  it("mines soft-404 search HTML instead of spraying more slug guesses", async () => {
+    const searchHtml = `
+      <html><body>Buy & Sell Search Results
+        <tr class="offer" id="product-2">
+          <td class="product_name"><a href="/game/wii/super-monkey-ball">Super Monkey Ball</a><h2><br>Wii</h2></td>
+        </tr>
+      </body></html>`;
+
+    let inventedSlugCount = 0;
+    let soft404Returned = false;
+    mockedGet.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (href.includes("/search-products") && href.includes("type=prices")) {
+        return {
+          status: 200,
+          data: `<html><body>Buy & Sell Search Results</body></html>`,
+          request: { res: { responseUrl: href } },
+        } as never;
+      }
+      // First /game/ guess soft-404s to search; later winner fiche is real.
+      if (href.includes("/game/") && !soft404Returned) {
+        soft404Returned = true;
+        inventedSlugCount += 1;
+        return {
+          status: 200,
+          data: searchHtml,
+          request: {
+            res: {
+              responseUrl:
+                "https://www.pricecharting.com/search-products?q=monkey",
+            },
+          },
+        } as never;
+      }
+      return detailResponse();
+    });
+
+    await expect(
+      fetchMetadataFromPriceChartingByName("Super Monkey Ball", "Wii", true),
+    ).resolves.toMatchObject({ title: "Super Monkey Ball" });
+
+    expect(inventedSlugCount).toBe(1);
+  });
+
+  it("stops further PriceCharting GETs after the first rate-limit in a name seek", async () => {
+    resetPriceChartingQuotaBlockForTests();
+    let calls = 0;
+    mockedGet.mockImplementation(async () => {
+      calls += 1;
+      return { status: 429, data: "Too Many Requests" } as never;
+    });
+
+    await expect(
+      fetchMetadataFromPriceChartingByName("Wii U Console", "Wii U", true),
+    ).resolves.toBeNull();
+
+    expect(calls).toBe(1);
+    expect(isPriceChartingQuotaBlocked()).toBe(true);
+    resetPriceChartingQuotaBlockForTests();
+  });
 });
 
 describe("fetchPricesFromPriceCharting", () => {

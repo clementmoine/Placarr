@@ -50,6 +50,11 @@ import {
   markPriceChartingQuotaHit,
   PriceChartingRateLimitedError,
 } from "./quota";
+import {
+  getPriceChartingFetchStore,
+  runWithPriceChartingFetchStore,
+  type PriceChartingHttpResponse,
+} from "./fetchStore";
 
 export type {
   PriceChartingMetadata,
@@ -65,39 +70,52 @@ const PRICECHARTING_HEADERS = {
   "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
 };
 
-async function priceChartingGet(
+function isPriceChartingSearchHtml(html: string): boolean {
+  return (
+    /Buy\s*&\s*Sell\s*Search\s*Results/i.test(html) ||
+    /Items\s+matching\s+your\s+search/i.test(html)
+  );
+}
+
+async function priceChartingGetRaw(
   url: string,
-  headers: Record<string, string> = PRICECHARTING_HEADERS,
-) {
+  headers: Record<string, string>,
+): Promise<PriceChartingHttpResponse> {
   if (isPriceChartingQuotaBlocked()) {
     throw new PriceChartingRateLimitedError();
   }
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const response = await fetchGetWithFlareFallback(url, {
-        headers,
-        maxRedirects: 5,
-      });
-      if (response.status === 429) {
-        markPriceChartingQuotaHit();
-        if (attempt < 2) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1500 * (attempt + 1)),
-          );
-          continue;
-        }
-      }
-      return {
-        status: response.status,
-        data: response.data as string,
-        request: { res: { responseUrl: response.responseUrl ?? url } },
-      };
-    } catch (error) {
-      throw error;
-    }
+  const response = await fetchGetWithFlareFallback(url, {
+    headers,
+    maxRedirects: 5,
+  });
+  if (response.status === 429) {
+    markPriceChartingQuotaHit();
+    throw new PriceChartingRateLimitedError();
   }
-  throw new Error(`PriceCharting GET failed for ${url}`);
+  return {
+    status: response.status,
+    data: response.data as string,
+    request: { res: { responseUrl: response.responseUrl ?? url } },
+  };
+}
+
+async function priceChartingGet(
+  url: string,
+  headers: Record<string, string> = PRICECHARTING_HEADERS,
+): Promise<PriceChartingHttpResponse> {
+  const store = getPriceChartingFetchStore();
+  if (store) {
+    return store.getOrFetch(url, (u) => priceChartingGetRaw(u, headers));
+  }
+  return priceChartingGetRaw(url, headers);
+}
+
+function isRateLimitedError(error: unknown): boolean {
+  return (
+    error instanceof PriceChartingRateLimitedError ||
+    (error instanceof Error && error.name === "PriceChartingRateLimitedError")
+  );
 }
 
 /** Prefer a verified `/game/…` URL from HTML (canonical) or the final request URL. */
@@ -381,6 +399,7 @@ export async function enrichPriceChartingMetadataWithSiblingRegion(
         metadata.title,
       );
     } catch (error: unknown) {
+      if (isRateLimitedError(error)) throw error;
       console.warn(
         `[PriceCharting Metadata] Sibling region fetch failed for ${siblingUrl}:`,
         error instanceof Error ? error.message : error,
@@ -414,6 +433,7 @@ export async function enrichPriceChartingMetadataWithSiblingRegion(
           );
           if (priceChartingGalleryImageCount(siblingMeta) > 0) break;
         } catch (error: unknown) {
+          if (isRateLimitedError(error)) throw error;
           console.warn(
             `[PriceCharting Metadata] Sibling slug variant failed for ${variantUrl}:`,
             error instanceof Error ? error.message : error,
@@ -438,6 +458,7 @@ export async function enrichPriceChartingMetadataWithSiblingRegion(
       primaryIsPal,
     );
   } catch (error: unknown) {
+    if (isRateLimitedError(error)) throw error;
     console.warn(
       `[PriceCharting Metadata] Sibling region enrich failed for ${siblingUrl}:`,
       error instanceof Error ? error.message : error,
@@ -541,6 +562,7 @@ async function fetchPriceChartingSiblingViaTitleSearch(
         url: resolved,
       };
     } catch (error: unknown) {
+      if (isRateLimitedError(error)) throw error;
       console.warn(
         `[PriceCharting Metadata] Sibling title search failed for "${seekTitle}":`,
         error instanceof Error ? error.message : error,
@@ -1402,10 +1424,20 @@ async function fetchDirectDetailHtmlFromNameFallback(
     acceptHtml?: (html: string, finalUrl: string) => boolean;
     preferMarketPrices?: boolean;
     mediaType?: string | null;
+    isClassics?: boolean;
+    /** All seek titles for soft-404 search row picking. */
+    seekTitles?: readonly string[];
   },
 ): Promise<string | null> {
   const seen = new Set<string>();
   let acceptedWithoutPrices: string | null = null;
+  // Hard cap: never spray dozens of invented slugs (soft-404 search is mined once).
+  const maxDirectUrls = options?.mediaType === "hardware" ? 2 : 3;
+  let urlsTried = 0;
+  const seekTitles = options?.seekTitles?.length
+    ? options.seekTitles
+    : fallbackNames;
+
   for (const fallbackName of fallbackNames) {
     for (const directUrl of buildDirectDetailUrls(
       fallbackName,
@@ -1416,14 +1448,39 @@ async function fetchDirectDetailHtmlFromNameFallback(
     )) {
       if (seen.has(directUrl)) continue;
       seen.add(directUrl);
+      if (urlsTried >= maxDirectUrls) {
+        return acceptedWithoutPrices;
+      }
+      urlsTried += 1;
 
       try {
         const detailRes = await priceChartingGet(directUrl, headers);
         const finalUrl = detailRes.request.res.responseUrl || directUrl;
+
+        // Soft-404 → search page: that HTML is SearchYield — mine it, stop spraying.
         if (
           isSearchUrl(finalUrl) ||
-          !isDetailUrlForPlatform(finalUrl, fallbackPlatform, barcode)
+          isPriceChartingSearchHtml(detailRes.data)
         ) {
+          getPriceChartingFetchStore()?.seed(directUrl, detailRes);
+          const fromSearch = await detailHtmlFromParsedSearchRows(
+            detailRes.data,
+            fallbackName,
+            headers,
+            fallbackPlatform,
+            isPal,
+            options?.isClassics,
+            seekTitles,
+            {
+              mediaType: options?.mediaType,
+              acceptHtml: options?.acceptHtml,
+              preferMarketPrices: options?.preferMarketPrices,
+            },
+          );
+          return fromSearch ?? acceptedWithoutPrices;
+        }
+
+        if (!isDetailUrlForPlatform(finalUrl, fallbackPlatform, barcode)) {
           continue;
         }
         if (
@@ -1441,6 +1498,7 @@ async function fetchDirectDetailHtmlFromNameFallback(
         }
         return detailRes.data;
       } catch (error) {
+        if (isRateLimitedError(error)) throw error;
         if (!axios.isAxiosError(error) || error.response?.status !== 404) {
           console.warn(
             `[PriceCharting] Direct detail lookup failed for ${directUrl}:`,
@@ -1452,6 +1510,57 @@ async function fetchDirectDetailHtmlFromNameFallback(
   }
 
   return acceptedWithoutPrices;
+}
+
+async function detailHtmlFromParsedSearchRows(
+  searchHtml: string,
+  queryName: string,
+  headers: Record<string, string>,
+  fallbackPlatform: string | undefined,
+  isPal: boolean | undefined,
+  isClassics: boolean | undefined,
+  seekTitles: readonly string[],
+  options?: {
+    mediaType?: string | null;
+    acceptHtml?: (html: string, finalUrl: string) => boolean;
+    preferMarketPrices?: boolean;
+  },
+): Promise<string | null> {
+  const bestRow = pickBestRow(
+    parseSearchRows(searchHtml),
+    queryName,
+    fallbackPlatform,
+    isPal,
+    isClassics,
+    seekTitles,
+    { mediaType: options?.mediaType },
+  );
+  if (!bestRow) return null;
+
+  const gameUrl = priceChartingGameUrl(
+    await resolvePriceChartingGamePath(bestRow.gamePath, headers),
+  );
+  const detailRes = await priceChartingGet(gameUrl, headers);
+  const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
+  if (
+    isSearchUrl(detailFinalUrl) ||
+    isPriceChartingSearchHtml(detailRes.data)
+  ) {
+    return null;
+  }
+  if (
+    options?.acceptHtml &&
+    !options.acceptHtml(detailRes.data, detailFinalUrl)
+  ) {
+    return null;
+  }
+  if (
+    options?.preferMarketPrices &&
+    !priceChartingDetailHtmlHasMarketPrices(detailRes.data)
+  ) {
+    return detailRes.data;
+  }
+  return detailRes.data;
 }
 
 function isAcceptedPriceChartingDetailHtml(
@@ -1512,9 +1621,9 @@ async function fetchDetailHtmlFromNameFallback(
   const primaryTitle = fallbackNames[0] ?? "";
   const rankedNames = rankPriceChartingSeekTitles(fallbackNames, primaryTitle);
   // Cap expanded seeks — Nightfire-style alias bags otherwise explode into
-  // dozens of sequential direct-URL + search GETs.
+  // dozens of sequential GETs.
   const MAX_PRICECHARTING_NAME_SEEKS =
-    options?.mediaType === "hardware" ? 8 : 5;
+    options?.mediaType === "hardware" ? 4 : 3;
   const expandedNames = rankPriceChartingSeekTitles(
     [
       ...expandPriceChartingHardwareCapacityBeforeFormFactorTitles(primaryTitle),
@@ -1527,6 +1636,8 @@ async function fetchDetailHtmlFromNameFallback(
     allowFranchiseStem: true as const,
     mediaType: options?.mediaType,
   };
+  const acceptNames =
+    acceptanceNames.length > 0 ? acceptanceNames : fallbackNames;
 
   const trySearchNames = async (): Promise<string | null> => {
     const seen = new Set<string>();
@@ -1535,50 +1646,41 @@ async function fetchDetailHtmlFromNameFallback(
       if (!normalized || seen.has(normalized)) continue;
       seen.add(normalized);
 
-      const nameSearchUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(fallbackName)}`;
+      const nameSearchUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(fallbackName)}&type=prices`;
       const nameRes = await priceChartingGet(nameSearchUrl, headers);
       const html = nameRes.data;
       const nameFinalUrl = nameRes.request.res.responseUrl || "";
 
-      if (
-        nameFinalUrl.includes("/search-products") ||
-        html.includes("Buy & Sell Search Results")
-      ) {
-        const bestRow = pickBestRow(
-          parseSearchRows(html),
+      if (isSearchUrl(nameFinalUrl) || isPriceChartingSearchHtml(html)) {
+        const fromRows = await detailHtmlFromParsedSearchRows(
+          html,
           fallbackName,
+          headers,
           fallbackPlatform,
           isPal,
           isClassics,
           expandedNames,
-          { mediaType: options?.mediaType },
+          {
+            mediaType: options?.mediaType,
+            acceptHtml: (body, finalUrl) =>
+              isAcceptedPriceChartingDetailHtml(
+                body,
+                finalUrl,
+                acceptNames,
+                fallbackPlatform,
+                acceptOpts,
+              ),
+          },
         );
-        if (!bestRow) continue;
-
-        const gameUrl = priceChartingGameUrl(
-          await resolvePriceChartingGamePath(bestRow.gamePath, headers),
-        );
-        const detailRes = await priceChartingGet(gameUrl, headers);
-        const detailFinalUrl = detailRes.request.res.responseUrl || gameUrl;
-        if (
-          !isAcceptedPriceChartingDetailHtml(
-            detailRes.data,
-            detailFinalUrl,
-            acceptanceNames.length > 0 ? acceptanceNames : fallbackNames,
-            fallbackPlatform,
-            acceptOpts,
-          )
-        ) {
-          continue;
-        }
-        return detailRes.data;
+        if (fromRows) return fromRows;
+        continue;
       }
 
       if (
         !isAcceptedPriceChartingDetailHtml(
           html,
           nameFinalUrl,
-          acceptanceNames.length > 0 ? acceptanceNames : fallbackNames,
+          acceptNames,
           fallbackPlatform,
           acceptOpts,
         )
@@ -1591,11 +1693,7 @@ async function fetchDetailHtmlFromNameFallback(
   };
 
   const tryDirectNames = async (): Promise<string | null> => {
-    // Hardware: few direct slug guesses only — search is the primary path.
-    // PSOne market SKUs are "… Slim System"; bare /psone stubs have no prices —
-    // prefer Slim seeks first so we don't lock onto empty fiches.
-    // Capacity-before-form-factor ("500GB Super Slim") before trailing-capacity
-    // stubs ("Super Slim 500GB") that 200 with empty market tables.
+    // Tiny last-resort slug guesses only — search is the primary path.
     const capacityBeforeForm = expandedNames.filter((name) =>
       /\b\d+\s*(?:tb|to|gb|go|mb|mo)\s+(?:super\s+)?(?:slim|lite)\b/i.test(name),
     );
@@ -1617,13 +1715,11 @@ async function fetchDetailHtmlFromNameFallback(
             ),
           ]
         : expandedNames;
-    const directNames =
-      options?.mediaType === "hardware"
-        ? [...new Set(directPool)].slice(0, 6)
-        : expandedNames;
-    const acceptNames =
-      acceptanceNames.length > 0 ? acceptanceNames : fallbackNames;
-    const directHtml = await fetchDirectDetailHtmlFromNameFallback(
+    const directNames = [...new Set(directPool)].slice(
+      0,
+      options?.mediaType === "hardware" ? 2 : 2,
+    );
+    return fetchDirectDetailHtmlFromNameFallback(
       directNames,
       headers,
       fallbackPlatform,
@@ -1632,6 +1728,8 @@ async function fetchDetailHtmlFromNameFallback(
       {
         preferMarketPrices: options?.mediaType === "hardware",
         mediaType: options?.mediaType,
+        isClassics,
+        seekTitles: expandedNames,
         acceptHtml: (html, finalUrl) =>
           isAcceptedPriceChartingDetailHtml(
             html,
@@ -1642,20 +1740,17 @@ async function fetchDetailHtmlFromNameFallback(
           ),
       },
     );
-    return directHtml;
   };
 
-  if (options?.mediaType === "hardware") {
-    // Prefer direct hyphenated slugs first — hardware search is noisy
-    // (accessories, fat PS1 for PSOne) and often omits the true System SKU.
-    const fromDirect = await tryDirectNames();
-    if (fromDirect) return fromDirect;
-    return trySearchNames();
+  // Search-first (games + hardware): real slugs live on the results page.
+  try {
+    const fromSearch = await trySearchNames();
+    if (fromSearch) return fromSearch;
+    return tryDirectNames();
+  } catch (error) {
+    if (isRateLimitedError(error)) return null;
+    throw error;
   }
-
-  const fromDirect = await tryDirectNames();
-  if (fromDirect) return fromDirect;
-  return trySearchNames();
 }
 
 const PRICECHARTING_IMAGE_SIZE_SUFFIX = /\/(\d+)\.(jpe?g|png|webp)$/i;
@@ -1872,6 +1967,24 @@ export async function fetchMetadataFromPriceChartingByName(
   isClassics?: boolean,
   options?: { mediaType?: string | null },
 ): Promise<PriceChartingMetadata | null> {
+  return runWithPriceChartingFetchStore(() =>
+    fetchMetadataFromPriceChartingByNameUncached(
+      name,
+      fallbackPlatform,
+      isPal,
+      isClassics,
+      options,
+    ),
+  );
+}
+
+async function fetchMetadataFromPriceChartingByNameUncached(
+  name: string,
+  fallbackPlatform?: string,
+  isPal?: boolean,
+  isClassics?: boolean,
+  options?: { mediaType?: string | null },
+): Promise<PriceChartingMetadata | null> {
   const cleanedName = name.replace(/\s+/g, " ").trim();
   if (!cleanedName) return null;
 
@@ -1898,14 +2011,21 @@ export async function fetchMetadataFromPriceChartingByName(
     );
     if (!parsed) return null;
     const url = resolvePriceChartingGamePageUrl(html);
+    // Same HTML serves metadata + prices (stage reuse via store for sibling GETs).
     const prices = parsePriceChartingPricesFromHtml(html);
     const base: PriceChartingMetadata = {
       ...parsed,
       ...(url ? { url } : {}),
       ...(prices ? { prices } : {}),
     };
-    return enrichPriceChartingMetadataWithSiblingRegion(base);
+    const primaryRich =
+      Boolean(base.coverUrl || (base.images && base.images.length > 0)) &&
+      Boolean(prices);
+    return enrichPriceChartingMetadataWithSiblingRegion(base, {
+      allowTitleSearchRescue: !primaryRich,
+    });
   } catch (error: unknown) {
+    if (isRateLimitedError(error)) return null;
     const message = error instanceof Error ? error.message : String(error);
     console.error(
       `[PriceCharting Metadata] Error fetching by name "${cleanedName}":`,
@@ -1920,6 +2040,20 @@ export async function fetchMetadataFromPriceChartingByName(
  * then merge the PAL/NTSC sibling gallery like barcode/name seeks.
  */
 export async function fetchMetadataFromPriceChartingGameUrl(
+  gameUrl: string,
+  options?: {
+    fallbackName?: string;
+    mediaType?: string | null;
+    allowTitleSearchRescue?: boolean;
+    allowHardwareSlugVariants?: boolean;
+  },
+): Promise<PriceChartingMetadata | null> {
+  return runWithPriceChartingFetchStore(() =>
+    fetchMetadataFromPriceChartingGameUrlUncached(gameUrl, options),
+  );
+}
+
+async function fetchMetadataFromPriceChartingGameUrlUncached(
   gameUrl: string,
   options?: {
     fallbackName?: string;
@@ -1954,14 +2088,20 @@ export async function fetchMetadataFromPriceChartingGameUrl(
       ...(prices ? { prices } : {}),
     };
     const mediaType = options?.mediaType;
+    const primaryRich =
+      Boolean(base.coverUrl || (base.images && base.images.length > 0)) &&
+      Boolean(prices);
     return enrichPriceChartingMetadataWithSiblingRegion(base, {
       // Pinned fiche is already trusted — keep sibling enrich cheap (same as
       // barcode-confirmed path) unless the caller opts into broader rescue.
-      allowTitleSearchRescue: options?.allowTitleSearchRescue === true,
+      // Skip title-search when primary already has cover + market prices.
+      allowTitleSearchRescue:
+        options?.allowTitleSearchRescue === true && !primaryRich,
       allowHardwareSlugVariants:
         options?.allowHardwareSlugVariants ?? mediaType === "hardware",
     });
   } catch (error: unknown) {
+    if (isRateLimitedError(error)) return null;
     const message = error instanceof Error ? error.message : String(error);
     console.error(
       `[PriceCharting Metadata] Error fetching pinned fiche "${cleaned}":`,
@@ -1972,6 +2112,14 @@ export async function fetchMetadataFromPriceChartingGameUrl(
 }
 
 export async function fetchPricesFromPriceChartingGameUrl(
+  gameUrl: string,
+): Promise<PriceChartingPrices | null> {
+  return runWithPriceChartingFetchStore(() =>
+    fetchPricesFromPriceChartingGameUrlUncached(gameUrl),
+  );
+}
+
+async function fetchPricesFromPriceChartingGameUrlUncached(
   gameUrl: string,
 ): Promise<PriceChartingPrices | null> {
   const cleaned = gameUrl.trim();
@@ -2016,6 +2164,26 @@ export async function fetchPricesFromPriceChartingGameUrl(
 }
 
 export async function fetchPricesFromPriceCharting(
+  barcode: string,
+  fallbackName?: string | string[],
+  fallbackPlatform?: string,
+  isPal?: boolean,
+  isClassics?: boolean,
+  options?: { mediaType?: string | null },
+): Promise<PriceChartingPrices | null> {
+  return runWithPriceChartingFetchStore(() =>
+    fetchPricesFromPriceChartingUncached(
+      barcode,
+      fallbackName,
+      fallbackPlatform,
+      isPal,
+      isClassics,
+      options,
+    ),
+  );
+}
+
+async function fetchPricesFromPriceChartingUncached(
   barcode: string,
   fallbackName?: string | string[],
   fallbackPlatform?: string,
@@ -2223,6 +2391,26 @@ export async function fetchPricesFromPriceCharting(
 }
 
 export async function fetchMetadataFromPriceCharting(
+  barcode: string,
+  fallbackName?: string,
+  fallbackPlatform?: string,
+  isPal?: boolean,
+  isClassics?: boolean,
+  options?: { mediaType?: string | null },
+): Promise<PriceChartingMetadata | null> {
+  return runWithPriceChartingFetchStore(() =>
+    fetchMetadataFromPriceChartingUncached(
+      barcode,
+      fallbackName,
+      fallbackPlatform,
+      isPal,
+      isClassics,
+      options,
+    ),
+  );
+}
+
+async function fetchMetadataFromPriceChartingUncached(
   barcode: string,
   fallbackName?: string,
   fallbackPlatform?: string,

@@ -46,7 +46,7 @@ Si deux modules ne sont importés **que ensemble**, les fusionner. Exemples fusi
 
 | Avant | Après |
 |-------|-------|
-| `fetch.ts` + gating + merge | **`enrich/fetch.ts`** (+ `bookSearch*` / `shelfContentLocale` re-extraits 2026-07-24) |
+| `fetch.ts` orchestrator | **`enrich/fetch.ts`** (+ `metadataFetchGating` / `merge` / `mergeObservationRanking` / book* re-extraits) |
 | `storage.ts` persist | **`enrich/storage.ts`** (+ `media/imageDownload` / `imageAssets` re-extraits) |
 | `compile.ts` consensus override | **`identify/evidence/compile.ts`** (+ `consensusTitle` / `resolve` re-extraits) |
 | `resolver.ts` prix | **`commerce/pricing/resolver.ts`** (+ `cachePolicy` / `outlierTrim` re-extraits) |
@@ -99,7 +99,7 @@ Auth / DB / HTTP             → lib/
 **Prochaines réductions utiles** (voir [metadata_engine_audit.md](metadata_engine_audit.md)) :
 
 1. ~~Découper `enrich/storage.ts` images / crop / localize select~~ **partiel 2026-07-24** — `media/imageDownload` + `imageAssets` + `croppedCoverSync` + `attachmentLocalization` ; `storeMetadata` reste.
-2. ~~`fetch` book/locale~~ **partiel 2026-07-24** — `bookSearch.ts` / `bookSearchAliases.ts` / `shelfContentLocale.ts`.
+2. ~~`fetch` gating/merge/book~~ **partiel 2026-07-24** — `metadataFetchGating` / `merge` / `mergeObservationRanking` / `bookSearch*`.
 3. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
 4. ~~`titleMatching` sequel / edition merge~~ **partiel 2026-07-24** — `titles/franchiseSequel` + `gameEditionSupplement` ; reste align/similarity/attachments.
 5. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.

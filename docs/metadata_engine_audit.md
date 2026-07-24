@@ -90,7 +90,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 
 | File | LOC (approx.) | Mix |
 | ---- | ------------- | --- |
-| `enrich/fetch.ts` | ~2496 | fetch + gating + merge (+ bookSearch* extracted) |
+| `enrich/fetch.ts` | ~1160 | orchestrator (+ gating / merge / observationRanking / book*) |
 | `enrich/storage.ts` | ~1015 | persist (+ image*, croppedCoverSync, attachmentLocalization) |
 | `enrich/titleMatching.ts` | ~1718 | similarity + align + attachments (+ franchiseSequel / editionSupplement) |
 | `commerce/pricing/resolver.ts` | ~1655 | resolve + shelf summarize (+ cachePolicy/outlierTrim extracted) |
@@ -110,7 +110,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
-| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — storage → image* + `croppedCoverSync` + `attachmentLocalization` ; fetch → book/locale ; pricing → cache/outlier ; compile → consensus/resolve ; titleMatching → `franchiseSequel` + `gameEditionSupplement`. Reste : cœur align/similarity + attachments encore couplés. |
+| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch → `metadataFetchGating` + `merge` + `mergeObservationRanking` + book* ; storage → image*/crop/localize ; pricing → cache/outlier ; compile → consensus/resolve ; titleMatching → sequel/edition. Reste : cœur `titleMatching` align/attachments. |
 
 ## Principles verdict
 

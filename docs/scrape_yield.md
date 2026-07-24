@@ -259,10 +259,14 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - SensCritique: synthetic `/search?keywords=&universe=` → typed GraphQL hits promote/reuse
 - LeDénicheur skipped this cut (search immediately resolves to prices/detail)
 
+## Phase 2aj — LeDénicheur SearchYield durable (done 2026-07-24)
+
+- LeDénicheur: synthetic `/search?q=` → typed BFF Product/Offer nodes promote/reuse
+- Price resolve (detail POST / GTIN HTML) still runs from cached nodes when needed
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| LeDénicheur GraphQL | Extract product-node SearchYield from BFF, then price resolve |

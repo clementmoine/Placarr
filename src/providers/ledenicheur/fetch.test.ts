@@ -6,6 +6,22 @@ vi.mock("axios", () => ({
     get: vi.fn(),
   },
 }));
+
+const readLeDenicheurSearchEvidence = vi.fn();
+const promoteLeDenicheurSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  leDenicheurSearchEvidenceUrl: (query: string) => {
+    const url = new URL("https://ledenicheur.fr/search");
+    url.searchParams.set("q", query.trim());
+    return url.toString();
+  },
+  readLeDenicheurSearchEvidence: (...args: unknown[]) =>
+    readLeDenicheurSearchEvidence(...args),
+  promoteLeDenicheurSearchEvidence: (...args: unknown[]) =>
+    promoteLeDenicheurSearchEvidence(...args),
+}));
+
 import axios from "axios";
 
 import {
@@ -83,6 +99,10 @@ beforeEach(() => {
   mockedPost.mockReset();
   mockedGet.mockReset();
   mockedGet.mockResolvedValue({ status: 404, data: "" });
+  readLeDenicheurSearchEvidence.mockReset();
+  promoteLeDenicheurSearchEvidence.mockReset();
+  readLeDenicheurSearchEvidence.mockResolvedValue(null);
+  promoteLeDenicheurSearchEvidence.mockResolvedValue(undefined);
   delete process.env.FLARESOLVERR_URL;
 });
 
@@ -150,6 +170,64 @@ describe("extractLeDenicheurProductId", () => {
 });
 
 describe("fetchPricesFromLeDenicheur", () => {
+  it("réutilise ProviderEvidence SearchYield sans POST BFF", async () => {
+    readLeDenicheurSearchEvidence.mockResolvedValueOnce([
+      {
+        __typename: "Product",
+        name: "Hades Nintendo Switch",
+        pathName: "/product.php?p=5752524",
+        priceSummary: {
+          regular: 21.99,
+          alternative: 34.99,
+          inStock: 21.99,
+          count: 9,
+        },
+        media: { first: "https://example.com/hades.jpg" },
+      },
+    ]);
+
+    await expect(fetchPricesFromLeDenicheur("hades switch")).resolves.toEqual({
+      priceNew: 2199,
+      priceUsed: 3499,
+      sourceUrl: "https://ledenicheur.fr/product.php?p=5752524",
+      productName: "Hades Nintendo Switch",
+      offerCount: 9,
+      coverUrl: "https://example.com/hades.jpg",
+      matchedQuery: "hades switch",
+    });
+    expect(mockedPost).not.toHaveBeenCalled();
+    expect(promoteLeDenicheurSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live BFF search", async () => {
+    mockedPost.mockResolvedValueOnce(
+      bffResponse([
+        {
+          __typename: "Product",
+          name: "Hades Nintendo Switch",
+          pathName: "/product.php?p=5752524",
+          priceSummary: {
+            regular: 21.99,
+            alternative: 34.99,
+            inStock: 21.99,
+            count: 9,
+          },
+          media: { first: "https://example.com/hades.jpg" },
+        },
+      ]),
+    );
+
+    await fetchPricesFromLeDenicheur("hades switch");
+    expect(promoteLeDenicheurSearchEvidence).toHaveBeenCalledWith(
+      "https://ledenicheur.fr/search?q=hades+switch",
+      expect.arrayContaining([
+        expect.objectContaining({
+          pathName: "/product.php?p=5752524",
+        }),
+      ]),
+    );
+  });
+
   it("convertit un produit BFF en prix en centimes", async () => {
     mockedPost
       .mockResolvedValueOnce(

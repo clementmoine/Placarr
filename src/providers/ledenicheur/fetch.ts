@@ -14,6 +14,13 @@ import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMa
 import { retailerBarcodeContradictsItem } from "@/core/commerce/retailer/productUrl";
 import type { LeDenicheurPrices } from "@/core/identify/lookup/providerTypes";
 
+import {
+  leDenicheurSearchEvidenceUrl,
+  promoteLeDenicheurSearchEvidence,
+  readLeDenicheurSearchEvidence,
+  type LeDenicheurSearchEvidenceHit,
+} from "./durableEvidence";
+
 export type { LeDenicheurPrices } from "@/core/identify/lookup/providerTypes";
 
 const BASE_URL = "https://ledenicheur.fr";
@@ -584,16 +591,21 @@ async function resolveProductNode(
   return buildProductPrices(product, detail, resolvedProbe.productGtin);
 }
 
-async function parseSearchResponse(
-  data: unknown,
-  query: string,
-  options?: LeDenicheurFetchOptions,
-): Promise<LeDenicheurPrices | null> {
+function extractSearchNodes(data: unknown): LeDenicheurSearchEvidenceHit[] {
   const envelope = data as LeDenicheurSearchEnvelope;
   const nodes =
     envelope?.data?.newSearch?.results?.products?.nodes ??
     envelope?.newSearch?.results?.products?.nodes;
-  if (!Array.isArray(nodes)) return null;
+  if (!Array.isArray(nodes)) return [];
+  return nodes as LeDenicheurSearchEvidenceHit[];
+}
+
+async function resolvePricesFromSearchNodes(
+  nodes: LeDenicheurSearchEvidenceHit[],
+  query: string,
+  options?: LeDenicheurFetchOptions,
+): Promise<LeDenicheurPrices | null> {
+  if (nodes.length === 0) return null;
 
   const productNodes = nodes.filter(
     (node) => (node as LeDenicheurNode).__typename !== "Offer",
@@ -659,6 +671,13 @@ async function fetchSingleQuery(
   query: string,
   options?: LeDenicheurFetchOptions,
 ): Promise<LeDenicheurPrices | null> {
+  const searchUrl = leDenicheurSearchEvidenceUrl(query);
+  const fromEvidence = await readLeDenicheurSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[LeDenicheur] Search evidence hit for ${searchUrl}`);
+    return resolvePricesFromSearchNodes(fromEvidence, query, options);
+  }
+
   const response = await axios.post(
     BFF_URL,
     {
@@ -683,7 +702,9 @@ async function fetchSingleQuery(
     return null;
   }
 
-  return parseSearchResponse(response.data, query, options);
+  const nodes = extractSearchNodes(response.data);
+  await promoteLeDenicheurSearchEvidence(searchUrl, nodes);
+  return resolvePricesFromSearchNodes(nodes, query, options);
 }
 
 export type LeDenicheurFetchOptions = {

@@ -54,4 +54,25 @@ describe("titleSpecificityTokens + corpus IDF", () => {
       ),
     ).toBe(false);
   });
+
+  it("builds in-memory cluster stats inside mergeDuplicateMatches path", () => {
+    // Shared marketplace chrome must not make a short title look like a
+    // strict subset of a longer chrome-padded listing when the batch itself
+    // shows blister/occasion everywhere.
+    const stats = buildTokenDocumentFrequency([
+      ...clusterTitles,
+      "Catan board",
+      "Catan board blister occasion",
+    ]);
+    expect(titleSpecificityTokens("Catan blister", stats).has("blister")).toBe(
+      false,
+    );
+    // Without IDF this would be a strict subset (blister/occasion pad the other).
+    expect(
+      isStrictTitleSubset("Catan board", "Catan board blister occasion", stats),
+    ).toBe(false);
+    expect(
+      isStrictTitleSubset("Catan board", "Catan board blister occasion"),
+    ).toBe(true);
+  });
 });

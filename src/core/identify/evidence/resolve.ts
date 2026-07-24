@@ -41,6 +41,7 @@ import type {
 } from "./types";
 import { ALTERNATE, CLUSTER_CONFIDENCE } from "./scoring";
 import { getRepresentativeScore } from "@/core/enrich/titles/displayScore";
+import { buildTokenDocumentFrequency } from "@/core/enrich/titles/tokenCorpusIdf";
 import { confrontWithDatabase } from "@/core/enrich/database";
 import {
   isStrictTitleSubset,
@@ -264,6 +265,10 @@ function filterOverlyGenericCanonicalEvidence(
   candidates: ProductEvidence[],
   allCanonicalEvidence: ProductEvidence[],
 ): ProductEvidence[] {
+  // In-memory IDF from titles already on this barcode resolve (no RawName scan).
+  const corpusStats = buildTokenDocumentFrequency(
+    allCanonicalEvidence.map((item) => item.title),
+  );
   const filtered = candidates.filter((candidate) => {
     return !allCanonicalEvidence.some((other) => {
       if (other === candidate) return false;
@@ -275,7 +280,7 @@ function filterOverlyGenericCanonicalEvidence(
         return false;
       }
 
-      return isStrictTitleSubset(candidate.title, other.title);
+      return isStrictTitleSubset(candidate.title, other.title, corpusStats);
     });
   });
 

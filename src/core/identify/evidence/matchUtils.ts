@@ -5,6 +5,7 @@ import {
 } from "@/core/identify/titleUtils";
 import { scoreDisplayTitle } from "@/core/enrich/titles/displayScore";
 import {
+  buildTokenDocumentFrequency,
   isCorpusGenericToken,
   type CorpusTokenStats,
 } from "@/core/enrich/titles/tokenCorpusIdf";
@@ -116,6 +117,10 @@ function mergeEvidenceSummaries(
 
 export function mergeDuplicateMatches(matches: MatchLike[]): ResolvedMatch[] {
   const merged: ResolvedMatch[] = [];
+  // In-memory IDF from titles already in this resolve batch (no RawName scan).
+  const corpusStats = buildTokenDocumentFrequency(
+    matches.flatMap((match) => [match.name, ...match.suggestions]),
+  );
 
   for (const match of matches) {
     const fallbackEvidence = fallbackEvidenceForMatch(match);
@@ -143,9 +148,17 @@ export function mergeDuplicateMatches(matches: MatchLike[]): ResolvedMatch[] {
           ? existing.name
           : normalizedMatch.confidence > existing.confidence
             ? normalizedMatch.name
-            : isStrictTitleSubset(existing.name, normalizedMatch.name)
+            : isStrictTitleSubset(
+                  existing.name,
+                  normalizedMatch.name,
+                  corpusStats,
+                )
               ? normalizedMatch.name
-              : isStrictTitleSubset(normalizedMatch.name, existing.name)
+              : isStrictTitleSubset(
+                    normalizedMatch.name,
+                    existing.name,
+                    corpusStats,
+                  )
                 ? existing.name
                 : existing.name;
       const mergedEvidence = mergeEvidenceSummaries(
@@ -202,6 +215,12 @@ export function pickPreferredClusterDisplayName(
       preserveEditionTerms: true,
     });
   }
+
+  // In-memory IDF from this cluster's titles only (no RawName table scan).
+  const corpusStats = buildTokenDocumentFrequency([
+    representative,
+    ...cluster.flatMap((item) => [item.title, item.cleanName, item.rawName]),
+  ]);
 
   const candidates = [
     {
@@ -272,7 +291,7 @@ export function pickPreferredClusterDisplayName(
           return !anchorNames.some(
             (anchorName) =>
               anchorName !== candidate.name &&
-              isStrictTitleSubset(anchorName, candidate.name),
+              isStrictTitleSubset(anchorName, candidate.name, corpusStats),
           );
         })
       : validCandidates;
@@ -281,7 +300,7 @@ export function pickPreferredClusterDisplayName(
     return !deNoisedCandidates.some(
       (other) =>
         other.name !== candidate.name &&
-        isStrictTitleSubset(other.name, candidate.name) &&
+        isStrictTitleSubset(other.name, candidate.name, corpusStats) &&
         scoreDisplayTitle(other.name, {
           isCanonical: other.isCanonical,
           isTrustedRetailer: other.isTrustedRetailer,
@@ -317,7 +336,7 @@ export function pickPreferredClusterDisplayName(
     const beatenByNoisySuperset = ranked.some(
       (other) =>
         other.name !== candidate.name &&
-        isStrictTitleSubset(candidate.name, other.name) &&
+        isStrictTitleSubset(candidate.name, other.name, corpusStats) &&
         scoreDisplayTitle(other.name, {
           isCanonical: other.isCanonical,
           isTrustedRetailer: other.isTrustedRetailer,

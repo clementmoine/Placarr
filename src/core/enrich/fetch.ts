@@ -43,6 +43,7 @@ import {
   normalizeDisplayTitle,
   scoreMetadataDisplayTitle,
 } from "@/core/enrich/titles/displayScore";
+import { IDENTITY_FUNCTION_WORDS } from "@/core/enrich/titles/identityNoise";
 import {
   aliasesExcludingTitle,
   collectMergedSearchAliases,
@@ -1723,28 +1724,9 @@ export function preferredMetadataLanguagesFromShelfName(
 }
 
 // ── coalesced from src/core/enrich/bookSearch.ts ──
-const TITLE_STOP_WORDS = new Set([
-  "le",
-  "la",
-  "les",
-  "l",
-  "du",
-  "de",
-  "des",
-  "d",
-  "un",
-  "une",
-  "au",
-  "aux",
-  "the",
-  "and",
-  "or",
-  "a",
-]);
-
 function distinctiveTokens(value: string): string[] {
   return normalizeDisplayTitle(value).filter(
-    (token) => token.length >= 3 && !TITLE_STOP_WORDS.has(token),
+    (token) => token.length >= 3 && !IDENTITY_FUNCTION_WORDS.has(token),
   );
 }
 

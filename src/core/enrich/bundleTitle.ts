@@ -3,34 +3,16 @@ import {
   stripLegalMarkSymbols,
 } from "@/core/enrich/search/query";
 import { normalizeDisplayTitle } from "@/core/enrich/titles/displayScore";
+import { IDENTITY_FUNCTION_WORDS } from "@/core/enrich/titles/identityNoise";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 import { titleTokenPresentInSet } from "@/core/enrich/titles/tokenEquivalents";
-
-const TITLE_STOP_WORDS = new Set([
-  "le",
-  "la",
-  "les",
-  "l",
-  "du",
-  "de",
-  "des",
-  "d",
-  "un",
-  "une",
-  "au",
-  "aux",
-  "the",
-  "and",
-  "or",
-  "a",
-]);
 
 /** Splits user bundle labels on +, &, "and", or /. */
 const BUNDLE_PART_SEPARATOR = /\s*(?:\+|&|\band\b)\s*|\s*\/\s*/i;
 
 function distinctiveTokens(value: string): string[] {
   return normalizeDisplayTitle(value).filter(
-    (token) => token.length >= 3 && !TITLE_STOP_WORDS.has(token),
+    (token) => token.length >= 3 && !IDENTITY_FUNCTION_WORDS.has(token),
   );
 }
 

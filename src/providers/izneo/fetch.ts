@@ -14,6 +14,12 @@ import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 
+import {
+  izneoSearchEvidenceUrl,
+  promoteIzneoSearchEvidence,
+  readIzneoSearchEvidence,
+} from "./durableEvidence";
+
 const IZNEO_WEB_API = "https://www.izneo.com/api/web";
 const IZNEO_HEADERS = {
   "User-Agent":
@@ -245,12 +251,22 @@ export async function searchIzneoSeries(
 ): Promise<IzneoSeriesHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
+
+  const searchUrl = izneoSearchEvidenceUrl(trimmed);
+  const fromEvidence = await readIzneoSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Izneo] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
   const encoded = encodeURIComponent(trimmed);
   const payload = await izneoGet<unknown>(
     `/search/v2/search-all/${encoded}`,
     signal,
   );
-  return parseIzneoSearchPayload(payload);
+  const hits = parseIzneoSearchPayload(payload);
+  await promoteIzneoSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchIzneoSerieVolumes(

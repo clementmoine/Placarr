@@ -3,6 +3,12 @@ import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { mergeAbortSignals } from "@/lib/http/abort";
 
+import {
+  howLongToBeatSearchEvidenceUrl,
+  promoteHowLongToBeatSearchEvidence,
+  readHowLongToBeatSearchEvidence,
+} from "./durableEvidence";
+
 interface HLTBInitResponse {
   token?: string;
   hpKey?: string;
@@ -382,11 +388,25 @@ async function fetchTextWithTimeout(
   }
 }
 
-async function searchHowLongToBeat(
+export async function searchHowLongToBeat(
   query: string,
   platform?: string | null,
   signal?: AbortSignal,
 ): Promise<HLTBSearchGame[]> {
+  const cleaned = query.trim();
+  if (!cleaned) return [];
+
+  const normalizedPlatform = normalizePlatformForHLTB(platform);
+  const searchUrl = howLongToBeatSearchEvidenceUrl({
+    query: cleaned,
+    platform: normalizedPlatform || undefined,
+  });
+  const fromEvidence = await readHowLongToBeatSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[HowLongToBeat] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
   const baseHeaders = {
     "User-Agent": HLTB_USER_AGENT,
     Accept: "application/json",
@@ -414,13 +434,15 @@ async function searchHowLongToBeat(
         "x-hp-val": init.hpVal || "",
       },
       body: JSON.stringify(
-        buildSearchPayload(query, normalizePlatformForHLTB(platform), init),
+        buildSearchPayload(cleaned, normalizedPlatform, init),
       ),
     },
     signal,
   );
 
-  return response.data || [];
+  const hits = response.data || [];
+  await promoteHowLongToBeatSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 function extractDetailData(html: string): HLTBDetailData | null {

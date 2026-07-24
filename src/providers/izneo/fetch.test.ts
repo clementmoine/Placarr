@@ -1,4 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+const readIzneoSearchEvidence = vi.fn();
+const promoteIzneoSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  izneoSearchEvidenceUrl: (query: string) => {
+    const url = new URL("https://www.izneo.com/search");
+    url.searchParams.set("q", query.trim());
+    return url.toString();
+  },
+  readIzneoSearchEvidence: (...args: unknown[]) =>
+    readIzneoSearchEvidence(...args),
+  promoteIzneoSearchEvidence: (...args: unknown[]) =>
+    promoteIzneoSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   izneoAlbumCoverUrl,
@@ -7,8 +30,11 @@ import {
   parseIzneoSearchPayload,
   parseIzneoVolumesPayload,
   pickVolume,
+  searchIzneoSeries,
 } from "./fetch";
 import { mapIzneoMetadata } from "./index";
+
+const mockedGet = vi.mocked(axios.get);
 
 describe("izneo", () => {
   it("parse la recherche series", () => {
@@ -110,5 +136,56 @@ describe("izneo", () => {
       query,
     );
     expect(picked?.id).toBe("right");
+  });
+});
+
+describe("searchIzneoSeries", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readIzneoSearchEvidence.mockReset();
+    promoteIzneoSearchEvidence.mockReset();
+    readIzneoSearchEvidence.mockResolvedValue(null);
+    promoteIzneoSearchEvidence.mockResolvedValue(undefined);
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        id: "5841",
+        title: "Astérix",
+        ratingValue: 4.2,
+        ratingCount: 1226,
+      },
+    ];
+    readIzneoSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchIzneoSeries("Astérix")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteIzneoSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        series: [
+          {
+            id: "5841",
+            title: "Astérix",
+            rate: "4.2",
+            rateAmount: "1226",
+          },
+        ],
+      },
+    } as never);
+
+    const hits = await searchIzneoSeries("Astérix");
+    expect(hits[0]?.id).toBe("5841");
+    expect(promoteIzneoSearchEvidence).toHaveBeenCalledWith(
+      "https://www.izneo.com/search?q=Ast%C3%A9rix",
+      expect.arrayContaining([
+        expect.objectContaining({ id: "5841" }),
+      ]),
+    );
   });
 });

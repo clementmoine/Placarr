@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2aj shipped (LeDénicheur SearchYield); Full Set = 2ak; No-Intro = later.
+> Phase 1–2ak shipped (Full Set SearchYield); HLTB/Izneo = 2al; No-Intro = later.
 
 ## Principle
 
@@ -269,10 +269,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Full Set: `/recherche.php?q=` → typed `{url,title,category?,platformLabel?,year?,consoleSlug?}` promote/reuse
 - Rate-limited scrape: refresh reuses SearchYield without repeating the search GET
 
+## Phase 2al — HowLongToBeat + Izneo SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `platform` (HowLongToBeat)
+- HowLongToBeat: synthetic `/search?q=&platform=` → typed bleed games promote/reuse (skips init+POST)
+- Izneo: synthetic `/search?q=` → typed series hits promote/reuse
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| HowLongToBeat / Izneo SearchYield durable | Remaining non-scrape/API search peers |

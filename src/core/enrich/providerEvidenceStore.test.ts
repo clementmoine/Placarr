@@ -206,6 +206,25 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps HowLongToBeat q+platform identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://howlongtobeat.com/search?q=Hades&platform=Nintendo+Switch&utm=1",
+      ),
+    ).toBe(
+      "https://howlongtobeat.com/search?q=hades&platform=nintendo+switch",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://howlongtobeat.com/search?q=Hades&platform=Nintendo+Switch",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://howlongtobeat.com/search?q=Hades&platform=PC",
+      ),
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

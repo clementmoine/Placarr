@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2ae shipped (Vivlio + Freakxy SearchYield); No-Intro = later.
+> Phase 1–2af shipped (Shopify factory SearchYield); No-Intro = later.
 
 ## Principle
 
@@ -233,10 +233,17 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Vivlio: `/search?search=` → typed `{title,productUrl,barcode?}` promote/reuse
 - Freakxy: Magento `/catalogsearch/result/?q=` barcode → typed `{name,coverUrl?}` promote/reuse
 
+## Phase 2af — Shopify factory SearchYield durable (done 2026-07-24)
+
+- Shared `fetchShopifySearchHandles` promote/reuse typed product handles per `config.id`
+- `/search?q=&type=product` HTML (Flare) skipped on evidence hit; product JSON detail GETs unchanged
+- Evidence keys already keep `q` + `type`
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| Bedetheque / Babelio multi-hop | Series search → albums, not thin SearchYield→detail |
+| Bedetheque / Babelio / Bdovore multi-hop | Series search → albums, not thin SearchYield→detail |
+| MyLudo / ChocoBonPlan / LeDénicheur | POST/Algolia/GraphQL — need body-keyed evidence or synthetic URLs |

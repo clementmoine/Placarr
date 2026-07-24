@@ -9,6 +9,10 @@ import {
 import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 
 import type { ShopifyProduct, ShopifyRetailerConfig } from "./types";
+import {
+  promoteShopifySearchEvidence,
+  readShopifySearchEvidence,
+} from "./durableEvidence";
 
 const HTML_HEADERS = {
   "User-Agent":
@@ -138,7 +142,7 @@ export async function fetchShopifyProductByHandle(
 // to skip the header/footer non-result links, few enough to stay cheap.
 const DEFAULT_HANDLE_CANDIDATES = 5;
 
-async function fetchShopifySearchHandles(
+export async function fetchShopifySearchHandles(
   config: ShopifyRetailerConfig,
   query: string,
   barcode?: string | null,
@@ -150,8 +154,23 @@ async function fetchShopifySearchHandles(
   const url = new URL("/search", config.baseUrl);
   url.searchParams.set("q", searchValue);
   url.searchParams.set("type", "product");
+  const searchUrl = url.toString();
 
-  const response = await fetchGetWithFlareFallback(url.toString(), {
+  const fromEvidence = await readShopifySearchEvidence(config.id, searchUrl);
+  if (fromEvidence) {
+    console.info(`[${config.label}] Search evidence hit for ${searchUrl}`);
+    const handles = [...fromEvidence];
+    if (normalizedBarcode) {
+      handles.sort(
+        (a, b) =>
+          (b.includes(normalizedBarcode) ? 1 : 0) -
+          (a.includes(normalizedBarcode) ? 1 : 0),
+      );
+    }
+    return handles;
+  }
+
+  const response = await fetchGetWithFlareFallback(searchUrl, {
     headers: HTML_HEADERS,
     timeout: 12000,
     validateStatus: (status) => status >= 200 && status < 500,
@@ -166,6 +185,7 @@ async function fetchShopifySearchHandles(
         (a.includes(normalizedBarcode) ? 1 : 0),
     );
   }
+  await promoteShopifySearchEvidence(config.id, searchUrl, handles);
   return handles;
 }
 

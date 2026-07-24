@@ -286,6 +286,7 @@ export async function fetchOkkazeoGame(url: string): Promise<OkkazeoGame> {
 export type OkkazeoBarcodeHit = {
   title: string;
   imageUrl?: string | null;
+  productUrl?: string | null;
   priceCents?: number | null;
   players?: string | null;
 };
@@ -317,6 +318,7 @@ export async function fetchOkkazeoBarcodeProduct(
     return {
       title: game.title,
       imageUrl: game.imageUrl || null,
+      productUrl: game.productUrl || hit.url,
       priceCents: game.priceCents ?? null,
       players: game.players ?? null,
     };

@@ -246,6 +246,7 @@ export async function fetchPlayInProduct(url: string): Promise<PlayInProduct> {
 export type PlayInBarcodeHit = {
   title: string;
   imageUrl?: string | null;
+  productUrl?: string | null;
   priceCents?: number | null;
 };
 
@@ -269,6 +270,7 @@ export async function fetchPlayInBarcodeProduct(
         return {
           title: product.title,
           imageUrl: product.imageUrl || null,
+          productUrl: product.productUrl || hit.url,
           priceCents: product.priceCents ?? null,
         };
       }

@@ -206,6 +206,7 @@ export async function fetchEspritJeuProduct(
 export type EspritJeuBarcodeHit = {
   title: string;
   imageUrl?: string | null;
+  productUrl?: string | null;
   priceCents?: number | null;
 };
 
@@ -232,6 +233,7 @@ export async function fetchEspritJeuBarcodeProduct(
       return {
         title: product.title,
         imageUrl: product.imageUrl || null,
+        productUrl: product.productUrl || hit.url,
         priceCents: product.priceCents ?? null,
       };
     }

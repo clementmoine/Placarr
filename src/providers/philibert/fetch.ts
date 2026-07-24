@@ -518,6 +518,8 @@ export async function fetchPhilibertProduct(
 export type BarcodeProductHit = {
   title: string;
   imageUrl?: string | null;
+  /** Absolute product fiche URL from the same scrape as identification. */
+  productUrl?: string | null;
   /** New price (cents) read from the same product page as the identification. */
   priceCents?: number | null;
   players?: string | null;
@@ -552,6 +554,7 @@ export async function fetchPhilibertBarcodeProduct(
     return {
       title,
       imageUrl: product.imageUrl || null,
+      productUrl: product.productUrl || hit.url,
       priceCents: product.priceCents ?? null,
       players: product.players ?? null,
       playtime: product.playtime ?? null,

@@ -82,6 +82,7 @@ async function refreshPlayInOffers(
           rawValue: hit,
           extra: {
             productName: hit.title,
+            sourceUrl: hit.productUrl ?? undefined,
             totalCents: hit.priceCents,
           },
         },
@@ -214,6 +215,22 @@ export const playinModule: ProviderModule = {
         ],
       },
     ];
+  },
+  extractScanPriceOffers(payload) {
+    if (!payload.playin?.priceCents) return [];
+    const hit = payload.playin;
+    return pricedOffers(PRICE_SOURCE, [
+      {
+        condition: "new",
+        priceCents: hit.priceCents,
+        rawValue: hit,
+        extra: {
+          productName: hit.title,
+          sourceUrl: hit.productUrl ?? undefined,
+          totalCents: hit.priceCents,
+        },
+      },
+    ]);
   },
   refreshBarcodePriceOffers: refreshPlayInOffers,
 };

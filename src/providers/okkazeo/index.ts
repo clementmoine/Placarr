@@ -222,6 +222,22 @@ export const okkazeoModule: ProviderModule = {
       },
     ];
   },
+  extractScanPriceOffers(payload) {
+    if (!payload.okkazeo?.priceCents) return [];
+    const hit = payload.okkazeo;
+    return pricedOffers(PRICE_SOURCE, [
+      {
+        condition: "used",
+        priceCents: hit.priceCents,
+        rawValue: hit,
+        extra: {
+          productName: hit.title,
+          sourceUrl: hit.productUrl ?? undefined,
+          totalCents: hit.priceCents,
+        },
+      },
+    ]);
+  },
   refreshBarcodePriceOffers: refreshOkkazeoOffers,
 };
 

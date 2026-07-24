@@ -3,13 +3,15 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { pricedOffer } from "@/core/catalog/priceOffers";
+import { pricedOffer, pricedOffers } from "@/core/catalog/priceOffers";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
-
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
+import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
 import type {
   BarcodeLookupType,
+  BarcodePriceRefreshContext,
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
@@ -27,7 +29,59 @@ const fetchFromPhilibert = createPhilibertResolver();
 // without it, a board game scanned without a type has no canonical/trusted source
 // and gets misclassified as "games" (see runBarcodeLookups generic branch).
 const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
+const PHILIBERT_PROVIDER_KEY = "philibert";
 const PRICE_SOURCE = "Philibert";
+
+async function refreshPhilibertOffers(
+  ctx: BarcodePriceRefreshContext,
+): Promise<ReturnType<typeof pricedOffers>> {
+  const resolvedProductUrls = providerProductUrlsForKey(
+    PHILIBERT_PROVIDER_KEY,
+    ctx.providerProductUrls,
+  ).filter(
+    (url) =>
+      !ctx.cleanedBarcode ||
+      !retailerProductUrlBarcodeConflicts(url, ctx.cleanedBarcode),
+  );
+
+  for (const productUrl of resolvedProductUrls) {
+    const product = await fetchPhilibertProduct(productUrl);
+    if (product.priceCents != null && product.priceCents > 0) {
+      return pricedOffers(PRICE_SOURCE, [
+        {
+          condition: "new",
+          priceCents: product.priceCents,
+          rawValue: product,
+          extra: {
+            productName: product.title,
+            sourceUrl: product.productUrl || productUrl,
+            totalCents: product.priceCents,
+          },
+        },
+      ]);
+    }
+  }
+
+  if (ctx.cleanedBarcode) {
+    const hit = await fetchPhilibertBarcodeProduct(ctx.cleanedBarcode);
+    if (hit?.priceCents != null && hit.priceCents > 0) {
+      return pricedOffers(PRICE_SOURCE, [
+        {
+          condition: "new",
+          priceCents: hit.priceCents,
+          rawValue: hit,
+          extra: {
+            productName: hit.title,
+            sourceUrl: hit.productUrl ?? undefined,
+            totalCents: hit.priceCents,
+          },
+        },
+      ]);
+    }
+  }
+
+  return [];
+}
 
 export const philibertModule: ProviderModule = {
   info: {
@@ -157,14 +211,15 @@ export const philibertModule: ProviderModule = {
   },
   extractScanPriceOffers(payload) {
     if (!payload.philibert?.priceCents) return [];
-    const offer = pricedOffer(
-      PRICE_SOURCE,
-      "new",
-      payload.philibert.priceCents,
-      payload.philibert,
-    );
+    const hit = payload.philibert;
+    const offer = pricedOffer(PRICE_SOURCE, "new", hit.priceCents, hit, {
+      productName: hit.title,
+      sourceUrl: hit.productUrl ?? undefined,
+      totalCents: hit.priceCents,
+    });
     return offer ? [offer] : [];
   },
+  refreshBarcodePriceOffers: refreshPhilibertOffers,
 };
 
 export { createPhilibertResolver } from "./resolver";

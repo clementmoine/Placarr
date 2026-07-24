@@ -69,6 +69,7 @@ async function refreshEspritJeuOffers(
           rawValue: hit,
           extra: {
             productName: hit.title,
+            sourceUrl: hit.productUrl ?? undefined,
             totalCents: hit.priceCents,
           },
         },
@@ -204,6 +205,22 @@ export const espritjeuModule: ProviderModule = {
         ],
       },
     ];
+  },
+  extractScanPriceOffers(payload) {
+    if (!payload.espritjeu?.priceCents) return [];
+    const hit = payload.espritjeu;
+    return pricedOffers(PRICE_SOURCE, [
+      {
+        condition: "new",
+        priceCents: hit.priceCents,
+        rawValue: hit,
+        extra: {
+          productName: hit.title,
+          sourceUrl: hit.productUrl ?? undefined,
+          totalCents: hit.priceCents,
+        },
+      },
+    ]);
   },
   refreshBarcodePriceOffers: refreshEspritJeuOffers,
 };

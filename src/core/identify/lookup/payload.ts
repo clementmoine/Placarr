@@ -14,6 +14,8 @@ export type BarcodeMetadataHit = {
   aliases?: string[];
   platformKey?: string | null;
   regionalTitles?: Array<{ region?: string; text: string }>;
+  /** Absolute product fiche URL when the barcode scrape already resolved one. */
+  productUrl?: string | null;
   /** New-price (cents) captured in the same lookup, when the source is a retailer (e.g. Philibert). */
   priceCents?: number | null;
   players?: string | null;

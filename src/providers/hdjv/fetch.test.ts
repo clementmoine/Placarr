@@ -1,4 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readHdjvSearchEvidence = vi.fn();
+const promoteHdjvSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readHdjvSearchEvidence: (...args: unknown[]) =>
+    readHdjvSearchEvidence(...args),
+  promoteHdjvSearchEvidence: (...args: unknown[]) =>
+    promoteHdjvSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   normalizeHdjvUrl,
@@ -6,8 +20,19 @@ import {
   parseHdjvGalleryPage,
   parseHdjvSearchResults,
   pickBestHdjvSearchHit,
+  searchHdjv,
   upgradeHdjvImageUrl,
 } from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readHdjvSearchEvidence.mockReset();
+  promoteHdjvSearchEvidence.mockReset();
+  readHdjvSearchEvidence.mockResolvedValue(null);
+  promoteHdjvSearchEvidence.mockResolvedValue(undefined);
+});
 
 const SEARCH_FIXTURE = [
   {
@@ -137,6 +162,45 @@ describe("hdjv fetch", () => {
       ),
     ).toBe(
       "https://www.historiquedesjeuxvideo.com/bdd/jeu/img/XBox-360/1943.jpg",
+    );
+  });
+});
+
+describe("searchHdjv", () => {
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        label: "Le Parrain 2 (Xbox 360)",
+        title: "Le Parrain 2",
+        support: "Xbox 360",
+        ficheUrl:
+          "https://www.historiquedesjeuxvideo.com/fiches/Xbox%20360/le-parrain-2.html",
+        gameCode: "12852",
+      },
+    ];
+    readHdjvSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchHdjv("Le Parrain 2", "5")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteHdjvSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_FIXTURE,
+    } as never);
+
+    const hits = await searchHdjv("Le Parrain 2", "5");
+    expect(hits).toHaveLength(2);
+    expect(promoteHdjvSearchEvidence).toHaveBeenCalledWith(
+      expect.stringMatching(/ajax_recherche_jeu\.php\?.*q=Le\+Parrain\+2/),
+      expect.arrayContaining([
+        expect.objectContaining({ gameCode: "12852", support: "Xbox 360" }),
+      ]),
+    );
+    expect(promoteHdjvSearchEvidence.mock.calls[0]?.[0]).toContain(
+      "support=5",
     );
   });
 });

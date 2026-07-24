@@ -107,6 +107,25 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps HDJV q+support identity (platform collisions)", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.historiquedesjeuxvideo.com/ajax_recherche_jeu.php?q=Le+Parrain+2&support=5&utm_source=x",
+      ),
+    ).toBe(
+      "https://www.historiquedesjeuxvideo.com/ajax_recherche_jeu.php?q=le+parrain+2&support=5",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.historiquedesjeuxvideo.com/ajax_recherche_jeu.php?q=Le+Parrain+2&support=5",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://www.historiquedesjeuxvideo.com/ajax_recherche_jeu.php?q=Le+Parrain+2&support=44",
+      ),
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

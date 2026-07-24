@@ -11,6 +11,10 @@ import {
 } from "@/core/enrich/titleMatching";
 import { slugify } from "@/lib/routing/slugs";
 
+import {
+  promoteHdjvSearchEvidence,
+  readHdjvSearchEvidence,
+} from "./durableEvidence";
 import { HDJV_PLATFORM_BY_KEY, resolveHdjvPlatform } from "./platforms";
 
 export const HDJV_BASE_URL = "https://www.historiquedesjeuxvideo.com";
@@ -405,16 +409,32 @@ async function hdjvGet(url: string): Promise<string> {
   return response.data as string;
 }
 
-async function searchHdjv(
+export async function searchHdjv(
   query: string,
   supportCode: string,
 ): Promise<HdjvSearchHit[]> {
-  const response = await fetchGetWithFlareFallback(HDJV_SEARCH_URL, {
+  const cleanedQuery = query.trim();
+  const cleanedSupport = supportCode.trim() || "tous";
+  if (!cleanedQuery) return [];
+
+  const searchUrl = new URL(HDJV_SEARCH_URL);
+  searchUrl.searchParams.set("q", cleanedQuery);
+  searchUrl.searchParams.set("support", cleanedSupport);
+  const requestUrl = searchUrl.toString();
+
+  const fromEvidence = await readHdjvSearchEvidence(requestUrl);
+  if (fromEvidence) {
+    console.info(`[HDJV] Search evidence hit for ${requestUrl}`);
+    return fromEvidence;
+  }
+
+  const response = await fetchGetWithFlareFallback(requestUrl, {
     headers: HEADERS,
-    params: { q: query, support: supportCode },
     timeout: 12000,
   });
-  return parseHdjvSearchResults(response.data);
+  const hits = parseHdjvSearchResults(response.data);
+  await promoteHdjvSearchEvidence(requestUrl, hits);
+  return hits;
 }
 
 async function fetchHdjvGalleryPages(

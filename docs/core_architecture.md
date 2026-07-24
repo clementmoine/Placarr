@@ -49,7 +49,7 @@ Si deux modules ne sont importés **que ensemble**, les fusionner. Exemples fusi
 | `fetch.ts` orchestrator | **`enrich/fetch.ts`** (+ `metadataFetchGating` / `merge` / `mergeObservationRanking` / book* re-extraits) |
 | `storage.ts` persist | **`enrich/storage.ts`** (+ `media/image*` / crop / localize / coverBootstrap / gallery+cover+item sync) |
 | `compile.ts` consensus override | **`identify/evidence/compile.ts`** (+ `consensusTitle` / `resolve` re-extraits) |
-| `resolver.ts` prix | **`commerce/pricing/resolver.ts`** (+ `cachePolicy` / `outlierTrim` re-extraits) |
+| `resolver.ts` prix | **`commerce/pricing/resolver.ts`** (+ `priceTypes` / `pricePipeline` / `cachePolicy` / `outlierTrim`) |
 | `itemDisplay.ts` + `metadataPriceFallback` | **`commerce/pricing/itemDisplay.ts`** |
 | `catalog.ts` + `materializeProviderInfo` | **`catalog/catalog.ts`** |
 
@@ -89,7 +89,7 @@ Auth / DB / HTTP             → lib/
 
 | Pilier | Gros morceaux |
 |--------|---------------|
-| enrich | storage, fetch, titleMatching, attachmentDisplayScore, residualIdentity |
+| enrich | storage, fetch, titleMatching (facades), attachmentDisplayScore leaves |
 | identify | compile, resolver, titleUtils, platforms |
 | collect | present, media, jobs/workRunner |
 | catalog | registry, sourceTraits, mappingAudit |

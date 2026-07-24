@@ -95,7 +95,8 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | `enrich/titleMatching.ts` | ~78 | facade re-exports (`titles/*` leaves) |
 | `enrich/titles/metadataTitleAlign.ts` | ~218 | align orchestrator (+ series/score/volume/better-match leaves) |
 | `enrich/titles/residualIdentity.ts` | ~137 | residual match facade (+ tokens/volumes/pairEvaluate leaves) |
-| `commerce/pricing/resolver.ts` | ~1655 | resolve + shelf summarize (+ cachePolicy/outlierTrim extracted) |
+| `commerce/pricing/resolver.ts` | ~645 | cache/persist/refresh orchestrator (+ pricePipeline / priceTypes) |
+| `enrich/media/attachmentDisplayScore.ts` | ~42 | facade (+ types / platformGate / scoring / coverDisplayRank) |
 | `identify/evidence/compile.ts` | ~750 | compile + confidence (+ consensusTitle/resolve extracted) |
 
 ## Recommended sequence
@@ -112,7 +113,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
-| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Fait 2026-07-24** — fetch/storage/storeMetadata scindés ; `titleMatching` + `metadataTitleAlign` + `residualIdentity` → facades + `titles/*` leaves. Gros cohésifs restants : `pricing/resolver`, `attachmentDisplayScore`. |
+| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Fait 2026-07-24** — fetch/storage/storeMetadata/title/residual/pricing/attachmentDisplayScore scindés en facades + leaves. |
 
 ## Principles verdict
 

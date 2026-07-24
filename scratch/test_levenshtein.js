@@ -14,12 +14,22 @@ const cleanedName = "Amped Freestyle Snowboarding";
 const validResults = [
   {
     id: 14877,
-    noms: [{"region":"ss","text":"Amped 2"},{"region":"us","text":"Amped 2"},{"region":"jp","text":"Tenku 2"},{"region":"eu","text":"Amped 2"}]
+    noms: [
+      { region: "ss", text: "Amped 2" },
+      { region: "us", text: "Amped 2" },
+      { region: "jp", text: "Tenku 2" },
+      { region: "eu", text: "Amped 2" },
+    ],
   },
   {
     id: 14941,
-    noms: [{"region":"ss","text":"Amped - Freestyle Snowboarding"},{"region":"us","text":"Amped : Freestyle Snowboarding"},{"region":"jp","text":"Tenku : Freestyle Snowboarding"},{"region":"eu","text":"Amped : Freestyle Snowboarding"}]
-  }
+    noms: [
+      { region: "ss", text: "Amped - Freestyle Snowboarding" },
+      { region: "us", text: "Amped : Freestyle Snowboarding" },
+      { region: "jp", text: "Tenku : Freestyle Snowboarding" },
+      { region: "eu", text: "Amped : Freestyle Snowboarding" },
+    ],
+  },
 ];
 
 let bestId = validResults[0].id;
@@ -27,7 +37,9 @@ let minDist = Infinity;
 for (const r of validResults) {
   const rTitle = pickSSTitle(r.noms)?.toLowerCase() || "";
   const dist = Levenshtein.get(cleanedName.toLowerCase(), rTitle);
-  console.log(`Comparing "${cleanedName.toLowerCase()}" with "${rTitle}": dist = ${dist}`);
+  console.log(
+    `Comparing "${cleanedName.toLowerCase()}" with "${rTitle}": dist = ${dist}`,
+  );
   if (dist < minDist) {
     minDist = dist;
     bestId = r.id;

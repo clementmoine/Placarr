@@ -120,3 +120,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Skip layout/paint of off-screen collection cards while scrolling. The `auto`
+   keyword makes the browser remember each card's real size once painted, so the
+   trailing length is only a first-guess used for cards never yet revealed. */
+@utility cv-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+}
+
+@utility cv-card-shelf {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 150px;
+}

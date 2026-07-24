@@ -4,8 +4,8 @@ import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { getToken } from "next-auth/jwt";
 
-import { authOptions } from "@/lib/auth.config";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth/config";
+import { prisma } from "@/lib/db/prisma";
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -44,10 +44,13 @@ export async function PATCH(req: NextRequest) {
       data: updateData,
     });
 
+    // Never expose the password hash in the API response.
+    const safeUser = { ...user, password: undefined };
+
     // If email was changed, return special response to trigger session update
     if (email && email !== session.user.email) {
       return NextResponse.json({
-        ...user,
+        ...safeUser,
         _sessionUpdate: {
           email: user.email,
           name: user.name,
@@ -55,7 +58,7 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json(safeUser);
   } catch (error) {
     console.error("Error updating user:", error);
     return NextResponse.json(

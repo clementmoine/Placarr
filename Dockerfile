@@ -42,40 +42,30 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-# Production image, copy all the files and run next
+# All-in-one production image: Next + background workers (Plex-style).
 FROM base AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Uncomment the following line in case you want to disable telemetry during runtime.
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+# DATABASE_URL is provided at runtime (PostgreSQL) via compose/env.
 
-COPY --from=builder /app/public ./public
+# Full tree so tsx can run scripts/backgroundWorker.ts beside the standalone server.
+COPY --from=builder /app /app
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Standalone Next expects static + public next to server.js.
+RUN mkdir -p .next/standalone/.next \
+  && cp -R .next/static .next/standalone/.next/static \
+  && cp -R public .next/standalone/public
 
-# Copy Prisma schema and migrations
-COPY --from=builder /app/prisma/schema.prisma ./prisma/
-COPY --from=builder /app/prisma/migrations ./prisma/migrations
+RUN mkdir -p /config /app/public/uploads /app/.cache /app/prisma
 
-# Create directory for config and set permissions
-RUN mkdir -p /config
-
-# Create directory for prisma and set permissions
-RUN mkdir -p /app/prisma 
-
-# Copy start script
 COPY init.sh /app/init.sh
 RUN chmod +x /app/init.sh
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV DATABASE_URL="file:/app/prisma/dev.db"
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-ENV HOSTNAME="0.0.0.0"
 CMD ["/app/init.sh"]

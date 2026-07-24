@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import type { ExploreItem } from "@/types/explore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
@@ -11,27 +12,25 @@ import {
   MessageSquare,
   Calendar,
   Building,
-  Check,
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
 import { BaseModal } from "./BaseModal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import { useAccount } from "@/lib/hooks/useAccount";
-import { cn } from "@/lib/utils";
-import { getHeroImage, getCoverImage, getGalleryImages } from "@/lib/itemMedia";
-import { getExploreDetailCoverClass } from "@/lib/cardFormat";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { cn } from "@/lib/shared/utils";
+import { getHeroImage, getGalleryImages } from "@/core/collect/media";
+import { getExploreDetailCoverClass } from "@/lib/text/cardFormat";
 
 interface ExploreItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: any; // Explore item result
+  item: ExploreItem | null;
 }
 
 export function ExploreItemModal({
@@ -45,10 +44,12 @@ export function ExploreItemModal({
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [notes, setNotes] = useState("");
 
-  const { data: loanData, isFetching: isFetchingLoans } = useQuery({
+  const { data: loanData } = useQuery({
     queryKey: ["loans"],
     queryFn: async () => {
-      const { data } = await axios.get("/api/loans");
+      const { data } = await axios.get<{
+        sent: Array<{ id: string; itemId: string; status: string }>;
+      }>("/api/loans");
       return data;
     },
     enabled: isOpen,
@@ -57,7 +58,7 @@ export function ExploreItemModal({
   const alreadyRequested = useMemo(() => {
     if (!loanData || !item) return false;
     return loanData.sent.some(
-      (req: any) =>
+      (req) =>
         req.itemId === item.id && ["PENDING", "APPROVED"].includes(req.status),
     );
   }, [loanData, item]);
@@ -65,10 +66,13 @@ export function ExploreItemModal({
   const activeRequest = useMemo(() => {
     if (!loanData || !item) return null;
     return loanData.sent.find(
-      (req: any) =>
+      (req) =>
         req.itemId === item.id && ["PENDING", "APPROVED"].includes(req.status),
     );
   }, [loanData, item]);
+
+  const referencePriceProviderLabel =
+    item?.referenceCatalogLink?.providerLabel ?? null;
 
   const createLoanMutation = useMutation({
     mutationFn: async (payload: { itemId: string; notes?: string }) => {
@@ -81,8 +85,11 @@ export function ExploreItemModal({
       setShowRequestForm(false);
       setNotes("");
     },
-    onError: (err: any) => {
-      const errMsg = err.response?.data?.error || t("common.error");
+    onError: (err: unknown) => {
+      const errMsg =
+        (axios.isAxiosError<{ error?: string }>(err) &&
+          err.response?.data?.error) ||
+        t("common.error");
       toast.error(errMsg);
     },
   });
@@ -99,7 +106,7 @@ export function ExploreItemModal({
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       toast.success(t("common.success") || "Action réussie");
     },
-    onError: (err: any) => {
+    onError: () => {
       toast.error(t("common.error"));
     },
   });
@@ -107,7 +114,7 @@ export function ExploreItemModal({
   if (!item) return null;
 
   const heroImage = item.backgroundImageUrl || getHeroImage(item);
-  const coverImage = getCoverImage(item);
+  const coverImage = item.imageUrl ?? null;
   const galleryImages = getGalleryImages(item).filter(
     (img) => img.url !== coverImage,
   );
@@ -271,7 +278,7 @@ export function ExploreItemModal({
               )}
             >
               {coverImage ? (
-                <Image
+                <RemoteImage
                   src={coverImage}
                   alt={item.name}
                   width={300}
@@ -310,7 +317,7 @@ export function ExploreItemModal({
                       Créateurs
                     </span>
                     <span className="text-xs font-semibold text-foreground truncate">
-                      {item.metadata.authors.map((a: any) => a.name).join(", ")}
+                      {item.metadata.authors.map((a) => a.name).join(", ")}
                     </span>
                   </div>
                 )}
@@ -322,9 +329,7 @@ export function ExploreItemModal({
                         Éditeurs
                       </span>
                       <span className="text-xs font-semibold text-foreground truncate">
-                        {item.metadata.publishers
-                          .map((p: any) => p.name)
-                          .join(", ")}
+                        {item.metadata.publishers.map((p) => p.name).join(", ")}
                       </span>
                     </div>
                   )}
@@ -349,22 +354,23 @@ export function ExploreItemModal({
                 </div>
               )}
 
-              {item.shelf?.type === "games" && (
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none flex items-center gap-1 select-none">
-                    PriceCharting
-                  </span>
-                  <a
-                    href={`https://www.pricecharting.com/fr/search-products?type=videogames&q=${encodeURIComponent(item.name || "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 hover:underline flex items-center gap-1 mt-0.5"
-                  >
-                    <Clock className="size-3" />
-                    Voir la cote
-                  </a>
-                </div>
-              )}
+              {item.referenceCatalogLink?.url &&
+                referencePriceProviderLabel && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none flex items-center gap-1 select-none">
+                      {referencePriceProviderLabel}
+                    </span>
+                    <a
+                      href={item.referenceCatalogLink.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 hover:underline flex items-center gap-1 mt-0.5"
+                    >
+                      <Clock className="size-3" />
+                      Voir la cote
+                    </a>
+                  </div>
+                )}
 
               {/* Description */}
               {(item.description || item.metadata?.description) && (
@@ -374,7 +380,7 @@ export function ExploreItemModal({
                     Description
                   </span>
                   <p className="text-xs leading-relaxed text-muted-foreground line-clamp-6">
-                    {item.description || item.metadata.description}
+                    {item.description || item.metadata?.description}
                   </p>
                 </div>
               )}
@@ -395,7 +401,7 @@ export function ExploreItemModal({
                   key={i}
                   className="relative h-20 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 shrink-0 bg-zinc-950/20"
                 >
-                  <Image
+                  <RemoteImage
                     src={img.url}
                     alt={`Illustration ${i + 1}`}
                     width={200}

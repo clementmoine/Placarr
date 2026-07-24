@@ -5,3 +5,19 @@ npm-debug.log
 README.md
 .next
 .git
+
+# Données runtime — vivent dans des volumes, jamais dans l'image.
+public/uploads
+.cache
+config
+
+# Secrets — l'environnement est fourni au runtime par compose.
+.env
+.env.*
+
+# Dev uniquement.
+scratch
+coverage
+tests/fixtures
+compose.yml
+compose.dev.yml

@@ -1,4 +1,4 @@
-import { fetchFromScreenScraper } from "../src/services/metadata";
+import { fetchFromScreenScraper } from "../src/services/metadataResolvers";
 
 async function main() {
   console.log("=== CALLING SCREEN SCRAPER FOR WHEELMAN ===");
@@ -6,7 +6,9 @@ async function main() {
   const title = "Wheelman";
   const platform = "Xbox 360";
 
-  console.log(`Searching with title="${title}", barcode="${barcode}", platform="${platform}"`);
+  console.log(
+    `Searching with title="${title}", barcode="${barcode}", platform="${platform}"`,
+  );
   try {
     const res = await fetchFromScreenScraper(title, barcode, platform);
     console.log("Result:", JSON.stringify(res, null, 2));

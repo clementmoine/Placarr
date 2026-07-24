@@ -5,11 +5,16 @@ import type { ShelfWithItemCount, ShelfWithItems } from "@/types/shelves";
 
 export const getShelves = (
   search?: string | null,
+  options?: { lite?: boolean },
 ): Promise<ShelfWithItemCount[]> => {
   const url = new URL("/api/shelves", window.location.origin);
 
   if (search && search.length >= 1) {
     url.searchParams.set("q", search);
+  }
+  // Skip bestItem enrichment — enough for shelf pickers in modals.
+  if (options?.lite) {
+    url.searchParams.set("lite", "1");
   }
 
   return axios.get(url.toString()).then((response) => response.data);

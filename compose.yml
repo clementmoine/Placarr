@@ -1,15 +1,46 @@
-version: "3"
-
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: placarr-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-placarr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-placarr}
+      POSTGRES_DB: ${POSTGRES_DB:-placarr}
+    ports:
+      # Exposé sur l'hôte pour le dev local (next dev sur le Mac).
+      - "5432:5432"
+    volumes:
+      - placarr-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-placarr}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Single image: Next + interactive worker + iCollect worker (init.sh).
   placarr:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
+    image: placarr:latest
     container_name: placarr
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_CONCURRENCY=6
+      - WORKER_ICOLLECT_CONCURRENCY=1
+      - ENABLE_WORKERS=1
+      - ENABLE_ICOLLECT_WORKER=1
+      - ENABLE_TITLE_IDF_BUILD=1
+      - ENABLE_TITLE_IDF_REFRESH=0
+      # - TITLE_IDF_REFRESH_SECONDS=86400
       - ADMIN_EMAIL=admin@placarr.com
       - ADMIN_NAME=Admin
       - ADMIN_PASSWORD=admin
@@ -18,12 +49,19 @@ services:
       - GUEST_PASSWORD=guest-password
       #- AVES_API_KEY=
       #- DATA_FOR_SEO_API_KEY=
-      #- SCALE_SERP_API_KEY=
-      #- SERP_API_KEY=
-      #- SERP_WOW_API_KEY=
-      #- VALUE_SERP_API_KEY=
       #- RAWG_API_KEY=
+      #- STEAMGRIDDB_API_KEY=
       #- TMDB_API_KEY=
     volumes:
       - ${ROOT:-.}/config/placarr:/config
+      # Données runtime — rien ne vit dans le conteneur : les uploads
+      # utilisateur et les index providers survivent aux recréations
+      # (down/up, nouvelle image). La base a déjà son volume `placarr-db`.
+      - placarr-uploads:/app/public/uploads
+      - placarr-cache:/app/.cache
     restart: unless-stopped
+
+volumes:
+  placarr-db:
+  placarr-uploads:
+  placarr-cache:

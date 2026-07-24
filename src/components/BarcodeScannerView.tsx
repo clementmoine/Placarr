@@ -1,9 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, CSSProperties } from "react";
 import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
+import { markCameraUnavailable } from "@/lib/client/hooks/useCameraAvailability";
 
 type ScannerProps = {
   onScan: (detectedCodes: IDetectedBarcode[]) => void;
@@ -23,25 +23,15 @@ type ScannerProps = {
   scanDelay?: number;
   allowMultiple?: boolean;
   sound?: boolean | string;
+  paused?: boolean;
 };
-
-const Scanner = dynamic<ScannerProps>(
-  () =>
-    import("@yudiel/react-qr-scanner").then(
-      (mod) => mod.Scanner as ComponentType<ScannerProps>,
-    ),
-  { ssr: false },
-);
 
 export type BarcodeScannerResult = IDetectedBarcode[];
 
-const BARCODE_FORMATS = [
-  "ean_13",
-  "ean_8",
-  "upc_a",
-  "upc_e",
-  "code_128",
-];
+const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"];
+const SCANNER_CLOSE_DELAY_MS = 150;
+
+export { SCANNER_CLOSE_DELAY_MS };
 
 const PRIMARY_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
   facingMode: { ideal: "environment" },
@@ -63,16 +53,68 @@ function isCameraWarmupTimeout(error: unknown): boolean {
   return /loading camera stream timed out/i.test(getErrorMessage(error));
 }
 
+function getErrorName(error: unknown): string {
+  if (error instanceof Error) return error.name;
+  return "";
+}
+
+function isCameraAccessUnavailable(error: unknown): boolean {
+  const errorDetails = `${getErrorName(error)} ${getErrorMessage(error)}`;
+
+  return /notallowed|notfound|security|permission|denied|permissions policy|requested device not found|could not start video source/i.test(
+    errorDetails,
+  );
+}
+
+/** Harmless when the scanner dialog closes while the camera stream is starting. */
+export function isBenignScannerMediaError(error: unknown): boolean {
+  const message = getErrorMessage(error);
+  return /play\(\) request was interrupted|media was removed from the document|The operation was aborted/i.test(
+    message,
+  );
+}
+
 export function BarcodeScannerView({
   onScan,
   onError,
+  paused = false,
 }: {
   onScan: (detectedCodes: BarcodeScannerResult) => void;
   onError?: (error: unknown) => void;
+  paused?: boolean;
 }) {
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onErrorRef = useRef(onError);
+  const [Scanner, setScanner] = useState<ComponentType<ScannerProps> | null>(
+    null,
+  );
+  const [scannerLoadError, setScannerLoadError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    import("@yudiel/react-qr-scanner")
+      .then((mod) => {
+        if (!isMounted) return;
+        setScanner(() => mod.Scanner as ComponentType<ScannerProps>);
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setScannerLoadError(true);
+        }
+        onErrorRef.current?.(error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -83,7 +125,8 @@ export function BarcodeScannerView({
   }, []);
 
   const constraints = useMemo(
-    () => (attempt === 0 ? PRIMARY_CAMERA_CONSTRAINTS : FALLBACK_CAMERA_CONSTRAINTS),
+    () =>
+      attempt === 0 ? PRIMARY_CAMERA_CONSTRAINTS : FALLBACK_CAMERA_CONSTRAINTS,
     [attempt],
   );
 
@@ -97,6 +140,9 @@ export function BarcodeScannerView({
 
   const handleError = useCallback(
     (error: unknown) => {
+      if (isBenignScannerMediaError(error)) {
+        return;
+      }
       if (isCameraWarmupTimeout(error) && attempt < 3) {
         setIsRetrying(true);
         if (retryTimerRef.current) {
@@ -110,10 +156,21 @@ export function BarcodeScannerView({
       }
 
       setIsRetrying(false);
+      if (isCameraAccessUnavailable(error)) {
+        markCameraUnavailable();
+      }
       onError?.(error);
     },
     [attempt, onError],
   );
+
+  if (!Scanner) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-black text-xs font-semibold text-white">
+        {scannerLoadError ? "Camera indisponible" : "Activation camera..."}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -121,6 +178,7 @@ export function BarcodeScannerView({
         key={attempt}
         onScan={handleScan}
         onError={handleError}
+        paused={paused}
         constraints={constraints}
         formats={BARCODE_FORMATS}
         scanDelay={250}

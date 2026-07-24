@@ -1,0 +1,53 @@
+/** Registered/trademark/copyright marks — decorative in catalog titles, noisy for search. */
+export function stripLegalMarkSymbols(name: string): string {
+  return name
+    .replace(/[\u00AE\u2122\u00A9\u2120\u2117]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function cleanSearchQuery(name: string): string {
+  let cleaned = stripLegalMarkSymbols(name);
+  cleaned = cleaned.replace(/\b\d{12,13}\b/g, "");
+  cleaned = cleaned.replace(
+    /^\s*(microsoft|nintendo|sony|sega|atari|capcom|konami|namco|bandai|ubisoft|square\s*enix|disney|ea|electronic\s*arts|warner\s*bros|wb|activision|mojang|rockstar|valve|blizzard)\b\s*[-–—:|]*\s*/gi,
+    "",
+  );
+  cleaned = cleaned.replace(
+    /\s*[-–—|]\s*.*?\b(ebay|amazon|fnac|pricecharting|rakuten|leboncoin|cdiscount|carrefour|auchan|boulanger|darty|cultura|decitre|deezer|discogs|qobuz|retroplace|micromania|philibert)\b.*/gi,
+    "",
+  );
+  cleaned = cleaned.replace(
+    /\b(ps1|ps2|ps3|ps4|ps5|playstation\s*\d?|xbox\s*(one|series\s*[xs]|\d{360})?|nintendo\s*switch|wii\s*u?|switch|ds|3ds|pc|dvd|vhs|blu\s*ray|bluray)\b/gi,
+    "",
+  );
+  cleaned = cleaned.replace(/\s*,?\s*le\s+jeu\s+vid[eé]o\s*$/gi, "");
+  cleaned = cleaned.replace(
+    /\b(good\s+condition|condition|pal|ntsc|fr|fra|fre|us|usa|uk|eu|eur|jp|jpn|import|jeu\s+vid[eé]o|jeu|game|jeux(?!\s+olympiques?)|sans\s+notice|avec\s+notice|boite\s+avec\s+notice|sans\s+boite|notice|boite|vf|vo|vost|vostfr|eng|ger|ita|spa)\b/gi,
+    "",
+  );
+  cleaned = cleaned.replace(/\s+\b(le|la|les)\s*$/gi, "");
+  cleaned = cleaned.replace(
+    /\s+\b(used|occasion|neuf|new|loose|cib|complet|complete)\s*$/gi,
+    "",
+  );
+  cleaned = cleaned.replace(
+    /\b(microsoft|sony|nintendo|sega|atari|capcom|konami|ubisoft|ea)\b\s*$/gi,
+    "",
+  );
+  // Keep bracketed volume markers ([No 120], [n°36]) — ChasseAuxLivres etc.
+  // encode the issue there. Drop other bracket noise (editions, SKUs).
+  cleaned = cleaned.replace(/\[([^\]]*)\]/g, (_match, inner: string) => {
+    if (
+      /\b(?:no\.?|n[°º]?|num(?:[eé]ro)?|vol(?:ume)?|tome|#)\s*\d+/i.test(inner)
+    ) {
+      return ` ${inner} `;
+    }
+    return " ";
+  });
+  cleaned = cleaned.replace(/\([^)]*\)/g, "");
+  cleaned = cleaned.replace(/\s*[-–—:|]+\s*$/g, "");
+  cleaned = cleaned.replace(/^\s*[-–—:|]+\s*/g, "");
+  cleaned = cleaned.replace(/\s+/g, " ");
+  return cleaned.trim();
+}

@@ -1,12 +1,12 @@
 // @ts-check
+import crypto from "node:crypto";
 import withSerwistInit from "@serwist/next";
+import { NEXT_IMAGE_CONFIG_REMOTE_PATTERNS } from "./src/core/enrich/media/nextImageRemoteHosts.ts";
 
-// You may want to use a more robust revision to cache
-// files more efficiently.
-// A viable option is `git rev-parse HEAD`.
 const revision = crypto.randomUUID();
 
 const withSerwist = withSerwistInit({
+  disable: process.env.NODE_ENV !== "production",
   cacheOnNavigation: true,
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
@@ -17,79 +17,19 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  eslint: {
-    ignoreDuringBuilds: true,
+  // Les données runtime ne font pas partie du build : sans cette exclusion le
+  // tracing standalone recopiait tout public/uploads (plusieurs Go) et .cache
+  // (index SQLite providers) dans .next/standalone à chaque build. Elles sont
+  // écrites/servies au runtime et persistées par des volumes Docker.
+  outputFileTracingExcludes: {
+    "*": ["./public/uploads/**", "./.cache/**"],
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "media.rawg.io",
-      },
-      {
-        protocol: "https",
-        hostname: "image.tmdb.org",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn-images.dzcdn.net",
-      },
-      {
-        protocol: "https",
-        hostname: "cf.geekdo-images.com",
-      },
-      {
-        protocol: "https",
-        hostname: "covers.openlibrary.org",
-      },
-      {
-        protocol: "https",
-        hostname: "coverproject.sfo2.cdn.digitaloceanspaces.com",
-      },
-      {
-        protocol: "https",
-        hostname: "img.chasse-aux-livres.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "storage.googleapis.com",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.achatmoinscher.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.igdb.com",
-      },
-      {
-        protocol: "https",
-        hostname: "neoclone.screenscraper.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "www.achatmoinscher.com",
-      },
-      {
-        protocol: "https",
-        hostname: "static.fnac-static.com",
-      },
-      {
-        protocol: "https",
-        hostname: "apriloshop.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "www.freakxy.fr",
-      },
-      {
-        protocol: "https",
-        hostname: "www.picclickimg.com",
-      },
-    ],
+    // Next.js caps remotePatterns at 50 — runtime host guard in `src/proxy.ts`.
+    remotePatterns: NEXT_IMAGE_CONFIG_REMOTE_PATTERNS,
   },
 };
 

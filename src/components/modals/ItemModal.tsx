@@ -1,27 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { z } from "zod";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import {
   SparklesIcon,
-  XIcon,
   Loader2,
   Upload,
   Link as LinkIcon,
   Check,
   Settings,
   Image as ImageIcon,
-  Info,
   Maximize2,
+  HardDrive,
 } from "lucide-react";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
@@ -38,31 +36,76 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ConditionIcon } from "@/components/ConditionIcon";
+import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Badge } from "@/components/ui/badge";
+import { itemConditionsForShelfType } from "@/core/collect/condition";
 
-import { isUrl } from "@/lib/isUrl";
-import { useDebounce } from "@/lib/hooks/useDebounce";
+import { isUrl } from "@/lib/shared/isUrl";
+import { useDebounce } from "@/lib/client/hooks/useDebounce";
+import { useItemModalMetadataMutations } from "@/lib/client/hooks/useItemModalMetadataMutations";
+import {
+  dumpTitleFromFileName,
+  formatRomHashSizeMiB,
+  hashRomFile,
+  romHashProgressPercent,
+  shouldWarnRomHashSize,
+} from "@/lib/client/hashRomFile";
+import {
+  buildItemModalSessionInit,
+  itemModalSessionKey,
+} from "@/lib/client/itemModalSession";
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
-import { uploadImage } from "@/lib/api/upload";
-import { getAspectRatio } from "@/lib/cardFormat";
-import { guessBestShelf, guessShelfByPlatformKey } from "@/lib/barcodeQuery";
-import { shelfPath } from "@/lib/slugs";
+import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { getAspectRatio } from "@/lib/text/cardFormat";
+import {
+  itemsBarcodeLabelKey,
+  itemsBarcodePlaceholderKey,
+} from "@/core/identify/shelfLabels";
+import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
+import { isAbortError } from "@/lib/http/abort";
+import { shelfPath } from "@/lib/routing/slugs";
 
-import { type Prisma, type Item, type Shelf, Condition } from "@prisma/client";
-import { cn } from "@/lib/utils";
+import {
+  type AttachmentType,
+  type Prisma,
+  type Item,
+  type Shelf,
+  Condition,
+} from "@prisma/client";
+import {
+  mergeCoverAttachmentsForPicker,
+  getCoverImage,
+  filterMetadataForShelfPlatform,
+  backgroundPickerAttachmentsForItem,
+} from "@/core/collect/media";
+import {
+  findAttachmentForUrl,
+  stripCropSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
+} from "@/core/enrich/media/coverUrl";
+import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
+import {
+  getAttachmentGalleryLabels,
+  type AttachmentDisplayLocale,
+} from "@/core/enrich/media/attachmentDisplayLabels";
+import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
+import { cn } from "@/lib/shared/utils";
 import type { ItemWithMetadata } from "@/types/items";
-import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
+import type { ShelfWithItemCount } from "@/types/shelves";
+import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
+import type {
+  MetadataResult,
+  MetadataAttachment,
+} from "@/types/metadataProvider";
+import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
+import { invalidateItemQueries } from "@/core/collect/queryCache";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,
@@ -76,6 +119,30 @@ function ShelfIcon({ type, className }: { type: string; className?: string }) {
   return (
     <ShelfTypeIcon type={type} className={cn("size-4 shrink-0", className)} />
   );
+}
+
+function attachmentTraitsOf(attachment: unknown) {
+  const traits = attachment as
+    | {
+        isFullWrapCoverSource?: boolean;
+        isGameMediaGallerySource?: boolean;
+        isMusicGallerySource?: boolean;
+        providerImageScoreAdjustment?: number;
+        coverProvenance?: string | null;
+        providerLabel?: string | null;
+        gridStyleCoverLabelsSource?: boolean;
+      }
+    | null
+    | undefined;
+  return {
+    isFullWrapCoverSource: traits?.isFullWrapCoverSource,
+    isGameMediaGallerySource: traits?.isGameMediaGallerySource,
+    isMusicGallerySource: traits?.isMusicGallerySource,
+    providerImageScoreAdjustment: traits?.providerImageScoreAdjustment,
+    coverProvenance: traits?.coverProvenance,
+    providerLabel: traits?.providerLabel,
+    gridStyleCoverLabelsSource: traits?.gridStyleCoverLabelsSource,
+  };
 }
 
 export function ItemModal({
@@ -102,6 +169,7 @@ export function ItemModal({
     barcode?: string;
     imageUrl?: string | null;
     shelfId?: string;
+    metadataPreview?: MetadataResult | null;
   };
 }) {
   const { t, locale } = useLocale();
@@ -167,39 +235,138 @@ export function ItemModal({
     resolver: zodResolver(itemSchema),
     defaultValues,
   });
-  const { isDirty } = form.formState;
 
   const debounce = useDebounce(1000);
 
   const queryClient = useQueryClient();
 
   const { data: item } = useQuery<ItemWithMetadata>({
-    queryKey: ["item", itemId],
-    queryFn: () => getItem(itemId, shelfId),
+    queryKey: ["shelf", shelfId, "items", itemId],
+    queryFn: () => getItem(itemId!, shelfId),
+    enabled: Boolean(isOpen && itemId && shelfId),
+    refetchOnMount: "always",
     initialData: () =>
-      queryClient
-        .getQueryData<Item[]>(["shelves"])
-        ?.find((s) => s.id === itemId) as ItemWithMetadata | undefined,
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
+      queryClient.getQueryData<ItemWithMetadata>([
+        "shelf",
+        shelfId,
+        "items",
+        itemId,
+      ]),
   });
+
+  useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
 
   const { data: shelf } = useQuery<Shelf>({
     queryKey: ["shelf", shelfId],
     queryFn: () => getShelf(shelfId),
-    enabled: !!shelfId,
+    enabled: Boolean(isOpen && shelfId),
+    initialData: () => queryClient.getQueryData<Shelf>(["shelf", shelfId]),
   });
 
-  const { data: shelves } = useQuery<Shelf[]>({
-    queryKey: ["shelves"],
-    queryFn: () => getShelves(),
+  // Lite list for the picker — skip bestItem; reuse grid cache while it loads.
+  const { data: shelves } = useQuery<ShelfWithItemCount[]>({
+    queryKey: ["shelves", "picker"],
+    queryFn: () => getShelves(null, { lite: true }),
     enabled: isOpen,
+    placeholderData: () =>
+      queryClient.getQueryData<ShelfWithItemCount[]>(["shelves", "picker"]) ??
+      queryClient.getQueryData<ShelfWithItemCount[]>(["shelves"]),
   });
 
-  const currentShelfId = form.watch("shelfId");
+  const hasPrefilledScanImage =
+    !itemId &&
+    typeof prefilledValues?.imageUrl === "string" &&
+    prefilledValues.imageUrl.trim().length > 0;
+  const prefilledScanImageUrl = hasPrefilledScanImage
+    ? prefilledValues?.imageUrl?.trim() || null
+    : null;
+
+  // useWatch (abonnement par champ) au lieu de form.watch : API compatible
+  // avec le compilateur React et re-rendus limités au champ concerné.
+  const currentShelfId = useWatch({ control: form.control, name: "shelfId" });
+
+  // Radix SelectValue stays blank until a matching SelectItem exists — seed the
+  // current shelf so the trigger never flashes empty while the list loads.
+  const shelfOptions = useMemo(() => {
+    type Opt = { id: string; name: string; type?: Shelf["type"] | null };
+    const byId = new Map<string, Opt>();
+    for (const entry of shelves ?? []) {
+      byId.set(entry.id, {
+        id: entry.id,
+        name: entry.name,
+        type: entry.type,
+      });
+    }
+    const cachedCurrent =
+      queryClient.getQueryData<Shelf>(["shelf", shelfId]) ??
+      queryClient
+        .getQueryData<ShelfWithItemCount[]>(["shelves"])
+        ?.find((entry) => entry.id === shelfId);
+    const seed = (
+      id: string | null | undefined,
+      name?: string | null,
+      type?: Shelf["type"] | null,
+    ) => {
+      if (!id || byId.has(id)) return;
+      byId.set(id, {
+        id,
+        name: name?.trim() || id,
+        type: type ?? null,
+      });
+    };
+    seed(
+      shelfId,
+      shelf?.name ?? cachedCurrent?.name,
+      shelf?.type ?? cachedCurrent?.type ?? shelfType,
+    );
+    seed(
+      currentShelfId,
+      shelf?.name ?? cachedCurrent?.name,
+      shelf?.type ?? cachedCurrent?.type ?? shelfType,
+    );
+    seed(item?.shelfId, item?.shelf?.name, item?.shelf?.type);
+    return Array.from(byId.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+  }, [
+    shelves,
+    shelfId,
+    shelf?.name,
+    shelf?.type,
+    shelfType,
+    currentShelfId,
+    item?.shelfId,
+    item?.shelf?.name,
+    item?.shelf?.type,
+    queryClient,
+  ]);
+
   const selectedShelf = shelves?.find((s) => s.id === currentShelfId);
   const activeShelfType = selectedShelf?.type || shelfType;
   const activeShelf = selectedShelf || shelf;
+
+  const activeShelfForMedia = useMemo(
+    () => ({
+      type: activeShelfType,
+      name:
+        activeShelf?.name ??
+        shelves?.find((entry) => entry.id === currentShelfId)?.name ??
+        shelves?.find((entry) => entry.id === shelfId)?.name ??
+        item?.shelf?.name ??
+        shelf?.name ??
+        currentShelfId ??
+        shelfId,
+    }),
+    [
+      activeShelf?.name,
+      activeShelfType,
+      currentShelfId,
+      item?.shelf?.name,
+      shelf?.name,
+      shelfId,
+      shelves,
+    ],
+  );
 
   const itemAspectRatio = useMemo(() => {
     return getAspectRatio(
@@ -214,35 +381,19 @@ export function ItemModal({
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
-  const metadataPreviewRequestRef = useRef<string | null>(null);
-  const metadataSuggestionsRequestRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      metadataPreviewRequestRef.current = null;
-      metadataSuggestionsRequestRef.current = null;
-      setPosterPage(1);
-      setBgPage(1);
-      if (prefilledValues?.shelfId) {
-        setGuessedShelfId(prefilledValues.shelfId);
-      } else {
-        setGuessedShelfId(null);
-      }
-      if (prefilledValues?.name) {
-        setNameSuggestion(prefilledValues.name);
-      } else {
-        setNameSuggestion(null);
-      }
-    }
-  }, [isOpen, prefilledValues]);
-
+  const watchedName = useWatch({ control: form.control, name: "name" });
+  const watchedCondition = useWatch({ control: form.control, name: "condition" });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
-    const val = (form.watch("name") || "").trim().toLowerCase();
+    const val = (watchedName || "").trim().toLowerCase();
     if (val === nameSuggestion.trim().toLowerCase()) return true;
     return suggestions.some((s) => s.trim().toLowerCase() === val);
-  }, [form.watch("name"), nameSuggestion, suggestions]);
+  }, [watchedName, nameSuggestion, suggestions]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isHashingDump, setIsHashingDump] = useState(false);
+  const [hashDumpPercent, setHashDumpPercent] = useState(0);
+  const dumpFileInputRef = useRef<HTMLInputElement>(null);
   interface GameMatch {
     name: string;
     suggestions: string[];
@@ -255,104 +406,164 @@ export function ItemModal({
     "general" | "poster" | "background" | "info"
   >("general");
 
-  const [initializedItemId, setInitializedItemId] = useState<
-    string | null | undefined
-  >(undefined);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState("");
-  const [showGenUrlInput, setShowGenUrlInput] = useState(false);
-  const [genUrlInputValue, setGenUrlInputValue] = useState("");
 
   const [showBgUrlInput, setShowBgUrlInput] = useState(false);
   const [bgUrlInputValue, setBgUrlInputValue] = useState("");
-  const [lastInitializedShelfId, setLastInitializedShelfId] = useState<string | null>(null);
+  const lastInitializedShelfIdRef = useRef<string | null>(null);
+  const prefilledPreviewRequestRef = useRef<string | null>(null);
 
-  const [fetchedMetadata, setFetchedMetadata] = useState<any>(null);
-  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+  const [fetchedMetadata, setFetchedMetadata] = useState<MetadataResult | null>(
+    null,
+  );
   const [posterPage, setPosterPage] = useState(1);
   const [bgPage, setBgPage] = useState(1);
+
+  const sessionKey = itemModalSessionKey({
+    isOpen,
+    itemId,
+    item,
+    prefilledValues,
+    shelfId,
+  });
+  const [sessionState, setSessionState] = useState<{
+    key: string;
+    init: ReturnType<typeof buildItemModalSessionInit>;
+  } | null>(null);
+  if (sessionKey !== sessionState?.key) {
+    if (sessionKey) {
+      const init = buildItemModalSessionInit({
+        item,
+        prefilledValues,
+        shelfId,
+        activeShelfForMedia,
+      });
+      setSessionState({ key: sessionKey, init });
+      setSuggestions(init.suggestions);
+      setNameSuggestion(init.nameSuggestion);
+      setActiveTab(defaultTab || "general");
+      setFetchedMetadata(init.fetchedMetadata);
+      setGuessedShelfId(null);
+      setMatches([]);
+      setSelectedMatch(null);
+      setPosterPage(1);
+      setBgPage(1);
+    } else if (!isOpen && sessionState !== null) {
+      setSessionState(null);
+    }
+  }
+
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
-  const fetchMetadataPreview = useCallback(
-    async (name: string, barcode?: string, forceOverwrite = false) => {
-      if (!name || !activeShelfType) return;
-      metadataPreviewRequestRef.current = [
-        activeShelfType,
-        activeShelf?.name || "",
-        name.trim().toLowerCase(),
-        (barcode || "").trim(),
-      ].join("|");
-      setIsFetchingMetadata(true);
-      try {
-        const metadata = await getMetadataPreview(
-          name,
-          activeShelfType,
-          barcode || null,
-          activeShelf?.name || null,
-        );
-        if (metadata) {
-          setFetchedMetadata(metadata);
+  const applyMetadataPreviewToForm = useCallback(
+    (
+      metadata: MetadataResult,
+      options: {
+        forceOverwrite?: boolean;
+        barcodeContext?: string;
+      } = {},
+    ) => {
+      const forceOverwrite = options.forceOverwrite ?? false;
+      const barcodeContext = options.barcodeContext;
 
-          if (metadata.imageUrl) {
-            // Only auto-set imageUrl if the form doesn't already have one or if forceOverwrite is enabled.
-            // Chasse Aux Livres cover (from barcode scan) is the preferred default
-            // — metadata images (TMDB etc.) are available as alternatives in the poster grid.
-            if (forceOverwrite || !form.getValues("imageUrl")) {
-              form.setValue("imageUrl", metadata.imageUrl, {
-                shouldDirty: true,
-              });
-            }
-          }
-          const bgAttachment =
-            metadata.attachments?.find((a: any) => a.type === "background") ||
-            metadata.attachments?.find((a: any) => a.type === "screenshot") ||
-            metadata.attachments?.find((a: any) => a.type === "artwork");
-          if (bgAttachment?.url) {
-            if (forceOverwrite || !form.getValues("backgroundImageUrl")) {
-              form.setValue("backgroundImageUrl", bgAttachment.url, {
-                shouldDirty: true,
-              });
-            }
-          }
+      setFetchedMetadata(
+        filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ??
+          metadata,
+      );
+
+      const currentBarcode = (
+        barcodeContext ||
+        form.getValues("barcode") ||
+        ""
+      ).trim();
+      const shelfPlatformKey =
+        activeShelfType === "games"
+          ? detectShelfGamePlatformKey(activeShelfForMedia?.name)
+          : undefined;
+      const userInitiatedBarcodeLookup = Boolean(barcodeContext?.trim());
+
+      if (
+        metadata.barcode &&
+        !currentBarcode &&
+        (!shelfPlatformKey || userInitiatedBarcodeLookup)
+      ) {
+        form.setValue("barcode", metadata.barcode, {
+          shouldDirty: true,
+        });
+      }
+
+      if (metadata.description?.trim()) {
+        if (forceOverwrite || !form.getValues("description")?.trim()) {
+          form.setValue("description", metadata.description.trim(), {
+            shouldDirty: true,
+          });
         }
-      } catch (err) {
-        console.error("Error fetching metadata preview:", err);
-      } finally {
-        setIsFetchingMetadata(false);
+      }
+
+      if (metadata.imageUrl) {
+        const currentImageUrl = form.getValues("imageUrl");
+        const canReplaceScanImage =
+          activeShelfType === "games" &&
+          hasPrefilledScanImage &&
+          typeof currentImageUrl === "string" &&
+          currentImageUrl.trim() === prefilledScanImageUrl;
+
+        if (forceOverwrite || !currentImageUrl || canReplaceScanImage) {
+          form.setValue("imageUrl", metadata.imageUrl, {
+            shouldDirty: true,
+          });
+        }
+      }
+
+      const bgAttachment =
+        metadata.attachments?.find((a) => a.type === "background") ||
+        metadata.attachments?.find((a) => a.type === "screenshot") ||
+        metadata.attachments?.find((a) => a.type === "artwork");
+      if (bgAttachment?.url) {
+        if (forceOverwrite || !form.getValues("backgroundImageUrl")) {
+          form.setValue("backgroundImageUrl", bgAttachment.url, {
+            shouldDirty: true,
+          });
+        }
       }
     },
-    [activeShelfType, activeShelf?.name, form],
+    [
+      activeShelfForMedia,
+      activeShelfType,
+      form,
+      hasPrefilledScanImage,
+      prefilledScanImageUrl,
+    ],
   );
 
-  const fetchNameSuggestions = useCallback(
-    async (name: string) => {
-      const trimmed = name.trim();
-      if (!trimmed || trimmed.length < 2 || !activeShelfType) return;
-
-      const requestKey = `${activeShelfType}|${trimmed.toLowerCase()}`;
-      metadataSuggestionsRequestRef.current = requestKey;
-
-      try {
-        const nextSuggestions = await getMetadataSuggestions(
-          trimmed,
-          activeShelfType,
-          activeShelf?.name || null,
-        );
-
-        if (metadataSuggestionsRequestRef.current !== requestKey) return;
-        if (!nextSuggestions || nextSuggestions.length === 0) return;
-
-        const cleanSuggestions = Array.from(
-          new Set(nextSuggestions.filter((suggestion) => suggestion.trim())),
-        );
-        setSuggestions(cleanSuggestions);
-        setNameSuggestion(cleanSuggestions[0] || null);
-      } catch (err) {
-        console.error("Error fetching name suggestions:", err);
-      }
+  const {
+    fetchMetadataPreview,
+    fetchNameSuggestions,
+    isFetchingMetadata,
+    cancelMetadataRequests,
+  } = useItemModalMetadataMutations({
+    activeShelfType,
+    activeShelfName: activeShelf?.name ?? null,
+    applyMetadataPreviewToForm,
+    onSuggestionsLoaded: (cleanSuggestions, primary) => {
+      setSuggestions(cleanSuggestions);
+      setNameSuggestion(primary);
     },
-    [activeShelf?.name, activeShelfType],
-  );
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      cancelMetadataRequests();
+      prefilledPreviewRequestRef.current = null;
+    }
+  }, [isOpen, cancelMetadataRequests]);
+
+  useEffect(() => {
+    if (watchedCondition !== "loose") return;
+    if (itemConditionsForShelfType(activeShelfType).includes("loose")) return;
+    form.setValue("condition", "used");
+  }, [activeShelfType, form, watchedCondition]);
 
   const handleNameChange = useCallback(
     (name: string) => {
@@ -370,8 +581,57 @@ export function ItemModal({
     [form, debounce, fetchMetadataPreview, fetchNameSuggestions],
   );
 
+  const handleDumpFileSelect = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file || activeShelfType !== "games") return;
+
+      if (shouldWarnRomHashSize(file.size)) {
+        toast.warning(
+          t("items.hashDumpLargeWarn").replace(
+            "{size}",
+            formatRomHashSizeMiB(file.size),
+          ),
+        );
+      }
+
+      setIsHashingDump(true);
+      setHashDumpPercent(0);
+      try {
+        const checksums = await hashRomFile(file, {
+          onProgress: (progress) => {
+            setHashDumpPercent(romHashProgressPercent(progress.ratio));
+          },
+        });
+        const currentName = (form.getValues("name") || "").trim();
+        const lookupName = currentName || dumpTitleFromFileName(file.name);
+        if (!currentName && lookupName) {
+          form.setValue("name", lookupName, { shouldDirty: true });
+        }
+        fetchMetadataPreview(
+          lookupName,
+          form.getValues("barcode") || "",
+          true,
+          checksums,
+        );
+        toast.success(t("items.hashDumpDone"));
+      } catch (error) {
+        console.error("Dump hash failed:", error);
+        toast.error(t("items.hashDumpFailed"));
+      } finally {
+        setIsHashingDump(false);
+        setHashDumpPercent(0);
+      }
+    },
+    [activeShelfType, fetchMetadataPreview, form, t],
+  );
+
   const availableBackgrounds = useMemo(() => {
-    const metadata = item?.metadata || fetchedMetadata;
+    const metadata = filterMetadataForShelfPlatform(
+      item?.metadata || fetchedMetadata,
+      activeShelfForMedia,
+    );
     if (!metadata) return [];
 
     const urls = new Set<string>();
@@ -381,31 +641,52 @@ export function ItemModal({
       label: string;
       source?: string | null;
       role?: string | null;
+      galleryProvider?: string | null;
+      gallerySourceNames?: string[];
+      galleryDetail?: string | null;
     }[] = [];
 
-    // Add attachments of type background, artwork, screenshot, image
-    const attachments = metadata.attachments || [];
-    attachments.forEach((a: any) => {
-      if (
-        a.url &&
-        !urls.has(a.url) &&
-        ["background", "artwork", "screenshot", "image"].includes(a.type)
-      ) {
-        urls.add(a.url);
-        list.push({
-          url: a.url,
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
+
+    backgroundPickerAttachmentsForItem(
+      metadata,
+      activeShelfForMedia,
+      locale,
+    ).forEach((a) => {
+      if (!a.url || urls.has(a.url)) return;
+      urls.add(a.url);
+      const gallery = getAttachmentGalleryLabels(
+        {
           type: a.type,
-          label: a.type.charAt(0).toUpperCase() + a.type.slice(1),
-          source: a.source,
           role: a.role,
-        });
-      }
+          title: a.title,
+          source: a.source,
+          providerLabel: a.providerLabel,
+          sourceNames: a.sourceNames,
+          gridStyleCoverLabelsSource: a.gridStyleCoverLabelsSource,
+        },
+        displayLocale,
+      );
+      list.push({
+        url: a.url,
+        type: a.type,
+        label: gallery.caption,
+        source: a.source,
+        role: a.role,
+        galleryProvider: gallery.provider,
+        gallerySourceNames: gallery.sourceNames,
+        galleryDetail: gallery.detail,
+      });
     });
 
     return list;
-  }, [item?.metadata, fetchedMetadata]);
+  }, [item?.metadata, fetchedMetadata, locale, activeShelfForMedia]);
 
-  const currentBackgroundUrl = form.watch("backgroundImageUrl");
+  const currentBackgroundUrl = useWatch({
+    control: form.control,
+    name: "backgroundImageUrl",
+  });
 
   const finalBackgrounds = useMemo(() => {
     const list = [...availableBackgrounds];
@@ -435,93 +716,363 @@ export function ItemModal({
   );
 
   const availableImages = useMemo(() => {
-    const metadata = item?.metadata || fetchedMetadata;
+    const rawMetadata =
+      itemId && item?.metadata
+        ? item.metadata
+        : (item?.metadata ?? fetchedMetadata);
+    const metadata = filterMetadataForShelfPlatform(
+      rawMetadata,
+      activeShelfForMedia,
+    );
 
     const urls = new Set<string>();
-    const list: {
+    const attachments: Array<{
+      type: AttachmentType;
       url: string;
-      type: string;
-      label: string;
       source?: string | null;
       role?: string | null;
-    }[] = [];
+      title?: string | null;
+      isFullWrapCoverSource?: boolean;
+      isGameMediaGallerySource?: boolean;
+      isMusicGallerySource?: boolean;
+      providerImageScoreAdjustment?: number;
+      coverProvenance?: string | null;
+      providerLabel?: string | null;
+      sourceNames?: string[] | null;
+      width?: number | null;
+      height?: number | null;
+      meanLuminance?: number | null;
+      darkPixelRatio?: number | null;
+    }> = [];
 
-    // Add Chasse Aux Livres barcode cover first — it's a photo of the physical object
-    const barcodeCover = prefilledValues?.imageUrl || item?.imageUrl;
-    if (barcodeCover && !urls.has(barcodeCover)) {
-      urls.add(barcodeCover);
-      list.push({
-        url: barcodeCover,
-        type: "cover",
-        label: "Chasse Aux Livres",
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
+
+    const addAttachment = (entry: {
+      type: AttachmentType | string;
+      url: string;
+      source?: string | null;
+      role?: string | null;
+      title?: string | null;
+      isFullWrapCoverSource?: boolean;
+      isGameMediaGallerySource?: boolean;
+      isMusicGallerySource?: boolean;
+      providerImageScoreAdjustment?: number;
+      coverProvenance?: string | null;
+      providerLabel?: string | null;
+      sourceNames?: string[] | null;
+      width?: number | null;
+      height?: number | null;
+      meanLuminance?: number | null;
+      darkPixelRatio?: number | null;
+    }) => {
+      if (!entry.url) return;
+      const existingIndex = attachments.findIndex((attachment) =>
+        urlsReferToSameLocalizedImage(attachment.url, entry.url),
+      );
+      if (existingIndex >= 0) {
+        const existing = attachments[existingIndex]!;
+        // Honor pin (`user`) often shares the provider file URL — upgrade the
+        // row so the chip shows Booknode / SensCritique, not "Perso".
+        if (
+          existing.source === "user" &&
+          entry.source &&
+          entry.source !== "user"
+        ) {
+          attachments[existingIndex] = {
+            ...existing,
+            ...entry,
+            type: entry.type as AttachmentType,
+            url: entry.url,
+          };
+        }
+        return;
+      }
+      urls.add(entry.url);
+      attachments.push({
+        type: entry.type as AttachmentType,
+        url: entry.url,
+        source: entry.source,
+        role: entry.role,
+        title: entry.title,
+        isFullWrapCoverSource: entry.isFullWrapCoverSource,
+        isGameMediaGallerySource: entry.isGameMediaGallerySource,
+        isMusicGallerySource: entry.isMusicGallerySource,
+        providerImageScoreAdjustment: entry.providerImageScoreAdjustment,
+        coverProvenance: entry.coverProvenance,
+        providerLabel: entry.providerLabel,
+        sourceNames: entry.sourceNames,
+        width: entry.width,
+        height: entry.height,
+        meanLuminance: entry.meanLuminance,
+        darkPixelRatio: entry.darkPixelRatio,
+      });
+    };
+
+    // URLs that already exist as real metadata attachments, with their true
+    // type/source. The currently-selected cover is almost always one of these;
+    // re-injecting it below as a transient "barcode"/"image" entry would give it
+    // a different score and rank, so the whole list reordered every time the
+    // selection changed. Only inject the scanned/selected cover when it is NOT
+    // already a metadata attachment (e.g. a fresh scan not yet in metadata).
+    const metadataImageUrls = new Set<string>();
+    if (metadata?.imageUrl) metadataImageUrls.add(metadata.imageUrl);
+    for (const attachment of metadata?.attachments || []) {
+      if (attachment.url) metadataImageUrls.add(attachment.url);
+    }
+
+    // The stored cover is cropped to a new "_crop" file, so its URL no longer
+    // matches the gallery attachment it was derived from. Index attachments by
+    // their crop-normalized URL so the cover still inherits its real provenance
+    // (source + region role) instead of looking like an orphan.
+    const stripCrop = stripCropSuffixFromUrl;
+    const attachmentByNormalizedUrl = new Map<string, MetadataAttachment>();
+    for (const attachment of metadata?.attachments || []) {
+      if (attachment.url) {
+        attachmentByNormalizedUrl.set(stripCrop(attachment.url), attachment);
+      }
+    }
+
+    // A freshly-scanned cover (prefill, usually a remote URL not yet enriched)
+    // is the only thing that should read as "Scan".
+    const scannedCover = prefilledValues?.imageUrl;
+    if (
+      scannedCover &&
+      typeof scannedCover === "string" &&
+      !metadataImageUrls.has(scannedCover)
+    ) {
+      addAttachment({
+        url: scannedCover,
+        type: activeShelfType === "games" ? "image" : "cover",
         source: "barcode",
       });
     }
 
+    // A persisted local cover keeps the provenance of the attachment it was
+    // cropped from (so its region badge survives); it falls back to the user's
+    // own selection — never "Scan".
+    const persistedCover = item?.imageUrl;
+    if (
+      persistedCover &&
+      typeof persistedCover === "string" &&
+      persistedCover !== scannedCover &&
+      !metadataImageUrls.has(persistedCover)
+    ) {
+      const matching = attachmentByNormalizedUrl.get(stripCrop(persistedCover));
+      addAttachment({
+        url: persistedCover,
+        type:
+          matching?.type || (activeShelfType === "games" ? "image" : "cover"),
+        // Provider covers are localized to `/uploads` before metadata lands —
+        // do not invent "user"/"Perso" without a real gallery row.
+        source: matching?.source || null,
+        role: matching?.role,
+        title: matching?.title,
+        ...attachmentTraitsOf(matching),
+      });
+    }
+
+    // The current cover is usually a cropped derivative of one gallery image.
+    // Once that crop is shown as the cover, its uncropped twin is a redundant
+    // duplicate — drop it from the list. (It comes back automatically when the
+    // user selects a different cover, since the gallery is rebuilt uncropped.)
+    const currentCover = item?.imageUrl;
+    const isRedundantTwinOfCover = (url: string) =>
+      typeof currentCover === "string" &&
+      url !== currentCover &&
+      stripCrop(url) === stripCrop(currentCover);
+
     if (metadata) {
-      // Add default metadata imageUrl
-      if (metadata.imageUrl && !urls.has(metadata.imageUrl)) {
-        urls.add(metadata.imageUrl);
+      if (metadata.imageUrl && !isRedundantTwinOfCover(metadata.imageUrl)) {
         const matchingAttachment = metadata.attachments?.find(
-          (a: any) => a.url === metadata.imageUrl,
+          (a) => a.url === metadata.imageUrl,
         );
-        list.push({
+        addAttachment({
           url: metadata.imageUrl,
           type: "cover",
-          label: t("items.editTabs.defaultMetadataImage"),
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
+          title: matchingAttachment?.title,
+          ...attachmentTraitsOf(matchingAttachment),
         });
       }
 
-      // Add attachments
-      const attachments = metadata.attachments || [];
-      attachments.forEach((a: any) => {
+      for (const attachment of metadata.attachments || []) {
         if (
-          a.url &&
-          !urls.has(a.url) &&
-          ["cover", "artwork", "image"].includes(a.type)
+          attachment.url &&
+          ["cover", "artwork", "image"].includes(attachment.type) &&
+          !isRedundantTwinOfCover(attachment.url)
         ) {
-          urls.add(a.url);
-          list.push({
-            url: a.url,
-            type: a.type,
-            label: a.type.charAt(0).toUpperCase() + a.type.slice(1),
-            source: a.source,
-            role: a.role,
+          addAttachment({
+            url: attachment.url,
+            type: attachment.type,
+            source: attachment.source,
+            role: attachment.role,
+            title: attachment.title,
+            ...attachmentTraitsOf(attachment),
           });
         }
+      }
+    }
+
+    const mediaForCover = {
+      imageUrl: item?.imageUrl ?? prefilledValues?.imageUrl ?? null,
+      updatedAt: item?.updatedAt,
+      condition: watchedCondition ?? item?.condition ?? null,
+      metadata,
+      shelf: activeShelfForMedia,
+    };
+
+    const orderedCovers = mergeCoverAttachmentsForPicker(
+      mediaForCover,
+      attachments,
+      locale,
+    );
+
+    // "Par défaut" = top of the dynamic gallery ranking (same as displayed cover
+    // when the user has not explicitly picked one).
+    const defaultCoverUrl =
+      orderedCovers[0]?.url ??
+      getCoverImage({ ...mediaForCover, imageUrl: null }, locale);
+
+    return orderedCovers.map((attachment) => {
+      const gallery = getAttachmentGalleryLabels(
+        {
+          type: attachment.type,
+          role: attachment.role,
+          title: attachment.title,
+          source: attachment.source,
+          providerLabel: attachment.providerLabel,
+          sourceNames: attachment.sourceNames,
+          gridStyleCoverLabelsSource:
+            attachment.gridStyleCoverLabelsSource ??
+            attachmentTraitsOf(attachment).gridStyleCoverLabelsSource,
+        },
+        displayLocale,
+      );
+      const label =
+        attachment.source === "barcode"
+          ? t("items.editTabs.scannedImage")
+          : defaultCoverUrl &&
+              urlsReferToSameLocalizedImage(defaultCoverUrl, attachment.url)
+            ? t("items.editTabs.defaultMetadataImage")
+            : gallery.caption;
+
+      return {
+        url: attachment.url,
+        type: attachment.type,
+        label,
+        source: attachment.source,
+        role: attachment.role,
+        galleryProvider: gallery.provider,
+        gallerySourceNames: gallery.sourceNames,
+        galleryDetail: gallery.detail,
+      };
+    });
+  }, [
+    itemId,
+    item,
+    fetchedMetadata,
+    prefilledValues?.imageUrl,
+    activeShelfForMedia,
+    activeShelfType,
+    watchedCondition,
+    locale,
+    t,
+  ]);
+
+  const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
+  const [pendingUploadPreviewUrl, setPendingUploadPreviewUrl] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    if (!(currentImageUrl instanceof File)) {
+      setPendingUploadPreviewUrl(null);
+      return;
+    }
+    const previewUrl = URL.createObjectURL(currentImageUrl);
+    setPendingUploadPreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [currentImageUrl]);
+
+  const finalImages = useMemo(() => {
+    const rawMetadata =
+      itemId && item?.metadata
+        ? item.metadata
+        : (item?.metadata ?? fetchedMetadata);
+    const metadata = filterMetadataForShelfPlatform(
+      rawMetadata,
+      activeShelfForMedia,
+    );
+    const displayLocale: AttachmentDisplayLocale =
+      locale === "en" ? "en" : "fr";
+    const list = [...availableImages];
+
+    if (pendingUploadPreviewUrl) {
+      list.unshift({
+        url: pendingUploadPreviewUrl,
+        type: "image",
+        label: t("items.editTabs.chooseImage"),
+        source: "user",
+        role: null,
+        galleryProvider: "Perso",
+        gallerySourceNames: ["Perso"],
+        galleryDetail: null,
+      });
+      return list;
+    }
+
+    if (
+      currentImageUrl &&
+      typeof currentImageUrl === "string" &&
+      !availableImages.some((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentImageUrl),
+      )
+    ) {
+      const provenance = findAttachmentForUrl(
+        metadata?.attachments || [],
+        currentImageUrl,
+      );
+      const gallery = provenance
+        ? getAttachmentGalleryLabels(
+            {
+              type: provenance.type,
+              role: provenance.role,
+              title: provenance.title,
+              source: provenance.source,
+              providerLabel: attachmentTraitsOf(provenance).providerLabel,
+              gridStyleCoverLabelsSource:
+                attachmentTraitsOf(provenance).gridStyleCoverLabelsSource,
+            },
+            displayLocale,
+          )
+        : null;
+
+      list.unshift({
+        url: currentImageUrl,
+        type: provenance?.type ?? "image",
+        label: gallery?.caption ?? t("items.editTabs.chooseImage"),
+        source: provenance?.source ?? null,
+        role: provenance?.role ?? null,
+        galleryProvider: gallery?.provider ?? null,
+        gallerySourceNames: gallery?.sourceNames ?? [],
+        galleryDetail: gallery?.detail ?? null,
       });
     }
 
     return list;
   }, [
+    availableImages,
+    currentImageUrl,
+    pendingUploadPreviewUrl,
+    itemId,
     item?.metadata,
-    item?.imageUrl,
     fetchedMetadata,
-    prefilledValues?.imageUrl,
+    activeShelfForMedia,
+    locale,
     t,
   ]);
-
-  const currentImageUrl = form.watch("imageUrl");
-
-  const finalImages = useMemo(() => {
-    const list = [...availableImages];
-
-    if (
-      currentImageUrl &&
-      typeof currentImageUrl === "string" &&
-      !availableImages.some((img) => img.url === currentImageUrl)
-    ) {
-      list.unshift({
-        url: currentImageUrl,
-        type: "custom",
-        label: t("items.editTabs.chooseImage"),
-      });
-    }
-
-    return list;
-  }, [availableImages, currentImageUrl, t]);
 
   const totalPosterPages = useMemo(
     () => Math.ceil(finalImages.length / 12) || 1,
@@ -568,53 +1119,39 @@ export function ItemModal({
           `/api/barcode?q=${barcode}${typeParam}`,
         );
         const data = response.data;
+        const displayName = data?.displayName || data?.cleanName;
+        const metadataTitle = data?.cleanName || data?.displayName;
 
         // Set guessed shelf
         if (shelves && shelves.length > 0) {
-          const matches = data?.matches || [];
+          const matches: GameMatch[] = data?.matches || [];
           const suggestions = data?.suggestions || [];
           const cleanName = data?.cleanName;
           const rawNames = data?.rawNames || [];
-          const resolvedShelfType = data?.shelfType;
           const platformKey = data?.platformKey;
+          // Physical-format + brand clues ("DVD", "DISNEY JUNIOR") lead so a
+          // matching format shelf is recommended over a generic same-type one.
+          const shelfHints = shelfSearchHintsFromBarcodePayload(data || {});
 
           const allSearchNames = Array.from(
             new Set([
+              ...shelfHints,
+              ...(displayName ? [displayName] : []),
               ...(cleanName ? [cleanName] : []),
               ...rawNames,
               ...suggestions,
-              ...matches.map((m: any) => m.name),
+              ...matches.map((m) => m.name),
             ]),
           ).filter(Boolean) as string[];
 
-          let guessedId: string | null = null;
-          const platformGuess = guessShelfByPlatformKey(platformKey, shelves);
-          if (platformGuess) {
-            guessedId = platformGuess.shelfId;
-          }
+          const shelfGuess = guessShelfFromBarcodeLookup({
+            platformKey,
+            searchNames: allSearchNames,
+            shelves,
+            preferredShelfId: form.getValues("shelfId") || shelfId || null,
+          });
 
-          // 2. Try to guess based on matching name keywords
-          if (!guessedId) {
-            for (const name of allSearchNames) {
-              const guess = guessBestShelf(name, shelves);
-              if (guess) {
-                guessedId = guess.shelfId;
-                break;
-              }
-            }
-          }
-
-          // 3. Fallback to matching resolved shelf type
-          if (!guessedId && resolvedShelfType) {
-            const matchingShelf = shelves.find(
-              (s) => s.type === resolvedShelfType,
-            );
-            if (matchingShelf) {
-              guessedId = matchingShelf.id;
-            }
-          }
-
-          setGuessedShelfId(guessedId);
+          setGuessedShelfId(shelfGuess?.shelfId ?? null);
         }
 
         if (
@@ -622,16 +1159,20 @@ export function ItemModal({
           Array.isArray(data.matches) &&
           data.matches.length > 1
         ) {
-          setMatches(data.matches);
+          const dataMatches = data.matches as GameMatch[];
+          setMatches(dataMatches);
 
-          let chosenMatch = data.matches[0];
+          let chosenMatch = dataMatches[0];
           if (prefilledValues?.name) {
-            const matchByName = data.matches.find(
-              (m: any) =>
-                m.name.toLowerCase().trim() === prefilledValues.name?.toLowerCase().trim() ||
+            const matchByName = dataMatches.find(
+              (m) =>
+                m.name.toLowerCase().trim() ===
+                  prefilledValues.name?.toLowerCase().trim() ||
                 m.suggestions?.some(
-                  (s: string) => s.toLowerCase().trim() === prefilledValues.name?.toLowerCase().trim()
-                )
+                  (s: string) =>
+                    s.toLowerCase().trim() ===
+                    prefilledValues.name?.toLowerCase().trim(),
+                ),
             );
             if (matchByName) {
               chosenMatch = matchByName;
@@ -643,16 +1184,17 @@ export function ItemModal({
           const bestSuggestion = chosenMatch.name;
           setNameSuggestion(bestSuggestion);
 
-          if (!form.watch("name") || prefilledValues?.name) {
+          if (!form.getValues("name") || prefilledValues?.name) {
             form.setValue("name", bestSuggestion);
           }
-          // Apply barcode cover directly if no image is already set or if it's the prefilled image
-          if (chosenMatch.coverUrl && (!form.getValues("imageUrl") || prefilledValues?.imageUrl)) {
+          // Apply barcode cover directly only when the form does not already
+          // carry the cover selected in the quick-scan step.
+          if (chosenMatch.coverUrl && !form.getValues("imageUrl")) {
             form.setValue("imageUrl", chosenMatch.coverUrl, {
               shouldDirty: true,
             });
           }
-          fetchMetadataPreview(bestSuggestion, barcode, true);
+          fetchMetadataPreview(metadataTitle || bestSuggestion, barcode, true);
         } else {
           setMatches([]);
           setSelectedMatch(null);
@@ -663,31 +1205,39 @@ export function ItemModal({
             data.suggestions.length > 0
           ) {
             setSuggestions(data.suggestions);
-            const bestSuggestion = data.cleanName || data.suggestions[0];
+            const bestSuggestion = displayName || data.suggestions[0];
             setNameSuggestion(bestSuggestion);
 
-            if (!form.watch("name") || prefilledValues?.name) {
+            if (!form.getValues("name") || prefilledValues?.name) {
               form.setValue("name", bestSuggestion);
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
-            if (firstMatchCover && (!form.getValues("imageUrl") || prefilledValues?.imageUrl)) {
+            if (firstMatchCover && !form.getValues("imageUrl")) {
               form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
             }
-            fetchMetadataPreview(bestSuggestion, barcode, true);
-          } else if (data?.cleanName) {
-            setSuggestions([data.cleanName]);
-            setNameSuggestion(data.cleanName);
+            fetchMetadataPreview(
+              metadataTitle || bestSuggestion,
+              barcode,
+              true,
+            );
+          } else if (displayName) {
+            setSuggestions(
+              data.suggestions?.length ? data.suggestions : [displayName],
+            );
+            setNameSuggestion(displayName);
 
-            if (!form.watch("name") || prefilledValues?.name) {
-              form.setValue("name", data.cleanName);
+            if (!form.getValues("name") || prefilledValues?.name) {
+              form.setValue("name", displayName);
             }
             // Apply barcode cover from first match if available and no image set
             const firstMatchCover = data.matches?.[0]?.coverUrl || null;
-            if (firstMatchCover && (!form.getValues("imageUrl") || prefilledValues?.imageUrl)) {
-              form.setValue("imageUrl", firstMatchCover, { shouldDirty: true });
+            if (firstMatchCover && !form.getValues("imageUrl")) {
+              form.setValue("imageUrl", firstMatchCover, {
+                shouldDirty: true,
+              });
             }
-            fetchMetadataPreview(data.cleanName, barcode, true);
+            fetchMetadataPreview(metadataTitle || displayName, barcode, true);
           } else {
             setSuggestions([]);
             setNameSuggestion(null);
@@ -702,8 +1252,20 @@ export function ItemModal({
         setGuessedShelfId(null);
       }
     },
-    [form, activeShelfType, fetchMetadataPreview, shelves, prefilledValues],
+    [
+      form,
+      activeShelfType,
+      fetchMetadataPreview,
+      shelves,
+      shelfId,
+      prefilledValues,
+    ],
   );
+
+  const handleBarcodeChangeRef = useRef(handleBarcodeChange);
+  handleBarcodeChangeRef.current = handleBarcodeChange;
+  const fetchMetadataPreviewRef = useRef(fetchMetadataPreview);
+  fetchMetadataPreviewRef.current = fetchMetadataPreview;
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
@@ -725,32 +1287,42 @@ export function ItemModal({
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      let imageUrl: FormValues["imageUrl"] = values.imageUrl;
-      if (imageUrl && imageUrl instanceof File) {
-        imageUrl = await uploadImage(imageUrl);
-      }
+      const imageUrl = await localizeImageFieldForSubmit(values.imageUrl);
+      const backgroundImageUrl = await localizeImageFieldForSubmit(
+        values.backgroundImageUrl,
+        { trim: false },
+      );
 
-      let backgroundImageUrl: FormValues["backgroundImageUrl"] =
-        values.backgroundImageUrl;
-      if (backgroundImageUrl && backgroundImageUrl instanceof File) {
-        backgroundImageUrl = await uploadImage(backgroundImageUrl);
-      }
-
+      // Form payload forwarded to the parent's onSubmit. It carries a scalar
+      // `shelfId` (and a raw `id`), which Prisma's *checked* create/update input
+      // types don't accept (they expect `shelf: { connect }`); the parent
+      // adapts it before hitting Prisma. `any` is load-bearing at that boundary.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedItem: any = {
         ...values,
         id: item ? item?.id : undefined,
         imageUrl: imageUrl,
         backgroundImageUrl: backgroundImageUrl,
+        // Create-from-scan: persist the preview so the item page keeps gallery /
+        // facts while background enrichment runs (otherwise only the chosen cover survives).
+        ...(item
+          ? {}
+          : { metadataPreview: fetchedMetadata ?? prefilledValues?.metadataPreview ?? null }),
       };
 
       await onSubmit(updatedItem);
       if (itemId) {
-        queryClient.invalidateQueries({ queryKey: ["item", itemId] });
+        void invalidateItemQueries(queryClient, itemId, [
+          shelfId,
+          values.shelfId,
+        ]);
       }
       onClose();
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error(t("items.saveFailed"));
+      if (!isAbortError(error)) {
+        console.error("Error submitting form:", error);
+        toast.error(t("items.saveFailed"));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -768,99 +1340,50 @@ export function ItemModal({
 
   const handleClose = () => {
     reset();
-    metadataPreviewRequestRef.current = null;
-    metadataSuggestionsRequestRef.current = null;
+    cancelMetadataRequests();
     setSuggestions([]);
     setNameSuggestion(null);
     setActiveTab(defaultTab || "general");
-    setInitializedItemId(undefined);
+    setSessionState(null);
     setFetchedMetadata(null);
-    setLastInitializedShelfId(null);
+    lastInitializedShelfIdRef.current = null;
     onClose();
   };
 
   useEffect(() => {
-    if (!isOpen) {
-      setInitializedItemId(undefined);
-      setFetchedMetadata(null);
-      return;
-    }
+    if (!sessionState) return;
 
-    // If editing (itemId is defined) but item is still loading, wait for it
-    if (itemId && !item) {
-      return;
-    }
+    reset(sessionState.init.formValues);
+    lastInitializedShelfIdRef.current =
+      sessionState.init.lastInitializedShelfId;
 
-    const currentId = itemId || null;
-    const isAlreadyInitialized = initializedItemId === currentId;
+    const asyncInit = sessionState.init.asyncInit;
+    if (!asyncInit) return;
 
-    if (isAlreadyInitialized && (isDirty || !item)) {
-      return;
-    }
-
-    if (item) {
-      reset({
-        shelfId: item.shelfId || defaultValues.shelfId,
-        name: item.name || defaultValues.name,
-        description: item.description || defaultValues.description,
-        condition: item.condition || defaultValues.condition,
-        imageUrl: item.imageUrl || defaultValues.imageUrl,
-        backgroundImageUrl:
-          item.backgroundImageUrl || defaultValues.backgroundImageUrl,
-        barcode: item.barcode || defaultValues.barcode,
-      });
-      setLastInitializedShelfId(item.shelfId || defaultValues.shelfId);
-
-      if (item.barcode && !item.metadata) {
-        handleBarcodeChange(item.barcode);
+    void Promise.resolve().then(() => {
+      if (asyncInit.kind === "barcode") {
+        return handleBarcodeChangeRef.current(asyncInit.barcode);
       }
-    } else {
-      reset(defaultValues);
-      setSuggestions([]);
-      setNameSuggestion(prefilledValues?.name || null);
-      setLastInitializedShelfId(defaultValues.shelfId);
+      fetchMetadataPreviewRef.current(asyncInit.name, "");
+    });
+    // Bootstrap only when the modal session identity changes. Do not depend on
+    // fetchMetadataPreview / handleBarcodeChange — those recreate when the
+    // selected shelf type changes and would reset shelfId mid-edit.
+  }, [sessionState, reset]);
 
-      // If we have prefilled values with barcode/name, let's fetch metadata preview!
-      if (prefilledValues?.barcode || prefilledValues?.name) {
-        if (prefilledValues.barcode) {
-          handleBarcodeChange(prefilledValues.barcode);
-        } else if (prefilledValues.name) {
-          fetchMetadataPreview(prefilledValues.name, "");
-        }
-      }
-    }
-
-            if (!isAlreadyInitialized) {
-      setActiveTab(defaultTab || "general");
-    }
-
-    setInitializedItemId(currentId);
-  }, [
-    isOpen,
-    itemId,
-    item,
-    defaultValues,
-    handleBarcodeChange,
-    fetchMetadataPreview,
-    reset,
-    defaultTab,
-    initializedItemId,
-    isDirty,
-    prefilledValues,
-  ]);
-
-  // Re-fetch metadata preview when shelf/platform changes
+  // Re-fetch metadata preview when shelf/platform changes.
   useEffect(() => {
-    if (!isOpen || initializedItemId === undefined || !lastInitializedShelfId) return;
-    if (currentShelfId !== lastInitializedShelfId) {
-      setLastInitializedShelfId(currentShelfId);
+    if (!isOpen || !sessionState?.key || !lastInitializedShelfIdRef.current)
+      return;
+    if (currentShelfId !== lastInitializedShelfIdRef.current) {
+      lastInitializedShelfIdRef.current = currentShelfId;
       const name = form.getValues("name");
       const barcode = form.getValues("barcode") || "";
       if (name) {
         fetchMetadataPreview(name, barcode, true);
       }
     }
-  }, [currentShelfId, lastInitializedShelfId, isOpen, initializedItemId, fetchMetadataPreview, form]);
+  }, [currentShelfId, isOpen, sessionState?.key, fetchMetadataPreview, form]);
 
   // Barcode-prefilled items can initialize before shelves are loaded. Once the
   // shelf type/platform is known, fetch the full metadata image set.
@@ -886,8 +1409,9 @@ export function ItemModal({
       barcode.trim(),
     ].join("|");
 
-    if (metadataPreviewRequestRef.current === requestKey) return;
-    fetchMetadataPreview(name, barcode, true);
+    if (prefilledPreviewRequestRef.current === requestKey) return;
+    prefilledPreviewRequestRef.current = requestKey;
+    fetchMetadataPreview(name, barcode, false);
   }, [
     activeShelf?.name,
     activeShelfType,
@@ -907,17 +1431,16 @@ export function ItemModal({
         isOpen={isOpen}
         onClose={handleClose}
         title={
-          <div className="flex items-center gap-2">
-            {shelf && <ShelfTypeIcon type={shelf.type} className="size-5" />}
-            <span>
-              {item
-                ? `${t("items.editItem")} : ${item.name}`
-                : t("items.addNewItem")}
-            </span>
-          </div>
+          <span className="block text-left">
+            {item
+              ? `${t("items.editItem")} : ${item.name}`
+              : t("items.addNewItem")}
+          </span>
         }
         description={
-          item ? t("items.editItemDetails") : t("items.createNewItem")
+          <span className="block text-left">
+            {item ? t("items.editItemDetails") : t("items.createNewItem")}
+          </span>
         }
         size="xl"
         customChildren={true}
@@ -1040,7 +1563,7 @@ export function ItemModal({
                                 </div>
                               </SelectTrigger>
                               <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
-                                {shelves?.map((s) => {
+                                {shelfOptions.map((s) => {
                                   const isGuessed = s.id === guessedShelfId;
                                   return (
                                     <SelectItem
@@ -1089,14 +1612,16 @@ export function ItemModal({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t("items.barcode")}
+                            {t(itemsBarcodeLabelKey(shelfType))}
                           </FormLabel>
                           <FormControl>
                             <div className="flex relative items-center">
                               <Input
                                 type="text"
                                 className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
-                                placeholder={t("items.enterBarcode")}
+                                placeholder={t(
+                                  itemsBarcodePlaceholderKey(shelfType),
+                                )}
                                 {...field}
                                 onChange={(e) => {
                                   field.onChange(e);
@@ -1140,10 +1665,22 @@ export function ItemModal({
                                       form.setValue("name", m.name);
 
                                       // Overwrite cover and background for the new match selection
-                                      form.setValue("imageUrl", m.coverUrl || null, { shouldDirty: true });
-                                      form.setValue("backgroundImageUrl", null, { shouldDirty: true });
+                                      form.setValue(
+                                        "imageUrl",
+                                        m.coverUrl || null,
+                                        { shouldDirty: true },
+                                      );
+                                      form.setValue(
+                                        "backgroundImageUrl",
+                                        null,
+                                        { shouldDirty: true },
+                                      );
 
-                                      fetchMetadataPreview(m.name, form.getValues("barcode") || "", true);
+                                      fetchMetadataPreview(
+                                        m.name,
+                                        form.getValues("barcode") || "",
+                                        true,
+                                      );
                                     }}
                                   >
                                     {m.name}
@@ -1189,11 +1726,45 @@ export function ItemModal({
                                   }}
                                   onFocus={() => {
                                     setShowDropdown(true);
+                                    if (suggestions.length > 0) return;
+
+                                    const metadata =
+                                      filterMetadataForShelfPlatform(
+                                        item?.metadata || fetchedMetadata,
+                                        activeShelfForMedia,
+                                      );
+                                    if (metadata) {
+                                      const storedName = (
+                                        item?.storedName ??
+                                        field.value ??
+                                        form.getValues("name") ??
+                                        ""
+                                      ).trim();
+                                      const seeded =
+                                        collectMetadataTitleSuggestions(
+                                          metadata,
+                                          {
+                                            itemName: storedName,
+                                            barcode:
+                                              form.getValues("barcode") ||
+                                              item?.barcode ||
+                                              null,
+                                          },
+                                        );
+                                      if (seeded.length > 0) {
+                                        setSuggestions(seeded);
+                                        setNameSuggestion(seeded[0]);
+                                        return;
+                                      }
+                                    }
+
                                     fetchNameSuggestions(
-                                      field.value || form.getValues("name") || "",
+                                      field.value ||
+                                        form.getValues("name") ||
+                                        "",
                                     );
                                   }}
-                                  onBlur={(e) => {
+                                  onBlur={() => {
                                     field.onBlur();
                                     setTimeout(
                                       () => setShowDropdown(false),
@@ -1236,6 +1807,40 @@ export function ItemModal({
                       )}
                     />
 
+                    {activeShelfType === "games" && (
+                      <div className="flex flex-col gap-1.5 -mt-1">
+                        <input
+                          ref={dumpFileInputRef}
+                          type="file"
+                          className="hidden"
+                          onChange={handleDumpFileSelect}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-fit rounded-lg text-xs font-semibold"
+                          disabled={isHashingDump || isFetchingMetadata}
+                          onClick={() => dumpFileInputRef.current?.click()}
+                        >
+                          {isHashingDump ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <HardDrive className="size-3.5" />
+                          )}
+                          {isHashingDump
+                            ? t("items.hashDumpProgress").replace(
+                                "{percent}",
+                                String(hashDumpPercent),
+                              )
+                            : t("items.hashDump")}
+                        </Button>
+                        <p className="text-[11px] text-muted-foreground leading-snug">
+                          {t("items.hashDumpHint")}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Description */}
                     <FormField
                       control={form.control}
@@ -1271,25 +1876,16 @@ export function ItemModal({
                               size="sm"
                               type="single"
                               variant="outline"
-                              className="flex w-full gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                              onValueChange={field.onChange}
-                              {...field}
+                              className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                              value={field.value}
+                              onValueChange={(value) => {
+                                // Radix allows clearing a single toggle — keep one grade selected.
+                                if (value) field.onChange(value);
+                              }}
                             >
-                              {Object.values(Condition).map((condition) => {
+                              {itemConditionsForShelfType(activeShelfType).map(
+                                (condition) => {
                                 const isActive = field.value === condition;
-                                let activeStyles = "";
-                                if (isActive) {
-                                  if (condition === "new") {
-                                    activeStyles =
-                                      "bg-white text-emerald-600 dark:bg-zinc-800 dark:text-emerald-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-emerald-500/10";
-                                  } else if (condition === "used") {
-                                    activeStyles =
-                                      "bg-white text-amber-600 dark:bg-zinc-800 dark:text-amber-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-amber-500/10";
-                                  } else if (condition === "damaged") {
-                                    activeStyles =
-                                      "bg-white text-rose-600 dark:bg-zinc-800 dark:text-rose-400 border-zinc-200/50 dark:border-zinc-700/50 shadow-sm ring-1 ring-rose-500/10";
-                                  }
-                                }
                                 return (
                                   <ToggleGroupItem
                                     key={condition}
@@ -1298,7 +1894,7 @@ export function ItemModal({
                                     className={cn(
                                       "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
                                       isActive
-                                        ? activeStyles
+                                        ? conditionToggleActiveClass(condition)
                                         : "bg-transparent hover:text-foreground",
                                     )}
                                   >
@@ -1308,7 +1904,8 @@ export function ItemModal({
                                     </span>
                                   </ToggleGroupItem>
                                 );
-                              })}
+                              },
+                              )}
                             </ToggleGroup>
                           </FormControl>
                           <FormMessage />
@@ -1337,6 +1934,7 @@ export function ItemModal({
                           suggestions={finalImages}
                           onViewMore={() => setActiveTab("poster")}
                           aspectRatio={itemAspectRatio}
+                          contain={true}
                         />
                       )}
                     />
@@ -1443,8 +2041,15 @@ export function ItemModal({
                                 currentPosterPage * 12,
                               )
                               .map((img, i) => {
+                                const selectedCoverUrl = currentImageUrl;
                                 const isSelected =
-                                  form.watch("imageUrl") === img.url;
+                                  pendingUploadPreviewUrl != null
+                                    ? img.url === pendingUploadPreviewUrl
+                                    : typeof selectedCoverUrl === "string" &&
+                                      urlsReferToSameLocalizedImage(
+                                        selectedCoverUrl,
+                                        img.url,
+                                      );
                                 return (
                                   <div
                                     key={i}
@@ -1467,19 +2072,18 @@ export function ItemModal({
                                       }
                                     }}
                                     className={cn(
-                                      "group relative overflow-hidden rounded-xl border-2 bg-zinc-950/20 text-left transition-all duration-200 outline-none flex flex-col items-center justify-center cursor-pointer",
+                                      "group relative overflow-hidden rounded-xl border-2 bg-white text-left transition-all duration-200 outline-none flex flex-col items-center justify-center cursor-pointer",
                                       isSelected
                                         ? "border-amber-600 dark:border-amber-500 shadow-md ring-2 ring-amber-600/30"
                                         : "border-border/60 hover:border-border hover:shadow-sm",
                                     )}
                                     style={{ aspectRatio: itemAspectRatio }}
                                   >
-                                    <Image
+                                    <RemoteImage
                                       src={img.url}
                                       alt={img.label}
-                                      width={512}
-                                      height={512}
-                                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                      sizes="180px"
+                                      className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                     />
 
                                     {/* Hover Zoom Button */}
@@ -1502,23 +2106,22 @@ export function ItemModal({
                                     )}
 
                                     {/* Source & Type Badges */}
-                                    <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none select-none">
-                                      {img.source && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-extrabold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded leading-none tracking-wider"
-                                        >
-                                          {img.source}
-                                        </Badge>
-                                      )}
-                                      {img.role && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-bold border-none text-zinc-300 uppercase px-1.5 py-0.5 rounded leading-none"
-                                        >
-                                          {img.role}
-                                        </Badge>
-                                      )}
+                                    <div
+                                      className="absolute top-1.5 left-1.5 z-30"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <AttachmentSourceChip
+                                        className="items-start"
+                                        badgeClassName="text-[8px] font-extrabold bg-black/85 tracking-wider leading-none"
+                                        detailClassName="text-[8px] bg-black/85 text-zinc-300 leading-none"
+                                        sourceNames={
+                                          img.gallerySourceNames ??
+                                          (img.galleryProvider
+                                            ? [img.galleryProvider]
+                                            : [])
+                                        }
+                                        detail={img.galleryDetail}
+                                      />
                                     </div>
 
                                     {/* Source label */}
@@ -1684,7 +2287,7 @@ export function ItemModal({
                               )
                               .map((img, i) => {
                                 const isSelected =
-                                  form.watch("backgroundImageUrl") === img.url;
+                                  currentBackgroundUrl === img.url;
                                 return (
                                   <div
                                     key={i}
@@ -1721,11 +2324,10 @@ export function ItemModal({
                                         : "border-border/60 hover:border-border hover:shadow-sm",
                                     )}
                                   >
-                                    <Image
+                                    <RemoteImage
                                       src={img.url}
                                       alt={img.label}
-                                      width={512}
-                                      height={512}
+                                      sizes="180px"
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
 
@@ -1749,23 +2351,22 @@ export function ItemModal({
                                     )}
 
                                     {/* Source & Type Badges */}
-                                    <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none select-none">
-                                      {img.source && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-extrabold border-none text-amber-400 uppercase px-1.5 py-0.5 rounded leading-none tracking-wider"
-                                        >
-                                          {img.source}
-                                        </Badge>
-                                      )}
-                                      {img.role && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-black/85 backdrop-blur text-[8px] font-bold border-none text-zinc-300 uppercase px-1.5 py-0.5 rounded leading-none"
-                                        >
-                                          {img.role}
-                                        </Badge>
-                                      )}
+                                    <div
+                                      className="absolute top-1.5 left-1.5 z-30"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <AttachmentSourceChip
+                                        className="items-start"
+                                        badgeClassName="text-[8px] font-extrabold bg-black/85 tracking-wider leading-none"
+                                        detailClassName="text-[8px] bg-black/85 text-zinc-300 leading-none"
+                                        sourceNames={
+                                          img.gallerySourceNames ??
+                                          (img.galleryProvider
+                                            ? [img.galleryProvider]
+                                            : [])
+                                        }
+                                        detail={img.galleryDetail}
+                                      />
                                     </div>
 
                                     {/* Source label */}
@@ -1894,6 +2495,9 @@ export function ItemModal({
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
             {zoomImageUrl && (
+              // Zoom plein écran d'une URL arbitraire (distante ou blob),
+              // affichée telle quelle sans optimisation.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={zoomImageUrl}
                 alt="Zoom"

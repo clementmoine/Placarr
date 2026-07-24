@@ -1,0 +1,206 @@
+import { describe, expect, it } from "vitest";
+
+import { buildGameMetadataSearchQueries } from "@/core/enrich/titleMatching";
+import {
+  buildCamelCaseTitleVariants,
+  buildFranchisePrefixTitleVariants,
+  buildSeparatorTitleVariants,
+  buildStructuralTitleSearchVariants,
+} from "./searchVariants";
+
+describe("buildSeparatorTitleVariants", () => {
+  it("splits titles on common separators", () => {
+    expect(
+      buildSeparatorTitleVariants("The Lapins Crétins : Retour vers le passé"),
+    ).toEqual(
+      expect.arrayContaining(["The Lapins Crétins", "Retour vers le passé"]),
+    );
+  });
+});
+
+describe("buildCamelCaseTitleVariants", () => {
+  it("splits camelCase fused titles for provider lookup (no invented spellings)", () => {
+    const variants = buildCamelCaseTitleVariants("BallXPitt");
+    expect(variants).toEqual(
+      expect.arrayContaining(["Ball X Pitt", "Ball x Pitt", "Ball Pitt"]),
+    );
+    expect(variants).not.toContain("Ball X Pit");
+    expect(variants).not.toContain("Ball Pit");
+  });
+
+  it("ignores titles that already contain spaces or are all-caps", () => {
+    expect(buildCamelCaseTitleVariants("Ball Pit")).toEqual([]);
+    expect(buildCamelCaseTitleVariants("DOOM")).toEqual([]);
+  });
+});
+
+describe("buildStructuralTitleSearchVariants", () => {
+  it("does not invent Legend of X from La Légende du X", () => {
+    const variants = buildStructuralTitleSearchVariants("La Légende Du Dragon");
+    expect(variants).not.toContain("Dragon");
+    expect(variants).not.toContain("Legend of Dragon");
+    expect(variants).not.toContain("The Legend of Dragon");
+    expect(variants.some((v) => /legend of/i.test(v))).toBe(false);
+  });
+
+  it("never emits legal mark symbols in search variants", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "You Suck at Parking® - Complete Edition",
+    );
+    expect(
+      variants.some((variant) => /Parking.*Complete Edition/i.test(variant)),
+    ).toBe(true);
+    for (const variant of variants) {
+      expect(variant).not.toMatch(/[\u00AE\u2122\u00A9\u2120\u2117]/);
+    }
+  });
+
+  it("splits fused franchise + subtitle titles for localized FR packaging", () => {
+    expect(
+      buildFranchisePrefixTitleVariants("Viva Pinata Pagaille au Paradis"),
+    ).toEqual(
+      expect.arrayContaining([
+        "Viva Pinata",
+        "Pagaille au Paradis",
+        "Viva Pinata: Pagaille au Paradis",
+        "Viva Pinata : Pagaille au Paradis",
+      ]),
+    );
+    expect(
+      buildGameMetadataSearchQueries(
+        "Viva Pinata Pagaille au Paradis",
+        "xbox-360",
+        "Xbox 360",
+      ),
+    ).toEqual(expect.arrayContaining(["Pagaille au Paradis", "Viva Pinata"]));
+    expect(
+      buildGameMetadataSearchQueries(
+        "LEGO Indiana Jones: The Original Adventures & Kung Fu Panda",
+        "xbox-360",
+        "Xbox 360",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "LEGO Indiana Jones: The Original Adventures + Kung Fu Panda Dual Pack",
+        expect.stringMatching(
+          /^Pack : LEGO Indiana Jones: The Original Adventures \+ Kung Fu Panda \/ /,
+        ),
+      ]),
+    );
+  });
+
+  it("inserts a colon before FR subtitle preambles like En marche", () => {
+    expect(
+      buildStructuralTitleSearchVariants("Call of Duty 3 En marche vers Paris"),
+    ).toEqual(
+      expect.arrayContaining([
+        "Call of Duty 3: En marche vers Paris",
+        "Call of Duty 3 : En marche vers Paris",
+      ]),
+    );
+  });
+
+  it("does not inject tokens absent from the source title", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "La Petite Fille + La Maison du Lac",
+    );
+    for (const variant of variants) {
+      expect(variant.toLowerCase()).not.toContain("horreur");
+      expect(variant.toLowerCase()).not.toContain("force unleashed");
+    }
+  });
+
+  it("does not invent FR↔EN category phrase swaps", () => {
+    // Les équivalences par-produit (« Baphomet » → « Broken Sword ») et les
+    // phrases catégorie (« movie video game ») viennent des alternate names
+    // providers — plus d'une table codée en dur.
+    const variants = buildStructuralTitleSearchVariants(
+      "Rio Le Film : Le Jeu Vidéo",
+    );
+    expect(variants.length).toBeLessThan(40);
+    expect(variants.some((v) => /movie video game/i.test(v))).toBe(false);
+
+    const baphomet = buildStructuralTitleSearchVariants(
+      "Les Chevaliers de Baphomet : La Malédiction du serpent",
+    );
+    expect(baphomet.length).toBeLessThan(40);
+    expect(baphomet).toEqual(
+      expect.not.arrayContaining([expect.stringMatching(/broken sword/i)]),
+    );
+  });
+
+  it("adds colon form for subtitle variants without translating them", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "Destiny Le Roi des Corrompus",
+    );
+    expect(variants).toEqual(
+      expect.arrayContaining(["Destiny: Le Roi des Corrompus"]),
+    );
+    // La forme anglaise vient des alternate names du provider, pas d'une map.
+    expect(variants).toEqual(
+      expect.not.arrayContaining([expect.stringMatching(/taken king/i)]),
+    );
+  });
+
+  it("does not emit standalone edition-only search fragments", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "Alan Wake II - Deluxe Edition",
+    );
+    expect(variants).toEqual(
+      expect.arrayContaining([
+        "Alan Wake 2 - Deluxe Edition",
+        "Alan Wake II: Deluxe Edition",
+      ]),
+    );
+    expect(variants).not.toContain("Deluxe Edition");
+  });
+
+  it("extracts the franchise root before a french subtitle dash", () => {
+    expect(
+      buildStructuralTitleSearchVariants(
+        "Ni No Kuni 2 - L’avénement d’un nouveau royaume",
+      ),
+    ).toEqual(expect.arrayContaining(["Ni No Kuni 2"]));
+  });
+
+  it("preserves roman numeral ranges like IV-VI", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "Tomb Raider IV-VI Remastered Starring Lara Croft",
+    );
+    expect(variants).toEqual(
+      expect.arrayContaining([
+        "Tomb Raider 4 5 6 Remastered Starring Lara Croft",
+        "Tomb Raider 4-6 Remastered Starring Lara Croft",
+      ]),
+    );
+    expect(variants).not.toContain("Tomb Raider IV");
+    expect(variants).not.toContain("VI Remastered Starring Lara Croft");
+  });
+
+  it("swaps french special edition labels for english provider indexes", () => {
+    expect(
+      buildStructuralTitleSearchVariants(
+        "Monkey Island Édition Spéciale Collection",
+      ),
+    ).toEqual(
+      expect.arrayContaining(["Monkey Island special edition Collection"]),
+    );
+  });
+
+  it("extracts subtitle fragments without hardcoded product phrase swaps", () => {
+    const variants = buildStructuralTitleSearchVariants(
+      "Assassin's Creed III: Naissance d'un Nouveau Monde",
+    );
+    expect(variants).toEqual(
+      expect.arrayContaining([
+        "Assassin's Creed III",
+        "Naissance d'un Nouveau Monde",
+      ]),
+    );
+    expect(variants).toEqual(
+      expect.not.arrayContaining([
+        expect.stringMatching(/birth of a new world/i),
+      ]),
+    );
+  });
+});

@@ -3,9 +3,9 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
-import ReactQueryProvider from "@/lib/providers/ReactQueryProvider";
-import SessionProvider from "@/lib/providers/SessionProvider";
-import { LocaleProvider } from "@/lib/providers/LocaleProvider";
+import ReactQueryProvider from "@/lib/client/providers/ReactQueryProvider";
+import SessionProvider from "@/lib/client/providers/SessionProvider";
+import { LocaleProvider } from "@/lib/client/providers/LocaleProvider";
 
 import "./globals.css";
 
@@ -15,8 +15,8 @@ const APP_DESCRIPTION = "All your inventory, always in your pocket.";
 export const metadata: Metadata = {
   applicationName: APP_NAME,
   title: {
-    default: APP_NAME,
-    template: "%s - NJS App",
+    default: "Placarr",
+    template: "%s · Placarr",
   },
   description: APP_DESCRIPTION,
   manifest: "/manifest.json",

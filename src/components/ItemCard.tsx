@@ -1,109 +1,202 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, type SyntheticEvent } from "react";
 import type { Item } from "@prisma/client";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import type { MetadataResult } from "@/types/metadataProvider";
+import { Loader2 } from "lucide-react";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
-  ShelfTypeIcon,
-  getShelfTypeIconComponent,
+  DEFAULT_SHELF_TYPE_ICON,
+  SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
-import { getAspectRatio } from "@/lib/cardFormat";
-import { getEstimatedItemValueCents } from "@/lib/itemValue";
+import { getAspectRatio } from "@/lib/text/cardFormat";
+import { getItemValueEstimate } from "@/core/collect/value";
+import { isItemMetadataBusy } from "@/core/collect/enrichment";
+import type { Condition } from "@prisma/client";
+import { cn } from "@/lib/shared/utils";
+
+function conditionBadgeClass(condition: Condition) {
+  switch (condition) {
+    case "new":
+      return "text-emerald-300 border-emerald-400/25";
+    case "used":
+      return "text-amber-400 border-white/10";
+    case "loose":
+      return "text-sky-300 border-sky-400/25";
+    case "damaged":
+      return "text-red-300 border-red-400/25";
+    default:
+      return "text-zinc-200 border-white/10";
+  }
+}
 
 interface ItemCardProps extends Item {
   shelfType?: string | null;
+  shelfName?: string | null;
   cardFormat?: string | null;
-  metadata?: any;
+  metadata?: MetadataResult | null;
   priceNew?: number | null;
   priceUsed?: number | null;
   priceUsedCIB?: number | null;
+  priceEstimated?: number | null;
+  priority?: boolean;
 }
 
-export function ItemCard(props: ItemCardProps) {
-  const { imageUrl, name, shelfType, cardFormat, condition } = props;
-  const { t } = useLocale();
+function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
+  return (
+    prev.id === next.id &&
+    prev.imageUrl === next.imageUrl &&
+    prev.name === next.name &&
+    prev.condition === next.condition &&
+    prev.shelfType === next.shelfType &&
+    prev.shelfName === next.shelfName &&
+    prev.cardFormat === next.cardFormat &&
+    prev.priceNew === next.priceNew &&
+    prev.priceUsed === next.priceUsed &&
+    prev.priceUsedCIB === next.priceUsedCIB &&
+    prev.priceEstimated === next.priceEstimated &&
+    prev.priority === next.priority &&
+    prev.metadataId === next.metadataId &&
+    prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
+    prev.metadata?.imageUrl === next.metadata?.imageUrl &&
+    (prev.metadata?.attachments?.length ?? 0) ===
+      (next.metadata?.attachments?.length ?? 0) &&
+    prev.createdAt === next.createdAt
+  );
+}
+
+function ItemCardInner(props: ItemCardProps) {
+  const { imageUrl, name, shelfType, shelfName, cardFormat, condition, priority } =
+    props;
+  const { locale, t } = useLocale();
+  const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
+  const isEnriching = isItemMetadataBusy(props);
+
+  const displayImageUrl = imageUrl;
 
   // Determine aspect ratio based on shelf type or card format
   const aspectRatio = useMemo(() => {
     return getAspectRatio(cardFormat, shelfType);
   }, [cardFormat, shelfType]);
 
-  // Pick placeholder icon based on shelf type
-  const PlaceholderIcon = useMemo(() => {
-    return getShelfTypeIconComponent(shelfType);
+  // Pick placeholder icon based on shelf type — memoized as an ELEMENT so no
+  // component identity is created during render.
+  const placeholderIcon = useMemo(() => {
+    const IconComponent =
+      SHELF_TYPE_ICONS[shelfType ?? ""] ?? DEFAULT_SHELF_TYPE_ICON;
+    return (
+      <IconComponent className="size-8 text-zinc-400 dark:text-zinc-500 transition-transform duration-500" />
+    );
   }, [shelfType]);
 
-  // Calculate estimated price in Euros
+  // Réinitialisation quand l'URL change — ajustée pendant le render (pattern
+  // React « adjust state when props change »), pas dans un effect.
+  const [prevImageUrl, setPrevImageUrl] = useState(displayImageUrl);
+  if (prevImageUrl !== displayImageUrl) {
+    setPrevImageUrl(displayImageUrl);
+    setImageFit("contain");
+  }
+
+  const handleImageLoad = (_event: SyntheticEvent<HTMLImageElement>) => {
+    setImageFit("contain");
+  };
+
+  // Calculate estimated price in Euros — a catalog-estimate fallback shows ~.
   const estimatedPrice = useMemo(() => {
-    const priceCents = getEstimatedItemValueCents({
+    const value = getItemValueEstimate({
       condition: props.condition,
       shelfType: props.shelfType,
       priceNew: props.priceNew,
       priceUsed: props.priceUsed,
       priceUsedCIB: props.priceUsedCIB,
+      priceEstimated: props.priceEstimated,
     });
-    if (priceCents === null || priceCents === 0) return null;
-    return priceCents / 100;
-  }, [props.condition, props.priceNew, props.priceUsed, props.priceUsedCIB]);
+    if (!value || value.cents === 0) return null;
+    return { euros: value.cents / 100, isEstimate: value.isEstimate };
+  }, [
+    props.condition,
+    props.shelfType,
+    props.priceNew,
+    props.priceUsed,
+    props.priceUsedCIB,
+    props.priceEstimated,
+  ]);
 
   return (
     <div
-      className="group relative flex flex-col w-full select-none overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
+      className="cv-card-item group relative flex flex-col w-full select-none overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
       style={{
         aspectRatio,
       }}
     >
-      {/* Badges container */}
-      <div className="absolute top-2 left-2 z-10 pointer-events-none select-none flex flex-wrap gap-1">
-        {condition && condition !== "new" && (
-          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-zinc-950/75 backdrop-blur-md text-amber-400 border border-white/10 shadow-sm">
-            {t(`items.conditions.${condition}`) || condition}
-          </span>
-        )}
-        {estimatedPrice !== null && (
-          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-950/85 backdrop-blur-md text-emerald-400 border border-emerald-500/20 shadow-sm">
-            {estimatedPrice.toFixed(2)} €
-          </span>
-        )}
-      </div>
+      {/* Top-right badges — price + condition stay visible even while enriching */}
+      {(estimatedPrice !== null || condition) && (
+        <div className="absolute top-2 right-2 z-20 pointer-events-none select-none flex flex-col items-end gap-1">
+          {estimatedPrice !== null && (
+            <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full bg-zinc-950/90 text-emerald-300 border border-emerald-400/30 shadow-sm">
+              {estimatedPrice.isEstimate ? "~" : ""}
+              {estimatedPrice.euros.toFixed(2)} €
+            </span>
+          )}
+          {condition && (
+            <span
+              className={cn(
+                "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border bg-zinc-950/90 shadow-sm",
+                conditionBadgeClass(condition),
+              )}
+            >
+              {t(`items.conditions.${condition}`) || condition}
+            </span>
+          )}
+        </div>
+      )}
 
-      {imageUrl ? (
-        <>
+      {/* Enriching overlay — centered spinner; badges & title remain on top */}
+      {isEnriching && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/45 backdrop-blur-[1px] pointer-events-none">
+          <Loader2 className="size-7 animate-spin text-white/90" />
+          <span className="text-[9px] font-black uppercase tracking-wider text-white/80">
+            {t("items.fetching")}
+          </span>
+        </div>
+      )}
+
+      {displayImageUrl ? (
+        <div className="w-full h-full bg-white relative overflow-hidden">
           {/* Main Cover Image */}
-          <Image
-            src={imageUrl}
+          <RemoteImage
+            src={displayImageUrl}
             alt={name}
-            width={512}
-            height={512}
-            className="w-full h-full object-cover select-none transition-transform duration-500 ease-out"
-            draggable={false}
+            priority={priority}
+            onLoad={handleImageLoad}
+            className={[
+              "w-full h-full select-none transition-transform duration-500 ease-out object-center",
+              imageFit === "contain" ? "object-contain" : "object-cover",
+            ].join(" ")}
           />
           {/* subtle dark overlay gradient for title legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-        </>
+        </div>
       ) : (
         /* Premium looking placeholder fallback */
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-900 dark:to-zinc-950 text-muted-foreground gap-3">
-          <PlaceholderIcon className="size-8 text-zinc-400 dark:text-zinc-500 transition-transform duration-500" />
+          {placeholderIcon}
           <span className="text-[10px] font-extrabold tracking-wide uppercase text-zinc-400 dark:text-zinc-550">
             {name.trim().substring(0, 2).toUpperCase() || "??"}
           </span>
         </div>
       )}
 
-      {/* Glassmorphic Bottom Title Bar (cohesive with ShelfCard) */}
-      <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-zinc-950/75 backdrop-blur-md border-t border-white/10 flex justify-center items-center gap-1.5 text-center">
-        {shelfType && (
-          <span className="flex items-center shrink-0 text-white/80">
-            <ShelfTypeIcon type={shelfType} className="size-3.5" />
-          </span>
-        )}
-        <span className="text-[10px] font-extrabold px-1 flex-1 line-clamp-2 text-white leading-tight">
+      {/* Glassmorphic bottom panel — title (stays above the enriching overlay) */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
+        <span className="text-[10px] font-extrabold line-clamp-2 text-white leading-tight">
           {name.trim().length > 0 ? name : t("common.noName")}
         </span>
       </div>
     </div>
   );
 }
+
+export const ItemCard = React.memo(ItemCardInner, itemCardPropsEqual);

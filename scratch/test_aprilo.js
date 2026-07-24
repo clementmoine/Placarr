@@ -10,7 +10,8 @@ const HEADERS = {
 
 async function test() {
   try {
-    const url = "https://apriloshop.fr/section-playstation-2/real-madrid-club-football-ps2";
+    const url =
+      "https://apriloshop.fr/section-playstation-2/real-madrid-club-football-ps2";
     console.log("Querying", url);
     const res = await axios.get(url, { headers: HEADERS, timeout: 8000 });
     console.log("Status:", res.status);

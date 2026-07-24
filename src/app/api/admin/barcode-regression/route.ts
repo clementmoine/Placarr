@@ -5,7 +5,7 @@ import {
   DEFAULT_BARCODE_REGRESSION_CASES,
   type BarcodeRegressionCase,
   type BarcodeRegressionExpectation,
-} from "@/lib/barcodeRegressionCases";
+} from "@/core/identify/lookup/regressionCases";
 
 type BarcodeRegressionAssertion = {
   label: string;
@@ -79,9 +79,18 @@ function assertNotIncludes(
   };
 }
 
+type LiveBarcodeResponse = {
+  provider?: string | null;
+  cleanName?: string | null;
+  shelfType?: string | null;
+  platformKey?: string | null;
+  suggestions?: string[];
+  matches?: Array<{ name?: string; confidence?: number }>;
+};
+
 function evaluateCase(
   testCase: BarcodeRegressionCase,
-  data: any,
+  data: LiveBarcodeResponse | null | undefined,
 ): BarcodeRegressionAssertion[] {
   const expected: BarcodeRegressionExpectation = testCase.expected || {};
   const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
@@ -92,21 +101,31 @@ function evaluateCase(
   const assertions: BarcodeRegressionAssertion[] = [];
 
   if (expected.cleanName !== undefined) {
-    assertions.push(assertEqual("cleanName", expected.cleanName, data?.cleanName));
+    assertions.push(
+      assertEqual("cleanName", expected.cleanName, data?.cleanName),
+    );
   }
 
   for (const value of expected.cleanNameIncludes || []) {
-    assertions.push(assertIncludes("cleanNameIncludes", value, data?.cleanName));
+    assertions.push(
+      assertIncludes("cleanNameIncludes", value, data?.cleanName || ""),
+    );
   }
 
   if (expected.platformKey !== undefined) {
     assertions.push(
-      assertEqual("platformKey", expected.platformKey, data?.platformKey || null),
+      assertEqual(
+        "platformKey",
+        expected.platformKey,
+        data?.platformKey || null,
+      ),
     );
   }
 
   if (expected.shelfType !== undefined) {
-    assertions.push(assertEqual("shelfType", expected.shelfType, data?.shelfType));
+    assertions.push(
+      assertEqual("shelfType", expected.shelfType, data?.shelfType),
+    );
   }
 
   if (expected.maxMatches !== undefined) {
@@ -130,11 +149,15 @@ function evaluateCase(
   }
 
   for (const value of expected.suggestionsInclude || []) {
-    assertions.push(assertIncludes("suggestionsInclude", value, suggestionsText));
+    assertions.push(
+      assertIncludes("suggestionsInclude", value, suggestionsText),
+    );
   }
 
   for (const value of expected.suggestionsExclude || []) {
-    assertions.push(assertNotIncludes("suggestionsExclude", value, suggestionsText));
+    assertions.push(
+      assertNotIncludes("suggestionsExclude", value, suggestionsText),
+    );
   }
 
   const provider = String(data?.provider || "");
@@ -145,17 +168,25 @@ function evaluateCase(
   return assertions;
 }
 
-function normalizeCases(body: any): BarcodeRegressionCase[] {
+type BarcodeRegressionRequestBody = {
+  cases?: BarcodeRegressionCase[];
+  barcodes?: string[];
+  type?: string | null;
+};
+
+function normalizeCases(
+  body: BarcodeRegressionRequestBody | null | undefined,
+): BarcodeRegressionCase[] {
   if (Array.isArray(body?.cases) && body.cases.length > 0) {
     return body.cases;
   }
 
   if (Array.isArray(body?.barcodes) && body.barcodes.length > 0) {
-    return body.barcodes.map((barcode: string, index: number) => ({
+    return body.barcodes.map((barcode, index) => ({
       id: `batch-${index + 1}`,
       label: barcode,
       barcode,
-      type: body.type,
+      type: body?.type ?? undefined,
       expected: {},
     }));
   }
@@ -182,7 +213,9 @@ async function runCase(
     const data = await response.json();
     const assertions = evaluateCase(testCase, data);
     const matches = Array.isArray(data?.matches) ? data.matches : [];
-    const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+    const suggestions = Array.isArray(data?.suggestions)
+      ? data.suggestions
+      : [];
 
     return {
       case: testCase,

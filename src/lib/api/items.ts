@@ -1,7 +1,8 @@
 import axios from "axios";
 
-import type { Prisma, Item } from "@prisma/client";
+import type { Prisma, Item, Condition } from "@prisma/client";
 import type { ItemWithMetadata } from "@/types/items";
+import type { MetadataResult } from "@/types/metadataProvider";
 
 export const getItem = (
   id?: Item["id"],
@@ -25,26 +26,103 @@ export const saveItem = (
     | (Prisma.ItemCreateInput & {
         refreshMetadata?: boolean;
         lookupQuery?: string;
+        currentShelfId?: string | null;
+        metadataPreview?: MetadataResult | null;
       })
     | (Prisma.ItemUpdateInput & {
         refreshMetadata?: boolean;
         lookupQuery?: string;
         shelfId?: string;
+        currentShelfId?: string | null;
+        metadataPreview?: MetadataResult | null;
       }),
 ): Promise<ItemWithMetadata> => {
   const url = new URL("/api/items", window.location.origin);
   let method: "POST" | "PATCH" = "POST";
+  const { currentShelfId, ...payload } = data;
 
   if ("id" in data && data.id) {
     url.searchParams.set("id", data.id.toString());
+    if (currentShelfId) {
+      url.searchParams.set("shelfId", currentShelfId);
+    }
     method = "PATCH";
   }
 
   return axios({
     method,
     url: url.toString(),
-    data,
+    data: payload,
   }).then((response) => response.data);
+};
+
+export type SaveItemsBatchInput = {
+  shelfId: string;
+  names: string[];
+  condition?: Condition;
+};
+
+export type SaveItemsBatchResult = {
+  count: number;
+};
+
+export type MoveItemsBatchInput = {
+  itemIds: string[];
+  targetShelfId: string;
+  sourceShelfId?: string;
+};
+
+export type MoveItemsBatchResult = {
+  count: number;
+  targetShelfId: string;
+  sourceShelfIds: string[];
+};
+
+export const saveItemsBatch = (
+  data: SaveItemsBatchInput,
+): Promise<SaveItemsBatchResult> => {
+  return axios.post("/api/items/batch", data).then((response) => response.data);
+};
+
+export const moveItemsBatch = (
+  data: MoveItemsBatchInput,
+): Promise<MoveItemsBatchResult> => {
+  return axios
+    .patch("/api/items/batch", data)
+    .then((response) => response.data);
+};
+
+export type RefreshItemsBatchInput = {
+  itemIds: string[];
+  sourceShelfId?: string;
+};
+
+export type RefreshItemsBatchResult = {
+  count: number;
+};
+
+export const refreshItemsBatch = (
+  data: RefreshItemsBatchInput,
+): Promise<RefreshItemsBatchResult> => {
+  return axios.put("/api/items/batch", data).then((response) => response.data);
+};
+
+export type DeleteItemsBatchInput = {
+  itemIds: string[];
+  sourceShelfId?: string;
+};
+
+export type DeleteItemsBatchResult = {
+  count: number;
+  sourceShelfIds: string[];
+};
+
+export const deleteItemsBatch = (
+  data: DeleteItemsBatchInput,
+): Promise<DeleteItemsBatchResult> => {
+  return axios
+    .delete("/api/items/batch", { data })
+    .then((response) => response.data);
 };
 
 export const deleteItem = (id: Item["id"]): Promise<void> => {
@@ -58,9 +136,15 @@ export const deleteItem = (id: Item["id"]): Promise<void> => {
   return axios.delete(url.toString()).then(() => {});
 };
 
+export type GetItemsOptions = {
+  excludeShelfTypes?: string[];
+  shelfTypes?: string[];
+};
+
 export const getItems = (
   search?: string | null,
   shelfId?: string | null,
+  options?: GetItemsOptions,
 ): Promise<ItemWithMetadata[]> => {
   const url = new URL("/api/items", window.location.origin);
   if (search && search.length >= 1) {
@@ -69,6 +153,15 @@ export const getItems = (
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
   }
+  if (options?.excludeShelfTypes?.length) {
+    url.searchParams.set(
+      "excludeShelfTypes",
+      options.excludeShelfTypes.join(","),
+    );
+  }
+  if (options?.shelfTypes?.length) {
+    url.searchParams.set("shelfTypes", options.shelfTypes.join(","));
+  }
   return axios.get(url.toString()).then((response) => response.data);
 };
 
@@ -76,10 +169,34 @@ export interface ItemPrices {
   priceNew: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
+  /** Point price derived from catalog estimates — display fallback, shown as ~. */
+  priceEstimated?: number | null;
   priceLastUpdated: string | null;
+  priceSources?: string[];
+  priceSourceDisplayNames?: string[];
+  isReferencePriceOnly?: boolean;
+  priceObservations?: Array<{
+    source: string;
+    productName?: string | null;
+    merchantName?: string | null;
+    condition?: string | null;
+    priceCents: number;
+    currency?: string | null;
+    sourceUrl?: string | null;
+    offerCount?: number | null;
+    observedAt?: string | null;
+    isReferencePriceSource?: boolean;
+    sourceDisplayLabel?: string;
+    metadataScoped?: boolean;
+    catalogEstimateMinCents?: number;
+    catalogEstimateMaxCents?: number;
+    catalogEstimateDisplayValue?: string;
+  }>;
 }
 
 export interface RefreshItemMetadataResponse {
+  accepted?: boolean;
+  metadataRefreshStartedAt?: string;
   metadata: ItemWithMetadata["metadata"] | null;
   item?: ItemWithMetadata | null;
 }
@@ -88,10 +205,7 @@ export const getItemPrices = (
   itemId: string,
   shelfId?: string | null,
 ): Promise<ItemPrices> => {
-  const url = new URL(
-    `/api/items/${itemId}/prices`,
-    window.location.origin,
-  );
+  const url = new URL(`/api/items/${itemId}/prices`, window.location.origin);
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
   }
@@ -103,10 +217,7 @@ export const refreshItemMetadata = (
   shelfId?: string | null,
   lookupQuery?: string | null,
 ): Promise<RefreshItemMetadataResponse> => {
-  const url = new URL(
-    `/api/items/${itemId}/metadata`,
-    window.location.origin,
-  );
+  const url = new URL(`/api/items/${itemId}/metadata`, window.location.origin);
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
   }

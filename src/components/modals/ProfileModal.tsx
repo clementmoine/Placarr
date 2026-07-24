@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { toast } from "sonner";
-import { useLocale } from "@/lib/providers/LocaleProvider";
-import Image from "next/image";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { useForm } from "react-hook-form";
-import { XIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -18,20 +17,12 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 
-import { useAccount } from "@/lib/hooks/useAccount";
-import { isUrl } from "@/lib/isUrl";
-import { cn } from "@/lib/utils";
+import { useAccount } from "@/lib/client/hooks/useAccount";
+import { isUrl } from "@/lib/shared/isUrl";
 import { uploadImage } from "@/lib/api/upload";
 
 interface ProfileModalProps {

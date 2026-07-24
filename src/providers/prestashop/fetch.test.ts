@@ -1,0 +1,353 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+const readPrestashopSearchEvidence = vi.fn();
+const promotePrestashopSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readPrestashopSearchEvidence: (...args: unknown[]) =>
+    readPrestashopSearchEvidence(...args),
+  promotePrestashopSearchEvidence: (...args: unknown[]) =>
+    promotePrestashopSearchEvidence(...args),
+}));
+
+import axios from "axios";
+
+import {
+  CHIPWELD_CONFIG,
+  MONSIEURDE_CONFIG,
+  NETGAMESRETRO_CONFIG,
+  TOKYOGAMESTORY_CONFIG,
+} from "./configs";
+import {
+  parsePrestashopGallery,
+  PrestashopAccessDeniedError,
+  prestashopImageId,
+  searchPrestashopHits,
+  searchPrestashopProduct,
+} from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
+
+const IQIT_MINIATURE = `
+  <div class="product-miniature js-product-miniature">
+    <h5 class="product-name">
+      <a href="https://www.chipweld.fr/jeux-xbox-one/trine-ultimate-collection">
+        Trine: Ultimate Collection XBOX ONE [NEUF]
+      </a>
+    </h5>
+    <img src="https://www.chipweld.fr/40143-home_default/trine.jpg" />
+    <span class="price product-price">19,90&nbsp;€</span>
+  </div>
+`;
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readPrestashopSearchEvidence.mockReset();
+  promotePrestashopSearchEvidence.mockReset();
+  readPrestashopSearchEvidence.mockResolvedValue(null);
+  promotePrestashopSearchEvidence.mockResolvedValue(undefined);
+});
+
+describe("prestashopImageId", () => {
+  it("extrait l'id image quelle que soit la taille", () => {
+    expect(
+      prestashopImageId("https://www.monsieurde.com/11949-large_default/x.jpg"),
+    ).toBe("11949");
+    expect(prestashopImageId("https://www.monsieurde.com/11949/x.jpg")).toBe(
+      "11949",
+    );
+    expect(prestashopImageId(null)).toBeNull();
+  });
+});
+
+describe("parsePrestashopGallery", () => {
+  it("extrait les images produit distinctes via data-image-large-src", () => {
+    const html = `
+      <img data-image-large-src="https://www.monsieurde.com/11949-large_default/jeu.jpg">
+      <img data-image-large-src="https://www.monsieurde.com/11949-large_default/jeu.jpg">
+      <img data-image-large-src="https://www.monsieurde.com/11950-large_default/jeu.jpg">
+      <img src="https://www.monsieurde.com/99999-home_default/cross-sell.jpg">
+    `;
+
+    expect(parsePrestashopGallery(html)).toEqual([
+      "https://www.monsieurde.com/11949-large_default/jeu.jpg",
+      "https://www.monsieurde.com/11950-large_default/jeu.jpg",
+    ]);
+  });
+
+  it("renvoie une liste vide sans galerie", () => {
+    expect(parsePrestashopGallery("<div>pas d'images</div>")).toEqual([]);
+  });
+});
+
+describe("searchPrestashopProduct", () => {
+  it("utilise products[] pour la stratégie native", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        products: [
+          {
+            name: "Catan",
+            link: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
+            price_amount: 43.9,
+            ean13: "3558380126133",
+            cover: {
+              bySize: {
+                home_default: {
+                  url: "https://www.monsieurde.com/27326-home_default/catan.jpg",
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const product = await searchPrestashopProduct(
+      MONSIEURDE_CONFIG,
+      "Catan",
+      "3558380126133",
+    );
+
+    expect(product).toMatchObject({
+      title: "Catan",
+      barcode: "3558380126133",
+      source: "monsieurde",
+    });
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("parse rendered_products pour la stratégie IQIT et enrichit l'EAN", async () => {
+    mockedGet
+      .mockResolvedValueOnce({
+        data: {
+          products: [],
+          rendered_products: IQIT_MINIATURE,
+        },
+      })
+      .mockResolvedValueOnce({
+        data: `<script>"gtin13": "5016488132497"</script>`,
+        status: 200,
+      });
+
+    const product = await searchPrestashopProduct(
+      CHIPWELD_CONFIG,
+      "",
+      "5016488132497",
+    );
+
+    expect(product).toMatchObject({
+      title: "Trine: Ultimate Collection XBOX ONE [NEUF]",
+      barcode: "5016488132497",
+      priceCents: 1990,
+      source: "chipweld",
+    });
+    expect(mockedGet).toHaveBeenCalledTimes(2);
+  });
+
+  it("IQIT multi-hit: enrichit en série et s'arrête au premier EAN match (pas N Flare)", async () => {
+    const multi = `
+      <div class="product-miniature js-product-miniature">
+        <h5 class="product-name">
+          <a href="https://www.chipweld.fr/wrong/other-game">Other Game</a>
+        </h5>
+      </div>
+      <div class="product-miniature js-product-miniature">
+        <h5 class="product-name">
+          <a href="https://www.chipweld.fr/jeux-xbox-one/trine-ultimate-collection">
+            Trine: Ultimate Collection XBOX ONE [NEUF]
+          </a>
+        </h5>
+        <span class="price product-price">19,90&nbsp;€</span>
+      </div>
+      <div class="product-miniature js-product-miniature">
+        <h5 class="product-name">
+          <a href="https://www.chipweld.fr/wrong/third">Third Game</a>
+        </h5>
+      </div>
+    `;
+    mockedGet
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { products: [], rendered_products: multi },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `<html>no barcode here</html>`,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `<script>"gtin13": "5016488132497"</script>`,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: `<script>"gtin13": "9999999999999"</script>`,
+      });
+
+    // Barcode-only: preserve miniature order; stop after the matching fiche.
+    const product = await searchPrestashopProduct(
+      CHIPWELD_CONFIG,
+      "",
+      "5016488132497",
+    );
+
+    expect(product).toMatchObject({
+      title: "Trine: Ultimate Collection XBOX ONE [NEUF]",
+      barcode: "5016488132497",
+      source: "chipweld",
+    });
+    // search + Other (miss) + Trine (hit) — Third never fetched
+    expect(mockedGet).toHaveBeenCalledTimes(3);
+  });
+
+  it("renvoie null quand IQIT ne renvoie aucune miniature", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: { products: [], rendered_products: "<div>aucun résultat</div>" },
+    });
+
+    await expect(
+      searchPrestashopProduct(CHIPWELD_CONFIG, "zelda"),
+    ).resolves.toBeNull();
+  });
+
+  it("trouve The Exit 8 sur Tokyo Game Story via le JSON products[]", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        products: [
+          {
+            name: "The Exit 8 + Platform 8 PS4 Japan Game in ENG-FRA-DEU-ESP-ITA New",
+            link: "https://tokyogamestory.com/fr/playstation-4-ps4-tout/10513-the-exit-8-platform-8-ps4-japan-game-in-eng-fra-deu-esp-ita-new-4589794580661.html",
+            reference: "4589794580661",
+            price: "34,99 €",
+            cover: {
+              bySize: {
+                large_default: {
+                  url: "https://tokyogamestory.com/116702-large_default/the-exit-8.jpg",
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const product = await searchPrestashopProduct(
+      TOKYOGAMESTORY_CONFIG,
+      "The Exit 8",
+      "4589794580661",
+    );
+
+    expect(product).toMatchObject({
+      title:
+        "The Exit 8 + Platform 8 PS4 Japan Game in ENG-FRA-DEU-ESP-ITA New",
+      barcode: "4589794580661",
+      priceCents: 3499,
+      source: "tokyogamestory",
+    });
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("trouve MX vs ATV sur NetGamesRetro via SearchYield (EAN dans l'URL, 0 fiche)", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        products: [
+          {
+            name: "MX vs ATV : Extrême limite Xbox 360",
+            link: "https://www.netgamesretro.com/fr/jeux-video-netgamesretrocom/3947-mx-vs-atv-extreme-limite-xbox-360-4005209102735.html",
+            reference: "1C63979A6E18",
+            price: "17,50 €",
+            cover: {
+              bySize: {
+                large_default: {
+                  url: "https://www.netgamesretro.com/17755-large_default/mx-vs-atv-extreme-limite-xbox-360.jpg",
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const product = await searchPrestashopProduct(
+      NETGAMESRETRO_CONFIG,
+      "MX vs ATV : Extrême limite Xbox 360",
+      "4005209102735",
+    );
+
+    expect(product).toMatchObject({
+      title: "MX vs ATV : Extrême limite Xbox 360",
+      barcode: "4005209102735",
+      priceCents: 1750,
+      source: "netgamesretro",
+      imageUrl:
+        "https://www.netgamesretro.com/17755-large_default/mx-vs-atv-extreme-limite-xbox-360.jpg",
+    });
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("signale un accès storefront bloqué (HTTP 403)", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 403,
+      data: "Forbidden",
+    });
+
+    await expect(
+      searchPrestashopProduct(CHIPWELD_CONFIG, "", "5016488132497"),
+    ).rejects.toBeInstanceOf(PrestashopAccessDeniedError);
+  });
+});
+
+describe("searchPrestashopHits SearchYield durable", () => {
+  it("réutilise ProviderEvidence sans HTTP", async () => {
+    const products = [
+      {
+        name: "Catan",
+        link: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
+        ean13: "3558380126133",
+        price_amount: 43.9,
+      },
+    ];
+    readPrestashopSearchEvidence.mockResolvedValueOnce(products);
+
+    await expect(
+      searchPrestashopHits(MONSIEURDE_CONFIG, "Catan"),
+    ).resolves.toEqual(products);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promotePrestashopSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        products: [
+          {
+            name: "Catan",
+            link: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
+            ean13: "3558380126133",
+            price_amount: 43.9,
+          },
+        ],
+      },
+    });
+
+    await searchPrestashopHits(MONSIEURDE_CONFIG, "Catan");
+
+    expect(promotePrestashopSearchEvidence).toHaveBeenCalledWith(
+      "monsieurde",
+      expect.stringContaining("search"),
+      [
+        expect.objectContaining({
+          name: "Catan",
+          ean13: "3558380126133",
+        }),
+      ],
+    );
+    const promotedUrl = promotePrestashopSearchEvidence.mock.calls[0]?.[1] as string;
+    expect(promotedUrl).toContain("s=Catan");
+  });
+});

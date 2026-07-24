@@ -31,7 +31,10 @@ async function testBarcode(barcode, systemeid) {
   } catch (err) {
     console.error("Error:", err.message);
     if (err.response) {
-      console.error("Response data error:", JSON.stringify(err.response.data, null, 2));
+      console.error(
+        "Response data error:",
+        JSON.stringify(err.response.data, null, 2),
+      );
     }
   }
 }

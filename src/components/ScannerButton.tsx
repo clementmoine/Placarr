@@ -1,6 +1,6 @@
 import { toast } from "sonner";
-import { useCallback, useState } from "react";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 import {
   Dialog,
@@ -10,11 +10,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
+import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 
 import { Barcode, Scan } from "lucide-react";
 import {
   BarcodeScannerView,
   type BarcodeScannerResult,
+  isBenignScannerMediaError,
+  SCANNER_CLOSE_DELAY_MS,
 } from "@/components/BarcodeScannerView";
 
 interface BarcodeScannerProps {
@@ -29,30 +33,66 @@ export function ScannerButton({
   onStop,
 }: BarcodeScannerProps) {
   const { t } = useLocale();
+  const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
   const [isActive, setActive] = useState(false);
+  const [scannerPaused, setScannerPaused] = useState(false);
+  const [manualBarcode, setManualBarcode] = useState("");
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
+  const closeScanner = useCallback((afterClose?: () => void) => {
+    setScannerPaused(true);
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+    }
+    closeTimerRef.current = setTimeout(() => {
+      setActive(false);
+      setScannerPaused(false);
+      setManualBarcode("");
+      afterClose?.();
+    }, SCANNER_CLOSE_DELAY_MS);
+  }, []);
 
   const handleStart = useCallback(() => {
+    setScannerPaused(false);
     setActive(true);
   }, []);
 
   const handleScan = (detectedCodes: BarcodeScannerResult) => {
-    setActive(false);
-    onScan(detectedCodes[0].rawValue);
+    const barcode = detectedCodes[0].rawValue;
+    closeScanner(() => onScan(barcode));
   };
 
   const handleStop = useCallback(() => {
-    setActive(false);
+    closeScanner(onStop);
+  }, [closeScanner, onStop]);
 
-    onStop?.();
-  }, [onStop]);
+  const handleManualBarcodeSubmit = useCallback(
+    (barcode: string) => {
+      closeScanner(() => onScan(barcode));
+    },
+    [closeScanner, onScan],
+  );
 
   const handleError = useCallback(
     (error: unknown) => {
+      if (isBenignScannerMediaError(error)) {
+        return;
+      }
       console.log("Something went wrong while scanning", error);
       toast.error(t("scanner.error"));
     },
     [t],
   );
+
+  if (isCameraUnavailable || isCheckingCamera) return null;
 
   return (
     <div className={className}>
@@ -62,7 +102,12 @@ export function ScannerButton({
           50% { top: 90%; opacity: 1; }
         }
       `}</style>
-      <Dialog open={isActive} onOpenChange={handleStop}>
+      <Dialog
+        open={isActive}
+        onOpenChange={(open) => {
+          if (!open) handleStop();
+        }}
+      >
         <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh] w-[95vw] sm:max-w-md rounded-2xl border border-border dark:border-zinc-800 shadow-2xl">
           <DialogHeader className="p-5 border-b shrink-0 flex flex-col gap-1">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
@@ -78,6 +123,7 @@ export function ScannerButton({
             <BarcodeScannerView
               onScan={handleScan}
               onError={handleError}
+              paused={scannerPaused}
             />
 
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
@@ -97,6 +143,14 @@ export function ScannerButton({
                 />
               </div>
             </div>
+          </div>
+
+          <div className="border-t border-border/60 p-4">
+            <ManualBarcodeEntry
+              value={manualBarcode}
+              onValueChange={setManualBarcode}
+              onSubmit={handleManualBarcodeSubmit}
+            />
           </div>
         </DialogContent>
       </Dialog>

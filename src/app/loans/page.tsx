@@ -1,29 +1,42 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useMemo, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import {
   Inbox,
   User,
-  Clock,
   CheckCircle,
   XCircle,
   FileText,
   RotateCcw,
-  Loader2,
   Calendar,
-  Sparkles,
 } from "lucide-react";
-import Image from "next/image";
+import { RemoteImage } from "@/components/RemoteImage";
 
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
+
+type LoanParty = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
+type LoanRequestEntry = {
+  id: string;
+  status: string;
+  notes?: string | null;
+  createdAt: string;
+  item?: { name?: string | null; imageUrl?: string | null } | null;
+  owner?: LoanParty | null;
+  requester?: LoanParty | null;
+};
 
 function LoansPageComponent() {
   const { t, locale } = useLocale();
@@ -32,7 +45,10 @@ function LoansPageComponent() {
   const { data: loanData, isFetching } = useQuery({
     queryKey: ["loans"],
     queryFn: async () => {
-      const { data } = await axios.get("/api/loans");
+      const { data } = await axios.get<{
+        sent: LoanRequestEntry[];
+        received: LoanRequestEntry[];
+      }>("/api/loans");
       return data;
     },
   });
@@ -104,7 +120,7 @@ function LoansPageComponent() {
             </h2>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
-            Suivez et gérez les objets que vous avez prêtés à d'autres
+            Suivez et gérez les objets que vous avez prêtés à d’autres
             collectionneurs ou ceux que vous avez empruntés.
           </p>
         </div>
@@ -141,7 +157,7 @@ function LoansPageComponent() {
             >
               {sentRequests.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {sentRequests.map((req: any) => (
+                  {sentRequests.map((req) => (
                     <div
                       key={req.id}
                       className="group relative flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 bg-zinc-50/20 dark:bg-zinc-950/40 border border-border/60 dark:border-zinc-800/80 rounded-2xl shadow-sm hover:border-zinc-350 dark:hover:border-zinc-750 transition-all duration-200"
@@ -149,9 +165,9 @@ function LoansPageComponent() {
                       {/* Item image */}
                       <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden border shrink-0 bg-zinc-950/20 shadow-inner select-none">
                         {req.item?.imageUrl ? (
-                          <Image
+                          <RemoteImage
                             src={req.item.imageUrl}
-                            alt={req.item.name}
+                            alt={req.item.name || ""}
                             width={128}
                             height={128}
                             className="w-full h-full object-cover"
@@ -252,7 +268,7 @@ function LoansPageComponent() {
             >
               {receivedRequests.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {receivedRequests.map((req: any) => (
+                  {receivedRequests.map((req) => (
                     <div
                       key={req.id}
                       className="group relative flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 bg-zinc-50/20 dark:bg-zinc-950/40 border border-border/60 dark:border-zinc-800/80 rounded-2xl shadow-sm hover:border-zinc-350 dark:hover:border-zinc-750 transition-all duration-200"
@@ -260,9 +276,9 @@ function LoansPageComponent() {
                       {/* Item image */}
                       <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden border shrink-0 bg-zinc-950/20 shadow-inner select-none">
                         {req.item?.imageUrl ? (
-                          <Image
+                          <RemoteImage
                             src={req.item.imageUrl}
-                            alt={req.item.name}
+                            alt={req.item.name || ""}
                             width={128}
                             height={128}
                             className="w-full h-full object-cover"

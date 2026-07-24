@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.pnpm-store
 /.pnp
 .pnp.*
 .yarn/*
@@ -22,6 +23,7 @@
 
 # misc
 .DS_Store
+.cache/
 *.pem
 
 # debug
@@ -47,6 +49,28 @@ certificates
 public/sw*
 public/swe-worker*
 
-# Prisma
+# Prisma / base locale — jamais versionner (données privées runtime)
 prisma/dev.db
 prisma/dev.db-journal
+prisma/dev.db-*
+prisma/*.backup*
+prisma/data-export.json
+prisma/*.dump
+prisma/*.sql.dump
+
+# Médias téléchargés/uploadés à l'exécution (données runtime, pas du source)
+/public/uploads/**
+!/public/uploads/.gitkeep
+
+# Caches providers locaux (SQLite) et dumps DB éventuels
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# Scripts et données de debug locaux
+/scratch/
+
+# Cursor IDE
+.cursor/
+# Outillage local Claude Code (preview/launch)
+/.claude/

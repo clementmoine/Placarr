@@ -6,8 +6,8 @@ import useEmblaCarousel, {
 } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-import { useLocale } from "@/lib/providers/LocaleProvider";
+import { cn } from "@/lib/shared/utils";
+import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 
 type CarouselApi = UseEmblaCarouselType[1];
@@ -59,14 +59,31 @@ function Carousel({
     },
     plugins,
   );
-  const [canScrollPrev, setCanScrollPrev] = React.useState(false);
-  const [canScrollNext, setCanScrollNext] = React.useState(false);
-
-  const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) return;
-    setCanScrollPrev(api.canScrollPrev());
-    setCanScrollNext(api.canScrollNext());
-  }, []);
+  // Embla est un store externe : on s'abonne via useSyncExternalStore au lieu
+  // de recopier son état dans des useState en effect (les snapshots sont des
+  // booléens, donc référentiellement stables).
+  const subscribeToApi = React.useCallback(
+    (onStoreChange: () => void) => {
+      if (!api) return () => {};
+      api.on("select", onStoreChange);
+      api.on("reInit", onStoreChange);
+      return () => {
+        api.off("select", onStoreChange);
+        api.off("reInit", onStoreChange);
+      };
+    },
+    [api],
+  );
+  const canScrollPrev = React.useSyncExternalStore(
+    subscribeToApi,
+    () => api?.canScrollPrev() ?? false,
+    () => false,
+  );
+  const canScrollNext = React.useSyncExternalStore(
+    subscribeToApi,
+    () => api?.canScrollNext() ?? false,
+    () => false,
+  );
 
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev();
@@ -91,19 +108,10 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api || !setApi) return;
+    // Remontée du handle impératif Embla au parent via la prop callback —
+    // l'interface publique du composant (pattern shadcn/ui d'origine).
     setApi(api);
   }, [api, setApi]);
-
-  React.useEffect(() => {
-    if (!api) return;
-    onSelect(api);
-    api.on("reInit", onSelect);
-    api.on("select", onSelect);
-
-    return () => {
-      api?.off("select", onSelect);
-    };
-  }, [api, onSelect]);
 
   return (
     <CarouselContext.Provider

@@ -1,0 +1,758 @@
+[
+  {
+    "id": 1,
+    "name": "3DO Interactive Multiplayer"
+  },
+  {
+    "id": 2,
+    "name": "Commodore Amiga"
+  },
+  {
+    "id": 3,
+    "name": "Amstrad CPC"
+  },
+  {
+    "id": 4,
+    "name": "Android"
+  },
+  {
+    "id": 5,
+    "name": "Arcade"
+  },
+  {
+    "id": 6,
+    "name": "Atari 2600"
+  },
+  {
+    "id": 7,
+    "name": "Atari 5200"
+  },
+  {
+    "id": 8,
+    "name": "Atari 7800"
+  },
+  {
+    "id": 9,
+    "name": "Atari Jaguar"
+  },
+  {
+    "id": 10,
+    "name": "Atari Jaguar CD"
+  },
+  {
+    "id": 11,
+    "name": "Atari Lynx"
+  },
+  {
+    "id": 12,
+    "name": "Atari XEGS"
+  },
+  {
+    "id": 13,
+    "name": "ColecoVision"
+  },
+  {
+    "id": 14,
+    "name": "Commodore 64"
+  },
+  {
+    "id": 15,
+    "name": "Mattel Intellivision"
+  },
+  {
+    "id": 16,
+    "name": "Apple iOS"
+  },
+  {
+    "id": 17,
+    "name": "Apple Mac OS"
+  },
+  {
+    "id": 18,
+    "name": "Microsoft Xbox"
+  },
+  {
+    "id": 19,
+    "name": "Microsoft Xbox 360"
+  },
+  {
+    "id": 20,
+    "name": "Microsoft Xbox One"
+  },
+  {
+    "id": 21,
+    "name": "SNK Neo Geo Pocket"
+  },
+  {
+    "id": 22,
+    "name": "SNK Neo Geo Pocket Color"
+  },
+  {
+    "id": 23,
+    "name": "SNK Neo Geo AES"
+  },
+  {
+    "id": 24,
+    "name": "Nintendo 3DS"
+  },
+  {
+    "id": 25,
+    "name": "Nintendo 64"
+  },
+  {
+    "id": 26,
+    "name": "Nintendo DS"
+  },
+  {
+    "id": 27,
+    "name": "Nintendo Entertainment System"
+  },
+  {
+    "id": 28,
+    "name": "Nintendo Game Boy"
+  },
+  {
+    "id": 29,
+    "name": "Nintendo Game Boy Advance"
+  },
+  {
+    "id": 30,
+    "name": "Nintendo Game Boy Color"
+  },
+  {
+    "id": 31,
+    "name": "Nintendo GameCube"
+  },
+  {
+    "id": 32,
+    "name": "Nintendo Virtual Boy"
+  },
+  {
+    "id": 33,
+    "name": "Nintendo Wii"
+  },
+  {
+    "id": 34,
+    "name": "Nintendo Wii U"
+  },
+  {
+    "id": 35,
+    "name": "Ouya"
+  },
+  {
+    "id": 37,
+    "name": "Philips CD-i"
+  },
+  {
+    "id": 38,
+    "name": "Sega 32X"
+  },
+  {
+    "id": 39,
+    "name": "Sega CD"
+  },
+  {
+    "id": 40,
+    "name": "Sega Dreamcast"
+  },
+  {
+    "id": 41,
+    "name": "Sega Game Gear"
+  },
+  {
+    "id": 42,
+    "name": "Sega Genesis"
+  },
+  {
+    "id": 43,
+    "name": "Sega Master System"
+  },
+  {
+    "id": 45,
+    "name": "Sega Saturn"
+  },
+  {
+    "id": 46,
+    "name": "Sinclair ZX Spectrum"
+  },
+  {
+    "id": 47,
+    "name": "Sony Playstation"
+  },
+  {
+    "id": 48,
+    "name": "Sony Playstation 2"
+  },
+  {
+    "id": 49,
+    "name": "Sony Playstation 3"
+  },
+  {
+    "id": 50,
+    "name": "Sony Playstation 4"
+  },
+  {
+    "id": 51,
+    "name": "Sony Playstation Vita"
+  },
+  {
+    "id": 52,
+    "name": "Sony PSP"
+  },
+  {
+    "id": 53,
+    "name": "Super Nintendo Entertainment System"
+  },
+  {
+    "id": 54,
+    "name": "NEC TurboGrafx-16"
+  },
+  {
+    "id": 55,
+    "name": "WonderSwan"
+  },
+  {
+    "id": 56,
+    "name": "WonderSwan Color"
+  },
+  {
+    "id": 57,
+    "name": "Magnavox Odyssey 2"
+  },
+  {
+    "id": 58,
+    "name": "Fairchild Channel F"
+  },
+  {
+    "id": 59,
+    "name": "BBC Microcomputer System"
+  },
+  {
+    "id": 60,
+    "name": "Memotech MTX512"
+  },
+  {
+    "id": 61,
+    "name": "Camputers Lynx"
+  },
+  {
+    "id": 63,
+    "name": "Tiger Game.com"
+  },
+  {
+    "id": 64,
+    "name": "Oric Atmos"
+  },
+  {
+    "id": 65,
+    "name": "Acorn Electron"
+  },
+  {
+    "id": 66,
+    "name": "Dragon 32/64"
+  },
+  {
+    "id": 67,
+    "name": "Entex Adventure Vision"
+  },
+  {
+    "id": 68,
+    "name": "APF Imagination Machine"
+  },
+  {
+    "id": 69,
+    "name": "Mattel Aquarius"
+  },
+  {
+    "id": 70,
+    "name": "Jupiter Ace"
+  },
+  {
+    "id": 71,
+    "name": "SAM Coup&#xE9;"
+  },
+  {
+    "id": 72,
+    "name": "Enterprise"
+  },
+  {
+    "id": 73,
+    "name": "EACA EG2000 Colour Genie"
+  },
+  {
+    "id": 74,
+    "name": "Acorn Archimedes"
+  },
+  {
+    "id": 75,
+    "name": "Tapwave Zodiac"
+  },
+  {
+    "id": 76,
+    "name": "Atari ST"
+  },
+  {
+    "id": 77,
+    "name": "Bally Astrocade"
+  },
+  {
+    "id": 78,
+    "name": "Magnavox Odyssey"
+  },
+  {
+    "id": 79,
+    "name": "Emerson Arcadia 2001"
+  },
+  {
+    "id": 80,
+    "name": "Sega SG-1000"
+  },
+  {
+    "id": 81,
+    "name": "Epoch Super Cassette Vision"
+  },
+  {
+    "id": 82,
+    "name": "Microsoft MSX"
+  },
+  {
+    "id": 83,
+    "name": "MS-DOS"
+  },
+  {
+    "id": 84,
+    "name": "Windows"
+  },
+  {
+    "id": 85,
+    "name": "Web Browser"
+  },
+  {
+    "id": 88,
+    "name": "Sega Model 2"
+  },
+  {
+    "id": 93,
+    "name": "Namco System 22"
+  },
+  {
+    "id": 94,
+    "name": "Sega Model 3"
+  },
+  {
+    "id": 96,
+    "name": "Sega System 32"
+  },
+  {
+    "id": 97,
+    "name": "Sega System 16"
+  },
+  {
+    "id": 98,
+    "name": "Sammy Atomiswave"
+  },
+  {
+    "id": 99,
+    "name": "Sega Naomi"
+  },
+  {
+    "id": 100,
+    "name": "Sega Naomi 2"
+  },
+  {
+    "id": 102,
+    "name": "Atari 800"
+  },
+  {
+    "id": 104,
+    "name": "Sega Model 1"
+  },
+  {
+    "id": 105,
+    "name": "Sega Pico"
+  },
+  {
+    "id": 107,
+    "name": "Acorn Atom"
+  },
+  {
+    "id": 109,
+    "name": "Amstrad GX4000"
+  },
+  {
+    "id": 111,
+    "name": "Apple II"
+  },
+  {
+    "id": 112,
+    "name": "Apple IIGS"
+  },
+  {
+    "id": 114,
+    "name": "Casio Loopy"
+  },
+  {
+    "id": 115,
+    "name": "Casio PV-1000"
+  },
+  {
+    "id": 117,
+    "name": "Coleco ADAM"
+  },
+  {
+    "id": 118,
+    "name": "Commodore 128"
+  },
+  {
+    "id": 119,
+    "name": "Commodore Amiga CD32"
+  },
+  {
+    "id": 120,
+    "name": "Commodore CDTV"
+  },
+  {
+    "id": 121,
+    "name": "Commodore Plus 4"
+  },
+  {
+    "id": 122,
+    "name": "Commodore VIC-20"
+  },
+  {
+    "id": 124,
+    "name": "Fujitsu FM Towns Marty"
+  },
+  {
+    "id": 125,
+    "name": "GCE Vectrex"
+  },
+  {
+    "id": 126,
+    "name": "Nuon"
+  },
+  {
+    "id": 127,
+    "name": "Mega Duck"
+  },
+  {
+    "id": 128,
+    "name": "Sharp X68000"
+  },
+  {
+    "id": 129,
+    "name": "Tandy TRS-80"
+  },
+  {
+    "id": 131,
+    "name": "Elektronika BK"
+  },
+  {
+    "id": 132,
+    "name": "Epoch Game Pocket Computer"
+  },
+  {
+    "id": 133,
+    "name": "Funtech Super Acan"
+  },
+  {
+    "id": 135,
+    "name": "GamePark GP32"
+  },
+  {
+    "id": 136,
+    "name": "Hartung Game Master"
+  },
+  {
+    "id": 137,
+    "name": "Interton VC 4000"
+  },
+  {
+    "id": 138,
+    "name": "MUGEN"
+  },
+  {
+    "id": 139,
+    "name": "OpenBOR"
+  },
+  {
+    "id": 140,
+    "name": "Philips VG 5000"
+  },
+  {
+    "id": 141,
+    "name": "Philips Videopac&#x2B;"
+  },
+  {
+    "id": 142,
+    "name": "RCA Studio II"
+  },
+  {
+    "id": 143,
+    "name": "ScummVM"
+  },
+  {
+    "id": 144,
+    "name": "Sega Dreamcast VMU"
+  },
+  {
+    "id": 145,
+    "name": "Sega SC-3000"
+  },
+  {
+    "id": 146,
+    "name": "Sega ST-V"
+  },
+  {
+    "id": 147,
+    "name": "Sinclair ZX-81"
+  },
+  {
+    "id": 148,
+    "name": "Sord M5"
+  },
+  {
+    "id": 149,
+    "name": "Texas Instruments TI 99/4A"
+  },
+  {
+    "id": 151,
+    "name": "Pinball"
+  },
+  {
+    "id": 152,
+    "name": "VTech CreatiVision"
+  },
+  {
+    "id": 153,
+    "name": "Watara Supervision"
+  },
+  {
+    "id": 154,
+    "name": "WoW Action Max"
+  },
+  {
+    "id": 155,
+    "name": "ZiNc"
+  },
+  {
+    "id": 157,
+    "name": "Nintendo Famicom Disk System"
+  },
+  {
+    "id": 161,
+    "name": "NEC PC-FX"
+  },
+  {
+    "id": 162,
+    "name": "PC Engine SuperGrafx"
+  },
+  {
+    "id": 163,
+    "name": "NEC TurboGrafx-CD"
+  },
+  {
+    "id": 164,
+    "name": "TRS-80 Color Computer"
+  },
+  {
+    "id": 166,
+    "name": "Nintendo Game &amp; Watch"
+  },
+  {
+    "id": 167,
+    "name": "SNK Neo Geo CD"
+  },
+  {
+    "id": 168,
+    "name": "Nintendo Satellaview"
+  },
+  {
+    "id": 169,
+    "name": "Taito Type X"
+  },
+  {
+    "id": 170,
+    "name": "XaviXPORT"
+  },
+  {
+    "id": 171,
+    "name": "Mattel HyperScan"
+  },
+  {
+    "id": 172,
+    "name": "Game Wave Family Entertainment System"
+  },
+  {
+    "id": 173,
+    "name": "Sega CD 32X"
+  },
+  {
+    "id": 174,
+    "name": "Aamber Pegasus"
+  },
+  {
+    "id": 175,
+    "name": "Apogee BK-01"
+  },
+  {
+    "id": 180,
+    "name": "Commodore MAX Machine"
+  },
+  {
+    "id": 181,
+    "name": "Commodore PET"
+  },
+  {
+    "id": 183,
+    "name": "Exelvision EXL 100"
+  },
+  {
+    "id": 184,
+    "name": "Exidy Sorcerer"
+  },
+  {
+    "id": 186,
+    "name": "Fujitsu FM-7"
+  },
+  {
+    "id": 187,
+    "name": "Hector HRX"
+  },
+  {
+    "id": 189,
+    "name": "Matra and Hachette Alice"
+  },
+  {
+    "id": 190,
+    "name": "Microsoft MSX2"
+  },
+  {
+    "id": 191,
+    "name": "Microsoft MSX2&#x2B;"
+  },
+  {
+    "id": 192,
+    "name": "NEC PC-8801"
+  },
+  {
+    "id": 193,
+    "name": "NEC PC-9801"
+  },
+  {
+    "id": 194,
+    "name": "Nintendo 64DD"
+  },
+  {
+    "id": 195,
+    "name": "Nintendo Pokemon Mini"
+  },
+  {
+    "id": 197,
+    "name": "Othello Multivision"
+  },
+  {
+    "id": 198,
+    "name": "VTech Socrates"
+  },
+  {
+    "id": 199,
+    "name": "Vector-06C"
+  },
+  {
+    "id": 200,
+    "name": "Tomy Tutor"
+  },
+  {
+    "id": 201,
+    "name": "Spectravideo"
+  },
+  {
+    "id": 202,
+    "name": "Sony PSP Minis"
+  },
+  {
+    "id": 203,
+    "name": "Sony PocketStation"
+  },
+  {
+    "id": 204,
+    "name": "Sharp X1"
+  },
+  {
+    "id": 205,
+    "name": "Sharp MZ-2500"
+  },
+  {
+    "id": 207,
+    "name": "Sega Triforce"
+  },
+  {
+    "id": 208,
+    "name": "Sega Hikaru"
+  },
+  {
+    "id": 210,
+    "name": "SNK Neo Geo MVS"
+  },
+  {
+    "id": 211,
+    "name": "Nintendo Switch"
+  },
+  {
+    "id": 212,
+    "name": "Windows 3.X"
+  },
+  {
+    "id": 213,
+    "name": "Nokia N-Gage"
+  },
+  {
+    "id": 216,
+    "name": "GameWave"
+  },
+  {
+    "id": 218,
+    "name": "Linux"
+  },
+  {
+    "id": 219,
+    "name": "Sony Playstation 5"
+  },
+  {
+    "id": 220,
+    "name": "PICO-8"
+  },
+  {
+    "id": 221,
+    "name": "VTech V.Smile"
+  },
+  {
+    "id": 222,
+    "name": "Microsoft Xbox Series X/S"
+  },
+  {
+    "id": 223,
+    "name": "Bandai Super Vision 8000"
+  },
+  {
+    "id": 224,
+    "name": "Nintendo Switch 2"
+  },
+  {
+    "id": 225,
+    "name": "Elektor TV Games Computer"
+  },
+  {
+    "id": 226,
+    "name": "Arduboy"
+  },
+  {
+    "id": 227,
+    "name": "Uzebox"
+  },
+  {
+    "id": 228,
+    "name": "WASM-4"
+  }
+]

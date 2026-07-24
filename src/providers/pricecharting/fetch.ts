@@ -55,6 +55,7 @@ import {
   runWithPriceChartingFetchStore,
   type PriceChartingHttpResponse,
 } from "./fetchStore";
+import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 
 export type {
   PriceChartingMetadata,
@@ -85,9 +86,19 @@ async function priceChartingGetRaw(
     throw new PriceChartingRateLimitedError();
   }
 
+  const signal = resolveRequestAbortSignal();
+  if (signal?.aborted) {
+    const reason = signal.reason;
+    if (reason instanceof Error) throw reason;
+    const error = new Error("Aborted");
+    error.name = "AbortError";
+    throw error;
+  }
+
   const response = await fetchGetWithFlareFallback(url, {
     headers,
     maxRedirects: 5,
+    signal,
   });
   if (response.status === 429) {
     markPriceChartingQuotaHit();

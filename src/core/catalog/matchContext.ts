@@ -181,7 +181,7 @@ export function matchPriceSeekQueries(
  */
 export function toBarcodePriceRefreshContext(
   match: MatchContext,
-  options: { expandSearchQueries?: boolean } = {},
+  options: { expandSearchQueries?: boolean; signal?: AbortSignal } = {},
 ): BarcodePriceRefreshContext {
   const cleanedBarcode = matchPrimaryBarcode(match);
   /** Cap alias expansion — each title becomes several marketplace HTTP seeks. */
@@ -214,6 +214,7 @@ export function toBarcodePriceRefreshContext(
     leDenicheurQueries,
     isPal: match.isPal ?? true,
     isClassics: match.isClassics ?? false,
+    ...(options.signal ? { signal: options.signal } : {}),
   };
 }
 

@@ -30,6 +30,7 @@ import {
 import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProviderExternalLinks";
 import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesSiblingBarcodes";
 import { prisma } from "@/lib/db/prisma";
+import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
 import path from "path";
 
 const CANCEL_POLL_MS = 2_000;
@@ -276,22 +277,37 @@ export async function executePriceRefreshJob(
     shelfName: payload.shelfName,
   };
 
-  const result = await withTimeout(
-    refreshItemPricesFromContext(context, { force: payload.force }),
-    PRICE_JOB_TIMEOUT_MS,
-    () => {
-      console.warn(
-        `[PriceRefresh] Job timeout after ${PRICE_JOB_TIMEOUT_MS}ms for item ${payload.id}`,
-      );
-    },
-  );
-  if (result === undefined) {
-    // Timed out: keep whatever offers were already persisted; free the slot.
-    return;
-  }
+  const controller = new AbortController();
+  try {
+    const result = await withTimeout(
+      runWithJobAbortSignal(controller.signal, () =>
+        refreshItemPricesFromContext(context, {
+          force: payload.force,
+          signal: controller.signal,
+        }),
+      ),
+      PRICE_JOB_TIMEOUT_MS,
+      () => {
+        console.warn(
+          `[PriceRefresh] Job timeout after ${PRICE_JOB_TIMEOUT_MS}ms for item ${payload.id}`,
+        );
+        controller.abort();
+      },
+    );
+    if (result === undefined) {
+      // Timed out: keep whatever offers were already persisted; free the slot.
+      // AbortSignal stops further Flare/HTTP work (ALS + concurrency gate).
+      return;
+    }
 
-  if (payload.shelfType === "books" && payload.barcode) {
-    await attachSeriesBarcodesAfterMetadata(payload.id);
+    if (payload.shelfType === "books" && payload.barcode) {
+      await attachSeriesBarcodesAfterMetadata(payload.id);
+    }
+  } catch (error) {
+    if (isAbortError(error)) {
+      return;
+    }
+    throw error;
   }
 }
 

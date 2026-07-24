@@ -3,6 +3,10 @@ import { finalizeGamePriceProviders } from "@/core/commerce/pricing/resolver";
 import type { PriceOfferInput } from "@/core/enrich/evidence";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
+import {
+  resolveRequestAbortSignal,
+  throwIfJobAborted,
+} from "@/lib/http/jobAbort";
 import { PROVIDER_MODULES } from "./registry";
 import type {
   BarcodeLookupType,
@@ -31,6 +35,7 @@ export function collectScanPriceOffers(
 export async function collectRefreshBarcodePriceOffers(
   ctx: BarcodePriceRefreshContext,
 ): Promise<PriceOfferInput[]> {
+  const signal = resolveRequestAbortSignal(ctx.signal);
   const modules = PROVIDER_MODULES.filter(
     (module) =>
       module.refreshBarcodePriceOffers &&
@@ -40,17 +45,28 @@ export async function collectRefreshBarcodePriceOffers(
     modules,
     BARCODE_PRICE_REFRESH_CONCURRENCY,
     async (module) => {
+      throwIfJobAborted(signal);
       await yieldToEventLoop();
       try {
-        return await module.refreshBarcodePriceOffers!(ctx);
-      } catch {
+        return await module.refreshBarcodePriceOffers!({
+          ...ctx,
+          ...(signal ? { signal } : {}),
+        });
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          (error.name === "AbortError" || error.name === "CanceledError")
+        ) {
+          throw error;
+        }
         return [] as PriceOfferInput[];
       } finally {
         await yieldToEventLoop();
       }
     },
+    { signal },
   );
-  return settled.flat();
+  return settled.filter((row): row is PriceOfferInput[] => Array.isArray(row)).flat();
 }
 
 export function priceProviderTokenFromOffers(

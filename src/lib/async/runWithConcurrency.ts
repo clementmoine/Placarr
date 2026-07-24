@@ -3,6 +3,7 @@ export async function runWithConcurrency<T, R>(
   items: readonly T[],
   concurrency: number,
   worker: (item: T, index: number) => Promise<R>,
+  options?: { signal?: AbortSignal },
 ): Promise<R[]> {
   if (items.length === 0) return [];
 
@@ -11,6 +12,7 @@ export async function runWithConcurrency<T, R>(
 
   async function runWorker(): Promise<void> {
     while (nextIndex < items.length) {
+      if (options?.signal?.aborted) return;
       const currentIndex = nextIndex;
       nextIndex += 1;
       results[currentIndex] = await worker(items[currentIndex], currentIndex);

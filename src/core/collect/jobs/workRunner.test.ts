@@ -63,7 +63,16 @@ vi.mock("@/lib/db/prisma", () => ({
   },
 }));
 
-import { executeMetadataRefreshJob } from "./workRunner";
+vi.mock("@/core/collect/seriesSiblingBarcodes", () => ({
+  attachSeriesSiblingBarcodesFromProviders: vi.fn().mockResolvedValue({
+    attached: [],
+  }),
+}));
+
+import {
+  executeMetadataRefreshJob,
+  executePriceRefreshJob,
+} from "./workRunner";
 import type { BackgroundWorkJobRow } from "./workQueue";
 
 describe("executeMetadataRefreshJob", () => {
@@ -268,5 +277,48 @@ describe("executeMetadataRefreshJob", () => {
         payload: expect.objectContaining({ force: true }),
       }),
     );
+  });
+});
+
+describe("executePriceRefreshJob", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("aborts in-flight price scrapes when the job timeout fires", async () => {
+    vi.useFakeTimers();
+    let sawAbort = false;
+    h.refreshItemPricesFromContext.mockImplementation(
+      async (_context, options) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            sawAbort = true;
+            const error = new Error("Aborted");
+            error.name = "AbortError";
+            reject(error);
+          });
+        }),
+    );
+
+    const done = executePriceRefreshJob({
+      id: "item-price-1",
+      barcode: "0045496365226",
+      name: "Super Monkey Ball",
+      shelfType: "games",
+      shelfName: "Wii",
+      force: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await expect(done).resolves.toBeUndefined();
+    expect(sawAbort).toBe(true);
+    expect(h.refreshItemPricesFromContext).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "item-price-1" }),
+      expect.objectContaining({
+        force: true,
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    vi.useRealTimers();
   });
 });

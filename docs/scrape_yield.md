@@ -30,13 +30,18 @@ Soft-404 to a search page is **not** a miss: mine the rows, pick a winner, fetch
 - Abort on 429 / quota (no retry spam)
 - Same HTML → metadata + prices parse; sibling title-search skipped when primary already rich
 
+## Phase 2a — Job timeout aborts scrapes (done 2026-07-24)
+
+- `jobAbort.ts` ALS — worker price timeout **aborts** in-flight axios/Flare (not just frees the slot)
+- `collectRefreshBarcodePriceOffers` stops launching more providers when aborted
+- Metadata refresh already aborted via session `AbortController` (unchanged)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Durable ProviderEvidence | Bridge Next scan ↔ worker refresh |
 | Harden scrape-pass gate | Never wake Flare swarm if Tier 0+1 complete |
-| Abort in-flight on job timeout | Stop burning Flare after “timeout” log |
 | Barcode adapters keep DetailYield | Kill slim-and-forget (title-only) |
 | Create/refresh = gap-fill | Don’t force full fan-out when evidence fresh |
 | eBay: batch search → aggregate | One Browse search ≫ N item details |

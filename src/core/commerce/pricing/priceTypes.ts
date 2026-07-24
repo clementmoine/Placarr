@@ -72,6 +72,8 @@ export type RefreshBarcodePricesInput = {
   externalIds?: Record<string, string | null | undefined>;
   /** Product-page URLs from metadata facts, keyed by provider id. */
   providerProductUrls?: readonly ProviderProductUrlRef[];
+  /** Abort in-flight marketplace scrapes (worker job timeout). */
+  signal?: AbortSignal;
 };
 
 export type RefreshItemPricesInput = {
@@ -87,6 +89,8 @@ export type RefreshItemPricesInput = {
   itemId: string;
   metadataId?: string | null;
   providerProductUrls?: readonly ProviderProductUrlRef[];
+  /** Abort in-flight marketplace scrapes (worker job timeout). */
+  signal?: AbortSignal;
 };
 
 export type ShelfItemPriceFields = {

@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
 import { isAbortError } from "@/lib/http/abort";
+import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 import { flareSolverrRequestGet } from "@/lib/http/flareSolverr";
 import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
 
@@ -65,7 +66,16 @@ export async function fetchGetWithFlareFallback(
     skipDirect?: boolean;
   } = {},
 ): Promise<ScrapeFetchResponse> {
-  const { flareMaxTimeoutMs, signal, skipDirect, ...axiosOptions } = options;
+  const { flareMaxTimeoutMs, signal: explicitSignal, skipDirect, ...axiosOptions } =
+    options;
+  const signal = resolveRequestAbortSignal(explicitSignal);
+  if (signal?.aborted) {
+    const reason = signal.reason;
+    if (reason instanceof Error) throw reason;
+    const error = new Error("Aborted");
+    error.name = "AbortError";
+    throw error;
+  }
   const validateStatus =
     axiosOptions.validateStatus ??
     ((status: number) => status >= 200 && status < 300);

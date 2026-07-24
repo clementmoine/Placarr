@@ -114,6 +114,8 @@ export type BarcodePriceRefreshContext = MatchContext & {
   leDenicheurQueries: string[];
   isPal: boolean;
   isClassics: boolean;
+  /** Job abort — stop launching further provider scrapes when set. */
+  signal?: AbortSignal;
 };
 
 export type CatalogExternalLinkContext = {

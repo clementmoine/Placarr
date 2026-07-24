@@ -541,7 +541,10 @@ export async function refreshBarcodePrices(
     regionHints: rawNamesList,
   });
   const priceOffers = await collectRefreshBarcodePriceOffers(
-    toBarcodePriceRefreshContext(match, { expandSearchQueries: true }),
+    toBarcodePriceRefreshContext(match, {
+      expandSearchQueries: true,
+      signal: input.signal,
+    }),
   );
 
   const persistNames = Array.from(
@@ -607,7 +610,10 @@ export async function refreshItemPrices(
     providerProductUrls,
   });
   const priceOffers = await collectRefreshBarcodePriceOffers(
-    toBarcodePriceRefreshContext(match, { expandSearchQueries: true }),
+    toBarcodePriceRefreshContext(match, {
+      expandSearchQueries: true,
+      signal: input.signal,
+    }),
   );
 
   const persistNames = Array.from(

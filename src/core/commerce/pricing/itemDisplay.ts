@@ -58,6 +58,8 @@ const MIN_PRICE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 export type RefreshItemPricesOptions = {
   /** Bypass the min-interval guard (post-metadata refresh). */
   force?: boolean;
+  /** Abort in-flight scrapes (worker price-job timeout). */
+  signal?: AbortSignal;
 };
 
 function priceRefreshKey(context: ItemPricesContext): string {
@@ -138,6 +140,7 @@ function priceRefreshProviderProductUrls(
 function refreshBarcodeInput(
   context: ItemPricesContext,
   cleanedBarcode: string,
+  signal?: AbortSignal,
 ): RefreshBarcodePricesInput {
   // Filtered aliases for both seek and accept/align — regional + edition
   // variants (Enter Electro, Remastered) must validate marketplace hits.
@@ -154,10 +157,14 @@ function refreshBarcodeInput(
     releaseDate: context.metadataReleaseDate,
     externalIds: context.metadataExternalIds ?? undefined,
     providerProductUrls: priceRefreshProviderProductUrls(context),
+    ...(signal ? { signal } : {}),
   };
 }
 
-function refreshItemInput(context: ItemPricesContext): RefreshItemPricesInput {
+function refreshItemInput(
+  context: ItemPricesContext,
+  signal?: AbortSignal,
+): RefreshItemPricesInput {
   const lookupNames = priceLookupNamesFromContext(context);
   return {
     shelfType: context.shelfType,
@@ -172,6 +179,7 @@ function refreshItemInput(context: ItemPricesContext): RefreshItemPricesInput {
     itemId: context.id,
     metadataId: context.metadataId,
     providerProductUrls: priceRefreshProviderProductUrls(context),
+    ...(signal ? { signal } : {}),
   };
 }
 
@@ -334,10 +342,11 @@ export async function refreshItemPricesFromContext(
     }
     const cleanedBarcode = context.barcode ? cleanCode(context.barcode) : "";
     if (!cleanedBarcode) {
-      return refreshItemPrices(refreshItemInput(context));
+      return refreshItemPrices(refreshItemInput(context, options.signal));
     }
-    return refreshBarcodePrices(refreshBarcodeInput(context, cleanedBarcode));
-  })();
+    return refreshBarcodePrices(
+      refreshBarcodeInput(context, cleanedBarcode, options.signal),
+    );  })();
 
   inFlightPriceRefresh.set(key, promise);
   try {

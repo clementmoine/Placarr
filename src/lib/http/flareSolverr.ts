@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { AsyncQueue } from "@/lib/async/asyncQueue";
 import { isAbortError } from "@/lib/http/abort";
+import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 import { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
 
 export type FlareSolverrCookies = {
@@ -50,7 +51,17 @@ function flareSolverrBaseUrl(): string | null {
 }
 
 function runFlareExclusive<T>(fn: () => Promise<T>): Promise<T> {
-  return flareQueue.run(fn);
+  return flareQueue.run(async () => {
+    const signal = resolveRequestAbortSignal();
+    if (signal?.aborted) {
+      const reason = signal.reason;
+      if (reason instanceof Error) throw reason;
+      const error = new Error("Aborted");
+      error.name = "AbortError";
+      throw error;
+    }
+    return fn();
+  });
 }
 
 export async function flareSolverrCookiesFor(
@@ -178,6 +189,14 @@ export async function flareSolverrRequestGet(
   if (!baseUrl) return null;
 
   const maxTimeoutMs = options.maxTimeoutMs ?? 30_000;
+  const signal = resolveRequestAbortSignal(options.signal);
+  if (signal?.aborted) {
+    const reason = signal.reason;
+    if (reason instanceof Error) throw reason;
+    const error = new Error("Aborted");
+    error.name = "AbortError";
+    throw error;
+  }
   const body: Record<string, unknown> = {
     cmd: "request.get",
     url,
@@ -191,7 +210,7 @@ export async function flareSolverrRequestGet(
       const response = await axios.post(`${baseUrl}/v1`, body, {
         timeout: maxTimeoutMs + 5_000,
         validateStatus: () => true,
-        signal: options.signal,
+        signal,
       });
       const html = response.data?.solution?.response;
       const status = Number(response.data?.solution?.status || 0);

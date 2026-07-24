@@ -19,6 +19,7 @@ import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { GENERIC_TITLE_TOKENS } from "@/core/enrich/titles/identityNoise";
 import {
   GAME_EDITION_TERMS,
+  LISTING_CONDITION_TERMS,
   LISTING_EDITION_PACKAGING_EXTRA_TERMS,
   LISTING_NOISE_TERMS,
 } from "@/core/identify/listingTerms";
@@ -406,6 +407,7 @@ function uniqueScreenScraperSearchQueries(values: string[]): string[] {
  * Ultra-broad first-word queries that must not hit ScreenScraper alone.
  * Shared generics + a closed provider-local set of title words that are
  * too common as standalone search seeds (`club`, `star`, `super`).
+ * `jeux` comes from `GENERIC_TITLE_TOKENS` (IDENTITY_MEDIA_CATEGORY_TOKENS).
  */
 const BROAD_SCREENSCRAPER_FALLBACK_WORDS = new Set([
   ...GENERIC_TITLE_TOKENS,
@@ -413,25 +415,37 @@ const BROAD_SCREENSCRAPER_FALLBACK_WORDS = new Set([
   "club",
   "star",
   "super",
-  "jeux",
 ]);
 
 /**
  * Non-distinctive listing/edition chrome for significant-token overlap.
  * Derived from shared taxonomies + a thin SS-local connector set.
+ * `complet` / `complete` come from `LISTING_CONDITION_TERMS`.
  */
 const NON_DISTINCTIVE_SCREENSCRAPER_TOKENS = new Set([
   ...GENERIC_TITLE_TOKENS,
   ...LISTING_NOISE_TERMS,
   ...LISTING_EDITION_PACKAGING_EXTRA_TERMS,
   ...GAME_EDITION_TERMS.filter((term) => !/\s/.test(term)),
+  ...LISTING_CONDITION_TERMS.filter(
+    (term) =>
+      !/\s/.test(term) &&
+      (term.toLowerCase() === "complet" || term.toLowerCase() === "complete"),
+  ),
   "sans",
   "bundle",
   "pack",
   "packs",
   "force",
-  "complet",
 ]);
+
+/** @internal — unit tests for taxonomy-backed SS chrome tokens. */
+export function __screenScraperChromeTokensForTests() {
+  return {
+    broad: BROAD_SCREENSCRAPER_FALLBACK_WORDS,
+    nonDistinctive: NON_DISTINCTIVE_SCREENSCRAPER_TOKENS,
+  };
+}
 
 function screenScraperSignificantTokens(
   value: string,

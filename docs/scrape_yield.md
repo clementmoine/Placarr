@@ -356,4 +356,4 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 
 | Item | Why |
 | ---- | --- |
-| Worker / server-side dump hashing | Only if dumps must live on server |
+| Worker / server-side dump hashing | **Deferred / optional** — only if dumps must live on server |

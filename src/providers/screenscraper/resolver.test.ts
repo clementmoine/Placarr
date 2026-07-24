@@ -18,6 +18,7 @@ import {
   pickSSCover,
   scoreScreenScraperGameTitleMatch,
   shouldUseCachedScreenScraperSuggestions,
+  __screenScraperChromeTokensForTests,
   type SSMedia,
 } from "./resolver";
 import { getScreenScraperEnv } from "./env";
@@ -689,5 +690,16 @@ describe("hydrateScreenScraperLookupFromGameCache", () => {
         (attachment) => attachment.type === "screenshot",
       ),
     ).toBe(true);
+  });
+
+  it("keeps jeux/complet chrome via GENERIC + LISTING_CONDITION (no bare literals)", () => {
+    const { broad, nonDistinctive } = __screenScraperChromeTokensForTests();
+    expect(broad.has("jeux")).toBe(true);
+    expect(broad.has("jeu")).toBe(true);
+    expect(nonDistinctive.has("complet")).toBe(true);
+    expect(nonDistinctive.has("complete")).toBe(true);
+    // Intentional SS seed policy — not listing taxonomies.
+    expect(broad.has("club")).toBe(true);
+    expect(nonDistinctive.has("force")).toBe(true);
   });
 });

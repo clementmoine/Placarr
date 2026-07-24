@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-24** (cleanup docs — base clean avant chantier SSOT identité).
+> Dernière vérification : **2026-07-24** (base clean — résidus optionnels seulement).
 > Index docs : [README.md](README.md).
 
 ## Ouverts — base clean (2026-07-24)
@@ -11,15 +11,15 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | -------- | ---- | ------ |
 | ~~**P0**~~ | ~~SSOT identité / covers / liens~~ | **Fait 2026-07-24** — étapes 1–7 + dead hardware titleMatch + present purge unique. |
 | ~~**P1**~~ | ~~List present sans `priceOffers.rawValue`~~ | **Fait 2026-07-24** — covers persistées à l’écriture prix ; `itemListMetadataInclude` sans priceOffers. |
-| **P2** | Word-lists → consensus / IDF | **First cut 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + offline DF + boot/cron. **GENERIC fully IDENTITY/listing-derived 2026-07-24** (`edition`/`version` + `jeu/game*` from listing taxonomies). |
-| **P2** | Scrape-yield / call efficiency | **… + eBay Browse SearchYield durable 2026-07-24**. LaunchBox FTS measured 2026-07-24 (`pnpm launchbox:bench-fts`). Voir [scrape_yield.md](scrape_yield.md). |
+| ~~**P2**~~ | ~~Word-lists → consensus / IDF~~ | **Fait 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + offline DF + boot/cron ; GENERIC fully listing/IDENTITY-derived. |
+| ~~**P2**~~ | ~~Scrape-yield / call efficiency~~ | **Fait 2026-07-24** — SearchYield durable + LaunchBox FTS measure + No-Intro dump path. Voir [scrape_yield.md](scrape_yield.md). Résidu optionnel : server dump hashing. |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~ | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override. |
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
 | ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro Tier0 + checksum path + DAT sync + enrich wire + client dump hash 2026-07-24**. |
 | ~~**P3**~~ | ~~LaunchBox / dumps~~ | **LB prebuild 2026-07-24** ; **No-Intro multi-DAT Tier0 2026-07-24** ; **FTS measure 2026-07-24** (`pnpm launchbox:bench-fts`). |
-| **P4** | Optionnel | Table GS1 audio (typage musique). LaunchBox FTS measure **fait 2026-07-24**. |
+| **P4** | Optionnel | Table GS1 audio (typage musique). |
 
-**Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.
+**Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late, GENERIC→IDENTITY, title-IDF offline index, No-Intro dump path.
 
 ---
 

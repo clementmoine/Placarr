@@ -289,20 +289,27 @@ function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
 }
 
 /**
- * Marketplace scrapes (Back Market, …) still contribute a product fiche link +
- * listing photo after stage 1 already has identify/cover from a catalog/API
- * source. Key-auth marketplaces (eBay) already bypass the scrape-cap gate;
- * keep title-search scrapes in the same boat for hardware/games.
+ * Marketplace scrapes (Back Market, …) may fill identify/cover when Tier 0+1
+ * left a gap. Once title+cover already exist, listing photos / fiche links
+ * belong in the dedicated price refresh path — do not wake Flare here.
+ * Key-auth marketplaces (eBay) bypass scrape-cap elsewhere.
  */
 export function shouldFetchMarketplaceListingInStage2(
   type: MediaType,
   provider: ProviderInfo,
   existing: MetadataResult | null | undefined,
+  stage1ActiveResults?: MetadataResult[],
 ): boolean {
   if (existing) return false;
   if (!provider.marketplaceSearchPriceSource) return false;
   if (type !== "hardware" && type !== "games") return false;
   if (provider.auth.kind !== "scrape") return false;
+  if (
+    stage1ActiveResults &&
+    metadataSnapshotHasTitleAndCover(stage1ActiveResults)
+  ) {
+    return false;
+  }
   const caps = metadataCapabilitiesOf(provider);
   return caps.includes("cover") || caps.includes("identify");
 }

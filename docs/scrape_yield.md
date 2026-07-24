@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1 (PriceCharting) shipped; durable evidence + cost tiers = next.
+> Phase 1 (PriceCharting) + 2a (job abort) + 2b (scrape gate) shipped; durable evidence = next.
 
 ## Principle
 
@@ -36,12 +36,17 @@ Soft-404 to a search page is **not** a miss: mine the rows, pick a winner, fetch
 - `collectRefreshBarcodePriceOffers` stops launching more providers when aborted
 - Metadata refresh already aborted via session `AbortController` (unchanged)
 
+## Phase 2b — Scrape-pass gate (done 2026-07-24)
+
+- `scrapeProvidersForMetadataPass` — Tier 0+1 complete ⇒ **only** fiche-pinned scrapes ∩ candidates (no Flare seeker swarm)
+- Capability gaps (incl. books lacking a *primary* cover) still wake the full candidate set
+- Marketplace stage-2 (Back Market, …) skipped once title+cover exist — price refresh owns listing photos
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Durable ProviderEvidence | Bridge Next scan ↔ worker refresh |
-| Harden scrape-pass gate | Never wake Flare swarm if Tier 0+1 complete |
 | Barcode adapters keep DetailYield | Kill slim-and-forget (title-only) |
 | Create/refresh = gap-fill | Don’t force full fan-out when evidence fresh |
 | eBay: batch search → aggregate | One Browse search ≫ N item details |

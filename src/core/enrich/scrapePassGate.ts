@@ -228,25 +228,11 @@ export function metadataResultsHavePrimaryBookCover(
   return false;
 }
 
-/**
- * After the API/DB pass: scrape only when useful fields are missing, or when
- * the fiche already cites a scrape provider we should refresh.
- *
- * For books, a Google Books / OpenLibrary cover alone does **not** satisfy
- * "cover" — we still want primary catalog scrapes (Bedetheque, BDovore, …).
- */
-export function shouldRunScrapeMetadataPass(options: {
+function metadataPassCapabilitiesIncomplete(options: {
   type: MediaType;
   activeResults: MetadataResult[];
-  existingScrapeProviderIds?: readonly string[];
-  candidateScrapeProviderIds: readonly string[];
   hasCapability: MetadataCapabilityProbe;
 }): boolean {
-  const candidates = new Set(options.candidateScrapeProviderIds);
-  if (options.existingScrapeProviderIds?.some((id) => candidates.has(id))) {
-    return true;
-  }
-
   const required = USEFUL_METADATA_CAPABILITIES[options.type] ?? [
     "identify",
     "cover",
@@ -265,4 +251,48 @@ export function shouldRunScrapeMetadataPass(options: {
   }
 
   return false;
+}
+
+/**
+ * Scrape provider ids to resolve after the API/local (Tier 0+1) pass.
+ *
+ * - Capability gaps → full candidate set (seek + fill).
+ * - Tier 0+1 already complete → **only** fiche-pinned scrapes ∩ candidates
+ *   (refresh known URLs; never wake the Flare seeker swarm).
+ *
+ * For books, a Google Books / OpenLibrary cover alone does **not** satisfy
+ * "cover" — primary catalog scrapes (Bedetheque, BDovore, …) stay candidates.
+ */
+export function scrapeProvidersForMetadataPass(options: {
+  type: MediaType;
+  activeResults: MetadataResult[];
+  existingScrapeProviderIds?: readonly string[];
+  candidateScrapeProviderIds: readonly string[];
+  hasCapability: MetadataCapabilityProbe;
+}): string[] {
+  const candidates = options.candidateScrapeProviderIds;
+  if (candidates.length === 0) return [];
+
+  if (metadataPassCapabilitiesIncomplete(options)) {
+    return [...candidates];
+  }
+
+  const pinned = new Set(options.existingScrapeProviderIds ?? []);
+  if (pinned.size === 0) return [];
+
+  return candidates.filter((id) => pinned.has(id));
+}
+
+/**
+ * After the API/DB pass: scrape only for capability gaps, or to refresh
+ * scrape providers already cited on the fiche (pinned — not the full swarm).
+ */
+export function shouldRunScrapeMetadataPass(options: {
+  type: MediaType;
+  activeResults: MetadataResult[];
+  existingScrapeProviderIds?: readonly string[];
+  candidateScrapeProviderIds: readonly string[];
+  hasCapability: MetadataCapabilityProbe;
+}): boolean {
+  return scrapeProvidersForMetadataPass(options).length > 0;
 }

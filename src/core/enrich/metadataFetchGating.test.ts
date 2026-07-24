@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   consoleShelfRejectsWebOnlyGameMetadata,
+  shouldFetchMarketplaceListingInStage2,
   shouldSkipRedundantBookScrapeRound,
 } from "./fetch";
 import type { ProviderInfo } from "@/types/providerRegistry";
@@ -45,6 +46,58 @@ describe("consoleShelfRejectsWebOnlyGameMetadata", () => {
         "xbox",
       ),
     ).toBe(false);
+  });
+});
+
+describe("shouldFetchMarketplaceListingInStage2", () => {
+  const marketplaceScrape = {
+    id: "backmarket",
+    auth: { kind: "scrape" as const },
+    marketplaceSearchPriceSource: true,
+    capabilities: ["identify", "cover", "price"],
+    metadataCapabilities: ["identify", "cover"],
+  } as ProviderInfo;
+
+  const titledCover: MetadataResult = {
+    title: "PlayStation 5",
+    imageUrl: "https://cdn.example/cover.jpg",
+  };
+
+  it("fills identify/cover gaps for hardware when Tier 0+1 left none", () => {
+    expect(
+      shouldFetchMarketplaceListingInStage2(
+        "hardware",
+        marketplaceScrape,
+        null,
+        [{ title: "PlayStation 5" }],
+      ),
+    ).toBe(true);
+  });
+
+  it("skips Flare marketplace scrapes once title+cover already exist", () => {
+    expect(
+      shouldFetchMarketplaceListingInStage2(
+        "hardware",
+        marketplaceScrape,
+        null,
+        [titledCover],
+      ),
+    ).toBe(false);
+    expect(
+      shouldFetchMarketplaceListingInStage2("games", marketplaceScrape, null, [
+        titledCover,
+      ]),
+    ).toBe(false);
+  });
+
+  it("still allows marketplace fill when stage1 snapshot is omitted", () => {
+    expect(
+      shouldFetchMarketplaceListingInStage2(
+        "hardware",
+        marketplaceScrape,
+        null,
+      ),
+    ).toBe(true);
   });
 });
 

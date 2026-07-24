@@ -6,6 +6,7 @@ import {
   preferPinnedProviderIds,
   providerRecordUrlsFromStoredSources,
   scrapeProviderIdsFromStoredSources,
+  scrapeProvidersForMetadataPass,
   shouldRunScrapeMetadataPass,
 } from "./scrapePassGate";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -114,6 +115,76 @@ describe("shouldRunScrapeMetadataPass", () => {
         hasCapability,
       }),
     ).toBe(false);
+  });
+});
+
+describe("scrapeProvidersForMetadataPass", () => {
+  const completeGame: MetadataResult = {
+    title: "Tony Hawk's American Wasteland",
+    imageUrl: "https://example.com/cover.jpg",
+    description: "Skateboarding open world.",
+  };
+
+  it("returns the full candidate set when Tier 0+1 still has gaps", () => {
+    expect(
+      scrapeProvidersForMetadataPass({
+        type: "games",
+        activeResults: [{ title: "Tony Hawk" }],
+        candidateScrapeProviderIds: ["pricecharting", "howlongtobeat"],
+        hasCapability,
+      }),
+    ).toEqual(["pricecharting", "howlongtobeat"]);
+  });
+
+  it("narrows to fiche-pinned scrapes when Tier 0+1 already complete", () => {
+    expect(
+      scrapeProvidersForMetadataPass({
+        type: "games",
+        activeResults: [completeGame],
+        existingScrapeProviderIds: ["pricecharting"],
+        candidateScrapeProviderIds: [
+          "pricecharting",
+          "howlongtobeat",
+          "coverproject",
+        ],
+        hasCapability,
+      }),
+    ).toEqual(["pricecharting"]);
+  });
+
+  it("returns empty when complete and no scrape is pinned on the fiche", () => {
+    expect(
+      scrapeProvidersForMetadataPass({
+        type: "games",
+        activeResults: [completeGame],
+        candidateScrapeProviderIds: ["howlongtobeat", "coverproject"],
+        hasCapability,
+      }),
+    ).toEqual([]);
+  });
+
+  it("still seeks all book scrapes when only a secondary API cover exists", () => {
+    expect(
+      scrapeProvidersForMetadataPass({
+        type: "books",
+        activeResults: [
+          {
+            title: "Wakfu",
+            imageUrl: "https://books.google.com/books/content?id=x",
+            description: "Synopsis",
+            attachments: [
+              {
+                type: "cover",
+                url: "https://books.google.com/books/content?id=x",
+                source: "googlebooks",
+              },
+            ],
+          },
+        ],
+        candidateScrapeProviderIds: ["booknode", "bdovore", "bedetheque"],
+        hasCapability,
+      }),
+    ).toEqual(["booknode", "bdovore", "bedetheque"]);
   });
 });
 

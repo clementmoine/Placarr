@@ -136,6 +136,7 @@ import {
 } from "@/core/enrich/galleryEnrichment";
 import {
   preferPinnedProviderIds,
+  scrapeProvidersForMetadataPass,
   shouldRunScrapeMetadataPass,
 } from "@/core/enrich/scrapePassGate";
 
@@ -409,13 +410,17 @@ export async function fetchMetadata(
     ...secondaryProviders.filter((p) => p.auth.kind === "scrape"),
   ].map((p) => p.id);
 
-  const runScrapePass = shouldRunScrapeMetadataPass({
+  const scrapePassOptions = {
     type,
     activeResults: stage1Active,
     existingScrapeProviderIds: options?.existingScrapeProviderIds,
     candidateScrapeProviderIds: scrapeCandidateIds,
     hasCapability: stage1HasMetadataCapability,
-  });
+  };
+  const scrapeIdsAllowed = new Set(
+    scrapeProvidersForMetadataPass(scrapePassOptions),
+  );
+  const runScrapePass = shouldRunScrapeMetadataPass(scrapePassOptions);
 
   if (runScrapePass && scrapeCanonicalProviders.length > 0) {
     throwIfAborted(options?.signal);
@@ -424,6 +429,7 @@ export async function fetchMetadata(
     ) as MetadataResult[];
     const toResolve = scrapeCanonicalProviders.filter(
       (p) =>
+        scrapeIdsAllowed.has(p.id) &&
         !shouldSkipRedundantBookScrapeRound(
           type,
           p,
@@ -532,6 +538,7 @@ export async function fetchMetadata(
           type,
           p,
           byProvider.get(p.id) ?? null,
+          stage1ActiveResults,
         )
       ) {
         return true;
@@ -549,6 +556,7 @@ export async function fetchMetadata(
         return true;
       }
       if (p.auth.kind !== "scrape") return true;
+      if (!scrapeIdsAllowed.has(p.id)) return false;
       if (
         shouldSkipRedundantBookScrapeRound(
           type,

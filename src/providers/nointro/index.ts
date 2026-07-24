@@ -22,7 +22,7 @@ export const nointroModule: ProviderModule = {
     defaultLanguage: "en",
     websiteUrl: "https://www.no-intro.org/",
     notes:
-      "Dump DAT Logiqx local (`pnpm nointro:build-index`, NOINTRO_DAT_PATH = fichier ou dossier). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
+      "Dump DAT Logiqx local (`pnpm nointro:sync` / `nointro:build-index`, NOINTRO_DAT_PATH = fichier ou dossier). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
   },
   createMetadataAdapter: () => ({
     id: "nointro",
@@ -92,4 +92,9 @@ export {
   lookupNoIntroGamesByChecksum,
   searchNoIntroGamesByTitle,
 } from "./indexStore";
+export {
+  isNoIntroDownloadAllowed,
+  resolveNoIntroDatPackSource,
+  syncNoIntroDatPack,
+} from "./syncDatPack";
 export { parseNoIntroDatXml } from "./parseDat";

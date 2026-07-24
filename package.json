@@ -28,7 +28,8 @@
     "icollect:scrape-pages": "tsx scripts/scrapeICollectPages.ts",
     "launchbox:build-index": "tsx scripts/buildLaunchBoxIndex.ts",
     "launchbox:bench-fts": "tsx scripts/benchLaunchBoxFts.ts",
-    "nointro:build-index": "tsx scripts/buildNoIntroIndex.ts"
+    "nointro:build-index": "tsx scripts/buildNoIntroIndex.ts",
+    "nointro:sync": "tsx scripts/syncNoIntroDats.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

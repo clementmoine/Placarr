@@ -8,6 +8,8 @@ import {
   GAME_EDITION_TERMS,
   LISTING_DISCARD_PACKAGING_NOUNS,
   LISTING_EDITION_PACKAGING_EXTRA_TERMS,
+  LISTING_LOT_PLURAL_GAME_NOUNS,
+  LISTING_NOISE_TERMS,
   LISTING_REGION_TERMS,
 } from "@/core/identify/listingTerms";
 import {
@@ -211,15 +213,22 @@ export function isIdentityFunctionWord(token: string): boolean {
 }
 
 /**
- * Residual media chrome not yet folded into a dedicated IDENTITY_* set.
- * Keep until warm IDF (or LISTING_NOISE) can cover the same cold gates.
+ * Bare media category nouns from listing taxonomies (`LISTING_NOISE_TERMS` +
+ * lot plurals). Kept as a small IDENTITY set so GENERIC can derive them
+ * without duplicating literals.
  */
-const GENERIC_TITLE_DOMAIN_CHROME = [
+const MEDIA_CATEGORY_TOKEN_ALLOW = new Set([
   "jeu",
   "game",
   "jeux",
   "games",
-] as const;
+]);
+
+export const IDENTITY_MEDIA_CATEGORY_TOKENS: ReadonlySet<string> = new Set(
+  [...LISTING_NOISE_TERMS, ...LISTING_LOT_PLURAL_GAME_NOUNS]
+    .map((term) => term.toLowerCase())
+    .filter((term) => MEDIA_CATEGORY_TOKEN_ALLOW.has(term)),
+);
 
 /**
  * Packaging atoms already present in IDENTITY taxonomies — re-exported so
@@ -248,13 +257,12 @@ function identityBackedGenericPackagingTokens(): string[] {
 
 /**
  * Stoplist for “distinctive” title tokens — function words + IDENTITY-backed
- * packaging atoms + residual media chrome.
+ * media category + packaging atoms.
  * Shared by evidence + ScreenScraper (lives here to avoid provider↔evidence cycles).
- * `"with"` is only in `IDENTITY_FUNCTION_WORDS` (no duplicate literal).
  */
 export const GENERIC_TITLE_TOKENS: ReadonlySet<string> = new Set([
   ...IDENTITY_FUNCTION_WORDS,
-  ...GENERIC_TITLE_DOMAIN_CHROME,
+  ...IDENTITY_MEDIA_CATEGORY_TOKENS,
   ...identityBackedGenericPackagingTokens(),
 ]);
 

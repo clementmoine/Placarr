@@ -26,6 +26,10 @@ import type {
   PrestashopRetailerConfig,
   PrestashopSearchProduct,
 } from "./types";
+import {
+  promotePrestashopSearchEvidence,
+  readPrestashopSearchEvidence,
+} from "./durableEvidence";
 
 const HEADERS = {
   "User-Agent":
@@ -282,8 +286,20 @@ async function fetchPrestashopSearchProducts(
   url.searchParams.set("controller", "search");
   url.searchParams.set(config.searchParam, searchValue);
   url.searchParams.set("ajax", "1");
+  const searchUrl = url.toString();
 
-  const response = await fetchGetWithFlareFallback(url.toString(), {
+  const fromEvidence = await readPrestashopSearchEvidence(
+    config.id,
+    searchUrl,
+  );
+  if (fromEvidence) {
+    console.info(
+      `[${config.label}] Search evidence hit for ${searchUrl}`,
+    );
+    return fromEvidence;
+  }
+
+  const response = await fetchGetWithFlareFallback(searchUrl, {
     headers: HEADERS,
     timeout: timeoutMs,
     validateStatus: (status) => status >= 200 && status < 500,
@@ -303,15 +319,18 @@ async function fetchPrestashopSearchProducts(
       ? (response.data as Record<string, unknown>)
       : null;
 
+  let products: PrestashopSearchProduct[] = [];
   if (config.searchStrategy === "iqit") {
     const rendered = payload?.rendered_products;
-    return typeof rendered === "string"
-      ? parseIqitRenderedProducts(rendered)
-      : [];
+    products =
+      typeof rendered === "string" ? parseIqitRenderedProducts(rendered) : [];
+  } else {
+    const raw = payload?.products;
+    products = Array.isArray(raw) ? raw : [];
   }
 
-  const products = payload?.products;
-  return Array.isArray(products) ? products : [];
+  await promotePrestashopSearchEvidence(config.id, searchUrl, products);
+  return products;
 }
 
 export async function searchPrestashopHits(

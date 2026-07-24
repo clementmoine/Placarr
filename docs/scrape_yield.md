@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2x shipped (Philibert SearchYield + search_query/s keys); Presta factory / No-Intro = later.
+> Phase 1–2y shipped (PrestaShop factory SearchYield durable); No-Intro = later.
 
 ## Principle
 
@@ -194,10 +194,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `normalizeProviderEvidenceUrl` keeps `search_query` + `s` (Presta-ready)
 - Philibert: `/fr/recherche?search_query=` → typed `{url,title?,barcode?}` promote/reuse
 
+## Phase 2y — PrestaShop factory SearchYield durable (done 2026-07-24)
+
+- Shared `fetchPrestashopSearchProducts` promote/reuse typed AJAX products per `config.id`
+- Native `products[]` and IQIT `rendered_products` both covered
+- Evidence keys use `search_query` / `s` (controller/ajax stripped by normalize)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| PrestaShop factory SearchYield durable | Same keys (`search_query` / `s`) now exist |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
+| Remaining niche Flare peers | Okkazeo / HDJV / Bedetheque multi-hop as needed |

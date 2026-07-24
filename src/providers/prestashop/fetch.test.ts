@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { parsePrestashopGallery, prestashopImageId } from "./fetch";
-
 vi.mock("axios", () => ({
   default: {
     get: vi.fn(),
   },
+}));
+
+const readPrestashopSearchEvidence = vi.fn();
+const promotePrestashopSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readPrestashopSearchEvidence: (...args: unknown[]) =>
+    readPrestashopSearchEvidence(...args),
+  promotePrestashopSearchEvidence: (...args: unknown[]) =>
+    promotePrestashopSearchEvidence(...args),
 }));
 
 import axios from "axios";
@@ -16,7 +24,13 @@ import {
   NETGAMESRETRO_CONFIG,
   TOKYOGAMESTORY_CONFIG,
 } from "./configs";
-import { PrestashopAccessDeniedError, searchPrestashopProduct } from "./fetch";
+import {
+  parsePrestashopGallery,
+  PrestashopAccessDeniedError,
+  prestashopImageId,
+  searchPrestashopHits,
+  searchPrestashopProduct,
+} from "./fetch";
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -34,6 +48,10 @@ const IQIT_MINIATURE = `
 
 beforeEach(() => {
   mockedGet.mockReset();
+  readPrestashopSearchEvidence.mockReset();
+  promotePrestashopSearchEvidence.mockReset();
+  readPrestashopSearchEvidence.mockResolvedValue(null);
+  promotePrestashopSearchEvidence.mockResolvedValue(undefined);
 });
 
 describe("prestashopImageId", () => {
@@ -281,5 +299,55 @@ describe("searchPrestashopProduct", () => {
     await expect(
       searchPrestashopProduct(CHIPWELD_CONFIG, "", "5016488132497"),
     ).rejects.toBeInstanceOf(PrestashopAccessDeniedError);
+  });
+});
+
+describe("searchPrestashopHits SearchYield durable", () => {
+  it("réutilise ProviderEvidence sans HTTP", async () => {
+    const products = [
+      {
+        name: "Catan",
+        link: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
+        ean13: "3558380126133",
+        price_amount: 43.9,
+      },
+    ];
+    readPrestashopSearchEvidence.mockResolvedValueOnce(products);
+
+    await expect(
+      searchPrestashopHits(MONSIEURDE_CONFIG, "Catan"),
+    ).resolves.toEqual(products);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promotePrestashopSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        products: [
+          {
+            name: "Catan",
+            link: "https://www.monsieurde.com/famille/359-catan-3558380126133.html",
+            ean13: "3558380126133",
+            price_amount: 43.9,
+          },
+        ],
+      },
+    });
+
+    await searchPrestashopHits(MONSIEURDE_CONFIG, "Catan");
+
+    expect(promotePrestashopSearchEvidence).toHaveBeenCalledWith(
+      "monsieurde",
+      expect.stringContaining("search"),
+      [
+        expect.objectContaining({
+          name: "Catan",
+          ean13: "3558380126133",
+        }),
+      ],
+    );
+    const promotedUrl = promotePrestashopSearchEvidence.mock.calls[0]?.[1] as string;
+    expect(promotedUrl).toContain("s=Catan");
   });
 });

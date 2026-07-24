@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3g No-Intro (checksum wire + DAT sync); Phase P4a LaunchBox FTS.
+> Phase 1–2am shipped; Phase 3a–3h No-Intro (client dump hash); Phase P4a LaunchBox FTS.
 
 ## Principle
 
@@ -331,9 +331,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `GET /api/metadata?crc=&md5=&sha1=` for scriptable preview (no ROM upload)
 - Refresh rehydrates CRC/MD5/SHA1 from stored identifier facts; No-Intro emits those facts
 
+## Phase 3h — Client dump hash → preview (done 2026-07-24)
+
+- `hashRomFile` (SHA-1 + MD5 + CRC32) — local only, never uploads
+- Games ItemModal “Identify from dump” → `getMetadataPreview(…, romChecksums)`
+- Filename stem used as lookup name when the form name is empty
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Client-side dump hash → API (no binary upload) | Product surface once preview path is proven |
-| File-ingest UI / worker hashing binaries | Only if dumps must live on server |
+| Worker / server-side dump hashing | Only if dumps must live on server |
+| Soft size warn for huge ISOs | UX polish for multi-GB dumps |

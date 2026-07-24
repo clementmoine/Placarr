@@ -12,10 +12,11 @@ import {
   Settings,
   Image as ImageIcon,
   Maximize2,
+  HardDrive,
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -48,6 +49,10 @@ import { itemConditionsForShelfType } from "@/core/collect/condition";
 import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useItemModalMetadataMutations } from "@/lib/client/hooks/useItemModalMetadataMutations";
+import {
+  dumpTitleFromFileName,
+  hashRomFile,
+} from "@/lib/client/hashRomFile";
 import {
   buildItemModalSessionInit,
   itemModalSessionKey,
@@ -383,6 +388,8 @@ export function ItemModal({
     return suggestions.some((s) => s.trim().toLowerCase() === val);
   }, [watchedName, nameSuggestion, suggestions]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isHashingDump, setIsHashingDump] = useState(false);
+  const dumpFileInputRef = useRef<HTMLInputElement>(null);
   interface GameMatch {
     name: string;
     suggestions: string[];
@@ -568,6 +575,37 @@ export function ItemModal({
       });
     },
     [form, debounce, fetchMetadataPreview, fetchNameSuggestions],
+  );
+
+  const handleDumpFileSelect = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file || activeShelfType !== "games") return;
+
+      setIsHashingDump(true);
+      try {
+        const checksums = await hashRomFile(file);
+        const currentName = (form.getValues("name") || "").trim();
+        const lookupName = currentName || dumpTitleFromFileName(file.name);
+        if (!currentName && lookupName) {
+          form.setValue("name", lookupName, { shouldDirty: true });
+        }
+        fetchMetadataPreview(
+          lookupName,
+          form.getValues("barcode") || "",
+          true,
+          checksums,
+        );
+        toast.success(t("items.hashDumpDone"));
+      } catch (error) {
+        console.error("Dump hash failed:", error);
+        toast.error(t("items.hashDumpFailed"));
+      } finally {
+        setIsHashingDump(false);
+      }
+    },
+    [activeShelfType, fetchMetadataPreview, form, t],
   );
 
   const availableBackgrounds = useMemo(() => {
@@ -1749,6 +1787,35 @@ export function ItemModal({
                         </FormItem>
                       )}
                     />
+
+                    {activeShelfType === "games" && (
+                      <div className="flex flex-col gap-1.5 -mt-1">
+                        <input
+                          ref={dumpFileInputRef}
+                          type="file"
+                          className="hidden"
+                          onChange={handleDumpFileSelect}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-fit rounded-lg text-xs font-semibold"
+                          disabled={isHashingDump || isFetchingMetadata}
+                          onClick={() => dumpFileInputRef.current?.click()}
+                        >
+                          {isHashingDump ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <HardDrive className="size-3.5" />
+                          )}
+                          {t("items.hashDump")}
+                        </Button>
+                        <p className="text-[11px] text-muted-foreground leading-snug">
+                          {t("items.hashDumpHint")}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Description */}
                     <FormField

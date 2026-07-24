@@ -4,11 +4,13 @@ import { useMutation } from "@tanstack/react-query";
 import { getMetadataPreview, getMetadataSuggestions } from "@/lib/api/metadata";
 import { isAbortError } from "@/lib/http/abort";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { RomChecksums } from "@/types/providerModule";
 
 type PreviewVariables = {
   name: string;
   barcode?: string;
   forceOverwrite?: boolean;
+  romChecksums?: RomChecksums;
   requestId: number;
 };
 
@@ -43,6 +45,7 @@ export function useItemModalMetadataMutations({
     mutationFn: async ({
       name,
       barcode,
+      romChecksums,
     }: PreviewVariables): Promise<MetadataResult | null> => {
       if (!name.trim() || !activeShelfType) return null;
       return getMetadataPreview(
@@ -51,6 +54,7 @@ export function useItemModalMetadataMutations({
         barcode || null,
         null,
         activeShelfName || null,
+        romChecksums,
       );
     },
     onSuccess: (metadata, variables) => {
@@ -103,13 +107,19 @@ export function useItemModalMetadataMutations({
   }, []);
 
   const fetchMetadataPreview = useCallback(
-    (name: string, barcode?: string, forceOverwrite = false) => {
+    (
+      name: string,
+      barcode?: string,
+      forceOverwrite = false,
+      romChecksums?: RomChecksums,
+    ) => {
       if (!name.trim() || !activeShelfType) return;
       const requestId = ++previewRequestIdRef.current;
       mutatePreview({
         name,
         barcode,
         forceOverwrite,
+        romChecksums,
         requestId,
       });
     },

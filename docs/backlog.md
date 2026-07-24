@@ -15,7 +15,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | **P2** | Scrape-yield / call efficiency | **… + eBay Browse SearchYield durable 2026-07-24**. LaunchBox FTS measured 2026-07-24 (`pnpm launchbox:bench-fts`). Voir [scrape_yield.md](scrape_yield.md). |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~ | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override. |
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
-| ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro Tier0 + multi-DAT + checksum-first + DAT pack sync + enrich romChecksums wire 2026-07-24**. Reste : client hash UI (optional). |
+| ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro Tier0 + checksum path + DAT sync + enrich wire + client dump hash 2026-07-24**. |
 | ~~**P3**~~ | ~~LaunchBox / dumps~~ | **LB prebuild 2026-07-24** ; **No-Intro multi-DAT Tier0 2026-07-24** ; **FTS measure 2026-07-24** (`pnpm launchbox:bench-fts`). |
 | **P4** | Optionnel | Table GS1 audio (typage musique). LaunchBox FTS measure **fait 2026-07-24**. |
 

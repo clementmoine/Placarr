@@ -339,6 +339,10 @@
       "noAssociation": "Aucune association de métadonnées pour le moment. Recherchez ci-dessous."
     },
     "enterName": "Entrer le nom",
+    "hashDump": "Identifier depuis un dump",
+    "hashDumpHint": "Hachage local (CRC / MD5 / SHA-1) — le fichier n’est pas envoyé.",
+    "hashDumpDone": "Dump haché — recherche des métadonnées…",
+    "hashDumpFailed": "Impossible de hacher ce fichier dump",
     "enterDescription": "Entrer la description",
     "cover": "Couverture",
     "itemCover": "Couverture de l'objet",

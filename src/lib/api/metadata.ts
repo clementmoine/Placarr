@@ -1,5 +1,6 @@
 import axios, { isAxiosError } from "axios";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { RomChecksums } from "@/types/providerModule";
 
 /** Cap interactive preview so Flare fan-out cannot hang the UI indefinitely. */
 const METADATA_PREVIEW_TIMEOUT_MS = 45_000;
@@ -10,6 +11,7 @@ type MetadataLookupParams = {
   barcode?: string | null;
   platform?: string | null;
   shelfName?: string | null;
+  romChecksums?: RomChecksums | null;
 };
 
 function metadataQueryParams({
@@ -18,11 +20,15 @@ function metadataQueryParams({
   barcode,
   platform,
   shelfName,
+  romChecksums,
 }: MetadataLookupParams): Record<string, string> {
   const params: Record<string, string> = { name, type };
   if (barcode) params.barcode = barcode;
   if (platform) params.platform = platform;
   if (shelfName) params.shelfName = shelfName;
+  if (romChecksums?.crc) params.crc = romChecksums.crc;
+  if (romChecksums?.md5) params.md5 = romChecksums.md5;
+  if (romChecksums?.sha1) params.sha1 = romChecksums.sha1;
   return params;
 }
 
@@ -42,6 +48,7 @@ export async function getMetadataPreview(
   barcode?: string | null,
   platform?: string | null,
   shelfName?: string | null,
+  romChecksums?: RomChecksums | null,
 ): Promise<MetadataResult | null> {
   try {
     const { data } = await axios.get("/api/metadata", {
@@ -51,6 +58,7 @@ export async function getMetadataPreview(
         barcode,
         platform,
         shelfName,
+        romChecksums,
       }),
       timeout: METADATA_PREVIEW_TIMEOUT_MS,
     });

@@ -9,6 +9,7 @@ import {
   isCorpusGenericToken,
   type CorpusTokenStats,
 } from "@/core/enrich/titles/tokenCorpusIdf";
+import { resolveCorpusTokenStats } from "@/core/enrich/titles/tokenCorpusIndex";
 
 import { GENERIC_TITLE_TOKENS } from "./parse";
 import type {
@@ -117,9 +118,11 @@ function mergeEvidenceSummaries(
 
 export function mergeDuplicateMatches(matches: MatchLike[]): ResolvedMatch[] {
   const merged: ResolvedMatch[] = [];
-  // In-memory IDF from titles already in this resolve batch (no RawName scan).
-  const corpusStats = buildTokenDocumentFrequency(
-    matches.flatMap((match) => [match.name, ...match.suggestions]),
+  // Prefer durable RawName DF index when present; else in-memory batch titles.
+  const corpusStats = resolveCorpusTokenStats(
+    buildTokenDocumentFrequency(
+      matches.flatMap((match) => [match.name, ...match.suggestions]),
+    ),
   );
 
   for (const match of matches) {
@@ -216,11 +219,13 @@ export function pickPreferredClusterDisplayName(
     });
   }
 
-  // In-memory IDF from this cluster's titles only (no RawName table scan).
-  const corpusStats = buildTokenDocumentFrequency([
-    representative,
-    ...cluster.flatMap((item) => [item.title, item.cleanName, item.rawName]),
-  ]);
+  // Prefer durable RawName DF index when present; else this cluster's titles.
+  const corpusStats = resolveCorpusTokenStats(
+    buildTokenDocumentFrequency([
+      representative,
+      ...cluster.flatMap((item) => [item.title, item.cleanName, item.rawName]),
+    ]),
+  );
 
   const candidates = [
     {

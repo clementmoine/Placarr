@@ -29,7 +29,8 @@
     "launchbox:build-index": "tsx scripts/buildLaunchBoxIndex.ts",
     "launchbox:bench-fts": "tsx scripts/benchLaunchBoxFts.ts",
     "nointro:build-index": "tsx scripts/buildNoIntroIndex.ts",
-    "nointro:sync": "tsx scripts/syncNoIntroDats.ts"
+    "nointro:sync": "tsx scripts/syncNoIntroDats.ts",
+    "title-idf:build-index": "tsx scripts/buildTokenCorpusIndex.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

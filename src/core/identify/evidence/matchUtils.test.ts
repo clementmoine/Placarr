@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { buildTokenDocumentFrequency } from "@/core/enrich/titles/tokenCorpusIdf";
+import {
+  __resetTokenCorpusIndexForTests,
+  __setTokenCorpusIndexForTests,
+} from "@/core/enrich/titles/tokenCorpusIndex";
 
 import {
   isStrictTitleSubset,
@@ -8,6 +12,9 @@ import {
 } from "./matchUtils";
 
 describe("titleSpecificityTokens + corpus IDF", () => {
+  afterEach(() => {
+    __resetTokenCorpusIndexForTests();
+  });
   const clusterTitles = [
     "Catan blister occasion",
     "Ticket to Ride blister FR",

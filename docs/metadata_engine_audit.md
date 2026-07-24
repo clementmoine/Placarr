@@ -91,8 +91,9 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | File | LOC (approx.) | Mix |
 | ---- | ------------- | --- |
 | `enrich/fetch.ts` | ~1160 | orchestrator (+ gating / merge / observationRanking / book*) |
-| `enrich/storage.ts` | ~889 | persist (+ image*/crop/localize/coverBootstrap) |
-| `enrich/titleMatching.ts` | ~1514 | align/similarity (+ tokens / album / edition / sequel leaves) |
+| `enrich/storage.ts` | ~886 | persist (+ image*/crop/localize/coverBootstrap) |
+| `enrich/titleMatching.ts` | ~78 | facade re-exports (`titles/*` leaves) |
+| `enrich/titles/metadataTitleAlign.ts` | ~663 | align gate (plus residualIdentity ~1099) |
 | `commerce/pricing/resolver.ts` | ~1655 | resolve + shelf summarize (+ cachePolicy/outlierTrim extracted) |
 | `identify/evidence/compile.ts` | ~750 | compile + confidence (+ consensusTitle/resolve extracted) |
 

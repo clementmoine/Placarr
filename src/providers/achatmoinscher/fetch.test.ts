@@ -5,8 +5,10 @@ vi.mock("axios", () => ({
 }));
 import axios from "axios";
 
+import { resetAchatMoinsCherResponseCacheForTests } from "./cache";
 import {
   fetchFromAchatMoinsCher,
+  fetchFromAchatMoinsCherByQuery,
   fetchPricesFromAchatMoinsCher,
 } from "./fetch";
 
@@ -40,10 +42,17 @@ const PRODUCT_HTML = `
 </html>
 `;
 
+const SEARCH_HTML = `
+  <div class="product">
+    <img alt="Wheelman PS3" onclick="ia(1); vProd('12345');" />
+  </div>
+`;
+
 beforeEach(() => {
   mockedPost.mockReset();
   mockedGet.mockReset();
   mockedHead.mockReset();
+  resetAchatMoinsCherResponseCacheForTests();
   delete process.env.FLARESOLVERR_URL;
 });
 
@@ -202,11 +211,7 @@ describe("fetchPricesFromAchatMoinsCher", () => {
     mockedGet
       .mockResolvedValueOnce({
         status: 200,
-        data: `
-          <div class="product">
-            <img alt="Wheelman PS3" onclick="ia(1); vProd('12345');" />
-          </div>
-        `,
+        data: SEARCH_HTML,
       } as never)
       .mockResolvedValueOnce({ status: 200, data: PRODUCT_HTML } as never);
 
@@ -217,5 +222,50 @@ describe("fetchPricesFromAchatMoinsCher", () => {
       priceUsed: 1999,
     });
     expect(mockedPost).not.toHaveBeenCalled();
+  });
+
+  it("réutilise SearchYield + fiche HTML après metadata (0 HTTP extra)", async () => {
+    mockedGet
+      .mockResolvedValueOnce({ status: 200, data: SEARCH_HTML } as never)
+      .mockResolvedValueOnce({ status: 200, data: PRODUCT_HTML } as never);
+    mockedHead.mockResolvedValue({ status: 200 } as never);
+
+    await expect(
+      fetchFromAchatMoinsCherByQuery("Wheelman PS3", ["Wheelman PS3"]),
+    ).resolves.toMatchObject([
+      {
+        name: "Wheelman (PlayStation 3)",
+        priceNew: 3999,
+        priceUsed: 1999,
+      },
+    ]);
+    const httpAfterMeta = mockedGet.mock.calls.length;
+
+    await expect(
+      fetchPricesFromAchatMoinsCher("Wheelman PS3", ["Wheelman PS3"]),
+    ).resolves.toEqual({
+      priceNew: 3999,
+      priceUsed: 1999,
+    });
+
+    expect(mockedGet.mock.calls.length).toBe(httpAfterMeta);
+  });
+
+  it("réutilise la fiche HTML barcode metadata → prix (0 GET extra)", async () => {
+    mockedPost.mockResolvedValue({ data: "12345" } as never);
+    mockedGet.mockResolvedValue({ status: 200, data: PRODUCT_HTML } as never);
+    mockedHead.mockResolvedValue({ status: 200 } as never);
+
+    await fetchFromAchatMoinsCher("5021290082728");
+    const httpAfterMeta = mockedGet.mock.calls.length;
+
+    await expect(
+      fetchPricesFromAchatMoinsCher("5021290082728"),
+    ).resolves.toEqual({
+      priceNew: 3999,
+      priceUsed: 1999,
+    });
+
+    expect(mockedGet.mock.calls.length).toBe(httpAfterMeta);
   });
 });

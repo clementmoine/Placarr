@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2j shipped (Smartoys search→rank→1 detail); corpora / durable SearchYield / peers = next.
+> Phase 1–2k shipped (AMC SearchYield + fiche HTML reuse); corpora / durable SearchYield / peers = next.
 
 ## Principle
 
@@ -101,10 +101,18 @@ Name path no longer walks every search URL until a fiche title matches:
 - **One** `fetchSmartoysProductPage` for the winner
 - Barcode path unchanged (`product_info.php?products_id=` → 1 GET)
 
+## Phase 2k — AchatMoinsCher SearchYield + fiche reuse (done 2026-07-24)
+
+Metadata name search and price name search no longer each pay for `recherche.php` + fiche:
+
+- Process-local `searchHitsCache` / `productHtmlCache` — meta then prix mines the same HTML (0 extra HTTP)
+- `pickBestAchatMoinsCherSearchHit` — title-rank among SearchYield matches → **one** detail
+- Barcode scanner path also reuses fiche HTML for the subsequent price parse
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Peer Flare name paths (AMC meta↔prix cache, Geedie, …) | Same 1-search philosophy |
+| Peer Flare name paths (Geedie, Chasse, …) | Same 1-search / cache philosophy |
 | Local full-set / dump sync | Closed platforms at home latency |
-| SearchYield durability | Soft-404 / search pages beyond PC detail / eBay process cache |
+| SearchYield durability | Soft-404 / search pages beyond process cache |

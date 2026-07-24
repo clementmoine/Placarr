@@ -6,8 +6,21 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
 import {
   isNameOnlyRetailerTitleMatch,
+  NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY,
   priceListingSharesItemIdentity,
 } from "@/core/commerce/retailer/titleMatch";
+import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
+
+import {
+  cacheAchatMoinsCherProductHtml,
+  cacheAchatMoinsCherSearchHits,
+  getCachedAchatMoinsCherProductHtml,
+  getCachedAchatMoinsCherSearchHits,
+  type AchatMoinsCherSearchHit,
+} from "./cache";
+
+export { resetAchatMoinsCherResponseCacheForTests } from "./cache";
+export type { AchatMoinsCherSearchHit } from "./cache";
 
 export interface AchatMoinsCherProduct {
   name: string;
@@ -377,13 +390,8 @@ export function parseAchatMoinsCherPrices(
 async function fetchAchatMoinsCherProductPrices(
   productId: string,
 ): Promise<AchatMoinsCherPrices | null> {
-  const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
-  console.log(`[AchatMoinsCher Prices] Fetching product page: ${productUrl}`);
-  const getRes = await fetchGetWithFlareFallback(productUrl, {
-    headers: HEADERS,
-    timeout: 5000,
-  });
-  return parseAchatMoinsCherPrices(String(getRes.data ?? ""), productId);
+  const html = await fetchAchatMoinsCherProductHtml(productId);
+  return parseAchatMoinsCherPrices(html, productId);
 }
 
 function isBarcodeOnlyQuery(query: string) {
@@ -474,16 +482,84 @@ async function parseAchatMoinsCherProductPage(
   };
 }
 
-async function fetchAchatMoinsCherProductById(
+async function fetchAchatMoinsCherProductHtml(
   productId: string,
-): Promise<AchatMoinsCherProduct | null> {
+): Promise<string> {
+  const cached = getCachedAchatMoinsCherProductHtml(productId);
+  if (cached !== undefined) {
+    console.info(`[AchatMoinsCher] Product HTML cache hit for ${productId}`);
+    return cached;
+  }
+
   const productUrl = `https://www.achatmoinscher.com/${productId}.html`;
   console.log(`[AchatMoinsCher] Fetching product page: ${productUrl}`);
   const getRes = await fetchGetWithFlareFallback(productUrl, {
     headers: HEADERS,
     timeout: 5000,
   });
-  return parseAchatMoinsCherProductPage(String(getRes.data ?? ""), productId);
+  const html = String(getRes.data ?? "");
+  cacheAchatMoinsCherProductHtml(productId, html);
+  return html;
+}
+
+async function fetchAchatMoinsCherProductById(
+  productId: string,
+): Promise<AchatMoinsCherProduct | null> {
+  const html = await fetchAchatMoinsCherProductHtml(productId);
+  return parseAchatMoinsCherProductPage(html, productId);
+}
+
+async function fetchAchatMoinsCherSearchHits(
+  query: string,
+): Promise<AchatMoinsCherSearchHit[]> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return [];
+
+  const cached = getCachedAchatMoinsCherSearchHits(cleanedQuery);
+  if (cached) {
+    console.info(`[AchatMoinsCher] Search cache hit for "${cleanedQuery}"`);
+    return cached;
+  }
+
+  const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
+  console.log(`[AchatMoinsCher] Querying search: ${cleanedQuery}`);
+  const searchRes = await fetchGetWithFlareFallback(searchUrl, {
+    headers: HEADERS,
+    timeout: 5000,
+  });
+  const hits = parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""));
+  cacheAchatMoinsCherSearchHits(cleanedQuery, hits);
+  return hits;
+}
+
+function pickBestAchatMoinsCherSearchHit(
+  hits: AchatMoinsCherSearchHit[],
+  expectedNames: string[],
+  options: { shelfType?: string | null } = {},
+): AchatMoinsCherSearchHit | null {
+  const matching = hits.filter((hit) =>
+    achatMoinsCherTitleMatchesExpectedNames(hit.title, expectedNames, options),
+  );
+  if (matching.length === 0) return null;
+  if (matching.length === 1) return matching[0];
+
+  let best: AchatMoinsCherSearchHit | null = null;
+  let bestScore = -1;
+  for (const hit of matching) {
+    const score = Math.max(
+      ...expectedNames
+        .filter(Boolean)
+        .map((name) => metadataTitleSimilarity(name, hit.title)),
+    );
+    if (score > bestScore) {
+      bestScore = score;
+      best = hit;
+    }
+  }
+  if (best && bestScore >= NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY) {
+    return best;
+  }
+  return matching[0] ?? null;
 }
 
 export async function fetchFromAchatMoinsCherByQuery(
@@ -495,26 +571,21 @@ export async function fetchFromAchatMoinsCherByQuery(
   if (!cleanedQuery) return [];
 
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
-  const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
-  console.log(`[AchatMoinsCher] Querying search: ${cleanedQuery}`);
-  const searchRes = await fetchGetWithFlareFallback(searchUrl, {
-    headers: HEADERS,
-    timeout: 5000,
-  });
+  const best = pickBestAchatMoinsCherSearchHit(
+    await fetchAchatMoinsCherSearchHits(cleanedQuery),
+    names,
+    options,
+  );
+  if (!best) return [];
 
-  for (const hit of parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""))) {
-    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names, options)) {
-      continue;
-    }
-    const product = await fetchAchatMoinsCherProductById(hit.productId);
-    if (product) return [product];
-  }
-
-  return [];
+  const product = await fetchAchatMoinsCherProductById(best.productId);
+  return product ? [product] : [];
 }
 
-export function parseAchatMoinsCherSearchHits(html: string) {
-  const hits: Array<{ productId: string; title: string }> = [];
+export function parseAchatMoinsCherSearchHits(
+  html: string,
+): AchatMoinsCherSearchHit[] {
+  const hits: AchatMoinsCherSearchHit[] = [];
   const seen = new Set<string>();
 
   for (const match of html.matchAll(
@@ -540,23 +611,15 @@ async function fetchPricesFromAchatMoinsCherByName(
   const cleanedQuery = query.trim();
   if (!cleanedQuery) return null;
 
-  const searchUrl = `https://www.achatmoinscher.com/recherche.php?q=${encodeURIComponent(cleanedQuery)}`;
-  console.log(`[AchatMoinsCher Prices] Querying search: ${cleanedQuery}`);
-  const searchRes = await fetchGetWithFlareFallback(searchUrl, {
-    headers: HEADERS,
-    timeout: 5000,
-  });
-
   const names = expectedNames.length > 0 ? expectedNames : [cleanedQuery];
-  for (const hit of parseAchatMoinsCherSearchHits(String(searchRes.data ?? ""))) {
-    if (!achatMoinsCherTitleMatchesExpectedNames(hit.title, names, options)) {
-      continue;
-    }
-    const prices = await fetchAchatMoinsCherProductPrices(hit.productId);
-    if (prices) return prices;
-  }
+  const best = pickBestAchatMoinsCherSearchHit(
+    await fetchAchatMoinsCherSearchHits(cleanedQuery),
+    names,
+    options,
+  );
+  if (!best) return null;
 
-  return null;
+  return fetchAchatMoinsCherProductPrices(best.productId);
 }
 
 export async function fetchPricesFromAchatMoinsCher(

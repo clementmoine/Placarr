@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3i No-Intro dump path; Phase P4a LaunchBox FTS.
+> Phase 1–2am shipped; Phase 3a–3j No-Intro dump path (streaming hash); Phase P4a LaunchBox FTS.
 
 ## Principle
 
@@ -339,12 +339,17 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 
 ## Phase 3i — Soft size warn for large dumps (done 2026-07-24)
 
-- Warn (do not block) when dump ≥ 256 MiB before in-memory hash
+- Warn (do not block) when dump ≥ 256 MiB before hashing
 - Toast copy includes rounded MiB size; hashing still local
+
+## Phase 3j — Chunked / streaming client hash (done 2026-07-24)
+
+- `hashRomFile` streams File/Blob in 1 MiB slices (override via `chunkBytes`)
+- Incremental CRC32 + MD5 + SHA-1 — multi-GB ISOs are not loaded fully into RAM
 
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Chunked / streaming client hash | Avoid loading multi-GB ISOs fully into memory |
 | Worker / server-side dump hashing | Only if dumps must live on server |
+| Progress UI while hashing large dumps | Optional UX polish |

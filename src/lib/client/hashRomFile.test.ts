@@ -8,6 +8,7 @@ import {
   hashRomFile,
   md5Hex,
   ROM_HASH_SOFT_WARN_BYTES,
+  sha1Hex,
   shouldWarnRomHashSize,
 } from "./hashRomFile";
 
@@ -29,12 +30,31 @@ describe("hashRomFile", () => {
     );
   });
 
+  it("SHA-1 matches Node createHash for abc", () => {
+    expect(sha1Hex(utf8("abc"))).toBe(
+      createHash("sha1").update("abc").digest("hex"),
+    );
+  });
+
   it("hashRomFile returns sha1/md5/crc aligned with Node digests", async () => {
     const bytes = utf8("Tetris dump fixture");
     const hashes = await hashRomFile(bytes);
     expect(hashes.sha1).toBe(createHash("sha1").update(bytes).digest("hex"));
     expect(hashes.md5).toBe(createHash("md5").update(bytes).digest("hex"));
     expect(hashes.crc).toBe(crc32Hex(bytes));
+  });
+
+  it("streams Blob slices with tiny chunks and matches one-shot digests", async () => {
+    const bytes = utf8("0123456789abcdef".repeat(20));
+    const blob = new Blob([
+      bytes.subarray(0, 7),
+      bytes.subarray(7, 40),
+      bytes.subarray(40),
+    ]);
+    const streamed = await hashRomFile(blob, { chunkBytes: 5 });
+    expect(streamed.sha1).toBe(createHash("sha1").update(bytes).digest("hex"));
+    expect(streamed.md5).toBe(createHash("md5").update(bytes).digest("hex"));
+    expect(streamed.crc).toBe(crc32Hex(bytes));
   });
 
   it("dumpTitleFromFileName strips extension and path", () => {

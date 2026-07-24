@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2ad shipped (BD Fugue + Planète BD SearchYield + mot-clef); No-Intro = later.
+> Phase 1–2ae shipped (Vivlio + Freakxy SearchYield); No-Intro = later.
 
 ## Principle
 
@@ -228,10 +228,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - BD Fugue: `/catalogsearch/result/?q=` → typed `{title,productUrl,barcode?}` promote/reuse
 - Planète BD: `/recherche?mot-clef=` → typed `{id,title,url,ratingStars?}` promote/reuse
 
+## Phase 2ae — Vivlio + Freakxy SearchYield durable (done 2026-07-24)
+
+- Vivlio: `/search?search=` → typed `{title,productUrl,barcode?}` promote/reuse
+- Freakxy: Magento `/catalogsearch/result/?q=` barcode → typed `{name,coverUrl?}` promote/reuse
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
-| Bedetheque multi-hop / Freakxy | Multi-hop or barcode-only cover scrape |
+| Bedetheque / Babelio multi-hop | Series search → albums, not thin SearchYield→detail |

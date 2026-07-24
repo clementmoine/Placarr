@@ -6,6 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   fetchICollectVideoGameItem: vi.fn(),
+  backgroundWorkJobCount: vi.fn().mockResolvedValue(0),
+}));
+
+vi.mock("@/lib/db/prisma", () => ({
+  prisma: {
+    backgroundWorkJob: {
+      count: (...args: unknown[]) => h.backgroundWorkJobCount(...args),
+    },
+  },
 }));
 
 vi.mock("./fetch", async (importOriginal) => {
@@ -32,6 +41,8 @@ describe("runICollectPageScrapeBatch", () => {
     tempDir = mkdtempSync(path.join(tmpdir(), "icollect-sync-"));
     process.env.ICOLLECT_INDEX_PATH = path.join(tempDir, "videogames.sqlite");
     h.fetchICollectVideoGameItem.mockReset();
+    h.backgroundWorkJobCount.mockReset();
+    h.backgroundWorkJobCount.mockResolvedValue(0);
   });
 
   afterEach(() => {

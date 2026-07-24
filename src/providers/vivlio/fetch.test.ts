@@ -1,13 +1,33 @@
-import { describe, expect, it } from "vitest";
+import axios from "axios";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readVivlioSearchEvidence = vi.fn();
+const promoteVivlioSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readVivlioSearchEvidence: (...args: unknown[]) =>
+    readVivlioSearchEvidence(...args),
+  promoteVivlioSearchEvidence: (...args: unknown[]) =>
+    promoteVivlioSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
 
 import {
   normalizeVivlioCoverUrl,
   parseVivlioProductPage,
   parseVivlioSearchHits,
+  searchVivlioHits,
   vivlioCoverDownloadCandidates,
   vivlioSearchUrl,
 } from "./fetch";
 import { mapVivlioMetadata, vivlioModule } from "./index";
+
+const mockedGet = vi.mocked(axios.get);
 
 const PRODUCT_URL =
   "https://shop.vivlio.com/product/9782755620610_9782755620610_9/after-tome-01";
@@ -69,6 +89,14 @@ function productHtml() {
 }
 
 describe("vivlio", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readVivlioSearchEvidence.mockReset();
+    promoteVivlioSearchEvidence.mockReset();
+    readVivlioSearchEvidence.mockResolvedValue(null);
+    promoteVivlioSearchEvidence.mockResolvedValue(undefined);
+  });
+
   it("construit l'URL search=", () => {
     expect(vivlioSearchUrl("Survivantes")).toContain("search=Survivantes");
   });
@@ -140,5 +168,37 @@ describe("vivlio", () => {
         "https://example.com/product/9782749961347_x",
       ),
     ).toBeNull();
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        title: "survivantes le thriller",
+        productUrl:
+          "https://shop.vivlio.com/product/9782749961347_9782749961347_3/survivantes-le-thriller",
+        barcode: "9782749961347",
+      },
+    ];
+    readVivlioSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchVivlioHits("Survivantes")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteVivlioSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: `<a href="/product/9782749961347_9782749961347_3/survivantes-le-thriller"></a>`,
+    } as never);
+
+    const hits = await searchVivlioHits("Survivantes");
+    expect(hits[0]).toMatchObject({ barcode: "9782749961347" });
+    expect(promoteVivlioSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("/search?search=Survivantes"),
+      expect.arrayContaining([
+        expect.objectContaining({ barcode: "9782749961347" }),
+      ]),
+    );
   });
 });

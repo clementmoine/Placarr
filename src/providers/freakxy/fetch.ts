@@ -1,6 +1,11 @@
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
+import {
+  promoteFreakxySearchEvidence,
+  readFreakxySearchEvidence,
+} from "./durableEvidence";
+
 export interface FreakxyProduct {
   name: string;
   coverUrl?: string | null;
@@ -16,14 +21,66 @@ const HEADERS = {
 
 const REQUEST_TIMEOUT_MS = 15000;
 
+export function freakxySearchUrl(barcode: string): string {
+  const cleaned = barcode.replace(/[^\d]/g, "").trim();
+  return `https://www.freakxy.fr/catalogsearch/result/?q=${encodeURIComponent(cleaned)}`;
+}
+
+/** Parse Magento product-item blocks into typed SearchYield hits. */
+export function parseFreakxySearchHits(html: string): FreakxyProduct[] {
+  if (
+    html.includes("Votre recherche n'a retourné aucun résultat") ||
+    html.includes("Your search returned no results") ||
+    html.includes("notice message info")
+  ) {
+    return [];
+  }
+
+  const productItems = html.match(
+    /<li class=\"[^\"]*product-item[^\"]*\">([\s\S]*?)<\/li>/gi,
+  );
+  if (!productItems) return [];
+
+  const results: FreakxyProduct[] = [];
+  for (const item of productItems) {
+    const titleMatch = item.match(
+      /class=\"product-item-link\"[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
+    );
+    const imgMatch =
+      item.match(
+        /<img[^>]*class=\"product-image-photo\"[^>]*src=\"([^\"]+)\"/i,
+      ) ||
+      item.match(
+        /<img[^>]*src=\"([^\"]+)\"[^>]*class=\"product-image-photo\"/i,
+      ) ||
+      item.match(/<img[^>]*src=\"([^\"]+)\"/i);
+
+    if (titleMatch) {
+      const title = decodeHTMLEntities(titleMatch[1].trim());
+      const coverUrl = imgMatch ? imgMatch[1].trim() : null;
+      results.push({
+        name: title,
+        coverUrl,
+      });
+    }
+  }
+  return results;
+}
+
 export async function fetchFromFreakxy(
   barcode: string,
 ): Promise<FreakxyProduct[]> {
   const cleanedBarcode = barcode.replace(/[^\d]/g, "").trim();
   if (!cleanedBarcode) return [];
 
-  const url = `https://www.freakxy.fr/catalogsearch/result/?q=${cleanedBarcode}`;
+  const url = freakxySearchUrl(cleanedBarcode);
   console.log(`[Freakxy] Querying search: ${url}`);
+
+  const fromEvidence = await readFreakxySearchEvidence(url);
+  if (fromEvidence) {
+    console.info(`[Freakxy] Search evidence hit for ${url}`);
+    return fromEvidence;
+  }
 
   try {
     const res = await fetchGetWithFlareFallback(url, {
@@ -31,54 +88,13 @@ export async function fetchFromFreakxy(
       timeout: REQUEST_TIMEOUT_MS,
     });
     const html = String(res.data ?? "");
-
-    if (
-      html.includes("Votre recherche n'a retourné aucun résultat") ||
-      html.includes("Your search returned no results") ||
-      html.includes("notice message info")
-    ) {
+    const results = parseFreakxySearchHits(html);
+    if (results.length === 0) {
       console.log(
         `[Freakxy] Search returned no results for barcode: ${cleanedBarcode}`,
       );
-      return [];
     }
-
-    // Matches Magento 2 product-item blocks
-    const productItems = html.match(
-      /<li class=\"[^\"]*product-item[^\"]*\">([\s\S]*?)<\/li>/gi,
-    );
-    if (!productItems) {
-      console.log(
-        `[Freakxy] No product items found for barcode: ${cleanedBarcode}`,
-      );
-      return [];
-    }
-
-    const results: FreakxyProduct[] = [];
-
-    for (const item of productItems) {
-      const titleMatch = item.match(
-        /class=\"product-item-link\"[^>]*>\s*([\s\S]*?)\s*<\/a>/i,
-      );
-      const imgMatch =
-        item.match(
-          /<img[^>]*class=\"product-image-photo\"[^>]*src=\"([^\"]+)\"/i,
-        ) ||
-        item.match(
-          /<img[^>]*src=\"([^\"]+)\"[^>]*class=\"product-image-photo\"/i,
-        ) ||
-        item.match(/<img[^>]*src=\"([^\"]+)\"/i);
-
-      if (titleMatch) {
-        const title = decodeHTMLEntities(titleMatch[1].trim());
-        const coverUrl = imgMatch ? imgMatch[1].trim() : null;
-        results.push({
-          name: title,
-          coverUrl,
-        });
-      }
-    }
-
+    await promoteFreakxySearchEvidence(url, results);
     return results;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

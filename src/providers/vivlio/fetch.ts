@@ -13,6 +13,11 @@ import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
+import {
+  promoteVivlioSearchEvidence,
+  readVivlioSearchEvidence,
+} from "./durableEvidence";
+
 const VIVLIO_BASE_URL = "https://shop.vivlio.com";
 const VIVLIO_HEADERS = {
   "User-Agent":
@@ -363,8 +368,19 @@ export async function searchVivlioHits(
 ): Promise<VivlioSearchHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const html = await fetchHtml(vivlioSearchUrl(trimmed), signal);
-  return html ? parseVivlioSearchHits(html) : [];
+  const searchUrl = vivlioSearchUrl(trimmed);
+
+  const fromEvidence = await readVivlioSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Vivlio] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const html = await fetchHtml(searchUrl, signal);
+  if (!html) return [];
+  const hits = parseVivlioSearchHits(html);
+  await promoteVivlioSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchVivlioProduct(

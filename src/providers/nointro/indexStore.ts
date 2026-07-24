@@ -63,6 +63,17 @@ function normalizeChecksum(value?: string | null): string | null {
   return cleaned || null;
 }
 
+/** FTS-facing text: strip diacritics so "Pokémon" matches "pokemon". */
+export function ftsNormalizeNoIntroText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function createIndexSchema(db: DatabaseSync): void {
   db.exec(`
     DROP TABLE IF EXISTS index_meta;
@@ -109,11 +120,25 @@ function createIndexSchema(db: DatabaseSync): void {
 }
 
 function rebuildGamesFts(db: DatabaseSync): void {
-  db.exec(`
+  db.exec(`DELETE FROM games_fts`);
+  const rows = db
+    .prepare(`SELECT id, name, description FROM games`)
+    .all() as Array<{
+    id: number;
+    name: string;
+    description: string | null;
+  }>;
+  const insertFts = db.prepare(`
     INSERT INTO games_fts (gameId, name, description)
-    SELECT id, name, COALESCE(description, '')
-    FROM games
+    VALUES (?, ?, ?)
   `);
+  for (const row of rows) {
+    insertFts.run(
+      row.id,
+      ftsNormalizeNoIntroText(row.name),
+      ftsNormalizeNoIntroText(row.description || ""),
+    );
+  }
 }
 
 function isIndexSchemaCurrent(db: DatabaseSync): boolean {

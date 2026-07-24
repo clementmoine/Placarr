@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3b No-Intro DAT→SQLite; LaunchBox FTS = P4.
+> Phase 1–2am shipped; Phase 3a–3c No-Intro DAT→SQLite→Tier0 module; LaunchBox FTS = P4.
 
 ## Principle
 
@@ -294,10 +294,17 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Lookups: `lookupNoIntroGamesByChecksum` / `searchNoIntroGamesByTitle`
 - **Out of this cut:** registry ProviderModule, multi-DAT merge, Redump, scan Tier0 wiring
 
+## Phase 3c — No-Intro Tier0 metadata module (done 2026-07-24)
+
+- `nointroModule` registered next to LaunchBox — title FTS + platform via DAT name, `requiresTitleAlignment`
+- Facts: DAT set, clone-of, CRC ; no attachments / covers
+- Health = local index open; checksum resolve exported for future file ingest
+- **Out of this cut:** multi-DAT / Redump, ROM-hash scan wiring, LaunchBox FTS measure
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
-| No-Intro / Redump Tier0 provider module | Wire index into metadata resolve like LaunchBox |
 | Multi-DAT / Redump corpus sync | Directory of DATs → one index |
 | LaunchBox local FTS perf measure | P4 backlog |
+| ROM checksum ingest → No-Intro lookup | Wire `fetchFromNoIntroByChecksum` when file hashes exist |

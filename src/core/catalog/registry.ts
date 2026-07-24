@@ -37,6 +37,7 @@ import { igdbModule } from "@/providers/igdb";
 import { izneoModule } from "@/providers/izneo";
 import { ledenicheurModule } from "@/providers/ledenicheur";
 import { musicbrainzModule } from "@/providers/musicbrainz";
+import { nointroModule } from "@/providers/nointro";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -67,6 +68,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   screenscraperModule,
   thegamesdbModule,
   launchboxModule,
+  nointroModule,
   igdbModule,
   rawgModule,
   steamgriddbModule,

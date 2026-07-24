@@ -4,6 +4,7 @@ import { decode as decodeHTMLEntities } from "html-entities";
 import {
   hasUnrequestedVariantMarker,
   isMetadataTitleAligned,
+  metadataTitleSimilarity,
 } from "@/core/enrich/titleMatching";
 import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
@@ -55,6 +56,29 @@ type BooknodeSearchCandidate = {
   title: string;
   url: string;
 };
+
+/** Rank aligned SearchYield hits — detail GET only for the winner. */
+export function pickBestBooknodeSearchCandidate(
+  candidates: BooknodeSearchCandidate[],
+  query: string,
+): BooknodeSearchCandidate | null {
+  const aligned = candidates.filter((candidate) =>
+    isCandidateAligned(query, candidate.title),
+  );
+  if (aligned.length === 0) return null;
+  if (aligned.length === 1) return aligned[0] ?? null;
+
+  let best: BooknodeSearchCandidate | null = null;
+  let bestScore = -1;
+  for (const candidate of aligned) {
+    const score = metadataTitleSimilarity(query, candidate.title);
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+  return best;
+}
 
 const BOOKNODE_BASE_URL = "https://booknode.com";
 const BOOKNODE_READER_URL_PREFIX = "https://r.jina.ai/http://r.jina.ai/http://";
@@ -725,24 +749,24 @@ export async function fetchBooknodeMetadata(
     );
     if (!searchHtml) continue;
 
-    const candidates = parseBooknodeSearchCandidates(searchHtml).filter(
-      (candidate) => isCandidateAligned(trimmedQuery, candidate.title),
+    const best = pickBestBooknodeSearchCandidate(
+      parseBooknodeSearchCandidates(searchHtml),
+      trimmedQuery,
     );
+    if (!best) continue;
 
-    for (const candidate of candidates.slice(0, 8)) {
-      for (const url of booknodePageUrlAlternates(candidate.url)) {
-        const html = await fetchBooknodePage(url, signal);
-        if (!html) continue;
-        const product = parseBooknodeBookPage(html, url);
-        if (product && isCandidateAligned(trimmedQuery, product.title)) {
-          if (
-            product.seriesName &&
-            hasUnrequestedVariantMarker(trimmedQuery, product.seriesName)
-          ) {
-            continue;
-          }
-          return enrichBooknodeWithCovers(product, signal);
+    for (const url of booknodePageUrlAlternates(best.url)) {
+      const html = await fetchBooknodePage(url, signal);
+      if (!html) continue;
+      const product = parseBooknodeBookPage(html, url);
+      if (product && isCandidateAligned(trimmedQuery, product.title)) {
+        if (
+          product.seriesName &&
+          hasUnrequestedVariantMarker(trimmedQuery, product.seriesName)
+        ) {
+          continue;
         }
+        return enrichBooknodeWithCovers(product, signal);
       }
     }
   }

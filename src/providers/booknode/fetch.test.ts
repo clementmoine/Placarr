@@ -7,6 +7,7 @@ import {
   parseBooknodeCoverUrls,
   parseBooknodePriceOffers,
   parseBooknodeSearchCandidates,
+  pickBestBooknodeSearchCandidate,
 } from "./fetch";
 
 vi.mock("axios", () => ({
@@ -154,6 +155,7 @@ describe("Booknode provider", () => {
   });
 
   it("parcourt la recherche par nom et retient le numero exact demande", async () => {
+    const bookPageGets: string[] = [];
     mockedGet.mockImplementation(async (url: string) => {
       if (url.includes("/search?")) {
         return {
@@ -164,13 +166,16 @@ describe("Booknode provider", () => {
           `,
         };
       }
-      if (url.includes("n_163")) {
-        return {
-          status: 200,
-          data: bookHtml({ title: "Super Picsou Geant n°163" }),
-        };
+      if (url.includes("/covers")) {
+        return { status: 200, data: "" };
       }
-      if (url.includes("n_1")) {
+      if (/booknode\.com\/[^/?#]+_\d+/.test(url) && !url.includes("/search")) {
+        bookPageGets.push(url);
+      }
+      if (url.includes("n_163") || url.includes("_n163_")) {
+        throw new Error(`Should not fetch n°163 fiche: ${url}`);
+      }
+      if (url.includes("n_1") || url.includes("n1")) {
         return { status: 200, data: bookHtml() };
       }
       throw new Error(`Unexpected URL ${url}`);
@@ -183,14 +188,71 @@ describe("Booknode provider", () => {
       imageUrl:
         "https://cdn1.booknode.com/book_cover/1691/mod11/super-picsou-geant-n1-1691432-264-432.webp",
     });
-    expect(mockedGet).not.toHaveBeenCalledWith(
-      expect.stringContaining("n_163"),
-      expect.anything(),
-    );
-    expect(mockedGet).toHaveBeenCalledWith(
-      "https://booknode.com/super_picsou_geant_n_1_0379552",
-      expect.anything(),
-    );
+    expect(bookPageGets).toHaveLength(1);
+    expect(bookPageGets[0]).toContain("n_1");
+  });
+
+  it("ne charge qu'une fiche meme quand plusieurs titres SearchYield sont alignes", async () => {
+    const bookPageGets: string[] = [];
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url.includes("/search?")) {
+        return {
+          status: 200,
+          data: `
+            [Tintin en Amerique](https://booknode.com/tintin_en_amerique_111)
+            [Tintin au Tibet](https://booknode.com/tintin_au_tibet_222)
+            [Tintin au Congo](https://booknode.com/tintin_au_congo_333)
+          `,
+        };
+      }
+      if (url.includes("/covers")) {
+        return { status: 200, data: "" };
+      }
+      if (/booknode\.com\/[^/?#]+_\d+/.test(url) && !url.includes("/search")) {
+        bookPageGets.push(url);
+      }
+      if (url.includes("tintin_au_tibet")) {
+        return {
+          status: 200,
+          data: bookHtml({
+            title: "Tintin au Tibet",
+            image:
+              "https://cdn1.booknode.com/book_cover/1/full/tintin-au-tibet.jpg",
+          }),
+        };
+      }
+      if (url.includes("tintin_en_amerique") || url.includes("tintin_au_congo")) {
+        throw new Error(`Should not fetch non-winner fiche: ${url}`);
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    const book = await fetchBooknodeMetadata("Tintin au Tibet");
+    expect(book?.title).toBe("Tintin au Tibet");
+    expect(bookPageGets).toHaveLength(1);
+    expect(bookPageGets[0]).toContain("tintin_au_tibet");
+  });
+
+  it("pickBestBooknodeSearchCandidate ranke localement le gagnant", () => {
+    expect(
+      pickBestBooknodeSearchCandidate(
+        [
+          {
+            title: "Tintin en Amerique",
+            url: "https://booknode.com/tintin_en_amerique_111",
+          },
+          {
+            title: "Tintin au Tibet",
+            url: "https://booknode.com/tintin_au_tibet_222",
+          },
+          {
+            title: "Tintin au Congo",
+            url: "https://booknode.com/tintin_au_congo_333",
+          },
+        ],
+        "Tintin au Tibet",
+      )?.url,
+    ).toContain("tintin_au_tibet");
   });
 
   it("utilise FlareSolverr quand Booknode bloque l'acces direct", async () => {

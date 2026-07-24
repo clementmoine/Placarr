@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2l shipped (Chasse SearchYield → 1 fiche); Booknode / corpora / durable SearchYield = next.
+> Phase 1–2m shipped (Booknode SearchYield → 1 fiche); Back Market cache / corpora / durable SearchYield = next.
 
 ## Principle
 
@@ -117,11 +117,19 @@ Search REST listings already expose title + `/prix/` URL; resolve no longer walk
 - First accepted fiche **returns immediately** (fixes unanchored “remember but keep walking”)
 - Barcode path still page-walks when SearchYield lacks EAN (Black Stories)
 
+## Phase 2m — Booknode SearchYield → 1 fiche (done 2026-07-24)
+
+Name search no longer walks up to 8 aligned candidates × URL alts:
+
+- `pickBestBooknodeSearchCandidate` — filter with `isCandidateAligned`, rank by `metadataTitleSimilarity`
+- **One** winner → `booknodePageUrlAlternates` (slug `_n1_` ↔ `_n_1_`) then `/covers`
+- Direct book URL path unchanged
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Booknode rank→1 (and Back Market search cache) | Smartoys / AMC mirrors |
+| Back Market search/fiche process cache | AMC-style meta↔prix reuse |
 | Local full-set / dump sync | Closed platforms at home latency |
 | SearchYield durability | Soft-404 / search beyond process cache |
 | Geedie gallery soft edges only | Multi-region covers need >1 detail by design |

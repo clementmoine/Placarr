@@ -326,38 +326,20 @@ export function pickAlignedGeedieSearchHits(
   return selected;
 }
 
-function slugifyGeedieTitle(title: string): string {
-  return title
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function buildGeedieBarcodeProductUrls(
-  queries: string[],
-  platform?: string,
+export function preferGeedieHitsWithBarcode(
+  hits: GeedieSearchHit[],
   barcode?: string | null,
-): string[] {
+): GeedieSearchHit[] {
   const cleaned = (barcode || "").replace(/\D/g, "");
-  if (cleaned.length < 12) return [];
+  if (cleaned.length < 12 || hits.length === 0) return hits;
 
-  const prefix = platformSlugPrefix(platform);
-  if (!prefix) return [];
-
-  const urls = new Set<string>();
-  for (const query of queries) {
-    const slug = slugifyGeedieTitle(query);
-    if (!slug) continue;
-    urls.add(`${GEEDIE_BASE_URL}/en/${prefix}-${slug}-${cleaned}`);
-    if (!slug.startsWith(`${prefix}-`)) {
-      urls.add(`${GEEDIE_BASE_URL}/en/${prefix}-${slug}`);
-    }
+  const withBarcode: GeedieSearchHit[] = [];
+  const rest: GeedieSearchHit[] = [];
+  for (const hit of hits) {
+    if (hit.productUrl.includes(cleaned)) withBarcode.push(hit);
+    else rest.push(hit);
   }
-  return [...urls];
+  return withBarcode.length > 0 ? [...withBarcode, ...rest] : hits;
 }
 
 export function inferGeedieAttachmentRole(
@@ -548,51 +530,22 @@ export async function fetchGeedieGallery(
     items.push(item);
   };
 
-  for (const productUrl of buildGeedieBarcodeProductUrls(
-    queries,
-    platform,
-    barcode,
-  )) {
-    const product = await fetchGeedieProduct(productUrl);
-    if (!product?.coverUrl) continue;
-    const hit: GeedieSearchHit = {
-      title: product.title,
-      productUrl: product.productUrl,
-      thumbnailUrl: product.coverUrl,
-    };
-    if (!isGeedieHitAligned(alignmentNames, platform, hit)) continue;
-    pushItem({
-      title: product.title,
-      productUrl: product.productUrl,
-      coverUrl: product.coverUrl,
-      role: inferGeedieAttachmentRole(hit, product),
-      barcode: product.barcode ?? null,
-    });
-  }
-
-  if (items.length > 0) {
-    const primary = items[0];
-    return {
-      title: primary.title,
-      productUrl: primary.productUrl,
-      coverUrl: primary.coverUrl,
-      barcode: primary.barcode ?? undefined,
-      productId: primary.productUrl.split("/").pop(),
-      items,
-    };
-  }
-
+  // Search-first: never invent `{platform}-{slug}-{ean}` product URLs (soft-404 spray).
+  // Prefer marketplace SearchYield rows that already embed the EAN in the slug.
   const searchHits: GeedieSearchHit[] = [];
   for (const query of queries) {
     const hits = await searchGeedieProducts(query, platform);
     searchHits.push(...hits);
   }
 
-  const alignedHits = pickAlignedGeedieSearchHits(
-    queries[0],
-    platform,
-    dedupeGeedieSearchHits(searchHits),
-    queries,
+  const alignedHits = preferGeedieHitsWithBarcode(
+    pickAlignedGeedieSearchHits(
+      queries[0],
+      platform,
+      dedupeGeedieSearchHits(searchHits),
+      queries,
+    ),
+    cleanedBarcode,
   );
 
   for (const hit of alignedHits) {

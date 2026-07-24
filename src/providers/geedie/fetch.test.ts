@@ -1,14 +1,30 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+import axios from "axios";
 
 import {
+  fetchGeedieGallery,
   inferGeedieAttachmentRole,
   parseGeedieCountryOfRelease,
   parseGeedieProductPage,
   parseGeedieSearchResults,
   pickAlignedGeedieSearchHits,
   pickBestGeedieSearchHit,
+  preferGeedieHitsWithBarcode,
   upgradeGeedieImageUrl,
 } from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  delete process.env.FLARESOLVERR_URL;
+});
+
+afterEach(() => {
+  delete process.env.FLARESOLVERR_URL;
+});
 
 const SEARCH_FIXTURE = `
 <img src="https://imagedelivery.net/2b3D1Oo3LJTf2No6Qa-wbQ/4861c183-5bf1-4e27-85c7-e0f4a266bc00/thumbnail" alt="PS4 Trine 4: The Nightmare Prince cover" />
@@ -318,5 +334,80 @@ describe("geedie fetch", () => {
         (entry) => entry.title,
       ),
     ).toEqual(["PS5 Hell Pie"]);
+  });
+
+  it("preferGeedieHitsWithBarcode puts EAN-slug listings first", () => {
+    const barcode = "7350002938935";
+    expect(
+      preferGeedieHitsWithBarcode(
+        [
+          {
+            title: "PS5 Lollipop Chainsaw RePOP Japanese",
+            productUrl: "https://geedie.lt/en/ps5-lollipop-chainsaw-repop-japanese",
+            thumbnailUrl: "https://geedie.lt/storage/products/jp/cover.webp",
+          },
+          {
+            title: "PS5 Lollipop Chainsaw RePOP",
+            productUrl: `https://geedie.lt/en/ps5-lollipop-chainsaw-repop-${barcode}`,
+            thumbnailUrl: "https://geedie.lt/storage/products/eu/cover.webp",
+          },
+        ],
+        barcode,
+      ).map((hit) => hit.productUrl),
+    ).toEqual([
+      `https://geedie.lt/en/ps5-lollipop-chainsaw-repop-${barcode}`,
+      "https://geedie.lt/en/ps5-lollipop-chainsaw-repop-japanese",
+    ]);
+  });
+
+  it("search-first: never invents barcode slug product URLs before marketplace", async () => {
+    const barcode = "7350002938935";
+    mockedGet.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/marketplace/") && u.includes("search=")) {
+        return {
+          status: 200,
+          data: `
+            <img src="https://geedie.lt/storage/products/ps5-lollipop/640x480-cover.webp" alt="PS5 Lollipop Chainsaw RePOP cover" />
+            <a href="https://geedie.lt/en/ps5-lollipop-chainsaw-repop-${barcode}" class="text-gray-700">PS5 Lollipop Chainsaw RePOP</a>
+            <img src="https://geedie.lt/storage/products/ps5-lollipop-jp/640x480-cover.webp" alt="PS5 Lollipop Chainsaw RePOP Japanese cover" />
+            <a href="https://geedie.lt/en/ps5-lollipop-chainsaw-repop-japanese" class="text-gray-700">PS5 Lollipop Chainsaw RePOP Japanese</a>
+          `,
+        };
+      }
+      if (u.includes("/en/ps5-lollipop-chainsaw-repop")) {
+        const isJp = u.includes("japanese");
+        const cover = isJp
+          ? "https://imagedelivery.net/x/jp-public"
+          : "https://imagedelivery.net/x/eu-public";
+        return {
+          status: 200,
+          data: `
+            <script type="application/ld+json">
+            {"@type":"Product","name":"PS5 Lollipop Chainsaw RePOP${isJp ? " Japanese" : ""}","image":"${cover}","gtin13":"${isJp ? "9999999999999" : barcode}"}
+            </script>
+            <div class="text-xs font-bold capitalize">Country of release</div>
+            <div class="text-sm"><a title="${isJp ? "Japan" : "Europe"}">${isJp ? "Japan" : "Europe"}</a></div>
+            <div x-data="{ currentImage: '${cover}' }">
+          `,
+        };
+      }
+      throw new Error(`Unexpected Geedie URL ${url}`);
+    });
+
+    const gallery = await fetchGeedieGallery(
+      "Lollipop Chainsaw RePOP",
+      "ps5",
+      barcode,
+    );
+
+    expect(gallery?.items.length).toBeGreaterThanOrEqual(2);
+    const urls = mockedGet.mock.calls.map(([url]) => String(url));
+    expect(urls[0]).toContain("/marketplace/");
+    expect(urls[0]).toContain("search=");
+    // Old spray also guessed bare /en/ps5-{slug} without going through search.
+    expect(urls.some((u) => /\/en\/ps5-lollipop-chainsaw-repop$/.test(u))).toBe(
+      false,
+    );
   });
 });

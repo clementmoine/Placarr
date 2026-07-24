@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2n shipped (Back Market HTML cache); corpora / durable SearchYield = next.
+> Phase 1–2o shipped (Geedie search-first); corpora / durable SearchYield = next.
 
 ## Principle
 
@@ -133,10 +133,17 @@ Metadata search and price search no longer each pay for the same Cloudflare HTML
 - `fetchFromBackMarket` then `fetchPricesFromBackMarket` → **0** extra search HTTP
 - Gallery enrich then pinned product URL → **0** extra fiche GET
 
+## Phase 2o — Geedie search-first (done 2026-07-24)
+
+Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before marketplace:
+
+- Dropped slug spray (often 1–2 Flare 404s, or early-return that skipped multi-region search)
+- Marketplace SearchYield first; `preferGeedieHitsWithBarcode` ranks EAN-in-slug rows ahead
+- Multi-region gallery still detail-fetches aligned hits (by design)
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Local full-set / dump sync | Closed platforms at home latency |
-| SearchYield durability | Soft-404 / search beyond process cache |
-| Geedie gallery soft edges only | Multi-region covers need >1 detail by design |
+| SearchYield durability | Needs search-aware URL keying (`?q=` / `?search=`) |

@@ -9,9 +9,11 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 
 | Priorité | Item | Détail |
 | -------- | ---- | ------ |
-| **P0** | **SSOT identité / covers / liens (accept→purge)** | **Étapes 1–7 faites** (SSOT + god-file splits). Détail : [metadata_engine_audit.md](metadata_engine_audit.md). |
+| ~~**P0**~~ | ~~SSOT identité / covers / liens~~ | **Fait 2026-07-24** — étapes 1–7 + dead hardware titleMatch + present purge unique. |
+| **P1** | List present sans `priceOffers.rawValue` | Persister covers marketplace à l’écriture ; grids sans JSON brut. |
 | **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme. |
-| **P3** | Finir découpe god files | **Fait 2026-07-24** — pricing + attachmentDisplayScore scindés aussi. |
+| **P2** | FlareSolverr vs workers | Monitor abandon rate ; URL-first scrapes. |
+| ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.

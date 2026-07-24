@@ -302,33 +302,15 @@ export function priceListingSharesItemIdentity(
   const listingTokens = stripLeadingMarketplacePriceTokens(
     distinctiveProductTokens(listingName, options?.shelfType),
   );
-  // Never treat empty token bags as universal match on hardware — console
-  // names used to collapse to [] after stripping platforms and accept anything.
   if (itemTokens.length === 0 || listingTokens.length === 0) {
-    return options?.shelfType !== "hardware";
+    return true;
   }
-  if (options?.shelfType === "hardware") {
-    if (itemTokens.length === 1 || listingTokens.length === 1) {
-      const shorter = itemTokens.length === 1 ? itemTokens : listingTokens;
-      const longerSet = new Set(
-        itemTokens.length === 1 ? listingTokens : itemTokens,
-      );
-      return shorter.every((token) => titleTokenPresentInSet(token, longerSet));
-    }
-  } else if (itemTokens.length === 1 || listingTokens.length === 1) {
+  if (itemTokens.length === 1 || listingTokens.length === 1) {
     return true;
   }
 
-  let prefixLen = identityTokenPrefixLength(itemTokens, listingTokens);
+  const prefixLen = identityTokenPrefixLength(itemTokens, listingTokens);
   if (prefixLen >= 1) {
-    if (options?.shelfType === "hardware") {
-      const missingPlatform = itemTokens.filter(
-        (token) =>
-          HARDWARE_PLATFORM_IDENTITY_TOKENS.has(token) &&
-          !titleTokenPresentInSet(token, new Set(listingTokens)),
-      );
-      if (missingPlatform.length > 0) return false;
-    }
     return true;
   }
 
@@ -343,13 +325,6 @@ export function priceListingSharesItemIdentity(
   const onlyListing = listingTokens.filter(
     (token) => !titleTokenPresentInSet(token, itemTokenSet),
   );
-
-  if (
-    options?.shelfType === "hardware" &&
-    onlyItem.some((token) => HARDWARE_PLATFORM_IDENTITY_TOKENS.has(token))
-  ) {
-    return false;
-  }
 
   return !(onlyItem.length > 0 && onlyListing.length > 0);
 }

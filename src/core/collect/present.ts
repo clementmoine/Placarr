@@ -261,7 +261,9 @@ function formatItemMetadata(
       ? detectVideoGamePlatformKey(item.shelfName)
       : null;
 
-  const enriched = isStoredMetadata(metadata)
+  // enrichMetadataProviderLinks already purges contradicted external links —
+  // do not re-run the same residual gate here (list + detail paid ×2).
+  return isStoredMetadata(metadata)
     ? enrichMetadataProviderLinks(formatted, {
         fieldEvidence: mapStoredFieldEvidence(metadata.fieldEvidence),
         priceOffers: mapStoredPriceOffers(metadata.priceOffers),
@@ -272,16 +274,6 @@ function formatItemMetadata(
         catalogLink: item?.catalogLink,
       })
     : formatted;
-
-  if (!enriched.facts?.length) return enriched;
-  const facts = purgeContradictedProviderExternalLinks(
-    enriched.facts,
-    item?.barcode,
-    item?.name,
-    item?.shelfType,
-  );
-  if (facts.length === enriched.facts.length) return enriched;
-  return { ...enriched, facts };
 }
 
 function mediaInput(item: PresentableItemInput) {

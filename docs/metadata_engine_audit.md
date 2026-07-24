@@ -14,10 +14,10 @@ and purges. Not random bugs — **multiple contracts for one decision**.
 
 | Compteur | Valeur |
 | -------- | ------ |
-| P0 accept→purge | 3 |
-| P1 structural | 8 |
-| P2 cleanup | 3 |
-| God files >1.5k LOC | 5 |
+| P0 accept→purge | 0 ouvert (3 faits 2026-07-24) |
+| P1 structural | 1 ouvert (list `priceOffers`/`rawValue` encore en lecture) |
+| P2 cleanup | 1 ouvert (FlareSolverr concurrency — monitor) |
+| God files >1.5k LOC | 0 (scindés 2026-07-24) |
 
 ## Pipeline: where truth changes
 
@@ -34,34 +34,34 @@ mutates at stages 3–5.
 
 ## Findings
 
-### P0 — accept→purge
+### P0 — accept→purge _(faits 2026-07-24)_
 
-| Issue | Symptom | Where | Fix |
-| ----- | ------- | ----- | --- |
-| **Covers: store looser than present** | Attachment accepted at persist, filtered on shelf/detail — gallery flickers / marketplace rows vanish. | `storage.ts` vs `media.ts` (retail + catalogCover + listing identity) | One `attachmentTitleAllowedForItem()` for store AND present. |
-| **`shelfType` omitted on hardware/games gates** | Soft accept at provider/seek; residual hard-reject later (PS5↔PS One, DS↔Nintendogs). | chasse / AMC / smartoys; storage barcode; fetch edition / preferTitle; coverUrlMatch; metadataLookup 0.42 | Mandatory `{ shelfType }` on every games/hardware identity call. |
-| **Price-offer link ≠ cover gates** | Fiche BM/eBay kept while cover purged (or reverse). | `coverAttachmentsFromPriceOffers` vs purge / contradict / trusted bypass | Same residual SSOT for offer cover + offer URL; marketplace ≠ PC trusted bypass. |
+| Issue | Fix |
+| ----- | --- |
+| ~~Covers store ≠ present~~ | `attachmentTitleAllowedForItem` |
+| ~~`shelfType` omitted~~ | Threaded on games/hardware identity calls |
+| ~~Offer link ≠ cover gates~~ | Shared `priceListingSharesItemIdentity` |
 
 ### P1 — accept→purge / structure
 
 | Issue | Symptom | Where | Fix |
 | ----- | ------- | ----- | --- |
-| **Threshold zoo 0.42 / 0.45 / 0.58** | Same pair passes merge and fails catalog URL align (or reverse). | `isMetadataTitleAligned` · `catalogTitleAlignedWithItem` · metadataLookup · name-only retailer | One floor 0.58 + residual on hardware; 0.42 only barcode-confirmed. |
-| **Facts: purge → fieldEvidence re-add → present purge** | DB holds links UI strips; repair oscillates. | `persistProviderExternalLinks`; `syncMetadataDisplayFactsFromFieldEvidence`; present ×2 | Purge after every fact mutation; present = defense only. |
-| **Price offers stored unfiltered** | Wrong listings persist; filter only hides on read. | `mergePriceOffers` vs `filterItemPriceOffers` | Filter or mark rejected at write from refresh. |
-| **God files violate own split guidance** | Identity tweak touches fetch/storage/titleMatching → regressions. | fetch ~2759; storage ~2063; titleMatching ~1943; pricing/resolver ~1718 | Split by change reason **after** SSOT locked ([core_architecture.md](core_architecture.md)). |
-| **Parallel TITLE_STOP_WORDS / retailer tokens** | Edit one copy, miss another → silent accept/purge drift. | `identityNoise` vs fetch / titleMatch / bundleTitle; `GENERIC_RETAILER_TOKENS` | Delete copies; import `IDENTITY_*` / `listingTerms` only. |
-| **List present loads priceOffers + double purge** | Shelf grids pay residual/URL × N; collect↔enrich blurred at read. | `itemListMetadataInclude.priceOffers`; `present.ts` purge ×2 | Persist covers/links at sync; drop rawValue from list; purge on write. |
-| **Missing present-path integration tests** | Unit purge green while list present still wrong. | `providerExternalLinks.test` vs `presentItemFromStorage` | Golden: enrich accept → present keeps; residual reject → present purges. |
-| **No locked 0.58 vs 0.45 mismatch scenario** | Threshold drift returns as “random” bugs. | `isMetadataTitleAligned` vs `catalogTitleAlignedWithItem` | Shared `it.each` fixture table across both gates. |
+| ~~**Threshold zoo**~~ | — | — | **Fait** — `identityThresholds` 0.58 / 0.42 |
+| ~~**Facts purge oscillates**~~ | — | — | **Fait** — purge after fieldEvidence; present défend une fois |
+| ~~**Price offers unfiltered at write**~~ | — | — | **Fait** — `filterPriceOfferInputsForPersist` |
+| ~~**God files**~~ | — | — | **Fait** — facades + leaves |
+| ~~**Parallel TITLE_STOP_WORDS**~~ | — | — | **Fait** — `IDENTITY_*` DRY |
+| ~~**List present loads priceOffers + double purge**~~ | Shelf grids paid residual ×2 | `present.ts` | **Partiel 2026-07-24** — double purge retiré ; `priceOffers`/`rawValue` encore lus pour injecter covers marketplace. |
+| ~~**Missing present-path integration tests**~~ | — | — | **Fait 2026-07-24** — `present.identityGate.test.ts` + `identityGateParity.test.ts`. |
+| ~~**No locked 0.58 vs 0.45 mismatch scenario**~~ | — | — | **Fait 2026-07-24** — floors 0.58 / 0.42 + parity tests. |
 
 ### P2 — cleanup
 
 | Issue | Symptom | Where | Fix |
 | ----- | ------- | ----- | --- |
-| **Dead hardware soft branches in titleMatch** | Unreachable after `hardwareProductTitlesAlign` early-return. | `commerce/retailer/titleMatch.ts` | Delete dead branches; one hardware contract. |
+| ~~**Dead hardware soft branches in titleMatch**~~ | — | `titleMatch.ts` | **Fait 2026-07-24** — early-return residual only ; soft token path games/media. |
 | **FlareSolverr serial vs worker concurrency 6** | Jobs wait on Flare; 90s/60s caps → partial progressive stores. | `flareSolverr.ts`; `backgroundWorker.ts` | URL-first pinned scrapes; monitor abandon rate. |
-| **Docs / TESTING point at deleted paths** | New tests land wrong; onboarding reinforces debt. | `TESTING.md`, `codebase_map.md` → `src/lib/barcode`, `src/services/barcode` | Rewrite maps to `src/core/*` + `workRunner`. **Fait 2026-07-24** (cleanup docs). |
+| ~~**Docs / TESTING point at deleted paths**~~ | — | — | **Fait 2026-07-24** (cleanup docs). |
 
 Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `fetch` — voir [codebase_map.md](codebase_map.md).
 
@@ -117,8 +117,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 
 ## Principles verdict
 
-Providers plug-and-play + empty blindness allowlist = healthy. Violations
-concentrate in identity/cover/link contracts (multiple rules for one decision)
-and read-time re-validation — not in registry design. `residualIdentity` is the
-right SSOT direction; call-site discipline and store=present parity are the
-missing glue.
+Providers plug-and-play + empty blindness allowlist = healthy. SSOT steps 1–7
+locked (identity / covers / links / prices / god-file splits). Remaining debt is
+opportunistic: list-present still reads marketplace `priceOffers.rawValue` for
+cover injection; FlareSolverr concurrency monitoring; long-term word-list → IDF.

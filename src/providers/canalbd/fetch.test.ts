@@ -1,4 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+
+const readCanalbdSearchEvidence = vi.fn();
+const promoteCanalbdSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readCanalbdSearchEvidence: (...args: unknown[]) =>
+    readCanalbdSearchEvidence(...args),
+  promoteCanalbdSearchEvidence: (...args: unknown[]) =>
+    promoteCanalbdSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
+
 import axios from "axios";
 
 import {
@@ -6,13 +23,9 @@ import {
   parseCanalbdArticlePage,
   parseCanalbdOffersPrice,
   parseCanalbdSearchHits,
+  searchCanalbdHits,
 } from "./fetch";
 import { mapCanalbdMetadata } from "./index";
-
-vi.mock("axios", () => ({ default: { get: vi.fn(), post: vi.fn() } }));
-vi.mock("@/lib/http/flareSolverr", () => ({
-  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
-}));
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -65,7 +78,13 @@ function offersHtml() {
 }
 
 describe("canalbd", () => {
-  beforeEach(() => mockedGet.mockReset());
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readCanalbdSearchEvidence.mockReset();
+    promoteCanalbdSearchEvidence.mockReset();
+    readCanalbdSearchEvidence.mockResolvedValue(null);
+    promoteCanalbdSearchEvidence.mockResolvedValue(undefined);
+  });
 
   it("construit l'URL de recherche", () => {
     expect(canalbdSearchUrl("Astérix")).toContain("q=Ast%C3%A9rix");
@@ -114,6 +133,37 @@ describe("canalbd", () => {
     expect(metadata?.barcode).toBe("9782017322382");
     expect(metadata?.facts?.find((f) => f.kind === "series")?.value).toBe(
       "Astérix",
+    );
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        id: "1269046",
+        title: "Astérix T9",
+        url: "https://www.canalbd.net/articles/asterix-t9-1269046/",
+      },
+    ];
+    readCanalbdSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchCanalbdHits("Astérix")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteCanalbdSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: searchHtml(),
+    } as never);
+
+    const hits = await searchCanalbdHits("Astérix");
+    expect(hits).toHaveLength(1);
+    expect(promoteCanalbdSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("/recherche/?q="),
+      expect.arrayContaining([
+        expect.objectContaining({ id: "1269046" }),
+      ]),
     );
   });
 });

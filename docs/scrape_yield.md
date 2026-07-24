@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2aa shipped (HDJV SearchYield + support key); No-Intro = later.
+> Phase 1–2ab shipped (Canal BD + Furet SearchYield); Gibert/Decitre / No-Intro = later.
 
 ## Principle
 
@@ -210,11 +210,17 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `normalizeProviderEvidenceUrl` keeps `q` + `support` (platform collisions)
 - `ajax_recherche_jeu.php` → typed `{label,title,support,ficheUrl,gameCode}` promote/reuse
 
+## Phase 2ab — Canal BD + Furet SearchYield durable (done 2026-07-24)
+
+- Canal BD: `/recherche/?q=` → typed `{id,title,url,coverUrl?}` promote/reuse
+- Furet: `/rechercher/result?q=` → typed `{title,productUrl,barcode?}` promote/reuse
+- Evidence keys already keep `q`
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
+| Gibert / Decitre SearchYield | Same book-retailer pattern (`q` / `search`) |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
 | Bedetheque multi-hop / Freakxy | Not thin SearchYield→detail |
-| Niche peers (Canal BD / Furet / Gibert / Decitre) | `q`/`search` already kept; thin if Flare-heavy |

@@ -20,6 +20,11 @@ import {
   schemaTypes,
 } from "@/providers/shared/jsonLdHtml";
 
+import {
+  promoteFuretSearchEvidence,
+  readFuretSearchEvidence,
+} from "./durableEvidence";
+
 const FURET_BASE_URL = "https://www.furet.com";
 const FURET_HEADERS = { ...BROWSER_HTML_HEADERS };
 
@@ -252,9 +257,19 @@ export async function searchFuretHits(
 ): Promise<FuretSearchHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const page = await fetchFuretHtml(furetSearchUrl(trimmed), options.signal);
+  const searchUrl = furetSearchUrl(trimmed);
+
+  const fromEvidence = await readFuretSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Furet] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const page = await fetchFuretHtml(searchUrl, options.signal);
   if (!page) return [];
-  return parseFuretSearchHits(page.html);
+  const hits = parseFuretSearchHits(page.html);
+  await promoteFuretSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 function productMatchesBarcode(

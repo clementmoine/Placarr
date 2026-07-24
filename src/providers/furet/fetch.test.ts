@@ -1,23 +1,34 @@
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  furetAttributeValue,
-  furetSearchUrl,
-  parseFuretProductPage,
-  parseFuretSearchHits,
-} from "./fetch";
-import { mapFuretMetadata } from "./index";
-
 vi.mock("axios", () => ({
   default: {
     get: vi.fn(),
   },
 }));
 
+const readFuretSearchEvidence = vi.fn();
+const promoteFuretSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readFuretSearchEvidence: (...args: unknown[]) =>
+    readFuretSearchEvidence(...args),
+  promoteFuretSearchEvidence: (...args: unknown[]) =>
+    promoteFuretSearchEvidence(...args),
+}));
+
 vi.mock("@/lib/http/flareSolverr", () => ({
   flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
 }));
+
+import {
+  furetAttributeValue,
+  furetSearchUrl,
+  parseFuretProductPage,
+  parseFuretSearchHits,
+  searchFuretHits,
+} from "./fetch";
+import { mapFuretMetadata } from "./index";
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -74,7 +85,13 @@ function searchHtml() {
 }
 
 describe("furet", () => {
-  beforeEach(() => mockedGet.mockReset());
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readFuretSearchEvidence.mockReset();
+    promoteFuretSearchEvidence.mockReset();
+    readFuretSearchEvidence.mockResolvedValue(null);
+    promoteFuretSearchEvidence.mockResolvedValue(undefined);
+  });
 
   it("construit l'URL de recherche", () => {
     expect(furetSearchUrl("Astérix")).toContain("/rechercher/result?q=");
@@ -114,6 +131,38 @@ describe("furet", () => {
     expect(metadata?.barcode).toBe(SAMPLE_EAN);
     expect(metadata?.facts?.find((f) => f.kind === "price")?.value).toBe(
       "7,60 €",
+    );
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        title: "L'étranger",
+        productUrl: PRODUCT_URL,
+        barcode: SAMPLE_EAN,
+      },
+    ];
+    readFuretSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchFuretHits("L'étranger")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteFuretSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: searchHtml(),
+      responseUrl: furetSearchUrl("L'étranger"),
+    } as never);
+
+    const hits = await searchFuretHits("L'étranger");
+    expect(hits.length).toBeGreaterThanOrEqual(1);
+    expect(promoteFuretSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("/rechercher/result?q="),
+      expect.arrayContaining([
+        expect.objectContaining({ barcode: SAMPLE_EAN }),
+      ]),
     );
   });
 });

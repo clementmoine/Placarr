@@ -13,6 +13,11 @@ import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
+import {
+  promoteCanalbdSearchEvidence,
+  readCanalbdSearchEvidence,
+} from "./durableEvidence";
+
 const CANALBD_BASE_URL = "https://www.canalbd.net";
 const CANALBD_HEADERS = {
   "User-Agent":
@@ -289,13 +294,22 @@ export async function searchCanalbdHits(
 ): Promise<CanalbdSearchHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const fetched = await fetchHtml(canalbdSearchUrl(trimmed), signal);
+  const searchUrl = canalbdSearchUrl(trimmed);
+
+  const fromEvidence = await readCanalbdSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Canal BD] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const fetched = await fetchHtml(searchUrl, signal);
   if (!fetched) return [];
 
+  let hits: CanalbdSearchHit[];
   if (looksLikeCanalbdArticlePage(fetched.html)) {
     const article = parseCanalbdArticlePage(fetched.html, fetched.finalUrl);
     if (!article) return [];
-    return [
+    hits = [
       {
         id: article.id,
         title: article.title,
@@ -303,9 +317,12 @@ export async function searchCanalbdHits(
         coverUrl: article.imageUrl,
       },
     ];
+  } else {
+    hits = parseCanalbdSearchHits(fetched.html);
   }
 
-  return parseCanalbdSearchHits(fetched.html);
+  await promoteCanalbdSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchCanalbdArticle(

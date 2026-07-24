@@ -102,7 +102,8 @@ Auth / DB / HTTP             → lib/
 2. ~~`fetch` gating/merge/book~~ **partiel 2026-07-24** — `metadataFetchGating` / `merge` / `mergeObservationRanking` / `bookSearch*`.
 3. ~~`platformSources.ts` → JSON/data file + loader~~ **fait 2026-07-19** (`platforms/data/*.json`).
 4. ~~`titleMatching` god file~~ **fait 2026-07-24** — facade `@/core/enrich/titleMatching` + leaves `titles/*` (align, similarity, search, variant, attachments…).
-5. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
+5. ~~`metadataTitleAlign` / `residualIdentity`~~ **fait 2026-07-24** — align orchestrateur + series/score/volume/better-match ; residual facade + tokens/volumes/pairEvaluate.
+6. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
 ## Checklist PR core
 

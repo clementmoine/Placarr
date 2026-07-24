@@ -93,7 +93,8 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | `enrich/fetch.ts` | ~1160 | orchestrator (+ gating / merge / observationRanking / book*) |
 | `enrich/storage.ts` | ~412 | persist orchestrator (+ gallery/cover/item sync leaves) |
 | `enrich/titleMatching.ts` | ~78 | facade re-exports (`titles/*` leaves) |
-| `enrich/titles/metadataTitleAlign.ts` | ~663 | align gate (plus residualIdentity ~1099) |
+| `enrich/titles/metadataTitleAlign.ts` | ~218 | align orchestrator (+ series/score/volume/better-match leaves) |
+| `enrich/titles/residualIdentity.ts` | ~137 | residual match facade (+ tokens/volumes/pairEvaluate leaves) |
 | `commerce/pricing/resolver.ts` | ~1655 | resolve + shelf summarize (+ cachePolicy/outlierTrim extracted) |
 | `identify/evidence/compile.ts` | ~750 | compile + confidence (+ consensusTitle/resolve extracted) |
 
@@ -111,7 +112,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
-| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch/storage leaves scindés ; `titleMatching` → facade + `titles/*` ; `storeMetadata` → `prepareMetadataGallery` / `resolveMetadataCoverHero` / `syncItemAfterMetadataStore`. Reste dense : `metadataTitleAlign` / `residualIdentity`. |
+| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Fait 2026-07-24** — fetch/storage/storeMetadata scindés ; `titleMatching` + `metadataTitleAlign` + `residualIdentity` → facades + `titles/*` leaves. Gros cohésifs restants : `pricing/resolver`, `attachmentDisplayScore`. |
 
 ## Principles verdict
 

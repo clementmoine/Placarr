@@ -53,11 +53,39 @@ function metadataXmlPath(): string {
   );
 }
 
-function shouldBuildLaunchBoxIndex(): boolean {
-  return true;
+export type LaunchBoxIndexBuildOptions = {
+  /** Intentional prebuild (`pnpm launchbox:build-index`) — may download Metadata.zip. */
+  allowDownload?: boolean;
+};
+
+/** Opt-in network fetch of Metadata.zip (env or build options). Default: off. */
+export function isLaunchBoxDownloadAllowed(
+  options?: LaunchBoxIndexBuildOptions,
+): boolean {
+  if (options?.allowDownload) return true;
+  const raw = process.env.LAUNCHBOX_ALLOW_DOWNLOAD?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
 }
 
-function shouldDownloadLaunchBoxZip(): boolean {
+function hasLocalLaunchBoxMetadataSource(): boolean {
+  const explicitXml = process.env.LAUNCHBOX_METADATA_XML?.trim();
+  if (explicitXml && existsSync(explicitXml)) return true;
+  return existsSync(metadataXmlPath()) || existsSync(zipPath());
+}
+
+/** Build/rebuild only from local XML/zip, or when download is explicitly allowed. */
+export function shouldBuildLaunchBoxIndex(
+  options?: LaunchBoxIndexBuildOptions,
+): boolean {
+  return (
+    hasLocalLaunchBoxMetadataSource() || isLaunchBoxDownloadAllowed(options)
+  );
+}
+
+function shouldDownloadLaunchBoxZip(
+  options?: LaunchBoxIndexBuildOptions,
+): boolean {
+  if (!isLaunchBoxDownloadAllowed(options)) return false;
   const hasExplicitZipUrl = Boolean(
     process.env.LAUNCHBOX_METADATA_ZIP_URL?.trim(),
   );
@@ -94,9 +122,11 @@ async function downloadMetadataZip(): Promise<string | null> {
   }
 }
 
-async function extractMetadataXmlFromZip(): Promise<string | null> {
+async function extractMetadataXmlFromZip(
+  options?: LaunchBoxIndexBuildOptions,
+): Promise<string | null> {
   if (!(await fileExists(zipPath()))) {
-    if (!shouldDownloadLaunchBoxZip()) {
+    if (!shouldDownloadLaunchBoxZip(options)) {
       return null;
     }
     const downloaded = await downloadMetadataZip();
@@ -125,7 +155,9 @@ async function extractMetadataXmlFromZip(): Promise<string | null> {
   return target;
 }
 
-async function resolveMetadataXmlSource(): Promise<string | null> {
+async function resolveMetadataXmlSource(
+  options?: LaunchBoxIndexBuildOptions,
+): Promise<string | null> {
   const explicitXml = process.env.LAUNCHBOX_METADATA_XML?.trim();
   if (explicitXml) {
     if (await fileExists(explicitXml)) {
@@ -139,7 +171,7 @@ async function resolveMetadataXmlSource(): Promise<string | null> {
     return cachedXml;
   }
 
-  return extractMetadataXmlFromZip();
+  return extractMetadataXmlFromZip(options);
 }
 
 function createIndexSchema(db: DatabaseSync): void {
@@ -347,9 +379,16 @@ async function buildSqliteIndex(
   return { games, alternateNames, images };
 }
 
-export async function buildLaunchBoxIndex(): Promise<DatabaseSync | null> {
-  const xmlPath = await resolveMetadataXmlSource();
-  if (!xmlPath) return null;
+export async function buildLaunchBoxIndex(
+  options?: LaunchBoxIndexBuildOptions,
+): Promise<DatabaseSync | null> {
+  const xmlPath = await resolveMetadataXmlSource(options);
+  if (!xmlPath) {
+    console.warn(
+      "[LaunchBox] No Metadata.xml/zip — run `pnpm launchbox:build-index` (download is opt-in, not at scan)",
+    );
+    return null;
+  }
 
   console.info(`[LaunchBox] Building SQLite index from ${xmlPath}...`);
   const file = indexPath();
@@ -409,6 +448,9 @@ export async function ensureLaunchBoxIndex(): Promise<DatabaseSync | null> {
   }
 
   if (!shouldBuildLaunchBoxIndex()) {
+    console.info(
+      "[LaunchBox] Index unavailable — run `pnpm launchbox:build-index` (no Metadata.zip download at scan)",
+    );
     return null;
   }
 

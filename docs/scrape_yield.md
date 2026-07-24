@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2t shipped (iCollect sitemap Tier0 on lookup); dump syncs / No-Intro = later.
+> Phase 1–2u shipped (LaunchBox prebuild / no zip at scan); No-Intro dumps = later.
 
 ## Principle
 
@@ -171,10 +171,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Background `catalogSync` still uses `shouldRefreshICollectItemPage` to upgrade sitemap → page
 - Aligns module notes with behavior (Flare only when barcode absent from local index)
 
+## Phase 2u — LaunchBox prebuild / no zip at scan (done 2026-07-24)
+
+- `ensureLaunchBoxIndex` opens existing SQLite only; rebuild needs local XML/zip or opt-in download
+- `pnpm launchbox:build-index` → `buildLaunchBoxIndex({ allowDownload: true })`
+- Env override: `LAUNCHBOX_ALLOW_DOWNLOAD=1`
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| LaunchBox prebuild / no zip at scan | Align with backlog note; measure local FTS |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
+| LaunchBox local FTS perf measure | P4 backlog |
 | Remaining Flare peers SearchYield | Same promote pattern as needed |

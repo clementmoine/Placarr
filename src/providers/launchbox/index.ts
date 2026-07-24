@@ -32,7 +32,7 @@ export const launchboxModule: ProviderModule = {
     isRealBoxCover: true,
     websiteUrl: "https://gamesdb.launchbox-app.com/",
     notes:
-      "Base communautaire LaunchBox (Metadata.zip). Index SQLite local (pas de scrape HTTP) : jeux, joueurs max, titres régionaux, images. Enrichissement par titre — pas de barcode GTIN. Tourne en pass API pour ne pas être sauté quand ScreenScraper/IGDB ont déjà titre+cover.",
+      "Base communautaire LaunchBox (Metadata.zip). Index SQLite local prébuild (`pnpm launchbox:build-index`) — pas de download au scan. Jeux, joueurs max, titres régionaux, images. Enrichissement par titre — pas de barcode GTIN. Tourne en pass API pour ne pas être sauté quand ScreenScraper/IGDB ont déjà titre+cover.",
   },
   createMetadataAdapter: () => ({
     id: "launchbox",

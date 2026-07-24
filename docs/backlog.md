@@ -12,11 +12,11 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | ~~**P0**~~ | ~~SSOT identité / covers / liens~~ | **Fait 2026-07-24** — étapes 1–7 + dead hardware titleMatch + present purge unique. |
 | ~~**P1**~~ | ~~List present sans `priceOffers.rawValue`~~ | **Fait 2026-07-24** — covers persistées à l’écriture prix ; `itemListMetadataInclude` sans priceOffers. |
 | **P2** | Word-lists → consensus / IDF | **First cut 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + in-memory cluster stats. Reste : index RawName offline / cron. |
-| **P2** | Scrape-yield / call efficiency | **… + iCollect sitemap Tier0 2026-07-24**. Reste : peers mineurs SearchYield. Voir [scrape_yield.md](scrape_yield.md). |
+| **P2** | Scrape-yield / call efficiency | **… + LaunchBox prebuild 2026-07-24**. Reste : peers mineurs SearchYield. Voir [scrape_yield.md](scrape_yield.md). |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~ | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override. |
 | ~~**P3**~~ | ~~Découpe god files~~ | **Fait 2026-07-24**. |
-| ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect sitemap = Tier0 (pas de Flare au scan). Reste : LaunchBox prebuild ; No-Intro/Redump. |
-| **P3** | LaunchBox / dumps | Prébuild index LB (pas de zip au scan) ; dumps No-Intro/Redump optionnels. |
+| ~~**P3**~~ | ~~Local full-set / dump sync~~ | **First cut 2026-07-24** — iCollect sitemap Tier0 + LaunchBox prebuild (pas de zip au scan). Reste : No-Intro/Redump. |
+| ~~**P3**~~ | ~~LaunchBox / dumps~~ | **LB prebuild 2026-07-24** (`pnpm launchbox:build-index`). Reste : dumps No-Intro/Redump ; mesure FTS (P4). |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.
@@ -427,7 +427,7 @@ Amorcé : `MetadataObservation`, Okkazeo premier émetteur ; généralisé depui
 
 ### LaunchBox
 
-Garder seulement si index local prébuild ; pas de download/extract au scan. Décision remove si pas assez rapide — [à mesurer].
+Garder seulement si index local prébuild ; pas de download/extract au scan. **Fait 2026-07-24** — `pnpm launchbox:build-index` ; scan ouvre SQLite existant seulement. Décision remove si pas assez rapide — [à mesurer] (P4).
 
 ---
 

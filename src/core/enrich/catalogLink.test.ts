@@ -150,7 +150,7 @@ describe("presentItemFromStorage PriceCharting chip", () => {
     expect(priceCharting?.url).toContain("search-products");
   });
 
-  it("injects marketplace listing covers from price offers onto the gallery", () => {
+  it("keeps write-persisted marketplace covers on the gallery without present inject", () => {
     const bmCover =
       "https://d2e6ccujb3mkqf.cloudfront.net/d0df7a5d-d274-4cad-948c-c26b697bdd7a-1.jpg";
     const presented = presentItemFromStorage({
@@ -201,24 +201,28 @@ describe("presentItemFromStorage PriceCharting chip", () => {
             meanLuminance: null,
             darkPixelRatio: null,
           },
+          {
+            id: "att-bm",
+            type: "cover" as const,
+            title: "Sega Mega Drive - Noir",
+            duration: null,
+            url: bmCover,
+            metadataId: "meta-md",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            role: null,
+            source: "backmarket",
+            coverProvenance: null,
+            platformKey: null,
+            width: null,
+            height: null,
+            meanLuminance: null,
+            darkPixelRatio: null,
+          },
         ],
         authors: [],
         publishers: [],
         fieldEvidence: [],
-        priceOffers: [
-          {
-            source: "Back Market",
-            sourceUrl:
-              "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
-            productName: "Sega Mega Drive - Noir",
-            rawValue: {
-              productName: "Sega Mega Drive - Noir",
-              coverUrl: bmCover,
-              sourceUrl:
-                "https://www.backmarket.fr/fr-fr/p/sega-mega-drive-1601-09-noir/d0df7a5d-d274-4cad-948c-c26b697bdd7a",
-            },
-          },
-        ],
       },
     });
 

@@ -9,7 +9,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 
 | Priorité | Item | Détail |
 | -------- | ---- | ------ |
-| **P0** | **SSOT identité / covers / liens (accept→purge)** | Une règle bout-en-bout : `residualIdentity` (+ `shelfType` obligatoire games/hardware) ; même filtre covers store=present ; liens marketplace vs PC trusted ; prix filtrés à l’écriture. Findings + séquence 1→7 : [metadata_engine_audit.md](metadata_engine_audit.md). |
+| **P0** | **SSOT identité / covers / liens (accept→purge)** | **En cours** — étapes 1–4 faites (`attachmentTitleAllowedForItem`, shelfType, offer link=cover, purge facts + filter prix write). Restent 5–6 (seuils/DRY + golden tests). Détail : [metadata_engine_audit.md](metadata_engine_audit.md). |
 | **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme, pas bloquant pour SSOT. |
 | **P3** | Découper `enrich/storage.ts` (persist / images / format) | Faible ROI tant que SSOT n’est pas verrouillé. Idem `fetch.ts` après. |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |

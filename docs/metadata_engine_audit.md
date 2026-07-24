@@ -107,7 +107,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 1 | Unify store ↔ present cover filter | Stops gallery accept→hide | **Fait 2026-07-24** — `attachmentTitleAllowedForItem` |
 | 2 | Thread `shelfType` everywhere (games/hardware) | Kills soft-accept → residual-reject | **Fait 2026-07-24** — fetch/storage/AMC/chasse/smartoys/metadataLookup (+ remaining providers as found) |
 | 3 | Align offer link + offer cover on residual SSOT | One marketplace product decision | **Fait 2026-07-24** — listing title + cover share `priceListingSharesItemIdentity` |
-| 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Partiel** — purge after fieldEvidence sync; filter prices at write still open |
+| 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | Ouvert |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | Ouvert (unit gate tests added) |
 | 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | Reporté |

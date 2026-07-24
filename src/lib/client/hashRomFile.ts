@@ -301,10 +301,34 @@ export function dumpTitleFromFileName(fileName: string): string {
   return base.replace(/\.[^.]+$/u, "").trim() || base;
 }
 
+export type RomHashProgress = {
+  bytesRead: number;
+  totalBytes: number;
+  /** 0..1 inclusive when complete. */
+  ratio: number;
+};
+
 export type HashRomFileOptions = {
   /** Override streaming slice size (tests / constrained memory). */
   chunkBytes?: number;
+  /** Called after each chunk (and once at start with 0). */
+  onProgress?: (progress: RomHashProgress) => void;
 };
+
+/** Whole percent 0–100 for button / toast copy. */
+export function romHashProgressPercent(ratio: number): number {
+  if (!Number.isFinite(ratio) || ratio <= 0) return 0;
+  if (ratio >= 1) return 100;
+  return Math.min(99, Math.max(0, Math.floor(ratio * 100)));
+}
+
+function inputByteLength(
+  input: File | Blob | ArrayBuffer | Uint8Array,
+): number {
+  if (input instanceof Uint8Array) return input.byteLength;
+  if (input instanceof ArrayBuffer) return input.byteLength;
+  return input.size;
+}
 
 async function* chunksFromInput(
   input: File | Blob | ArrayBuffer | Uint8Array,
@@ -333,14 +357,23 @@ export async function hashRomFile(
   options?: HashRomFileOptions,
 ): Promise<RomChecksums> {
   const chunkBytes = options?.chunkBytes ?? ROM_HASH_CHUNK_BYTES;
+  const totalBytes = inputByteLength(input);
+  const onProgress = options?.onProgress;
   const crc = createCrc32();
   const md5 = createMd5();
   const sha1 = createSha1();
+
+  let bytesRead = 0;
+  onProgress?.({ bytesRead: 0, totalBytes, ratio: totalBytes === 0 ? 1 : 0 });
 
   for await (const chunk of chunksFromInput(input, chunkBytes)) {
     crc.update(chunk);
     md5.update(chunk);
     sha1.update(chunk);
+    bytesRead += chunk.byteLength;
+    const ratio =
+      totalBytes <= 0 ? 1 : Math.min(1, bytesRead / totalBytes);
+    onProgress?.({ bytesRead, totalBytes, ratio });
   }
 
   return {

@@ -8,6 +8,7 @@ import {
   hashRomFile,
   md5Hex,
   ROM_HASH_SOFT_WARN_BYTES,
+  romHashProgressPercent,
   sha1Hex,
   shouldWarnRomHashSize,
 } from "./hashRomFile";
@@ -55,6 +56,28 @@ describe("hashRomFile", () => {
     expect(streamed.sha1).toBe(createHash("sha1").update(bytes).digest("hex"));
     expect(streamed.md5).toBe(createHash("md5").update(bytes).digest("hex"));
     expect(streamed.crc).toBe(crc32Hex(bytes));
+  });
+
+  it("reports progress from 0 to complete while streaming", async () => {
+    const bytes = utf8("0123456789abcdef".repeat(8));
+    const ratios: number[] = [];
+    await hashRomFile(new Blob([bytes]), {
+      chunkBytes: 16,
+      onProgress: (progress) => {
+        ratios.push(progress.ratio);
+        expect(progress.totalBytes).toBe(bytes.byteLength);
+        expect(progress.bytesRead).toBeLessThanOrEqual(progress.totalBytes);
+      },
+    });
+    expect(ratios[0]).toBe(0);
+    expect(ratios.at(-1)).toBe(1);
+    expect(ratios.length).toBeGreaterThan(2);
+  });
+
+  it("maps progress ratio to whole percent for UI copy", () => {
+    expect(romHashProgressPercent(0)).toBe(0);
+    expect(romHashProgressPercent(0.456)).toBe(45);
+    expect(romHashProgressPercent(1)).toBe(100);
   });
 
   it("dumpTitleFromFileName strips extension and path", () => {

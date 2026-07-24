@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2am shipped; Phase 3a–3j No-Intro dump path (streaming hash); Phase P4a LaunchBox FTS.
+> Phase 1–2am shipped; Phase 3a–3k No-Intro dump path; Phase P4a LaunchBox FTS.
 
 ## Principle
 
@@ -347,9 +347,13 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - `hashRomFile` streams File/Blob in 1 MiB slices (override via `chunkBytes`)
 - Incremental CRC32 + MD5 + SHA-1 — multi-GB ISOs are not loaded fully into RAM
 
+## Phase 3k — Hash progress UI (done 2026-07-24)
+
+- `onProgress` on `hashRomFile` → ItemModal button shows “Hashing dump… N%”
+- Pure `romHashProgressPercent` for stable whole-percent copy
+
 ## Phase 2+/3+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Worker / server-side dump hashing | Only if dumps must live on server |
-| Progress UI while hashing large dumps | Optional UX polish |

@@ -53,6 +53,7 @@ import {
   dumpTitleFromFileName,
   formatRomHashSizeMiB,
   hashRomFile,
+  romHashProgressPercent,
   shouldWarnRomHashSize,
 } from "@/lib/client/hashRomFile";
 import {
@@ -391,6 +392,7 @@ export function ItemModal({
   }, [watchedName, nameSuggestion, suggestions]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isHashingDump, setIsHashingDump] = useState(false);
+  const [hashDumpPercent, setHashDumpPercent] = useState(0);
   const dumpFileInputRef = useRef<HTMLInputElement>(null);
   interface GameMatch {
     name: string;
@@ -595,8 +597,13 @@ export function ItemModal({
       }
 
       setIsHashingDump(true);
+      setHashDumpPercent(0);
       try {
-        const checksums = await hashRomFile(file);
+        const checksums = await hashRomFile(file, {
+          onProgress: (progress) => {
+            setHashDumpPercent(romHashProgressPercent(progress.ratio));
+          },
+        });
         const currentName = (form.getValues("name") || "").trim();
         const lookupName = currentName || dumpTitleFromFileName(file.name);
         if (!currentName && lookupName) {
@@ -614,6 +621,7 @@ export function ItemModal({
         toast.error(t("items.hashDumpFailed"));
       } finally {
         setIsHashingDump(false);
+        setHashDumpPercent(0);
       }
     },
     [activeShelfType, fetchMetadataPreview, form, t],
@@ -1820,7 +1828,12 @@ export function ItemModal({
                           ) : (
                             <HardDrive className="size-3.5" />
                           )}
-                          {t("items.hashDump")}
+                          {isHashingDump
+                            ? t("items.hashDumpProgress").replace(
+                                "{percent}",
+                                String(hashDumpPercent),
+                              )
+                            : t("items.hashDump")}
                         </Button>
                         <p className="text-[11px] text-muted-foreground leading-snug">
                           {t("items.hashDumpHint")}

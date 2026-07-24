@@ -340,6 +340,7 @@
     },
     "enterName": "Enter name",
     "hashDump": "Identify from dump",
+    "hashDumpProgress": "Hashing dump… {percent}%",
     "hashDumpHint": "Hashes the file locally in chunks (CRC / MD5 / SHA-1) — nothing is uploaded.",
     "hashDumpDone": "Dump hashed — looking up metadata…",
     "hashDumpFailed": "Could not hash this dump file",

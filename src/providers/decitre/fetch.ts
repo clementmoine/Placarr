@@ -19,6 +19,11 @@ import {
   schemaTypes,
 } from "@/providers/shared/jsonLdHtml";
 
+import {
+  promoteDecitreSearchEvidence,
+  readDecitreSearchEvidence,
+} from "./durableEvidence";
+
 const DECITRE_BASE_URL = "https://www.decitre.fr";
 const DECITRE_HEADERS = { ...BROWSER_HTML_HEADERS };
 
@@ -270,9 +275,19 @@ export async function searchDecitreHits(
 ): Promise<DecitreSearchHit[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const page = await fetchDecitreHtml(decitreSearchUrl(trimmed), options.signal);
+  const searchUrl = decitreSearchUrl(trimmed);
+
+  const fromEvidence = await readDecitreSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Decitre] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const page = await fetchDecitreHtml(searchUrl, options.signal);
   if (!page) return [];
-  return parseDecitreSearchHits(page.html);
+  const hits = parseDecitreSearchHits(page.html);
+  await promoteDecitreSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 function productMatchesBarcode(

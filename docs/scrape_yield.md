@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2ab shipped (Canal BD + Furet SearchYield); Gibert/Decitre / No-Intro = later.
+> Phase 1–2ac shipped (Gibert + Decitre SearchYield); No-Intro = later.
 
 ## Principle
 
@@ -216,11 +216,16 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Furet: `/rechercher/result?q=` → typed `{title,productUrl,barcode?}` promote/reuse
 - Evidence keys already keep `q`
 
+## Phase 2ac — Gibert + Decitre SearchYield durable (done 2026-07-24)
+
+- Gibert: `/catalogsearch/result/?q=` → typed `{title,productUrl,barcode?}` promote/reuse
+- Decitre: `/search?search=` → typed `{title,productUrl,barcode?}` promote/reuse
+- Evidence keys already keep `q` / `search`
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Gibert / Decitre SearchYield | Same book-retailer pattern (`q` / `search`) |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |
 | Bedetheque multi-hop / Freakxy | Not thin SearchYield→detail |

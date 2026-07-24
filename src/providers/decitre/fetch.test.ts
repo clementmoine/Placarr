@@ -1,6 +1,26 @@
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+const readDecitreSearchEvidence = vi.fn();
+const promoteDecitreSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readDecitreSearchEvidence: (...args: unknown[]) =>
+    readDecitreSearchEvidence(...args),
+  promoteDecitreSearchEvidence: (...args: unknown[]) =>
+    promoteDecitreSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
+
 import {
   decitreAttributeValue,
   decitreSearchUrl,
@@ -9,18 +29,9 @@ import {
   parseDecitreProductPage,
   parseDecitreSearchHits,
   resolveDecitreMetadata,
+  searchDecitreHits,
 } from "./fetch";
 import { mapDecitreMetadata } from "./index";
-
-vi.mock("axios", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/http/flareSolverr", () => ({
-  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
-}));
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -85,6 +96,10 @@ function searchHtml(ean = SAMPLE_EAN) {
 describe("decitre fetch", () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    readDecitreSearchEvidence.mockReset();
+    promoteDecitreSearchEvidence.mockReset();
+    readDecitreSearchEvidence.mockResolvedValue(null);
+    promoteDecitreSearchEvidence.mockResolvedValue(undefined);
   });
 
   it("construit l'URL de recherche ISBN", () => {
@@ -185,5 +200,41 @@ describe("decitre fetch", () => {
     );
     expect(metadata?.observations?.length).toBeGreaterThan(0);
     expect(metadata?.externalIds?.decitre).toBe(SAMPLE_EAN);
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        title: "Ecris notre histoire",
+        productUrl: PRODUCT_URL,
+        barcode: SAMPLE_EAN,
+      },
+    ];
+    readDecitreSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchDecitreHits(SAMPLE_EAN)).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteDecitreSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: searchHtml(),
+      responseUrl: decitreSearchUrl(SAMPLE_EAN),
+    } as never);
+
+    const hits = await searchDecitreHits(SAMPLE_EAN);
+    expect(hits).toEqual([
+      {
+        title: "Ecris notre histoire",
+        productUrl: PRODUCT_URL,
+        barcode: SAMPLE_EAN,
+      },
+    ]);
+    expect(promoteDecitreSearchEvidence).toHaveBeenCalledWith(
+      `https://www.decitre.fr/search?search=${SAMPLE_EAN}`,
+      hits,
+    );
   });
 });

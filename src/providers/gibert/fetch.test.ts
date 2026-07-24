@@ -1,4 +1,21 @@
-import { describe, expect, it } from "vitest";
+import axios from "axios";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+
+const readGibertSearchEvidence = vi.fn();
+const promoteGibertSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readGibertSearchEvidence: (...args: unknown[]) =>
+    readGibertSearchEvidence(...args),
+  promoteGibertSearchEvidence: (...args: unknown[]) =>
+    promoteGibertSearchEvidence(...args),
+}));
+
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+}));
 
 import {
   gibertSearchUrl,
@@ -8,7 +25,17 @@ import {
 } from "./fetch";
 import { mapGibertMetadata } from "./index";
 
+const mockedGet = vi.mocked(axios.get);
+
 describe("gibert", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    readGibertSearchEvidence.mockReset();
+    promoteGibertSearchEvidence.mockReset();
+    readGibertSearchEvidence.mockResolvedValue(null);
+    promoteGibertSearchEvidence.mockResolvedValue(undefined);
+  });
+
   it("construit l'URL Magento catalogsearch", () => {
     expect(gibertSearchUrl("9782070360024")).toContain(
       "catalogsearch/result/?q=9782070360024",
@@ -60,5 +87,38 @@ describe("gibert", () => {
   it("guards empty search queries", async () => {
     await expect(searchGibertHits("")).resolves.toEqual([]);
     expect(gibertSearchUrl("")).toContain("q=");
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    const hits = [
+      {
+        title: "L'Étranger",
+        productUrl: "https://www.gibert.com/etranger-9782070360024.html",
+        barcode: "9782070360024",
+      },
+    ];
+    readGibertSearchEvidence.mockResolvedValueOnce(hits);
+
+    await expect(searchGibertHits("9782070360024")).resolves.toEqual(hits);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteGibertSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: `
+        <a class="product-item-link" href="https://www.gibert.com/etranger-9782070360024.html">L'Étranger</a>
+      `,
+    } as never);
+
+    const hits = await searchGibertHits("9782070360024");
+    expect(hits[0]).toMatchObject({ barcode: "9782070360024" });
+    expect(promoteGibertSearchEvidence).toHaveBeenCalledWith(
+      expect.stringContaining("/catalogsearch/result/?q=9782070360024"),
+      expect.arrayContaining([
+        expect.objectContaining({ barcode: "9782070360024" }),
+      ]),
+    );
   });
 });

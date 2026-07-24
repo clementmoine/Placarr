@@ -18,6 +18,11 @@ import {
   schemaTypes,
 } from "@/providers/shared/jsonLdHtml";
 
+import {
+  promoteGibertSearchEvidence,
+  readGibertSearchEvidence,
+} from "./durableEvidence";
+
 const GIBERT_BASE_URL = "https://www.gibert.com";
 const GIBERT_HEADERS = { ...BROWSER_HTML_HEADERS };
 
@@ -228,8 +233,19 @@ export async function searchGibertHits(
 ): Promise<GibertSearchHit[]> {
   const trimmed = String(query || "").trim();
   if (!trimmed) return [];
-  const html = await fetchHtml(gibertSearchUrl(trimmed), signal);
-  return html ? parseGibertSearchHits(html) : [];
+  const searchUrl = gibertSearchUrl(trimmed);
+
+  const fromEvidence = await readGibertSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Gibert] Search evidence hit for ${searchUrl}`);
+    return fromEvidence;
+  }
+
+  const html = await fetchHtml(searchUrl, signal);
+  if (!html) return [];
+  const hits = parseGibertSearchHits(html);
+  await promoteGibertSearchEvidence(searchUrl, hits);
+  return hits;
 }
 
 export async function fetchGibertProduct(

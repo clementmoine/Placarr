@@ -4,6 +4,10 @@ import {
   normalizeForTokens,
 } from "@/core/identify/titleUtils";
 import { scoreDisplayTitle } from "@/core/enrich/titles/displayScore";
+import {
+  isCorpusGenericToken,
+  type CorpusTokenStats,
+} from "@/core/enrich/titles/tokenCorpusIdf";
 
 import { GENERIC_TITLE_TOKENS } from "./parse";
 import type {
@@ -11,6 +15,8 @@ import type {
   ProductEvidence,
   ResolvedMatch,
 } from "./types";
+
+export type { CorpusTokenStats };
 
 type MatchLike = {
   name: string;
@@ -20,22 +26,34 @@ type MatchLike = {
   evidence?: MatchEvidenceSummary;
 };
 
-function titleSpecificityTokens(value: string): Set<string> {
+/**
+ * Distinctive title tokens for subset / specificity checks.
+ * When `corpusStats` is provided, also drops corpus-generic tokens (IDF floor).
+ * Without stats, behavior matches the historical GENERIC_TITLE_TOKENS-only path.
+ */
+export function titleSpecificityTokens(
+  value: string,
+  corpusStats?: CorpusTokenStats | null,
+): Set<string> {
   const tokens = normalizeForTokens(value)
     .split(/[^a-z0-9]+/)
-    .filter(
-      (token) =>
-        token.length > 1 &&
-        !GENERIC_TITLE_TOKENS.has(token) &&
-        token !== "video",
-    );
+    .filter((token) => {
+      if (token.length <= 1) return false;
+      if (GENERIC_TITLE_TOKENS.has(token) || token === "video") return false;
+      if (corpusStats && isCorpusGenericToken(token, corpusStats)) return false;
+      return true;
+    });
 
   return new Set(tokens);
 }
 
-export function isStrictTitleSubset(candidate: string, other: string): boolean {
-  const candidateTokens = titleSpecificityTokens(candidate);
-  const otherTokens = titleSpecificityTokens(other);
+export function isStrictTitleSubset(
+  candidate: string,
+  other: string,
+  corpusStats?: CorpusTokenStats | null,
+): boolean {
+  const candidateTokens = titleSpecificityTokens(candidate, corpusStats);
+  const otherTokens = titleSpecificityTokens(other, corpusStats);
   if (candidateTokens.size < 2 || otherTokens.size <= candidateTokens.size) {
     return false;
   }

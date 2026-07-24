@@ -16,7 +16,7 @@ import {
   VIDEO_GAME_PLATFORM_TOKEN_TERMS,
 } from "@/core/identify/platforms/platforms";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
-import { IDENTITY_FUNCTION_WORDS, GENERIC_TITLE_TOKENS } from "@/core/enrich/titles/identityNoise";
+import { GENERIC_TITLE_TOKENS } from "@/core/enrich/titles/identityNoise";
 import {
   GAME_EDITION_TERMS,
   LISTING_EDITION_PACKAGING_EXTRA_TERMS,
@@ -422,11 +422,9 @@ const BROAD_SCREENSCRAPER_FALLBACK_WORDS = new Set([
  */
 const NON_DISTINCTIVE_SCREENSCRAPER_TOKENS = new Set([
   ...GENERIC_TITLE_TOKENS,
-  ...IDENTITY_FUNCTION_WORDS,
   ...LISTING_NOISE_TERMS,
   ...LISTING_EDITION_PACKAGING_EXTRA_TERMS,
   ...GAME_EDITION_TERMS.filter((term) => !/\s/.test(term)),
-  "avec",
   "sans",
   "bundle",
   "pack",

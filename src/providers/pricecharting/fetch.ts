@@ -23,6 +23,7 @@ import {
   expandHardwareFinishFrontTitles,
   hardwareFinishEnSlugToken,
   hardwareRequestImpliesCatalogSlimChrome,
+  IDENTITY_FUNCTION_WORDS,
 } from "@/core/enrich/titles/identityNoise";
 import { titleSeasonYearsConflict } from "@/core/enrich/titles/intentYear";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
@@ -98,22 +99,6 @@ async function priceChartingGet(
   }
   throw new Error(`PriceCharting GET failed for ${url}`);
 }
-
-const TITLE_STOP_WORDS = new Set([
-  "a",
-  "an",
-  "and",
-  "de",
-  "des",
-  "du",
-  "la",
-  "le",
-  "les",
-  "of",
-  "the",
-  "un",
-  "une",
-]);
 
 /** Prefer a verified `/game/…` URL from HTML (canonical) or the final request URL. */
 export function resolvePriceChartingGamePageUrl(
@@ -606,7 +591,7 @@ function titleTokens(value: string): string[] {
     .filter(
       (token) =>
         token &&
-        !TITLE_STOP_WORDS.has(token) &&
+        !IDENTITY_FUNCTION_WORDS.has(token) &&
         // Keep sequel numbers ("2") but drop stray single letters ("d").
         (token.length > 1 || /^\d+$/.test(token)),
     );

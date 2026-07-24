@@ -6,7 +6,11 @@ import {
   metadataTitleSimilarity,
   hasUnrequestedVariantMarker,
 } from "@/core/enrich/titleMatching";
-import { IDENTITY_FUNCTION_WORDS } from "@/core/enrich/titles/identityNoise";
+import {
+  IDENTITY_EDITION_PACKAGING_TOKENS,
+  IDENTITY_FUNCTION_WORDS,
+  IDENTITY_PLATFORM_NOISE_TOKENS,
+} from "@/core/enrich/titles/identityNoise";
 import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 import {
   normalizeVolumeNumber,
@@ -29,44 +33,6 @@ import {
 export const NAME_ONLY_RETAILER_TITLE_MIN_SIMILARITY =
   METADATA_TITLE_ALIGN_FLOOR;
 
-const GENERIC_RETAILER_TOKENS = new Set([
-  "deluxe",
-  "edition",
-  "collector",
-  "limited",
-  "ultimate",
-  "definitive",
-  "complete",
-  "premium",
-  "gold",
-  "platinum",
-  "anniversary",
-  "remastered",
-  "remaster",
-  "ps4",
-  "ps5",
-  "xbox",
-  "switch",
-  "nintendo",
-  "playstation",
-  "series",
-  "sur",
-  "for",
-  "pc",
-]);
-
-/** Platform / console tokens that ARE product identity on hardware shelves. */
-const HARDWARE_PLATFORM_IDENTITY_TOKENS = new Set([
-  "ps4",
-  "ps5",
-  "xbox",
-  "switch",
-  "nintendo",
-  "playstation",
-  "series",
-  "pc",
-]);
-
 export type PriceListingIdentityOptions = {
   shelfType?: string | null;
 };
@@ -75,6 +41,18 @@ function distinctiveTokens(value: string): string[] {
   return normalizeDisplayTitle(value).filter(
     (token) => token.length >= 3 && !IDENTITY_FUNCTION_WORDS.has(token),
   );
+}
+
+/** Edition / platform chrome — platforms stay identity on hardware shelves. */
+function isRetailerListingChromeToken(
+  token: string,
+  shelfType?: string | null,
+): boolean {
+  if (IDENTITY_EDITION_PACKAGING_TOKENS.has(token)) return true;
+  if (IDENTITY_PLATFORM_NOISE_TOKENS.has(token)) {
+    return shelfType !== "hardware";
+  }
+  return false;
 }
 
 /** Prefix length allowing hyphen compounds ("spider"+"man" ↔ "spiderman"). */
@@ -121,13 +99,9 @@ function distinctiveProductTokens(
   value: string,
   shelfType?: string | null,
 ): string[] {
-  return distinctiveTokens(value).filter((token) => {
-    if (!GENERIC_RETAILER_TOKENS.has(token)) return true;
-    // Hardware: console/platform tokens are the product, not disposable chrome.
-    return (
-      shelfType === "hardware" && HARDWARE_PLATFORM_IDENTITY_TOKENS.has(token)
-    );
-  });
+  return distinctiveTokens(value).filter(
+    (token) => !isRetailerListingChromeToken(token, shelfType),
+  );
 }
 
 const MARKETPLACE_LEADING_PRICE_TOKENS = new Set([

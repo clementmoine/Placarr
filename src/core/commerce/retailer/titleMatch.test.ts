@@ -237,6 +237,28 @@ describe("priceListingSharesItemIdentity", () => {
       ),
     ).toBe(false);
   });
+  it("treats gold/platinum edition chrome as non-identity on software shelves", () => {
+    expect(
+      priceListingSharesItemIdentity(
+        "The Last of Us Part II",
+        "The Last of Us Part II Gold Edition PS4",
+      ),
+    ).toBe(true);
+    expect(
+      priceListingSharesItemIdentity(
+        "Final Fantasy VII Remake",
+        "Final Fantasy VII Remake Platinum Edition",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps platform tokens as hardware identity", () => {
+    expect(
+      priceListingSharesItemIdentity("Xbox Series X", "Xbox Series X Console", {
+        shelfType: "hardware",
+      }),
+    ).toBe(true);
+  });
 });
 
 describe("retailerCatalogSharesRequestedIdentity", () => {

@@ -3,12 +3,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fetchOkkazeoGame = vi.fn();
 const searchOkkazeo = vi.fn();
 const fetchOkkazeoBarcodeProduct = vi.fn();
+const readRetailPriceEvidence = vi.fn();
+const promoteRetailPriceEvidence = vi.fn();
 
 vi.mock("./fetch", () => ({
   fetchOkkazeoBarcodeProduct: (...args: unknown[]) =>
     fetchOkkazeoBarcodeProduct(...args),
   fetchOkkazeoGame: (...args: unknown[]) => fetchOkkazeoGame(...args),
   searchOkkazeo: (...args: unknown[]) => searchOkkazeo(...args),
+}));
+
+vi.mock("@/core/enrich/retailPriceEvidence", () => ({
+  readRetailPriceEvidence: (...args: unknown[]) =>
+    readRetailPriceEvidence(...args),
+  promoteRetailPriceEvidence: (...args: unknown[]) =>
+    promoteRetailPriceEvidence(...args),
 }));
 
 import { PROVIDER_MODULES } from "@/core/catalog/catalog";
@@ -36,6 +45,8 @@ function refreshCtx(
 describe("okkazeo refreshBarcodePriceOffers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    readRetailPriceEvidence.mockResolvedValue(null);
+    promoteRetailPriceEvidence.mockResolvedValue(undefined);
   });
 
   it("uses stored product URL before barcode search", async () => {

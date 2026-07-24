@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fetchShopifyBarcodeProduct = vi.fn();
 const fetchShopifyProductByUrl = vi.fn();
 const searchShopifyProduct = vi.fn();
+const readRetailPriceEvidence = vi.fn();
+const promoteRetailPriceEvidence = vi.fn();
 
 vi.mock("@/providers/shopify/fetch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/providers/shopify/fetch")>();
@@ -15,6 +17,13 @@ vi.mock("@/providers/shopify/fetch", async (importOriginal) => {
     searchShopifyProduct: (...args: unknown[]) => searchShopifyProduct(...args),
   };
 });
+
+vi.mock("@/core/enrich/retailPriceEvidence", () => ({
+  readRetailPriceEvidence: (...args: unknown[]) =>
+    readRetailPriceEvidence(...args),
+  promoteRetailPriceEvidence: (...args: unknown[]) =>
+    promoteRetailPriceEvidence(...args),
+}));
 
 import { PROVIDER_MODULES } from "@/core/catalog/catalog";
 import {
@@ -47,6 +56,12 @@ function refreshCtx(
 }
 
 describe("scrape catalog factory — scan DetailYield", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    readRetailPriceEvidence.mockResolvedValue(null);
+    promoteRetailPriceEvidence.mockResolvedValue(undefined);
+  });
+
   it("extracts Shopify scan offers with sourceUrl from retailer hits", () => {
     const payload: BarcodeLookupPayload = {
       ...createEmptyBarcodeLookupPayload(),
@@ -69,6 +84,7 @@ describe("scrape catalog factory — scan DetailYield", () => {
     expect(offers).toHaveLength(1);
     expect(offers[0]?.sourceUrl).toContain("/products/mille-sabords");
     expect(offers[0]?.priceCents).toBe(2490);
+    expect(promoteRetailPriceEvidence).toHaveBeenCalled();
   });
 
   it("extracts PrestaShop scan offers with sourceUrl from retailer hits", () => {
@@ -95,9 +111,36 @@ describe("scrape catalog factory — scan DetailYield", () => {
   });
 });
 
-describe("scrape catalog factory — Shopify URL-first refresh", () => {
+describe("scrape catalog factory — Shopify gap-fill refresh", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    readRetailPriceEvidence.mockResolvedValue(null);
+    promoteRetailPriceEvidence.mockResolvedValue(undefined);
+  });
+
+  it("reuses fresh ProviderEvidence without HTTP", async () => {
+    readRetailPriceEvidence.mockResolvedValueOnce({
+      priceCents: 2490,
+      condition: "new",
+      productName: "Mille Sabords",
+      sourceUrl: "https://latelierdesjeux.fr/products/mille-sabords",
+    });
+
+    const offers = await latelierdesjeuxModule.refreshBarcodePriceOffers!(
+      refreshCtx({
+        providerProductUrls: [
+          {
+            providerKey: "latelierdesjeux",
+            url: "https://latelierdesjeux.fr/products/mille-sabords",
+          },
+        ],
+      }),
+    );
+
+    expect(fetchShopifyProductByUrl).not.toHaveBeenCalled();
+    expect(fetchShopifyBarcodeProduct).not.toHaveBeenCalled();
+    expect(offers).toHaveLength(1);
+    expect(offers[0]?.priceCents).toBe(2490);
   });
 
   it("uses a pinned product URL before barcode search", async () => {
@@ -122,5 +165,6 @@ describe("scrape catalog factory — Shopify URL-first refresh", () => {
     expect(fetchShopifyBarcodeProduct).not.toHaveBeenCalled();
     expect(offers).toHaveLength(1);
     expect(offers[0]?.sourceUrl).toContain("latelierdesjeux.fr");
+    expect(promoteRetailPriceEvidence).toHaveBeenCalled();
   });
 });

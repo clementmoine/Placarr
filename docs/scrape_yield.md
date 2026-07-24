@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2e shipped (incl. Presta/Shopify factory DetailYield); gap-fill / eBay = next.
+> Phase 1–2f shipped (price gap-fill via retail ProviderEvidence); metadata seed gap-fill / eBay = next.
 
 ## Principle
 
@@ -63,11 +63,17 @@ Boardgame retailers no longer slim-and-forget after paying for a fiche GET:
 - `RetailerBarcodeHit.providerId` for scan offer routing
 - Shopify: `fetchShopifyProductByUrl` for URL-first refresh; PrestaShop: barcode refresh with `sourceUrl`
 
+## Phase 2f — Price refresh gap-fill (done 2026-07-24)
+
+- `retailPriceEvidence` — single-condition DetailYield promote/reuse (shared by factory + Philibert/Okkazeo/Esprit/Play-In)
+- Scan promotes evidence; pinned refresh **reuses** fresh rows (zero HTTP) before Flare/product GET
+- PriceCharting already had the multi-condition path; retailers now match that contract
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Create/refresh = gap-fill | Don’t force full fan-out when evidence fresh |
+| Metadata create/refresh seed gap-fill | Don’t blank-slate Tier 0+1 when fiche already complete |
 | eBay: batch search → aggregate | One Browse search ≫ N item details |
 | Local full-set / dump sync | Closed platforms at home latency |
 | Flare retailers: 1 search → N candidates | Same philosophy as PC |

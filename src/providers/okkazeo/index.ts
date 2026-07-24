@@ -14,6 +14,10 @@ import {
 } from "@/core/identify/normalize";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
+import {
+  promoteRetailPriceEvidence,
+  readRetailPriceEvidence,
+} from "@/core/enrich/retailPriceEvidence";
 import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,
@@ -36,6 +40,36 @@ const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
 const OKKAZEO_PROVIDER_KEY = "okkazeo";
 const PRICE_SOURCE = "Okkazeo";
 
+async function okkazeoOffersFromPrice(input: {
+  title?: string | null;
+  priceCents: number;
+  productUrl?: string | null;
+  rawValue: unknown;
+  promote?: boolean;
+}) {
+  const offers = pricedOffers(PRICE_SOURCE, [
+    {
+      condition: "used",
+      priceCents: input.priceCents,
+      rawValue: input.rawValue,
+      extra: {
+        productName: input.title ?? undefined,
+        sourceUrl: input.productUrl ?? undefined,
+        totalCents: input.priceCents,
+      },
+    },
+  ]);
+  if (input.promote && input.productUrl) {
+    await promoteRetailPriceEvidence(OKKAZEO_PROVIDER_KEY, {
+      priceCents: input.priceCents,
+      condition: "used",
+      productName: input.title ?? undefined,
+      sourceUrl: input.productUrl,
+    });
+  }
+  return offers;
+}
+
 async function refreshOkkazeoOffers(
   ctx: BarcodePriceRefreshContext,
 ): Promise<ReturnType<typeof pricedOffers>> {
@@ -49,20 +83,28 @@ async function refreshOkkazeoOffers(
   );
 
   for (const productUrl of resolvedProductUrls) {
+    const cached = await readRetailPriceEvidence(
+      OKKAZEO_PROVIDER_KEY,
+      productUrl,
+    );
+    if (cached) {
+      return okkazeoOffersFromPrice({
+        title: cached.productName,
+        priceCents: cached.priceCents,
+        productUrl: cached.sourceUrl || productUrl,
+        rawValue: cached,
+      });
+    }
+
     const game = await fetchOkkazeoGame(productUrl);
     if (game.priceCents != null && game.priceCents > 0) {
-      return pricedOffers(PRICE_SOURCE, [
-        {
-          condition: "used",
-          priceCents: game.priceCents,
-          rawValue: game,
-          extra: {
-            productName: game.title,
-            sourceUrl: game.productUrl,
-            totalCents: game.priceCents,
-          },
-        },
-      ]);
+      return okkazeoOffersFromPrice({
+        title: game.title,
+        priceCents: game.priceCents,
+        productUrl: game.productUrl,
+        rawValue: game,
+        promote: true,
+      });
     }
   }
 
@@ -80,18 +122,13 @@ async function refreshOkkazeoOffers(
         return [];
       }
       if (game.priceCents != null && game.priceCents > 0) {
-        return pricedOffers(PRICE_SOURCE, [
-          {
-            condition: "used",
-            priceCents: game.priceCents,
-            rawValue: game,
-            extra: {
-              productName: game.title,
-              sourceUrl: game.productUrl,
-              totalCents: game.priceCents,
-            },
-          },
-        ]);
+        return okkazeoOffersFromPrice({
+          title: game.title,
+          priceCents: game.priceCents,
+          productUrl: game.productUrl,
+          rawValue: game,
+          promote: true,
+        });
       }
     }
   }
@@ -225,6 +262,14 @@ export const okkazeoModule: ProviderModule = {
   extractScanPriceOffers(payload) {
     if (!payload.okkazeo?.priceCents) return [];
     const hit = payload.okkazeo;
+    if (hit.productUrl) {
+      void promoteRetailPriceEvidence(OKKAZEO_PROVIDER_KEY, {
+        priceCents: hit.priceCents,
+        condition: "used",
+        productName: hit.title,
+        sourceUrl: hit.productUrl,
+      });
+    }
     return pricedOffers(PRICE_SOURCE, [
       {
         condition: "used",

@@ -9,6 +9,10 @@ import { pricedOffers } from "@/core/catalog/priceOffers";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
+import {
+  promoteRetailPriceEvidence,
+  readRetailPriceEvidence,
+} from "@/core/enrich/retailPriceEvidence";
 
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
@@ -127,6 +131,29 @@ function offersFromPricedProduct(
   ]);
 }
 
+async function offersFromPricedProductAndPromote(
+  providerId: string,
+  label: string,
+  product: {
+    title?: string | null;
+    priceCents?: number | null;
+    productUrl?: string | null;
+  },
+  rawValue: unknown,
+) {
+  const offers = offersFromPricedProduct(label, product, rawValue);
+  const sourceUrl = product.productUrl?.trim();
+  if (offers.length > 0 && sourceUrl && product.priceCents) {
+    await promoteRetailPriceEvidence(providerId, {
+      priceCents: product.priceCents,
+      condition: "new",
+      productName: product.title ?? undefined,
+      sourceUrl,
+    });
+  }
+  return offers;
+}
+
 export function createScrapeCatalogModule<
   T extends ScrapeCatalogRetailerConfig,
 >(deps: ScrapeCatalogModuleFactoryDeps<T>) {
@@ -161,6 +188,21 @@ export function createScrapeCatalogModule<
           !retailerProductUrlBarcodeConflicts(url, ctx.cleanedBarcode),
       );
 
+      for (const productUrl of pinnedUrls) {
+        const cached = await readRetailPriceEvidence(config.id, productUrl);
+        if (cached) {
+          return offersFromPricedProduct(
+            config.label,
+            {
+              title: cached.productName,
+              priceCents: cached.priceCents,
+              productUrl: cached.sourceUrl || productUrl,
+            },
+            cached,
+          );
+        }
+      }
+
       if (deps.fetchProductByUrl) {
         for (const productUrl of pinnedUrls) {
           const product = await deps.fetchProductByUrl(
@@ -168,7 +210,8 @@ export function createScrapeCatalogModule<
             productUrl,
             ctx.cleanedBarcode,
           );
-          const offers = offersFromPricedProduct(
+          const offers = await offersFromPricedProductAndPromote(
+            config.id,
             config.label,
             {
               title: product?.title,
@@ -183,7 +226,12 @@ export function createScrapeCatalogModule<
 
       if (ctx.cleanedBarcode) {
         const hit = await deps.fetchBarcodeProduct(config, ctx.cleanedBarcode);
-        return offersFromPricedProduct(config.label, hit ?? {}, hit);
+        return offersFromPricedProductAndPromote(
+          config.id,
+          config.label,
+          hit ?? {},
+          hit,
+        );
       }
 
       return [];
@@ -347,7 +395,16 @@ export function createScrapeCatalogModule<
         const hit = payload.retailers.find(
           (retailer) => retailer.providerId === config.id,
         );
-        return offersFromPricedProduct(config.label, hit ?? {}, hit);
+        const offers = offersFromPricedProduct(config.label, hit ?? {}, hit);
+        if (offers.length > 0 && hit?.productUrl && hit.priceCents) {
+          void promoteRetailPriceEvidence(config.id, {
+            priceCents: hit.priceCents,
+            condition: "new",
+            productName: hit.title,
+            sourceUrl: hit.productUrl,
+          });
+        }
+        return offers;
       },
       refreshBarcodePriceOffers: refreshCatalogOffers,
     };

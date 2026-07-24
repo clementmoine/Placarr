@@ -9,6 +9,10 @@ import { pricedOffers } from "@/core/catalog/priceOffers";
 import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
+import {
+  promoteRetailPriceEvidence,
+  readRetailPriceEvidence,
+} from "@/core/enrich/retailPriceEvidence";
 import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,
@@ -29,6 +33,36 @@ const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
 const ESPRITJEU_PROVIDER_KEY = "espritjeu";
 const PRICE_SOURCE = "Esprit Jeu";
 
+async function espritOffersFromPrice(input: {
+  title?: string | null;
+  priceCents: number;
+  productUrl?: string | null;
+  rawValue: unknown;
+  promote?: boolean;
+}) {
+  const offers = pricedOffers(PRICE_SOURCE, [
+    {
+      condition: "new",
+      priceCents: input.priceCents,
+      rawValue: input.rawValue,
+      extra: {
+        productName: input.title ?? undefined,
+        sourceUrl: input.productUrl ?? undefined,
+        totalCents: input.priceCents,
+      },
+    },
+  ]);
+  if (input.promote && input.productUrl) {
+    await promoteRetailPriceEvidence(ESPRITJEU_PROVIDER_KEY, {
+      priceCents: input.priceCents,
+      condition: "new",
+      productName: input.title ?? undefined,
+      sourceUrl: input.productUrl,
+    });
+  }
+  return offers;
+}
+
 async function refreshEspritJeuOffers(
   ctx: BarcodePriceRefreshContext,
 ): Promise<ReturnType<typeof pricedOffers>> {
@@ -42,38 +76,41 @@ async function refreshEspritJeuOffers(
   );
 
   for (const productUrl of resolvedProductUrls) {
+    const cached = await readRetailPriceEvidence(
+      ESPRITJEU_PROVIDER_KEY,
+      productUrl,
+    );
+    if (cached) {
+      return espritOffersFromPrice({
+        title: cached.productName,
+        priceCents: cached.priceCents,
+        productUrl: cached.sourceUrl || productUrl,
+        rawValue: cached,
+      });
+    }
+
     const product = await fetchEspritJeuProduct(productUrl);
     if (product.priceCents != null && product.priceCents > 0) {
-      return pricedOffers(PRICE_SOURCE, [
-        {
-          condition: "new",
-          priceCents: product.priceCents,
-          rawValue: product,
-          extra: {
-            productName: product.title,
-            sourceUrl: product.productUrl,
-            totalCents: product.priceCents,
-          },
-        },
-      ]);
+      return espritOffersFromPrice({
+        title: product.title,
+        priceCents: product.priceCents,
+        productUrl: product.productUrl,
+        rawValue: product,
+        promote: true,
+      });
     }
   }
 
   if (ctx.cleanedBarcode) {
     const hit = await fetchEspritJeuBarcodeProduct(ctx.cleanedBarcode);
     if (hit?.priceCents != null && hit.priceCents > 0) {
-      return pricedOffers(PRICE_SOURCE, [
-        {
-          condition: "new",
-          priceCents: hit.priceCents,
-          rawValue: hit,
-          extra: {
-            productName: hit.title,
-            sourceUrl: hit.productUrl ?? undefined,
-            totalCents: hit.priceCents,
-          },
-        },
-      ]);
+      return espritOffersFromPrice({
+        title: hit.title,
+        priceCents: hit.priceCents,
+        productUrl: hit.productUrl,
+        rawValue: hit,
+        promote: true,
+      });
     }
   }
 
@@ -209,6 +246,14 @@ export const espritjeuModule: ProviderModule = {
   extractScanPriceOffers(payload) {
     if (!payload.espritjeu?.priceCents) return [];
     const hit = payload.espritjeu;
+    if (hit.productUrl) {
+      void promoteRetailPriceEvidence(ESPRITJEU_PROVIDER_KEY, {
+        priceCents: hit.priceCents,
+        condition: "new",
+        productName: hit.title,
+        sourceUrl: hit.productUrl,
+      });
+    }
     return pricedOffers(PRICE_SOURCE, [
       {
         condition: "new",

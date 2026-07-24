@@ -47,6 +47,8 @@ const EVIDENCE_SEARCH_IDENTITY_PARAMS = [
   "keywords",
   "query",
   "catalog",
+  "search_query",
+  "s",
 ] as const;
 
 function shouldDropSearchParam(key: string): boolean {

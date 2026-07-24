@@ -1,4 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({ default: { get: vi.fn(), head: vi.fn() } }));
+
+const readPhilibertSearchEvidence = vi.fn();
+const promotePhilibertSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readPhilibertSearchEvidence: (...args: unknown[]) =>
+    readPhilibertSearchEvidence(...args),
+  promotePhilibertSearchEvidence: (...args: unknown[]) =>
+    promotePhilibertSearchEvidence(...args),
+}));
+
+import axios from "axios";
 
 import {
   parsePhilibertFeatureRows,
@@ -8,7 +22,18 @@ import {
   parsePhilibertReviewsHtml,
   parsePhilibertTopFeatures,
   philibertImageId,
+  searchPhilibertHits,
 } from "./fetch";
+
+const mockedGet = vi.mocked(axios.get);
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  readPhilibertSearchEvidence.mockReset();
+  promotePhilibertSearchEvidence.mockReset();
+  readPhilibertSearchEvidence.mockResolvedValue(null);
+  promotePhilibertSearchEvidence.mockResolvedValue(undefined);
+});
 
 describe("parsePhilibertTopFeatures", () => {
   it("extrait joueurs, durée, âge et langue", () => {
@@ -135,5 +160,55 @@ describe("parsePhilibertGalleryImages", () => {
 
   it("renvoie une liste vide quand l'url de la fiche n'a pas de slug exploitable", () => {
     expect(parsePhilibertGalleryImages("<img src=''>", "")).toEqual([]);
+  });
+});
+
+describe("searchPhilibertHits", () => {
+  const PRODUCT_PATH =
+    "/fr/kosmos/123-catan-3558380126133.html";
+  const PRODUCT_URL = `https://www.philibertnet.com${PRODUCT_PATH}`;
+  const SEARCH_HTML = `<a href="${PRODUCT_PATH}">Catan</a>`;
+
+  it("réutilise ProviderEvidence SearchYield sans HTTP", async () => {
+    readPhilibertSearchEvidence.mockResolvedValueOnce([
+      {
+        url: PRODUCT_URL,
+        title: "Catan",
+        barcode: "3558380126133",
+      },
+    ]);
+
+    await expect(searchPhilibertHits("Catan")).resolves.toEqual([
+      {
+        url: PRODUCT_URL,
+        title: "Catan",
+        barcode: "3558380126133",
+      },
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promotePhilibertSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("promotes SearchYield after a live search GET", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 200,
+      data: SEARCH_HTML,
+    } as never);
+
+    await expect(searchPhilibertHits("Catan")).resolves.toEqual([
+      expect.objectContaining({
+        url: PRODUCT_URL,
+        barcode: "3558380126133",
+      }),
+    ]);
+    expect(promotePhilibertSearchEvidence).toHaveBeenCalledWith(
+      "https://www.philibertnet.com/fr/recherche?search_query=Catan",
+      [
+        expect.objectContaining({
+          url: PRODUCT_URL,
+          barcode: "3558380126133",
+        }),
+      ],
+    );
   });
 });

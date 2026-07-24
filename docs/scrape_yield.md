@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2w shipped (Esprit Jeu + Play-In SearchYield durable); Philibert / No-Intro = later.
+> Phase 1–2x shipped (Philibert SearchYield + search_query/s keys); Presta factory / No-Intro = later.
 
 ## Principle
 
@@ -189,10 +189,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Play-In: catalogue `?search=` → typed `{url,productId?}` promote/reuse
 - Detail GETs still verify barcode on winners
 
+## Phase 2x — Philibert SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `search_query` + `s` (Presta-ready)
+- Philibert: `/fr/recherche?search_query=` → typed `{url,title?,barcode?}` promote/reuse
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
-| Philibert SearchYield (`search_query` identity) | Needs core identity param first |
+| PrestaShop factory SearchYield durable | Same keys (`search_query` / `s`) now exist |
 | No-Intro / Redump / closed-platform dumps | True full-set corpora beyond ICE+LB |
 | LaunchBox local FTS perf measure | P4 backlog |

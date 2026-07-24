@@ -9,6 +9,10 @@ import {
   normalizeProductBarcode,
 } from "@/core/identify/normalize";
 import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
+import {
+  promotePhilibertSearchEvidence,
+  readPhilibertSearchEvidence,
+} from "./durableEvidence";
 
 const BASE_URL = "https://www.philibertnet.com";
 
@@ -471,19 +475,23 @@ export async function searchPhilibertHits(
   const searchTerm = cleanedBarcode || cleanedQuery;
   if (!searchTerm) return [];
 
+  const searchUrl = `${BASE_URL}/fr/recherche?search_query=${encodeURIComponent(searchTerm)}`;
+  const fromEvidence = await readPhilibertSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Philibert] Search evidence hit for ${searchUrl}`);
+    return fromEvidence.slice(0, hitLimit);
+  }
+
   try {
-    const response = await fetchGetWithFlareFallback(
-      `${BASE_URL}/fr/recherche`,
-      {
-        params: { search_query: searchTerm },
-        headers: HEADERS,
-        timeout: 10000,
-      },
-    );
+    const response = await fetchGetWithFlareFallback(searchUrl, {
+      headers: HEADERS,
+      timeout: 10000,
+    });
     const hits = parseProductLinks(
       String(response.data ?? ""),
       cleanedBarcode || undefined,
     );
+    await promotePhilibertSearchEvidence(searchUrl, hits);
     return hits.slice(0, hitLimit);
   } catch (error) {
     console.error("[Philibert] Search failed:", error);

@@ -75,6 +75,21 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps Presta/Philibert search_query and s identity", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.philibertnet.com/fr/recherche?search_query=Catan&utm_source=x",
+      ),
+    ).toBe(
+      "https://www.philibertnet.com/fr/recherche?search_query=catan",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://shop.example/recherche?controller=search&s=Ticket+to+Ride&ajax=1",
+      ),
+    ).toBe("https://shop.example/recherche?s=ticket+to+ride");
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

@@ -11,7 +11,7 @@ Ce qui reste **vraiment** à faire. Le reste du fichier = journal / historique.
 | -------- | ---- | ------ |
 | **P0** | **SSOT identité / covers / liens (accept→purge)** | **Étapes 1–6 faites** ; étape 7 **partielle** (voir audit). Détail : [metadata_engine_audit.md](metadata_engine_audit.md). |
 | **P2** | Word-lists → consensus / IDF | Inventaire dans [word_list_audit.md](word_list_audit.md) — long terme. |
-| **P3** | Finir découpe god files | `storeMetadata` encore dense ; `metadataTitleAlign` / `residualIdentity` restent gros mais cohésifs. |
+| **P3** | Finir découpe god files | `storeMetadata` scindé (gallery/cover/item sync) ; restent `metadataTitleAlign` / `residualIdentity` (cohésifs). |
 | **P4** | Optionnel | Table GS1 audio (typage musique) ; mesure perf index LaunchBox local. |
 
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late.
@@ -252,7 +252,7 @@ Réorganisation **`src/core/`** en 5 piliers (`identify`, `enrich`, `collect`, `
 
 | Priorité | Item | État | Détail |
 | -------- | ---- | ---- | ------ |
-| ~~**P3**~~ | ~~Découper `enrich/storage.ts`~~ | **Reporté** | Faible ROI ; reprendre seulement après SSOT identité (voir § Ouverts) |
+| ~~**P3**~~ | ~~Découper `enrich/storage.ts`~~ | **Fait 2026-07-24** | Orchestrateur + leaves media (gallery / cover-hero / item sync) ; re-exports inchangés |
 | ~~**P3**~~ | ~~DRY titres identify ↔ enrich~~ | **Fait 2026-07-19 (partiel)** | `normalizeForTokens` → `enrich/titles/normalize.ts` ; matchers volontairement séparés. |
 | ~~**P4**~~ | ~~`platformSources.ts` → data file~~ | **Fait 2026-07-19** | Snapshots SS/LB → `platforms/data/*.json`. |
 | ~~**P2**~~ | ~~Imports core → `@/providers/icollect/*`~~ | **Fait 2026-07-19** | Traits stampés ; allowlist blindness vide. |
@@ -263,15 +263,11 @@ Réorganisation **`src/core/`** en 5 piliers (`identify`, `enrich`, `collect`, `
 
 Numérotation = celle de [audit_fonctionnement.md](audit_fonctionnement.md) (≠ P1–P6 ci-dessus). Vérif standard pour chaque : `pnpm test` vert + `pnpm build` vert + `pnpm exec eslint <fichiers>`.
 
-#### KISS-1 — Découper `storage.ts` _(partiel — coalesce 2026-07-05 → ~1300 L)_
+#### KISS-1 — Découper `storage.ts` _(fait 2026-07-24 — orchestrateur ~412 L)_
 
-- **État 2026-07-04** : **4 extractions faites** (comportement préservé, re-exports pour compat, `storeMetadata` reste l'orchestrateur) :
-  - `services/metadata/imageAssets.ts` — perceptual-hash dedupe + métriques image locales + détection placeholder plat (`387075c`).
-  - `services/metadata/imageUrls.ts` — helpers purs de résolution d'URL image originale (`c6385d9`).
-  - `services/metadata/dbMapping.ts` — mappers Prisma `MetadataResult` ↔ rows + `formatMetadataFor/FromStorage` (`060ff90`).
-  - `services/metadata/imageDownload.ts` — acquisition d'image distante (`downloadRemoteImage` + chaîne `canKeep…`/`remoteImageFallback…`/`providerMatches…` + `existingLocalizedUploadForUrl`) déplacée en bloc pour éviter l'import circulaire ; mocks `route.test.ts`/`cache.test.ts` intacts (`d909d6c`).
-- **Reste = rien d'évident.** `storeMetadata` est l'orchestrateur, à laisser dans `storage.ts`. Extractions suivantes = rendement quasi nul.
-- **Pièges (si on continue quand même)** : `coverProvenance` dérivée de l'URL **originale** avant localisation ; `heroImageUrl` réutilise le scorer display ; toujours re-exporter depuis `storage.ts` pour ne pas toucher les consommateurs (`app/api/items`, `index.ts`, `product-teardown`, tests) ; nettoyer les imports orphelins (eslint les liste).
+- Extractions historiques (2026-07-04) : `imageAssets` / `imageUrls` / `dbMapping` / `imageDownload`.
+- Extractions SSOT (2026-07-24) : `croppedCoverSync`, `attachmentLocalization`, `metadataCoverBootstrap`, puis stages `storeMetadata` → `prepareMetadataGallery` / `resolveMetadataCoverHero` / `syncItemAfterMetadataStore`.
+- `storage.ts` reste la façade publique (re-exports) + orchestration persist / evidence / deferred localize.
 
 #### KISS-2 — Alléger `fetch.ts` _(partiel — coalesce 2026-07-05 → ~2300 L dans `enrich/fetch.ts`)_
 

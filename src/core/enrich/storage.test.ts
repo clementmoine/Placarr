@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AttachmentType } from "@prisma/client";
+import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import {
   dedupeByPerceptualHash,
@@ -750,7 +751,10 @@ describe("selectAttachmentsForLocalization", () => {
       },
     ];
 
-    const selected = selectAttachmentsForLocalization(attachments, 5);
+    const selected = selectAttachmentsForLocalization(
+      attachments as MetadataAttachment[],
+      5,
+    );
     expect(selected).toHaveLength(5);
     expect(selected[0]?.url).toBe("https://cdn.example/box.png");
     expect(selected[1]?.url).toBe("https://cdn.example/hero.png");

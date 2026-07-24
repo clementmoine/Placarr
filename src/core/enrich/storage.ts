@@ -1,68 +1,20 @@
 import {
   Attachment,
-  AttachmentType,
   Author,
   Metadata,
   Publisher,
   Type,
 } from "@prisma/client";
-import path from "path";
-import {
-  deriveAttachmentPlatformKeyFromUrl,
-  shouldShowCoverAttachmentOnShelf,
-  shouldSuppressCoverOnPlatformShelf,
-  pickBestBackgroundFromAttachments,
-  pickBestCoverFromAttachments,
-  rankAttachmentsForDisplay,
-  reorderAttachmentsCoverFirst,
-  resolveStoredMetadataCoverUrl,
-  type AttachmentImageMetrics,
-} from "@/core/enrich/media/attachmentDisplayScore";
-import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
-import {
-  detectVideoGamePlatformKey,
-  isVideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
-import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPreservation";
-import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
-import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
-import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
-import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
-import {
-  urlsReferToSameLocalizedImage,
-  isUrlEligibleDefaultCover,
-  isCoverEligibleAttachmentType,
-} from "@/core/enrich/media/coverUrl";
-import {
-  readFileImageMetrics,
-  isCoverResolutionAcceptable,
-} from "@/core/enrich/media/imageMetrics";
-import {
-  isMissingArtImageUrl,
-  isPlaceholderCoverImage,
-} from "@/core/enrich/media/coverPlaceholder";
-import { cropImageIfNeeded } from "@/core/enrich/media/imageTrim";
-import {
-  withProviderAttachmentTraits,
-  authoritative3dCoverRoleSource,
-  coverProvenanceForSource,
-  gridStyleCoverLabelSource,
-} from "@/core/catalog/sourceTraits";
-import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
-import { regionRank } from "@/core/locale/preference";
-import { resolveCoverAttachmentRole } from "@/core/enrich/media/coverPerspective";
-import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { prisma } from "@/lib/db/prisma";
-import { metadataFieldEvidence } from "@/core/enrich/facts";
-import { runCpuBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
-import type {
-  MetadataAttachment,
-  MetadataResult,
-} from "@/types/metadataProvider";
 import type { Item } from "@prisma/client";
-import { replaceFieldEvidence, mergeFieldEvidenceForStorage } from "@/core/enrich/evidence";
-
+import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { prisma } from "@/lib/db/prisma";
+import { dedupeFacts, metadataFieldEvidence } from "@/core/enrich/facts";
+import { runCpuBackgroundWork } from "@/core/collect/jobs/backgroundWorkQueue";
+import type { MetadataResult } from "@/types/metadataProvider";
+import {
+  replaceFieldEvidence,
+  mergeFieldEvidenceForStorage,
+} from "@/core/enrich/evidence";
 import {
   formatMetadataForStorage,
   toAttachmentCreateData,
@@ -73,36 +25,18 @@ import {
   mergeMetadataFactsForStorage,
   parseMetadataFactsJson,
 } from "@/core/enrich/metadataFactsMerge";
-import { dedupeFacts } from "@/core/enrich/facts";
 import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
-import {
-  canUseBarcodeCacheCover,
-  getCachedMetadata,
-  injectOrphanUserCoverAttachment,
-  metadataImageAttachmentSemantics,
-} from "@/core/enrich/media/metadataCoverBootstrap";
+import { metadataImageAttachmentSemantics } from "@/core/enrich/media/metadataCoverBootstrap";
+import { cloneMetadataForImageLocalization } from "@/core/enrich/media/attachmentLocalization";
+import { prepareMetadataGalleryForStore } from "@/core/enrich/media/prepareMetadataGallery";
+import { resolveMetadataCoverAndHero } from "@/core/enrich/media/resolveMetadataCoverHero";
+import { syncItemFieldsAfterMetadataStore } from "@/core/enrich/media/syncItemAfterMetadataStore";
 
 export {
   canUseBarcodeCacheCover,
   getCachedMetadata,
   metadataImageAttachmentSemantics,
 } from "@/core/enrich/media/metadataCoverBootstrap";
-import {
-  dedupeLocalizedAttachmentsByContent,
-  filterOutFlatImageAttachments,
-  perceptualHashForAsset,
-  PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
-  readAttachmentImageMetrics,
-  retargetUserHonorPinsInAttachmentGallery,
-  shouldReadImageMetricsForAttachment,
-} from "@/core/enrich/media/imageAssets";
-import { pickVisuallyMatchingCatalogCoverUrl } from "@/core/enrich/media/croppedCoverSync";
-import {
-  cloneMetadataForImageLocalization,
-  prepareDeferredAttachments,
-  selectAttachmentsForLocalization,
-} from "@/core/enrich/media/attachmentLocalization";
-
 export {
   pickVisuallyMatchingCatalogCoverUrl,
   planCroppedCoverAttachmentSync,
@@ -113,10 +47,31 @@ export {
   MAX_ATTACHMENTS_TO_LOCALIZE,
   selectAttachmentsForLocalization,
 } from "@/core/enrich/media/attachmentLocalization";
-
 export { isMissingMusicGallery } from "@/core/enrich/galleries";
-
 export { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
+export {
+  canKeepRemoteImageOnDownloadFailure,
+  downloadRemoteImage,
+} from "@/core/enrich/media/imageDownload";
+export {
+  dedupeByPerceptualHash,
+  dedupeLocalizedAttachmentsByContent,
+  filterOutFlatImageAttachments,
+  hammingDistance,
+  keepSourcelessCoverOnlyWithoutCatalogTwin,
+  readAttachmentImageMetrics,
+  retargetUserHonorPinIfCatalogTwin,
+  retargetUserHonorPinsInAttachmentGallery,
+  shouldReadImageMetricsForAttachment,
+} from "@/core/enrich/media/imageAssets";
+export {
+  formatMetadataForStorage,
+  formatMetadataFromStorage,
+} from "@/core/enrich/dbMapping";
+export {
+  providerOriginalImageUrl,
+  retailerOriginalImageUrl,
+} from "@/core/enrich/imageUrls";
 
 export type StoreMetadataOptions = {
   /** Persist remote URLs immediately; localize images in a background job. */
@@ -210,7 +165,6 @@ export async function storeMetadata(
 
   const now = new Date();
 
-  // First, get the existing metadata if any
   const item = await prisma.item.findUnique({
     where: { id: itemId },
     include: {
@@ -226,320 +180,38 @@ export async function storeMetadata(
       ? detectShelfGamePlatformKey(item?.shelf?.name)
       : undefined;
 
-  const attachmentsList = stampAttachmentsMissingPlatformKey(
-    (metadata.attachments || []).map((attachment) =>
-      withProviderAttachmentTraits(attachment),
-    ),
-    metadata.platformKey ?? requestedPlatformKey,
-  );
-  if (metadata.imageUrl) {
-    const exists = attachmentsList.some(
-      (attachment) => attachment.url === metadata.imageUrl,
-    );
-    if (!exists) {
-      attachmentsList.unshift(
-        withProviderAttachmentTraits({
-          type: metadataImageSemantics?.type ?? "cover",
-          url: metadata.imageUrl,
-          role: metadataImageSemantics?.role,
-          source: metadataImageSemantics?.source ?? undefined,
-          title: metadataImageSemantics?.title,
-        }),
-      );
-    }
-  }
-  if (item?.barcode) {
-    const cleanedBarcode = item.barcode.replace(/[^\d]/g, "").trim();
-    if (cleanedBarcode) {
-      const cached = await prisma.barcodeCache.findUnique({
-        where: { barcode: cleanedBarcode },
-        include: { rawNames: true },
-      });
-      if (cached) {
-        const barcodeCover = cached.rawNames.find(
-          (rn) => rn.coverUrl,
-        )?.coverUrl;
-        const barcodeCoverSemantics = barcodeCover
-          ? metadataImageAttachmentSemantics(
-              { imageUrl: barcodeCover },
-              barcodeCover,
-            )
-          : null;
-        if (
-          barcodeCover &&
-          canUseBarcodeCacheCover(
-            cached,
-            type,
-            metadata,
-            name,
-            barcodeCoverSemantics,
-          )
-        ) {
-          const exists = attachmentsList.some((a) => a.url === barcodeCover);
-          if (!exists) {
-            attachmentsList.unshift(
-              withProviderAttachmentTraits({
-                type:
-                  barcodeCoverSemantics?.type ?? ("cover" as AttachmentType),
-                url: barcodeCover,
-                role: barcodeCoverSemantics?.role,
-                source: barcodeCoverSemantics?.source ?? "barcode",
-                title: barcodeCoverSemantics?.title,
-              }),
-            );
-          }
-        }
-      }
-    }
-  }
-
-  // Deduplicate attachments by URL
-  const uniqueAttachments = attachmentsList.filter(
-    (attachment, index, self) =>
-      index === self.findIndex((a) => a.url === attachment.url),
-  );
-
-  // Localize a ranked subset — full SteamGridDB/SS galleries (30+ assets) used
-  // to dominate metadata wall time. Non-selected remotes stay as https URLs.
-  const localizeUrls = new Set(
-    selectAttachmentsForLocalization(uniqueAttachments).map(
-      (attachment) => attachment.url,
-    ),
-  );
-
-  let attachmentsForRanking = deferImageLocalization
-    ? prepareDeferredAttachments(uniqueAttachments)
-    : (
-        await Promise.all(
-          uniqueAttachments.map(async (attachment) => {
-            const sourceUrl = attachment.url;
-            const shouldLocalize =
-              localizeUrls.has(sourceUrl) && /^https?:\/\//i.test(sourceUrl);
-
-            let nextUrl = sourceUrl;
-            if (shouldLocalize) {
-              const localizedUrl = await downloadRemoteImage(sourceUrl, {
-                source: attachment.source,
-                itemId,
-                metadataId: item?.metadata?.id,
-              });
-              // Keep the remote URL when localize fails (CloudFront / Flare
-              // blips) so marketplace covers still appear in the gallery.
-              if (localizedUrl) nextUrl = localizedUrl;
-            }
-
-            let role = attachment.role;
-            if (attachment.type === "cover") {
-              role =
-                resolveCoverAttachmentRole({
-                  type: attachment.type,
-                  url: sourceUrl,
-                  title: attachment.title,
-                  role: attachment.role,
-                  source: attachment.source,
-                  authoritative3dCoverRoleSource:
-                    authoritative3dCoverRoleSource(attachment.source),
-                  gridStyleCoverLabelsSource: gridStyleCoverLabelSource(
-                    attachment.source,
-                  ),
-                }) ?? role;
-            }
-
-            return {
-              ...attachment,
-              url: nextUrl,
-              role,
-              coverProvenance:
-                coverProvenanceForSource(attachment.source, sourceUrl) ??
-                attachment.coverProvenance,
-              // Derive from the *original* remote URL — the local /uploads path it
-              // is about to become no longer carries the platform signal.
-              platformKey:
-                deriveAttachmentPlatformKeyFromUrl(sourceUrl) ??
-                attachment.platformKey,
-            };
-          }),
-        )
-      ).filter((a): a is NonNullable<typeof a> => a !== null);
-
-  if (!deferImageLocalization) {
-    attachmentsForRanking = await filterOutFlatImageAttachments(
-      attachmentsForRanking,
-    );
-  }
-
-  if (
-    attachmentsForRanking.length === 0 &&
-    item?.metadata?.attachments?.length
-  ) {
-    attachmentsForRanking = item.metadata.attachments
-      .filter((attachment) => attachment.url.startsWith("/uploads/"))
-      .map((attachment) => ({
-        type: attachment.type,
-        url: attachment.url,
-        role: attachment.role ?? undefined,
-        source: attachment.source ?? undefined,
-        title: attachment.title ?? undefined,
-        coverProvenance: attachment.coverProvenance ?? undefined,
-        platformKey: attachment.platformKey ?? undefined,
-      }));
-  }
-
-  const previousLocalCoverRaw = item?.metadata?.imageUrl?.startsWith(
-    "/uploads/",
-  )
-    ? item.metadata.imageUrl
-    : item?.imageUrl?.startsWith("/uploads/")
-      ? item.imageUrl
-      : null;
-  const previousLocalCover =
-    previousLocalCoverRaw &&
-    isCoverResolutionAcceptable(
-      await readFileImageMetrics(
-        path.join(process.cwd(), "public", previousLocalCoverRaw),
-      ),
-    )
-      ? previousLocalCoverRaw
-      : null;
-
-  const imageMetricsByUrl = new Map<string, AttachmentImageMetrics | null>();
-  if (!deferImageLocalization) {
-    await Promise.all(
-      attachmentsForRanking
-        .filter((attachment) =>
-          shouldReadImageMetricsForAttachment(attachment.type),
-        )
-        .map(async (attachment) => {
-          imageMetricsByUrl.set(
-            attachment.url,
-            await readAttachmentImageMetrics(attachment.url),
-          );
-        }),
-    );
-  }
-
-  // Stamp the provider-declared cover traits onto each attachment so the display
-  // scorer (and the client, via the stored payload) ranks the box cover / full
-  // wrap signals without reading the registry.
-  const rankedLocalizedAttachments = await dedupeLocalizedAttachmentsByContent(
-    reorderAttachmentsCoverFirst(
-      rankAttachmentsForDisplay(
-        attachmentsForRanking.map(withProviderAttachmentTraits),
-        imageMetricsByUrl,
-        { requestedPlatformKey },
-      ),
-      imageMetricsByUrl,
-      { requestedPlatformKey },
-    ),
-  );
-  const storableAttachments = (
-    requestedPlatformKey
-      ? (() => {
-          const coverCandidates = rankedLocalizedAttachments.filter(
-            (attachment) =>
-              ["cover", "artwork", "image"].includes(attachment.type),
-          );
-          return rankedLocalizedAttachments.filter((attachment) => {
-            if (!["cover", "artwork", "image"].includes(attachment.type)) {
-              return true;
-            }
-            return shouldShowCoverAttachmentOnShelf(
-              attachment,
-              requestedPlatformKey,
-              coverCandidates,
-            );
-          });
-        })()
-      : rankedLocalizedAttachments
-  ).filter((attachment) =>
-    attachmentTitleAllowedForItem(
-      formattedMetadata.title || name,
-      attachment,
-      { mediaType: type },
-    ),
-  );
-
-  const withOrphanUserPins = preserveGalleryAttachmentsOnRegression(
-    item?.metadata?.attachments,
-    injectOrphanUserCoverAttachment(item, storableAttachments),
-    requestedPlatformKey,
-  );
-  const finalStorableAttachments =
-    await retargetUserHonorPinsInAttachmentGallery(withOrphanUserPins);
-
-  const canonicalCoverCandidate = finalStorableAttachments.find(
-    (attachment) =>
-      attachment.isCanonicalCoverSource && attachment.type === "cover",
-  );
-  const canonicalCover =
-    canonicalCoverCandidate &&
-    (deferImageLocalization ||
-      isCoverResolutionAcceptable(
-        imageMetricsByUrl.get(canonicalCoverCandidate.url) ?? null,
-      ))
-      ? canonicalCoverCandidate
-      : undefined;
-  const metadataCoverFallback =
-    formattedMetadata.imageUrl &&
-    isUrlEligibleDefaultCover(formattedMetadata.imageUrl, finalStorableAttachments)
-      ? formattedMetadata.imageUrl
-      : null;
-  const scoredImageUrl =
-    canonicalCover?.url ??
-    pickBestCoverFromAttachments(finalStorableAttachments, imageMetricsByUrl, {
-      requestedPlatformKey,
-    }) ??
-    metadataCoverFallback ??
-    (previousLocalCover &&
-    requestedPlatformKey &&
-    shouldSuppressCoverOnPlatformShelf(
-      attachmentsForRanking.find(
-        (attachment) => attachment.url === previousLocalCover,
-      ) ?? { type: "cover", url: previousLocalCover },
-      finalStorableAttachments.filter((attachment) =>
-        ["cover", "artwork", "image"].includes(attachment.type),
-      ),
-      requestedPlatformKey,
-    )
-      ? null
-      : previousLocalCover) ??
-    null;
-
-  const selectedImageUrl = resolveStoredMetadataCoverUrl(
-    scoredImageUrl,
+  const {
+    attachmentsForRanking,
     finalStorableAttachments,
     imageMetricsByUrl,
-    { requestedPlatformKey },
-  );
+    previousLocalCover,
+  } = await prepareMetadataGalleryForStore({
+    metadata,
+    type,
+    name,
+    itemId,
+    item,
+    requestedPlatformKey,
+    deferImageLocalization,
+    metadataImageSemantics,
+    formattedTitle: formattedMetadata.title,
+  });
 
-  const croppedImageUrl = selectedImageUrl
-    ? await cropImageIfNeeded(selectedImageUrl, { minMarginPixels: 30 })
-    : null;
-
-  // Cropping writes a new "_crop" file, so the cover URL stored on the item /
-  // metadata would no longer match any gallery attachment. Repoint the source
-  // attachment at the cropped file so the cover keeps its provenance
-  // (source + region role) instead of surfacing as an orphan "Scan" image.
-  if (
-    croppedImageUrl &&
-    selectedImageUrl &&
-    croppedImageUrl !== selectedImageUrl
-  ) {
-    const coverAttachment = finalStorableAttachments.find(
-      (attachment) => attachment.url === selectedImageUrl,
-    );
-    if (coverAttachment) coverAttachment.url = croppedImageUrl;
-  }
+  const {
+    croppedImageUrl,
+    heroImageUrl,
+    finalStorableAttachments: storableAttachments,
+  } = await resolveMetadataCoverAndHero({
+    finalStorableAttachments,
+    attachmentsForRanking,
+    imageMetricsByUrl,
+    deferImageLocalization,
+    formattedImageUrl: formattedMetadata.imageUrl,
+    previousLocalCover,
+    requestedPlatformKey,
+  });
 
   metadata.imageUrl = croppedImageUrl || undefined;
-
-  // Computed wide hero/background: the sharpest landscape image we have (reuses
-  // the display scorer + the metrics already gathered above). Null when nothing
-  // high-resolution qualifies, so the UI falls back to the legacy heuristic.
-  const heroImageUrl = pickBestBackgroundFromAttachments(
-    finalStorableAttachments,
-    imageMetricsByUrl,
-  );
   metadata.heroImageUrl = heroImageUrl || undefined;
 
   const mergedFacts = item?.metadata
@@ -582,7 +254,6 @@ export async function storeMetadata(
       !current?.lastFetched ||
       current.lastFetched.getTime() !== options.expectLastFetched.getTime()
     ) {
-      // A newer store landed while we localized — keep it.
       return {
         ...item.metadata,
         attachments: item.metadata.attachments,
@@ -599,7 +270,7 @@ export async function storeMetadata(
         ...metadataData,
         attachments: {
           deleteMany: {},
-          create: finalStorableAttachments.map((attachment) =>
+          create: storableAttachments.map((attachment) =>
             toAttachmentCreateData(
               attachment,
               imageMetricsByUrl.get(attachment.url),
@@ -607,18 +278,17 @@ export async function storeMetadata(
           ),
         },
         authors: {
-          set: [], // Disconnect all existing authors
+          set: [],
           connectOrCreate: formattedMetadata.authors?.connectOrCreate || [],
         },
         publishers: {
-          set: [], // Disconnect all existing publishers
+          set: [],
           connectOrCreate: formattedMetadata.publishers?.connectOrCreate || [],
         },
       },
       include: { attachments: true, authors: true, publishers: true },
     });
   } else {
-    // Create new metadata and connect it to the item
     storedMetadata = await prisma.metadata.create({
       data: {
         ...metadataData,
@@ -626,7 +296,7 @@ export async function storeMetadata(
           connect: { id: itemId },
         },
         attachments: {
-          create: finalStorableAttachments.map((attachment) =>
+          create: storableAttachments.map((attachment) =>
             toAttachmentCreateData(
               attachment,
               imageMetricsByUrl.get(attachment.url),
@@ -678,140 +348,20 @@ export async function storeMetadata(
     evidence,
   );
 
-  if (item && croppedImageUrl) {
-    const previousMetadataImage = item.metadata?.imageUrl || null;
-    const itemCoverStillInGallery = finalStorableAttachments.some(
-      (attachment) => attachment.url === item.imageUrl,
-    );
-    const itemCoverMetrics = item.imageUrl?.startsWith("/uploads/")
-      ? (imageMetricsByUrl.get(item.imageUrl) ??
-        (await readFileImageMetrics(
-          path.join(process.cwd(), "public", item.imageUrl),
-        )))
-      : null;
-    const itemCoverIsLowRes =
-      Boolean(item.imageUrl) && !isCoverResolutionAcceptable(itemCoverMetrics);
-    const userCoverSavedAfterEnrichment =
-      item.updatedAt &&
-      item.metadata?.lastFetched &&
-      new Date(item.updatedAt).getTime() >
-        new Date(item.metadata.lastFetched).getTime();
-    const itemCoverIsUserAttachment = finalStorableAttachments.some(
-      (attachment) =>
-        attachment.source === "user" &&
-        item.imageUrl &&
-        urlsReferToSameLocalizedImage(attachment.url, item.imageUrl),
-    );
-    let visualCatalogMatchUrl: string | null = null;
-    if (
-      item.imageUrl?.startsWith("/uploads/") &&
-      !itemCoverStillInGallery &&
-      !itemCoverIsUserAttachment
-    ) {
-      const pinHash = await perceptualHashForAsset(item.imageUrl);
-      if (pinHash) {
-        const candidates = await Promise.all(
-          finalStorableAttachments.map(async (attachment) => ({
-            url: attachment.url,
-            type: attachment.type,
-            source: attachment.source,
-            hash: await perceptualHashForAsset(attachment.url),
-          })),
-        );
-        visualCatalogMatchUrl = pickVisuallyMatchingCatalogCoverUrl(
-          pinHash,
-          candidates,
-          PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
-        );
-      }
-    }
-    const shouldSyncItemCover =
-      !itemCoverIsUserAttachment &&
-      (!item.imageUrl ||
-        item.imageUrl === previousMetadataImage ||
-        item.imageUrl === croppedImageUrl ||
-        (itemCoverIsLowRes && !userCoverSavedAfterEnrichment) ||
-        Boolean(visualCatalogMatchUrl) ||
-        attachmentsForRanking.some(
-          (attachment) =>
-            attachment.source === "barcode" &&
-            attachment.url === item.imageUrl,
-        ) ||
-        (type === "musics" &&
-          !itemCoverStillInGallery &&
-          finalStorableAttachments.some(
-            (attachment) => attachment.isCanonicalCoverSource,
-          )));
-    if (shouldSyncItemCover) {
-      await prisma.item.update({
-        where: { id: itemId },
-        data: { imageUrl: visualCatalogMatchUrl ?? croppedImageUrl },
-      });
-    }
-  } else if (item && previousLocalCover && !item.imageUrl) {
-    await prisma.item.update({
-      where: { id: itemId },
-      data: { imageUrl: previousLocalCover },
-    });
-  }
-
-  // Fill item.barcode only when the collector left it empty and the discovered
-  // EAN is identity-safe (title-aligned + no platform conflict on games shelves).
-  // Never overwrite a user-entered barcode.
-  const discoveredBarcode = normalizeProductBarcode(metadata.barcode);
-  const itemName = name.trim() || item?.name?.trim() || "";
-  const metadataPlatformKey =
-    metadata.platformKey && isVideoGamePlatformKey(metadata.platformKey)
-      ? metadata.platformKey
-      : detectVideoGamePlatformKey(metadata.platformKey ?? "");
-  const discoveredBarcodePlatformConflicts = Boolean(
-    requestedPlatformKey &&
-      metadataPlatformKey &&
-      metadataPlatformKey !== requestedPlatformKey,
-  );
-  let effectiveBarcode = normalizeProductBarcode(item?.barcode);
-  if (
-    item &&
-    discoveredBarcode &&
-    !effectiveBarcode &&
-    !discoveredBarcodePlatformConflicts &&
-    itemName &&
-    metadata.title &&
-    isMetadataTitleAligned({ title: metadata.title }, [itemName], 0.58, {
-      shelfType: type,
-    })
-  ) {
-    await prisma.item.update({
-      where: { id: itemId },
-      data: { barcode: discoveredBarcode },
-    });
-    effectiveBarcode = discoveredBarcode;
-  }
-
-  if (item && heroImageUrl) {
-    const previousHero = item.metadata?.heroImageUrl || null;
-    const shouldSyncBackground =
-      !item.backgroundImageUrl ||
-      item.backgroundImageUrl === previousHero ||
-      item.backgroundImageUrl === heroImageUrl;
-    if (shouldSyncBackground) {
-      await prisma.item.update({
-        where: { id: itemId },
-        data: { backgroundImageUrl: heroImageUrl },
-      });
-    }
-  }
-
-  // Fill item.name only when empty / barcode placeholder and a barcode is set.
-  if (item) {
-    const displayTitle = resolveMetadataDisplayTitle(metadata, effectiveBarcode);
-    await adoptItemNameFromMetadataIfPlaceholder({
-      itemId,
-      metadataTitle: displayTitle,
-      itemName: item.name?.trim() || name.trim(),
-      barcode: effectiveBarcode,
-    });
-  }
+  await syncItemFieldsAfterMetadataStore({
+    itemId,
+    item,
+    metadata,
+    type,
+    name,
+    croppedImageUrl,
+    heroImageUrl,
+    previousLocalCover,
+    requestedPlatformKey,
+    finalStorableAttachments: storableAttachments,
+    attachmentsForRanking,
+    imageMetricsByUrl,
+  });
 
   if (
     deferImageLocalization &&
@@ -860,27 +410,3 @@ export async function storeMetadata(
 
   return storedMetadata;
 }
-
-export {
-  canKeepRemoteImageOnDownloadFailure,
-  downloadRemoteImage,
-} from "@/core/enrich/media/imageDownload";
-export {
-  dedupeByPerceptualHash,
-  dedupeLocalizedAttachmentsByContent,
-  filterOutFlatImageAttachments,
-  hammingDistance,
-  keepSourcelessCoverOnlyWithoutCatalogTwin,
-  readAttachmentImageMetrics,
-  retargetUserHonorPinIfCatalogTwin,
-  retargetUserHonorPinsInAttachmentGallery,
-  shouldReadImageMetricsForAttachment,
-} from "@/core/enrich/media/imageAssets";
-export {
-  formatMetadataForStorage,
-  formatMetadataFromStorage,
-} from "@/core/enrich/dbMapping";
-export {
-  providerOriginalImageUrl,
-  retailerOriginalImageUrl,
-} from "@/core/enrich/imageUrls";

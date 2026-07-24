@@ -91,7 +91,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | File | LOC (approx.) | Mix |
 | ---- | ------------- | --- |
 | `enrich/fetch.ts` | ~1160 | orchestrator (+ gating / merge / observationRanking / book*) |
-| `enrich/storage.ts` | ~886 | persist (+ image*/crop/localize/coverBootstrap) |
+| `enrich/storage.ts` | ~412 | persist orchestrator (+ gallery/cover/item sync leaves) |
 | `enrich/titleMatching.ts` | ~78 | facade re-exports (`titles/*` leaves) |
 | `enrich/titles/metadataTitleAlign.ts` | ~663 | align gate (plus residualIdentity ~1099) |
 | `commerce/pricing/resolver.ts` | ~1655 | resolve + shelf summarize (+ cachePolicy/outlierTrim extracted) |
@@ -111,7 +111,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | 4 | Purge after fieldEvidence sync; filter prices at write | DB matches UI | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write |
 | 5 | Collapse thresholds + delete stopword copies / dead code | DRY / KISS | **Fait 2026-07-24** — floors dans `identityThresholds.ts` (0.58 standard, 0.42 barcode-only); catalog URL aligné sur 0.58; stopwords DRY |
 | 6 | Present-path + threshold golden tests; refresh docs | Lock contracts | **Fait 2026-07-24** — `identityGateParity.test.ts` + `present.identityGate.test.ts` |
-| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch/storage leaves scindés ; `titleMatching` → facade + `titles/*` (search, similarity, variant, align, attachments…). Reste dense : `metadataTitleAlign` / `residualIdentity` / `storeMetadata`. |
+| 7 | Split god files **only after** SSOT locked | Otherwise chaos moves | **Partiel 2026-07-24** — fetch/storage leaves scindés ; `titleMatching` → facade + `titles/*` ; `storeMetadata` → `prepareMetadataGallery` / `resolveMetadataCoverHero` / `syncItemAfterMetadataStore`. Reste dense : `metadataTitleAlign` / `residualIdentity`. |
 
 ## Principles verdict
 

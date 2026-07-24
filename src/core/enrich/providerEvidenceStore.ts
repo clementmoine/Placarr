@@ -40,7 +40,14 @@ const EVIDENCE_DROP_PARAMS = new Set([
  * Search / list identity params — when present, kept (sorted) so distinct
  * queries do not collide. Fiche URLs without these still strip all search.
  */
-const EVIDENCE_SEARCH_IDENTITY_PARAMS = ["q", "search", "type", "keywords"] as const;
+const EVIDENCE_SEARCH_IDENTITY_PARAMS = [
+  "q",
+  "search",
+  "type",
+  "keywords",
+  "query",
+  "catalog",
+] as const;
 
 function shouldDropSearchParam(key: string): boolean {
   const lower = key.toLowerCase();
@@ -51,7 +58,7 @@ function shouldDropSearchParam(key: string): boolean {
 /**
  * Stable cache key for a provider fiche or search URL.
  * Fiche: strips hash + query (after dropping trackers).
- * Search: keeps identity params (`q` / `search` / `type` / …), strips UTM.
+ * Search: keeps identity params (`q` / `search` / `query` / `catalog` / …), strips UTM.
  */
 export function normalizeProviderEvidenceUrl(url: string): string | null {
   const trimmed = url.trim();

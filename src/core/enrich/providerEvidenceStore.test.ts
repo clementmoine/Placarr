@@ -56,6 +56,25 @@ describe("normalizeProviderEvidenceUrl", () => {
     );
   });
 
+  it("keeps Chasse query+catalog identity (not colliding catalogs)", () => {
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.chasse-aux-livres.fr/search?query=Black+Stories&catalog=toys&utm_source=x",
+      ),
+    ).toBe(
+      "https://www.chasse-aux-livres.fr/search?query=black+stories&catalog=toys",
+    );
+    expect(
+      normalizeProviderEvidenceUrl(
+        "https://www.chasse-aux-livres.fr/search?query=Black%20Stories&catalog=fr",
+      ),
+    ).not.toBe(
+      normalizeProviderEvidenceUrl(
+        "https://www.chasse-aux-livres.fr/search?query=Black%20Stories&catalog=toys",
+      ),
+    );
+  });
+
   it("returns null for empty or invalid URLs", () => {
     expect(normalizeProviderEvidenceUrl("")).toBeNull();
     expect(normalizeProviderEvidenceUrl("not-a-url")).toBeNull();

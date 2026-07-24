@@ -1,7 +1,7 @@
 # Scrape yield & call efficiency
 
 > **STATUS 2026-07-24.** Companion to multi-provider latency work.
-> Phase 1–2r shipped (Booknode + Smartoys SearchYield durable); Chasse / corpora = next.
+> Phase 1–2s shipped (Chasse SearchYield durable + query/catalog keys); corpora = next.
 
 ## Principle
 
@@ -159,10 +159,15 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 - Smartoys: `loadSmartoysSearchHits` promote/reuse `{url,title}` for `keywords=`
 - Detail GET still only for the locally ranked winner
 
+## Phase 2s — Chasse SearchYield durable (done 2026-07-24)
+
+- `normalizeProviderEvidenceUrl` keeps `query` + `catalog` (fr vs toys do not collide)
+- Promote typed `{name,productUrl,coverUrl?}` after REST SearchYield; reuse skips search HTML + REST pages → fiche only
+- Soft-filter / barcode order still applied on reused hits
+
 ## Phase 2+ backlog
 
 | Item | Why |
 | ---- | --- |
 | Local full-set / dump sync | Closed platforms at home latency |
-| Chasse (+ `query` identity param) → durable SearchYield | REST search payloads; needs `query` in evidence keys |
 | Remaining Flare peers | Same promote pattern as needed |

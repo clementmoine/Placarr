@@ -1,6 +1,22 @@
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const readChasseSearchEvidence = vi.fn();
+const promoteChasseSearchEvidence = vi.fn();
+
+vi.mock("./durableEvidence", () => ({
+  readChasseSearchEvidence: (...args: unknown[]) =>
+    readChasseSearchEvidence(...args),
+  promoteChasseSearchEvidence: (...args: unknown[]) =>
+    promoteChasseSearchEvidence(...args),
+}));
+
+vi.mock("axios", () => ({ default: { get: vi.fn() } }));
+vi.mock("@/lib/http/flareSolverr", () => ({
+  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
+  flareSolverrDestroySession: vi.fn().mockResolvedValue(undefined),
+}));
+
 import {
   chasseOfferLandedPriceCents,
   extractChasseAuxLivresProductImages,
@@ -9,12 +25,6 @@ import {
   orderChasseSearchHits,
   parseChasseAuxLivresProductPage,
 } from "./fetch";
-
-vi.mock("axios", () => ({ default: { get: vi.fn() } }));
-vi.mock("@/lib/http/flareSolverr", () => ({
-  flareSolverrRequestGet: vi.fn().mockResolvedValue(null),
-  flareSolverrDestroySession: vi.fn().mockResolvedValue(undefined),
-}));
 
 import {
   flareSolverrDestroySession,
@@ -74,6 +84,10 @@ describe("parseChasseAuxLivresProductPage", () => {
     mockedFlare.mockResolvedValue(null);
     mockedFlareDestroy.mockReset();
     mockedFlareDestroy.mockResolvedValue(undefined);
+    readChasseSearchEvidence.mockReset();
+    promoteChasseSearchEvidence.mockReset();
+    readChasseSearchEvidence.mockResolvedValue(null);
+    promoteChasseSearchEvidence.mockResolvedValue(undefined);
   });
 
   it("exploite les donnees structurees JSON-LD d'une fiche produit", () => {
@@ -254,6 +268,60 @@ describe("parseChasseAuxLivresProductPage", () => {
     });
     expect(fetchedPrix).toHaveLength(1);
     expect(fetchedPrix[0]).toContain("P109843183");
+    expect(promoteChasseSearchEvidence).toHaveBeenCalledWith(
+      "https://www.chasse-aux-livres.fr/search?query=Super%20Picsou%20G%C3%A9ant%20n%C2%B001&catalog=fr",
+      expect.arrayContaining([
+        expect.objectContaining({
+          productUrl: expect.stringContaining("P109843183"),
+        }),
+      ]),
+    );
+  });
+
+  it("réutilise ProviderEvidence SearchYield sans search/REST", async () => {
+    readChasseSearchEvidence.mockResolvedValueOnce([
+      {
+        name: "Super Picsou géant",
+        productUrl:
+          "https://www.chasse-aux-livres.fr/prix/2092662422/super-picsou-geant",
+      },
+      {
+        name: "Super picsou geant N° 1",
+        productUrl:
+          "https://www.chasse-aux-livres.fr/prix/P109843183/super-picsou-geant-n-1",
+      },
+    ]);
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url.includes("/search?") || url.includes("/rest/search-results")) {
+        throw new Error(`Should not fetch search/REST: ${url}`);
+      }
+      if (url.includes("P109843183")) {
+        return {
+          data: productHtml({
+            name: "Super picsou geant N° 1",
+            sku: "P109843183",
+            image: "https://img.example/n1.jpg",
+          }),
+          request: { res: { responseUrl: url } },
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    const product = await fetchChasseAuxLivresMetadataProduct(
+      "Super Picsou Géant n°01",
+      "fr",
+      {
+        validateProduct: (candidate) => /n[°º]?\s*1\b/i.test(candidate.name),
+        withPrices: false,
+      },
+    );
+
+    expect(product).toMatchObject({
+      name: "Super picsou geant N° 1",
+      sku: "P109843183",
+    });
+    expect(promoteChasseSearchEvidence).not.toHaveBeenCalled();
   });
 
   it("prefere un candidat barcode-confirme pour Black Stories", async () => {
@@ -397,6 +465,10 @@ describe("fetchFromChasseAuxLivres", () => {
     mockedFlare.mockResolvedValue(null);
     mockedFlareDestroy.mockReset();
     mockedFlareDestroy.mockResolvedValue(undefined);
+    readChasseSearchEvidence.mockReset();
+    promoteChasseSearchEvidence.mockReset();
+    readChasseSearchEvidence.mockResolvedValue(null);
+    promoteChasseSearchEvidence.mockResolvedValue(undefined);
   });
 
   it("retombe sur FlareSolverr quand la page recherche directe n'expose pas de hash", async () => {

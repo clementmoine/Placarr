@@ -356,4 +356,4 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 
 | Item | Why |
 | ---- | --- |
-| Worker / server-side dump hashing | **Deferred / optional** — only if dumps must live on server |
+| ~~Worker / server-side dump hashing~~ | **Différé 2026-07-24** — le chemin client (`hashRomFile` → preview / enrich) suffit ; les dumps ne vivent pas sur le serveur. Réouvrir seulement si un produit impose upload / worker hashing (stockage serveur, batch folder ingest, etc.). |

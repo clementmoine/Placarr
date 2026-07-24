@@ -30,8 +30,6 @@ rationale, pas comme file active.
 
 File courte : [backlog.md § Ouverts](backlog.md#ouverts--base-clean-2026-07-24).
 
-**Base clean** — ne pas rouvrir SSOT, god-file splits, LaunchBox FTS measure, No-Intro dump path, GENERIC→IDENTITY, ou AUDIO-1/GS1 audio sans raison.
+**Base clean** — ne pas rouvrir SSOT, god-file splits, LaunchBox FTS measure, No-Intro dump path, GENERIC→IDENTITY, AUDIO-1/GS1 audio, ou server dump hashing sans raison produit.
 
-Résidu **optionnel** seulement :
-
-1. Server-side dump hashing — seulement si les dumps doivent vivre sur le serveur ([scrape_yield.md](scrape_yield.md))
+Aucun résidu ouvert : prochaine coupe = nouvelle direction produit.

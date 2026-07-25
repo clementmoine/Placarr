@@ -182,6 +182,18 @@ export interface ProviderInfo {
    */
   rateLimited?: boolean;
   /**
+   * Minimum delay between two calls to this provider, from its documented rate
+   * limit. Implies a serial queue — declare it here rather than teaching core
+   * about provider ids.
+   */
+  minRequestIntervalMs?: number;
+  /**
+   * How many calls to this provider may be in flight at once. Defaults to 1 for
+   * scrapes, rate-limited providers and anything with a min interval; other
+   * API/local providers get `API_PROVIDER_CONCURRENCY`. Set it to pin a value.
+   */
+  maxConcurrentRequests?: number;
+  /**
    * Live scrape that reliably stalls (host unreachable / connection blocked /
    * bot-protected) with no canonical anchor to show for it, so it eats its full
    * request timeout on most calls. Skipped while recording network fixtures in

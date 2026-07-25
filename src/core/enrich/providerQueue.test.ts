@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import {
+  API_PROVIDER_CONCURRENCY,
+  configureProviderQueue,
+  providerQueueSettings,
   PROVIDER_RESOLVE_TIMEOUT_INTERACTIVE_MS,
   resetMetadataProviderQueuesForTests,
   resolveMetadataProvidersInOrder,
@@ -239,5 +242,79 @@ describe("metadataProviderQueue", () => {
 
     expect(seen.sort()).toEqual(["a", "b", "c"]);
     expect(Array.from(byProvider.keys())).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("providerQueueSettings", () => {
+  it("keeps scrapes serial", () => {
+    expect(providerQueueSettings({ auth: { kind: "scrape" } })).toEqual({
+      concurrency: 1,
+      minIntervalMs: 0,
+    });
+  });
+
+  it("keeps a declared interval serial and carries it", () => {
+    expect(
+      providerQueueSettings({
+        auth: { kind: "key", env: ["IGDB"], free: true },
+        minRequestIntervalMs: 250,
+      }),
+    ).toEqual({ concurrency: 1, minIntervalMs: 250 });
+  });
+
+  it("keeps rate-limited providers serial even without an interval", () => {
+    expect(
+      providerQueueSettings({
+        auth: { kind: "none" },
+        rateLimited: true,
+      }),
+    ).toEqual({ concurrency: 1, minIntervalMs: 0 });
+  });
+
+  it("lets an unthrottled API provider run in parallel", () => {
+    expect(providerQueueSettings({ auth: { kind: "none" } })).toEqual({
+      concurrency: API_PROVIDER_CONCURRENCY,
+      minIntervalMs: 0,
+    });
+  });
+
+  it("honours an explicit ceiling", () => {
+    expect(
+      providerQueueSettings({
+        auth: { kind: "scrape" },
+        maxConcurrentRequests: 2,
+      }),
+    ).toEqual({ concurrency: 2, minIntervalMs: 0 });
+  });
+});
+
+describe("configureProviderQueue", () => {
+  it("runs configured API calls in parallel and scrapes one at a time", async () => {
+    resetMetadataProviderQueuesForTests();
+    configureProviderQueue("parallel-api", { auth: { kind: "none" } });
+    configureProviderQueue("serial-scrape", { auth: { kind: "scrape" } });
+
+    const peaks = { api: 0, scrape: 0 };
+    const active = { api: 0, scrape: 0 };
+    const call = (id: "parallel-api" | "serial-scrape") => {
+      const key = id === "parallel-api" ? "api" : "scrape";
+      return runQueuedMetadataProviderCall(id, async () => {
+        active[key] += 1;
+        peaks[key] = Math.max(peaks[key], active[key]);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        active[key] -= 1;
+      });
+    };
+
+    await Promise.all([
+      call("parallel-api"),
+      call("parallel-api"),
+      call("parallel-api"),
+      call("serial-scrape"),
+      call("serial-scrape"),
+    ]);
+
+    expect(peaks.api).toBe(3);
+    expect(peaks.scrape).toBe(1);
   });
 });

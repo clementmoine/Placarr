@@ -96,6 +96,8 @@ export const screenscraperModule: ProviderModule = {
     coverUrlHost: "screenscraper.fr",
     types: ["games"],
     rateLimited: true,
+    // API terms: ~1 call/s per user — keep a margin.
+    minRequestIntervalMs: 1_100,
     capabilities: [
       "identify",
       "cover",

@@ -171,6 +171,13 @@ hand-built phrase lists used to guess type/format from listing text.
 
 ## 🟠 P2 — Provider-specific processing in core
 
+- ~~**`src/core/enrich/providerQueue.ts`** — `PROVIDER_CONCURRENCY` et
+  `PROVIDER_MIN_INTERVAL_MS`, deux tables id → valeur dans le core.~~
+  **Fait 2026-07-25** : chaque provider déclare `minRequestIntervalMs` /
+  `maxConcurrentRequests` dans son `info` ; le core dérive la forme de queue de
+  ces traits (`providerQueueSettings`) et le bootstrap l'enregistre. Ces clés
+  n'étaient pas quotées, donc invisibles pour `blindnessGuard`.
+
 - **`src/lib/barcode/sourceAssembly.ts`** — a large per-provider switch: each
   payload key (`ss`, `pc`, `amc`, `philibert`…) is mapped to a labelled source
   with bespoke extraction. The per-provider knowledge lives in core.

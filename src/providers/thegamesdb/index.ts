@@ -19,6 +19,7 @@ export const thegamesdbModule: ProviderModule = {
   info: {
     id: "thegamesdb",
     label: "TheGamesDB",
+    minRequestIntervalMs: 250,
     factLabel: "TGDB",
     types: ["games"],
     requiresTitleAlignment: true,

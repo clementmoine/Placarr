@@ -15,6 +15,7 @@ export const howlongtobeatModule: ProviderModule = {
   info: {
     id: "howlongtobeat",
     label: "HowLongToBeat",
+    minRequestIntervalMs: 500,
     types: ["games"],
     capabilities: ["identify", "duration"],
     auth: { kind: "scrape" },

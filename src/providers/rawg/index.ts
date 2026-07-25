@@ -20,6 +20,7 @@ export const rawgModule: ProviderModule = {
   info: {
     id: "rawg",
     label: "RAWG",
+    minRequestIntervalMs: 250,
     // Screenshot-style art (not a real box cover), so its covers rank lowest.
     coverUrlHost: "rawg.io",
     types: ["games"],

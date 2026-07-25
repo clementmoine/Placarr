@@ -15,6 +15,8 @@ export const launchboxModule: ProviderModule = {
   info: {
     id: "launchbox",
     label: "LaunchBox",
+    // Local SQLite FTS: parallel reads help, but not unbounded.
+    maxConcurrentRequests: 2,
     types: ["games"],
     requiresTitleAlignment: true,
     capabilities: [

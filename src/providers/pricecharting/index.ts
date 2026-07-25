@@ -307,6 +307,7 @@ export const pricechartingModule: ProviderModule = {
   info: {
     id: "pricecharting",
     label: "PriceCharting",
+    minRequestIntervalMs: 500,
     referencePriceSource: true,
     evidenceOnlyPriceRefresh: true,
     catalogDisplayTitleFallback: true,

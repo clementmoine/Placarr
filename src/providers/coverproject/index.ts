@@ -14,6 +14,8 @@ export const coverprojectModule: ProviderModule = {
   info: {
     id: "coverproject",
     label: "Cover Project",
+    // Static CDN listing pages — two in flight is polite enough.
+    maxConcurrentRequests: 2,
     types: ["games"],
     capabilities: ["cover"],
     auth: { kind: "scrape" },

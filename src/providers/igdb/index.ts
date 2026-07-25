@@ -21,6 +21,8 @@ export const igdbModule: ProviderModule = {
   info: {
     id: "igdb",
     label: "IGDB",
+    // Documented 4 req/s ceiling.
+    minRequestIntervalMs: 250,
     types: ["games"],
     nameDatabase: true,
     requiresTitleAlignment: true,

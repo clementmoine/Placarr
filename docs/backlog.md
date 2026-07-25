@@ -15,10 +15,12 @@ livrés).
 | ~~#5~~   | ~~Mode light-refresh~~           | **Fait 2026-07-25** — `src/core/enrich/lightRefresh.ts` : fiche à cover canonique + titre aligné + galerie complète + prix < 7 j ⇒ la passe scrape est sautée entièrement (même les fiches épinglées). Un manque de capability Tier 0+1 l'emporte toujours.                          |
 | ~~#6~~   | ~~Double-throttle admin-enrich~~ | **Fait 2026-07-25** — la route ne fait que stamp + enqueue ; le rythme réel est celui du pool I/O background. Le `runWithConcurrency(2)` en plus ne freinait que la réponse admin.                                                                                                   |
 
-**Contrainte suivante identifiée** (post-#2) : les queues par provider sont en
-concurrency 1 (`providerQueue.ts`). Ne relever que pour les providers API sans
-rate limit ; ScreenScraper (1,1 s), IGDB/RAWG/TheGamesDB (250 ms), HLTB (500 ms)
-et PriceCharting (500 ms) doivent rester sérialisés.
+**Contrainte post-#2 levée 2026-07-25** : les queues par provider ne sont plus
+toutes en concurrency 1. Chaque provider déclare `minRequestIntervalMs` /
+`maxConcurrentRequests` dans son `info` ; `providerQueueSettings` en dérive la
+forme de la queue (scrape, `rateLimited` ou intervalle déclaré ⇒ sérialisé ;
+sinon `API_PROVIDER_CONCURRENCY` = 3). Les deux tables id → valeur du core ont
+disparu.
 
 ## Ouverts — base clean (2026-07-24)
 

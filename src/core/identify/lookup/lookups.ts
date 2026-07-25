@@ -24,6 +24,7 @@ import {
 import type { PriceChartingMetadata } from "@/core/identify/lookup/providerTypes";
 import type { BarcodeLookupTaskBuilder } from "@/core/catalog/barcode";
 import type { BarcodeLookupType } from "@/types/providerModule";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 type BarcodeLookupTaskBuilders = Record<
   BarcodeLookupType,
@@ -37,7 +38,7 @@ export async function runBarcodeLookups(params: {
   taskBuilders: BarcodeLookupTaskBuilders;
 }): Promise<BarcodeLookupPayload> {
   const { cleanedBarcode, type, contextPlatformKey, taskBuilders } = params;
-  const payload = createEmptyBarcodeLookupPayload();
+  const payload = createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults());
 
   if (type === "games") {
     const lookups = await resolveBarcodeLookupTasks(

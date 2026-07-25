@@ -31,20 +31,8 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {};
  * the entries below). Shrink this to `{}`.
  */
 const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
-  // One named slot per provider in the barcode lookup payload: the assembler
-  // is provider-blind, the payload shape it fills is not.
-  "src/core/identify/lookup/payload.ts": {
-    deezer: 2,
-    discogs: 2,
-    ebay: 2,
-    espritjeu: 2,
-    freakxy: 2,
-    myludo: 2,
-    okkazeo: 2,
-    philibert: 2,
-    playin: 2,
-    tmdb: 2,
-  },
+  // `GameLookupInputs` still names two marketplace buckets, and picks a title
+  // from them in provider-preference order — tracked in docs/backlog.md.
   "src/core/identify/gameLookup.ts": { ebay: 2, freakxy: 1 },
   "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
 };

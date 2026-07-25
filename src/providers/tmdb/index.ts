@@ -105,6 +105,7 @@ export const tmdbModule: ProviderModule = {
       return [];
     }
   },
+  barcodeLookupSlots: { tmdb: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.tmdb;
     if (!hit?.title) return [];
@@ -126,3 +127,13 @@ export const tmdbModule: ProviderModule = {
 };
 
 export { createTMDBResolver, parseTMDBSeriesIntent } from "./resolver";
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `tmdb` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    tmdb: BarcodeMetadataHit | null;
+  }
+}

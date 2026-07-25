@@ -5,6 +5,7 @@ import {
   createEmptyBarcodeLookupPayload,
   type BarcodeLookupPayload,
 } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 const okkazeoModule = PROVIDER_MODULES.find(
   (module) => module.info.id === "okkazeo",
@@ -13,7 +14,7 @@ const okkazeoModule = PROVIDER_MODULES.find(
 describe("okkazeo extractScanPriceOffers", () => {
   it("emits a used offer with the barcode productUrl as sourceUrl", () => {
     const payload: BarcodeLookupPayload = {
-      ...createEmptyBarcodeLookupPayload(),
+      ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
       okkazeo: {
         title: "Black Stories",
         priceCents: 1200,

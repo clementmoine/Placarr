@@ -4,6 +4,7 @@ import { isCatalogTitleAnchorProvider } from "@/core/catalog/evidence";
 import { buildProductEvidence } from "@/core/identify/evidence/parse";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 import { icollectModule } from "./index";
 
@@ -11,7 +12,7 @@ function payloadWithIce(
   title: string,
   platform?: string | null,
 ): BarcodeLookupPayload {
-  const payload = createEmptyBarcodeLookupPayload();
+  const payload = createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults());
   payload.ice = {
     title,
     platform: platform ?? null,

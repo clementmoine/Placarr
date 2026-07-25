@@ -129,6 +129,7 @@ export const myludoModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchMyLudoGame(hit.url));
   },
+  barcodeLookupSlots: { myludo: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.myludo;
     if (!hit?.title?.trim()) return [];
@@ -149,3 +150,13 @@ export const myludoModule: ProviderModule = {
 };
 
 export { createMyLudoResolver, fetchMyLudoGame, searchMyLudoHits };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `myludo` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    myludo: BarcodeMetadataHit | null;
+  }
+}

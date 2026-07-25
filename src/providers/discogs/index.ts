@@ -446,6 +446,7 @@ export const discogsModule: ProviderModule = {
       return [];
     }
   },
+  barcodeLookupSlots: { discogs: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.discogs;
     if (!hit?.title) return [];
@@ -458,3 +459,13 @@ export const discogsModule: ProviderModule = {
     ];
   },
 };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `discogs` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    discogs: BarcodeMetadataHit | null;
+  }
+}

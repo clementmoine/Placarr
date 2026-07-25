@@ -230,6 +230,7 @@ export const philibertModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchPhilibertProduct(hit.url));
   },
+  barcodeLookupSlots: { philibert: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.philibert;
     if (!hit?.title?.trim()) return [];
@@ -274,3 +275,13 @@ export {
   searchPhilibert,
   searchPhilibertHits,
 } from "./fetch";
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `philibert` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    philibert: BarcodeMetadataHit | null;
+  }
+}

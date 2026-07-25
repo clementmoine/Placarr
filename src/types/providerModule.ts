@@ -429,6 +429,12 @@ export interface ProviderModule {
    * tagged by media type. Plug-and-play replacement for the central assembler:
    * core iterates the registry instead of hard-coding each provider.
    */
+  /**
+   * Empty value for each barcode-lookup slot this provider owns, keyed by slot
+   * name. Declare it next to the matching `declare module` augmentation of
+   * `BarcodeLookupSlots` so the type and its default stay adjacent.
+   */
+  barcodeLookupSlots?: Record<string, () => unknown>;
   buildBarcodeSources?: (
     payload: BarcodeLookupPayload,
     ctx: BarcodeSourceContext,

@@ -339,6 +339,7 @@ export const ebayModule: ProviderModule = {
         "eBay",
         `eBay credentials missing — set ${EBAY_ENV_NAMES.join(" / ")}`,
       ),
+  barcodeLookupSlots: { ebay: () => [] },
   buildBarcodeSources(payload, ctx) {
     return [
       ...marketplaceContributions("eBay", payload.ebay, ctx, [
@@ -353,3 +354,13 @@ export const ebayModule: ProviderModule = {
   },
   refreshBarcodePriceOffers: refreshEbayOffers,
 };
+
+import type { NamedListing } from "@/core/identify/gameLookup";
+
+// This module owns the `ebay` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    ebay: NamedListing[];
+  }
+}

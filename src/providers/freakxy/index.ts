@@ -73,6 +73,7 @@ export const freakxyModule: ProviderModule = {
       fetchFromFreakxy(ctx.barcode || FALLBACK_QUERIES[0]),
     );
   },
+  barcodeLookupSlots: { freakxy: () => [] },
   buildBarcodeSources(payload, ctx) {
     return [
       ...marketplaceContributions("Freakxy", payload.freakxy, ctx, ["games"]),
@@ -80,3 +81,13 @@ export const freakxyModule: ProviderModule = {
     ];
   },
 };
+
+import type { NamedListing } from "@/core/identify/gameLookup";
+
+// This module owns the `freakxy` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    freakxy: NamedListing[];
+  }
+}

@@ -103,6 +103,7 @@ export const deezerModule: ProviderModule = {
       return [];
     }
   },
+  barcodeLookupSlots: { deezer: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.deezer;
     if (!hit?.title) return [];
@@ -117,3 +118,13 @@ export const deezerModule: ProviderModule = {
 };
 
 export { createDeezerResolver };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `deezer` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    deezer: BarcodeMetadataHit | null;
+  }
+}

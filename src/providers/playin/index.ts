@@ -237,6 +237,7 @@ export const playinModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchPlayInProduct(hit.url));
   },
+  barcodeLookupSlots: { playin: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.playin;
     if (!hit?.title?.trim()) return [];
@@ -282,3 +283,13 @@ export const playinModule: ProviderModule = {
 };
 
 export { createPlayInResolver, fetchPlayInProduct, searchPlayInHits };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `playin` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    playin: BarcodeMetadataHit | null;
+  }
+}

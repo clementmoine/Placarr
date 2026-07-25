@@ -31,20 +31,17 @@ export type ScanDexLookup = {
   } | null;
 } | null;
 
-export type BarcodeLookupPayload = {
+/**
+ * Barcode lookup slots. Core declares only what it owns across providers;
+ * every provider-specific slot is added by that provider's module through
+ * `declare module` augmentation, so adding a provider never edits this file.
+ */
+export interface BarcodeLookupSlots {
   ol: BarcodeMetadataHit | null;
-  deezer: BarcodeMetadataHit | null;
   mb: BarcodeMetadataHit | null;
-  discogs: BarcodeMetadataHit | null;
   ss: BarcodeMetadataHit | null;
-  tmdb: BarcodeMetadataHit | null;
   pc: PriceChartingMetadata | null;
   sd: ScanDexLookup;
-  philibert: BarcodeMetadataHit | null;
-  okkazeo: BarcodeMetadataHit | null;
-  espritjeu: BarcodeMetadataHit | null;
-  playin: BarcodeMetadataHit | null;
-  myludo: BarcodeMetadataHit | null;
   retailers: RetailerBarcodeHit[];
   amc: NamedListing[];
   calFr: NamedListing[];
@@ -53,40 +50,35 @@ export type BarcodeLookupPayload = {
   calToys: NamedListing[];
   calJeuxVideo: NamedListing[];
   calGeneric: NamedListing[];
-  freakxy: NamedListing[];
-  ebay: NamedListing[];
   leDenicheur: LeDenicheurPrices | null;
   ice: CollectorCatalogBarcodeHit | null;
+}
+
+export type BarcodeLookupPayload = BarcodeLookupSlots;
+
+/**
+ * Empty value per slot. A mapped type over the augmented interface: a provider
+ * that declares a slot without supplying its default fails to compile at the
+ * call site, instead of leaving an `undefined` behind a type that promises a
+ * value.
+ */
+export type BarcodeLookupSlotDefaults = {
+  [K in keyof BarcodeLookupSlots]: () => BarcodeLookupSlots[K];
 };
 
-export function createEmptyBarcodeLookupPayload(): BarcodeLookupPayload {
-  return {
-    ol: null,
-    deezer: null,
-    mb: null,
-    discogs: null,
-    ss: null,
-    tmdb: null,
-    pc: null,
-    sd: null,
-    philibert: null,
-    okkazeo: null,
-    espritjeu: null,
-    playin: null,
-    myludo: null,
-    retailers: [],
-    amc: [],
-    calFr: [],
-    calDvd: [],
-    calMusic: [],
-    calToys: [],
-    calJeuxVideo: [],
-    calGeneric: [],
-    freakxy: [],
-    ebay: [],
-    leDenicheur: null,
-    ice: null,
-  };
+/**
+ * Build an empty payload from the slot defaults. The defaults come from the
+ * caller that owns the registry (`barcodeLookupSlotDefaults()`), which is what
+ * makes a missing slot a compile error rather than a runtime `undefined`.
+ */
+export function createEmptyBarcodeLookupPayload(
+  defaults: BarcodeLookupSlotDefaults,
+): BarcodeLookupPayload {
+  const payload = {} as Record<string, unknown>;
+  for (const [key, empty] of Object.entries(defaults)) {
+    payload[key] = (empty as () => unknown)();
+  }
+  return payload as unknown as BarcodeLookupPayload;
 }
 
 export const DEFAULT_BARCODE_LOOKUP_TASK_DEADLINE_MS = 8000;

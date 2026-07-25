@@ -31,6 +31,7 @@ import {
   createEmptyBarcodeLookupPayload,
   type BarcodeLookupPayload,
 } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 const latelierdesjeuxModule = PROVIDER_MODULES.find(
@@ -69,7 +70,7 @@ describe("scrape catalog factory — scan DetailYield", () => {
 
   it("extracts Shopify scan offers with sourceUrl from retailer hits", () => {
     const payload: BarcodeLookupPayload = {
-      ...createEmptyBarcodeLookupPayload(),
+      ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
       retailers: [
         {
           providerId: "latelierdesjeux",
@@ -94,7 +95,7 @@ describe("scrape catalog factory — scan DetailYield", () => {
 
   it("extracts PrestaShop scan offers with sourceUrl from retailer hits", () => {
     const payload: BarcodeLookupPayload = {
-      ...createEmptyBarcodeLookupPayload(),
+      ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
       retailers: [
         {
           providerId: "monsieurde",

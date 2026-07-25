@@ -24,62 +24,45 @@ disparu.
 
 ## Ouverts
 
-| Priorité | Item                                | Détail                                                                                                                                  |
-| -------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| P2       | `BarcodeLookupPayload` par provider | Le core déclare **un slot nommé par provider** dans [`payload.ts`](../src/core/identify/lookup/payload.ts). Voir la section ci-dessous. |
+| Priorité | Item                                     | Détail                                                                                                                       |
+| -------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| P2       | `GameLookupInputs` : buckets marketplace | Deux slots nommés (`ebay`, `freakxy`) et un ordre de préférence provider dans `pickMovieTitleFromListings`. Voir ci-dessous. |
 
-### `BarcodeLookupPayload` — le dernier hardcodé provider du core
+### `BarcodeLookupPayload` — fait 2026-07-25
 
-**Trouvé 2026-07-25** en élargissant `blindnessGuard` aux clés d'objet non
-quotées. L'assembleur est provider-blind depuis longtemps (chaque module
-déclare `buildBarcodeSources`), mais **la forme du payload qu'il remplit** ne
-l'est pas : `deezer`, `discogs`, `tmdb`, `philibert`, `okkazeo`, `espritjeu`,
-`playin`, `myludo`, `freakxy`, `ebay` + les codes courts (`ss`, `pc`, `amc`,
-`sd`, `ice`, `ol`, `mb`, `cal*`). Ajouter un provider avec un slot de lookup
-touche encore le core.
+Les 10 slots nommés par provider ont quitté le core. Chaque module déclare
+désormais **son type** (`declare module` sur `BarcodeLookupSlots`) et **sa
+valeur vide** (`barcodeLookupSlots`), côte à côte dans le même fichier.
 
-**Périmètre réel** : 221 lectures de `payload.*`, mais l'essentiel est
-légitime — chaque provider lit **son** slot, et doit continuer à le lire typé.
-Le core n'énumère qu'à trois endroits : le type, `createEmptyBarcodeLookupPayload()`
-et l'assembleur (`lookups.ts`).
+Le point qui avait fait échouer la première tentative est réglé :
+`createEmptyBarcodeLookupPayload()` **exige** les défauts en paramètre, fournis
+par `barcodeLookupSlotDefaults()` — le seul module qui importe le registre.
+Construire un payload sans eux est une erreur de compilation, au lieu d'un
+`undefined` silencieux derrière un type qui promettait une valeur.
 
-**Deux designs, pas équivalents :**
+Deux garde-fous, tous deux vérifiés par mutation :
 
-1. **Record générique** — `slots: Record<string, unknown>` + accesseurs.
-   Le core n'énumère plus rien, mais les 25 providers perdent l'accès typé et
-   récupèrent des casts. On échange du hardcodé contre du `unknown` : à mon
-   sens un recul, pas un gain.
-2. **Plug-and-play typé** — chaque provider déclare son slot _et son type_.
+- `barcodeLookupSlots.test.ts` apparie, dans la source de chaque provider, les
+  slots **typés** et les slots **enregistrés** — l'augmentation étant effacée à
+  la compilation, aucun contrôle runtime ne peut voir un slot typé mais absent ;
+- le même fichier vérifie qu'aucun slot n'est `undefined` et que les slots
+  tableau ne sont pas partagés entre deux payloads.
 
-### Tentative du 2026-07-25 — ce qui marche, ce qui coince
+**Reste** : les slots à clé abrégée (`ss`, `pc`, `sd`, `ice`, `mb`, `ol`,
+`amc`, `leDenicheur`) appartiennent chacun à un provider mais leur clé ne
+ressemble pas à son id — le guard ne les voit pas. Même mécanisme applicable,
+sans urgence. Les six `cal*` sont un cas à part : une seule tâche provider que
+le core éclate par type de média.
 
-Le design 2 a été prototypé puis **annulé**. Ce qui en est vérifié :
+### `GameLookupInputs` — ouvert
 
-- ✅ **La moitié typage marche.** `BarcodeLookupSlots` en `interface` + un
-  `declare module "@/core/identify/lookup/payload"` dans chaque provider :
-  `tsc` passe à 0 avec le slot retiré du core, et **9 erreurs** dès qu'on
-  enlève l'augmentation — donc elle porte vraiment. L'alias de chemin
-  n'empêche pas l'augmentation.
-- ❌ **La moitié runtime casse un contrat implicite.** Avec
-  `registerBarcodeLookupSlot()` appelé à l'import du provider,
-  `createEmptyBarcodeLookupPayload()` ne rend les slots que si les modules
-  providers ont été importés. En prod le registre les charge tous ; dans un
-  test qui n'importe que `payload.ts`, `payload.freakxy` vaut `undefined`
-  alors que **le type promet `NamedListing[]`**. Symptôme réel obtenu :
-  `TypeError: listings is not iterable` dans `collectPayloadListingNames`.
-
-**À trancher avant de recommencer** : les slots providers deviennent-ils
-_optionnels_ dans le type (honnête, mais ~100 sites de lecture à rendre
-défensifs), ou la fabrique prend-elle les slots **en paramètre** depuis
-l'appelant qui a le registre (l'oubli devient une erreur de compilation au lieu
-d'un `undefined` silencieux) ? La seconde piste semble la bonne, et c'est elle
-qui rend le chantier non trivial. Le prototype a échoué exactement là.
-
-**En attendant, c'est contenu, pas oublié** : les trois fichiers sont sur
+`gameLookup.ts` nomme encore deux buckets marketplace (`ebay`, `freakxy`), et
+surtout `pickMovieTitleFromListings` encode une **préférence de provider** :
+eBay avant AchatMoinsCher avant ChasseAuxLivres. C'est du biais de classement
+dans le core, pas seulement un nom en dur — à traiter comme tel (poids déclaré
+par provider) plutôt que par un simple renommage. Les deux fichiers restent sur
 `ALLOWED_PROVIDER_KEYS` dans
-[`blindnessGuard.test.ts`](../src/core/catalog/blindnessGuard.test.ts) avec le
-compte exact par provider. La liste ne peut plus grossir sans faire échouer un
-test, et toute modification apparaît dans le diff.
+[`blindnessGuard.test.ts`](../src/core/catalog/blindnessGuard.test.ts).
 
 Le reste du fichier = journal / historique.
 

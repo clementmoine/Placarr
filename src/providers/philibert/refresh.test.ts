@@ -28,6 +28,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/catalog";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 const philibertModule = PROVIDER_MODULES.find(
   (module) => module.info.id === "philibert",
@@ -60,7 +61,7 @@ describe("philibert extractScanPriceOffers", () => {
 
   it("keeps sourceUrl from the barcode DetailYield", () => {
     const payload: BarcodeLookupPayload = {
-      ...createEmptyBarcodeLookupPayload(),
+      ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
       philibert: {
         title: "Catan",
         priceCents: 4590,

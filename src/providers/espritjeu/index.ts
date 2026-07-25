@@ -227,6 +227,7 @@ export const espritjeuModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchEspritJeuProduct(hit.url));
   },
+  barcodeLookupSlots: { espritjeu: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.espritjeu;
     if (!hit?.title?.trim()) return [];
@@ -272,3 +273,13 @@ export const espritjeuModule: ProviderModule = {
 };
 
 export { createEspritJeuResolver, fetchEspritJeuProduct, searchEspritJeuHits };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `espritjeu` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    espritjeu: BarcodeMetadataHit | null;
+  }
+}

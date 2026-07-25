@@ -243,6 +243,7 @@ export const okkazeoModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchOkkazeoGame(hit.url));
   },
+  barcodeLookupSlots: { okkazeo: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.okkazeo;
     if (!hit?.title?.trim()) return [];
@@ -288,3 +289,13 @@ export const okkazeoModule: ProviderModule = {
 };
 
 export { createOkkazeoResolver, fetchOkkazeoGame, searchOkkazeo };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `okkazeo` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    okkazeo: BarcodeMetadataHit | null;
+  }
+}

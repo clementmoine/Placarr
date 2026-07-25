@@ -5,6 +5,7 @@ import levenshtein from "fast-levenshtein";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const BASE_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -367,7 +368,11 @@ function pickBestVolume(
       if (
         trimmedName &&
         title &&
-        !isMetadataTitleAligned({ title }, [trimmedName], 0.58)
+        !isMetadataTitleAligned(
+          { title },
+          [trimmedName],
+          METADATA_TITLE_ALIGN_FLOOR,
+        )
       ) {
         // ISBN hit for a different franchise than the shelf name — refuse
         // rather than ship a confident wrong cover (Naruto label + Boruto ISBN).
@@ -384,7 +389,11 @@ function pickBestVolume(
   const aligned = volumes.filter((volume) => {
     const title = volumeDisplayTitle(volume);
     if (!title) return false;
-    return isMetadataTitleAligned({ title }, [trimmedName], 0.58);
+    return isMetadataTitleAligned(
+      { title },
+      [trimmedName],
+      METADATA_TITLE_ALIGN_FLOOR,
+    );
   });
   if (aligned.length === 0) return null;
 

@@ -66,6 +66,7 @@ export {
   pickBestMetadataObservationTitle,
   pickBestMetadataObservationImageUrl,
 } from "@/core/enrich/mergeObservationRanking";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 function dedupePeople(
   people: Array<{ name: string; imageUrl?: string | null }>,
@@ -133,9 +134,14 @@ export function preferRequestedDisplayTitle(
   }
 
   if (
-    !isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58, {
-      shelfType: options?.shelfType,
-    })
+    !isMetadataTitleAligned(
+      { title: currentTitle },
+      [requestedTitle],
+      METADATA_TITLE_ALIGN_FLOOR,
+      {
+        shelfType: options?.shelfType,
+      },
+    )
   ) {
     // Provider hit a different product (e.g. Pokémon OLED for a Zelda OLED
     // request). Keep the catalog name, drop covers that belong to the wrong SKU.
@@ -206,9 +212,14 @@ function providerMetadataAlignsForGallery(
   // Pass shelfType so hardware residual accepts finish synonyms
   // ("Slim Rose" ↔ "System [Pink]") the same way merge title gates do.
   if (
-    isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
-      shelfType,
-    })
+    isMetadataTitleAligned(
+      metadata,
+      alignmentNames,
+      METADATA_TITLE_ALIGN_FLOOR,
+      {
+        shelfType,
+      },
+    )
   ) {
     return true;
   }
@@ -338,7 +349,7 @@ export function mergeMetadata(
             !isMetadataTitleAligned(
               { title: r.metadata.title },
               [options.requestedTitle!.trim()],
-              0.58,
+              METADATA_TITLE_ALIGN_FLOOR,
               { shelfType: mediaType },
             )
           ) {

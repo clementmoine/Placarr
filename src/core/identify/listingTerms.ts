@@ -173,18 +173,64 @@ export type ListingFormatDefinition = {
   nonGameCarrier?: boolean;
   /** Physical disc/tape formats used for shelf-name routing (Bluray ≠ DVD). */
   physicalShelfFormat?: boolean;
+  /**
+   * Human label for the physical format, used as a shelf-name hint once the
+   * format word has been stripped from the title. Declaration order is the
+   * detection order, so the least ambiguous carriers come first.
+   */
+  displayLabel?: string;
 };
 
 export const LISTING_FORMAT_DEFINITIONS: readonly ListingFormatDefinition[] = [
-  { term: "blu-ray", nonGameCarrier: true, physicalShelfFormat: true },
-  { term: "bluray", nonGameCarrier: true, physicalShelfFormat: true },
-  { term: "dvd", nonGameCarrier: true, physicalShelfFormat: true },
+  // LaserDisc / VHS first: a listing that names one of them is that carrier,
+  // even when it also mentions a DVD or Blu-ray reissue.
+  {
+    term: "laserdisc",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "LaserDisc",
+  },
+  {
+    term: "laser disc",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "LaserDisc",
+  },
+  {
+    term: "vhs",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "VHS",
+  },
+  {
+    term: "blu-ray",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "Blu-ray",
+  },
+  // Spaced form: a term with a space matches any separator (space, dot, dash),
+  // so this one also covers "blu-ray" and "blu.ray" in normalized listings.
+  {
+    term: "blu ray",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "Blu-ray",
+  },
+  {
+    term: "bluray",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "Blu-ray",
+  },
+  {
+    term: "dvd",
+    nonGameCarrier: true,
+    physicalShelfFormat: true,
+    displayLabel: "DVD",
+  },
   { term: "uhd", nonGameCarrier: true, physicalShelfFormat: true },
   { term: "ultra hd", nonGameCarrier: true, physicalShelfFormat: true },
   { term: "ultra-hd", nonGameCarrier: true, physicalShelfFormat: true },
-  { term: "vhs", nonGameCarrier: true, physicalShelfFormat: true },
-  { term: "laserdisc", nonGameCarrier: true, physicalShelfFormat: true },
-  { term: "laser disc", nonGameCarrier: true, physicalShelfFormat: true },
   { term: "cd", nonGameCarrier: true },
   { term: "album", nonGameCarrier: true },
   { term: "k7" },
@@ -229,6 +275,13 @@ export const LISTING_PHYSICAL_SHELF_FORMAT_TERMS = Array.from(
     "4k",
   ]),
 );
+
+/**
+ * Physical carriers that have a display label, in detection order.
+ * Derived from the format definitions — no second table of regexes.
+ */
+export const LISTING_LABELLED_FORMAT_DEFINITIONS =
+  LISTING_FORMAT_DEFINITIONS.filter((format) => format.displayLabel);
 
 /**
  * Companion / non-game context tokens that must not win a game barcode
@@ -433,6 +486,32 @@ export const LISTING_REGION_TERMS = [
   "japan",
   "version",
   "import",
+] as const;
+
+/**
+ * Category phrases that name a board game outright. High precision on purpose:
+ * they bias type scoring, so a loose phrase would hijack a video game.
+ */
+export const LISTING_BOARDGAME_CATEGORY_TERMS = [
+  "jeu de societe",
+  "jeux de societe",
+  "jeu de plateau",
+  "jeux de plateau",
+  "board game",
+  "board games",
+  "boardgame",
+  "boardgames",
+] as const;
+
+/**
+ * Film-content cues that are not a carrier word: a listing saying "dessin
+ * animé" or "VOSTFR" is a movie, whatever else it mentions. Carrier formats
+ * (VHS, LaserDisc…) live in LISTING_FORMAT_DEFINITIONS.
+ */
+export const LISTING_FILM_CONTENT_TERMS = [
+  "dessin anime",
+  "long metrage",
+  "vostfr",
 ] as const;
 
 export const LISTING_NOISE_TERMS = [

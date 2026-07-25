@@ -21,6 +21,7 @@ import {
   promoteBabelioSearchEvidence,
   readBabelioSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const BABELIO_BASE_URL = "https://www.babelio.com";
 const BABELIO_SEARCH_URL = `${BABELIO_BASE_URL}/aj_recherche.php`;
@@ -439,14 +440,22 @@ function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  if (isMetadataTitleAligned({ title }, [query], 0.58)) return true;
+  if (isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR))
+    return true;
   // Name-only queries often omit "tome N" while Babelio titles encode it before
   // the album subtitle — align against that subtitle when present.
   // Skip when the query already names a specific album (Wakfu + Mines…) so a
   // volume-sibling with a different subtitle cannot win via a loose bypass.
   if (albumSpecificDistinctiveTokens(query).length >= 2) return false;
   const subtitle = albumSubtitle(title);
-  if (subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58)) {
+  if (
+    subtitle &&
+    isMetadataTitleAligned(
+      { title: subtitle },
+      [query],
+      METADATA_TITLE_ALIGN_FLOOR,
+    )
+  ) {
     return true;
   }
   return false;

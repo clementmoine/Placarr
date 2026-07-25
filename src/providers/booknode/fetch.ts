@@ -22,6 +22,7 @@ import {
   promoteBooknodeSearchEvidence,
   readBooknodeSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export interface BooknodeBook {
   id?: string;
@@ -224,7 +225,7 @@ function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  return isMetadataTitleAligned({ title }, [query], 0.58);
+  return isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR);
 }
 
 type JsonLdSchema = Record<string, unknown>;

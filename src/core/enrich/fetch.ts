@@ -66,6 +66,7 @@ import {
   metadataPassCapabilitiesIncomplete,
 } from "@/core/enrich/scrapePassGate";
 import { normalizeRomChecksums } from "@/core/enrich/romChecksums";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export type FetchMetadataOptions = {
   isBackground?: boolean;
@@ -763,7 +764,7 @@ export async function fetchMetadata(
               providerInfo.requiresTitleAlignment
                 ? [name, ...barcodeAlternateNames]
                 : [name, fallbackName, ...finalFallbackNames],
-              0.58,
+              METADATA_TITLE_ALIGN_FLOOR,
               { shelfType: type },
             ),
         },
@@ -912,9 +913,14 @@ async function buildMergedMetadataFromByProvider(input: {
       // title alignment for games and hardware before merging any provider payload.
       if ((type === "games" || type === "hardware") && metadata.title?.trim()) {
         if (
-          !isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
-            shelfType: type,
-          }) ||
+          !isMetadataTitleAligned(
+            metadata,
+            alignmentNames,
+            METADATA_TITLE_ALIGN_FLOOR,
+            {
+              shelfType: type,
+            },
+          ) ||
           isGenericTitleFragment(metadata.title, alignmentNames)
         ) {
           return [];
@@ -924,9 +930,14 @@ async function buildMergedMetadataFromByProvider(input: {
         providers.find((p) => p.id === providerId)?.requiresTitleAlignment
       ) {
         if (
-          !isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
-            shelfType: type,
-          }) ||
+          !isMetadataTitleAligned(
+            metadata,
+            alignmentNames,
+            METADATA_TITLE_ALIGN_FLOOR,
+            {
+              shelfType: type,
+            },
+          ) ||
           isGenericTitleFragment(metadata.title, alignmentNames)
         ) {
           return [];
@@ -982,16 +993,26 @@ async function buildMergedMetadataFromByProvider(input: {
     const catalogTitle = catalogMetadata?.title;
     if (
       catalogTitle &&
-      isMetadataTitleAligned({ title: catalogTitle }, alignmentNames, 0.58, {
-        shelfType: type,
-      })
+      isMetadataTitleAligned(
+        { title: catalogTitle },
+        alignmentNames,
+        METADATA_TITLE_ALIGN_FLOOR,
+        {
+          shelfType: type,
+        },
+      )
     ) {
       if (!merged.title?.trim()) {
         finalMerged = { ...merged, title: catalogTitle };
       } else if (
-        !isMetadataTitleAligned(merged, alignmentNames, 0.58, {
-          shelfType: type,
-        })
+        !isMetadataTitleAligned(
+          merged,
+          alignmentNames,
+          METADATA_TITLE_ALIGN_FLOOR,
+          {
+            shelfType: type,
+          },
+        )
       ) {
         const aliases = aliasesExcludingTitle(
           catalogTitle,

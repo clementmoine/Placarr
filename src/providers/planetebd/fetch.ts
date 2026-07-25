@@ -17,6 +17,7 @@ import {
   promotePlanetebdSearchEvidence,
   readPlanetebdSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const PLANETEBD_BASE_URL = "https://www.planetebd.com";
 const PLANETEBD_HEADERS = {
@@ -227,14 +228,20 @@ function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  if (isMetadataTitleAligned({ title }, [query], 0.58)) return true;
+  if (isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR))
+    return true;
   const subtitle = title
     .split(/\s*:\s*/)
     .slice(1)
     .join(": ")
     .trim();
   return Boolean(
-    subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58),
+    subtitle &&
+      isMetadataTitleAligned(
+        { title: subtitle },
+        [query],
+        METADATA_TITLE_ALIGN_FLOOR,
+      ),
   );
 }
 

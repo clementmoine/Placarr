@@ -41,6 +41,7 @@ import {
 } from "@/core/enrich/media/platformKeyStamp";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import { isRawgQuotaBlocked, markRawgQuotaHit } from "./quota";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 type RawgResolverDeps = {
   formatScore: (value: number, scale: number) => string | null;
@@ -132,7 +133,11 @@ export function pickRawgSearchMatch(
   const requestedKey = platform ? detectVideoGamePlatformKey(platform) : null;
 
   const aligned = results.filter((game) =>
-    isMetadataTitleAligned({ title: game.name }, [cleanedQuery], 0.58),
+    isMetadataTitleAligned(
+      { title: game.name },
+      [cleanedQuery],
+      METADATA_TITLE_ALIGN_FLOOR,
+    ),
   );
   if (aligned.length === 0) return null;
 

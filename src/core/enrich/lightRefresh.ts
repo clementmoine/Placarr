@@ -19,6 +19,7 @@ import { metadataResultsHavePrimaryBookCover } from "@/core/enrich/scrapePassGat
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { MediaType } from "@/types/providerRegistry";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 /** Prices older than this are worth a full pass again. */
 export const LIGHT_REFRESH_PRICE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -99,7 +100,9 @@ export function isLightRefreshEligible(input: LightRefreshInput): boolean {
   if (!metadataResultsHaveCanonicalCover(input.type, [stored])) return false;
 
   if (
-    !isMetadataTitleAligned(stored, [itemName], 0.58, { shelfType: input.type })
+    !isMetadataTitleAligned(stored, [itemName], METADATA_TITLE_ALIGN_FLOOR, {
+      shelfType: input.type,
+    })
   ) {
     return false;
   }

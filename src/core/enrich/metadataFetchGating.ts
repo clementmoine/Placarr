@@ -35,6 +35,7 @@ import {
   metadataResultsHaveGameGallerySource,
 } from "@/core/enrich/galleryEnrichment";
 import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 /**
  * Gating + shaping helpers for the generic metadata fetch orchestrator.
@@ -529,9 +530,14 @@ export async function supplementGameEditionProviderResults(
       const editionMetadata = byProvider.get(providerId) ?? null;
       if (
         editionMetadata &&
-        !isMetadataTitleAligned(editionMetadata, alignmentNames, 0.58, {
-          shelfType,
-        })
+        !isMetadataTitleAligned(
+          editionMetadata,
+          alignmentNames,
+          METADATA_TITLE_ALIGN_FLOOR,
+          {
+            shelfType,
+          },
+        )
       ) {
         return;
       }
@@ -553,9 +559,14 @@ export async function supplementGameEditionProviderResults(
 
       if (
         !baseResult ||
-        !isMetadataTitleAligned(baseResult, alignmentNames, 0.58, {
-          shelfType,
-        })
+        !isMetadataTitleAligned(
+          baseResult,
+          alignmentNames,
+          METADATA_TITLE_ALIGN_FLOOR,
+          {
+            shelfType,
+          },
+        )
       ) {
         return;
       }
@@ -592,9 +603,14 @@ export function alignedProviderResultsForFallback(
     );
     if (
       providerInfo?.requiresTitleAlignment &&
-      (!isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
-        shelfType,
-      }) ||
+      (!isMetadataTitleAligned(
+        metadata,
+        alignmentNames,
+        METADATA_TITLE_ALIGN_FLOOR,
+        {
+          shelfType,
+        },
+      ) ||
         isGenericTitleFragment(metadata.title, alignmentNames))
     ) {
       return [];

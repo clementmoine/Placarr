@@ -143,13 +143,14 @@ moteur.
 **Réglé.** La liste `PUBLISHERS` (23 éditeurs choisis à la main) n'existe plus.
 Le signal vient maintenant du provider qui répond et des phrases de catégorie.
 
-**Reste ouvert (petit)** : dans
-[`boardGameSignal.ts`](../src/core/identify/boardGameSignal.ts), trois listes de
-phrases construites à la main — `CATEGORY_PATTERNS` (« jeu de société »),
-`VIDEO_FORMAT_PATTERNS` (VHS / LaserDisc / dessin animé) et
-`MEDIA_FORMAT_LABELS`. Elles sont étroites, commentées et de haute précision,
-mais ce sont bien des mots-clés FR/EN écrits en dur. À traiter comme les autres
-vocabulaires (P4) plutôt que comme du biais provider.
+~~**Reste ouvert (petit)** : les trois listes de regex de
+`boardGameSignal.ts`.~~ **Fait 2026-07-25** : le vocabulaire vit dans
+[`listingTerms.ts`](../src/core/identify/listingTerms.ts)
+(`LISTING_BOARDGAME_CATEGORY_TERMS`, `LISTING_FILM_CONTENT_TERMS`) et les
+matchers sont dérivés via `createTermMatcher`. `MEDIA_FORMAT_LABELS`
+**dupliquait** `LISTING_FORMAT_DEFINITIONS` avec ses propres regex : les
+définitions portent maintenant un `displayLabel` et la détection les parcourt
+dans l'ordre de déclaration (LaserDisc/VHS avant DVD/Blu-ray, comme avant).
 
 ## 🟠 P2 — Provider-specific processing in core
 
@@ -188,10 +189,19 @@ nommées et groupées). Les trois fichiers cités par l'audit d'origine ont depu
 - ~~`metadataProviderSelection.ts`, `priceResolver.ts` — seuils~~ — **réglé** :
   `selection.ts` et `commerce/pricing/resolver.ts` n'ont plus aucun littéral
   décimal.
-- **Reste** : 4 littéraux décimaux dans
-  [`merge.ts`](../src/core/enrich/merge.ts) (seuils d'alignement de titre).
-  Assez peu pour ne pas justifier un fichier de config à eux seuls ; les nommer
-  sur place suffirait.
+- ~~4 littéraux décimaux dans `merge.ts`~~ — **fait 2026-07-25**, et le compte
+  était très sous-évalué : le seuil d'alignement `0.58` était recopié **32
+  fois dans 17 fichiers**, alors que la constante nommée
+  `METADATA_TITLE_ALIGN_FLOOR` existait déjà dans
+  [`identityThresholds.ts`](../src/core/enrich/titles/identityThresholds.ts) et
+  n'était utilisée que par 3 modules. Tous les sites d'alignement l'utilisent
+  désormais (dont un `Math.max(METADATA_TITLE_ALIGN_FLOOR, 0.58)` tautologique
+  chez No-Intro).
+- **Attention, à ne pas unifier** : il reste ~39 `confidence: 0.58` dans les
+  providers. Même valeur, concept sans rapport (la confiance d'un fait
+  title-matched). Les fondre dans la constante d'alignement coupleraient deux
+  réglages indépendants — régler le seuil de titre changerait silencieusement
+  la confiance de tous les faits providers.
 
 ## 🟢 P4 — Linguistic vocabulary → replace with maintained libraries
 
@@ -262,8 +272,12 @@ Le gros morceau restant, et le seul chantier P1–P4 encore réellement ouvert.
    duplication de la taxonomie d'affichage.
 2. ~~**P4 stopwords**~~ — **fait 2026-07-25** : les listes étaient déjà
    dérivées, seul le token `"video"` était patché à trois endroits.
-3. **Résidus** : nommer les 4 seuils de `merge.ts`, traiter les phrases de
-   `boardGameSignal.ts` comme du vocabulaire (P4) et non comme du code.
+3. ~~**Résidus**~~ — **fait 2026-07-25** : seuil d'alignement nommé partout (32
+   sites), phrases de `boardGameSignal.ts` passées en vocabulaire dérivé.
+
+**Les trois points de cet ordre sont soldés.** Ce qui reste du P4 est assumé :
+le jargon vendeur est de la donnée maison (aucune source externe propre), et
+les mots-nombres restent anglais-only faute d'équivalent FR fiable.
 
 > **Leçon** : avant de remplacer une liste maison par un dataset complet,
 > vérifier ce que la liste _fait_. Un vocabulaire de reconnaissance gagne à être

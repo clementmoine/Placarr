@@ -9,6 +9,7 @@ import type {
   MetadataAttachment,
   MetadataResult,
 } from "@/types/metadataProvider";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const STEAMGRIDDB_API_BASE = "https://www.steamgriddb.com/api/v2";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -74,7 +75,11 @@ function pickBestGame(
   const aligned = games.filter(
     (game) =>
       game.name &&
-      isMetadataTitleAligned({ title: game.name }, [requestedName], 0.58),
+      isMetadataTitleAligned(
+        { title: game.name },
+        [requestedName],
+        METADATA_TITLE_ALIGN_FLOOR,
+      ),
   );
   if (aligned.length === 0) return null;
 

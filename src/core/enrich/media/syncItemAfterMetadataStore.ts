@@ -28,6 +28,7 @@ import type {
   MetadataResult,
 } from "@/types/metadataProvider";
 import type { StoreItemContext } from "@/core/enrich/media/prepareMetadataGallery";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export async function syncItemFieldsAfterMetadataStore(input: {
   itemId: string;
@@ -156,9 +157,14 @@ export async function syncItemFieldsAfterMetadataStore(input: {
     !discoveredBarcodePlatformConflicts &&
     itemName &&
     metadata.title &&
-    isMetadataTitleAligned({ title: metadata.title }, [itemName], 0.58, {
-      shelfType: type,
-    })
+    isMetadataTitleAligned(
+      { title: metadata.title },
+      [itemName],
+      METADATA_TITLE_ALIGN_FLOOR,
+      {
+        shelfType: type,
+      },
+    )
   ) {
     await prisma.item.update({
       where: { id: itemId },

@@ -19,6 +19,7 @@ import {
   promoteIzneoSearchEvidence,
   readIzneoSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const IZNEO_WEB_API = "https://www.izneo.com/api/web";
 const IZNEO_HEADERS = {
@@ -222,7 +223,8 @@ export function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  if (isMetadataTitleAligned({ title }, [query], 0.58)) return true;
+  if (isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR))
+    return true;
   // Izneo titles: "Série - Album - n°N" — align on the album segment.
   // When the query already names a specific album, do not accept a bare
   // franchise/series segment (that would snap any volume N of the series).
@@ -231,7 +233,14 @@ export function isCandidateAligned(query: string, title: string): boolean {
     const segment = part.trim();
     if (!segment) continue;
     if (/^n[°º]?\s*\d+/i.test(segment) || /^t\d+\b/i.test(segment)) continue;
-    if (isMetadataTitleAligned({ title: segment }, [query], 0.58)) return true;
+    if (
+      isMetadataTitleAligned(
+        { title: segment },
+        [query],
+        METADATA_TITLE_ALIGN_FLOOR,
+      )
+    )
+      return true;
   }
   const subtitle = title
     .split(/\s*:\s*/)
@@ -239,7 +248,12 @@ export function isCandidateAligned(query: string, title: string): boolean {
     .join(": ")
     .trim();
   return Boolean(
-    subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58),
+    subtitle &&
+      isMetadataTitleAligned(
+        { title: subtitle },
+        [query],
+        METADATA_TITLE_ALIGN_FLOOR,
+      ),
   );
 }
 

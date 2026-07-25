@@ -7,6 +7,7 @@ import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
 import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 function openLibraryTitleAligned(
   resultTitle: string,
@@ -17,7 +18,10 @@ function openLibraryTitleAligned(
   if (requestedIssue && resultIssue && requestedIssue !== resultIssue) {
     return false;
   }
-  return metadataTitleSimilarity(resultTitle, requestedName) >= 0.58;
+  return (
+    metadataTitleSimilarity(resultTitle, requestedName) >=
+    METADATA_TITLE_ALIGN_FLOOR
+  );
 }
 
 interface OpenLibraryWork {

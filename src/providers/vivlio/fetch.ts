@@ -17,6 +17,7 @@ import {
   promoteVivlioSearchEvidence,
   readVivlioSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const VIVLIO_BASE_URL = "https://shop.vivlio.com";
 const VIVLIO_HEADERS = {
@@ -328,7 +329,7 @@ function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  return isMetadataTitleAligned({ title }, [query], 0.58);
+  return isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR);
 }
 
 async function fetchHtml(

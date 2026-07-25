@@ -23,7 +23,7 @@ import {
   type NoIntroIndexedGame,
 } from "./indexStore";
 
-const TITLE_FLOOR = Math.max(METADATA_TITLE_ALIGN_FLOOR, 0.58);
+const TITLE_FLOOR = METADATA_TITLE_ALIGN_FLOOR;
 
 function readExternalId(
   ids: Record<string, string | null | undefined> | null | undefined,

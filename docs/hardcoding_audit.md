@@ -223,10 +223,18 @@ Le gros morceau restant, et le seul chantier P1–P4 encore réellement ouvert.
     [`locale/preference.ts`](../src/core/locale/preference.ts) dont tout le
     reste dérive, et le `regionRank` partagé (qui résout en plus les alias
     providers `au`/`sp` → `eu`, ce que les copies locales ne faisaient pas).
-- **Stopwords / tokens génériques** — `RESOLVER_GENERIC_TOKENS`,
-  `NON_CANONICAL_CONTEXT_TOKENS`, `SUFFIX_EXCLUDED_NOISE`. À noter :
-  `NON_CANONICAL_CONTEXT_TOKENS` est déjà **dérivé** des définitions de format,
-  plus écrit à la main — le modèle à généraliser aux deux autres.
+- ~~**Stopwords / tokens génériques**~~ — **fait 2026-07-25**, et le constat
+  était déjà à moitié périmé : `SUFFIX_EXCLUDED_NOISE` (filtre sur
+  `LISTING_NOISE_TERMS`) et `RESOLVER_GENERIC_TOKENS` (union de quatre
+  taxonomies) étaient **déjà dérivés**, comme
+  `NON_CANONICAL_CONTEXT_TOKENS`. Le seul résidu était le token `"video"`,
+  rajouté à la main dans **trois** sites de comparaison
+  (`resolve.ts`, `matchUtils.ts`, `titleUtils.ts`) faute d'avoir un
+  propriétaire. Il est maintenant déclaré une fois dans
+  `IDENTITY_MEDIA_CATEGORY_TOKENS` — la moitié qualifiante de « video game » /
+  « jeu vidéo » — et les trois patchs ont disparu. Il reste volontairement
+  **hors** de `LISTING_NOISE_TERMS` : c'est un token qu'on déprécie comme
+  distinctif, jamais qu'on retire d'un titre (sinon « Music Video » → « Music »).
 - **Jargon vendeur** — `LISTING_CONDITION_TERMS`, `LISTING_FORMAT_DEFINITIONS`,
   `GAME_EDITION_DEFINITIONS`, `GAME_CLASSICS_KEYWORDS`. Pas de source externe
   propre. Ils sont maintenant **structurés** (des définitions avec des traits,
@@ -252,8 +260,8 @@ Le gros morceau restant, et le seul chantier P1–P4 encore réellement ouvert.
 1. ~~**P4 codes région / langue**~~ — **fait 2026-07-25**, mais pas comme prévu :
    la piste ISO était mauvaise (voir P4). Ce qui a été corrigé, c'est la
    duplication de la taxonomie d'affichage.
-2. **P4 stopwords** → généraliser le modèle déjà appliqué à
-   `NON_CANONICAL_CONTEXT_TOKENS` : dériver au lieu d'énumérer.
+2. ~~**P4 stopwords**~~ — **fait 2026-07-25** : les listes étaient déjà
+   dérivées, seul le token `"video"` était patché à trois endroits.
 3. **Résidus** : nommer les 4 seuils de `merge.ts`, traiter les phrases de
    `boardGameSignal.ts` comme du vocabulaire (P4) et non comme du code.
 

@@ -64,6 +64,9 @@ describe("GENERIC_TITLE_TOKENS identity-backed packaging", () => {
     expect(IDENTITY_MEDIA_CATEGORY_TOKENS.has("game")).toBe(true);
     expect(IDENTITY_MEDIA_CATEGORY_TOKENS.has("jeux")).toBe(true);
     expect(IDENTITY_MEDIA_CATEGORY_TOKENS.has("games")).toBe(true);
+    // The qualifier half of "video game" / "jeu vidéo" — owned here so the
+    // comparison sites stop patching it in one by one.
+    expect(IDENTITY_MEDIA_CATEGORY_TOKENS.has("video")).toBe(true);
 
     expect(GENERIC_TITLE_TOKENS.has("with")).toBe(true);
     expect(GENERIC_TITLE_TOKENS.has("jeu")).toBe(true);
@@ -72,6 +75,13 @@ describe("GENERIC_TITLE_TOKENS identity-backed packaging", () => {
     expect(GENERIC_TITLE_TOKENS.has("games")).toBe(true);
     expect(GENERIC_TITLE_TOKENS.has("edition")).toBe(true);
     expect(GENERIC_TITLE_TOKENS.has("version")).toBe(true);
+    expect(GENERIC_TITLE_TOKENS.has("video")).toBe(true);
+  });
+
+  it("keeps the media qualifier out of the title-stripping taxonomy", () => {
+    // "video" is discounted as a distinctive token, never removed from a
+    // title — stripping it would turn "Music Video" into "Music".
+    expect(LISTING_NOISE_TERMS).not.toContain("video");
   });
 
   it("cold specificity still drops media/edition chrome without corpus stats", () => {

@@ -38,6 +38,7 @@ import {
 import {
   foldHardwareCapacityUnitsInTitle,
   IDENTITY_FUNCTION_WORDS,
+  IDENTITY_MEDIA_CATEGORY_TOKENS,
   IDENTITY_PLATFORM_NOISE_TOKENS,
   IDENTITY_VOLUME_STOP_WORDS,
 } from "@/core/enrich/titles/identityNoise";
@@ -784,10 +785,7 @@ export function priceListingMatchesAnyItemName(
 const PRICE_LISTING_LEADING_TOKENS = new Set([
   ...IDENTITY_FUNCTION_WORDS,
   ...IDENTITY_PLATFORM_NOISE_TOKENS,
-  "jeu",
-  "game",
-  "jeux",
-  "video",
+  ...IDENTITY_MEDIA_CATEGORY_TOKENS,
   "edition",
   "ed",
 ]);

@@ -42,7 +42,7 @@ export function titleSpecificityTokens(
     .split(/[^a-z0-9]+/)
     .filter((token) => {
       if (token.length <= 1) return false;
-      if (GENERIC_TITLE_TOKENS.has(token) || token === "video") return false;
+      if (GENERIC_TITLE_TOKENS.has(token)) return false;
       if (corpusStats && isCorpusGenericToken(token, corpusStats)) return false;
       return true;
     });

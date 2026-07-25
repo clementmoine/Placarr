@@ -91,7 +91,6 @@ export async function buildDatabaseEvidence(
 
 const RESOLVER_GENERIC_TOKENS = new Set([
   ...GENERIC_TITLE_TOKENS,
-  "video",
   ...LISTING_PUBLISHER_BRAND_TOKENS,
   ...HARDWARE_CONTROLLER_FAMILY_TOKENS,
   ...LISTING_DISCARD_PACKAGING_NOUNS.filter(

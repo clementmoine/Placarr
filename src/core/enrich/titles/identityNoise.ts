@@ -218,11 +218,21 @@ export function isIdentityFunctionWord(token: string): boolean {
  */
 const MEDIA_CATEGORY_TOKEN_ALLOW = new Set(["jeu", "game", "jeux", "games"]);
 
-export const IDENTITY_MEDIA_CATEGORY_TOKENS: ReadonlySet<string> = new Set(
-  [...LISTING_NOISE_TERMS, ...LISTING_LOT_PLURAL_GAME_NOUNS]
+/**
+ * The qualifier half of "video game" / "jeu vidéo" ("vidéo" normalizes here
+ * once accents are stripped). It has no entry in the listing taxonomies
+ * because it must NOT be stripped out of titles — only discounted as a
+ * distinctive token — so it is declared here, once, instead of being patched
+ * into each comparison site.
+ */
+const MEDIA_CATEGORY_QUALIFIER_TOKENS = ["video", "videos"] as const;
+
+export const IDENTITY_MEDIA_CATEGORY_TOKENS: ReadonlySet<string> = new Set([
+  ...[...LISTING_NOISE_TERMS, ...LISTING_LOT_PLURAL_GAME_NOUNS]
     .map((term) => term.toLowerCase())
     .filter((term) => MEDIA_CATEGORY_TOKEN_ALLOW.has(term)),
-);
+  ...MEDIA_CATEGORY_QUALIFIER_TOKENS,
+]);
 
 /**
  * Packaging atoms already present in IDENTITY taxonomies — re-exported so

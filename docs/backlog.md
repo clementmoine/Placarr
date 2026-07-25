@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-25** (plan perf #1–#6 terminé, queues par provider dérivées du registre, lint React Compiler à zéro).
+> Dernière vérification : **2026-07-25** (plan perf #1–#6 terminé ; lint et typecheck à zéro ; un item ouvert : le payload barcode par provider).
 > Index docs : [README.md](README.md).
 
 ## Plan perf métadonnées — terminé (2026-07-25)
@@ -24,7 +24,44 @@ disparu.
 
 ## Ouverts
 
-**Aucun item ouvert.** Le reste du fichier = journal / historique.
+| Priorité | Item                                | Détail                                                                                                                                  |
+| -------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| P2       | `BarcodeLookupPayload` par provider | Le core déclare **un slot nommé par provider** dans [`payload.ts`](../src/core/identify/lookup/payload.ts). Voir la section ci-dessous. |
+
+### `BarcodeLookupPayload` — le dernier hardcodé provider du core
+
+**Trouvé 2026-07-25** en élargissant `blindnessGuard` aux clés d'objet non
+quotées. L'assembleur est provider-blind depuis longtemps (chaque module
+déclare `buildBarcodeSources`), mais **la forme du payload qu'il remplit** ne
+l'est pas : `deezer`, `discogs`, `tmdb`, `philibert`, `okkazeo`, `espritjeu`,
+`playin`, `myludo`, `freakxy`, `ebay` + les codes courts (`ss`, `pc`, `amc`,
+`sd`, `ice`, `ol`, `mb`, `cal*`). Ajouter un provider avec un slot de lookup
+touche encore le core.
+
+**Périmètre réel** : 221 lectures de `payload.*`, mais l'essentiel est
+légitime — chaque provider lit **son** slot, et doit continuer à le lire typé.
+Le core n'énumère qu'à trois endroits : le type, `createEmptyBarcodeLookupPayload()`
+et l'assembleur (`lookups.ts`).
+
+**Deux designs, pas équivalents :**
+
+1. **Record générique** — `slots: Record<string, unknown>` + accesseurs.
+   Le core n'énumère plus rien, mais les 25 providers perdent l'accès typé et
+   récupèrent des casts. On échange du hardcodé contre du `unknown` : à mon
+   sens un recul, pas un gain.
+2. **Plug-and-play typé** — chaque provider déclare son slot _et son type_, le
+   payload se compose par génériques depuis le registre. C'est le bon design,
+   et c'est une refonte de la partie la plus load-bearing de l'app (celle que
+   garde le corpus de 21 cas). À faire avec du temps devant soi, pas en
+   nettoyage de fin de session.
+
+**En attendant, c'est contenu, pas oublié** : les trois fichiers sont sur
+`ALLOWED_PROVIDER_KEYS` dans
+[`blindnessGuard.test.ts`](../src/core/catalog/blindnessGuard.test.ts) avec le
+compte exact par provider. La liste ne peut plus grossir sans faire échouer un
+test, et toute modification apparaît dans le diff.
+
+Le reste du fichier = journal / historique.
 
 | Priorité   | Item                                         | Détail                                                                                                                                                                                                                                                                                                                                        |
 | ---------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

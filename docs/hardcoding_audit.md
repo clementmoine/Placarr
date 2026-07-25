@@ -5,9 +5,9 @@
 > `src/lib` + `src/services` → `src/core`. L'audit citait 12 chemins, dont 10
 > n'existaient plus ; ils sont corrigés ou marqués réglés.
 >
-> **Reste ouvert :** P4 (vocabulaire linguistique) pour l'essentiel, plus deux
-> résidus mineurs — les listes de phrases de `boardGameSignal.ts` et 4 seuils
-> décimaux dans `merge.ts`. Tout P1, tout P2 et l'essentiel de P3 sont réglés.
+> **Reste ouvert :** un seul item, `BarcodeLookupPayload` (P2, voir ci-dessous).
+> Tout le reste de P1–P3 est réglé ; ce qui subsiste en P4 est assumé (jargon
+> vendeur = donnée maison, mots-nombres anglais-only).
 >
 > **Ce qui suit le bandeau `Enforcement` est un journal historique** conservé
 > pour le raisonnement, pas la surface vivante.
@@ -171,6 +171,10 @@ Tous les points de la liste d'origine sont réglés. État vérifié le 2026-07-
   chargeur typé de 28 lignes. Elles vivent encore dans le core plutôt que dans
   les modules providers — acceptable tant que ce sont des données de build, à
   déplacer si un provider veut les tenir à jour lui-même.
+- **`BarcodeLookupPayload` — ouvert.** Trouvé 2026-07-25 en élargissant
+  `blindnessGuard` aux **clés d'objet non quotées** : le core déclare un slot
+  nommé par provider. Contenu par l'allowlist du guard, design à trancher —
+  détail dans [backlog.md](backlog.md).
 - ~~`providerQueue.ts` — `PROVIDER_CONCURRENCY` / `PROVIDER_MIN_INTERVAL_MS`~~ —
   **réglé 2026-07-25** : chaque provider déclare `minRequestIntervalMs` /
   `maxConcurrentRequests` dans son `info`, `providerQueueSettings` dérive la

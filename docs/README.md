@@ -18,7 +18,7 @@ rationale, pas comme file active.
 
 | Doc                                                                      | Note                                                            |
 | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| [hardcoding_audit.md](hardcoding_audit.md)                               | Rejoué 2026-07-25 — P1/P2 réglés, reste P4 (vocabulaire)        |
+| [hardcoding_audit.md](hardcoding_audit.md)                               | Rejoué 2026-07-25 — 1 item ouvert (payload barcode)             |
 | [provider_agnostic_architecture.md](provider_agnostic_architecture.md)   | Design + historique ; ranking supersédé                         |
 | [unbiased_ranking.md](unbiased_ranking.md)                               | Principes vivants ; tableaux « current state » datés            |
 | [word_list_audit.md](word_list_audit.md)                                 | Inventaire ; GENERIC/IDENTITY + IDF offline **fait 2026-07-24** |

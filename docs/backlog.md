@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-25** (plan perf #1–#6 terminé ; prochaine coupe = queues par provider, voir ci-dessous).
+> Dernière vérification : **2026-07-25** (plan perf #1–#6 terminé, queues par provider dérivées du registre, lint React Compiler à zéro).
 > Index docs : [README.md](README.md).
 
 ## Plan perf métadonnées — terminé (2026-07-25)
@@ -24,11 +24,7 @@ disparu.
 
 ## Ouverts
 
-| Priorité | Item                         | Détail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| -------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P3       | React Compiler : 11 findings | `pnpm lint` sort 11 erreurs `react-hooks/*` : 8 `preserve-manual-memoization` (le compilateur abandonne le composant), 2 `refs` (ref écrite pendant le render, `ItemModal`), 1 `set-state-in-effect`. Concentré dans [ItemModal.tsx](../src/components/modals/ItemModal.tsx), [items/page.tsx](../src/app/items/page.tsx) et la page détail. Pas des bugs — des optimisations manquées. À faire composant par composant **avec vérification visuelle** : aucun test ne couvre ces composants. |
-
-Le reste du fichier = journal / historique.
+**Aucun item ouvert.** Le reste du fichier = journal / historique.
 
 | Priorité   | Item                                         | Détail                                                                                                                                                                                                                                                                                                                                        |
 | ---------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

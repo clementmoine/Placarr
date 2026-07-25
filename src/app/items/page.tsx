@@ -276,7 +276,14 @@ function ItemsPageComponent() {
     selectionAnchorIdRef.current = null;
     setMoveModalOpen(false);
     setDeleteModalOpen(false);
-  }, []);
+    // Setters are stable; listing them lets the React Compiler verify the memo
+    // instead of bailing out of the whole component.
+  }, [
+    setSelectionMode,
+    setSelectedItemIds,
+    setMoveModalOpen,
+    setDeleteModalOpen,
+  ]);
 
   useEffect(() => {
     if (!selectionMode) return;
@@ -315,12 +322,12 @@ function ItemsPageComponent() {
         return next;
       });
     },
-    [visibleItemIds],
+    [visibleItemIds, setSelectionMode, setSelectedItemIds],
   );
 
   const selectAllVisibleItems = useCallback(() => {
     setSelectedItemIds(new Set(visibleItemIds));
-  }, [visibleItemIds]);
+  }, [visibleItemIds, setSelectedItemIds]);
 
   const selectableItemCount = visibleItemIds.length;
   const allVisibleSelected =

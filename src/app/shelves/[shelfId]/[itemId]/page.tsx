@@ -1817,7 +1817,8 @@ export default function ItemDetailsPage() {
     return seriesSiblings(seriesTitle, entries).filter(
       (entry) => entry.id !== resolvedItemId,
     );
-  }, [shelf?.items, item, resolvedItemId]);
+    // `shelf` whole: the compiler tracks the object, not the `.items` read.
+  }, [shelf, item, resolvedItemId]);
 
   // Franchise grouping comes only from the provider-sourced franchise fact, never
   // from title heuristics.
@@ -1845,7 +1846,7 @@ export default function ItemDetailsPage() {
         );
       },
     );
-  }, [shelf?.items, franchiseName, seriesVolumes, resolvedItemId]);
+  }, [shelf, franchiseName, seriesVolumes, resolvedItemId]);
 
   // Generic "other items" excludes the more specific groups above, so each sibling
   // shows up once in its most meaningful section.

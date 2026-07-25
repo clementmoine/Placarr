@@ -998,19 +998,22 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
-  const [pendingUploadPreviewUrl, setPendingUploadPreviewUrl] = useState<
-    string | null
-  >(null);
+  // Preview URL for a freshly picked file. Derived from the File rather than
+  // pushed through setState from an effect, so choosing an image costs one
+  // render instead of two; the effect owns the revoke, and each URL it sees
+  // gets its own cleanup when the File changes.
+  const pendingUploadPreviewUrl = useMemo(
+    () =>
+      currentImageUrl instanceof File
+        ? URL.createObjectURL(currentImageUrl)
+        : null,
+    [currentImageUrl],
+  );
 
   useEffect(() => {
-    if (!(currentImageUrl instanceof File)) {
-      setPendingUploadPreviewUrl(null);
-      return;
-    }
-    const previewUrl = URL.createObjectURL(currentImageUrl);
-    setPendingUploadPreviewUrl(previewUrl);
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [currentImageUrl]);
+    if (!pendingUploadPreviewUrl) return;
+    return () => URL.revokeObjectURL(pendingUploadPreviewUrl);
+  }, [pendingUploadPreviewUrl]);
 
   const finalImages = useMemo(() => {
     const rawMetadata =
@@ -1083,7 +1086,7 @@ export function ItemModal({
     currentImageUrl,
     pendingUploadPreviewUrl,
     itemId,
-    item?.metadata,
+    item,
     fetchedMetadata,
     activeShelfForMedia,
     locale,
@@ -1278,10 +1281,15 @@ export function ItemModal({
     ],
   );
 
+  // Latest-callback refs. Assigned after commit — writing a ref during render
+  // is not allowed — which is early enough: the only readers are post-commit
+  // microtasks in the session-bootstrap effect below.
   const handleBarcodeChangeRef = useRef(handleBarcodeChange);
-  handleBarcodeChangeRef.current = handleBarcodeChange;
   const fetchMetadataPreviewRef = useRef(fetchMetadataPreview);
-  fetchMetadataPreviewRef.current = fetchMetadataPreview;
+  useEffect(() => {
+    handleBarcodeChangeRef.current = handleBarcodeChange;
+    fetchMetadataPreviewRef.current = fetchMetadataPreview;
+  });
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {

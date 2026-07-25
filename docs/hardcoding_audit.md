@@ -202,12 +202,27 @@ Le gros morceau restant, et le seul chantier P1–P4 encore réellement ouvert.
   ([`titles/numberWords.ts`](../src/core/enrich/titles/numberWords.ts)) : maison
   et **anglais seulement**. Un `words-to-numbers` couvrirait plus de notations,
   mais rien de solide côté FR.
-- **Codes région / langue** — `LISTING_REGION_TERMS`
-  ([`listingTerms.ts`](../src/core/identify/listingTerms.ts)),
-  `LOCALE_REGION_ORDER` ([`locale/preference.ts`](../src/core/locale/preference.ts)),
-  `USER_VISIBLE_REGIONS` ([`evidence/resolve.ts`](../src/core/identify/evidence/resolve.ts)).
-  Toujours des listes qui s'allongent. **Option inchangée** : `iso-639-1` +
-  `i18n-iso-countries`, test d'appartenance contre un jeu de données complet.
+- ~~**Codes région / langue** → `iso-639-1` + `i18n-iso-countries`~~ —
+  **recommandation retirée 2026-07-25, elle était fausse.** Deux choses
+  distinctes avaient été mises dans le même sac :
+  - `LISTING_REGION_TERMS` n'est pas une liste de langues, c'est un
+    **vocabulaire de bruit** : chacun de ses termes est retiré des titres
+    marketplace. La moitié n'est pas ISO du tout (`pal`, `ntsc`, `secam`, `vf`,
+    `version`, `import`), et surtout un jeu ISO complet **casserait** le
+    nettoyage : `be`/`it`/`no`/`is` sont des codes ISO 639-1, et « Let It Be »
+    devient « Let ». Vérifié, puis épinglé par
+    [`listingRegionTerms.test.ts`](../src/core/identify/listingRegionTerms.test.ts).
+    Cette liste doit rester **courte et fermée** — sa croissance est le signal
+    d'alerte, pas son incomplétude.
+  - La taxonomie d'affichage (`fr/eu/wor/uk/us/jp`) n'a pas d'équivalent ISO
+    (`wor`, `eu`) : c'est une convention de région console. Le vrai défaut
+    n'était pas l'absence de dataset mais la **duplication** — le même tableau
+    ordonné était réécrit dans trois fichiers et `USER_VISIBLE_REGIONS` en
+    recopiait un sous-ensemble à la main. **Réglé** : une seule table
+    `DISPLAY_REGIONS` dans
+    [`locale/preference.ts`](../src/core/locale/preference.ts) dont tout le
+    reste dérive, et le `regionRank` partagé (qui résout en plus les alias
+    providers `au`/`sp` → `eu`, ce que les copies locales ne faisaient pas).
 - **Stopwords / tokens génériques** — `RESOLVER_GENERIC_TOKENS`,
   `NON_CANONICAL_CONTEXT_TOKENS`, `SUFFIX_EXCLUDED_NOISE`. À noter :
   `NON_CANONICAL_CONTEXT_TOKENS` est déjà **dérivé** des définitions de format,
@@ -234,13 +249,18 @@ Le gros morceau restant, et le seul chantier P1–P4 encore réellement ouvert.
 
 ## Ordre recommandé (mis à jour 2026-07-25)
 
-1. **P4 codes région / langue** → `iso-639-1` + `i18n-iso-countries`. C'est la
-   liste qui s'allonge le plus souvent, et la seule où une lib externe est
-   clairement meilleure que la liste maison.
+1. ~~**P4 codes région / langue**~~ — **fait 2026-07-25**, mais pas comme prévu :
+   la piste ISO était mauvaise (voir P4). Ce qui a été corrigé, c'est la
+   duplication de la taxonomie d'affichage.
 2. **P4 stopwords** → généraliser le modèle déjà appliqué à
    `NON_CANONICAL_CONTEXT_TOKENS` : dériver au lieu d'énumérer.
 3. **Résidus** : nommer les 4 seuils de `merge.ts`, traiter les phrases de
    `boardGameSignal.ts` comme du vocabulaire (P4) et non comme du code.
+
+> **Leçon** : avant de remplacer une liste maison par un dataset complet,
+> vérifier ce que la liste _fait_. Un vocabulaire de reconnaissance gagne à être
+> complet ; un vocabulaire de **suppression** appliqué à des titres gagne à être
+> minimal — le compléter le rend destructeur.
 
 Le jargon vendeur reste volontairement de la donnée maison : aucune source
 externe propre n'existe, et il est désormais structuré en définitions dont les

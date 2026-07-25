@@ -47,6 +47,7 @@ import {
   mergeDuplicateMatches,
   pickPreferredClusterDisplayName,
 } from "./matchUtils";
+import { regionRank, USER_VISIBLE_REGIONS } from "@/core/locale/preference";
 
 export async function buildDatabaseEvidence(
   names: string[],
@@ -211,12 +212,6 @@ export function pickRepresentativeEvidence(
     evidence.filter((item) => item.isCanonical && item.region),
     canonicalEvidence,
   );
-  const regionOrder = ["fr", "eu", "wor", "uk", "us", "jp"];
-  const regionRank = (region?: string | null) => {
-    const index = regionOrder.indexOf((region || "").toLowerCase());
-    return index === -1 ? regionOrder.length : index;
-  };
-
   if (canonicalRegionalEvidence.length > 0) {
     return canonicalRegionalEvidence.slice().sort((a, b) => {
       const regionDiff = regionRank(a.region) - regionRank(b.region);
@@ -285,8 +280,6 @@ function filterOverlyGenericCanonicalEvidence(
 
   return filtered.length > 0 ? filtered : candidates;
 }
-
-const USER_VISIBLE_REGIONS = new Set(["fr", "eu", "wor", "uk", "us"]);
 
 export function filterDisplayEvidenceForSuggestions(
   evidence: ProductEvidence[],

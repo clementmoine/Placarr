@@ -17,6 +17,7 @@ import type {
   ProductEvidence,
   ResolvedMatch,
 } from "./types";
+import { regionRank } from "@/core/locale/preference";
 
 export type { CorpusTokenStats };
 
@@ -197,11 +198,6 @@ export function pickPreferredClusterDisplayName(
     (item) => item.isCanonical && !item.contradictedByConsensus,
   );
   if (trustworthyCanonical.length > 0) {
-    const regionOrder = ["fr", "eu", "wor", "uk", "us", "jp"];
-    const regionRank = (region?: string | null) => {
-      const index = regionOrder.indexOf((region || "").toLowerCase());
-      return index === -1 ? regionOrder.length : index;
-    };
     const best = trustworthyCanonical.slice().sort((a, b) => {
       const regionDiff = regionRank(a.region) - regionRank(b.region);
       if (regionDiff !== 0) return regionDiff;

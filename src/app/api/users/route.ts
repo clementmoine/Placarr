@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { Prisma } from "@/generated/prisma/browser";
+import { Prisma, UserRole } from "@/generated/prisma/browser";
 import bcrypt from "bcryptjs";
 import { getToken } from "next-auth/jwt";
 
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_HASH_ROUNDS,
+} from "@/lib/auth/passwordPolicy";
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -15,13 +19,36 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // The shared guest account is read-only everywhere else; without this it
+  // could rename itself, change its email, or lock everyone out by setting a
+  // new password.
+  if (session.user.role === UserRole.guest) {
+    return NextResponse.json(
+      { error: "Write access not allowed for guests" },
+      { status: 403 },
+    );
+  }
+
   try {
     const data = await req.json();
     const { name, image, password, email } = data;
 
     const updateData: Prisma.UserUpdateInput = { name, image };
     if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
+      // Same floor and cost as registration — otherwise the minimum is one
+      // profile update away from being bypassed.
+      if (
+        typeof password !== "string" ||
+        password.length < MIN_PASSWORD_LENGTH
+      ) {
+        return NextResponse.json(
+          {
+            error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+          },
+          { status: 400 },
+        );
+      }
+      updateData.password = await bcrypt.hash(password, PASSWORD_HASH_ROUNDS);
     }
 
     // If email is being changed, we need to update the session

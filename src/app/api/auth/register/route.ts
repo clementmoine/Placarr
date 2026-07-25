@@ -2,9 +2,10 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 import { UserRole } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
-
-/** Shortest password the app will store. */
-const MIN_PASSWORD_LENGTH = 10;
+import {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_HASH_ROUNDS,
+} from "@/lib/auth/passwordPolicy";
 
 function isTruthyEnv(value?: string | null): boolean {
   const raw = value?.trim().toLowerCase();
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
     }
 
     // Hash password
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await hash(password, PASSWORD_HASH_ROUNDS);
 
     // Create user
     const user = await prisma.user.create({

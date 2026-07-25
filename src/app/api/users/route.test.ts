@@ -21,6 +21,7 @@ vi.mock("@/lib/db/prisma", () => ({
 vi.mock("bcryptjs", () => ({ default: { hash: h.hash } }));
 
 import { PATCH, DELETE } from "./route";
+import { PASSWORD_HASH_ROUNDS } from "@/lib/auth/passwordPolicy";
 
 function patchReq(body: unknown) {
   return new NextRequest("http://localhost/api/users", {
@@ -82,10 +83,36 @@ describe("PATCH /api/users", () => {
       password: "HASHED",
     });
 
-    await PATCH(patchReq({ password: "newpass" }));
+    await PATCH(patchReq({ password: "correct-horse-battery" }));
 
-    expect(h.hash).toHaveBeenCalledWith("newpass", 10);
+    // Même coût que l'inscription : les deux chemins partagent
+    // `PASSWORD_HASH_ROUNDS`.
+    expect(h.hash).toHaveBeenCalledWith(
+      "correct-horse-battery",
+      PASSWORD_HASH_ROUNDS,
+    );
     expect(h.update.mock.calls[0][0].data.password).toBe("HASHED");
+  });
+  it("refuse un mot de passe trop court (même plancher qu'à l'inscription)", async () => {
+    h.getServerSession.mockResolvedValue({ user: { email: "a@b.c" } });
+    h.getToken.mockResolvedValue({ sub: "u1" });
+
+    const res = await PATCH(patchReq({ password: "court" }));
+
+    expect(res.status).toBe(400);
+    expect(h.update).not.toHaveBeenCalled();
+  });
+
+  it("403 pour un invité : le compte partagé reste en lecture seule", async () => {
+    h.getServerSession.mockResolvedValue({
+      user: { email: "guest@b.c", role: "guest" },
+    });
+    h.getToken.mockResolvedValue({ sub: "g1" });
+
+    const res = await PATCH(patchReq({ name: "Pirate" }));
+
+    expect(res.status).toBe(403);
+    expect(h.update).not.toHaveBeenCalled();
   });
 });
 

@@ -1,19 +1,19 @@
 # Backlog
 
-> Dernière vérification : **2026-07-25** (plan perf : #3, #4, #5 faits ; #6 ouvert).
+> Dernière vérification : **2026-07-25** (plan perf #1–#6 terminé ; prochaine coupe = queues par provider, voir ci-dessous).
 > Index docs : [README.md](README.md).
 
-## Ouverts — plan perf métadonnées
+## Plan perf métadonnées — terminé (2026-07-25)
 
 Suite de l'audit refresh (#1 passes parallélisées et #2 split des pools déjà
 livrés).
 
-| Priorité | Item                         | Détail                                                                                                                                                                                                                                                                               |
-| -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ~~#3~~   | ~~Client HTTP partagé~~      | **Fait 2026-07-25** — `src/lib/http/httpClient.ts` : timeout par défaut, signal d'abort ambiant, dédup des GET identiques en vol. Tous les appels `src/providers` + `src/core` y passent (guard test).                                                                               |
-| ~~#4~~   | ~~Correctifs ciblés~~        | **Fait 2026-07-25** — `retry()` par défaut 5 → 3 (aucun appelant ne s'appuyait sur 5 ; les jobs background étaient déjà à 3) ; FlareSolverr : solve par défaut 30 s (`FLARESOLVERR_MAX_TIMEOUT_MS`) et abandon au-delà de 45 s d'attente en file (`FLARESOLVERR_MAX_QUEUE_WAIT_MS`). |
-| ~~#5~~   | ~~Mode light-refresh~~       | **Fait 2026-07-25** — `src/core/enrich/lightRefresh.ts` : fiche à cover canonique + titre aligné + galerie complète + prix < 7 j ⇒ la passe scrape est sautée entièrement (même les fiches épinglées). Un manque de capability Tier 0+1 l'emporte toujours.                          |
-| #6       | Double-throttle admin-enrich | Retirer le throttle en double sur `/api/admin/metadata-enrich`.                                                                                                                                                                                                                      |
+| Priorité | Item                             | Détail                                                                                                                                                                                                                                                                               |
+| -------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ~~#3~~   | ~~Client HTTP partagé~~          | **Fait 2026-07-25** — `src/lib/http/httpClient.ts` : timeout par défaut, signal d'abort ambiant, dédup des GET identiques en vol. Tous les appels `src/providers` + `src/core` y passent (guard test).                                                                               |
+| ~~#4~~   | ~~Correctifs ciblés~~            | **Fait 2026-07-25** — `retry()` par défaut 5 → 3 (aucun appelant ne s'appuyait sur 5 ; les jobs background étaient déjà à 3) ; FlareSolverr : solve par défaut 30 s (`FLARESOLVERR_MAX_TIMEOUT_MS`) et abandon au-delà de 45 s d'attente en file (`FLARESOLVERR_MAX_QUEUE_WAIT_MS`). |
+| ~~#5~~   | ~~Mode light-refresh~~           | **Fait 2026-07-25** — `src/core/enrich/lightRefresh.ts` : fiche à cover canonique + titre aligné + galerie complète + prix < 7 j ⇒ la passe scrape est sautée entièrement (même les fiches épinglées). Un manque de capability Tier 0+1 l'emporte toujours.                          |
+| ~~#6~~   | ~~Double-throttle admin-enrich~~ | **Fait 2026-07-25** — la route ne fait que stamp + enqueue ; le rythme réel est celui du pool I/O background. Le `runWithConcurrency(2)` en plus ne freinait que la réponse admin.                                                                                                   |
 
 **Contrainte suivante identifiée** (post-#2) : les queues par provider sont en
 concurrency 1 (`providerQueue.ts`). Ne relever que pour les providers API sans

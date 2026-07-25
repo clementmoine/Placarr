@@ -95,21 +95,14 @@ export interface MetadataResult {
   attachments?: MetadataAttachment[];
   aliases?: string[];
   regionalTitles?: { region?: string; text: string }[];
+  /**
+   * Record ids keyed by provider id, plus cross-provider namespaces like
+   * `imdb`. Deliberately an index signature: enumerating the providers here
+   * added nothing (the signature already accepted any key) and made core
+   * carry a list to update on every new provider.
+   */
   externalIds?: {
     imdb?: string | null;
-    tmdb?: string | null;
-    launchbox?: string | null;
-    igdb?: string | null;
-    screenscraper?: string | null;
-    steam?: string | null;
-    rawg?: string | null;
-    bgg?: string | null;
-    googlebooks?: string | null;
-    openlibrary?: string | null;
-    musicbrainz?: string | null;
-    discogs?: string | null;
-    wikidata?: string | null;
-    thegamesdb?: string | null;
     [key: string]: string | null | undefined;
   };
   facts?: MetadataFact[];

@@ -24,6 +24,31 @@ type ProviderLiteralInventory = Record<
 /** Empty = zero quoted provider ids outside `src/providers/` (+ tests). */
 const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {};
 
+/**
+ * Same idea for provider ids used as **unquoted object keys** (`philibert: …`).
+ * The quoted-literal sweep above cannot see those, which is how two tables of
+ * provider knowledge survived in core (the queue knobs, closed 2026-07-25, and
+ * the entries below). Shrink this to `{}`.
+ */
+const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
+  // One named slot per provider in the barcode lookup payload: the assembler
+  // is provider-blind, the payload shape it fills is not.
+  "src/core/identify/lookup/payload.ts": {
+    deezer: 2,
+    discogs: 2,
+    ebay: 2,
+    espritjeu: 2,
+    freakxy: 2,
+    myludo: 2,
+    okkazeo: 2,
+    philibert: 2,
+    playin: 2,
+    tmdb: 2,
+  },
+  "src/core/identify/gameLookup.ts": { ebay: 2, freakxy: 1 },
+  "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
+};
+
 const SOURCE_ROOTS = ["src", "scripts"];
 const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
 
@@ -85,6 +110,41 @@ function inventoryProviderLiterals(): ProviderLiteralInventory {
   );
 }
 
+function inventoryProviderKeys(): ProviderLiteralInventory {
+  const inventory: ProviderLiteralInventory = {};
+  const sourceFiles = SOURCE_ROOTS.flatMap((sourceRoot) =>
+    listSourceFiles(path.join(process.cwd(), sourceRoot)),
+  );
+
+  for (const absolutePath of sourceFiles) {
+    const text = fs.readFileSync(absolutePath, "utf8");
+    const relativePath = path.relative(process.cwd(), absolutePath);
+    const fileHits: Partial<Record<ProviderTerm, number>> = {};
+
+    for (const term of PROVIDER_TERMS) {
+      // `foo:` in *key position* only — at the start of a line (optionally
+      // after `{` or `,`), so prose like "pnpm foo:build" and property reads
+      // are not counted. `?:` covers optional members.
+      const objectKey = new RegExp(
+        `(?:^|[{,])\\s*${escapeRegExp(term)}\\s*\\??\\s*:`,
+        "gm",
+      );
+      const matches = text.match(objectKey);
+      if (matches?.length) {
+        fileHits[term] = matches.length;
+      }
+    }
+
+    if (Object.keys(fileHits).length > 0) {
+      inventory[relativePath] = fileHits;
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(inventory).sort(([a], [b]) => a.localeCompare(b)),
+  );
+}
+
 function diffInventory(
   actual: ProviderLiteralInventory,
   allowed: ProviderLiteralInventory,
@@ -122,6 +182,14 @@ describe("provider-blind core guard", () => {
     for (const id of registryIds) {
       expect(PROVIDER_TERMS).toContain(id);
     }
+  });
+
+  it("keeps provider ids out of core object keys too", () => {
+    const differences = diffInventory(
+      inventoryProviderKeys(),
+      ALLOWED_PROVIDER_KEYS,
+    );
+    expect(differences).toEqual([]);
   });
 
   it("keeps provider literals outside provider modules on a shrinking allowlist", () => {

@@ -32,6 +32,27 @@ pnpm dev                         # native compile (~1-2s)
 `DATABASE_URL` defaults to `postgresql://placarr:placarr@localhost:5432/placarr`
 (see `.env`). Open [http://localhost:3000](http://localhost:3000) to view the app.
 
+### Configuration
+
+Copy [`.env.example`](./.env.example) to `.env`. Only two variables are
+mandatory — `DATABASE_URL` and `NEXTAUTH_SECRET`; everything else has a working
+default and the file documents each one next to its value.
+
+What you may actually want to change:
+
+| Variable                            | Default                    | Why you would touch it                                                                                                                  |
+| ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_PASSWORD` / `GUEST_PASSWORD` | `admin` / `guest-password` | **Change these before exposing an instance** — the seed creates both accounts.                                                          |
+| `FLARESOLVERR_URL`                  | unset                      | Enables the Cloudflare-protected retailers. Without it they are skipped.                                                                |
+| `WORKER_CONCURRENCY`                | `6`                        | Jobs the `pnpm worker` process runs at once. Automatically capped to 3 when FlareSolverr is configured — one browser, one serial queue. |
+| `BACKGROUND_IO_CONCURRENCY`         | `4`                        | In-process work the Next server does itself (a separate pool from the worker).                                                          |
+| `BACKGROUND_CPU_CONCURRENCY`        | `2`                        | Image localization (`sharp`). Raise only if the host has cores to spare.                                                                |
+| `PRISMA_PG_POOL_MAX`                | `10`                       | Connections per process. Keep (processes × pool) under Postgres `max_connections`.                                                      |
+| Provider API keys                   | unset                      | Each missing key simply disables that provider — `pnpm providers:health` lists them.                                                    |
+
+Provider credentials are all optional and all free tiers. A provider without its
+key reports as `blocked` and is skipped at runtime rather than failing a scan.
+
 ### Full Docker (parity / Linux servers)
 
 ```bash

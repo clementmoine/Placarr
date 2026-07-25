@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-25** (plan perf en cours : #3 et #4 faits, #5–#6 ouverts).
+> Dernière vérification : **2026-07-25** (plan perf : #3, #4, #5 faits ; #6 ouvert).
 > Index docs : [README.md](README.md).
 
 ## Ouverts — plan perf métadonnées
@@ -12,7 +12,7 @@ livrés).
 | -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | ~~#3~~   | ~~Client HTTP partagé~~      | **Fait 2026-07-25** — `src/lib/http/httpClient.ts` : timeout par défaut, signal d'abort ambiant, dédup des GET identiques en vol. Tous les appels `src/providers` + `src/core` y passent (guard test).                                                                               |
 | ~~#4~~   | ~~Correctifs ciblés~~        | **Fait 2026-07-25** — `retry()` par défaut 5 → 3 (aucun appelant ne s'appuyait sur 5 ; les jobs background étaient déjà à 3) ; FlareSolverr : solve par défaut 30 s (`FLARESOLVERR_MAX_TIMEOUT_MS`) et abandon au-delà de 45 s d'attente en file (`FLARESOLVERR_MAX_QUEUE_WAIT_MS`). |
-| #5       | Mode light-refresh           | Sauter les providers scrape secondaires quand l'item a déjà cover canonique + titre aligné + prix récents.                                                                                                                                                                           |
+| ~~#5~~   | ~~Mode light-refresh~~       | **Fait 2026-07-25** — `src/core/enrich/lightRefresh.ts` : fiche à cover canonique + titre aligné + galerie complète + prix < 7 j ⇒ la passe scrape est sautée entièrement (même les fiches épinglées). Un manque de capability Tier 0+1 l'emporte toujours.                          |
 | #6       | Double-throttle admin-enrich | Retirer le throttle en double sur `/api/admin/metadata-enrich`.                                                                                                                                                                                                                      |
 
 **Contrainte suivante identifiée** (post-#2) : les queues par provider sont en

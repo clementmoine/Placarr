@@ -296,6 +296,8 @@ export function scrapeProvidersForMetadataPass(options: {
   existingScrapeProviderIds?: readonly string[];
   candidateScrapeProviderIds: readonly string[];
   hasCapability: MetadataCapabilityProbe;
+  /** Stored fiche already complete (see `isLightRefreshEligible`). */
+  lightRefresh?: boolean;
 }): string[] {
   const candidates = options.candidateScrapeProviderIds;
   if (candidates.length === 0) return [];
@@ -303,6 +305,10 @@ export function scrapeProvidersForMetadataPass(options: {
   if (metadataPassCapabilitiesIncomplete(options)) {
     return [...candidates];
   }
+
+  // Nothing left to seek and nothing stale — not even the pinned fiches are
+  // worth a round-trip on this pass.
+  if (options.lightRefresh) return [];
 
   const pinned = new Set(options.existingScrapeProviderIds ?? []);
   if (pinned.size === 0) return [];
@@ -320,6 +326,7 @@ export function shouldRunScrapeMetadataPass(options: {
   existingScrapeProviderIds?: readonly string[];
   candidateScrapeProviderIds: readonly string[];
   hasCapability: MetadataCapabilityProbe;
+  lightRefresh?: boolean;
 }): boolean {
   return scrapeProvidersForMetadataPass(options).length > 0;
 }

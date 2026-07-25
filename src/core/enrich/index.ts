@@ -14,7 +14,9 @@ import {
   isMissingMusicGallery,
   isMissingBookGallery,
 } from "@/core/enrich/galleries";
+import { isLightRefreshEligible } from "@/core/enrich/lightRefresh";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import { isMediaType } from "@/core/enrich/selection";
 import { filterMetadataForShelfPlatform } from "@/core/collect/media";
 export { filterMetadataForShelfPlatform };
 import {
@@ -108,12 +110,19 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
   externalIds: Record<string, string>;
   providerRecordUrls: Record<string, string>;
   romChecksums?: RomChecksums;
+  priceLastUpdated?: Date | null;
 }> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
     include: {
       metadata: { include: { attachments: true } },
       fieldEvidence: { select: { source: true, sourceUrl: true } },
+      // Newest observation only — light refresh just needs "how old".
+      priceOffers: {
+        orderBy: { observedAt: "desc" },
+        take: 1,
+        select: { observedAt: true },
+      },
     },
   });
   if (!item) {
@@ -146,6 +155,7 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
       fieldEvidence,
     }),
     romChecksums: romChecksumsFromIdentifierFacts(facts),
+    priceLastUpdated: item.priceOffers?.[0]?.observedAt ?? null,
   };
 }
 
@@ -165,6 +175,7 @@ export async function getMetadata(
     existingProviderRecordUrls?: Record<string, string>;
     romChecksums?: RomChecksums;
     seededActiveResults?: MetadataResult[];
+    lightRefresh?: boolean;
     onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
   } = {},
 ): Promise<MetadataResult | null> {
@@ -218,6 +229,7 @@ export async function getMetadata(
           existingProviderRecordUrls: options.existingProviderRecordUrls,
           romChecksums: options.romChecksums,
           seededActiveResults: options.seededActiveResults,
+          lightRefresh: options.lightRefresh,
           onApiPassComplete: options.onApiPassComplete,
         },
       );
@@ -311,6 +323,7 @@ export async function fetchAndStoreMetadata(
     externalIds: existingExternalIds,
     providerRecordUrls: existingProviderRecordUrls,
     romChecksums: storedRomChecksums,
+    priceLastUpdated,
   } = await storedProviderMemoryForItem(itemId);
 
   // Even on forceRefresh, seed capability gating from the current fiche so we
@@ -322,6 +335,18 @@ export async function fetchAndStoreMetadata(
       seededActiveResults = [formatMetadataFromStorage(prior)];
     }
   }
+
+  // Fiche already canonical, aligned, complete and priced recently: Tier 0+1
+  // still runs (it is cheap and pinned), the scrape swarm does not.
+  const lightRefresh =
+    isMediaType(type) &&
+    isLightRefreshEligible({
+      type,
+      itemName: name,
+      stored: seededActiveResults?.[0],
+      barcode,
+      priceLastUpdated,
+    });
 
   let progressiveStored = false;
   const persistPartial = async (partial: MetadataResult) => {
@@ -361,6 +386,7 @@ export async function fetchAndStoreMetadata(
         romChecksumsFromIdentifierFacts(seededActiveResults?.[0]?.facts),
       ),
       seededActiveResults,
+      lightRefresh,
       onApiPassComplete: persistPartial,
     });
   } catch (error) {

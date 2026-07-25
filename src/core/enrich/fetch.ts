@@ -86,6 +86,11 @@ export type FetchMetadataOptions = {
    */
   seededActiveResults?: MetadataResult[];
   /**
+   * The stored fiche is already complete and fresh (`isLightRefreshEligible`),
+   * so the scrape pass is skipped unless Tier 0+1 leaves a capability gap.
+   */
+  lightRefresh?: boolean;
+  /**
    * Progressive store: called after the API pass and again mid-batch when the
    * merged cover (or first title snapshot) improves — does not skip providers.
    */
@@ -381,6 +386,7 @@ export async function fetchMetadata(
     existingScrapeProviderIds: options?.existingScrapeProviderIds,
     candidateScrapeProviderIds: scrapeCandidateIds,
     hasCapability: stage1HasMetadataCapability,
+    lightRefresh: options?.lightRefresh,
   };
   const scrapeIdsAllowed = new Set(
     scrapeProvidersForMetadataPass(scrapePassOptions),

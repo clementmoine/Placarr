@@ -4,14 +4,20 @@ import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
+import { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
 
-// Allowed MIME types for images
+/**
+ * Raster formats only. SVG is deliberately absent: uploads are served from
+ * `public/uploads`, which the proxy matcher excludes from auth, so an SVG
+ * carrying a `<script>` would execute on the app's own origin for anyone
+ * opening its URL — stored XSS. Re-adding it needs sanitising *and* a
+ * `Content-Disposition`/CSP story, not just a MIME entry.
+ */
 const ALLOWED_MIMETYPES = [
   "image/png",
   "image/jpeg",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ];
 
 // Maximum file size (5MB)
@@ -63,7 +69,6 @@ export async function POST(req: NextRequest) {
     if (file.type === "image/jpeg") extension = "jpg";
     else if (file.type === "image/webp") extension = "webp";
     else if (file.type === "image/gif") extension = "gif";
-    else if (file.type === "image/svg+xml") extension = "svg";
 
     const filename = `${randomUUID()}.${extension}`;
     const relativePath = `/uploads/${filename}`;
@@ -78,6 +83,16 @@ export async function POST(req: NextRequest) {
     // Write file to uploads directory
     const bytes = await file.arrayBuffer();
     const originalBuffer = Buffer.from(bytes);
+
+    // `file.type` is whatever the client claimed. Check the bytes before this
+    // lands in a publicly served directory.
+    if (!looksLikeImageBuffer(originalBuffer, file.type)) {
+      return NextResponse.json(
+        { error: "File content is not a valid image" },
+        { status: 400 },
+      );
+    }
+
     const originalFilePath = join(uploadsDir, filename);
     await writeFile(originalFilePath, originalBuffer);
 

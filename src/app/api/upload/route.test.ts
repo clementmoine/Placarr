@@ -29,6 +29,11 @@ beforeEach(() => {
   h.writeFile.mockReset().mockResolvedValue(undefined);
 });
 
+/** PNG signature — enough for the content check to accept the buffer. */
+const PNG_BYTES = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+]);
+
 describe("POST /api/upload", () => {
   it("renvoie la réponse d'auth (401) quand non authentifié", async () => {
     h.requireGuestOrHigher.mockResolvedValue(
@@ -80,10 +85,25 @@ describe("POST /api/upload", () => {
     expect(h.writeFile).not.toHaveBeenCalled();
   });
 
+  it("400 quand les octets ne sont pas une image malgré un MIME d'image", async () => {
+    // `file.type` vient du client : seul le contenu fait foi avant d'écrire
+    // dans un dossier servi publiquement.
+    const res = await POST(
+      uploadReq(
+        new File(["<script>alert(1)</script>"], "x.png", {
+          type: "image/png",
+        }),
+      ),
+    );
+
+    expect(res.status).toBe(400);
+    expect(h.writeFile).not.toHaveBeenCalled();
+  });
+
   it("écrit un PNG valide; l'extension vient du MIME, le nom est aléatoire (pas le nom client)", async () => {
     const res = await POST(
       uploadReq(
-        new File(["hello"], "../evil name.jpeg", { type: "image/png" }),
+        new File([PNG_BYTES], "../evil name.jpeg", { type: "image/png" }),
       ),
     );
     const json = await res.json();

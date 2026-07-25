@@ -6,6 +6,15 @@ set -e
 
 npx prisma migrate deploy
 
+# Comptes admin/guest. Le seed est idempotent (upsert sans update), donc le
+# rejouer à chaque boot ne réinitialise aucun mot de passe existant — sans lui
+# une installation Docker n'a aucun administrateur, et l'inscription publique
+# ne crée que des comptes `user`. ENABLE_SEED=0 pour s'en passer.
+if [ "${ENABLE_SEED:-1}" = "1" ]; then
+  echo "[init] seeding admin/guest accounts"
+  npx prisma db seed
+fi
+
 PIDS=""
 
 cleanup() {
@@ -79,7 +88,23 @@ node server.js &
 NEXT_PID=$!
 PIDS="$PIDS $NEXT_PID"
 
-wait "$NEXT_PID"
-STATUS=$?
-cleanup
-exit "$STATUS"
+# Watch every child, not just Next. Waiting on `$NEXT_PID` alone left a
+# container that looked healthy with a dead worker: enrichment stopped silently
+# and `restart: unless-stopped` never fired. Polling rather than `wait -n`,
+# which busybox sh (alpine) does not reliably support.
+while :; do
+  for pid in $PIDS; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      if [ "$pid" = "$NEXT_PID" ]; then
+        wait "$NEXT_PID" || true
+        STATUS=$?
+      else
+        echo "[init] worker pid=$pid died — taking the container down"
+        STATUS=1
+      fi
+      cleanup
+      exit "$STATUS"
+    fi
+  done
+  sleep 5
+done

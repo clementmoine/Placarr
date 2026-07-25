@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getGalleryImages, mergeCoverAttachmentsForPicker, orderedCoverAttachmentsForDisplay } from "./media";
+import {
+  getGalleryImages,
+  mergeCoverAttachmentsForPicker,
+  orderedCoverAttachmentsForDisplay,
+} from "./media";
 
 describe("orderedCoverAttachmentsForDisplay", () => {
   it("pins metadata.imageUrl first then keeps storage order", () => {

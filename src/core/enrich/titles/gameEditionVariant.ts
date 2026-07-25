@@ -50,4 +50,3 @@ export function extractBaseTitleVariant(requestedName: string): string | null {
 export function isGameEditionVariant(requestedName: string): boolean {
   return extractBaseTitleVariant(requestedName) !== null;
 }
-

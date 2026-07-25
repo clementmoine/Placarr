@@ -532,9 +532,7 @@ async function fetchAchatMoinsCherSearchHits(
   const searchUrl = achatMoinsCherSearchUrl(cleanedQuery);
   const fromEvidence = await readAchatMoinsCherSearchEvidence(searchUrl);
   if (fromEvidence) {
-    console.info(
-      `[AchatMoinsCher] Search evidence hit for "${cleanedQuery}"`,
-    );
+    console.info(`[AchatMoinsCher] Search evidence hit for "${cleanedQuery}"`);
     cacheAchatMoinsCherSearchHits(cleanedQuery, fromEvidence);
     return fromEvidence;
   }

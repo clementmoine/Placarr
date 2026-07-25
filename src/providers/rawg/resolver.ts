@@ -114,9 +114,7 @@ export function filterRawgTagsForShelf(
     ? detectVideoGamePlatformKey(requestedPlatform)
     : null;
   if (!requestedKey || requestedKey === "pc") return unique;
-  return unique.filter(
-    (name) => !/\b(fangame|gamemaker|horror)\b/i.test(name),
-  );
+  return unique.filter((name) => !/\b(fangame|gamemaker|horror)\b/i.test(name));
 }
 
 /**
@@ -131,9 +129,7 @@ export function pickRawgSearchMatch(
   const cleanedQuery = query.trim();
   if (!cleanedQuery || results.length === 0) return null;
 
-  const requestedKey = platform
-    ? detectVideoGamePlatformKey(platform)
-    : null;
+  const requestedKey = platform ? detectVideoGamePlatformKey(platform) : null;
 
   const aligned = results.filter((game) =>
     isMetadataTitleAligned({ title: game.name }, [cleanedQuery], 0.58),
@@ -267,9 +263,11 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     if (!data?.results || data.results.length === 0) return null;
 
-    const bestMatch = pickRawgSearchMatch(data.results, name, platform) as
-      | RawgGame
-      | null;
+    const bestMatch = pickRawgSearchMatch(
+      data.results,
+      name,
+      platform,
+    ) as RawgGame | null;
     if (!bestMatch) return null;
 
     let detailedDescription: string | undefined;

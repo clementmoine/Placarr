@@ -8,18 +8,20 @@ import { franchiseSequelNumbersConflict } from "@/core/enrich/titleMatching";
 import { residualIdentityMatch } from "@/core/enrich/titles/residualIdentity";
 
 function normalizeTitleTokens(value: string): string[] {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    // Keep franchise compounds aligned: Spider-Man ↔ Spiderman.
-    .replace(/-/g, "")
-    // FR console capacity units ≡ PriceCharting EN (250Go ≡ 250GB).
-    .replace(/\b(\d+)\s*(go|gb)\b/g, "$1gb")
-    .replace(/\b(\d+)\s*(to|tb)\b/g, "$1tb")
-    .replace(/\b(\d+)\s*(mo|mb)\b/g, "$1mb")
-    .split(/[^a-z0-9]+/)
-    .filter((token) => token.length > 1);
+  return (
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      // Keep franchise compounds aligned: Spider-Man ↔ Spiderman.
+      .replace(/-/g, "")
+      // FR console capacity units ≡ PriceCharting EN (250Go ≡ 250GB).
+      .replace(/\b(\d+)\s*(go|gb)\b/g, "$1gb")
+      .replace(/\b(\d+)\s*(to|tb)\b/g, "$1tb")
+      .replace(/\b(\d+)\s*(mo|mb)\b/g, "$1mb")
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 1)
+  );
 }
 
 /** Token count ≈ how specific a seek title is (bare franchise vs full edition). */

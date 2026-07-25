@@ -62,9 +62,8 @@ function incomingHasSameSourceFact(
   return incoming.some(
     (candidate) =>
       candidate.kind === fact.kind &&
-      normalizeProviderSourceKey(
-        candidate.source ?? candidate.label ?? "",
-      ) === sourceKey,
+      normalizeProviderSourceKey(candidate.source ?? candidate.label ?? "") ===
+        sourceKey,
   );
 }
 

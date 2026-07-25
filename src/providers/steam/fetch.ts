@@ -534,7 +534,8 @@ export async function fetchFromSteam(
             data.detailed_description,
         ),
         releaseDate: data.release_date?.date || undefined,
-        imageUrl: data.capsule_imagev5 || data.capsule_image || data.header_image,
+        imageUrl:
+          data.capsule_imagev5 || data.capsule_image || data.header_image,
         publishers: (data.publishers || []).map((publisher) => ({
           name: publisher,
         })),

@@ -16,11 +16,11 @@ Soft-404 to a search page is **not** a miss: mine the rows, pick a winner, fetch
 
 ## Cost tiers
 
-| Tier | Examples | When |
-| ---- | -------- | ---- |
-| 0 | LaunchBox / iCollect local, BarcodeCache | Always first |
-| 1 | APIs (eBay Browse, ScreenScraper, IGDB, …) | Parallel after / with Tier 0 |
-| 2 | Flare / Bipart scrapes | Only for **capability gaps** |
+| Tier | Examples                                   | When                         |
+| ---- | ------------------------------------------ | ---------------------------- |
+| 0    | LaunchBox / iCollect local, BarcodeCache   | Always first                 |
+| 1    | APIs (eBay Browse, ScreenScraper, IGDB, …) | Parallel after / with Tier 0 |
+| 2    | Flare / Bipart scrapes                     | Only for **capability gaps** |
 
 ## Phase 1 — PriceCharting (done)
 
@@ -39,7 +39,7 @@ Soft-404 to a search page is **not** a miss: mine the rows, pick a winner, fetch
 ## Phase 2b — Scrape-pass gate (done 2026-07-24)
 
 - `scrapeProvidersForMetadataPass` — Tier 0+1 complete ⇒ **only** fiche-pinned scrapes ∩ candidates (no Flare seeker swarm)
-- Capability gaps (incl. books lacking a *primary* cover) still wake the full candidate set
+- Capability gaps (incl. books lacking a _primary_ cover) still wake the full candidate set
 - Marketplace stage-2 (Back Market, …) skipped once title+cover exist — price refresh owns listing photos
 
 ## Phase 2c — Durable ProviderEvidence (done 2026-07-24)
@@ -354,6 +354,6 @@ Barcode path no longer invents `{platform}-{slug}-{ean}` product URLs before mar
 
 ## Phase 2+/3+ backlog
 
-| Item | Why |
-| ---- | --- |
+| Item                                  | Why                                                                                                                                                                                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ~~Worker / server-side dump hashing~~ | **Différé 2026-07-24** — le chemin client (`hashRomFile` → preview / enrich) suffit ; les dumps ne vivent pas sur le serveur. Réouvrir seulement si un produit impose upload / worker hashing (stockage serveur, batch folder ingest, etc.). |

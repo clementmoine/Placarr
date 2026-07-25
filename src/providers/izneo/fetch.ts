@@ -186,9 +186,7 @@ export function mapIzneoAlbumPayload(
   payload: Record<string, unknown>,
 ): IzneoAlbum | null {
   const id = cleanText(String(payload.id || ""));
-  const title = cleanText(
-    String(payload.title || payload.displayTitle || ""),
-  );
+  const title = cleanText(String(payload.title || payload.displayTitle || ""));
   if (!id || !title) return null;
   const path = cleanText(String(payload.url || ""));
   const price = parseNumber(payload.price);
@@ -196,9 +194,7 @@ export function mapIzneoAlbumPayload(
     id,
     title,
     displayTitle: cleanText(String(payload.displayTitle || "")),
-    sourceUrl:
-      absoluteIzneoUrl(path) ||
-      `https://www.izneo.com/fr/bd/${id}`,
+    sourceUrl: absoluteIzneoUrl(path) || `https://www.izneo.com/fr/bd/${id}`,
     description: cleanText(String(payload.synopsis || "")),
     imageUrl: izneoAlbumCoverUrl(id),
     authors: namedList(payload.authors),
@@ -207,14 +203,12 @@ export function mapIzneoAlbumPayload(
     seriesName: cleanText(String(payload.serieName || "")),
     seriesUrl: absoluteIzneoUrl(String(payload.serieUrl || "")),
     volume: cleanText(String(payload.volume || "")),
-    barcode:
-      normalizeProductBarcode(String(payload.ean || "")) || undefined,
+    barcode: normalizeProductBarcode(String(payload.ean || "")) || undefined,
     pageCount: parseNumber(payload.totalPages),
     releaseDate: cleanText(String(payload.publicationDate || "")),
     ratingValue: parseNumber(payload.rate),
     ratingCount: parseNumber(payload.rateAmount),
-    priceCents:
-      price != null ? Math.round(price * 100) : undefined,
+    priceCents: price != null ? Math.round(price * 100) : undefined,
   };
 }
 
@@ -239,7 +233,11 @@ export function isCandidateAligned(query: string, title: string): boolean {
     if (/^n[°º]?\s*\d+/i.test(segment) || /^t\d+\b/i.test(segment)) continue;
     if (isMetadataTitleAligned({ title: segment }, [query], 0.58)) return true;
   }
-  const subtitle = title.split(/\s*:\s*/).slice(1).join(": ").trim();
+  const subtitle = title
+    .split(/\s*:\s*/)
+    .slice(1)
+    .join(": ")
+    .trim();
   return Boolean(
     subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58),
   );
@@ -322,8 +320,7 @@ export function pickVolume(
 ): IzneoVolumeHit | null {
   if (barcode) {
     const byBarcode = volumes.find(
-      (volume) =>
-        volume.ean && barcodesEquivalent(volume.ean, barcode),
+      (volume) => volume.ean && barcodesEquivalent(volume.ean, barcode),
     );
     if (byBarcode) return byBarcode;
   }
@@ -378,8 +375,7 @@ export async function resolveIzneoMetadata(options: {
         pickVolume(volumes, query, barcode || undefined) ||
         (barcode
           ? volumes.find(
-              (volume) =>
-                volume.ean && barcodesEquivalent(volume.ean, barcode),
+              (volume) => volume.ean && barcodesEquivalent(volume.ean, barcode),
             )
           : null);
       if (!picked) continue;
@@ -387,7 +383,11 @@ export async function resolveIzneoMetadata(options: {
         (picked.raw ? mapIzneoAlbumPayload(picked.raw) : null) ||
         (await fetchIzneoAlbum(picked.id, signal));
       if (!album) continue;
-      if (barcode && album.barcode && !barcodesEquivalent(album.barcode, barcode)) {
+      if (
+        barcode &&
+        album.barcode &&
+        !barcodesEquivalent(album.barcode, barcode)
+      ) {
         continue;
       }
       if (
@@ -427,9 +427,7 @@ export async function collectIzneoMappingRawKeys(
   query: string,
 ): Promise<string[]> {
   const series = await searchIzneoSeries(query);
-  const volumes = series[0]
-    ? await fetchIzneoSerieVolumes(series[0].id)
-    : [];
+  const volumes = series[0] ? await fetchIzneoSerieVolumes(series[0].id) : [];
   const album = volumes[0] ? await fetchIzneoAlbum(volumes[0].id) : null;
   return collectObjectMappingSignals({
     series: series.slice(0, 3),

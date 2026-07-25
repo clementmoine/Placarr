@@ -79,9 +79,7 @@ describe("searchHowLongToBeat", () => {
     expect(hits[0]?.game_id).toBe(2127);
     expect(promoteHowLongToBeatSearchEvidence).toHaveBeenCalledWith(
       "https://howlongtobeat.com/search?q=Hades&platform=Nintendo+Switch",
-      expect.arrayContaining([
-        expect.objectContaining({ game_id: 2127 }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ game_id: 2127 })]),
     );
   });
 });

@@ -81,9 +81,10 @@ describe("No-Intro DAT pack sync", () => {
 
   it("allows download when options or env opt in", () => {
     process.env.NOINTRO_DAT_PACK_URL = "https://example.test/pack.zip";
-    expect(
-      resolveNoIntroDatPackSource({ allowDownload: true }),
-    ).toEqual({ kind: "url", url: "https://example.test/pack.zip" });
+    expect(resolveNoIntroDatPackSource({ allowDownload: true })).toEqual({
+      kind: "url",
+      url: "https://example.test/pack.zip",
+    });
 
     process.env.NOINTRO_ALLOW_DOWNLOAD = "1";
     expect(isNoIntroDownloadAllowed()).toBe(true);

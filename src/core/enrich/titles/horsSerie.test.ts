@@ -16,13 +16,12 @@ describe("hasHorsSerieMarker", () => {
     expect(hasHorsSerieMarker(title)).toBe(true);
   });
 
-  it.each([
-    "Super Picsou Géant n°100bis",
-    "Naruto Tome 12",
-    "Les horsains",
-  ])("stays silent on %s", (title) => {
-    expect(hasHorsSerieMarker(title)).toBe(false);
-  });
+  it.each(["Super Picsou Géant n°100bis", "Naruto Tome 12", "Les horsains"])(
+    "stays silent on %s",
+    (title) => {
+      expect(hasHorsSerieMarker(title)).toBe(false);
+    },
+  );
 });
 
 describe("horsSerieSeriesPart", () => {

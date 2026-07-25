@@ -25,9 +25,9 @@ async function main() {
       | undefined
   )?.count;
   const datCount = (
-    db
-      .prepare("SELECT COUNT(DISTINCT datName) AS count FROM games")
-      .get() as { count?: number } | undefined
+    db.prepare("SELECT COUNT(DISTINCT datName) AS count FROM games").get() as
+      | { count?: number }
+      | undefined
   )?.count;
   console.log(
     `No-Intro index ready (${typeof gameCount === "number" ? gameCount : "?"} games, ${typeof romCount === "number" ? romCount : "?"} roms, ${typeof datCount === "number" ? datCount : "?"} DAT set(s)).`,

@@ -63,10 +63,7 @@ export async function readPlanetebdSearchEvidence(
     if (!isPlanetebdSearchHits(row.yieldJson)) return null;
     return row.yieldJson;
   } catch (error) {
-    console.warn(
-      "[Planète BD] Failed to read durable search evidence:",
-      error,
-    );
+    console.warn("[Planète BD] Failed to read durable search evidence:", error);
     return null;
   }
 }

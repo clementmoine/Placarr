@@ -276,7 +276,8 @@ describe("bdovore fetch", () => {
               { ID_SERIE: "846", NOM_SERIE: "Les âges d'or de Picsou" },
               {
                 ID_SERIE: "12539",
-                NOM_SERIE: "Picsou Magazine (hors-série, les trésors de Picsou)",
+                NOM_SERIE:
+                  "Picsou Magazine (hors-série, les trésors de Picsou)",
               },
             ]),
           };
@@ -290,7 +291,8 @@ describe("bdovore fetch", () => {
                 ID_TOME: "47485",
                 TITRE_TOME: "Les trésors de Picsou n°1 : La jeunesse de Picsou",
                 NUM_TOME: "1",
-                NOM_SERIE: "Picsou Magazine (hors-série, les trésors de Picsou)",
+                NOM_SERIE:
+                  "Picsou Magazine (hors-série, les trésors de Picsou)",
                 ID_SERIE: "12539",
               },
             ]),
@@ -473,9 +475,7 @@ describe("bdovore fetch", () => {
   it("promotes series SearchYield after a live getjson GET", async () => {
     mockedGet.mockResolvedValueOnce({
       status: 200,
-      data: JSON.stringify([
-        { ID_SERIE: "59", NOM_SERIE: "Alpha" },
-      ]),
+      data: JSON.stringify([{ ID_SERIE: "59", NOM_SERIE: "Alpha" }]),
     } as never);
 
     await expect(searchBdovoreSeries("Alpha")).resolves.toEqual([

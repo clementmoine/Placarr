@@ -923,10 +923,7 @@ describe("filterItemPriceOffers", () => {
 
     expect(
       filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
-    ).toEqual([
-      "PriceCharting:loose:8175",
-      "PriceCharting:cib:21364",
-    ]);
+    ).toEqual(["PriceCharting:loose:8175", "PriceCharting:cib:21364"]);
   });
 
   it("keeps Back Market refurbished hardware used near PriceCharting CIB", () => {
@@ -1071,10 +1068,7 @@ describe("filterItemPriceOffers", () => {
 
     expect(
       filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
-    ).toEqual([
-      "PriceCharting:loose:16411",
-      "PriceCharting:cib:27806",
-    ]);
+    ).toEqual(["PriceCharting:loose:16411", "PriceCharting:cib:27806"]);
   });
 
   it("drops unnamed shop rows when a titled listing matches", () => {

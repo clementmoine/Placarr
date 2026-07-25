@@ -157,9 +157,7 @@ async function resolveProviderWithTimeout(
     recordProviderResolve({
       providerId: adapter.id,
       mediaType,
-      durationMs: timedOut
-        ? timeoutMs
-        : Math.max(0, Date.now() - startedAt),
+      durationMs: timedOut ? timeoutMs : Math.max(0, Date.now() - startedAt),
       hit,
     });
   }
@@ -206,11 +204,7 @@ export async function resolveMetadataProvidersInOrder(
         return { providerId, value: null as MetadataResult | null };
       }
       try {
-        const value = await resolveProviderWithTimeout(
-          adapter,
-          ctx,
-          mediaType,
-        );
+        const value = await resolveProviderWithTimeout(adapter, ctx, mediaType);
         byProvider.set(providerId, value);
         if (options?.onProviderResult) {
           const callback = options.onProviderResult;
@@ -259,8 +253,7 @@ export async function resolveMetadataProvidersInOrder(
       providerId,
       byProvider.has(providerId)
         ? byProvider.get(providerId)!
-        : (results.find((row) => row.providerId === providerId)?.value ??
-          null),
+        : (results.find((row) => row.providerId === providerId)?.value ?? null),
     );
   }
 

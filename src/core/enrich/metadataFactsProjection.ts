@@ -80,7 +80,9 @@ function parseFieldEvidenceDisplayFact(
     colonIdx > 0 ? field.slice(0, colonIdx) : field
   ) as MetadataFact["kind"];
   const label =
-    colonIdx > 0 ? field.slice(colonIdx + 1) : formatProviderSourceLabel(source);
+    colonIdx > 0
+      ? field.slice(colonIdx + 1)
+      : formatProviderSourceLabel(source);
 
   if (kind === "tag" && label === "Poids") kind = "weight";
   if (kind === "tag" && label === "Estimation") kind = "price";

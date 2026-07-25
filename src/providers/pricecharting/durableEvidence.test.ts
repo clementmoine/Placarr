@@ -53,8 +53,7 @@ describe("pricecharting durableEvidence", () => {
     putProviderEvidence.mockResolvedValueOnce(undefined);
     await promotePriceChartingPriceEvidence({
       priceUsed: 1200,
-      sourceUrl:
-        "https://www.pricecharting.com/game/wii/super-monkey-ball",
+      sourceUrl: "https://www.pricecharting.com/game/wii/super-monkey-ball",
       productName: "Super Monkey Ball",
     });
 
@@ -64,8 +63,7 @@ describe("pricecharting durableEvidence", () => {
       kind: "detail",
       yieldJson: {
         priceUsed: 1200,
-        sourceUrl:
-          "https://www.pricecharting.com/game/wii/super-monkey-ball",
+        sourceUrl: "https://www.pricecharting.com/game/wii/super-monkey-ball",
         productName: "Super Monkey Ball",
       },
     });

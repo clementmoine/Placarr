@@ -17,6 +17,8 @@ const eslintConfig = [
       "coverage/",
       "tests/fixtures/",
       "scratch/",
+      // Client Prisma généré (prisma generate) — jamais édité à la main.
+      "src/generated/",
       "next-env.d.ts",
     ],
   },

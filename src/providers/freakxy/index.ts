@@ -4,7 +4,10 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  marketplaceContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 
 import { fetchFromFreakxy } from "./fetch";
 

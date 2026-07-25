@@ -64,9 +64,9 @@ describe("priceChartingAcceptanceTitleBag", () => {
     expect(bag.some((title) => /high stakes/i.test(title))).toBe(true);
     expect(bag.some((title) => /conduite/i.test(title))).toBe(true);
     expect(bag.some((title) => /road\s*&\s*track/i.test(title))).toBe(false);
-    expect(
-      bag.some((title) => title.toLowerCase() === "need for speed"),
-    ).toBe(false);
+    expect(bag.some((title) => title.toLowerCase() === "need for speed")).toBe(
+      false,
+    );
     expect(bag[0]).toMatch(/conduit/i);
   });
 

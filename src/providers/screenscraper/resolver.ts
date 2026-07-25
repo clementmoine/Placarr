@@ -1377,9 +1377,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             new Set(
               gameData.noms.map((n) => repairCatalogColonSubstitute(n.text)),
             ),
-          ).filter(
-            (n) => n.toLowerCase().trim() !== title.toLowerCase().trim(),
-          )
+          ).filter((n) => n.toLowerCase().trim() !== title.toLowerCase().trim())
         : undefined;
       const regionalTitles = gameData.noms
         ? gameData.noms

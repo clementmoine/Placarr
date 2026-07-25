@@ -45,10 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { cn } from "@/lib/shared/utils";
-import {
-  getItems,
-  refreshItemsBatch,
-} from "@/lib/api/items";
+import { getItems, refreshItemsBatch } from "@/lib/api/items";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -162,9 +159,7 @@ const CollectionGridItem = memo(function CollectionGridItem({
         <button
           type="button"
           aria-pressed={isSelected}
-          onClick={(event) =>
-            onSelect(item.id, { shiftKey: event.shiftKey })
-          }
+          onClick={(event) => onSelect(item.id, { shiftKey: event.shiftKey })}
           className="block w-full text-left"
         >
           {card}

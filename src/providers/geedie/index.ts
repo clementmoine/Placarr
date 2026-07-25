@@ -47,7 +47,9 @@ function galleryToMetadata(
           platformKey ??
           undefined,
       })),
-      externalIds: gallery.productId ? { geedie: gallery.productId } : undefined,
+      externalIds: gallery.productId
+        ? { geedie: gallery.productId }
+        : undefined,
     },
     platformKey,
   );

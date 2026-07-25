@@ -288,7 +288,14 @@ export const bdovoreModule: ProviderModule = {
     label: "BDovore",
     types: ["books"],
     nameDatabase: true,
-    capabilities: ["identify", "cover", "rating", "people", "releaseDate", "price"],
+    capabilities: [
+      "identify",
+      "cover",
+      "rating",
+      "people",
+      "releaseDate",
+      "price",
+    ],
     auth: { kind: "scrape" },
     canonical: false,
     defaultLanguage: "fr",
@@ -346,7 +353,8 @@ export const bdovoreModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  suggestDatabaseTitles: ({ cleanedName }) => getBdovoreSuggestions(cleanedName),
+  suggestDatabaseTitles: ({ cleanedName }) =>
+    getBdovoreSuggestions(cleanedName),
   healthCheck: createMetadataHealthCheck("bdovore", "BDovore", async () => {
     const start = Date.now();
     const isUp = await pingUrl("https://www.bdovore.com/");

@@ -297,9 +297,7 @@ describe("searchSensCritique", () => {
     expect(hits[0]?.id).toBe(415352);
     expect(promoteSensCritiqueSearchEvidence).toHaveBeenCalledWith(
       "https://www.senscritique.com/search?keywords=Rayman&universe=game",
-      expect.arrayContaining([
-        expect.objectContaining({ id: 415352 }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: 415352 })]),
     );
   });
 });
@@ -311,10 +309,7 @@ describe("sensCritiqueUniversesForType", () => {
       "book",
       "comicBook",
     ]);
-    expect(sensCritiqueUniversesForType("movies")).toEqual([
-      "movie",
-      "tvShow",
-    ]);
+    expect(sensCritiqueUniversesForType("movies")).toEqual(["movie", "tvShow"]);
     expect(sensCritiqueUniversesForType("musics")).toEqual(["musicAlbum"]);
     expect(sensCritiqueUniversesForType("boardgames")).toEqual([]);
     expect(sensCritiqueUniversesForType(null)).toEqual([]);

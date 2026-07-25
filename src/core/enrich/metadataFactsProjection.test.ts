@@ -164,9 +164,11 @@ describe("syncMetadataDisplayFactsFromFieldEvidence", () => {
 
     expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
     expect(merged?.find((fact) => fact.kind === "weight")?.value).toBe("390 g");
-    expect(merged?.find((fact) => fact.kind === "price" && fact.label === "Estimation")?.value).toBe(
-      "de 5 à 10 euros",
-    );
+    expect(
+      merged?.find(
+        (fact) => fact.kind === "price" && fact.label === "Estimation",
+      )?.value,
+    ).toBe("de 5 à 10 euros");
   });
 
   it("normalizes legacy estimate kind to price", async () => {
@@ -231,8 +233,7 @@ describe("syncMetadataDisplayFactsFromFieldEvidence", () => {
     expect(
       merged?.some(
         (fact) =>
-          fact.kind === "external-link" &&
-          fact.url?.includes("playstation-1"),
+          fact.kind === "external-link" && fact.url?.includes("playstation-1"),
       ),
     ).toBe(false);
     expect(merged?.some((fact) => fact.kind === "genre")).toBe(true);

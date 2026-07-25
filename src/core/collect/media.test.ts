@@ -1186,7 +1186,7 @@ describe("filterMetadataForShelfPlatform", () => {
           duration: null,
           role: "fr",
           coverProvenance: null,
-platformKey: null,
+          platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -1204,7 +1204,7 @@ platformKey: null,
           duration: null,
           role: "fr",
           coverProvenance: null,
-platformKey: null,
+          platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -1325,7 +1325,7 @@ describe("presentItem", () => {
             url: "/uploads/base-pop.jpg",
             title: "PS3 Prince of Persia",
             coverProvenance: null,
-platformKey: null,
+            platformKey: null,
             width: null,
             height: null,
             meanLuminance: null,
@@ -1343,7 +1343,7 @@ platformKey: null,
             url: "/uploads/trilogy-pop.jpg",
             title: "PS3 Prince of Persia Trilogy: 3 Full Games",
             coverProvenance: null,
-platformKey: null,
+            platformKey: null,
             width: null,
             height: null,
             meanLuminance: null,
@@ -1457,9 +1457,9 @@ platformKey: null,
       shelf: { type: "books", name: "Les Trésors de Picsou" },
     });
 
-    expect(presented.metadata?.attachments?.map((attachment) => attachment.url)).toEqual([
-      "/uploads/tresors.jpg",
-    ]);
+    expect(
+      presented.metadata?.attachments?.map((attachment) => attachment.url),
+    ).toEqual(["/uploads/tresors.jpg"]);
     expect(presented.imageUrl).toBe("/uploads/tresors.jpg");
     expect(presented.imageUrl).not.toBe("/uploads/ages-or-crop.jpg");
   });
@@ -1606,9 +1606,9 @@ describe("mergeCoverAttachmentsForPicker Perso/jaquette twin", () => {
       "fr",
     );
 
-    expect(picker.filter((a) => a.type === "cover" || a.type === "image")).toHaveLength(
-      1,
-    );
+    expect(
+      picker.filter((a) => a.type === "cover" || a.type === "image"),
+    ).toHaveLength(1);
     expect(picker[0]?.source).toBe("netgamesretro");
     expect(picker[0]?.url).toBe(crop);
   });

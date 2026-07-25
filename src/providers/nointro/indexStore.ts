@@ -59,7 +59,10 @@ async function fileExists(filePath: string): Promise<boolean> {
 }
 
 function normalizeChecksum(value?: string | null): string | null {
-  const cleaned = value?.trim().toLowerCase().replace(/[^a-f0-9]/g, "");
+  const cleaned = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[^a-f0-9]/g, "");
   return cleaned || null;
 }
 
@@ -205,9 +208,7 @@ export function loadNoIntroDatIntoDb(
   }
   const parsed = parseNoIntroDatXml(xml);
   const datName =
-    options?.datName?.trim() ||
-    parsed.header.name?.trim() ||
-    "Unknown DAT";
+    options?.datName?.trim() || parsed.header.name?.trim() || "Unknown DAT";
   const startId = options?.startId ?? 1;
   db.exec("BEGIN TRANSACTION");
   const stats = insertDatGames(db, parsed.games, datName, startId);
@@ -270,9 +271,7 @@ export async function buildNoIntroIndex(
 
   const files = await resolveNoIntroDatFiles(datPath);
   if (files.length === 0) {
-    console.warn(
-      `[No-Intro] No .dat/.xml files found at ${datPath}`,
-    );
+    console.warn(`[No-Intro] No .dat/.xml files found at ${datPath}`);
     return null;
   }
 

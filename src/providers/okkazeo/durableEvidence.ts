@@ -81,9 +81,6 @@ export async function promoteOkkazeoSearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Okkazeo] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Okkazeo] Failed to promote durable search evidence:", error);
   }
 }

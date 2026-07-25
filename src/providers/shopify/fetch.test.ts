@@ -72,15 +72,8 @@ describe("fetchShopifySearchHandles", () => {
     ]);
 
     await expect(
-      fetchShopifySearchHandles(
-        LATELIERDESJEUX_CONFIG,
-        "",
-        "3421272109517",
-      ),
-    ).resolves.toEqual([
-      "mille-sabords-3421272109517",
-      "carte-cadeaux",
-    ]);
+      fetchShopifySearchHandles(LATELIERDESJEUX_CONFIG, "", "3421272109517"),
+    ).resolves.toEqual(["mille-sabords-3421272109517", "carte-cadeaux"]);
     expect(mockedGet).not.toHaveBeenCalled();
     expect(promoteShopifySearchEvidence).not.toHaveBeenCalled();
   });

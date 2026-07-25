@@ -166,7 +166,9 @@ describe("fetchPricesFromSmartoys", () => {
     });
 
     expect(mockedGet).toHaveBeenCalledTimes(2);
-    expect(String(mockedGet.mock.calls[1]?.[0])).toContain("-p-0711719405191.html");
+    expect(String(mockedGet.mock.calls[1]?.[0])).toContain(
+      "-p-0711719405191.html",
+    );
   });
 
   it("réutilise ProviderEvidence SearchYield sans HTTP search", async () => {
@@ -191,7 +193,9 @@ describe("fetchPricesFromSmartoys", () => {
     });
 
     expect(mockedGet).toHaveBeenCalledTimes(1);
-    expect(String(mockedGet.mock.calls[0]?.[0])).toContain("-p-0711719405191.html");
+    expect(String(mockedGet.mock.calls[0]?.[0])).toContain(
+      "-p-0711719405191.html",
+    );
     expect(promoteSmartoysSearchEvidence).not.toHaveBeenCalled();
   });
 

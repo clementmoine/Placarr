@@ -372,11 +372,11 @@ describe("preferPinnedProviderIds", () => {
   });
 
   it("keeps original relative order within pin and seek groups", () => {
-    expect(
-      preferPinnedProviderIds(
-        ["a", "b", "c", "d"],
-        ["c", "a"],
-      ),
-    ).toEqual(["a", "c", "b", "d"]);
+    expect(preferPinnedProviderIds(["a", "b", "c", "d"], ["c", "a"])).toEqual([
+      "a",
+      "c",
+      "b",
+      "d",
+    ]);
   });
 });

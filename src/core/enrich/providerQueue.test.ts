@@ -198,7 +198,9 @@ describe("metadataProviderQueue", () => {
         { name: "Test", isBackground: false },
         adapters,
       );
-      await vi.advanceTimersByTimeAsync(PROVIDER_RESOLVE_TIMEOUT_INTERACTIVE_MS);
+      await vi.advanceTimersByTimeAsync(
+        PROVIDER_RESOLVE_TIMEOUT_INTERACTIVE_MS,
+      );
       const byProvider = await pending;
       expect(byProvider.get("slow")).toBeNull();
       expect(byProvider.get("fast")?.title).toBe("fast");

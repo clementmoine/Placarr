@@ -170,11 +170,7 @@ export function collectPayloadShelfHints(
   const push = (value?: string | null) => {
     const trimmed = value?.trim();
     if (!trimmed) return;
-    if (
-      hints.some(
-        (hint) => hint.toLowerCase() === trimmed.toLowerCase(),
-      )
-    ) {
+    if (hints.some((hint) => hint.toLowerCase() === trimmed.toLowerCase())) {
       return;
     }
     hints.push(trimmed);
@@ -194,8 +190,7 @@ export function shelfHintObservationsFromHints(
 ): MetadataObservation[] {
   return hints.map((hint) => {
     const isFormatHint =
-      mediaFormat != null &&
-      hint.toLowerCase() === mediaFormat.toLowerCase();
+      mediaFormat != null && hint.toLowerCase() === mediaFormat.toLowerCase();
     return {
       kind: "fact" as const,
       role: "listing_fact" as const,
@@ -206,10 +201,7 @@ export function shelfHintObservationsFromHints(
         providerId: "marketplace",
         providerLabel: "Marketplace",
         sourceDocumentRole: "structured_data" as const,
-        evidenceSignals: [
-          "structured_data" as const,
-          "barcode_match" as const,
-        ],
+        evidenceSignals: ["structured_data" as const, "barcode_match" as const],
       },
       usage: makeObservationUsage({
         displayCandidate: false,

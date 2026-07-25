@@ -99,7 +99,12 @@ describe("workQueue", () => {
       kind: BACKGROUND_WORK_KIND.priceRefresh,
       itemId: "item-1",
       replaceOpenForItem: true,
-      payload: { id: "item-1", name: "Voodoo Vince", shelfType: "games", shelfName: "Xbox" },
+      payload: {
+        id: "item-1",
+        name: "Voodoo Vince",
+        shelfType: "games",
+        shelfName: "Xbox",
+      },
     });
 
     expect(h.create).toHaveBeenCalledWith(

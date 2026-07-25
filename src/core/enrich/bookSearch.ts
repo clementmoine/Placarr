@@ -72,4 +72,3 @@ export function buildBookMetadataSearchQueries(
 
   return ordered;
 }
-

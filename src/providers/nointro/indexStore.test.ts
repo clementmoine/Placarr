@@ -79,9 +79,9 @@ describe("No-Intro indexStore", () => {
 
     const byTitle = searchNoIntroGamesByTitle(db, "tetris japan");
     expect(byTitle.some((game) => game.name === "Tetris (Japan)")).toBe(true);
-    expect(byTitle.find((game) => game.name === "Tetris (Japan)")?.cloneOf).toBe(
-      "Tetris (World) (Rev 1)",
-    );
+    expect(
+      byTitle.find((game) => game.name === "Tetris (Japan)")?.cloneOf,
+    ).toBe("Tetris (World) (Rev 1)");
   });
 
   it("buildNoIntroIndex writes sqlite from a local DAT file", async () => {
@@ -106,21 +106,25 @@ describe("No-Intro indexStore", () => {
   });
 
   it("resolveNoIntroDatFiles lists .dat/.xml in a directory", async () => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "placarr-nointro-list-"));
+    const dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "placarr-nointro-list-"),
+    );
     await fs.writeFile(path.join(dir, "gb.dat"), "<datafile/>", "utf8");
     await fs.writeFile(path.join(dir, "nes.XML"), "<datafile/>", "utf8");
     await fs.writeFile(path.join(dir, "readme.txt"), "nope", "utf8");
 
     const files = await resolveNoIntroDatFiles(dir);
-    expect(files.map((file) => path.basename(file).toLowerCase()).sort()).toEqual(
-      ["gb.dat", "nes.xml"],
-    );
+    expect(
+      files.map((file) => path.basename(file).toLowerCase()).sort(),
+    ).toEqual(["gb.dat", "nes.xml"]);
 
     await fs.rm(dir, { recursive: true, force: true });
   });
 
   it("buildNoIntroIndex merges multiple DATs from a directory", async () => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "placarr-nointro-multi-"));
+    const dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "placarr-nointro-multi-"),
+    );
     const sqliteFile = path.join(dir, "nointro.sqlite");
     await fs.writeFile(
       path.join(dir, "gb.dat"),

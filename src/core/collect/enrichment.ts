@@ -110,7 +110,5 @@ export function collectionHasMetadataBusy(
 export function metadataBusyRefetchInterval(
   items: ItemEnrichmentFields[] | null | undefined,
 ): number | false {
-  return collectionHasMetadataBusy(items)
-    ? METADATA_POLL_INTERVAL_MS
-    : false;
+  return collectionHasMetadataBusy(items) ? METADATA_POLL_INTERVAL_MS : false;
 }

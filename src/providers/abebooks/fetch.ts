@@ -209,14 +209,14 @@ export type AbeBooksSeriesVolume = {
 };
 
 function volumeFromSeriesPositionLabel(label: string): string | null {
-  const match = label.match(
-    /(?:livre|book)\s+(\d+)\s+(?:sur|of)\s+\d+/i,
-  );
+  const match = label.match(/(?:livre|book)\s+(\d+)\s+(?:sur|of)\s+\d+/i);
   if (!match) return null;
   return String(Number.parseInt(match[1], 10));
 }
 
-export function parseAbeBooksSeriesVolumes(payload: unknown): AbeBooksSeriesVolume[] {
+export function parseAbeBooksSeriesVolumes(
+  payload: unknown,
+): AbeBooksSeriesVolume[] {
   if (!payload || typeof payload !== "object") return [];
   const cards = (payload as { positionCards?: unknown }).positionCards;
   if (!Array.isArray(cards)) return [];
@@ -231,7 +231,8 @@ export function parseAbeBooksSeriesVolumes(payload: unknown): AbeBooksSeriesVolu
       title?: unknown;
       positionLabel?: unknown;
     };
-    const coverUrl = typeof row.imageUrl === "string" ? row.imageUrl.trim() : "";
+    const coverUrl =
+      typeof row.imageUrl === "string" ? row.imageUrl.trim() : "";
     const barcode = coverUrl ? isbnFromAbeBooksCoverUrl(coverUrl) : null;
     if (!barcode || seen.has(barcode)) continue;
 

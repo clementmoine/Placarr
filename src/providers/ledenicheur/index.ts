@@ -12,7 +12,10 @@ import {
 } from "@/lib/dev/teardownUtils";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { gatedContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  gatedContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import {
   fetchPricesFromLeDenicheur,

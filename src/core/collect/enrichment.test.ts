@@ -56,9 +56,9 @@ describe("isItemMetadataRefreshing", () => {
   });
 
   it("returns false when the stamp is cleared", () => {
-    expect(
-      isItemMetadataRefreshing({ metadataRefreshStartedAt: null }),
-    ).toBe(false);
+    expect(isItemMetadataRefreshing({ metadataRefreshStartedAt: null })).toBe(
+      false,
+    );
   });
 });
 

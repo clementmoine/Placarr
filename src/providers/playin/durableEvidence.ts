@@ -75,9 +75,6 @@ export async function promotePlayInSearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Play-In] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Play-In] Failed to promote durable search evidence:", error);
   }
 }

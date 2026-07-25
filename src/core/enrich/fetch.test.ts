@@ -426,17 +426,22 @@ describe("fetchMetadataByType generic routing", () => {
       return null;
     });
 
-    const res = await fetchMetadataByType("Nintendo Wii Bleu", "hardware", null, null, {
-      shelfName: "Consoles",
-    });
+    const res = await fetchMetadataByType(
+      "Nintendo Wii Bleu",
+      "hardware",
+      null,
+      null,
+      {
+        shelfName: "Consoles",
+      },
+    );
 
     expect(
       mockResolve.mock.calls.some((call) => call[1] === "backmarket"),
     ).toBe(true);
     expect(
       res?.facts?.some(
-        (fact) =>
-          fact.source === "backmarket" && fact.kind === "external-link",
+        (fact) => fact.source === "backmarket" && fact.kind === "external-link",
       ),
     ).toBe(true);
   });
@@ -743,9 +748,9 @@ describe("fetchMetadataByType generic routing", () => {
       existingScrapeProviderIds: ["bdovore"],
     });
 
-    expect(
-      mockResolve.mock.calls.some((call) => call[1] === "bdovore"),
-    ).toBe(true);
+    expect(mockResolve.mock.calls.some((call) => call[1] === "bdovore")).toBe(
+      true,
+    );
   });
 
   it("passes romChecksums on the initial Pass1 adapter context", async () => {
@@ -819,14 +824,17 @@ describe("fetchMetadataByType generic routing", () => {
     // and nothing is pinned.
     const nonScrapeCalls = mockResolve.mock.calls.filter((call) => {
       const id = call[1] as string;
-      return !["howlongtobeat", "coverproject", "pricecharting", "mobygames"].includes(
-        id,
-      );
+      return ![
+        "howlongtobeat",
+        "coverproject",
+        "pricecharting",
+        "mobygames",
+      ].includes(id);
     });
     // Soft check: at least IGDB/ScreenScraper/LaunchBox must not run.
-    expect(
-      mockResolve.mock.calls.some((call) => call[1] === "igdb"),
-    ).toBe(false);
+    expect(mockResolve.mock.calls.some((call) => call[1] === "igdb")).toBe(
+      false,
+    );
     expect(
       mockResolve.mock.calls.some((call) => call[1] === "screenscraper"),
     ).toBe(false);

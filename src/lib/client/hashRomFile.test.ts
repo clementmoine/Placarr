@@ -23,9 +23,7 @@ describe("hashRomFile", () => {
   });
 
   it("MD5 matches Node createHash for empty and abc", () => {
-    expect(md5Hex(utf8(""))).toBe(
-      createHash("md5").update("").digest("hex"),
-    );
+    expect(md5Hex(utf8(""))).toBe(createHash("md5").update("").digest("hex"));
     expect(md5Hex(utf8("abc"))).toBe(
       createHash("md5").update("abc").digest("hex"),
     );

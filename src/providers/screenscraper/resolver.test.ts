@@ -209,8 +209,7 @@ describe("buildScreenScraperObservations", () => {
         externalIds: { screenscraper: "14825" },
       },
       {
-        sourceUrl:
-          "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
+        sourceUrl: "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
         hasBarcodeMatch: true,
         hasPlatformMatch: true,
       },

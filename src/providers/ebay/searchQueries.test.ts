@@ -9,10 +9,7 @@ describe("ebayMarketplaceQueryVariants", () => {
   it("adds an accent-stripped variant for magazine titles", () => {
     expect(
       ebayMarketplaceQueryVariants(["Les Trésors de Picsou n°63"]),
-    ).toEqual([
-      "Les Trésors de Picsou n°63",
-      "Les Tresors de Picsou N 63",
-    ]);
+    ).toEqual(["Les Trésors de Picsou n°63", "Les Tresors de Picsou N 63"]);
   });
 });
 
@@ -33,10 +30,10 @@ describe("ebayPriceSearchQueries", () => {
 
   it("title-only: two distinct titles + ascii variants, capped at 4", () => {
     expect(
-      ebayPriceSearchQueries(
-        "Les Trésors de Picsou n°63",
-        ["Les trésors de Picsou n°63", "Les Trésors de Picsou 63"],
-      ),
+      ebayPriceSearchQueries("Les Trésors de Picsou n°63", [
+        "Les trésors de Picsou n°63",
+        "Les Trésors de Picsou 63",
+      ]),
     ).toEqual([
       "Les Trésors de Picsou n°63",
       "Les Tresors de Picsou N 63",

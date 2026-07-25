@@ -223,9 +223,7 @@ function mapBdFugueMetadata(
     regionalTitles: [{ region: "fr", text: product.title }],
     attachments: buildBdFugueAttachments(product),
     facts,
-    externalIds: product.barcode
-      ? { bdfugue: product.barcode }
-      : undefined,
+    externalIds: product.barcode ? { bdfugue: product.barcode } : undefined,
   };
 
   const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];

@@ -51,7 +51,8 @@ export function isNoIntroDownloadAllowed(
 export function resolveNoIntroDatDestDir(
   options?: Pick<NoIntroDatSyncOptions, "destDir">,
 ): string {
-  const explicit = options?.destDir?.trim() || process.env.NOINTRO_DAT_PATH?.trim();
+  const explicit =
+    options?.destDir?.trim() || process.env.NOINTRO_DAT_PATH?.trim();
   if (explicit) return explicit;
   return path.join(cacheDir(), "dats");
 }
@@ -190,15 +191,11 @@ export async function syncNoIntroDatPack(
     await unzipToDir(zipPath, extractRoot);
     const nested = await collectDatFiles(extractRoot);
     if (nested.length === 0) {
-      console.warn(
-        `[No-Intro] No .dat/.xml files inside pack ${zipPath}`,
-      );
+      console.warn(`[No-Intro] No .dat/.xml files inside pack ${zipPath}`);
       return null;
     }
     const files = await flattenDatFilesInto(nested, destDir);
-    console.info(
-      `[No-Intro] Synced ${files.length} DAT file(s) → ${destDir}`,
-    );
+    console.info(`[No-Intro] Synced ${files.length} DAT file(s) → ${destDir}`);
     return { destDir, files, source };
   } finally {
     await fs.rm(extractRoot, { recursive: true, force: true }).catch(() => {});

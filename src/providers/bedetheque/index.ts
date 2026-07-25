@@ -18,14 +18,20 @@ import type {
   MetadataProviderAdapter,
   ProviderModule,
 } from "@/types/providerModule";
-import { matchBarcodes, matchPrimaryBarcode } from "@/core/catalog/matchContext";
+import {
+  matchBarcodes,
+  matchPrimaryBarcode,
+} from "@/core/catalog/matchContext";
 
-import { fetchBedethequeMetadata, fetchBedethequeAlbumByUrl, getBedethequeSuggestions, isKnownBedethequePriceEstimate } from "./fetch";
+import {
+  fetchBedethequeMetadata,
+  fetchBedethequeAlbumByUrl,
+  getBedethequeSuggestions,
+  isKnownBedethequePriceEstimate,
+} from "./fetch";
 import { collectBedethequeMappingRawKeys } from "./fetch";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
-import {
-  pinnedProviderRecordUrl,
-} from "@/providers/shared/pinnedRecord";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 export {
   fetchBedethequeMetadata,
@@ -57,7 +63,10 @@ function buildBedethequePriceFacts(
     });
   }
 
-  if (album.priceEstimate && isKnownBedethequePriceEstimate(album.priceEstimate)) {
+  if (
+    album.priceEstimate &&
+    isKnownBedethequePriceEstimate(album.priceEstimate)
+  ) {
     facts.push({
       kind: "price",
       label: "Estimation",
@@ -106,8 +115,8 @@ async function refreshBedethequeOffers(ctx: BarcodePriceRefreshContext) {
   const barcodes = matchBarcodes(ctx);
   const queries = Array.from(
     new Set(
-      [ctx.primaryName, ...ctx.fallbackNames, ...barcodes].filter(
-        (query) => query?.trim(),
+      [ctx.primaryName, ...ctx.fallbackNames, ...barcodes].filter((query) =>
+        query?.trim(),
       ),
     ),
   );

@@ -262,8 +262,7 @@ export function guessShelfByStrongNameMatch(
       score > 0 &&
       (!best ||
         score > best.score ||
-        (score === best.score &&
-          normalizedShelfName.length > best.nameLength))
+        (score === best.score && normalizedShelfName.length > best.nameLength))
     ) {
       best = {
         shelfId: shelf.id,
@@ -497,7 +496,11 @@ export function shelfSearchHintsFromBarcodePayload(payload: {
   const push = (value?: string | null) => {
     const trimmed = value?.trim();
     if (!trimmed) return;
-    if (hints.some((hint) => normalizeShelfName(hint) === normalizeShelfName(trimmed))) {
+    if (
+      hints.some(
+        (hint) => normalizeShelfName(hint) === normalizeShelfName(trimmed),
+      )
+    ) {
       return;
     }
     hints.push(trimmed);

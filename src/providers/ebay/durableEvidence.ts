@@ -47,7 +47,10 @@ function isEbayBrowseSearchHits(
     if (!isOptionalString(record.itemWebUrl)) return false;
     if (!isImageBlock(record.image)) return false;
     if (!isPriceBlock(record.price)) return false;
-    if (record.thumbnailImages !== undefined && record.thumbnailImages !== null) {
+    if (
+      record.thumbnailImages !== undefined &&
+      record.thumbnailImages !== null
+    ) {
       if (!Array.isArray(record.thumbnailImages)) return false;
       if (!record.thumbnailImages.every(isImageBlock)) return false;
     }

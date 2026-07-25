@@ -66,8 +66,12 @@ export async function fetchGetWithFlareFallback(
     skipDirect?: boolean;
   } = {},
 ): Promise<ScrapeFetchResponse> {
-  const { flareMaxTimeoutMs, signal: explicitSignal, skipDirect, ...axiosOptions } =
-    options;
+  const {
+    flareMaxTimeoutMs,
+    signal: explicitSignal,
+    skipDirect,
+    ...axiosOptions
+  } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
   if (signal?.aborted) {
     const reason = signal.reason;

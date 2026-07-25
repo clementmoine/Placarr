@@ -62,7 +62,9 @@ describe("priceObservationsFromMetadataFacts", () => {
     ]);
 
     expect(observations).toHaveLength(3);
-    expect(observations.find((entry) => entry.condition === "estimated")).toMatchObject({
+    expect(
+      observations.find((entry) => entry.condition === "estimated"),
+    ).toMatchObject({
       source: "bedetheque",
       metadataScoped: true,
       catalogEstimateMinCents: 500,
@@ -92,12 +94,12 @@ describe("priceObservationsFromMetadataFacts", () => {
         },
       ]),
     ).toEqual([]);
-    expect(observations.find((entry) => entry.condition === "new")?.priceCents).toBe(
-      730,
-    );
-    expect(observations.find((entry) => entry.condition === "used")?.priceCents).toBe(
-      1100,
-    );
+    expect(
+      observations.find((entry) => entry.condition === "new")?.priceCents,
+    ).toBe(730);
+    expect(
+      observations.find((entry) => entry.condition === "used")?.priceCents,
+    ).toBe(1100);
   });
 });
 

@@ -355,7 +355,11 @@ describe("POST /api/items — autorisation", () => {
       title: "Giana Sisters",
       imageUrl: "https://example.com/cover.jpg",
       attachments: [
-        { type: "cover", source: "screenscraper", url: "https://example.com/cover.jpg" },
+        {
+          type: "cover",
+          source: "screenscraper",
+          url: "https://example.com/cover.jpg",
+        },
       ],
     };
 

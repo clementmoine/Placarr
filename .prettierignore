@@ -4,3 +4,4 @@ dist
 public
 pnpm-lock.yaml
 tests/fixtures
+src/generated

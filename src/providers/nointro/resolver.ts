@@ -97,7 +97,10 @@ export function scoreNoIntroTitleMatch(
     catalogLabelSimilarity(query, game.name),
     catalogLabelSimilarity(query, stripped),
     game.description
-      ? catalogLabelSimilarity(query, stripNoIntroReleaseFlags(game.description))
+      ? catalogLabelSimilarity(
+          query,
+          stripNoIntroReleaseFlags(game.description),
+        )
       : 0,
   );
 }

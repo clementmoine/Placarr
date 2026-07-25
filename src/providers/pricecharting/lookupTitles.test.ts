@@ -26,9 +26,9 @@ describe("expandPriceChartingLookupTitles", () => {
     const variants = expandPriceChartingLookupTitles(
       "Pokémon Yellow Version: Special Pikachu Edition",
     );
-    expect(
-      variants.some((title) => /^pokémon yellow$/i.test(title)),
-    ).toBe(true);
+    expect(variants.some((title) => /^pokémon yellow$/i.test(title))).toBe(
+      true,
+    );
   });
 
   it("expands glued Joycon into Joy-Con / Joy Con catalog spellings", () => {
@@ -94,9 +94,9 @@ describe("expandPriceChartingLookupTitles", () => {
   it("glues spaced platform aliases (PS One → PSOne) and expands System", () => {
     const variants = expandPriceChartingLookupTitles("PS One Slim");
     expect(variants.some((title) => /psone/i.test(title))).toBe(true);
-    expect(
-      variants.some((title) => /ps\s*one.*system/i.test(title)),
-    ).toBe(true);
+    expect(variants.some((title) => /ps\s*one.*system/i.test(title))).toBe(
+      true,
+    );
   });
 
   it("expands bare PSOne to PriceCharting Slim System seeks", () => {
@@ -122,9 +122,7 @@ describe("expandPriceChartingLookupTitles", () => {
   it("inserts Console before capacity (Slim 250Go → Slim Console 250GB)", () => {
     const variants = expandPriceChartingLookupTitles("Xbox 360 Slim 250Go");
     expect(
-      variants.some((title) =>
-        /^Xbox 360 Slim Console 250\s*GB$/i.test(title),
-      ),
+      variants.some((title) => /^Xbox 360 Slim Console 250\s*GB$/i.test(title)),
     ).toBe(true);
   });
 });

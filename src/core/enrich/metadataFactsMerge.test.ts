@@ -80,9 +80,7 @@ describe("mergeMetadataFactsForStorage", () => {
 
     const merged = mergeMetadataFactsForStorage(existing, incoming);
     expect(
-      merged.some(
-        (fact) => fact.kind === "price" && fact.value === "11,00 €",
-      ),
+      merged.some((fact) => fact.kind === "price" && fact.value === "11,00 €"),
     ).toBe(true);
   });
 
@@ -109,9 +107,7 @@ describe("mergeMetadataFactsForStorage", () => {
       merged.filter(
         (fact) => fact.kind === "price" && fact.source === "booknode",
       ),
-    ).toEqual([
-      expect.objectContaining({ value: "9,50 €" }),
-    ]);
+    ).toEqual([expect.objectContaining({ value: "9,50 €" })]);
   });
 
   it("incoming external-link replaces stale link from the same provider", () => {
@@ -141,6 +137,8 @@ describe("mergeMetadataFactsForStorage", () => {
           fact.kind === "external-link" &&
           normalizeProviderSourceKey(fact.source ?? "") === "bedetheque",
       ),
-    ).toEqual([expect.objectContaining({ url: "https://www.bedetheque.com/new.html" })]);
+    ).toEqual([
+      expect.objectContaining({ url: "https://www.bedetheque.com/new.html" }),
+    ]);
   });
 });

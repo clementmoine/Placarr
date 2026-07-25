@@ -22,9 +22,7 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import type {
-  ObservationEvidenceSignal,
-} from "@/types/metadataObservation";
+import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
@@ -72,7 +70,9 @@ function buildDecitreAttachments(
   ];
 }
 
-function mapDecitreMetadata(product: DecitreProduct | null): MetadataResult | null {
+function mapDecitreMetadata(
+  product: DecitreProduct | null,
+): MetadataResult | null {
   if (!product?.title) return null;
 
   const facts: MetadataFact[] = [
@@ -167,9 +167,7 @@ function mapDecitreMetadata(product: DecitreProduct | null): MetadataResult | nu
     regionalTitles: [{ region: "fr", text: product.title }],
     attachments: buildDecitreAttachments(product),
     facts,
-    externalIds: product.barcode
-      ? { decitre: product.barcode }
-      : undefined,
+    externalIds: product.barcode ? { decitre: product.barcode } : undefined,
   };
 
   const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];

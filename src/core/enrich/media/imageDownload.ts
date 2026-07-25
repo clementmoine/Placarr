@@ -4,7 +4,10 @@
 import path from "path";
 import crypto from "crypto";
 import fs from "fs";
-import { PROVIDERS, providerModuleForCoverDownload } from "@/core/catalog/catalog";
+import {
+  PROVIDERS,
+  providerModuleForCoverDownload,
+} from "@/core/catalog/catalog";
 import { canonicalProviderIdForSource } from "@/core/catalog/sourceTraits";
 import { isMissingArtImageUrl } from "@/core/enrich/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPlaceholder.server";
@@ -182,4 +185,3 @@ export async function downloadRemoteImage(
     return persistRemoteFallback();
   }
 }
-

@@ -25,9 +25,7 @@ describe("pricecharting hardware barcode sources", () => {
         label: "PriceCharting",
       }),
     ]);
-    expect(sources?.[0]?.products[0]?.name).toBe(
-      "Playstation 3 System 60GB",
-    );
+    expect(sources?.[0]?.products[0]?.name).toBe("Playstation 3 System 60GB");
     expect(sources?.[0]?.products[0]?.coverUrl).toBe(
       "https://example.com/ps3.jpg",
     );

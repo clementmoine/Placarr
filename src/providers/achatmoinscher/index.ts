@@ -2,7 +2,10 @@ import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
-import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  marketplaceContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import {
   makeObservationUsage,

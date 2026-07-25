@@ -94,7 +94,9 @@ async function main() {
       "WARN: p95 > 100ms — investigate FTS plan size or index health before relying on LaunchBox at scan.",
     );
   } else {
-    console.log("OK: p95 ≤ 100ms on this machine (keep LaunchBox local index).");
+    console.log(
+      "OK: p95 ≤ 100ms on this machine (keep LaunchBox local index).",
+    );
   }
 
   if (maxPlans > LAUNCHBOX_FTS_MATCH_PLAN_BUDGET) {

@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  normalizeForTokens,
-  repairCatalogColonSubstitute,
-} from "./normalize";
+import { normalizeForTokens, repairCatalogColonSubstitute } from "./normalize";
 
 describe("normalizeForTokens", () => {
   it("strips diacritics and lowercases", () => {
@@ -19,9 +16,7 @@ describe("normalizeForTokens", () => {
 describe("repairCatalogColonSubstitute", () => {
   it("rewrites ScreenScraper-style Main ? Subtitle to a colon", () => {
     expect(
-      repairCatalogColonSubstitute(
-        "Lego La Grande Aventure ? Le Jeu Vidéo",
-      ),
+      repairCatalogColonSubstitute("Lego La Grande Aventure ? Le Jeu Vidéo"),
     ).toBe("Lego La Grande Aventure : Le Jeu Vidéo");
   });
 

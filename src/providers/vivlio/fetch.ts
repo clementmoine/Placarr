@@ -116,11 +116,7 @@ function firstName(value: unknown): string | undefined {
 function schemaNames(value: unknown): string[] {
   const raw = Array.isArray(value) ? value : value ? [value] : [];
   return Array.from(
-    new Set(
-      raw
-        .map(firstName)
-        .filter((name): name is string => Boolean(name)),
-    ),
+    new Set(raw.map(firstName).filter((name): name is string => Boolean(name))),
   );
 }
 
@@ -214,11 +210,7 @@ export function parseVivlioSearchHits(html: string): VivlioSearchHit[] {
     const url = absoluteUrl(path);
     if (!url || seen.has(url)) continue;
     seen.add(url);
-    const slugTitle = path
-      .split("/")
-      .pop()
-      ?.replace(/-/g, " ")
-      .trim();
+    const slugTitle = path.split("/").pop()?.replace(/-/g, " ").trim();
     hits.push({
       title: cleanText(slugTitle) || barcode,
       productUrl: url,
@@ -236,9 +228,7 @@ export function parseVivlioProductPage(
   const blocks = parseJsonLdBlocks(html);
   const product =
     blocks.find((block) =>
-      schemaTypes(block["@type"]).some((type) =>
-        /product|book/i.test(type),
-      ),
+      schemaTypes(block["@type"]).some((type) => /product|book/i.test(type)),
     ) || null;
   const bookFeed = blocks.find((block) =>
     schemaTypes(block["@type"]).some((type) => /datafeed/i.test(type)),
@@ -252,7 +242,9 @@ export function parseVivlioProductPage(
     firstName(product?.name) ||
     firstName(bookExample?.name) ||
     cleanText(
-      html.match(/property=["']og:title["'][^>]+content=["']([^"']+)["']/i)?.[1],
+      html.match(
+        /property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+      )?.[1],
     )?.replace(/\s+Ebook\b.*$/i, "");
   if (!title) return null;
 
@@ -278,7 +270,9 @@ export function parseVivlioProductPage(
     );
   const imageUrl = normalizeVivlioCoverUrl(
     firstName(product?.image) ||
-      html.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
+      html.match(
+        /property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+      )?.[1],
   );
   const offers =
     product?.offers && typeof product.offers === "object"
@@ -302,10 +296,7 @@ export function parseVivlioProductPage(
       workExampleOffer?.Price,
   );
   const bookFormat = cleanText(
-    String(product?.bookFormat || "").replace(
-      /^https?:\/\/schema\.org\//i,
-      "",
-    ),
+    String(product?.bookFormat || "").replace(/^https?:\/\/schema\.org\//i, ""),
   );
   const releaseDate = cleanText(String(workExample?.datePublished || ""));
   const series = parseVivlioCatalogLink(html, "serie");
@@ -436,9 +427,9 @@ export async function resolveVivlioMetadata(options: {
     for (const hit of hits.slice(0, 8)) {
       if (
         !isCandidateAligned(query, hit.title) &&
-        !hit.productUrl.toLowerCase().includes(
-          query.toLowerCase().replace(/\s+/g, "-").slice(0, 20),
-        )
+        !hit.productUrl
+          .toLowerCase()
+          .includes(query.toLowerCase().replace(/\s+/g, "-").slice(0, 20))
       ) {
         // Slug titles are weak — still fetch top hits and align on fiche.
       }
@@ -457,8 +448,6 @@ export async function collectVivlioMappingRawKeys(
   query: string,
 ): Promise<string[]> {
   const hits = await searchVivlioHits(query);
-  const product = hits[0]
-    ? await fetchVivlioProduct(hits[0].productUrl)
-    : null;
+  const product = hits[0] ? await fetchVivlioProduct(hits[0].productUrl) : null;
   return collectObjectMappingSignals({ hits: hits.slice(0, 3), product });
 }

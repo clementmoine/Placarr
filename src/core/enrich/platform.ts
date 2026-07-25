@@ -25,11 +25,7 @@ export function resolveGameMetadataPlatform(
   shelfName?: string | null,
   shelfType?: string | null,
 ): string | undefined {
-  if (
-    shelfType &&
-    shelfType !== "games" &&
-    shelfType !== "hardware"
-  ) {
+  if (shelfType && shelfType !== "games" && shelfType !== "hardware") {
     return undefined;
   }
 

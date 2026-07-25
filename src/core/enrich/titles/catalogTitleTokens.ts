@@ -37,7 +37,10 @@ export function distinctiveTitleTokens(value: string): string[] {
  * parenthetical segment, album title). Rewards embedded sub-series labels
  * without product-specific literals.
  */
-export function distinctiveTokenCoverage(query: string, candidate: string): number {
+export function distinctiveTokenCoverage(
+  query: string,
+  candidate: string,
+): number {
   const queryTokens = distinctiveTitleTokens(query);
   if (queryTokens.length === 0) return 0;
   const candidateTokens = catalogMatchTokenSet(candidate);

@@ -346,7 +346,8 @@ export async function refreshItemPricesFromContext(
     }
     return refreshBarcodePrices(
       refreshBarcodeInput(context, cleanedBarcode, options.signal),
-    );  })();
+    );
+  })();
 
   inFlightPriceRefresh.set(key, promise);
   try {
@@ -533,10 +534,7 @@ export async function readItemPrices(
   const fresh = await refreshItemPricesFromContext(context);
   return finalizeItemPrices(
     context,
-    withMetadataPriceFallback(
-      context,
-      alignPricesForContext(context, fresh),
-    ),
+    withMetadataPriceFallback(context, alignPricesForContext(context, fresh)),
   );
 }
 

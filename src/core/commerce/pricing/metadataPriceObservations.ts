@@ -1,4 +1,7 @@
-import { formatProviderSourceLabel, isReferencePriceSource } from "@/core/catalog/catalog";
+import {
+  formatProviderSourceLabel,
+  isReferencePriceSource,
+} from "@/core/catalog/catalog";
 import type { MetadataFact } from "@/types/metadataProvider";
 
 import {
@@ -97,8 +100,7 @@ function parseEuroCents(value?: string | null): number | null {
 
 function isCatalogEstimateFact(fact: MetadataFact): boolean {
   return (
-    fact.kind === "price" &&
-    /^estimation$/i.test((fact.label ?? "").trim())
+    fact.kind === "price" && /^estimation$/i.test((fact.label ?? "").trim())
   );
 }
 
@@ -245,7 +247,9 @@ function dedupePriceObservations(
   return deduped;
 }
 
-function hasPriceSummary(prices: BarcodePricesResult | null | undefined): boolean {
+function hasPriceSummary(
+  prices: BarcodePricesResult | null | undefined,
+): boolean {
   if (!prices) return false;
   return (
     prices.priceNew != null ||

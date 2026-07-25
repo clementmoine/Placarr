@@ -157,4 +157,3 @@ export async function withBookSearchAliases<
   if (!aliases?.length) return metadata;
   return { ...metadata, aliases };
 }
-

@@ -25,10 +25,10 @@ scanne un code-barres ou on saisit un nom, l'app **identifie** le produit puis
 
 L'architecture repose sur **deux plans distincts et volontairement non fusionnés** :
 
-| Plan | Rôle | Entrée | Racine code | Sortie |
-|------|------|--------|-------------|--------|
-| **Identification** (barcode) | « Ce code-barres = quel produit ? » decide-late | code-barres | `lib/barcode/**` + `services/barcode` | `BarcodeCache` (+ observations) |
-| **Enrichissement** (metadata) | « Ce produit → couverture/desc/facts/prix » | nom + type + plateforme | `services/metadata/**` + `lib/metadata/**` | `Metadata` + `Attachment` + `FieldEvidence` + `PriceOffer` |
+| Plan                          | Rôle                                            | Entrée                  | Racine code                                | Sortie                                                     |
+| ----------------------------- | ----------------------------------------------- | ----------------------- | ------------------------------------------ | ---------------------------------------------------------- |
+| **Identification** (barcode)  | « Ce code-barres = quel produit ? » decide-late | code-barres             | `lib/barcode/**` + `services/barcode`      | `BarcodeCache` (+ observations)                            |
+| **Enrichissement** (metadata) | « Ce produit → couverture/desc/facts/prix »     | nom + type + plateforme | `services/metadata/**` + `lib/metadata/**` | `Metadata` + `Attachment` + `FieldEvidence` + `PriceOffer` |
 
 Les deux plans **produisent des observations typées** (jamais de « vérité » finale du
 provider) et **projettent** ensuite un affichage via des moteurs génériques
@@ -147,15 +147,15 @@ confiant interdit**. Les golden-masters (`resolver.test.ts` + fixtures) verrouil
 Chacune des logiques « qui doivent être uniques » demandées existe et est **centralisée
 et provider-blind** :
 
-| Logique | Foyer unique | État |
-|---------|-------------|------|
-| **Tri images → cover par défaut = 1er** | [attachmentDisplayScore.ts](src/lib/media/attachmentDisplayScore.ts) `rankCoverGalleryAttachments` → `pickBestCoverFromAttachments = ranked[0]` | ✅ unique, ordre : type → mismatch plateforme → région → provenance → score → résolution |
-| **Classification métadonnées par régions** | [locale/preference.ts](src/lib/locale/preference.ts) `LOCALE_REGION_ALIASES` + `regionRank` (FR > EU > WOR > …) | ✅ data-driven, ordre inversé selon la locale UI |
-| **Consensualisation des facts** | [metadata/consensus.ts](src/lib/metadata/consensus.ts) (note médiane, PEGI mode, durée union) + `evidence/ranking.ts` | ✅ fonctions pures, une seule formule de confiance |
-| **Titres/descriptions localisés FR/EN** | `locale/preference.ts` `inferTextLanguage` + `pickBestLocalizedDescription` + `title/displayScore` | ✅ on récupère tout, on labellise, on projette selon la locale |
-| **Traits provider → flags client-safe** | [registry.ts](src/services/provider/registry.ts) + [sourceTraits.ts](src/services/provider/sourceTraits.ts) `withProviderAttachmentTraits` | ✅ le scorer client ne connaît pas le registry |
+| Logique                                    | Foyer unique                                                                                                                                    | État                                                                                     |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Tri images → cover par défaut = 1er**    | [attachmentDisplayScore.ts](src/lib/media/attachmentDisplayScore.ts) `rankCoverGalleryAttachments` → `pickBestCoverFromAttachments = ranked[0]` | ✅ unique, ordre : type → mismatch plateforme → région → provenance → score → résolution |
+| **Classification métadonnées par régions** | [locale/preference.ts](src/lib/locale/preference.ts) `LOCALE_REGION_ALIASES` + `regionRank` (FR > EU > WOR > …)                                 | ✅ data-driven, ordre inversé selon la locale UI                                         |
+| **Consensualisation des facts**            | [metadata/consensus.ts](src/lib/metadata/consensus.ts) (note médiane, PEGI mode, durée union) + `evidence/ranking.ts`                           | ✅ fonctions pures, une seule formule de confiance                                       |
+| **Titres/descriptions localisés FR/EN**    | `locale/preference.ts` `inferTextLanguage` + `pickBestLocalizedDescription` + `title/displayScore`                                              | ✅ on récupère tout, on labellise, on projette selon la locale                           |
+| **Traits provider → flags client-safe**    | [registry.ts](src/services/provider/registry.ts) + [sourceTraits.ts](src/services/provider/sourceTraits.ts) `withProviderAttachmentTraits`      | ✅ le scorer client ne connaît pas le registry                                           |
 
-**Conclusion de la cartographie** : le cœur *est* déjà agnostique, generic et data-driven
+**Conclusion de la cartographie** : le cœur _est_ déjà agnostique, generic et data-driven
 sur l'essentiel. Les moteurs uniques existent. Ce n'est pas un chantier de refonte, mais
 un chantier de **nettoyage de dette résiduelle**.
 
@@ -171,15 +171,15 @@ que le projet s'est lui-même fixé.
 L'intuition « on a beaucoup de fichiers, tout n'est pas utilisé » est **fondée**. Détection
 par analyse d'imports (alias + relatifs + barrels) :
 
-| Élément | Chemin | Preuve |
-|---------|--------|--------|
-| Composant mort | [ItemCarousel.tsx](src/components/ItemCarousel.tsx) | 0 référence |
-| Composant mort | [ShelfBadge.tsx](src/components/ShelfBadge.tsx) | 0 référence |
-| Modale morte | [BulkSeriesModal.tsx](src/components/modals/BulkSeriesModal.tsx) | 0 référence (le form `BulkSeriesForm` est utilisé, pas la modale) |
-| Client API mort | [lib/api/user.ts](src/lib/api/user.ts) | 0 référence |
-| **16 barrels `index.ts` jamais importés en dossier** | `lib/{core,item,title,jobs,db,http,pricing,provider,retailer,routing,text,games,dev}`, `services/{app,pricing,provider}` | le code importe toujours les chemins concrets (`@/core/enrich/titles/displayScore`), jamais `@/lib/title` — vérifié : 0 import-dossier |
-| 2 fonctions `@deprecated` | `markItemMetadataRefreshStarted`, `clearItemMetadataRefreshStarted` dans [scheduleMetadataRefresh.ts](src/lib/jobs/scheduleMetadataRefresh.ts) | utilisées uniquement par leur propre test |
-| Primitives UI shadcn probablement inutilisées | `ui/{alert-dialog,breadcrumb,pagination,popover,scroll-area,separator,table}.tsx` | 0 import applicatif (à confirmer au cas par cas) |
+| Élément                                              | Chemin                                                                                                                                         | Preuve                                                                                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Composant mort                                       | [ItemCarousel.tsx](src/components/ItemCarousel.tsx)                                                                                            | 0 référence                                                                                                                            |
+| Composant mort                                       | [ShelfBadge.tsx](src/components/ShelfBadge.tsx)                                                                                                | 0 référence                                                                                                                            |
+| Modale morte                                         | [BulkSeriesModal.tsx](src/components/modals/BulkSeriesModal.tsx)                                                                               | 0 référence (le form `BulkSeriesForm` est utilisé, pas la modale)                                                                      |
+| Client API mort                                      | [lib/api/user.ts](src/lib/api/user.ts)                                                                                                         | 0 référence                                                                                                                            |
+| **16 barrels `index.ts` jamais importés en dossier** | `lib/{core,item,title,jobs,db,http,pricing,provider,retailer,routing,text,games,dev}`, `services/{app,pricing,provider}`                       | le code importe toujours les chemins concrets (`@/core/enrich/titles/displayScore`), jamais `@/lib/title` — vérifié : 0 import-dossier |
+| 2 fonctions `@deprecated`                            | `markItemMetadataRefreshStarted`, `clearItemMetadataRefreshStarted` dans [scheduleMetadataRefresh.ts](src/lib/jobs/scheduleMetadataRefresh.ts) | utilisées uniquement par leur propre test                                                                                              |
+| Primitives UI shadcn probablement inutilisées        | `ui/{alert-dialog,breadcrumb,pagination,popover,scroll-area,separator,table}.tsx`                                                              | 0 import applicatif (à confirmer au cas par cas)                                                                                       |
 
 **Action** : supprimer les composants/clients morts + les barrels non importés (les
 fichiers cibles restent, seul le `index.ts` de re-export part). Retirer les 2 fonctions
@@ -201,6 +201,7 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
 
 1. **Word-list musique + préfixes barcode dupliqués** dans
    [resolver.ts](src/services/barcode/resolver.ts) `selectBarcodeTypeResult` :
+
    - `/^(0?(498|499)|45|88)/` (préfixes « audio-like ») écrit **deux fois** (L218 et L252) → DRY.
    - `/\b(?:orchestra|soundtrack|ost|album|cd)\b/i` → **liste magique de mots** dans le
      core, exactement ce que `placarr-principles.mdc` interdit. La désambiguïsation
@@ -259,8 +260,8 @@ hardcodés** qui ne correspondent à aucun module. Il en reste :
    > `titleMatching.test.ts`. `word_list_audit.md` corrigé.
 
 4. **Couplage de nommage** : `BGG_LANGUAGE_ROLE_MAP` / `mapBggLanguageToAttachmentRole`
-   dans [locale/preference.ts](src/lib/locale/preference.ts). La *logique* est générique
-   (langue → région), mais le *nom* porte un provider dans le core. Renommer en
+   dans [locale/preference.ts](src/lib/locale/preference.ts). La _logique_ est générique
+   (langue → région), mais le _nom_ porte un provider dans le core. Renommer en
    `LANGUAGE_NAME_TO_ATTACHMENT_ROLE` / `mapLanguageNameToAttachmentRole`.
 
    > **✅ Exécuté le 2026-07-05.** Renommage sans changement de comportement ;
@@ -280,7 +281,7 @@ souvent `mdl.info`. Migration terminée — une source de vérité par module.
 
 - [fetch.ts](src/services/metadata/fetch.ts) : le moteur est générique mais **saturé de
   branches `type === "games"`** (gallery, plateforme, édition, web-only console). C'est de
-  la spécificité *par type de média* (légitime) mais la densité rend le fichier difficile.
+  la spécificité _par type de média_ (légitime) mais la densité rend le fichier difficile.
   Piste : extraire une stratégie « games » (hooks de gating) pour que `fetchMetadata` reste
   lisible, sans re-créer un fetcher par type.
 - [storage.ts](src/services/metadata/storage.ts) à 1511 lignes fait persistance +
@@ -328,7 +329,7 @@ DB applicative.
    évolution le justifie.
 6. **P5/P6** — poll idle du menu jobs + purge des résidus de migration.
 
-> **Message clé** : Placarr *tient déjà* son principe provider-blind (guard à allowlist
+> **Message clé** : Placarr _tient déjà_ son principe provider-blind (guard à allowlist
 > vide, moteurs de projection uniques et génériques). Le travail restant n'est pas
 > « rendre le core agnostique » — il l'est — mais **retirer la dette résiduelle** (dead
 > code, quelques listes magiques, config à moitié migrée) pour que l'intention et le code

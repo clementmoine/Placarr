@@ -53,9 +53,7 @@ export function serializeTokenCorpusStats(
   };
 }
 
-export function parseTokenCorpusStats(
-  raw: unknown,
-): CorpusTokenStats | null {
+export function parseTokenCorpusStats(raw: unknown): CorpusTokenStats | null {
   if (!raw || typeof raw !== "object") return null;
   const file = raw as Partial<TokenCorpusIndexFile>;
   if (file.schemaVersion !== TOKEN_CORPUS_INDEX_SCHEMA_VERSION) return null;

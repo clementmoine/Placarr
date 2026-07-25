@@ -17,9 +17,7 @@ import {
   barcodeEvidenceTitleObservationScore,
   compareBarcodeEvidenceByImageObservationRank,
 } from "./observations";
-import {
-  VIDEO_GAME_PLATFORM_TOKEN_TERMS,
-} from "@/core/identify/platforms/platforms";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platforms";
 import { isbnCoverUrlForBarcode } from "@/core/catalog/catalog";
 import {
   areEvidenceSameProduct,
@@ -268,9 +266,7 @@ function filterOverlyGenericCanonicalEvidence(
 ): ProductEvidence[] {
   // Prefer durable RawName DF index when present; else titles on this barcode.
   const corpusStats = resolveCorpusTokenStats(
-    buildTokenDocumentFrequency(
-      allCanonicalEvidence.map((item) => item.title),
-    ),
+    buildTokenDocumentFrequency(allCanonicalEvidence.map((item) => item.title)),
   );
   const filtered = candidates.filter((candidate) => {
     return !allCanonicalEvidence.some((other) => {

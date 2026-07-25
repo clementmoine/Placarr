@@ -39,7 +39,9 @@ describe("icollect hardware barcode sources", () => {
       "hardware",
     ]);
 
-    const hardware = contributions.find((entry) => entry.mediaType === "hardware");
+    const hardware = contributions.find(
+      (entry) => entry.mediaType === "hardware",
+    );
     expect(hardware?.products[0]?.name).toMatch(/Console/i);
 
     const evidence = buildProductEvidence(

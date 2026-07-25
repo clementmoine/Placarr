@@ -158,16 +158,10 @@ export function relaxedOffersForPriceFallback(
   return platformFiltered.filter((offer) => {
     const listing = offer.productName?.trim() ?? "";
     if (listing && isLotListing(listing)) return false;
-    if (
-      listing &&
-      listingLooksLikeNonBookProduct(listing, { shelfType })
-    ) {
+    if (listing && listingLooksLikeNonBookProduct(listing, { shelfType })) {
       return false;
     }
-    if (
-      listing &&
-      listingLooksLikeGameAccessory(listing, { shelfType })
-    ) {
+    if (listing && listingLooksLikeGameAccessory(listing, { shelfType })) {
       return false;
     }
 
@@ -232,7 +226,10 @@ export function resolveItemPriceFromOffers(
   };
 }
 
-export function pricesForCondition(offers: PriceObservation[], conditions: string[]) {
+export function pricesForCondition(
+  offers: PriceObservation[],
+  conditions: string[],
+) {
   const wanted = new Set(conditions);
   return offers
     .filter((offer) => {
@@ -694,17 +691,22 @@ export function alignBarcodePricesForItemNames(
 }
 
 export function significantTitleTokens(value: string): string[] {
-  return normalizeForTokens(cleanSearchQuery(value) || value)
-    .replace(/[:;|/]/g, " ")
-    // Match product-compare: Spider-Man ↔ Spiderman.
-    .replace(/-/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter((token) => token.length >= 3);
+  return (
+    normalizeForTokens(cleanSearchQuery(value) || value)
+      .replace(/[:;|/]/g, " ")
+      // Match product-compare: Spider-Man ↔ Spiderman.
+      .replace(/-/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter((token) => token.length >= 3)
+  );
 }
 
-export function listingIsBareFranchiseStemOf(itemName: string, listing: string): boolean {
+export function listingIsBareFranchiseStemOf(
+  itemName: string,
+  listing: string,
+): boolean {
   const itemTokens = significantTitleTokens(itemName);
   const listingTokens = significantTitleTokens(listing);
   if (listingTokens.length < 2 || itemTokens.length <= listingTokens.length) {
@@ -752,7 +754,9 @@ export function referenceOfferSurvivesRegionalTitleMiss(
   if (!isReferencePriceSource(offer.source ?? "")) return false;
   const listing = offer.productName?.trim();
   if (!listing) return true;
-  if (itemNames.some((name) => listingIsDistinctProductSpinoff(name, listing))) {
+  if (
+    itemNames.some((name) => listingIsDistinctProductSpinoff(name, listing))
+  ) {
     return false;
   }
   if (itemNames.some((name) => listingIsBareFranchiseStemOf(name, listing))) {
@@ -764,7 +768,6 @@ export function referenceOfferSurvivesRegionalTitleMiss(
 export function cleanBarcodeValue(barcode?: string | null): string {
   return barcode ? barcode.replace(/[^\d]/g, "").trim() : "";
 }
-
 
 export function toPriceObservations(
   offers: Array<{
@@ -827,10 +830,7 @@ export function observedSummaryFromAlignedOffers(
 
 export function priceSummaryMatchesOffers(
   shelfType: string,
-  summary: Pick<
-    CacheSummaryFields,
-    "priceNew" | "priceUsed" | "priceUsedCIB"
-  >,
+  summary: Pick<CacheSummaryFields, "priceNew" | "priceUsed" | "priceUsedCIB">,
   offers: PriceObservation[],
 ): boolean {
   if (offers.length === 0) return false;

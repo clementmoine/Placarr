@@ -328,10 +328,7 @@ export async function findBdphileIssueLink(
         1,
         Math.floor((target - max) / REVUE_ISSUES_PAGE_SIZE),
       );
-      start = Math.min(
-        start + hopPages * REVUE_ISSUES_PAGE_SIZE,
-        maxStart,
-      );
+      start = Math.min(start + hopPages * REVUE_ISSUES_PAGE_SIZE, maxStart);
       while (visited.has(start) && start > 0) {
         start -= REVUE_ISSUES_PAGE_SIZE;
       }
@@ -352,16 +349,16 @@ function labelledValue(html: string, label: string): string | undefined {
 }
 
 /** "242 pages - 4.9€" → page count + catalog list price in cents. */
-export function parseBdphileFormatField(
-  value?: string | null,
-): { pageCount?: number; priceNewCents?: number; formatLabel?: string } {
+export function parseBdphileFormatField(value?: string | null): {
+  pageCount?: number;
+  priceNewCents?: number;
+  formatLabel?: string;
+} {
   const text = cleanText(value);
   if (!text) return {};
 
   const pageMatch = text.match(/(\d+)\s*pages?\b/i);
-  const pageCount = pageMatch
-    ? Number.parseInt(pageMatch[1], 10)
-    : Number.NaN;
+  const pageCount = pageMatch ? Number.parseInt(pageMatch[1], 10) : Number.NaN;
 
   const priceMatch = text.match(/(\d+(?:[.,]\d+)?)\s*€/);
   const priceNewCents = priceMatch
@@ -471,9 +468,7 @@ export async function fetchBdphileIssueById(
 ): Promise<BdphileIssue | null> {
   const id = numeroId.trim();
   if (!id) return null;
-  return fetchBdphileIssueByUrl(
-    absoluteBdphileUrl(`/revue/numero/${id}/`),
-  );
+  return fetchBdphileIssueByUrl(absoluteBdphileUrl(`/revue/numero/${id}/`));
 }
 
 export async function fetchBdphileMetadata(

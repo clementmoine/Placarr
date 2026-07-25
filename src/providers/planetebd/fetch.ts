@@ -84,9 +84,7 @@ function metaContent(html: string, property: string): string | undefined {
     "i",
   );
   const match2 = html.match(re2);
-  return match2?.[1]
-    ? cleanText(decodeHTMLEntities(match2[1]))
-    : undefined;
+  return match2?.[1] ? cleanText(decodeHTMLEntities(match2[1])) : undefined;
 }
 
 function cleanSearchTitle(raw: string): string {
@@ -156,14 +154,14 @@ export function parsePlanetebdAlbumPage(
   const h1 = cleanText(html.match(/<h1[^>]*>([^<]+)/i)?.[1]);
   const title =
     [h1, albumTitle].filter(Boolean).join(" : ") ||
-    metaContent(html, "og:title")?.replace(/\s+chez\s+.+$/i, "").trim() ||
+    metaContent(html, "og:title")
+      ?.replace(/\s+chez\s+.+$/i, "")
+      .trim() ||
     cleanText(metaContent(html, "itemprop:name"));
   if (!title) return null;
 
   const authors: string[] = [];
-  const titleTag = cleanText(
-    html.match(/<title>([\s\S]*?)<\/title>/i)?.[1],
-  );
+  const titleTag = cleanText(html.match(/<title>([\s\S]*?)<\/title>/i)?.[1]);
   const fromTitle = titleTag?.match(/\bde\s+(.+)$/i)?.[1];
   if (fromTitle) {
     for (const part of fromTitle.split(/,/)) {
@@ -202,7 +200,8 @@ export function parsePlanetebdAlbumPage(
   const ratingLabel = cleanText(
     html.match(/class=["']mark-information["'][\s\S]*?<h2[^>]*>([^<]+)/i)?.[1],
   );
-  const ratingStars = (html.match(/ico_star_y\.png/gi) || []).length || undefined;
+  const ratingStars =
+    (html.match(/ico_star_y\.png/gi) || []).length || undefined;
 
   return {
     id,
@@ -229,7 +228,11 @@ function isCandidateAligned(query: string, title: string): boolean {
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
   if (isMetadataTitleAligned({ title }, [query], 0.58)) return true;
-  const subtitle = title.split(/\s*:\s*/).slice(1).join(": ").trim();
+  const subtitle = title
+    .split(/\s*:\s*/)
+    .slice(1)
+    .join(": ")
+    .trim();
   return Boolean(
     subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58),
   );

@@ -77,9 +77,6 @@ export async function promoteFreakxySearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Freakxy] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Freakxy] Failed to promote durable search evidence:", error);
   }
 }

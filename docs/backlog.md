@@ -22,9 +22,13 @@ forme de la queue (scrape, `rateLimited` ou intervalle déclaré ⇒ sérialisé
 sinon `API_PROVIDER_CONCURRENCY` = 3). Les deux tables id → valeur du core ont
 disparu.
 
-## Ouverts — base clean (2026-07-24)
+## Ouverts
 
-**Aucun item ouvert.** Le reste du fichier = journal / historique.
+| Priorité | Item                         | Détail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P3       | React Compiler : 11 findings | `pnpm lint` sort 11 erreurs `react-hooks/*` : 8 `preserve-manual-memoization` (le compilateur abandonne le composant), 2 `refs` (ref écrite pendant le render, `ItemModal`), 1 `set-state-in-effect`. Concentré dans [ItemModal.tsx](../src/components/modals/ItemModal.tsx), [items/page.tsx](../src/app/items/page.tsx) et la page détail. Pas des bugs — des optimisations manquées. À faire composant par composant **avec vérification visuelle** : aucun test ne couvre ces composants. |
+
+Le reste du fichier = journal / historique.
 
 | Priorité   | Item                                         | Détail                                                                                                                                                                                                                                                                                                                                        |
 | ---------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

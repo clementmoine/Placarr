@@ -37,9 +37,14 @@ export function isRetryableError(err: unknown): boolean {
   return true;
 }
 
+/**
+ * `retries` is the total number of attempts, not extra ones. Three is the
+ * default because every attempt holds a background worker slot through its own
+ * backoff — past that, a flaky provider costs more than it returns.
+ */
 export async function retry<T>(
   fn: () => Promise<T>,
-  retries = 5,
+  retries = 3,
   delayMs = 300,
   signal?: AbortSignal,
 ): Promise<T> {

@@ -1,20 +1,16 @@
 # Hardcoding audit — core must be agnostic, data-driven, provider-neutral
 
-> **STATUS 2026-06-29 — provider-literal migration COMPLETE.** The blindness guard
-> (`src/core/catalog/blindnessGuard.test.ts`) now ships an **empty** allowlist:
-> **zero** provider-id literals remain outside `src/providers/`. The
-> "current violations" tables, per-file allowlist notes and the `P2*` progress log
-> below are **historical** — kept for rationale, no longer the live surface.
+> **STATUS 2026-07-25 — audit rejoué sur l'arborescence actuelle.** Les sections
+> P1–P4 ci-dessous ont été re-vérifiées fichier par fichier après le découpage
+> `src/lib` + `src/services` → `src/core`. L'audit citait 12 chemins, dont 10
+> n'existaient plus ; ils sont corrigés ou marqués réglés.
 >
-> **Update 2026-07-02** : le merge d'enrichissement est dé-biaisé depuis le
-> 2026-06-30 (`orderResultsByObservationStrength` a remplacé le tri
-> `resultsByWeight`). Résidu `ProviderInfo.weight` : **supprimé 2026-07-02**
-> (champ + entrées d'extensions) — `nameDatabaseProviderForType` trie par
-> `canonical` (sélections épinglées par `nameDatabaseProvider.test.ts`),
-> `primaryGameCoverSource` = premier `canonical && isRealBoxCover`. Écarts word-lists par-produit : **réglés 2026-07-02**
-> (`tokenEquivalents.ts` réduit au dictionnaire + alignement par alternate
-> names providers ; boosts FR de `title/displayScore.ts` pilotés par la
-> locale). Détail : [word_list_audit.md](word_list_audit.md).
+> **Reste ouvert :** P4 (vocabulaire linguistique) pour l'essentiel, plus deux
+> résidus mineurs — les listes de phrases de `boardGameSignal.ts` et 4 seuils
+> décimaux dans `merge.ts`. Tout P1, tout P2 et l'essentiel de P3 sont réglés.
+>
+> **Ce qui suit le bandeau `Enforcement` est un journal historique** conservé
+> pour le raisonnement, pas la surface vivante.
 
 > **Enforcement already exists:** `src/core/catalog/blindnessGuard.test.ts`
 > inventories every quoted provider literal in `src/`+`scripts/` (excluding
@@ -51,7 +47,7 @@
 > **P2b ✅ COMPLETE — `sourceAssembly` is fully provider-blind (0 provider literals,
 > guard allowlist entry removed).** All 15 providers self-declare their evidence
 > contribution via `ProviderModule.buildBarcodeSources`; core just iterates the
-> registry. Marketplace/aggregator scoping lives in `src/lib/barcode/sourceContribution.ts`
+> registry. Marketplace/aggregator scoping lives in `src/core/identify/lookup/sourceContribution.ts`
 > (`marketplaceContributions` / `gatedContributions` / `scopedContribution`). The
 > `payload.retailers[]` loop stays (already provider-blind). Plug-and-play achieved:
 > adding a provider no longer touches the assembler. Behaviour-preserving (694 tests,
@@ -134,103 +130,96 @@ provider bias in core · 🟡 P3 magic numbers · 🟢 P4 linguistic vocab (exte
 
 ---
 
-## 🔴 P1 — Per-product hardcoded "matches" (worst offenders)
+## 🔴 P1 — Per-product hardcoded "matches"
 
-**`src/lib/barcode/titleUtils.ts` ~415-438** — functions returning a hand-fixed
-title for ONE specific game:
-
-- `"Link's Crossbow Training"`
-- `"Super Monkey Ball: Banana Blitz"` (adds a colon)
-- `"Mario & Sonic aux Jeux Olympiques"` (ampersand + accents/casing)
-
-One `if` per product = the anti-pattern. **Options:**
-
-1. **Delete them** — the consensus-title engine + canonical clean spelling already
-   produce the correct title for most (proven for romhack/edition/sequel). Where
-   the fix is punctuation/casing the engine can't infer (a colon, an ampersand),
-   that knowledge must come from a **canonical source's own spelling**, never be
-   invented in core. Remove test-driven (live-verify each barcode after).
-2. Keep only a _general_ normalization (e.g. "&"/"and" casing) if it generalizes —
-   never a per-title literal.
+**Réglé.** Les trois titres câblés (`Link's Crossbow Training`,
+`Super Monkey Ball : Banana Blitz`, `Mario & Sonic aux Jeux Olympiques`) ne
+subsistent que dans [`regressionCases.ts`](../src/core/identify/lookup/regressionCases.ts),
+c'est-à-dire comme cas de test attendus — plus aucun `if` par produit dans le
+moteur.
 
 ## 🔴 P1 — Board-game publisher list
 
-**`src/lib/barcode/boardGameSignal.ts` `PUBLISHERS`** — 23 hand-picked publishers,
-comment admits it is deliberately partial. Biases type detection by guessing
-"board game" from a name harvested off generic marketplace listings. **Options:**
+**Réglé.** La liste `PUBLISHERS` (23 éditeurs choisis à la main) n'existe plus.
+Le signal vient maintenant du provider qui répond et des phrases de catégorie.
 
-1. **Provider-as-signal (preferred, fully agnostic):** a board-game-specialist
-   provider (Philibert / Okkazeo / BGG) _returning the product at all_ is the
-   signal — drop the publisher-name guessing entirely. Type comes from which
-   provider answered, which is already known.
-2. External dataset (BGG publishers) if a name signal is still wanted — but (1) is
-   cleaner and needs no list.
-
-Same shape: `CATEGORY_PATTERNS`, `VIDEO_FORMAT_PATTERNS`, `MEDIA_FORMAT_LABELS` —
-hand-built phrase lists used to guess type/format from listing text.
+**Reste ouvert (petit)** : dans
+[`boardGameSignal.ts`](../src/core/identify/boardGameSignal.ts), trois listes de
+phrases construites à la main — `CATEGORY_PATTERNS` (« jeu de société »),
+`VIDEO_FORMAT_PATTERNS` (VHS / LaserDisc / dessin animé) et
+`MEDIA_FORMAT_LABELS`. Elles sont étroites, commentées et de haute précision,
+mais ce sont bien des mots-clés FR/EN écrits en dur. À traiter comme les autres
+vocabulaires (P4) plutôt que comme du biais provider.
 
 ## 🟠 P2 — Provider-specific processing in core
 
-- ~~**`src/core/enrich/providerQueue.ts`** — `PROVIDER_CONCURRENCY` et
-  `PROVIDER_MIN_INTERVAL_MS`, deux tables id → valeur dans le core.~~
-  **Fait 2026-07-25** : chaque provider déclare `minRequestIntervalMs` /
-  `maxConcurrentRequests` dans son `info` ; le core dérive la forme de queue de
-  ces traits (`providerQueueSettings`) et le bootstrap l'enregistre. Ces clés
-  n'étaient pas quotées, donc invisibles pour `blindnessGuard`.
+Tous les points de la liste d'origine sont réglés. État vérifié le 2026-07-25 :
 
-- **`src/lib/barcode/sourceAssembly.ts`** — a large per-provider switch: each
-  payload key (`ss`, `pc`, `amc`, `philibert`…) is mapped to a labelled source
-  with bespoke extraction. The per-provider knowledge lives in core.
-  **Option:** invert to plug-and-play — each provider module declares
-  `toEvidenceSources(payload)` (it already declares its `evidence` profile in
-  `providerEvidence.ts`); core just iterates `PROVIDER_MODULES`. Adding a provider
-  then never touches core.
-- **`src/lib/playerFacts.ts` `formatFactSource`** — 20-case `switch` mapping a
-  provider id → display label ("ss" → "SS", "bgg" → "BoardGameGeek"…).
-  **Option:** each provider declares its `displayLabel` in the registry; core
-  reads it. Delete the switch.
-- **`src/lib/playerFacts.ts`** — provider-name ordering/priority literals
-  (AchatMoinsCher / Steam / IGDB / RAWG / TMDB / PriceCharting / Philibert /
-  LaunchBox). **Option:** drive from each provider's declared weight/role.
-- **`src/lib/priceCachePolicy.ts`** — "PriceCharting"-specific cache rule.
-  **Option:** provider declares its own price-cache policy.
-- **`src/lib/videoGamePlatformSources.ts`** — `SCREEN_SCRAPER_PLATFORM_REFERENCES`
-  - `LAUNCHBOX_PLATFORM_REFERENCES` (~3.5k lines of provider platform-id tables).
-    These are _that provider's_ mapping data. **Option:** move each table into its
-    provider module; core keeps only the canonical platform vocabulary.
+- ~~`sourceAssembly.ts` (switch par provider)~~ — **réglé** : chaque module
+  déclare `buildBarcodeSources`, le core itère le registre. Le fichier n'existe
+  plus.
+- ~~`playerFacts.formatFactSource` (switch id → label)~~ — **réglé** : les
+  providers déclarent `info.factLabel` ; plus aucun littéral provider dans
+  [`playerFacts.ts`](../src/core/enrich/facts/playerFacts.ts).
+- ~~Ordonnancement par nom de provider dans `playerFacts`~~ — **réglé**.
+- ~~`priceCachePolicy.ts` (règle spécifique PriceCharting)~~ — **réglé** :
+  trait `info.referencePriceSource`. Le fichier n'existe plus.
+- ~~Tables plateformes ScreenScraper / LaunchBox (~3,5k lignes)~~ —
+  **traité en données** : elles sont devenues
+  [`platforms/data/*.json`](../src/core/identify/platforms/data/) derrière un
+  chargeur typé de 28 lignes. Elles vivent encore dans le core plutôt que dans
+  les modules providers — acceptable tant que ce sont des données de build, à
+  déplacer si un provider veut les tenir à jour lui-même.
+- ~~`providerQueue.ts` — `PROVIDER_CONCURRENCY` / `PROVIDER_MIN_INTERVAL_MS`~~ —
+  **réglé 2026-07-25** : chaque provider déclare `minRequestIntervalMs` /
+  `maxConcurrentRequests` dans son `info`, `providerQueueSettings` dérive la
+  forme de queue. Ces clés n'étaient pas quotées, donc invisibles pour
+  `blindnessGuard` — c'est le mode de fuite à surveiller.
 
 ## 🟡 P3 — Magic numbers beyond the barcode scorer
 
-Barcode scoring is now centralised (`evidence/scoring.ts`). Still scattered:
+Le scoring barcode est centralisé dans
+[`evidence/scoring.ts`](../src/core/identify/evidence/scoring.ts) (35 constantes
+nommées et groupées). Les trois fichiers cités par l'audit d'origine ont depuis
+été découpés :
 
-- **`src/lib/metadataConsensus.ts`** — `confidence = 0.5 + n * 0.15` formulas (×3).
-- **`src/services/metadataMerge.ts`** — `weight ?? 0.5` defaults; tier orders.
-- **`src/services/metadataProviderSelection.ts`**, `priceResolver.ts` — thresholds.
-  **Option:** one documented `metadataScoring` config (mirror `scoring.ts`), or
-  derive confidence from agreement count rather than a tuned constant.
+- ~~`metadataConsensus.ts` — `0.5 + n * 0.15` (×3)~~ — **réglé** : un seul
+  `agreementConfidence()` dans [`consensus.ts`](../src/core/enrich/consensus.ts).
+- ~~`metadataProviderSelection.ts`, `priceResolver.ts` — seuils~~ — **réglé** :
+  `selection.ts` et `commerce/pricing/resolver.ts` n'ont plus aucun littéral
+  décimal.
+- **Reste** : 4 littéraux décimaux dans
+  [`merge.ts`](../src/core/enrich/merge.ts) (seuils d'alignement de titre).
+  Assez peu pour ne pas justifier un fichier de config à eux seuls ; les nommer
+  sur place suffirait.
 
 ## 🟢 P4 — Linguistic vocabulary → replace with maintained libraries
 
-These are real lists but hand-maintained and language-incomplete:
+Le gros morceau restant, et le seul chantier P1–P4 encore réellement ouvert.
 
-- **Region / language codes** — `LISTING_REGION_TERMS`, `LOCALE_REGION_ORDER`,
-  `USER_VISIBLE_REGIONS` (the "fr/de/es/nl…" we keep extending). **Option:**
-  `iso-639-1` (languages) + `i18n-iso-countries` (regions). Membership test against
-  a complete dataset instead of a growing literal list.
-- **Roman numerals / number words** — `ROMAN_MAP`, `NUMBER_WORD_MAP`
-  (titleUtils.ts). **Option:** a numerals lib (`roman-numerals`,
-  `words-to-numbers`) — covers more notations than the hand map.
-- **Stopwords / generic title tokens** — `GENERIC_TITLE_TOKENS`,
-  `RESOLVER_GENERIC_TOKENS`, `NON_CANONICAL_CONTEXT_TOKENS`, `SUFFIX_EXCLUDED_NOISE`.
-  **Option:** a multilingual stopword package (`stopword`) for the generic words;
-  keep only genuinely domain-specific tokens, as data.
-- **Seller jargon** — `LISTING_CONDITION_TERMS`, `LISTING_FORMAT_TERMS`,
-  `LISTING_NOISE_TERMS`, `LISTING_EXTRA_SUFFIX_TERMS`, `GAME_EDITION_DEFINITIONS`,
-  `GAME_CLASSICS_KEYWORDS`. No clean external source exists. **Option:** keep as
-  _data files_ (JSON/config), clearly separated from code, and prefer the
-  corroboration engine (which already drops uncorroborated tokens) over growing
-  these lists. The `cleanTitleForDisplay` inline `.replace()` chains
-  (titleUtils.ts ~334-385) embed the same jargon as regex — fold into the data.
+- ~~Chiffres romains (`ROMAN_MAP`)~~ — **réglé** : dépendance `romanizr`.
+- **Mots-nombres** — `englishNumberWordToDigits`
+  ([`titles/numberWords.ts`](../src/core/enrich/titles/numberWords.ts)) : maison
+  et **anglais seulement**. Un `words-to-numbers` couvrirait plus de notations,
+  mais rien de solide côté FR.
+- **Codes région / langue** — `LISTING_REGION_TERMS`
+  ([`listingTerms.ts`](../src/core/identify/listingTerms.ts)),
+  `LOCALE_REGION_ORDER` ([`locale/preference.ts`](../src/core/locale/preference.ts)),
+  `USER_VISIBLE_REGIONS` ([`evidence/resolve.ts`](../src/core/identify/evidence/resolve.ts)).
+  Toujours des listes qui s'allongent. **Option inchangée** : `iso-639-1` +
+  `i18n-iso-countries`, test d'appartenance contre un jeu de données complet.
+- **Stopwords / tokens génériques** — `RESOLVER_GENERIC_TOKENS`,
+  `NON_CANONICAL_CONTEXT_TOKENS`, `SUFFIX_EXCLUDED_NOISE`. À noter :
+  `NON_CANONICAL_CONTEXT_TOKENS` est déjà **dérivé** des définitions de format,
+  plus écrit à la main — le modèle à généraliser aux deux autres.
+- **Jargon vendeur** — `LISTING_CONDITION_TERMS`, `LISTING_FORMAT_DEFINITIONS`,
+  `GAME_EDITION_DEFINITIONS`, `GAME_CLASSICS_KEYWORDS`. Pas de source externe
+  propre. Ils sont maintenant **structurés** (des définitions avec des traits,
+  dont les autres listes se dérivent) plutôt que juxtaposés, ce qui était le
+  vrai risque. Les garder comme données et laisser le moteur de corroboration
+  faire le tri reste la bonne réponse.
+- Résidu suivi séparément : la table de phrases de `tokenEquivalents.ts`
+  (voir [word_list_audit.md](word_list_audit.md)).
 
 ## ⚪ Keep — real-world standards (cite, don't apologise)
 
@@ -243,17 +232,18 @@ These are real lists but hand-maintained and language-incomplete:
 
 ---
 
-## Recommended order (small → safe → high-value first)
+## Ordre recommandé (mis à jour 2026-07-25)
 
-1. **P1 per-product title `if`s** (titleUtils) — delete test-driven; smallest diff,
-   biggest principle win, directly what was flagged.
-2. **P1 board-game publishers → provider-as-signal** — removes a never-exhaustive
-   list, improves type detection.
-3. **P2 provider-in-core** — `formatFactSource` → registry label (quick), then the
-   `sourceAssembly` inversion (larger), then platform tables → provider modules.
-4. **P4 externalize numerals + ISO codes** (clear lib wins), then stopwords.
-5. **P3 centralise remaining magic numbers** (`metadataScoring` config).
+1. **P4 codes région / langue** → `iso-639-1` + `i18n-iso-countries`. C'est la
+   liste qui s'allonge le plus souvent, et la seule où une lib externe est
+   clairement meilleure que la liste maison.
+2. **P4 stopwords** → généraliser le modèle déjà appliqué à
+   `NON_CANONICAL_CONTEXT_TOKENS` : dériver au lieu d'énumérer.
+3. **Résidus** : nommer les 4 seuils de `merge.ts`, traiter les phrases de
+   `boardGameSignal.ts` comme du vocabulaire (P4) et non comme du code.
 
-Each step stays test-gated (unit + live §5) and behaviour is re-verified live where
-it touches resolution. No cache-version bump needed unless displayed titles change
-(then bump `BARCODE_CACHE_VERSION`).
+Le jargon vendeur reste volontairement de la donnée maison : aucune source
+externe propre n'existe, et il est désormais structuré en définitions dont les
+autres listes se dérivent.
+
+---

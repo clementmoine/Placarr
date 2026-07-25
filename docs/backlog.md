@@ -49,11 +49,31 @@ et l'assembleur (`lookups.ts`).
    Le core n'énumère plus rien, mais les 25 providers perdent l'accès typé et
    récupèrent des casts. On échange du hardcodé contre du `unknown` : à mon
    sens un recul, pas un gain.
-2. **Plug-and-play typé** — chaque provider déclare son slot _et son type_, le
-   payload se compose par génériques depuis le registre. C'est le bon design,
-   et c'est une refonte de la partie la plus load-bearing de l'app (celle que
-   garde le corpus de 21 cas). À faire avec du temps devant soi, pas en
-   nettoyage de fin de session.
+2. **Plug-and-play typé** — chaque provider déclare son slot _et son type_.
+
+### Tentative du 2026-07-25 — ce qui marche, ce qui coince
+
+Le design 2 a été prototypé puis **annulé**. Ce qui en est vérifié :
+
+- ✅ **La moitié typage marche.** `BarcodeLookupSlots` en `interface` + un
+  `declare module "@/core/identify/lookup/payload"` dans chaque provider :
+  `tsc` passe à 0 avec le slot retiré du core, et **9 erreurs** dès qu'on
+  enlève l'augmentation — donc elle porte vraiment. L'alias de chemin
+  n'empêche pas l'augmentation.
+- ❌ **La moitié runtime casse un contrat implicite.** Avec
+  `registerBarcodeLookupSlot()` appelé à l'import du provider,
+  `createEmptyBarcodeLookupPayload()` ne rend les slots que si les modules
+  providers ont été importés. En prod le registre les charge tous ; dans un
+  test qui n'importe que `payload.ts`, `payload.freakxy` vaut `undefined`
+  alors que **le type promet `NamedListing[]`**. Symptôme réel obtenu :
+  `TypeError: listings is not iterable` dans `collectPayloadListingNames`.
+
+**À trancher avant de recommencer** : les slots providers deviennent-ils
+_optionnels_ dans le type (honnête, mais ~100 sites de lecture à rendre
+défensifs), ou la fabrique prend-elle les slots **en paramètre** depuis
+l'appelant qui a le registre (l'oubli devient une erreur de compilation au lieu
+d'un `undefined` silencieux) ? La seconde piste semble la bonne, et c'est elle
+qui rend le chantier non trivial. Le prototype a échoué exactement là.
 
 **En attendant, c'est contenu, pas oublié** : les trois fichiers sont sur
 `ALLOWED_PROVIDER_KEYS` dans

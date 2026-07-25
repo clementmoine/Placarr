@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import {
   createMetadataHealthCheck,
@@ -45,7 +45,7 @@ export const steamModule: ProviderModule = {
     const start = Date.now();
     try {
       await fetchWithTimeout(
-        axios.get("https://store.steampowered.com/api/storesearch/", {
+        httpGet("https://store.steampowered.com/api/storesearch/", {
           params: { term: "Hades", cc: "fr", l: "french" },
           timeout: 4000,
         }),
@@ -86,7 +86,7 @@ export const steamModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const search = await axios.get(
+      const search = await httpGet<{ items?: Array<{ id?: number }> }>(
         "https://store.steampowered.com/api/storesearch/",
         {
           params: { term: "Hades", cc: "fr", l: "french" },
@@ -95,7 +95,7 @@ export const steamModule: ProviderModule = {
       );
       const id = search.data?.items?.[0]?.id;
       if (!id) return Object.keys(search.data?.items?.[0] || {});
-      const details = await axios.get(
+      const details = await httpGet<Record<string, { data?: JsonObject }>>(
         "https://store.steampowered.com/api/appdetails",
         {
           params: { appids: id, cc: "fr", l: "french" },

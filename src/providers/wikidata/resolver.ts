@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -81,17 +81,20 @@ async function resolveWikidataLabels(
   const uniqueIds = Array.from(new Set(qids));
   if (uniqueIds.length === 0) return new Map();
 
-  const response = await axios.get(WIKIDATA_API, {
-    params: {
-      action: "wbgetentities",
-      ids: uniqueIds.join("|"),
-      props: "labels",
-      languages: "fr|en",
-      format: "json",
+  const response = await httpGet<{ entities?: Record<string, WikidataEntity> }>(
+    WIKIDATA_API,
+    {
+      params: {
+        action: "wbgetentities",
+        ids: uniqueIds.join("|"),
+        props: "labels",
+        languages: "fr|en",
+        format: "json",
+      },
+      headers: { "User-Agent": USER_AGENT },
+      timeout: 10000,
     },
-    headers: { "User-Agent": USER_AGENT },
-    timeout: 10000,
-  });
+  );
 
   const labels = new Map<string, string>();
   for (const [qid, entity] of Object.entries(
@@ -193,25 +196,28 @@ function scoreSearchHit(name: string, hit: WikidataSearchHit): number {
 async function searchWikidataEntities(
   query: string,
 ): Promise<WikidataSearchHit[]> {
-  const response = await axios.get(WIKIDATA_API, {
-    params: {
-      action: "wbsearchentities",
-      search: query,
-      language: "fr",
-      format: "json",
-      limit: 8,
-      type: "item",
+  const response = await httpGet<{ search?: WikidataSearchHit[] }>(
+    WIKIDATA_API,
+    {
+      params: {
+        action: "wbsearchentities",
+        search: query,
+        language: "fr",
+        format: "json",
+        limit: 8,
+        type: "item",
+      },
+      headers: { "User-Agent": USER_AGENT },
+      timeout: 10000,
     },
-    headers: { "User-Agent": USER_AGENT },
-    timeout: 10000,
-  });
+  );
   return response.data?.search || [];
 }
 
 async function fetchWikidataEntity(
   qid: string,
 ): Promise<WikidataEntity | null> {
-  const response = await axios.get(
+  const response = await httpGet<{ entities?: Record<string, WikidataEntity> }>(
     `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`,
     {
       headers: { "User-Agent": USER_AGENT },
@@ -225,23 +231,22 @@ async function fetchWikipediaSummary(
   title: string,
   language: "fr" | "en",
 ): Promise<{ extract?: string; thumbnail?: string }> {
-  const response = await axios.get(
-    `https://${language}.wikipedia.org/w/api.php`,
-    {
-      params: {
-        action: "query",
-        prop: "extracts|pageimages",
-        exintro: 1,
-        explaintext: 1,
-        piprop: "thumbnail",
-        pithumbsize: 800,
-        titles: title,
-        format: "json",
-      },
-      headers: { "User-Agent": USER_AGENT },
-      timeout: 10000,
+  const response = await httpGet<{
+    query?: { pages?: Record<string, unknown> };
+  }>(`https://${language}.wikipedia.org/w/api.php`, {
+    params: {
+      action: "query",
+      prop: "extracts|pageimages",
+      exintro: 1,
+      explaintext: 1,
+      piprop: "thumbnail",
+      pithumbsize: 800,
+      titles: title,
+      format: "json",
     },
-  );
+    headers: { "User-Agent": USER_AGENT },
+    timeout: 10000,
+  });
   const page = Object.values(response.data?.query?.pages || {})[0] as
     | { extract?: string; thumbnail?: { source?: string } }
     | undefined;

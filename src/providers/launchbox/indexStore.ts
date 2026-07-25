@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { DatabaseSync } from "node:sqlite";
 
 import {
@@ -109,7 +109,7 @@ async function downloadMetadataZip(): Promise<string | null> {
   await fs.mkdir(cacheDir(), { recursive: true });
 
   try {
-    const response = await axios.get<ArrayBuffer>(zipUrl, {
+    const response = await httpGet<ArrayBuffer>(zipUrl, {
       responseType: "arraybuffer",
       timeout: 10 * 60_000,
       maxContentLength: 256 * 1024 * 1024,

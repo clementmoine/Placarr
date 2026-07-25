@@ -1,4 +1,5 @@
 import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 export interface ScanDexLookupResult {
   id: number;
@@ -34,7 +35,7 @@ export async function fetchFromScanDex(
   }
 
   try {
-    const res = await axios.get<ScanDexLookupResult>(
+    const res = await httpGet<ScanDexLookupResult>(
       "https://scandex.gamery.app/api/v2/lookup",
       {
         params: { value: cleanedBarcode },

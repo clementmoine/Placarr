@@ -1,4 +1,5 @@
 import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
 import { retry } from "@/lib/http/retry";
@@ -275,7 +276,7 @@ async function fetchScreenScraperGameById(
 
   try {
     const queryFn = () =>
-      axios.get<{ response: { jeu: SSGame } }>(
+      httpGet<{ response: { jeu: SSGame } }>(
         "https://api.screenscraper.fr/api2/jeuInfos.php",
         {
           params: {
@@ -697,7 +698,7 @@ async function searchScreenScraperGames(
 
   try {
     const queryFn = () =>
-      axios.get<{
+      httpGet<{
         response: { jeux?: SSGame[] | SSGame };
       }>("https://api.screenscraper.fr/api2/jeuRecherche.php", {
         params: {

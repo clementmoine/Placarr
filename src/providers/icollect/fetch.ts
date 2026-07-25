@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
@@ -504,7 +504,7 @@ async function streamSearchSitemapForBarcode(
   const needles = barcodeSearchNeedles(barcode);
   if (needles.length === 0) return null;
 
-  const response = await axios.get<Readable>(sitemapUrl, {
+  const response = await httpGet<Readable>(sitemapUrl, {
     headers: ICE_HEADERS,
     timeout: SITEMAP_STREAM_TIMEOUT_MS,
     responseType: "stream",

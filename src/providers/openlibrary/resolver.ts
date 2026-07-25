@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
@@ -151,7 +151,7 @@ export function createOpenLibraryResolver() {
       retryCount = 0,
     ): Promise<T> => {
       try {
-        const response = await axios.get<T>(url, {
+        const response = await httpGet<T>(url, {
           timeout: OPENLIBRARY_TIMEOUT_MS,
         });
         return response.data;

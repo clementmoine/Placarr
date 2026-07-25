@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { createGoogleBooksResolver } from "./resolver";
@@ -113,7 +113,7 @@ export const googlebooksModule: ProviderModule = {
   collectMappingRawKeys: async () => {
     const apiKey = process.env.GOOGLE_BOOKS_API_KEY?.trim();
     try {
-      const res = await axios.get(
+      const res = await httpGet<{ items?: Array<{ volumeInfo?: JsonObject }> }>(
         "https://www.googleapis.com/books/v1/volumes",
         {
           params: {
@@ -124,7 +124,7 @@ export const googlebooksModule: ProviderModule = {
           timeout: 8000,
         },
       );
-      return Object.keys(res.data?.items?.[0]?.volumeInfo || {});
+      return Object.keys(res.data?.items?.[0]?.volumeInfo ?? {});
     } catch {
       return [];
     }

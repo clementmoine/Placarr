@@ -1,4 +1,5 @@
 import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
@@ -62,7 +63,7 @@ export async function fetchFromAchatMoinsCher(
 
   try {
     console.log(`[AchatMoinsCher] Querying barcode scanner: ${cleanedBarcode}`);
-    const postRes = await axios.post(
+    const postRes = await httpPost(
       "https://www.achatmoinscher.com/scanner.php",
       `code=${cleanedBarcode}`,
       {
@@ -649,7 +650,7 @@ export async function fetchPricesFromAchatMoinsCher(
       console.log(
         `[AchatMoinsCher Prices] Querying barcode scanner: ${cleanedBarcode}`,
       );
-      const postRes = await axios.post(
+      const postRes = await httpPost(
         "https://www.achatmoinscher.com/scanner.php",
         `code=${cleanedBarcode}`,
         {

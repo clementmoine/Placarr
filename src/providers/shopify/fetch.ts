@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
@@ -125,7 +125,7 @@ export async function fetchShopifyProductByHandle(
   handle: string,
   barcode?: string | null,
 ): Promise<ShopifyProduct | null> {
-  const response = await axios.get(
+  const response = await httpGet<JsonObject>(
     `${config.baseUrl}/products/${handle}.json`,
     {
       headers: JSON_HEADERS,

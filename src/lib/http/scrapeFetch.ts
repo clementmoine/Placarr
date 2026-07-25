@@ -1,6 +1,7 @@
-import axios, { type AxiosRequestConfig } from "axios";
+import { type AxiosRequestConfig } from "axios";
 
 import { isAbortError } from "@/lib/http/abort";
+import { httpGet } from "@/lib/http/httpClient";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 import { flareSolverrRequestGet } from "@/lib/http/flareSolverr";
 import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
@@ -64,12 +65,15 @@ export async function fetchGetWithFlareFallback(
     flareMaxTimeoutMs?: number;
     signal?: AbortSignal;
     skipDirect?: boolean;
+    /** Reuse an identical direct GET for this long (shared client). */
+    cacheTtlMs?: number;
   } = {},
 ): Promise<ScrapeFetchResponse> {
   const {
     flareMaxTimeoutMs,
     signal: explicitSignal,
     skipDirect,
+    cacheTtlMs,
     ...axiosOptions
   } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
@@ -89,8 +93,9 @@ export async function fetchGetWithFlareFallback(
 
   if (!skipDirect) {
     try {
-      const response = await axios.get(url, {
+      const response = await httpGet(url, {
         ...axiosOptions,
+        ...(cacheTtlMs ? { cacheTtlMs } : {}),
         validateStatus: () => true,
         signal,
       });

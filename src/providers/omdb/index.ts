@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 import { createOMDbResolver } from "./resolver";
@@ -68,7 +68,7 @@ export const omdbModule: ProviderModule = {
     const key = process.env.OMDB_API_KEY;
     if (!key) return [];
     try {
-      const details = await axios.get("https://www.omdbapi.com/", {
+      const details = await httpGet("https://www.omdbapi.com/", {
         params: { apikey: key, t: "Aladdin", plot: "short" },
         timeout: 8000,
       });

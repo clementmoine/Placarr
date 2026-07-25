@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { convertXML } from "simple-xml-to-json";
 
 import {
@@ -116,7 +116,7 @@ export const bggModule: ProviderModule = {
     const token = process.env.BGG_API_TOKEN?.trim();
     if (!token) return [];
     try {
-      const res = await axios.get(
+      const res = await httpGet<string>(
         "https://boardgamegeek.com/xmlapi2/thing?id=13&stats=1",
         {
           headers: {

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import {
@@ -238,11 +238,14 @@ export const musicbrainzModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const res = await axios.get("https://musicbrainz.org/ws/2/release/", {
-        params: { query: "barcode:886443927087", fmt: "json", limit: 1 },
-        headers: { "User-Agent": "Placarr/1.0 (mapping-audit)" },
-        timeout: 8000,
-      });
+      const res = await httpGet<{ releases?: JsonObject[] }>(
+        "https://musicbrainz.org/ws/2/release/",
+        {
+          params: { query: "barcode:886443927087", fmt: "json", limit: 1 },
+          headers: { "User-Agent": "Placarr/1.0 (mapping-audit)" },
+          timeout: 8000,
+        },
+      );
       return Object.keys(res.data?.releases?.[0] || {});
     } catch {
       return [];

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
@@ -365,7 +365,7 @@ export async function searchChocoBonPlanDeals(
     return fromEvidence.slice(0, hitsPerPage);
   }
 
-  const response = await axios.post<{ hits?: ChocoBonPlanDealHit[] }>(
+  const response = await httpPost<{ hits?: ChocoBonPlanDealHit[] }>(
     ALGOLIA_URL,
     { query: cleaned, hitsPerPage },
     {

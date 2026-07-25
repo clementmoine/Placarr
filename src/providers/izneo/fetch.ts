@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import {
   barcodesEquivalent,
@@ -120,7 +120,7 @@ async function izneoGet<T>(
   signal?: AbortSignal,
 ): Promise<T | null> {
   try {
-    const response = await axios.get<T>(`${IZNEO_WEB_API}${path}`, {
+    const response = await httpGet<T>(`${IZNEO_WEB_API}${path}`, {
       headers: IZNEO_HEADERS,
       timeout: 20_000,
       signal,

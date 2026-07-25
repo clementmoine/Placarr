@@ -1,7 +1,24 @@
 # Backlog
 
-> Dernière vérification : **2026-07-24** (base clean — aucun résidu ouvert ; prochaine coupe = nouvelle direction produit).
+> Dernière vérification : **2026-07-25** (plan perf en cours : #3 fait, #4–#6 ouverts).
 > Index docs : [README.md](README.md).
+
+## Ouverts — plan perf métadonnées
+
+Suite de l'audit refresh (#1 passes parallélisées et #2 split des pools déjà
+livrés).
+
+| Priorité | Item                         | Détail                                                                                                                                                                                                 |
+| -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ~~#3~~   | ~~Client HTTP partagé~~      | **Fait 2026-07-25** — `src/lib/http/httpClient.ts` : timeout par défaut, signal d'abort ambiant, dédup des GET identiques en vol. Tous les appels `src/providers` + `src/core` y passent (guard test). |
+| #4       | Correctifs ciblés            | Retries background 5 → 2-3 (`src/lib/http/retry.ts`) ; time-box FlareSolverr (`maxTimeoutMs` 60s par défaut aujourd'hui).                                                                              |
+| #5       | Mode light-refresh           | Sauter les providers scrape secondaires quand l'item a déjà cover canonique + titre aligné + prix récents.                                                                                             |
+| #6       | Double-throttle admin-enrich | Retirer le throttle en double sur `/api/admin/metadata-enrich`.                                                                                                                                        |
+
+**Contrainte suivante identifiée** (post-#2) : les queues par provider sont en
+concurrency 1 (`providerQueue.ts`). Ne relever que pour les providers API sans
+rate limit ; ScreenScraper (1,1 s), IGDB/RAWG/TheGamesDB (250 ms), HLTB (500 ms)
+et PriceCharting (500 ms) doivent rester sérialisés.
 
 ## Ouverts — base clean (2026-07-24)
 

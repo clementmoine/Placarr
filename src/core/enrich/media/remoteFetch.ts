@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
 import { coverUrlExpectsHighResolution } from "@/core/enrich/media/coverResolution";
@@ -38,7 +38,7 @@ async function tryFetchUrl(
   url: string,
   extraHeaders: Record<string, string> = {},
 ): Promise<RemoteImageFetchResult | null> {
-  const response = await axios.get(url, {
+  const response = await httpGet<ArrayBuffer>(url, {
     responseType: "arraybuffer",
     timeout: 15_000,
     headers: {

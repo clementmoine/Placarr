@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import {
   isMetadataTitleAligned,
@@ -225,7 +225,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       let lastError: unknown;
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         try {
-          const response = await axios.get<T>(url);
+          const response = await httpGet<T>(url);
           return response.data;
         } catch (error: unknown) {
           lastError = error;

@@ -9,6 +9,7 @@
  */
 
 import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
 import type {
@@ -58,7 +59,7 @@ async function getToken(
   // Fetch new token
   try {
     const now = Date.now();
-    const res = await axios.post<{
+    const res = await httpPost<{
       access_token: string;
       expires_in: number;
     }>(TWITCH_TOKEN_URL, null, {
@@ -439,7 +440,7 @@ async function fetchFromIGDBWithToken(
   const headers = igdbHeaders(token);
 
   // Search for the game using the search endpoint
-  const searchRes = await axios.post<IGDBGame[]>(
+  const searchRes = await httpPost<IGDBGame[]>(
     `${IGDB_BASE}/games`,
     `fields name, category, platforms.name, alternative_names.name, summary, first_release_date, rating, rating_count, aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, cover.image_id, screenshots.image_id, artworks.image_id, involved_companies.company.name, involved_companies.publisher, genres.name, franchise.name, franchises.name, collections.name, age_ratings.category, age_ratings.rating, age_ratings.organization.name, age_ratings.rating_category.rating;
        search "${name.replace(/"/g, " ")}";
@@ -461,7 +462,7 @@ async function fetchFromIGDBWithToken(
         where (${nameConditions}) | (${altConditions});
         limit 20;`;
 
-    const fallbackRes = await axios.post<IGDBGame[]>(
+    const fallbackRes = await httpPost<IGDBGame[]>(
       `${IGDB_BASE}/games`,
       fallbackQuery,
       { headers, timeout: 8000 },
@@ -501,7 +502,7 @@ async function fetchIGDBSuggestionsWithToken(
 ): Promise<string[]> {
   const headers = igdbHeaders(token);
 
-  const searchRes = await axios.post<IGDBGame[]>(
+  const searchRes = await httpPost<IGDBGame[]>(
     `${IGDB_BASE}/games`,
     `fields name, category, platforms.name, alternative_names.name;
        search "${name.replace(/"/g, " ")}";
@@ -521,7 +522,7 @@ async function fetchIGDBSuggestionsWithToken(
         where (${nameConditions}) | (${altConditions});
         limit 20;`;
 
-    const fallbackRes = await axios.post<IGDBGame[]>(
+    const fallbackRes = await httpPost<IGDBGame[]>(
       `${IGDB_BASE}/games`,
       fallbackQuery,
       { headers, timeout: 5000 },
@@ -549,7 +550,7 @@ async function fetchIGDBSuggestionsWithToken(
 }
 
 async function pingIGDBWithToken(token: string): Promise<void> {
-  await axios.post(`${IGDB_BASE}/games`, "fields name; limit 1;", {
+  await httpPost(`${IGDB_BASE}/games`, "fields name; limit 1;", {
     headers: igdbHeaders(token),
     timeout: 5000,
   });
@@ -645,7 +646,7 @@ async function fetchIGDBTimeToBeat(
   headers: Record<string, string>,
 ): Promise<IGDBTimeToBeat | null> {
   try {
-    const res = await axios.post<IGDBTimeToBeat[]>(
+    const res = await httpPost<IGDBTimeToBeat[]>(
       `${IGDB_BASE}/game_time_to_beats`,
       `fields hastily, normally, completely, count; where game_id = ${gameId}; limit 1;`,
       { headers, timeout: 5000 },

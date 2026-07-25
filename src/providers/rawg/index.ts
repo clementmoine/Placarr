@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
@@ -85,10 +85,13 @@ export const rawgModule: ProviderModule = {
     const key = process.env.RAWG_API_KEY;
     if (!key) return [];
     try {
-      const res = await axios.get("https://api.rawg.io/api/games", {
-        params: { search: "Hades", key },
-        timeout: 8000,
-      });
+      const res = await httpGet<{ results?: JsonObject[] }>(
+        "https://api.rawg.io/api/games",
+        {
+          params: { search: "Hades", key },
+          timeout: 8000,
+        },
+      );
       return Object.keys(res.data?.results?.[0] || {});
     } catch {
       return [];

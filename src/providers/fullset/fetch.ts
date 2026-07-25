@@ -1,4 +1,5 @@
 import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import {
   fullSetSearchEvidenceUrl,
@@ -172,7 +173,7 @@ export async function searchFullSet(
   }
 
   try {
-    const response = await axios.get(`${BASE_URL}/recherche.php`, {
+    const response = await httpGet(`${BASE_URL}/recherche.php`, {
       params: { q: cleaned },
       headers: HEADERS,
       timeout: 12_000,
@@ -197,7 +198,7 @@ export async function fetchFullSetItem(
   signal?: AbortSignal,
 ): Promise<FullSetItem | null> {
   try {
-    const response = await axios.get(url, {
+    const response = await httpGet(url, {
       headers: HEADERS,
       timeout: 12_000,
       signal,

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 import type {
   MetadataAttachment,
@@ -484,7 +484,7 @@ export async function fetchFromSteam(
   if (!query) return null;
 
   try {
-    const searchRes = await axios.get<{
+    const searchRes = await httpGet<{
       total?: number;
       items?: SteamSearchItem[];
     }>("https://store.steampowered.com/api/storesearch/", {
@@ -508,7 +508,7 @@ export async function fetchFromSteam(
     const best = ranked[0];
     if (!best || best.score < 0.42) return null;
 
-    const detailsRes = await axios.get<
+    const detailsRes = await httpGet<
       Record<string, { success?: boolean; data?: SteamAppDetails }>
     >("https://store.steampowered.com/api/appdetails", {
       params: {

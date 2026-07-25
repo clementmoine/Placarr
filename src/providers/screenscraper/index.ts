@@ -2,7 +2,7 @@ import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
 } from "@/core/catalog/healthUtils";
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -168,7 +168,7 @@ export const screenscraperModule: ProviderModule = {
       async () => {
         const start = Date.now();
         try {
-          const response = await axios.get(
+          const response = await httpGet<{ response?: { error?: unknown } }>(
             "https://api.screenscraper.fr/api2/jeuRecherche.php",
             {
               params: {

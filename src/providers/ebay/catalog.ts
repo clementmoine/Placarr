@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
 
@@ -68,7 +68,7 @@ async function searchEbayCatalog(
 ): Promise<CatalogProductSummary[]> {
   const token = await getEbayCatalogAccessToken(credentials);
   if (!token) return [];
-  const res = await axios.get(EBAY_CATALOG_SEARCH_URL, {
+  const res = await httpGet<JsonObject>(EBAY_CATALOG_SEARCH_URL, {
     params: { limit: "10", ...params },
     headers: {
       Authorization: `Bearer ${token}`,

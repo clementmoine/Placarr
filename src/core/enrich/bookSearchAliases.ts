@@ -1,7 +1,7 @@
 /**
  * Cross-edition book/manga title aliases via Open Library author search.
  */
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
 import { inferTextLanguage } from "@/core/locale/preference";
 import {
@@ -40,7 +40,7 @@ async function fetchOpenLibraryTitlesByAuthor(
   authorName: string,
 ): Promise<string[]> {
   try {
-    const response = await axios.get<OpenLibrarySearchResponse>(
+    const response = await httpGet<OpenLibrarySearchResponse>(
       OPENLIBRARY_SEARCH_URL,
       {
         timeout: OPENLIBRARY_TIMEOUT_MS,

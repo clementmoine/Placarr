@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
@@ -84,7 +84,7 @@ export const tmdbModule: ProviderModule = {
     const key = process.env.TMDB_API_KEY;
     if (!key) return [];
     try {
-      const search = await axios.get(
+      const search = await httpGet<{ results?: JsonObject[] }>(
         "https://api.themoviedb.org/3/search/movie",
         {
           params: { query: "Aladdin", api_key: key, language: "fr-FR" },
@@ -93,7 +93,7 @@ export const tmdbModule: ProviderModule = {
       );
       const id = search.data?.results?.[0]?.id;
       if (!id) return Object.keys(search.data?.results?.[0] || {});
-      const details = await axios.get(
+      const details = await httpGet<JsonObject>(
         `https://api.themoviedb.org/3/movie/${id}`,
         {
           params: { api_key: key, language: "fr-FR" },

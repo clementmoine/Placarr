@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -501,7 +501,7 @@ async function searchBabelioHtmlHits(
       Recherche: trimmed,
       recherche: "",
     });
-    const response = await axios.post(
+    const response = await httpPost(
       `${BABELIO_BASE_URL}/recherche.php`,
       body.toString(),
       {
@@ -540,7 +540,7 @@ export async function searchBabelioHits(
 
   let ajaxHits: BabelioSearchHit[] = [];
   try {
-    const response = await axios.post(
+    const response = await httpPost(
       BABELIO_SEARCH_URL,
       { id_user: "", isMobile: false, term: trimmed },
       {

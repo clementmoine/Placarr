@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -421,19 +421,10 @@ export const discogsModule: ProviderModule = {
     const barcode = (context?.barcode || "4988601467124").replace(/[^\d]/g, "");
     if (!barcode) return [];
     try {
-      const res = await axios.get("https://api.discogs.com/database/search", {
-        params: { barcode, per_page: 1, ...auth },
-        headers: {
-          "User-Agent": "Placarr/1.0 +https://github.com/clementmoine/Placarr",
-        },
-        timeout: 8000,
-      });
-      const id = res.data?.results?.[0]?.id;
-      if (!id) return Object.keys(res.data?.results?.[0] || {});
-      const release = await axios.get(
-        `https://api.discogs.com/releases/${id}`,
+      const res = await httpGet<{ results?: JsonObject[] }>(
+        "https://api.discogs.com/database/search",
         {
-          params: auth,
+          params: { barcode, per_page: 1, ...auth },
           headers: {
             "User-Agent":
               "Placarr/1.0 +https://github.com/clementmoine/Placarr",
@@ -441,6 +432,15 @@ export const discogsModule: ProviderModule = {
           timeout: 8000,
         },
       );
+      const id = res.data?.results?.[0]?.id;
+      if (!id) return Object.keys(res.data?.results?.[0] || {});
+      const release = await httpGet(`https://api.discogs.com/releases/${id}`, {
+        params: auth,
+        headers: {
+          "User-Agent": "Placarr/1.0 +https://github.com/clementmoine/Placarr",
+        },
+        timeout: 8000,
+      });
       return Object.keys(release.data || {});
     } catch {
       return [];

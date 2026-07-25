@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { priceListingMatchesAnyItemName } from "@/core/identify/titleUtils";
 
@@ -131,7 +131,7 @@ async function searchEbayBrowse(
 ): Promise<EbayBrowseSearchResult> {
   const token = await getEbayBrowseAccessToken(credentials);
   if (!token) return { items: [], retryableFailure: false };
-  const res = await axios.get(EBAY_BROWSE_SEARCH_URL, {
+  const res = await httpGet<JsonObject>(EBAY_BROWSE_SEARCH_URL, {
     params: { limit: "10", ...params },
     headers: {
       Authorization: `Bearer ${token}`,

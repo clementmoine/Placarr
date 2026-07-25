@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { createOpenLibraryResolver } from "./resolver";
@@ -113,7 +113,7 @@ export const openlibraryModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const isbn = await axios.get(
+      const isbn = await httpGet<{ works?: Array<{ key?: string }> }>(
         "https://openlibrary.org/isbn/9780140328721.json",
         {
           timeout: 8000,
@@ -124,7 +124,7 @@ export const openlibraryModule: ProviderModule = {
         "",
       );
       if (!workKey) return Object.keys(isbn.data || {});
-      const ratings = await axios.get(
+      const ratings = await httpGet(
         `https://openlibrary.org/works/${workKey}/ratings.json`,
         { timeout: 8000 },
       );

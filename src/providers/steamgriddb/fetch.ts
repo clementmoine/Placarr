@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import {
   resolveGameAttachmentPlatformKey,
@@ -50,7 +50,7 @@ async function fetchSteamGridDbJson<T>(
   const apiKey = getSteamGridDbApiKey();
   if (!apiKey) return null;
 
-  const res = await axios.get<SteamGridDbResponse<T>>(
+  const res = await httpGet<SteamGridDbResponse<T>>(
     `${STEAMGRIDDB_API_BASE}${path}`,
     {
       headers: {

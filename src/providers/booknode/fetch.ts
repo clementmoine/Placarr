@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -655,7 +655,7 @@ async function fetchWithReader(
   signal?: AbortSignal,
 ): Promise<string | null> {
   try {
-    const response = await axios.get(`${BOOKNODE_READER_URL_PREFIX}${url}`, {
+    const response = await httpGet(`${BOOKNODE_READER_URL_PREFIX}${url}`, {
       responseType: "text",
       transformResponse: [(data) => data],
       timeout: 12_000,
@@ -678,7 +678,7 @@ async function fetchBooknodePage(
   signal?: AbortSignal,
 ): Promise<string | null> {
   try {
-    const response = await axios.get(url, {
+    const response = await httpGet(url, {
       headers: BOOKNODE_HEADERS,
       responseType: "text",
       transformResponse: [(data) => data],

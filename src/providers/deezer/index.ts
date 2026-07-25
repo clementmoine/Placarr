@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { createDeezerResolver } from "./resolver";
@@ -83,15 +83,21 @@ export const deezerModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const search = await axios.get("https://api.deezer.com/search/album", {
-        params: { q: "Daft Punk Random Access Memories" },
-        timeout: 8000,
-      });
+      const search = await httpGet<{ data?: JsonObject[] }>(
+        "https://api.deezer.com/search/album",
+        {
+          params: { q: "Daft Punk Random Access Memories" },
+          timeout: 8000,
+        },
+      );
       const id = search.data?.data?.[0]?.id;
       if (!id) return Object.keys(search.data?.data?.[0] || {});
-      const album = await axios.get(`https://api.deezer.com/album/${id}`, {
-        timeout: 8000,
-      });
+      const album = await httpGet<JsonObject>(
+        `https://api.deezer.com/album/${id}`,
+        {
+          timeout: 8000,
+        },
+      );
       return Object.keys(album.data || {});
     } catch {
       return [];

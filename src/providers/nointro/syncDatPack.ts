@@ -7,7 +7,7 @@ import { existsSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 const DAT_FILE_RE = /\.(dat|xml)$/i;
 
@@ -90,7 +90,7 @@ async function downloadDatPackZip(url: string): Promise<string | null> {
   await fs.mkdir(cacheDir(), { recursive: true });
   const zipPath = path.join(cacheDir(), "nointro-dat-pack.zip");
   try {
-    const response = await axios.get<ArrayBuffer>(url, {
+    const response = await httpGet<ArrayBuffer>(url, {
       responseType: "arraybuffer",
       timeout: 10 * 60_000,
       maxContentLength: 512 * 1024 * 1024,

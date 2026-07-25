@@ -1,4 +1,5 @@
 import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
@@ -418,7 +419,7 @@ export function createGoogleBooksResolver() {
     if (!query) return null;
 
     try {
-      const response = await axios.get<GoogleBooksResponse>(BASE_URL, {
+      const response = await httpGet<GoogleBooksResponse>(BASE_URL, {
         params: {
           q: query,
           maxResults: 8,

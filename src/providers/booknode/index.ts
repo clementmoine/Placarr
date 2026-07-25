@@ -1,6 +1,5 @@
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
-import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -381,7 +380,9 @@ export const booknodeModule: ProviderModule = {
       if (!/booknode\.com$/i.test(parsed.hostname.replace(/^www\./i, ""))) {
         return null;
       }
-      return parsed.pathname.match(/(?:_|media\/)(\d+)(?:[/?#]|$)/)?.[1] ?? null;
+      return (
+        parsed.pathname.match(/(?:_|media\/)(\d+)(?:[/?#]|$)/)?.[1] ?? null
+      );
     } catch {
       return null;
     }

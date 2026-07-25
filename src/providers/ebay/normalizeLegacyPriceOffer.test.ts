@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ebayItemUrlFromPicClickUrl,
   normalizeLegacyPriceOffer,
+  type NormalizablePriceOffer,
 } from "./normalizeLegacyPriceOffer";
 
 describe("ebayItemUrlFromPicClickUrl", () => {
@@ -23,7 +24,7 @@ describe("ebayItemUrlFromPicClickUrl", () => {
 
 describe("normalizeLegacyPriceOffer", () => {
   it("rewrites PicClick rows to eBay with a direct listing URL", () => {
-    const normalized = normalizeLegacyPriceOffer({
+    const normalized = normalizeLegacyPriceOffer<NormalizablePriceOffer>({
       source: "PicClick",
       condition: "used",
       priceCents: 1100,
@@ -48,7 +49,7 @@ describe("normalizeLegacyPriceOffer", () => {
   });
 
   it("sanitizes stale PicClick payload on already-renamed eBay rows", () => {
-    const normalized = normalizeLegacyPriceOffer({
+    const normalized = normalizeLegacyPriceOffer<NormalizablePriceOffer>({
       source: "eBay",
       condition: "used",
       priceCents: 1100,

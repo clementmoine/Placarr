@@ -1,4 +1,4 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -127,6 +127,11 @@ export type BarcodePriceRefreshContext = MatchContext & {
   isClassics: boolean;
   /** Job abort — stop launching further provider scrapes when set. */
   signal?: AbortSignal;
+  /**
+   * Rejoue uniquement ProviderEvidence frais (SearchYield / DetailYield) —
+   * aucun HTTP. Miss evidence ⇒ offre vide pour ce provider.
+   */
+  evidenceOnly?: boolean;
 };
 
 export type CatalogExternalLinkContext = {
@@ -205,6 +210,7 @@ export type BarcodeLookupDeps = {
     preferredPlatform?: string,
     isPal?: boolean,
     isClassics?: boolean,
+    options?: { mediaType?: string | null },
   ) => Promise<unknown>;
   fetchFromChasseAuxLivres: (
     barcode: string,
@@ -291,14 +297,21 @@ export interface TestProviderHandler {
   ) => Promise<unknown>;
 }
 
+/**
+ * Probe samples may be barcode-only (Magento retailers seek by EAN), so the
+ * name is optional here — the audit fills it in before calling an adapter.
+ */
+export type ProviderMappingProbeContext = Omit<MetadataAdapterContext, "name"> &
+  Partial<Pick<MetadataAdapterContext, "name">>;
+
 export interface ProviderMappingProbeSample {
   sampleInput: string;
-  context: MetadataAdapterContext;
+  context: ProviderMappingProbeContext;
 }
 
 export interface ProviderMappingProbe {
   sampleInput: string;
-  context: MetadataAdapterContext;
+  context: ProviderMappingProbeContext;
   fallbackBarcodes?: string[];
   catalog?: string;
   /**
@@ -348,7 +361,7 @@ export interface ProviderModule {
    * back to their default sample (backward compatible).
    */
   collectMappingRawKeys?: (
-    context?: MetadataAdapterContext,
+    context?: ProviderMappingProbeContext,
   ) => Promise<string[]>;
   healthCheck?: ProviderHealthCheck;
   /** When set, metadata fetch skips this provider while its quota cooldown is active. */

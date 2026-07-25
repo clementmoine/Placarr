@@ -1,5 +1,6 @@
 import type { DetailFact } from "./playerFacts";
 import { formatDetailFactSourceToken, getFactSourceNames } from "./playerFacts";
+import { isInternalMetadataMergeKey } from "@/core/enrich/internalMergeKeys";
 
 const HIDDEN_DISPLAY_KINDS = new Set([
   "identifier",
@@ -8,7 +9,6 @@ const HIDDEN_DISPLAY_KINDS = new Set([
   "recommended-players",
   "review",
 ]);
-
 
 const TAG_LIKE_KINDS = new Set([
   "category",
@@ -67,13 +67,18 @@ function providerLinkOwnerKey(fact: DetailFact): string {
 
 export function extractProviderLinkFacts(facts: DetailFact[]): DetailFact[] {
   const links = facts.filter(
-    (fact) => fact.kind === "external-link" && fact.url,
+    (fact) =>
+      fact.kind === "external-link" &&
+      fact.url &&
+      !isInternalMetadataMergeKey(fact.source) &&
+      !isInternalMetadataMergeKey(fact.label) &&
+      !isInternalMetadataMergeKey(fact.providerLabel),
   );
   const bestByProvider = new Map<string, DetailFact>();
 
   for (const fact of links) {
     const ownerKey = providerLinkOwnerKey(fact);
-    if (!ownerKey) continue;
+    if (!ownerKey || isInternalMetadataMergeKey(ownerKey)) continue;
 
     const existing = bestByProvider.get(ownerKey);
     if (!existing || (fact.priority ?? 0) > (existing.priority ?? 0)) {

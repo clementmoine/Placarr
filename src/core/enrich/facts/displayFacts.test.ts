@@ -308,6 +308,31 @@ describe("displayFacts", () => {
     });
   });
 
+  describe("extractProviderLinkFacts", () => {
+    it("hides leaked __cached_fiche__ source chips", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "external-link",
+          label: "__cached_fiche__",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+          source: "__cached_fiche__",
+        },
+        {
+          kind: "external-link",
+          label: "PriceCharting",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+          source: "pricecharting",
+          providerLabel: "PriceCharting",
+        },
+      ];
+      const links = extractProviderLinkFacts(facts);
+      expect(links).toHaveLength(1);
+      expect(providerLinkDisplayLabel(links[0]!)).toBe("PriceCharting");
+    });
+  });
+
   describe("sortProviderLinkFacts", () => {
     it("sorts links alphabetically by display label", () => {
       const facts: DetailFact[] = [

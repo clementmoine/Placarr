@@ -34,7 +34,7 @@ export async function resolveMetadataCoverAndHero(input: {
     previousLocalCover,
     requestedPlatformKey,
   } = input;
-  let finalStorableAttachments = input.finalStorableAttachments;
+  const finalStorableAttachments = input.finalStorableAttachments;
   const formattedMetadata = { imageUrl: input.formattedImageUrl };
 
   const canonicalCoverCandidate = finalStorableAttachments.find(
@@ -51,7 +51,10 @@ export async function resolveMetadataCoverAndHero(input: {
       : undefined;
   const metadataCoverFallback =
     formattedMetadata.imageUrl &&
-    isUrlEligibleDefaultCover(formattedMetadata.imageUrl, finalStorableAttachments)
+    isUrlEligibleDefaultCover(
+      formattedMetadata.imageUrl,
+      finalStorableAttachments,
+    )
       ? formattedMetadata.imageUrl
       : null;
   const scoredImageUrl =
@@ -101,7 +104,6 @@ export async function resolveMetadataCoverAndHero(input: {
     if (coverAttachment) coverAttachment.url = croppedImageUrl;
   }
 
-
   // Computed wide hero/background: the sharpest landscape image we have (reuses
   // the display scorer + the metrics already gathered above). Null when nothing
   // high-resolution qualifies, so the UI falls back to the legacy heuristic.
@@ -109,7 +111,6 @@ export async function resolveMetadataCoverAndHero(input: {
     finalStorableAttachments,
     imageMetricsByUrl,
   );
-
 
   return {
     selectedImageUrl: selectedImageUrl ?? null,

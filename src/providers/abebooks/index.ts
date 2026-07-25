@@ -114,6 +114,7 @@ export function mapAbeBooksMetadata(
       sourceUrl: product.sourceUrl,
       evidenceSignals: ["barcode_match", "title_match"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",

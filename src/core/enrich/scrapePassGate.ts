@@ -65,22 +65,22 @@ export function externalIdsFromStoredSources(input: {
   const considerUrl = (url?: string | null, sourceHint?: string | null) => {
     if (!url?.trim()) return;
     const hintId = canonicalProviderIdForSource(sourceHint);
-    for (const module of PROVIDER_MODULES) {
-      if (!module.parseMetadataRecordIdFromUrl) continue;
-      if (hintId && module.info.id !== hintId) continue;
-      const recordId = module.parseMetadataRecordIdFromUrl(url.trim());
+    for (const providerModule of PROVIDER_MODULES) {
+      if (!providerModule.parseMetadataRecordIdFromUrl) continue;
+      if (hintId && providerModule.info.id !== hintId) continue;
+      const recordId = providerModule.parseMetadataRecordIdFromUrl(url.trim());
       if (recordId) {
-        ids[module.info.id] = recordId;
+        ids[providerModule.info.id] = recordId;
         return;
       }
     }
     // No source hint: try every parser (host-scoped inside each module).
     if (hintId) return;
-    for (const module of PROVIDER_MODULES) {
-      if (!module.parseMetadataRecordIdFromUrl) continue;
-      const recordId = module.parseMetadataRecordIdFromUrl(url.trim());
+    for (const providerModule of PROVIDER_MODULES) {
+      if (!providerModule.parseMetadataRecordIdFromUrl) continue;
+      const recordId = providerModule.parseMetadataRecordIdFromUrl(url.trim());
       if (recordId) {
-        ids[module.info.id] = recordId;
+        ids[providerModule.info.id] = recordId;
         return;
       }
     }
@@ -133,16 +133,16 @@ export function providerRecordUrlsFromStoredSources(input: {
     const trimmed = url.trim();
     const hintId = canonicalProviderIdForSource(sourceHint);
 
-    const tryParse = (module: (typeof PROVIDER_MODULES)[number]) => {
-      if (!module.parseMetadataRecordIdFromUrl) return false;
-      if (!module.parseMetadataRecordIdFromUrl(trimmed)) return false;
-      urls[module.info.id] = trimmed;
+    const tryParse = (providerModule: (typeof PROVIDER_MODULES)[number]) => {
+      if (!providerModule.parseMetadataRecordIdFromUrl) return false;
+      if (!providerModule.parseMetadataRecordIdFromUrl(trimmed)) return false;
+      urls[providerModule.info.id] = trimmed;
       return true;
     };
 
     if (hintId) {
       const hinted = PROVIDER_MODULES.find(
-        (module) => module.info.id === hintId,
+        (providerModule) => providerModule.info.id === hintId,
       );
       if (hinted && tryParse(hinted)) return;
       const provider = PROVIDERS.find((entry) => entry.id === hintId);
@@ -162,8 +162,8 @@ export function providerRecordUrlsFromStoredSources(input: {
       return;
     }
 
-    for (const module of PROVIDER_MODULES) {
-      if (tryParse(module)) return;
+    for (const providerModule of PROVIDER_MODULES) {
+      if (tryParse(providerModule)) return;
     }
   };
 

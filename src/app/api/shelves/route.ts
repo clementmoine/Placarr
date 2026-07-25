@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Type } from "@prisma/client";
+import { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 
 import { requireGuestOrHigher } from "@/lib/auth";
@@ -29,7 +29,6 @@ import {
 import { reconcileOrphanedMetadataRefreshesForUser } from "@/core/collect/jobs/metadataRefreshSession";
 import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
-
 
 async function formatShelfWithItemPrices<
   T extends {
@@ -333,9 +332,7 @@ export async function GET(req: NextRequest) {
           },
         });
 
-        return NextResponse.json(
-          lite ? shelves : await withBestItems(shelves),
-        );
+        return NextResponse.json(lite ? shelves : await withBestItems(shelves));
       }
 
       const shelves = await prisma.shelf.findMany({
@@ -399,7 +396,7 @@ export async function POST(req: NextRequest) {
         slug: slugify(name),
         imageUrl,
         color,
-        type,
+        type: type as Type,
         ...(typeof cardFormat === "string" && cardFormat.trim()
           ? { cardFormat: cardFormat.trim() }
           : {}),

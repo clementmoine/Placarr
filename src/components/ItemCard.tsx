@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, type SyntheticEvent } from "react";
-import type { Item } from "@prisma/client";
+import type { Item } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -14,7 +14,7 @@ import { RemoteImage } from "@/components/RemoteImage";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
@@ -68,9 +68,8 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
 }
 
 function ItemCardInner(props: ItemCardProps) {
-  const { imageUrl, name, shelfType, shelfName, cardFormat, condition, priority } =
-    props;
-  const { locale, t } = useLocale();
+  const { imageUrl, name, shelfType, cardFormat, condition, priority } = props;
+  const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
 

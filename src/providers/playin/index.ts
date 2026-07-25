@@ -80,7 +80,10 @@ async function refreshPlayInOffers(
   );
 
   for (const productUrl of resolvedProductUrls) {
-    const cached = await readRetailPriceEvidence(PLAYIN_PROVIDER_KEY, productUrl);
+    const cached = await readRetailPriceEvidence(
+      PLAYIN_PROVIDER_KEY,
+      productUrl,
+    );
     if (cached) {
       return playInOffersFromPrice({
         title: cached.productName,
@@ -251,8 +254,8 @@ export const playinModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload) {
-    if (!payload.playin?.priceCents) return [];
     const hit = payload.playin;
+    if (!hit?.priceCents) return [];
     if (hit.productUrl) {
       void promoteRetailPriceEvidence(PLAYIN_PROVIDER_KEY, {
         priceCents: hit.priceCents,

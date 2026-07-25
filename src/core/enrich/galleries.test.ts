@@ -95,7 +95,10 @@ describe("isMissingMusicGallery", () => {
 
 describe("hasDetailMetadataAttachments", () => {
   it("detects shelf snapshots that omit attachment galleries", () => {
-    expect(hasDetailMetadataAttachments({ facts: [] })).toBe(false);
+    const shelfSnapshot: { attachments?: unknown; facts?: unknown } = {
+      facts: [],
+    };
+    expect(hasDetailMetadataAttachments(shelfSnapshot)).toBe(false);
     expect(hasDetailMetadataAttachments({ attachments: [] })).toBe(true);
     expect(
       hasDetailMetadataAttachments({ attachments: [{ type: "cover" }] }),

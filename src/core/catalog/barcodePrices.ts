@@ -36,11 +36,19 @@ export async function collectRefreshBarcodePriceOffers(
   ctx: BarcodePriceRefreshContext,
 ): Promise<PriceOfferInput[]> {
   const signal = resolveRequestAbortSignal(ctx.signal);
-  const modules = PROVIDER_MODULES.filter(
-    (module) =>
-      module.refreshBarcodePriceOffers &&
-      moduleSupportsShelfType(module.info.types, ctx.shelfType),
-  );
+  const modules = PROVIDER_MODULES.filter((module) => {
+    if (
+      !module.refreshBarcodePriceOffers ||
+      !moduleSupportsShelfType(module.info.types, ctx.shelfType)
+    ) {
+      return false;
+    }
+    // Evidence-only reconfront must not wake scrapers that still HTTP on miss.
+    if (ctx.evidenceOnly && !module.info.evidenceOnlyPriceRefresh) {
+      return false;
+    }
+    return true;
+  });
   const settled = await runWithConcurrency(
     modules,
     BARCODE_PRICE_REFRESH_CONCURRENCY,
@@ -66,7 +74,9 @@ export async function collectRefreshBarcodePriceOffers(
     },
     { signal },
   );
-  return settled.filter((row): row is PriceOfferInput[] => Array.isArray(row)).flat();
+  return settled
+    .filter((row): row is PriceOfferInput[] => Array.isArray(row))
+    .flat();
 }
 
 export function priceProviderTokenFromOffers(

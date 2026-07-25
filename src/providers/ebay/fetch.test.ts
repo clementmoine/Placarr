@@ -268,6 +268,18 @@ describe("fetchPricesFromEbay", () => {
     expect(promoteEbayBrowseSearchEvidence).not.toHaveBeenCalled();
   });
 
+  it("evidenceOnly returns null without credentials when SearchYield is missing", async () => {
+    delete process.env.EBAY_CLIENT_ID;
+    delete process.env.EBAY_CLIENT_SECRET;
+    readEbayBrowseSearchEvidence.mockResolvedValueOnce(null);
+
+    await expect(
+      fetchPricesFromEbay("0045496365226", [], { evidenceOnly: true }),
+    ).resolves.toBeNull();
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(mockedPost).not.toHaveBeenCalled();
+  });
+
   it("promotes Browse SearchYield after a live search", async () => {
     mockedPost.mockResolvedValueOnce(tokenResponse());
     mockedGet.mockResolvedValueOnce(

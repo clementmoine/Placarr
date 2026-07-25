@@ -11,19 +11,16 @@ import {
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { refineCatalogDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
 import {
-  aliasesExcludingTitle,
   collectMergedSearchAliases,
   promoteTitleKeepingAliases,
 } from "@/core/enrich/aliases";
 import {
   dedupeFieldEvidence,
   dedupeFacts,
-  metadataFieldEvidence,
   isTimeToBeatFamilyFact,
 } from "@/core/enrich/facts";
 import {
   dedupeProviderExternalLinkFacts,
-  externalLinkFactsFromFieldEvidence,
   appendMissingProviderExternalLinkFacts,
 } from "@/core/enrich/providerExternalLinks";
 import {
@@ -48,11 +45,10 @@ import {
   pickDiscoveredBarcode,
 } from "@/core/identify/normalize";
 import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
-import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
 import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
 import { isHowLongToBeatFactSource } from "@/core/catalog/sourceTraits";
-import { AttachmentType } from "@prisma/client";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { AttachmentType } from "@/generated/prisma/browser";
+import type { MetadataResult } from "@/types/metadataProvider";
 import {
   orderResultsByObservationStrength,
   pickBestMetadataFactsFromObservations,

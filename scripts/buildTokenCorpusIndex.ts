@@ -6,7 +6,7 @@
  *   pnpm title-idf:build-index
  *   TOKEN_CORPUS_INDEX_PATH=/path/to/token-df.json pnpm title-idf:build-index
  */
-import { prisma } from "@/lib/db/prisma";
+import { disconnectPrisma, prisma } from "@/lib/db/prisma";
 import {
   buildTokenCorpusIndexFromTitles,
   writeTokenCorpusIndex,
@@ -72,5 +72,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect().catch(() => {});
+    await disconnectPrisma();
   });

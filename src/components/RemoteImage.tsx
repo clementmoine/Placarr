@@ -49,6 +49,8 @@ export function RemoteImage({
   sizes = "(max-width: 640px) 50vw, 384px",
   fill,
   priority,
+  loading,
+  fetchPriority,
   onLoad,
   onError,
 }: {
@@ -60,7 +62,10 @@ export function RemoteImage({
   height?: number;
   sizes?: string;
   fill?: boolean;
+  /** @deprecated Prefer `loading="eager"` / `fetchPriority="high"` (Next 16). */
   priority?: boolean;
+  loading?: "lazy" | "eager";
+  fetchPriority?: "high" | "low" | "auto";
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   onError?: (event: SyntheticEvent<HTMLImageElement>) => void;
 }) {
@@ -68,6 +73,10 @@ export function RemoteImage({
   const unoptimized =
     remoteImageShouldSkipOptimizer(src) ||
     remoteImageShouldSkipOptimizer(displaySrc);
+  // `priority` alone leaves loading unset; Next 16 LCP warning needs eager.
+  const resolvedLoading = loading ?? (priority ? "eager" : undefined);
+  const resolvedFetchPriority =
+    fetchPriority ?? (priority ? "high" : undefined);
 
   if (isBlobImageSrc(src)) {
     return (
@@ -78,6 +87,8 @@ export function RemoteImage({
         alt={alt}
         className={className}
         style={style}
+        loading={resolvedLoading}
+        fetchPriority={resolvedFetchPriority}
         onLoad={onLoad}
         onError={onError}
         draggable={false}
@@ -94,7 +105,8 @@ export function RemoteImage({
         alt={alt}
         fill
         sizes={sizes}
-        priority={priority}
+        loading={resolvedLoading}
+        fetchPriority={resolvedFetchPriority}
         unoptimized={unoptimized}
         className={className}
         style={style}
@@ -111,7 +123,8 @@ export function RemoteImage({
       alt={alt}
       width={width}
       height={height}
-      priority={priority}
+      loading={resolvedLoading}
+      fetchPriority={resolvedFetchPriority}
       unoptimized={unoptimized}
       className={cn(aspectRatioClassName(className), className)}
       style={style}

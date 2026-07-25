@@ -1,9 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
 import { providerIdForSourceToken } from "@/core/catalog/catalog";
 import {
-  isLegacyPicClickPriceSource,
   normalizeLegacyPriceOffer,
   needsLegacyPriceOfferNormalization,
 } from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
@@ -265,7 +264,9 @@ export async function reconcileLegacyPriceOfferSources(
   scope: EvidenceScope,
 ): Promise<void> {
   if (!hasScope(scope)) return;
-  const existing = await prisma.priceOffer.findMany({ where: scopeWhere(scope) });
+  const existing = await prisma.priceOffer.findMany({
+    where: scopeWhere(scope),
+  });
   if (!existing.some(needsLegacyPriceOfferNormalization)) return;
   await mergePriceOffers(scope, []);
 }

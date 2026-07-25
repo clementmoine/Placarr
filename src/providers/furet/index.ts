@@ -156,6 +156,7 @@ export function mapFuretMetadata(
         ? ["structured_data", "barcode_match"]
         : ["structured_data"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -264,19 +265,15 @@ export const furetModule: ProviderModule = {
     } satisfies MetadataProviderAdapter;
   },
   refreshBarcodePriceOffers: refreshFuretOffers,
-  healthCheck: createMetadataHealthCheck(
-    "furet",
-    "Furet du Nord",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.furet.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
+  healthCheck: createMetadataHealthCheck("furet", "Furet du Nord", async () => {
+    const start = Date.now();
+    const isUp = await pingUrl("https://www.furet.com/");
+    return {
+      ok: isUp,
+      latency: Date.now() - start,
+      error: isUp ? null : "Host unreachable",
+    };
+  }),
   testHandlers: {
     "furet-barcode": {
       label: "Furet du Nord - Barcode",

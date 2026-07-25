@@ -19,6 +19,7 @@ import type {
   MappingProbeResult,
   MappingProbeStatus,
   MetadataAdapterContext,
+  ProviderMappingProbeContext,
 } from "@/types/providerModule";
 
 export type { MappingProbeStatus } from "@/types/providerModule";
@@ -233,19 +234,22 @@ function buildObservationSnapshot(
 
 async function runMetadataAdapterProbe(
   providerId: string,
-  contextOverride?: MetadataAdapterContext,
+  contextOverride?: ProviderMappingProbeContext,
 ): Promise<ProbeExecution> {
   const providerModule = getProviderModule(providerId);
   const adapter = getMetadataProviderAdapter(providerId);
   const rawCtx = contextOverride ?? providerModule?.mappingProbe?.context;
   if (!adapter || !rawCtx) return { probe: null, metadata: null };
 
+  // Barcode-only samples carry no name — adapters still require the field.
+  const namedCtx: MetadataAdapterContext = { name: "", ...rawCtx };
+
   // Adapters that branch on media type (SensCritique universes, book ISBN
   // bootstrap, …) need a type even when the sample context only set a name.
   const ctx: MetadataAdapterContext =
-    rawCtx.type || !providerModule?.info.types[0]
-      ? rawCtx
-      : { ...rawCtx, type: providerModule.info.types[0] };
+    namedCtx.type || !providerModule?.info.types[0]
+      ? namedCtx
+      : { ...namedCtx, type: providerModule.info.types[0] };
 
   const resolve = (context: typeof ctx) => adapter.resolve(context);
   const shouldRetry = !!providerModule?.info.mappingProbeRetry;
@@ -282,7 +286,7 @@ async function runMetadataAdapterProbe(
 
 async function runProbe(
   providerId: string,
-  contextOverride?: MetadataAdapterContext,
+  contextOverride?: ProviderMappingProbeContext,
 ): Promise<ProbeExecution> {
   const providerModule = getProviderModule(providerId);
   const hasAdapter = !!getMetadataProviderAdapter(providerId);
@@ -336,7 +340,7 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
         // Probe the primary sample plus any opt-in additional samples, then
         // union their raw + mapped keys so per-product field gaps don't hide
         // unexploited keys (see mergeMappingProbeSamples).
-        const sampleContexts: Array<MetadataAdapterContext | undefined> = [
+        const sampleContexts: Array<ProviderMappingProbeContext | undefined> = [
           providerModule?.mappingProbe?.context,
           ...(providerModule?.mappingProbe?.additionalSamples ?? []).map(
             (sample) => sample.context,

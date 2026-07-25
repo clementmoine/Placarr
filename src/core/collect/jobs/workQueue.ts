@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 
@@ -117,10 +117,7 @@ async function cancelOpenJobs(options: {
 }): Promise<number> {
   const where: Prisma.BackgroundWorkJobWhereInput = {
     status: {
-      in: [
-        BACKGROUND_WORK_STATUS.pending,
-        BACKGROUND_WORK_STATUS.running,
-      ],
+      in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
     },
   };
   if (options.itemId) where.itemId = options.itemId;
@@ -161,10 +158,7 @@ export async function enqueueBackgroundWorkJob(input: {
         itemId: input.itemId,
         kind: input.kind,
         status: {
-          in: [
-            BACKGROUND_WORK_STATUS.pending,
-            BACKGROUND_WORK_STATUS.running,
-          ],
+          in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
         },
       },
       orderBy: { createdAt: "asc" },
@@ -208,10 +202,7 @@ export async function hasActiveBackgroundWorkJobForItem(
     where: {
       itemId,
       status: {
-        in: [
-          BACKGROUND_WORK_STATUS.pending,
-          BACKGROUND_WORK_STATUS.running,
-        ],
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
       },
     },
     select: { id: true },
@@ -226,7 +217,7 @@ export async function hasActiveBackgroundWorkJobForItem(
  * @param kinds When set, only claim jobs of these kinds (pool isolation).
  */
 export async function claimNextBackgroundWorkJob(
-  workerId = randomUUID(),
+  workerId: string = randomUUID(),
   kinds: readonly BackgroundWorkKind[] | null = null,
 ): Promise<BackgroundWorkJobRow | null> {
   // Empty array = misconfigured pool (never claim). null = all kinds.

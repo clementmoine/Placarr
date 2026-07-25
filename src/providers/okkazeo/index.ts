@@ -260,8 +260,8 @@ export const okkazeoModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload) {
-    if (!payload.okkazeo?.priceCents) return [];
     const hit = payload.okkazeo;
+    if (!hit?.priceCents) return [];
     if (hit.productUrl) {
       void promoteRetailPriceEvidence(OKKAZEO_PROVIDER_KEY, {
         priceCents: hit.priceCents,

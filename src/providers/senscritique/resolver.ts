@@ -160,7 +160,7 @@ export function sensCritiqueAliases(
 
 export function mapSensCritiqueMetadata(
   product: SensCritiqueProduct,
-  ctx: {
+  _ctx: {
     platform?: string | null;
     shelfName?: string | null;
   } = {},

@@ -15,13 +15,7 @@
  *   docker compose -f compose.dev.yml up worker worker-icollect
  */
 
-export {};
-
-try {
-  process.loadEnvFile(".env");
-} catch {
-  // Docker / production often injects env without a local .env file.
-}
+import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
 
@@ -118,8 +112,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const { concurrency, cappedForFlare } =
-    resolveInteractiveWorkerConcurrency();
+  const { concurrency, cappedForFlare } = resolveInteractiveWorkerConcurrency();
   const kindsLabel = claimKinds?.join(",") ?? "all";
   console.info(
     `[Worker ${WORKER_ID}] starting (concurrency=${concurrency}, poll=${POLL_IDLE_MS}ms, kinds=${kindsLabel})`,
@@ -130,17 +123,20 @@ async function main(): Promise<void> {
     );
   }
 
-  const recoverTimer = setInterval(() => {
-    void recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS).then(
-      (count) => {
-        if (count > 0) {
-          console.warn(
-            `[Worker ${WORKER_ID}] recovered ${count} stale running job(s)`,
-          );
-        }
-      },
-    );
-  }, Math.min(STALE_RECOVER_MS, 5 * 60 * 1000));
+  const recoverTimer = setInterval(
+    () => {
+      void recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS).then(
+        (count) => {
+          if (count > 0) {
+            console.warn(
+              `[Worker ${WORKER_ID}] recovered ${count} stale running job(s)`,
+            );
+          }
+        },
+      );
+    },
+    Math.min(STALE_RECOVER_MS, 5 * 60 * 1000),
+  );
   if (typeof recoverTimer.unref === "function") recoverTimer.unref();
 
   await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);

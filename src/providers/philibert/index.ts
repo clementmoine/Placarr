@@ -247,8 +247,8 @@ export const philibertModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload) {
-    if (!payload.philibert?.priceCents) return [];
     const hit = payload.philibert;
+    if (!hit?.priceCents) return [];
     const offer = pricedOffer(PRICE_SOURCE, "new", hit.priceCents, hit, {
       productName: hit.title,
       sourceUrl: hit.productUrl ?? undefined,

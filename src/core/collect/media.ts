@@ -7,7 +7,7 @@
  * - photo utilisateur locale = override explicite
  */
 
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 import type { Locale } from "@/types/i18n";
 import { getBestLocale } from "@/core/locale/utils";
 
@@ -74,6 +74,8 @@ export interface MediaItem {
   strictShelfPlatformCoverSource?: boolean;
   collectorCoverRegionFromAgeRatingSource?: boolean;
   coverProvenance?: string | null;
+  /** Per-source cover ranking nudge (providerSourceTraits), stamped at storage. */
+  providerImageScoreAdjustment?: number;
   // Persisted at enrichment from the original image URL; the platform-aware cover
   // ranking's load-bearing signal once the URL is a local /uploads path.
   platformKey?: string | null;
@@ -172,9 +174,7 @@ function pinUserCoversFirst(
   const rest: ScoredAttachmentInput[] = [];
   for (const attachment of ranked) {
     if (attachment.source === "user") {
-      const key = attachment.url
-        ? stripCropSuffixFromUrl(attachment.url)
-        : "";
+      const key = attachment.url ? stripCropSuffixFromUrl(attachment.url) : "";
       // Honor pin sharing the catalog file must not appear as a leading "Perso"
       // card — URL dedupe already prefers the provider row.
       if (key && catalogKeys.has(key)) {
@@ -758,9 +758,7 @@ export function collapseCroppedUserPinWithCatalogOriginal(
     title: catalog.title ?? userCrop.title,
   };
 
-  const drop = new Set(
-    [userCrop.url, catalog.url].filter(Boolean) as string[],
-  );
+  const drop = new Set([userCrop.url, catalog.url].filter(Boolean) as string[]);
   return [
     merged,
     ...attachments.filter(
@@ -939,9 +937,7 @@ export function orderedCoverAttachmentsForDisplay(
   }
   const pin = resolveMetadataCoverUrl(item, uiLocale);
 
-  return pinUserCoversFirst(
-    orderRankedCoversWithMetadataPin(ranked, pin),
-  );
+  return pinUserCoversFirst(orderRankedCoversWithMetadataPin(ranked, pin));
 }
 
 /** Merge enrichment order with transient picker entries (scan / local crop). */

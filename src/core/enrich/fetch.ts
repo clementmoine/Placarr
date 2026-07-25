@@ -1,8 +1,4 @@
-import type {
-  MediaType,
-  Capability,
-  ProviderInfo,
-} from "@/types/providerRegistry";
+import type { MediaType, ProviderInfo } from "@/types/providerRegistry";
 import {
   isMediaType,
   isPcLikeGamePlatform,
@@ -17,124 +13,51 @@ import {
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import { metadataProviderResolverMap } from "@/core/catalog/bootstrap";
 import { loadBarcodeAlternateNames } from "@/core/identify/alternateNames";
-import { cleanCode, detectPlatformKey } from "@/core/identify/query";
-import {
-  normalizeProductBarcode,
-  pickDiscoveredBarcode,
-} from "@/core/identify/normalize";
-import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
+import { cleanCode } from "@/core/identify/query";
 import {
   buildGameMetadataFallbackNames,
   buildGameMetadataSearchQueries,
   buildHardwareMetadataSearchQueries,
-  buildMetadataAlignmentNames,
-  extractBaseTitleVariant,
   isMetadataTitleAligned,
   isGenericTitleFragment,
   shouldRecheckMetadataMatch,
   findBetterMetadataMatch,
-  metadataTitleSimilarity,
-  supplementGameEditionMetadata,
-  descriptionMatchesRequestedTitle,
 } from "@/core/enrich/titleMatching";
 import {
   areDisplayTitlesSameProduct,
   requestedTitleCoversCurrentTitle,
-  normalizeDisplayTitle,
-  scoreMetadataDisplayTitle,
 } from "@/core/enrich/titles/displayScore";
 import { preferredMetadataLanguagesFromShelfName } from "@/core/enrich/shelfContentLocale";
 import { buildBookMetadataSearchQueries } from "@/core/enrich/bookSearch";
-import {
-  supplementBookSearchAliases,
-  withBookSearchAliases,
-} from "@/core/enrich/bookSearchAliases";
-import {
-  aliasesExcludingTitle,
-  collectMergedSearchAliases,
-  promoteTitleKeepingAliases,
-} from "@/core/enrich/aliases";
+import { withBookSearchAliases } from "@/core/enrich/bookSearchAliases";
+import { aliasesExcludingTitle } from "@/core/enrich/aliases";
 import {
   dedupeFieldEvidence,
   dedupeFacts,
   metadataFieldEvidence,
-  isTimeToBeatFamilyFact,
 } from "@/core/enrich/facts";
 import {
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
-  appendMissingProviderExternalLinkFacts,
 } from "@/core/enrich/providerExternalLinks";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { CACHED_FICHE_MERGE_KEY } from "@/core/enrich/internalMergeKeys";
+import type { MetadataResult } from "@/types/metadataProvider";
 import { buildBoardGameMetadataSearchQueries } from "@/core/enrich/boardGame";
 import { buildPriceSearchQueries } from "@/core/commerce/pricing/searchQueries";
-import {
-  resolveGameMetadataPlatform,
-  detectShelfGamePlatformKey,
-} from "@/core/enrich/platform";
+import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { inferTextLanguage } from "@/core/locale/preference";
-import {
-  isVideoGamePlatformKey,
-  detectVideoGamePlatformKey,
-  videoGamePlatformTargetsPhysicalMedia,
-} from "@/core/identify/platforms/platforms";
-import { throwIfAborted, isAbortError } from "@/lib/http/abort";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import { throwIfAborted } from "@/lib/http/abort";
 import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
-import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
-import type {
-  MetadataAdapterContext,
-  MetadataProviderAdapter,
-  RomChecksums,
-} from "@/types/providerModule";
+import type { RomChecksums } from "@/types/providerModule";
 import {
   buildMatchContext,
   matchInputsFromMetadataResults,
   withMatchOnAdapterContext,
 } from "@/core/catalog/matchContext";
-import { bookIsbnBootstrapProviderIds } from "@/core/catalog/catalog";
-import { AttachmentType } from "@prisma/client";
-import { isHowLongToBeatFactSource } from "@/core/catalog/sourceTraits";
-import { PROVIDERS } from "@/core/catalog/catalog";
-import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
-import {
-  pickBestCoverFromAttachments,
-  pickBestDisplayImageUrl,
-  rankCoverGalleryAttachments,
-} from "@/core/enrich/media/attachmentDisplayScore";
-import { refineCatalogDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import {
-  bundleTitlePartsMatchCatalogTitle,
-  isBundleTitle,
-} from "@/core/enrich/bundleTitle";
-import { buildEditionPhraseEquivalentVariants } from "@/core/enrich/titles/searchVariants";
-import {
-  pickBestLocalizedDescription,
-  pickBestRegionalTitle,
-} from "@/core/locale/preference";
-import {
-  isDisplayObservation,
-  isRejectedObservation,
-  METADATA_OBSERVATION_SCHEMA_VERSION,
-  observationEvidenceRank,
-} from "@/core/enrich/observations";
-import {
-  factObservationRankScore,
-  pickBestFactObservationsByGroup,
-  pickCoverUrlFromObservations,
-} from "@/core/identify/evidence/ranking";
-import { coverUrlQualityRank } from "@/core/catalog/catalog";
-import type {
-  TitleObservation,
-  TitleObservationRole,
-  FactObservation,
-  MetadataObservation,
-} from "@/types/metadataObservation";
 
 import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
-import {
-  metadataResultsNeedGalleryEnrichment,
-  metadataResultsHaveGameGallerySource,
-} from "@/core/enrich/galleryEnrichment";
+import { metadataResultsNeedGalleryEnrichment } from "@/core/enrich/galleryEnrichment";
 import {
   apiProvidersForMetadataPass,
   preferPinnedProviderIds,
@@ -168,10 +91,6 @@ export type FetchMetadataOptions = {
    */
   onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
 };
-
-/** Local merge key for the DB/seed snapshot — not a registry provider id. */
-const CACHED_FICHE_MERGE_KEY = "__cached_fiche__";
-
 
 function pinnedProviderIdsFromOptions(
   options?: FetchMetadataOptions,
@@ -270,7 +189,9 @@ export async function fetchMetadata(
   throwIfAborted(options?.signal);
   const resolvedPlatform =
     resolveGameMetadataPlatform(platform, options?.shelfName, type) ??
-    (type === "hardware" ? detectVideoGamePlatformKey(name) ?? undefined : undefined);
+    (type === "hardware"
+      ? (detectVideoGamePlatformKey(name) ?? undefined)
+      : undefined);
   const providers = metadataCandidatesForType(type);
   const canonicalProviders = providers.filter((p) => !p.isSecondary);
   const secondaryProviders = providers.filter((p) => p.isSecondary);
@@ -541,10 +462,13 @@ export async function fetchMetadata(
       shelfType: type,
       shelfName: options?.shelfName,
       primaryTitle: name,
-      titles: [name, ...stage1FallbackNames, ...(stage1MatchContributions.titles ?? [])],
+      titles: [
+        name,
+        ...stage1FallbackNames,
+        ...(stage1MatchContributions.titles ?? []),
+      ],
       barcodes: [barcode, ...(stage1MatchContributions.barcodes ?? [])],
-      platformKey:
-        stage1MatchContributions.platformKey ?? resolvedPlatform,
+      platformKey: stage1MatchContributions.platformKey ?? resolvedPlatform,
       releaseDate: stage1MatchContributions.releaseDate,
       externalIds: stage1ExternalIds,
     }),
@@ -712,10 +636,13 @@ export async function fetchMetadata(
       shelfType: type,
       shelfName: options?.shelfName,
       primaryTitle: name,
-      titles: [name, ...finalFallbackNames, ...(finalMatchContributions.titles ?? [])],
+      titles: [
+        name,
+        ...finalFallbackNames,
+        ...(finalMatchContributions.titles ?? []),
+      ],
       barcodes: [barcode, ...(finalMatchContributions.barcodes ?? [])],
-      platformKey:
-        finalMatchContributions.platformKey ?? resolvedPlatform,
+      platformKey: finalMatchContributions.platformKey ?? resolvedPlatform,
       releaseDate: finalMatchContributions.releaseDate,
       externalIds: finalExternalIds,
     }),
@@ -977,10 +904,7 @@ async function buildMergedMetadataFromByProvider(input: {
       }
       // Name-searched retailers can return a different sequel/edition; validate
       // title alignment for games and hardware before merging any provider payload.
-      if (
-        (type === "games" || type === "hardware") &&
-        metadata.title?.trim()
-      ) {
+      if ((type === "games" || type === "hardware") && metadata.title?.trim()) {
         if (
           !isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
             shelfType: type,

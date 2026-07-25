@@ -78,9 +78,7 @@ function formatRating(value: number, count?: number): string {
     : `${formatted}/5`;
 }
 
-function buildAttachments(
-  album: IzneoAlbum,
-): MetadataAttachment[] | undefined {
+function buildAttachments(album: IzneoAlbum): MetadataAttachment[] | undefined {
   if (!album.imageUrl) return undefined;
   return [
     {
@@ -323,7 +321,7 @@ export const izneoModule: ProviderModule = {
         return mapIzneoMetadata(
           await resolveIzneoMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),

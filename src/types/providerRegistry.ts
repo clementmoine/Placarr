@@ -54,6 +54,11 @@ export interface ProviderInfo {
    */
   marketplaceSearchPriceSource?: boolean;
   /**
+   * `refreshBarcodePriceOffers` honors `evidenceOnly` (ProviderEvidence replay,
+   * zero HTTP). Collect skips other price modules during evidence-only passes.
+   */
+  evidenceOnlyPriceRefresh?: boolean;
+  /**
    * Provider supplies authoritative time-to-beat / playtime facts for games.
    */
   timeToBeatSource?: boolean;

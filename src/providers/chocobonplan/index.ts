@@ -49,7 +49,7 @@ function chocoBonPlanCoverRole(image: {
 
 function productToMetadata(
   product: NonNullable<Awaited<ReturnType<typeof fetchFromChocoBonPlan>>>,
-  context?: { platform?: string | null; shelfName?: string | null },
+  _context?: { platform?: string | null; shelfName?: string | null },
 ): MetadataResult {
   const facts =
     product.priceNew != null

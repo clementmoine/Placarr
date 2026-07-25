@@ -11,7 +11,6 @@ import {
 } from "./coverUrl";
 import {
   isCoverResolutionAcceptable,
-  readBufferImageMetrics,
   readFileImageMetrics,
   shortestImageEdge,
 } from "@/core/enrich/media/imageMetrics";
@@ -277,8 +276,8 @@ function canKeepRemoteBooknodeFallback(
   const provider = remoteImageProxyProviderFor(url);
   if (!provider?.remoteImageFallback) return false;
   if (source) {
-    const module = getProviderModule(source);
-    if (module?.info.remoteImageFallback) return true;
+    const providerModule = getProviderModule(source);
+    if (providerModule?.info.remoteImageFallback) return true;
   }
   return isBooknodeCoverUrl(url);
 }

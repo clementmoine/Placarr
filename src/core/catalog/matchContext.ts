@@ -64,14 +64,9 @@ export type BuildMatchContextInput = {
  */
 export function buildMatchContext(input: BuildMatchContextInput): MatchContext {
   const primaryTitle = input.primaryTitle.trim();
-  const titles = uniqueNonEmpty([
-    primaryTitle,
-    ...(input.titles ?? []),
-  ]);
+  const titles = uniqueNonEmpty([primaryTitle, ...(input.titles ?? [])]);
   const acceptanceTitles = uniqueNonEmpty(
-    input.acceptanceTitles?.length
-      ? input.acceptanceTitles
-      : [primaryTitle],
+    input.acceptanceTitles?.length ? input.acceptanceTitles : [primaryTitle],
   );
   const barcodes = uniqueBarcodes(input.barcodes ?? []);
   const platformKey =
@@ -154,17 +149,10 @@ export function matchAcceptanceTitles(match: MatchContext): string[] {
 export function matchPriceSeekQueries(
   ctx: Pick<
     BarcodePriceRefreshContext,
-    | "barcodes"
-    | "cleanedBarcode"
-    | "primaryName"
-    | "fallbackNames"
-    | "leDenicheurQueries"
+    "barcodes" | "cleanedBarcode" | "primaryName" | "fallbackNames"
   >,
 ): string[] {
-  const codes = uniqueNonEmpty([
-    ...(ctx.barcodes ?? []),
-    ctx.cleanedBarcode,
-  ]);
+  const codes = uniqueNonEmpty([...(ctx.barcodes ?? []), ctx.cleanedBarcode]);
   // With a barcode, one title fallback is enough. Title-only needs two.
   const maxTitleSeeks = codes.length > 0 ? 1 : 2;
   const titles = uniqueNonEmpty([
@@ -181,7 +169,11 @@ export function matchPriceSeekQueries(
  */
 export function toBarcodePriceRefreshContext(
   match: MatchContext,
-  options: { expandSearchQueries?: boolean; signal?: AbortSignal } = {},
+  options: {
+    expandSearchQueries?: boolean;
+    signal?: AbortSignal;
+    evidenceOnly?: boolean;
+  } = {},
 ): BarcodePriceRefreshContext {
   const cleanedBarcode = matchPrimaryBarcode(match);
   /** Cap alias expansion — each title becomes several marketplace HTTP seeks. */
@@ -215,6 +207,7 @@ export function toBarcodePriceRefreshContext(
     isPal: match.isPal ?? true,
     isClassics: match.isClassics ?? false,
     ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.evidenceOnly ? { evidenceOnly: true } : {}),
   };
 }
 

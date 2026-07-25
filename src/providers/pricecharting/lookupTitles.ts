@@ -3,6 +3,7 @@ import {
   expandHardwareFinishFrontTitles,
   expandHardwareFinishLookupTitles,
   hardwareFinishColors,
+  hardwareFinishEnSeekSpellings,
   hardwareRequestImpliesCatalogSlimChrome,
   isHardwareCatalogChromeToken,
 } from "@/core/enrich/titles/identityNoise";
@@ -27,7 +28,9 @@ function titleTokenCount(value: string): number {
  * the compound ("Joycon"). When a token matches CONTROLLER_RE and has no
  * separator, emit hyphen + spaced spellings (catalog encoding only).
  */
-export function expandPriceChartingGluedControllerTitles(title: string): string[] {
+export function expandPriceChartingGluedControllerTitles(
+  title: string,
+): string[] {
   const cleaned = title.replace(/\s+/g, " ").trim();
   if (!cleaned || !CONTROLLER_RE.test(cleaned)) return [];
 
@@ -64,28 +67,24 @@ export function expandPriceChartingPlatformControllerBundleTitles(
   const platform = getVideoGamePlatform(platformKey);
   if (!platform?.label) return [];
 
-  const english =
-    expandHardwareFinishLookupTitles(cleaned)[0] ?? cleaned;
-  const finishKeys = hardwareFinishColors(english);
-  const finishEn: Record<string, string> = {
-    black: "Black",
-    white: "White",
-    silver: "Silver",
-    gray: "Gray",
-    blue: "Blue",
-    pink: "Pink",
-  };
-  const finishWord = finishKeys[0] ? finishEn[finishKeys[0]] : undefined;
+  const finishKeys = hardwareFinishColors(
+    expandHardwareFinishLookupTitles(cleaned)[0] ?? cleaned,
+  );
+  const finishWords = finishKeys.flatMap((key) =>
+    hardwareFinishEnSeekSpellings(key),
+  );
 
-  const normalized = english.toLowerCase();
+  const normalized = cleaned.toLowerCase();
   const padForms = /\bjoy/.test(normalized)
     ? (["Joy-Con", "Joy Con"] as const)
     : (["Controller"] as const);
 
   const variants = new Set<string>();
   for (const pad of padForms) {
-    if (finishWord) {
-      variants.add(`${platform.label} with ${finishWord} ${pad}`);
+    if (finishWords.length > 0) {
+      for (const finishWord of finishWords) {
+        variants.add(`${platform.label} with ${finishWord} ${pad}`);
+      }
     } else {
       variants.add(`${platform.label} with ${pad}`);
     }
@@ -193,7 +192,9 @@ export function expandPriceChartingHardwareCapacityBeforeFormFactorTitles(
  * ("Xbox 360 Elite", "PS One Slim") so seek can hit "… System".
  * Trailing capacity → insert before it ("Slim 250GB" → "Slim Console 250GB").
  */
-export function expandPriceChartingHardwareSystemTitles(title: string): string[] {
+export function expandPriceChartingHardwareSystemTitles(
+  title: string,
+): string[] {
   const cleaned = title.replace(/\s+/g, " ").trim();
   if (!cleaned) return [];
   if (CONTROLLER_RE.test(cleaned)) return [];
@@ -223,10 +224,7 @@ export function expandPriceChartingHardwareSystemTitles(title: string): string[]
       .replace(/\bto\b/gi, "TB")
       .replace(/\bmo\b/gi, "MB");
     if (stem) {
-      return [
-        `${stem} System ${capacity}`,
-        `${stem} Console ${capacity}`,
-      ];
+      return [`${stem} System ${capacity}`, `${stem} Console ${capacity}`];
     }
   }
 
@@ -418,7 +416,9 @@ export function expandPriceChartingLookupTitles(title: string): string[] {
 
   for (const glued of expandPriceChartingGluedControllerTitles(cleaned)) {
     variants.add(glued);
-    for (const possessive of expandPriceChartingPossessiveTitleVariants(glued)) {
+    for (const possessive of expandPriceChartingPossessiveTitleVariants(
+      glued,
+    )) {
       variants.add(possessive);
     }
   }

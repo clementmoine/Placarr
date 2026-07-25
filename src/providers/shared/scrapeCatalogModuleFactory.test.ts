@@ -7,7 +7,8 @@ const readRetailPriceEvidence = vi.fn();
 const promoteRetailPriceEvidence = vi.fn();
 
 vi.mock("@/providers/shopify/fetch", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/providers/shopify/fetch")>();
+  const actual =
+    await importOriginal<typeof import("@/providers/shopify/fetch")>();
   return {
     ...actual,
     fetchShopifyBarcodeProduct: (...args: unknown[]) =>
@@ -45,6 +46,10 @@ function refreshCtx(
 ): BarcodePriceRefreshContext {
   return {
     shelfType: "boardgames",
+    barcodes: ["3421272109517"],
+    primaryTitle: "Mille Sabords",
+    titles: ["Mille Sabords"],
+    acceptanceTitles: ["Mille Sabords"],
     cleanedBarcode: "3421272109517",
     primaryName: "Mille Sabords",
     fallbackNames: [],

@@ -23,16 +23,12 @@ import {
 } from "@/core/enrich/titleMatching";
 import {
   isVideoGamePlatformKey,
-  detectVideoGamePlatformKey,
   videoGamePlatformTargetsPhysicalMedia,
 } from "@/core/identify/platforms/platforms";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import { throwIfAborted, isAbortError } from "@/lib/http/abort";
-import {
-  normalizeProductBarcode,
-  pickDiscoveredBarcode,
-} from "@/core/identify/normalize";
+import { pickDiscoveredBarcode } from "@/core/identify/normalize";
 import { bookIsbnBootstrapProviderIds } from "@/core/catalog/catalog";
 import {
   metadataResultsNeedGalleryEnrichment,
@@ -60,7 +56,9 @@ function metadataHasDescription(metadata: MetadataResult): boolean {
 }
 
 /** Provider already pinned a record — title recheck / fallback names won't help. */
-export function metadataResultIsPinnedForRecheck(result: MetadataResult): boolean {
+export function metadataResultIsPinnedForRecheck(
+  result: MetadataResult,
+): boolean {
   const externalIds = result.externalIds;
   if (
     !externalIds ||
@@ -229,7 +227,9 @@ export async function bootstrapBookProvidersWithDiscoveredIsbn(
   }
 }
 
-export function normalizeMetadataPlatformKey(value?: string | null): string | null {
+export function normalizeMetadataPlatformKey(
+  value?: string | null,
+): string | null {
   if (!value?.trim()) return null;
   const trimmed = value.trim();
   if (isVideoGamePlatformKey(trimmed)) return trimmed;
@@ -603,6 +603,8 @@ export function alignedProviderResultsForFallback(
   });
 }
 
-export function metadataProvidersReadyToResolve(providerIds: string[]): string[] {
+export function metadataProvidersReadyToResolve(
+  providerIds: string[],
+): string[] {
   return providerIds.filter((id) => !isMetadataProviderQuotaBlocked(id));
 }

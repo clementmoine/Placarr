@@ -127,8 +127,7 @@ export const IDENTITY_PLATFORM_NOISE_TOKENS: ReadonlySet<string> = new Set([
  * `VOLUME_KEYWORD_PATTERN` (+ short forms n/no/nr/ed used in title streams).
  */
 export const IDENTITY_VOLUME_STOP_WORDS: ReadonlySet<string> = new Set([
-  ...VOLUME_KEYWORD_PATTERN
-    .replace(/^\(\?:/, "")
+  ...VOLUME_KEYWORD_PATTERN.replace(/^\(\?:/, "")
     .replace(/\)$/, "")
     .split("|")
     .flatMap((alt) => {
@@ -217,12 +216,7 @@ export function isIdentityFunctionWord(token: string): boolean {
  * lot plurals). Kept as a small IDENTITY set so GENERIC can derive them
  * without duplicating literals.
  */
-const MEDIA_CATEGORY_TOKEN_ALLOW = new Set([
-  "jeu",
-  "game",
-  "jeux",
-  "games",
-]);
+const MEDIA_CATEGORY_TOKEN_ALLOW = new Set(["jeu", "game", "jeux", "games"]);
 
 export const IDENTITY_MEDIA_CATEGORY_TOKENS: ReadonlySet<string> = new Set(
   [...LISTING_NOISE_TERMS, ...LISTING_LOT_PLURAL_GAME_NOUNS]
@@ -351,8 +345,9 @@ export const HARDWARE_CATALOG_CHROME_TOKENS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Default console finish family → canonical key (FR/EN folded).
- * Includes rose≡pink (same default SKU finish as blanc≡white).
+ * Token → finish id (FR/EN folded within a family member).
+ * Cross-member synonyms (gris↔silver) live in HARDWARE_FINISH_SYNONYM_FAMILIES —
+ * not a single "translation" target.
  */
 const HARDWARE_FINISH_CANONICAL: Readonly<Record<string, string>> = {
   black: "black",
@@ -377,22 +372,69 @@ const HARDWARE_FINISH_CANONICAL: Readonly<Record<string, string>> = {
   rose: "pink",
 };
 
-/** EN spelling PriceCharting uses on console finish SKUs. */
-const HARDWARE_FINISH_EN_LOOKUP: Readonly<Record<string, string>> = {
-  black: "Black",
-  white: "White",
-  silver: "Silver",
-  gray: "Gray",
-  blue: "Blue",
-  pink: "Pink",
-};
+/**
+ * Synonym families for matching + catalog seeks.
+ * Retail labels the same metallic SKU as FR "gris", EN "Gray", or PC "Silver".
+ * `enSeek` = EN spellings to try (preference order); members share conflict identity.
+ */
+const HARDWARE_FINISH_SYNONYM_FAMILIES: ReadonlyArray<{
+  members: readonly string[];
+  enSeek: readonly string[];
+}> = [
+  { members: ["black"], enSeek: ["Black"] },
+  { members: ["white"], enSeek: ["White"] },
+  { members: ["silver", "gray"], enSeek: ["Silver", "Gray"] },
+  { members: ["blue"], enSeek: ["Blue"] },
+  { members: ["pink"], enSeek: ["Pink"] },
+];
+
+const HARDWARE_FINISH_FAMILY_BY_MEMBER: ReadonlyMap<
+  string,
+  (typeof HARDWARE_FINISH_SYNONYM_FAMILIES)[number]
+> = (() => {
+  const map = new Map<
+    string,
+    (typeof HARDWARE_FINISH_SYNONYM_FAMILIES)[number]
+  >();
+  for (const family of HARDWARE_FINISH_SYNONYM_FAMILIES) {
+    for (const member of family.members) map.set(member, family);
+  }
+  return map;
+})();
+
+function hardwareFinishFamily(canonical: string) {
+  return HARDWARE_FINISH_FAMILY_BY_MEMBER.get(canonical) ?? null;
+}
+
+/** True when two finish ids are the same synonym family (gris ≡ silver). */
+export function hardwareFinishIdsCompatible(
+  left: string,
+  right: string,
+): boolean {
+  if (left === right) return true;
+  const family = hardwareFinishFamily(left);
+  return Boolean(family?.members.includes(right));
+}
+
+/** EN catalog spellings to seek for a finish id (synonym expansion). */
+export function hardwareFinishEnSeekSpellings(canonical: string): string[] {
+  const family = hardwareFinishFamily(canonical);
+  if (family) return [...family.enSeek];
+  return [];
+}
 
 /** Lowercase EN finish token for PriceCharting product slugs (`white-…`). */
 export function hardwareFinishEnSlugToken(token: string): string | null {
+  const spellings = hardwareFinishEnSlugTokens(token);
+  return spellings[0] ?? null;
+}
+
+/** All synonym EN slug tokens for finish reorder variants (`gray` + `silver`). */
+export function hardwareFinishEnSlugTokens(token: string): string[] {
   const canonical = hardwareFinishCanonical(token);
-  if (!canonical) return null;
-  return (
-    HARDWARE_FINISH_EN_LOOKUP[canonical]?.toLowerCase() ?? canonical
+  if (!canonical) return [];
+  return hardwareFinishEnSeekSpellings(canonical).map((spelling) =>
+    spelling.toLowerCase(),
   );
 }
 
@@ -427,7 +469,9 @@ export function hardwareFinishCanonical(token: string): string | null {
 }
 
 export function isHardwareFinishQualifierToken(token: string): boolean {
-  return HARDWARE_FINISH_QUALIFIER_TOKENS.has(normalizeHardwareFinishToken(token));
+  return HARDWARE_FINISH_QUALIFIER_TOKENS.has(
+    normalizeHardwareFinishToken(token),
+  );
 }
 
 /** Canonical finishes present in a title ("white", "black"). */
@@ -442,7 +486,8 @@ export function hardwareFinishColors(title: string): string[] {
 
 /**
  * Request names a finish the candidate lacks or contradicts (Blanche ↛ Black).
- * Candidate-only finish stays allowed (bare "Wii" ↔ "Wii Console White").
+ * Synonym families do not conflict (Gris ↔ Silver). Candidate-only finish stays
+ * allowed (bare "Wii" ↔ "Wii Console White").
  */
 export function hardwareFinishConflict(
   requestTitle: string,
@@ -452,26 +497,52 @@ export function hardwareFinishConflict(
   if (requested.length === 0) return false;
   const candidate = hardwareFinishColors(candidateTitle);
   if (candidate.length === 0) return true;
-  return !requested.every((finish) => candidate.includes(finish));
+  return !requested.every((finish) =>
+    candidate.some((other) => hardwareFinishIdsCompatible(finish, other)),
+  );
 }
 
-/** FR finish tokens → EN catalog spellings for PriceCharting seek. */
+/**
+ * Finish tokens → EN catalog spellings for seeks.
+ * Emits every synonym spelling (Gris → Gray + Silver), not a single translation.
+ */
 export function expandHardwareFinishLookupTitles(title: string): string[] {
   const cleaned = title.replace(/\s+/g, " ").trim();
   if (!cleaned) return [];
 
-  const rewritten = cleaned
-    .split(/(\s+)/)
-    .map((part) => {
-      if (/^\s+$/.test(part)) return part;
-      const canonical = hardwareFinishCanonical(part);
-      if (!canonical) return part;
-      return HARDWARE_FINISH_EN_LOOKUP[canonical] ?? part;
-    })
-    .join("");
+  const parts = cleaned.split(/(\s+)/);
+  const finishSlots: Array<{ index: number; spellings: string[] }> = [];
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index]!;
+    if (/^\s+$/.test(part)) continue;
+    const canonical = hardwareFinishCanonical(part);
+    if (!canonical) continue;
+    const spellings = hardwareFinishEnSeekSpellings(canonical);
+    if (spellings.length === 0) continue;
+    finishSlots.push({ index, spellings });
+  }
+  if (finishSlots.length === 0) return [];
 
-  const trimmed = rewritten.replace(/\s+/g, " ").trim();
-  return trimmed && trimmed !== cleaned ? [trimmed] : [];
+  // Cartesian product over finish slots (usually one finish on console SKUs).
+  let variants: string[][] = [parts.map((part) => part)];
+  for (const slot of finishSlots) {
+    const next: string[][] = [];
+    for (const base of variants) {
+      for (const spelling of slot.spellings) {
+        const copy = [...base];
+        copy[slot.index] = spelling;
+        next.push(copy);
+      }
+    }
+    variants = next;
+  }
+
+  const out = new Set<string>();
+  for (const variantParts of variants) {
+    const trimmed = variantParts.join("").replace(/\s+/g, " ").trim();
+    if (trimmed && trimmed !== cleaned) out.add(trimmed);
+  }
+  return [...out];
 }
 
 /**
@@ -494,8 +565,8 @@ export function expandHardwareFinishFrontTitles(title: string): string[] {
   }
   if (finishIndex < 0 || !canonical) return [];
 
-  const enFinish = HARDWARE_FINISH_EN_LOOKUP[canonical];
-  if (!enFinish) return [];
+  const enFinishes = hardwareFinishEnSeekSpellings(canonical);
+  if (enFinishes.length === 0) return [];
 
   const rest = tokens
     .filter((_, index) => index !== finishIndex)
@@ -504,17 +575,19 @@ export function expandHardwareFinishFrontTitles(title: string): string[] {
 
   const base = rest.join(" ");
   const variants = new Set<string>();
-  variants.add(`${enFinish} ${base} System`);
-  variants.add(`${enFinish} ${base} Console`);
-  // NTSC Wii rows are "White Nintendo Wii System" — only inject for Nintendo
-  // platforms (never "Silver Nintendo PlayStation 2").
-  const platformKey = detectVideoGamePlatformKey(base);
-  if (
-    platformKey &&
-    !/\bnintendo\b/i.test(base) &&
-    !/^(ps|psp|vita|xbox)/i.test(platformKey)
-  ) {
-    variants.add(`${enFinish} Nintendo ${base} System`);
+  for (const enFinish of enFinishes) {
+    variants.add(`${enFinish} ${base} System`);
+    variants.add(`${enFinish} ${base} Console`);
+    // NTSC Wii rows are "White Nintendo Wii System" — only inject for Nintendo
+    // platforms (never "Silver Nintendo PlayStation 2").
+    const platformKey = detectVideoGamePlatformKey(base);
+    if (
+      platformKey &&
+      !/\bnintendo\b/i.test(base) &&
+      !/^(ps|psp|vita|xbox)/i.test(platformKey)
+    ) {
+      variants.add(`${enFinish} Nintendo ${base} System`);
+    }
   }
   variants.delete(cleaned);
   return [...variants];
@@ -552,7 +625,9 @@ export function hardwareFormFactors(title: string): string[] {
  *   PriceCharting indexes it as "PSOne Slim System", so candidate-only Slim
  *   is catalog chrome, not a distinct SKU.
  */
-export function hardwareRequestImpliesCatalogSlimChrome(title: string): boolean {
+export function hardwareRequestImpliesCatalogSlimChrome(
+  title: string,
+): boolean {
   const core = normalizeForTokens(title)
     .replace(/\b(?:console|system|systems|consoles)\b/g, " ")
     .replace(/\s+/g, " ")

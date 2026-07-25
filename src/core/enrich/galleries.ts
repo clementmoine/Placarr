@@ -46,6 +46,7 @@ export function isMissingGameMediaGallery(
 
 export type BookGalleryAttachment = {
   type: string;
+  source?: string | null;
   isBookGallerySource?: boolean;
   isGameMediaGallerySource?: boolean;
 };

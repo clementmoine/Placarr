@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  scheduleItemMetadataRefresh,
   shelfMoveMetadataResetData,
   startItemMetadataRefresh,
 } from "./scheduleMetadataRefresh";

@@ -88,7 +88,7 @@ describe("cachedReferencePricesMissApprovedFiches", () => {
         priceNew: 48236,
         priceUsed: 4410,
         priceUsedCIB: 5412,
-        priceLastUpdated: new Date().toISOString(),
+        priceLastUpdated: new Date(),
         priceSources: ["PriceCharting"],
         priceSourceDisplayNames: ["PriceCharting"],
         priceObservations: [
@@ -130,7 +130,7 @@ describe("cachedReferencePricesMissApprovedFiches", () => {
         priceNew: 25824,
         priceUsed: 8391,
         priceUsedCIB: 10774,
-        priceLastUpdated: new Date().toISOString(),
+        priceLastUpdated: new Date(),
         priceSources: ["PriceCharting"],
         priceSourceDisplayNames: ["PriceCharting"],
         priceObservations: [

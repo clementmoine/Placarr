@@ -61,11 +61,11 @@ import {
   refreshItemMetadata,
   type ItemPrices,
 } from "@/lib/api/items";
-import { cancelBackgroundJob, upsertBackgroundJobInCache } from "@/lib/api/backgroundJobs";
 import {
-  getHeroImage,
-  getGalleryImages,
-} from "@/core/collect/media";
+  cancelBackgroundJob,
+  upsertBackgroundJobInCache,
+} from "@/lib/api/backgroundJobs";
+import { getHeroImage, getGalleryImages } from "@/core/collect/media";
 import { findAttachmentForUrl } from "@/core/enrich/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
@@ -82,7 +82,7 @@ import {
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
-import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useDocumentTitle } from "@/lib/client/hooks/useDocumentTitle";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -1162,9 +1162,7 @@ export default function ItemDetailsPage() {
     // while this item is still being enriched (no metadataId yet) — survives a
     // page refresh since the state is derived from the persisted item.
     refetchInterval: (query) =>
-      metadataBusyRefetchInterval(
-        query.state.data ? [query.state.data] : null,
-      ),
+      metadataBusyRefetchInterval(query.state.data ? [query.state.data] : null),
     refetchIntervalInBackground: true,
   });
 
@@ -2279,7 +2277,8 @@ export default function ItemDetailsPage() {
                       width={768}
                       height={1152}
                       sizes="(max-width: 768px) 240px, 480px"
-                      priority
+                      loading="eager"
+                      fetchPriority="high"
                       onLoad={handleCoverImageLoad}
                       className={cn(
                         "w-full h-full transition-transform duration-500",
@@ -2686,7 +2685,10 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2 z-30" onClick={(event) => event.stopPropagation()}>
+                    <div
+                      className="absolute top-2 right-2 z-30"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <AttachmentSourceChip
                         sourceNames={img.gallerySourceNames ?? []}
                         detail={img.galleryDetail}

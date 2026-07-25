@@ -570,7 +570,8 @@ export function parseBooknodeBookPage(
   const barcode =
     normalizeProductBarcode(firstSchemaValue(book?.isbn)) ||
     normalizeProductBarcode(firstSchemaValue(book?.gtin13)) ||
-    normalizeProductBarcode(firstSchemaValue(book?.gtin));
+    normalizeProductBarcode(firstSchemaValue(book?.gtin)) ||
+    undefined;
   const releaseDate =
     firstSchemaValue(book?.datePublished) ||
     firstSchemaValue(book?.dateCreated);
@@ -807,10 +808,7 @@ export async function getBooknodeSuggestions(name: string): Promise<string[]> {
     );
     if (candidates.length === 0) continue;
 
-    for (const candidate of candidates.slice(
-      0,
-      5,
-    )) {
+    for (const candidate of candidates.slice(0, 5)) {
       const title = candidate.title.trim();
       if (!title || seen.has(title)) continue;
       seen.add(title);
@@ -836,7 +834,9 @@ export async function collectBooknodeMappingRawKeys(
   if (isBooknodeBookUrl(trimmed)) {
     urls = booknodePageUrlAlternates(trimmed);
   } else {
-    const candidates = await loadBooknodeSearchCandidates(searchUrlFor(trimmed));
+    const candidates = await loadBooknodeSearchCandidates(
+      searchUrlFor(trimmed),
+    );
     const candidate = candidates[0]?.url;
     if (candidate) urls = booknodePageUrlAlternates(candidate);
   }

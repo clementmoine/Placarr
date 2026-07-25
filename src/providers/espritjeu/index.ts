@@ -244,8 +244,8 @@ export const espritjeuModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload) {
-    if (!payload.espritjeu?.priceCents) return [];
     const hit = payload.espritjeu;
+    if (!hit?.priceCents) return [];
     if (hit.productUrl) {
       void promoteRetailPriceEvidence(ESPRITJEU_PROVIDER_KEY, {
         priceCents: hit.priceCents,

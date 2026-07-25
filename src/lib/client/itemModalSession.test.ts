@@ -18,11 +18,14 @@ describe("itemModalSession", () => {
   });
 
   it("builds a stable edit session key that ignores metadata refresh stamps", () => {
+    type ModalItem = NonNullable<
+      Parameters<typeof itemModalSessionKey>[0]["item"]
+    >;
     const item = {
       id: "item-1",
       metadataId: "meta-1",
       metadata: { lastFetched: new Date("2026-07-05T12:00:00.000Z") },
-    } as never;
+    } as unknown as ModalItem;
 
     expect(
       itemModalSessionKey({
@@ -40,7 +43,7 @@ describe("itemModalSession", () => {
         item: {
           ...item,
           metadata: { lastFetched: new Date("2026-07-05T13:00:00.000Z") },
-        } as never,
+        } as unknown as ModalItem,
         shelfId: "shelf-1",
       }),
     ).toBe("edit:item-1");

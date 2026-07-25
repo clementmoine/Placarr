@@ -83,16 +83,11 @@ function metaContent(html: string, property: string): string | undefined {
     "i",
   );
   const match2 = html.match(re2);
-  return match2?.[1]
-    ? cleanText(decodeHTMLEntities(match2[1]))
-    : undefined;
+  return match2?.[1] ? cleanText(decodeHTMLEntities(match2[1])) : undefined;
 }
 
 function listValue(html: string, label: string): string | undefined {
-  const re = new RegExp(
-    `<li>\\s*${label}\\s*:\\s*([\\s\\S]*?)</li>`,
-    "i",
-  );
+  const re = new RegExp(`<li>\\s*${label}\\s*:\\s*([\\s\\S]*?)</li>`, "i");
   return cleanText(html.match(re)?.[1]);
 }
 
@@ -124,8 +119,7 @@ export function looksLikeCanalbdArticlePage(html: string): boolean {
   return Boolean(
     metaContent(html, "isbn") ||
       html.match(/itemprop=["']isbn["']/i) ||
-      (metaContent(html, "og:type") === "product" &&
-        html.match(/EAN13\s*:/i)),
+      (metaContent(html, "og:type") === "product" && html.match(/EAN13\s*:/i)),
   );
 }
 
@@ -193,9 +187,7 @@ export function parseCanalbdArticlePage(
 
   const seriesHref = html.match(/href=["'](\/series\/[^"']+)["']/i)?.[1];
   const seriesName =
-    cleanText(
-      html.match(/href=["']\/series\/[^"']+["'][^>]*>([^<]+)/i)?.[1],
-    ) ||
+    cleanText(html.match(/href=["']\/series\/[^"']+["'][^>]*>([^<]+)/i)?.[1]) ||
     cleanText(
       seriesHref?.match(/\/series\/([^-/]+)/i)?.[1]?.replace(/-/g, " "),
     );
@@ -229,10 +221,8 @@ export function parseCanalbdArticlePage(
     seriesUrl,
     barcode: barcode || undefined,
     releaseDate:
-      metaContent(html, "datePublished") ||
-      listValue(html, "Date de parution"),
-    pageCount:
-      pageCount && Number.isFinite(pageCount) ? pageCount : undefined,
+      metaContent(html, "datePublished") || listValue(html, "Date de parution"),
+    pageCount: pageCount && Number.isFinite(pageCount) ? pageCount : undefined,
     ratingValue:
       ratingValue && Number.isFinite(ratingValue) ? ratingValue : undefined,
     ratingCount:
@@ -242,9 +232,8 @@ export function parseCanalbdArticlePage(
 
 export function parseCanalbdOffersPrice(html: string): number | undefined {
   return parseEuroCents(
-    html.match(
-      /class=["']product-offer-price-value["'][^>]*>([^<]+)/i,
-    )?.[1] || html.match(/Neuf\s*:[\s\S]{0,120}?(\d+[.,]\d{2}\s*€)/i)?.[1],
+    html.match(/class=["']product-offer-price-value["'][^>]*>([^<]+)/i)?.[1] ||
+      html.match(/Neuf\s*:[\s\S]{0,120}?(\d+[.,]\d{2}\s*€)/i)?.[1],
   );
 }
 
@@ -254,7 +243,11 @@ function isCandidateAligned(query: string, title: string): boolean {
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
   if (isMetadataTitleAligned({ title }, [query], 0.58)) return true;
-  const subtitle = title.split(/\s*:\s*/).slice(1).join(": ").trim();
+  const subtitle = title
+    .split(/\s*:\s*/)
+    .slice(1)
+    .join(": ")
+    .trim();
   return Boolean(
     subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58),
   );
@@ -277,10 +270,7 @@ async function fetchHtml(
     if (response.status >= 400) return null;
     const html = String(response.data || "");
     if (!html.trim()) return null;
-    const finalUrl =
-      typeof response.request?.res?.responseUrl === "string"
-        ? response.request.res.responseUrl
-        : url;
+    const finalUrl = response.responseUrl || url;
     return { html, finalUrl };
   } catch (error) {
     if (isAbortError(error)) throw error;

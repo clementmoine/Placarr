@@ -72,6 +72,8 @@ describe("pricecharting refreshBarcodePriceOffers", () => {
 
     expect(fetchPricesFromPriceChartingGameUrl).toHaveBeenCalledWith(
       "https://www.pricecharting.com/game/pal-nintendo-64/nintendo-64-system",
+      // Normal refresh — the pinned fiche is fetched without the evidence-only guard.
+      expect.not.objectContaining({ evidenceOnly: true }),
     );
     expect(fetchPricesFromPriceCharting).not.toHaveBeenCalled();
     expect(offers.map((offer) => offer.condition)).toEqual([
@@ -90,9 +92,8 @@ describe("pricecharting refreshBarcodePriceOffers", () => {
       productName: "Nintendo 64 System",
     });
 
-    const offers = await pricechartingModule.refreshBarcodePriceOffers!(
-      refreshCtx(),
-    );
+    const offers =
+      await pricechartingModule.refreshBarcodePriceOffers!(refreshCtx());
 
     expect(fetchPricesFromPriceChartingGameUrl).not.toHaveBeenCalled();
     expect(fetchPricesFromPriceCharting).toHaveBeenCalled();

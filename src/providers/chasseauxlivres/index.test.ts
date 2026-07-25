@@ -23,7 +23,7 @@ describe("chasseauxlivres metadata adapter", () => {
       coverUrl: "https://img.chasse-aux-livres.fr/cover.jpg",
     });
 
-    const adapter = chasseauxlivresModule.createMetadataAdapter!();
+    const adapter = chasseauxlivresModule.createMetadataAdapter!()!;
     const metadata = await adapter.resolve({
       name: "",
       barcode: "9780140328721",

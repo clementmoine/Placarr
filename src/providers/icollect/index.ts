@@ -360,7 +360,9 @@ export const icollectModule: ProviderModule = {
     );
   },
   buildBarcodeSources(payload: BarcodeLookupPayload) {
-    const metadata = payload.ice;
+    // Lookup keeps the `ice` slice structural (title + platform); the provider
+    // owns the richer shape it wrote there.
+    const metadata = payload.ice as ICollectMetadata | null;
     if (!metadata?.title) return [];
     const platformKey = icollectPlatformKey(metadata.platform);
     const product = {
@@ -401,12 +403,10 @@ export const icollectModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload, shelfType) {
-    if (
-      (shelfType !== "games" && shelfType !== "hardware") ||
-      !payload.ice
-    ) {
+    const metadata = payload.ice as ICollectMetadata | null;
+    if ((shelfType !== "games" && shelfType !== "hardware") || !metadata) {
       return [];
     }
-    return icollectScanOffers(payload.ice);
+    return icollectScanOffers(metadata);
   },
 };

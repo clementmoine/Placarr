@@ -3,16 +3,17 @@ import type {
   BarcodeLookupType,
   ProviderModule,
 } from "@/types/providerModule";
-import {
-  matchPrimaryBarcode,
-} from "@/core/catalog/matchContext";
+import { matchPrimaryBarcode } from "@/core/catalog/matchContext";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  marketplaceContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
@@ -117,18 +118,17 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  const titleMatch = { shelfType: ctx.shelfType };
+  const titleMatch = {
+    shelfType: ctx.shelfType,
+    ...(ctx.evidenceOnly ? { evidenceOnly: true } : {}),
+  };
   const priceQueries = ebayPriceSearchQueries(
     ctx.primaryName,
     ctx.fallbackNames,
     matchPrimaryBarcode(ctx) || ctx.cleanedBarcode,
   );
   for (const query of priceQueries) {
-    const result = await fetchPricesFromEbay(
-      query,
-      expectedNames,
-      titleMatch,
-    );
+    const result = await fetchPricesFromEbay(query, expectedNames, titleMatch);
     if (!result) continue;
     const extra = {
       productName: result.productName ?? null,
@@ -174,6 +174,7 @@ export const ebayModule: ProviderModule = {
     websiteUrl: "https://www.ebay.fr/",
     sourceAliases: ["PicClick", "picclick"],
     marketplaceSearchPriceSource: true,
+    evidenceOnlyPriceRefresh: true,
     apiKeyDashboardUrl: "https://developer.ebay.com/my/keys",
     mappingProbeRetry: true,
     mappingProbeConfigHint:

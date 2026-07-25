@@ -23,7 +23,6 @@ import type {
   ShelfItemPriceFields,
 } from "@/core/commerce/pricing/priceTypes";
 import {
-  alignBarcodePricesForItemNames,
   cleanBarcodeValue,
   emptyBarcodePrices,
   filterPriceOfferInputsForPersist,
@@ -478,6 +477,7 @@ export async function persistItemPrices(params: {
     await persistProviderExternalLinksForMetadata(metadataId, {
       itemBarcode: item?.barcode,
       itemTitle: item?.name,
+      itemTitles: itemNames.length > 0 ? itemNames : undefined,
       shelfType,
       priceOffers: merged,
     });
@@ -530,9 +530,7 @@ export async function refreshBarcodePrices(
     shelfName,
     primaryTitle: primaryName,
     titles: [...extraNames, primaryName, ...rawNamesList],
-    acceptanceTitles: acceptanceNames?.length
-      ? acceptanceNames
-      : [primaryName],
+    acceptanceTitles: acceptanceNames?.length ? acceptanceNames : [primaryName],
     barcodes: [cleanedBarcode, ...extraBarcodes],
     platformKey,
     releaseDate,
@@ -549,12 +547,7 @@ export async function refreshBarcodePrices(
 
   const persistNames = Array.from(
     new Set(
-      [
-        primaryName,
-        ...extraNames,
-        ...(acceptanceNames ?? []),
-        ...rawNamesList,
-      ]
+      [primaryName, ...extraNames, ...(acceptanceNames ?? []), ...rawNamesList]
         .map((name) => name.trim())
         .filter(Boolean),
     ),
@@ -600,9 +593,7 @@ export async function refreshItemPrices(
     shelfName,
     primaryTitle: primaryName,
     titles: [...extraNames, primaryName],
-    acceptanceTitles: acceptanceNames?.length
-      ? acceptanceNames
-      : [primaryName],
+    acceptanceTitles: acceptanceNames?.length ? acceptanceNames : [primaryName],
     barcodes: extraBarcodes,
     platformKey,
     releaseDate,

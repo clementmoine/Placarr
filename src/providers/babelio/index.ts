@@ -288,7 +288,7 @@ export const babelioModule: ProviderModule = {
         return mapBabelioMetadata(
           await resolveBabelioMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),
@@ -320,9 +320,7 @@ export const babelioModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     metadataProbe(
-      mapBabelioMetadata(
-        await resolveBabelioMetadata({ name: SAMPLE_QUERY }),
-      ),
+      mapBabelioMetadata(await resolveBabelioMetadata({ name: SAMPLE_QUERY })),
     ),
   collectMappingRawKeys: async (context) => {
     const ctx = probeContextOrDefault(context, { name: SAMPLE_QUERY });

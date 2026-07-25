@@ -39,6 +39,7 @@ describe("provider platformKey stamping", () => {
   it("stamps LaunchBox attachments from metadata.platformKey", () => {
     const attachments = buildLaunchBoxAttachments([
       {
+        databaseId: 1,
         fileName: "Images/Box/Front/NA.jpg",
         type: "Box - Front",
         region: "North America",
@@ -81,9 +82,9 @@ describe("provider platformKey stamping", () => {
       "psvita",
     );
 
-    expect(metadata.attachments?.map((attachment) => attachment.platformKey)).toEqual(
-      ["psvita", "psvita"],
-    );
+    expect(
+      metadata.attachments?.map((attachment) => attachment.platformKey),
+    ).toEqual(["psvita", "psvita"]);
   });
 
   it("does not stamp SensCritique covers from shelf context alone", () => {

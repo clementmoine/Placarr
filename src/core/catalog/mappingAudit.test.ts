@@ -121,8 +121,8 @@ describe("provider mapping probes", () => {
     // Regression: `ctx.name.trim()` threw when mappingProbe.context only set barcode
     // (Gibert and other Magento retailers) → map:error for the whole provider.
     expect(() => {
-      const name: string | undefined = undefined;
-      void name?.trim();
+      const probeContext: { name?: string } = {};
+      void probeContext.name?.trim();
     }).not.toThrow();
 
     const gibert = PROVIDER_MODULES.find((mdl) => mdl.info.id === "gibert");

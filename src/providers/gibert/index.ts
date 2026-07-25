@@ -150,6 +150,7 @@ export function mapGibertMetadata(
         ? ["structured_data", "barcode_match"]
         : ["structured_data"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -247,7 +248,7 @@ export const gibertModule: ProviderModule = {
         return mapGibertMetadata(
           await resolveGibertMetadata({
             name: String(name || "").trim() || undefined,
-            barcode,
+            barcode: barcode ?? undefined,
             lookupQueries,
             signal,
           }),
@@ -287,7 +288,10 @@ export const gibertModule: ProviderModule = {
       ),
     ),
   collectMappingRawKeys: async (context) => {
-    const ctx = probeContextOrDefault(context, { barcode: SAMPLE_BARCODE });
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: SAMPLE_BARCODE,
+    });
     return collectGibertMappingRawKeys(ctx.barcode || ctx.name);
   },
   refreshBarcodePriceOffers: refreshGibertOffers,

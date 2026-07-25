@@ -14,7 +14,34 @@ import {
   IDENTITY_LISTING_PACKAGING_NOISE,
   IDENTITY_MEDIA_CATEGORY_TOKENS,
   IDENTITY_VOLUME_STOP_WORDS,
+  expandHardwareFinishLookupTitles,
+  hardwareFinishConflict,
+  hardwareFinishIdsCompatible,
 } from "./identityNoise";
+
+describe("hardware finish synonym families", () => {
+  it("treats gris and silver as the same retail finish family", () => {
+    expect(hardwareFinishIdsCompatible("gray", "silver")).toBe(true);
+    expect(
+      hardwareFinishConflict(
+        "PlayStation 3 Slim Gris",
+        "PlayStation 3 Slim Silver",
+      ),
+    ).toBe(false);
+    expect(
+      hardwareFinishConflict(
+        "PlayStation 3 Slim Gris",
+        "PlayStation 3 Slim Black",
+      ),
+    ).toBe(true);
+  });
+
+  it("expands FR gris into EN Gray and Silver seek spellings", () => {
+    expect(expandHardwareFinishLookupTitles("PlayStation 3 Slim Gris")).toEqual(
+      ["PlayStation 3 Slim Silver", "PlayStation 3 Slim Gray"],
+    );
+  });
+});
 
 describe("GENERIC_TITLE_TOKENS identity-backed packaging", () => {
   afterEach(() => {

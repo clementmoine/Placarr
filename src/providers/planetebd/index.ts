@@ -170,6 +170,7 @@ export function mapPlanetebdMetadata(
         ? ["title_match", "barcode_match"]
         : ["title_match"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -239,7 +240,7 @@ export const planetebdModule: ProviderModule = {
         return mapPlanetebdMetadata(
           await resolvePlanetebdMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),

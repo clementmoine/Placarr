@@ -10,7 +10,7 @@ export type GameEditionDefinition = {
   catalogRequired?: boolean;
 };
 
-export const GAME_EDITION_DEFINITIONS = [
+export const GAME_EDITION_DEFINITIONS: readonly GameEditionDefinition[] = [
   {
     label: "Player's Choice",
     terms: ["players choice", "player's choice"],
@@ -30,7 +30,11 @@ export const GAME_EDITION_DEFINITIONS = [
   },
   { label: "Classics", terms: ["classics"], classicsLine: true },
   { label: "Best Of", terms: ["best of"], classicsLine: true },
-  { label: "Game of the Year", terms: ["goty", "game of the year"], catalogRequired: true },
+  {
+    label: "Game of the Year",
+    terms: ["goty", "game of the year"],
+    catalogRequired: true,
+  },
   { label: "Deluxe", terms: ["deluxe"] },
   { label: "Ultimate", terms: ["ultimate"] },
   { label: "Legendary", terms: ["legendary"] },
@@ -61,7 +65,7 @@ export const GAME_EDITION_DEFINITIONS = [
   { label: "Collector", terms: ["collector", "collectors"] },
   { label: "Limited", terms: ["limited", "limitee"] },
   { label: "Edition", terms: ["edition", "editions", "édition", "éditions"] },
-] as const satisfies readonly GameEditionDefinition[];
+];
 
 export const GAME_EDITION_TERMS = Array.from(
   new Set(GAME_EDITION_DEFINITIONS.flatMap((edition) => edition.terms)),
@@ -171,7 +175,7 @@ export type ListingFormatDefinition = {
   physicalShelfFormat?: boolean;
 };
 
-export const LISTING_FORMAT_DEFINITIONS = [
+export const LISTING_FORMAT_DEFINITIONS: readonly ListingFormatDefinition[] = [
   { term: "blu-ray", nonGameCarrier: true, physicalShelfFormat: true },
   { term: "bluray", nonGameCarrier: true, physicalShelfFormat: true },
   { term: "dvd", nonGameCarrier: true, physicalShelfFormat: true },
@@ -196,7 +200,7 @@ export const LISTING_FORMAT_DEFINITIONS = [
   { term: "vinyl", nonGameCarrier: true },
   { term: "lp", nonGameCarrier: true },
   { term: "livre", nonGameCarrier: true },
-] as const satisfies readonly ListingFormatDefinition[];
+];
 
 export const LISTING_FORMAT_TERMS = LISTING_FORMAT_DEFINITIONS.map(
   (format) => format.term,
@@ -257,12 +261,13 @@ export const NON_CANONICAL_CONTEXT_TOKENS = new Set([
  * Bundle / collection product markers: if the item title carries one, catalog
  * art that drops it is the wrong SKU (base game art for a trilogy, etc.).
  */
-export const PRODUCT_COLLECTION_MARKER_GROUPS: readonly (readonly string[])[] = [
-  ["trilogy", "trilogie"],
-  ["collection"],
-  ["saga"],
-  ["compilation", "anthology", "anthologie"],
-];
+export const PRODUCT_COLLECTION_MARKER_GROUPS: readonly (readonly string[])[] =
+  [
+    ["trilogy", "trilogie"],
+    ["collection"],
+    ["saga"],
+    ["compilation", "anthology", "anthologie"],
+  ];
 
 /**
  * Phrase groups required on catalog attachments when present on the product.
@@ -271,9 +276,9 @@ export const PRODUCT_COLLECTION_MARKER_GROUPS: readonly (readonly string[])[] = 
 export const CATALOG_REQUIRED_TITLE_MARKER_GROUPS: readonly (readonly string[])[] =
   [
     ...PRODUCT_COLLECTION_MARKER_GROUPS,
-    ...GAME_EDITION_DEFINITIONS.filter((edition) => edition.catalogRequired).map(
-      (edition) => edition.terms,
-    ),
+    ...GAME_EDITION_DEFINITIONS.filter(
+      (edition) => edition.catalogRequired,
+    ).map((edition) => edition.terms),
   ];
 
 /** Publisher / studio labels commonly glued as listing suffixes. */

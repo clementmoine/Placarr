@@ -75,7 +75,11 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
-import { syncItemQueries, syncShelfQueries, invalidateShelfQueries } from "@/core/collect/queryCache";
+import {
+  syncItemQueries,
+  syncShelfQueries,
+  invalidateShelfQueries,
+} from "@/core/collect/queryCache";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
   parseItemCollectionSort,
@@ -89,7 +93,7 @@ import { metadataBusyRefetchInterval } from "@/core/collect/enrichment";
 import type { ItemMetadataIdleFields } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
-import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
 
@@ -185,9 +189,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
         <button
           type="button"
           aria-pressed={isSelected}
-          onClick={(event) =>
-            onSelect(item.id, { shiftKey: event.shiftKey })
-          }
+          onClick={(event) => onSelect(item.id, { shiftKey: event.shiftKey })}
           className="block w-full text-left"
         >
           {card}
@@ -280,9 +282,7 @@ function ShelfComponent() {
       const items = (query.state.data as { items?: unknown[] } | undefined)
         ?.items;
       if (!Array.isArray(items)) return false;
-      return metadataBusyRefetchInterval(
-        items as ItemMetadataIdleFields[],
-      );
+      return metadataBusyRefetchInterval(items as ItemMetadataIdleFields[]);
     },
     refetchIntervalInBackground: true,
     placeholderData: (previousData) => {
@@ -350,10 +350,17 @@ function ShelfComponent() {
     mutationFn: saveItem,
     onSuccess: (item, variables) => {
       const isCreate = !("id" in variables && variables.id);
+      const itemShelfSlug =
+        "shelf" in item &&
+        item.shelf &&
+        typeof item.shelf === "object" &&
+        "slug" in item.shelf
+          ? (item.shelf.slug as string | null | undefined)
+          : undefined;
       void syncItemQueries(
         queryClient,
         item,
-        [item.shelfId, shelfId, item.shelf?.slug],
+        [item.shelfId, shelfId, itemShelfSlug],
         { isCreate },
       );
     },
@@ -906,26 +913,23 @@ function ShelfComponent() {
 
               {/* Plus Add Item Card in the items grid — keep the slot while
                   selecting so layout animations do not reflow the whole grid. */}
-              {!isLoading &&
-                isAuthenticated &&
-                !isGuest &&
-                canEdit && (
-                  <motion.button
-                    layout={!selectionMode}
-                    layoutId="add-item-btn"
-                    onClick={() => handleModalOpen("item")}
-                    tabIndex={selectionMode ? -1 : undefined}
-                    aria-hidden={selectionMode || undefined}
-                    className={cn(
-                      "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
-                      selectionMode && "invisible pointer-events-none",
-                    )}
-                    style={{ aspectRatio: skeletonAspectRatio }}
-                  >
-                    <Plus className="size-5 text-primary" />
-                    <span>{t("items.addItem")}</span>
-                  </motion.button>
-                )}
+              {!isLoading && isAuthenticated && !isGuest && canEdit && (
+                <motion.button
+                  layout={!selectionMode}
+                  layoutId="add-item-btn"
+                  onClick={() => handleModalOpen("item")}
+                  tabIndex={selectionMode ? -1 : undefined}
+                  aria-hidden={selectionMode || undefined}
+                  className={cn(
+                    "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
+                    selectionMode && "invisible pointer-events-none",
+                  )}
+                  style={{ aspectRatio: skeletonAspectRatio }}
+                >
+                  <Plus className="size-5 text-primary" />
+                  <span>{t("items.addItem")}</span>
+                </motion.button>
+              )}
             </div>
           </LayoutGroup>
 

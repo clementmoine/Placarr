@@ -38,9 +38,6 @@ const SOURCE =
   "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg";
 const PREVIEW =
   "https://cdn1.booknode.com/book_cover/1691/mod11/super-picsou-geant-n1-1691432-264-432.webp";
-const FULL =
-  "https://cdn1.booknode.com/book_cover/1691/full/super-picsou-geant-n1-1691432.jpg";
-
 async function jpegBuffer(width: number, height: number) {
   const sharp = (await import("sharp")).default;
   return sharp({
@@ -82,7 +79,10 @@ describe("downloadBooknodeCoverImage", () => {
     const full = await jpegBuffer(1200, 1800);
 
     mockedFetch.mockImplementation(
-      async (url: string, options?: { allowSubThresholdFallback?: boolean }) => {
+      async (
+        url: string,
+        options?: { allowSubThresholdFallback?: boolean },
+      ) => {
         if (url.includes("/mod11/") && options?.allowSubThresholdFallback) {
           return {
             buffer: preview,

@@ -141,6 +141,7 @@ export const philibertModule: ProviderModule = {
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.philibertnet.com/",
+    scrapeCatalogImageBaseUrl: "https://www.philibertnet.com",
     notes: "Fiches produit FR (description, couverture, prix, avis).",
   },
   evidence: {

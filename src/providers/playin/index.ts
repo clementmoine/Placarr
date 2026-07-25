@@ -141,6 +141,7 @@ export const playinModule: ProviderModule = {
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.play-in.com/fr/",
+    scrapeCatalogImageBaseUrl: "https://www.play-in.com",
     notes:
       "Boutique FR jeux de société : catalogue gamme 5 + fiche JSON-LD (gtin14).",
   },

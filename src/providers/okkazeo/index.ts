@@ -156,6 +156,7 @@ export const okkazeoModule: ProviderModule = {
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.okkazeo.com/",
+    scrapeCatalogImageBaseUrl: "https://www.okkazeo.com",
     notes:
       "Base FR jeux de société : fiche canonique (JSON-LD) + recherche par EAN.",
   },

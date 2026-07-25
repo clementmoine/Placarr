@@ -42,6 +42,7 @@ export const myludoModule: ProviderModule = {
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.myludo.fr/",
+    scrapeCatalogImageBaseUrl: "https://www.myludo.fr",
     notes:
       "Base communautaire FR : API interne (recherche EAN, fiche jeu, galerie).",
   },

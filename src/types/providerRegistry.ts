@@ -264,6 +264,13 @@ export interface ProviderInfo {
   /** Collector age-rating facts map to cover region (e.g. PEGI → EU). */
   collectorCoverRegionFromAgeRating?: boolean;
   /** Default cover region when inferring 3D roles from filename hints. */
+  /**
+   * Product images are served from the shop's own domain (not a CDN), so the
+   * host must be allowed for `next/image`. Declared here rather than listed in
+   * core — the middleware mirror is generated from the registry and pinned by
+   * `nextImageRemoteHosts.test.ts`.
+   */
+  scrapeCatalogImageBaseUrl?: string;
   coverDefaultRegion?: "fr" | "en" | "eu" | "us" | "jp" | "wor";
   /**
    * Friendlier mapping-audit message when a keyed provider is unconfigured

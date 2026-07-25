@@ -128,6 +128,7 @@ export const espritjeuModule: ProviderModule = {
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.espritjeu.com/",
+    scrapeCatalogImageBaseUrl: "https://www.espritjeu.com",
     notes: "Catalogue FR jeux de société (fiche produit, EAN, galerie).",
   },
   evidence: {

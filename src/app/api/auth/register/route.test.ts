@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/generated/prisma/browser";
 
 const h = vi.hoisted(() => ({
   findUnique: vi.fn(),

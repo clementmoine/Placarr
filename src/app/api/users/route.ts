@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/browser";
 import bcrypt from "bcryptjs";
 import { getToken } from "next-auth/jwt";
 

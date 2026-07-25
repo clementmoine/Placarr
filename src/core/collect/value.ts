@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 import { shelfSupportsLooseCondition } from "@/core/collect/condition";
 
 export type ItemPriceValues = {
@@ -74,7 +74,10 @@ export function getItemValueEstimate(
   }
 
   if (item.condition === "loose") {
-    return withProvenance(looseMarketObserved(item), looseEstimateFallback(item));
+    return withProvenance(
+      looseMarketObserved(item),
+      looseEstimateFallback(item),
+    );
   }
 
   if (item.condition === "damaged") {

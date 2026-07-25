@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import {
@@ -308,7 +308,7 @@ describe("formatMetadataFromStorage attachment traits", () => {
           duration: null,
           role: null,
           coverProvenance: null,
-platformKey: null,
+          platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -609,14 +609,14 @@ describe("keepSourcelessCoverOnlyWithoutCatalogTwin", () => {
 
   it("keeps a sourceless cover when no catalog twin exists", () => {
     const gallery = [
-      { type: "cover" as AttachmentType, url: "/uploads/only.jpg", source: null },
+      {
+        type: "cover" as AttachmentType,
+        url: "/uploads/only.jpg",
+        source: null,
+      },
     ];
     expect(
-      keepSourcelessCoverOnlyWithoutCatalogTwin(
-        gallery[0],
-        gallery,
-        new Map(),
-      ),
+      keepSourcelessCoverOnlyWithoutCatalogTwin(gallery[0], gallery, new Map()),
     ).toBe(true);
   });
 });

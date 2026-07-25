@@ -57,6 +57,8 @@ prisma/*.backup*
 prisma/data-export.json
 prisma/*.dump
 prisma/*.sql.dump
+# Client généré (prisma generate / postinstall)
+/src/generated/prisma/
 
 # Médias téléchargés/uploadés à l'exécution (données runtime, pas du source)
 /public/uploads/**

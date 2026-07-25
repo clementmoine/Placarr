@@ -16,7 +16,14 @@ import {
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -42,7 +49,10 @@ import {
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
+import {
+  ConditionIcon,
+  conditionToggleActiveClass,
+} from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { itemConditionsForShelfType } from "@/core/collect/condition";
 
@@ -68,7 +78,10 @@ import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
 } from "@/core/identify/shelfLabels";
-import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
+import {
+  guessShelfFromBarcodeLookup,
+  shelfSearchHintsFromBarcodePayload,
+} from "@/core/identify/query";
 import { isAbortError } from "@/lib/http/abort";
 import { shelfPath } from "@/lib/routing/slugs";
 
@@ -78,7 +91,7 @@ import {
   type Item,
   type Shelf,
   Condition,
-} from "@prisma/client";
+} from "@/generated/prisma/browser";
 import {
   mergeCoverAttachmentsForPicker,
   getCoverImage,
@@ -383,7 +396,10 @@ export function ItemModal({
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
 
   const watchedName = useWatch({ control: form.control, name: "name" });
-  const watchedCondition = useWatch({ control: form.control, name: "condition" });
+  const watchedCondition = useWatch({
+    control: form.control,
+    name: "condition",
+  });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
     const val = (watchedName || "").trim().toLowerCase();
@@ -1307,7 +1323,10 @@ export function ItemModal({
         // facts while background enrichment runs (otherwise only the chosen cover survives).
         ...(item
           ? {}
-          : { metadataPreview: fetchedMetadata ?? prefilledValues?.metadataPreview ?? null }),
+          : {
+              metadataPreview:
+                fetchedMetadata ?? prefilledValues?.metadataPreview ?? null,
+            }),
       };
 
       await onSubmit(updatedItem);
@@ -1885,26 +1904,28 @@ export function ItemModal({
                             >
                               {itemConditionsForShelfType(activeShelfType).map(
                                 (condition) => {
-                                const isActive = field.value === condition;
-                                return (
-                                  <ToggleGroupItem
-                                    key={condition}
-                                    value={condition}
-                                    aria-label={condition}
-                                    className={cn(
-                                      "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
-                                      isActive
-                                        ? conditionToggleActiveClass(condition)
-                                        : "bg-transparent hover:text-foreground",
-                                    )}
-                                  >
-                                    <ConditionIcon condition={condition} />
-                                    <span className="shrink-0 font-medium">
-                                      {t(`items.conditions.${condition}`)}
-                                    </span>
-                                  </ToggleGroupItem>
-                                );
-                              },
+                                  const isActive = field.value === condition;
+                                  return (
+                                    <ToggleGroupItem
+                                      key={condition}
+                                      value={condition}
+                                      aria-label={condition}
+                                      className={cn(
+                                        "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
+                                        isActive
+                                          ? conditionToggleActiveClass(
+                                              condition,
+                                            )
+                                          : "bg-transparent hover:text-foreground",
+                                      )}
+                                    >
+                                      <ConditionIcon condition={condition} />
+                                      <span className="shrink-0 font-medium">
+                                        {t(`items.conditions.${condition}`)}
+                                      </span>
+                                    </ToggleGroupItem>
+                                  );
+                                },
                               )}
                             </ToggleGroup>
                           </FormControl>

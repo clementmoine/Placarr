@@ -1,4 +1,4 @@
-import type { Type } from "@prisma/client";
+import type { Type } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
 import {

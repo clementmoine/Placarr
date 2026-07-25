@@ -2,7 +2,7 @@
  * Sync item cover / barcode / hero / display name after metadata persist.
  */
 import path from "path";
-import type { Type } from "@prisma/client";
+import type { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 import {
   readFileImageMetrics,
@@ -23,7 +23,10 @@ import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
 import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
 import type { AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type { StoreItemContext } from "@/core/enrich/media/prepareMetadataGallery";
 
 export async function syncItemFieldsAfterMetadataStore(input: {
@@ -111,8 +114,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
         Boolean(visualCatalogMatchUrl) ||
         attachmentsForRanking.some(
           (attachment) =>
-            attachment.source === "barcode" &&
-            attachment.url === item.imageUrl,
+            attachment.source === "barcode" && attachment.url === item.imageUrl,
         ) ||
         (type === "musics" &&
           !itemCoverStillInGallery &&
@@ -181,7 +183,10 @@ export async function syncItemFieldsAfterMetadataStore(input: {
 
   // Fill item.name only when empty / barcode placeholder and a barcode is set.
   if (item) {
-    const displayTitle = resolveMetadataDisplayTitle(metadata, effectiveBarcode);
+    const displayTitle = resolveMetadataDisplayTitle(
+      metadata,
+      effectiveBarcode,
+    );
     await adoptItemNameFromMetadataIfPlaceholder({
       itemId,
       metadataTitle: displayTitle,
@@ -189,6 +194,4 @@ export async function syncItemFieldsAfterMetadataStore(input: {
       barcode: effectiveBarcode,
     });
   }
-
-
 }

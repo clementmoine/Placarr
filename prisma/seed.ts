@@ -1,9 +1,9 @@
-import { PrismaClient, UserRole } from "@prisma/client";
+import "dotenv/config";
+import { UserRole } from "../src/generated/prisma/browser";
+import { prisma, disconnectPrisma } from "../src/lib/db/prisma";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import path from "path";
-
-const prisma = new PrismaClient();
 
 async function main() {
   // Create admin user
@@ -87,5 +87,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await disconnectPrisma();
   });

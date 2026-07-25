@@ -4,14 +4,15 @@
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
-import type { AttachmentType } from "@prisma/client";
-import {
-  type AttachmentImageMetrics,
-} from "@/core/enrich/media/attachmentDisplayScore";
+import type { AttachmentType } from "@/generated/prisma/browser";
+import { type AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/imageMetrics";
 import { isPlaceholderCoverImage } from "@/core/enrich/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPlaceholder.server";
-import { isCoverEligibleAttachmentType, urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
+import {
+  isCoverEligibleAttachmentType,
+  urlsReferToSameLocalizedImage,
+} from "@/core/enrich/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 import { measureCoverExposureFromBuffer } from "@/core/enrich/media/coverExposure.server";
 import { regionRank } from "@/core/locale/preference";
@@ -173,11 +174,7 @@ export async function dedupeLocalizedAttachmentsByContent<
       retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),
     )
     .filter((attachment, _index, gallery) =>
-      keepSourcelessCoverOnlyWithoutCatalogTwin(
-        attachment,
-        gallery,
-        hashByUrl,
-      ),
+      keepSourcelessCoverOnlyWithoutCatalogTwin(attachment, gallery, hashByUrl),
     );
 }
 
@@ -224,7 +221,11 @@ export async function retargetUserHonorPinsInAttachmentGallery<
     source?: string | null;
   },
 >(attachments: T[]): Promise<T[]> {
-  if (!attachments.some((attachment) => attachmentSourceKey(attachment.source) === "user")) {
+  if (
+    !attachments.some(
+      (attachment) => attachmentSourceKey(attachment.source) === "user",
+    )
+  ) {
     return attachments;
   }
   const hashByUrl = new Map<string, string>();

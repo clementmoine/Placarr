@@ -53,7 +53,7 @@ import axios from "axios";
 import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-import type { Shelf, Prisma } from "@prisma/client";
+import type { Shelf, Prisma } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 const shelfSchema = z.object({

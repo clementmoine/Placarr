@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 /**
  * Shelf item grades, ordered best → worst.
@@ -18,7 +18,9 @@ export const ITEM_CONDITIONS = [
 
 export type ItemCondition = (typeof ITEM_CONDITIONS)[number];
 
-export function isItemCondition(value: string | null | undefined): value is Condition {
+export function isItemCondition(
+  value: string | null | undefined,
+): value is Condition {
   return (
     typeof value === "string" &&
     (ITEM_CONDITIONS as readonly string[]).includes(value)
@@ -89,7 +91,9 @@ export function marketOfferConditionsForItem(
 
   if (condition === "damaged") {
     if (shelfSupportsLooseCondition(shelfType)) {
-      return prices?.priceUsedCIB ? ["cib", "loose", "used"] : ["loose", "used"];
+      return prices?.priceUsedCIB
+        ? ["cib", "loose", "used"]
+        : ["loose", "used"];
     }
     return ["used"];
   }

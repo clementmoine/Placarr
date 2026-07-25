@@ -32,7 +32,7 @@ import { syncItemQueries } from "@/core/collect/queryCache";
 import { cn } from "@/lib/shared/utils";
 import { cleanManualBarcode } from "@/components/ManualBarcodeEntry";
 
-import { Condition, type Shelf } from "@prisma/client";
+import { Condition, type Shelf } from "@/generated/prisma/browser";
 
 export type BulkAddTab = "names" | "series" | "scan";
 
@@ -79,10 +79,7 @@ export function BulkAddModal({
   const [isScanning, setIsScanning] = useState(false);
   const [scannedRows, setScannedRows] = useState<ScannedRow[]>([]);
   const availableConditions = itemConditionsForShelfType(shelfType);
-  if (
-    condition === "loose" &&
-    !availableConditions.includes("loose")
-  ) {
+  if (condition === "loose" && !availableConditions.includes("loose")) {
     setCondition(Condition.used);
   }
 

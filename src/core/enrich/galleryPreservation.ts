@@ -1,4 +1,4 @@
-import type { Attachment } from "@prisma/client";
+import type { Attachment } from "@/generated/prisma/browser";
 
 import { shouldShowCoverAttachmentOnShelf } from "@/core/enrich/media/attachmentDisplayScore";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
@@ -93,9 +93,7 @@ export function preserveGalleryAttachmentsOnRegression(
 
   const revived = revivedCandidates.filter((attachment) => {
     if (
-      withAbsentSources.some((existing) =>
-        sameGalleryRow(existing, attachment),
-      )
+      withAbsentSources.some((existing) => sameGalleryRow(existing, attachment))
     ) {
       return false;
     }

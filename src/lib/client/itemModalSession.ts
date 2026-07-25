@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import {

@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
@@ -23,8 +22,9 @@ export default withAuth(
     if (imageGuard) return imageGuard;
 
     const token = req.nextauth.token;
-    const isAdmin = token?.role === UserRole.admin;
-    const isGuest = token?.role === UserRole.guest;
+    // String literals — keep this Edge/proxy bundle free of Prisma client.
+    const isAdmin = token?.role === "admin";
+    const isGuest = token?.role === "guest";
 
     // Allow guests to access read-only routes
     if (isGuest) {

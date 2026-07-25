@@ -1,4 +1,4 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
 import type { MetadataObservation } from "@/types/metadataObservation";

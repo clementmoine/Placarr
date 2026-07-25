@@ -1,4 +1,4 @@
-import { Prisma, Type } from "@prisma/client";
+import { Prisma, Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -11,7 +11,10 @@ import {
   syncCroppedCoverAttachment,
   storeMetadata,
 } from "@/core/enrich/storage";
-import { presentItemFromStorage, itemDetailMetadataInclude } from "@/core/collect/present";
+import {
+  presentItemFromStorage,
+  itemDetailMetadataInclude,
+} from "@/core/collect/present";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { asSeedableMetadataPreview } from "@/core/collect/seedMetadataPreview";
 import {
@@ -98,9 +101,7 @@ export async function GET(req: NextRequest) {
         where: { id: resolvedId },
         include: {
           shelf: true,
-          metadata: includeMetadata
-            ? itemDetailMetadataInclude
-            : false,
+          metadata: includeMetadata ? itemDetailMetadataInclude : false,
         },
       });
 
@@ -419,8 +420,7 @@ export async function PATCH(req: NextRequest) {
     try {
       const searchParams = req.nextUrl.searchParams;
       const body = await req.json();
-      const { id, refreshMetadata, lookupQuery, currentShelfId, ...raw } =
-        body;
+      const { id, refreshMetadata, lookupQuery, currentShelfId, ...raw } = body;
       const requestId = typeof id === "string" ? id : searchParams.get("id");
       const sourceShelfId =
         typeof currentShelfId === "string"

@@ -3,7 +3,7 @@ import axios from "axios";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
 
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 import {
   BARCODE_CONFIRMED_TITLE_FLOOR,

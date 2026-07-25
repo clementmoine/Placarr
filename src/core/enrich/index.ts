@@ -35,7 +35,7 @@ import {
 import type { RomChecksums } from "@/types/providerModule";
 import { parseMetadataFactsJson } from "@/core/enrich/metadataFactsMerge";
 import { prisma } from "@/lib/db/prisma";
-import type { Item, Type } from "@prisma/client";
+import type { Item, Type } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 export {

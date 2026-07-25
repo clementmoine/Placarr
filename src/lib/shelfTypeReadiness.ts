@@ -1,4 +1,4 @@
-import { Type } from "@prisma/client";
+import { Type } from "@/generated/prisma/browser";
 
 export type ShelfTypeReadiness = "ready" | "comingSoon";
 

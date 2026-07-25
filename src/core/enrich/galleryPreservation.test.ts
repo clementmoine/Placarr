@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Attachment, AttachmentType } from "@prisma/client";
+import type { Attachment, AttachmentType } from "@/generated/prisma/browser";
 
 import { preserveGalleryAttachmentsOnRegression } from "./galleryPreservation";
 

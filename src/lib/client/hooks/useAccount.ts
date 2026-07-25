@@ -3,7 +3,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-import { type User, UserRole } from "@prisma/client";
+import { type User, UserRole } from "@/generated/prisma/browser";
 
 export function useAccount() {
   const { data: session, update: updateSession } = useSession();

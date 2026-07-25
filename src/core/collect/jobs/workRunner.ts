@@ -1,4 +1,4 @@
-import type { Prisma, Type } from "@prisma/client";
+import type { Prisma, Type } from "@/generated/prisma/browser";
 
 import {
   adoptItemMetadataRefreshOnWorker,
@@ -145,7 +145,9 @@ async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
 }
 
 /** Seed ISBN → series siblings EANs → soft price enqueue for newly barcoded. */
-async function attachSeriesBarcodesAfterMetadata(itemId: string): Promise<void> {
+async function attachSeriesBarcodesAfterMetadata(
+  itemId: string,
+): Promise<void> {
   try {
     const { attached } = await attachSeriesSiblingBarcodesFromProviders(itemId);
     for (const row of attached) {

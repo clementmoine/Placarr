@@ -31,6 +31,9 @@ const nextConfig = {
     // Next.js caps remotePatterns at 50 — runtime host guard in `src/proxy.ts`.
     remotePatterns: NEXT_IMAGE_CONFIG_REMOTE_PATTERNS,
   },
+  // Prisma 7 client lives in src/generated — do not externalize the empty
+  // npm `@prisma/client` stub (it looks for missing `.prisma/client`).
+  serverExternalPackages: [],
 };
 
 export default withSerwist(nextConfig);

@@ -1,4 +1,4 @@
-import { Condition, type Prisma, Type } from "@prisma/client";
+import { Condition, type Prisma, Type } from "@/generated/prisma/browser";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";

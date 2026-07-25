@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/generated/prisma/browser";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 

@@ -5,7 +5,7 @@ import {
   Metadata,
   Publisher,
   Type,
-} from "@prisma/client";
+} from "@/generated/prisma/browser";
 
 import { type AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";

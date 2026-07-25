@@ -1,9 +1,7 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
-import {
-  ITEM_ENRICH_WINDOW_MS,
-} from "@/core/collect/enrichment";
+import { ITEM_ENRICH_WINDOW_MS } from "@/core/collect/enrichment";
 import {
   cancelAndClearItemMetadataRefresh,
   getInMemoryMetadataRefreshItemIds,

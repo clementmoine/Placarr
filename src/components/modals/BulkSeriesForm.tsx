@@ -28,8 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
-import { Condition, type Shelf } from "@prisma/client";
+import {
+  ConditionIcon,
+  conditionToggleActiveClass,
+} from "@/components/ConditionIcon";
+import { Condition, type Shelf } from "@/generated/prisma/browser";
 import { itemConditionsForShelfType } from "@/core/collect/condition";
 import { saveItemsBatch } from "@/lib/api/items";
 import { cn } from "@/lib/shared/utils";

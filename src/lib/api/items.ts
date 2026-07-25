@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { Prisma, Item, Condition } from "@prisma/client";
+import type { Prisma, Item, Condition } from "@/generated/prisma/browser";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 

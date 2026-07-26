@@ -4,6 +4,9 @@
 # `.ts` module, which only loads on a runtime that strips types — on 22.16 the
 # build died with `Unknown file extension ".ts"`.
 FROM node:26-alpine AS base
+# node 25 dropped corepack from the official images, so pnpm is installed
+# explicitly, pinned to the version `packageManager` declares.
+RUN npm i -g pnpm@9.14.2
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -23,7 +26,7 @@ ENV DATABASE_URL="postgresql://placarr:placarr@localhost:5432/placarr"
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
@@ -40,6 +43,11 @@ RUN npx prisma generate
 
 ENV NODE_ENV=production
 ENV NEXT_PRIVATE_STANDALONE=true
+# `next build` collects page data, which imports `auth/config.ts`, which throws
+# without this. Build-time only and never baked into the runner stage — the
+# real secret comes from the environment at start-up, and the throw stays as
+# the boot-time guard it is meant to be.
+ENV NEXTAUTH_SECRET="build-only-placeholder-not-a-secret"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -49,7 +57,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 

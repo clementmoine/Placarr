@@ -24,6 +24,32 @@ disparu.
 
 ## Ouverts
 
+| Priorité | Item                        | Détail                                                                                                          |
+| -------- | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| P1       | Build Docker jamais vérifié | 4 causes de casse corrigées à l'aveugle, **aucun build complet n'a abouti**. Voir ci-dessous avant de déployer. |
+
+### Build Docker — corrigé sans preuve
+
+Découvert 2026-07-26 en durcissant l'image : `docker build` échouait, et pas à
+moitié. Quatre causes indépendantes, révélées une par build (~8 min chacun) :
+
+1. `postinstall: prisma generate` sans le schéma dans le stage `deps`
+   (introduit par le commit Prisma 7 de cette branche) ;
+2. `next.config.js` importe un `.ts` — illisible par le Node 22.16 de l'image
+   alors que l'hôte tourne en 26 (ancien, commit `feat(media)`) ;
+3. Node 26 ne fournit plus `corepack`, donc `pnpm` introuvable (conséquence
+   du correctif 2) ;
+4. `next build` charge `auth/config.ts`, qui **throw** sans `NEXTAUTH_SECRET`.
+
+Les quatre sont corrigées. **Aucun build n'a été mené à son terme après le
+quatrième correctif** : la chaîne s'est révélée couche par couche, rien ne dit
+qu'il n'en reste pas une cinquième. À valider par un `docker build` complet
+avant tout déploiement.
+
+**Leçon de méthode** : lancer `docker build` _avant_ de toucher à l'image. Un
+seul build aurait montré que la chaîne était déjà morte, au lieu d'un build par
+couche découverte.
+
 | Priorité | Item                                     | Détail                                                                                                                       |
 | -------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | P2       | `GameLookupInputs` : buckets marketplace | Deux slots nommés (`ebay`, `freakxy`) et un ordre de préférence provider dans `pickMovieTitleFromListings`. Voir ci-dessous. |

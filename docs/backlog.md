@@ -24,6 +24,23 @@ disparu.
 
 ## Ouverts
 
+| Priorité | Item                          | Détail                                                                                                                     |
+| -------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Bloqué sur 3 décisions produit (quantité, prix Lorcana, cartes gradées). |
+| P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                                      |
+
+### Vue 3D retournable — nice to have
+
+Le plein écran des **cartes** aura un onglet dos + un retournement 3D
+(voir [tcg_support.md](tcg_support.md)). L'idée vaut au-delà : une jaquette de
+jeu a un dos, un livre a une quatrième de couverture. On a déjà les galeries
+par provider avec des rôles d'attachment (`cover_back` existe dans la
+taxonomie d'observations), donc la donnée est en partie là.
+
+À faire seulement après les cartes, et sans généraliser à l'aveugle : tous les
+objets n'ont pas de dos exploitable, et une boîte de jeu de société se
+photographie sous six faces, pas deux.
+
 | Priorité | Item                        | Détail                                                                                                          |
 | -------- | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | P1       | Build Docker jamais vérifié | 4 causes de casse corrigées à l'aveugle, **aucun build complet n'a abouti**. Voir ci-dessous avant de déployer. |

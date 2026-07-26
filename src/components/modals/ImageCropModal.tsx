@@ -186,9 +186,27 @@ export function ImageCropModal({
     }
   }, [crop, sourceUrl, onCropped, onClose, t]);
 
-  /** Hand back the untouched original — the crop was only ever a derivative. */
-  const handleRevert = useCallback(() => {
+  /**
+   * Hand back the untouched original — the crop was only ever a derivative.
+   *
+   * The stored rectangle goes too: reverting means forgetting the framing, so
+   * reopening offers the automatic suggestion again instead of restoring the
+   * very crop that was just discarded. Failing to forget it must not block the
+   * revert itself, which is the part the collector asked for.
+   */
+  const handleRevert = useCallback(async () => {
     if (!sourceUrl) return;
+    setIsSaving(true);
+    try {
+      await fetch(`/api/images/crop?url=${encodeURIComponent(sourceUrl)}`, {
+        method: "DELETE",
+      });
+    } catch {
+      // Ignored on purpose — see above.
+    } finally {
+      setIsSaving(false);
+    }
+    setCurrent(null);
     onCropped(sourceUrl);
     onClose();
   }, [sourceUrl, onCropped, onClose]);

@@ -207,3 +207,47 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+/**
+ * Forget the stored rectangle, so the editor opens on the automatic suggestion
+ * again rather than restoring a framing the collector has just discarded.
+ *
+ * The derived `_crop` file is deliberately left alone: another record may still
+ * point at it, and an unreferenced file costs nothing next to a broken cover.
+ */
+export async function DELETE(req: NextRequest) {
+  const auth = await requireGuestOrHigher(req);
+  if (auth instanceof NextResponse) return auth;
+  if (auth.user.role === "guest") {
+    return NextResponse.json(
+      { error: "Guests cannot edit images" },
+      { status: 403 },
+    );
+  }
+
+  try {
+    const raw = new URL(req.url).searchParams.get("url");
+    if (!raw) {
+      return NextResponse.json({ error: "url is required" }, { status: 400 });
+    }
+
+    const localUrl = await resolveLocalUrl(raw);
+    const filePath = localUrl ? uploadsFilePath(localUrl) : null;
+    if (!filePath || !localUrl) {
+      // Nothing to forget is a success, not a failure.
+      return NextResponse.json({ cleared: false });
+    }
+
+    const sidecar = cropSidecarPath(filePath);
+    const existed = fs.existsSync(sidecar);
+    if (existed) fs.unlinkSync(sidecar);
+
+    return NextResponse.json({ cleared: existed, url: localUrl });
+  } catch (error) {
+    console.error("[DELETE /api/images/crop]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

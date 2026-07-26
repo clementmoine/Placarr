@@ -2,6 +2,21 @@
 # All-in-one entrypoint (Plex-style): migrate → workers → Next in one container.
 set -e
 
+# Drop privileges. Everything below — migrations, workers, the HTTP server —
+# runs as `node` (uid 1000 by default, PUID/PGID to match a host user).
+#
+# The chown covers volumes created by an earlier root-running version of this
+# image: Docker only copies image ownership into a volume the first time it is
+# created, so an upgrade would otherwise land on root-owned uploads and cache.
+# Only the mount points, never the whole tree: `node_modules` is enormous.
+APP_UID="${PUID:-1000}"
+APP_GID="${PGID:-1000}"
+if [ "$(id -u)" = "0" ]; then
+  chown -R "$APP_UID:$APP_GID" /app/public/uploads /app/.cache /config 2>/dev/null || true
+  echo "[init] dropping privileges to ${APP_UID}:${APP_GID}"
+  exec su-exec "$APP_UID:$APP_GID" "$0" "$@"
+fi
+
 # PostgreSQL is expected healthy (compose depends_on). DATABASE_URL from env.
 
 npx prisma migrate deploy

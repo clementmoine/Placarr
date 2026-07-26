@@ -54,14 +54,36 @@ ressemble pas à son id — le guard ne les voit pas. Même mécanisme applicabl
 sans urgence. Les six `cal*` sont un cas à part : une seule tâche provider que
 le core éclate par type de média.
 
-### `GameLookupInputs` — ouvert
+### `GameLookupInputs` — ouvert, et bloqué par le payload
 
-`gameLookup.ts` nomme encore deux buckets marketplace (`ebay`, `freakxy`), et
-surtout `pickMovieTitleFromListings` encode une **préférence de provider** :
-eBay avant AchatMoinsCher avant ChasseAuxLivres. C'est du biais de classement
-dans le core, pas seulement un nom en dur — à traiter comme tel (poids déclaré
-par provider) plutôt que par un simple renommage. Les deux fichiers restent sur
-`ALLOWED_PROVIDER_KEYS` dans
+`gameLookup.ts` nomme deux buckets marketplace (`ebay`, `freakxy`), et
+`pickMovieTitleFromListings` encode une **préférence de provider** : eBay avant
+AchatMoinsCher avant ChasseAuxLivres. C'est du biais de classement dans le
+core, pas seulement un nom en dur.
+
+**Tentative du 2026-07-26 — annulée.** Le design semblait évident : chaque
+source déclare `info.listingTitleQuality`, le core trie dessus. Il bute sur
+ceci : pour lire le poids d'un provider, le core doit le **nommer**, et les
+trois buckets ne se déduisent pas de leur slot (`amc` ≠ achatmoinscher,
+`calDvd` ≠ chasseauxlivres). Le prototype a introduit trois
+`listingTitleQualityForProvider("ebay")` dans `lookups.ts` — que
+`blindnessGuard` a immédiatement rejetés, à raison. On échangeait un ordre
+documenté contre trois ids quotés dans le core.
+
+**Ce qui débloquerait** : le même chantier que le payload. Une fois les slots
+possédés par les providers (`barcodeLookupSlots`), le registre sait quel
+provider remplit quel bucket, et le poids se lit sans jamais nommer personne.
+Faire les deux ensemble, pas l'un sans l'autre.
+
+**Piège relevé au passage, à ne pas retenter** : `sourceWeight` semble être le
+poids tout trouvé, mais il classe ces trois sources dans **l'ordre inverse**
+(chasseauxlivres 0.16 > achatmoinscher 0.12 > ebay 0.10). Il note la fiabilité
+d'une source comme _preuve d'identité_, pas la qualité de ses titres bruts : un
+comparateur de livres est une meilleure preuve et un bien plus mauvais nom de
+DVD. Deux concepts, deux traits — s'en servir aurait inversé le comportement en
+silence.
+
+Les deux fichiers restent sur `ALLOWED_PROVIDER_KEYS` dans
 [`blindnessGuard.test.ts`](../src/core/catalog/blindnessGuard.test.ts).
 
 Le reste du fichier = journal / historique.

@@ -313,6 +313,7 @@ function ShelfComponent() {
             updatedAt: new Date(),
             shelfId: shelfId,
             description: null,
+            printKey: null,
             barcode: null,
             condition: "new",
             metadataId: null,

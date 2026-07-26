@@ -1,8 +1,11 @@
 # Support TCG — conception
 
-> Statut : **proposition**, aucun code écrit. Les APIs ont été sondées en direct
-> le 2026-07-26 (réponses réelles, pas de la doc lue en diagonale) ; tout ce qui
-> est marqué « vérifié » a été appelé.
+> Statut : **phase 1 en cours** (2026-07-26). Décisions produit prises (§8).
+> Livré : ancre `printKey`, provider LorcanaJSON, colonne `Item.printKey`.
+> Reste : flux d'ajout par recherche, regroupement des doublons, plein écran.
+>
+> Les APIs ont été sondées en direct — réponses réelles, pas de la doc lue en
+> diagonale ; tout ce qui est marqué « vérifié » a été appelé.
 
 ## 1. Le vrai problème : il n'y a pas de code-barres
 
@@ -11,14 +14,30 @@ Toute la chaîne d'identification part d'un EAN/UPC : `BarcodeCache`, les
 régression. **Une carte à l'unité n'a jamais de code-barres** (seuls les
 produits scellés en ont un).
 
-Mais une carte a une identité tout aussi stable, c'est juste une clé composite :
+Mais une carte a une identité tout aussi stable, c'est juste une clé composite.
+La forme exacte a été **corrigée par les données** — la version naïve
+(`jeu / set / numéro / langue`) est fausse :
 
 ```
-jeu / set / numéro de collection / langue        → « print identity »
+jeu : set - numéro[variante] [- groupe promo]     → « print identity »
 ```
 
-`swsh3-136 · fr` désigne exactement une carte, partout, pour toujours. C'est
-l'ancre qui remplace le code-barres.
+Trois choses vérifiées sur les 6386 tirages FR + EN de Lorcana :
+
+- **`set + numéro` n'est pas unique.** Le set 3 imprime cinq Chiots dalmatiens
+  différents, tous numérotés 4, distingués par une lettre : `4a` … `4e`.
+- **Il faut aussi le groupe promo.** `20/204` (Simba) et `20/P1` (Génie) sont
+  deux cartes du set 1 portant le numéro 20.
+- **La langue ne fait pas partie de la clé.** Le même tirage porte le même
+  numéro en FR et en EN (zéro divergence sur 3154 cartes communes). La langue
+  décrit l'exemplaire possédé, pas la carte — cohérent avec le §4.
+
+Contre-exemple assumé : Moana et Vaiana, deux cartes physiquement distinctes,
+sont toutes deux imprimées `26/P2 • 7`. L'ambiguïté est dans le monde réel, pas
+dans le modèle ; on la lève par le nom et on garde l'id provider dans
+`externalIds`.
+
+C'est l'ancre qui remplace le code-barres.
 
 **Conséquence structurante** : le flux « scanner » ne s'applique pas. Les TCG
 ont besoin d'un flux **recherche-d'abord** (nom → liste → set + numéro), ou
@@ -76,15 +95,50 @@ Trois axes **orthogonaux**, souvent confondus :
 « Foil », « holo », « reverse », « irisé » sont donc tous de l'axe 2. Le mot
 générique de l'industrie est **finish** (ou _treatment_).
 
-## 4. Ce que le modèle actuel ne sait pas faire
+## 4. Les doublons — décidé : N items, regroupés à l'affichage
 
-- **La quantité.** Un collectionneur possède 4× la même carte. Aujourd'hui
-  `Item` = un objet physique. Soit on crée 4 items, soit on ajoute une
-  quantité — avec finition et état **par ligne**, sinon on perd l'information
-  (2 normales + 1 reverse ≠ 3 exemplaires).
+Un collectionneur possède 4× la même carte. **On garde `Item` = un objet
+physique**, on n'ajoute pas de colonne quantité.
+
+Pourquoi : un exemplaire porte déjà, individuellement, une `condition`, des
+`PriceOffer` et des `LoanRequest`. On prête **un** exemplaire, pas 1,5 sur 3 ;
+chacun a son prix d'achat et son état. Une colonne quantité obligerait
+aussitôt à ré-attacher état + prêt + prix _par unité_, c'est-à-dire à recréer
+la table `Item` dans un champ JSON. Et la mécanique de doublons existe déjà
+(`ITEM_COPY_SLUG_MARKER`, slugs `-copy-N`).
+
+Le regroupement est donc un **transform d'affichage**, à côté de
+`queryCollectionItems` dans la page d'étagère — générique pour tous les types
+par construction, pas une mécanique TCG. Zéro migration ; les doublons de jeux
+déjà saisis en bénéficient immédiatement.
+
+**Clé de regroupement** — deux exemplaires fusionnent si c'est le même objet :
+
+| Axe                                | Dans la clé ? |
+| ---------------------------------- | ------------- |
+| Métadonnée (la carte, le jeu)      | ✅            |
+| Variante (finition, édition)       | ✅            |
+| Langue de l'exemplaire             | ✅            |
+| **État** (neuf / occasion / abîmé) | ❌            |
+
+L'état décrit la **santé** de l'objet, pas son identité : il change dans le
+temps (une carte neuve se joue, un jeu neuf s'ouvre). S'il séparait les
+groupes, on ne pourrait jamais dire « j'ai 3 Elsa ». La vignette affiche
+`Elsa foil ×3` ; le détail du groupe liste les exemplaires avec état, prix
+d'achat et statut de prêt. Corollaire : plus besoin de « (copie) » dans le
+titre.
+
+**Dette signalée, non traitée ici** : l'enum `Condition` mélange deux axes —
+`new`/`used`/`damaged` sont des états, mais `loose` décrit _ce qu'on possède_
+(cartouche seule vs boîte complète) et pilote une gamme de prix distincte.
+C'est de la variante déguisée en état. Le jour où l'axe variante existe,
+`loose` doit migrer dessus.
+
+Reste à couvrir :
+
 - **La langue de l'exemplaire.** Rien ne la porte aujourd'hui.
-- **La gradation** (PSA / CGC / Beckett). L'enum `Condition` actuelle est
-  pensée neuf/occasion ; le marché de la carte est piloté par la note.
+- **La gradation** (PSA / CGC / Beckett) — **hors périmètre**, décidé. À
+  rouvrir le jour où une carte sous coque entre dans la collection.
 
 ## 5. L'effet holographique
 
@@ -115,6 +169,20 @@ Les dos sont **constants par jeu** (une image, parfois deux selon l'époque),
 pas par carte — c'est quelques fichiers, pas un chantier de données. Un onglet
 dédié en plein écran, avec un retournement 3D, est une petite feature isolée.
 
+## 6 bis. Pièges LorcanaJSON (vérifiés, pas lus dans la doc)
+
+- **L'identité n'existe que dans `allCards.json`.** Les fichiers par set
+  (`sets/setdata.N.json`) n'ont ni `setCode`, ni `variant`, ni `promoGrouping`.
+- **`fullIdentifier` est inexploitable comme clé.** Il contredit le `setCode`
+  explicite sur certaines promos (`11/P3 • FR • 1` appartient au set **9**) et
+  les vieux enregistrements EN utilisent une autre forme (`1 TFC • EN • 1/P1`).
+  15 divergences sur 6386. Reconstruire l'identité en le parsant aurait rangé
+  des cartes dans le mauvais set, silencieusement.
+- **Le poids est gérable** : 9 Mo parsés mais 1,6 Mo sur le fil en gzip, ~480 ms.
+  D'où un index allégé en mémoire, revalidé via le fichier `.md5` compagnon.
+- **`varnishType` est un second axe de finition** (`HighGloss`,
+  `MetallicHotFoil`), indépendant de `foilTypes`.
+
 ## 7. Découpage proposé
 
 1. **Lorcana FR de bout en bout** : ajout par recherche, `printKey`, images,
@@ -124,9 +192,11 @@ dédié en plein écran, avec un retournement 3D, est une petite feature isolée
    `reverse`/`holo` en prime.
 4. **Magic / Yu-Gi-Oh**, puis Scrydex si on veut One Piece & co.
 
-## 8. Décisions à prendre avant de coder
+## 8. Décisions prises (2026-07-26)
 
-- **Quantité** : N items, ou un item avec quantité + lignes par finition ?
-- **Prix Lorcana** : on croise LorcanaJSON (FR) et Lorcast (prix USD), ou on
-  s'en passe pour la v1 ?
-- **Cartes gradées** : dans le périmètre, ou plus tard ?
+- **Doublons** : N items, regroupés à l'affichage. Voir §4.
+- **Prix** : aucun traitement spécial. Lorcana sort sans prix parce qu'aucune
+  source gratuite n'en publie en FR — pas parce que ce serait câblé en dur. Un
+  provider qui déclare la capacité prix est appelé par le flux prix normal,
+  comme pour tous les autres types.
+- **Cartes gradées** : hors périmètre.

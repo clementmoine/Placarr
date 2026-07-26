@@ -27,6 +27,7 @@ import { discogsModule } from "@/providers/discogs";
 import { ebayModule } from "@/providers/ebay";
 import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
+import { lorcanajsonModule } from "@/providers/lorcanajson";
 import { furetModule } from "@/providers/furet";
 import { geedieModule } from "@/providers/geedie";
 import { gibertModule } from "@/providers/gibert";
@@ -104,6 +105,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   playinModule,
   senscritiqueModule,
   fullsetModule,
+  lorcanajsonModule,
   ...PRESTASHOP_RETAILER_MODULES,
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,

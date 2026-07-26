@@ -48,6 +48,8 @@ export type BuildMatchContextInput = {
   /** Hard-acceptance titles (item + metadata title). Defaults to primary. */
   acceptanceTitles?: Array<string | null | undefined>;
   barcodes?: Array<string | null | undefined>;
+  /** Anchor for barcode-less objects (cards). See `@/core/identify/printKey`. */
+  printKey?: string | null;
   platformKey?: string | null;
   releaseDate?: string | null;
   externalIds?: Record<string, string | null | undefined>;
@@ -98,6 +100,7 @@ export function buildMatchContext(input: BuildMatchContextInput): MatchContext {
 
   return {
     barcodes,
+    printKey: input.printKey?.trim() || null,
     primaryTitle,
     titles,
     acceptanceTitles,
@@ -226,6 +229,7 @@ export function withMatchOnAdapterContext(
     match,
     name: match.primaryTitle || base.name,
     barcode: primaryBarcode || base.barcode,
+    printKey: match.printKey ?? base.printKey,
     platform: match.platformKey ?? base.platform,
     shelfName: match.shelfName ?? base.shelfName,
     fallbackNames: titles.filter((title) => {

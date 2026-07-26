@@ -62,6 +62,7 @@ const SUPPLEMENTAL_IMAGE_REMOTE_EXACT_HOSTS = [
  * `PROVIDERS` import — middleware and client bundles must stay registry-free).
  */
 export const REGISTRY_COVER_IMAGE_EXACT_HOSTS = [
+  "api.lorcana.ravensburger.com",
   "babelio.com",
   "bdovore.com",
   "bedetheque.com",

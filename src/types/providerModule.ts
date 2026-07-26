@@ -20,6 +20,14 @@ export type InferredImageAttachmentSemantics = {
 export type MatchContext = {
   /** Digits-only barcodes known for this item (EAN / UPC / ISBN…). Preferred first. */
   barcodes: string[];
+  /**
+   * Print identity for objects that never carry a barcode — a trading card is
+   * anchored by what is printed on it (game, set, collector number). Sits
+   * alongside `barcodes` rather than inside it: a print key is not a barcode,
+   * and a column that lies costs more than the extra field.
+   * See `@/core/identify/printKey`.
+   */
+  printKey?: string | null;
   /** Primary display title. */
   primaryTitle: string;
   /**
@@ -53,6 +61,8 @@ export type MetadataAdapterContext = {
   name: string;
   type?: string | null;
   barcode?: string | null;
+  /** Print identity for barcode-less objects. See {@link MatchContext.printKey}. */
+  printKey?: string | null;
   platform?: string | null;
   shelfName?: string | null;
   lookupQueries?: string[];

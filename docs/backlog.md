@@ -24,10 +24,24 @@ disparu.
 
 ## Ouverts
 
-| Priorité | Item                          | Détail                                                                                                                     |
-| -------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Bloqué sur 3 décisions produit (quantité, prix Lorcana, cartes gradées). |
-| P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                                      |
+| Priorité | Item                          | Détail                                                                                                            |
+| -------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Décisions produit prises le 2026-07-26, implémentation ouverte. |
+| P2       | Regroupement des doublons     | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.          |
+| P3       | `loose` est une variante      | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                  |
+| P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                             |
+
+### `Condition.loose` est de la variante déguisée en état
+
+`new` / `used` / `damaged` décrivent la **santé** d'un exemplaire ; `loose`
+décrit **ce qu'on possède** (cartouche seule vs boîte complète) et pilote une
+gamme de prix distincte. Les deux axes cohabitent dans la même enum.
+
+Conséquence pratique : le regroupement des doublons (P2) exclut l'état de sa
+clé mais doit y inclure la variante — tant que `loose` vit dans `Condition`,
+un jeu loose et le même jeu complet se regrouperaient à tort. À traiter quand
+l'axe variante existera (chantier TCG), pas avant : la migration touche des
+données réelles.
 
 ### Vue 3D retournable — nice to have
 

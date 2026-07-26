@@ -6,6 +6,7 @@ import {
   MIN_PASSWORD_LENGTH,
   PASSWORD_HASH_ROUNDS,
 } from "@/lib/auth/passwordPolicy";
+import { clientIpFrom, consumeRateLimit } from "@/lib/http/rateLimit";
 
 function isTruthyEnv(value?: string | null): boolean {
   const raw = value?.trim().toLowerCase();
@@ -14,6 +15,23 @@ function isTruthyEnv(value?: string | null): boolean {
 
 export async function POST(req: Request) {
   try {
+    // Account creation is cheap for the caller and expensive for the host
+    // (bcrypt, then a fresh collection to enrich). Per address, not per
+    // account: the account does not exist yet.
+    const throttle = consumeRateLimit(`register:${clientIpFrom(req.headers)}`, {
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!throttle.allowed) {
+      return NextResponse.json(
+        { message: "Too many attempts, try again later" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(throttle.retryAfterSeconds) },
+        },
+      );
+    }
+
     const body = await req.json();
     const name = typeof body?.name === "string" ? body.name.trim() : "";
     // Stored lowercase: `A@b.com` and `a@b.com` are the same account, and the

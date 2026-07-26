@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { prisma } from "@/lib/db/prisma";
+import { clientIpFrom, consumeRateLimit } from "@/lib/http/rateLimit";
 
 if (!process.env.NEXTAUTH_SECRET) {
   throw new Error("Please provide NEXTAUTH_SECRET environment variable");
@@ -41,14 +42,33 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
+        const email = credentials.email.trim().toLowerCase();
+
+        // Per-account first: an attacker rotating addresses still hits this,
+        // and throttling one account cannot lock the whole instance out.
+        const perAccount = consumeRateLimit(`login:email:${email}`, {
+          limit: 10,
+          windowMs: 15 * 60 * 1000,
+        });
+        const perAddress = consumeRateLimit(
+          `login:ip:${clientIpFrom(new Headers(req?.headers ?? {}))}`,
+          { limit: 30, windowMs: 15 * 60 * 1000 },
+        );
+        if (!perAccount.allowed || !perAddress.allowed) {
+          console.warn(`[Auth] Throttled sign-in attempt for ${email}`);
+          return null;
+        }
+
+        // Case-insensitive: registration stores lowercase, but rows created
+        // before that change kept whatever case the user typed.
+        const user = await prisma.user.findFirst({
           where: {
-            email: credentials.email,
+            email: { equals: email, mode: "insensitive" },
           },
         });
 

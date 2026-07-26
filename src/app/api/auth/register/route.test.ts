@@ -16,6 +16,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 import { POST } from "./route";
+import { resetRateLimitsForTests } from "@/lib/http/rateLimit";
 
 const VALID_PASSWORD = "correct-horse-battery";
 
@@ -27,6 +28,9 @@ function req(body: unknown) {
 }
 
 beforeEach(() => {
+  // Le limiteur est un compteur de process : sans ça les cas suivants
+  // héritent des hits des précédents.
+  resetRateLimitsForTests();
   h.findUnique.mockReset().mockResolvedValue(null);
   h.create.mockReset().mockResolvedValue({
     id: "u1",
@@ -141,5 +145,50 @@ describe("POST /api/auth/register", () => {
     );
 
     expect(res.status).toBe(500);
+  });
+});
+
+describe("POST /api/auth/register — throttling", () => {
+  beforeEach(() => {
+    resetRateLimitsForTests();
+    h.count.mockResolvedValue(1);
+    process.env.ALLOW_REGISTRATION = "1";
+  });
+
+  it("renvoie 429 après 5 tentatives depuis la même adresse", async () => {
+    const from = (email: string) =>
+      new Request("http://localhost/api/auth/register", {
+        method: "POST",
+        headers: { "x-forwarded-for": "203.0.113.5" },
+        body: JSON.stringify({ name: "A", email, password: VALID_PASSWORD }),
+      });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const ok = await POST(from(`a${attempt}@b.c`));
+      expect(ok.status, `tentative ${attempt + 1}`).toBe(201);
+    }
+
+    const blocked = await POST(from("a5@b.c"));
+    expect(blocked.status).toBe(429);
+    expect(Number(blocked.headers.get("Retry-After"))).toBeGreaterThan(0);
+  });
+
+  it("compte séparément une autre adresse", async () => {
+    const post = (ip: string) =>
+      POST(
+        new Request("http://localhost/api/auth/register", {
+          method: "POST",
+          headers: { "x-forwarded-for": ip },
+          body: JSON.stringify({
+            name: "A",
+            email: "a@b.c",
+            password: VALID_PASSWORD,
+          }),
+        }),
+      );
+
+    for (let attempt = 0; attempt < 6; attempt += 1) await post("203.0.113.6");
+    expect((await post("203.0.113.6")).status).toBe(429);
+    expect((await post("203.0.113.7")).status).toBe(201);
   });
 });

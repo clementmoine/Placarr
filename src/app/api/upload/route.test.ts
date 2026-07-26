@@ -11,6 +11,7 @@ vi.mock("@/lib/auth", () => ({ requireGuestOrHigher: h.requireGuestOrHigher }));
 vi.mock("fs/promises", () => ({ mkdir: h.mkdir, writeFile: h.writeFile }));
 
 import { POST } from "./route";
+import { resetRateLimitsForTests } from "@/lib/http/rateLimit";
 
 const USER = { user: { id: "u1", role: "user" } };
 
@@ -24,6 +25,9 @@ function uploadReq(file: File | null) {
 }
 
 beforeEach(() => {
+  // Le limiteur est un compteur de process : sans ça les cas suivants
+  // héritent des hits des précédents.
+  resetRateLimitsForTests();
   h.requireGuestOrHigher.mockReset().mockResolvedValue(USER);
   h.mkdir.mockReset().mockResolvedValue(undefined);
   h.writeFile.mockReset().mockResolvedValue(undefined);

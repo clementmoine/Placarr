@@ -5,6 +5,7 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
+import { consumeRateLimit } from "@/lib/http/rateLimit";
 
 /**
  * Raster formats only. SVG is deliberately absent: uploads are served from
@@ -32,6 +33,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "Guests cannot upload files" },
       { status: 403 },
+    );
+  }
+
+  // Keyed by account, not address: an authenticated user filling the disk is
+  // the realistic case, and the session is the thing we can trust here.
+  const throttle = consumeRateLimit(`upload:${auth.user.id}`, {
+    limit: 120,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!throttle.allowed) {
+    return NextResponse.json(
+      { error: "Too many uploads, try again later" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(throttle.retryAfterSeconds) },
+      },
     );
   }
 

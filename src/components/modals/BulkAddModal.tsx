@@ -20,6 +20,7 @@ import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DialogFooter } from "@/components/ui/dialog";
 import { ConditionIcon } from "@/components/ConditionIcon";
@@ -67,6 +68,8 @@ export function BulkAddModal({
   const { t } = useLocale();
   const queryClient = useQueryClient();
   const isBookShelf = isBookShelfType(shelfType);
+  /** Nothing on these shelves has a barcode, so the scan tab has no input. */
+  const canScan = !usesPrintSearch(shelfType);
 
   const defaultTab = useMemo(() => {
     if (initialTab === "series" && !isBookShelf) return "names";
@@ -203,7 +206,8 @@ export function BulkAddModal({
   );
 
   const scanCount = scannedRows.filter((row) => row.status === "done").length;
-  const scanTabActive = isOpen && tab === "scan";
+  // Guard the camera too: the tab can still be requested by `initialTab`.
+  const scanTabActive = isOpen && tab === "scan" && canScan;
 
   return (
     <BaseModal
@@ -235,7 +239,11 @@ export function BulkAddModal({
           <TabsList
             className={cn(
               "w-full grid h-auto p-1",
-              isBookShelf ? "grid-cols-3" : "grid-cols-2",
+              [isBookShelf, canScan].filter(Boolean).length === 2
+                ? "grid-cols-3"
+                : [isBookShelf, canScan].some(Boolean)
+                  ? "grid-cols-2"
+                  : "grid-cols-1",
             )}
           >
             <TabsTrigger value="names" className="gap-1.5 py-2">
@@ -248,10 +256,12 @@ export function BulkAddModal({
                 {t("items.bulkAdd.tabSeries")}
               </TabsTrigger>
             )}
-            <TabsTrigger value="scan" className="gap-1.5 py-2">
-              <ScanLine className="size-4" />
-              {t("items.bulkAdd.tabScan")}
-            </TabsTrigger>
+            {canScan && (
+              <TabsTrigger value="scan" className="gap-1.5 py-2">
+                <ScanLine className="size-4" />
+                {t("items.bulkAdd.tabScan")}
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 

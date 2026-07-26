@@ -50,6 +50,7 @@ import {
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ImageCropModal } from "@/components/modals/ImageCropModal";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { ScannerButton } from "@/components/ScannerButton";
 import {
   ConditionIcon,
@@ -1684,94 +1685,97 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Barcode */}
-                    <FormField
-                      control={form.control}
-                      name="barcode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t(itemsBarcodeLabelKey(shelfType))}
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex relative items-center">
-                              <Input
-                                type="text"
-                                className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
-                                placeholder={t(
-                                  itemsBarcodePlaceholderKey(shelfType),
-                                )}
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  debounce(() =>
-                                    handleBarcodeChange(e.target.value),
-                                  );
-                                }}
-                              />
-                              <ScannerButton
-                                className="absolute right-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-                                onScan={(barcode) => {
-                                  form.setValue("barcode", barcode);
-                                  handleBarcodeChange(barcode);
-                                }}
-                              />
-                            </div>
-                          </FormControl>
-                          {matches.length > 1 && (
-                            <div className="mt-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-fade-in shadow-xs">
-                              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-2">
-                                <SparklesIcon className="size-3.5" />
-                                {t("items.multipleMatchesTitle")}
-                              </span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {matches.map((m) => (
-                                  <Button
-                                    key={m.name}
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(
-                                      "text-xs px-3 py-1.5 h-auto rounded-lg font-semibold transition-all border select-none cursor-pointer",
-                                      selectedMatch?.name === m.name
-                                        ? "bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700 hover:text-white dark:bg-amber-500 dark:border-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:hover:border-amber-400 dark:hover:text-zinc-950"
-                                        : "bg-background border-border hover:bg-accent text-muted-foreground hover:text-foreground",
-                                    )}
-                                    onClick={() => {
-                                      setSelectedMatch(m);
-                                      setSuggestions(m.suggestions);
-                                      setNameSuggestion(m.name);
-                                      form.setValue("name", m.name);
-
-                                      // Overwrite cover and background for the new match selection
-                                      form.setValue(
-                                        "imageUrl",
-                                        m.coverUrl || null,
-                                        { shouldDirty: true },
-                                      );
-                                      form.setValue(
-                                        "backgroundImageUrl",
-                                        null,
-                                        { shouldDirty: true },
-                                      );
-
-                                      fetchMetadataPreview(
-                                        m.name,
-                                        form.getValues("barcode") || "",
-                                        true,
-                                      );
-                                    }}
-                                  >
-                                    {m.name}
-                                  </Button>
-                                ))}
+                    {/* Nothing on this shelf carries a barcode: the field, and the
+                        scanner inside it, would only ever come up empty. */}
+                    {!usesPrintSearch(shelfType) && (
+                      <FormField
+                        control={form.control}
+                        name="barcode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t(itemsBarcodeLabelKey(shelfType))}
+                            </FormLabel>
+                            <FormControl>
+                              <div className="flex relative items-center">
+                                <Input
+                                  type="text"
+                                  className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
+                                  placeholder={t(
+                                    itemsBarcodePlaceholderKey(shelfType),
+                                  )}
+                                  {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    debounce(() =>
+                                      handleBarcodeChange(e.target.value),
+                                    );
+                                  }}
+                                />
+                                <ScannerButton
+                                  className="absolute right-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                                  onScan={(barcode) => {
+                                    form.setValue("barcode", barcode);
+                                    handleBarcodeChange(barcode);
+                                  }}
+                                />
                               </div>
-                            </div>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            </FormControl>
+                            {matches.length > 1 && (
+                              <div className="mt-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-fade-in shadow-xs">
+                                <span className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-2">
+                                  <SparklesIcon className="size-3.5" />
+                                  {t("items.multipleMatchesTitle")}
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {matches.map((m) => (
+                                    <Button
+                                      key={m.name}
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className={cn(
+                                        "text-xs px-3 py-1.5 h-auto rounded-lg font-semibold transition-all border select-none cursor-pointer",
+                                        selectedMatch?.name === m.name
+                                          ? "bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700 hover:text-white dark:bg-amber-500 dark:border-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:hover:border-amber-400 dark:hover:text-zinc-950"
+                                          : "bg-background border-border hover:bg-accent text-muted-foreground hover:text-foreground",
+                                      )}
+                                      onClick={() => {
+                                        setSelectedMatch(m);
+                                        setSuggestions(m.suggestions);
+                                        setNameSuggestion(m.name);
+                                        form.setValue("name", m.name);
+
+                                        // Overwrite cover and background for the new match selection
+                                        form.setValue(
+                                          "imageUrl",
+                                          m.coverUrl || null,
+                                          { shouldDirty: true },
+                                        );
+                                        form.setValue(
+                                          "backgroundImageUrl",
+                                          null,
+                                          { shouldDirty: true },
+                                        );
+
+                                        fetchMetadataPreview(
+                                          m.name,
+                                          form.getValues("barcode") || "",
+                                          true,
+                                        );
+                                      }}
+                                    >
+                                      {m.name}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     {/* Name */}
                     <FormField

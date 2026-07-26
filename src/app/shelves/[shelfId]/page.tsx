@@ -1060,7 +1060,25 @@ function ShelfComponent() {
         </div>
       )}
 
-      {!selectionMode && !isPrintSearchShelf && <ScanFAB />}
+      {!selectionMode &&
+        (isPrintSearchShelf ? (
+          /* Scanning is meaningless here, but the shortcut is not: the same
+             corner offers the flow that does work — searching a printing. */
+          <div className="fixed bottom-24 sm:bottom-6 right-6 z-40">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleModalOpen("item")}
+              aria-label={t("items.addItem")}
+              title={t("items.addItem")}
+              className="size-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center focus:outline-none cursor-pointer border border-primary-foreground/10"
+            >
+              <Plus className="size-6" />
+            </motion.button>
+          </div>
+        ) : (
+          <ScanFAB />
+        ))}
     </div>
   );
 }

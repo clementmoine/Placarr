@@ -1037,6 +1037,17 @@ export function ItemModal({
       locale === "en" ? "en" : "fr";
     const list = [...availableImages];
 
+    /**
+     * Re-cropping rewrites the same filename, so the URL alone tells the
+     * browser nothing changed and the thumbnail stays stale until a reload.
+     * Display only — the form keeps the clean URL, and every comparison goes
+     * through `urlsReferToSameLocalizedImage`, which drops the query.
+     */
+    const displayUrlFor = (url: string): string =>
+      cropVersion && /_crop\.[^.]+$/.test(url)
+        ? `${url}?v=${cropVersion}`
+        : url;
+
     // A fresh crop is a derivative of a gallery image, so the twin-matching
     // below considers it "already there" and the user would keep seeing the
     // uncropped original — no feedback that anything happened. Show the crop in
@@ -1053,12 +1064,18 @@ export function ItemModal({
       if (twinIndex >= 0) {
         list[twinIndex] = {
           ...list[twinIndex],
-          // Display only — the form keeps the clean URL, and every comparison
-          // goes through `urlsReferToSameLocalizedImage`, which drops the query.
-          url: cropVersion
-            ? `${currentImageUrl}?v=${cropVersion}`
-            : currentImageUrl,
+          url: displayUrlFor(currentImageUrl),
         };
+      } else {
+        // The crop has no local twin (its source is still a remote gallery
+        // URL), so it is carried by the branch below instead — bust it there.
+        const selfIndex = list.findIndex((img) => img.url === currentImageUrl);
+        if (selfIndex >= 0) {
+          list[selfIndex] = {
+            ...list[selfIndex],
+            url: displayUrlFor(currentImageUrl),
+          };
+        }
       }
     }
 
@@ -1103,7 +1120,7 @@ export function ItemModal({
         : null;
 
       list.unshift({
-        url: currentImageUrl,
+        url: displayUrlFor(currentImageUrl),
         type: provenance?.type ?? "image",
         label: gallery?.caption ?? t("items.editTabs.chooseImage"),
         source: provenance?.source ?? null,

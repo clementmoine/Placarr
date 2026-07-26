@@ -28,6 +28,7 @@ disparu.
 | -------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Décisions produit prises le 2026-07-26, implémentation ouverte. |
 | P2       | Regroupement des doublons     | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.          |
+| P1       | Variante par exemplaire       | Dire que _son_ exemplaire est foil / loose. Générique, tous types — voir ci-dessous.                              |
 | P2       | Recadrage libre à 4 coins     | Redressement de perspective façon scan iPhone — voir ci-dessous.                                                  |
 | P3       | `loose` est une variante      | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                  |
 | P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                             |
@@ -108,6 +109,44 @@ Chemin proposé, sans nouvelle dépendance native :
 Alternative écartée : OpenCV / ImageMagick feraient ça en une ligne
 (`-distort Perspective`), mais ajoutent une dépendance native au conteneur
 pour une seule fonction.
+
+### Variantes par exemplaire — l'axe qui manque (tous types)
+
+Aujourd'hui **l'axe tirage/édition est géré** : `searchPrints` fait choisir
+_lequel_ on possède, et les finitions existantes remontent en fait
+(« Finitions existantes : None • Silver »). Ce qui manque : **dire que son
+exemplaire est le foil**. Rien ne le porte.
+
+La demande se généralise au-delà des cartes — une PS3 a ses modèles (Phat,
+Slim, Super Slim), un jeu ses éditions (Standard, GOTY, Collector) — et le
+mécanisme est déjà là : `searchPrints` n'a rien de spécifique aux TCG, c'est
+« choisir quelle variante exacte on possède ». Étendre aux consoles = un
+provider qui renvoie des candidats de modèle, rien à changer dans le core ni
+dans le sélecteur.
+
+**La distinction à ne pas perdre**, et c'est elle qui porte tout le reste :
+
+|                                | Nature                                                                  | Où ça vit                                            |
+| ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------- |
+| Modèle / édition / tirage      | un **autre objet** : métadonnées, photos, prix distincts                | identité — `Metadata` + `printKey`, choisi à l'ajout |
+| Finition (foil, reverse, holo) | **le même objet imprimé autrement** — même carte, même numéro, même set | l'**exemplaire** — `Item`                            |
+
+Confondre les deux est le piège. Si le foil devenait une entrée de métadonnées
+séparée, on aurait deux fiches « Elsa 42/204 » et chaque comptage, prix et
+galerie doublerait.
+
+Ordre proposé :
+
+1. **`Item.variant`** (nullable, générique) : la finition de l'exemplaire,
+   choisie parmi les options que la métadonnée déclare. Surtout pas une colonne
+   TCG — c'est exactement là que `Condition.loose` doit migrer (voir ci-dessous).
+2. Le **regroupement des doublons** s'appuie dessus : c'est ce qui fait marcher
+   « Elsa foil ×3 » sans mélanger le foil et le classique.
+
+Réserve pour le **matériel** : l'axe variante d'une console est surtout le
+_modèle_, donc de l'identité, pas de la finition. Les consoles ont besoin de
+meilleurs candidats `searchPrints`, pas d'une finition par exemplaire. Besoin
+différent, même mécanisme.
 
 ### `Condition.loose` est de la variante déguisée en état
 

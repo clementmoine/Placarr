@@ -52,17 +52,25 @@ ment coûte toujours plus cher que la colonne en trop.
 
 ## 2. Providers — sondés le 2026-07-26
 
-| Jeu                     | Provider                                        | Données FR      | Images FR      | Variantes                            | Prix                              | Clé        |
-| ----------------------- | ----------------------------------------------- | --------------- | -------------- | ------------------------------------ | --------------------------------- | ---------- |
-| Pokémon                 | [TCGdex](https://tcgdex.dev/)                   | ✅ vérifié      | ✅ vérifié     | ✅ `variants_detailed` + `variantId` | ✅ Cardmarket **EUR** + TCGplayer | aucune     |
-| Lorcana                 | [LorcanaJSON](https://lorcanajson.org/)         | ✅ FR/DE/IT     | ✅ officielles | ✅ `foilTypes` + **`foilMask`**      | ❌                                | fichiers   |
-| Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil uniquement                 | TCGplayer USD                     | aucune     |
-| Magic                   | [Scryfall](https://scryfall.com/docs/api)       | ✅ vérifié      | ✅             | ✅ `finishes: nonfoil/foil/etched`   | ✅                                | UA requis  |
-| Yu-Gi-Oh                | [YGOPRODeck](https://ygoprodeck.com/api-guide/) | ✅ noms         | EN             | sets + raretés                       | ✅                                | aucune     |
-| One Piece, Gundam, etc. | [Scrydex](https://scrydex.com/)                 | ?               | ?              | ✅                                   | ✅                                | **payant** |
+| Jeu                     | Provider                                        | Données FR      | Images FR      | Variantes                            | Prix                              | Clé               |
+| ----------------------- | ----------------------------------------------- | --------------- | -------------- | ------------------------------------ | --------------------------------- | ----------------- |
+| Pokémon                 | [TCGdex](https://tcgdex.dev/)                   | ✅ vérifié      | ✅ vérifié     | ✅ `variants_detailed` + `variantId` | ✅ Cardmarket **EUR** + TCGplayer | aucune            |
+| Lorcana                 | [LorcanaJSON](https://lorcanajson.org/)         | ✅ FR/DE/IT     | ✅ officielles | ✅ `foilTypes` + **`foilMask`**      | ❌                                | fichiers          |
+| Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil uniquement                 | TCGplayer USD                     | aucune            |
+| Magic                   | [Scryfall](https://scryfall.com/docs/api)       | ✅ vérifié      | ✅             | ✅ `finishes: nonfoil/foil/etched`   | ✅                                | UA requis         |
+| Yu-Gi-Oh                | [YGOPRODeck](https://ygoprodeck.com/api-guide/) | ✅ noms         | EN             | sets + raretés                       | ✅                                | aucune            |
+| One Piece, Dragon Ball  | [apitcg.com](https://apitcg.com/)               | ?               | ?              | ✅                                   | ?                                 | clé (inscription) |
+| One Piece, Gundam, etc. | [Scrydex](https://scrydex.com/)                 | ?               | ?              | ✅                                   | ✅                                | **payant**        |
 
 Ça tombe pile dans le registre existant : **un module par jeu**, chacun
 déclarant `types: ["tcg"]`. Aucun concept nouveau côté providers.
+
+Sur la couverture par jeu (sondé le 2026-07-26) : **Pokémon** est le mieux
+servi — TCGdex répond en français sur la recherche par nom (112 résultats pour
+« Dracaufeu »), sans clé. **One Piece** et **Dragon Ball Fusion World** sont
+couverts par apitcg.com, qui exige une clé obtenue par inscription (répond
+`API key is required` sans elle) ; le périmètre exact des données et les
+langues restent à vérifier une fois la clé en main.
 
 Deux remarques qui comptent :
 

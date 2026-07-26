@@ -1,6 +1,15 @@
 /** Normalizes a localized cover path so crop derivatives match their source file. */
+/**
+ * The original a derived crop came from. Query strings are dropped first: a
+ * re-crop overwrites the same filename, so the UI appends a cache-busting
+ * `?v=` to force a refetch — that suffix must never make two URLs look like
+ * different images.
+ */
 export function stripCropSuffixFromUrl(url: string): string {
-  return url.replace(/_crop(\.[^.]+)$/, "$1");
+  return url
+    .split("?")[0]
+    .split("#")[0]
+    .replace(/_crop(\.[^.]+)$/, "$1");
 }
 
 export function urlsReferToSameLocalizedImage(a: string, b: string): boolean {

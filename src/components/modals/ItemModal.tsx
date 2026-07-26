@@ -12,6 +12,7 @@ import {
   Settings,
   Image as ImageIcon,
   Maximize2,
+  Crop,
   HardDrive,
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/dialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
+import { ImageCropModal } from "@/components/modals/ImageCropModal";
 import { ScannerButton } from "@/components/ScannerButton";
 import {
   ConditionIcon,
@@ -471,6 +473,13 @@ export function ItemModal({
   }
 
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  /**
+   * Bumped on every applied crop. Re-cropping overwrites the same filename, so
+   * without a changing URL the browser and next/image keep serving the previous
+   * version — the thumbnail only refreshed on a full page reload.
+   */
+  const [cropVersion, setCropVersion] = useState(0);
 
   const applyMetadataPreviewToForm = useCallback(
     (
@@ -1028,6 +1037,31 @@ export function ItemModal({
       locale === "en" ? "en" : "fr";
     const list = [...availableImages];
 
+    // A fresh crop is a derivative of a gallery image, so the twin-matching
+    // below considers it "already there" and the user would keep seeing the
+    // uncropped original — no feedback that anything happened. Show the crop in
+    // its twin's place, keeping that entry's provenance.
+    if (
+      typeof currentImageUrl === "string" &&
+      /_crop\.[^.]+$/.test(currentImageUrl)
+    ) {
+      const twinIndex = list.findIndex(
+        (img) =>
+          img.url !== currentImageUrl &&
+          urlsReferToSameLocalizedImage(img.url, currentImageUrl),
+      );
+      if (twinIndex >= 0) {
+        list[twinIndex] = {
+          ...list[twinIndex],
+          // Display only — the form keeps the clean URL, and every comparison
+          // goes through `urlsReferToSameLocalizedImage`, which drops the query.
+          url: cropVersion
+            ? `${currentImageUrl}?v=${cropVersion}`
+            : currentImageUrl,
+        };
+      }
+    }
+
     if (pendingUploadPreviewUrl) {
       list.unshift({
         url: pendingUploadPreviewUrl,
@@ -1084,6 +1118,7 @@ export function ItemModal({
   }, [
     availableImages,
     currentImageUrl,
+    cropVersion,
     pendingUploadPreviewUrl,
     itemId,
     item,
@@ -2122,9 +2157,22 @@ export function ItemModal({
                                         e.stopPropagation();
                                         setZoomImageUrl(img.url);
                                       }}
-                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer"
+                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Maximize2 className="size-3.5" />
+                                    </button>
+
+                                    {/* Hover Crop Button */}
+                                    <button
+                                      type="button"
+                                      title={t("items.cropImage.action")}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCropImageUrl(img.url);
+                                      }}
+                                      className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
+                                    >
+                                      <Crop className="size-3.5" />
                                     </button>
 
                                     {/* Selected overlay checkmark */}
@@ -2367,9 +2415,22 @@ export function ItemModal({
                                         e.stopPropagation();
                                         setZoomImageUrl(img.url);
                                       }}
-                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer"
+                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Maximize2 className="size-3.5" />
+                                    </button>
+
+                                    {/* Hover Crop Button */}
+                                    <button
+                                      type="button"
+                                      title={t("items.cropImage.action")}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCropImageUrl(img.url);
+                                      }}
+                                      className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
+                                    >
+                                      <Crop className="size-3.5" />
                                     </button>
 
                                     {/* Selected overlay checkmark */}
@@ -2536,6 +2597,17 @@ export function ItemModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Reframing a gallery image also picks it: you cropped it to use it. */}
+      <ImageCropModal
+        imageUrl={cropImageUrl}
+        isOpen={!!cropImageUrl}
+        onClose={() => setCropImageUrl(null)}
+        onCropped={(url) => {
+          form.setValue("imageUrl", url, { shouldDirty: true });
+          setCropVersion((version) => version + 1);
+        }}
+      />
     </>
   );
 }

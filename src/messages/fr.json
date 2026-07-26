@@ -441,6 +441,15 @@
       "searchPlaceholder": "Nom de la carte (ex. Elsa, Chiot dalmatien)",
       "hint": "Tapez un nom pour voir les tirages disponibles.",
       "noResults": "Aucun tirage ne correspond."
+    },
+    "cropImage": {
+      "title": "Recadrer l'image",
+      "description": "Ajustez les coins. Le recadrage part toujours de l'image d'origine, vous pouvez donc y revenir ou le refaire autant de fois que vous voulez.",
+      "apply": "Recadrer",
+      "revert": "Rétablir l'original",
+      "action": "Recadrer",
+      "auto": "Auto",
+      "autoHint": "Proposer un recadrage automatique (marges détectées)"
     }
   },
   "sorting": {

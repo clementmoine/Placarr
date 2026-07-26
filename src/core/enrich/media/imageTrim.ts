@@ -1,6 +1,4 @@
 import sharp from "sharp";
-import fs from "fs";
-import path from "path";
 
 const LIGHT_BACKGROUND_LUMINANCE = 242;
 const LIGHT_BACKGROUND_MAX_DELTA = 28;
@@ -196,42 +194,4 @@ export async function applyCropBox(
       height: box.height,
     })
     .toBuffer();
-}
-
-export async function cropImageIfNeeded(
-  urlOrPath: string,
-  options: { minMarginPixels?: number } = {},
-): Promise<string> {
-  if (!urlOrPath || !urlOrPath.startsWith("/uploads/")) {
-    return urlOrPath;
-  }
-
-  try {
-    const cleanUrl = urlOrPath.replace(/_crop(\.[^.]+)$/, "$1");
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    const fileName = path.basename(cleanUrl);
-    const originalFilePath = path.join(uploadsDir, fileName);
-
-    if (!fs.existsSync(originalFilePath)) {
-      return urlOrPath;
-    }
-
-    const originalBuffer = fs.readFileSync(originalFilePath);
-    const trimmedBuffer = await trimLightImageMargins(originalBuffer, options);
-
-    if (trimmedBuffer !== originalBuffer) {
-      const ext = path.extname(fileName);
-      const baseName = path.basename(fileName, ext);
-      const croppedFileName = `${baseName}_crop${ext}`;
-      const croppedFilePath = path.join(uploadsDir, croppedFileName);
-
-      fs.writeFileSync(croppedFilePath, trimmedBuffer);
-      return `/uploads/${croppedFileName}`;
-    } else {
-      return cleanUrl;
-    }
-  } catch (error) {
-    console.error("[cropImageIfNeeded] Error cropping image:", error);
-    return urlOrPath;
-  }
 }

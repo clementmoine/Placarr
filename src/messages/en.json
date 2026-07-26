@@ -441,6 +441,15 @@
       "searchPlaceholder": "Card name (e.g. Elsa, Dalmatian Puppy)",
       "hint": "Type a name to see the available printings.",
       "noResults": "No printing matches."
+    },
+    "cropImage": {
+      "title": "Crop image",
+      "description": "Drag the corners. Cropping always starts from the original image, so you can revert or redo it as often as you like.",
+      "apply": "Crop",
+      "revert": "Restore original",
+      "action": "Crop",
+      "auto": "Auto",
+      "autoHint": "Suggest an automatic crop (detected margins)"
     }
   },
   "sorting": {

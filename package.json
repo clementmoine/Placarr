@@ -76,6 +76,7 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-hook-form": "7.55.0",
+    "react-image-crop": "^11.1.2",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "romanizr": "^2.0.0",

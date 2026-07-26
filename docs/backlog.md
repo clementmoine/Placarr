@@ -28,11 +28,11 @@ disparu.
 | -------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Décisions produit prises le 2026-07-26, implémentation ouverte. |
 | P2       | Regroupement des doublons     | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.          |
-| P2       | Recadrage manuel assisté      | Crop auto retiré ; reste l'outil à poignées (react-image-crop) — voir ci-dessous.                                 |
+| P2       | Recadrage libre à 4 coins     | Redressement de perspective façon scan iPhone — voir ci-dessous.                                                  |
 | P3       | `loose` est une variante      | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                  |
 | P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                             |
 
-### Recadrage manuel — le crop automatique est coupé (2026-07-26)
+### Recadrage manuel — livré (2026-07-26)
 
 Le recadrage automatique est **retiré** : il réécrivait l'URL stockée vers un
 fichier dérivé `_crop`, ce qui détachait la couverture de son attachment (perte
@@ -46,24 +46,68 @@ Retiré aux 4 endroits qui l'appliquaient sans qu'on le demande :
 forme de **suggestion** : `suggestCropBox()` renvoie un rectangle, `applyCropBox()`
 l'applique — rien ne recadre sans qu'on le lui dise.
 
-Reste à faire, l'outil assisté :
+L'outil manuel est en place (`ImageCropModal`, `react-image-crop` v11, ISC,
+115 Ko, aucune dépendance runtime) : un bouton sur **chaque image de la
+galerie**, au-dessus de l'agrandissement, visible d'emblée au tactile via
+`@media (hover: hover)`.
 
-- **Lib** : [`react-image-crop`](https://github.com/dominictobias/react-image-crop)
-  (v11, ISC, 115 Ko, aucune dépendance runtime, peer React seul). C'est le seul
-  des candidats évalués qui fait de vraies **poignées aux 4 coins** souris +
-  tactile ; `react-easy-crop` et `react-advanced-cropper` sont des fenêtres
-  fixes qu'on déplace/zoome, ce qui n'est pas la demande.
-- **Non destructif** : stocker le rectangle (`CropBox`) à côté de l'image, pas à
-  la place. On doit pouvoir rouvrir, réajuster, ou revenir au cadrage d'origine.
-  `CropBox` porte déjà `imageWidth`/`imageHeight` pour qu'un rectangle stocké
-  puisse être validé contre le fichier.
-- **Suggestion au départ** : ouvrir l'outil avec le rectangle de
-  `suggestCropBox()` déjà positionné, que l'utilisateur accepte ou déplace.
-- **Sur l'image de son choix** : depuis la galerie, pas seulement la couverture.
+Ce qui rend le recadrage réversible :
+
+- Le rectangle appliqué est mémorisé dans un sidecar `_crop.json`, à côté du
+  fichier produit — pas en base, parce que le même éditeur sert les objets, les
+  étagères et les avatars. Rouvrir affiche le cadrage **en cours**.
+- L'éditeur repart toujours du fichier d'origine, jamais d'un recadrage
+  précédent : réajuster dix fois ne dégrade rien.
+- « Auto » repropose la suggestion de `suggestCropBox()`, « Rétablir
+  l'original » revient à l'image entière.
+- Une réécriture porte le même nom de fichier, donc l'URL affichée reçoit un
+  `?v=` (affichage seul, la valeur stockée reste propre) — sans quoi la vignette
+  ne se rafraîchissait qu'au rechargement de la page.
+
+Reste ouvert :
+
 - **Dette liée** : `croppedImageUrl` traverse encore ~30 sites de
   `storage.ts` / `croppedCoverSync.ts` / `syncItemAfterMetadataStore.ts` alors
   qu'il ne transporte plus qu'une couverture non recadrée. Renommage à faire
-  quand l'outil manuel arrivera, pas avant — c'est une couche peu couverte.
+  avec le mode libre, pas avant — c'est une couche peu couverte.
+- **Sidecars orphelins** : supprimer un `_crop.jpg` laisse son `_crop.json`.
+  Inoffensif, à balayer si le dossier `uploads` est un jour nettoyé.
+
+### Recadrage libre à quatre coins (redressement de perspective)
+
+Le recadrage livré est **rectangulaire** : quatre poignées liées, ça découpe.
+La demande suivante est un **quadrilatère à quatre coins indépendants**, façon
+scan de document iPhone : on pose les coins sur une photo prise de biais et
+l'image est redressée à plat.
+
+Ce n'est pas un réglage du recadrage actuel, c'est une autre opération —
+une découpe versus une **homographie**. Deux conséquences vérifiées :
+
+- **`sharp` ne sait pas le faire.** Il expose `affine()` (matrice 2×2 +
+  translation), qui ne peut pas représenter une perspective : un trapèze ne
+  redevient pas un rectangle par transformation affine. Vérifié sur sharp
+  0.35.2 / libvips 8.18.3, aucune méthode `perspective`/`distort`.
+- **`react-image-crop` ne sait pas le faire non plus** : la lib est
+  rectangulaire par conception. Le mode libre demande un éditeur maison —
+  overlay SVG, 4 points glissables en pointer events (souris + tactile), tracé
+  du polygone.
+
+Chemin proposé, sans nouvelle dépendance native :
+
+1. **UI** : un sélecteur de mode dans `ImageCropModal` — « Rectangle » (la lib
+   actuelle) et « Libre » (l'éditeur quadrilatère). Les deux modes partagent le
+   même enregistrement et le même retour arrière.
+2. **Serveur** : homographie en JS pur dans `imageTrim.ts` — lire les pixels
+   bruts via `sharp().raw()`, calculer la matrice inverse depuis les 4 coins,
+   échantillonner en bilinéaire, ré-encoder par sharp. Sur une image de carte
+   (~1468×2048, 3 Mpx) c'est de l'ordre de quelques centaines de ms, à borner
+   comme `MAX_TRIM_PIXELS` le fait déjà.
+3. **Persistance** : le sidecar `_crop.json` accueille soit une `CropBox`, soit
+   un quadrilatère de 4 points — la réouverture restaure l'un ou l'autre.
+
+Alternative écartée : OpenCV / ImageMagick feraient ça en une ligne
+(`-distort Perspective`), mais ajoutent une dépendance native au conteneur
+pour une seule fonction.
 
 ### `Condition.loose` est de la variante déguisée en état
 

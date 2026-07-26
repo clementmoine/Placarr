@@ -1064,34 +1064,26 @@ export function ItemModal({
         ? `${url}?v=${cropVersion}`
         : url;
 
-    // A fresh crop is a derivative of a gallery image, so the twin-matching
-    // below considers it "already there" and the user would keep seeing the
-    // uncropped original — no feedback that anything happened. Show the crop in
-    // its twin's place, keeping that entry's provenance.
+    /**
+     * A crop and the file it came from are the same gallery row, so twin-matching
+     * treats one as "already there" and the row keeps whichever URL it happened
+     * to hold. That row must show the *selected* framing, in both directions:
+     * cropping showed no change at all, and reverting kept showing the crop
+     * because saving repoints the stored attachment at the cropped file.
+     * The row keeps its own provenance — only the URL follows the selection.
+     */
     if (
       typeof currentImageUrl === "string" &&
-      /_crop\.[^.]+$/.test(currentImageUrl)
+      currentImageUrl.startsWith("/uploads/")
     ) {
-      const twinIndex = list.findIndex(
-        (img) =>
-          img.url !== currentImageUrl &&
-          urlsReferToSameLocalizedImage(img.url, currentImageUrl),
+      const rowIndex = list.findIndex((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentImageUrl),
       );
-      if (twinIndex >= 0) {
-        list[twinIndex] = {
-          ...list[twinIndex],
+      if (rowIndex >= 0 && list[rowIndex]!.url !== currentImageUrl) {
+        list[rowIndex] = {
+          ...list[rowIndex]!,
           url: displayUrlFor(currentImageUrl),
         };
-      } else {
-        // The crop has no local twin (its source is still a remote gallery
-        // URL), so it is carried by the branch below instead — bust it there.
-        const selfIndex = list.findIndex((img) => img.url === currentImageUrl);
-        if (selfIndex >= 0) {
-          list[selfIndex] = {
-            ...list[selfIndex],
-            url: displayUrlFor(currentImageUrl),
-          };
-        }
       }
     }
 

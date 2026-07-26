@@ -43,18 +43,19 @@ RUN npx prisma generate
 
 ENV NODE_ENV=production
 ENV NEXT_PRIVATE_STANDALONE=true
-# `next build` collects page data, which imports `auth/config.ts`, which throws
-# without this. Build-time only and never baked into the runner stage — the
-# real secret comes from the environment at start-up, and the throw stays as
-# the boot-time guard it is meant to be.
-ENV NEXTAUTH_SECRET="build-only-placeholder-not-a-secret"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# `next build` collects page data, which imports `auth/config.ts`, which throws
+# without a secret. Passed inline rather than as an `ENV`: it never lands in
+# the image metadata (and does not trip `SecretsUsedInArgOrEnv`). The real
+# secret arrives from the environment at start-up, where the throw stays the
+# boot guard it is meant to be.
 RUN \
+  export NEXTAUTH_SECRET="build-only-placeholder-not-a-secret"; \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
   elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
@@ -75,22 +76,22 @@ ENV HOSTNAME="0.0.0.0"
 # DATABASE_URL is provided at runtime (PostgreSQL) via compose/env.
 
 # Full tree so tsx can run scripts/backgroundWorker.ts beside the standalone server.
-COPY --from=builder /app /app
+# Ownership is set by the COPY itself: a separate `chown -R /app` walks
+# node_modules (~900 packages) and rewrites the whole layer — a minute of build
+# time and a duplicated layer for a result the copy gives away for free.
+COPY --from=builder --chown=node:node /app /app
 
 # Standalone Next expects static + public next to server.js.
 RUN mkdir -p .next/standalone/.next \
   && cp -R .next/static .next/standalone/.next/static \
   && cp -R public .next/standalone/public
 
-RUN mkdir -p /config /app/public/uploads /app/.cache /app/prisma
+# Mount points only — they are empty here, so this is not recursive in practice.
+RUN mkdir -p /config /app/public/uploads /app/.cache /app/prisma \
+  && chown node:node /config /app/public/uploads /app/.cache /app/prisma
 
-COPY init.sh /app/init.sh
+COPY --chown=node:node init.sh /app/init.sh
 RUN chmod +x /app/init.sh
-
-# Own the tree as `node` (uid 1000) at build time so a *fresh* named volume
-# inherits that ownership from the image. Pre-existing volumes were created
-# root-owned, which is why the entrypoint still fixes them at boot.
-RUN chown -R node:node /app /config
 
 EXPOSE 3000
 

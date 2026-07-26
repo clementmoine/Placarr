@@ -41,10 +41,22 @@ moitié. Quatre causes indépendantes, révélées une par build (~8 min chacun)
    du correctif 2) ;
 4. `next build` charge `auth/config.ts`, qui **throw** sans `NEXTAUTH_SECRET`.
 
-Les quatre sont corrigées. **Aucun build n'a été mené à son terme après le
-quatrième correctif** : la chaîne s'est révélée couche par couche, rien ne dit
-qu'il n'en reste pas une cinquième. À valider par un `docker build` complet
-avant tout déploiement.
+Les quatre sont corrigées, et un build lancé côté utilisateur le 2026-07-26 a
+confirmé qu'il n'y a **pas de cinquième cause** : `pnpm run build` passe (402 s)
+et le stage runner se déroule jusqu'au bout. Il a buté sur un défaut de mon
+propre durcissement, corrigé depuis :
+
+- `RUN chown -R node:node /app` recursait sur `node_modules` (~900 paquets) —
+  55 s et une couche entière réécrite. L'appartenance est désormais posée par
+  le `COPY --chown`, gratuitement, et le `chown` explicite ne touche que les
+  points de montage (vides à ce stade).
+- l'avertissement `SecretsUsedInArgOrEnv` a disparu : le placeholder de build
+  est passé en ligne au `RUN` au lieu d'un `ENV`, donc il ne rentre plus dans
+  les métadonnées de l'image. `docker build --check` ne renvoie plus rien.
+
+**Reste à vérifier** : un build complet après ces deux correctifs (le stage
+`builder` sera réinvalidé, ~7 min), puis que le conteneur démarre bien en
+`node` et non en root.
 
 **Leçon de méthode** : lancer `docker build` _avant_ de toucher à l'image. Un
 seul build aurait montré que la chaîne était déjà morte, au lieu d'un build par

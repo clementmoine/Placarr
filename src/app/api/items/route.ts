@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 
-import { cropImageIfNeeded } from "@/core/enrich/media/imageTrim";
 import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
@@ -26,6 +25,7 @@ import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
+import { parsePrintKey } from "@/core/identify/printKey";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
 import {
@@ -251,6 +251,7 @@ export async function POST(req: NextRequest) {
         imageUrl,
         backgroundImageUrl,
         barcode,
+        printKey: rawPrintKey,
         condition,
         fetchMetadata = true,
         metadataPreview,
@@ -273,6 +274,13 @@ export async function POST(req: NextRequest) {
       const normalizedBarcode = normalizeProductBarcode(
         typeof barcode === "string" ? barcode : null,
       );
+      // Cards are anchored by their printing rather than a barcode. Store only
+      // a key that parses: an unusable one would never resolve again, and would
+      // be indistinguishable from a real anchor at read time.
+      const printKey =
+        typeof rawPrintKey === "string" && parsePrintKey(rawPrintKey)
+          ? rawPrintKey.trim().toLowerCase()
+          : null;
       let resolvedName = typeof name === "string" ? name.trim() : "";
       if (!resolvedName) {
         if (normalizedBarcode) {
@@ -308,13 +316,11 @@ export async function POST(req: NextRequest) {
       let localImageUrl = imageUrl;
       let localBackgroundImageUrl = backgroundImageUrl;
 
+      // No automatic crop: it rewrote the stored URL to a derived `_crop` file,
+      // which detached the cover from its gallery attachment (losing source and
+      // region) and could never be undone. Framing is the collector's call.
       if (imageUrl) {
         localImageUrl = await downloadRemoteImage(imageUrl);
-        if (localImageUrl) {
-          localImageUrl = await cropImageIfNeeded(localImageUrl, {
-            minMarginPixels: 30,
-          });
-        }
       }
       if (backgroundImageUrl) {
         localBackgroundImageUrl = await downloadRemoteImage(backgroundImageUrl);
@@ -334,6 +340,7 @@ export async function POST(req: NextRequest) {
           imageUrl: localImageUrl,
           backgroundImageUrl: localBackgroundImageUrl,
           barcode: normalizedBarcode ?? barcode,
+          printKey,
           condition: resolvedCondition,
           userId: auth.user.id,
         },
@@ -539,11 +546,6 @@ export async function PATCH(req: NextRequest) {
         const selectedImageUrl =
           typeof data.imageUrl === "string" ? data.imageUrl : null;
         data.imageUrl = await downloadRemoteImage(data.imageUrl);
-        if (data.imageUrl) {
-          data.imageUrl = await cropImageIfNeeded(data.imageUrl, {
-            minMarginPixels: 30,
-          });
-        }
         // Always sync — even when the URL is unchanged — so a source=user pin
         // realigns to the cover the collector just confirmed (e.g. re-selecting
         // the stored marketplace pin while display was stuck on another image).

@@ -434,6 +434,13 @@
       "tracks": "Tracks",
       "themes": "Themes",
       "upToPlayers": "Up to {count}"
+    },
+    "printPicker": {
+      "title": "Add a card",
+      "description": "A card has no barcode: search it by name, then pick the exact printing.",
+      "searchPlaceholder": "Card name (e.g. Elsa, Dalmatian Puppy)",
+      "hint": "Type a name to see the available printings.",
+      "noResults": "No printing matches."
     }
   },
   "sorting": {

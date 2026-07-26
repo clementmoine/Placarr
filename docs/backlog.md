@@ -28,8 +28,42 @@ disparu.
 | -------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Décisions produit prises le 2026-07-26, implémentation ouverte. |
 | P2       | Regroupement des doublons     | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.          |
+| P2       | Recadrage manuel assisté      | Crop auto retiré ; reste l'outil à poignées (react-image-crop) — voir ci-dessous.                                 |
 | P3       | `loose` est une variante      | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                  |
 | P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                             |
+
+### Recadrage manuel — le crop automatique est coupé (2026-07-26)
+
+Le recadrage automatique est **retiré** : il réécrivait l'URL stockée vers un
+fichier dérivé `_crop`, ce qui détachait la couverture de son attachment (perte
+de la source et de la région, cf. [cover-crop-breaks-provenance]) et ne laissait
+aucun retour en arrière. Il se trompait aussi souvent : logos dont la marge est
+voulue, visuels de cartes déjà bord à bord.
+
+Retiré aux 4 endroits qui l'appliquaient sans qu'on le demande :
+`POST /api/items` (création + édition), `resolveMetadataCoverHero`, et le défaut
+`trim` de `POST /api/upload` (devenu opt-in). La géométrie est conservée sous
+forme de **suggestion** : `suggestCropBox()` renvoie un rectangle, `applyCropBox()`
+l'applique — rien ne recadre sans qu'on le lui dise.
+
+Reste à faire, l'outil assisté :
+
+- **Lib** : [`react-image-crop`](https://github.com/dominictobias/react-image-crop)
+  (v11, ISC, 115 Ko, aucune dépendance runtime, peer React seul). C'est le seul
+  des candidats évalués qui fait de vraies **poignées aux 4 coins** souris +
+  tactile ; `react-easy-crop` et `react-advanced-cropper` sont des fenêtres
+  fixes qu'on déplace/zoome, ce qui n'est pas la demande.
+- **Non destructif** : stocker le rectangle (`CropBox`) à côté de l'image, pas à
+  la place. On doit pouvoir rouvrir, réajuster, ou revenir au cadrage d'origine.
+  `CropBox` porte déjà `imageWidth`/`imageHeight` pour qu'un rectangle stocké
+  puisse être validé contre le fichier.
+- **Suggestion au départ** : ouvrir l'outil avec le rectangle de
+  `suggestCropBox()` déjà positionné, que l'utilisateur accepte ou déplace.
+- **Sur l'image de son choix** : depuis la galerie, pas seulement la couverture.
+- **Dette liée** : `croppedImageUrl` traverse encore ~30 sites de
+  `storage.ts` / `croppedCoverSync.ts` / `syncItemAfterMetadataStore.ts` alors
+  qu'il ne transporte plus qu'une couverture non recadrée. Renommage à faire
+  quand l'outil manuel arrivera, pas avant — c'est une couche peu couverte.
 
 ### `Condition.loose` est de la variante déguisée en état
 

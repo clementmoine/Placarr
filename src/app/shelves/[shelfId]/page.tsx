@@ -57,6 +57,7 @@ import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { ItemModal } from "@/components/modals/ItemModal";
+import { PrintPickerModal } from "@/components/modals/PrintPickerModal";
 import {
   BulkAddModal,
   type BulkAddTab,
@@ -95,6 +96,7 @@ import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
 import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount } from "@/types/shelves";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import type { ItemWithMetadata } from "@/types/items";
 
 const itemSearchSchema = z.object({
@@ -411,6 +413,15 @@ function ShelfComponent() {
     [shelfMutate],
   );
 
+  /**
+   * Nothing on this shelf carries a barcode, so every scan affordance is dead
+   * weight here — worse, the scan FAB pre-fills the current shelf and would
+   * file a boxed product among the singles.
+   */
+  const isPrintSearchShelf = usesPrintSearch(shelf?.type);
+  /** Adding to a barcode-less shelf goes through the print picker instead. */
+  const usesPrintPicker = isPrintSearchShelf && !editingItemId;
+
   const handleItemModalSubmit = useCallback(
     async (item: Prisma.ItemCreateInput | Prisma.ItemUpdateInput) => {
       return new Promise<void>((resolve, reject) => {
@@ -683,14 +694,30 @@ function ShelfComponent() {
             onClose={handleModalClose}
             onSubmit={handleShelfModalSubmit}
           />
+          {/* Cards have no barcode: adding one starts from a print search,
+              not from the scan-oriented item form. Editing keeps the normal
+              form, which is about the copy rather than the printing. */}
           <ItemModal
             shelfId={resolvedShelfId}
             shelfType={shelf?.type}
             itemId={editingItemId}
-            isOpen={visibleModal === "item"}
+            isOpen={visibleModal === "item" && !usesPrintPicker}
             onClose={handleModalClose}
             onSubmit={handleItemModalSubmit}
           />
+          {shelf?.type && (
+            <PrintPickerModal
+              shelfId={resolvedShelfId}
+              shelfType={shelf.type}
+              isOpen={visibleModal === "item" && usesPrintPicker}
+              onClose={handleModalClose}
+              onAdded={() => {
+                void queryClient.invalidateQueries({
+                  queryKey: ["shelf", shelfId],
+                });
+              }}
+            />
+          )}
           {visibleModal === "bulk" && (
             <BulkAddModal
               shelfId={resolvedShelfId}
@@ -794,13 +821,15 @@ function ShelfComponent() {
                       <ListPlus className="size-4 mr-2" />
                       {t("items.bulkAdd.menuLabel")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("bulk", "scan")}
-                    >
-                      <ScanLine className="size-4 mr-2" />
-                      {t("items.bulkAdd.tabScan")}
-                    </DropdownMenuItem>
+                    {!isPrintSearchShelf && (
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("bulk", "scan")}
+                      >
+                        <ScanLine className="size-4 mr-2" />
+                        {t("items.bulkAdd.tabScan")}
+                      </DropdownMenuItem>
+                    )}
                     {shelf?.type === "books" && (
                       <DropdownMenuItem
                         className="cursor-pointer font-medium"
@@ -843,12 +872,14 @@ function ShelfComponent() {
                                 handleSearchChange(e);
                               }}
                             />
-                            <ScannerButton
-                              className="absolute right-1 rounded-xl"
-                              onScan={(barcode) => {
-                                handleSearch({ search: barcode });
-                              }}
-                            />
+                            {!isPrintSearchShelf && (
+                              <ScannerButton
+                                className="absolute right-1 rounded-xl"
+                                onScan={(barcode) => {
+                                  handleSearch({ search: barcode });
+                                }}
+                              />
+                            )}
                           </div>
                         </FormControl>
                       </FormItem>
@@ -1029,7 +1060,7 @@ function ShelfComponent() {
         </div>
       )}
 
-      {!selectionMode && <ScanFAB />}
+      {!selectionMode && !isPrintSearchShelf && <ScanFAB />}
     </div>
   );
 }

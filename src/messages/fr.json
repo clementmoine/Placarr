@@ -434,6 +434,13 @@
       "tracks": "Tracks",
       "themes": "Thèmes",
       "upToPlayers": "Jusqu'à {count}"
+    },
+    "printPicker": {
+      "title": "Ajouter une carte",
+      "description": "Une carte n'a pas de code-barres : cherchez-la par son nom, puis choisissez le tirage exact.",
+      "searchPlaceholder": "Nom de la carte (ex. Elsa, Chiot dalmatien)",
+      "hint": "Tapez un nom pour voir les tirages disponibles.",
+      "noResults": "Aucun tirage ne correspond."
     }
   },
   "sorting": {

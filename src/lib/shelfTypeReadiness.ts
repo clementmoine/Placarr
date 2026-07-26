@@ -9,7 +9,7 @@ const SHELF_TYPE_READINESS: Record<Type, ShelfTypeReadiness> = {
   books: "ready",
   boardgames: "ready",
   hardware: "ready",
-  tcg: "comingSoon",
+  tcg: "ready",
   toys: "comingSoon",
 };
 

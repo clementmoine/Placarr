@@ -96,6 +96,12 @@ export type FetchMetadataOptions = {
    * merged cover (or first title snapshot) improves — does not skip providers.
    */
   onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
+  /**
+   * Print identity for barcode-less objects (cards). Providers that resolve by
+   * printing read it instead of falling back to a name search, which cannot
+   * tell two prints of the same card apart.
+   */
+  printKey?: string | null;
 };
 
 function pinnedProviderIdsFromOptions(
@@ -241,6 +247,7 @@ export async function fetchMetadata(
       type,
       name,
       barcode,
+      printKey: options?.printKey,
       platform: resolvedPlatform,
       shelfName: options?.shelfName,
       lookupQueries,
@@ -263,6 +270,7 @@ export async function fetchMetadata(
       shelfType: type,
       shelfName: options?.shelfName,
       primaryTitle: name,
+      printKey: options?.printKey,
       titles: lookupQueries,
       barcodes: [barcode],
       platformKey: resolvedPlatform,
@@ -469,6 +477,7 @@ export async function fetchMetadata(
       shelfType: type,
       shelfName: options?.shelfName,
       primaryTitle: name,
+      printKey: options?.printKey,
       titles: [
         name,
         ...stage1FallbackNames,
@@ -643,6 +652,7 @@ export async function fetchMetadata(
       shelfType: type,
       shelfName: options?.shelfName,
       primaryTitle: name,
+      printKey: options?.printKey,
       titles: [
         name,
         ...finalFallbackNames,

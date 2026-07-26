@@ -166,6 +166,42 @@ export type DatabaseTitleSuggestionContext = {
   platform?: string | null;
 };
 
+export type PrintSearchContext = {
+  /** Raw user query. Providers normalize it themselves. */
+  query: string;
+  /** Preferred language for names and artwork, when the provider has several. */
+  language?: string | null;
+  limit?: number;
+  signal?: AbortSignal;
+};
+
+/**
+ * One pickable printing. Everything here exists to let a human tell two prints
+ * of the same card apart, so the fields are the ones printed on the card or
+ * visible at a glance.
+ */
+export type PrintCandidate = {
+  /** Provider-neutral anchor. See `@/core/identify/printKey`. */
+  printKey: string;
+  /** `Elsa - Esprit de l'hiver`. */
+  title: string;
+  /** Where it comes from, as a collector reads it: `Premier Chapitre · 207`. */
+  reference: string;
+  rarity?: string | null;
+  thumbnailUrl?: string | null;
+  imageUrl?: string | null;
+  language?: string | null;
+  /**
+   * Finishes this print exists in. The copy's own finish is chosen by the user
+   * at add time — it belongs to the item, never to the print.
+   */
+  finishes?: string[];
+  /** Exact provider handles, so re-resolution never re-runs the search. */
+  externalIds?: Record<string, string>;
+  /** Stamped by core from the module's own id; modules must not set it. */
+  providerId?: string;
+};
+
 export type GameBarcodeEnrichmentDeps = {
   fetchReferencePriceByBarcode?: (
     barcode: string,
@@ -363,6 +399,13 @@ export interface ProviderModule {
   suggestDatabaseTitles?: (
     ctx: DatabaseTitleSuggestionContext,
   ) => Promise<string[]>;
+  /**
+   * Print candidates for objects that cannot be scanned. A title alone does not
+   * identify a card — five Lorcana prints share the name "Chiot dalmatien" —
+   * so the user picks a print, not a title. Implemented by providers whose
+   * media type has no barcode to start from.
+   */
+  searchPrints?: (ctx: PrintSearchContext) => Promise<PrintCandidate[]>;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;
   /**

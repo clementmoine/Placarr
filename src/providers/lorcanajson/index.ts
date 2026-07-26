@@ -319,7 +319,26 @@ export const lorcanajsonModule: ProviderModule = {
   },
   suggestDatabaseTitles: async ({ cleanedName }) => {
     const cards = await searchLorcanaCards(cleanedName, { limit: 10 });
-    return cards.map((card) => card.fullName);
+    // Several prints share a name; the picker exists to tell them apart.
+    return Array.from(new Set(cards.map((card) => card.fullName)));
+  },
+  searchPrints: async ({ query, language, limit, signal }) => {
+    const cards = await searchLorcanaCards(query, {
+      language: isLorcanaLanguage(language) ? language : undefined,
+      limit,
+      signal,
+    });
+    return cards.map((card) => ({
+      printKey: card.printKey,
+      title: card.fullName,
+      reference: lorcanaPrintLabel(card),
+      rarity: card.rarity,
+      thumbnailUrl: card.thumbnailUrl ?? card.imageUrl,
+      imageUrl: card.imageUrl,
+      language: card.language,
+      finishes: card.foilTypes,
+      externalIds: { [PROVIDER_ID]: card.providerId },
+    }));
   },
   healthCheck: createMetadataHealthCheck(
     PROVIDER_ID,

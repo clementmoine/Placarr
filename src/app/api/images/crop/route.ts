@@ -6,6 +6,7 @@ import sharp from "sharp";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
+import { stripCropSuffixFromUrl } from "@/core/enrich/media/coverUrl";
 import {
   applyCropBox,
   suggestCropBox,
@@ -21,7 +22,7 @@ const UPLOADS_PREFIX = "/uploads/";
  */
 function uploadsFilePath(url: string): string | null {
   if (!url.startsWith(UPLOADS_PREFIX)) return null;
-  const fileName = path.basename(url);
+  const fileName = path.basename(url.split("?")[0].split("#")[0]);
   if (!fileName || fileName === "." || fileName === "..") return null;
   const uploadsDir = path.join(process.cwd(), "public", "uploads");
   const filePath = path.join(uploadsDir, fileName);
@@ -58,20 +59,14 @@ function readStoredCrop(originalFilePath: string): CropBox | null {
   }
 }
 
-/**
- * The un-suffixed twin of a derived crop. Cropping always reads this, never a
- * previous crop — that is what makes re-framing lossless however many times the
- * collector changes their mind.
- */
-function originalUrl(url: string): string {
-  return url.replace(/_crop(\.[^.]+)$/, "$1");
-}
-
 /** Localize a remote gallery image so it can be cropped like any other. */
 async function resolveLocalUrl(rawUrl: string): Promise<string | null> {
   const url = rawUrl.trim();
   if (!url) return null;
-  if (url.startsWith(UPLOADS_PREFIX)) return originalUrl(url);
+  // `stripCropSuffixFromUrl` drops the query first: the gallery appends a
+  // cache-busting `?v=` to a crop it just rewrote, and the suffix regex is
+  // anchored at the end — leaving it on turned every second crop into a 404.
+  if (url.startsWith(UPLOADS_PREFIX)) return stripCropSuffixFromUrl(url);
   if (!/^https?:\/\//i.test(url)) return null;
   return downloadRemoteImage(url);
 }

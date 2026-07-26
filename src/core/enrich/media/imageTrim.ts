@@ -64,10 +64,29 @@ function shouldSkipFormat(format?: string) {
   return format === "gif" || format === "svg";
 }
 
-export async function trimLightImageMargins(
+export type CropBox = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  /** Source dimensions, so a stored box can be validated against the file. */
+  imageWidth: number;
+  imageHeight: number;
+};
+
+/**
+ * The rectangle that would remain once neutral margins are trimmed, or `null`
+ * when there is nothing worth trimming.
+ *
+ * Returns geometry rather than pixels on purpose: a *suggestion* the user can
+ * accept, adjust or ignore. Applying it automatically was the old behaviour and
+ * it cost more than it gave — the crop replaced the stored URL, so provenance
+ * was lost and there was no way back to the original framing.
+ */
+export async function suggestCropBox(
   buffer: Buffer,
   options: { minMarginPixels?: number } = {},
-): Promise<Buffer> {
+): Promise<CropBox | null> {
   const minMarginPixels = options.minMarginPixels ?? MIN_CROP_PIXELS;
 
   try {
@@ -80,7 +99,7 @@ export async function trimLightImageMargins(
       (metadata.pages ?? 1) > 1 ||
       metadata.width * metadata.height > MAX_TRIM_PIXELS
     ) {
-      return buffer;
+      return null;
     }
 
     const { data, info } = await image
@@ -111,33 +130,72 @@ export async function trimLightImageMargins(
       }
     }
 
-    if (maxX < minX || maxY < minY) return buffer;
+    if (maxX < minX || maxY < minY) return null;
 
     const cropWidth = maxX - minX + 1;
     const cropHeight = maxY - minY + 1;
     if (cropWidth === info.width && cropHeight === info.height) {
-      return buffer;
+      return null;
     }
 
     const removedX = info.width - cropWidth;
     const removedY = info.height - cropHeight;
     if (removedX < minMarginPixels && removedY < minMarginPixels) {
-      return buffer;
+      return null;
     }
 
     if (
       cropWidth / info.width < MIN_RETAINED_RATIO ||
       cropHeight / info.height < MIN_RETAINED_RATIO
     ) {
-      return buffer;
+      return null;
     }
 
-    return image
-      .extract({ left: minX, top: minY, width: cropWidth, height: cropHeight })
-      .toBuffer();
+    return {
+      left: minX,
+      top: minY,
+      width: cropWidth,
+      height: cropHeight,
+      imageWidth: info.width,
+      imageHeight: info.height,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Trim neutral margins, or return the buffer untouched when there is nothing to
+ * trim. Only callers that explicitly opt in should use this — see the callers of
+ * `trim: true`.
+ */
+export async function trimLightImageMargins(
+  buffer: Buffer,
+  options: { minMarginPixels?: number } = {},
+): Promise<Buffer> {
+  const box = await suggestCropBox(buffer, options);
+  if (!box) return buffer;
+  try {
+    return await applyCropBox(buffer, box);
   } catch {
     return buffer;
   }
+}
+
+/** Apply a box to an image. Kept separate so nothing crops without being told. */
+export async function applyCropBox(
+  buffer: Buffer,
+  box: CropBox,
+): Promise<Buffer> {
+  return sharp(buffer)
+    .rotate()
+    .extract({
+      left: box.left,
+      top: box.top,
+      width: box.width,
+      height: box.height,
+    })
+    .toBuffer();
 }
 
 export async function cropImageIfNeeded(

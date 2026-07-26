@@ -55,9 +55,12 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    // Margin-trimming suits box art, but mangles logos (e.g. shelf logos) whose
-    // padding/transparency is intentional. Callers opt out with `trim=false`.
-    const trim = formData.get("trim") !== "false";
+    // Opt-in, never the default. Trimming rewrites the stored URL to a derived
+    // `_crop` file with no way back to the original framing, and it guesses
+    // wrong often enough — on logos whose padding is deliberate, on card art
+    // that is already edge to edge. Framing is the collector's call; the
+    // assisted flow suggests a box (`suggestCropBox`) instead of imposing one.
+    const trim = formData.get("trim") === "true";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });

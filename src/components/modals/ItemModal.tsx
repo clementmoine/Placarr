@@ -475,6 +475,21 @@ export function ItemModal({
 
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+
+  /**
+   * Whether the dedicated cover tab is available. When it is, the General tab
+   * must not offer a second cover picker: the two disagreed — the inline one
+   * showed the provider's remote original rather than the crop actually in
+   * force, and listed the same image twice (remote + localized), so touching it
+   * silently discarded the collector's framing. On a bare manual creation there
+   * are no tabs at all, and then it is the only picker there is.
+   */
+  const hasCoverTab = Boolean(
+    item ||
+      fetchedMetadata ||
+      prefilledValues?.imageUrl ||
+      prefilledValues?.barcode,
+  );
   /**
    * Bumped on every applied crop. Re-cropping overwrites the same filename, so
    * without a changing URL the browser and next/image keep serving the previous
@@ -1533,10 +1548,7 @@ export function ItemModal({
           >
             <div className="flex flex-1 overflow-hidden flex-col min-h-0">
               {/* Sidebar for tabs (when editing, when metadata available, or when coming from a scan) */}
-              {(item ||
-                fetchedMetadata ||
-                prefilledValues?.imageUrl ||
-                prefilledValues?.barcode) && (
+              {hasCoverTab && (
                 <div className="w-[calc(100%-2rem)] mx-auto mt-3 bg-zinc-200/50 dark:bg-zinc-900/60 border border-border/60 p-1 flex gap-1 rounded-xl shrink-0 overflow-x-auto backdrop-blur-md">
                   <button
                     type="button"
@@ -1998,31 +2010,32 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Premium Cover Selector inside General tab */}
-                    <FormField
-                      control={form.control}
-                      name="imageUrl"
-                      render={({ field }) => (
-                        <ImagePickerField
-                          value={field.value}
-                          onChange={field.onChange}
-                          onFileChange={handleLogoChange}
-                          label={t("items.cover")}
-                          placeholder="Pas de couverture"
-                          chooseImageText={t("items.editTabs.chooseImage")}
-                          enterUrlText={t("items.editTabs.enterUrl")}
-                          urlPlaceholderText={t(
-                            "items.editTabs.urlPlaceholder",
-                          )}
-                          suggestedImagesText="Images suggérées"
-                          invalidUrlText={t("items.invalidImage")}
-                          suggestions={finalImages}
-                          onViewMore={() => setActiveTab("poster")}
-                          aspectRatio={itemAspectRatio}
-                          contain={true}
-                        />
-                      )}
-                    />
+                    {/* Only when there is no cover tab to own this. */}
+                    {!hasCoverTab && (
+                      <FormField
+                        control={form.control}
+                        name="imageUrl"
+                        render={({ field }) => (
+                          <ImagePickerField
+                            value={field.value}
+                            onChange={field.onChange}
+                            onFileChange={handleLogoChange}
+                            label={t("items.cover")}
+                            placeholder="Pas de couverture"
+                            chooseImageText={t("items.editTabs.chooseImage")}
+                            enterUrlText={t("items.editTabs.enterUrl")}
+                            urlPlaceholderText={t(
+                              "items.editTabs.urlPlaceholder",
+                            )}
+                            suggestedImagesText="Images suggérées"
+                            invalidUrlText={t("items.invalidImage")}
+                            suggestions={finalImages}
+                            aspectRatio={itemAspectRatio}
+                            contain={true}
+                          />
+                        )}
+                      />
+                    )}
                   </div>
                 )}
 

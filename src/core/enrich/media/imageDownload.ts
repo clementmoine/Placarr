@@ -59,7 +59,15 @@ const LOCAL_IMAGE_EXTENSIONS = [
   ".svg",
 ];
 
-async function existingLocalizedUploadForUrl(
+/**
+ * The local copy of a remote image when it is already on disk, `null` otherwise.
+ *
+ * Localized files are named `md5(sourceUrl)`, so a remote URL and its download
+ * are the same picture under two names. Anything that shows both — a gallery
+ * merging a stored attachment with a freshly fetched one, say — needs this to
+ * avoid listing one image twice.
+ */
+export async function existingLocalizedUploadForUrl(
   url: string,
 ): Promise<string | null> {
   const targetDir = path.join(process.cwd(), "public", "uploads");

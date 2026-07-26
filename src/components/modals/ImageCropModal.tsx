@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactCrop, {
   type Crop,
-  type PixelCrop,
   centerCrop,
+  convertToPixelCrop,
 } from "react-image-crop";
 import { Loader2, RotateCcw, Wand2 } from "lucide-react";
 
@@ -56,7 +56,6 @@ export function ImageCropModal({
   /** The rectangle already applied to this image, when there is one. */
   const [current, setCurrent] = useState<CropSuggestion | null>(null);
   const [crop, setCrop] = useState<Crop | undefined>();
-  const [pixelCrop, setPixelCrop] = useState<PixelCrop | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +69,6 @@ export function ImageCropModal({
       setIsLoading(true);
       setError(null);
       setCrop(undefined);
-      setPixelCrop(undefined);
       try {
         const response = await fetch(
           `/api/images/crop?url=${encodeURIComponent(imageUrl)}`,
@@ -146,7 +144,16 @@ export function ImageCropModal({
 
   const handleConfirm = useCallback(async () => {
     const image = imageRef.current;
-    if (!image || !pixelCrop || !sourceUrl || !pixelCrop.width) return;
+    if (!image || !crop?.width || !crop?.height || !sourceUrl) return;
+
+    /**
+     * Derived from the rectangle on screen, not from `onComplete`. That callback
+     * only fires at the end of a *user* interaction, so a rectangle set
+     * programmatically — the stored crop on open, or the "Auto" button — left
+     * the previous one in state and the wrong region was written.
+     */
+    const pixelCrop = convertToPixelCrop(crop, image.width, image.height);
+    if (!pixelCrop.width || !pixelCrop.height) return;
 
     // The editor works in displayed pixels; the file is cropped in natural ones.
     const scaleX = image.naturalWidth / image.width;
@@ -177,7 +184,7 @@ export function ImageCropModal({
     } finally {
       setIsSaving(false);
     }
-  }, [pixelCrop, sourceUrl, onCropped, onClose, t]);
+  }, [crop, sourceUrl, onCropped, onClose, t]);
 
   /** Hand back the untouched original — the crop was only ever a derivative. */
   const handleRevert = useCallback(() => {
@@ -227,7 +234,7 @@ export function ImageCropModal({
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={isSaving || isLoading || !pixelCrop?.width}
+              disabled={isSaving || isLoading || !crop?.width}
               className="inline-flex items-center gap-1.5 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 disabled:opacity-50 cursor-pointer"
             >
               {isSaving && <Loader2 className="size-4 animate-spin" />}
@@ -246,7 +253,6 @@ export function ImageCropModal({
           <ReactCrop
             crop={crop}
             onChange={(_, percentCrop) => setCrop(percentCrop)}
-            onComplete={(completed) => setPixelCrop(completed)}
             className="max-h-[55vh]"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}

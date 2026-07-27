@@ -226,12 +226,12 @@ function HoloLayer({
         "pointer-events-none absolute inset-0 isolate mix-blend-color-dodge transition-opacity duration-300",
         isActive
           ? varnish
-            ? "opacity-30"
-            : "opacity-55"
+            ? "opacity-40"
+            : "opacity-65"
           : // Never zero: the whole point is to see it without hovering.
             varnish
-            ? "opacity-15"
-            : "opacity-30",
+            ? "opacity-25"
+            : "opacity-50",
       )}
     >
       <div
@@ -250,7 +250,14 @@ function HoloLayer({
             ? "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)"
             : "repeating-linear-gradient(115deg, #ff6b8b 0%, #ffe066 12%, #6bffb8 24%, #6bd5ff 36%, #b98bff 48%, #ff6b8b 60%)",
           backgroundSize: varnish ? "200% 200%" : "300% 300%",
-          backgroundPosition: "var(--holo-x) var(--holo-y)",
+          /**
+           * Only while the pointer drives it. An inline value beats a keyframe,
+           * so setting this unconditionally pinned the gradient dead centre and
+           * `holo-drift` never moved anything — the idle card looked plain.
+           */
+          ...(isActive
+            ? { backgroundPosition: "var(--holo-x) var(--holo-y)" }
+            : {}),
         }}
       />
       {/* Multiply against the mask: black keeps the artwork, white lets light in. */}

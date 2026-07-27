@@ -24,14 +24,14 @@ disparu.
 
 ## Ouverts
 
-| Priorité | Item                          | Détail                                                                                                            |
-| -------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| P1       | Support TCG (Lorcana d'abord) | Conception dans [tcg_support.md](tcg_support.md). Décisions produit prises le 2026-07-26, implémentation ouverte. |
-| P2       | Regroupement des doublons     | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.          |
-| P1       | Variante par exemplaire       | Dire que _son_ exemplaire est foil / loose. Générique, tous types — voir ci-dessous.                              |
-| P2       | Recadrage libre à 4 coins     | Redressement de perspective façon scan iPhone — voir ci-dessous.                                                  |
-| P3       | `loose` est une variante      | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                  |
-| P3       | Vue 3D retournable            | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                             |
+| Priorité | Item                         | Détail                                                                                                                     |
+| -------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| P1       | TCG — plein écran holo + dos | Lorcana livré (ajout, identité, variantes). Reste l'effet holo masqué et le dos 3D. Voir [tcg_support.md](tcg_support.md). |
+| P2       | TCG — autres jeux            | Pokémon (TCGdex, prix en €), Magic, Yu-Gi-Oh gratuits ; One Piece / Dragon Ball via clé apitcg.                            |
+| P2       | Regroupement des doublons    | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.                   |
+| P2       | Recadrage libre à 4 coins    | Redressement de perspective façon scan iPhone — voir ci-dessous.                                                           |
+| P3       | `loose` est une variante     | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                           |
+| P3       | Vue 3D retournable           | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                                      |
 
 ### Recadrage manuel — livré (2026-07-26)
 

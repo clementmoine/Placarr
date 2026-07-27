@@ -25,6 +25,16 @@ export function urlsReferToSameLocalizedImage(a: string, b: string): boolean {
 }
 
 /**
+ * True for a file this app derived by cropping, whatever role it was cropped
+ * for. Re-cropping overwrites the same name, so these are the URLs a gallery
+ * has to cache-bust; matching only the bare `_crop` left every role-scoped
+ * derivative showing its previous framing.
+ */
+export function isCropDerivativeUrl(url: string): boolean {
+  return url !== stripCropSuffixFromUrl(url.split("?")[0].split("#")[0]);
+}
+
+/**
  * The role whose crop keeps the bare `_crop` name, so files written before crops
  * were scoped stay valid.
  */

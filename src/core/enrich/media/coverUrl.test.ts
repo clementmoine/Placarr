@@ -5,6 +5,7 @@ import {
   DEFAULT_CROP_ROLE,
   findAttachmentForUrl,
   isCoverEligibleAttachmentType,
+  isCropDerivativeUrl,
   isUrlEligibleDefaultCover,
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
@@ -74,6 +75,24 @@ describe("stripCropSuffixFromUrl", () => {
     expect(stripCropSuffixFromUrl("/uploads/cropped.jpg")).toBe(
       "/uploads/cropped.jpg",
     );
+  });
+});
+
+describe("isCropDerivativeUrl", () => {
+  it("recognizes a crop whatever role it was cropped for", () => {
+    expect(isCropDerivativeUrl("/uploads/abc_crop.jpg")).toBe(true);
+    // The background derivative is the one the bare `_crop` test missed, so
+    // its thumbnail kept showing the previous framing after a re-crop.
+    expect(isCropDerivativeUrl("/uploads/abc_crop-background.jpg")).toBe(true);
+    expect(isCropDerivativeUrl("/uploads/abc_crop-background.jpg?v=3")).toBe(
+      true,
+    );
+  });
+
+  it("leaves originals alone, including names that merely mention cropping", () => {
+    expect(isCropDerivativeUrl("/uploads/abc.jpg")).toBe(false);
+    expect(isCropDerivativeUrl("/uploads/cropped.jpg")).toBe(false);
+    expect(isCropDerivativeUrl("/uploads/cover-background.jpg")).toBe(false);
   });
 });
 

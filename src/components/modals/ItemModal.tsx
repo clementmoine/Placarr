@@ -105,6 +105,7 @@ import {
 } from "@/core/collect/media";
 import {
   findAttachmentForUrl,
+  isCropDerivativeUrl,
   stripCropSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
@@ -711,6 +712,12 @@ export function ItemModal({
     const urls = new Set<string>();
     const list: {
       url: string;
+      /**
+       * What the thumbnail loads, when that has to differ from the URL the form
+       * stores — a cache-busted crop. The query must never reach `url`, or a
+       * save would persist it.
+       */
+      displayUrl?: string;
       type: string;
       label: string;
       source?: string | null;
@@ -762,23 +769,51 @@ export function ItemModal({
     name: "backgroundImageUrl",
   });
 
+  /**
+   * Re-cropping rewrites the same filename, so the URL alone tells the browser
+   * nothing changed and the thumbnail stays stale until a reload. Display only —
+   * the form keeps the clean URL, and every comparison goes through
+   * `urlsReferToSameLocalizedImage`, which drops the query.
+   */
+  const displayUrlFor = useCallback(
+    (url: string): string =>
+      cropVersion && isCropDerivativeUrl(url) ? `${url}?v=${cropVersion}` : url,
+    [cropVersion],
+  );
+
   const finalBackgrounds = useMemo(() => {
     const list = [...availableBackgrounds];
 
-    if (
-      currentBackgroundUrl &&
-      typeof currentBackgroundUrl === "string" &&
-      !availableBackgrounds.some((img) => img.url === currentBackgroundUrl)
-    ) {
-      list.unshift({
-        url: currentBackgroundUrl,
-        type: "custom",
-        label: t("items.editTabs.chooseImage"),
-      });
+    if (currentBackgroundUrl && typeof currentBackgroundUrl === "string") {
+      /**
+       * A crop and the file it came from are one gallery row, not two. Matching
+       * on the exact URL made cropping a background add a second, unlabelled
+       * tile beside the original instead of re-framing it in place — the same
+       * twin-matching the poster tab already does.
+       */
+      const rowIndex = list.findIndex((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentBackgroundUrl),
+      );
+      if (rowIndex >= 0) {
+        if (list[rowIndex]!.url !== currentBackgroundUrl) {
+          list[rowIndex] = {
+            ...list[rowIndex]!,
+            url: currentBackgroundUrl,
+            displayUrl: displayUrlFor(currentBackgroundUrl),
+          };
+        }
+      } else {
+        list.unshift({
+          url: currentBackgroundUrl,
+          displayUrl: displayUrlFor(currentBackgroundUrl),
+          type: "custom",
+          label: t("items.editTabs.chooseImage"),
+        });
+      }
     }
 
     return list;
-  }, [availableBackgrounds, currentBackgroundUrl, t]);
+  }, [availableBackgrounds, currentBackgroundUrl, displayUrlFor, t]);
 
   const totalBgPages = useMemo(
     () => Math.ceil(finalBackgrounds.length / 12) || 1,
@@ -1034,6 +1069,12 @@ export function ItemModal({
 
       return {
         url: attachment.url,
+        /**
+         * What the thumbnail loads, when that has to differ from the URL the
+         * form stores — a cache-busted crop. The query must never reach `url`,
+         * or a save would persist it.
+         */
+        displayUrl: undefined as string | undefined,
         type: attachment.type,
         label,
         source: attachment.source,
@@ -1087,17 +1128,6 @@ export function ItemModal({
     const list = [...availableImages];
 
     /**
-     * Re-cropping rewrites the same filename, so the URL alone tells the
-     * browser nothing changed and the thumbnail stays stale until a reload.
-     * Display only — the form keeps the clean URL, and every comparison goes
-     * through `urlsReferToSameLocalizedImage`, which drops the query.
-     */
-    const displayUrlFor = (url: string): string =>
-      cropVersion && /_crop\.[^.]+$/.test(url)
-        ? `${url}?v=${cropVersion}`
-        : url;
-
-    /**
      * A crop and the file it came from are the same gallery row, so twin-matching
      * treats one as "already there" and the row keeps whichever URL it happened
      * to hold. That row must show the *selected* framing, in both directions:
@@ -1115,7 +1145,8 @@ export function ItemModal({
       if (rowIndex >= 0 && list[rowIndex]!.url !== currentImageUrl) {
         list[rowIndex] = {
           ...list[rowIndex]!,
-          url: displayUrlFor(currentImageUrl),
+          url: currentImageUrl,
+          displayUrl: displayUrlFor(currentImageUrl),
         };
       }
     }
@@ -1123,6 +1154,7 @@ export function ItemModal({
     if (pendingUploadPreviewUrl) {
       list.unshift({
         url: pendingUploadPreviewUrl,
+        displayUrl: undefined,
         type: "image",
         label: t("items.editTabs.chooseImage"),
         source: "user",
@@ -1161,7 +1193,8 @@ export function ItemModal({
         : null;
 
       list.unshift({
-        url: displayUrlFor(currentImageUrl),
+        url: currentImageUrl,
+        displayUrl: displayUrlFor(currentImageUrl),
         type: provenance?.type ?? "image",
         label: gallery?.caption ?? t("items.editTabs.chooseImage"),
         source: provenance?.source ?? null,
@@ -1176,7 +1209,7 @@ export function ItemModal({
   }, [
     availableImages,
     currentImageUrl,
-    cropVersion,
+    displayUrlFor,
     pendingUploadPreviewUrl,
     itemId,
     item,
@@ -2245,7 +2278,7 @@ export function ItemModal({
                                     style={{ aspectRatio: itemAspectRatio }}
                                   >
                                     <RemoteImage
-                                      src={img.url}
+                                      src={img.displayUrl ?? img.url}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
@@ -2506,7 +2539,7 @@ export function ItemModal({
                                     )}
                                   >
                                     <RemoteImage
-                                      src={img.url}
+                                      src={img.displayUrl ?? img.url}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"

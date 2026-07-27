@@ -78,6 +78,15 @@ export type LorcanaCard = {
    * Ravensburger. Present on roughly 97% of prints.
    */
   foilMaskUrl: string | null;
+  /**
+   * Artwork of the foil printing, when Ravensburger publishes a distinct file.
+   * Measured against the plain one: mean channel delta 4.85/255 with peaks at
+   * 250 on 4.3% of channels — a real sheen, subtle, not different art. Prefer it
+   * over compositing the mask when it exists.
+   */
+  fullFoilUrl: string | null;
+  /** Mask for the varnish axis, independent of `foilMaskUrl`. */
+  varnishMaskUrl: string | null;
   cardmarketUrl: string | null;
   /** Search haystack: lowercased, unaccented, punctuation-free. */
   searchName: string;
@@ -87,6 +96,10 @@ type RawImages = {
   full?: unknown;
   thumbnail?: unknown;
   foilMask?: unknown;
+  /** Artwork with the foil sheen baked in. Rare — 30 of 3154 French prints. */
+  fullFoil?: unknown;
+  /** Second, independent mask for the varnish axis. 301 prints. */
+  varnishMask?: unknown;
 };
 
 type RawExternalLinks = {
@@ -219,6 +232,8 @@ function mapRawCard(
     imageUrl: httpsUrl(raw.images?.full),
     thumbnailUrl: httpsUrl(raw.images?.thumbnail),
     foilMaskUrl: httpsUrl(raw.images?.foilMask),
+    fullFoilUrl: httpsUrl(raw.images?.fullFoil),
+    varnishMaskUrl: httpsUrl(raw.images?.varnishMask),
     cardmarketUrl: httpsUrl(raw.externalLinks?.cardmarketUrl),
     searchName: normalizeLorcanaSearchText(fullName),
   };

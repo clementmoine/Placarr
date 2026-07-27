@@ -133,3 +133,47 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 150px;
 }
+
+/* Holographic card, idle state.
+   A foil copy has to read as special before anyone touches it, so the sheen
+   drifts on its own and the card breathes; the pointer takes over on hover.
+   Both stop under `prefers-reduced-motion` — the sheen stays, it just holds
+   still, because it is information, not decoration. */
+@keyframes holo-drift {
+  0% {
+    background-position: 15% 20%;
+  }
+  50% {
+    background-position: 85% 80%;
+  }
+  100% {
+    background-position: 15% 20%;
+  }
+}
+
+@keyframes holo-breathe {
+  0% {
+    transform: rotateX(1.2deg) rotateY(-2.4deg);
+  }
+  50% {
+    transform: rotateX(-1.2deg) rotateY(2.4deg);
+  }
+  100% {
+    transform: rotateX(1.2deg) rotateY(-2.4deg);
+  }
+}
+
+.holo-idle-sheen {
+  animation: holo-drift 9s ease-in-out infinite;
+}
+
+.holo-idle-tilt {
+  animation: holo-breathe 11s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-idle-sheen,
+  .holo-idle-tilt {
+    animation: none;
+  }
+}

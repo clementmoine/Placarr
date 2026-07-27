@@ -204,6 +204,21 @@ export type PrintCandidate = {
    * at add time — it belongs to the item, never to the print.
    */
   finishes?: string[];
+  /**
+   * The subset of `finishes` that carries no visual effect — a plain print.
+   * Core cannot infer this: only the provider knows that Lorcana's `None` means
+   * "no foil" while every other value means there is something to render.
+   */
+  plainFinishes?: string[];
+  /**
+   * Artwork per finish, when the provider publishes a distinct file rather than
+   * expecting the effect to be composited. Preferred over the mask when present.
+   */
+  variantImageUrls?: Record<string, string>;
+  /** Where the holographic effect applies. See `HoloCardImage`. */
+  foilMaskUrl?: string | null;
+  /** Second, independent effect layer (varnish). */
+  varnishMaskUrl?: string | null;
   /** Exact provider handles, so re-resolution never re-runs the search. */
   externalIds?: Record<string, string>;
   /** Stamped by core from the module's own id; modules must not set it. */

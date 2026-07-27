@@ -51,6 +51,8 @@ import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ImageCropModal } from "@/components/modals/ImageCropModal";
 import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { usePrintVariant } from "@/lib/client/hooks/usePrintVariant";
+import { normalizeVariantOptions } from "@/core/enrich/variants";
 import { ScannerButton } from "@/components/ScannerButton";
 import {
   ConditionIcon,
@@ -500,32 +502,11 @@ export function ItemModal({
    * not be: the variant says *which* thing this is, the condition says how it
    * has aged.
    */
-  const [variantOptions, setVariantOptions] = useState<string[]>([]);
-  const itemPrintKey = item?.printKey ?? null;
-  const itemShelfType = item?.shelf?.type ?? shelfType;
-
-  useEffect(() => {
-    if (!isOpen || !itemPrintKey || !itemShelfType) return;
-
-    const controller = new AbortController();
-    void (async () => {
-      try {
-        const response = await fetch(
-          `/api/prints?printKey=${encodeURIComponent(itemPrintKey)}&type=${encodeURIComponent(itemShelfType)}`,
-          { signal: controller.signal },
-        );
-        if (!response.ok) return;
-        const data = (await response.json()) as {
-          candidate?: { finishes?: string[] } | null;
-        };
-        setVariantOptions(data.candidate?.finishes ?? []);
-      } catch {
-        // No options simply means no picker — never a blocked form.
-      }
-    })();
-
-    return () => controller.abort();
-  }, [isOpen, itemPrintKey, itemShelfType]);
+  const printVariant = usePrintVariant(
+    isOpen ? item?.printKey : null,
+    item?.shelf?.type ?? shelfType,
+  );
+  const variantOptions = normalizeVariantOptions(printVariant?.finishes);
 
   const hasCoverTab = Boolean(
     item ||

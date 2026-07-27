@@ -96,6 +96,12 @@ import {
 import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
+import { HoloCardImage } from "@/components/HoloCardImage";
+import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
+import {
+  usePrintVariant,
+  variantRendering,
+} from "@/lib/client/hooks/usePrintVariant";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import {
@@ -1715,6 +1721,13 @@ export default function ItemDetailsPage() {
 
   const coverImage = item?.imageUrl ?? null;
 
+  /**
+   * A foil copy is drawn with the holographic layers; a plain one is not. The
+   * provider says which finishes carry an effect and supplies the masks.
+   */
+  const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
+  const variantView = variantRendering(item?.variant, printVariant, coverImage);
+
   const coverSourceChip = useMemo(() => {
     if (!item || !coverImage) return null;
     const displayLocale: AttachmentDisplayLocale =
@@ -2272,24 +2285,44 @@ export default function ItemDetailsPage() {
               >
                 {coverImage ? (
                   <>
-                    <RemoteImage
-                      src={coverImage}
-                      alt={itemDisplayName ?? ""}
-                      width={768}
-                      height={1152}
-                      sizes="(max-width: 768px) 240px, 480px"
-                      loading="eager"
-                      fetchPriority="high"
-                      onLoad={handleCoverImageLoad}
+                    {variantView.foilMaskUrl ? (
+                      <HoloCardImage
+                        imageUrl={variantView.imageUrl ?? coverImage}
+                        alt={itemDisplayName ?? ""}
+                        maskUrl={variantView.foilMaskUrl}
+                        varnishMaskUrl={variantView.varnishMaskUrl}
+                      />
+                    ) : (
+                      <RemoteImage
+                        src={coverImage}
+                        alt={itemDisplayName ?? ""}
+                        width={768}
+                        height={1152}
+                        sizes="(max-width: 768px) 240px, 480px"
+                        loading="eager"
+                        fetchPriority="high"
+                        onLoad={handleCoverImageLoad}
+                        className={cn(
+                          "w-full h-full transition-transform duration-500",
+                          coverImageFit === "contain"
+                            ? "object-contain"
+                            : "object-cover group-hover/cover:scale-105",
+                        )}
+                      />
+                    )}
+                    {/* Hover Zoom Overlay — decorative, and the click is the
+                        container's, so it must not swallow the pointer: the holo
+                        layers below track pointer position to place their sheen. */}
+                    <div
                       className={cn(
-                        "w-full h-full transition-transform duration-500",
-                        coverImageFit === "contain"
-                          ? "object-contain"
-                          : "object-cover group-hover/cover:scale-105",
+                        "pointer-events-none absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20",
+                        // Darkening fights the shimmer it appears with, so a foil
+                        // copy keeps the affordance and loses the scrim.
+                        variantView.foilMaskUrl
+                          ? "bg-transparent"
+                          : "bg-black/40",
                       )}
-                    />
-                    {/* Hover Zoom Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+                    >
                       <div className="bg-white/20 hover:bg-white/35 text-white backdrop-blur-md p-2.5 rounded-full border border-white/20 shadow-md active:scale-95 transition-all">
                         <Maximize2 className="size-5" />
                       </div>
@@ -2724,15 +2757,29 @@ export default function ItemDetailsPage() {
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none flex flex-col items-center justify-center backdrop-blur-xl">
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
-            {zoomImageUrl && (
-              <RemoteImage
-                src={zoomImageUrl}
-                alt="Zoom"
-                width={1920}
-                height={1920}
-                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
-              />
-            )}
+            {zoomImageUrl &&
+              /* Fullscreen is where a foil card is worth looking at, so the
+                 holographic layers belong here above all — but only for the
+                 cover itself: zooming a gallery image shows that image. */
+              (variantView.foilMaskUrl &&
+              urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
+                <div className="aspect-[5/7] max-h-[80vh] overflow-hidden rounded-lg shadow-2xl animate-zoom-in">
+                  <HoloCardImage
+                    imageUrl={variantView.imageUrl ?? zoomImageUrl}
+                    alt="Zoom"
+                    maskUrl={variantView.foilMaskUrl}
+                    varnishMaskUrl={variantView.varnishMaskUrl}
+                  />
+                </div>
+              ) : (
+                <RemoteImage
+                  src={zoomImageUrl}
+                  alt="Zoom"
+                  width={1920}
+                  height={1920}
+                  className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
+                />
+              ))}
           </div>
         </DialogContent>
       </Dialog>

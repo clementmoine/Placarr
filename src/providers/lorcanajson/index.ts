@@ -42,6 +42,8 @@ export {
 } from "./fetch";
 
 const PROVIDER_ID = "lorcanajson";
+/** LorcanaJSON's name for a print with no foil treatment. */
+const PLAIN_FINISH = "None";
 const PROVIDER_LABEL = "LorcanaJSON";
 
 /**
@@ -219,6 +221,17 @@ function toPrintCandidate(card: LorcanaCard): PrintCandidate {
     imageUrl: card.imageUrl,
     language: card.language,
     finishes: card.foilTypes,
+    // `None` is Lorcana's word for "no foil"; every other value is an effect.
+    plainFinishes: card.foilTypes.filter((finish) => finish === PLAIN_FINISH),
+    variantImageUrls: card.fullFoilUrl
+      ? Object.fromEntries(
+          card.foilTypes
+            .filter((finish) => finish !== PLAIN_FINISH)
+            .map((finish) => [finish, card.fullFoilUrl as string]),
+        )
+      : undefined,
+    foilMaskUrl: card.foilMaskUrl,
+    varnishMaskUrl: card.varnishMaskUrl,
     externalIds: { [PROVIDER_ID]: card.providerId },
   };
 }

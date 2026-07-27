@@ -33,8 +33,36 @@ function objectFitClass(fit: "cover" | "contain"): string {
   return fit === "contain" ? "object-contain" : "object-cover";
 }
 
+/** What a masked layer paints: the rainbow sweep, the varnish, or the facets. */
+type HoloLayerKind = "foil" | "varnish" | "grain";
+
 /** Rest position: gradients centred, card flat. */
 const NEUTRAL = { x: 50, y: 50, tiltX: 0, tiltY: 0 } as const;
+
+/**
+ * The sparkle in the foil itself.
+ *
+ * Generated as inline SVG turbulence rather than shipped as an image: it costs
+ * no request, and it stays sharp at any card size, where a bitmap would either
+ * blur on the fullscreen view or be wastefully large for a thumbnail.
+ *
+ * A smooth rainbow reads as printed plastic. Real foil is a field of tiny
+ * facets, and it is the facets catching the light — not the sweep — that says
+ * "this one is special" at a glance.
+ */
+const GRAIN_TEXTURE =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1' intercept='-0.233'/%3E%3CfeFuncG type='linear' slope='1' intercept='-0.233'/%3E%3CfeFuncB type='linear' slope='1' intercept='-0.233'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E\")";
+
+/**
+ * How far the sparkle slides against the print as the card leans, as a share of
+ * the pointer's travel.
+ *
+ * This is the realism cue. Glitter fixed to the artwork reads as a printed
+ * pattern; shifting it a little turns it into facets sitting *above* the ink,
+ * catching the light from a new angle. Small on purpose — past a few percent it
+ * stops looking like depth and starts looking like a texture sliding around.
+ */
+const GRAIN_PARALLAX = 0.14;
 
 /**
  * How far the card leans at the edges, in degrees. Generous enough to read as
@@ -174,12 +202,25 @@ export function HoloCardImage({
         />
 
         <HoloLayer maskUrl={maskUrl} isActive={isActive} fit={fit} />
+        {/*
+          The facets get their own masked layer rather than riding on the sweep.
+          Blended onto that deliberately dark gradient they did nothing —
+          `overlay` barely moves a dark base — so the grain was invisible at any
+          amplitude. Dodged straight onto the artwork, like the sweep itself, it
+          reads as light catching the foil.
+        */}
+        <HoloLayer
+          maskUrl={maskUrl}
+          isActive={isActive}
+          fit={fit}
+          kind="grain"
+        />
         {varnishMaskUrl && (
           <HoloLayer
             maskUrl={varnishMaskUrl}
             isActive={isActive}
             fit={fit}
-            varnish
+            kind="varnish"
           />
         )}
 
@@ -212,13 +253,15 @@ function HoloLayer({
   maskUrl,
   isActive,
   fit,
-  varnish = false,
+  kind = "foil",
 }: {
   maskUrl: string;
   isActive: boolean;
   fit: "cover" | "contain";
-  varnish?: boolean;
+  kind?: HoloLayerKind;
 }) {
+  const varnish = kind === "varnish";
+  const grain = kind === "grain";
   return (
     <div
       aria-hidden
@@ -227,15 +270,24 @@ function HoloLayer({
         isActive
           ? varnish
             ? "opacity-40"
-            : "opacity-65"
+            : grain
+              ? "opacity-90"
+              : "opacity-65"
           : // Never zero: the whole point is to see it without hovering.
             varnish
             ? "opacity-25"
-            : "opacity-50",
+            : grain
+              ? "opacity-70"
+              : "opacity-50",
       )}
     >
       <div
-        className={cn("absolute inset-0", !isActive && "holo-idle-sheen")}
+        className={cn(
+          "absolute inset-0",
+          // The facets belong to the print, so they hold still while the sweep
+          // drifts across them. Animating both made the whole surface crawl.
+          !isActive && !grain && "holo-idle-sheen",
+        )}
         style={{
           /**
            * Darkened and contrasted before dodging. Straight from the gradient,
@@ -243,23 +295,41 @@ function HoloLayer({
            * the rainbow disappears — the effect reads as "brightened" instead of
            * "holographic".
            */
-          filter: varnish
-            ? "brightness(0.7) contrast(1.6)"
-            : "brightness(0.55) contrast(2.2) saturate(1.5)",
-          backgroundImage: varnish
-            ? "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)"
-            : "repeating-linear-gradient(115deg, #ff6b8b 0%, #ffe066 12%, #6bffb8 24%, #6bd5ff 36%, #b98bff 48%, #ff6b8b 60%)",
-          backgroundSize: varnish ? "200% 200%" : "300% 300%",
+          filter: grain
+            ? // Darker and harder than the sweep. Dodge turns the bright facets
+              // into pinpricks of light and leaves the dark ones alone, which is
+              // what separates glitter from a uniform haze.
+              "brightness(0.4) contrast(2.8)"
+            : varnish
+              ? "brightness(0.7) contrast(1.6)"
+              : "brightness(0.55) contrast(2.2) saturate(1.5)",
+          backgroundImage: grain
+            ? GRAIN_TEXTURE
+            : varnish
+              ? "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)"
+              : "repeating-linear-gradient(115deg, #ff6b8b 0%, #ffe066 12%, #6bffb8 24%, #6bd5ff 36%, #b98bff 48%, #ff6b8b 60%)",
+          backgroundSize: grain
+            ? "160px 160px"
+            : varnish
+              ? "200% 200%"
+              : "300% 300%",
           /**
            * Only while the pointer drives it. An inline value beats a keyframe,
            * so setting this unconditionally pinned the gradient dead centre and
            * `holo-drift` never moved anything — the idle card looked plain.
            */
           ...(isActive
-            ? { backgroundPosition: "var(--holo-x) var(--holo-y)" }
+            ? {
+                backgroundPosition: grain
+                  ? // Parallax, not a sweep: the facets slide a little against
+                    // the ink so they read as sitting above it.
+                    `calc(var(--holo-x) * ${GRAIN_PARALLAX}) calc(var(--holo-y) * ${GRAIN_PARALLAX})`
+                  : "var(--holo-x) var(--holo-y)",
+              }
             : {}),
         }}
       />
+
       {/* Multiply against the mask: black keeps the artwork, white lets light in. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

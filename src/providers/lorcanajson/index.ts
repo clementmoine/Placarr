@@ -44,6 +44,31 @@ export {
 const PROVIDER_ID = "lorcanajson";
 /** LorcanaJSON's name for a print with no foil treatment. */
 const PLAIN_FINISH = "None";
+
+/**
+ * Which look each of Ravensburger's finishes is drawn with.
+ *
+ * The finish is what decides the effect — not the rarity, and not the card.
+ * An Enchanted Elsa does not carry `Silver` at all: her only finish is `Lava`,
+ * which is exactly why she does not look like the other 2703 silver prints.
+ *
+ * Only the names that visibly differ are listed. Anything absent falls back to
+ * the everyday foil, which is the honest answer for a finish nobody has looked
+ * at yet: the copy is foil, we just have no better word for how.
+ */
+const FINISH_SHADERS: Readonly<Record<string, string>> = {
+  // Enchanted only. Broad pastel wash rather than bands.
+  Lava: "aurora",
+  Magma: "aurora",
+  VerticalWave: "aurora",
+  // Épique, and the Iconique line: a smooth finish, not a diffracting one.
+  Satin: "sheen",
+  Lore: "sheen",
+  // Finishes whose name is the tooth itself.
+  Glitter: "sparkle",
+  RainbowPillars: "sparkle",
+  SeaWave: "aurora",
+};
 const PROVIDER_LABEL = "LorcanaJSON";
 
 /**
@@ -211,7 +236,7 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
 }
 
 /** One shape for both the search results and a lookup by key. */
-function toPrintCandidate(card: LorcanaCard): PrintCandidate {
+export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
   return {
     printKey: card.printKey,
     title: card.fullName,
@@ -223,6 +248,13 @@ function toPrintCandidate(card: LorcanaCard): PrintCandidate {
     finishes: card.foilTypes,
     // `None` is Lorcana's word for "no foil"; every other value is an effect.
     plainFinishes: card.foilTypes.filter((finish) => finish === PLAIN_FINISH),
+    // The table is the only gate: `None` is deliberately absent from it, so a
+    // plain copy cannot pick up a look even by accident.
+    finishShaders: Object.fromEntries(
+      card.foilTypes
+        .filter((finish) => FINISH_SHADERS[finish])
+        .map((finish) => [finish, FINISH_SHADERS[finish] as string]),
+    ),
     variantImageUrls: card.fullFoilUrl
       ? Object.fromEntries(
           card.foilTypes

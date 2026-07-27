@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
+import { holoShader, type HoloShader } from "@/core/render/holoShaders";
 import { cn } from "@/lib/shared/utils";
 
 type HoloCardImageProps = {
@@ -25,6 +26,11 @@ type HoloCardImageProps = {
    * artwork if they are letterboxed exactly like it.
    */
   fit?: "cover" | "contain";
+  /**
+   * Which look to draw. Comes from the print's own finish, so an Enchanted card
+   * does not shimmer like a common one. Defaults to the everyday foil.
+   */
+  shader?: HoloShader;
   className?: string;
   children?: React.ReactNode;
 };
@@ -32,6 +38,16 @@ type HoloCardImageProps = {
 function objectFitClass(fit: "cover" | "contain"): string {
   return fit === "contain" ? "object-contain" : "object-cover";
 }
+
+/**
+ * The varnish coat. Independent of the foil look: a card can be Enchanted *and*
+ * high-gloss, and the gloss looks the same either way.
+ */
+const VARNISH_SWEEP =
+  "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)";
+const VARNISH_SCALE = "200% 200%";
+const VARNISH_FILTER = "brightness(0.7) contrast(1.6)";
+const VARNISH_OPACITY = { idle: 0.25, active: 0.4 } as const;
 
 /** What a masked layer paints: the rainbow sweep, the varnish, or the facets. */
 type HoloLayerKind = "foil" | "varnish" | "grain";
@@ -94,6 +110,7 @@ export function HoloCardImage({
   maskUrl,
   varnishMaskUrl,
   fit = "contain",
+  shader = holoShader(null),
   className,
   children,
 }: HoloCardImageProps) {
@@ -201,7 +218,12 @@ export function HoloCardImage({
           className={cn("h-full w-full", objectFitClass(fit))}
         />
 
-        <HoloLayer maskUrl={maskUrl} isActive={isActive} fit={fit} />
+        <HoloLayer
+          maskUrl={maskUrl}
+          isActive={isActive}
+          fit={fit}
+          shader={shader}
+        />
         {/*
           The facets get their own masked layer rather than riding on the sweep.
           Blended onto that deliberately dark gradient they did nothing —
@@ -213,6 +235,7 @@ export function HoloCardImage({
           maskUrl={maskUrl}
           isActive={isActive}
           fit={fit}
+          shader={shader}
           kind="grain"
         />
         {varnishMaskUrl && (
@@ -220,6 +243,7 @@ export function HoloCardImage({
             maskUrl={varnishMaskUrl}
             isActive={isActive}
             fit={fit}
+            shader={shader}
             kind="varnish"
           />
         )}
@@ -253,33 +277,31 @@ function HoloLayer({
   maskUrl,
   isActive,
   fit,
+  shader,
   kind = "foil",
 }: {
   maskUrl: string;
   isActive: boolean;
   fit: "cover" | "contain";
+  shader: HoloShader;
   kind?: HoloLayerKind;
 }) {
   const varnish = kind === "varnish";
   const grain = kind === "grain";
+  // The varnish is a second, smoother coat over whatever the foil is doing, so
+  // it keeps its own restrained strength rather than following the look.
+  const strength = varnish
+    ? VARNISH_OPACITY
+    : grain
+      ? shader.grainOpacity
+      : shader.sweepOpacity;
   return (
     <div
       aria-hidden
-      className={cn(
-        "pointer-events-none absolute inset-0 isolate mix-blend-color-dodge transition-opacity duration-300",
-        isActive
-          ? varnish
-            ? "opacity-40"
-            : grain
-              ? "opacity-90"
-              : "opacity-65"
-          : // Never zero: the whole point is to see it without hovering.
-            varnish
-            ? "opacity-25"
-            : grain
-              ? "opacity-70"
-              : "opacity-50",
-      )}
+      // Inline, not a utility class: the shader supplies a number, and this
+      // component has twice been bitten by a class losing to something else.
+      style={{ opacity: isActive ? strength.active : strength.idle }}
+      className="pointer-events-none absolute inset-0 isolate mix-blend-color-dodge transition-opacity duration-300"
     >
       <div
         className={cn(
@@ -301,18 +323,18 @@ function HoloLayer({
               // what separates glitter from a uniform haze.
               "brightness(0.4) contrast(2.8)"
             : varnish
-              ? "brightness(0.7) contrast(1.6)"
-              : "brightness(0.55) contrast(2.2) saturate(1.5)",
+              ? VARNISH_FILTER
+              : shader.sweepFilter,
           backgroundImage: grain
             ? GRAIN_TEXTURE
             : varnish
-              ? "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)"
-              : "repeating-linear-gradient(115deg, #ff6b8b 0%, #ffe066 12%, #6bffb8 24%, #6bd5ff 36%, #b98bff 48%, #ff6b8b 60%)",
+              ? VARNISH_SWEEP
+              : shader.sweep,
           backgroundSize: grain
-            ? "160px 160px"
+            ? shader.grainScale
             : varnish
-              ? "200% 200%"
-              : "300% 300%",
+              ? VARNISH_SCALE
+              : shader.sweepScale,
           /**
            * Only while the pointer drives it. An inline value beats a keyframe,
            * so setting this unconditionally pinned the gradient dead centre and

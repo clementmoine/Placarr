@@ -211,6 +211,17 @@ export type PrintCandidate = {
    */
   plainFinishes?: string[];
   /**
+   * Which look each finish is drawn with, keyed by finish, valued by an id from
+   * the shader library in `core/render/holoShaders`.
+   *
+   * The publisher names its finishes and core cannot read those names: only the
+   * provider knows that Lorcana's `Silver` is the everyday foil while `Lava`
+   * belongs to Enchanted cards and looks nothing like it. A finish left out, or
+   * pointed at an id this build does not define, falls back to the everyday
+   * foil — never to no effect at all.
+   */
+  finishShaders?: Record<string, string>;
+  /**
    * Artwork per finish, when the provider publishes a distinct file rather than
    * expecting the effect to be composited. Preferred over the mask when present.
    */

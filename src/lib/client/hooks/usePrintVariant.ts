@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 
 import { resolveStoredVariant } from "@/core/enrich/variants";
+import { holoShader, type HoloShader } from "@/core/render/holoShaders";
 
 /** What the provider says a printing exists as. Shape mirrors `PrintCandidate`. */
 export type PrintVariantInfo = {
   finishes?: string[];
   plainFinishes?: string[];
+  /** Finish -> shader id. See `PrintCandidate.finishShaders`. */
+  finishShaders?: Record<string, string>;
   variantImageUrls?: Record<string, string>;
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
@@ -61,6 +64,12 @@ export type VariantRendering = {
   /** Masks to composite, empty when this copy carries no effect. */
   foilMaskUrl: string | null;
   varnishMaskUrl: string | null;
+  /**
+   * How to draw it. Every non-plain finish used to render identically, so an
+   * Enchanted print and a common silver one were indistinguishable on screen
+   * even though the publisher gives them different finishes.
+   */
+  shader: HoloShader;
 };
 
 /**
@@ -79,6 +88,7 @@ export function variantRendering(
     imageUrl: fallbackImageUrl,
     foilMaskUrl: null,
     varnishMaskUrl: null,
+    shader: holoShader(null),
   };
   if (!info) return plain;
 
@@ -94,5 +104,6 @@ export function variantRendering(
     imageUrl: info.variantImageUrls?.[resolved] ?? fallbackImageUrl,
     foilMaskUrl: info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,
+    shader: holoShader(info.finishShaders?.[resolved]),
   };
 }

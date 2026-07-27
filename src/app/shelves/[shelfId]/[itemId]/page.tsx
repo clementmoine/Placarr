@@ -2276,9 +2276,16 @@ export default function ItemDetailsPage() {
               <div
                 onClick={() => coverImage && setZoomImageUrl(coverImage)}
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
+                  "relative mx-auto md:mx-0 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
+                  // A leaning card needs room to lean; the holo view clips
+                  // itself with this radius instead.
+                  variantView.foilMaskUrl
+                    ? "overflow-visible"
+                    : "overflow-hidden",
                   coverImage
-                    ? "cursor-pointer group/cover bg-white"
+                    ? // No plate behind the cover: card art is opaque and edge
+                      // to edge, so a white slab only framed it.
+                      "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
                   coverAspectRatio,
                 )}
@@ -2754,7 +2761,9 @@ export default function ItemDetailsPage() {
           if (!open) setZoomImageUrl(null);
         }}
       >
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none flex flex-col items-center justify-center backdrop-blur-xl">
+        {/* Transparent: the blur alone separates the card from the page, and a
+            black plate fought the holographic sheen it was meant to showcase. */}
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none flex flex-col items-center justify-center backdrop-blur-xl">
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
             {zoomImageUrl &&

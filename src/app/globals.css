@@ -153,13 +153,13 @@
 
 @keyframes holo-breathe {
   0% {
-    transform: rotateX(1.2deg) rotateY(-2.4deg);
+    transform: rotateX(2.5deg) rotateY(-5deg);
   }
   50% {
-    transform: rotateX(-1.2deg) rotateY(2.4deg);
+    transform: rotateX(-2.5deg) rotateY(5deg);
   }
   100% {
-    transform: rotateX(1.2deg) rotateY(-2.4deg);
+    transform: rotateX(2.5deg) rotateY(-5deg);
   }
 }
 

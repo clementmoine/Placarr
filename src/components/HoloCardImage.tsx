@@ -23,8 +23,11 @@ type HoloCardImageProps = {
 /** Rest position: gradients centred, card flat. */
 const NEUTRAL = { x: 50, y: 50, tiltX: 0, tiltY: 0 } as const;
 
-/** How far the card leans, in degrees at the edges. Subtle on purpose. */
-const MAX_TILT = 8;
+/**
+ * How far the card leans at the edges, in degrees. Generous enough to read as
+ * holding a card rather than as a hover state.
+ */
+const MAX_TILT = 18;
 
 /**
  * A card that catches the light as you move over it.
@@ -110,16 +113,36 @@ export function HoloCardImage({
       onPointerLeave={reset}
       onPointerCancel={reset}
       className={cn(
-        "relative h-full w-full [perspective:1000px]",
+        // `rounded-[inherit]` only chains if every level passes the radius down.
+        "relative h-full w-full rounded-[inherit] [perspective:1000px]",
         "[--holo-x:50%] [--holo-y:50%] [--holo-tilt-x:0deg] [--holo-tilt-y:0deg]",
         className,
       )}
     >
       <div
-        className={cn(
-          "relative h-full w-full transform-gpu",
+        /**
+         * Rotation set inline rather than through an arbitrary Tailwind class:
+         * `transform-gpu` also writes `transform`, and it won — the card never
+         * leaned at all, it only looked like it might. Inline also beats the
+         * idle keyframes, so the pointer takes over cleanly and the animation
+         * resumes the moment it leaves.
+         */
+        style={
           isActive
-            ? "transition-transform duration-200 ease-out [transform:rotateX(var(--holo-tilt-x))_rotateY(var(--holo-tilt-y))]"
+            ? {
+                transform:
+                  "rotateX(var(--holo-tilt-x)) rotateY(var(--holo-tilt-y))",
+                willChange: "transform",
+              }
+            : undefined
+        }
+        className={cn(
+          // Clipping belongs to the element that rotates, with the container's
+          // own radius: left on an ancestor, a leaning card gets its corners
+          // sliced off flat instead of turning.
+          "relative h-full w-full overflow-hidden rounded-[inherit]",
+          isActive
+            ? "transition-transform duration-200 ease-out"
             : // Breathing on its own, so a foil copy reads as special before
               // anyone touches it. The pointer takes over on hover.
               "holo-idle-tilt",

@@ -212,6 +212,13 @@ model Item {
   // `barcode` on purpose: a column holding something that is not a barcode
   // costs more in the long run than the extra column. See core/identify/printKey.
   printKey           String?
+  // Which variant of the object this copy is: a card's finish (foil, reverse),
+  // eventually a game's completeness. Deliberately generic and free text —
+  // every media type has variants and the vocabulary belongs to the provider,
+  // not to an enum here. Distinct from `condition`, which describes the copy's
+  // health rather than which thing it is. Options come from the metadata's
+  // `variant-option` facts. See core/enrich/variants.
+  variant            String?
   condition          Condition
   metadataId         String?
   shelfId            String

@@ -252,6 +252,7 @@ export async function POST(req: NextRequest) {
         backgroundImageUrl,
         barcode,
         printKey: rawPrintKey,
+        variant: rawVariant,
         condition,
         fetchMetadata = true,
         metadataPreview,
@@ -280,6 +281,13 @@ export async function POST(req: NextRequest) {
       const printKey =
         typeof rawPrintKey === "string" && parsePrintKey(rawPrintKey)
           ? rawPrintKey.trim().toLowerCase()
+          : null;
+      // Free text on purpose: the vocabulary is the provider's, not ours. It is
+      // validated against the metadata's declared options at read time, so an
+      // unknown value degrades to "no variant" rather than being rejected here.
+      const variant =
+        typeof rawVariant === "string" && rawVariant.trim()
+          ? rawVariant.trim()
           : null;
       let resolvedName = typeof name === "string" ? name.trim() : "";
       if (!resolvedName) {
@@ -341,6 +349,7 @@ export async function POST(req: NextRequest) {
           backgroundImageUrl: localBackgroundImageUrl,
           barcode: normalizedBarcode ?? barcode,
           printKey,
+          variant,
           condition: resolvedCondition,
           userId: auth.user.id,
         },
@@ -447,6 +456,7 @@ export async function PATCH(req: NextRequest) {
         imageUrl?: string | null;
         backgroundImageUrl?: string | null;
         barcode?: string | null;
+        variant?: string | null;
         condition?: NonNullable<ReturnType<typeof parseItemCondition>>;
         shelfId?: string;
         slug?: string;
@@ -454,6 +464,13 @@ export async function PATCH(req: NextRequest) {
       } = {};
 
       if (typeof raw.name === "string") data.name = raw.name;
+      if ("variant" in raw) {
+        const next =
+          typeof raw.variant === "string" && raw.variant.trim()
+            ? raw.variant.trim()
+            : null;
+        data.variant = next;
+      }
       if (
         "description" in raw &&
         (typeof raw.description === "string" || raw.description === null)

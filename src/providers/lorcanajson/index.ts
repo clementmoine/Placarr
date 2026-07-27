@@ -4,6 +4,7 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { VARIANT_OPTION_FACT_KIND } from "@/core/enrich/variants";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -121,7 +122,9 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
   /**
    * The finishes this print *exists* in. Which one is in the sleeve belongs to
    * the item, not to the card — recording it here would claim every copy is
-   * foil.
+   * foil. Published twice on purpose: once as a readable tag for the fiche, and
+   * once per option as a structured fact the variant picker reads by kind
+   * rather than by parsing a localized label.
    */
   if (card.foilTypes.length > 0) {
     facts.push({
@@ -132,6 +135,16 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
       confidence: 0.85,
       priority: 30,
     });
+    for (const finish of card.foilTypes) {
+      facts.push({
+        kind: VARIANT_OPTION_FACT_KIND,
+        label: "Finition",
+        value: finish,
+        source: PROVIDER_ID,
+        confidence: 0.85,
+        priority: 30,
+      });
+    }
   }
 
   if (card.varnishType) {

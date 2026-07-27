@@ -52,6 +52,12 @@ export function PrintPickerModal({
   const [candidates, setCandidates] = useState<PrintCandidateView[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [addingKey, setAddingKey] = useState<string | null>(null);
+  /**
+   * Print awaiting a finish. A card that exists in several finishes cannot be
+   * added without saying which one is in the sleeve — defaulting to the plain
+   * one would quietly mislabel every foil pulled from a booster.
+   */
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -66,6 +72,7 @@ export function PrintPickerModal({
     setHasSearched(false);
     setError(null);
     setAddingKey(null);
+    setPendingKey(null);
     onClose();
   }, [onClose]);
 
@@ -115,7 +122,7 @@ export function PrintPickerModal({
   const visibleCandidates = trimmedQuery ? candidates : [];
 
   const addCandidate = useCallback(
-    async (candidate: PrintCandidateView) => {
+    async (candidate: PrintCandidateView, variant?: string | null) => {
       setAddingKey(candidate.printKey);
       setError(null);
       try {
@@ -126,6 +133,7 @@ export function PrintPickerModal({
             shelfId,
             name: candidate.title,
             printKey: candidate.printKey,
+            variant: variant ?? null,
             imageUrl: candidate.imageUrl ?? candidate.thumbnailUrl,
             condition: "used",
           }),
@@ -203,7 +211,18 @@ export function PrintPickerModal({
                   <button
                     type="button"
                     disabled={Boolean(addingKey)}
-                    onClick={() => addCandidate(candidate)}
+                    onClick={() => {
+                      const finishes = candidate.finishes ?? [];
+                      if (finishes.length > 1) {
+                        setPendingKey((key) =>
+                          key === candidate.printKey
+                            ? null
+                            : candidate.printKey,
+                        );
+                        return;
+                      }
+                      void addCandidate(candidate, finishes[0] ?? null);
+                    }}
                     className={cn(
                       "group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-2 text-left transition-all",
                       "hover:border-primary/60 hover:shadow-md disabled:opacity-60",
@@ -240,6 +259,22 @@ export function PrintPickerModal({
                       )}
                     </div>
                   </button>
+
+                  {pendingKey === candidate.printKey && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {(candidate.finishes ?? []).map((finish) => (
+                        <button
+                          key={finish}
+                          type="button"
+                          disabled={Boolean(addingKey)}
+                          onClick={() => void addCandidate(candidate, finish)}
+                          className="cursor-pointer rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-bold hover:border-primary/60 disabled:opacity-60"
+                        >
+                          {finish}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </li>
               );
             })}

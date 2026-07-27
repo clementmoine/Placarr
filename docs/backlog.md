@@ -110,12 +110,20 @@ Alternative écartée : OpenCV / ImageMagick feraient ça en une ligne
 (`-distort Perspective`), mais ajoutent une dépendance native au conteneur
 pour une seule fonction.
 
-### Variantes par exemplaire — l'axe qui manque (tous types)
+### Variantes par exemplaire — livré (2026-07-27)
 
-Aujourd'hui **l'axe tirage/édition est géré** : `searchPrints` fait choisir
-_lequel_ on possède, et les finitions existantes remontent en fait
-(« Finitions existantes : None • Silver »). Ce qui manque : **dire que son
-exemplaire est le foil**. Rien ne le porte.
+`Item.variant` porte la finition de l'exemplaire. Le sélecteur de tirages la
+demande à l'ajout quand le tirage existe en plusieurs finitions — une seule
+finition n'est pas un choix, elle est appliquée sans demander — et le formulaire
+d'objet permet de la corriger après coup, re-cliquer l'option active l'efface.
+
+**Les options ne sont pas persistées** : elles sont demandées au provider par
+clé de tirage (`lookupPrint`). Première tentative, abandonnée : les publier
+comme faits structurés. `Metadata.facts` est reconstruit depuis les
+`FieldEvidence` après chaque stockage, donc un `kind` maison devait survivre à
+**deux** listes blanches distinctes pour arriver au client — et n'aurait été
+qu'une copie qui dérive quand un set est corrigé. Ce qu'un tirage _est_
+appartient au provider.
 
 La demande se généralise au-delà des cartes — une PS3 a ses modèles (Phat,
 Slim, Super Slim), un jeu ses éditions (Standard, GOTY, Collector) — et le
@@ -135,13 +143,14 @@ Confondre les deux est le piège. Si le foil devenait une entrée de métadonné
 séparée, on aurait deux fiches « Elsa 42/204 » et chaque comptage, prix et
 galerie doublerait.
 
-Ordre proposé :
+Reste à faire :
 
-1. **`Item.variant`** (nullable, générique) : la finition de l'exemplaire,
-   choisie parmi les options que la métadonnée déclare. Surtout pas une colonne
-   TCG — c'est exactement là que `Condition.loose` doit migrer (voir ci-dessous).
-2. Le **regroupement des doublons** s'appuie dessus : c'est ce qui fait marcher
+1. Le **regroupement des doublons** s'appuie dessus : c'est ce qui fait marcher
    « Elsa foil ×3 » sans mélanger le foil et le classique.
+2. Faire migrer `Condition.loose` sur cet axe (voir ci-dessous) — le champ est
+   générique exprès, ce n'est pas une colonne TCG.
+3. Étendre aux **consoles** : un provider qui renvoie des candidats de modèle.
+   Rien à changer dans le core ni dans le sélecteur.
 
 Réserve pour le **matériel** : l'axe variante d'une console est surtout le
 _modèle_, donc de l'identité, pas de la finition. Les consoles ont besoin de

@@ -15,6 +15,12 @@ export type ItemModalFormValues = {
   name: string;
   barcode?: string;
   description?: string;
+  /**
+   * Which variant of the object this copy is (a card's finish, say). Free text
+   * because the vocabulary is the provider's; the options come from the
+   * metadata's `variant-option` facts. See `@/core/enrich/variants`.
+   */
+  variant?: string | null;
   condition: Condition;
   imageUrl: string | File | null;
   backgroundImageUrl: string | File | null;
@@ -84,6 +90,7 @@ function defaultFormValues(
     backgroundImageUrl: null,
     description: "",
     barcode: prefilledValues?.barcode || "",
+    variant: null,
     condition: "used",
   };
 }
@@ -153,6 +160,7 @@ export function buildItemModalSessionInit(input: {
       description:
         item.description || item.metadata?.description || defaults.description,
       condition: item.condition || defaults.condition,
+      variant: item.variant ?? defaults.variant ?? null,
       imageUrl: seededCoverUrl,
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,

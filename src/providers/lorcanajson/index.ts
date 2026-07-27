@@ -4,7 +4,6 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
-import { VARIANT_OPTION_FACT_KIND } from "@/core/enrich/variants";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -19,6 +18,7 @@ import type {
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
+  PrintCandidate,
   ProviderModule,
 } from "@/types/providerModule";
 
@@ -122,9 +122,10 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
   /**
    * The finishes this print *exists* in. Which one is in the sleeve belongs to
    * the item, not to the card — recording it here would claim every copy is
-   * foil. Published twice on purpose: once as a readable tag for the fiche, and
-   * once per option as a structured fact the variant picker reads by kind
-   * rather than by parsing a localized label.
+   * foil. Exposed as a readable tag only — the variant picker asks the provider
+   * by print key instead of reading a persisted copy, because `Metadata.facts`
+   * is rebuilt from field evidence after storage and a fact kind would have to
+   * survive two separate allow-lists to get through.
    */
   if (card.foilTypes.length > 0) {
     facts.push({
@@ -135,16 +136,6 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
       confidence: 0.85,
       priority: 30,
     });
-    for (const finish of card.foilTypes) {
-      facts.push({
-        kind: VARIANT_OPTION_FACT_KIND,
-        label: "Finition",
-        value: finish,
-        source: PROVIDER_ID,
-        confidence: 0.85,
-        priority: 30,
-      });
-    }
   }
 
   if (card.varnishType) {
@@ -215,6 +206,21 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
   }
 
   return facts;
+}
+
+/** One shape for both the search results and a lookup by key. */
+function toPrintCandidate(card: LorcanaCard): PrintCandidate {
+  return {
+    printKey: card.printKey,
+    title: card.fullName,
+    reference: lorcanaPrintLabel(card),
+    rarity: card.rarity,
+    thumbnailUrl: card.thumbnailUrl ?? card.imageUrl,
+    imageUrl: card.imageUrl,
+    language: card.language,
+    finishes: card.foilTypes,
+    externalIds: { [PROVIDER_ID]: card.providerId },
+  };
 }
 
 export function mapLorcanaMetadata(
@@ -341,17 +347,16 @@ export const lorcanajsonModule: ProviderModule = {
       limit,
       signal,
     });
-    return cards.map((card) => ({
-      printKey: card.printKey,
-      title: card.fullName,
-      reference: lorcanaPrintLabel(card),
-      rarity: card.rarity,
-      thumbnailUrl: card.thumbnailUrl ?? card.imageUrl,
-      imageUrl: card.imageUrl,
-      language: card.language,
-      finishes: card.foilTypes,
-      externalIds: { [PROVIDER_ID]: card.providerId },
-    }));
+    return cards.map(toPrintCandidate);
+  },
+  lookupPrint: async ({ printKey, name, language, signal }) => {
+    if (parsePrintKey(printKey)?.game !== LORCANA_GAME) return null;
+    const card = await fetchLorcanaCardByPrintKey(printKey, {
+      language: isLorcanaLanguage(language) ? language : undefined,
+      name,
+      signal,
+    });
+    return card ? toPrintCandidate(card) : null;
   },
   healthCheck: createMetadataHealthCheck(
     PROVIDER_ID,

@@ -1,95 +1,77 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  VARIANT_OPTION_FACT_KIND,
+  normalizeVariantOptions,
   offersVariantChoice,
   resolveStoredVariant,
-  variantOptionsFromFacts,
 } from "./variants";
 
-function option(value: string) {
-  return { kind: VARIANT_OPTION_FACT_KIND, value };
-}
-
-describe("variantOptionsFromFacts", () => {
-  it("collects the declared variants in provider order", () => {
-    expect(
-      variantOptionsFromFacts([
-        { kind: "tag", value: "Personnage" },
-        option("None"),
-        option("Silver"),
-        { kind: "rarity", value: "Rare" },
-      ]),
-    ).toEqual(["None", "Silver"]);
+describe("normalizeVariantOptions", () => {
+  it("keeps the provider's order", () => {
+    expect(normalizeVariantOptions(["None", "Silver"])).toEqual([
+      "None",
+      "Silver",
+    ]);
   });
 
-  it("reads the kind, never the label", () => {
-    // A localized label must not be what makes a fact machine-readable.
-    expect(
-      variantOptionsFromFacts([
-        { kind: "tag", value: "None • Silver" },
-        { kind: "tag", value: "Finitions existantes" },
-      ]),
-    ).toEqual([]);
+  it("offers one choice when two providers spell a finish differently", () => {
+    expect(normalizeVariantOptions(["Foil", "foil", "FOIL"])).toEqual(["Foil"]);
   });
 
-  it("offers one choice when two providers name the same finish", () => {
-    expect(
-      variantOptionsFromFacts([option("Foil"), option("foil"), option("FOIL")]),
-    ).toEqual(["Foil"]);
+  it("drops blanks rather than offering an empty choice", () => {
+    expect(normalizeVariantOptions(["  ", "Silver", "", null])).toEqual([
+      "Silver",
+    ]);
   });
 
-  it("ignores blank values rather than offering an empty choice", () => {
-    expect(
-      variantOptionsFromFacts([option("  "), option("Silver"), option("")]),
-    ).toEqual(["Silver"]);
-  });
-
-  it("survives missing facts", () => {
-    expect(variantOptionsFromFacts(null)).toEqual([]);
-    expect(variantOptionsFromFacts(undefined)).toEqual([]);
-    expect(variantOptionsFromFacts([])).toEqual([]);
+  it("survives missing options", () => {
+    expect(normalizeVariantOptions(null)).toEqual([]);
+    expect(normalizeVariantOptions(undefined)).toEqual([]);
+    expect(normalizeVariantOptions([])).toEqual([]);
   });
 });
 
 describe("offersVariantChoice", () => {
   it("is false for a single option, which is not a choice", () => {
     // An Enchanted card exists only in Magma foil: asking says nothing.
-    expect(offersVariantChoice([option("Magma")])).toBe(false);
+    expect(offersVariantChoice(["Magma"])).toBe(false);
   });
 
   it("is true once there is something to pick between", () => {
-    expect(offersVariantChoice([option("None"), option("Silver")])).toBe(true);
+    expect(offersVariantChoice(["None", "Silver"])).toBe(true);
+  });
+
+  it("is false when duplicates collapse to a single option", () => {
+    expect(offersVariantChoice(["Foil", "foil"])).toBe(false);
   });
 
   it("is false without options", () => {
-    expect(offersVariantChoice([{ kind: "tag", value: "Rare" }])).toBe(false);
+    expect(offersVariantChoice([])).toBe(false);
+    expect(offersVariantChoice(null)).toBe(false);
   });
 });
 
 describe("resolveStoredVariant", () => {
-  it("keeps a variant the metadata still declares", () => {
-    expect(
-      resolveStoredVariant("Silver", [option("None"), option("Silver")]),
-    ).toBe("Silver");
+  it("keeps a variant that is still offered", () => {
+    expect(resolveStoredVariant("Silver", ["None", "Silver"])).toBe("Silver");
   });
 
   it("matches case-insensitively but answers with the declared spelling", () => {
-    expect(resolveStoredVariant("silver", [option("Silver")])).toBe("Silver");
+    expect(resolveStoredVariant("silver", ["Silver"])).toBe("Silver");
   });
 
-  it("drops a variant the metadata no longer declares", () => {
+  it("drops a variant no longer offered", () => {
     // Guessing a replacement would quietly relabel someone's copy.
-    expect(resolveStoredVariant("Silver", [option("None")])).toBeNull();
+    expect(resolveStoredVariant("Silver", ["None"])).toBeNull();
   });
 
-  it("drops everything when nothing is declared", () => {
+  it("drops everything when nothing is offered", () => {
     expect(resolveStoredVariant("Silver", [])).toBeNull();
     expect(resolveStoredVariant("Silver", null)).toBeNull();
   });
 
   it("treats blank as absent", () => {
-    expect(resolveStoredVariant("  ", [option("None")])).toBeNull();
-    expect(resolveStoredVariant(null, [option("None")])).toBeNull();
+    expect(resolveStoredVariant("  ", ["None"])).toBeNull();
+    expect(resolveStoredVariant(null, ["None"])).toBeNull();
   });
 });

@@ -450,7 +450,8 @@
       "action": "Recadrer",
       "auto": "Auto",
       "autoHint": "Proposer un recadrage automatique (marges détectées)"
-    }
+    },
+    "variant": "Variante"
   },
   "sorting": {
     "title": "Trier par",

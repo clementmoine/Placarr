@@ -201,6 +201,9 @@ export function ItemModal({
 
     barcode: z.string().trim().optional(),
 
+    /** Free text: the vocabulary belongs to the provider, not to a local enum. */
+    variant: z.string().nullable().optional(),
+
     description: z.string().trim().optional(),
 
     condition: z.nativeEnum(Condition),
@@ -242,6 +245,7 @@ export function ItemModal({
       backgroundImageUrl: null,
       description: "",
       barcode: prefilledValues?.barcode || "",
+      variant: null,
       condition: "used",
     }),
     [shelfId, prefilledValues],
@@ -484,6 +488,45 @@ export function ItemModal({
    * silently discarded the collector's framing. On a bare manual creation there
    * are no tabs at all, and then it is the only picker there is.
    */
+  /**
+   * Variants this object exists in, asked of the provider that owns the print.
+   *
+   * Not read from stored facts: `Metadata.facts` is rebuilt from field evidence
+   * after every store, so a structured fact would have to survive two separate
+   * allow-lists to reach the client — and it would be a copy that drifts. What a
+   * print exists as belongs to the provider.
+   *
+   * Rendered next to `condition` because the two are easy to confuse and must
+   * not be: the variant says *which* thing this is, the condition says how it
+   * has aged.
+   */
+  const [variantOptions, setVariantOptions] = useState<string[]>([]);
+  const itemPrintKey = item?.printKey ?? null;
+  const itemShelfType = item?.shelf?.type ?? shelfType;
+
+  useEffect(() => {
+    if (!isOpen || !itemPrintKey || !itemShelfType) return;
+
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/prints?printKey=${encodeURIComponent(itemPrintKey)}&type=${encodeURIComponent(itemShelfType)}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          candidate?: { finishes?: string[] } | null;
+        };
+        setVariantOptions(data.candidate?.finishes ?? []);
+      } catch {
+        // No options simply means no picker — never a blocked form.
+      }
+    })();
+
+    return () => controller.abort();
+  }, [isOpen, itemPrintKey, itemShelfType]);
+
   const hasCoverTab = Boolean(
     item ||
       fetchedMetadata ||
@@ -2001,6 +2044,48 @@ export function ItemModal({
                         </FormItem>
                       )}
                     />
+
+                    {/* One option is not a choice, so it is not offered. */}
+                    {variantOptions.length > 1 && (
+                      <FormField
+                        control={form.control}
+                        name="variant"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t("items.variant")}
+                            </FormLabel>
+                            <FormControl>
+                              <ToggleGroup
+                                size="sm"
+                                type="single"
+                                variant="outline"
+                                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                                value={field.value ?? ""}
+                                onValueChange={(value) =>
+                                  // Re-clicking the active option clears it, so a
+                                  // variant set by mistake can be taken back.
+                                  field.onChange(value ? value : null)
+                                }
+                              >
+                                {variantOptions.map((option) => (
+                                  <ToggleGroupItem
+                                    key={option}
+                                    value={option}
+                                    className="flex-1 gap-1.5 rounded-lg border-0 text-xs data-[state=on]:bg-white data-[state=on]:shadow-sm dark:data-[state=on]:bg-zinc-850"
+                                  >
+                                    <span className="shrink-0 font-medium">
+                                      {option}
+                                    </span>
+                                  </ToggleGroupItem>
+                                ))}
+                              </ToggleGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     {/* Only when there is no cover tab to own this. */}
                     {!hasCoverTab && (

@@ -33,6 +33,41 @@ function providersFor(type: string) {
   );
 }
 
+/**
+ * One printing by key, from whichever provider owns that game. Asked live
+ * rather than read from storage: what a print exists as belongs to the
+ * provider, and a persisted copy would drift as sets get corrected.
+ */
+export async function lookupPrintCandidate(
+  printKey: string,
+  type: string,
+  options: PrintSearchOptions & { name?: string | null } = {},
+): Promise<PrintCandidate | null> {
+  const key = printKey?.trim();
+  if (!key || !parsePrintKey(key)) return null;
+
+  for (const provider of PROVIDER_MODULES) {
+    if (typeof provider.lookupPrint !== "function") continue;
+    if (!provider.info.types.some((mediaType) => mediaType === type)) continue;
+    try {
+      const found = await provider.lookupPrint({
+        printKey: key,
+        name: options.name,
+        language: options.language,
+        signal: options.signal,
+      });
+      if (found) return { ...found, providerId: provider.info.id };
+    } catch (error) {
+      // One provider failing must not hide a print another one could resolve.
+      console.warn(
+        `[lookupPrintCandidate] ${provider.info.id} failed for "${key}":`,
+        error,
+      );
+    }
+  }
+  return null;
+}
+
 /** Whether any provider can answer a print search for this media type. */
 export function supportsPrintSearch(type: string): boolean {
   return providersFor(type).length > 0;

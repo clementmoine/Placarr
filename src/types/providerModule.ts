@@ -166,6 +166,14 @@ export type DatabaseTitleSuggestionContext = {
   platform?: string | null;
 };
 
+export type PrintLookupContext = {
+  printKey: string;
+  /** Disambiguates the rare printed identifier covering two cards. */
+  name?: string | null;
+  language?: string | null;
+  signal?: AbortSignal;
+};
+
 export type PrintSearchContext = {
   /** Raw user query. Providers normalize it themselves. */
   query: string;
@@ -406,6 +414,12 @@ export interface ProviderModule {
    * media type has no barcode to start from.
    */
   searchPrints?: (ctx: PrintSearchContext) => Promise<PrintCandidate[]>;
+  /**
+   * One printing by its key. Lets the app ask what a print *is* — its finishes,
+   * above all — without persisting a copy of the answer, which would drift and
+   * has to survive the fact pipeline's allow-lists to get stored at all.
+   */
+  lookupPrint?: (ctx: PrintLookupContext) => Promise<PrintCandidate | null>;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;
   /**

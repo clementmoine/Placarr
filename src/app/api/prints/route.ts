@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
 import {
+  lookupPrintCandidate,
   searchPrintCandidates,
   supportsPrintSearch,
 } from "@/core/identify/printSearch";
@@ -28,7 +29,19 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.trim();
+    const printKey = searchParams.get("printKey")?.trim();
     const type = searchParams.get("type")?.trim();
+
+    // Lookup by key answers what a print *is* — its finishes, above all — so
+    // nothing has to persist a copy of that answer.
+    if (printKey && type) {
+      const candidate = await lookupPrintCandidate(printKey, type, {
+        name: searchParams.get("name"),
+        language: searchParams.get("language"),
+        signal: req.signal,
+      });
+      return NextResponse.json({ supported: true, candidate });
+    }
 
     if (!query || !type) {
       return NextResponse.json(

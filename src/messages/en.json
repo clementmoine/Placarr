@@ -450,7 +450,8 @@
       "action": "Crop",
       "auto": "Auto",
       "autoHint": "Suggest an automatic crop (detected margins)"
-    }
+    },
+    "variant": "Variant"
   },
   "sorting": {
     "title": "Sort by",

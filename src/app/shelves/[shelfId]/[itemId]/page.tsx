@@ -98,6 +98,7 @@ import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { HoloCardImage } from "@/components/HoloCardImage";
+import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { resolveStoredVariant } from "@/core/enrich/variants";
 import {
@@ -1734,6 +1735,20 @@ export default function ItemDetailsPage() {
   const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
   const variantView = variantRendering(item?.variant, printVariant, coverImage);
   /**
+   * Masks follow the artwork's own framing. Cropping the card left them cut for
+   * the full print, so `object-contain` letterboxed the two differently and the
+   * shimmer sat off the foil areas.
+   */
+  const heroArtworkUrl = variantView.imageUrl ?? coverImage;
+  const foilMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.foilMaskUrl,
+  );
+  const varnishMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.varnishMaskUrl,
+  );
+  /**
    * Shown on the fiche only once the provider still offers it. A variant the
    * catalogue has dropped is not a fact worth stating.
    */
@@ -2334,8 +2349,8 @@ export default function ItemDetailsPage() {
                       <HoloCardImage
                         imageUrl={variantView.imageUrl ?? coverImage}
                         alt={itemDisplayName ?? ""}
-                        maskUrl={variantView.foilMaskUrl}
-                        varnishMaskUrl={variantView.varnishMaskUrl}
+                        maskUrl={foilMaskUrl}
+                        varnishMaskUrl={varnishMaskUrl}
                       />
                     ) : (
                       <RemoteImage
@@ -2827,8 +2842,19 @@ export default function ItemDetailsPage() {
                   <HoloCardImage
                     imageUrl={variantView.imageUrl ?? zoomImageUrl}
                     alt="Zoom"
-                    maskUrl={variantView.foilMaskUrl}
-                    varnishMaskUrl={variantView.varnishMaskUrl}
+                    /* The mirrored masks were cut for the hero's framing. They
+                       only fit here if this is the same file — zooming the
+                       uncropped original of a cropped cover is not. */
+                    maskUrl={
+                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
+                        ? foilMaskUrl
+                        : variantView.foilMaskUrl
+                    }
+                    varnishMaskUrl={
+                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
+                        ? varnishMaskUrl
+                        : variantView.varnishMaskUrl
+                    }
                   />
                 </div>
               ) : (

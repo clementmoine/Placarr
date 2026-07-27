@@ -29,6 +29,12 @@ type ImageCropModalProps = {
   onClose: () => void;
   /** Receives the derived crop URL, or the original one on revert. */
   onCropped: (url: string) => void;
+  /**
+   * What the crop is for. The same artwork often serves as both the cover and
+   * the background: keyed on the file alone, cropping one rewrote the other's
+   * image.
+   */
+  role?: string;
 };
 
 /**
@@ -47,6 +53,7 @@ export function ImageCropModal({
   isOpen,
   onClose,
   onCropped,
+  role = "cover",
 }: ImageCropModalProps) {
   const { t } = useLocale();
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -71,7 +78,7 @@ export function ImageCropModal({
       setCrop(undefined);
       try {
         const response = await fetch(
-          `/api/images/crop?url=${encodeURIComponent(imageUrl)}`,
+          `/api/images/crop?url=${encodeURIComponent(imageUrl)}&role=${encodeURIComponent(role)}`,
         );
         if (!response.ok) throw new Error(String(response.status));
         const data = (await response.json()) as {
@@ -93,7 +100,7 @@ export function ImageCropModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, imageUrl, t]);
+  }, [isOpen, imageUrl, role, t]);
 
   /** Percentages, so a rectangle survives the displayed-size scaling. */
   const asPercentCrop = useCallback((box: CropSuggestion): Crop | null => {
@@ -167,6 +174,7 @@ export function ImageCropModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: sourceUrl,
+          role,
           crop: {
             left: Math.round(pixelCrop.x * scaleX),
             top: Math.round(pixelCrop.y * scaleY),
@@ -184,7 +192,7 @@ export function ImageCropModal({
     } finally {
       setIsSaving(false);
     }
-  }, [crop, sourceUrl, onCropped, onClose, t]);
+  }, [crop, sourceUrl, role, onCropped, onClose, t]);
 
   /**
    * Hand back the untouched original — the crop was only ever a derivative.
@@ -198,9 +206,10 @@ export function ImageCropModal({
     if (!sourceUrl) return;
     setIsSaving(true);
     try {
-      await fetch(`/api/images/crop?url=${encodeURIComponent(sourceUrl)}`, {
-        method: "DELETE",
-      });
+      await fetch(
+        `/api/images/crop?url=${encodeURIComponent(sourceUrl)}&role=${encodeURIComponent(role)}`,
+        { method: "DELETE" },
+      );
     } catch {
       // Ignored on purpose — see above.
     } finally {
@@ -209,7 +218,7 @@ export function ImageCropModal({
     setCurrent(null);
     onCropped(sourceUrl);
     onClose();
-  }, [sourceUrl, onCropped, onClose]);
+  }, [sourceUrl, role, onCropped, onClose]);
 
   return (
     <BaseModal

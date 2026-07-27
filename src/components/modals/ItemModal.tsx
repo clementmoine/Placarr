@@ -480,7 +480,16 @@ export function ItemModal({
   }
 
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
-  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  /**
+   * Which image is being reframed, and which field it belongs to. The field
+   * matters: the same artwork can be both the cover and the background, and
+   * writing the result to `imageUrl` regardless meant cropping the background
+   * silently replaced the cover.
+   */
+  const [cropTarget, setCropTarget] = useState<{
+    url: string;
+    field: "imageUrl" | "backgroundImageUrl";
+  } | null>(null);
 
   /**
    * Whether the dedicated cover tab is available. When it is, the General tab
@@ -2260,7 +2269,10 @@ export function ItemModal({
                                       title={t("items.cropImage.action")}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setCropImageUrl(img.url);
+                                        setCropTarget({
+                                          url: img.url,
+                                          field: "imageUrl",
+                                        });
                                       }}
                                       className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
@@ -2518,7 +2530,10 @@ export function ItemModal({
                                       title={t("items.cropImage.action")}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setCropImageUrl(img.url);
+                                        setCropTarget({
+                                          url: img.url,
+                                          field: "backgroundImageUrl",
+                                        });
                                       }}
                                       className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
@@ -2690,13 +2705,19 @@ export function ItemModal({
         </DialogContent>
       </Dialog>
 
-      {/* Reframing a gallery image also picks it: you cropped it to use it. */}
+      {/* Reframing a gallery image also picks it: you cropped it to use it —
+          for the field it was cropped from, not always the cover. */}
       <ImageCropModal
-        imageUrl={cropImageUrl}
-        isOpen={!!cropImageUrl}
-        onClose={() => setCropImageUrl(null)}
+        imageUrl={cropTarget?.url ?? null}
+        isOpen={!!cropTarget}
+        role={
+          cropTarget?.field === "backgroundImageUrl" ? "background" : "cover"
+        }
+        onClose={() => setCropTarget(null)}
         onCropped={(url) => {
-          form.setValue("imageUrl", url, { shouldDirty: true });
+          form.setValue(cropTarget?.field ?? "imageUrl", url, {
+            shouldDirty: true,
+          });
           setCropVersion((version) => version + 1);
         }}
       />

@@ -6,7 +6,11 @@ import sharp from "sharp";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
-import { stripCropSuffixFromUrl } from "@/core/enrich/media/coverUrl";
+import {
+  cropDerivativeBaseName,
+  DEFAULT_CROP_ROLE,
+  stripCropSuffixFromUrl,
+} from "@/core/enrich/media/coverUrl";
 import {
   applyCropBox,
   suggestCropBox,
@@ -31,21 +35,44 @@ function uploadsFilePath(url: string): string | null {
 }
 
 /**
+ * What the crop is for. The same artwork often serves as both the cover and the
+ * background, and a crop keyed on the file alone made cropping one rewrite the
+ * other's image. `cover` keeps the bare `_crop` name so existing files stay
+ * valid; anything else gets its own marker.
+ */
+function parseCropRole(raw: string | null | undefined): string {
+  const role = raw?.trim().toLowerCase();
+  // Letters only: the marker goes into a filename, and `stripCropSuffixFromUrl`
+  // has to be able to take it back off again.
+  return role && /^[a-z]+$/.test(role) ? role : DEFAULT_CROP_ROLE;
+}
+
+/** Base name of the derivative for this source and role, without extension. */
+function derivedBaseName(originalFilePath: string, role: string): string {
+  const ext = path.extname(originalFilePath);
+  return cropDerivativeBaseName(path.basename(originalFilePath, ext), role);
+}
+
+/**
  * Where the applied rectangle is remembered, next to the file it produced.
  *
  * Stored as a sidecar rather than a column because the same editor serves
  * items, shelves and avatars: the box belongs to the derived image, not to
  * whichever record happens to point at it.
  */
-function cropSidecarPath(originalFilePath: string): string {
-  const ext = path.extname(originalFilePath);
-  const baseName = path.basename(originalFilePath, ext);
-  return path.join(path.dirname(originalFilePath), `${baseName}_crop.json`);
+function cropSidecarPath(originalFilePath: string, role: string): string {
+  return path.join(
+    path.dirname(originalFilePath),
+    `${derivedBaseName(originalFilePath, role)}.json`,
+  );
 }
 
-function readStoredCrop(originalFilePath: string): CropBox | null {
+function readStoredCrop(
+  originalFilePath: string,
+  role: string,
+): CropBox | null {
   try {
-    const sidecar = cropSidecarPath(originalFilePath);
+    const sidecar = cropSidecarPath(originalFilePath, role);
     if (!fs.existsSync(sidecar)) return null;
     const parsed = JSON.parse(fs.readFileSync(sidecar, "utf8")) as CropBox;
     const usable =
@@ -99,7 +126,10 @@ export async function GET(req: NextRequest) {
       suggestion,
       // Reopening must show what is actually applied, not re-propose the
       // automatic guess over the framing the collector already chose.
-      current: readStoredCrop(filePath),
+      current: readStoredCrop(
+        filePath,
+        parseCropRole(new URL(req.url).searchParams.get("role")),
+      ),
     });
   } catch (error) {
     console.error("[GET /api/images/crop]", error);
@@ -186,14 +216,18 @@ export async function POST(req: NextRequest) {
     };
 
     const cropped = await applyCropBox(buffer, box);
+    const role = parseCropRole(
+      typeof (body as { role?: unknown }).role === "string"
+        ? (body as { role?: string }).role
+        : null,
+    );
     const ext = path.extname(filePath);
-    const baseName = path.basename(filePath, ext);
-    const croppedName = `${baseName}_crop${ext}`;
+    const croppedName = `${derivedBaseName(filePath, role)}${ext}`;
     fs.writeFileSync(
       path.join(process.cwd(), "public", "uploads", croppedName),
       cropped,
     );
-    fs.writeFileSync(cropSidecarPath(filePath), JSON.stringify(box));
+    fs.writeFileSync(cropSidecarPath(filePath, role), JSON.stringify(box));
 
     return NextResponse.json({
       url: `${UPLOADS_PREFIX}${croppedName}`,
@@ -238,7 +272,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ cleared: false });
     }
 
-    const sidecar = cropSidecarPath(filePath);
+    const sidecar = cropSidecarPath(
+      filePath,
+      parseCropRole(new URL(req.url).searchParams.get("role")),
+    );
     const existed = fs.existsSync(sidecar);
     if (existed) fs.unlinkSync(sidecar);
 

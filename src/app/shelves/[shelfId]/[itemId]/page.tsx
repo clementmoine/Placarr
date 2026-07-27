@@ -101,6 +101,10 @@ import { HoloCardImage } from "@/components/HoloCardImage";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { resolveStoredVariant } from "@/core/enrich/variants";
 import {
+  edgeGradient,
+  useImageEdgeColors,
+} from "@/lib/client/hooks/useImageEdgeColors";
+import {
   usePrintVariant,
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
@@ -1762,18 +1766,31 @@ export default function ItemDetailsPage() {
     };
   }, [item, coverImage, locale]);
 
+  /**
+   * Colours of the two cover edges that border the empty space. A contained
+   * cover leaves bands on one axis; filled with the artwork's own edge colours
+   * they read as the image continuing, rather than as a plate it sits on.
+   */
+  const {
+    colors: coverEdgeColors,
+    measure: measureCoverEdges,
+    reset: resetCoverEdgeColors,
+  } = useImageEdgeColors();
+
   // Réinitialisation quand la cover change — ajustée pendant le render.
   const [prevCoverImage, setPrevCoverImage] = useState(coverImage);
   if (prevCoverImage !== coverImage) {
     setPrevCoverImage(coverImage);
     setCoverImageFit("contain");
+    resetCoverEdgeColors();
   }
 
   const handleCoverImageLoad = useCallback(
-    (_event: SyntheticEvent<HTMLImageElement>) => {
+    (event: SyntheticEvent<HTMLImageElement>) => {
       setCoverImageFit("contain");
+      measureCoverEdges(event.currentTarget);
     },
-    [],
+    [measureCoverEdges],
   );
 
   const galleryImages = useMemo(() => {
@@ -2294,11 +2311,22 @@ export default function ItemDetailsPage() {
                     : "overflow-hidden",
                   coverImage
                     ? // No plate behind the cover: card art is opaque and edge
-                      // to edge, so a white slab only framed it.
+                      // to edge, so a white slab only framed it. Anything else
+                      // gets its own edges bled outwards, see `style` below.
                       "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
                   coverAspectRatio,
                 )}
+                /**
+                 * Bleed the cover's own edges into the letterbox. Skipped for a
+                 * foil card, which fills its frame edge to edge and has the
+                 * holographic layers instead.
+                 */
+                style={
+                  coverEdgeColors && !variantView.foilMaskUrl
+                    ? { background: edgeGradient(coverEdgeColors) }
+                    : undefined
+                }
               >
                 {coverImage ? (
                   <>

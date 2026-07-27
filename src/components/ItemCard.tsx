@@ -10,6 +10,10 @@ import {
   SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
+import {
+  edgeGradient,
+  useImageEdgeColors,
+} from "@/lib/client/hooks/useImageEdgeColors";
 
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { getItemValueEstimate } from "@/core/collect/value";
@@ -72,6 +76,17 @@ function ItemCardInner(props: ItemCardProps) {
   const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
+  /**
+   * Covers are contained, so a portrait box art in a landscape tile — or the
+   * reverse — leaves empty bands. Painted with the artwork's own edge colours
+   * they read as the image continuing past the frame, instead of as a white
+   * slab the cover floats on.
+   */
+  const {
+    colors: edgeColors,
+    measure: measureEdges,
+    reset: resetEdgeColors,
+  } = useImageEdgeColors();
 
   const displayImageUrl = imageUrl;
 
@@ -96,10 +111,12 @@ function ItemCardInner(props: ItemCardProps) {
   if (prevImageUrl !== displayImageUrl) {
     setPrevImageUrl(displayImageUrl);
     setImageFit("contain");
+    resetEdgeColors();
   }
 
-  const handleImageLoad = (_event: SyntheticEvent<HTMLImageElement>) => {
+  const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
     setImageFit("contain");
+    measureEdges(event.currentTarget);
   };
 
   // Calculate estimated price in Euros — a catalog-estimate fallback shows ~.
@@ -163,7 +180,12 @@ function ItemCardInner(props: ItemCardProps) {
       )}
 
       {displayImageUrl ? (
-        <div className="w-full h-full bg-white relative overflow-hidden">
+        <div
+          className="w-full h-full bg-white relative overflow-hidden"
+          style={
+            edgeColors ? { background: edgeGradient(edgeColors) } : undefined
+          }
+        >
           {/* Main Cover Image */}
           <RemoteImage
             src={displayImageUrl}

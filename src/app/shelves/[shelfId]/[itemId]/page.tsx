@@ -23,6 +23,7 @@ import {
   Gauge,
   Layers,
   Loader2,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -98,6 +99,7 @@ import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { HoloCardImage } from "@/components/HoloCardImage";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
+import { resolveStoredVariant } from "@/core/enrich/variants";
 import {
   usePrintVariant,
   variantRendering,
@@ -1727,6 +1729,14 @@ export default function ItemDetailsPage() {
    */
   const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
   const variantView = variantRendering(item?.variant, printVariant, coverImage);
+  /**
+   * Shown on the fiche only once the provider still offers it. A variant the
+   * catalogue has dropped is not a fact worth stating.
+   */
+  const resolvedVariant = resolveStoredVariant(
+    item?.variant,
+    printVariant?.finishes,
+  );
 
   const coverSourceChip = useMemo(() => {
     if (!item || !coverImage) return null;
@@ -2397,6 +2407,19 @@ export default function ItemDetailsPage() {
                       >
                         <ConditionIcon condition={item.condition} />
                         {t(`items.conditions.${item.condition}`)}
+                      </Badge>
+                    )}
+                    {/* Next to the condition, the other thing that is true of
+                        this copy rather than of the card. Only shown once the
+                        provider confirms the variant is one it still offers, so
+                        a stale value never sits on the fiche as fact. */}
+                    {resolvedVariant && (
+                      <Badge
+                        variant="outline"
+                        className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
+                      >
+                        <Sparkles className="size-3" />
+                        {resolvedVariant}
                       </Badge>
                     )}
                     {shelf?.type && (

@@ -2276,7 +2276,7 @@ export default function ItemDetailsPage() {
               <div
                 onClick={() => coverImage && setZoomImageUrl(coverImage)}
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
+                  "relative mx-auto md:mx-0 rounded-2xl shrink-0 select-none transition-all duration-300",
                   // A leaning card needs room to lean; the holo view clips
                   // itself with this radius instead.
                   variantView.foilMaskUrl
@@ -2711,7 +2711,7 @@ export default function ItemDetailsPage() {
                   <div
                     key={idx}
                     onClick={() => setZoomImageUrl(img.url)}
-                    className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 bg-zinc-100/30 dark:bg-zinc-950/30 hover:border-zinc-350 dark:hover:border-zinc-700/80 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden bg-zinc-100/30 dark:bg-zinc-950/30 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
                     <RemoteImage
                       src={img.url}
@@ -2763,7 +2763,7 @@ export default function ItemDetailsPage() {
       >
         {/* Transparent: the blur alone separates the card from the page, and a
             black plate fought the holographic sheen it was meant to showcase. */}
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none flex flex-col items-center justify-center backdrop-blur-xl">
+        <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex flex-col items-center justify-center">
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
           <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
             {zoomImageUrl &&
@@ -2772,7 +2772,7 @@ export default function ItemDetailsPage() {
                  cover itself: zooming a gallery image shows that image. */
               (variantView.foilMaskUrl &&
               urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
-                <div className="aspect-[5/7] max-h-[80vh] overflow-hidden rounded-lg shadow-2xl animate-zoom-in">
+                <div className="aspect-[5/7] max-h-[80vh] rounded-lg animate-zoom-in">
                   <HoloCardImage
                     imageUrl={variantView.imageUrl ?? zoomImageUrl}
                     alt="Zoom"

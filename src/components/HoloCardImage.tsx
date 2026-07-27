@@ -16,9 +16,22 @@ type HoloCardImageProps = {
   maskUrl?: string | null;
   /** Second, independent layer (varnish). Composited the same way. */
   varnishMaskUrl?: string | null;
+  /**
+   * How the artwork fills its box. `contain` by default: a card is meant to be
+   * seen whole, and covering cut the printed border off on both the hero and the
+   * fullscreen view.
+   *
+   * Whatever it is, the masks use the same value — they only line up with the
+   * artwork if they are letterboxed exactly like it.
+   */
+  fit?: "cover" | "contain";
   className?: string;
   children?: React.ReactNode;
 };
+
+function objectFitClass(fit: "cover" | "contain"): string {
+  return fit === "contain" ? "object-contain" : "object-cover";
+}
 
 /** Rest position: gradients centred, card flat. */
 const NEUTRAL = { x: 50, y: 50, tiltX: 0, tiltY: 0 } as const;
@@ -52,6 +65,7 @@ export function HoloCardImage({
   alt,
   maskUrl,
   varnishMaskUrl,
+  fit = "contain",
   className,
   children,
 }: HoloCardImageProps) {
@@ -97,7 +111,11 @@ export function HoloCardImage({
     return (
       <div className={cn("relative h-full w-full", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt={alt} className="h-full w-full object-cover" />
+        <img
+          src={imageUrl}
+          alt={alt}
+          className={cn("h-full w-full", objectFitClass(fit))}
+        />
         {children}
       </div>
     );
@@ -149,11 +167,20 @@ export function HoloCardImage({
         )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt={alt} className="h-full w-full object-cover" />
+        <img
+          src={imageUrl}
+          alt={alt}
+          className={cn("h-full w-full", objectFitClass(fit))}
+        />
 
-        <HoloLayer maskUrl={maskUrl} isActive={isActive} />
+        <HoloLayer maskUrl={maskUrl} isActive={isActive} fit={fit} />
         {varnishMaskUrl && (
-          <HoloLayer maskUrl={varnishMaskUrl} isActive={isActive} varnish />
+          <HoloLayer
+            maskUrl={varnishMaskUrl}
+            isActive={isActive}
+            fit={fit}
+            varnish
+          />
         )}
 
         {/* Glare rides on top of everything, unmasked: light falls on the whole card. */}
@@ -184,10 +211,12 @@ export function HoloCardImage({
 function HoloLayer({
   maskUrl,
   isActive,
+  fit,
   varnish = false,
 }: {
   maskUrl: string;
   isActive: boolean;
+  fit: "cover" | "contain";
   varnish?: boolean;
 }) {
   return (
@@ -229,7 +258,11 @@ function HoloLayer({
       <img
         src={maskUrl}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover mix-blend-multiply"
+        className={cn(
+          "absolute inset-0 h-full w-full mix-blend-multiply",
+          // Same fit as the artwork, or the mask lands off the foil areas.
+          objectFitClass(fit),
+        )}
       />
     </div>
   );

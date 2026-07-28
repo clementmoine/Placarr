@@ -39,6 +39,12 @@ export type HoloShader = {
   mixBlendMode: string;
   opacity?: number;
   filter?: string;
+  /**
+   * A second coat this finish always comes with, drawn above it through the
+   * same mask. Two finishes ship one: without it a Lore card was missing the
+   * layer that carries most of its colour.
+   */
+  overlay?: HoloShaderId;
 };
 
 export const HOLO_SHADER_IDS = [
@@ -54,6 +60,8 @@ export const HOLO_SHADER_IDS = [
   "freeForm",
   "tempest",
   "calendarWave",
+  "loreShine",
+  "satinShine",
   "hotFoil",
   "chromeRainbowHotFoil",
 ] as const;
@@ -87,6 +95,7 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
     backgroundBlendMode: "normal, multiply",
     mixBlendMode: "exclusion",
     filter: "brightness(0.5)",
+    overlay: "satinShine",
   },
 
   /** Iconique. Ten prints in the whole game. */
@@ -99,6 +108,7 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
     backgroundBlendMode: "multiply, normal",
     mixBlendMode: "exclusion",
     filter: "brightness(0.5)",
+    overlay: "loreShine",
   },
 
   lava: {
@@ -205,6 +215,35 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
     mixBlendMode: "multiply",
     opacity: 0.4,
     filter: "contrast(2) saturate(1.5)",
+  },
+
+  /**
+   * The second coat a Lore print carries. Not a variant of the finish — it is
+   * drawn above it, through the same mask, and it is where most of the colour
+   * on an Iconique card actually comes from.
+   */
+  loreShine: {
+    id: "loreShine",
+    backgroundImage: `url(${T}/lore.jpg), url(${T}/vertwavec.jpg)`,
+    backgroundRepeat: "no-repeat, repeat",
+    backgroundSize: "cover, 150% 150%",
+    backgroundPosition:
+      "center, calc(var(--colorX) * 2 + var(--colorY)) center",
+    backgroundBlendMode: "exclusion, normal",
+    mixBlendMode: "darken",
+    opacity: 0.6,
+    filter: "brightness(0.75) contrast(2) saturate(2)",
+  },
+
+  /** The same idea for Satin: one travelling highlight over the finish. */
+  satinShine: {
+    id: "satinShine",
+    backgroundImage:
+      "linear-gradient(60deg, transparent 60%, rgba(255,255,255,0.8) 70%, transparent 80%)",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "300% 100%",
+    backgroundPosition: "var(--combined) center",
+    mixBlendMode: "hard-light",
   },
 
   /**

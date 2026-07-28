@@ -97,6 +97,38 @@ describe("the library itself", () => {
   });
 });
 
+describe("extra coats", () => {
+  it("gives Lore the second coat it ships with", () => {
+    // Five layers, not three. Without this one an Iconique card lost most of
+    // its colour — the finish alone is nearly monochrome.
+    expect(holoShader("lore").overlay).toBe("loreShine");
+    expect(holoShader("satin").overlay).toBe("satinShine");
+  });
+
+  it("leaves the finishes that ship alone without one", () => {
+    for (const id of ["silver", "lava", "magma", "glitter"] as const) {
+      expect(holoShader(id).overlay).toBeUndefined();
+    }
+  });
+
+  it("points every overlay at a look that exists", () => {
+    // A dangling id would render nothing and look like a missing layer again.
+    for (const id of HOLO_SHADER_IDS) {
+      const overlay = holoShader(id).overlay;
+      if (overlay) expect(holoShader(overlay).id).toBe(overlay);
+    }
+  });
+
+  it("never chains one overlay into another", () => {
+    // Only one extra coat is drawn, so an overlay carrying its own would be
+    // silently dropped.
+    for (const id of HOLO_SHADER_IDS) {
+      const overlay = holoShader(id).overlay;
+      if (overlay) expect(holoShader(overlay).overlay).toBeUndefined();
+    }
+  });
+});
+
 describe("holoLayerStyle", () => {
   it("carries the whole recipe onto the element", () => {
     const style = holoLayerStyle(holoShader("silver"));

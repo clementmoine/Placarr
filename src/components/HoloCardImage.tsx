@@ -283,6 +283,24 @@ export function HoloCardImage({
           )}
         />
 
+        {/*
+          The extra coat some finishes ship with, drawn above the finish and
+          through the same mask. A Lore card has five layers, not three, and
+          this is where most of its colour comes from — without it the finish
+          alone is nearly monochrome.
+        */}
+        {shader.overlay && (
+          <div
+            aria-hidden
+            style={{
+              ...holoLayerStyle(holoShader(shader.overlay)),
+              mask: `url(#${foilMaskId})`,
+              WebkitMask: `url(#${foilMaskId})`,
+            }}
+            className="pointer-events-none absolute inset-0"
+          />
+        )}
+
         {varnishMaskUrl && (
           <div
             aria-hidden

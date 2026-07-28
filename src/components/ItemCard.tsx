@@ -10,6 +10,12 @@ import {
   SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
+import { HoloCardImage } from "@/components/HoloCardImage";
+import {
+  variantRendering,
+  type PrintVariantInfo,
+} from "@/lib/client/hooks/usePrintVariant";
+import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import {
   edgeGradient,
   useImageEdgeColors,
@@ -37,6 +43,11 @@ function conditionBadgeClass(condition: Condition) {
 }
 
 interface ItemCardProps extends Item {
+  /**
+   * What this copy is a print of, when the shelf could resolve it. Resolved for
+   * the whole shelf at once rather than per tile — see `usePrintVariants`.
+   */
+  printVariant?: PrintVariantInfo | null;
   shelfType?: string | null;
   shelfName?: string | null;
   cardFormat?: string | null;
@@ -64,6 +75,8 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.priority === next.priority &&
     prev.metadataId === next.metadataId &&
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
+    prev.variant === next.variant &&
+    prev.printVariant === next.printVariant &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
     (prev.metadata?.attachments?.length ?? 0) ===
       (next.metadata?.attachments?.length ?? 0) &&
@@ -73,6 +86,20 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
 
 function ItemCardInner(props: ItemCardProps) {
   const { imageUrl, name, shelfType, cardFormat, condition, priority } = props;
+  /**
+   * A foil copy has to be recognisable in the grid, not only once opened —
+   * otherwise the one thing that separates it from an ordinary copy is
+   * invisible exactly where a collector scans their collection.
+   */
+  const variantView = variantRendering(
+    props.variant,
+    props.printVariant ?? null,
+    imageUrl,
+  );
+  const foilMaskUrl = useMirroredCropMask(
+    variantView.imageUrl,
+    variantView.foilMaskUrl,
+  );
   const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
@@ -156,6 +183,11 @@ function ItemCardInner(props: ItemCardProps) {
               {estimatedPrice.euros.toFixed(2)} €
             </span>
           )}
+          {variantView.foilMaskUrl && (
+            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
+              ✦ {props.variant}
+            </span>
+          )}
           {condition && (
             <span
               className={cn(
@@ -187,16 +219,26 @@ function ItemCardInner(props: ItemCardProps) {
           }
         >
           {/* Main Cover Image */}
-          <RemoteImage
-            src={displayImageUrl}
-            alt={name}
-            priority={priority}
-            onLoad={handleImageLoad}
-            className={[
-              "w-full h-full select-none transition-transform duration-500 ease-out object-center",
-              imageFit === "contain" ? "object-contain" : "object-cover",
-            ].join(" ")}
-          />
+          {foilMaskUrl ? (
+            <HoloCardImage
+              imageUrl={variantView.imageUrl ?? displayImageUrl}
+              alt={name}
+              maskUrl={foilMaskUrl}
+              shader={variantView.shader}
+              fit={imageFit}
+            />
+          ) : (
+            <RemoteImage
+              src={displayImageUrl}
+              alt={name}
+              priority={priority}
+              onLoad={handleImageLoad}
+              className={[
+                "w-full h-full select-none transition-transform duration-500 ease-out object-center",
+                imageFit === "contain" ? "object-contain" : "object-cover",
+              ].join(" ")}
+            />
+          )}
           {/* subtle dark overlay gradient for title legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
         </div>

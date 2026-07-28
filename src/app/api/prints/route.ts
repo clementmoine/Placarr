@@ -19,6 +19,12 @@ function parseLimit(raw: string | null): number | undefined {
 }
 
 /**
+ * Ceiling on a batch. A shelf is paginated well below this; the cap is there so
+ * a crafted query cannot ask the provider for the whole set at once.
+ */
+const MAX_BATCH_KEYS = 120;
+
+/**
  * Print search for shelves that cannot be scanned. Cards carry no barcode, so
  * this is how an item gets identified before it exists.
  */
@@ -31,6 +37,40 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get("q")?.trim();
     const printKey = searchParams.get("printKey")?.trim();
     const type = searchParams.get("type")?.trim();
+
+    /**
+     * A whole shelf at once. Each tile needs to know what its copy is a print
+     * of before it can draw the right foil, and a shelf holds dozens — one
+     * request each would be dozens of round trips for an answer the provider
+     * already holds in memory.
+     */
+    const printKeys = searchParams.get("printKeys")?.trim();
+    if (printKeys && type) {
+      const keys = [
+        ...new Set(
+          printKeys
+            .split(",")
+            .map((key) => key.trim())
+            .filter(Boolean),
+        ),
+      ].slice(0, MAX_BATCH_KEYS);
+
+      const found = await Promise.all(
+        keys.map((key) =>
+          lookupPrintCandidate(key, type, { signal: req.signal }).catch(
+            // One unknown print must not cost the shelf its other answers.
+            () => null,
+          ),
+        ),
+      );
+
+      return NextResponse.json({
+        supported: true,
+        candidates: Object.fromEntries(
+          keys.map((key, index) => [key, found[index]]).filter(([, c]) => c),
+        ),
+      });
+    }
 
     // Lookup by key answers what a print *is* — its finishes, above all — so
     // nothing has to persist a copy of that answer.

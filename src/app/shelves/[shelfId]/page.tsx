@@ -55,6 +55,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
+import { usePrintVariants } from "@/lib/client/hooks/usePrintVariants";
+import type { PrintVariantInfo } from "@/lib/client/hooks/usePrintVariant";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { ItemModal } from "@/components/modals/ItemModal";
 import { PrintPickerModal } from "@/components/modals/PrintPickerModal";
@@ -113,6 +115,8 @@ type ShelfGridItemProps = {
   selectionMode: boolean;
   isSelected: boolean;
   canSelect: boolean;
+  /** What this copy is a print of, resolved once for the whole shelf. */
+  printVariant?: PrintVariantInfo | null;
   onSelect: (itemId: string, options?: { shiftKey?: boolean }) => void;
 };
 
@@ -124,6 +128,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   selectionMode,
   isSelected,
   canSelect,
+  printVariant,
   onSelect,
 }: ShelfGridItemProps) {
   const { t } = useLocale();
@@ -131,6 +136,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   const card = (
     <ItemCard
       {...item}
+      printVariant={printVariant}
       shelfType={shelf?.type}
       shelfName={shelf?.name}
       cardFormat={shelf?.cardFormat}
@@ -383,6 +389,18 @@ function ShelfComponent() {
       shelfType: shelf.type,
     });
   }, [shelf, sortBy]);
+
+  /**
+   * What each copy is a print of, for the whole shelf in one request.
+   *
+   * A foil copy has to be recognisable in the grid and not only once opened —
+   * otherwise the one thing separating it from an ordinary copy is invisible
+   * exactly where a collector scans their collection.
+   */
+  const printVariants = usePrintVariants(
+    useMemo(() => sortedItems.map((item) => item.printKey), [sortedItems]),
+    shelf?.type,
+  );
 
   const totalValue = useMemo(() => {
     if (!shelf?.items) return { total: 0, includesEstimates: false };
@@ -939,6 +957,7 @@ function ShelfComponent() {
                     selectionMode={selectionMode}
                     isSelected={selectedItemIds.has(item.id)}
                     canSelect={Boolean(isAuthenticated && !isGuest && canEdit)}
+                    printVariant={printVariants[item.printKey ?? ""]}
                     onSelect={beginSelection}
                   />
                 ),

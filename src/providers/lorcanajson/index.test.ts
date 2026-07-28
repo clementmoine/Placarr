@@ -49,6 +49,14 @@ describe("toPrintCandidate finishes", () => {
     ).toEqual({ RainbowPillars: "rainbow" });
   });
 
+  it("gives the Iconique line its own showpiece look", () => {
+    // `Lore` is on ten prints in the whole game, all hot-foiled. Sharing
+    // `sheen` with Satin made the rarest cards the dullest on the shelf.
+    expect(
+      toPrintCandidate(card({ foilTypes: ["Lore"] })).finishShaders,
+    ).toEqual({ Lore: "lore" });
+  });
+
   it("separates the smooth finishes from the toothy ones", () => {
     expect(
       toPrintCandidate(card({ foilTypes: ["Satin"] })).finishShaders,

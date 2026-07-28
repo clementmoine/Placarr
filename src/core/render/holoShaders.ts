@@ -35,6 +35,7 @@ export type HoloShader = {
 
 export const HOLO_SHADER_IDS = [
   "silver",
+  "lore",
   "rainbow",
   "aurora",
   "sheen",
@@ -100,9 +101,29 @@ const AURORA: HoloShader = {
   // so what crosses it is a single light rather than a stack of stripes.
   sweepScale: "260% 260%",
   sweepFilter: "brightness(0.62) contrast(1.7) saturate(1.35)",
-  sweepOpacity: { idle: 0.38, active: 0.85 },
+  sweepOpacity: { idle: 0.5, active: 0.85 },
   grainOpacity: { idle: 0.35, active: 0.8 },
   grainScale: "190px 190px",
+};
+
+/**
+ * The showpiece look, for the tier a game prints ten of.
+ *
+ * Loud at rest, and that is the point. `silver` rests dark because unlit metal
+ * *is* dark, and that reasoning does not carry: it was generalised to every
+ * look here and left an Iconique card — one of ten in 3154 prints — rendering
+ * fainter than a common. A card someone opened a case to find has to announce
+ * itself sitting still.
+ */
+const LORE: HoloShader = {
+  id: "lore",
+  sweep:
+    "repeating-linear-gradient(108deg, #2b1f00 0%, #ffdf7a 3%, #ffffff 5%, #ffc4e8 7%, #7ad4ff 9%, #2b1f00 13%)",
+  sweepScale: "250% 250%",
+  sweepFilter: "brightness(0.68) contrast(2) saturate(1.4)",
+  sweepOpacity: { idle: 0.6, active: 0.95 },
+  grainOpacity: { idle: 0.65, active: 1 },
+  grainScale: "130px 130px",
 };
 
 /** One soft warm highlight, no spectrum: a smooth finish, not a diffracting one. */
@@ -112,8 +133,8 @@ const SHEEN: HoloShader = {
     "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)",
   sweepScale: "200% 200%",
   sweepFilter: "brightness(0.7) contrast(1.6)",
-  sweepOpacity: { idle: 0.16, active: 0.6 },
-  grainOpacity: { idle: 0.12, active: 0.4 },
+  sweepOpacity: { idle: 0.42, active: 0.7 },
+  grainOpacity: { idle: 0.3, active: 0.5 },
   grainScale: "150px 150px",
 };
 
@@ -124,18 +145,26 @@ const SPARKLE: HoloShader = {
     "repeating-linear-gradient(100deg, #fff6d5 0%, #ffffff 20%, #ffe9f5 40%, #ffffff 60%, #fff6d5 80%)",
   sweepScale: "220% 220%",
   sweepFilter: "brightness(0.45) contrast(1.9)",
-  sweepOpacity: { idle: 0.2, active: 0.6 },
-  grainOpacity: { idle: 0.5, active: 1 },
+  sweepOpacity: { idle: 0.35, active: 0.65 },
+  grainOpacity: { idle: 0.8, active: 1 },
   grainScale: "110px 110px",
 };
 
 const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
   silver: SILVER,
+  lore: LORE,
   rainbow: RAINBOW,
   aurora: AURORA,
   sheen: SHEEN,
   sparkle: SPARKLE,
 };
+
+/**
+ * The one look allowed to be nearly invisible at rest, because unlit metal is.
+ * Every other finish marks a card as rarer than plain, so it has to say so
+ * without being touched — see the floor this is excepted from in the tests.
+ */
+export const RESTS_DARK_SHADER_ID: HoloShaderId = "silver";
 
 /** What an unrecognized or missing look falls back to. */
 export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "silver";

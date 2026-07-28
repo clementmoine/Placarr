@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_HOLO_SHADER_ID,
+  RESTS_DARK_SHADER_ID,
   HOLO_SHADER_IDS,
   holoShader,
   isHoloShaderId,
@@ -60,6 +61,30 @@ describe("the library itself", () => {
       );
       expect(r).toBe(g);
       expect(g).toBe(b);
+    }
+  });
+
+  it("stays legible at rest, except for the one look that must not be", () => {
+    // The reasoning behind `silver` — unlit metal is dark — was generalised to
+    // every look, and an Iconique card, ten of which exist in 3154 prints,
+    // ended up fainter at rest than a common. A finish marks a card as rarer
+    // than plain; it has to say so before anyone touches it.
+    for (const id of HOLO_SHADER_IDS) {
+      if (id === RESTS_DARK_SHADER_ID) continue;
+      expect(holoShader(id).sweepOpacity.idle).toBeGreaterThanOrEqual(0.3);
+    }
+    expect(holoShader(RESTS_DARK_SHADER_ID).sweepOpacity.idle).toBeLessThan(
+      0.3,
+    );
+  });
+
+  it("saves the loudest look for the tier a game prints ten of", () => {
+    const lore = holoShader("lore").sweepOpacity;
+    for (const id of HOLO_SHADER_IDS) {
+      if (id === "lore") continue;
+      expect(lore.idle).toBeGreaterThanOrEqual(
+        holoShader(id).sweepOpacity.idle,
+      );
     }
   });
 

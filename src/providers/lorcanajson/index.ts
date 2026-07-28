@@ -64,9 +64,12 @@ const FINISH_SHADERS: Readonly<Record<string, string>> = {
   Magma: "aurora",
   VerticalWave: "aurora",
   SeaWave: "aurora",
-  // Épique, and the Iconique line: a smooth coat, not a diffracting one.
+  // Épique: a smooth coat, not a diffracting one.
   Satin: "sheen",
-  Lore: "sheen",
+  // Iconique. Ten prints in the whole game, every one of them hot-foiled —
+  // lumping them in with Satin was a guess, and it made them the dullest cards
+  // on the shelf.
+  Lore: "lore",
   // Finishes whose name is the tooth itself.
   Glitter: "sparkle",
   // The one finish that really is a spectrum.

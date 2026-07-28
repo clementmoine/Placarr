@@ -167,21 +167,35 @@
   initial-value: 100%;
 }
 
+@property --opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 @keyframes holo-drift {
+  /* The glare moves with the light rather than waiting for a pointer. Held at
+     zero, a resting card only shifted its textures, which reads as almost
+     nothing at thumbnail size — where a collector most needs to tell a foil
+     copy from an ordinary one. Well under the value hovering gives, so the
+     pointer still has somewhere to go. */
   0% {
     --colorX: 22%;
     --colorY: 28%;
     --combined: 50%;
+    --opacity: 0.12;
   }
   50% {
     --colorX: 78%;
     --colorY: 72%;
     --combined: 150%;
+    --opacity: 0.3;
   }
   100% {
     --colorX: 22%;
     --colorY: 28%;
     --combined: 50%;
+    --opacity: 0.12;
   }
 }
 

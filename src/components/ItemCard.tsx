@@ -226,6 +226,9 @@ function ItemCardInner(props: ItemCardProps) {
               maskUrl={foilMaskUrl}
               shader={variantView.shader}
               fit={imageFit}
+              // A wall of tiles each tipping under the cursor reads as the page
+              // squirming. The light still drifts, which is what marks the copy.
+              tilt={false}
             />
           ) : (
             <RemoteImage

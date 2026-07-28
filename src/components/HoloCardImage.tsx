@@ -43,6 +43,14 @@ type HoloCardImageProps = {
    */
   varnishColor?: string;
   /**
+   * Whether the card leans under the pointer.
+   *
+   * Off in a grid: a wall of tiles each tipping as the cursor crosses them
+   * reads as the page squirming, not as cards. The light still drifts on its
+   * own — that is what marks the copy as foil — but nothing moves in 3D.
+   */
+  tilt?: boolean;
+  /**
    * Label for the control that asks iOS for the motion sensor. Passed in rather
    * than translated here so this component stays free of the locale plumbing.
    */
@@ -84,6 +92,7 @@ export function HoloCardImage({
   shader = holoShader(null),
   varnishShader = varnishShaderFor(null),
   varnishColor = "#5ff0ff",
+  tilt = true,
   tiltPromptLabel = "Incliner",
   className,
   children,
@@ -92,6 +101,13 @@ export function HoloCardImage({
   const [isActive, setIsActive] = useState(false);
   const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
   const foilMaskId = `holoFoil${instanceId}`;
+  /**
+   * The mask has to be letterboxed exactly like the artwork it confines. On the
+   * detail page the frame is already the card's shape so it never showed, but a
+   * shelf tile has whatever shape the shelf is configured for — stretching the
+   * mask to fill it put the foil off the card.
+   */
+  const maskAspect = fit === "contain" ? "xMidYMid meet" : "xMidYMid slice";
   const varnishMaskId = `holoVarnish${instanceId}`;
 
   /**
@@ -99,7 +115,7 @@ export function HoloCardImage({
    * still — an effect that exists to be played with could not be. Tilting the
    * phone is the gesture people already make holding a real card.
    */
-  const deviceTilt = useDeviceTilt(MAX_TILT, Boolean(maskUrl));
+  const deviceTilt = useDeviceTilt(MAX_TILT, tilt && Boolean(maskUrl));
   const deviceLean = deviceTilt.lean;
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
@@ -175,12 +191,16 @@ export function HoloCardImage({
   return (
     <div
       ref={frameRef}
-      onPointerMove={(event) => {
-        setIsActive(true);
-        applyPointer(event.clientX, event.clientY);
-      }}
-      onPointerLeave={reset}
-      onPointerCancel={reset}
+      onPointerMove={
+        tilt
+          ? (event) => {
+              setIsActive(true);
+              applyPointer(event.clientX, event.clientY);
+            }
+          : undefined
+      }
+      onPointerLeave={tilt ? reset : undefined}
+      onPointerCancel={tilt ? reset : undefined}
       style={
         {
           "--colorX": "50%",
@@ -194,7 +214,9 @@ export function HoloCardImage({
       }
       className={cn(
         // `rounded-[inherit]` only chains if every level passes the radius down.
-        "relative h-full w-full rounded-[inherit] [perspective:900px]",
+        "relative h-full w-full rounded-[inherit]",
+        // No perspective when nothing leans: it would only cost a layer.
+        tilt && "[perspective:900px]",
         // The drift animates this element's own custom properties, which every
         // layer is positioned against, so it belongs here rather than on any
         // one of them.
@@ -216,7 +238,7 @@ export function HoloCardImage({
             href={maskUrl}
             width="1"
             height="1"
-            preserveAspectRatio="none"
+            preserveAspectRatio={maskAspect}
           />
         </mask>
         {varnishMaskUrl && (
@@ -235,7 +257,7 @@ export function HoloCardImage({
               href={varnishMaskUrl}
               width="1"
               height="1"
-              preserveAspectRatio="none"
+              preserveAspectRatio={maskAspect}
               filter="url(#holo-varnish-coverage)"
             />
           </mask>
@@ -248,20 +270,25 @@ export function HoloCardImage({
          * `transform-gpu` also writes `transform`, and it won — the card never
          * leaned at all, it only looked like it might.
          */
-        style={{
-          transform: "rotateX(var(--rotateY)) rotateY(var(--rotateX))",
-          willChange: "transform",
-        }}
+        style={
+          tilt
+            ? {
+                transform: "rotateX(var(--rotateY)) rotateY(var(--rotateX))",
+                willChange: "transform",
+              }
+            : undefined
+        }
         className={cn(
           // Clipping belongs to the element that rotates, with the container's
           // own radius: left on an ancestor, a leaning card gets its corners
           // sliced off flat instead of turning.
           "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
-          isDriven
-            ? "transition-transform duration-200 ease-out"
-            : // Breathing on its own, so a foil copy reads as special before
-              // anyone touches it. The pointer takes over on hover.
-              "holo-idle-tilt",
+          tilt &&
+            (isDriven
+              ? "transition-transform duration-200 ease-out"
+              : // Breathing on its own, so a foil copy reads as special before
+                // anyone touches it. The pointer takes over on hover.
+                "holo-idle-tilt"),
         )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

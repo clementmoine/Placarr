@@ -195,6 +195,10 @@ export function HoloCardImage({
       className={cn(
         // `rounded-[inherit]` only chains if every level passes the radius down.
         "relative h-full w-full rounded-[inherit] [perspective:900px]",
+        // The drift animates this element's own custom properties, which every
+        // layer is positioned against, so it belongs here rather than on any
+        // one of them.
+        !isDriven && "holo-idle-sheen",
         className,
       )}
     >
@@ -274,10 +278,7 @@ export function HoloCardImage({
             mask: `url(#${foilMaskId})`,
             WebkitMask: `url(#${foilMaskId})`,
           }}
-          className={cn(
-            "pointer-events-none absolute inset-0",
-            !isDriven && "holo-idle-sheen",
-          )}
+          className="pointer-events-none absolute inset-0"
         />
 
         {/*

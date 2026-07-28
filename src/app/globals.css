@@ -135,19 +135,53 @@
 }
 
 /* Holographic card, idle state.
-   A foil copy has to read as special before anyone touches it, so the sheen
+   A foil copy has to read as special before anyone touches it, so the light
    drifts on its own and the card breathes; the pointer takes over on hover.
-   Both stop under `prefers-reduced-motion` — the sheen stays, it just holds
-   still, because it is information, not decoration. */
+   Both stop under `prefers-reduced-motion` — the foil stays, it just holds
+   still, because it is information, not decoration.
+
+   The light moves by animating the same properties the pointer writes, never
+   `background-position` directly. A finish is two or three textures with
+   different positions — one travelling, one held centred and covering — and a
+   keyframe on `background-position` sets a single value for all of them, which
+   flattens the recipe into a smear. It also beats the inline styles the recipe
+   is applied through, so the effect it destroys is the whole effect.
+
+   Registering them is what makes them interpolate; an unregistered custom
+   property animates as a string, in one discrete jump. */
+@property --colorX {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --colorY {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --combined {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
 @keyframes holo-drift {
   0% {
-    background-position: 15% 20%;
+    --colorX: 22%;
+    --colorY: 28%;
+    --combined: 50%;
   }
   50% {
-    background-position: 85% 80%;
+    --colorX: 78%;
+    --colorY: 72%;
+    --combined: 150%;
   }
   100% {
-    background-position: 15% 20%;
+    --colorX: 22%;
+    --colorY: 28%;
+    --combined: 50%;
   }
 }
 

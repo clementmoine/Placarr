@@ -8,6 +8,7 @@ import {
   varnishShader as varnishShaderFor,
   type HoloShader,
 } from "@/core/render/holoShaders";
+import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { cn } from "@/lib/shared/utils";
 
@@ -103,21 +104,25 @@ export function HoloCardImage({
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
 
-  /** The whole contract the recipes are written against. */
-  const place = useCallback(
-    (x: number, y: number, tiltX: number, tiltY: number, glare: number) => {
-      const frame = frameRef.current;
-      if (!frame) return;
-      frame.style.setProperty("--colorX", `${x}%`);
-      frame.style.setProperty("--colorY", `${y}%`);
-      // The recipes lean on the sum as a single travelling coordinate.
-      frame.style.setProperty("--combined", `${x + y}%`);
-      frame.style.setProperty("--rotateX", `${tiltY}deg`);
-      frame.style.setProperty("--rotateY", `${tiltX}deg`);
-      frame.style.setProperty("--opacity", `${glare}`);
-    },
-    [],
-  );
+  /**
+   * The whole contract the recipes are written against.
+   *
+   * `--rotateX` is the amount *driven by* X, and it feeds `rotateY()` — the
+   * pairing is crossed, because moving sideways turns a card about its vertical
+   * axis. Writing them the other way round is silent: the card still moves, it
+   * just leans into the pointer on one axis and away on the other.
+   */
+  const place = useCallback((lean: Lean, glare: number) => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    frame.style.setProperty("--colorX", `${lean.lightX}%`);
+    frame.style.setProperty("--colorY", `${lean.lightY}%`);
+    // The recipes lean on the sum as a single travelling coordinate.
+    frame.style.setProperty("--combined", `${lean.lightX + lean.lightY}%`);
+    frame.style.setProperty("--rotateX", `${lean.tiltY}deg`);
+    frame.style.setProperty("--rotateY", `${lean.tiltX}deg`);
+    frame.style.setProperty("--opacity", `${glare}`);
+  }, []);
 
   const applyPointer = useCallback(
     (clientX: number, clientY: number) => {
@@ -125,16 +130,12 @@ export function HoloCardImage({
       if (!frame) return;
       const rect = frame.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-
-      const clamp = (value: number) => Math.min(100, Math.max(0, value));
-      const x = clamp(((clientX - rect.left) / rect.width) * 100);
-      const y = clamp(((clientY - rect.top) / rect.height) * 100);
-      // Lean away from the pointer, the way a card tips under a finger.
       place(
-        x,
-        y,
-        ((x - 50) / 50) * MAX_TILT,
-        ((y - 50) / 50) * -MAX_TILT,
+        leanFromPointer(
+          ((clientX - rect.left) / rect.width) * 100,
+          ((clientY - rect.top) / rect.height) * 100,
+          MAX_TILT,
+        ),
         0.66,
       );
     },
@@ -143,7 +144,7 @@ export function HoloCardImage({
 
   const reset = useCallback(() => {
     setIsActive(false);
-    place(NEUTRAL.x, NEUTRAL.y, 0, 0, 0);
+    place(leanFromPointer(NEUTRAL.x, NEUTRAL.y, MAX_TILT), 0);
   }, [place]);
 
   // The sensor drives the same properties the pointer does, so the two never
@@ -151,13 +152,9 @@ export function HoloCardImage({
   // mouse user tilting their laptop is not making a gesture.
   useEffect(() => {
     if (!deviceLean || isActive) return;
-    place(
-      deviceLean.lightX,
-      deviceLean.lightY,
-      deviceLean.tiltY,
-      deviceLean.tiltX,
-      0.4,
-    );
+    // The same shape the pointer produces, so the two inputs cannot disagree
+    // about which way the card turns.
+    place(deviceLean, 0.4);
   }, [deviceLean, isActive, place]);
 
   /** No mask, no effect — better a plain card than a uniformly shiny one. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   gravityFromOrientation,
+  leanFromPointer,
   leanFromGravity,
   orientationNeedsPermission,
   smoothGravity,
@@ -133,5 +134,50 @@ describe("orientationNeedsPermission", () => {
     expect(orientationNeedsPermission(function () {})).toBe(false);
     expect(orientationNeedsPermission(undefined)).toBe(false);
     expect(orientationNeedsPermission({ requestPermission: 1 })).toBe(false);
+  });
+});
+
+describe("leanFromPointer", () => {
+  it("rests flat with the pointer at the centre", () => {
+    expect(leanFromPointer(50, 50, 18)).toEqual({
+      tiltX: -0,
+      tiltY: 0,
+      lightX: 50,
+      lightY: 50,
+    });
+  });
+
+  it("crosses the axes: sideways turns the card about its vertical one", () => {
+    // A port once wired X to the up-down rotation and Y to the left-right one.
+    // The card still moved, so it read as a magnetism that pushed on one axis
+    // and pulled on the other rather than as an outright bug.
+    const right = leanFromPointer(100, 50, 18);
+    expect(right.tiltY).toBeCloseTo(18, 6);
+    expect(right.tiltX).toBeCloseTo(0, 6);
+
+    const bottom = leanFromPointer(50, 100, 18);
+    expect(bottom.tiltX).toBeCloseTo(-18, 6);
+    expect(bottom.tiltY).toBeCloseTo(0, 6);
+  });
+
+  it("leans away from the pointer, not into it", () => {
+    expect(leanFromPointer(100, 50, 18).tiltY).toBeGreaterThan(0);
+    expect(leanFromPointer(0, 50, 18).tiltY).toBeLessThan(0);
+    expect(leanFromPointer(50, 0, 18).tiltX).toBeGreaterThan(0);
+    expect(leanFromPointer(50, 100, 18).tiltX).toBeLessThan(0);
+  });
+
+  it("agrees with the phone about which way is which", () => {
+    // Both inputs write the same properties; if they disagreed, picking a card
+    // up mid-hover would flip it.
+    const pointer = leanFromPointer(100, 50, 18);
+    const phone = leanFromGravity({ x: 1, y: 0, z: 0 }, FLAT, 18);
+    expect(Math.sign(pointer.tiltY)).toBe(Math.sign(phone.tiltY));
+    expect(pointer.lightX).toBeCloseTo(phone.lightX, 6);
+  });
+
+  it("never leans past the maximum, however far outside the card", () => {
+    expect(leanFromPointer(400, -400, 18).tiltY).toBeCloseTo(18, 6);
+    expect(leanFromPointer(400, -400, 18).tiltX).toBeCloseTo(18, 6);
   });
 });

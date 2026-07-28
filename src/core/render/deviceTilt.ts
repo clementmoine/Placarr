@@ -16,7 +16,15 @@ export type OrientationReading = {
 /** Which way down is, from the device's point of view. */
 export type GravityVector = { x: number; y: number; z: number };
 
-/** How far the card leans, in the same units the pointer path produces. */
+/**
+ * How far the card leans, and where the light sits.
+ *
+ * `tiltX` and `tiltY` are named for the axis they *rotate about*, not the input
+ * that drives them, and the pairing is crossed: moving sideways turns the card
+ * about its vertical axis. Getting that backwards is silent — the card still
+ * moves, it just leans into the pointer instead of away from it — so it is
+ * pinned by tests rather than left to reading.
+ */
 export type Lean = {
   tiltX: number;
   tiltY: number;
@@ -114,4 +122,23 @@ export function orientationNeedsPermission(
     typeof (eventClass as { requestPermission?: unknown }).requestPermission ===
       "function"
   );
+}
+
+/**
+ * The lean a pointer at (x, y) should produce, both as percentages of the card.
+ *
+ * Shares its shape with {@link leanFromGravity} so the pointer and the phone
+ * hand the renderer the same thing. The card leans *away* from the pointer, the
+ * way one tips under a finger.
+ */
+export function leanFromPointer(x: number, y: number, maxTilt: number): Lean {
+  const clamp = (value: number) => Math.min(100, Math.max(0, value));
+  const px = clamp(x);
+  const py = clamp(y);
+  return {
+    tiltY: ((px - 50) / 50) * maxTilt,
+    tiltX: ((py - 50) / 50) * -maxTilt,
+    lightX: px,
+    lightY: py,
+  };
 }

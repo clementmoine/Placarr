@@ -100,6 +100,13 @@ function ItemCardInner(props: ItemCardProps) {
     variantView.imageUrl,
     variantView.foilMaskUrl,
   );
+  // The stamped coat is a layer of its own, and on the tiers that carry one it
+  // is most of what makes the card look special. Leaving it to the detail page
+  // meant a hot-foiled print was drawn on the shelf as a plain foil.
+  const varnishMaskUrl = useMirroredCropMask(
+    variantView.imageUrl,
+    variantView.varnishMaskUrl,
+  );
   const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
@@ -224,7 +231,9 @@ function ItemCardInner(props: ItemCardProps) {
               imageUrl={variantView.imageUrl ?? displayImageUrl}
               alt={name}
               maskUrl={foilMaskUrl}
+              varnishMaskUrl={varnishMaskUrl}
               shader={variantView.shader}
+              varnishShader={variantView.varnish}
               fit={imageFit}
               // A wall of tiles each tipping under the cursor reads as the page
               // squirming. The light still drifts, which is what marks the copy.

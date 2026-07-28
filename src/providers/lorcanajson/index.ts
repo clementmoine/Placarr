@@ -57,17 +57,20 @@ const PLAIN_FINISH = "None";
  * at yet: the copy is foil, we just have no better word for how.
  */
 const FINISH_SHADERS: Readonly<Record<string, string>> = {
-  // Enchanted only. Broad pastel wash rather than bands.
+  // The everyday foil, on 2703 of 3154 prints. Named for a metal, drawn as one.
+  Silver: "silver",
+  // Enchanted only. Broad pastel wash rather than streaks.
   Lava: "aurora",
   Magma: "aurora",
   VerticalWave: "aurora",
-  // Épique, and the Iconique line: a smooth finish, not a diffracting one.
+  SeaWave: "aurora",
+  // Épique, and the Iconique line: a smooth coat, not a diffracting one.
   Satin: "sheen",
   Lore: "sheen",
   // Finishes whose name is the tooth itself.
   Glitter: "sparkle",
-  RainbowPillars: "sparkle",
-  SeaWave: "aurora",
+  // The one finish that really is a spectrum.
+  RainbowPillars: "rainbow",
 };
 const PROVIDER_LABEL = "LorcanaJSON";
 

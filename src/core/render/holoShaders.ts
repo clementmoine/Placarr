@@ -34,7 +34,8 @@ export type HoloShader = {
 };
 
 export const HOLO_SHADER_IDS = [
-  "rainbowBands",
+  "silver",
+  "rainbow",
   "aurora",
   "sheen",
   "sparkle",
@@ -42,15 +43,42 @@ export const HOLO_SHADER_IDS = [
 
 export type HoloShaderId = (typeof HOLO_SHADER_IDS)[number];
 
-/** Tight repeating spectrum: the everyday foil, and the fallback for anything unknown. */
-const RAINBOW_BANDS: HoloShader = {
-  id: "rainbowBands",
+/**
+ * Brushed metal: the everyday foil, and the fallback for anything unknown.
+ *
+ * Achromatic on purpose. This started life as a rainbow, which was simply the
+ * wrong reading of the word — the publisher calls the finish *Silver*, and
+ * silver is not a spectrum. Colour here made every common card look like the
+ * rarest ones.
+ *
+ * Narrow bright streaks separated by black, because `color-dodge` leaves black
+ * untouched: the lit parts read as reflections catching an edge rather than as
+ * a wash lying over the whole card. Metal does not glow evenly.
+ *
+ * And it rests dark. Unlit silver is nearly the plain card; the light arrives
+ * with the pointer, which is why its two states are further apart than any
+ * other look here.
+ */
+const SILVER: HoloShader = {
+  id: "silver",
+  sweep:
+    "repeating-linear-gradient(105deg, #000000 0%, #4a4a4a 2.5%, #f2f2f2 4.5%, #8a8a8a 6.5%, #000000 10%)",
+  sweepScale: "230% 230%",
+  sweepFilter: "brightness(0.72) contrast(1.5)",
+  sweepOpacity: { idle: 0.22, active: 0.85 },
+  grainOpacity: { idle: 0.3, active: 0.75 },
+  grainScale: "150px 150px",
+};
+
+/** An actual spectrum, for the finishes that really are one. */
+const RAINBOW: HoloShader = {
+  id: "rainbow",
   sweep:
     "repeating-linear-gradient(115deg, #ff6b8b 0%, #ffe066 12%, #6bffb8 24%, #6bd5ff 36%, #b98bff 48%, #ff6b8b 60%)",
   sweepScale: "300% 300%",
   sweepFilter: "brightness(0.55) contrast(2.2) saturate(1.5)",
-  sweepOpacity: { idle: 0.5, active: 0.65 },
-  grainOpacity: { idle: 0.7, active: 0.9 },
+  sweepOpacity: { idle: 0.34, active: 0.75 },
+  grainOpacity: { idle: 0.45, active: 0.9 },
   grainScale: "160px 160px",
 };
 
@@ -72,8 +100,8 @@ const AURORA: HoloShader = {
   // so what crosses it is a single light rather than a stack of stripes.
   sweepScale: "260% 260%",
   sweepFilter: "brightness(0.62) contrast(1.7) saturate(1.35)",
-  sweepOpacity: { idle: 0.62, active: 0.8 },
-  grainOpacity: { idle: 0.55, active: 0.75 },
+  sweepOpacity: { idle: 0.38, active: 0.85 },
+  grainOpacity: { idle: 0.35, active: 0.8 },
   grainScale: "190px 190px",
 };
 
@@ -84,8 +112,8 @@ const SHEEN: HoloShader = {
     "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)",
   sweepScale: "200% 200%",
   sweepFilter: "brightness(0.7) contrast(1.6)",
-  sweepOpacity: { idle: 0.25, active: 0.4 },
-  grainOpacity: { idle: 0.2, active: 0.35 },
+  sweepOpacity: { idle: 0.16, active: 0.6 },
+  grainOpacity: { idle: 0.12, active: 0.4 },
   grainScale: "150px 150px",
 };
 
@@ -96,20 +124,21 @@ const SPARKLE: HoloShader = {
     "repeating-linear-gradient(100deg, #fff6d5 0%, #ffffff 20%, #ffe9f5 40%, #ffffff 60%, #fff6d5 80%)",
   sweepScale: "220% 220%",
   sweepFilter: "brightness(0.45) contrast(1.9)",
-  sweepOpacity: { idle: 0.3, active: 0.45 },
-  grainOpacity: { idle: 0.95, active: 1 },
+  sweepOpacity: { idle: 0.2, active: 0.6 },
+  grainOpacity: { idle: 0.5, active: 1 },
   grainScale: "110px 110px",
 };
 
 const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
-  rainbowBands: RAINBOW_BANDS,
+  silver: SILVER,
+  rainbow: RAINBOW,
   aurora: AURORA,
   sheen: SHEEN,
   sparkle: SPARKLE,
 };
 
 /** What an unrecognized or missing look falls back to. */
-export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "rainbowBands";
+export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "silver";
 
 export function isHoloShaderId(value: unknown): value is HoloShaderId {
   return (

@@ -35,9 +35,18 @@ describe("toPrintCandidate finishes", () => {
     }
   });
 
-  it("keeps the everyday foil on the everyday finish", () => {
-    // `Silver` is on 2703 prints: whatever else changes, it stays the baseline.
-    expect(toPrintCandidate(card({})).finishShaders).toEqual({});
+  it("draws the everyday finish as the metal it is named after", () => {
+    // `Silver` is on 2703 prints. It used to render as a rainbow, which made
+    // every common card look like the rarest ones.
+    expect(toPrintCandidate(card({})).finishShaders).toEqual({
+      Silver: "silver",
+    });
+  });
+
+  it("keeps the spectrum for the finish that really is one", () => {
+    expect(
+      toPrintCandidate(card({ foilTypes: ["RainbowPillars"] })).finishShaders,
+    ).toEqual({ RainbowPillars: "rainbow" });
   });
 
   it("separates the smooth finishes from the toothy ones", () => {

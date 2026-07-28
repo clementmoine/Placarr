@@ -78,17 +78,13 @@ describe("variantRendering", () => {
     };
 
     expect(variantRendering("Lava", enchanted, BASE).shader.id).toBe("aurora");
-    expect(variantRendering("Silver", info, BASE).shader.id).toBe(
-      "rainbowBands",
-    );
+    expect(variantRendering("Silver", info, BASE).shader.id).toBe("silver");
   });
 
   it("still draws a foil this build has no look for", () => {
     // The copy really is foil; rendering it plain would state the opposite.
     const unknown = { ...info, finishShaders: { Silver: "iridescent-v2" } };
-    expect(variantRendering("Silver", unknown, BASE).shader.id).toBe(
-      "rainbowBands",
-    );
+    expect(variantRendering("Silver", unknown, BASE).shader.id).toBe("silver");
     expect(variantRendering("Silver", unknown, BASE).foilMaskUrl).toBe(
       "/uploads/mask.jpg",
     );

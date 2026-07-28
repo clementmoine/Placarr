@@ -17,6 +17,7 @@ describe("holoShader", () => {
     // A finish this build has no look for still has to render as some foil —
     // the copy really is one, and drawing it plain would state the opposite.
     expect(holoShader("Lava").id).toBe(DEFAULT_HOLO_SHADER_ID);
+    expect(DEFAULT_HOLO_SHADER_ID).toBe("silver");
     expect(holoShader(null).id).toBe(DEFAULT_HOLO_SHADER_ID);
     expect(holoShader(undefined).id).toBe(DEFAULT_HOLO_SHADER_ID);
   });
@@ -50,6 +51,28 @@ describe("the library itself", () => {
     }
   });
 
+  it("keeps the everyday foil colourless", () => {
+    // Silver is a metal, not a spectrum: every stop has to be a pure grey, or
+    // a common card starts looking like a rare one.
+    for (const stop of holoShader("silver").sweep.match(/#[0-9a-f]{6}/gi)!) {
+      const [r, g, b] = [1, 3, 5].map((i) =>
+        Number.parseInt(stop.slice(i, i + 2), 16),
+      );
+      expect(r).toBe(g);
+      expect(g).toBe(b);
+    }
+  });
+
+  it("rests darker than it reacts, so the light arrives with the pointer", () => {
+    // Real foil is nearly the plain card until something lights it.
+    for (const id of HOLO_SHADER_IDS) {
+      const shader = holoShader(id);
+      expect(shader.sweepOpacity.active).toBeGreaterThan(
+        shader.sweepOpacity.idle,
+      );
+    }
+  });
+
   it("never rests louder than it reacts", () => {
     // Hovering has to add something, or the pointer feels dead.
     for (const id of HOLO_SHADER_IDS) {
@@ -74,8 +97,9 @@ describe("the library itself", () => {
   it("gives the broad wash wider bands than the everyday foil", () => {
     // Measured off the publisher's own app: the top rarities move one wide
     // light across the card, not a stack of stripes.
-    const scale = (id: string) =>
-      Number.parseInt(holoShader(id).sweep.match(/\d+%/g)!.at(-2)!, 10);
-    expect(scale("aurora")).toBeGreaterThan(scale("rainbowBands"));
+    const stops = (id: string) => holoShader(id).sweep.match(/#[0-9a-f]{6}/gi)!;
+    expect(new Set(stops("aurora")).size).toBeGreaterThan(
+      new Set(stops("rainbow")).size,
+    );
   });
 });

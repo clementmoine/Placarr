@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { holoShader, type HoloShader } from "@/core/render/holoShaders";
+import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { cn } from "@/lib/shared/utils";
 
 type HoloCardImageProps = {
@@ -31,6 +32,11 @@ type HoloCardImageProps = {
    * does not shimmer like a common one. Defaults to the everyday foil.
    */
   shader?: HoloShader;
+  /**
+   * Label for the control that asks iOS for the motion sensor. Passed in rather
+   * than translated here so this component stays free of the locale plumbing.
+   */
+  tiltPromptLabel?: string;
   className?: string;
   children?: React.ReactNode;
 };
@@ -111,11 +117,22 @@ export function HoloCardImage({
   varnishMaskUrl,
   fit = "contain",
   shader = holoShader(null),
+  tiltPromptLabel = "Incliner",
   className,
   children,
 }: HoloCardImageProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [isActive, setIsActive] = useState(false);
+
+  /**
+   * On a touch screen there is no pointer to follow, so the card sat perfectly
+   * still — an effect that exists to be played with could not be. Tilting the
+   * phone is the gesture people already make holding a real card.
+   */
+  const deviceTilt = useDeviceTilt(MAX_TILT, Boolean(maskUrl));
+  const deviceLean = deviceTilt.lean;
+  /** Pointer on the card, or phone in the hand: either way the light is placed. */
+  const isDriven = isActive || Boolean(deviceLean);
 
   const applyPointer = useCallback((clientX: number, clientY: number) => {
     const frame = frameRef.current;
@@ -140,6 +157,18 @@ export function HoloCardImage({
       `${((clamp(x) - 50) / 50) * MAX_TILT}deg`,
     );
   }, []);
+
+  // The sensor drives the same four properties the pointer does, so the two
+  // never disagree — and the pointer wins while it is actually on the card,
+  // because a mouse user tilting their laptop is not making a gesture.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || !deviceLean || isActive) return;
+    frame.style.setProperty("--holo-x", `${deviceLean.lightX}%`);
+    frame.style.setProperty("--holo-y", `${deviceLean.lightY}%`);
+    frame.style.setProperty("--holo-tilt-x", `${deviceLean.tiltX}deg`);
+    frame.style.setProperty("--holo-tilt-y", `${deviceLean.tiltY}deg`);
+  }, [deviceLean, isActive]);
 
   const reset = useCallback(() => {
     const frame = frameRef.current;
@@ -191,7 +220,7 @@ export function HoloCardImage({
          * resumes the moment it leaves.
          */
         style={
-          isActive
+          isActive || deviceLean
             ? {
                 transform:
                   "rotateX(var(--holo-tilt-x)) rotateY(var(--holo-tilt-y))",
@@ -204,7 +233,7 @@ export function HoloCardImage({
           // own radius: left on an ancestor, a leaning card gets its corners
           // sliced off flat instead of turning.
           "relative h-full w-full overflow-hidden rounded-[inherit]",
-          isActive
+          isActive || deviceLean
             ? "transition-transform duration-200 ease-out"
             : // Breathing on its own, so a foil copy reads as special before
               // anyone touches it. The pointer takes over on hover.
@@ -221,6 +250,7 @@ export function HoloCardImage({
         <HoloLayer
           maskUrl={maskUrl}
           isActive={isActive}
+          isDriven={isDriven}
           fit={fit}
           shader={shader}
         />
@@ -234,6 +264,7 @@ export function HoloCardImage({
         <HoloLayer
           maskUrl={maskUrl}
           isActive={isActive}
+          isDriven={isDriven}
           fit={fit}
           shader={shader}
           kind="grain"
@@ -242,6 +273,7 @@ export function HoloCardImage({
           <HoloLayer
             maskUrl={varnishMaskUrl}
             isActive={isActive}
+            isDriven={isDriven}
             fit={fit}
             shader={shader}
             kind="varnish"
@@ -265,6 +297,24 @@ export function HoloCardImage({
 
         {children}
       </div>
+
+      {/*
+        iOS hands the sensor over only after a tap, and only from a real user
+        gesture, so the tilt cannot start on its own there. One unobtrusive
+        control, shown solely on the platform that asks for it.
+      */}
+      {deviceTilt.needsPermission && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            deviceTilt.requestPermission();
+          }}
+          className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm"
+        >
+          {tiltPromptLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -276,12 +326,15 @@ export function HoloCardImage({
 function HoloLayer({
   maskUrl,
   isActive,
+  isDriven,
   fit,
   shader,
   kind = "foil",
 }: {
   maskUrl: string;
   isActive: boolean;
+  /** Something — pointer or phone — is placing the light right now. */
+  isDriven: boolean;
   fit: "cover" | "contain";
   shader: HoloShader;
   kind?: HoloLayerKind;
@@ -308,7 +361,7 @@ function HoloLayer({
           "absolute inset-0",
           // The facets belong to the print, so they hold still while the sweep
           // drifts across them. Animating both made the whole surface crawl.
-          !isActive && !grain && "holo-idle-sheen",
+          !isDriven && !grain && "holo-idle-sheen",
         )}
         style={{
           /**
@@ -340,7 +393,7 @@ function HoloLayer({
            * so setting this unconditionally pinned the gradient dead centre and
            * `holo-drift` never moved anything — the idle card looked plain.
            */
-          ...(isActive
+          ...(isDriven
             ? {
                 backgroundPosition: grain
                   ? // Parallax, not a sweep: the facets slide a little against

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_HOLO_SHADER_ID,
+  DEFAULT_VARNISH_SHADER_ID,
   RESTS_DARK_SHADER_ID,
+  varnishShader,
   HOLO_SHADER_IDS,
   holoShader,
   isHoloShaderId,
@@ -31,6 +33,20 @@ describe("isHoloShaderId", () => {
     expect(isHoloShaderId("")).toBe(false);
     expect(isHoloShaderId(null)).toBe(false);
     expect(isHoloShaderId(42)).toBe(false);
+  });
+});
+
+describe("varnishShader", () => {
+  it("returns the coat asked for", () => {
+    expect(varnishShader("hotFoil").id).toBe("hotFoil");
+  });
+
+  it("falls back to a plain clear coat, not to the everyday foil", () => {
+    // The two axes are not interchangeable: an unknown coat should stay out of
+    // the way, where an unknown foil should still look like foil.
+    expect(varnishShader("nope").id).toBe(DEFAULT_VARNISH_SHADER_ID);
+    expect(varnishShader(null).id).toBe("gloss");
+    expect(DEFAULT_VARNISH_SHADER_ID).not.toBe(DEFAULT_HOLO_SHADER_ID);
   });
 });
 
@@ -78,10 +94,13 @@ describe("the library itself", () => {
     );
   });
 
-  it("saves the loudest look for the tier a game prints ten of", () => {
+  it("saves the loudest foil for the tier a game prints ten of", () => {
+    // Foil looks only. The varnish coats are a second layer on a different
+    // axis, and a stamped hot foil is loud on purpose — on the cards that
+    // carry it, that line work *is* the effect.
+    const foilLooks = ["silver", "rainbow", "aurora", "sheen", "sparkle"];
     const lore = holoShader("lore").sweepOpacity;
-    for (const id of HOLO_SHADER_IDS) {
-      if (id === "lore") continue;
+    for (const id of foilLooks) {
       expect(lore.idle).toBeGreaterThanOrEqual(
         holoShader(id).sweepOpacity.idle,
       );

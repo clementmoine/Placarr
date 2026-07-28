@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 
 import { resolveStoredVariant } from "@/core/enrich/variants";
-import { holoShader, type HoloShader } from "@/core/render/holoShaders";
+import {
+  holoShader,
+  varnishShader,
+  type HoloShader,
+} from "@/core/render/holoShaders";
 
 /** What the provider says a printing exists as. Shape mirrors `PrintCandidate`. */
 export type PrintVariantInfo = {
@@ -11,6 +15,9 @@ export type PrintVariantInfo = {
   plainFinishes?: string[];
   /** Finish -> shader id. See `PrintCandidate.finishShaders`. */
   finishShaders?: Record<string, string>;
+  /** Varnish name -> shader id, and which varnish this print carries. */
+  varnishShaders?: Record<string, string>;
+  varnishType?: string | null;
   variantImageUrls?: Record<string, string>;
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
@@ -70,6 +77,8 @@ export type VariantRendering = {
    * even though the publisher gives them different finishes.
    */
   shader: HoloShader;
+  /** How to draw the varnish coat, which has its own names and its own looks. */
+  varnish: HoloShader;
 };
 
 /**
@@ -89,6 +98,7 @@ export function variantRendering(
     foilMaskUrl: null,
     varnishMaskUrl: null,
     shader: holoShader(null),
+    varnish: varnishShader(null),
   };
   if (!info) return plain;
 
@@ -105,5 +115,8 @@ export function variantRendering(
     foilMaskUrl: info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,
     shader: holoShader(info.finishShaders?.[resolved]),
+    varnish: varnishShader(
+      info.varnishType ? info.varnishShaders?.[info.varnishType] : null,
+    ),
   };
 }

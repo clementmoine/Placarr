@@ -51,6 +51,30 @@ export default function RootLayout({
     // Suppress hydration warning for the html tag due to the theme provider
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <body>
+        {/*
+          Ravensburger ships its varnish masks as normal maps, not coverage
+          masks: R and G carry the surface slope and sit at a constant ~127/128,
+          while B carries whether anything is stamped there at all. Fed to
+          `multiply` as-is, the mid-grey let half the effect through across the
+          whole card, so the varnish washed over the art instead of landing on
+          the engraved line work.
+
+          This pulls B into all three channels, turning the map into the
+          coverage mask the compositing already expects. Defined once here
+          rather than per card — every foil card on a shelf would otherwise
+          repeat it.
+        */}
+        <svg aria-hidden className="absolute size-0" focusable="false">
+          <filter id="holo-varnish-coverage" colorInterpolationFilters="sRGB">
+            <feColorMatrix
+              type="matrix"
+              values="0 0 1 0 0
+                      0 0 1 0 0
+                      0 0 1 0 0
+                      0 0 0 1 0"
+            />
+          </filter>
+        </svg>
         <SessionProvider>
           <ReactQueryProvider>
             <LocaleProvider>

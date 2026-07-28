@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { holoShader, type HoloShader } from "@/core/render/holoShaders";
+import {
+  holoShader,
+  varnishShader as varnishShaderFor,
+  type HoloShader,
+} from "@/core/render/holoShaders";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { cn } from "@/lib/shared/utils";
 
@@ -32,6 +36,8 @@ type HoloCardImageProps = {
    * does not shimmer like a common one. Defaults to the everyday foil.
    */
   shader?: HoloShader;
+  /** How to draw the varnish coat. Its own axis, with its own names. */
+  varnishShader?: HoloShader;
   /**
    * Label for the control that asks iOS for the motion sensor. Passed in rather
    * than translated here so this component stays free of the locale plumbing.
@@ -44,16 +50,6 @@ type HoloCardImageProps = {
 function objectFitClass(fit: "cover" | "contain"): string {
   return fit === "contain" ? "object-contain" : "object-cover";
 }
-
-/**
- * The varnish coat. Independent of the foil look: a card can be Enchanted *and*
- * high-gloss, and the gloss looks the same either way.
- */
-const VARNISH_SWEEP =
-  "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)";
-const VARNISH_SCALE = "200% 200%";
-const VARNISH_FILTER = "brightness(0.7) contrast(1.6)";
-const VARNISH_OPACITY = { idle: 0.25, active: 0.4 } as const;
 
 /** What a masked layer paints: the rainbow sweep, the varnish, or the facets. */
 type HoloLayerKind = "foil" | "varnish" | "grain";
@@ -117,6 +113,7 @@ export function HoloCardImage({
   varnishMaskUrl,
   fit = "contain",
   shader = holoShader(null),
+  varnishShader = varnishShaderFor(null),
   tiltPromptLabel = "Incliner",
   className,
   children,
@@ -275,7 +272,7 @@ export function HoloCardImage({
             isActive={isActive}
             isDriven={isDriven}
             fit={fit}
-            shader={shader}
+            shader={varnishShader}
             kind="varnish"
           />
         )}
@@ -343,11 +340,7 @@ function HoloLayer({
   const grain = kind === "grain";
   // The varnish is a second, smoother coat over whatever the foil is doing, so
   // it keeps its own restrained strength rather than following the look.
-  const strength = varnish
-    ? VARNISH_OPACITY
-    : grain
-      ? shader.grainOpacity
-      : shader.sweepOpacity;
+  const strength = grain ? shader.grainOpacity : shader.sweepOpacity;
   return (
     <div
       aria-hidden
@@ -375,19 +368,9 @@ function HoloLayer({
               // into pinpricks of light and leaves the dark ones alone, which is
               // what separates glitter from a uniform haze.
               "brightness(0.4) contrast(2.8)"
-            : varnish
-              ? VARNISH_FILTER
-              : shader.sweepFilter,
-          backgroundImage: grain
-            ? GRAIN_TEXTURE
-            : varnish
-              ? VARNISH_SWEEP
-              : shader.sweep,
-          backgroundSize: grain
-            ? shader.grainScale
-            : varnish
-              ? VARNISH_SCALE
-              : shader.sweepScale,
+            : shader.sweepFilter,
+          backgroundImage: grain ? GRAIN_TEXTURE : shader.sweep,
+          backgroundSize: grain ? shader.grainScale : shader.sweepScale,
           /**
            * Only while the pointer drives it. An inline value beats a keyframe,
            * so setting this unconditionally pinned the gradient dead centre and
@@ -410,6 +393,14 @@ function HoloLayer({
       <img
         src={maskUrl}
         alt=""
+        /**
+         * The varnish mask is a normal map, not a coverage mask — its red and
+         * green channels are a near-constant mid-grey and only blue says where
+         * anything is stamped. Multiplied raw it let half the effect through
+         * everywhere, which is why the varnish washed the whole card instead of
+         * following the engraved lines. The filter pulls blue into all three.
+         */
+        style={varnish ? { filter: "url(#holo-varnish-coverage)" } : undefined}
         className={cn(
           "absolute inset-0 h-full w-full mix-blend-multiply",
           // Same fit as the artwork, or the mask lands off the foil areas.

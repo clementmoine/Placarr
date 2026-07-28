@@ -222,6 +222,14 @@ export type PrintCandidate = {
    */
   finishShaders?: Record<string, string>;
   /**
+   * Which look the varnish is drawn with, keyed by the publisher's own name for
+   * it. A second, independent axis: a card can be Enchanted *and* hot-foiled,
+   * and the two are stamped separately.
+   */
+  varnishShaders?: Record<string, string>;
+  /** The varnish this print carries, if any. Keys `varnishShaders`. */
+  varnishType?: string | null;
+  /**
    * Artwork per finish, when the provider publishes a distinct file rather than
    * expecting the effect to be composited. Preferred over the mask when present.
    */

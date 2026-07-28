@@ -40,6 +40,8 @@ export const HOLO_SHADER_IDS = [
   "aurora",
   "sheen",
   "sparkle",
+  "gloss",
+  "hotFoil",
 ] as const;
 
 export type HoloShaderId = (typeof HOLO_SHADER_IDS)[number];
@@ -150,6 +152,44 @@ const SPARKLE: HoloShader = {
   grainScale: "110px 110px",
 };
 
+/**
+ * A clear coat catching the light. The restrained one — it sits over whatever
+ * the foil is doing and must not compete with it.
+ */
+const GLOSS: HoloShader = {
+  id: "gloss",
+  sweep:
+    "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)",
+  sweepScale: "200% 200%",
+  sweepFilter: "brightness(0.7) contrast(1.6)",
+  sweepOpacity: { idle: 0.3, active: 0.45 },
+  grainOpacity: { idle: 0.12, active: 0.2 },
+  grainScale: "150px 150px",
+};
+
+/**
+ * Dichroic hot foil: the stamped line work, not a coat over the whole card.
+ *
+ * Two hues and nothing between them. Watching the publisher's app tilt one of
+ * these, the castle outline, the swirls and the ability headers swing between
+ * an electric cyan and a red-magenta — that is what a dichroic film does, it
+ * reflects one colour and transmits its complement. A spectrum would be wrong
+ * here, and so would a white sheen.
+ *
+ * Loud, because on the cards that carry it this *is* the effect: it is stamped
+ * onto the art's own lines, and the mask is that line work.
+ */
+const HOT_FOIL: HoloShader = {
+  id: "hotFoil",
+  sweep:
+    "repeating-linear-gradient(112deg, #00121b 0%, #24f0ff 4%, #071d2a 8%, #ff2f8a 12%, #00121b 16%)",
+  sweepScale: "240% 240%",
+  sweepFilter: "brightness(0.78) contrast(1.9) saturate(1.7)",
+  sweepOpacity: { idle: 0.7, active: 1 },
+  grainOpacity: { idle: 0.2, active: 0.35 },
+  grainScale: "120px 120px",
+};
+
 const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
   silver: SILVER,
   lore: LORE,
@@ -157,6 +197,8 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
   aurora: AURORA,
   sheen: SHEEN,
   sparkle: SPARKLE,
+  gloss: GLOSS,
+  hotFoil: HOT_FOIL,
 };
 
 /**
@@ -168,6 +210,18 @@ export const RESTS_DARK_SHADER_ID: HoloShaderId = "silver";
 
 /** What an unrecognized or missing look falls back to. */
 export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "silver";
+
+/**
+ * What a varnish falls back to. Its own default, because the two axes are not
+ * interchangeable: an unknown *coat* should stay out of the way, where an
+ * unknown *foil* should still look like foil.
+ */
+export const DEFAULT_VARNISH_SHADER_ID: HoloShaderId = "gloss";
+
+/** The look for a varnish id, or a plain clear coat. */
+export function varnishShader(id: string | null | undefined): HoloShader {
+  return isHoloShaderId(id) ? SHADERS[id] : SHADERS[DEFAULT_VARNISH_SHADER_ID];
+}
 
 export function isHoloShaderId(value: unknown): value is HoloShaderId {
   return (

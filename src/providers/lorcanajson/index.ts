@@ -75,6 +75,23 @@ const FINISH_SHADERS: Readonly<Record<string, string>> = {
   // The one finish that really is a spectrum.
   RainbowPillars: "rainbow",
 };
+
+/**
+ * And the same for the varnish, which is a separate coat with its own five
+ * names. Treating all five as one pale sheen made the hot-foiled line work —
+ * the whole point of an Iconique card — indistinguishable from a clear gloss.
+ */
+const VARNISH_SHADERS: Readonly<Record<string, string>> = {
+  // A clear coat: present, but it must not compete with the foil underneath.
+  HighGloss: "gloss",
+  MatteHotFoil: "gloss",
+  // Dichroic film stamped onto the art's own lines. Swings between two
+  // complementary hues as the card turns, which is what dichroic means.
+  MetallicHotFoil: "hotFoil",
+  SnowHotFoil: "hotFoil",
+  // Named for its spectrum, so it gets one.
+  ChromeRainbowHotFoil: "rainbow",
+};
 const PROVIDER_LABEL = "LorcanaJSON";
 
 /**
@@ -270,6 +287,11 @@ export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
       : undefined,
     foilMaskUrl: card.foilMaskUrl,
     varnishMaskUrl: card.varnishMaskUrl,
+    varnishType: card.varnishType,
+    varnishShaders:
+      card.varnishType && VARNISH_SHADERS[card.varnishType]
+        ? { [card.varnishType]: VARNISH_SHADERS[card.varnishType] as string }
+        : {},
     externalIds: { [PROVIDER_ID]: card.providerId },
   };
 }

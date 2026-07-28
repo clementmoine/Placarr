@@ -24,6 +24,31 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
   } as LorcanaCard;
 }
 
+describe("toPrintCandidate varnish", () => {
+  it("gives the stamped hot foil its own look, apart from a clear coat", () => {
+    // Treating all five varnish names as one pale sheen made the hot-foiled
+    // line work — the whole point of an Iconique card — look like gloss.
+    expect(
+      toPrintCandidate(card({ varnishType: "MetallicHotFoil" })).varnishShaders,
+    ).toEqual({ MetallicHotFoil: "hotFoil" });
+    expect(
+      toPrintCandidate(card({ varnishType: "HighGloss" })).varnishShaders,
+    ).toEqual({ HighGloss: "gloss" });
+  });
+
+  it("gives the one named for a spectrum a spectrum", () => {
+    expect(
+      toPrintCandidate(card({ varnishType: "ChromeRainbowHotFoil" }))
+        .varnishShaders,
+    ).toEqual({ ChromeRainbowHotFoil: "rainbow" });
+  });
+
+  it("claims nothing for a print with no varnish", () => {
+    expect(toPrintCandidate(card({})).varnishShaders).toEqual({});
+    expect(toPrintCandidate(card({})).varnishType).toBeNull();
+  });
+});
+
 describe("toPrintCandidate finishes", () => {
   it("gives the Enchanted finishes their own look", () => {
     // An Enchanted print carries no `Silver` at all — its only finish is one of

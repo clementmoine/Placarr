@@ -33,14 +33,14 @@ describe("toPrintCandidate varnish", () => {
     ).toEqual({ MetallicHotFoil: "hotFoil" });
     expect(
       toPrintCandidate(card({ varnishType: "HighGloss" })).varnishShaders,
-    ).toEqual({ HighGloss: "gloss" });
+    ).toEqual({ HighGloss: "hotFoil" });
   });
 
   it("gives the one named for a spectrum a spectrum", () => {
     expect(
       toPrintCandidate(card({ varnishType: "ChromeRainbowHotFoil" }))
         .varnishShaders,
-    ).toEqual({ ChromeRainbowHotFoil: "rainbow" });
+    ).toEqual({ ChromeRainbowHotFoil: "chromeRainbowHotFoil" });
   });
 
   it("claims nothing for a print with no varnish", () => {
@@ -53,10 +53,15 @@ describe("toPrintCandidate finishes", () => {
   it("gives the Enchanted finishes their own look", () => {
     // An Enchanted print carries no `Silver` at all — its only finish is one of
     // these — which is exactly why it must not shimmer like a common card.
+    const LOOKS: Record<string, string> = {
+      Lava: "lava",
+      Magma: "magma",
+      VerticalWave: "verticalWave",
+    };
     for (const finish of ["Lava", "Magma", "VerticalWave"]) {
       expect(
         toPrintCandidate(card({ foilTypes: [finish] })).finishShaders,
-      ).toEqual({ [finish]: "aurora" });
+      ).toEqual({ [finish]: LOOKS[finish] });
     }
   });
 
@@ -71,7 +76,7 @@ describe("toPrintCandidate finishes", () => {
   it("keeps the spectrum for the finish that really is one", () => {
     expect(
       toPrintCandidate(card({ foilTypes: ["RainbowPillars"] })).finishShaders,
-    ).toEqual({ RainbowPillars: "rainbow" });
+    ).toEqual({ RainbowPillars: "rainbowPillars" });
   });
 
   it("gives the Iconique line its own showpiece look", () => {
@@ -85,16 +90,16 @@ describe("toPrintCandidate finishes", () => {
   it("separates the smooth finishes from the toothy ones", () => {
     expect(
       toPrintCandidate(card({ foilTypes: ["Satin"] })).finishShaders,
-    ).toEqual({ Satin: "sheen" });
+    ).toEqual({ Satin: "satin" });
     expect(
       toPrintCandidate(card({ foilTypes: ["Glitter"] })).finishShaders,
-    ).toEqual({ Glitter: "sparkle" });
+    ).toEqual({ Glitter: "glitter" });
   });
 
   it("never claims a look for the plain finish", () => {
     // `None` means no foil; giving it a shader would light up a normal copy.
     const candidate = toPrintCandidate(card({ foilTypes: ["None", "Lava"] }));
-    expect(candidate.finishShaders).toEqual({ Lava: "aurora" });
+    expect(candidate.finishShaders).toEqual({ Lava: "lava" });
     expect(candidate.plainFinishes).toEqual(["None"]);
   });
 
@@ -102,7 +107,7 @@ describe("toPrintCandidate finishes", () => {
     // Silence falls back to the everyday foil downstream, which is honest:
     // the copy is foil, we just have no better word for how.
     expect(
-      toPrintCandidate(card({ foilTypes: ["FreeForm1"] })).finishShaders,
+      toPrintCandidate(card({ foilTypes: ["Tempest"] })).finishShaders,
     ).toEqual({});
   });
 });

@@ -57,40 +57,31 @@ const PLAIN_FINISH = "None";
  * at yet: the copy is foil, we just have no better word for how.
  */
 const FINISH_SHADERS: Readonly<Record<string, string>> = {
-  // The everyday foil, on 2703 of 3154 prints. Named for a metal, drawn as one.
   Silver: "silver",
-  // Enchanted only. Broad pastel wash rather than streaks.
-  Lava: "aurora",
-  Magma: "aurora",
-  VerticalWave: "aurora",
-  SeaWave: "aurora",
-  // Épique: a smooth coat, not a diffracting one.
-  Satin: "sheen",
-  // Iconique. Ten prints in the whole game, every one of them hot-foiled —
-  // lumping them in with Satin was a guess, and it made them the dullest cards
-  // on the shelf.
+  Satin: "satin",
   Lore: "lore",
-  // Finishes whose name is the tooth itself.
-  Glitter: "sparkle",
-  // The one finish that really is a spectrum.
-  RainbowPillars: "rainbow",
+  Lava: "lava",
+  Magma: "magma",
+  Glitter: "glitter",
+  VerticalWave: "verticalWave",
+  SeaWave: "seaWave",
+  RainbowPillars: "rainbowPillars",
+  FreeForm1: "freeForm",
+  FreeForm2: "freeForm",
 };
 
 /**
- * And the same for the varnish, which is a separate coat with its own five
- * names. Treating all five as one pale sheen made the hot-foiled line work —
- * the whole point of an Iconique card — indistinguishable from a clear gloss.
+ * And the same for the varnish, a separate coat with its own names.
+ *
+ * `None` is deliberately absent from both tables, so a plain copy cannot pick
+ * up a look even by accident.
  */
 const VARNISH_SHADERS: Readonly<Record<string, string>> = {
-  // A clear coat: present, but it must not compete with the foil underneath.
-  HighGloss: "gloss",
-  MatteHotFoil: "gloss",
-  // Dichroic film stamped onto the art's own lines. Swings between two
-  // complementary hues as the card turns, which is what dichroic means.
+  HighGloss: "hotFoil",
+  MatteHotFoil: "hotFoil",
   MetallicHotFoil: "hotFoil",
   SnowHotFoil: "hotFoil",
-  // Named for its spectrum, so it gets one.
-  ChromeRainbowHotFoil: "rainbow",
+  ChromeRainbowHotFoil: "chromeRainbowHotFoil",
 };
 const PROVIDER_LABEL = "LorcanaJSON";
 

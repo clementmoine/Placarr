@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_HOLO_SHADER_ID,
   DEFAULT_VARNISH_SHADER_ID,
-  RESTS_DARK_SHADER_ID,
-  varnishShader,
   HOLO_SHADER_IDS,
+  holoLayerStyle,
   holoShader,
   isHoloShaderId,
+  varnishShader,
 } from "./holoShaders";
 
 describe("holoShader", () => {
   it("returns the look asked for", () => {
-    expect(holoShader("aurora").id).toBe("aurora");
-    expect(holoShader("sparkle").id).toBe("sparkle");
+    expect(holoShader("lava").id).toBe("lava");
+    expect(holoShader("lore").id).toBe("lore");
   });
 
   it("falls back to the everyday foil rather than nothing", () => {
@@ -26,27 +26,27 @@ describe("holoShader", () => {
   });
 });
 
-describe("isHoloShaderId", () => {
-  it("accepts only the ids the library defines", () => {
-    expect(isHoloShaderId("aurora")).toBe(true);
-    expect(isHoloShaderId("Aurora")).toBe(false);
-    expect(isHoloShaderId("")).toBe(false);
-    expect(isHoloShaderId(null)).toBe(false);
-    expect(isHoloShaderId(42)).toBe(false);
+describe("varnishShader", () => {
+  it("returns the coat asked for", () => {
+    expect(varnishShader("chromeRainbowHotFoil").id).toBe(
+      "chromeRainbowHotFoil",
+    );
+  });
+
+  it("falls back to the stamped coat, not to the everyday foil", () => {
+    // The two axes are not interchangeable, so they do not share a default.
+    expect(varnishShader("nope").id).toBe(DEFAULT_VARNISH_SHADER_ID);
+    expect(DEFAULT_VARNISH_SHADER_ID).not.toBe(DEFAULT_HOLO_SHADER_ID);
   });
 });
 
-describe("varnishShader", () => {
-  it("returns the coat asked for", () => {
-    expect(varnishShader("hotFoil").id).toBe("hotFoil");
-  });
-
-  it("falls back to a plain clear coat, not to the everyday foil", () => {
-    // The two axes are not interchangeable: an unknown coat should stay out of
-    // the way, where an unknown foil should still look like foil.
-    expect(varnishShader("nope").id).toBe(DEFAULT_VARNISH_SHADER_ID);
-    expect(varnishShader(null).id).toBe("gloss");
-    expect(DEFAULT_VARNISH_SHADER_ID).not.toBe(DEFAULT_HOLO_SHADER_ID);
+describe("isHoloShaderId", () => {
+  it("accepts only the ids the library defines", () => {
+    expect(isHoloShaderId("lava")).toBe(true);
+    expect(isHoloShaderId("Lava")).toBe(false);
+    expect(isHoloShaderId("")).toBe(false);
+    expect(isHoloShaderId(null)).toBe(false);
+    expect(isHoloShaderId(42)).toBe(false);
   });
 });
 
@@ -57,93 +57,58 @@ describe("the library itself", () => {
     }
   });
 
-  it("never leaves a foil invisible at rest", () => {
-    // The whole point is that a foil copy reads as special before anyone
-    // touches it, so no look may rest at zero on both axes.
+  it("names only textures that ship with the app", () => {
+    // The recipes were transcribed with the publisher's hashed asset names
+    // rewritten to local ones. A typo there is invisible until a card renders
+    // blank, so pin the shape of every reference.
     for (const id of HOLO_SHADER_IDS) {
-      const shader = holoShader(id);
-      expect(
-        shader.sweepOpacity.idle + shader.grainOpacity.idle,
-      ).toBeGreaterThan(0);
+      for (const url of holoShader(id).backgroundImage.matchAll(
+        /url\((\/[^)]+)\)/g,
+      )) {
+        expect(url[1]).toMatch(/^\/foil\/[a-z0-9]+\.(jpg|png)$/);
+      }
+    }
+  });
+
+  it("blends every look onto the artwork rather than covering it", () => {
+    // A look with no `mix-blend-mode` paints an opaque rectangle over the card.
+    for (const id of HOLO_SHADER_IDS) {
+      expect(holoShader(id).mixBlendMode).toBeTruthy();
+      expect(holoShader(id).mixBlendMode).not.toBe("normal");
     }
   });
 
   it("keeps the everyday foil colourless", () => {
-    // Silver is a metal, not a spectrum: every stop has to be a pure grey, or
-    // a common card starts looking like a rare one.
-    for (const stop of holoShader("silver").sweep.match(/#[0-9a-f]{6}/gi)!) {
-      const [r, g, b] = [1, 3, 5].map((i) =>
-        Number.parseInt(stop.slice(i, i + 2), 16),
-      );
-      expect(r).toBe(g);
-      expect(g).toBe(b);
-    }
+    // Silver is a metal, not a spectrum: it reached the right look only by
+    // desaturating, and losing that filter turns every common card rainbow.
+    expect(holoShader("silver").filter).toContain("saturate(0.2)");
   });
 
-  it("stays legible at rest, except for the one look that must not be", () => {
-    // The reasoning behind `silver` — unlit metal is dark — was generalised to
-    // every look, and an Iconique card, ten of which exist in 3154 prints,
-    // ended up fainter at rest than a common. A finish marks a card as rarer
-    // than plain; it has to say so before anyone touches it.
+  it("places each look against the properties the card actually sets", () => {
+    // The recipes are written against `--colorX`, `--colorY` and `--combined`.
+    // A look referring to anything else silently never moves.
     for (const id of HOLO_SHADER_IDS) {
-      if (id === RESTS_DARK_SHADER_ID) continue;
-      expect(holoShader(id).sweepOpacity.idle).toBeGreaterThanOrEqual(0.3);
-    }
-    expect(holoShader(RESTS_DARK_SHADER_ID).sweepOpacity.idle).toBeLessThan(
-      0.3,
-    );
-  });
-
-  it("saves the loudest foil for the tier a game prints ten of", () => {
-    // Foil looks only. The varnish coats are a second layer on a different
-    // axis, and a stamped hot foil is loud on purpose — on the cards that
-    // carry it, that line work *is* the effect.
-    const foilLooks = ["silver", "rainbow", "aurora", "sheen", "sparkle"];
-    const lore = holoShader("lore").sweepOpacity;
-    for (const id of foilLooks) {
-      expect(lore.idle).toBeGreaterThanOrEqual(
-        holoShader(id).sweepOpacity.idle,
-      );
+      for (const name of holoShader(id).backgroundPosition.matchAll(
+        /var\((--[a-zA-Z-]+)\)/g,
+      )) {
+        expect(["--colorX", "--colorY", "--combined"]).toContain(name[1]);
+      }
     }
   });
+});
 
-  it("rests darker than it reacts, so the light arrives with the pointer", () => {
-    // Real foil is nearly the plain card until something lights it.
-    for (const id of HOLO_SHADER_IDS) {
-      const shader = holoShader(id);
-      expect(shader.sweepOpacity.active).toBeGreaterThan(
-        shader.sweepOpacity.idle,
-      );
-    }
+describe("holoLayerStyle", () => {
+  it("carries the whole recipe onto the element", () => {
+    const style = holoLayerStyle(holoShader("silver"));
+    expect(style.mixBlendMode).toBe("hard-light");
+    expect(style.backgroundBlendMode).toBe("exclusion");
+    expect(style.opacity).toBe(0.5);
+    expect(style.backgroundImage).toContain("/foil/silverc.jpg");
   });
 
-  it("never rests louder than it reacts", () => {
-    // Hovering has to add something, or the pointer feels dead.
-    for (const id of HOLO_SHADER_IDS) {
-      const shader = holoShader(id);
-      expect(shader.sweepOpacity.active).toBeGreaterThanOrEqual(
-        shader.sweepOpacity.idle,
-      );
-      expect(shader.grainOpacity.active).toBeGreaterThanOrEqual(
-        shader.grainOpacity.idle,
-      );
-    }
-  });
-
-  it("darkens every sweep before it is dodged", () => {
-    // `color-dodge` on an undarkened gradient blows light artwork to flat
-    // white and the colour vanishes; each look has to bring its own brake.
-    for (const id of HOLO_SHADER_IDS) {
-      expect(holoShader(id).sweepFilter).toMatch(/brightness\(0?\.\d+\)/);
-    }
-  });
-
-  it("gives the broad wash wider bands than the everyday foil", () => {
-    // Measured off the publisher's own app: the top rarities move one wide
-    // light across the card, not a stack of stripes.
-    const stops = (id: string) => holoShader(id).sweep.match(/#[0-9a-f]{6}/gi)!;
-    expect(new Set(stops("aurora")).size).toBeGreaterThan(
-      new Set(stops("rainbow")).size,
-    );
+  it("leaves out what a look does not set, rather than inventing a value", () => {
+    // `undefined` lets the stylesheet decide; a literal would override it.
+    expect(holoLayerStyle(holoShader("magma")).filter).toBeUndefined();
+    expect(holoLayerStyle(holoShader("lore")).opacity).toBeUndefined();
   });
 });

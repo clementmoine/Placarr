@@ -72,12 +72,12 @@ describe("variantRendering", () => {
     const enchanted = {
       finishes: ["Lava"],
       plainFinishes: [],
-      finishShaders: { Lava: "aurora" },
+      finishShaders: { Lava: "lava" },
       foilMaskUrl: "/uploads/mask.jpg",
       varnishMaskUrl: null,
     };
 
-    expect(variantRendering("Lava", enchanted, BASE).shader.id).toBe("aurora");
+    expect(variantRendering("Lava", enchanted, BASE).shader.id).toBe("lava");
     expect(variantRendering("Silver", info, BASE).shader.id).toBe("silver");
   });
 

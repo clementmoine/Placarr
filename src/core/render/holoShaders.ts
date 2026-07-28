@@ -1,227 +1,248 @@
+import type { CSSProperties } from "react";
+
 /**
  * The looks a foil printing can be drawn with.
  *
- * Publishers name their finishes — Ravensburger alone ships eleven, from the
- * `Silver` on nearly every common to the `Lava` that only Enchanted cards get —
- * and those names are the library. Each one is a set of numbers here; deciding
- * which name maps to which look belongs to the provider that knows the names,
- * never to this file.
+ * These are not invented. They are the recipes the publisher's own card viewer
+ * uses, transcribed from it — see `docs/foil_recipes.md`, which keeps the
+ * originals verbatim so any change here can be checked against the source.
  *
- * Every field feeds CSS directly. They are deliberately plain values rather
- * than class names: an inline style is the only thing that reliably beats both
- * the idle keyframes and the utility classes, which this component has been
- * bitten by twice.
+ * The shape of a look is worth understanding before touching one. It is *not* a
+ * gradient. Each finish is two or three photographed foil textures stacked and
+ * blended against each other (`backgroundBlendMode`), and the stack as a whole
+ * blended onto the artwork (`mixBlendMode`) through a filter. An earlier
+ * attempt here built gradients by eye and tuned them over several rounds; no
+ * amount of tuning was going to arrive at `exclusion` over `hard-light` under
+ * `brightness(1.6) saturate(.2) invert()`.
+ *
+ * Positions are expressed against custom properties the card container sets,
+ * and nothing else:
+ *
+ * - `--colorX` / `--colorY` — pointer position as a percentage, 50% at rest
+ * - `--combined` — their sum, 100% at rest
+ * - `--topcolor` — the hue a stamped varnish throws
+ *
+ * Which finish maps to which look belongs to the provider that knows the finish
+ * names, never to this file.
  */
 export type HoloShader = {
   id: HoloShaderId;
-  /** The sweep's `background-image`. */
-  sweep: string;
-  /** Its `background-size`. How wide the bands read. */
-  sweepScale: string;
-  /**
-   * Applied before the sweep is dodged onto the artwork. Straight from a
-   * gradient, `color-dodge` blows every light area to flat white and the colour
-   * disappears, so each look darkens itself first.
-   */
-  sweepFilter: string;
-  /** Sweep strength at rest and under the pointer. Never zero at rest: the
-   * point is that a foil copy reads as special before anyone touches it. */
-  sweepOpacity: Readonly<{ idle: number; active: number }>;
-  /** Facet strength, same two states. Zero for a finish with no visible tooth. */
-  grainOpacity: Readonly<{ idle: number; active: number }>;
-  /** Facet tile size. Smaller is finer. */
-  grainScale: string;
+  /** Comma-separated `background-image` layers. */
+  backgroundImage: string;
+  backgroundRepeat: string;
+  backgroundSize: string;
+  /** Usually a function of `--colorX` / `--colorY` / `--combined`. */
+  backgroundPosition: string;
+  /** How the layers blend against each other, before reaching the artwork. */
+  backgroundBlendMode?: string;
+  /** How the finished stack blends onto the artwork. */
+  mixBlendMode: string;
+  opacity?: number;
+  filter?: string;
 };
 
 export const HOLO_SHADER_IDS = [
   "silver",
+  "satin",
   "lore",
-  "rainbow",
-  "aurora",
-  "sheen",
-  "sparkle",
-  "gloss",
+  "lava",
+  "magma",
+  "glitter",
+  "verticalWave",
+  "seaWave",
+  "rainbowPillars",
+  "freeForm",
+  "tempest",
+  "calendarWave",
   "hotFoil",
+  "chromeRainbowHotFoil",
 ] as const;
 
 export type HoloShaderId = (typeof HOLO_SHADER_IDS)[number];
 
-/**
- * Brushed metal: the everyday foil, and the fallback for anything unknown.
- *
- * Achromatic on purpose. This started life as a rainbow, which was simply the
- * wrong reading of the word — the publisher calls the finish *Silver*, and
- * silver is not a spectrum. Colour here made every common card look like the
- * rarest ones.
- *
- * Narrow bright streaks separated by black, because `color-dodge` leaves black
- * untouched: the lit parts read as reflections catching an edge rather than as
- * a wash lying over the whole card. Metal does not glow evenly.
- *
- * And it rests dark. Unlit silver is nearly the plain card; the light arrives
- * with the pointer, which is why its two states are further apart than any
- * other look here.
- */
-const SILVER: HoloShader = {
-  id: "silver",
-  sweep:
-    "repeating-linear-gradient(105deg, #000000 0%, #4a4a4a 2.5%, #f2f2f2 4.5%, #8a8a8a 6.5%, #000000 10%)",
-  sweepScale: "230% 230%",
-  sweepFilter: "brightness(0.72) contrast(1.5)",
-  sweepOpacity: { idle: 0.22, active: 0.85 },
-  grainOpacity: { idle: 0.3, active: 0.75 },
-  grainScale: "150px 150px",
-};
-
-/** An actual spectrum, for the finishes that really are one. */
-const RAINBOW: HoloShader = {
-  id: "rainbow",
-  sweep:
-    "repeating-linear-gradient(115deg, #ff6b8b 0%, #ffe066 12%, #6bffb8 24%, #6bd5ff 36%, #b98bff 48%, #ff6b8b 60%)",
-  sweepScale: "300% 300%",
-  sweepFilter: "brightness(0.55) contrast(2.2) saturate(1.5)",
-  sweepOpacity: { idle: 0.34, active: 0.75 },
-  grainOpacity: { idle: 0.45, active: 0.9 },
-  grainScale: "160px 160px",
-};
-
-/**
- * Broad pastel wash rather than bands — the look the top rarities get.
- *
- * Measured off a recording of the publisher's own app: between two frames the
- * card's right half moved by 30–88 per channel while the left barely shifted,
- * and the movement was chromatic, not a change in brightness (one block went
- * -52 red, -69 green, but only -15 blue). That is one wide soft band travelling
- * across and changing hue, so the stops are few, far apart and desaturated,
- * where the everyday foil repeats a tight spectrum.
- */
-const AURORA: HoloShader = {
-  id: "aurora",
-  sweep:
-    "linear-gradient(125deg, #ffd9ec 0%, #cbb2ff 18%, #9fe8ff 36%, #d8ffe6 52%, #fff0b8 68%, #ffc2dd 84%, #b8c6ff 100%)",
-  // Far wider than the banded look: one pass of the gradient covers the card,
-  // so what crosses it is a single light rather than a stack of stripes.
-  sweepScale: "260% 260%",
-  sweepFilter: "brightness(0.62) contrast(1.7) saturate(1.35)",
-  sweepOpacity: { idle: 0.5, active: 0.85 },
-  grainOpacity: { idle: 0.35, active: 0.8 },
-  grainScale: "190px 190px",
-};
-
-/**
- * The showpiece look, for the tier a game prints ten of.
- *
- * Loud at rest, and that is the point. `silver` rests dark because unlit metal
- * *is* dark, and that reasoning does not carry: it was generalised to every
- * look here and left an Iconique card — one of ten in 3154 prints — rendering
- * fainter than a common. A card someone opened a case to find has to announce
- * itself sitting still.
- */
-const LORE: HoloShader = {
-  id: "lore",
-  sweep:
-    "repeating-linear-gradient(108deg, #2b1f00 0%, #ffdf7a 3%, #ffffff 5%, #ffc4e8 7%, #7ad4ff 9%, #2b1f00 13%)",
-  sweepScale: "250% 250%",
-  sweepFilter: "brightness(0.68) contrast(2) saturate(1.4)",
-  sweepOpacity: { idle: 0.6, active: 0.95 },
-  grainOpacity: { idle: 0.65, active: 1 },
-  grainScale: "130px 130px",
-};
-
-/** One soft warm highlight, no spectrum: a smooth finish, not a diffracting one. */
-const SHEEN: HoloShader = {
-  id: "sheen",
-  sweep:
-    "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)",
-  sweepScale: "200% 200%",
-  sweepFilter: "brightness(0.7) contrast(1.6)",
-  sweepOpacity: { idle: 0.42, active: 0.7 },
-  grainOpacity: { idle: 0.3, active: 0.5 },
-  grainScale: "150px 150px",
-};
-
-/** Mostly tooth: the light comes from the facets, not from a travelling band. */
-const SPARKLE: HoloShader = {
-  id: "sparkle",
-  sweep:
-    "repeating-linear-gradient(100deg, #fff6d5 0%, #ffffff 20%, #ffe9f5 40%, #ffffff 60%, #fff6d5 80%)",
-  sweepScale: "220% 220%",
-  sweepFilter: "brightness(0.45) contrast(1.9)",
-  sweepOpacity: { idle: 0.35, active: 0.65 },
-  grainOpacity: { idle: 0.8, active: 1 },
-  grainScale: "110px 110px",
-};
-
-/**
- * A clear coat catching the light. The restrained one — it sits over whatever
- * the foil is doing and must not compete with it.
- */
-const GLOSS: HoloShader = {
-  id: "gloss",
-  sweep:
-    "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 45%, rgba(255,236,180,0.9) 50%, rgba(255,255,255,0.75) 55%, transparent 80%)",
-  sweepScale: "200% 200%",
-  sweepFilter: "brightness(0.7) contrast(1.6)",
-  sweepOpacity: { idle: 0.3, active: 0.45 },
-  grainOpacity: { idle: 0.12, active: 0.2 },
-  grainScale: "150px 150px",
-};
-
-/**
- * Dichroic hot foil: the stamped line work, not a coat over the whole card.
- *
- * Two hues and nothing between them. Watching the publisher's app tilt one of
- * these, the castle outline, the swirls and the ability headers swing between
- * an electric cyan and a red-magenta — that is what a dichroic film does, it
- * reflects one colour and transmits its complement. A spectrum would be wrong
- * here, and so would a white sheen.
- *
- * Loud, because on the cards that carry it this *is* the effect: it is stamped
- * onto the art's own lines, and the mask is that line work.
- */
-const HOT_FOIL: HoloShader = {
-  id: "hotFoil",
-  sweep:
-    "repeating-linear-gradient(112deg, #00121b 0%, #24f0ff 4%, #071d2a 8%, #ff2f8a 12%, #00121b 16%)",
-  sweepScale: "240% 240%",
-  sweepFilter: "brightness(0.78) contrast(1.9) saturate(1.7)",
-  sweepOpacity: { idle: 0.7, active: 1 },
-  grainOpacity: { idle: 0.2, active: 0.35 },
-  grainScale: "120px 120px",
-};
+/** Where the transcribed textures live. */
+const T = "/foil";
 
 const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
-  silver: SILVER,
-  lore: LORE,
-  rainbow: RAINBOW,
-  aurora: AURORA,
-  sheen: SHEEN,
-  sparkle: SPARKLE,
-  gloss: GLOSS,
-  hotFoil: HOT_FOIL,
+  /** The everyday foil, on 2703 of 3154 prints. Achromatic, and inverted. */
+  silver: {
+    id: "silver",
+    backgroundImage: `url(${T}/silverc.jpg), url(${T}/satin.jpg)`,
+    backgroundRepeat: "repeat-x, no-repeat",
+    backgroundSize: "300% 100%, 100% 100%",
+    backgroundPosition: "var(--colorX) center, center",
+    backgroundBlendMode: "exclusion",
+    mixBlendMode: "hard-light",
+    opacity: 0.5,
+    filter: "brightness(1.6) saturate(0.2) invert()",
+  },
+
+  satin: {
+    id: "satin",
+    backgroundImage: `url(${T}/satinc.png), url(${T}/satin.jpg)`,
+    backgroundRepeat: "repeat, repeat",
+    backgroundSize: "175% 100%, cover",
+    backgroundPosition:
+      "calc(var(--colorX) * 1 + var(--colorY)) center, center",
+    backgroundBlendMode: "normal, multiply",
+    mixBlendMode: "exclusion",
+    filter: "brightness(0.5)",
+  },
+
+  /** Iconique. Ten prints in the whole game. */
+  lore: {
+    id: "lore",
+    backgroundImage: `url(${T}/vertwavec.jpg), url(${T}/satin.jpg)`,
+    backgroundRepeat: "repeat, no-repeat",
+    backgroundSize: "250% 100%, cover",
+    backgroundPosition: "calc(var(--combined) / 2) center, center",
+    backgroundBlendMode: "multiply, normal",
+    mixBlendMode: "exclusion",
+    filter: "brightness(0.5)",
+  },
+
+  lava: {
+    id: "lava",
+    backgroundImage: `url(${T}/lava2.jpg), repeating-linear-gradient(65deg, #0004 12.5%, #2b1fdf44 25%, #00a8bf44 37.5%, #36fc3844 50%, #ccc00044 62.5%, #d004 75%, #0004 87.5%)`,
+    backgroundRepeat: "no-repeat, repeat",
+    backgroundSize: "cover, 300% 300%",
+    backgroundPosition: "center, calc(var(--combined) / 1.75) center",
+    backgroundBlendMode: "color-burn, soft-light",
+    mixBlendMode: "color-dodge",
+    filter: "brightness(0.85) contrast(3) saturate(1.5)",
+  },
+
+  magma: {
+    id: "magma",
+    backgroundImage: `url(${T}/vertwavec.jpg), url(${T}/magma.jpg), url(${T}/magma.jpg)`,
+    backgroundRepeat: "no-repeat, repeat, repeat",
+    backgroundSize: "150% 100%, 125% 125%, 125% 125%",
+    backgroundPosition:
+      "calc(var(--combined) / 1.5) center, calc(var(--colorX) / 8) calc(var(--colorY) / 10), calc(-1 * var(--colorX) / 10) calc(-1 * var(--colorY) / 8)",
+    backgroundBlendMode: "color, difference",
+    mixBlendMode: "hard-light",
+    opacity: 0.625,
+  },
+
+  glitter: {
+    id: "glitter",
+    backgroundImage: `url(${T}/glitter.jpg), url(${T}/ff2c.jpg), url(${T}/glitter.jpg)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "12.5% 12.5%, 350% 125%, 25% 25%",
+    backgroundPosition: "center, var(--combined) var(--combined), center",
+    backgroundBlendMode: "color-burn, darken, normal",
+    mixBlendMode: "exclusion",
+    opacity: 0.4,
+    filter: "brightness(4) invert()",
+  },
+
+  verticalWave: {
+    id: "verticalWave",
+    backgroundImage: `url(${T}/vertwave.jpg), url(${T}/vertwavec.jpg), url(${T}/satin.jpg)`,
+    backgroundRepeat: "no-repeat, repeat, no-repeat",
+    backgroundSize: "cover, 600% 100%, cover",
+    backgroundPosition: "center, calc(var(--combined) / 3) center, center",
+    backgroundBlendMode: "color-burn, multiply, normal",
+    mixBlendMode: "hard-light",
+    filter: "brightness(0.75) contrast(0.5)",
+  },
+
+  seaWave: {
+    id: "seaWave",
+    backgroundImage: `url(${T}/seawavec.jpg), url(${T}/seawave.jpg), url(${T}/satin.jpg)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "125% 125%, 100% 50%, 50% 50%",
+    backgroundPosition: "calc(var(--combined) * 4) center, center, center",
+    backgroundBlendMode: "color-burn, multiply, normal",
+    mixBlendMode: "hard-light",
+    filter: "brightness(0.5) contrast(0.75)",
+  },
+
+  rainbowPillars: {
+    id: "rainbowPillars",
+    backgroundImage: `url(${T}/pillar.jpg), url(${T}/pillar2.jpg), url(${T}/color.jpg)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "150% 150%, 140% 150%, 90% 90%",
+    backgroundPosition:
+      "calc(var(--combined) / 2) bottom, calc(var(--combined) / 4) top, calc(var(--combined) / 2) center",
+    backgroundBlendMode: "color-dodge, darken, normal",
+    mixBlendMode: "hard-light",
+    opacity: 0.25,
+    filter: "brightness(0.75) contrast(5) saturate(4)",
+  },
+
+  freeForm: {
+    id: "freeForm",
+    backgroundImage: `url(${T}/ff2c.jpg), url(${T}/ff2.jpg), url(${T}/ff2.jpg)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "400%, 80% 300%, 80% 200%",
+    backgroundPosition:
+      "calc(var(--colorX) / 1.75) calc(var(--colorY) / 1.75), calc(var(--colorX) / 4) calc(-1 * var(--colorY) / 8), calc(-1 * (var(--colorX)) / 1.5) calc(-1 * var(--colorY) / 10)",
+    backgroundBlendMode: "color, multiply, normal",
+    mixBlendMode: "multiply",
+    opacity: 0.5,
+    filter: "brightness(0.6) contrast(5) saturate(2)",
+  },
+
+  tempest: {
+    id: "tempest",
+    backgroundImage: `url(${T}/tempest.jpg), url(${T}/vertwavec.jpg), url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3e%3cfilter id='n'%3e%3cfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='10' stitchTiles='stitch'/%3e%3c/filter%3e%3crect width='500' height='500' fill='%23000'/%3e%3crect width='500' height='500' filter='url(%23n)' opacity='0.3'/%3e%3c/svg%3e")`,
+    backgroundRepeat: "no-repeat, repeat, repeat",
+    backgroundSize: "cover, 300% 100%, 50% 50%",
+    backgroundPosition: "center, calc(var(--combined) / 2) center, center",
+    backgroundBlendMode: "color-burn, multiply",
+    mixBlendMode: "hard-light",
+    filter: "brightness(0.75) contrast(1.5)",
+  },
+
+  calendarWave: {
+    id: "calendarWave",
+    backgroundImage: `url(${T}/calc.jpg), url(${T}/calendarwave.jpg), url(${T}/satin.jpg)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "300% 100%, cover, 50% 50%",
+    backgroundPosition: "calc(var(--combined) * 1.5) center, center, center",
+    backgroundBlendMode: "color-burn, exclusion, normal",
+    mixBlendMode: "multiply",
+    opacity: 0.4,
+    filter: "contrast(2) saturate(1.5)",
+  },
+
+  /**
+   * The varnish coat, stamped onto the art's own line work rather than laid
+   * over the card. A second, independent axis: a print can be Enchanted *and*
+   * hot-foiled, and the two are stamped separately.
+   */
+  hotFoil: {
+    id: "hotFoil",
+    backgroundImage: `url(${T}/satind.png), linear-gradient(90deg, transparent 50%, var(--topcolor) 60%, transparent 80%)`,
+    backgroundRepeat: "repeat, repeat",
+    backgroundSize: "50% 50%, 300% 300%",
+    backgroundPosition: "center, var(--colorX) center",
+    backgroundBlendMode: "exclusion",
+    mixBlendMode: "screen",
+    filter: "contrast(1.25) saturate(1.5)",
+  },
+
+  chromeRainbowHotFoil: {
+    id: "chromeRainbowHotFoil",
+    backgroundImage: `linear-gradient(90deg, #333 20%, var(--topcolor) 50%, #333 80%), url(${T}/color.jpg)`,
+    backgroundRepeat: "repeat, repeat",
+    backgroundSize: "300% 300%, 75% 75%",
+    backgroundPosition: "var(--colorX) center, var(--colorX) var(--colorY)",
+    backgroundBlendMode: "darken",
+    mixBlendMode: "color",
+  },
 };
 
-/**
- * The one look allowed to be nearly invisible at rest, because unlit metal is.
- * Every other finish marks a card as rarer than plain, so it has to say so
- * without being touched — see the floor this is excepted from in the tests.
- */
-export const RESTS_DARK_SHADER_ID: HoloShaderId = "silver";
-
-/** What an unrecognized or missing look falls back to. */
+/** What an unrecognized or missing finish falls back to. */
 export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "silver";
 
 /**
- * What a varnish falls back to. Its own default, because the two axes are not
- * interchangeable: an unknown *coat* should stay out of the way, where an
- * unknown *foil* should still look like foil.
+ * What an unrecognized varnish falls back to. Its own default, because the two
+ * axes are not interchangeable: an unknown coat should stay out of the way,
+ * where an unknown foil should still look like foil.
  */
-export const DEFAULT_VARNISH_SHADER_ID: HoloShaderId = "gloss";
-
-/** The look for a varnish id, or a plain clear coat. */
-export function varnishShader(id: string | null | undefined): HoloShader {
-  return isHoloShaderId(id) ? SHADERS[id] : SHADERS[DEFAULT_VARNISH_SHADER_ID];
-}
+export const DEFAULT_VARNISH_SHADER_ID: HoloShaderId = "hotFoil";
 
 export function isHoloShaderId(value: unknown): value is HoloShaderId {
   return (
@@ -238,4 +259,23 @@ export function isHoloShaderId(value: unknown): value is HoloShaderId {
  */
 export function holoShader(id: string | null | undefined): HoloShader {
   return isHoloShaderId(id) ? SHADERS[id] : SHADERS[DEFAULT_HOLO_SHADER_ID];
+}
+
+/** The look for a varnish id, or the plain stamped coat. */
+export function varnishShader(id: string | null | undefined): HoloShader {
+  return isHoloShaderId(id) ? SHADERS[id] : SHADERS[DEFAULT_VARNISH_SHADER_ID];
+}
+
+/** The inline style a look resolves to, ready for the layer element. */
+export function holoLayerStyle(shader: HoloShader): CSSProperties {
+  return {
+    backgroundImage: shader.backgroundImage,
+    backgroundRepeat: shader.backgroundRepeat,
+    backgroundSize: shader.backgroundSize,
+    backgroundPosition: shader.backgroundPosition,
+    backgroundBlendMode: shader.backgroundBlendMode,
+    mixBlendMode: shader.mixBlendMode as CSSProperties["mixBlendMode"],
+    opacity: shader.opacity,
+    filter: shader.filter,
+  };
 }

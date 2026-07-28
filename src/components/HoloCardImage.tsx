@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import {
+  holoLayerStyle,
   holoShader,
   varnishShader as varnishShaderFor,
   type HoloShader,
@@ -15,29 +16,31 @@ type HoloCardImageProps = {
   imageUrl: string;
   alt: string;
   /**
-   * Alpha map of where the holographic effect applies, white where it does.
-   * Without it the effect is skipped entirely rather than smeared over the whole
-   * card — a uniform shimmer looks like a bug, not like foil.
+   * Where the holographic effect applies. Used as a **luminance** mask: the
+   * publisher ships it as a JPEG with no alpha channel, so a CSS `mask-image`
+   * would see an opaque rectangle and mask nothing. Routed through an SVG
+   * `<mask>`, which reads luminance by default, it works exactly as published.
+   *
+   * Without one the effect is skipped entirely rather than smeared over the
+   * whole card — a uniform shimmer looks like a bug, not like foil.
    */
   maskUrl?: string | null;
-  /** Second, independent layer (varnish). Composited the same way. */
+  /** Second, independent coat: the stamped varnish. */
   varnishMaskUrl?: string | null;
   /**
    * How the artwork fills its box. `contain` by default: a card is meant to be
-   * seen whole, and covering cut the printed border off on both the hero and the
-   * fullscreen view.
-   *
-   * Whatever it is, the masks use the same value — they only line up with the
-   * artwork if they are letterboxed exactly like it.
+   * seen whole, and covering cut the printed border off.
    */
   fit?: "cover" | "contain";
-  /**
-   * Which look to draw. Comes from the print's own finish, so an Enchanted card
-   * does not shimmer like a common one. Defaults to the everyday foil.
-   */
+  /** Which look to draw. Comes from the print's own finish. */
   shader?: HoloShader;
   /** How to draw the varnish coat. Its own axis, with its own names. */
   varnishShader?: HoloShader;
+  /**
+   * The hue a stamped varnish throws. Feeds `--topcolor`, which the varnish
+   * recipes sweep across the card.
+   */
+  varnishColor?: string;
   /**
    * Label for the control that asks iOS for the motion sensor. Passed in rather
    * than translated here so this component stays free of the locale plumbing.
@@ -51,36 +54,8 @@ function objectFitClass(fit: "cover" | "contain"): string {
   return fit === "contain" ? "object-contain" : "object-cover";
 }
 
-/** What a masked layer paints: the rainbow sweep, the varnish, or the facets. */
-type HoloLayerKind = "foil" | "varnish" | "grain";
-
-/** Rest position: gradients centred, card flat. */
-const NEUTRAL = { x: 50, y: 50, tiltX: 0, tiltY: 0 } as const;
-
-/**
- * The sparkle in the foil itself.
- *
- * Generated as inline SVG turbulence rather than shipped as an image: it costs
- * no request, and it stays sharp at any card size, where a bitmap would either
- * blur on the fullscreen view or be wastefully large for a thumbnail.
- *
- * A smooth rainbow reads as printed plastic. Real foil is a field of tiny
- * facets, and it is the facets catching the light — not the sweep — that says
- * "this one is special" at a glance.
- */
-const GRAIN_TEXTURE =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1' intercept='-0.233'/%3E%3CfeFuncG type='linear' slope='1' intercept='-0.233'/%3E%3CfeFuncB type='linear' slope='1' intercept='-0.233'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E\")";
-
-/**
- * How far the sparkle slides against the print as the card leans, as a share of
- * the pointer's travel.
- *
- * This is the realism cue. Glitter fixed to the artwork reads as a printed
- * pattern; shifting it a little turns it into facets sitting *above* the ink,
- * catching the light from a new angle. Small on purpose — past a few percent it
- * stops looking like depth and starts looking like a texture sliding around.
- */
-const GRAIN_PARALLAX = 0.14;
+/** Rest position: light centred, card flat, glare off. */
+const NEUTRAL = { x: 50, y: 50 } as const;
 
 /**
  * How far the card leans at the edges, in degrees. Generous enough to read as
@@ -89,19 +64,12 @@ const GRAIN_PARALLAX = 0.14;
 const MAX_TILT = 18;
 
 /**
- * A card that catches the light as you move over it.
+ * A card that catches the light as you move over it, or as you tilt the phone.
  *
- * Reproduces the layering of [poke-holo](https://poke-holo.simey.me/): a
- * rainbow sweep and a glare, both following the pointer, confined to where the
- * print is actually foil.
- *
- * The confinement is the whole trick, and it is why this needs a mask rather
- * than a filter. Ravensburger publishes one per card — 3078 of 3154 French
- * prints — as a **JPEG**, which has no alpha channel, so `mask-image` would see
- * an opaque rectangle and mask nothing. Instead the rainbow is multiplied by the
- * mask (black leaves it untouched, white lets it through) and the result is
- * color-dodged onto the artwork. Both blend modes are far better supported than
- * luminance masking.
+ * The looks themselves live in `core/render/holoShaders`, transcribed from the
+ * publisher's own viewer. This file only places the light: it writes the custom
+ * properties those recipes are expressed against, and confines every layer to
+ * where the print is actually foil.
  *
  * Pointer position rides CSS custom properties so moving the mouse never
  * re-renders React.
@@ -114,12 +82,16 @@ export function HoloCardImage({
   fit = "contain",
   shader = holoShader(null),
   varnishShader = varnishShaderFor(null),
+  varnishColor = "#5ff0ff",
   tiltPromptLabel = "Incliner",
   className,
   children,
 }: HoloCardImageProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [isActive, setIsActive] = useState(false);
+  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const foilMaskId = `holoFoil${instanceId}`;
+  const varnishMaskId = `holoVarnish${instanceId}`;
 
   /**
    * On a touch screen there is no pointer to follow, so the card sat perfectly
@@ -131,51 +103,62 @@ export function HoloCardImage({
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
 
-  const applyPointer = useCallback((clientX: number, clientY: number) => {
-    const frame = frameRef.current;
-    if (!frame) return;
+  /** The whole contract the recipes are written against. */
+  const place = useCallback(
+    (x: number, y: number, tiltX: number, tiltY: number, glare: number) => {
+      const frame = frameRef.current;
+      if (!frame) return;
+      frame.style.setProperty("--colorX", `${x}%`);
+      frame.style.setProperty("--colorY", `${y}%`);
+      // The recipes lean on the sum as a single travelling coordinate.
+      frame.style.setProperty("--combined", `${x + y}%`);
+      frame.style.setProperty("--rotateX", `${tiltY}deg`);
+      frame.style.setProperty("--rotateY", `${tiltX}deg`);
+      frame.style.setProperty("--opacity", `${glare}`);
+    },
+    [],
+  );
 
-    const rect = frame.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+  const applyPointer = useCallback(
+    (clientX: number, clientY: number) => {
+      const frame = frameRef.current;
+      if (!frame) return;
+      const rect = frame.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
 
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    const clamp = (value: number) => Math.min(100, Math.max(0, value));
-
-    frame.style.setProperty("--holo-x", `${clamp(x)}%`);
-    frame.style.setProperty("--holo-y", `${clamp(y)}%`);
-    // Lean away from the pointer, the way a card tips under a finger.
-    frame.style.setProperty(
-      "--holo-tilt-x",
-      `${((clamp(y) - 50) / 50) * -MAX_TILT}deg`,
-    );
-    frame.style.setProperty(
-      "--holo-tilt-y",
-      `${((clamp(x) - 50) / 50) * MAX_TILT}deg`,
-    );
-  }, []);
-
-  // The sensor drives the same four properties the pointer does, so the two
-  // never disagree — and the pointer wins while it is actually on the card,
-  // because a mouse user tilting their laptop is not making a gesture.
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame || !deviceLean || isActive) return;
-    frame.style.setProperty("--holo-x", `${deviceLean.lightX}%`);
-    frame.style.setProperty("--holo-y", `${deviceLean.lightY}%`);
-    frame.style.setProperty("--holo-tilt-x", `${deviceLean.tiltX}deg`);
-    frame.style.setProperty("--holo-tilt-y", `${deviceLean.tiltY}deg`);
-  }, [deviceLean, isActive]);
+      const clamp = (value: number) => Math.min(100, Math.max(0, value));
+      const x = clamp(((clientX - rect.left) / rect.width) * 100);
+      const y = clamp(((clientY - rect.top) / rect.height) * 100);
+      // Lean away from the pointer, the way a card tips under a finger.
+      place(
+        x,
+        y,
+        ((x - 50) / 50) * MAX_TILT,
+        ((y - 50) / 50) * -MAX_TILT,
+        0.66,
+      );
+    },
+    [place],
+  );
 
   const reset = useCallback(() => {
-    const frame = frameRef.current;
     setIsActive(false);
-    if (!frame) return;
-    frame.style.setProperty("--holo-x", `${NEUTRAL.x}%`);
-    frame.style.setProperty("--holo-y", `${NEUTRAL.y}%`);
-    frame.style.setProperty("--holo-tilt-x", `${NEUTRAL.tiltX}deg`);
-    frame.style.setProperty("--holo-tilt-y", `${NEUTRAL.tiltY}deg`);
-  }, []);
+    place(NEUTRAL.x, NEUTRAL.y, 0, 0, 0);
+  }, [place]);
+
+  // The sensor drives the same properties the pointer does, so the two never
+  // disagree — and the pointer wins while it is actually on the card, because a
+  // mouse user tilting their laptop is not making a gesture.
+  useEffect(() => {
+    if (!deviceLean || isActive) return;
+    place(
+      deviceLean.lightX,
+      deviceLean.lightY,
+      deviceLean.tiltY,
+      deviceLean.tiltX,
+      0.4,
+    );
+  }, [deviceLean, isActive, place]);
 
   /** No mask, no effect — better a plain card than a uniformly shiny one. */
   if (!maskUrl) {
@@ -201,36 +184,79 @@ export function HoloCardImage({
       }}
       onPointerLeave={reset}
       onPointerCancel={reset}
+      style={
+        {
+          "--colorX": "50%",
+          "--colorY": "50%",
+          "--combined": "100%",
+          "--rotateX": "0deg",
+          "--rotateY": "0deg",
+          "--opacity": "0",
+          "--topcolor": varnishColor,
+        } as React.CSSProperties
+      }
       className={cn(
         // `rounded-[inherit]` only chains if every level passes the radius down.
-        "relative h-full w-full rounded-[inherit] [perspective:1000px]",
-        "[--holo-x:50%] [--holo-y:50%] [--holo-tilt-x:0deg] [--holo-tilt-y:0deg]",
+        "relative h-full w-full rounded-[inherit] [perspective:900px]",
         className,
       )}
     >
+      {/*
+        An SVG `<mask>` reads luminance, which is what makes the published JPEG
+        usable at all — as a CSS `mask-image` it would be an opaque rectangle.
+      */}
+      <svg aria-hidden className="absolute size-0" focusable="false">
+        <mask
+          id={foilMaskId}
+          maskUnits="objectBoundingBox"
+          maskContentUnits="objectBoundingBox"
+        >
+          <image
+            href={maskUrl}
+            width="1"
+            height="1"
+            preserveAspectRatio="none"
+          />
+        </mask>
+        {varnishMaskUrl && (
+          <mask
+            id={varnishMaskId}
+            maskUnits="objectBoundingBox"
+            maskContentUnits="objectBoundingBox"
+          >
+            {/*
+              The varnish mask is a normal map, not a coverage mask: red and
+              green are pinned near 127/128 and only blue says where anything is
+              stamped. The filter pulls blue into all three channels so the
+              luminance mask means what it should.
+            */}
+            <image
+              href={varnishMaskUrl}
+              width="1"
+              height="1"
+              preserveAspectRatio="none"
+              filter="url(#holo-varnish-coverage)"
+            />
+          </mask>
+        )}
+      </svg>
+
       <div
         /**
          * Rotation set inline rather than through an arbitrary Tailwind class:
          * `transform-gpu` also writes `transform`, and it won — the card never
-         * leaned at all, it only looked like it might. Inline also beats the
-         * idle keyframes, so the pointer takes over cleanly and the animation
-         * resumes the moment it leaves.
+         * leaned at all, it only looked like it might.
          */
-        style={
-          isActive || deviceLean
-            ? {
-                transform:
-                  "rotateX(var(--holo-tilt-x)) rotateY(var(--holo-tilt-y))",
-                willChange: "transform",
-              }
-            : undefined
-        }
+        style={{
+          transform: "rotateX(var(--rotateY)) rotateY(var(--rotateX))",
+          willChange: "transform",
+        }}
         className={cn(
           // Clipping belongs to the element that rotates, with the container's
           // own radius: left on an ancestor, a leaning card gets its corners
           // sliced off flat instead of turning.
-          "relative h-full w-full overflow-hidden rounded-[inherit]",
-          isActive || deviceLean
+          "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
+          isDriven
             ? "transition-transform duration-200 ease-out"
             : // Breathing on its own, so a foil copy reads as special before
               // anyone touches it. The pointer takes over on hover.
@@ -244,51 +270,40 @@ export function HoloCardImage({
           className={cn("h-full w-full", objectFitClass(fit))}
         />
 
-        <HoloLayer
-          maskUrl={maskUrl}
-          isActive={isActive}
-          isDriven={isDriven}
-          fit={fit}
-          shader={shader}
+        <div
+          aria-hidden
+          style={{
+            ...holoLayerStyle(shader),
+            mask: `url(#${foilMaskId})`,
+            WebkitMask: `url(#${foilMaskId})`,
+          }}
+          className={cn(
+            "pointer-events-none absolute inset-0",
+            !isDriven && "holo-idle-sheen",
+          )}
         />
-        {/*
-          The facets get their own masked layer rather than riding on the sweep.
-          Blended onto that deliberately dark gradient they did nothing —
-          `overlay` barely moves a dark base — so the grain was invisible at any
-          amplitude. Dodged straight onto the artwork, like the sweep itself, it
-          reads as light catching the foil.
-        */}
-        <HoloLayer
-          maskUrl={maskUrl}
-          isActive={isActive}
-          isDriven={isDriven}
-          fit={fit}
-          shader={shader}
-          kind="grain"
-        />
+
         {varnishMaskUrl && (
-          <HoloLayer
-            maskUrl={varnishMaskUrl}
-            isActive={isActive}
-            isDriven={isDriven}
-            fit={fit}
-            shader={varnishShader}
-            kind="varnish"
+          <div
+            aria-hidden
+            style={{
+              ...holoLayerStyle(varnishShader),
+              mask: `url(#${varnishMaskId})`,
+              WebkitMask: `url(#${varnishMaskId})`,
+            }}
+            className="pointer-events-none absolute inset-0"
           />
         )}
 
         {/* Glare rides on top of everything, unmasked: light falls on the whole card. */}
         <div
           aria-hidden
-          className={cn(
-            "pointer-events-none absolute inset-0 mix-blend-overlay transition-opacity duration-300",
-            // No idle animation here: the drift moves `background-position`,
-            // which does nothing to a radial gradient placed with `at`.
-            isActive ? "opacity-35" : "opacity-15",
-          )}
+          className="pointer-events-none absolute inset-0 mix-blend-overlay transition-opacity duration-300"
           style={{
-            background:
-              "radial-gradient(farthest-corner circle at var(--holo-x) var(--holo-y), rgba(255,255,255,0.8) 5%, rgba(255,255,255,0.15) 30%, rgba(0,0,0,0.4) 100%)",
+            backgroundImage:
+              "radial-gradient(farthest-corner circle at var(--colorX) var(--colorY), rgba(255,255,255,0.8) 10%, rgba(255,255,255,0.65) 20%, rgba(0,0,0,0.5) 90%)",
+            backgroundSize: "100%",
+            opacity: "var(--opacity)",
           }}
         />
 
@@ -312,101 +327,6 @@ export function HoloCardImage({
           {tiltPromptLabel}
         </button>
       )}
-    </div>
-  );
-}
-
-/**
- * One masked shimmer. `isolate` keeps the multiply inside this stacking context,
- * so only the masked result reaches the artwork below through `color-dodge`.
- */
-function HoloLayer({
-  maskUrl,
-  isActive,
-  isDriven,
-  fit,
-  shader,
-  kind = "foil",
-}: {
-  maskUrl: string;
-  isActive: boolean;
-  /** Something — pointer or phone — is placing the light right now. */
-  isDriven: boolean;
-  fit: "cover" | "contain";
-  shader: HoloShader;
-  kind?: HoloLayerKind;
-}) {
-  const varnish = kind === "varnish";
-  const grain = kind === "grain";
-  // The varnish is a second, smoother coat over whatever the foil is doing, so
-  // it keeps its own restrained strength rather than following the look.
-  const strength = grain ? shader.grainOpacity : shader.sweepOpacity;
-  return (
-    <div
-      aria-hidden
-      // Inline, not a utility class: the shader supplies a number, and this
-      // component has twice been bitten by a class losing to something else.
-      style={{ opacity: isActive ? strength.active : strength.idle }}
-      className="pointer-events-none absolute inset-0 isolate mix-blend-color-dodge transition-opacity duration-300"
-    >
-      <div
-        className={cn(
-          "absolute inset-0",
-          // The facets belong to the print, so they hold still while the sweep
-          // drifts across them. Animating both made the whole surface crawl.
-          !isDriven && !grain && "holo-idle-sheen",
-        )}
-        style={{
-          /**
-           * Darkened and contrasted before dodging. Straight from the gradient,
-           * `color-dodge` blows any light area of the artwork to flat white and
-           * the rainbow disappears — the effect reads as "brightened" instead of
-           * "holographic".
-           */
-          filter: grain
-            ? // Darker and harder than the sweep. Dodge turns the bright facets
-              // into pinpricks of light and leaves the dark ones alone, which is
-              // what separates glitter from a uniform haze.
-              "brightness(0.4) contrast(2.8)"
-            : shader.sweepFilter,
-          backgroundImage: grain ? GRAIN_TEXTURE : shader.sweep,
-          backgroundSize: grain ? shader.grainScale : shader.sweepScale,
-          /**
-           * Only while the pointer drives it. An inline value beats a keyframe,
-           * so setting this unconditionally pinned the gradient dead centre and
-           * `holo-drift` never moved anything — the idle card looked plain.
-           */
-          ...(isDriven
-            ? {
-                backgroundPosition: grain
-                  ? // Parallax, not a sweep: the facets slide a little against
-                    // the ink so they read as sitting above it.
-                    `calc(var(--holo-x) * ${GRAIN_PARALLAX}) calc(var(--holo-y) * ${GRAIN_PARALLAX})`
-                  : "var(--holo-x) var(--holo-y)",
-              }
-            : {}),
-        }}
-      />
-
-      {/* Multiply against the mask: black keeps the artwork, white lets light in. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={maskUrl}
-        alt=""
-        /**
-         * The varnish mask is a normal map, not a coverage mask — its red and
-         * green channels are a near-constant mid-grey and only blue says where
-         * anything is stamped. Multiplied raw it let half the effect through
-         * everywhere, which is why the varnish washed the whole card instead of
-         * following the engraved lines. The filter pulls blue into all three.
-         */
-        style={varnish ? { filter: "url(#holo-varnish-coverage)" } : undefined}
-        className={cn(
-          "absolute inset-0 h-full w-full mix-blend-multiply",
-          // Same fit as the artwork, or the mask lands off the foil areas.
-          objectFitClass(fit),
-        )}
-      />
     </div>
   );
 }

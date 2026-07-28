@@ -102,12 +102,19 @@ export function HoloCardImage({
   const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
   const foilMaskId = `holoFoil${instanceId}`;
   /**
-   * The mask has to be letterboxed exactly like the artwork it confines. On the
-   * detail page the frame is already the card's shape so it never showed, but a
-   * shelf tile has whatever shape the shelf is configured for — stretching the
-   * mask to fill it put the foil off the card.
+   * The mask fills the frame, and must not try to letterbox itself.
+   *
+   * `objectBoundingBox` units put the mask in a 1x1 viewport — a *square* in
+   * user space, whatever shape the element is. `xMidYMid meet` therefore fits
+   * the artwork's 0.72 into a square, leaving a seventh of the width empty on
+   * each side, and the box mapping then stretches that inset result over the
+   * card. The foil stopped short of the left and right edges.
+   *
+   * `none` is right because the frame is given the card's own shape by its
+   * caller. If a frame ever has to be a different shape, the fix is to letterbox
+   * the *frame*, never this.
    */
-  const maskAspect = fit === "contain" ? "xMidYMid meet" : "xMidYMid slice";
+  const maskAspect = "none";
   const varnishMaskId = `holoVarnish${instanceId}`;
 
   /**

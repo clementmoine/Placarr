@@ -67,7 +67,6 @@ import {
   upsertBackgroundJobInCache,
 } from "@/lib/api/backgroundJobs";
 import { getHeroImage, getGalleryImages } from "@/core/collect/media";
-import { findAttachmentForUrl } from "@/core/enrich/media/coverUrl";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -1757,30 +1756,6 @@ export default function ItemDetailsPage() {
     printVariant?.finishes,
   );
 
-  const coverSourceChip = useMemo(() => {
-    if (!item || !coverImage) return null;
-    const displayLocale: AttachmentDisplayLocale =
-      locale === "en" ? "en" : "fr";
-    const match = findAttachmentForUrl(getGalleryImages(item), coverImage);
-    if (!match) return null;
-    const gallery = getAttachmentGalleryLabels(
-      {
-        type: match.type,
-        role: match.role,
-        title: match.title,
-        source: match.source,
-        providerLabel: match.providerLabel,
-        sourceNames: match.sourceNames,
-        gridStyleCoverLabelsSource: match.gridStyleCoverLabelsSource,
-      },
-      displayLocale,
-    );
-    return {
-      sourceNames: gallery.sourceNames,
-      detail: gallery.detail,
-    };
-  }, [item, coverImage, locale]);
-
   /**
    * Colours of the two cover edges that border the empty space. A contained
    * cover leaves bands on one axis; filled with the artwork's own edge colours
@@ -2390,19 +2365,6 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    {coverSourceChip &&
-                      (coverSourceChip.sourceNames.length > 0 ||
-                        coverSourceChip.detail) && (
-                        <div
-                          className="absolute top-2 right-2 z-30"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <AttachmentSourceChip
-                            sourceNames={coverSourceChip.sourceNames}
-                            detail={coverSourceChip.detail}
-                          />
-                        </div>
-                      )}
                   </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-950 text-muted-foreground p-6 gap-3 min-h-[300px]">

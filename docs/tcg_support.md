@@ -171,6 +171,44 @@ Ce qui a été vérifié :
 générique (sans masque, piloté par `foilTypes`/`finish`) ailleurs. Le mode
 plein écran des cartes seulement, comme demandé.
 
+### 5 bis. Pourquoi Lorcana est une exception — et comment le tester ailleurs
+
+_(vérifié le 2026-07-29)_
+
+Les masques Lorcana sont publics **parce que Ravensburger a un visualiseur web**
+(`cards.disneylorcana.com`). Un rendu dans un navigateur oblige à servir les
+masques côté client : ils sont donc sur un CDN public, et les recettes elles-mêmes
+sont dans une feuille de style lisible. Ce n'est pas de la générosité, c'est une
+conséquence technique — et c'est ce qui a permis de tout transcrire.
+
+**D'où le test à faire pour tout nouveau jeu, avant d'envisager quoi que ce
+soit d'autre : l'éditeur a-t-il un visualiseur web officiel qui _rend_ les
+foils ?** Si oui, masques et recettes sont accessibles comme pour Lorcana. Sinon,
+il n'y a rien à copier, et il n'y aura rien.
+
+Ce qui a été testé en direct, et qui échoue à ce test :
+
+| Source                    | Ce qu'elle publie sur les finitions                                      | Masque   |
+| ------------------------- | ------------------------------------------------------------------------ | -------- |
+| **TCGdex**                | `variants: {holo, normal, reverse, firstEdition, wPromo}` — des booléens | ❌ aucun |
+| **Scryfall** (Magic)      | `finishes: [nonfoil, foil]` + tailles d'image                            | ❌ aucun |
+| **flibustier** (Pocket)   | métadonnées + URLs d'images                                              | ❌ aucun |
+| Site officiel Pokémon TCG | images à plat, aucun rendu de foil                                       | ❌ aucun |
+
+Un scan haute résolution **n'est pas** un masque : ces sources disent *qu'*une
+carte existe en foil, jamais _où_ le foil se pose. Attention aux documents qui
+cochent « résolu » sur cette base — c'est une confusion de catégorie.
+
+**Pokémon TCG Pocket** : `RaenonX-PokemonTCGP/pokemon-tcgp-apk-dumper` mirrore
+l'APK en CI (650 Mo, `current.zip` + archives, **aucune licence**). Quelqu'un
+automatise donc déjà le dump — mais s'en servir place au même endroit que le
+faire soi-même : ce sont des assets Nintendo. Décompiler pour **comprendre** la
+technique est défendable (exception d'interopérabilité, et c'est ce qu'on a fait
+en lisant du GPL sans le copier) ; embarquer les masques dans `public/` ne l'est
+pas. Et la question préalable reste entière : Pocket est un jeu **numérique**,
+sans état ni prix de revente — sa place dans un suivi de collection physique
+n'est pas établie.
+
 ## 6. Le dos de carte
 
 Les dos sont **constants par jeu** (une image, parfois deux selon l'époque),

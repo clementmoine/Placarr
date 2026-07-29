@@ -144,6 +144,37 @@ describe("extra coats", () => {
   });
 });
 
+describe("the varnish hue", () => {
+  it("carries the colour the publisher throws, not an invented one", () => {
+    // Read off their viewer: a hot foil is red. Defaulting to a cyan in the
+    // component put a blue wash over every hot-foiled card.
+    expect(varnishShader("hotFoil").topColor).toBe("#FF474B");
+    expect(varnishShader("chromeRainbowHotFoil").topColor).toBe("#99A2A6");
+  });
+
+  it("belongs to the coats, never to a foil finish", () => {
+    // `--topcolor` only appears in varnish recipes; a finish carrying one would
+    // be stating something about a layer it does not draw.
+    for (const id of ["silver", "lore", "lava", "magma", "satin"] as const) {
+      expect(holoShader(id).topColor).toBeUndefined();
+    }
+  });
+
+  it("gives a colour to every look that sweeps one", () => {
+    // A recipe referring to `--topcolor` without one sweeps `transparent`,
+    // which is a layer that silently does nothing.
+    for (const id of HOLO_SHADER_IDS) {
+      const shader = holoShader(id);
+      if (shader.backgroundImage.includes("var(--topcolor)")) {
+        expect(
+          shader.topColor,
+          `${id} sweeps a hue it never defines`,
+        ).toBeTruthy();
+      }
+    }
+  });
+});
+
 describe("holoLayerStyle", () => {
   it("carries the whole recipe onto the element", () => {
     const style = holoLayerStyle(holoShader("silver"));

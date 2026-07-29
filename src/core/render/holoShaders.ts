@@ -40,6 +40,11 @@ export type HoloShader = {
   opacity?: number;
   filter?: string;
   /**
+   * The hue a stamped varnish throws, feeding `--topcolor`. Set only on the
+   * varnish coats; a foil finish does not use it.
+   */
+  topColor?: string;
+  /**
    * A second coat this finish always comes with, drawn above it through the
    * same mask. Two finishes ship one: without it a Lore card was missing the
    * layer that carries most of its colour.
@@ -253,6 +258,11 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
    */
   hotFoil: {
     id: "hotFoil",
+    // Read off the publisher's viewer, which sets it per card inline. Two
+    // MetallicHotFoil prints both gave this red; `HighGloss`, `SnowHotFoil` and
+    // `MatteHotFoil` share this look but their own colour has not been
+    // observed, so they borrow it — a snow foil is unlikely to be red.
+    topColor: "#FF474B",
     backgroundImage: `url(${T}/satind.png), linear-gradient(90deg, transparent 50%, var(--topcolor) 60%, transparent 80%)`,
     backgroundRepeat: "repeat, repeat",
     backgroundSize: "50% 50%, 300% 300%",
@@ -264,6 +274,7 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
 
   chromeRainbowHotFoil: {
     id: "chromeRainbowHotFoil",
+    topColor: "#99A2A6",
     backgroundImage: `linear-gradient(90deg, #333 20%, var(--topcolor) 50%, #333 80%), url(${T}/color.jpg)`,
     backgroundRepeat: "repeat, repeat",
     backgroundSize: "300% 300%, 75% 75%",

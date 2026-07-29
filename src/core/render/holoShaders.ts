@@ -258,10 +258,20 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
    */
   hotFoil: {
     id: "hotFoil",
-    // Read off the publisher's viewer, which sets it per card inline. Two
-    // MetallicHotFoil prints both gave this red; `HighGloss`, `SnowHotFoil` and
-    // `MatteHotFoil` share this look but their own colour has not been
-    // observed, so they borrow it — a snow foil is unlikely to be red.
+    /**
+     * Read off the publisher's viewer, which sets it per card inline.
+     *
+     * What decides it could not be established. Seven prints were sampled: the
+     * card's ink explains four and is contradicted by three — an Amber, an
+     * Amethyst and a Ruby Enchanted from the same set all throw the same
+     * `#D9A36D`. Nor is it the varnish: those three are MetallicHotFoil like
+     * the reds. Nothing LorcanaJSON publishes predicts it.
+     *
+     * This red is what both sampled Iconique prints throw, across two sets, and
+     * those are the cards where the coat carries the look. Every other card
+     * borrows it, which is a stand-in rather than a finding — a Special print
+     * measured `#79CC5E`, a green.
+     */
     topColor: "#FF474B",
     backgroundImage: `url(${T}/satind.png), linear-gradient(90deg, transparent 50%, var(--topcolor) 60%, transparent 80%)`,
     backgroundRepeat: "repeat, repeat",
@@ -274,6 +284,8 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
 
   chromeRainbowHotFoil: {
     id: "chromeRainbowHotFoil",
+    // The grey this recipe's own gradient is built around, and the value its
+    // one sampled print throws. The two agreeing is the reason to trust it.
     topColor: "#99A2A6",
     backgroundImage: `linear-gradient(90deg, #333 20%, var(--topcolor) 50%, #333 80%), url(${T}/color.jpg)`,
     backgroundRepeat: "repeat, repeat",

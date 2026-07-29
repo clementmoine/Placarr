@@ -97,6 +97,8 @@ import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { HoloCardImage } from "@/components/HoloCardImage";
+import { FlippableCard } from "@/components/FlippableCard";
+import { cardBackUrlFor } from "@/core/render/cardBack";
 import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { resolveStoredVariant } from "@/core/enrich/variants";
@@ -2809,29 +2811,37 @@ export default function ItemDetailsPage() {
                  cover itself: zooming a gallery image shows that image. */
               (variantView.foilMaskUrl &&
               urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
-                <div className="aspect-[5/7] max-h-[80vh] rounded-lg animate-zoom-in">
-                  <HoloCardImage
-                    imageUrl={variantView.imageUrl ?? zoomImageUrl}
-                    alt="Zoom"
-                    /* The mirrored masks were cut for the hero's framing. They
+                <div className="h-[80vh] aspect-[5/7] rounded-lg animate-zoom-in">
+                  <FlippableCard
+                    backUrl={cardBackUrlFor(item?.printKey)}
+                    backAlt={`${itemDisplayName ?? ""} — dos`}
+                    flipLabel={t("items.flipCard")}
+                  >
+                    <HoloCardImage
+                      imageUrl={variantView.imageUrl ?? zoomImageUrl}
+                      alt="Zoom"
+                      /* The mirrored masks were cut for the hero's framing. They
                        only fit here if this is the same file — zooming the
                        uncropped original of a cropped cover is not. */
-                    maskUrl={
-                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
-                        ? foilMaskUrl
-                        : variantView.foilMaskUrl
-                    }
-                    varnishMaskUrl={
-                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
-                        ? varnishMaskUrl
-                        : variantView.varnishMaskUrl
-                    }
-                    shader={variantView.shader}
-                    varnishShader={variantView.varnish}
-                    varnishColor={variantView.varnishColor}
-                    secondVarnishMaskUrl={secondVarnishMaskUrl}
-                    secondVarnishColor={variantView.secondVarnishColor}
-                  />
+                      maskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? foilMaskUrl
+                          : variantView.foilMaskUrl
+                      }
+                      varnishMaskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? varnishMaskUrl
+                          : variantView.varnishMaskUrl
+                      }
+                      shader={variantView.shader}
+                      varnishShader={variantView.varnish}
+                      varnishColor={variantView.varnishColor}
+                      secondVarnishMaskUrl={secondVarnishMaskUrl}
+                      secondVarnishColor={variantView.secondVarnishColor}
+                    />
+                  </FlippableCard>
                 </div>
               ) : (
                 <RemoteImage

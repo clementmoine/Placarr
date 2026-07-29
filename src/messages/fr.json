@@ -355,6 +355,7 @@
     "invalidImageFile": "Veuillez télécharger un fichier image valide",
     "saveFailed": "Échec de l'enregistrement de l'objet",
     "fetching": "Récupération",
+    "flipCard": "Voir le dos",
     "unknownBarcodeMetadata": "Code-barres inconnu",
     "unknownBarcodeMetadataHint": "Aucune source (BGG, boutiques, bases publiques) ne reconnaît ce code-barres. Vérifiez qu'il est correct, renommez l'objet avec le titre du jeu puis rafraîchissez les métadonnées, ou complétez la fiche à la main.",
     "refreshMetadata": "Rafraîchir",

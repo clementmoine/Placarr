@@ -355,6 +355,7 @@
     "invalidImageFile": "Please upload a valid image file",
     "saveFailed": "Failed to save item",
     "fetching": "Fetching",
+    "flipCard": "Show the back",
     "unknownBarcodeMetadata": "Unknown barcode",
     "unknownBarcodeMetadataHint": "No source (BGG, retailers, public databases) recognizes this barcode. Check that it is correct, rename the item with the game title and refresh metadata, or fill in the details manually.",
     "refreshMetadata": "Refresh",

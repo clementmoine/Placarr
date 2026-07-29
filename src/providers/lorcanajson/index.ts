@@ -83,6 +83,9 @@ const VARNISH_SHADERS: Readonly<Record<string, string>> = {
   MatteHotFoil: "hotFoil",
   MetallicHotFoil: "hotFoil",
   SnowHotFoil: "hotFoil",
+  // Distinct from `ChromeRainbowHotFoil`, and drawn by the generic coat — only
+  // the Chrome one gets its own rule upstream.
+  RainbowHotFoil: "hotFoil",
   ChromeRainbowHotFoil: "chromeRainbowHotFoil",
 };
 const PROVIDER_LABEL = "LorcanaJSON";

@@ -25,6 +25,37 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
 }
 
 describe("toPrintCandidate varnish", () => {
+  it("names every varnish the catalogue actually ships", () => {
+    // Taken from the catalogue itself, one representative per distinct
+    // (finish, varnish, hot-foil count) combination: 22 of them. `RainbowHotFoil`
+    // was missing and fell back to the everyday coat unnoticed.
+    for (const [varnish, look] of [
+      ["HighGloss", "hotFoil"],
+      ["MatteHotFoil", "hotFoil"],
+      ["MetallicHotFoil", "hotFoil"],
+      ["SnowHotFoil", "hotFoil"],
+      ["RainbowHotFoil", "hotFoil"],
+      ["ChromeRainbowHotFoil", "chromeRainbowHotFoil"],
+    ] as const) {
+      expect(
+        toPrintCandidate(card({ varnishType: varnish })).varnishShaders,
+      ).toEqual({ [varnish]: look });
+    }
+  });
+
+  it("leaves the hue to the catalogue rather than to the varnish name", () => {
+    // Two prints with the same varnish throw different colours, so nothing here
+    // may claim one. A print the catalogue says nothing about gets none.
+    expect(
+      toPrintCandidate(card({ varnishType: "MetallicHotFoil" })).varnishColor,
+    ).toBeNull();
+    expect(
+      toPrintCandidate(card({ varnishType: "MetallicHotFoil" }), {
+        hotFoilColor: "#FF474B",
+      }).varnishColor,
+    ).toBe("#FF474B");
+  });
+
   it("gives the stamped hot foil its own look, apart from a clear coat", () => {
     // Treating all five varnish names as one pale sheen made the hot-foiled
     // line work — the whole point of an Iconique card — look like gloss.

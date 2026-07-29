@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   holoLayerStyle,
   holoShader,
+  NEUTRAL_VARNISH_COLOR,
   varnishShader as varnishShaderFor,
   type HoloShader,
 } from "@/core/render/holoShaders";
@@ -217,9 +218,12 @@ export function HoloCardImage({
           "--rotateX": "0deg",
           "--rotateY": "0deg",
           "--opacity": "0",
-          // The varnish coat carries its own hue; inventing one here put a cyan
-          // wash over every hot-foiled card, where the publisher throws a red.
-          "--topcolor": varnishColor ?? varnishShader.topColor ?? "transparent",
+          /**
+           * The print's own stamped hue. Absent for all but 83 prints, and the
+           * publisher falls back to this same neutral grey rather than to a
+           * colour — checked on a HighGloss card, which resolves `#aaa`.
+           */
+          "--topcolor": varnishColor ?? NEUTRAL_VARNISH_COLOR,
         } as React.CSSProperties
       }
       className={cn(

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_HOLO_SHADER_ID,
+  NEUTRAL_VARNISH_COLOR,
   DEFAULT_VARNISH_SHADER_ID,
   HOLO_SHADER_IDS,
   holoLayerStyle,
@@ -144,34 +145,12 @@ describe("extra coats", () => {
   });
 });
 
-describe("the varnish hue", () => {
-  it("carries the colour the publisher throws, not an invented one", () => {
-    // Read off their viewer: a hot foil is red. Defaulting to a cyan in the
-    // component put a blue wash over every hot-foiled card.
-    expect(varnishShader("hotFoil").topColor).toBe("#FF474B");
-    expect(varnishShader("chromeRainbowHotFoil").topColor).toBe("#99A2A6");
-  });
-
-  it("belongs to the coats, never to a foil finish", () => {
-    // `--topcolor` only appears in varnish recipes; a finish carrying one would
-    // be stating something about a layer it does not draw.
-    for (const id of ["silver", "lore", "lava", "magma", "satin"] as const) {
-      expect(holoShader(id).topColor).toBeUndefined();
-    }
-  });
-
-  it("gives a colour to every look that sweeps one", () => {
-    // A recipe referring to `--topcolor` without one sweeps `transparent`,
-    // which is a layer that silently does nothing.
-    for (const id of HOLO_SHADER_IDS) {
-      const shader = holoShader(id);
-      if (shader.backgroundImage.includes("var(--topcolor)")) {
-        expect(
-          shader.topColor,
-          `${id} sweeps a hue it never defines`,
-        ).toBeTruthy();
-      }
-    }
+describe("the neutral a coat falls back to", () => {
+  it("is the publisher's own, a grey rather than a colour", () => {
+    // Read off a HighGloss print, which the catalogue gives no hue. Only 83 of
+    // 3241 variants carry one, so this is what most coats actually render —
+    // a colour here tinted every single one of them.
+    expect(NEUTRAL_VARNISH_COLOR).toBe("#aaa");
   });
 });
 

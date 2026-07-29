@@ -20,7 +20,9 @@ import type { CSSProperties } from "react";
  *
  * - `--colorX` / `--colorY` — pointer position as a percentage, 50% at rest
  * - `--combined` — their sum, 100% at rest
- * - `--topcolor` — the hue a stamped varnish throws
+ * - `--topcolor` — the hue the *print's own* stamped coat throws, which comes
+ *   from the catalogue and never from a look: nothing about the finish, the
+ *   varnish, the ink or the set predicts it
  *
  * Which finish maps to which look belongs to the provider that knows the finish
  * names, never to this file.
@@ -39,11 +41,6 @@ export type HoloShader = {
   mixBlendMode: string;
   opacity?: number;
   filter?: string;
-  /**
-   * The hue a stamped varnish throws, feeding `--topcolor`. Set only on the
-   * varnish coats; a foil finish does not use it.
-   */
-  topColor?: string;
   /**
    * A second coat this finish always comes with, drawn above it through the
    * same mask. Two finishes ship one: without it a Lore card was missing the
@@ -201,13 +198,13 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
 
   tempest: {
     id: "tempest",
-    backgroundImage: `url(${T}/tempest.jpg), url(${T}/vertwavec.jpg), url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3e%3cfilter id='n'%3e%3cfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='10' stitchTiles='stitch'/%3e%3c/filter%3e%3crect width='500' height='500' fill='%23000'/%3e%3crect width='500' height='500' filter='url(%23n)' opacity='0.3'/%3e%3c/svg%3e")`,
-    backgroundRepeat: "no-repeat, repeat, repeat",
-    backgroundSize: "cover, 300% 100%, 50% 50%",
-    backgroundPosition: "center, calc(var(--combined) / 2) center, center",
-    backgroundBlendMode: "color-burn, multiply",
-    mixBlendMode: "hard-light",
-    filter: "brightness(0.75) contrast(1.5)",
+    backgroundImage: `url(${T}/tempest.jpg), url(${T}/vertwavec.jpg), url("data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20width='500'%20height='500'%3e%3cfilter%20id='n'%3e%3cfeTurbulence%20type='fractalNoise'%20baseFrequency='.7'%20numOctaves='10'%20stitchTiles='stitch'%3e%3c/feTurbulence%3e%3c/filter%3e%3crect%20width='500'%20height='500'%20fill='%23000'%3e%3c/rect%3e%3crect%20width='500'%20height='500'%20filter='url(%23n)'%20opacity='0.3'%3e%3c/rect%3e%3c/svg%3e")`,
+    backgroundRepeat: "no-repeat, repeat, no-repeat",
+    backgroundSize: "cover, 700% 250%, cover",
+    backgroundPosition: "center, calc(var(--combined) / 4) center, center",
+    backgroundBlendMode: "color-burn, screen, normal",
+    mixBlendMode: "color-dodge",
+    filter: "brightness(0.8) contrast(2)",
   },
 
   calendarWave: {
@@ -258,21 +255,6 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
    */
   hotFoil: {
     id: "hotFoil",
-    /**
-     * Read off the publisher's viewer, which sets it per card inline.
-     *
-     * What decides it could not be established. Seven prints were sampled: the
-     * card's ink explains four and is contradicted by three — an Amber, an
-     * Amethyst and a Ruby Enchanted from the same set all throw the same
-     * `#D9A36D`. Nor is it the varnish: those three are MetallicHotFoil like
-     * the reds. Nothing LorcanaJSON publishes predicts it.
-     *
-     * This red is what both sampled Iconique prints throw, across two sets, and
-     * those are the cards where the coat carries the look. Every other card
-     * borrows it, which is a stand-in rather than a finding — a Special print
-     * measured `#79CC5E`, a green.
-     */
-    topColor: "#FF474B",
     backgroundImage: `url(${T}/satind.png), linear-gradient(90deg, transparent 50%, var(--topcolor) 60%, transparent 80%)`,
     backgroundRepeat: "repeat, repeat",
     backgroundSize: "50% 50%, 300% 300%",
@@ -284,9 +266,6 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
 
   chromeRainbowHotFoil: {
     id: "chromeRainbowHotFoil",
-    // The grey this recipe's own gradient is built around, and the value its
-    // one sampled print throws. The two agreeing is the reason to trust it.
-    topColor: "#99A2A6",
     backgroundImage: `linear-gradient(90deg, #333 20%, var(--topcolor) 50%, #333 80%), url(${T}/color.jpg)`,
     backgroundRepeat: "repeat, repeat",
     backgroundSize: "300% 300%, 75% 75%",
@@ -295,6 +274,15 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
     mixBlendMode: "color",
   },
 };
+
+/**
+ * What a stamped coat throws when the catalogue names no colour for it.
+ *
+ * The publisher's own fallback, read off a HighGloss print: a neutral grey, not
+ * a colour. Only 83 of 3241 variants carry a hue, so this is what most coats
+ * actually render — getting it wrong tinted every one of them.
+ */
+export const NEUTRAL_VARNISH_COLOR = "#aaa";
 
 /** What an unrecognized or missing finish falls back to. */
 export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "silver";

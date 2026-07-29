@@ -55,6 +55,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
+import { groupCopies } from "@/core/collect/groupCopies";
 import { usePrintVariants } from "@/lib/client/hooks/usePrintVariants";
 import type { PrintVariantInfo } from "@/lib/client/hooks/usePrintVariant";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
@@ -115,6 +116,8 @@ type ShelfGridItemProps = {
   selectionMode: boolean;
   isSelected: boolean;
   canSelect: boolean;
+  /** How many copies this tile stands for. 1 means it stands for itself. */
+  copyCount: number;
   /** What this copy is a print of, resolved once for the whole shelf. */
   printVariant?: PrintVariantInfo | null;
   onSelect: (itemId: string, options?: { shiftKey?: boolean }) => void;
@@ -128,6 +131,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   selectionMode,
   isSelected,
   canSelect,
+  copyCount,
   printVariant,
   onSelect,
 }: ShelfGridItemProps) {
@@ -136,6 +140,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   const card = (
     <ItemCard
       {...item}
+      copyCount={copyCount}
       printVariant={printVariant}
       shelfType={shelf?.type}
       shelfName={shelf?.name}
@@ -389,6 +394,15 @@ function ShelfComponent() {
       shelfType: shelf.type,
     });
   }, [shelf, sortBy]);
+
+  /**
+   * Copies of the same object share a tile.
+   *
+   * `Item` stays one physical copy — each has its own condition, price and
+   * loan — so this is purely a display fold, applied after sorting so a group
+   * appears where its first copy did. See `docs/tcg_support.md` §4.
+   */
+  const groupedItems = useMemo(() => groupCopies(sortedItems), [sortedItems]);
 
   /**
    * What each copy is a print of, for the whole shelf in one request.
@@ -938,7 +952,7 @@ function ShelfComponent() {
           </div>
           <LayoutGroup id="shelf-grid">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
-              {sortedItems.map((item, index) =>
+              {groupedItems.map(({ key, lead: item, copies }, index) =>
                 isLoading || !item.id ? (
                   <Skeleton
                     key={`skeleton-${index}`}
@@ -949,8 +963,9 @@ function ShelfComponent() {
                   />
                 ) : (
                   <ShelfGridItem
-                    key={item.id}
+                    key={key}
                     item={item}
+                    copyCount={copies.length}
                     index={index}
                     shelf={shelf}
                     resolvedShelfId={resolvedShelfId}

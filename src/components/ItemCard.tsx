@@ -25,6 +25,7 @@ import { getAspectRatio } from "@/lib/text/cardFormat";
 import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import type { Condition } from "@/generated/prisma/browser";
+import { withoutCopyMarker } from "@/core/collect/groupCopies";
 import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
@@ -43,6 +44,11 @@ function conditionBadgeClass(condition: Condition) {
 }
 
 interface ItemCardProps extends Item {
+  /**
+   * How many copies of this object the collector owns. The tile stands for all
+   * of them: `Item` stays one physical copy, and the fold is display-only.
+   */
+  copyCount?: number;
   /**
    * What this copy is a print of, when the shelf could resolve it. Resolved for
    * the whole shelf at once rather than per tile — see `usePrintVariants`.
@@ -77,6 +83,7 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
     prev.variant === next.variant &&
     prev.printVariant === next.printVariant &&
+    prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
     (prev.metadata?.attachments?.length ?? 0) ===
       (next.metadata?.attachments?.length ?? 0) &&
@@ -85,7 +92,21 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
 }
 
 function ItemCardInner(props: ItemCardProps) {
-  const { imageUrl, name, shelfType, cardFormat, condition, priority } = props;
+  const {
+    imageUrl,
+    name,
+    shelfType,
+    cardFormat,
+    condition,
+    priority,
+    copyCount = 1,
+  } = props;
+  /**
+   * The copy marker in the title becomes noise once the tile says how many
+   * there are — and on the lead copy it was always arbitrary which of the four
+   * wore it.
+   */
+  const displayName = copyCount > 1 ? withoutCopyMarker(name) : name;
   /**
    * A foil copy has to be recognisable in the grid, not only once opened —
    * otherwise the one thing that separates it from an ordinary copy is
@@ -194,6 +215,11 @@ function ItemCardInner(props: ItemCardProps) {
               {estimatedPrice.euros.toFixed(2)} €
             </span>
           )}
+          {copyCount > 1 && (
+            <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full border border-white/15 bg-zinc-950/90 text-zinc-100 shadow-sm">
+              ×{copyCount}
+            </span>
+          )}
           {variantView.foilMaskUrl && (
             <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
               ✦ {props.variant}
@@ -274,7 +300,7 @@ function ItemCardInner(props: ItemCardProps) {
       {/* Glassmorphic bottom panel — title (stays above the enriching overlay) */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
         <span className="text-[10px] font-extrabold line-clamp-2 text-white leading-tight">
-          {name.trim().length > 0 ? name : t("common.noName")}
+          {displayName.trim().length > 0 ? displayName : t("common.noName")}
         </span>
       </div>
     </div>

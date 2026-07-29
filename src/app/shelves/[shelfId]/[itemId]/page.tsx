@@ -1747,6 +1747,10 @@ export default function ItemDetailsPage() {
     heroArtworkUrl,
     variantView.varnishMaskUrl,
   );
+  const secondVarnishMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.secondVarnishMaskUrl,
+  );
   /**
    * Shown on the fiche only once the provider still offers it. A variant the
    * catalogue has dropped is not a fact worth stating.
@@ -2329,6 +2333,8 @@ export default function ItemDetailsPage() {
                         shader={variantView.shader}
                         varnishShader={variantView.varnish}
                         varnishColor={variantView.varnishColor}
+                        secondVarnishMaskUrl={secondVarnishMaskUrl}
+                        secondVarnishColor={variantView.secondVarnishColor}
                       />
                     ) : (
                       <RemoteImage
@@ -2823,6 +2829,8 @@ export default function ItemDetailsPage() {
                     shader={variantView.shader}
                     varnishShader={variantView.varnish}
                     varnishColor={variantView.varnishColor}
+                    secondVarnishMaskUrl={secondVarnishMaskUrl}
+                    secondVarnishColor={variantView.secondVarnishColor}
                   />
                 </div>
               ) : (

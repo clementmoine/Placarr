@@ -308,6 +308,10 @@ export function toPrintCandidate(
     // The catalogue's own hue for the stamped coat. Absent for all but 83
     // prints, and nothing derives it — see `catalog.ts`.
     varnishColor: foil?.hotFoilColor ?? null,
+    // Two prints in the game carry a second stamped coat, with its own mask
+    // and its own hue. Neither is in the published data files.
+    secondVarnishMaskUrl: foil?.secondVarnishMaskUrl ?? null,
+    secondVarnishColor: foil?.secondHotFoilColor ?? null,
     varnishShaders:
       card.varnishType && VARNISH_SHADERS[card.varnishType]
         ? { [card.varnishType]: VARNISH_SHADERS[card.varnishType] as string }

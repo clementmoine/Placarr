@@ -20,6 +20,9 @@ export type PrintVariantInfo = {
   varnishType?: string | null;
   /** Hue the stamped coat throws. See `PrintCandidate.varnishColor`. */
   varnishColor?: string | null;
+  /** A second stamped coat. See `PrintCandidate.secondVarnishMaskUrl`. */
+  secondVarnishMaskUrl?: string | null;
+  secondVarnishColor?: string | null;
   variantImageUrls?: Record<string, string>;
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
@@ -83,6 +86,9 @@ export type VariantRendering = {
   varnish: HoloShader;
   /** The hue that coat throws, when the provider knows it. */
   varnishColor: string | null;
+  /** The second coat, on the prints that carry two. */
+  secondVarnishMaskUrl: string | null;
+  secondVarnishColor: string | null;
 };
 
 /**
@@ -104,6 +110,8 @@ export function variantRendering(
     shader: holoShader(null),
     varnish: varnishShader(null),
     varnishColor: null,
+    secondVarnishMaskUrl: null,
+    secondVarnishColor: null,
   };
   if (!info) return plain;
 
@@ -124,5 +132,7 @@ export function variantRendering(
       info.varnishType ? info.varnishShaders?.[info.varnishType] : null,
     ),
     varnishColor: info.varnishColor ?? null,
+    secondVarnishMaskUrl: info.secondVarnishMaskUrl ?? null,
+    secondVarnishColor: info.secondVarnishColor ?? null,
   };
 }

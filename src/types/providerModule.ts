@@ -238,6 +238,12 @@ export type PrintCandidate = {
    */
   varnishColor?: string | null;
   /**
+   * A second stamped coat, for the prints that carry two — its own mask and
+   * its own hue, both independent of the first.
+   */
+  secondVarnishMaskUrl?: string | null;
+  secondVarnishColor?: string | null;
+  /**
    * Artwork per finish, when the provider publishes a distinct file rather than
    * expecting the effect to be composited. Preferred over the mask when present.
    */

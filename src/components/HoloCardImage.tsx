@@ -30,6 +30,13 @@ type HoloCardImageProps = {
   /** Second, independent coat: the stamped varnish. */
   varnishMaskUrl?: string | null;
   /**
+   * A second stamped coat, on the prints that carry two. Rare — two in the
+   * whole game — but on those it is a layer of the card that is simply absent
+   * without it.
+   */
+  secondVarnishMaskUrl?: string | null;
+  secondVarnishColor?: string | null;
+  /**
    * How the artwork fills its box. `contain` by default: a card is meant to be
    * seen whole, and covering cut the printed border off.
    */
@@ -90,6 +97,8 @@ export function HoloCardImage({
   alt,
   maskUrl,
   varnishMaskUrl,
+  secondVarnishMaskUrl,
+  secondVarnishColor,
   fit = "contain",
   shader = holoShader(null),
   varnishShader = varnishShaderFor(null),
@@ -118,6 +127,7 @@ export function HoloCardImage({
    */
   const maskAspect = "none";
   const varnishMaskId = `holoVarnish${instanceId}`;
+  const secondVarnishMaskId = `holoVarnish2${instanceId}`;
 
   /**
    * On a touch screen there is no pointer to follow, so the card sat perfectly
@@ -224,6 +234,7 @@ export function HoloCardImage({
            * colour — checked on a HighGloss card, which resolves `#aaa`.
            */
           "--topcolor": varnishColor ?? NEUTRAL_VARNISH_COLOR,
+          "--topcolor2": secondVarnishColor ?? NEUTRAL_VARNISH_COLOR,
         } as React.CSSProperties
       }
       className={cn(
@@ -269,6 +280,21 @@ export function HoloCardImage({
             */}
             <image
               href={varnishMaskUrl}
+              width="1"
+              height="1"
+              preserveAspectRatio={maskAspect}
+              filter="url(#holo-varnish-coverage)"
+            />
+          </mask>
+        )}
+        {secondVarnishMaskUrl && (
+          <mask
+            id={secondVarnishMaskId}
+            maskUnits="objectBoundingBox"
+            maskContentUnits="objectBoundingBox"
+          >
+            <image
+              href={secondVarnishMaskUrl}
               width="1"
               height="1"
               preserveAspectRatio={maskAspect}
@@ -347,6 +373,26 @@ export function HoloCardImage({
               ...holoLayerStyle(varnishShader),
               mask: `url(#${varnishMaskId})`,
               WebkitMask: `url(#${varnishMaskId})`,
+            }}
+            className="pointer-events-none absolute inset-0"
+          />
+        )}
+
+        {secondVarnishMaskUrl && (
+          <div
+            aria-hidden
+            style={{
+              ...holoLayerStyle(varnishShader),
+              // The second coat sweeps its own hue, which is why the recipes
+              // keep `--topcolor2` apart from `--topcolor`.
+              backgroundImage: holoLayerStyle(
+                varnishShader,
+              ).backgroundImage?.replaceAll(
+                "var(--topcolor)",
+                "var(--topcolor2)",
+              ),
+              mask: `url(#${secondVarnishMaskId})`,
+              WebkitMask: `url(#${secondVarnishMaskId})`,
             }}
             className="pointer-events-none absolute inset-0"
           />

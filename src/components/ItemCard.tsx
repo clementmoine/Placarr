@@ -107,6 +107,10 @@ function ItemCardInner(props: ItemCardProps) {
     variantView.imageUrl,
     variantView.varnishMaskUrl,
   );
+  const secondVarnishMaskUrl = useMirroredCropMask(
+    variantView.imageUrl,
+    variantView.secondVarnishMaskUrl,
+  );
   const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
@@ -235,6 +239,8 @@ function ItemCardInner(props: ItemCardProps) {
               shader={variantView.shader}
               varnishShader={variantView.varnish}
               varnishColor={variantView.varnishColor}
+              secondVarnishMaskUrl={secondVarnishMaskUrl}
+              secondVarnishColor={variantView.secondVarnishColor}
               fit={imageFit}
               // A wall of tiles each tipping under the cursor reads as the page
               // squirming. The light still drifts, which is what marks the copy.

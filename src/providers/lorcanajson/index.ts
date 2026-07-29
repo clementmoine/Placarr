@@ -41,6 +41,8 @@ export {
   searchLorcanaCards,
 } from "./fetch";
 
+import { loadPrintFoilIndex, type PrintFoilDetails } from "./catalog";
+
 const PROVIDER_ID = "lorcanajson";
 /** LorcanaJSON's name for a print with no foil treatment. */
 const PLAIN_FINISH = "None";
@@ -249,8 +251,29 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
   return facts;
 }
 
+/**
+ * The stored foil details, or nothing.
+ *
+ * Kept behind a helper so both entry points read it the same way and neither
+ * can fail on it: the coats render without their own hue if it is missing,
+ * which is exactly what happened before this existed.
+ */
+async function printFoilIndex(
+  language: string | null | undefined,
+  signal?: AbortSignal,
+) {
+  return loadPrintFoilIndex({
+    providerId: PROVIDER_ID,
+    language: isLorcanaLanguage(language) ? language : LORCANA_DEFAULT_LANGUAGE,
+    signal,
+  });
+}
+
 /** One shape for both the search results and a lookup by key. */
-export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
+export function toPrintCandidate(
+  card: LorcanaCard,
+  foil?: PrintFoilDetails,
+): PrintCandidate {
   return {
     printKey: card.printKey,
     title: card.fullName,
@@ -279,6 +302,9 @@ export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
     foilMaskUrl: card.foilMaskUrl,
     varnishMaskUrl: card.varnishMaskUrl,
     varnishType: card.varnishType,
+    // The catalogue's own hue for the stamped coat. Absent for all but 83
+    // prints, and nothing derives it — see `catalog.ts`.
+    varnishColor: foil?.hotFoilColor ?? null,
     varnishShaders:
       card.varnishType && VARNISH_SHADERS[card.varnishType]
         ? { [card.varnishType]: VARNISH_SHADERS[card.varnishType] as string }
@@ -411,7 +437,8 @@ export const lorcanajsonModule: ProviderModule = {
       limit,
       signal,
     });
-    return cards.map(toPrintCandidate);
+    const foils = await printFoilIndex(language, signal);
+    return cards.map((card) => toPrintCandidate(card, foils[card.providerId]));
   },
   lookupPrint: async ({ printKey, name, language, signal }) => {
     if (parsePrintKey(printKey)?.game !== LORCANA_GAME) return null;
@@ -420,7 +447,9 @@ export const lorcanajsonModule: ProviderModule = {
       name,
       signal,
     });
-    return card ? toPrintCandidate(card) : null;
+    if (!card) return null;
+    const foils = await printFoilIndex(language, signal);
+    return toPrintCandidate(card, foils[card.providerId]);
   },
   healthCheck: createMetadataHealthCheck(
     PROVIDER_ID,

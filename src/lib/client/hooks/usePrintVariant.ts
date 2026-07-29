@@ -18,6 +18,8 @@ export type PrintVariantInfo = {
   /** Varnish name -> shader id, and which varnish this print carries. */
   varnishShaders?: Record<string, string>;
   varnishType?: string | null;
+  /** Hue the stamped coat throws. See `PrintCandidate.varnishColor`. */
+  varnishColor?: string | null;
   variantImageUrls?: Record<string, string>;
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
@@ -79,6 +81,8 @@ export type VariantRendering = {
   shader: HoloShader;
   /** How to draw the varnish coat, which has its own names and its own looks. */
   varnish: HoloShader;
+  /** The hue that coat throws, when the provider knows it. */
+  varnishColor: string | null;
 };
 
 /**
@@ -99,6 +103,7 @@ export function variantRendering(
     varnishMaskUrl: null,
     shader: holoShader(null),
     varnish: varnishShader(null),
+    varnishColor: null,
   };
   if (!info) return plain;
 
@@ -118,5 +123,6 @@ export function variantRendering(
     varnish: varnishShader(
       info.varnishType ? info.varnishShaders?.[info.varnishType] : null,
     ),
+    varnishColor: info.varnishColor ?? null,
   };
 }

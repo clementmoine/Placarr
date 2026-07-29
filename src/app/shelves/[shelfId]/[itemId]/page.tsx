@@ -2353,6 +2353,7 @@ export default function ItemDetailsPage() {
                         varnishMaskUrl={varnishMaskUrl}
                         shader={variantView.shader}
                         varnishShader={variantView.varnish}
+                        varnishColor={variantView.varnishColor}
                       />
                     ) : (
                       <RemoteImage
@@ -2859,6 +2860,7 @@ export default function ItemDetailsPage() {
                     }
                     shader={variantView.shader}
                     varnishShader={variantView.varnish}
+                    varnishColor={variantView.varnishColor}
                   />
                 </div>
               ) : (

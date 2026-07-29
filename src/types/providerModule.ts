@@ -230,6 +230,14 @@ export type PrintCandidate = {
   /** The varnish this print carries, if any. Keys `varnishShaders`. */
   varnishType?: string | null;
   /**
+   * The hue the stamped coat throws, when the provider can say.
+   *
+   * Nothing derives it — not the ink, the rarity, the set or the varnish — so a
+   * provider that cannot supply it leaves it null and the coat renders without
+   * one, rather than with a guess.
+   */
+  varnishColor?: string | null;
+  /**
    * Artwork per finish, when the provider publishes a distinct file rather than
    * expecting the effect to be composited. Preferred over the mask when present.
    */

@@ -38,6 +38,12 @@ type HoloCardImageProps = {
   /** How to draw the varnish coat. Its own axis, with its own names. */
   varnishShader?: HoloShader;
   /**
+   * The print's own stamped hue, when the provider knows it. Nothing derives
+   * it, so the look's own value is only a stand-in for prints the catalogue has
+   * nothing to say about.
+   */
+  varnishColor?: string | null;
+  /**
    * Whether the card leans under the pointer.
    *
    * Off in a grid: a wall of tiles each tipping as the cursor crosses them
@@ -86,6 +92,7 @@ export function HoloCardImage({
   fit = "contain",
   shader = holoShader(null),
   varnishShader = varnishShaderFor(null),
+  varnishColor,
   tilt = true,
   tiltPromptLabel = "Incliner",
   className,
@@ -212,7 +219,7 @@ export function HoloCardImage({
           "--opacity": "0",
           // The varnish coat carries its own hue; inventing one here put a cyan
           // wash over every hot-foiled card, where the publisher throws a red.
-          "--topcolor": varnishShader.topColor ?? "transparent",
+          "--topcolor": varnishColor ?? varnishShader.topColor ?? "transparent",
         } as React.CSSProperties
       }
       className={cn(

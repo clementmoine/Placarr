@@ -84,6 +84,21 @@ describe("the library itself", () => {
     expect(holoShader("silver").filter).toContain("saturate(0.2)");
   });
 
+  it("leaves no look sitting still while the light sweeps past", () => {
+    // The idle sweep drives all three properties, and it has to: every look is
+    // positioned against at least one of them, so a look referring to none
+    // would hold perfectly still while its neighbours travelled. That is how a
+    // finish ends up looking broken rather than absent.
+    const driven = ["--colorX", "--colorY", "--combined"];
+    for (const id of HOLO_SHADER_IDS) {
+      const position = holoShader(id).backgroundPosition;
+      expect(
+        driven.some((name) => position.includes(name)),
+        `${id} is positioned against nothing the idle animation moves`,
+      ).toBe(true);
+    }
+  });
+
   it("places each look against the properties the card actually sets", () => {
     // The recipes are written against `--colorX`, `--colorY` and `--combined`.
     // A look referring to anything else silently never moves.

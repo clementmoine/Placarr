@@ -174,27 +174,35 @@
 }
 
 @keyframes holo-drift {
-  /* The glare moves with the light rather than waiting for a pointer. Held at
-     zero, a resting card only shifted its textures, which reads as almost
-     nothing at thumbnail size — where a collector most needs to tell a foil
-     copy from an ordinary one. Well under the value hovering gives, so the
-     pointer still has somewhere to go. */
+  /* A light sweeping from the top right down to the bottom left, so a finish
+     banded either way still crosses it. `--colorX` falls while `--colorY`
+     rises, which is the diagonal a card catches when tipped under a lamp.
+
+     `--combined` is driven on its own course rather than as the sum it is under
+     the pointer. On an anti-diagonal the sum barely moves — the two terms
+     cancel — and ten of the sixteen looks are positioned against it, so they
+     would have sat perfectly still while the other six travelled.
+
+     The glare rides along, well under the value hovering gives so the pointer
+     still has somewhere to go. Held at zero, a resting card only shifted its
+     textures, which reads as almost nothing at thumbnail size — where telling a
+     foil copy from an ordinary one matters most. */
   0% {
-    --colorX: 22%;
+    --colorX: 78%;
     --colorY: 28%;
-    --combined: 50%;
+    --combined: 40%;
     --opacity: 0.12;
   }
   50% {
-    --colorX: 78%;
+    --colorX: 22%;
     --colorY: 72%;
-    --combined: 150%;
+    --combined: 160%;
     --opacity: 0.3;
   }
   100% {
-    --colorX: 22%;
+    --colorX: 78%;
     --colorY: 28%;
-    --combined: 50%;
+    --combined: 40%;
     --opacity: 0.12;
   }
 }

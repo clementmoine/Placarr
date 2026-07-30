@@ -7,7 +7,10 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import Header from "@/components/Header";
-import { FoilPlayroom } from "@/components/admin/FoilPlayroom";
+import {
+  FoilPlayroom,
+  type PlayroomSample,
+} from "@/components/admin/FoilPlayroom";
 import { getItems } from "@/lib/api/items";
 import {
   usePrintVariant,
@@ -33,17 +36,36 @@ export default function FoilPlayroomPage() {
     enabled: status === "authenticated" && isAdmin,
   });
 
-  /** The first copy that is a print of something — only those carry masks. */
-  const sample = useMemo(
-    () => items?.find((item) => item.printKey && item.variant) ?? null,
+  /**
+   * Every foil copy, so each look can be shown on a card that actually carries
+   * its finish. A recipe ends in `mix-blend-mode` against the artwork, so a
+   * Lava look over a Lava print says something it cannot say over a Silver one.
+   */
+  const samples = useMemo<PlayroomSample[]>(
+    () =>
+      (items ?? [])
+        .filter((item) => item.printKey && item.variant)
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          variant: item.variant ?? null,
+          printKey: item.printKey ?? null,
+          shelfType: item.shelf?.type ?? null,
+          imageUrl: item.imageUrl ?? null,
+        })),
     [items],
   );
 
-  const printVariant = usePrintVariant(sample?.printKey, sample?.shelf?.type);
+  /** Whatever the collection happens to hold, for looks it owns no card of. */
+  const fallbackSample = samples[0] ?? null;
+  const printVariant = usePrintVariant(
+    fallbackSample?.printKey,
+    fallbackSample?.shelfType,
+  );
   const view = variantRendering(
-    sample?.variant,
+    fallbackSample?.variant,
     printVariant,
-    sample?.imageUrl ?? null,
+    fallbackSample?.imageUrl ?? null,
   );
 
   if (status === "loading" || (isAdmin && isLoading)) {
@@ -87,11 +109,12 @@ export default function FoilPlayroomPage() {
             Salle d&apos;essai
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tous les effets que l&apos;app sait dessiner, sur une même carte.
-            {sample ? (
+            Tous les effets que l&apos;app sait dessiner.
+            {samples.length > 0 ? (
               <>
                 {" "}
-                Support : <strong>{sample.name}</strong> ({sample.variant}).
+                Chaque effet sur une carte qui porte cette finition, quand la
+                collection en a une — {samples.length} exemplaires disponibles.
               </>
             ) : null}
           </p>
@@ -99,9 +122,12 @@ export default function FoilPlayroomPage() {
 
         {view.imageUrl && view.foilMaskUrl ? (
           <FoilPlayroom
-            imageUrl={view.imageUrl}
-            maskUrl={view.foilMaskUrl}
-            varnishMaskUrl={view.varnishMaskUrl}
+            fallback={{
+              imageUrl: view.imageUrl,
+              maskUrl: view.foilMaskUrl,
+              varnishMaskUrl: view.varnishMaskUrl,
+            }}
+            samples={samples}
           />
         ) : (
           <p className="text-sm text-muted-foreground">

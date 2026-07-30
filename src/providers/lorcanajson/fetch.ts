@@ -377,6 +377,21 @@ export async function fetchLorcanaCardsByPrintKey(
 }
 
 /** The single print for this key, or `null` when absent or ambiguous by name. */
+/**
+ * The languages to try, the preferred one first.
+ *
+ * Preference is not availability. A printing can exist in one language and not
+ * another — Tempest, FreeForm2 and CalendarWave appear on no French card at all
+ * — and the finish is a property of the *printing*, not of the text on it. So a
+ * lookup that stopped at the preferred language would report those three as
+ * unknown prints and draw them as plain, which is the wrong answer to "we do
+ * not publish this in French".
+ */
+function languagesToTry(preferred?: LorcanaLanguage): LorcanaLanguage[] {
+  const first = preferred ?? LORCANA_DEFAULT_LANGUAGE;
+  return [first, ...LORCANA_LANGUAGES.filter((lang) => lang !== first)];
+}
+
 export async function fetchLorcanaCardByPrintKey(
   printKey: string,
   options: {
@@ -386,12 +401,24 @@ export async function fetchLorcanaCardByPrintKey(
     name?: string | null;
   } = {},
 ): Promise<LorcanaCard | null> {
-  const matches = await fetchLorcanaCardsByPrintKey(printKey, options);
-  if (matches.length <= 1) return matches[0] ?? null;
+  for (const language of languagesToTry(options.language)) {
+    const matches = await fetchLorcanaCardsByPrintKey(printKey, {
+      ...options,
+      language,
+    });
+    if (matches.length === 0) continue;
 
-  const wanted = options.name ? normalizeLorcanaSearchText(options.name) : "";
-  if (!wanted) return null;
-  return matches.find((card) => card.searchName === wanted) ?? null;
+    if (matches.length === 1) return matches[0];
+
+    const wanted = options.name ? normalizeLorcanaSearchText(options.name) : "";
+    // Several cards share this printed identifier and nothing disambiguates
+    // them. Another language would be just as ambiguous, so stop here rather
+    // than walking on and returning a different card's translation.
+    if (!wanted) return null;
+    const named = matches.find((card) => card.searchName === wanted);
+    if (named) return named;
+  }
+  return null;
 }
 
 export async function fetchLorcanaCardByProviderId(

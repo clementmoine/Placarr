@@ -1,4 +1,8 @@
-import type { HoloShader, HoloShaderId } from "@/core/render/holoShaders";
+import type {
+  HoloShader,
+  HoloShaderId,
+  HoloTuning,
+} from "@/core/render/holoShaders";
 
 /**
  * The same looks, rebuilt on the mobile app's own textures.
@@ -262,6 +266,73 @@ const APP_SHADERS: Readonly<Record<AppHoloShaderId, HoloShader>> = {
   },
 };
 
+/**
+ * The values each effect actually ships with, read off the app's materials.
+ *
+ * Not knobs — settings. The whole point of dumping them is that they *differ*:
+ * `_Inkwash_Strength` runs from 0.1 on Tempest to 1.1 on Magma, and that spread
+ * is a good part of what makes the two look nothing alike. A slider that moved
+ * them together would erase exactly the thing worth having.
+ *
+ * Deliberately absent, because the dump shows them identical on every material
+ * and so they carry no per-effect signal: `_MotifColorWeight` (0.5 throughout)
+ * and `_Speed` (0.15 throughout). Recording them as knobs would have implied a
+ * distinction the data does not contain.
+ *
+ * Source material named per entry so any value can be re-checked against the
+ * dump rather than taken on trust.
+ */
+type RecordedParams = {
+  /** `_Inkwash_Strength` — the dark wash. The widest-spread axis, 0.1 … 1.1. */
+  inkwash?: number;
+  /** `_RainbowStrength` — only Satin departs from 1. */
+  rainbow?: number;
+  /** `_GlitterSize` — the grain's own scale, where a look has one. */
+  glitter?: number;
+};
+
+const RECORDED: Readonly<Record<AppHoloShaderId, RecordedParams>> = {
+  silver: {}, // CardFoilSilver — no wash at all, which is why it reads clean
+  satin: { rainbow: 0.882 }, // CardFoilSatin — the only look under full rainbow
+  lore: { inkwash: 0.9, glitter: 1.1 }, // CardLoreMetallicHotFoil
+  lava: { inkwash: 0.55 }, // CardFoilLava
+  magma: { inkwash: 1.1, glitter: 1.1 }, // CardMagmaFoil — the heaviest wash
+  glitter: { inkwash: 0.5, glitter: 1.1 }, // CardFoilGlitter
+  verticalWave: { inkwash: 0.55 }, // CardFoilVertWave
+  seaWave: { inkwash: 0.65, glitter: 1.1 }, // CardFoilSeaWave
+  rainbowPillars: { inkwash: 0.55 }, // CardRainbowPillarsFoil
+  freeForm: { inkwash: 0.9 }, // CardFreeForm1Foil
+  freeForm2: { inkwash: 0.9 }, // CardFreeForm2Foil
+  tempest: { inkwash: 0.1 }, // CardFoilTempest — the lightest, by a long way
+  calendarWave: { inkwash: 0.65, glitter: 1.1 }, // CardFoilCalendarWave
+  loreShine: {},
+  satinShine: {},
+  hotFoil: {},
+  chromeRainbowHotFoil: {},
+};
+
+/** The recorded settings for a look, for display and for derivation. */
+export function appRecordedParams(id: AppHoloShaderId): RecordedParams {
+  return RECORDED[id];
+}
+
 export function appHoloShader(id: AppHoloShaderId): HoloShader {
   return APP_SHADERS[id];
+}
+
+/**
+ * The recorded settings as the render layer wants them.
+ *
+ * `glitter` becomes `grain` because that is what the CSS side scales — the
+ * background's own tile size. Absent values stay absent rather than defaulting
+ * to 1, so a look the app gives no wash draws with none instead of a neutral
+ * one, which is a different thing.
+ */
+export function appRecordedTuning(id: AppHoloShaderId): HoloTuning {
+  const recorded = RECORDED[id];
+  return {
+    rainbow: recorded.rainbow,
+    inkwash: recorded.inkwash,
+    grain: recorded.glitter,
+  };
 }

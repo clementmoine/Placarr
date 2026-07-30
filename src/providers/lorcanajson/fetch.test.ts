@@ -431,3 +431,80 @@ describe("normalizeLorcanaSearchText", () => {
     );
   });
 });
+
+describe("looking a print up across languages", () => {
+  /** FR knows one printing, EN knows both — the real asymmetry, in miniature. */
+  function serveTwoLanguages() {
+    httpGet.mockImplementation(async (url: string) => {
+      if (url.endsWith(".md5")) return { data: `md5-${url}`, status: 200 };
+      const isEnglish = url.includes("/en/");
+      return {
+        data: {
+          metadata: {
+            generatedOn: "2026-07-24T17:37:25",
+            language: isEnglish ? "en" : "fr",
+          },
+          sets: { "1": { name: "Premier Chapitre" } },
+          cards: [
+            {
+              id: 1,
+              setCode: "1",
+              number: 1,
+              variant: null,
+              promoGrouping: null,
+              fullName: isEnglish
+                ? "Ariel - On Human Legs"
+                : "Ariel - Sur des jambes humaines",
+              name: "Ariel",
+              rarity: "Rare",
+              foilTypes: ["None", "Silver"],
+            },
+            ...(isEnglish
+              ? [
+                  {
+                    id: 2,
+                    setCode: "1",
+                    number: 1,
+                    variant: null,
+                    promoGrouping: "c1",
+                    fullName: "Ariel - Tempest Print",
+                    name: "Ariel",
+                    rarity: "Rare",
+                    foilTypes: ["None", "Tempest"],
+                  },
+                ]
+              : []),
+          ],
+        },
+        status: 200,
+      };
+    });
+  }
+
+  it("prefers the language asked for", async () => {
+    serveTwoLanguages();
+    const card = await fetchLorcanaCardByPrintKey("lorcana:1-1", {
+      language: "fr",
+    });
+    expect(card?.fullName).toBe("Ariel - Sur des jambes humaines");
+  });
+
+  it("finds a printing that exists in no French card", async () => {
+    // Tempest, FreeForm2 and CalendarWave appear on no FR printing at all. A
+    // lookup that stopped at the preferred language reported them as unknown
+    // prints and drew them plain, which is the wrong answer to "not published
+    // in French" — the finish belongs to the printing, not to the text on it.
+    serveTwoLanguages();
+    const card = await fetchLorcanaCardByPrintKey("lorcana:1-1-c1", {
+      language: "fr",
+    });
+    expect(card?.foilTypes).toContain("Tempest");
+  });
+
+  it("still returns nothing for a print key no language has", async () => {
+    serveTwoLanguages();
+    expect(
+      await fetchLorcanaCardByPrintKey("lorcana:9-99", { language: "fr" }),
+    ).toBeNull();
+  });
+});

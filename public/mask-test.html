@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Diagnostic masque foil</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 16px 16px 64px;
+        background: #101014;
+        color: #f4f4f5;
+        line-height: 1.45;
+      }
+      h1 {
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      p.lede {
+        margin: 0 0 20px;
+        font-size: 13px;
+        color: #a1a1aa;
+      }
+      #support {
+        font-size: 12px;
+        border: 1px solid #27272a;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 24px;
+      }
+      #support div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 2px 0;
+        font-variant-numeric: tabular-nums;
+      }
+      #support code {
+        color: #a1a1aa;
+      }
+      .case {
+        margin-bottom: 26px;
+      }
+      .case h2 {
+        font-size: 13px;
+        margin: 0 0 2px;
+      }
+      .case p {
+        font-size: 12px;
+        color: #a1a1aa;
+        margin: 0 0 8px;
+      }
+      /* The card, so a failure looks exactly like it does in the app. */
+      .card {
+        position: relative;
+        isolation: isolate;
+        width: min(100%, 260px);
+        aspect-ratio: 5 / 7;
+        border-radius: 4% / 3%;
+        overflow: hidden;
+        background: #000;
+      }
+      .card img.art {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      /* A flat, unmistakable magenta. If the mask works it lands only where the
+         published mask is bright; if it does not, it covers the whole card. */
+      .layer {
+        position: absolute;
+        inset: 0;
+        background: magenta;
+        mix-blend-mode: normal;
+        opacity: 0.85;
+      }
+      .verdict {
+        font-size: 12px;
+        margin-top: 6px;
+        color: #a1a1aa;
+      }
+      .ok {
+        color: #4ade80;
+      }
+      .bad {
+        color: #f87171;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Diagnostic masque foil</h1>
+    <p class="lede">
+      Quatre façons de porter le même masque. Dis-moi lesquelles montrent du
+      magenta <strong>seulement par endroits</strong> (le masque marche) et
+      lesquelles en couvrent <strong>toute la carte</strong> (le masque est
+      ignoré).
+    </p>
+
+    <div id="support"></div>
+
+    <div class="case">
+      <h2>1 · mask-image + mask-mode: luminance</h2>
+      <p>Ce que l'app utilise aujourd'hui.</p>
+      <div class="card">
+        <img class="art" alt="" />
+        <div
+          class="layer"
+          style="
+            mask-image: var(--m);
+            mask-mode: luminance;
+            mask-size: 100% 100%;
+            mask-repeat: no-repeat;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <div class="case">
+      <h2>2 · -webkit-mask-image + -webkit-mask-source-type</h2>
+      <p>L'ancienne graphie WebKit, sans propriété non préfixée.</p>
+      <div class="card">
+        <img class="art" alt="" />
+        <div
+          class="layer"
+          style="
+            -webkit-mask-image: var(--m);
+            -webkit-mask-source-type: luminance;
+            -webkit-mask-size: 100% 100%;
+            -webkit-mask-repeat: no-repeat;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <div class="case">
+      <h2>3 · mask-image: url(#svgMask)</h2>
+      <p>L'indirection SVG que je viens de retirer. Attendue en échec.</p>
+      <svg width="1" height="1" viewBox="0 0 1 1" style="position: absolute">
+        <defs>
+          <mask
+            id="svgMask"
+            mask-type="luminance"
+            maskUnits="objectBoundingBox"
+            maskContentUnits="objectBoundingBox"
+          >
+            <image id="svgMaskImage" x="0" y="0" width="1" height="1" preserveAspectRatio="none" />
+          </mask>
+        </defs>
+      </svg>
+      <div class="card">
+        <img class="art" alt="" />
+        <div
+          class="layer"
+          style="mask-image: url(#svgMask); -webkit-mask-image: url(#svgMask)"
+        ></div>
+      </div>
+    </div>
+
+    <div class="case">
+      <h2>4 · aucun masque (témoin)</h2>
+      <p>À quoi ressemble un masque ignoré. Doit être entièrement magenta.</p>
+      <div class="card">
+        <img class="art" alt="" />
+        <div class="layer"></div>
+      </div>
+    </div>
+
+    <script>
+      // Real files from the collection, so this tests the actual assets.
+      var ART = "/uploads/c313ea5e7499860a77bb9986b1976b12.jpg";
+      var MASK = "/uploads/f9f5e95a01981fa763eac69e6d0f1336.jpg";
+
+      document.querySelectorAll("img.art").forEach(function (img) {
+        img.src = ART;
+      });
+      document.documentElement.style.setProperty("--m", 'url("' + MASK + '")');
+      document
+        .getElementById("svgMaskImage")
+        .setAttributeNS("http://www.w3.org/1999/xlink", "href", MASK);
+      document.getElementById("svgMaskImage").setAttribute("href", MASK);
+
+      var rows = [
+        ["mask-image", CSS.supports("mask-image", 'url("/x.jpg")')],
+        ["mask-mode: luminance", CSS.supports("mask-mode", "luminance")],
+        [
+          "-webkit-mask-image",
+          CSS.supports("-webkit-mask-image", 'url("/x.jpg")'),
+        ],
+        [
+          "-webkit-mask-source-type",
+          CSS.supports("-webkit-mask-source-type", "luminance"),
+        ],
+        ["mask-size", CSS.supports("mask-size", "100% 100%")],
+      ];
+
+      var support = document.getElementById("support");
+      rows.forEach(function (row) {
+        var line = document.createElement("div");
+        line.innerHTML =
+          "<code>" +
+          row[0] +
+          "</code><span class='" +
+          (row[1] ? "ok" : "bad") +
+          "'>" +
+          (row[1] ? "supporté" : "NON supporté") +
+          "</span>";
+        support.appendChild(line);
+      });
+
+      // Whether the mask file itself even loaded — this eliminates "the image
+      // never arrived" as an explanation, which JS can answer on its own.
+      var probe = new Image();
+      probe.onload = function () {
+        report("masque chargé (" + probe.naturalWidth + "x" + probe.naturalHeight + ")", true);
+      };
+      probe.onerror = function () {
+        report("le fichier masque n'a PAS chargé", false);
+      };
+      probe.src = MASK;
+
+      function report(text, good) {
+        var line = document.createElement("div");
+        line.innerHTML =
+          "<code>fichier</code><span class='" +
+          (good ? "ok" : "bad") +
+          "'>" +
+          text +
+          "</span>";
+        support.appendChild(line);
+      }
+
+      var ua = document.createElement("div");
+      ua.innerHTML = "<code>UA</code><span>" + navigator.userAgent + "</span>";
+      ua.style.fontSize = "10px";
+      support.appendChild(ua);
+    </script>
+  </body>
+</html>

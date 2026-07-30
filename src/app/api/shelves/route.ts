@@ -20,6 +20,7 @@ import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
 import { slugify } from "@/lib/routing/slugs";
 import { buildItemSearchConditions } from "@/core/collect/search";
+import { normalizeCardBackUrl } from "@/core/collect/cardBack";
 import { bestRatingRatioFromFacts } from "@/core/collect/rating";
 import { summarizeShelfItemPrices } from "@/core/commerce/pricing/resolver";
 import {
@@ -177,19 +178,6 @@ async function withBestItems<T extends { id: string }>(
         : null,
     };
   });
-}
-
-/**
- * The card back a shelf was given, or nothing.
- *
- * Only absolute http(s) URLs are kept: the value is fed straight to an `<img>`,
- * and anything else is either a mistake or an attempt to point the page
- * somewhere it should not go.
- */
-function normalizedCardBackUrl(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  return /^https?:\/\//i.test(trimmed) ? trimmed : null;
 }
 
 export async function GET(req: NextRequest) {
@@ -413,7 +401,7 @@ export async function POST(req: NextRequest) {
         ...(typeof cardFormat === "string" && cardFormat.trim()
           ? { cardFormat: cardFormat.trim() }
           : {}),
-        cardBackUrl: normalizedCardBackUrl(cardBackUrl),
+        cardBackUrl: normalizeCardBackUrl(cardBackUrl),
         userId: auth.user.id,
       },
       include: {
@@ -497,7 +485,7 @@ export async function PATCH(req: NextRequest) {
     // Present-but-empty clears it, which is how a collector says "these cards
     // no longer turn over" — so the key has to be tested, not the value.
     if ("cardBackUrl" in body) {
-      data.cardBackUrl = normalizedCardBackUrl(body.cardBackUrl);
+      data.cardBackUrl = normalizeCardBackUrl(body.cardBackUrl);
     }
     if (typeof body.isPublic === "boolean") {
       data.isPublic = body.isPublic;

@@ -226,6 +226,13 @@ image ou une URL fournie par le collectionneur, rien de résolu automatiquement.
 Vide ⇒ les cartes ne se retournent pas, mais s'inclinent quand même : une carte
 reste un objet physique.
 
+**Ce que le champ accepte est une seule fonction**, `normalizeCardBackUrl` —
+importée par le formulaire *et* par la route. Écrite deux fois, elle a divergé :
+le formulaire acceptait le `/uploads/…` rendu par l'upload, l'API n'acceptait
+que des URLs absolues, donc choisir une image enregistrait sans rien stocker et
+effaçait au passage le dos précédent. Un champ dont les deux côtés valident
+séparément est un champ qui perdra des données.
+
 ## 6 bis. Pièges LorcanaJSON (vérifiés, pas lus dans la doc)
 
 - **L'identité n'existe que dans `allCards.json`.** Les fichiers par set

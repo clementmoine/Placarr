@@ -38,6 +38,7 @@ import { cn } from "@/lib/shared/utils";
 
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
 import { isUrl } from "@/lib/shared/isUrl";
+import { isCardBackUrl } from "@/core/collect/cardBack";
 import { uploadImage } from "@/lib/api/upload";
 import {
   coerceCardFormatForType,
@@ -242,9 +243,11 @@ export function ShelfModal({
      */
     cardBackUrl: z.any().refine((value) => {
       if (value instanceof File) return true;
-      if (value == null || value === "") return true;
-      if (typeof value !== "string") return false;
-      return value.startsWith("/uploads/") || isUrl(value);
+      if (value == null || typeof value !== "string") return value == null;
+      if (!value.trim()) return true;
+      // The same predicate the API stores by — see `normalizeCardBackUrl`.
+      // Split in two, the form once accepted a path the API silently dropped.
+      return isCardBackUrl(value);
     }, t("shelves.invalidCardBackUrl")),
   });
 

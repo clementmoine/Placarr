@@ -180,9 +180,10 @@
     "dropLogo": "Déposez le logo ici",
     "removeLogo": "Retirer le logo",
     "cardFormat": "Forme des cartes",
-    "cardBackUrl": "Dos des cartes (URL)",
+    "cardBackUrl": "Dos des cartes",
     "cardBackUrlHint": "Décoratif : le dos n’est pas récupéré automatiquement. Donnez une image ou une URL pour pouvoir retourner les cartes ; laissez vide et elles ne tourneront pas.",
-    "invalidCardBackUrl": "L’adresse doit commencer par http:// ou https://",
+    "invalidCardBackUrl": "Choisissez une image, ou collez une adresse commençant par http:// ou https://",
+    "clearCardBack": "Retirer le dos",
     "cardFormats": {
       "default": "Par défaut ({type})",
       "square": "Carré (1:1 - CD, Vinyle, Société)",

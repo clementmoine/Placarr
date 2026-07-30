@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   holoLayerStyle,
@@ -19,16 +19,19 @@ type HoloCardImageProps = {
   imageUrl: string;
   alt: string;
   /**
-   * Where the holographic effect applies. Used as a **luminance** mask: the
-   * publisher ships it as a JPEG with no alpha channel, so a CSS `mask-image`
-   * would see an opaque rectangle and mask nothing. Routed through an SVG
-   * `<mask>`, which reads luminance by default, it works exactly as published.
+   * Where the holographic effect applies, as a **luminance** mask: the publisher
+   * ships a JPEG with no alpha channel, so `mask-mode: luminance` is what makes
+   * it mean anything — read by alpha it is an opaque rectangle.
    *
    * Without one the effect is skipped entirely rather than smeared over the
    * whole card — a uniform shimmer looks like a bug, not like foil.
    */
   maskUrl?: string | null;
-  /** Second, independent coat: the stamped varnish. */
+  /**
+   * Second, independent coat: the stamped varnish. Already reduced to coverage
+   * by the time it arrives — the published file is a normal map where only blue
+   * carries the stamp, and that channel is pulled out at download.
+   */
   varnishMaskUrl?: string | null;
   /**
    * A second stamped coat, on the prints that carry two. Rare — two in the
@@ -113,24 +116,21 @@ export function HoloCardImage({
 }: HoloCardImageProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [isActive, setIsActive] = useState(false);
-  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const foilMaskId = `holoFoil${instanceId}`;
-  /**
-   * The mask fills the frame, and must not try to letterbox itself.
+  /*
+   * The masks are worn as plain CSS image masks, stretched to the frame — no
+   * SVG, no per-instance ids. The `<mask>` element this used to go through was
+   * solving nothing CSS could not: `mask-mode: luminance` is the keyword for
+   * reading a JPEG's brightness, and the varnish normal maps have their blue
+   * channel pulled out at download instead of by a filter on every frame.
    *
-   * `objectBoundingBox` units put the mask in a 1x1 viewport — a *square* in
-   * user space, whatever shape the element is. `xMidYMid meet` therefore fits
-   * the artwork's 0.72 into a square, leaving a seventh of the width empty on
-   * each side, and the box mapping then stretches that inset result over the
-   * card. The foil stopped short of the left and right edges.
+   * It also does not work on iPhone. Safari does not apply an SVG `<mask>`
+   * referenced from CSS to an HTML element, so every layer covered the whole
+   * card — artwork, text box, borders — while Chrome looked finished.
    *
-   * `none` is right because the frame is given the card's own shape by its
-   * caller. If a frame ever has to be a different shape, the fix is to letterbox
-   * the *frame*, never this.
+   * Stretched rather than fitted: the frame is given the card's own shape by its
+   * caller, so mask and artwork already agree. If a frame ever has to be a
+   * different shape, the fix is to letterbox the *frame*, never the mask.
    */
-  const maskAspect = "none";
-  const varnishMaskId = `holoVarnish${instanceId}`;
-  const secondVarnishMaskId = `holoVarnish2${instanceId}`;
 
   /**
    * On a touch screen there is no pointer to follow, so the light on the card
@@ -287,80 +287,6 @@ export function HoloCardImage({
 
         `<defs>` and the explicit `x`/`y` match the publisher's markup too.
       */}
-      {/*
-        1x1 with a viewBox, not `size-0`. A zero-sized SVG with no user
-        coordinate system is the shakiest way to host a mask — the publisher
-        ships `height="1" viewBox="0 0 1 1"`, and matching that costs nothing.
-      */}
-      <svg
-        aria-hidden
-        focusable="false"
-        height="1"
-        width="1"
-        viewBox="0 0 1 1"
-        className="pointer-events-none absolute -z-10 overflow-hidden"
-      >
-        <defs>
-          <mask
-            id={foilMaskId}
-            mask-type="luminance"
-            maskUnits="objectBoundingBox"
-            maskContentUnits="objectBoundingBox"
-          >
-            <image
-              href={maskUrl}
-              x="0"
-              y="0"
-              width="1"
-              height="1"
-              preserveAspectRatio={maskAspect}
-            />
-          </mask>
-          {varnishMaskUrl && (
-            <mask
-              id={varnishMaskId}
-              mask-type="luminance"
-              maskUnits="objectBoundingBox"
-              maskContentUnits="objectBoundingBox"
-            >
-              {/*
-                The varnish mask is a normal map, not a coverage mask: red and
-                green are pinned near 127/128 and only blue says where anything
-                is stamped. The filter pulls blue into all three channels so the
-                luminance mask means what it should.
-              */}
-              <image
-                href={varnishMaskUrl}
-                x="0"
-                y="0"
-                width="1"
-                height="1"
-                preserveAspectRatio={maskAspect}
-                filter="url(#holo-varnish-coverage)"
-              />
-            </mask>
-          )}
-          {secondVarnishMaskUrl && (
-            <mask
-              id={secondVarnishMaskId}
-              mask-type="luminance"
-              maskUnits="objectBoundingBox"
-              maskContentUnits="objectBoundingBox"
-            >
-              <image
-                href={secondVarnishMaskUrl}
-                x="0"
-                y="0"
-                width="1"
-                height="1"
-                preserveAspectRatio={maskAspect}
-                filter="url(#holo-varnish-coverage)"
-              />
-            </mask>
-          )}
-        </defs>
-      </svg>
-
       <div
         /**
          * Rotation set inline rather than through an arbitrary Tailwind class:
@@ -405,7 +331,7 @@ export function HoloCardImage({
           aria-hidden
           style={{
             ...holoLayerStyle(shader),
-            ...maskedByStyle(foilMaskId),
+            ...maskedByStyle(maskUrl),
           }}
           className="pointer-events-none absolute inset-0"
         />
@@ -421,7 +347,7 @@ export function HoloCardImage({
             aria-hidden
             style={{
               ...holoLayerStyle(holoShader(shader.overlay)),
-              ...maskedByStyle(foilMaskId),
+              ...maskedByStyle(maskUrl),
             }}
             className="pointer-events-none absolute inset-0"
           />
@@ -432,7 +358,7 @@ export function HoloCardImage({
             aria-hidden
             style={{
               ...holoLayerStyle(varnishShader),
-              ...maskedByStyle(varnishMaskId),
+              ...maskedByStyle(varnishMaskUrl),
             }}
             className="pointer-events-none absolute inset-0"
           />
@@ -451,7 +377,7 @@ export function HoloCardImage({
                 "var(--topcolor)",
                 "var(--topcolor2)",
               ),
-              ...maskedByStyle(secondVarnishMaskId),
+              ...maskedByStyle(secondVarnishMaskUrl),
             }}
             className="pointer-events-none absolute inset-0"
           />

@@ -173,7 +173,7 @@ describe("holoLayerStyle", () => {
 
 describe("maskedByStyle", () => {
   it("states luminance rather than leaving it to match-source", () => {
-    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+    const style = maskedByStyle("/uploads/abc.jpg") as Record<string, string>;
 
     // The bug this pins: with `mask-mode` unset, the initial `match-source` is
     // resolved by WebKit as *alpha*. The published masks are JPEGs, so their
@@ -183,7 +183,7 @@ describe("maskedByStyle", () => {
   });
 
   it("uses the older WebKit spelling of the mode as well", () => {
-    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+    const style = maskedByStyle("/uploads/abc.jpg") as Record<string, string>;
 
     // `-webkit-mask-mode` does not exist; `-webkit-mask-source-type` is the
     // property Safari actually reads, and the one the publisher states.
@@ -191,17 +191,17 @@ describe("maskedByStyle", () => {
   });
 
   it("declares both the prefixed and unprefixed properties", () => {
-    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+    const style = maskedByStyle("/uploads/abc.jpg") as Record<string, string>;
 
     // Safari needs the prefixed ones; dropping either half loses one engine.
-    expect(style.maskImage).toBe("url(#holoFoilABC)");
-    expect(style.WebkitMaskImage).toBe("url(#holoFoilABC)");
+    expect(style.maskImage).toBe('url("/uploads/abc.jpg")');
+    expect(style.WebkitMaskImage).toBe('url("/uploads/abc.jpg")');
     expect(style.maskSize).toBe("100% 100%");
     expect(style.WebkitMaskSize).toBe("100% 100%");
   });
 
   it("never uses the mask shorthand, which resets the mode it just set", () => {
-    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+    const style = maskedByStyle("/uploads/abc.jpg") as Record<string, string>;
 
     // `mask` and `-webkit-mask` reset `mask-mode` to its initial value. React
     // writes an inline style object in key order, so one shorthand anywhere in
@@ -210,9 +210,9 @@ describe("maskedByStyle", () => {
     expect(style.WebkitMask).toBeUndefined();
   });
 
-  it("points at the id it was given, so layers cannot share a mask by accident", () => {
+  it("points at the file it was given", () => {
     expect(
-      (maskedByStyle("holoVarnish2xy") as Record<string, string>).maskImage,
-    ).toBe("url(#holoVarnish2xy)");
+      (maskedByStyle("/uploads/xy.png") as Record<string, string>).maskImage,
+    ).toBe('url("/uploads/xy.png")');
   });
 });

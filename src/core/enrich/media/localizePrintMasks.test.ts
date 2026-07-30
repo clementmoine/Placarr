@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   localizePrintMasks,
-  remoteMaskUrls,
+  remoteMaskRequests,
   withLocalizedMasks,
 } from "@/core/enrich/media/localizePrintMasks";
 
@@ -20,34 +20,54 @@ const REMOTE = "https://api.lorcana.ravensburger.com/images/fr/set1/17_ab.jpg";
 const REMOTE_2 =
   "https://api.lorcana.ravensburger.com/images/fr/set1/18_cd.jpg";
 
-describe("remoteMaskUrls", () => {
-  it("collects all three mask fields", () => {
+describe("remoteMaskRequests", () => {
+  it("collects all three mask fields, and says which need baking", () => {
+    // The varnish masks are normal maps: unusable as luminance until their blue
+    // channel is pulled out. The foil mask is already a coverage map.
     expect(
-      remoteMaskUrls([
+      remoteMaskRequests([
         {
           foilMaskUrl: REMOTE,
           varnishMaskUrl: "https://x.test/v.jpg",
           secondVarnishMaskUrl: "https://x.test/v2.jpg",
         },
       ]),
-    ).toEqual([REMOTE, "https://x.test/v.jpg", "https://x.test/v2.jpg"]);
+    ).toEqual([
+      { url: REMOTE, coverage: false },
+      { url: "https://x.test/v.jpg", coverage: true },
+      { url: "https://x.test/v2.jpg", coverage: true },
+    ]);
   });
 
   it("asks once for a mask a whole shelf shares", () => {
     // A set reuses masks heavily; per-print fetches would hammer a host that
     // already rate-limits.
     expect(
-      remoteMaskUrls([
+      remoteMaskRequests([
         { foilMaskUrl: REMOTE },
         { foilMaskUrl: REMOTE },
         { foilMaskUrl: REMOTE_2 },
       ]),
-    ).toEqual([REMOTE, REMOTE_2]);
+    ).toEqual([
+      { url: REMOTE, coverage: false },
+      { url: REMOTE_2, coverage: false },
+    ]);
+  });
+
+  it("keeps the raw and baked forms of one file apart", () => {
+    // The same normal map could in principle serve both roles; one cache entry
+    // for both would hand a foil layer a baked mask or vice versa.
+    expect(
+      remoteMaskRequests([{ foilMaskUrl: REMOTE, varnishMaskUrl: REMOTE }]),
+    ).toEqual([
+      { url: REMOTE, coverage: false },
+      { url: REMOTE, coverage: true },
+    ]);
   });
 
   it("ignores masks that are already local, and absent ones", () => {
     expect(
-      remoteMaskUrls([
+      remoteMaskRequests([
         { foilMaskUrl: "/uploads/abc.jpg" },
         { foilMaskUrl: null, varnishMaskUrl: undefined },
         {},
@@ -61,7 +81,7 @@ describe("withLocalizedMasks", () => {
     expect(
       withLocalizedMasks(
         { foilMaskUrl: REMOTE },
-        new Map([[REMOTE, "/uploads/abc.jpg"]]),
+        new Map([[`raw|${REMOTE}`, "/uploads/abc.jpg"]]),
       ),
     ).toEqual({ foilMaskUrl: "/uploads/abc.jpg" });
   });
@@ -82,7 +102,7 @@ describe("withLocalizedMasks", () => {
     };
 
     expect(
-      withLocalizedMasks(print, new Map([[REMOTE, "/uploads/abc.jpg"]])),
+      withLocalizedMasks(print, new Map([[`raw|${REMOTE}`, "/uploads/abc.jpg"]])),
     ).toEqual({
       foilMaskUrl: "/uploads/abc.jpg",
       finishes: ["Silver"],
@@ -93,7 +113,7 @@ describe("withLocalizedMasks", () => {
 
 describe("localizePrintMasks", () => {
   it("localizes every print from one pass over the distinct files", async () => {
-    const localize = vi.fn(async (url: string) =>
+    const localize = vi.fn(async ({ url }: { url: string }) =>
       url === REMOTE ? "/uploads/aaa.jpg" : "/uploads/bbb.jpg",
     );
 
@@ -124,7 +144,7 @@ describe("localizePrintMasks", () => {
   });
 
   it("survives one unreachable mask without losing the others", async () => {
-    const localize = vi.fn(async (url: string) => {
+    const localize = vi.fn(async ({ url }: { url: string }) => {
       if (url === REMOTE) throw new Error("403");
       return "/uploads/bbb.jpg";
     });
@@ -144,7 +164,7 @@ describe("localizePrintMasks", () => {
   it("refuses anything the localizer did not actually bring home", async () => {
     // `downloadRemoteImage` hands back the remote URL when it decides a file is
     // worth keeping remote. Treating that as a local copy would be a lie.
-    const localize = vi.fn(async (url: string) => url);
+    const localize = vi.fn(async ({ url }: { url: string }) => url);
 
     const out = await localizePrintMasks(
       [{ foilMaskUrl: REMOTE }],

@@ -7,7 +7,7 @@ import {
   supportsPrintSearch,
 } from "@/core/identify/printSearch";
 import { isAbortError } from "@/lib/http/abort";
-import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
+import { localizeMaskImage } from "@/core/enrich/media/maskDownload";
 import { localizePrintMasks } from "@/core/enrich/media/localizePrintMasks";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 
@@ -47,7 +47,7 @@ async function withLocalMasks<
 >(prints: readonly T[], signal: AbortSignal): Promise<T[]> {
   return localizePrintMasks(
     prints,
-    (url) => downloadRemoteImage(url, { trim: false, source: "lorcana-mask" }),
+    ({ url, coverage }) => localizeMaskImage(url, { coverage, signal }),
     (items, worker) =>
       runWithConcurrency(items, MASK_DOWNLOAD_CONCURRENCY, worker, { signal }),
   );

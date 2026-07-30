@@ -12,6 +12,7 @@ import {
 } from "@/core/render/holoShaders";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
+import { useMaskBlob } from "@/lib/client/hooks/useMaskBlob";
 import { cn } from "@/lib/shared/utils";
 
 type HoloCardImageProps = {
@@ -145,6 +146,19 @@ export function HoloCardImage({
     MAX_TILT,
     trackPointer && Boolean(maskUrl),
   ).lean;
+
+  /*
+   * The masks, as resources already in memory.
+   *
+   * iOS does not apply a mask whose image has not loaded when the style is
+   * resolved, and never invalidates afterwards — so naming a URL here is not
+   * enough. Until a mask is in memory its layer must not be drawn at all: an
+   * unresolved mask is not a faint layer, it is an unmasked one over the whole
+   * card. See `maskBlobStore`.
+   */
+  const foilMask = useMaskBlob(maskUrl);
+  const varnishMask = useMaskBlob(varnishMaskUrl);
+  const secondVarnishMask = useMaskBlob(secondVarnishMaskUrl);
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
 
@@ -202,7 +216,9 @@ export function HoloCardImage({
   }, [deviceLean, isActive, place]);
 
   /** No mask, no effect — better a plain card than a uniformly shiny one. */
-  if (!maskUrl) {
+  // Plain until the foil mask is in memory, then foil. Drawing the layers
+  // against a mask that has not loaded is what covered the whole card on iOS.
+  if (!maskUrl || !foilMask) {
     return (
       <div
         /**
@@ -331,7 +347,7 @@ export function HoloCardImage({
           aria-hidden
           style={{
             ...holoLayerStyle(shader),
-            ...maskedByStyle(maskUrl),
+            ...maskedByStyle(foilMask),
           }}
           className="pointer-events-none absolute inset-0"
         />
@@ -347,24 +363,24 @@ export function HoloCardImage({
             aria-hidden
             style={{
               ...holoLayerStyle(holoShader(shader.overlay)),
-              ...maskedByStyle(maskUrl),
+              ...maskedByStyle(foilMask),
             }}
             className="pointer-events-none absolute inset-0"
           />
         )}
 
-        {varnishMaskUrl && (
+        {varnishMask && (
           <div
             aria-hidden
             style={{
               ...holoLayerStyle(varnishShader),
-              ...maskedByStyle(varnishMaskUrl),
+              ...maskedByStyle(varnishMask),
             }}
             className="pointer-events-none absolute inset-0"
           />
         )}
 
-        {secondVarnishMaskUrl && (
+        {secondVarnishMask && (
           <div
             aria-hidden
             style={{
@@ -377,7 +393,7 @@ export function HoloCardImage({
                 "var(--topcolor)",
                 "var(--topcolor2)",
               ),
-              ...maskedByStyle(secondVarnishMaskUrl),
+              ...maskedByStyle(secondVarnishMask),
             }}
             className="pointer-events-none absolute inset-0"
           />

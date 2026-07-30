@@ -15,6 +15,10 @@ import {
   APP_HOLO_SHADER_IDS,
   appHoloShader,
 } from "@/core/render/holoShadersApp";
+import {
+  HOUSE_HOLO_SHADER_IDS,
+  houseHoloShader,
+} from "@/core/render/holoShadersHouse";
 import { cn } from "@/lib/shared/utils";
 
 /**
@@ -59,6 +63,10 @@ const ROLE_OF: Readonly<Record<string, Role>> = {
   satinShine: "overlay",
   hotFoil: "varnish",
   chromeRainbowHotFoil: "varnish",
+  rainbowBands: "finish",
+  aurora: "finish",
+  sheen: "finish",
+  sparkle: "finish",
 };
 
 const GROUPS: readonly { role: Role; title: string; hint: string }[] = [
@@ -94,6 +102,14 @@ const SOURCES = [
     ids: APP_HOLO_SHADER_IDS as readonly string[],
     shaderOf: (id: string) =>
       appHoloShader(id as (typeof APP_HOLO_SHADER_IDS)[number]),
+  },
+  {
+    key: "house" as const,
+    label: "Effets Maison",
+    hint: "Les nôtres, d'avant la transcription : des dégradés et un grain, sans aucune texture. Remplacés parce qu'ils rendaient toutes les finitions pareilles, pas parce qu'ils étaient ratés.",
+    ids: HOUSE_HOLO_SHADER_IDS as readonly string[],
+    shaderOf: (id: string) =>
+      houseHoloShader(id as (typeof HOUSE_HOLO_SHADER_IDS)[number]),
   },
 ];
 
@@ -157,7 +173,7 @@ export function FoilPlayroom({
   maskUrl,
   varnishMaskUrl,
 }: FoilPlayroomProps) {
-  const [sourceKey, setSourceKey] = useState<"web" | "app">("web");
+  const [sourceKey, setSourceKey] = useState<"web" | "app" | "house">("web");
   const [tuning, setTuning] = useState<Required<HoloTuning>>(UNTUNED);
   const [tilt, setTilt] = useState(false);
 

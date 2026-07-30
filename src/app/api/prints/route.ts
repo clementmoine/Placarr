@@ -7,6 +7,9 @@ import {
   supportsPrintSearch,
 } from "@/core/identify/printSearch";
 import { isAbortError } from "@/lib/http/abort";
+import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
+import { localizePrintMasks } from "@/core/enrich/media/localizePrintMasks";
+import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 
 /** Enough to fill a picker grid without turning a typo into a long scroll. */
 const MAX_LIMIT = 48;
@@ -23,6 +26,32 @@ function parseLimit(raw: string | null): number | undefined {
  * a crafted query cannot ask the provider for the whole set at once.
  */
 const MAX_BATCH_KEYS = 120;
+
+/**
+ * How many masks to fetch at once the first time a set is seen.
+ *
+ * Low on purpose. The publisher's image host rate-limits, and after the first
+ * pass every mask is already on disk, so this only ever paces a cold start.
+ */
+const MASK_DOWNLOAD_CONCURRENCY = 4;
+
+/**
+ * Bring a print's masks onto our own origin before answering.
+ *
+ * Never trimmed: a mask lines up with its artwork pixel for pixel, and trimming
+ * a margin would slide the foil off the card. See `localizePrintMasks` for why
+ * hotlinking them was worse than an inconsistency.
+ */
+async function withLocalMasks<
+  T extends Parameters<typeof localizePrintMasks>[0][number],
+>(prints: readonly T[], signal: AbortSignal): Promise<T[]> {
+  return localizePrintMasks(
+    prints,
+    (url) => downloadRemoteImage(url, { trim: false, source: "lorcana-mask" }),
+    (items, worker) =>
+      runWithConcurrency(items, MASK_DOWNLOAD_CONCURRENCY, worker, { signal }),
+  );
+}
 
 /**
  * Print search for shelves that cannot be scanned. Cards carry no barcode, so
@@ -64,10 +93,22 @@ export async function GET(req: NextRequest) {
         ),
       );
 
+      const resolved = found.filter((candidate) => candidate !== null);
+      const localized = await withLocalMasks(resolved, req.signal);
+      const localByCandidate = new Map(
+        resolved.map((candidate, index) => [candidate, localized[index]]),
+      );
+
       return NextResponse.json({
         supported: true,
         candidates: Object.fromEntries(
-          keys.map((key, index) => [key, found[index]]).filter(([, c]) => c),
+          keys
+            .map((key, index) => [key, found[index]] as const)
+            .filter(([, candidate]) => candidate)
+            .map(([key, candidate]) => [
+              key,
+              localByCandidate.get(candidate!) ?? candidate,
+            ]),
         ),
       });
     }
@@ -80,7 +121,10 @@ export async function GET(req: NextRequest) {
         language: searchParams.get("language"),
         signal: req.signal,
       });
-      return NextResponse.json({ supported: true, candidate });
+      const [localized] = candidate
+        ? await withLocalMasks([candidate], req.signal)
+        : [candidate];
+      return NextResponse.json({ supported: true, candidate: localized });
     }
 
     if (!query || !type) {

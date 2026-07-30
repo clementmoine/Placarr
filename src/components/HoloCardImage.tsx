@@ -287,7 +287,19 @@ export function HoloCardImage({
 
         `<defs>` and the explicit `x`/`y` match the publisher's markup too.
       */}
-      <svg aria-hidden className="absolute size-0" focusable="false">
+      {/*
+        1x1 with a viewBox, not `size-0`. A zero-sized SVG with no user
+        coordinate system is the shakiest way to host a mask — the publisher
+        ships `height="1" viewBox="0 0 1 1"`, and matching that costs nothing.
+      */}
+      <svg
+        aria-hidden
+        focusable="false"
+        height="1"
+        width="1"
+        viewBox="0 0 1 1"
+        className="pointer-events-none absolute -z-10 overflow-hidden"
+      >
         <defs>
           <mask
             id={foilMaskId}

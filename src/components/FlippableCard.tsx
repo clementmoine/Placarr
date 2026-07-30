@@ -194,32 +194,47 @@ export function FlippableCard({
         className,
       )}
     >
+      {/*
+        Lean and turn live on separate elements, because only one of them may
+        transition. Sharing one `transform` put the 500ms flip transition under
+        the pointer too: every pointermove retargeted it, which Chrome blends
+        smoothly but Safari restarts — the card lagged the cursor and stuttered.
+        The lean must be immediate; the turn is the one that animates.
+      */}
       <div
-        className="relative h-full w-full rounded-[inherit] transition-transform duration-500 ease-out [transform-style:preserve-3d]"
+        className="relative h-full w-full rounded-[inherit] [transform-style:preserve-3d]"
         style={{
-          // The turn composes with the lean rather than replacing it, so a card
-          // being tipped can be flipped without snapping back to square.
-          transform: `rotateX(var(--flip-lean-x)) rotateY(calc(var(--flip-lean-y) + ${turn}deg))`,
+          transform: "rotateX(var(--flip-lean-x)) rotateY(var(--flip-lean-y))",
+          willChange: "transform",
         }}
       >
-        <div className="absolute inset-0 rounded-[inherit] [backface-visibility:hidden]">
-          {children}
-        </div>
-
-        {backUrl && (
-          <div
-            className="absolute inset-0 overflow-hidden rounded-[inherit] [backface-visibility:hidden] [transform:rotateY(180deg)]"
-            aria-hidden={!flipped}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={backUrl}
-              alt={backAlt}
-              draggable={false}
-              className="h-full w-full rounded-[inherit] object-contain"
-            />
+        <div
+          className="relative h-full w-full rounded-[inherit] transition-transform duration-500 ease-out [transform-style:preserve-3d]"
+          style={{
+            // Composes with the lean above rather than replacing it, so a card
+            // being tipped can be flipped without snapping back to square.
+            transform: `rotateY(${turn}deg)`,
+          }}
+        >
+          <div className="absolute inset-0 rounded-[inherit] [backface-visibility:hidden]">
+            {children}
           </div>
-        )}
+
+          {backUrl && (
+            <div
+              className="absolute inset-0 overflow-hidden rounded-[inherit] [backface-visibility:hidden] [transform:rotateY(180deg)]"
+              aria-hidden={!flipped}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={backUrl}
+                alt={backAlt}
+                draggable={false}
+                className="h-full w-full rounded-[inherit] object-contain"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/*

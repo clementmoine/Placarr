@@ -60,6 +60,13 @@ type HoloCardImageProps = {
    */
   tilt?: boolean;
   /**
+   * Whether the light follows the pointer, independently of whether the card
+   * leans. Split apart because a flipped card is leaned by its wrapper — both
+   * faces have to turn together — while the light stays this component's job.
+   * Defaults to whatever `tilt` says, which is the standalone case.
+   */
+  trackPointer?: boolean;
+  /**
    * Label for the control that asks iOS for the motion sensor. Passed in rather
    * than translated here so this component stays free of the locale plumbing.
    */
@@ -104,6 +111,7 @@ export function HoloCardImage({
   varnishShader = varnishShaderFor(null),
   varnishColor,
   tilt = true,
+  trackPointer = tilt,
   tiltPromptLabel = "Incliner",
   className,
   children,
@@ -134,7 +142,7 @@ export function HoloCardImage({
    * still — an effect that exists to be played with could not be. Tilting the
    * phone is the gesture people already make holding a real card.
    */
-  const deviceTilt = useDeviceTilt(MAX_TILT, tilt && Boolean(maskUrl));
+  const deviceTilt = useDeviceTilt(MAX_TILT, trackPointer && Boolean(maskUrl));
   const deviceLean = deviceTilt.lean;
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
@@ -211,15 +219,15 @@ export function HoloCardImage({
     <div
       ref={frameRef}
       onPointerMove={
-        tilt
+        trackPointer
           ? (event) => {
               setIsActive(true);
               applyPointer(event.clientX, event.clientY);
             }
           : undefined
       }
-      onPointerLeave={tilt ? reset : undefined}
-      onPointerCancel={tilt ? reset : undefined}
+      onPointerLeave={trackPointer ? reset : undefined}
+      onPointerCancel={trackPointer ? reset : undefined}
       style={
         {
           "--colorX": "50%",

@@ -179,6 +179,19 @@ async function withBestItems<T extends { id: string }>(
   });
 }
 
+/**
+ * The card back a shelf was given, or nothing.
+ *
+ * Only absolute http(s) URLs are kept: the value is fed straight to an `<img>`,
+ * and anything else is either a mistake or an attempt to point the page
+ * somewhere it should not go.
+ */
+function normalizedCardBackUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : null;
+}
+
 export async function GET(req: NextRequest) {
   return withRequestUiLocale(req, async (uiLocale) => {
     const auth = await requireGuestOrHigher(req);
@@ -377,7 +390,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { name, imageUrl, color, type, cardFormat } = body;
+    const { name, imageUrl, color, type, cardFormat, cardBackUrl } = body;
 
     if (
       typeof type !== "string" ||
@@ -400,6 +413,7 @@ export async function POST(req: NextRequest) {
         ...(typeof cardFormat === "string" && cardFormat.trim()
           ? { cardFormat: cardFormat.trim() }
           : {}),
+        cardBackUrl: normalizedCardBackUrl(cardBackUrl),
         userId: auth.user.id,
       },
       include: {
@@ -446,6 +460,7 @@ export async function PATCH(req: NextRequest) {
       color?: string | null;
       type?: Type;
       cardFormat?: string;
+      cardBackUrl?: string | null;
       isPublic?: boolean;
     } = {};
     if (typeof body.name === "string") {
@@ -478,6 +493,11 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof body.cardFormat === "string" && body.cardFormat.trim()) {
       data.cardFormat = body.cardFormat.trim();
+    }
+    // Present-but-empty clears it, which is how a collector says "these cards
+    // no longer turn over" — so the key has to be tested, not the value.
+    if ("cardBackUrl" in body) {
+      data.cardBackUrl = normalizedCardBackUrl(body.cardBackUrl);
     }
     if (typeof body.isPublic === "boolean") {
       data.isPublic = body.isPublic;

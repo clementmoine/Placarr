@@ -98,7 +98,6 @@ import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { HoloCardImage } from "@/components/HoloCardImage";
 import { FlippableCard } from "@/components/FlippableCard";
-import { cardBackUrlFor } from "@/core/render/cardBack";
 import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { resolveStoredVariant } from "@/core/enrich/variants";
@@ -2809,17 +2808,25 @@ export default function ItemDetailsPage() {
               /* Fullscreen is where a foil card is worth looking at, so the
                  holographic layers belong here above all — but only for the
                  cover itself: zooming a gallery image shows that image. */
-              (variantView.foilMaskUrl &&
+              /* A card is a physical object whether or not its print is foil, so
+                 the whole treatment — the card shape, the perspective, the lean,
+                 and the turn when a back is known — hangs on it being a card,
+                 not on it shimmering. `printKey` is what makes it one. */
+              (item?.printKey &&
               urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
-                <div className="h-[80vh] aspect-[5/7] rounded-lg animate-zoom-in">
+                <div className="h-[80vh] aspect-[5/7] rounded-[4%/3%] animate-zoom-in">
                   <FlippableCard
-                    backUrl={cardBackUrlFor(item?.printKey)}
+                    backUrl={shelf?.cardBackUrl}
                     backAlt={`${itemDisplayName ?? ""} — dos`}
                     flipLabel={t("items.flipCard")}
                   >
                     <HoloCardImage
                       imageUrl={variantView.imageUrl ?? zoomImageUrl}
                       alt="Zoom"
+                      /* The wrapper leans the whole card so the back turns with
+                         it; this keeps only the light on its own surface. */
+                      tilt={false}
+                      trackPointer
                       /* The mirrored masks were cut for the hero's framing. They
                        only fit here if this is the same file — zooming the
                        uncropped original of a cropped cover is not. */

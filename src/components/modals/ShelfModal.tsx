@@ -233,6 +233,18 @@ export function ShelfModal({
       message: t("shelf.type.soon"),
     }),
     cardFormat: z.string().default("default"),
+    /**
+     * The back of this shelf's cards. Optional, and a plain URL rather than an
+     * upload: no publisher ships one, so it is always something the collector
+     * found. Empty simply means the cards do not turn over.
+     */
+    cardBackUrl: z
+      .string()
+      .trim()
+      .refine((value) => !value || /^https?:\/\//i.test(value), {
+        message: t("shelves.invalidCardBackUrl"),
+      })
+      .default(""),
   });
 
   type FormValues = z.infer<typeof shelfSchema>;
@@ -244,6 +256,7 @@ export function ShelfModal({
       color: "#3b82f6",
       type: "games",
       cardFormat: "default",
+      cardBackUrl: "",
     }),
     [],
   );
@@ -425,6 +438,7 @@ export function ShelfModal({
         imageUrl: shelf.imageUrl || defaultValues.imageUrl,
         color: shelf.color || defaultValues.color,
         cardFormat: shelf.cardFormat || defaultValues.cardFormat,
+        cardBackUrl: shelf.cardBackUrl || "",
       });
     }
   }, [isOpen, shelf, shelfId, reset, defaultValues]);
@@ -778,6 +792,30 @@ export function ShelfModal({
                             />
                           </button>
                         </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cardBackUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={FIELD_LABEL_CLASS}>
+                          {t("shelves.cardBackUrl")}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            inputMode="url"
+                            placeholder="https://…"
+                          />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          {t("shelves.cardBackUrlHint")}
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}

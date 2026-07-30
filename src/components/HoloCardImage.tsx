@@ -117,21 +117,25 @@ export function HoloCardImage({
 }: HoloCardImageProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [isActive, setIsActive] = useState(false);
-  /*
-   * The masks are worn as plain CSS image masks, stretched to the frame — no
-   * SVG, no per-instance ids. The `<mask>` element this used to go through was
-   * solving nothing CSS could not: `mask-mode: luminance` is the keyword for
-   * reading a JPEG's brightness, and the varnish normal maps have their blue
-   * channel pulled out at download instead of by a filter on every frame.
+  /**
+   * The artwork's own proportions, learned when it loads.
    *
-   * It also does not work on iPhone. Safari does not apply an SVG `<mask>`
-   * referenced from CSS to an HTML element, so every layer covered the whole
-   * card — artwork, text box, borders — while Chrome looked finished.
-   *
-   * Stretched rather than fitted: the frame is given the card's own shape by its
-   * caller, so mask and artwork already agree. If a frame ever has to be a
-   * different shape, the fix is to letterbox the *frame*, never the mask.
+   * The caller's frame is an *approximation* of the card shape (5:7, say),
+   * while the scan is the card's true ratio — Lorcana's run 1468x2048. With
+   * `object-contain` the art paints a few pixels short of the frame, but the
+   * effect layers used to stretch to the frame itself: on a 313px-tall hero the
+   * foil hung 6px past the artwork and the mask was stretched 2% against it.
+   * The layers must cover the *painted art*, so everything below sits in a
+   * surface box of exactly this ratio, centred in the frame.
    */
+  const [artRatio, setArtRatio] = useState<string | null>(null);
+  // Reset during render when the artwork changes, never in an effect —
+  // the React Compiler's "adjust state when props change" pattern.
+  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
+  if (prevImageUrl !== imageUrl) {
+    setPrevImageUrl(imageUrl);
+    setArtRatio(null);
+  }
 
   /**
    * On a touch screen there is no pointer to follow, so the light on the card
@@ -289,20 +293,6 @@ export function HoloCardImage({
         className,
       )}
     >
-      {/*
-        An SVG `<mask>` reads luminance, which is what makes the published JPEG
-        usable at all — as a CSS `mask-image` it would be an opaque rectangle.
-
-        `mask-type` is not decoration. Left off, the CSS side falls back to
-        `mask-mode: match-source`, and WebKit resolves that to **alpha** for a
-        mask referenced from CSS. These masks are JPEGs, so their alpha is
-        opaque everywhere: on iPhone the foil covered the whole card, text box
-        and borders included, while Chrome — which resolves `match-source` to
-        luminance here — looked correct. The publisher states it explicitly on
-        both the element and the CSS property; so do we.
-
-        `<defs>` and the explicit `x`/`y` match the publisher's markup too.
-      */}
       <div
         /**
          * Rotation set inline rather than through an arbitrary Tailwind class:
@@ -330,86 +320,109 @@ export function HoloCardImage({
                 "holo-idle-tilt"),
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt={alt}
-          /**
-           * Dragging the artwork hands the pointer to the browser's own drag,
-           * which stops `pointermove` — the card freezes mid-lean with its
-           * light stuck wherever the drag began.
-           */
-          draggable={false}
-          className={cn("h-full w-full", objectFitClass(fit))}
-        />
-
-        <div
-          aria-hidden
-          style={{
-            ...holoLayerStyle(shader),
-            ...maskedByStyle(foilMask),
-          }}
-          className="pointer-events-none absolute inset-0"
-        />
-
         {/*
+          The surface box: the painted artwork, exactly. Width-driven with the
+          height capped — the spec transfers the cap back through the ratio, so
+          this is `object-contain` as a box the layers can share. Until the
+          ratio is known (or when the art covers), it simply fills the frame.
+        */}
+        <div className="relative flex h-full w-full items-center justify-center">
+          <div
+            className="relative"
+            style={
+              fit === "contain" && artRatio
+                ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
+                : { width: "100%", height: "100%" }
+            }
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={alt}
+              /**
+               * Dragging the artwork hands the pointer to the browser's own
+               * drag, which stops `pointermove` — the card freezes mid-lean
+               * with its light stuck wherever the drag began.
+               */
+              draggable={false}
+              onLoad={(event) => {
+                const art = event.currentTarget;
+                if (art.naturalWidth && art.naturalHeight) {
+                  setArtRatio(`${art.naturalWidth} / ${art.naturalHeight}`);
+                }
+              }}
+              className={cn("h-full w-full", objectFitClass(fit))}
+            />
+
+            <div
+              aria-hidden
+              style={{
+                ...holoLayerStyle(shader),
+                ...maskedByStyle(foilMask),
+              }}
+              className="pointer-events-none absolute inset-0"
+            />
+
+            {/*
           The extra coat some finishes ship with, drawn above the finish and
           through the same mask. A Lore card has five layers, not three, and
           this is where most of its colour comes from — without it the finish
           alone is nearly monochrome.
         */}
-        {shader.overlay && (
-          <div
-            aria-hidden
-            style={{
-              ...holoLayerStyle(holoShader(shader.overlay)),
-              ...maskedByStyle(foilMask),
-            }}
-            className="pointer-events-none absolute inset-0"
-          />
-        )}
+            {shader.overlay && (
+              <div
+                aria-hidden
+                style={{
+                  ...holoLayerStyle(holoShader(shader.overlay)),
+                  ...maskedByStyle(foilMask),
+                }}
+                className="pointer-events-none absolute inset-0"
+              />
+            )}
 
-        {varnishMask && (
-          <div
-            aria-hidden
-            style={{
-              ...holoLayerStyle(varnishShader),
-              ...maskedByStyle(varnishMask),
-            }}
-            className="pointer-events-none absolute inset-0"
-          />
-        )}
+            {varnishMask && (
+              <div
+                aria-hidden
+                style={{
+                  ...holoLayerStyle(varnishShader),
+                  ...maskedByStyle(varnishMask),
+                }}
+                className="pointer-events-none absolute inset-0"
+              />
+            )}
 
-        {secondVarnishMask && (
-          <div
-            aria-hidden
-            style={{
-              ...holoLayerStyle(varnishShader),
-              // The second coat sweeps its own hue, which is why the recipes
-              // keep `--topcolor2` apart from `--topcolor`.
-              backgroundImage: holoLayerStyle(
-                varnishShader,
-              ).backgroundImage?.replaceAll(
-                "var(--topcolor)",
-                "var(--topcolor2)",
-              ),
-              ...maskedByStyle(secondVarnishMask),
-            }}
-            className="pointer-events-none absolute inset-0"
-          />
-        )}
+            {secondVarnishMask && (
+              <div
+                aria-hidden
+                style={{
+                  ...holoLayerStyle(varnishShader),
+                  // The second coat sweeps its own hue, which is why the recipes
+                  // keep `--topcolor2` apart from `--topcolor`.
+                  backgroundImage: holoLayerStyle(
+                    varnishShader,
+                  ).backgroundImage?.replaceAll(
+                    "var(--topcolor)",
+                    "var(--topcolor2)",
+                  ),
+                  ...maskedByStyle(secondVarnishMask),
+                }}
+                className="pointer-events-none absolute inset-0"
+              />
+            )}
 
-        {/* Glare rides on top of everything, unmasked: light falls on the whole card. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 mix-blend-overlay transition-opacity duration-300"
-          style={{
-            backgroundImage:
-              "radial-gradient(farthest-corner circle at var(--colorX) var(--colorY), rgba(255,255,255,0.8) 10%, rgba(255,255,255,0.65) 20%, rgba(0,0,0,0.5) 90%)",
-            backgroundSize: "100%",
-            opacity: "var(--opacity)",
-          }}
-        />
+            {/* Glare rides on top of everything, unmasked: light falls on the whole card. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 mix-blend-overlay transition-opacity duration-300"
+              style={{
+                backgroundImage:
+                  "radial-gradient(farthest-corner circle at var(--colorX) var(--colorY), rgba(255,255,255,0.8) 10%, rgba(255,255,255,0.65) 20%, rgba(0,0,0,0.5) 90%)",
+                backgroundSize: "100%",
+                opacity: "var(--opacity)",
+              }}
+            />
+          </div>
+        </div>
 
         {children}
       </div>

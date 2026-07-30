@@ -56,8 +56,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
 import { groupCopies } from "@/core/collect/groupCopies";
-import { usePrintVariants } from "@/lib/client/hooks/usePrintVariants";
-import type { PrintVariantInfo } from "@/lib/client/hooks/usePrintVariant";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { ItemModal } from "@/components/modals/ItemModal";
 import { PrintPickerModal } from "@/components/modals/PrintPickerModal";
@@ -118,8 +116,6 @@ type ShelfGridItemProps = {
   canSelect: boolean;
   /** How many copies this tile stands for. 1 means it stands for itself. */
   copyCount: number;
-  /** What this copy is a print of, resolved once for the whole shelf. */
-  printVariant?: PrintVariantInfo | null;
   onSelect: (itemId: string, options?: { shiftKey?: boolean }) => void;
 };
 
@@ -132,7 +128,6 @@ const ShelfGridItem = memo(function ShelfGridItem({
   isSelected,
   canSelect,
   copyCount,
-  printVariant,
   onSelect,
 }: ShelfGridItemProps) {
   const { t } = useLocale();
@@ -141,7 +136,6 @@ const ShelfGridItem = memo(function ShelfGridItem({
     <ItemCard
       {...item}
       copyCount={copyCount}
-      printVariant={printVariant}
       shelfType={shelf?.type}
       shelfName={shelf?.name}
       cardFormat={shelf?.cardFormat}
@@ -403,18 +397,6 @@ function ShelfComponent() {
    * appears where its first copy did. See `docs/tcg_support.md` §4.
    */
   const groupedItems = useMemo(() => groupCopies(sortedItems), [sortedItems]);
-
-  /**
-   * What each copy is a print of, for the whole shelf in one request.
-   *
-   * A foil copy has to be recognisable in the grid and not only once opened —
-   * otherwise the one thing separating it from an ordinary copy is invisible
-   * exactly where a collector scans their collection.
-   */
-  const printVariants = usePrintVariants(
-    useMemo(() => sortedItems.map((item) => item.printKey), [sortedItems]),
-    shelf?.type,
-  );
 
   const totalValue = useMemo(() => {
     if (!shelf?.items) return { total: 0, includesEstimates: false };
@@ -972,7 +954,6 @@ function ShelfComponent() {
                     selectionMode={selectionMode}
                     isSelected={selectedItemIds.has(item.id)}
                     canSelect={Boolean(isAuthenticated && !isGuest && canEdit)}
-                    printVariant={printVariants[item.printKey ?? ""]}
                     onSelect={beginSelection}
                   />
                 ),

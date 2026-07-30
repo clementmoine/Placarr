@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 import { resolveStoredVariant } from "@/core/enrich/variants";
+import {
+  peekPrintVariant,
+  requestPrintVariant,
+  subscribeToPrintVariants,
+} from "@/lib/client/printVariantStore";
 import {
   holoShader,
   varnishShader,
@@ -35,36 +40,30 @@ export type PrintVariantInfo = {
  * field evidence after every store, so a persisted copy both has to survive two
  * allow-lists and drifts when a set is corrected. The provider's index is held
  * in memory server-side, so the answer is cheap.
+ *
+ * Every caller shares one store, so a page of cards costs one request per media
+ * type rather than one per card — see `printVariantStore`. That is why this can
+ * be called from a tile: it used to be too expensive to, which is how five
+ * lists of cards ended up drawing foils as plain.
  */
 export function usePrintVariant(
   printKey: string | null | undefined,
   shelfType: string | null | undefined,
 ): PrintVariantInfo | null {
-  const [info, setInfo] = useState<PrintVariantInfo | null>(null);
+  const snapshot = useCallback(
+    () => peekPrintVariant(printKey, shelfType),
+    [printKey, shelfType],
+  );
+  const info = useSyncExternalStore(
+    subscribeToPrintVariants,
+    snapshot,
+    // Nothing is known during the server render, and a card with no effect is
+    // the honest placeholder for one whose effect is not resolved yet.
+    () => null,
+  );
 
   useEffect(() => {
-    const controller = new AbortController();
-    void (async () => {
-      if (!printKey || !shelfType) {
-        setInfo(null);
-        return;
-      }
-      try {
-        const response = await fetch(
-          `/api/prints?printKey=${encodeURIComponent(printKey)}&type=${encodeURIComponent(shelfType)}`,
-          { signal: controller.signal },
-        );
-        if (!response.ok) return;
-        const data = (await response.json()) as {
-          candidate?: PrintVariantInfo | null;
-        };
-        setInfo(data.candidate ?? null);
-      } catch {
-        // Unknown simply means no variant picker and no effect, never a failure.
-      }
-    })();
-
-    return () => controller.abort();
+    requestPrintVariant(printKey, shelfType);
   }, [printKey, shelfType]);
 
   return info;

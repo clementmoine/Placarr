@@ -12,8 +12,8 @@ import {
 import { RemoteImage } from "@/components/RemoteImage";
 import { HoloCardImage } from "@/components/HoloCardImage";
 import {
+  usePrintVariant,
   variantRendering,
-  type PrintVariantInfo,
 } from "@/lib/client/hooks/usePrintVariant";
 import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import {
@@ -49,11 +49,6 @@ interface ItemCardProps extends Item {
    * of them: `Item` stays one physical copy, and the fold is display-only.
    */
   copyCount?: number;
-  /**
-   * What this copy is a print of, when the shelf could resolve it. Resolved for
-   * the whole shelf at once rather than per tile — see `usePrintVariants`.
-   */
-  printVariant?: PrintVariantInfo | null;
   shelfType?: string | null;
   shelfName?: string | null;
   cardFormat?: string | null;
@@ -82,7 +77,7 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.metadataId === next.metadataId &&
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
     prev.variant === next.variant &&
-    prev.printVariant === next.printVariant &&
+    prev.printKey === next.printKey &&
     prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
     (prev.metadata?.attachments?.length ?? 0) ===
@@ -112,9 +107,15 @@ function ItemCardInner(props: ItemCardProps) {
    * otherwise the one thing that separates it from an ordinary copy is
    * invisible exactly where a collector scans their collection.
    */
+  /**
+   * Asked for by the tile itself. The answer is shared and batched, so a grid
+   * of cards costs one request — and no list has to remember to resolve this on
+   * its cards' behalf, which is how the shelf grid ended up being the only
+   * place a foil print looked foil.
+   */
   const variantView = variantRendering(
     props.variant,
-    props.printVariant ?? null,
+    usePrintVariant(props.printKey, shelfType),
     imageUrl,
   );
   const foilMaskUrl = useMirroredCropMask(

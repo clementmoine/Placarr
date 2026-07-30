@@ -2808,9 +2808,13 @@ export default function ItemDetailsPage() {
       >
         {/* Transparent: the blur alone separates the card from the page, and a
             black plate fought the holographic sheen it was meant to showcase. */}
-        <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex flex-col items-center justify-center">
+        {/* `sm:max-w-4xl` because the base component's own `sm:max-w-lg` wins
+              over a plain `max-w-4xl` at this breakpoint, and 512px of dialog
+              was quietly capping the card at 480px — well under the 80dvh it
+              asks for. */}
+        <DialogContent className="max-w-4xl sm:max-w-4xl p-0 bg-transparent border-none shadow-none flex flex-col items-center justify-center">
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
-          <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
+          <div className="relative w-full h-full max-h-[85dvh] flex items-center justify-center p-4">
             {zoomImageUrl &&
               /* Fullscreen is where a foil card is worth looking at, so the
                  holographic layers belong here above all — but only for the
@@ -2821,7 +2825,29 @@ export default function ItemDetailsPage() {
                  not on it shimmering. `printKey` is what makes it one. */
               (item?.printKey &&
               urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
-                <div className="h-[80vh] aspect-[5/7] rounded-[4%/3%] animate-zoom-in">
+                /**
+                 * Sized from its *width*, so the card can never be wider than
+                 * the screen.
+                 *
+                 * Driven from the height (`h-[80vh] aspect-[5/7]`) it was 464px
+                 * wide inside a 375px iPhone — 44px off each edge, corners and
+                 * card number cut away. Deriving the height from the width
+                 * instead keeps the 5:7 exact at every size: the width takes
+                 * whichever is smaller, the room on screen or what 80dvh of
+                 * height would allow.
+                 *
+                 * Measured against the **viewport**, not the parent. `min(100%,
+                 * …)` looks tidier and is circular: this dialog is shrink-to-fit,
+                 * so its width comes from its content while the content's came
+                 * from its width — the same card measured 480px wide one moment
+                 * and 331px the next.
+                 *
+                 * `dvh`, not `vh`: on iOS `vh` measures the viewport with the
+                 * URL bar hidden, so 80vh is taller than what can actually be
+                 * seen and the card slid under the browser chrome. The `2rem`
+                 * is the wrapper's own `p-4`, both sides.
+                 */
+                <div className="aspect-[5/7] w-[min(calc(100vw-2rem),calc(80dvh*5/7))] rounded-[4%/3%] animate-zoom-in">
                   <FlippableCard
                     backUrl={shelf?.cardBackUrl}
                     backAlt={`${itemDisplayName ?? ""} — dos`}
@@ -2864,7 +2890,10 @@ export default function ItemDetailsPage() {
                   alt="Zoom"
                   width={1920}
                   height={1920}
-                  className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
+                  // `dvh` for the same reason as the card branch above: on iOS
+                  // `vh` measures the viewport with the URL bar hidden, so a
+                  // tall gallery image ran under the browser chrome.
+                  className="max-w-full max-h-[80dvh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
                 />
               ))}
           </div>

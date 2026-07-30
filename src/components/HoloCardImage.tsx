@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import {
   holoLayerStyle,
+  maskedByStyle,
   holoShader,
   NEUTRAL_VARNISH_COLOR,
   varnishShader as varnishShaderFor,
@@ -275,56 +276,77 @@ export function HoloCardImage({
       {/*
         An SVG `<mask>` reads luminance, which is what makes the published JPEG
         usable at all — as a CSS `mask-image` it would be an opaque rectangle.
+
+        `mask-type` is not decoration. Left off, the CSS side falls back to
+        `mask-mode: match-source`, and WebKit resolves that to **alpha** for a
+        mask referenced from CSS. These masks are JPEGs, so their alpha is
+        opaque everywhere: on iPhone the foil covered the whole card, text box
+        and borders included, while Chrome — which resolves `match-source` to
+        luminance here — looked correct. The publisher states it explicitly on
+        both the element and the CSS property; so do we.
+
+        `<defs>` and the explicit `x`/`y` match the publisher's markup too.
       */}
       <svg aria-hidden className="absolute size-0" focusable="false">
-        <mask
-          id={foilMaskId}
-          maskUnits="objectBoundingBox"
-          maskContentUnits="objectBoundingBox"
-        >
-          <image
-            href={maskUrl}
-            width="1"
-            height="1"
-            preserveAspectRatio={maskAspect}
-          />
-        </mask>
-        {varnishMaskUrl && (
+        <defs>
           <mask
-            id={varnishMaskId}
-            maskUnits="objectBoundingBox"
-            maskContentUnits="objectBoundingBox"
-          >
-            {/*
-              The varnish mask is a normal map, not a coverage mask: red and
-              green are pinned near 127/128 and only blue says where anything is
-              stamped. The filter pulls blue into all three channels so the
-              luminance mask means what it should.
-            */}
-            <image
-              href={varnishMaskUrl}
-              width="1"
-              height="1"
-              preserveAspectRatio={maskAspect}
-              filter="url(#holo-varnish-coverage)"
-            />
-          </mask>
-        )}
-        {secondVarnishMaskUrl && (
-          <mask
-            id={secondVarnishMaskId}
+            id={foilMaskId}
+            mask-type="luminance"
             maskUnits="objectBoundingBox"
             maskContentUnits="objectBoundingBox"
           >
             <image
-              href={secondVarnishMaskUrl}
+              href={maskUrl}
+              x="0"
+              y="0"
               width="1"
               height="1"
               preserveAspectRatio={maskAspect}
-              filter="url(#holo-varnish-coverage)"
             />
           </mask>
-        )}
+          {varnishMaskUrl && (
+            <mask
+              id={varnishMaskId}
+              mask-type="luminance"
+              maskUnits="objectBoundingBox"
+              maskContentUnits="objectBoundingBox"
+            >
+              {/*
+                The varnish mask is a normal map, not a coverage mask: red and
+                green are pinned near 127/128 and only blue says where anything
+                is stamped. The filter pulls blue into all three channels so the
+                luminance mask means what it should.
+              */}
+              <image
+                href={varnishMaskUrl}
+                x="0"
+                y="0"
+                width="1"
+                height="1"
+                preserveAspectRatio={maskAspect}
+                filter="url(#holo-varnish-coverage)"
+              />
+            </mask>
+          )}
+          {secondVarnishMaskUrl && (
+            <mask
+              id={secondVarnishMaskId}
+              mask-type="luminance"
+              maskUnits="objectBoundingBox"
+              maskContentUnits="objectBoundingBox"
+            >
+              <image
+                href={secondVarnishMaskUrl}
+                x="0"
+                y="0"
+                width="1"
+                height="1"
+                preserveAspectRatio={maskAspect}
+                filter="url(#holo-varnish-coverage)"
+              />
+            </mask>
+          )}
+        </defs>
       </svg>
 
       <div
@@ -371,8 +393,7 @@ export function HoloCardImage({
           aria-hidden
           style={{
             ...holoLayerStyle(shader),
-            mask: `url(#${foilMaskId})`,
-            WebkitMask: `url(#${foilMaskId})`,
+            ...maskedByStyle(foilMaskId),
           }}
           className="pointer-events-none absolute inset-0"
         />
@@ -388,8 +409,7 @@ export function HoloCardImage({
             aria-hidden
             style={{
               ...holoLayerStyle(holoShader(shader.overlay)),
-              mask: `url(#${foilMaskId})`,
-              WebkitMask: `url(#${foilMaskId})`,
+              ...maskedByStyle(foilMaskId),
             }}
             className="pointer-events-none absolute inset-0"
           />
@@ -400,8 +420,7 @@ export function HoloCardImage({
             aria-hidden
             style={{
               ...holoLayerStyle(varnishShader),
-              mask: `url(#${varnishMaskId})`,
-              WebkitMask: `url(#${varnishMaskId})`,
+              ...maskedByStyle(varnishMaskId),
             }}
             className="pointer-events-none absolute inset-0"
           />
@@ -420,8 +439,7 @@ export function HoloCardImage({
                 "var(--topcolor)",
                 "var(--topcolor2)",
               ),
-              mask: `url(#${secondVarnishMaskId})`,
-              WebkitMask: `url(#${secondVarnishMaskId})`,
+              ...maskedByStyle(secondVarnishMaskId),
             }}
             className="pointer-events-none absolute inset-0"
           />

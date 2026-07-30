@@ -329,3 +329,35 @@ export function holoLayerStyle(shader: HoloShader): CSSProperties {
     filter: shader.filter,
   };
 }
+
+/**
+ * How a layer wears one of the SVG `<mask>` elements.
+ *
+ * Two separate traps, both silent, both found on an iPhone.
+ *
+ * **The mask has to be read as luminance, said out loud.** Left to the initial
+ * `mask-mode: match-source`, WebKit resolves it as *alpha*. The published masks
+ * are JPEGs, so their alpha is opaque everywhere: the layer covered the whole
+ * card — text box, borders and all — while Chrome, which resolves the same
+ * keyword to luminance here, looked perfect. `-webkit-mask-source-type` is the
+ * older WebKit spelling of the same thing, and the publisher states it too.
+ *
+ * **Longhands only, never the `mask` shorthand.** `mask` and `-webkit-mask` are
+ * shorthands that reset `mask-mode` to its initial value, so writing the mode
+ * and then either shorthand silently throws the mode away — which is exactly
+ * what React's style object did, in key order, on the first attempt at this fix.
+ * With longhands the declarations are order-independent.
+ */
+export function maskedByStyle(maskId: string): CSSProperties {
+  const reference = `url(#${maskId})`;
+  return {
+    maskImage: reference,
+    maskMode: "luminance",
+    maskSize: "100% 100%",
+    maskRepeat: "no-repeat",
+    WebkitMaskImage: reference,
+    WebkitMaskSize: "100% 100%",
+    WebkitMaskRepeat: "no-repeat",
+    WebkitMaskSourceType: "luminance",
+  } as CSSProperties;
+}

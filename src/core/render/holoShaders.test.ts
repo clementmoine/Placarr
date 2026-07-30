@@ -8,6 +8,7 @@ import {
   holoLayerStyle,
   holoShader,
   isHoloShaderId,
+  maskedByStyle,
   varnishShader,
 } from "./holoShaders";
 
@@ -167,5 +168,51 @@ describe("holoLayerStyle", () => {
     // `undefined` lets the stylesheet decide; a literal would override it.
     expect(holoLayerStyle(holoShader("magma")).filter).toBeUndefined();
     expect(holoLayerStyle(holoShader("lore")).opacity).toBeUndefined();
+  });
+});
+
+describe("maskedByStyle", () => {
+  it("states luminance rather than leaving it to match-source", () => {
+    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+
+    // The bug this pins: with `mask-mode` unset, the initial `match-source` is
+    // resolved by WebKit as *alpha*. The published masks are JPEGs, so their
+    // alpha is opaque everywhere and the layer covered the whole card on
+    // iPhone — text box, borders and all — while Chrome looked correct.
+    expect(style.maskMode).toBe("luminance");
+  });
+
+  it("uses the older WebKit spelling of the mode as well", () => {
+    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+
+    // `-webkit-mask-mode` does not exist; `-webkit-mask-source-type` is the
+    // property Safari actually reads, and the one the publisher states.
+    expect(style.WebkitMaskSourceType).toBe("luminance");
+  });
+
+  it("declares both the prefixed and unprefixed properties", () => {
+    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+
+    // Safari needs the prefixed ones; dropping either half loses one engine.
+    expect(style.maskImage).toBe("url(#holoFoilABC)");
+    expect(style.WebkitMaskImage).toBe("url(#holoFoilABC)");
+    expect(style.maskSize).toBe("100% 100%");
+    expect(style.WebkitMaskSize).toBe("100% 100%");
+  });
+
+  it("never uses the mask shorthand, which resets the mode it just set", () => {
+    const style = maskedByStyle("holoFoilABC") as Record<string, string>;
+
+    // `mask` and `-webkit-mask` reset `mask-mode` to its initial value. React
+    // writes an inline style object in key order, so one shorthand anywhere in
+    // here silently throws the luminance away again.
+    expect(style.mask).toBeUndefined();
+    expect(style.WebkitMask).toBeUndefined();
+  });
+
+  it("points at the id it was given, so layers cannot share a mask by accident", () => {
+    expect(
+      (maskedByStyle("holoVarnish2xy") as Record<string, string>).maskImage,
+    ).toBe("url(#holoVarnish2xy)");
   });
 });

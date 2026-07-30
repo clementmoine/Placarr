@@ -227,7 +227,7 @@ Vide ⇒ les cartes ne se retournent pas, mais s'inclinent quand même : une car
 reste un objet physique.
 
 **Ce que le champ accepte est une seule fonction**, `normalizeCardBackUrl` —
-importée par le formulaire *et* par la route. Écrite deux fois, elle a divergé :
+importée par le formulaire _et_ par la route. Écrite deux fois, elle a divergé :
 le formulaire acceptait le `/uploads/…` rendu par l'upload, l'API n'acceptait
 que des URLs absolues, donc choisir une image enregistrait sans rien stocker et
 effaçait au passage le dos précédent. Un champ dont les deux côtés valident
@@ -264,3 +264,76 @@ séparément est un champ qui perdra des données.
   provider qui déclare la capacité prix est appelé par le flux prix normal,
   comme pour tous les autres types.
 - **Cartes gradées** : hors périmètre.
+
+## 9. Ce que l'app mobile apprend (dump du 2026-07-30)
+
+Le viewer web n'était pas incomplet — il est _entier pour ce qu'il est_. L'app
+tourne sur un moteur différent, et c'est de là que vient l'écart.
+
+### Méthode
+
+`Disney Lorcana TCG Companion 2026.4`, Unity 6000.3.17f1, IL2CPP. Deux sources :
+
+- `global-metadata.dat` (non compressé) → tous les noms de classes et de champs.
+  C'est ce qui a livré le **vocabulaire des finitions**, et donc le bug : notre
+  table n'en connaissait que 11 sur 13.
+- `data.unity3d`, lu avec UnityPy → l'inventaire des matériaux et **leurs
+  paramètres**. `strings` seul ne suffit pas : le corps est compressé et rend
+  des noms tronqués (`FoilLoreh`, `FoilEffecJ`) qui ressemblent à des trouvailles.
+
+On relève des **faits de configuration** — quels effets existent, quels réglages
+les distinguent. Pas leur code de shader : sur un build mobile il est de toute
+façon compilé en bytecode GPU.
+
+### Vocabulaire complet
+
+**Finitions (13)** — Silver, Satin, Lore, Lava, Magma, Glitter, VerticalWave,
+SeaWave, RainbowPillars, FreeForm1, FreeForm2, **Tempest**, **CalendarWave**.
+Les deux dernières manquaient à `FINISH_SHADERS` et tombaient sur `silver`.
+
+**Vernis (6)** — HighGloss, MatteHotFoil, MetallicHotFoil, SnowHotFoil,
+RainbowHotFoil, ChromeRainbowHotFoil. Notre table était complète.
+
+### L'architecture diffère du viewer web
+
+Le web a **une recette CSS par finition**. L'app a **8 shader graphs pour 23
+matériaux** : plusieurs finitions partagent un graph et ne se distinguent que par
+leurs réglages. `CardFoilLore` est le cheval de trait — il sert CalendarWave,
+SeaWave, Magma et les variantes Lore.
+
+Le nom du matériau porte la **combinaison** finition + vernis
+(`CardSeaWaveMatteHotFoil`, `CardMagmaChromeRainbowHotFoilMaterial`) : chez eux
+la paire est pré-écrite, chez nous elle est composée à la volée par deux couches.
+Les deux donnent le même résultat ; la leur coûte un matériau par paire, la nôtre
+reste combinatoire.
+
+### Les familles de réglages
+
+Ce que l'app expose et que le CSS n'a pas :
+
+| famille             | paramètres                                                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| motif / arc-en-ciel | `_MotifColorWeight`, `_RainbowStrength`, `_MotifToRainbowRatio`                                                                         |
+| lavis               | `_Inkwash_Strength`, `_Inkwash_Compactness`                                                                                             |
+| animation           | `_Speed`, `_TimeFactor`, `_FoilMorphSpeed`                                                                                              |
+| vernis              | `_VarnishBevelStrength`, `_VarnishDarkenStrength`, `_VarnishHighlightStrength`, `_VarnishOutlineStrength`, `_VarnishDistortionStrength` |
+| hot foil            | `_HotFoilBrightness`, `_HotFoilContrast`, `_HotFoilOffset`                                                                              |
+| relief              | `_FoilDisplacementStrength`, `_Parallax`                                                                                                |
+| divers              | `_GlitterSize`, `_FoilMidToneStrength`, `_FoilHighlightStrength`                                                                        |
+
+### Ce qui n'est pas portable, et pourquoi
+
+`_FoilDisplacementStrength`, `_Parallax`, `_VarnishBevelStrength` et
+`_VarnishOutlineStrength` sont des opérations de **géométrie et d'éclairage 3D**
+— déplacement de surface, biseau éclairé, contour. Une pile de `mix-blend-mode`
+CSS ne sait pas les faire : elle compose des images, elle ne modèle pas une
+surface. Copier ces shaders n'est pas « difficile », c'est sans objet.
+
+**L'app vaut donc comme spécification, pas comme source à porter.** Elle dit
+quels effets existent et quels axes les séparent ; le viewer web reste la seule
+source directement transposable, et nos recettes lui correspondent déjà
+déclaration par déclaration (`holoShaderParity.test.ts`).
+
+Gain réel de ce dump : deux finitions enfin rendues correctement, un garde qui
+empêche qu'un look transcrit reste débranché, et une liste d'axes pour la salle
+d'essai.

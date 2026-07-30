@@ -1,3 +1,5 @@
+import type { MaskKind } from "@/core/enrich/media/maskDownload";
+
 /**
  * Bringing a print's foil masks onto our own origin.
  *
@@ -25,33 +27,30 @@ export type PrintMaskUrls = {
 };
 
 /**
- * The mask fields, and whether each needs its coverage baked out.
+ * The mask fields, and what each file *is*.
  *
- * The varnish masks are normal maps — only their blue channel says where the
- * coat is stamped — so they are not usable as luminance until that channel is
- * pulled out. The foil mask is already a greyscale coverage map.
- *
- * Named in one place so a fourth mask cannot be added without deciding which
- * kind it is.
+ * Both kinds get baked into an alpha mask, by different formulas: a foil mask is
+ * a greyscale coverage map, a varnish mask is a normal map. Named in one place
+ * so a fourth mask cannot be added without deciding which kind it is.
  */
 export const PRINT_MASK_FIELDS = {
-  foilMaskUrl: { coverage: false },
-  varnishMaskUrl: { coverage: true },
-  secondVarnishMaskUrl: { coverage: true },
-} as const satisfies Record<keyof PrintMaskUrls, { coverage: boolean }>;
+  foilMaskUrl: { kind: "foil" },
+  varnishMaskUrl: { kind: "varnish" },
+  secondVarnishMaskUrl: { kind: "varnish" },
+} as const satisfies Record<keyof PrintMaskUrls, { kind: MaskKind }>;
 
 type MaskField = keyof typeof PRINT_MASK_FIELDS;
 
 const MASK_FIELD_NAMES = Object.keys(PRINT_MASK_FIELDS) as MaskField[];
 
 /** A file to fetch, and how to treat it once fetched. */
-export type MaskRequest = { url: string; coverage: boolean };
+export type MaskRequest = { url: string; kind: MaskKind };
 
 export type MaskLocalizer = (request: MaskRequest) => Promise<string | null>;
 
-/** The two are one cache key: a normal map serves as both raw and baked. */
+/** The kind is part of the key: one file can serve as either kind. */
 function requestKey(request: MaskRequest): string {
-  return `${request.coverage ? "coverage" : "raw"}|${request.url}`;
+  return `${request.kind}|${request.url}`;
 }
 
 /**
@@ -69,7 +68,7 @@ export function remoteMaskRequests(
     for (const field of MASK_FIELD_NAMES) {
       const url = print[field];
       if (!url || !url.startsWith("http")) continue;
-      const request = { url, coverage: PRINT_MASK_FIELDS[field].coverage };
+      const request = { url, kind: PRINT_MASK_FIELDS[field].kind };
       byKey.set(requestKey(request), request);
     }
   }
@@ -92,7 +91,7 @@ export function withLocalizedMasks<T extends PrintMaskUrls>(
     const url = print[field];
     if (!url) continue;
     const local = localByKey.get(
-      requestKey({ url, coverage: PRINT_MASK_FIELDS[field].coverage }),
+      requestKey({ url, kind: PRINT_MASK_FIELDS[field].kind }),
     );
     if (local) localized[field] = local as T[typeof field];
   }

@@ -21,9 +21,9 @@ const REMOTE_2 =
   "https://api.lorcana.ravensburger.com/images/fr/set1/18_cd.jpg";
 
 describe("remoteMaskRequests", () => {
-  it("collects all three mask fields, and says which need baking", () => {
-    // The varnish masks are normal maps: unusable as luminance until their blue
-    // channel is pulled out. The foil mask is already a coverage map.
+  it("collects all three mask fields, and says what each file is", () => {
+    // The two kinds bake by different formulas: a foil mask is a coverage map,
+    // a varnish mask is a normal map.
     expect(
       remoteMaskRequests([
         {
@@ -33,9 +33,9 @@ describe("remoteMaskRequests", () => {
         },
       ]),
     ).toEqual([
-      { url: REMOTE, coverage: false },
-      { url: "https://x.test/v.jpg", coverage: true },
-      { url: "https://x.test/v2.jpg", coverage: true },
+      { url: REMOTE, kind: "foil" },
+      { url: "https://x.test/v.jpg", kind: "varnish" },
+      { url: "https://x.test/v2.jpg", kind: "varnish" },
     ]);
   });
 
@@ -49,19 +49,19 @@ describe("remoteMaskRequests", () => {
         { foilMaskUrl: REMOTE_2 },
       ]),
     ).toEqual([
-      { url: REMOTE, coverage: false },
-      { url: REMOTE_2, coverage: false },
+      { url: REMOTE, kind: "foil" },
+      { url: REMOTE_2, kind: "foil" },
     ]);
   });
 
-  it("keeps the raw and baked forms of one file apart", () => {
-    // The same normal map could in principle serve both roles; one cache entry
-    // for both would hand a foil layer a baked mask or vice versa.
+  it("keeps the two bakes of one file apart", () => {
+    // One file could serve either role, and the bakes differ; a single cache
+    // entry would hand a foil layer a varnish bake or the reverse.
     expect(
       remoteMaskRequests([{ foilMaskUrl: REMOTE, varnishMaskUrl: REMOTE }]),
     ).toEqual([
-      { url: REMOTE, coverage: false },
-      { url: REMOTE, coverage: true },
+      { url: REMOTE, kind: "foil" },
+      { url: REMOTE, kind: "varnish" },
     ]);
   });
 
@@ -81,7 +81,7 @@ describe("withLocalizedMasks", () => {
     expect(
       withLocalizedMasks(
         { foilMaskUrl: REMOTE },
-        new Map([[`raw|${REMOTE}`, "/uploads/abc.jpg"]]),
+        new Map([[`foil|${REMOTE}`, "/uploads/abc.jpg"]]),
       ),
     ).toEqual({ foilMaskUrl: "/uploads/abc.jpg" });
   });
@@ -102,7 +102,10 @@ describe("withLocalizedMasks", () => {
     };
 
     expect(
-      withLocalizedMasks(print, new Map([[`raw|${REMOTE}`, "/uploads/abc.jpg"]])),
+      withLocalizedMasks(
+        print,
+        new Map([[`foil|${REMOTE}`, "/uploads/abc.jpg"]]),
+      ),
     ).toEqual({
       foilMaskUrl: "/uploads/abc.jpg",
       finishes: ["Silver"],

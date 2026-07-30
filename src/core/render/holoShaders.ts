@@ -333,34 +333,28 @@ export function holoLayerStyle(shader: HoloShader): CSSProperties {
 /**
  * How a layer wears its mask.
  *
- * A plain CSS image mask — the `mask-image: url(#svgMaskElement)` indirection
- * this used to use does not work in Safari at all: it applies to SVG content,
- * not to an HTML element, so on iPhone every layer covered the whole card.
- *
- * Two traps remain, both silent, both found the hard way.
- *
- * **The mask has to be read as luminance, said out loud.** Left to the initial
- * `mask-mode: match-source`, an image mask is read by its *alpha*. These masks
- * are JPEGs, so their alpha is opaque everywhere and the mask means nothing.
- * `-webkit-mask-source-type` is the older WebKit spelling of the same thing, and
- * the publisher states it too.
+ * **Alpha, not luminance.** Safari parses `mask-mode: luminance`, reports it
+ * supported and returns it from `getComputedStyle` — and does not apply it to an
+ * image mask, so the layer covered the whole card on iPhone. The masks arrive
+ * with their coverage already baked into the alpha channel for exactly this
+ * reason; see `bakeMask`, and the publisher's own `generate Safari mask`.
  *
  * **Longhands only, never the `mask` shorthand.** `mask` and `-webkit-mask` are
  * shorthands that reset `mask-mode` to its initial value, so writing the mode
  * and then either shorthand silently throws the mode away — which is exactly
- * what React's style object did, in key order, on the first attempt at this. With
- * longhands the declarations are order-independent.
+ * what React's style object did, in key order, on an earlier attempt at this.
+ * With longhands the declarations are order-independent.
  */
 export function maskedByStyle(maskUrl: string): CSSProperties {
   const reference = `url("${maskUrl}")`;
   return {
     maskImage: reference,
-    maskMode: "luminance",
+    maskMode: "alpha",
     maskSize: "100% 100%",
     maskRepeat: "no-repeat",
     WebkitMaskImage: reference,
     WebkitMaskSize: "100% 100%",
     WebkitMaskRepeat: "no-repeat",
-    WebkitMaskSourceType: "luminance",
+    WebkitMaskSourceType: "alpha",
   } as CSSProperties;
 }

@@ -172,22 +172,15 @@ describe("holoLayerStyle", () => {
 });
 
 describe("maskedByStyle", () => {
-  it("states luminance rather than leaving it to match-source", () => {
+  it("masks by alpha, never by luminance", () => {
     const style = maskedByStyle("/uploads/abc.jpg") as Record<string, string>;
 
-    // The bug this pins: with `mask-mode` unset, the initial `match-source` is
-    // resolved by WebKit as *alpha*. The published masks are JPEGs, so their
-    // alpha is opaque everywhere and the layer covered the whole card on
-    // iPhone — text box, borders and all — while Chrome looked correct.
-    expect(style.maskMode).toBe("luminance");
-  });
-
-  it("uses the older WebKit spelling of the mode as well", () => {
-    const style = maskedByStyle("/uploads/abc.jpg") as Record<string, string>;
-
-    // `-webkit-mask-mode` does not exist; `-webkit-mask-source-type` is the
-    // property Safari actually reads, and the one the publisher states.
-    expect(style.WebkitMaskSourceType).toBe("luminance");
+    // Safari parses `mask-mode: luminance`, reports it supported and returns it
+    // from `getComputedStyle` — and does not apply it to an image mask, so the
+    // layer covered the whole card on iPhone. Coverage lives in the alpha
+    // channel instead; see `bakeMask`.
+    expect(style.maskMode).toBe("alpha");
+    expect(style.WebkitMaskSourceType).toBe("alpha");
   });
 
   it("declares both the prefixed and unprefixed properties", () => {

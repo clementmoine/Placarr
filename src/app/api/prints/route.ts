@@ -47,7 +47,7 @@ async function withLocalMasks<
 >(prints: readonly T[], signal: AbortSignal): Promise<T[]> {
   return localizePrintMasks(
     prints,
-    ({ url, coverage }) => localizeMaskImage(url, { coverage, signal }),
+    ({ url, kind }) => localizeMaskImage(url, { kind, signal }),
     (items, worker) =>
       runWithConcurrency(items, MASK_DOWNLOAD_CONCURRENCY, worker, { signal }),
   );

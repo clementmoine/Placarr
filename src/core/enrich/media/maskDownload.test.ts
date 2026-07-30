@@ -2,88 +2,164 @@ import { describe, expect, it } from "vitest";
 import sharp from "sharp";
 
 import {
-  bakeCoverageMask,
+  bakeMask,
+  lumaOf,
   maskUploadPath,
+  normalMapCoverage,
 } from "@/core/enrich/media/maskDownload";
 
-/** A 2x1 image: one pixel with blue at 0, one with blue at full. */
-async function normalMapStrip(blueLeft: number, blueRight: number) {
-  return sharp(
-    Buffer.from([
-      // R    G    B                 R    G    B
-      127,
-      128,
-      blueLeft,
-      127,
-      128,
-      blueRight,
-    ]),
-    { raw: { width: 2, height: 1, channels: 3 } },
-  )
+/** A one-row strip of RGB triples, as a PNG. */
+async function strip(pixels: [number, number, number][]) {
+  return sharp(Buffer.from(pixels.flat()), {
+    raw: { width: pixels.length, height: 1, channels: 3 },
+  })
     .png()
     .toBuffer();
 }
 
-async function greyValues(png: Buffer): Promise<number[]> {
+/** The alpha channel of a baked mask — the only channel that carries meaning. */
+async function alphaOf(png: Buffer): Promise<number[]> {
+  const { data, info } = await sharp(png)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return Array.from(
+    { length: info.width },
+    (_, x) => data[x * info.channels + 3],
+  );
+}
+
+async function rgbOf(png: Buffer): Promise<number[][]> {
   const { data, info } = await sharp(png)
     .raw()
     .toBuffer({ resolveWithObject: true });
-  return Array.from({ length: info.width }, (_, x) => data[x * info.channels]);
+  return Array.from({ length: info.width }, (_, x) => [
+    data[x * info.channels],
+    data[x * info.channels + 1],
+    data[x * info.channels + 2],
+  ]);
 }
 
-describe("bakeCoverageMask", () => {
-  it("turns the blue channel into the brightness the mask is read by", async () => {
-    // This is the `feColorMatrix` that used to run per frame: B into all three.
-    const baked = await bakeCoverageMask(await normalMapStrip(0, 255));
+describe("lumaOf", () => {
+  it("is BT.601, the weighting the publisher's canvas uses", () => {
+    // 0.299R + 0.587G + 0.114B, read off their bundle rather than guessed.
+    expect(lumaOf(255, 0, 0)).toBeCloseTo(76.245, 2);
+    expect(lumaOf(0, 255, 0)).toBeCloseTo(149.685, 2);
+    expect(lumaOf(0, 0, 255)).toBeCloseTo(29.07, 2);
+    expect(lumaOf(255, 255, 255)).toBeCloseTo(255, 2);
+    expect(lumaOf(0, 0, 0)).toBe(0);
+  });
+});
 
-    expect(await greyValues(baked)).toEqual([0, 255]);
+describe("normalMapCoverage", () => {
+  it("reads the midpoint as no coverage at all", () => {
+    // The trap this encodes: taking blue alone let a flat normal map through at
+    // half strength, and the varnish washed across the whole card. Decoding to
+    // -1..1 first makes the midpoint mean nothing.
+    // Not exactly 0: 128 sits a hair above the encoded midpoint, so their
+    // formula yields ~1/255 — invisible, and matching them beats rounding.
+    expect(normalMapCoverage(127, 128, 128)).toBeLessThan(1.5);
+    expect(normalMapCoverage(127, 128, 100)).toBe(0);
   });
 
-  it("does not let a normal map's flat mid-grey through as half coverage", async () => {
-    // Read as luminance untouched, a normal map is ~mid-grey everywhere, so the
-    // coat washed over the whole card at half strength instead of landing on the
-    // engraved line work.
-    const raw = await normalMapStrip(0, 0);
-    const untouched = await greyValues(await sharp(raw).png().toBuffer());
-    const baked = await greyValues(await bakeCoverageMask(raw));
-
-    expect(untouched[0]).toBeGreaterThan(60);
-    expect(baked).toEqual([0, 0]);
+  it("gives full coverage where the map is fully blue", () => {
+    expect(normalMapCoverage(127, 128, 255)).toBeGreaterThan(250);
   });
 
-  it("keeps the gradient rather than thresholding it", async () => {
-    // Coverage is not binary; a hard cut would give the coat jagged edges.
-    const baked = await bakeCoverageMask(await normalMapStrip(64, 192));
+  it("keeps the gradient in between rather than thresholding", () => {
+    const mid = normalMapCoverage(127, 128, 192);
+    expect(mid).toBeGreaterThan(100);
+    expect(mid).toBeLessThan(160);
+  });
 
-    expect(await greyValues(baked)).toEqual([64, 192]);
+  it("never returns a negative, which would wrap round to opaque", () => {
+    expect(normalMapCoverage(0, 0, 0)).toBe(0);
+  });
+});
+
+describe("bakeMask", () => {
+  it("puts a foil mask's luminance into the alpha channel", async () => {
+    // Safari parses `mask-mode: luminance` and does not apply it, so coverage
+    // has to live in alpha — which is what the publisher's canvas does.
+    const baked = await bakeMask(
+      await strip([
+        [0, 0, 0],
+        [255, 255, 255],
+      ]),
+      "foil",
+    );
+
+    expect(await alphaOf(baked)).toEqual([0, 255]);
+  });
+
+  it("leaves a baked mask's RGB solid white", async () => {
+    // If something downstream ever reads it as luminance anyway, white means
+    // "everywhere" rather than "nowhere" — a visible bug, not an invisible one.
+    const baked = await bakeMask(await strip([[10, 20, 30]]), "foil");
+
+    expect(await rgbOf(baked)).toEqual([[255, 255, 255]]);
+  });
+
+  it("decodes a varnish mask as a normal map, not as a channel", async () => {
+    const baked = await bakeMask(
+      await strip([
+        [127, 128, 128],
+        [127, 128, 255],
+      ]),
+      "varnish",
+    );
+    const alpha = await alphaOf(baked);
+
+    expect(alpha[0]).toBeLessThan(4);
+    expect(alpha[1]).toBeGreaterThan(250);
+  });
+
+  it("bakes the two kinds differently from the same file", async () => {
+    const source = await strip([[127, 128, 128]]);
+
+    // Mid-blue is half-bright, so read as luma it is half coverage; decoded as a
+    // normal map it is none. Same bytes, opposite meaning.
+    expect((await alphaOf(await bakeMask(source, "foil")))[0]).toBeGreaterThan(
+      100,
+    );
+    expect((await alphaOf(await bakeMask(source, "varnish")))[0]).toBeLessThan(
+      4,
+    );
+  });
+
+  it("keeps the mask's dimensions, so it still lines up with the artwork", async () => {
+    const baked = await bakeMask(
+      await strip([
+        [0, 0, 0],
+        [128, 128, 128],
+        [255, 255, 255],
+      ]),
+      "foil",
+    );
+    const meta = await sharp(baked).metadata();
+
+    expect([meta.width, meta.height]).toEqual([3, 1]);
+    expect(meta.hasAlpha).toBe(true);
   });
 });
 
 describe("maskUploadPath", () => {
-  it("keeps the raw and baked forms of one file apart", () => {
+  it("keeps the two bakes of one file apart", () => {
     const url = "https://api.lorcana.ravensburger.com/images/fr/set1/17_ab.jpg";
 
-    expect(maskUploadPath(url, false)).not.toBe(maskUploadPath(url, true));
+    expect(maskUploadPath(url, "foil")).not.toBe(
+      maskUploadPath(url, "varnish"),
+    );
   });
 
-  it("writes a baked mask as PNG, whatever the source was", () => {
-    // Re-encoding a greyscale coverage gradient as JPEG would band it.
-    expect(maskUploadPath("https://x.test/a.jpg", true)).toMatch(/\.png$/);
-  });
-
-  it("keeps the source extension for a mask it does not touch", () => {
-    expect(maskUploadPath("https://x.test/a.jpg", false)).toMatch(/\.jpg$/);
-    expect(maskUploadPath("https://x.test/a.png", false)).toMatch(/\.png$/);
-  });
-
-  it("falls back to jpg rather than trusting an odd path", () => {
-    expect(maskUploadPath("https://x.test/mask", false)).toMatch(/\.jpg$/);
-    expect(maskUploadPath("https://x.test/a.svg", false)).toMatch(/\.jpg$/);
+  it("always writes PNG, since the output carries alpha", () => {
+    expect(maskUploadPath("https://x.test/a.jpg", "foil")).toMatch(/\.png$/);
+    expect(maskUploadPath("https://x.test/a.jpg", "varnish")).toMatch(/\.png$/);
   });
 
   it("is stable, so a second visit finds the file already there", () => {
-    expect(maskUploadPath("https://x.test/a.jpg", true)).toBe(
-      maskUploadPath("https://x.test/a.jpg", true),
+    expect(maskUploadPath("https://x.test/a.jpg", "foil")).toBe(
+      maskUploadPath("https://x.test/a.jpg", "foil"),
     );
   });
 });

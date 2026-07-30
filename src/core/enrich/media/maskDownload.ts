@@ -5,28 +5,34 @@ import path from "path";
 import sharp from "sharp";
 
 /**
- * Bringing a foil mask onto disk, in the form the CSS can use directly.
+ * Turning a published mask into something WebKit will actually wear.
  *
- * The masks used to be worn through an SVG `<mask>` element, referenced from CSS
- * as `mask-image: url(#id)`. That indirection existed for two reasons and needed
- * neither:
+ * `mask-mode: luminance` is parsed by Safari, reported as supported by
+ * `CSS.supports`, and returned by `getComputedStyle` — and not applied to an
+ * image mask. The mask means nothing, so the layer covers the entire card:
+ * artwork, text box, borders.
  *
- * 1. *"A CSS `mask-image` would read the JPEG's alpha, which is opaque."* True
- *    only by default — `mask-mode: luminance` is exactly the property that says
- *    to read brightness instead. The SVG was solving a problem CSS already had a
- *    keyword for.
- * 2. *The varnish masks are normal maps,* where only the blue channel carries
- *    coverage, so an `feColorMatrix` pulled blue into every channel. That is one
- *    channel extraction on a static file — it belongs at download, once, not in
- *    the compositor on every frame.
+ * The publisher does not rely on it either. Their viewer converts each mask,
+ * client-side on a canvas, into a PNG whose **alpha** carries the coverage and
+ * whose RGB is solid white, then masks with that — the default alpha path, which
+ * every engine has supported for years. Their own function is named
+ * `generate Safari mask`.
  *
- * Removing the indirection matters because Safari does not apply an SVG `<mask>`
- * referenced from CSS to an HTML element. Every layer covered the whole card on
- * iPhone: artwork, text box, borders. A plain image mask is a path every engine
- * has supported for years.
+ * We do the same conversion, once, at download, with the formulas read off their
+ * bundle rather than guessed:
+ *
+ * - **Foil:** `alpha = 0.299R + 0.587G + 0.114B` (BT.601 luma), RGB white.
+ * - **Varnish:** the file is a *normal map*, so each channel is decoded to
+ *   `-1..1` and summed: `alpha = max(0, x+y+z) * 255`, RGB white. Note this is
+ *   not a channel extraction — an earlier attempt here took blue alone, which
+ *   let mid-grey through at half coverage and washed the coat across the card.
+ *   Their decode clamps everything below the midpoint to nothing.
  */
 
-/** Extensions we are willing to write, keyed off the source URL. */
+/** Which conversion a mask needs, named for what the file *is*. */
+export type MaskKind = "foil" | "varnish";
+
+/** Extensions we are willing to read, keyed off the source URL. */
 const MASK_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 
 function extensionFor(url: string): string {
@@ -35,53 +41,98 @@ function extensionFor(url: string): string {
 }
 
 /**
- * Where a mask lands. The kind is part of the hash: the same normal map serves
- * as both a raw file and a baked coverage mask, and they must not collide.
+ * Where a mask lands. The kind is part of the hash: the same file can serve as
+ * both a foil mask and a varnish one, and the two bakes must not collide.
+ *
+ * Always PNG — the output carries an alpha channel, which JPEG has no room for.
  */
-export function maskUploadPath(url: string, coverage: boolean): string {
-  const hash = crypto
-    .createHash("md5")
-    .update(coverage ? `${url}#coverage` : url)
-    .digest("hex");
-  // A baked mask is always PNG: the bake is greyscale, and re-encoding it as
-  // JPEG would band the very gradient the coverage depends on.
-  return `/uploads/${hash}${coverage ? ".png" : extensionFor(url)}`;
+export function maskUploadPath(url: string, kind: MaskKind): string {
+  const hash = crypto.createHash("md5").update(`${url}#${kind}`).digest("hex");
+  return `/uploads/${hash}.png`;
+}
+
+/** @internal exposed so the extension policy stays testable. */
+export function sourceExtension(url: string): string {
+  return extensionFor(url);
+}
+
+/** BT.601 luma, the weighting the publisher's canvas uses. */
+export function lumaOf(r: number, g: number, b: number): number {
+  return r * 0.299 + g * 0.587 + b * 0.114;
 }
 
 /**
- * Pull the blue channel into a greyscale image.
+ * A normal map's coverage: decode each channel to `-1..1`, sum, clamp at zero.
  *
- * The publisher's varnish masks are normal maps: red and green sit pinned near
- * 127/128 and only blue says where anything is stamped. Read as luminance
- * as-is, a normal map is a flat mid-grey — the coat would cover the whole card
- * at half strength. This is the `feColorMatrix` that used to run per frame,
- * done once.
+ * Red and green sit pinned near 127/128 on these files, so they contribute
+ * roughly nothing and blue decides — but the decode is what makes the midpoint
+ * mean *no coverage* instead of half of it.
  */
-export async function bakeCoverageMask(input: Buffer): Promise<Buffer> {
-  // No `toColourspace("b-w")`: libvips applies the conversion before the
-  // extraction, leaving a single-band image that `extractChannel` then cannot
-  // take a third channel from — "Cannot extract channel 2 from image with
-  // channels 0-0". Extraction already yields exactly one greyscale band.
-  return sharp(input).extractChannel("blue").png().toBuffer();
+export function normalMapCoverage(r: number, g: number, b: number): number {
+  const x = (r / 255) * 2 - 1;
+  const y = (g / 255) * 2 - 1;
+  const z = (b / 255) * 2 - 1;
+  return Math.max(0, x + y + z) * 255;
+}
+
+/**
+ * Bake coverage into the alpha channel, leaving RGB solid white.
+ *
+ * White because the RGB of a mask is irrelevant once alpha carries the coverage,
+ * and white is what the publisher writes — a mask that is accidentally read as
+ * luminance somewhere then still means "everywhere" rather than "nowhere".
+ */
+export async function bakeMask(input: Buffer, kind: MaskKind): Promise<Buffer> {
+  const { data, info } = await sharp(input)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const pixels = info.width * info.height;
+  const alpha = Buffer.allocUnsafe(pixels);
+  const coverage = kind === "varnish" ? normalMapCoverage : lumaOf;
+
+  for (let index = 0; index < pixels; index += 1) {
+    const at = index * info.channels;
+    alpha[index] = Math.round(
+      Math.min(
+        255,
+        Math.max(0, coverage(data[at], data[at + 1], data[at + 2])),
+      ),
+    );
+  }
+
+  return sharp({
+    create: {
+      width: info.width,
+      height: info.height,
+      channels: 3,
+      background: { r: 255, g: 255, b: 255 },
+    },
+  })
+    .joinChannel(alpha, {
+      raw: { width: info.width, height: info.height, channels: 1 },
+    })
+    .png()
+    .toBuffer();
 }
 
 /**
  * The local copy of a mask, downloading and baking it if this is the first time.
  *
  * Returns `null` rather than throwing: a mask that cannot be fetched leaves the
- * caller free to keep pointing at the publisher, which is better than no mask
- * at all — no mask means the layer covers the entire card.
+ * card plain, which is the honest fallback — an unmasked layer would cover the
+ * whole card.
  */
 export async function localizeMaskImage(
   url: string,
-  options: { coverage?: boolean; signal?: AbortSignal } = {},
+  options: { kind: MaskKind; signal?: AbortSignal },
 ): Promise<string | null> {
   if (!url.startsWith("http")) {
     return url.startsWith("/uploads/") ? url : null;
   }
 
-  const coverage = options.coverage === true;
-  const relativePath = maskUploadPath(url, coverage);
+  const relativePath = maskUploadPath(url, options.kind);
   const targetDir = path.join(process.cwd(), "public", "uploads");
   const targetPath = path.join(targetDir, path.basename(relativePath));
 
@@ -91,10 +142,10 @@ export async function localizeMaskImage(
     const response = await fetch(url, { signal: options.signal });
     if (!response.ok) return null;
     const downloaded = Buffer.from(await response.arrayBuffer());
-    const bytes = coverage ? await bakeCoverageMask(downloaded) : downloaded;
+    const baked = await bakeMask(downloaded, options.kind);
 
     await fs.promises.mkdir(targetDir, { recursive: true });
-    await fs.promises.writeFile(targetPath, bytes);
+    await fs.promises.writeFile(targetPath, baked);
     return relativePath;
   } catch {
     return null;

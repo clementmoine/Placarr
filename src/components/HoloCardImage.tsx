@@ -211,7 +211,7 @@ export function HoloCardImage({
          * foil, now that they all get the card treatment.
          */
         className={cn(
-          "relative h-full w-full overflow-hidden rounded-[inherit]",
+          "relative h-full w-full select-none overflow-hidden rounded-[inherit]",
           className,
         )}
       >
@@ -219,6 +219,7 @@ export function HoloCardImage({
         <img
           src={imageUrl}
           alt={alt}
+          draggable={false}
           className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
         />
         {children}
@@ -258,7 +259,10 @@ export function HoloCardImage({
       }
       className={cn(
         // `rounded-[inherit]` only chains if every level passes the radius down.
-        "relative h-full w-full rounded-[inherit]",
+        // `select-none` because a card is handled, not read: a drag across it
+        // paints a selection over the artwork, and that flat blue wash is
+        // exactly the sheen this component exists to show.
+        "relative h-full w-full select-none rounded-[inherit]",
         // No perspective when nothing leans: it would only cost a layer.
         tilt && "[perspective:900px]",
         // The drift animates this element's own custom properties, which every
@@ -354,6 +358,12 @@ export function HoloCardImage({
         <img
           src={imageUrl}
           alt={alt}
+          /**
+           * Dragging the artwork hands the pointer to the browser's own drag,
+           * which stops `pointermove` — the card freezes mid-lean with its
+           * light stuck wherever the drag began.
+           */
+          draggable={false}
           className={cn("h-full w-full", objectFitClass(fit))}
         />
 

@@ -144,7 +144,10 @@ export function FlippableCard({
       className={cn(
         // `rounded-[inherit]` only chains if every level passes the radius down,
         // and this component sits between the card and whatever framed it.
-        "relative h-full w-full rounded-[inherit] outline-none [perspective:1400px]",
+        // `select-none` covers both faces: a click that lands slightly askew
+        // reads as a drag, and a drag over the card selects it instead of
+        // turning it — the selection wash then hides the very effect.
+        "relative h-full w-full select-none rounded-[inherit] outline-none [perspective:1400px]",
         canFlip && "cursor-pointer",
         className,
       )}
@@ -170,6 +173,7 @@ export function FlippableCard({
             <img
               src={backUrl}
               alt={backAlt}
+              draggable={false}
               className="h-full w-full rounded-[inherit] object-contain"
             />
           </div>

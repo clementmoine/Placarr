@@ -1,0 +1,267 @@
+import type { HoloShader, HoloShaderId } from "@/core/render/holoShaders";
+
+/**
+ * The same looks, rebuilt on the mobile app's own textures.
+ *
+ * **These are not the app's shaders.** Its effects are Unity Shader Graphs
+ * compiled to GPU code; the authoring graph is not shipped and could not be
+ * ported anyway — see `docs/tcg_support.md` §9. What *is* recoverable, and what
+ * this file uses, is the app's texture set.
+ *
+ * That set is the interesting difference. The web viewer shares a handful of
+ * generic textures across every finish; the app gives each one its own motif
+ * **and its own colour ramp** — eight distinct `RainbowGradient*`, plus a
+ * dedicated `InkwashMask` and three varnish surfaces. Two cards can therefore
+ * differ in hue in the app while our CSS draws them through the same shared
+ * `color.jpg`, which is most of why its rendering reads richer at equal finish.
+ *
+ * The composition here is ours: the blend structure of the transcribed web
+ * recipe (which is proven against the publisher's stylesheet) with the app's
+ * per-effect textures swapped in. Where a finish shares a shader graph in the
+ * app, its ramp is shared here too — `magma` and `calendarWave` both run on
+ * `CardFoilLore`, so both take the Lore ramp.
+ *
+ * Kept beside the web set rather than replacing it, so the parity test keeps
+ * meaning something while these are judged by eye.
+ */
+
+/** Where the extracted textures live, apart from the web viewer's own. */
+const A = "/foil/app";
+
+/**
+ * `freeForm` splits in two here.
+ *
+ * The web viewer draws `FreeForm1` and `FreeForm2` with one grouped selector,
+ * so a single look was faithful to it. The app ships two distinct patterns, so
+ * the split only exists on this side.
+ */
+export type AppHoloShaderId = HoloShaderId | "freeForm2";
+
+export const APP_HOLO_SHADER_IDS = [
+  "silver",
+  "satin",
+  "lore",
+  "lava",
+  "magma",
+  "glitter",
+  "verticalWave",
+  "seaWave",
+  "rainbowPillars",
+  "freeForm",
+  "freeForm2",
+  "tempest",
+  "calendarWave",
+  "loreShine",
+  "satinShine",
+  "hotFoil",
+  "chromeRainbowHotFoil",
+] as const satisfies readonly AppHoloShaderId[];
+
+const APP_SHADERS: Readonly<Record<AppHoloShaderId, HoloShader>> = {
+  /** Achromatic by nature, so its own shine texture carries it, not a ramp. */
+  silver: {
+    id: "silver",
+    backgroundImage: `url(${A}/silvershine.png), url(${A}/inkwashmask.png)`,
+    backgroundRepeat: "repeat-x, no-repeat",
+    backgroundSize: "300% 100%, cover",
+    backgroundPosition: "var(--colorX) center, center",
+    backgroundBlendMode: "exclusion",
+    mixBlendMode: "hard-light",
+    opacity: 0.5,
+    filter: "brightness(1.6) saturate(0.2) invert()",
+  },
+
+  satin: {
+    id: "satin",
+    backgroundImage: `url(${A}/rainbowgradientsatinwide.png), url(${A}/satinfoilnoise.png)`,
+    backgroundRepeat: "repeat, repeat",
+    backgroundSize: "175% 100%, cover",
+    backgroundPosition:
+      "calc(var(--colorX) * 1 + var(--colorY)) center, center",
+    backgroundBlendMode: "normal, multiply",
+    mixBlendMode: "exclusion",
+    filter: "brightness(0.5)",
+    overlay: "satinShine",
+  },
+
+  lore: {
+    id: "lore",
+    backgroundImage: `url(${A}/rainbowgradientlore.png), url(${A}/lorepattern.png)`,
+    backgroundRepeat: "repeat, no-repeat",
+    backgroundSize: "250% 100%, cover",
+    backgroundPosition: "calc(var(--combined) / 2) center, center",
+    backgroundBlendMode: "multiply, normal",
+    mixBlendMode: "exclusion",
+    filter: "brightness(0.5)",
+    overlay: "loreShine",
+  },
+
+  /** Runs on the app's default holo graph, so it takes the generic wash. */
+  lava: {
+    id: "lava",
+    backgroundImage: `url(${A}/inkwashmask.png), url(${A}/rainbowgradientinkwash.png)`,
+    backgroundRepeat: "no-repeat, repeat",
+    backgroundSize: "cover, 300% 300%",
+    backgroundPosition: "center, calc(var(--combined) / 1.75) center",
+    backgroundBlendMode: "color-burn, soft-light",
+    mixBlendMode: "color-dodge",
+    filter: "brightness(0.85) contrast(3) saturate(1.5)",
+  },
+
+  /** `CardMagmaFoil` runs on `CardFoilLore`, hence the Lore ramp. */
+  magma: {
+    id: "magma",
+    backgroundImage: `url(${A}/rainbowgradientlore.png), url(${A}/magmatexture.png), url(${A}/magmatexture.png)`,
+    backgroundRepeat: "no-repeat, repeat, repeat",
+    backgroundSize: "150% 100%, 125% 125%, 125% 125%",
+    backgroundPosition:
+      "calc(var(--combined) / 1.5) center, calc(var(--colorX) / 8) calc(var(--colorY) / 10), calc(-1 * var(--colorX) / 10) calc(-1 * var(--colorY) / 8)",
+    backgroundBlendMode: "color, difference",
+    mixBlendMode: "hard-light",
+    opacity: 0.625,
+  },
+
+  glitter: {
+    id: "glitter",
+    backgroundImage: `url(${A}/glitterpattern.png), url(${A}/rainbowgradienttempestglitter.png), url(${A}/glitterpattern.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "12.5% 12.5%, 350% 125%, 25% 25%",
+    backgroundPosition: "center, var(--combined) var(--combined), center",
+    backgroundBlendMode: "color-burn, darken, normal",
+    mixBlendMode: "exclusion",
+    opacity: 0.4,
+    filter: "brightness(4) invert()",
+  },
+
+  verticalWave: {
+    id: "verticalWave",
+    backgroundImage: `url(${A}/vertwavetexture.png), url(${A}/rainbowgradientlore.png), url(${A}/inkwashmask.png)`,
+    backgroundRepeat: "no-repeat, repeat, no-repeat",
+    backgroundSize: "cover, 600% 100%, cover",
+    backgroundPosition: "center, calc(var(--combined) / 3) center, center",
+    backgroundBlendMode: "color-burn, multiply, normal",
+    mixBlendMode: "hard-light",
+    filter: "brightness(0.75) contrast(0.5)",
+  },
+
+  seaWave: {
+    id: "seaWave",
+    backgroundImage: `url(${A}/rainbowgradientseawave.png), url(${A}/seawavepattern.png), url(${A}/inkwashmask.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "125% 125%, 100% 50%, 50% 50%",
+    backgroundPosition: "calc(var(--combined) * 4) center, center, center",
+    backgroundBlendMode: "color-burn, multiply, normal",
+    mixBlendMode: "hard-light",
+    filter: "brightness(0.5) contrast(0.75)",
+  },
+
+  rainbowPillars: {
+    id: "rainbowPillars",
+    backgroundImage: `url(${A}/rainbowpillarspattern.png), url(${A}/rainbowpillarspattern.png), url(${A}/rainbowgradientlore.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "150% 150%, 140% 150%, 90% 90%",
+    backgroundPosition:
+      "calc(var(--combined) / 2) bottom, calc(var(--combined) / 4) top, calc(var(--combined) / 2) center",
+    backgroundBlendMode: "color-dodge, darken, normal",
+    mixBlendMode: "hard-light",
+    opacity: 0.25,
+    filter: "brightness(0.75) contrast(5) saturate(4)",
+  },
+
+  freeForm: {
+    id: "freeForm",
+    backgroundImage: `url(${A}/rainbowgradientfreeform.png), url(${A}/freeform1pattern.png), url(${A}/freeform1pattern.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "400%, 80% 300%, 80% 200%",
+    backgroundPosition:
+      "calc(var(--colorX) / 1.75) calc(var(--colorY) / 1.75), calc(var(--colorX) / 4) calc(-1 * var(--colorY) / 8), calc(-1 * (var(--colorX)) / 1.5) calc(-1 * var(--colorY) / 10)",
+    backgroundBlendMode: "color, multiply, normal",
+    mixBlendMode: "multiply",
+    opacity: 0.5,
+    filter: "brightness(0.6) contrast(5) saturate(2)",
+  },
+
+  /** The half the web viewer never distinguished. */
+  freeForm2: {
+    id: "freeForm" as HoloShaderId,
+    backgroundImage: `url(${A}/rainbowgradientfreeform.png), url(${A}/freeform2pattern.png), url(${A}/freeform2pattern.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "400%, 80% 300%, 80% 200%",
+    backgroundPosition:
+      "calc(var(--colorX) / 1.75) calc(var(--colorY) / 1.75), calc(var(--colorX) / 4) calc(-1 * var(--colorY) / 8), calc(-1 * (var(--colorX)) / 1.5) calc(-1 * var(--colorY) / 10)",
+    backgroundBlendMode: "color, multiply, normal",
+    mixBlendMode: "multiply",
+    opacity: 0.5,
+    filter: "brightness(0.6) contrast(5) saturate(2)",
+  },
+
+  tempest: {
+    id: "tempest",
+    backgroundImage: `url(${A}/tempestpatterns.png), url(${A}/rainbowgradienttempestglitter.png), url(${A}/inkwashmask.png)`,
+    backgroundRepeat: "no-repeat, repeat, no-repeat",
+    backgroundSize: "cover, 700% 250%, cover",
+    backgroundPosition: "center, calc(var(--combined) / 4) center, center",
+    backgroundBlendMode: "color-burn, screen, normal",
+    mixBlendMode: "color-dodge",
+    filter: "brightness(0.8) contrast(2)",
+  },
+
+  /** Also on `CardFoilLore`, so also the Lore ramp. */
+  calendarWave: {
+    id: "calendarWave",
+    backgroundImage: `url(${A}/rainbowgradientlore.png), url(${A}/calendarwavepattern.png), url(${A}/inkwashmask.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "300% 100%, cover, 50% 50%",
+    backgroundPosition: "calc(var(--combined) * 1.5) center, center, center",
+    backgroundBlendMode: "color-burn, exclusion, normal",
+    mixBlendMode: "multiply",
+    opacity: 0.4,
+    filter: "contrast(2) saturate(1.5)",
+  },
+
+  loreShine: {
+    id: "loreShine",
+    backgroundImage: `url(${A}/rainbowgradientlore.png)`,
+    backgroundRepeat: "repeat",
+    backgroundSize: "200% 100%",
+    backgroundPosition: "calc(var(--combined) / 2) center",
+    mixBlendMode: "screen",
+    opacity: 0.5,
+  },
+
+  satinShine: {
+    id: "satinShine",
+    backgroundImage: `url(${A}/rainbowgradientsatin.png)`,
+    backgroundRepeat: "repeat",
+    backgroundSize: "200% 100%",
+    backgroundPosition: "calc(var(--colorX) * 1 + var(--colorY)) center",
+    mixBlendMode: "screen",
+    opacity: 0.5,
+  },
+
+  /** The stamped coat gets the surfaces the web viewer never had. */
+  hotFoil: {
+    id: "hotFoil",
+    backgroundImage: `linear-gradient(90deg, #333 20%, var(--topcolor) 50%, #333 80%), url(${A}/varnishshine.png), url(${A}/varnishsurface.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "300% 300%, 200% 100%, 50% 50%",
+    backgroundPosition: "var(--colorX) center, var(--colorX) center, center",
+    backgroundBlendMode: "screen, overlay",
+    mixBlendMode: "color-dodge",
+  },
+
+  chromeRainbowHotFoil: {
+    id: "chromeRainbowHotFoil",
+    backgroundImage: `linear-gradient(90deg, #333 20%, var(--topcolor) 50%, #333 80%), url(${A}/rainbowgradientgold.png), url(${A}/varnishshinebroad.png)`,
+    backgroundRepeat: "repeat, repeat, repeat",
+    backgroundSize: "300% 300%, 200% 100%, 75% 75%",
+    backgroundPosition:
+      "var(--colorX) center, var(--colorX) var(--colorY), var(--colorX) var(--colorY)",
+    backgroundBlendMode: "darken, screen",
+    mixBlendMode: "color",
+  },
+};
+
+export function appHoloShader(id: AppHoloShaderId): HoloShader {
+  return APP_SHADERS[id];
+}

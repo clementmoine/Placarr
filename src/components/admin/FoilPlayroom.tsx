@@ -8,65 +8,95 @@ import {
   holoShader,
   varnishShader,
   NEUTRAL_VARNISH_COLOR,
-  type HoloShaderId,
+  type HoloShader,
   type HoloTuning,
 } from "@/core/render/holoShaders";
+import {
+  APP_HOLO_SHADER_IDS,
+  appHoloShader,
+} from "@/core/render/holoShadersApp";
+import { cn } from "@/lib/shared/utils";
 
 /**
- * A bench for every look the app can draw.
+ * A bench for every look the app can draw, from either texture set.
  *
  * It exists because the looks were only ever visible on whichever cards the
  * collection happened to hold: two of the thirteen finishes were drawn as
- * silver for months precisely because nothing showed them side by side. A grid
- * that renders all of them on one artwork makes an unwired look obvious.
+ * silver for months precisely because nothing showed them side by side.
  *
- * The axes are the publisher's own, taken from their mobile app's material
- * parameters — the seven families a CSS blend stack can carry. The ones it
- * cannot (`_Parallax`, `_FoilDisplacementStrength`, `_VarnishBevelStrength`,
+ * Two sources, deliberately side by side rather than one replacing the other:
+ *
+ * - **Web** — transcribed from the publisher's stylesheet and pinned to it by
+ *   `holoShaderParity.test.ts`. This is what ships today.
+ * - **App** — the same blend structure over the mobile app's per-effect
+ *   textures, which give each finish its own colour ramp where the web viewer
+ *   shares one. Judged by eye here until it is worth migrating to.
+ *
+ * The axes are the app's own material parameters, the families a CSS blend
+ * stack can carry. The ones it cannot (`_Parallax`,
+ * `_FoilDisplacementStrength`, `_VarnishBevelStrength`,
  * `_VarnishOutlineStrength`) are surface lighting against a normal, and are
- * listed as absent rather than faked: see `docs/tcg_support.md` §9.
+ * named as absent rather than faked: see `docs/tcg_support.md` §9.
  */
 
-/** Which role a look plays, so the grid reads as three groups and not sixteen. */
-const ROLES: Readonly<Record<HoloShaderId, "finish" | "overlay" | "varnish">> =
-  {
-    silver: "finish",
-    satin: "finish",
-    lore: "finish",
-    lava: "finish",
-    magma: "finish",
-    glitter: "finish",
-    verticalWave: "finish",
-    seaWave: "finish",
-    rainbowPillars: "finish",
-    freeForm: "finish",
-    tempest: "finish",
-    calendarWave: "finish",
-    loreShine: "overlay",
-    satinShine: "overlay",
-    hotFoil: "varnish",
-    chromeRainbowHotFoil: "varnish",
-  };
+type Role = "finish" | "overlay" | "varnish";
 
-const GROUPS = [
+const ROLE_OF: Readonly<Record<string, Role>> = {
+  silver: "finish",
+  satin: "finish",
+  lore: "finish",
+  lava: "finish",
+  magma: "finish",
+  glitter: "finish",
+  verticalWave: "finish",
+  seaWave: "finish",
+  rainbowPillars: "finish",
+  freeForm: "finish",
+  freeForm2: "finish",
+  tempest: "finish",
+  calendarWave: "finish",
+  loreShine: "overlay",
+  satinShine: "overlay",
+  hotFoil: "varnish",
+  chromeRainbowHotFoil: "varnish",
+};
+
+const GROUPS: readonly { role: Role; title: string; hint: string }[] = [
   {
-    role: "finish" as const,
+    role: "finish",
     title: "Finitions",
     hint: "Ce que porte la carte. Une par exemplaire, jamais deux.",
   },
   {
-    role: "overlay" as const,
+    role: "overlay",
     title: "Secondes couches",
     hint: "Dessinées au-dessus de leur finition, à travers le même masque. Jamais seules.",
   },
   {
-    role: "varnish" as const,
+    role: "varnish",
     title: "Vernis",
     hint: "Le coat estampé, sur son propre masque et sa propre couleur.",
   },
 ];
 
-/** The tuning axes, each an equivalent of one of the app's parameters. */
+const SOURCES = [
+  {
+    key: "web" as const,
+    label: "Effets Web",
+    hint: "Transcrits de la feuille de style de l'éditeur, et vérifiés contre elle. Ce qui tourne aujourd'hui.",
+    ids: HOLO_SHADER_IDS as readonly string[],
+    shaderOf: (id: string) => holoShader(id),
+  },
+  {
+    key: "app" as const,
+    label: "Effets App",
+    hint: "Notre composition sur les textures de l'app mobile : une rampe de couleur par effet, là où le web en partage une seule.",
+    ids: APP_HOLO_SHADER_IDS as readonly string[],
+    shaderOf: (id: string) =>
+      appHoloShader(id as (typeof APP_HOLO_SHADER_IDS)[number]),
+  },
+];
+
 const AXES = [
   {
     key: "rainbow" as const,
@@ -111,7 +141,6 @@ const NOT_PORTABLE = [
   "_FoilDisplacementStrength",
   "_VarnishBevelStrength",
   "_VarnishOutlineStrength",
-  "_VarnishDistortionStrength",
 ];
 
 export type FoilPlayroomProps = {
@@ -128,15 +157,40 @@ export function FoilPlayroom({
   maskUrl,
   varnishMaskUrl,
 }: FoilPlayroomProps) {
+  const [sourceKey, setSourceKey] = useState<"web" | "app">("web");
   const [tuning, setTuning] = useState<Required<HoloTuning>>(UNTUNED);
   const [tilt, setTilt] = useState(false);
+
+  const source = SOURCES.find((entry) => entry.key === sourceKey) ?? SOURCES[0];
   const isUntuned = useMemo(
     () => AXES.every((axis) => tuning[axis.key] === 1),
     [tuning],
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-2">
+        {SOURCES.map((entry) => (
+          <button
+            key={entry.key}
+            type="button"
+            onClick={() => setSourceKey(entry.key)}
+            className={cn(
+              "rounded-md border px-3 py-1.5 text-sm transition-colors",
+              entry.key === sourceKey
+                ? "border-primary bg-primary/10 font-semibold"
+                : "border-border hover:bg-accent",
+            )}
+          >
+            {entry.label}{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              ({entry.ids.length})
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="-mt-3 text-xs text-muted-foreground">{source.hint}</p>
+
       <section className="rounded-xl border border-border/60 p-4">
         <div className="mb-3 flex items-baseline justify-between gap-4">
           <h3 className="text-sm font-semibold">Axes</h3>
@@ -190,11 +244,6 @@ export function FoilPlayroom({
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground">
-          Sans réglage, chaque look est la recette transcrite au caractère près
-          — celle que <code>holoShaderParity.test.ts</code> compare à la feuille
-          de style de l&apos;éditeur.
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
           Absents faute de médium, pas faute de données :{" "}
           {NOT_PORTABLE.map((name) => (
             <code key={name} className="mr-1.5 text-[10px]">
@@ -207,7 +256,8 @@ export function FoilPlayroom({
       </section>
 
       {GROUPS.map((group) => {
-        const ids = HOLO_SHADER_IDS.filter((id) => ROLES[id] === group.role);
+        const ids = source.ids.filter((id) => ROLE_OF[id] === group.role);
+        if (ids.length === 0) return null;
         return (
           <section key={group.role} className="flex flex-col gap-3">
             <div>
@@ -223,8 +273,12 @@ export function FoilPlayroom({
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
               {ids.map((id) => {
                 const isVarnish = group.role === "varnish";
+                const look: HoloShader = source.shaderOf(id);
                 return (
-                  <figure key={id} className="flex flex-col gap-1.5">
+                  <figure
+                    key={`${source.key}-${id}`}
+                    className="flex flex-col gap-1.5"
+                  >
                     <div className="aspect-[5/7] w-full overflow-hidden rounded-[4%/3%]">
                       <HoloCardImage
                         imageUrl={imageUrl}
@@ -236,10 +290,8 @@ export function FoilPlayroom({
                         varnishMaskUrl={
                           isVarnish ? (varnishMaskUrl ?? maskUrl) : null
                         }
-                        shader={isVarnish ? holoShader(null) : holoShader(id)}
-                        varnishShader={
-                          isVarnish ? varnishShader(id) : varnishShader(null)
-                        }
+                        shader={isVarnish ? holoShader(null) : look}
+                        varnishShader={isVarnish ? look : varnishShader(null)}
                         varnishColor={NEUTRAL_VARNISH_COLOR}
                         tuning={tuning}
                         tilt={tilt}

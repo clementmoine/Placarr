@@ -81,6 +81,10 @@ describe("toPrintCandidate varnish", () => {
 });
 
 describe("toPrintCandidate finishes", () => {
+  it("tags every print with the Lorcana effect pack", () => {
+    expect(toPrintCandidate(card({})).effectPack).toBe("lorcana");
+  });
+
   it("gives the Enchanted finishes their own look", () => {
     // An Enchanted print carries no `Silver` at all — its only finish is one of
     // these — which is exactly why it must not shimmer like a common card.

@@ -33,11 +33,17 @@ export type OrientationSnapshot = {
   gravity: GravityVector;
   /** How the phone was held when the first reading arrived. */
   baseline: GravityVector;
+  /**
+   * Compass heading in degrees (`DeviceOrientationEvent.alpha`), or `null`
+   * when the sensor does not report one. Fed to Unity as `_DeviceRotationDegrees`.
+   */
+  alpha: number | null;
 };
 
 let snapshot: OrientationSnapshot | null = null;
 let smoothed: GravityVector | null = null;
 let baseline: GravityVector | null = null;
+let alpha: number | null = null;
 let granted = false;
 const listeners = new Set<() => void>();
 let detach: (() => void) | null = null;
@@ -52,9 +58,16 @@ function handleReading(reading: OrientationReading) {
 
   smoothed = smoothGravity(smoothed, gravity, SMOOTHING);
   baseline ??= smoothed;
+  if (reading.alpha != null && Number.isFinite(reading.alpha)) {
+    // Same light smoothing as gravity — raw compass jumps make varnish bevels twitch.
+    alpha =
+      alpha == null
+        ? reading.alpha
+        : alpha + (reading.alpha - alpha) * SMOOTHING;
+  }
   // A fresh object per reading, the same object between them: that identity is
   // what `useSyncExternalStore` uses to decide whether anything happened.
-  snapshot = { gravity: smoothed, baseline };
+  snapshot = { gravity: smoothed, baseline, alpha };
   announce();
 }
 
@@ -122,6 +135,7 @@ export function resetDeviceOrientationStore(): void {
   snapshot = null;
   smoothed = null;
   baseline = null;
+  alpha = null;
   granted = false;
   listeners.clear();
   detach?.();

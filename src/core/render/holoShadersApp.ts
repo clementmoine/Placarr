@@ -7,10 +7,11 @@ import type {
 /**
  * The same looks, rebuilt on the mobile app's own textures.
  *
- * **These are not the app's shaders.** Its effects are Unity Shader Graphs
- * compiled to GPU code; the authoring graph is not shipped and could not be
- * ported anyway — see `docs/tcg_support.md` §9. What *is* recoverable, and what
- * this file uses, is the app's texture set.
+ * **These are not the app's shaders.** Those exist in this codebase now — the
+ * GLES3 build ships them as GLSL text and `core/render/foil` runs them
+ * verbatim on WebGL2, see `docs/tcg_support.md` §9. This file predates that
+ * discovery and stays for what it is: the app's texture set drawn through CSS
+ * blend modes, for wherever a canvas is not an option.
  *
  * That set is the interesting difference. The web viewer shares a handful of
  * generic textures across every finish; the app gives each one its own motif

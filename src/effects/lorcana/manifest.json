@@ -1,0 +1,2485 @@
+{
+  "CardFoilCalendarWave": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.55,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.55,
+        0.3,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        0.35,
+        0.25,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.0,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 5.0,
+      "_FoilMidToneStrength": 0.4,
+      "_FoilMorphSpeed": 1.44,
+      "_Inkwash_Strength": 0.65,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_NONE.frag",
+    "fragmentTime": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_NONE___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_NONE"
+    ],
+    "textures": {
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "calendarwavepattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 256
+        },
+        "file": "calendarwavepattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilGlitter": {
+    "colors": {
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_GlitterSize": 1.1,
+      "_Inkwash_Strength": 0.5,
+      "_RainbowToMotifWeight": 0.175,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilGlitter.frag",
+    "fragmentTime": "CardFoilGlitter___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilGlitter",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_19825a75a1e1475f9aba106e3e93b681_Texture_1_Texture2D": {
+        "aniso": 8,
+        "astc": {
+          "file": "glitterpattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "glitterpattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_5d5bc58c79de46d28a401b0262a4cdf3_Texture_1_Texture2D": {
+        "aniso": 8,
+        "astc": {
+          "file": "glitterpattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "glitterpattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ad6aaa0cbede4a7a9e59e8d8b6cf82c3_Texture_1_Texture2D": {
+        "aniso": 1,
+        "file": "rainbowgradienttempestglitter.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilLava": {
+    "colors": {
+      "_Offset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_Tiling": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_Inkwash_Strength": 0.55,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "DefaultHoloFoil.frag",
+    "fragmentTime": "DefaultHoloFoil___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/DefaultHoloFoil",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientinkwash.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientinkwash.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Texture": {
+        "aniso": 1,
+        "astc": {
+          "file": "inkwashmask.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "inkwashmask.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilSatin": {
+    "colors": {
+      "_FoilDisplacementTiling": [
+        3.0,
+        2.0,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilDisplacementStrength": 0.3,
+      "_RainbowStrength": 0.882,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilSatin___VARNISHTYPE_NONE.frag",
+    "fragmentTime": "CardFoilSatin___VARNISHTYPE_NONE___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilSatin",
+    "keywords": [
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_NONE"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_RainbowGradientTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientsatin.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 16,
+          "width": 512
+        },
+        "file": "rainbowgradientsatin.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ecaa018932e843b68c4797464457ac07_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_f44e690f3f3541a884ac95936014fc30_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "satinfoilnoise.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "satinfoilnoise.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Texture2DAsset_450a32acbdb1461b842432479265bb3d_Out_0_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilSatinHighGloss": {
+    "colors": {
+      "_FoilDisplacementTiling": [
+        1.0,
+        2.0,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishDistortionTiling": [
+        0.25,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        0.984314,
+        0.913725,
+        0.796078,
+        1.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilDisplacementStrength": 0.45,
+      "_RainbowStrength": 1.0,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": 0.2,
+      "_VarnishDarkenStrength": 0.35,
+      "_VarnishDistortionStrength": 0.04,
+      "_VarnishHighlightStrength": 0.65,
+      "_VarnishOffset": 0.25,
+      "_VarnishOutlineStrength": 0.4,
+      "_VarnishRainbowDistortionStrength": 0.325
+    },
+    "fragment": "CardFoilSatin___VARNISHTYPE_HIGHGLOSS.frag",
+    "fragmentTime": "CardFoilSatin___VARNISHTYPE_HIGHGLOSS___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilSatin",
+    "keywords": [
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HIGHGLOSS"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_32b038f47e684388a3378904b95b91d3_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_RainbowGradientTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientsatinwide.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientsatinwide.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ecaa018932e843b68c4797464457ac07_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_f44e690f3f3541a884ac95936014fc30_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "satinfoilnoise.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "satinfoilnoise.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Texture2DAsset_450a32acbdb1461b842432479265bb3d_Out_0_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshine.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilSeaWave": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.55,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.3,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        0.5,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.0,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 5.0,
+      "_FoilMidToneStrength": 0.4,
+      "_FoilMorphSpeed": 1.44,
+      "_Inkwash_Strength": 0.65,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_NONE.frag",
+    "fragmentTime": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_NONE___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_HOTFOILSURFACE_METALLIC",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_NONE"
+    ],
+    "textures": {
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "seawavepattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "seawavepattern.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilSeaWaveHighGloss": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.55,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.3,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        0.5,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishDistortionTiling": [
+        0.25,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        0.984314,
+        0.913725,
+        0.796078,
+        1.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.0,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 5.0,
+      "_FoilMidToneStrength": 0.4,
+      "_FoilMorphSpeed": 1.44,
+      "_HotFoilOffset": 0.25,
+      "_Inkwash_Strength": 0.65,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": 0.2,
+      "_VarnishDarkenStrength": 0.3,
+      "_VarnishDistortionStrength": 0.04,
+      "_VarnishHighlightStrength": 0.65,
+      "_VarnishOutlineStrength": 0.8
+    },
+    "fragment": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HIGHGLOSS.frag",
+    "fragmentTime": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HIGHGLOSS___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_HOTFOILSURFACE_METALLIC",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HIGHGLOSS"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_91b9b577ace748019a7807438ac77b97_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "seawavepattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "seawavepattern.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshine.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilSilver": {
+    "colors": {
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilSilver.frag",
+    "fragmentTime": "CardFoilSilver___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilSilver",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_ec9b044a8f854b959842da02b1cd8abd_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ecaa018932e843b68c4797464457ac07_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilTempest": {
+    "colors": {
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilTempest.frag",
+    "fragmentTime": "CardFoilTempest___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilTempest",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ad6aaa0cbede4a7a9e59e8d8b6cf82c3_Texture_1_Texture2D": {
+        "aniso": 1,
+        "file": "rainbowgradienttempestglitter.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ef0db2719a6848e5ac298c7eb7328277_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "tempestpatterns.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "tempestpatterns.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFoilVertWave": {
+    "colors": {
+      "_Offset": [
+        1.1,
+        1.4,
+        0.0,
+        0.0
+      ],
+      "_Tiling": [
+        0.28,
+        0.47,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_Inkwash_Strength": 0.55,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "DefaultHoloFoil.frag",
+    "fragmentTime": "DefaultHoloFoil___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/DefaultHoloFoil",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientinkwash.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientinkwash.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Texture": {
+        "aniso": 1,
+        "astc": {
+          "file": "vertwavetexture.astc",
+          "format": "COMPRESSED_RGBA_ASTC_8x8_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "vertwavetexture.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFreeForm1Foil": {
+    "colors": {
+      "_Offset": [
+        0.42,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_Tiling": [
+        0.8,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_Foil_Strength": 0.9,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilFreeForm.frag",
+    "fragmentTime": "CardFoilFreeForm___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilFreeForm",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ad6aaa0cbede4a7a9e59e8d8b6cf82c3_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientfreeform.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientfreeform.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Texture": {
+        "aniso": 1,
+        "astc": {
+          "file": "freeform1pattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "freeform1pattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFreeForm2Foil": {
+    "colors": {
+      "_Offset": [
+        0.2,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "_Tiling": [
+        0.1,
+        0.1,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_Foil_Strength": 0.9,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilFreeForm.frag",
+    "fragmentTime": "CardFoilFreeForm___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilFreeForm",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ad6aaa0cbede4a7a9e59e8d8b6cf82c3_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientfreeform.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientfreeform.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Texture": {
+        "aniso": 1,
+        "astc": {
+          "file": "freeform2pattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "freeform2pattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardFreeForm2RainbowHotFoil": {
+    "colors": {
+      "_Offset": [
+        0.2,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "_Tiling": [
+        0.1,
+        0.1,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_Foil_Strength": 0.9,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilFreeFormGoldVarnish.frag",
+    "fragmentTime": "CardFoilFreeFormGoldVarnish___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilFreeFormGoldVarnish",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_424b6d7bfe0c45a98e8c08b589a24fdf_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientgold.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientgold.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_652ce33a9b0b4e8eb0fc31aec804f2f9_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "gradientgold.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "gradientgold.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ad6aaa0cbede4a7a9e59e8d8b6cf82c3_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientfreeform.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientfreeform.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Texture": {
+        "aniso": 1,
+        "astc": {
+          "file": "freeform2pattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "freeform2pattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      }
+    }
+  },
+  "CardLoreMetallicHotFoil": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.3,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        1.4,
+        1.932,
+        0.0,
+        0.0
+      ],
+      "_HotFoilColor": [
+        0.223529,
+        0.447059,
+        0.203922,
+        1.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishDistortionTiling": [
+        3.0,
+        7.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        1.0,
+        0.811765,
+        0.447059,
+        1.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.0,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 5.0,
+      "_FoilMidToneStrength": 1.0,
+      "_FoilMorphSpeed": 0.8,
+      "_HotFoilBrightness": 0.6,
+      "_HotFoilContrast": 0.85,
+      "_HotFoilOffset": 0.25,
+      "_Inkwash_Strength": 0.9,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": 0.5,
+      "_VarnishDistortionStrength": 0.1
+    },
+    "fragment": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HOTFOIL.frag",
+    "fragmentTime": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HOTFOIL___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_FOILOFFSETSRAINBOW",
+      "_HOTFOILSURFACE_METALLIC",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HOTFOIL"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_91b9b577ace748019a7807438ac77b97_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientlore.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientlore.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "lorepattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "lorepattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshinebroad.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshinebroad.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardMagmaChromeRainbowHotFoilMaterial": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.26,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "_HotFoilColor": [
+        1.0,
+        0.278431,
+        0.294118,
+        1.0
+      ],
+      "_VarnishDistortionTiling": [
+        3.0,
+        7.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        1.0,
+        0.811765,
+        0.447059,
+        1.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.85,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 9.0,
+      "_FoilMidToneStrength": 2.29,
+      "_FoilMorphSpeed": 0.2,
+      "_HotFoilBrightness": 0.42,
+      "_HotFoilContrast": 0.4,
+      "_HotFoilOffset": 0.25,
+      "_Inkwash_Strength": 1.1,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": 0.5,
+      "_VarnishDistortionStrength": 0.1
+    },
+    "fragment": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_COLORRAINBOW___VARNISHTYPE_HOTFOIL.frag",
+    "fragmentTime": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_COLORRAINBOW___VARNISHTYPE_HOTFOIL___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_FOILOFFSETSRAINBOW",
+      "_HOTFOILSURFACE_COLORRAINBOW",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HOTFOIL"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_91b9b577ace748019a7807438ac77b97_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "magmatexture.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "magmatexture.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_275af332c9e249698629407265a9f121_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientgold.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientgold.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshinebroad.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshinebroad.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardMagmaFoil": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.26,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.85,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 9.0,
+      "_FoilMidToneStrength": 2.29,
+      "_FoilMorphSpeed": 0.2,
+      "_Inkwash_Strength": 1.1,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_METALLIC___VARNISHTYPE_NONE.frag",
+    "fragmentTime": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_METALLIC___VARNISHTYPE_NONE___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_FOILOFFSETSRAINBOW",
+      "_HOTFOILSURFACE_METALLIC",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_NONE"
+    ],
+    "textures": {
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "magmatexture.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "magmatexture.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardMagmaMetallicHotFoil": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.26,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "_HotFoilColor": [
+        0.223529,
+        0.447059,
+        0.203922,
+        1.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishDistortionTiling": [
+        3.0,
+        7.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        0.85098,
+        0.639216,
+        0.427451,
+        1.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.85,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 9.0,
+      "_FoilMidToneStrength": 2.29,
+      "_FoilMorphSpeed": 0.2,
+      "_HotFoilBrightness": 0.6,
+      "_HotFoilContrast": 0.85,
+      "_HotFoilOffset": 0.15,
+      "_Inkwash_Strength": 1.0,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": -0.5,
+      "_VarnishDistortionStrength": 0.1
+    },
+    "fragment": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HOTFOIL.frag",
+    "fragmentTime": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HOTFOIL___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_FOILOFFSETSRAINBOW",
+      "_HOTFOILSURFACE_METALLIC",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HOTFOIL"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_91b9b577ace748019a7807438ac77b97_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "magmatexture.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "magmatexture.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshinebroad.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshinebroad.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardMagmaSnowHotFoil": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.26,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishDistortionTiling": [
+        3.0,
+        7.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        0.858824,
+        0.937255,
+        0.952941,
+        1.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.9,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 9.0,
+      "_FoilMidToneStrength": 2.29,
+      "_FoilMorphSpeed": 0.2,
+      "_GlitterSize": 0.7,
+      "_HotFoilBrightness": 0.6,
+      "_HotFoilContrast": 1.63,
+      "_HotFoilOffset": 0.15,
+      "_Inkwash_Strength": 0.8,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": -0.6,
+      "_VarnishDistortionStrength": 1.3
+    },
+    "fragment": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_SNOW___VARNISHTYPE_HOTFOIL.frag",
+    "fragmentTime": "CardFoilLore___FOILOFFSETSRAINBOW___HOTFOILSURFACE_SNOW___VARNISHTYPE_HOTFOIL___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_FOILOFFSETSRAINBOW",
+      "_HOTFOILSURFACE_SNOW",
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HOTFOIL"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_91b9b577ace748019a7807438ac77b97_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "magmatexture.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "magmatexture.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_27bb04339679444fb62a3eebc499f548_Texture_1_Texture2D": {
+        "aniso": 8,
+        "astc": {
+          "file": "glitterpattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "glitterpattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_6d30e0b953df4f898f8aca64be4593ba_Texture_1_Texture2D": {
+        "aniso": 8,
+        "astc": {
+          "file": "glitterpattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 1024,
+          "width": 1024
+        },
+        "file": "glitterpattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshinebroad.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshinebroad.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardRainbowPillarsFoil": {
+    "colors": {
+      "_Offset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_Tiling": [
+        0.3,
+        0.414,
+        0.0,
+        0.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_Inkwash_Strength": 0.55,
+      "_TimeFactor": 0.4
+    },
+    "fragment": "DefaultHoloFoil.frag",
+    "fragmentTime": "DefaultHoloFoil___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/DefaultHoloFoil",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Texture": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowpillarspattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "rainbowpillarspattern.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardSeaWaveMatteHotFoil": {
+    "colors": {
+      "_FoilMorphOffset": [
+        0.55,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_FoilOffset": [
+        0.3,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "_FoilTiling": [
+        0.5,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "_HotFoilColor": [
+        0.223529,
+        0.447059,
+        0.203922,
+        1.0
+      ],
+      "_Tilt": [
+        0.25,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishDistortionTiling": [
+        3.0,
+        7.0,
+        0.0,
+        0.0
+      ],
+      "_VarnishLightColor": [
+        1.0,
+        0.811765,
+        0.447059,
+        1.0
+      ]
+    },
+    "floats": {
+      "_BrightHighlightsReduction": 0.0,
+      "_DeviceRotationDegrees": 0.0,
+      "_FoilHighlightStrength": 5.0,
+      "_FoilMidToneStrength": 0.4,
+      "_FoilMorphSpeed": 1.44,
+      "_HotFoilBrightness": 0.6,
+      "_HotFoilContrast": 0.4,
+      "_HotFoilOffset": 0.25,
+      "_Inkwash_Strength": 0.65,
+      "_TimeFactor": 0.4,
+      "_VarnishBevelStrength": 0.05,
+      "_VarnishDistortionStrength": 0.04
+    },
+    "fragment": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HOTFOIL.frag",
+    "fragmentTime": "CardFoilLore___HOTFOILSURFACE_METALLIC___VARNISHTYPE_HOTFOIL___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardFoilLore",
+    "keywords": [
+      "_SCROLLMODE_TIME",
+      "_VARNISHTYPE_HOTFOIL"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_91b9b577ace748019a7807438ac77b97_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilColorGradient": {
+        "aniso": 1,
+        "astc": {
+          "file": "rainbowgradientseawave.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 32,
+          "width": 1024
+        },
+        "file": "rainbowgradientseawave.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_FoilPattern": {
+        "aniso": 1,
+        "astc": {
+          "file": "seawavepattern.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "seawavepattern.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_189abfa7029441b2a872a686f60c1b59_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_ee5f7afeb3e24649904302917468a9d7_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      },
+      "_VarnishShineTex": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshine.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      }
+    }
+  },
+  "CardVarnishRegular": {
+    "colors": {
+      "_LightColor": [
+        0.984314,
+        0.913725,
+        0.796078,
+        1.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_TimeFactor": 0.33,
+      "_VarnishBevelStrength": 0.2,
+      "_VarnishDarkenStrength": 0.3,
+      "_VarnishHighlightStrength": 0.65
+    },
+    "fragment": "CardVarnishRegular.frag",
+    "fragmentTime": "CardVarnishRegular___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardVarnishRegular",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_73ebb6f60a5648fead4edb0e1b742729_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_CalculateVarnishLayers_73ebb6f60a5648fead4edb0e1b742729_VarnishShineTex_1105464448_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshine.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_SampleTexture2D_42722767dabc4cb3a6c6f6e3f8ef5ea8_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_b03a50bb7ac04e9fa053b072bb1c81bf_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      }
+    }
+  },
+  "CardVarnishSilver": {
+    "colors": {
+      "_LightColor": [
+        0.984314,
+        0.913725,
+        0.796078,
+        1.0
+      ]
+    },
+    "floats": {
+      "_DeviceRotationDegrees": 0.0,
+      "_TimeFactor": 0.33,
+      "_VarnishBevelStrength": 0.2,
+      "_VarnishDarkenStrength": 0.3,
+      "_VarnishHighlightStrength": 0.65
+    },
+    "fragment": "CardVarnishSilver.frag",
+    "fragmentTime": "CardVarnishSilver___SCROLLMODE_TIME.frag",
+    "graph": "Shader Graphs/CardVarnishSilver",
+    "keywords": [
+      "_SCROLLMODE_TIME"
+    ],
+    "textures": {
+      "_CalculateVarnishLayers_a220e3f8b07d4d02b91e9cd7212f72f1_DistortionTex_3454849507_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishsurface.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 256,
+          "width": 256
+        },
+        "file": "varnishsurface.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_CalculateVarnishLayers_a220e3f8b07d4d02b91e9cd7212f72f1_VarnishShineTex_1105464448_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "varnishshine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 64,
+          "width": 512
+        },
+        "file": "varnishshine.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_Motif": {
+        "role": "art"
+      },
+      "_MotifMask": {
+        "role": "foilMask"
+      },
+      "_SampleTexture2D_af6d7cb49c5047e28024f2f2b90753f2_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "cardmasks.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 2048,
+          "width": 1024
+        },
+        "file": "cardmasks.png",
+        "filter": "bilinear",
+        "mipmaps": false,
+        "wrap": "repeat"
+      },
+      "_SampleTexture2D_b03a50bb7ac04e9fa053b072bb1c81bf_Texture_1_Texture2D": {
+        "aniso": 1,
+        "astc": {
+          "file": "silvershine.astc",
+          "format": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+          "height": 512,
+          "width": 512
+        },
+        "file": "silvershine.png",
+        "filter": "bilinear",
+        "mipmaps": true,
+        "wrap": "repeat"
+      },
+      "_TopLayerMask": {
+        "role": "varnishMask"
+      }
+    }
+  }
+}

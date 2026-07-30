@@ -13,6 +13,11 @@ import {
 export type DeviceTilt = {
   /** Latest lean, or `null` while there is no sensor and no permission. */
   lean: Lean | null;
+  /**
+   * Compass heading in degrees for `_DeviceRotationDegrees`, or `null` when
+   * the sensor has not reported one yet.
+   */
+  alpha: number | null;
   /** True when the platform will only hand the sensor over after a tap. */
   needsPermission: boolean;
   /** Ask for it. Must be called from a real user gesture, or iOS refuses. */
@@ -69,6 +74,7 @@ export function useDeviceTilt(maxTilt: number, enabled = true): DeviceTilt {
 
   return {
     lean,
+    alpha: enabled ? (snapshot?.alpha ?? null) : null,
     needsPermission: enabled && gated,
     requestPermission: requestOrientationPermission,
   };

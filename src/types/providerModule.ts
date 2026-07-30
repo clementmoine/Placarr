@@ -221,6 +221,8 @@ export type PrintCandidate = {
    * foil — never to no effect at all.
    */
   finishShaders?: Record<string, string>;
+  /** Effect pack id from `src/effects/<id>` — never a Unity material name. */
+  effectPack?: string | null;
   /**
    * Which look the varnish is drawn with, keyed by the publisher's own name for
    * it. A second, independent axis: a card can be Enchanted *and* hot-foiled,
@@ -280,6 +282,25 @@ export type SeriesVolumeBarcode = {
   barcode: string;
   title: string;
   coverUrl?: string;
+};
+
+/** Finish + varnish pair a dumped foil material asks the playroom to illustrate. */
+export type FoilPlayroomNeed = {
+  finish: string | null;
+  varnish: string | null;
+};
+
+/**
+ * One catalog print that can stand in for a playroom tile when the collection
+ * has no adapted copy. `variant` is the finish the material expects.
+ */
+export type FoilPlayroomCatalogSample = {
+  id: string;
+  name: string;
+  variant: string | null;
+  printKey: string;
+  shelfType: string;
+  imageUrl: string | null;
 };
 
 export type SeriesVolumeBarcodeContext = {
@@ -468,6 +489,14 @@ export interface ProviderModule {
    * has to survive the fact pipeline's allow-lists to get stored at all.
    */
   lookupPrint?: (ctx: PrintLookupContext) => Promise<PrintCandidate | null>;
+  /**
+   * Catalog prints that actually carry each finish/varnish the foil playroom
+   * needs — so an empty collection does not leave Magma tiles blank, and we
+   * never fake Magma on a Silver mask.
+   */
+  suggestFoilPlayroomSamples?: (
+    needs: readonly FoilPlayroomNeed[],
+  ) => Promise<FoilPlayroomCatalogSample[]>;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;
   /**

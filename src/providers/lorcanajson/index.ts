@@ -15,6 +15,7 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
@@ -42,6 +43,7 @@ export {
 } from "./fetch";
 
 import { loadPrintFoilIndex, type PrintFoilDetails } from "./catalog";
+import { suggestLorcanaFoilPlayroomSamples } from "./playroomSamples";
 
 const PROVIDER_ID = "lorcanajson";
 /** LorcanaJSON's name for a print with no foil treatment. */
@@ -301,6 +303,7 @@ export function toPrintCandidate(
         .filter((finish) => FINISH_SHADERS[finish])
         .map((finish) => [finish, FINISH_SHADERS[finish] as string]),
     ),
+    effectPack: LORCANA_EFFECT_PACK_ID,
     variantImageUrls: card.fullFoilUrl
       ? Object.fromEntries(
           card.foilTypes
@@ -464,6 +467,8 @@ export const lorcanajsonModule: ProviderModule = {
     const foils = await printFoilIndex(language, signal);
     return toPrintCandidate(card, foils[card.providerId]);
   },
+  suggestFoilPlayroomSamples: (needs) =>
+    suggestLorcanaFoilPlayroomSamples(needs),
   healthCheck: createMetadataHealthCheck(
     PROVIDER_ID,
     PROVIDER_LABEL,

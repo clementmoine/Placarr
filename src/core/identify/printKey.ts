@@ -27,7 +27,7 @@ const SEGMENT_SEPARATOR = "-";
 const SEGMENT_PATTERN = /^[a-z0-9]+$/;
 
 export type PrintIdentity = {
-  /** Game slug, e.g. `lorcana`. Not a provider id. */
+  /** Game slug, e.g. the Lorcana slug. Not a provider id. */
   game: string;
   /** Set code as printed, e.g. `9`, `Q1`. */
   set: string;

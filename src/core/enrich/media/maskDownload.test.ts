@@ -92,12 +92,15 @@ describe("bakeMask", () => {
     expect(await alphaOf(baked)).toEqual([0, 255]);
   });
 
-  it("leaves a baked mask's RGB solid white", async () => {
-    // If something downstream ever reads it as luminance anyway, white means
-    // "everywhere" rather than "nowhere" — a visible bug, not an invisible one.
+  it("writes a foil mask's luminance into RGB as well as alpha", async () => {
+    // Unity fragments sample `_MotifMask.xyz`, not alpha. A solid-white RGB
+    // bake made every card look fully foiled. Greyscale luma keeps CSS (alpha)
+    // and Unity (RGB) on the same coverage.
     const baked = await bakeMask(await strip([[10, 20, 30]]), "foil");
+    const luma = Math.round(lumaOf(10, 20, 30));
 
-    expect(await rgbOf(baked)).toEqual([[255, 255, 255]]);
+    expect(await rgbOf(baked)).toEqual([[luma, luma, luma]]);
+    expect((await alphaOf(baked))[0]).toBe(luma);
   });
 
   it("decodes a varnish mask as a normal map, not as a channel", async () => {
@@ -112,6 +115,14 @@ describe("bakeMask", () => {
 
     expect(alpha[0]).toBeLessThan(4);
     expect(alpha[1]).toBeGreaterThan(250);
+  });
+
+  it("keeps a varnish mask's normal-map RGB for Unity bevels", async () => {
+    // The HighGloss fragment does `rgb * 2 - 1` on the varnish mask. Flattening
+    // RGB to white made every bevel sample as a flat (1,1,1) normal.
+    const baked = await bakeMask(await strip([[40, 90, 200]]), "varnish");
+
+    expect(await rgbOf(baked)).toEqual([[40, 90, 200]]);
   });
 
   it("bakes the two kinds differently from the same file", async () => {

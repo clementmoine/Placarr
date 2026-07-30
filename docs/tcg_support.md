@@ -281,9 +281,17 @@ tourne sur un moteur différent, et c'est de là que vient l'écart.
   paramètres**. `strings` seul ne suffit pas : le corps est compressé et rend
   des noms tronqués (`FoilLoreh`, `FoilEffecJ`) qui ressemblent à des trouvailles.
 
-On relève des **faits de configuration** — quels effets existent, quels réglages
-les distinguent. Pas leur code de shader : sur un build mobile il est de toute
-façon compilé en bytecode GPU.
+**Correction (2026-07-30, deuxième passe)** : la première lecture affirmait que
+le code des shaders était « de toute façon compilé en bytecode GPU ». C'est
+faux, et l'erreur a coûté : un build Android cible `GLES3Plus`, et pour cette
+cible Unity embarque les programmes en **GLSL texte intégral**
+(`#version 300 es`) dans le blob LZ4 du shader — le dialecte exact de WebGL2.
+Les huit shader graphs sont donc récupérables **et exécutables tels quels dans
+le navigateur** : deux macros à basculer (`HLSLCC_ENABLE_UNIFORM_BUFFERS`,
+`UNITY_SUPPORTS_UNIFORM_LOCATION`), zéro math transcrite. La leçon générale :
+**vérifier la plateforme de compilation avant de déclarer un blob illisible** —
+`kShaderCompPlatformGLES3Plus` = texte, Vulkan = SPIR-V (décompilable aussi,
+via spirv-cross).
 
 ### Vocabulaire complet
 
@@ -297,9 +305,10 @@ RainbowHotFoil, ChromeRainbowHotFoil. Notre table était complète.
 ### L'architecture diffère du viewer web
 
 Le web a **une recette CSS par finition**. L'app a **8 shader graphs pour 23
-matériaux** : plusieurs finitions partagent un graph et ne se distinguent que par
-leurs réglages. `CardFoilLore` est le cheval de trait — il sert CalendarWave,
-SeaWave, Magma et les variantes Lore.
+matériaux** (dont `OwnedIndicatorFoiled`, indicateur UI hors cartes) : plusieurs
+finitions partagent un graph et ne se distinguent que par leurs réglages.
+`CardFoilLore` est le cheval de trait — il sert CalendarWave, SeaWave, Magma et
+les variantes Lore. Le port web couvre les **22 matériaux carte**.
 
 Le nom du matériau porte la **combinaison** finition + vernis
 (`CardSeaWaveMatteHotFoil`, `CardMagmaChromeRainbowHotFoilMaterial`) : chez eux
@@ -321,19 +330,99 @@ Ce que l'app expose et que le CSS n'a pas :
 | relief              | `_FoilDisplacementStrength`, `_Parallax`                                                                                                |
 | divers              | `_GlitterSize`, `_FoilMidToneStrength`, `_FoilHighlightStrength`                                                                        |
 
-### Ce qui n'est pas portable, et pourquoi
+### Ce qui n'est pas portable **en CSS** — et l'est en WebGL
 
 `_FoilDisplacementStrength`, `_Parallax`, `_VarnishBevelStrength` et
 `_VarnishOutlineStrength` sont des opérations de **géométrie et d'éclairage 3D**
 — déplacement de surface, biseau éclairé, contour. Une pile de `mix-blend-mode`
 CSS ne sait pas les faire : elle compose des images, elle ne modèle pas une
-surface. Copier ces shaders n'est pas « difficile », c'est sans objet.
+surface. Cette limite est celle du médium CSS, pas de la source : les fragments
+extraits les font, puisqu'ils *sont* le code qui les fait.
 
-**L'app vaut donc comme spécification, pas comme source à porter.** Elle dit
-quels effets existent et quels axes les séparent ; le viewer web reste la seule
-source directement transposable, et nos recettes lui correspondent déjà
-déclaration par déclaration (`holoShaderParity.test.ts`).
+### Le port réel : `core/render/foil` + `effects/lorcana` (2026-07-30)
 
-Gain réel de ce dump : deux finitions enfin rendues correctement, un garde qui
-empêche qu'un look transcrit reste débranché, et une liste d'axes pour la salle
-d'essai.
+Pipeline `scripts/effects-dump/dump_unity.py --pack lorcana` (+ compagnon
+`dump_lorcana_web.py` pour les recettes CSS), sorties commitées :
+
+- `public/foil/lorcana/shaders/*.frag` — les fragments de l'app, un par variante
+  de keywords (`_VARNISHTYPE_*`, `_HOTFOILSURFACE_*`, `USESECONDTOPLAYER`…),
+  **en deux modes de scroll** : `_SCROLLMODE_TILT` (pointeur / gyro) et
+  `_SCROLLMODE_TIME` (idle natif via `_CosTime` × `_TimeFactor`).
+- `src/effects/lorcana/manifest.json` — les **22 matériaux carte** (le
+  23ᵉ de l'APK, `OwnedIndicatorFoiled`, est un indicateur UI hors Shader
+  Graphs et n'est pas porté), avec pour chacun ses variantes Tilt + Time et
+  **tout ce que ses fragments déclarent** : textures par slot (wrap / filter /
+  mips inclus, lus sur `m_TextureSettings`), floats, couleurs. Le filtrage
+  est data-driven — un uniform absent du fragment n'entre pas au manifest.
+  Les slots par-carte (`_Motif`, `_MotifMask`, `_TopLayerMask`…) sont marqués
+  d'un rôle et remplis à l'exécution par le catalogue (CDN provider, pas APK).
+- `public/foil/lorcana/textures/*.{png,astc}` — textures pack dumpées en **dual
+  PNG + ASTC** (WebGL2 compresse quand le GPU le permet). `cardmasks.png`
+  (canal R : gradient de lumière ambiante, canal G : découpe des coins).
+- `public/foil/lorcana/card_back.png` — dos de carte sur le pack ; en produit,
+  `resolveCardBack` préfère le dos configuré sur l'étagère, puis celui du pack.
+
+Côté runtime, `core/render/foil/webgl/renderer.ts` compile les deux programmes,
+pilote `_Tilt` / `_CosTime` / `_DeviceRotationDegrees` (compas `alpha`), et
+applique le sampler state dumpé (Repeat + Bilinear sur les foils APK, mips
+là où `m_MipCount > 1`). Il ne connaît aucun shader par son nom — tout passe
+par la réflexion du programme (`getActiveUniform`). En produit, `FoilCardImage`
+choisit WebGL2 par défaut quand le matériau et le pool le permettent, sinon
+la pile CSS complète. La salle d'essai (`/admin/foil`) expose trois backends :
+**Auto | Unity | Web** (pas une quatrième source séparée).
+
+Les recettes CSS (`effects/lorcana/cssRecipes`) servent partout où WebGL2 manque
+ou est forcé en mode Web ; `holoShaderParity.test.ts` continue de les pinner
+sur la feuille de style de l'éditeur. Les deux sources coexistent dans la
+salle d'essai, jugées côte à côte.
+
+Décisions de fidélité à connaître pour juger le rendu :
+
+- **Espace colorimétrique : Gamma.** `PlayerSettings` n'est pas lisible par
+  UnityPy sur ce build, mais `m_LightsUseLinearIntensity: False` et des
+  constantes de shader manifestement écrites pour des valeurs gamma pointent
+  là. Aucune conversion sRGB→linéaire n'est faite, ni nécessaire à l'œil.
+- **Idle = Time, interaction = Tilt.** Au repos le programme Time anime via
+  `_CosTime` ; sous le pointeur / gyro on bascule sur Tilt. L'amplitude
+  pointeur reste calibrée sur `_TimeFactor` (= 0.4).
+- **Une carte hors écran rend son contexte WebGL** (IntersectionObserver) : le
+  navigateur en tolère ~16, une grille se serait évincée elle-même.
+
+Legacy : `core/render/unityFoil/` ré-exporte le pack Lorcana pour les imports
+historiques ; le chemin canonique est `effects/lorcana` + `core/render/foil`.
+
+### Pokémon TCG Pocket — sondage APK (pas le même dump)
+
+APK analysé : `~/Downloads/jp.pokemon.pokemontcgp_1.7.0-…_apkmirror.com`
+(Pocket 1.7.0 — jeu mobile, pas le TCG papier).
+
+| Signal | Finding |
+| --- | --- |
+| Shaders foil type Lorcana | Absent — surtout UI/Hidden/TextMeshPro ; helpers `Hidden/Card/*`, `UI/Rainbow` |
+| GLES3 GLSL `#version 300 es` | ~6 / 105 — majorité pas prête WebGL2 |
+| Card content | ~7575 blobs `.aladin` dans `split_bundledtree.apk` (format propriétaire) |
+| card_back | Pas de sprite utile ; icônes UI seulement |
+| Materials | ~14 dans le `Data` de base |
+
+**Conclusion :** Lorcana d'abord ; un futur `effects/pokemon` exigerait une
+reverse différente (Aladin + shaders non-GLES3). Le TCG papier passera plutôt
+par TCGdex avec un pack plus léger.
+
+### Refaire pareil pour le prochain jeu
+
+1. Récupérer l'APK (split `base` ou `config` contenant `assets/bin/Data/`).
+2. `strings global-metadata.dat` → vocabulaire (finitions, vernis, classes).
+3. Vérifier la plateforme shader (`ShaderCompilerPlatform`) : GLES3+ = GLSL
+   texte, prêt pour WebGL2 ; Vulkan = SPIR-V, passer par spirv-cross.
+4. `scripts/effects-dump/dump_unity.py --pack <id>` avec les mots-clés du jeu
+   (`CARD_EFFECT_KEYS`, `RUNTIME_ROLES`) — le parsing du blob, les variantes
+   par keywords et le filtrage des uniforms sont indépendants du jeu.
+5. Les slots par-carte demandent l'équivalent du `foilMask` LorcanaJSON chez
+   ce jeu ; sans masque par carte, l'effet ne se confine pas (cf. §5 bis).
+
+**Pocket n'est pas un drop-in** : pas de fragments CardFoil*, contenu `.aladin`,
+peu de GLSL WebGL2-ready — ne pas réutiliser le pipeline Lorcana tel quel.
+
+Gain réel de ce dump, deuxième passe comprise : deux finitions enfin rendues,
+un garde anti-débranchement, la liste des axes… et le moteur de rendu de
+l'app lui-même, exécuté au pixel près.

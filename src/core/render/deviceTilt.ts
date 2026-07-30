@@ -7,6 +7,11 @@
 
 /** A device orientation reading, in degrees, as the browser reports it. */
 export type OrientationReading = {
+  /**
+   * Compass heading, 0..360. The app feeds this into `_DeviceRotationDegrees`
+   * (foil bevels rotate with how the phone faces the room). Null on desktop.
+   */
+  alpha?: number | null;
   /** Front-to-back tilt, -180..180. */
   beta: number | null;
   /** Left-to-right tilt, -90..90. */

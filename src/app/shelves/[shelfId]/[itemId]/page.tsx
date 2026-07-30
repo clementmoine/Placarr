@@ -96,8 +96,10 @@ import {
 import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
-import { HoloCardImage } from "@/components/HoloCardImage";
+import { FoilCardImage } from "@/components/FoilCardImage";
 import { FlippableCard } from "@/components/FlippableCard";
+import { resolveCardBackUrl } from "@/core/render/foil";
+import "@/effects";
 import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { resolveStoredVariant } from "@/core/enrich/variants";
@@ -110,6 +112,7 @@ import {
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
+import { formatFinishLabel } from "@/lib/text/finishLabel";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import {
   itemPath,
@@ -2323,13 +2326,14 @@ export default function ItemDetailsPage() {
                 {coverImage ? (
                   <>
                     {variantView.foilMaskUrl ? (
-                      <HoloCardImage
+                      <FoilCardImage
+                        effectPack={variantView.effectPackId}
                         imageUrl={variantView.imageUrl ?? coverImage}
                         alt={itemDisplayName ?? ""}
+                        finish={variantView.finish}
+                        varnishType={variantView.varnishType}
                         maskUrl={foilMaskUrl}
                         varnishMaskUrl={varnishMaskUrl}
-                        shader={variantView.shader}
-                        varnishShader={variantView.varnish}
                         varnishColor={variantView.varnishColor}
                         secondVarnishMaskUrl={secondVarnishMaskUrl}
                         secondVarnishColor={variantView.secondVarnishColor}
@@ -2441,7 +2445,7 @@ export default function ItemDetailsPage() {
                         className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
                       >
                         <Sparkles className="size-3" />
-                        {resolvedVariant}
+                        {formatFinishLabel(resolvedVariant)}
                       </Badge>
                     )}
                     {shelf?.type && (
@@ -2849,14 +2853,20 @@ export default function ItemDetailsPage() {
                  */
                 <div className="aspect-[5/7] w-[min(calc(100vw-2rem),calc(80dvh*5/7))] rounded-[4%/3%] animate-zoom-in">
                   <FlippableCard
-                    backUrl={shelf?.cardBackUrl}
+                    backUrl={resolveCardBackUrl({
+                      shelfCardBackUrl: shelf?.cardBackUrl,
+                      effectPackId: variantView.effectPackId,
+                    })}
                     backAlt={`${itemDisplayName ?? ""} — dos`}
                     flipLabel={t("items.flipCard")}
                     tiltPromptLabel={t("items.tiltPrompt")}
                   >
-                    <HoloCardImage
+                    <FoilCardImage
+                      effectPack={variantView.effectPackId}
                       imageUrl={variantView.imageUrl ?? zoomImageUrl}
                       alt="Zoom"
+                      finish={variantView.finish}
+                      varnishType={variantView.varnishType}
                       /* The wrapper leans the whole card so the back turns with
                          it; this keeps only the light on its own surface. */
                       tilt={false}
@@ -2876,8 +2886,6 @@ export default function ItemDetailsPage() {
                           ? varnishMaskUrl
                           : variantView.varnishMaskUrl
                       }
-                      shader={variantView.shader}
-                      varnishShader={variantView.varnish}
                       varnishColor={variantView.varnishColor}
                       secondVarnishMaskUrl={secondVarnishMaskUrl}
                       secondVarnishColor={variantView.secondVarnishColor}

@@ -1,54 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
-import { HoloCardImage } from "@/components/HoloCardImage";
+import { FoilCardImage } from "@/components/FoilCardImage";
+import type { FoilBackendPreference } from "@/core/render/foil";
+import { setFoilPoolMax } from "@/core/render/foil";
+import { listEffectPacks } from "@/effects";
 import {
-  HOLO_SHADER_IDS,
-  holoShader,
-  varnishShader,
-  NEUTRAL_VARNISH_COLOR,
-  type HoloShader,
-  type HoloTuning,
-} from "@/core/render/holoShaders";
+  peekPrintVariant,
+  requestPrintVariant,
+  subscribeToPrintVariants,
+} from "@/lib/client/printVariantStore";
 import {
-  APP_HOLO_SHADER_IDS,
-  appHoloShader,
-  appRecordedParams,
-  appRecordedTuning,
-} from "@/core/render/holoShadersApp";
-import {
-  HOUSE_HOLO_SHADER_IDS,
-  houseHoloShader,
-} from "@/core/render/holoShadersHouse";
-import {
-  usePrintVariant,
   variantRendering,
+  type VariantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
 import { cn } from "@/lib/shared/utils";
 
 /**
- * A bench for every look the app can draw, from either texture set.
+ * Bench for every dumped foil material, on the same face API as the shelves.
  *
- * The looks were only ever visible on whichever cards the collection happened
- * to hold, which is exactly how two of the thirteen finishes stayed drawn as
- * silver for months. Each look is shown on a card that actually carries that
- * finish where the collection has one — a Lava recipe over a Lava print says
- * something a Lava recipe over a Silver print does not, since every recipe ends
- * in `mix-blend-mode` against the artwork underneath.
- *
- * Three sources, side by side rather than one replacing the other:
- *
- * - **Web** — transcribed from the publisher's stylesheet and pinned to it by
- *   `holoShaderParity.test.ts`. What ships today.
- * - **App** — the same blend structure over the mobile app's per-effect
- *   textures, each carrying the settings recorded in its own material.
- * - **Maison** — ours, from before the transcription.
+ * Three backends, one component (`FoilCardImage`):
+ * - **Auto** — product default (WebGL when compatible, else CSS)
+ * - **Unity** — force WebGL
+ * - **Web** — force CSS recipes
  */
 
-type Role = "finish" | "overlay" | "varnish";
-
-/** Enough of an item for a tile to resolve and draw its own print. */
 export type PlayroomSample = {
   id: string;
   name: string;
@@ -58,248 +35,293 @@ export type PlayroomSample = {
   imageUrl: string | null;
 };
 
-const ROLE_OF: Readonly<Record<string, Role>> = {
-  silver: "finish",
-  satin: "finish",
-  lore: "finish",
-  lava: "finish",
-  magma: "finish",
-  glitter: "finish",
-  verticalWave: "finish",
-  seaWave: "finish",
-  rainbowPillars: "finish",
-  freeForm: "finish",
-  freeForm2: "finish",
-  tempest: "finish",
-  calendarWave: "finish",
-  loreShine: "overlay",
-  satinShine: "overlay",
-  hotFoil: "varnish",
-  chromeRainbowHotFoil: "varnish",
+const BACKENDS: readonly {
+  key: FoilBackendPreference;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    key: "auto",
+    label: "Auto",
+    hint: "Comme la collection : WebGL (shaders app) dès que WebGL2 + matériau + slot pool le permettent, sinon recettes CSS.",
+  },
+  {
+    key: "webgl",
+    label: "Unity",
+    hint: "Force les fragments dumpés de l'app (WebGL2). Sans WebGL2 ou hors budget pool → CSS.",
+  },
+  {
+    key: "css",
+    label: "Web",
+    hint: "Force les recettes CSS du visualiseur (pack cssRecipes).",
+  },
+];
+
+type AdaptedPrint = {
+  sample: PlayroomSample;
+  own: VariantRendering;
 };
 
-const GROUPS: readonly { role: Role; title: string; hint: string }[] = [
-  {
-    role: "finish",
-    title: "Finitions",
-    hint: "Ce que porte la carte. Une par exemplaire, jamais deux.",
+function useAdaptedPrint(
+  candidates: readonly PlayroomSample[],
+  opts: {
+    wantedVarnish: string | null;
+    requireFoilMask: boolean;
+    requireVarnishMask: boolean;
   },
-  {
-    role: "overlay",
-    title: "Secondes couches",
-    hint: "Dessinées au-dessus de leur finition, à travers le même masque. Jamais seules.",
-  },
-  {
-    role: "varnish",
-    title: "Vernis",
-    hint: "Le coat estampé, sur son propre masque et sa propre couleur.",
-  },
-];
+): AdaptedPrint | null {
+  const { wantedVarnish, requireFoilMask, requireVarnishMask } = opts;
 
-const SOURCES = [
-  {
-    key: "web" as const,
-    label: "Effets Web",
-    hint: "Transcrits de la feuille de style de l'éditeur, et vérifiés contre elle. Ce qui tourne aujourd'hui.",
-    ids: HOLO_SHADER_IDS as readonly string[],
-    shaderOf: (id: string) => holoShader(id),
-  },
-  {
-    key: "app" as const,
-    label: "Effets App",
-    hint: "Notre composition sur les textures de l'app mobile, chacune avec les valeurs enregistrées dans son matériau.",
-    ids: APP_HOLO_SHADER_IDS as readonly string[],
-    shaderOf: (id: string) =>
-      appHoloShader(id as (typeof APP_HOLO_SHADER_IDS)[number]),
-  },
-  {
-    key: "house" as const,
-    label: "Effets Maison",
-    hint: "Les nôtres, d'avant la transcription : des dégradés et un grain, sans aucune texture. Remplacés parce qu'ils rendaient toutes les finitions pareilles, pas parce qu'ils étaient ratés.",
-    ids: HOUSE_HOLO_SHADER_IDS as readonly string[],
-    shaderOf: (id: string) =>
-      houseHoloShader(id as (typeof HOUSE_HOLO_SHADER_IDS)[number]),
-  },
-];
+  useEffect(() => {
+    for (const sample of candidates) {
+      requestPrintVariant(sample.printKey, sample.shelfType);
+    }
+  }, [candidates]);
 
-/** What the app has and CSS cannot express, named so it is not silently missing. */
-const NOT_PORTABLE = [
-  "_Parallax",
-  "_FoilDisplacementStrength",
-  "_VarnishBevelStrength",
-  "_VarnishOutlineStrength",
-];
+  const snapshotKey = useSyncExternalStore(
+    subscribeToPrintVariants,
+    () =>
+      candidates
+        .map((sample) => {
+          const info = peekPrintVariant(sample.printKey, sample.shelfType);
+          if (!info) return `${sample.id}:?`;
+          return `${sample.id}:${info.varnishType ?? ""}:${info.foilMaskUrl ? 1 : 0}:${info.varnishMaskUrl ? 1 : 0}`;
+        })
+        .join("|"),
+    () => "",
+  );
 
-/**
- * The card a look is shown on.
- *
- * Matched on the finish name the publisher uses, case-insensitively, since our
- * ids are the same words in camel case. `freeForm` falls back to `FreeForm1`:
- * the web viewer draws both halves with one rule and names neither.
- */
-function sampleForLook(
-  id: string,
+  return useMemo(() => {
+    void snapshotKey;
+    let best: { print: AdaptedPrint; score: number } | null = null;
+    for (const sample of candidates) {
+      const info = peekPrintVariant(sample.printKey, sample.shelfType);
+      const own = variantRendering(
+        sample.variant,
+        info,
+        sample.imageUrl ?? null,
+      );
+      if (!own.imageUrl) continue;
+      if (requireFoilMask && !own.foilMaskUrl) continue;
+      if (requireVarnishMask && !own.varnishMaskUrl) continue;
+
+      let score = 1;
+      if (wantedVarnish) {
+        if (
+          info?.varnishType?.toLowerCase() !== wantedVarnish.toLowerCase()
+        ) {
+          continue;
+        }
+        score = 3;
+      } else if (!info?.varnishType) {
+        score = 2;
+      }
+
+      if (!best || score > best.score) {
+        best = { print: { sample, own }, score };
+      }
+    }
+    return best?.print ?? null;
+  }, [
+    candidates,
+    requireFoilMask,
+    requireVarnishMask,
+    snapshotKey,
+    wantedVarnish,
+  ]);
+}
+
+function samplesForFinish(
+  finish: string,
   samples: readonly PlayroomSample[],
-): PlayroomSample | null {
-  const wanted = id.toLowerCase();
-  const exact = samples.find((item) => item.variant?.toLowerCase() === wanted);
-  if (exact) return exact;
-  if (wanted === "freeform") {
-    return (
-      samples.find((item) => item.variant?.toLowerCase() === "freeform1") ??
-      null
+): PlayroomSample[] {
+  const wanted = finish.toLowerCase();
+  const exact = samples.filter(
+    (item) => item.variant?.toLowerCase() === wanted,
+  );
+  if (exact.length > 0) return exact;
+  if (wanted === "freeform" || wanted === "freeform1") {
+    return samples.filter(
+      (item) => item.variant?.toLowerCase() === "freeform1",
     );
   }
-  return null;
+  if (wanted === "freeform2") {
+    return samples.filter(
+      (item) => item.variant?.toLowerCase() === "freeform2",
+    );
+  }
+  return [];
 }
 
-function RecordedValues({ id }: { id: (typeof APP_HOLO_SHADER_IDS)[number] }) {
-  const entries = Object.entries(appRecordedParams(id)).filter(
-    ([, value]) => value !== undefined,
-  );
-  return (
-    <span className="text-[10px] text-muted-foreground">
-      {entries.length === 0
-        ? "aucun réglage"
-        : entries.map(([key, value]) => `${key} ${value}`).join(" · ")}
-    </span>
+function materialHasRole(
+  material: { textures: Record<string, { role?: string }> },
+  role: "foilMask" | "varnishMask",
+): boolean {
+  return Object.values(material.textures).some(
+    (binding) => binding.role === role,
   );
 }
 
-/**
- * One tile: a look, drawn on its own print.
- *
- * Each resolves its own print rather than the page resolving all of them,
- * because `usePrintVariant` is a hook and there is one card per look. The
- * requests coalesce into a single batch anyway — see `printVariantStore`.
- */
-function LookTile({
-  lookId,
-  look,
-  role,
-  sample,
-  fallback,
-  tuning,
+function MaterialTile({
+  packId,
+  materialName,
+  samples,
+  backend,
   tilt,
-  showRecorded,
 }: {
-  lookId: string;
-  look: HoloShader;
-  role: Role;
-  sample: PlayroomSample | null;
-  fallback: {
-    imageUrl: string;
-    maskUrl: string;
-    varnishMaskUrl?: string | null;
-  };
-  tuning?: HoloTuning;
+  packId: string;
+  materialName: string;
+  samples: readonly PlayroomSample[];
+  backend: FoilBackendPreference;
   tilt: boolean;
-  showRecorded: boolean;
 }) {
-  const printVariant = usePrintVariant(sample?.printKey, sample?.shelfType);
-  const own = variantRendering(
-    sample?.variant,
-    printVariant,
-    sample?.imageUrl ?? null,
-  );
+  const pack = listEffectPacks().find((entry) => entry.id === packId);
+  const material = pack?.material(materialName) ?? null;
+  const { finish, varnish } = pack?.parseMaterialName?.(materialName) ?? {
+    finish: null,
+    varnish: null,
+  };
 
-  // The card's own artwork and mask once it resolved, the shared one until then.
-  const usingOwn = Boolean(own.imageUrl && own.foilMaskUrl);
-  const imageUrl = usingOwn ? own.imageUrl! : fallback.imageUrl;
-  const maskUrl = usingOwn ? own.foilMaskUrl! : fallback.maskUrl;
-  const varnishMaskUrl = usingOwn
-    ? own.varnishMaskUrl
-    : fallback.varnishMaskUrl;
-  const isVarnish = role === "varnish";
+  const candidates = useMemo(() => {
+    if (!finish) return samples;
+    return samplesForFinish(finish, samples);
+  }, [finish, samples]);
+
+  const adapted = useAdaptedPrint(candidates, {
+    wantedVarnish: varnish,
+    requireFoilMask: material ? materialHasRole(material, "foilMask") : true,
+    requireVarnishMask: material
+      ? materialHasRole(material, "varnishMask")
+      : Boolean(varnish),
+  });
+
+  if (!adapted?.own.imageUrl) {
+    return (
+      <figure className="flex flex-col gap-1.5 opacity-40">
+        <div className="aspect-[5/7] rounded-md border border-dashed border-border bg-muted/30" />
+        <figcaption className="flex flex-col">
+          <span className="text-[11px] font-medium">{materialName}</span>
+          <span className="text-[10px] text-muted-foreground">
+            Pas d&apos;exemplaire adapté
+          </span>
+        </figcaption>
+      </figure>
+    );
+  }
+
+  const { sample, own } = adapted;
+  const artUrl = own.imageUrl;
+  if (!artUrl) {
+    return null;
+  }
 
   return (
     <figure className="flex flex-col gap-1.5">
-      <div className="aspect-[5/7] w-full overflow-hidden rounded-[4%/3%]">
-        <HoloCardImage
-          imageUrl={imageUrl}
-          alt={lookId}
-          /* A varnish is drawn on the varnish mask, never the foil one —
-             showing it through the wrong mask would misrepresent both. */
-          maskUrl={maskUrl}
-          varnishMaskUrl={isVarnish ? (varnishMaskUrl ?? maskUrl) : null}
-          shader={isVarnish ? holoShader(null) : look}
-          varnishShader={isVarnish ? look : varnishShader(null)}
-          varnishColor={NEUTRAL_VARNISH_COLOR}
-          tuning={tuning}
+      <div
+        className="aspect-[5/7] overflow-hidden rounded-md border border-border/60 bg-black"
+        title={materialName}
+      >
+        <FoilCardImage
+          effectPack={packId}
+          imageUrl={artUrl}
+          alt={materialName}
+          materialName={materialName}
+          finish={finish ?? own.finish}
+          varnishType={varnish ?? own.varnishType}
+          maskUrl={own.foilMaskUrl}
+          varnishMaskUrl={own.varnishMaskUrl}
+          secondVarnishMaskUrl={own.secondVarnishMaskUrl}
+          varnishColor={own.varnishColor}
+          secondVarnishColor={own.secondVarnishColor}
+          backend={backend}
           tilt={tilt}
           trackPointer
         />
       </div>
       <figcaption className="flex flex-col">
-        <span className="text-[11px] font-medium">{lookId}</span>
-        <span className="text-[10px] text-muted-foreground">
-          {usingOwn ? sample!.name : "carte de secours"}
-        </span>
-        {showRecorded ? (
-          <RecordedValues id={lookId as (typeof APP_HOLO_SHADER_IDS)[number]} />
-        ) : null}
+        <span className="text-[11px] font-medium">{materialName}</span>
+        <span className="text-[10px] text-muted-foreground">{sample.name}</span>
       </figcaption>
     </figure>
   );
 }
 
 export type FoilPlayroomProps = {
-  /** Artwork and masks used wherever the collection has no card of that finish. */
-  fallback: {
-    imageUrl: string;
-    maskUrl: string;
-    varnishMaskUrl?: string | null;
-  };
-  /** Every foil copy in the collection, to match a look against its own print. */
   samples: readonly PlayroomSample[];
 };
 
-export function FoilPlayroom({ fallback, samples }: FoilPlayroomProps) {
-  const [sourceKey, setSourceKey] = useState<"web" | "app" | "house">("web");
+export function FoilPlayroom({ samples }: FoilPlayroomProps) {
+  const packs = listEffectPacks();
+  const [packId, setPackId] = useState(packs[0]?.id ?? "");
+  const [backend, setBackend] = useState<FoilBackendPreference>("auto");
   const [tilt, setTilt] = useState(false);
 
-  const source = SOURCES.find((entry) => entry.key === sourceKey) ?? SOURCES[0];
+  // Playroom shows every material at once — raise the WebGL budget so Unity
+  // mode is not silently CSS for half the grid (collection keeps the default).
+  useEffect(() => {
+    setFoilPoolMax(24);
+    return () => setFoilPoolMax(10);
+  }, []);
+
+  const pack = packs.find((entry) => entry.id === packId) ?? packs[0];
+  const parseName = pack?.parseMaterialName;
+  const materials = pack?.listMaterials() ?? [];
+  const finishes = materials.filter(
+    (name) => parseName?.(name).finish !== null,
+  );
+  const varnishes = materials.filter(
+    (name) => parseName?.(name).finish === null,
+  );
+  const backendMeta =
+    BACKENDS.find((entry) => entry.key === backend) ?? BACKENDS[0];
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
-        {SOURCES.map((entry) => (
+        {packs.map((entry) => (
           <button
-            key={entry.key}
+            key={entry.id}
             type="button"
-            onClick={() => setSourceKey(entry.key)}
+            onClick={() => setPackId(entry.id)}
             className={cn(
               "rounded-md border px-3 py-1.5 text-sm transition-colors",
-              entry.key === sourceKey
+              entry.id === pack?.id
                 ? "border-primary bg-primary/10 font-semibold"
                 : "border-border hover:bg-accent",
             )}
           >
-            {entry.label}{" "}
+            Pack {entry.id}{" "}
             <span className="text-xs font-normal text-muted-foreground">
-              ({entry.ids.length})
+              ({entry.listMaterials().length})
             </span>
           </button>
         ))}
       </div>
-      <p className="-mt-3 text-xs text-muted-foreground">{source.hint}</p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {BACKENDS.map((entry) => (
+          <button
+            key={entry.key}
+            type="button"
+            onClick={() => setBackend(entry.key)}
+            className={cn(
+              "rounded-md border px-3 py-1.5 text-sm transition-colors",
+              entry.key === backend
+                ? "border-primary bg-primary/10 font-semibold"
+                : "border-border hover:bg-accent",
+            )}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+      <p className="-mt-3 text-xs text-muted-foreground">{backendMeta.hint}</p>
 
       <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-4 text-xs">
         <p className="text-muted-foreground">
-          {sourceKey === "app" ? (
-            <>
-              Chaque effet porte les <strong>valeurs enregistrées</strong> de
-              son matériau, pas des réglages.
-            </>
-          ) : (
-            <>Recettes telles quelles, sans réglage.</>
-          )}{" "}
-          Absents faute de médium :{" "}
-          {NOT_PORTABLE.map((name) => (
-            <code key={name} className="mr-1.5 text-[10px]">
-              {name}
-            </code>
-          ))}
+          Même API que la collection (<code className="text-[10px]">FoilCardImage</code>
+          ). Dump :{" "}
+          <code className="text-[10px]">scripts/effects-dump</code>.
         </p>
         <label className="flex shrink-0 items-center gap-1.5">
           <input
@@ -311,45 +333,44 @@ export function FoilPlayroom({ fallback, samples }: FoilPlayroomProps) {
         </label>
       </section>
 
-      {GROUPS.map((group) => {
-        const ids = source.ids.filter((id) => ROLE_OF[id] === group.role);
-        if (ids.length === 0) return null;
-        return (
-          <section key={group.role} className="flex flex-col gap-3">
-            <div>
-              <h3 className="text-sm font-semibold">
-                {group.title}{" "}
-                <span className="font-normal text-muted-foreground">
-                  ({ids.length})
-                </span>
-              </h3>
-              <p className="text-xs text-muted-foreground">{group.hint}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-              {ids.map((id) => (
-                <LookTile
-                  key={`${source.key}-${id}`}
-                  lookId={id}
-                  look={source.shaderOf(id)}
-                  role={group.role}
-                  sample={sampleForLook(id, samples)}
-                  fallback={fallback}
-                  tuning={
-                    source.key === "app"
-                      ? appRecordedTuning(
-                          id as (typeof APP_HOLO_SHADER_IDS)[number],
-                        )
-                      : undefined
-                  }
-                  tilt={tilt}
-                  showRecorded={source.key === "app"}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      {[
+        {
+          key: "finishes",
+          title: "Matériaux de finition",
+          hint: "Chaque matériau uniquement sur une carte qui porte sa finition — et son vernis quand le nom en encode un.",
+          names: finishes,
+        },
+        {
+          key: "varnishes",
+          title: "Vernis seuls",
+          hint: "Matériaux varnish-only de l'app — exemplaire avec masque de vernis requis.",
+          names: varnishes,
+        },
+      ].map((group) => (
+        <section key={group.key} className="flex flex-col gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">
+              {group.title}{" "}
+              <span className="font-normal text-muted-foreground">
+                ({group.names.length})
+              </span>
+            </h3>
+            <p className="text-xs text-muted-foreground">{group.hint}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            {group.names.map((name) => (
+              <MaterialTile
+                key={name}
+                packId={pack?.id ?? packId}
+                materialName={name}
+                samples={samples}
+                backend={backend}
+                tilt={tilt}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

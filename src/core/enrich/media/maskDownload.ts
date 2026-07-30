@@ -5,7 +5,7 @@ import path from "path";
 import sharp from "sharp";
 
 /**
- * Turning a published mask into something WebKit will actually wear.
+ * Turning a published mask into something both CSS and the Unity shaders wear.
  *
  * `mask-mode: luminance` is parsed by Safari, reported as supported by
  * `CSS.supports`, and returned by `getComputedStyle` — and not applied to an
@@ -13,20 +13,21 @@ import sharp from "sharp";
  * artwork, text box, borders.
  *
  * The publisher does not rely on it either. Their viewer converts each mask,
- * client-side on a canvas, into a PNG whose **alpha** carries the coverage and
- * whose RGB is solid white, then masks with that — the default alpha path, which
- * every engine has supported for years. Their own function is named
- * `generate Safari mask`.
+ * client-side on a canvas, into a PNG whose **alpha** carries the coverage,
+ * then masks with that — the default alpha path, which every engine has
+ * supported for years. Their own function is named `generate Safari mask`.
  *
  * We do the same conversion, once, at download, with the formulas read off their
- * bundle rather than guessed:
+ * bundle rather than guessed — and we keep the RGB the Unity fragments need,
+ * because those sample `.xyz` (foil coverage, varnish normals), never alpha:
  *
- * - **Foil:** `alpha = 0.299R + 0.587G + 0.114B` (BT.601 luma), RGB white.
- * - **Varnish:** the file is a *normal map*, so each channel is decoded to
- *   `-1..1` and summed: `alpha = max(0, x+y+z) * 255`, RGB white. Note this is
- *   not a channel extraction — an earlier attempt here took blue alone, which
- *   let mid-grey through at half coverage and washed the coat across the card.
- *   Their decode clamps everything below the midpoint to nothing.
+ * - **Foil:** `coverage = 0.299R + 0.587G + 0.114B` (BT.601 luma). Written to
+ *   both RGB (as greyscale) and alpha. CSS reads alpha; Unity reads `.xyz`.
+ * - **Varnish:** the file is a *normal map*. RGB is kept verbatim so Unity's
+ *   bevel math (`* 2 - 1` on RG, Z as height) still works; alpha gets
+ *   `max(0, x+y+z) * 255` for the CSS coat. An earlier bake that flattened RGB
+ *   to white made every Unity varnish sample as a flat normal and every foil
+ *   mask as "everywhere".
  */
 
 /** Which conversion a mask needs, named for what the file *is*. */
@@ -44,10 +45,16 @@ function extensionFor(url: string): string {
  * Where a mask lands. The kind is part of the hash: the same file can serve as
  * both a foil mask and a varnish one, and the two bakes must not collide.
  *
+ * `v2` busts the first bake that wrote solid-white RGB — fine for CSS alpha,
+ * unusable for Unity fragments that sample `.xyz`.
+ *
  * Always PNG — the output carries an alpha channel, which JPEG has no room for.
  */
 export function maskUploadPath(url: string, kind: MaskKind): string {
-  const hash = crypto.createHash("md5").update(`${url}#${kind}`).digest("hex");
+  const hash = crypto
+    .createHash("md5")
+    .update(`${url}#${kind}#v2`)
+    .digest("hex");
   return `/uploads/${hash}.png`;
 }
 
@@ -76,11 +83,11 @@ export function normalMapCoverage(r: number, g: number, b: number): number {
 }
 
 /**
- * Bake coverage into the alpha channel, leaving RGB solid white.
+ * Bake coverage into alpha, and keep the RGB the Unity shaders sample.
  *
- * White because the RGB of a mask is irrelevant once alpha carries the coverage,
- * and white is what the publisher writes — a mask that is accidentally read as
- * luminance somewhere then still means "everywhere" rather than "nowhere".
+ * - Foil: greyscale luma in RGB + alpha — CSS and Unity agree.
+ * - Varnish: original normal-map RGB + coverage alpha — CSS uses alpha, Unity
+ *   decodes the normals from `.xyz`.
  */
 export async function bakeMask(input: Buffer, kind: MaskKind): Promise<Buffer> {
   const { data, info } = await sharp(input)
@@ -88,31 +95,36 @@ export async function bakeMask(input: Buffer, kind: MaskKind): Promise<Buffer> {
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const pixels = info.width * info.height;
-  const alpha = Buffer.allocUnsafe(pixels);
-  const coverage = kind === "varnish" ? normalMapCoverage : lumaOf;
+  const out = Buffer.allocUnsafe(info.width * info.height * 4);
 
-  for (let index = 0; index < pixels; index += 1) {
+  for (let index = 0; index < info.width * info.height; index += 1) {
     const at = index * info.channels;
-    alpha[index] = Math.round(
-      Math.min(
-        255,
-        Math.max(0, coverage(data[at], data[at + 1], data[at + 2])),
-      ),
-    );
+    const r = data[at];
+    const g = data[at + 1];
+    const b = data[at + 2];
+    const dest = index * 4;
+
+    if (kind === "foil") {
+      const coverage = Math.round(
+        Math.min(255, Math.max(0, lumaOf(r, g, b))),
+      );
+      out[dest] = coverage;
+      out[dest + 1] = coverage;
+      out[dest + 2] = coverage;
+      out[dest + 3] = coverage;
+    } else {
+      out[dest] = r;
+      out[dest + 1] = g;
+      out[dest + 2] = b;
+      out[dest + 3] = Math.round(
+        Math.min(255, Math.max(0, normalMapCoverage(r, g, b))),
+      );
+    }
   }
 
-  return sharp({
-    create: {
-      width: info.width,
-      height: info.height,
-      channels: 3,
-      background: { r: 255, g: 255, b: 255 },
-    },
+  return sharp(out, {
+    raw: { width: info.width, height: info.height, channels: 4 },
   })
-    .joinChannel(alpha, {
-      raw: { width: info.width, height: info.height, channels: 1 },
-    })
     .png()
     .toBuffer();
 }

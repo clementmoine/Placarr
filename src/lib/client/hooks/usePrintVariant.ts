@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 import { resolveStoredVariant } from "@/core/enrich/variants";
+import { getEffectPack } from "@/core/render/foil";
 import {
   peekPrintVariant,
   requestPrintVariant,
@@ -13,11 +14,14 @@ import {
   varnishShader,
   type HoloShader,
 } from "@/core/render/holoShaders";
+import "@/effects";
 
 /** What the provider says a printing exists as. Shape mirrors `PrintCandidate`. */
 export type PrintVariantInfo = {
   finishes?: string[];
   plainFinishes?: string[];
+  /** Effect pack id from `src/effects/<id>`. See `PrintCandidate.effectPack`. */
+  effectPack?: string | null;
   /** Finish -> shader id. See `PrintCandidate.finishShaders`. */
   finishShaders?: Record<string, string>;
   /** Varnish name -> shader id, and which varnish this print carries. */
@@ -88,6 +92,12 @@ export type VariantRendering = {
   /** The second coat, on the prints that carry two. */
   secondVarnishMaskUrl: string | null;
   secondVarnishColor: string | null;
+  /** Effect pack for WebGL foil rendering. Null when plain or unknown. */
+  effectPackId: string | null;
+  /** Catalogue finish name for this copy. Null when plain or unknown. */
+  finish: string | null;
+  /** Catalogue varnish type for this copy. Null when plain or absent. */
+  varnishType: string | null;
 };
 
 /**
@@ -111,6 +121,9 @@ export function variantRendering(
     varnishColor: null,
     secondVarnishMaskUrl: null,
     secondVarnishColor: null,
+    effectPackId: null,
+    finish: null,
+    varnishType: null,
   };
   if (!info) return plain;
 
@@ -122,16 +135,25 @@ export function variantRendering(
   );
   if (isPlainFinish) return plain;
 
+  const pack = getEffectPack(info.effectPack);
+  const css = pack?.resolveCss(resolved, info.varnishType) ?? null;
+
   return {
     imageUrl: info.variantImageUrls?.[resolved] ?? fallbackImageUrl,
     foilMaskUrl: info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,
-    shader: holoShader(info.finishShaders?.[resolved]),
+    shader: holoShader(
+      css?.finishShaderId ?? info.finishShaders?.[resolved],
+    ),
     varnish: varnishShader(
-      info.varnishType ? info.varnishShaders?.[info.varnishType] : null,
+      css?.varnishShaderId ??
+        (info.varnishType ? info.varnishShaders?.[info.varnishType] : null),
     ),
     varnishColor: info.varnishColor ?? null,
     secondVarnishMaskUrl: info.secondVarnishMaskUrl ?? null,
     secondVarnishColor: info.secondVarnishColor ?? null,
+    effectPackId: info.effectPack ?? null,
+    finish: resolved,
+    varnishType: info.varnishType ?? null,
   };
 }

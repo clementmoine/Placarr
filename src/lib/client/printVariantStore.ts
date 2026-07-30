@@ -22,9 +22,17 @@ import type { PrintVariantInfo } from "@/lib/client/hooks/usePrintVariant";
  */
 const MAX_BATCH_KEYS = 120;
 
+/**
+ * Bump when localized mask bytes change shape (e.g. bake v2 kept RGB for
+ * Unity). Print facts are otherwise immutable, but a session that resolved
+ * before the bake fix would keep serving white-RGB foil masks forever.
+ */
+/** Bumped for `effectPack` on PrintCandidate — stale sessions would stay CSS-only. */
+const PRINT_VARIANT_CACHE_VERSION = 3;
+
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {
-  return `${type}|${printKey}`;
+  return `v${PRINT_VARIANT_CACHE_VERSION}|${type}|${printKey}`;
 }
 
 /** Resolved answers, `null` for "asked, and this print is unknown". */

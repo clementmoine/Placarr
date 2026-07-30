@@ -71,7 +71,7 @@ export const HOLO_SHADER_IDS = [
 export type HoloShaderId = (typeof HOLO_SHADER_IDS)[number];
 
 /** Where the transcribed textures live. */
-const T = "/foil";
+const T = "/foil/lorcana/web";
 
 const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
   /** The everyday foil, on 2703 of 3154 prints. Achromatic, and inverted. */

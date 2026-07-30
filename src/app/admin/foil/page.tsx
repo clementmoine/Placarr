@@ -12,63 +12,63 @@ import {
   type PlayroomSample,
 } from "@/components/admin/FoilPlayroom";
 import { getItems } from "@/lib/api/items";
-import {
-  usePrintVariant,
-  variantRendering,
-} from "@/lib/client/hooks/usePrintVariant";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The foil bench.
  *
- * Drawn on a real card from the collection rather than a checked pattern: a
- * look only tells the truth over artwork it has to blend with, which is the
- * whole point of recipes built on `mix-blend-mode`. The sample is simply the
- * first print that carries a foil mask.
+ * Every look is drawn on a real print that actually carries that finish (and
+ * varnish, when the material bakes one in). Collection copies are preferred;
+ * the catalogue fills gaps so Magma is never shown on a Silver mask.
  */
 export default function FoilPlayroomPage() {
   const { data: session, status } = useSession();
   const isAdmin = session?.user?.role === "admin";
 
-  const { data: items, isLoading } = useQuery({
+  const { data: items, isLoading: itemsLoading } = useQuery({
     queryKey: ["foilPlayroomSample"],
     queryFn: () => getItems(),
     enabled: status === "authenticated" && isAdmin,
   });
 
-  /**
-   * Every foil copy, so each look can be shown on a card that actually carries
-   * its finish. A recipe ends in `mix-blend-mode` against the artwork, so a
-   * Lava look over a Lava print says something it cannot say over a Silver one.
-   */
-  const samples = useMemo<PlayroomSample[]>(
-    () =>
-      (items ?? [])
-        .filter((item) => item.printKey && item.variant)
-        .map((item) => ({
-          id: item.id,
-          name: item.name,
-          variant: item.variant ?? null,
-          printKey: item.printKey ?? null,
-          shelfType: item.shelf?.type ?? null,
-          imageUrl: item.imageUrl ?? null,
-        })),
-    [items],
-  );
+  const { data: catalog, isLoading: catalogLoading } = useQuery({
+    queryKey: ["foilPlayroomCatalog"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/foil-playroom-samples");
+      if (!response.ok) {
+        throw new Error("foil playroom catalog unavailable");
+      }
+      return (await response.json()) as { samples: PlayroomSample[] };
+    },
+    enabled: status === "authenticated" && isAdmin,
+  });
 
-  /** Whatever the collection happens to hold, for looks it owns no card of. */
-  const fallbackSample = samples[0] ?? null;
-  const printVariant = usePrintVariant(
-    fallbackSample?.printKey,
-    fallbackSample?.shelfType,
-  );
-  const view = variantRendering(
-    fallbackSample?.variant,
-    printVariant,
-    fallbackSample?.imageUrl ?? null,
-  );
+  const samples = useMemo<PlayroomSample[]>(() => {
+    const fromCollection = (items ?? [])
+      .filter((item) => item.printKey && item.variant)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        variant: item.variant ?? null,
+        printKey: item.printKey ?? null,
+        shelfType: item.shelf?.type ?? null,
+        imageUrl: item.imageUrl ?? null,
+      }));
 
-  if (status === "loading" || (isAdmin && isLoading)) {
+    const ownedKeys = new Set(
+      fromCollection.map((sample) => `${sample.printKey}|${sample.variant}`),
+    );
+
+    const fromCatalog = (catalog?.samples ?? []).filter(
+      (sample) =>
+        sample.printKey &&
+        !ownedKeys.has(`${sample.printKey}|${sample.variant}`),
+    );
+
+    return [...fromCollection, ...fromCatalog];
+  }, [catalog?.samples, items]);
+
+  if (status === "loading" || (isAdmin && (itemsLoading || catalogLoading))) {
     return (
       <div className="flex flex-col">
         <Header />
@@ -89,6 +89,11 @@ export default function FoilPlayroomPage() {
       </div>
     );
   }
+
+  const collectionCount = (items ?? []).filter(
+    (item) => item.printKey && item.variant,
+  ).length;
+  const catalogCount = samples.length - collectionCount;
 
   return (
     <div className="flex flex-col">
@@ -113,27 +118,24 @@ export default function FoilPlayroomPage() {
             {samples.length > 0 ? (
               <>
                 {" "}
-                Chaque effet sur une carte qui porte cette finition, quand la
-                collection en a une — {samples.length} exemplaires disponibles.
+                Chaque effet uniquement sur une carte adaptée —{" "}
+                {collectionCount} exemplaire
+                {collectionCount === 1 ? "" : "s"} en collection
+                {catalogCount > 0
+                  ? `, ${catalogCount} comblé${catalogCount === 1 ? "" : "s"} depuis le catalogue`
+                  : ""}
+                .
               </>
             ) : null}
           </p>
         </div>
 
-        {view.imageUrl && view.foilMaskUrl ? (
-          <FoilPlayroom
-            fallback={{
-              imageUrl: view.imageUrl,
-              maskUrl: view.foilMaskUrl,
-              varnishMaskUrl: view.varnishMaskUrl,
-            }}
-            samples={samples}
-          />
+        {samples.length > 0 ? (
+          <FoilPlayroom samples={samples} />
         ) : (
           <p className="text-sm text-muted-foreground">
-            Aucune carte à effet dans la collection pour servir de support — il
-            faut au moins un exemplaire dont la finition n&apos;est pas simple,
-            puisque c&apos;est son masque que la salle d&apos;essai réutilise.
+            Aucune carte à effet disponible (collection vide et catalogue
+            inaccessible).
           </p>
         )}
       </div>

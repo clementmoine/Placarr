@@ -42,6 +42,16 @@ describe("deviceOrientationStore", () => {
 
     expect(later.baseline).toBe(first);
     expect(later.gravity).not.toEqual(first);
+    expect(later.alpha).toBeNull();
+  });
+
+  it("smooths compass alpha for _DeviceRotationDegrees", () => {
+    pushOrientationReading({ alpha: 90, beta: 0, gamma: 0 });
+    expect(getOrientationSnapshot()!.alpha).toBe(90);
+    pushOrientationReading({ alpha: 100, beta: 0, gamma: 0 });
+    const next = getOrientationSnapshot()!.alpha!;
+    expect(next).toBeGreaterThan(90);
+    expect(next).toBeLessThan(100);
   });
 
   it("hands every reading to a fresh object, so a re-render is detectable", () => {

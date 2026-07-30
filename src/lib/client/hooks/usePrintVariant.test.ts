@@ -11,12 +11,21 @@ const info = {
 
 const BASE = "/uploads/card.jpg";
 
+const plainFields = {
+  effectPackId: null,
+  finish: null,
+  varnishType: null,
+};
+
 describe("variantRendering", () => {
   it("renders a foil copy with its masks", () => {
     expect(variantRendering("Silver", info, BASE)).toMatchObject({
       imageUrl: BASE,
       foilMaskUrl: "/uploads/mask.jpg",
       varnishMaskUrl: null,
+      effectPackId: null,
+      finish: "Silver",
+      varnishType: null,
     });
   });
 
@@ -26,6 +35,7 @@ describe("variantRendering", () => {
       imageUrl: BASE,
       foilMaskUrl: null,
       varnishMaskUrl: null,
+      ...plainFields,
     });
   });
 
@@ -44,12 +54,13 @@ describe("variantRendering", () => {
       imageUrl: BASE,
       foilMaskUrl: null,
       varnishMaskUrl: null,
+      ...plainFields,
     });
   });
 
   it("gives no effect when the copy has no variant", () => {
-    expect(variantRendering(null, info, BASE).foilMaskUrl).toBeNull();
-    expect(variantRendering("  ", info, BASE).foilMaskUrl).toBeNull();
+    expect(variantRendering(null, info, BASE)).toMatchObject(plainFields);
+    expect(variantRendering("  ", info, BASE)).toMatchObject(plainFields);
   });
 
   it("gives no effect before the provider has answered", () => {
@@ -57,6 +68,7 @@ describe("variantRendering", () => {
       imageUrl: BASE,
       foilMaskUrl: null,
       varnishMaskUrl: null,
+      ...plainFields,
     });
   });
 
@@ -98,5 +110,19 @@ describe("variantRendering", () => {
         BASE,
       ),
     ).toMatchObject({ varnishMaskUrl: "/uploads/v.jpg" });
+  });
+
+  it("carries effect pack metadata for foil copies", () => {
+    expect(
+      variantRendering(
+        "Silver",
+        { ...info, effectPack: "lorcana", varnishType: "HotFoil" },
+        BASE,
+      ),
+    ).toMatchObject({
+      effectPackId: "lorcana",
+      finish: "Silver",
+      varnishType: "HotFoil",
+    });
   });
 });

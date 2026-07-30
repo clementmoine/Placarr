@@ -39,7 +39,10 @@ const SELECTOR_TO_LOOK: Readonly<Record<string, string>> = {
  */
 function normalize(value: string | undefined): string {
   return (value ?? "")
-    .replace(/\/assets\/([a-z0-9]+)-[A-Za-z0-9_]+\.(jpg|png)/g, "/foil/$1.$2")
+    .replace(
+      /\/assets\/([a-z0-9]+)-[A-Za-z0-9_]+\.(jpg|png)/g,
+      "/foil/lorcana/web/$1.$2",
+    )
     .replace(/\btransparent\b/g, "#0000")
     .replace(/rgba\(255,\s*255,\s*255,\s*0?\.8\)/g, "#fffc")
     .replace(/(^|[^\d])0\.(\d)/g, "$1.$2")
@@ -109,7 +112,7 @@ describe("parity with the recipes these were transcribed from", () => {
                 /url\(data:image\/jpeg[^)]*\)/g,
                 "url(/assets/seawavec-inline.jpg)",
               )
-              .matchAll(/\/(?:assets|foil)\/([a-z0-9]+)[-.]/g),
+              .matchAll(/\/(?:assets|foil(?:\/[a-z]+)*)\/([a-z0-9]+)[-.]/g),
           ].map((match) => match[1]);
         expect(assets(holoShader(id).backgroundImage)).toEqual(
           assets(rules[selector]?.["background-image"]),

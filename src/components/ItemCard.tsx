@@ -10,7 +10,7 @@ import {
   SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
-import { HoloCardImage } from "@/components/HoloCardImage";
+import { FoilCardImage } from "@/components/FoilCardImage";
 import {
   usePrintVariant,
   variantRendering,
@@ -22,6 +22,7 @@ import {
 } from "@/lib/client/hooks/useImageEdgeColors";
 
 import { getAspectRatio } from "@/lib/text/cardFormat";
+import { formatFinishLabel } from "@/lib/text/finishLabel";
 import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import type { Condition } from "@/generated/prisma/browser";
@@ -102,6 +103,10 @@ function ItemCardInner(props: ItemCardProps) {
    * wore it.
    */
   const displayName = copyCount > 1 ? withoutCopyMarker(name) : name;
+  const titledName = displayName.replace(
+    / — ([A-Za-z][\w]*)$/u,
+    (_match, finish: string) => ` — ${formatFinishLabel(finish)}`,
+  );
   /**
    * A foil copy has to be recognisable in the grid, not only once opened —
    * otherwise the one thing that separates it from an ordinary copy is
@@ -221,9 +226,9 @@ function ItemCardInner(props: ItemCardProps) {
               ×{copyCount}
             </span>
           )}
-          {variantView.foilMaskUrl && (
-            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
-              ✦ {props.variant}
+          {variantView.foilMaskUrl && props.variant && (
+            <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
+              ✦ {formatFinishLabel(props.variant)}
             </span>
           )}
           {condition && (
@@ -258,13 +263,14 @@ function ItemCardInner(props: ItemCardProps) {
         >
           {/* Main Cover Image */}
           {foilMaskUrl ? (
-            <HoloCardImage
+            <FoilCardImage
+              effectPack={variantView.effectPackId}
               imageUrl={variantView.imageUrl ?? displayImageUrl}
               alt={name}
+              finish={variantView.finish}
+              varnishType={variantView.varnishType}
               maskUrl={foilMaskUrl}
               varnishMaskUrl={varnishMaskUrl}
-              shader={variantView.shader}
-              varnishShader={variantView.varnish}
               varnishColor={variantView.varnishColor}
               secondVarnishMaskUrl={secondVarnishMaskUrl}
               secondVarnishColor={variantView.secondVarnishColor}
@@ -301,7 +307,7 @@ function ItemCardInner(props: ItemCardProps) {
       {/* Glassmorphic bottom panel — title (stays above the enriching overlay) */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
         <span className="text-[10px] font-extrabold line-clamp-2 text-white leading-tight">
-          {displayName.trim().length > 0 ? displayName : t("common.noName")}
+          {titledName.trim().length > 0 ? titledName : t("common.noName")}
         </span>
       </div>
     </div>

@@ -66,11 +66,6 @@ type HoloCardImageProps = {
    * Defaults to whatever `tilt` says, which is the standalone case.
    */
   trackPointer?: boolean;
-  /**
-   * Label for the control that asks iOS for the motion sensor. Passed in rather
-   * than translated here so this component stays free of the locale plumbing.
-   */
-  tiltPromptLabel?: string;
   className?: string;
   children?: React.ReactNode;
 };
@@ -112,7 +107,6 @@ export function HoloCardImage({
   varnishColor,
   tilt = true,
   trackPointer = tilt,
-  tiltPromptLabel = "Incliner",
   className,
   children,
 }: HoloCardImageProps) {
@@ -138,12 +132,18 @@ export function HoloCardImage({
   const secondVarnishMaskId = `holoVarnish2${instanceId}`;
 
   /**
-   * On a touch screen there is no pointer to follow, so the card sat perfectly
-   * still — an effect that exists to be played with could not be. Tilting the
-   * phone is the gesture people already make holding a real card.
+   * On a touch screen there is no pointer to follow, so the light on the card
+   * sat perfectly still — an effect that exists to be played with could not be.
+   *
+   * Only the *light* is taken from the sensor here. Leaning the card is
+   * `FlippableCard`'s job, because a card is one object and its back has to turn
+   * with it; that component also owns the iOS prompt, and the sensor itself is
+   * shared, so a tap there starts the readings this reads.
    */
-  const deviceTilt = useDeviceTilt(MAX_TILT, trackPointer && Boolean(maskUrl));
-  const deviceLean = deviceTilt.lean;
+  const deviceLean = useDeviceTilt(
+    MAX_TILT,
+    trackPointer && Boolean(maskUrl),
+  ).lean;
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
 
@@ -441,24 +441,6 @@ export function HoloCardImage({
 
         {children}
       </div>
-
-      {/*
-        iOS hands the sensor over only after a tap, and only from a real user
-        gesture, so the tilt cannot start on its own there. One unobtrusive
-        control, shown solely on the platform that asks for it.
-      */}
-      {deviceTilt.needsPermission && (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            deviceTilt.requestPermission();
-          }}
-          className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm"
-        >
-          {tiltPromptLabel}
-        </button>
-      )}
     </div>
   );
 }

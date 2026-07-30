@@ -2826,6 +2826,7 @@ export default function ItemDetailsPage() {
                     backUrl={shelf?.cardBackUrl}
                     backAlt={`${itemDisplayName ?? ""} — dos`}
                     flipLabel={t("items.flipCard")}
+                    tiltPromptLabel={t("items.tiltPrompt")}
                   >
                     <HoloCardImage
                       imageUrl={variantView.imageUrl ?? zoomImageUrl}

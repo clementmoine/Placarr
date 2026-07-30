@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { leanFromPointer } from "@/core/render/deviceTilt";
+import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
+import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { cn } from "@/lib/shared/utils";
 
 type FlippableCardProps = {
@@ -13,6 +14,8 @@ type FlippableCardProps = {
   backAlt: string;
   /** Announced on the control, so this component stays free of locale plumbing. */
   flipLabel: string;
+  /** Label for the control that asks iOS for the motion sensor. Same reason. */
+  tiltPromptLabel: string;
   className?: string;
 };
 
@@ -58,6 +61,11 @@ export function showsBack(turn: number): boolean {
  * Both angles ride CSS custom properties, so following the pointer never
  * re-renders React; only the turn itself is state.
  *
+ * On a phone there is no pointer, so the lean comes from the handset's own
+ * orientation instead — tilting it is the gesture people already make holding a
+ * real card. The pointer wins whenever it is actually on the card: a laptop user
+ * tipping their screen is not making a gesture.
+ *
  * Without a back it still tips — a card is a physical object whether or not its
  * reverse is known — but it does not turn: a flip onto a placeholder would say
  * less than no flip at all. So the lean is unconditional and only the turn, the
@@ -72,6 +80,7 @@ export function FlippableCard({
   backUrl,
   backAlt,
   flipLabel,
+  tiltPromptLabel,
   className,
 }: FlippableCardProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -84,26 +93,59 @@ export function FlippableCard({
     setTurn((previous) => turnAfterPush(previous, fromRightHalf));
   }, []);
 
-  const applyPointer = useCallback((clientX: number, clientY: number) => {
+  const deviceTilt = useDeviceTilt(MAX_TILT);
+  const deviceLean = deviceTilt.lean;
+  /**
+   * Whether the pointer currently owns the lean. A ref rather than state: this
+   * component deliberately does not re-render as the cursor moves, and hovering
+   * is not a reason to break that.
+   */
+  const pointerOwnsLean = useRef(false);
+
+  const applyLean = useCallback((lean: Lean) => {
     const frame = frameRef.current;
     if (!frame) return;
-    const rect = frame.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-
-    const lean = leanFromPointer(
-      ((clientX - rect.left) / rect.width) * 100,
-      ((clientY - rect.top) / rect.height) * 100,
-      MAX_TILT,
-    );
     frame.style.setProperty("--flip-lean-x", `${lean.tiltX}deg`);
     frame.style.setProperty("--flip-lean-y", `${lean.tiltY}deg`);
   }, []);
 
+  const applyPointer = useCallback(
+    (clientX: number, clientY: number) => {
+      const frame = frameRef.current;
+      if (!frame) return;
+      const rect = frame.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      pointerOwnsLean.current = true;
+      applyLean(
+        leanFromPointer(
+          ((clientX - rect.left) / rect.width) * 100,
+          ((clientY - rect.top) / rect.height) * 100,
+          MAX_TILT,
+        ),
+      );
+    },
+    [applyLean],
+  );
+
   const rest = useCallback(() => {
+    pointerOwnsLean.current = false;
     const frame = frameRef.current;
-    frame?.style.setProperty("--flip-lean-x", "0deg");
-    frame?.style.setProperty("--flip-lean-y", "0deg");
-  }, []);
+    if (!frame) return;
+    // Back to however the phone is being held, when there is one — flat is only
+    // the resting position on a device with no orientation to fall back on.
+    if (deviceLean) {
+      applyLean(deviceLean);
+      return;
+    }
+    frame.style.setProperty("--flip-lean-x", "0deg");
+    frame.style.setProperty("--flip-lean-y", "0deg");
+  }, [applyLean, deviceLean]);
+
+  useEffect(() => {
+    if (!deviceLean || pointerOwnsLean.current) return;
+    applyLean(deviceLean);
+  }, [deviceLean, applyLean]);
 
   const canFlip = Boolean(backUrl);
 
@@ -179,6 +221,28 @@ export function FlippableCard({
           </div>
         )}
       </div>
+
+      {/*
+        iOS hands the sensor over only after a tap, and only from a real user
+        gesture, so the tilt cannot start on its own there. It lives on the card
+        rather than on its face because a plain card tilts too — and because one
+        tap has to serve every card on screen, which is what the shared store is
+        for.
+      */}
+      {deviceTilt.needsPermission && (
+        <button
+          type="button"
+          onClick={(event) => {
+            // The card's own click turns it over; asking for the sensor is not
+            // a request to flip.
+            event.stopPropagation();
+            deviceTilt.requestPermission();
+          }}
+          className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm"
+        >
+          {tiltPromptLabel}
+        </button>
+      )}
     </div>
   );
 }

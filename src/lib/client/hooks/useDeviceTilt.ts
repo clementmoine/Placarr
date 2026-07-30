@@ -1,27 +1,14 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
+import { leanFromGravity, type Lean } from "@/core/render/deviceTilt";
 import {
-  gravityFromOrientation,
-  leanFromGravity,
-  orientationNeedsPermission,
-  smoothGravity,
-  type GravityVector,
-  type Lean,
-} from "@/core/render/deviceTilt";
-
-/**
- * How much of each new reading to take. Low enough that a phone resting on a
- * table stops moving, high enough that the card still follows the wrist.
- */
-const SMOOTHING = 0.18;
+  getOrientationSnapshot,
+  orientationPermissionPending,
+  requestOrientationPermission,
+  subscribeToDeviceOrientation,
+} from "@/lib/client/deviceOrientationStore";
 
 export type DeviceTilt = {
   /** Latest lean, or `null` while there is no sensor and no permission. */
@@ -32,6 +19,8 @@ export type DeviceTilt = {
   requestPermission: () => void;
 };
 
+const NO_SUBSCRIPTION = () => () => {};
+
 /**
  * The lean of a card held in the hand, from the phone's own orientation.
  *
@@ -41,64 +30,46 @@ export type DeviceTilt = {
  *
  * Nothing happens on a device without the sensor, which is every desktop, so
  * the pointer path is left alone there rather than competing with it.
+ *
+ * The sensor itself is read once for the whole page — see
+ * `deviceOrientationStore`. `maxTilt` stays per caller, because how far a card
+ * leans is a property of that card, not of the phone.
  */
 export function useDeviceTilt(maxTilt: number, enabled = true): DeviceTilt {
-  const [lean, setLean] = useState<Lean | null>(null);
-  const [granted, setGranted] = useState(false);
+  const subscribe = useCallback(
+    (onChange: () => void) =>
+      enabled ? subscribeToDeviceOrientation(onChange) : NO_SUBSCRIPTION(),
+    [enabled],
+  );
+
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getOrientationSnapshot,
+    // No sensor during the server render, so the markup matches on arrival.
+    () => null,
+  );
 
   /**
-   * Whether this platform gates the sensor. Read through the store rather than
-   * an effect: it is a browser fact, not a consequence of rendering, and the
-   * server has to answer "no" so the markup matches on arrival.
+   * Whether this platform gates the sensor. Read through the store because a tap
+   * on any card's prompt grants it for all of them.
    */
   const gated = useSyncExternalStore(
-    () => () => {},
-    () => orientationNeedsPermission(window.DeviceOrientationEvent),
+    subscribe,
+    orientationPermissionPending,
     () => false,
   );
-  const needsPermission = enabled && gated && !granted;
 
-  // Held in refs, not state: readings arrive many times a second and none of
-  // them should cost a React render on their own.
-  const smoothed = useRef<GravityVector | null>(null);
-  const baseline = useRef<GravityVector | null>(null);
+  const lean = useMemo(
+    () =>
+      enabled && snapshot
+        ? leanFromGravity(snapshot.gravity, snapshot.baseline, maxTilt)
+        : null,
+    [enabled, snapshot, maxTilt],
+  );
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!("DeviceOrientationEvent" in window)) return;
-    // Asking is itself a decision the user has to make, so only surface it once
-    // something actually wants the tilt.
-    if (!enabled) return;
-    // Nothing arrives until the platform has been asked, and asking has to come
-    // from a tap — see `requestPermission`.
-    if (needsPermission) return;
-
-    const onOrientation = (event: DeviceOrientationEvent) => {
-      const gravity = gravityFromOrientation(event);
-      if (!gravity) return;
-
-      smoothed.current = smoothGravity(smoothed.current, gravity, SMOOTHING);
-      // Whatever angle the phone was at when the card appeared becomes flat.
-      baseline.current ??= smoothed.current;
-      setLean(leanFromGravity(smoothed.current, baseline.current, maxTilt));
-    };
-
-    window.addEventListener("deviceorientation", onOrientation);
-    return () => window.removeEventListener("deviceorientation", onOrientation);
-  }, [enabled, needsPermission, maxTilt]);
-
-  const requestPermission = useCallback(() => {
-    const eventClass = window.DeviceOrientationEvent;
-    if (!orientationNeedsPermission(eventClass)) return;
-    void eventClass
-      .requestPermission()
-      .then((response) => {
-        if (response === "granted") setGranted(true);
-      })
-      .catch(() => {
-        // Refused, or called outside a gesture. The pointer path still works.
-      });
-  }, []);
-
-  return { lean, needsPermission, requestPermission };
+  return {
+    lean,
+    needsPermission: enabled && gated,
+    requestPermission: requestOrientationPermission,
+  };
 }

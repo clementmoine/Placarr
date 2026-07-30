@@ -181,7 +181,7 @@
     "removeLogo": "Retirer le logo",
     "cardFormat": "Forme des cartes",
     "cardBackUrl": "Dos des cartes (URL)",
-    "cardBackUrlHint": "Aucun éditeur ne publie le dos de ses cartes. Collez une URL pour pouvoir retourner les cartes ; laissez vide et elles ne tourneront pas.",
+    "cardBackUrlHint": "Décoratif : le dos n’est pas récupéré automatiquement. Donnez une image ou une URL pour pouvoir retourner les cartes ; laissez vide et elles ne tourneront pas.",
     "invalidCardBackUrl": "L’adresse doit commencer par http:// ou https://",
     "cardFormats": {
       "default": "Par défaut ({type})",

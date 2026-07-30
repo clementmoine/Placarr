@@ -215,14 +215,16 @@ Les dos sont **constants par jeu** (une image, parfois deux selon l'époque),
 pas par carte — c'est quelques fichiers, pas un chantier de données. Un onglet
 dédié en plein écran, avec un retournement 3D, est une petite feature isolée.
 
-**Le dos n'est publié nulle part** _(cherché le 2026-07-29)_ : le catalogue
-Ravensburger n'a aucun champ `back`/`reverse`, `card_sets[]` ne porte qu'une
-vignette de set, leur visualiseur ne sert que deux logos, et le site
-marketing ne montre jamais une carte de dos — logique, leur visualiseur ne
-retourne jamais les cartes. Le fichier livré (`public/cardbacks/lorcana.webp`,
-400×560) vient d'un miroir communautaire et n'est **qu'un provisoire pour
-développer** : basse résolution face aux 1468×2048 des faces. À remplacer par
-un original Ravensburger/Lorcana dès qu'on en trouve un.
+**Ravensburger ne publie pas le dos** _(cherché le 2026-07-29)_ : son catalogue
+n'a aucun champ `back`/`reverse`, `card_sets[]` ne porte qu'une vignette de set,
+son visualiseur ne sert que deux logos, et le site marketing ne montre jamais
+une carte de dos — logique, leur visualiseur ne retourne jamais les cartes.
+Rien n'a été vérifié pour les autres éditeurs.
+
+Le dos est donc traité comme de la **décoration** : `Shelf.cardBackUrl`, une
+image ou une URL fournie par le collectionneur, rien de résolu automatiquement.
+Vide ⇒ les cartes ne se retournent pas, mais s'inclinent quand même : une carte
+reste un objet physique.
 
 ## 6 bis. Pièges LorcanaJSON (vérifiés, pas lus dans la doc)
 

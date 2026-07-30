@@ -203,12 +203,23 @@ export function HoloCardImage({
   /** No mask, no effect — better a plain card than a uniformly shiny one. */
   if (!maskUrl) {
     return (
-      <div className={cn("relative h-full w-full", className)}>
+      <div
+        /**
+         * Carries the frame's radius and clips to it, exactly as the foil branch
+         * does. Without this a plain card came out square-cornered wherever its
+         * frame relied on the card to clip — which is every card that is not
+         * foil, now that they all get the card treatment.
+         */
+        className={cn(
+          "relative h-full w-full overflow-hidden rounded-[inherit]",
+          className,
+        )}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUrl}
           alt={alt}
-          className={cn("h-full w-full", objectFitClass(fit))}
+          className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
         />
         {children}
       </div>

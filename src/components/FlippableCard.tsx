@@ -8,7 +8,7 @@ import { cn } from "@/lib/shared/utils";
 type FlippableCardProps = {
   /** The card itself — usually a `HoloCardImage`, effects and all. */
   children: React.ReactNode;
-  /** Where the back lives. Without one there is nothing to flip to. */
+  /** Where the back lives, if the collection was given one. */
   backUrl?: string | null;
   backAlt: string;
   /** Announced on the control, so this component stays free of locale plumbing. */

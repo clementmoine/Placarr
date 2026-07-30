@@ -181,7 +181,7 @@
     "removeLogo": "Remove logo",
     "cardFormat": "Card shape",
     "cardBackUrl": "Card back (URL)",
-    "cardBackUrlHint": "No publisher ships the back of its cards. Paste a URL to let cards turn over; leave it empty and they will not.",
+    "cardBackUrlHint": "Decorative: the back is not fetched automatically. Give an image or a URL to let cards turn over; leave it empty and they will not.",
     "invalidCardBackUrl": "The address must start with http:// or https://",
     "cardFormats": {
       "default": "Default ({type})",

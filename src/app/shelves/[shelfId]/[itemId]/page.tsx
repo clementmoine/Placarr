@@ -2298,12 +2298,9 @@ export default function ItemDetailsPage() {
               <div
                 onClick={() => coverImage && setZoomImageUrl(coverImage)}
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl shrink-0 select-none transition-all duration-300",
-                  // A leaning card needs room to lean; the holo view clips
-                  // itself with this radius instead.
-                  variantView.foilMaskUrl
-                    ? "overflow-visible"
-                    : "overflow-hidden",
+                  // Clips again now that nothing leans out of it — see the
+                  // `tilt={false}` below.
+                  "relative mx-auto md:mx-0 overflow-hidden rounded-2xl shrink-0 select-none transition-all duration-300",
                   coverImage
                     ? // No plate behind the cover: card art is opaque and edge
                       // to edge, so a white slab only framed it. Anything else
@@ -2336,6 +2333,16 @@ export default function ItemDetailsPage() {
                         varnishColor={variantView.varnishColor}
                         secondVarnishMaskUrl={secondVarnishMaskUrl}
                         secondVarnishColor={variantView.secondVarnishColor}
+                        /**
+                         * Flat here, exactly as in the grid. This cover sits in
+                         * a page of text, and a card that tips whenever the
+                         * cursor passes on its way to the metadata is restless
+                         * rather than alive. The sheen still drifts on its own,
+                         * so the print still reads as foil — and the click
+                         * opens the fullscreen card, which is where the
+                         * perspective, the lean and the turn belong.
+                         */
+                        tilt={false}
                       />
                     ) : (
                       <RemoteImage

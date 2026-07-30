@@ -137,8 +137,63 @@ describe("toPrintCandidate finishes", () => {
   it("stays silent on a finish nobody has looked at yet", () => {
     // Silence falls back to the everyday foil downstream, which is honest:
     // the copy is foil, we just have no better word for how.
+    //
+    // This used to be written with `Tempest`, which the library has had a look
+    // for all along — the test was asserting a real bug as if it were the
+    // intent, and that is why nothing caught it. The example has to be a name
+    // the publisher does not ship.
     expect(
-      toPrintCandidate(card({ foilTypes: ["Tempest"] })).finishShaders,
+      toPrintCandidate(card({ foilTypes: ["Kaleidoscope"] })).finishShaders,
+    ).toEqual({});
+  });
+});
+
+describe("the finish vocabulary", () => {
+  /**
+   * Every look the library defines must be reachable.
+   *
+   * The bug this pins was invisible for months: `tempest` and `calendarWave`
+   * were transcribed, tested for parity against the publisher's stylesheet, and
+   * then never added to the finish table — so both fell through to the everyday
+   * silver, and nothing said so. A look nothing maps to is dead weight that
+   * looks alive.
+   */
+  it("draws every finish the publisher ships with its own look", () => {
+    for (const [finish, look] of [
+      ["Silver", "silver"],
+      ["Satin", "satin"],
+      ["Lore", "lore"],
+      ["Lava", "lava"],
+      ["Magma", "magma"],
+      ["Glitter", "glitter"],
+      ["VerticalWave", "verticalWave"],
+      ["SeaWave", "seaWave"],
+      ["RainbowPillars", "rainbowPillars"],
+      ["FreeForm1", "freeForm"],
+      ["FreeForm2", "freeForm"],
+      ["Tempest", "tempest"],
+      ["CalendarWave", "calendarWave"],
+    ] as const) {
+      expect(
+        toPrintCandidate(card({ foilTypes: ["None", finish] })).finishShaders,
+        `${finish} is drawn as something other than ${look}`,
+      ).toEqual({ [finish]: look });
+    }
+  });
+
+  it("leaves a plain copy with no look at all", () => {
+    // `None` in either table would hand an ordinary print a foil.
+    expect(
+      toPrintCandidate(card({ foilTypes: ["None"] })).finishShaders,
+    ).toEqual({});
+  });
+
+  it("says nothing about a finish it has never seen", () => {
+    // Falling back to silver is right for an unknown *print*; claiming a
+    // mapping for an unknown *name* would hide the next missing finish.
+    expect(
+      toPrintCandidate(card({ foilTypes: ["None", "Kaleidoscope"] }))
+        .finishShaders,
     ).toEqual({});
   });
 });

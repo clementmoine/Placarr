@@ -70,6 +70,12 @@ const FINISH_SHADERS: Readonly<Record<string, string>> = {
   RainbowPillars: "rainbowPillars",
   FreeForm1: "freeForm",
   FreeForm2: "freeForm",
+  // Both looks were transcribed months ago and then never wired up: the two
+  // names were missing from this table alone, so every Tempest and CalendarWave
+  // print fell through to the everyday silver. Found by reading the mobile
+  // app's own finish vocabulary — see `docs/tcg_support.md` §7.
+  Tempest: "tempest",
+  CalendarWave: "calendarWave",
 };
 
 /**

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   holoLayerStyle,
   maskedByStyle,
+  type HoloTuning,
   holoShader,
   NEUTRAL_VARNISH_COLOR,
   varnishShader as varnishShaderFor,
@@ -56,6 +57,11 @@ type HoloCardImageProps = {
    * nothing to say about.
    */
   varnishColor?: string | null;
+  /**
+   * Push the look along the publisher's own axes. Absent means the transcribed
+   * recipe exactly — see `HoloTuning`. Only the playroom passes this.
+   */
+  tuning?: HoloTuning;
   /**
    * Whether the card leans under the pointer.
    *
@@ -110,6 +116,7 @@ export function HoloCardImage({
   shader = holoShader(null),
   varnishShader = varnishShaderFor(null),
   varnishColor,
+  tuning,
   tilt = true,
   trackPointer = tilt,
   className,
@@ -357,7 +364,7 @@ export function HoloCardImage({
             <div
               aria-hidden
               style={{
-                ...holoLayerStyle(shader),
+                ...holoLayerStyle(shader, tuning),
                 ...maskedByStyle(foilMask),
               }}
               className="pointer-events-none absolute inset-0"
@@ -373,7 +380,7 @@ export function HoloCardImage({
               <div
                 aria-hidden
                 style={{
-                  ...holoLayerStyle(holoShader(shader.overlay)),
+                  ...holoLayerStyle(holoShader(shader.overlay), tuning),
                   ...maskedByStyle(foilMask),
                 }}
                 className="pointer-events-none absolute inset-0"
@@ -384,7 +391,7 @@ export function HoloCardImage({
               <div
                 aria-hidden
                 style={{
-                  ...holoLayerStyle(varnishShader),
+                  ...holoLayerStyle(varnishShader, tuning),
                   ...maskedByStyle(varnishMask),
                 }}
                 className="pointer-events-none absolute inset-0"
@@ -395,7 +402,7 @@ export function HoloCardImage({
               <div
                 aria-hidden
                 style={{
-                  ...holoLayerStyle(varnishShader),
+                  ...holoLayerStyle(varnishShader, tuning),
                   // The second coat sweeps its own hue, which is why the recipes
                   // keep `--topcolor2` apart from `--topcolor`.
                   backgroundImage: holoLayerStyle(

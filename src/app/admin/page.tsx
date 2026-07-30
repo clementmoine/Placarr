@@ -38,6 +38,7 @@ import {
   Play,
   Loader2,
   FlaskConical,
+  Sparkles,
   Terminal,
 } from "lucide-react";
 import { useAccount } from "@/lib/client/hooks/useAccount";
@@ -755,6 +756,17 @@ function AdminDashboardComponent() {
               {locale === "fr" ? "Teardown" : "Teardown"}
             </TabsTrigger>
           </TabsList>
+
+          {/* Its own route rather than a fourth tab: the bench renders sixteen
+              live cards, and mounting those behind a tab nobody opened would
+              cost every admin visit a foil grid. */}
+          <Link
+            href="/admin/foil"
+            className="inline-flex w-fit items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            <Sparkles className="size-4" />
+            {locale === "fr" ? "Salle d'essai des effets" : "Foil playroom"}
+          </Link>
 
           <TabsContent value="refresh" className="space-y-6 outline-none">
             <MetadataRefreshPanel />

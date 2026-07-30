@@ -209,3 +209,65 @@ describe("maskedByStyle", () => {
     ).toBe('url("/uploads/xy.png")');
   });
 });
+
+describe("holoLayerStyle tuning", () => {
+  it("leaves the transcribed recipe untouched when nothing is asked", () => {
+    // The whole safety of the tuning API: an absent or unit tuning must be
+    // byte-identical, because the recipes are pinned against the publisher's
+    // stylesheet and a nudged default would quietly break that.
+    for (const id of HOLO_SHADER_IDS) {
+      const plain = holoLayerStyle(holoShader(id));
+      expect(holoLayerStyle(holoShader(id), {})).toEqual(plain);
+      expect(
+        holoLayerStyle(holoShader(id), {
+          rainbow: 1,
+          inkwash: 1,
+          motif: 1,
+          grain: 1,
+        }),
+      ).toEqual(plain);
+    }
+  });
+
+  it("adds saturation for rainbow rather than replacing the look's own", () => {
+    const style = holoLayerStyle(holoShader("silver"), { rainbow: 2 });
+    // Silver already desaturates to 0.2; the axis composes onto that.
+    expect(style.filter).toBe("brightness(1.6) saturate(0.2) invert() saturate(2)");
+  });
+
+  it("darkens as the wash gets stronger, and lifts as it weakens", () => {
+    const strong = holoLayerStyle(holoShader("magma"), { inkwash: 2 });
+    expect(strong.filter).toBe("brightness(0.5) contrast(2)");
+
+    const weak = holoLayerStyle(holoShader("magma"), { inkwash: 0.5 });
+    expect(weak.filter).toBe("brightness(2) contrast(0.5)");
+  });
+
+  it("scales a look that declares no filter of its own", () => {
+    // `magma` has no filter, so the axis must not produce `undefined saturate(…)`.
+    expect(holoShader("magma").filter).toBeUndefined();
+    expect(holoLayerStyle(holoShader("magma"), { rainbow: 1.5 }).filter).toBe(
+      "saturate(1.5)",
+    );
+  });
+
+  it("weights the whole layer, treating a look with no opacity as opaque", () => {
+    expect(holoLayerStyle(holoShader("silver"), { motif: 0.5 }).opacity).toBe(
+      0.25,
+    );
+    // `lore` declares none, so the weight applies to a full 1.
+    expect(holoShader("lore").opacity).toBeUndefined();
+    expect(holoLayerStyle(holoShader("lore"), { motif: 0.4 }).opacity).toBe(0.4);
+  });
+
+  it("scales the grain by resizing every length, keeping keywords intact", () => {
+    // `cover` and `contain` have no size to scale, and dropping them would
+    // change which layer covers the card.
+    expect(
+      holoLayerStyle(holoShader("lava"), { grain: 2 }).backgroundSize,
+    ).toBe("cover, 600% 600%");
+    expect(
+      holoLayerStyle(holoShader("silver"), { grain: 0.5 }).backgroundSize,
+    ).toBe("150% 50%, 50% 50%");
+  });
+});

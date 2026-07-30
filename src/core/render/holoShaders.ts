@@ -317,16 +317,96 @@ export function varnishShader(id: string | null | undefined): HoloShader {
 }
 
 /** The inline style a look resolves to, ready for the layer element. */
-export function holoLayerStyle(shader: HoloShader): CSSProperties {
+/**
+ * The axes a look can be pushed along, named after the publisher's own.
+ *
+ * Their mobile app exposes each effect as one shader plus a set of parameters —
+ * several finishes share a shader graph and differ only by these. Seven of those
+ * families have a CSS equivalent and are reproduced here; the rest
+ * (`_Parallax`, `_FoilDisplacementStrength`, `_VarnishBevelStrength`,
+ * `_VarnishOutlineStrength`) are per-pixel surface lighting against a normal,
+ * which a stack of blend modes cannot express at all — see
+ * `docs/tcg_support.md` §9.
+ *
+ * Every value is a **multiplier around 1**, so an absent or unit tuning leaves
+ * the transcribed recipe byte for byte. That matters: the recipes are pinned
+ * against the publisher's stylesheet by `holoShaderParity.test.ts`, and a
+ * default that nudged them would break the one thing keeping us honest.
+ */
+export type HoloTuning = {
+  /** `_RainbowStrength` — how much colour the look throws. */
+  rainbow?: number;
+  /** `_Inkwash_Strength` — how dark and contrasted the wash under it sits. */
+  inkwash?: number;
+  /** `_MotifColorWeight` — how strongly the whole layer reads. */
+  motif?: number;
+  /** `_GlitterSize` — the scale of the texture's own grain. */
+  grain?: number;
+};
+
+const UNTUNED: Required<HoloTuning> = {
+  rainbow: 1,
+  inkwash: 1,
+  motif: 1,
+  grain: 1,
+};
+
+/** `2.5` -> `2.5`, but `2.50000001` -> `2.5`: keeps generated CSS readable. */
+function round(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
+/**
+ * Scale every length in a `background-size` list.
+ *
+ * Keywords (`cover`, `contain`, `auto`) have no size to scale and are passed
+ * through — scaling them is meaningless, and dropping them would change which
+ * layer covers.
+ */
+function scaleBackgroundSize(size: string, factor: number): string {
+  if (factor === 1) return size;
+  return size.replace(
+    /(\d*\.?\d+)%/g,
+    (_, value: string) => `${round(Number(value) * factor)}%`,
+  );
+}
+
+/** Compose a filter function onto whatever the look already declares. */
+function withFilter(
+  base: string | undefined,
+  added: string[],
+): string | undefined {
+  const extra = added.join(" ").trim();
+  if (!extra) return base;
+  return base ? `${base} ${extra}` : extra;
+}
+
+export function holoLayerStyle(
+  shader: HoloShader,
+  tuning?: HoloTuning,
+): CSSProperties {
+  const { rainbow, inkwash, motif, grain } = { ...UNTUNED, ...tuning };
+
+  const added: string[] = [];
+  if (rainbow !== 1) added.push(`saturate(${round(rainbow)})`);
+  if (inkwash !== 1) {
+    // The wash is what darkens and compacts the look; more of it means less
+    // brightness and more contrast, which is why the two move oppositely.
+    added.push(`brightness(${round(1 / inkwash)}) contrast(${round(inkwash)})`);
+  }
+
   return {
     backgroundImage: shader.backgroundImage,
     backgroundRepeat: shader.backgroundRepeat,
-    backgroundSize: shader.backgroundSize,
+    backgroundSize: scaleBackgroundSize(shader.backgroundSize, grain),
     backgroundPosition: shader.backgroundPosition,
     backgroundBlendMode: shader.backgroundBlendMode,
     mixBlendMode: shader.mixBlendMode as CSSProperties["mixBlendMode"],
-    opacity: shader.opacity,
-    filter: shader.filter,
+    // A look with no opacity of its own is fully opaque, so the weight has
+    // something to scale either way.
+    opacity:
+      motif === 1 ? shader.opacity : round((shader.opacity ?? 1) * motif),
+    filter: withFilter(shader.filter, added),
   };
 }
 

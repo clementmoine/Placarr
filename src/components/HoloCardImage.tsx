@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
 
 import {
   holoLayerStyle,
@@ -77,6 +77,8 @@ type HoloCardImageProps = {
    * Defaults to whatever `tilt` says, which is the standalone case.
    */
   trackPointer?: boolean;
+  /** Fired when the artwork finishes loading (for letterbox edge bleed, etc.). */
+  onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
   children?: React.ReactNode;
 };
@@ -119,6 +121,7 @@ export function HoloCardImage({
   tuning,
   tilt = true,
   trackPointer = tilt,
+  onLoad,
   className,
   children,
 }: HoloCardImageProps) {
@@ -248,6 +251,7 @@ export function HoloCardImage({
           src={imageUrl}
           alt={alt}
           draggable={false}
+          onLoad={onLoad}
           className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
         />
         {children}
@@ -357,6 +361,7 @@ export function HoloCardImage({
                 if (art.naturalWidth && art.naturalHeight) {
                   setArtRatio(`${art.naturalWidth} / ${art.naturalHeight}`);
                 }
+                onLoad?.(event);
               }}
               className={cn("h-full w-full", objectFitClass(fit))}
             />

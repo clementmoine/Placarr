@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, type SyntheticEvent } from "react";
+import React, { useMemo, useRef, useState, type SyntheticEvent } from "react";
 import type { Item } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
@@ -142,6 +142,7 @@ function ItemCardInner(props: ItemCardProps) {
     variantView.secondVarnishMaskUrl,
   );
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
+  const artFrameRef = useRef<HTMLDivElement | null>(null);
   const isEnriching = isItemMetadataBusy(props);
   /**
    * Covers are contained, so a portrait box art in a landscape tile — or the
@@ -183,7 +184,13 @@ function ItemCardInner(props: ItemCardProps) {
 
   const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
     setImageFit("contain");
-    measureEdges(event.currentTarget);
+    const frame = artFrameRef.current;
+    measureEdges(
+      event.currentTarget,
+      frame
+        ? { width: frame.clientWidth, height: frame.clientHeight }
+        : undefined,
+    );
   };
 
   const estimatedPrice = useMemo(() => {
@@ -268,9 +275,12 @@ function ItemCardInner(props: ItemCardProps) {
 
       {displayImageUrl ? (
         <div
-          className="w-full h-full bg-white relative overflow-hidden"
+          ref={artFrameRef}
+          className="w-full h-full bg-zinc-200 dark:bg-zinc-950 relative overflow-hidden"
           style={
-            edgeColors ? { background: edgeGradient(edgeColors) } : undefined
+            edgeColors && !foilMaskUrl
+              ? { background: edgeGradient(edgeColors) }
+              : undefined
           }
         >
           {/* Main Cover Image */}
@@ -286,7 +296,12 @@ function ItemCardInner(props: ItemCardProps) {
               varnishColor={variantView.varnishColor}
               secondVarnishMaskUrl={secondVarnishMaskUrl}
               secondVarnishColor={variantView.secondVarnishColor}
-              fit={imageFit}
+              // Cover: TCG scans are ~tile ratio, and `contain` leaves a 1px
+              // letterbox whose edge bleed samples the print's white border.
+              fit="cover"
+              // Grids stay on CSS foil: WebGL is for the detail hero / fullscreen
+              // only (one context, readable art).
+              backend="css"
               // A wall of tiles each tipping under the cursor reads as the page
               // squirming. The light still drifts, which is what marks the copy.
               tilt={false}

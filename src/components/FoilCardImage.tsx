@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 
 import { HoloCardImage } from "@/components/HoloCardImage";
 import {
@@ -31,10 +39,11 @@ import "@/effects";
  * Product face for foil prints: metadata in, engine out.
  *
  * Callers pass catalogue finish / varnish / masks — never Unity material names
- * and never a backend choice (except the playroom override). Default is WebGL
- * when WebGL2 + resolved material + pool slot allow; otherwise the full CSS
- * stack via `HoloCardImage`. CSS paints first while WebGL loads, then unmounts
- * once the canvas is ready — no permanent double render.
+ * and never a backend choice (except the playroom override or grid `css`).
+ * Default is WebGL when WebGL2 + resolved material + pool slot allow; otherwise
+ * the full CSS stack via `HoloCardImage`. Grids force `backend="css"`; detail
+ * and fullscreen leave `auto`. CSS paints first while WebGL loads, then
+ * unmounts once the canvas is ready — no permanent double render.
  */
 
 const MAX_TILT = 18;
@@ -79,6 +88,8 @@ type FoilCardImageProps = {
   trackPointer?: boolean;
   /** Playroom override. Product leaves `auto`. */
   backend?: FoilBackendPreference;
+  /** Fired when the artwork finishes loading (for letterbox edge bleed, etc.). */
+  onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
   children?: React.ReactNode;
 };
@@ -136,6 +147,7 @@ function CssFoilFace({
   tuning,
   tilt,
   trackPointer,
+  onLoad,
   className,
   children,
 }: {
@@ -152,6 +164,7 @@ function CssFoilFace({
   tuning?: HoloTuning;
   tilt?: boolean;
   trackPointer?: boolean;
+  onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -170,6 +183,7 @@ function CssFoilFace({
       tuning={tuning}
       tilt={tilt}
       trackPointer={trackPointer}
+      onLoad={onLoad}
       className={className}
     >
       {children}
@@ -211,6 +225,7 @@ export function FoilCardImage({
   tilt = true,
   trackPointer = tilt,
   backend: preference = "auto",
+  onLoad,
   className,
   children,
 }: FoilCardImageProps) {
@@ -260,6 +275,9 @@ export function FoilCardImage({
    * WebGL is *desired* for this card (material + caps + preference). Visibility
    * and pool are applied separately — the frame must stay mounted whenever
    * this is true so IntersectionObserver can flip `inView`.
+   *
+   * Grids pass `backend="css"`; detail / fullscreen leave `auto` (WebGL with
+   * CSS fallback).
    */
   const eligible =
     !failed &&
@@ -475,6 +493,7 @@ export function FoilCardImage({
       tuning={tuning}
       tilt={tilt}
       trackPointer={trackPointer}
+      onLoad={onLoad}
       className={eligible ? undefined : className}
     >
       {!eligible ? children : null}
@@ -581,6 +600,7 @@ export function FoilCardImage({
                     tuning={tuning}
                     tilt={false}
                     trackPointer={false}
+                    onLoad={onLoad}
                   />
                 </div>
               )}
@@ -595,6 +615,7 @@ export function FoilCardImage({
                   if (art.naturalWidth && art.naturalHeight) {
                     setArtRatio(`${art.naturalWidth} / ${art.naturalHeight}`);
                   }
+                  onLoad?.(event);
                 }}
                 className="pointer-events-none h-full w-full object-contain opacity-0"
               />

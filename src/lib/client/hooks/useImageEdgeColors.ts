@@ -133,17 +133,22 @@ function readEdgeStrip(
  * Stays `null` for an image that cannot be measured — a missing answer must fall
  * back to the plain background, never to a guessed colour.
  */
+/** Optional frame size when the `<img>` no longer fills the letterbox box. */
+export type EdgeMeasureBox = { width: number; height: number };
+
 export function useImageEdgeColors(): {
   colors: ImageEdgeColors | null;
-  measure: (image: HTMLImageElement) => void;
+  measure: (image: HTMLImageElement, box?: EdgeMeasureBox) => void;
   reset: () => void;
 } {
   const [colors, setColors] = useState<ImageEdgeColors | null>(null);
 
-  const measure = useCallback((image: HTMLImageElement) => {
+  const measure = useCallback((image: HTMLImageElement, box?: EdgeMeasureBox) => {
     if (!image.naturalWidth || !image.naturalHeight) return;
-    const boxWidth = image.clientWidth || image.width;
-    const boxHeight = image.clientHeight || image.height;
+    // Foil CSS nests the art in a ratio box; letterboxing lives on the outer
+    // frame — pass that frame here or the axis reads as "no gap".
+    const boxWidth = box?.width || image.clientWidth || image.width;
+    const boxHeight = box?.height || image.clientHeight || image.height;
     if (!boxWidth || !boxHeight) return;
 
     try {

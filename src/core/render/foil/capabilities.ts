@@ -86,3 +86,32 @@ export function astcFormatConstant(
 }
 
 export { ASTC_FORMAT_NAMES };
+
+/**
+ * How many device pixels to render per CSS pixel, for a card of this width.
+ *
+ * The renderer composites the artwork itself — the `<img>` beside it is held at
+ * `opacity-0` and only carries the alt text and the natural ratio — so this is
+ * the resolution of the whole card, rules text included. That is why it cannot
+ * simply be 1 everywhere.
+ *
+ * But a grid tile measures ~107 CSS pixels across, where the rules text is
+ * around 4px tall and unreadable at any sampling. Rendering it at ×2 cost four
+ * times the fill for detail nobody can resolve: measured at 38 Mpixels/s across
+ * ten tiles, with the page already at 42fps on a desktop GPU.
+ *
+ * So: full sharpness where a card is actually being looked at, and one device
+ * pixel per CSS pixel for thumbnails. The threshold is a judgement — a card
+ * wider than this is one you are reading, narrower is one you are scanning past
+ * — and it is deliberately below the fullscreen and detail-hero sizes.
+ */
+export const FOIL_SHARP_WIDTH_PX = 200;
+
+export function foilRenderScale(
+  cssWidth: number,
+  devicePixelRatio: number,
+): number {
+  // Never below 1: sub-sampling a card is visible even in a thumbnail.
+  const cap = cssWidth >= FOIL_SHARP_WIDTH_PX ? 2 : 1;
+  return Math.max(1, Math.min(devicePixelRatio, cap));
+}

@@ -7,6 +7,8 @@ import {
   astcFormatConstant,
   getFoilCapabilities,
 } from "@/core/render/foil/capabilities";
+import { foilClockSeconds, subscribeFoilFrame } from "../clock";
+
 import type {
   FoilAstcBinding,
   FoilFilter,
@@ -110,7 +112,10 @@ const WRAP_GL: Record<FoilWrap, number> = {
   mirrorOnce: 0,
 };
 
-function wrapMode(gl: WebGL2RenderingContext, wrap: FoilWrap | undefined): number {
+function wrapMode(
+  gl: WebGL2RenderingContext,
+  wrap: FoilWrap | undefined,
+): number {
   switch (wrap) {
     case "clamp":
       return gl.CLAMP_TO_EDGE;
@@ -170,7 +175,9 @@ const ROLE_FALLBACK: Record<string, [number, number, number, number]> = {
   normals: [128, 128, 255, 255],
 };
 
-function recoverFoilMaskRgb(image: ImageBitmap): ImageBitmap | Promise<ImageBitmap> {
+function recoverFoilMaskRgb(
+  image: ImageBitmap,
+): ImageBitmap | Promise<ImageBitmap> {
   const probe = document.createElement("canvas");
   probe.width = Math.min(image.width, 64);
   probe.height = Math.min(image.height, 64);
@@ -249,7 +256,13 @@ export function createWebglFoilRenderer(
   let paused = document.visibilityState === "hidden";
   let tilt: readonly [number, number] = [0, 0];
   let deviceRotation = material.floats._DeviceRotationDegrees ?? 0;
-  let timeOrigin = performance.now();
+  /**
+   * Unsubscribe from the shared clock, when this renderer is animating.
+   *
+   * The origin is the clock's, not ours: cards created seconds apart while
+   * scrolling used to shimmer out of phase, because each captured its own.
+   */
+  let unsubscribeClock: (() => void) | null = null;
   const texturesBySlot = new Map<string, WebGLTexture>();
 
   function onVisibilityChange() {
@@ -259,6 +272,7 @@ export function createWebglFoilRenderer(
         cancelAnimationFrame(frame);
         frame = 0;
       }
+      syncClock();
       return;
     }
     if (scrollMode === "time" && active) scheduleDraw();
@@ -295,19 +309,10 @@ export function createWebglFoilRenderer(
     const wrap = isRole ? "clamp" : (binding?.wrap ?? "repeat");
     // Compressed ASTC dumps are level-0 only — generateMipmap is illegal on
     // them, and a mip minFilter without a chain samples black.
-    const mipmaps =
-      !options.compressed && !isRole && Boolean(binding?.mipmaps);
+    const mipmaps = !options.compressed && !isRole && Boolean(binding?.mipmaps);
     const filter = binding?.filter ?? "bilinear";
-    gl!.texParameteri(
-      gl!.TEXTURE_2D,
-      gl!.TEXTURE_WRAP_S,
-      wrapMode(gl!, wrap),
-    );
-    gl!.texParameteri(
-      gl!.TEXTURE_2D,
-      gl!.TEXTURE_WRAP_T,
-      wrapMode(gl!, wrap),
-    );
+    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, wrapMode(gl!, wrap));
+    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, wrapMode(gl!, wrap));
     gl!.texParameteri(
       gl!.TEXTURE_2D,
       gl!.TEXTURE_MIN_FILTER,
@@ -508,7 +513,7 @@ export function createWebglFoilRenderer(
     };
   }
 
-  function draw() {
+  function draw(seconds = foilClockSeconds()) {
     frame = 0;
     if (destroyed || !active || paused) return;
     gl!.viewport(0, 0, canvas.width, canvas.height);
@@ -518,7 +523,7 @@ export function createWebglFoilRenderer(
 
     if (active.tiltLoc) gl!.uniform2f(active.tiltLoc, tilt[0], tilt[1]);
     if (active.cosTimeLoc) {
-      const cos = foilCosTime((performance.now() - timeOrigin) / 1000);
+      const cos = foilCosTime(seconds);
       gl!.uniform4f(active.cosTimeLoc, cos[0], cos[1], cos[2], cos[3]);
     }
     if (active.deviceRotLoc) {
@@ -533,24 +538,38 @@ export function createWebglFoilRenderer(
     }
 
     gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
-
-    if (scrollMode === "time" && !destroyed && !paused) {
-      frame = requestAnimationFrame(draw);
-    }
   }
 
-  function scheduleDraw() {
-    if (paused) return;
-    if (scrollMode === "time") {
-      if (!frame) frame = requestAnimationFrame(draw);
+  /** Follow the shared clock while animating; stop the moment we are not. */
+  function syncClock() {
+    const wants = scrollMode === "time" && !destroyed && !paused && !!active;
+    if (wants === Boolean(unsubscribeClock)) return;
+    if (wants) {
+      unsubscribeClock = subscribeFoilFrame((seconds) => draw(seconds));
       return;
     }
-    if (!frame) frame = requestAnimationFrame(draw);
+    unsubscribeClock?.();
+    unsubscribeClock = null;
+  }
+
+  /**
+   * A one-off draw, for the tilt path and for state changes.
+   *
+   * The time path does not go through here — it is driven by the shared clock,
+   * which already ticks every frame.
+   */
+  function scheduleDraw() {
+    if (paused) return;
+    syncClock();
+    if (scrollMode === "time") return;
+    if (!frame) frame = requestAnimationFrame(() => draw());
   }
 
   function activate(mode: WebglFoilScrollMode) {
     const next =
-      mode === "time" ? (timeProgram ?? tiltProgram) : (tiltProgram ?? timeProgram);
+      mode === "time"
+        ? (timeProgram ?? tiltProgram)
+        : (tiltProgram ?? timeProgram);
     if (!next || next === active) {
       scrollMode = mode;
       scheduleDraw();
@@ -626,6 +645,10 @@ export function createWebglFoilRenderer(
     },
     destroy() {
       destroyed = true;
+      // Before anything else: a live subscription would keep the shared clock
+      // ticking for a renderer whose context is about to be lost.
+      unsubscribeClock?.();
+      unsubscribeClock = null;
       document.removeEventListener("visibilitychange", onVisibilityChange);
       if (frame) cancelAnimationFrame(frame);
       gl.getExtension("WEBGL_lose_context")?.loseContext();

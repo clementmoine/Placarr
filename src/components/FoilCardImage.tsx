@@ -14,6 +14,7 @@ import {
   type FoilBackendPreference,
   type FoilCapabilities,
   type FoilMaterial,
+  foilRenderScale,
 } from "@/core/render/foil";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import {
@@ -416,8 +417,15 @@ export function FoilCardImage({
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
-      canvas.width = Math.round(width * 2);
-      canvas.height = Math.round(height * 2);
+      // Scaled to what the card is actually worth reading at — see
+      // `foilRenderScale`. A grid thumbnail at x2 paid four times the fill for
+      // rules text four pixels tall.
+      const scale = foilRenderScale(width, window.devicePixelRatio || 1);
+      const nextWidth = Math.round(width * scale);
+      const nextHeight = Math.round(height * scale);
+      if (canvas.width === nextWidth && canvas.height === nextHeight) return;
+      canvas.width = nextWidth;
+      canvas.height = nextHeight;
       const [x, y] = tiltUniformRef.current;
       rendererRef.current?.setTilt(x, y);
     });
@@ -512,7 +520,10 @@ export function FoilCardImage({
       onPointerCancel={useWebgl ? reset : undefined}
       style={
         useWebgl
-          ? ({ "--rotateX": "0deg", "--rotateY": "0deg" } as React.CSSProperties)
+          ? ({
+              "--rotateX": "0deg",
+              "--rotateY": "0deg",
+            } as React.CSSProperties)
           : undefined
       }
       className={cn(

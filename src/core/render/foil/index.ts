@@ -38,12 +38,10 @@ export {
   subscribeFoilPool,
 } from "./pool";
 
-export {
-  getEffectPack,
-  listEffectPacks,
-  registerEffectPack,
-} from "./registry";
+export { getEffectPack, listEffectPacks, registerEffectPack } from "./registry";
 
 export { selectFoilBackend } from "./selectBackend";
 
 export { resolveCardBackUrl } from "./resolveBack";
+export { foilRenderScale, FOIL_SHARP_WIDTH_PX } from "./capabilities";
+export { subscribeFoilFrame, foilClockSeconds } from "./clock";

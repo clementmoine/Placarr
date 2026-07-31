@@ -36,6 +36,13 @@ import type {
   PriceObservation,
   SerializedPriceObservation,
 } from "@/core/commerce/pricing/priceTypes";
+import {
+  convertCents,
+  DISPLAY_CURRENCY,
+  isDisplayCurrency,
+  normalizeCurrencyCode,
+} from "@/lib/money/convertCurrency";
+import { metadataScopedFromRawValue } from "@/core/enrich/evidence";
 
 export function averageCents(values: number[]) {
   const trimmed = trimPriceOutlierCents(values);
@@ -215,6 +222,7 @@ export function resolveItemPriceFromOffers(
   const summary = summarizeObservedPrices(shelfType, trimmed);
   const hasSummary =
     summary.priceNew != null ||
+    summary.priceFoil != null ||
     summary.priceUsed != null ||
     summary.priceUsedCIB != null;
   if (!hasSummary) return null;
@@ -257,13 +265,35 @@ export function effectiveGameOfferCondition(
   return condition;
 }
 
+/** Offers already denominated in the app display currency (default EUR). */
+export function offersInDisplayCurrency(
+  offers: PriceObservation[],
+): PriceObservation[] {
+  return offers.filter((offer) => isDisplayCurrency(offer.currency));
+}
+
+/** Offers in a foreign currency — eligible for FX fallback only. */
+export function offersInForeignCurrency(
+  offers: PriceObservation[],
+): PriceObservation[] {
+  return offers.filter((offer) => !isDisplayCurrency(offer.currency));
+}
+
+/**
+ * Average / trim consensus for observed market prices.
+ *
+ * Only offers in {@link DISPLAY_CURRENCY} participate. Foreign-currency rows
+ * must never dilute a EUR median — convert them via
+ * {@link fxFallbackEstimatedCents} when a bucket has no native observation.
+ */
 export function summarizeObservedPrices(
   shelfType: string,
   offers: PriceObservation[],
 ) {
+  const native = offersInDisplayCurrency(offers);
   const usedOffers = shelfSupportsLooseCondition(shelfType)
-    ? trustedGameUsedOffers(shelfType, offers)
-    : offers;
+    ? trustedGameUsedOffers(shelfType, native)
+    : native;
   if (shelfSupportsLooseCondition(shelfType)) {
     // Loose = cartridge/disc/console only. Shop "used" / retail listings are
     // complete-in-box proxies and must not inflate a loose copy's observed price
@@ -271,21 +301,178 @@ export function summarizeObservedPrices(
     // explicitly say "Loose" are remapped above via {@link effectiveGameOfferCondition}.
     const looseCents = pricesForCondition(usedOffers, ["loose"]);
     const cibCents = [
-      ...pricesForCondition(offers, ["cib"]),
+      ...pricesForCondition(native, ["cib"]),
       ...pricesForCondition(usedOffers, ["used"]),
     ];
     return {
-      priceNew: averageCents(pricesForCondition(offers, ["new"])),
+      priceNew: averageCents(pricesForCondition(native, ["new"])),
+      priceFoil: averageCents(pricesForCondition(native, ["foil"])),
       priceUsed: averageCents(looseCents),
       priceUsedCIB: averageCents(cibCents),
     };
   }
   return {
-    priceNew: averageCents(pricesForCondition(offers, ["new"])),
+    priceNew: averageCents(pricesForCondition(native, ["new"])),
+    priceFoil: averageCents(pricesForCondition(native, ["foil"])),
     priceUsed: averageCents(pricesForCondition(usedOffers, ["used"])),
     priceUsedCIB: null,
   };
 }
+
+/**
+ * When a summary bucket has no native display-currency observation, convert
+ * foreign offers for that bucket into a single ~ estimate (EUR cents).
+ *
+ * Never mixes converted values into {@link summarizeObservedPrices}.
+ * Computes non-foil (`priceEstimated`) and foil (`priceEstimatedFoil`)
+ * independently so TCG finishes can pick the right ~.
+ */
+export async function fxFallbackEstimatedCents(
+  shelfType: string,
+  summary: {
+    priceNew: number | null;
+    priceFoil?: number | null;
+    priceUsed: number | null;
+    priceUsedCIB: number | null;
+  },
+  offers: PriceObservation[],
+  options: { signal?: AbortSignal } = {},
+): Promise<number | null> {
+  const both = await fxFallbackEstimatedBuckets(
+    shelfType,
+    summary,
+    offers,
+    options,
+  );
+  return both.priceEstimated;
+}
+
+async function averageConvertedForeign(
+  foreign: PriceObservation[],
+  condition: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<number | null> {
+  const candidates = foreign.filter((offer) => {
+    const effective = effectiveGameOfferCondition(offer);
+    return effective === condition;
+  });
+  if (candidates.length === 0) return null;
+
+  const converted: number[] = [];
+  for (const offer of candidates) {
+    const cents = await convertCents(
+      offer.priceCents,
+      normalizeCurrencyCode(offer.currency),
+      DISPLAY_CURRENCY,
+      options,
+    );
+    if (cents != null) converted.push(cents);
+  }
+  return averageCents(converted);
+}
+
+export async function fxFallbackEstimatedBuckets(
+  shelfType: string,
+  summary: {
+    priceNew: number | null;
+    priceFoil?: number | null;
+    priceUsed: number | null;
+    priceUsedCIB: number | null;
+  },
+  offers: PriceObservation[],
+  options: { signal?: AbortSignal } = {},
+): Promise<{
+  priceEstimated: number | null;
+  priceEstimatedFoil: number | null;
+}> {
+  const foreign = offersInForeignCurrency(offers);
+  if (foreign.length === 0) {
+    return { priceEstimated: null, priceEstimatedFoil: null };
+  }
+
+  let priceEstimated: number | null = null;
+  let priceEstimatedFoil: number | null = null;
+
+  if (summary.priceNew == null) {
+    // Prefer foreign `new` alone; foil-only cards fall through to foil FX below
+    // so a common-card estimate is not inflated by Enchanted foil rows.
+    priceEstimated = await averageConvertedForeign(foreign, "new", options);
+  }
+
+  if (summary.priceFoil == null) {
+    priceEstimatedFoil = await averageConvertedForeign(
+      foreign,
+      "foil",
+      options,
+    );
+  }
+
+  // Sole foil market (Enchanted etc.): surface as the default ~ when no new.
+  if (priceEstimated == null && summary.priceNew == null) {
+    priceEstimated = priceEstimatedFoil;
+  }
+
+  if (
+    priceEstimated == null &&
+    summary.priceUsed == null &&
+    summary.priceUsedCIB == null
+  ) {
+    const usedConditions = shelfSupportsLooseCondition(shelfType)
+      ? ["loose", "used", "cib"]
+      : ["used"];
+    for (const condition of usedConditions) {
+      const average = await averageConvertedForeign(
+        foreign,
+        condition,
+        options,
+      );
+      if (average != null) {
+        priceEstimated = average;
+        break;
+      }
+    }
+  }
+
+  return { priceEstimated, priceEstimatedFoil };
+}
+
+/**
+ * Attach FX ~ fallback onto a barcode/item price result when native buckets
+ * are empty. Preserves an existing `priceEstimated` (catalog cote) when set.
+ */
+export async function withFxPriceEstimated(
+  result: BarcodePricesResult,
+  offers: PriceObservation[],
+  shelfType: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<BarcodePricesResult> {
+  const keepEstimated = result.priceEstimated != null;
+  const keepFoilEstimated = result.priceEstimatedFoil != null;
+  if (keepEstimated && keepFoilEstimated) return result;
+
+  const buckets = await fxFallbackEstimatedBuckets(
+    shelfType,
+    {
+      priceNew: result.priceNew,
+      priceFoil: result.priceFoil ?? null,
+      priceUsed: result.priceUsed,
+      priceUsedCIB: result.priceUsedCIB,
+    },
+    offers,
+    options,
+  );
+
+  return {
+    ...result,
+    priceEstimated: keepEstimated
+      ? result.priceEstimated
+      : (buckets.priceEstimated ?? result.priceEstimated ?? null),
+    priceEstimatedFoil: keepFoilEstimated
+      ? result.priceEstimatedFoil
+      : (buckets.priceEstimatedFoil ?? result.priceEstimatedFoil ?? null),
+  };
+}
+
 
 export function priceSourcesFromOffers(
   offers: PriceObservation[],
@@ -339,6 +526,7 @@ export function withPriceSourceTraits(
 export function emptyBarcodePrices(): BarcodePricesResult {
   return withPriceSourceTraits({
     priceNew: null,
+    priceFoil: null,
     priceUsed: null,
     priceUsedCIB: null,
     priceLastUpdated: null,
@@ -378,7 +566,7 @@ export function dropIdentityConflictingListings(
     if (!sharesIdentity) return true;
     return (
       priceListingMatchesAnyItemName(names, listing, { shelfType }) ||
-      referenceOfferSurvivesRegionalTitleMiss(names, offer)
+      referenceOfferSurvivesRegionalTitleMiss(names, offer, shelfType)
     );
   });
 }
@@ -437,6 +625,7 @@ export function filterPriceOfferInputsForPersist(
     sourceUrl: offer.sourceUrl,
     offerCount: offer.offerCount,
     observedAt: offer.observedAt,
+    metadataScoped: offer.metadataScoped,
   }));
 
   const kept = new Set(
@@ -497,7 +686,7 @@ export function filterItemPriceOffers(
             priceListingMatchesAnyItemName(names, offer.productName, {
               shelfType,
             }) ||
-            referenceOfferSurvivesRegionalTitleMiss(names, offer),
+            referenceOfferSurvivesRegionalTitleMiss(names, offer, shelfType),
         );
 
   if (names.length > 0) {
@@ -589,6 +778,7 @@ export function alignBarcodePricesForItemNames(
       sourceUrl: offer.sourceUrl,
       offerCount: offer.offerCount,
       observedAt: offer.observedAt,
+      metadataScoped: offer.metadataScoped === true,
     }),
   );
   const filtered = filterItemPriceOffers(
@@ -641,7 +831,7 @@ export function alignBarcodePricesForItemNames(
       } else if (priceSummaryMatchesOffers(shelfType, prices, namedOffers)) {
         // FR primary vs EN PriceCharting title: keep reference aggregates when
         // the catalog still shares the franchise family (not a spinoff / bare stem).
-        if (shouldKeepReferencePricesOnTitleMiss(names, namedOffers)) {
+        if (shouldKeepReferencePricesOnTitleMiss(names, namedOffers, shelfType)) {
           const referenceOffers = namedOffers.filter((offer) =>
             isReferencePriceSource(offer.source ?? ""),
           );
@@ -658,7 +848,7 @@ export function alignBarcodePricesForItemNames(
         namedOffers.every((offer) =>
           isReferencePriceSource(offer.source ?? ""),
         ) &&
-        !shouldKeepReferencePricesOnTitleMiss(names, namedOffers)
+        !shouldKeepReferencePricesOnTitleMiss(names, namedOffers, shelfType)
       ) {
         // Wrong catalog fiche (generic Slim vs Pink) whose cents no longer
         // equal the mixed barcode summary — still drop the contradicted
@@ -669,18 +859,43 @@ export function alignBarcodePricesForItemNames(
 
     const hasSummary =
       prices.priceNew != null ||
+      prices.priceFoil != null ||
       prices.priceUsed != null ||
       prices.priceUsedCIB != null;
-    if (!hasSummary) return emptyBarcodePrices();
-    return { ...prices, priceObservations: [] };
+    // Keep FX / catalog ~ estimates even when every named listing title misses
+    // the FR item name (Lorcast EN titles vs French Lorcana prints).
+    if (
+      !hasSummary &&
+      prices.priceEstimated == null &&
+      prices.priceEstimatedFoil == null
+    ) {
+      return emptyBarcodePrices();
+    }
+    return {
+      ...prices,
+      priceObservations:
+        prices.priceEstimated != null || prices.priceEstimatedFoil != null
+          ? prices.priceObservations
+          : [],
+    };
   }
 
   const summary = summarizeObservedPrices(shelfType, filtered);
 
   return withPriceSourceTraits({
     priceNew: summary.priceNew,
+    priceFoil: summary.priceFoil,
     priceUsed: summary.priceUsed,
     priceUsedCIB: summary.priceUsedCIB,
+    // Native EUR summary empty → keep the FX / catalog ~ estimate from cache.
+    priceEstimated:
+      summary.priceNew == null &&
+      summary.priceUsed == null &&
+      summary.priceUsedCIB == null
+        ? (prices.priceEstimated ?? null)
+        : null,
+    priceEstimatedFoil:
+      summary.priceFoil == null ? (prices.priceEstimatedFoil ?? null) : null,
     priceLastUpdated: prices.priceLastUpdated,
     priceSources: priceSourcesFromOffers(filtered),
     priceObservations: observationsFromFilteredOffers(
@@ -735,6 +950,7 @@ export function listingSharesFranchiseFamily(
 export function shouldKeepReferencePricesOnTitleMiss(
   itemNames: string[],
   namedOffers: PriceObservation[],
+  shelfType?: string | null,
 ): boolean {
   if (namedOffers.length === 0) return false;
   if (
@@ -743,13 +959,14 @@ export function shouldKeepReferencePricesOnTitleMiss(
     return false;
   }
   return namedOffers.every((offer) =>
-    referenceOfferSurvivesRegionalTitleMiss(itemNames, offer),
+    referenceOfferSurvivesRegionalTitleMiss(itemNames, offer, shelfType),
   );
 }
 
 export function referenceOfferSurvivesRegionalTitleMiss(
   itemNames: string[],
   offer: PriceObservation,
+  shelfType?: string | null,
 ): boolean {
   if (!isReferencePriceSource(offer.source ?? "")) return false;
   const listing = offer.productName?.trim();
@@ -762,7 +979,13 @@ export function referenceOfferSurvivesRegionalTitleMiss(
   if (itemNames.some((name) => listingIsBareFranchiseStemOf(name, listing))) {
     return false;
   }
-  return listingSharesFranchiseFamily(itemNames, listing);
+  if (listingSharesFranchiseFamily(itemNames, listing)) return true;
+  // TCG identity is printKey (set/number), not the localized title. EN catalog
+  // names often share zero tokens with the FR print ("Ce rêve bleu" vs
+  // "A Whole New World"). metadataScoped marks printKey-matched offers;
+  // legacy Lorcast rows without the stamp still trust the reference source.
+  if (shelfType === "tcg") return true;
+  return false;
 }
 
 export function cleanBarcodeValue(barcode?: string | null): string {
@@ -780,6 +1003,8 @@ export function toPriceObservations(
     sourceUrl?: string | null;
     offerCount?: number | null;
     observedAt?: Date | string | null;
+    rawValue?: unknown;
+    metadataScoped?: boolean;
   }>,
 ): PriceObservation[] {
   return offers.map((offer) => {
@@ -794,6 +1019,9 @@ export function toPriceObservations(
       sourceUrl: normalized.sourceUrl,
       offerCount: normalized.offerCount,
       observedAt: normalized.observedAt,
+      metadataScoped:
+        offer.metadataScoped === true ||
+        metadataScopedFromRawValue(offer.rawValue),
     };
   });
 }
@@ -908,6 +1136,7 @@ export function resolveItemDisplayPrices(
 
   const hasSummaryInput =
     summaryInput.priceNew != null ||
+    summaryInput.priceFoil != null ||
     summaryInput.priceUsed != null ||
     summaryInput.priceUsedCIB != null;
   if (!hasSummaryInput && offers.length === 0) return null;
@@ -917,6 +1146,7 @@ export function resolveItemDisplayPrices(
     itemNames,
     withPriceSourceTraits({
       priceNew: summaryInput.priceNew,
+      priceFoil: summaryInput.priceFoil ?? null,
       priceUsed: summaryInput.priceUsed,
       priceUsedCIB: summaryInput.priceUsedCIB,
       priceLastUpdated: summaryInput.priceLastUpdated,

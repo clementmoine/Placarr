@@ -24,6 +24,7 @@ function makeItem(
     shelfId: "shelf-1",
     description: null,
     barcode: null,
+    printKey: overrides.printKey ?? null,
     condition: overrides.condition ?? "new",
     metadataId: null,
     metadataRefreshStartedAt: null,
@@ -139,6 +140,39 @@ describe("collectionQuery", () => {
     expect(
       sortCollectionItems(items, "price_asc", "games").map((item) => item.id),
     ).toEqual(["cheap", "mid", "best"]);
+  });
+
+  it("sorts TCG prints by set then collector number", () => {
+    const items = [
+      makeItem({
+        id: "rof-1",
+        name: "Later set",
+        printKey: "lorcana:2-1",
+      }),
+      makeItem({
+        id: "tfc-20p",
+        name: "Promo",
+        printKey: "lorcana:1-20-p1",
+      }),
+      makeItem({
+        id: "tfc-2",
+        name: "Ariel",
+        printKey: "lorcana:1-2",
+      }),
+      makeItem({
+        id: "tfc-10",
+        name: "Ten",
+        printKey: "lorcana:1-10",
+      }),
+      makeItem({
+        id: "orphan",
+        name: "Sans clé",
+      }),
+    ];
+
+    expect(
+      sortCollectionItems(items, "print_asc", "tcg").map((item) => item.id),
+    ).toEqual(["tfc-2", "tfc-10", "tfc-20p", "rof-1", "orphan"]);
   });
 
   it("parses filter params from the URL", () => {

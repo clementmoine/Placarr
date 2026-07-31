@@ -128,3 +128,73 @@ export async function searchPrintCandidates(
 
   return merged.slice(0, options.limit ?? DEFAULT_LIMIT);
 }
+
+/**
+ * Reverse of `slugifyItemName("TFC#002")` → `tfc-2` (and `PR3#34` → `pr3-34`).
+ * Used so bookmarks to the pre-enrichment URL still resolve after the catalog
+ * title rewrites the slug.
+ */
+export function collectorQueryFromItemSlug(slug: string): string | null {
+  const match = slug.trim().match(/^([a-z][a-z0-9]*)-(\d+[a-z]?)$/i);
+  if (!match) return null;
+  return `${match[1]!.toUpperCase()}#${match[2]}`;
+}
+
+/** Promo tokens collectors type (`P3`, `PR3`) — not a card title. */
+function queryPromoGrouping(query: string): string | null {
+  const match = query.match(/\bpr?(\d+)\b/i);
+  return match ? `p${match[1]}` : null;
+}
+
+function printNumberIdentity(printKey: string): string | null {
+  const identity = parsePrintKey(printKey);
+  if (!identity) return null;
+  return `${identity.game}|${identity.set}|${identity.number}`;
+}
+
+/**
+ * Resolve a pasted line to a single printing when the query is unambiguous.
+ *
+ * Used by bulk add: `TFC#001` is a lookup code, not a display name. Ambiguous
+ * names (`elsa`, `premier chapitre`, twin promos) stay unresolved so we never
+ * invent a print the collector did not pick.
+ */
+export async function resolveUniquePrintCandidate(
+  query: string,
+  type: string,
+  options: PrintSearchOptions = {},
+): Promise<PrintCandidate | null> {
+  const found = await searchPrintCandidates(query, type, {
+    ...options,
+    limit: options.limit ?? PER_PROVIDER_LIMIT,
+  });
+  if (found.length === 0) return null;
+
+  const byKey = new Map<string, PrintCandidate>();
+  for (const candidate of found) {
+    if (!byKey.has(candidate.printKey)) {
+      byKey.set(candidate.printKey, candidate);
+    }
+  }
+  if (byKey.size === 1) return byKey.values().next().value ?? null;
+
+  const wantedPromo = queryPromoGrouping(query);
+  if (wantedPromo) {
+    const promoHits = [...byKey.values()].filter(
+      (candidate) => parsePrintKey(candidate.printKey)?.grouping === wantedPromo,
+    );
+    if (promoHits.length === 1) return promoHits[0]!;
+    return null;
+  }
+
+  // `TFC#20` hits both the base print and `20/P1`. Prefer the base when the
+  // query did not ask for a promo group and every hit shares set + number.
+  const identities = [...byKey.keys()].map(printNumberIdentity);
+  if (identities.some((id) => id == null)) return null;
+  if (new Set(identities).size !== 1) return null;
+
+  const base = [...byKey.values()].find(
+    (candidate) => !parsePrintKey(candidate.printKey)?.grouping,
+  );
+  return base ?? null;
+}

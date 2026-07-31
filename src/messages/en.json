@@ -457,7 +457,12 @@
       "auto": "Auto",
       "autoHint": "Suggest an automatic crop (detected margins)"
     },
-    "variant": "Variant"
+    "variant": "Variant",
+    "finishes": {
+      "none": "Normal",
+      "nonfoil": "Normal",
+      "normal": "Normal"
+    }
   },
   "sorting": {
     "title": "Sort by",
@@ -471,6 +476,8 @@
     "rating_asc": "Lowest rated",
     "price_desc": "Price (high to low)",
     "price_asc": "Price (low to high)",
+    "print_asc": "Set / collector number",
+    "print_desc": "Set / collector number (reverse)",
     "nameAsc": "A-Z (Alphabetical)",
     "nameDesc": "Z-A (Alphabetical)",
     "addedDesc": "Date Added (Newest)",

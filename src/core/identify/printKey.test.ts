@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildPrintKey, isPrintKey, parsePrintKey } from "./printKey";
+import { buildPrintKey, isPrintKey, parsePrintKey, comparePrintKeys, comparePrintSetCodes } from "./printKey";
 
 describe("buildPrintKey", () => {
   it("builds a key from what is printed on the card", () => {
@@ -130,5 +130,46 @@ describe("isPrintKey", () => {
   it("separates print keys from barcodes", () => {
     expect(isPrintKey("lorcana:9-1")).toBe(true);
     expect(isPrintKey("0045496420355")).toBe(false);
+  });
+});
+
+describe("comparePrintSetCodes", () => {
+  it("orders numeric sets by release number", () => {
+    expect(comparePrintSetCodes("1", "2")).toBeLessThan(0);
+    expect(comparePrintSetCodes("2", "11")).toBeLessThan(0);
+    expect(comparePrintSetCodes("11", "2")).toBeGreaterThan(0);
+  });
+
+  it("keeps lettered sets after numeric ones", () => {
+    expect(comparePrintSetCodes("9", "q1")).toBeLessThan(0);
+    expect(comparePrintSetCodes("q1", "9")).toBeGreaterThan(0);
+  });
+});
+
+describe("comparePrintKeys", () => {
+  it("orders by set then collector number then base before promo", () => {
+    const keys = [
+      "lorcana:2-1",
+      "lorcana:1-20-p1",
+      "lorcana:1-20",
+      "lorcana:1-2",
+      "lorcana:1-10",
+      "lorcana:3-4a",
+      "lorcana:3-4b",
+    ];
+    expect([...keys].sort(comparePrintKeys)).toEqual([
+      "lorcana:1-2",
+      "lorcana:1-10",
+      "lorcana:1-20",
+      "lorcana:1-20-p1",
+      "lorcana:2-1",
+      "lorcana:3-4a",
+      "lorcana:3-4b",
+    ]);
+  });
+
+  it("places missing keys after real prints", () => {
+    expect(comparePrintKeys(null, "lorcana:1-1")).toBeGreaterThan(0);
+    expect(comparePrintKeys("lorcana:1-1", null)).toBeLessThan(0);
   });
 });

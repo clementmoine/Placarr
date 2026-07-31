@@ -27,6 +27,7 @@ import { isAbortError } from "@/lib/http/abort";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
 import {
   scrapeProviderIdsFromStoredSources,
+  nonScrapeProviderIdsFromStoredSources,
   externalIdsFromStoredSources,
   providerRecordUrlsFromStoredSources,
 } from "@/core/enrich/scrapePassGate";
@@ -112,6 +113,7 @@ function metadataCacheKey(
 
 async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
   scrapeProviderIds: string[];
+  ficheProviderIds: string[];
   externalIds: Record<string, string>;
   providerRecordUrls: Record<string, string>;
   romChecksums?: RomChecksums;
@@ -132,7 +134,12 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
     },
   });
   if (!item) {
-    return { scrapeProviderIds: [], externalIds: {}, providerRecordUrls: {} };
+    return {
+      scrapeProviderIds: [],
+      ficheProviderIds: [],
+      externalIds: {},
+      providerRecordUrls: {},
+    };
   }
 
   const facts = parseMetadataFactsJson(item.metadata?.facts);
@@ -145,13 +152,15 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
     : [];
 
   const fieldEvidence = [...(item.fieldEvidence ?? []), ...metadataEvidence];
+  const sourceInput = {
+    facts,
+    fieldEvidence,
+    attachments: item.metadata?.attachments ?? [],
+  };
 
   return {
-    scrapeProviderIds: scrapeProviderIdsFromStoredSources({
-      facts,
-      fieldEvidence,
-      attachments: item.metadata?.attachments ?? [],
-    }),
+    scrapeProviderIds: scrapeProviderIdsFromStoredSources(sourceInput),
+    ficheProviderIds: nonScrapeProviderIdsFromStoredSources(sourceInput),
     externalIds: externalIdsFromStoredSources({
       facts,
       fieldEvidence,
@@ -180,6 +189,7 @@ export async function getMetadata(
     existingScrapeProviderIds?: readonly string[];
     existingExternalIds?: Record<string, string | null>;
     existingProviderRecordUrls?: Record<string, string>;
+    existingFicheProviderIds?: readonly string[];
     romChecksums?: RomChecksums;
     seededActiveResults?: MetadataResult[];
     lightRefresh?: boolean;
@@ -210,6 +220,7 @@ export async function getMetadata(
     !options.signal &&
     !options.onApiPassComplete &&
     !options.existingScrapeProviderIds?.length &&
+    !options.existingFicheProviderIds?.length &&
     !options.existingExternalIds &&
     !options.existingProviderRecordUrls &&
     !options.romChecksums &&
@@ -237,6 +248,7 @@ export async function getMetadata(
           existingScrapeProviderIds: options.existingScrapeProviderIds,
           existingExternalIds: options.existingExternalIds,
           existingProviderRecordUrls: options.existingProviderRecordUrls,
+          existingFicheProviderIds: options.existingFicheProviderIds,
           romChecksums: options.romChecksums,
           seededActiveResults: options.seededActiveResults,
           lightRefresh: options.lightRefresh,
@@ -331,6 +343,7 @@ export async function fetchAndStoreMetadata(
 
   const {
     scrapeProviderIds: existingScrapeProviderIds,
+    ficheProviderIds: existingFicheProviderIds,
     externalIds: existingExternalIds,
     providerRecordUrls: existingProviderRecordUrls,
     romChecksums: storedRomChecksums,
@@ -394,6 +407,7 @@ export async function fetchAndStoreMetadata(
       existingScrapeProviderIds,
       existingExternalIds,
       existingProviderRecordUrls,
+      existingFicheProviderIds,
       romChecksums: mergeRomChecksums(
         storedRomChecksums,
         romChecksumsFromIdentifierFacts(seededActiveResults?.[0]?.facts),

@@ -1,4 +1,9 @@
+import {
+  collectorQueryFromItemSlug,
+  resolveUniquePrintCandidate,
+} from "@/core/identify/printSearch";
 import { prisma } from "@/lib/db/prisma";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import {
   itemLookupSlugs,
   itemMatchesVolumeItemSlug,
@@ -100,6 +105,37 @@ export async function resolveItemId(
       itemMatchesVolumeItemSlug(value, candidate),
     );
     if (volumeSlugMatches.length === 1) return volumeSlugMatches[0].id;
+  }
+
+  // Print shelves: `/tfc-2` was the slug while the item was still named
+  // `TFC#002`. After catalog title adoption the slug changes — resolve via
+  // the collector code so old bookmarks keep working.
+  if (resolvedShelfId) {
+    const collectorQuery = collectorQueryFromItemSlug(value);
+    if (collectorQuery) {
+      const shelf = await prisma.shelf.findUnique({
+        where: { id: resolvedShelfId },
+        select: { type: true },
+      });
+      if (shelf && usesPrintSearch(shelf.type)) {
+        const hit = await resolveUniquePrintCandidate(
+          collectorQuery,
+          shelf.type,
+        );
+        const printKey = hit?.printKey?.trim().toLowerCase();
+        if (printKey) {
+          const byPrint = await prisma.item.findFirst({
+            where: {
+              shelfId: resolvedShelfId,
+              printKey,
+              ...(userId ? { userId } : {}),
+            },
+            select: { id: true },
+          });
+          if (byPrint) return byPrint.id;
+        }
+      }
+    }
   }
 
   return value;

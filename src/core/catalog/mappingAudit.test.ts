@@ -95,6 +95,7 @@ describe("provider mapping probes", () => {
         "lepassetemps",
         "lesgentlemendujeu",
         "lorcanajson",
+        "lorcast",
         "ludifolie",
         "ludocortex",
         "monsieurde",

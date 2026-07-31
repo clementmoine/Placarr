@@ -55,8 +55,10 @@ ment coûte toujours plus cher que la colonne en trop.
 | Jeu                     | Provider                                        | Données FR      | Images FR      | Variantes                            | Prix                              | Clé               |
 | ----------------------- | ----------------------------------------------- | --------------- | -------------- | ------------------------------------ | --------------------------------- | ----------------- |
 | Pokémon                 | [TCGdex](https://tcgdex.dev/)                   | ✅ vérifié      | ✅ vérifié     | ✅ `variants_detailed` + `variantId` | ✅ Cardmarket **EUR** + TCGplayer | aucune            |
-| Lorcana                 | [LorcanaJSON](https://lorcanajson.org/)         | ✅ FR/DE/IT     | ✅ officielles | ✅ `foilTypes` + **`foilMask`**      | ❌                                | fichiers          |
-| Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil uniquement                 | TCGplayer USD                     | aucune            |
+| Lorcana                 | [LorcanaJSON](https://lorcanajson.org/)         | ✅ FR/DE/IT     | ✅ toutes langues stockées | ✅ `foilTypes` + **`foilMask`**      | ❌ (métadonnées)                  | fichiers          |
+| Lorcana                 | [Play-In](https://www.play-in.com/)             | ✅ FR           | ✅             | stock Mint / FOIL                    | ✅ EUR retail (scrape)            | scrape            |
+| Lorcana                 | [Lorcana.gg](https://lorcana.gg/cards/) (DotGG) | EN catalogue    | ✅             | `cmPrice` / `cmFoilPrice`            | ✅ Cardmarket **EUR** (dump API)  | dump + printKey   |
+| Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil + non-foil                 | ✅ TCGplayer USD → EUR `~`        | aucune            |
 | Magic                   | [Scryfall](https://scryfall.com/docs/api)       | ✅ vérifié      | ✅             | ✅ `finishes: nonfoil/foil/etched`   | ✅                                | UA requis         |
 | Yu-Gi-Oh                | [YGOPRODeck](https://ygoprodeck.com/api-guide/) | ✅ noms         | EN             | sets + raretés                       | ✅                                | aucune            |
 | One Piece, Dragon Ball  | [apitcg.com](https://apitcg.com/)               | ?               | ?              | ✅                                   | ?                                 | clé (inscription) |
@@ -78,10 +80,12 @@ Deux remarques qui comptent :
   servies (`assets.tcgdex.net/fr/...`, vérifié 200), variantes détaillées avec
   un id par variante, et surtout **des prix Cardmarket en euros**, ce qui colle
   au reste de l'app là où TCGplayer est en dollars.
-- **Lorcana n'a pas de source FR + prix**. LorcanaJSON a le FR et les images
-  officielles mais aucun prix ; Lorcast a des prix mais uniquement en anglais.
-  Si les prix Lorcana comptent, il faudra croiser les deux — le moteur de
-  consensus sait déjà faire ça.
+- **Lorcana croise LorcanaJSON + Lorcast + Lorcana.gg + Play-In.** LorcanaJSON
+  stocke titres et jaquettes **FR/EN/DE/IT** pour le même `printKey`. Lorcast
+  apporte les prix TCGplayer en **USD** (fallback FX `~`). **Lorcana.gg**
+  (dump DotGG) apporte les cotes Cardmarket en **EUR** natives — utile sur les
+  promos sans TCGPlayer. **Play-In** contribue en EUR retail via
+  `/fr/carte/…`, matché sur `printKey`.
 
 ## 3. Les « variants » — le vocabulaire
 
@@ -135,6 +139,14 @@ groupes, on ne pourrait jamais dire « j'ai 3 Elsa ». La vignette affiche
 `Elsa foil ×3` ; le détail du groupe liste les exemplaires avec état, prix
 d'achat et statut de prêt. Corollaire : plus besoin de « (copie) » dans le
 titre.
+
+**TCG — état masqué, cote par finition (2026-07-31).** Sur les singles,
+neuf / occasion n'est pas le levier utile (tu déblister pour savoir ce que
+c'est). L'UI masque le chip / sélecteur d'`Condition` pour `shelfType ===
+"tcg"` ; le prix héros lit le bucket market de la finition (`Item.variant` →
+offres `foil` vs `new`, EUR natif puis FX `priceEstimatedFoil` /
+`priceEstimated`). Même principe que l'axe variante livré — voir
+[backlog.md](backlog.md) « Variantes par exemplaire ».
 
 **Dette signalée, non traitée ici** : l'enum `Condition` mélange deux axes —
 `new`/`used`/`damaged` sont des états, mais `loose` décrit _ce qu'on possède_
@@ -249,20 +261,23 @@ séparément est un champ qui perdra des données.
 
 ## 7. Découpage proposé
 
-1. **Lorcana FR de bout en bout** : ajout par recherche, `printKey`, images,
-   finitions. Sans prix.
+1. **Lorcana FR de bout en bout** : ajout par recherche, `printKey`, images
+   multi-langues, finitions, prix ≈ via Lorcast (USD→EUR `~`).
 2. **Plein écran** : effet holo masqué + dos + retournement 3D.
-3. **Pokémon via TCGdex** : apporte les prix en euros et les variantes
+3. **Pokémon via TCGdex** : apporte les prix en euros natifs et les variantes
    `reverse`/`holo` en prime.
 4. **Magic / Yu-Gi-Oh**, puis Scrydex si on veut One Piece & co.
 
 ## 8. Décisions prises (2026-07-26)
 
 - **Doublons** : N items, regroupés à l'affichage. Voir §4.
-- **Prix** : aucun traitement spécial. Lorcana sort sans prix parce qu'aucune
-  source gratuite n'en publie en FR — pas parce que ce serait câblé en dur. Un
-  provider qui déclare la capacité prix est appelé par le flux prix normal,
-  comme pour tous les autres types.
+- **Prix** : pas de câblage spécial par jeu. Un provider `types: ["tcg"]` avec
+  capacité prix (Lorcast) est appelé par le flux normal. **Devise** : moyenne /
+  consensus uniquement en EUR ; conversion FX hors moyenne, affichée en `~`.
+  Lorcast indexe les promos sous des sets `P1`/`P2`/… (`P2/24`), pas sous
+  `7/24bp2` — le lookup prix mappe `printKey` `…-pN` vers ce schéma. Le job
+  prix relit `printKey` + aliases depuis l'item (pas seulement le payload
+  d'enqueue) pour ne pas rater un match après enrichissement multi-langue.
 - **Cartes gradées** : hors périmètre.
 
 ## 9. Ce que l'app mobile apprend (dump du 2026-07-30)

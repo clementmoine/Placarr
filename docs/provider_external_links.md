@@ -14,7 +14,7 @@ utile était souvent perdue (restée dans une observation, un `source-url`, ou l
 `sourceUrl` d’une offer). Conséquences :
 
 1. **Sources & boutiques** (`ProviderLinksBar`) incomplète — impossible de voir
-   d’où vient une fiche erronée.
+   d’où vient une fiche erronée (covers IGDB, prix Lorcast, faits LorcanaJSON…).
 2. **Refresh prix** re-seekait barcode/titre alors qu’on avait déjà la fiche
    produit (`chasseauxlivres`, `okkazeo`, PrestaShop, Philibert, …).
 
@@ -22,13 +22,17 @@ utile était souvent perdue (restée dans une observation, un `source-url`, ou l
 
 ## Invariant produit
 
-> **Chaque hit provider avec une URL fiche produit → un `external-link` persisté
-> (1 par provider, dédupliqué).**
+> **Chaque provider registry qui a contribué (fact / evidence / cover / prix)
+> apparaît dans Sources & boutiques.** Préférer une URL fiche produit ; sinon
+> le `websiteUrl` du registry (attribution). Jamais d’URL inventée.
 
 - Kind affiché UI : `external-link` uniquement (`extractProviderLinkFacts`).
 - Kind intermédiaire accepté : `source-url` (mirrored en `external-link` au merge).
-- Pas de lien pour assets CDN (`looksLikeProviderProductPageUrl` filtre images,
-  `book_cover`, `mediajeu.php`, …).
+- Pas de lien CDN (`looksLikeProviderProductPageUrl` filtre images, `book_cover`,
+  `mediajeu.php`, …).
+- Les chips `websiteUrl` (racine du site) **n’alimentent pas** le refresh prix
+  URL-first (`providerProductUrlsFromMetadataFacts` exige un path produit).
+- Exclus : `MergedEngine`, clés internes (`__cached_fiche__`).
 
 ---
 

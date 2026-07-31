@@ -47,6 +47,8 @@ export type ItemPricesContext = {
   metadataRefreshStartedAt?: Date | string | null;
   shelfType: string;
   shelfName: string;
+  /** Print identity for barcode-less TCG items. */
+  printKey?: string | null;
 };
 
 const inFlightPriceRefresh = new Map<string, Promise<BarcodePricesResult>>();
@@ -179,6 +181,10 @@ function refreshItemInput(
     itemId: context.id,
     metadataId: context.metadataId,
     providerProductUrls: priceRefreshProviderProductUrls(context),
+    printKey:
+      context.printKey?.trim() ||
+      context.metadataExternalIds?.printKey?.trim() ||
+      null,
     ...(signal ? { signal } : {}),
   };
 }
@@ -375,6 +381,7 @@ function toPriceRefreshPayload(
     metadataFacts: context.metadataFacts,
     shelfType: context.shelfType,
     shelfName: context.shelfName,
+    printKey: context.printKey,
     force: options?.force,
   };
 }
@@ -562,6 +569,7 @@ export function itemPricesContextFromRecord(item: {
   id: string;
   name: string;
   barcode?: string | null;
+  printKey?: string | null;
   metadataId?: string | null;
   metadataRefreshStartedAt?: Date | string | null;
   metadata?: {
@@ -578,6 +586,7 @@ export function itemPricesContextFromRecord(item: {
     id: item.id,
     name: item.name,
     barcode: item.barcode,
+    printKey: item.printKey?.trim() || externalIds.printKey?.trim() || null,
     metadataId: item.metadataId,
     metadataTitle: item.metadata?.title,
     metadataAliases: item.metadata?.aliases,
@@ -603,9 +612,11 @@ export const EMPTY_LIST_ITEM_PRICES = {
 
 export type ListItemPriceFields = {
   priceNew: number | null;
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   priceEstimated?: number | null;
+  priceEstimatedFoil?: number | null;
   priceLastUpdated: Date | string | null;
 };
 
@@ -617,8 +628,11 @@ export function shelfGridItemPriceFields(
   const batchResult: BarcodePricesResult | null = batch
     ? {
         priceNew: batch.priceNew,
+        priceFoil: batch.priceFoil ?? null,
         priceUsed: batch.priceUsed,
         priceUsedCIB: batch.priceUsedCIB,
+        priceEstimated: batch.priceEstimated ?? null,
+        priceEstimatedFoil: batch.priceEstimatedFoil ?? null,
         priceLastUpdated:
           typeof batch.priceLastUpdated === "string"
             ? new Date(batch.priceLastUpdated)
@@ -642,9 +656,11 @@ export function shelfGridItemPriceFields(
 
   return {
     priceNew: finalized.priceNew,
+    priceFoil: finalized.priceFoil ?? null,
     priceUsed: finalized.priceUsed,
     priceUsedCIB: finalized.priceUsedCIB,
     priceEstimated: finalized.priceEstimated ?? null,
+    priceEstimatedFoil: finalized.priceEstimatedFoil ?? null,
     priceLastUpdated: finalized.priceLastUpdated,
   };
 }

@@ -19,6 +19,61 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("affiche la langue d'une jaquette TCG (role ISO), pas le seau région Europe", () => {
+    // Lorcana stores language as role (`de` / `en` / `it`). The region alias
+    // map folds `de`→Europe for German *game boxes*; on a card printing that
+    // would hide the actual language.
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "de",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      kind: "Jaquette",
+      region: "Allemand",
+      detail: "Jaquette · Allemand",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "en",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      region: "Anglais",
+      detail: "Jaquette · Anglais",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "fr",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      region: "Français",
+      detail: "Jaquette · Français",
+    });
+  });
+
+  it("garde les rôles région composés (back-eu) hors des labels langue", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        role: "back-eu",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({
+      kind: "Dos",
+      region: "Europe",
+      detail: "Dos · Europe",
+    });
+  });
+
   it("affiche la région d'une jaquette ScreenScraper australienne (au → Europe)", () => {
     // Regression: a `box-2D(au)` cover was stored with role "au" and showed
     // "Jaquette" with no region because the resolver only knew the 6 canonical

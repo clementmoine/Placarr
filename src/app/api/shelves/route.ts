@@ -96,13 +96,16 @@ async function formatShelfWithItemPrices<
         ...prices,
       };
     }),
+    { shelfType: shelf.type },
   ) as Array<
     PresentedItem<PresentableItemInput> & {
       id: string;
       priceNew: number | null;
+      priceFoil?: number | null;
       priceUsed: number | null;
       priceUsedCIB: number | null;
       priceEstimated?: number | null;
+      priceEstimatedFoil?: number | null;
       priceLastUpdated: Date | string | null;
     }
   >;

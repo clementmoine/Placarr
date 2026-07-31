@@ -77,3 +77,4 @@ prisma/*.sql.dump
 .cursor/
 # Outillage local Claude Code (preview/launch)
 /.claude/
+__pycache__/

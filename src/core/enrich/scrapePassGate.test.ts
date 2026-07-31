@@ -4,6 +4,7 @@ import {
   apiProvidersForMetadataPass,
   externalIdsFromStoredSources,
   metadataResultsHavePrimaryBookCover,
+  nonScrapeProviderIdsFromStoredSources,
   preferPinnedProviderIds,
   providerRecordUrlsFromStoredSources,
   scrapeProviderIdsFromStoredSources,
@@ -281,6 +282,16 @@ describe("scrapeProviderIdsFromStoredSources", () => {
       attachments: [{ source: "MergedEngine" }],
     });
     expect(ids.sort()).toEqual(["bedetheque", "booknode"].sort());
+  });
+});
+
+describe("nonScrapeProviderIdsFromStoredSources", () => {
+  it("keeps API / static providers already on the fiche", () => {
+    const ids = nonScrapeProviderIdsFromStoredSources({
+      facts: [{ source: "lorcanajson" }, { source: "Bedetheque" }],
+      attachments: [{ source: "lorcanajson" }],
+    });
+    expect(ids).toEqual(["lorcanajson"]);
   });
 });
 

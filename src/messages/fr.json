@@ -457,7 +457,12 @@
       "auto": "Auto",
       "autoHint": "Proposer un recadrage automatique (marges détectées)"
     },
-    "variant": "Variante"
+    "variant": "Variante",
+    "finishes": {
+      "none": "Normal",
+      "nonfoil": "Normal",
+      "normal": "Normal"
+    }
   },
   "sorting": {
     "title": "Trier par",
@@ -471,6 +476,8 @@
     "rating_asc": "Notes les plus basses",
     "price_desc": "Prix décroissant",
     "price_asc": "Prix croissant",
+    "print_asc": "Extension / numéro",
+    "print_desc": "Extension / numéro (inverse)",
     "nameAsc": "A-Z (Alphabétique)",
     "nameDesc": "Z-A (Alphabétique)",
     "addedDesc": "Date d'ajout (Récents)",

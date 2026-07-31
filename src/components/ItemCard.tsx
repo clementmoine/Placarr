@@ -22,11 +22,12 @@ import {
 } from "@/lib/client/hooks/useImageEdgeColors";
 
 import { getAspectRatio } from "@/lib/text/cardFormat";
-import { formatFinishLabel } from "@/lib/text/finishLabel";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import type { Condition } from "@/generated/prisma/browser";
 import { withoutCopyMarker } from "@/core/collect/groupCopies";
+import { shelfShowsItemCondition } from "@/core/collect/condition";
 import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
@@ -55,9 +56,11 @@ interface ItemCardProps extends Item {
   cardFormat?: string | null;
   metadata?: MetadataResult | null;
   priceNew?: number | null;
+  priceFoil?: number | null;
   priceUsed?: number | null;
   priceUsedCIB?: number | null;
   priceEstimated?: number | null;
+  priceEstimatedFoil?: number | null;
   priority?: boolean;
 }
 
@@ -71,9 +74,11 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.shelfName === next.shelfName &&
     prev.cardFormat === next.cardFormat &&
     prev.priceNew === next.priceNew &&
+    prev.priceFoil === next.priceFoil &&
     prev.priceUsed === next.priceUsed &&
     prev.priceUsedCIB === next.priceUsedCIB &&
     prev.priceEstimated === next.priceEstimated &&
+    prev.priceEstimatedFoil === next.priceEstimatedFoil &&
     prev.priority === next.priority &&
     prev.metadataId === next.metadataId &&
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
@@ -97,6 +102,7 @@ function ItemCardInner(props: ItemCardProps) {
     priority,
     copyCount = 1,
   } = props;
+  const { t } = useLocale();
   /**
    * The copy marker in the title becomes noise once the tile says how many
    * there are — and on the lead copy it was always arbitrary which of the four
@@ -105,7 +111,7 @@ function ItemCardInner(props: ItemCardProps) {
   const displayName = copyCount > 1 ? withoutCopyMarker(name) : name;
   const titledName = displayName.replace(
     / — ([A-Za-z][\w]*)$/u,
-    (_match, finish: string) => ` — ${formatFinishLabel(finish)}`,
+    (_match, finish: string) => ` — ${localizeFinishLabel(finish, t)}`,
   );
   /**
    * A foil copy has to be recognisable in the grid, not only once opened —
@@ -118,11 +124,8 @@ function ItemCardInner(props: ItemCardProps) {
    * its cards' behalf, which is how the shelf grid ended up being the only
    * place a foil print looked foil.
    */
-  const variantView = variantRendering(
-    props.variant,
-    usePrintVariant(props.printKey, shelfType),
-    imageUrl,
-  );
+  const printVariant = usePrintVariant(props.printKey, shelfType);
+  const variantView = variantRendering(props.variant, printVariant, imageUrl);
   const foilMaskUrl = useMirroredCropMask(
     variantView.imageUrl,
     variantView.foilMaskUrl,
@@ -138,7 +141,6 @@ function ItemCardInner(props: ItemCardProps) {
     variantView.imageUrl,
     variantView.secondVarnishMaskUrl,
   );
-  const { t } = useLocale();
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
   const isEnriching = isItemMetadataBusy(props);
   /**
@@ -184,25 +186,32 @@ function ItemCardInner(props: ItemCardProps) {
     measureEdges(event.currentTarget);
   };
 
-  // Calculate estimated price in Euros — a catalog-estimate fallback shows ~.
   const estimatedPrice = useMemo(() => {
     const value = getItemValueEstimate({
       condition: props.condition,
       shelfType: props.shelfType,
+      variant: props.variant,
+      plainFinishes: printVariant?.plainFinishes,
       priceNew: props.priceNew,
+      priceFoil: props.priceFoil,
       priceUsed: props.priceUsed,
       priceUsedCIB: props.priceUsedCIB,
       priceEstimated: props.priceEstimated,
+      priceEstimatedFoil: props.priceEstimatedFoil,
     });
     if (!value || value.cents === 0) return null;
     return { euros: value.cents / 100, isEstimate: value.isEstimate };
   }, [
     props.condition,
     props.shelfType,
+    props.variant,
+    printVariant?.plainFinishes,
     props.priceNew,
+    props.priceFoil,
     props.priceUsed,
     props.priceUsedCIB,
     props.priceEstimated,
+    props.priceEstimatedFoil,
   ]);
 
   return (
@@ -213,7 +222,10 @@ function ItemCardInner(props: ItemCardProps) {
       }}
     >
       {/* Top-right badges — price + condition stay visible even while enriching */}
-      {(estimatedPrice !== null || condition) && (
+      {(estimatedPrice !== null ||
+        (condition && shelfShowsItemCondition(shelfType)) ||
+        copyCount > 1 ||
+        (variantView.foilMaskUrl && props.variant)) && (
         <div className="absolute top-2 right-2 z-20 pointer-events-none select-none flex flex-col items-end gap-1">
           {estimatedPrice !== null && (
             <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full bg-zinc-950/90 text-emerald-300 border border-emerald-400/30 shadow-sm">
@@ -228,10 +240,10 @@ function ItemCardInner(props: ItemCardProps) {
           )}
           {variantView.foilMaskUrl && props.variant && (
             <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
-              ✦ {formatFinishLabel(props.variant)}
+              ✦ {localizeFinishLabel(props.variant, t)}
             </span>
           )}
-          {condition && (
+          {condition && shelfShowsItemCondition(shelfType) && (
             <span
               className={cn(
                 "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border bg-zinc-950/90 shadow-sm",

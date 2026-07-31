@@ -9,7 +9,7 @@ import type {
 } from "@/types/providerModule";
 
 import {
-  loadLorcanaIndex,
+  loadLorcanaIndexes,
   type LorcanaCard,
   type LorcanaLanguage,
 } from "./fetch";
@@ -104,8 +104,11 @@ export async function suggestLorcanaFoilPlayroomSamples(
   options?: { language?: LorcanaLanguage; signal?: AbortSignal },
 ): Promise<FoilPlayroomCatalogSample[]> {
   if (needs.length === 0) return [];
-  const index = await loadLorcanaIndex(options?.language, {
+  // Preferred language first, then the rest — Tempest / FreeForm2 /
+  // CalendarWave live only on English printings today.
+  const indexes = await loadLorcanaIndexes(options?.language, {
     signal: options?.signal,
   });
-  return pickLorcanaPlayroomSamples(index.cards, needs);
+  const cards = indexes.flatMap((index) => index.cards);
+  return pickLorcanaPlayroomSamples(cards, needs);
 }

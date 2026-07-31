@@ -112,7 +112,7 @@ import {
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
 import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
-import { formatFinishLabel } from "@/lib/text/finishLabel";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import {
   itemPath,
@@ -122,6 +122,7 @@ import {
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
 import { seriesSiblings } from "@/core/enrich/titles/series";
 import { FRANCHISE_FACT_KIND } from "@/core/enrich/facts/franchiseFact";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import {
   invalidateItemQueries,
   patchCachedItem,
@@ -130,7 +131,10 @@ import {
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { getItemValueEstimate } from "@/core/collect/value";
-import { marketOfferConditionsForItem } from "@/core/collect/condition";
+import {
+  marketOfferConditionsForItem,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
 
@@ -517,9 +521,14 @@ function priceObservationConditions(
   shelfType?: string | null,
   prices?: {
     priceUsedCIB?: number | null;
+    priceObservations?: Array<{ condition?: string | null }> | null;
   } | null,
+  options?: {
+    variant?: string | null;
+    plainFinishes?: readonly (string | null | undefined)[] | null;
+  },
 ) {
-  return marketOfferConditionsForItem(condition, shelfType, prices);
+  return marketOfferConditionsForItem(condition, shelfType, prices, options);
 }
 
 function isPrimaryInfoFact(fact: DetailFact) {
@@ -1194,6 +1203,14 @@ export default function ItemDetailsPage() {
 
   useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
 
+  // Collector-code bookmarks (`/tfc-2`) resolve after title adoption — rewrite
+  // the address bar to the canonical catalog slug once the item is known.
+  useEffect(() => {
+    if (!item?.id || !item.slug || !shelf) return;
+    if (itemId === item.id || itemId === item.slug) return;
+    router.replace(itemPath(shelf, item));
+  }, [item, itemId, router, shelf]);
+
   useEffect(() => {
     if (!item?.id) return;
     if (
@@ -1276,18 +1293,22 @@ export default function ItemDetailsPage() {
     if (!item?.id) return null;
     if (
       item.priceNew == null &&
+      item.priceFoil == null &&
       item.priceUsed == null &&
       item.priceUsedCIB == null &&
       item.priceEstimated == null &&
+      item.priceEstimatedFoil == null &&
       !item.priceObservations?.length
     ) {
       return null;
     }
     return {
       priceNew: item.priceNew ?? null,
+      priceFoil: item.priceFoil ?? null,
       priceUsed: item.priceUsed ?? null,
       priceUsedCIB: item.priceUsedCIB ?? null,
       priceEstimated: item.priceEstimated ?? null,
+      priceEstimatedFoil: item.priceEstimatedFoil ?? null,
       priceLastUpdated: item.priceLastUpdated ?? null,
       priceSources: item.priceSources,
       priceSourceDisplayNames: item.priceSourceDisplayNames,
@@ -1840,10 +1861,19 @@ export default function ItemDetailsPage() {
       name: itemDisplayName,
       metadataTitle: item?.metadata?.title,
       aliases: item?.metadata?.aliases,
+      attachments: item?.metadata?.attachments,
     });
-  }, [item?.metadata?.aliases, item?.metadata?.title, itemDisplayName]);
+  }, [
+    item?.metadata?.aliases,
+    item?.metadata?.attachments,
+    item?.metadata?.title,
+    itemDisplayName,
+  ]);
 
   const seriesVolumes = useMemo(() => {
+    // Volume consensus is a books concept — collector codes like `TFC#001`
+    // look like "Tome #001" and would invent a phantom series on TCG shelves.
+    if (usesPrintSearch(shelf?.type)) return [];
     if (!shelf?.items || !item || !resolvedItemId) return [];
     const seriesTitle = item.storedName ?? item.name ?? "";
     const entries = (shelf.items as unknown as ItemWithMetadata[]).map(
@@ -1913,16 +1943,21 @@ export default function ItemDetailsPage() {
   }, [description]);
 
   const copyValue = useMemo(() => {
-    if (!prices || !item?.condition) return null;
+    if (!prices) return null;
+    if (shelf?.type !== "tcg" && !item?.condition) return null;
     return getItemValueEstimate({
-      condition: item.condition,
+      condition: item?.condition,
       shelfType: shelf?.type,
+      variant: item?.variant,
+      plainFinishes: printVariant?.plainFinishes,
       priceNew: prices.priceNew,
+      priceFoil: prices.priceFoil,
       priceUsed: prices.priceUsed,
       priceUsedCIB: prices.priceUsedCIB,
       priceEstimated: prices.priceEstimated,
+      priceEstimatedFoil: prices.priceEstimatedFoil,
     });
-  }, [prices, item, shelf?.type]);
+  }, [prices, item, shelf?.type, printVariant?.plainFinishes]);
 
   const formattedCopyValue = useMemo(() => {
     if (copyValue === null) return null;
@@ -1938,6 +1973,10 @@ export default function ItemDetailsPage() {
       item?.condition,
       shelf?.type,
       prices,
+      {
+        variant: item?.variant,
+        plainFinishes: printVariant?.plainFinishes,
+      },
     );
     const observations = prices?.priceObservations || [];
     const relevantObservations = observations.filter(
@@ -1992,7 +2031,7 @@ export default function ItemDetailsPage() {
         (Boolean(stampedReferenceOnly) ||
           (prices?.isReferencePriceOnly ?? false)),
     };
-  }, [item?.condition, prices, shelf?.type]);
+  }, [item?.condition, item?.variant, prices, shelf?.type, printVariant?.plainFinishes]);
 
   const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -2426,7 +2465,8 @@ export default function ItemDetailsPage() {
                         {year}
                       </Badge>
                     )}
-                    {item?.condition && (
+                    {item?.condition &&
+                      shelfShowsItemCondition(shelf?.type) && (
                       <Badge
                         variant="outline"
                         className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
@@ -2435,17 +2475,15 @@ export default function ItemDetailsPage() {
                         {t(`items.conditions.${item.condition}`)}
                       </Badge>
                     )}
-                    {/* Next to the condition, the other thing that is true of
-                        this copy rather than of the card. Only shown once the
-                        provider confirms the variant is one it still offers, so
-                        a stale value never sits on the fiche as fact. */}
+                    {/* Finish is the TCG copy axis (foil vs plain); condition is
+                        hidden for cards — see shelfShowsItemCondition. */}
                     {resolvedVariant && (
                       <Badge
                         variant="outline"
                         className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
                       >
                         <Sparkles className="size-3" />
-                        {formatFinishLabel(resolvedVariant)}
+                        {localizeFinishLabel(resolvedVariant, t)}
                       </Badge>
                     )}
                     {shelf?.type && (

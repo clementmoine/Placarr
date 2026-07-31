@@ -167,10 +167,13 @@ export const getItems = (
 
 export interface ItemPrices {
   priceNew: number | null;
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   /** Point price derived from catalog estimates — display fallback, shown as ~. */
   priceEstimated?: number | null;
+  /** FX ~ for the foil market bucket (TCG finishes). */
+  priceEstimatedFoil?: number | null;
   priceLastUpdated: string | null;
   priceSources?: string[];
   priceSourceDisplayNames?: string[];

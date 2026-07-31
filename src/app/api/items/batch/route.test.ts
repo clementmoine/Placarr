@@ -16,6 +16,8 @@ const h = vi.hoisted(() => ({
   scheduleBatchItemMetadataRefresh: vi.fn(),
   stampItemMetadataRefresh: vi.fn(),
   transaction: vi.fn(),
+  resolveUniquePrintCandidate: vi.fn(),
+  supportsPrintSearch: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -56,6 +58,10 @@ vi.mock("@/lib/routing/itemSlug", () => ({
 vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (value: string) => `slug-${value}`,
 }));
+vi.mock("@/core/identify/printSearch", () => ({
+  resolveUniquePrintCandidate: h.resolveUniquePrintCandidate,
+  supportsPrintSearch: h.supportsPrintSearch,
+}));
 
 import { POST, PATCH, PUT, DELETE } from "./route";
 
@@ -85,11 +91,15 @@ beforeEach(() => {
     h.scheduleBatchItemMetadataRefresh,
     h.stampItemMetadataRefresh,
     h.transaction,
+    h.resolveUniquePrintCandidate,
+    h.supportsPrintSearch,
   ]) {
     fn.mockReset();
   }
   h.requireGuestOrHigher.mockResolvedValue(USER);
   h.resolveShelfId.mockImplementation(async (id: string) => id);
+  h.supportsPrintSearch.mockReturnValue(false);
+  h.resolveUniquePrintCandidate.mockResolvedValue(null);
   h.shelf.findUnique.mockResolvedValue({
     type: "books",
     userId: "u1",
@@ -123,6 +133,53 @@ describe("POST /api/items/batch", () => {
         { itemId: "i2", lookupQuery: "Naruto Tome 02" },
       ],
       { type: "books", userId: "u1", name: "Mangas" },
+    );
+  });
+
+  it("resolves TCG collector codes to catalog title + printKey", async () => {
+    h.shelf.findUnique.mockResolvedValue({
+      type: "tcg",
+      userId: "u1",
+      name: "Lorcana",
+    });
+    h.supportsPrintSearch.mockReturnValue(true);
+    h.resolveUniquePrintCandidate.mockResolvedValue({
+      printKey: "lorcana:1-1",
+      title: "Ariel - Sur une mission",
+      reference: "Premier Chapitre · 1",
+    });
+    h.transaction.mockImplementation(async (ops: Promise<unknown>[]) =>
+      Promise.all(ops),
+    );
+    h.item.create.mockResolvedValueOnce({
+      id: "i1",
+      name: "Ariel - Sur une mission",
+    });
+
+    const res = await POST(
+      withBody({
+        shelfId: "shelf-tcg",
+        names: ["TFC#001"],
+        condition: "used",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.resolveUniquePrintCandidate).toHaveBeenCalledWith(
+      "TFC#001",
+      "tcg",
+    );
+    expect(h.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: "Ariel - Sur une mission",
+          printKey: "lorcana:1-1",
+        }),
+      }),
+    );
+    expect(h.scheduleBatchItemMetadataRefresh).toHaveBeenCalledWith(
+      [{ itemId: "i1", lookupQuery: "Ariel - Sur une mission" }],
+      { type: "tcg", userId: "u1", name: "Lorcana" },
     );
   });
 

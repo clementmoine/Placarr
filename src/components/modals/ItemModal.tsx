@@ -59,7 +59,10 @@ import {
   conditionToggleActiveClass,
 } from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { itemConditionsForShelfType } from "@/core/collect/condition";
+import {
+  itemConditionsForShelfType,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
 
 import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -78,6 +81,7 @@ import {
 import { deleteItem, getItem } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
@@ -1614,7 +1618,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "general"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1637,7 +1641,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "poster"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1660,7 +1664,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "background"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -2015,7 +2019,8 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Condition */}
+                    {/* Condition — hidden for TCG (finish is the copy axis). */}
+                    {shelfShowsItemCondition(activeShelfType) && (
                     <FormField
                       control={form.control}
                       name="condition"
@@ -2067,6 +2072,7 @@ export function ItemModal({
                         </FormItem>
                       )}
                     />
+                    )}
 
                     {/* One option is not a choice, so it is not offered. */}
                     {variantOptions.length > 1 && (
@@ -2095,10 +2101,10 @@ export function ItemModal({
                                   <ToggleGroupItem
                                     key={option}
                                     value={option}
-                                    className="flex-1 gap-1.5 rounded-lg border-0 text-xs data-[state=on]:bg-white data-[state=on]:shadow-sm dark:data-[state=on]:bg-zinc-850"
+                                    className="flex-1 gap-1.5 rounded-lg border-0 text-xs data-[state=on]:bg-white data-[state=on]:text-zinc-950 data-[state=on]:shadow-sm dark:data-[state=on]:bg-zinc-800 dark:data-[state=on]:text-zinc-50"
                                   >
                                     <span className="shrink-0 font-medium">
-                                      {option}
+                                      {localizeFinishLabel(option, t)}
                                     </span>
                                   </ToggleGroupItem>
                                 ))}

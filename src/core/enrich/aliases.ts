@@ -191,11 +191,19 @@ export function collectMergedSearchAliases(
  * Names shown under "Aussi connu sous": stored aliases plus the catalog
  * `metadata.title` when it differs from the collector's display name.
  * (Short ScreenScraper noms like "Wrc 4" often land only on metadata.title.)
+ *
+ * Cover titles tagged with a language role (fr/en/de/…) are also included —
+ * TCG prints store one jaquette per language with the regional full name.
  */
 export function displayAliasesForItem(input: {
   name?: string | null;
   metadataTitle?: string | null;
   aliases?: unknown;
+  attachments?: Array<{
+    type?: string | null;
+    role?: string | null;
+    title?: string | null;
+  }> | null;
 }): string[] {
   const displayName = input.name?.trim() || "";
   const exclude = new Set(
@@ -207,6 +215,7 @@ export function displayAliasesForItem(input: {
   for (const candidate of [
     ...(metadataAliases(input.aliases) ?? []),
     input.metadataTitle,
+    ...regionalCoverAliasTitles(input.attachments),
   ]) {
     if (typeof candidate !== "string") continue;
     const trimmed = normalizeAliasValue(candidate);
@@ -221,4 +230,32 @@ export function displayAliasesForItem(input: {
   }
 
   return aliases;
+}
+
+/** Cover titles whose `role` is a language code (Lorcana FR/EN/DE/IT jaquettes). */
+export function regionalCoverAliasTitles(
+  attachments:
+    | Array<{
+        type?: string | null;
+        role?: string | null;
+        title?: string | null;
+      }>
+    | null
+    | undefined,
+): string[] {
+  if (!attachments?.length) return [];
+  const titles: string[] = [];
+  const seen = new Set<string>();
+  for (const attachment of attachments) {
+    if (attachment.type !== "cover") continue;
+    const role = attachment.role?.trim().toLowerCase();
+    if (!role || !/^[a-z]{2}(?:-[a-z]{2})?$/.test(role)) continue;
+    const title = attachment.title?.trim();
+    if (!title) continue;
+    const key = normalizeTitleKey(normalizeAliasValue(title));
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    titles.push(normalizeAliasValue(title));
+  }
+  return titles;
 }

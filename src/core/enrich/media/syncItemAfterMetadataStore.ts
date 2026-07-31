@@ -21,7 +21,10 @@ import {
 } from "@/core/identify/platforms/platforms";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
+import {
+  adoptItemNameFromMetadataIfPlaceholder,
+  syncPrintItemIdentityFromMetadata,
+} from "@/core/collect/adoptMetadataTitle";
 import type { AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
 import type {
   MetadataAttachment,
@@ -188,6 +191,8 @@ export async function syncItemFieldsAfterMetadataStore(input: {
   }
 
   // Fill item.name only when empty / barcode placeholder and a barcode is set.
+  // Print shelves also adopt catalog title + printKey when the add was a code
+  // (`TFC#001`) rather than a finished title.
   if (item) {
     const displayTitle = resolveMetadataDisplayTitle(
       metadata,
@@ -198,6 +203,13 @@ export async function syncItemFieldsAfterMetadataStore(input: {
       metadataTitle: displayTitle,
       itemName: item.name?.trim() || name.trim(),
       barcode: effectiveBarcode,
+    });
+    await syncPrintItemIdentityFromMetadata({
+      itemId,
+      shelfType: type,
+      itemName: item.name?.trim() || name.trim(),
+      metadataTitle: displayTitle,
+      metadataPrintKey: metadata.externalIds?.printKey,
     });
   }
 }

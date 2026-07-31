@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatFinishLabel } from "./finishLabel";
+import {
+  finishLabelMessageKey,
+  formatFinishLabel,
+  localizeFinishLabel,
+} from "./finishLabel";
 
 describe("formatFinishLabel", () => {
   it.each([
@@ -15,5 +19,25 @@ describe("formatFinishLabel", () => {
     ["Lava", "Lava"],
   ])("%s → %s", (input, expected) => {
     expect(formatFinishLabel(input)).toBe(expected);
+  });
+});
+
+describe("localizeFinishLabel", () => {
+  const t = (key: string) =>
+    ({
+      "items.finishes.none": "Normal",
+      "items.finishes.nonfoil": "Normal",
+      "items.finishes.normal": "Normal",
+    })[key] ?? key;
+
+  it("translates plain finishes", () => {
+    expect(localizeFinishLabel("None", t)).toBe("Normal");
+    expect(localizeFinishLabel("nonfoil", t)).toBe("Normal");
+    expect(finishLabelMessageKey("None")).toBe("items.finishes.none");
+  });
+
+  it("keeps named foil finishes as spaced CamelCase", () => {
+    expect(localizeFinishLabel("RainbowPillars", t)).toBe("Rainbow Pillars");
+    expect(finishLabelMessageKey("Silver")).toBeNull();
   });
 });

@@ -36,6 +36,7 @@ import {
   requestedTitleCoversCurrentTitle,
   scoreMetadataDisplayTitle,
 } from "@/core/enrich/titles/displayScore";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
@@ -133,6 +134,16 @@ export function preferRequestedDisplayTitle(
     return metadata;
   }
 
+  // Print shelves: the "requested" string is often a collector code (`TFC#001`),
+  // not a display title. A catalog printKey means the provider hit the right
+  // printing — keep its name (do not overwrite Ariel with TFC#001).
+  if (
+    usesPrintSearch(options?.shelfType) ||
+    Boolean(metadata.externalIds?.printKey?.trim())
+  ) {
+    return metadata;
+  }
+
   if (
     !isMetadataTitleAligned(
       { title: currentTitle },
@@ -144,7 +155,8 @@ export function preferRequestedDisplayTitle(
     )
   ) {
     // Provider hit a different product (e.g. Pokémon OLED for a Zelda OLED
-    // request). Keep the catalog name, drop covers that belong to the wrong SKU.
+    // request). Prefer the collector's requested name and drop covers that
+    // belong to the wrong SKU.
     return stripCoversMisalignedWithRequestedTitle(
       {
         ...metadata,
@@ -198,6 +210,15 @@ function providerMetadataAlignsForGallery(
 ): boolean {
   const requested = requestedTitle?.trim();
   if (!requested) return true;
+
+  // Print lookup codes (`TFC#002`) do not align with catalog titles; the cover
+  // still belongs to the resolved printing when printKey is present.
+  if (
+    usesPrintSearch(shelfType) ||
+    Boolean(metadata.externalIds?.printKey?.trim())
+  ) {
+    return true;
+  }
 
   const catalogTitle = metadata.title?.trim();
   if (!catalogTitle) return false;

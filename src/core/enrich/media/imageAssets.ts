@@ -168,7 +168,16 @@ export async function dedupeLocalizedAttachmentsByContent<
         )
       );
     },
-    (item) => item.source ?? "merged",
+    (item) => {
+      const source = item.source ?? "merged";
+      // Language / region roles must not collapse into one cover: Lorcana FR/EN/DE
+      // share nearly identical art (only the text plate changes) and the Affiche
+      // picker needs every printing. Foil masks are language-independent alpha
+      // and still dedupe per provider.
+      if (item.type === "foilMask") return source;
+      const role = item.role?.trim().toLowerCase() ?? "";
+      return role ? `${source}::${role}` : source;
+    },
   )
     .map((attachment) =>
       retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),

@@ -10,7 +10,7 @@ vi.mock("@/core/catalog/registry", () => ({
   },
 }));
 
-import { searchPrintCandidates, supportsPrintSearch } from "./printSearch";
+import { searchPrintCandidates, resolveUniquePrintCandidate, supportsPrintSearch, collectorQueryFromItemSlug } from "./printSearch";
 
 function candidate(overrides: Partial<PrintCandidate> = {}): PrintCandidate {
   return {
@@ -194,5 +194,96 @@ describe("searchPrintCandidates", () => {
     expect(searchPrints).toHaveBeenCalledWith(
       expect.objectContaining({ query: "elsa" }),
     );
+  });
+});
+
+describe("resolveUniquePrintCandidate", () => {
+  it("returns the only printing when the query resolves to one key", async () => {
+    modules.push(fakeModule("lorcanajson", ["tcg"], async () => [candidate()]));
+
+    const found = await resolveUniquePrintCandidate("TFC#207", "tcg");
+
+    expect(found?.printKey).toBe("lorcana:1-207");
+    expect(found?.title).toBe("Elsa - Esprit de l'hiver");
+  });
+
+  it("prefers the base print when challenge/promo twins share set+number", async () => {
+    modules.push(
+      fakeModule("lorcanajson", ["tcg"], async () => [
+        candidate({
+          printKey: "lorcana:1-1",
+          title: "Ariel - Sur des jambes humaines",
+        }),
+        candidate({ printKey: "lorcana:1-1-c1", title: "Dragon Fire" }),
+        candidate({
+          printKey: "lorcana:1-1-cc1",
+          title: "Ariel - Spectacular Singer",
+        }),
+        candidate({
+          printKey: "lorcana:1-1-d23",
+          title: "Mickey Mouse - Brave Little Tailor",
+        }),
+        candidate({ printKey: "lorcana:1-1-p1", title: "Promo twin" }),
+      ]),
+    );
+
+    const found = await resolveUniquePrintCandidate("TFC#001", "tcg");
+
+    expect(found?.printKey).toBe("lorcana:1-1");
+    expect(found?.title).toBe("Ariel - Sur des jambes humaines");
+  });
+
+  it("prefers the base print when a promo twin shares set+number", async () => {
+    modules.push(
+      fakeModule("lorcanajson", ["tcg"], async () => [
+        candidate({ printKey: "lorcana:1-20", title: "Simba" }),
+        candidate({ printKey: "lorcana:1-20-p1", title: "Genie" }),
+      ]),
+    );
+
+    const found = await resolveUniquePrintCandidate("TFC#20", "tcg");
+
+    expect(found?.printKey).toBe("lorcana:1-20");
+    expect(found?.title).toBe("Simba");
+  });
+
+  it("stays unresolved when several unrelated prints match", async () => {
+    modules.push(
+      fakeModule("lorcanajson", ["tcg"], async () => [
+        candidate({ printKey: "lorcana:1-1", title: "Ariel" }),
+        candidate({ printKey: "lorcana:1-20", title: "Simba" }),
+      ]),
+    );
+
+    expect(
+      await resolveUniquePrintCandidate("premier chapitre", "tcg"),
+    ).toBeNull();
+  });
+
+  it("keeps promo twins ambiguous when the query asks for a promo group", async () => {
+    modules.push(
+      fakeModule("lorcanajson", ["tcg"], async () => [
+        candidate({ printKey: "lorcana:1-20", title: "Simba" }),
+        candidate({ printKey: "lorcana:1-20-p1", title: "Genie" }),
+      ]),
+    );
+
+    const found = await resolveUniquePrintCandidate("20 P1", "tcg");
+
+    expect(found?.printKey).toBe("lorcana:1-20-p1");
+    expect(found?.title).toBe("Genie");
+  });
+});
+
+describe("collectorQueryFromItemSlug", () => {
+  it("rebuilds the collector code that produced the item slug", () => {
+    expect(collectorQueryFromItemSlug("tfc-2")).toBe("TFC#2");
+    expect(collectorQueryFromItemSlug("tfc-2a")).toBe("TFC#2a");
+    expect(collectorQueryFromItemSlug("pr3-34")).toBe("PR3#34");
+  });
+
+  it("ignores ordinary title slugs", () => {
+    expect(collectorQueryFromItemSlug("ariel-chanteuse-exceptionnelle")).toBeNull();
+    expect(collectorQueryFromItemSlug("tfc")).toBeNull();
   });
 });

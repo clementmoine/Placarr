@@ -938,10 +938,113 @@ export function buildProfileProviderLinkFacts(input: {
     }
   }
 
-  // Contributors without a product/listing URL (cover-only, price-only) must not
-  // get a homepage chip — `websiteUrl` is a site root, not a fiche.
+  // Every real contributing provider gets a chip: product/listing URL when we
+  // have one, else registry websiteUrl (attribution — not a invented fiche).
+  links = appendAttributionLinksForContributors(links, input);
 
   return dedupeProviderExternalLinkFacts(links).filter(
     (fact) => fact.kind === "external-link" && fact.url?.trim(),
   );
+}
+
+/** Registry providers that stamped facts / evidence / covers / prices. */
+export function collectContributingProviderIds(input: {
+  facts?: MetadataFact[];
+  fieldEvidence?: readonly { source?: string | null }[];
+  attachments?: readonly { source?: string | null }[];
+  priceOffers?: readonly { source?: string | null }[];
+}): string[] {
+  const ids = new Set<string>();
+  const consider = (source?: string | null) => {
+    const raw = source?.trim();
+    if (!raw) return;
+    if (isInternalMetadataMergeKey(raw)) return;
+    if (/^mergedengine$/i.test(raw)) return;
+    const id = providerIdForSourceToken(raw);
+    if (!id || isInternalMetadataMergeKey(id)) return;
+    if (!getProviderModule(id)) return;
+    ids.add(id);
+  };
+
+  for (const fact of input.facts ?? []) consider(fact.source);
+  for (const row of input.fieldEvidence ?? []) consider(row.source);
+  for (const row of input.attachments ?? []) consider(row.source);
+  for (const row of input.priceOffers ?? []) consider(row.source);
+
+  return [...ids];
+}
+
+/**
+ * Fill missing Sources & Boutiques chips for contributors that have no
+ * external-link yet. Prefer a product/listing URL already on the profile;
+ * fall back to registry `websiteUrl` so cover/price-only APIs stay visible.
+ */
+export function appendAttributionLinksForContributors(
+  links: MetadataFact[],
+  input: {
+    facts?: MetadataFact[];
+    fieldEvidence?: readonly FieldEvidenceInput[];
+    attachments?: readonly { source?: string | null }[];
+    priceOffers?: readonly ProviderPriceOfferLinkInput[];
+    platformKey?: string | null;
+  },
+): MetadataFact[] {
+  const additions: MetadataFact[] = [];
+  const known = [...links];
+
+  for (const providerId of collectContributingProviderIds(input)) {
+    if (providerHasExternalLink([...known, ...additions], providerId)) {
+      continue;
+    }
+
+    const productUrl = pickContributorProductUrl(providerId, input);
+    const websiteUrl = getProviderModule(providerId)?.info.websiteUrl?.trim();
+    const url = productUrl || websiteUrl;
+    if (!url) continue;
+
+    additions.push(
+      makeProviderExternalLinkFact({
+        source: providerId,
+        url,
+        priority: productUrl ? 38 : 28,
+        platformKey: input.platformKey,
+      }),
+    );
+  }
+
+  return additions.length > 0 ? [...known, ...additions] : known;
+}
+
+function pickContributorProductUrl(
+  providerId: string,
+  input: {
+    facts?: MetadataFact[];
+    fieldEvidence?: readonly FieldEvidenceInput[];
+    priceOffers?: readonly ProviderPriceOfferLinkInput[];
+  },
+): string | null {
+  for (const fact of input.facts ?? []) {
+    const sourceKey = normalizeProviderSourceKey(
+      fact.source ?? fact.label ?? "",
+    );
+    if (sourceKey !== providerId) continue;
+    const url = fact.url?.trim();
+    if (url && looksLikeProviderProductPageUrl(url)) return url;
+  }
+
+  for (const row of input.fieldEvidence ?? []) {
+    const sourceKey = normalizeProviderSourceKey(row.source ?? "");
+    if (sourceKey !== providerId) continue;
+    const url = row.sourceUrl?.trim();
+    if (url && looksLikeProviderProductPageUrl(url)) return url;
+  }
+
+  for (const offer of input.priceOffers ?? []) {
+    const sourceKey = normalizeProviderSourceKey(offer.source ?? "");
+    if (sourceKey !== providerId) continue;
+    const url = productPageUrlFromPriceOffer(offer);
+    if (url) return url;
+  }
+
+  return null;
 }

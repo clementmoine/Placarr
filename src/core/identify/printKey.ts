@@ -96,3 +96,69 @@ export function parsePrintKey(
 export function isPrintKey(value: string | null | undefined): boolean {
   return parsePrintKey(value) !== null;
 }
+
+/**
+ * Set order as collectors browse binders: numeric release codes ascending
+ * (`1` Premier Chapitre before `11`), then lettered codes (`q1`).
+ */
+export function comparePrintSetCodes(left: string, right: string): number {
+  const leftNumber = /^\d+$/.test(left) ? Number(left) : null;
+  const rightNumber = /^\d+$/.test(right) ? Number(right) : null;
+  if (leftNumber != null && rightNumber != null) {
+    return leftNumber - rightNumber;
+  }
+  if (leftNumber != null) return -1;
+  if (rightNumber != null) return 1;
+  return left.localeCompare(right);
+}
+
+/** Collector number with optional variant letter (`4`, `4a`, `20`). */
+function compareCollectorNumbers(left: string, right: string): number {
+  const parse = (value: string) => {
+    const match = value.match(/^(\d+)([a-z]*)$/i);
+    if (!match) return { num: null as number | null, suffix: value };
+    return { num: Number(match[1]), suffix: (match[2] ?? "").toLowerCase() };
+  };
+  const a = parse(left);
+  const b = parse(right);
+  if (a.num != null && b.num != null) {
+    if (a.num !== b.num) return a.num - b.num;
+    return a.suffix.localeCompare(b.suffix);
+  }
+  if (a.num != null) return -1;
+  if (b.num != null) return 1;
+  return left.localeCompare(right);
+}
+
+/**
+ * Binder order: game → set → number → base before promo grouping → full key.
+ * Missing / malformed keys sort after real prints (then caller may name-tiebreak).
+ */
+export function comparePrintKeys(
+  left: string | null | undefined,
+  right: string | null | undefined,
+): number {
+  const a = parsePrintKey(left);
+  const b = parsePrintKey(right);
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+
+  const game = a.game.localeCompare(b.game);
+  if (game !== 0) return game;
+
+  const set = comparePrintSetCodes(a.set, b.set);
+  if (set !== 0) return set;
+
+  const number = compareCollectorNumbers(a.number, b.number);
+  if (number !== 0) return number;
+
+  const groupA = a.grouping ?? "";
+  const groupB = b.grouping ?? "";
+  if (!groupA && groupB) return -1;
+  if (groupA && !groupB) return 1;
+  const group = groupA.localeCompare(groupB);
+  if (group !== 0) return group;
+
+  return (left ?? "").localeCompare(right ?? "");
+}

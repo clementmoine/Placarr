@@ -16,10 +16,15 @@
  *
  * Freshness is checked against the tiny `.md5` companion file rather than by
  * re-downloading, and at most every {@link INDEX_REVALIDATE_MS}.
+ *
+ * Search and lookup always walk **every** published language (preferred first).
+ * A printing can exist in English only — Tempest, FreeForm2, CalendarWave —
+ * and stopping at French would hide it. Deduping is by `providerId` so the
+ * preferred language's title wins when the same card exists in several files.
  */
 import { httpGet } from "@/lib/http/httpClient";
 
-import { buildPrintKey } from "@/core/identify/printKey";
+import { buildPrintKey, comparePrintSetCodes } from "@/core/identify/printKey";
 
 /** Game slug used in every print key this provider emits. */
 export const LORCANA_GAME = "lorcana";
@@ -363,8 +368,43 @@ export async function loadLorcanaIndex(
 }
 
 /**
- * Every print sharing this key. More than one only for the Moana / Vaiana pair,
- * which really are two cards carrying the same printed identifier.
+ * The languages to try, the preferred one first.
+ *
+ * Preference is not availability. A printing can exist in one language and not
+ * another — Tempest, FreeForm2 and CalendarWave appear on no French card at all
+ * — and the finish is a property of the *printing*, not of the text on it.
+ */
+export function lorcanaLanguagesToTry(
+  preferred?: LorcanaLanguage,
+): LorcanaLanguage[] {
+  const first = preferred ?? LORCANA_DEFAULT_LANGUAGE;
+  return [first, ...LORCANA_LANGUAGES.filter((lang) => lang !== first)];
+}
+
+/**
+ * Every published language index, preferred first. Loads in parallel so a
+ * cold search does not wait on four sequential 1.6 MB downloads.
+ */
+export async function loadLorcanaIndexes(
+  preferred?: LorcanaLanguage,
+  options: { signal?: AbortSignal } = {},
+): Promise<LorcanaIndex[]> {
+  return Promise.all(
+    lorcanaLanguagesToTry(preferred).map((language) =>
+      loadLorcanaIndex(language, options),
+    ),
+  );
+}
+
+/**
+ * Every print sharing this key in one language index. More than one only for
+ * the Moana / Vaiana pair, which really are two cards carrying the same printed
+ * identifier.
+ *
+ * Walks every language (preferred first) and returns the first non-empty hit
+ * set — an English-only C1 Tempest print must not vanish because French was
+ * asked for. For storing every language's art, use
+ * {@link fetchLorcanaLanguageVariants}.
  */
 export async function fetchLorcanaCardsByPrintKey(
   printKey: string,
@@ -372,26 +412,15 @@ export async function fetchLorcanaCardsByPrintKey(
 ): Promise<LorcanaCard[]> {
   const key = printKey.trim().toLowerCase();
   if (!key) return [];
-  const index = await loadLorcanaIndex(options.language, options);
-  return index.byPrintKey.get(key) ?? [];
+  for (const language of lorcanaLanguagesToTry(options.language)) {
+    const index = await loadLorcanaIndex(language, options);
+    const matches = index.byPrintKey.get(key) ?? [];
+    if (matches.length > 0) return matches;
+  }
+  return [];
 }
 
 /** The single print for this key, or `null` when absent or ambiguous by name. */
-/**
- * The languages to try, the preferred one first.
- *
- * Preference is not availability. A printing can exist in one language and not
- * another — Tempest, FreeForm2 and CalendarWave appear on no French card at all
- * — and the finish is a property of the *printing*, not of the text on it. So a
- * lookup that stopped at the preferred language would report those three as
- * unknown prints and draw them as plain, which is the wrong answer to "we do
- * not publish this in French".
- */
-function languagesToTry(preferred?: LorcanaLanguage): LorcanaLanguage[] {
-  const first = preferred ?? LORCANA_DEFAULT_LANGUAGE;
-  return [first, ...LORCANA_LANGUAGES.filter((lang) => lang !== first)];
-}
-
 export async function fetchLorcanaCardByPrintKey(
   printKey: string,
   options: {
@@ -401,24 +430,15 @@ export async function fetchLorcanaCardByPrintKey(
     name?: string | null;
   } = {},
 ): Promise<LorcanaCard | null> {
-  for (const language of languagesToTry(options.language)) {
-    const matches = await fetchLorcanaCardsByPrintKey(printKey, {
-      ...options,
-      language,
-    });
-    if (matches.length === 0) continue;
+  const matches = await fetchLorcanaCardsByPrintKey(printKey, options);
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
 
-    if (matches.length === 1) return matches[0];
-
-    const wanted = options.name ? normalizeLorcanaSearchText(options.name) : "";
-    // Several cards share this printed identifier and nothing disambiguates
-    // them. Another language would be just as ambiguous, so stop here rather
-    // than walking on and returning a different card's translation.
-    if (!wanted) return null;
-    const named = matches.find((card) => card.searchName === wanted);
-    if (named) return named;
-  }
-  return null;
+  const wanted = options.name ? normalizeLorcanaSearchText(options.name) : "";
+  // Several cards share this printed identifier and nothing disambiguates
+  // them — returning one at random would quietly swap Moana for Vaiana.
+  if (!wanted) return null;
+  return matches.find((card) => card.searchName === wanted) ?? null;
 }
 
 export async function fetchLorcanaCardByProviderId(
@@ -427,8 +447,34 @@ export async function fetchLorcanaCardByProviderId(
 ): Promise<LorcanaCard | null> {
   const id = providerId.trim();
   if (!id) return null;
-  const index = await loadLorcanaIndex(options.language, options);
-  return index.byProviderId.get(id) ?? null;
+  for (const language of lorcanaLanguagesToTry(options.language)) {
+    const index = await loadLorcanaIndex(language, options);
+    const card = index.byProviderId.get(id);
+    if (card) return card;
+  }
+  return null;
+}
+
+/**
+ * One row per published language for the same card (`providerId`).
+ *
+ * Preferred language first when present; languages that never published the
+ * print are simply absent. Used so metadata can store every cover / title
+ * while still defaulting the primary fields to the preferred language.
+ */
+export async function fetchLorcanaLanguageVariants(
+  providerId: string,
+  options: { language?: LorcanaLanguage; signal?: AbortSignal } = {},
+): Promise<LorcanaCard[]> {
+  const id = providerId.trim();
+  if (!id) return [];
+  const indexes = await loadLorcanaIndexes(options.language, options);
+  const variants: LorcanaCard[] = [];
+  for (const index of indexes) {
+    const card = index.byProviderId.get(id);
+    if (card) variants.push(card);
+  }
+  return variants;
 }
 
 /**
@@ -451,6 +497,197 @@ export function scoreLorcanaCard(card: LorcanaCard, query: string): number {
   return 0;
 }
 
+/**
+ * Letter codes collectors type (`TFC#1`, `ITI 4a`). Observed on English
+ * printings (`1 TFC • EN • …`) and shop media paths — kept local to this
+ * catalog module, not imported from a retailer.
+ */
+const SET_LETTER_CODES: Readonly<Record<string, string>> = {
+  tfc: "1",
+  rof: "2",
+  iti: "3",
+  ur: "4",
+  urs: "4",
+  ssk: "5",
+  azu: "6",
+  afi: "7",
+  aov: "13",
+};
+
+type LorcanaSetCatalog = {
+  codes: Set<string>;
+  /** Normalized set name → numeric/letter set code. */
+  byName: Map<string, string>;
+};
+
+export type LorcanaCollectorQuery = {
+  setCode: string | null;
+  number: number | null;
+  variant: string | null;
+  /** Uppercase promo group as stored on cards (`P1`, `P3`). */
+  promoGrouping: string | null;
+};
+
+function buildSetCatalog(indexes: LorcanaIndex[]): LorcanaSetCatalog {
+  const codes = new Set<string>();
+  const byName = new Map<string, string>();
+  for (const index of indexes) {
+    for (const card of index.cards) {
+      codes.add(card.setCode);
+      if (!card.setName) continue;
+      const name = normalizeLorcanaSearchText(card.setName);
+      if (name) byName.set(name, card.setCode);
+    }
+  }
+  return { codes, byName };
+}
+
+/** `p3` / `pr3` → `P3`. */
+export function parseLorcanaPromoToken(token: string): string | null {
+  const match = token.trim().toLowerCase().match(/^pr?(\d+)$/);
+  return match ? `P${match[1]}` : null;
+}
+
+/** `20`, `4a` → number + optional variant letter. */
+export function parseLorcanaCollectorNumber(token: string): {
+  number: number;
+  variant: string | null;
+} | null {
+  const match = token.trim().toLowerCase().match(/^(\d+)([a-z])?$/);
+  if (!match) return null;
+  return { number: Number(match[1]), variant: match[2] ?? null };
+}
+
+function resolveSetRef(
+  ref: string,
+  catalog: LorcanaSetCatalog,
+): string | null {
+  if (!ref) return null;
+  if (catalog.codes.has(ref)) return ref;
+  const letter = SET_LETTER_CODES[ref];
+  if (letter) return letter;
+
+  const chapter = ref.match(/^chapitre (\d+)$/);
+  if (chapter?.[1] && catalog.codes.has(chapter[1])) return chapter[1];
+
+  const exact = catalog.byName.get(ref);
+  if (exact) return exact;
+
+  // Unique word-prefix so "premier" → "premier chapitre" without matching "p".
+  const hits = [...catalog.byName.entries()].filter(
+    ([name]) => name === ref || name.startsWith(`${ref} `),
+  );
+  if (hits.length === 1) return hits[0]![1];
+  return null;
+}
+
+function parseNumberPromoTokens(tokens: string[]): {
+  number: number | null;
+  variant: string | null;
+  promoGrouping: string | null;
+} | null {
+  if (tokens.length === 0) {
+    return { number: null, variant: null, promoGrouping: null };
+  }
+  if (tokens.length === 1) {
+    const promo = parseLorcanaPromoToken(tokens[0]!);
+    if (promo) return { number: null, variant: null, promoGrouping: promo };
+    const num = parseLorcanaCollectorNumber(tokens[0]!);
+    if (!num) return null;
+    return { ...num, promoGrouping: null };
+  }
+  if (tokens.length === 2) {
+    const promoFirst = parseLorcanaPromoToken(tokens[0]!);
+    const numSecond = parseLorcanaCollectorNumber(tokens[1]!);
+    if (promoFirst && numSecond) {
+      return { ...numSecond, promoGrouping: promoFirst };
+    }
+    const numFirst = parseLorcanaCollectorNumber(tokens[0]!);
+    const promoSecond = parseLorcanaPromoToken(tokens[1]!);
+    if (numFirst && promoSecond) {
+      return { ...numFirst, promoGrouping: promoSecond };
+    }
+  }
+  return null;
+}
+
+/**
+ * Collector-shaped queries: set name/code + optional number/promo.
+ * `null` means the string is not print-shaped — fall back to name search only.
+ */
+export function parseLorcanaCollectorQuery(
+  normalized: string,
+  catalog: LorcanaSetCatalog,
+): LorcanaCollectorQuery | null {
+  if (!normalized) return null;
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return null;
+
+  const setOnly = resolveSetRef(normalized, catalog);
+  if (setOnly) {
+    return {
+      setCode: setOnly,
+      number: null,
+      variant: null,
+      promoGrouping: null,
+    };
+  }
+
+  for (let split = tokens.length - 1; split >= 1; split -= 1) {
+    const setCode = resolveSetRef(tokens.slice(0, split).join(" "), catalog);
+    if (!setCode) continue;
+    const rest = parseNumberPromoTokens(tokens.slice(split));
+    if (!rest) continue;
+    return { setCode, ...rest };
+  }
+
+  // Promo without set: `P3#34`, `PR3 1`, `34 p3`.
+  const promoOnly = parseNumberPromoTokens(tokens);
+  if (
+    promoOnly &&
+    promoOnly.promoGrouping &&
+    (promoOnly.number != null || tokens.length === 1)
+  ) {
+    return { setCode: null, ...promoOnly };
+  }
+
+  return null;
+}
+
+/**
+ * Score against set / number / promo. Higher than name substrings so
+ * `TFC#1` beats a card whose title happens to contain those letters.
+ */
+export function scoreLorcanaCollectorMatch(
+  card: LorcanaCard,
+  query: LorcanaCollectorQuery,
+): number {
+  if (query.setCode && card.setCode !== query.setCode) return 0;
+
+  if (query.promoGrouping) {
+    const cardPromo = (card.promoGrouping ?? "").toUpperCase();
+    if (cardPromo !== query.promoGrouping) return 0;
+  }
+
+  if (query.number != null) {
+    if (card.number !== query.number) return 0;
+    if (
+      query.variant &&
+      (card.variant ?? "").toLowerCase() !== query.variant
+    ) {
+      return 0;
+    }
+    // Exact print when promo was asked; otherwise every print of that number.
+    if (query.promoGrouping) return 99;
+    if (query.variant) return 98;
+    return 96;
+  }
+
+  // Set (or promo group) browse — below exact name, above loose substrings.
+  if (query.setCode || query.promoGrouping) return 55;
+  return 0;
+}
+
 export type LorcanaSearchOptions = {
   language?: LorcanaLanguage;
   signal?: AbortSignal;
@@ -459,7 +696,17 @@ export type LorcanaSearchOptions = {
 
 const DEFAULT_SEARCH_LIMIT = 25;
 
-/** Name search — the entry point for shelves that cannot scan a barcode. */
+/**
+ * Name + collector search across every published language — preferred first.
+ *
+ * Dedupes by `providerId` (language-independent) so "Elsa" does not return the
+ * French and English rows as two picks; the preferred language's title wins on
+ * a score tie. Prints that exist in only one language (English Tempest C1s,
+ * D23 FreeForm2) still surface.
+ *
+ * Collector queries (`premier chapitre`, `TFC#1`, `P3 34`) resolve via set
+ * name / letter code / promo group — name search alone cannot find them.
+ */
 export async function searchLorcanaCards(
   query: string,
   options: LorcanaSearchOptions = {},
@@ -467,19 +714,42 @@ export async function searchLorcanaCards(
   const normalized = normalizeLorcanaSearchText(query ?? "");
   if (!normalized) return [];
 
-  const index = await loadLorcanaIndex(options.language, options);
-  const scored: Array<{ card: LorcanaCard; score: number }> = [];
-  for (const card of index.cards) {
-    const score = scoreLorcanaCard(card, normalized);
-    if (score > 0) scored.push({ card, score });
-  }
+  const indexes = await loadLorcanaIndexes(options.language, options);
+  const catalog = buildSetCatalog(indexes);
+  const collector = parseLorcanaCollectorQuery(normalized, catalog);
+  const bestByProvider = new Map<
+    string,
+    { card: LorcanaCard; score: number; langRank: number }
+  >();
 
+  indexes.forEach((index, langRank) => {
+    for (const card of index.cards) {
+      const nameScore = scoreLorcanaCard(card, normalized);
+      const collectorScore = collector
+        ? scoreLorcanaCollectorMatch(card, collector)
+        : 0;
+      const score = Math.max(nameScore, collectorScore);
+      if (score <= 0) continue;
+      const previous = bestByProvider.get(card.providerId);
+      if (
+        !previous ||
+        score > previous.score ||
+        (score === previous.score && langRank < previous.langRank)
+      ) {
+        bestByProvider.set(card.providerId, { card, score, langRank });
+      }
+    }
+  });
+
+  const scored = [...bestByProvider.values()];
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    // Stable, collector-meaningful order: oldest set first, then card number.
-    const setDelta = compareSetCodes(a.card.setCode, b.card.setCode);
+    // Stable, collector-meaningful order: oldest set first, then card number,
+    // then print key so the base print sorts before its promo twin.
+    const setDelta = comparePrintSetCodes(a.card.setCode, b.card.setCode);
     if (setDelta !== 0) return setDelta;
-    return a.card.number - b.card.number;
+    if (a.card.number !== b.card.number) return a.card.number - b.card.number;
+    return a.card.printKey.localeCompare(b.card.printKey);
   });
 
   return scored
@@ -487,15 +757,13 @@ export async function searchLorcanaCards(
     .map((entry) => entry.card);
 }
 
-/** Numeric sets come first in release order; lettered promo sets follow. */
-export function compareSetCodes(left: string, right: string): number {
-  const leftNumber = /^\d+$/.test(left) ? Number(left) : null;
-  const rightNumber = /^\d+$/.test(right) ? Number(right) : null;
-  if (leftNumber != null && rightNumber != null)
-    return leftNumber - rightNumber;
-  if (leftNumber != null) return -1;
-  if (rightNumber != null) return 1;
-  return left.localeCompare(right);
+/** Collector number only, e.g. `4a`, `20/P1`, `34/P3`. */
+export function lorcanaCollectorNumberLabel(card: LorcanaCard): string {
+  const number = `${card.number}${card.variant ?? ""}`;
+  if (card.promoGrouping) {
+    return `${number}/${card.promoGrouping}`;
+  }
+  return number;
 }
 
 /** Human-readable print reference, e.g. `Fabuleux · 1/9`. */

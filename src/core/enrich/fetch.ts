@@ -77,6 +77,11 @@ export type FetchMetadataOptions = {
   existingExternalIds?: Record<string, string | null>;
   existingProviderRecordUrls?: Record<string, string>;
   /**
+   * Non-scrape providers already on the fiche (fact / attachment sources) that
+   * should refresh even when Tier 0+1 capabilities look complete.
+   */
+  existingFicheProviderIds?: readonly string[];
+  /**
    * ROM dump hashes when known (API preview / prior identifier facts).
    * Tier0 dump providers prefer these over title search.
    */
@@ -108,8 +113,11 @@ function pinnedProviderIdsFromOptions(
   options?: FetchMetadataOptions,
 ): string[] {
   return [
-    ...Object.keys(options?.existingExternalIds ?? {}),
-    ...Object.keys(options?.existingProviderRecordUrls ?? {}),
+    ...new Set([
+      ...Object.keys(options?.existingExternalIds ?? {}),
+      ...Object.keys(options?.existingProviderRecordUrls ?? {}),
+      ...(options?.existingFicheProviderIds ?? []),
+    ]),
   ];
 }
 

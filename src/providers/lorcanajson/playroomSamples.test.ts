@@ -122,4 +122,42 @@ describe("pickLorcanaPlayroomSamples", () => {
     expect(sample?.printKey).toMatch(/satin-hg|magma-metal|varnish-only/);
     expect(sample?.variant).toBeNull();
   });
+
+  it("trouve Tempest / FreeForm2 / CalendarWave même hors FR", () => {
+    const withEnglishOnly = [
+      ...catalog,
+      card({
+        printKey: "lorcana:1-1-c1",
+        fullName: "Dragon Fire",
+        language: "en",
+        foilTypes: ["Tempest"],
+        varnishType: null,
+        foilMaskUrl: "https://example.com/tempest-mask.png",
+      }),
+      card({
+        printKey: "lorcana:1-1-d23",
+        fullName: "Mickey Mouse - Brave Little Tailor",
+        language: "en",
+        foilTypes: ["FreeForm2"],
+        foilMaskUrl: "https://example.com/ff2-mask.png",
+      }),
+      card({
+        printKey: "lorcana:6-13-p3",
+        fullName: "Mickey Mouse - Pirate Captain",
+        language: "en",
+        foilTypes: ["CalendarWave"],
+        foilMaskUrl: "https://example.com/cal-mask.png",
+      }),
+    ];
+    const samples = pickLorcanaPlayroomSamples(withEnglishOnly, [
+      { finish: "Tempest", varnish: null },
+      { finish: "FreeForm2", varnish: null },
+      { finish: "CalendarWave", varnish: null },
+    ]);
+    expect(samples.map((s) => s.printKey)).toEqual([
+      "lorcana:1-1-c1",
+      "lorcana:1-1-d23",
+      "lorcana:6-13-p3",
+    ]);
+  });
 });

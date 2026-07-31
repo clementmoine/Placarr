@@ -237,6 +237,42 @@ describe("displayFacts", () => {
       });
     });
 
+    it("keeps TCG collector numbers (format) while hiding raw identifiers", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "identifier",
+          label: "Référence",
+          value: "Winterspell · 34 P3",
+          source: "lorcanajson",
+        },
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "34/P3",
+          source: "lorcanajson",
+        },
+        {
+          kind: "series",
+          label: "Extension",
+          value: "Winterspell",
+          source: "lorcanajson",
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ kind: "format", label: "Numéro", value: "34/P3" }),
+          expect.objectContaining({
+            kind: "series",
+            label: "Extension",
+            value: "Winterspell",
+          }),
+        ]),
+      );
+      expect(filtered.some((fact) => fact.kind === "identifier")).toBe(false);
+    });
+
     it("merges booknode tags and bedetheque genres into one theme row", () => {
       const facts: DetailFact[] = [
         {

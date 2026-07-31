@@ -4,6 +4,7 @@ import {
   normalizeVariantOptions,
   offersVariantChoice,
   resolveStoredVariant,
+  variantUsesFoilMarketPrice,
 } from "./variants";
 
 describe("normalizeVariantOptions", () => {
@@ -73,5 +74,19 @@ describe("resolveStoredVariant", () => {
   it("treats blank as absent", () => {
     expect(resolveStoredVariant("  ", ["None"])).toBeNull();
     expect(resolveStoredVariant(null, ["None"])).toBeNull();
+  });
+});
+
+describe("variantUsesFoilMarketPrice", () => {
+  it("uses plainFinishes from the provider when available", () => {
+    expect(variantUsesFoilMarketPrice("None", ["None"])).toBe(false);
+    expect(variantUsesFoilMarketPrice("Silver", ["None"])).toBe(true);
+  });
+
+  it("falls back to common plain spellings without plainFinishes", () => {
+    expect(variantUsesFoilMarketPrice("None")).toBe(false);
+    expect(variantUsesFoilMarketPrice("nonfoil")).toBe(false);
+    expect(variantUsesFoilMarketPrice("Silver")).toBe(true);
+    expect(variantUsesFoilMarketPrice(null)).toBe(false);
   });
 });

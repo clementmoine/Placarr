@@ -52,6 +52,38 @@ describe("metadataAliases", () => {
     ).toEqual(["Wrc 4"]);
   });
 
+  it("surfaces regional cover titles (TCG multi-lang jaquettes)", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Ariel - Sur des jambes humaines",
+        metadataTitle: "Ariel - Sur des jambes humaines",
+        aliases: null,
+        attachments: [
+          {
+            type: "cover",
+            role: "fr",
+            title: "Ariel - Sur des jambes humaines",
+          },
+          { type: "cover", role: "en", title: "Ariel - On Human Legs" },
+          {
+            type: "cover",
+            role: "de",
+            title: "Arielle - Auf menschlichen Beinen",
+          },
+          {
+            type: "foilMask",
+            role: "en",
+            title: "Ariel - On Human Legs — masque holographique",
+          },
+        ],
+      }),
+    ).toEqual([
+      "Ariel - On Human Legs",
+      "Arielle - Auf menschlichen Beinen",
+    ]);
+  });
+
   it("does not repeat the display name as an alias", async () => {
     const { displayAliasesForItem } = await import("@/core/enrich/aliases");
     expect(

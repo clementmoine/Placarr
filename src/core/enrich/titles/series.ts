@@ -3,6 +3,7 @@ import {
   stripVolumeMarkersFromTitle,
   volumeNumberFromTitle,
 } from "./volumeNumber";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 
 /**
  * Series-aware display titles.
@@ -172,8 +173,14 @@ export function applySeriesDisplayName<
 /** Apply series volume padding across a shelf's presented items. */
 export function applySeriesDisplayNames<
   T extends { id: string; name: string; storedName?: string },
->(items: T[]): T[] {
+>(
+  items: T[],
+  options?: { shelfType?: string | null },
+): T[] {
   if (items.length === 0) return items;
+  // Collector codes (`TFC#002`) look like volume markers; never invent a manga
+  // series on print shelves.
+  if (usesPrintSearch(options?.shelfType)) return items;
   const entries = items.map((item) => ({
     id: item.id,
     title: item.storedName ?? item.name,
@@ -193,6 +200,7 @@ export function applySeriesDisplayNamesByShelf<
     shelfId: string;
     name: string;
     storedName?: string;
+    shelf?: { type?: string | null } | null;
   },
 >(items: T[]): T[] {
   const byShelf = new Map<string, T[]>();
@@ -203,7 +211,9 @@ export function applySeriesDisplayNamesByShelf<
   }
   const paddedById = new Map<string, T>();
   for (const group of byShelf.values()) {
-    for (const item of applySeriesDisplayNames(group)) {
+    for (const item of applySeriesDisplayNames(group, {
+      shelfType: group[0]?.shelf?.type,
+    })) {
       paddedById.set(item.id, item);
     }
   }

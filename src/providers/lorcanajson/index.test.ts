@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toPrintCandidate } from "./index";
+import { mapLorcanaMetadata, toPrintCandidate } from "./index";
 import type { LorcanaCard } from "./fetch";
 
 function card(overrides: Partial<LorcanaCard>): LorcanaCard {
@@ -15,6 +15,8 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
     language: "fr",
     foilTypes: ["None", "Silver"],
     varnishType: null,
+    artists: [],
+    flavorText: null,
     imageUrl: null,
     thumbnailUrl: null,
     foilMaskUrl: null,
@@ -23,6 +25,55 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
     ...overrides,
   } as LorcanaCard;
 }
+
+describe("mapLorcanaMetadata language variants", () => {
+  it("stores a cover and title for every language, preferred first", () => {
+    const fr = card({
+      language: "fr",
+      fullName: "Ariel - Sur des jambes humaines",
+      imageUrl: "https://example.test/fr.jpg",
+      foilMaskUrl: "https://example.test/fr-mask.png",
+    });
+    const en = card({
+      language: "en",
+      fullName: "Ariel - On Human Legs",
+      imageUrl: "https://example.test/en.jpg",
+      foilMaskUrl: "https://example.test/en-mask.png",
+    });
+    const mapped = mapLorcanaMetadata(fr, [fr, en]);
+    expect(mapped?.imageUrl).toBe("https://example.test/fr.jpg");
+    expect(mapped?.title).toBe("Ariel - Sur des jambes humaines");
+    expect(mapped?.regionalTitles).toEqual([
+      { region: "fr", text: "Ariel - Sur des jambes humaines" },
+      { region: "en", text: "Ariel - On Human Legs" },
+    ]);
+    expect(mapped?.aliases).toEqual(["Ariel - On Human Legs"]);
+    expect(
+      mapped?.attachments
+        ?.filter((row) => row.type === "cover")
+        .map((row) => row.role),
+    ).toEqual(["fr", "en"]);
+    expect(
+      mapped?.attachments
+        ?.filter((row) => row.type === "foilMask")
+        .map((row) => row.role),
+    ).toEqual(["fr", "en"]);
+  });
+
+  it("keeps a single cover when only one language published the print", () => {
+    const en = card({
+      language: "en",
+      fullName: "Ariel - Tempest Print",
+      imageUrl: "https://example.test/en-tempest.jpg",
+      foilTypes: ["None", "Tempest"],
+    });
+    const mapped = mapLorcanaMetadata(en, [en]);
+    expect(mapped?.imageUrl).toBe("https://example.test/en-tempest.jpg");
+    expect(mapped?.attachments?.filter((row) => row.type === "cover")).toEqual([
+      expect.objectContaining({ role: "en", url: "https://example.test/en-tempest.jpg" }),
+    ]);
+  });
+});
 
 describe("toPrintCandidate varnish", () => {
   it("names every varnish the catalogue actually ships", () => {

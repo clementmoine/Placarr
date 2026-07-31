@@ -143,7 +143,8 @@ export function scheduleBatchItemMetadataRefresh(
             barcode: next.barcode,
             shelfType: shelf.type,
             shelfName: shelf.name,
-            bypassMetadataCache: false,
+            // Force a live provider pass: a prior miss must not poison the batch.
+            bypassMetadataCache: true,
             forceRefresh: true,
             userId: existing?.userId,
           },

@@ -291,6 +291,9 @@ export function providerProductUrlsFromMetadataFacts(
 
   for (const fact of linkFacts) {
     const url = fact.url!.trim();
+    // Attribution chips may point at registry websiteUrl (site root) — those
+    // must never drive URL-first price refresh.
+    if (!urlLooksLikeProductPagePath(url)) continue;
     for (const providerModule of PROVIDER_MODULES) {
       if (!factMatchesPriceProviderModule(fact, url, providerModule)) continue;
 
@@ -302,6 +305,17 @@ export function providerProductUrlsFromMetadataFacts(
   }
 
   return results;
+}
+
+/** Site roots / bare hosts are attribution chips, not product fiches. */
+function urlLooksLikeProductPagePath(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "");
+    return Boolean(path);
+  } catch {
+    return false;
+  }
 }
 
 // ── coalesced from src/core/catalog/materializeProviderInfo.ts ──

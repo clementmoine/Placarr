@@ -11,6 +11,11 @@ import {
 } from "@/core/collect/jobs/scheduleMetadataRefresh";
 import { stampItemMetadataRefresh } from "@/core/collect/jobs/metadataRefreshSession";
 import { ITEM_CONDITIONS } from "@/core/collect/condition";
+import {
+  resolveUniquePrintCandidate,
+  supportsPrintSearch,
+} from "@/core/identify/printSearch";
+import { parsePrintKey } from "@/core/identify/printKey";
 
 const VALID_CONDITIONS = new Set<string>(ITEM_CONDITIONS);
 const CREATE_CHUNK_SIZE = 100;
@@ -156,7 +161,7 @@ function scheduleMetadataRefreshByShelf(items: BatchItemRow[]): void {
 }
 
 async function createItemsInChunks(
-  names: string[],
+  rows: Array<{ name: string; printKey: string | null }>,
   data: {
     shelfId: string;
     userId: string;
@@ -166,19 +171,20 @@ async function createItemsInChunks(
   const created: CreatedBatchItem[] = [];
   const reservedSlugs = new Set<string>();
 
-  for (let offset = 0; offset < names.length; offset += CREATE_CHUNK_SIZE) {
-    const chunk = names.slice(offset, offset + CREATE_CHUNK_SIZE);
-    const rows: Array<{ name: string; slug: string }> = [];
-    for (const name of chunk) {
-      const slug = await allocateUniqueItemSlug(data.shelfId, name, {
+  for (let offset = 0; offset < rows.length; offset += CREATE_CHUNK_SIZE) {
+    const chunk = rows.slice(offset, offset + CREATE_CHUNK_SIZE);
+    const planned: Array<{ name: string; slug: string; printKey: string | null }> =
+      [];
+    for (const row of chunk) {
+      const slug = await allocateUniqueItemSlug(data.shelfId, row.name, {
         reserved: reservedSlugs,
       });
       reservedSlugs.add(slug);
-      rows.push({ name, slug });
+      planned.push({ name: row.name, slug, printKey: row.printKey });
     }
 
     const batch = await prisma.$transaction(
-      rows.map((row) =>
+      planned.map((row) =>
         prisma.item.create({
           data: {
             shelfId: data.shelfId,
@@ -186,6 +192,7 @@ async function createItemsInChunks(
             slug: row.slug,
             condition: data.condition,
             userId: data.userId,
+            printKey: row.printKey,
           },
           select: itemCreateSelect,
         }),
@@ -195,6 +202,46 @@ async function createItemsInChunks(
   }
 
   return created;
+}
+
+/**
+ * On print shelves, pasted codes (`TFC#001`) resolve to the catalog title +
+ * printKey before insert. Unresolved lines stay as typed (honest empty later).
+ */
+async function resolveBatchCreateRows(
+  names: string[],
+  shelfType: Type,
+): Promise<Array<{ name: string; printKey: string | null; lookupQuery: string }>> {
+  if (!supportsPrintSearch(shelfType)) {
+    return names.map((name) => ({
+      name,
+      printKey: null,
+      lookupQuery: name,
+    }));
+  }
+
+  const rows: Array<{
+    name: string;
+    printKey: string | null;
+    lookupQuery: string;
+  }> = [];
+  for (const query of names) {
+    const hit = await resolveUniquePrintCandidate(query, shelfType);
+    const printKey =
+      hit?.printKey && parsePrintKey(hit.printKey)
+        ? hit.printKey.trim().toLowerCase()
+        : null;
+    if (hit && printKey) {
+      rows.push({
+        name: hit.title.trim() || query,
+        printKey,
+        lookupQuery: hit.title.trim() || query,
+      });
+    } else {
+      rows.push({ name: query, printKey: null, lookupQuery: query });
+    }
+  }
+  return rows;
 }
 
 export async function POST(req: NextRequest) {
@@ -248,16 +295,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const createdItems = await createItemsInChunks(normalizedNames, {
+    const createRows = await resolveBatchCreateRows(
+      normalizedNames,
+      shelf.type,
+    );
+    const createdItems = await createItemsInChunks(createRows, {
       shelfId: resolvedShelfId,
       userId: auth.user.id,
       condition,
     });
 
     scheduleBatchItemMetadataRefresh(
-      createdItems.map((item) => ({
+      createdItems.map((item, index) => ({
         itemId: item.id,
-        lookupQuery: item.name,
+        lookupQuery: createRows[index]?.lookupQuery ?? item.name,
       })),
       shelf,
     );

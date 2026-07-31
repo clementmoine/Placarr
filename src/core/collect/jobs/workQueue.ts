@@ -90,6 +90,7 @@ export type PriceRefreshJobPayload = {
   metadataFacts?: unknown;
   shelfType: string;
   shelfName: string;
+  printKey?: string | null;
   force?: boolean;
 };
 

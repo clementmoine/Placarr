@@ -1,4 +1,5 @@
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -26,9 +27,11 @@ import type {
 import {
   fetchLorcanaCardByPrintKey,
   fetchLorcanaCardByProviderId,
+  fetchLorcanaLanguageVariants,
   isLorcanaLanguage,
   LORCANA_DEFAULT_LANGUAGE,
   LORCANA_GAME,
+  lorcanaCollectorNumberLabel,
   lorcanaPrintLabel,
   searchLorcanaCards,
   type LorcanaCard,
@@ -38,7 +41,10 @@ import {
 export {
   fetchLorcanaCardByPrintKey,
   fetchLorcanaCardByProviderId,
+  fetchLorcanaLanguageVariants,
   loadLorcanaIndex,
+  loadLorcanaIndexes,
+  lorcanaLanguagesToTry,
   searchLorcanaCards,
 } from "./fetch";
 
@@ -108,43 +114,60 @@ function resolveLanguage(ctx: MetadataAdapterContext): LorcanaLanguage {
   return isLorcanaLanguage(requested) ? requested : LORCANA_DEFAULT_LANGUAGE;
 }
 
-function buildAttachments(card: LorcanaCard): MetadataAttachment[] | undefined {
+function buildAttachments(
+  variants: LorcanaCard[],
+): MetadataAttachment[] | undefined {
   const attachments: MetadataAttachment[] = [];
 
-  if (card.imageUrl) {
-    attachments.push({
-      type: "cover",
-      url: card.imageUrl,
-      title: card.fullName,
-      role: card.language,
-      source: PROVIDER_ID,
-    });
-  }
+  for (const card of variants) {
+    if (card.imageUrl) {
+      attachments.push({
+        type: "cover",
+        url: card.imageUrl,
+        title: card.fullName,
+        role: card.language,
+        source: PROVIDER_ID,
+      });
+    }
 
-  /**
-   * The mask is not artwork — it is the alpha layer that says where the
-   * holographic effect applies. Kept as its own attachment type so gallery
-   * ranking never shows it as a picture of the card.
-   */
-  if (card.foilMaskUrl) {
-    attachments.push({
-      type: "foilMask",
-      url: card.foilMaskUrl,
-      title: `${card.fullName} — masque holographique`,
-      role: card.language,
-      source: PROVIDER_ID,
-    });
+    /**
+     * The mask is not artwork — it is the alpha layer that says where the
+     * holographic effect applies. Kept as its own attachment type so gallery
+     * ranking never shows it as a picture of the card.
+     */
+    if (card.foilMaskUrl) {
+      attachments.push({
+        type: "foilMask",
+        url: card.foilMaskUrl,
+        title: `${card.fullName} — masque holographique`,
+        role: card.language,
+        source: PROVIDER_ID,
+      });
+    }
   }
 
   return attachments.length > 0 ? attachments : undefined;
 }
 
+function regionalTitlesFromVariants(variants: LorcanaCard[]) {
+  const seen = new Set<string>();
+  const titles: { region: string; text: string }[] = [];
+  for (const card of variants) {
+    if (seen.has(card.language)) continue;
+    seen.add(card.language);
+    titles.push({ region: card.language, text: card.fullName });
+  }
+  return titles;
+}
+
 function buildFacts(card: LorcanaCard): MetadataFact[] {
   const facts: MetadataFact[] = [
     {
-      kind: "identifier",
-      label: "Référence",
-      value: lorcanaPrintLabel(card),
+      // `format` (not `identifier`): identifiers are hidden from the detail
+      // table; collectors need the printed number next to Extension / Rareté.
+      kind: "format",
+      label: "Numéro",
+      value: lorcanaCollectorNumberLabel(card),
       source: PROVIDER_ID,
       confidence: 0.95,
       priority: 45,
@@ -329,10 +352,29 @@ export function toPrintCandidate(
   };
 }
 
+/**
+ * Preferred-language fields for title / description / facts; every published
+ * language contributes a cover (+ foil mask) and a regional title.
+ *
+ * `variants` must be preferred-first (as from {@link fetchLorcanaLanguageVariants}).
+ * When omitted, only `card` is stored — useful for unit tests of mapping alone.
+ */
 export function mapLorcanaMetadata(
   card: LorcanaCard | null,
+  variants?: LorcanaCard[],
 ): MetadataResult | null {
   if (!card) return null;
+
+  const languageRows =
+    variants && variants.length > 0
+      ? variants
+      : ([card] as LorcanaCard[]);
+  // Prefer the resolved card's language for primary fields even if a caller
+  // passed variants in a different order.
+  const ordered = [
+    card,
+    ...languageRows.filter((row) => row.language !== card.language),
+  ];
 
   const metadata: MetadataResult = {
     title: card.fullName,
@@ -343,8 +385,13 @@ export function mapLorcanaMetadata(
         ? card.artists.map((name) => ({ name }))
         : undefined,
     publishers: [{ name: "Ravensburger" }],
-    regionalTitles: [{ region: card.language, text: card.fullName }],
-    attachments: buildAttachments(card),
+    regionalTitles: regionalTitlesFromVariants(ordered),
+    // Other-language full names → "Aussi connu sous" (EN/DE/IT next to FR primary).
+    aliases: catalogAliasesFromNames(
+      card.fullName,
+      ordered.map((row) => row.fullName),
+    ),
+    attachments: buildAttachments(ordered),
     facts: buildFacts(card),
     externalIds: {
       [PROVIDER_ID]: card.providerId,
@@ -410,6 +457,18 @@ async function resolveLorcanaCard(
   return null;
 }
 
+async function resolveLorcanaMetadata(
+  ctx: MetadataAdapterContext,
+): Promise<MetadataResult | null> {
+  const card = await resolveLorcanaCard(ctx);
+  if (!card) return null;
+  const variants = await fetchLorcanaLanguageVariants(card.providerId, {
+    language: resolveLanguage(ctx),
+    signal: ctx.signal,
+  });
+  return mapLorcanaMetadata(card, variants);
+}
+
 export const lorcanajsonModule: ProviderModule = {
   info: {
     id: PROVIDER_ID,
@@ -428,7 +487,7 @@ export const lorcanajsonModule: ProviderModule = {
     },
     websiteUrl: "https://lorcanajson.org/",
     notes:
-      "Jeu de cartes Disney Lorcana. Fichiers statiques publics, sans clé, en FR/EN/DE/IT, avec les visuels officiels Ravensburger et — rare — le masque holographique par carte (98 % des tirages). Aucune donnée de prix : LorcanaJSON n'en publie pas. L'identité vient du tirage imprimé (extension + numéro + promo), jamais d'un code-barres : une carte à l'unité n'en a pas.",
+      "Jeu de cartes Disney Lorcana. Fichiers statiques publics, sans clé, en FR/EN/DE/IT, avec les visuels officiels Ravensburger et — rare — le masque holographique par carte (98 % des tirages). Stocke une jaquette (et titre) par langue pour le même tirage ; la langue préférée reste le défaut. Aucune donnée de prix : voir le provider Lorcast. L'identité vient du tirage imprimé (extension + numéro + promo), jamais d'un code-barres : une carte à l'unité n'en a pas.",
   },
   evidence: {
     label: PROVIDER_LABEL,
@@ -438,7 +497,7 @@ export const lorcanajsonModule: ProviderModule = {
     return {
       id: PROVIDER_ID,
       async resolve(ctx) {
-        return mapLorcanaMetadata(await resolveLorcanaCard(ctx));
+        return resolveLorcanaMetadata(ctx);
       },
     } satisfies MetadataProviderAdapter;
   },

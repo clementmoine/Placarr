@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
+import { shelfShowsItemCondition } from "@/core/collect/condition";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { cn } from "@/lib/shared/utils";
 import { getHeroImage, getGalleryImages } from "@/core/collect/media";
@@ -217,12 +218,14 @@ export function ExploreItemModal({
             <ShelfTypeIcon type={item.shelf?.type} className="size-3" />
             {t(`shelf.type.${item.shelf?.type}`)}
           </Badge>
-          <Badge
-            variant="outline"
-            className="bg-zinc-500/10 border-none select-none font-bold py-0.5 text-[10px] text-muted-foreground leading-none"
-          >
-            {t(`items.conditions.${item.condition}`)}
-          </Badge>
+          {shelfShowsItemCondition(item.shelf?.type) ? (
+            <Badge
+              variant="outline"
+              className="bg-zinc-500/10 border-none select-none font-bold py-0.5 text-[10px] text-muted-foreground leading-none"
+            >
+              {t(`items.conditions.${item.condition}`)}
+            </Badge>
+          ) : null}
           <Badge
             variant="outline"
             className="bg-amber-500/10 border-none select-none font-bold py-0.5 text-[10px] text-amber-600 dark:text-amber-400 leading-none"

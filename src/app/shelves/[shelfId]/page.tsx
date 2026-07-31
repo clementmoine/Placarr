@@ -907,6 +907,7 @@ function ShelfComponent() {
             <div className="w-full sm:w-[220px] shrink-0">
               <ItemCollectionSortSelect
                 value={sortBy}
+                shelfType={shelf?.type}
                 onValueChange={(value) => {
                   setSortBy(value);
                   replaceCollectionParams({ sort: value });

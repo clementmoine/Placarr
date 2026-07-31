@@ -133,6 +133,7 @@ async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
         metadataFacts: context.metadataFacts,
         shelfType: context.shelfType,
         shelfName: context.shelfName,
+        printKey: context.printKey,
         force,
       } as unknown as Prisma.InputJsonValue,
     });
@@ -233,6 +234,11 @@ export async function executeMetadataRefreshJob(
     if (adopted.signal.aborted && !stored) {
       abandoned = new BackgroundWorkAbandonedError("cancelled");
     }
+    if (!stored && !adopted.signal.aborted) {
+      console.warn(
+        `[MetadataRefresh] Empty store for item ${payload.itemId} lookup="${payload.lookupQuery}" (providers returned nothing durable)`,
+      );
+    }
   } catch (error) {
     if (!isAbortError(error)) {
       console.error(
@@ -263,21 +269,31 @@ export async function executeMetadataRefreshJob(
 export async function executePriceRefreshJob(
   payload: PriceRefreshJobPayload,
 ): Promise<void> {
-  const context: ItemPricesContext = {
-    id: payload.id,
-    barcode: payload.barcode,
-    name: payload.name,
-    metadataId: payload.metadataId,
-    metadataTitle: payload.metadataTitle,
-    metadataAliases: payload.metadataAliases,
-    metadataReleaseDate: payload.metadataReleaseDate,
-    metadataPlatformKey: payload.metadataPlatformKey,
-    metadataExternalIds: payload.metadataExternalIds,
-    metadataBarcodes: payload.metadataBarcodes,
-    metadataFacts: payload.metadataFacts as ItemPricesContext["metadataFacts"],
-    shelfType: payload.shelfType,
-    shelfName: payload.shelfName,
-  };
+  // Prefer live item row over the enqueue-time payload: older jobs omitted
+  // printKey, and metadata aliases (EN titles for Lorcast) can land after the
+  // price job was queued.
+  const item = await prisma.item.findUnique({
+    where: { id: payload.id },
+    include: { shelf: true, metadata: true },
+  });
+  const context: ItemPricesContext = item
+    ? itemPricesContextFromRecord(item)
+    : {
+        id: payload.id,
+        barcode: payload.barcode,
+        name: payload.name,
+        metadataId: payload.metadataId,
+        metadataTitle: payload.metadataTitle,
+        metadataAliases: payload.metadataAliases,
+        metadataReleaseDate: payload.metadataReleaseDate,
+        metadataPlatformKey: payload.metadataPlatformKey,
+        metadataExternalIds: payload.metadataExternalIds,
+        metadataBarcodes: payload.metadataBarcodes,
+        metadataFacts: payload.metadataFacts as ItemPricesContext["metadataFacts"],
+        shelfType: payload.shelfType,
+        shelfName: payload.shelfName,
+        printKey: payload.printKey,
+      };
 
   const controller = new AbortController();
   try {

@@ -74,3 +74,35 @@ export function resolveStoredVariant(
     ) ?? null
   );
 }
+
+/**
+ * Publisher spellings that mean "no foil treatment" when the provider has not
+ * supplied `plainFinishes`. Prefer `plainFinishes` when the print lookup is
+ * available — only the provider knows that Lorcana's `None` is plain while
+ * every other finish is foil-priced.
+ */
+const FALLBACK_PLAIN_FINISH_KEYS = new Set([
+  "none",
+  "nonfoil",
+  "normal",
+  "non-foil",
+]);
+
+/**
+ * Whether this copy's finish should read the market `foil` bucket (vs `new`).
+ * Blank / unknown finish → non-foil market (honest default for unset copies).
+ */
+export function variantUsesFoilMarketPrice(
+  variant: string | null | undefined,
+  plainFinishes?: readonly (string | null | undefined)[] | null,
+): boolean {
+  const stored = variant?.trim();
+  if (!stored) return false;
+
+  const plain = normalizeVariantOptions(plainFinishes);
+  if (plain.length > 0) {
+    return !plain.some((option) => key(option) === key(stored));
+  }
+
+  return !FALLBACK_PLAIN_FINISH_KEYS.has(key(stored));
+}

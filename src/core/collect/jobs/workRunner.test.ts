@@ -283,6 +283,8 @@ describe("executeMetadataRefreshJob", () => {
 describe("executePriceRefreshJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    h.prismaItemFindUnique.mockResolvedValue(null);
+    h.itemPricesContextFromRecord.mockReset();
   });
 
   it("aborts in-flight price scrapes when the job timeout fires", async () => {
@@ -320,5 +322,45 @@ describe("executePriceRefreshJob", () => {
       }),
     );
     vi.useRealTimers();
+  });
+
+  it("hydrates printKey from the live item when the job payload omitted it", async () => {
+    h.prismaItemFindUnique.mockResolvedValue({
+      id: "item-tcg-1",
+      name: "Hiro Hamada - Concepteur d'armures",
+      printKey: "lorcana:7-24b-p2",
+      barcode: null,
+      shelf: { type: "tcg", name: "Lorcana" },
+      metadata: null,
+    });
+    h.itemPricesContextFromRecord.mockReturnValue({
+      id: "item-tcg-1",
+      name: "Hiro Hamada - Concepteur d'armures",
+      printKey: "lorcana:7-24b-p2",
+      shelfType: "tcg",
+      shelfName: "Lorcana",
+    });
+    h.refreshItemPricesFromContext.mockResolvedValue({
+      priceNew: null,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceLastUpdated: null,
+      priceSources: [],
+      priceObservations: [],
+    });
+
+    await executePriceRefreshJob({
+      id: "item-tcg-1",
+      name: "Hiro Hamada - Concepteur d'armures",
+      shelfType: "tcg",
+      shelfName: "Lorcana",
+      // Intentionally no printKey — older enqueue payloads omitted it.
+    });
+
+    expect(h.itemPricesContextFromRecord).toHaveBeenCalled();
+    expect(h.refreshItemPricesFromContext).toHaveBeenCalledWith(
+      expect.objectContaining({ printKey: "lorcana:7-24b-p2" }),
+      expect.any(Object),
+    );
   });
 });

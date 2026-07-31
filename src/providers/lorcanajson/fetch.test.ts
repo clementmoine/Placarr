@@ -10,7 +10,9 @@ import {
   fetchLorcanaCardByPrintKey,
   fetchLorcanaCardByProviderId,
   fetchLorcanaCardsByPrintKey,
+  fetchLorcanaLanguageVariants,
   loadLorcanaIndex,
+  lorcanaCollectorNumberLabel,
   lorcanaPrintLabel,
   normalizeLorcanaSearchText,
   resetLorcanaIndexCache,
@@ -31,6 +33,19 @@ function payload() {
       "9": { name: "Fabuleux" },
     },
     cards: [
+      {
+        id: 1,
+        setCode: "1",
+        number: 1,
+        variant: null,
+        promoGrouping: null,
+        fullName: "Ariel - Sur une mission",
+        name: "Ariel",
+        version: "Sur une mission",
+        rarity: "Commune",
+        foilTypes: ["None", "Silver"],
+        images: { full: "https://example.test/ariel-1.jpg" },
+      },
       {
         id: 20,
         setCode: "1",
@@ -113,6 +128,18 @@ function payload() {
         images: { full: "https://example.test/queen.jpg" },
       },
       {
+        // Promo group P3 — collectors type PR3#34 / P3 34.
+        id: 11034,
+        setCode: "11",
+        number: 34,
+        variant: null,
+        promoGrouping: "P3",
+        fullName: "Fée Clochette - Promo P3",
+        name: "Fée Clochette",
+        foilTypes: ["Magma"],
+        images: { full: "https://example.test/tink-p3.jpg" },
+      },
+      {
         // Identity is unusable — must be dropped, never keyed on a guess.
         id: 9999,
         setCode: null,
@@ -190,7 +217,7 @@ describe("print keys", () => {
     const index = await loadLorcanaIndex("fr");
 
     expect(index.byProviderId.has("9999")).toBe(false);
-    expect(index.cards).toHaveLength(5);
+    expect(index.cards).toHaveLength(7);
   });
 });
 
@@ -237,6 +264,8 @@ describe("card mapping", () => {
       language: "fr",
     });
 
+    expect(lorcanaCollectorNumberLabel(puppy!)).toBe("4a");
+    expect(lorcanaCollectorNumberLabel(genie!)).toBe("20/P1");
     expect(lorcanaPrintLabel(puppy!)).toBe("Les Terres d'Encre · 4a");
     expect(lorcanaPrintLabel(genie!)).toBe("Premier Chapitre · 20 P1");
   });
@@ -387,6 +416,50 @@ describe("search", () => {
 
     expect(results).toHaveLength(2);
   });
+
+  it("lists a set from its French name", async () => {
+    mockDataset(payload());
+    const results = await searchLorcanaCards("premier chapitre", {
+      language: "fr",
+    });
+
+    expect(results.map((card) => card.printKey)).toEqual([
+      "lorcana:1-1",
+      "lorcana:1-20",
+      "lorcana:1-20-p1",
+    ]);
+  });
+
+  it("resolves set + collector number (name, letter code, or #)", async () => {
+    mockDataset(payload());
+
+    const byName = await searchLorcanaCards("premier chapitre 1", {
+      language: "fr",
+    });
+    const byCode = await searchLorcanaCards("TFC#1", { language: "fr" });
+    const bySpaced = await searchLorcanaCards("tfc 1", { language: "fr" });
+
+    expect(byName.map((card) => card.printKey)).toEqual(["lorcana:1-1"]);
+    expect(byCode.map((card) => card.printKey)).toEqual(["lorcana:1-1"]);
+    expect(bySpaced.map((card) => card.printKey)).toEqual(["lorcana:1-1"]);
+  });
+
+  it("resolves promo group + number (P3 / PR3)", async () => {
+    mockDataset(payload());
+
+    const byP = await searchLorcanaCards("P3#34", { language: "fr" });
+    const byPr = await searchLorcanaCards("PR3 34", { language: "fr" });
+
+    expect(byP.map((card) => card.printKey)).toEqual(["lorcana:11-34-p3"]);
+    expect(byPr.map((card) => card.printKey)).toEqual(["lorcana:11-34-p3"]);
+  });
+
+  it("still finds cards by character name alongside collector search", async () => {
+    mockDataset(payload());
+    const results = await searchLorcanaCards("simba", { language: "fr" });
+
+    expect(results[0]?.printKey).toBe("lorcana:1-20");
+  });
 });
 
 function sortAsCollectorWould(left: string, right: string): number {
@@ -437,12 +510,32 @@ describe("looking a print up across languages", () => {
   function serveTwoLanguages() {
     httpGet.mockImplementation(async (url: string) => {
       if (url.endsWith(".md5")) return { data: `md5-${url}`, status: 200 };
-      const isEnglish = url.includes("/en/");
+      const language = url.includes("/en/")
+        ? "en"
+        : url.includes("/de/")
+          ? "de"
+          : url.includes("/it/")
+            ? "it"
+            : "fr";
+      if (language === "de" || language === "it") {
+        return {
+          data: {
+            metadata: {
+              generatedOn: "2026-07-24T17:37:25",
+              language,
+            },
+            sets: { "1": { name: "Set 1" } },
+            cards: [],
+          },
+          status: 200,
+        };
+      }
+      const isEnglish = language === "en";
       return {
         data: {
           metadata: {
             generatedOn: "2026-07-24T17:37:25",
-            language: isEnglish ? "en" : "fr",
+            language,
           },
           sets: { "1": { name: "Premier Chapitre" } },
           cards: [
@@ -506,5 +599,46 @@ describe("looking a print up across languages", () => {
     expect(
       await fetchLorcanaCardByPrintKey("lorcana:9-99", { language: "fr" }),
     ).toBeNull();
+  });
+
+  it("searches every language and prefers the asked-for title", async () => {
+    serveTwoLanguages();
+    const preferred = await searchLorcanaCards("ariel", { language: "fr" });
+    expect(preferred.map((card) => card.fullName)).toContain(
+      "Ariel - Sur des jambes humaines",
+    );
+    // Same provider id must not appear twice (FR + EN).
+    expect(
+      preferred.filter((card) => card.providerId === "1"),
+    ).toHaveLength(1);
+
+    const onlyEnglish = await searchLorcanaCards("tempest print", {
+      language: "fr",
+    });
+    expect(onlyEnglish.map((card) => card.printKey)).toContain(
+      "lorcana:1-1-c1",
+    );
+    expect(onlyEnglish[0]?.foilTypes).toContain("Tempest");
+  });
+
+  it("returns one row per language for the same provider id", async () => {
+    serveTwoLanguages();
+    const variants = await fetchLorcanaLanguageVariants("1", {
+      language: "fr",
+    });
+    expect(variants.map((card) => card.language)).toEqual(["fr", "en"]);
+    expect(variants.map((card) => card.fullName)).toEqual([
+      "Ariel - Sur des jambes humaines",
+      "Ariel - On Human Legs",
+    ]);
+  });
+
+  it("returns only the languages that published an English-only print", async () => {
+    serveTwoLanguages();
+    const variants = await fetchLorcanaLanguageVariants("2", {
+      language: "fr",
+    });
+    expect(variants.map((card) => card.language)).toEqual(["en"]);
+    expect(variants[0]?.foilTypes).toContain("Tempest");
   });
 });

@@ -29,12 +29,38 @@ export function scrapeProviderIdsFromStoredSources(input: {
   fieldEvidence?: Array<{ source?: string | null }> | null;
   attachments?: Array<{ source?: string | null }> | null;
 }): string[] {
+  return ficheProviderIdsFromStoredSources(input, "scrape");
+}
+
+/**
+ * Non-scrape (API / static) providers already on the fiche — refresh should
+ * re-query them even when Tier 0+1 capabilities look "complete" (e.g. LorcanaJSON
+ * after a multi-lang aliases gap-fill).
+ */
+export function nonScrapeProviderIdsFromStoredSources(input: {
+  facts?: Array<{ source?: string | null }> | null;
+  fieldEvidence?: Array<{ source?: string | null }> | null;
+  attachments?: Array<{ source?: string | null }> | null;
+}): string[] {
+  return ficheProviderIdsFromStoredSources(input, "non-scrape");
+}
+
+function ficheProviderIdsFromStoredSources(
+  input: {
+    facts?: Array<{ source?: string | null }> | null;
+    fieldEvidence?: Array<{ source?: string | null }> | null;
+    attachments?: Array<{ source?: string | null }> | null;
+  },
+  kind: "scrape" | "non-scrape",
+): string[] {
   const ids = new Set<string>();
   const consider = (source?: string | null) => {
     const id = canonicalProviderIdForSource(source);
     if (!id) return;
     const provider = PROVIDERS.find((entry) => entry.id === id);
-    if (provider?.auth.kind === "scrape") ids.add(provider.id);
+    if (!provider) return;
+    const isScrape = provider.auth.kind === "scrape";
+    if (kind === "scrape" ? isScrape : !isScrape) ids.add(provider.id);
   };
 
   for (const fact of input.facts ?? []) consider(fact.source);

@@ -971,7 +971,7 @@ describe("externalLinkFactsFromFieldEvidence", () => {
 });
 
 describe("buildProfileProviderLinkFacts", () => {
-  it("keeps real product URLs and skips cover-only homepage fallbacks", () => {
+  it("keeps real product URLs and attribution chips for other contributors", () => {
     const links = buildProfileProviderLinkFacts({
       facts: [
         {
@@ -1032,13 +1032,21 @@ describe("buildProfileProviderLinkFacts", () => {
       "HowLongToBeat",
       "NetGamesRetro",
       "PriceCharting",
+      "RAWG",
+      "SteamGridDB",
     ]);
     expect(links.find((fact) => fact.source === "netgamesretro")?.url).toBe(
       "https://www.netgamesretro.com/jeu/little-big-planet",
     );
+    expect(links.find((fact) => fact.source === "steamgriddb")?.url).toBe(
+      "https://www.steamgriddb.com/",
+    );
+    expect(links.find((fact) => fact.source === "rawg")?.url).toBe(
+      "https://rawg.io/",
+    );
   });
 
-  it("does not invent a NetGamesRetro homepage chip from cover/price only", () => {
+  it("attributes cover/price-only NetGamesRetro via registry websiteUrl", () => {
     const links = buildProfileProviderLinkFacts({
       facts: [
         {
@@ -1061,6 +1069,62 @@ describe("buildProfileProviderLinkFacts", () => {
       shelfType: "hardware",
     });
 
-    expect(links.filter((fact) => fact.source === "netgamesretro")).toEqual([]);
+    expect(links.filter((fact) => fact.source === "netgamesretro")).toEqual([
+      expect.objectContaining({
+        kind: "external-link",
+        source: "netgamesretro",
+        url: "https://www.netgamesretro.com",
+      }),
+    ]);
+  });
+
+  it("attributes LorcanaJSON / Lorcast contributors systematically", () => {
+    const links = buildProfileProviderLinkFacts({
+      facts: [
+        {
+          kind: "tag",
+          label: "Rareté",
+          value: "Common",
+          source: "lorcanajson",
+        },
+      ],
+      attachments: [{ source: "lorcanajson" }],
+      priceOffers: [
+        {
+          source: "lorcast",
+          sourceUrl: "https://lorcast.com/cards/tfc/1",
+        },
+      ],
+    });
+
+    expect(links.find((fact) => fact.source === "lorcanajson")?.url).toBe(
+      "https://lorcanajson.org/",
+    );
+    expect(links.find((fact) => fact.source === "lorcast")?.url).toBe(
+      "https://lorcast.com/cards/tfc/1",
+    );
+  });
+
+  it("never invents chips for MergedEngine or internal merge keys", () => {
+    const links = buildProfileProviderLinkFacts({
+      facts: [
+        {
+          kind: "title",
+          label: "Titre",
+          value: "Ariel",
+          source: "MergedEngine",
+        },
+      ],
+      fieldEvidence: [
+        {
+          field: "title",
+          value: "Ariel",
+          source: "__cached_fiche__",
+        },
+      ],
+      attachments: [{ source: "MergedEngine" }],
+    });
+
+    expect(links).toEqual([]);
   });
 });

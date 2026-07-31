@@ -26,11 +26,13 @@ import {
   cleanBarcodeValue,
   emptyBarcodePrices,
   filterPriceOfferInputsForPersist,
+  alignBarcodePricesForItemNames,
   priceSourcesFromOffers,
   resolveItemDisplayPrices,
   serializePriceOffers,
   summarizeObservedPrices,
   toPriceObservations,
+  withFxPriceEstimated,
   withPriceSourceTraits,
 } from "@/core/commerce/pricing/pricePipeline";
 
@@ -120,7 +122,7 @@ export async function getCachedBarcodePrices(
   const itemNames = (options.itemNames ?? []).filter((name) => name.trim());
 
   if (itemNames.length > 0) {
-    return resolveItemDisplayPrices(
+    const resolved = resolveItemDisplayPrices(
       shelfType,
       options.shelfName,
       itemNames,
@@ -134,36 +136,62 @@ export async function getCachedBarcodePrices(
           }
         : null,
     );
+    const base =
+      resolved ??
+      (sourceOffers.length > 0
+        ? withPriceSourceTraits({
+            priceNew: null,
+            priceUsed: null,
+            priceUsedCIB: null,
+            priceLastUpdated:
+              usableBarcodeCache?.priceLastUpdated ??
+              offers[0]?.observedAt ??
+              null,
+            priceSources: priceSourcesFromOffers(
+              sourceOffers,
+              usableBarcodeCache?.provider,
+            ),
+            priceObservations: serializePriceOffers(sourceOffers),
+          })
+        : null);
+    if (!base) return null;
+    return withFxPriceEstimated(base, sourceOffers, shelfType);
   }
 
   const observedSummary =
     offers.length > 0 ? summarizeObservedPrices(shelfType, offers) : null;
   const summary = {
     priceNew: observedSummary?.priceNew ?? usableBarcodeCache?.priceNew ?? null,
+    priceFoil: observedSummary?.priceFoil ?? null,
     priceUsed:
       observedSummary?.priceUsed ?? usableBarcodeCache?.priceUsed ?? null,
     priceUsedCIB:
       observedSummary?.priceUsedCIB ?? usableBarcodeCache?.priceUsedCIB ?? null,
   };
 
-  return withPriceSourceTraits({
-    priceNew: summary.priceNew,
-    priceUsed: summary.priceUsed,
-    priceUsedCIB: summary.priceUsedCIB,
-    priceLastUpdated:
-      usableBarcodeCache?.priceLastUpdated ?? offers[0]?.observedAt ?? null,
-    priceSources: priceSourcesFromOffers(offers, usableBarcodeCache?.provider),
-    priceObservations: serializePriceOffers(offers),
-  });
+  return withFxPriceEstimated(
+    withPriceSourceTraits({
+      priceNew: summary.priceNew,
+      priceFoil: summary.priceFoil,
+      priceUsed: summary.priceUsed,
+      priceUsedCIB: summary.priceUsedCIB,
+      priceLastUpdated:
+        usableBarcodeCache?.priceLastUpdated ?? offers[0]?.observedAt ?? null,
+      priceSources: priceSourcesFromOffers(offers, usableBarcodeCache?.provider),
+      priceObservations: serializePriceOffers(offers),
+    }),
+    sourceOffers,
+    shelfType,
+  );
 }
 
-function resolveShelfItemPriceFields(
+async function resolveShelfItemPriceFields(
   shelfType: string,
   shelfName: string | null | undefined,
   itemNames: string[],
   offers: PriceObservation[],
   cacheSummary: CacheSummaryFields | null,
-): ShelfItemPriceFields | null {
+): Promise<ShelfItemPriceFields | null> {
   const resolved = resolveItemDisplayPrices(
     shelfType,
     shelfName,
@@ -173,11 +201,27 @@ function resolveShelfItemPriceFields(
   );
   if (!resolved) return null;
 
+  const withFx = await withFxPriceEstimated(resolved, offers, shelfType);
+  // Title-align the same way as item detail so FR prints keep Lorcast ~EUR.
+  const aligned = alignBarcodePricesForItemNames(
+    shelfType,
+    itemNames,
+    withFx,
+    shelfName,
+  );
+
   return {
-    priceNew: resolved.priceNew,
-    priceUsed: resolved.priceUsed,
-    priceUsedCIB: resolved.priceUsedCIB,
-    priceLastUpdated: resolved.priceLastUpdated,
+    priceNew: aligned.priceNew,
+    ...(aligned.priceFoil != null ? { priceFoil: aligned.priceFoil } : {}),
+    priceUsed: aligned.priceUsed,
+    priceUsedCIB: aligned.priceUsedCIB,
+    ...(aligned.priceEstimated != null
+      ? { priceEstimated: aligned.priceEstimated }
+      : {}),
+    ...(aligned.priceEstimatedFoil != null
+      ? { priceEstimatedFoil: aligned.priceEstimatedFoil }
+      : {}),
+    priceLastUpdated: aligned.priceLastUpdated,
   };
 }
 
@@ -279,7 +323,7 @@ export async function summarizeShelfItemPrices(
         }
       : null;
 
-    const fields = resolveShelfItemPriceFields(
+    const fields = await resolveShelfItemPriceFields(
       shelfType,
       shelfName,
       itemNames,
@@ -318,13 +362,24 @@ export async function getCachedItemPrices(
   const sourceOffers = toPriceObservations(offers);
   const itemNames = (options.itemNames ?? []).filter((name) => name.trim());
 
-  return resolveItemDisplayPrices(
+  const resolved = resolveItemDisplayPrices(
     shelfType,
     options.shelfName,
     itemNames,
     sourceOffers,
     null,
   );
+  const base =
+    resolved ??
+    withPriceSourceTraits({
+      priceNew: null,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceLastUpdated: offers[0]?.observedAt ?? null,
+      priceSources: priceSourcesFromOffers(sourceOffers),
+      priceObservations: serializePriceOffers(sourceOffers),
+    });
+  return withFxPriceEstimated(base, sourceOffers, shelfType);
 }
 
 /**
@@ -395,9 +450,10 @@ export async function persistBarcodePrices(params: {
     { barcodeCacheId: cacheRecord.id },
     incoming,
   );
+  const observations = toPriceObservations(merged);
   const { priceNew, priceUsed, priceUsedCIB } = summarizeObservedPrices(
     shelfType,
-    merged,
+    observations,
   );
 
   await prisma.barcodeCache.update({
@@ -407,14 +463,18 @@ export async function persistBarcodePrices(params: {
 
   await persistProviderExternalLinksForBarcodeItems(cleanedBarcode, merged);
 
-  return withPriceSourceTraits({
-    priceNew,
-    priceUsed,
-    priceUsedCIB,
-    priceLastUpdated: now,
-    priceSources: priceSourcesFromOffers(merged, provider),
-    priceObservations: serializePriceOffers(merged),
-  });
+  return withFxPriceEstimated(
+    withPriceSourceTraits({
+      priceNew,
+      priceUsed,
+      priceUsedCIB,
+      priceLastUpdated: now,
+      priceSources: priceSourcesFromOffers(observations, provider),
+      priceObservations: serializePriceOffers(observations),
+    }),
+    observations,
+    shelfType,
+  );
 }
 
 /**
@@ -467,9 +527,10 @@ export async function persistItemPrices(params: {
   }
 
   const merged = await mergePriceOffers(scope, incoming);
+  const observations = toPriceObservations(merged);
   const { priceNew, priceUsed, priceUsedCIB } = summarizeObservedPrices(
     shelfType,
-    merged,
+    observations,
   );
   const now = new Date();
 
@@ -483,14 +544,18 @@ export async function persistItemPrices(params: {
     });
   }
 
-  return withPriceSourceTraits({
-    priceNew,
-    priceUsed,
-    priceUsedCIB,
-    priceLastUpdated: now,
-    priceSources: priceSourcesFromOffers(merged),
-    priceObservations: serializePriceOffers(merged),
-  });
+  return withFxPriceEstimated(
+    withPriceSourceTraits({
+      priceNew,
+      priceUsed,
+      priceUsedCIB,
+      priceLastUpdated: now,
+      priceSources: priceSourcesFromOffers(observations),
+      priceObservations: serializePriceOffers(observations),
+    }),
+    observations,
+    shelfType,
+  );
 }
 
 /**
@@ -513,6 +578,7 @@ export async function refreshBarcodePrices(
     releaseDate,
     externalIds,
     providerProductUrls = [],
+    printKey,
   } = input;
 
   const cached = await prisma.barcodeCache.findUnique({
@@ -537,6 +603,10 @@ export async function refreshBarcodePrices(
     externalIds,
     providerProductUrls,
     regionHints: rawNamesList,
+    printKey:
+      printKey?.trim() ||
+      externalIds?.printKey?.trim() ||
+      null,
   });
   const priceOffers = await collectRefreshBarcodePriceOffers(
     toBarcodePriceRefreshContext(match, {
@@ -582,6 +652,7 @@ export async function refreshItemPrices(
     itemId,
     metadataId,
     providerProductUrls = [],
+    printKey,
   } = input;
 
   console.log(
@@ -599,6 +670,10 @@ export async function refreshItemPrices(
     releaseDate,
     externalIds,
     providerProductUrls,
+    printKey:
+      printKey?.trim() ||
+      externalIds?.printKey?.trim() ||
+      null,
   });
   const priceOffers = await collectRefreshBarcodePriceOffers(
     toBarcodePriceRefreshContext(match, {

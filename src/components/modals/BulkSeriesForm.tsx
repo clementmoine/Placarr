@@ -33,7 +33,10 @@ import {
   conditionToggleActiveClass,
 } from "@/components/ConditionIcon";
 import { Condition, type Shelf } from "@/generated/prisma/browser";
-import { itemConditionsForShelfType } from "@/core/collect/condition";
+import {
+  itemConditionsForShelfType,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
 import { saveItemsBatch } from "@/lib/api/items";
 import { cn } from "@/lib/shared/utils";
 import {
@@ -295,7 +298,8 @@ export function BulkSeriesForm({
           <FormField
             control={form.control}
             name="condition"
-            render={({ field }) => (
+            render={({ field }) =>
+              shelfShowsItemCondition(shelfType) ? (
               <FormItem>
                 <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   {t("items.condition")}
@@ -336,7 +340,8 @@ export function BulkSeriesForm({
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            )}
+              ) : null
+            }
           />
         </div>
 

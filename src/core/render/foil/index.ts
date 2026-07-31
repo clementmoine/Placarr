@@ -45,3 +45,11 @@ export { selectFoilBackend } from "./selectBackend";
 export { resolveCardBackUrl } from "./resolveBack";
 export { foilRenderScale, FOIL_SHARP_WIDTH_PX } from "./capabilities";
 export { subscribeFoilFrame, foilClockSeconds } from "./clock";
+export {
+  IDLE_RELEASE_MS,
+  blendGlare,
+  blendLean,
+  easeOutCubic,
+  idleLeanFromSeconds,
+  idlePointerFromSeconds,
+} from "./idleLean";

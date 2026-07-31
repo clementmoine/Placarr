@@ -2850,87 +2850,105 @@ export default function ItemDetailsPage() {
       >
         {/* Transparent: the blur alone separates the card from the page, and a
             black plate fought the holographic sheen it was meant to showcase. */}
-        {/* `sm:max-w-4xl` because the base component's own `sm:max-w-lg` wins
-              over a plain `max-w-4xl` at this breakpoint, and 512px of dialog
-              was quietly capping the card at 480px — well under the 80dvh it
-              asks for. */}
-        <DialogContent className="max-w-4xl sm:max-w-4xl p-0 bg-transparent border-none shadow-none flex flex-col items-center justify-center">
+        {/*
+          Full-viewport shell, not a shrink-wrapped box: clicking the dimmed
+          edge must close. Radix's content owns `pointer-events: auto` inline and
+          used to swallow those clicks before they reached the overlay — so the
+          shell itself is the dismiss target, and the card stops propagation.
+        */}
+        <DialogContent
+          showClose={false}
+          onClick={() => setZoomImageUrl(null)}
+          className="fixed inset-0 top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center rounded-none border-none bg-transparent p-0 shadow-none sm:max-w-none"
+        >
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
-          <div className="relative w-full h-full max-h-[85dvh] flex items-center justify-center p-4">
-            {zoomImageUrl &&
-              /* Fullscreen is where a foil card is worth looking at, so the
-                 holographic layers belong here above all — but only for the
-                 cover itself: zooming a gallery image shows that image. */
-              /* A card is a physical object whether or not its print is foil, so
-                 the whole treatment — the card shape, the perspective, the lean,
-                 and the turn when a back is known — hangs on it being a card,
-                 not on it shimmering. `printKey` is what makes it one. */
-              (item?.printKey &&
-              urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
-                /**
-                 * Sized from its *width*, so the card can never be wider than
-                 * the screen.
-                 *
-                 * Driven from the height (`h-[80vh] aspect-[5/7]`) it was 464px
-                 * wide inside a 375px iPhone — 44px off each edge, corners and
-                 * card number cut away. Deriving the height from the width
-                 * instead keeps the 5:7 exact at every size: the width takes
-                 * whichever is smaller, the room on screen or what 80dvh of
-                 * height would allow.
-                 *
-                 * Measured against the **viewport**, not the parent. `min(100%,
-                 * …)` looks tidier and is circular: this dialog is shrink-to-fit,
-                 * so its width comes from its content while the content's came
-                 * from its width — the same card measured 480px wide one moment
-                 * and 331px the next.
-                 *
-                 * `dvh`, not `vh`: on iOS `vh` measures the viewport with the
-                 * URL bar hidden, so 80vh is taller than what can actually be
-                 * seen and the card slid under the browser chrome. The `2rem`
-                 * is the wrapper's own `p-4`, both sides.
-                 */
-                <div className="aspect-[5/7] w-[min(calc(100vw-2rem),calc(80dvh*5/7))] rounded-[4%/3%] animate-zoom-in">
-                  <FlippableCard
-                    backUrl={resolveCardBackUrl({
-                      shelfCardBackUrl: shelf?.cardBackUrl,
-                      effectPackId: variantView.effectPackId,
-                    })}
-                    backAlt={`${itemDisplayName ?? ""} — dos`}
-                    flipLabel={t("items.flipCard")}
-                    tiltPromptLabel={t("items.tiltPrompt")}
-                  >
-                    <FoilCardImage
-                      effectPack={variantView.effectPackId}
-                      imageUrl={variantView.imageUrl ?? zoomImageUrl}
-                      alt="Zoom"
-                      finish={variantView.finish}
-                      varnishType={variantView.varnishType}
-                      /* The wrapper leans the whole card so the back turns with
-                         it; this keeps only the light on its own surface. */
-                      tilt={false}
-                      trackPointer
-                      /* The mirrored masks were cut for the hero's framing. They
-                       only fit here if this is the same file — zooming the
-                       uncropped original of a cropped cover is not. */
-                      maskUrl={
-                        (variantView.imageUrl ?? zoomImageUrl) ===
-                        heroArtworkUrl
-                          ? foilMaskUrl
-                          : variantView.foilMaskUrl
-                      }
-                      varnishMaskUrl={
-                        (variantView.imageUrl ?? zoomImageUrl) ===
-                        heroArtworkUrl
-                          ? varnishMaskUrl
-                          : variantView.varnishMaskUrl
-                      }
-                      varnishColor={variantView.varnishColor}
-                      secondVarnishMaskUrl={secondVarnishMaskUrl}
-                      secondVarnishColor={variantView.secondVarnishColor}
-                    />
-                  </FlippableCard>
-                </div>
-              ) : (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setZoomImageUrl(null);
+            }}
+            aria-label={t("common.close")}
+            className="absolute top-4 right-4 z-50 rounded-full bg-black/60 p-2 text-white opacity-90 shadow-md backdrop-blur-sm transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/40"
+          >
+            <X className="size-4" />
+          </button>
+          {zoomImageUrl &&
+            /* Fullscreen is where a foil card is worth looking at, so the
+               holographic layers belong here above all — but only for the
+               cover itself: zooming a gallery image shows that image. */
+            /* A card is a physical object whether or not its print is foil, so
+               the whole treatment — the card shape, the perspective, the lean,
+               and the turn when a back is known — hangs on it being a card,
+               not on it shimmering. `printKey` is what makes it one. */
+            (item?.printKey &&
+            urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
+              /**
+               * Sized from its *width*, so the card can never be wider than
+               * the screen.
+               *
+               * Driven from the height (`h-[80vh] aspect-[5/7]`) it was 464px
+               * wide inside a 375px iPhone — 44px off each edge, corners and
+               * card number cut away. Deriving the height from the width
+               * instead keeps the 5:7 exact at every size: the width takes
+               * whichever is smaller, the room on screen or what 80dvh of
+               * height would allow.
+               *
+               * Measured against the **viewport**, not the parent. `min(100%,
+               * …)` looks tidier and is circular: this dialog is shrink-to-fit,
+               * so its width comes from its content while the content's came
+               * from its width — the same card measured 480px wide one moment
+               * and 331px the next.
+               *
+               * `dvh`, not `vh`: on iOS `vh` measures the viewport with the
+               * URL bar hidden, so 80vh is taller than what can actually be
+               * seen and the card slid under the browser chrome. The `2rem`
+               * is padding on both sides.
+               */
+              <div
+                className="aspect-[5/7] w-[min(calc(100vw-2rem),calc(80dvh*5/7))] rounded-[4%/3%] animate-zoom-in"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <FlippableCard
+                  backUrl={resolveCardBackUrl({
+                    shelfCardBackUrl: shelf?.cardBackUrl,
+                    effectPackId: variantView.effectPackId,
+                  })}
+                  backAlt={`${itemDisplayName ?? ""} — dos`}
+                  flipLabel={t("items.flipCard")}
+                  tiltPromptLabel={t("items.tiltPrompt")}
+                >
+                  <FoilCardImage
+                    effectPack={variantView.effectPackId}
+                    imageUrl={variantView.imageUrl ?? zoomImageUrl}
+                    alt="Zoom"
+                    finish={variantView.finish}
+                    varnishType={variantView.varnishType}
+                    /* The wrapper leans the whole card so the back turns with
+                       it; this keeps only the light on its own surface. */
+                    tilt={false}
+                    trackPointer
+                    /* The mirrored masks were cut for the hero's framing. They
+                     only fit here if this is the same file — zooming the
+                     uncropped original of a cropped cover is not. */
+                    maskUrl={
+                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
+                        ? foilMaskUrl
+                        : variantView.foilMaskUrl
+                    }
+                    varnishMaskUrl={
+                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
+                        ? varnishMaskUrl
+                        : variantView.varnishMaskUrl
+                    }
+                    varnishColor={variantView.varnishColor}
+                    secondVarnishMaskUrl={secondVarnishMaskUrl}
+                    secondVarnishColor={variantView.secondVarnishColor}
+                  />
+                </FlippableCard>
+              </div>
+            ) : (
+              <div onClick={(event) => event.stopPropagation()}>
                 <RemoteImage
                   src={zoomImageUrl}
                   alt="Zoom"
@@ -2941,8 +2959,8 @@ export default function ItemDetailsPage() {
                   // tall gallery image ran under the browser chrome.
                   className="max-w-full max-h-[80dvh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
                 />
-              ))}
-          </div>
+              </div>
+            ))}
         </DialogContent>
       </Dialog>
     </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
+import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { cn } from "@/lib/shared/utils";
 
 type FlippableCardProps = {
@@ -59,7 +60,13 @@ export function showsBack(turn: number): boolean {
  * rather than to the card.
  *
  * Both angles ride CSS custom properties, so following the pointer never
- * re-renders React; only the turn itself is state.
+ * re-renders React on every move; only the turn itself and the idle↔driven
+ * handoff are state.
+ *
+ * Idle is a fake hover on the shared foil clock (`cos(t)`, same driver as
+ * WebGL Time mode) — not a separate breathe keyframe — so the card's lean
+ * and the foil sheen agree. Leaving the card eases back into that sweep
+ * instead of snapping.
  *
  * On a phone there is no pointer, so the lean comes from the handset's own
  * orientation instead — tilting it is the gesture people already make holding a
@@ -87,6 +94,11 @@ export function FlippableCard({
   /** Total degrees turned, not a boolean — see {@link turnAfterPush}. */
   const [turn, setTurn] = useState(0);
   const flipped = showsBack(turn);
+  /**
+   * Pointer on the card (state, not a ref): idle clock lean must stop once
+   * someone is driving, so React has to know.
+   */
+  const [pointerActive, setPointerActive] = useState(false);
 
   /** Push from whichever side was clicked; the keyboard has no side. */
   const push = useCallback((fromRightHalf: boolean) => {
@@ -96,11 +108,12 @@ export function FlippableCard({
   const deviceTilt = useDeviceTilt(MAX_TILT);
   const deviceLean = deviceTilt.lean;
   /**
-   * Whether the pointer currently owns the lean. A ref rather than state: this
-   * component deliberately does not re-render as the cursor moves, and hovering
-   * is not a reason to break that.
+   * Whether the pointer currently owns the lean. Kept as a ref too so the
+   * device-tilt effect can skip without waiting for a re-render mid-gesture.
    */
   const pointerOwnsLean = useRef(false);
+  /** Phone in hand or cursor on the card — either way, idle must not fight. */
+  const isDriven = pointerActive || Boolean(deviceLean);
 
   const applyLean = useCallback((lean: Lean) => {
     const frame = frameRef.current;
@@ -108,6 +121,8 @@ export function FlippableCard({
     frame.style.setProperty("--flip-lean-x", `${lean.tiltX}deg`);
     frame.style.setProperty("--flip-lean-y", `${lean.tiltY}deg`);
   }, []);
+
+  const { noteLean } = useFoilIdleLean(isDriven, MAX_TILT, applyLean);
 
   const applyPointer = useCallback(
     (clientX: number, clientY: number) => {
@@ -117,35 +132,34 @@ export function FlippableCard({
       if (!rect.width || !rect.height) return;
 
       pointerOwnsLean.current = true;
-      applyLean(
-        leanFromPointer(
-          ((clientX - rect.left) / rect.width) * 100,
-          ((clientY - rect.top) / rect.height) * 100,
-          MAX_TILT,
-        ),
+      setPointerActive(true);
+      const lean = leanFromPointer(
+        ((clientX - rect.left) / rect.width) * 100,
+        ((clientY - rect.top) / rect.height) * 100,
+        MAX_TILT,
       );
+      noteLean(lean);
+      applyLean(lean);
     },
-    [applyLean],
+    [applyLean, noteLean],
   );
 
   const rest = useCallback(() => {
     pointerOwnsLean.current = false;
-    const frame = frameRef.current;
-    if (!frame) return;
-    // Back to however the phone is being held, when there is one — flat is only
-    // the resting position on a device with no orientation to fall back on.
+    setPointerActive(false);
+    // Device pose, if any, is applied by the effect below; otherwise the idle
+    // hook eases from the last noted lean into the shared sweep.
     if (deviceLean) {
+      noteLean(deviceLean);
       applyLean(deviceLean);
-      return;
     }
-    frame.style.setProperty("--flip-lean-x", "0deg");
-    frame.style.setProperty("--flip-lean-y", "0deg");
-  }, [applyLean, deviceLean]);
+  }, [applyLean, deviceLean, noteLean]);
 
   useEffect(() => {
     if (!deviceLean || pointerOwnsLean.current) return;
+    noteLean(deviceLean, 0.4);
     applyLean(deviceLean);
-  }, [deviceLean, applyLean]);
+  }, [deviceLean, applyLean, noteLean]);
 
   const canFlip = Boolean(backUrl);
 
@@ -204,7 +218,8 @@ export function FlippableCard({
       <div
         className="relative h-full w-full rounded-[inherit] [transform-style:preserve-3d]"
         style={{
-          transform: "rotateX(var(--flip-lean-x)) rotateY(var(--flip-lean-y))",
+          transform:
+            "rotateX(var(--flip-lean-x)) rotateY(var(--flip-lean-y))",
           willChange: "transform",
         }}
       >

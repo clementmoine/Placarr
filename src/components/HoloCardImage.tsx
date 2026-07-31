@@ -13,6 +13,7 @@ import {
 } from "@/core/render/holoShaders";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
+import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { useMaskBlob } from "@/lib/client/hooks/useMaskBlob";
 import { cn } from "@/lib/shared/utils";
 
@@ -86,9 +87,6 @@ type HoloCardImageProps = {
 function objectFitClass(fit: "cover" | "contain"): string {
   return fit === "contain" ? "object-contain" : "object-cover";
 }
-
-/** Rest position: light centred, card flat, glare off. */
-const NEUTRAL = { x: 50, y: 50 } as const;
 
 /**
  * How far the card leans at the edges, in degrees. Generous enough to read as
@@ -196,28 +194,30 @@ export function HoloCardImage({
     frame.style.setProperty("--opacity", `${glare}`);
   }, []);
 
+  const idleEnabled = Boolean(maskUrl && foilMask) && !isDriven;
+  const { noteLean } = useFoilIdleLean(isDriven || !idleEnabled, MAX_TILT, place);
+
   const applyPointer = useCallback(
     (clientX: number, clientY: number) => {
       const frame = frameRef.current;
       if (!frame) return;
       const rect = frame.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      place(
-        leanFromPointer(
-          ((clientX - rect.left) / rect.width) * 100,
-          ((clientY - rect.top) / rect.height) * 100,
-          MAX_TILT,
-        ),
-        0.66,
+      const lean = leanFromPointer(
+        ((clientX - rect.left) / rect.width) * 100,
+        ((clientY - rect.top) / rect.height) * 100,
+        MAX_TILT,
       );
+      noteLean(lean, 0.66);
+      place(lean, 0.66);
     },
-    [place],
+    [place, noteLean],
   );
 
   const reset = useCallback(() => {
     setIsActive(false);
-    place(leanFromPointer(NEUTRAL.x, NEUTRAL.y, MAX_TILT), 0);
-  }, [place]);
+    // Idle hook eases from the last noted pose — do not snap to neutral.
+  }, []);
 
   // The sensor drives the same properties the pointer does, so the two never
   // disagree — and the pointer wins while it is actually on the card, because a
@@ -226,8 +226,9 @@ export function HoloCardImage({
     if (!deviceLean || isActive) return;
     // The same shape the pointer produces, so the two inputs cannot disagree
     // about which way the card turns.
+    noteLean(deviceLean, 0.4);
     place(deviceLean, 0.4);
-  }, [deviceLean, isActive, place]);
+  }, [deviceLean, isActive, place, noteLean]);
 
   /** No mask, no effect — better a plain card than a uniformly shiny one. */
   // Plain until the foil mask is in memory, then foil. Drawing the layers
@@ -297,10 +298,6 @@ export function HoloCardImage({
         "relative h-full w-full select-none rounded-[inherit]",
         // No perspective when nothing leans: it would only cost a layer.
         tilt && "[perspective:900px]",
-        // The drift animates this element's own custom properties, which every
-        // layer is positioned against, so it belongs here rather than on any
-        // one of them.
-        !isDriven && "holo-idle-sheen",
         className,
       )}
     >
@@ -323,12 +320,7 @@ export function HoloCardImage({
           // own radius: left on an ancestor, a leaning card gets its corners
           // sliced off flat instead of turning.
           "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
-          tilt &&
-            (isDriven
-              ? "transition-transform duration-200 ease-out"
-              : // Breathing on its own, so a foil copy reads as special before
-                // anyone touches it. The pointer takes over on hover.
-                "holo-idle-tilt"),
+          tilt && isDriven && "transition-transform duration-200 ease-out",
         )}
       >
         {/*

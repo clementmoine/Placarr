@@ -31,6 +31,7 @@ import {
   type HoloTuning,
 } from "@/core/render/holoShaders";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
+import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { cn } from "@/lib/shared/utils";
 
 import "@/effects";
@@ -368,6 +369,14 @@ export function FoilCardImage({
     [setShaderTilt, timeFactor],
   );
 
+  // Physical lean follows the same `cos(t)` Time mode uses for the foil, with
+  // a release blend so leaving the card is not a snap.
+  const { noteLean } = useFoilIdleLean(
+    isDriven || !useWebgl || !tilt,
+    MAX_TILT,
+    (lean) => applyLean(lean),
+  );
+
   useEffect(() => {
     if (!useWebgl || !material || !pack) return;
     const canvas = canvasRef.current;
@@ -453,8 +462,9 @@ export function FoilCardImage({
 
   useEffect(() => {
     if (!deviceLean || isActive) return;
+    noteLean(deviceLean, 0.4);
     applyLean(deviceLean);
-  }, [deviceLean, isActive, applyLean]);
+  }, [deviceLean, isActive, applyLean, noteLean]);
 
   useEffect(() => {
     if (!useWebgl || !rendererReady) return;
@@ -512,19 +522,20 @@ export function FoilCardImage({
         const rect = frame.getBoundingClientRect();
         if (!rect.width || !rect.height) return;
         setIsActive(true);
-        applyLean(
-          leanFromPointer(
-            ((event.clientX - rect.left) / rect.width) * 100,
-            ((event.clientY - rect.top) / rect.height) * 100,
-            MAX_TILT,
-          ),
+        const lean = leanFromPointer(
+          ((event.clientX - rect.left) / rect.width) * 100,
+          ((event.clientY - rect.top) / rect.height) * 100,
+          MAX_TILT,
         );
+        noteLean(lean);
+        applyLean(lean);
       }
     : undefined;
 
   const reset = trackPointer
     ? () => {
         setIsActive(false);
+        // Idle hook eases from the last noted pose — do not snap.
       }
     : undefined;
 
@@ -565,10 +576,7 @@ export function FoilCardImage({
           }
           className={cn(
             "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
-            tilt &&
-              (isDriven
-                ? "transition-transform duration-200 ease-out"
-                : "holo-idle-tilt"),
+            tilt && isDriven && "transition-transform duration-200 ease-out",
           )}
         >
           <div className="relative flex h-full w-full items-center justify-center">

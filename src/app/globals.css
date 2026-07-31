@@ -134,21 +134,11 @@
   contain-intrinsic-size: auto 150px;
 }
 
-/* Holographic card, idle state.
-   A foil copy has to read as special before anyone touches it, so the light
-   drifts on its own and the card breathes; the pointer takes over on hover.
-   Both stop under `prefers-reduced-motion` — the foil stays, it just holds
-   still, because it is information, not decoration.
-
-   The light moves by animating the same properties the pointer writes, never
-   `background-position` directly. A finish is two or three textures with
-   different positions — one travelling, one held centred and covering — and a
-   keyframe on `background-position` sets a single value for all of them, which
-   flattens the recipe into a smear. It also beats the inline styles the recipe
-   is applied through, so the effect it destroys is the whole effect.
-
-   Registering them is what makes them interpolate; an unregistered custom
-   property animates as a string, in one discrete jump. */
+/* Custom properties the foil recipes lean on. Registered so they interpolate
+   if anything ever transitions them; idle itself is a fake hover on the shared
+   foil clock (`cos(t)`, same driver as WebGL Time mode) — see
+   `idleLeanFromSeconds` — so sheen and lean stay locked. Reduced motion is
+   handled at the subscription site. */
 @property --colorX {
   syntax: "<percentage>";
   inherits: true;
@@ -171,65 +161,4 @@
   syntax: "<number>";
   inherits: true;
   initial-value: 0;
-}
-
-@keyframes holo-drift {
-  /* A light sweeping from the top right down to the bottom left, so a finish
-     banded either way still crosses it. `--colorX` falls while `--colorY`
-     rises, which is the diagonal a card catches when tipped under a lamp.
-
-     `--combined` is driven on its own course rather than as the sum it is under
-     the pointer. On an anti-diagonal the sum barely moves — the two terms
-     cancel — and ten of the sixteen looks are positioned against it, so they
-     would have sat perfectly still while the other six travelled.
-
-     The glare rides along, well under the value hovering gives so the pointer
-     still has somewhere to go. Held at zero, a resting card only shifted its
-     textures, which reads as almost nothing at thumbnail size — where telling a
-     foil copy from an ordinary one matters most. */
-  0% {
-    --colorX: 78%;
-    --colorY: 28%;
-    --combined: 40%;
-    --opacity: 0.12;
-  }
-  50% {
-    --colorX: 22%;
-    --colorY: 72%;
-    --combined: 160%;
-    --opacity: 0.3;
-  }
-  100% {
-    --colorX: 78%;
-    --colorY: 28%;
-    --combined: 40%;
-    --opacity: 0.12;
-  }
-}
-
-@keyframes holo-breathe {
-  0% {
-    transform: rotateX(2.5deg) rotateY(-5deg);
-  }
-  50% {
-    transform: rotateX(-2.5deg) rotateY(5deg);
-  }
-  100% {
-    transform: rotateX(2.5deg) rotateY(-5deg);
-  }
-}
-
-.holo-idle-sheen {
-  animation: holo-drift 9s ease-in-out infinite;
-}
-
-.holo-idle-tilt {
-  animation: holo-breathe 11s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .holo-idle-sheen,
-  .holo-idle-tilt {
-    animation: none;
-  }
 }

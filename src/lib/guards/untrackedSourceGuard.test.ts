@@ -34,26 +34,14 @@ const SOURCE_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|cjs|css|prisma)$/;
 const DISPOSABLE = [/^\.tmp-/, /^scratch\//, /^node_modules\//];
 
 /**
- * Areas with untracked source **today**, and the list may only ever shrink.
+ * Areas allowed to hold untracked source — **empty, and meant to stay that way**.
  *
- * Same contract as `blindnessGuard`'s allowlist: it exists so the rule can be
- * enforced now rather than after a cleanup that keeps being postponed, and each
- * entry is a standing invitation to commit that work. Adding an entry is how
- * this guard stops being worth anything — do not.
+ * It started with eleven entries, one per area that had uncommitted source the
+ * day the guard was written. Committing that work emptied it, which is the only
+ * direction this list is allowed to move. Adding an entry back is how the guard
+ * stops being worth anything; commit the file instead.
  */
-const KNOWN_UNTRACKED_AREAS = [
-  "scripts/foil",
-  "scripts/lib",
-  "scripts/lorcana",
-  "scripts/media",
-  "scripts/pokemon",
-  "src/app",
-  "src/components",
-  "src/core",
-  "src/effects",
-  "src/lib",
-  "src/providers",
-];
+const KNOWN_UNTRACKED_AREAS: string[] = [];
 
 function untrackedFiles(): string[] {
   return execSync("git ls-files --others --exclude-standard -z", {

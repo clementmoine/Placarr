@@ -9,7 +9,11 @@
 import { parsePrintKey } from "@/core/identify/printKey";
 import { foilTextureFile } from "@/effects/foilTextureFile";
 
-import cardsJson from "./cards.json";
+import {
+  listBundleIds,
+  listSetIds,
+  variantsForBundle,
+} from "./cardFoilLookups";
 import { foilManifestToShader, type PokemonPaperFoilName } from "./foilNames";
 import { remapCollectorNumberForLive } from "./collectorRemap";
 import { lookupByName, lookupBySetNum } from "./liveCardsLookups";
@@ -57,7 +61,31 @@ export type PaperEffectResolution = {
   bundle: string;
 };
 
-const CARDS = cardsJson as Record<string, PaperCardEntry>;
+/**
+ * The dump, one row at a time.
+ *
+ * This was `cardsJson as Record<string, PaperCardEntry>` over a 10.7 MB static
+ * import. Two `"use client"` components reach this pack, so webpack tried to
+ * ship all 41 546 entries to the browser and never finished compiling — see
+ * `cardFoilLookups` for the full account. Rows now come from SQLite, which a
+ * browser bundle cannot contain by construction.
+ */
+function cardEntry(bundleId: string): PaperCardEntry | null {
+  const variants = variantsForBundle(bundleId);
+  if (variants.length === 0) return null;
+  const entry: PaperCardEntry = {};
+  for (const v of variants) {
+    entry[v.variant] = {
+      foil: v.foil,
+      shader: v.shader,
+      cardTex: v.cardTex,
+      maskTex: v.maskTex,
+      ...(v.etchTex ? { etchTex: v.etchTex } : {}),
+      ...(v.coldFoilTex ? { coldFoilTex: v.coldFoilTex } : {}),
+    };
+  }
+  return entry;
+}
 
 let liveStemSetCache: Set<string> | null = null;
 
@@ -97,20 +125,15 @@ export function liveBundleLangsToTry(lang?: string | null): string[] {
 }
 
 export function paperCard(bundleId: string): PaperCardEntry | null {
-  return CARDS[bundleId] ?? null;
+  return cardEntry(bundleId);
 }
 
 export function listPaperBundleIds(): string[] {
-  return Object.keys(CARDS).sort();
+  return listBundleIds();
 }
 
 export function listLiveSetIds(): string[] {
-  const sets = new Set<string>();
-  for (const id of Object.keys(CARDS)) {
-    const set = id.split("_")[0];
-    if (set) sets.add(set);
-  }
-  return [...sets].sort();
+  return listSetIds();
 }
 
 /** True when the Live row names a real HoloFoil leaf (not NonFoil). */

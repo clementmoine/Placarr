@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+// Installs the SQLite `card_foil` lookups; without it the pack sees stubs.
+import "./cardFoilIndex";
+
 import { POKEMON_FOIL_NAMES } from "./foilNames";
 import {
   listDumpedBundlesForShader,

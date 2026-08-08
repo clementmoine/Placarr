@@ -128,7 +128,7 @@ export async function readFoilPackStatuses(opts: {
         path.join(dataRoot, "pokemon", "foil", "shaders"),
         path.join(dataRoot, "pokemon", "foil", "textures"),
         path.join(dataRoot, "pokemon", "foil", "extract-report.json"),
-        path.join(repoRoot, "src", "effects", "pokemon", "cards.json"),
+        path.join(repoRoot, "data", "pokemon", "cards.json"),
       ],
     },
   ];

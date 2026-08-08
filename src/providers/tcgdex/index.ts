@@ -14,6 +14,11 @@ import {
 import { POKEMON_EFFECT_PACK_ID } from "@/effects/pokemon";
 // Install SQLite Live lookups (server-only) before joinLiveForPrint.
 import "@/effects/pokemon/liveCardsIndex";
+// …and the per-print foil mapping, which lives in the same database. Both are
+// side-effect imports: loading them is what installs the real lookups over the
+// client-safe stubs. Without this the provider still resolves cards but never
+// finds a Live texture, and silently falls back to TCGdex art.
+import "@/effects/pokemon/cardFoilIndex";
 import { faceQuarterTurnsForPokemonPrint } from "@/effects/pokemon/faceOrientation";
 import { joinLiveForPrint } from "@/effects/pokemon/liveJoin";
 import { lookupByBundle } from "@/effects/pokemon/liveCardsLookups";

@@ -34,7 +34,7 @@ export function defaultAuditPaths(root = repoRoot()): AuditApkPaths {
     root,
     configCache: path.join(root, "data/pokemon/config-cache"),
     cataloguePath: path.join(root, "data/pokemon/cdn-catalogue-setnum.txt"),
-    cardsPath: path.join(root, "src/effects/pokemon/cards.json"),
+    cardsPath: path.join(root, "data/pokemon/cards.json"),
     bundlesDir: path.join(root, "data/pokemon/cdn-bundles"),
     reportPath: path.join(root, "data/pokemon/logs/apk-coverage.json"),
   };

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+// Installs the SQLite `card_foil` lookups; without it the pack sees stubs.
+import "./cardFoilIndex";
+
 import {
   liveBundleLangsToTry,
   orderLiveSetCandidates,
@@ -208,6 +211,7 @@ describe("resolveEffectForPrintKey", () => {
     const {
       resetLiveCardsIndexCache,
     } = await import("./liveCardsIndex");
+    const { resetCardFoilIndexCache } = await import("./cardFoilIndex");
 
     const dir = await mkdtemp(path.join(os.tmpdir(), "name-fallback-"));
     const dbPath = path.join(dir, "live-cards.sqlite");
@@ -229,7 +233,31 @@ describe("resolveEffectForPrintKey", () => {
         rarity_code TEXT,
         set_code TEXT
       );
+      -- The foil mapping lives in the same file, so a fixture DB needs it too.
+      CREATE TABLE card_foil (
+        bundle_id TEXT NOT NULL,
+        variant TEXT NOT NULL,
+        card_tex TEXT NOT NULL DEFAULT '',
+        mask_tex TEXT NOT NULL DEFAULT '',
+        etch_tex TEXT NOT NULL DEFAULT '',
+        cold_foil_tex TEXT NOT NULL DEFAULT '',
+        foil TEXT NOT NULL DEFAULT '',
+        shader TEXT NOT NULL DEFAULT '',
+        PRIMARY KEY (bundle_id, variant)
+      );
     `);
+    db.prepare(
+      `INSERT INTO card_foil VALUES (?,?,?,?,?,?,?,?)`,
+    ).run(
+      "bw10_fr_001",
+      "ph",
+      "bw10_fr_001",
+      "bw10_wp_ph_fr_001",
+      "",
+      "",
+      "HoloFoil_Rainbow_Amplify_J",
+      "Rainbow",
+    );
     // Num does not match printKey 999 — only the title joins to bw10_fr_001.
     db.prepare(
       `INSERT INTO live_cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -254,6 +282,7 @@ describe("resolveEffectForPrintKey", () => {
     const prev = process.env.PLACARR_LIVE_CARDS_DB;
     process.env.PLACARR_LIVE_CARDS_DB = dbPath;
     resetLiveCardsIndexCache();
+    resetCardFoilIndexCache();
     try {
       const r = resolveEffectForPrintKey(
         "pokemon:bw10-999",
@@ -270,6 +299,7 @@ describe("resolveEffectForPrintKey", () => {
       if (prev === undefined) delete process.env.PLACARR_LIVE_CARDS_DB;
       else process.env.PLACARR_LIVE_CARDS_DB = prev;
       resetLiveCardsIndexCache();
+      resetCardFoilIndexCache();
       await rm(dir, { recursive: true, force: true });
     }
   });

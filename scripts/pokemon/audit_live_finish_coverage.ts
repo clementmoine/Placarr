@@ -132,7 +132,7 @@ function main() {
     }
   }
 
-  if (strict && !existsSync(path.join(ROOT, "src/effects/pokemon/cards.json"))) {
+  if (strict && !existsSync(path.join(ROOT, "data/pokemon/cards.json"))) {
     console.error("strict: cards.json missing");
     process.exit(1);
   }

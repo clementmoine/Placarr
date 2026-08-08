@@ -37,6 +37,7 @@
     "foil:pokemon:scrape": "scripts/pokemon/run-scrape.sh",
     "foil:pokemon:sources": "scripts/pokemon/run-sources.sh",
     "foil:pokemon:index-cards": "tsx scripts/pokemon/indexCards.ts",
+    "foil:pokemon:index-card-foil": "tsx scripts/pokemon/indexCardFoil.ts",
     "foil:pokemon:audit-apk": "tsx scripts/pokemon/auditApkCoverage.ts",
     "foil:pokemon:audit-finish": "tsx scripts/pokemon/audit_live_finish_coverage.ts",
     "foil:pokemon:audit-store": "tsx scripts/pokemon/audit_store.ts",

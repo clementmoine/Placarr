@@ -7,8 +7,8 @@
  * Mask = scraped `_w` from the same dump (or pack fallback).
  */
 
-import cardsJson from "./cards.json";
 import { foilTextureFile } from "@/effects/foilTextureFile";
+import { bundlesForShader, variantsForBundle } from "./cardFoilLookups";
 import {
   foilManifestToShader,
   foilSheetAliasName,
@@ -21,7 +21,6 @@ import { POKEMON_MAT_ALIASES } from "./materials";
 import { lookupByBundle } from "./liveCardsLookups";
 import { ownedBundlesForShader } from "./liveOwnedBundles";
 import { formatPlayroomFaceCaption } from "./liveSetDisplay";
-import type { PaperCardEntry } from "./resolveEffect";
 
 const ASSET_BASE = "/foil/pokemon";
 const LANG = "fr";
@@ -196,7 +195,6 @@ type BundlePick = {
   coldFoilTex: string;
 };
 
-const CARDS = cardsJson as Record<string, PaperCardEntry>;
 
 /** How many Live faces the focus/compare bench stacks per material. */
 export const PLAYROOM_FACES_PER_MATERIAL = 4;
@@ -230,25 +228,29 @@ function liveArtUrl(pick: BundlePick | null): string | null {
   return `${ASSET_BASE}/textures/${pick.bundleId}/${foilTextureFile(pick.cardTex)}`;
 }
 
-function variantPick(
+/**
+ * One named bundle's face for this shader, `ph` before `std`.
+ *
+ * Used for the two ordered preferences — the Live-owned faces and the seed hero
+ * — where the bundle id is already known and only its variants are needed.
+ * `variantsForBundle` already returns `ph` first, so the first match wins.
+ */
+function pickFromLookup(
   bundleId: string,
-  entry: PaperCardEntry,
   shader: PokemonPaperFoilName,
 ): BundlePick | null {
-  for (const variantKey of ["ph", "std"] as const) {
-    const variant = entry[variantKey];
-    if (!variant) continue;
+  for (const variant of variantsForBundle(bundleId)) {
     const mapped =
       foilManifestToShader(variant.shader) ||
       foilManifestToShader(variant.foil);
     if (mapped !== shader) continue;
     return {
       bundleId,
-      variant: variantKey,
-      maskTex: variant.maskTex?.trim() ?? "",
-      cardTex: variant.cardTex?.trim() ?? "",
-      etchTex: variant.etchTex?.trim() ?? "",
-      coldFoilTex: variant.coldFoilTex?.trim() ?? "",
+      variant: variant.variant,
+      maskTex: variant.maskTex,
+      cardTex: variant.cardTex,
+      etchTex: variant.etchTex,
+      coldFoilTex: variant.coldFoilTex,
     };
   }
   return null;
@@ -310,31 +312,38 @@ export function listDumpedBundlesForShader(
       (a, b) => ownedRank(a) - ownedRank(b) || a.localeCompare(b),
     );
     for (const bundleId of ownedOrdered) {
-      const entry = CARDS[bundleId];
-      if (!entry) continue;
-      const pick = variantPick(bundleId, entry, shader);
+      const pick = pickFromLookup(bundleId, shader);
       if (pick) push(pick);
     }
 
     if (preferred) {
-      const entry = CARDS[preferred];
-      if (entry) {
-        const pick = variantPick(preferred, entry, shader);
-        if (pick) push(pick);
-      }
+      const pick = pickFromLookup(preferred, shader);
+      if (pick) push(pick);
     }
 
-    const fr: BundlePick[] = [];
-    const other: BundlePick[] = [];
-    for (const [bundleId, entry] of Object.entries(CARDS)) {
-      if (seenBundle.has(bundleId)) continue;
-      const pick = variantPick(bundleId, entry, shader);
-      if (!pick) continue;
-      if (/_[a-z]{2}_/i.test(bundleId) && /_fr_/i.test(bundleId)) fr.push(pick);
-      else other.push(pick);
+    /*
+      The dump, queried by shader instead of scanned.
+
+      This was `Object.entries(CARDS)` over 41 546 entries, once per material,
+      against a 10.7 MB static import — the import that made webpack try to ship
+      the whole dump to the browser. SQLite already returns FR first and `ph`
+      before `std`, which is the order this loop used to impose by hand.
+    */
+    for (const row of bundlesForShader(shader)) {
+      if (seenBundle.has(row.bundleId)) continue;
+      const mapped =
+        foilManifestToShader(row.variant.shader) ||
+        foilManifestToShader(row.variant.foil);
+      if (mapped !== shader) continue;
+      push({
+        bundleId: row.bundleId,
+        variant: row.variant.variant,
+        maskTex: row.variant.maskTex,
+        cardTex: row.variant.cardTex,
+        etchTex: row.variant.etchTex,
+        coldFoilTex: row.variant.coldFoilTex,
+      });
     }
-    for (const pick of fr) push(pick);
-    for (const pick of other) push(pick);
 
     full = out;
     DUMPED_BUNDLE_LIST_CACHE.set(shader, full);

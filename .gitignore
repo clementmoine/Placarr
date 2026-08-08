@@ -68,7 +68,6 @@ prisma/*.sql.dump
 # JSON générés par les dumpers (stubs via `pnpm foil:ensure`)
 /src/effects/lorcana/manifest.json
 /src/effects/lorcana/cards-index.json
-/src/effects/pokemon/cards.json
 /src/effects/pokemon/materialSheets.json
 /src/effects/pokemon/textureFlags.json
 

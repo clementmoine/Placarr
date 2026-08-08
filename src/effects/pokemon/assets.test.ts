@@ -3,20 +3,22 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+// Installs the SQLite `card_foil` lookups; without it the pack sees stubs.
+import "./cardFoilIndex";
+
 import { foilTextureFile } from "@/effects/foilTextureFile";
-import cardsJson from "./cards.json";
+import { listBundleIds, variantsForBundle } from "./cardFoilLookups";
 import {
   foilManifestToShader,
   POKEMON_FOIL_NAMES,
 } from "./foilNames";
-import type { PaperCardEntry } from "./resolveEffect";
 
 const PACK_ROOT = path.join(process.cwd(), "data", "pokemon", "foil");
 const SHADERS_DIR = path.join(PACK_ROOT, "shaders");
 const TEXTURES_DIR = path.join(PACK_ROOT, "textures");
 
-const CARDS = cardsJson as Record<string, PaperCardEntry>;
-const hasDump = Object.keys(CARDS).length > 0;
+const BUNDLE_IDS = listBundleIds();
+const hasDump = BUNDLE_IDS.length > 0;
 
 function packFile(...names: string[]): boolean {
   return names.some((name) => existsSync(path.join(PACK_ROOT, name)));
@@ -57,18 +59,16 @@ describe("pokemon pack assets", () => {
     ).toBeGreaterThan(0);
   });
 
-  it.skipIf(!hasDump)("maps every cards.json foil/shader to a known leaf", () => {
+  it.skipIf(!hasDump)("maps every dumped foil/shader to a known leaf", () => {
     const unmapped: string[] = [];
-    for (const [bundleId, entry] of Object.entries(CARDS)) {
-      for (const key of ["std", "ph"] as const) {
-        const variant = entry[key];
-        if (!variant) continue;
+    for (const bundleId of BUNDLE_IDS) {
+      for (const variant of variantsForBundle(bundleId)) {
         const mapped =
           foilManifestToShader(variant.shader) ||
           foilManifestToShader(variant.foil);
         if (!mapped) {
           unmapped.push(
-            `${bundleId}:${key}:${variant.foil || "?"}/${variant.shader || "?"}`,
+            `${bundleId}:${variant.variant}:${variant.foil || "?"}/${variant.shader || "?"}`,
           );
         }
       }
@@ -79,14 +79,13 @@ describe("pokemon pack assets", () => {
   it.skipIf(!hasDump)("ships mask textures for a sample of FR foil variants", () => {
     let checked = 0;
     const missing: string[] = [];
-    for (const [bundleId, entry] of Object.entries(CARDS)) {
+    for (const bundleId of BUNDLE_IDS) {
       // Manifest index covers every CDN lang; textures are scraped FR-first.
       if (!/_fr_/i.test(bundleId)) continue;
       const bundleDir = path.join(TEXTURES_DIR, bundleId);
       if (!existsSync(bundleDir)) continue;
-      for (const key of ["std", "ph"] as const) {
-        const variant = entry[key];
-        const maskTex = variant?.maskTex?.trim();
+      for (const variant of variantsForBundle(bundleId)) {
+        const maskTex = variant.maskTex.trim();
         if (!maskTex) continue;
         checked += 1;
         if (checked % 400 !== 1) continue;

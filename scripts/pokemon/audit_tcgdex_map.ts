@@ -28,7 +28,7 @@ import {
 } from "../../src/effects/pokemon/setAliases";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const CARDS_PATH = path.join(ROOT, "src/effects/pokemon/cards.json");
+const CARDS_PATH = path.join(ROOT, "data/pokemon/cards.json");
 const REPORT_PATH = path.join(
   ROOT,
   "data/pokemon/logs/tcgdex-live-set-map.json",
@@ -389,7 +389,7 @@ async function main() {
     finishedAt: new Date().toISOString(),
     policy:
       "Live dump must be exploitable via TCGdex. Missing Live for a TCGdex set is OK.",
-    cardsPath: "src/effects/pokemon/cards.json",
+    cardsPath: "data/pokemon/cards.json",
     liveCardsSqlite: liveCardsIndexAvailable(),
     liveSetCount: liveStems.length,
     liveMapped: mapped,

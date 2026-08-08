@@ -19,7 +19,7 @@ import type { PaperCardEntry } from "../../src/effects/pokemon/resolveEffect";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const PACK_ROOT = path.join(ROOT, "data", "pokemon", "foil");
-const CARDS_PATH = path.join(ROOT, "src", "effects", "pokemon", "cards.json");
+const CARDS_PATH = path.join(ROOT, "data", "pokemon", "cards.json");
 const REPORT_PATH = path.join(
   ROOT,
   "data",
@@ -140,7 +140,7 @@ function main() {
   const report = {
     finishedAt: new Date().toISOString(),
     packRoot: "data/pokemon/foil",
-    cardsPath: "src/effects/pokemon/cards.json",
+    cardsPath: "data/pokemon/cards.json",
     bundleCount: Object.keys(cards).length,
     variantCount: variants,
     shaderLeafCount: POKEMON_FOIL_NAMES.length,

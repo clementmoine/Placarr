@@ -1263,10 +1263,24 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
         repeat: "no-repeat",
       },
       spectrum("FX_T_Spectrum_FlatSilver", "240% 240%"),
+      /*
+        The material's *second* spectrum, which was being dropped.
+
+        FlatSilver binds two: `_Tex_Spectrum` (FlatSilver, above) and
+        `_Tex_CC_Spectrum` (SVHolo2). The MAT leaves `_Tex_CC` unbound, but as
+        `materials.ts` notes, "glitter/spectrum still run" — the shader samples
+        both ramps even without a laminate plate. We drew the CC glitter and not
+        its spectrum, so reverse holos ran on half the colour they should.
+        `flatSilverCc` already had it; plain FlatSilver did not.
+
+        Tall strip (32×256), so it travels down — scrolled across, a vertical
+        ramp moves along the axis it is constant on and never changes hue.
+      */
+      spectrumTall("FX_T_Spectrum_SVHolo2", "100% 240%"),
       tooth("FX_T_SVUltra_Glitter", "150px 150px"),
     ],
     {
-      blend: "difference, soft-light",
+      blend: "difference, soft-light, overlay",
       mix: "soft-light",
       opacity: 0.38,
       contrast: [1.1, 0.3],

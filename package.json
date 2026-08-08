@@ -43,6 +43,7 @@
     "foil:pokemon:audit-store": "tsx scripts/pokemon/audit_store.ts",
     "foil:pokemon:inventory-faces": "tsx scripts/pokemon/inventoryFoilFaces.ts",
     "foil:pokemon:sync-owned": "tsx scripts/pokemon/syncLiveOwned.ts",
+    "foil:pokemon:live-card": "tsx scripts/pokemon/liveCard.ts",
     "foil:audit-gaps": "tsx scripts/foil/auditGaps.ts",
     "foil:audit-live-css": "tsx scripts/foil/auditLiveVsCss.ts",
     "media:to-webp": "tsx scripts/media/png-to-webp.ts"

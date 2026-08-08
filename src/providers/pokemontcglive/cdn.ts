@@ -1467,11 +1467,45 @@ export async function main(argv: string[] | null = null): Promise<number> {
   }
   console.log(`Scraping ${names.length} bundle(s) langs=${langs.join(",")} → ${out}`);
 
+  /*
+    Resolve the content root before the first GET, unless the caller pinned one.
+
+    `{platform}_contentpath` is not stable: Live moved from
+    `cdn.studio-prod.pokemon.com` to `cdn.studio-preprod.pokemon.biz` between
+    clients 1.38 and 1.39 (`docs/pokemon_live_rainier.md` §3). `sources` already
+    reads GameSettings at runtime; scrape did not, and fell back to the host
+    baked into `CDN_HOST`.
+
+    That fallback fails in the worst possible way. Every GET against a dead host
+    answers 403 with S3 `AccessDenied`, which the classifier correctly reads as
+    "object missing" — so a whole catalogue would be reported as unpublished,
+    with no hint that we were simply knocking on the wrong door.
+
+    Unreachable GameSettings still falls back to the historical host, which is
+    the same behaviour as before; this only removes the silent-wrong-host case.
+  */
+  let contentBase = args.contentBase ?? undefined;
+  if (!contentBase) {
+    try {
+      // Imported here, not at the top: `gameSettings` imports `CDN_HOST` from
+      // this module, so a static import would close the cycle.
+      const { fetchContentBase } = await import("./gameSettings");
+      const resolved = await fetchContentBase({ version: args.version });
+      contentBase = resolved.contentBase;
+      console.log(`  content base (${resolved.source}): ${contentBase}`);
+    } catch (err) {
+      console.warn(
+        `  GameSettings unreachable (${(err as Error).message}) — ` +
+          `falling back to ${CDN_HOST}`,
+      );
+    }
+  }
+
   const cfg = path.join(repo, "data", "pokemon", "config-cache");
   const report = await scrape(names, out, {
     version: args.version,
     contentDir: args.contentDir,
-    contentBase: args.contentBase ?? undefined,
+    contentBase,
     dirProbe: args.dirProbe,
     configCache: existsSync(cfg) && statSync(cfg).isDirectory() ? cfg : null,
     workers: args.workers,

@@ -7,6 +7,7 @@ import {
   FoilPlayroom,
   type PlayroomSample,
 } from "@/components/admin/FoilPlayroom";
+import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import { getItems } from "@/lib/api/items";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -29,7 +30,10 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
       if (!response.ok) {
         throw new Error("foil playroom catalog unavailable");
       }
-      return (await response.json()) as { samples: PlayroomSample[] };
+      return (await response.json()) as {
+        samples: PlayroomSample[];
+        packArts?: Record<string, Record<string, PlayroomArt[]>>;
+      };
     },
   });
 
@@ -67,5 +71,11 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     );
   }
 
-  return <FoilPlayroom samples={samples} locale={locale} />;
+  return (
+    <FoilPlayroom
+      samples={samples}
+      packArts={catalog?.packArts}
+      locale={locale}
+    />
+  );
 }

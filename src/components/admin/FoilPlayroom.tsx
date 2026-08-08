@@ -21,6 +21,7 @@ import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
 import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
 import { listEffectPacks } from "@/effects";
+import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import {
   peekPrintVariant,
   requestPrintVariant,
@@ -686,6 +687,15 @@ function MaterialTile({
 
 export type FoilPlayroomProps = {
   samples: readonly PlayroomSample[];
+  /**
+   * Live faces per pack and material, resolved on the server.
+   *
+   * The pack cannot answer this in the browser any more: the per-print dump
+   * lives in SQLite, which has no browser build. Absent (tests, older callers)
+   * the component falls back to asking the pack, which simply yields the
+   * TCGdex seed with no Live mask.
+   */
+  packArts?: Record<string, Record<string, PlayroomArt[]>>;
   locale?: string;
   /** Actions aligned on the sticky toolbar (APK, CLI…). */
   tools?: ReactNode;
@@ -693,6 +703,7 @@ export type FoilPlayroomProps = {
 
 export function FoilPlayroom({
   samples,
+  packArts,
   locale = "fr",
   tools,
 }: FoilPlayroomProps) {
@@ -705,6 +716,23 @@ export function FoilPlayroom({
     resolveEffectPackId(searchParams.get("pack"), packIds) ??
     packs[0]?.id ??
     "";
+  /**
+   * Live faces for a material: server-resolved when the prop is there, else the
+   * pack — which in the browser can only offer the TCGdex seed.
+   */
+  const artsFor = useCallback(
+    (name: string): PlayroomArt[] => {
+      const fromServer = packArts?.[packId]?.[name];
+      if (fromServer && fromServer.length > 0) return fromServer;
+      const pack = packs.find((entry) => entry.id === packId);
+      const list = pack?.playroomArtsForMaterial?.(name);
+      if (list && list.length > 0) return list;
+      const one = pack?.playroomArtForMaterial?.(name);
+      return one ? [one] : [];
+    },
+    [packArts, packId, packs],
+  );
+
   const layout = resolvePlayroomLayout(searchParams.get("view"));
   const [backend, setBackend] = useState<FoilBackendPreference>("auto");
   const [tilt, setTilt] = useState(true);
@@ -714,11 +742,11 @@ export function FoilPlayroom({
   const materials = pack?.listMaterials() ?? [];
   /** Owned Live faces first so MuMu-checkable effects are easy to find. */
   const materialsOrdered = useMemo(() => {
-    if (!pack?.playroomArtForMaterial) return materials;
+    if (!pack) return materials;
     const owned: string[] = [];
     const rest: string[] = [];
     for (const name of materials) {
-      if (pack.playroomArtForMaterial(name)?.liveOwned) owned.push(name);
+      if (artsFor(name)[0]?.liveOwned) owned.push(name);
       else rest.push(name);
     }
     return [...owned, ...rest];
@@ -735,13 +763,10 @@ export function FoilPlayroom({
    * Focus/compare: several Live faces for the material (seed + other sets).
    * Grid keeps a single seed tile so the wall stays readable.
    */
-  const focusedArts = useMemo(() => {
-    if (!focusedMaterial || !pack) return [];
-    const list = pack.playroomArtsForMaterial?.(focusedMaterial);
-    if (list && list.length > 0) return list;
-    const one = pack.playroomArtForMaterial?.(focusedMaterial);
-    return one ? [one] : [];
-  }, [focusedMaterial, pack]);
+  const focusedArts = useMemo(
+    () => (focusedMaterial ? artsFor(focusedMaterial) : []),
+    [focusedMaterial, artsFor],
+  );
 
   const replaceParams = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
@@ -954,7 +979,7 @@ export function FoilPlayroom({
                   >
                     {materialsOrdered.map((name) => {
                       const owned = Boolean(
-                        pack?.playroomArtForMaterial?.(name)?.liveOwned,
+                        artsFor(name)[0]?.liveOwned,
                       );
                       return (
                         <option key={name} value={name}>
@@ -1061,6 +1086,8 @@ export function FoilPlayroom({
                   backend={backend}
                   tilt={tilt}
                   locale={locale}
+                  // Server-resolved face: the browser cannot read the dump.
+                  packArt={artsFor(name)[0] ?? null}
                   onFocus={selectMaterial}
                 />
               ))}

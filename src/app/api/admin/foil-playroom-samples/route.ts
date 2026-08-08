@@ -5,6 +5,9 @@ import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { localizeMaskImage } from "@/core/enrich/media/maskDownload";
 import { localizePrintMasks } from "@/core/enrich/media/localizePrintMasks";
 import { listEffectPacks } from "@/effects";
+// Server-side: installs the SQLite lookups the packs read Live faces from.
+import "@/effects/pokemon/cardFoilIndex";
+import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import type { FoilPlayroomNeed } from "@/types/providerModule";
 
@@ -60,5 +63,33 @@ export async function GET(req: Request) {
     { dropRemoteOnMiss: true },
   );
 
-  return NextResponse.json({ samples: localized });
+  /*
+    Live faces, resolved here rather than in the browser.
+
+    The playroom used to call `pack.playroomArtForMaterial` client-side, back
+    when the per-print dump was a static JSON import. That import is what put
+    10.7 MB in the browser bundle and stopped webpack compiling at all, so the
+    dump moved to SQLite — and SQLite has no browser build, by design. The
+    client now gets empty lookups: without this, every material falls back to
+    its TCGdex seed, loses its Live mask, and draws no foil.
+
+    Sent as `packId → material → faces`, which is exactly what the three
+    consumers need: the first face for a tile, the whole list for focus and
+    compare, and `liveOwned` for the ordering.
+  */
+  const packArts: Record<string, Record<string, PlayroomArt[]>> = {};
+  for (const pack of listEffectPacks()) {
+    const forPack: Record<string, PlayroomArt[]> = {};
+    for (const name of pack.listMaterials()) {
+      const faces =
+        pack.playroomArtsForMaterial?.(name) ??
+        (pack.playroomArtForMaterial?.(name)
+          ? [pack.playroomArtForMaterial(name)!]
+          : []);
+      if (faces.length > 0) forPack[name] = faces;
+    }
+    if (Object.keys(forPack).length > 0) packArts[pack.id] = forPack;
+  }
+
+  return NextResponse.json({ samples: localized, packArts });
 }

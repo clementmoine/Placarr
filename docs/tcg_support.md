@@ -1,8 +1,10 @@
 # Support TCG — conception
 
-> Statut : **phase 1 en cours** (2026-07-26). Décisions produit prises (§8).
-> Livré : ancre `printKey`, provider LorcanaJSON, colonne `Item.printKey`.
-> Reste : flux d'ajout par recherche, regroupement des doublons, plein écran.
+> Statut : foil CSS+WebGL livrés pour **Lorcana** et **Pokémon** (2026-08).  
+> Livré : `printKey`, providers, Face/Dos (`print > set > pack`), packs sous
+> `effects/<id>` + `core/render/foil` — voir [foil_effects.md](foil_effects.md).  
+> Ouvert : regroupement doublons, langue exemplaire, raffinage fidélité CSS
+> (simey / site) vs Unity.
 >
 > Les APIs ont été sondées en direct — réponses réelles, pas de la doc lue en
 > diagonale ; tout ce qui est marqué « vérifié » a été appelé.
@@ -169,10 +171,11 @@ pilotées par la position du pointeur : l'image de la carte, une couche
 Ce qui a été vérifié :
 
 - **Lorcana : réaliste avec les assets officiels.** LorcanaJSON expose un
-  `images.foilMask` par carte, servi par l'API Ravensburger — **3078 masques
-  sur 3154 cartes FR (97 %)**, vérifié en téléchargeant l'un d'eux (96 ko,
-  HTTP 200). C'est exactement la couche qui manque d'habitude, et elle est
-  first-party.
+  `images.foilMask` par carte (API Ravensburger). On **scrape brut** sous
+  `data/lorcana/foil/cards/{printKey}/` et on sert `/foil/lorcana/cards/…`
+  (local-first — [data-layout.md](data-layout.md)). Le JPEG publié n’a pas
+  d’alpha ; le runtime fait l’équivalent de `generate Safari mask` côté
+  client (comme `cards.disneylorcana.com`), pas un bake au scrape.
 - **Pokémon : possible mais pas propre.** Le CDN de poke-holo répond (vérifié),
   mais c'est **leur bande passante** et leur build partiel, set par set.
   Hotlinker n'est pas une option pour un produit ; re-héberger pose une
@@ -211,39 +214,24 @@ Un scan haute résolution **n'est pas** un masque : ces sources disent *qu'*une
 carte existe en foil, jamais _où_ le foil se pose. Attention aux documents qui
 cochent « résolu » sur cette base — c'est une confusion de catégorie.
 
-**Pokémon TCG Pocket** : `RaenonX-PokemonTCGP/pokemon-tcgp-apk-dumper` mirrore
-l'APK en CI (650 Mo, `current.zip` + archives, **aucune licence**). Quelqu'un
-automatise donc déjà le dump — mais s'en servir place au même endroit que le
-faire soi-même : ce sont des assets Nintendo. Décompiler pour **comprendre** la
-technique est défendable (exception d'interopérabilité, et c'est ce qu'on a fait
-en lisant du GPL sans le copier) ; embarquer les masques dans `public/` ne l'est
-pas. Et la question préalable reste entière : Pocket est un jeu **numérique**,
-sans état ni prix de revente — sa place dans un suivi de collection physique
-n'est pas établie.
+**Pokémon** : identité / prix via TCGdex ; recettes foil + front Live + dos pack
+via pack `pokemon` (TCG Live CDN / APK — [archive/tcglive_effects.md](archive/tcglive_effects.md),
+[data-layout.md](data-layout.md)). Pas de masques first-party type LorcanaJSON
+côté catalogue TCGdex.
 
 ## 6. Le dos de carte
 
-Les dos sont **constants par jeu** (une image, parfois deux selon l'époque),
-pas par carte — c'est quelques fichiers, pas un chantier de données. Un onglet
-dédié en plein écran, avec un retournement 3D, est une petite feature isolée.
+Les dos sont résolus **au niveau item / tirage**, pas à l’étagère :
 
-**Ravensburger ne publie pas le dos** _(cherché le 2026-07-29)_ : son catalogue
-n'a aucun champ `back`/`reverse`, `card_sets[]` ne porte qu'une vignette de set,
-son visualiseur ne sert que deux logos, et le site marketing ne montre jamais
-une carte de dos — logique, leur visualiseur ne retourne jamais les cartes.
-Rien n'a été vérifié pour les autres éditeurs.
+1. **Print** — alt face / dos spécifique (`PrintCandidate.cardBackUrl`), ex. leader DBS
+2. **Set** — `EffectPack.resolveCardBack({ setCode, printKey })` quand le jeu change de verso par extension
+3. **Pack** — `EffectPack.cardBackUrl` **obligatoire** (contrat) : `/foil/<pack>/card_back.webp` extrait du dump
 
-Le dos est donc traité comme de la **décoration** : `Shelf.cardBackUrl`, une
-image ou une URL fournie par le collectionneur, rien de résolu automatiquement.
-Vide ⇒ les cartes ne se retournent pas, mais s'inclinent quand même : une carte
-reste un objet physique.
+`resolveCardBackUrl` / `pickDefaultCardBack` classent print > set > pack. Le défaut système n’est pas supprimable ; sans URL résolue la carte **s’incline** mais **ne tourne pas** au clic.
 
-**Ce que le champ accepte est une seule fonction**, `normalizeCardBackUrl` —
-importée par le formulaire _et_ par la route. Écrite deux fois, elle a divergé :
-le formulaire acceptait le `/uploads/…` rendu par l'upload, l'API n'acceptait
-que des URLs absolues, donc choisir une image enregistrait sans rien stocker et
-effaçait au passage le dos précédent. Un champ dont les deux côtés valident
-séparément est un champ qui perdra des données.
+Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut servir de **skeleton** le temps que la face charge (une URL partagée pour des milliers de cartes).
+
+**Dump** : chaque chantier foil doit chercher et extraire les backs (APK / bundles / CDN / catalogue) — au minimum le défaut jeu.
 
 ## 6 bis. Pièges LorcanaJSON (vérifiés, pas lus dans la doc)
 
@@ -258,6 +246,9 @@ séparément est un champ qui perdra des données.
   D'où un index allégé en mémoire, revalidé via le fichier `.md5` compagnon.
 - **`varnishType` est un second axe de finition** (`HighGloss`,
   `MetallicHotFoil`), indépendant de `foilTypes`.
+- **`foilEffectColors` + `images.varnishMask2`** (août 2026) : teinte(s) du
+  vernis stampé et second masque. Rien d'autre ne les prédit. Plus besoin du
+  scrape SSO catalogue Ravensburger.
 
 ## 7. Découpage proposé
 
@@ -354,28 +345,23 @@ CSS ne sait pas les faire : elle compose des images, elle ne modèle pas une
 surface. Cette limite est celle du médium CSS, pas de la source : les fragments
 extraits les font, puisqu'ils *sont* le code qui les fait.
 
-### Le port réel : `core/render/foil` + `effects/lorcana` (2026-07-30)
+### Le port réel : `core/render/foil` + `effects/lorcana`
 
-Pipeline `scripts/effects-dump/dump_unity.py --pack lorcana` (+ compagnon
-`dump_lorcana_web.py` pour les recettes CSS), sorties commitées :
+Pipeline : `pnpm foil:lorcana` — pack complet (web CSS + cards + Unity si APK).
+Les sous-providers (`lorcanaweb` / `lorcanacards` / `lorcanamobile`) restent
+disponibles en CLI pour du debug ; l’admin n’expose qu’un bouton **Lorcana**.
 
-- `public/foil/lorcana/shaders/*.frag` — les fragments de l'app, un par variante
-  de keywords (`_VARNISHTYPE_*`, `_HOTFOILSURFACE_*`, `USESECONDTOPLAYER`…),
-  **en deux modes de scroll** : `_SCROLLMODE_TILT` (pointeur / gyro) et
-  `_SCROLLMODE_TIME` (idle natif via `_CosTime` × `_TimeFactor`).
-- `src/effects/lorcana/manifest.json` — les **22 matériaux carte** (le
-  23ᵉ de l'APK, `OwnedIndicatorFoiled`, est un indicateur UI hors Shader
-  Graphs et n'est pas porté), avec pour chacun ses variantes Tilt + Time et
-  **tout ce que ses fragments déclarent** : textures par slot (wrap / filter /
-  mips inclus, lus sur `m_TextureSettings`), floats, couleurs. Le filtrage
-  est data-driven — un uniform absent du fragment n'entre pas au manifest.
-  Les slots par-carte (`_Motif`, `_MotifMask`, `_TopLayerMask`…) sont marqués
-  d'un rôle et remplis à l'exécution par le catalogue (CDN provider, pas APK).
-- `public/foil/lorcana/textures/*.{png,astc}` — textures pack dumpées en **dual
-  PNG + ASTC** (WebGL2 compresse quand le GPU le permet). `cardmasks.png`
-  (canal R : gradient de lumière ambiante, canal G : découpe des coins).
-- `public/foil/lorcana/card_back.png` — dos de carte sur le pack ; en produit,
-  `resolveCardBack` préfère le dos configuré sur l'étagère, puis celui du pack.
+Sorties :
+
+- `data/lorcana/foil/shaders/*.frag` — fragments app, variantes de keywords
+  (`_VARNISHTYPE_*`, `_HOTFOILSURFACE_*`, `USESECONDTOPLAYER`…), **Tilt** et
+  **Time** (`_SCROLLMODE_*`). Servis en `/foil/lorcana/…`.
+- `src/effects/lorcana/manifest.json` — matériaux carte (généré, gitignoré ;
+  stub via `pnpm foil:ensure`), textures / floats / couleurs filtrés
+  data-driven. Slots par-carte (`_Motif`, masques…) = rôles runtime.
+- `data/lorcana/foil/textures/*.{webp,astc}` — dual WebP lossless + ASTC.
+- `data/lorcana/foil/card_back.webp` — dos pack ; produit : `resolveCardBack`
+  préfère le dos d'étagère.
 
 Côté runtime, `core/render/foil/webgl/renderer.ts` compile les deux programmes,
 pilote `_Tilt` / `_CosTime` / `_DeviceRotationDegrees` (compas `alpha`), et
@@ -383,8 +369,8 @@ applique le sampler state dumpé (Repeat + Bilinear sur les foils APK, mips
 là où `m_MipCount > 1`). Il ne connaît aucun shader par son nom — tout passe
 par la réflexion du programme (`getActiveUniform`). En produit, `FoilCardImage`
 choisit WebGL2 par défaut quand le matériau et le pool le permettent, sinon
-la pile CSS complète. La salle d'essai (`/admin/foil`) expose trois backends :
-**Auto | Unity | Web** (pas une quatrième source séparée).
+la pile CSS complète. Banc admin : `/admin?tab=tcg-effects` — backends
+**Auto | Unity | Web**.
 
 Les recettes CSS (`effects/lorcana/cssRecipes`) servent partout où WebGL2 manque
 ou est forcé en mode Web ; `holoShaderParity.test.ts` continue de les pinner
@@ -403,41 +389,37 @@ Décisions de fidélité à connaître pour juger le rendu :
 - **Une carte hors écran rend son contexte WebGL** (IntersectionObserver) : le
   navigateur en tolère ~16, une grille se serait évincée elle-même.
 
-Legacy : `core/render/unityFoil/` ré-exporte le pack Lorcana pour les imports
-historiques ; le chemin canonique est `effects/lorcana` + `core/render/foil`.
+Le chemin canonique est `effects/lorcana` + `core/render/foil` (`FoilCardImage`).
 
-### Pokémon TCG Pocket — sondage APK (pas le même dump)
+### Pokémon — pack `pokemon` (TCG Live)
 
-APK analysé : `~/Downloads/jp.pokemon.pokemontcgp_1.7.0-…_apkmirror.com`
-(Pocket 1.7.0 — jeu mobile, pas le TCG papier).
+> Détail : [archive/tcglive_effects.md](archive/tcglive_effects.md) · layout : [data-layout.md](data-layout.md).
 
-| Signal | Finding |
-| --- | --- |
-| Shaders foil type Lorcana | Absent — surtout UI/Hidden/TextMeshPro ; helpers `Hidden/Card/*`, `UI/Rainbow` |
-| GLES3 GLSL `#version 300 es` | ~6 / 105 — majorité pas prête WebGL2 |
-| Card content | ~7575 blobs `.aladin` dans `split_bundledtree.apk` (format propriétaire) |
-| card_back | Pas de sprite utile ; icônes UI seulement |
-| Materials | ~14 dans le `Data` de base |
+Le client officiel des cartes physiques expose 23 shaders
+`TPCi/Cards3D/HoloFoil/*` (GLES3) + masque / type de foil par carte.
 
-**Conclusion :** Lorcana d'abord ; un futur `effects/pokemon` exigerait une
-reverse différente (Aladin + shaders non-GLES3). Le TCG papier passera plutôt
-par TCGdex avec un pack plus léger.
+- CLI : `pnpm foil:pokemon` (+ `:scrape` / `:sources` / `:index-cards` / `:audit-join`)
+- Store : `data/pokemon/foil/` → `/foil/pokemon/…`
+- JSON : `src/effects/pokemon/cards.json` (généré)
+- Catalogue : TCGdex (`src/providers/tcgdex`) ; série digitale Pocket (`tcgp`) exclue (`digitalOnly.ts`)
+- Join identité : `data/pokemon/live-cards.sqlite` — pas de provider `pokemontcglive`
+
+**Médias sur `PrintCandidate`** (TCGdex + Live) :
+
+| Champ | Source |
+|---|---|
+| Face (`imageUrl` / variantes) | Front Live dump (`cardTex`) si joint, sinon scan TCGdex |
+| Dos (`cardBackUrl`) | Pack `/foil/pokemon/card_back.webp` (Texture2D `cardBack` dans `base.apk`) |
+| Foils | `finishShaders` + `finishFoilMaskUrls` depuis le dump Live |
+| Attachments | `tcgdex-scan` + `tcglive-front` quand les deux existent |
+
+**Pocket (app)** : code et docs handoff **retirés** — cartes jamais imprimées.
 
 ### Refaire pareil pour le prochain jeu
 
-1. Récupérer l'APK (split `base` ou `config` contenant `assets/bin/Data/`).
-2. `strings global-metadata.dat` → vocabulaire (finitions, vernis, classes).
-3. Vérifier la plateforme shader (`ShaderCompilerPlatform`) : GLES3+ = GLSL
-   texte, prêt pour WebGL2 ; Vulkan = SPIR-V, passer par spirv-cross.
-4. `scripts/effects-dump/dump_unity.py --pack <id>` avec les mots-clés du jeu
-   (`CARD_EFFECT_KEYS`, `RUNTIME_ROLES`) — le parsing du blob, les variantes
-   par keywords et le filtrage des uniforms sont indépendants du jeu.
-5. Les slots par-carte demandent l'équivalent du `foilMask` LorcanaJSON chez
-   ce jeu ; sans masque par carte, l'effet ne se confine pas (cf. §5 bis).
-
-**Pocket n'est pas un drop-in** : pas de fragments CardFoil*, contenu `.aladin`,
-peu de GLSL WebGL2-ready — ne pas réutiliser le pipeline Lorcana tel quel.
-
-Gain réel de ce dump, deuxième passe comprise : deux finitions enfin rendues,
-un garde anti-débranchement, la liste des axes… et le moteur de rendu de
-l'app lui-même, exécuté au pixel près.
+1. Source d’assets (CDN / APK) sans ADB dans le produit si possible.
+2. `strings` / manifest → vocabulaire (finitions, vernis, classes).
+3. Plateforme shader : GLES3+ = GLSL → WebGL2 ; Vulkan = SPIR-V → spirv-cross.
+4. Pack sous `src/effects/<id>/` + `data/<id>/foil/` ; register dans `effects/`.
+5. Les slots par-carte demandent l'équivalent du `foilMask` LorcanaJSON ;
+   sans masque par carte, l'effet ne se confine pas (cf. §5 bis).

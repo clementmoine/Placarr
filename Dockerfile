@@ -87,8 +87,9 @@ RUN mkdir -p .next/standalone/.next \
   && cp -R public .next/standalone/public
 
 # Mount points only — they are empty here, so this is not recursive in practice.
-RUN mkdir -p /config /app/public/uploads /app/.cache /app/prisma \
-  && chown node:node /config /app/public/uploads /app/.cache /app/prisma
+# Runtime bytes live under /app/data (uploads, foil, indexes); never public/.
+RUN mkdir -p /app/data /app/prisma \
+  && chown node:node /app/data /app/prisma
 
 COPY --chown=node:node init.sh /app/init.sh
 RUN chmod +x /app/init.sh

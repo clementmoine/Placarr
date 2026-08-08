@@ -32,7 +32,7 @@ let indexBuildPromise: Promise<DatabaseSync | null> | null = null;
 function cacheDir(): string {
   return (
     process.env.LAUNCHBOX_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "launchbox")
+    path.join(process.cwd(), "data", "launchbox")
   );
 }
 
@@ -54,7 +54,7 @@ function metadataXmlPath(): string {
 }
 
 export type LaunchBoxIndexBuildOptions = {
-  /** Intentional prebuild (`pnpm launchbox:build-index`) — may download Metadata.zip. */
+  /** Intentional prebuild (`pnpm launchbox:update`) — may download Metadata.zip. */
   allowDownload?: boolean;
 };
 
@@ -385,7 +385,7 @@ export async function buildLaunchBoxIndex(
   const xmlPath = await resolveMetadataXmlSource(options);
   if (!xmlPath) {
     console.warn(
-      "[LaunchBox] No Metadata.xml/zip — run `pnpm launchbox:build-index` (download is opt-in, not at scan)",
+      "[LaunchBox] No Metadata.xml/zip — run `pnpm launchbox:update` (download is opt-in, not at scan)",
     );
     return null;
   }
@@ -449,7 +449,7 @@ export async function ensureLaunchBoxIndex(): Promise<DatabaseSync | null> {
 
   if (!shouldBuildLaunchBoxIndex()) {
     console.info(
-      "[LaunchBox] Index unavailable — run `pnpm launchbox:build-index` (no Metadata.zip download at scan)",
+      "[LaunchBox] Index unavailable — run `pnpm launchbox:update` (no Metadata.zip download at scan)",
     );
     return null;
   }

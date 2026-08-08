@@ -11,6 +11,7 @@
  */
 import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { isAbortError } from "@/lib/http/abort";
 
 import type { PrintCandidate } from "@/types/providerModule";
 
@@ -58,6 +59,8 @@ export async function lookupPrintCandidate(
       });
       if (found) return { ...found, providerId: provider.info.id };
     } catch (error) {
+      // Client navigated away / HMR killed the batch — not a provider fault.
+      if (isAbortError(error) || options.signal?.aborted) throw error;
       // One provider failing must not hide a print another one could resolve.
       console.warn(
         `[lookupPrintCandidate] ${provider.info.id} failed for "${key}":`,

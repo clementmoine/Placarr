@@ -135,9 +135,9 @@
 }
 
 /* Custom properties the foil recipes lean on. Registered so they interpolate
-   if anything ever transitions them; idle itself is a fake hover on the shared
-   foil clock (`cos(t)`, same driver as WebGL Time mode) — see
-   `idleLeanFromSeconds` — so sheen and lean stay locked. Reduced motion is
+   if anything ever transitions them. Idle sheen is a fake hover on the shared
+   foil clock (`idlePointerFromSeconds`) — `--combined` travels on its own
+   course there, because x+y on the anti-diagonal cancels. Reduced motion is
    handled at the subscription site. */
 @property --colorX {
   syntax: "<percentage>";

@@ -7,50 +7,46 @@ import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
 import {
-  cropDerivativeBaseName,
-  DEFAULT_CROP_ROLE,
-  stripCropSuffixFromUrl,
+  editDerivativeBaseName,
+  DEFAULT_EDIT_ROLE,
+  stripEditSuffixFromUrl,
 } from "@/core/enrich/media/coverUrl";
 import {
   applyCropBox,
+  normalizeRotation,
+  orientedDimensions,
   suggestCropBox,
   type CropBox,
 } from "@/core/enrich/media/imageTrim";
-
-const UPLOADS_PREFIX = "/uploads/";
+import { toUploadWebp } from "@/lib/media/losslessWebp";
+import { UPLOADS_PREFIX, uploadsFilePath } from "@/lib/media/uploadsPath";
+import { uploadsDir } from "@/lib/runtimeData";
 
 /**
- * Resolve an uploads URL to a file path, refusing anything that escapes the
- * directory. The URL arrives from the client, so `..` and absolute paths have
- * to die here rather than at `readFileSync`.
+ * Every raster this app writes is WebP — uploads, and the derivatives it makes
+ * of them. Keeping the source extension re-introduced the PNGs that
+ * `pnpm media:to-webp` had just converted away, at several times the size, on
+ * every crop of a provider scan that arrived as PNG.
  */
-function uploadsFilePath(url: string): string | null {
-  if (!url.startsWith(UPLOADS_PREFIX)) return null;
-  const fileName = path.basename(url.split("?")[0].split("#")[0]);
-  if (!fileName || fileName === "." || fileName === "..") return null;
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  const filePath = path.join(uploadsDir, fileName);
-  if (path.dirname(filePath) !== uploadsDir) return null;
-  return fs.existsSync(filePath) ? filePath : null;
-}
+const DERIVATIVE_EXTENSION = ".webp";
 
 /**
  * What the crop is for. The same artwork often serves as both the cover and the
  * background, and a crop keyed on the file alone made cropping one rewrite the
- * other's image. `cover` keeps the bare `_crop` name so existing files stay
+ * other's image. `cover` keeps the bare `_edited` name so existing files stay
  * valid; anything else gets its own marker.
  */
 function parseCropRole(raw: string | null | undefined): string {
   const role = raw?.trim().toLowerCase();
-  // Letters only: the marker goes into a filename, and `stripCropSuffixFromUrl`
+  // Letters only: the marker goes into a filename, and `stripEditSuffixFromUrl`
   // has to be able to take it back off again.
-  return role && /^[a-z]+$/.test(role) ? role : DEFAULT_CROP_ROLE;
+  return role && /^[a-z]+$/.test(role) ? role : DEFAULT_EDIT_ROLE;
 }
 
 /** Base name of the derivative for this source and role, without extension. */
 function derivedBaseName(originalFilePath: string, role: string): string {
   const ext = path.extname(originalFilePath);
-  return cropDerivativeBaseName(path.basename(originalFilePath, ext), role);
+  return editDerivativeBaseName(path.basename(originalFilePath, ext), role);
 }
 
 /**
@@ -80,7 +76,11 @@ function readStoredCrop(
       Number.isFinite(parsed?.top) &&
       parsed?.width > 0 &&
       parsed?.height > 0;
-    return usable ? parsed : null;
+    // Normalized on the way out: a sidecar written by an older build has no
+    // rotation at all, and a hand-edited one could say anything.
+    return usable
+      ? { ...parsed, rotate: normalizeRotation(parsed.rotate) }
+      : null;
   } catch {
     return null;
   }
@@ -90,12 +90,29 @@ function readStoredCrop(
 async function resolveLocalUrl(rawUrl: string): Promise<string | null> {
   const url = rawUrl.trim();
   if (!url) return null;
-  // `stripCropSuffixFromUrl` drops the query first: the gallery appends a
+  // `stripEditSuffixFromUrl` drops the query first: the gallery appends a
   // cache-busting `?v=` to a crop it just rewrote, and the suffix regex is
   // anchored at the end — leaving it on turned every second crop into a 404.
-  if (url.startsWith(UPLOADS_PREFIX)) return stripCropSuffixFromUrl(url);
+  if (url.startsWith(UPLOADS_PREFIX)) return stripEditSuffixFromUrl(url);
   if (!/^https?:\/\//i.test(url)) return null;
   return downloadRemoteImage(url);
+}
+
+/**
+ * The original, resolved to a file, then named by that file.
+ *
+ * Stripping `_edited.webp` yields `<name>.webp` while the source it came from may
+ * still be `<name>.png` — {@link uploadsFilePath} finds it either way, but the
+ * URL handed back has to be the one that exists, or "revert to original" would
+ * point a cover at a 404.
+ */
+async function resolveOriginal(
+  rawUrl: string,
+): Promise<{ url: string; filePath: string } | null> {
+  const localUrl = await resolveLocalUrl(rawUrl);
+  const filePath = localUrl ? uploadsFilePath(localUrl) : null;
+  if (!filePath) return null;
+  return { url: `${UPLOADS_PREFIX}${path.basename(filePath)}`, filePath };
 }
 
 /** Suggested rectangle + source dimensions, to seed the editor. */
@@ -109,11 +126,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
     }
 
-    const localUrl = await resolveLocalUrl(raw);
-    const filePath = localUrl ? uploadsFilePath(localUrl) : null;
-    if (!filePath || !localUrl) {
+    const original = await resolveOriginal(raw);
+    if (!original) {
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
+    const { url: localUrl, filePath } = original;
 
     const buffer = fs.readFileSync(filePath);
     const metadata = await sharp(buffer).rotate().metadata();
@@ -142,6 +159,8 @@ export async function GET(req: NextRequest) {
 
 type CropRequest = {
   url?: unknown;
+  /** Quarter-turn applied before the box — see {@link CropBox.rotate}. */
+  rotate?: unknown;
   crop?: { left?: unknown; top?: unknown; width?: unknown; height?: unknown };
 };
 
@@ -152,7 +171,7 @@ function positiveInt(value: unknown): number | null {
 
 /**
  * Write the cropped derivative and return its URL. The original file stays on
- * disk untouched, so "revert" is just dropping the `_crop` suffix.
+ * disk untouched, so "revert" is just dropping the `_edited` suffix.
  */
 export async function POST(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
@@ -190,16 +209,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid crop" }, { status: 400 });
     }
 
-    const localUrl = await resolveLocalUrl(raw);
-    const filePath = localUrl ? uploadsFilePath(localUrl) : null;
-    if (!filePath || !localUrl) {
+    const original = await resolveOriginal(raw);
+    if (!original) {
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
+    const { url: localUrl, filePath } = original;
 
     const buffer = fs.readFileSync(filePath);
-    const metadata = await sharp(buffer).rotate().metadata();
-    const imageWidth = metadata.width ?? 0;
-    const imageHeight = metadata.height ?? 0;
+    const rotate = normalizeRotation(body.rotate);
+    /*
+      Bounds come from the *rotated* source, because that is the space the
+      collector drew the rectangle in. Clamping against the upright dimensions
+      would reject a perfectly good box on any quarter turn.
+    */
+    const { width: imageWidth, height: imageHeight } = await orientedDimensions(
+      buffer,
+      rotate,
+    );
     if (!imageWidth || !imageHeight) {
       return NextResponse.json({ error: "Unreadable image" }, { status: 422 });
     }
@@ -213,20 +239,17 @@ export async function POST(req: NextRequest) {
       height: Math.min(height, imageHeight - Math.min(top, imageHeight - 1)),
       imageWidth,
       imageHeight,
+      rotate,
     };
 
-    const cropped = await applyCropBox(buffer, box);
+    const cropped = await toUploadWebp(await applyCropBox(buffer, box));
     const role = parseCropRole(
       typeof (body as { role?: unknown }).role === "string"
         ? (body as { role?: string }).role
         : null,
     );
-    const ext = path.extname(filePath);
-    const croppedName = `${derivedBaseName(filePath, role)}${ext}`;
-    fs.writeFileSync(
-      path.join(process.cwd(), "public", "uploads", croppedName),
-      cropped,
-    );
+    const croppedName = `${derivedBaseName(filePath, role)}${DERIVATIVE_EXTENSION}`;
+    fs.writeFileSync(path.join(uploadsDir(), croppedName), cropped);
     fs.writeFileSync(cropSidecarPath(filePath, role), JSON.stringify(box));
 
     return NextResponse.json({
@@ -246,7 +269,7 @@ export async function POST(req: NextRequest) {
  * Forget the stored rectangle, so the editor opens on the automatic suggestion
  * again rather than restoring a framing the collector has just discarded.
  *
- * The derived `_crop` file is deliberately left alone: another record may still
+ * The derived `_edited` file is deliberately left alone: another record may still
  * point at it, and an unreferenced file costs nothing next to a broken cover.
  */
 export async function DELETE(req: NextRequest) {
@@ -265,12 +288,12 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
     }
 
-    const localUrl = await resolveLocalUrl(raw);
-    const filePath = localUrl ? uploadsFilePath(localUrl) : null;
-    if (!filePath || !localUrl) {
+    const original = await resolveOriginal(raw);
+    if (!original) {
       // Nothing to forget is a success, not a failure.
       return NextResponse.json({ cleared: false });
     }
+    const { url: localUrl, filePath } = original;
 
     const sidecar = cropSidecarPath(
       filePath,

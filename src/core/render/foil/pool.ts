@@ -38,7 +38,12 @@ export function releaseFoilSlot(id: string): void {
   const wasHeld = held.delete(id);
   const waitIndex = waiting.indexOf(id);
   if (waitIndex >= 0) waiting.splice(waitIndex, 1);
-  if (wasHeld) notifyWaiters();
+  if (!wasHeld) return;
+  // FIFO: the oldest waiter inherits the freed slot so a soft-failed tile
+  // (or a newly visible one) is not starved by a notify race.
+  const next = waiting.shift();
+  if (next) held.add(next);
+  notifyWaiters();
 }
 
 export function hasFoilSlot(id: string): boolean {
@@ -55,6 +60,16 @@ export function foilPoolWaiting(): number {
 
 export function setFoilPoolMax(n: number): void {
   maxSlots = Math.max(1, n);
+  notifyWaiters();
+}
+
+/**
+ * Drop every holder / waiter. Used when the playroom switches to single-card
+ * focus so a leftover grid slot cannot starve the only mounted canvas.
+ */
+export function clearFoilPool(): void {
+  held.clear();
+  waiting.length = 0;
   notifyWaiters();
 }
 

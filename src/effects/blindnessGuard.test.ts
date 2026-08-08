@@ -5,8 +5,10 @@ import { describe, expect, it } from "vitest";
 
 /** Quoted effect-pack ids outside allowed trees should shrink to `{}`. */
 const ALLOWED_PACK_LITERALS: Record<string, Partial<Record<string, number>>> = {
-  // Shelf-name hint for TCG type detection — game keyword, not effectPack routing.
-  "src/core/identify/query.ts": { lorcana: 1 },
+  // Shelf-name / title hints — game keywords, not effectPack routing.
+  "src/core/identify/query.ts": { lorcana: 1, pokemon: 1 },
+  "src/core/enrich/titles/searchVariants.ts": { pokemon: 1 },
+  "src/core/enrich/titles/variantIdentity.ts": { pokemon: 1 },
 };
 
 const SOURCE_ROOTS = ["src", "scripts"];
@@ -15,7 +17,19 @@ const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
 const SKIP_DIR_PREFIXES = [
   "src/effects/",
   "src/providers/",
-  "scripts/effects-dump/",
+  "scripts/lorcana/",
+  "scripts/pokemon/",
+  // Foil admin bench + APK/extract APIs — pack ids are the job surface.
+  "src/app/api/admin/foil-",
+  "src/components/admin/Foil",
+  "src/components/admin/TcgEffects",
+  "src/components/admin/WebAdb",
+  "src/lib/admin/foilStatus",
+  "src/lib/admin/foilExtractRunner.ts",
+  "src/lib/client/foilExtract.ts",
+  // Foil extract enqueue — pack ids are the job target surface.
+  "src/core/collect/jobs/backgroundJobs.ts",
+  "src/lib/api/backgroundJobs.ts",
 ];
 
 function escapeRegExp(value: string): string {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { showsBack, turnAfterPush } from "./FlippableCard";
+import { showsBack, turnAfterPush, turnTowardBack, turnTowardFace } from "./FlippableCard";
 
 describe("turnAfterPush", () => {
   it("turns the way the card was pushed", () => {
@@ -39,5 +39,21 @@ describe("showsBack", () => {
       turn = turnAfterPush(turn, right);
       expect(showsBack(turn)).toBe(Math.abs(turn) % 360 === 180);
     }
+  });
+});
+
+describe("turnTowardFace / turnTowardBack", () => {
+  it("is a no-op when already on that face", () => {
+    expect(turnTowardFace(0)).toBe(0);
+    expect(turnTowardBack(180)).toBe(180);
+  });
+
+  it("adds a half-turn to reach the other face", () => {
+    expect(showsBack(turnTowardBack(0))).toBe(true);
+    expect(showsBack(turnTowardFace(180))).toBe(false);
+  });
+
+  it("reaches the back from a face that was itself reached by snap", () => {
+    expect(showsBack(turnTowardBack(turnTowardFace(180)))).toBe(true);
   });
 });

@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import "@/effects";
 import { variantRendering } from "./usePrintVariant";
 
-const info = {
+const lorcana = {
   finishes: ["None", "Silver"],
   plainFinishes: ["None"],
   foilMaskUrl: "/uploads/mask.jpg",
   varnishMaskUrl: null,
+  effectPack: "lorcana",
 };
 
 const BASE = "/uploads/card.jpg";
@@ -15,27 +17,31 @@ const plainFields = {
   effectPackId: null,
   finish: null,
   varnishType: null,
+  shader: null,
+  varnish: null,
 };
 
 describe("variantRendering", () => {
   it("renders a foil copy with its masks", () => {
-    expect(variantRendering("Silver", info, BASE)).toMatchObject({
+    expect(variantRendering("Silver", lorcana, BASE)).toMatchObject({
       imageUrl: BASE,
       foilMaskUrl: "/uploads/mask.jpg",
       varnishMaskUrl: null,
-      effectPackId: null,
+      effectPackId: "lorcana",
       finish: "Silver",
       varnishType: null,
     });
   });
 
-  it("gives a plain finish no effect at all", () => {
-    // Shimmering on both a normal and a foil copy would distinguish nothing.
-    expect(variantRendering("None", info, BASE)).toMatchObject({
+  it("gives a plain finish no foil layers but keeps the effect pack for card backs", () => {
+    expect(variantRendering("None", lorcana, BASE)).toMatchObject({
       imageUrl: BASE,
       foilMaskUrl: null,
       varnishMaskUrl: null,
-      ...plainFields,
+      shader: null,
+      varnish: null,
+      effectPackId: "lorcana",
+      finish: "None",
     });
   });
 
@@ -43,24 +49,37 @@ describe("variantRendering", () => {
     expect(
       variantRendering(
         "Silver",
-        { ...info, variantImageUrls: { Silver: "/uploads/foil.jpg" } },
+        { ...lorcana, variantImageUrls: { Silver: "/uploads/foil.jpg" } },
         BASE,
       ),
     ).toMatchObject({ imageUrl: "/uploads/foil.jpg" });
   });
 
   it("treats an unrecognized variant as plain rather than guessing", () => {
-    expect(variantRendering("Rainbow", info, BASE)).toMatchObject({
+    expect(variantRendering("Rainbow", lorcana, BASE)).toMatchObject({
       imageUrl: BASE,
       foilMaskUrl: null,
       varnishMaskUrl: null,
-      ...plainFields,
+      effectPackId: "lorcana",
+      finish: null,
+      varnishType: null,
+      shader: null,
+      varnish: null,
     });
   });
 
-  it("gives no effect when the copy has no variant", () => {
-    expect(variantRendering(null, info, BASE)).toMatchObject(plainFields);
-    expect(variantRendering("  ", info, BASE)).toMatchObject(plainFields);
+  it("keeps the effect pack for backs when the copy has no variant", () => {
+    expect(variantRendering(null, lorcana, BASE)).toMatchObject({
+      imageUrl: BASE,
+      foilMaskUrl: null,
+      effectPackId: "lorcana",
+      finish: null,
+      shader: null,
+    });
+    expect(variantRendering("  ", lorcana, BASE)).toMatchObject({
+      effectPackId: "lorcana",
+      finish: null,
+    });
   });
 
   it("gives no effect before the provider has answered", () => {
@@ -72,41 +91,110 @@ describe("variantRendering", () => {
     });
   });
 
+  it("prefers a per-finish foil mask when the provider supplies one", () => {
+    expect(
+      variantRendering(
+        "Silver",
+        {
+          ...lorcana,
+          foilMaskUrl: "/uploads/mask.jpg",
+          finishFoilMaskUrls: { Silver: "/foil/live/mask.png" },
+        },
+        BASE,
+      ).foilMaskUrl,
+    ).toBe("/foil/live/mask.png");
+  });
+
   it("matches the finish case-insensitively", () => {
-    expect(variantRendering("silver", info, BASE).foilMaskUrl).toBe(
+    expect(variantRendering("silver", lorcana, BASE).foilMaskUrl).toBe(
       "/uploads/mask.jpg",
     );
   });
 
-  it("draws each finish with the look its provider gives it", () => {
-    // Every non-plain finish used to render identically, so an Enchanted print
-    // and a common silver one were indistinguishable on screen.
+  it("draws each finish from pack.resolveCss, not Unity finishShaders", () => {
     const enchanted = {
       finishes: ["Lava"],
       plainFinishes: [],
-      finishShaders: { Lava: "lava" },
+      effectPack: "lorcana",
       foilMaskUrl: "/uploads/mask.jpg",
       varnishMaskUrl: null,
     };
 
-    expect(variantRendering("Lava", enchanted, BASE).shader.id).toBe("lava");
-    expect(variantRendering("Silver", info, BASE).shader.id).toBe("silver");
+    expect(variantRendering("Lava", enchanted, BASE).shader?.id).toBe("lava");
+    expect(variantRendering("Silver", lorcana, BASE).shader?.id).toBe("silver");
   });
 
-  it("still draws a foil this build has no look for", () => {
-    // The copy really is foil; rendering it plain would state the opposite.
-    const unknown = { ...info, finishShaders: { Silver: "iridescent-v2" } };
-    expect(variantRendering("Silver", unknown, BASE).shader.id).toBe("silver");
-    expect(variantRendering("Silver", unknown, BASE).foilMaskUrl).toBe(
+  it("accepts provider finishShaders only when they are CSS look ids", () => {
+    // Stale / partial candidates without effectPack still got CSS via this table.
+    const legacy = {
+      finishes: ["Lava"],
+      plainFinishes: [],
+      finishShaders: { Lava: "lava" },
+      foilMaskUrl: "/uploads/mask.jpg",
+    };
+    expect(variantRendering("Lava", legacy, BASE).shader?.id).toBe("lava");
+  });
+
+  it("uses the Lorcana pack silver default for an unknown foil finish", () => {
+    const unknown = {
+      finishes: ["Kaleidoscope"],
+      plainFinishes: [],
+      effectPack: "lorcana",
+      foilMaskUrl: "/uploads/mask.jpg",
+      varnishMaskUrl: null,
+    };
+    expect(variantRendering("Kaleidoscope", unknown, BASE).shader?.id).toBe(
+      "silver",
+    );
+    expect(variantRendering("Kaleidoscope", unknown, BASE).foilMaskUrl).toBe(
       "/uploads/mask.jpg",
     );
+  });
+
+  it("gives Pokémon a simey catalogue look through its own mask, never a Lorcana one", () => {
+    const pokemon = {
+      finishes: ["holo"],
+      plainFinishes: [],
+      effectPack: "pokemon",
+      finishShaders: { holo: "SunPillar" },
+      foilMaskUrl: "/uploads/mask.jpg",
+      varnishMaskUrl: null,
+    };
+    const rendering = variantRendering("holo", pokemon, BASE);
+    /*
+      Catalogue `holo` resolves to simey regularHolo; the mask is the print's
+      own. Unity material names in finishShaders are not CSS look ids.
+    */
+    expect(rendering.shader?.id).toBe("regularHolo");
+    expect(JSON.stringify(rendering.shader)).not.toContain("/foil/lorcana/");
+    expect(rendering.foilMaskUrl).toBe("/uploads/mask.jpg");
+    expect(rendering.effectPackId).toBe("pokemon");
+
+    // A stale candidate without its pack id must stay plain: Unity material
+    // names in finishShaders are not CSS look ids.
+    const stale = { ...pokemon, effectPack: undefined };
+    expect(variantRendering("holo", stale, BASE).shader).toBeNull();
+  });
+
+  it("stays plain when there is a mask but no pack and no CSS finishShaders", () => {
+    expect(
+      variantRendering(
+        "Silver",
+        {
+          finishes: ["Silver"],
+          plainFinishes: [],
+          foilMaskUrl: "/uploads/mask.jpg",
+        },
+        BASE,
+      ).shader,
+    ).toBeNull();
   });
 
   it("carries the varnish layer when the print has one", () => {
     expect(
       variantRendering(
         "Silver",
-        { ...info, varnishMaskUrl: "/uploads/v.jpg" },
+        { ...lorcana, varnishMaskUrl: "/uploads/v.jpg" },
         BASE,
       ),
     ).toMatchObject({ varnishMaskUrl: "/uploads/v.jpg" });
@@ -116,13 +204,14 @@ describe("variantRendering", () => {
     expect(
       variantRendering(
         "Silver",
-        { ...info, effectPack: "lorcana", varnishType: "HotFoil" },
+        { ...lorcana, varnishType: "HighGloss" },
         BASE,
       ),
     ).toMatchObject({
       effectPackId: "lorcana",
       finish: "Silver",
-      varnishType: "HotFoil",
+      varnishType: "HighGloss",
+      varnish: expect.objectContaining({ id: "hotFoil" }),
     });
   });
 });

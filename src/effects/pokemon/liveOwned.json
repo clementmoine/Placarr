@@ -1,0 +1,307 @@
+{
+  "syncedAt": "2026-08-07T23:22:28Z",
+  "byEffect": {
+    "AceFoil": [
+      "sv5_fr_152",
+      "sv5_fr_154",
+      "sv5_fr_157",
+      "sv5_fr_162",
+      "sv6-5_fr_058",
+      "sv6_fr_163",
+      "sv6_fr_165",
+      "sv6_fr_167",
+      "sv7_fr_136",
+      "sv7_fr_142",
+      "sv8-5_fr_116",
+      "sv8_fr_176",
+      "sv8_fr_185"
+    ],
+    "AngledPillars": [
+      "smalt_fr_001",
+      "ec_fr_010"
+    ],
+    "Cosmos": [
+      "smalt_fr_013"
+    ],
+    "CrackedIce": [
+      "smalt_fr_136"
+    ],
+    "FlatSilver": [
+      "me2_fr_017",
+      "me2_fr_075",
+      "me5_fr_001",
+      "me5_fr_002",
+      "me5_fr_006",
+      "me5_fr_007",
+      "me5_fr_009",
+      "me5_fr_010",
+      "me5_fr_011",
+      "me5_fr_012",
+      "me5_fr_013",
+      "me5_fr_014",
+      "me5_fr_015",
+      "me5_fr_020",
+      "me5_fr_023",
+      "me5_fr_024",
+      "me5_fr_029",
+      "me5_fr_030",
+      "me5_fr_033",
+      "me5_fr_034",
+      "me5_fr_035",
+      "me5_fr_036",
+      "me5_fr_037",
+      "me5_fr_041",
+      "me5_fr_042",
+      "me5_fr_043",
+      "me5_fr_044",
+      "me5_fr_047",
+      "me5_fr_049",
+      "me5_fr_050",
+      "me5_fr_054",
+      "me5_fr_063",
+      "me5_fr_066",
+      "me5_fr_067",
+      "me5_fr_068",
+      "me5_fr_069",
+      "me5_fr_072",
+      "me5_fr_073",
+      "me5_fr_076",
+      "me5_fr_077",
+      "me5_fr_078",
+      "me5_fr_079",
+      "me5_fr_080",
+      "me5_fr_082",
+      "rsv10-5_fr_044",
+      "rsv10-5_fr_082",
+      "sv4_fr_177",
+      "zsv10-5_fr_030",
+      "zsv10-5_fr_031",
+      "zsv10-5_fr_079"
+    ],
+    "Galaxy": [
+      "xy12_fr_011"
+    ],
+    "Rainbow": [
+      "bw1_fr_095"
+    ],
+    "SunBeam": [
+      "sm1_fr_009"
+    ],
+    "SunLava": [
+      "smalt_fr_027"
+    ],
+    "SunPillar": [
+      "me2_fr_018",
+      "me3_fr_062",
+      "me5_fr_004",
+      "me5_fr_045",
+      "me5_fr_085",
+      "me5_fr_087",
+      "me5_fr_088",
+      "me5_fr_089",
+      "me5_fr_090",
+      "me5_fr_094",
+      "me5_fr_095",
+      "me5_fr_112",
+      "rsv10-5_fr_045",
+      "sv10_fr_145",
+      "sv1_fr_081",
+      "sv2_fr_061",
+      "sv2_fr_169",
+      "sv3-5_fr_151",
+      "sv3_fr_164",
+      "sv4_fr_139",
+      "sv5_fr_123",
+      "sv6-5_fr_038",
+      "sv6-5_fr_039",
+      "sv6_fr_134",
+      "sv9_fr_024",
+      "sv9_fr_079",
+      "sv9_fr_098",
+      "zsv10-5_fr_034",
+      "zsv10-5_fr_067"
+    ],
+    "SvHolo": [
+      "me1_fr_010",
+      "me1_fr_073",
+      "me1_fr_074",
+      "me2-5_fr_122",
+      "me2-5_fr_155",
+      "me2_fr_017",
+      "me2_fr_068",
+      "me5_fr_012",
+      "me5_fr_020",
+      "me5_fr_035",
+      "me5_fr_047",
+      "me5_fr_056",
+      "me5_fr_059",
+      "me5_fr_070",
+      "me5_fr_083",
+      "me5_fr_084",
+      "sv10_fr_078",
+      "sv1_fr_054",
+      "sv1_fr_142",
+      "sv2_fr_060",
+      "sv2_fr_071",
+      "sv2_fr_172",
+      "sv3-5_fr_113",
+      "sv4_fr_072",
+      "sv5_fr_129",
+      "sv6-5_fr_020",
+      "sv6_fr_095",
+      "sv7_fr_115",
+      "sv8_fr_072",
+      "sv9_fr_055",
+      "sv9_fr_116"
+    ],
+    "SvUltra": [
+      "me1_fr_003",
+      "me1_fr_050",
+      "me1_fr_077",
+      "me1_fr_094",
+      "me2-5_fr_022",
+      "me2-5_fr_061",
+      "me2_fr_013",
+      "me2_fr_056",
+      "me2_fr_061",
+      "me3_fr_055",
+      "me5_fr_038",
+      "me5_fr_048",
+      "me5_fr_098",
+      "me5_fr_115",
+      "me5_fr_118",
+      "sv3_fr_125",
+      "sv6_fr_025",
+      "sv6_fr_106",
+      "sv6_fr_130",
+      "sv8_fr_057",
+      "sv8_fr_119"
+    ],
+    "SwHolo": [
+      "swshalt_fr_012"
+    ],
+    "Thatch": [
+      "bwalt_fr_008"
+    ],
+    "Tinsel": [
+      "bw6-5_fr_001",
+      "bw6-5_fr_002"
+    ]
+  },
+  "carddexCount": 421,
+  "wallet": {
+    "currencyStacks": [
+      {
+        "currencyId": 0,
+        "name": "TradeCurrency",
+        "version": 0,
+        "quantity": 535
+      },
+      {
+        "currencyId": 0,
+        "name": "HardCurrency",
+        "version": 0,
+        "quantity": 150
+      }
+    ],
+    "version": 52
+  },
+  "lastCraftBatch": {
+    "bought": [
+      {
+        "effect": "AngledPillars",
+        "cardId": "ec_10_ph",
+        "stem": "ec_fr_010",
+        "price": 40,
+        "invoiceId": "ce090743-92d1-4426-aef0-161ddf9157c2",
+        "idempotencyKey": "084b001c-2f15-4cd5-b38e-819062ea1a66"
+      },
+      {
+        "effect": "Cosmos",
+        "cardId": "smalt_13",
+        "stem": "smalt_fr_013",
+        "price": 40,
+        "invoiceId": "f45b9f4e-2747-4b72-94a7-d4dfb7243503",
+        "idempotencyKey": "64aba4f6-3e03-4e19-905d-124d4c882898"
+      },
+      {
+        "effect": "CrackedIce",
+        "cardId": "smalt_136",
+        "stem": "smalt_fr_136",
+        "price": 40,
+        "invoiceId": "f64790e3-21c4-4d01-9af0-b4e056d95bb9",
+        "idempotencyKey": "924602ab-8c85-4050-9dd0-77e833a4abed"
+      },
+      {
+        "effect": "SunLava",
+        "cardId": "smalt_27",
+        "stem": "smalt_fr_027",
+        "price": 40,
+        "invoiceId": "3bcfa960-dba5-4177-9127-d041bfbdb20a",
+        "idempotencyKey": "71a1868c-1cb7-4306-8a45-9cee313f77cf"
+      },
+      {
+        "effect": "SwHolo",
+        "cardId": "swshalt_12",
+        "stem": "swshalt_fr_012",
+        "price": 40,
+        "invoiceId": "5141be29-1e9e-49cf-be2a-df2d0998bb07",
+        "idempotencyKey": "eec27d48-e4ff-4fd5-a139-3e722dcae6cd"
+      },
+      {
+        "effect": "Galaxy",
+        "cardId": "xy12_11",
+        "stem": "xy12_fr_011",
+        "price": 425,
+        "invoiceId": "4330b268-9bf3-4dd7-959a-063f8036816c",
+        "idempotencyKey": "3d91dfd1-f8c7-4333-8b08-c6b28fa5e6d9"
+      }
+    ],
+    "skipped": [
+      {
+        "effect": "RadiantHolo",
+        "cardId": "swsh10-5_11",
+        "price": 600,
+        "reason": "insufficient"
+      },
+      {
+        "effect": "Squares",
+        "cardId": "xy10_14",
+        "price": 600,
+        "reason": "insufficient"
+      },
+      {
+        "effect": "SwSecret",
+        "cardId": "swsh4-5_17",
+        "price": 600,
+        "reason": "insufficient"
+      },
+      {
+        "effect": "25thConfetti",
+        "cardId": "swsh7-5r_1",
+        "price": 1250,
+        "reason": "insufficient"
+      },
+      {
+        "effect": "SolidColor",
+        "cardId": "bw11_114",
+        "price": 2000,
+        "reason": "insufficient"
+      },
+      {
+        "effect": "SvUltraGoldRainbow",
+        "cardId": "me1_187",
+        "price": 2000,
+        "reason": "insufficient"
+      },
+      {
+        "effect": "SvUltraScodix",
+        "cardId": "sv4-5_240",
+        "price": 2000,
+        "reason": "insufficient"
+      }
+    ],
+    "tradeBefore": 1200,
+    "tradeAfter": 575
+  }
+}

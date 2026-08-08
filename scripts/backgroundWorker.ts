@@ -6,7 +6,7 @@
  * them (SKIP LOCKED) and runs work off the request event loop.
  *
  * Pools (set `WORKER_KINDS`):
- *   interactive (default) → metadataRefresh + priceRefresh
+ *   interactive (default) → metadataRefresh + priceRefresh + foilExtract
  *   catalog               → icollectCatalogSync only
  *   all / *               → every kind (legacy / debug)
  *
@@ -22,9 +22,11 @@ import { randomUUID } from "node:crypto";
 import {
   claimNextBackgroundWorkJob,
   completeBackgroundWorkJob,
+  DEFAULT_STALE_RUNNING_MS,
   failBackgroundWorkJob,
   isBackgroundWorkJobCancelled,
   recoverStaleRunningBackgroundWorkJobs,
+  releaseRunningJobsForWorker,
   resolveWorkerKinds,
   INTERACTIVE_WORKER_KINDS,
   type BackgroundWorkKind,
@@ -38,8 +40,17 @@ import { resolveInteractiveWorkerConcurrency } from "../src/core/collect/jobs/wo
 
 const WORKER_ID = process.env.WORKER_ID || `worker-${randomUUID().slice(0, 8)}`;
 const POLL_IDLE_MS = Number.parseInt(process.env.WORKER_POLL_MS || "1000", 10);
+/**
+ * Non-foil stale window. Foil uses a shorter heartbeat window inside
+ * `recoverStaleRunningBackgroundWorkJobs` (see FOIL_STALE_RUNNING_MS).
+ */
 const STALE_RECOVER_MS = Number.parseInt(
-  process.env.WORKER_STALE_RECOVER_MS || String(15 * 60 * 1000),
+  process.env.WORKER_STALE_RECOVER_MS || String(DEFAULT_STALE_RUNNING_MS),
+  10,
+);
+/** How often to sweep zombie running locks (foil orphans especially). */
+const STALE_SWEEP_MS = Number.parseInt(
+  process.env.WORKER_STALE_SWEEP_MS || String(60 * 1000),
   10,
 );
 
@@ -87,7 +98,11 @@ async function processOneJob(): Promise<boolean> {
       return true;
     }
     console.error(`[Worker ${WORKER_ID}] failed ${job.id}:`, error);
-    await failBackgroundWorkJob(job.id, error);
+    await failBackgroundWorkJob(job.id, error, {
+      // Foil CDN scrape is expensive — do not auto-retry three times.
+      maxAttempts:
+        job.kind === "foilExtract" ? job.attempts : undefined,
+    });
   }
   return true;
 }
@@ -101,6 +116,16 @@ async function runSlot(slot: number): Promise<void> {
       console.error(`[Worker ${WORKER_ID}] slot ${slot} error:`, error);
       await sleep(POLL_IDLE_MS);
     }
+  }
+}
+
+async function sweepStaleLocks(): Promise<void> {
+  const { requeued, abandoned } =
+    await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);
+  if (requeued > 0 || abandoned > 0) {
+    console.warn(
+      `[Worker ${WORKER_ID}] stale recovery: requeued=${requeued} abandoned=${abandoned}`,
+    );
   }
 }
 
@@ -123,32 +148,32 @@ async function main(): Promise<void> {
     );
   }
 
-  const recoverTimer = setInterval(
-    () => {
-      void recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS).then(
-        (count) => {
-          if (count > 0) {
-            console.warn(
-              `[Worker ${WORKER_ID}] recovered ${count} stale running job(s)`,
-            );
-          }
-        },
-      );
-    },
-    Math.min(STALE_RECOVER_MS, 5 * 60 * 1000),
-  );
+  const recoverTimer = setInterval(() => {
+    void sweepStaleLocks();
+  }, STALE_SWEEP_MS);
   if (typeof recoverTimer.unref === "function") recoverTimer.unref();
 
-  await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);
+  await sweepStaleLocks();
 
-  const onStop = (signal: string) => {
-    if (stopping) return;
+  let shuttingDown: Promise<void> | null = null;
+  const shutdown = async (signal: string) => {
+    if (stopping) return shuttingDown ?? Promise.resolve();
     stopping = true;
     console.info(`[Worker ${WORKER_ID}] shutting down on ${signal}`);
     clearInterval(recoverTimer);
+    const count = await releaseRunningJobsForWorker(WORKER_ID);
+    if (count > 0) {
+      console.info(
+        `[Worker ${WORKER_ID}] released ${count} running job(s) back to pending`,
+      );
+    }
   };
-  process.on("SIGINT", () => onStop("SIGINT"));
-  process.on("SIGTERM", () => onStop("SIGTERM"));
+  process.on("SIGINT", () => {
+    shuttingDown = shutdown("SIGINT").finally(() => process.exit(0));
+  });
+  process.on("SIGTERM", () => {
+    shuttingDown = shutdown("SIGTERM").finally(() => process.exit(0));
+  });
 
   await Promise.all(
     Array.from({ length: concurrency }, (_, slot) => runSlot(slot)),

@@ -1,12 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 
 import { BaseModal } from "@/components/modals/BaseModal";
+import { FoilCardImage } from "@/components/FoilCardImage";
+import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
+import { RemoteImage } from "@/components/RemoteImage";
+import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
+import {
+  variantRendering,
+  type PrintVariantInfo,
+} from "@/lib/client/hooks/usePrintVariant";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { cn } from "@/lib/shared/utils";
+import "@/effects";
 
 /** Mirrors `PrintCandidate` from the provider contract, minus server-only bits. */
 export type PrintCandidateView = {
@@ -14,10 +23,25 @@ export type PrintCandidateView = {
   title: string;
   reference: string;
   rarity?: string | null;
+  category?: string | null;
+  faceQuarterTurns?: 0 | 1 | 2 | 3;
   thumbnailUrl?: string | null;
   imageUrl?: string | null;
   language?: string | null;
   finishes?: string[];
+  plainFinishes?: string[];
+  effectPack?: string | null;
+  finishShaders?: Record<string, string>;
+  finishFoilMaskUrls?: Record<string, string>;
+  varnishShaders?: Record<string, string>;
+  varnishType?: string | null;
+  varnishColor?: string | null;
+  secondVarnishMaskUrl?: string | null;
+  secondVarnishColor?: string | null;
+  /** Per-finish front art when Live / provider dumps differ by treatment. */
+  variantImageUrls?: Record<string, string>;
+  foilMaskUrl?: string | null;
+  varnishMaskUrl?: string | null;
 };
 
 type PrintPickerModalProps = {
@@ -32,13 +56,100 @@ type PrintPickerModalProps = {
 /** Long enough that typing a card name is one request, not eight. */
 const SEARCH_DEBOUNCE_MS = 300;
 
+function rowArtUrl(
+  candidate: PrintCandidateView,
+  finish: string | null,
+): string | null {
+  if (finish && candidate.variantImageUrls?.[finish]) {
+    return candidate.variantImageUrls[finish]!;
+  }
+  return candidate.thumbnailUrl ?? candidate.imageUrl ?? null;
+}
+
+function candidateAsVariantInfo(
+  candidate: PrintCandidateView,
+): PrintVariantInfo {
+  return {
+    finishes: candidate.finishes,
+    plainFinishes: candidate.plainFinishes,
+    effectPack: candidate.effectPack,
+    finishShaders: candidate.finishShaders,
+    finishFoilMaskUrls: candidate.finishFoilMaskUrls,
+    varnishShaders: candidate.varnishShaders,
+    varnishType: candidate.varnishType,
+    varnishColor: candidate.varnishColor,
+    secondVarnishMaskUrl: candidate.secondVarnishMaskUrl,
+    secondVarnishColor: candidate.secondVarnishColor,
+    variantImageUrls: candidate.variantImageUrls,
+    foilMaskUrl: candidate.foilMaskUrl,
+    varnishMaskUrl: candidate.varnishMaskUrl,
+    faceQuarterTurns: candidate.faceQuarterTurns,
+  };
+}
+
+/**
+ * Tile art: CSS foil when the pack has a recipe + mask (Lorcana today; Pokémon
+ * when its CSS path is ready). Plain finishes stay on a static image.
+ */
+function PrintPickerTileArt({
+  candidate,
+  finish,
+}: {
+  candidate: PrintCandidateView;
+  finish: string | null;
+}) {
+  const fallback = rowArtUrl(candidate, finish);
+  const view = variantRendering(
+    finish,
+    candidateAsVariantInfo(candidate),
+    fallback,
+  );
+  const art = view.imageUrl ?? fallback;
+  if (!art) return null;
+
+  if (view.foilMaskUrl && (view.shader || view.varnish)) {
+    return (
+      <FoilCardImage
+        effectPack={view.effectPackId}
+        printKey={candidate.printKey}
+        title={candidate.title}
+        imageUrl={art}
+        alt={candidate.title}
+        finish={view.finish}
+        varnishType={view.varnishType}
+        cssFinishShaderId={view.shader?.id ?? null}
+        cssVarnishShaderId={view.varnish?.id ?? null}
+        maskUrl={view.foilMaskUrl}
+        varnishMaskUrl={view.varnishMaskUrl}
+        varnishColor={view.varnishColor}
+        secondVarnishMaskUrl={view.secondVarnishMaskUrl}
+        secondVarnishColor={view.secondVarnishColor}
+        fit="cover"
+        backend="css"
+        tilt={false}
+        className="absolute inset-0 h-full w-full"
+      />
+    );
+  }
+
+  return (
+    <RemoteImage
+      src={art}
+      alt={candidate.title}
+      fill
+      sizes="(max-width: 640px) 45vw, 180px"
+      className="object-cover"
+    />
+  );
+}
+
 /**
  * Add flow for shelves that cannot be scanned.
  *
  * A card carries no barcode, and its name is not an answer either — five
  * Lorcana prints are called "Chiot dalmatien". So the user searches, then picks
- * a *printing*: the reference, rarity and artwork are shown precisely because
- * they are what tells two otherwise identical rows apart.
+ * a *printing × finish*: reference, rarity, artwork and finish tag are what
+ * tell otherwise identical rows apart.
  */
 export function PrintPickerModal({
   shelfId,
@@ -52,12 +163,6 @@ export function PrintPickerModal({
   const [candidates, setCandidates] = useState<PrintCandidateView[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [addingKey, setAddingKey] = useState<string | null>(null);
-  /**
-   * Print awaiting a finish. A card that exists in several finishes cannot be
-   * added without saying which one is in the sleeve — defaulting to the plain
-   * one would quietly mislabel every foil pulled from a booster.
-   */
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -72,7 +177,6 @@ export function PrintPickerModal({
     setHasSearched(false);
     setError(null);
     setAddingKey(null);
-    setPendingKey(null);
     onClose();
   }, [onClose]);
 
@@ -119,13 +223,21 @@ export function PrintPickerModal({
    * Derived rather than cleared by an effect: an empty box shows nothing, and a
    * stale list never flashes between two queries.
    */
-  const visibleCandidates = trimmedQuery ? candidates : [];
+  const pickerRows = useMemo(
+    () => expandPrintCandidatesByFinish(trimmedQuery ? candidates : []),
+    [trimmedQuery, candidates],
+  );
 
-  const addCandidate = useCallback(
-    async (candidate: PrintCandidateView, variant?: string | null) => {
-      setAddingKey(candidate.printKey);
+  const addRow = useCallback(
+    async (
+      candidate: PrintCandidateView,
+      finish: string | null,
+      rowKey: string,
+    ) => {
+      setAddingKey(rowKey);
       setError(null);
       try {
+        const art = rowArtUrl(candidate, finish);
         const response = await fetch("/api/items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -133,8 +245,8 @@ export function PrintPickerModal({
             shelfId,
             name: candidate.title,
             printKey: candidate.printKey,
-            variant: variant ?? null,
-            imageUrl: candidate.imageUrl ?? candidate.thumbnailUrl,
+            variant: finish,
+            imageUrl: art,
             condition: "used",
           }),
         });
@@ -193,88 +305,62 @@ export function PrintPickerModal({
           </p>
         )}
 
-        {hasSearched &&
-          !isSearching &&
-          visibleCandidates.length === 0 &&
-          !error && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {t("items.printPicker.noResults")}
-            </p>
-          )}
+        {hasSearched && !isSearching && pickerRows.length === 0 && !error && (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            {t("items.printPicker.noResults")}
+          </p>
+        )}
 
-        {visibleCandidates.length > 0 && (
+        {pickerRows.length > 0 && (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {visibleCandidates.map((candidate) => {
-              const isAdding = addingKey === candidate.printKey;
+            {pickerRows.map((row) => {
+              const isAdding = addingKey === row.rowKey;
               return (
-                <li key={`${candidate.printKey}-${candidate.language ?? ""}`}>
+                <li key={row.rowKey}>
                   <button
                     type="button"
                     disabled={Boolean(addingKey)}
-                    onClick={() => {
-                      const finishes = candidate.finishes ?? [];
-                      if (finishes.length > 1) {
-                        setPendingKey((key) =>
-                          key === candidate.printKey
-                            ? null
-                            : candidate.printKey,
-                        );
-                        return;
-                      }
-                      void addCandidate(candidate, finishes[0] ?? null);
-                    }}
+                    onClick={() => void addRow(row, row.finish, row.rowKey)}
                     className={cn(
                       "group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-2 text-left transition-all",
                       "hover:border-primary/60 hover:shadow-md disabled:opacity-60",
                       isAdding && "border-primary",
                     )}
                   >
-                    <div className="relative aspect-[5/7] w-full overflow-hidden rounded-lg bg-muted">
-                      {candidate.thumbnailUrl ? (
-                        <Image
-                          src={candidate.thumbnailUrl}
-                          alt={candidate.title}
-                          fill
-                          sizes="(max-width: 640px) 45vw, 180px"
-                          className="object-cover"
+                    <div className="relative">
+                      <OrientedMediaFrame
+                        aspectRatio="5 / 7"
+                        faceQuarterTurns={row.faceQuarterTurns}
+                        className="overflow-hidden rounded-lg bg-muted"
+                      >
+                        <PrintPickerTileArt
+                          candidate={row}
+                          finish={row.finish}
                         />
-                      ) : null}
+                      </OrientedMediaFrame>
+                      {row.finish && (
+                        <span className="pointer-events-none absolute bottom-1.5 left-1.5 z-10 max-w-[calc(100%-0.75rem)] truncate rounded-md border border-amber-300/40 bg-zinc-950/90 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-200 shadow-sm">
+                          ✦ {localizeFinishLabel(row.finish, t)}
+                        </span>
+                      )}
                       {isAdding && (
-                        <div className="absolute inset-0 grid place-items-center bg-background/70">
+                        <div className="absolute inset-0 z-20 grid place-items-center rounded-lg bg-background/70">
                           <Loader2 className="size-5 animate-spin" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-bold">
-                        {candidate.title}
-                      </p>
+                      <p className="truncate text-xs font-bold">{row.title}</p>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        {candidate.reference}
+                        {row.reference}
                       </p>
-                      {candidate.rarity && (
+                      {row.rarity && (
                         <p className="truncate text-[11px] text-muted-foreground">
-                          {candidate.rarity}
+                          {row.rarity}
                         </p>
                       )}
                     </div>
                   </button>
-
-                  {pendingKey === candidate.printKey && (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {(candidate.finishes ?? []).map((finish) => (
-                        <button
-                          key={finish}
-                          type="button"
-                          disabled={Boolean(addingKey)}
-                          onClick={() => void addCandidate(candidate, finish)}
-                          className="cursor-pointer rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-bold hover:border-primary/60 disabled:opacity-60"
-                        >
-                          {finish}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </li>
               );
             })}

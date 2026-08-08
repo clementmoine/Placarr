@@ -1,6 +1,7 @@
 /**
  * No-Intro local SQLite index — build from Logiqx DAT XML (prebuild only).
  * Scan path opens an existing index; never downloads DATs.
+ * `pnpm nointro:update` may sync a DAT pack zip first (allowDownload).
  */
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
@@ -35,7 +36,7 @@ let activeDbConnection: DatabaseSync | null = null;
 function cacheDir(): string {
   return (
     process.env.NOINTRO_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "nointro")
+    path.join(process.cwd(), "data", "nointro")
   );
 }
 
@@ -232,6 +233,15 @@ export type NoIntroIndexBuildOptions = {
    * Defaults to `NOINTRO_DAT_PATH`.
    */
   datPath?: string;
+  /**
+   * Intentional prebuild (`pnpm nointro:update`) — may sync a DAT pack zip
+   * (local `NOINTRO_DAT_PACK` or URL when download is allowed).
+   */
+  allowDownload?: boolean;
+  /** Local zip path override (else `NOINTRO_DAT_PACK`). */
+  packPath?: string;
+  /** Remote zip URL override (else `NOINTRO_DAT_PACK_URL`). */
+  packUrl?: string;
 };
 
 const DAT_FILE_RE = /\.(dat|xml)$/i;
@@ -257,21 +267,47 @@ export async function resolveNoIntroDatFiles(
     .sort((a, b) => a.localeCompare(b, "en"));
 }
 
-/** Prebuild SQLite from a local DAT file or directory. Never downloads. */
+/**
+ * Prefer existing DAT files; otherwise sync a pack when allowed (LaunchBox parity).
+ */
+async function resolveDatRootForBuild(
+  options?: NoIntroIndexBuildOptions,
+): Promise<string | null> {
+  const explicit = options?.datPath?.trim() || configuredDatPath();
+  if (explicit) {
+    const existing = await resolveNoIntroDatFiles(explicit);
+    if (existing.length > 0) return explicit;
+  }
+
+  const { syncNoIntroDatPack } = await import("./syncDatPack");
+  const synced = await syncNoIntroDatPack({
+    allowDownload: options?.allowDownload,
+    packPath: options?.packPath,
+    packUrl: options?.packUrl,
+    destDir: explicit || undefined,
+  });
+  if (synced?.destDir) return synced.destDir;
+
+  return explicit;
+}
+
+/** Prebuild SQLite from local DAT file(s), optionally syncing a pack first. */
 export async function buildNoIntroIndex(
   options?: NoIntroIndexBuildOptions,
 ): Promise<DatabaseSync | null> {
-  const datPath = options?.datPath?.trim() || configuredDatPath();
+  const datPath = await resolveDatRootForBuild(options);
   if (!datPath) {
     console.warn(
-      "[No-Intro] No DAT path — set NOINTRO_DAT_PATH to a file or directory",
+      "[No-Intro] No DAT path — set NOINTRO_DAT_PATH, or NOINTRO_DAT_PACK / URL, then `pnpm nointro:update`",
     );
     return null;
   }
 
   const files = await resolveNoIntroDatFiles(datPath);
   if (files.length === 0) {
-    console.warn(`[No-Intro] No .dat/.xml files found at ${datPath}`);
+    console.warn(
+      `[No-Intro] No .dat/.xml files found at ${datPath} — run \`pnpm nointro:update\` with a pack or DAT path`,
+    );
     return null;
   }
 
@@ -331,7 +367,7 @@ export async function ensureNoIntroIndex(): Promise<DatabaseSync | null> {
   const file = indexPath();
   if (!(await fileExists(file))) {
     console.info(
-      "[No-Intro] Index unavailable — run `pnpm nointro:build-index`",
+      "[No-Intro] Index unavailable — run `pnpm nointro:update`",
     );
     return null;
   }
@@ -340,7 +376,7 @@ export async function ensureNoIntroIndex(): Promise<DatabaseSync | null> {
     const db = new DatabaseSync(file);
     if (!isIndexSchemaCurrent(db)) {
       console.info(
-        `[No-Intro] Index schema outdated — rebuild with \`pnpm nointro:build-index\` (v${NOINTRO_INDEX_SCHEMA_VERSION})`,
+        `[No-Intro] Index schema outdated — rebuild with \`pnpm nointro:update\` (v${NOINTRO_INDEX_SCHEMA_VERSION})`,
       );
       db.close();
       return null;

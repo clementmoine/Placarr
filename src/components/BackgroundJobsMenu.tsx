@@ -30,7 +30,32 @@ import { cn } from "@/lib/shared/utils";
 function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   if (job.kind === "metadataRefresh") return t("backgroundJobs.kindRefresh");
   if (job.kind === "priceRefresh") return t("backgroundJobs.kindPrice");
+  if (job.kind === "foilExtract") return t("backgroundJobs.kindFoil");
+  if (job.kind === "icollectCatalogSync")
+    return t("backgroundJobs.kindCatalog");
+  if (job.kind === "launchboxIndexSync")
+    return t("backgroundJobs.kindLaunchbox");
+  if (job.kind === "nointroIndexSync") return t("backgroundJobs.kindNointro");
   return t("backgroundJobs.kindEnrich");
+}
+
+/**
+ * Catalogue crawls the collector never asked for by name.
+ *
+ * iCollect, LaunchBox and No-Intro are how the app keeps its provider data
+ * fresh; which of the three is running is plumbing. Listed individually they
+ * announced themselves in English — the server names them from a hardcoded
+ * map — under a French subtitle that repeated the same thing, and linked to the
+ * TCG effects admin, which is not where any of them lives.
+ */
+const PROVIDER_DATA_KINDS = new Set([
+  "icollectCatalogSync",
+  "launchboxIndexSync",
+  "nointroIndexSync",
+]);
+
+function isProviderDataJob(job: BackgroundJob): boolean {
+  return PROVIDER_DATA_KINDS.has(job.kind);
 }
 
 export function BackgroundJobsMenu() {
@@ -80,7 +105,9 @@ export function BackgroundJobsMenu() {
   if (isGuest) return null;
 
   const count = data?.count ?? 0;
-  const jobs = data?.jobs ?? [];
+  const allJobs = data?.jobs ?? [];
+  const jobs = allJobs.filter((job) => !isProviderDataJob(job));
+  const providerDataJobs = allJobs.filter(isProviderDataJob);
   const isBusy = count > 0 || cancelAll.isPending || cancelOne.isPending;
 
   if (!isBusy) return null;
@@ -124,11 +151,11 @@ export function BackgroundJobsMenu() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isLoading && jobs.length === 0 ? (
+        {isLoading && allJobs.length === 0 ? (
           <div className="px-3 py-4 text-sm text-muted-foreground">
             {t("common.loading")}
           </div>
-        ) : jobs.length === 0 ? (
+        ) : allJobs.length === 0 ? (
           <div className="px-3 py-4 text-sm text-muted-foreground">
             {t("backgroundJobs.empty")}
           </div>
@@ -139,19 +166,35 @@ export function BackgroundJobsMenu() {
               className="flex items-start gap-2 p-2 focus:bg-accent"
               onSelect={(event) => event.preventDefault()}
             >
-              <ShelfTypeIcon
-                type={job.shelf.type}
-                className="mt-0.5 size-4 shrink-0"
-              />
+              {job.shelf ? (
+                <ShelfTypeIcon
+                  type={job.shelf.type}
+                  className="mt-0.5 size-4 shrink-0"
+                />
+              ) : (
+                <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+              )}
               <div className="min-w-0 flex-1">
-                <Link
-                  href={itemPath(job.shelf, job)}
-                  className="block truncate text-sm font-semibold hover:text-primary"
-                >
-                  {job.name}
-                </Link>
+                {job.shelf ? (
+                  <Link
+                    href={itemPath(job.shelf, job)}
+                    className="block truncate text-sm font-semibold hover:text-primary"
+                  >
+                    {job.name}
+                  </Link>
+                ) : (
+                  <Link
+                    href="/admin?tab=tcg-effects"
+                    className="block truncate text-sm font-semibold hover:text-primary"
+                  >
+                    {job.name}
+                  </Link>
+                )}
                 <p className="truncate text-xs text-muted-foreground">
-                  {jobKindLabel(job, t)} · {job.shelf.name}
+                  {jobKindLabel(job, t)}
+                  {job.shelf
+                    ? ` · ${job.shelf.name}`
+                    : ` · ${t("backgroundJobs.foilAdmin")}`}
                 </p>
               </div>
               {job.cancellable ? (
@@ -168,6 +211,39 @@ export function BackgroundJobsMenu() {
               ) : null}
             </DropdownMenuItem>
           ))
+        )}
+        {providerDataJobs.length > 0 && (
+          /*
+            One row for the lot, and deliberately not a link: there is nothing
+            here the collector has to act on, and the previous per-crawl rows
+            pointed at an admin tab none of them belongs to.
+          */
+          <DropdownMenuItem
+            className="flex items-start gap-2 p-2 focus:bg-accent"
+            onSelect={(event) => event.preventDefault()}
+          >
+            <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">
+                {t("backgroundJobs.providerData")}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {t("backgroundJobs.providerDataHint")}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0"
+              aria-label={t("backgroundJobs.cancelOne")}
+              disabled={cancelOne.isPending}
+              onClick={() => {
+                for (const job of providerDataJobs) cancelOne.mutate(job.id);
+              }}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

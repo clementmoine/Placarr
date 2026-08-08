@@ -106,3 +106,41 @@ export function variantUsesFoilMarketPrice(
 
   return !FALLBACK_PLAIN_FINISH_KEYS.has(key(stored));
 }
+
+/**
+ * One picker row per print×finish so the add modal can show finish tags and
+ * add in a single click (no second “which foil?” step).
+ */
+export type PrintFinishRow<T> = T & {
+  finish: string | null;
+  rowKey: string;
+};
+
+export function expandPrintCandidatesByFinish<
+  T extends {
+    printKey: string;
+    language?: string | null;
+    finishes?: readonly (string | null | undefined)[] | null;
+  },
+>(candidates: readonly T[]): PrintFinishRow<T>[] {
+  const rows: PrintFinishRow<T>[] = [];
+  for (const candidate of candidates) {
+    const finishes = normalizeVariantOptions(candidate.finishes);
+    if (finishes.length === 0) {
+      rows.push({
+        ...candidate,
+        finish: null,
+        rowKey: `${candidate.printKey}||${candidate.language ?? ""}`,
+      });
+      continue;
+    }
+    for (const finish of finishes) {
+      rows.push({
+        ...candidate,
+        finish,
+        rowKey: `${candidate.printKey}|${finish}|${candidate.language ?? ""}`,
+      });
+    }
+  }
+  return rows;
+}

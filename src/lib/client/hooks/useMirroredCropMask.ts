@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { isCropDerivativeUrl } from "@/core/enrich/media/coverUrl";
+import { isEditDerivativeUrl } from "@/core/enrich/media/coverUrl";
 
 /**
  * Whether a mask has to be re-cut to follow the artwork.
@@ -18,7 +18,7 @@ export function maskNeedsMirroring(
     artworkUrl &&
       maskUrl &&
       artworkUrl.startsWith("/uploads/") &&
-      isCropDerivativeUrl(artworkUrl),
+      isEditDerivativeUrl(artworkUrl),
   );
 }
 

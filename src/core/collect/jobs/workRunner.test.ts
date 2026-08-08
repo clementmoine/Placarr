@@ -19,9 +19,35 @@ vi.mock("@/core/collect/jobs/workQueue", () => ({
     metadataRefresh: "metadataRefresh",
     priceRefresh: "priceRefresh",
     icollectCatalogSync: "icollectCatalogSync",
+    launchboxIndexSync: "launchboxIndexSync",
+    nointroIndexSync: "nointroIndexSync",
+    foilExtract: "foilExtract",
   },
   enqueueBackgroundWorkJob: h.enqueueBackgroundWorkJob,
   isBackgroundWorkJobCancelled: h.isBackgroundWorkJobCancelled,
+}));
+
+vi.mock("@/lib/admin/foilExtractRunner", () => ({
+  FOIL_EXTRACT_TIMEOUT_MS: 60_000,
+  isFoilExtractTarget: (value: unknown) =>
+    value === "pokemon" ||
+    value === "lorcana" ||
+    value === "lorcana-web" ||
+    value === "lorcana-mobile" ||
+    value === "lorcana-cards",
+  normalizeFoilExtractTarget: (value: unknown) => {
+    if (value === "pokemon") return "pokemon";
+    if (
+      value === "lorcana" ||
+      value === "lorcana-web" ||
+      value === "lorcana-mobile" ||
+      value === "lorcana-cards"
+    ) {
+      return "lorcana";
+    }
+    return null;
+  },
+  runFoilExtractCommand: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/core/collect/jobs/metadataRefreshSession", () => ({

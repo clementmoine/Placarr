@@ -38,12 +38,9 @@ const nextConfig = {
     "*.local",
     "*.localhost",
   ],
-  // Les données runtime ne font pas partie du build : sans cette exclusion le
-  // tracing standalone recopiait tout public/uploads (plusieurs Go) et .cache
-  // (index SQLite providers) dans .next/standalone à chaque build. Elles sont
-  // écrites/servies au runtime et persistées par des volumes Docker.
+  // Runtime data stays out of the standalone trace (multi‑GB under data/).
   outputFileTracingExcludes: {
-    "*": ["./public/uploads/**", "./.cache/**"],
+    "*": ["./data/**"],
   },
   typescript: {
     ignoreBuildErrors: false,
@@ -55,6 +52,31 @@ const nextConfig = {
   // Prisma 7 client lives in src/generated — do not externalize the empty
   // npm `@prisma/client` stub (it looks for missing `.prisma/client`).
   serverExternalPackages: [],
+  /**
+   * Foil/CDN dumps write heavily under ``data/``. Watching them forces webpack
+   * to recompile on every texture pull (and races JSON parses on concurrent
+   * ``/foil/...`` requests during invalidation).
+   */
+  webpack: (config, { dev }) => {
+    if (dev) {
+      const ignored = [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/data/**",
+        "**/scripts/lorcana/.venv/**",
+        "**/scripts/pokemon/.venv/**",
+        // Dumpers rewrite these in place; watching them recompiles mid-extract.
+        "**/src/effects/**/cards.json",
+        "**/src/effects/**/manifest.json",
+      ];
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored,
+      };
+    }
+    return config;
+  },
 };
 
 export default withSerwist(nextConfig);

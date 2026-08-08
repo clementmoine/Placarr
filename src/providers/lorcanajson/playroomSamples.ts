@@ -7,8 +7,10 @@ import type {
   FoilPlayroomCatalogSample,
   FoilPlayroomNeed,
 } from "@/types/providerModule";
+import { withPackCardUrls } from "@/effects/lorcana/packAssets";
 
 import {
+  LORCANA_DEFAULT_LANGUAGE,
   loadLorcanaIndexes,
   type LorcanaCard,
   type LorcanaLanguage,
@@ -86,14 +88,24 @@ export function pickLorcanaPlayroomSamples(
 
     const { card } = best;
     const variant = need.finish;
-    out.push({
-      id: `catalog:${card.printKey}:${variant ?? "varnish"}:${need.varnish ?? "none"}`,
-      name: card.fullName,
-      variant,
-      printKey: card.printKey,
-      shelfType: SHELF_TYPE,
-      imageUrl: card.fullFoilUrl ?? card.imageUrl,
-    });
+    out.push(
+      withPackCardUrls({
+        id: `catalog:${card.printKey}:${variant ?? "varnish"}:${need.varnish ?? "none"}`,
+        name: card.fullName,
+        variant,
+        printKey: card.printKey,
+        shelfType: SHELF_TYPE,
+        language: card.language,
+        imageUrl: card.fullFoilUrl ?? card.imageUrl,
+        foilMaskUrl: card.foilMaskUrl,
+        varnishMaskUrl: card.varnishMaskUrl,
+        varnishType: card.varnishType,
+        varnishColor: card.foilEffectColors[0] ?? null,
+        secondVarnishMaskUrl: card.secondVarnishMaskUrl,
+        secondVarnishColor: card.foilEffectColors[1] ?? null,
+        effectPack: "lorcana",
+      }),
+    );
   }
 
   return out;
@@ -106,7 +118,8 @@ export async function suggestLorcanaFoilPlayroomSamples(
   if (needs.length === 0) return [];
   // Preferred language first, then the rest — Tempest / FreeForm2 /
   // CalendarWave live only on English printings today.
-  const indexes = await loadLorcanaIndexes(options?.language, {
+  const language = options?.language ?? LORCANA_DEFAULT_LANGUAGE;
+  const indexes = await loadLorcanaIndexes(language, {
     signal: options?.signal,
   });
   const cards = indexes.flatMap((index) => index.cards);

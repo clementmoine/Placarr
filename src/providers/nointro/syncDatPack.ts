@@ -18,7 +18,7 @@ export type NoIntroDatSyncOptions = {
   packUrl?: string;
   /** Destination directory for extracted `.dat`/`.xml` (flat copy by basename). */
   destDir?: string;
-  /** Intentional prebuild (`pnpm nointro:sync`) — may download. */
+  /** Intentional prebuild / tooling — may download. */
   allowDownload?: boolean;
 };
 
@@ -35,7 +35,7 @@ export type NoIntroDatSyncResult = {
 function cacheDir(): string {
   return (
     process.env.NOINTRO_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "nointro")
+    path.join(process.cwd(), "data", "nointro")
   );
 }
 
@@ -164,7 +164,7 @@ export async function syncNoIntroDatPack(
   const source = resolveNoIntroDatPackSource(options);
   if (!source) {
     console.warn(
-      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL with NOINTRO_ALLOW_DOWNLOAD=1",
+      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL, then `pnpm nointro:update`",
     );
     return null;
   }

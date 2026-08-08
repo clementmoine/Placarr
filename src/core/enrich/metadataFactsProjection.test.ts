@@ -80,6 +80,63 @@ describe("displayFactsFromFieldEvidence", () => {
       ],
     );
 
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatchObject({
+      kind: "genre",
+      label: "Thèmes Booknode",
+      value: "Bande dessinée",
+      source: "booknode",
+    });
+  });
+
+  it("upgrades a provider slot when the evidence value changed", () => {
+    const facts = displayFactsFromFieldEvidence(
+      [
+        {
+          field: "format:Numéro",
+          source: "tcgdex",
+          value: "11/108",
+        },
+      ],
+      [
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+        },
+      ],
+    );
+
+    expect(facts).toEqual([
+      expect.objectContaining({
+        kind: "format",
+        label: "Numéro",
+        value: "11/108",
+        source: "tcgdex",
+      }),
+    ]);
+  });
+
+  it("skips unchanged provider slots", () => {
+    const facts = displayFactsFromFieldEvidence(
+      [
+        {
+          field: "format:Numéro",
+          source: "tcgdex",
+          value: "11/108",
+        },
+      ],
+      [
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11/108",
+          source: "tcgdex",
+        },
+      ],
+    );
+
     expect(facts).toHaveLength(0);
   });
 });
@@ -87,6 +144,48 @@ describe("displayFactsFromFieldEvidence", () => {
 describe("syncMetadataDisplayFactsFromFieldEvidence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("upgrades a stale display fact when field evidence has a newer value", async () => {
+    h.metadataFindUnique.mockResolvedValue({
+      facts: JSON.stringify([
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+        },
+      ]),
+    });
+    h.fieldEvidenceFindMany.mockResolvedValue([
+      {
+        field: "format:Numéro",
+        source: "tcgdex",
+        value: "11/108",
+        sourceUrl: null,
+        priority: 45,
+        confidence: 0.95,
+      },
+      {
+        field: "tag:PV",
+        source: "tcgdex",
+        value: "150",
+        sourceUrl: null,
+        priority: 28,
+        confidence: 0.9,
+      },
+    ]);
+    h.metadataUpdate.mockResolvedValue({});
+
+    const merged = await syncMetadataDisplayFactsFromFieldEvidence({
+      metadataId: "meta-1",
+    });
+
+    expect(h.metadataUpdate).toHaveBeenCalledTimes(1);
+    expect(merged?.find((fact) => fact.label === "Numéro")?.value).toBe(
+      "11/108",
+    );
+    expect(merged?.find((fact) => fact.label === "PV")?.value).toBe("150");
   });
 
   it("backfills missing display facts into metadata JSON", async () => {

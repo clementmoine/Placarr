@@ -39,6 +39,10 @@
     "foil:pokemon:index-cards": "tsx scripts/pokemon/indexCards.ts",
     "foil:pokemon:audit-apk": "tsx scripts/pokemon/auditApkCoverage.ts",
     "foil:pokemon:audit-finish": "tsx scripts/pokemon/audit_live_finish_coverage.ts",
+    "foil:pokemon:audit-store": "tsx scripts/pokemon/audit_store.ts",
+    "foil:pokemon:inventory-faces": "tsx scripts/pokemon/inventoryFoilFaces.ts",
+    "foil:pokemon:sync-owned": "tsx scripts/pokemon/syncLiveOwned.ts",
+    "foil:audit-gaps": "tsx scripts/foil/auditGaps.ts",
     "media:to-webp": "tsx scripts/media/png-to-webp.ts"
   },
   "dependencies": {

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -174,6 +175,44 @@ describe("No-Intro indexStore", () => {
     expect(
       searchNoIntroGamesByTitle(opened!, "super mario")[0]?.datName,
     ).toContain("Nintendo Entertainment System");
+
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it("buildNoIntroIndex syncs a local DAT pack zip then builds sqlite", async () => {
+    const dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "placarr-nointro-pack-build-"),
+    );
+    const nested = path.join(dir, "pack", "systems");
+    await fs.mkdir(nested, { recursive: true });
+    await fs.writeFile(path.join(nested, "Nintendo - Game Boy.dat"), FIXTURE_DAT);
+    const zipPath = path.join(dir, "nointro-pack.zip");
+    await new Promise<void>((resolve, reject) => {
+      const zip = spawn("zip", ["-r", zipPath, "pack"], {
+        cwd: dir,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      zip.on("error", reject);
+      zip.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`zip exited with code ${code}`));
+      });
+    });
+
+    const datsDir = path.join(dir, "dats");
+    const sqliteFile = path.join(dir, "nointro.sqlite");
+    process.env.NOINTRO_CACHE_DIR = dir;
+    process.env.NOINTRO_INDEX_PATH = sqliteFile;
+    delete process.env.NOINTRO_DAT_PATH;
+
+    const built = await buildNoIntroIndex({
+      allowDownload: true,
+      packPath: zipPath,
+      datPath: datsDir,
+    });
+    expect(built).not.toBeNull();
+    const hits = lookupNoIntroGamesByChecksum(built!, { crc: "46df91ad" });
+    expect(hits[0]?.name).toBe("Tetris (World) (Rev 1)");
 
     await fs.rm(dir, { recursive: true, force: true });
   });

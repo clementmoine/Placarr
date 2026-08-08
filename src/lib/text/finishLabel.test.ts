@@ -25,15 +25,30 @@ describe("formatFinishLabel", () => {
 describe("localizeFinishLabel", () => {
   const t = (key: string) =>
     ({
-      "items.finishes.none": "Normal",
-      "items.finishes.nonfoil": "Normal",
-      "items.finishes.normal": "Normal",
+      "items.finishes.none": "Regular",
+      "items.finishes.nonfoil": "Regular",
+      "items.finishes.normal": "Regular",
+      "items.finishes.holo": "Holofoil",
+      "items.finishes.reverse": "Reverse Holofoil",
+      "items.finishes.firstEdition": "1st Edition",
+      "items.finishes.wPromo": "W Promo",
     })[key] ?? key;
 
-  it("translates plain finishes", () => {
-    expect(localizeFinishLabel("None", t)).toBe("Normal");
-    expect(localizeFinishLabel("nonfoil", t)).toBe("Normal");
+  it("uses the collector lexicon for catalogue finishes", () => {
+    expect(localizeFinishLabel("None", t)).toBe("Regular");
+    expect(localizeFinishLabel("normal", t)).toBe("Regular");
+    expect(localizeFinishLabel("holo", t)).toBe("Holofoil");
+    expect(localizeFinishLabel("reverse", t)).toBe("Reverse Holofoil");
+    expect(localizeFinishLabel("firstEdition", t)).toBe("1st Edition");
     expect(finishLabelMessageKey("None")).toBe("items.finishes.none");
+    expect(finishLabelMessageKey("holo")).toBe("items.finishes.holo");
+  });
+
+  it("maps synthetic Live finishes to Holofoil / Reverse Holofoil", () => {
+    expect(finishLabelMessageKey("live-std")).toBe("items.finishes.holo");
+    expect(finishLabelMessageKey("live-ph")).toBe("items.finishes.reverse");
+    expect(localizeFinishLabel("live-std", t)).toBe("Holofoil");
+    expect(localizeFinishLabel("live-ph", t)).toBe("Reverse Holofoil");
   });
 
   it("keeps named foil finishes as spaced CamelCase", () => {

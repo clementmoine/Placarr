@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-08-02T11:56:16.767Z",
+  "source": "tcgdex-fr+live-dump",
+  "byTcgdexSet": {
+    "swsh4.5sv": {
+      "parentTcgdex": "swsh4.5",
+      "parentLive": "swsh4-5",
+      "svOffset": 73,
+      "parentCardTotal": 73,
+      "vaultCardTotal": 122
+    }
+  }
+}

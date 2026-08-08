@@ -10,7 +10,9 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
   isBackgroundWorkJobCancelled,
+  touchBackgroundWorkJobLock,
   type BackgroundWorkJobRow,
+  type FoilExtractJobPayload,
   type MetadataRefreshJobPayload,
   type PriceRefreshJobPayload,
 } from "@/core/collect/jobs/workQueue";
@@ -31,9 +33,16 @@ import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProvide
 import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesSiblingBarcodes";
 import { prisma } from "@/lib/db/prisma";
 import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
+import {
+  FOIL_EXTRACT_TIMEOUT_MS,
+  normalizeFoilExtractTarget,
+  runFoilExtractCommand,
+} from "@/lib/admin/foilExtractRunner";
 import path from "path";
 
 const CANCEL_POLL_MS = 2_000;
+/** Foil CDN scrapes can run 15–40 min — refresh lock so stale recovery stays off. */
+const FOIL_LOCK_HEARTBEAT_MS = 60_000;
 /** Hard ceiling: spinner must not sit forever behind Flare scrapes. */
 const METADATA_JOB_TIMEOUT_MS = 90_000;
 /** Price scrapes must not monopolize every worker slot for minutes. */
@@ -352,5 +361,82 @@ export async function executeBackgroundWorkJob(
     return;
   }
 
+  if (job.kind === BACKGROUND_WORK_KIND.launchboxIndexSync) {
+    const { buildLaunchBoxIndex } = await import(
+      "@/providers/launchbox/indexStore"
+    );
+    const db = await buildLaunchBoxIndex({ allowDownload: true });
+    if (!db) throw new Error("LaunchBox index build failed");
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.nointroIndexSync) {
+    const { buildNoIntroIndex } = await import(
+      "@/providers/nointro/indexStore"
+    );
+    const db = await buildNoIntroIndex({ allowDownload: true });
+    if (!db) throw new Error("No-Intro index build failed");
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.foilExtract) {
+    await executeFoilExtractJob(job, payload as FoilExtractJobPayload);
+    return;
+  }
+
   throw new Error(`Unknown background work kind: ${job.kind}`);
+}
+
+async function executeFoilExtractJob(
+  job: BackgroundWorkJobRow,
+  payload: FoilExtractJobPayload,
+): Promise<void> {
+  const target = normalizeFoilExtractTarget(payload?.target);
+  if (!target) {
+    throw new Error(`Invalid foil extract target: ${String(payload?.target)}`);
+  }
+
+  const controller = new AbortController();
+  const cancelPoll = setInterval(() => {
+    void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
+      if (cancelled) controller.abort();
+    });
+  }, CANCEL_POLL_MS);
+  if (typeof cancelPoll.unref === "function") cancelPoll.unref();
+
+  const heartbeat = setInterval(() => {
+    void touchBackgroundWorkJobLock(job.id);
+  }, FOIL_LOCK_HEARTBEAT_MS);
+  if (typeof heartbeat.unref === "function") heartbeat.unref();
+  // Fresh lock immediately so a slow spawn is still covered.
+  void touchBackgroundWorkJobLock(job.id);
+
+  const logTail: string[] = [];
+  const writeLog = (line: string) => {
+    logTail.push(line);
+    if (logTail.length > 40) logTail.shift();
+    if (logTail.length % 20 === 0) {
+      console.info(`[FoilExtract ${target}] ${line}`);
+    }
+  };
+
+  try {
+    await runFoilExtractCommand(target, {
+      signal: controller.signal,
+      timeoutMs: FOIL_EXTRACT_TIMEOUT_MS,
+      onLog: writeLog,
+      logHeader: [`jobId=${job.id}`],
+    });
+  } catch (error) {
+    if (controller.signal.aborted || (await isBackgroundWorkJobCancelled(job.id))) {
+      return;
+    }
+    const tail = logTail.slice(-8).join("\n");
+    const message =
+      error instanceof Error ? error.message : String(error);
+    throw new Error(tail ? `${message}\n---\n${tail}` : message);
+  } finally {
+    clearInterval(cancelPoll);
+    clearInterval(heartbeat);
+  }
 }

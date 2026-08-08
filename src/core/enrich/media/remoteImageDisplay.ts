@@ -18,11 +18,30 @@ export function isLocalUploadImageSrc(url: string): boolean {
   );
 }
 
+/** Foil pack textures under ``/foil/<pack>/…`` — streamed from ``data/``, not CDN. */
+export function isLocalFoilImageSrc(url: string): boolean {
+  return (
+    url.startsWith("/foil/") ||
+    /^https?:\/\/localhost(?::\d+)?\/foil\//i.test(url)
+  );
+}
+
+/** TCGdex asset CDN — already sized (`low.webp` / `high.png`); sharp adds latency. */
+export function isTcgdexAssetImageSrc(url: string): boolean {
+  try {
+    return new URL(url).hostname.toLowerCase() === "assets.tcgdex.net";
+  } catch {
+    return false;
+  }
+}
+
 /** Skip the Next image optimizer when it adds no value or can hang the server. */
 export function remoteImageShouldSkipOptimizer(url: string): boolean {
   return (
     remoteImageNeedsProxy(url) ||
     isLocalUploadImageSrc(url) ||
+    isLocalFoilImageSrc(url) ||
+    isTcgdexAssetImageSrc(url) ||
     // Already rewritten to our referer/Flare proxy — query strings are not in
     // `images.localPatterns` and must not go through `/_next/image`.
     url.startsWith("/api/media/remote")

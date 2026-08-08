@@ -1,11 +1,37 @@
-import { getEffectPack } from "./registry";
+import {
+  pickDefaultCardBack,
+  resolveCardBackCandidates,
+  type CardBackCandidate,
+} from "./cardBacks";
 
+export type {
+  CardBackCandidate,
+  CardBackScope,
+} from "./cardBacks";
+export {
+  pickDefaultCardBack,
+  rankCardBacks,
+  resolveCardBackCandidates,
+  sharedCardBackSkeletonUrl,
+} from "./cardBacks";
+
+/**
+ * Resolve the default card-back URL for an item: print (alt face) > set > pack.
+ * No shelf override — backs live on the print/pack, not the collection.
+ */
 export function resolveCardBackUrl(opts: {
-  shelfCardBackUrl?: string | null;
+  printCardBackUrl?: string | null;
+  printKey?: string | null;
+  setCode?: string | null;
   effectPackId?: string | null;
+  providerId?: string | null;
 }): string | null {
-  if (opts.shelfCardBackUrl) return opts.shelfCardBackUrl;
+  return pickDefaultCardBack(resolveCardBackCandidates(opts))?.url ?? null;
+}
 
-  const pack = getEffectPack(opts.effectPackId);
-  return pack?.cardBackUrl ?? null;
+/** Full default candidate (scope included) — for skeleton / Face·Dos UI. */
+export function resolveDefaultCardBack(
+  opts: Parameters<typeof resolveCardBackCandidates>[0],
+): CardBackCandidate | null {
+  return pickDefaultCardBack(resolveCardBackCandidates(opts));
 }

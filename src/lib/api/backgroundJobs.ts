@@ -4,16 +4,24 @@ import type { QueryClient } from "@tanstack/react-query";
 export type BackgroundJob = {
   id: string;
   name: string;
-  slug: string;
-  kind: "metadataRefresh" | "metadataEnrich" | "priceRefresh";
+  slug: string | null;
+  kind:
+    | "metadataRefresh"
+    | "metadataEnrich"
+    | "priceRefresh"
+    | "foilExtract"
+    | "icollectCatalogSync"
+    | "launchboxIndexSync"
+    | "nointroIndexSync";
   startedAt: string;
   cancellable: boolean;
+  foilTarget?: "lorcana" | "pokemon" | null;
   shelf: {
     id: string;
     name: string;
-    slug: string;
+    slug: string | null;
     type: string;
-  };
+  } | null;
 };
 
 export type BackgroundJobsPayload = {
@@ -22,8 +30,18 @@ export type BackgroundJobsPayload = {
 };
 
 export async function getBackgroundJobs(): Promise<BackgroundJobsPayload> {
-  const { data } = await axios.get("/api/background-jobs");
-  return data;
+  try {
+    const { data } = await axios.get<BackgroundJobsPayload>(
+      "/api/background-jobs",
+      { validateStatus: (status) => status < 500 },
+    );
+    if (!data || !Array.isArray(data.jobs)) {
+      return { jobs: [], count: 0 };
+    }
+    return data;
+  } catch {
+    return { jobs: [], count: 0 };
+  }
 }
 
 export async function cancelBackgroundJob(itemId: string): Promise<void> {

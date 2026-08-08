@@ -11,6 +11,7 @@ import {
 } from "@/lib/client/printVariantStore";
 import {
   holoShader,
+  isHoloShaderId,
   varnishShader,
   type HoloShader,
 } from "@/core/render/holoShaders";
@@ -24,6 +25,8 @@ export type PrintVariantInfo = {
   effectPack?: string | null;
   /** Finish -> shader id. See `PrintCandidate.finishShaders`. */
   finishShaders?: Record<string, string>;
+  /** Foil mask per catalogue finish. See `PrintCandidate.finishFoilMaskUrls`. */
+  finishFoilMaskUrls?: Record<string, string>;
   /** Varnish name -> shader id, and which varnish this print carries. */
   varnishShaders?: Record<string, string>;
   varnishType?: string | null;
@@ -35,6 +38,15 @@ export type PrintVariantInfo = {
   variantImageUrls?: Record<string, string>;
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
+  /** Print-specific back / alt face when the catalogue supplies one. */
+  cardBackUrl?: string | null;
+  /** Set code for set-scoped pack backs. */
+  setCode?: string | null;
+  /**
+   * Quarters of a turn for faces that share the shelf format but sit on their
+   * side (Pokémon BREAK → 1). Omit / 0 = upright.
+   */
+  faceQuarterTurns?: 0 | 1 | 2 | 3;
 };
 
 /**
@@ -80,19 +92,20 @@ export type VariantRendering = {
   foilMaskUrl: string | null;
   varnishMaskUrl: string | null;
   /**
-   * How to draw it. Every non-plain finish used to render identically, so an
-   * Enchanted print and a common silver one were indistinguishable on screen
-   * even though the publisher gives them different finishes.
+   * How to draw it (CSS). Null when the pack has no web recipe — WebGL may
+   * still run via {@link effectPackId} + finish. Never invent a pack default
+   * here; that belongs in `pack.resolveCss`.
    */
-  shader: HoloShader;
-  /** How to draw the varnish coat, which has its own names and its own looks. */
-  varnish: HoloShader;
+  shader: HoloShader | null;
+  /** How to draw the varnish coat. Null when the pack has no CSS varnish. */
+  varnish: HoloShader | null;
   /** The hue that coat throws, when the provider knows it. */
   varnishColor: string | null;
   /** The second coat, on the prints that carry two. */
   secondVarnishMaskUrl: string | null;
   secondVarnishColor: string | null;
-  /** Effect pack for WebGL foil rendering. Null when plain or unknown. */
+  /** Effect pack for WebGL foil *and* card-back resolve. Kept on plain finishes
+   * so the pack default back still applies; null only when unknown. */
   effectPackId: string | null;
   /** Catalogue finish name for this copy. Null when plain or unknown. */
   finish: string | null;
@@ -106,6 +119,9 @@ export type VariantRendering = {
  * A plain finish gets nothing — the point of a foil effect is that it separates
  * a foil copy from a normal one, so shimmering on both would say nothing. An
  * unrecognized variant is treated as plain rather than guessed at.
+ *
+ * CSS looks come only from `pack.resolveCss`. Provider `finishShaders` may hold
+ * Unity material names (Pokémon) and must not feed the CSS path.
  */
 export function variantRendering(
   variant: string | null | undefined,
@@ -116,8 +132,8 @@ export function variantRendering(
     imageUrl: fallbackImageUrl,
     foilMaskUrl: null,
     varnishMaskUrl: null,
-    shader: holoShader(null),
-    varnish: varnishShader(null),
+    shader: null,
+    varnish: null,
     varnishColor: null,
     secondVarnishMaskUrl: null,
     secondVarnishColor: null,
@@ -127,28 +143,55 @@ export function variantRendering(
   };
   if (!info) return plain;
 
+  const packId = info.effectPack ?? null;
   const resolved = resolveStoredVariant(variant, info.finishes);
-  if (!resolved) return plain;
+  // Keep pack id even without a finish: backs (flip / skeleton) resolve from
+  // the pack; foil layers stay null until a finish is known.
+  if (!resolved) {
+    return {
+      ...plain,
+      effectPackId: packId,
+      varnishType: info.varnishType ?? null,
+    };
+  }
 
   const isPlainFinish = (info.plainFinishes ?? []).some(
     (finish) => finish.toLowerCase() === resolved.toLowerCase(),
   );
-  if (isPlainFinish) return plain;
+  // Plain finish: no foil layers, but keep the pack id so the card back
+  // (pack default / set / print) still resolves for flip + skeleton.
+  if (isPlainFinish) {
+    return {
+      ...plain,
+      effectPackId: packId,
+      finish: resolved,
+      varnishType: info.varnishType ?? null,
+    };
+  }
 
   const pack = getEffectPack(info.effectPack);
   const css = pack?.resolveCss(resolved, info.varnishType) ?? null;
+  // Prefer pack.resolveCss. If the pack id is missing (stale session cache,
+  // partial candidate), accept provider finishShaders / varnishShaders only
+  // when they are real CSS look ids — never Unity material names (Pokémon).
+  const finishShaderId =
+    css?.finishShaderId ??
+    (isHoloShaderId(info.finishShaders?.[resolved])
+      ? info.finishShaders![resolved]
+      : null);
+  const varnishShaderId =
+    css?.varnishShaderId ??
+    (info.varnishType && isHoloShaderId(info.varnishShaders?.[info.varnishType])
+      ? info.varnishShaders![info.varnishType]
+      : null);
 
   return {
     imageUrl: info.variantImageUrls?.[resolved] ?? fallbackImageUrl,
-    foilMaskUrl: info.foilMaskUrl ?? null,
+    foilMaskUrl:
+      info.finishFoilMaskUrls?.[resolved] ?? info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,
-    shader: holoShader(
-      css?.finishShaderId ?? info.finishShaders?.[resolved],
-    ),
-    varnish: varnishShader(
-      css?.varnishShaderId ??
-        (info.varnishType ? info.varnishShaders?.[info.varnishType] : null),
-    ),
+    shader: holoShader(finishShaderId),
+    varnish: varnishShader(varnishShaderId),
     varnishColor: info.varnishColor ?? null,
     secondVarnishMaskUrl: info.secondVarnishMaskUrl ?? null,
     secondVarnishColor: info.secondVarnishColor ?? null,

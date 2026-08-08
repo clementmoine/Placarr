@@ -27,4 +27,11 @@ cp /tmp/poke-holo/LICENSE /tmp/poke-holo/README.md third_party/simeydotme-pokemo
 git -C /tmp/poke-holo rev-parse HEAD > third_party/simeydotme-pokemon-cards-css/UPSTREAM_COMMIT
 ```
 
-Then re-adapt the touched recipes in `holoShadersSimey.ts` / tests.
+Then:
+
+```bash
+pnpm foil:audit-gaps   # lists vendored CSS rarities not yet ported
+```
+
+Re-adapt touched recipes in `holoShadersSimey.ts` / `cssRecipes.ts` / tests.
+Full checklist: `docs/foil_new_finish.md` §2.

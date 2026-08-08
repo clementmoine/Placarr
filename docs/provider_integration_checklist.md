@@ -3,7 +3,7 @@
 A followable checklist for adding a provider so it is **fully exploited, properly
 tested, and verified against the live source** — never under-used, never a hidden
 bias. Companion to [unbiased_ranking.md](unbiased_ranking.md),
-[word_list_audit.md](word_list_audit.md),
+[archive/word_list_audit.md](archive/word_list_audit.md),
 [provider_agnostic_architecture.md](provider_agnostic_architecture.md). Worked
 example: `src/providers/okkazeo/`.
 

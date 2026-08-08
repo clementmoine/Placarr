@@ -7,20 +7,26 @@ export const BACKGROUND_WORK_KIND = {
   metadataRefresh: "metadataRefresh",
   priceRefresh: "priceRefresh",
   icollectCatalogSync: "icollectCatalogSync",
+  launchboxIndexSync: "launchboxIndexSync",
+  nointroIndexSync: "nointroIndexSync",
+  foilExtract: "foilExtract",
 } as const;
 
 export type BackgroundWorkKind =
   (typeof BACKGROUND_WORK_KIND)[keyof typeof BACKGROUND_WORK_KIND];
 
-/** Interactive enrich path — must not share slots with the iCollect crawl. */
+/** Interactive enrich path — must not share slots with the catalog crawl. */
 export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.metadataRefresh,
   BACKGROUND_WORK_KIND.priceRefresh,
+  BACKGROUND_WORK_KIND.foilExtract,
 ];
 
-/** Catalog crawl — dedicated process (`pnpm worker:catalog`). */
+/** Local index / catalog crawl — dedicated process (`pnpm worker:icollect`). */
 export const ICOLLECT_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.icollectCatalogSync,
+  BACKGROUND_WORK_KIND.launchboxIndexSync,
+  BACKGROUND_WORK_KIND.nointroIndexSync,
 ];
 
 const KNOWN_WORKER_KINDS = new Set<string>(Object.values(BACKGROUND_WORK_KIND));
@@ -28,7 +34,7 @@ const KNOWN_WORKER_KINDS = new Set<string>(Object.values(BACKGROUND_WORK_KIND));
 /**
  * Parse `WORKER_KINDS` (comma-separated).
  * - unset / empty → `null` (all kinds — tests / explicit override)
- * - `interactive` → metadata + price
+ * - `interactive` → metadata + price + foil extract
  * - `catalog` → catalog sync only
  * - otherwise a comma list of kind ids
  */
@@ -92,6 +98,12 @@ export type PriceRefreshJobPayload = {
   shelfName: string;
   printKey?: string | null;
   force?: boolean;
+};
+
+import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+
+export type FoilExtractJobPayload = {
+  target: FoilExtractTarget;
 };
 
 export type BackgroundWorkJobRow = {
@@ -190,6 +202,30 @@ export async function cancelBackgroundWorkJobsForItem(
   return cancelOpenJobs({ itemId });
 }
 
+export async function cancelBackgroundWorkJobById(
+  jobId: string,
+  userId?: string | null,
+): Promise<boolean> {
+  const where: Prisma.BackgroundWorkJobWhereInput = {
+    id: jobId,
+    status: {
+      in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+    },
+  };
+  if (userId) where.userId = userId;
+
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where,
+    data: {
+      status: BACKGROUND_WORK_STATUS.cancelled,
+      finishedAt: new Date(),
+      lockedAt: null,
+      lockedBy: null,
+    },
+  });
+  return result.count > 0;
+}
+
 export async function cancelBackgroundWorkJobsForUser(
   userId: string,
 ): Promise<number> {
@@ -272,10 +308,21 @@ export async function claimNextBackgroundWorkJob(
               AND running_price."kind" = ${BACKGROUND_WORK_KIND.priceRefresh}
           ) < 1
         )
+        AND (
+          -- At most one long foil extract at a time (CDN scrape).
+          candidate."kind" <> ${BACKGROUND_WORK_KIND.foilExtract}
+          OR (
+            SELECT COUNT(*)::int
+            FROM "BackgroundWorkJob" AS running_foil
+            WHERE running_foil."status" = ${BACKGROUND_WORK_STATUS.running}
+              AND running_foil."kind" = ${BACKGROUND_WORK_KIND.foilExtract}
+          ) < 1
+        )
       ORDER BY
         CASE candidate."kind"
           WHEN ${BACKGROUND_WORK_KIND.metadataRefresh} THEN 0
           WHEN ${BACKGROUND_WORK_KIND.icollectCatalogSync} THEN 2
+          WHEN ${BACKGROUND_WORK_KIND.foilExtract} THEN 3
           ELSE 1
         END ASC,
         candidate."createdAt" ASC
@@ -370,23 +417,141 @@ export async function failBackgroundWorkJob(
   });
 }
 
-/** Re-queue jobs stuck in `running` after a worker crash. */
-export async function recoverStaleRunningBackgroundWorkJobs(
-  staleAfterMs = 30 * 60 * 1000,
+/** Keep a long-running job's lock fresh so stale recovery does not steal it. */
+export async function touchBackgroundWorkJobLock(
+  jobId: string,
+): Promise<boolean> {
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: {
+      id: jobId,
+      status: BACKGROUND_WORK_STATUS.running,
+    },
+    data: {
+      lockedAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+  return result.count > 0;
+}
+
+/**
+ * Re-queue this worker's running jobs (SIGINT / crash path).
+ * Without this, foil extracts stay `running` forever and block the one-at-a-time gate.
+ */
+export async function releaseRunningJobsForWorker(
+  workerId: string,
 ): Promise<number> {
-  const cutoff = new Date(Date.now() - staleAfterMs);
   const result = await prisma.backgroundWorkJob.updateMany({
     where: {
       status: BACKGROUND_WORK_STATUS.running,
-      lockedAt: { lt: cutoff },
+      lockedBy: workerId,
     },
     data: {
       status: BACKGROUND_WORK_STATUS.pending,
       lockedAt: null,
       lockedBy: null,
       runAfter: new Date(),
-      error: "Recovered stale running job after worker timeout",
+      error: "Released on worker shutdown — will retry",
+      updatedAt: new Date(),
     },
   });
   return result.count;
+}
+
+/** Default stale window for jobs that do not heartbeat. */
+export const DEFAULT_STALE_RUNNING_MS = 30 * 60 * 1000;
+/**
+ * Foil extracts heartbeat every ~60s. No touch for this long ⇒ zombie lock
+ * (worker died mid-spawn, or claim without execute).
+ */
+export const FOIL_STALE_RUNNING_MS = 5 * 60 * 1000;
+/** After this many claims that went stale, abandon instead of infinite requeue. */
+export const FOIL_STALE_MAX_ATTEMPTS = 2;
+
+export type StaleRecoveryResult = {
+  requeued: number;
+  abandoned: number;
+};
+
+/**
+ * Re-queue (or abandon) jobs stuck in `running` after a worker crash / orphan lock.
+ *
+ * Foil uses a short heartbeat window and is abandoned after
+ * {@link FOIL_STALE_MAX_ATTEMPTS} stale recoveries so zombies cannot block the
+ * single-foil gate forever.
+ */
+export async function recoverStaleRunningBackgroundWorkJobs(
+  staleAfterMs = DEFAULT_STALE_RUNNING_MS,
+  options?: {
+    foilStaleAfterMs?: number;
+    foilMaxAttempts?: number;
+  },
+): Promise<StaleRecoveryResult> {
+  const foilStaleMs = options?.foilStaleAfterMs ?? FOIL_STALE_RUNNING_MS;
+  const foilMaxAttempts = options?.foilMaxAttempts ?? FOIL_STALE_MAX_ATTEMPTS;
+  const now = Date.now();
+  const generalCutoff = new Date(now - staleAfterMs);
+  const foilCutoff = new Date(now - foilStaleMs);
+
+  const stale = await prisma.backgroundWorkJob.findMany({
+    where: {
+      status: BACKGROUND_WORK_STATUS.running,
+      OR: [
+        {
+          kind: BACKGROUND_WORK_KIND.foilExtract,
+          lockedAt: { lt: foilCutoff },
+        },
+        {
+          kind: { not: BACKGROUND_WORK_KIND.foilExtract },
+          lockedAt: { lt: generalCutoff },
+        },
+      ],
+    },
+    select: { id: true, kind: true, attempts: true },
+  });
+
+  let requeued = 0;
+  let abandoned = 0;
+
+  for (const job of stale) {
+    const isFoil = job.kind === BACKGROUND_WORK_KIND.foilExtract;
+    if (isFoil && job.attempts >= foilMaxAttempts) {
+      const result = await prisma.backgroundWorkJob.updateMany({
+        where: {
+          id: job.id,
+          status: BACKGROUND_WORK_STATUS.running,
+        },
+        data: {
+          status: BACKGROUND_WORK_STATUS.failed,
+          finishedAt: new Date(),
+          lockedBy: null,
+          error:
+            "Abandoned stale foil extract (no heartbeat — worker died or never ran)",
+          updatedAt: new Date(),
+        },
+      });
+      abandoned += result.count;
+      continue;
+    }
+
+    const result = await prisma.backgroundWorkJob.updateMany({
+      where: {
+        id: job.id,
+        status: BACKGROUND_WORK_STATUS.running,
+      },
+      data: {
+        status: BACKGROUND_WORK_STATUS.pending,
+        lockedAt: null,
+        lockedBy: null,
+        runAfter: new Date(),
+        error: isFoil
+          ? "Recovered stale foil extract — will retry"
+          : "Recovered stale running job after worker timeout",
+        updatedAt: new Date(),
+      },
+    });
+    requeued += result.count;
+  }
+
+  return { requeued, abandoned };
 }

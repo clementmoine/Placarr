@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  dropUnbakedRemoteMasks,
   localizePrintMasks,
   remoteMaskRequests,
   withLocalizedMasks,
@@ -69,6 +70,7 @@ describe("remoteMaskRequests", () => {
     expect(
       remoteMaskRequests([
         { foilMaskUrl: "/uploads/abc.jpg" },
+        { foilMaskUrl: "/foil/lorcana/cards/lorcana%3A1-1/foil_mask.jpg" },
         { foilMaskUrl: null, varnishMaskUrl: undefined },
         {},
       ]),
@@ -137,13 +139,33 @@ describe("localizePrintMasks", () => {
     const localize = vi.fn(async () => "/uploads/never.jpg");
 
     const out = await localizePrintMasks(
-      [{ foilMaskUrl: "/uploads/already.jpg" }],
+      [
+        { foilMaskUrl: "/uploads/already.jpg" },
+        { foilMaskUrl: "/foil/lorcana/cards/x/foil_mask.jpg" },
+      ],
       localize,
       runSerially,
     );
 
     expect(localize).not.toHaveBeenCalled();
-    expect(out).toEqual([{ foilMaskUrl: "/uploads/already.jpg" }]);
+    expect(out).toEqual([
+      { foilMaskUrl: "/uploads/already.jpg" },
+      { foilMaskUrl: "/foil/lorcana/cards/x/foil_mask.jpg" },
+    ]);
+  });
+
+  it("accepts /foil/ answers from the localizer", async () => {
+    const localize = vi.fn(async () => "/foil/lorcana/cards/x/foil_mask.jpg");
+
+    const out = await localizePrintMasks(
+      [{ foilMaskUrl: REMOTE }],
+      localize,
+      runSerially,
+    );
+
+    expect(out).toEqual([
+      { foilMaskUrl: "/foil/lorcana/cards/x/foil_mask.jpg" },
+    ]);
   });
 
   it("survives one unreachable mask without losing the others", async () => {
@@ -176,5 +198,43 @@ describe("localizePrintMasks", () => {
     );
 
     expect(out).toEqual([{ foilMaskUrl: REMOTE }]);
+  });
+
+  it("can drop remote masks that never baked (CSS alpha cannot wear JPEG)", async () => {
+    const localize = vi.fn(async ({ url }: { url: string }) => {
+      if (url === REMOTE) return null;
+      return "/uploads/bbb.png";
+    });
+
+    const out = await localizePrintMasks(
+      [
+        { foilMaskUrl: REMOTE, varnishMaskUrl: REMOTE_2 },
+        { foilMaskUrl: REMOTE_2 },
+      ],
+      localize,
+      runSerially,
+      { dropRemoteOnMiss: true },
+    );
+
+    expect(out).toEqual([
+      { foilMaskUrl: null, varnishMaskUrl: "/uploads/bbb.png" },
+      { foilMaskUrl: "/uploads/bbb.png" },
+    ]);
+  });
+});
+
+describe("dropUnbakedRemoteMasks", () => {
+  it("nulls leftover http masks and keeps local uploads and pack foil", () => {
+    expect(
+      dropUnbakedRemoteMasks({
+        foilMaskUrl: REMOTE,
+        varnishMaskUrl: "/uploads/baked.png",
+        secondVarnishMaskUrl: "/foil/lorcana/cards/x/varnish_mask.jpg",
+      }),
+    ).toEqual({
+      foilMaskUrl: null,
+      varnishMaskUrl: "/uploads/baked.png",
+      secondVarnishMaskUrl: "/foil/lorcana/cards/x/varnish_mask.jpg",
+    });
   });
 });

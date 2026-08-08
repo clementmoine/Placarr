@@ -40,6 +40,12 @@ describe("buildPrintKey", () => {
     );
   });
 
+  it("accepts dotted TCGdex set codes", () => {
+    expect(
+      buildPrintKey({ game: "pokemon", set: "sv03.5", number: "006" }),
+    ).toBe("pokemon:sv03.5-006");
+  });
+
   it("treats an absent grouping and an empty one alike", () => {
     const withNull = buildPrintKey({
       game: "lorcana",

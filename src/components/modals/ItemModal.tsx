@@ -109,8 +109,8 @@ import {
 } from "@/core/collect/media";
 import {
   findAttachmentForUrl,
-  isCropDerivativeUrl,
-  stripCropSuffixFromUrl,
+  isEditDerivativeUrl,
+  stripEditSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
@@ -529,9 +529,15 @@ export function ItemModal({
       prefilledValues?.barcode,
   );
   /**
-   * Bumped on every applied crop. Re-cropping overwrites the same filename, so
-   * without a changing URL the browser and next/image keep serving the previous
-   * version — the thumbnail only refreshed on a full page reload.
+   * When the crop on screen was applied. Re-cropping overwrites the same
+   * filename, so without a changing URL the browser and next/image keep serving
+   * the previous version — the thumbnail only refreshed on a full page reload.
+   *
+   * A timestamp, not a counter. A counter restarts at 1 in every modal, so the
+   * first crop of each session asked for `?v=1` again — the one URL already in
+   * the browser's cache from the session before, which is exactly when a
+   * collector re-crops. That made cropping look broken while the file on disk
+   * was perfectly correct.
    */
   const [cropVersion, setCropVersion] = useState(0);
 
@@ -715,13 +721,12 @@ export function ItemModal({
 
     const urls = new Set<string>();
     const list: {
-      url: string;
       /**
-       * What the thumbnail loads, when that has to differ from the URL the form
-       * stores — a cache-busted crop. The query must never reach `url`, or a
-       * save would persist it.
+       * The URL the form stores. Never carries a query: what the thumbnail
+       * loads is {@link displayUrlFor} of this, applied at render time, and a
+       * cache-busting `?v=` reaching `url` would be persisted by a save.
        */
-      displayUrl?: string;
+      url: string;
       type: string;
       label: string;
       source?: string | null;
@@ -778,10 +783,16 @@ export function ItemModal({
    * nothing changed and the thumbnail stays stale until a reload. Display only —
    * the form keeps the clean URL, and every comparison goes through
    * `urlsReferToSameLocalizedImage`, which drops the query.
+   *
+   * Applied to **every** tile, at the point it is rendered. Stamping it only on
+   * the row whose URL had just changed meant a crop refreshed the thumbnail
+   * exactly once: as soon as one was saved, the stored attachment *was* the
+   * `_edited` file, so every later re-crop left the row's URL untouched and the
+   * gallery kept showing the first framing.
    */
   const displayUrlFor = useCallback(
     (url: string): string =>
-      cropVersion && isCropDerivativeUrl(url) ? `${url}?v=${cropVersion}` : url,
+      cropVersion && isEditDerivativeUrl(url) ? `${url}?v=${cropVersion}` : url,
     [cropVersion],
   );
 
@@ -800,16 +811,11 @@ export function ItemModal({
       );
       if (rowIndex >= 0) {
         if (list[rowIndex]!.url !== currentBackgroundUrl) {
-          list[rowIndex] = {
-            ...list[rowIndex]!,
-            url: currentBackgroundUrl,
-            displayUrl: displayUrlFor(currentBackgroundUrl),
-          };
+          list[rowIndex] = { ...list[rowIndex]!, url: currentBackgroundUrl };
         }
       } else {
         list.unshift({
           url: currentBackgroundUrl,
-          displayUrl: displayUrlFor(currentBackgroundUrl),
           type: "custom",
           label: t("items.editTabs.chooseImage"),
         });
@@ -817,7 +823,7 @@ export function ItemModal({
     }
 
     return list;
-  }, [availableBackgrounds, currentBackgroundUrl, displayUrlFor, t]);
+  }, [availableBackgrounds, currentBackgroundUrl, t]);
 
   const totalBgPages = useMemo(
     () => Math.ceil(finalBackgrounds.length / 12) || 1,
@@ -934,11 +940,11 @@ export function ItemModal({
       if (attachment.url) metadataImageUrls.add(attachment.url);
     }
 
-    // The stored cover is cropped to a new "_crop" file, so its URL no longer
+    // The stored cover is cropped to a new "_edited" file, so its URL no longer
     // matches the gallery attachment it was derived from. Index attachments by
     // their crop-normalized URL so the cover still inherits its real provenance
     // (source + region role) instead of looking like an orphan.
-    const stripCrop = stripCropSuffixFromUrl;
+    const stripCrop = stripEditSuffixFromUrl;
     const attachmentByNormalizedUrl = new Map<string, MetadataAttachment>();
     for (const attachment of metadata?.attachments || []) {
       if (attachment.url) {
@@ -1073,12 +1079,6 @@ export function ItemModal({
 
       return {
         url: attachment.url,
-        /**
-         * What the thumbnail loads, when that has to differ from the URL the
-         * form stores — a cache-busted crop. The query must never reach `url`,
-         * or a save would persist it.
-         */
-        displayUrl: undefined as string | undefined,
         type: attachment.type,
         label,
         source: attachment.source,
@@ -1147,18 +1147,13 @@ export function ItemModal({
         urlsReferToSameLocalizedImage(img.url, currentImageUrl),
       );
       if (rowIndex >= 0 && list[rowIndex]!.url !== currentImageUrl) {
-        list[rowIndex] = {
-          ...list[rowIndex]!,
-          url: currentImageUrl,
-          displayUrl: displayUrlFor(currentImageUrl),
-        };
+        list[rowIndex] = { ...list[rowIndex]!, url: currentImageUrl };
       }
     }
 
     if (pendingUploadPreviewUrl) {
       list.unshift({
         url: pendingUploadPreviewUrl,
-        displayUrl: undefined,
         type: "image",
         label: t("items.editTabs.chooseImage"),
         source: "user",
@@ -1198,7 +1193,6 @@ export function ItemModal({
 
       list.unshift({
         url: currentImageUrl,
-        displayUrl: displayUrlFor(currentImageUrl),
         type: provenance?.type ?? "image",
         label: gallery?.caption ?? t("items.editTabs.chooseImage"),
         source: provenance?.source ?? null,
@@ -1213,7 +1207,6 @@ export function ItemModal({
   }, [
     availableImages,
     currentImageUrl,
-    displayUrlFor,
     pendingUploadPreviewUrl,
     itemId,
     item,
@@ -2021,28 +2014,29 @@ export function ItemModal({
 
                     {/* Condition — hidden for TCG (finish is the copy axis). */}
                     {shelfShowsItemCondition(activeShelfType) && (
-                    <FormField
-                      control={form.control}
-                      name="condition"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t("items.condition")}
-                          </FormLabel>
-                          <FormControl>
-                            <ToggleGroup
-                              size="sm"
-                              type="single"
-                              variant="outline"
-                              className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                              value={field.value}
-                              onValueChange={(value) => {
-                                // Radix allows clearing a single toggle — keep one grade selected.
-                                if (value) field.onChange(value);
-                              }}
-                            >
-                              {itemConditionsForShelfType(activeShelfType).map(
-                                (condition) => {
+                      <FormField
+                        control={form.control}
+                        name="condition"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t("items.condition")}
+                            </FormLabel>
+                            <FormControl>
+                              <ToggleGroup
+                                size="sm"
+                                type="single"
+                                variant="outline"
+                                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                                value={field.value}
+                                onValueChange={(value) => {
+                                  // Radix allows clearing a single toggle — keep one grade selected.
+                                  if (value) field.onChange(value);
+                                }}
+                              >
+                                {itemConditionsForShelfType(
+                                  activeShelfType,
+                                ).map((condition) => {
                                   const isActive = field.value === condition;
                                   return (
                                     <ToggleGroupItem
@@ -2064,14 +2058,13 @@ export function ItemModal({
                                       </span>
                                     </ToggleGroupItem>
                                   );
-                                },
-                              )}
-                            </ToggleGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                                })}
+                              </ToggleGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     )}
 
                     {/* One option is not a choice, so it is not offered. */}
@@ -2284,7 +2277,7 @@ export function ItemModal({
                                     style={{ aspectRatio: itemAspectRatio }}
                                   >
                                     <RemoteImage
-                                      src={img.displayUrl ?? img.url}
+                                      src={displayUrlFor(img.url)}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
@@ -2545,7 +2538,7 @@ export function ItemModal({
                                     )}
                                   >
                                     <RemoteImage
-                                      src={img.displayUrl ?? img.url}
+                                      src={displayUrlFor(img.url)}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -2757,7 +2750,7 @@ export function ItemModal({
           form.setValue(cropTarget?.field ?? "imageUrl", url, {
             shouldDirty: true,
           });
-          setCropVersion((version) => version + 1);
+          setCropVersion(Date.now());
         }}
       />
     </>

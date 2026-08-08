@@ -48,8 +48,9 @@ import { isCoverResolutionAcceptable } from "@/core/enrich/media/coverResolution
 import {
   findAttachmentForUrl,
   isCoverEligibleAttachmentType,
+  isEditDerivativeUrl,
   isUrlEligibleDefaultCover,
-  stripCropSuffixFromUrl,
+  stripEditSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import {
@@ -166,7 +167,7 @@ function pinUserCoversFirst(
     ranked
       .filter((attachment) => normalizeSourceKey(attachment.source) !== "user")
       .map((attachment) =>
-        attachment.url ? stripCropSuffixFromUrl(attachment.url) : "",
+        attachment.url ? stripEditSuffixFromUrl(attachment.url) : "",
       )
       .filter(Boolean),
   );
@@ -174,7 +175,7 @@ function pinUserCoversFirst(
   const rest: ScoredAttachmentInput[] = [];
   for (const attachment of ranked) {
     if (attachment.source === "user") {
-      const key = attachment.url ? stripCropSuffixFromUrl(attachment.url) : "";
+      const key = attachment.url ? stripEditSuffixFromUrl(attachment.url) : "";
       // Honor pin sharing the catalog file must not appear as a leading "Perso"
       // card — URL dedupe already prefers the provider row.
       if (key && catalogKeys.has(key)) {
@@ -658,7 +659,7 @@ function dedupeAttachmentsByImageUrl(
 
   for (const attachment of list) {
     if (!attachment.url) continue;
-    const key = stripCropSuffixFromUrl(attachment.url);
+    const key = stripEditSuffixFromUrl(attachment.url);
     const existing = byKey.get(key);
     if (!existing) {
       byKey.set(key, attachment);
@@ -683,11 +684,11 @@ function dedupeAttachmentsByImageUrl(
 }
 
 function isLocalCropUploadUrl(url: string): boolean {
-  return url.startsWith("/uploads/") && /_crop\.[^.]+$/i.test(url);
+  return url.startsWith("/uploads/") && isEditDerivativeUrl(url);
 }
 
 /**
- * Affiche picker: a Perso `/uploads/…_crop` pin beside its remote catalog
+ * Affiche picker: a Perso `/uploads/…_edited` pin beside its remote catalog
  * jaquette (failed remote→local fold) is the same art twice. Keep the crop as
  * the display URL and inherit catalog provenance; drop the redundant remote.
  */

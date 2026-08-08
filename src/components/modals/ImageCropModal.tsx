@@ -6,7 +6,13 @@ import ReactCrop, {
   centerCrop,
   convertToPixelCrop,
 } from "react-image-crop";
-import { Loader2, RotateCcw, Wand2 } from "lucide-react";
+import {
+  Loader2,
+  RotateCcw,
+  RotateCcwSquare,
+  RotateCwSquare,
+  Wand2,
+} from "lucide-react";
 
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -20,7 +26,32 @@ type CropSuggestion = {
   height: number;
   imageWidth: number;
   imageHeight: number;
+  /** Quarter-turn applied before the rectangle was drawn, in degrees. */
+  rotate?: number;
 };
+
+/**
+ * The rotated bitmap the editor actually works on, as a data URL.
+ *
+ * Rotating the preview rather than the crop rectangle is what keeps this honest:
+ * `react-image-crop` measures the element it is given, so a CSS transform would
+ * leave the rectangle in the *untransformed* space and every coordinate would
+ * need undoing. Handing it a bitmap that is already turned means the box comes
+ * out in exactly the space the server will extract from — no conversion, no
+ * sign conventions to get wrong.
+ */
+function rotatedDataUrl(image: HTMLImageElement, degrees: number): string {
+  const odd = degrees % 180 === 90;
+  const canvas = document.createElement("canvas");
+  canvas.width = odd ? image.naturalHeight : image.naturalWidth;
+  canvas.height = odd ? image.naturalWidth : image.naturalHeight;
+  const context = canvas.getContext("2d");
+  if (!context) return image.src;
+  context.translate(canvas.width / 2, canvas.height / 2);
+  context.rotate((degrees * Math.PI) / 180);
+  context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+  return canvas.toDataURL("image/png");
+}
 
 type ImageCropModalProps = {
   /** Image to reframe. May be remote — the server localizes it first. */
@@ -66,6 +97,18 @@ export function ImageCropModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Quarter-turn the collector has asked for, in degrees. */
+  const [rotate, setRotate] = useState(0);
+  /**
+   * The turned bitmap, tagged with the angle it was made for.
+   *
+   * Tagged rather than cleared on every turn: a stale bitmap simply stops
+   * matching, so nothing has to be reset synchronously and the previous
+   * rotation can never flash on screen while the next one encodes.
+   */
+  const [turned, setTurned] = useState<{ degrees: number; url: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isOpen || !imageUrl) return;
@@ -90,6 +133,8 @@ export function ImageCropModal({
         setSourceUrl(data.url);
         setSuggestion(data.suggestion);
         setCurrent(data.current);
+        // Reopening shows what is applied, rotation included.
+        setRotate(data.current?.rotate ?? 0);
       } catch {
         if (!cancelled) setError(t("errors.genericMessage"));
       } finally {
@@ -101,6 +146,36 @@ export function ImageCropModal({
       cancelled = true;
     };
   }, [isOpen, imageUrl, role, t]);
+
+  /**
+   * Turn the source into the bitmap the editor works on. At 0° that is the
+   * source itself — no re-encode for the overwhelmingly common case.
+   */
+  useEffect(() => {
+    if (!sourceUrl || rotate === 0) return;
+    let cancelled = false;
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      if (!cancelled) {
+        setTurned({ degrees: rotate, url: rotatedDataUrl(image, rotate) });
+      }
+    };
+    image.onerror = () => {
+      // Fall back to the upright source rather than a blank editor; the
+      // rotation is still sent, so the result is right even if the preview
+      // could not be turned.
+      if (!cancelled) setTurned({ degrees: rotate, url: sourceUrl });
+    };
+    image.src = sourceUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceUrl, rotate]);
+
+  /** What the editor shows: the source upright, the turned bitmap otherwise. */
+  const previewUrl =
+    rotate === 0 ? sourceUrl : turned?.degrees === rotate ? turned.url : null;
 
   /** Percentages, so a rectangle survives the displayed-size scaling. */
   const asPercentCrop = useCallback((box: CropSuggestion): Crop | null => {
@@ -124,7 +199,18 @@ export function ImageCropModal({
       const image = event.currentTarget;
       imageRef.current = image;
 
-      const seed = current ?? suggestion;
+      /*
+        Both seeds are tied to an orientation: the stored box was drawn in its
+        own rotation's space, and the automatic suggestion was measured on the
+        upright image. Replaying either under a different turn would frame the
+        wrong region, so at a new angle the editor starts from the whole frame.
+      */
+      const seed =
+        current && (current.rotate ?? 0) === rotate
+          ? current
+          : rotate === 0
+            ? suggestion
+            : null;
       const percent = seed ? asPercentCrop(seed) : null;
       if (percent) {
         setCrop(percent);
@@ -139,8 +225,18 @@ export function ImageCropModal({
         ),
       );
     },
-    [current, suggestion, asPercentCrop],
+    [current, suggestion, rotate, asPercentCrop],
   );
+
+  /**
+   * Turn by a quarter, wrapping. The rectangle is dropped: it was drawn in the
+   * previous orientation, and carrying it over would frame a region the
+   * collector never chose.
+   */
+  const turnBy = useCallback((delta: number) => {
+    setRotate((previous) => (((previous + delta) % 360) + 360) % 360);
+    setCrop(undefined);
+  }, []);
 
   /** Offer the automatic framing as a one-click alternative, never as a default. */
   const handleAutoCrop = useCallback(() => {
@@ -175,6 +271,7 @@ export function ImageCropModal({
         body: JSON.stringify({
           url: sourceUrl,
           role,
+          rotate,
           crop: {
             left: Math.round(pixelCrop.x * scaleX),
             top: Math.round(pixelCrop.y * scaleY),
@@ -192,7 +289,7 @@ export function ImageCropModal({
     } finally {
       setIsSaving(false);
     }
-  }, [crop, sourceUrl, role, onCropped, onClose, t]);
+  }, [crop, sourceUrl, role, rotate, onCropped, onClose, t]);
 
   /**
    * Hand back the untouched original — the crop was only ever a derivative.
@@ -249,6 +346,29 @@ export function ImageCropModal({
               <Wand2 className="size-4" />
               {t("items.cropImage.auto")}
             </button>
+            {/* Quarter turns only: lossless, and the whole point is a scan that
+                arrived on its side. A free angle would need resampling and a
+                background to fill the corners it opens up. */}
+            <button
+              type="button"
+              onClick={() => turnBy(-90)}
+              disabled={!previewUrl || isSaving}
+              title={t("items.cropImage.rotateLeft")}
+              aria-label={t("items.cropImage.rotateLeft")}
+              className="inline-flex items-center justify-center rounded-xl size-10 border border-border bg-card hover:bg-accent disabled:opacity-50 cursor-pointer"
+            >
+              <RotateCcwSquare className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => turnBy(90)}
+              disabled={!previewUrl || isSaving}
+              title={t("items.cropImage.rotateRight")}
+              aria-label={t("items.cropImage.rotateRight")}
+              className="inline-flex items-center justify-center rounded-xl size-10 border border-border bg-card hover:bg-accent disabled:opacity-50 cursor-pointer"
+            >
+              <RotateCwSquare className="size-4" />
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -276,7 +396,7 @@ export function ImageCropModal({
         {error && (
           <p className="text-sm font-medium text-destructive">{error}</p>
         )}
-        {!isLoading && sourceUrl && (
+        {!isLoading && previewUrl && (
           <ReactCrop
             crop={crop}
             onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -284,7 +404,7 @@ export function ImageCropModal({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={sourceUrl}
+              src={previewUrl}
               alt=""
               onLoad={handleImageLoad}
               className="max-h-[55vh] w-auto"

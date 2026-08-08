@@ -23,7 +23,7 @@
 
 # misc
 .DS_Store
-.cache/
+cache/
 *.pem
 
 # debug
@@ -61,20 +61,42 @@ prisma/*.sql.dump
 # Client généré (prisma generate / postinstall)
 /src/generated/prisma/
 
-# Médias téléchargés/uploadés à l'exécution (données runtime, pas du source)
-/public/uploads/**
-!/public/uploads/.gitkeep
+# Médias / foil / indexes runtime (jamais versionnés)
+/data/**
+!/data/**/.gitkeep
+
+# JSON générés par les dumpers (stubs via `pnpm foil:ensure`)
+/src/effects/lorcana/manifest.json
+/src/effects/lorcana/cards-index.json
+/src/effects/pokemon/cards.json
+/src/effects/pokemon/materialSheets.json
+/src/effects/pokemon/textureFlags.json
 
 # Caches providers locaux (SQLite) et dumps DB éventuels
+# (indexes live under data/<domaine>/)
+
+# Legacy paths — must never return
+/public/uploads/**
+/public/foil
+/config/placarr/effects/**
+
 *.sqlite
 *.sqlite3
 *.sqlite-journal
 
 # Scripts et données de debug locaux
 /scratch/
+scripts/lorcana/.venv/
+scripts/pokemon/.venv/
+scripts/lorcana/bin/
+scripts/pokemon/bin/
 
 # Cursor IDE
 .cursor/
 # Outillage local Claude Code (preview/launch)
 /.claude/
 __pycache__/
+
+# Spool de sniffing / audit Live — contient des tokens OAuth, ne jamais committer
+.tmp-foil-audit/
+.tmp-rebase-aside/

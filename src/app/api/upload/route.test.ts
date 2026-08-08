@@ -9,6 +9,11 @@ const h = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth", () => ({ requireGuestOrHigher: h.requireGuestOrHigher }));
 vi.mock("fs/promises", () => ({ mkdir: h.mkdir, writeFile: h.writeFile }));
+vi.mock("@/lib/media/losslessWebp", () => ({
+  toUploadWebp: async (buf: Buffer) => buf,
+  toLosslessWebp: async (buf: Buffer) => buf,
+  UPLOAD_WEBP_QUALITY: 88,
+}));
 
 import { POST } from "./route";
 import { resetRateLimitsForTests } from "@/lib/http/rateLimit";
@@ -104,7 +109,7 @@ describe("POST /api/upload", () => {
     expect(h.writeFile).not.toHaveBeenCalled();
   });
 
-  it("écrit un PNG valide; l'extension vient du MIME, le nom est aléatoire (pas le nom client)", async () => {
+  it("écrit un WebP q88; extension fixe .webp, le nom est aléatoire (pas le nom client)", async () => {
     const res = await POST(
       uploadReq(
         new File([PNG_BYTES], "../evil name.jpeg", { type: "image/png" }),
@@ -113,9 +118,9 @@ describe("POST /api/upload", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    // Nom = UUID, extension dérivée du MIME → pas de path traversal ni de
+    // Nom = UUID, toujours .webp après ré-encodage — pas de path traversal ni de
     // confusion d'extension via le nom client.
-    expect(json.url).toMatch(/^\/uploads\/[a-f0-9-]+\.png$/);
+    expect(json.url).toMatch(/^\/uploads\/[a-f0-9-]+\.webp$/);
     expect(h.writeFile).toHaveBeenCalledTimes(1);
   });
 });

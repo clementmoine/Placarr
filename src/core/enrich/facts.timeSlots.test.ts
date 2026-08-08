@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dedupeFacts } from "@/core/enrich/facts";
+import { dedupeFacts, dedupeFieldEvidence } from "@/core/enrich/facts";
 import type { MetadataFact } from "@/types/metadataProvider";
 
 /**
@@ -13,6 +13,86 @@ import type { MetadataFact } from "@/types/metadataProvider";
  * Le dédup par créneau sémantique garantit UN fact temps principal + UN fact
  * complétion (priorité max), à l'écriture comme à la lecture.
  */
+describe("dedupeFacts — provider slots", () => {
+  it("collapses conflicting values from the same provider slot to the fresher row", () => {
+    const deduped =
+      dedupeFacts([
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+          priority: 45,
+        },
+        {
+          kind: "tag",
+          label: "Type",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 31,
+        },
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11/108",
+          source: "tcgdex",
+          priority: 45,
+        },
+        {
+          kind: "tag",
+          label: "Type",
+          value: "Feu",
+          source: "tcgdex",
+          priority: 31,
+        },
+      ]) ?? [];
+
+    expect(deduped.find((fact) => fact.label === "Numéro")?.value).toBe(
+      "11/108",
+    );
+    expect(deduped.find((fact) => fact.label === "Type")?.value).toBe("Feu");
+  });
+});
+
+describe("dedupeFieldEvidence — fact slots", () => {
+  it("keeps one value per fact field+source, preferring the later row", () => {
+    const deduped = dedupeFieldEvidence([
+      {
+        field: "format:Numéro",
+        source: "tcgdex",
+        value: "11",
+        priority: 45,
+      },
+      {
+        field: "format:Numéro",
+        source: "tcgdex",
+        value: "11/108",
+        priority: 45,
+      },
+      {
+        field: "cover",
+        source: "tcgdex",
+        value: "https://assets.tcgdex.net/a.png",
+      },
+      {
+        field: "cover",
+        source: "tcgdex",
+        value: "/uploads/local.png",
+      },
+    ]);
+
+    expect(
+      deduped.filter((row) => row.field === "format:Numéro").map((row) => row.value),
+    ).toEqual(["11/108"]);
+    expect(
+      deduped.filter((row) => row.field === "cover").map((row) => row.value),
+    ).toEqual([
+      "https://assets.tcgdex.net/a.png",
+      "/uploads/local.png",
+    ]);
+  });
+});
+
 describe("dedupeFacts — créneaux temps de jeu", () => {
   const legacySevenDaysFacts: MetadataFact[] = [
     {

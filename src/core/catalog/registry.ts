@@ -30,6 +30,9 @@ import { fullsetModule } from "@/providers/fullset";
 import { lorcanajsonModule } from "@/providers/lorcanajson";
 import { lorcanaggModule } from "@/providers/lorcanagg";
 import { lorcastModule } from "@/providers/lorcast";
+import { lorcanatcgModule } from "@/providers/lorcanatcg";
+import { tcgdexModule } from "@/providers/tcgdex";
+import { pokemontcgliveModule } from "@/providers/pokemontcglive";
 import { furetModule } from "@/providers/furet";
 import { geedieModule } from "@/providers/geedie";
 import { gibertModule } from "@/providers/gibert";
@@ -108,8 +111,11 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   senscritiqueModule,
   fullsetModule,
   lorcanajsonModule,
+  lorcanatcgModule,
   lorcanaggModule,
   lorcastModule,
+  tcgdexModule,
+  pokemontcgliveModule,
   ...PRESTASHOP_RETAILER_MODULES,
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,

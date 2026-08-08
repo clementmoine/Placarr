@@ -1,0 +1,384 @@
+#!/usr/bin/env node
+/**
+ * Scrape Lorcana catalogue media (masks + art) as published bytes into
+ * data/lorcana/foil/cards/{printKey}/{lang}/ — all LorcanaJSON languages
+ * (fr, en, de, it).
+ *
+ *   pnpm foil:lorcana:cards
+ *   pnpm foil:lorcana -- --providers lorcanacards
+ *   pnpm foil:lorcana:cards -- --force
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+import {
+  isLorcanaLanguage,
+  loadLorcanaIndex,
+  LORCANA_LANGUAGES,
+  type LorcanaCard,
+  type LorcanaLanguage,
+} from "@/providers/lorcanajson/fetch";
+import { dataRoot } from "@/lib/runtimeData";
+import {
+  exportLorcanaCardsIndexJson,
+  writeLorcanaTcgIndex,
+  type LorcanaTcgAssetRow,
+  type LorcanaTcgPrintRow,
+  type LorcanaTcgTitleRow,
+} from "./indexStore";
+
+export type ScrapeLorcanaCardsOptions = {
+  force?: boolean;
+  root?: string;
+};
+
+const CONCURRENCY = 6;
+/** Same languages as LorcanaJSON — keep local sqlite + pack faces in sync. */
+const SCRAPE_LANGUAGES = LORCANA_LANGUAGES;
+
+/** Old flat layout `cards/{printKey}/art.jpg` — superseded by `{printKey}/{lang}/`. */
+const LEGACY_ROOT_ASSET_NAMES = [
+  "art.jpg",
+  "art.jpeg",
+  "art.png",
+  "art.webp",
+  "thumb.jpg",
+  "thumb.jpeg",
+  "thumb.png",
+  "thumb.webp",
+  "foil_mask.jpg",
+  "foil_mask.jpeg",
+  "foil_mask.png",
+  "foil_mask.webp",
+  "varnish_mask.jpg",
+  "varnish_mask.jpeg",
+  "varnish_mask.png",
+  "varnish_mask.webp",
+  "second_varnish_mask.jpg",
+  "second_varnish_mask.jpeg",
+  "second_varnish_mask.png",
+  "second_varnish_mask.webp",
+] as const;
+
+type LangFiles = {
+  foilMask?: string;
+  varnishMask?: string;
+  secondVarnishMask?: string;
+  art?: string;
+  thumb?: string;
+};
+
+type Job = {
+  printKey: string;
+  language: LorcanaLanguage;
+  field: keyof LangFiles;
+  file: string;
+  url: string;
+  dest: string;
+};
+
+function extFromUrl(url: string): string {
+  try {
+    const ext = path.extname(new URL(url).pathname).toLowerCase();
+    if ([".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+      return ext === ".jpeg" ? ".jpg" : ext;
+    }
+  } catch {
+    /* ignore */
+  }
+  return ".jpg";
+}
+
+async function downloadRaw(
+  url: string,
+  destPath: string,
+  skipExisting: boolean,
+): Promise<"ok" | "skip"> {
+  if (skipExisting && fs.existsSync(destPath)) return "skip";
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status} ${url}`);
+  const buf = Buffer.from(await response.arrayBuffer());
+  await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
+  await fs.promises.writeFile(destPath, buf);
+  return "ok";
+}
+
+async function runPool<T>(
+  items: readonly T[],
+  worker: (item: T, index: number) => Promise<void>,
+): Promise<unknown[]> {
+  let i = 0;
+  const errors: unknown[] = [];
+  const runners = Array.from(
+    { length: Math.min(CONCURRENCY, items.length || 1) },
+    async () => {
+      while (i < items.length) {
+        const idx = i;
+        i += 1;
+        try {
+          await worker(items[idx]!, idx);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+    },
+  );
+  await Promise.all(runners);
+  return errors;
+}
+
+/**
+ * Remove legacy flat files under `cards/{printKey}/` when a lang folder exists.
+ * Current scrape only writes `cards/{printKey}/{lang}/…`.
+ */
+export function cleanupLegacyPrintRootAssets(cardsDir: string): {
+  removed: number;
+  bytes: number;
+} {
+  if (!fs.existsSync(cardsDir)) return { removed: 0, bytes: 0 };
+  let removed = 0;
+  let bytes = 0;
+  for (const name of fs.readdirSync(cardsDir)) {
+    const printDir = path.join(cardsDir, name);
+    if (!fs.statSync(printDir).isDirectory()) continue;
+    const hasLang = SCRAPE_LANGUAGES.some((lang) =>
+      fs.existsSync(path.join(printDir, lang)),
+    );
+    if (!hasLang) continue;
+    for (const file of LEGACY_ROOT_ASSET_NAMES) {
+      const target = path.join(printDir, file);
+      if (!fs.existsSync(target) || !fs.statSync(target).isFile()) continue;
+      bytes += fs.statSync(target).size;
+      fs.unlinkSync(target);
+      removed += 1;
+    }
+  }
+  return { removed, bytes };
+}
+
+/** Drop flat art/mask keys once per-lang folders are indexed. */
+export function stripLegacyFlatIndexKeys(
+  cards: Record<string, Record<string, unknown>>,
+): number {
+  const flatKeys = [
+    "art",
+    "thumb",
+    "foilMask",
+    "varnishMask",
+    "secondVarnishMask",
+  ] as const;
+  let stripped = 0;
+  for (const entry of Object.values(cards)) {
+    const hasLang = SCRAPE_LANGUAGES.some((lang) => {
+      const files = entry[lang];
+      return Boolean(files && typeof files === "object");
+    });
+    if (!hasLang) continue;
+    for (const key of flatKeys) {
+      if (key in entry) {
+        delete entry[key];
+        stripped += 1;
+      }
+    }
+  }
+  return stripped;
+}
+
+function collectJobsForCard(
+  card: LorcanaCard,
+  cardsDir: string,
+): Job[] {
+  const language = card.language;
+  const dir = path.join(cardsDir, card.printKey, language);
+  const jobs: Job[] = [];
+
+  const add = (field: keyof LangFiles, fileStem: string, url: string) => {
+    const file = `${fileStem}${extFromUrl(url)}`;
+    jobs.push({
+      printKey: card.printKey,
+      language,
+      field,
+      file,
+      url,
+      dest: path.join(dir, file),
+    });
+  };
+
+  if (card.foilMaskUrl) add("foilMask", "foil_mask", card.foilMaskUrl);
+  if (card.varnishMaskUrl) add("varnishMask", "varnish_mask", card.varnishMaskUrl);
+  if (card.secondVarnishMaskUrl) {
+    add("secondVarnishMask", "second_varnish_mask", card.secondVarnishMaskUrl);
+  }
+  const artUrl = card.fullFoilUrl ?? card.imageUrl;
+  if (artUrl) add("art", "art", artUrl);
+  if (card.thumbnailUrl && card.thumbnailUrl !== artUrl) {
+    add("thumb", "thumb", card.thumbnailUrl);
+  }
+  return jobs;
+}
+
+export async function scrapeLorcanaCards(
+  opts: ScrapeLorcanaCardsOptions = {},
+): Promise<{
+  ok: number;
+  skip: number;
+  fail: number;
+  prints: number;
+  sqlite: string;
+}> {
+  const root = opts.root ?? path.resolve(dataRoot(), "..");
+  const skipExisting = !opts.force;
+  const cardsDir = path.join(root, "data/lorcana/foil/cards");
+  const indexPath = path.join(root, "data/lorcana/foil/cards-index.json");
+  const srcIndexPath = path.join(root, "src/effects/lorcana/cards-index.json");
+  const dbPath = path.join(root, "data/lorcana/lorcana.sqlite");
+
+  console.log(
+    `Loading Lorcana indexes (${SCRAPE_LANGUAGES.join(" + ")})…`,
+  );
+
+  const jobs: Job[] = [];
+  const prints = new Map<string, LorcanaTcgPrintRow>();
+  const titles: LorcanaTcgTitleRow[] = [];
+  const assetsByKey = new Map<string, LorcanaTcgAssetRow>();
+
+  // Seed assets from previous sqlite so --skip keeps paths for untouched files.
+  const prior = exportLorcanaCardsIndexJson(dbPath);
+  if (prior) {
+    for (const [printKey, entry] of Object.entries(prior.cards)) {
+      for (const lang of SCRAPE_LANGUAGES) {
+        const files = entry[lang];
+        if (!files || typeof files !== "object") continue;
+        assetsByKey.set(`${printKey}\0${lang}`, {
+          printKey,
+          lang,
+          art: files.art ?? null,
+          thumb: files.thumb ?? null,
+          foilMask: files.foilMask ?? null,
+          varnishMask: files.varnishMask ?? null,
+          secondVarnishMask: files.secondVarnishMask ?? null,
+        });
+      }
+    }
+  }
+
+  for (const language of SCRAPE_LANGUAGES) {
+    const index = await loadLorcanaIndex(language);
+    console.log(`  ${language}: ${index.cards.length} cards`);
+    for (const card of index.cards) {
+      if (!isLorcanaLanguage(card.language)) continue;
+      // Language-agnostic print facts: last write wins (FR then EN); cost /
+      // foilTypes / artists are stable across locales in LorcanaJSON.
+      prints.set(card.printKey, {
+        printKey: card.printKey,
+        setCode: card.setCode,
+        number: String(card.number),
+        variant: card.variant,
+        promoGrouping: card.promoGrouping,
+        providerId: card.providerId,
+        cost: card.cost,
+        artists: card.artists.length ? card.artists : null,
+        foilTypes: card.foilTypes.length ? card.foilTypes : null,
+        varnishType: card.varnishType,
+        cardmarketUrl: card.cardmarketUrl,
+      });
+      titles.push({
+        printKey: card.printKey,
+        lang: language,
+        fullName: card.fullName,
+        name: card.name,
+        version: card.version,
+        setName: card.setName,
+        rarity: card.rarity,
+        cardType: card.cardType,
+        color: card.color,
+        story: card.story,
+        flavorText: card.flavorText,
+        searchName: card.searchName,
+        imageUrl: card.imageUrl,
+        thumbnailUrl: card.thumbnailUrl,
+        fullFoilUrl: card.fullFoilUrl,
+        foilMaskUrl: card.foilMaskUrl,
+        varnishMaskUrl: card.varnishMaskUrl,
+        secondVarnishMaskUrl: card.secondVarnishMaskUrl,
+      });
+      jobs.push(...collectJobsForCard(card, cardsDir));
+    }
+  }
+
+  console.log(
+    `Jobs ${jobs.length} (prints ${prints.size}, skip_existing=${skipExisting})`,
+  );
+
+  let ok = 0;
+  let skip = 0;
+  let fail = 0;
+  const errors = await runPool(jobs, async (job) => {
+    try {
+      const result = await downloadRaw(job.url, job.dest, skipExisting);
+      if (result === "skip") skip += 1;
+      else ok += 1;
+      const key = `${job.printKey}\0${job.language}`;
+      const row = assetsByKey.get(key) ?? {
+        printKey: job.printKey,
+        lang: job.language,
+      };
+      row[job.field] = job.file;
+      assetsByKey.set(key, row);
+    } catch (error) {
+      fail += 1;
+      throw error;
+    }
+  });
+
+  const written = writeLorcanaTcgIndex({
+    dbPath,
+    languages: [...SCRAPE_LANGUAGES],
+    prints: [...prints.values()],
+    titles,
+    assets: [...assetsByKey.values()],
+  });
+  const payload = exportLorcanaCardsIndexJson(dbPath);
+  if (!payload) {
+    throw new Error("Failed to export cards-index from sqlite");
+  }
+
+  const legacy = cleanupLegacyPrintRootAssets(cardsDir);
+
+  await fs.promises.mkdir(path.dirname(indexPath), { recursive: true });
+  await fs.promises.writeFile(indexPath, `${JSON.stringify(payload, null, 2)}\n`);
+  await fs.promises.writeFile(
+    srcIndexPath,
+    `${JSON.stringify(payload, null, 2)}\n`,
+  );
+
+  console.log(
+    JSON.stringify(
+      {
+        ok,
+        skip,
+        fail,
+        prints: written.printCount,
+        sqlite: path.relative(root, dbPath),
+        languages: [...SCRAPE_LANGUAGES],
+        legacyRootRemoved: legacy.removed,
+        legacyRootBytes: legacy.bytes,
+        errorSample: errors.slice(0, 5).map((e) =>
+          e instanceof Error ? e.message : String(e),
+        ),
+      },
+      null,
+      2,
+    ),
+  );
+  if (fail > 0 && ok === 0) {
+    throw new Error(`All ${fail} download jobs failed`);
+  }
+  return {
+    ok,
+    skip,
+    fail,
+    prints: written.printCount,
+    sqlite: path.relative(root, dbPath),
+  };
+}

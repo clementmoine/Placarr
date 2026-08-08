@@ -14,10 +14,15 @@ import {
 } from "./resolveMaterial";
 
 export const LORCANA_EFFECT_PACK_ID = "lorcana";
-export const LORCANA_CARD_BACK_URL = "/foil/lorcana/card_back.png";
+export const LORCANA_CARD_BACK_URL = "/foil/lorcana/card_back.webp";
 
+export { faceQuarterTurnsForLorcanaPrint } from "./faceOrientation";
+
+/** CSS = site Lorcana ; WebGL = app TCG Unity — `docs/foil_effects.md`. */
 export const lorcanaEffectPack: EffectPackModule = {
   id: LORCANA_EFFECT_PACK_ID,
+  label: "Lorcana",
+  blurb: "CSS site + WebGL app",
   assetBase: "/foil/lorcana",
   cardBackUrl: LORCANA_CARD_BACK_URL,
   resolveMaterial: (finish, varnish) => resolveMaterial(finish, varnish),

@@ -16,7 +16,11 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
+import {
+  faceQuarterTurnsForLorcanaPrint,
+  LORCANA_EFFECT_PACK_ID,
+} from "@/effects/lorcana";
+import { withPackCardUrls } from "@/effects/lorcana/packAssets";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
@@ -48,7 +52,6 @@ export {
   searchLorcanaCards,
 } from "./fetch";
 
-import { loadPrintFoilIndex, type PrintFoilDetails } from "./catalog";
 import { suggestLorcanaFoilPlayroomSamples } from "./playroomSamples";
 
 const PROVIDER_ID = "lorcanajson";
@@ -248,6 +251,72 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
     });
   }
 
+  if (card.cost != null) {
+    facts.push({
+      kind: "tag",
+      label: "Coût",
+      value: String(card.cost),
+      source: PROVIDER_ID,
+      confidence: 0.9,
+      priority: 23,
+    });
+  }
+
+  if (card.inkwell != null) {
+    facts.push({
+      kind: "tag",
+      label: "Encrier",
+      value: card.inkwell ? "Oui" : "Non",
+      source: PROVIDER_ID,
+      confidence: 0.9,
+      priority: 22,
+    });
+  }
+
+  if (card.lore != null) {
+    facts.push({
+      kind: "tag",
+      label: "Lore",
+      value: String(card.lore),
+      source: PROVIDER_ID,
+      confidence: 0.9,
+      priority: 21,
+    });
+  }
+
+  if (card.strength != null) {
+    facts.push({
+      kind: "tag",
+      label: "Force",
+      value: String(card.strength),
+      source: PROVIDER_ID,
+      confidence: 0.9,
+      priority: 20,
+    });
+  }
+
+  if (card.willpower != null) {
+    facts.push({
+      kind: "tag",
+      label: "Volonté",
+      value: String(card.willpower),
+      source: PROVIDER_ID,
+      confidence: 0.9,
+      priority: 19,
+    });
+  }
+
+  if ((card.subtypes ?? []).length > 0) {
+    facts.push({
+      kind: "tag",
+      label: "Sous-types",
+      value: card.subtypes.join(" • "),
+      source: PROVIDER_ID,
+      confidence: 0.85,
+      priority: 18,
+    });
+  }
+
   if (card.story) {
     facts.push({
       kind: "tag",
@@ -255,7 +324,7 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
       value: card.story,
       source: PROVIDER_ID,
       confidence: 0.85,
-      priority: 22,
+      priority: 17,
     });
   }
 
@@ -266,7 +335,7 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
       value: card.artists.join(" • "),
       source: PROVIDER_ID,
       confidence: 0.88,
-      priority: 27,
+      priority: 16,
     });
   }
 
@@ -278,41 +347,25 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
       url: card.cardmarketUrl,
       source: PROVIDER_ID,
       confidence: 0.7,
-      priority: 34,
+      priority: 15,
     });
   }
 
   return facts;
 }
 
-/**
- * The stored foil details, or nothing.
- *
- * Kept behind a helper so both entry points read it the same way and neither
- * can fail on it: the coats render without their own hue if it is missing,
- * which is exactly what happened before this existed.
- */
-async function printFoilIndex(
-  language: string | null | undefined,
-  signal?: AbortSignal,
-) {
-  return loadPrintFoilIndex({
-    providerId: PROVIDER_ID,
-    language: isLorcanaLanguage(language) ? language : LORCANA_DEFAULT_LANGUAGE,
-    signal,
-  });
-}
-
 /** One shape for both the search results and a lookup by key. */
-export function toPrintCandidate(
-  card: LorcanaCard,
-  foil?: PrintFoilDetails,
-): PrintCandidate {
-  return {
+export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
+  const faceQuarterTurns = faceQuarterTurnsForLorcanaPrint({
+    cardType: card.cardType,
+  });
+  return withPackCardUrls({
     printKey: card.printKey,
     title: card.fullName,
     reference: lorcanaPrintLabel(card),
     rarity: card.rarity,
+    category: card.cardType,
+    ...(faceQuarterTurns ? { faceQuarterTurns } : {}),
     thumbnailUrl: card.thumbnailUrl ?? card.imageUrl,
     imageUrl: card.imageUrl,
     language: card.language,
@@ -337,19 +390,16 @@ export function toPrintCandidate(
     foilMaskUrl: card.foilMaskUrl,
     varnishMaskUrl: card.varnishMaskUrl,
     varnishType: card.varnishType,
-    // The catalogue's own hue for the stamped coat. Absent for all but 83
-    // prints, and nothing derives it — see `catalog.ts`.
-    varnishColor: foil?.hotFoilColor ?? null,
-    // Two prints in the game carry a second stamped coat, with its own mask
-    // and its own hue. Neither is in the published data files.
-    secondVarnishMaskUrl: foil?.secondVarnishMaskUrl ?? null,
-    secondVarnishColor: foil?.secondHotFoilColor ?? null,
+    // Published as `foilEffectColors` — nothing else predicts the hue.
+    varnishColor: card.foilEffectColors[0] ?? null,
+    secondVarnishMaskUrl: card.secondVarnishMaskUrl,
+    secondVarnishColor: card.foilEffectColors[1] ?? null,
     varnishShaders:
       card.varnishType && VARNISH_SHADERS[card.varnishType]
         ? { [card.varnishType]: VARNISH_SHADERS[card.varnishType] as string }
         : {},
     externalIds: { [PROVIDER_ID]: card.providerId },
-  };
+  });
 }
 
 /**
@@ -512,8 +562,7 @@ export const lorcanajsonModule: ProviderModule = {
       limit,
       signal,
     });
-    const foils = await printFoilIndex(language, signal);
-    return cards.map((card) => toPrintCandidate(card, foils[card.providerId]));
+    return cards.map((card) => toPrintCandidate(card));
   },
   lookupPrint: async ({ printKey, name, language, signal }) => {
     if (parsePrintKey(printKey)?.game !== LORCANA_GAME) return null;
@@ -523,8 +572,7 @@ export const lorcanajsonModule: ProviderModule = {
       signal,
     });
     if (!card) return null;
-    const foils = await printFoilIndex(language, signal);
-    return toPrintCandidate(card, foils[card.providerId]);
+    return toPrintCandidate(card);
   },
   suggestFoilPlayroomSamples: (needs) =>
     suggestLorcanaFoilPlayroomSamples(needs),

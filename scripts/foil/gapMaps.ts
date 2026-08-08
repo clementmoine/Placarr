@@ -1,0 +1,100 @@
+/**
+ * Pure helpers for foil gap audits — “upstream added X, Placarr missing map”.
+ * Used by `scripts/foil/auditGaps.ts` and unit tests (no dump I/O here).
+ */
+
+/** kebab-case CSS basename → camelCase look id (`radiant-holo` → `radiantHolo`). */
+export function kebabCssStemToCamelId(stem: string): string {
+  return stem
+    .split("-")
+    .filter(Boolean)
+    .map((part, i) =>
+      i === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1),
+    )
+    .join("");
+}
+
+/**
+ * Vendored simey card CSS files that are scaffolding or intentionally not
+ * ported (one-offs / TG aliases). Keep in sync with `docs/foil_css_sources.md`.
+ */
+export const SIMEY_CSS_SKIP_STEMS = new Set([
+  "base",
+  "basic",
+  "swsh-pikachu",
+  "trainer-full-art",
+  "trainer-gallery-v-regular",
+  "trainer-gallery-v-max",
+  "trainer-gallery-secret-rare",
+  "shiny-vmax",
+  "ex-special-illustration-rare",
+]);
+
+export type SimeyCssGap = {
+  tree: string;
+  stem: string;
+  expectedId: string;
+};
+
+/**
+ * Report vendored rarity CSS files with no matching Placarr look id.
+ * `portedIds` = union of simey + pokemon (Radiant) HoloShader ids.
+ */
+export function simeyCssGaps(input: {
+  files: Array<{ tree: string; stem: string }>;
+  portedIds: ReadonlySet<string>;
+  skipStems?: ReadonlySet<string>;
+}): SimeyCssGap[] {
+  const skip = input.skipStems ?? SIMEY_CSS_SKIP_STEMS;
+  const gaps: SimeyCssGap[] = [];
+  for (const { tree, stem } of input.files) {
+    if (skip.has(stem)) continue;
+    const expectedId = kebabCssStemToCamelId(stem);
+    const hit =
+      input.portedIds.has(expectedId) ||
+      [...input.portedIds].some(
+        (id) => id === expectedId || id.startsWith(`${expectedId}`),
+      );
+    if (!hit) gaps.push({ tree, stem, expectedId });
+  }
+  return gaps.sort(
+    (a, b) => a.tree.localeCompare(b.tree) || a.stem.localeCompare(b.stem),
+  );
+}
+
+/** Live leaf / sheet names that must appear in `LIVE_FINISH_CSS`. */
+export function liveLeavesMissingCssMap(input: {
+  foilNames: readonly string[];
+  sheetAliases: readonly string[];
+  liveFinishCss: Readonly<Record<string, string>>;
+  skip?: ReadonlySet<string>;
+}): string[] {
+  const skip = input.skip ?? new Set(["NonFoil"]);
+  const need = [...input.foilNames, ...input.sheetAliases].filter(
+    (n) => !skip.has(n),
+  );
+  return need.filter((n) => !input.liveFinishCss[n]).sort();
+}
+
+/** Foiled Live leaves that need a `SHARED_BY_FOIL` motif map for WebGL. */
+export function liveLeavesMissingSharedMotifs(input: {
+  foilNames: readonly string[];
+  sheetAliases: readonly string[];
+  hasShared: (name: string) => boolean;
+  skip?: ReadonlySet<string>;
+}): string[] {
+  const skip = input.skip ?? new Set(["NonFoil"]);
+  const need = [...input.foilNames, ...input.sheetAliases].filter(
+    (n) => !skip.has(n),
+  );
+  return need.filter((n) => !input.hasShared(n)).sort();
+}
+
+/** Dump `.frag` stems not yet in `POKEMON_FOIL_NAMES`. */
+export function extraLiveFragStems(
+  dumpFrags: readonly string[],
+  foilNames: readonly string[],
+): string[] {
+  const known = new Set(foilNames);
+  return [...dumpFrags].filter((f) => !known.has(f)).sort();
+}

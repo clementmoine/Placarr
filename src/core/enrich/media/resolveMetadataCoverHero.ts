@@ -85,7 +85,7 @@ export async function resolveMetadataCoverAndHero(input: {
   );
 
   // The cover is stored as the provider served it. Cropping here used to write a
-  // derived "_crop" file and repoint the attachment at it, which severed the
+  // derived "_edited" file and repoint the attachment at it, which severed the
   // cover from its provenance and could not be undone — framing belongs to the
   // collector, not to enrichment. See `suggestCropBox` for the assisted flow.
 

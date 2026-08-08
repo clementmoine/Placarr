@@ -50,6 +50,11 @@ export type LorcanaCard = {
   setCode: string;
   setName: string | null;
   number: number;
+  /**
+   * Main-set size from `fullIdentifier` (`1/204 • FR • 1` → 204). Null on
+   * promos (`20/P1`) where the second segment is not a count.
+   */
+  setCardCount: number | null;
   /** Distinguishes prints sharing a number, e.g. the five Dalmatian Puppies. */
   variant: string | null;
   /** Set on promos that reuse a base card's number (`20/204` vs `20/P1`). */
@@ -65,6 +70,11 @@ export type LorcanaCard = {
   cardType: string | null;
   color: string | null;
   cost: number | null;
+  lore: number | null;
+  strength: number | null;
+  willpower: number | null;
+  subtypes: string[];
+  inkwell: boolean | null;
   artists: string[];
   story: string | null;
   flavorText: string | null;
@@ -92,6 +102,17 @@ export type LorcanaCard = {
   fullFoilUrl: string | null;
   /** Mask for the varnish axis, independent of `foilMaskUrl`. */
   varnishMaskUrl: string | null;
+  /**
+   * Second stamped varnish mask (`images.varnishMask2`). Two prints in the
+   * game carry one; without it the second coat cannot be drawn.
+   */
+  secondVarnishMaskUrl: string | null;
+  /**
+   * Hues the stamped varnish throws (`foilEffectColors`). Index 0 is the
+   * primary coat, index 1 the second. Absent on all but ~83 prints — nothing
+   * else predicts them.
+   */
+  foilEffectColors: string[];
   cardmarketUrl: string | null;
   /** Search haystack: lowercased, unaccented, punctuation-free. */
   searchName: string;
@@ -105,6 +126,8 @@ type RawImages = {
   fullFoil?: unknown;
   /** Second, independent mask for the varnish axis. 301 prints. */
   varnishMask?: unknown;
+  /** Second stamped coat mask. Two prints. */
+  varnishMask2?: unknown;
 };
 
 type RawExternalLinks = {
@@ -117,6 +140,7 @@ type RawCard = {
   number?: unknown;
   variant?: unknown;
   promoGrouping?: unknown;
+  fullIdentifier?: unknown;
   fullName?: unknown;
   name?: unknown;
   version?: unknown;
@@ -124,11 +148,17 @@ type RawCard = {
   type?: unknown;
   color?: unknown;
   cost?: unknown;
+  lore?: unknown;
+  strength?: unknown;
+  willpower?: unknown;
+  subtypes?: unknown;
+  inkwell?: unknown;
   artists?: unknown;
   story?: unknown;
   flavorText?: unknown;
   foilTypes?: unknown;
   varnishType?: unknown;
+  foilEffectColors?: unknown;
   images?: RawImages;
   externalLinks?: RawExternalLinks;
 };
@@ -172,6 +202,35 @@ function httpsUrl(value: unknown): string | null {
   return /^https?:\/\//i.test(parsed) ? parsed : null;
 }
 
+/** Hex coats only — skip junk if upstream ever ships a named colour. */
+function hexColorList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    const parsed = text(entry);
+    if (!parsed || !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(parsed)) return [];
+    return [parsed];
+  });
+}
+
+/**
+ * `1/204 • FR • 1` → 204. Promo tails like `20/P1` are not a set size.
+ */
+export function setCardCountFromFullIdentifier(
+  fullIdentifier: string | null | undefined,
+): number | null {
+  const head = fullIdentifier?.split("•")[0]?.trim();
+  if (!head) return null;
+  const match = /^[^/]+\/(\d+)\s*$/.exec(head);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function optionalBool(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  return null;
+}
+
 /** Fold to a comparable form: unaccented, lowercase, alphanumeric words only. */
 export function normalizeLorcanaSearchText(value: string): string {
   return value
@@ -212,6 +271,7 @@ function mapRawCard(
 
   const name = text(raw.name) ?? fullName;
   const version = text(raw.version);
+  const fullIdentifier = text(raw.fullIdentifier);
 
   return {
     providerId,
@@ -219,6 +279,7 @@ function mapRawCard(
     setCode,
     setName: setNames.get(setCode) ?? null,
     number,
+    setCardCount: setCardCountFromFullIdentifier(fullIdentifier),
     variant,
     promoGrouping,
     language,
@@ -229,6 +290,11 @@ function mapRawCard(
     cardType: text(raw.type),
     color: text(raw.color),
     cost: integer(raw.cost),
+    lore: integer(raw.lore),
+    strength: integer(raw.strength),
+    willpower: integer(raw.willpower),
+    subtypes: stringList(raw.subtypes),
+    inkwell: optionalBool(raw.inkwell),
     artists: stringList(raw.artists),
     story: text(raw.story),
     flavorText: text(raw.flavorText),
@@ -239,6 +305,8 @@ function mapRawCard(
     foilMaskUrl: httpsUrl(raw.images?.foilMask),
     fullFoilUrl: httpsUrl(raw.images?.fullFoil),
     varnishMaskUrl: httpsUrl(raw.images?.varnishMask),
+    secondVarnishMaskUrl: httpsUrl(raw.images?.varnishMask2),
+    foilEffectColors: hexColorList(raw.foilEffectColors),
     cardmarketUrl: httpsUrl(raw.externalLinks?.cardmarketUrl),
     searchName: normalizeLorcanaSearchText(fullName),
   };
@@ -757,19 +825,20 @@ export async function searchLorcanaCards(
     .map((entry) => entry.card);
 }
 
-/** Collector number only, e.g. `4a`, `20/P1`, `34/P3`. */
+/** Collector number only, e.g. `4a`, `1/204`, `20/P1`. */
 export function lorcanaCollectorNumberLabel(card: LorcanaCard): string {
   const number = `${card.number}${card.variant ?? ""}`;
   if (card.promoGrouping) {
     return `${number}/${card.promoGrouping}`;
   }
+  if (card.setCardCount != null) {
+    return `${number}/${card.setCardCount}`;
+  }
   return number;
 }
 
-/** Human-readable print reference, e.g. `Fabuleux · 1/9`. */
+/** Human-readable print reference, e.g. `Premier Chapitre · 1/204`. */
 export function lorcanaPrintLabel(card: LorcanaCard): string {
-  const number = `${card.number}${card.variant ?? ""}`;
-  const grouping = card.promoGrouping ? ` ${card.promoGrouping}` : "";
   const set = card.setName ?? `Set ${card.setCode}`;
-  return `${set} · ${number}${grouping}`;
+  return `${set} · ${lorcanaCollectorNumberLabel(card)}`;
 }

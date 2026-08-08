@@ -3,6 +3,7 @@ import sharp from "sharp";
 
 import {
   bakeMask,
+  localizeMaskImage,
   lumaOf,
   maskUploadPath,
   normalMapCoverage,
@@ -164,13 +165,31 @@ describe("maskUploadPath", () => {
   });
 
   it("always writes PNG, since the output carries alpha", () => {
-    expect(maskUploadPath("https://x.test/a.jpg", "foil")).toMatch(/\.png$/);
-    expect(maskUploadPath("https://x.test/a.jpg", "varnish")).toMatch(/\.png$/);
+    expect(maskUploadPath("https://x.test/a.jpg", "foil")).toMatch(/\.webp$/);
+    expect(maskUploadPath("https://x.test/a.jpg", "varnish")).toMatch(
+      /\.webp$/,
+    );
   });
 
   it("is stable, so a second visit finds the file already there", () => {
     expect(maskUploadPath("https://x.test/a.jpg", "foil")).toBe(
       maskUploadPath("https://x.test/a.jpg", "foil"),
     );
+  });
+});
+
+describe("localizeMaskImage", () => {
+  it("leaves pack /foil/ URLs alone (raw scrape, convert at display)", async () => {
+    const pack =
+      "/foil/lorcana/cards/lorcana%3A1-1/foil_mask.jpg";
+    await expect(
+      localizeMaskImage(pack, { kind: "foil" }),
+    ).resolves.toBe(pack);
+  });
+
+  it("leaves /uploads/ alone", async () => {
+    await expect(
+      localizeMaskImage("/uploads/baked.png", { kind: "foil" }),
+    ).resolves.toBe("/uploads/baked.png");
   });
 });

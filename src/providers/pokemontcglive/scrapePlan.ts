@@ -1,0 +1,288 @@
+/**
+ * Scrape plan / ledger helpers (ptcgl.dev-inspired).
+ *
+ * - Persist CloudFront soft-ban cooldown across runs
+ * - Skip stems already logged as CDN-unavailable (honest miss)
+ * - Intersect wanted stems with on-disk CDN AssetManifest dumps when present
+ * - Single-process lock file for CDN scrape
+ */
+
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import path from "node:path";
+
+import {
+  defaultManifestDumpPath,
+  filterCardBundleNames,
+  intersectWantedWithManifest,
+  loadCdnManifestDump,
+} from "./cdnManifest";
+import { DEFAULT_CONTENT_DIR } from "./cdn";
+
+export type SoftbanState = {
+  until: string;
+  reason: string;
+  writtenAt: string;
+};
+
+export type ScrapePlan = {
+  names: string[];
+  extras: string[];
+  deferredKnownMiss: string[];
+  notInManifest: string[];
+  usedManifest: boolean;
+  softbanUntil: string | null;
+  softbanBlocked: boolean;
+};
+
+function logsDir(cacheRoot: string): string {
+  return path.join(cacheRoot, "logs");
+}
+
+export function softbanStatePath(cacheRoot: string): string {
+  return path.join(logsDir(cacheRoot), "cdn-softban-until.json");
+}
+
+export function scrapeLockPath(cacheRoot: string): string {
+  return path.join(logsDir(cacheRoot), "cdn-scrape.lock");
+}
+
+export function knownCdnMissPath(cacheRoot: string): string {
+  return path.join(logsDir(cacheRoot), "cdn-unavailable-stems.txt");
+}
+
+export function readSoftbanState(cacheRoot: string): SoftbanState | null {
+  const p = softbanStatePath(cacheRoot);
+  if (!existsSync(p)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(p, "utf8")) as SoftbanState;
+    if (!raw?.until) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function writeSoftbanState(
+  cacheRoot: string,
+  opts: { until: Date; reason: string },
+): SoftbanState {
+  mkdirSync(logsDir(cacheRoot), { recursive: true });
+  const state: SoftbanState = {
+    until: opts.until.toISOString(),
+    reason: opts.reason,
+    writtenAt: new Date().toISOString(),
+  };
+  writeFileSync(
+    softbanStatePath(cacheRoot),
+    `${JSON.stringify(state, null, 2)}\n`,
+    "utf8",
+  );
+  return state;
+}
+
+export function clearSoftbanState(cacheRoot: string): void {
+  const p = softbanStatePath(cacheRoot);
+  if (existsSync(p)) unlinkSync(p);
+}
+
+/** Active soft-ban cooldown remaining (ms), or 0 if clear. */
+export function softbanRemainingMs(
+  cacheRoot: string,
+  now = Date.now(),
+): number {
+  const state = readSoftbanState(cacheRoot);
+  if (!state) return 0;
+  const until = Date.parse(state.until);
+  if (!Number.isFinite(until)) return 0;
+  return Math.max(0, until - now);
+}
+
+export function loadKnownCdnMisses(cacheRoot: string): Set<string> {
+  const p = knownCdnMissPath(cacheRoot);
+  if (!existsSync(p)) return new Set();
+  const out = new Set<string>();
+  for (const line of readFileSync(p, "utf8").split(/\r?\n/)) {
+    const s = line.trim().toLowerCase();
+    if (s && !s.startsWith("#")) out.add(s);
+  }
+  return out;
+}
+
+/**
+ * Load union of card-bundle asset names from dumped manifests under
+ * ``cacheRoot/cdn-manifests/`` for the requested langs (+ optional bucket).
+ */
+export function loadManifestAssetUnion(
+  cacheRoot: string,
+  opts: { langs: readonly string[]; bucket?: string },
+): string[] | null {
+  const dir = path.join(cacheRoot, "cdn-manifests");
+  if (!existsSync(dir)) return null;
+  const bucket = opts.bucket?.trim() || DEFAULT_CONTENT_DIR;
+  const langs = opts.langs.map((l) => l.toLowerCase());
+  const assets: string[] = [];
+  let found = 0;
+  for (const lang of langs) {
+    const preferred = defaultManifestDumpPath(cacheRoot, bucket, lang);
+    const candidates = [preferred];
+    try {
+      for (const name of readdirSync(dir)) {
+        if (
+          name.startsWith(`manifest_${lang}_`) &&
+          name.endsWith(".json")
+        ) {
+          candidates.push(path.join(dir, name));
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    for (const file of candidates) {
+      const dump = loadCdnManifestDump(file);
+      if (!dump) continue;
+      found += 1;
+      assets.push(
+        ...filterCardBundleNames(dump.assets, {
+          langs: [lang],
+          includeThumbnails: false,
+        }),
+      );
+      break;
+    }
+  }
+  if (!found) return null;
+  return [...new Set(assets)];
+}
+
+export type AcquireScrapeLockResult =
+  | { ok: true; path: string }
+  | { ok: false; holderPid: number | null; path: string };
+
+/** Best-effort single-process lock (ptcgl.dev Forbid concurrency). */
+export function tryAcquireScrapeLock(
+  cacheRoot: string,
+  pid = process.pid,
+): AcquireScrapeLockResult {
+  mkdirSync(logsDir(cacheRoot), { recursive: true });
+  const lockPath = scrapeLockPath(cacheRoot);
+  if (existsSync(lockPath)) {
+    let holder: number | null = null;
+    try {
+      const raw = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: number };
+      holder = typeof raw.pid === "number" ? raw.pid : null;
+    } catch {
+      holder = null;
+    }
+    if (holder != null && holder !== pid) {
+      try {
+        process.kill(holder, 0);
+        return { ok: false, holderPid: holder, path: lockPath };
+      } catch {
+        /* stale lock */
+      }
+    }
+  }
+  writeFileSync(
+    lockPath,
+    `${JSON.stringify({ pid, at: new Date().toISOString() }, null, 2)}\n`,
+    "utf8",
+  );
+  return { ok: true, path: lockPath };
+}
+
+export function releaseScrapeLock(cacheRoot: string, pid = process.pid): void {
+  const lockPath = scrapeLockPath(cacheRoot);
+  if (!existsSync(lockPath)) return;
+  try {
+    const raw = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: number };
+    if (raw.pid != null && raw.pid !== pid) return;
+  } catch {
+    /* remove anyway if ours */
+  }
+  try {
+    unlinkSync(lockPath);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Build the CDN GET list: extras + wanted, minus known misses, optionally
+ * intersected with dumped AssetManifests (derive-then-intersect).
+ */
+export function planScrapeNames(opts: {
+  cacheRoot: string;
+  wanted: readonly string[];
+  extras?: readonly string[];
+  langs: readonly string[];
+  contentDir?: string;
+  /** Skip stems in logs/cdn-unavailable-stems.txt (default true). */
+  skipKnownMisses?: boolean;
+  /** Force retry of previously logged CDN misses. */
+  retryCdnMisses?: boolean;
+  /** When false, never intersect manifests even if dumps exist. */
+  useManifestIntersect?: boolean;
+}): ScrapePlan {
+  const extras = [...(opts.extras ?? [])].map((s) => s.trim()).filter(Boolean);
+  const skipKnown =
+    opts.retryCdnMisses === true
+      ? false
+      : opts.skipKnownMisses !== false;
+  const knownMiss = skipKnown ? loadKnownCdnMisses(opts.cacheRoot) : new Set();
+  const deferredKnownMiss: string[] = [];
+  const wanted: string[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of opts.wanted) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (knownMiss.has(key)) {
+      deferredKnownMiss.push(name);
+      continue;
+    }
+    wanted.push(name);
+  }
+
+  let notInManifest: string[] = [];
+  let usedManifest = false;
+  let scrapeWanted = wanted;
+  if (opts.useManifestIntersect !== false) {
+    const union = loadManifestAssetUnion(opts.cacheRoot, {
+      langs: opts.langs,
+      bucket: opts.contentDir,
+    });
+    if (union && union.length) {
+      usedManifest = true;
+      const { hit, miss } = intersectWantedWithManifest(wanted, union);
+      scrapeWanted = hit;
+      notInManifest = miss;
+    }
+  }
+
+  const remaining = softbanRemainingMs(opts.cacheRoot);
+  const softbanUntil =
+    remaining > 0 ? readSoftbanState(opts.cacheRoot)?.until ?? null : null;
+
+  return {
+    names: [...extras, ...scrapeWanted],
+    extras,
+    deferredKnownMiss,
+    notInManifest,
+    usedManifest,
+    softbanUntil,
+    softbanBlocked: remaining > 0,
+  };
+}
+
+/** Default soft-ban resume delay after abort (15 min — Cron-friendly). */
+export const DEFAULT_SOFTBAN_ABORT_COOLDOWN_MS = 15 * 60 * 1000;

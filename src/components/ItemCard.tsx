@@ -10,6 +10,7 @@ import {
   SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
+import { CardBackSkeleton } from "@/components/CardBackSkeleton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import {
   usePrintVariant,
@@ -21,7 +22,13 @@ import {
   useImageEdgeColors,
 } from "@/lib/client/hooks/useImageEdgeColors";
 
-import { getAspectRatio } from "@/lib/text/cardFormat";
+import {
+  resolveDefaultCardBack,
+  sharedCardBackSkeletonUrl,
+} from "@/core/render/foil";
+import "@/effects";
+import { getAspectRatio, orientAspectRatio } from "@/lib/text/cardFormat";
+import { OrientedMediaRotator } from "@/components/OrientedMediaFrame";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
@@ -126,6 +133,15 @@ function ItemCardInner(props: ItemCardProps) {
    */
   const printVariant = usePrintVariant(props.printKey, shelfType);
   const variantView = variantRendering(props.variant, printVariant, imageUrl);
+  const cardBackSkeletonUrl = sharedCardBackSkeletonUrl(
+    resolveDefaultCardBack({
+      printCardBackUrl: printVariant?.cardBackUrl,
+      printKey: props.printKey,
+      setCode: printVariant?.setCode,
+      effectPackId:
+        variantView.effectPackId ?? printVariant?.effectPack ?? null,
+    }),
+  );
   const foilMaskUrl = useMirroredCropMask(
     variantView.imageUrl,
     variantView.foilMaskUrl,
@@ -142,6 +158,7 @@ function ItemCardInner(props: ItemCardProps) {
     variantView.secondVarnishMaskUrl,
   );
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
+  const [plainArtReady, setPlainArtReady] = useState(false);
   const artFrameRef = useRef<HTMLDivElement | null>(null);
   const isEnriching = isItemMetadataBusy(props);
   /**
@@ -158,10 +175,16 @@ function ItemCardInner(props: ItemCardProps) {
 
   const displayImageUrl = imageUrl;
 
-  // Determine aspect ratio based on shelf type or card format
-  const aspectRatio = useMemo(() => {
-    return getAspectRatio(cardFormat, shelfType);
-  }, [cardFormat, shelfType]);
+  // Determine aspect ratio based on shelf type or card format (+ print orientation).
+  const faceQuarterTurns = printVariant?.faceQuarterTurns ?? 0;
+  const baseAspect = useMemo(
+    () => getAspectRatio(cardFormat, shelfType),
+    [cardFormat, shelfType],
+  );
+  const aspectRatio = useMemo(
+    () => orientAspectRatio(baseAspect, faceQuarterTurns),
+    [baseAspect, faceQuarterTurns],
+  );
 
   // Pick placeholder icon based on shelf type — memoized as an ELEMENT so no
   // component identity is created during render.
@@ -179,10 +202,12 @@ function ItemCardInner(props: ItemCardProps) {
   if (prevImageUrl !== displayImageUrl) {
     setPrevImageUrl(displayImageUrl);
     setImageFit("contain");
+    setPlainArtReady(false);
     resetEdgeColors();
   }
 
   const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    setPlainArtReady(true);
     setImageFit("contain");
     const frame = artFrameRef.current;
     measureEdges(
@@ -276,48 +301,67 @@ function ItemCardInner(props: ItemCardProps) {
       {displayImageUrl ? (
         <div
           ref={artFrameRef}
-          className="w-full h-full bg-zinc-200 dark:bg-zinc-950 relative overflow-hidden"
+          className="relative h-full w-full overflow-hidden rounded-[inherit] bg-zinc-200 dark:bg-zinc-950"
           style={
             edgeColors && !foilMaskUrl
               ? { background: edgeGradient(edgeColors) }
               : undefined
           }
         >
-          {/* Main Cover Image */}
-          {foilMaskUrl ? (
-            <FoilCardImage
-              effectPack={variantView.effectPackId}
-              imageUrl={variantView.imageUrl ?? displayImageUrl}
-              alt={name}
-              finish={variantView.finish}
-              varnishType={variantView.varnishType}
-              maskUrl={foilMaskUrl}
-              varnishMaskUrl={varnishMaskUrl}
-              varnishColor={variantView.varnishColor}
-              secondVarnishMaskUrl={secondVarnishMaskUrl}
-              secondVarnishColor={variantView.secondVarnishColor}
-              // Cover: TCG scans are ~tile ratio, and `contain` leaves a 1px
-              // letterbox whose edge bleed samples the print's white border.
-              fit="cover"
-              // Grids stay on CSS foil: WebGL is for the detail hero / fullscreen
-              // only (one context, readable art).
-              backend="css"
-              // A wall of tiles each tipping under the cursor reads as the page
-              // squirming. The light still drifts, which is what marks the copy.
-              tilt={false}
-            />
-          ) : (
-            <RemoteImage
-              src={displayImageUrl}
-              alt={name}
-              priority={priority}
-              onLoad={handleImageLoad}
-              className={[
-                "w-full h-full select-none transition-transform duration-500 ease-out object-center",
-                imageFit === "contain" ? "object-contain" : "object-cover",
-              ].join(" ")}
+          {/* Bleeding the cover's own edges wins; the back only fills a frame
+              that has nothing else behind it. */}
+          {!(edgeColors && !foilMaskUrl) && (
+            <CardBackSkeleton
+              url={cardBackSkeletonUrl}
+              faceQuarterTurns={faceQuarterTurns}
+              orientedAspect={aspectRatio}
             />
           )}
+          <OrientedMediaRotator
+            faceQuarterTurns={faceQuarterTurns}
+            orientedAspect={aspectRatio}
+          >
+            {/* Main Cover Image */}
+            {foilMaskUrl ? (
+              <FoilCardImage
+                effectPack={variantView.effectPackId}
+                printKey={props.printKey}
+                title={name}
+                imageUrl={variantView.imageUrl ?? displayImageUrl}
+                alt={name}
+                finish={variantView.finish}
+                varnishType={variantView.varnishType}
+                cssFinishShaderId={variantView.shader?.id ?? null}
+                cssVarnishShaderId={variantView.varnish?.id ?? null}
+                maskUrl={foilMaskUrl}
+                varnishMaskUrl={varnishMaskUrl}
+                varnishColor={variantView.varnishColor}
+                secondVarnishMaskUrl={secondVarnishMaskUrl}
+                secondVarnishColor={variantView.secondVarnishColor}
+                // Cover: TCG scans are ~tile ratio, and `contain` leaves a 1px
+                // letterbox whose edge bleed samples the print's white border.
+                fit="cover"
+                // Grids stay on CSS foil: WebGL is for the detail hero / fullscreen
+                // only (one context, readable art).
+                backend="css"
+                // A wall of tiles each tipping under the cursor reads as the page
+                // squirming. The light still drifts, which is what marks the copy.
+                tilt={false}
+              />
+            ) : (
+              <RemoteImage
+                src={displayImageUrl}
+                alt={name}
+                priority={priority}
+                onLoad={handleImageLoad}
+                className={[
+                  "w-full h-full select-none transition-opacity duration-150 ease-out object-center",
+                  imageFit === "contain" ? "object-contain" : "object-cover",
+                  cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
+                ].join(" ")}
+              />
+            )}
+          </OrientedMediaRotator>
           {/* subtle dark overlay gradient for title legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
         </div>

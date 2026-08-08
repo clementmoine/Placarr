@@ -27,8 +27,9 @@ const MAX_BATCH_KEYS = 120;
  * Unity). Print facts are otherwise immutable, but a session that resolved
  * before the bake fix would keep serving white-RGB foil masks forever.
  */
-/** Bumped for `effectPack` on PrintCandidate — stale sessions would stay CSS-only. */
-const PRINT_VARIANT_CACHE_VERSION = 3;
+/** Bumped when CSS must re-resolve via pack (effectPack + resolveCss). */
+/** Bumped again when faceQuarterTurns joined the print payload. */
+const PRINT_VARIANT_CACHE_VERSION = 6;
 
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {

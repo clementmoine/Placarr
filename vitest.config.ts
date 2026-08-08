@@ -19,7 +19,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "tests/**/*.test.ts", "scripts/**/*.test.ts"],
     setupFiles: ["tests/helpers/setup.ts"],
     // Cap workers so parallel Prisma/pg pools don't exhaust Postgres
     // max_connections (see src/lib/db/prisma.ts PRISMA_PG_POOL_MAX).

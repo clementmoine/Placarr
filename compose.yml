@@ -59,15 +59,9 @@ services:
       #- STEAMGRIDDB_API_KEY=
       #- TMDB_API_KEY=
     volumes:
-      - ${ROOT:-.}/config/placarr:/config
-      # Données runtime — rien ne vit dans le conteneur : les uploads
-      # utilisateur et les index providers survivent aux recréations
-      # (down/up, nouvelle image). La base a déjà son volume `placarr-db`.
-      - placarr-uploads:/app/public/uploads
-      - placarr-cache:/app/.cache
+      # Runtime data: uploads, foil packs, provider indexes (never in the image).
+      - ${ROOT:-.}/data:/app/data
     restart: unless-stopped
 
 volumes:
   placarr-db:
-  placarr-uploads:
-  placarr-cache:

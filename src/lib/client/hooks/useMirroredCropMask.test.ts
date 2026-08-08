@@ -6,8 +6,8 @@ const MASK = "https://api.lorcana.ravensburger.com/images/fr/set1/17_abc.jpg";
 
 describe("maskNeedsMirroring", () => {
   it("re-cuts the mask once the artwork has been cropped", () => {
-    expect(maskNeedsMirroring("/uploads/abc_crop.jpg", MASK)).toBe(true);
-    expect(maskNeedsMirroring("/uploads/abc_crop-background.jpg", MASK)).toBe(
+    expect(maskNeedsMirroring("/uploads/abc_edited.jpg", MASK)).toBe(true);
+    expect(maskNeedsMirroring("/uploads/abc_edited-background.jpg", MASK)).toBe(
       true,
     );
   });
@@ -17,13 +17,13 @@ describe("maskNeedsMirroring", () => {
   });
 
   it("skips a remote artwork, which this app never cropped", () => {
-    expect(maskNeedsMirroring("https://example.com/abc_crop.jpg", MASK)).toBe(
+    expect(maskNeedsMirroring("https://example.com/abc_edited.jpg", MASK)).toBe(
       false,
     );
   });
 
   it("has nothing to do without both pieces", () => {
-    expect(maskNeedsMirroring("/uploads/abc_crop.jpg", null)).toBe(false);
+    expect(maskNeedsMirroring("/uploads/abc_edited.jpg", null)).toBe(false);
     expect(maskNeedsMirroring(null, MASK)).toBe(false);
   });
 });

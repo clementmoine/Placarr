@@ -1,58 +1,75 @@
-/** Normalizes a localized cover path so crop derivatives match their source file. */
+/** Normalizes a localized cover path so edited derivatives match their source. */
 /**
- * The original a derived crop came from.
+ * The original a derived edit came from.
  *
- * Two suffixes are stripped. Query strings first: a re-crop overwrites the same
+ * Two suffixes are stripped. Query strings first: re-editing overwrites the same
  * filename, so the UI appends a cache-busting `?v=` to force a refetch, and that
  * must never make two URLs look like different images.
  *
- * Then an optional role marker. A crop belongs to a file *and* a use — the same
- * artwork can be both the cover and the background, and cropping one used to
- * rewrite the other's file. The marker sits *after* `_crop`
- * (`<name>_crop-background.jpg`), never before it: a source name may legitimately
- * end in `-something`, so `<name>-background_crop.jpg` would have been
- * indistinguishable from a plain crop of a file called `<name>-background`.
+ * Then an optional role marker. An edit belongs to a file *and* a use — the same
+ * artwork can be both the cover and the background, and editing one used to
+ * rewrite the other's file. The marker sits *after* `_edited`
+ * (`<name>_edited-background.webp`), never before it: a source name may
+ * legitimately end in `-something`, so `<name>-background_edited.webp` would
+ * have been indistinguishable from a plain edit of a file called
+ * `<name>-background`.
  */
-export function stripCropSuffixFromUrl(url: string): string {
+export function stripEditSuffixFromUrl(url: string): string {
   return url
     .split("?")[0]
     .split("#")[0]
-    .replace(/_crop(?:-[a-z]+)?(\.[^.]+)$/, "$1");
+    .replace(/_edited(?:-[a-z0-9]+)?(\.[^.]+)$/, "$1");
+}
+
+const UPLOADS_PREFIX = "/uploads/";
+
+/**
+ * Comparison key for "these name the same picture".
+ *
+ * For our own uploads the *extension* is dropped as well as the edit suffix:
+ * every derivative is written as WebP whatever the source arrived as, so
+ * `<hash>_edited.webp` and `<hash>.png` are one image. Matching on the full name
+ * put an edit in the gallery as a second, unlabelled tile beside the original —
+ * and stopped the selected row from following it. Remote URLs keep their
+ * extension: two files on a provider CDN that differ only by extension are not
+ * ours to declare identical.
+ */
+function localizedImageKey(url: string): string {
+  const stripped = stripEditSuffixFromUrl(url);
+  if (!stripped.startsWith(UPLOADS_PREFIX)) return stripped;
+  return stripped.replace(/\.[^./]+$/, "");
 }
 
 export function urlsReferToSameLocalizedImage(a: string, b: string): boolean {
-  return stripCropSuffixFromUrl(a) === stripCropSuffixFromUrl(b);
+  return localizedImageKey(a) === localizedImageKey(b);
 }
 
 /**
- * True for a file this app derived by cropping, whatever role it was cropped
- * for. Re-cropping overwrites the same name, so these are the URLs a gallery
- * has to cache-bust; matching only the bare `_crop` left every role-scoped
- * derivative showing its previous framing.
+ * True for a file this app derived by editing, whatever role it was edited for.
+ * Re-editing overwrites the same name, so these are the URLs a gallery has to
+ * cache-bust; matching only the bare `_edited` left every role-scoped derivative
+ * showing its previous framing.
  */
-export function isCropDerivativeUrl(url: string): boolean {
-  return url !== stripCropSuffixFromUrl(url.split("?")[0].split("#")[0]);
+export function isEditDerivativeUrl(url: string): boolean {
+  return url !== stripEditSuffixFromUrl(url.split("?")[0].split("#")[0]);
 }
 
-/**
- * The role whose crop keeps the bare `_crop` name, so files written before crops
- * were scoped stay valid.
- */
-export const DEFAULT_CROP_ROLE = "cover";
+/** The role whose edit keeps the bare `_edited` name, with no marker. */
+export const DEFAULT_EDIT_ROLE = "cover";
 
 /**
- * Name of the crop derived from `baseName` for this role, extension excluded.
+ * Name of the edit derived from `baseName` for this role, extension excluded.
  *
- * Paired with {@link stripCropSuffixFromUrl}, which must be able to take the
- * marker back off — that round trip is what lets the app find the original a
- * crop came from, and it is checked in the tests.
+ * Paired with {@link stripEditSuffixFromUrl}, which must be able to take the
+ * marker back off — that round trip is what lets the app find the original an
+ * edit came from, and it is checked in the tests.
  */
-export function cropDerivativeBaseName(baseName: string, role: string): string {
+export function editDerivativeBaseName(baseName: string, role: string): string {
   const marker =
-    role && role !== DEFAULT_CROP_ROLE && /^[a-z]+$/.test(role)
+    role && role !== DEFAULT_EDIT_ROLE && /^[a-z]+$/.test(role)
       ? `-${role}`
       : "";
-  return `${baseName}_crop${marker}`;
+  return `${baseName}_edited${marker}`;
 }
 
 const COVER_ELIGIBLE_ATTACHMENT_TYPES = new Set(["cover", "artwork", "image"]);

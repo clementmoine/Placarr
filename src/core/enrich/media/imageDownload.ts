@@ -1,5 +1,5 @@
 /**
- * Remote cover acquisition: localize a remote image URL into `public/uploads`.
+ * Remote cover acquisition: localize a remote image URL into `data/uploads`.
  */
 import path from "path";
 import crypto from "crypto";
@@ -15,6 +15,8 @@ import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/core/enrich/media/remoteFetch";
 import { providerOriginalImageUrl } from "@/core/enrich/imageUrls";
+import { FETCHED_IMAGE_MAX_SIDE, toUploadWebp } from "@/lib/media/losslessWebp";
+import { uploadsDir } from "@/lib/runtimeData";
 
 function providerMatchesImageUrl(
   provider: { coverUrlHost?: string | null },
@@ -70,7 +72,7 @@ const LOCAL_IMAGE_EXTENSIONS = [
 export async function existingLocalizedUploadForUrl(
   url: string,
 ): Promise<string | null> {
-  const targetDir = path.join(process.cwd(), "public", "uploads");
+  const targetDir = uploadsDir();
   const candidates = coverDownloadCandidates(url);
 
   for (const candidate of candidates) {
@@ -129,7 +131,7 @@ export async function downloadRemoteImage(
 
   try {
     const hash = crypto.createHash("md5").update(url).digest("hex");
-    const targetDir = path.join(process.cwd(), "public", "uploads");
+    const targetDir = uploadsDir();
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
     }
@@ -147,15 +149,16 @@ export async function downloadRemoteImage(
     }
 
     const parsedUrl = new URL(fetched.sourceUrl);
-    let ext = path.extname(parsedUrl.pathname);
-    if (
-      !ext ||
-      ![".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"].includes(
-        ext.toLowerCase(),
-      )
-    ) {
-      ext = ".jpg";
-    }
+    const sourceExt = path.extname(parsedUrl.pathname).toLowerCase();
+    /*
+      Vector stays vector: rasterising an SVG here would have to pick a size,
+      and it is already the smallest thing on disk. Everything else is stored
+      as WebP whatever it arrived as — keeping the source extension is what
+      kept re-introducing the PNGs and JPEGs `pnpm media:to-webp` converts away,
+      one provider fetch at a time.
+    */
+    const keepVerbatim = sourceExt === ".svg";
+    const ext = keepVerbatim ? ".svg" : ".webp";
 
     const filename = `${hash}${ext}`;
     const targetPath = path.join(targetDir, filename);
@@ -179,6 +182,22 @@ export async function downloadRemoteImage(
       imageBuffer = await trimLightImageMargins(imageBuffer, {
         minMarginPixels: options.minMarginPixels,
       });
+    }
+    if (!keepVerbatim) {
+      try {
+        imageBuffer = await toUploadWebp(imageBuffer, {
+          maxSide: FETCHED_IMAGE_MAX_SIDE,
+        });
+      } catch (err) {
+        // An image sharp cannot re-encode is not worth losing: the fallback is
+        // to keep pointing at the remote URL rather than store something the
+        // app will fail to decode later.
+        console.warn(
+          `[ImageLocalizer] Could not encode ${fetched.sourceUrl} as WebP:`,
+          err instanceof Error ? err.message : String(err),
+        );
+        return persistRemoteFallback();
+      }
     }
     fs.writeFileSync(targetPath, imageBuffer);
     console.log(

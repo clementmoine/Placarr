@@ -28,6 +28,13 @@ function parseLimit(raw: string | null): number | undefined {
 const MAX_BATCH_KEYS = 120;
 
 /**
+ * How many print lookups to run at once in a batch.
+ * Full parallel (Promise.all of 120) floods the provider and turns every client
+ * abort/HMR into a wall of ResponseAborted warnings.
+ */
+const LOOKUP_CONCURRENCY = 6;
+
+/**
  * How many masks to fetch at once the first time a set is seen.
  *
  * Low on purpose. The publisher's image host rate-limits, and after the first
@@ -84,13 +91,21 @@ export async function GET(req: NextRequest) {
         ),
       ].slice(0, MAX_BATCH_KEYS);
 
-      const found = await Promise.all(
-        keys.map((key) =>
-          lookupPrintCandidate(key, type, { signal: req.signal }).catch(
+      const found = await runWithConcurrency(
+        keys,
+        LOOKUP_CONCURRENCY,
+        async (key) => {
+          try {
+            return await lookupPrintCandidate(key, type, {
+              signal: req.signal,
+            });
+          } catch (error) {
+            if (isAbortError(error) || req.signal.aborted) throw error;
             // One unknown print must not cost the shelf its other answers.
-            () => null,
-          ),
-        ),
+            return null;
+          }
+        },
+        { signal: req.signal },
       );
 
       const resolved = found.filter((candidate) => candidate !== null);

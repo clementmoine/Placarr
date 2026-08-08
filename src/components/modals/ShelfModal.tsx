@@ -14,7 +14,7 @@ import {
   useState,
 } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus, Loader2, Plus, Upload, X } from "lucide-react";
+import { ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -38,7 +38,6 @@ import { cn } from "@/lib/shared/utils";
 
 import { deleteShelf, getShelf } from "@/lib/api/shelves";
 import { isUrl } from "@/lib/shared/isUrl";
-import { isCardBackUrl } from "@/core/collect/cardBack";
 import { uploadImage } from "@/lib/api/upload";
 import {
   coerceCardFormatForType,
@@ -200,7 +199,6 @@ export function ShelfModal({
 }) {
   const { t } = useLocale();
   const logoInputId = useId();
-  const cardBackInputId = useId();
   const customColorInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
 
@@ -235,20 +233,6 @@ export function ShelfModal({
       message: t("shelf.type.soon"),
     }),
     cardFormat: z.string().default("default"),
-    /**
-     * The back of this shelf's cards. Optional, and either a URL or a file the
-     * collector picks: it is decoration, not data, so nothing goes looking for
-     * it — Ravensburger publishes none, and whether others do was never
-     * checked. Empty simply means the cards do not turn over.
-     */
-    cardBackUrl: z.any().refine((value) => {
-      if (value instanceof File) return true;
-      if (value == null || typeof value !== "string") return value == null;
-      if (!value.trim()) return true;
-      // The same predicate the API stores by — see `normalizeCardBackUrl`.
-      // Split in two, the form once accepted a path the API silently dropped.
-      return isCardBackUrl(value);
-    }, t("shelves.invalidCardBackUrl")),
   });
 
   type FormValues = z.infer<typeof shelfSchema>;
@@ -260,7 +244,6 @@ export function ShelfModal({
       color: "#3b82f6",
       type: "games",
       cardFormat: "default",
-      cardBackUrl: "",
     }),
     [],
   );
@@ -353,47 +336,6 @@ export function ShelfModal({
     }
   }, [watchedCardFormat, selectedType, form]);
 
-  const watchedCardBack = useWatch({
-    control: form.control,
-    name: "cardBackUrl",
-  });
-
-  /** What the field shows: a picked file's blob, or the URL as given. */
-  const cardBackPreviewSrc = useMemo(() => {
-    if (typeof File !== "undefined" && watchedCardBack instanceof File) {
-      return URL.createObjectURL(watchedCardBack);
-    }
-    return typeof watchedCardBack === "string" && watchedCardBack.trim()
-      ? watchedCardBack
-      : null;
-  }, [watchedCardBack]);
-
-  useEffect(() => {
-    if (!(typeof File !== "undefined" && watchedCardBack instanceof File)) {
-      return;
-    }
-    if (!cardBackPreviewSrc) return;
-    return () => URL.revokeObjectURL(cardBackPreviewSrc);
-  }, [watchedCardBack, cardBackPreviewSrc]);
-
-  const setCardBackFile = (file: File | null) => {
-    if (!file) {
-      form.setValue("cardBackUrl", null, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      toast.error(t("shelves.invalidImageFile"));
-      return;
-    }
-    form.setValue("cardBackUrl", file, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-  };
-
   const previewImageSrc = useMemo(() => {
     if (typeof File !== "undefined" && watchedImage instanceof File) {
       return URL.createObjectURL(watchedImage);
@@ -483,7 +425,6 @@ export function ShelfModal({
         imageUrl: shelf.imageUrl || defaultValues.imageUrl,
         color: shelf.color || defaultValues.color,
         cardFormat: shelf.cardFormat || defaultValues.cardFormat,
-        cardBackUrl: shelf.cardBackUrl || "",
       });
     }
   }, [isOpen, shelf, shelfId, reset, defaultValues]);
@@ -519,21 +460,10 @@ export function ShelfModal({
         imageUrl = await uploadImage(imageUrl, { trim: false });
       }
 
-      // The back is a card face, so it keeps its borders: trimming would eat
-      // the printed edge that makes it look like a card at all.
-      let cardBackUrl: FormValues["cardBackUrl"] = values.cardBackUrl;
-      if (cardBackUrl && cardBackUrl instanceof File) {
-        cardBackUrl = await uploadImage(cardBackUrl, { trim: false });
-      }
-
       const updatedShelf: Prisma.ShelfUpdateInput | Prisma.ShelfCreateInput = {
         ...values,
         id: shelf ? shelf?.id : undefined,
         imageUrl: imageUrl,
-        cardBackUrl:
-          typeof cardBackUrl === "string" && cardBackUrl.trim()
-            ? cardBackUrl.trim()
-            : null,
       };
 
       await onSubmit(updatedShelf);
@@ -847,84 +777,6 @@ export function ShelfModal({
                               onChange={(e) => field.onChange(e.target.value)}
                             />
                           </button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="cardBackUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className={FIELD_LABEL_CLASS}>
-                          {t("shelves.cardBackUrl")}
-                        </FormLabel>
-                        <input
-                          id={cardBackInputId}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            setCardBackFile(event.target.files?.[0] || null);
-                            event.target.value = "";
-                          }}
-                        />
-                        <div className="flex items-start gap-3">
-                          {/* The preview is card-shaped: a back that turns out
-                              to be the wrong crop is obvious here rather than
-                              only once a card is flipped. */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              document.getElementById(cardBackInputId)?.click()
-                            }
-                            className="relative aspect-[5/7] w-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted/40 transition-colors hover:border-foreground/30"
-                          >
-                            {cardBackPreviewSrc ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
-                                src={cardBackPreviewSrc}
-                                alt=""
-                                className="h-full w-full object-contain"
-                              />
-                            ) : (
-                              <Upload className="absolute inset-0 m-auto size-4 text-muted-foreground" />
-                            )}
-                          </button>
-
-                          <div className="flex-1 space-y-2">
-                            <FormControl>
-                              <Input
-                                value={
-                                  field.value instanceof File
-                                    ? field.value.name
-                                    : (field.value ?? "")
-                                }
-                                readOnly={field.value instanceof File}
-                                onChange={(event) =>
-                                  field.onChange(event.target.value)
-                                }
-                                inputMode="url"
-                                placeholder="https://…"
-                              />
-                            </FormControl>
-                            <p className="text-xs text-muted-foreground">
-                              {t("shelves.cardBackUrlHint")}
-                            </p>
-                            {field.value ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2 text-xs"
-                                onClick={() => field.onChange(null)}
-                              >
-                                {t("shelves.clearCardBack")}
-                              </Button>
-                            ) : null}
-                          </div>
                         </div>
                         <FormMessage />
                       </FormItem>

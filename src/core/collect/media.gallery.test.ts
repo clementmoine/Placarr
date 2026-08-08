@@ -339,7 +339,7 @@ describe("orderedCoverAttachmentsForDisplay", () => {
   it("collapses duplicate local files referenced by multiple providers", () => {
     const item = {
       metadata: {
-        imageUrl: "/uploads/cover_crop.jpg",
+        imageUrl: "/uploads/cover_edited.jpg",
         attachments: [
           {
             type: "cover",

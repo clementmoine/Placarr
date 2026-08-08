@@ -67,9 +67,9 @@ describe("downloadBooknodeCoverImage", () => {
     vi.mocked(prisma.attachment.update).mockReset();
     vi.mocked(prisma.metadata.update).mockReset();
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    const uploadsRoot = path.join(process.cwd(), "data", "uploads");
     for (const ext of [".webp", ".jpg", ".jpeg", ".png"]) {
-      const target = path.join(uploadsDir, `${UPLOAD_HASH}${ext}`);
+      const target = path.join(uploadsRoot, `${UPLOAD_HASH}${ext}`);
       if (fs.existsSync(target)) fs.unlinkSync(target);
     }
   });

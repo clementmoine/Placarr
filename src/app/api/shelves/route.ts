@@ -20,7 +20,6 @@ import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
 import { slugify } from "@/lib/routing/slugs";
 import { buildItemSearchConditions } from "@/core/collect/search";
-import { normalizeCardBackUrl } from "@/core/collect/cardBack";
 import { bestRatingRatioFromFacts } from "@/core/collect/rating";
 import { summarizeShelfItemPrices } from "@/core/commerce/pricing/resolver";
 import {
@@ -381,7 +380,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { name, imageUrl, color, type, cardFormat, cardBackUrl } = body;
+    const { name, imageUrl, color, type, cardFormat } = body;
 
     if (
       typeof type !== "string" ||
@@ -404,7 +403,6 @@ export async function POST(req: NextRequest) {
         ...(typeof cardFormat === "string" && cardFormat.trim()
           ? { cardFormat: cardFormat.trim() }
           : {}),
-        cardBackUrl: normalizeCardBackUrl(cardBackUrl),
         userId: auth.user.id,
       },
       include: {
@@ -451,7 +449,6 @@ export async function PATCH(req: NextRequest) {
       color?: string | null;
       type?: Type;
       cardFormat?: string;
-      cardBackUrl?: string | null;
       isPublic?: boolean;
     } = {};
     if (typeof body.name === "string") {
@@ -484,11 +481,6 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof body.cardFormat === "string" && body.cardFormat.trim()) {
       data.cardFormat = body.cardFormat.trim();
-    }
-    // Present-but-empty clears it, which is how a collector says "these cards
-    // no longer turn over" — so the key has to be tested, not the value.
-    if ("cardBackUrl" in body) {
-      data.cardBackUrl = normalizeCardBackUrl(body.cardBackUrl);
     }
     if (typeof body.isPublic === "boolean") {
       data.isPublic = body.isPublic;

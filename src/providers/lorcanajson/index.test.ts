@@ -22,6 +22,9 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
     foilMaskUrl: null,
     fullFoilUrl: null,
     varnishMaskUrl: null,
+    secondVarnishMaskUrl: null,
+    foilEffectColors: [],
+    cardType: null,
     ...overrides,
   } as LorcanaCard;
 }
@@ -94,17 +97,25 @@ describe("toPrintCandidate varnish", () => {
     }
   });
 
-  it("leaves the hue to the catalogue rather than to the varnish name", () => {
+  it("leaves the hue to foilEffectColors rather than to the varnish name", () => {
     // Two prints with the same varnish throw different colours, so nothing here
-    // may claim one. A print the catalogue says nothing about gets none.
+    // may claim one. A print upstream says nothing about gets none.
     expect(
       toPrintCandidate(card({ varnishType: "MetallicHotFoil" })).varnishColor,
     ).toBeNull();
     expect(
-      toPrintCandidate(card({ varnishType: "MetallicHotFoil" }), {
-        hotFoilColor: "#FF474B",
-      }).varnishColor,
-    ).toBe("#FF474B");
+      toPrintCandidate(
+        card({
+          varnishType: "MetallicHotFoil",
+          foilEffectColors: ["#FF474B", "#B2B2B2"],
+          secondVarnishMaskUrl: "https://example.test/v2.jpg",
+        }),
+      ),
+    ).toMatchObject({
+      varnishColor: "#FF474B",
+      secondVarnishColor: "#B2B2B2",
+      secondVarnishMaskUrl: "https://example.test/v2.jpg",
+    });
   });
 
   it("gives the stamped hot foil its own look, apart from a clear coat", () => {
@@ -134,6 +145,20 @@ describe("toPrintCandidate varnish", () => {
 describe("toPrintCandidate finishes", () => {
   it("tags every print with the Lorcana effect pack", () => {
     expect(toPrintCandidate(card({})).effectPack).toBe("lorcana");
+  });
+
+  it("rotates Location prints a quarter turn (localised types)", () => {
+    for (const cardType of ["Location", "Lieu", "Ort", "Luogo"]) {
+      expect(toPrintCandidate(card({ cardType }))).toMatchObject({
+        category: cardType,
+        faceQuarterTurns: 1,
+      });
+    }
+    expect(toPrintCandidate(card({ cardType: "Personnage" })).faceQuarterTurns)
+      .toBeUndefined();
+    expect(toPrintCandidate(card({ cardType: "Character" })).category).toBe(
+      "Character",
+    );
   });
 
   it("gives the Enchanted finishes their own look", () => {

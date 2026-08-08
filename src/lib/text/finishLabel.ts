@@ -4,8 +4,9 @@
  * Publisher ids stay `RainbowPillars` in data; the tile chip uses `uppercase`,
  * which otherwise paints `RAINBOWPILLARS` as one unreadable run.
  *
- * Plain finishes (`None`, `nonfoil`…) keep their provider spelling in storage
- * and get a locale label via {@link localizeFinishLabel}.
+ * Catalogue / plain finishes keep provider spelling in storage and get a
+ * locale label via {@link localizeFinishLabel} (Pokémon: Regular / Holofoil /
+ * Reverse Holofoil — never Live’s internal `std` / `ph`).
  */
 
 /** i18n keys for provider spellings that mean “no foil treatment”. */
@@ -14,6 +15,20 @@ const PLAIN_FINISH_LABEL_KEYS: Record<string, string> = {
   nonfoil: "items.finishes.nonfoil",
   "non-foil": "items.finishes.nonfoil",
   normal: "items.finishes.normal",
+};
+
+/**
+ * Pokémon catalogue + synthetic Live finishes → collector lexicon.
+ * Storage ids stay `holo` / `live-ph` / …; chips never show those raw strings.
+ */
+const CATALOGUE_FINISH_LABEL_KEYS: Record<string, string> = {
+  holo: "items.finishes.holo",
+  reverse: "items.finishes.reverse",
+  firstedition: "items.finishes.firstEdition",
+  wpromo: "items.finishes.wPromo",
+  // Live rows TCGdex could not name — same paper treatments as holo / reverse.
+  "live-std": "items.finishes.holo",
+  "live-ph": "items.finishes.reverse",
 };
 
 export function formatFinishLabel(value: string): string {
@@ -27,11 +42,13 @@ export function formatFinishLabel(value: string): string {
     .trim();
 }
 
-/** Message key for a plain finish, or null when the value is a named effect. */
+/** Message key for a catalogue / plain finish, or null for named effects. */
 export function finishLabelMessageKey(value: string): string | null {
   const key = value.trim().toLowerCase();
   if (!key) return null;
-  return PLAIN_FINISH_LABEL_KEYS[key] ?? null;
+  return (
+    PLAIN_FINISH_LABEL_KEYS[key] ?? CATALOGUE_FINISH_LABEL_KEYS[key] ?? null
+  );
 }
 
 /**

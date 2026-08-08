@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { foilCosTime } from "./webgl/renderer";
 import {
+  IDLE_LEAN_FACTOR,
   blendLean,
   easeOutCubic,
   idleLeanFromSeconds,
@@ -24,15 +25,28 @@ describe("idlePointerFromSeconds", () => {
     const atPeak = idlePointerFromSeconds(0); // cos = 1
     expect(atPeak.glare).toBeCloseTo(0.12);
   });
+
+  it("drives --combined in phase with the lean (not |cos|)", () => {
+    // Anti-diagonal: x+y barely moves (~94–106). Finishes keyed on --combined
+    // need a real sweep — same signed phase as lean, else sheen fights tip.
+    const topRight = idlePointerFromSeconds(0); // cos = +1
+    expect(topRight.x + topRight.y).toBeCloseTo(106);
+    expect(topRight.combined).toBeCloseTo(40);
+    const bottomLeft = idlePointerFromSeconds(Math.PI); // cos = -1
+    expect(bottomLeft.combined).toBeCloseTo(160);
+    const mid = idlePointerFromSeconds(Math.PI / 2); // cos = 0
+    expect(mid.combined).toBeCloseTo(100);
+  });
 });
 
 describe("idleLeanFromSeconds", () => {
-  it("is the pointer lean at the same second", () => {
+  it("is the pointer lean at a soft idle fraction of maxTilt", () => {
     const lean = idleLeanFromSeconds(1.25, 18);
     const { x, y } = idlePointerFromSeconds(1.25);
     expect(lean.lightX).toBeCloseTo(x);
     expect(lean.lightY).toBeCloseTo(y);
-    expect(lean.tiltY).toBeCloseTo(((x - 50) / 50) * 18);
+    // Interactive ±18°; idle ~±6° so shelves don't rock like a hover.
+    expect(lean.tiltY).toBeCloseTo(((x - 50) / 50) * 18 * IDLE_LEAN_FACTOR);
   });
 });
 

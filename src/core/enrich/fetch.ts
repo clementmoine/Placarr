@@ -40,7 +40,7 @@ import {
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
 } from "@/core/enrich/providerExternalLinks";
-import { CACHED_FICHE_MERGE_KEY } from "@/core/enrich/internalMergeKeys";
+import { CACHED_FICHE_MERGE_KEY, metadataForCachedFicheMerge } from "@/core/enrich/internalMergeKeys";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { buildBoardGameMetadataSearchQueries } from "@/core/enrich/boardGame";
 import { buildPriceSearchQueries } from "@/core/commerce/pricing/searchQueries";
@@ -616,7 +616,10 @@ export async function fetchMetadata(
   }
 
   if (seededActiveResults[0]) {
-    byProvider.set(CACHED_FICHE_MERGE_KEY, seededActiveResults[0]);
+    byProvider.set(
+      CACHED_FICHE_MERGE_KEY,
+      metadataForCachedFicheMerge(seededActiveResults[0]),
+    );
   }
 
   // 4. Build final canonical fallback names from all successful queries

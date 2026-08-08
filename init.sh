@@ -12,7 +12,7 @@ set -e
 APP_UID="${PUID:-1000}"
 APP_GID="${PGID:-1000}"
 if [ "$(id -u)" = "0" ]; then
-  chown -R "$APP_UID:$APP_GID" /app/public/uploads /app/.cache /config 2>/dev/null || true
+  chown -R "$APP_UID:$APP_GID" /app/data 2>/dev/null || true
   echo "[init] dropping privileges to ${APP_UID}:${APP_GID}"
   exec su-exec "$APP_UID:$APP_GID" "$0" "$@"
 fi
@@ -53,7 +53,7 @@ start_worker() {
 
 rebuild_title_idf() {
   echo "[init] rebuilding title IDF index…"
-  if ./node_modules/.bin/tsx scripts/buildTokenCorpusIndex.ts; then
+  if ./node_modules/.bin/tsx scripts/title-idf/build-index.ts; then
     echo "[init] title IDF index ready"
   else
     echo "[init] title IDF rebuild skipped (non-fatal)"

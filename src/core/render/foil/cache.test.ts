@@ -31,6 +31,7 @@ describe("foil cache", () => {
     expect(a).toBe("shader:https://example.test/shader.frag");
     expect(b).toBe(a);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(url, { cache: "no-store" });
     expect(__foilCacheStats().fragmentFetches).toBe(1);
   });
 
@@ -46,7 +47,7 @@ describe("foil cache", () => {
       })),
     );
 
-    const url = "https://example.test/tex.png";
+    const url = "/foil/pokemon/textures/mask_white.png";
     const [a, b] = await Promise.all([
       fetchImageBitmap(url),
       fetchImageBitmap(url),
@@ -59,6 +60,16 @@ describe("foil cache", () => {
       colorSpaceConversion: "none",
     });
     expect(__foilCacheStats().imageFetches).toBe(1);
+  });
+
+  it("routes allowlisted remote art through /_next/image for WebGL CORS", async () => {
+    const { foilTextureRequestUrl } = await import("./cache");
+    const remote = "https://assets.tcgdex.net/fr/sv/sv03.5/006/high.png";
+    const rewritten = foilTextureRequestUrl(remote);
+    expect(rewritten).toMatch(/^\/_next\/image\?.*url=/);
+    // Next.js rejects any q outside images.qualities (default [75]).
+    expect(rewritten).toMatch(/[?&]q=75(?:&|$)/);
+    expect(foilTextureRequestUrl("/foil/local.png")).toBe("/foil/local.png");
   });
 
   it("fetches an array buffer once per URL", async () => {

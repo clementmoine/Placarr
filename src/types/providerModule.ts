@@ -196,9 +196,30 @@ export type PrintCandidate = {
   /** Where it comes from, as a collector reads it: `Premier Chapitre · 207`. */
   reference: string;
   rarity?: string | null;
+  /**
+   * Quarters of a turn for faces that share the shelf card format but sit on
+   * their side (e.g. Pokémon BREAK = TCG 5:7 rotated → 7:5). Omit / 0 = upright.
+   */
+  faceQuarterTurns?: 0 | 1 | 2 | 3;
+  /**
+   * Card family as the catalogue spells it (`Pokémon`, `Dresseur`, `Énergie`).
+   * A look is chosen per family as much as per rarity — a Dresseur wearing a
+   * Pokémon frame gets an energy badge and an HP bar it has no use for.
+   */
+  category?: string | null;
   thumbnailUrl?: string | null;
   imageUrl?: string | null;
   language?: string | null;
+  /**
+   * Set / expansion code when the catalogue has one. Used to rank set-scoped
+   * card backs (`resolveCardBack`) without re-querying the provider.
+   */
+  setCode?: string | null;
+  /**
+   * Card-specific back / alt face URL (e.g. DBS leader morph). Becomes the
+   * default over set and pack backs when present. See `resolveCardBackUrl`.
+   */
+  cardBackUrl?: string | null;
   /**
    * Finishes this print exists in. The copy's own finish is chosen by the user
    * at add time — it belongs to the item, never to the print.
@@ -250,6 +271,11 @@ export type PrintCandidate = {
    * expecting the effect to be composited. Preferred over the mask when present.
    */
   variantImageUrls?: Record<string, string>;
+  /**
+   * Foil mask URL per catalogue finish (e.g. Live `std` vs `ph`). When set,
+   * preferred over the single {@link foilMaskUrl} for that finish.
+   */
+  finishFoilMaskUrls?: Record<string, string>;
   /** Where the holographic effect applies. See `HoloCardImage`. */
   foilMaskUrl?: string | null;
   /** Second, independent effect layer (varnish). */
@@ -293,6 +319,10 @@ export type FoilPlayroomNeed = {
 /**
  * One catalog print that can stand in for a playroom tile when the collection
  * has no adapted copy. `variant` is the finish the material expects.
+ *
+ * Mask URLs are optional but should be filled when the catalogue already knows
+ * them — the playroom must not wait on a second print-variant round-trip
+ * before Unity can start (Lorcana HotFoil / foilMask gate).
  */
 export type FoilPlayroomCatalogSample = {
   id: string;
@@ -301,6 +331,13 @@ export type FoilPlayroomCatalogSample = {
   printKey: string;
   shelfType: string;
   imageUrl: string | null;
+  foilMaskUrl?: string | null;
+  varnishMaskUrl?: string | null;
+  secondVarnishMaskUrl?: string | null;
+  varnishType?: string | null;
+  varnishColor?: string | null;
+  secondVarnishColor?: string | null;
+  effectPack?: string | null;
 };
 
 export type SeriesVolumeBarcodeContext = {

@@ -324,7 +324,7 @@ export async function POST(req: NextRequest) {
       let localImageUrl = imageUrl;
       let localBackgroundImageUrl = backgroundImageUrl;
 
-      // No automatic crop: it rewrote the stored URL to a derived `_crop` file,
+      // No automatic crop: it rewrote the stored URL to a derived `_edited` file,
       // which detached the cover from its gallery attachment (losing source and
       // region) and could never be undone. Framing is the collector's call.
       if (imageUrl) {

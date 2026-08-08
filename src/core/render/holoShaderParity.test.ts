@@ -50,7 +50,14 @@ function normalize(value: string | undefined): string {
     .replace(/\s*,\s*/g, ",")
     .replace(/\)\s*(?=[a-z])/g, ")")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    // `--combined` is defined as colorX+colorY on pointer; we spell that sum
+    // as `var(--combined)` so idle can travel it without freezing on the
+    // anti-diagonal (publisher CSS still writes the calc form).
+    .replace(
+      /calc\(var\(--colorx\)\s*\*\s*1\s*\+\s*var\(--colory\)\)/g,
+      "var(--combined)",
+    );
 }
 
 /**

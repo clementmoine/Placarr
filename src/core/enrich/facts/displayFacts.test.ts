@@ -273,6 +273,65 @@ describe("displayFacts", () => {
       expect(filtered.some((fact) => fact.kind === "identifier")).toBe(false);
     });
 
+    it("collapses duplicate Numéro / Type rows from a stale seed", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+          priority: 303,
+        },
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11/108",
+          source: "tcgdex",
+          priority: 303,
+        },
+        {
+          kind: "category",
+          label: "Catégorie",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 32,
+        },
+        {
+          kind: "tag",
+          label: "Type",
+          value: "Feu",
+          source: "tcgdex",
+          priority: 31,
+        },
+        {
+          kind: "tag",
+          label: "Type",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 26,
+        },
+        {
+          kind: "series",
+          label: "Extension",
+          value: "Évolutions",
+          source: "tcgdex",
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered.find((fact) => fact.label === "Numéro")?.value).toBe(
+        "11/108",
+      );
+      expect(filtered.filter((fact) => fact.label === "Numéro")).toHaveLength(1);
+      expect(filtered.find((fact) => fact.label === "Type")?.value).toBe("Feu");
+      expect(filtered.some((fact) => fact.value === "Pokémon" && fact.label === "Type")).toBe(
+        false,
+      );
+      expect(filtered.find((fact) => fact.label === "Catégorie")?.value).toBe(
+        "Pokémon",
+      );
+    });
+
     it("merges booknode tags and bedetheque genres into one theme row", () => {
       const facts: DetailFact[] = [
         {
@@ -318,6 +377,40 @@ describe("displayFacts", () => {
       expect(consolidated).toHaveLength(1);
       expect(consolidated[0]?.value).toBe("Bluff • Déduction");
       expect(consolidated[0]?.label).toBe("Mécaniques");
+    });
+
+    it("keeps labeled TCG collector tags as separate rows", () => {
+      const facts: DetailFact[] = [
+        { kind: "tag", label: "Rareté", value: "Rare", priority: 40 },
+        { kind: "tag", label: "Type", value: "Feu", priority: 31 },
+        { kind: "tag", label: "PV", value: "150", priority: 28 },
+        { kind: "tag", label: "Thème", value: "Classique", priority: 10 },
+        { kind: "genre", label: "Genre", value: "Combat", priority: 10 },
+      ];
+
+      const consolidated = consolidateTagLikeFactsByKind(facts);
+      expect(consolidated).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: "Rareté", value: "Rare" }),
+          expect.objectContaining({ label: "Type", value: "Feu" }),
+          expect.objectContaining({ label: "PV", value: "150" }),
+          expect.objectContaining({
+            kind: "tag",
+            label: "Thème",
+            value: "Classique • Combat",
+          }),
+        ]),
+      );
+      expect(consolidated).toHaveLength(4);
+    });
+
+    it("keeps a single Type when Feu and Pokémon both exist", () => {
+      const consolidated = consolidateTagLikeFactsByKind([
+        { kind: "tag", label: "Type", value: "Feu", priority: 31 },
+        { kind: "tag", label: "Type", value: "Pokémon", priority: 26 },
+      ]);
+      expect(consolidated).toHaveLength(1);
+      expect(consolidated[0]?.value).toBe("Feu");
     });
   });
 

@@ -31,6 +31,64 @@ describe("mergeMetadataFactsForStorage", () => {
     ).toBe(true);
   });
 
+  it("upgrades a TCG collector slot when the same provider emits a new value", () => {
+    const merged = mergeMetadataFactsForStorage(
+      [
+        {
+          kind: "format" as const,
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+        },
+        {
+          kind: "tag" as const,
+          label: "Type",
+          value: "Pokémon",
+          source: "tcgdex",
+        },
+        {
+          kind: "tag" as const,
+          label: "PV",
+          value: "150",
+          source: "tcgdex",
+        },
+      ],
+      [
+        {
+          kind: "format" as const,
+          label: "Numéro",
+          value: "11/108",
+          source: "tcgdex",
+          priority: 45,
+        },
+        {
+          kind: "tag" as const,
+          label: "Type",
+          value: "Feu",
+          source: "tcgdex",
+          priority: 31,
+        },
+        {
+          kind: "category" as const,
+          label: "Catégorie",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 32,
+        },
+      ],
+    );
+
+    expect(merged.find((fact) => fact.label === "Numéro")?.value).toBe(
+      "11/108",
+    );
+    expect(merged.find((fact) => fact.label === "Type")?.value).toBe("Feu");
+    expect(merged.find((fact) => fact.label === "Catégorie")?.value).toBe(
+      "Pokémon",
+    );
+    // Same-kind tag from this provider that was not re-emitted stays.
+    expect(merged.find((fact) => fact.label === "PV")?.value).toBe("150");
+  });
+
   it("preserves existing external-link when refresh omits it", () => {
     const existing = [
       {

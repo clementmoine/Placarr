@@ -64,10 +64,6 @@ pnpm dev:docker                  # Postgres + Next, hot-reload, http://localhost
 > fine on Linux (native bind mounts). On a Mac, prefer the hybrid setup above
 > for day-to-day development.
 
-> Migrating an existing SQLite `dev.db`? Use `scripts/export-data.cjs`
-> (run while still on SQLite) then `scripts/import-data.cjs` (after the
-> Postgres migration). See the migration notes in the repo.
-
 ---
 
 ## 📸 Screenshots
@@ -94,9 +90,11 @@ Deploy this project instantly with [Vercel](https://vercel.com/new?utm_source=cr
 
 ---
 
-## 🧾 License
+## License
 
-This project is licensed under the [MIT License](LICENSE).
+Placarr is licensed under the [GNU General Public License v3.0 or later](LICENSE).
+See [NOTICE](NOTICE) for third-party foil CSS attributions (notably
+[simeydotme/pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css)).
 
 ---
 

@@ -70,6 +70,13 @@ export function itemCollectionSortOptions(
   }
   return BASE_ITEM_COLLECTION_SORT_OPTIONS;
 }
+
+/** Default binder order on TCG; A–Z everywhere else. */
+export function defaultItemCollectionSort(
+  shelfType?: string | null,
+): ItemCollectionSort {
+  return usesPrintSearch(shelfType) ? "print_asc" : "name_asc";
+}
 export const ITEM_COLLECTION_RATING_MIN_OPTIONS = [6, 7, 8, 9] as const;
 
 function metadataFacts(
@@ -253,6 +260,7 @@ export function sumCollectionEstimatedValue(
 
 export function parseItemCollectionSort(
   value: string | null | undefined,
+  shelfType?: string | null,
 ): ItemCollectionSort {
   if (
     value &&
@@ -260,7 +268,7 @@ export function parseItemCollectionSort(
   ) {
     return value as ItemCollectionSort;
   }
-  return "name_asc";
+  return defaultItemCollectionSort(shelfType);
 }
 
 export function parseItemCollectionFilters(searchParams: {

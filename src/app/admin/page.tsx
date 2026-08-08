@@ -3,13 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import Header from "@/components/Header";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
+import { TcgEffectsPanel } from "@/components/admin/TcgEffectsPanel";
+import { LocalIndexesPanel } from "@/components/admin/LocalIndexesPanel";
 import {
   Card,
   CardContent,
@@ -286,11 +288,46 @@ function AdminDashboardComponent() {
   const { status, data: session } = useSession();
   useAccount();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, locale } = useLocale();
+
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab =
+    tabFromUrl === "tcg-effects" ||
+    tabFromUrl === "refresh" ||
+    tabFromUrl === "playground" ||
+    tabFromUrl === "providers"
+      ? tabFromUrl
+      : "providers";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (
+      tab === "tcg-effects" ||
+      tab === "refresh" ||
+      tab === "playground" ||
+      tab === "providers"
+    ) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const setTab = (value: string) => {
+    setActiveTab(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    if (value !== "tcg-effects") params.delete("pack");
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  };
 
   const [expandedErrors, setExpandedErrors] = useState<Record<string, boolean>>(
     {},
   );
+
+  const isAdmin =
+    status === "authenticated" && session?.user?.role === "admin";
+  const providersTabActive = activeTab === "providers";
 
   const {
     data: apis,
@@ -303,7 +340,7 @@ function AdminDashboardComponent() {
       const res = await axios.get("/api/admin/status");
       return res.data;
     },
-    enabled: status === "authenticated" && session?.user?.role === "admin",
+    enabled: isAdmin && providersTabActive,
     refetchOnWindowFocus: false,
   });
 
@@ -318,7 +355,7 @@ function AdminDashboardComponent() {
       const res = await axios.get("/api/admin/providers");
       return res.data;
     },
-    enabled: status === "authenticated" && session?.user?.role === "admin",
+    enabled: isAdmin && providersTabActive,
     refetchOnWindowFocus: false,
   });
 
@@ -697,29 +734,13 @@ function AdminDashboardComponent() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-24 md:pb-12">
-      <Header>
-        <div className="flex gap-2">
-          <Button
-            id="btn-refresh-status"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              refetch();
-              refetchProviders();
-              refetchMappingAudit();
-            }}
-            disabled={isLoading || isFetching}
-            className="flex items-center gap-1.5"
-          >
-            <RefreshCw
-              className={`size-4 ${isFetching ? "animate-spin" : ""}`}
-            />
-            <span>{t("admin.status.refresh")}</span>
-          </Button>
-        </div>
-      </Header>
+      <Header />
 
-      <div className="max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+      <div
+        className={`max-w-7xl w-full mx-auto p-4 md:p-6 ${
+          activeTab === "tcg-effects" ? "space-y-3" : "space-y-6"
+        }`}
+      >
         {/* Navigation & Header Info */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -733,16 +754,28 @@ function AdminDashboardComponent() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {t("navigation.admin") || "Administration"}
+              {activeTab === "tcg-effects"
+                ? locale === "fr"
+                  ? "Effets foil"
+                  : "Foil effects"
+                : t("navigation.admin") || "Administration"}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {t("admin.status.description")}
-            </p>
+            {activeTab === "tcg-effects" ? null : (
+              <p className="text-muted-foreground text-sm mt-1">
+                {t("admin.status.description")}
+              </p>
+            )}
           </div>
         </div>
 
-        <Tabs defaultValue="providers" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-[760px]">
+        <Tabs
+          value={activeTab}
+          onValueChange={setTab}
+          className={`w-full ${
+            activeTab === "tcg-effects" ? "space-y-3" : "space-y-6"
+          }`}
+        >
+          <TabsList className="grid w-full grid-cols-4 max-w-[920px]">
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Database className="size-4" />
               {locale === "fr" ? "Providers" : "Providers"}
@@ -755,18 +788,21 @@ function AdminDashboardComponent() {
               <FlaskConical className="size-4" />
               {locale === "fr" ? "Teardown" : "Teardown"}
             </TabsTrigger>
+            <TabsTrigger
+              value="tcg-effects"
+              className="flex items-center gap-2"
+            >
+              <Sparkles className="size-4" />
+              {locale === "fr" ? "Foil" : "Foil"}
+            </TabsTrigger>
           </TabsList>
 
-          {/* Its own route rather than a fourth tab: the bench renders sixteen
-              live cards, and mounting those behind a tab nobody opened would
-              cost every admin visit a foil grid. */}
-          <Link
-            href="/admin/foil"
-            className="inline-flex w-fit items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
-          >
-            <Sparkles className="size-4" />
-            {locale === "fr" ? "Salle d'essai des effets" : "Foil playroom"}
-          </Link>
+          <TabsContent value="tcg-effects" className="outline-none">
+            {/* Mount only when open — the grid spins WebGL canvases. */}
+            {activeTab === "tcg-effects" ? (
+              <TcgEffectsPanel locale={locale} />
+            ) : null}
+          </TabsContent>
 
           <TabsContent value="refresh" className="space-y-6 outline-none">
             <MetadataRefreshPanel />
@@ -1370,6 +1406,7 @@ function AdminDashboardComponent() {
                     </p>
                   </div>
                   <Button
+                    id="btn-refresh-status"
                     variant="outline"
                     size="sm"
                     onClick={() => {
@@ -1377,15 +1414,19 @@ function AdminDashboardComponent() {
                       refetchProviders();
                       refetchMappingAudit();
                     }}
-                    disabled={isFetchingProviders}
+                    disabled={
+                      isLoading || isFetching || isFetchingProviders
+                    }
                     className="w-full sm:w-auto"
                   >
                     <RefreshCw
-                      className={`size-4 ${isFetchingProviders ? "animate-spin" : ""}`}
+                      className={`size-4 ${isFetching || isFetchingProviders ? "animate-spin" : ""}`}
                     />
                     {t("admin.status.refresh")}
                   </Button>
                 </div>
+
+                <LocalIndexesPanel />
 
                 <div className="rounded-lg border bg-card/40 px-3 py-2">
                   <button

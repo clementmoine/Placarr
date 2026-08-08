@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 
 import {
   holoLayerStyle,
@@ -8,14 +14,20 @@ import {
   type HoloTuning,
   holoShader,
   NEUTRAL_VARNISH_COLOR,
-  varnishShader as varnishShaderFor,
   type HoloShader,
+  FOIL_POINTER_GLARE_STYLE,
+  FOIL_PLATE_GLARE_STYLE,
+  FOIL_POINTER_LIGHT_MASK,
 } from "@/core/render/holoShaders";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
+import { applyFoilPointerCss } from "@/core/render/foil/pointerCss";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
+import { useFoilPointerSpring } from "@/lib/client/hooks/useFoilPointerSpring";
 import { useMaskBlob } from "@/lib/client/hooks/useMaskBlob";
+import { useInvertedPaintBlob } from "@/lib/client/hooks/useInvertedPaintBlob";
 import { cn } from "@/lib/shared/utils";
+import { foilFaceReady } from "@/components/foilFaceReady";
 
 type HoloCardImageProps = {
   /** Artwork to show. Already the foil printing when the provider has one. */
@@ -30,6 +42,15 @@ type HoloCardImageProps = {
    * whole card — a uniform shimmer looks like a bug, not like foil.
    */
   maskUrl?: string | null;
+  /**
+   * The foil *plate*, intersected with {@link maskUrl} on the finish layer.
+   *
+   * Coverage says where a card is foiled; the plate says what the foil draws.
+   * On the Live gold prints the visible texture is a near-flat slab and the
+   * illustration exists only on the plate — masked by coverage alone the
+   * shimmer floods the card and the picture never appears.
+   */
+  foilPlateUrl?: string | null;
   /**
    * Second, independent coat: the stamped varnish. Already reduced to coverage
    * by the time it arrives — the published file is a normal map where only blue
@@ -48,10 +69,10 @@ type HoloCardImageProps = {
    * seen whole, and covering cut the printed border off.
    */
   fit?: "cover" | "contain";
-  /** Which look to draw. Comes from the print's own finish. */
-  shader?: HoloShader;
-  /** How to draw the varnish coat. Its own axis, with its own names. */
-  varnishShader?: HoloShader;
+  /** Which look to draw. Null when the pack has no CSS recipe for this finish. */
+  shader?: HoloShader | null;
+  /** How to draw the varnish coat. Null when the pack has no CSS varnish recipe. */
+  varnishShader?: HoloShader | null;
   /**
    * The print's own stamped hue, when the provider knows it. Nothing derives
    * it, so the look's own value is only a stand-in for prints the catalogue has
@@ -78,6 +99,11 @@ type HoloCardImageProps = {
    * Defaults to whatever `tilt` says, which is the standalone case.
    */
   trackPointer?: boolean;
+  /**
+   * Simey `--card-glow` (Radiant spotlight colour). Written once on the frame
+   * so pointerCss does not overwrite with the generic cyan default.
+   */
+  cardGlow?: string | null;
   /** Fired when the artwork finishes loading (for letterbox edge bleed, etc.). */
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
@@ -109,16 +135,18 @@ export function HoloCardImage({
   imageUrl,
   alt,
   maskUrl,
+  foilPlateUrl,
   varnishMaskUrl,
   secondVarnishMaskUrl,
   secondVarnishColor,
   fit = "contain",
-  shader = holoShader(null),
-  varnishShader = varnishShaderFor(null),
+  shader = null,
+  varnishShader = null,
   varnishColor,
   tuning,
   tilt = true,
   trackPointer = tilt,
+  cardGlow = null,
   onLoad,
   className,
   children,
@@ -137,12 +165,14 @@ export function HoloCardImage({
    * surface box of exactly this ratio, centred in the frame.
    */
   const [artRatio, setArtRatio] = useState<string | null>(null);
+  const [artReady, setArtReady] = useState(false);
   // Reset during render when the artwork changes, never in an effect —
   // the React Compiler's "adjust state when props change" pattern.
   const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
   if (prevImageUrl !== imageUrl) {
     setPrevImageUrl(imageUrl);
     setArtRatio(null);
+    setArtReady(false);
   }
 
   /**
@@ -154,9 +184,50 @@ export function HoloCardImage({
    * with it; that component also owns the iOS prompt, and the sensor itself is
    * shared, so a tap there starts the readings this reads.
    */
+  const isRadiantCss = shader?.id === "radiantHolo";
+  const isUltraGoldCss =
+    shader?.id === "ultraGoldRainbow" || shader?.id === "ultraScodix";
+  const isSwSecretCss = shader?.id === "swSecret";
+  /** Catalogue leftover — same full-card / raw-etch rules as SwSecret. */
+  const isSecretRareCss = shader?.id === "secretRare";
+  const isLiveGoldCss =
+    isUltraGoldCss || isSwSecretCss || isSecretRareCss;
+  /**
+   * Radiant CSS = Live etch invert + lattice unmasked.
+   *
+   * Ultra Gold / Scodix / SwSecret: **full-card**. Live white-plate greys the
+   * figure as a CSS mask. Etch paint = raw Live plate (not Radiant invert).
+   */
+  const liveWpMaskUrl = isRadiantCss || isLiveGoldCss ? null : maskUrl;
+
+  /**
+   * Live `_CardEtch` → light-on-black RGB for Radiant.
+   * Ultra Gold / secret paints the raw plate (see polarity note above).
+   */
+  const foilEtchPaint = useInvertedPaintBlob(
+    isRadiantCss ? varnishMaskUrl : null,
+  );
+  /** Ultra Gold etch fingerprint — same-origin Live etch URL (no invert). */
+  const goldEtchPaint =
+    isLiveGoldCss && varnishMaskUrl ? varnishMaskUrl : null;
+  const etchCssPaint = isLiveGoldCss ? goldEtchPaint : foilEtchPaint;
+  /**
+   * Inverted etch as Safari foil mask: `useMaskBlob` writes luma→alpha on the
+   * already-inverted plate, so etch lines (now bright) become coverage.
+   */
+  const radiantEtchMask = useMaskBlob(
+    isRadiantCss ? foilEtchPaint : null,
+    "foil",
+  );
+
   const deviceLean = useDeviceTilt(
     MAX_TILT,
-    trackPointer && Boolean(maskUrl),
+    trackPointer &&
+      Boolean(
+        liveWpMaskUrl ||
+          ((isRadiantCss || isLiveGoldCss) && varnishMaskUrl) ||
+          (!isRadiantCss && !isLiveGoldCss && maskUrl),
+      ),
   ).lean;
 
   /*
@@ -168,9 +239,52 @@ export function HoloCardImage({
    * unresolved mask is not a faint layer, it is an unmasked one over the whole
    * card. See `maskBlobStore`.
    */
-  const foilMask = useMaskBlob(maskUrl);
-  const varnishMask = useMaskBlob(varnishMaskUrl);
-  const secondVarnishMask = useMaskBlob(secondVarnishMaskUrl);
+  const foilMask = useMaskBlob(liveWpMaskUrl, "foil");
+  const foilPlate = useMaskBlob(
+    isRadiantCss || isLiveGoldCss ? null : foilPlateUrl,
+    "foil",
+  );
+  const varnishMask = useMaskBlob(varnishMaskUrl, "varnish");
+  const secondVarnishMask = useMaskBlob(secondVarnishMaskUrl, "varnish");
+  /** Radiant: invert(etch). Ultra Gold: none (full-card). Else: white-plate. */
+  const shineMask = isRadiantCss ? radiantEtchMask : foilMask;
+
+  /**
+   * Parent frames paint the pack/set card back behind us. Until art + every
+   * mask we will wear is in memory, keep the face invisible so layers never
+   * pop in one by one (plain art → foil → varnish).
+   */
+  const wantsFoil = Boolean(
+    (shader || varnishShader) &&
+      (isLiveGoldCss ||
+        liveWpMaskUrl ||
+        (isRadiantCss && varnishMaskUrl) ||
+        (!isRadiantCss && maskUrl)),
+  );
+  const faceReady = foilFaceReady({
+    artReady,
+    wantsFoil,
+    maskUrl: isRadiantCss ? foilEtchPaint : liveWpMaskUrl,
+    foilMask: shineMask,
+    // Ultra Gold paints etch via `--foil-etch`, not the house varnish layer.
+    varnishMaskUrl: isRadiantCss || isLiveGoldCss ? null : varnishMaskUrl,
+    varnishMask,
+    secondVarnishMaskUrl,
+    secondVarnishMask,
+  });
+  const faceReadyForPaint = faceReady;
+
+  const noteArtLoaded = useCallback(
+    (art: HTMLImageElement, event?: SyntheticEvent<HTMLImageElement>) => {
+      if (art.naturalWidth && art.naturalHeight) {
+        setArtRatio(`${art.naturalWidth} / ${art.naturalHeight}`);
+      }
+      setArtReady(true);
+      if (event) onLoad?.(event);
+    },
+    [onLoad],
+  );
+
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
 
@@ -182,20 +296,40 @@ export function HoloCardImage({
    * axis. Writing them the other way round is silent: the card still moves, it
    * just leans into the pointer on one axis and away on the other.
    */
-  const place = useCallback((lean: Lean, glare: number) => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    frame.style.setProperty("--colorX", `${lean.lightX}%`);
-    frame.style.setProperty("--colorY", `${lean.lightY}%`);
-    // The recipes lean on the sum as a single travelling coordinate.
-    frame.style.setProperty("--combined", `${lean.lightX + lean.lightY}%`);
-    frame.style.setProperty("--rotateX", `${lean.tiltY}deg`);
-    frame.style.setProperty("--rotateY", `${lean.tiltX}deg`);
-    frame.style.setProperty("--opacity", `${glare}`);
-  }, []);
+  const place = useCallback(
+    (
+      lean: Lean,
+      glare: number,
+      combined?: number,
+      mode: "pointer" | "idle" = "pointer",
+    ) => {
+      const frame = frameRef.current;
+      if (!frame) return;
+      // Idle may pass a travelling `--combined` (not lightX+lightY). Motif
+      // scroll + soft idle glare share the same lean as pointer mode.
+      applyFoilPointerCss(frame, lean, glare, combined, mode);
+    },
+    [],
+  );
 
-  const idleEnabled = Boolean(maskUrl && foilMask) && !isDriven;
-  const { noteLean } = useFoilIdleLean(isDriven || !idleEnabled, MAX_TILT, place);
+  const { setTarget: springTo, snap: springSnap } = useFoilPointerSpring(place);
+
+  const placeIdle = useCallback(
+    (lean: Lean, glare: number, combined: number) => {
+      // Keep spring state aligned with idle so engaging the pointer does not jump.
+      springSnap(lean, glare);
+      place(lean, glare, combined, "idle");
+    },
+    [place, springSnap],
+  );
+
+  const idleEnabled =
+    Boolean((shader || varnishShader) && shineMask) && !isDriven;
+  const { noteLean } = useFoilIdleLean(
+    isDriven || !idleEnabled,
+    MAX_TILT,
+    placeIdle,
+  );
 
   const applyPointer = useCallback(
     (clientX: number, clientY: number) => {
@@ -209,9 +343,9 @@ export function HoloCardImage({
         MAX_TILT,
       );
       noteLean(lean, 0.66);
-      place(lean, 0.66);
+      springTo(lean, 0.66);
     },
-    [place, noteLean],
+    [springTo, noteLean],
   );
 
   const reset = useCallback(() => {
@@ -227,13 +361,41 @@ export function HoloCardImage({
     // The same shape the pointer produces, so the two inputs cannot disagree
     // about which way the card turns.
     noteLean(deviceLean, 0.4);
-    place(deviceLean, 0.4);
-  }, [deviceLean, isActive, place, noteLean]);
+    springTo(deviceLean, 0.4);
+  }, [deviceLean, isActive, springTo, noteLean]);
 
-  /** No mask, no effect — better a plain card than a uniformly shiny one. */
-  // Plain until the foil mask is in memory, then foil. Drawing the layers
-  // against a mask that has not loaded is what covered the whole card on iOS.
-  if (!maskUrl || !foilMask) {
+  if (!faceReadyForPaint) {
+    return (
+      <div
+        aria-busy="true"
+        className={cn(
+          "relative h-full w-full select-none overflow-hidden rounded-[inherit]",
+          className,
+        )}
+      >
+        {/* Preload art (and masks via hooks) while the parent card-back shows. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt=""
+          aria-hidden
+          draggable={false}
+          ref={(img) => {
+            if (img?.complete && img.naturalWidth > 0 && !artReady) {
+              noteArtLoaded(img);
+            }
+          }}
+          onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
+        />
+      </div>
+    );
+  }
+
+  /** No mask / no CSS recipe — better a plain card than a guessed sheen. */
+  // Packs without a CSS recipe (null shaders) stay plain even when a mask URL
+  // exists — core must not invent a TCG default look.
+  if (!wantsFoil) {
     return (
       <div
         /**
@@ -252,12 +414,32 @@ export function HoloCardImage({
           src={imageUrl}
           alt={alt}
           draggable={false}
-          onLoad={onLoad}
+          ref={(img) => {
+            if (img?.complete && img.naturalWidth > 0 && !artReady) {
+              noteArtLoaded(img);
+            }
+          }}
+          onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
           className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
         />
         {children}
       </div>
     );
+  }
+
+  const overlayLooks: HoloShader[] = [];
+  {
+    // Radiant (and any multi-pass look) chains `overlay` → `overlay`…
+    // (simey shine → :after → :before). Cap depth so a cycle cannot hang.
+    const seen = new Set<string>();
+    let nextId = shader?.overlay;
+    while (nextId && !seen.has(nextId) && overlayLooks.length < 4) {
+      seen.add(nextId);
+      const look = holoShader(nextId);
+      if (!look) break;
+      overlayLooks.push(look);
+      nextId = look.overlay;
+    }
   }
 
   return (
@@ -275,19 +457,27 @@ export function HoloCardImage({
       onPointerCancel={trackPointer ? reset : undefined}
       style={
         {
-          "--colorX": "50%",
-          "--colorY": "50%",
-          "--combined": "100%",
-          "--rotateX": "0deg",
-          "--rotateY": "0deg",
-          "--opacity": "0",
           /**
+           * Static stamps only. Pointer / idle write `--colorX` etc. on the DOM
+           * node directly; putting those in React `style` re-clobber them to
+           * rest values on every parent render and freezes the sheen.
+           *
            * The print's own stamped hue. Absent for all but 83 prints, and the
            * publisher falls back to this same neutral grey rather than to a
            * colour — checked on a HighGloss card, which resolves `#aaa`.
            */
           "--topcolor": varnishColor ?? NEUTRAL_VARNISH_COLOR,
           "--topcolor2": secondVarnishColor ?? NEUTRAL_VARNISH_COLOR,
+          ...(cardGlow ? { "--card-glow": cardGlow } : {}),
+          /*
+            Per-print Live `_CardEtch` as simey's `--foil` paint (same locale as
+            the face — FR/DE/…, never an EN-only Simey scan). Invert polarity
+            once so the coat can keep upstream's stack: foil on top of the
+            pastel rainbow, `hard-light`, one `color-dodge`.
+          */
+          ...(etchCssPaint
+            ? { "--foil-etch": `url("${etchCssPaint}")` }
+            : {}),
         } as React.CSSProperties
       }
       className={cn(
@@ -316,119 +506,216 @@ export function HoloCardImage({
             : undefined
         }
         className={cn(
-          // Clipping belongs to the element that rotates, with the container's
-          // own radius: left on an ancestor, a leaning card gets its corners
-          // sliced off flat instead of turning.
-          "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
+          "relative h-full w-full rounded-[inherit]",
           tilt && isDriven && "transition-transform duration-200 ease-out",
         )}
       >
         {/*
+          Radius + overflow must be *inside* the tilt transform. Same-node
+          `transform` + `overflow:hidden` + `border-radius` fails to clip
+          (sharp corners). `clip-path` survives 3d / compositor quirks better.
+        */}
+        <div className="relative isolate h-full w-full overflow-hidden rounded-[inherit]">
+          {/*
           The surface box: the painted artwork, exactly. Width-driven with the
           height capped — the spec transfers the cap back through the ratio, so
           this is `object-contain` as a box the layers can share. Until the
           ratio is known (or when the art covers), it simply fills the frame.
         */}
-        <div className="relative flex h-full w-full items-center justify-center">
-          <div
-            className="relative"
-            style={
-              fit === "contain" && artRatio
-                ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
-                : { width: "100%", height: "100%" }
-            }
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt={alt}
-              /**
-               * Dragging the artwork hands the pointer to the browser's own
-               * drag, which stops `pointermove` — the card freezes mid-lean
-               * with its light stuck wherever the drag began.
-               */
-              draggable={false}
-              onLoad={(event) => {
-                const art = event.currentTarget;
-                if (art.naturalWidth && art.naturalHeight) {
-                  setArtRatio(`${art.naturalWidth} / ${art.naturalHeight}`);
-                }
-                onLoad?.(event);
-              }}
-              className={cn("h-full w-full", objectFitClass(fit))}
-            />
-
+          <div className="relative flex h-full w-full items-center justify-center">
             <div
-              aria-hidden
-              style={{
-                ...holoLayerStyle(shader, tuning),
-                ...maskedByStyle(foilMask),
-              }}
-              className="pointer-events-none absolute inset-0"
-            />
+              className="relative"
+              style={
+                fit === "contain" && artRatio
+                  ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
+                  : { width: "100%", height: "100%" }
+              }
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt={alt}
+                /**
+                 * Dragging the artwork hands the pointer to the browser's own
+                 * drag, which stops `pointermove` — the card freezes mid-lean
+                 * with its light stuck wherever the drag began.
+                 */
+                draggable={false}
+                onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
+                className={cn("h-full w-full", objectFitClass(fit))}
+              />
 
-            {/*
-          The extra coat some finishes ship with, drawn above the finish and
-          through the same mask. A Lore card has five layers, not three, and
-          this is where most of its colour comes from — without it the finish
-          alone is nearly monochrome.
+              {/*
+                Radiant paint order (Live etch has no lozenge bake):
+                  coat → lattice → sparkle
+                Simey DOM is shine(lattice) → :after(coat) → :before(sparkle),
+                but their mask/foil bake the crosshatch into the coat. Our coat
+                is fingerprint-only; stacking lattice under it color-dodges the
+                diamonds away. Lattice stays unmasked; coat/sparkle use etch.
+              */}
+              {isRadiantCss &&
+                overlayLooks
+                  .filter((look) => look.id === "radiantHoloCoat")
+                  .map((overlayLook) => (
+                    <div
+                      key={overlayLook.id}
+                      aria-hidden
+                      style={{
+                        ...holoLayerStyle(overlayLook, tuning),
+                        ...maskedByStyle([
+                          shineMask,
+                          foilPlate,
+                          overlayLook.pointerFalloff === false
+                            ? null
+                            : FOIL_POINTER_LIGHT_MASK,
+                        ]),
+                      }}
+                      className="pointer-events-none absolute inset-0"
+                    />
+                  ))}
+
+              {shader && (
+                <div
+                  aria-hidden
+                  style={{
+                    ...holoLayerStyle(shader, tuning),
+                    // A look's own stencil intersects the print's masks: see
+                    // `HoloShader.carve`. Pointer light falloff (simey) last.
+                    //
+                    // Radiant lattice (±45° lozenges) must NOT wear Live etch as
+                    // a mask: Simey's mask bakes the crosshatch; ours is fingerprint
+                    // waves only — masking the shine wiped the diamonds.
+                    ...maskedByStyle([
+                      isRadiantCss ? null : shineMask,
+                      foilPlate,
+                      shader.carve,
+                      shader.pointerFalloff === false
+                        ? null
+                        : FOIL_POINTER_LIGHT_MASK,
+                    ]),
+                  }}
+                  className="pointer-events-none absolute inset-0"
+                />
+              )}
+
+              {/*
+          Extra coats some finishes ship with, drawn above the finish through
+          the same mask. Overlay ids may chain (Radiant: coat → sparkle) so a
+          look can use more than one mix-blend-mode — simey’s shine/:after/:before.
+          Radiant coat is rendered above (under the lattice); only sparkle here.
+          Ultra Gold etch layer is full-card (no white-plate mask).
         */}
-            {shader.overlay && (
+              {overlayLooks
+                .filter((look) => !(isRadiantCss && look.id === "radiantHoloCoat"))
+                .map((overlayLook) => (
+                <div
+                  key={overlayLook.id}
+                  aria-hidden
+                  style={{
+                    ...holoLayerStyle(overlayLook, tuning),
+                    ...maskedByStyle([
+                      shineMask,
+                      foilPlate,
+                      overlayLook.pointerFalloff === false
+                        ? null
+                        : FOIL_POINTER_LIGHT_MASK,
+                    ]),
+                  }}
+                  className="pointer-events-none absolute inset-0"
+                />
+              ))}
+
+              {varnishMask && varnishShader && (
+                <div
+                  aria-hidden
+                  style={{
+                    ...holoLayerStyle(varnishShader, tuning),
+                    ...maskedByStyle(varnishMask),
+                  }}
+                  className="pointer-events-none absolute inset-0"
+                />
+              )}
+
+              {secondVarnishMask && varnishShader && (
+                <div
+                  aria-hidden
+                  style={{
+                    ...holoLayerStyle(varnishShader, tuning),
+                    // The second coat sweeps its own hue, which is why the recipes
+                    // keep `--topcolor2` apart from `--topcolor`.
+                    backgroundImage: holoLayerStyle(
+                      varnishShader,
+                    ).backgroundImage?.replaceAll(
+                      "var(--topcolor)",
+                      "var(--topcolor2)",
+                    ),
+                    ...maskedByStyle(secondVarnishMask),
+                  }}
+                  className="pointer-events-none absolute inset-0"
+                />
+              )}
+
+              {/*
+                Glare rides on top of everything, unmasked: light falls on the
+                whole card. Finish-specific overrides match poke-holo
+                (`radiant-holo.css`, `secret-rare.css`); others keep base overlay.
+              */}
               <div
                 aria-hidden
-                style={{
-                  ...holoLayerStyle(holoShader(shader.overlay), tuning),
-                  ...maskedByStyle(foilMask),
-                }}
-                className="pointer-events-none absolute inset-0"
+                className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+                style={
+                  shader?.id === "radiantHolo"
+                    ? {
+                        backgroundImage:
+                          "radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(0, 0%, 100%, 0.33) 0%, hsl(0, 0%, 25%) 110%)",
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat",
+                        mixBlendMode: "hard-light",
+                        filter: "brightness(1) contrast(1.5)",
+                        opacity: "var(--opacity)",
+                      }
+                    : isLiveGoldCss
+                      ? {
+                          // Cooler / dimmer hard-light — Live gold/secret fields
+                          // already warm. Full-card (no white-plate).
+                          backgroundImage:
+                            "radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(48, 4%, 62%, 0.2) 0%, hsl(28, 8%, 11%) 180%)",
+                          backgroundSize: "cover",
+                          backgroundRepeat: "no-repeat",
+                          mixBlendMode: "hard-light",
+                          filter: "brightness(1.05) contrast(1.35)",
+                          opacity: "var(--opacity)",
+                        }
+                      : {
+                          ...FOIL_POINTER_GLARE_STYLE,
+                          mixBlendMode: "overlay",
+                          opacity: "var(--opacity)",
+                        }
+                }
               />
-            )}
 
-            {varnishMask && (
-              <div
-                aria-hidden
-                style={{
-                  ...holoLayerStyle(varnishShader, tuning),
-                  ...maskedByStyle(varnishMask),
-                }}
-                className="pointer-events-none absolute inset-0"
-              />
-            )}
-
-            {secondVarnishMask && (
-              <div
-                aria-hidden
-                style={{
-                  ...holoLayerStyle(varnishShader, tuning),
-                  // The second coat sweeps its own hue, which is why the recipes
-                  // keep `--topcolor2` apart from `--topcolor`.
-                  backgroundImage: holoLayerStyle(
-                    varnishShader,
-                  ).backgroundImage?.replaceAll(
-                    "var(--topcolor)",
-                    "var(--topcolor2)",
-                  ),
-                  ...maskedByStyle(secondVarnishMask),
-                }}
-                className="pointer-events-none absolute inset-0"
-              />
-            )}
-
-            {/* Glare rides on top of everything, unmasked: light falls on the whole card. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 mix-blend-overlay transition-opacity duration-300"
-              style={{
-                backgroundImage:
-                  "radial-gradient(farthest-corner circle at var(--colorX) var(--colorY), rgba(255,255,255,0.8) 10%, rgba(255,255,255,0.65) 20%, rgba(0,0,0,0.5) 90%)",
-                backgroundSize: "100%",
-                opacity: "var(--opacity)",
-              }}
-            />
+              {/*
+                Second glare (simey `.card__glare2`): white wash through the
+                foil plate only — softens specular where the plate draws.
+              */}
+              {foilPlate && (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+                  style={{
+                    ...FOIL_PLATE_GLARE_STYLE,
+                    ...maskedByStyle(foilPlate),
+                    // Quieter than the full-card glare — simey's glare2 is a
+                    // soft foil wash, not a second specular lobe.
+                    opacity: "calc(var(--opacity) * 0.55)",
+                  }}
+                />
+              )}
+            </div>
           </div>
-        </div>
 
-        {children}
+          {children}
+        </div>
       </div>
     </div>
   );

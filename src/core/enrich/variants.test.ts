@@ -1,11 +1,57 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  expandPrintCandidatesByFinish,
   normalizeVariantOptions,
   offersVariantChoice,
   resolveStoredVariant,
   variantUsesFoilMarketPrice,
 } from "./variants";
+
+describe("expandPrintCandidatesByFinish", () => {
+  it("emits one row per finish so the picker can tag each option", () => {
+    const rows = expandPrintCandidatesByFinish([
+      {
+        printKey: "pokemon:xy12-11",
+        language: "fr",
+        finishes: ["normal", "holo", "live-ph"],
+        title: "Dracaufeu",
+      },
+    ]);
+    expect(rows.map((row) => row.finish)).toEqual([
+      "normal",
+      "holo",
+      "live-ph",
+    ]);
+    expect(rows.map((row) => row.rowKey)).toEqual([
+      "pokemon:xy12-11|normal|fr",
+      "pokemon:xy12-11|holo|fr",
+      "pokemon:xy12-11|live-ph|fr",
+    ]);
+  });
+
+  it("keeps a single row when the print has no finish list", () => {
+    expect(
+      expandPrintCandidatesByFinish([
+        { printKey: "lorcana:1", finishes: [], title: "Elsa" },
+      ]),
+    ).toEqual([
+      expect.objectContaining({
+        printKey: "lorcana:1",
+        finish: null,
+        rowKey: "lorcana:1||",
+      }),
+    ]);
+  });
+
+  it("still expands a lone finish so the tile can show its tag", () => {
+    expect(
+      expandPrintCandidatesByFinish([
+        { printKey: "p:1", finishes: ["holo"], language: "en" },
+      ])[0],
+    ).toMatchObject({ finish: "holo", rowKey: "p:1|holo|en" });
+  });
+});
 
 describe("normalizeVariantOptions", () => {
   it("keeps the provider's order", () => {

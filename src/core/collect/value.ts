@@ -79,7 +79,11 @@ function tcgValueFromFinish(item: ItemPriceValues): ItemValueEstimate | null {
       (item.priceNew == null && item.priceFoil == null
         ? item.priceEstimated
         : null);
-    return withProvenance(item.priceFoil, foilEstimate);
+    const foil = withProvenance(item.priceFoil, foilEstimate);
+    if (foil) return foil;
+    // TCGdex may omit the holo variant flag so CM only stamped `new` — still
+    // better than an empty hero when the copy is a foil finish.
+    return withProvenance(item.priceNew, item.priceEstimated);
   }
   return withProvenance(item.priceNew, item.priceEstimated);
 }

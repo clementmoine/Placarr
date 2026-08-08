@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   coerceCardFormatForType,
+  faceRotateDeg,
   getCardFormatsForPicker,
   getDefaultCardFormatAlias,
+  normalizeFaceQuarterTurns,
+  orientAspectRatio,
 } from "@/lib/text/cardFormat";
 
 describe("getDefaultCardFormatAlias", () => {
@@ -43,5 +46,40 @@ describe("coerceCardFormatForType", () => {
     expect(coerceCardFormatForType("vhs", "musics")).toBe("vhs");
     expect(coerceCardFormatForType("square", "movies")).toBe("square");
     expect(coerceCardFormatForType("tcg", "games")).toBe("tcg");
+  });
+});
+
+describe("face orientation", () => {
+  it.each([
+    [0, 0],
+    [1, 1],
+    [2, 2],
+    [3, 3],
+    [4, 0],
+    [-1, 3],
+    [null, 0],
+    [undefined, 0],
+  ] as const)("normalizeFaceQuarterTurns(%s) → %s", (input, expected) => {
+    expect(normalizeFaceQuarterTurns(input)).toBe(expected);
+  });
+
+  it.each([
+    ["5 / 7", 0, "5 / 7"],
+    ["5 / 7", 1, "7 / 5"],
+    ["5 / 7", 2, "5 / 7"],
+    ["5 / 7", 3, "7 / 5"],
+    ["1 / 1", 1, "1 / 1"],
+    ["16 / 9", 1, "9 / 16"],
+  ] as const)("orientAspectRatio(%s, %s) → %s", (aspect, turns, expected) => {
+    expect(orientAspectRatio(aspect, turns)).toBe(expected);
+  });
+
+  it.each([
+    [0, 0],
+    [1, 90],
+    [2, 180],
+    [3, 270],
+  ] as const)("faceRotateDeg(%s) → %s", (turns, deg) => {
+    expect(faceRotateDeg(turns)).toBe(deg);
   });
 });

@@ -20,11 +20,11 @@ const GAME_SEPARATOR = ":";
 const SEGMENT_SEPARATOR = "-";
 
 /**
- * Segments must stay free of both separators, otherwise a key could not be
- * parsed back. Collector numbers and promo groupings are alphanumeric in every
- * dataset seen so far (`4a`, `223`, `P1`, `PD1`).
+ * Segments must stay free of both separators (`:` / `-`), otherwise a key
+ * could not be parsed back. Collector numbers and set codes are alphanumeric
+ * (plus `.` for TCGdex set codes like `sv03.5`).
  */
-const SEGMENT_PATTERN = /^[a-z0-9]+$/;
+const SEGMENT_PATTERN = /^[a-z0-9.]+$/;
 
 export type PrintIdentity = {
   /** Game slug, e.g. the Lorcana slug. Not a provider id. */

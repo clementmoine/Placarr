@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { HoloCardImage } from "@/components/HoloCardImage";
+import { foilSurfacesReady } from "@/components/foilFaceReady";
 import {
   acquireFoilSlot,
   getEffectPack,
@@ -43,8 +44,8 @@ import "@/effects";
  * and never a backend choice (except the playroom override or grid `css`).
  * Default is WebGL when WebGL2 + resolved material + pool slot allow; otherwise
  * the full CSS stack via `HoloCardImage`. Grids force `backend="css"`; detail
- * and fullscreen leave `auto`. CSS paints first while WebGL loads, then
- * unmounts once the canvas is ready — no permanent double render.
+ * and fullscreen leave `auto`. While WebGL loads the face stays empty so the
+ * parent card-back skeleton shows — no CSS→canvas flash.
  */
 
 const MAX_TILT = 18;
@@ -66,8 +67,32 @@ export function tiltFromLightPercent(
   return ((lightPercent - 50) / 50) * timeFactor;
 }
 
+/**
+ * Which WebGL scroll clock to run while the card is idle vs pointer-driven.
+ *
+ * TCG Live HoloFoil frags bake `_Time` motif scroll **and** light/view response
+ * in a single program. Flipping to `"tilt"` on hover used to unsubscribe the
+ * shared clock — `_Time` froze and the foil looked "posed" under the cursor
+ * while Live keeps shimmering. Lorcana alone ships a dual sibling
+ * (`fragmentTime` / tilt); only then may hover swap programs.
+ */
+export function foilScrollModeForInteraction(opts: {
+  isDriven: boolean;
+  /** True when the material has a separate SCROLLMODE_TIME fragment. */
+  hasTimeSibling: boolean;
+  prefersReducedMotion?: boolean;
+}): "time" | "tilt" {
+  if (opts.prefersReducedMotion && !opts.isDriven) return "tilt";
+  if (opts.hasTimeSibling && opts.isDriven) return "tilt";
+  return "time";
+}
+
 type FoilCardImageProps = {
   effectPack?: string | null;
+  /** Provider-neutral print anchor — packs may resolve finish → dumped recipe. */
+  printKey?: string | null;
+  /** Catalogue title — Live name join when set+num misses. */
+  title?: string | null;
   imageUrl: string;
   alt: string;
   /** Catalogue finish name (e.g. Magma), not a shader id. */
@@ -78,15 +103,31 @@ type FoilCardImageProps = {
    * instead of finish+varnish resolution — varnish-only materials have no finish.
    */
   materialName?: string | null;
+  /**
+   * Live `foil_mask` (CastAndCure, ReverseLaminate*, …). Packs may enable CC
+   * foil layers from it — playroom passes the dumped seed's mask.
+   */
+  liveFoilMask?: string | null;
   maskUrl?: string | null;
+  /** Foil plate, intersected with the coverage mask — see `HoloCardImage`. */
+  foilPlateUrl?: string | null;
   varnishMaskUrl?: string | null;
   secondVarnishMaskUrl?: string | null;
   secondVarnishColor?: string | null;
   varnishColor?: string | null;
+  /**
+   * Pre-resolved CSS look ids (from `variantRendering` / pack.resolveCss).
+   * When set, preferred over re-resolving from finish — keeps the grid foil
+   * alive even if `effectPack` is briefly missing from a stale print cache.
+   */
+  cssFinishShaderId?: string | null;
+  cssVarnishShaderId?: string | null;
   fit?: "cover" | "contain";
   tuning?: HoloTuning;
   tilt?: boolean;
   trackPointer?: boolean;
+  /** Simey `--card-glow` (Radiant type colour). */
+  cardGlow?: string | null;
   /** Playroom override. Product leaves `auto`. */
   backend?: FoilBackendPreference;
   /** Fired when the artwork finishes loading (for letterbox edge bleed, etc.). */
@@ -98,6 +139,7 @@ type FoilCardImageProps = {
 type WebglHandle = {
   ready: Promise<void>;
   setTilt: (x: number, y: number) => void;
+  setLeanDegrees: (x: number, y: number) => void;
   setScrollMode: (mode: "time" | "tilt") => void;
   setDeviceRotationDegrees: (degrees: number) => void;
   destroy: () => void;
@@ -138,6 +180,7 @@ function CssFoilFace({
   imageUrl,
   alt,
   maskUrl,
+  foilPlateUrl,
   varnishMaskUrl,
   secondVarnishMaskUrl,
   secondVarnishColor,
@@ -151,10 +194,12 @@ function CssFoilFace({
   onLoad,
   className,
   children,
+  cardGlow,
 }: {
   imageUrl: string;
   alt: string;
   maskUrl?: string | null;
+  foilPlateUrl?: string | null;
   varnishMaskUrl?: string | null;
   secondVarnishMaskUrl?: string | null;
   secondVarnishColor?: string | null;
@@ -168,12 +213,14 @@ function CssFoilFace({
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
   children?: React.ReactNode;
+  cardGlow?: string | null;
 }) {
   return (
     <HoloCardImage
       imageUrl={imageUrl}
       alt={alt}
       maskUrl={maskUrl}
+      foilPlateUrl={foilPlateUrl}
       varnishMaskUrl={varnishMaskUrl}
       secondVarnishMaskUrl={secondVarnishMaskUrl}
       secondVarnishColor={secondVarnishColor}
@@ -184,6 +231,7 @@ function CssFoilFace({
       tuning={tuning}
       tilt={tilt}
       trackPointer={trackPointer}
+      cardGlow={cardGlow}
       onLoad={onLoad}
       className={className}
     >
@@ -211,66 +259,98 @@ function useFoilCapabilities(): FoilCapabilities {
 
 export function FoilCardImage({
   effectPack: effectPackId,
+  printKey,
+  title,
   imageUrl,
   alt,
   finish,
   varnishType,
   materialName,
+  liveFoilMask,
   maskUrl,
+  foilPlateUrl,
   varnishMaskUrl,
   secondVarnishMaskUrl,
   secondVarnishColor,
   varnishColor,
+  cssFinishShaderId,
+  cssVarnishShaderId,
   fit = "contain",
   tuning,
   tilt = true,
   trackPointer = tilt,
   backend: preference = "auto",
+  cardGlow = null,
   onLoad,
   className,
   children,
 }: FoilCardImageProps) {
   const pack = getEffectPack(effectPackId);
-  const cssRecipe = pack
-    ? pack.resolveCss(finish ?? "", varnishType)
+  const fromPack = pack
+    ? pack.resolveCss(finish ?? "", varnishType, {
+        foilMask: liveFoilMask,
+        printKey,
+        title,
+      })
     : { finishShaderId: null, varnishShaderId: null };
-  const material = pack
-    ? materialName
-      ? (pack.materialForPrint?.(materialName, { secondVarnishMaskUrl }) ??
-        pack.material(materialName))
-      : finish
-        ? pack.resolveMaterialForPrint(finish, varnishType, {
-            secondVarnishMaskUrl,
-          })
-        : null
-    : null;
+  // Prefer pack resolve (sees Live foil_mask) when it yields a look; fall back
+  // to pre-resolved ids when the pack is briefly missing from a stale cache.
+  const cssRecipe = {
+    finishShaderId: fromPack.finishShaderId ?? cssFinishShaderId ?? null,
+    varnishShaderId: fromPack.varnishShaderId ?? cssVarnishShaderId ?? null,
+  };
+  // Memoize: materialForPrint often returns a fresh object (foil_mask /
+  // USESECONDTOPLAYER clones). A new identity remounts WebGL every lean tick.
+  const material = useMemo(() => {
+    if (!pack) return null;
+    if (materialName) {
+      return (
+        pack.materialForPrint?.(materialName, {
+          secondVarnishMaskUrl,
+          foilMask: liveFoilMask,
+        }) ?? pack.material(materialName)
+      );
+    }
+    if (finish) {
+      return pack.resolveMaterialForPrint(finish, varnishType, {
+        secondVarnishMaskUrl,
+        printKey,
+        title,
+        foilMask: liveFoilMask,
+      });
+    }
+    return null;
+  }, [
+    pack,
+    materialName,
+    finish,
+    varnishType,
+    secondVarnishMaskUrl,
+    liveFoilMask,
+    printKey,
+    title,
+  ]);
 
   const slotId = useId();
   const frameRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<WebglHandle | null>(null);
   const tiltUniformRef = useRef<readonly [number, number]>([0, 0]);
+  const leanDegreesRef = useRef<readonly [number, number]>([0, 0]);
 
   const [inView, setInView] = useState(false);
   const [poolOk, setPoolOk] = useState(false);
   const [failed, setFailed] = useState(false);
   const [rendererReady, setRendererReady] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  const [artRatio, setArtRatio] = useState<string | null>(null);
-  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
-  if (prevImageUrl !== imageUrl) {
-    setPrevImageUrl(imageUrl);
-    setArtRatio(null);
-  }
 
   const caps = useFoilCapabilities();
-  const surfacesReady = Boolean(
-    material &&
-      (!materialNeedsRole(material, "foilMask") || maskUrl) &&
-      (!materialNeedsRole(material, "varnishMask") || varnishMaskUrl) &&
-      (!materialNeedsRole(material, "secondVarnishMask") ||
-        secondVarnishMaskUrl),
-  );
+  const effectiveMaskUrl = maskUrl ?? pack?.fallbackFoilMaskUrl ?? null;
+  const surfacesReady = foilSurfacesReady({
+    hasMaterial: Boolean(material),
+    needsFoilMask: material ? materialNeedsRole(material, "foilMask") : false,
+    foilMaskUrl: effectiveMaskUrl,
+  });
 
   /**
    * WebGL is *desired* for this card (material + caps + preference). Visibility
@@ -299,7 +379,9 @@ export function FoilCardImage({
     if (!frame) return;
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { rootMargin: "25%" },
+      // Small cushion so a 1px scroll does not thrash pool acquire/release
+      // (that read as a blink). Keep it modest — large margins starved HotFoil.
+      { rootMargin: "40px" },
     );
     observer.observe(frame);
     return () => observer.disconnect();
@@ -318,7 +400,12 @@ export function FoilCardImage({
     };
     tryAcquire();
     const unsubscribe = subscribeFoilPool(() => {
-      if (!hasFoilSlot(slotId)) tryAcquire();
+      // FIFO handoff may have granted the slot already — sync state.
+      if (hasFoilSlot(slotId)) {
+        setPoolOk(true);
+        return;
+      }
+      tryAcquire();
     });
     return () => {
       unsubscribe();
@@ -330,7 +417,7 @@ export function FoilCardImage({
   // Allow a later mount / backend switch to retry after a compile failure.
   useEffect(() => {
     setFailed(false);
-  }, [preference, materialName, finish, varnishType, effectPackId]);
+  }, [preference, materialName, finish, varnishType, effectPackId, printKey]);
 
   const useWebgl =
     eligible &&
@@ -348,25 +435,38 @@ export function FoilCardImage({
   const isDriven = isActive || Boolean(deviceLean);
 
   const timeFactor = material?.floats._TimeFactor ?? DEFAULT_TIME_FACTOR;
-
-  const setShaderTilt = useCallback((xy: readonly [number, number]) => {
-    tiltUniformRef.current = xy;
-    rendererRef.current?.setTilt(xy[0], xy[1]);
-  }, []);
+  /** Lorcana dual-frag only — Pokémon keeps one Live frag with `_Time` + light. */
+  const hasTimeSibling = Boolean(material?.fragmentTime);
 
   const applyLean = useCallback(
-    (lean: Lean) => {
-      setShaderTilt([
+    (lean: Lean, opts?: { engageTiltProgram?: boolean }) => {
+      const xy = [
         tiltFromLightPercent(lean.lightX, timeFactor),
         tiltFromLightPercent(lean.lightY, timeFactor),
-      ]);
+      ] as const;
+      tiltUniformRef.current = xy;
+      const renderer = rendererRef.current;
+      if (renderer) {
+        // Dual-frag (Lorcana): hover must flip to the tilt sibling immediately.
+        // Single-frag Live (Pokémon): stay on the clock — engageTilt would freeze
+        // `_Time` and pose the foil under the cursor.
+        if (opts?.engageTiltProgram && hasTimeSibling) {
+          renderer.setScrollMode("tilt");
+        }
+        renderer.setTilt(xy[0], xy[1]);
+      }
+      // The same lean as an angle, for the shaders that rotate rather than
+      // scroll. `tiltX`/`tiltY` are rotations *about* X and Y, so they land on
+      // the Euler components of the same name.
+      leanDegreesRef.current = [lean.tiltX, lean.tiltY];
+      renderer?.setLeanDegrees(lean.tiltX, lean.tiltY);
       const frame = frameRef.current;
       if (frame) {
         frame.style.setProperty("--rotateX", `${lean.tiltY}deg`);
         frame.style.setProperty("--rotateY", `${lean.tiltX}deg`);
       }
     },
-    [setShaderTilt, timeFactor],
+    [timeFactor, hasTimeSibling],
   );
 
   // Physical lean follows the same `cos(t)` Time mode uses for the foil, with
@@ -396,7 +496,7 @@ export function FoilCardImage({
           material,
           {
             artUrl: imageUrl,
-            foilMaskUrl: maskUrl,
+            foilMaskUrl: effectiveMaskUrl,
             varnishMaskUrl,
             secondVarnishMaskUrl,
             hotFoilColor: parseCssColor(varnishColor),
@@ -413,7 +513,9 @@ export function FoilCardImage({
         if (!cancelled && rendererRef.current === renderer) {
           setRendererReady(true);
         }
-      } catch {
+      } catch (err) {
+        // Stay on CSS until the user switches backend / material.
+        console.warn("[foil] WebGL init failed", material?.fragment, err);
         if (!cancelled) setFailed(true);
       }
     })();
@@ -430,7 +532,7 @@ export function FoilCardImage({
     material,
     pack,
     imageUrl,
-    maskUrl,
+    effectiveMaskUrl,
     varnishMaskUrl,
     secondVarnishMaskUrl,
     varnishColor,
@@ -455,6 +557,8 @@ export function FoilCardImage({
       canvas.height = nextHeight;
       const [x, y] = tiltUniformRef.current;
       rendererRef.current?.setTilt(x, y);
+      const [leanX, leanY] = leanDegreesRef.current;
+      rendererRef.current?.setLeanDegrees(leanX, leanY);
     });
     observer.observe(canvas);
     return () => observer.disconnect();
@@ -463,24 +567,26 @@ export function FoilCardImage({
   useEffect(() => {
     if (!deviceLean || isActive) return;
     noteLean(deviceLean, 0.4);
-    applyLean(deviceLean);
+    applyLean(deviceLean, { engageTiltProgram: true });
   }, [deviceLean, isActive, applyLean, noteLean]);
 
   useEffect(() => {
     if (!useWebgl || !rendererReady) return;
     const renderer = rendererRef.current;
     if (!renderer) return;
-    if (
-      !isDriven &&
+    const prefersReduced =
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      renderer.setScrollMode("tilt");
-      setShaderTilt([0, 0]);
-      return;
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mode = foilScrollModeForInteraction({
+      isDriven,
+      hasTimeSibling,
+      prefersReducedMotion: prefersReduced,
+    });
+    renderer.setScrollMode(mode);
+    if (mode === "tilt" && prefersReduced && !isDriven) {
+      renderer.setTilt(0, 0);
     }
-    renderer.setScrollMode(isDriven ? "tilt" : "time");
-  }, [useWebgl, rendererReady, isDriven, setShaderTilt]);
+  }, [useWebgl, rendererReady, isDriven, hasTimeSibling]);
 
   useEffect(() => {
     if (!useWebgl || !rendererReady) return;
@@ -493,6 +599,7 @@ export function FoilCardImage({
       imageUrl={imageUrl}
       alt={alt}
       maskUrl={maskUrl}
+      foilPlateUrl={foilPlateUrl}
       varnishMaskUrl={varnishMaskUrl}
       secondVarnishMaskUrl={secondVarnishMaskUrl}
       secondVarnishColor={secondVarnishColor}
@@ -503,6 +610,7 @@ export function FoilCardImage({
       tuning={tuning}
       tilt={tilt}
       trackPointer={trackPointer}
+      cardGlow={cardGlow}
       onLoad={onLoad}
       className={eligible ? undefined : className}
     >
@@ -528,7 +636,7 @@ export function FoilCardImage({
           MAX_TILT,
         );
         noteLean(lean);
-        applyLean(lean);
+        applyLean(lean, { engageTiltProgram: true });
       }
     : undefined;
 
@@ -539,31 +647,27 @@ export function FoilCardImage({
       }
     : undefined;
 
-  // Eligible: keep a stable frame for IntersectionObserver. CSS underneath
-  // until the canvas is ready; without this wrapper, inView never flips and
-  // WebGL never starts.
+  // Eligible: keep a stable frame for IntersectionObserver. Without this
+  // wrapper, inView never flips and WebGL never starts. Face stays empty until
+  // the canvas is ready so the parent card-back skeleton shows (no CSS flash).
   return (
     <div
       ref={frameRef}
+      // CSS face owns its pointer + idle; only the WebGL canvas needs the
+      // frame (canvas is pointer-events-none).
       onPointerMove={useWebgl ? onPointerMove : undefined}
       onPointerLeave={useWebgl ? reset : undefined}
       onPointerCancel={useWebgl ? reset : undefined}
-      style={
-        useWebgl
-          ? ({
-              "--rotateX": "0deg",
-              "--rotateY": "0deg",
-            } as React.CSSProperties)
-          : undefined
-      }
       className={cn(
         "relative h-full w-full select-none rounded-[inherit]",
         useWebgl && tilt && "[perspective:900px]",
-        className,
       )}
+      aria-busy={useWebgl && !rendererReady ? true : undefined}
     >
       {!useWebgl ? (
-        cssFace
+        <div className={cn("h-full w-full rounded-[inherit]", className)}>
+          {cssFace}
+        </div>
       ) : (
         <div
           style={
@@ -575,69 +679,53 @@ export function FoilCardImage({
               : undefined
           }
           className={cn(
-            "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
-            tilt && isDriven && "transition-transform duration-200 ease-out",
+            "relative h-full w-full rounded-[inherit]",
+            // Lorcana dual-frag can ease the canvas tilt; Live single-frag
+            // follows the pointer immediately (CSS transition felt like a pose).
+            tilt && isDriven && hasTimeSibling && "transition-transform duration-200 ease-out",
           )}
         >
-          <div className="relative flex h-full w-full items-center justify-center">
-            <div
-              className="relative"
-              style={
-                artRatio
-                  ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
-                  : { width: "100%", height: "100%" }
-              }
-            >
-              {/*
-                CSS paints first; once WebGL is ready we unmount it so we do not
-                keep idle sheen layers + mask blobs under an opaque canvas.
-              */}
-              {!rendererReady && (
-                <div className="absolute inset-0">
-                  <CssFoilFace
-                    imageUrl={imageUrl}
-                    alt={alt}
-                    maskUrl={maskUrl}
-                    varnishMaskUrl={varnishMaskUrl}
-                    secondVarnishMaskUrl={secondVarnishMaskUrl}
-                    secondVarnishColor={secondVarnishColor}
-                    varnishColor={varnishColor}
-                    finishShaderId={cssRecipe.finishShaderId}
-                    varnishShaderId={cssRecipe.varnishShaderId}
-                    fit={fit}
-                    tuning={tuning}
-                    tilt={false}
-                    trackPointer={false}
-                    onLoad={onLoad}
-                  />
-                </div>
-              )}
+          {/*
+            Radius + overflow must be on a node *inside* the tilt transform.
+            Same-node `transform` + `overflow:hidden` + `border-radius` fails to
+            clip the canvas (sharp corners, rounded shadow only).
+          */}
+          <div
+            className={cn(
+              "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
+              className,
+            )}
+          >
+            {/*
+              Fill the oriented frame edge-to-edge. Aspect lives on
+              OrientedMediaFrame / shelf tile — do not re-introduce aspectRatio +
+              maxHeight here (that fight clips BREAK faces after rotate).
+
+              `rounded-[inherit]` here too: the canvas asks to inherit the card
+              radius, and inside a `preserve-3d` scene that own rounded box is
+              the only thing that still clips it.
+            */}
+            <div className="relative h-full w-full rounded-[inherit]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl}
                 alt={rendererReady ? alt : ""}
                 aria-hidden={!rendererReady}
                 draggable={false}
-                onLoad={(event) => {
-                  const art = event.currentTarget;
-                  if (art.naturalWidth && art.naturalHeight) {
-                    setArtRatio(`${art.naturalWidth} / ${art.naturalHeight}`);
-                  }
-                  onLoad?.(event);
-                }}
-                className="pointer-events-none h-full w-full object-contain opacity-0"
+                onLoad={onLoad}
+                className="pointer-events-none h-full w-full object-fill opacity-0"
               />
               <canvas
                 ref={canvasRef}
                 aria-hidden
                 className={cn(
-                  "pointer-events-none absolute inset-0 h-full w-full transition-opacity duration-150",
+                  "pointer-events-none absolute inset-0 h-full w-full rounded-[inherit]",
                   rendererReady ? "opacity-100" : "opacity-0",
                 )}
               />
             </div>
+            {children}
           </div>
-          {children}
         </div>
       )}
     </div>

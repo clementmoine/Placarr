@@ -248,16 +248,6 @@ function ShelfComponent() {
 
   const queryClient = useQueryClient();
 
-  // L'état local suit le paramètre d'URL : ajusté pendant le render (pattern
-  // « adjust state when props change ») ; seule l'écriture du store externe
-  // react-hook-form reste dans un effect.
-  const paramsKey = searchParams.toString();
-  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
-  if (prevParamsKey !== paramsKey) {
-    setPrevParamsKey(paramsKey);
-    setSearchQuery(q);
-    setSortBy(parseItemCollectionSort(searchParams.get("sort")));
-  }
   useEffect(() => {
     form.setValue("search", q);
   }, [q, form]);
@@ -333,6 +323,17 @@ function ShelfComponent() {
       };
     },
   });
+
+  // L'état local suit le paramètre d'URL (+ type d'étagère pour le défaut TCG) :
+  // ajusté pendant le render (pattern « adjust state when props change »).
+  const paramsKey = searchParams.toString();
+  const sortSourceKey = `${paramsKey}|${shelf?.type ?? ""}`;
+  const [prevSortSourceKey, setPrevSortSourceKey] = useState(sortSourceKey);
+  if (prevSortSourceKey !== sortSourceKey) {
+    setPrevSortSourceKey(sortSourceKey);
+    setSearchQuery(q);
+    setSortBy(parseItemCollectionSort(searchParams.get("sort"), shelf?.type));
+  }
 
   useDocumentTitle(shelf?.name);
   useRefetchShelfItemsWhenMetadataIdle(queryClient, shelf?.items, shelfId);

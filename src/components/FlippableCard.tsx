@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  cardFaceClipPath,
+  cardFaceRadius,
+  OrientedMediaRotator,
+} from "@/components/OrientedMediaFrame";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
@@ -10,13 +15,24 @@ import { cn } from "@/lib/shared/utils";
 type FlippableCardProps = {
   /** The card itself — usually a `HoloCardImage`, effects and all. */
   children: React.ReactNode;
-  /** Where the back lives, if the collection was given one. */
+  /** Where the back lives, if one was resolved (print / set / pack). */
   backUrl?: string | null;
   backAlt: string;
   /** Announced on the control, so this component stays free of locale plumbing. */
   flipLabel: string;
   /** Label for the control that asks iOS for the motion sensor. Same reason. */
   tiltPromptLabel: string;
+  /**
+   * Quarter-turns the *face* is displayed at (Location / BREAK). The back turns
+   * with it — see the back face below.
+   */
+  faceQuarterTurns?: number | null;
+  /** Oriented aspect of the frame (after the swap), e.g. `7 / 5`. */
+  orientedAspect?: string;
+  /** Optional Face tab label — shown with {@link backTabLabel} when a back exists. */
+  faceTabLabel?: string;
+  /** Optional Dos tab label — shown with {@link faceTabLabel} when a back exists. */
+  backTabLabel?: string;
   className?: string;
 };
 
@@ -45,13 +61,53 @@ export function showsBack(turn: number): boolean {
   return Math.abs(turn / 180) % 2 === 1;
 }
 
+/** Snap the accumulated turn onto the face (even half-turns). */
+export function turnTowardFace(turn: number): number {
+  return showsBack(turn) ? turn + 180 : turn;
+}
+
+/** Snap the accumulated turn onto the back (odd half-turns). */
+export function turnTowardBack(turn: number): number {
+  return showsBack(turn) ? turn : turn + 180;
+}
+
+/** One of the Face / Dos pills above the card. */
+function SideTab({
+  label,
+  active,
+  onSelect,
+}: {
+  label?: string;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onSelect}
+      className={cn(
+        "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
+        active
+          ? "bg-white text-zinc-900"
+          : "bg-white/15 text-white hover:bg-white/25",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 /**
  * A card you can turn over, and tip.
  *
- * Both faces are laid on top of each other and the whole thing is rotated, with
- * `backface-visibility` hiding whichever is looking away. That keeps the front
- * mounted through the turn — it carries the foil layers, and remounting them
- * mid-rotation would restart their animation.
+ * Lean wraps a rounded clip, which wraps the 3d flip. Clipping *outside*
+ * `preserve-3d` is required: faces (and Location/BREAK 90° rotators) escape
+ * overflow/clip-path when they sit inside a 3d scene, so corners go square.
+ *
+ * Both faces stay mounted through the turn — the front carries the foil
+ * layers, and remounting them mid-rotation would restart their animation.
+ * `backface-visibility` hides whichever looks away.
  *
  * The lean lives here rather than on the front face, because a card is one
  * object: tipping it has to move the back too, and the back is a sibling of the
@@ -88,6 +144,10 @@ export function FlippableCard({
   backAlt,
   flipLabel,
   tiltPromptLabel,
+  faceQuarterTurns = 0,
+  orientedAspect,
+  faceTabLabel,
+  backTabLabel,
   className,
 }: FlippableCardProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -162,117 +222,188 @@ export function FlippableCard({
   }, [deviceLean, applyLean, noteLean]);
 
   const canFlip = Boolean(backUrl);
+  const showTabs = Boolean(canFlip && faceTabLabel && backTabLabel);
 
   return (
-    <div
-      ref={frameRef}
-      role={canFlip ? "button" : undefined}
-      tabIndex={canFlip ? 0 : undefined}
-      aria-label={canFlip ? flipLabel : undefined}
-      aria-pressed={canFlip ? flipped : undefined}
-      onClick={
-        canFlip
-          ? (event) => {
-              event.stopPropagation();
-              const rect = event.currentTarget.getBoundingClientRect();
-              push(event.clientX >= rect.left + rect.width / 2);
-            }
-          : undefined
-      }
-      onKeyDown={
-        canFlip
-          ? (event) => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              push(true);
-            }
-          : undefined
-      }
-      onPointerMove={(event) => applyPointer(event.clientX, event.clientY)}
-      onPointerLeave={rest}
-      onPointerCancel={rest}
-      style={
-        {
-          "--flip-lean-x": "0deg",
-          "--flip-lean-y": "0deg",
-        } as React.CSSProperties
-      }
-      className={cn(
-        // `rounded-[inherit]` only chains if every level passes the radius down,
-        // and this component sits between the card and whatever framed it.
-        // `select-none` covers both faces: a click that lands slightly askew
-        // reads as a drag, and a drag over the card selects it instead of
-        // turning it — the selection wash then hides the very effect.
-        "relative h-full w-full select-none rounded-[inherit] outline-none [perspective:1400px]",
-        canFlip && "cursor-pointer",
-        className,
-      )}
-    >
-      {/*
-        Lean and turn live on separate elements, because only one of them may
-        transition. Sharing one `transform` put the 500ms flip transition under
-        the pointer too: every pointermove retargeted it, which Chrome blends
-        smoothly but Safari restarts — the card lagged the cursor and stuttered.
-        The lean must be immediate; the turn is the one that animates.
-      */}
-      <div
-        className="relative h-full w-full rounded-[inherit] [transform-style:preserve-3d]"
-        style={{
-          transform:
-            "rotateX(var(--flip-lean-x)) rotateY(var(--flip-lean-y))",
-          willChange: "transform",
-        }}
-      >
+    // Tabs sit above the card; this shell must still pass the frame radius
+    // down — without `rounded-[inherit]` every face goes square (inherit → 0).
+    <div className="relative h-full w-full rounded-[inherit]">
+      {showTabs && (
+        /*
+          Stacked *outside* the card (bottom edge on the card's top edge), never
+          as padding on it. Padding here reserved the strip out of the frame's
+          own box, so the card no longer had the aspect its parent advertised: a
+          90° Location rotator sizes its pre-rotate box from that ratio, came
+          out 36px too tall once turned, and the overflow clip shaved its
+          corners off — a square-cornered, slightly stretched card. Keeping the
+          box untouched leaves the frame exactly the rectangle it was sized to
+          be.
+
+          Sibling of the frame rather than a child of it: the frame turns the
+          card on click and leans it on pointer move, and neither belongs to a
+          tab.
+        */
         <div
-          className="relative h-full w-full rounded-[inherit] transition-transform duration-500 ease-out [transform-style:preserve-3d]"
+          className="absolute inset-x-0 z-10 flex justify-center gap-1"
+          style={{ bottom: "100%", marginBottom: "0.5rem" }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <SideTab
+            label={faceTabLabel}
+            active={!flipped}
+            onSelect={() => setTurn(turnTowardFace)}
+          />
+          <SideTab
+            label={backTabLabel}
+            active={flipped}
+            onSelect={() => setTurn(turnTowardBack)}
+          />
+        </div>
+      )}
+      <div
+        ref={frameRef}
+        role={canFlip ? "button" : undefined}
+        tabIndex={canFlip ? 0 : undefined}
+        aria-label={canFlip ? flipLabel : undefined}
+        aria-pressed={canFlip ? flipped : undefined}
+        onClick={
+          canFlip
+            ? (event) => {
+                event.stopPropagation();
+                const rect = event.currentTarget.getBoundingClientRect();
+                push(event.clientX >= rect.left + rect.width / 2);
+              }
+            : undefined
+        }
+        onKeyDown={
+          canFlip
+            ? (event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                push(true);
+              }
+            : undefined
+        }
+        onPointerMove={(event) => applyPointer(event.clientX, event.clientY)}
+        onPointerLeave={rest}
+        onPointerCancel={rest}
+        style={
+          {
+            "--flip-lean-x": "0deg",
+            "--flip-lean-y": "0deg",
+          } as React.CSSProperties
+        }
+        className={cn(
+          // `rounded-[inherit]` only chains if every level passes the radius down,
+          // and this component sits between the card and whatever framed it.
+          // `select-none` covers both faces: a click that lands slightly askew
+          // reads as a drag, and a drag over the card selects it instead of
+          // turning it — the selection wash then hides the very effect.
+          "relative h-full w-full select-none rounded-[inherit] outline-none [perspective:1400px]",
+          canFlip && "cursor-pointer",
+          className,
+        )}
+      >
+        {/*
+        Lean → clip → turn. The rounded clip must wrap the 3d flip, not sit
+        inside it: under `preserve-3d`, overflow/clip-path on a face stops
+        clipping (Location 90° rotator + WebGL canvas go square). Clipping
+        *outside* the 3d scene flattens it as a group, so the card keeps its
+        radius while leaning and flipping.
+      */}
+        <div
+          className="relative h-full w-full rounded-[inherit]"
           style={{
-            // Composes with the lean above rather than replacing it, so a card
-            // being tipped can be flipped without snapping back to square.
-            transform: `rotateY(${turn}deg)`,
+            transform:
+              "rotateX(var(--flip-lean-x)) rotateY(var(--flip-lean-y))",
+            willChange: "transform",
           }}
         >
-          <div className="absolute inset-0 rounded-[inherit] [backface-visibility:hidden]">
-            {children}
-          </div>
-
-          {backUrl && (
+          {/*
+            This frame is the *turned* box for a Location, so its radius is
+            quoted against it; the face inside is rounded again in its own
+            upright space by the rotator.
+          */}
+          <div
+            className="relative h-full w-full overflow-hidden"
+            style={{
+              borderRadius: cardFaceRadius(faceQuarterTurns),
+              clipPath: cardFaceClipPath(faceQuarterTurns),
+            }}
+          >
+            {/*
+            The turntable and both faces keep passing the radius down. The clip
+            above already cuts the silhouette, but a WebGL face escapes an
+            ancestor clip once it is inside this `preserve-3d` scene — it needs
+            a rounded box of its own, and `inherit` only reaches it if no level
+            in between drops the chain.
+          */}
             <div
-              className="absolute inset-0 overflow-hidden rounded-[inherit] [backface-visibility:hidden] [transform:rotateY(180deg)]"
-              aria-hidden={!flipped}
+              className="relative h-full w-full rounded-[inherit] transition-transform duration-500 ease-out [transform-style:preserve-3d]"
+              style={{
+                transform: `rotateY(${turn}deg)`,
+              }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={backUrl}
-                alt={backAlt}
-                draggable={false}
-                className="h-full w-full rounded-[inherit] object-contain"
-              />
-            </div>
-          )}
-        </div>
-      </div>
+              <div className="absolute inset-0 rounded-[inherit] [backface-visibility:hidden]">
+                {children}
+              </div>
 
-      {/*
+              {backUrl && (
+                <div
+                  className="absolute inset-0 rounded-[inherit] [backface-visibility:hidden] [transform:rotateY(180deg)]"
+                  aria-hidden={!flipped}
+                >
+                  {/*
+                  The back turns with the card. A Location is a normal portrait
+                  card held sideways, so its back is sideways too — left
+                  upright in a landscape frame it read as a portrait back
+                  pasted onto a landscape card.
+
+                  Same quarter-turns as the face, and no sign to flip: this
+                  sits inside `rotateY(180deg)`, which mirrors x and so renders
+                  a CSS `rotate(θ)` on screen as `rotate(-θ)` — exactly what
+                  turning a card over its long axis does to its back.
+                */}
+                  <OrientedMediaRotator
+                    faceQuarterTurns={faceQuarterTurns}
+                    orientedAspect={orientedAspect}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={backUrl}
+                      alt={backAlt}
+                      draggable={false}
+                      className="h-full w-full object-contain"
+                    />
+                  </OrientedMediaRotator>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/*
         iOS hands the sensor over only after a tap, and only from a real user
         gesture, so the tilt cannot start on its own there. It lives on the card
         rather than on its face because a plain card tilts too — and because one
         tap has to serve every card on screen, which is what the shared store is
         for.
       */}
-      {deviceTilt.needsPermission && (
-        <button
-          type="button"
-          onClick={(event) => {
-            // The card's own click turns it over; asking for the sensor is not
-            // a request to flip.
-            event.stopPropagation();
-            deviceTilt.requestPermission();
-          }}
-          className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm"
-        >
-          {tiltPromptLabel}
-        </button>
-      )}
+        {deviceTilt.needsPermission && (
+          <button
+            type="button"
+            onClick={(event) => {
+              // The card's own click turns it over; asking for the sensor is not
+              // a request to flip.
+              event.stopPropagation();
+              deviceTilt.requestPermission();
+            }}
+            className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm"
+          >
+            {tiltPromptLabel}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

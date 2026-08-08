@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-07-25** (plan perf #1–#6 terminé ; lint et typecheck à zéro ; un item ouvert : le payload barcode par provider).
+> Dernière vérification : **2026-08-05** (ajout P2 border-radius fullscreen Location/BREAK ; plan perf #1–#6 déjà terminé).
 > Index docs : [README.md](README.md).
 
 ## Plan perf métadonnées — terminé (2026-07-25)
@@ -26,12 +26,52 @@ disparu.
 
 | Priorité | Item                         | Détail                                                                                                                     |
 | -------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| P1       | TCG — plein écran holo + dos | Lorcana livré (ajout, identité, variantes). Reste l'effet holo masqué et le dos 3D. Voir [tcg_support.md](tcg_support.md). |
+| ~~P1~~   | ~~TCG — plein écran holo + dos~~ | **Fait** — foil masqué (CSS/WebGL), flip Face/Dos, dos pack (print > set > pack). Plus de `Shelf.cardBackUrl`. Voir [tcg_support.md](tcg_support.md) §6. |
+| **P2**   | **TCG — border-radius fullscreen (Location / BREAK)** | Coins arrondis OK en **portrait** (WebGL + `clip-path` hors `preserve-3d`). En **paysage** (`faceQuarterTurns` + `OrientedMediaRotator` 90°), le canvas WebGL **échappe** au clip dès qu’un `rotate` s’interpose entre le clip et le canvas — silhouette sharp (vérifié au rouge uni, pas à l’art). Piste : clipper *dans* le rotate (autour du canvas, sans transform entre clip et canvas) + radii pré-rotate `3%/4%` pour matcher le visuel `4%/3%`. Ne pas se fier à l’œil sur l’illustration (bords déjà « ronds » dans l’art). Fichiers : `FlippableCard`, `OrientedMediaFrame`, zoom fiche. |
+| **P1**   | **TCG — foil via TCG Live** | Pack `pokemon` + CDN (`pnpm foil:pokemon`). Voir [archive/tcglive_effects.md](archive/tcglive_effects.md) + [data-layout.md](data-layout.md). |
+| ~~P3~~   | ~~TCG — Pocket effets~~    | **Supprimé** (jamais imprimé). Code Pocket retiré. |
 | P2       | TCG — autres jeux            | Pokémon (TCGdex, prix en €), Magic, Yu-Gi-Oh gratuits ; One Piece / Dragon Ball via clé apitcg.                            |
 | P2       | Regroupement des doublons    | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.                   |
 | P2       | Recadrage libre à 4 coins    | Redressement de perspective façon scan iPhone — voir ci-dessous.                                                           |
 | P3       | `loose` est une variante     | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                           |
-| P3       | Vue 3D retournable           | Demandée pour les cartes (plein écran). À étendre aux jeux ensuite — voir ci-dessous.                                      |
+| P3       | Vue 3D retournable           | Cartes : livré (Face/Dos). À étendre aux jeux / boîtes ensuite.                                                              |
+| P3       | Revoir title-IDF (`data/indexes/title-idf`) | Index DF titres offline (`token-df.json`, `pnpm title-idf:update`) — découvert late, opaque. Clarifier / documenter le contrat, décider si on garde le dossier top-level, le merge ailleurs, ou on simplifie le chemin (qui build, qui lit, fallback sans fichier). Voir `tokenCorpusIndex.ts` + [archive/word_list_audit.md](archive/word_list_audit.md). |
+| P3       | Renommer / scinder `data/<pack>/foil/` | Le dossier `foil/` sert encore le pack rendu (`/foil/<pack>/…` : shaders, textures, web) mais `foil/cards/` = faces catalogue multi-langues + masks — le nom « foil » sous-vend. À trancher : (a) renommer en `pack/` / `assets/` + URLs, ou (b) sortir `cards/` à côté du sqlite (`data/lorcana/cards/`) et garder `foil/` pour shaders/textures/web. Voir [data-layout.md](data-layout.md). |
+| P2       | Sync catalogue TCG local (fraîcheur) | `lorcanatcg` / `pokemontcglive` n’ont pas d’équivalent iCollect : pas de job léger « re-sync sqlite + assets manquants ». Aujourd’hui = `foilExtract` manuel (lourd) ou CLI. À faire : job `*IndexSync` / trait `localCatalogSync` (Phase C plan indexes) — enqueue admin + worker catalog, skip bytes existants, rewrite sqlite depuis upstream (LorcanaJSON / Live). Sans ça, la DB locale vieillit jusqu’au prochain extract manuel. |
+| P3       | ~~Foil CSS fallback (Simey / Pokebox)~~ | **Livré** — simey → `HoloShader` + `cssRecipes.ts` (pas `/foil/lorcana/web`). Contrat packs : [foil_effects.md](foil_effects.md). |
+
+### Foil via TCG Live
+
+**CLI :** `pnpm foil:pokemon` · `pnpm foil:pokemon:scrape` · `pnpm foil:pokemon:sources` · `pnpm foil:pokemon:index-cards` · audits via `tsx scripts/pokemon/audit*.ts` · `pnpm foil:lorcana` · `pnpm foil:lorcana:cards`.
+
+**À faire, dans l'ordre :**
+
+| # | Tâche | Note |
+| - | ----- | ---- |
+| 0 | ~~Matrice sources~~ | `pnpm foil:pokemon:sources` |
+| 1 | Catalogue sans device | Config-cache local ; **Malie** `databases`/`export` (amorce multi-lang) ; API op-core **TBD** |
+| 2 | ~~Update CDN~~ | `pnpm foil:pokemon` |
+| 3 | Pack `pokemon` | Unity/WebGL — `printKey`→Live. Audits: `audit-apk` · `audit-map` · fallback `*sv` auto |
+| 4 | ~~Audit store~~ | `tsx scripts/pokemon/audit_store.ts` — shaders / masques / `cards.json` |
+| 5 | ~~Fallback CSS (stock)~~ | `cssRecipes.ts` + house looks — après pack Unity |
+
+**Scrape intelligent (anti soft-ban) — règles figées :**
+
+1. **Inventaire union** — APK/config (`card-database` + setnums) ∪ Malie DBs → `scrape-inventory.txt`. Malie-miss → `logs/malie-unavailable-stems.txt` ; CDN-miss → `logs/cdn-unavailable-stems.txt` (+ `scrape-availability.json`). Optionnel : dump `manifest_{lang}_{bucket}` puis intersect.
+2. **Une langue à la fois** — défaut `fr`, puis `--langs en` (etc.).
+3. **Un seul process** — jamais 2 `update.ts` en parallèle.
+4. **Dir primaire** — `dirProbe=primary` (`10101_0000`) ; `--probe-all-dirs` seulement pour résidus rares.
+5. **Content base** — `GameSettings.json` → `android_contentpath` (host non stable) ; fallback synthétique.
+6. **Cadence** — défaut `workers=1` / `delay=0` (séquentiel RTT-paced, comme ptcgl.dev) ; HTML `Request blocked…` = pause + cooldown persisté ; XML `AccessDenied` = miss honnête.
+7. **Skip existing** — reprise gratuite ; ne pas re-HEAD le catalogue déjà sur disque.
+
+```sh
+pnpm foil:pokemon -- --langs fr
+pnpm foil:pokemon -- --langs en   # après FR + soft-ban dissipé
+# Admin Extract Pokémon = inventory APK∪Malie → CDN (misses logged)
+```
+
+**Dépendance :** foil runtime = CDN ; catalogue Malie et/ou `card-database-*` → `live-cards.sqlite`.
 
 ### Recadrage manuel — livré (2026-07-26)
 
@@ -288,7 +328,7 @@ Le reste du fichier = journal / historique.
 | ~~**P0**~~ | ~~SSOT identité / covers / liens~~           | **Fait 2026-07-24** — étapes 1–7 + dead hardware titleMatch + present purge unique.                                                                                                                                                                                                                                                           |
 | ~~**P1**~~ | ~~List present sans `priceOffers.rawValue`~~ | **Fait 2026-07-24** — covers persistées à l’écriture prix ; `itemListMetadataInclude` sans priceOffers.                                                                                                                                                                                                                                       |
 | ~~**P2**~~ | ~~Word-lists → consensus / IDF~~             | **Fait 2026-07-24**: DRY → `IDENTITY_*` ; IDF MVP + offline DF + boot/cron ; GENERIC fully listing/IDENTITY-derived.                                                                                                                                                                                                                          |
-| ~~**P2**~~ | ~~Scrape-yield / call efficiency~~           | **Fait 2026-07-24** — SearchYield durable + LaunchBox FTS measure + No-Intro dump path. Voir [scrape_yield.md](scrape_yield.md).                                                                                                                                                                                                              |
+| ~~**P2**~~ | ~~Scrape-yield / call efficiency~~           | **Fait 2026-07-24** — SearchYield durable + LaunchBox FTS measure + No-Intro dump path. Voir [archive/scrape_yield.md](archive/scrape_yield.md).                                                                                                                                                                                                              |
 | ~~**P2**~~ | ~~FlareSolverr vs workers~~                  | **Fait 2026-07-24** — cap concurrency ≤3 si `FLARESOLVERR_URL` ; logs outcomes Flare ; `WORKER_CONCURRENCY_FORCE` pour override.                                                                                                                                                                                                              |
 | ~~**P3**~~ | ~~Découpe god files~~                        | **Fait 2026-07-24**.                                                                                                                                                                                                                                                                                                                          |
 | ~~**P3**~~ | ~~Local full-set / dump sync~~               | **First cut 2026-07-24** — iCollect + LaunchBox. **No-Intro Tier0 + checksum path + DAT sync + enrich wire + client dump hash 2026-07-24**.                                                                                                                                                                                                   |
@@ -383,7 +423,7 @@ Deux concepts **distincts**, sourcés différemment :
 | **P3**   | Rétention des observations rejetées (barcode) | **Fait 2026-06-30** | `compile.ts` : listings bruit / contexte non-canonique / hors-ancre émis en observations `evidence: "reject"` + `retainForReprojection: true` via `rejectedObservationsFromProductEvidence`.                                                    |
 | **P3**   | Décision cap canonique seul / DB-fallback     | **Documenté**       | Un barcode confirmé par une source canonique (ou DB-fallback honnête) est une ancre légitime — le plafond `listingOnlyCap` ne s'applique pas. Comportement voulu, encodé dans `compile.confidenceLock.test.ts` + `compile.honestEmpty.test.ts`. |
 
-> **Provider-blindness : migration TERMINÉE** — allowlist du guard `src/core/catalog/blindnessGuard.test.ts` **vide** (0 littéral provider hors `providers/` ; liste des ids **dérivée du registry**). Docs `hardcoding_audit.md` / `provider_agnostic_architecture.md` / `unbiased_ranking.md` rebannerisées (tableaux = historique).
+> **Provider-blindness : migration TERMINÉE** — allowlist du guard `src/core/catalog/blindnessGuard.test.ts` **vide** (0 littéral provider hors `providers/` ; liste des ids **dérivée du registry**). Docs `archive/hardcoding_audit.md` / `archive/provider_agnostic_architecture.md` / `archive/unbiased_ranking.md` rebannerisées (tableaux = historique).
 
 **P1 providers / probes** : file migration metadata **vide** (PicClick→eBay, ScreenScraper, TheGamesDB, Apriloshop IQIT — faits). **TheGamesDB** : si audit `map:blocked`, quota API épuisé (12–20 min cooldown) — pas une régression code ; probe classée `blocked` sur message quota.
 
@@ -405,7 +445,7 @@ Deux concepts **distincts**, sourcés différemment :
 | ~~**P2**~~ | ~~Priorité providers dynamique + progressive store~~ | **Fait 2026-07-19** | `providerRuntimeStats` (EMA latence / hit / cover) + cold-start via traits registry (`bookCoverPriority`, `slowScanScrape`…) ; soft timeout par provider ; merge progressif mid-batch quand cover/titre s’améliore. **Pas** d’early-stop ni blacklist. Concurrency worker défaut 4 (`WORKER_CONCURRENCY`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ~~**P1**~~ | ~~Mesure durée jobs (`lockedAt`)~~                   | **Fait 2026-07-19** | `completeBackgroundWorkJob` / fail terminal gardent `lockedAt` (clear `lockedBy` seul) → durée locked→finished mesurable.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | **P1**     | Garde-fou taille fixtures                            | **Fait 2026-07-02** | Une capture de sitemap non tronquée (362 Mo) dans un commit local bloquait le push (limite GitHub 100 Mo). Historique local **non publié** réécrit (blob purgé, arbre final identique), poussé en fast-forward ; `tests/fixtureSize.test.ts` verrouille < 25 Mo par fixture.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **P1**     | Persistance données Docker                           | **Fait 2026-07-02** | Les uploads (`/app/public/uploads`) n'étaient montés sur aucun volume → perdus à chaque recréation du conteneur. Volumes nommés `placarr-uploads` + `placarr-cache` (index SQLite providers) ; `outputFileTracingExcludes` sort uploads/.cache du standalone (cause de l'ENOSPC) ; `.dockerignore` exclut données runtime **et `.env`** (secrets hors layers). Migration : `docker cp` des uploads existants avant recréation.                                                                                                                                                                                                                                                                                                                                                                                      |
+| **P1**     | Persistance données Docker                           | **Fait 2026-07-02** | Les uploads (`/app/public/uploads`) n'étaient montés sur aucun volume → perdus à chaque recréation du conteneur. Volumes nommés `placarr-uploads` + `placarr-cache` (index SQLite providers) ; `outputFileTracingExcludes` sort uploads/cache du standalone (cause de l'ENOSPC) ; `.dockerignore` exclut données runtime **et `.env`** (secrets hors layers). Migration : `docker cp` des uploads existants avant recréation.                                                                                                                                                                                                                                                                                                                                                                                      |
 
 **Audit principes 2026-07-02** (revue complète du core vs `.cursor/rules/placarr-principles.mdc`) — conformes : blindness guard allowlist vide, merge d'enrichissement dé-biaisé (`orderResultsByObservationStrength`), `selectConsensusTitle` câblé dans `compile.ts`, dédup région garde la meilleure région (2 sites), édition préservée (v40), honest-empty encodé. Écarts restants :
 
@@ -482,7 +522,7 @@ Chaque entrée = module `providers/<id>/` + registry + tests + `pnpm providers:a
 
 ### P2 — Ranking sans biais (gros chantier)
 
-Voir [unbiased_ranking.md](unbiased_ranking.md) et [word_list_audit.md](word_list_audit.md).
+Voir [archive/unbiased_ranking.md](archive/unbiased_ranking.md) et [archive/word_list_audit.md](archive/word_list_audit.md).
 
 1. Modèle d'observations complet (déjà amorcé — généraliser ranking images + facts)
 2. Migrer le **chemin barcode** (`compile.ts`) vers observations — **fait** (2026-07-05) : observations persistées + `selectConsensusTitle` ; ranks titre/image ; cluster `sourceScore` + tier (`observationTierScale: 0.01`) ; platform pick decide-late 2 passes (tier nudge pass 2 only).
@@ -706,7 +746,7 @@ Amorcé : `MetadataObservation`, Okkazeo premier émetteur ; généralisé depui
 
 ### LaunchBox
 
-Garder seulement si index local prébuild ; pas de download/extract au scan. **Fait 2026-07-24** — `pnpm launchbox:build-index` ; scan ouvre SQLite existant seulement. **FTS measure 2026-07-24** — `pnpm launchbox:bench-fts` (p50/p95 ; soft keep si p95 ≤ 100ms) + budget unit `LAUNCHBOX_FTS_MATCH_PLAN_BUDGET`.
+Garder seulement si index local prébuild ; pas de download/extract au scan. **Fait 2026-07-24** — `pnpm launchbox:update` ; scan ouvre SQLite existant seulement. **FTS measure 2026-07-24** — `tsx scripts/launchbox/bench-fts.ts` (p50/p95 ; soft keep si p95 ≤ 100ms) + budget unit `LAUNCHBOX_FTS_MATCH_PLAN_BUDGET`.
 
 ---
 
@@ -715,4 +755,4 @@ Garder seulement si index local prébuild ; pas de download/extract au scan. **F
 - [provider_integration_checklist.md](provider_integration_checklist.md)
 - [provider_agnostic_architecture.md](provider_agnostic_architecture.md)
 - [barcode_consensus_refactor.md](barcode_consensus_refactor.md)
-- [hardcoding_audit.md](hardcoding_audit.md)
+- [archive/hardcoding_audit.md](archive/hardcoding_audit.md)

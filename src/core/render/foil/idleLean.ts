@@ -7,6 +7,12 @@ import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 export const IDLE_RELEASE_MS = 420;
 
 /**
+ * Idle tilt as a fraction of interactive maxTilt.
+ * Old `holo-breathe` peaked near ±2.5° / ±5° vs interactive ±18°.
+ */
+export const IDLE_LEAN_FACTOR = 0.35;
+
+/**
  * Idle light as a fake pointer, locked to WebGL Time mode's driver.
  *
  * Unity Time-scroll fragments read `_CosTime.w * _TimeFactor`, and
@@ -16,26 +22,35 @@ export const IDLE_RELEASE_MS = 420;
  *
  * The path is the same diagonal `holo-drift` used to paint: when `w` is high
  * the light sits top-right, when low bottom-left.
+ *
+ * `--combined` shares the signed `cos(t)` phase with the lean (not `|cos|`,
+ * which ran at 2× and fought the tip). It is still not `x + y` — that sum
+ * cancels on the anti-diagonal and freezes finishes keyed on `--combined`.
  */
 export function idlePointerFromSeconds(seconds: number): {
   x: number;
   y: number;
   glare: number;
+  combined: number;
 } {
   const w = Math.cos(seconds);
+  const abs = Math.abs(w);
   return {
     x: 50 + w * 28,
     y: 50 - w * 22,
     // Soft glare that peaks mid-sweep — same band as the old `holo-drift`
     // keyframes (0.12 → 0.3), so the pointer still has somewhere to go.
-    glare: 0.12 + (1 - Math.abs(w)) * 0.18,
+    glare: 0.12 + (1 - abs) * 0.18,
+    // Same signed phase as the lean / anti-diagonal (not `|w|`).
+    // w=+1 (top-right) → 40%; w=-1 (bottom-left) → 160% — historical drift.
+    combined: 100 - 60 * w,
   };
 }
 
 /** Lean a resting card would take under {@link idlePointerFromSeconds}. */
 export function idleLeanFromSeconds(seconds: number, maxTilt: number): Lean {
   const { x, y } = idlePointerFromSeconds(seconds);
-  return leanFromPointer(x, y, maxTilt);
+  return leanFromPointer(x, y, maxTilt * IDLE_LEAN_FACTOR);
 }
 
 /** Ease-out cubic — quick leave, soft settle into idle. */

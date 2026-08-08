@@ -70,7 +70,28 @@ export type CropBox = {
   /** Source dimensions, so a stored box can be validated against the file. */
   imageWidth: number;
   imageHeight: number;
+  /**
+   * Quarter-turn applied to the source *before* the rectangle, in degrees
+   * (0 / 90 / 180 / 270). The box is therefore expressed in post-rotation
+   * coordinates — the space the collector drew it in.
+   *
+   * Recorded rather than inferred so the derivative can be reproduced from the
+   * original, and so anything that has to follow the artwork — the foil masks
+   * above all — can be given the same treatment instead of guessing.
+   */
+  rotate?: number;
 };
+
+/** The only rotations the editor offers: lossless, and enough for a scan. */
+export const QUARTER_TURNS = [0, 90, 180, 270] as const;
+
+/** Coerce anything to one of {@link QUARTER_TURNS}; unknown input means none. */
+export function normalizeRotation(value: unknown): number {
+  const degrees = typeof value === "number" ? Math.round(value) : 0;
+  if (!Number.isFinite(degrees)) return 0;
+  const wrapped = ((degrees % 360) + 360) % 360;
+  return (QUARTER_TURNS as readonly number[]).includes(wrapped) ? wrapped : 0;
+}
 
 /**
  * The rectangle that would remain once neutral margins are trimmed, or `null`
@@ -180,13 +201,27 @@ export async function trimLightImageMargins(
   }
 }
 
-/** Apply a box to an image. Kept separate so nothing crops without being told. */
+/**
+ * Apply a rotation then a box. Kept separate so nothing crops without being told.
+ *
+ * Two passes on purpose. `rotate()` with no argument honours EXIF orientation
+ * and `rotate(angle)` turns by an angle, but sharp keeps only the last call —
+ * asking for both on one pipeline silently drops the EXIF correction. Encoding
+ * the oriented bitmap first makes the order explicit, and it is the order the
+ * box was drawn in: turn the picture upright, *then* frame it.
+ */
 export async function applyCropBox(
   buffer: Buffer,
   box: CropBox,
 ): Promise<Buffer> {
-  return sharp(buffer)
-    .rotate()
+  const rotation = normalizeRotation(box.rotate);
+  const oriented = await sharp(buffer).rotate().toBuffer();
+  const framed =
+    rotation === 0
+      ? oriented
+      : await sharp(oriented).rotate(rotation).toBuffer();
+
+  return sharp(framed)
     .extract({
       left: box.left,
       top: box.top,
@@ -194,4 +229,16 @@ export async function applyCropBox(
       height: box.height,
     })
     .toBuffer();
+}
+
+/** Source dimensions after EXIF orientation and `rotate`, in that order. */
+export async function orientedDimensions(
+  buffer: Buffer,
+  rotate?: number,
+): Promise<{ width: number; height: number }> {
+  const meta = await sharp(buffer).rotate().metadata();
+  const width = meta.width ?? 0;
+  const height = meta.height ?? 0;
+  const odd = normalizeRotation(rotate) % 180 === 90;
+  return odd ? { width: height, height: width } : { width, height };
 }

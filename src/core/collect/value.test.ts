@@ -159,6 +159,18 @@ describe("getItemValueEstimate", () => {
     ).toEqual({ cents: 75, isEstimate: false });
   });
 
+  it("TCG foil finish falls back to new when CM only stamped the non-foil bucket", () => {
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        variant: "live-std",
+        plainFinishes: ["normal"],
+        priceNew: 9588,
+        priceFoil: null,
+      }),
+    ).toEqual({ cents: 9588, isEstimate: false });
+  });
+
   it("TCG foil-only Enchanted: falls back to sole priceEstimated", () => {
     // Stale Lorcast row tagged `new` → FX only filled priceEstimated.
     expect(

@@ -1,5 +1,21 @@
 import type { CSSProperties } from "react";
 
+import {
+  houseHoloShader,
+  isHouseHoloShaderId,
+  type HouseHoloShaderId,
+} from "@/core/render/holoShadersHouse";
+import {
+  isPokemonHoloShaderId,
+  pokemonHoloShader,
+  type PokemonHoloShaderId,
+} from "@/core/render/holoShadersPokemon";
+import {
+  isSimeyHoloShaderId,
+  simeyHoloShader,
+  type SimeyHoloShaderId,
+} from "@/core/render/holoShadersSimey";
+
 /**
  * The looks a foil printing can be drawn with.
  *
@@ -19,7 +35,8 @@ import type { CSSProperties } from "react";
  * and nothing else:
  *
  * - `--colorX` / `--colorY` — pointer position as a percentage, 50% at rest
- * - `--combined` — their sum, 100% at rest
+ * - `--combined` — pointer: colorX+colorY (100% at rest); idle: travelling
+ *   phase (not the sum — that cancels on the anti-diagonal lean path)
  * - `--topcolor` — the hue the *print's own* stamped coat throws, which comes
  *   from the catalogue and never from a look: nothing about the finish, the
  *   varnish, the ink or the set predicts it
@@ -28,7 +45,16 @@ import type { CSSProperties } from "react";
  * names, never to this file.
  */
 export type HoloShader = {
-  id: HoloShaderId;
+  /**
+   * What this look is called — and it must be its *own* name.
+   *
+   * Callers round-trip a look through here: `variantRendering` resolves a
+   * shader, the card passes `shader.id` down, and the face resolves it again.
+   * House looks used to declare `silver` to satisfy a Lorcana-only type, so
+   * every Pokémon card came back wearing Lorcana's silver texture — the one
+   * thing `cssGuard` exists to forbid, arriving by a path it could not see.
+   */
+  id: HoloShaderId | HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
   /** Comma-separated `background-image` layers. */
   backgroundImage: string;
   backgroundRepeat: string;
@@ -46,7 +72,40 @@ export type HoloShader = {
    * same mask. Two finishes ship one: without it a Lore card was missing the
    * layer that carries most of its colour.
    */
-  overlay?: HoloShaderId;
+  /*
+    Widened past Lorcana's own ids: a second coat is how a look reaches more
+    than one `mix-blend-mode`, and a stack needs that. The reference cards run
+    three passes — dodge for the highlights, exclusion for the iridescence,
+    multiply for the depth — because no single blend does all three.
+  */
+  overlay?: HoloShaderId | HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
+  /**
+   * A repeating pattern that **cuts** this finish into shapes, rather than
+   * being painted with it.
+   *
+   * Some plates in a publisher's extract are stencils, not pictures: cosmos
+   * dots, galaxy stars, cracked ice, the Poké Ball laminate. They carry the
+   * shape in their alpha and near-black RGB everywhere, so painting one can
+   * only darken the card — under `overlay` it reads as grime. Fed through here
+   * it intersects the print's own masks and the shimmer appears *in* the
+   * shapes, which is what a cast-and-cure or cosmos print actually does.
+   */
+  carve?: MaskLayer;
+  /**
+   * When `false`, skip the pointer radial falloff mask. Full-card lattices
+   * (Radiant lozenges) must cover the print; a soft radial eats the grid.
+   */
+  pointerFalloff?: boolean;
+  /**
+   * Optional `clip-path` (simey Radiant: borders on shine, art-window on
+   * `:after`). Applied on the layer node after masks.
+   */
+  clipPath?: string;
+  /**
+   * When true, layer opacity is `var(--opacity)` (pointer glare). Idle pins
+   * that to 0 — use for spotlight/halo only, never for motif lattices.
+   */
+  opacityFollowsGlare?: boolean;
 };
 
 export const HOLO_SHADER_IDS = [
@@ -93,7 +152,9 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
     backgroundRepeat: "repeat, repeat",
     backgroundSize: "175% 100%, cover",
     backgroundPosition:
-      "calc(var(--colorX) * 1 + var(--colorY)) center, center",
+      // Prefer --combined: on pointer it equals colorX+colorY; on idle anti-diagonal
+      // that sum freezes while --combined still travels (satinShine already uses it).
+      "var(--combined) center, center",
     backgroundBlendMode: "normal, multiply",
     mixBlendMode: "exclusion",
     filter: "brightness(0.5)",
@@ -284,13 +345,15 @@ const SHADERS: Readonly<Record<HoloShaderId, HoloShader>> = {
  */
 export const NEUTRAL_VARNISH_COLOR = "#aaa";
 
-/** What an unrecognized or missing finish falls back to. */
+/**
+ * Look ids used as pack-level CSS defaults (e.g. Lorcana unknown foil → silver).
+ * Core never applies them automatically — packs pass an explicit id or null.
+ */
 export const DEFAULT_HOLO_SHADER_ID: HoloShaderId = "silver";
 
 /**
- * What an unrecognized varnish falls back to. Its own default, because the two
- * axes are not interchangeable: an unknown coat should stay out of the way,
- * where an unknown foil should still look like foil.
+ * Pack-level CSS default for an unknown varnish coat (Lorcana → hotFoil).
+ * Core never applies it automatically.
  */
 export const DEFAULT_VARNISH_SHADER_ID: HoloShaderId = "hotFoil";
 
@@ -302,18 +365,27 @@ export function isHoloShaderId(value: unknown): value is HoloShaderId {
 }
 
 /**
- * The look for an id, or the everyday foil.
+ * The look for a known id, or `null` when absent / unknown.
  *
- * Never throws and never returns nothing: a finish this build has no look for
- * still has to render as *some* foil, because the copy really is one.
+ * Packs decide fallbacks (Lorcana maps unknown foil → `"silver"` in
+ * `resolveCss`). Core must not invent a TCG-specific default.
  */
-export function holoShader(id: string | null | undefined): HoloShader {
-  return isHoloShaderId(id) ? SHADERS[id] : SHADERS[DEFAULT_HOLO_SHADER_ID];
+export function holoShader(id: string | null | undefined): HoloShader | null {
+  if (isHoloShaderId(id)) return SHADERS[id];
+  // Pokémon looks built from that pack's own extracted FX textures.
+  if (isPokemonHoloShaderId(id)) return pokemonHoloShader(id);
+  // Catalogue rarities adapted from simeydotme poke-holo / poke-151 (GPL).
+  if (isSimeyHoloShaderId(id)) return simeyHoloShader(id);
+  // House looks (pure CSS) — the fallback for finishes with no texture recipe.
+  if (isHouseHoloShaderId(id)) return houseHoloShader(id);
+  return null;
 }
 
-/** The look for a varnish id, or the plain stamped coat. */
-export function varnishShader(id: string | null | undefined): HoloShader {
-  return isHoloShaderId(id) ? SHADERS[id] : SHADERS[DEFAULT_VARNISH_SHADER_ID];
+/** The look for a known varnish id, or `null` when absent / unknown. */
+export function varnishShader(
+  id: string | null | undefined,
+): HoloShader | null {
+  return holoShader(id);
 }
 
 /** The inline style a look resolves to, ready for the layer element. */
@@ -402,11 +474,15 @@ export function holoLayerStyle(
     backgroundPosition: shader.backgroundPosition,
     backgroundBlendMode: shader.backgroundBlendMode,
     mixBlendMode: shader.mixBlendMode as CSSProperties["mixBlendMode"],
-    // A look with no opacity of its own is fully opaque, so the weight has
-    // something to scale either way.
-    opacity:
-      motif === 1 ? shader.opacity : round((shader.opacity ?? 1) * motif),
+    // Glare-linked layers (Radiant halo) read `--opacity`; idle pins it to 0.
+    // Motif lattices keep a numeric opacity so they never vanish with glare.
+    opacity: shader.opacityFollowsGlare
+      ? "var(--opacity)"
+      : motif === 1
+        ? shader.opacity
+        : round((shader.opacity ?? 1) * motif),
     filter: withFilter(shader.filter, added),
+    ...(shader.clipPath ? { clipPath: shader.clipPath } : {}),
   };
 }
 
@@ -425,16 +501,112 @@ export function holoLayerStyle(
  * what React's style object did, in key order, on an earlier attempt at this.
  * With longhands the declarations are order-independent.
  */
-export function maskedByStyle(maskUrl: string): CSSProperties {
-  const reference = `url("${maskUrl}")`;
+/**
+ * One mask in a stack.
+ *
+ * A plain string is a full-card mask, stretched to fit — every per-print mask
+ * is one of those. The object form exists for *patterns*: a repeating plate
+ * that carves the foil into shapes, which needs its own tile size and must
+ * repeat rather than stretch.
+ */
+export type MaskLayer = {
+  /**
+   * File URL for a bitmap mask, or a CSS `<image>` (e.g. `radial-gradient(…)`).
+   * Gradients are written raw; file URLs are wrapped in `url("…")`.
+   */
+  url: string;
+  /** `mask-size`; defaults to covering the card once. */
+  size?: string;
+  /** `mask-repeat`; defaults to `no-repeat`. */
+  repeat?: string;
+};
+
+/** True for CSS gradient / image functions — must not be wrapped in `url()`. */
+function isCssImageFunction(value: string): boolean {
+  return /^(?:repeating-)?(?:linear|radial|conic)-gradient\(/i.test(
+    value.trim(),
+  );
+}
+
+function maskImageReference(layer: MaskLayer): string {
+  return isCssImageFunction(layer.url) ? layer.url : `url("${layer.url}")`;
+}
+
+/**
+ * Soft radial so foil only reads where the light sits (simey technique:
+ * pointer-linked falloff on the shine). Intersected with coverage / plate.
+ */
+export const FOIL_POINTER_LIGHT_MASK: MaskLayer = {
+  url: "radial-gradient(farthest-corner circle at var(--colorX) var(--colorY), rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 32%, rgba(255,255,255,0) 68%)",
+  size: "100% 100%",
+  repeat: "no-repeat",
+};
+
+export function maskedByStyle(
+  maskUrl:
+    | string
+    | MaskLayer
+    | readonly (string | MaskLayer | null | undefined)[],
+): CSSProperties {
+  /*
+   * Several masks intersect rather than stack.
+   *
+   * A coverage mask says *where* a card is foiled; a foil plate says what the
+   * foil draws. On the Live gold prints the base texture is a near-flat slab
+   * and the picture only exists on the plate, so a shimmer masked by coverage
+   * alone floods the card and the illustration never appears. Intersecting the
+   * two makes the light run along the drawing, which is what the print does.
+   */
+  const layers: MaskLayer[] = (Array.isArray(maskUrl) ? maskUrl : [maskUrl])
+    .filter((entry): entry is string | MaskLayer => Boolean(entry))
+    .map((entry) => (typeof entry === "string" ? { url: entry } : entry));
+  if (layers.length === 0) return {};
+
+  const reference = layers.map(maskImageReference).join(", ");
+  const per = (value: string) => layers.map(() => value).join(", ");
+  const sizes = layers.map(({ size }) => size ?? "100% 100%").join(", ");
+  const repeats = layers.map(({ repeat }) => repeat ?? "no-repeat").join(", ");
+  const composite =
+    layers.length > 1 ? layers.map(() => "intersect").join(", ") : undefined;
+
   return {
     maskImage: reference,
-    maskMode: "alpha",
-    maskSize: "100% 100%",
-    maskRepeat: "no-repeat",
+    maskMode: per("alpha"),
+    maskSize: sizes,
+    maskRepeat: repeats,
+    ...(composite ? { maskComposite: composite } : {}),
     WebkitMaskImage: reference,
-    WebkitMaskSize: "100% 100%",
-    WebkitMaskRepeat: "no-repeat",
-    WebkitMaskSourceType: "alpha",
+    WebkitMaskSize: sizes,
+    WebkitMaskRepeat: repeats,
+    WebkitMaskSourceType: per("alpha"),
+    // Safari spells the operator differently, and calls intersection `source-in`.
+    ...(composite
+      ? { WebkitMaskComposite: layers.map(() => "source-in").join(", ") }
+      : {}),
   } as CSSProperties;
 }
+
+/**
+ * Specular glare that follows the pointer (`--colorX` / `--colorY`).
+ *
+ * Technique from simeydotme `.card__glare`: cover once (`no-repeat`). Default
+ * `repeat` tiles this radial in a corner and shows a hard join.
+ */
+export const FOIL_POINTER_GLARE_STYLE = {
+  backgroundImage:
+    "radial-gradient(farthest-corner circle at var(--colorX) var(--colorY), rgba(255,255,255,0.8) 10%, rgba(255,255,255,0.65) 20%, rgba(0,0,0,0.5) 90%)",
+  backgroundSize: "100% 100%",
+  backgroundRepeat: "no-repeat",
+} as const satisfies CSSProperties;
+
+/**
+ * Second glare — white wash through the foil *plate* (simey `.card__glare2`).
+ *
+ * Softens specular only where the plate draws; mask is applied by the caller
+ * via {@link maskedByStyle}. Shown when a plate URL exists.
+ */
+export const FOIL_PLATE_GLARE_STYLE = {
+  backgroundColor: "#fff",
+  mixBlendMode: "overlay",
+  filter: "contrast(0.8)",
+} as const satisfies CSSProperties;

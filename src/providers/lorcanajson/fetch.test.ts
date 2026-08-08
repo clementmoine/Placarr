@@ -18,6 +18,7 @@ import {
   resetLorcanaIndexCache,
   scoreLorcanaCard,
   searchLorcanaCards,
+  setCardCountFromFullIdentifier,
 } from "./fetch";
 
 /**
@@ -52,6 +53,7 @@ function payload() {
         number: 20,
         variant: null,
         promoGrouping: null,
+        fullIdentifier: "20/204 • FR • 1",
         fullName: "Simba - Lionceau protecteur",
         name: "Simba",
         version: "Lionceau protecteur",
@@ -59,6 +61,11 @@ function payload() {
         type: "Personnage",
         color: "Ambre",
         cost: 2,
+        lore: 1,
+        strength: 2,
+        willpower: 3,
+        subtypes: ["Storyborn", "Héros"],
+        inkwell: true,
         artists: ["Matthew Robert Davies"],
         story: "Le Roi Lion",
         foilTypes: ["None", "Silver"],
@@ -140,6 +147,21 @@ function payload() {
         images: { full: "https://example.test/tink-p3.jpg" },
       },
       {
+        id: 3215,
+        setCode: "13",
+        number: 244,
+        fullName: "Lilo & Stitch - Amis qui aiment s'amuser",
+        name: "Lilo & Stitch",
+        foilTypes: ["Lore"],
+        varnishType: "MetallicHotFoil",
+        foilEffectColors: ["#FFB348", "#B2B2B2"],
+        images: {
+          full: "https://example.test/lilo.jpg",
+          varnishMask: "https://example.test/lilo-v.jpg",
+          varnishMask2: "https://example.test/lilo-v2.jpg",
+        },
+      },
+      {
         // Identity is unusable — must be dropped, never keyed on a guess.
         id: 9999,
         setCode: null,
@@ -217,7 +239,7 @@ describe("print keys", () => {
     const index = await loadLorcanaIndex("fr");
 
     expect(index.byProviderId.has("9999")).toBe(false);
-    expect(index.cards).toHaveLength(7);
+    expect(index.cards).toHaveLength(8);
   });
 });
 
@@ -244,6 +266,18 @@ describe("card mapping", () => {
     });
   });
 
+  it("carries foilEffectColors and varnishMask2 from upstream", async () => {
+    mockDataset(payload());
+    const card = await fetchLorcanaCardByPrintKey("lorcana:13-244", {
+      language: "fr",
+    });
+    expect(card).toMatchObject({
+      foilEffectColors: ["#FFB348", "#B2B2B2"],
+      secondVarnishMaskUrl: "https://example.test/lilo-v2.jpg",
+      varnishMaskUrl: "https://example.test/lilo-v.jpg",
+    });
+  });
+
   it("leaves a missing mask null rather than falling back to the artwork", async () => {
     mockDataset(payload());
     const card = await fetchLorcanaCardByPrintKey("lorcana:9-1", {
@@ -263,11 +297,22 @@ describe("card mapping", () => {
     const genie = await fetchLorcanaCardByPrintKey("lorcana:1-20-p1", {
       language: "fr",
     });
+    const simba = await fetchLorcanaCardByPrintKey("lorcana:1-20", {
+      language: "fr",
+    });
 
     expect(lorcanaCollectorNumberLabel(puppy!)).toBe("4a");
     expect(lorcanaCollectorNumberLabel(genie!)).toBe("20/P1");
+    expect(lorcanaCollectorNumberLabel(simba!)).toBe("20/204");
     expect(lorcanaPrintLabel(puppy!)).toBe("Les Terres d'Encre · 4a");
-    expect(lorcanaPrintLabel(genie!)).toBe("Premier Chapitre · 20 P1");
+    expect(lorcanaPrintLabel(genie!)).toBe("Premier Chapitre · 20/P1");
+    expect(lorcanaPrintLabel(simba!)).toBe("Premier Chapitre · 20/204");
+  });
+
+  it("parses set size from fullIdentifier and ignores promo tails", () => {
+    expect(setCardCountFromFullIdentifier("1/204 • FR • 1")).toBe(204);
+    expect(setCardCountFromFullIdentifier("20/P1 • FR • 9")).toBeNull();
+    expect(setCardCountFromFullIdentifier(null)).toBeNull();
   });
 });
 

@@ -106,25 +106,31 @@ function parseFieldEvidenceDisplayFact(
   };
 }
 
+/**
+ * Project evidence into display facts. Same kind+label+source as an existing
+ * fact is a no-op when the value matches; a different value is an upgrade
+ * (e.g. Numéro `11` → `11/108` after set size is known).
+ */
 export function displayFactsFromFieldEvidence(
   evidence: readonly FieldEvidenceInput[],
   existingFacts: MetadataFact[] = [],
 ): MetadataFact[] {
-  const existingKeys = new Set(
-    existingFacts.map((fact) => displayFactIdentityKey(fact)),
+  const existingByKey = new Map(
+    existingFacts.map((fact) => [displayFactIdentityKey(fact), fact] as const),
   );
-  const additions: MetadataFact[] = [];
+  const changes: MetadataFact[] = [];
 
   for (const entry of evidence) {
     const fact = parseFieldEvidenceDisplayFact(entry);
     if (!fact) continue;
     const key = displayFactIdentityKey(fact);
-    if (existingKeys.has(key)) continue;
-    existingKeys.add(key);
-    additions.push(fact);
+    const existing = existingByKey.get(key);
+    if (existing && existing.value === fact.value) continue;
+    existingByKey.set(key, fact);
+    changes.push(fact);
   }
 
-  return additions;
+  return changes;
 }
 
 function factsSnapshot(facts: MetadataFact[]): string {
@@ -211,14 +217,19 @@ export async function syncMetadataDisplayFactsFromFieldEvidence(input: {
 
   const rawExisting = parseMetadataFactsJson(row.facts);
   const existing = normalizeMiscTagFacts(rawExisting);
-  const additions = displayFactsFromFieldEvidence(evidence, existing);
+  const changes = displayFactsFromFieldEvidence(evidence, existing);
+
+  const byKey = new Map(
+    existing.map((fact) => [displayFactIdentityKey(fact), fact] as const),
+  );
+  for (const fact of changes) {
+    byKey.set(displayFactIdentityKey(fact), fact);
+  }
 
   const merged = purgeContradictedProviderExternalLinks(
     dropSupersededMiscTagFacts(
       dedupeFacts(
-        dedupeProviderExternalLinkFacts(
-          additions.length > 0 ? [...existing, ...additions] : existing,
-        ),
+        dedupeProviderExternalLinkFacts([...byKey.values()]),
       ) ?? [],
     ),
     input.itemBarcode,

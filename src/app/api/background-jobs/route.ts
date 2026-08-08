@@ -14,15 +14,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ jobs: [], count: 0 });
   }
 
-  const jobs = await listBackgroundJobsForUser(auth.user.id);
-
-  return NextResponse.json({
-    count: jobs.length,
-    jobs: jobs.map((job) => ({
-      ...job,
-      startedAt: job.startedAt.toISOString(),
-    })),
-  });
+  try {
+    const jobs = await listBackgroundJobsForUser(auth.user.id);
+    return NextResponse.json({
+      count: jobs.length,
+      jobs: jobs.map((job) => ({
+        ...job,
+        startedAt: job.startedAt.toISOString(),
+      })),
+    });
+  } catch (error) {
+    console.error("[background-jobs] list failed", error);
+    return NextResponse.json(
+      { jobs: [], count: 0, error: "Failed to list background jobs" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function DELETE(req: NextRequest) {

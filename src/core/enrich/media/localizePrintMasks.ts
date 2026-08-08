@@ -111,6 +111,15 @@ export async function localizePrintMasks<T extends PrintMaskUrls>(
     items: readonly A[],
     worker: (item: A) => Promise<R>,
   ) => Promise<R[]>,
+  options?: {
+    /**
+     * When a remote mask cannot be baked, drop it instead of keeping the
+     * publisher URL. CSS `mask-mode: alpha` treats JPEG (opaque alpha) as
+     * full-card coverage — worse than a plain card. Unity can sample RGB from
+     * JPEG, but cross-origin publisher hosts usually deny WebGL texures anyway.
+     */
+    dropRemoteOnMiss?: boolean;
+  },
 ): Promise<T[]> {
   const requests = remoteMaskRequests(prints);
   if (requests.length === 0) return [...prints];
@@ -127,10 +136,35 @@ export async function localizePrintMasks<T extends PrintMaskUrls>(
   const localByKey = new Map<string, string>();
   requests.forEach((request, index) => {
     const local = results[index];
-    if (local && local.startsWith("/uploads/")) {
+    if (
+      local &&
+      (local.startsWith("/uploads/") || local.startsWith("/foil/"))
+    ) {
       localByKey.set(requestKey(request), local);
     }
   });
 
-  return prints.map((print) => withLocalizedMasks(print, localByKey));
+  const localized = prints.map((print) =>
+    withLocalizedMasks(print, localByKey),
+  );
+  if (!options?.dropRemoteOnMiss) return localized;
+  return localized.map((print) => dropUnbakedRemoteMasks(print));
+}
+
+/**
+ * Strip leftover `http(s)` mask URLs after a localize pass.
+ *
+ * Publisher foil masks are JPEG coverage maps. Our CSS stack masks by alpha
+ * (Safari never applies `mask-mode: luminance`), so an unbaked JPEG paints the
+ * foil over the whole card — text box included. Prefer plain art.
+ */
+export function dropUnbakedRemoteMasks<T extends PrintMaskUrls>(print: T): T {
+  const next = { ...print };
+  for (const field of MASK_FIELD_NAMES) {
+    const url = next[field];
+    if (url && url.startsWith("http")) {
+      next[field] = null as T[typeof field];
+    }
+  }
+  return next;
 }

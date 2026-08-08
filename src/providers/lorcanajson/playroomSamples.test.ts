@@ -13,6 +13,7 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
     setCode: "1",
     setName: null,
     number: 1,
+    setCardCount: null,
     variant: null,
     promoGrouping: null,
     language: "fr",
@@ -23,6 +24,11 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
     cardType: null,
     color: null,
     cost: null,
+    lore: null,
+    strength: null,
+    willpower: null,
+    subtypes: [],
+    inkwell: null,
     artists: [],
     story: null,
     flavorText: null,
@@ -33,6 +39,8 @@ function card(overrides: Partial<LorcanaCard>): LorcanaCard {
     foilMaskUrl: "https://example.com/foil.png",
     fullFoilUrl: null,
     varnishMaskUrl: null,
+    secondVarnishMaskUrl: null,
+    foilEffectColors: [],
     cardmarketUrl: null,
     searchName: "test card",
     ...overrides,
@@ -106,6 +114,9 @@ describe("pickLorcanaPlayroomSamples", () => {
       "lorcana:magma-metal",
     ]);
     expect(samples.every((s) => s.shelfType === "tcg")).toBe(true);
+    expect(samples[0]?.foilMaskUrl).toBe("https://example.com/foil.png");
+    expect(samples[0]?.varnishMaskUrl).toBe("https://example.com/v.png");
+    expect(samples[0]?.effectPack).toBe("lorcana");
   });
 
   it("prefers unvarnished when the material has no varnish", () => {

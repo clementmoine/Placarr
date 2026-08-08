@@ -34,6 +34,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type SyntheticEvent,
   type TouchEvent,
 } from "react";
@@ -98,10 +99,16 @@ import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import { FlippableCard } from "@/components/FlippableCard";
-import { resolveCardBackUrl } from "@/core/render/foil";
+import {
+  resolveDefaultCardBack,
+  sharedCardBackSkeletonUrl,
+} from "@/core/render/foil";
 import "@/effects";
 import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
-import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
+import {
+  stripEditSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
+} from "@/core/enrich/media/coverUrl";
 import { resolveStoredVariant } from "@/core/enrich/variants";
 import {
   edgeGradient,
@@ -111,7 +118,17 @@ import {
   usePrintVariant,
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
-import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
+import {
+  getDetailCoverClass,
+  getAspectRatio,
+  orientAspectRatio,
+} from "@/lib/text/cardFormat";
+import { AmbientBackdrop } from "@/components/AmbientBackdrop";
+import { CardBackSkeleton } from "@/components/CardBackSkeleton";
+import {
+  cardFaceRadius,
+  OrientedMediaRotator,
+} from "@/components/OrientedMediaFrame";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import {
@@ -1133,6 +1150,7 @@ export default function ItemDetailsPage() {
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
     "contain",
   );
+  const [coverFaceReady, setCoverFaceReady] = useState(false);
   // Garde « une seule tentative » : jamais rendu → ref, pas un state (évite
   // un setState synchrone dans l'effect de refresh).
   const autoMetadataRefreshAttemptedRef = useRef(false);
@@ -1758,6 +1776,14 @@ export default function ItemDetailsPage() {
    */
   const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
   const variantView = variantRendering(item?.variant, printVariant, coverImage);
+  const cardBack = resolveDefaultCardBack({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: item?.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
+  const cardBackUrl = cardBack?.url ?? null;
+  const cardBackSkeletonUrl = sharedCardBackSkeletonUrl(cardBack);
   /**
    * Masks follow the artwork's own framing. Cropping the card left them cut for
    * the full print, so `object-contain` letterboxed the two differently and the
@@ -1801,11 +1827,13 @@ export default function ItemDetailsPage() {
   if (prevCoverImage !== coverImage) {
     setPrevCoverImage(coverImage);
     setCoverImageFit("contain");
+    setCoverFaceReady(false);
     resetCoverEdgeColors();
   }
 
   const handleCoverImageLoad = useCallback(
     (event: SyntheticEvent<HTMLImageElement>) => {
+      setCoverFaceReady(true);
       setCoverImageFit("contain");
       measureCoverEdges(event.currentTarget);
     },
@@ -1817,13 +1845,15 @@ export default function ItemDetailsPage() {
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
     const allImages = getGalleryImages(item);
-    // Exclude the cover, including its uncropped twin: the cover is a "_crop"
-    // derivative of a gallery image, so its source image must not show again.
-    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
-    const coverKey = coverImage ? stripCrop(coverImage) : null;
+    // Exclude the cover, including its unedited twin: the cover is a derivative
+    // of a gallery image, so its source must not show again. Through the shared
+    // helper — a local copy of the rule went stale the moment the suffix moved.
+    const coverKey = coverImage ? stripEditSuffixFromUrl(coverImage) : null;
     return allImages
       .filter(
-        (img) => img.url !== coverImage && stripCrop(img.url) !== coverKey,
+        (img) =>
+          img.url !== coverImage &&
+          stripEditSuffixFromUrl(img.url) !== coverKey,
       )
       .slice(0, 24)
       .map((img) => {
@@ -1855,6 +1885,20 @@ export default function ItemDetailsPage() {
 
   const itemDisplayName = item?.name;
   useDocumentTitle(itemDisplayName);
+
+  /** Série · Extension · n° — picker shows this; keep it next to the title too. */
+  const printReferenceLine = useMemo(() => {
+    if (shelf?.type !== "tcg") return null;
+    const facts = normalizeFacts(item?.metadata?.facts);
+    const byLabel = (label: string) =>
+      facts.find((fact) => fact.label === label)?.value?.trim() || null;
+    const parts = [
+      byLabel("Série"),
+      byLabel("Extension"),
+      byLabel("Numéro"),
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  }, [item?.metadata?.facts, shelf?.type]);
 
   const displayAliases = useMemo(() => {
     return displayAliasesForItem({
@@ -1930,9 +1974,38 @@ export default function ItemDetailsPage() {
     );
   }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
+  const faceQuarterTurns = printVariant?.faceQuarterTurns ?? 0;
   const coverAspectRatio = useMemo(() => {
-    return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
-  }, [shelf?.cardFormat, shelf?.type]);
+    const base = getDetailCoverClass(shelf?.cardFormat, shelf?.type);
+    if (!faceQuarterTurns) return base;
+    // Aspect comes from inline style when the print sits on its side.
+    return base
+      .replace(/\baspect-\[[^\]]+\]\b/g, "")
+      .replace(/\baspect-square\b/g, "")
+      .replace(/\baspect-video\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }, [shelf?.cardFormat, shelf?.type, faceQuarterTurns]);
+  const coverOrientedAspect = useMemo(
+    () =>
+      orientAspectRatio(
+        getAspectRatio(shelf?.cardFormat, shelf?.type),
+        faceQuarterTurns,
+      ),
+    [shelf?.cardFormat, shelf?.type, faceQuarterTurns],
+  );
+  /**
+   * The backdrop turns with the card only when it *is* the card. A Location has
+   * no background of its own, so the hero falls back to its own face — a
+   * portrait scan whose art is sideways — and the banner lay on its side. A
+   * real landscape background, or any other artwork, must be left alone.
+   */
+  const heroQuarterTurns =
+    heroImage &&
+    heroArtworkUrl &&
+    urlsReferToSameLocalizedImage(heroImage, heroArtworkUrl)
+      ? faceQuarterTurns
+      : 0;
 
   const description = useMemo(() => {
     return item?.description || item?.metadata?.description;
@@ -2031,7 +2104,13 @@ export default function ItemDetailsPage() {
         (Boolean(stampedReferenceOnly) ||
           (prices?.isReferencePriceOnly ?? false)),
     };
-  }, [item?.condition, item?.variant, prices, shelf?.type, printVariant?.plainFinishes]);
+  }, [
+    item?.condition,
+    item?.variant,
+    prices,
+    shelf?.type,
+    printVariant?.plainFinishes,
+  ]);
 
   const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -2243,9 +2322,9 @@ export default function ItemDetailsPage() {
       {/* Netflix-style Ambient Backdrop */}
       {heroImage && (
         <div className="absolute top-0 left-0 right-0 h-[65vh] md:h-[75vh] pointer-events-none -z-10 overflow-hidden select-none">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-[0.50] transition-all duration-1000 ease-out"
-            style={{ backgroundImage: `url(${heroImage})` }}
+          <AmbientBackdrop
+            imageUrl={heroImage}
+            quarterTurns={heroQuarterTurns}
           />
           {/* Dark overlay to ensure text readability */}
           <div className="absolute inset-0 bg-zinc-950/10 dark:bg-zinc-950/40" />
@@ -2356,55 +2435,79 @@ export default function ItemDetailsPage() {
                  * foil card, which fills its frame edge to edge and has the
                  * holographic layers instead.
                  */
-                style={
-                  coverEdgeColors && !variantView.foilMaskUrl
+                style={{
+                  ...(faceQuarterTurns
+                    ? { aspectRatio: coverOrientedAspect }
+                    : {}),
+                  ...(coverEdgeColors && !variantView.foilMaskUrl
                     ? { background: edgeGradient(coverEdgeColors) }
-                    : undefined
-                }
+                    : {}),
+                }}
               >
+                {/* Bleeding the cover's own edges wins; the back only fills a
+                    frame that has nothing else behind it. */}
+                {!(coverEdgeColors && !variantView.foilMaskUrl) && (
+                  <CardBackSkeleton
+                    url={cardBackSkeletonUrl}
+                    faceQuarterTurns={faceQuarterTurns}
+                    orientedAspect={coverOrientedAspect}
+                  />
+                )}
                 {coverImage ? (
                   <>
-                    {variantView.foilMaskUrl ? (
-                      <FoilCardImage
-                        effectPack={variantView.effectPackId}
-                        imageUrl={variantView.imageUrl ?? coverImage}
-                        alt={itemDisplayName ?? ""}
-                        finish={variantView.finish}
-                        varnishType={variantView.varnishType}
-                        maskUrl={foilMaskUrl}
-                        varnishMaskUrl={varnishMaskUrl}
-                        varnishColor={variantView.varnishColor}
-                        secondVarnishMaskUrl={secondVarnishMaskUrl}
-                        secondVarnishColor={variantView.secondVarnishColor}
-                        /**
-                         * Flat here, exactly as in the grid. This cover sits in
-                         * a page of text, and a card that tips whenever the
-                         * cursor passes on its way to the metadata is restless
-                         * rather than alive. The sheen still drifts on its own,
-                         * so the print still reads as foil — and the click
-                         * opens the fullscreen card, which is where the
-                         * perspective, the lean and the turn belong.
-                         */
-                        tilt={false}
-                      />
-                    ) : (
-                      <RemoteImage
-                        src={coverImage}
-                        alt={itemDisplayName ?? ""}
-                        width={768}
-                        height={1152}
-                        sizes="(max-width: 768px) 240px, 480px"
-                        loading="eager"
-                        fetchPriority="high"
-                        onLoad={handleCoverImageLoad}
-                        className={cn(
-                          "w-full h-full transition-transform duration-500",
-                          coverImageFit === "contain"
-                            ? "object-contain"
-                            : "object-cover group-hover/cover:scale-105",
-                        )}
-                      />
-                    )}
+                    <OrientedMediaRotator
+                      faceQuarterTurns={faceQuarterTurns}
+                      orientedAspect={coverOrientedAspect}
+                    >
+                      {variantView.foilMaskUrl ? (
+                        <FoilCardImage
+                          effectPack={variantView.effectPackId}
+                          printKey={item?.printKey}
+                          title={itemDisplayName}
+                          imageUrl={variantView.imageUrl ?? coverImage}
+                          alt={itemDisplayName ?? ""}
+                          finish={variantView.finish}
+                          varnishType={variantView.varnishType}
+                          cssFinishShaderId={variantView.shader?.id ?? null}
+                          cssVarnishShaderId={variantView.varnish?.id ?? null}
+                          maskUrl={foilMaskUrl}
+                          varnishMaskUrl={varnishMaskUrl}
+                          varnishColor={variantView.varnishColor}
+                          secondVarnishMaskUrl={secondVarnishMaskUrl}
+                          secondVarnishColor={variantView.secondVarnishColor}
+                          /**
+                           * Flat here, exactly as in the grid. This cover sits in
+                           * a page of text, and a card that tips whenever the
+                           * cursor passes on its way to the metadata is restless
+                           * rather than alive. The sheen still drifts on its own,
+                           * so the print still reads as foil — and the click
+                           * opens the fullscreen card, which is where the
+                           * perspective, the lean and the turn belong.
+                           */
+                          tilt={false}
+                        />
+                      ) : (
+                        <RemoteImage
+                          src={coverImage}
+                          alt={itemDisplayName ?? ""}
+                          width={768}
+                          height={1152}
+                          sizes="(max-width: 768px) 240px, 480px"
+                          loading="eager"
+                          fetchPriority="high"
+                          onLoad={handleCoverImageLoad}
+                          className={cn(
+                            "w-full h-full transition-opacity duration-150 transition-transform duration-500",
+                            coverImageFit === "contain"
+                              ? "object-contain"
+                              : "object-cover group-hover/cover:scale-105",
+                            cardBackSkeletonUrl &&
+                              !coverFaceReady &&
+                              "opacity-0",
+                          )}
+                        />
+                      )}
+                    </OrientedMediaRotator>
                     {/* Hover Zoom Overlay — decorative, and the click is the
                         container's, so it must not swallow the pointer: the holo
                         layers below track pointer position to place their sheen. */}
@@ -2439,6 +2542,11 @@ export default function ItemDetailsPage() {
                   <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground dark:text-white leading-none">
                     {itemDisplayName}
                   </h1>
+                  {printReferenceLine && (
+                    <p className="text-sm md:text-base font-semibold text-muted-foreground tracking-tight">
+                      {printReferenceLine}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {isMetadataBusy && (
                       <Badge
@@ -2467,14 +2575,14 @@ export default function ItemDetailsPage() {
                     )}
                     {item?.condition &&
                       shelfShowsItemCondition(shelf?.type) && (
-                      <Badge
-                        variant="outline"
-                        className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
-                      >
-                        <ConditionIcon condition={item.condition} />
-                        {t(`items.conditions.${item.condition}`)}
-                      </Badge>
-                    )}
+                        <Badge
+                          variant="outline"
+                          className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
+                        >
+                          <ConditionIcon condition={item.condition} />
+                          {t(`items.conditions.${item.condition}`)}
+                        </Badge>
+                      )}
                     {/* Finish is the TCG copy axis (foil vs plain); condition is
                         hidden for cards — see shelfShowsItemCondition. */}
                     {resolvedVariant && (
@@ -2904,47 +3012,73 @@ export default function ItemDetailsPage() {
                * URL bar hidden, so 80vh is taller than what can actually be
                * seen and the card slid under the browser chrome. The `2rem`
                * is padding on both sides.
+               *
+               * The height budget is spent through the *same* oriented ratio
+               * the box is given, so a sideways print (or a shelf format that
+               * is not 5:7 at all) cannot drift from it.
                */
               <div
-                className="aspect-[5/7] w-[min(calc(100vw-2rem),calc(80dvh*5/7))] rounded-[4%/3%] animate-zoom-in"
+                className="animate-zoom-in"
+                style={
+                  {
+                    // The card's own corner, quoted against this (oriented)
+                    // box. FlippableCard clips to the same shape; this is what
+                    // its `rounded-[inherit]` chain starts from.
+                    borderRadius: cardFaceRadius(faceQuarterTurns),
+                    aspectRatio: coverOrientedAspect,
+                    width: `min(calc(100vw - 2rem), calc(80dvh * ${coverOrientedAspect}))`,
+                  } as CSSProperties
+                }
                 onClick={(event) => event.stopPropagation()}
               >
                 <FlippableCard
-                  backUrl={resolveCardBackUrl({
-                    shelfCardBackUrl: shelf?.cardBackUrl,
-                    effectPackId: variantView.effectPackId,
-                  })}
+                  backUrl={cardBackUrl}
                   backAlt={`${itemDisplayName ?? ""} — dos`}
                   flipLabel={t("items.flipCard")}
                   tiltPromptLabel={t("items.tiltPrompt")}
+                  faceQuarterTurns={faceQuarterTurns}
+                  orientedAspect={coverOrientedAspect}
+                  faceTabLabel={t("items.cardFace")}
+                  backTabLabel={t("items.cardBack")}
                 >
-                  <FoilCardImage
-                    effectPack={variantView.effectPackId}
-                    imageUrl={variantView.imageUrl ?? zoomImageUrl}
-                    alt="Zoom"
-                    finish={variantView.finish}
-                    varnishType={variantView.varnishType}
-                    /* The wrapper leans the whole card so the back turns with
-                       it; this keeps only the light on its own surface. */
-                    tilt={false}
-                    trackPointer
-                    /* The mirrored masks were cut for the hero's framing. They
-                     only fit here if this is the same file — zooming the
-                     uncropped original of a cropped cover is not. */
-                    maskUrl={
-                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
-                        ? foilMaskUrl
-                        : variantView.foilMaskUrl
-                    }
-                    varnishMaskUrl={
-                      (variantView.imageUrl ?? zoomImageUrl) === heroArtworkUrl
-                        ? varnishMaskUrl
-                        : variantView.varnishMaskUrl
-                    }
-                    varnishColor={variantView.varnishColor}
-                    secondVarnishMaskUrl={secondVarnishMaskUrl}
-                    secondVarnishColor={variantView.secondVarnishColor}
-                  />
+                  <OrientedMediaRotator
+                    faceQuarterTurns={faceQuarterTurns}
+                    orientedAspect={coverOrientedAspect}
+                  >
+                    <FoilCardImage
+                      effectPack={variantView.effectPackId}
+                      printKey={item?.printKey}
+                      title={itemDisplayName}
+                      imageUrl={variantView.imageUrl ?? zoomImageUrl}
+                      alt="Zoom"
+                      finish={variantView.finish}
+                      varnishType={variantView.varnishType}
+                      cssFinishShaderId={variantView.shader?.id ?? null}
+                      cssVarnishShaderId={variantView.varnish?.id ?? null}
+                      /* The wrapper leans the whole card so the back turns with
+                         it; this keeps only the light on its own surface. */
+                      tilt={false}
+                      trackPointer
+                      /* The mirrored masks were cut for the hero's framing. They
+                       only fit here if this is the same file — zooming the
+                       uncropped original of a cropped cover is not. */
+                      maskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? foilMaskUrl
+                          : variantView.foilMaskUrl
+                      }
+                      varnishMaskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? varnishMaskUrl
+                          : variantView.varnishMaskUrl
+                      }
+                      varnishColor={variantView.varnishColor}
+                      secondVarnishMaskUrl={secondVarnishMaskUrl}
+                      secondVarnishColor={variantView.secondVarnishColor}
+                    />
+                  </OrientedMediaRotator>
                 </FlippableCard>
               </div>
             ) : (

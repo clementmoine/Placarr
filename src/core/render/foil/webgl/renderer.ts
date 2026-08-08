@@ -16,6 +16,23 @@ import type {
   FoilTextureBinding,
   FoilWrap,
 } from "@/core/render/foil/types";
+import { hotFoilStampUniforms } from "@/core/render/foil/hotFoilStamp";
+import {
+  cameraPosFromTilt,
+  lightDirectionFromTilt,
+} from "./lightDirection";
+
+import type {
+  WebglFoilRenderer,
+  WebglFoilScrollMode,
+  WebglFoilSurfaces,
+} from "./webglTypes";
+
+export type {
+  WebglFoilRenderer,
+  WebglFoilScrollMode,
+  WebglFoilSurfaces,
+} from "./webglTypes";
 
 /**
  * The mobile app's own foil shaders, run in the browser.
@@ -31,13 +48,44 @@ import type {
  * per-effect logic.
  */
 
+/**
+ * Live `Card` mesh width/height (`data/pokemon/foil/cardQuad.json`). Portrait
+ * UVs are not isometric: equal Δu/Δv map to unequal millimetres.
+ */
+export const LIVE_CARD_ASPECT = 0.7187859711391763;
+
+/**
+ * Full-screen quad → UVs, plus Unity card varyings.
+ * Lorcana frags read `vs_INTERP*`; TCG Live HoloFoil reads `vs_TEXCOORD*`
+ * (TBN rows + world pos.w from the Live VS). Identity TBN faces the camera.
+ */
 const VERTEX_SRC = `#version 300 es
 layout(location = 0) in vec2 position;
 out highp vec4 vs_INTERP0;
 out highp vec4 vs_INTERP2;
+out highp vec2 vs_TEXCOORD0;
+out highp vec4 vs_TEXCOORD1;
+out highp vec4 vs_TEXCOORD2;
+out highp vec4 vs_TEXCOORD3;
 void main() {
-  vs_INTERP0 = vec4(position * 0.5 + 0.5, 0.0, 0.0);
+  vec2 uv = position * 0.5 + 0.5;
+  vs_INTERP0 = vec4(uv, 0.0, 0.0);
   vs_INTERP2 = vec4(1.0);
+  vs_TEXCOORD0 = uv;
+  // Unity packing: TEXCOORD<i> = (T.<i>, B.<i>, N.<i>, worldPos.<i>) —
+  // frags read normal as (T1.z, T2.z, T3.z), worldPos as (T1.w, T2.w, T3.w).
+  // The app authors its card flat, normal +Y (MAT sheets: _LightDirection
+  // (0,1,0)): T=(1,0,0), B=(0,0,1), N=(0,1,0).
+  //
+  // worldPos must vary across the card: Live's HoloFoil frags derive a
+  // per-pixel view offset from dFdx/dFdy of it — a constant leaves
+  // inversesqrt(0) = ∞ and NaN shine/spectrum UVs (no gold-rainbow sweep).
+  // The magnitude only sets the view-angle spread (the offset is normalised):
+  // card aspect from the Card mesh, height 1, camera 2 units up.
+  vec3 worldPos = vec3((uv.x - 0.5) * ${LIVE_CARD_ASPECT}, 0.0, (0.5 - uv.y) * 1.0);
+  vs_TEXCOORD1 = vec4(1.0, 0.0, 0.0, worldPos.x);
+  vs_TEXCOORD2 = vec4(0.0, 0.0, 1.0, worldPos.y);
+  vs_TEXCOORD3 = vec4(0.0, 1.0, 0.0, worldPos.z);
   gl_Position = vec4(position, 0.0, 1.0);
 }`;
 
@@ -105,6 +153,153 @@ export function restoreOpaqueFoilOutput(source: string): string {
   );
 }
 
+/**
+ * Square / isotropic motifs (`TEX_CC_PB`, stars, confetti dots, Radiant cross
+ * lattice, …) are authored for equal UV scales. Live frags use `vec2(s, s)`,
+ * which stretches them tall on the portrait card. CSS tiles in square pixels;
+ * scale.x *= aspect so WebGL matches that isotropy.
+ *
+ * - `_Tex_CC` / stars / dots: equal `vs_TEXCOORD0` tilings near `texture(…)`.
+ * - `_CrossTexture` / Squares direction: lattice math sits between scale and
+ *   sample — rewrite every equal `vs_TEXCOORD0.xy * vec2(s,s)` in those frags.
+ */
+export function aspectCorrectSquareMotifUv(
+  source: string,
+  aspect: number = LIVE_CARD_ASPECT,
+): string {
+  if (!(aspect > 0)) return source;
+  const hasCc = source.includes("_Tex_CC");
+  const hasStarDot =
+    source.includes("_StarsTexture") ||
+    source.includes("_TexDots") ||
+    source.includes("_T_noise_dots");
+  const hasCross = source.includes("_CrossTexture");
+  const hasSquareDir = source.includes("_T_Direction_RGB_Random");
+  if (!hasCc && !hasStarDot && !hasCross && !hasSquareDir) return source;
+
+  const motifSampler =
+    "_Tex_CC(?!_)|_StarsTexture|_TexDots|_T_noise_dots";
+
+  // Equal vec2 → earliest texture(motif) within the next 1–3 lines.
+  // Non-greedy so two back-to-back CC samples (SunPillar) each match once.
+  let out = source.replace(
+    new RegExp(
+      String.raw`vs_TEXCOORD0\.xy \* vec2\(([0-9.eE+-]+),\s*\1\)((?:[^\n]*\n){1,3}?[^\n]*texture\((${motifSampler}))`,
+      "g",
+    ),
+    (_match, scale: string, tail: string) => {
+      const s = Number(scale);
+      if (!Number.isFinite(s)) return _match;
+      return `vs_TEXCOORD0.xy * vec2(${s * aspect}, ${s})${tail}`;
+    },
+  );
+
+  // Radiant / Ace cross lattice and Squares grid: scale is followed by rotate /
+  // trunc math, not an immediate texture(). Rewrite every equal TEXCOORD0 pair
+  // (`vec2(s,s)` → unequal args, so a second pass is a no-op).
+  if (hasCross || hasSquareDir) {
+    out = out.replace(
+      /vs_TEXCOORD0\.xy \* vec2\(([0-9.eE+-]+),\s*\1\)/g,
+      (_match, scale: string) => {
+        const s = Number(scale);
+        if (!Number.isFinite(s)) return _match;
+        return `vs_TEXCOORD0.xy * vec2(${s * aspect}, ${s})`;
+      },
+    );
+  }
+
+  if (!hasStarDot && !hasCross) return out;
+
+  // Equal vec4 xyxy — Cosmos / Galaxy star grids; Ace cross quantize.
+  out = out.replace(
+    /vs_TEXCOORD0\.xyxy \* vec4\(([0-9.eE+-]+),\s*\1,\s*\1,\s*\1\)/g,
+    (_match, scale: string) => {
+      const s = Number(scale);
+      if (!Number.isFinite(s)) return _match;
+      return `vs_TEXCOORD0.xyxy * vec4(${s * aspect}, ${s}, ${s * aspect}, ${s})`;
+    },
+  );
+
+  // Paired equals `vec4(sx,sx,sz,sz)` — CrackedIce stars / Ace 192×256 grid.
+  out = out.replace(
+    /vs_TEXCOORD0\.xyxy \* vec4\(([0-9.eE+-]+),\s*\1,\s*([0-9.eE+-]+),\s*\2\)/g,
+    (_match, sx: string, sz: string) => {
+      const a = Number(sx);
+      const b = Number(sz);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return _match;
+      // Already rewritten all-equal form keeps sx===sz numerically after
+      // aspect on x — skip if this still looks like the all-equal rewrite.
+      if (a === b * aspect || b === a * aspect) return _match;
+      return `vs_TEXCOORD0.xyxy * vec4(${a * aspect}, ${a}, ${b * aspect}, ${b})`;
+    },
+  );
+
+  return out;
+}
+
+/**
+ * @deprecated Prefer {@link aspectCorrectSquareMotifUv} — same CC path, kept
+ * as a named export for existing tests.
+ */
+export function aspectCorrectSquareCcUv(
+  source: string,
+  aspect: number = LIVE_CARD_ASPECT,
+): string {
+  return aspectCorrectSquareMotifUv(source, aspect);
+}
+
+/**
+ * Identity columns for a `hlslcc_mtx4x4unity_*` vec4-array uniform.
+ *
+ * GL lists the whole array as one active uniform `name[0]` whose `size` is the
+ * element count: a single `uniform4f` write fills only column `first` and
+ * leaves the rest at zero — the frags' `normalize(WorldToObject · n)` then
+ * hits `inversesqrt(0)` = NaN and takes whole effect stages with it (Live's
+ * gold-rainbow spectrum sampled a corner texel through NaN UVs).
+ */
+export function identityMatrixColumns(first: number, size: number): number[] {
+  const identity = [
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1],
+  ] as const;
+  const cols = Math.max(size, 1);
+  const data: number[] = [];
+  for (let c = 0; c < cols; c++) {
+    data.push(...(identity[first + c] ?? [0, 0, 0, 0]));
+  }
+  return data;
+}
+
+/**
+ * Unity Linear pipeline: the fragment emits linear colour and the app's sRGB
+ * framebuffer encodes it in hardware. WebGL2's default framebuffer stores the
+ * value raw, so the encode has to live in the shader — wrap `main` and apply
+ * the exact sRGB OETF to the colour output (alpha stays linear coverage).
+ *
+ * No-op when the fragment's output declaration is not found.
+ */
+export function encodeLinearFoilOutput(source: string): string {
+  const out = /layout\(location = 0\) out \w+ vec4 (\w+);/.exec(source);
+  if (!out || !source.includes("void main()")) return source;
+  const target = out[1];
+  return (
+    source.replace("void main()", "void foil_linear_main()") +
+    `
+void main() {
+  foil_linear_main();
+  vec3 lin = max(${target}.xyz, vec3(0.0));
+  ${target}.xyz = mix(
+    lin * 12.92,
+    1.055 * pow(lin, vec3(1.0 / 2.4)) - 0.055,
+    step(vec3(0.0031308), lin)
+  );
+}
+`
+  );
+}
+
 const WRAP_GL: Record<FoilWrap, number> = {
   repeat: 0,
   clamp: 0,
@@ -147,25 +342,6 @@ function magFilter(
 ): number {
   return filter === "point" ? gl.NEAREST : gl.LINEAR;
 }
-
-export type WebglFoilSurfaces = {
-  artUrl: string;
-  foilMaskUrl?: string | null;
-  varnishMaskUrl?: string | null;
-  secondVarnishMaskUrl?: string | null;
-  hotFoilColor?: readonly [number, number, number, number] | null;
-  secondHotFoilColor?: readonly [number, number, number, number] | null;
-};
-
-export type WebglFoilScrollMode = "time" | "tilt";
-
-export type WebglFoilRenderer = {
-  ready: Promise<void>;
-  setTilt(x: number, y: number): void;
-  setScrollMode(mode: WebglFoilScrollMode): void;
-  setDeviceRotationDegrees(degrees: number): void;
-  destroy(): void;
-};
 
 const ROLE_FALLBACK: Record<string, [number, number, number, number]> = {
   art: [128, 128, 128, 255],
@@ -218,7 +394,14 @@ function recoverFoilMaskRgb(
 type ProgramBindings = {
   program: WebGLProgram;
   tiltLoc: WebGLUniformLocation | null;
+  /** TCG Live HoloFoil: lean as a front-facing light vector. */
+  lightDirLoc: WebGLUniformLocation | null;
+  lightDirSize: 3 | 4;
+  /** View-dependent frags (SolidColor, …) — moved with lean each draw. */
+  cameraPosLoc: WebGLUniformLocation | null;
+  cameraPosSize: 3 | 4;
   cosTimeLoc: WebGLUniformLocation | null;
+  timeLoc: WebGLUniformLocation | null;
   deviceRotLoc: WebGLUniformLocation | null;
   samplers: { location: WebGLUniformLocation; unit: number; slot: string }[];
 };
@@ -232,6 +415,19 @@ function supportsAstcOnContext(gl: WebGL2RenderingContext): boolean {
   );
 }
 
+/**
+ * Smoke / debug: `localStorage.placarrForceFoilRaster = "1"` skips ASTC so the
+ * lossless WebP (or PNG) raster path is exercised. Lorcana dumps prefer ASTC
+ * on desktop otherwise — WebP never appears in Network.
+ */
+function forceFoilRaster(): boolean {
+  try {
+    return globalThis.localStorage?.getItem("placarrForceFoilRaster") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function createWebglFoilRenderer(
   canvas: HTMLCanvasElement,
   material: FoilMaterial,
@@ -242,7 +438,9 @@ export function createWebglFoilRenderer(
     premultipliedAlpha: true,
     alpha: true,
   });
-  if (!gl) throw new Error("WebGL2 indisponible");
+  if (!gl || gl.isContextLost()) {
+    throw new Error("WebGL2 indisponible");
+  }
 
   const shaderBase = `${assetBase}/shaders/`;
   const textureBase = `${assetBase}/textures/`;
@@ -335,7 +533,9 @@ export function createWebglFoilRenderer(
     gl!.texImage2D(
       gl!.TEXTURE_2D,
       0,
-      gl!.RGBA,
+      // sRGB-authored textures decode to linear on sample (filtering included),
+      // matching how the app's Linear pipeline reads them.
+      binding?.srgb ? gl!.SRGB8_ALPHA8 : gl!.RGBA,
       gl!.RGBA,
       gl!.UNSIGNED_BYTE,
       image,
@@ -408,7 +608,13 @@ export function createWebglFoilRenderer(
       solidTexture(fallback as [number, number, number, number]),
     );
 
-    if (binding?.astc && binding.file && !role && supportsAstcOnContext(gl!)) {
+    if (
+      binding?.astc &&
+      binding.file &&
+      !role &&
+      !forceFoilRaster() &&
+      supportsAstcOnContext(gl!)
+    ) {
       try {
         const data = await fetchArrayBuffer(textureBase + binding.astc.file);
         if (destroyed) return;
@@ -451,7 +657,7 @@ export function createWebglFoilRenderer(
 
       if (
         surfaces.hotFoilColor &&
-        (info.name === "_HotFoilColor" || info.name === "_VarnishLightColor")
+        hotFoilStampUniforms(material).has(info.name)
       ) {
         const c = surfaces.hotFoilColor;
         if (info.type === gl!.FLOAT_VEC3) {
@@ -473,14 +679,44 @@ export function createWebglFoilRenderer(
 
       const float = material.floats[info.name];
       const color = material.colors[info.name];
-      if (info.type === gl!.FLOAT && float !== undefined) {
-        gl!.uniform1f(location, float);
+      if (info.type === gl!.FLOAT) {
+        if (float !== undefined) {
+          gl!.uniform1f(location, float);
+        } else if (info.name === "_OverallBrightness") {
+          // Unity dumps leave brightness in the material sheet; unset → 0
+          // blacks every Live HoloFoil leaf.
+          gl!.uniform1f(location, 1);
+        }
       } else if (info.type === gl!.FLOAT_VEC2 && color) {
         gl!.uniform2f(location, color[0], color[1]);
-      } else if (info.type === gl!.FLOAT_VEC3 && color) {
-        gl!.uniform3f(location, color[0], color[1], color[2]);
-      } else if (info.type === gl!.FLOAT_VEC4 && color) {
-        gl!.uniform4f(location, color[0], color[1], color[2], color[3]);
+      } else if (info.type === gl!.FLOAT_VEC3) {
+          if (color) {
+            gl!.uniform3f(location, color[0], color[1], color[2]);
+          } else if (info.name === "_WorldSpaceCameraPos") {
+            // Above the card — the app's card lies flat, normal +Y.
+            gl!.uniform3f(location, 0, 2, 0);
+          }
+      } else if (info.type === gl!.FLOAT_VEC4) {
+        if (color) {
+          gl!.uniform4f(location, color[0], color[1], color[2], color[3]);
+        } else if (/_ST$/.test(info.name)) {
+          // Unity `*_ST` tiling/offset — identity when the dump sheet omitted it.
+          gl!.uniform4f(location, 1, 1, 0, 0);
+            } else if (info.name === "_Time" || info.name.startsWith("_Time[")) {
+              gl!.uniform4f(location, 0, 0, 0, 0);
+            } else if (info.name === "_WorldSpaceCameraPos") {
+              gl!.uniform4f(location, 0, 2, 0, 1);
+            } else {
+          const mtx = info.name.match(
+            /^hlslcc_mtx4x4unity_(?:WorldToObject|ObjectToWorld)\[(\d+)\]$/,
+          );
+          if (mtx) {
+            gl!.uniform4fv(
+              location,
+              identityMatrixColumns(Number(mtx[1]), info.size),
+            );
+          }
+        }
       }
     }
   }
@@ -501,13 +737,36 @@ export function createWebglFoilRenderer(
     return samplers;
   }
 
+  function vecBinding(
+    program: WebGLProgram,
+    name: string,
+  ): { loc: WebGLUniformLocation | null; size: 3 | 4 } {
+    const loc = gl!.getUniformLocation(program, name);
+    if (!loc) return { loc: null, size: 3 };
+    const count = gl!.getProgramParameter(program, gl!.ACTIVE_UNIFORMS);
+    for (let i = 0; i < count; i++) {
+      const info = gl!.getActiveUniform(program, i);
+      if (!info || info.name.replace(/\[\d+\]$/, "") !== name) continue;
+      if (info.type === gl!.FLOAT_VEC4) return { loc, size: 4 };
+      return { loc, size: 3 };
+    }
+    return { loc, size: 3 };
+  }
+
   function buildBindings(program: WebGLProgram): ProgramBindings {
     gl!.useProgram(program);
     bindStaticUniforms(program);
+    const light = vecBinding(program, "_LightDirection");
+    const camera = vecBinding(program, "_WorldSpaceCameraPos");
     return {
       program,
       tiltLoc: gl!.getUniformLocation(program, "_Tilt"),
+      lightDirLoc: light.loc,
+      lightDirSize: light.size,
+      cameraPosLoc: camera.loc,
+      cameraPosSize: camera.size,
       cosTimeLoc: gl!.getUniformLocation(program, "_CosTime"),
+      timeLoc: gl!.getUniformLocation(program, "_Time"),
       deviceRotLoc: gl!.getUniformLocation(program, "_DeviceRotationDegrees"),
       samplers: collectSamplers(program),
     };
@@ -522,9 +781,35 @@ export function createWebglFoilRenderer(
     gl!.useProgram(active.program);
 
     if (active.tiltLoc) gl!.uniform2f(active.tiltLoc, tilt[0], tilt[1]);
+    if (active.lightDirLoc) {
+      const dir = lightDirectionFromTilt(tilt[0], tilt[1]);
+      if (active.lightDirSize === 4) {
+        gl!.uniform4f(active.lightDirLoc, dir[0], dir[1], dir[2], 0);
+      } else {
+        gl!.uniform3f(active.lightDirLoc, dir[0], dir[1], dir[2]);
+      }
+    }
+    if (active.cameraPosLoc) {
+      const cam = cameraPosFromTilt(tilt[0], tilt[1]);
+      if (active.cameraPosSize === 4) {
+        gl!.uniform4f(active.cameraPosLoc, cam[0], cam[1], cam[2], 1);
+      } else {
+        gl!.uniform3f(active.cameraPosLoc, cam[0], cam[1], cam[2]);
+      }
+    }
     if (active.cosTimeLoc) {
       const cos = foilCosTime(seconds);
       gl!.uniform4f(active.cosTimeLoc, cos[0], cos[1], cos[2], cos[3]);
+    }
+    if (active.timeLoc) {
+      // Unity `_Time`: (t/20, t, t*2, t*3) — Live frags mostly read `.y`.
+      gl!.uniform4f(
+        active.timeLoc,
+        seconds / 20,
+        seconds,
+        seconds * 2,
+        seconds * 3,
+      );
     }
     if (active.deviceRotLoc) {
       gl!.uniform1f(active.deviceRotLoc, deviceRotation);
@@ -584,13 +869,21 @@ export function createWebglFoilRenderer(
     scheduleDraw();
   }
 
+  const prepareFragment = (source: string): string => {
+    const opaque = restoreOpaqueFoilOutput(source);
+    const isotropic = aspectCorrectSquareMotifUv(opaque);
+    return material.linearOutput
+      ? encodeLinearFoilOutput(isotropic)
+      : isotropic;
+  };
+
   const ready = (async () => {
-    const tiltSrc = restoreOpaqueFoilOutput(
+    const tiltSrc = prepareFragment(
       await fetchFragmentSource(shaderBase + material.fragment),
     );
     if (destroyed) return;
     const timeSrc = material.fragmentTime
-      ? restoreOpaqueFoilOutput(
+      ? prepareFragment(
           await fetchFragmentSource(shaderBase + material.fragmentTime),
         )
       : null;
@@ -630,7 +923,17 @@ export function createWebglFoilRenderer(
     ready,
     setTilt(x: number, y: number) {
       tilt = [x, y];
-      if (scrollMode === "tilt") scheduleDraw();
+      // Always redraw — even in `time` mode. Pointer hover used to land while
+      // the idle clock was still driving, and `scheduleDraw` bails in that
+      // mode, so the uniform change stayed invisible until the next tick (or
+      // forever, for fragments that only read `_Tilt` in the tilt program).
+      if (paused || destroyed) return;
+      syncClock();
+      if (!frame) frame = requestAnimationFrame(() => draw());
+    },
+    setLeanDegrees() {
+      // Lorcana's fragments scroll a phase from the normalised lean (`setTilt`);
+      // none of them takes an angle.
     },
     setScrollMode(mode: WebglFoilScrollMode) {
       if (mode === scrollMode && active) {
@@ -651,7 +954,21 @@ export function createWebglFoilRenderer(
       unsubscribeClock = null;
       document.removeEventListener("visibilitychange", onVisibilityChange);
       if (frame) cancelAnimationFrame(frame);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      for (const texture of texturesBySlot.values()) {
+        gl.deleteTexture(texture);
+      }
+      texturesBySlot.clear();
+      // Do not `loseContext()`: React Strict Mode and backend switches remount
+      // the effect on the same <canvas>. A lost context then makes the next
+      // `getContext("webgl2")` compile with a null log (HotFoil especially).
+      // Programs/textures above are enough; the context dies with the element.
+      if (tiltProgram) gl.deleteProgram(tiltProgram.program);
+      if (timeProgram && timeProgram !== tiltProgram) {
+        gl.deleteProgram(timeProgram.program);
+      }
+      tiltProgram = null;
+      timeProgram = null;
+      active = null;
     },
   };
 }

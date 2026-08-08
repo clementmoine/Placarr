@@ -165,6 +165,20 @@ describe("maskBlobStore", () => {
     expect(peekMaskBlob(MASK)).toMatch(/^blob:/);
   });
 
+  it("keeps foil and varnish kinds apart for the same URL", async () => {
+    stubObjectUrls();
+    const calls = stubFetch();
+
+    requestMaskBlob(MASK, "foil");
+    requestMaskBlob(MASK, "varnish");
+    await settle();
+
+    expect(calls).toEqual([MASK, MASK]);
+    expect(peekMaskBlob(MASK, "foil")).toMatch(/^blob:/);
+    expect(peekMaskBlob(MASK, "varnish")).toMatch(/^blob:/);
+    expect(peekMaskBlob(MASK, "foil")).not.toBe(peekMaskBlob(MASK, "varnish"));
+  });
+
   it("tells subscribers when a mask becomes wearable", async () => {
     stubObjectUrls();
     stubFetch();

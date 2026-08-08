@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
+import type { MaskKind } from "@/core/enrich/media/maskCoverage";
 import {
   peekMaskBlob,
   requestMaskBlob,
@@ -12,23 +13,22 @@ import {
  * A mask URL, as something CSS can actually wear on iOS.
  *
  * Returns `null` until the file is in memory. Callers must draw no masked layer
- * while it is `null`: a layer with an unresolved mask is not a faint layer, it is
- * an unmasked one covering the whole card. Plain now and foil a moment later is
- * the right degradation — see `maskBlobStore` for why the wait exists at all.
+ * while it is `null`. `kind` selects foil vs varnish Safari conversion.
  */
-export function useMaskBlob(url: string | null | undefined): string | null {
-  const snapshot = useCallback(() => peekMaskBlob(url), [url]);
+export function useMaskBlob(
+  url: string | null | undefined,
+  kind: MaskKind = "foil",
+): string | null {
+  const snapshot = useCallback(() => peekMaskBlob(url, kind), [url, kind]);
   const blob = useSyncExternalStore(
     subscribeToMaskBlobs,
     snapshot,
-    // Nothing is in memory during the server render, and there is no document
-    // to create an object URL against.
     () => null,
   );
 
   useEffect(() => {
-    requestMaskBlob(url);
-  }, [url]);
+    requestMaskBlob(url, kind);
+  }, [url, kind]);
 
   return blob;
 }

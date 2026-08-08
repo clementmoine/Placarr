@@ -153,11 +153,6 @@ model Shelf {
   type        Type
   isPublic    Boolean  @default(true)
   cardFormat  String   @default("default")
-  /// Back of the cards on this shelf, as a URL or an uploaded image.
-  /// A property of the collection rather than of a card: one image covers the
-  /// whole game. Decoration rather than data, so nothing resolves it
-  /// automatically. Empty means the cards simply do not turn over.
-  cardBackUrl String?
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

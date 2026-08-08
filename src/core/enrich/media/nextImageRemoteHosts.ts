@@ -63,6 +63,7 @@ const SUPPLEMENTAL_IMAGE_REMOTE_EXACT_HOSTS = [
  */
 export const REGISTRY_COVER_IMAGE_EXACT_HOSTS = [
   "api.lorcana.ravensburger.com",
+  "assets.tcgdex.net",
   "babelio.com",
   "bdovore.com",
   "bedetheque.com",

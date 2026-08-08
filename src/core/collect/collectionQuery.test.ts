@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_ITEM_COLLECTION_FILTERS,
+  defaultItemCollectionSort,
   filterCollectionItems,
   parseItemCollectionFilters,
+  parseItemCollectionSort,
   queryCollectionItems,
   sortCollectionItems,
   summarizeCollectionEstimatedValue,
@@ -202,6 +204,15 @@ describe("collectionQuery", () => {
         get: (key) => (key === "condition" ? "mint" : null),
       }).condition,
     ).toBe("all");
+  });
+
+  it("defaults TCG shelves to print binder order", () => {
+    expect(defaultItemCollectionSort("tcg")).toBe("print_asc");
+    expect(defaultItemCollectionSort("games")).toBe("name_asc");
+    expect(parseItemCollectionSort(null, "tcg")).toBe("print_asc");
+    expect(parseItemCollectionSort(null, "games")).toBe("name_asc");
+    expect(parseItemCollectionSort("name_asc", "tcg")).toBe("name_asc");
+    expect(parseItemCollectionSort("price_desc", "tcg")).toBe("price_desc");
   });
 
   it("applies filters then sort", () => {

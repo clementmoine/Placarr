@@ -113,12 +113,19 @@
     "kindRefresh": "Rafraîchissement metadata",
     "kindEnrich": "Enrichissement",
     "kindPrice": "Mise à jour des prix",
+    "kindFoil": "Extract foil",
+    "kindCatalog": "Catalogue iCollect",
+    "kindLaunchbox": "Index LaunchBox",
+    "kindNointro": "Index No-Intro",
+    "foilAdmin": "Admin · effets TCG",
     "cancelAll": "Tout annuler",
     "cancelOne": "Annuler",
     "cancelledOne": "Tâche annulée",
     "cancelledAll": "{count} tâche(s) annulée(s)",
     "nothingToCancel": "Aucune tâche à annuler",
-    "cancelFailed": "Impossible d'annuler la tâche"
+    "cancelFailed": "Impossible d'annuler la tâche",
+    "providerData": "Données fournisseurs",
+    "providerDataHint": "Mise à jour des catalogues"
   },
   "auth": {
     "title": "Authentification",
@@ -180,10 +187,6 @@
     "dropLogo": "Déposez le logo ici",
     "removeLogo": "Retirer le logo",
     "cardFormat": "Forme des cartes",
-    "cardBackUrl": "Dos des cartes",
-    "cardBackUrlHint": "Décoratif : le dos n’est pas récupéré automatiquement. Donnez une image ou une URL pour pouvoir retourner les cartes ; laissez vide et elles ne tourneront pas.",
-    "invalidCardBackUrl": "Choisissez une image, ou collez une adresse commençant par http:// ou https://",
-    "clearCardBack": "Retirer le dos",
     "cardFormats": {
       "default": "Par défaut ({type})",
       "square": "Carré (1:1 - CD, Vinyle, Société)",
@@ -361,6 +364,8 @@
     "fetching": "Récupération",
     "flipCard": "Voir le dos",
     "tiltPrompt": "Incliner",
+    "cardFace": "Face",
+    "cardBack": "Dos",
     "unknownBarcodeMetadata": "Code-barres inconnu",
     "unknownBarcodeMetadataHint": "Aucune source (BGG, boutiques, bases publiques) ne reconnaît ce code-barres. Vérifiez qu'il est correct, renommez l'objet avec le titre du jeu puis rafraîchissez les métadonnées, ou complétez la fiche à la main.",
     "refreshMetadata": "Rafraîchir",
@@ -443,25 +448,31 @@
     },
     "printPicker": {
       "title": "Ajouter une carte",
-      "description": "Une carte n'a pas de code-barres : cherchez-la par son nom, puis choisissez le tirage exact.",
+      "description": "Une carte n'a pas de code-barres : cherchez-la par son nom, puis choisissez le tirage et la finition.",
       "searchPlaceholder": "Nom de la carte (ex. Elsa, Chiot dalmatien)",
-      "hint": "Tapez un nom pour voir les tirages disponibles.",
+      "hint": "Tapez un nom : chaque finition apparaît comme une option séparée.",
       "noResults": "Aucun tirage ne correspond."
     },
     "cropImage": {
-      "title": "Recadrer l'image",
-      "description": "Ajustez les coins. Le recadrage part toujours de l'image d'origine, vous pouvez donc y revenir ou le refaire autant de fois que vous voulez.",
-      "apply": "Recadrer",
+      "title": "Modifier l'image",
+      "description": "Tournez puis ajustez les coins. L'édition part toujours de l'image d'origine, vous pouvez donc y revenir ou la refaire autant de fois que vous voulez.",
+      "apply": "Appliquer",
       "revert": "Rétablir l'original",
-      "action": "Recadrer",
+      "action": "Modifier l'image",
       "auto": "Auto",
-      "autoHint": "Proposer un recadrage automatique (marges détectées)"
+      "autoHint": "Proposer un recadrage automatique (marges détectées)",
+      "rotateLeft": "Tourner à gauche",
+      "rotateRight": "Tourner à droite"
     },
     "variant": "Variante",
     "finishes": {
-      "none": "Normal",
-      "nonfoil": "Normal",
-      "normal": "Normal"
+      "none": "Normale",
+      "nonfoil": "Normale",
+      "normal": "Normale",
+      "holo": "Holofoil",
+      "reverse": "Reverse Holofoil",
+      "firstEdition": "1ère édition",
+      "wPromo": "Promo W"
     }
   },
   "sorting": {

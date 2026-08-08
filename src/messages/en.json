@@ -113,12 +113,19 @@
     "kindRefresh": "Metadata refresh",
     "kindEnrich": "Enrichment",
     "kindPrice": "Price update",
+    "kindFoil": "Foil extract",
+    "kindCatalog": "iCollect catalog",
+    "kindLaunchbox": "LaunchBox index",
+    "kindNointro": "No-Intro index",
+    "foilAdmin": "Admin · TCG effects",
     "cancelAll": "Cancel all",
     "cancelOne": "Cancel",
     "cancelledOne": "Task cancelled",
     "cancelledAll": "{count} task(s) cancelled",
     "nothingToCancel": "Nothing to cancel",
-    "cancelFailed": "Could not cancel task"
+    "cancelFailed": "Could not cancel task",
+    "providerData": "Provider data",
+    "providerDataHint": "Updating catalogues"
   },
   "auth": {
     "title": "Authentication",
@@ -180,10 +187,6 @@
     "dropLogo": "Drop logo here",
     "removeLogo": "Remove logo",
     "cardFormat": "Card shape",
-    "cardBackUrl": "Card back",
-    "cardBackUrlHint": "Decorative: the back is not fetched automatically. Give an image or a URL to let cards turn over; leave it empty and they will not.",
-    "invalidCardBackUrl": "Pick an image, or paste an address starting with http:// or https://",
-    "clearCardBack": "Remove the back",
     "cardFormats": {
       "default": "Default ({type})",
       "square": "Square (1:1 - CD, Vinyl, Board Game)",
@@ -361,6 +364,8 @@
     "fetching": "Fetching",
     "flipCard": "Show the back",
     "tiltPrompt": "Tilt",
+    "cardFace": "Front",
+    "cardBack": "Back",
     "unknownBarcodeMetadata": "Unknown barcode",
     "unknownBarcodeMetadataHint": "No source (BGG, retailers, public databases) recognizes this barcode. Check that it is correct, rename the item with the game title and refresh metadata, or fill in the details manually.",
     "refreshMetadata": "Refresh",
@@ -443,25 +448,31 @@
     },
     "printPicker": {
       "title": "Add a card",
-      "description": "A card has no barcode: search it by name, then pick the exact printing.",
+      "description": "A card has no barcode: search it by name, then pick the exact printing and finish.",
       "searchPlaceholder": "Card name (e.g. Elsa, Dalmatian Puppy)",
-      "hint": "Type a name to see the available printings.",
+      "hint": "Type a name — each finish shows as its own option.",
       "noResults": "No printing matches."
     },
     "cropImage": {
-      "title": "Crop image",
-      "description": "Drag the corners. Cropping always starts from the original image, so you can revert or redo it as often as you like.",
-      "apply": "Crop",
+      "title": "Edit image",
+      "description": "Rotate, then adjust the corners. Editing always starts from the original image, so you can revert or redo it as often as you like.",
+      "apply": "Apply",
       "revert": "Restore original",
-      "action": "Crop",
+      "action": "Edit image",
       "auto": "Auto",
-      "autoHint": "Suggest an automatic crop (detected margins)"
+      "autoHint": "Suggest an automatic crop (detected margins)",
+      "rotateLeft": "Rotate left",
+      "rotateRight": "Rotate right"
     },
     "variant": "Variant",
     "finishes": {
-      "none": "Normal",
-      "nonfoil": "Normal",
-      "normal": "Normal"
+      "none": "Regular",
+      "nonfoil": "Regular",
+      "normal": "Regular",
+      "holo": "Holofoil",
+      "reverse": "Reverse Holofoil",
+      "firstEdition": "1st Edition",
+      "wPromo": "W Promo"
     }
   },
   "sorting": {

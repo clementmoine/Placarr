@@ -23,6 +23,10 @@ import {
   type TcgdexLanguage,
 } from "./fetch";
 
+// Server-side: installs the SQLite lookups over the client-safe stubs.
+// Without it the pack answers empty and every audit reports zero.
+import "@/effects/pokemon/cardFoilIndex";
+
 const SHELF_TYPE = "tcg";
 
 /** One seed print per finish we know how to illustrate from catalogue alone. */

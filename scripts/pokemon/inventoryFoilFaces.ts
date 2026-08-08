@@ -20,6 +20,10 @@ import {
 import { ownedBundlesForShader } from "../../src/effects/pokemon/liveOwnedBundles";
 import { repoRoot } from "../lib/foilPaths";
 
+// Server-side: installs the SQLite lookups over the client-safe stubs.
+// Without it the pack answers empty and every audit reports zero.
+import "@/effects/pokemon/cardFoilIndex";
+
 function parseArgs(argv: string[]): { effect: string | null } {
   let effect: string | null = null;
   for (let i = 0; i < argv.length; i++) {

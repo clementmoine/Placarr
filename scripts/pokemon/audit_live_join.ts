@@ -29,6 +29,10 @@ import {
 import { remapCollectorNumberForLive } from "../../src/effects/pokemon/collectorRemap";
 import { liveSetCandidatesFromTcgdexSet } from "../../src/effects/pokemon/liveSetId";
 
+// Server-side: installs the SQLite lookups over the client-safe stubs.
+// Without it the pack answers empty and every audit reports zero.
+import "@/effects/pokemon/cardFoilIndex";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REPORT_PATH = path.join(
   ROOT,

@@ -12,6 +12,10 @@ import {
 
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
+// Server-side: installs the SQLite lookups over the client-safe stubs.
+// Without it the pack answers empty and every audit reports zero.
+import "@/effects/pokemon/cardFoilIndex";
+
 const PROVIDER_ID = "pokemontcglive";
 
 export function liveFrontUrlForPrint(opts: {

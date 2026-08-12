@@ -55,7 +55,7 @@ const nextConfig = {
   /**
    * Foil/CDN dumps write heavily under ``data/``. Watching them forces webpack
    * to recompile on every texture pull (and races JSON parses on concurrent
-   * ``/foil/...`` requests during invalidation).
+   * ``/assets/...`` requests during invalidation).
    */
   webpack: (config, { dev }) => {
     if (dev) {

@@ -21,7 +21,7 @@ function fakePack(
   overrides: Partial<EffectPackModule> & Pick<EffectPackModule, "id" | "cardBackUrl">,
 ): EffectPackModule {
   return {
-    assetBase: "/foil/test",
+    assetBase: "/assets/test",
     resolveMaterial: () => null,
     resolveMaterialForPrint: () => null,
     resolveCss: () => ({ finishShaderId: null, varnishShaderId: null }),
@@ -82,9 +82,9 @@ describe("resolveCardBackCandidates / resolveCardBackUrl", () => {
     registerEffectPack(
       fakePack({
         id: "pack-a",
-        cardBackUrl: "/foil/pack-a/card_back.png",
+        cardBackUrl: "/assets/pack-a/cards/back.png",
         resolveCardBack: ({ setCode }) =>
-          setCode === "S1" ? "/foil/pack-a/set_s1.png" : null,
+          setCode === "S1" ? "/assets/pack-a/set_s1.png" : null,
       }),
     );
     const candidates = resolveCardBackCandidates({
@@ -102,13 +102,13 @@ describe("resolveCardBackCandidates / resolveCardBackUrl", () => {
         source: "example",
       },
       {
-        url: "/foil/pack-a/set_s1.png",
+        url: "/assets/pack-a/set_s1.png",
         scope: "set",
         key: "S1",
         source: "effect-pack",
       },
       {
-        url: "/foil/pack-a/card_back.png",
+        url: "/assets/pack-a/cards/back.png",
         scope: "pack",
         source: "effect-pack",
       },
@@ -124,10 +124,10 @@ describe("resolveCardBackCandidates / resolveCardBackUrl", () => {
 
   it("falls through to pack default when only the pack is known", () => {
     registerEffectPack(
-      fakePack({ id: "pack-a", cardBackUrl: "/foil/pack-a/card_back.png" }),
+      fakePack({ id: "pack-a", cardBackUrl: "/assets/pack-a/cards/back.png" }),
     );
     expect(resolveCardBackUrl({ effectPackId: "pack-a" })).toBe(
-      "/foil/pack-a/card_back.png",
+      "/assets/pack-a/cards/back.png",
     );
     expect(resolveDefaultCardBack({ effectPackId: "pack-a" })?.scope).toBe(
       "pack",
@@ -141,13 +141,13 @@ describe("resolveCardBackCandidates / resolveCardBackUrl", () => {
 
   it("ignores blank print URLs", () => {
     registerEffectPack(
-      fakePack({ id: "pack-a", cardBackUrl: "/foil/pack-a/card_back.png" }),
+      fakePack({ id: "pack-a", cardBackUrl: "/assets/pack-a/cards/back.png" }),
     );
     expect(
       resolveCardBackUrl({
         printCardBackUrl: "   ",
         effectPackId: "pack-a",
       }),
-    ).toBe("/foil/pack-a/card_back.png");
+    ).toBe("/assets/pack-a/cards/back.png");
   });
 });

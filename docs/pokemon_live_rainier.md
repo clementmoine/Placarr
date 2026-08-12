@@ -57,7 +57,7 @@ ptcgl.dev / DESIGN + sniffs MuMu.
 | **Miroirs publics** | ptcgl.dev / Omukade = catalogue ; **pas** les routes commerce owned |
 
 Pour l’owned playroom : `pnpm foil:pokemon:sync-owned` →
-`src/effects/pokemon/liveOwned.json` + `pnpm foil:pokemon:inventory-faces`.
+`data/pokemon/liveOwned.json` + `pnpm foil:pokemon:inventory-faces`.
 
 ---
 
@@ -175,7 +175,7 @@ Chemins tirés de `global-metadata.dat` (`/commerce/v1/external/…`). Les guess
 `/account/v1/external/inventory/get` → **403** (route gate, pas la bonne famille).
 
 **Owned playroom** : joindre `cardId` → `live-cards.sqlite.card_id` →
-`foil_effect` + stem normalisé `_fr_` → `src/effects/pokemon/liveOwned.json`.
+`foil_effect` + stem normalisé `_fr_` → `data/pokemon/liveOwned.json`.
 Snapshot compte (ex.) : 412 carddex / 1269 inventory items / foil leaves
 AceFoil, FlatSilver, Rainbow, SunPillar, SvHolo, SvUltra (+ Thatch manuel).
 

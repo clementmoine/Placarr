@@ -1,5 +1,5 @@
 /**
- * Sync `src/effects/pokemon/liveOwned.json` from Live Rainier commerce APIs.
+ * Sync `data/pokemon/liveOwned.json` from Live Rainier commerce APIs.
  *
  * Requires PTCS tokens at `.tmp-foil-audit/live-unity/mitm/tokens.json`
  * (`access_token` + single-use `refresh_token`). See docs/pokemon_live_rainier.md.
@@ -15,8 +15,8 @@ const TOKENS = path.join(
   ROOT,
   ".tmp-foil-audit/live-unity/mitm/tokens.json",
 );
-const OUT_JSON = path.join(ROOT, "src/effects/pokemon/liveOwned.json");
-const SQLITE = path.join(ROOT, "data/pokemon/live-cards.sqlite");
+const OUT_JSON = path.join(ROOT, "data/pokemon/liveOwned.json");
+const SQLITE = path.join(ROOT, "data/pokemon/catalog.sqlite");
 const KEY = "421d8904-0236-4ab4-94f5-a8a84aeb3f7b";
 const CLIENT = "tpci-tcg-app";
 const BASE = "https://api.studio-prod.pokemon.com";

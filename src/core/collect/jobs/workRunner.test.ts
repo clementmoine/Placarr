@@ -28,7 +28,7 @@ vi.mock("@/core/collect/jobs/workQueue", () => ({
 }));
 
 vi.mock("@/lib/admin/foilExtractRunner", () => ({
-  FOIL_EXTRACT_TIMEOUT_MS: 60_000,
+  foilExtractTimeoutMs: () => 60_000,
   isFoilExtractTarget: (value: unknown) =>
     value === "pokemon" ||
     value === "lorcana" ||

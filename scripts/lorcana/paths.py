@@ -1,70 +1,52 @@
-"""Resolve Placarr foil store paths under ``data/<pack>/foil``.
+"""Pack paths for ``scripts/lorcana`` — see ``scripts/lib/paths.py``.
 
-Used by ``scripts/lorcana`` dumpers. Override foil data-root with
-``PLACARR_EFFECTS_DIR`` (layout still ``<root>/<pack>/foil``).
+Loaded via ``importlib`` so ``PYTHONPATH=scripts/lorcana`` cannot recurse
+into this shim when resolving ``paths``.
 """
 
 from __future__ import annotations
 
-import os
+import importlib.util
 from pathlib import Path
 
+_LIB_PATHS = Path(__file__).resolve().parents[1] / "lib" / "paths.py"
+_spec = importlib.util.spec_from_file_location(
+    "_placarr_lib_paths",
+    _LIB_PATHS,
+)
+if _spec is None or _spec.loader is None:
+    raise ImportError(f"cannot load {_LIB_PATHS}")
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
 
-def repo_root_from(here: Path | None = None) -> Path:
-    """``scripts/lorcana/paths.py`` → repo root."""
-    return Path(__file__).resolve().parents[2]
+data_dir = _mod.data_dir
+effects_src_dir = _mod.effects_src_dir
+ensure_effects_layout = _mod.ensure_effects_layout
+foil_data_root = _mod.foil_data_root
+foil_pack_dir = _mod.foil_pack_dir
+pack_cards_dir = _mod.pack_cards_dir
+pack_cards_index = _mod.pack_cards_index
+pack_catalog_db = _mod.pack_catalog_db
+pack_data_dir = _mod.pack_data_dir
+pack_staging_dir = _mod.pack_staging_dir
+pack_apks_dir = _mod.pack_apks_dir
+pack_unity_data_dir = _mod.pack_unity_data_dir
+repo_root_from = _mod.repo_root_from
+write_last_run = _mod.write_last_run
 
-
-def data_dir(repo: Path | None = None) -> Path:
-    root = (repo or repo_root_from()).resolve()
-    override = os.environ.get("PLACARR_DATA_DIR", "").strip()
-    if override:
-        return Path(override).expanduser().resolve()
-    return (root / "data").resolve()
-
-
-def foil_data_root(repo: Path | None = None) -> Path:
-    """Root that contains ``<pack>/foil`` directories."""
-    override = os.environ.get("PLACARR_EFFECTS_DIR", "").strip()
-    if override:
-        return Path(override).expanduser().resolve()
-    return data_dir(repo)
-
-
-def foil_pack_dir(repo: Path, pack: str) -> Path:
-    """Binary assets for a pack (shaders, textures, web textures, …)."""
-    return foil_data_root(repo) / pack / "foil"
-
-
-def pack_data_dir(repo: Path, pack: str) -> Path:
-    """Domain staging for a foil pack (apks, foil, logs, last-run, …)."""
-    return data_dir(repo) / pack
-
-
-def effects_src_dir(repo: Path, pack: str) -> Path:
-    """Hand-maintained + generated JSON consumed by TypeScript."""
-    return repo.resolve() / "src" / "effects" / pack
-
-
-def ensure_effects_layout(repo: Path) -> Path:
-    """Ensure ``data/`` exists (pack dirs are created on write)."""
-    root = data_dir(repo)
-    root.mkdir(parents=True, exist_ok=True)
-    return root
-
-
-def write_last_run(repo: Path, pack: str, payload: dict) -> Path:
-    """Write ``data/<pack>/foil-last-run.json`` (not under ``foil/`` — not HTTP)."""
-    import json
-    from datetime import datetime, timezone
-
-    dest_dir = pack_data_dir(repo, pack)
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    path = dest_dir / "foil-last-run.json"
-    body = {
-        **payload,
-        "pack": pack,
-        "finishedAt": datetime.now(timezone.utc).isoformat(),
-    }
-    path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
-    return path
+__all__ = [
+    "data_dir",
+    "effects_src_dir",
+    "ensure_effects_layout",
+    "foil_data_root",
+    "foil_pack_dir",
+    "pack_cards_dir",
+    "pack_cards_index",
+    "pack_catalog_db",
+    "pack_data_dir",
+    "pack_staging_dir",
+    "pack_apks_dir",
+    "pack_unity_data_dir",
+    "repo_root_from",
+    "write_last_run",
+]

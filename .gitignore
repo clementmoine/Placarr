@@ -66,10 +66,7 @@ prisma/*.sql.dump
 !/data/**/.gitkeep
 
 # JSON générés par les dumpers (stubs via `pnpm foil:ensure`)
-/src/effects/lorcana/manifest.json
-/src/effects/lorcana/cards-index.json
-/src/effects/pokemon/materialSheets.json
-/src/effects/pokemon/textureFlags.json
+# Generated foil meta lives under data/ (see docs/data-layout.md)
 
 # Caches providers locaux (SQLite) et dumps DB éventuels
 # (indexes live under data/<domaine>/)

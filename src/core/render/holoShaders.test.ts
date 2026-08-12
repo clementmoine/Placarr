@@ -99,7 +99,7 @@ describe("the library itself", () => {
     for (const id of HOLO_SHADER_IDS) {
       const look = holoShader(id)!;
       for (const url of look.backgroundImage.matchAll(/url\((\/[^)]+)\)/g)) {
-        expect(url[1]).toMatch(/^\/foil\/lorcana\/web\/[a-z0-9]+\.(jpg|png)$/);
+        expect(url[1]).toMatch(/^\/assets\/lorcana\/web\/[a-z0-9]+\.(jpg|png)$/);
       }
     }
   });
@@ -194,7 +194,7 @@ describe("holoLayerStyle", () => {
     expect(style.mixBlendMode).toBe("hard-light");
     expect(style.backgroundBlendMode).toBe("exclusion");
     expect(style.opacity).toBe(0.5);
-    expect(style.backgroundImage).toContain("/foil/lorcana/web/silverc.jpg");
+    expect(style.backgroundImage).toContain("/assets/lorcana/web/silverc.jpg");
   });
 
   it("leaves out what a look does not set, rather than inventing a value", () => {

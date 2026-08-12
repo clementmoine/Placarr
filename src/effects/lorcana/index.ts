@@ -5,6 +5,7 @@ import { resolveCssRecipe } from "./cssRecipes";
 import {
   lorcanaMaterial,
   lorcanaMaterialForPrint,
+  listLorcanaMaterialNames,
   LORCANA_MATERIAL_NAMES,
 } from "./manifest";
 import {
@@ -14,7 +15,7 @@ import {
 } from "./resolveMaterial";
 
 export const LORCANA_EFFECT_PACK_ID = "lorcana";
-export const LORCANA_CARD_BACK_URL = "/foil/lorcana/card_back.webp";
+export const LORCANA_CARD_BACK_URL = "/assets/lorcana/cards/back.webp";
 
 export { faceQuarterTurnsForLorcanaPrint } from "./faceOrientation";
 
@@ -23,7 +24,7 @@ export const lorcanaEffectPack: EffectPackModule = {
   id: LORCANA_EFFECT_PACK_ID,
   label: "Lorcana",
   blurb: "CSS site + WebGL app",
-  assetBase: "/foil/lorcana",
+  assetBase: "/assets/lorcana",
   cardBackUrl: LORCANA_CARD_BACK_URL,
   resolveMaterial: (finish, varnish) => resolveMaterial(finish, varnish),
   resolveMaterialForPrint: (finish, varnish, opts) => {
@@ -31,7 +32,7 @@ export const lorcanaEffectPack: EffectPackModule = {
     return name ? lorcanaMaterialForPrint(name, opts) : null;
   },
   resolveCss: (finish, varnish) => resolveCssRecipe(finish, varnish),
-  listMaterials: () => LORCANA_MATERIAL_NAMES,
+  listMaterials: () => listLorcanaMaterialNames(),
   material: (name) => lorcanaMaterial(name),
   materialForPrint: (name, opts) => lorcanaMaterialForPrint(name, opts),
   parseMaterialName,

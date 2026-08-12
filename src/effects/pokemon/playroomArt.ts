@@ -2,27 +2,26 @@
  * One catalogue face (+ Live mask when dumped) per HoloFoil material so the
  * playroom can show every Unity effect without collapsing on finish "holo".
  *
- * Prefer Live pack art under `/foil/pokemon/textures/<bundle>/…` when the dump
+ * Prefer Live pack art under `/assets/pokemon/cards/{set}/{lang}/{num}/…` when the dump
  * has a row for that shader; TCGdex HD remains cold-start fallback only.
  * Mask = scraped `_w` from the same dump (or pack fallback).
  */
 
-import { foilTextureFile } from "@/effects/foilTextureFile";
+import { pokemonCardTextureUrl } from "@/lib/packAssetUrls";
 import { bundlesForShader, variantsForBundle } from "./cardFoilLookups";
 import {
   foilManifestToShader,
   foilSheetAliasName,
-  POKEMON_FOIL_NAMES,
+  listPokemonFoilNames,
   type PokemonPaperFoilName,
 } from "./foilNames";
-import { liveFoilMaskForBundle } from "./liveFoilMasks";
+import { liveFoilMaskForBundle, liveLaminatePreferForBundle } from "./liveFoilMasks";
 import { faceQuarterTurnsForPokemonPrint } from "./faceOrientation";
 import { POKEMON_MAT_ALIASES } from "./materials";
 import { lookupByBundle } from "./liveCardsLookups";
 import { ownedBundlesForShader } from "./liveOwnedBundles";
-import { formatPlayroomFaceCaption } from "./liveSetDisplay";
+import { formatPlayroomFaceCaption, pickLiveCardDisplayName } from "./liveSetDisplay";
 
-const ASSET_BASE = "/foil/pokemon";
 const LANG = "fr";
 
 type Seed = {
@@ -55,7 +54,11 @@ type Seed = {
  * `label` MUST name that face (client has no Live sqlite — seed label is the
  * caption). Never leave label as a TCGdex fantasy while art is another dump.
  */
-const FOIL_SEEDS: Record<PokemonPaperFoilName, Seed> = {
+/**
+ * Representative printed card per Live foil leaf — curated overrides only.
+ * Missing leaves seed from the first dump/owned bundle for that shader.
+ */
+const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
   NonFoil: {
     imageBase: "https://assets.tcgdex.net/fr/bw/bw10/1",
     label: "Arakdo",
@@ -77,7 +80,8 @@ const FOIL_SEEDS: Record<PokemonPaperFoilName, Seed> = {
     bundleId: "bwalt_fr_038",
   },
   SunPillar: {
-    // Rampardos ex / Charkos-ex (ME05) — owned in Live for side-by-side.
+    // Rampardos ex / Charkos-ex (ME05) — owned CastAndCure SunPillar hero.
+    // Miaouss-ex (me3_fr_062) stays in liveOwned for the multi-face bench.
     imageBase: "https://assets.tcgdex.net/fr/me/me5/045",
     label: "Charkos-ex",
     bundleId: "me5_fr_045",
@@ -196,6 +200,15 @@ type BundlePick = {
 };
 
 
+function seedFor(shader: string): Seed {
+  return (
+    FOIL_SEED_OVERRIDES[shader] ?? {
+      imageBase: "https://assets.tcgdex.net/fr/swsh/swsh1/1",
+      label: shader,
+    }
+  );
+}
+
 /** How many Live faces the focus/compare bench stacks per material. */
 export const PLAYROOM_FACES_PER_MATERIAL = 4;
 
@@ -225,7 +238,7 @@ function highPng(imageBase: string): string {
 
 function liveArtUrl(pick: BundlePick | null): string | null {
   if (!pick?.cardTex) return null;
-  return `${ASSET_BASE}/textures/${pick.bundleId}/${foilTextureFile(pick.cardTex)}`;
+  return pokemonCardTextureUrl(pick.bundleId, pick.cardTex);
 }
 
 /**
@@ -239,21 +252,38 @@ function pickFromLookup(
   bundleId: string,
   shader: PokemonPaperFoilName,
 ): BundlePick | null {
+  const candidates: BundlePick[] = [];
   for (const variant of variantsForBundle(bundleId)) {
     const mapped =
       foilManifestToShader(variant.shader) ||
       foilManifestToShader(variant.foil);
     if (mapped !== shader) continue;
-    return {
+    candidates.push({
       bundleId,
       variant: variant.variant,
       maskTex: variant.maskTex,
       cardTex: variant.cardTex,
       etchTex: variant.etchTex,
       coldFoilTex: variant.coldFoilTex,
-    };
+    });
   }
-  return null;
+  if (candidates.length === 0) return null;
+
+  /*
+    Prefer the whiteplate that matches a Live laminate override. Dump rows for
+    Master Ball Frillish are often `std`+`wp_mph` (or `ph` without the plate)
+    while live-cards keys the print as `mph`.
+  */
+  const laminatePrefer = liveLaminatePreferForBundle(bundleId);
+  const score = (pick: BundlePick) => {
+    const plate = (pick.maskTex ?? "").toLowerCase();
+    if (laminatePrefer === "mph" && plate.includes("_wp_mph_")) return 0;
+    if (laminatePrefer === "sph" && plate.includes("_wp_sph_")) return 0;
+    if (liveFoilMaskForBundle(bundleId, { variant: pick.variant })) return 1;
+    return 2;
+  };
+  candidates.sort((a, b) => score(a) - score(b));
+  return candidates[0]!;
 }
 
 /**
@@ -301,7 +331,7 @@ export function listDumpedBundlesForShader(
 
     // Confirmed owned in Live → prefer for 1:1 playroom ↔ MuMu compare.
     // Order: FOIL_SEED hero (if owned), other Pokémon faces, then energy `ec_*`.
-    const preferred = FOIL_SEEDS[shader]?.bundleId;
+    const preferred = seedFor(shader).bundleId;
     const owned = ownedBundlesForShader(shader);
     const ownedRank = (id: string) => {
       if (preferred && id === preferred) return 0;
@@ -357,7 +387,7 @@ function textureUrlFor(
   stem: string | undefined,
 ): string | null {
   if (!pick || !stem) return null;
-  return `${ASSET_BASE}/textures/${pick.bundleId}/${foilTextureFile(stem)}`;
+  return pokemonCardTextureUrl(pick.bundleId, stem);
 }
 
 function resolveShaderName(name: string): PokemonPaperFoilName | null {
@@ -367,7 +397,7 @@ function resolveShaderName(name: string): PokemonPaperFoilName | null {
       ? POKEMON_MAT_ALIASES[alias as keyof typeof POKEMON_MAT_ALIASES]
       : null) ??
     foilManifestToShader(name) ??
-    (POKEMON_FOIL_NAMES.includes(name as PokemonPaperFoilName)
+    (listPokemonFoilNames().includes(name)
       ? (name as PokemonPaperFoilName)
       : null)
   );
@@ -377,17 +407,20 @@ function artFromDump(
   shader: PokemonPaperFoilName,
   dumped: BundlePick | null,
 ): PlayroomArt {
-  const seed = FOIL_SEEDS[shader];
+  const seed = seedFor(shader);
   const liveRow = dumped ? lookupByBundle(dumped.bundleId) : null;
-  const liveName = liveRow?.nameFr || liveRow?.nameEn || null;
-  const cardName = (() => {
-    if (!dumped) return seed.label;
-    return (
-      liveName ||
-      (seed.bundleId === dumped.bundleId ? seed.label : null) ||
-      dumped.bundleId
-    );
-  })();
+  const fallbackName =
+    (dumped && seed.bundleId === dumped.bundleId ? seed.label : null) ||
+    dumped?.bundleId ||
+    seed.label;
+  const cardName = dumped
+    ? pickLiveCardDisplayName({
+        nameFr: liveRow?.nameFr,
+        nameEn: liveRow?.nameEn,
+        prefer: "fr",
+        fallback: fallbackName,
+      })
+    : seed.label;
   const label = dumped
     ? formatPlayroomFaceCaption(cardName, dumped.bundleId, LANG)
     : `${seed.label} (${LANG})`;
@@ -408,10 +441,10 @@ function artFromDump(
     varnishMaskUrl: textureUrlFor(dumped, dumped?.etchTex),
     secondVarnishMaskUrl: textureUrlFor(dumped, dumped?.coldFoilTex),
     foilMask:
-      liveRow?.foilMask ??
       liveFoilMaskForBundle(dumped?.bundleId, {
         variant: dumped?.variant,
       }) ??
+      liveRow?.foilMask ??
       null,
     bundleId: dumped?.bundleId ?? null,
     label,
@@ -443,7 +476,7 @@ export function playroomArtForMaterial(name: string): PlayroomArt | null {
   return listPlayroomArtsForMaterial(name, 1)[0] ?? null;
 }
 
-/** Every foil leaf has a seed — used by tests. */
+/** Discovered foil leaves (dump) — used by tests / playroom seed lists. */
 export function playroomSeedFoilNames(): PokemonPaperFoilName[] {
-  return [...POKEMON_FOIL_NAMES];
+  return listPokemonFoilNames();
 }

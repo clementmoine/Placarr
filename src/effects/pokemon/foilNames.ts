@@ -1,51 +1,79 @@
 /**
- * TCG Live HoloFoil / Standard shader leaf names (platform 9 `.frag` files).
- * Longest-first for substring matching against MaterialManifest `_f` strings
- * like `HoloFoil_Rainbow_Amplify_J`.
+ * TCG Live HoloFoil / Standard shader leaf names — discovered from dump
+ * (`frag-stems.json` + optional server disk scan), not an allowlist.
+ * Longest-first for substring matching against MaterialManifest `_f` strings.
+ *
+ * **Client-safe**: no `node:*`. Disk `.frag` scan is installed on the server
+ * via {@link installPokemonShaderStemScanner}.
  */
-export const POKEMON_FOIL_NAMES = [
-  "SvUltraGoldRainbow",
-  "SvUltraScodix",
-  "25thConfetti",
-  "AngledPillars",
-  "RadiantHolo",
-  "CrackedIce",
-  "FlatSilver",
-  "SolidColor",
-  "SunPillar",
-  "SunBeam",
-  "SunLava",
-  "SwSecret",
-  "AceFoil",
-  "Squares",
-  "Stamped",
-  "Rainbow",
-  "Galaxy",
-  "Cosmos",
-  "Tinsel",
-  "Thatch",
-  "SvUltra",
-  "SvHolo",
-  "SwHolo",
-  "NonFoil",
-] as const;
 
-export type PokemonPaperFoilName = (typeof POKEMON_FOIL_NAMES)[number];
+import { loadFragStems } from "@/lib/foilMetaLoad";
 
-const FOIL_SET = new Set<string>(POKEMON_FOIL_NAMES);
+/** Widened: any dumped `.frag` stem (plus NonFoil). */
+export type PokemonPaperFoilName = string;
 
-/** Map MaterialManifest `_f` / shaderPath tail → dumped `.frag` stem. */
+type ShaderStemScanner = () => string[];
+
+const g = globalThis as typeof globalThis & {
+  __PLACARR_POKEMON_SHADER_SCAN__?: ShaderStemScanner;
+};
+
+/** Server: register `readdir` of `data/pokemon/foil/shaders`. */
+export function installPokemonShaderStemScanner(scan: ShaderStemScanner): void {
+  g.__PLACARR_POKEMON_SHADER_SCAN__ = scan;
+}
+
 /**
  * MAT sheet aliases → dumped `.frag` stem. Matched before prefix rules so
  * `FlatSilver_CC` resolves as FlatSilver (shader) while `paperMaterial` can
  * still load the CC sheet by exact leaf name.
  */
-const FOIL_SHEET_ALIAS_FRAG: Record<string, PokemonPaperFoilName> = {
+const FOIL_SHEET_ALIAS_FRAG: Record<string, string> = {
   flatsilver_cc: "FlatSilver",
   flatsilvercc: "FlatSilver",
   rainbow02: "Rainbow",
   swsecret02: "SwSecret",
 };
+
+function scanShaderStems(): string[] {
+  return g.__PLACARR_POKEMON_SHADER_SCAN__?.() ?? [];
+}
+
+function longestFirst(names: string[]): string[] {
+  return [...new Set(names)].sort((a, b) => b.length - a.length || a.localeCompare(b));
+}
+
+let cachedFoilNames: string[] | null = null;
+
+/** Foil leaf names present on disk / in frag-stems meta (longest-first). */
+export function listPokemonFoilNames(): string[] {
+  if (cachedFoilNames) return cachedFoilNames;
+  const stems = [...loadFragStems(), ...scanShaderStems(), "NonFoil"];
+  cachedFoilNames = longestFirst(stems.filter(Boolean));
+  return cachedFoilNames;
+}
+
+/** Call after extract / frag-stems rewrite so discovery sees new leaves. */
+export function invalidatePokemonFoilNamesCache(): void {
+  cachedFoilNames = null;
+}
+
+/**
+ * Live view of discovered foil names (lazy — safe before/after meta hydrate).
+ * Prefer {@link listPokemonFoilNames} in new code.
+ */
+export const POKEMON_FOIL_NAMES: readonly string[] = new Proxy(
+  [] as string[],
+  {
+    get(_target, prop) {
+      const names = listPokemonFoilNames();
+      const value = Reflect.get(names, prop, names);
+      return typeof value === "function"
+        ? (value as (...args: unknown[]) => unknown).bind(names)
+        : value;
+    },
+  },
+);
 
 /** Exact MAT / playroom leaf name when it is a sheet alias (not a .frag stem). */
 export function foilSheetAliasName(foil: string): string | null {
@@ -61,20 +89,21 @@ export function foilSheetAliasName(foil: string): string | null {
 export function foilManifestToShader(foil: string): PokemonPaperFoilName | null {
   const raw = foil.trim();
   if (!raw) return null;
-  if (FOIL_SET.has(raw)) return raw as PokemonPaperFoilName;
+  const names = listPokemonFoilNames();
+  const foilSet = new Set(names);
+  if (foilSet.has(raw)) return raw;
 
   let n = raw.replace(/^TPCi\/Cards3D\/(?:HoloFoil|Standard)\//, "");
   n = n.replace(/^Cards\/(?:Foil|Standard)\//, "");
   n = n.replace(/^HoloFoil_/, "").replace(/^Standard_/, "");
 
   const nLower = n.toLowerCase();
-  // Live sometimes inserts underscores inside CamelCase (`Cracked_Ice_…`).
   const nCompact = nLower.replace(/_/g, "");
   const aliasFrag =
     FOIL_SHEET_ALIAS_FRAG[nLower] ?? FOIL_SHEET_ALIAS_FRAG[nCompact];
   if (aliasFrag) return aliasFrag;
 
-  for (const name of POKEMON_FOIL_NAMES) {
+  for (const name of names) {
     const nameLower = name.toLowerCase();
     if (
       nLower === nameLower ||

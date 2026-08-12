@@ -3,12 +3,15 @@ import type {
   FoilTextureBinding,
 } from "@/core/render/foil/types";
 import { foilTextureFile } from "@/effects/foilTextureFile";
+import {
+  loadMaterialSheets,
+  loadSharedMotifs,
+  loadTextureFlags,
+} from "@/lib/foilMetaLoad";
 
-import materialSheetsJson from "./materialSheets.json";
-import textureFlagsJson from "./textureFlags.json";
 import {
   foilManifestToShader,
-  POKEMON_FOIL_NAMES,
+  listPokemonFoilNames,
   type PokemonPaperFoilName,
 } from "./foilNames";
 
@@ -16,7 +19,7 @@ import {
  * Lorcana-style roles for TCG Live HoloFoil fragments.
  * Art = TCGdex / Live `_c`; foil mask = per-card `_w`.
  * Shared motifs = Unity `MAT_Cards3D_*` defaults from `shadersbundle`
- * (property → Texture2D under `textures/_shared/`).
+ * (property → Texture2D under `textures/`).
  */
 const BASE_TEXTURES: FoilMaterial["textures"] = {
   // Every per-card texture — masks and plates included — ships
@@ -40,26 +43,30 @@ const BASE_FLOATS: FoilMaterial["floats"] = {
 };
 
 /**
- * `MAT_Cards3D_*` recorded uniforms, dumped from `shadersbundle`
- * (`write_material_sheets`). Empty stub without a local dump.
+ * `MAT_Cards3D_*` recorded uniforms — `data/pokemon/foil/materialSheets.json`.
  */
-const MATERIAL_SHEETS = materialSheetsJson as Record<
+function materialSheets(): Record<
   string,
   | {
       floats?: Record<string, number>;
       colors?: Record<string, number[]>;
     }
   | undefined
->;
+> {
+  return loadMaterialSheets() as Record<
+    string,
+    | {
+        floats?: Record<string, number>;
+        colors?: Record<string, number[]>;
+      }
+    | undefined
+  >;
+}
 
-/**
- * Per-texture `m_ColorSpace` from `shadersbundle` (`textureFlags.json`).
- * Empty stub without a local dump.
- */
-const TEXTURE_FLAGS = textureFlagsJson as Record<
-  string,
-  { srgb?: boolean } | undefined
->;
+/** Per-texture `m_ColorSpace` — `data/pokemon/foil/textureFlags.json`. */
+function textureFlags(): Record<string, { srgb?: boolean } | undefined> {
+  return loadTextureFlags() as Record<string, { srgb?: boolean } | undefined>;
+}
 
 /**
  * MAT leaves that reuse a dumped `.frag` but ship their own sheet / TexEnvs.
@@ -73,23 +80,23 @@ export const POKEMON_MAT_ALIASES = {
 
 export type PokemonMatAliasName = keyof typeof POKEMON_MAT_ALIASES;
 
-/** Shared motif under `/foil/pokemon/textures/`. */
+/** Shared motif under `/assets/pokemon/textures/`. */
 function shared(stem: string): FoilTextureBinding {
   return {
-    file: `_shared/${foilTextureFile(stem)}`,
+    file: foilTextureFile(stem),
     // Colour motifs are sRGB-authored; data maps (normals / direction /
     // noise) are flagged raw in the dump. Unknown stems read as colour —
     // that is the overwhelming default in the bundle.
-    srgb: TEXTURE_FLAGS[stem]?.srgb ?? true,
+    srgb: textureFlags()[stem]?.srgb ?? true,
   };
 }
 
 /**
- * Dump-aligned motif slots per HoloFoil leaf (APK / CDN `shadersbundle`).
- * Keys must match GLES3 sampler names in `*.frag` (not always the Material
- * property spelling when Unity stripped names — those stay unbound).
+ * Pathological MAT / GLES overrides (CC unbound, stripped sampler names, …).
+ * Dump TexEnvs go to `shared-motifs.json`; overrides win on conflict.
+ * @see docs/foil_apk_sources.md
  */
-const SHARED_BY_FOIL: Record<string, Record<string, string>> = {
+const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
   "25thConfetti": {
     _FoilShineTexture: "FX_T_Highlight_Over",
     _SpectrumTex: "FX_T_Spectrum_Celebration",
@@ -118,8 +125,11 @@ const SHARED_BY_FOIL: Record<string, Record<string, string>> = {
     _TextureLightSheen: "T_Holofoil_Mask_Gradient_LightSheen",
   },
   FlatSilver: {
-    // MAT leaves `_Tex_CC` unbound (pathid 0); glitter/spectrum still run.
-    // ReverseLaminate* / FlatSilver_CC bind a CC plate via foil_mask overrides.
+    // MAT leaves `_Tex_CC` unbound (pathid 0). The frag still *samples*
+    // glitter/CC spectrum, but the overlay is gated by `_Tex_CC.a × _UseCCFoil`
+    // — null CC ⇒ α≈0 ⇒ silver-only reverse. WebGL must not fill unbound slots
+    // with opaque black (that arms SVHolo2). ReverseLaminate* / FlatSilver_CC
+    // bind a real CC plate via foil_mask overrides.
     _Tex_CC_Glitter: "FX_T_SVUltra_Glitter",
     _Tex_CC_Spectrum: "FX_T_Spectrum_SVHolo2",
     _Tex_Shine: "T_Holofoil_Mask_Bar_Wide_Single",
@@ -228,7 +238,7 @@ const SHARED_BY_FOIL: Record<string, Record<string, string>> = {
     _T_Direction_RG_Thatch: "T_Direction_RG_Thatch",
   },
   Tinsel: {
-    _BarsDistortion: "T_Normal_BumpRandom",
+    // MAT may list `_BarsDistortion` TexEnv; the GLES frag never samples it.
     _FoilShineTexture: "FX_T_Gradient_Shine",
     _Shine_Tex: "FX_T_Gradient_Shine_Dull",
     _SpectrumBars: "FX_T_Spectrum_Bands_Rainbow",
@@ -289,7 +299,12 @@ export function applyLiveFoilMask(
 }
 
 function sheetColorsFrom(
-  sheet: (typeof MATERIAL_SHEETS)[string],
+  sheet:
+    | {
+        floats?: Record<string, number>;
+        colors?: Record<string, number[]>;
+      }
+    | undefined,
 ): FoilMaterial["colors"] {
   return Object.fromEntries(
     Object.entries(sheet?.colors ?? {}).map(([slot, rgba]) => [
@@ -304,24 +319,42 @@ function sheetColorsFrom(
   );
 }
 
+function motifsForLeaf(sheetName: string, fragStem: string): Record<string, string> {
+  const generated = loadSharedMotifs();
+  return {
+    ...(generated[sheetName] ?? generated[fragStem] ?? {}),
+    ...(SHARED_MOTIF_OVERRIDES[sheetName] ?? SHARED_MOTIF_OVERRIDES[fragStem] ?? {}),
+  };
+}
+
 function materialForSheet(
   sheetName: string,
   fragStem: PokemonPaperFoilName,
 ): FoilMaterial {
   const textures: FoilMaterial["textures"] = { ...BASE_TEXTURES };
-  const sharedSlots =
-    SHARED_BY_FOIL[sheetName] ?? SHARED_BY_FOIL[fragStem] ?? {};
+  const sharedSlots = motifsForLeaf(sheetName, fragStem);
   for (const [slot, stem] of Object.entries(sharedSlots)) {
     textures[slot] = shared(stem);
   }
-  const sheet = MATERIAL_SHEETS[sheetName] ?? MATERIAL_SHEETS[fragStem];
+  const sheet = materialSheets()[sheetName] ?? materialSheets()[fragStem];
+  const isNonFoil = fragStem === "NonFoil";
+  if (isNonFoil) {
+    // Standard leaf samples art only — keep mask roles off so the playroom
+    // does not pull a foiled print's finish/mask onto a plain face.
+    delete textures._CardWhitePlateMask;
+    delete textures._CardEtch;
+    delete textures._CardColdFoilMask;
+  }
   return {
-    graph: `TPCi/Cards3D/${fragStem === "NonFoil" ? "Standard" : "HoloFoil"}/${sheetName}`,
+    graph: `TPCi/Cards3D/${isNonFoil ? "Standard" : "HoloFoil"}/${sheetName}`,
     keywords: [],
     fragment: `${fragStem}.frag`,
     // TCG Live renders in Unity's Linear colour space (sRGB-flagged textures,
     // raw-flagged data maps): sample through sRGB decode, encode on output.
     linearOutput: true,
+    // NonFoil = plain print. CSS already resolves to null shaders; WebGL would
+    // only re-blit art through Standard lighting (SDL=1 noop) and fake a gap.
+    ...(isNonFoil ? { webgl: false as const } : {}),
     textures,
     floats: mergeMaterialFloats(sheet?.floats),
     // `*_ST` stays identity like the sheet says: the app crops its square
@@ -331,24 +364,40 @@ function materialForSheet(
   };
 }
 
-const MATERIALS: Record<string, FoilMaterial> = Object.fromEntries([
-  ...POKEMON_FOIL_NAMES.map((name) => [name, materialForSheet(name, name)]),
-  ...Object.entries(POKEMON_MAT_ALIASES).map(([alias, frag]) => [
-    alias,
-    materialForSheet(alias, frag),
-  ]),
-]);
+export function listPokemonMaterialNames(): string[] {
+  return [
+    ...listPokemonFoilNames(),
+    ...(Object.keys(POKEMON_MAT_ALIASES) as PokemonMatAliasName[]),
+  ];
+}
 
-export const POKEMON_MATERIAL_NAMES = [
-  ...POKEMON_FOIL_NAMES,
-  ...(Object.keys(POKEMON_MAT_ALIASES) as PokemonMatAliasName[]),
-];
+/**
+ * Live view of material names (lazy). Prefer {@link listPokemonMaterialNames}.
+ */
+export const POKEMON_MATERIAL_NAMES: readonly string[] = new Proxy(
+  [] as string[],
+  {
+    get(_target, prop) {
+      const names = listPokemonMaterialNames();
+      const value = Reflect.get(names, prop, names);
+      return typeof value === "function"
+        ? (value as (...args: unknown[]) => unknown).bind(names)
+        : value;
+    },
+  },
+);
 
 /** Shared motif stems declared for a foil leaf (tests / audits). */
 export function sharedMotifStems(
   name: string,
 ): Readonly<Record<string, string>> {
-  return SHARED_BY_FOIL[name] ?? {};
+  return motifsForLeaf(name, name);
+}
+
+/** Drop cached materials after foil meta hydrate (browser). */
+export function resetPaperMaterialCache(): void {
+  BASE_MATERIALS.clear();
+  MASKED_MATERIALS.clear();
 }
 
 export type PaperMaterialOptions = {
@@ -358,14 +407,44 @@ export type PaperMaterialOptions = {
 
 /** Stable overrides — new object identity each call remounts WebGL (blink). */
 const MASKED_MATERIALS = new Map<string, FoilMaterial>();
+const BASE_MATERIALS = new Map<string, FoilMaterial>();
+
+function baseMaterialFor(name: string): FoilMaterial | null {
+  const cached = BASE_MATERIALS.get(name);
+  if (cached) return cached;
+
+  const aliasFrag =
+    POKEMON_MAT_ALIASES[name as PokemonMatAliasName] ?? null;
+  if (aliasFrag) {
+    const m = materialForSheet(name, aliasFrag);
+    BASE_MATERIALS.set(name, m);
+    return m;
+  }
+
+  const names = listPokemonFoilNames();
+  if (names.includes(name)) {
+    const m = materialForSheet(name, name);
+    BASE_MATERIALS.set(name, m);
+    return m;
+  }
+
+  const mapped = foilManifestToShader(name);
+  if (mapped && names.includes(mapped)) {
+    const m = materialForSheet(mapped, mapped);
+    BASE_MATERIALS.set(mapped, m);
+    return m;
+  }
+  return null;
+}
 
 export function paperMaterial(
   name: string,
   opts?: PaperMaterialOptions,
 ): FoilMaterial | null {
-  const direct = MATERIALS[name];
+  const direct = baseMaterialFor(name);
   const mapped = direct ? null : foilManifestToShader(name);
-  const base = direct ?? (mapped ? (MATERIALS[mapped] ?? null) : null);
+  const base =
+    direct ?? (mapped ? baseMaterialFor(mapped) : null);
   if (!base) return null;
   const mask = (opts?.foilMask ?? "").trim();
   if (!mask || mask === "None") return base;
@@ -403,8 +482,9 @@ export function parsePaperMaterialName(name: string): {
   finish: string | null;
   varnish: string | null;
 } {
-  const shader = MATERIALS[name] ? name : foilManifestToShader(name);
+  const shader = baseMaterialFor(name) ? name : foilManifestToShader(name);
   if (!shader) return { finish: null, varnish: null };
-  if (shader === "NonFoil") return { finish: null, varnish: null };
+  // Keep "NonFoil" as the finish id so CSS resolves to plain (null shaders)
+  // and the playroom does not fall through to another print's foiled finish.
   return { finish: shader, varnish: null };
 }

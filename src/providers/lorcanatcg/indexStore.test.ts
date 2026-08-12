@@ -24,14 +24,14 @@ describe("lorcanatcg indexStore", () => {
   it("writes full catalogue row + assets and exports cards-index json", () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "lorcanatcg-"));
     dirs.push(dir);
-    const dbPath = path.join(dir, "lorcana.sqlite");
+    const dbPath = path.join(dir, "catalog.sqlite");
 
     writeLorcanaTcgIndex({
       dbPath,
       languages: ["fr", "en"],
       prints: [
         {
-          printKey: "1-1",
+          printKey: "lorcana:1-1",
           setCode: "1",
           number: "1",
           providerId: "abc",
@@ -44,7 +44,7 @@ describe("lorcanatcg indexStore", () => {
       ],
       titles: [
         {
-          printKey: "1-1",
+          printKey: "lorcana:1-1",
           lang: "fr",
           fullName: "Ariel - Sur ses jambes",
           name: "Ariel",
@@ -60,7 +60,7 @@ describe("lorcanatcg indexStore", () => {
           foilMaskUrl: "https://cdn.example/fr/mask.jpg",
         },
         {
-          printKey: "1-1",
+          printKey: "lorcana:1-1",
           lang: "en",
           fullName: "Ariel - On Human Legs",
           name: "Ariel",
@@ -75,20 +75,20 @@ describe("lorcanatcg indexStore", () => {
       ],
       assets: [
         {
-          printKey: "1-1",
+          printKey: "lorcana:1-1",
           lang: "fr",
           art: "art.jpg",
-          foilMask: "foil_mask.jpg",
+          foilMask: "mask.jpg",
         },
         {
-          printKey: "1-1",
+          printKey: "lorcana:1-1",
           lang: "en",
           art: "art.jpg",
         },
       ],
     });
 
-    const fr = lookupLorcanaTcgTitle("1-1", "fr", dbPath);
+    const fr = lookupLorcanaTcgTitle("lorcana:1-1", "fr", dbPath);
     expect(fr?.fullName).toBe("Ariel - Sur ses jambes");
     expect(fr?.flavorText).toBe("Elle rêve de terre ferme.");
     expect(fr?.setName).toBe("Premier Chapitre");
@@ -96,11 +96,11 @@ describe("lorcanatcg indexStore", () => {
     expect(fr?.imageUrl).toBe("https://cdn.example/fr/art.jpg");
     expect(fr?.foilMaskUrl).toBe("https://cdn.example/fr/mask.jpg");
 
-    const en = lookupLorcanaTcgTitle("1-1", "en", dbPath);
+    const en = lookupLorcanaTcgTitle("lorcana:1-1", "en", dbPath);
     expect(en?.fullName).toBe("Ariel - On Human Legs");
     expect(en?.color).toBe("Amethyst");
 
-    const print = lookupLorcanaTcgPrint("1-1", dbPath);
+    const print = lookupLorcanaTcgPrint("lorcana:1-1", dbPath);
     expect(print?.cost).toBe(4);
     expect(print?.artists).toEqual(["Alice"]);
     expect(print?.foilTypes).toEqual(["Satin"]);
@@ -108,12 +108,16 @@ describe("lorcanatcg indexStore", () => {
     expect(print?.cardmarketUrl).toBe("https://example.test/cm");
 
     const json = exportLorcanaCardsIndexJson(dbPath);
-    expect(json?.printCount).toBe(1);
-    expect(json?.schemaVersion).toBe("2");
-    expect(json?.cards["1-1"]?.fr).toEqual({
-      art: "art.jpg",
-      foilMask: "foil_mask.jpg",
+    expect(json?.version).toBe(1);
+    expect(json?.pack).toBe("lorcana");
+    expect(Object.keys(json?.cards ?? {})).toHaveLength(1);
+    expect(json?.cards["lorcana:1-1"]).toEqual({
+      set: "1",
+      card: "1",
+      langs: {
+        fr: { art: "art.jpg", mask: "mask.jpg" },
+        en: { art: "art.jpg" },
+      },
     });
-    expect(json?.cards["1-1"]?.en?.art).toBe("art.jpg");
   });
 });

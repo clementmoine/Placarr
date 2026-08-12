@@ -88,14 +88,116 @@ export function intersectWantedWithManifest(
   return { hit, miss };
 }
 
+/** One ``assetList`` row: ``crc`` lets a refresh skip unchanged bundles. */
+export type ManifestAssetEntry = {
+  name: string;
+  crc?: number | null;
+  hash?: string | null;
+  dependencies?: string[];
+};
+
 export type CdnManifestDump = {
   contentBase: string;
   bucket: string;
   locale: string;
   assetCount: number;
   assets: string[];
+  /** Present on dumps written after the multi-bucket rewrite. */
+  entries?: ManifestAssetEntry[];
   source?: string;
 };
+
+/**
+ * Authoritative catalogue across every dumped bucket: which bundles exist,
+ * and — the part the scrape needs — which bucket serves each one, so a GET
+ * never has to walk the dated dirs looking for it.
+ */
+export type CdnCatalogue = {
+  /** Card-bundle names (deduped, ``_t`` thumbnails excluded). */
+  names: string[];
+  /** ``bundle name`` (lowercased) → content dir that serves it. */
+  bucketOf: Map<string, string>;
+  crcOf: Map<string, number>;
+  /** Manifest ``hash`` — the client's cache key, so ours too. */
+  hashOf: Map<string, string>;
+  buckets: string[];
+  locales: string[];
+  /** Every assetName seen, cards or not — for coverage reporting. */
+  assetCount: number;
+};
+
+export function emptyCdnCatalogue(): CdnCatalogue {
+  return {
+    names: [],
+    bucketOf: new Map(),
+    crcOf: new Map(),
+    hashOf: new Map(),
+    buckets: [],
+    locales: [],
+    assetCount: 0,
+  };
+}
+
+/**
+ * Merge dumps into one catalogue. When a bundle appears in several buckets
+ * the **last** dump wins, so callers should feed buckets oldest-first and let
+ * the freshest epoch override (that is how the client resolves them too).
+ */
+export function buildCdnCatalogue(
+  dumps: readonly CdnManifestDump[],
+  opts: { langs?: readonly string[]; includeThumbnails?: boolean } = {},
+): CdnCatalogue {
+  const bucketOf = new Map<string, string>();
+  const crcOf = new Map<string, number>();
+  const hashOf = new Map<string, string>();
+  const names: string[] = [];
+  const seen = new Set<string>();
+  const buckets: string[] = [];
+  const locales: string[] = [];
+  let assetCount = 0;
+
+  const ordered = [...dumps].sort((a, b) =>
+    a.bucket === b.bucket ? 0 : a.bucket < b.bucket ? -1 : 1,
+  );
+
+  for (const dump of ordered) {
+    if (!buckets.includes(dump.bucket)) buckets.push(dump.bucket);
+    if (!locales.includes(dump.locale)) locales.push(dump.locale);
+    assetCount += dump.assets.length;
+
+    const kept = new Set(
+      filterCardBundleNames(dump.assets, {
+        langs: opts.langs,
+        includeThumbnails: opts.includeThumbnails,
+      }).map((n) => n.toLowerCase()),
+    );
+    const crcByName = new Map<string, number>();
+    const hashByName = new Map<string, string>();
+    for (const entry of dump.entries ?? []) {
+      const key = entry.name.toLowerCase();
+      if (typeof entry.crc === "number") crcByName.set(key, entry.crc);
+      if (entry.hash) hashByName.set(key, entry.hash);
+    }
+
+    for (const raw of dump.assets) {
+      const name = raw.trim();
+      const key = name.toLowerCase();
+      if (!kept.has(key)) continue;
+      bucketOf.set(key, dump.bucket);
+      const crc = crcByName.get(key);
+      if (crc != null) crcOf.set(key, crc);
+      const hash = hashByName.get(key);
+      if (hash) hashOf.set(key, hash);
+      if (!seen.has(key)) {
+        seen.add(key);
+        names.push(name);
+      }
+    }
+  }
+
+  names.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  return { names, bucketOf, crcOf, hashOf, buckets, locales, assetCount };
+}
 
 export function loadCdnManifestDump(filePath: string): CdnManifestDump | null {
   if (!existsSync(filePath)) return null;

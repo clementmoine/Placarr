@@ -17,13 +17,20 @@ Requires: UnityPy, lz4, Pillow (see requirements.txt).
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import struct
+import sys
 from pathlib import Path
 
 import lz4.block
 import UnityPy
+
+_SCRIPTS = Path(__file__).resolve().parents[1]
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from lib.paths import foil_pack_dir  # noqa: E402
 
 CARD_EFFECT_KEYS = ("Foil", "Varnish", "Holo")
 
@@ -379,6 +386,7 @@ def dump_materials(
         if fragment_time:
             entry["fragmentTime"] = fragment_time
         saved = m.m_SavedProperties
+        unbound_tex: list[str] = []
         for key, tex_env in pairs(saved.m_TexEnvs):
             key = str(key)
             if key not in used:
@@ -394,7 +402,23 @@ def dump_materials(
                 entry["textures"][key] = binding
                 bundle_textures.add(tex_name)
             else:
-                print(f"  ATTENTION {name}: slot {key} sans texture")
+                unbound_tex.append(key)
+        # Base HotFoil mats often leave the 2nd CalculateVarnishLayers DistortionTex
+        # PathID null (only live under USESECONDTOPLAYER). Same varnishsurface as the
+        # primary DistortionTex — mirror texturesForSecondTopLayer, no ATTENTION.
+        donor_distortion = next(
+            (
+                binding
+                for slot, binding in entry["textures"].items()
+                if "DistortionTex" in slot and binding.get("file")
+            ),
+            None,
+        )
+        for key in unbound_tex:
+            if donor_distortion and "DistortionTex" in key:
+                entry["textures"][key] = copy.deepcopy(donor_distortion)
+                continue
+            print(f"  ATTENTION {name}: slot {key} sans texture")
         for key, value in pairs(saved.m_Floats):
             if str(key) in used:
                 entry["floats"][str(key)] = round(float(value), 6)
@@ -550,12 +574,12 @@ def main() -> None:
     parser.add_argument("--repo", required=True, help="Racine du repo Placarr")
     args = parser.parse_args()
 
-    repo = Path(args.repo)
+    repo = Path(args.repo).resolve()
     pack = args.pack
     foil = repo / "public" / "foil" / pack
     shaders_dir = foil / "shaders"
     textures_dir = foil / "textures"
-    manifest_path = repo / "src" / "effects" / pack / "manifest.json"
+    manifest_path = foil_pack_dir(repo, pack) / "manifest.json"
     card_back_path = foil / "card_back.png"
 
     data_file = resolve_data_file(Path(args.data))

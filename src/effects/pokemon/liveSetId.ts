@@ -2,11 +2,12 @@
  * Map a TCGdex set id onto TCG Live CDN set stem(s).
  *
  * Order:
- * 1. Explicit alias table ({@link TCGDEX_TO_LIVE_SETS})
+ * 1. Explicit irreducible aliases ({@link TCGDEX_TO_LIVE_SETS}) — shrink over time
  * 2. Mechanical normalizer: `.` → `-`, strip leading zeros (`sv03.5` → `sv3-5`)
+ *    so new retail sets with matching stems need no table row
  *
- * Reprint fallbacks for TCGdex Shiny Vault splits (`*sv`) are derived
- * mechanically — see {@link liveSetCandidatesForResolve}.
+ * Reprint fallbacks for TCGdex Shiny Vault splits (`*sv`) — see
+ * {@link liveSetCandidatesForResolve}.
  */
 import { TCGDEX_TO_LIVE_SETS } from "./setAliases";
 

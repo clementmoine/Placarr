@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  foilLeanAmplitude,
   foilScrollModeForInteraction,
   tiltFromLightPercent,
 } from "@/components/FoilCardImage";
@@ -10,10 +11,30 @@ describe("tiltFromLightPercent", () => {
     expect(tiltFromLightPercent(50, 0.4)).toBe(0);
   });
 
-  it("atteint ±timeFactor aux bords (balayage mono-axe = amplitude idle)", () => {
+  it("atteint ±amplitude aux bords", () => {
     expect(tiltFromLightPercent(0, 0.4)).toBeCloseTo(-0.4);
     expect(tiltFromLightPercent(100, 0.4)).toBeCloseTo(0.4);
     expect(tiltFromLightPercent(0, 0.33)).toBeCloseTo(-0.33);
+    expect(tiltFromLightPercent(100, 1)).toBeCloseTo(1);
+  });
+});
+
+describe("foilLeanAmplitude", () => {
+  it("uses sheet _TimeFactor for Lorcana CosTime / dual-frag", () => {
+    expect(foilLeanAmplitude({ timeFactor: 0.4, hasTimeSibling: true })).toBe(
+      0.4,
+    );
+    expect(foilLeanAmplitude({ timeFactor: 0.33 })).toBe(0.33);
+  });
+
+  it("uses full ±1 for Live HoloFoil (no _TimeFactor) so light/camera move", () => {
+    // Pokémon sheets omit _TimeFactor; the old 0.4 default starved _LightDirection.
+    expect(foilLeanAmplitude({ hasTimeSibling: false })).toBe(1);
+    expect(foilLeanAmplitude({})).toBe(1);
+  });
+
+  it("falls back to 0.4 when dual-frag has no explicit factor", () => {
+    expect(foilLeanAmplitude({ hasTimeSibling: true })).toBe(0.4);
   });
 });
 

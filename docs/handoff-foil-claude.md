@@ -52,7 +52,7 @@ clés, tests, ouvertures, pièges) pour que Cursor / Composer reprenne.
 - Docs contrat + checklist nouveau finish.
 - `pnpm foil:audit-gaps` (`scripts/foil/auditGaps.ts` + `gapMaps.ts`) — gaps Live
   frags / SHARED / LIVE_FINISH_CSS / simey unported / Lorcana unlisted stems.
-- Dump Lorcana web : `parseAllAssetStems` + `unlistedStems` dans `source.json`
+- Dump Lorcana web : `parseAllAssetStems` + `unlistedStems` dans `logs/web-source.json`
   (`src/providers/lorcanatcg/dumpWeb.ts`).
 
 ### CSS Pokémon = simey choreography + Live plates

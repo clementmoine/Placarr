@@ -45,7 +45,7 @@ describe("readFoilPackStatuses", () => {
   it("flags APK ready + extract present, and stale when APK is newer", async () => {
     const { utimes } = await import("node:fs/promises");
     const { repo, data } = await makeRepo();
-    const apkDir = path.join(data, "lorcana", "apks");
+    const apkDir = path.join(data, "lorcana", "staging", "apks");
     const shaders = path.join(data, "lorcana", "foil", "shaders");
     await mkdir(apkDir, { recursive: true });
     await mkdir(shaders, { recursive: true });

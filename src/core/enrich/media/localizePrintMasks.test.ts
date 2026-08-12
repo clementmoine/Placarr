@@ -70,7 +70,7 @@ describe("remoteMaskRequests", () => {
     expect(
       remoteMaskRequests([
         { foilMaskUrl: "/uploads/abc.jpg" },
-        { foilMaskUrl: "/foil/lorcana/cards/lorcana%3A1-1/foil_mask.jpg" },
+        { foilMaskUrl: "/assets/lorcana/cards/lorcana%3A1-1/foil_mask.jpg" },
         { foilMaskUrl: null, varnishMaskUrl: undefined },
         {},
       ]),
@@ -141,7 +141,7 @@ describe("localizePrintMasks", () => {
     const out = await localizePrintMasks(
       [
         { foilMaskUrl: "/uploads/already.jpg" },
-        { foilMaskUrl: "/foil/lorcana/cards/x/foil_mask.jpg" },
+        { foilMaskUrl: "/assets/lorcana/cards/x/foil_mask.jpg" },
       ],
       localize,
       runSerially,
@@ -150,12 +150,12 @@ describe("localizePrintMasks", () => {
     expect(localize).not.toHaveBeenCalled();
     expect(out).toEqual([
       { foilMaskUrl: "/uploads/already.jpg" },
-      { foilMaskUrl: "/foil/lorcana/cards/x/foil_mask.jpg" },
+      { foilMaskUrl: "/assets/lorcana/cards/x/foil_mask.jpg" },
     ]);
   });
 
-  it("accepts /foil/ answers from the localizer", async () => {
-    const localize = vi.fn(async () => "/foil/lorcana/cards/x/foil_mask.jpg");
+  it("accepts /assets/ answers from the localizer", async () => {
+    const localize = vi.fn(async () => "/assets/lorcana/cards/x/foil_mask.jpg");
 
     const out = await localizePrintMasks(
       [{ foilMaskUrl: REMOTE }],
@@ -164,7 +164,7 @@ describe("localizePrintMasks", () => {
     );
 
     expect(out).toEqual([
-      { foilMaskUrl: "/foil/lorcana/cards/x/foil_mask.jpg" },
+      { foilMaskUrl: "/assets/lorcana/cards/x/foil_mask.jpg" },
     ]);
   });
 
@@ -229,12 +229,12 @@ describe("dropUnbakedRemoteMasks", () => {
       dropUnbakedRemoteMasks({
         foilMaskUrl: REMOTE,
         varnishMaskUrl: "/uploads/baked.png",
-        secondVarnishMaskUrl: "/foil/lorcana/cards/x/varnish_mask.jpg",
+        secondVarnishMaskUrl: "/assets/lorcana/cards/x/varnish_mask.jpg",
       }),
     ).toEqual({
       foilMaskUrl: null,
       varnishMaskUrl: "/uploads/baked.png",
-      secondVarnishMaskUrl: "/foil/lorcana/cards/x/varnish_mask.jpg",
+      secondVarnishMaskUrl: "/assets/lorcana/cards/x/varnish_mask.jpg",
     });
   });
 });

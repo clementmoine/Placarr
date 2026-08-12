@@ -40,9 +40,9 @@ function unityInputsAvailable(
 ): boolean {
   if (data) return fs.existsSync(data) && fs.statSync(data).isDirectory();
   if (apk) return fs.existsSync(apk) && fs.statSync(apk).isFile();
-  const persist = path.join(repo, "data/lorcana/unity-data");
+  const persist = path.join(repo, "data/lorcana/staging/unity-data");
   if (fs.existsSync(persist) && fs.statSync(persist).isDirectory()) return true;
-  const apks = path.join(repo, "data/lorcana/apks");
+  const apks = path.join(repo, "data/lorcana/staging/apks");
   if (!fs.existsSync(apks)) return false;
   return fs.readdirSync(apks).some((n) => n.endsWith(".apk"));
 }
@@ -122,7 +122,7 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
         } else if (pid === "lorcanamobile") {
           if (!unityInputsAvailable(repo, args.apk, args.data)) {
             console.log(
-              "skip Unity: no APK under data/lorcana/apks/ (web + cards only)",
+              "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards only)",
             );
             results.push({
               provider: "lorcanamobile",

@@ -15,7 +15,7 @@ export const POKEMON_CSS_DODGE_OPACITY_CEILING = 0.5;
 /**
  * Pokémon looks built from the pack's **own** foil textures.
  *
- * Not invented, and not borrowed: `data/pokemon/foil/textures/_shared/` holds 70
+ * Not invented, and not borrowed: `data/pokemon/foil/textures/` holds ~70
  * FX textures extracted from the publisher's app — the same kind of asset the
  * Lorcana recipes are transcribed against, and the exact ones each Unity
  * material binds. The house gradients in `holoShadersHouse` were a stand-in for
@@ -58,7 +58,7 @@ export const POKEMON_CSS_DODGE_OPACITY_CEILING = 0.5;
  */
 
 /** Where the extracted FX textures are served from. */
-const T = "/foil/pokemon/textures/_shared";
+const T = "/assets/pokemon/textures";
 
 /**
  * How a layer moves under the pointer.
@@ -71,6 +71,8 @@ type Motion =
   | "scroll"
   /** A spectrum stored as a *tall* strip, so it must travel down instead. */
   | "scrollY"
+  /** Simey `0% var(--background-y)` spectrum pan (diagonalFamily). */
+  | "scrollYEdge"
   /** The shine: half rate, so it separates from the spectrum. */
   | "drift"
   /** The half-rate counterpart for a tall strip. */
@@ -100,7 +102,11 @@ type Motion =
   /** Opposite-pan coat (simey rainbow-alt / V :after) — mild. */
   | "opposite"
   /** Strong opposite pan (simey ×−1.5). */
-  | "oppositeStrong";
+  | "oppositeStrong"
+  /** poke-151 ex-full-art rib pan: `bx + by*0.2`. */
+  | "shear"
+  /** Coat: negated shear. */
+  | "shearOpposite";
 
 const POSITION: Record<Motion, string> = {
   // Motif travel uses compressed `--background-x/y` (simey technique: glare
@@ -110,6 +116,8 @@ const POSITION: Record<Motion, string> = {
   // engines reject it and drop the whole `background-position`).
   scroll: "var(--background-x, 50%) center",
   scrollY: "center var(--background-y, 50%)",
+  /** Simey diagonalFamily spectrum: `0% var(--background-y)`. */
+  scrollYEdge: "0% var(--background-y, 50%)",
   drift: "calc(var(--background-x, 50%) / 2 + 25%) center",
   driftY: "center calc(var(--background-y, 50%) / 2 + 25%)",
   counter: "calc(100% - var(--background-x, 50%)) center",
@@ -124,10 +132,14 @@ const POSITION: Record<Motion, string> = {
     "calc(100% - var(--background-x, 50%)) calc(100% - var(--background-y, 50%))",
   oppositeStrong:
     "calc(((var(--background-x, 50%) - 50%) * -1.5) + 50%) calc(((var(--background-y, 50%) - 50%) * -1.5) + 50%)",
+  shear:
+    "calc(var(--background-x, 50%) + (var(--background-y, 50%) * 0.2)) var(--background-y, 50%)",
+  shearOpposite:
+    "calc(0% - (var(--background-x, 50%) + (var(--background-y, 50%) * 0.2))) calc(0% - var(--background-y, 50%))",
 };
 
 type Layer = {
-  /** File stem under `_shared/`, without extension. */
+  /** File stem under `textures/`, without extension. */
   tex?: string;
   /** A CSS `<image>` written out in full — used for the banding gradients. */
   raw?: string;
@@ -244,6 +256,74 @@ const COSMOS_BANDS = `repeating-linear-gradient(82deg, hsl(53, 65%, 60%) calc(va
 /** V-family diagonal ribs (`v-*.css`) — px period so they may `repeat`. */
 function vRibs(angle = "133deg"): string {
   return `repeating-linear-gradient(${angle}, #0e152e 0px, hsl(180, 10%, 60%) 4px, hsl(180, 29%, 66%) 5px, hsl(180, 10%, 60%) 6px, #0e152e 12px, #0e152e 14px)`;
+}
+
+/**
+ * Live `FX_T_Spectrum_Sunpillar` hues as a CSS repeating ramp. poke-151
+ * `ex-regular` uses 0° (shine) / `--angle` 133° (glitter); Live frag rotates
+ * the plate in UV — CSS rebuilds the period from dump samples instead.
+ * Oversized `no-repeat` (no tile seam).
+ *
+ * Dump samples are darkened for CSS soft-light: raw mid stops (`#c1c96e`,
+ * `#82ccd4`) still lift Live art toward milk when soft-lit at playroom dose.
+ */
+function liveSunPillarBands(angle: string): string {
+  const sampled = [
+    "#370e58",
+    "#70153e",
+    "#ab4837",
+    "#c1c96e",
+    "#82ccd4",
+    "#3d4dd1",
+    "#271f9a",
+    "#2f0e58",
+  ].map(liveSunPillarCssDim);
+  const step = 12.5; // % of the gradient period
+  const stops = sampled.map((col, i) => `${col} ${i * step}%`);
+  stops.push(`${sampled[0]} ${sampled.length * step}%`);
+  return `repeating-linear-gradient(${angle}, ${stops.join(", ")})`;
+}
+
+/** Keep hue; pull luma down so soft-light does not milk dark Live art. */
+function liveSunPillarCssDim(hex: string): string {
+  const n = hex.replace("#", "");
+  const to = (v: number) =>
+    Math.round(Math.min(255, Math.max(0, v * 0.45)))
+      .toString(16)
+      .padStart(2, "0");
+  const r = parseInt(n.slice(0, 2), 16);
+  const g = parseInt(n.slice(2, 4), 16);
+  const b = parseInt(n.slice(4, 6), 16);
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+/**
+ * poke-151 `ex-regular` structural ribs (133°). Colour comes from the Live
+ * spectrum layer; these ribs are the tooth that sells sun-pillars.
+ * Highlights stay mid (not Simey's L≈82%) — on dark Live art, bright ribs
+ * + color-dodge/lighten milk the plate grey-white.
+ */
+function sunPillarRibs(): string {
+  return `repeating-linear-gradient(133deg, #0e1221 0%, hsl(180, 18%, 28%) 2.8%, hsl(180, 35%, 42%) 3.5%, hsl(180, 18%, 28%) 4.2%, #0e1221 7%, #0e1221 12%)`;
+}
+
+/** Simey ex-regular glitter radial (pointer-linked dank falloff). */
+function sunPillarGlitterSpot(): string {
+  return `radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsl(295, 100%, 10%) 20%, hsla(183, 84%, 85%, 0.15) 100%)`;
+}
+
+/**
+ * poke-151 `ex-full-art` / Simey `vBars` ribs at 128.5°.
+ * %-period is OK: single oversized `no-repeat` plate (Simey sizes 300%/195%)
+ * — never `background-repeat` a diagonal lattice.
+ */
+function angledExRibs(): string {
+  return `repeating-linear-gradient(128.5deg, #0e152e 0%, hsl(180, 10%, 60%) 3.8%, hsl(180, 29%, 66%) 4.5%, hsl(180, 10%, 60%) 5.2%, #0e152e 14%, #0e152e 16%)`;
+}
+
+/** Simey V / ex pointer shade. */
+function pillarSpot(): string {
+  return `radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(0, 0%, 0%, 0.1) 12%, hsla(0, 0%, 0%, 0.15) 20%, hsla(0, 0%, 0%, 0.25) 120%)`;
 }
 
 /** Amazing-rare inverted radial (dark core → bright rim). */
@@ -510,7 +590,11 @@ export const POKEMON_HOLO_SHADER_IDS = [
   "rainbow02",
   "rainbow02Coat",
   "sunPillar",
+  "sunPillarCoat",
+  "sunPillarGlitter",
   "sunPillarCc",
+  "sunPillarCcCoat",
+  "sunPillarCcGlitter",
   "sunBeam",
   "sunLava",
   "flatSilver",
@@ -1160,37 +1244,234 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     },
   ),
 
-  /** Sun Pillar base — Northern Cross only when Live `CastAndCure` (see sunPillarCc). */
-  sunPillar: look(
-    "sunPillar",
-    [spectrum("FX_T_Spectrum_Sunpillar"), shine("FX_T_Gradient_Shine")],
+  /**
+   * SunPillar — poke-151 `ex-regular` **composition** (double rare EX cards),
+   * painted with Live plates / Live-measured hues.
+   *
+   * Simey stack (`ex-regular.css`): grain → horizontal sunpillar ramp → 133°
+   * ribs → pointer spot; `:after` opposite pan; `.card__glitter` hard-light.
+   * Live paint: raw dump hues + darkened ribs. Avoid `screen`/`lighten`/
+   * `difference` on full-card plates — they milk dark Live art grey-white.
+   * CastAndCure stars = Northern Cross carve + dodge (Unity's CC punch).
+   */
+  sunPillar: {
+    ...look(
+      "sunPillar",
+      [
+        // No FX_T_Gradient_Shine — mid-grey grain (μ≈143) screens to a milk
+        // haze on dark Live art. Simey's --grain is authored for lighten.
+        {
+          raw: liveSunPillarBands("0deg"),
+          size: "200% 700%",
+          motion: "scrollYEdge",
+          repeat: "no-repeat",
+        },
+        {
+          raw: sunPillarRibs(),
+          size: "300% 100%",
+          motion: "scroll",
+          repeat: "no-repeat",
+        },
+        {
+          raw: pillarSpot(),
+          size: "200% 100%",
+          motion: "lean",
+          repeat: "no-repeat",
+        },
+      ],
+      {
+        // soft-light keeps dark Live art's blacks; screen lifted them to milk.
+        blend: "soft-light, hard-light",
+        mix: "soft-light",
+        opacity: 0.45,
+        brightness: [0.9, 0.2],
+        contrast: [1.3, 0.25],
+        saturate: [1.7, 0.3],
+        pointerFalloff: false,
+      },
+    ),
+    overlay: "sunPillarCoat",
+  },
+
+  /** Simey `.card__shine:after` — opposite rib pan. */
+  sunPillarCoat: {
+    ...look(
+      "sunPillarCoat",
+      [
+        {
+          raw: liveSunPillarBands("0deg"),
+          size: "200% 400%",
+          motion: "scrollYEdge",
+          repeat: "no-repeat",
+        },
+        {
+          raw: sunPillarRibs(),
+          size: "195% 100%",
+          motion: "opposite",
+          repeat: "no-repeat",
+        },
+        {
+          raw: pillarSpot(),
+          size: "200% 100%",
+          motion: "lean",
+          repeat: "no-repeat",
+        },
+      ],
+      {
+        blend: "soft-light, hard-light",
+        mix: "soft-light",
+        opacity: 0.28,
+        brightness: [0.88, 0.18],
+        contrast: [1.2, 0.2],
+        saturate: [1.5, 0.25],
+        pointerFalloff: false,
+      },
+    ),
+    overlay: "sunPillarGlitter",
+  },
+
+  /** Simey `.card__glitter` — sparkle pass; Live glitter tooth. */
+  sunPillarGlitter: look(
+    "sunPillarGlitter",
+    [
+      {
+        raw: sunPillarGlitterSpot(),
+        size: "cover",
+        motion: "still",
+        repeat: "no-repeat",
+      },
+      {
+        raw: liveSunPillarBands("133deg"),
+        size: "500% 500%",
+        motion: "lean",
+        repeat: "no-repeat",
+      },
+      {
+        tex: "FX_T_SVUltra_Glitter",
+        size: "25% 25%",
+        motion: "still",
+        repeat: "repeat",
+      },
+      {
+        tex: "T_Noise_Random",
+        size: "140% 140%",
+        motion: "still",
+        repeat: "repeat",
+      },
+    ],
     {
-      blend: "overlay",
-      mix: "overlay",
-      opacity: 0.5,
-      contrast: [1.1, 0.4],
-      saturate: [1.15, 0.7],
+      blend: "darken, soft-light, lighten",
+      mix: "soft-light",
+      opacity: 0.35,
+      brightness: [1.15, 0.25],
+      contrast: [1.1, 0.15],
+      saturate: [1.3, 0.2],
+      pointerFalloff: false,
     },
   ),
 
   /**
-   * Cast-and-Cure Sun Pillar — MAT `_UseCCFoil` + Northern Cross stencil +
-   * `_Tex_CC_Spectrum` (SVHolo2).
+   * CastAndCure — same ex-regular shine/coat; glitter pass adds Northern Cross
+   * × SVHolo2 (Live `_Tex_CC` / `_Tex_CC_Spectrum`).
    */
-  sunPillarCc: look(
-    "sunPillarCc",
+  sunPillarCc: {
+    ...look(
+      "sunPillarCc",
+      [
+        {
+          raw: liveSunPillarBands("0deg"),
+          size: "200% 700%",
+          motion: "scrollYEdge",
+          repeat: "no-repeat",
+        },
+        {
+          raw: sunPillarRibs(),
+          size: "300% 100%",
+          motion: "scroll",
+          repeat: "no-repeat",
+        },
+        {
+          raw: pillarSpot(),
+          size: "200% 100%",
+          motion: "lean",
+          repeat: "no-repeat",
+        },
+      ],
+      {
+        blend: "soft-light, hard-light",
+        mix: "soft-light",
+        opacity: 0.45,
+        brightness: [0.9, 0.2],
+        contrast: [1.3, 0.25],
+        saturate: [1.7, 0.3],
+        pointerFalloff: false,
+      },
+    ),
+    overlay: "sunPillarCcCoat",
+  },
+
+  sunPillarCcCoat: {
+    ...look(
+      "sunPillarCcCoat",
+      [
+        {
+          raw: liveSunPillarBands("0deg"),
+          size: "200% 400%",
+          motion: "scrollYEdge",
+          repeat: "no-repeat",
+        },
+        {
+          raw: sunPillarRibs(),
+          size: "195% 100%",
+          motion: "opposite",
+          repeat: "no-repeat",
+        },
+        {
+          raw: pillarSpot(),
+          size: "200% 100%",
+          motion: "lean",
+          repeat: "no-repeat",
+        },
+      ],
+      {
+        blend: "soft-light, hard-light",
+        mix: "soft-light",
+        opacity: 0.28,
+        brightness: [0.88, 0.18],
+        contrast: [1.2, 0.2],
+        saturate: [1.5, 0.25],
+        pointerFalloff: false,
+      },
+    ),
+    overlay: "sunPillarCcGlitter",
+  },
+
+  sunPillarCcGlitter: look(
+    "sunPillarCcGlitter",
     [
-      spectrum("FX_T_Spectrum_Sunpillar"),
-      spectrumTall("FX_T_Spectrum_SVHolo2"),
-      shine("FX_T_Gradient_Shine"),
+      {
+        tex: "FX_T_Spectrum_SVHolo2",
+        size: "140% 320%",
+        motion: "scrollY",
+        repeat: "no-repeat",
+      },
+      {
+        tex: "FX_T_Spectrum_SVHolo2",
+        size: "140% 280%",
+        motion: "counterY",
+        repeat: "no-repeat",
+      },
     ],
     {
-      blend: "overlay, hard-light",
-      mix: "overlay",
-      opacity: 0.5,
-      contrast: [1.1, 0.4],
-      saturate: [1.15, 0.7],
-      carve: carve("FX_T_Northern_Cross", "320px 320px"),
+      // Dodge + dark exposure — stars punch chroma without full-card milk.
+      blend: "screen",
+      mix: "color-dodge",
+      opacity: POKEMON_CSS_DODGE_OPACITY_CEILING,
+      brightness: [0.42, 0.35],
+      contrast: [1.55, 0.3],
+      saturate: [2.0, 0.4],
+      carve: carve("FX_T_Northern_Cross", "160px 160px"),
+      pointerFalloff: false,
     },
   ),
 
@@ -1218,7 +1499,11 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     },
   ),
 
-  /** The reverse-holo silver: Live plates + reverse laminate light masks. */
+  /**
+   * Plain reverse-holo silver. GLES desats the FlatSilver spectrum 75% toward
+   * luma then ×0.33 — keep CSS quiet (soft-light, low sat) so we do not read as
+   * a rainbow wash. SVHolo2 belongs only on CC laminates (`flatSilverCc*`).
+   */
   flatSilver: {
     ...look(
       "flatSilver",
@@ -1240,19 +1525,23 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
         tooth("FX_T_SVUltra_Glitter", "150px 150px"),
       ],
       {
-        blend: "soft-light, difference, overlay, screen",
-        mix: "color-dodge",
-        opacity: 0.42,
-        brightness: [0.45, 0.2],
-        contrast: [1.2, 0.35],
-        saturate: [1.0, 0.35],
+        blend: "soft-light, soft-light, overlay, soft-light",
+        mix: "soft-light",
+        opacity: 0.34,
+        brightness: [0.55, 0.15],
+        contrast: [1.05, 0.25],
+        saturate: [0.45, 0.2],
         pointerFalloff: false,
       },
     ),
     overlay: "flatSilverCoat",
   },
 
-  /** Opposite-pan laminate coat (simey reverse :after depth). */
+  /**
+   * Opposite-pan silver coat. Do not paint `_Tex_CC_Spectrum` (SVHolo2): the
+   * MAT leaves `_Tex_CC` unbound, and the frag gates that rainbow on CC alpha.
+   * Painting it here was the CSS half of the Reshiram FlatSilver wash.
+   */
   flatSilverCoat: look(
     "flatSilverCoat",
     [
@@ -1263,28 +1552,14 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
         repeat: "no-repeat",
       },
       spectrum("FX_T_Spectrum_FlatSilver", "240% 240%"),
-      /*
-        The material's *second* spectrum, which was being dropped.
-
-        FlatSilver binds two: `_Tex_Spectrum` (FlatSilver, above) and
-        `_Tex_CC_Spectrum` (SVHolo2). The MAT leaves `_Tex_CC` unbound, but as
-        `materials.ts` notes, "glitter/spectrum still run" — the shader samples
-        both ramps even without a laminate plate. We drew the CC glitter and not
-        its spectrum, so reverse holos ran on half the colour they should.
-        `flatSilverCc` already had it; plain FlatSilver did not.
-
-        Tall strip (32×256), so it travels down — scrolled across, a vertical
-        ramp moves along the axis it is constant on and never changes hue.
-      */
-      spectrumTall("FX_T_Spectrum_SVHolo2", "100% 240%"),
       tooth("FX_T_SVUltra_Glitter", "150px 150px"),
     ],
     {
-      blend: "difference, soft-light, overlay",
+      blend: "soft-light, soft-light, soft-light",
       mix: "soft-light",
-      opacity: 0.38,
-      contrast: [1.1, 0.3],
-      saturate: [0.95, 0.3],
+      opacity: 0.28,
+      contrast: [1.05, 0.2],
+      saturate: [0.4, 0.2],
       pointerFalloff: false,
     },
   ),
@@ -1560,26 +1835,49 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     },
   ),
 
-  /** AngledPillars — Live angled spectrum + V ribs + opposite-pan coat. */
+  /**
+   * AngledPillars — Simey `diagonalFamily` / poke-151 `ex-full-art`:
+   *   Gradient_Shine → Live `Bands_Angled` (200%×700%, scrollY) → 128.5° ribs
+   *   (300%×100%, shear) → pointer spot. Coat mirrors with opposite pan.
+   * Seamless: every layer `no-repeat`; gradients tile inside one plate
+   * (Simey sizes — not `background-repeat` on diagonals).
+   */
   angledPillars: {
     ...look(
       "angledPillars",
       [
-        spectrum("FX_T_Spectrum_Bands_Angled"),
-        shine("FX_T_Gradient_Shine"),
         {
-          raw: vRibs(),
+          tex: "FX_T_Gradient_Shine",
+          size: "cover",
+          motion: "still",
+          repeat: "no-repeat",
+        },
+        {
+          tex: "FX_T_Spectrum_Bands_Angled",
+          size: "200% 700%",
+          motion: "scrollYEdge",
+          repeat: "no-repeat",
+        },
+        {
+          raw: angledExRibs(),
           size: "300% 100%",
-          motion: "scroll",
-          repeat: "repeat",
+          motion: "shear",
+          repeat: "no-repeat",
+        },
+        {
+          raw: pillarSpot(),
+          size: "200% 100%",
+          motion: "lean",
+          repeat: "no-repeat",
         },
       ],
       {
-        blend: "screen, soft-light, hard-light",
-        mix: "overlay",
-        opacity: 0.48,
-        contrast: [1.1, 0.4],
-        saturate: [1.15, 0.7],
+        blend: "soft-light, soft-light, hue, hard-light",
+        mix: "color-dodge",
+        opacity: POKEMON_CSS_DODGE_OPACITY_CEILING,
+        brightness: [0.5, 0.4],
+        contrast: [1.5, 0.2],
+        saturate: [1.5, 0.15],
         pointerFalloff: false,
       },
     ),
@@ -1589,20 +1887,38 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
   angledPillarsCoat: look(
     "angledPillarsCoat",
     [
-      spectrum("FX_T_Spectrum_Bands_Angled", "240% 240%"),
       {
-        raw: vRibs(),
+        tex: "FX_T_Gradient_Shine",
+        size: "cover",
+        motion: "still",
+        repeat: "no-repeat",
+      },
+      {
+        tex: "FX_T_Spectrum_Bands_Angled",
+        size: "200% 400%",
+        motion: "scrollYEdge",
+        repeat: "no-repeat",
+      },
+      {
+        raw: angledExRibs(),
         size: "195% 100%",
-        motion: "opposite",
-        repeat: "repeat",
+        motion: "shearOpposite",
+        repeat: "no-repeat",
+      },
+      {
+        raw: pillarSpot(),
+        size: "200% 100%",
+        motion: "lean",
+        repeat: "no-repeat",
       },
     ],
     {
-      blend: "soft-light, hard-light",
+      blend: "soft-light, soft-light, hue, hard-light",
       mix: "exclusion",
-      opacity: 0.4,
-      contrast: [1.08, 0.3],
-      saturate: [1.1, 0.45],
+      opacity: 0.55,
+      brightness: [0.5, 0.4],
+      contrast: [1.5, 0.2],
+      saturate: [1.25, 0.15],
       pointerFalloff: false,
     },
   ),

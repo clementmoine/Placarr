@@ -8,6 +8,7 @@ import {
 } from "@/core/collect/jobs/workQueue";
 import {
   foilExtractLabel,
+  normalizeFoilExtractScope,
   normalizeFoilExtractTarget,
   resolveFoilExtractCommand,
 } from "@/lib/admin/foilExtractRunner";
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many extracts" }, { status: 429 });
   }
 
-  const body = (await req.json()) as { target?: string };
+  const body = (await req.json()) as { target?: string; scope?: string };
   const target = normalizeFoilExtractTarget(String(body.target || "").trim());
   if (!target) {
     return NextResponse.json(
@@ -40,10 +41,11 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  const scope = normalizeFoilExtractScope(body.scope);
 
   // Validate paths before enqueue so the UI gets a fast error.
   try {
-    await resolveFoilExtractCommand(target);
+    await resolveFoilExtractCommand(target, { scope });
   } catch (error) {
     return NextResponse.json(
       {
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
   const job = await enqueueBackgroundWorkJob({
     kind: BACKGROUND_WORK_KIND.foilExtract,
     userId: auth.user.id,
-    payload: { target },
+    payload: { target, scope },
     replaceOpenForKind: true,
   });
 
@@ -72,11 +74,14 @@ export async function POST(req: NextRequest) {
     ok: true,
     jobId: job.id,
     target,
+    scope,
     kind: BACKGROUND_WORK_KIND.foilExtract,
     label: foilExtractLabel(target),
     hint:
       target === "pokemon"
-        ? "Extract Pokémon en file d’attente (worker). Tu peux quitter la page."
+        ? scope === "catalogue"
+          ? "Catalogue complet en file d’attente : ~93k bundles, plusieurs heures. Tu peux quitter la page."
+          : "Extract Pokémon en file d’attente (worker). Tu peux quitter la page."
         : "Extract Lorcana en file d’attente (worker). Tu peux quitter la page.",
   });
 }

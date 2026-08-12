@@ -17,11 +17,13 @@ import {
   FoilPackSources,
   foilExtractTargetForPack,
 } from "@/components/admin/FoilSourcesPanel";
+import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
 import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
 import { listEffectPacks } from "@/effects";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
+import { hydrateFoilMetaFromAssets } from "@/lib/foilMetaLoad";
 import {
   peekPrintVariant,
   requestPrintVariant,
@@ -506,6 +508,16 @@ function MaterialTile({
   const subCaptionClass = focus
     ? "text-xs text-muted-foreground"
     : "truncate text-[10px] text-muted-foreground";
+  const liveBundleId = packArt?.bundleId?.trim() || null;
+  const liveOpen =
+    liveOwned && liveBundleId ? (
+      <OpenInLiveButton
+        bundleId={liveBundleId}
+        material={materialName}
+        locale={locale}
+        className={focus ? "items-center" : undefined}
+      />
+    ) : null;
 
   const cardFrame = (children: ReactNode) => (
     <OrientedMediaFrame
@@ -587,11 +599,17 @@ function MaterialTile({
           focus && "shadow-lg",
         )}
         materialName={materialName}
-        liveFoilMask={packArt?.foilMask ?? null}
-        finish={finish ?? own?.finish}
+        liveFoilMask={
+          material?.webgl === false ? null : (packArt?.foilMask ?? null)
+        }
+        finish={
+          material?.webgl === false
+            ? (finish ?? materialName)
+            : (finish ?? own?.finish)
+        }
         // Only pass varnish from the material under test — not from a random
         // adapted print that happens to carry a varnish coat.
-        varnishType={varnish}
+        varnishType={material?.webgl === false ? null : varnish}
         /*
           Same rule as the plates below, and for the same reason: the foil mask
           describes *this* print's foiled areas. Preferring the adapted print
@@ -599,10 +617,12 @@ function MaterialTile({
           wore `swsh7-5_wp_fr_009` while its own `…_wp_…` sat unused on disk.
         */
         maskUrl={
-          packArt?.maskUrl ??
-          own?.foilMaskUrl ??
-          pack?.fallbackFoilMaskUrl ??
-          null
+          material?.webgl === false
+            ? null
+            : (packArt?.maskUrl ??
+              own?.foilMaskUrl ??
+              pack?.fallbackFoilMaskUrl ??
+              null)
         }
         /*
           Ultra Gold / Scodix / SwSecret: full-card + raw `--foil-etch`.
@@ -635,53 +655,38 @@ function MaterialTile({
         trackPointer
       />,
     ),
-    onFocus ? (
-      <button
-        type="button"
-        onClick={() => onFocus(materialName)}
-        className="block w-full text-left transition-colors hover:text-foreground"
-      >
-        <p className={captionClass}>
-          {materialName}
-          {liveOwned ? (
-            <span className="ml-1.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-              Live
-            </span>
-          ) : null}
-        </p>
-        <p className={subCaptionClass}>
-          {packArt?.label ?? sample?.name ?? finish ?? "—"}
-          {liveOwned ? (
-            <span className="ml-1 text-emerald-700/80 dark:text-emerald-400/80">
-              · {fr ? "owned · comparables MuMu" : "owned · MuMu check"}
-            </span>
-          ) : (
-            <span className="ml-1 text-muted-foreground/70">
-              · {fr ? "inspecter" : "inspect"}
-            </span>
-          )}
-        </p>
-      </button>
-    ) : (
-      <>
-        <p className={captionClass}>
-          {materialName}
-          {liveOwned ? (
-            <span className="ml-1.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-              Live
-            </span>
-          ) : null}
-        </p>
-        <p className={subCaptionClass}>
-          {packArt?.label ?? sample?.name ?? finish ?? "—"}
-          {liveOwned ? (
-            <span className="ml-1 text-emerald-700/80 dark:text-emerald-400/80">
-              · {fr ? "owned · comparables MuMu" : "owned · MuMu check"}
-            </span>
-          ) : null}
-        </p>
-      </>
-    ),
+    <div
+      className={cn(
+        "flex w-full gap-2",
+        focus ? "flex-col items-center" : "items-start justify-between",
+      )}
+    >
+      {onFocus ? (
+        <button
+          type="button"
+          onClick={() => onFocus(materialName)}
+          className="min-w-0 flex-1 text-left transition-colors hover:text-foreground"
+        >
+          <p className={captionClass}>{materialName}</p>
+          <p className={subCaptionClass}>
+            {packArt?.label ?? sample?.name ?? finish ?? "—"}
+            {!liveOwned ? (
+              <span className="ml-1 text-muted-foreground/70">
+                · {fr ? "inspecter" : "inspect"}
+              </span>
+            ) : null}
+          </p>
+        </button>
+      ) : (
+        <div className="min-w-0 flex-1">
+          <p className={captionClass}>{materialName}</p>
+          <p className={subCaptionClass}>
+            {packArt?.label ?? sample?.name ?? finish ?? "—"}
+          </p>
+        </div>
+      )}
+      {liveOpen}
+    </div>,
   );
 }
 
@@ -710,6 +715,17 @@ export function FoilPlayroom({
   const fr = locale === "fr";
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [metaReady, setMetaReady] = useState(typeof window === "undefined");
+  useEffect(() => {
+    let cancelled = false;
+    void hydrateFoilMetaFromAssets().finally(() => {
+      if (!cancelled) setMetaReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const packs = listEffectPacks();
   const packIds = packs.map((entry) => entry.id);
   const packId =
@@ -739,7 +755,11 @@ export function FoilPlayroom({
 
   const pack = packs.find((entry) => entry.id === packId) ?? packs[0];
   const extractTarget = foilExtractTargetForPack(pack?.id ?? packId);
-  const materials = pack?.listMaterials() ?? [];
+  // Re-read after foil-meta hydrate (manifest / frag-stems).
+  const materials = useMemo(
+    () => pack?.listMaterials() ?? [],
+    [pack, metaReady],
+  );
   /** Owned Live faces first so MuMu-checkable effects are easy to find. */
   const materialsOrdered = useMemo(() => {
     if (!pack) return materials;
@@ -836,6 +856,11 @@ export function FoilPlayroom({
   );
 
   const focusStageRef = useFillViewportBelow<HTMLDivElement>(layout !== "grid");
+
+  useEffect(() => {
+    // Warm Frida navd in the background so Live opens hit the hot attach.
+    void fetch("/api/admin/live-open").catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Focus mounts a single card — pool of 1 keeps the WebGL context exclusive.
@@ -977,16 +1002,11 @@ export function FoilPlayroom({
                     onChange={(event) => selectMaterial(event.target.value)}
                     className="max-w-[min(100%,20rem)] truncate rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm"
                   >
-                    {materialsOrdered.map((name) => {
-                      const owned = Boolean(
-                        artsFor(name)[0]?.liveOwned,
-                      );
-                      return (
-                        <option key={name} value={name}>
-                          {owned ? `${name} · Live` : name}
-                        </option>
-                      );
-                    })}
+                    {materialsOrdered.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
                   <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                     {focusIndex + 1}/{materialsOrdered.length}

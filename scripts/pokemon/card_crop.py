@@ -21,8 +21,10 @@ UvRect = tuple[float, float, float, float]
 
 
 def load_uv_rect(pack_dir: Path) -> UvRect | None:
-    """Read the mesh rect from ``<pack_dir>/cardQuad.json``; None without a dump."""
-    path = pack_dir / "cardQuad.json"
+    """Read the mesh rect from ``<pack_dir>/card-uv-rect.json``; None without a dump."""
+    path = pack_dir / "card-uv-rect.json"
+    if not path.is_file():
+        return None
     try:
         quad = json.loads(path.read_text(encoding="utf-8"))
         rect = quad["uvRect"]

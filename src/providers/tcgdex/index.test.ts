@@ -53,14 +53,14 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     const candidate = toPrintCandidate(card!);
     expect(candidate.printKey).toBe("pokemon:sv03.5-006");
     expect(candidate.imageUrl).toBe(
-      "/foil/pokemon/textures/sv3-5_fr_006/sv3-5_fr_006.webp",
+      "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
     );
     expect(candidate.thumbnailUrl).toBe(candidate.imageUrl);
     expect(candidate.cardBackUrl).toBeUndefined();
     expect(candidate.effectPack).toBe("pokemon");
     // Pack default is EffectPack.cardBackUrl, not print scope.
     expect(candidate.variantImageUrls?.holo).toBe(
-      "/foil/pokemon/textures/sv3-5_fr_006/sv3-5_fr_006.webp",
+      "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
     );
     expect(candidate.effectPack).toBe("pokemon");
     expect(candidate.finishes).toEqual(["holo"]);
@@ -68,10 +68,10 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     // Live set id sv3-5 ← TCGdex sv03.5 (stub + full dump both carry 006)
     expect(candidate.finishShaders?.holo).toBe("SunPillar");
     expect(candidate.finishFoilMaskUrls?.holo).toBe(
-      "/foil/pokemon/textures/sv3-5_fr_006/sv3-5_wp_fr_006.webp",
+      "/assets/pokemon/cards/sv3-5/fr/006/mask.webp",
     );
     expect(candidate.foilMaskUrl).toBe(
-      "/foil/pokemon/textures/sv3-5_fr_006/sv3-5_wp_fr_006.webp",
+      "/assets/pokemon/cards/sv3-5/fr/006/mask.webp",
     );
     expect(candidate.externalIds?.pokemonLiveBundle).toBe("sv3-5_fr_006");
     expect(candidate.externalIds?.tcgdexImage).toContain("tcgdex.net");
@@ -171,7 +171,7 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     expect(candidate.finishShaders?.holo).toBe("Tinsel");
     expect(candidate.finishShaders?.["live-ph"]).toBe("Rainbow");
     expect(candidate.finishFoilMaskUrls?.["live-ph"]).toContain(
-      "bw10_wp_ph_fr_016",
+      "/assets/pokemon/cards/bw10/fr/016/mask-ph.webp",
     );
   });
 
@@ -296,8 +296,8 @@ describe("pickTcgdexPlayroomSamples", () => {
       printKey: "pokemon:sv03.5-006",
       variant: "holo",
       shelfType: "tcg",
-      imageUrl: "/foil/pokemon/textures/sv3-5_fr_006/sv3-5_fr_006.webp",
-      foilMaskUrl: "/foil/pokemon/textures/sv3-5_fr_006/sv3-5_wp_fr_006.webp",
+      imageUrl: "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
+      foilMaskUrl: "/assets/pokemon/cards/sv3-5/fr/006/mask.webp",
     });
   });
 

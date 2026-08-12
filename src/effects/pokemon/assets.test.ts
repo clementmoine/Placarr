@@ -10,10 +10,12 @@ import { foilTextureFile } from "@/effects/foilTextureFile";
 import { listBundleIds, variantsForBundle } from "./cardFoilLookups";
 import {
   foilManifestToShader,
+  listPokemonFoilNames,
   POKEMON_FOIL_NAMES,
 } from "./foilNames";
 
 const PACK_ROOT = path.join(process.cwd(), "data", "pokemon", "foil");
+const CARDS_ROOT = path.join(process.cwd(), "data", "pokemon", "cards");
 const SHADERS_DIR = path.join(PACK_ROOT, "shaders");
 const TEXTURES_DIR = path.join(PACK_ROOT, "textures");
 
@@ -24,15 +26,17 @@ function packFile(...names: string[]): boolean {
   return names.some((name) => existsSync(path.join(PACK_ROOT, name)));
 }
 
-const hasCardBack = packFile("card_back.webp", "card_back.png");
+const hasCardBack =
+  existsSync(path.join(CARDS_ROOT, "back.webp")) ||
+  existsSync(path.join(CARDS_ROOT, "back.png"));
 
 describe("pokemon pack assets", () => {
   it("declares the pack default card back URL", () => {
-    expect("/foil/pokemon/card_back.webp").toMatch(/card_back\.webp$/);
+    expect("/assets/pokemon/cards/back.webp").toMatch(/\/cards\/back\.webp$/);
   });
 
   it.skipIf(!hasCardBack)(
-    "ships card_back.webp extracted from Live APK (Texture2D cardBack)",
+    "ships cards/back.webp extracted from Live APK (Texture2D cardBack)",
     () => {
       expect(hasCardBack).toBe(true);
     },
@@ -52,51 +56,68 @@ describe("pokemon pack assets", () => {
 
   it.skipIf(!hasDump)("ships full_foil_mask + shared motifs", () => {
     expect(packFile("full_foil_mask.webp", "full_foil_mask.png")).toBe(true);
-    const shared = path.join(TEXTURES_DIR, "_shared");
-    expect(existsSync(shared)).toBe(true);
+    expect(existsSync(TEXTURES_DIR)).toBe(true);
     expect(
-      readdirSync(shared).filter((name) => !name.startsWith(".")).length,
+      readdirSync(TEXTURES_DIR).filter(
+        (name) => !name.startsWith(".") && name.endsWith(".webp"),
+      ).length,
     ).toBeGreaterThan(0);
   });
 
-  it.skipIf(!hasDump)("maps every dumped foil/shader to a known leaf", () => {
-    const unmapped: string[] = [];
-    for (const bundleId of BUNDLE_IDS) {
-      for (const variant of variantsForBundle(bundleId)) {
-        const mapped =
-          foilManifestToShader(variant.shader) ||
-          foilManifestToShader(variant.foil);
-        if (!mapped) {
-          unmapped.push(
-            `${bundleId}:${variant.variant}:${variant.foil || "?"}/${variant.shader || "?"}`,
-          );
+  it.skipIf(!hasDump)(
+    "maps every dumped foil/shader to a known leaf",
+    () => {
+      // Warm discovery cache once — full dump is ~40k bundles.
+      void listPokemonFoilNames();
+      const unmapped: string[] = [];
+      for (const bundleId of BUNDLE_IDS) {
+        for (const variant of variantsForBundle(bundleId)) {
+          const mapped =
+            foilManifestToShader(variant.shader) ||
+            foilManifestToShader(variant.foil);
+          if (!mapped) {
+            unmapped.push(
+              `${bundleId}:${variant.variant}:${variant.foil || "?"}/${variant.shader || "?"}`,
+            );
+          }
         }
       }
-    }
-    expect(unmapped.slice(0, 10), unmapped.slice(0, 10).join("\n")).toEqual([]);
-  });
+      expect(unmapped.slice(0, 10), unmapped.slice(0, 10).join("\n")).toEqual(
+        [],
+      );
+    },
+    60_000,
+  );
 
   it.skipIf(!hasDump)("ships mask textures for a sample of FR foil variants", () => {
     let checked = 0;
     const missing: string[] = [];
     for (const bundleId of BUNDLE_IDS) {
-      // Manifest index covers every CDN lang; textures are scraped FR-first.
       if (!/_fr_/i.test(bundleId)) continue;
-      const bundleDir = path.join(TEXTURES_DIR, bundleId);
-      if (!existsSync(bundleDir)) continue;
+      const m = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})$/i.exec(bundleId);
+      if (!m) continue;
+      const cardDir = path.join(CARDS_ROOT, m[1]!.toLowerCase(), m[2]!.toLowerCase(), m[3]!);
+      if (!existsSync(cardDir)) continue;
       for (const variant of variantsForBundle(bundleId)) {
         const maskTex = variant.maskTex.trim();
         if (!maskTex) continue;
         checked += 1;
         if (checked % 400 !== 1) continue;
-        const file = foilTextureFile(maskTex);
-        const webp = path.join(bundleDir, file);
-        const png = path.join(
-          bundleDir,
-          file.replace(/\.webp$/i, ".png"),
-        );
-        if (!existsSync(webp) && !existsSync(png)) {
-          missing.push(`${bundleId}/${file}`);
+        const file = foilTextureFile(maskTex)
+          .replace(/^.*_wp_mph_.*$/i, "mask-mph.webp")
+          .replace(/^.*_wp_sph_.*$/i, "mask-sph.webp")
+          .replace(/^.*_wp_ph_.*$/i, "mask-ph.webp")
+          .replace(/^.*_wp_.*$/i, "mask.webp");
+        const canonical = file.includes("mask")
+          ? file
+          : maskTex.toLowerCase().includes("_wp_ph_")
+            ? "mask-ph.webp"
+            : maskTex.toLowerCase().includes("_wp_")
+              ? "mask.webp"
+              : "mask.webp";
+        const webp = path.join(cardDir, canonical);
+        if (!existsSync(webp)) {
+          missing.push(`${bundleId}/${canonical}`);
         }
       }
     }

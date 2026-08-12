@@ -3,7 +3,7 @@
  * for (`holo`, `reverse`, …). Seeds are known TCGdex ids that carry those
  * variants — no full dump required.
  *
- * Prefer Live pack art/masks under `/foil/pokemon/…` when the dump has the
+ * Prefer Live pack art/masks under `/assets/pokemon/…` when the dump has the
  * print; TCGdex CDN remains cold-start fallback only.
  */
 import type {
@@ -29,12 +29,11 @@ import "@/effects/pokemon/cardFoilIndex";
 
 const SHELF_TYPE = "tcg";
 
-/** One seed print per finish we know how to illustrate from catalogue alone. */
+/** Minimal catalogue seeds when Live dump has no face for the finish yet. */
 const FINISH_SEEDS: ReadonlyArray<{ finish: string; cardId: string }> = [
   { finish: "normal", cardId: "sv03.5-001" },
   { finish: "reverse", cardId: "sv03.5-001" },
   { finish: "holo", cardId: "sv03.5-006" },
-  // Pokémon TCG Pocket Ossatueur-ex (Quatre Diamants → RR hologram path)
   { finish: "holo", cardId: "A1-153" },
   { finish: "firstEdition", cardId: "base1-4" },
 ];
@@ -72,9 +71,17 @@ export function pickTcgdexPlayroomSamples(
     const seed = FINISH_SEEDS.find(
       (entry) => normalizeFinish(entry.finish) === wanted,
     );
-    if (!seed) continue;
 
-    const card = cardsById.get(seed.cardId);
+    let card = seed ? cardsById.get(seed.cardId) : undefined;
+    // Prefer any card already loaded that declares this finish (dynamic bench).
+    if (!card) {
+      for (const candidate of cardsById.values()) {
+        if (cardHasFinish(candidate, need.finish) && candidate.imageUrl) {
+          card = candidate;
+          break;
+        }
+      }
+    }
     if (!card?.imageUrl) continue;
     if (!cardHasFinish(card, need.finish) && card.finishes.length > 0) continue;
 

@@ -7,7 +7,7 @@
  */
 
 import { parsePrintKey } from "@/core/identify/printKey";
-import { foilTextureFile } from "@/effects/foilTextureFile";
+import { pokemonCardTextureUrl } from "@/lib/packAssetUrls";
 
 import {
   listBundleIds,
@@ -54,7 +54,7 @@ export type PaperEffectResolution = {
     | "tcglive-reprint-fallback"
     | "tcglive-name-fallback";
   maskTex: string | null;
-  /** Live card art stem under ``textures/<bundle>/``. */
+  /** Live card art stem under ``cards/{set}/{lang}/{card}/``. */
   cardTex: string | null;
   etchTex: string | null;
   coldFoilTex: string | null;
@@ -354,24 +354,20 @@ export function resolveEffectForPrintKey(
   return null;
 }
 
-/** Public URL for a dumped mask texture under `/foil/pokemon`. */
+/** Public URL for a dumped mask texture under `/assets/pokemon/cards/…`. */
 export function paperMaskUrl(
   bundle: string,
   maskTex: string | null | undefined,
 ): string | null {
-  const tex = maskTex?.trim();
-  if (!tex) return null;
-  return `/foil/pokemon/textures/${bundle}/${foilTextureFile(tex)}`;
+  return pokemonCardTextureUrl(bundle, maskTex);
 }
 
-/** Public URL for a dumped card art texture under `/foil/pokemon`. */
+/** Public URL for a dumped card art texture under `/assets/pokemon/cards/…`. */
 export function paperArtUrl(
   bundle: string,
   cardTex: string | null | undefined,
 ): string | null {
-  const tex = cardTex?.trim();
-  if (!tex) return null;
-  return `/foil/pokemon/textures/${bundle}/${foilTextureFile(tex)}`;
+  return pokemonCardTextureUrl(bundle, cardTex);
 }
 
 /**

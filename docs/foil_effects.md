@@ -19,7 +19,7 @@
    médias, deux sources. On mappe **par intention visuelle** (finish / leaf).
 2. Ne pas charger les `.css` upstream au runtime : on **adapte** dans
    `HoloShader` (comme les recettes Lorcana dumpées).
-3. Assets officiels (art, masks, textures APK/CDN) restent sous `data/<pack>/foil/`.
+3. Assets officiels : faces sous `data/<pack>/cards/`, kit rendu sous `data/<pack>/foil/` → URL `/assets/<pack>/…`.
 4. Trees simey = **vendored** dans `third_party/` (pas de submodule) — même idée
    que les dumps Lorcana versionnés / pinés.
 5. **Pokémon CSS :** vérité = **TCG Live** (compare Unity | CSS). Simey,
@@ -28,6 +28,11 @@
    leur bijection rareté↔matériau. Si un layer Live n’a pas d’équivalent CSS
    évident → s’inspirer du frag WebGL / house pour **reproduire l’intention**
    (pas porter le GLSL). Détail : [foil_css_sources.md](foil_css_sources.md) §0.
+
+**Statut Pokémon (2026-08-11) :** dumps + recettes **branchés** ; intégration
+**à terminer** — (1) WebGL : vérif Live vs Placarr leaf par leaf ;
+(2) CSS : adaptation intelligente Live (+ Simey en analyse, layers ≠). Voir
+[backlog.md](backlog.md) P1 foil Pokémon.
 
 ## 2. Couches (même partout)
 
@@ -67,8 +72,8 @@ Même skeleton pour tout nouveau jeu :
 Disk / URL (voir [data-layout.md](data-layout.md)) :
 
 ```
-data/<pack>/foil/  →  /foil/<pack>/…
-  shaders/  textures/  card_back.webp  (+ web/ ou cards/ selon dump)
+data/<pack>/cards/  →  /assets/<pack>/cards/…   (faces + back.webp)
+data/<pack>/foil/   →  /assets/<pack>/…          (shaders, textures FX, web, …)
 scripts/<pack>/    →  pnpm foil:<pack>
 ```
 

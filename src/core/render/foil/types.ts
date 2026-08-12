@@ -61,6 +61,13 @@ export type FoilMaterial = {
    * made the render dark and oversaturated.
    */
   linearOutput?: boolean;
+  /**
+   * When `false`, stay on the CSS plain-art path even if the preference is
+   * `webgl` / `auto`. Live Standard/NonFoil has no foil layers — running its
+   * dump frag next to CSS invented a fake Unity↔web gap in the playroom.
+   * Omit or `true` = WebGL-eligible.
+   */
+  webgl?: boolean;
   textures: Record<string, FoilTextureBinding>;
   floats: Record<string, number>;
   colors: Record<string, number[]>;
@@ -90,7 +97,7 @@ export type EffectPackModule = {
   label?: string;
   /** Short subtitle under the label when space allows. */
   blurb?: string;
-  /** Base URL for pack assets, e.g. `/foil/lorcana` */
+  /** Base URL for pack assets, e.g. `/assets/lorcana` */
   assetBase: string;
   /**
    * Default card back for the whole game (dump APK/CDN). Required contract —

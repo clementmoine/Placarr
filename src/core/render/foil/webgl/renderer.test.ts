@@ -8,7 +8,14 @@ import {
   identityMatrixColumns,
   LIVE_CARD_ASPECT,
   restoreOpaqueFoilOutput,
+  UNBOUND_TEXTURE_FALLBACK,
 } from "./renderer";
+
+describe("UNBOUND_TEXTURE_FALLBACK", () => {
+  it("reste transparent (α=0) — pas noir opaque qui arme les couches CC", () => {
+    expect(UNBOUND_TEXTURE_FALLBACK).toEqual([0, 0, 0, 0]);
+  });
+});
 
 describe("foilCosTime", () => {
   it("suit la formule Unity (cos t/8, t/4, t/2, t)", () => {

@@ -17,7 +17,7 @@ export { lumaOf, normalMapCoverage } from "@/core/enrich/media/maskCoverage";
 /**
  * Turning a published mask into something both CSS and the Unity shaders wear.
  *
- * Prefer storing publisher JPEGs under `/foil/<pack>/cards/…` and converting
+ * Prefer storing publisher JPEGs under `/assets/<pack>/cards/…` and converting
  * at display time (`maskBlobStore` / Safari alpha). This server bake remains
  * for legacy `/uploads/` localize of remote hotlinks.
  *
@@ -89,7 +89,7 @@ export async function bakeMask(input: Buffer, kind: MaskKind): Promise<Buffer> {
 /**
  * The local copy of a mask, downloading and baking it if this is the first time.
  *
- * `/foil/` and `/uploads/` are already on our origin — returned as-is (no bake).
+ * `/assets/` and `/uploads/` are already on our origin — returned as-is (no bake).
  * Pack cards should be raw JPEGs converted client-side for CSS.
  */
 export async function localizeMaskImage(
@@ -97,7 +97,7 @@ export async function localizeMaskImage(
   options: { kind: MaskKind; signal?: AbortSignal },
 ): Promise<string | null> {
   if (!url.startsWith("http")) {
-    if (url.startsWith("/uploads/") || url.startsWith("/foil/")) return url;
+    if (url.startsWith("/uploads/") || url.startsWith("/assets/")) return url;
     return null;
   }
 

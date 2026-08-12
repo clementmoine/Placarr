@@ -24,7 +24,6 @@ const SHARED_DIR = path.join(
   "pokemon",
   "foil",
   "textures",
-  "_shared",
 );
 const SHADERS_DIR = path.join(process.cwd(), "data", "pokemon", "foil", "shaders");
 const SHEETS_PATH = path.join(

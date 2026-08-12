@@ -98,3 +98,45 @@ export function extraLiveFragStems(
   const known = new Set(foilNames);
   return [...dumpFrags].filter((f) => !known.has(f)).sort();
 }
+
+/**
+ * Viewer CSS chrome (nav / chrome) — not foil textures. Keep out of actionable
+ * Lorcana web-stem gaps.
+ */
+export const LORCANA_WEB_CHROME_STEMS = new Set([
+  "frame",
+  "menu",
+  "logo",
+  "icon",
+  "favicon",
+]);
+
+/**
+ * Catalogue finishes / varnishes that only hit pack CSS defaults.
+ * `isFallbackOnly` is pack-owned (see `effects/lorcana/cssRecipes`).
+ */
+export function lorcanaCatalogueCssGaps(input: {
+  finishes: readonly string[];
+  varnishes: readonly string[];
+  isFinishFallbackOnly: (finish: string) => boolean;
+  isVarnishFallbackOnly: (varnish: string) => boolean;
+}): { finishes: string[]; varnishes: string[] } {
+  const finishes = [
+    ...new Set(input.finishes.filter((f) => input.isFinishFallbackOnly(f))),
+  ].sort();
+  const varnishes = [
+    ...new Set(input.varnishes.filter((v) => input.isVarnishFallbackOnly(v))),
+  ].sort();
+  return { finishes, varnishes };
+}
+
+/** Web dump stems to review (unknown foil texture, not chrome). */
+export function lorcanaWebStemGaps(input: {
+  unlistedStems: readonly string[];
+  chromeStems?: ReadonlySet<string>;
+}): string[] {
+  const chrome = input.chromeStems ?? LORCANA_WEB_CHROME_STEMS;
+  return [...input.unlistedStems]
+    .filter((s) => s && !chrome.has(s.toLowerCase()))
+    .sort();
+}

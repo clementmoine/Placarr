@@ -1,172 +1,122 @@
 # Handoff — navigateur Live carte (Frida / uGUI) (2026-08-08)
 
-Reconstitué côté Cursor : Claude n’a **pas** écrit de handoff de retour.
-Source = collages chat Claude + commits locaux + `scripts/pokemon/liveCard.ts`.
+Mis à jour Cursor — API-first (pas de taps pixels sauf ultime secours).
 
-Branche `feat/foundation-postgres-tests` (HEAD local **8 commits** devant origin,
-working tree clean au moment de ce doc). Ne pas committer secrets / tokens.
-
-**Où Claude s’est arrêté :** chaîne Frida/il2cpp validée ; navigateur pas encore
-écrit. Demande user : « le plus logique / efficace pour **toujours** trouver la
-carte ».
+Branche `feat/foundation-postgres-tests`. Scratch : `~/.cache/placarr-frida-ugui/`.
 
 ---
 
-## 1. Verdict — surfaces externes (clos, exhaustif)
+## 1. Verdict
 
-Les trois voies Android pour adresser l’app depuis l’extérieur sont **mortes** :
-
-| Voie | Verdict |
+| Question | Réponse |
 |---|---|
-| URI / deep link `tpcitcgapp://` | Seulement `callback` + `event.googleplay` ; routage dans `LoginWebFlow` |
-| Activité tierce | **1** activité exportée : `.UnityPlayerActivity` (MAIN/LAUNCHER + VIEW OAuth) |
-| Service / broadcast | Aucun exporté ; receiver protégé `DYNAMIC_RECEIVER_NOT_EXPORTED` (signature) |
-| Provider | `FirebaseInitProvider` interne seulement |
+| Deep link / intent carte ? | **Non** |
+| DOM | **uGUI** + `frida-il2cpp-bridge` |
+| Entrée Card-Dex | `MainMenuNavigation_P.GoToHomeScreen` + `MainMenuController.OpenScreen(HUBCardDex)` / `ChangeToCardCollection` (parfois AV mais UI OK) |
+| Fermer overlays (carte / tri) | **`OverlayManager.CloseAllOverlays()`** — **jamais** tap y≈0.91 (ouvre « Trier par ») |
+| Série | `CardDexSeriesDropdownItem.OnClickSeries` / `CardDexSeriesSelector.SelectSeries` |
+| **Set (y compris hors pool recyclé)** | **`CollectionSetCarousel.ShiftCarouselToTargetSet(id)` + `OnClickExpansion(id, bool, bool)`** |
+| Set (fallback cellule GC) | `CollectionCarouselObjects.SelectExpansion()` |
+| Carte | `CardDexStackParts.InvokeClickDelegateWithBoundArchetypeStack` via `_assetBundleToUse` |
+| Catalogue sets | `HUBCardDexScreenController.get_AllCachedExpansionDetails()` |
+| Thread | Unity main (`Il2Cpp.mainThread.schedule` quand dispo) |
 
-Même si Unity lisait des extras d’intent, **aucun handler** ne route hors login.
-L’app n’est pilotable que par son UI — décision éditeur, pas lacune d’outil.
-
-**Ne pas** relancer l’enquête deep link / intent / activité.
+Identité foil admin → Live : `printKey` → `paperBundleId` → `{liveSet}_{lang}_{num}` ex. `me5_fr_001`. Playroom : `bundleId` déjà sur `packArts`.
 
 ---
 
-## 2. UI Card-Dex (reconnu avant Frida)
+## 2. Scratch CLI
 
-| Observation | Implication |
+```bash
+python3 ~/.cache/placarr-frida-ugui/nav.py close-overlays
+python3 ~/.cache/placarr-frida-ugui/nav.py home
+python3 ~/.cache/placarr-frida-ugui/nav.py card-dex      # OpenScreen API
+python3 ~/.cache/placarr-frida-ugui/nav.py series XY
+python3 ~/.cache/placarr-frida-ugui/nav.py select XY1   # Shift+OnClickExpansion
+python3 ~/.cache/placarr-frida-ugui/nav.py open xy1_fr_001 --prefer ph
+python3 ~/.cache/placarr-frida-ugui/nav.py goto me5_fr_001 --prefer ph
+python3 ~/.cache/placarr-frida-ugui/nav.py expansions   # catalogue complet
+python3 ~/.cache/placarr-frida-ugui/nav.py tour          # série→sets pool→open (API)
+```
+
+Ne pas ajouter `frida-il2cpp-bridge` aux deps Placarr. Proxy mitm off pendant la nav.
+
+---
+
+## 3. Placarr
+
+| Fichier | Rôle |
 |---|---|
-| uiautomator = surface vide | Pas d’a11y Android utile |
-| Pas de recherche Card-Dex (`ui_filters_*` ≠ champ nom) | Pas de « tape le nom → go » |
-| Bandeau « MÉGA-ÉVOLUTION ▲ » = **sélecteur de série** | UI **à 2 niveaux**, pas carrousel plat de 100 sets |
-| Listes séries stables (ME, SV, SWSH, SM, XY, …) | Peu d’entrées, peu de churn |
+| `scripts/pokemon/liveCard.ts` | Nom → sqlite → `fridaGotoCard` → tilt → vérif |
+| `src/lib/admin/liveNavFrida.ts` | Shell `nav.py` (`goto` / `select` / `open`) |
+| `src/app/api/admin/live-open` | Admin bouton playroom → `openCardInLive` |
+| `scripts/pokemon/liveCardVerify.ts` | Screenshot ↔ `cardTex` (complément) |
+| `src/effects/pokemon/resolveEffect.ts` | `printKey` → bundle |
+| Admin | `/admin?tab=tcg-effects` (`FoilPlayroom` / `packArts.bundleId`) |
 
-Préfixes set → série (dérivable, ~6 lignes, stable) :
+```bash
+pnpm foil:pokemon:live-card "Tropius" --set me5 --tilt
+```
 
-| Préfixe stem | Série UI (FR observée) |
+---
+
+## 4. Validé live (API)
+
+| Étape | Résultat |
 |---|---|
-| `me*` | Méga-Évolution |
-| `sv*` | Écarlate et Violet |
-| `swsh*` | Épée et Bouclier |
-| `sm*` | Soleil et Lune |
-| `xy*` | XY |
-| `bw*` | Noir & Blanc |
-
-Sets hors préfixe (à nommer explicitement) : `gum`, `rsv10-5`, `zsv10-5`.
-
----
-
-## 3. Designs envisagés (ordre chronologique)
-
-### A. Table set → index carrousel (proposé puis dépassé)
-
-Générer une fois l’ordre d’affichage Live par série, figer, rafraîchir à chaque
-nouveau set. Sans OCR / sans dep. **Fragile** si Live réordonne ; maintenance.
-
-### B. Série (préfixe) + table set-dans-série + **vérif image** (design Claude « logique »)
-
-1. **Niveau 1 série** — gratuit via préfixe stem.
-2. **Niveau 2 set** — table générée (ordre Live capturé), pas manuscrite.
-3. **Niveau 3 garantie** — après ouverture, comparer le screenshot à la
-   `cardTex` dumpée du bundle (~41k textures locales). Mismatch → échec explicite
-   (« on sait quand ça n’a pas marché »), pas une fausse capture.
-
-C’est le critère user « toujours trouver la carte » : navigation + **preuve**.
-
-### C. Frida uGUI (dernier état — à poursuivre)
-
-Découverte après B : graphe uGUI inspectable (pas UI Toolkit — 0 `UIDocument`).
-
-| Classe | ~instances |
-|---|---|
-| `UnityEngine.Canvas` | 219 |
-| `UnityEngine.UI.Button` | 1 890 |
-| `TMPro.TextMeshProUGUI` | 4 857 |
-| `UnityEngine.GameObject` | 69 142 |
-
-Frida + `frida-il2cpp-bridge` (scratch **hors repo**) : lire libellés TMP, tap via
-`RectTransform`, éventuellement `onClick`.
-
-**Recommandation reprise :** **C pour naviguer** (plus de table d’index à
-maintenir) + **garder B.3 vérif `cardTex`** (la garantie). Préfixe série (B.1)
-reste utile comme hint / filtre même avec Frida. Table set (B.2) = repli si
-Frida casse, pas le chemin principal.
+| CloseAllOverlays / GoToHome | OK |
+| Card-Dex (OpenScreen) | AV possible ; `inCardDex` / titre Collection = source de vérité (pas GC carousel stale) |
+| `listExpansions` | Catalogue complet (bw/xy/sv/…) |
+| `selectSeries("XY")` dropdown | OK |
+| `Shift+OnClickExpansion("XY1")` | OK — pool passe à XY0/1/2, `loaded=XY1` |
+| `open XY12_fr_005` | OK — Aspicot Évolutions |
+| `open me5_fr_001 --prefer ph` | OK — Tropius owned 4 |
 
 ---
 
-## 4. Baseline repo aujourd’hui
+## 4. Ouvert (pour tests foil carte-par-carte)
 
-`pnpm foil:pokemon:live-card "<nom>" [--set-steps N] [--tilt]`
-→ `scripts/pokemon/liveCard.ts`
+1. ~~OpenScreen AV~~ / ~~set hors pool~~ / ~~close overlays~~
+2. **Tour exhaustif** optionnel — moins critique grâce à `openFast`
+3. **JumpToDataIndex** grille — fallback seulement
+4. **Vérif cardTex** — seuil/crop
+5. ~~**Bouton admin** « Live »~~ → `POST /api/admin/live-open` + `OpenInLiveButton` (playroom owned faces)
 
-- Résolution nom → stem : SQLite (`name_*` puis normalize locale).
-- Navigation : **coordonnées** (Card-Dex, carousel, grille 3 col).
-- Tilt : `motionevent` DOWN/MOVE/capture/UP (`input swipe` relâche → foil plat).
-- Deep link clos documenté en tête du fichier.
+### Instant open (2026-08-08 soir)
 
-À remplacer : navigation coordonnées / `--set-steps`. À garder : SQLite + tilt +
-(à ajouter) vérif image vs dump.
+```
+bundle …
+  → ensure Card-Dex (soft OpenScreen ; skip CloseAllOverlays / GoToHome — hang Frida)
+  → openFast: SetupLargeCard + OpenOverlay
+  → hide purchaseUI + BackgroundInputBlocker
+  → settle ~2s: DragRotator ready + PhysicsRaycaster
+```
 
----
+**Pourquoi Dex d’abord** : `openFast` depuis home (ou overlay déjà ouvert hors Dex) laisse PurchaseUI / chrome incomplet → pas de X close ni tilt doigt. Toujours `OpenScreen(CardDex)` avant `openFast` (même si le détecteur croit déjà être en Dex).
 
-## 5. État outillage (fin passe Claude)
+`inCardDex` : `CardDexSeriesSelector` / écran dex / titre Collection — **pas** `CollectionCarouselObjects` (faux positif hors dex).
 
-| Élément | État |
-|---|---|
-| Emulator | MuMu `emulator-5554`, `com.pokemon.pokemontcgl` |
-| `frida-server` | Sur device, attach OK (`frida-ps -U`) |
-| `adb` root | OK |
-| `frida-il2cpp-bridge` | Scratch **hors** dépôt — deps Placarr intactes |
-| Probe | `dumpui.ts` scratch : UIDocument=0 → pivot uGUI |
-| Frida **dans** repo | Scanner mémoire court — pas d’il2cpp |
-| Proxy mitm | Remis `10.0.2.2:8080` — **app offline si mitm n’écoute pas** |
+Warm daemon `navd.py` (~0.5–1 s/open). Sans daemon, chaque clic ~2.5–3.5 s (re-attach Frida).
+Le bouton admin tente de démarrer `navd` en arrière-plan (sans bloquer le 1er clic).
 
-Retrouver / recréer le scratch si perdu. Mitm **dégagé** pendant nav UI/Frida.
+```bash
+python3 ~/.cache/placarr-frida-ugui/navd.py &   # une fois
+python3 ~/.cache/placarr-frida-ugui/nav.py goto smalt_fr_001
+pnpm foil:pokemon:live-card --bundle smalt_fr_001 --tilt
+```
 
----
-
-## 6. Commits Claude (HEAD local, non poussés au moment du doc)
-
-1. `428b6f6` pack Pokémon + `untrackedSourceGuard`
-2. `a161486` `card_foil` SQLite
-3. `3bb0d0d` drop `unityFoil`
-4. `4c601d9` lookups SQLite audits/serveur
-5. `d2f942c` CDN GameSettings
-6. `bb11511` playroom faces Live serveur
-7. `90502a8` FlatSilver 2ᵉ spectre + `foil:audit-live-css`
-8. `d19df6c` **`live-card`** (baseline)
-
-Owned/craft : `docs/handoff-live-owned-craft.md`, `docs/pokemon_live_rainier.md`.
+- GC `CollectionCarouselObjects` **stale hors Card-Dex** → ne pas croire `current_set` / `inCardDex` seul.
+- Tap bas d’écran = barre **Trier par** / decks — préférer `CloseAllOverlays` hors hot path.
+- Package Live = `com.pokemon.pokemontcgl` only (jamais Pocket).
+- Pas de KEYCODE_BACK (boot/loading).
+- **Erreur chargement (ERREUR 10099 + Réessayer)** : `wait_app_ready` / `attach` tapent le bouton in-app (cooldown ~8s), **pas** de force-stop pour ça.
+- Tap Card-Dex hub : label y−40 (le texte est sous l’hex).
+- `SelectSeries` / certains invokes AV **après** succès — re-vérifier pool / `loadedSetId`.
 
 ---
 
-## 7. Prochaine étape
+## 7. Prompt de reprise
 
-1. Scratch : enum TMP/Button actifs → `findLabel` → tap / onClick.
-2. Brancher dans `liveCard.ts` : série (préfixe ou label) → set (label) → carte
-   (nom) ; drop `--set-steps` quand Frida OK.
-3. **Vérif** screenshot ↔ `cardTex` du bundle (échec bruyant si mismatch).
-4. Cas `gum` / `rsv10-5` / `zsv10-5` : mapping explicite série.
-5. Ne pas vendor il2cpp-bridge tant que ce n’est pas outil first-class.
-6. Doc rainier § UI ou garder ce handoff.
-
-Hors scope : craft batch, re-sniff tokens.
-
----
-
-## 8. Pièges
-
-- uiautomator vide ≠ pas de DOM Unity.
-- Symboles UIElements ≠ usage (0 UIDocument).
-- Proxy sans listener → offline.
-- Ne pas committer `.tmp-foil-audit/` / scratch avec tokens.
-- `motionevent` pour tilt, pas `swipe`.
-- OCR = mauvaise piste (Frida lit les labels ; table seule = maintenance).
-
----
-
-## 9. Prompt de reprise
-
-> Lis `docs/handoff-live-frida-nav.md`. Objectif : **toujours** ouvrir la bonne
-> carte Live. Naviguer via **Frida uGUI** (pas table carrousel, pas OCR) ;
-> **vérifier** contre `cardTex` dumpée. Outillage il2cpp-bridge hors repo. Mitm
-> dégagé sauf OAuth. À la fin : handoff de retour (verdict, chemins scratch,
-> diffs `liveCard.ts`, pièges).
+> Lis ce handoff. Priorité : (1) `tour` exhaustif via `ShiftCarouselToTargetSet`
+> + catalogue `listExpansions` ; (2) stabiliser `openCardDex` ; (3) bouton admin
+> foil → `goto` bundle. API-first, pas de taps. Scratch hors repo.

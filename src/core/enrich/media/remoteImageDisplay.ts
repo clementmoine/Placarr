@@ -18,10 +18,10 @@ export function isLocalUploadImageSrc(url: string): boolean {
   );
 }
 
-/** Foil pack textures under ``/foil/<pack>/…`` — streamed from ``data/``, not CDN. */
+/** Foil pack textures under ``/assets/<pack>/…`` — streamed from ``data/``, not CDN. */
 export function isLocalFoilImageSrc(url: string): boolean {
   return (
-    url.startsWith("/foil/") ||
+    url.startsWith("/assets/") ||
     /^https?:\/\/localhost(?::\d+)?\/foil\//i.test(url)
   );
 }

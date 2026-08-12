@@ -24,6 +24,23 @@ export function foilFaceReady(input: {
 }
 
 /**
+ * CSS idle lean gate. Ultra Gold / Scodix / SwSecret are **full-card** (no WP
+ * shine mask); requiring `shineMask` left them frozen after pointer leave —
+ * idle never armed, last pose stuck.
+ */
+export function holoCssIdleEnabled(input: {
+  hasFinish: boolean;
+  isDriven: boolean;
+  /** Live gold / secret: paint full-card without a white-plate shine mask. */
+  fullCardFinish: boolean;
+  shineMask: string | null;
+}): boolean {
+  if (!input.hasFinish || input.isDriven) return false;
+  if (input.fullCardFinish) return true;
+  return Boolean(input.shineMask);
+}
+
+/**
  * Whether the WebGL path has the surfaces it cannot invent. Etch / cold-foil
  * plates are optional — the renderer falls back to solid black ("no plate").
  * Only the foil mask is required when the material samples it.

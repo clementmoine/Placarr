@@ -7,6 +7,10 @@ import {
   DEFAULT_VARNISH_CSS_ID,
   FINISH_CSS,
   VARNISH_CSS,
+  hasDedicatedCssFinish,
+  isCssFinishFallbackOnly,
+  isCssVarnishFallbackOnly,
+  lorcanaWebRecipeTextureStems,
   resolveCssRecipe,
 } from "./cssRecipes";
 
@@ -16,6 +20,8 @@ describe("resolveCssRecipe", () => {
     (finish, shaderId) => {
       expect(resolveCssRecipe(finish, null).finishShaderId).toBe(shaderId);
       expect(isHoloShaderId(shaderId)).toBe(true);
+      expect(isCssFinishFallbackOnly(finish)).toBe(false);
+      expect(hasDedicatedCssFinish(finish)).toBe(true);
     },
   );
 
@@ -26,6 +32,7 @@ describe("resolveCssRecipe", () => {
         shaderId,
       );
       expect(isHoloShaderId(shaderId)).toBe(true);
+      expect(isCssVarnishFallbackOnly(varnish)).toBe(false);
     },
   );
 
@@ -36,6 +43,13 @@ describe("resolveCssRecipe", () => {
       varnishShaderId: null,
     });
     expect(DEFAULT_FINISH_CSS_ID).toBe("silver");
+    expect(isCssFinishFallbackOnly("Kaleidoscope")).toBe(true);
+  });
+
+  it("does not flag Silver / None as fallback-only gaps", () => {
+    expect(isCssFinishFallbackOnly("Silver")).toBe(false);
+    expect(isCssFinishFallbackOnly("None")).toBe(false);
+    expect(isCssFinishFallbackOnly("")).toBe(false);
   });
 
   it("falls back to pack hotFoil for an unknown varnish type", () => {
@@ -43,6 +57,9 @@ describe("resolveCssRecipe", () => {
       finishShaderId: "silver",
       varnishShaderId: DEFAULT_VARNISH_CSS_ID,
     });
+    expect(isCssVarnishFallbackOnly("MysteryCoat")).toBe(true);
+    expect(isCssVarnishFallbackOnly("HighGloss")).toBe(false);
+    expect(isCssVarnishFallbackOnly("MetallicHotFoil")).toBe(false);
   });
 
   it("returns no finish CSS when finish is empty (varnish-only materials)", () => {
@@ -50,5 +67,11 @@ describe("resolveCssRecipe", () => {
       finishShaderId: null,
       varnishShaderId: "hotFoil",
     });
+  });
+
+  it("lists recipe texture stems used by ported looks", () => {
+    const stems = lorcanaWebRecipeTextureStems();
+    expect(stems.has("silverc")).toBe(true);
+    expect(stems.has("frame")).toBe(false);
   });
 });

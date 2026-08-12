@@ -77,7 +77,7 @@ par effet (généricité).
 | `SwHolo` | `swHolo` | |
 | `AceFoil` | `aceFoil` | |
 | `AngledPillars` | `angledPillars` | |
-| `SunPillar` | `sunPillar` / `sunPillarCc` | CC = Northern Cross + SVHolo2 |
+| `SunPillar` | `sunPillar` → coat → glitter (+ Cc) | poke-151 `ex-regular` stack; Live hues / CC glitter = Northern Cross × SVHolo2 |
 | `SunBeam` / `SunLava` | `sunBeam` / `sunLava` | |
 | `SolidColor` / `Squares` / `Thatch` / `Tinsel` | APK ids | |
 | `Stamped` / `25thConfetti` | `stamped` / `confetti25th` | |
@@ -159,21 +159,28 @@ Leçons Radiant + Ultra Gold (2026-08-07), à rejouer sur chaque finish
 
 ### File d’attente (passer la checklist)
 
-Mapping Live → CSS Pokemon **branché** (table §1). Reste la **vérif visuelle**
-Unity | CSS (dosage = toi) :
+**Statut 2026-08-11 :** mapping Live → CSS **branché** (table §1) ≠ **terminé**.
+Rester sur la checklist §2 leaf par leaf — dosage / mixes / idle encore faux
+sur plusieurs finishes (ports Simey aveugles ou screen trop agressifs).
 
-1. `RadiantHolo` — fait (réf. §3)
-2. `SvUltraGoldRainbow` / `ultraGoldRainbow` — fait (réf. §3)
-3. `SvUltraScodix` / `ultraScodix` — branché (+ etch Ultra Gold)
-4. `SwSecret` / `swSecret` — branché (Spectrum + noise + etch)
-5. `Rainbow` / `Rainbow02` — branché
-6. `Cosmos` / `Galaxy` / `CrackedIce` — branché (carve)
-7. `FlatSilver` / `_CC` — branché (CC = carve Poké Ball)
-8. `SvUltra` / `SvHolo` / `SwHolo` — branché
-9. `AceFoil` / `AngledPillars` — branché
-10. Sun* / SolidColor / Squares / Thatch / Tinsel / Stamped / 25th — branché
+Ordre de travail suggéré (Comparer Unity | CSS, plusieurs faces) :
 
-Cocher dans le PR / la note de finish après compare manuel.
+1. `RadiantHolo`
+2. `SvUltraGoldRainbow` / `ultraGoldRainbow` (+ idle full-card)
+3. `SvUltraScodix` / `ultraScodix`
+4. `SwSecret` / `swSecret`
+5. `SunPillar` / `SunPillar`+CastAndCure — Live d’abord ; Simey `ex-regular` = composition seulement
+6. `Rainbow` / `Rainbow02`
+7. `Cosmos` / `Galaxy` / `CrackedIce`
+8. `FlatSilver` / `_CC`
+9. `SvUltra` / `SvHolo` / `SwHolo`
+10. `AceFoil` / `AngledPillars`
+11. Sun* / SolidColor / Squares / Thatch / Tinsel / Stamped / 25th
+
+Cocher dans le PR / la note de finish **après** compare manuel vert (pas
+seulement « ça compile / cssGuard vert »).
+
+Voir aussi backlog P1 « foil Pokémon : terminer l’intégration » (WebGL + CSS).
 
 ---
 

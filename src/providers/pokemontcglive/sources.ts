@@ -214,8 +214,12 @@ export async function pickContentDir(opts: {
   return [DEFAULT_CONTENT_DIR, "default-fallback"];
 }
 
+function pokemonConfigCacheDir(cacheRoot: string): string {
+  return path.join(cacheRoot, "staging", "config-cache");
+}
+
 export async function resolveCdnTarget(cache: string): Promise<CdnTarget> {
-  const configCache = path.join(cache, "config-cache");
+  const configCache = pokemonConfigCacheDir(cache);
   let ver: string;
   let build: string | null;
   let verSrc: string;
@@ -249,7 +253,7 @@ export async function writeSourcesReport(
   out?: string,
 ): Promise<Record<string, unknown>> {
   const target = await resolveCdnTarget(cache);
-  const configCache = path.join(cache, "config-cache");
+  const configCache = pokemonConfigCacheDir(cache);
   const setnums =
     fs.existsSync(configCache) && fs.statSync(configCache).isDirectory()
       ? catalogueSetnumsFromConfig(configCache)

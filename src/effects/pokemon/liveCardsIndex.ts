@@ -1,6 +1,6 @@
 /**
  * Local SQLite index of TCG Live card-database identity rows.
- * Built by ``pnpm foil:pokemon:index-cards`` → ``data/pokemon/live-cards.sqlite``.
+ * Built by ``pnpm foil:pokemon:index-cards`` → ``data/pokemon/catalog.sqlite``.
  *
  * Join aid only — TCGdex remains the product catalogue.
  *
@@ -9,7 +9,7 @@
  * loaded on the server (provider / worker / scripts). Avoid `server-only` —
  * background workers run via tsx outside Next's react-server resolution.
  */
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -40,24 +40,33 @@ const SELECT_COLS = `
 `;
 
 let cachedPath: string | null = null;
+let cachedMtimeMs: number | null = null;
 let cachedDb: DatabaseSync | null = null;
 
 export function liveCardsDbPath(): string {
   const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
   if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "live-cards.sqlite");
+  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
 }
 
 function openDb(dbPath = liveCardsDbPath()): DatabaseSync | null {
-  if (cachedDb && cachedPath === dbPath) return cachedDb;
   if (!existsSync(dbPath)) {
-    cachedDb = null;
-    cachedPath = dbPath;
+    resetLiveCardsIndexCache();
     return null;
+  }
+  const mtimeMs = statSync(dbPath).mtimeMs;
+  if (cachedDb && cachedPath === dbPath && cachedMtimeMs === mtimeMs) {
+    return cachedDb;
+  }
+  try {
+    cachedDb?.close();
+  } catch {
+    /* ignore */
   }
   const db = new DatabaseSync(dbPath, { readOnly: true });
   cachedDb = db;
   cachedPath = dbPath;
+  cachedMtimeMs = mtimeMs;
   return db;
 }
 
@@ -70,6 +79,7 @@ export function resetLiveCardsIndexCache(): void {
   }
   cachedDb = null;
   cachedPath = null;
+  cachedMtimeMs = null;
 }
 
 function mapRow(row: Record<string, unknown> | undefined): LiveCardRow | null {

@@ -1,5 +1,5 @@
 /**
- * Build `data/pokemon/live-cards.sqlite` from config-cache card-database files.
+ * Build `data/pokemon/catalog.sqlite` from config-cache card-database files.
  */
 
 import fs from "node:fs";
@@ -31,10 +31,11 @@ export function indexLiveCards(opts: IndexLiveCardsOptions = {}): {
 } {
   const root = opts.root ?? path.resolve(dataRoot(), "..");
   const cache = path.resolve(
-    opts.configCache ?? path.join(root, "data", "pokemon", "config-cache"),
+    opts.configCache ??
+      path.join(root, "data", "pokemon", "staging", "config-cache"),
   );
   const out = path.resolve(
-    opts.out ?? path.join(root, "data", "pokemon", "live-cards.sqlite"),
+    opts.out ?? path.join(root, "data", "pokemon", "catalog.sqlite"),
   );
 
   if (!fs.existsSync(cache) || !fs.statSync(cache).isDirectory()) {
@@ -47,7 +48,7 @@ export function indexLiveCards(opts: IndexLiveCardsOptions = {}): {
   const meta = writeLiveCardsSqlite(rows, out);
   const foilMasks = writeLiveFoilMasksJson(
     rows,
-    path.join(root, "src", "effects", "pokemon", "liveFoilMasks.json"),
+    path.join(root, "data", "pokemon", "liveFoilMasks.json"),
   );
   return { ok: true, meta: { ...meta, foilMasks } };
 }

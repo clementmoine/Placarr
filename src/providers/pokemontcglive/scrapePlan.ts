@@ -18,12 +18,13 @@ import {
 import path from "node:path";
 
 import {
-  defaultManifestDumpPath,
-  filterCardBundleNames,
+  buildCdnCatalogue,
+  emptyCdnCatalogue,
   intersectWantedWithManifest,
   loadCdnManifestDump,
+  type CdnCatalogue,
+  type CdnManifestDump,
 } from "./cdnManifest";
-import { DEFAULT_CONTENT_DIR } from "./cdn";
 
 export type SoftbanState = {
   until: string;
@@ -119,46 +120,57 @@ export function loadKnownCdnMisses(cacheRoot: string): Set<string> {
  * Load union of card-bundle asset names from dumped manifests under
  * ``cacheRoot/cdn-manifests/`` for the requested langs (+ optional bucket).
  */
+export function loadCdnManifestDumps(
+  cacheRoot: string,
+  opts: { langs: readonly string[] },
+): CdnManifestDump[] {
+  const dir = path.join(cacheRoot, "cdn-manifests");
+  if (!existsSync(dir)) return [];
+  const langs = new Set(opts.langs.map((l) => l.toLowerCase()));
+  let files: string[];
+  try {
+    files = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const dumps: CdnManifestDump[] = [];
+  for (const name of files) {
+    if (!name.startsWith("manifest_") || !name.endsWith(".json")) continue;
+    const dump = loadCdnManifestDump(path.join(dir, name));
+    if (!dump) continue;
+    if (!langs.has(dump.locale.toLowerCase())) continue;
+    dumps.push(dump);
+  }
+  return dumps;
+}
+
+/**
+ * Full catalogue across **every** dumped bucket — the authoritative list of
+ * what the CDN serves, plus each bundle's bucket.
+ */
+export function loadCdnCatalogue(
+  cacheRoot: string,
+  opts: { langs: readonly string[]; includeThumbnails?: boolean },
+): CdnCatalogue {
+  const dumps = loadCdnManifestDumps(cacheRoot, opts);
+  if (!dumps.length) return emptyCdnCatalogue();
+  return buildCdnCatalogue(dumps, {
+    langs: opts.langs,
+    includeThumbnails: opts.includeThumbnails,
+  });
+}
+
+/**
+ * Card-bundle names known to the CDN, unioned over all buckets.
+ * ``null`` when no dump exists (callers then skip the intersect).
+ */
 export function loadManifestAssetUnion(
   cacheRoot: string,
   opts: { langs: readonly string[]; bucket?: string },
 ): string[] | null {
-  const dir = path.join(cacheRoot, "cdn-manifests");
-  if (!existsSync(dir)) return null;
-  const bucket = opts.bucket?.trim() || DEFAULT_CONTENT_DIR;
-  const langs = opts.langs.map((l) => l.toLowerCase());
-  const assets: string[] = [];
-  let found = 0;
-  for (const lang of langs) {
-    const preferred = defaultManifestDumpPath(cacheRoot, bucket, lang);
-    const candidates = [preferred];
-    try {
-      for (const name of readdirSync(dir)) {
-        if (
-          name.startsWith(`manifest_${lang}_`) &&
-          name.endsWith(".json")
-        ) {
-          candidates.push(path.join(dir, name));
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-    for (const file of candidates) {
-      const dump = loadCdnManifestDump(file);
-      if (!dump) continue;
-      found += 1;
-      assets.push(
-        ...filterCardBundleNames(dump.assets, {
-          langs: [lang],
-          includeThumbnails: false,
-        }),
-      );
-      break;
-    }
-  }
-  if (!found) return null;
-  return [...new Set(assets)];
+  const catalogue = loadCdnCatalogue(cacheRoot, { langs: opts.langs });
+  if (!catalogue.names.length) return null;
+  return catalogue.names;
 }
 
 export type AcquireScrapeLockResult =

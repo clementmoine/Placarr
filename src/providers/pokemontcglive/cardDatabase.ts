@@ -324,7 +324,7 @@ export function liveFoilMaskOverrideMap(
   return out;
 }
 
-/** Write `src/effects/pokemon/liveFoilMasks.json` for the browser foil pack. */
+/** Write `data/pokemon/liveFoilMasks.json` for the browser foil pack. */
 export function writeLiveFoilMasksJson(
   rows: readonly LiveCardIdentity[],
   dest: string,
@@ -344,42 +344,125 @@ export function writeLiveCardsSqlite(
   dest: string,
 ): { path: string; rows: number; bundles: number; sets: number } {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  if (fs.existsSync(dest)) fs.unlinkSync(dest);
-  const db = new DatabaseSync(dest);
+
+  type CardFoilRow = Record<string, string | number | null>;
+  let preservedFoil: CardFoilRow[] = [];
+  if (fs.existsSync(dest)) {
+    try {
+      const prev = new DatabaseSync(dest, { readOnly: true });
+      try {
+        const has = prev
+          .prepare(
+            `SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name='card_foil'`,
+          )
+          .get() as { ok?: number } | undefined;
+        if (has?.ok) {
+          preservedFoil = prev
+            .prepare(`SELECT * FROM card_foil`)
+            .all() as CardFoilRow[];
+        }
+      } finally {
+        prev.close();
+      }
+    } catch {
+      preservedFoil = [];
+    }
+  }
+
+  // Build on a sibling path, then rename over `dest`. Next/admin may keep a
+  // read-only handle on the live file during extract; in-place rewrite (unlink
+  // + recreate + per-row commits) races SHARED locks → SQLITE_BUSY. Atomic
+  // replace leaves readers on the old inode and never writes through their path.
+  const tmp = `${dest}.tmp`;
   try {
-    db.exec(SCHEMA_SQL);
-    const insert = db.prepare(`
-      INSERT INTO live_cards (
-        bundle_stem, live_set, num, lang, variant, long_form_id,
-        card_id, name_en, name_fr, collector_num,
-        foil_effect, foil_mask, rarity_code, set_code
-      ) VALUES (
-        ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?,
-        ?, ?, ?, ?
-      )
-    `);
-    for (const row of rows) {
-      insert.run(
-        row.bundle_stem,
-        row.live_set,
-        row.num,
-        row.lang,
-        row.variant,
-        row.long_form_id,
-        row.card_id,
-        row.name_en,
-        row.name_fr,
-        row.collector_num,
-        row.foil_effect,
-        row.foil_mask,
-        row.rarity_code,
-        row.set_code,
-      );
+    fs.unlinkSync(tmp);
+  } catch {
+    /* no prior tmp */
+  }
+
+  const db = new DatabaseSync(tmp);
+  try {
+    db.exec("PRAGMA busy_timeout = 30000");
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.exec(SCHEMA_SQL);
+      const insert = db.prepare(`
+        INSERT INTO live_cards (
+          bundle_stem, live_set, num, lang, variant, long_form_id,
+          card_id, name_en, name_fr, collector_num,
+          foil_effect, foil_mask, rarity_code, set_code
+        ) VALUES (
+          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `);
+      for (const row of rows) {
+        insert.run(
+          row.bundle_stem,
+          row.live_set,
+          row.num,
+          row.lang,
+          row.variant,
+          row.long_form_id,
+          row.card_id,
+          row.name_en,
+          row.name_fr,
+          row.collector_num,
+          row.foil_effect,
+          row.foil_mask,
+          row.rarity_code,
+          row.set_code,
+        );
+      }
+
+      if (preservedFoil.length > 0) {
+        db.exec(`
+          CREATE TABLE IF NOT EXISTS card_foil (
+            bundle_id TEXT NOT NULL,
+            variant TEXT NOT NULL,
+            card_tex TEXT,
+            mask_tex TEXT,
+            etch_tex TEXT,
+            cold_foil_tex TEXT,
+            foil TEXT,
+            shader TEXT,
+            PRIMARY KEY (bundle_id, variant)
+          );
+          CREATE INDEX IF NOT EXISTS card_foil_shader ON card_foil (shader);
+        `);
+        const foilInsert = db.prepare(
+          `INSERT OR REPLACE INTO card_foil
+            (bundle_id, variant, card_tex, mask_tex, etch_tex, cold_foil_tex, foil, shader)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        );
+        for (const r of preservedFoil) {
+          foilInsert.run(
+            r.bundle_id,
+            r.variant,
+            r.card_tex ?? null,
+            r.mask_tex ?? null,
+            r.etch_tex ?? null,
+            r.cold_foil_tex ?? null,
+            r.foil ?? null,
+            r.shader ?? null,
+          );
+        }
+      }
+      db.exec("COMMIT");
+    } catch (err) {
+      try {
+        db.exec("ROLLBACK");
+      } catch {
+        /* already closed / no txn */
+      }
+      throw err;
     }
   } finally {
     db.close();
   }
+
+  fs.renameSync(tmp, dest);
   return {
     path: dest,
     rows: rows.length,

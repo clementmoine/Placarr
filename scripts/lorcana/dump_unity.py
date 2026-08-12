@@ -6,7 +6,7 @@ Three phases:
 2. **materials** — binding table at ``src/effects/<pack>/manifest.json``.
 3. **textures** — lossless WebP (+ best-effort raw ASTC) under ``data/<pack>/foil/textures/``.
 
-Also exports pack card backs (e.g. ``card_back`` sprite) to ``data/<pack>/foil/card_back.webp``.
+Also exports pack card backs (e.g. ``card_back`` sprite) to ``data/<pack>/cards/back.webp``.
 
 Usage:
     python dump_unity.py --pack lorcana --data <apk>/assets/bin/Data --repo <repo root>
@@ -17,6 +17,7 @@ Requires: UnityPy, lz4, Pillow (see requirements.txt).
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import struct
@@ -401,6 +402,7 @@ def dump_materials(
         if fragment_time:
             entry["fragmentTime"] = fragment_time
         saved = m.m_SavedProperties
+        unbound_tex: list[str] = []
         for key, tex_env in pairs(saved.m_TexEnvs):
             key = str(key)
             if key not in used:
@@ -416,7 +418,23 @@ def dump_materials(
                 entry["textures"][key] = binding
                 bundle_textures.add(tex_name)
             else:
-                print(f"  ATTENTION {name}: slot {key} sans texture")
+                unbound_tex.append(key)
+        # Base HotFoil mats often leave the 2nd CalculateVarnishLayers DistortionTex
+        # PathID null (only live under USESECONDTOPLAYER). Same varnishsurface as the
+        # primary DistortionTex — mirror texturesForSecondTopLayer, no ATTENTION.
+        donor_distortion = next(
+            (
+                binding
+                for slot, binding in entry["textures"].items()
+                if "DistortionTex" in slot and binding.get("file")
+            ),
+            None,
+        )
+        for key in unbound_tex:
+            if donor_distortion and "DistortionTex" in key:
+                entry["textures"][key] = copy.deepcopy(donor_distortion)
+                continue
+            print(f"  ATTENTION {name}: slot {key} sans texture")
         for key, value in pairs(saved.m_Floats):
             if str(key) in used:
                 entry["floats"][str(key)] = round(float(value), 6)
@@ -581,7 +599,7 @@ def main() -> None:
     parser.add_argument("--repo", required=True, help="Racine du repo Placarr")
     args = parser.parse_args()
 
-    from paths import ensure_effects_layout, foil_pack_dir
+    from paths import ensure_effects_layout, foil_pack_dir, pack_cards_dir
 
     repo = Path(args.repo).resolve()
     ensure_effects_layout(repo)
@@ -589,8 +607,8 @@ def main() -> None:
     foil = foil_pack_dir(repo, pack)
     shaders_dir = foil / "shaders"
     textures_dir = foil / "textures"
-    manifest_path = repo / "src" / "effects" / pack / "manifest.json"
-    card_back_path = foil / "card_back.webp"
+    manifest_path = foil / "manifest.json"
+    card_back_path = pack_cards_dir(repo, pack) / "back.webp"
 
     data_file = resolve_data_file(Path(args.data))
     print(f"Bundle: {data_file}")

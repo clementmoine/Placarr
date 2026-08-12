@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Play, RefreshCw, ScrollText, Upload } from "lucide-react";
+import {
+  Loader2,
+  Play,
+  RefreshCw,
+  ScrollText,
+  Upload,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -18,7 +24,10 @@ import type {
   FoilPackStatus,
 } from "@/lib/admin/foilStatusTypes";
 import { getBackgroundJobs } from "@/lib/api/backgroundJobs";
-import type { FoilExtractTarget } from "@/lib/client/foilExtract";
+import type {
+  FoilExtractScope,
+  FoilExtractTarget,
+} from "@/lib/client/foilExtract";
 
 type FoilLogResponse = {
   pack: FoilExtractTarget;
@@ -49,14 +58,24 @@ function formatMo(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(0)} Mo`;
 }
 
-async function fetchFoilStatus(): Promise<FoilPackStatus[]> {
+async function fetchFoilStatus(): Promise<{
+  packs: FoilPackStatus[];
+  gaps: {
+    actionableCount: number;
+    items: Array<{ id: string; section: string; detail: string; apkGated?: boolean }>;
+  } | null;
+}> {
   const res = await fetch("/api/admin/foil-status");
   const body = (await res.json()) as {
     packs?: FoilPackStatus[];
+    gaps?: {
+      actionableCount: number;
+      items: Array<{ id: string; section: string; detail: string; apkGated?: boolean }>;
+    };
     error?: string;
   };
   if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-  return body.packs ?? [];
+  return { packs: body.packs ?? [], gaps: body.gaps ?? null };
 }
 
 function statusLine(
@@ -112,6 +131,7 @@ export function FoilPackSources({
   const apkPack: FoilPackId = target;
   const [enqueueing, setEnqueueing] = useState(false);
   const [apkOpen, setApkOpen] = useState(false);
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [logText, setLogText] = useState("");
   const [logJobStatus, setLogJobStatus] = useState<string | null>(null);
@@ -132,12 +152,14 @@ export function FoilPackSources({
     (job) => job.kind === "foilExtract" && job.foilTarget === target,
   );
 
-  const { data: packs = [], refetch: refetchStatus } = useQuery({
+  const { data: statusPayload, refetch: refetchStatus } = useQuery({
     queryKey: ["foilStatus"],
     queryFn: fetchFoilStatus,
     refetchInterval: jobRunning ? 4_000 : 30_000,
     refetchOnWindowFocus: true,
   });
+  const packs = statusPayload?.packs ?? [];
+  const gaps = statusPayload?.gaps ?? null;
 
   const status = packs.find((pack) => pack.id === apkPack);
   const canExtract = status?.canExtract ?? true;
@@ -196,11 +218,15 @@ export function FoilPackSources({
     return () => clearInterval(timer);
   }, [logsOpen, pollLogs]);
 
-  const runExtract = async () => {
+  const runExtract = async (scope?: FoilExtractScope) => {
     setEnqueueing(true);
     try {
       const { enqueueFoilExtract } = await import("@/lib/client/foilExtract");
-      const done = await enqueueFoilExtract(target);
+      // Pokémon: catalogue = AssetManifests CDN (authoritative). Inventory is
+      // only APK∪Malie — used by auto-sync, not the admin button.
+      const effective =
+        scope ?? (target === "pokemon" ? "catalogue" : "inventory");
+      const done = await enqueueFoilExtract(target, effective);
       toast.success(
         done.hint ||
           (fr ? "Extract en file d’attente" : "Extract queued"),
@@ -218,6 +244,26 @@ export function FoilPackSources({
 
   return (
     <>
+      {gaps && gaps.actionableCount > 0 ? (
+        <details className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
+          <summary className="cursor-pointer font-medium text-amber-900 dark:text-amber-100">
+            {fr
+              ? `Intégration manuelle requise (${gaps.actionableCount})`
+              : `Manual integration needed (${gaps.actionableCount})`}
+          </summary>
+          <ul className="mt-2 max-h-40 list-disc space-y-1 overflow-y-auto pl-4 text-muted-foreground">
+            {gaps.items.slice(0, 40).map((item) => (
+              <li key={item.id}>
+                {item.apkGated ? "[apk] " : ""}
+                {item.detail}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-muted-foreground">
+            docs/foil_new_finish.md · docs/foil_apk_sources.md · pnpm foil:audit-gaps
+          </p>
+        </details>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="min-w-0 text-xs text-muted-foreground">
           {statusLine(status, jobRunning, fr)}
@@ -252,7 +298,19 @@ export function FoilPackSources({
             size="sm"
             className="h-7 gap-1 px-2 text-xs"
             disabled={busy || !canExtract}
-            onClick={() => void runExtract()}
+            onClick={() => {
+              if (target === "pokemon") setCatalogueOpen(true);
+              else void runExtract();
+            }}
+            title={
+              target === "pokemon"
+                ? fr
+                  ? "Tout le catalogue CDN (AssetManifests) — skip déjà présent"
+                  : "Full CDN catalogue (AssetManifests) — skips existing"
+                : fr
+                  ? "Sync foil (web + cards + Unity si APK)"
+                  : "Foil sync (web + cards + Unity if APK)"
+            }
           >
             {busy ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -263,6 +321,49 @@ export function FoilPackSources({
           </Button>
         </div>
       </div>
+
+      <Dialog open={catalogueOpen} onOpenChange={setCatalogueOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {fr ? "Scraper tout le catalogue CDN ?" : "Scrape the full CDN catalogue?"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              {fr
+                ? "Les AssetManifests du CDN sont re-téléchargés, puis chaque bundle qu’ils déclarent est récupéré — environ 93 000 cartes sur 6 langues. C’est la source autoritative (pas seulement APK ∪ Malie)."
+                : "CDN AssetManifests are re-dumped, then every bundle they list is fetched — roughly 93,000 cards across 6 languages. This is the authoritative source (not just APK ∪ Malie)."}
+            </p>
+            <p>
+              {fr
+                ? "Les bundles déjà présents sont sautés. Le reste représente ~10 Go et plusieurs heures en séquentiel. Annulable depuis le menu des tâches."
+                : "Bundles already on disk are skipped. The rest is ~10 GB and several hours, sequentially. Cancellable from the jobs menu."}
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCatalogueOpen(false)}
+            >
+              {fr ? "Annuler" : "Cancel"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                setCatalogueOpen(false);
+                void runExtract("catalogue");
+              }}
+            >
+              {fr ? "Lancer" : "Run"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={logsOpen} onOpenChange={setLogsOpen}>
         <DialogContent className="flex max-h-[85vh] flex-col gap-3 sm:max-w-2xl">

@@ -19,12 +19,19 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
 
 import UnityPy
 from UnityPy.enums import ClassIDType
+
+_LIB = Path(__file__).resolve().parents[1] / "lib"
+if str(_LIB) not in sys.path:
+    sys.path.insert(0, str(_LIB))
+
+from paths import pack_apks_dir  # noqa: E402
 
 MESH_NAME = "Card"
 
@@ -218,8 +225,8 @@ def unity_st(quad: dict) -> dict:
 
 
 def dump_pokemon_card_quad(repo: Path, dest: Path) -> dict | None:
-    """``data/pokemon/apks/base.apk`` → ``dest`` (runtime JSON). None on miss."""
-    apk = repo / "data" / "pokemon" / "apks" / "base.apk"
+    """``data/pokemon/staging/apks/base.apk`` → ``dest`` (runtime JSON). None on miss."""
+    apk = pack_apks_dir(repo, "pokemon") / "base.apk"
     quad = card_quad_from_apk(apk)
     if quad is None:
         return None

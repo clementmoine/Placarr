@@ -34,7 +34,8 @@ import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesS
 import { prisma } from "@/lib/db/prisma";
 import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
 import {
-  FOIL_EXTRACT_TIMEOUT_MS,
+  foilExtractTimeoutMs,
+  normalizeFoilExtractScope,
   normalizeFoilExtractTarget,
   runFoilExtractCommand,
 } from "@/lib/admin/foilExtractRunner";
@@ -423,9 +424,13 @@ async function executeFoilExtractJob(
   try {
     await runFoilExtractCommand(target, {
       signal: controller.signal,
-      timeoutMs: FOIL_EXTRACT_TIMEOUT_MS,
+      timeoutMs: foilExtractTimeoutMs(
+        target,
+        normalizeFoilExtractScope(payload?.scope),
+      ),
       onLog: writeLog,
       logHeader: [`jobId=${job.id}`],
+      scope: normalizeFoilExtractScope(payload?.scope),
     });
   } catch (error) {
     if (controller.signal.aborted || (await isBackgroundWorkJobCancelled(job.id))) {

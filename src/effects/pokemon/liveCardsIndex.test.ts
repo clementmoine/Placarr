@@ -24,7 +24,7 @@ afterEach(async () => {
 async function makeDb(): Promise<string> {
   const dir = await mkdtemp(path.join(os.tmpdir(), "live-cards-"));
   tmpDirs.push(dir);
-  const dbPath = path.join(dir, "live-cards.sqlite");
+  const dbPath = path.join(dir, "catalog.sqlite");
   const db = new DatabaseSync(dbPath);
   db.exec(`
     CREATE TABLE live_cards (
@@ -100,7 +100,7 @@ describe("liveCardsIndex", () => {
   it("returns null when the sqlite is missing", () => {
     expect(
       lookupByBundle("sv1_fr_001", {
-        dbPath: path.join(os.tmpdir(), "no-such-live-cards.sqlite"),
+        dbPath: path.join(os.tmpdir(), "no-such-catalog.sqlite"),
       }),
     ).toBeNull();
   });

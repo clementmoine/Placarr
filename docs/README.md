@@ -10,6 +10,7 @@
 | [data-layout.md](data-layout.md) | `data/`, scripts, foil CLI | **Vivant** |
 | [foil_effects.md](foil_effects.md) | Contrat foil CSS+WebGL (packs + sources) | **Vivant** |
 | [foil_new_finish.md](foil_new_finish.md) | Ajouter un finish (Live / simey / Lorcana) | **Vivant** |
+| [foil_apk_sources.md](foil_apk_sources.md) | Réseau vs APK (analyse ouverte) | **Vivant** |
 | [foil_css_sources.md](foil_css_sources.md) | Pokémon CSS : Live ↔ simey | **Vivant** |
 | [pokemon_live_rainier.md](pokemon_live_rainier.md) | Live Rainier : auth, config-docs, CDN, owned | **Vivant** |
 | [backlog.md](backlog.md) | Ouverts | Mixte |

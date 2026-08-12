@@ -11,14 +11,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { POKEMON_FOIL_NAMES } from "../../src/effects/pokemon/foilNames";
+import { listPokemonFoilNames } from "../../src/effects/pokemon/foilNames";
 import {
   listDumpedBundlesForShader,
   playroomArtForMaterial,
   playroomSeedFoilNames,
 } from "../../src/effects/pokemon/playroomArt";
 import { ownedBundlesForShader } from "../../src/effects/pokemon/liveOwnedBundles";
-import { repoRoot } from "../lib/foilPaths";
+import { packLiveOwnedPath } from "../../src/lib/packPaths";
 
 // Server-side: installs the SQLite lookups over the client-safe stubs.
 // Without it the pack answers empty and every audit reports zero.
@@ -42,18 +42,15 @@ function main(): void {
     ? playroomSeedFoilNames().filter(
         (n) => n.toLowerCase() === effect.toLowerCase(),
       )
-    : [...POKEMON_FOIL_NAMES];
+    : listPokemonFoilNames();
 
   if (effect && names.length === 0) {
     console.error(`Unknown foil leaf: ${effect}`);
-    console.error(`Known: ${POKEMON_FOIL_NAMES.join(", ")}`);
+    console.error(`Known: ${listPokemonFoilNames().join(", ")}`);
     process.exit(1);
   }
 
-  const ownedPath = path.join(
-    repoRoot(),
-    "src/effects/pokemon/liveOwned.json",
-  );
+  const ownedPath = packLiveOwnedPath("pokemon");
   console.log(
     `# Foil face inventory (dump + owned preference)\n` +
       `# owned file: ${ownedPath}\n` +

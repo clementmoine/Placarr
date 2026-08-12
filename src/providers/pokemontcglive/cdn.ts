@@ -22,6 +22,12 @@ import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
+import {
+  bundleFreshness,
+  loadBundleLedger,
+  recordBundleVersion,
+  saveBundleLedger,
+} from "./bundleLedger";
 import { POKEMON_LIVE_SCRAPE_DEFAULT_LANGS_CSV } from "./languages";
 import {
   DEFAULT_SOFTBAN_ABORT_COOLDOWN_MS,
@@ -212,7 +218,12 @@ export function bundleUrl(
   return `${base}${contentDir}/${name}`;
 }
 
-/** ``bw1_001`` → ``[bw1_fr_001, bw1_fr_001_t]`` (foil variant probe). */
+/**
+ * ``bw1_001`` → ``[bw1_fr_001, bw1_fr_001_t]``.
+ *
+ * ``_t`` is the **thumbnail**, not a foil variant: 22 KB against 188 KB for the
+ * same card. Only probe it when thumbnails are actually wanted.
+ */
 export function setnumToBundleNames(
   setnum: string,
   lang = "fr",
@@ -520,10 +531,21 @@ export async function downloadBundleResolved(
     cacheLock: AsyncLock;
     skipExisting?: boolean;
     contentBase?: string;
+    /**
+     * Bucket the AssetManifest says serves this exact bundle. Tried first and
+     * without a HEAD probe; a miss still falls through to dir resolution, so a
+     * stale catalogue costs one GET rather than the whole bundle.
+     */
+    knownBucket?: string | null;
+    /**
+     * ``true`` when the ledger says the stored copy is at an older manifest
+     * hash — the one case where an existing file must still be refetched.
+     */
+    stale?: boolean;
   },
 ): Promise<BundleResult> {
   const skipExisting = opts.skipExisting ?? true;
-  if (skipExisting && existsSync(dest)) {
+  if (skipExisting && !opts.stale && existsSync(dest)) {
     const st = await stat(dest);
     if (st.size > 0) {
       return { name, ok: true, skipped: true, bytes: st.size };
@@ -539,6 +561,20 @@ export async function downloadBundleResolved(
     softBan: false,
     contentDir: null,
   };
+
+  const known = opts.knownBucket?.trim();
+  if (known) {
+    const res = await httpDeps.downloadBundle(name, dest, {
+      version: opts.version,
+      contentDir: known,
+      contentBase: opts.contentBase,
+      skipExisting: false,
+    });
+    res.contentDir = known;
+    if (res.ok || res.softBan === true) return res;
+    last = res;
+    tried.add(known);
+  }
 
   const maxRounds = Math.max(1, opts.dirs.length);
   for (let round = 0; round < maxRounds; round++) {
@@ -782,6 +818,17 @@ export async function scrape(
     configCache?: string | null;
     /** ``primary`` = preferred dir only (default); ``all`` = manifest dated dirs. */
     dirProbe?: DirProbeMode;
+    /**
+     * ``bundle name`` (lowercased) → bucket, from the AssetManifest catalogue.
+     * When a name is in here the scrape goes straight to its bucket instead of
+     * probing dated dirs — which is what makes multi-epoch sets cheap.
+     */
+    bucketOf?: Map<string, string> | null;
+    /**
+     * ``bundle name`` (lowercased) → manifest hash. Enables the freshness
+     * ledger: an on-disk bundle whose recorded hash differs is refetched.
+     */
+    hashOf?: Map<string, string> | null;
     workers?: number;
     delayS?: number;
     dryRun?: boolean;
@@ -866,13 +913,16 @@ export async function scrape(
     const setDirCache = new Map<string, string>();
     const cacheLock = new AsyncLock();
     for (const name of names) {
-      const resolved = await resolveContentDir(name, {
-        version,
-        dirs,
-        setDirCache,
-        cacheLock,
-        contentBase,
-      });
+      const known = opts.bucketOf?.get(name.toLowerCase()) ?? null;
+      const resolved = known
+        ? { contentDir: known, softBan: false }
+        : await resolveContentDir(name, {
+            version,
+            dirs,
+            setDirCache,
+            cacheLock,
+            contentBase,
+          });
       if (resolved.softBan) {
         results.push({
           name,
@@ -925,6 +975,12 @@ export async function scrape(
     const cacheLock = new AsyncLock();
     let stop = false;
     let missLogged = 0;
+    // Freshness ledger only makes sense when the catalogue supplies hashes.
+    const ledger =
+      cacheRoot && opts.hashOf?.size ? loadBundleLedger(cacheRoot) : null;
+    if (ledger) ledger.contentBase = contentBase ?? ledger.contentBase ?? null;
+    let adopted = 0;
+    let refreshed = 0;
     const workerCount = Math.max(1, Math.trunc(workers));
     console.log(
       `  content dirs (${dirs.length}): ${dirs.slice(0, 6).join(", ")}…` +
@@ -971,11 +1027,25 @@ export async function scrape(
         return { name, ok: false, error: "aborted", status: null };
       }
       const dest = path.join(outDir, name);
+      const wantHash = opts.hashOf?.get(name.toLowerCase()) ?? null;
+      const freshness = ledger
+        ? bundleFreshness(ledger, name, wantHash)
+        : "unknown";
       if (existsSync(dest)) {
         const st = statSync(dest);
-        if (st.size > 0) {
+        if (st.size > 0 && freshness !== "stale") {
+          // Never seen before but already on disk: adopt at the current hash
+          // rather than refetch 42k files the first time this ledger runs.
+          if (ledger && freshness === "unknown" && wantHash) {
+            recordBundleVersion(ledger, name, wantHash, {
+              bucket: opts.bucketOf?.get(name.toLowerCase()) ?? null,
+              assumed: true,
+            });
+            adopted += 1;
+          }
           return { name, ok: true, skipped: true, bytes: st.size };
         }
+        if (freshness === "stale") refreshed += 1;
       }
 
       if (delayS > 0) {
@@ -1003,7 +1073,14 @@ export async function scrape(
         cacheLock,
         skipExisting: false,
         contentBase,
+        knownBucket: opts.bucketOf?.get(name.toLowerCase()) ?? null,
       });
+
+      if (res.ok && !res.skipped && ledger && wantHash) {
+        recordBundleVersion(ledger, name, wantHash, {
+          bucket: res.contentDir ?? null,
+        });
+      }
 
       const status = res.status;
       const skipped = Boolean(res.skipped);
@@ -1124,6 +1201,15 @@ export async function scrape(
           "resume later (skip_existing keeps progress)",
       );
     }
+
+    // Saved even on abort: adopted + refreshed rows must survive a resume.
+    if (ledger && cacheRoot) {
+      const file = saveBundleLedger(cacheRoot, ledger);
+      console.log(
+        `  freshness ledger: ${Object.keys(ledger.entries).length} entries` +
+          ` (adopted=${adopted} refreshed=${refreshed}) → ${path.relative(cacheRoot, file)}`,
+      );
+    }
   }
 
   const ok = results.reduce((n, r) => n + (r.ok ? 1 : 0), 0);
@@ -1209,7 +1295,7 @@ scrape options:
   --workers N               Concurrent downloads (default: ${DEFAULT_WORKERS} = sequential)
   --delay S                 Optional sleep between request starts (default: ${DEFAULT_DELAY_S})
   --dry-run                 HEAD only, no downloads
-  --out DIR                 Output dir (default: <repo>/data/pokemon/cdn-bundles)
+  --out DIR                 Output dir (default: <repo>/data/pokemon/staging/cdn-bundles)
   --repo DIR                Repo root
 `;
 
@@ -1404,7 +1490,7 @@ export async function main(argv: string[] | null = null): Promise<number> {
   if (args.cmd === "catalogue") {
     const cfg = args.configCache
       ? path.resolve(args.configCache)
-      : path.join(repo, "data", "pokemon", "config-cache");
+      : path.join(repo, "data", "pokemon", "staging", "config-cache");
     const out = args.out
       ? path.resolve(args.out)
       : path.join(path.dirname(cfg), "cdn-catalogue-setnum.txt");
@@ -1417,7 +1503,7 @@ export async function main(argv: string[] | null = null): Promise<number> {
   // scrape
   const out = args.out
     ? path.resolve(args.out)
-    : path.join(repo, "data", "pokemon", "cdn-bundles");
+    : path.join(repo, "data", "pokemon", "staging", "cdn-bundles");
   const langsRaw = args.lang || args.langs;
   const langs = langsRaw
     .split(",")
@@ -1426,7 +1512,7 @@ export async function main(argv: string[] | null = null): Promise<number> {
 
   let setnumsPath = args.fromSetnums;
   if (args.fromCatalogue) {
-    const cfg = path.join(repo, "data", "pokemon", "config-cache");
+    const cfg = path.join(repo, "data", "pokemon", "staging", "config-cache");
     const cat = path.join(repo, "data", "pokemon", "cdn-catalogue-setnum.txt");
     const lines = catalogueSetnumsFromConfig(cfg);
     writeFileSync(cat, `${lines.join("\n")}\n`, "utf8");
@@ -1501,7 +1587,7 @@ export async function main(argv: string[] | null = null): Promise<number> {
     }
   }
 
-  const cfg = path.join(repo, "data", "pokemon", "config-cache");
+  const cfg = path.join(repo, "data", "pokemon", "staging", "config-cache");
   const report = await scrape(names, out, {
     version: args.version,
     contentDir: args.contentDir,

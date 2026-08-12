@@ -1,5 +1,5 @@
 /**
- * Lorcana official local SQLite index under `data/lorcana/lorcana.sqlite`.
+ * Lorcana official local SQLite index under `data/lorcana/catalog.sqlite`.
  * Built by scrape / `pnpm foil:lorcana:cards`. Blobs stay on disk; this stores
  * the full catalogue row from the same API call (titles, facts, remote URLs)
  * plus local asset filenames per printKey/lang.
@@ -11,6 +11,8 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
+import { parsePrintKey } from "@/core/identify/printKey";
+import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 
 export const LORCANA_TCG_SCHEMA_VERSION = "2";
 
@@ -63,16 +65,7 @@ export type LorcanaTcgAssetRow = LorcanaTcgAssetFiles & {
   lang: string;
 };
 
-export type LorcanaCardsIndexJson = {
-  generatedAt: string;
-  languages: string[];
-  printCount: number;
-  schemaVersion: string;
-  cards: Record<
-    string,
-    Partial<Record<string, LorcanaTcgAssetFiles>> & LorcanaTcgAssetFiles
-  >;
-};
+export type LorcanaCardsIndexJson = CardsIndexV1;
 
 let activeDb: DatabaseSync | null = null;
 let activePath: string | null = null;
@@ -80,7 +73,7 @@ let activePath: string | null = null;
 export function lorcanaTcgDbPath(): string {
   const override = process.env.PLACARR_LORCANA_TCG_DB?.trim();
   if (override) return path.resolve(override);
-  return path.join(dataRoot(), "lorcana", "lorcana.sqlite");
+  return path.join(dataRoot(), "lorcana", "catalog.sqlite");
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -326,21 +319,12 @@ export function exportLorcanaCardsIndexJson(
   if (!existsSync(dbPath)) return null;
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {
-    const languagesRaw = (
-      db.prepare("SELECT value FROM meta WHERE key = 'languages'").get() as
-        | { value?: string }
-        | undefined
-    )?.value;
     const generatedAt =
       (
         db.prepare("SELECT value FROM meta WHERE key = 'generated_at'").get() as
           | { value?: string }
           | undefined
       )?.value ?? new Date().toISOString();
-
-    const languages = languagesRaw
-      ? (JSON.parse(languagesRaw) as string[])
-      : [];
 
     const rows = db
       .prepare(
@@ -359,24 +343,37 @@ export function exportLorcanaCardsIndexJson(
       secondVarnishMask: string | null;
     }>;
 
-    const cards: LorcanaCardsIndexJson["cards"] = {};
+    const cards: CardsIndexV1["cards"] = {};
     for (const row of rows) {
-      const files: LorcanaTcgAssetFiles = {};
-      if (row.art) files.art = row.art;
-      if (row.thumb) files.thumb = row.thumb;
-      if (row.foilMask) files.foilMask = row.foilMask;
-      if (row.varnishMask) files.varnishMask = row.varnishMask;
-      if (row.secondVarnishMask) files.secondVarnishMask = row.secondVarnishMask;
-      const entry = cards[row.printKey] ?? {};
-      entry[row.lang] = files;
+      const parsed = parsePrintKey(row.printKey);
+      if (!parsed) continue;
+      const cardId = parsed.grouping
+        ? `${parsed.number}-${parsed.grouping}`
+        : parsed.number;
+      const langFiles: CardsIndexEntry["langs"][string] = {};
+      if (row.art) langFiles.art = row.art;
+      if (row.thumb) langFiles.thumb = row.thumb;
+      if (row.foilMask) {
+        // Disk basename is mask.* after layout migration.
+        langFiles.mask = row.foilMask.replace(/^foil_mask/i, "mask");
+      }
+      if (row.varnishMask) langFiles.varnishMask = row.varnishMask;
+      if (row.secondVarnishMask) {
+        langFiles.secondVarnishMask = row.secondVarnishMask;
+      }
+      const entry = cards[row.printKey] ?? {
+        set: parsed.set,
+        card: cardId,
+        langs: {},
+      };
+      entry.langs[row.lang] = langFiles;
       cards[row.printKey] = entry;
     }
 
     return {
+      version: 1,
+      pack: "lorcana",
       generatedAt,
-      languages,
-      printCount: Object.keys(cards).length,
-      schemaVersion: LORCANA_TCG_SCHEMA_VERSION,
       cards,
     };
   } finally {

@@ -1,8 +1,8 @@
 /**
- * Resolve Placarr foil store paths under `data/<pack>/foil`.
+ * Resolve Placarr pack paths under `data/<pack>/{foil,cards,staging}`.
  *
- * Override data root with `PLACARR_DATA_DIR`; foil data-root with
- * `PLACARR_EFFECTS_DIR` (layout still `<root>/<pack>/foil`).
+ * Public URLs: `/assets/<pack>/…`. Override data root with `PLACARR_DATA_DIR`;
+ * pack asset root with `PLACARR_EFFECTS_DIR`.
  */
 
 import fs from "node:fs";
@@ -30,6 +30,22 @@ export function foilPackDir(repo: string, pack: string): string {
   return path.join(foilDataRoot(repo), pack, "foil");
 }
 
+export function packCardsDir(repo: string, pack: string): string {
+  return path.join(foilDataRoot(repo), pack, "cards");
+}
+
+export function packStagingDir(repo: string, pack: string): string {
+  return path.join(dataDir(repo), pack, "staging");
+}
+
+export function packCatalogDb(repo: string, pack: string): string {
+  return path.join(dataDir(repo), pack, "catalog.sqlite");
+}
+
+export function packCardsIndexPath(repo: string, pack: string): string {
+  return path.join(dataDir(repo), pack, "cards-index.json");
+}
+
 export function packDataDir(repo: string, pack: string): string {
   return path.join(dataDir(repo), pack);
 }
@@ -49,9 +65,9 @@ export function writeLastRun(
   pack: string,
   payload: Record<string, unknown>,
 ): string {
-  const destDir = packDataDir(repo, pack);
+  const destDir = path.join(packDataDir(repo, pack), "logs");
   fs.mkdirSync(destDir, { recursive: true });
-  const dest = path.join(destDir, "foil-last-run.json");
+  const dest = path.join(destDir, "last-run.json");
   const body = {
     ...payload,
     pack,

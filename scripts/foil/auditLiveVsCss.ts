@@ -72,7 +72,7 @@ function stemOf(value: unknown): string {
   return (raw.split("/").pop() ?? "").replace(/\.\w+$/, "");
 }
 
-/** Every `_shared` stem the CSS chain paints or carves, following overlays. */
+/** Every `textures/` stem the CSS chain paints or carves, following overlays. */
 function cssPlates(startId: string | null): {
   painted: Set<string>;
   carved: Set<string>;
@@ -89,7 +89,7 @@ function cssPlates(startId: string | null): {
     if (!look) break;
     chain.push(id);
     for (const [, stem] of String(look.backgroundImage).matchAll(
-      /_shared\/([^./]+)\.webp/g,
+      /\/textures\/([^./]+)\.webp/g,
     )) {
       painted.add(stem);
     }

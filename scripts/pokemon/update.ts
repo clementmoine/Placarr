@@ -12,7 +12,7 @@
  * (Malie-miss logged, CDN-miss logged, skip existing) → Unity extract.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -48,6 +48,7 @@ import {
   mergeLiveIdentities,
 } from "@/providers/pokemontcglive/scrapeInventory";
 import {
+  loadCdnCatalogue,
   planScrapeNames,
   releaseScrapeLock,
   tryAcquireScrapeLock,
@@ -66,18 +67,74 @@ function packPython(repo: string): string {
   return fs.existsSync(venv) ? venv : "python3";
 }
 
+/**
+ * Dump ``manifest_<locale>_<bucket>`` for every bucket × lang into
+ * ``staging/cdn-manifests``. Needs UnityPy, hence the Python hop.
+ */
+function runManifestDump(
+  repo: string,
+  opts: {
+    staging: string;
+    contentBase: string;
+    langs: string[];
+  },
+): number {
+  const dirsManifest = path.join(
+    opts.staging,
+    "config-cache",
+    "asset-bundle-manifest_0.0.json",
+  );
+  if (!fs.existsSync(dirsManifest)) {
+    console.warn(
+      `  missing ${dirsManifest} — cannot list CDN buckets (need APK config-cache)`,
+    );
+    return 1;
+  }
+  const args = [
+    path.join(repo, "scripts/pokemon/dump_cdn_manifest.py"),
+    "--content-base",
+    opts.contentBase,
+    "--buckets",
+    "all",
+    "--dirs-manifest",
+    dirsManifest,
+    "--locales",
+    opts.langs.join(","),
+    "--out-dir",
+    path.join(opts.staging, "cdn-manifests"),
+  ];
+  const r = spawnSync(packPython(repo), args, {
+    cwd: repo,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      PYTHONPATH: [
+        path.join(repo, "scripts/lib"),
+        path.join(repo, "scripts/pokemon"),
+      ].join(path.delimiter),
+    },
+  });
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.stderr) process.stderr.write(r.stderr);
+  return r.status ?? 1;
+}
+
 function runExtract(
   repo: string,
   opts: {
+    bundlesDir: string;
     extractLimit: number;
     textureMode: string;
     extractWorkers: number | null;
   },
-): Record<string, unknown> {
+  runOpts?: { signal?: AbortSignal },
+): Promise<Record<string, unknown>> {
   const args = [
     path.join(repo, "scripts/pokemon/extract.py"),
     "--repo",
     repo,
+    "--bundles-dir",
+    opts.bundlesDir,
     "--textures",
     opts.textureMode,
   ];
@@ -87,29 +144,72 @@ function runExtract(
   if (opts.extractWorkers != null) {
     args.push("--workers", String(opts.extractWorkers));
   }
-  const r = spawnSync(packPython(repo), args, {
-    cwd: repo,
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      PYTHONPATH: path.join(repo, "scripts/pokemon"),
-    },
-  });
-  if (r.stdout) process.stdout.write(r.stdout);
-  if (r.stderr) process.stderr.write(r.stderr);
-  const lines = (r.stdout || "").trim().split("\n").filter(Boolean);
-  let meta: Record<string, unknown> = {
-    extractErrors: r.status === 0 ? 0 : 1,
-  };
-  for (let i = lines.length - 1; i >= 0; i--) {
+  const pyPath = [
+    path.join(repo, "scripts/lib"),
+    path.join(repo, "scripts/pokemon"),
+  ].join(path.delimiter);
+  const reportPath = path.join(
+    repo,
+    "data",
+    "pokemon",
+    "foil",
+    "extract-report.json",
+  );
+
+  return new Promise((resolve, reject) => {
+    let child: ChildProcess;
     try {
-      meta = JSON.parse(lines[i]!) as Record<string, unknown>;
-      break;
-    } catch {
-      /* keep looking */
+      child = spawn(packPython(repo), args, {
+        cwd: repo,
+        // inherit — spawnSync used to buffer all extract output until exit, so
+        // long runs looked silent in foil-extract.log until timeout killed them.
+        stdio: "inherit",
+        env: {
+          ...process.env,
+          PYTHONPATH: pyPath,
+          PYTHONUNBUFFERED: "1",
+        },
+      });
+    } catch (err) {
+      reject(err);
+      return;
     }
-  }
-  return meta;
+
+    const onAbort = () => {
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* already gone */
+      }
+      reject(new Error("foil extract cancelled"));
+    };
+    runOpts?.signal?.addEventListener("abort", onAbort, { once: true });
+
+    child.on("error", (err) => {
+      runOpts?.signal?.removeEventListener("abort", onAbort);
+      reject(err);
+    });
+    child.on("close", (code) => {
+      runOpts?.signal?.removeEventListener("abort", onAbort);
+      let meta: Record<string, unknown> = {
+        extractErrors: code === 0 ? 0 : 1,
+      };
+      if (fs.existsSync(reportPath)) {
+        try {
+          meta = JSON.parse(fs.readFileSync(reportPath, "utf8")) as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          /* keep status-based fallback */
+        }
+      }
+      if (typeof meta.extractErrors !== "number") {
+        meta.extractErrors = code === 0 ? 0 : 1;
+      }
+      resolve(meta);
+    });
+  });
 }
 
 export type UpdateOpts = {
@@ -120,6 +220,14 @@ export type UpdateOpts = {
   workers?: number;
   delayS?: number;
   dirProbe?: DirProbeMode;
+  /**
+   * Source the scrape list from the CDN's own AssetManifests instead of the
+   * derived APK ∪ Malie inventory. Authoritative: no phantoms, no dir probing
+   * (each bundle's bucket comes with it).
+   */
+  fromManifest?: boolean;
+  /** Re-dump the per-bucket AssetManifests before reading the catalogue. */
+  refreshManifests?: boolean;
   /** Pull Malie card-databases → exact CDN stem list before scrape (default on). */
   bootstrapMalie?: boolean;
   /** Cap Malie DB files during bootstrap (0 = all). */
@@ -147,8 +255,9 @@ export async function runUpdate(
   };
   throwIfAborted();
   const cache = path.join(repo, "data/pokemon");
-  const bundles = path.join(cache, "cdn-bundles");
-  const configCache = path.join(cache, "config-cache");
+  const staging = path.join(cache, "staging");
+  const bundles = path.join(staging, "cdn-bundles");
+  const configCache = path.join(staging, "config-cache");
   const pack = foilPackDir(repo, "pokemon");
 
   const sources = await writeSourcesReport(cache);
@@ -171,7 +280,7 @@ export async function runUpdate(
   if (opts.bootstrapMalie !== false) {
     console.log("── Malie bootstrap (catalogue stems; skip unchanged)");
     const boot = await bootstrapMalieCatalogue({
-      outDir: cache,
+      outDir: staging,
       langs: opts.langs,
       signal,
       limitFiles: opts.malieLimitFiles ?? 0,
@@ -181,7 +290,7 @@ export async function runUpdate(
     console.log(JSON.stringify(boot.report, null, 2));
   }
 
-  const catPath = path.join(cache, "cdn-catalogue-setnum.txt");
+  const catPath = path.join(staging, "cdn-catalogue-setnum.txt");
   let setnums = fs.existsSync(configCache)
     ? catalogueSetnumsFromConfig(configCache)
     : [];
@@ -204,14 +313,14 @@ export async function runUpdate(
 
   let liveCardsIndex: Record<string, unknown> | null = null;
   if (identityRows.length) {
-    console.log("── index live-cards.sqlite (Malie ∪ APK)");
+    console.log("── index catalog.sqlite (Malie ∪ APK)");
     liveCardsIndex = writeLiveCardsSqlite(
       identityRows,
-      path.join(cache, "live-cards.sqlite"),
+      path.join(cache, "catalog.sqlite"),
     ) as unknown as Record<string, unknown>;
     const foilMasks = writeLiveFoilMasksJson(
       identityRows,
-      path.join(repo, "src", "effects", "pokemon", "liveFoilMasks.json"),
+      path.join(repo, "data", "pokemon", "liveFoilMasks.json"),
     );
     liveCardsIndex = { ...liveCardsIndex, foilMasks };
     console.log(JSON.stringify(liveCardsIndex, null, 2));
@@ -219,8 +328,9 @@ export async function runUpdate(
     console.log("no card-database identities to index");
   }
 
+  // Malie writes stems under staging/ (same as bootstrap outDir).
   const malieStems = filterMalieStemsByLangs(
-    loadMalieBundleStems(cache),
+    loadMalieBundleStems(staging),
     opts.langs,
   );
   const apkStems = [
@@ -269,9 +379,39 @@ export async function runUpdate(
 
   throwIfAborted();
   let scrapeReport: Record<string, unknown> | null = null;
+  let catalogue: ReturnType<typeof loadCdnCatalogue> | null = null;
+  if (opts.fromManifest) {
+    if (opts.refreshManifests) {
+      console.log("── dump AssetManifests (14 buckets × langs)");
+      const code = runManifestDump(repo, {
+        staging,
+        contentBase: target.content_base,
+        langs: opts.langs,
+      });
+      if (code !== 0) {
+        console.warn("  manifest dump failed — falling back to dumps on disk");
+      }
+    }
+    // Manifest dumps + dirs live under staging/ (post data-layout migrate).
+    catalogue = loadCdnCatalogue(staging, {
+      langs: opts.langs,
+      includeThumbnails: Boolean(opts.includeFoilT),
+    });
+    console.log(
+      `── catalogue CDN: ${catalogue.names.length} bundles` +
+        ` sur ${catalogue.buckets.length} buckets × ${catalogue.locales.length} langues`,
+    );
+    if (!catalogue.names.length) {
+      console.warn(
+        "  aucun dump de manifeste sous staging/cdn-manifests —" +
+          " relance avec --refresh-manifests ; on retombe sur l'inventaire APK ∪ Malie",
+      );
+      catalogue = null;
+    }
+  }
   if (!opts.skipScrape) {
     const extras = opts.withShared === false ? [] : ["shadersbundle"];
-    let cardNames = inventory.stems;
+    let cardNames = catalogue ? catalogue.names : inventory.stems;
     if (!cardNames.length) {
       cardNames = await loadNames({
         names: [],
@@ -286,7 +426,7 @@ export async function runUpdate(
     }
     const names = [...extras, ...cardNames];
     console.log(
-      `Scraping ${names.length} (inventory ∪ shared)` +
+      `Scraping ${names.length} (${catalogue ? "catalogue CDN" : "inventory"} ∪ shared)` +
         ` langs=${opts.langs.join(",")}` +
         ` → ${bundles} (CDN; Malie-miss already logged)`,
     );
@@ -294,7 +434,10 @@ export async function runUpdate(
       version: target.version,
       contentDir: target.content_dir,
       contentBase: target.content_base,
-      dirProbe: opts.dirProbe ?? DEFAULT_DIR_PROBE,
+      // Catalogue carries each bundle's bucket → probing is moot.
+      dirProbe: catalogue ? "all" : (opts.dirProbe ?? DEFAULT_DIR_PROBE),
+      bucketOf: catalogue?.bucketOf ?? null,
+      hashOf: catalogue?.hashOf ?? null,
       configCache: fs.existsSync(configCache) ? configCache : null,
       workers: opts.workers ?? DEFAULT_WORKERS,
       delayS: opts.delayS ?? DEFAULT_DELAY_S,
@@ -333,11 +476,16 @@ export async function runUpdate(
   console.log(`Extract → ${pack}`);
   const ew =
     opts.extractWorkers ?? Math.max(1, Math.floor((os.cpus().length || 4) / 2));
-  const extractReport = runExtract(repo, {
-    extractLimit: opts.extractLimit ?? 0,
-    textureMode: opts.textureMode ?? "cards",
-    extractWorkers: ew,
-  });
+  const extractReport = await runExtract(
+    repo,
+    {
+      bundlesDir: bundles,
+      extractLimit: opts.extractLimit ?? 0,
+      textureMode: opts.textureMode ?? "cards",
+      extractWorkers: ew,
+    },
+    { signal },
+  );
 
   let apkAuditRc: number | null = null;
   if (!opts.skipApkAudit && fs.existsSync(configCache)) {
@@ -396,6 +544,21 @@ export async function runUpdate(
   }
 
   writeLastRun(repo, "pokemon", { provider: "tcglive-update", ...summary });
+
+  // Rebuild per-print foil index from cards.json (same DB as live_cards).
+  try {
+    const { buildCardFoilIndex } = await import("./indexCardFoil");
+    const foil = buildCardFoilIndex();
+    console.log(
+      `card_foil: ${foil.rows} rows from ${foil.bundles} bundles → ${foil.path}`,
+    );
+    (summary as { cardFoil?: unknown }).cardFoil = foil;
+  } catch (err) {
+    console.warn(
+      `[foil] index-card-foil skipped: ${err instanceof Error ? err.message : err}`,
+    );
+  }
+
   return summary;
 }
 
@@ -432,6 +595,11 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string; noJob: boolean 
     else if (a === "--workers") out.workers = Number(argv[++i]);
     else if (a === "--delay") out.delayS = Number(argv[++i]);
     else if (a === "--probe-all-dirs") out.dirProbe = "all";
+    else if (a === "--from-manifest") out.fromManifest = true;
+    else if (a === "--refresh-manifests") {
+      out.fromManifest = true;
+      out.refreshManifests = true;
+    }
     else if (a === "--bootstrap-malie") out.bootstrapMalie = true;
     else if (a === "--skip-bootstrap-malie") out.bootstrapMalie = false;
     else if (a === "--malie-limit-files") {

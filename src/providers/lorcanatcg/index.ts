@@ -97,7 +97,7 @@ export const lorcanatcgModule: ProviderModule = {
     defaultLanguage: "fr",
     websiteUrl: "https://cards.disneylorcana.com/",
     notes:
-      "Ingest officiel local → `data/lorcana/lorcana.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`.",
+      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`.",
   },
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,

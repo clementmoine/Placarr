@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isLiveFoilMaskOverride,
   liveFoilMaskForBundle,
+  liveLaminatePreferForBundle,
 } from "./liveFoilMasks";
 import { paperMaterial } from "./materials";
 
@@ -22,8 +23,21 @@ describe("liveFoilMaskForBundle", () => {
     expect(
       liveFoilMaskForBundle("rsv10-5_de_001", { variant: "mph" }),
     ).toBe("ReverseLaminateMasterBall");
-    // Sans variant: ne pas inventer une plaque laminate.
+    // Sans variant / variant dump `ph`: ne pas inventer quand mph+sph coexistent.
     expect(liveFoilMaskForBundle("rsv10-5_de_001")).toBeNull();
+    expect(
+      liveFoilMaskForBundle("rsv10-5_de_001", { variant: "ph" }),
+    ).toBeNull();
+  });
+
+  it("Frillish dump `ph` → Master Ball (seul laminate mph sur le stem)", () => {
+    expect(
+      liveFoilMaskForBundle("rsv10-5_fr_044", { variant: "ph" }),
+    ).toBe("ReverseLaminateMasterBall");
+    expect(liveFoilMaskForBundle("rsv10-5_fr_044")).toBe(
+      "ReverseLaminateMasterBall",
+    );
+    expect(liveLaminatePreferForBundle("rsv10-5_fr_044")).toBe("mph");
   });
 
   it("returns null for ordinary reverse / holo stems", () => {

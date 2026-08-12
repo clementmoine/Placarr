@@ -138,7 +138,7 @@ export async function localizePrintMasks<T extends PrintMaskUrls>(
     const local = results[index];
     if (
       local &&
-      (local.startsWith("/uploads/") || local.startsWith("/foil/"))
+      (local.startsWith("/uploads/") || local.startsWith("/assets/"))
     ) {
       localByKey.set(requestKey(request), local);
     }

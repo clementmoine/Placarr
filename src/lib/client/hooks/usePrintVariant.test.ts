@@ -98,11 +98,11 @@ describe("variantRendering", () => {
         {
           ...lorcana,
           foilMaskUrl: "/uploads/mask.jpg",
-          finishFoilMaskUrls: { Silver: "/foil/live/mask.png" },
+          finishFoilMaskUrls: { Silver: "/assets/live/mask.png" },
         },
         BASE,
       ).foilMaskUrl,
-    ).toBe("/foil/live/mask.png");
+    ).toBe("/assets/live/mask.png");
   });
 
   it("matches the finish case-insensitively", () => {
@@ -166,7 +166,7 @@ describe("variantRendering", () => {
       own. Unity material names in finishShaders are not CSS look ids.
     */
     expect(rendering.shader?.id).toBe("regularHolo");
-    expect(JSON.stringify(rendering.shader)).not.toContain("/foil/lorcana/");
+    expect(JSON.stringify(rendering.shader)).not.toContain("/assets/lorcana/");
     expect(rendering.foilMaskUrl).toBe("/uploads/mask.jpg");
     expect(rendering.effectPackId).toBe("pokemon");
 

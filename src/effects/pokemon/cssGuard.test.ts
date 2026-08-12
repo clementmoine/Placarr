@@ -136,14 +136,14 @@ describe("pokemon CSS foil fallback", () => {
       const look = holoShader(id)!;
       expect(look.id, finish).toBe(id);
       expect(holoShader(look.id), finish).toBe(look);
-      expect(JSON.stringify(look), finish).not.toContain("/foil/lorcana/");
+      expect(JSON.stringify(look), finish).not.toContain("/assets/lorcana/");
     }
   });
 
   it("never reaches for a Lorcana recipe, whatever the finish", () => {
     /*
       The load-bearing invariant, and the reason this file exists. Lorcana's
-      looks are photographed textures under `/foil/lorcana/web`, transcribed
+      looks are photographed textures under `/assets/lorcana/web`, transcribed
       from its publisher's viewer; they describe Lorcana foils and nothing else.
       Pokémon stays on house looks even for a finish neither pack has seen.
     */
@@ -170,7 +170,7 @@ describe("pokemon CSS foil fallback", () => {
       expect(
         JSON.stringify(holoShader(css.finishShaderId)),
         finish,
-      ).not.toContain("/foil/lorcana/");
+      ).not.toContain("/assets/lorcana/");
       // Paint-etch finishes skip house varnish (double-wash).
       const expectHouseEtch =
         css.finishShaderId !== "radiantHolo" &&
@@ -186,7 +186,7 @@ describe("pokemon CSS foil fallback", () => {
 });
 
 describe("pokemon textured recipes", () => {
-  const SHARED = join(process.cwd(), "data/pokemon/foil/textures/_shared");
+  const SHARED = join(process.cwd(), "data/pokemon/foil/textures");
 
   /**
    * Split a comma-separated CSS list on its *top-level* commas only.
@@ -278,11 +278,13 @@ describe("pokemon textured recipes", () => {
       "cosmos",
       "galaxy",
       "crackedIce",
-      "sunPillarCc",
+      "sunPillarCcGlitter",
     ] as const) {
       expect(pokemonHoloShader(id).carve?.url, id).toBeTruthy();
     }
     expect(pokemonHoloShader("sunPillar").carve).toBeUndefined();
+    expect(pokemonHoloShader("sunPillarCc").carve).toBeUndefined();
+    expect(pokemonHoloShader("sunPillarCcCoat").carve).toBeUndefined();
     expect(pokemonHoloShader("flatSilverCc").carve?.url).toContain("TEX_CC_PB");
     expect(pokemonHoloShader("flatSilverCcMb").carve?.url).toContain(
       "TEX_CC_MB",
@@ -546,6 +548,99 @@ describe("pokemon CSS opacity dose", () => {
     );
     expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmos");
     expect(resolveCssRecipe("SwHolo", null).finishShaderId).toBe("swHolo");
+  });
+
+  it("SunPillar CSS mirrors poke-151 ex-regular composition with Live paint", () => {
+    expect(resolveCssRecipe("SunPillar", null).finishShaderId).toBe(
+      "sunPillar",
+    );
+    const shine = pokemonHoloShader("sunPillar");
+    const coat = pokemonHoloShader("sunPillarCoat");
+    const glitter = pokemonHoloShader("sunPillarGlitter");
+    expect(shine.overlay).toBe("sunPillarCoat");
+    expect(coat.overlay).toBe("sunPillarGlitter");
+    // Simey :before structure — 0° sunpillar + 133° ribs + pointer spot.
+    // Skip mid-grey Gradient_Shine (μ≈143 screens to milk on dark Live art).
+    expect(shine.backgroundImage).not.toContain("FX_T_Gradient_Shine");
+    expect(shine.backgroundImage).toMatch(/0deg/);
+    expect(shine.backgroundImage).toMatch(/133deg/);
+    expect(shine.backgroundSize).toContain("200% 700%");
+    expect(shine.backgroundSize).toContain("300% 100%");
+    expect(shine.backgroundBlendMode).toBe("soft-light, hard-light");
+    expect(shine.mixBlendMode).toBe("soft-light");
+    // Simey :after — opposite rib pan (soft-light; screen milks dark Live art).
+    expect(coat.backgroundSize).toContain("195% 100%");
+    expect(coat.mixBlendMode).toBe("soft-light");
+    expect(glitter.mixBlendMode).toBe("soft-light");
+    expect(shine.backgroundImage).not.toContain("FX_T_Noise_Dim");
+    // Dimmed Live dump hue (raw ×0.45 for soft-light).
+    expect(shine.backgroundImage).toMatch(/#190628|#575a32/i);
+
+    const cc = pokemonHoloShader("sunPillarCc");
+    const ccCoat = pokemonHoloShader("sunPillarCcCoat");
+    const ccGlitter = pokemonHoloShader("sunPillarCcGlitter");
+    expect(cc.overlay).toBe("sunPillarCcCoat");
+    expect(ccCoat.overlay).toBe("sunPillarCcGlitter");
+    expect(cc.carve).toBeUndefined();
+    expect(ccCoat.carve).toBeUndefined();
+    expect(ccGlitter.backgroundImage).toContain("FX_T_Spectrum_SVHolo2");
+    expect(ccGlitter.carve?.url).toContain("FX_T_Northern_Cross");
+    expect(ccGlitter.mixBlendMode).toBe("color-dodge");
+    expect(ccGlitter.opacity).toBeLessThanOrEqual(POKEMON_CSS_DODGE_OPACITY_CEILING);
+    expect(
+      resolveCssRecipe("SunPillar", null, { foilMask: "CastAndCure" })
+        .finishShaderId,
+    ).toBe("sunPillarCc");
+  });
+
+  it("AngledPillars matches Simey diagonalFamily / ex-full-art", () => {
+    expect(resolveCssRecipe("AngledPillars", null).finishShaderId).toBe(
+      "angledPillars",
+    );
+    const shine = pokemonHoloShader("angledPillars");
+    const coat = pokemonHoloShader("angledPillarsCoat");
+    expect(shine.overlay).toBe("angledPillarsCoat");
+    // Same stack as holoShadersSimey exFullArt: shine + Live angled + ribs + spot.
+    expect(shine.backgroundImage).toContain("FX_T_Gradient_Shine");
+    expect(shine.backgroundImage).toContain("FX_T_Spectrum_Bands_Angled");
+    expect(shine.backgroundImage).toMatch(/128\.5deg/);
+    expect(shine.backgroundSize).toContain("200% 700%");
+    expect(shine.backgroundSize).toContain("300% 100%");
+    expect(shine.backgroundBlendMode).toBe(
+      "soft-light, soft-light, hue, hard-light",
+    );
+    expect(shine.mixBlendMode).toBe("color-dodge");
+    expect(shine.opacity).toBeLessThanOrEqual(POKEMON_CSS_DODGE_OPACITY_CEILING);
+    for (const part of shine.backgroundRepeat?.split(",") ?? []) {
+      expect(part.trim()).toBe("no-repeat");
+    }
+    expect(coat.backgroundSize).toContain("200% 400%");
+    expect(coat.backgroundSize).toContain("195% 100%");
+    expect(coat.mixBlendMode).toBe("exclusion");
+  });
+
+  it("plain FlatSilver keeps SVHolo2 off (CC spectrum is α-gated in GLES)", () => {
+    /*
+      MAT binds `_Tex_CC_Spectrum=SVHolo2` with `_Tex_CC` unbound. The frag
+      samples both, but mixes CC through `_Tex_CC.a × _UseCCFoil`. Painting
+      SVHolo2 on flatSilver / flatSilverCoat made Reshiram reverse read as a
+      rainbow wash; FlatSilver_CC / ReverseLaminate* still need it.
+    */
+    for (const id of ["flatSilver", "flatSilverCoat"] as const) {
+      expect(
+        pokemonHoloShader(id).backgroundImage,
+        id,
+      ).not.toContain("SVHolo2");
+    }
+    expect(pokemonHoloShader("flatSilverCc").backgroundImage).toContain(
+      "SVHolo2",
+    );
+    expect(pokemonHoloShader("flatSilverCcMb").backgroundImage).toContain(
+      "SVHolo2",
+    );
+    const silver = pokemonHoloShader("flatSilver");
+    expect(silver.mixBlendMode).toBe("soft-light");
+    expect(silver.opacity).toBeLessThanOrEqual(0.4);
   });
 
   it("matches poke-holo Radiant structure with Live etch polarity adapted", () => {

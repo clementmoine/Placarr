@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatPlayroomFaceCaption,
+  isPlausibleLiveCardName,
   liveSetDisplayName,
   parseLiveBundleId,
+  pickLiveCardDisplayName,
 } from "./liveSetDisplay";
 
 describe("parseLiveBundleId", () => {
@@ -42,5 +44,30 @@ describe("formatPlayroomFaceCaption", () => {
     expect(
       formatPlayroomFaceCaption("Florizarre Radieux", "swsh10-5_fr_004", "fr"),
     ).toBe("Florizarre Radieux · Épée & Bouclier · Pokémon GO n°4");
+  });
+});
+
+describe("isPlausibleLiveCardName / pickLiveCardDisplayName", () => {
+  it("rejects attack-body fragments wrongly stored as name_fr", () => {
+    expect(
+      isPlausibleLiveCardName(
+        "ur de votre adversaire, il ne peut pas jouer de cartes Objet de sa main.",
+      ),
+    ).toBe(false);
+    expect(isPlausibleLiveCardName("Frillish")).toBe(true);
+    expect(
+      isPlausibleLiveCardName("Capsule Technique : Énergisant Spontané"),
+    ).toBe(true);
+  });
+
+  it("falls back to EN when FR is attack text", () => {
+    expect(
+      pickLiveCardDisplayName({
+        nameFr:
+          "ur de votre adversaire, il ne peut pas jouer de cartes Objet de sa main.",
+        nameEn: "Frillish",
+        fallback: "rsv10-5_fr_044",
+      }),
+    ).toBe("Frillish");
   });
 });

@@ -27,7 +27,7 @@ import { useFoilPointerSpring } from "@/lib/client/hooks/useFoilPointerSpring";
 import { useMaskBlob } from "@/lib/client/hooks/useMaskBlob";
 import { useInvertedPaintBlob } from "@/lib/client/hooks/useInvertedPaintBlob";
 import { cn } from "@/lib/shared/utils";
-import { foilFaceReady } from "@/components/foilFaceReady";
+import { foilFaceReady, holoCssIdleEnabled } from "@/components/foilFaceReady";
 
 type HoloCardImageProps = {
   /** Artwork to show. Already the foil printing when the provider has one. */
@@ -323,8 +323,12 @@ export function HoloCardImage({
     [place, springSnap],
   );
 
-  const idleEnabled =
-    Boolean((shader || varnishShader) && shineMask) && !isDriven;
+  const idleEnabled = holoCssIdleEnabled({
+    hasFinish: Boolean(shader || varnishShader),
+    isDriven,
+    fullCardFinish: isLiveGoldCss,
+    shineMask,
+  });
   const { noteLean } = useFoilIdleLean(
     isDriven || !idleEnabled,
     MAX_TILT,
@@ -565,6 +569,7 @@ export function HoloCardImage({
                         ...maskedByStyle([
                           shineMask,
                           foilPlate,
+                          overlayLook.carve,
                           overlayLook.pointerFalloff === false
                             ? null
                             : FOIL_POINTER_LIGHT_MASK,
@@ -604,6 +609,8 @@ export function HoloCardImage({
           look can use more than one mix-blend-mode — simey’s shine/:after/:before.
           Radiant coat is rendered above (under the lattice); only sparkle here.
           Ultra Gold etch layer is full-card (no white-plate mask).
+          Overlay `carve` (e.g. SunPillar CastAndCure Northern Cross) must apply
+          here — coats carry the stencil, not the base shine.
         */}
               {overlayLooks
                 .filter((look) => !(isRadiantCss && look.id === "radiantHoloCoat"))
@@ -616,6 +623,7 @@ export function HoloCardImage({
                     ...maskedByStyle([
                       shineMask,
                       foilPlate,
+                      overlayLook.carve,
                       overlayLook.pointerFalloff === false
                         ? null
                         : FOIL_POINTER_LIGHT_MASK,

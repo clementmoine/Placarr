@@ -16,22 +16,22 @@ const SAMPLE_CSS = `
 `;
 
 describe("dumpWeb", () => {
-  it("parseAssetRefs keeps foil stems only", () => {
+  it("parseAssetRefs downloads every CSS image stem (no allowlist)", () => {
     const refs = parseAssetRefs(SAMPLE_CSS);
     expect(refs.satin).toBe("/assets/satin-BFAj3gek.jpg");
     expect(refs.silverc).toBe("/assets/silverc-B7Q2CuyS.jpg");
     expect(refs.satinc).toBe("/assets/satinc-_4HVyYlm.png");
-    expect(refs).not.toHaveProperty("frame");
-    expect(refs).not.toHaveProperty("brandnewfoil");
+    expect(refs.frame).toBe("/assets/frame-slice-D8pv6LjA.png");
+    expect(refs.brandnewfoil).toBe("/assets/brandnewfoil-AaBbCc12.webp");
   });
 
   it("parseAllAssetStems + unlistedFoilStemCandidates surface new site textures", () => {
     const all = parseAllAssetStems(SAMPLE_CSS);
     expect(all.frame).toBe("/assets/frame-slice-D8pv6LjA.png");
     expect(all.brandnewfoil).toBe("/assets/brandnewfoil-AaBbCc12.webp");
-    expect(unlistedFoilStemCandidates(all)).toEqual(
-      expect.arrayContaining(["brandnewfoil", "frame"]),
-    );
+    expect(
+      unlistedFoilStemCandidates(all, new Set(["silverc", "satin", "satinc"])),
+    ).toEqual(["brandnewfoil", "frame"]);
   });
 
   it("stableName normalizes jpeg → jpg", () => {

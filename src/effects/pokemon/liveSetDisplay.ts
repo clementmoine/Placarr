@@ -177,3 +177,43 @@ export function formatPlayroomFaceCaption(
   parts.push(`${setName} n°${parsed.num}`);
   return parts.join(" · ");
 }
+
+/**
+ * Live `name_fr` sometimes stores attack/rules body (blob string offsets).
+ * Reject those so captions can fall back to `name_en`.
+ */
+export function isPlausibleLiveCardName(
+  name: string | null | undefined,
+): boolean {
+  const t = (name ?? "").trim();
+  if (!t) return false;
+  // Real Trainer/TM titles top out around ~50–60 chars; attack bodies run longer.
+  if (t.length > 72) return false;
+  if (
+    /adversaire|pokémon actif|<sprite|cette attaque|dégâts|défaussez|si c'est face|cartes objet|marqueurs? de dégâts|batt(re|ent) en retraite|inflige \d|pour chaque/i.test(
+      t,
+    )
+  ) {
+    return false;
+  }
+  // Truncated mid-sentence fragments often start lowercase and contain spaces.
+  if (/^[a-zàâäéèêëïîôùûüç]/.test(t) && /\s/.test(t)) return false;
+  return true;
+}
+
+/** Prefer FR name when sane; otherwise EN; otherwise caller fallback. */
+export function pickLiveCardDisplayName(opts: {
+  nameFr?: string | null;
+  nameEn?: string | null;
+  prefer?: LiveSetLocale;
+  fallback: string;
+}): string {
+  const ordered =
+    (opts.prefer ?? "fr") === "fr"
+      ? [opts.nameFr, opts.nameEn]
+      : [opts.nameEn, opts.nameFr];
+  for (const cand of ordered) {
+    if (isPlausibleLiveCardName(cand)) return cand!.trim();
+  }
+  return opts.fallback;
+}

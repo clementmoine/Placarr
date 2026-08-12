@@ -10,6 +10,7 @@ import {
   applyLiveFoilMask,
   mergeMaterialFloats,
   paperMaterial,
+  parsePaperMaterialName,
   POKEMON_MAT_ALIASES,
   sharedMotifStems,
 } from "./materials";
@@ -20,11 +21,10 @@ const SHARED_DIR = path.join(
   "pokemon",
   "foil",
   "textures",
-  "_shared",
 );
 
 describe("pokemon materials shared motifs", () => {
-  it("binds dump-aligned _shared files for every foil with motifs", () => {
+  it("binds dump-aligned textures/ files for every foil with motifs", () => {
     let slots = 0;
     for (const name of POKEMON_FOIL_NAMES) {
       const stems = sharedMotifStems(name);
@@ -32,9 +32,7 @@ describe("pokemon materials shared motifs", () => {
       expect(material).toBeTruthy();
       for (const [slot, stem] of Object.entries(stems)) {
         slots += 1;
-        expect(material!.textures[slot]?.file).toBe(
-          `_shared/${foilTextureFile(stem)}`,
-        );
+        expect(material!.textures[slot]?.file).toBe(foilTextureFile(stem));
         const webp = path.join(SHARED_DIR, foilTextureFile(stem));
         const png = path.join(SHARED_DIR, `${stem}.png`);
         expect(
@@ -52,8 +50,20 @@ describe("pokemon materials shared motifs", () => {
       expect(m.textures._CardColorDiffuse?.role).toBe("art");
       if (name !== "NonFoil") {
         expect(m.textures._CardWhitePlateMask?.role).toBe("foilMask");
+        expect(m.webgl).not.toBe(false);
       }
     }
+  });
+
+  it("NonFoil stays CSS-only — no fake Unity↔web foil gap", () => {
+    const m = paperMaterial("NonFoil")!;
+    expect(m.webgl).toBe(false);
+    expect(m.textures._CardWhitePlateMask).toBeUndefined();
+    expect(m.textures._CardEtch).toBeUndefined();
+    expect(parsePaperMaterialName("NonFoil")).toEqual({
+      finish: "NonFoil",
+      varnish: null,
+    });
   });
 
   it("SolidColor: motifs + animation malgré le sheet FoilAnimation=0", () => {
@@ -117,6 +127,9 @@ describe("applyLiveFoilMask", () => {
 
   it("ReverseLaminate* bind TEX_CC_PB / TEX_CC_MB", () => {
     const base = paperMaterial("FlatSilver")!;
+    // Plain reverse: MAT leaves `_Tex_CC` unbound (CC overlay α-gated off).
+    expect(base.textures._Tex_CC).toBeUndefined();
+    expect(base.floats._UseCCFoil).toBe(1);
     expect(
       applyLiveFoilMask(base, "ReverseLaminatePokeBall").textures._Tex_CC
         ?.file,

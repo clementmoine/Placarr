@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-08-05** (ajout P2 border-radius fullscreen Location/BREAK ; plan perf #1–#6 déjà terminé).
+> Dernière vérification : **2026-08-11** (border-radius fullscreen Location/BREAK → fait ; foil Pokémon intégration à terminer).
 > Index docs : [README.md](README.md).
 
 ## Plan perf métadonnées — terminé (2026-07-25)
@@ -27,8 +27,8 @@ disparu.
 | Priorité | Item                         | Détail                                                                                                                     |
 | -------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | ~~P1~~   | ~~TCG — plein écran holo + dos~~ | **Fait** — foil masqué (CSS/WebGL), flip Face/Dos, dos pack (print > set > pack). Plus de `Shelf.cardBackUrl`. Voir [tcg_support.md](tcg_support.md) §6. |
-| **P2**   | **TCG — border-radius fullscreen (Location / BREAK)** | Coins arrondis OK en **portrait** (WebGL + `clip-path` hors `preserve-3d`). En **paysage** (`faceQuarterTurns` + `OrientedMediaRotator` 90°), le canvas WebGL **échappe** au clip dès qu’un `rotate` s’interpose entre le clip et le canvas — silhouette sharp (vérifié au rouge uni, pas à l’art). Piste : clipper *dans* le rotate (autour du canvas, sans transform entre clip et canvas) + radii pré-rotate `3%/4%` pour matcher le visuel `4%/3%`. Ne pas se fier à l’œil sur l’illustration (bords déjà « ronds » dans l’art). Fichiers : `FlippableCard`, `OrientedMediaFrame`, zoom fiche. |
-| **P1**   | **TCG — foil via TCG Live** | Pack `pokemon` + CDN (`pnpm foil:pokemon`). Voir [archive/tcglive_effects.md](archive/tcglive_effects.md) + [data-layout.md](data-layout.md). |
+| ~~P2~~   | ~~TCG — border-radius fullscreen (Location / BREAK)~~ | **Fait** — clip *dans* le `OrientedMediaRotator` (pas d’ancêtre `clip-path` au-dessus du `rotate`) + radii pré-rotate `3%/4%` (`cardFaceRadius` / `cardFaceClipPath`). Portrait et paysage (BREAK / Location). |
+| **P1**   | **TCG — foil Pokémon : terminer l’intégration** | Pack + dumps CDN **branchés** ; la **fidélité** n’est pas finie. **(A) WebGL** — vérifier leaf par leaf Live/Unity (app / playroom Comparer) vs Placarr (`materials` + frags GLES) : light/tilt/TBN, CC, scrolls `_Time`, pas de wash. **(B) CSS** — adapter **depuis Live** (plaques + intention frag) ; Simey / poke-151 = **appui d’analyse** seulement (mixes, composition) — **pas** les mêmes layers → adaptation intelligente (pas de port aveugle). Contrats : [foil_effects.md](foil_effects.md), [foil_css_sources.md](foil_css_sources.md). |
 | ~~P3~~   | ~~TCG — Pocket effets~~    | **Supprimé** (jamais imprimé). Code Pocket retiré. |
 | P2       | TCG — autres jeux            | Pokémon (TCGdex, prix en €), Magic, Yu-Gi-Oh gratuits ; One Piece / Dragon Ball via clé apitcg.                            |
 | P2       | Regroupement des doublons    | Transform d'affichage générique (tous types) : `Elsa foil ×3`. Voir [tcg_support.md](tcg_support.md) §4.                   |
@@ -36,24 +36,25 @@ disparu.
 | P3       | `loose` est une variante     | L'enum `Condition` mélange état et complétude — voir ci-dessous.                                                           |
 | P3       | Vue 3D retournable           | Cartes : livré (Face/Dos). À étendre aux jeux / boîtes ensuite.                                                              |
 | P3       | Revoir title-IDF (`data/indexes/title-idf`) | Index DF titres offline (`token-df.json`, `pnpm title-idf:update`) — découvert late, opaque. Clarifier / documenter le contrat, décider si on garde le dossier top-level, le merge ailleurs, ou on simplifie le chemin (qui build, qui lit, fallback sans fichier). Voir `tokenCorpusIndex.ts` + [archive/word_list_audit.md](archive/word_list_audit.md). |
-| P3       | Renommer / scinder `data/<pack>/foil/` | Le dossier `foil/` sert encore le pack rendu (`/foil/<pack>/…` : shaders, textures, web) mais `foil/cards/` = faces catalogue multi-langues + masks — le nom « foil » sous-vend. À trancher : (a) renommer en `pack/` / `assets/` + URLs, ou (b) sortir `cards/` à côté du sqlite (`data/lorcana/cards/`) et garder `foil/` pour shaders/textures/web. Voir [data-layout.md](data-layout.md). |
-| P2       | Sync catalogue TCG local (fraîcheur) | `lorcanatcg` / `pokemontcglive` n’ont pas d’équivalent iCollect : pas de job léger « re-sync sqlite + assets manquants ». Aujourd’hui = `foilExtract` manuel (lourd) ou CLI. À faire : job `*IndexSync` / trait `localCatalogSync` (Phase C plan indexes) — enqueue admin + worker catalog, skip bytes existants, rewrite sqlite depuis upstream (LorcanaJSON / Live). Sans ça, la DB locale vieillit jusqu’au prochain extract manuel. |
+| ~~P3~~   | ~~Renommer / scinder `data/<pack>/foil/`~~ | **Fait** — `cards/{set}/{lang}/{card}/` + `foil/` rendu + `catalog.sqlite` + `cards-index.json` v1 + URL `/assets/<pack>/…` + `staging/`. Voir [data-layout.md](data-layout.md). |
+| P3       | Audit mécanismes temporaires oubliés | Passer code + docs + routes data (hors `docs/archive/`) à la recherche de shims / dual-path / « transition » / « legacy » / « compat » / « temporaire ». Ex. déjà retiré : fallback `/foil/` `.webp`↔`.png`. Pour chaque hit restant : **supprimer**, ou **documenter comme contrat permanent**. Dette déjà notée ailleurs : `croppedImageUrl`. |
+| ~~P2~~   | Sync catalogue TCG local (fraîcheur) | **Fait** — sync auto `foilCatalogSync` (staleness) + manuel admin/CLI ; indexes data-only ; gaps admin/`foil:audit-gaps` ; APK vs réseau : [foil_apk_sources.md](foil_apk_sources.md). |
 | P3       | ~~Foil CSS fallback (Simey / Pokebox)~~ | **Livré** — simey → `HoloShader` + `cssRecipes.ts` (pas `/foil/lorcana/web`). Contrat packs : [foil_effects.md](foil_effects.md). |
 
 ### Foil via TCG Live
 
 **CLI :** `pnpm foil:pokemon` · `pnpm foil:pokemon:scrape` · `pnpm foil:pokemon:sources` · `pnpm foil:pokemon:index-cards` · audits via `tsx scripts/pokemon/audit*.ts` · `pnpm foil:lorcana` · `pnpm foil:lorcana:cards`.
 
-**À faire, dans l'ordre :**
+**Infrastructure (extrait / pack) — largement en place ; intégration rendu = ouverte.**
 
 | # | Tâche | Note |
 | - | ----- | ---- |
 | 0 | ~~Matrice sources~~ | `pnpm foil:pokemon:sources` |
 | 1 | Catalogue sans device | Config-cache local ; **Malie** `databases`/`export` (amorce multi-lang) ; API op-core **TBD** |
 | 2 | ~~Update CDN~~ | `pnpm foil:pokemon` |
-| 3 | Pack `pokemon` | Unity/WebGL — `printKey`→Live. Audits: `audit-apk` · `audit-map` · fallback `*sv` auto |
+| 3 | **WebGL — parité Live** | **À terminer.** Dump + `paperMaterial` branchés ≠ fidèle. Comparer Unity (app Mac / playroom) vs canvas Placarr leaf par leaf : drivers tilt (`_LightDirection` / camera / TBN), `_Time` idle, CastAndCure, masks WP. Corriger frags/binds/mats quand le Comparer diverge. |
 | 4 | ~~Audit store~~ | `tsx scripts/pokemon/audit_store.ts` — shaders / masques / `cards.json` |
-| 5 | ~~Fallback CSS (stock)~~ | `cssRecipes.ts` + house looks — après pack Unity |
+| 5 | **CSS — adaptation Live (+ Simey analyse)** | **À terminer.** Recettes `holoShadersPokemon` / `cssRecipes` branchées ; dosage + chorégraphie encore faux sur plusieurs leaves (ex. SunPillar wash, Ultra Gold idle). Vérité = Live ; Simey = structure/mixes **sans** bijection de layers — adapter intelligemment. Checklist : [foil_css_sources.md](foil_css_sources.md) §2. |
 
 **Scrape intelligent (anti soft-ban) — règles figées :**
 
@@ -71,7 +72,7 @@ pnpm foil:pokemon -- --langs en   # après FR + soft-ban dissipé
 # Admin Extract Pokémon = inventory APK∪Malie → CDN (misses logged)
 ```
 
-**Dépendance :** foil runtime = CDN ; catalogue Malie et/ou `card-database-*` → `live-cards.sqlite`.
+**Dépendance :** foil runtime = CDN ; catalogue Malie et/ou `card-database-*` → `catalog.sqlite`.
 
 ### Recadrage manuel — livré (2026-07-26)
 

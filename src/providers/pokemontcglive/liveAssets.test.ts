@@ -14,7 +14,7 @@ describe("pokemontcglive", () => {
     });
     expect(attachments.some((a) => a.role === "tcglive-front")).toBe(true);
     expect(attachments.every((a) => a.source === "pokemontcglive")).toBe(true);
-    expect(attachments[0]?.url).toContain("/foil/pokemon/");
+    expect(attachments[0]?.url).toContain("/assets/pokemon/");
   });
 
   it("resolves cover metadata from printKey when Live art exists", async () => {

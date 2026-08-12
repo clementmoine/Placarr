@@ -49,7 +49,7 @@ export type {
  */
 
 /**
- * Live `Card` mesh width/height (`data/pokemon/foil/cardQuad.json`). Portrait
+ * Live `Card` mesh width/height (`data/pokemon/foil/card-uv-rect.json`). Portrait
  * UVs are not isometric: equal Δu/Δv map to unequal millimetres.
  */
 export const LIVE_CARD_ASPECT = 0.7187859711391763;
@@ -57,10 +57,15 @@ export const LIVE_CARD_ASPECT = 0.7187859711391763;
 /**
  * Full-screen quad → UVs, plus Unity card varyings.
  * Lorcana frags read `vs_INTERP*`; TCG Live HoloFoil reads `vs_TEXCOORD*`
- * (TBN rows + world pos.w from the Live VS). Identity TBN faces the camera.
+ * (TBN rows + world pos.w from the Live VS).
+ *
+ * `u_CardLean` tips the TBN like Live rotating the Card mesh. Without it,
+ * AceFoil's CrossTexture lattice (driven by WorldToObject·N → TBN dots) stays
+ * frozen — CSS only spins the canvas; clip-space geometry stayed flat.
  */
 const VERTEX_SRC = `#version 300 es
 layout(location = 0) in vec2 position;
+uniform vec2 u_CardLean;
 out highp vec4 vs_INTERP0;
 out highp vec4 vs_INTERP2;
 out highp vec2 vs_TEXCOORD0;
@@ -74,18 +79,22 @@ void main() {
   vs_TEXCOORD0 = uv;
   // Unity packing: TEXCOORD<i> = (T.<i>, B.<i>, N.<i>, worldPos.<i>) —
   // frags read normal as (T1.z, T2.z, T3.z), worldPos as (T1.w, T2.w, T3.w).
-  // The app authors its card flat, normal +Y (MAT sheets: _LightDirection
-  // (0,1,0)): T=(1,0,0), B=(0,0,1), N=(0,1,0).
+  // Rest lean: T=(1,0,0), B=(0,0,1), N=(0,1,0) — same as MAT _LightDirection.
   //
   // worldPos must vary across the card: Live's HoloFoil frags derive a
   // per-pixel view offset from dFdx/dFdy of it — a constant leaves
   // inversesqrt(0) = ∞ and NaN shine/spectrum UVs (no gold-rainbow sweep).
-  // The magnitude only sets the view-angle spread (the offset is normalised):
-  // card aspect from the Card mesh, height 1, camera 2 units up.
-  vec3 worldPos = vec3((uv.x - 0.5) * ${LIVE_CARD_ASPECT}, 0.0, (0.5 - uv.y) * 1.0);
-  vs_TEXCOORD1 = vec4(1.0, 0.0, 0.0, worldPos.x);
-  vs_TEXCOORD2 = vec4(0.0, 0.0, 1.0, worldPos.y);
-  vs_TEXCOORD3 = vec4(0.0, 1.0, 0.0, worldPos.z);
+  // Tip local XZ with the same TBN so etch-view + lattice track the lean.
+  vec3 N = normalize(vec3(u_CardLean.x, 1.0, u_CardLean.y));
+  vec3 T = vec3(1.0, 0.0, 0.0) - N * N.x;
+  float tLen = length(T);
+  T = tLen > 1e-4 ? T / tLen : normalize(cross(vec3(0.0, 0.0, 1.0), N));
+  vec3 B = cross(T, N);
+  vec3 local = vec3((uv.x - 0.5) * ${LIVE_CARD_ASPECT}, 0.0, (0.5 - uv.y) * 1.0);
+  vec3 worldPos = T * local.x + B * local.z;
+  vs_TEXCOORD1 = vec4(T.x, B.x, N.x, worldPos.x);
+  vs_TEXCOORD2 = vec4(T.y, B.y, N.y, worldPos.y);
+  vs_TEXCOORD3 = vec4(T.z, B.z, N.z, worldPos.z);
   gl_Position = vec4(position, 0.0, 1.0);
 }`;
 
@@ -351,6 +360,16 @@ const ROLE_FALLBACK: Record<string, [number, number, number, number]> = {
   normals: [128, 128, 255, 255],
 };
 
+/**
+ * Unbound motif / optional slots (Unity pathid 0) must sample as transparent.
+ * Opaque black (α=255) falsely arms alpha-gated layers — e.g. FlatSilver keeps
+ * `_UseCCFoil=1` and `_Tex_CC_Spectrum=SVHolo2` while `_Tex_CC` is unbound; Live
+ * null-textures α≈0 so the CC rainbow stays off, but α=1 lit the whole card.
+ */
+export const UNBOUND_TEXTURE_FALLBACK: [number, number, number, number] = [
+  0, 0, 0, 0,
+];
+
 function recoverFoilMaskRgb(
   image: ImageBitmap,
 ): ImageBitmap | Promise<ImageBitmap> {
@@ -394,6 +413,8 @@ function recoverFoilMaskRgb(
 type ProgramBindings = {
   program: WebGLProgram;
   tiltLoc: WebGLUniformLocation | null;
+  /** Tips Live TBN in the VS (AceFoil lattice, etch view, …). */
+  cardLeanLoc: WebGLUniformLocation | null;
   /** TCG Live HoloFoil: lean as a front-facing light vector. */
   lightDirLoc: WebGLUniformLocation | null;
   lightDirSize: 3 | 4;
@@ -448,7 +469,11 @@ export function createWebglFoilRenderer(
   let tiltProgram: ProgramBindings | null = null;
   let timeProgram: ProgramBindings | null = null;
   let active: ProgramBindings | null = null;
-  let scrollMode: WebglFoilScrollMode = material.fragmentTime ? "time" : "tilt";
+  // Always start on the clock. Live single-frag (Pokémon) reads `_Time` in the
+  // same program — defaulting to `"tilt"` left `_Time` frozen until React
+  // flipped the mode (and foil looked dead / stuck after hover). Lorcana
+  // dual-frag also wants Time at rest; hover swaps via setScrollMode.
+  let scrollMode: WebglFoilScrollMode = "time";
   let destroyed = false;
   let frame = 0;
   let paused = document.visibilityState === "hidden";
@@ -602,7 +627,8 @@ export function createWebglFoilRenderer(
     binding: FoilTextureBinding | undefined,
   ): Promise<void> {
     const role = binding?.role;
-    const fallback = (role && ROLE_FALLBACK[role]) ?? [0, 0, 0, 255];
+    const fallback =
+      (role && ROLE_FALLBACK[role]) ?? UNBOUND_TEXTURE_FALLBACK;
     texturesBySlot.set(
       slot,
       solidTexture(fallback as [number, number, number, number]),
@@ -761,6 +787,7 @@ export function createWebglFoilRenderer(
     return {
       program,
       tiltLoc: gl!.getUniformLocation(program, "_Tilt"),
+      cardLeanLoc: gl!.getUniformLocation(program, "u_CardLean"),
       lightDirLoc: light.loc,
       lightDirSize: light.size,
       cameraPosLoc: camera.loc,
@@ -781,6 +808,9 @@ export function createWebglFoilRenderer(
     gl!.useProgram(active.program);
 
     if (active.tiltLoc) gl!.uniform2f(active.tiltLoc, tilt[0], tilt[1]);
+    if (active.cardLeanLoc) {
+      gl!.uniform2f(active.cardLeanLoc, tilt[0], tilt[1]);
+    }
     if (active.lightDirLoc) {
       const dir = lightDirectionFromTilt(tilt[0], tilt[1]);
       if (active.lightDirSize === 4) {

@@ -30,13 +30,15 @@ export type AuditApkPaths = {
 };
 
 export function defaultAuditPaths(root = repoRoot()): AuditApkPaths {
+  const pack = path.join(root, "data/pokemon");
+  const staging = path.join(pack, "staging");
   return {
     root,
-    configCache: path.join(root, "data/pokemon/config-cache"),
-    cataloguePath: path.join(root, "data/pokemon/cdn-catalogue-setnum.txt"),
-    cardsPath: path.join(root, "data/pokemon/cards.json"),
-    bundlesDir: path.join(root, "data/pokemon/cdn-bundles"),
-    reportPath: path.join(root, "data/pokemon/logs/apk-coverage.json"),
+    configCache: path.join(staging, "config-cache"),
+    cataloguePath: path.join(staging, "cdn-catalogue-setnum.txt"),
+    cardsPath: path.join(pack, "cards.json"),
+    bundlesDir: path.join(staging, "cdn-bundles"),
+    reportPath: path.join(pack, "logs/apk-coverage.json"),
   };
 }
 

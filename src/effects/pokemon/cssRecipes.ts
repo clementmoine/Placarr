@@ -2,14 +2,8 @@
  * Pokémon CSS foil — **Live / Unity first** (plaques + intention frag).
  * Simey / forks = analyse only — not the choreography we depend on.
  *
- * Looks live in `holoShadersPokemon` (APK/Live plates) or catalogue-only
- * Simey ids for non-Live finishes (`holo`, `reverse`, …).
- *
- * The print's own foil mask still gates coverage in `HoloCardImage`
- * (`maskedByStyle`), except full-card gold/secret finishes.
- *
- * Live `foil_mask` (CastAndCure / ReverseLaminate*) remaps CSS the same way
- * `applyLiveFoilMask` remaps WebGL — Northern Cross / Poké·Master Ball carves.
+ * Resolve: known irregular aliases → Pascal leaf → camelCase if ported → default.
+ * New dumped leaves without a ported look fall back honestly (gap audit).
  */
 
 /**
@@ -21,9 +15,16 @@
  */
 export const POKEMON_CSS_FOIL_SHIPPED = true;
 
+import { HOUSE_HOLO_SHADER_IDS } from "@/core/render/holoShadersHouse";
 import type { HouseHoloShaderId } from "@/core/render/holoShadersHouse";
-import type { PokemonHoloShaderId } from "@/core/render/holoShadersPokemon";
-import type { SimeyHoloShaderId } from "@/core/render/holoShadersSimey";
+import {
+  POKEMON_HOLO_SHADER_IDS,
+  type PokemonHoloShaderId,
+} from "@/core/render/holoShadersPokemon";
+import {
+  SIMEY_HOLO_SHADER_IDS,
+  type SimeyHoloShaderId,
+} from "@/core/render/holoShadersSimey";
 
 import { foilManifestToShader } from "./foilNames";
 
@@ -33,27 +34,59 @@ export const DEFAULT_FINISH_CSS_ID: SimeyHoloShaderId = "regularHolo";
 /** Reverse / parallel sheen — simey `reverse-holo.css`. */
 export const REVERSE_FINISH_CSS_ID: SimeyHoloShaderId = "reverseHolo";
 
+type CssLookId = HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
+
+const PORTED_CSS_IDS = new Set<string>([
+  ...HOUSE_HOLO_SHADER_IDS,
+  ...POKEMON_HOLO_SHADER_IDS,
+  ...SIMEY_HOLO_SHADER_IDS,
+]);
+
 /**
- * Live HoloFoil leaf → CSS look (Pokemon / Live plates).
- *
- * Remapped off Simey rarity ids (2026-08-07): Unity compare is the truth.
- * CastAndCure / laminate overrides applied in {@link applyFoilMaskCss}.
+ * Irregular Live leaf → CSS id (where `RadiantHolo`→`radiantHolo` is wrong).
  */
-export const LIVE_FINISH_CSS: Readonly<
-  Record<string, HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId>
-> = {
-  RadiantHolo: "radiantHolo",
-  SwSecret: "swSecret",
-  SwSecreT02: "swSecret",
+const LIVE_FINISH_CSS_ALIASES: Readonly<Record<string, CssLookId>> = {
   Rainbow: "rainbowFoil",
   Rainbow02: "rainbow02",
+  SwSecreT02: "swSecret",
+  FlatSilver_CC: "flatSilverCc",
+  SvUltraGoldRainbow: "ultraGoldRainbow",
+  SvUltraScodix: "ultraScodix",
+  "25thConfetti": "confetti25th",
+};
+
+function leafToCamelCssId(leaf: string): string {
+  if (!leaf) return "";
+  return leaf.charAt(0).toLowerCase() + leaf.slice(1);
+}
+
+function isPortedCssId(id: string): id is CssLookId {
+  return PORTED_CSS_IDS.has(id);
+}
+
+/** Resolve Live leaf → ported CSS id without catalogue / default. */
+export function resolveLiveFinishCssId(leaf: string): CssLookId | null {
+  const trimmed = leaf.trim();
+  if (!trimmed) return null;
+  const alias = LIVE_FINISH_CSS_ALIASES[trimmed];
+  if (alias) return alias;
+  const camel = leafToCamelCssId(trimmed);
+  if (isPortedCssId(camel)) return camel;
+  return null;
+}
+
+/**
+ * Snapshot of leaf→id for guards / audits (aliases + convention for known leaves).
+ * Prefer {@link resolveLiveFinishCssId} for runtime.
+ */
+export const LIVE_FINISH_CSS: Readonly<Record<string, CssLookId>> = {
+  ...LIVE_FINISH_CSS_ALIASES,
+  RadiantHolo: "radiantHolo",
+  SwSecret: "swSecret",
   Cosmos: "cosmos",
   Galaxy: "galaxy",
   CrackedIce: "crackedIce",
   FlatSilver: "flatSilver",
-  FlatSilver_CC: "flatSilverCc",
-  SvUltraGoldRainbow: "ultraGoldRainbow",
-  SvUltraScodix: "ultraScodix",
   SvUltra: "svUltra",
   SvHolo: "svHolo",
   SwHolo: "swHolo",
@@ -67,8 +100,19 @@ export const LIVE_FINISH_CSS: Readonly<
   Thatch: "thatch",
   Tinsel: "tinsel",
   Stamped: "stamped",
-  "25thConfetti": "confetti25th",
 };
+
+/** True when a named Live leaf would only get the pack default CSS look. */
+export function isCssFinishFallbackOnly(leaf: string): boolean {
+  const trimmed = leaf.trim();
+  if (!trimmed) return false;
+  if (resolveLiveFinishCssId(trimmed)) return false;
+  const live = foilManifestToShader(trimmed);
+  if (!live || live === "NonFoil") return false;
+  if (resolveLiveFinishCssId(live)) return false;
+  if (CATALOGUE[trimmed.toLowerCase()]) return false;
+  return true;
+}
 
 /** Finishes that paint Live etch inside the shine stack (no house varnish). */
 const ETCH_PAINT_FINISH_IDS = new Set<string>([
@@ -79,9 +123,7 @@ const ETCH_PAINT_FINISH_IDS = new Set<string>([
   "secretRare",
 ]);
 
-const CATALOGUE: Readonly<
-  Record<string, HouseHoloShaderId | SimeyHoloShaderId | PokemonHoloShaderId>
-> = {
+const CATALOGUE: Readonly<Record<string, CssLookId>> = {
   holo: DEFAULT_FINISH_CSS_ID,
   reverse: REVERSE_FINISH_CSS_ID,
   firstedition: DEFAULT_FINISH_CSS_ID,
@@ -155,10 +197,6 @@ export function resolveCssRecipe(
   }
 
   const withEtch = (finishShaderId: string | null) => {
-    /*
-      Radiant / Ultra Gold / Scodix / SwSecret paint Live `_CardEtch` inside the
-      shine stack. Emitting house `etch` as well double-washes the card.
-    */
     if (finishShaderId && ETCH_PAINT_FINISH_IDS.has(finishShaderId)) {
       return { finishShaderId, varnishShaderId: null };
     }
@@ -171,15 +209,7 @@ export function resolveCssRecipe(
   const finishId = (id: string) =>
     withEtch(applyFoilMaskCss(id, opts?.foilMask));
 
-  /*
-    The exact leaf first, and this order is load-bearing. `foilManifestToShader`
-    collapses sheet aliases onto their `.frag` stem — `FlatSilver_CC` becomes
-    `FlatSilver`, `Rainbow02` becomes `Rainbow` — because that is the right
-    answer for *shader* lookup. It is the wrong answer here: those leaves bind
-    different textures (the Poké Ball laminate, a different spectrum), so
-    collapsing first would make their recipes unreachable.
-  */
-  const exact = LIVE_FINISH_CSS[trimmed];
+  const exact = resolveLiveFinishCssId(trimmed);
   if (exact) {
     return finishId(exact);
   }
@@ -188,8 +218,9 @@ export function resolveCssRecipe(
   if (live === "NonFoil") {
     return { finishShaderId: null, varnishShaderId: null };
   }
-  if (live && LIVE_FINISH_CSS[live]) {
-    return finishId(LIVE_FINISH_CSS[live]);
+  if (live) {
+    const fromLive = resolveLiveFinishCssId(live);
+    if (fromLive) return finishId(fromLive);
   }
 
   const catalogue = CATALOGUE[trimmed.toLowerCase()];
@@ -197,6 +228,5 @@ export function resolveCssRecipe(
     return finishId(catalogue);
   }
 
-  // Unknown named finish: honest fan default, not a Lorcana silver recipe.
   return finishId(DEFAULT_FINISH_CSS_ID);
 }

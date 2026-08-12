@@ -1,9 +1,9 @@
 /**
  * Generated reprint hints for TCGdex Shiny Vault splits (`*sv`).
- * @see reprintMeta.json — regenerate via audit-map `--write-reprint-meta`.
+ * @see data/pokemon/reprintMeta.json — regenerate via audit-map `--write-reprint-meta`.
  */
 
-import reprintMetaJson from "./reprintMeta.json";
+import { loadReprintMeta } from "@/lib/foilMetaLoad";
 
 export type ReprintMetaEntry = {
   parentTcgdex: string;
@@ -20,16 +20,23 @@ export type ReprintMetaFile = {
   byTcgdexSet: Record<string, ReprintMetaEntry>;
 };
 
-const META = reprintMetaJson as ReprintMetaFile;
+function meta(): ReprintMetaFile {
+  const raw = loadReprintMeta() as Partial<ReprintMetaFile>;
+  return {
+    generatedAt: raw.generatedAt ?? "",
+    source: raw.source ?? "",
+    byTcgdexSet: raw.byTcgdexSet ?? {},
+  };
+}
 
 export function reprintMetaForTcgdexSet(
   setId: string | null | undefined,
 ): ReprintMetaEntry | null {
   const raw = setId?.trim().toLowerCase() ?? "";
   if (!raw) return null;
-  return META.byTcgdexSet[raw] ?? null;
+  return meta().byTcgdexSet[raw] ?? null;
 }
 
 export function listReprintMetaSets(): string[] {
-  return Object.keys(META.byTcgdexSet).sort();
+  return Object.keys(meta().byTcgdexSet).sort();
 }

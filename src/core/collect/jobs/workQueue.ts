@@ -100,10 +100,15 @@ export type PriceRefreshJobPayload = {
   force?: boolean;
 };
 
-import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+import type {
+  FoilExtractScope,
+  FoilExtractTarget,
+} from "@/lib/admin/foilExtractRunner";
 
 export type FoilExtractJobPayload = {
   target: FoilExtractTarget;
+  /** Absent on rows enqueued before scopes existed → treated as ``inventory``. */
+  scope?: FoilExtractScope;
 };
 
 export type BackgroundWorkJobRow = {

@@ -138,7 +138,7 @@ describe("resolveEffectForPrintKey", () => {
       confidence: "exact",
     });
     expect(paperMaskUrl(r!.bundle, r!.maskTex)).toBe(
-      "/foil/pokemon/textures/bw10_fr_001/bw10_wp_ph_fr_001.webp",
+      "/assets/pokemon/cards/bw10/fr/001/mask-ph.webp",
     );
   });
 
@@ -214,7 +214,7 @@ describe("resolveEffectForPrintKey", () => {
     const { resetCardFoilIndexCache } = await import("./cardFoilIndex");
 
     const dir = await mkdtemp(path.join(os.tmpdir(), "name-fallback-"));
-    const dbPath = path.join(dir, "live-cards.sqlite");
+    const dbPath = path.join(dir, "catalog.sqlite");
     const db = new DatabaseSync(dbPath);
     db.exec(`
       CREATE TABLE live_cards (

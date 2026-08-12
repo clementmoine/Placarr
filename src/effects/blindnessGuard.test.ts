@@ -26,10 +26,18 @@ const SKIP_DIR_PREFIXES = [
   "src/components/admin/WebAdb",
   "src/lib/admin/foilStatus",
   "src/lib/admin/foilExtractRunner.ts",
+  "src/lib/admin/foilCatalogSync.ts",
+  "src/lib/admin/foilGaps.ts",
+  "src/lib/admin/foilGapMaps.ts",
+  "src/lib/foilMetaLoad.ts",
+  "src/lib/foilMetaLoad.server.ts",
+  "src/lib/packAssetUrls.ts",
+  "src/lib/packPaths.ts",
   "src/lib/client/foilExtract.ts",
   // Foil extract enqueue — pack ids are the job target surface.
   "src/core/collect/jobs/backgroundJobs.ts",
   "src/lib/api/backgroundJobs.ts",
+  "scripts/foil/",
 ];
 
 function escapeRegExp(value: string): string {

@@ -1,6 +1,9 @@
 /**
  * Explicit TCGdex set id → TCG Live CDN set stem(s).
  *
+ * Irreducible remaps only — prefer inferring joins from dump + TCGdex metadata
+ * when possible; shrink this table over time.
+ *
  * First entry is the primary table; further entries are sibling slices in Live
  * (radiant collection, reprints) tried when the primary bundle is missing.
  *

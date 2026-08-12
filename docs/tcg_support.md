@@ -356,7 +356,7 @@ Sorties :
 - `data/lorcana/foil/shaders/*.frag` — fragments app, variantes de keywords
   (`_VARNISHTYPE_*`, `_HOTFOILSURFACE_*`, `USESECONDTOPLAYER`…), **Tilt** et
   **Time** (`_SCROLLMODE_*`). Servis en `/foil/lorcana/…`.
-- `src/effects/lorcana/manifest.json` — matériaux carte (généré, gitignoré ;
+- `data/lorcana/foil/manifest.json` — matériaux carte (généré, gitignoré ;
   stub via `pnpm foil:ensure`), textures / floats / couleurs filtrés
   data-driven. Slots par-carte (`_Motif`, masques…) = rôles runtime.
 - `data/lorcana/foil/textures/*.{webp,astc}` — dual WebP lossless + ASTC.

@@ -115,7 +115,7 @@ describe("cardDatabase", () => {
       extraSearch: "pomdepik",
     });
     const rows = extractIdentitiesFromBlob(blob, { lang: "fr" });
-    const dest = path.join(dir, "live-cards.sqlite");
+    const dest = path.join(dir, "catalog.sqlite");
     const meta = writeLiveCardsSqlite(rows, dest);
     expect(meta.rows).toBe(1);
     expect(fs.existsSync(dest)).toBe(true);
@@ -134,6 +134,101 @@ describe("cardDatabase", () => {
       expect(hit?.variant).toBe("ph");
     } finally {
       db.close();
+    }
+  });
+
+  it("writeLiveCardsSqlite replaces atomically while a reader holds the old file", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "card-db-lock-"));
+    tmpDirs.push(dir);
+    const dest = path.join(dir, "catalog.sqlite");
+
+    const first = extractIdentitiesFromBlob(
+      makeBlob({
+        nameEn: "Pineco",
+        nameFr: "Pomdepik",
+        collector: "1",
+        longForm: "Pineco_sv1_1_ph_Common_FlatSilver_Reverse",
+        extraSearch: "pomdepik",
+      }),
+      { lang: "fr" },
+    );
+    writeLiveCardsSqlite(first, dest);
+
+    // Seed card_foil on the live file (preserved across rewrite).
+    {
+      const seed = new DatabaseSync(dest);
+      try {
+        seed.exec(`
+          CREATE TABLE card_foil (
+            bundle_id TEXT NOT NULL,
+            variant TEXT NOT NULL,
+            card_tex TEXT,
+            mask_tex TEXT,
+            etch_tex TEXT,
+            cold_foil_tex TEXT,
+            foil TEXT,
+            shader TEXT,
+            PRIMARY KEY (bundle_id, variant)
+          );
+        `);
+        seed
+          .prepare(
+            `INSERT INTO card_foil
+              (bundle_id, variant, card_tex, mask_tex, etch_tex, cold_foil_tex, foil, shader)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .run("sv1_fr_001", "ph", "c", "m", "e", "cf", "f", "s");
+      } finally {
+        seed.close();
+      }
+    }
+
+    const reader = new DatabaseSync(dest, { readOnly: true });
+    try {
+      const second = extractIdentitiesFromBlob(
+        makeBlob({
+          nameEn: "Oddish",
+          nameFr: "Mystherbe",
+          collector: "2",
+          longForm: "Oddish_sv1_2_std_Common_None_None",
+          extraSearch: "mystherbe",
+        }),
+        { lang: "fr" },
+      );
+      expect(() => writeLiveCardsSqlite(second, dest)).not.toThrow();
+      expect(fs.existsSync(`${dest}.tmp`)).toBe(false);
+
+      // Old handle still sees the first snapshot (prior inode).
+      const stale = reader
+        .prepare("SELECT name_en FROM live_cards")
+        .all() as Array<{ name_en: string }>;
+      expect(stale.map((r) => r.name_en)).toEqual(["Pineco"]);
+    } finally {
+      reader.close();
+    }
+
+    const fresh = new DatabaseSync(dest, { readOnly: true });
+    try {
+      const names = (
+        fresh.prepare("SELECT name_en FROM live_cards").all() as Array<{
+          name_en: string;
+        }>
+      ).map((r) => r.name_en);
+      expect(names).toEqual(["Oddish"]);
+      const foil = fresh
+        .prepare(
+          "SELECT bundle_id, variant, shader FROM card_foil WHERE bundle_id=?",
+        )
+        .get("sv1_fr_001") as
+        | { bundle_id: string; variant: string; shader: string }
+        | undefined;
+      expect(foil).toEqual({
+        bundle_id: "sv1_fr_001",
+        variant: "ph",
+        shader: "s",
+      });
+    } finally {
+      fresh.close();
     }
   });
 

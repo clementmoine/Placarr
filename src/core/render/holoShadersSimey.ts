@@ -2,19 +2,20 @@
  * Foil looks adapted from simeydotme poke-holo / poke-151 (GPL-3.0).
  *
  * **Structure** = simey (overlay chains, blend, clip, glare).
- * **Paint** = TCG Live dump plates under `/foil/pokemon/textures/_shared`
+ * **Paint** = TCG Live dump plates under `/assets/pokemon/textures`
  * (same stems as `SHARED_BY_FOIL` in `effects/pokemon/materials`). CSS hue
  * ramps stay only where Live has no drawable plate (regular bars, reverse
  * light mask, sunpillar-style diagonals without a spectrum slot).
  *
  * Vendored reference CSS: `third_party/simeydotme-pokemon-cards-{css,151}/`.
- * Leafs with no simey analogue (Thatch, Tinsel, Squares, Sun*, Stamped,
- * Confetti, SolidColor) stay on APK recipes in `holoShadersPokemon.ts`.
+ * Leafs with no simey analogue (Thatch, Tinsel, Squares, SunBeam/SunLava,
+ * Stamped, Confetti, SolidColor) stay on APK recipes in `holoShadersPokemon.ts`.
+ * SunPillar ↔ poke-151 `ex-regular`; AngledPillars ↔ `ex-full-art`.
  */
 
 import type { HoloShader } from "@/core/render/holoShaders";
 
-const T = "/foil/pokemon/textures/_shared";
+const T = "/assets/pokemon/textures";
 const tex = (stem: string) => `url(${T}/${stem}.webp)`;
 
 const GLITTER = tex("T_Noise_Random");
@@ -228,9 +229,9 @@ const [exRegular, exRegularCoat] = diagonalFamily(
   [1.2, 0.1],
   "difference",
   "screen, hue, hard-light",
-);
+); // SunPillar ↔ poke-151 double-rare `ex-regular` (house CSS owns the Live port)
 
-/** AngledPillars — Live angled spectrum. */
+/** AngledPillars — Live angled spectrum / poke-151 ultra-rare `ex-full-art`. */
 const [exFullArt, exFullArtCoat] = diagonalFamily(
   "exFullArt",
   "exFullArtCoat",

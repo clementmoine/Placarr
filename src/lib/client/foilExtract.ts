@@ -4,10 +4,17 @@
 
 export type FoilExtractTarget = "lorcana" | "pokemon";
 
+/**
+ * ``inventory`` = liste dérivée APK ∪ Malie (rapide, incrémentale).
+ * ``catalogue`` = tout ce que les AssetManifests du CDN déclarent.
+ */
+export type FoilExtractScope = "inventory" | "catalogue";
+
 export type FoilExtractEnqueued = {
   ok: true;
   jobId: string;
   target: FoilExtractTarget;
+  scope: FoilExtractScope;
   kind: "foilExtract";
   label: string;
   hint?: string;
@@ -19,6 +26,7 @@ export type FoilExtractEnqueued = {
  */
 export async function enqueueFoilExtract(
   target: FoilExtractTarget,
+  scope: FoilExtractScope = "inventory",
 ): Promise<FoilExtractEnqueued> {
   const res = await fetch("/api/admin/foil-extract", {
     method: "POST",
@@ -26,7 +34,7 @@ export async function enqueueFoilExtract(
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ target }),
+    body: JSON.stringify({ target, scope }),
   });
 
   const body = (await res.json()) as {
@@ -34,6 +42,7 @@ export async function enqueueFoilExtract(
     ok?: boolean;
     jobId?: string;
     target?: FoilExtractTarget;
+    scope?: FoilExtractScope;
     kind?: "foilExtract";
     label?: string;
     hint?: string;
@@ -47,6 +56,7 @@ export async function enqueueFoilExtract(
     ok: true,
     jobId: body.jobId,
     target: body.target ?? target,
+    scope: body.scope ?? scope,
     kind: "foilExtract",
     label: body.label ?? target,
     hint: body.hint,

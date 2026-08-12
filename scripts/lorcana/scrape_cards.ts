@@ -18,11 +18,8 @@ import {
 
 async function cleanupOnly(): Promise<void> {
   const root = path.resolve(dataRoot(), "..");
-  const cardsDir = path.join(root, "data/lorcana/foil/cards");
-  const indexPaths = [
-    path.join(root, "data/lorcana/foil/cards-index.json"),
-    path.join(root, "src/effects/lorcana/cards-index.json"),
-  ];
+  const cardsDir = path.join(root, "data/lorcana/cards");
+  const indexPaths = [path.join(root, "data/lorcana/cards-index.json")];
   const legacy = cleanupLegacyPrintRootAssets(cardsDir);
   let stripped = 0;
   for (const indexPath of indexPaths) {

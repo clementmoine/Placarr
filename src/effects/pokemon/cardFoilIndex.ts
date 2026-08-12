@@ -1,7 +1,7 @@
 /**
  * SQLite implementation of the per-print foil texture lookups.
  *
- * Table `card_foil` in `data/pokemon/live-cards.sqlite`, built by
+ * Table `card_foil` in `data/pokemon/catalog.sqlite`, built by
  * ``pnpm foil:pokemon:index-card-foil``.
  *
  * Do not import this from client modules — importing it is what *installs* the
@@ -10,10 +10,11 @@
  * background workers run through tsx, outside Next's react-server resolution,
  * exactly as `liveCardsIndex` documents.
  */
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import "@/lib/foilMetaLoad.server";
 import { dataRoot } from "@/lib/runtimeData";
 
 import {
@@ -35,24 +36,33 @@ const SELECT_COLS = `
 `;
 
 let cachedPath: string | null = null;
+let cachedMtimeMs: number | null = null;
 let cachedDb: DatabaseSync | null = null;
 
 export function cardFoilDbPath(): string {
   const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
   if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "live-cards.sqlite");
+  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
 }
 
 function openDb(dbPath = cardFoilDbPath()): DatabaseSync | null {
-  if (cachedDb && cachedPath === dbPath) return cachedDb;
   if (!existsSync(dbPath)) {
-    cachedDb = null;
-    cachedPath = dbPath;
+    resetCardFoilIndexCache();
     return null;
+  }
+  const mtimeMs = statSync(dbPath).mtimeMs;
+  if (cachedDb && cachedPath === dbPath && cachedMtimeMs === mtimeMs) {
+    return cachedDb;
+  }
+  try {
+    cachedDb?.close();
+  } catch {
+    /* ignore */
   }
   const db = new DatabaseSync(dbPath, { readOnly: true });
   cachedDb = db;
   cachedPath = dbPath;
+  cachedMtimeMs = mtimeMs;
   return db;
 }
 
@@ -65,6 +75,7 @@ export function resetCardFoilIndexCache(): void {
   }
   cachedDb = null;
   cachedPath = null;
+  cachedMtimeMs = null;
 }
 
 function hasTable(db: DatabaseSync): boolean {

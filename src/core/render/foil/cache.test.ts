@@ -47,7 +47,7 @@ describe("foil cache", () => {
       })),
     );
 
-    const url = "/foil/pokemon/textures/mask_white.png";
+    const url = "/assets/pokemon/textures/mask_white.png";
     const [a, b] = await Promise.all([
       fetchImageBitmap(url),
       fetchImageBitmap(url),
@@ -69,7 +69,7 @@ describe("foil cache", () => {
     expect(rewritten).toMatch(/^\/_next\/image\?.*url=/);
     // Next.js rejects any q outside images.qualities (default [75]).
     expect(rewritten).toMatch(/[?&]q=75(?:&|$)/);
-    expect(foilTextureRequestUrl("/foil/local.png")).toBe("/foil/local.png");
+    expect(foilTextureRequestUrl("/assets/local.png")).toBe("/assets/local.png");
   });
 
   it("fetches an array buffer once per URL", async () => {

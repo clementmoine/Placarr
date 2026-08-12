@@ -31,7 +31,7 @@ import type {
  */
 
 /** Where the extracted textures live, apart from the web viewer's own. */
-const A = "/foil/app";
+const A = "/assets/app";
 
 /**
  * `freeForm` splits in two here.

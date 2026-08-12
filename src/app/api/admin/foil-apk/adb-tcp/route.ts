@@ -18,8 +18,8 @@ const PACKAGE_BY_PACK: Record<PackId, string> = {
 };
 
 const STAGING_BY_PACK: Record<PackId, string> = {
-  lorcana: "lorcana",
-  pokemon: "pokemon",
+  lorcana: "lorcana/staging",
+  pokemon: "pokemon/staging",
 };
 
 const MUMU_DEFAULT = "127.0.0.1:7555";
@@ -105,7 +105,7 @@ function hintForPack(
         file.name.toLowerCase().includes("unitydataassetpack"),
       ) ??
       saved[0];
-    return `pnpm foil:lorcana -- --providers lorcanamobile --apk ${preferred?.path ?? "data/lorcana/apks/base.apk"}  # fusionne aussi les splits du même dossier`;
+    return `pnpm foil:lorcana -- --providers lorcanamobile --apk ${preferred?.path ?? "data/lorcana/staging/apks/base.apk"}  # fusionne aussi les splits du même dossier`;
   }
   return "pnpm foil:pokemon  # CDN principal ; APK = secours schéma";
 }

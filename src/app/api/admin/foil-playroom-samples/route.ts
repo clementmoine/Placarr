@@ -7,6 +7,7 @@ import { localizePrintMasks } from "@/core/enrich/media/localizePrintMasks";
 import { listEffectPacks } from "@/effects";
 // Server-side: installs the SQLite lookups the packs read Live faces from.
 import "@/effects/pokemon/cardFoilIndex";
+import "@/lib/foilMetaLoad.server";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 import type { FoilPlayroomNeed } from "@/types/providerModule";

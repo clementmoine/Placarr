@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
-import { dataRoot } from "@/lib/runtimeData";
+import { packApksDir } from "@/lib/packPaths";
 
 const PACKS = new Set(["lorcana", "pokemon"]);
 const MAX_APK_BYTES = 512 * 1024 * 1024;
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "apk file(s) required" }, { status: 400 });
   }
 
-  const destDir = path.join(dataRoot(), pack, "apks");
+  const destDir = packApksDir(pack);
   await mkdir(destDir, { recursive: true });
 
   const saved: { name: string; bytes: number; path: string }[] = [];
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     saved.push({
       name: safeName,
       bytes: buf.length,
-      path: `data/${staging}/apks/${safeName}`,
+      path: `data/${pack}/staging/apks/${safeName}`,
     });
   }
 
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     saved,
     hint:
       pack === "lorcana"
-        ? "Ensuite: pnpm foil:lorcana -- --providers lorcanamobile --apk data/lorcana/apks/base.apk (fusionne aussi split_UnityDataAssetPack.apk du même dossier)"
+        ? "Ensuite: pnpm foil:lorcana -- --providers lorcanamobile --apk data/lorcana/staging/apks/base.apk (fusionne aussi split_UnityDataAssetPack.apk du même dossier)"
         : "Live: refresh CDN reste le chemin principal; APK = secours schéma.",
   });
 }

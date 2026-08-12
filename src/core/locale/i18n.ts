@@ -1,8 +1,13 @@
 import type { Locale } from "@/types/i18n";
 
+import en from "@/messages/en.json";
+import fr from "@/messages/fr.json";
+
 // Supported locales
 export const locales: Locale[] = ["en", "fr"];
 export const defaultLocale: Locale = "en";
+
+const MESSAGES: Record<Locale, typeof en> = { en, fr };
 
 // Locale detection from URL path
 export function getLocaleFromPath(pathname: string): Locale {
@@ -34,17 +39,17 @@ export function getPathnameWithoutLocale(pathname: string): string {
   return segments.join("/") || "/";
 }
 
-// Load messages for a specific locale
+/**
+ * Sync catalogue — avoid `import(\`@/messages/${locale}.json\`)`.
+ * That webpack lazy context can hang in the browser (keys stuck as
+ * `auth.loginTitle` / `common.loading` forever).
+ *
+ * Webpack/JSON interop may wrap the object in `{ default: … }`.
+ */
 export async function getMessages(locale: Locale) {
-  try {
-    const messages = await import(`@/messages/${locale}.json`);
-    return messages.default;
-  } catch (error) {
-    console.warn(`Failed to load messages for locale: ${locale}`, error);
-    // Fallback to default locale
-    const fallbackMessages = await import(`@/messages/${defaultLocale}.json`);
-    return fallbackMessages.default;
-  }
+  const mod = MESSAGES[locale] ?? MESSAGES[defaultLocale];
+  const nested = (mod as { default?: typeof en }).default;
+  return nested ?? mod;
 }
 
 // Type-safe message key access

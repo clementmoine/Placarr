@@ -89,7 +89,7 @@ Batch artifacts : `.tmp-foil-audit/live-unity/mitm/craft_batch_missing_effects.j
 
 | Fichier | Rôle |
 |---|---|
-| `src/effects/pokemon/liveOwned.json` | cache carddex → stems `_fr_` par effet |
+| `data/pokemon/liveOwned.json` | cache carddex → stems `_fr_` par effet |
 | `src/effects/pokemon/liveOwnedBundles.ts` | `ownedBundlesForShader` |
 | `src/effects/pokemon/playroomArt.ts` | owned d’abord ; flag `liveOwned` ; `ec_*` après Pokémon |
 | `src/components/admin/FoilPlayroom.tsx` | badge Live, tri owned en tête |

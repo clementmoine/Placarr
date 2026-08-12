@@ -10,7 +10,7 @@ from pathlib import Path
 import UnityPy
 
 import dump_unity
-from paths import ensure_effects_layout, foil_pack_dir
+from paths import ensure_effects_layout, foil_pack_dir, pack_cards_dir
 
 PACKAGE = "com.ravensburger.disney.lorcana"
 PLAY_HINT = f"https://play.google.com/store/apps/details?id={PACKAGE}"
@@ -115,7 +115,7 @@ def run(
 ) -> dict:
     del serial, timeout_s  # ADB removed — APK / --data only
     ensure_effects_layout(repo)
-    persist = repo / "data" / "lorcana" / "unity-data"
+    persist = repo / "data" / "lorcana" / "staging" / "unity-data"
 
     if data is not None:
         data_dir = Path(data).resolve()
@@ -130,7 +130,7 @@ def run(
         print(f"Using cached Unity Data: {persist}")
         data_dir = persist
     else:
-        default_apks = repo / "data" / "lorcana" / "apks"
+        default_apks = repo / "data" / "lorcana" / "staging" / "apks"
         if default_apks.is_dir() and any(default_apks.glob("*.apk")):
             inputs = _unity_apks(default_apks)
             print("Using APK(s): " + ", ".join(p.name for p in inputs))
@@ -138,15 +138,15 @@ def run(
         else:
             raise SystemExit(
                 "lorcanamobile requires --apk <file.apk> or --data <Unity Data dir> "
-                "(or APKs under data/lorcana/apks/)."
+                "(or APKs under data/lorcana/staging/apks/)."
             )
 
     pack = "lorcana"
     foil = foil_pack_dir(repo, pack)
     shaders_dir = foil / "shaders"
     textures_dir = foil / "textures"
-    manifest_path = repo / "src" / "effects" / pack / "manifest.json"
-    card_back_path = foil / "card_back.webp"
+    manifest_path = foil / "manifest.json"
+    card_back_path = pack_cards_dir(repo, pack) / "back.webp"
 
     data_file = dump_unity.resolve_data_file(data_dir)
     print(f"Bundle: {data_file}")

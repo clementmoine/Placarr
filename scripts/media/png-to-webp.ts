@@ -14,7 +14,7 @@
  *   pnpm media:to-webp -- --uploads-only
  *   pnpm media:to-webp -- --concurrency 12
  *
- * Also rewrites `src/effects/lorcana/manifest.json` texture `"file": "*.png"` → `.webp`.
+ * Also rewrites `data/lorcana/foil/manifest.json` texture `"file": "*.png"` → `.webp`.
  */
 
 import { existsSync } from "node:fs";
@@ -154,7 +154,7 @@ function walkFiles(dir: string, exts: Set<string>): string[] {
 }
 
 function rewriteLorcanaManifest(dryRun: boolean): number {
-  const manifestPath = path.join(ROOT, "src/effects/lorcana/manifest.json");
+  const manifestPath = path.join(ROOT, "data/lorcana/foil/manifest.json");
   if (!existsSync(manifestPath)) return 0;
   const raw = readFileSync(manifestPath, "utf8");
   const next = raw.replace(/"file": "([^"]+)\.png"/g, '"file": "$1.webp"');

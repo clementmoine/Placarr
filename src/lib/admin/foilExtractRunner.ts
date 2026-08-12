@@ -10,6 +10,7 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
+import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
 
 export const FOIL_EXTRACT_TARGETS = ["lorcana", "pokemon"] as const;
@@ -47,8 +48,21 @@ export function foilExtractLabel(target: FoilExtractTarget): string {
   }
 }
 
-/** CDN scrape + extract can run well past the interactive enrich budget. */
+/** Inventory / Lorcana — CDN scrape + extract within a dev session. */
 export const FOIL_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
+
+/** Pokémon catalogue (~93k bundles): scrape skip-pass + extract can run hours. */
+export const FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
+
+export function foilExtractTimeoutMs(
+  target: FoilExtractTarget,
+  scope: FoilExtractScope = "inventory",
+): number {
+  if (target === "pokemon" && scope === "catalogue") {
+    return FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS;
+  }
+  return FOIL_EXTRACT_TIMEOUT_MS;
+}
 
 function repoRoot(): string {
   return path.dirname(dataRoot());
@@ -64,7 +78,7 @@ async function fileExists(filePath: string): Promise<boolean> {
 }
 
 async function preferredLorcanaApk(): Promise<string | null> {
-  const dir = path.join(dataRoot(), "lorcana", "apks");
+  const dir = packApksDir("lorcana");
   for (const name of ["base.apk", "split_UnityDataAssetPack.apk"]) {
     const full = path.join(dir, name);
     if (await fileExists(full)) return full;
@@ -78,9 +92,26 @@ export type FoilExtractCommand = {
   prelude: string[];
 };
 
+/**
+ * ``inventory`` (default) scrapes the derived APK ∪ Malie stem list.
+ * ``catalogue`` re-dumps the CDN AssetManifests and scrapes everything they
+ * list — authoritative and phantom-free, but that is the full ~93k bundles.
+ */
+export const FOIL_EXTRACT_SCOPES = ["inventory", "catalogue"] as const;
+export type FoilExtractScope = (typeof FOIL_EXTRACT_SCOPES)[number];
+
+export function normalizeFoilExtractScope(value: unknown): FoilExtractScope {
+  const raw = String(value ?? "").trim().toLowerCase();
+  return (FOIL_EXTRACT_SCOPES as readonly string[]).includes(raw)
+    ? (raw as FoilExtractScope)
+    : "inventory";
+}
+
 export async function resolveFoilExtractCommand(
   target: FoilExtractTarget,
+  opts: { scope?: FoilExtractScope } = {},
 ): Promise<FoilExtractCommand> {
+  const scope = opts.scope ?? "inventory";
   const root = repoRoot();
   if (target === "lorcana") {
     const apk = await preferredLorcanaApk();
@@ -95,7 +126,7 @@ export async function resolveFoilExtractCommand(
       prelude.push(`apk=${apk}`);
     } else {
       prelude.push(
-        "skip Unity: no APK under data/lorcana/apks/ (web + cards only)",
+        "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards only)",
       );
     }
     return {
@@ -104,16 +135,24 @@ export async function resolveFoilExtractCommand(
       prelude,
     };
   }
+  // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
+  // adoptCli (that cancels the parent job → instant ── cancelled).
+  const args = ["--langs", POKEMON_LIVE_LANGS_CSV, "--no-job"];
+  const prelude =
+    scope === "catalogue"
+      ? [
+          "Pokémon: catalogue CDN (AssetManifests, 14 buckets) → tous les bundles listés",
+          "chaque bundle porte son bucket : aucune sonde de dossiers",
+        ]
+      : [
+          "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
+        ];
+  if (scope === "catalogue") args.push("--refresh-manifests");
+  prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
   return {
     command: path.join(root, "scripts/pokemon/run.sh"),
-    // APK/config ∪ Malie inventory → CDN UnityFS; misses logged for learning.
-    // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
-    // adoptCli (that cancels the parent job → instant ── cancelled).
-    args: ["--langs", POKEMON_LIVE_LANGS_CSV, "--no-job"],
-    prelude: [
-      "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
-      `langs=${POKEMON_LIVE_LANGS_CSV}`,
-    ],
+    args,
+    prelude,
   };
 }
 
@@ -158,10 +197,15 @@ export async function runFoilExtractCommand(
     timeoutMs?: number;
     /** Extra header lines when (re)starting the pack log file. */
     logHeader?: readonly string[];
+    scope?: FoilExtractScope;
   } = {},
 ): Promise<void> {
-  const { command, args, prelude } = await resolveFoilExtractCommand(target);
-  const timeoutMs = options.timeoutMs ?? FOIL_EXTRACT_TIMEOUT_MS;
+  const { command, args, prelude } = await resolveFoilExtractCommand(target, {
+    scope: options.scope,
+  });
+  const timeoutMs =
+    options.timeoutMs ??
+    foilExtractTimeoutMs(target, options.scope ?? "inventory");
   const root = repoRoot();
 
   const { appendFoilExtractLog, beginFoilExtractLog } = await import(
@@ -246,6 +290,12 @@ export async function runFoilExtractCommand(
           .catch(reject);
       });
     });
+    if (target === "pokemon") {
+      const { invalidatePokemonFoilNamesCache } = await import(
+        "@/effects/pokemon/foilNames"
+      );
+      invalidatePokemonFoilNamesCache();
+    }
     onLog("── done");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

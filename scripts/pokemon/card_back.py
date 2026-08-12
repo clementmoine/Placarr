@@ -9,11 +9,14 @@ import UnityPy
 from UnityPy.enums import ClassIDType
 
 _SCRIPTS = Path(__file__).resolve().parents[1]
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
+_LIB = _SCRIPTS / "lib"
+for _p in (_LIB, _SCRIPTS):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 from card_crop import UvRect, crop_card_image  # noqa: E402
 from lib.save_webp import save_lossless_webp  # noqa: E402
+from paths import pack_apks_dir, pack_cards_dir  # noqa: E402
 
 # Live ships the default paper back as Texture2D ``cardBack`` in base.apk.
 CARD_BACK_NAMES = ("cardback", "card_back")
@@ -22,7 +25,7 @@ CARD_BACK_NAMES = ("cardback", "card_back")
 def dump_card_back_from_apk(
     apk: Path, dest: Path, crop_rect: UvRect | None = None
 ) -> bool:
-    """Write ``dest`` (usually ``data/pokemon/foil/card_back.webp``)."""
+    """Write ``dest`` (usually ``data/pokemon/cards/back.webp``)."""
     if not apk.is_file():
         return False
     try:
@@ -66,7 +69,10 @@ def dump_pokemon_card_back(
     pack_dir: Path | None = None,
     crop_rect: UvRect | None = None,
 ) -> bool:
-    """Prefer ``data/pokemon/apks/base.apk`` → ``data/pokemon/foil/card_back.webp``."""
-    apk = repo / "data" / "pokemon" / "apks" / "base.apk"
-    dest = (pack_dir or (repo / "data" / "pokemon" / "foil")) / "card_back.webp"
+    """``data/pokemon/staging/apks/base.apk`` → ``data/pokemon/cards/back.webp``."""
+    del pack_dir  # faces live under cards/; pack_dir kept for call-site compat
+    apk = pack_apks_dir(repo, "pokemon") / "base.apk"
+    cards = pack_cards_dir(repo, "pokemon")
+    dest = cards / "back.webp"
+    cards.mkdir(parents=True, exist_ok=True)
     return dump_card_back_from_apk(apk, dest, crop_rect)

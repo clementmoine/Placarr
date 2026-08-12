@@ -35,7 +35,7 @@ const REPORT_PATH = path.join(
 );
 const REPRINT_META_PATH = path.join(
   ROOT,
-  "src/effects/pokemon/reprintMeta.json",
+  "data/pokemon/reprintMeta.json",
 );
 
 const MALIE_INDEX_URL =
@@ -352,7 +352,7 @@ async function main() {
         bundles,
         hint:
           stem.endsWith("a")
-            ? "Likely JP Character Rare — join via live-cards.sqlite name (foil:pokemon:index-cards)"
+            ? "Likely JP Character Rare — join via catalog.sqlite name (foil:pokemon:index-cards)"
             : stem.endsWith("r")
               ? "Radiant/reprint slice — check EN TCGdex or parent set RC ids"
               : "No TCGdex set id resolves here yet — add alias or confirm absent",
@@ -418,8 +418,8 @@ async function main() {
         ? `reprintMeta.json written (${reprintMetaCount} *sv fallbacks)`
         : null,
       liveCardsIndexAvailable()
-        ? "live-cards.sqlite present (name join for resolveEffect)"
-        : "live-cards.sqlite missing — run pnpm foil:pokemon:index-cards",
+        ? "catalog.sqlite present (name join for resolveEffect)"
+        : "catalog.sqlite missing — run pnpm foil:pokemon:index-cards",
     ]
       .filter(Boolean)
       .join("; "),

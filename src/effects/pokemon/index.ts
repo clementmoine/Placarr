@@ -6,7 +6,7 @@
  * Backend auto = WebGL2 si matériau, sinon CSS. Voir `docs/foil_effects.md`.
  * Pack id `pokemon` (not a provider id). Catalogue art prefers Live dump front
  * when joined; TCGdex = attachment / fallback.
- * Pack back: `/foil/pokemon/card_back.webp`.
+ * Pack back: `/assets/pokemon/cards/back.webp`.
  */
 
 import type { EffectPackModule } from "@/core/render/foil/types";
@@ -18,6 +18,7 @@ import { lookupByBundle } from "./liveCardsLookups";
 import {
   paperMaterial,
   parsePaperMaterialName,
+  listPokemonMaterialNames,
   POKEMON_MATERIAL_NAMES,
 } from "./materials";
 import { playroomArtForMaterial, listPlayroomArtsForMaterial } from "./playroomArt";
@@ -27,9 +28,9 @@ import {
 } from "./resolveEffect";
 
 export const POKEMON_EFFECT_PACK_ID = "pokemon";
-export const POKEMON_ASSET_BASE = "/foil/pokemon";
-/** Pack default back — dump must extract `card_back.webp` (APK / CDN / bundles). */
-export const POKEMON_CARD_BACK_URL = `${POKEMON_ASSET_BASE}/card_back.webp`;
+export const POKEMON_ASSET_BASE = "/assets/pokemon";
+/** Pack default back — dump must extract `cards/back.webp` (APK / CDN / bundles). */
+export const POKEMON_CARD_BACK_URL = `${POKEMON_ASSET_BASE}/cards/back.webp`;
 /** Opaque white when a HoloFoil material needs a mask and none is dumped yet. */
 export const POKEMON_FULL_FOIL_MASK_URL = `${POKEMON_ASSET_BASE}/full_foil_mask.webp`;
 
@@ -39,6 +40,7 @@ export {
 } from "./foilNames";
 export {
   applyLiveFoilMask,
+  listPokemonMaterialNames,
   paperMaterial,
   parsePaperMaterialName,
   POKEMON_MATERIAL_NAMES,
@@ -182,7 +184,7 @@ export const pokemonPaperEffectPack: EffectPackModule = {
     }
     return resolveCssRecipe(finish, varnish, { foilMask });
   },
-  listMaterials: () => [...POKEMON_MATERIAL_NAMES],
+  listMaterials: () => listPokemonMaterialNames(),
   material: (name) => paperMaterial(name),
   materialForPrint: (name, opts) =>
     paperMaterial(name, { foilMask: opts?.foilMask }),

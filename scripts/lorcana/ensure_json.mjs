@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Ensure Lorcana generated JSON exists (copy from *.stub.json when missing).
- * Dumpers overwrite these; they are gitignored. Stubs keep build/vitest
- * importable without a local dump.
+ * Ensure Lorcana generated JSON exists under `data/` when missing.
+ * Dumpers overwrite these; they are gitignored. Empty defaults keep
+ * foil meta loaders importable without a local dump.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -10,23 +10,18 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-const COPIES = [
-  ["src/effects/lorcana/manifest.stub.json", "src/effects/lorcana/manifest.json"],
+const DEFAULTS = [
+  ["data/lorcana/foil/manifest.json", "{}\n"],
   [
-    "src/effects/lorcana/cards-index.stub.json",
-    "src/effects/lorcana/cards-index.json",
+    "data/lorcana/cards-index.json",
+    `${JSON.stringify({ version: 1, pack: "lorcana", cards: {} }, null, 2)}\n`,
   ],
 ];
 
-for (const [stubRel, destRel] of COPIES) {
-  const stub = path.join(root, stubRel);
+for (const [destRel, body] of DEFAULTS) {
   const dest = path.join(root, destRel);
   if (fs.existsSync(dest)) continue;
-  if (!fs.existsSync(stub)) {
-    console.error(`missing stub: ${stubRel}`);
-    process.exit(1);
-  }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(stub, dest);
+  fs.writeFileSync(dest, body);
   console.log(`lorcana:ensure ${destRel}`);
 }

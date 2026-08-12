@@ -1,23 +1,30 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import manifestJson from "./manifest.json";
 import type { FoilMaterial } from "@/core/render/foil/types";
 
 const PACK_ROOT = path.join(process.cwd(), "data", "lorcana", "foil");
 const TEXTURES_DIR = path.join(PACK_ROOT, "textures");
+const MANIFEST_PATH = path.join(PACK_ROOT, "manifest.json");
 
-const MATERIALS = manifestJson as Record<string, FoilMaterial>;
+const MATERIALS = (
+  existsSync(MANIFEST_PATH)
+    ? (JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as Record<
+        string,
+        FoilMaterial
+      >)
+    : {}
+) as Record<string, FoilMaterial>;
 
 describe("lorcana pack assets", () => {
   const hasDump = Object.keys(MATERIALS).length > 0;
 
-  it.skipIf(!hasDump)("ships card_back.webp on the pack", () => {
+  it.skipIf(!hasDump)("ships cards/back.webp on the pack", () => {
     expect(
-      existsSync(path.join(PACK_ROOT, "card_back.webp")) ||
-        existsSync(path.join(PACK_ROOT, "card_back.png")),
+      existsSync(path.join(process.cwd(), "data", "lorcana", "cards", "back.webp")) ||
+        existsSync(path.join(process.cwd(), "data", "lorcana", "cards", "back.png")),
     ).toBe(true);
   });
 

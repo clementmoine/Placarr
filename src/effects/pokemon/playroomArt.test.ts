@@ -20,7 +20,7 @@ describe("playroomArtForMaterial", () => {
     for (const name of POKEMON_FOIL_NAMES) {
       const art = playroomArtForMaterial(name);
       expect(art?.imageUrl).toMatch(
-        /^(https:\/\/assets\.tcgdex\.net\/.+|\/foil\/pokemon\/textures\/.+)\.(png|webp)$/,
+        /^(https:\/\/assets\.tcgdex\.net\/.+|\/assets\/pokemon\/cards\/.+)\.(png|webp)$/,
       );
       expect(art?.label).toBeTruthy();
     }
@@ -61,7 +61,7 @@ describe("playroomArtForMaterial", () => {
       const dumped = pickDumpedBundleForShader(name);
       expect(dumped?.bundleId).toBe(bundleId);
       const art = playroomArtForMaterial(name);
-      expect(art?.imageUrl).toContain(`/textures/${bundleId}/`);
+      expect(art?.imageUrl).toContain(`/cards/`);
       expect(art?.label).toMatch(label);
       expect(art?.label).not.toMatch(/bw10_fr_|xy12_fr_|bwalt_fr_/);
     }
@@ -72,10 +72,10 @@ describe("playroomArtForMaterial", () => {
     expect(dumped?.bundleId).toBe("bw1_fr_095");
     const art = playroomArtForMaterial("Rainbow");
     expect(art?.imageUrl).toBe(
-      "/foil/pokemon/textures/bw1_fr_095/bw1_fr_095.webp",
+      "/assets/pokemon/cards/bw1/fr/095/art.webp",
     );
     expect(art?.maskUrl).toBe(
-      "/foil/pokemon/textures/bw1_fr_095/bw1_wp_ph_fr_095.webp",
+      "/assets/pokemon/cards/bw1/fr/095/mask-ph.webp",
     );
   });
 
@@ -84,10 +84,10 @@ describe("playroomArtForMaterial", () => {
     expect(dumped?.bundleId).toBe("me5_fr_045");
     const art = playroomArtForMaterial("SunPillar");
     expect(art?.imageUrl).toBe(
-      "/foil/pokemon/textures/me5_fr_045/me5_fr_045.webp",
+      "/assets/pokemon/cards/me5/fr/045/art.webp",
     );
     expect(art?.maskUrl).toBe(
-      "/foil/pokemon/textures/me5_fr_045/me5_wp_fr_045.webp",
+      "/assets/pokemon/cards/me5/fr/045/mask.webp",
     );
     expect(art?.label).toMatch(/Charkos-ex/);
     expect(art?.label).toMatch(/Nuit Noire/);
@@ -105,10 +105,10 @@ describe("playroomArtForMaterial", () => {
     expect(dumped?.variant).toBe("ph");
     const art = playroomArtForMaterial("SunBeam");
     expect(art?.imageUrl).toBe(
-      "/foil/pokemon/textures/sm1_fr_009/sm1_fr_009.webp",
+      "/assets/pokemon/cards/sm1/fr/009/art.webp",
     );
     expect(art?.maskUrl).toBe(
-      "/foil/pokemon/textures/sm1_fr_009/sm1_wp_ph_fr_009.webp",
+      "/assets/pokemon/cards/sm1/fr/009/mask-ph.webp",
     );
     expect(art?.label).toMatch(/sm1_fr_009 · Soleil & Lune n°9/);
     expect(art?.bundleId).toBe("sm1_fr_009");

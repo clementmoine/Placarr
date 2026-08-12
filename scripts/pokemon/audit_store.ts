@@ -1,7 +1,7 @@
 /**
  * Pack store audit: every foil leaf has a `.frag`, every `cards.json` variant
- * maps to a known shader, and every referenced mask texture exists under
- * `data/pokemon/foil/textures/` (``.webp``, legacy ``.png`` OK).
+ * maps to a known shader, and every referenced mask exists under
+ * `data/pokemon/cards/{set}/{lang}/{card}/` (``.webp``, legacy ``.png`` OK).
  *
  *   tsx scripts/pokemon/audit_store.ts
  *   tsx scripts/pokemon/audit_store.ts -- --strict
@@ -11,14 +11,20 @@ import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import "@/lib/foilMetaLoad.server";
 import {
   foilManifestToShader,
   POKEMON_FOIL_NAMES,
 } from "../../src/effects/pokemon/foilNames";
 import type { PaperCardEntry } from "../../src/effects/pokemon/resolveEffect";
+import {
+  cardDiskIdFromBundleStem,
+  pokemonFaceFileFromTex,
+} from "../../src/lib/packAssetUrls";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const PACK_ROOT = path.join(ROOT, "data", "pokemon", "foil");
+const CARDS_ROOT = path.join(ROOT, "data", "pokemon", "cards");
 const CARDS_PATH = path.join(ROOT, "data", "pokemon", "cards.json");
 const REPORT_PATH = path.join(
   ROOT,
@@ -48,11 +54,40 @@ function listFragStems(shadersDir: string): Set<string> {
   );
 }
 
-function maskPath(bundleId: string, maskTex: string): string {
-  const stem = maskTex.replace(/\.(png|webp)$/i, "");
-  const webp = path.join(PACK_ROOT, "textures", bundleId, `${stem}.webp`);
-  if (existsSync(webp)) return webp;
-  return path.join(PACK_ROOT, "textures", bundleId, `${stem}.png`);
+function maskPath(bundleId: string, maskTex: string): string | null {
+  const id = cardDiskIdFromBundleStem(bundleId);
+  if (!id) return null;
+  const cardDir = path.join(CARDS_ROOT, id.set, id.lang, id.card);
+  const stem = maskTex.trim().toLowerCase().replace(/\.(webp|png)$/i, "");
+  const candidates = [
+    path.join(cardDir, pokemonFaceFileFromTex(bundleId, maskTex)),
+    path.join(cardDir, `extra-${stem}.webp`),
+  ];
+  const crossId = cardDiskIdFromBundleStem(stem);
+  if (crossId) {
+    candidates.push(
+      path.join(
+        CARDS_ROOT,
+        crossId.set,
+        crossId.lang,
+        crossId.card,
+        pokemonFaceFileFromTex(bundleId, maskTex),
+      ),
+      path.join(
+        CARDS_ROOT,
+        crossId.set,
+        crossId.lang,
+        crossId.card,
+        `extra-${stem}.webp`,
+      ),
+    );
+  }
+  for (const webp of candidates) {
+    if (existsSync(webp)) return webp;
+    const png = webp.replace(/\.webp$/i, ".png");
+    if (existsSync(png)) return png;
+  }
+  return null;
 }
 
 function main() {
@@ -62,7 +97,7 @@ function main() {
     PaperCardEntry
   >;
   const frags = listFragStems(path.join(PACK_ROOT, "shaders"));
-  const sharedDir = path.join(PACK_ROOT, "textures", "_shared");
+  const sharedDir = path.join(PACK_ROOT, "textures");
 
   const missingFrags = POKEMON_FOIL_NAMES.filter((name) => !frags.has(name));
   const extraFrags = [...frags]
@@ -109,7 +144,8 @@ function main() {
         continue;
       }
       withMask += 1;
-      if (!existsSync(maskPath(bundleId, maskTex))) {
+      const resolved = maskPath(bundleId, maskTex);
+      if (!resolved || !existsSync(resolved)) {
         missingMasks += 1;
         if (missingMaskSamples.length < 30) {
           missingMaskSamples.push({ bundle: bundleId, maskTex });
@@ -140,6 +176,7 @@ function main() {
   const report = {
     finishedAt: new Date().toISOString(),
     packRoot: "data/pokemon/foil",
+    cardsRoot: "data/pokemon/cards",
     cardsPath: "data/pokemon/cards.json",
     bundleCount: Object.keys(cards).length,
     variantCount: variants,

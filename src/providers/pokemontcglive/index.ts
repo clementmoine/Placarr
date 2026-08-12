@@ -1,6 +1,6 @@
 /**
  * Pokémon TCG Live — official local ingest (CDN / APK → data/pokemon).
- * Identity join: `live-cards.sqlite`. Catalogue tiers remains `tcgdex`.
+ * Identity join: `catalog.sqlite`. Catalogue tiers remains `tcgdex`.
  */
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -26,7 +26,7 @@ const POKEMON_GAME = "pokemon";
 export function pokemonLiveCardsDbPath(): string {
   const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
   if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "live-cards.sqlite");
+  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
 }
 
 function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
@@ -67,7 +67,7 @@ export const pokemontcgliveModule: ProviderModule = {
     defaultLanguage: "en",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
-      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `live-cards.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Sync : `pnpm foil:pokemon`.",
+      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Sync : `pnpm foil:pokemon`.",
   },
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Scrape Lorcana catalogue media (masks + art) as published bytes into
- * data/lorcana/foil/cards/{printKey}/{lang}/ — all LorcanaJSON languages
+ * data/lorcana/cards/{set}/{lang}/{card}/ — all LorcanaJSON languages
  * (fr, en, de, it).
  *
  *   pnpm foil:lorcana:cards
@@ -18,6 +18,7 @@ import {
   type LorcanaCard,
   type LorcanaLanguage,
 } from "@/providers/lorcanajson/fetch";
+import { cardDiskIdFromPrintKey } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import {
   exportLorcanaCardsIndexJson,
@@ -189,7 +190,9 @@ function collectJobsForCard(
   cardsDir: string,
 ): Job[] {
   const language = card.language;
-  const dir = path.join(cardsDir, card.printKey, language);
+  const disk = cardDiskIdFromPrintKey(card.printKey, language);
+  if (!disk) return [];
+  const dir = path.join(cardsDir, disk.set, disk.lang, disk.card);
   const jobs: Job[] = [];
 
   const add = (field: keyof LangFiles, fileStem: string, url: string) => {
@@ -204,7 +207,7 @@ function collectJobsForCard(
     });
   };
 
-  if (card.foilMaskUrl) add("foilMask", "foil_mask", card.foilMaskUrl);
+  if (card.foilMaskUrl) add("foilMask", "mask", card.foilMaskUrl);
   if (card.varnishMaskUrl) add("varnishMask", "varnish_mask", card.varnishMaskUrl);
   if (card.secondVarnishMaskUrl) {
     add("secondVarnishMask", "second_varnish_mask", card.secondVarnishMaskUrl);
@@ -228,10 +231,9 @@ export async function scrapeLorcanaCards(
 }> {
   const root = opts.root ?? path.resolve(dataRoot(), "..");
   const skipExisting = !opts.force;
-  const cardsDir = path.join(root, "data/lorcana/foil/cards");
-  const indexPath = path.join(root, "data/lorcana/foil/cards-index.json");
-  const srcIndexPath = path.join(root, "src/effects/lorcana/cards-index.json");
-  const dbPath = path.join(root, "data/lorcana/lorcana.sqlite");
+  const cardsDir = path.join(root, "data/lorcana/cards");
+  const indexPath = path.join(root, "data/lorcana/cards-index.json");
+  const dbPath = path.join(root, "data/lorcana/catalog.sqlite");
 
   console.log(
     `Loading Lorcana indexes (${SCRAPE_LANGUAGES.join(" + ")})…`,
@@ -247,14 +249,14 @@ export async function scrapeLorcanaCards(
   if (prior) {
     for (const [printKey, entry] of Object.entries(prior.cards)) {
       for (const lang of SCRAPE_LANGUAGES) {
-        const files = entry[lang];
+        const files = entry.langs[lang];
         if (!files || typeof files !== "object") continue;
         assetsByKey.set(`${printKey}\0${lang}`, {
           printKey,
           lang,
           art: files.art ?? null,
           thumb: files.thumb ?? null,
-          foilMask: files.foilMask ?? null,
+          foilMask: files.mask ?? null,
           varnishMask: files.varnishMask ?? null,
           secondVarnishMask: files.secondVarnishMask ?? null,
         });
@@ -347,10 +349,6 @@ export async function scrapeLorcanaCards(
 
   await fs.promises.mkdir(path.dirname(indexPath), { recursive: true });
   await fs.promises.writeFile(indexPath, `${JSON.stringify(payload, null, 2)}\n`);
-  await fs.promises.writeFile(
-    srcIndexPath,
-    `${JSON.stringify(payload, null, 2)}\n`,
-  );
 
   console.log(
     JSON.stringify(

@@ -5,7 +5,9 @@ vi.mock("@/lib/runtimeData", () => ({
 }));
 
 import {
+  FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
   foilExtractLabel,
+  foilExtractTimeoutMs,
   isFoilExtractTarget,
   normalizeFoilExtractTarget,
   resolveFoilExtractCommand,
@@ -30,12 +32,29 @@ describe("foilExtractRunner targets", () => {
     );
   });
 
-  it("pokemon extract unions APK/Malie inventory then CDN (all Live langs)", async () => {
+  it("pokemon catalogue uses a longer worker timeout than inventory", () => {
+    expect(foilExtractTimeoutMs("pokemon", "catalogue")).toBe(
+      FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
+    );
+    expect(foilExtractTimeoutMs("pokemon", "inventory")).toBeLessThan(
+      FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
+    );
+  });
+
+  it("pokemon inventory scrape unions APK/Malie then CDN (all Live langs)", async () => {
     const cmd = await resolveFoilExtractCommand("pokemon");
     expect(cmd.command).toContain("scripts/pokemon/run.sh");
     expect(cmd.args).toEqual(["--langs", "fr,en,de,it,es,ptbr", "--no-job"]);
     expect(cmd.prelude.some((l) => /inventory/i.test(l))).toBe(true);
     expect(cmd.prelude.some((l) => /Malie/i.test(l))).toBe(true);
+  });
+
+  it("pokemon extract passes --refresh-manifests for catalogue scope", async () => {
+    const cmd = await resolveFoilExtractCommand("pokemon", {
+      scope: "catalogue",
+    });
+    expect(cmd.args).toContain("--refresh-manifests");
+    expect(cmd.prelude.some((l) => /catalogue CDN/i.test(l))).toBe(true);
   });
 
   it("lorcana extract passes --no-job so child does not cancel worker job", async () => {

@@ -49,22 +49,48 @@ import "@/effects";
  */
 
 const MAX_TILT = 18;
-/** Fallback when a material does not declare `_TimeFactor` (almost all do: 0.4). */
-const DEFAULT_TIME_FACTOR = 0.4;
+/**
+ * Lorcana dual-frag / `_CosTime` scroll amplitude. Live HoloFoil (Pokémon) does
+ * **not** declare `_TimeFactor` — its frags read `_LightDirection` /
+ * `_WorldSpaceCameraPos`. Reusing 0.4 there capped lean at ±0.4 and the foil
+ * layers barely moved vs the Mac app.
+ */
+const LORCANA_TIME_FACTOR = 0.4;
+/** Live light/camera lean: full edge → ±1 into {@link lightDirectionFromTilt}. */
+const LIVE_LEAN_AMPLITUDE = 1;
 
 /**
- * Map a light position (0..100, 50 at rest) to one `_Tilt` component.
+ * Map a light position (0..100, 50 at rest) to one lean component for
+ * `setTilt` / light+camera (or Lorcana `_Tilt` phase).
  *
- * The app's fragments scroll with `_Tilt.x + _Tilt.y` — the same channel Time
- * mode drives via `_CosTime.w * _TimeFactor` (±timeFactor). Each axis alone
- * must reach ±timeFactor at the card edge; halving it left a normal horizontal
- * sweep at half the idle travel.
+ * Lorcana Time-scroll uses `_CosTime.w * _TimeFactor` (±timeFactor). Live
+ * Pokémon maps the same 0..100 pointer onto ±{@amplitude} so a full
+ * card-edge sweep matches the Mac client's visible spectrum / sheen travel.
  */
 export function tiltFromLightPercent(
   lightPercent: number,
-  timeFactor: number = DEFAULT_TIME_FACTOR,
+  amplitude: number = LORCANA_TIME_FACTOR,
 ): number {
-  return ((lightPercent - 50) / 50) * timeFactor;
+  return ((lightPercent - 50) / 50) * amplitude;
+}
+
+/**
+ * How far `setTilt` should travel at the card edge.
+ *
+ * - Lorcana sheets ship `_TimeFactor` (0.33–0.4) for CosTime / tilt-frag phase.
+ * - Pokémon Live sheets omit it — use full ±1 so `_LightDirection` /
+ *   `_WorldSpaceCameraPos` actually swing (a ±0.4 cap was the “weak tilt”
+ *   feel vs TCG Live).
+ */
+export function foilLeanAmplitude(opts: {
+  timeFactor?: number | null;
+  hasTimeSibling?: boolean;
+}): number {
+  if (opts.timeFactor != null && Number.isFinite(opts.timeFactor)) {
+    return opts.timeFactor;
+  }
+  if (opts.hasTimeSibling) return LORCANA_TIME_FACTOR;
+  return LIVE_LEAN_AMPLITUDE;
 }
 
 /**
@@ -286,21 +312,25 @@ export function FoilCardImage({
   children,
 }: FoilCardImageProps) {
   const pack = getEffectPack(effectPackId);
-  const fromPack = pack
-    ? pack.resolveCss(finish ?? "", varnishType, {
-        foilMask: liveFoilMask,
-        printKey,
-        title,
-      })
-    : { finishShaderId: null, varnishShaderId: null };
-  // Prefer pack resolve (sees Live foil_mask) when it yields a look; fall back
-  // to pre-resolved ids when the pack is briefly missing from a stale cache.
-  const cssRecipe = {
-    finishShaderId: fromPack.finishShaderId ?? cssFinishShaderId ?? null,
-    varnishShaderId: fromPack.varnishShaderId ?? cssVarnishShaderId ?? null,
-  };
+  const [metaReady, setMetaReady] = useState(
+    typeof window === "undefined",
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void import("@/lib/foilMetaLoad")
+      .then((m) => m.hydrateFoilMetaFromAssets())
+      .finally(() => {
+        if (!cancelled) setMetaReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Memoize: materialForPrint often returns a fresh object (foil_mask /
   // USESECONDTOPLAYER clones). A new identity remounts WebGL every lean tick.
+  // `metaReady` re-resolves after browser foil-meta hydrate.
   const material = useMemo(() => {
     if (!pack) return null;
     if (materialName) {
@@ -329,7 +359,28 @@ export function FoilCardImage({
     liveFoilMask,
     printKey,
     title,
+    metaReady,
   ]);
+
+  const fromPack = pack
+    ? pack.resolveCss(finish ?? "", varnishType, {
+        foilMask: liveFoilMask,
+        printKey,
+        title,
+      })
+    : { finishShaderId: null, varnishShaderId: null };
+  // Prefer pack resolve (sees Live foil_mask) when it yields a look; fall back
+  // to pre-resolved ids when the pack is briefly missing from a stale cache.
+  // Plain leaves (`webgl: false`, Live NonFoil) must stay shader-less even if
+  // a stale `finish` prop names another print's foil.
+  const cssRecipe =
+    material?.webgl === false
+      ? { finishShaderId: null, varnishShaderId: null }
+      : {
+          finishShaderId: fromPack.finishShaderId ?? cssFinishShaderId ?? null,
+          varnishShaderId:
+            fromPack.varnishShaderId ?? cssVarnishShaderId ?? null,
+        };
 
   const slotId = useId();
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -358,15 +409,16 @@ export function FoilCardImage({
    * this is true so IntersectionObserver can flip `inView`.
    *
    * Grids pass `backend="css"`; detail / fullscreen leave `auto` (WebGL with
-   * CSS fallback).
+   * CSS fallback). `material.webgl === false` (Live NonFoil) stays CSS.
    */
+  const webglMaterial = Boolean(material) && material?.webgl !== false;
   const eligible =
     !failed &&
     surfacesReady &&
     selectFoilBackend({
       preference,
       supportsWebgl2: caps.supportsWebgl2,
-      hasMaterial: Boolean(material),
+      hasMaterial: webglMaterial,
       hasPoolSlot: true,
     }) === "webgl";
 
@@ -426,7 +478,7 @@ export function FoilCardImage({
     selectFoilBackend({
       preference,
       supportsWebgl2: caps.supportsWebgl2,
-      hasMaterial: Boolean(material),
+      hasMaterial: webglMaterial,
       hasPoolSlot: poolOk,
     }) === "webgl";
 
@@ -434,15 +486,18 @@ export function FoilCardImage({
   const deviceLean = deviceTilt.lean;
   const isDriven = isActive || Boolean(deviceLean);
 
-  const timeFactor = material?.floats._TimeFactor ?? DEFAULT_TIME_FACTOR;
   /** Lorcana dual-frag only — Pokémon keeps one Live frag with `_Time` + light. */
   const hasTimeSibling = Boolean(material?.fragmentTime);
+  const leanAmplitude = foilLeanAmplitude({
+    timeFactor: material?.floats._TimeFactor,
+    hasTimeSibling,
+  });
 
   const applyLean = useCallback(
     (lean: Lean, opts?: { engageTiltProgram?: boolean }) => {
       const xy = [
-        tiltFromLightPercent(lean.lightX, timeFactor),
-        tiltFromLightPercent(lean.lightY, timeFactor),
+        tiltFromLightPercent(lean.lightX, leanAmplitude),
+        tiltFromLightPercent(lean.lightY, leanAmplitude),
       ] as const;
       tiltUniformRef.current = xy;
       const renderer = rendererRef.current;
@@ -466,7 +521,7 @@ export function FoilCardImage({
         frame.style.setProperty("--rotateY", `${lean.tiltX}deg`);
       }
     },
-    [timeFactor, hasTimeSibling],
+    [leanAmplitude, hasTimeSibling],
   );
 
   // Physical lean follows the same `cos(t)` Time mode uses for the foil, with

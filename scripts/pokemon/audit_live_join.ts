@@ -25,6 +25,7 @@ import {
 import {
   paperBundleId,
   paperCard,
+  resolveEffectForPrintKey,
 } from "../../src/effects/pokemon/resolveEffect";
 import { remapCollectorNumberForLive } from "../../src/effects/pokemon/collectorRemap";
 import { liveSetCandidatesFromTcgdexSet } from "../../src/effects/pokemon/liveSetId";
@@ -39,13 +40,24 @@ const REPORT_PATH = path.join(
   "data/pokemon/logs/tcgdex-live-card-join.json",
 );
 
-const SEED_TCGDEX_SETS = [
-  "bw10",
-  "sv01",
-  "sv03.5",
-  "swsh4.5sv",
-  "sma",
-  "base1",
+/**
+ * Spot-checks that exercise the real product path (`resolveEffectForPrintKey`),
+ * not a naive « card #1 exists on candidate stem » probe.
+ *
+ * ``expectLive: false`` = set absent from TCG Live (catalogue-only paper).
+ */
+const SEED_PRINT_KEYS: ReadonlyArray<{
+  printKey: string;
+  label: string;
+  expectLive: boolean;
+}> = [
+  { printKey: "pokemon:bw10-001", label: "bw10", expectLive: true },
+  { printKey: "pokemon:sv01-001", label: "sv01", expectLive: true },
+  { printKey: "pokemon:sv03.5-001", label: "sv03.5", expectLive: true },
+  // Shiny Vault: TCGdex SV# → Live table num (remap), not collector 1/6.
+  { printKey: "pokemon:swsh4.5sv-SV001", label: "swsh4.5sv", expectLive: true },
+  { printKey: "pokemon:sma-SV001", label: "sma", expectLive: true },
+  { printKey: "pokemon:base1-004", label: "base1", expectLive: false },
 ];
 
 type LiveOrphanStatus =
@@ -182,20 +194,62 @@ function auditLiveToTcgdex(): {
 
 function auditTcgdexSeedsToLive(): {
   seeds: string[];
-  setnumHits: number;
-  misses: number;
+  hits: number;
+  notInLive: number;
+  unexpectedMiss: number;
+  details: Array<{
+    label: string;
+    printKey: string;
+    status: "hit" | "not-in-live" | "unexpected-miss";
+    bundle?: string;
+  }>;
 } {
-  let setnumHits = 0;
-  let misses = 0;
-  for (const tid of SEED_TCGDEX_SETS) {
-    const lives = liveSetCandidatesFromTcgdexSet(tid);
-    const any =
-      lives.some((live) => paperCard(paperBundleId(live, 1, "fr") ?? "")) ||
-      lives.some((live) => paperCard(paperBundleId(live, 6, "fr") ?? ""));
-    if (any) setnumHits += 1;
-    else misses += 1;
+  const details: Array<{
+    label: string;
+    printKey: string;
+    status: "hit" | "not-in-live" | "unexpected-miss";
+    bundle?: string;
+  }> = [];
+  let hits = 0;
+  let notInLive = 0;
+  let unexpectedMiss = 0;
+
+  for (const seed of SEED_PRINT_KEYS) {
+    const resolved = resolveEffectForPrintKey(seed.printKey, "holo", "fr");
+    if (resolved) {
+      hits += 1;
+      details.push({
+        label: seed.label,
+        printKey: seed.printKey,
+        status: "hit",
+        bundle: resolved.bundle,
+      });
+      continue;
+    }
+    if (!seed.expectLive) {
+      notInLive += 1;
+      details.push({
+        label: seed.label,
+        printKey: seed.printKey,
+        status: "not-in-live",
+      });
+      continue;
+    }
+    unexpectedMiss += 1;
+    details.push({
+      label: seed.label,
+      printKey: seed.printKey,
+      status: "unexpected-miss",
+    });
   }
-  return { seeds: SEED_TCGDEX_SETS, setnumHits, misses };
+
+  return {
+    seeds: SEED_PRINT_KEYS.map((s) => s.label),
+    hits,
+    notInLive,
+    unexpectedMiss,
+    details,
+  };
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -209,21 +263,27 @@ async function main(argv: string[]): Promise<number> {
     liveToTcgdex,
     tcgdexToLive,
     policy:
-      "Every Live std identity should join a TCGdex set (or be non-catalogue). true-orphan must stay 0.",
+      "Every Live std identity should join a TCGdex set (or be non-catalogue). true-orphan must stay 0. Seed checks use resolveEffectForPrintKey (real remap path).",
   };
 
   mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
   console.log(
-    `Live→TCGdex: joined=${liveToTcgdex.joined} orphans=${liveToTcgdex.trueOrphans} noSet=${liveToTcgdex.noTcgdexSet} dumpMiss=${liveToTcgdex.dumpMiss} nonCat=${liveToTcgdex.nonCatalogue} / ${liveToTcgdex.sampled}`,
+    `Live→TCGdex (sample FR std): joined=${liveToTcgdex.joined} trueOrphans=${liveToTcgdex.trueOrphans} noTcgdexSet=${liveToTcgdex.noTcgdexSet} dumpMiss=${liveToTcgdex.dumpMiss} nonCatalogue=${liveToTcgdex.nonCatalogue} / ${liveToTcgdex.sampled}`,
   );
   console.log(
-    `TCGdex seeds→Live: hits=${tcgdexToLive.setnumHits} miss=${tcgdexToLive.misses}`,
+    `TCGdex→Live (seed printKeys via resolveEffect): hits=${tcgdexToLive.hits} notInLive=${tcgdexToLive.notInLive} unexpectedMiss=${tcgdexToLive.unexpectedMiss}`,
   );
+  for (const d of tcgdexToLive.details) {
+    const extra = d.bundle ? ` → ${d.bundle}` : "";
+    console.log(`  ${d.label} (${d.printKey}): ${d.status}${extra}`);
+  }
   console.log(`Wrote ${REPORT_PATH}`);
 
-  if (strict && liveToTcgdex.trueOrphans > 0) return 2;
+  if (strict && (liveToTcgdex.trueOrphans > 0 || tcgdexToLive.unexpectedMiss > 0)) {
+    return 2;
+  }
   return 0;
 }
 

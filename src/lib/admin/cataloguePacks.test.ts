@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildCatalogueCardRows,
+  catalogueCollectorKey,
   entryHasFoil,
   langFilesHaveFoil,
 } from "@/lib/admin/catalogueCards";
@@ -51,5 +53,190 @@ describe("catalogueCards foil detection", () => {
         langs: { fr: { art: "art.jpg" }, en: { art: "a.webp", etch: "e.webp" } },
       }),
     ).toBe(true);
+  });
+});
+
+describe("same-number art fallback (Naruto)", () => {
+  it("normalizes collector keys", () => {
+    expect(catalogueCollectorKey("ni024")).toBe("ni024");
+    expect(catalogueCollectorKey("TE-030-cdf")).toBe("te030");
+    expect(catalogueCollectorKey("te030-cdf")).toBe("te030");
+  });
+
+  it("inherits retail face onto promo stub until official art exists", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ccg",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s1-ni024": {
+          set: "s1",
+          card: "ni024",
+          name: "Zabuza Momochi",
+          langs: { fr: { art: "art.jpg", thumb: "thumb.jpg" } },
+        },
+        "naruto:promo-ni024": {
+          set: "promo",
+          card: "ni024",
+          name: "Zabuza Momochi",
+          rarity: "promo",
+          langs: {},
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ccg", index);
+    const promo = rows.find((r) => r.printKey === "naruto:promo-ni024");
+    const retail = rows.find((r) => r.printKey === "naruto:s1-ni024");
+    expect(retail?.artUrl).toContain("/s1/");
+    expect(promo?.missingArt).toBeUndefined();
+    expect(promo?.artFallbackFrom).toBe("naruto:s1-ni024");
+    expect(promo?.artUrl).toBe(retail?.artUrl);
+    expect(promo?.thumbUrl).toBe(retail?.thumbUrl);
+  });
+
+  it("does not inherit across Pokémon set numbers", () => {
+    const index = {
+      version: 1 as const,
+      pack: "pokemon",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "pokemon:sv1-001": {
+          set: "sv1",
+          card: "001",
+          langs: { fr: { art: "art.webp" } },
+        },
+        "pokemon:sv2-001": {
+          set: "sv2",
+          card: "001",
+          langs: {},
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("pokemon", index);
+    const stub = rows.find((r) => r.printKey === "pokemon:sv2-001");
+    expect(stub?.missingArt).toBe(true);
+    expect(stub?.artUrl).toBe("");
+    expect(stub?.artFallbackFrom).toBeUndefined();
+  });
+
+  it("prefers non-promo donor and matches cdf grouping to base number", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ccg",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s3-te030": {
+          set: "s3",
+          card: "te030",
+          langs: { fr: { art: "art.jpg" } },
+        },
+        "naruto:promo-te030": {
+          set: "promo",
+          card: "te030",
+          langs: { fr: { art: "art.jpg" } },
+        },
+        "naruto:promo-te030-cdf": {
+          set: "promo",
+          card: "te030-cdf",
+          name: "L'éclair pourfendeur",
+          langs: {},
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ccg", index);
+    const cdf = rows.find((r) => r.printKey === "naruto:promo-te030-cdf");
+    expect(cdf?.artFallbackFrom).toBe("naruto:s3-te030");
+  });
+});
+
+describe("mergeCatalogueBackRows", () => {
+  it("puts pack back first and set backs ahead of each set", async () => {
+    const { mergeCatalogueBackRows } = await import(
+      "@/lib/admin/catalogueCards"
+    );
+    const faces = [
+      {
+        printKey: "naruto:promo-ni001",
+        set: "promo",
+        card: "ni001",
+        lang: "fr",
+        artUrl: "/a",
+        hasFoil: false,
+        label: "promo · ni001",
+      },
+      {
+        printKey: "naruto:s1-ni001",
+        set: "s1",
+        card: "ni001",
+        lang: "fr",
+        artUrl: "/b",
+        hasFoil: false,
+        label: "s1 · ni001",
+      },
+      {
+        printKey: "naruto:s1-ni002",
+        set: "s1",
+        card: "ni002",
+        lang: "fr",
+        artUrl: "/c",
+        hasFoil: false,
+        label: "s1 · ni002",
+      },
+      {
+        printKey: "naruto:s2-ni001",
+        set: "s2",
+        card: "ni001",
+        lang: "fr",
+        artUrl: "/d",
+        hasFoil: false,
+        label: "s2 · ni001",
+      },
+    ];
+    const rows = mergeCatalogueBackRows({
+      pack: "naruto/ccg",
+      faceRows: faces,
+      packBackUrl: "/assets/naruto/ccg/cards/back.webp",
+      setBackUrls: {
+        s1: "/assets/naruto/ccg/cards/s1/back.webp",
+        // s2 intentionally missing
+      },
+    });
+    expect(rows.map((r) => r.printKey)).toEqual([
+      "naruto/ccg:__pack-back__",
+      "naruto:promo-ni001",
+      "naruto/ccg:__set-back-s1__",
+      "naruto:s1-ni001",
+      "naruto:s1-ni002",
+      "naruto:s2-ni001",
+    ]);
+    expect(rows[0]?.kind).toBe("pack-back");
+    expect(rows[0]?.label).toBe("Dos · pack");
+    expect(rows[2]?.kind).toBe("set-back");
+    expect(rows[2]?.label).toBe("Dos · s1");
+  });
+
+  it("leaves face order unchanged when no backs exist", async () => {
+    const { mergeCatalogueBackRows } = await import(
+      "@/lib/admin/catalogueCards"
+    );
+    const faces = [
+      {
+        printKey: "naruto:s1-ni001",
+        set: "s1",
+        card: "ni001",
+        lang: "fr",
+        artUrl: "/b",
+        hasFoil: false,
+        label: "s1 · ni001",
+      },
+    ];
+    expect(
+      mergeCatalogueBackRows({
+        pack: "naruto/ccg",
+        faceRows: faces,
+        packBackUrl: null,
+        setBackUrls: {},
+      }),
+    ).toEqual(faces);
   });
 });

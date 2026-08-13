@@ -12,11 +12,43 @@ import {
   type CardsIndexV1,
 } from "@/effects/cardsIndex";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
-import { packCardsIndexPath } from "@/lib/packPaths";
-import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
+import {
+  assetsPackBackUrl,
+  assetsSetBackUrl,
+  packCardsIndexPath,
+} from "@/lib/packPaths";
+import {
+  cataloguePackInfo,
+  type CataloguePackId,
+} from "@/lib/admin/cataloguePacks";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
 export type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
+
+/** `ni024`, `te030-cdf`, `TE-030` → `ni024` / `te030` for same-number art fallback. */
+export function catalogueCollectorKey(card: string): string {
+  const raw = card.trim().toLowerCase();
+  const m = /^((?:ni|te|ta|cl|pr)[\-]?\d{1,4})(?:-.*)?$/i.exec(raw);
+  if (!m) return raw;
+  return m[1]!.replace(/-/g, "");
+}
+
+type ArtDonor = {
+  printKey: string;
+  set: string;
+  card: string;
+  lang: string;
+  file: string;
+  thumb?: string;
+};
+
+function donorScore(set: string, file: string): number {
+  let score = 0;
+  if (set.toLowerCase() !== "promo") score += 100;
+  if (/\.reconstructed\./i.test(file)) score += 30;
+  else if (/\.corrected\./i.test(file)) score += 20;
+  return score;
+}
 
 type PackCache = {
   mtimeMs: number;
@@ -105,11 +137,42 @@ function loadIndex(pack: CataloguePackId): CardsIndexV1 {
   return emptyCardsIndex(pack);
 }
 
-function buildRows(
+/** Build browse rows from an in-memory index (also used by unit tests). */
+export function buildCatalogueCardRows(
   pack: CataloguePackId,
   index: CardsIndexV1,
   preferLang?: string,
 ): CatalogueCardRow[] {
+  const allowFallback =
+    cataloguePackInfo(pack)?.sameNumberArtFallback === true;
+
+  const donorsByNumber = new Map<string, ArtDonor>();
+  if (allowFallback) {
+    for (const [printKey, entry] of Object.entries(index.cards)) {
+      const picked = pickLang(entry, preferLang);
+      const file = picked ? artFile(picked.files) : null;
+      if (!picked || !file) continue;
+      const key = catalogueCollectorKey(entry.card);
+      const thumb = thumbFile(picked.files) ?? undefined;
+      const candidate: ArtDonor = {
+        printKey,
+        set: entry.set,
+        card: entry.card,
+        lang: picked.lang,
+        file,
+        ...(thumb ? { thumb } : {}),
+      };
+      const prev = donorsByNumber.get(key);
+      if (
+        !prev ||
+        donorScore(candidate.set, candidate.file) >
+          donorScore(prev.set, prev.file)
+      ) {
+        donorsByNumber.set(key, candidate);
+      }
+    }
+  }
+
   const rows: CatalogueCardRow[] = [];
   for (const [printKey, entry] of Object.entries(index.cards)) {
     const picked = pickLang(entry, preferLang);
@@ -119,7 +182,37 @@ function buildRows(
     const label = entry.name
       ? `${entry.set} · ${entry.card} — ${entry.name}`
       : `${entry.set} · ${entry.card}`;
+
     if (!file) {
+      const donor = allowFallback
+        ? donorsByNumber.get(catalogueCollectorKey(entry.card))
+        : undefined;
+      // Don't point a stub at itself (no art) or another empty print.
+      if (donor && donor.printKey !== printKey) {
+        const diskId = {
+          set: donor.set,
+          lang: donor.lang,
+          card: donor.card,
+        };
+        const artUrl = packFaceAssetUrl(pack, diskId, donor.file);
+        const thumbUrl = donor.thumb
+          ? packFaceAssetUrl(pack, diskId, donor.thumb)
+          : undefined;
+        rows.push({
+          printKey,
+          set: entry.set,
+          card: entry.card,
+          lang: donor.lang,
+          artUrl,
+          ...(thumbUrl ? { thumbUrl } : {}),
+          hasFoil,
+          label,
+          artFallbackFrom: donor.printKey,
+          ...(entry.rarity ? { rarity: entry.rarity } : {}),
+          ...(entry.name ? { name: entry.name } : {}),
+        });
+        continue;
+      }
       rows.push({
         printKey,
         set: entry.set,
@@ -163,6 +256,78 @@ function buildRows(
   return rows;
 }
 
+/**
+ * Insert pack-common and per-set verso tiles so backs are browsable like faces.
+ * Pack back leads the grid; each set back leads its set group.
+ */
+export function mergeCatalogueBackRows(input: {
+  pack: CataloguePackId;
+  faceRows: CatalogueCardRow[];
+  packBackUrl?: string | null;
+  setBackUrls?: ReadonlyMap<string, string> | Record<string, string>;
+}): CatalogueCardRow[] {
+  const packBackUrl = input.packBackUrl ?? null;
+  const setBackMap =
+    input.setBackUrls instanceof Map
+      ? input.setBackUrls
+      : new Map(Object.entries(input.setBackUrls ?? {}));
+
+  const out: CatalogueCardRow[] = [];
+  if (packBackUrl) {
+    out.push({
+      printKey: `${input.pack}:__pack-back__`,
+      set: "",
+      card: "back",
+      lang: "—",
+      artUrl: packBackUrl,
+      hasFoil: false,
+      label: "Dos · pack",
+      kind: "pack-back",
+    });
+  }
+
+  let currentSet: string | null = null;
+  for (const row of input.faceRows) {
+    if (row.set !== currentSet) {
+      currentSet = row.set;
+      const setBackUrl = setBackMap.get(row.set);
+      if (setBackUrl) {
+        out.push({
+          printKey: `${input.pack}:__set-back-${row.set}__`,
+          set: row.set,
+          card: "back",
+          lang: "—",
+          artUrl: setBackUrl,
+          hasFoil: false,
+          label: `Dos · ${row.set}`,
+          kind: "set-back",
+        });
+      }
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+/** Resolve on-disk backs and prepend them to face rows. */
+export function withCatalogueBackRows(
+  pack: CataloguePackId,
+  faceRows: CatalogueCardRow[],
+): CatalogueCardRow[] {
+  const packBackUrl = assetsPackBackUrl(pack);
+  const setBackUrls = new Map<string, string>();
+  for (const set of new Set(faceRows.map((r) => r.set))) {
+    const url = assetsSetBackUrl(pack, set);
+    if (url) setBackUrls.set(set, url);
+  }
+  return mergeCatalogueBackRows({
+    pack,
+    faceRows,
+    packBackUrl,
+    setBackUrls,
+  });
+}
+
 function rowsForPack(
   pack: CataloguePackId,
   preferLang?: string,
@@ -170,10 +335,16 @@ function rowsForPack(
   const mtimeMs = indexMtimeMs(pack);
   const cacheKey = `${pack}|${preferLang ?? ""}`;
   const hit = cache.get(cacheKey);
-  if (hit && hit.mtimeMs === mtimeMs) return hit.rows;
-  const rows = buildRows(pack, loadIndex(pack), preferLang);
-  cache.set(cacheKey, { mtimeMs, rows });
-  return rows;
+  let faces: CatalogueCardRow[];
+  if (hit && hit.mtimeMs === mtimeMs) {
+    faces = hit.rows;
+  } else {
+    faces = buildCatalogueCardRows(pack, loadIndex(pack), preferLang);
+    cache.set(cacheKey, { mtimeMs, rows: faces });
+  }
+  // Backs are cheap existsSync lookups; keep them outside the index mtime cache
+  // so installing `cards/back.webp` shows up without a re-sync.
+  return withCatalogueBackRows(pack, faces);
 }
 
 export type ListCatalogueCardsInput = {

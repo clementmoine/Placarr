@@ -105,11 +105,35 @@ export function resolvePackBackPath(pack: string): string | null {
   return null;
 }
 
+/**
+ * Optional set-specific verso under `cards/{set}/back.webp` (Naruto etc.).
+ * Pack-common back stays at `cards/back.webp`.
+ */
+export function resolveSetBackPath(pack: string, set: string): string | null {
+  const trimmed = set.trim();
+  if (!trimmed || trimmed.includes("..") || trimmed.includes("/") || trimmed.includes("\\")) {
+    return null;
+  }
+  const dir = path.join(packCardsDir(pack), trimmed);
+  for (const name of PACK_BACK_FILENAMES) {
+    const candidate = path.join(dir, name);
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
 /** `/assets/<pack>/cards/back.{webp|png|…}` when a back file exists. */
 export function assetsPackBackUrl(pack: string): string | null {
   const disk = resolvePackBackPath(pack);
   if (!disk) return null;
   return assetsPackFileUrl(pack, "cards", path.basename(disk));
+}
+
+/** `/assets/<pack>/cards/{set}/back.{webp|png|…}` when a set verso exists. */
+export function assetsSetBackUrl(pack: string, set: string): string | null {
+  const disk = resolveSetBackPath(pack, set);
+  if (!disk) return null;
+  return assetsPackFileUrl(pack, "cards", set, path.basename(disk));
 }
 
 /** Lorcana Unity materials manifest — `data/lorcana/foil/manifest.json`. */

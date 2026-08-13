@@ -16,6 +16,11 @@ export type CataloguePackInfo = {
   hasFoilEffects: boolean;
   /** Default scope when opening the pack. */
   defaultScope: CatalogueBrowseScope;
+  /**
+   * When a print has no face yet, reuse art from another print that shares the
+   * same collector number (Naruto NI/TE/TA… — unsafe for Pokémon set numbers).
+   */
+  sameNumberArtFallback?: boolean;
 };
 
 export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
@@ -39,6 +44,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Naruto CCG",
     hasFoilEffects: false,
     defaultScope: "all",
+    sameNumberArtFallback: true,
   },
 ] as const;
 

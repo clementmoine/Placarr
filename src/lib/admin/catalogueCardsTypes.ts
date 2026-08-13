@@ -15,4 +15,11 @@ export type CatalogueCardRow = {
   rarity?: string;
   /** True when index has the print/name but no art/thumb file yet. */
   missingArt?: boolean;
+  /**
+   * When `artUrl` comes from another print of the same collector number
+   * (e.g. promo stub → retail S1 face) until official art exists.
+   */
+  artFallbackFrom?: string;
+  /** Synthetic pack/set back tiles in the catalogue grid. */
+  kind?: "face" | "pack-back" | "set-back";
 };

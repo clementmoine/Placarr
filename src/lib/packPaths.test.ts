@@ -76,4 +76,12 @@ describe("packPaths", () => {
       );
     }
   });
+
+  it("resolves optional set-level back under cards/{set}/", async () => {
+    const { resolveSetBackPath, assetsSetBackUrl } = await import("./packPaths");
+    // No set verso is required; helpers must reject path traversal and stay null.
+    expect(resolveSetBackPath("naruto/ccg", "../etc")).toBeNull();
+    expect(resolveSetBackPath("naruto/ccg", "s1/../s2")).toBeNull();
+    expect(assetsSetBackUrl("naruto/ccg", "s1/../s2")).toBeNull();
+  });
 });

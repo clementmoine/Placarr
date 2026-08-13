@@ -166,8 +166,12 @@ export function CatalogueBrowser({
                 {card.hasFoil ? (
                   <span className="ml-1 text-foreground/70">· foil</span>
                 ) : null}
-                {card.missingArt ? (
+                {card.kind === "pack-back" || card.kind === "set-back" ? (
+                  <span className="ml-1 text-foreground/70">· back</span>
+                ) : card.missingArt ? (
                   <span className="ml-1 text-foreground/70">· stub</span>
+                ) : card.artFallbackFrom ? (
+                  <span className="ml-1 text-foreground/70">· retail art</span>
                 ) : null}
               </figcaption>
             </figure>

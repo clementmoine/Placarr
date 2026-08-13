@@ -33,6 +33,7 @@ import {
 } from "./carteSemaine";
 import { applyOfficialNames, loadOfficialNames } from "./officialNames";
 import { ensureNarutoChecklistLayout } from "./buildCoverageChecklist";
+import { ensureNarutoCuratedAssets } from "./installReconstructed";
 import {
   medThumbRank,
   parseCarddassAssetPath,
@@ -696,6 +697,7 @@ export async function scrapeNarutoCards(
   ensureNarutoChecklistLayout();
 
   if (options.indexOnly) {
+    await ensureNarutoCuratedAssets();
     const migratedVc = migrateNarutoVcBacksToCorrectedArt(root);
     const tinPromos = materializeTinBoxPromos(root);
     const { prints, assets } = buildIndexFromDisk(root);

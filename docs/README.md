@@ -5,8 +5,12 @@
 | [core_architecture.md](core_architecture.md) | 5 piliers, DRY | **Vivant** |
 | [codebase_map.md](codebase_map.md) | Où aller selon le bug | **Vivant** |
 | [provider_integration_checklist.md](provider_integration_checklist.md) | Ajouter un provider | **Vivant** |
+| [provider_supply_modes.md](provider_supply_modes.md) | Catalog providers, data vs curated, Catalogue hub | **Vivant** |
 | [provider_external_links.md](provider_external_links.md) | Liens + URL-first prix | **Vivant** |
 | [tcg_support.md](tcg_support.md) | TCG produit (Lorcana / Pokémon) | **Vivant** |
+| [one_piece_tcg.md](one_piece_tcg.md) | One Piece : providers, apps, foil (recherche) | **Vivant** |
+| [naruto_carddass_tcg.md](naruto_carddass_tcg.md) | Naruto — CACG / Carddass (+ autres lignes via sets) | **Vivant** |
+| [naruto_carddass_fr_recovery.md](naruto_carddass_fr_recovery.md) | Naruto FR — audit recovery carddass.fr / trous / pistes | **Vivant** |
 | [data-layout.md](data-layout.md) | `data/`, scripts, foil CLI | **Vivant** |
 | [foil_effects.md](foil_effects.md) | Contrat foil CSS+WebGL (packs + sources) | **Vivant** |
 | [foil_new_finish.md](foil_new_finish.md) | Ajouter un finish (Live / simey / Lorcana) | **Vivant** |
@@ -28,11 +32,13 @@ data/launchbox|icollect|nointro|pokemon|lorcana/
 data/indexes/title-idf/
 ```
 
-Scripts foil (packs séparés) :
+Scripts foil / catalogues locaux :
 
 ```
-scripts/lorcana/   → pnpm foil:lorcana
-scripts/pokemon/   → pnpm foil:pokemon
+src/providers/lorcanatcg/     → pnpm foil:lorcana
+src/providers/pokemontcglive/ → pnpm foil:pokemon
+src/providers/narutoccg/         → pnpm naruto:cards
+src/providers/{icollect,launchbox,nointro}/cli.ts
 ```
 
-`pnpm foil:ensure` = stubs JSON des deux packs. Pocket **supprimé**.
+`pnpm foil:ensure` = stubs JSON des packs foil. Pocket **supprimé**.

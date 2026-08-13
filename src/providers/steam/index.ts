@@ -27,6 +27,7 @@ export const steamModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     // PC capsule/header art, not the physical console box being scanned.

@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type {
-  FoilPackId,
   FoilPackStatus,
 } from "@/lib/admin/foilStatusTypes";
 import { getBackgroundJobs } from "@/lib/api/backgroundJobs";
@@ -37,7 +36,12 @@ type FoilLogResponse = {
   launchedAt: string | null;
   nextOffset: number;
   text: string;
-  job: { id: string; status: string; startedAt: string } | null;
+  job: {
+    id: string;
+    status: string;
+    startedAt: string;
+    error?: string | null;
+  } | null;
   error?: string;
 };
 
@@ -85,7 +89,16 @@ function statusLine(
 ): string {
   if (!status) return "…";
   const parts: string[] = [];
-  if (status.apk.present) {
+  if (status.id === "naruto") {
+    if (status.extract.present) {
+      parts.push(
+        formatWhen(status.extract.newestAt, fr) ||
+          (fr ? "catalogue local" : "local catalogue"),
+      );
+    } else {
+      parts.push(fr ? "pas de catalogue" : "no catalogue");
+    }
+  } else if (status.apk.present) {
     const apkBits = [
       `${status.apk.files.length} APK`,
       formatMo(status.apk.bytes),
@@ -94,27 +107,33 @@ function statusLine(
   } else {
     parts.push(fr ? "pas d’APK" : "no APK");
   }
-  if (!status.extract.present) {
-    parts.push(fr ? "pas d’extract" : "no extract");
-  } else {
-    const extractBits = [
-      status.extract.stale ? (fr ? "obsolète" : "stale") : null,
-      status.extract.shaders != null ? `${status.extract.shaders} shaders` : null,
-      formatWhen(status.extract.newestAt, fr) || null,
-    ].filter(Boolean);
-    parts.push(extractBits.join(" · ") || "extract");
+  if (status.id !== "naruto") {
+    if (!status.extract.present) {
+      parts.push(fr ? "pas d’extract" : "no extract");
+    } else {
+      const extractBits = [
+        status.extract.stale ? (fr ? "obsolète" : "stale") : null,
+        status.extract.shaders != null
+          ? `${status.extract.shaders} shaders`
+          : null,
+        formatWhen(status.extract.newestAt, fr) || null,
+      ].filter(Boolean);
+      parts.push(extractBits.join(" · ") || "extract");
+    }
   }
   if (jobRunning) parts.push(fr ? "en cours" : "running");
   return parts.join(" · ");
 }
 
 /**
- * Map a playroom effect-pack id to the admin extract target (same ids today).
+ * Map a playroom / catalogue pack id to the admin extract target.
  */
 export function foilExtractTargetForPack(
   packId: string | null | undefined,
 ): FoilExtractTarget | null {
-  if (packId === "lorcana" || packId === "pokemon") return packId;
+  if (packId === "lorcana" || packId === "pokemon" || packId === "naruto") {
+    return packId;
+  }
   return null;
 }
 
@@ -128,7 +147,9 @@ export function FoilPackSources({
 }) {
   const fr = locale === "fr";
   const queryClient = useQueryClient();
-  const apkPack: FoilPackId = target;
+  /** APK lab only knows foil packs — never point it at Naruto. */
+  const apkPack: "lorcana" | "pokemon" | null =
+    target === "pokemon" || target === "lorcana" ? target : null;
   const [enqueueing, setEnqueueing] = useState(false);
   const [apkOpen, setApkOpen] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
@@ -140,6 +161,7 @@ export function FoilPackSources({
   const [logLoading, setLogLoading] = useState(false);
   const logPreRef = useRef<HTMLPreElement>(null);
   const logOffsetRef = useRef(0);
+  const logPollLockRef = useRef<Promise<void>>(Promise.resolve());
 
   const { data: backgroundJobs } = useQuery({
     queryKey: ["backgroundJobs"],
@@ -161,7 +183,7 @@ export function FoilPackSources({
   const packs = statusPayload?.packs ?? [];
   const gaps = statusPayload?.gaps ?? null;
 
-  const status = packs.find((pack) => pack.id === apkPack);
+  const status = packs.find((pack) => pack.id === target);
   const canExtract = status?.canExtract ?? true;
   const busy = enqueueing || jobRunning;
 
@@ -180,8 +202,8 @@ export function FoilPackSources({
     setLogActivityAt(null);
   };
 
-  const pollLogs = useCallback(
-    async (reset: boolean) => {
+  const pollLogs = useCallback((reset: boolean) => {
+    logPollLockRef.current = logPollLockRef.current.then(async () => {
       setLogLoading(true);
       try {
         const after = reset ? 0 : logOffsetRef.current;
@@ -198,6 +220,23 @@ export function FoilPackSources({
         } else if (body.text) {
           setLogText((prev) => (prev ? `${prev}${body.text}` : body.text));
         }
+        // Only echo DB failure when it belongs to *this* log run (matched by
+        // jobId) and the file itself does not already record success/failure.
+        if (
+          body.job?.status === "failed" &&
+          body.job.error &&
+          !/── done\b/.test(body.text) &&
+          !/status=failed/.test(body.text) &&
+          !/── failed:/.test(body.text)
+        ) {
+          const failBlock = `\nstatus=failed\n${body.job.error}\n`;
+          setLogText((prev) => {
+            if (/── done\b/.test(prev) || prev.includes(body.job!.error!)) {
+              return prev;
+            }
+            return `${prev}${failBlock}`;
+          });
+        }
         logOffsetRef.current = body.nextOffset;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -205,9 +244,9 @@ export function FoilPackSources({
       } finally {
         setLogLoading(false);
       }
-    },
-    [target],
-  );
+    });
+    return logPollLockRef.current;
+  }, [target]);
 
   useEffect(() => {
     if (!logsOpen) return;
@@ -232,6 +271,7 @@ export function FoilPackSources({
           (fr ? "Extract en file d’attente" : "Extract queued"),
       );
       void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalogueCards"] });
       openLogs();
       void refetchStatus();
     } catch (error) {
@@ -260,7 +300,7 @@ export function FoilPackSources({
             ))}
           </ul>
           <p className="mt-2 text-muted-foreground">
-            docs/foil_new_finish.md · docs/foil_apk_sources.md · pnpm foil:audit-gaps
+            docs/foil_new_finish.md · docs/foil_apk_sources.md · admin foil-status gaps
           </p>
         </details>
       ) : null}
@@ -269,16 +309,18 @@ export function FoilPackSources({
           {statusLine(status, jobRunning, fr)}
         </p>
         <div className="flex flex-wrap gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            onClick={() => setApkOpen(true)}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            APK
-          </Button>
+          {target !== "naruto" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs"
+              onClick={() => setApkOpen(true)}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              APK
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="outline"
@@ -307,9 +349,13 @@ export function FoilPackSources({
                 ? fr
                   ? "Tout le catalogue CDN (AssetManifests) — skip déjà présent"
                   : "Full CDN catalogue (AssetManifests) — skips existing"
-                : fr
-                  ? "Sync foil (web + cards + Unity si APK)"
-                  : "Foil sync (web + cards + Unity if APK)"
+                : target === "naruto"
+                  ? fr
+                    ? "Sync Wayback carddass.fr → data/naruto"
+                    : "Sync Wayback carddass.fr → data/naruto"
+                  : fr
+                    ? "Sync foil (web + cards + Unity si APK)"
+                    : "Foil sync (web + cards + Unity if APK)"
             }
           >
             {busy ? (
@@ -317,7 +363,7 @@ export function FoilPackSources({
             ) : (
               <Play className="h-3.5 w-3.5" />
             )}
-            Extract
+            {target === "naruto" ? (fr ? "Sync" : "Sync") : "Extract"}
           </Button>
         </div>
       </div>
@@ -410,14 +456,16 @@ export function FoilPackSources({
         </DialogContent>
       </Dialog>
 
-      <WebAdbApkLab
-        open={apkOpen}
-        onOpenChange={setApkOpen}
-        locale={locale}
-        initialPack={apkPack}
-        lockPack
-        onUploaded={() => void refetchStatus()}
-      />
+      {apkPack ? (
+        <WebAdbApkLab
+          open={apkOpen}
+          onOpenChange={setApkOpen}
+          locale={locale}
+          initialPack={apkPack}
+          lockPack
+          onUploaded={() => void refetchStatus()}
+        />
+      ) : null}
     </>
   );
 }

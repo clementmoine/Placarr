@@ -11,7 +11,6 @@ import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import Header from "@/components/Header";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
 import { TcgEffectsPanel } from "@/components/admin/TcgEffectsPanel";
-import { LocalIndexesPanel } from "@/components/admin/LocalIndexesPanel";
 import {
   Card,
   CardContent,
@@ -756,8 +755,8 @@ function AdminDashboardComponent() {
             <h1 className="text-3xl font-bold tracking-tight">
               {activeTab === "tcg-effects"
                 ? locale === "fr"
-                  ? "Effets foil"
-                  : "Foil effects"
+                  ? "Catalogue"
+                  : "Catalogue"
                 : t("navigation.admin") || "Administration"}
             </h1>
             {activeTab === "tcg-effects" ? null : (
@@ -793,7 +792,7 @@ function AdminDashboardComponent() {
               className="flex items-center gap-2"
             >
               <Sparkles className="size-4" />
-              {locale === "fr" ? "Foil" : "Foil"}
+              {locale === "fr" ? "Catalogue" : "Catalogue"}
             </TabsTrigger>
           </TabsList>
 
@@ -1426,7 +1425,7 @@ function AdminDashboardComponent() {
                   </Button>
                 </div>
 
-                <LocalIndexesPanel />
+                {/* Local indexes live under Catalogue (corpus hub). */}
 
                 <div className="rounded-lg border bg-card/40 px-3 py-2">
                   <button

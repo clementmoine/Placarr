@@ -197,6 +197,7 @@ export const musicbrainzModule: ProviderModule = {
     types: ["musics"],
     capabilities: ["identify", "cover", "releaseDate", "people", "tracksCount"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     websiteUrl: "https://musicbrainz.org/",
     notes: "Lookup par code-barre, sans clé.",

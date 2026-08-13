@@ -25,6 +25,7 @@ export const omdbModule: ProviderModule = {
       "people",
     ],
     auth: { kind: "key", env: ["OMDB_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     isSecondary: true,

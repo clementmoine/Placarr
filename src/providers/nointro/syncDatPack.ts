@@ -77,6 +77,21 @@ export function resolveNoIntroDatPackSource(
   return { kind: "url", url };
 }
 
+/**
+ * True when a DAT path or pack (local zip / allowed URL) is configured —
+ * used so catalogue auto-sync does not treat an empty index as forever-stale.
+ */
+export function isNoIntroDatSourceConfigured(
+  options?: NoIntroDatSyncOptions,
+): boolean {
+  if (process.env.NOINTRO_DAT_PATH?.trim()) return true;
+  return resolveNoIntroDatPackSource({
+    ...options,
+    // Catalogue refresh passes allowDownload; status should match that path.
+    allowDownload: options?.allowDownload ?? true,
+  }) != null;
+}
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);

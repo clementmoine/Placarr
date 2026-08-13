@@ -21,13 +21,15 @@ Portions of the Pokémon foil CSS recipes are adapted from:
   <https://github.com/simeydotme/pokemon-cards-151>
   Licensed under the GNU General Public License v3.0
 
-Vendored reference trees (CSS only, no upstream foil PNGs):
-  third_party/simeydotme-pokemon-cards-css/   → public/css/cards/
-  third_party/simeydotme-pokemon-cards-151/   → public/css/cards/
+Vendored reference trees (CSS only, no upstream foil PNGs) live under
+volatile staging (re-sync with `pnpm foil:pokemon:simey`):
+
+  data/pokemon/staging/simey/poke-holo/   → public/css/cards/
+  data/pokemon/staging/simey/poke-151/    → public/css/cards/
   (see each tree’s UPSTREAM_COMMIT for the pinned revision)
 
 Adapted into Placarr as `HoloShader` recipes (e.g. radiantHolo, regularHolo,
-reverseHolo). See docs/foil_css_sources.md and third_party/README.md.
+reverseHolo). See docs/foil_css_sources.md.
 
 ---------------------------------------------------------------------------
 

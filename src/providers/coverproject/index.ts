@@ -19,6 +19,7 @@ export const coverprojectModule: ProviderModule = {
     types: ["games"],
     capabilities: ["cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: true,
     isRealBoxCover: true,
     // Covers are full front+back wraps, so the display scorer penalises them and

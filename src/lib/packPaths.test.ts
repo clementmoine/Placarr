@@ -47,4 +47,33 @@ describe("packPaths", () => {
       "/assets/pokemon/cards/me5/fr/045/art.webp",
     );
   });
+
+  it("splits nested franchise/line pack paths", async () => {
+    const { splitAssetsPackPath } = await import("./packPaths");
+    expect(splitAssetsPackPath(["lorcana", "cards", "s1", "en", "1"])).toEqual({
+      pack: "lorcana",
+      rest: ["cards", "s1", "en", "1"],
+    });
+    expect(
+      splitAssetsPackPath(["naruto", "ccg", "cards", "s1", "fr", "ni001"]),
+    ).toEqual({
+      pack: "naruto/ccg",
+      rest: ["cards", "s1", "fr", "ni001"],
+    });
+    expect(splitAssetsPackPath(["naruto", "ccg"])).toBeNull();
+  });
+
+  it("resolves pack back.webp or back.png", async () => {
+    const { assetsPackBackUrl, resolvePackBackPath } = await import("./packPaths");
+    // Naruto CCG ships curated back.webp under data/naruto/ccg/cards/.
+    const naruto = resolvePackBackPath("naruto/ccg");
+    if (naruto) {
+      expect(naruto.endsWith("back.png") || naruto.endsWith("back.webp")).toBe(
+        true,
+      );
+      expect(assetsPackBackUrl("naruto/ccg")).toMatch(
+        /^\/assets\/naruto\/ccg\/cards\/back\.(png|webp)$/,
+      );
+    }
+  });
 });

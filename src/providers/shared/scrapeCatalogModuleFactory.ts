@@ -244,6 +244,7 @@ export function createScrapeCatalogModule<
         types: config.types,
         capabilities,
         auth: { kind: "scrape" },
+        supplyMode: "scrape_cache",
         canonical: false,
         websiteUrl: config.baseUrl,
         notes: `Recherche ${deps.platformLabel} par EAN (${config.label}).`,

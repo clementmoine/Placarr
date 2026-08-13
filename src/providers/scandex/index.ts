@@ -30,6 +30,7 @@ export const scandexModule: ProviderModule = {
     types: ["games", "movies", "musics", "books", "boardgames"],
     capabilities: ["identify"],
     auth: { kind: "key", env: ["SCANDEX_ACCESS_TOKEN"], free: true },
+    supplyMode: "api_live",
     canonical: false,
     websiteUrl: "https://scandex.app/",
   },

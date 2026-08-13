@@ -500,8 +500,40 @@ export interface MappingProbeResult {
   statusHint?: MappingProbeStatus;
 }
 
+export interface ProviderCatalogStatus {
+  /** No usable index / cards yet. */
+  empty: boolean;
+  /** Older than configured max-age, missing, or schema outdated. */
+  stale: boolean;
+  /** Last successful sync/build, when known. */
+  lastSyncAt: string | null;
+}
+
+export type ProviderCatalogRefreshOpts = {
+  /** Background / Plex-like path — prefer cheap sync when the provider supports it. */
+  auto?: boolean;
+  signal?: AbortSignal;
+};
+
+/**
+ * Optional local-corpus surface for providers that own refreshable data under
+ * `data/<pack>/`. Core/admin discover these via the registry — never by id.
+ * @see docs/provider_supply_modes.md
+ */
+export interface ProviderCatalogHooks {
+  /** Pack slug under `data/<pack>/` (may differ from provider id). */
+  dataPack: string;
+  status: () => ProviderCatalogStatus | Promise<ProviderCatalogStatus>;
+  refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
+}
+
 export interface ProviderModule {
   info: ProviderInfo;
+  /**
+   * Local / scrape-cache corpus: status + in-process refresh for Catalogue hub
+   * and auto-sync. Tambouille stays in the module.
+   */
+  catalog?: ProviderCatalogHooks;
   evidence?: ProviderEvidenceConfig;
   createMetadataAdapter?: (
     deps?: Record<string, unknown>,

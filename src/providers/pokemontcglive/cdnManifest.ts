@@ -4,7 +4,7 @@
  * Official layout (verified via ptcgl.dev + Live client):
  *   ``{contentBase}{bucket}/manifest_{locale}_{bucket}``
  *
- * Parsing the UnityFS needs UnityPy (``scripts/pokemon/dump_cdn_manifest.py``).
+ * Parsing the UnityFS needs UnityPy (`unity/dump_cdn_manifest.py`).
  * This module stays Node-safe: URLs + name filtering for derive-then-intersect.
  */
 

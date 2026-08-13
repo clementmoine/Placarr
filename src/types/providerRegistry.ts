@@ -281,4 +281,14 @@ export interface ProviderInfo {
   websiteUrl?: string;
   /** API key / developer console URL linked from admin health cards. */
   apiKeyDashboardUrl?: string;
+  /**
+   * How this provider obtains durable data. Catalog providers use
+   * `local_catalog` / `scrape_cache` plus optional `ProviderModule.catalog`.
+   * Defaults to `api_live` in `materializeProviderInfo`.
+   * @see docs/provider_supply_modes.md
+   */
+  supplyMode?: ProviderSupplyMode;
 }
+
+export type ProviderSupplyMode = "api_live" | "scrape_cache" | "local_catalog";
+

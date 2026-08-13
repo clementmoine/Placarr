@@ -220,6 +220,7 @@ export const achatmoinscherModule: ProviderModule = {
     // would scrape AchatMoinsCher even when title + cover are already present.
     metadataCapabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isSecondary: true,

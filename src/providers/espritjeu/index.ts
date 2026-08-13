@@ -124,6 +124,7 @@ export const espritjeuModule: ProviderModule = {
     types: ["boardgames"],
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

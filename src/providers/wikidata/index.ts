@@ -18,6 +18,7 @@ export const wikidataModule: ProviderModule = {
     types: ["games", "boardgames"],
     capabilities: ["identify", "description", "cover", "releaseDate", "people"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     websiteUrl: "https://www.wikidata.org/",
     notes: "Descriptions FR via Wikipedia/Wikidata (jeux de société).",

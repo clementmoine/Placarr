@@ -20,8 +20,8 @@
 2. Ne pas charger les `.css` upstream au runtime : on **adapte** dans
    `HoloShader` (comme les recettes Lorcana dumpées).
 3. Assets officiels : faces sous `data/<pack>/cards/`, kit rendu sous `data/<pack>/foil/` → URL `/assets/<pack>/…`.
-4. Trees simey = **vendored** dans `third_party/` (pas de submodule) — même idée
-   que les dumps Lorcana versionnés / pinés.
+4. Trees simey = staging volatile `data/pokemon/staging/simey/`
+   (`pnpm foil:pokemon:simey`) — même idée que le dump web Lorcana.
 5. **Pokémon CSS :** vérité = **TCG Live** (compare Unity | CSS). Simey,
    photo-cards, ShaderKit, etc. = **références d’analyse** (noms de layers,
    mixes utiles, promo→style) — on ne dépend pas de leur chorégraphie ni de
@@ -100,7 +100,7 @@ Idle vs pointer : glare figé / opacity 0 en idle ; motif + tilt restent actifs
 ## 6. Nouveau finish (Simey / Live / site / app)
 
 Quand une source upstream ajoute un effet : dump ou re-vendor →
-`pnpm foil:audit-gaps` → map → ship. Checklist par surface :
+admin foil-status (`computeFoilGaps`) → map → ship. Checklist par surface :
 [foil_new_finish.md](foil_new_finish.md).
 
 ## 7. Docs liées

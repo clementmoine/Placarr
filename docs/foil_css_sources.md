@@ -2,13 +2,14 @@
 
 Contrat commun CSS+WebGL (les deux packs) : [foil_effects.md](foil_effects.md).
 
-Dernière passe 2026-08-07 (simey **vendored** dans `third_party/`, plus de
-submodules).
+Dernière passe 2026-08-13 (simey sous `data/pokemon/staging/simey/`, refresh
+`pnpm foil:pokemon:simey` — plus de `third_party/`).
 
-**Règle.** Placarr = **GPL-3.0-or-later**. Arbres simey = copies locales
-(`third_party/simeydotme-pokemon-cards-{css,151}/`) pour **lire** leurs
+**Règle.** Placarr = **GPL-3.0-or-later**. Arbres simey = dump staging
+(`data/pokemon/staging/simey/{poke-holo,poke-151}/`) pour **lire** leurs
 recettes — on n’en dépend pas au runtime et on ne force pas leur stack sur
-un leaf Live divergent. Assets Pokémon officiels hors arbre.
+un leaf Live divergent. Assets Pokémon officiels hors arbre. Volatile :
+re-vérifier HEAD upstream à chaque refresh (comme un extract).
 
 **Fidélité Pokémon.** WebGL = Live GLES3. CSS = **même intention visuelle**
 que le compare Unity, avec les **plaques Live multi-locale** (FR/DE/…).
@@ -254,14 +255,14 @@ Pas de PNGs EN simey ; pas de remap finish → rareté Simey.
 
 ---
 
-## 4. Arbres vendored (analyse)
+## 4. Arbres staging (analyse)
 
 | Upstream | Path | Pin |
 |---|---|---|
-| [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `third_party/simeydotme-pokemon-cards-css/` | `UPSTREAM_COMMIT` |
-| [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `third_party/simeydotme-pokemon-cards-151/` | `UPSTREAM_COMMIT` |
+| [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `data/pokemon/staging/simey/poke-holo/` | `UPSTREAM_COMMIT` |
+| [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `data/pokemon/staging/simey/poke-151/` | `UPSTREAM_COMMIT` |
 
-Pas de `git submodule`. Voir `third_party/README.md` pour un refresh manuel.
+Refresh : `pnpm foil:pokemon:simey` (`--check` / `--force`). Pas de submodule.
 Réf. mapping promo→Live : [kronenz/photo-cards `promos.json`](https://github.com/kronenz/photo-cards/blob/000e554eef94778845cb71aacebe61ec4ec99348/src/lib/components/promos.json).
 
 ---

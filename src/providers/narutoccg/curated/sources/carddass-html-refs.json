@@ -1,0 +1,2465 @@
+{
+ "source": "Image references parsed from archived carddass.fr /naruto/ HTML pages (Wayback)",
+ "note": "Catches cards the site linked to but Wayback never downloaded.",
+ "refs": {
+  "cl027": [
+   "CL-027.jpg",
+   "images/cartes/5/clients/CL-027.jpg"
+  ],
+  "cl028": [
+   "CL-028.jpg",
+   "images/cartes/5/clients/CL-028.jpg"
+  ],
+  "cl029": [
+   "CL-029.jpg",
+   "images/cartes/5/clients/CL-029.jpg"
+  ],
+  "cl030": [
+   "CL-030.jpg",
+   "images/cartes/5/clients/CL-030.jpg"
+  ],
+  "cl031": [
+   "CL-031.jpg",
+   "images/cartes/5/clients/CL-031.jpg"
+  ],
+  "ni001": [
+   "../images/cartes/1/NINJA-001.jpg",
+   "images/cartes/1/NINJA-001.jpg"
+  ],
+  "ni002": [
+   "../images/cartes/1/NINJA-002.jpg",
+   "images/cartes/1/NINJA-002.jpg"
+  ],
+  "ni003": [
+   "../images/cartes/1/NINJA-003.jpg",
+   "images/cartes/1/NINJA-003.jpg"
+  ],
+  "ni004": [
+   "../images/cartes/1/NINJA-004.jpg",
+   "images/cartes/1/NINJA-004.jpg"
+  ],
+  "ni005": [
+   "../images/cartes/1/NINJA-005.jpg",
+   "images/cartes/1/NINJA-005.jpg"
+  ],
+  "ni006": [
+   "../images/cartes/1/NINJA-006.jpg",
+   "/naruto/images/cartes/1/NINJA-006.jpg",
+   "images/cartes/1/NINJA-006.jpg"
+  ],
+  "ni007": [
+   "images/cartes/1/NINJA-007.jpg"
+  ],
+  "ni008": [
+   "../images/cartes/1/NINJA-008.jpg",
+   "../images/cartes/2/NINJA-008.jpg",
+   "images/cartes/1/NINJA-008.jpg"
+  ],
+  "ni009": [
+   "NINJA-009.jpg",
+   "images/cartes/1/NINJA-009.jpg"
+  ],
+  "ni010": [
+   "../images/cartes/1/NINJA-010.jpg",
+   "NINJA-010.jpg",
+   "images/cartes/1/NINJA-010.jpg"
+  ],
+  "ni011": [
+   "/naruto/images/cartes/1/NINJA-011.jpg",
+   "images/cartes/1/NINJA-011.jpg"
+  ],
+  "ni012": [
+   "images/cartes/1/NINJA-012.jpg"
+  ],
+  "ni013": [
+   "../images/cartes/1/NINJA-013.jpg",
+   "images/cartes/1/NINJA-013.jpg"
+  ],
+  "ni014": [
+   "images/cartes/1/NINJA-014.jpg"
+  ],
+  "ni015": [
+   "images/cartes/1/NINJA-015.jpg"
+  ],
+  "ni016": [
+   "images/cartes/1/NINJA-016.jpg"
+  ],
+  "ni017": [
+   "../images/cartes/2/NINJA-017.jpg",
+   "images/cartes/1/NINJA-017.jpg"
+  ],
+  "ni018": [
+   "images/cartes/1/NINJA-018.jpg"
+  ],
+  "ni019": [
+   "images/cartes/1/NINJA-019.jpg"
+  ],
+  "ni020": [
+   "images/cartes/1/NINJA-020.jpg"
+  ],
+  "ni021": [
+   "images/cartes/1/NINJA-021.jpg"
+  ],
+  "ni022": [
+   "images/cartes/1/NINJA-022.jpg"
+  ],
+  "ni023": [
+   "images/cartes/1/NINJA-023.jpg",
+   "images/cartes/promo/NINJA-023.jpg"
+  ],
+  "ni024": [
+   "images/cartes/1/NINJA-024.jpg"
+  ],
+  "ni025": [
+   "images/cartes/1/NINJA-025.jpg"
+  ],
+  "ni026": [
+   "images/cartes/1/NINJA-026.jpg"
+  ],
+  "ni027": [
+   "NINJA-027.jpg",
+   "images/cartes/1/NINJA-027.jpg"
+  ],
+  "ni028": [
+   "NINJA-028.jpg",
+   "images/cartes/1/NINJA-028.jpg"
+  ],
+  "ni029": [
+   "../images/cartes/1/NINJA-029.jpg",
+   "NINJA-029.jpg",
+   "images/cartes/1/NINJA-029.jpg",
+   "images/cartes/5/revival/NINJA-029.jpg"
+  ],
+  "ni030": [
+   "images/cartes/1/NINJA-030.jpg"
+  ],
+  "ni031": [
+   "../images/cartes/1/NINJA-031.jpg",
+   "../images/cartes/2/NINJA-031.jpg",
+   "images/cartes/1/NINJA-031.jpg"
+  ],
+  "ni032": [
+   "images/cartes/1/NINJA-032.jpg"
+  ],
+  "ni033": [
+   "../images/cartes/1/NINJA-033.jpg",
+   "images/cartes/1/NINJA-033.jpg"
+  ],
+  "ni034": [
+   "/naruto/images/cartes/1/NINJA-034.jpg",
+   "images/cartes/1/NINJA-034.jpg"
+  ],
+  "ni035": [
+   "images/cartes/1/NINJA-035.jpg"
+  ],
+  "ni036": [
+   "images/cartes/1/NINJA-036.jpg"
+  ],
+  "ni037": [
+   "../images/cartes/1/NINJA-037.jpg",
+   "images/cartes/1/NINJA-037.jpg"
+  ],
+  "ni038": [
+   "/naruto/images/cartes/1/NINJA-038.jpg",
+   "NINJA-038.jpg",
+   "images/cartes/1/NINJA-038.jpg"
+  ],
+  "ni039": [
+   "../images/cartes/1/NINJA-039.jpg",
+   "images/cartes/1/NINJA-039.jpg"
+  ],
+  "ni040": [
+   "../images/cartes/2/NINJA-040.jpg",
+   "images/cartes/1/NINJA-040.jpg"
+  ],
+  "ni041": [
+   "images/cartes/1/NINJA-041.jpg"
+  ],
+  "ni042": [
+   "images/cartes/1/NINJA-042.jpg"
+  ],
+  "ni043": [
+   "images/cartes/1/NINJA-043.jpg"
+  ],
+  "ni044": [
+   "images/cartes/1/NINJA-044.jpg"
+  ],
+  "ni045": [
+   "images/cartes/1/NINJA-045.jpg"
+  ],
+  "ni046": [
+   "images/cartes/1/NINJA-046.jpg"
+  ],
+  "ni047": [
+   "images/cartes/1/NINJA-047.jpg"
+  ],
+  "ni048": [
+   "images/cartes/1/NINJA-048.jpg"
+  ],
+  "ni049": [
+   "NINJA-049.jpg",
+   "images/cartes/1/NINJA-049.jpg",
+   "images/cartes/5/revival/NINJA-049.jpg"
+  ],
+  "ni050": [
+   "NINJA-050.jpg",
+   "images/cartes/1/NINJA-050.jpg"
+  ],
+  "ni051": [
+   "images/cartes/1/NINJA-051.jpg"
+  ],
+  "ni052": [
+   "../images/cartes/1/NINJA-052.jpg",
+   "images/cartes/1/NINJA-052.jpg"
+  ],
+  "ni053": [
+   "images/cartes/1/NINJA-053.jpg"
+  ],
+  "ni054": [
+   "images/cartes/1/NINJA-054.jpg"
+  ],
+  "ni055": [
+   "images/cartes/1/NINJA-055.jpg"
+  ],
+  "ni056": [
+   "images/cartes/1/NINJA-056.jpg"
+  ],
+  "ni057": [
+   "images/cartes/1/NINJA-057.jpg"
+  ],
+  "ni058": [
+   "images/cartes/1/NINJA-058.jpg"
+  ],
+  "ni059": [
+   "images/cartes/1/NINJA-059.jpg"
+  ],
+  "ni060": [
+   "images/cartes/1/NINJA-060.jpg"
+  ],
+  "ni061": [
+   "images/cartes/2/NINJA-061.jpg"
+  ],
+  "ni062": [
+   "../images/cartes/2/NINJA-062.jpg",
+   "/naruto/images/cartes/2/NINJA-062.jpg",
+   "images/cartes/2/NINJA-062.jpg"
+  ],
+  "ni063": [
+   "/naruto/images/cartes/3/NINJA-063.jpg",
+   "images/cartes/3/NINJA-063.jpg"
+  ],
+  "ni064": [
+   "/naruto/images/cartes/2/NINJA-064.jpg",
+   "images/cartes/2/NINJA-064.jpg"
+  ],
+  "ni065": [
+   "images/cartes/2/NINJA-065.jpg"
+  ],
+  "ni066": [
+   "images/cartes/2/NINJA-066.jpg"
+  ],
+  "ni067": [
+   "../images/cartes/2/NINJA-067.jpg",
+   "images/cartes/2/NINJA-067.jpg"
+  ],
+  "ni068": [
+   "images/cartes/2/NINJA-068.jpg"
+  ],
+  "ni069": [
+   "images/cartes/2/NINJA-069.jpg"
+  ],
+  "ni070": [
+   "images/cartes/2/NINJA-070.jpg"
+  ],
+  "ni071": [
+   "images/cartes/2/NINJA-071.jpg"
+  ],
+  "ni072": [
+   "images/cartes/2/NINJA-072.jpg"
+  ],
+  "ni073": [
+   "images/cartes/2/NINJA-073.jpg"
+  ],
+  "ni074": [
+   "images/cartes/2/NINJA-074.jpg"
+  ],
+  "ni075": [
+   "../images/cartes/2/NINJA-075.jpg",
+   "images/cartes/2/NINJA-075.jpg"
+  ],
+  "ni076": [
+   "images/cartes/2/NINJA-076.jpg"
+  ],
+  "ni077": [
+   "images/cartes/2/NINJA-077.jpg"
+  ],
+  "ni078": [
+   "images/cartes/2/NINJA-078.jpg"
+  ],
+  "ni079": [
+   "NINJA-079.jpg",
+   "images/cartes/3/NINJA-079.jpg"
+  ],
+  "ni080": [
+   "NINJA-080.jpg",
+   "images/cartes/3/NINJA-080.jpg"
+  ],
+  "ni081": [
+   "NINJA-081.jpg",
+   "images/cartes/3/NINJA-081.jpg"
+  ],
+  "ni082": [
+   "images/cartes/2/NINJA-082.jpg"
+  ],
+  "ni083": [
+   "images/cartes/2/NINJA-083.jpg"
+  ],
+  "ni084": [
+   "../images/cartes/2/NINJA-084.jpg",
+   "images/cartes/2/NINJA-084.jpg"
+  ],
+  "ni085": [
+   "images/cartes/3/NINJA-085.jpg"
+  ],
+  "ni086": [
+   "images/cartes/3/NINJA-086.jpg"
+  ],
+  "ni087": [
+   "images/cartes/3/NINJA-087.jpg"
+  ],
+  "ni088": [
+   "images/cartes/3/NINJA-088.jpg"
+  ],
+  "ni089": [
+   "images/cartes/3/NINJA-089.jpg"
+  ],
+  "ni090": [
+   "images/cartes/3/NINJA-090.jpg"
+  ],
+  "ni091": [
+   "/naruto/images/cartes/2/NINJA-091.jpg",
+   "images/cartes/2/NINJA-091.jpg"
+  ],
+  "ni092": [
+   "images/cartes/2/NINJA-092.jpg"
+  ],
+  "ni093": [
+   "images/cartes/2/NINJA-093.jpg"
+  ],
+  "ni094": [
+   "images/cartes/2/NINJA-094.jpg"
+  ],
+  "ni095": [
+   "images/cartes/2/NINJA-095.jpg",
+   "images/cartes/promo/NINJA-095.jpg"
+  ],
+  "ni096": [
+   "images/cartes/2/NINJA-096.jpg"
+  ],
+  "ni097": [
+   "images/cartes/2/NINJA-097.jpg"
+  ],
+  "ni098": [
+   "images/cartes/2/NINJA-098.jpg"
+  ],
+  "ni099": [
+   "NINJA-099.jpg",
+   "images/cartes/2/NINJA-099.jpg"
+  ],
+  "ni100": [
+   "images/cartes/2/NINJA-100.jpg"
+  ],
+  "ni101": [
+   "images/cartes/3/NINJA-101.jpg"
+  ],
+  "ni102": [
+   "images/cartes/3/NINJA-102.jpg"
+  ],
+  "ni103": [
+   "images/cartes/2/NINJA-103.jpg"
+  ],
+  "ni104": [
+   "images/cartes/2/NINJA-104.jpg"
+  ],
+  "ni105": [
+   "images/cartes/2/NINJA-105.jpg"
+  ],
+  "ni106": [
+   "images/cartes/2/NINJA-106.jpg"
+  ],
+  "ni107": [
+   "images/cartes/2/NINJA-107.jpg"
+  ],
+  "ni108": [
+   "images/cartes/2/NINJA-108.jpg"
+  ],
+  "ni109": [
+   "../images/cartes/2/NINJA-109.jpg",
+   "images/cartes/2/NINJA-109.jpg"
+  ],
+  "ni110": [
+   "../images/cartes/2/NINJA-110.jpg",
+   "images/cartes/2/NINJA-110.jpg"
+  ],
+  "ni111": [
+   "/naruto/images/cartes/2/NINJA-111.jpg",
+   "images/cartes/2/NINJA-111.jpg"
+  ],
+  "ni112": [
+   "../images/cartes/2/NINJA-112.jpg",
+   "images/cartes/2/NINJA-112.jpg"
+  ],
+  "ni113": [
+   "images/cartes/2/NINJA-113.jpg"
+  ],
+  "ni114": [
+   "NINJA-114.jpg",
+   "images/cartes/2/NINJA-114.jpg"
+  ],
+  "ni115": [
+   "images/cartes/3/NINJA-115.jpg"
+  ],
+  "ni116": [
+   "images/cartes/3/NINJA-116.jpg"
+  ],
+  "ni117": [
+   "images/cartes/3/NINJA-117.jpg"
+  ],
+  "ni118": [
+   "images/cartes/3/NINJA-118.jpg"
+  ],
+  "ni119": [
+   "images/cartes/3/NINJA-119.jpg"
+  ],
+  "ni120": [
+   "/naruto/images/cartes/3/NINJA-120.jpg",
+   "images/cartes/3/NINJA-120.jpg"
+  ],
+  "ni121": [
+   "/naruto/images/cartes/3/NINJA-121.jpg",
+   "images/cartes/3/NINJA-121.jpg"
+  ],
+  "ni122": [
+   "/naruto/images/cartes/3/NINJA-122.jpg",
+   "images/cartes/3/NINJA-122.jpg"
+  ],
+  "ni123": [
+   "images/cartes/3/NINJA-123.jpg"
+  ],
+  "ni124": [
+   "/naruto/images/cartes/3/NINJA-124.jpg",
+   "images/cartes/3/NINJA-124.jpg"
+  ],
+  "ni125": [
+   "images/cartes/3/NINJA-125.jpg"
+  ],
+  "ni126": [
+   "NINJA-126.jpg",
+   "images/cartes/3/NINJA-126.jpg",
+   "images/cartes/5/revival/NINJA-126.jpg"
+  ],
+  "ni127": [
+   "/naruto/images/cartes/3/NINJA-127.jpg",
+   "NINJA-127.jpg",
+   "images/cartes/3/NINJA-127.jpg"
+  ],
+  "ni128": [
+   "images/cartes/3/NINJA-128.jpg"
+  ],
+  "ni129": [
+   "images/cartes/3/NINJA-129.jpg"
+  ],
+  "ni130": [
+   "images/cartes/3/NINJA-130.jpg"
+  ],
+  "ni136": [
+   "images/cartes/3/NINJA-136.jpg"
+  ],
+  "ni137": [
+   "images/cartes/3/NINJA-137.jpg"
+  ],
+  "ni138": [
+   "images/cartes/3/NINJA-138.jpg"
+  ],
+  "ni139": [
+   "images/cartes/3/NINJA-139.jpg"
+  ],
+  "ni140": [
+   "images/cartes/3/NINJA-140.jpg"
+  ],
+  "ni141": [
+   "images/cartes/3/NINJA-141.jpg"
+  ],
+  "ni142": [
+   "images/cartes/3/NINJA-142.jpg"
+  ],
+  "ni143": [
+   "/naruto/images/cartes/3/NINJA-143.jpg",
+   "images/cartes/3/NINJA-143.jpg"
+  ],
+  "ni144": [
+   "images/cartes/3/NINJA-144.jpg"
+  ],
+  "ni145": [
+   "/naruto/images/cartes/s4/NINJA-145.jpg",
+   "NINJA-145.jpg"
+  ],
+  "ni146": [
+   "/naruto/images/cartes/3/NINJA-146.jpg",
+   "images/cartes/3/NINJA-146.jpg"
+  ],
+  "ni147": [
+   "images/cartes/3/NINJA-147.jpg"
+  ],
+  "ni148": [
+   "images/cartes/3/NINJA-148.jpg"
+  ],
+  "ni149": [
+   "images/cartes/3/NINJA-149.jpg"
+  ],
+  "ni150": [
+   "images/cartes/3/NINJA-150.jpg"
+  ],
+  "ni151": [
+   "images/cartes/3/NINJA-151.jpg"
+  ],
+  "ni152": [
+   "images/cartes/3/NINJA-152.jpg",
+   "images/cartes/cartes_med/NINJA-152.jpg"
+  ],
+  "ni153": [
+   "images/cartes/3/NINJA-153.jpg"
+  ],
+  "ni154": [
+   "NINJA-154.jpg"
+  ],
+  "ni155": [
+   "/naruto/images/cartes/s4/NINJA-155.jpg",
+   "NINJA-155.jpg",
+   "images/cartes/s4/NINJA-155.jpg"
+  ],
+  "ni156": [
+   "NINJA-156.jpg"
+  ],
+  "ni157": [
+   "/naruto/images/cartes/3/NINJA-157.jpg",
+   "NINJA-157.jpg",
+   "images/cartes/3/NINJA-157.jpg"
+  ],
+  "ni158": [
+   "NINJA-158.jpg",
+   "images/cartes/s4/NINJA-158.jpg"
+  ],
+  "ni159": [
+   "/naruto/images/cartes/s4/NINJA-159.jpg",
+   "NINJA-159.jpg",
+   "images/cartes/5/revival/NINJA-159.jpg"
+  ],
+  "ni160": [
+   "NINJA-160.jpg",
+   "images/cartes/5/revival/NINJA-160.jpg"
+  ],
+  "ni161": [
+   "NINJA-161.jpg",
+   "images/cartes/5/revival/NINJA-161.jpg"
+  ],
+  "ni162": [
+   "NINJA-162.jpg",
+   "images/cartes/5/revival/NINJA-162.jpg"
+  ],
+  "ni163": [
+   "/naruto/images/cartes/s4/NINJA-163.jpg",
+   "NINJA-163.jpg",
+   "images/cartes/s4/NINJA-163.jpg"
+  ],
+  "ni164": [
+   "NINJA-164.jpg"
+  ],
+  "ni165": [
+   "NINJA-165.jpg"
+  ],
+  "ni166": [
+   "NINJA-166.jpg"
+  ],
+  "ni167": [
+   "NINJA-167.jpg"
+  ],
+  "ni168": [
+   "NINJA-168.jpg",
+   "images/cartes/s4/NINJA-168.jpg"
+  ],
+  "ni169": [
+   "NINJA-169.jpg"
+  ],
+  "ni170": [
+   "/naruto/images/cartes/s4/NINJA-170.jpg",
+   "NINJA-170.jpg"
+  ],
+  "ni171": [
+   "/naruto/images/cartes/s4/NINJA-171.jpg",
+   "NINJA-171.jpg"
+  ],
+  "ni172": [
+   "/naruto/images/cartes/s4/NINJA-172.jpg",
+   "NINJA-172.jpg"
+  ],
+  "ni173": [
+   "NINJA-173.jpg"
+  ],
+  "ni174": [
+   "NINJA-174.jpg",
+   "images/cartes/s4/NINJA-174.jpg"
+  ],
+  "ni175": [
+   "NINJA-175.jpg",
+   "images/cartes/s4/NINJA-175.jpg"
+  ],
+  "ni176": [
+   "NINJA-176.jpg"
+  ],
+  "ni177": [
+   "/naruto/images/cartes/s4/NINJA-177.jpg",
+   "NINJA-177.jpg",
+   "file://///Serveur-abysse/WebSite/carddass/naruto/images/cartes/s4/NINJA-177.jpg"
+  ],
+  "ni178": [
+   "NINJA-178.jpg"
+  ],
+  "ni179": [
+   "/naruto/images/cartes/s4/NINJA-179.jpg",
+   "NINJA-179.jpg"
+  ],
+  "ni180": [
+   "/naruto/images/cartes/s4/NINJA-180.jpg",
+   "NINJA-180.jpg"
+  ],
+  "ni186": [
+   "/naruto/images/cartes/s4/NINJA-186.jpg",
+   "NINJA-186.jpg",
+   "images/cartes/s4/NINJA-186.jpg"
+  ],
+  "ni187": [
+   "/naruto/images/cartes/s4/NINJA-187.jpg",
+   "NINJA-187.jpg",
+   "images/cartes/s4/NINJA-187.jpg"
+  ],
+  "ni188": [
+   "NINJA-188.jpg"
+  ],
+  "ni189": [
+   "/naruto/images/cartes/s4/NINJA-189.jpg",
+   "NINJA-189.jpg",
+   "images/cartes/s4/NINJA-189.jpg"
+  ],
+  "ni190": [
+   "NINJA-190.jpg"
+  ],
+  "ni191": [
+   "NINJA-191.jpg",
+   "images/cartes/5/revival/NINJA-191.jpg",
+   "images/cartes/s4/NINJA-191.jpg"
+  ],
+  "ni192": [
+   "NINJA-192.jpg",
+   "images/cartes/s4/NINJA-192.jpg"
+  ],
+  "ni193": [
+   "/naruto/images/cartes/s4/NINJA-193.jpg",
+   "NINJA-193.jpg",
+   "images/cartes/s4/NINJA-193.jpg"
+  ],
+  "ni194": [
+   "NINJA-194.jpg",
+   "images/cartes/s4/NINJA-194.jpg"
+  ],
+  "ni195": [
+   "NINJA-195.jpg",
+   "images/cartes/s4/NINJA-195.jpg"
+  ],
+  "ni196": [
+   "/naruto/images/cartes/s4/NINJA-196.jpg",
+   "NINJA-196.jpg",
+   "images/cartes/5/revival/NINJA-196.jpg",
+   "images/cartes/s4/NINJA-196.jpg"
+  ],
+  "ni197": [
+   "NINJA-197.jpg",
+   "images/cartes/5/revival/NINJA-197.jpg",
+   "images/cartes/s4/NINJA-197.jpg"
+  ],
+  "ni198": [
+   "NINJA-198.jpg"
+  ],
+  "ni199": [
+   "NINJA-199.jpg"
+  ],
+  "ni200": [
+   "NINJA-200.jpg"
+  ],
+  "ni201": [
+   "NINJA-201.jpg",
+   "images/cartes/s4/NINJA-201.jpg"
+  ],
+  "ni202": [
+   "NINJA-202.jpg",
+   "images/cartes/cartes_med/NINJA-202.jpg",
+   "images/cartes/s4/NINJA-202.jpg"
+  ],
+  "ni203": [
+   "/naruto/images/cartes/s4/NINJA-203.jpg",
+   "NINJA-203.jpg",
+   "images/cartes/s4/NINJA-203.jpg"
+  ],
+  "ni204": [
+   "NINJA-204.jpg"
+  ],
+  "ni205": [
+   "NINJA-205.jpg",
+   "images/cartes/5/ninjas/NINJA-205.jpg"
+  ],
+  "ni206": [
+   "NINJA-206.jpg",
+   "images/cartes/5/ninjas/NINJA-206.jpg"
+  ],
+  "ni207": [
+   "NINJA-207.jpg",
+   "images/cartes/5/ninjas/NINJA 207.jpg",
+   "images/cartes/5/ninjas/NINJA-207.jpg"
+  ],
+  "ni208": [
+   "NINJA-208.jpg",
+   "images/cartes/5/ninjas/NINJA-208.jpg"
+  ],
+  "ni209": [
+   "NINJA-209.jpg",
+   "images/cartes/5/ninjas/NINJA-209.jpg"
+  ],
+  "ni210": [
+   "NINJA-210.jpg",
+   "images/cartes/5/ninjas/NINJA-210.jpg"
+  ],
+  "ni211": [
+   "NINJA 211.jpg",
+   "NINJA-211.jpg",
+   "images/cartes/5/ninjas/NINJA 211.jpg",
+   "images/cartes/5/ninjas/NINJA-211.jpg"
+  ],
+  "ni212": [
+   "NINJA-212.jpg",
+   "images/cartes/5/ninjas/NINJA-212.jpg"
+  ],
+  "ni213": [
+   "NINJA-213.jpg",
+   "images/cartes/5/ninjas/NINJA-213.jpg"
+  ],
+  "ni214": [
+   "NINJA-214.jpg",
+   "images/cartes/5/ninjas/NINJA-214.jpg"
+  ],
+  "ni215": [
+   "NINJA-215.jpg",
+   "images/cartes/5/ninjas/NINJA-215.jpg"
+  ],
+  "ni216": [
+   "NINJA-216.jpg",
+   "images/cartes/5/ninjas/NINJA-216.jpg"
+  ],
+  "ni217": [
+   "NINJA-217.jpg",
+   "images/cartes/5/ninjas/NINJA-217.jpg"
+  ],
+  "ni218": [
+   "NINJA-218.jpg",
+   "images/cartes/5/ninjas/NINJA-218.jpg"
+  ],
+  "ni219": [
+   "NINJA 219.jpg",
+   "NINJA-219.jpg",
+   "images/cartes/5/ninjas/NINJA 219.jpg",
+   "images/cartes/5/ninjas/NINJA-219.jpg"
+  ],
+  "ni220": [
+   "NINJA-220.jpg",
+   "images/cartes/5/ninjas/NINJA-220.jpg"
+  ],
+  "ni221": [
+   "NINJA-221.jpg",
+   "images/cartes/5/ninjas/NINJA-221.jpg"
+  ],
+  "ni222": [
+   "NINJA-222.jpg",
+   "images/cartes/5/ninjas/NINJA-222.jpg"
+  ],
+  "ni223": [
+   "NINJA-223.jpg",
+   "images/cartes/5/ninjas/NINJA-223.jpg"
+  ],
+  "ni224": [
+   "NINJA-224.jpg",
+   "images/cartes/5/ninjas/NINJA-224.jpg"
+  ],
+  "ni225": [
+   "NINJA-225.jpg",
+   "images/cartes/5/ninjas/NINJA-225.jpg"
+  ],
+  "ni226": [
+   "NINJA-226.jpg",
+   "images/cartes/5/ninjas/NINJA-226.jpg"
+  ],
+  "ni227": [
+   "NINJA-227.jpg",
+   "images/cartes/5/ninjas/NINJA-227.jpg"
+  ],
+  "ni228": [
+   "NINJA-228.jpg",
+   "images/cartes/5/ninjas/NINJA-228.jpg"
+  ],
+  "ni229": [
+   "NINJA-229.jpg",
+   "images/cartes/5/ninjas/NINJA-229.jpg"
+  ],
+  "ni230": [
+   "NINJA-230.jpg",
+   "images/cartes/5/ninjas/NINJA-230.jpg"
+  ],
+  "ni231": [
+   "NINJA-231.jpg",
+   "images/cartes/5/ninjas/NINJA-231.jpg"
+  ],
+  "ni232": [
+   "NINJA-232.jpg",
+   "images/cartes/5/ninjas/NINJA-232.jpg"
+  ],
+  "ni233": [
+   "NINJA-233.jpg",
+   "images/cartes/5/ninjas/NINJA-233.jpg"
+  ],
+  "ni234": [
+   "NINJA-234.jpg",
+   "images/cartes/5/ninjas/NINJA-234.jpg"
+  ],
+  "ni235": [
+   "NINJA-235.jpg",
+   "images/cartes/5/ninjas/NINJA-235.jpg"
+  ],
+  "ni236": [
+   "NINJA-236.jpg",
+   "images/cartes/5/ninjas/NINJA-236.jpg"
+  ],
+  "ni237": [
+   "NINJA-237.jpg",
+   "images/cartes/5/ninjas/NINJA-237.jpg"
+  ],
+  "ni238": [
+   "NINJA-238.jpg",
+   "images/cartes/5/ninjas/NINJA-238.jpg"
+  ],
+  "ni239": [
+   "NINJA-239.jpg",
+   "images/cartes/5/ninjas/NINJA-239.jpg"
+  ],
+  "ni240": [
+   "NINJA-240.jpg",
+   "images/cartes/5/ninjas/NINJA-240.jpg"
+  ],
+  "ni241": [
+   "NINJA-241.jpg",
+   "images/cartes/5/ninjas/NINJA-241-vc.jpg"
+  ],
+  "ni242": [
+   "NINJA-242.jpg",
+   "images/cartes/5/ninjas/NINJA-242.jpg"
+  ],
+  "ni243": [
+   "NINJA-243.jpg",
+   "images/cartes/5/ninjas/NINJA-243.jpg"
+  ],
+  "ni244": [
+   "NINJA-244.jpg",
+   "images/cartes/5/ninjas/NINJA-244.jpg"
+  ],
+  "ni245": [
+   "NINJA-245.jpg",
+   "images/cartes/5/ninjas/NINJA-245.jpg"
+  ],
+  "ni246": [
+   "NINJA-246.jpg",
+   "images/cartes/5/ninjas/NINJA-246.jpg"
+  ],
+  "ni247": [
+   "NINJA-247.jpg",
+   "images/cartes/5/ninjas/NINJA-247.jpg"
+  ],
+  "ni248": [
+   "NINJA-248.jpg",
+   "images/cartes/5/ninjas/NINJA-248.jpg"
+  ],
+  "ni249": [
+   "NINJA-249.jpg",
+   "images/cartes/5/ninjas/NINJA-249.jpg"
+  ],
+  "ni250": [
+   "NINJA-250.jpg",
+   "images/cartes/5/ninjas/NINJA-250.jpg"
+  ],
+  "ni251": [
+   "NINJA-251.jpg",
+   "images/cartes/5/ninjas/NINJA-251.jpg"
+  ],
+  "ni252": [
+   "NINJA-252.jpg",
+   "images/cartes/5/ninjas/NINJA-252.jpg"
+  ],
+  "ni253": [
+   "NINJA-253.jpg",
+   "images/cartes/5/ninjas/NINJA-253.jpg"
+  ],
+  "ni254": [
+   "NINJA-254.jpg",
+   "images/cartes/5/ninjas/NINJA-254.jpg"
+  ],
+  "ni264": [
+   "images/cartes/6/NINJA 264.jpg"
+  ],
+  "ni273": [
+   "images/cartes/6/NINJA 273.jpg"
+  ],
+  "ni294": [
+   "images/cartes/6/NINJA 294.jpg"
+  ],
+  "ni313": [
+   "NINJA-313.jpg",
+   "images/cartes/5/ninjas/NINJA-313.jpg"
+  ],
+  "ta001": [
+   "../images/cartes/1/TACTIQUE-001.jpg",
+   "images/cartes/1/TACTIQUE-001.jpg"
+  ],
+  "ta002": [
+   "images/cartes/1/TACTIQUE-002.jpg"
+  ],
+  "ta003": [
+   "images/cartes/1/TACTIQUE-003.jpg"
+  ],
+  "ta004": [
+   "images/cartes/1/TACTIQUE-004.jpg"
+  ],
+  "ta005": [
+   "images/cartes/1/TACTIQUE-005.jpg"
+  ],
+  "ta006": [
+   "../images/cartes/1/TACTIQUE-006.jpg",
+   "/naruto/images/cartes/1/TACTIQUE-006.jpg",
+   "images/cartes/1/TACTIQUE-006.jpg"
+  ],
+  "ta007": [
+   "../images/cartes/1/TACTIQUE-007.jpg",
+   "images/cartes/1/TACTIQUE-007.jpg"
+  ],
+  "ta008": [
+   "../images/cartes/1/TACTIQUE-008.jpg",
+   "images/cartes/1/TACTIQUE-008.jpg"
+  ],
+  "ta009": [
+   "images/cartes/1/TACTIQUE-009.jpg"
+  ],
+  "ta010": [
+   "images/cartes/1/TACTIQUE-010.jpg"
+  ],
+  "ta011": [
+   "images/cartes/1/TACTIQUE-011.jpg"
+  ],
+  "ta012": [
+   "images/cartes/1/TACTIQUE-012.jpg"
+  ],
+  "ta013": [
+   "images/cartes/1/TACTIQUE-013.jpg"
+  ],
+  "ta014": [
+   "images/cartes/1/TACTIQUE-014.jpg"
+  ],
+  "ta015": [
+   "../images/cartes/1/TACTIQUE-015.jpg",
+   "images/cartes/1/TACTIQUE-015.jpg"
+  ],
+  "ta016": [
+   "images/cartes/1/TACTIQUE-016.jpg"
+  ],
+  "ta017": [
+   "../images/cartes/1/TACTIQUE-017.jpg",
+   "images/cartes/1/TACTIQUE-017.jpg"
+  ],
+  "ta018": [
+   "/naruto/images/cartes/1/TACTIQUE-018.jpg",
+   "images/cartes/1/TACTIQUE-018.jpg"
+  ],
+  "ta019": [
+   "images/cartes/1/TACTIQUE-019.jpg"
+  ],
+  "ta020": [
+   "../images/cartes/1/TACTIQUE-020.jpg",
+   "images/cartes/1/TACTIQUE-020.jpg"
+  ],
+  "ta021": [
+   "images/cartes/1/TACTIQUE-021.jpg"
+  ],
+  "ta022": [
+   "../images/cartes/1/TACTIQUE-022.jpg",
+   "images/cartes/1/TACTIQUE-022.jpg"
+  ],
+  "ta023": [
+   "images/cartes/1/TACTIQUE-023.jpg"
+  ],
+  "ta024": [
+   "../images/cartes/1/TACTIQUE-024.jpg",
+   "images/cartes/1/TACTIQUE-024.jpg"
+  ],
+  "ta025": [
+   "images/cartes/1/TACTIQUE-025.jpg"
+  ],
+  "ta026": [
+   "../images/cartes/1/TACTIQUE-026.jpg",
+   "images/cartes/1/TACTIQUE-026.jpg"
+  ],
+  "ta027": [
+   "images/cartes/1/TACTIQUE-027.jpg"
+  ],
+  "ta028": [
+   "images/cartes/1/TACTIQUE-028.jpg"
+  ],
+  "ta029": [
+   "images/cartes/1/TACTIQUE-029.jpg"
+  ],
+  "ta030": [
+   "images/cartes/1/TACTIQUE-030.jpg"
+  ],
+  "ta031": [
+   "images/cartes/1/TACTIQUE-031.jpg"
+  ],
+  "ta032": [
+   "images/cartes/1/TACTIQUE-032.jpg"
+  ],
+  "ta033": [
+   "images/cartes/1/TACTIQUE-033.jpg"
+  ],
+  "ta034": [
+   "images/cartes/1/TACTIQUE-034.jpg"
+  ],
+  "ta035": [
+   "images/cartes/1/TACTIQUE-035.jpg"
+  ],
+  "ta036": [
+   "images/cartes/1/TACTIQUE-036.jpg"
+  ],
+  "ta037": [
+   "images/cartes/1/TACTIQUE-037.jpg"
+  ],
+  "ta038": [
+   "images/cartes/1/TACTIQUE-038.jpg"
+  ],
+  "ta039": [
+   "../images/cartes/1/TACTIQUE-039.jpg",
+   "images/cartes/1/TACTIQUE-039.jpg"
+  ],
+  "ta040": [
+   "images/cartes/1/TACTIQUE-040.jpg"
+  ],
+  "ta041": [
+   "images/cartes/1/TACTIQUE-041.jpg"
+  ],
+  "ta042": [
+   "images/cartes/1/TACTIQUE-042.jpg"
+  ],
+  "ta043": [
+   "images/cartes/1/TACTIQUE-043.jpg"
+  ],
+  "ta044": [
+   "images/cartes/1/TACTIQUE-044.jpg"
+  ],
+  "ta045": [
+   "../images/cartes/1/TACTIQUE-045.jpg",
+   "images/cartes/1/TACTIQUE-045.jpg"
+  ],
+  "ta046": [
+   "../images/cartes/1/TACTIQUE-046.jpg",
+   "images/cartes/1/TACTIQUE-046.jpg"
+  ],
+  "ta047": [
+   "images/cartes/1/TACTIQUE-047.jpg"
+  ],
+  "ta048": [
+   "images/cartes/1/TACTIQUE-048.jpg"
+  ],
+  "ta049": [
+   "images/cartes/1/TACTIQUE-049.jpg"
+  ],
+  "ta050": [
+   "images/cartes/1/TACTIQUE-050.jpg"
+  ],
+  "ta051": [
+   "images/cartes/1/TACTIQUE-051.jpg"
+  ],
+  "ta052": [
+   "images/cartes/1/TACTIQUE-052.jpg"
+  ],
+  "ta053": [
+   "images/cartes/1/TACTIQUE-053.jpg"
+  ],
+  "ta054": [
+   "images/cartes/1/TACTIQUE-054.jpg"
+  ],
+  "ta055": [
+   "images/cartes/1/TACTIQUE-055.jpg"
+  ],
+  "ta056": [
+   "images/cartes/1/TACTIQUE-056.jpg"
+  ],
+  "ta057": [
+   "images/cartes/1/TACTIQUE-057.jpg"
+  ],
+  "ta058": [
+   "images/cartes/1/TACTIQUE-058.jpg"
+  ],
+  "ta059": [
+   "images/cartes/1/TACTIQUE-059.jpg"
+  ],
+  "ta060": [
+   "images/cartes/1/TACTIQUE-060.jpg"
+  ],
+  "ta061": [
+   "images/cartes/2/TACTIQUE-061.jpg"
+  ],
+  "ta062": [
+   "images/cartes/2/TACTIQUE-062.jpg"
+  ],
+  "ta063": [
+   "../images/cartes/2/TACTIQUE-063.jpg",
+   "images/cartes/2/TACTIQUE-063.jpg"
+  ],
+  "ta064": [
+   "images/cartes/2/TACTIQUE-064.jpg"
+  ],
+  "ta065": [
+   "images/cartes/2/TACTIQUE-065.jpg"
+  ],
+  "ta066": [
+   "images/cartes/2/TACTIQUE-066.jpg"
+  ],
+  "ta067": [
+   "images/cartes/2/TACTIQUE-067.jpg"
+  ],
+  "ta068": [
+   "images/cartes/2/TACTIQUE-068.jpg"
+  ],
+  "ta069": [
+   "images/cartes/2/TACTIQUE-069.jpg"
+  ],
+  "ta070": [
+   "/naruto/images/cartes/2/TACTIQUE-070.jpg",
+   "images/cartes/2/TACTIQUE-070.jpg"
+  ],
+  "ta071": [
+   "images/cartes/2/TACTIQUE-071.jpg"
+  ],
+  "ta072": [
+   "../images/cartes/2/TACTIQUE-072.jpg",
+   "images/cartes/2/TACTIQUE-072.jpg"
+  ],
+  "ta073": [
+   "images/cartes/2/TACTIQUE-073.jpg"
+  ],
+  "ta074": [
+   "images/cartes/2/TACTIQUE-074.jpg"
+  ],
+  "ta075": [
+   "images/cartes/2/TACTIQUE-075.jpg"
+  ],
+  "ta076": [
+   "../images/cartes/1/TACTIQUE-076.jpg",
+   "../images/cartes/2/TACTIQUE-076.jpg",
+   "images/cartes/2/TACTIQUE-076.jpg"
+  ],
+  "ta077": [
+   "images/cartes/2/TACTIQUE-077.jpg"
+  ],
+  "ta078": [
+   "images/cartes/2/TACTIQUE-078.jpg"
+  ],
+  "ta079": [
+   "images/cartes/2/TACTIQUE-079.jpg"
+  ],
+  "ta080": [
+   "/naruto/images/cartes/2/TACTIQUE-080.jpg",
+   "images/cartes/2/TACTIQUE-080.jpg"
+  ],
+  "ta081": [
+   "images/cartes/2/TACTIQUE-081.jpg"
+  ],
+  "ta082": [
+   "images/cartes/2/TACTIQUE-082.jpg"
+  ],
+  "ta083": [
+   "images/cartes/2/TACTIQUE-083.jpg"
+  ],
+  "ta084": [
+   "images/cartes/2/TACTIQUE-084.jpg"
+  ],
+  "ta085": [
+   "images/cartes/2/TACTIQUE-085.jpg"
+  ],
+  "ta086": [
+   "images/cartes/2/TACTIQUE-086.jpg"
+  ],
+  "ta087": [
+   "images/cartes/2/TACTIQUE-087.jpg"
+  ],
+  "ta088": [
+   "images/cartes/2/TACTIQUE-088.jpg"
+  ],
+  "ta089": [
+   "images/cartes/2/TACTIQUE-089.jpg"
+  ],
+  "ta090": [
+   "images/cartes/2/TACTIQUE-090.jpg"
+  ],
+  "ta091": [
+   "images/cartes/2/TACTIQUE-091.jpg",
+   "images/cartes/cartes_med/TACTIQUE-091.jpg"
+  ],
+  "ta092": [
+   "images/cartes/2/TACTIQUE-092.jpg"
+  ],
+  "ta093": [
+   "images/cartes/2/TACTIQUE-093.jpg"
+  ],
+  "ta094": [
+   "images/cartes/2/TACTIQUE-094.jpg"
+  ],
+  "ta095": [
+   "../images/cartes/1/TACTIQUE-095.jpg",
+   "../images/cartes/2/TACTIQUE-095.jpg",
+   "images/cartes/2/TACTIQUE-095.jpg"
+  ],
+  "ta096": [
+   "../images/cartes/2/TACTIQUE-096.jpg",
+   "images/cartes/2/TACTIQUE-096.jpg"
+  ],
+  "ta097": [
+   "images/cartes/2/TACTIQUE-097.jpg"
+  ],
+  "ta098": [
+   "images/cartes/2/TACTIQUE-098.jpg"
+  ],
+  "ta099": [
+   "images/cartes/2/TACTIQUE-099.jpg"
+  ],
+  "ta100": [
+   "../images/cartes/1/TACTIQUE-100.jpg",
+   "../images/cartes/2/TACTIQUE-100.jpg",
+   "images/cartes/2/TACTIQUE-100.jpg"
+  ],
+  "ta101": [
+   "images/cartes/2/TACTIQUE-101.jpg"
+  ],
+  "ta102": [
+   "images/cartes/2/TACTIQUE-102.jpg"
+  ],
+  "ta103": [
+   "images/cartes/2/TACTIQUE-103.jpg"
+  ],
+  "ta104": [
+   "images/cartes/2/TACTIQUE-104.jpg"
+  ],
+  "ta105": [
+   "images/cartes/2/TACTIQUE-105.jpg"
+  ],
+  "ta106": [
+   "../images/cartes/2/TACTIQUE-106.jpg",
+   "images/cartes/2/TACTIQUE-106.jpg"
+  ],
+  "ta107": [
+   "images/cartes/2/TACTIQUE-107.jpg"
+  ],
+  "ta108": [
+   "images/cartes/3/TACTIQUE-108.jpg"
+  ],
+  "ta109": [
+   "images/cartes/3/TACTIQUE-109.jpg"
+  ],
+  "ta110": [
+   "images/cartes/3/TACTIQUE-110.jpg"
+  ],
+  "ta111": [
+   "images/cartes/3/TACTIQUE-111.jpg"
+  ],
+  "ta112": [
+   "images/cartes/3/TACTIQUE-112.jpg"
+  ],
+  "ta113": [
+   "images/cartes/3/TACTIQUE-113.jpg"
+  ],
+  "ta114": [
+   "images/cartes/3/TACTIQUE-114.jpg"
+  ],
+  "ta115": [
+   "images/cartes/3/TACTIQUE-115.jpg"
+  ],
+  "ta116": [
+   "images/cartes/3/TACTIQUE-116.jpg"
+  ],
+  "ta117": [
+   "images/cartes/3/TACTIQUE-117.jpg"
+  ],
+  "ta118": [
+   "TACTIQUE-118.jpg"
+  ],
+  "ta119": [
+   "images/cartes/3/TACTIQUE-119.jpg"
+  ],
+  "ta120": [
+   "images/cartes/3/TACTIQUE-120.jpg"
+  ],
+  "ta122": [
+   "images/cartes/3/TACTIQUE-122.jpg"
+  ],
+  "ta125": [
+   "images/cartes/3/TACTIQUE-125.jpg"
+  ],
+  "ta126": [
+   "images/cartes/3/TACTIQUE-126.jpg"
+  ],
+  "ta127": [
+   "images/cartes/3/TACTIQUE-127.jpg"
+  ],
+  "ta128": [
+   "images/cartes/3/TACTIQUE-128.jpg"
+  ],
+  "ta129": [
+   "images/cartes/3/TACTIQUE-129.jpg"
+  ],
+  "ta130": [
+   "images/cartes/3/TACTIQUE-130.jpg"
+  ],
+  "ta131": [
+   "images/cartes/3/TACTIQUE-131.jpg"
+  ],
+  "ta133": [
+   "images/cartes/3/TACTIQUE-133.jpg"
+  ],
+  "ta134": [
+   "images/cartes/3/TACTIQUE-134.jpg"
+  ],
+  "ta135": [
+   "images/cartes/3/TACTIQUE-135.jpg"
+  ],
+  "ta136": [
+   "images/cartes/3/TACTIQUE-136.jpg"
+  ],
+  "ta137": [
+   "images/cartes/3/TACTIQUE-137.jpg"
+  ],
+  "ta138": [
+   "images/cartes/3/TACTIQUE-138.jpg"
+  ],
+  "ta139": [
+   "images/cartes/3/TACTIQUE-139.jpg"
+  ],
+  "ta140": [
+   "images/cartes/3/TACTIQUE-140.jpg"
+  ],
+  "ta141": [
+   "images/cartes/3/TACTIQUE-141.jpg"
+  ],
+  "ta142": [
+   "images/cartes/3/TACTIQUE-142.jpg"
+  ],
+  "ta143": [
+   "images/cartes/3/TACTIQUE-143.jpg"
+  ],
+  "ta144": [
+   "/naruto/images/cartes/3/TACTIQUE-144.jpg",
+   "images/cartes/3/TACTIQUE-144.jpg"
+  ],
+  "ta145": [
+   "images/cartes/3/TACTIQUE-145.jpg"
+  ],
+  "ta146": [
+   "images/cartes/3/TACTIQUE-146.jpg"
+  ],
+  "ta147": [
+   "images/cartes/3/TACTIQUE-147.jpg"
+  ],
+  "ta148": [
+   "images/cartes/3/TACTIQUE-148.jpg"
+  ],
+  "ta149": [
+   "images/cartes/3/TACTIQUE-149.jpg"
+  ],
+  "ta150": [
+   "/naruto/images/cartes/3/TACTIQUE-150.jpg",
+   "images/cartes/3/TACTIQUE-150.jpg"
+  ],
+  "ta151": [
+   "TACTIQUE-151.jpg"
+  ],
+  "ta152": [
+   "TACTIQUE-152.jpg"
+  ],
+  "ta153": [
+   "images/cartes/3/TACTIQUE-153.jpg"
+  ],
+  "ta154": [
+   "TACTIQUE-154.jpg"
+  ],
+  "ta155": [
+   "TACTIQUE-155.jpg",
+   "images/cartes/s4/TACTIQUE-155.jpg"
+  ],
+  "ta156": [
+   "TACTIQUE-156.jpg"
+  ],
+  "ta157": [
+   "TACTIQUE-157.jpg"
+  ],
+  "ta158": [
+   "/naruto/images/cartes/s4/TACTIQUE-158.jpg",
+   "TACTIQUE-158.jpg",
+   "images/cartes/s4/TACTIQUE-158.jpg"
+  ],
+  "ta159": [
+   "TACTIQUE-159.jpg"
+  ],
+  "ta160": [
+   "TACTIQUE-160.jpg"
+  ],
+  "ta161": [
+   "TACTIQUE-161.jpg",
+   "images/cartes/s4/TACTIQUE-161.jpg"
+  ],
+  "ta162": [
+   "TACTIQUE-162.jpg"
+  ],
+  "ta163": [
+   "TACTIQUE-163.jpg",
+   "images/cartes/s4/TACTIQUE-163.jpg"
+  ],
+  "ta164": [
+   "TACTIQUE-164.jpg"
+  ],
+  "ta165": [
+   "TACTIQUE-165.jpg"
+  ],
+  "ta166": [
+   "TACTIQUE-166.jpg"
+  ],
+  "ta167": [
+   "TACTIQUE-167.jpg"
+  ],
+  "ta168": [
+   "TACTIQUE-168.jpg"
+  ],
+  "ta169": [
+   "TACTIQUE-169.jpg"
+  ],
+  "ta171": [
+   "TACTIQUE-171.jpg"
+  ],
+  "ta173": [
+   "TACTIQUE-173.jpg"
+  ],
+  "ta174": [
+   "/naruto/images/cartes/s4/TACTIQUE-174.jpg",
+   "TACTIQUE-174.jpg"
+  ],
+  "ta175": [
+   "TACTIQUE-175.jpg"
+  ],
+  "ta176": [
+   "TACTIQUE-176.jpg"
+  ],
+  "ta177": [
+   "TACTIQUE-177.jpg"
+  ],
+  "ta178": [
+   "TACTIQUE-178.jpg"
+  ],
+  "ta179": [
+   "TACTIQUE-179.jpg"
+  ],
+  "ta180": [
+   "TACTIQUE-180.jpg",
+   "images/cartes/s4/TACTIQUE-180.jpg"
+  ],
+  "ta181": [
+   "TACTIQUE-181.jpg"
+  ],
+  "ta182": [
+   "TACTIQUE-182.jpg"
+  ],
+  "ta183": [
+   "TACTIQUE-183.jpg"
+  ],
+  "ta187": [
+   "TACTIQUE-187.jpg"
+  ],
+  "ta188": [
+   "TACTIQUE-188.jpg"
+  ],
+  "ta189": [
+   "TACTIQUE-189.jpg"
+  ],
+  "ta190": [
+   "TACTIQUE-190.jpg"
+  ],
+  "ta191": [
+   "TACTIQUE-191.jpg",
+   "images/cartes/5/tactique/TACTIQUE-191.jpg"
+  ],
+  "ta192": [
+   "TACTIQUE-192.jpg",
+   "images/cartes/5/tactique/TACTIQUE-192.jpg"
+  ],
+  "ta193": [
+   "TACTIQUE-193.jpg",
+   "images/cartes/5/tactique/TACTIQUE-193.jpg"
+  ],
+  "ta194": [
+   "TACTIQUE-194.jpg",
+   "images/cartes/5/tactique/TACTIQUE-194.jpg"
+  ],
+  "ta195": [
+   "TACTIQUE-195.jpg",
+   "images/cartes/5/tactique/TACTIQUE-195.jpg"
+  ],
+  "ta196": [
+   "TACTIQUE-196.jpg",
+   "images/cartes/5/tactique/TACTIQUE-196.jpg"
+  ],
+  "ta197": [
+   "TACTIQUE-197.jpg",
+   "images/cartes/5/tactique/TACTIQUE-197.jpg"
+  ],
+  "ta198": [
+   "TACTIQUE-198.jpg",
+   "images/cartes/5/tactique/TACTIQUE-198.jpg"
+  ],
+  "ta199": [
+   "TACTIQUE-199.jpg",
+   "images/cartes/5/tactique/TACTIQUE-199.jpg"
+  ],
+  "ta200": [
+   "TACTIQUE-200.jpg",
+   "images/cartes/5/tactique/TACTIQUE-200.jpg"
+  ],
+  "ta201": [
+   "TACTIQUE-201.jpg",
+   "images/cartes/5/tactique/TACTIQUE-201.jpg"
+  ],
+  "ta202": [
+   "TACTIQUE-202.jpg",
+   "images/cartes/5/tactique/TACTIQUE-202.jpg"
+  ],
+  "ta203": [
+   "TACTIQUE-203.jpg",
+   "images/cartes/5/tactique/TACTIQUE-203.jpg"
+  ],
+  "ta204": [
+   "TACTIQUE-204.jpg",
+   "images/cartes/5/tactique/TACTIQUE-204.jpg"
+  ],
+  "ta205": [
+   "TACTIQUE-205.jpg",
+   "images/cartes/5/tactique/TACTIQUE-205.jpg"
+  ],
+  "ta206": [
+   "TACTIQUE-206.jpg",
+   "images/cartes/5/tactique/TACTIQUE-206.jpg"
+  ],
+  "ta207": [
+   "TACTIQUE-207.jpg",
+   "images/cartes/5/tactique/TACTIQUE-207.jpg"
+  ],
+  "ta208": [
+   "TACTIQUE-208.jpg",
+   "images/cartes/5/tactique/TACTIQUE-208.jpg"
+  ],
+  "ta209": [
+   "TACTIQUE-209.jpg",
+   "images/cartes/5/tactique/TACTIQUE-209.jpg"
+  ],
+  "ta210": [
+   "TACTIQUE-210.jpg",
+   "images/cartes/5/tactique/TACTIQUE-210.jpg"
+  ],
+  "ta211": [
+   "TACTIQUE-211.jpg",
+   "images/cartes/5/tactique/TACTIQUE-211.jpg"
+  ],
+  "ta212": [
+   "TACTIQUE-212.jpg",
+   "images/cartes/5/tactique/TACTIQUE-212.jpg"
+  ],
+  "ta213": [
+   "TACTIQUE-213.jpg",
+   "images/cartes/5/tactique/TACTIQUE-213.jpg"
+  ],
+  "ta214": [
+   "TACTIQUE-214.jpg",
+   "images/cartes/5/tactique/TACTIQUE-214.jpg"
+  ],
+  "ta215": [
+   "TACTIQUE-215.jpg",
+   "images/cartes/5/tactique/TACTIQUE-215.jpg"
+  ],
+  "ta216": [
+   "TACTIQUE-216.jpg",
+   "images/cartes/5/tactique/TACTIQUE-216.jpg"
+  ],
+  "ta217": [
+   "TACTIQUE-217.jpg",
+   "images/cartes/5/tactique/TACTIQUE-217.jpg"
+  ],
+  "ta218": [
+   "TACTIQUE-218.jpg",
+   "images/cartes/5/tactique/TACTIQUE-218.jpg"
+  ],
+  "ta219": [
+   "TACTIQUE-219.jpg",
+   "images/cartes/5/tactique/TACTIQUE-219.jpg"
+  ],
+  "ta220": [
+   "TACTIQUE-220.jpg",
+   "images/cartes/5/tactique/TACTIQUE-220.jpg"
+  ],
+  "ta221": [
+   "TACTIQUE-221.jpg",
+   "images/cartes/5/tactique/TACTIQUE-221.jpg"
+  ],
+  "ta222": [
+   "TACTIQUE-222.jpg",
+   "images/cartes/5/tactique/TACTIQUE-222.jpg"
+  ],
+  "ta223": [
+   "TACTIQUE-223.jpg",
+   "images/cartes/5/tactique/TACTIQUE-223.jpg"
+  ],
+  "ta224": [
+   "TACTIQUE-224.jpg",
+   "images/cartes/5/tactique/TACTIQUE-224.jpg"
+  ],
+  "ta225": [
+   "TACTIQUE-225.jpg",
+   "images/cartes/5/tactique/TACTIQUE-225.jpg"
+  ],
+  "ta226": [
+   "TACTIQUE-226.jpg",
+   "images/cartes/5/tactique/TACTIQUE-226.jpg"
+  ],
+  "ta227": [
+   "TACTIQUE-227.jpg",
+   "images/cartes/5/tactique/TACTIQUE-227.jpg"
+  ],
+  "ta228": [
+   "TACTIQUE-228.jpg",
+   "images/cartes/5/tactique/TACTIQUE-228.jpg"
+  ],
+  "ta229": [
+   "TACTIQUE-229.jpg",
+   "images/cartes/5/tactique/TACTIQUE-229.jpg"
+  ],
+  "ta230": [
+   "TACTIQUE-230.jpg",
+   "images/cartes/5/tactique/TACTIQUE-230.jpg"
+  ],
+  "ta231": [
+   "TACTIQUE-231.jpg",
+   "images/cartes/5/tactique/TACTIQUE-231.jpg"
+  ],
+  "ta232": [
+   "TACTIQUE-232.jpg",
+   "images/cartes/5/tactique/TACTIQUE-232.jpg"
+  ],
+  "ta233": [
+   "TACTIQUE-233.jpg",
+   "images/cartes/5/tactique/TACTIQUE-233.jpg"
+  ],
+  "ta234": [
+   "TACTIQUE-234.jpg",
+   "images/cartes/5/tactique/TACTIQUE-234.jpg"
+  ],
+  "ta235": [
+   "TACTIQUE-235.jpg",
+   "images/cartes/5/tactique/TACTIQUE-235.jpg"
+  ],
+  "ta239": [
+   "images/cartes/6/TA-239.jpg"
+  ],
+  "ta240": [
+   "images/cartes/6/TA-240.jpg"
+  ],
+  "ta262": [
+   "images/cartes/6/TA-262.jpg"
+  ],
+  "te001": [
+   "../images/cartes/1/TECHNIQUE-001.jpg",
+   "images/cartes/1/TECHNIQUE-001.jpg"
+  ],
+  "te002": [
+   "../images/cartes/1/TECHNIQUE-002.jpg",
+   "images/cartes/1/TECHNIQUE-002.jpg"
+  ],
+  "te003": [
+   "../images/cartes/1/TECHNIQUE-003.jpg",
+   "images/cartes/1/TECHNIQUE-003.jpg"
+  ],
+  "te004": [
+   "images/cartes/1/TECHNIQUE-004.jpg"
+  ],
+  "te005": [
+   "images/cartes/1/TECHNIQUE-005.jpg"
+  ],
+  "te006": [
+   "/naruto/images/cartes/1/TECHNIQUE-006.jpg",
+   "images/cartes/1/TECHNIQUE-006.jpg"
+  ],
+  "te007": [
+   "/naruto/images/cartes/1/TECHNIQUE-007.jpg",
+   "images/cartes/1/TECHNIQUE-007.jpg"
+  ],
+  "te008": [
+   "images/cartes/1/TECHNIQUE-008.jpg"
+  ],
+  "te009": [
+   "images/cartes/1/TECHNIQUE-009.jpg"
+  ],
+  "te010": [
+   "../images/cartes/1/TECHNIQUE-010.jpg",
+   "images/cartes/1/TECHNIQUE-010.jpg"
+  ],
+  "te011": [
+   "images/cartes/1/TECHNIQUE-011.jpg"
+  ],
+  "te012": [
+   "images/cartes/1/TECHNIQUE-012.jpg"
+  ],
+  "te013": [
+   "images/cartes/1/TECHNIQUE-013.jpg"
+  ],
+  "te014": [
+   "images/cartes/1/TECHNIQUE-014.jpg"
+  ],
+  "te015": [
+   "images/cartes/1/TECHNIQUE-015.jpg"
+  ],
+  "te016": [
+   "images/cartes/1/TECHNIQUE-016.jpg"
+  ],
+  "te017": [
+   "images/cartes/1/TECHNIQUE-017.jpg"
+  ],
+  "te018": [
+   "images/cartes/1/TECHNIQUE-018.jpg"
+  ],
+  "te019": [
+   "../images/cartes/1/TECHNIQUE-019.jpg",
+   "images/cartes/1/TECHNIQUE-019.jpg"
+  ],
+  "te020": [
+   "images/cartes/1/TECHNIQUE-020.jpg"
+  ],
+  "te021": [
+   "images/cartes/1/TECHNIQUE-021.jpg"
+  ],
+  "te022": [
+   "images/cartes/1/TECHNIQUE-022.jpg"
+  ],
+  "te023": [
+   "images/cartes/1/TECHNIQUE-023.jpg"
+  ],
+  "te024": [
+   "images/cartes/1/TECHNIQUE-024.jpg"
+  ],
+  "te025": [
+   "../images/cartes/1/TECHNIQUE-025.jpg",
+   "images/cartes/1/TECHNIQUE-025.jpg"
+  ],
+  "te026": [
+   "images/cartes/1/TECHNIQUE-026.jpg"
+  ],
+  "te027": [
+   "images/cartes/1/TECHNIQUE-027.jpg"
+  ],
+  "te028": [
+   "images/cartes/1/TECHNIQUE-028.jpg"
+  ],
+  "te029": [
+   "../images/cartes/1/TECHNIQUE-029.jpg",
+   "images/cartes/1/TECHNIQUE-029.jpg"
+  ],
+  "te030": [
+   "images/cartes/1/TECHNIQUE-030.jpg"
+  ],
+  "te031": [
+   "images/cartes/1/TECHNIQUE-031.jpg"
+  ],
+  "te032": [
+   "images/cartes/1/TECHNIQUE-032.jpg"
+  ],
+  "te033": [
+   "images/cartes/1/TECHNIQUE-033.jpg"
+  ],
+  "te034": [
+   "/naruto/images/cartes/1/TECHNIQUE-034.jpg",
+   "images/cartes/1/TECHNIQUE-034.jpg"
+  ],
+  "te035": [
+   "images/cartes/1/TECHNIQUE-035.jpg"
+  ],
+  "te036": [
+   "images/cartes/1/TECHNIQUE-036.jpg"
+  ],
+  "te037": [
+   "images/cartes/1/TECHNIQUE-037.jpg"
+  ],
+  "te038": [
+   "images/cartes/1/TECHNIQUE-038.jpg"
+  ],
+  "te039": [
+   "images/cartes/1/TECHNIQUE-039.jpg"
+  ],
+  "te040": [
+   "images/cartes/1/TECHNIQUE-040.jpg"
+  ],
+  "te041": [
+   "images/cartes/1/TECHNIQUE-041.jpg"
+  ],
+  "te042": [
+   "images/cartes/1/TECHNIQUE-042.jpg"
+  ],
+  "te043": [
+   "images/cartes/1/TECHNIQUE-043.jpg"
+  ],
+  "te044": [
+   "images/cartes/1/TECHNIQUE-044.jpg"
+  ],
+  "te045": [
+   "images/cartes/1/TECHNIQUE-045.jpg"
+  ],
+  "te046": [
+   "../images/cartes/1/TECHNIQUE-046.jpg",
+   "images/cartes/1/TECHNIQUE-046.jpg"
+  ],
+  "te047": [
+   "images/cartes/1/TECHNIQUE-047.jpg"
+  ],
+  "te048": [
+   "../images/cartes/1/TECHNIQUE-048.jpg",
+   "images/cartes/1/TECHNIQUE-048.jpg"
+  ],
+  "te049": [
+   "../images/cartes/1/TECHNIQUE-049.jpg",
+   "images/cartes/1/TECHNIQUE-049.jpg"
+  ],
+  "te050": [
+   "images/cartes/1/TECHNIQUE-050.jpg"
+  ],
+  "te051": [
+   "images/cartes/1/TECHNIQUE-051.jpg"
+  ],
+  "te052": [
+   "images/cartes/1/TECHNIQUE-052.jpg"
+  ],
+  "te053": [
+   "images/cartes/1/TECHNIQUE-053.jpg"
+  ],
+  "te054": [
+   "/naruto/images/cartes/1/TECHNIQUE-054.jpg",
+   "images/cartes/1/TECHNIQUE-054.jpg"
+  ],
+  "te055": [
+   "/naruto/images/cartes/1/TECHNIQUE-055.jpg",
+   "images/cartes/1/TECHNIQUE-055.jpg"
+  ],
+  "te056": [
+   "images/cartes/1/TECHNIQUE-056.jpg"
+  ],
+  "te057": [
+   "images/cartes/1/TECHNIQUE-057.jpg"
+  ],
+  "te058": [
+   "images/cartes/1/TECHNIQUE-058.jpg"
+  ],
+  "te059": [
+   "../images/cartes/1/TECHNIQUE-059.jpg",
+   "images/cartes/1/TECHNIQUE-059.jpg"
+  ],
+  "te060": [
+   "images/cartes/1/TECHNIQUE-060.jpg"
+  ],
+  "te061": [
+   "../images/cartes/2/TECHNIQUE-061.jpg",
+   "images/cartes/2/TECHNIQUE-061.jpg"
+  ],
+  "te062": [
+   "images/cartes/2/TECHNIQUE-062.jpg"
+  ],
+  "te063": [
+   "../images/cartes/2/TECHNIQUE-063.jpg",
+   "images/cartes/2/TECHNIQUE-063.jpg"
+  ],
+  "te064": [
+   "images/cartes/3/TECHNIQUE-064.jpg"
+  ],
+  "te065": [
+   "images/cartes/2/TECHNIQUE-065.jpg"
+  ],
+  "te066": [
+   "images/cartes/2/TECHNIQUE-066.jpg"
+  ],
+  "te067": [
+   "../images/cartes/2/TECHNIQUE-067.jpg",
+   "images/cartes/2/TECHNIQUE-067.jpg"
+  ],
+  "te068": [
+   "images/cartes/2/TECHNIQUE-068.jpg"
+  ],
+  "te069": [
+   "images/cartes/2/TECHNIQUE-069.jpg"
+  ],
+  "te070": [
+   "images/cartes/2/TECHNIQUE-070.jpg"
+  ],
+  "te071": [
+   "../images/cartes/2/TECHNIQUE-071.jpg",
+   "images/cartes/2/TECHNIQUE-071.jpg"
+  ],
+  "te072": [
+   "images/cartes/2/TECHNIQUE-072.jpg"
+  ],
+  "te073": [
+   "images/cartes/2/TECHNIQUE-073.jpg"
+  ],
+  "te074": [
+   "../images/cartes/1/TECHNIQUE-074.jpg",
+   "../images/cartes/2/TECHNIQUE-074.jpg",
+   "images/cartes/2/TECHNIQUE-074.jpg"
+  ],
+  "te075": [
+   "images/cartes/2/TECHNIQUE-075.jpg"
+  ],
+  "te076": [
+   "../images/cartes/2/TECHNIQUE-076.jpg",
+   "images/cartes/2/TECHNIQUE-076.jpg"
+  ],
+  "te077": [
+   "images/cartes/2/TECHNIQUE-077.jpg"
+  ],
+  "te078": [
+   "../images/cartes/1/TECHNIQUE-078.jpg",
+   "images/cartes/2/TECHNIQUE-078.jpg"
+  ],
+  "te079": [
+   "../images/cartes/2/TECHNIQUE-079.jpg",
+   "/naruto/images/cartes/2/TECHNIQUE-079.jpg",
+   "images/cartes/2/TECHNIQUE-079.jpg"
+  ],
+  "te080": [
+   "images/cartes/3/TECHNIQUE-080.jpg"
+  ],
+  "te081": [
+   "images/cartes/3/TECHNIQUE-081.jpg"
+  ],
+  "te082": [
+   "images/cartes/2/TECHNIQUE-082.jpg"
+  ],
+  "te083": [
+   "images/cartes/2/TECHNIQUE-083.jpg"
+  ],
+  "te084": [
+   "images/cartes/2/TECHNIQUE-084.jpg"
+  ],
+  "te085": [
+   "images/cartes/2/TECHNIQUE-085.jpg"
+  ],
+  "te086": [
+   "../images/cartes/2/TECHNIQUE-086.jpg",
+   "images/cartes/2/TECHNIQUE-086.jpg"
+  ],
+  "te087": [
+   "images/cartes/2/TECHNIQUE-087.jpg"
+  ],
+  "te088": [
+   "images/cartes/2/TECHNIQUE-088.jpg"
+  ],
+  "te089": [
+   "images/cartes/2/TECHNIQUE-089.jpg"
+  ],
+  "te090": [
+   "images/cartes/2/TECHNIQUE-090.jpg"
+  ],
+  "te091": [
+   "images/cartes/2/TECHNIQUE-091.jpg"
+  ],
+  "te092": [
+   "images/cartes/2/TECHNIQUE-092.jpg"
+  ],
+  "te093": [
+   "images/cartes/2/TECHNIQUE-093.jpg"
+  ],
+  "te094": [
+   "images/cartes/2/TECHNIQUE-094.jpg"
+  ],
+  "te095": [
+   "images/cartes/2/TECHNIQUE-095.jpg"
+  ],
+  "te096": [
+   "../images/cartes/1/TECHNIQUE-096.jpg",
+   "images/cartes/2/TECHNIQUE-096.jpg"
+  ],
+  "te097": [
+   "images/cartes/3/TECHNIQUE-097.jpg"
+  ],
+  "te098": [
+   "images/cartes/3/TECHNIQUE-098.jpg"
+  ],
+  "te099": [
+   "images/cartes/2/TECHNIQUE-099.jpg"
+  ],
+  "te100": [
+   "images/cartes/2/TECHNIQUE-100.jpg"
+  ],
+  "te101": [
+   "images/cartes/2/TECHNIQUE-101.jpg"
+  ],
+  "te102": [
+   "images/cartes/2/TECHNIQUE-102.jpg"
+  ],
+  "te103": [
+   "images/cartes/2/TECHNIQUE-103.jpg"
+  ],
+  "te104": [
+   "images/cartes/2/TECHNIQUE-104.jpg"
+  ],
+  "te105": [
+   "images/cartes/2/TECHNIQUE-105.jpg"
+  ],
+  "te106": [
+   "images/cartes/3/TECHNIQUE-106.jpg"
+  ],
+  "te107": [
+   "images/cartes/3/TECHNIQUE-107.jpg"
+  ],
+  "te108": [
+   "images/cartes/3/TECHNIQUE-108.jpg"
+  ],
+  "te109": [
+   "images/cartes/3/TECHNIQUE-109.jpg"
+  ],
+  "te110": [
+   "/naruto/images/cartes/3/TECHNIQUE-110.jpg",
+   "images/cartes/3/TECHNIQUE-110.jpg"
+  ],
+  "te111": [
+   "images/cartes/3/TECHNIQUE-111.jpg"
+  ],
+  "te112": [
+   "images/cartes/3/TECHNIQUE-112.jpg"
+  ],
+  "te113": [
+   "images/cartes/3/TECHNIQUE-113.jpg"
+  ],
+  "te114": [
+   "images/cartes/3/TECHNIQUE-114.jpg"
+  ],
+  "te115": [
+   "images/cartes/3/TECHNIQUE-115.jpg"
+  ],
+  "te116": [
+   "images/cartes/3/TECHNIQUE-116.jpg"
+  ],
+  "te122": [
+   "images/cartes/3/TECHNIQUE-122.jpg"
+  ],
+  "te123": [
+   "/naruto/images/cartes/3/TECHNIQUE-123.jpg",
+   "images/cartes/3/TECHNIQUE-123.jpg"
+  ],
+  "te124": [
+   "images/cartes/3/TECHNIQUE-124.jpg"
+  ],
+  "te125": [
+   "images/cartes/3/TECHNIQUE-125.jpg"
+  ],
+  "te126": [
+   "images/cartes/3/TECHNIQUE-126.jpg"
+  ],
+  "te127": [
+   "images/cartes/3/TECHNIQUE-127.jpg"
+  ],
+  "te128": [
+   "images/cartes/3/TECHNIQUE-128.jpg"
+  ],
+  "te129": [
+   "images/cartes/3/TECHNIQUE-129.jpg"
+  ],
+  "te130": [
+   "images/cartes/3/TECHNIQUE-130.jpg"
+  ],
+  "te131": [
+   "/naruto/images/cartes/3/TECHNIQUE-131.jpg",
+   "images/cartes/3/TECHNIQUE-131.jpg"
+  ],
+  "te132": [
+   "images/cartes/3/TECHNIQUE-132.jpg"
+  ],
+  "te133": [
+   "images/cartes/3/TECHNIQUE-133.jpg"
+  ],
+  "te134": [
+   "images/cartes/3/TECHNIQUE-134.jpg"
+  ],
+  "te135": [
+   "images/cartes/3/TECHNIQUE-135.jpg"
+  ],
+  "te136": [
+   "images/cartes/3/TECHNIQUE-136.jpg"
+  ],
+  "te137": [
+   "images/cartes/3/TECHNIQUE-137.jpg"
+  ],
+  "te138": [
+   "/naruto/images/cartes/s4/TECHNIQUE-138.jpg",
+   "TECHNIQUE-138.jpg"
+  ],
+  "te139": [
+   "images/cartes/3/TECHNIQUE-139.jpg"
+  ],
+  "te140": [
+   "images/cartes/3/TECHNIQUE-140.jpg"
+  ],
+  "te141": [
+   "images/cartes/3/TECHNIQUE-141.jpg"
+  ],
+  "te142": [
+   "images/cartes/3/TECHNIQUE-142.jpg"
+  ],
+  "te143": [
+   "images/cartes/3/TECHNIQUE-143.jpg"
+  ],
+  "te144": [
+   "images/cartes/3/TECHNIQUE-144.jpg"
+  ],
+  "te145": [
+   "TECHNIQUE-145.jpg"
+  ],
+  "te146": [
+   "TECHNIQUE-146.jpg"
+  ],
+  "te147": [
+   "TECHNIQUE-147.jpg",
+   "images/cartes/s4/TECHNIQUE-147.jpg"
+  ],
+  "te148": [
+   "TECHNIQUE-148.jpg",
+   "images/cartes/s4/TECHNIQUE-148.jpg"
+  ],
+  "te149": [
+   "TECHNIQUE-149.jpg",
+   "images/cartes/s4/TECHNIQUE-149.jpg"
+  ],
+  "te150": [
+   "TECHNIQUE-150.jpg"
+  ],
+  "te151": [
+   "TECHNIQUE-151.jpg"
+  ],
+  "te152": [
+   "TECHNIQUE-152.jpg",
+   "images/cartes/s4/TECHNIQUE-152.jpg"
+  ],
+  "te153": [
+   "TECHNIQUE-153.jpg"
+  ],
+  "te154": [
+   "TECHNIQUE-154.jpg"
+  ],
+  "te155": [
+   "TECHNIQUE-155.jpg"
+  ],
+  "te156": [
+   "TECHNIQUE-156.jpg"
+  ],
+  "te157": [
+   "TECHNIQUE-157.jpg"
+  ],
+  "te158": [
+   "TECHNIQUE-158.jpg"
+  ],
+  "te159": [
+   "TECHNIQUE-159.jpg"
+  ],
+  "te160": [
+   "TECHNIQUE-160.jpg"
+  ],
+  "te161": [
+   "TECHNIQUE-161.jpg"
+  ],
+  "te162": [
+   "TECHNIQUE-162.jpg"
+  ],
+  "te163": [
+   "TECHNIQUE-163.jpg"
+  ],
+  "te164": [
+   "TECHNIQUE-164.jpg"
+  ],
+  "te165": [
+   "TECHNIQUE-165.jpg"
+  ],
+  "te166": [
+   "TECHNIQUE-166.jpg"
+  ],
+  "te167": [
+   "TECHNIQUE-167.jpg"
+  ],
+  "te168": [
+   "TECHNIQUE-168.jpg"
+  ],
+  "te169": [
+   "TECHNIQUE-169.jpg"
+  ],
+  "te170": [
+   "TECHNIQUE-170.jpg"
+  ],
+  "te171": [
+   "TECHNIQUE-171.jpg"
+  ],
+  "te172": [
+   "TECHNIQUE-172.jpg"
+  ],
+  "te173": [
+   "TECHNIQUE-173.jpg"
+  ],
+  "te174": [
+   "TECHNIQUE-174.jpg"
+  ],
+  "te175": [
+   "TECHNIQUE-175.jpg"
+  ],
+  "te176": [
+   "TECHNIQUE-176.jpg"
+  ],
+  "te177": [
+   "TECHNIQUE-177.jpg",
+   "images/cartes/s4/TECHNIQUE-177.jpg"
+  ],
+  "te178": [
+   "TECHNIQUE-178.jpg",
+   "images/cartes/s4/TECHNIQUE-178.jpg"
+  ],
+  "te183": [
+   "TECHNIQUE-183.jpg"
+  ],
+  "te184": [
+   "TECHNIQUE-184.jpg",
+   "images/cartes/s4/TECHNIQUE-184.jpg"
+  ],
+  "te185": [
+   "TECHNIQUE-185.jpg",
+   "images/cartes/s4/TECHNIQUE-185.jpg"
+  ],
+  "te187": [
+   "TECHNIQUE-187.jpg",
+   "images/cartes/s4/TECHNIQUE-187.jpg"
+  ],
+  "te188": [
+   "TECHNIQUE-188.jpg",
+   "images/cartes/s4/TECHNIQUE-188.jpg"
+  ],
+  "te189": [
+   "TECHNIQUE-189.jpg"
+  ],
+  "te191": [
+   "TECHNIQUE-191.jpg"
+  ],
+  "te192": [
+   "TE-192.jpg",
+   "images/cartes/5/technique/TE-192.jpg"
+  ],
+  "te193": [
+   "TE-193.jpg",
+   "images/cartes/5/technique/TE-193.jpg"
+  ],
+  "te194": [
+   "TE-194.jpg",
+   "images/cartes/5/technique/TE-194.jpg"
+  ],
+  "te195": [
+   "TE-195.jpg",
+   "images/cartes/5/technique/TE-195.jpg"
+  ],
+  "te196": [
+   "TE-196.jpg",
+   "images/cartes/5/technique/TE-196.jpg"
+  ],
+  "te197": [
+   "TE-197.jpg",
+   "images/cartes/5/technique/TE-197.jpg"
+  ],
+  "te198": [
+   "TE-198.jpg",
+   "images/cartes/5/technique/TE-198.jpg"
+  ],
+  "te199": [
+   "TE-199.jpg",
+   "images/cartes/5/technique/TE-199.jpg"
+  ],
+  "te200": [
+   "TE-200.jpg",
+   "images/cartes/5/technique/TE-200.jpg"
+  ],
+  "te201": [
+   "TE-201.jpg",
+   "images/cartes/5/technique/TE-201.jpg"
+  ],
+  "te202": [
+   "TE-202.jpg",
+   "images/cartes/5/technique/TE-202.jpg"
+  ],
+  "te203": [
+   "TE-203.jpg",
+   "images/cartes/5/technique/TE-203.jpg"
+  ],
+  "te204": [
+   "TE-204.jpg",
+   "images/cartes/5/technique/TE-204.jpg"
+  ],
+  "te205": [
+   "TE-205.jpg",
+   "images/cartes/5/technique/TE-205.jpg"
+  ],
+  "te206": [
+   "TE-206.jpg",
+   "images/cartes/5/technique/TE-206.jpg"
+  ],
+  "te207": [
+   "TE-207.jpg",
+   "images/cartes/5/technique/TE-207.jpg"
+  ],
+  "te208": [
+   "TE-208.jpg",
+   "images/cartes/5/technique/TE-208.jpg"
+  ],
+  "te209": [
+   "TE-209.jpg",
+   "images/cartes/5/technique/TE-209.jpg"
+  ],
+  "te210": [
+   "TE-210.jpg",
+   "images/cartes/5/technique/TE-210.jpg"
+  ],
+  "te211": [
+   "TE-211.jpg",
+   "images/cartes/5/technique/TE-211.jpg"
+  ],
+  "te212": [
+   "TE-212-vc.jpg",
+   "TE-212.jpg",
+   "images/cartes/5/technique/TE-212.jpg"
+  ],
+  "te213": [
+   "TE-213.jpg",
+   "images/cartes/5/technique/TE-213.jpg"
+  ],
+  "te214": [
+   "TE-214.jpg",
+   "images/cartes/5/technique/TE-214.jpg"
+  ],
+  "te215": [
+   "TE-215.jpg",
+   "images/cartes/5/technique/TE-215.jpg"
+  ],
+  "te216": [
+   "TE-216.jpg",
+   "images/cartes/5/technique/TE-216.jpg"
+  ],
+  "te217": [
+   "TE-217.jpg",
+   "images/cartes/5/technique/TE-217.jpg"
+  ],
+  "te218": [
+   "TE-218.jpg",
+   "images/cartes/5/technique/TE-218.jpg"
+  ],
+  "te219": [
+   "TE-219.jpg",
+   "images/cartes/5/technique/TE-219.jpg"
+  ],
+  "te220": [
+   "TE-220.jpg",
+   "images/cartes/5/technique/TE-220.jpg"
+  ],
+  "te221": [
+   "TE-221.jpg",
+   "images/cartes/5/technique/TE-221.jpg"
+  ],
+  "te222": [
+   "TE-222.jpg",
+   "images/cartes/5/technique/TE-222.jpg"
+  ],
+  "te223": [
+   "TE-223.jpg",
+   "images/cartes/5/technique/TE-223.jpg"
+  ],
+  "te224": [
+   "TE-224.jpg",
+   "images/cartes/5/technique/TE-224.jpg"
+  ],
+  "te225": [
+   "TE-225.jpg",
+   "images/cartes/5/technique/TE-225.jpg"
+  ],
+  "te226": [
+   "TE-226.jpg",
+   "images/cartes/5/technique/TE-226.jpg"
+  ],
+  "te227": [
+   "TE-227.jpg",
+   "images/cartes/5/technique/TE-227.jpg"
+  ],
+  "te228": [
+   "TE-228.jpg",
+   "images/cartes/5/technique/TE-228.jpg"
+  ],
+  "te229": [
+   "TE-229.jpg",
+   "images/cartes/5/technique/TE-229.jpg"
+  ],
+  "te230": [
+   "TE-230.jpg",
+   "images/cartes/5/technique/TE-230.jpg"
+  ],
+  "te231": [
+   "TE-231.jpg",
+   "images/cartes/5/technique/TE-231.jpg"
+  ],
+  "te248": [
+   "images/cartes/6/TE-248.jpg"
+  ],
+  "te263": [
+   "images/cartes/6/TE-263.jpg"
+  ],
+  "te267": [
+   "images/cartes/6/TE-267.jpg"
+  ],
+  "te268": [
+   "images/cartes/6/TE-268.jpg"
+  ],
+  "te269": [
+   "images/cartes/6/TE-269.jpg"
+  ],
+  "te270": [
+   "images/cartes/6/TE-270.jpg"
+  ]
+ }
+}

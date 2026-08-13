@@ -278,6 +278,7 @@ export const backmarketModule: ProviderModule = {
     // Prices stay on refreshBarcodePriceOffers — metadata chase must not wait.
     metadataCapabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     marketplaceSearchPriceSource: true,
     evidenceOnlyPriceRefresh: true,

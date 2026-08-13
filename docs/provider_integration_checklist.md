@@ -4,8 +4,9 @@ A followable checklist for adding a provider so it is **fully exploited, properl
 tested, and verified against the live source** — never under-used, never a hidden
 bias. Companion to [unbiased_ranking.md](unbiased_ranking.md),
 [archive/word_list_audit.md](archive/word_list_audit.md),
-[provider_agnostic_architecture.md](provider_agnostic_architecture.md). Worked
-example: `src/providers/okkazeo/`.
+[provider_agnostic_architecture.md](provider_agnostic_architecture.md),
+[provider_supply_modes.md](provider_supply_modes.md) (catalog / local corpora).
+Worked example: `src/providers/okkazeo/`.
 
 Golden rule: a provider may hardcode what is specific to **its own** API/format;
 it must never inject app-global logic (language, shelf type, provider privilege).
@@ -204,6 +205,17 @@ Final pass, the point of this whole checklist:
       next best _datum_ — never hard-depends on this provider.
 
 ---
+
+## Catalog / local corpus (when applicable)
+
+See [provider_supply_modes.md](provider_supply_modes.md). Short form:
+
+- [ ] `info.supplyMode` is `local_catalog` or `scrape_cache` (with durable index).
+- [ ] `module.catalog` exposes `dataPack`, `status()`, `refresh()`.
+- [ ] Observations use **this** provider id — no silent attribution to another
+      service (e.g. app dump ≠ community JSON API).
+- [ ] Recoverable → `data/`; curated → `curated/` under the provider folder.
+- [ ] No new provider-id literals in core/admin — Catalogue derives from registry.
 
 ## Anti-checklist (reject the PR if any is true)
 

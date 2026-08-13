@@ -35,7 +35,7 @@ export type BackgroundJobRow = {
   startedAt: Date;
   cancellable: boolean;
   /** Foil extract pack target — drives per-pack loading / logs in admin. */
-  foilTarget?: "lorcana" | "pokemon" | null;
+  foilTarget?: "lorcana" | "pokemon" | "naruto" | null;
   shelf: {
     id: string;
     name: string;

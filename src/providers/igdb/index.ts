@@ -42,6 +42,7 @@ export const igdbModule: ProviderModule = {
       env: ["IGDB_CLIENT_ID", "IGDB_CLIENT_SECRET"],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     websiteUrl: "https://www.igdb.com/",

@@ -20,6 +20,7 @@ export const deezerModule: ProviderModule = {
     nameDatabase: true,
     capabilities: ["identify", "cover", "releaseDate", "people", "tracksCount"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     websiteUrl: "https://www.deezer.com/",
     apiKeyDashboardUrl: "https://developers.deezer.com/",

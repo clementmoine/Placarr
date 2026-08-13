@@ -16,29 +16,52 @@ covers, crops) — not catalogue masks. Layout stays **flat** (`hash.ext` +
 
 ```
 data/
-  uploads/                 → /uploads/…   (user media only, flat)
+  uploads/
   lorcana/ | pokemon/
-    catalog.sqlite         # pack catalogue index
-    cards-index.json       # client-safe export (schema v1) — data only
-    liveFoilMasks.json     # Pokémon (optional)
-    liveOwned.json / reprintMeta.json  # Pokémon (optional)
-    cards/                 → /assets/<pack>/cards/…
-      back.webp            # pack default verso (see foil_apk_sources.md)
-      {set}/{lang}/{card}/ # art.*, mask.*, thumb.*, …
-    foil/                  → /assets/<pack>/… (shaders, textures FX, web, meta)
-      shaders/ textures/ web/
-      manifest.json | materialSheets.json | frag-stems.json | shared-motifs.json …
-      card-uv-rect.json    # Pokémon UV crop (optional; APK-gated)
-      full_foil_mask.webp  # Pokémon pack-level (optional)
-    staging/               # apks, cdn-*, malie-*, unity-data, config-cache…
-    logs/
-      last-run.json
-      web-source.json      # Lorcana dump provenance
+    catalog.sqlite | cards-index.json | cards/ | foil/ | staging/ | logs/
+  naruto/                          # franchise ombrelle
+    ccg/                           # ligne Bandai CCG/JCC (provider narutoccg)
+      catalog.sqlite | cards-index.json
+      cards/{set}/{fr|en|jap}/{card}/  → /assets/naruto/ccg/cards/…
+      staging/  carddass-fr/ | bandaicg-en/ | carddas-jp/ | manga-news/
+      logs/
+    # ultra-challenge/ …           # autres lignes produit plus tard
   launchbox|icollect|nointro/
   indexes/title-idf/
 ```
 
-`public/` stays git-static only (icons, SW, …).
+`naruto` = franchise ; **`naruto/ccg`** = dataPack / catalogue. Layout cartes :
+`cards/{set}/{fr|en|jap}/{cardId}/` — set = `s1`… / `promo` / `ns` / `spc`.
+printKey : `naruto:s4-ta190` (locale hors clé). Provider : `src/providers/narutoccg/`.
+CLI : `pnpm naruto:cards` — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.md).
+Dos : `cards/back.webp` depuis `src/providers/narutoccg/curated/`.
+
+## Catalogues locaux / supply modes
+
+Voir [provider_supply_modes.md](provider_supply_modes.md) :
+
+- **Provider catalogue** = `ProviderModule` avec `supplyMode` + hook `catalog`
+  (refresh / status / `dataPack`) — core provider-blind.
+- **Récupérable** → `data/<pack>/` (jamais commit). **Manuel non rejouable** →
+  `src/providers/<id>/curated/` (git), installé vers `data/` au refresh
+  (Naruto : `curated/{back,reconstructed,sources}` — voir
+  `src/providers/narutoccg/curated/README.md`).
+- **`src/effects/`** = moteur foil (pas les octets).
+- Admin **Catalogue** : refresh all / unitaire / auto (Plex-like). Distinct de
+  l’onglet Refresh metadata.
+
+**Trous correctibles (régénération incomplète, pas curated) :**
+
+| Artefact | Gap |
+|----------|-----|
+| `data/pokemon/cards-index.json` | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + `foil:pokemon` + `pnpm foil:pokemon:rebuild-cards-index` |
+| `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés) |
+| `catalog.refresh` Pokémon/Lorcana | Identités/scrape + faces index ; foil Unity = CLI / foilExtract |
+| Naruto `curated/sources/*.json` | Ledgers manuels (checklist, names, sets, coleka…). **`apache-index`** → `data/naruto/ccg/logs/` (`pnpm naruto:cards -- --only sources`) |
+
+Certains corpus **ne grandissent plus** (TCG Bandai arrêté, etc.) : base locale
+terminée sous `data/<pack>/`. Candidat : Naruto CACG FR
+([naruto_carddass_tcg.md](naruto_carddass_tcg.md)) — provider `narutoccg`.
 
 ## Foil packs
 
@@ -65,18 +88,24 @@ pnpm foil:ensure
 
 `next.config.js` ignores `data/` in webpack watch so foil/CDN dumps do not thrash `next dev`.
 
-## Scripts — one folder per pack
+## Scripts — repo-wide only
+
+Provider ingest lives under `src/providers/<id>/` (see
+[provider_supply_modes.md](provider_supply_modes.md)).
 
 | Path | Role | pnpm |
 |------|------|------|
-| `scripts/lorcana/` | Node: web CSS + cards; Python: Unity APK | `foil:lorcana` · `foil:lorcana:cards` |
-| `scripts/pokemon/` | Node: CDN scrape, SQLite index, audits; Python: UnityFS extract | `foil:pokemon` · `:scrape` · `:sources` · `:index-cards` |
-| `scripts/foil/` | Gap audit + layout migrate/rebuild | `foil:audit-gaps` |
-| `scripts/icollect/` | catalog index | `icollect:update` |
-| `scripts/launchbox/` | Metadata.zip → SQLite (+ `--enqueue` job) | `launchbox:update` |
-| `scripts/nointro/` | DAT → SQLite (+ `--enqueue` job) | `nointro:update` |
-| `scripts/title-idf/` | title-token DF | `title-idf:update` |
+| `scripts/backgroundWorker.ts` | Background jobs | `worker` · `worker:icollect` |
+| `scripts/providerMappingAudit.ts` | Mapping audit | `providers:audit:mapping` |
+| `scripts/record-all-barcode-fixtures.ts` | Barcode fixtures | `test:record:all` |
+| `scripts/buildTitleIdfIndex.ts` | Title IDF corpus | `title-idf:update` |
 
-**Node vs Python:** everything that is not Unity asset extract runs under `tsx` / Node. Python stays only where **UnityPy** is required. Shared path helpers: `scripts/lib/foilPaths.ts` (+ `scripts/lib/paths.py`).
+Pack CLIs: `src/providers/{lorcanatcg,pokemontcglive,naruto,icollect,launchbox,nointro}/`.
+Pokémon Live↔CSS audit: `pnpm foil:audit-live-css` → `pokemontcglive/auditLiveVsCss.ts`.
+Foil gaps: admin `/api/admin/foil-status` → `computeFoilGaps()` (`src/lib/admin/foilGaps.ts`).
+UnityPy venv: preferred `src/providers/<id>/unity/.venv` (see `unity/README.md`).
+
+**Node vs Python:** everything that is not Unity asset extract runs under `tsx` /
+Node. Python stays only where **UnityPy** is required (`providers/*/unity/`).
 
 Historical Live handoff notes: [archive/tcglive_effects.md](archive/tcglive_effects.md).

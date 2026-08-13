@@ -27,7 +27,7 @@ describe("readFoilPackStatuses", () => {
   it("reports missing APKs and no extract on empty data", async () => {
     const { repo, data } = await makeRepo();
     const packs = await readFoilPackStatuses({ dataRoot: data, repoRoot: repo });
-    expect(packs).toHaveLength(2);
+    expect(packs).toHaveLength(3);
     expect(packs[0]).toMatchObject({
       id: "lorcana",
       apk: { present: false },
@@ -36,6 +36,12 @@ describe("readFoilPackStatuses", () => {
     });
     expect(packs[1]).toMatchObject({
       id: "pokemon",
+      apk: { present: false },
+      extract: { present: false },
+      canExtract: true,
+    });
+    expect(packs[2]).toMatchObject({
+      id: "naruto",
       apk: { present: false },
       extract: { present: false },
       canExtract: true,

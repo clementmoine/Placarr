@@ -217,6 +217,7 @@ export const bdphileModule: ProviderModule = {
     types: ["books"],
     capabilities: ["identify", "cover", "releaseDate", "description", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

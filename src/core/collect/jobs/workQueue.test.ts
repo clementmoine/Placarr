@@ -155,6 +155,7 @@ describe("workQueue", () => {
       BACKGROUND_WORK_KIND.icollectCatalogSync,
       BACKGROUND_WORK_KIND.launchboxIndexSync,
       BACKGROUND_WORK_KIND.nointroIndexSync,
+      BACKGROUND_WORK_KIND.catalogProviderSync,
     ]);
     expect(resolveWorkerKinds("all")).toBeNull();
     expect(resolveWorkerKinds(undefined)).toBeNull();

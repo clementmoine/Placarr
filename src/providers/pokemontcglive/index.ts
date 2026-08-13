@@ -18,6 +18,7 @@ import {
   buildPokemonLiveAttachments,
   liveTitleForPrint,
 } from "./liveAssets";
+import { pokemontcgliveCatalog } from "./pipeline";
 
 const PROVIDER_ID = "pokemontcglive";
 const PROVIDER_LABEL = "Pokémon TCG Live (local)";
@@ -63,12 +64,14 @@ export const pokemontcgliveModule: ProviderModule = {
     types: ["tcg"],
     capabilities: ["identify", "cover"],
     auth: { kind: "none" },
+    supplyMode: "local_catalog",
     canonical: false,
     defaultLanguage: "en",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
       "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Sync : `pnpm foil:pokemon`.",
   },
+  catalog: pokemontcgliveCatalog,
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,
     async resolve(ctx) {

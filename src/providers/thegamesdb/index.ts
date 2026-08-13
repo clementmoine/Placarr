@@ -36,6 +36,7 @@ export const thegamesdbModule: ProviderModule = {
       env: ["THEGAMESDB_API_KEY"],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     isRealBoxCover: true,

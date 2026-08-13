@@ -12,8 +12,9 @@ import path from "node:path";
 import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
+import { NARUTO_CCG_CLI_PATH } from "@/providers/narutoccg/cli";
 
-export const FOIL_EXTRACT_TARGETS = ["lorcana", "pokemon"] as const;
+export const FOIL_EXTRACT_TARGETS = ["lorcana", "pokemon", "naruto"] as const;
 
 export type FoilExtractTarget = (typeof FOIL_EXTRACT_TARGETS)[number];
 
@@ -32,6 +33,13 @@ export function normalizeFoilExtractTarget(
     return value as FoilExtractTarget;
   }
   if (LEGACY_LORCANA_TARGETS.has(value)) return "lorcana";
+  if (
+    value === "naruto-cacg" ||
+    value === "carddass" ||
+    value === "naruto/ccg"
+  ) {
+    return "naruto";
+  }
   return null;
 }
 
@@ -45,6 +53,8 @@ export function foilExtractLabel(target: FoilExtractTarget): string {
       return "Lorcana";
     case "pokemon":
       return "Pokémon";
+    case "naruto":
+      return "Naruto CCG";
   }
 }
 
@@ -130,9 +140,18 @@ export async function resolveFoilExtractCommand(
       );
     }
     return {
-      command: path.join(root, "scripts/lorcana/run.sh"),
-      args,
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [path.join(root, "src/providers/lorcanatcg/cli.ts"), ...args],
       prelude,
+    };
+  }
+  if (target === "naruto") {
+    return {
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [NARUTO_CCG_CLI_PATH],
+      prelude: [
+        "Naruto CCG: Wayback → data/naruto/ccg (catalogue fermé)",
+      ],
     };
   }
   // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
@@ -150,8 +169,8 @@ export async function resolveFoilExtractCommand(
   if (scope === "catalogue") args.push("--refresh-manifests");
   prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
   return {
-    command: path.join(root, "scripts/pokemon/run.sh"),
-    args,
+    command: path.join(root, "node_modules/.bin/tsx"),
+    args: [path.join(root, "src/providers/pokemontcglive/cli.ts"), ...args],
     prelude,
   };
 }

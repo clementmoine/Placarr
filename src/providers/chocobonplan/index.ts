@@ -135,6 +135,7 @@ export const chocobonplanModule: ProviderModule = {
     types: ["games", "movies", "musics", "boardgames", "books"],
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     requiresTitleAlignment: true,

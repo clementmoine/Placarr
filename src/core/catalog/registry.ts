@@ -44,6 +44,7 @@ import { izneoModule } from "@/providers/izneo";
 import { ledenicheurModule } from "@/providers/ledenicheur";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
+import { narutoccgModule } from "@/providers/narutoccg";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -112,6 +113,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   fullsetModule,
   lorcanajsonModule,
   lorcanatcgModule,
+  narutoccgModule,
   lorcanaggModule,
   lorcastModule,
   tcgdexModule,

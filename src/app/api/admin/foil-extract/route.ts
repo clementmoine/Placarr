@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   const target = normalizeFoilExtractTarget(String(body.target || "").trim());
   if (!target) {
     return NextResponse.json(
-      { error: "target must be lorcana or pokemon" },
+      { error: "target must be lorcana, pokemon, or naruto" },
       { status: 400 },
     );
   }
@@ -82,6 +82,8 @@ export async function POST(req: NextRequest) {
         ? scope === "catalogue"
           ? "Catalogue complet en file d’attente : ~93k bundles, plusieurs heures. Tu peux quitter la page."
           : "Extract Pokémon en file d’attente (worker). Tu peux quitter la page."
-        : "Extract Lorcana en file d’attente (worker). Tu peux quitter la page.",
+        : target === "naruto"
+          ? "Sync Naruto (Carddass / CACG) en file d’attente (worker). Tu peux quitter la page."
+          : "Extract Lorcana en file d’attente (worker). Tu peux quitter la page.",
   });
 }

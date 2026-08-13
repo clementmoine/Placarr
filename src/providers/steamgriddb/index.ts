@@ -21,6 +21,7 @@ export const steamgriddbModule: ProviderModule = {
     types: ["games"],
     capabilities: ["cover"],
     auth: { kind: "key", env: ["STEAMGRIDDB_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     authoritative3dCoverRole: true,
     gridStyleCoverLabels: true,

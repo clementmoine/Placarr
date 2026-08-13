@@ -66,6 +66,8 @@ const nextConfig = {
         "**/data/**",
         "**/scripts/lorcana/.venv/**",
         "**/scripts/pokemon/.venv/**",
+        "**/src/providers/lorcanatcg/unity/.venv/**",
+        "**/src/providers/pokemontcglive/unity/.venv/**",
         // Dumpers rewrite these in place; watching them recompiles mid-extract.
         "**/src/effects/**/cards.json",
         "**/src/effects/**/manifest.json",

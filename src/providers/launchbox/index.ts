@@ -10,6 +10,7 @@ import {
   fetchFromLaunchBox,
   fetchFromLaunchBoxWithLookupQueries,
 } from "./resolver";
+import { launchboxCatalog } from "./pipeline";
 
 export const launchboxModule: ProviderModule = {
   info: {
@@ -29,6 +30,7 @@ export const launchboxModule: ProviderModule = {
       "screenshots",
     ],
     auth: { kind: "none" },
+    supplyMode: "local_catalog",
     canonical: true,
     defaultLanguage: "en",
     isRealBoxCover: true,
@@ -36,6 +38,7 @@ export const launchboxModule: ProviderModule = {
     notes:
       "Base communautaire LaunchBox (Metadata.zip). Index SQLite local prébuild (`pnpm launchbox:update`) — pas de download au scan. Jeux, joueurs max, titres régionaux, images. Enrichissement par titre — pas de barcode GTIN. Tourne en pass API pour ne pas être sauté quand ScreenScraper/IGDB ont déjà titre+cover.",
   },
+  catalog: launchboxCatalog,
   createMetadataAdapter: () => ({
     id: "launchbox",
     async resolve({ name, platform, lookupQueries }) {

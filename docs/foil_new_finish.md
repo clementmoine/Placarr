@@ -5,14 +5,14 @@ But : quand upstream ajoute un effet, le récupérer via **sync auto** (ou
 nouveaux. Contrat : [foil_effects.md](foil_effects.md).
 APK vs réseau : [foil_apk_sources.md](foil_apk_sources.md).
 
-Lister les trous (CLI ou admin tcg-effects) :
+Lister les trous (admin Catalogue / tcg-effects → foil-status `gaps`) :
 
 ```bash
-pnpm foil:audit-gaps
-pnpm foil:audit-gaps -- --strict
+# même payload : GET /api/admin/foil-status → gaps
+# moteur : src/lib/admin/foilGaps.ts (computeFoilGaps)
 ```
 
-Rapport : `data/logs/foil-gaps.json` — même payload que `/api/admin/foil-status` → `gaps`.
+Rapport : payload `/api/admin/foil-status` → `gaps` (moteur `computeFoilGaps`).
 
 ---
 
@@ -30,7 +30,7 @@ Après sync : nouveaux sets/cartes/frags/textures **sans edit `src/`**. Index so
 | Étape | Action |
 |-------|--------|
 | 1 | Sync / `pnpm foil:pokemon` |
-| 2 | `foil:audit-gaps` → motifs manquants |
+| 2 | Admin foil-status gaps → motifs manquants |
 | 3 | Si motif pathologique : override B dans `materials.ts` (rare) |
 | 4 | Playroom WebGL |
 

@@ -63,8 +63,9 @@ ment coûte toujours plus cher que la colonne en trop.
 | Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil + non-foil                 | ✅ TCGplayer USD → EUR `~`        | aucune            |
 | Magic                   | [Scryfall](https://scryfall.com/docs/api)       | ✅ vérifié      | ✅             | ✅ `finishes: nonfoil/foil/etched`   | ✅                                | UA requis         |
 | Yu-Gi-Oh                | [YGOPRODeck](https://ygoprodeck.com/api-guide/) | ✅ noms         | EN             | sets + raretés                       | ✅                                | aucune            |
-| One Piece, Dragon Ball  | [apitcg.com](https://apitcg.com/)               | ?               | ?              | ✅                                   | ?                                 | clé (inscription) |
+| One Piece, Dragon Ball  | [apitcg.com](https://apitcg.com/)               | ?               | ?              | ✅                                   | ?                                 | clé (inscription) — détail [one_piece_tcg.md](one_piece_tcg.md) |
 | One Piece, Gundam, etc. | [Scrydex](https://scrydex.com/)                 | ?               | ?              | ✅                                   | ✅                                | **payant**        |
+| Naruto (CACG / multi-lignes) | pas d’API catalogue (Coleka / nikita / TCDB) | FR partiel | community | foil physique | estimates / eBay | pack `naruto` + sets `s*` + lang `fr|en|jap` — [naruto_carddass_tcg.md](naruto_carddass_tcg.md) |
 
 Ça tombe pile dans le registre existant : **un module par jeu**, chacun
 déclarant `types: ["tcg"]`. Aucun concept nouveau côté providers.
@@ -73,8 +74,8 @@ Sur la couverture par jeu (sondé le 2026-07-26) : **Pokémon** est le mieux
 servi — TCGdex répond en français sur la recherche par nom (112 résultats pour
 « Dracaufeu »), sans clé. **One Piece** et **Dragon Ball Fusion World** sont
 couverts par apitcg.com, qui exige une clé obtenue par inscription (répond
-`API key is required` sans elle) ; le périmètre exact des données et les
-langues restent à vérifier une fois la clé en main.
+`API key is required` sans elle). Recherche sources OPTCG (catalogue, apps,
+absence de client foil type Live) : [one_piece_tcg.md](one_piece_tcg.md).
 
 Deux remarques qui comptent :
 
@@ -126,21 +127,21 @@ Le regroupement est donc un **transform d'affichage**, à côté de
 par construction, pas une mécanique TCG. Zéro migration ; les doublons de jeux
 déjà saisis en bénéficient immédiatement.
 
-**Clé de regroupement** — deux exemplaires fusionnent si c'est le même objet :
+**Clé de regroupement** — deux exemplaires fusionnent seulement s'ils sont
+**strictement** le même objet **et** le même état :
 
 | Axe                                | Dans la clé ? |
 | ---------------------------------- | ------------- |
 | Métadonnée (la carte, le jeu)      | ✅            |
 | Variante (finition, édition)       | ✅            |
 | Langue de l'exemplaire             | ✅            |
-| **État** (neuf / occasion / abîmé) | ❌            |
+| **État** (neuf / occasion / abîmé) | ✅            |
 
-L'état décrit la **santé** de l'objet, pas son identité : il change dans le
-temps (une carte neuve se joue, un jeu neuf s'ouvre). S'il séparait les
-groupes, on ne pourrait jamais dire « j'ai 3 Elsa ». La vignette affiche
-`Elsa foil ×3` ; le détail du groupe liste les exemplaires avec état, prix
-d'achat et statut de prêt. Corollaire : plus besoin de « (copie) » dans le
-titre.
+Décidé 2026-08-12 : pas de « 3 Elsa » mélangeant neuf et occasion — un groupe
+= même identité + même finition + même langue + **même `Condition` à 100 %**.
+La vignette affiche p.ex. `Elsa foil ×3` (tous neuf) ; le détail du groupe
+liste les exemplaires (prix d'achat, prêt). Corollaire : plus besoin de
+« (copie) » dans le titre.
 
 **TCG — état masqué, cote par finition (2026-07-31).** Sur les singles,
 neuf / occasion n'est pas le levier utile (tu déblister pour savoir ce que

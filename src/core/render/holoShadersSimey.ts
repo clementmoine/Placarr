@@ -7,7 +7,8 @@
  * ramps stay only where Live has no drawable plate (regular bars, reverse
  * light mask, sunpillar-style diagonals without a spectrum slot).
  *
- * Vendored reference CSS: `third_party/simeydotme-pokemon-cards-{css,151}/`.
+ * Staging reference CSS: `data/pokemon/staging/simey/{poke-holo,poke-151}/`
+ * (`pnpm foil:pokemon:simey`). Not loaded in the browser.
  * Leafs with no simey analogue (Thatch, Tinsel, Squares, SunBeam/SunLava,
  * Stamped, Confetti, SolidColor) stay on APK recipes in `holoShadersPokemon.ts`.
  * SunPillar ↔ poke-151 `ex-regular`; AngledPillars ↔ `ex-full-art`.

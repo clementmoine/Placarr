@@ -19,6 +19,7 @@ export const howlongtobeatModule: ProviderModule = {
     types: ["games"],
     capabilities: ["identify", "duration"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: true,
     imageScoreAdjustment: -500,
     websiteUrl: "https://howlongtobeat.com/",

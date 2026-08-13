@@ -46,6 +46,10 @@ function indexPath(): string {
   return path.join(cacheDir(), "nointro.sqlite");
 }
 
+export function getNoIntroIndexPath(): string {
+  return indexPath();
+}
+
 function configuredDatPath(): string | null {
   return process.env.NOINTRO_DAT_PATH?.trim() || null;
 }

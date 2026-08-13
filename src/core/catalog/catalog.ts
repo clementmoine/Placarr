@@ -39,6 +39,18 @@ export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((mdl) => mdl.info.id === id);
 }
 
+/** Modules that expose a local/scrape corpus refresh surface. */
+export function discoverCatalogProviderModules(): readonly ProviderModule[] {
+  return PROVIDER_MODULES.filter((mdl) => Boolean(mdl.catalog));
+}
+
+export function getCatalogProviderModule(
+  id: string,
+): ProviderModule | undefined {
+  const mdl = getProviderModule(id);
+  return mdl?.catalog ? mdl : undefined;
+}
+
 /** Provider that owns a custom cover download path for this remote URL. */
 export function providerModuleForCoverDownload(
   url: string,
@@ -341,5 +353,6 @@ export function materializeProviderInfo(info: ProviderInfo): ProviderInfo {
     gridStyleCoverLabels: info.gridStyleCoverLabels ?? false,
     collectorCoverRegionFromAgeRating:
       info.collectorCoverRegionFromAgeRating ?? false,
+    supplyMode: info.supplyMode ?? "api_live",
   };
 }

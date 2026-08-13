@@ -15,6 +15,7 @@ import {
   lookupLorcanaTcgTitle,
   lorcanaTcgDbPath,
 } from "./indexStore";
+import { lorcanatcgCatalog } from "./pipeline";
 
 export {
   exportLorcanaCardsIndexJson,
@@ -93,12 +94,14 @@ export const lorcanatcgModule: ProviderModule = {
     types: ["tcg"],
     capabilities: ["identify", "cover", "description", "people"],
     auth: { kind: "none" },
+    supplyMode: "local_catalog",
     canonical: false,
     defaultLanguage: "fr",
     websiteUrl: "https://cards.disneylorcana.com/",
     notes:
-      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`.",
+      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`. Dump app/Unity = cette source (`lorcanatcg`), pas `lorcanajson`.",
   },
+  catalog: lorcanatcgCatalog,
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,
     async resolve(ctx) {

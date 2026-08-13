@@ -80,6 +80,7 @@ export const hdjvModule: ProviderModule = {
       "players",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     requiresTitleAlignment: true,

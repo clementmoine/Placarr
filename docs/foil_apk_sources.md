@@ -32,3 +32,7 @@ Objectif : sync auto **sans téléphone**. Frida = QA seulement, jamais une sour
 - Gaps admin taguent `apk-gated` quand WebGL / back / UV manquent faute d’APK.
 
 Voir aussi : [foil_effects.md](foil_effects.md), [backlog.md](backlog.md) §Foil, `src/providers/pokemontcglive/sources.ts`.
+
+**One Piece** : pas de client / APK foil connu — voir [one_piece_tcg.md](one_piece_tcg.md).
+
+**Naruto** (pack ombrelle, CACG FR d’abord) : idem (pas de client foil) — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.md).

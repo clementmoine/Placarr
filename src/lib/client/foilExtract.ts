@@ -2,7 +2,7 @@
  * Admin foil extract — enqueue durable background job (`POST /api/admin/foil-extract`).
  */
 
-export type FoilExtractTarget = "lorcana" | "pokemon";
+export type FoilExtractTarget = "lorcana" | "pokemon" | "naruto";
 
 /**
  * ``inventory`` = liste dérivée APK ∪ Malie (rapide, incrémentale).

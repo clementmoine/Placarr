@@ -24,9 +24,8 @@ import { uploadsDir } from "@/lib/runtimeData";
 
 /**
  * Every raster this app writes is WebP — uploads, and the derivatives it makes
- * of them. Keeping the source extension re-introduced the PNGs that
- * `pnpm media:to-webp` had just converted away, at several times the size, on
- * every crop of a provider scan that arrived as PNG.
+ * of them. Keeping the source extension would re-introduce PNG on disk at
+ * several times the size on every crop of a provider scan that arrived as PNG.
  */
 const DERIVATIVE_EXTENSION = ".webp";
 

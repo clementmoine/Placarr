@@ -156,6 +156,7 @@ export const abebooksModule: ProviderModule = {
     // Prices stay on refreshBarcodePriceOffers — metadata chase must not wait.
     metadataCapabilities: ["cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     websiteUrl: "https://www.abebooks.fr/",

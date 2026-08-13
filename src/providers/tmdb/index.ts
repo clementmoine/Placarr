@@ -31,6 +31,7 @@ export const tmdbModule: ProviderModule = {
       "people",
     ],
     auth: { kind: "key", env: ["TMDB_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "fr",
     websiteUrl: "https://www.themoviedb.org/",

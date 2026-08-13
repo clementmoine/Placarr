@@ -53,7 +53,7 @@ start_worker() {
 
 rebuild_title_idf() {
   echo "[init] rebuilding title IDF index…"
-  if ./node_modules/.bin/tsx scripts/title-idf/build-index.ts; then
+  if ./node_modules/.bin/tsx scripts/buildTitleIdfIndex.ts; then
     echo "[init] title IDF index ready"
   else
     echo "[init] title IDF rebuild skipped (non-fatal)"

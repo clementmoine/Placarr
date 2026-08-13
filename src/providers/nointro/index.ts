@@ -8,6 +8,7 @@ import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import { ensureNoIntroIndex } from "./indexStore";
+import { nointroCatalog } from "./pipeline";
 import { fetchFromNoIntro, resolveNoIntroMetadata } from "./resolver";
 
 export const nointroModule: ProviderModule = {
@@ -18,12 +19,14 @@ export const nointroModule: ProviderModule = {
     requiresTitleAlignment: true,
     capabilities: ["identify"],
     auth: { kind: "none" },
+    supplyMode: "local_catalog",
     canonical: false,
     defaultLanguage: "en",
     websiteUrl: "https://www.no-intro.org/",
     notes:
       "Dump DAT Logiqx (`pnpm nointro:update` : NOINTRO_DAT_PATH et/ou pack zip NOINTRO_DAT_PACK / URL). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
   },
+  catalog: nointroCatalog,
   createMetadataAdapter: () => ({
     id: "nointro",
     async resolve(ctx) {

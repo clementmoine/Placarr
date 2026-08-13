@@ -26,6 +26,10 @@ export type CardsIndexEntry = {
   set: string;
   card: string;
   langs: Record<string, CardsIndexLangFiles>;
+  /** Optional display name (e.g. Manga-News FR). */
+  name?: string;
+  /** Optional rarity tag when known from checklist. */
+  rarity?: string;
 };
 
 export type CardsIndexV1 = {

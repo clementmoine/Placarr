@@ -114,6 +114,7 @@ export const screenscraperModule: ProviderModule = {
       env: SCREEN_SCRAPER_ENV_NAMES,
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "fr",
     isRealBoxCover: true,

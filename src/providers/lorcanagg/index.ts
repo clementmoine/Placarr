@@ -93,6 +93,7 @@ export const lorcanaggModule: ProviderModule = {
     types: ["tcg"],
     capabilities: ["price"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: false,
     websiteUrl: "https://lorcana.gg/",
     notes:

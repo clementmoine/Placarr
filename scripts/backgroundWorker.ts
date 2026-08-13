@@ -155,6 +155,21 @@ async function main(): Promise<void> {
 
   await sweepStaleLocks();
 
+  const { ICOLLECT_WORKER_KINDS } = await import(
+    "../src/core/collect/jobs/workQueue"
+  );
+  const runsCatalogueAutoSync =
+    !claimKinds ||
+    claimKinds.some((kind) =>
+      (ICOLLECT_WORKER_KINDS as readonly string[]).includes(kind),
+    );
+  if (runsCatalogueAutoSync) {
+    const { startCatalogueAutoSyncLoop } = await import(
+      "../src/lib/admin/catalogueAutoSync"
+    );
+    startCatalogueAutoSyncLoop();
+  }
+
   let shuttingDown: Promise<void> | null = null;
   const shutdown = async (signal: string) => {
     if (stopping) return shuttingDown ?? Promise.resolve();

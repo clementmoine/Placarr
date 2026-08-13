@@ -355,6 +355,7 @@ export const booknodeModule: ProviderModule = {
       "pageCount",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

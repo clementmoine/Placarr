@@ -511,6 +511,7 @@ export const chasseauxlivresModule: ProviderModule = {
       "people",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",

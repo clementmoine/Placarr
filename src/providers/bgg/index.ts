@@ -39,6 +39,7 @@ export const bggModule: ProviderModule = {
       "players",
     ],
     auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     isRealBoxCover: true,

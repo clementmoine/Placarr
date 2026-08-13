@@ -414,6 +414,7 @@ export const bedethequeModule: ProviderModule = {
       "price",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

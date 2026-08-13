@@ -314,6 +314,7 @@ export const pricechartingModule: ProviderModule = {
     types: ["games", "hardware"],
     capabilities: ["identify", "price", "cover"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: false,
     isRealBoxCover: true,
     imageScoreAdjustment: 160,

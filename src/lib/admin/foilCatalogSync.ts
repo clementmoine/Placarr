@@ -1,44 +1,24 @@
 /**
- * Foil catalogue sync — enqueue foilExtract when pack data is stale (like iCollect).
- * Manual admin/CLI still available; this is the automatic path.
+ * Foil pack stale helpers + kick Catalogue auto-sync loop.
+ * Corpus-wide auto refresh lives in `catalogueAutoSync.ts`.
  */
 
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-import {
-  BACKGROUND_WORK_KIND,
-  enqueueBackgroundWorkJob,
-} from "@/core/collect/jobs/workQueue";
 import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
 
+import { startCatalogueAutoSyncLoop } from "./catalogueAutoSync";
+
 const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-const DEFAULT_CHECK_MS = 60 * 60 * 1000;
-
-type GlobalSyncState = {
-  loopStarted?: boolean;
-  syncScheduled?: Record<string, boolean>;
-};
-
-const globalStateKey = "__placarrFoilCatalogSync__";
-
-function globalSyncState(): GlobalSyncState {
-  const root = globalThis as typeof globalThis &
-    Record<string, GlobalSyncState>;
-  if (!root[globalStateKey]) root[globalStateKey] = { syncScheduled: {} };
-  return root[globalStateKey]!;
-}
-
-function isEnabled(): boolean {
-  const raw = process.env.PLACARR_FOIL_AUTO_SYNC?.trim().toLowerCase();
-  if (raw === "0" || raw === "false" || raw === "off") return false;
-  return true;
-}
 
 function maxAgeMs(): number {
-  const raw = Number(process.env.PLACARR_FOIL_SYNC_MAX_AGE_MS);
+  const raw = Number(
+    process.env.PLACARR_CATALOG_SYNC_MAX_AGE_MS ??
+      process.env.PLACARR_FOIL_SYNC_MAX_AGE_MS,
+  );
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_MAX_AGE_MS;
 }
 
@@ -58,6 +38,11 @@ function packLooksEmpty(pack: FoilExtractTarget): boolean {
     const web = path.join(foilPackDir("lorcana"), "web");
     return !existsSync(cards) && !existsSync(web);
   }
+  if (pack === "naruto" || pack === "naruto/ccg") {
+    const cards = path.join(dataRoot(), "naruto", "ccg", "cards-index.json");
+    const db = path.join(dataRoot(), "naruto", "ccg", "catalog.sqlite");
+    return !existsSync(cards) && !existsSync(db);
+  }
   const shaders = path.join(foilPackDir("pokemon"), "shaders");
   const db = path.join(dataRoot(), "pokemon", "catalog.sqlite");
   return !existsSync(shaders) && !existsSync(db);
@@ -70,57 +55,27 @@ export function isFoilPackStale(pack: FoilExtractTarget): boolean {
   return Date.now() - mtime > maxAgeMs();
 }
 
+/** @deprecated Prefer catalogueAutoSync — maps pack → provider catalog.refresh */
 export async function maybeEnqueueFoilCatalogSync(
   pack: FoilExtractTarget,
 ): Promise<boolean> {
-  if (!isEnabled()) return false;
-  if (!isFoilPackStale(pack)) return false;
-
-  const state = globalSyncState();
-  state.syncScheduled ??= {};
-  if (state.syncScheduled[pack]) return false;
-  state.syncScheduled[pack] = true;
-
-  try {
-    await enqueueBackgroundWorkJob({
-      kind: BACKGROUND_WORK_KIND.foilExtract,
-      payload: { target: pack, auto: true },
-      replaceOpenForKind: false,
-    });
-    return true;
-  } catch (error) {
-    console.warn(`[foil sync] failed to enqueue ${pack}:`, error);
-    return false;
-  } finally {
-    state.syncScheduled[pack] = false;
-  }
+  const { maybeEnqueueFoilCatalogSync: enqueue } = await import(
+    "./catalogueAutoSync"
+  );
+  return enqueue(pack);
 }
 
 export function startFoilCatalogSyncLoop(): void {
-  if (!isEnabled()) return;
-  const state = globalSyncState();
-  if (state.loopStarted) return;
-  state.loopStarted = true;
-
-  const checkMs = (() => {
-    const raw = Number(process.env.PLACARR_FOIL_SYNC_CHECK_MS);
-    return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_CHECK_MS;
-  })();
-
-  void maybeEnqueueFoilCatalogSync("lorcana");
-  void maybeEnqueueFoilCatalogSync("pokemon");
-
-  setInterval(() => {
-    void maybeEnqueueFoilCatalogSync("lorcana");
-    void maybeEnqueueFoilCatalogSync("pokemon");
-  }, checkMs).unref?.();
+  startCatalogueAutoSyncLoop();
 }
+
+export { startCatalogueAutoSyncLoop } from "./catalogueAutoSync";
 
 /** @internal */
 export function resetFoilCatalogSyncForTests(): void {
-  const root = globalThis as typeof globalThis &
-    Record<string, GlobalSyncState>;
-  delete root[globalStateKey];
+  void import("./catalogueAutoSync").then((m) =>
+    m.resetCatalogueAutoSyncForTests(),
+  );
 }
 
 /** Touch helper for tests / status — read last-run without throwing. */

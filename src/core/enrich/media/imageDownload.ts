@@ -153,9 +153,9 @@ export async function downloadRemoteImage(
     /*
       Vector stays vector: rasterising an SVG here would have to pick a size,
       and it is already the smallest thing on disk. Everything else is stored
-      as WebP whatever it arrived as — keeping the source extension is what
-      kept re-introducing the PNGs and JPEGs `pnpm media:to-webp` converts away,
-      one provider fetch at a time.
+      as WebP whatever it arrived as — keeping the source extension would
+      re-introduce PNG/JPEG on disk one provider fetch at a time
+      (see `toUploadWebp`).
     */
     const keepVerbatim = sourceExt === ".svg";
     const ext = keepVerbatim ? ".svg" : ".webp";

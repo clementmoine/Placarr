@@ -355,28 +355,42 @@ export async function executeBackgroundWorkJob(
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync) {
-    const { runICollectCatalogSyncTick } = await import(
-      "@/providers/icollect/catalogSync"
+    const { refreshICollectCatalog } = await import(
+      "@/providers/icollect/pipeline"
     );
-    await runICollectCatalogSyncTick();
+    await refreshICollectCatalog({ auto: true });
     return;
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.launchboxIndexSync) {
-    const { buildLaunchBoxIndex } = await import(
-      "@/providers/launchbox/indexStore"
+    const { refreshLaunchBoxCatalog } = await import(
+      "@/providers/launchbox/pipeline"
     );
-    const db = await buildLaunchBoxIndex({ allowDownload: true });
-    if (!db) throw new Error("LaunchBox index build failed");
+    await refreshLaunchBoxCatalog();
     return;
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.nointroIndexSync) {
-    const { buildNoIntroIndex } = await import(
-      "@/providers/nointro/indexStore"
+    const { refreshNoIntroCatalog } = await import(
+      "@/providers/nointro/pipeline"
     );
-    const db = await buildNoIntroIndex({ allowDownload: true });
-    if (!db) throw new Error("No-Intro index build failed");
+    // Legacy kind — treat like auto when no DAT is configured (skip, don't fail).
+    await refreshNoIntroCatalog({ auto: true });
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
+    const providerId =
+      typeof payload.providerId === "string" ? payload.providerId.trim() : "";
+    if (!providerId) throw new Error("catalogProviderSync requires providerId");
+    const { getCatalogProviderModule } = await import("@/core/catalog/catalog");
+    const mdl = getCatalogProviderModule(providerId);
+    if (!mdl?.catalog) {
+      throw new Error(`No catalog hooks for provider ${providerId}`);
+    }
+    await mdl.catalog.refresh({
+      auto: Boolean(payload.auto),
+    });
     return;
   }
 
@@ -388,13 +402,43 @@ export async function executeBackgroundWorkJob(
   throw new Error(`Unknown background work kind: ${job.kind}`);
 }
 
+async function stampFoilExtractFailure(
+  pack: string,
+  jobId: string,
+  message: string,
+): Promise<void> {
+  try {
+    const { appendFoilExtractLog, beginFoilExtractLog } = await import(
+      "@/lib/admin/foilExtractLog"
+    );
+    const { readFoilExtractLog } = await import("@/lib/admin/foilExtractLog");
+    const { isFoilExtractTarget } = await import(
+      "@/lib/admin/foilExtractRunner"
+    );
+    if (!isFoilExtractTarget(pack)) return;
+    const typed = pack;
+    const existing = await readFoilExtractLog(typed, { after: 0, maxBytes: 64 });
+    // Keep any scrape tail already on disk — only seed a fresh header when empty.
+    if (!existing.exists || existing.size === 0) {
+      await beginFoilExtractLog(typed, [`jobId=${jobId}`]);
+    }
+    await appendFoilExtractLog(typed, `status=failed`);
+    await appendFoilExtractLog(typed, message);
+  } catch {
+    /* log must not mask the real failure */
+  }
+}
+
 async function executeFoilExtractJob(
   job: BackgroundWorkJobRow,
   payload: FoilExtractJobPayload,
 ): Promise<void> {
-  const target = normalizeFoilExtractTarget(payload?.target);
+  const rawTarget = String(payload?.target ?? "").trim();
+  const target = normalizeFoilExtractTarget(rawTarget);
   if (!target) {
-    throw new Error(`Invalid foil extract target: ${String(payload?.target)}`);
+    const message = `Invalid foil extract target: ${rawTarget || "(empty)"}`;
+    if (rawTarget) await stampFoilExtractFailure(rawTarget, job.id, message);
+    throw new Error(message);
   }
 
   const controller = new AbortController();
@@ -439,6 +483,11 @@ async function executeFoilExtractJob(
     const tail = logTail.slice(-8).join("\n");
     const message =
       error instanceof Error ? error.message : String(error);
+    await stampFoilExtractFailure(
+      target,
+      job.id,
+      tail ? `${message}\n---\n${tail}` : message,
+    );
     throw new Error(tail ? `${message}\n---\n${tail}` : message);
   } finally {
     clearInterval(cancelPoll);

@@ -56,6 +56,7 @@ export const smartoysModule: ProviderModule = {
     types: ["games", "hardware"],
     capabilities: ["price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     websiteUrl: "https://www.smartoys.be/",
     notes: "Prix détaillant BE (jeux + consoles/manettes rétro).",

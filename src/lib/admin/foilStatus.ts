@@ -98,7 +98,7 @@ export async function readFoilPackStatuses(opts: {
     id: FoilPackId;
     label: string;
     staging: string;
-    extractTarget: "lorcana" | "pokemon";
+    extractTarget: "lorcana" | "pokemon" | "naruto";
     /** APK unlocks Unity extras; packs can still extract without one. */
     apkRequired: boolean;
     extractMarkers: string[];
@@ -131,6 +131,19 @@ export async function readFoilPackStatuses(opts: {
         path.join(dataRoot, "pokemon", "catalog.sqlite"),
         path.join(dataRoot, "pokemon", "liveFoilMasks.json"),
         path.join(dataRoot, "pokemon", "cards.json"),
+      ],
+    },
+    {
+      id: "naruto",
+      label: "Naruto CCG",
+      staging: "naruto/ccg/staging",
+      extractTarget: "naruto",
+      apkRequired: false,
+      extractMarkers: [
+        path.join(dataRoot, "naruto", "ccg", "cards-index.json"),
+        path.join(dataRoot, "naruto", "ccg", "catalog.sqlite"),
+        path.join(dataRoot, "naruto", "ccg", "cards"),
+        path.join(dataRoot, "naruto", "ccg", "cards", "back.webp"),
       ],
     },
   ];

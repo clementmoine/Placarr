@@ -7,15 +7,15 @@ import {
   FoilPlayroom,
   type PlayroomSample,
 } from "@/components/admin/FoilPlayroom";
+import { CatalogueCorporaPanel } from "@/components/admin/CatalogueCorporaPanel";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import { getItems } from "@/lib/api/items";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Admin bench for every dumped TCG foil look. Collection copies preferred;
- * catalogue fillers cover gaps so a finish is never shown on the wrong mask.
+ * Admin Catalogue — local corpora hub + TCG playroom / cards browser.
  *
- * Mount only when the Effets TCG tab is open — the grid spins WebGL canvases.
+ * Mount only when the Catalogue tab is open — the foil grid spins WebGL canvases.
  */
 export function TcgEffectsPanel({ locale }: { locale: string }) {
   const { data: items, isLoading: itemsLoading } = useQuery({
@@ -65,6 +65,7 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
   if (itemsLoading || catalogLoading) {
     return (
       <div className="space-y-4">
+        <CatalogueCorporaPanel />
         <Skeleton className="h-12 w-full rounded-xl" />
         <Skeleton className="h-72 w-full rounded-xl" />
       </div>
@@ -72,10 +73,13 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
   }
 
   return (
-    <FoilPlayroom
-      samples={samples}
-      packArts={catalog?.packArts}
-      locale={locale}
-    />
+    <div className="space-y-6">
+      <CatalogueCorporaPanel />
+      <FoilPlayroom
+        samples={samples}
+        packArts={catalog?.packArts}
+        locale={locale}
+      />
+    </div>
   );
 }

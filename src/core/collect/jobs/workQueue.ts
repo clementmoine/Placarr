@@ -9,6 +9,8 @@ export const BACKGROUND_WORK_KIND = {
   icollectCatalogSync: "icollectCatalogSync",
   launchboxIndexSync: "launchboxIndexSync",
   nointroIndexSync: "nointroIndexSync",
+  /** Provider-blind catalog refresh — payload `{ providerId, auto? }`. */
+  catalogProviderSync: "catalogProviderSync",
   foilExtract: "foilExtract",
 } as const;
 
@@ -27,6 +29,7 @@ export const ICOLLECT_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.icollectCatalogSync,
   BACKGROUND_WORK_KIND.launchboxIndexSync,
   BACKGROUND_WORK_KIND.nointroIndexSync,
+  BACKGROUND_WORK_KIND.catalogProviderSync,
 ];
 
 const KNOWN_WORKER_KINDS = new Set<string>(Object.values(BACKGROUND_WORK_KIND));

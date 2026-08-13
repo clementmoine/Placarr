@@ -33,7 +33,7 @@ export async function GET(req: Request, ctx: Ctx) {
   });
 }
 
-/** After `pnpm media:to-webp`, DB may still point at ``.png``/``.jpg`` paths. */
+/** Legacy DB paths may still point at ``.png``/``.jpg``; serve sibling ``.webp``. */
 function resolveMigratedWebp(
   root: string,
   segments: string[] | undefined,

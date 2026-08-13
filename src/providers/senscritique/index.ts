@@ -33,6 +33,7 @@ export const senscritiqueModule: ProviderModule = {
       "screenshots",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

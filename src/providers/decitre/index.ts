@@ -254,6 +254,7 @@ export const decitreModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",

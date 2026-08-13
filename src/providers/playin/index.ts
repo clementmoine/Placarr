@@ -227,6 +227,7 @@ export const playinModule: ProviderModule = {
     types: ["boardgames", "tcg"],
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

@@ -1,6 +1,6 @@
 /**
  * Pure helpers for foil gap audits — “upstream added X, Placarr missing map”.
- * Used by `scripts/foil/auditGaps.ts` and unit tests (no dump I/O here).
+ * Used by `foilGaps.ts` and unit tests (no dump I/O here).
  */
 
 /** kebab-case CSS basename → camelCase look id (`radiant-holo` → `radiantHolo`). */

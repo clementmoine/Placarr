@@ -227,6 +227,7 @@ export const furetModule: ProviderModule = {
       "pageCount",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",

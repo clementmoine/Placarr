@@ -62,6 +62,7 @@ export const geedieModule: ProviderModule = {
     types: ["games"],
     capabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "en",
     isSecondary: true,

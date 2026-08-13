@@ -1,5 +1,5 @@
 /**
- * Foil gap audit — dump/data vs ported looks / motifs (shared by CLI + admin).
+ * Foil gap audit — dump/data vs ported looks / motifs (admin foil-status).
  */
 
 import "@/lib/foilMetaLoad.server";
@@ -20,8 +20,8 @@ import {
   POKEMON_MAT_ALIASES,
   sharedMotifStems,
 } from "@/effects/pokemon/materials";
-import { packCardsDir, packLogsDir, packShadersDir } from "@/lib/packPaths";
-import { dataRoot, foilPackDir } from "@/lib/runtimeData";
+import { packCardsDir, packLogsDir, packShadersDir, pokemonSimeyCssCardsDir } from "@/lib/packPaths";
+import { foilPackDir } from "@/lib/runtimeData";
 import { lorcanaTcgDbPath } from "@/providers/lorcanatcg/indexStore";
 
 import {
@@ -67,28 +67,8 @@ export type FoilGapsReport = {
 };
 
 const SIMEY_TREES = [
-  {
-    id: "poke-holo",
-    dir: path.join(
-      process.cwd(),
-      "third_party",
-      "simeydotme-pokemon-cards-css",
-      "public",
-      "css",
-      "cards",
-    ),
-  },
-  {
-    id: "poke-151",
-    dir: path.join(
-      process.cwd(),
-      "third_party",
-      "simeydotme-pokemon-cards-151",
-      "public",
-      "css",
-      "cards",
-    ),
-  },
+  { id: "poke-holo" as const, dir: () => pokemonSimeyCssCardsDir("poke-holo") },
+  { id: "poke-151" as const, dir: () => pokemonSimeyCssCardsDir("poke-151") },
 ] as const;
 
 function listFragStems(shadersDir: string): string[] {
@@ -101,8 +81,9 @@ function listFragStems(shadersDir: string): string[] {
 function listSimeyCssFiles(): Array<{ tree: string; stem: string }> {
   const out: Array<{ tree: string; stem: string }> = [];
   for (const tree of SIMEY_TREES) {
-    if (!existsSync(tree.dir)) continue;
-    for (const name of readdirSync(tree.dir)) {
+    const dir = tree.dir();
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
       if (!name.endsWith(".css")) continue;
       out.push({ tree: tree.id, stem: name.replace(/\.css$/i, "") });
     }
@@ -323,8 +304,4 @@ export function computeFoilGaps(): FoilGapsReport {
     },
     apkGated,
   };
-}
-
-export function foilGapsReportPath(): string {
-  return path.join(dataRoot(), "logs", "foil-gaps.json");
 }

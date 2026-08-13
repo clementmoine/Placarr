@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { normalizeFoilExtractTarget } from "@/lib/admin/foilExtractRunner";
-import { readFoilExtractLog } from "@/lib/admin/foilExtractLog";
+import {
+  readFoilExtractJobId,
+  readFoilExtractLog,
+} from "@/lib/admin/foilExtractLog";
 import {
   BACKGROUND_WORK_KIND,
   BACKGROUND_WORK_STATUS,
@@ -23,7 +26,7 @@ export async function GET(req: NextRequest) {
   );
   if (!pack) {
     return NextResponse.json(
-      { error: "pack must be lorcana or pokemon" },
+      { error: "pack must be lorcana, pokemon, or naruto" },
       { status: 400 },
     );
   }
@@ -38,37 +41,73 @@ export async function GET(req: NextRequest) {
     id: string;
     status: string;
     startedAt: string;
+    error?: string | null;
   } | null = null;
   try {
-    const openJobs = await prisma.backgroundWorkJob.findMany({
-      where: {
-        kind: BACKGROUND_WORK_KIND.foilExtract,
-        status: {
-          in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+    // Prefer the jobId stamped in the current log — otherwise an older failed
+    // row for the same pack pollutes Logs after a successful re-run.
+    const logJobId = await readFoilExtractJobId(pack);
+    if (logJobId) {
+      const byId = await prisma.backgroundWorkJob.findUnique({
+        where: { id: logJobId },
+        select: {
+          id: true,
+          status: true,
+          payload: true,
+          lockedAt: true,
+          createdAt: true,
+          error: true,
         },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: {
-        id: true,
-        status: true,
-        payload: true,
-        lockedAt: true,
-        createdAt: true,
-      },
-    });
-    const match = openJobs.find((job) => {
+      });
       const target = normalizeFoilExtractTarget(
-        (job.payload as { target?: unknown })?.target,
+        (byId?.payload as { target?: unknown } | undefined)?.target,
       );
-      return target === pack;
-    });
-    if (match) {
-      active = {
-        id: match.id,
-        status: match.status,
-        startedAt: (match.lockedAt ?? match.createdAt).toISOString(),
-      };
+      if (byId && target === pack) {
+        active = {
+          id: byId.id,
+          status: byId.status,
+          startedAt: (byId.lockedAt ?? byId.createdAt).toISOString(),
+          error: byId.error,
+        };
+      }
+    }
+
+    if (!active) {
+      const openJobs = await prisma.backgroundWorkJob.findMany({
+        where: {
+          kind: BACKGROUND_WORK_KIND.foilExtract,
+          status: {
+            in: [
+              BACKGROUND_WORK_STATUS.pending,
+              BACKGROUND_WORK_STATUS.running,
+            ],
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        select: {
+          id: true,
+          status: true,
+          payload: true,
+          lockedAt: true,
+          createdAt: true,
+          error: true,
+        },
+      });
+      const match = openJobs.find((job) => {
+        const target = normalizeFoilExtractTarget(
+          (job.payload as { target?: unknown })?.target,
+        );
+        return target === pack;
+      });
+      if (match) {
+        active = {
+          id: match.id,
+          status: match.status,
+          startedAt: (match.lockedAt ?? match.createdAt).toISOString(),
+          error: match.error,
+        };
+      }
     }
   } catch {
     /* listing jobs must not blank the log tail */

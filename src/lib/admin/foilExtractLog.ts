@@ -12,8 +12,18 @@ export const FOIL_EXTRACT_LOG_NAME = "foil-extract.log";
 /** Cap retained file size so a multi-hour scrape cannot fill the disk. */
 const MAX_LOG_BYTES = 4 * 1024 * 1024;
 
+/** Extract UI target → on-disk data pack (franchise line nest). */
+function foilExtractDataPack(pack: FoilExtractTarget): string {
+  if (pack === "naruto") return "naruto/ccg";
+  return pack;
+}
+
 export function foilExtractLogPath(pack: FoilExtractTarget): string {
-  return path.join(foilPackDataDir(pack), "logs", FOIL_EXTRACT_LOG_NAME);
+  return path.join(
+    foilPackDataDir(foilExtractDataPack(pack)),
+    "logs",
+    FOIL_EXTRACT_LOG_NAME,
+  );
 }
 
 export async function beginFoilExtractLog(
@@ -74,23 +84,37 @@ export type FoilExtractLogSlice = {
 
 const LAUNCH_HEADER_RE =
   /^── foil extract \S+ @ (\d{4}-\d{2}-\d{2}T[^\s]+)/m;
+const JOB_ID_RE = /^jobId=([^\s]+)/m;
 
-async function readLaunchStamp(filePath: string): Promise<string | null> {
+async function readLogHead(filePath: string): Promise<string> {
   try {
     const handle = await fs.promises.open(filePath, "r");
     try {
-      const buf = Buffer.alloc(256);
+      const buf = Buffer.alloc(512);
       const { bytesRead } = await handle.read(buf, 0, buf.length, 0);
-      if (bytesRead <= 0) return null;
-      const head = buf.subarray(0, bytesRead).toString("utf8");
-      const match = LAUNCH_HEADER_RE.exec(head);
-      return match?.[1] ?? null;
+      if (bytesRead <= 0) return "";
+      return buf.subarray(0, bytesRead).toString("utf8");
     } finally {
       await handle.close();
     }
   } catch {
-    return null;
+    return "";
   }
+}
+
+async function readLaunchStamp(filePath: string): Promise<string | null> {
+  const head = await readLogHead(filePath);
+  const match = LAUNCH_HEADER_RE.exec(head);
+  return match?.[1] ?? null;
+}
+
+/** jobId line written by admin enqueue / worker logHeader. */
+export async function readFoilExtractJobId(
+  pack: FoilExtractTarget,
+): Promise<string | null> {
+  const head = await readLogHead(foilExtractLogPath(pack));
+  const match = JOB_ID_RE.exec(head);
+  return match?.[1] ?? null;
 }
 
 /**

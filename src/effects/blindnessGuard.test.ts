@@ -17,9 +17,13 @@ const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
 const SKIP_DIR_PREFIXES = [
   "src/effects/",
   "src/providers/",
-  "scripts/lorcana/",
-  "scripts/pokemon/",
-  // Foil admin bench + APK/extract APIs — pack ids are the job surface.
+  "src/providers/lorcanatcg/",
+  "src/providers/pokemontcglive/",
+  "src/providers/narutoccg/",
+  "src/providers/icollect/",
+  "src/providers/launchbox/",
+  "src/providers/nointro/",
+
   "src/app/api/admin/foil-",
   "src/components/admin/Foil",
   "src/components/admin/TcgEffects",
@@ -29,6 +33,11 @@ const SKIP_DIR_PREFIXES = [
   "src/lib/admin/foilCatalogSync.ts",
   "src/lib/admin/foilGaps.ts",
   "src/lib/admin/foilGapMaps.ts",
+  "src/lib/admin/cataloguePacks.ts",
+  "src/lib/admin/catalogueCards.ts",
+  "src/lib/admin/catalogueCardsTypes.ts",
+  "src/app/api/admin/catalogue-cards/",
+  "src/components/admin/Catalogue",
   "src/lib/foilMetaLoad.ts",
   "src/lib/foilMetaLoad.server.ts",
   "src/lib/packAssetUrls.ts",
@@ -37,7 +46,6 @@ const SKIP_DIR_PREFIXES = [
   // Foil extract enqueue — pack ids are the job target surface.
   "src/core/collect/jobs/backgroundJobs.ts",
   "src/lib/api/backgroundJobs.ts",
-  "scripts/foil/",
 ];
 
 function escapeRegExp(value: string): string {

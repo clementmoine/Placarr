@@ -370,6 +370,7 @@ export const discogsModule: ProviderModule = {
       env: ["DISCOGS_CONSUMER_KEY", "DISCOGS_CONSUMER_SECRET"],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     musicGallerySource: true,
     // The Discogs release image is the definitive album cover — trust it as-is.

@@ -17,12 +17,21 @@ import {
   FoilPackSources,
   foilExtractTargetForPack,
 } from "@/components/admin/FoilSourcesPanel";
+import { CatalogueBrowser } from "@/components/admin/CatalogueBrowser";
 import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
 import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
 import { listEffectPacks } from "@/effects";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
+import {
+  CATALOGUE_PACKS,
+  cataloguePackInfo,
+  resolveCataloguePackId,
+  resolveCatalogueScope,
+  type CatalogueBrowseScope,
+  type CataloguePackId,
+} from "@/lib/admin/cataloguePacks";
 import { hydrateFoilMetaFromAssets } from "@/lib/foilMetaLoad";
 import {
   peekPrintVariant,
@@ -727,11 +736,18 @@ export function FoilPlayroom({
   }, []);
 
   const packs = listEffectPacks();
-  const packIds = packs.map((entry) => entry.id);
-  const packId =
-    resolveEffectPackId(searchParams.get("pack"), packIds) ??
-    packs[0]?.id ??
-    "";
+  const cataloguePackId: CataloguePackId =
+    resolveCataloguePackId(searchParams.get("pack")) ??
+    CATALOGUE_PACKS[0]!.id;
+  const catalogueInfo =
+    cataloguePackInfo(cataloguePackId) ?? CATALOGUE_PACKS[0]!;
+  const browseScope: CatalogueBrowseScope = resolveCatalogueScope(
+    searchParams.get("scope"),
+    catalogueInfo,
+  );
+  const showFoilPlayroom =
+    catalogueInfo.hasFoilEffects && browseScope === "foils";
+  const packId = cataloguePackId;
   /**
    * Live faces for a material: server-resolved when the prop is there, else the
    * pack — which in the browser can only offer the TCGdex seed.
@@ -753,8 +769,8 @@ export function FoilPlayroom({
   const [backend, setBackend] = useState<FoilBackendPreference>("auto");
   const [tilt, setTilt] = useState(true);
 
-  const pack = packs.find((entry) => entry.id === packId) ?? packs[0];
-  const extractTarget = foilExtractTargetForPack(pack?.id ?? packId);
+  const pack = packs.find((entry) => entry.id === packId) ?? null;
+  const extractTarget = foilExtractTargetForPack(packId);
   // Re-read after foil-meta hydrate (manifest / frag-stems).
   const materials = useMemo(
     () => pack?.listMaterials() ?? [],
@@ -800,10 +816,31 @@ export function FoilPlayroom({
 
   const selectPack = useCallback(
     (id: string) => {
+      const next = cataloguePackInfo(id);
       replaceParams((params) => {
         params.set("pack", id);
         // Pack switch: keep layout, drop a material that no longer exists.
         params.delete("material");
+        if (next && !next.hasFoilEffects) {
+          params.set("scope", "all");
+        } else if (next?.defaultScope === "foils") {
+          params.delete("scope");
+        }
+      });
+    },
+    [replaceParams],
+  );
+
+  const selectScope = useCallback(
+    (next: CatalogueBrowseScope) => {
+      replaceParams((params) => {
+        if (next === "foils") {
+          params.delete("scope");
+        } else {
+          params.set("scope", "all");
+          params.delete("material");
+          params.delete("view");
+        }
       });
     },
     [replaceParams],
@@ -904,24 +941,50 @@ export function FoilPlayroom({
       <div className="sticky top-14 z-30 -mx-1 flex flex-col gap-2 bg-background/95 px-1 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <SegmentedControl
-            value={pack?.id ?? packId}
+            value={cataloguePackId}
             onChange={selectPack}
-            options={packs.map((entry) => ({
+            options={CATALOGUE_PACKS.map((entry) => ({
               value: entry.id,
-              label: `${entry.label ?? entry.id} · ${entry.listMaterials().length}`,
+              label: fr ? entry.labelFr : entry.labelEn,
             }))}
           />
           {tools ? (
             <div className="flex flex-wrap items-center gap-2">{tools}</div>
           ) : null}
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {catalogueInfo.hasFoilEffects ? (
+            <SegmentedControl
+              value={browseScope}
+              onChange={selectScope}
+              options={[
+                {
+                  value: "foils",
+                  label: fr ? "Foils" : "Foils",
+                },
+                {
+                  value: "all",
+                  label: fr ? "Toutes les cartes" : "All cards",
+                },
+              ]}
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {fr
+                ? "Catalogue local Naruto — pas de dump foil"
+                : "Local Naruto catalogue — no foil dump"}
+            </p>
+          )}
+        </div>
         {/* Focus needs every vertical pixel for the card — sources stay on grid. */}
-        {extractTarget && layout === "grid" ? (
+        {extractTarget && (layout === "grid" || !showFoilPlayroom) ? (
           <FoilPackSources target={extractTarget} locale={locale} />
         ) : null}
       </div>
 
-      {materials.length === 0 ? (
+      {!showFoilPlayroom ? (
+        <CatalogueBrowser packId={cataloguePackId} locale={locale} />
+      ) : materials.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {fr
             ? "Aucun matériau dumpé pour ce pack."

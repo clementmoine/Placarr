@@ -95,6 +95,7 @@ export const ledenicheurModule: ProviderModule = {
     types: ["games", "movies", "musics", "books", "boardgames", "hardware"],
     capabilities: ["price", "identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     slowBarcodeLookup: true,

@@ -15,7 +15,7 @@ export type BackgroundJob = {
     | "nointroIndexSync";
   startedAt: string;
   cancellable: boolean;
-  foilTarget?: "lorcana" | "pokemon" | null;
+  foilTarget?: "lorcana" | "pokemon" | "naruto" | null;
   shelf: {
     id: string;
     name: string;

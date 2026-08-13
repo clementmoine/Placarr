@@ -501,6 +501,7 @@ export const tcgdexModule: ProviderModule = {
     nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people", "price"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "fr",
     isRealBoxCover: true,

@@ -30,6 +30,7 @@ export const googlebooksModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "key", env: ["GOOGLE_BOOKS_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     mappingProbeRetry: true,

@@ -24,6 +24,7 @@ export const freakxyModule: ProviderModule = {
     types: ["games", "hardware"],
     capabilities: ["identify", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,

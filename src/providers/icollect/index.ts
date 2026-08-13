@@ -24,6 +24,7 @@ import {
   type ICollectMetadata,
 } from "./fetch";
 import { icollectAttachmentRole } from "./imageLabels";
+import { icollectCatalog } from "./pipeline";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 
 export {
@@ -261,6 +262,7 @@ export const icollectModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "none" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "en",
     isSecondary: true,
@@ -281,6 +283,7 @@ export const icollectModule: ProviderModule = {
     notes:
       "Catalogue jeux + consoles (SKU console/system) + photos de boîtes + estimation. Résolution metadata par barcode via index SQLite local (.cache/icollect) — auth.none pour ne pas être sauté quand le pass scrape est fermé. Fallback HTTP (Flare) seulement si le barcode n'est pas encore en cache.",
   },
+  catalog: icollectCatalog,
   evidence: {
     label: "iCollect Everything",
     sourceWeight: 0.42,

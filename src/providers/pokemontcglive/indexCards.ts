@@ -70,3 +70,10 @@ export function main(argv: string[] = process.argv.slice(2)): number {
     return 1;
   }
 }
+
+if (
+  process.argv[1] &&
+  /indexCards\.(ts|js)$/.test(process.argv[1].replace(/\\/g, "/"))
+) {
+  process.exit(main());
+}

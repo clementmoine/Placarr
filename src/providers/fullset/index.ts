@@ -23,6 +23,7 @@ export const fullsetModule: ProviderModule = {
     types: ["games", "hardware"],
     capabilities: ["identify", "price", "releaseDate"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     // Search is title-based over a collector index: results are validated

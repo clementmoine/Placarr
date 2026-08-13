@@ -32,6 +32,7 @@ export const openlibraryModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     websiteUrl: "https://openlibrary.org/",

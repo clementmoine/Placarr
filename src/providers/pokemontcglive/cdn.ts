@@ -20,6 +20,7 @@ import {
 } from "node:fs";
 import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { dataRoot } from "@/lib/runtimeData";
 import {
@@ -1623,4 +1624,11 @@ export async function main(argv: string[] | null = null): Promise<number> {
   if (report.aborted) return 2;
   if (report.ok > 0) return 0;
   return report.failed ? 1 : 0;
+}
+
+const entry = process.argv[1]
+  ? pathToFileURL(path.resolve(process.argv[1])).href
+  : "";
+if (import.meta.url === entry) {
+  main().then((code) => process.exit(code));
 }

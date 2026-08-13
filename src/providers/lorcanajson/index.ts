@@ -527,6 +527,7 @@ export const lorcanajsonModule: ProviderModule = {
     nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -537,7 +538,7 @@ export const lorcanajsonModule: ProviderModule = {
     },
     websiteUrl: "https://lorcanajson.org/",
     notes:
-      "Jeu de cartes Disney Lorcana. Fichiers statiques publics, sans clé, en FR/EN/DE/IT, avec les visuels officiels Ravensburger et — rare — le masque holographique par carte (98 % des tirages). Stocke une jaquette (et titre) par langue pour le même tirage ; la langue préférée reste le défaut. Aucune donnée de prix : voir le provider Lorcast. L'identité vient du tirage imprimé (extension + numéro + promo), jamais d'un code-barres : une carte à l'unité n'en a pas.",
+      "Jeu de cartes Disney Lorcana. Fichiers statiques publics, sans clé, en FR/EN/DE/IT, avec les visuels officiels Ravensburger et — rare — le masque holographique par carte (98 % des tirages). Stocke une jaquette (et titre) par langue pour le même tirage ; la langue préférée reste le défaut. Aucune donnée de prix : voir le provider Lorcast. L'identité vient du tirage imprimé (extension + numéro + promo), jamais d'un code-barres : une carte à l'unité n'en a pas. Complète `lorcanatcg` (dump app/Unity local) — ne pas attribuer les octets app à cette source.",
   },
   evidence: {
     label: PROVIDER_LABEL,

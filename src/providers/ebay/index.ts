@@ -166,6 +166,7 @@ export const ebayModule: ProviderModule = {
       env: [...EBAY_ENV_NAMES],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: false,
     coverUrlHost: "i.ebayimg.com",
     remoteImageFallback: true,

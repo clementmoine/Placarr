@@ -311,6 +311,7 @@ export const bdfugueModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",

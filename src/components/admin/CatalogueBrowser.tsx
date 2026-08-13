@@ -145,18 +145,29 @@ export function CatalogueBrowser({
               className="flex flex-col gap-1"
             >
               <div className="relative aspect-[63/88] overflow-hidden rounded-md bg-muted/40">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={card.thumbUrl ?? card.artUrl}
-                  alt={card.label}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
+                {card.missingArt || !card.artUrl ? (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 text-center">
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {fr ? "sans image" : "no art"}
+                    </span>
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={card.thumbUrl ?? card.artUrl}
+                    alt={card.label}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                )}
               </div>
               <figcaption className="truncate text-[11px] text-muted-foreground">
                 {card.label}
                 {card.hasFoil ? (
                   <span className="ml-1 text-foreground/70">· foil</span>
+                ) : null}
+                {card.missingArt ? (
+                  <span className="ml-1 text-foreground/70">· stub</span>
                 ) : null}
               </figcaption>
             </figure>

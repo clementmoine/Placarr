@@ -113,29 +113,44 @@ function buildRows(
   const rows: CatalogueCardRow[] = [];
   for (const [printKey, entry] of Object.entries(index.cards)) {
     const picked = pickLang(entry, preferLang);
-    if (!picked) continue;
-    const file = artFile(picked.files);
-    if (!file) continue;
-    const thumb = thumbFile(picked.files);
+    const file = picked ? artFile(picked.files) : null;
+    const lang = picked?.lang ?? preferLang ?? "fr";
+    const hasFoil = entryHasFoil(entry);
+    const label = entry.name
+      ? `${entry.set} · ${entry.card} — ${entry.name}`
+      : `${entry.set} · ${entry.card}`;
+    if (!file) {
+      rows.push({
+        printKey,
+        set: entry.set,
+        card: entry.card,
+        lang,
+        artUrl: "",
+        hasFoil,
+        label,
+        missingArt: true,
+        ...(entry.rarity ? { rarity: entry.rarity } : {}),
+        ...(entry.name ? { name: entry.name } : {}),
+      });
+      continue;
+    }
     const diskId = {
       set: entry.set,
-      lang: picked.lang,
+      lang,
       card: entry.card,
     };
-    const hasFoil = entryHasFoil(entry);
+    const thumb = picked ? thumbFile(picked.files) : null;
     const artUrl = packFaceAssetUrl(pack, diskId, file);
     const thumbUrl = thumb ? packFaceAssetUrl(pack, diskId, thumb) : undefined;
     rows.push({
       printKey,
       set: entry.set,
       card: entry.card,
-      lang: picked.lang,
+      lang,
       artUrl,
       ...(thumbUrl ? { thumbUrl } : {}),
       hasFoil,
-      label: entry.name
-        ? `${entry.set} · ${entry.card} — ${entry.name}`
-        : `${entry.set} · ${entry.card}`,
+      label,
       ...(entry.rarity ? { rarity: entry.rarity } : {}),
       ...(entry.name ? { name: entry.name } : {}),
     });

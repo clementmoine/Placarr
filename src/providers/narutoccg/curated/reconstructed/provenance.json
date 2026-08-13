@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-13T13:54:29.331Z",
+ "generatedAt": "2026-08-13T16:01:31.077Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "src/providers/narutoccg/curated/reconstructed/source-photos/",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
@@ -10,8 +10,30 @@
    "source": "reconstructed/ni236.png",
    "dest": "cards/s5/fr/ni236/art.reconstructed.webp",
    "from": {
-    "width": 864,
+    "width": 865,
     "height": 1236
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni253",
+   "set": "s5",
+   "source": "reconstructed/ni253.png",
+   "dest": "cards/s5/fr/ni253/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1225
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te212",
+   "set": "s5",
+   "source": "reconstructed/te212.png",
+   "dest": "cards/s5/fr/te212/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1077
    },
    "cropped": false
   }

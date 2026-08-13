@@ -225,11 +225,11 @@ Exemple face :
 ### Implication dump
 
 1. **CLI Placarr** : `pnpm naruto:cards` — CDX Wayback → faces FR sous **`cards/{set}/fr/`** **+** extras `staging/carddass-fr/images/`.
-   - `--locale fr|en|ja` (défaut `fr`) ; `--cdx-only` / `--cards-only` / `--limit N` / `--force` / `--index-only`
+   - `--locale fr|en|jap` (défaut `fr`) ; `--cdx-only` / `--cards-only` / `--limit N` / `--force` / `--index-only`
 2. **FR** `cards/{set}/fr/` = Wayback `carddass.fr` — seule ligne catalogue pour l’instant.
-3. **EN** `staging/bandaicg-en/images/cards_*/` = Wayback `bandaicg.com` (CCG US ≠ CACG ; partiel, surtout thumbs `_t`) — **pas** sous `cards/`.
-4. **JA** `staging/carddas-jp/cardlist/card_img/` = specials sparses carddas.com — **pas** sous `cards/`. Autres langues (TW…) : pas d’arbre JPEG officiel en CDX.
-5. Compléter **hors site** via Coleka / Manga-News / RetroTCG — pas auto-substituer FR.
+3. **EN** `staging/bandaicg-en/{images,pages}/` = miroir officiel Wayback `bandaicg.com/naruto` (**hors forums** vBulletin). Images `cards_*` partielles (surtout thumbs) + cardlists HTML/PHP. **Pas** sous `cards/`.
+4. **JA** `staging/carddas-jp/{www.carddas.com,www.carddass.com}/naruto/` = miroir site officiel (HTML cardlists 巻ノ…, product, PDF règles, specials sparses). **Pas** sous `cards/`.
+5. Compléter **hors site** (nikita / Coleka / …) seulement après épuisement de ces miroirs.
 
 ## 5. Clients digitaux & foil
 

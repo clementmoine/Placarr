@@ -21,7 +21,7 @@
  *
  *   pnpm naruto:cards -- --only known
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
@@ -34,6 +34,7 @@ import {
   normalizeCardNumber,
   type MangaNewsCardType,
 } from "./parseMangaNewsChecklist";
+import { pickPreferredFaceArtFilename } from "./parseCarddassAsset";
 
 export const KNOWN_SOURCES = [
   "carddass-fr-checklist",
@@ -101,8 +102,89 @@ export type KnownCardsReport = {
   unreleasedHtmlOnly: string[];
   /** In the local index but attested by no external source (promos, S6 on disk). */
   unattested: string[];
+  /**
+   * Local face is a large collector photo (no carddass site render /
+   * corrected / reconstructed preferred). OK as fallback — queue for
+   * `art.reconstructed.webp`.
+   */
+  photoFallbackArt: PhotoFallbackArtRow[];
   cards: KnownCardRow[];
 };
+
+/** Official site faces cluster ~40–80 KB / ~350×495; photos are far larger. */
+export const PHOTO_FALLBACK_MIN_BYTES = 300_000;
+
+export type PhotoFallbackArtRow = {
+  printKey: string;
+  set: string;
+  cardId: string;
+  /** Displayed face filename under the card dir. */
+  artFile: string;
+  bytes: number;
+  /** `high` = published set gap; `low` = cancelled S6 photos. */
+  priority: "high" | "low";
+};
+
+/**
+ * Preferred face is plain `art.*` and oversized → collector-photo fallback
+ * (not `art.corrected` / `art.reconstructed`).
+ */
+export function isCollectorPhotoFallbackFace(input: {
+  preferredArtFile: string | null;
+  bytes: number;
+  minBytes?: number;
+}): boolean {
+  const file = input.preferredArtFile;
+  if (!file) return false;
+  if (!/^art\.(jpe?g|png|webp|gif)$/i.test(file)) return false;
+  return input.bytes >= (input.minBytes ?? PHOTO_FALLBACK_MIN_BYTES);
+}
+
+/** Scan `cards/{set}/fr/{cardId}/` for photo-fallback faces still preferred. */
+export function collectPhotoFallbackArt(
+  cardsRoot: string,
+): PhotoFallbackArtRow[] {
+  if (!existsSync(cardsRoot)) return [];
+  const rows: PhotoFallbackArtRow[] = [];
+  for (const set of readdirSync(cardsRoot, { withFileTypes: true })) {
+    if (!set.isDirectory() || set.name.startsWith(".")) continue;
+    const fr = path.join(cardsRoot, set.name, "fr");
+    if (!existsSync(fr)) continue;
+    for (const card of readdirSync(fr, { withFileTypes: true })) {
+      if (!card.isDirectory() || card.name.startsWith(".")) continue;
+      const dir = path.join(fr, card.name);
+      const files = readdirSync(dir);
+      const preferred = pickPreferredFaceArtFilename(files);
+      if (!preferred) continue;
+      const artPath = path.join(dir, preferred);
+      let bytes = 0;
+      try {
+        bytes = statSync(artPath).size;
+      } catch {
+        continue;
+      }
+      if (!isCollectorPhotoFallbackFace({ preferredArtFile: preferred, bytes })) {
+        continue;
+      }
+      rows.push({
+        printKey: `naruto:${set.name}-${card.name}`,
+        set: set.name,
+        cardId: card.name,
+        artFile: preferred,
+        bytes,
+        priority: set.name === "s6" ? "low" : "high",
+      });
+    }
+  }
+  rows.sort((a, b) => {
+    const p = a.priority.localeCompare(b.priority);
+    if (p !== 0) return p;
+    const s = a.set.localeCompare(b.set, undefined, { numeric: true });
+    if (s !== 0) return s;
+    return a.cardId.localeCompare(b.cardId, undefined, { numeric: true });
+  });
+  return rows;
+}
 
 /**
  * Sources that imply a physical / checklist card (printed or at least listed
@@ -312,6 +394,7 @@ export function buildNarutoKnownCards(): KnownCardsReport {
     unattested: cards
       .filter((c) => c.sources.length === 1 && c.sources[0] === "local-index")
       .map((c) => c.number),
+    photoFallbackArt: collectPhotoFallbackArt(path.join(packRoot(), "cards")),
     cards,
   };
 }
@@ -410,6 +493,36 @@ export function formatKnownCardsMarkdown(report: KnownCardsReport): string {
       : "_Aucune._",
     "",
   );
+  lines.push(
+    "## Photos collector en fallback (pas de render carddass)",
+    "",
+    "Face affichée = plain `art.*` trop lourde (≥ ~300 KB ; site ~40–80 KB /",
+    "~350×495). Pas de `art.corrected` / `art.reconstructed` préféré — OK en",
+    "fallback catalogue, à préparer en reconstruct (`curated/reconstructed/`).",
+    "",
+    "_Exclut_ les cartes déjà servies via `-vc` (`art.corrected`) ou reconstruct.",
+    "",
+  );
+  if (report.photoFallbackArt.length === 0) {
+    lines.push("_Aucune._", "");
+  } else {
+    const high = report.photoFallbackArt.filter((r) => r.priority === "high");
+    const low = report.photoFallbackArt.filter((r) => r.priority === "low");
+    lines.push(
+      `| Priorité | Print | Art | Ko |`,
+      `|----------|-------|-----|---:|`,
+    );
+    for (const row of report.photoFallbackArt) {
+      lines.push(
+        `| ${row.priority} | \`${row.printKey}\` | \`${row.artFile}\` | ${Math.round(row.bytes / 1024)} |`,
+      );
+    }
+    lines.push(
+      "",
+      `**${high.length}** priorité haute (sets publiés), **${low.length}** basse (S6 annulée).`,
+      "",
+    );
+  }
   return lines.join("\n");
 }
 
@@ -441,6 +554,16 @@ export function runNarutoKnownCardsCli(): KnownCardsReport {
   if (report.unreleasedHtmlOnly.length) {
     console.log(
       `   ${"dont HTML seule".padEnd(20)} ${report.unreleasedHtmlOnly.join(", ")}`,
+    );
+  }
+  const photoHigh = report.photoFallbackArt.filter((r) => r.priority === "high");
+  console.log(
+    `   ${"photo fallback".padEnd(20)} ${report.photoFallbackArt.length}` +
+      ` (${photoHigh.length} high)`,
+  );
+  if (photoHigh.length) {
+    console.log(
+      `   → ${photoHigh.map((r) => r.printKey).join(", ")}`,
     );
   }
   return report;

@@ -15,6 +15,7 @@ alone.
 | `sources/carddass-card-names.json` | Official FR names + rarity + errata |
 | `sources/carddass-html-refs.json` | Href ledger (parser candidate later) |
 | `sources/coleka.json` | Targeted extract — S6 + S5 holes only |
+| `sources/attested-promos.json` | Tournament/tin/CdF promos → catalogue stubs |
 
 Installed at refresh: curated sync → `data/naruto/ccg/cards/`. Regenerate
 `logs/apache-index.json` with `pnpm naruto:cards -- --only sources`.

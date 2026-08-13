@@ -85,8 +85,45 @@ Apache / MN / Coleka → **non publiée**, toujours dans `cards[]`.
 
 Nouvelle Série 2012 (~118), promos shuriken, gap Coleka S2 (~20), EN/JP.
 
+### 5bis. Promos shuriken — inventaire 2026-08-13
+
+Ledger recherche : `data/naruto/ccg/staging/narutoccgfrance/promo-attested.json`
+(forum **narutoccgfrance** live + pages tournois déjà en `staging/carddass-fr/`).
+
+- **Officiel CdF 07** : `TE-30` / `NI-23` / `NI-95` → `cards/promo/fr/` + index.
+- **Tin** : `PR-011` / `PR-016` → déjà sur disque.
+- **Rééditions shuriken / marketplace** : injectées en catalogue comme
+  `naruto:promo-{id}` (noms FR, rarity `promo`) même **sans image** — même
+  règle que S6. Source : `curated/sources/attested-promos.json` (merge à
+  l’index). Faces → drop sous `cards/promo/fr/{id}/` puis `--index-only`.
+- Ne pas confondre avec la liste **cartes limitées deck** (t349).
+
 **Dos de carte** : aucun asset officiel isolé en Wayback / Ultrajeux (2026-08-13).
 `cards/back.webp` = Figma provisoire (curated PNG → webp) — [BACK.md](../src/providers/narutoccg/curated/BACK.md).
+
+### 5ter. Photos collector en fallback (pas de render carddass) — 2026-08-13
+
+Heuristic (rapport `pnpm naruto:cards -- --only known`) : face préférée =
+plain `art.*` ≥ ~300 KB (faces site ~40–80 KB / ~350×495). Exclut
+`art.corrected` / `art.reconstructed`.
+
+| Bucket | Cartes | Notes |
+|--------|--------|-------|
+| **S4 high** | `ni194` Asuma, `ni195` Kurenai | Retail (pas `PROMO CARD`). Apache listait `NINJA-194/195.jpg` mais dump site absent. `ni165` / `ni177` OK via `art.corrected.jpg`. |
+| **S6 low** | faces FR sur disque | Série annulée — photos only ; reconstruct optionnel. |
+
+Listé dans `logs/known-cards.{md,json}` → section **Photos collector en
+fallback**. Cible : `curated/reconstructed/{cardId}.png` → `art.reconstructed.webp`.
+
+### 5quater. Archives « carte de la semaine » — 2026-08-13
+
+Spotlights stratégie (pas promos tournoi). Staging :
+`staging/carddass-fr/pages/naruto__archiveN_carte_semaine_*.html`.
+
+- Extract : `logs/carte-semaine.{json,md}` via `carteSemaine.ts` (rebuild à
+  `--index-only`).
+- Merge catalogue : noms FR manquants + stubs S6 si focus sans face
+  (`ni309`, `te263`, `ta240`, …).
 
 ---
 
@@ -94,10 +131,10 @@ Nouvelle Série 2012 (~118), promos shuriken, gap Coleka S2 (~20), EN/JP.
 
 | Fichier | Rôle |
 |---------|------|
-| `logs/known-cards.{md,json}` | Ledger toutes sources |
+| `logs/known-cards.{md,json}` | Ledger toutes sources + photo-fallback / trous |
+| `logs/carte-semaine.{md,json}` | Focus + IDs extraits des archives CdF |
 | `logs/coverage.*` | MN ↔ index |
-| `logs/known-cards.*` | Ledger attestations (checklist, apache, html, MN, coleka) |
 | `staging/README.md` | Layout staging |
 | `src/providers/narutoccg/` | Pipeline + curated |
 
-*Dernière màj : 2026-08-13 — reconstruct S5, fantômes HTML, skip med/tin remap.*
+*Dernière màj : 2026-08-13 — carte-semaine → noms/stubs catalogue.*

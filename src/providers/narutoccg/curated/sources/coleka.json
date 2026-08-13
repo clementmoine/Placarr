@@ -197,6 +197,26 @@
   "ni291": {
    "name": "Carte NI-291",
    "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-291_i1761787"
+  },
+  "pr016": {
+   "name": "Naruto Uzumaki",
+   "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart/naruto-uzumaki_i787874",
+   "colekaId": 787874,
+   "printed": "PR-16",
+   "note": "Tin PR filed under S5 on Coleka"
+  },
+  "pr011": {
+   "name": "Orochimaru",
+   "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart/orochimaru_i787868",
+   "colekaId": 787868,
+   "printed": "PR-11",
+   "note": "Tin PR filed under S5 on Coleka"
+  },
+  "te109": {
+   "name": "Invocation",
+   "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-03-puissances-cachees/invocation_i203137",
+   "colekaId": 203137,
+   "printed": "TE-109"
   }
  }
 }

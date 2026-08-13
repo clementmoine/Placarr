@@ -61,6 +61,52 @@ describe("mapSiteMedThumbsOntoAssets", () => {
     expect(fs.existsSync(path.join(medDir, "ORPHAN-999_med.jpg"))).toBe(true);
   });
 
+  it("does not copy one med onto both retail and promo for the same number", () => {
+    const root = tmpPack();
+    const medDir = path.join(
+      root,
+      "staging",
+      "carddass-fr",
+      "images",
+      "cartes",
+      "cartes_med",
+    );
+    const retailDir = path.join(root, "cards", "s2", "fr", "ni095");
+    const promoDir = path.join(root, "cards", "promo", "fr", "ni095");
+    fs.mkdirSync(medDir, { recursive: true });
+    fs.mkdirSync(retailDir, { recursive: true });
+    fs.mkdirSync(promoDir, { recursive: true });
+    fs.writeFileSync(path.join(retailDir, "art.jpg"), "retail-art");
+    fs.writeFileSync(path.join(promoDir, "art.jpg"), "promo-art");
+    fs.writeFileSync(path.join(medDir, "NINJA-095_med.jpg"), "shared-med");
+
+    const prints: NarutoPrintRow[] = [
+      {
+        printKey: "naruto:s2-ni095",
+        setCode: "s2",
+        number: "ni095",
+        cardType: "ni",
+      },
+      {
+        printKey: "naruto:promo-ni095",
+        setCode: "promo",
+        number: "ni095",
+        cardType: "ni",
+      },
+    ];
+    const assets: NarutoAssetRow[] = [
+      { printKey: "naruto:s2-ni095", lang: "fr", art: "art.jpg" },
+      { printKey: "naruto:promo-ni095", lang: "fr", art: "art.jpg" },
+    ];
+
+    expect(mapSiteMedThumbsOntoAssets(root, prints, assets)).toBe(1);
+    expect(fs.readFileSync(path.join(retailDir, "thumb.jpg"), "utf8")).toBe(
+      "shared-med",
+    );
+    expect(fs.existsSync(path.join(promoDir, "thumb.jpg"))).toBe(false);
+    expect(fs.existsSync(path.join(medDir, "NINJA-095_med.jpg"))).toBe(false);
+  });
+
   it("clears staging without rewriting when thumb.jpg already exists", () => {
     const root = tmpPack();
     const medDir = path.join(

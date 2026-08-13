@@ -1,12 +1,21 @@
 /**
- * Dump sparse JP official specials from Wayback carddas.com into staging.
+ * Dump official JP NARUTOカードゲーム site from Wayback into staging.
  * Not the FR CACG catalogue — do **not** write under `cards/`.
  *
- *   data/naruto/ccg/staging/carddas-jp/cardlist/card_img/…
+ * Hosts (same product line, overlapping archives):
+ *   www.carddas.com/naruto/*   (primary — richer)
+ *   www.carddass.com/naruto/*  (alias / leftovers)
+ *
+ *   data/naruto/ccg/staging/carddas-jp/
+ *     www.carddas.com/naruto/…
+ *     www.carddass.com/naruto/…   (paths not already on carddas.com)
+ *     cdx.json
  *
  *   pnpm naruto:cards -- --locale ja
+ *   pnpm naruto:cards -- --locale ja --cdx-only
  *
- * Not a full 巻ノ catalogue — CDX only has ~dozen `*_spc2.gif` under card_img/.
+ * Official face dump is sparse (specials + product chrome). Full 巻ノ…
+ * cardlists HTML are the valuable part of this mirror.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,31 +24,30 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "./indexStore";
 import { parseCarddasJpAssetPath } from "./parseCarddasJpAsset";
-import { waybackRawUrl } from "./parseCarddassAsset";
-import { downloadRaw, runPool, type ScrapeNarutoOptions } from "./scrapeCards";
+import type { ScrapeNarutoOptions } from "./scrapeCards";
+import {
+  dedupeLatest,
+  downloadMirrorHits,
+  fetchCdxRows,
+  stagingRelFromUrl,
+  writeJson,
+  type MirrorHit,
+} from "./waybackSiteMirror";
 
-const CDX_URL =
-  "https://web.archive.org/cdx/search/cdx?url=www.carddas.com/naruto/cardlist/card_img/*&output=json&fl=timestamp,original,mimetype,statuscode&filter=statuscode:200&collapse=urlkey&limit=5000";
+const CDX_CARDDAS =
+  "https://web.archive.org/cdx/search/cdx?url=www.carddas.com/naruto/*&output=json&fl=timestamp,original,mimetype,statuscode&filter=statuscode:200&collapse=urlkey&limit=20000";
 
-/** Raw official mirror — same role as `staging/carddass-fr/images/`. */
+const CDX_CARDDASS =
+  "https://web.archive.org/cdx/search/cdx?url=www.carddass.com/naruto/*&output=json&fl=timestamp,original,mimetype,statuscode&filter=statuscode:200&collapse=urlkey&limit=20000";
+
 export const NARUTO_STAGING_CARDDAS_JP = path.join("staging", "carddas-jp");
 
-const DEFAULT_CONCURRENCY = 2;
-const DEFAULT_DELAY_MS = 500;
+const DEFAULT_CONCURRENCY = 3;
+const DEFAULT_DELAY_MS = 350;
 
-const IMAGE_MIME =
-  /^(image\/(jpeg|jpg|png|gif|webp)|application\/octet-stream)$/i;
-const IMAGE_EXT = /\.(jpe?g|png|gif|webp)$/i;
-
-type CdxHit = {
-  timestamp: string;
-  original: string;
-  /** Path under `staging/carddas-jp/` (e.g. cardlist/card_img/jutsu-027_spc2.gif). */
-  relPath: string;
-  printKey: string;
-  stem: string;
-  kind: string;
-};
+/** Skip tiny chrome / tracking junk by mime when path has no useful ext. */
+const KEEP_MIME =
+  /^(text\/html|text\/css|text\/plain|application\/(pdf|javascript|x-javascript|xhtml)|image\/|application\/octet-stream)/i;
 
 function packRoot(root?: string): string {
   return path.join(root ?? dataRoot(), NARUTO_PACK_ID);
@@ -49,92 +57,106 @@ function stagingJpDir(root: string): string {
   return path.join(root, NARUTO_STAGING_CARDDAS_JP);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-function canonicalizeUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    if (u.port === "80" || u.port === "443") u.port = "";
-    u.hash = "";
-    return u.toString().replace(/\/$/, "").toLowerCase();
-  } catch {
-    return url.toLowerCase();
+function toMirrorHit(
+  timestamp: string,
+  original: string,
+  mimetype: string,
+): MirrorHit | null {
+  if (mimetype && !KEEP_MIME.test(mimetype)) {
+    if (!/\.(html?|shtml|php|jpe?g|png|gif|webp|pdf|css|js)$/i.test(original)) {
+      return null;
+    }
   }
+  const relPath = stagingRelFromUrl(original, {
+    stripPathPrefix: "/naruto/",
+    includeHost: true,
+  });
+  if (!relPath) return null;
+  const host = relPath.split("/")[0] ?? "www.carddas.com";
+  const rest = relPath.slice(host.length + 1);
+  const withNaruto = rest.startsWith("naruto/")
+    ? relPath
+    : path.posix.join(host, "naruto", rest);
+  return {
+    timestamp,
+    original,
+    mimetype,
+    relPath: withNaruto.toLowerCase(),
+  };
 }
 
-/** `…/naruto/cardlist/card_img/x.gif` → `cardlist/card_img/x.gif` */
-function relPathFromOriginal(original: string): string | null {
+/** Path under /naruto/ without host — for cross-host dedupe. */
+function narutoPathKey(original: string): string | null {
   try {
-    const pathname = decodeURIComponent(new URL(original).pathname).replace(
-      /\\/g,
-      "/",
-    );
-    const m = pathname.match(/\/naruto\/(cardlist\/card_img\/[^/]+)$/i);
-    return m?.[1]?.toLowerCase() ?? null;
+    const u = new URL(original);
+    const p = decodeURIComponent(u.pathname).toLowerCase();
+    const idx = p.indexOf("/naruto/");
+    if (idx < 0) return null;
+    return `${p.slice(idx)}${u.search.toLowerCase()}`;
   } catch {
     return null;
   }
 }
 
-async function fetchCdxHits(): Promise<{
-  hits: CdxHit[];
+async function sweepJp(): Promise<{
+  hits: MirrorHit[];
   cdxRows: number;
+  specials: number;
+  byHost: Record<string, number>;
 }> {
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    try {
-      console.log(`CDX JP fetch attempt ${attempt}/5…`);
-      const response = await fetch(CDX_URL, {
-        headers: { "user-agent": "PlacarrNarutoScrape/1.0 (local collection)" },
-      });
-      if (!response.ok) throw new Error(`CDX HTTP ${response.status}`);
-      const raw = (await response.json()) as string[][];
-      const byCanon = new Map<
-        string,
-        { timestamp: string; original: string }
-      >();
-      let cdxRows = 0;
-      for (const row of raw) {
-        if (!row[0] || row[0] === "timestamp") continue;
-        cdxRows += 1;
-        const timestamp = row[0]!;
-        const original = row[1]!;
-        const mimetype = (row[2] || "").toLowerCase();
-        if (!original) continue;
-        const looksImage =
-          IMAGE_MIME.test(mimetype) ||
-          IMAGE_EXT.test(original.split("?")[0] ?? "");
-        if (!looksImage) continue;
-        const canon = canonicalizeUrl(original);
-        const prev = byCanon.get(canon);
-        if (!prev || timestamp > prev.timestamp) {
-          byCanon.set(canon, { timestamp, original });
-        }
-      }
-      const hits: CdxHit[] = [];
-      for (const { timestamp, original } of byCanon.values()) {
-        const parsed = parseCarddasJpAssetPath(original);
-        const relPath = relPathFromOriginal(original);
-        if (!parsed || !relPath) continue;
-        hits.push({
-          timestamp,
-          original,
-          relPath,
-          printKey: parsed.printKey,
-          stem: parsed.stem,
-          kind: parsed.kind,
-        });
-      }
-      hits.sort((a, b) => a.stem.localeCompare(b.stem));
-      return { hits, cdxRows };
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      await sleep(attempt * 3_000);
-    }
+  const [carddasRows, carddassRows] = await Promise.all([
+    fetchCdxRows(CDX_CARDDAS, "JP carddas.com"),
+    fetchCdxRows(CDX_CARDDASS, "JP carddass.com"),
+  ]);
+
+  const primary = dedupeLatest(carddasRows);
+  const alias = dedupeLatest(carddassRows);
+
+  const primaryKeys = new Set<string>();
+  const byRel = new Map<string, MirrorHit>();
+
+  for (const row of primary) {
+    const key = narutoPathKey(row.original);
+    if (key) primaryKeys.add(key);
+    const hit = toMirrorHit(row.timestamp, row.original, row.mimetype);
+    if (!hit) continue;
+    const prev = byRel.get(hit.relPath);
+    if (!prev || hit.timestamp > prev.timestamp) byRel.set(hit.relPath, hit);
   }
-  throw lastError ?? new Error("CDX JP failed");
+
+  let aliasExtra = 0;
+  for (const row of alias) {
+    const key = narutoPathKey(row.original);
+    if (key && primaryKeys.has(key)) continue;
+    const hit = toMirrorHit(row.timestamp, row.original, row.mimetype);
+    if (!hit) continue;
+    aliasExtra += 1;
+    const prev = byRel.get(hit.relPath);
+    if (!prev || hit.timestamp > prev.timestamp) byRel.set(hit.relPath, hit);
+  }
+
+  const hits = [...byRel.values()].sort((a, b) =>
+    a.relPath.localeCompare(b.relPath),
+  );
+
+  let specials = 0;
+  const byHost: Record<string, number> = {};
+  for (const hit of hits) {
+    const host = hit.relPath.split("/")[0] ?? "?";
+    byHost[host] = (byHost[host] ?? 0) + 1;
+    if (parseCarddasJpAssetPath(hit.original)) specials += 1;
+  }
+
+  console.log(
+    `JP alias extras from carddass.com (unique paths)=${aliasExtra}`,
+  );
+
+  return {
+    hits,
+    cdxRows: carddasRows.length + carddassRows.length,
+    specials,
+    byHost,
+  };
 }
 
 export async function scrapeNarutoJpCards(
@@ -146,35 +168,45 @@ export async function scrapeNarutoJpCards(
   fs.mkdirSync(logsDir, { recursive: true });
   fs.mkdirSync(stagingDir, { recursive: true });
 
-  console.log("── CDX Wayback carddas.com/naruto/cardlist/card_img → staging");
-  const sweep = await fetchCdxHits();
+  console.log(
+    "── CDX Wayback carddas.com + carddass.com /naruto → staging (full site mirror)",
+  );
+  const sweep = await sweepJp();
   let hits = sweep.hits;
-  console.log(`CDX rows=${sweep.cdxRows} specials=${hits.length}`);
+  console.log(
+    `mirror=${hits.length} specials=${sweep.specials} cdxRows=${sweep.cdxRows}`,
+  );
 
   if (options.limit && options.limit > 0) {
     hits = hits.slice(0, options.limit);
+    console.log(`limited assets=${hits.length}`);
   }
 
-  fs.writeFileSync(
-    path.join(logsDir, "cdx-hits-ja.json"),
-    `${JSON.stringify(
-      {
-        source: "wayback:carddas.com",
-        layout: `${NARUTO_STAGING_CARDDAS_JP}/cardlist/card_img/`,
-        specials: hits.map((h) => ({
-          printKey: h.printKey,
-          stem: h.stem,
-          kind: h.kind,
-          relPath: h.relPath,
-          original: h.original,
-          timestamp: h.timestamp,
-        })),
-        note: "Staging only (JP specials ≠ FR CACG). Sparse archive; no full 巻ノ dump. Not written under cards/.",
-      },
-      null,
-      2,
-    )}\n`,
-  );
+  const inventory = {
+    source: "wayback:carddas.com+carddass.com",
+    layout: `${NARUTO_STAGING_CARDDAS_JP}/{host}/naruto/…`,
+    note: "Official JP Carddass CG site mirror. Sparse face GIFs; cardlist HTML is the main corpus. Staging only.",
+    totals: {
+      mirror: hits.length,
+      specials: sweep.specials,
+      cdxRows: sweep.cdxRows,
+      byHost: sweep.byHost,
+    },
+    hits: hits.map((h) => ({
+      relPath: h.relPath,
+      original: h.original,
+      timestamp: h.timestamp,
+      mimetype: h.mimetype,
+    })),
+  };
+  writeJson(path.join(stagingDir, "cdx.json"), inventory);
+  writeJson(path.join(logsDir, "cdx-hits-ja.json"), {
+    source: inventory.source,
+    layout: inventory.layout,
+    note: inventory.note,
+    totals: inventory.totals,
+    sample: hits.slice(0, 30).map((h) => h.relPath),
+  });
 
   if (options.cdxOnly) {
     console.log(
@@ -182,8 +214,7 @@ export async function scrapeNarutoJpCards(
         {
           cdxOnly: true,
           staging: NARUTO_STAGING_CARDDAS_JP,
-          specials: hits.length,
-          layout: `${NARUTO_STAGING_CARDDAS_JP}/cardlist/card_img/`,
+          ...inventory.totals,
         },
         null,
         2,
@@ -200,32 +231,27 @@ export async function scrapeNarutoJpCards(
     `── download JP → ${NARUTO_STAGING_CARDDAS_JP}/ (${hits.length}) concurrency=${concurrency} delayMs=${delayMs}${force ? " force" : ""}`,
   );
 
-  let ok = 0;
-  let skip = 0;
-  let fail = 0;
-  await runPool(hits, concurrency, delayMs, async (hit) => {
-    const dest = path.join(stagingDir, hit.relPath);
-    const url = waybackRawUrl(hit.timestamp, hit.original);
-    const result = await downloadRaw(url, dest, !force);
-    if (result === "ok") ok += 1;
-    else if (result === "skip") skip += 1;
-    else fail += 1;
+  const { ok, skip, fail } = await downloadMirrorHits(hits, stagingDir, {
+    concurrency,
+    delayMs,
+    force,
+    label: "ja",
   });
 
   const summary = {
     staging: NARUTO_STAGING_CARDDAS_JP,
-    layout: `${NARUTO_STAGING_CARDDAS_JP}/cardlist/card_img/`,
     downloaded: ok,
     skipped: skip,
     failed: fail,
-    specials: hits.length,
+    mirror: hits.length,
+    specials: sweep.specials,
+    byHost: sweep.byHost,
     stagingDir,
-    note: "Sparse JP specials in staging — promote to cards/{set}/jap/ when first-class.",
   };
-  fs.writeFileSync(
-    path.join(logsDir, "last-run-ja.json"),
-    `${JSON.stringify({ ...summary, at: new Date().toISOString() }, null, 2)}\n`,
-  );
+  writeJson(path.join(logsDir, "last-run-ja.json"), {
+    ...summary,
+    at: new Date().toISOString(),
+  });
   console.log(JSON.stringify(summary, null, 2));
 }
 

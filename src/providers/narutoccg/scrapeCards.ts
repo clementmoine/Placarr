@@ -26,6 +26,11 @@ import {
   titlesForPrints,
 } from "./mangaNewsTitles";
 import { materializeTinBoxPromos, TIN_BOX_PROMOS } from "./tinBoxPromos";
+import { mergeAttestedPromos } from "./attestedPromos";
+import {
+  mergeCarteSemaineIntoIndex,
+  writeCarteSemaineReport,
+} from "./carteSemaine";
 import { applyOfficialNames, loadOfficialNames } from "./officialNames";
 import { ensureNarutoChecklistLayout } from "./buildCoverageChecklist";
 import {
@@ -544,6 +549,7 @@ export function mapSiteMedThumbsOntoAssets(
     if (targets.length === 0) continue;
 
     const destPaths: string[] = [];
+    const setCodes = new Set<string>();
     for (const asset of targets) {
       const print = printByKey.get(asset.printKey)!;
       const cardId = print.grouping
@@ -551,11 +557,25 @@ export function mapSiteMedThumbsOntoAssets(
         : print.number;
       const cardDir = path.join(cardsDir, print.setCode, asset.lang, cardId);
       if (!fs.existsSync(cardDir)) continue;
+      setCodes.add(print.setCode);
       destPaths.push(path.join(cardDir, "thumb.jpg"));
     }
     if (destPaths.length === 0) continue;
 
-    const allHaveThumb = destPaths.every((dest) => {
+    // One site med per collector number must not paint both retail and promo:
+    // they share NI/TE/TA but different faces (PROMO mark / shurikens). Prefer
+    // retail folders; promo thumbs come from the promo art (fixThumbs).
+    const medDestPaths =
+      setCodes.size > 1
+        ? destPaths.filter((dest) => {
+            const rel = path.relative(cardsDir, path.dirname(dest));
+            const setCode = rel.split(path.sep)[0];
+            return setCode !== "promo";
+          })
+        : destPaths;
+    if (medDestPaths.length === 0) continue;
+
+    const allHaveThumb = medDestPaths.every((dest) => {
       try {
         return fs.statSync(dest).isFile();
       } catch {
@@ -565,7 +585,7 @@ export function mapSiteMedThumbsOntoAssets(
 
     if (!allHaveThumb) {
       // Drop prior symlinks / stale thumbs so we install real bytes.
-      for (const dest of destPaths) {
+      for (const dest of medDestPaths) {
         try {
           const st = fs.lstatSync(dest);
           if (st.isSymbolicLink() || st.isFile()) fs.unlinkSync(dest);
@@ -593,7 +613,7 @@ export function mapSiteMedThumbsOntoAssets(
         fs.renameSync(tmp, to);
       };
       try {
-        for (const dest of destPaths) writeReal(hit.abs, dest);
+        for (const dest of medDestPaths) writeReal(hit.abs, dest);
       } catch {
         continue;
       }
@@ -608,6 +628,25 @@ export function mapSiteMedThumbsOntoAssets(
       }
     }
     for (const asset of targets) {
+      const print = printByKey.get(asset.printKey)!;
+      const cardId = print.grouping
+        ? `${print.number}-${print.grouping}`
+        : print.number;
+      const dest = path.join(
+        cardsDir,
+        print.setCode,
+        asset.lang,
+        cardId,
+        "thumb.jpg",
+      );
+      const gotMed = medDestPaths.includes(dest);
+      let hasFile = false;
+      try {
+        hasFile = fs.statSync(dest).isFile();
+      } catch {
+        /* */
+      }
+      if (!gotMed && !hasFile) continue;
       asset.thumb = "thumb.jpg";
       mapped += 1;
     }
@@ -661,32 +700,52 @@ export async function scrapeNarutoCards(
     const tinPromos = materializeTinBoxPromos(root);
     const { prints, assets } = buildIndexFromDisk(root);
     const thumbMapped = mapSiteMedThumbsOntoAssets(root, prints, assets);
-    const titles = titlesForNarutoPrints(prints);
+    const baseTitles = titlesForNarutoPrints(prints);
+    const withPromos = mergeAttestedPromos({ prints, titles: baseTitles });
+    const carteSemaine = writeCarteSemaineReport(root);
+    const merged = mergeCarteSemaineIntoIndex({
+      prints: withPromos.prints,
+      titles: withPromos.titles,
+      report: carteSemaine,
+      root,
+    });
     const { dbPath, printCount } = writeNarutoCcgIndex({
-      prints,
-      titles,
+      prints: merged.prints,
+      titles: merged.titles,
       assets,
       dbPath: path.join(root, "catalog.sqlite"),
       meta: {
         source: "disk",
-        titleSource: "carddass-official + manga-news-cache",
-        titleCount: String(titles.length),
+        titleSource:
+          "carddass-official + manga-news-cache + attested-promos + carte-semaine",
+        titleCount: String(merged.titles.length),
         thumbMapped: String(thumbMapped),
         tinPromos: tinPromos.installed.join(","),
+        attestedPromosAdded: String(withPromos.addedPrints.length),
+        carteSemaineNamed: String(merged.named.length),
+        carteSemaineAdded: String(merged.addedPrints.length),
         migratedVcBacks: String(migratedVc),
       },
     });
     const indexPath = path.join(root, "cards-index.json");
-    exportNarutoCardsIndexJson(prints, assets, indexPath, titles);
+    exportNarutoCardsIndexJson(
+      merged.prints,
+      assets,
+      indexPath,
+      merged.titles,
+    );
     console.log(
       JSON.stringify(
         {
           indexOnly: true,
           printCount,
-          titleCount: titles.length,
+          titleCount: merged.titles.length,
           thumbMapped,
           migratedVc,
           tinPromos,
+          attestedPromosAdded: withPromos.addedPrints.length,
+          carteSemaineNamed: merged.named.length,
+          carteSemaineAdded: merged.addedPrints.length,
           dbPath,
           indexPath,
         },
@@ -939,25 +998,55 @@ export async function scrapeNarutoCards(
   const thumbMapped = mapSiteMedThumbsOntoAssets(root, printList, assetList);
 
   console.log("── index catalog.sqlite + cards-index.json");
-  const titles = titlesForNarutoPrints(printList);
-  const { dbPath, printCount } = writeNarutoCcgIndex({
+  const baseTitles = titlesForNarutoPrints(printList);
+  const withPromos = mergeAttestedPromos({
     prints: printList,
-    titles,
+    titles: baseTitles,
+  });
+  if (withPromos.addedPrints.length) {
+    console.log(
+      `── attested promos: ${withPromos.addedPrints.length} printKeys sans face encore`,
+    );
+  }
+  const carteSemaine = writeCarteSemaineReport(root);
+  const merged = mergeCarteSemaineIntoIndex({
+    prints: withPromos.prints,
+    titles: withPromos.titles,
+    report: carteSemaine,
+    root,
+  });
+  if (merged.named.length || merged.addedPrints.length) {
+    console.log(
+      `── carte-semaine: ${merged.named.length} titres, ${merged.addedPrints.length} stubs`,
+    );
+  }
+  const { dbPath, printCount } = writeNarutoCcgIndex({
+    prints: merged.prints,
+    titles: merged.titles,
     assets: assetList,
     dbPath: path.join(root, "catalog.sqlite"),
     meta: {
       source: "wayback:carddass.fr",
       cdxHits: String(hits.length),
       siteExtras: String(siteHits.length),
-      titleSource: "carddass-official + manga-news-cache",
-      titleCount: String(titles.length),
+      titleSource:
+        "carddass-official + manga-news-cache + attested-promos + carte-semaine",
+      titleCount: String(merged.titles.length),
       thumbMapped: String(thumbMapped),
       tinPromos: tinPromos.installed.join(","),
+      attestedPromosAdded: String(withPromos.addedPrints.length),
+      carteSemaineNamed: String(merged.named.length),
+      carteSemaineAdded: String(merged.addedPrints.length),
       migratedVcBacks: String(migratedVc),
     },
   });
   const indexPath = path.join(root, "cards-index.json");
-  exportNarutoCardsIndexJson(printList, assetList, indexPath, titles);
+  exportNarutoCardsIndexJson(
+    merged.prints,
+    assetList,
+    indexPath,
+    merged.titles,
+  );
 
   const siteByKind: Record<string, number> = {};
   for (const h of siteHits) siteByKind[h.kind] = (siteByKind[h.kind] ?? 0) + 1;
@@ -967,7 +1056,10 @@ export async function scrapeNarutoCards(
     skipped: skip,
     failed: fail,
     printCount,
-    titleCount: titles.length,
+    titleCount: merged.titles.length,
+    attestedPromosAdded: withPromos.addedPrints.length,
+    carteSemaineNamed: merged.named.length,
+    carteSemaineAdded: merged.addedPrints.length,
     thumbMapped,
     migratedVc,
     tinPromos,

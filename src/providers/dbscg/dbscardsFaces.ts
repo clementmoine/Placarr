@@ -118,6 +118,14 @@ export function dbscardsSlugs(input: DbscardsFaceInput): string[] {
  * `face: "back"` asks for the awakened side, which only Leader prints have —
  * a miss there is normal, not a failure.
  */
+/**
+ * Which pool a URL points at. The learned attempt order keys on this — a set
+ * lives entirely in one pool, so one probe teaches the rest of it.
+ */
+export function dbscardsPoolOf(url: string): "legacy" | "set" {
+  return url.includes("/cards/original/") ? "legacy" : "set";
+}
+
 export function dbscardsFaceUrls(
   input: DbscardsFaceInput,
   opts: { face?: "front" | "back" } = {},

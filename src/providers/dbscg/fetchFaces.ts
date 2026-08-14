@@ -30,7 +30,15 @@ import {
   writeSoftbanState,
 } from "@/providers/shared/softban";
 
-import { dbscardsFaceUrls } from "./dbscardsFaces";
+import {
+  loadAttemptOrder,
+  rankAttempts,
+  recordAttempt,
+  saveAttemptOrder,
+  type AttemptOrderLedger,
+} from "@/providers/shared/attemptOrder";
+
+import { dbscardsFaceUrls, dbscardsPoolOf } from "./dbscardsFaces";
 import {
   dbsFaceFilename,
   dbsFaceSourceOf,
@@ -82,6 +90,7 @@ const SOFTBAN_LEDGER = "faces";
 /** Long enough to be a real pause: this host bans by the hour, not the minute. */
 const SOFTBAN_COOLDOWN_MS = 60 * 60 * 1000;
 const PREFERRED_HOST = "static.dbscards.fr";
+const ATTEMPT_ORDER_LEDGER = "faces";
 const MIN_WEBP_BYTES = 100;
 
 export type FetchDbsCgFacesOptions = {
@@ -264,6 +273,8 @@ async function downloadFace(
   urls: readonly string[],
   banned: BannedHosts,
   retryBackoffMs = RETRY_BACKOFF_MS,
+  /** Called for answers only — a 200 or a 404, never a silence. */
+  onAnswer?: (url: string, hit: boolean) => void,
 ): Promise<FaceDownload> {
   let throttled = false;
   for (const url of urls) {
@@ -302,7 +313,10 @@ async function downloadFace(
         const raw = toBuffer(response.data);
         if (raw.byteLength < MIN_WEBP_BYTES) break;
         const webp = await toWebp(raw);
-        if (webp) return { buf: webp, throttled };
+        if (webp) {
+          onAnswer?.(url, true);
+          return { buf: webp, throttled };
+        }
         break;
       } catch (error) {
         const status = (error as { response?: { status?: number } } | undefined)
@@ -314,7 +328,11 @@ async function downloadFace(
         }
         // A status at all means the host answered; only silence is worth
         // asking again.
-        if (status != null || attempt >= DOWNLOAD_RETRIES) break;
+        if (status != null) {
+          onAnswer?.(url, false);
+          break;
+        }
+        if (attempt >= DOWNLOAD_RETRIES) break;
         attempt += 1;
         if (retryBackoffMs > 0) await sleep(retryBackoffMs * attempt);
       }
@@ -435,6 +453,12 @@ export async function fetchDbsCgFaces(
   /** Shared across the pool so one refusal stops the whole run pestering. */
   const banned: BannedHosts = new Set();
 
+  /** Which URL shape has been answering, per source and set. Survives runs. */
+  const order: AttemptOrderLedger = loadAttemptOrder(
+    foilPackDataDir(DBS_CG_PACK_ID),
+    ATTEMPT_ORDER_LEDGER,
+  );
+
   /*
     A cooldown outlives the process on purpose. An in-memory flag protects only
     the run that got banned; the next one starts innocent, hammers the same
@@ -530,10 +554,27 @@ export async function fetchDbsCgFaces(
         repaired by simply running again, no `--force` needed.
       */
       if (!force && existsSync(file)) continue;
+      /*
+        Try the pool that has been answering for this set first.
+
+        A set lives entirely in one of dbscards' two pools — measured, three
+        sets sampled were homogeneous — but which one is not derivable. So one
+        card's answer settles the rest of its set, turning a wasted request per
+        card into one per set.
+      */
+      const orderKey = `${candidate.source}:${lang}:${print.setCode}`;
+      const urls =
+        candidate.source === "dbscards"
+          ? rankAttempts(order, orderKey, candidate.urls, dbscardsPoolOf)
+          : candidate.urls;
       const { buf, throttled } = await downloadFace(
-        candidate.urls,
+        urls,
         banned,
         retryBackoffMs,
+        candidate.source === "dbscards"
+          ? (url, hit) =>
+              recordAttempt(order, orderKey, dbscardsPoolOf(url), hit)
+          : undefined,
       );
       if (throttled) throttledHere = true;
       if (!buf) continue;
@@ -605,6 +646,12 @@ export async function fetchDbsCgFaces(
       stats.fail += 1;
     }
   });
+
+  saveAttemptOrder(
+    foilPackDataDir(DBS_CG_PACK_ID),
+    ATTEMPT_ORDER_LEDGER,
+    order,
+  );
 
   const indexPath = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
   exportDbsCgCardsIndexJson(

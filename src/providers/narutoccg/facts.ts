@@ -1,6 +1,11 @@
 /**
  * Item facts for a Naruto CCG print.
  *
+ * `kind` is `category`, never `tag`: the item page remaps `tag` (and `genre`)
+ * to a single "Thèmes" label, which is right for board-game families but wipes
+ * a card attribute's own name — Rareté, Distribution and Langue all rendered as
+ * three groups called "Thèmes".
+ *
  * The pack is a closed local corpus, so everything here is read from
  * `catalog.sqlite` plus the curated ledgers — no network, no guessing. What the
  * catalogue does not hold (chakra cost, power, printed effect text) is simply
@@ -90,7 +95,7 @@ function promoFacts(number: string, providerId: string): MetadataFact[] {
     : null;
   if (channel) {
     out.push({
-      kind: "tag",
+      kind: "category",
       label: "Distribution",
       value: channel,
       source: providerId,
@@ -100,7 +105,7 @@ function promoFacts(number: string, providerId: string): MetadataFact[] {
   }
   if (typeof row.shuriken === "number" && row.shuriken > 0) {
     out.push({
-      kind: "tag",
+      kind: "category",
       // The printed PROMO stamp carries 1–3 shurikens; more = scarcer.
       label: "Shurikens",
       value: "★".repeat(row.shuriken),
@@ -141,7 +146,7 @@ export function narutoPrintFacts(
 
   if (row.rarity) {
     facts.push({
-      kind: "tag",
+      kind: "category",
       label: "Rareté",
       value: row.rarity,
       source: providerId,
@@ -157,7 +162,7 @@ export function narutoPrintFacts(
     code && code !== "pr" ? (CARD_FAMILY[code] ?? row.cardType) : null;
   if (family) {
     facts.push({
-      kind: "tag",
+      kind: "category",
       label: "Type",
       value: family,
       source: providerId,
@@ -168,7 +173,7 @@ export function narutoPrintFacts(
 
   if (row.lang) {
     facts.push({
-      kind: "tag",
+      kind: "category",
       label: "Langue",
       value: row.lang.toUpperCase(),
       source: providerId,

@@ -54,7 +54,11 @@ export type HoloShader = {
    * every Pokémon card came back wearing Lorcana's silver texture — the one
    * thing `cssGuard` exists to forbid, arriving by a path it could not see.
    */
-  id: HoloShaderId | HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
+  id:
+    | HoloShaderId
+    | HouseHoloShaderId
+    | PokemonHoloShaderId
+    | SimeyHoloShaderId;
   /** Comma-separated `background-image` layers. */
   backgroundImage: string;
   backgroundRepeat: string;
@@ -68,6 +72,16 @@ export type HoloShader = {
   opacity?: number;
   filter?: string;
   /**
+   * A CSS `animation` shorthand, for a look whose character is its *timing*.
+   *
+   * Everything else here is positioned by JS through `--combined` /
+   * `--pointer-*`, which can say where the light is but not that it should
+   * pass and then wait. Optional and rare on purpose: a keyframed layer no
+   * longer answers the pointer, so only reach for it when the pause is the
+   * point. Keyframes live in `globals.css`.
+   */
+  animation?: string;
+  /**
    * A second coat this finish always comes with, drawn above it through the
    * same mask. Two finishes ship one: without it a Lore card was missing the
    * layer that carries most of its colour.
@@ -78,7 +92,11 @@ export type HoloShader = {
     three passes — dodge for the highlights, exclusion for the iridescence,
     multiply for the depth — because no single blend does all three.
   */
-  overlay?: HoloShaderId | HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
+  overlay?:
+    | HoloShaderId
+    | HouseHoloShaderId
+    | PokemonHoloShaderId
+    | SimeyHoloShaderId;
   /**
    * A repeating pattern that **cuts** this finish into shapes, rather than
    * being painted with it.
@@ -482,6 +500,7 @@ export function holoLayerStyle(
         ? shader.opacity
         : round((shader.opacity ?? 1) * motif),
     filter: withFilter(shader.filter, added),
+    ...(shader.animation ? { animation: shader.animation } : {}),
     ...(shader.clipPath ? { clipPath: shader.clipPath } : {}),
   };
 }

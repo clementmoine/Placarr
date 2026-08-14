@@ -164,41 +164,48 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
   },
 
   /**
-   * A bright spot under the pointer with a dark falloff, crossed by one
-   * diagonal band. No spectrum, no grain.
+   * One narrow glint that crosses the card and then leaves it alone.
    *
    * The plainest look here on purpose. It suits a pack whose foil was never
-   * captured: a rainbow would invent detail we do not have, while a highlight
-   * that tracks the light only claims "this copy is shiny", which is exactly
-   * what we do know.
+   * captured: a spectrum would invent detail we do not have, while a glint
+   * only claims "this copy is shiny", which is exactly what we do know.
    *
-   * Shape follows the technique `kongyo2/cards-css` uses for its `reverse`
-   * card — a pointer-centred radial differenced against a diagonal sweep, the
-   * stack then dodged onto the art. Written in our own values and layers: we
-   * have no foil texture to sit under it, so the third layer of the original
-   * is gone and the blend collapses to one `difference`.
+   * Taken from the Pokémon TCG gallery's own hero cards — a thin white bar at
+   * -45°, `luminosity`, crossing in a fifth of the cycle and resting for the
+   * rest. `luminosity` is the part that matters: it lifts brightness while
+   * leaving the artwork's hue alone, so the card looks polished rather than
+   * washed white the way `screen` leaves it.
    *
-   * Dodge is what gives it the wet, polished look instead of a flat wash — and
-   * dodge is also what blew out the earlier house looks. The brightness is
-   * held near half on purpose: that is the whole reason the reference reads
-   * clean rather than burnt.
+   * The pause is the character, and a pause needs a timeline — so this is the
+   * one look driven by keyframes instead of the pointer. See
+   * `HoloShader.animation`.
    */
   flare: {
     id: "flare",
-    backgroundImage: `radial-gradient(farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%), rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.28) 22%, rgba(255,255,255,0) 55%), linear-gradient(-45deg, transparent 38%, rgba(255,255,255,0.5) 50%, transparent 62%)`,
-    backgroundRepeat: "no-repeat, no-repeat",
-    backgroundSize: "120% 120%, 200% 200%",
-    backgroundPosition:
-      "center center, var(--background-x, 50%) var(--background-y, 50%)",
-    backgroundBlendMode: "screen",
-    // Screen, not dodge: dodge on a layer dark enough to stay safe lifts almost
-    // nothing, and bright enough to show burns the art. Screen only ever
-    // lightens, so the illustration survives underneath at any angle.
-    mixBlendMode: "screen",
-    opacity: 0.9,
-    // Brightest as the card turns away from you, which is when a real foil
-    // catches the light; settles as you face it.
-    filter: `brightness(${lit(0.85, 0.6)}) contrast(1.25)`,
+    backgroundImage: `linear-gradient(-45deg, transparent 44%, rgba(255,255,255,0.95) 50%, transparent 56%)`,
+    backgroundRepeat: "no-repeat",
+    // Wider than the card so the band is fully off it at both ends of the
+    // sweep, instead of appearing and vanishing mid-face.
+    backgroundSize: "250% 250%",
+    // Overridden by the animation; the resting frame for reduced motion.
+    backgroundPosition: "160% 160%",
+    mixBlendMode: "luminosity",
+    opacity: 0.7,
+    animation: "holo-sweep 5s linear infinite",
+    /*
+      No pointer falloff. That mask fades the foil to nothing 68% out from the
+      cursor, which suits a textured holo — light only reads where you point.
+      Here it cut the band into a patch around the pointer, so the glint never
+      crossed the card: the one thing this look is.
+    */
+    pointerFalloff: false,
+    /*
+      The band's path is on a timer, but its strength still answers the light:
+      the glint is brightest when the card is turned away, which is when a real
+      foil catches it. Keeps this look inside the promise every other one makes
+      (`cssGuard`) instead of taking an exception from it.
+    */
+    filter: `brightness(${lit(0.95, 0.5)})`,
   },
 };
 

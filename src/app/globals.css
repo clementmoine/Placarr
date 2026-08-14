@@ -162,3 +162,28 @@
   inherits: true;
   initial-value: 0;
 }
+
+/* A single glint crossing the card, then a long rest — the shape the Pokémon
+   TCG gallery uses on its hero cards. Every other look here is driven by JS
+   through the custom properties above, which can express a position but not a
+   pause: the character of this one is that it passes quickly and then leaves
+   the card alone, so it needs a timeline. `background-position` rather than a
+   transform, because the layer is the masked foil plane itself. */
+@keyframes holo-sweep {
+  0% {
+    background-position: -60% -60%;
+  }
+  20%,
+  100% {
+    background-position: 160% 160%;
+  }
+}
+
+/* Matches only layers that asked for the sweep by name (set inline by
+   `holoLayerStyle`). Motion is the whole effect here, so it stops rather than
+   slows. */
+@media (prefers-reduced-motion: reduce) {
+  [style*="holo-sweep"] {
+    animation: none;
+  }
+}

@@ -5,6 +5,7 @@
 import { existsSync } from "node:fs";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
+import { parsePrintKey } from "@/core/identify/printKey";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
@@ -16,6 +17,7 @@ import {
   lookupNarutoTitle,
   narutoCcgDbPath,
 } from "./indexStore";
+import { searchNarutoPrints, lookupNarutoPrint } from "./searchPrints";
 import { narutoccgCatalog } from "./pipeline";
 
 const PROVIDER_ID = "narutoccg";
@@ -59,6 +61,12 @@ export const narutoccgModule: ProviderModule = {
       return resolveFromLocal(ctx);
     },
   }),
+  searchPrints: async ({ query, language, limit }) =>
+    searchNarutoPrints(query, { language: language ?? undefined, limit }),
+  lookupPrint: async ({ printKey, language }) => {
+    if (parsePrintKey(printKey)?.game !== "naruto") return null;
+    return lookupNarutoPrint(printKey, { language: language ?? undefined });
+  },
   mappingProbe: {
     sampleInput: "naruto:s1-ni001",
     context: { printKey: "naruto:s1-ni001" },

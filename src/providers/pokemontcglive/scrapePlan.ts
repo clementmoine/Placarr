@@ -17,6 +17,25 @@ import {
 } from "node:fs";
 import path from "node:path";
 
+/*
+  Soft-ban state is shared with the other packs that scrape a rate-limiting
+  host — see `providers/shared/softban`. Re-exported so this module keeps the
+  surface its callers already use.
+*/
+export {
+  clearSoftbanState,
+  readSoftbanState,
+  softbanRemainingMs,
+  softbanStatePath,
+  writeSoftbanState,
+  type SoftbanState,
+} from "@/providers/shared/softban";
+
+import {
+  readSoftbanState,
+  softbanRemainingMs,
+} from "@/providers/shared/softban";
+
 import {
   buildCdnCatalogue,
   emptyCdnCatalogue,
@@ -25,12 +44,6 @@ import {
   type CdnCatalogue,
   type CdnManifestDump,
 } from "./cdnManifest";
-
-export type SoftbanState = {
-  until: string;
-  reason: string;
-  writtenAt: string;
-};
 
 export type ScrapePlan = {
   names: string[];
@@ -46,63 +59,12 @@ function logsDir(cacheRoot: string): string {
   return path.join(cacheRoot, "logs");
 }
 
-export function softbanStatePath(cacheRoot: string): string {
-  return path.join(logsDir(cacheRoot), "cdn-softban-until.json");
-}
-
 export function scrapeLockPath(cacheRoot: string): string {
   return path.join(logsDir(cacheRoot), "cdn-scrape.lock");
 }
 
 export function knownCdnMissPath(cacheRoot: string): string {
   return path.join(logsDir(cacheRoot), "cdn-unavailable-stems.txt");
-}
-
-export function readSoftbanState(cacheRoot: string): SoftbanState | null {
-  const p = softbanStatePath(cacheRoot);
-  if (!existsSync(p)) return null;
-  try {
-    const raw = JSON.parse(readFileSync(p, "utf8")) as SoftbanState;
-    if (!raw?.until) return null;
-    return raw;
-  } catch {
-    return null;
-  }
-}
-
-export function writeSoftbanState(
-  cacheRoot: string,
-  opts: { until: Date; reason: string },
-): SoftbanState {
-  mkdirSync(logsDir(cacheRoot), { recursive: true });
-  const state: SoftbanState = {
-    until: opts.until.toISOString(),
-    reason: opts.reason,
-    writtenAt: new Date().toISOString(),
-  };
-  writeFileSync(
-    softbanStatePath(cacheRoot),
-    `${JSON.stringify(state, null, 2)}\n`,
-    "utf8",
-  );
-  return state;
-}
-
-export function clearSoftbanState(cacheRoot: string): void {
-  const p = softbanStatePath(cacheRoot);
-  if (existsSync(p)) unlinkSync(p);
-}
-
-/** Active soft-ban cooldown remaining (ms), or 0 if clear. */
-export function softbanRemainingMs(
-  cacheRoot: string,
-  now = Date.now(),
-): number {
-  const state = readSoftbanState(cacheRoot);
-  if (!state) return 0;
-  const until = Date.parse(state.until);
-  if (!Number.isFinite(until)) return 0;
-  return Math.max(0, until - now);
 }
 
 export function loadKnownCdnMisses(cacheRoot: string): Set<string> {
@@ -187,7 +149,9 @@ export function tryAcquireScrapeLock(
   if (existsSync(lockPath)) {
     let holder: number | null = null;
     try {
-      const raw = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: number };
+      const raw = JSON.parse(readFileSync(lockPath, "utf8")) as {
+        pid?: number;
+      };
       holder = typeof raw.pid === "number" ? raw.pid : null;
     } catch {
       holder = null;
@@ -244,9 +208,7 @@ export function planScrapeNames(opts: {
 }): ScrapePlan {
   const extras = [...(opts.extras ?? [])].map((s) => s.trim()).filter(Boolean);
   const skipKnown =
-    opts.retryCdnMisses === true
-      ? false
-      : opts.skipKnownMisses !== false;
+    opts.retryCdnMisses === true ? false : opts.skipKnownMisses !== false;
   const knownMiss = skipKnown ? loadKnownCdnMisses(opts.cacheRoot) : new Set();
   const deferredKnownMiss: string[] = [];
   const wanted: string[] = [];
@@ -283,7 +245,7 @@ export function planScrapeNames(opts: {
 
   const remaining = softbanRemainingMs(opts.cacheRoot);
   const softbanUntil =
-    remaining > 0 ? readSoftbanState(opts.cacheRoot)?.until ?? null : null;
+    remaining > 0 ? (readSoftbanState(opts.cacheRoot)?.until ?? null) : null;
 
   return {
     names: [...extras, ...scrapeWanted],

@@ -1,10 +1,9 @@
 /**
- * Card faces → `data/dbs/cg/cards/{set}/fr/{card}/art.webp`.
+ * Card faces → `data/dbs/cg/cards/{set}/{lang}/{card}/art.webp`.
  *
- * dbscards.fr first, at 400x560. Everything behind it serves Bandai's own
- * 260x363 — the official `cardimg/`, the Deckplanet mirror, and the Fandom
- * wiki alike (see `dbscardsFaces`), so the fallbacks are for coverage, not
- * quality.
+ * One face per printing *in its own language*, filed per locale. dbscards
+ * leads at 400x560, Bandai's own 260x363 stands in, and Deckplanet — English
+ * only, up to 860x1205 — is reachable from the English column alone.
  *
  * Deckplanet hosts are the Linode bucket used by
  * https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena and that repo’s
@@ -16,7 +15,15 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardDir } from "@/lib/packPaths";
+import { foilPackDataDir } from "@/lib/runtimeData";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
+
+import {
+  clearSoftbanState,
+  isSoftbanStatus,
+  softbanRemainingMs,
+  writeSoftbanState,
+} from "@/providers/shared/softban";
 
 import { dbscardsFaceUrls } from "./dbscardsFaces";
 import { DBS_CG_CARDLIST_ORIGIN } from "./parseCardlist";
@@ -47,6 +54,12 @@ const MAX_FACE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_CONCURRENCY = 1;
 /** No artificial sleep: one request at a time is the throttle. */
 const DEFAULT_DELAY_MS = 0;
+
+/** Where the cooldown is written, next to the pack's other logs. */
+const SOFTBAN_LEDGER = "faces";
+/** Long enough to be a real pause: this host bans by the hour, not the minute. */
+const SOFTBAN_COOLDOWN_MS = 60 * 60 * 1000;
+const PREFERRED_HOST = "static.dbscards.fr";
 const MIN_WEBP_BYTES = 100;
 
 export type FetchDbsCgFacesOptions = {
@@ -194,18 +207,6 @@ async function toWebp(buf: Buffer): Promise<Buffer | null> {
   }
 }
 
-/**
- * A refusal that means "slow down", not "no such file".
- *
- * Treating the two alike is what made a throttle invisible: a bulk pass got
- * 403s from dbscards, silently fell through to Bandai's 260x363 and reported
- * a clean run, so half the catalogue ended up at the smaller size with nothing
- * in the log to say why.
- */
-function isThrottleStatus(status: number | undefined): boolean {
-  return status === 403 || status === 429 || status === 503;
-}
-
 export type FaceDownload = { buf: Buffer | null; throttled: boolean };
 
 /** Hosts that told us to go away, for the rest of this run. */
@@ -253,7 +254,7 @@ async function downloadFace(
     } catch (error) {
       const status = (error as { response?: { status?: number } } | undefined)
         ?.response?.status;
-      if (isThrottleStatus(status)) {
+      if (isSoftbanStatus(status)) {
         throttled = true;
         banned.add(hostOf(url));
       }
@@ -313,6 +314,24 @@ export async function fetchDbsCgFaces(
 
   /** Shared across the pool so one refusal stops the whole run pestering. */
   const banned: BannedHosts = new Set();
+
+  /*
+    A cooldown outlives the process on purpose. An in-memory flag protects only
+    the run that got banned; the next one starts innocent, hammers the same
+    host and extends the block. Same ledger the Pokémon CDN scrape keeps.
+  */
+  const cacheRoot = foilPackDataDir(DBS_CG_PACK_ID);
+  const remainingMs = softbanRemainingMs(cacheRoot, Date.now(), SOFTBAN_LEDGER);
+  if (remainingMs > 0) {
+    const waitS = Math.ceil(remainingMs / 1000);
+    console.warn(
+      `── refroidissement actif : ${waitS}s restantes avant de réinterroger la source préférée.`,
+    );
+    console.warn(
+      "   La passe continue avec les sources de repli — relancer --force après ce délai pour la haute définition.",
+    );
+    banned.add(PREFERRED_HOST);
+  }
 
   const stats: FetchDbsCgFacesResult = {
     ok: 0,
@@ -382,6 +401,15 @@ export async function fetchDbsCgFaces(
   console.log(
     `── faces ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} fail=${stats.fail} → ${indexPath}`,
   );
+  if (banned.has(PREFERRED_HOST) && remainingMs === 0) {
+    writeSoftbanState(cacheRoot, {
+      until: new Date(Date.now() + SOFTBAN_COOLDOWN_MS),
+      reason: `${PREFERRED_HOST} a refusé pendant la passe faces`,
+      name: SOFTBAN_LEDGER,
+    });
+  } else if (stats.throttled === 0 && remainingMs === 0) {
+    clearSoftbanState(cacheRoot, SOFTBAN_LEDGER);
+  }
   if (stats.throttled > 0) {
     console.warn(
       `── ATTENTION : ${stats.throttled} tirages ont reçu une face de repli parce que la source préférée nous a bridés (403/429).`,

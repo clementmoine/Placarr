@@ -46,24 +46,37 @@ describe("foilExtractRunner targets", () => {
 
   it("builds DBS Masters and Fusion World catalogue sync commands", async () => {
     const masters = await resolveFoilExtractCommand("dbs-cg");
-    expect(masters.args.some((a) => a.includes(`${path.sep}dbscg${path.sep}cli.ts`) || a.includes("/dbscg/cli.ts"))).toBe(
-      true,
-    );
-    expect(masters.prelude.some((line) => /Deckplanet/i.test(line))).toBe(
-      true,
-    );
+    expect(
+      masters.args.some(
+        (a) =>
+          a.includes(`${path.sep}dbscg${path.sep}cli.ts`) ||
+          a.includes("/dbscg/cli.ts"),
+      ),
+    ).toBe(true);
+    // The prelude has to say the two things a click cannot undo: faces are
+    // per-language now, and an existing one is skipped without --force.
+    expect(masters.prelude.some((line) => /fr, en/i.test(line))).toBe(true);
+    expect(masters.prelude.some((line) => /--force/.test(line))).toBe(true);
     const fw = await resolveFoilExtractCommand("dbs-fw");
-    expect(fw.args.some((a) => a.includes(`${path.sep}dbsfw${path.sep}cli.ts`) || a.includes("/dbsfw/cli.ts"))).toBe(
-      true,
-    );
+    expect(
+      fw.args.some(
+        (a) =>
+          a.includes(`${path.sep}dbsfw${path.sep}cli.ts`) ||
+          a.includes("/dbsfw/cli.ts"),
+      ),
+    ).toBe(true);
   });
 
   it("builds Naruto Wayback catalogue sync command", async () => {
     const cmd = await resolveFoilExtractCommand("naruto");
     expect(cmd.command).toContain("tsx");
-    expect(cmd.args.some((a) => a.endsWith(`${path.sep}narutoccg${path.sep}cli.ts`) || a.includes("/narutoccg/cli.ts"))).toBe(
-      true,
-    );
+    expect(
+      cmd.args.some(
+        (a) =>
+          a.endsWith(`${path.sep}narutoccg${path.sep}cli.ts`) ||
+          a.includes("/narutoccg/cli.ts"),
+      ),
+    ).toBe(true);
     expect(cmd.prelude.some((l) => /Naruto/i.test(l))).toBe(true);
   });
 

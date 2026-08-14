@@ -16,6 +16,7 @@ vi.mock("@/lib/http/httpClient", () => ({
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardDir } from "@/lib/packPaths";
+import { softbanRemainingMs } from "@/providers/shared/softban";
 
 import {
   DBS_MASTERS_DECKPLANET_BASE,
@@ -251,6 +252,30 @@ describe("fetchDbsCgFaces", () => {
       .filter((url) => url.includes("dbscards.fr"));
     // One refusal is enough to learn; the rest of the run leaves them alone.
     expect(tries.length).toBe(1);
+  });
+
+  it("persists a cooldown so the next run does not re-hammer the host", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("dbscards.fr")) {
+        throw Object.assign(new Error("403"), { response: { status: 403 } });
+      }
+      return { data: tinyWebp(), status: 200 } as never;
+    });
+    await fetchDbsCgFaces({ delayMs: 0, concurrency: 1, langs: ["fr"] });
+    expect(
+      softbanRemainingMs(path.join(tmp, "dbs/cg"), Date.now(), "faces"),
+    ).toBeGreaterThan(0);
+
+    // A second run must not touch the banned host at all while it cools down.
+    mockedGet.mockClear();
+    await fetchDbsCgFaces({
+      delayMs: 0,
+      concurrency: 1,
+      langs: ["fr"],
+      force: true,
+    });
+    const tried = mockedGet.mock.calls.map((call) => String(call[0]));
+    expect(tried.some((url) => url.includes("dbscards.fr"))).toBe(false);
   });
 
   it("does not count a plain 404 as throttling", async () => {

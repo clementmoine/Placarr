@@ -36,10 +36,12 @@ describe("packPaths", () => {
   });
 
   it("builds assets card URLs and canonical face names", () => {
-    expect(assetsCardUrl("lorcana", { set: "1", lang: "fr", card: "1" }, "art.jpg")).toBe(
-      "/assets/lorcana/cards/1/fr/1/art.jpg",
+    expect(
+      assetsCardUrl("lorcana", { set: "1", lang: "fr", card: "1" }, "art.jpg"),
+    ).toBe("/assets/lorcana/cards/1/fr/1/art.jpg");
+    expect(pokemonFaceFileFromTex("me5_fr_045", "me5_wp_fr_045")).toBe(
+      "mask.webp",
     );
-    expect(pokemonFaceFileFromTex("me5_fr_045", "me5_wp_fr_045")).toBe("mask.webp");
     expect(pokemonFaceFileFromTex("bw10_fr_001", "bw10_wp_ph_fr_001")).toBe(
       "mask-ph.webp",
     );
@@ -63,8 +65,39 @@ describe("packPaths", () => {
     expect(splitAssetsPackPath(["naruto", "ccg"])).toBeNull();
   });
 
+  it("serves the render kit, which clients address without a foil segment", async () => {
+    const { splitAssetsPackPath, resolveAssetsDiskRoot } = await import(
+      "./packPaths"
+    );
+    // `/assets/lorcana/web/calc.jpg` and `/assets/pokemon/shaders/x.frag` are
+    // what holoShaders / cssRecipes build. Accepting only `cards` and `foil`
+    // here 404'd every shader and web texture of every pack.
+    for (const root of ["web", "shaders", "textures"]) {
+      expect(splitAssetsPackPath(["lorcana", root, "x.jpg"])).toEqual({
+        pack: "lorcana",
+        rest: [root, "x.jpg"],
+      });
+      expect(splitAssetsPackPath(["naruto", "ccg", root, "x.jpg"])).toEqual({
+        pack: "naruto/ccg",
+        rest: [root, "x.jpg"],
+      });
+    }
+    const split = splitAssetsPackPath(["lorcana", "web", "calc.jpg"])!;
+    const mapped = resolveAssetsDiskRoot(split.pack, split.rest)!;
+    // Kit paths land under `data/<pack>/foil/`, catalogue paths under `cards/`.
+    expect(mapped.root.endsWith("/lorcana/foil")).toBe(true);
+    expect(mapped.relative).toEqual(["web", "calc.jpg"]);
+  });
+
+  it("still refuses a segment that names neither a pack root nor a nest", async () => {
+    const { splitAssetsPackPath } = await import("./packPaths");
+    expect(splitAssetsPackPath(["lorcana", "etc", "passwd"])).toBeNull();
+  });
+
   it("resolves pack back.webp or back.png", async () => {
-    const { assetsPackBackUrl, resolvePackBackPath } = await import("./packPaths");
+    const { assetsPackBackUrl, resolvePackBackPath } = await import(
+      "./packPaths"
+    );
     // Naruto CCG ships curated back.webp under data/naruto/ccg/cards/.
     const naruto = resolvePackBackPath("naruto/ccg");
     if (naruto) {
@@ -78,7 +111,9 @@ describe("packPaths", () => {
   });
 
   it("resolves optional set-level back under cards/{set}/", async () => {
-    const { resolveSetBackPath, assetsSetBackUrl } = await import("./packPaths");
+    const { resolveSetBackPath, assetsSetBackUrl } = await import(
+      "./packPaths"
+    );
     // No set verso is required; helpers must reject path traversal and stay null.
     expect(resolveSetBackPath("naruto/ccg", "../etc")).toBeNull();
     expect(resolveSetBackPath("naruto/ccg", "s1/../s2")).toBeNull();

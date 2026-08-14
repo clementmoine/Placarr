@@ -229,6 +229,29 @@ export function packCardDir(
  * Resolve a `/assets/<pack>/…` path segments (after host) to pack id + rest.
  * Supports nested product lines: `/assets/naruto/ccg/cards/…`.
  */
+/**
+ * Segments that end a pack id and start its content.
+ *
+ * `cards` is the catalogue; everything else is the render kit, which the app
+ * serves flat under the pack (`/assets/lorcana/web/…` → `data/lorcana/foil/web`)
+ * — see {@link resolveAssetsDiskRoot}. Listing only `cards` and `foil` here made
+ * every shader and web texture 404, since no client builds those URLs with a
+ * `foil` segment.
+ */
+const PACK_ASSET_ROOTS = [
+  "cards",
+  "foil",
+  "web",
+  "shaders",
+  "textures",
+] as const;
+
+function isPackAssetRoot(segment: string | undefined): boolean {
+  return Boolean(
+    segment && (PACK_ASSET_ROOTS as readonly string[]).includes(segment),
+  );
+}
+
 export function splitAssetsPackPath(
   segments: string[],
 ): { pack: string; rest: string[] } | null {
@@ -236,15 +259,11 @@ export function splitAssetsPackPath(
   const segOk = (s: string) => /^[a-z0-9_-]+$/i.test(s);
   const [a, b, c] = segments;
   if (!a || !segOk(a)) return null;
-  if (b === "cards" || b === "foil") {
+  if (isPackAssetRoot(b)) {
     return { pack: a, rest: segments.slice(1) };
   }
-  if (
-    b &&
-    segOk(b) &&
-    (c === "cards" || c === "foil") &&
-    segments.length >= 3
-  ) {
+  // Nested product line: `naruto/ccg/cards/…`, `naruto/ccg/shaders/…`.
+  if (b && segOk(b) && isPackAssetRoot(c) && segments.length >= 3) {
     return { pack: `${a}/${b}`, rest: segments.slice(2) };
   }
   return null;

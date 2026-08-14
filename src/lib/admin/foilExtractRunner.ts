@@ -43,7 +43,9 @@ export function normalizeFoilExtractTarget(
   return null;
 }
 
-export function isFoilExtractTarget(value: unknown): value is FoilExtractTarget {
+export function isFoilExtractTarget(
+  value: unknown,
+): value is FoilExtractTarget {
   return normalizeFoilExtractTarget(value) != null;
 }
 
@@ -111,7 +113,9 @@ export const FOIL_EXTRACT_SCOPES = ["inventory", "catalogue"] as const;
 export type FoilExtractScope = (typeof FOIL_EXTRACT_SCOPES)[number];
 
 export function normalizeFoilExtractScope(value: unknown): FoilExtractScope {
-  const raw = String(value ?? "").trim().toLowerCase();
+  const raw = String(value ?? "")
+    .trim()
+    .toLowerCase();
   return (FOIL_EXTRACT_SCOPES as readonly string[]).includes(raw)
     ? (raw as FoilExtractScope)
     : "inventory";
@@ -149,9 +153,7 @@ export async function resolveFoilExtractCommand(
     return {
       command: path.join(root, "node_modules/.bin/tsx"),
       args: [NARUTO_CCG_CLI_PATH],
-      prelude: [
-        "Naruto CCG: Wayback → data/naruto/ccg (catalogue fermé)",
-      ],
+      prelude: ["Naruto CCG: Wayback → data/naruto/ccg (catalogue fermé)"],
     };
   }
   // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
@@ -256,9 +258,28 @@ export async function runFoilExtractCommand(
         cwd: root,
         env: { ...process.env, PYTHONUNBUFFERED: "1" },
         stdio: ["ignore", "pipe", "pipe"],
+        /*
+          Own process group, so cancelling kills the whole tree.
+          We spawn `tsx`, which forks the real node process, and the extract
+          itself may fork python. SIGKILL on the direct child only reaped the
+          wrapper: the grandchild kept downloading and kept writing to the
+          inherited pipes, so the log showed `── cancelled` followed by two
+          hundred more cards.
+        */
+        detached: process.platform !== "win32",
       });
 
       const killChild = () => {
+        // Negative pid = the whole group. Falls back to the lone child when
+        // there is no group (Windows, or spawn failed before it had a pid).
+        try {
+          if (child.pid && process.platform !== "win32") {
+            process.kill(-child.pid, "SIGKILL");
+            return;
+          }
+        } catch {
+          /* group already gone, or never existed — try the child below */
+        }
         try {
           child.kill("SIGKILL");
         } catch {

@@ -322,14 +322,20 @@ describe("fetchDbsCgFaces", () => {
     expect(mockedGet).not.toHaveBeenCalled();
   });
 
-  it("shows the biggest stored face, not the first one fetched", async () => {
+  it("shows the better-scoring stored face, not the first one fetched", async () => {
     const dir = path.dirname(artPath());
     mkdirSync(dir, { recursive: true });
     const { default: sharp } = await import("sharp");
+    /*
+      Real card sizes, not toy ones: the scorer grades by quality tier, and
+      40x56, 120x168 and 260x363 all land in the same tier. Only a size that
+      crosses a boundary — here 400x560 against the 40x56 default — actually
+      exercises the ranking.
+    */
     const big = await sharp({
       create: {
-        width: 120,
-        height: 168,
+        width: 400,
+        height: 560,
         channels: 3,
         background: "#808080",
         noise: { type: "gaussian", mean: 128, sigma: 60 },
@@ -348,7 +354,7 @@ describe("fetchDbsCgFaces", () => {
     const shown = await sharp(
       path.join(path.dirname(artPath()), chosenFace()!),
     ).metadata();
-    expect(shown.width).toBe(120);
+    expect(shown.width).toBe(400);
   });
 
   /**

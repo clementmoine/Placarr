@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { explainAttachmentScoreForDisplay } from "@/core/enrich/media/attachmentDisplayScoring";
+
 /**
  * Which stored face a print shows.
  *
@@ -117,12 +119,20 @@ export type StoredFace = {
 };
 
 /**
- * The best of what we hold: most pixels wins.
+ * The best of what we hold, scored by the app's own cover engine.
  *
- * Resolution rather than a fixed source order, because no source is best
- * everywhere — dbscards carries 400x560 across the corpus, but Deckplanet
- * reaches 860x1205 on the recent English sets, and Bandai is the only one that
- * covers some prints at all. Source order only settles a tie.
+ * Not a ranking of our own: `explainAttachmentScoreForDisplay` is what already
+ * decides which cover an item shows, and a card face is the same question. It
+ * takes plain objects — no Prisma row, no `sharp` — so the catalogue can use
+ * it before any item exists.
+ *
+ * Checked on the three cases that matter before adopting it, and it answers
+ * each correctly: French dbscards 400x560 over Bandai 260x363 (791 vs 661),
+ * old English dbscards over Deckplanet 260x363 (791 vs 661), recent English
+ * Deckplanet 860x1205 over dbscards (861 vs 791). None of its box-art
+ * heuristics — disc sleeves, platform gates, wrap covers — fired on a card.
+ *
+ * The locale list only settles an exact tie, which the scoring makes rare.
  */
 export function pickBestFace(
   faces: readonly StoredFace[],
@@ -138,24 +148,31 @@ export function pickBestFace(
       (a, b) => priorityOf(a.source, lang) - priorityOf(b.source, lang),
     )[0]!.source;
   }
-  let best: StoredFace | null = null;
+  let best: { face: StoredFace; score: number } | null = null;
   for (const face of faces) {
     if (face.width <= 0 || face.height <= 0) continue;
-    if (!best) {
-      best = face;
+    const score = explainAttachmentScoreForDisplay(
+      {
+        type: "cover",
+        url: `${face.source}/${dbsFaceFilename(face.source)}`,
+        source: face.source,
+        // Publisher scans, not marketplace photos: the honest tier for a
+        // catalogue face.
+        coverProvenance: "catalog",
+      },
+      { width: face.width, height: face.height },
+    ).score;
+    if (!best || score > best.score) {
+      best = { face, score };
       continue;
     }
-    const area = face.width * face.height;
-    const bestArea = best.width * best.height;
-    if (area > bestArea) {
-      best = face;
-    } else if (area === bestArea) {
+    if (score === best.score) {
       const rank = priorityOf(face.source, lang);
-      const bestRank = priorityOf(best.source, lang);
-      if (rank < bestRank) best = face;
+      const bestRank = priorityOf(best.face.source, lang);
+      if (rank < bestRank) best = { face, score };
     }
   }
-  return best?.source ?? null;
+  return best?.face.source ?? null;
 }
 
 /** The filename recorded for a role, or null when it says nothing usable. */

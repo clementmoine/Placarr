@@ -17,6 +17,23 @@ describe("dbsFaceSourceOf", () => {
 });
 
 describe("pickBestFace", () => {
+  it("grades by quality tier, so close sizes tie rather than split hairs", () => {
+    /*
+      The scorer buckets resolution: 260x363 and anything smaller share a tier.
+      Worth pinning, because it is what makes the locale list matter — ties are
+      common, not exceptional.
+    */
+    expect(
+      pickBestFace(
+        [
+          { source: "bandai", width: 260, height: 363 },
+          { source: "deckplanet", width: 260, height: 364 },
+        ],
+        "en",
+      ),
+    ).toBe("deckplanet");
+  });
+
   it("takes the most pixels, whatever the source", () => {
     // Deckplanet beats dbscards on the recent English sets; a fixed source
     // order would have thrown those 860x1205 away.

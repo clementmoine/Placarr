@@ -27,25 +27,20 @@ describe("readFoilPackStatuses", () => {
   it("reports missing APKs and no extract on empty data", async () => {
     const { repo, data } = await makeRepo();
     const packs = await readFoilPackStatuses({ dataRoot: data, repoRoot: repo });
-    expect(packs).toHaveLength(3);
-    expect(packs[0]).toMatchObject({
-      id: "lorcana",
-      apk: { present: false },
-      extract: { present: false },
-      canExtract: true,
-    });
-    expect(packs[1]).toMatchObject({
-      id: "pokemon",
-      apk: { present: false },
-      extract: { present: false },
-      canExtract: true,
-    });
-    expect(packs[2]).toMatchObject({
-      id: "naruto",
-      apk: { present: false },
-      extract: { present: false },
-      canExtract: true,
-    });
+    expect(packs.map((pack) => pack.id)).toEqual([
+      "lorcana",
+      "pokemon",
+      "naruto",
+      "dbs-cg",
+      "dbs-fw",
+    ]);
+    for (const pack of packs) {
+      expect(pack).toMatchObject({
+        apk: { present: false },
+        extract: { present: false },
+        canExtract: true,
+      });
+    }
   });
 
   it("flags APK ready + extract present, and stale when APK is newer", async () => {

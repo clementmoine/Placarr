@@ -26,6 +26,18 @@ data/
       staging/  carddass-fr/ | bandaicg-en/ | carddas-jp/ | manga-news/
       logs/
     # ultra-challenge/ …           # autres lignes produit plus tard
+  dbs/                             # franchise Dragon Ball Super
+    cg/                            # Masters (provider dbscg)
+      catalog.sqlite | cards-index.json
+      cards/back.webp              → /assets/dbs/cg/cards/back.webp
+      cards/{set}/fr/{card}/art.webp   # Deckplanet dump (sync)
+      foil/full_foil_mask.webp
+      logs/
+    fw/                            # Fusion World (provider dbsfw)
+      catalog.sqlite | cards-index.json
+      cards/back.webp              → /assets/dbs/fw/cards/back.webp
+      foil/full_foil_mask.webp
+      logs/
   launchbox|icollect|nointro/
   indexes/title-idf/
 ```
@@ -35,6 +47,14 @@ data/
 printKey : `naruto:s4-ta190` (locale hors clé). Provider : `src/providers/narutoccg/`.
 CLI : `pnpm naruto:cards` — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.md).
 Dos : `cards/back.webp` depuis `src/providers/narutoccg/curated/`.
+
+`dbs` = franchise ; **`dbs/cg`** = Masters (`dbscg:bt1-001`) ; **`dbs/fw`** =
+Fusion World (`dbsfw:st01-001`, parallels `_P1`). Faces Masters = dump
+Deckplanet (`art.webp`) au sync, URLs Bandai SAMPLE en fallback. Faces FW =
+URLs Bandai SAMPLE (pas de dump). Dos sleeve : curated dbscards (FW = même
+octet placeholder). CLI : `pnpm dbs:cards` / `pnpm dbs:fw`. Catalogue admin :
+un onglet Dragon Ball, lignes Masters | Fusion World — même schéma que Naruto
+(CCG aujourd’hui, Panini plus tard).
 
 ## Catalogues locaux / supply modes
 

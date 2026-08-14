@@ -37,6 +37,8 @@ describe("provider catalog contract", () => {
       "lorcana",
       "pokemon",
       "naruto/ccg",
+      "dbs/cg",
+      "dbs/fw",
       "launchbox",
       "icollect",
       "nointro",

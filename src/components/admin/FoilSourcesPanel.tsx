@@ -27,7 +27,11 @@ import type {
   FoilExtractScope,
   FoilExtractTarget,
 } from "@/lib/client/foilExtract";
-import { resolveCataloguePackId } from "@/lib/admin/cataloguePacks";
+import {
+  cataloguePackInfo,
+  foilExtractNeedsApk,
+  resolveCataloguePackId,
+} from "@/lib/admin/cataloguePacks";
 
 type FoilLogResponse = {
   pack: FoilExtractTarget;
@@ -90,7 +94,8 @@ function statusLine(
 ): string {
   if (!status) return "…";
   const parts: string[] = [];
-  if (status.id === "naruto") {
+  const catalogueOnly = !foilExtractNeedsApk(status.extractTarget);
+  if (catalogueOnly) {
     if (status.extract.present) {
       parts.push(
         formatWhen(status.extract.newestAt, fr) ||
@@ -108,7 +113,7 @@ function statusLine(
   } else {
     parts.push(fr ? "pas d’APK" : "no APK");
   }
-  if (status.id !== "naruto") {
+  if (!catalogueOnly) {
     if (!status.extract.present) {
       parts.push(fr ? "pas d’extract" : "no extract");
     } else {
@@ -137,10 +142,8 @@ export function foilExtractTargetForPack(
   // resolver so aliases (`carddass`, `cacg`, `pokemonpaper`…) map too.
   // The server-side `normalizeFoilExtractTarget` cannot be reused here — it
   // pulls `node:child_process` and this is a client component.
-  const pack = resolveCataloguePackId(packId);
-  if (pack === "pokemon" || pack === "lorcana") return pack;
-  if (pack === "naruto/ccg") return "naruto";
-  return null;
+  const pack = cataloguePackInfo(resolveCataloguePackId(packId));
+  return pack?.extractTarget ?? null;
 }
 
 /** Compact APK / Logs / Extract bar for the active playroom pack. */
@@ -153,7 +156,7 @@ export function FoilPackSources({
 }) {
   const fr = locale === "fr";
   const queryClient = useQueryClient();
-  /** APK lab only knows foil packs — never point it at Naruto. */
+  /** APK lab only knows foil packs — never point it at a catalogue-only line. */
   const apkPack: "lorcana" | "pokemon" | null =
     target === "pokemon" || target === "lorcana" ? target : null;
   const [enqueueing, setEnqueueing] = useState(false);
@@ -315,7 +318,7 @@ export function FoilPackSources({
           {statusLine(status, jobRunning, fr)}
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {target !== "naruto" ? (
+          {apkPack ? (
             <Button
               type="button"
               variant="outline"
@@ -355,10 +358,10 @@ export function FoilPackSources({
                 ? fr
                   ? "Tout le catalogue CDN (AssetManifests) — skip déjà présent"
                   : "Full CDN catalogue (AssetManifests) — skips existing"
-                : target === "naruto"
+                : !foilExtractNeedsApk(target)
                   ? fr
-                    ? "Sync Wayback carddass.fr → data/naruto"
-                    : "Sync Wayback carddass.fr → data/naruto"
+                    ? "Sync le catalogue local de cette ligne"
+                    : "Sync this line’s local catalogue"
                   : fr
                     ? "Sync foil (web + cards + Unity si APK)"
                     : "Foil sync (web + cards + Unity if APK)"
@@ -369,7 +372,11 @@ export function FoilPackSources({
             ) : (
               <Play className="h-3.5 w-3.5" />
             )}
-            {target === "naruto" ? (fr ? "Sync" : "Sync") : "Extract"}
+            {!foilExtractNeedsApk(target)
+              ? fr
+                ? "Sync"
+                : "Sync"
+              : "Extract"}
           </Button>
         </div>
       </div>

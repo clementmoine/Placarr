@@ -70,10 +70,7 @@ export function resolveCardlistUrl(
 
 function dlDd(html: string, className: string): string | null {
   const match = html.match(
-    new RegExp(
-      `<dl class="${className}"[\\s\\S]*?<dd>([\\s\\S]*?)</dd>`,
-      "i",
-    ),
+    new RegExp(`<dl class="${className}"[\\s\\S]*?<dd>([\\s\\S]*?)</dd>`, "i"),
   );
   if (!match) return null;
   const text = stripHtml(match[1]!);
@@ -91,9 +88,7 @@ function parseFace(html: string): {
   character: string | null;
   power: string | null;
 } {
-  const numberMatch = html.match(
-    /<dt class="cardNumber">([^<]+)<\/dt>/i,
-  );
+  const numberMatch = html.match(/<dt class="cardNumber">([^<]+)<\/dt>/i);
   const nameMatch = html.match(/<dd class="cardName">([\s\S]*?)<\/dd>/i);
   const imgMatch = html.match(
     /<div class="cardimg">[\s\S]*?<img[^>]+src="([^"]+)"/i,
@@ -120,8 +115,7 @@ function parseListItem(liHtml: string): DbsParsedCard | null {
   if (!parsed || !printKey) return null;
 
   const back = parts[1] ? parseFace(parts[1]) : null;
-  const awakened =
-    back?.name && back.name !== front.name ? back.name : null;
+  const awakened = back?.name && back.name !== front.name ? back.name : null;
 
   return {
     cardNumber: formatDbsCollectorNumber(

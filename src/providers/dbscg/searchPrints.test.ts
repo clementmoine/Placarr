@@ -10,14 +10,14 @@ import { DBS_CG_EFFECT_PACK_ID, DBS_CG_FINISHES } from "@/effects/dbscg";
 
 import { parseDbsCardlistHtml } from "./parseCardlist";
 import { indexDbsCgCards } from "./scrapeCardlist";
-import {
-  lookupDbsCgPrint,
-  searchDbsCgPrints,
-} from "./searchPrints";
+import { lookupDbsCgPrint, searchDbsCgPrints } from "./searchPrints";
 import { resetDbsCgDbCache } from "./indexStore";
 
 const fixture = readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures/bt1-sample.html"),
+  path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "fixtures/bt1-sample.html",
+  ),
   "utf8",
 );
 

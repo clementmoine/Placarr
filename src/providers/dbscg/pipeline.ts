@@ -17,8 +17,8 @@ import { dbsCgDbPath, DBS_CG_PACK_ID } from "./indexStore";
 export async function refreshDbsCgCatalog(
   opts?: ProviderCatalogRefreshOpts,
 ): Promise<void> {
-  // Bandai's cardlist is live — auto refresh re-scrapes. `--offline` is CLI-only
-  // (curated install without hitting europe-fr).
+  // Bandai's cardlist is live — auto refresh re-scrapes then pulls Deckplanet
+  // faces (skip-existing). `--offline` is CLI-only (curated without network).
   await runDbsCgPackPipeline([]);
   const logs = packLogsDir(DBS_CG_PACK_ID);
   mkdirSync(logs, { recursive: true });

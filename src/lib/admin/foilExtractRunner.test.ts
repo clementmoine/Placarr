@@ -7,24 +7,55 @@ vi.mock("@/lib/runtimeData", () => ({
 
 import {
   FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
+  FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
+  FOIL_EXTRACT_TARGETS,
   foilExtractLabel,
   foilExtractTimeoutMs,
   isFoilExtractTarget,
   normalizeFoilExtractTarget,
   resolveFoilExtractCommand,
 } from "./foilExtractRunner";
+import { CATALOGUE_PACKS } from "./cataloguePacks";
 
 describe("foilExtractRunner targets", () => {
+  it("covers every catalogue pack extract target", () => {
+    for (const pack of CATALOGUE_PACKS) {
+      expect(isFoilExtractTarget(pack.extractTarget), pack.id).toBe(true);
+    }
+    expect(FOIL_EXTRACT_TARGETS).toEqual(
+      CATALOGUE_PACKS.map((pack) => pack.extractTarget),
+    );
+  });
+
   it("exposes one target per pack", () => {
     expect(isFoilExtractTarget("lorcana")).toBe(true);
     expect(isFoilExtractTarget("pokemon")).toBe(true);
     expect(isFoilExtractTarget("naruto")).toBe(true);
+    expect(isFoilExtractTarget("dbs-cg")).toBe(true);
+    expect(isFoilExtractTarget("dbs-fw")).toBe(true);
     expect(isFoilExtractTarget("lorcana-web")).toBe(true); // legacy alias
     expect(normalizeFoilExtractTarget("lorcana-cards")).toBe("lorcana");
     expect(normalizeFoilExtractTarget("lorcana-mobile")).toBe("lorcana");
     expect(normalizeFoilExtractTarget("naruto-cacg")).toBe("naruto");
+    expect(normalizeFoilExtractTarget("dbs/cg")).toBe("dbs-cg");
+    expect(normalizeFoilExtractTarget("fusionworld")).toBe("dbs-fw");
     expect(foilExtractLabel("lorcana")).toBe("Lorcana");
     expect(foilExtractLabel("naruto")).toBe("Naruto CCG");
+    expect(foilExtractLabel("dbs-cg")).toBe("Dragon Ball Masters");
+  });
+
+  it("builds DBS Masters and Fusion World catalogue sync commands", async () => {
+    const masters = await resolveFoilExtractCommand("dbs-cg");
+    expect(masters.args.some((a) => a.includes(`${path.sep}dbscg${path.sep}cli.ts`) || a.includes("/dbscg/cli.ts"))).toBe(
+      true,
+    );
+    expect(masters.prelude.some((line) => /Deckplanet/i.test(line))).toBe(
+      true,
+    );
+    const fw = await resolveFoilExtractCommand("dbs-fw");
+    expect(fw.args.some((a) => a.includes(`${path.sep}dbsfw${path.sep}cli.ts`) || a.includes("/dbsfw/cli.ts"))).toBe(
+      true,
+    );
   });
 
   it("builds Naruto Wayback catalogue sync command", async () => {
@@ -53,6 +84,15 @@ describe("foilExtractRunner targets", () => {
     );
     expect(foilExtractTimeoutMs("pokemon", "inventory")).toBeLessThan(
       FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
+    );
+  });
+
+  it("gives Masters a longer timeout for the Deckplanet dump", () => {
+    expect(foilExtractTimeoutMs("dbs-cg", "catalogue")).toBe(
+      FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
+    );
+    expect(foilExtractTimeoutMs("dbs-fw", "catalogue")).toBeLessThan(
+      FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
     );
   });
 

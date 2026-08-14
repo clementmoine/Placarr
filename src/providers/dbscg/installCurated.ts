@@ -1,12 +1,7 @@
 /**
  * Install curated sleeve back + generated full-face foil plate into `data/dbs/cg/`.
  */
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  statSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 

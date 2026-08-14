@@ -907,8 +907,10 @@ export function FoilPlayroom({
           ) : (
             <p className="text-xs text-muted-foreground">
               {fr
-                ? "Catalogue local Naruto — pas de dump foil"
-                : "Local Naruto catalogue — no foil dump"}
+                ? (catalogueInfo.blurbFr ??
+                  "Catalogue local — pas de dump foil")
+                : (catalogueInfo.blurbEn ??
+                  "Local catalogue — no foil dump")}
             </p>
           )}
         </div>

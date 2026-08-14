@@ -1,8 +1,8 @@
 /**
  * Scrape Bandai europe-fr cardlist → `data/dbs/cg/catalog.sqlite`.
  *
- * Faces are not downloaded: the index stores the official cardimg URLs
- * (SAMPLE watermark, 260×363). Sleeve back is curated separately.
+ * Metadata + SAMPLE cardimg URLs. Local faces are the Deckplanet dump
+ * (`fetchFaces`), not this scrape. Sleeve back is curated separately.
  */
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
@@ -98,7 +98,9 @@ async function fetchIndexHtml(): Promise<string> {
     timeout: SEARCH_TIMEOUT_MS,
     responseType: "text",
   });
-  return typeof response.data === "string" ? response.data : String(response.data);
+  return typeof response.data === "string"
+    ? response.data
+    : String(response.data);
 }
 
 async function fetchSeriesHtml(categoryId: string): Promise<string> {
@@ -126,7 +128,9 @@ async function fetchSeriesHtml(categoryId: string): Promise<string> {
     timeout: SEARCH_TIMEOUT_MS,
     responseType: "text",
   });
-  return typeof response.data === "string" ? response.data : String(response.data);
+  return typeof response.data === "string"
+    ? response.data
+    : String(response.data);
 }
 
 export async function scrapeDbsCgCardlist(

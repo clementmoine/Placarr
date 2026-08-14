@@ -11,6 +11,7 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
 } from "@/core/collect/jobs/workQueue";
+import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
 
 const DEFAULT_CHECK_MS = 60 * 60 * 1000;
 
@@ -105,7 +106,9 @@ export async function maybeEnqueueFoilCatalogSync(
   pack: string,
 ): Promise<boolean> {
   const byPack = discoverCatalogProviderModules().find(
-    (mdl) => mdl.catalog?.dataPack === pack,
+    (mdl) =>
+      mdl.catalog?.dataPack === pack ||
+      mdl.catalog?.dataPack === cataloguePackForExtractTarget(pack)?.id,
   );
   if (!byPack) return false;
   return maybeEnqueueCatalogueProviderSync(byPack.info.id);

@@ -157,6 +157,7 @@ export function CatalogueBrowser({
                     src={card.thumbUrl ?? card.artUrl}
                     alt={card.label}
                     loading="lazy"
+                    referrerPolicy="no-referrer"
                     className="h-full w-full object-cover"
                   />
                 )}

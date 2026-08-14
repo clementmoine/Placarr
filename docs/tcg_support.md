@@ -63,7 +63,9 @@ ment coûte toujours plus cher que la colonne en trop.
 | Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil + non-foil                 | ✅ TCGplayer USD → EUR `~`        | aucune            |
 | Magic                   | [Scryfall](https://scryfall.com/docs/api)       | ✅ vérifié      | ✅             | ✅ `finishes: nonfoil/foil/etched`   | ✅                                | UA requis         |
 | Yu-Gi-Oh                | [YGOPRODeck](https://ygoprodeck.com/api-guide/) | ✅ noms         | EN             | sets + raretés                       | ✅                                | aucune            |
-| One Piece, Dragon Ball  | [apitcg.com](https://apitcg.com/)               | ?               | ?              | ✅                                   | ?                                 | clé (inscription) — détail [one_piece_tcg.md](one_piece_tcg.md) |
+| Dragon Ball Super (Masters) | Bandai europe-fr cardlist (`dbscg`) + Deckplanet | ✅ FR | ✅ dump 260×364 (SAMPLE en fallback) | `_SPR` / `_PR` + finish `foil` maison | ❌ | scrape local — [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md) |
+| Dragon Ball Super (Fusion World) | Bandai fw/en cardlist (`dbsfw`) | EN (pas de `/fw/fr/`) | ✅ SAMPLE WebP | `_P1` + finish `foil` maison | ❌ | scrape local — même doc |
+| One Piece, Dragon Ball FW (apitcg) | [apitcg.com](https://apitcg.com/) | ? | SAMPLE Bandai | ✅ | ? | clé — OPTCG [one_piece_tcg.md](one_piece_tcg.md) ; FW Placarr = `dbsfw` (cardlist Bandai, pas apitcg) |
 | One Piece, Gundam, etc. | [Scrydex](https://scrydex.com/)                 | ?               | ?              | ✅                                   | ✅                                | **payant**        |
 | Naruto (CACG / multi-lignes) | pas d’API catalogue (Coleka / nikita / TCDB) | FR partiel | community | foil physique | estimates / eBay | pack `naruto` + sets `s*` + lang `fr|en|jap` — [naruto_carddass_tcg.md](naruto_carddass_tcg.md) |
 
@@ -72,10 +74,11 @@ déclarant `types: ["tcg"]`. Aucun concept nouveau côté providers.
 
 Sur la couverture par jeu (sondé le 2026-07-26) : **Pokémon** est le mieux
 servi — TCGdex répond en français sur la recherche par nom (112 résultats pour
-« Dracaufeu »), sans clé. **One Piece** et **Dragon Ball Fusion World** sont
-couverts par apitcg.com, qui exige une clé obtenue par inscription (répond
-`API key is required` sans elle). Recherche sources OPTCG (catalogue, apps,
-absence de client foil type Live) : [one_piece_tcg.md](one_piece_tcg.md).
+« Dracaufeu »), sans clé. **One Piece** reste surtout apitcg.com (clé) —
+[one_piece_tcg.md](one_piece_tcg.md). **Dragon Ball Fusion World** a un module
+Placarr (`dbsfw`, cardlist Bandai) ; apitcg est une source alternative.
+Faces DBS (Masters : dump Deckplanet ; FW : SAMPLE Bandai ; `cardgame.fr`) :
+[dragon_ball_super_card_game.md](dragon_ball_super_card_game.md).
 
 Deux remarques qui comptent :
 

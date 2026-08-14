@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       : null);
   if (!pack || !isCataloguePackId(pack)) {
     return NextResponse.json(
-      { error: "pack must be pokemon, lorcana, or naruto/ccg" },
+      { error: "pack must be a Catalogue pack id" },
       { status: 400 },
     );
   }

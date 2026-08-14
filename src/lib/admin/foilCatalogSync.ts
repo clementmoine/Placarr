@@ -7,6 +7,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
 
@@ -22,8 +23,13 @@ function maxAgeMs(): number {
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_MAX_AGE_MS;
 }
 
+function lastRunPath(pack: FoilExtractTarget): string {
+  const dataPack = cataloguePackForExtractTarget(pack)?.id ?? pack;
+  return path.join(packLogsDir(dataPack), "last-run.json");
+}
+
 function lastRunMtime(pack: FoilExtractTarget): number | null {
-  const p = path.join(packLogsDir(pack), "last-run.json");
+  const p = lastRunPath(pack);
   if (!existsSync(p)) return null;
   try {
     return statSync(p).mtimeMs;
@@ -38,9 +44,19 @@ function packLooksEmpty(pack: FoilExtractTarget): boolean {
     const web = path.join(foilPackDir("lorcana"), "web");
     return !existsSync(cards) && !existsSync(web);
   }
-  if (pack === "naruto" || pack === "naruto/ccg") {
+  if (pack === "naruto") {
     const cards = path.join(dataRoot(), "naruto", "ccg", "cards-index.json");
     const db = path.join(dataRoot(), "naruto", "ccg", "catalog.sqlite");
+    return !existsSync(cards) && !existsSync(db);
+  }
+  if (pack === "dbs-cg") {
+    const cards = path.join(dataRoot(), "dbs", "cg", "cards-index.json");
+    const db = path.join(dataRoot(), "dbs", "cg", "catalog.sqlite");
+    return !existsSync(cards) && !existsSync(db);
+  }
+  if (pack === "dbs-fw") {
+    const cards = path.join(dataRoot(), "dbs", "fw", "cards-index.json");
+    const db = path.join(dataRoot(), "dbs", "fw", "catalog.sqlite");
     return !existsSync(cards) && !existsSync(db);
   }
   const shaders = path.join(foilPackDir("pokemon"), "shaders");
@@ -80,7 +96,7 @@ export function resetFoilCatalogSyncForTests(): void {
 
 /** Touch helper for tests / status — read last-run without throwing. */
 export function readFoilLastRun(pack: FoilExtractTarget): unknown | null {
-  const p = path.join(packLogsDir(pack), "last-run.json");
+  const p = lastRunPath(pack);
   if (!existsSync(p)) return null;
   try {
     return JSON.parse(readFileSync(p, "utf8"));

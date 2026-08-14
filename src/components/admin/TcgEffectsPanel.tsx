@@ -19,18 +19,33 @@ import { getItems } from "@/lib/api/items";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   applyCataloguePackParams,
+  catalogueFranchises,
+  catalogueFranchiseForPack,
   cataloguePackForDataPack,
   resolveCataloguePackId,
+  type CatalogueFranchise,
+  type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
 
+type TopTab =
+  | { kind: "franchise"; franchise: CatalogueFranchise }
+  | {
+      kind: "corpus";
+      providerId: string;
+      label: string;
+    };
+
+function topTabValue(tab: TopTab): string {
+  return tab.kind === "franchise"
+    ? `franchise:${tab.franchise.id}`
+    : `corpus:${tab.providerId}`;
+}
+
 /**
- * Admin Catalogue — one tab per catalog provider.
+ * Admin Catalogue — franchise tabs, then product-line tabs when a franchise
+ * has several (Dragon Ball Masters | Fusion World; later Naruto CCG | Panini).
  *
- * The tab bar owns the active provider (URL `?pack=`): a TCG pack opens the
- * playroom / cards browser, any other corpus (LaunchBox, No-Intro, Players)
- * shows its status and its own refresh. `Refresh all` sits on the tab row
- * because it spans every tab.
- *
+ * `?pack=` is always the line / data pack id (or a non-pack corpus provider).
  * Mount only when the Catalogue tab is open — the foil grid spins WebGL canvases.
  */
 export function TcgEffectsPanel({ locale }: { locale: string }) {
@@ -63,44 +78,78 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     },
   });
 
-  /** Card packs first (they own a browser), then the plain corpora. */
-  const tabs = useMemo(() => {
-    const rows = corpora.map((corpus) => ({
-      corpus,
-      pack: cataloguePackForDataPack(corpus.dataPack),
-    }));
-    return [
-      ...rows.filter((row) => row.pack),
-      ...rows.filter((row) => !row.pack),
-    ].map((row) => ({
-      // A pack tab is addressed by its pack id so `?pack=` keeps working for
-      // deep links; a plain corpus falls back to the provider id.
-      value: row.pack?.id ?? row.corpus.providerId,
-      label: row.pack
-        ? fr
-          ? row.pack.labelFr
-          : row.pack.labelEn
-        : row.corpus.label,
-      corpus: row.corpus,
-      hasBrowser: Boolean(row.pack),
-    }));
-  }, [corpora, fr]);
+  const franchises = useMemo(() => catalogueFranchises(), []);
+
+  const otherCorpora = useMemo(
+    () => corpora.filter((corpus) => !cataloguePackForDataPack(corpus.dataPack)),
+    [corpora],
+  );
+
+  const topTabs = useMemo<TopTab[]>(
+    () => [
+      ...franchises.map(
+        (franchise): TopTab => ({ kind: "franchise", franchise }),
+      ),
+      ...otherCorpora.map(
+        (corpus): TopTab => ({
+          kind: "corpus",
+          providerId: corpus.providerId,
+          label: corpus.label,
+        }),
+      ),
+    ],
+    [franchises, otherCorpora],
+  );
 
   const requested = searchParams.get("pack");
-  const active =
-    tabs.find((tab) => tab.value === resolveCataloguePackId(requested)) ??
-    tabs.find((tab) => tab.value === requested) ??
-    tabs[0] ??
-    null;
+  const packFromUrl = resolveCataloguePackId(requested);
+  const corpusFromUrl =
+    otherCorpora.find(
+      (corpus) =>
+        corpus.providerId === requested || corpus.dataPack === requested,
+    ) ?? null;
+  const defaultPackId: CataloguePackId | null =
+    franchises[0]?.lines[0]?.id ?? null;
+  const activePackId: CataloguePackId | null =
+    packFromUrl ??
+    (corpusFromUrl || (requested && corporaLoading) ? null : defaultPackId);
+  const activeFranchise = activePackId
+    ? catalogueFranchiseForPack(activePackId)
+    : null;
+  const activeCorpus = corpusFromUrl;
 
-  const selectTab = useCallback(
-    (value: string) => {
+  const activeTopValue = activeFranchise
+    ? `franchise:${activeFranchise.id}`
+    : activeCorpus
+      ? `corpus:${activeCorpus.providerId}`
+      : (topTabs[0] ? topTabValue(topTabs[0]) : "");
+
+  const selectPack = useCallback(
+    (packId: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      applyCataloguePackParams(params, value);
+      applyCataloguePackParams(params, packId);
       if (!params.get("tab")) params.set("tab", "tcg-effects");
       router.replace(`/admin?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
+  );
+
+  const selectTop = useCallback(
+    (value: string) => {
+      if (value.startsWith("franchise:")) {
+        const franchiseId = value.slice("franchise:".length);
+        const franchise = franchises.find((row) => row.id === franchiseId);
+        const lines = franchise?.lines ?? [];
+        const keep = lines.find((line) => line.id === activePackId);
+        const next = keep?.id ?? lines[0]?.id;
+        if (next) selectPack(next);
+        return;
+      }
+      if (value.startsWith("corpus:")) {
+        selectPack(value.slice("corpus:".length));
+      }
+    },
+    [activePackId, franchises, selectPack],
   );
 
   const samples = useMemo<PlayroomSample[]>(() => {
@@ -128,30 +177,52 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     return [...fromCollection, ...fromCatalog];
   }, [catalog?.samples, items]);
 
+  const showLineTabs = (activeFranchise?.lines.length ?? 0) > 1;
+
   const tabBar = (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      {tabs.length ? (
-        <SegmentedControl
-          value={active?.value ?? ""}
-          onChange={selectTab}
-          options={tabs.map((tab) => ({ value: tab.value, label: tab.label }))}
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {topTabs.length ? (
+          <SegmentedControl
+            value={activeTopValue}
+            onChange={selectTop}
+            options={topTabs.map((tab) => ({
+              value: topTabValue(tab),
+              label:
+                tab.kind === "franchise"
+                  ? fr
+                    ? tab.franchise.labelFr
+                    : tab.franchise.labelEn
+                  : tab.label,
+            }))}
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {corporaLoading
+              ? fr
+                ? "Chargement…"
+                : "Loading…"
+              : fr
+                ? "Aucun corpus"
+                : "No corpora"}
+          </span>
+        )}
+        <RefreshAllCorporaButton
+          busy={busy}
+          disabled={topTabs.length === 0}
+          onRefresh={refresh}
         />
-      ) : (
-        <span className="text-sm text-muted-foreground">
-          {corporaLoading
-            ? fr
-              ? "Chargement…"
-              : "Loading…"
-            : fr
-              ? "Aucun corpus"
-              : "No corpora"}
-        </span>
-      )}
-      <RefreshAllCorporaButton
-        busy={busy}
-        disabled={tabs.length === 0}
-        onRefresh={refresh}
-      />
+      </div>
+      {showLineTabs && activeFranchise ? (
+        <SegmentedControl
+          value={activePackId ?? activeFranchise.lines[0]!.id}
+          onChange={selectPack}
+          options={activeFranchise.lines.map((line) => ({
+            value: line.id,
+            label: fr ? line.lineLabelFr : line.lineLabelEn,
+          }))}
+        />
+      ) : null}
     </div>
   );
 
@@ -168,14 +239,14 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
   return (
     <div className="space-y-4">
       {tabBar}
-      {active?.hasBrowser ? (
+      {activePackId ? (
         <FoilPlayroom
           samples={samples}
           packArts={catalog?.packArts}
           locale={locale}
         />
-      ) : active ? (
-        <CorpusPanel corpus={active.corpus} busy={busy} onRefresh={refresh} />
+      ) : activeCorpus ? (
+        <CorpusPanel corpus={activeCorpus} busy={busy} onRefresh={refresh} />
       ) : null}
     </div>
   );

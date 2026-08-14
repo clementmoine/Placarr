@@ -11,7 +11,10 @@ import {
 } from "./parseCardlist";
 
 const fixture = readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures/bt1-sample.html"),
+  path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "fixtures/bt1-sample.html",
+  ),
   "utf8",
 );
 

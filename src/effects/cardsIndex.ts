@@ -10,6 +10,11 @@ export type CardsIndexLangFiles = {
   secondVarnishMask?: string;
   etch?: string;
   back?: string;
+  /**
+   * Remote face when the pack does not store art on disk (Bandai SAMPLE URLs).
+   * Catalogue browse uses this when `art` is missing.
+   */
+  artUrl?: string;
   /** Pokémon: foil metadata per Live variant; files stay in the same card dir. */
   variants?: Record<
     string,

@@ -1,11 +1,14 @@
 /**
  * DBS Masters local catalogue — `data/dbs/cg/catalog.sqlite`.
- * Faces stay on Bandai's cardlist CDN (SAMPLE watermark); we index metadata.
+ * Bandai SAMPLE URLs stay in `print_assets`; local Deckplanet faces are
+ * `cards/{set}/fr/{card}/art.webp` when the faces step has run.
  */
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import type { CardsIndexLangFiles } from "@/effects/cardsIndex";
+import { packCardDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { DBS_CG_GAME } from "./printIdentity";
@@ -224,6 +227,64 @@ export function ensureDbsCgIndex(): DatabaseSync | null {
   }
 }
 
+/** Catalogue folder for one print: `001` or `011-spr`. */
+export function dbsCgCardFolder(
+  print: Pick<DbsPrintRow, "number" | "grouping">,
+): string {
+  return print.grouping ? `${print.number}-${print.grouping}` : print.number;
+}
+
+export function dbsCgLocalArtFilename(
+  print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
+): string | null {
+  const art = path.join(
+    packCardDir(DBS_CG_PACK_ID, {
+      set: print.setCode,
+      lang: "fr",
+      card: dbsCgCardFolder(print),
+    }),
+    "art.webp",
+  );
+  return existsSync(art) ? "art.webp" : null;
+}
+
+export function loadDbsCgIndex(): {
+  prints: DbsPrintRow[];
+  titles: DbsTitleRow[];
+  assets: DbsAssetRow[];
+} | null {
+  const db = ensureDbsCgIndex();
+  if (!db) return null;
+  try {
+    const prints = db
+      .prepare(
+        `SELECT print_key AS printKey, set_code AS setCode, number, grouping,
+                card_type AS cardType, source_url AS sourceUrl
+           FROM prints
+          ORDER BY set_code, number, grouping`,
+      )
+      .all() as DbsPrintRow[];
+    const titles = db
+      .prepare(
+        `SELECT print_key AS printKey, lang, full_name AS fullName, rarity,
+                set_name AS setName, color, character, power,
+                awakened_name AS awakenedName
+           FROM print_titles`,
+      )
+      .all() as DbsTitleRow[];
+    const assets = db
+      .prepare(
+        `SELECT print_key AS printKey, lang, image_url AS imageUrl,
+                back_url AS backUrl
+           FROM print_assets`,
+      )
+      .all() as DbsAssetRow[];
+    return { prints, titles, assets };
+  } catch {
+    return null;
+  }
+}
+
 export function exportDbsCgCardsIndexJson(
   prints: DbsPrintRow[],
   titles: DbsTitleRow[] | undefined,
@@ -242,7 +303,7 @@ export function exportDbsCgCardsIndexJson(
       card: string;
       name?: string;
       rarity?: string;
-      langs: Record<string, { artUrl: string }>;
+      langs: Record<string, CardsIndexLangFiles>;
     }
   > = {};
   const assetByKey = new Map<string, DbsAssetRow>();
@@ -253,14 +314,16 @@ export function exportDbsCgCardsIndexJson(
   }
   for (const print of prints) {
     const title = titleByKey.get(print.printKey);
-    const card = print.grouping
-      ? `${print.number}-${print.grouping}`
-      : print.number;
+    const card = dbsCgCardFolder(print);
     const imageUrl = assetByKey.get(print.printKey)?.imageUrl;
+    const art = dbsCgLocalArtFilename(print);
+    const fr: CardsIndexLangFiles = {};
+    if (art) fr.art = art;
+    if (imageUrl) fr.artUrl = imageUrl;
     cards[print.printKey] = {
       set: print.setCode,
       card,
-      langs: imageUrl ? { fr: { artUrl: imageUrl } } : {},
+      langs: Object.keys(fr).length ? { fr } : {},
       ...(title?.fullName ? { name: title.fullName } : {}),
       ...(title?.rarity ? { rarity: title.rarity } : {}),
     };

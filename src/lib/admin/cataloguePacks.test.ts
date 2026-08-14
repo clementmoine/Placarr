@@ -7,6 +7,9 @@ import {
   langFilesHaveFoil,
 } from "@/lib/admin/catalogueCards";
 import {
+  catalogueFranchises,
+  catalogueFranchiseForPack,
+  foilExtractNeedsApk,
   resolveCataloguePackId,
   resolveCatalogueScope,
   cataloguePackInfo,
@@ -18,7 +21,28 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("carddass")).toBe("naruto/ccg");
     expect(resolveCataloguePackId("naruto")).toBe("naruto/ccg");
     expect(resolveCataloguePackId("ccg")).toBe("naruto/ccg");
+    expect(resolveCataloguePackId("dbs")).toBe("dbs/cg");
+    expect(resolveCataloguePackId("masters")).toBe("dbs/cg");
+    expect(resolveCataloguePackId("fusionworld")).toBe("dbs/fw");
     expect(resolveCataloguePackId("nope")).toBeNull();
+  });
+
+  it("groups Dragon Ball lines under one franchise (Naruto stays one line until Panini)", () => {
+    const franchises = catalogueFranchises();
+    expect(franchises.map((row) => row.id)).toEqual([
+      "pokemon",
+      "lorcana",
+      "naruto",
+      "dbs",
+    ]);
+    const naruto = franchises.find((row) => row.id === "naruto");
+    expect(naruto?.lines.map((line) => line.id)).toEqual(["naruto/ccg"]);
+    const dbs = catalogueFranchiseForPack("dbs/fw");
+    expect(dbs?.id).toBe("dbs");
+    expect(dbs?.lines.map((line) => line.id)).toEqual(["dbs/cg", "dbs/fw"]);
+    expect(foilExtractNeedsApk("naruto")).toBe(false);
+    expect(foilExtractNeedsApk("dbs-cg")).toBe(false);
+    expect(foilExtractNeedsApk("pokemon")).toBe(true);
   });
 
   it("forces all scope when pack has no foil effects", () => {
@@ -117,6 +141,57 @@ describe("same-number art fallback (Naruto)", () => {
     expect(stub?.missingArt).toBe(true);
     expect(stub?.artUrl).toBe("");
     expect(stub?.artFallbackFrom).toBeUndefined();
+  });
+
+  it("prefers local art over a remote Bandai artUrl", () => {
+    const index = {
+      version: 1 as const,
+      pack: "dbs/cg",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "dbscg:bt1-001": {
+          set: "bt1",
+          card: "001",
+          name: "Champa",
+          langs: {
+            fr: {
+              art: "art.webp",
+              artUrl:
+                "https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/BT1-001.png",
+            },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("dbs/cg", index);
+    expect(rows[0]?.artUrl).toBe("/assets/dbs/cg/cards/bt1/fr/001/art.webp");
+  });
+
+  it("uses a remote artUrl when the pack stores Bandai faces, not local files", () => {
+    const index = {
+      version: 1 as const,
+      pack: "dbs/cg",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "dbscg:bt1-001": {
+          set: "bt1",
+          card: "001",
+          name: "Champa",
+          langs: {
+            fr: {
+              artUrl:
+                "https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/BT1-001.png",
+            },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("dbs/cg", index);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.missingArt).toBeUndefined();
+    expect(rows[0]?.artUrl).toBe(
+      "https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/BT1-001.png",
+    );
   });
 
   it("prefers non-promo donor and matches cdf grouping to base number", () => {

@@ -1,19 +1,23 @@
 #!/usr/bin/env tsx
 /**
- * Dragon Ball Super Card Game (Masters) — Bandai europe-fr cardlist → local index.
+ * Dragon Ball Super Card Game (Masters) — Bandai cardlist + Deckplanet faces.
  *
  *   pnpm dbs:cards
  *   pnpm dbs:cards -- --limit 2
+ *   pnpm dbs:cards -- --only faces
+ *   pnpm dbs:cards -- --skip faces
  *   pnpm dbs:cards -- --offline
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { fetchDbsCgFaces } from "./fetchFaces";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
 
-const STEPS = ["scrape"] as const;
+const STEPS = ["scrape", "faces"] as const;
 type Step = (typeof STEPS)[number];
+const ONLINE = new Set<Step>(["scrape", "faces"]);
 
 function argValueFrom(
   argv: readonly string[],
@@ -38,7 +42,31 @@ export function selectDbsCgSteps(argv: readonly string[]): Step[] {
   const base = only.length
     ? STEPS.filter((step) => only.includes(step))
     : [...STEPS];
-  return base.filter((step) => !skip.has(step) && !(offline && step === "scrape"));
+  return base.filter(
+    (step) => !skip.has(step) && !(offline && ONLINE.has(step)),
+  );
+}
+
+function optionalNumber(
+  argv: readonly string[],
+  name: string,
+): number | undefined {
+  const raw = argValueFrom(argv, name);
+  if (!raw) return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * `--limit` on a full run caps Bandai series, not individual faces.
+ * Print cap only applies to `--only faces`.
+ */
+export function dbsCgFaceDownloadLimit(
+  argv: readonly string[],
+  steps: readonly string[],
+): number | undefined {
+  if (steps.includes("scrape")) return undefined;
+  return optionalNumber(argv, "--limit");
 }
 
 export async function runDbsCgPackPipeline(
@@ -47,7 +75,9 @@ export async function runDbsCgPackPipeline(
   const dryRun = argv.includes("--dry-run");
   const force = argv.includes("--force");
   const steps = selectDbsCgSteps(argv);
-  console.log(`── DBS Masters — étapes : ${steps.join(" → ") || "(curated only)"}`);
+  console.log(
+    `── DBS Masters — étapes : ${steps.join(" → ") || "(curated only)"}`,
+  );
 
   console.log(`── curated sync${dryRun ? " (dry run)" : ""}`);
   await ensureDbsCgCuratedAssets({ dryRun, force });
@@ -56,12 +86,16 @@ export async function runDbsCgPackPipeline(
     if (step === "scrape") {
       await scrapeDbsCgCardlist({
         force,
-        limit: argValueFrom(argv, "--limit")
-          ? Number(argValueFrom(argv, "--limit"))
-          : undefined,
-        delayMs: argValueFrom(argv, "--delay")
-          ? Number(argValueFrom(argv, "--delay"))
-          : undefined,
+        limit: optionalNumber(argv, "--limit"),
+        delayMs: optionalNumber(argv, "--delay"),
+      });
+    }
+    if (step === "faces") {
+      await fetchDbsCgFaces({
+        force,
+        limit: dbsCgFaceDownloadLimit(argv, steps),
+        delayMs: optionalNumber(argv, "--delay"),
+        concurrency: optionalNumber(argv, "--concurrency"),
       });
     }
   }

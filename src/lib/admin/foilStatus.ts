@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 import type { FoilPackId, FoilPackStatus } from "./foilStatusTypes";
+import type { CatalogueExtractTarget } from "./cataloguePacks";
 
 export type { FoilPackId, FoilPackStatus } from "./foilStatusTypes";
 
@@ -97,8 +98,10 @@ export async function readFoilPackStatuses(opts: {
   const packs: Array<{
     id: FoilPackId;
     label: string;
+    /** On-disk data pack (may nest: naruto/ccg, dbs/cg). */
+    dataPack: string;
     staging: string;
-    extractTarget: "lorcana" | "pokemon" | "naruto";
+    extractTarget: CatalogueExtractTarget;
     /** APK unlocks Unity extras; packs can still extract without one. */
     apkRequired: boolean;
     extractMarkers: string[];
@@ -106,6 +109,7 @@ export async function readFoilPackStatuses(opts: {
     {
       id: "lorcana",
       label: "Lorcana",
+      dataPack: "lorcana",
       staging: "lorcana/staging",
       extractTarget: "lorcana",
       apkRequired: false,
@@ -121,6 +125,7 @@ export async function readFoilPackStatuses(opts: {
     {
       id: "pokemon",
       label: "Pokémon",
+      dataPack: "pokemon",
       staging: "pokemon/staging",
       extractTarget: "pokemon",
       apkRequired: false,
@@ -136,6 +141,7 @@ export async function readFoilPackStatuses(opts: {
     {
       id: "naruto",
       label: "Naruto CCG",
+      dataPack: "naruto/ccg",
       staging: "naruto/ccg/staging",
       extractTarget: "naruto",
       apkRequired: false,
@@ -144,6 +150,34 @@ export async function readFoilPackStatuses(opts: {
         path.join(dataRoot, "naruto", "ccg", "catalog.sqlite"),
         path.join(dataRoot, "naruto", "ccg", "cards"),
         path.join(dataRoot, "naruto", "ccg", "cards", "back.webp"),
+      ],
+    },
+    {
+      id: "dbs-cg",
+      label: "Dragon Ball Masters",
+      dataPack: "dbs/cg",
+      staging: "dbs/cg/staging",
+      extractTarget: "dbs-cg",
+      apkRequired: false,
+      extractMarkers: [
+        path.join(dataRoot, "dbs", "cg", "cards-index.json"),
+        path.join(dataRoot, "dbs", "cg", "catalog.sqlite"),
+        path.join(dataRoot, "dbs", "cg", "cards"),
+        path.join(dataRoot, "dbs", "cg", "cards", "back.webp"),
+      ],
+    },
+    {
+      id: "dbs-fw",
+      label: "Dragon Ball Fusion World",
+      dataPack: "dbs/fw",
+      staging: "dbs/fw/staging",
+      extractTarget: "dbs-fw",
+      apkRequired: false,
+      extractMarkers: [
+        path.join(dataRoot, "dbs", "fw", "cards-index.json"),
+        path.join(dataRoot, "dbs", "fw", "catalog.sqlite"),
+        path.join(dataRoot, "dbs", "fw", "cards"),
+        path.join(dataRoot, "dbs", "fw", "cards", "back.webp"),
       ],
     },
   ];
@@ -158,7 +192,7 @@ export async function readFoilPackStatuses(opts: {
       null,
     );
 
-    const shadersDir = path.join(dataRoot, pack.id, "foil", "shaders");
+    const shadersDir = path.join(dataRoot, pack.dataPack, "foil", "shaders");
     const shaders = await countFiles(shadersDir);
     const extractBest = await newestInTree(pack.extractMarkers);
     const extractPresent =

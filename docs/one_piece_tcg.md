@@ -79,3 +79,4 @@ Ne pas brancher comme rendu OPTCG « officiel ».
 - [foil_effects.md](foil_effects.md) — contrat foil (packs avec assets)  
 - [foil_apk_sources.md](foil_apk_sources.md) — quand APK / réseau existent  
 - [backlog.md](backlog.md) — P2 autres TCG (apitcg)
+- [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md) — même éditeur Bandai / apitcg (FW)

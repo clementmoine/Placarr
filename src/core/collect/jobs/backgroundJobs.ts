@@ -16,6 +16,7 @@ import {
 import {
   foilExtractLabel,
   normalizeFoilExtractTarget,
+  type FoilExtractTarget,
 } from "@/lib/admin/foilExtractRunner";
 
 export type BackgroundJobKind =
@@ -35,7 +36,7 @@ export type BackgroundJobRow = {
   startedAt: Date;
   cancellable: boolean;
   /** Foil extract pack target — drives per-pack loading / logs in admin. */
-  foilTarget?: "lorcana" | "pokemon" | "naruto" | null;
+  foilTarget?: FoilExtractTarget | null;
   shelf: {
     id: string;
     name: string;

@@ -118,6 +118,12 @@ function artFile(files: CardsIndexLangFiles): string | null {
   return files.thumb ?? null;
 }
 
+function remoteArtUrl(files: CardsIndexLangFiles): string | null {
+  const url = files.artUrl?.trim();
+  if (url && /^https?:\/\//i.test(url)) return url;
+  return null;
+}
+
 function thumbFile(files: CardsIndexLangFiles): string | null {
   return files.thumb ?? null;
 }
@@ -188,6 +194,21 @@ export function buildCatalogueCardRows(
       : `${entry.set} · ${entry.card}`;
 
     if (!file) {
+      const remote = picked ? remoteArtUrl(picked.files) : null;
+      if (remote) {
+        rows.push({
+          printKey,
+          set: entry.set,
+          card: entry.card,
+          lang,
+          artUrl: remote,
+          hasFoil,
+          label,
+          ...(entry.rarity ? { rarity: entry.rarity } : {}),
+          ...(entry.name ? { name: entry.name } : {}),
+        });
+        continue;
+      }
       const donor = allowFallback
         ? donorsByNumber.get(catalogueCollectorKey(entry.card))
         : undefined;

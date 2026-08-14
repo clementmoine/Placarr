@@ -9,6 +9,7 @@
 | [provider_external_links.md](provider_external_links.md) | Liens + URL-first prix | **Vivant** |
 | [tcg_support.md](tcg_support.md) | TCG produit (Lorcana / Pokémon) | **Vivant** |
 | [one_piece_tcg.md](one_piece_tcg.md) | One Piece : providers, apps, foil (recherche) | **Vivant** |
+| [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md) | DBS Masters / Fusion World : Deckplanet, SAMPLE, cardgame.fr | **Vivant** |
 | [naruto_carddass_tcg.md](naruto_carddass_tcg.md) | Naruto — CACG / Carddass (+ autres lignes via sets) | **Vivant** |
 | [naruto_carddass_fr_recovery.md](naruto_carddass_fr_recovery.md) | Naruto FR — audit recovery carddass.fr / trous / pistes | **Vivant** |
 | [data-layout.md](data-layout.md) | `data/`, scripts, foil CLI | **Vivant** |
@@ -28,7 +29,7 @@ Voir [data-layout.md](data-layout.md). Résumé :
 ```
 data/uploads/          → /uploads (stream)
 data/<pack>/foil/      → /foil/<pack>/… (stream)
-data/launchbox|icollect|nointro|pokemon|lorcana/
+data/launchbox|icollect|nointro|pokemon|lorcana|dbs/
 data/indexes/title-idf/
 ```
 
@@ -37,7 +38,8 @@ Scripts foil / catalogues locaux :
 ```
 src/providers/lorcanatcg/     → pnpm foil:lorcana
 src/providers/pokemontcglive/ → pnpm foil:pokemon
-src/providers/narutoccg/         → pnpm naruto:cards
+src/providers/narutoccg/      → pnpm naruto:cards
+src/providers/dbscg/          → pnpm dbs:cards
 src/providers/{icollect,launchbox,nointro}/cli.ts
 ```
 

@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { foilPackDataDir } from "@/lib/runtimeData";
+import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
 import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
 
 export const FOIL_EXTRACT_LOG_NAME = "foil-extract.log";
@@ -14,8 +15,7 @@ const MAX_LOG_BYTES = 4 * 1024 * 1024;
 
 /** Extract UI target → on-disk data pack (franchise line nest). */
 function foilExtractDataPack(pack: FoilExtractTarget): string {
-  if (pack === "naruto") return "naruto/ccg";
-  return pack;
+  return cataloguePackForExtractTarget(pack)?.id ?? pack;
 }
 
 export function foilExtractLogPath(pack: FoilExtractTarget): string {

@@ -13,10 +13,20 @@ import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
 import { NARUTO_CCG_CLI_PATH } from "@/providers/narutoccg/cli";
+import { DBS_CG_CLI_PATH } from "@/providers/dbscg/cli";
+import { DBS_FW_CLI_PATH } from "@/providers/dbsfw/cli";
+import {
+  CATALOGUE_PACKS,
+  cataloguePackForExtractTarget,
+  type CatalogueExtractTarget,
+} from "@/lib/admin/cataloguePacks";
 
-export const FOIL_EXTRACT_TARGETS = ["lorcana", "pokemon", "naruto"] as const;
+/** Same vocabulary as Catalogue packs — adding a pack is enough. */
+export type FoilExtractTarget = CatalogueExtractTarget;
 
-export type FoilExtractTarget = (typeof FOIL_EXTRACT_TARGETS)[number];
+export const FOIL_EXTRACT_TARGETS: readonly FoilExtractTarget[] = [
+  ...new Set(CATALOGUE_PACKS.map((pack) => pack.extractTarget)),
+];
 
 /** Legacy admin targets → single pack extract. */
 const LEGACY_LORCANA_TARGETS = new Set([
@@ -40,6 +50,16 @@ export function normalizeFoilExtractTarget(
   ) {
     return "naruto";
   }
+  if (value === "dbs/cg" || value === "dbs-masters") {
+    return "dbs-cg";
+  }
+  if (
+    value === "dbs/fw" ||
+    value === "fusion-world" ||
+    value === "fusionworld"
+  ) {
+    return "dbs-fw";
+  }
   return null;
 }
 
@@ -50,14 +70,8 @@ export function isFoilExtractTarget(
 }
 
 export function foilExtractLabel(target: FoilExtractTarget): string {
-  switch (target) {
-    case "lorcana":
-      return "Lorcana";
-    case "pokemon":
-      return "Pokémon";
-    case "naruto":
-      return "Naruto CCG";
-  }
+  const pack = cataloguePackForExtractTarget(target);
+  return pack?.labelEn ?? target;
 }
 
 /** Inventory / Lorcana — CDN scrape + extract within a dev session. */
@@ -66,12 +80,18 @@ export const FOIL_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
 /** Pokémon catalogue (~93k bundles): scrape skip-pass + extract can run hours. */
 export const FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
 
+/** Masters first-run Deckplanet dump (~10k WebP) plus Bandai scrape. */
+export const FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+
 export function foilExtractTimeoutMs(
   target: FoilExtractTarget,
   scope: FoilExtractScope = "inventory",
 ): number {
   if (target === "pokemon" && scope === "catalogue") {
     return FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS;
+  }
+  if (target === "dbs-cg") {
+    return FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS;
   }
   return FOIL_EXTRACT_TIMEOUT_MS;
 }
@@ -154,6 +174,24 @@ export async function resolveFoilExtractCommand(
       command: path.join(root, "node_modules/.bin/tsx"),
       args: [NARUTO_CCG_CLI_PATH],
       prelude: ["Naruto CCG: Wayback → data/naruto/ccg (catalogue fermé)"],
+    };
+  }
+  if (target === "dbs-cg") {
+    return {
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [DBS_CG_CLI_PATH],
+      prelude: [
+        "Dragon Ball Masters: Bandai europe-fr cardlist + Deckplanet faces → data/dbs/cg",
+      ],
+    };
+  }
+  if (target === "dbs-fw") {
+    return {
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [DBS_FW_CLI_PATH],
+      prelude: [
+        "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dbs/fw",
+      ],
     };
   }
   // ``--no-job``: worker already owns the BackgroundWorkJob; child must not

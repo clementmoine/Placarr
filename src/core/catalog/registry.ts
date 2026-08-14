@@ -45,6 +45,8 @@ import { ledenicheurModule } from "@/providers/ledenicheur";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
 import { narutoccgModule } from "@/providers/narutoccg";
+import { dbscgModule } from "@/providers/dbscg";
+import { dbsfwModule } from "@/providers/dbsfw";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -114,6 +116,8 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   lorcanajsonModule,
   lorcanatcgModule,
   narutoccgModule,
+  dbscgModule,
+  dbsfwModule,
   lorcanaggModule,
   lorcastModule,
   tcgdexModule,

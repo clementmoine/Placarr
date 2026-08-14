@@ -1,8 +1,9 @@
 /**
  * Print search for the DBS Masters local catalogue.
  *
- * Faces are Bandai cardlist URLs (SAMPLE watermark). The sleeve back lives on
- * the effect pack; Leader awakened faces are `cardBackUrl` on the print.
+ * Catalogue faces are local Deckplanet WebPs when synced; Bandai SAMPLE URLs
+ * remain as fallback. The sleeve back lives on the effect pack; Leader
+ * awakened faces are `cardBackUrl` on the print.
  */
 import {
   DBS_CG_EFFECT_PACK_ID,

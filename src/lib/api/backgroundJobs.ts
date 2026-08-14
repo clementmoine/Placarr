@@ -1,6 +1,8 @@
 import axios from "axios";
 import type { QueryClient } from "@tanstack/react-query";
 
+import type { CatalogueExtractTarget } from "@/lib/admin/cataloguePacks";
+
 export type BackgroundJob = {
   id: string;
   name: string;
@@ -15,7 +17,7 @@ export type BackgroundJob = {
     | "nointroIndexSync";
   startedAt: string;
   cancellable: boolean;
-  foilTarget?: "lorcana" | "pokemon" | "naruto" | null;
+  foilTarget?: CatalogueExtractTarget | null;
   shelf: {
     id: string;
     name: string;

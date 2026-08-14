@@ -18,10 +18,7 @@ import type {
 } from "@/types/providerModule";
 
 import { dbsCgPrintFacts } from "./facts";
-import {
-  dbsCgDbPath,
-  ensureDbsCgIndex,
-} from "./indexStore";
+import { dbsCgDbPath, ensureDbsCgIndex } from "./indexStore";
 import { dbscgCatalog } from "./pipeline";
 import { DBS_CG_GAME } from "./printIdentity";
 import {
@@ -77,7 +74,7 @@ export const dbscgModule: ProviderModule = {
     defaultLanguage: "fr",
     websiteUrl: "https://www.dbs-cardgame.com/europe-fr/cartes/",
     notes:
-      "Masters (europe-fr cardlist) → `data/dbs/cg/`. Faces Bandai (SAMPLE). Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
+      "Masters (europe-fr cardlist) → `data/dbs/cg/`. Faces Deckplanet au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
   },
   catalog: dbscgCatalog,
   evidence: {
@@ -137,9 +134,7 @@ export const dbscgModule: ProviderModule = {
       return {
         ok,
         latency: Date.now() - start,
-        error: ok
-          ? null
-          : `Index unavailable — run pnpm dbs:cards (${dbPath})`,
+        error: ok ? null : `Index unavailable — run pnpm dbs:cards (${dbPath})`,
         configured: true,
       };
     },

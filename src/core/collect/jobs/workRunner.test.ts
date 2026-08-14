@@ -34,7 +34,10 @@ vi.mock("@/lib/admin/foilExtractRunner", () => ({
     value === "lorcana" ||
     value === "lorcana-web" ||
     value === "lorcana-mobile" ||
-    value === "lorcana-cards",
+    value === "lorcana-cards" ||
+    value === "naruto" ||
+    value === "dbs-cg" ||
+    value === "dbs-fw",
   normalizeFoilExtractTarget: (value: unknown) => {
     if (value === "pokemon") return "pokemon";
     if (
@@ -45,6 +48,9 @@ vi.mock("@/lib/admin/foilExtractRunner", () => ({
     ) {
       return "lorcana";
     }
+    if (value === "naruto") return "naruto";
+    if (value === "dbs-cg" || value === "dbs/cg") return "dbs-cg";
+    if (value === "dbs-fw" || value === "dbs/fw") return "dbs-fw";
     return null;
   },
   runFoilExtractCommand: vi.fn().mockResolvedValue(undefined),

@@ -5,6 +5,11 @@
 import { existsSync } from "node:fs";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
+import { metadataProbe } from "@/lib/dev/mappingProbe";
+import {
+  mappingRawKeysFromFetch,
+  probeContextOrDefault,
+} from "@/lib/dev/mappingRawKeys";
 import { parsePrintKey } from "@/core/identify/printKey";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
@@ -29,6 +34,10 @@ import { narutoccgCatalog } from "./pipeline";
 
 const PROVIDER_ID = "narutoccg";
 const PROVIDER_LABEL = "Naruto CCG (local)";
+
+/** Probe sample: the first card of the first series, always on disk. */
+const PROBE_PRINT_KEY = "naruto:s1-ni001";
+const PROBE_CARD_NAME = "Naruto Uzumaki";
 
 function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   const printKey =
@@ -68,6 +77,8 @@ export const narutoccgModule: ProviderModule = {
     label: PROVIDER_LABEL,
     types: ["tcg"],
     capabilities: ["identify", "cover"],
+    /** Closed local corpus: its own names are the reference for manual entry. */
+    nameDatabase: true,
     auth: { kind: "none" },
     supplyMode: "local_catalog",
     canonical: false,
@@ -77,6 +88,17 @@ export const narutoccgModule: ProviderModule = {
       "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/ccg/`. Curated sous `src/providers/narutoccg/curated/`. Sync : `pnpm naruto:cards`.",
   },
   catalog: narutoccgCatalog,
+  evidence: {
+    label: PROVIDER_LABEL,
+    // Its own catalogue, read from disk — no scrape guesswork to discount.
+    sourceWeight: 0.9,
+  },
+  suggestDatabaseTitles: async ({ cleanedName }) => {
+    const cards = searchNarutoPrints(cleanedName, { limit: 10 });
+    // Several prints share a name (`ni023` retail + promo): the picker is what
+    // tells them apart, so suggest each distinct title once.
+    return Array.from(new Set(cards.map((card) => card.title)));
+  },
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,
     async resolve(ctx) {
@@ -89,9 +111,32 @@ export const narutoccgModule: ProviderModule = {
     if (parsePrintKey(printKey)?.game !== "naruto") return null;
     return lookupNarutoPrint(printKey, { language: language ?? undefined });
   },
+  runMappingProbe: async () =>
+    metadataProbe(lookupNarutoPrintDetail(PROBE_PRINT_KEY)),
+  collectMappingRawKeys: async (context) => {
+    const ctx = probeContextOrDefault(context, {
+      name: PROBE_CARD_NAME,
+      printKey: PROBE_PRINT_KEY,
+    });
+    return mappingRawKeysFromFetch(async () =>
+      lookupNarutoPrintDetail(ctx.printKey ?? PROBE_PRINT_KEY),
+    );
+  },
+  testHandlers: {
+    "narutoccg-search": {
+      label: "Naruto CCG - Recherche",
+      kind: "metadata",
+      run: (query) => Promise.resolve(searchNarutoPrints(query, { limit: 10 })),
+    },
+    "narutoccg-printkey": {
+      label: "Naruto CCG - Clé de tirage",
+      kind: "metadata",
+      run: (query) => Promise.resolve(lookupNarutoPrint(query)),
+    },
+  },
   mappingProbe: {
-    sampleInput: "naruto:s1-ni001",
-    context: { printKey: "naruto:s1-ni001" },
+    sampleInput: PROBE_PRINT_KEY,
+    context: { printKey: PROBE_PRINT_KEY },
   },
   healthCheck: createMetadataHealthCheck(
     PROVIDER_ID,

@@ -20,9 +20,14 @@ const DATA_PACK = "naruto/ccg";
 export async function refreshNarutoCcgCatalog(
   opts?: ProviderCatalogRefreshOpts,
 ): Promise<void> {
-  const argv = opts?.auto
-    ? ["--offline", "--skip", "checklist"]
-    : process.argv.slice(2);
+  /*
+    Never `process.argv`: this runs inside the background worker, whose own
+    arguments have nothing to do with the pack. Reading them let unrelated
+    flags leak into the pipeline — and made the same call behave differently
+    depending on who invoked it. `[]` is the full run (see `selectSteps`).
+    Lorcana and Pokémon likewise derive everything from `opts`.
+  */
+  const argv = opts?.auto ? ["--offline", "--skip", "checklist"] : [];
   await runNarutoPackPipeline(argv);
   const logs = packLogsDir(DATA_PACK);
   mkdirSync(logs, { recursive: true });

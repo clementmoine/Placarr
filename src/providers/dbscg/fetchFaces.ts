@@ -10,7 +10,14 @@
  * GitHub Pages copy. Bandai SAMPLE URLs stay in sqlite as `artUrl`. Leader
  * `_b.webp` is not the pack sleeve — skip it.
  */
-import { existsSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
@@ -26,6 +33,13 @@ import {
 } from "@/providers/shared/softban";
 
 import { dbscardsFaceUrls } from "./dbscardsFaces";
+import {
+  dbsFaceFilename,
+  dbsFaceSourceOf,
+  pickBestFace,
+  type DbsFaceSource,
+  type StoredFace,
+} from "./faceChoice";
 import { DBS_CG_CARDLIST_ORIGIN } from "./parseCardlist";
 import {
   DBS_CG_FACE_LANGS,
@@ -116,7 +130,9 @@ export function bandaiFaceUrl(collector: string, lang: string): string {
  * 860x1205 is only reachable for English prints — it is worth a lot of pixels
  * and none of them are in French.
  */
-export function dbsCgFaceUrls(input: {
+export type FaceCandidate = { source: DbsFaceSource; urls: string[] };
+
+export function dbsCgFaceCandidates(input: {
   setCode: string;
   number: string;
   collector: string;
@@ -124,12 +140,13 @@ export function dbsCgFaceUrls(input: {
   rarity?: string | null;
   fullName?: string | null;
   awakenedName?: string | null;
-}): string[] {
+}): FaceCandidate[] {
   const lang = input.lang.toLowerCase();
-  const urls: string[] = [];
+  const out: FaceCandidate[] = [];
   if (input.fullName) {
-    urls.push(
-      ...dbscardsFaceUrls({
+    out.push({
+      source: "dbscards",
+      urls: dbscardsFaceUrls({
         setCode: input.setCode,
         number: input.number,
         lang,
@@ -137,12 +154,17 @@ export function dbsCgFaceUrls(input: {
         fullName: input.fullName,
         awakenedName: input.awakenedName,
       }),
-    );
+    });
   }
-  urls.push(bandaiFaceUrl(input.collector, lang));
-  if (lang === "en")
-    urls.push(...dbsMastersFaceUrls(input.setCode, input.collector));
-  return urls;
+  out.push({ source: "bandai", urls: [bandaiFaceUrl(input.collector, lang)] });
+  // English only — Deckplanet mirrors no French printing.
+  if (lang === "en") {
+    out.push({
+      source: "deckplanet",
+      urls: dbsMastersFaceUrls(input.setCode, input.collector),
+    });
+  }
+  return out;
 }
 
 export function isWebpBuffer(buf: Buffer): boolean {
@@ -264,6 +286,33 @@ async function downloadFace(
   return { buf: null, throttled };
 }
 
+/** What this card already holds, with the sizes the ranking needs. */
+async function readStoredFaces(cardDir: string): Promise<StoredFace[]> {
+  let names: string[];
+  try {
+    names = readdirSync(cardDir);
+  } catch {
+    return [];
+  }
+  const { default: sharp } = await import("sharp");
+  const out: StoredFace[] = [];
+  for (const name of names) {
+    const source = dbsFaceSourceOf(name);
+    if (!source) continue;
+    try {
+      const meta = await sharp(path.join(cardDir, name)).metadata();
+      out.push({
+        source,
+        width: meta.width ?? 0,
+        height: meta.height ?? 0,
+      });
+    } catch {
+      /* unreadable file — not a candidate */
+    }
+  }
+  return out;
+}
+
 function writeAtomic(destPath: string, buf: Buffer): void {
   mkdirSync(path.dirname(destPath), { recursive: true });
   const tmp = `${destPath}.tmp`;
@@ -348,44 +397,69 @@ export async function fetchDbsCgFaces(
   stats.total = jobs.length;
 
   await runPool(jobs, concurrency, delayMs, async ({ print, lang }) => {
-    const dest = path.join(
-      packCardDir(DBS_CG_PACK_ID, {
-        set: print.setCode,
-        lang,
-        card: dbsCgCardFolder(print),
-      }),
-      "art.webp",
-    );
-    if (!force && existsSync(dest)) {
-      stats.skip += 1;
-      return;
-    }
+    const cardDir = packCardDir(DBS_CG_PACK_ID, {
+      set: print.setCode,
+      lang,
+      card: dbsCgCardFolder(print),
+    });
     const collector = formatDbsCollectorNumber(
       print.setCode,
       print.number,
       print.grouping,
     );
     const title = titleByPrintKey.get(print.printKey);
-    const { buf, throttled } = await downloadFace(
-      dbsCgFaceUrls({
-        setCode: print.setCode,
-        number: print.number,
-        collector,
-        lang,
-        rarity: title?.rarity,
-        fullName: title?.fullName,
-        awakenedName: title?.awakenedName,
-      }),
-      banned,
-    );
-    if (throttled) stats.throttled += 1;
-    if (!buf) {
+    const candidates = dbsCgFaceCandidates({
+      setCode: print.setCode,
+      number: print.number,
+      collector,
+      lang,
+      rarity: title?.rarity,
+      fullName: title?.fullName,
+      awakenedName: title?.awakenedName,
+    });
+
+    let fetched = 0;
+    let throttledHere = false;
+    for (const candidate of candidates) {
+      const file = path.join(cardDir, dbsFaceFilename(candidate.source));
+      /*
+        Skip is per *source*, not per card. That is what lets a later pass fill
+        in only what is missing — a card already holding Bandai's face still
+        gets asked for the dbscards one, so a run interrupted by a ban is
+        repaired by simply running again, no `--force` needed.
+      */
+      if (!force && existsSync(file)) continue;
+      const { buf, throttled } = await downloadFace(candidate.urls, banned);
+      if (throttled) throttledHere = true;
+      if (!buf) continue;
+      try {
+        writeAtomic(file, buf);
+        fetched += 1;
+      } catch {
+        stats.fail += 1;
+      }
+    }
+    if (throttledHere) stats.throttled += 1;
+
+    const stored = await readStoredFaces(cardDir);
+    if (stored.length === 0) {
+      stats.miss += 1;
+      return;
+    }
+    const best = pickBestFace(stored);
+    if (!best) {
       stats.miss += 1;
       return;
     }
     try {
-      writeAtomic(dest, buf);
-      stats.ok += 1;
+      // `art.webp` stays the name every reader already knows; it is now a copy
+      // of whichever stored face won, not the first one that answered.
+      copyFileSync(
+        path.join(cardDir, dbsFaceFilename(best)),
+        path.join(cardDir, "art.webp"),
+      );
+      if (fetched > 0) stats.ok += 1;
+      else stats.skip += 1;
     } catch {
       stats.fail += 1;
     }

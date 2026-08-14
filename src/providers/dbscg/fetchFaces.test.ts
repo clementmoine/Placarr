@@ -8,7 +8,15 @@ import {
 import os from "node:os";
 import path from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("@/lib/http/httpClient", () => ({
   httpGet: vi.fn(),
@@ -34,12 +42,32 @@ import {
 
 const mockedGet = vi.mocked(httpGet);
 
+/*
+  A real encode, not a stub header: the faces pass measures what it stored to
+  rank the sources, so a buffer sharp cannot read would exercise the wrong
+  path. Built once — encoding is the slow part.
+*/
+let tinyWebpCache: Buffer | null = null;
+
+beforeAll(async () => {
+  const { default: sharp } = await import("sharp");
+  tinyWebpCache = await sharp({
+    // Big enough to clear MIN_WEBP_BYTES; noise so it does not compress to
+    // nothing.
+    create: {
+      width: 40,
+      height: 56,
+      channels: 3,
+      noise: { type: "gaussian", mean: 128, sigma: 60 },
+    },
+  })
+    .webp()
+    .toBuffer();
+});
+
 function tinyWebp(): Buffer {
-  const buf = Buffer.alloc(128, 0);
-  buf.write("RIFF", 0);
-  buf.writeUInt32LE(120, 4);
-  buf.write("WEBP", 8);
-  return buf;
+  if (!tinyWebpCache) throw new Error("tinyWebp not initialised");
+  return tinyWebpCache;
 }
 
 function artPath(lang = "fr"): string {
@@ -202,9 +230,28 @@ describe("fetchDbsCgFaces", () => {
     expect(index.cards["dbscg:bt1-001"]?.langs.fr?.art).toBe("art.webp");
   });
 
-  it("skips an existing face unless --force", async () => {
+  it("re-asks only for the sources it does not hold yet", async () => {
+    // Bandai's face is already stored; dbscards' is not — as after a pass cut
+    // short by a ban. Running again must fetch the missing one and leave the
+    // held one alone, without `--force`.
     mkdirSync(path.dirname(artPath()), { recursive: true });
-    writeFileSync(artPath(), tinyWebp());
+    writeFileSync(
+      path.join(path.dirname(artPath()), "art.bandai.webp"),
+      tinyWebp(),
+    );
+    mockedGet.mockResolvedValue({ data: tinyWebp(), status: 200 } as never);
+    await fetchDbsCgFaces({ delayMs: 0, concurrency: 1, langs: ["fr"] });
+    const tried = mockedGet.mock.calls.map((call) => String(call[0]));
+    expect(tried.some((url) => url.includes("dbscards.fr"))).toBe(true);
+    expect(tried.some((url) => url.includes("dbs-cardgame.com"))).toBe(false);
+  });
+
+  it("asks for nothing once every source is held", async () => {
+    const dir = path.dirname(artPath());
+    mkdirSync(dir, { recursive: true });
+    for (const name of ["art.dbscards.webp", "art.bandai.webp"]) {
+      writeFileSync(path.join(dir, name), tinyWebp());
+    }
     const result = await fetchDbsCgFaces({
       delayMs: 0,
       concurrency: 1,
@@ -212,6 +259,29 @@ describe("fetchDbsCgFaces", () => {
     });
     expect(result.skip).toBe(1);
     expect(mockedGet).not.toHaveBeenCalled();
+  });
+
+  it("shows the biggest stored face, not the first one fetched", async () => {
+    const dir = path.dirname(artPath());
+    mkdirSync(dir, { recursive: true });
+    const { default: sharp } = await import("sharp");
+    const big = await sharp({
+      create: {
+        width: 120,
+        height: 168,
+        channels: 3,
+        noise: { type: "gaussian", mean: 128, sigma: 60 },
+      },
+    })
+      .webp()
+      .toBuffer();
+    // Bandai holds the larger file here; the ranking must prefer it over the
+    // nominally better-ranked source.
+    writeFileSync(path.join(dir, "art.dbscards.webp"), tinyWebp());
+    writeFileSync(path.join(dir, "art.bandai.webp"), big);
+    await fetchDbsCgFaces({ delayMs: 0, concurrency: 1, langs: ["fr"] });
+    const shown = await sharp(artPath()).metadata();
+    expect(shown.width).toBe(120);
   });
 
   /**

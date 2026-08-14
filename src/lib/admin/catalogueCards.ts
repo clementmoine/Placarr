@@ -71,7 +71,12 @@ export function packFaceAssetUrl(
 }
 
 export function langFilesHaveFoil(files: CardsIndexLangFiles): boolean {
-  if (files.mask || files.etch || files.varnishMask || files.secondVarnishMask) {
+  if (
+    files.mask ||
+    files.etch ||
+    files.varnishMask ||
+    files.secondVarnishMask
+  ) {
     return true;
   }
   if (!files.variants) return false;
@@ -143,8 +148,7 @@ export function buildCatalogueCardRows(
   index: CardsIndexV1,
   preferLang?: string,
 ): CatalogueCardRow[] {
-  const allowFallback =
-    cataloguePackInfo(pack)?.sameNumberArtFallback === true;
+  const allowFallback = cataloguePackInfo(pack)?.sameNumberArtFallback === true;
 
   const donorsByNumber = new Map<string, ArtDonor>();
   if (allowFallback) {
@@ -260,28 +264,50 @@ export function buildCatalogueCardRows(
  * Insert pack-common and per-set verso tiles so backs are browsable like faces.
  * Pack back leads the grid; each set back leads its set group.
  */
+/**
+ * One verso tile. `lang` is `"—"` for a back shared by every locale of the
+ * pack; it carries a code only when that print run has its own verso.
+ */
+export type CatalogueBackTile = { url: string; lang: string };
+
+/** Accept a bare URL (one shared back) or an explicit per-language list. */
+type BackInput = string | null | undefined | readonly CatalogueBackTile[];
+
+function backTiles(input: BackInput): CatalogueBackTile[] {
+  if (!input) return [];
+  if (typeof input === "string") return [{ url: input, lang: "—" }];
+  return [...input];
+}
+
 export function mergeCatalogueBackRows(input: {
   pack: CataloguePackId;
   faceRows: CatalogueCardRow[];
-  packBackUrl?: string | null;
-  setBackUrls?: ReadonlyMap<string, string> | Record<string, string>;
+  packBackUrl?: BackInput;
+  setBackUrls?:
+    | ReadonlyMap<string, BackInput>
+    | Record<string, Exclude<BackInput, undefined>>;
 }): CatalogueCardRow[] {
-  const packBackUrl = input.packBackUrl ?? null;
   const setBackMap =
     input.setBackUrls instanceof Map
       ? input.setBackUrls
-      : new Map(Object.entries(input.setBackUrls ?? {}));
+      : new Map<string, BackInput>(Object.entries(input.setBackUrls ?? {}));
+
+  /** Suffix keeps print keys unique when a pack has several versos. */
+  const suffix = (tile: CatalogueBackTile) =>
+    tile.lang === "—" ? "" : `-${tile.lang}`;
+  const suffixLabel = (tile: CatalogueBackTile) =>
+    tile.lang === "—" ? "" : ` · ${tile.lang.toUpperCase()}`;
 
   const out: CatalogueCardRow[] = [];
-  if (packBackUrl) {
+  for (const tile of backTiles(input.packBackUrl)) {
     out.push({
-      printKey: `${input.pack}:__pack-back__`,
+      printKey: `${input.pack}:__pack-back${suffix(tile)}__`,
       set: "",
       card: "back",
-      lang: "—",
-      artUrl: packBackUrl,
+      lang: tile.lang,
+      artUrl: tile.url,
       hasFoil: false,
-      label: "Dos · pack",
+      label: `Dos · pack${suffixLabel(tile)}`,
       kind: "pack-back",
     });
   }
@@ -290,16 +316,15 @@ export function mergeCatalogueBackRows(input: {
   for (const row of input.faceRows) {
     if (row.set !== currentSet) {
       currentSet = row.set;
-      const setBackUrl = setBackMap.get(row.set);
-      if (setBackUrl) {
+      for (const tile of backTiles(setBackMap.get(row.set))) {
         out.push({
-          printKey: `${input.pack}:__set-back-${row.set}__`,
+          printKey: `${input.pack}:__set-back-${row.set}${suffix(tile)}__`,
           set: row.set,
           card: "back",
-          lang: "—",
-          artUrl: setBackUrl,
+          lang: tile.lang,
+          artUrl: tile.url,
           hasFoil: false,
-          label: `Dos · ${row.set}`,
+          label: `Dos · ${row.set}${suffixLabel(tile)}`,
           kind: "set-back",
         });
       }
@@ -314,11 +339,28 @@ export function withCatalogueBackRows(
   pack: CataloguePackId,
   faceRows: CatalogueCardRow[],
 ): CatalogueCardRow[] {
-  const packBackUrl = assetsPackBackUrl(pack);
-  const setBackUrls = new Map<string, string>();
+  // Resolve the verso once per locale on show, then keep only the distinct
+  // files: locales that share the common `back.webp` collapse to a single
+  // tile, and a run with its own `back.<lang>.webp` gets its own.
+  const langs = [...new Set(faceRows.map((r) => r.lang).filter(Boolean))];
+  const distinct = (
+    resolve: (lang: string | undefined) => string | null,
+  ): CatalogueBackTile[] => {
+    const shared = resolve(undefined);
+    const byUrl = new Map<string, string>();
+    if (shared) byUrl.set(shared, "—");
+    for (const lang of langs) {
+      const url = resolve(lang);
+      if (url && !byUrl.has(url)) byUrl.set(url, lang);
+    }
+    return [...byUrl].map(([url, lang]) => ({ url, lang }));
+  };
+
+  const packBackUrl = distinct((lang) => assetsPackBackUrl(pack, lang));
+  const setBackUrls = new Map<string, CatalogueBackTile[]>();
   for (const set of new Set(faceRows.map((r) => r.set))) {
-    const url = assetsSetBackUrl(pack, set);
-    if (url) setBackUrls.set(set, url);
+    const tiles = distinct((lang) => assetsSetBackUrl(pack, set, lang));
+    if (tiles.length) setBackUrls.set(set, tiles);
   }
   return mergeCatalogueBackRows({
     pack,

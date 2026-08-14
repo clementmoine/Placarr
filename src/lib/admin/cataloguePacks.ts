@@ -95,3 +95,33 @@ export function resolveCatalogueScope(
   if (raw === "foils" || raw === "foil" || raw === "effects") return "foils";
   return pack.defaultScope;
 }
+
+/**
+ * URL semantics of switching the active Catalogue tab. A pack change must drop
+ * a material that does not exist in the next pack, and force `scope=all` on a
+ * pack with no foil effects — otherwise the browser opens on an empty "Foils".
+ */
+export function applyCataloguePackParams(
+  params: URLSearchParams,
+  packId: string,
+): void {
+  params.set("pack", packId);
+  params.delete("material");
+  const next = cataloguePackInfo(packId);
+  if (next && !next.hasFoilEffects) {
+    params.set("scope", "all");
+  } else if (next?.defaultScope === "foils") {
+    params.delete("scope");
+  }
+}
+
+/**
+ * Catalogue pack behind a catalog corpus. `ProviderCatalogHooks.dataPack` is
+ * the pack id, so core never has to know provider names — keeping this side
+ * provider-blind (see `blindnessGuard`).
+ */
+export function cataloguePackForDataPack(
+  dataPack: string | null | undefined,
+): CataloguePackInfo | null {
+  return cataloguePackInfo(dataPack);
+}

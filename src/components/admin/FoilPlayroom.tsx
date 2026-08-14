@@ -23,6 +23,7 @@ import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
 import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
 import { listEffectPacks } from "@/effects";
+import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import {
   CATALOGUE_PACKS,
@@ -386,47 +387,6 @@ function materialHasRole(
 ): boolean {
   return Object.values(material.textures).some(
     (binding) => binding.role === role,
-  );
-}
-
-function SegmentedControl<T extends string>({
-  value,
-  onChange,
-  options,
-  disabled,
-}: {
-  value: T;
-  onChange: (next: T) => void;
-  options: readonly { value: T; label: string }[];
-  disabled?: boolean;
-}) {
-  return (
-    <div
-      role="tablist"
-      className="inline-flex rounded-lg border border-border/80 bg-muted/30 p-0.5"
-    >
-      {options.map((option) => {
-        const selected = option.value === value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            disabled={disabled}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
-              selected
-                ? "bg-background font-medium text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
@@ -814,23 +774,6 @@ export function FoilPlayroom({
     [router, searchParams],
   );
 
-  const selectPack = useCallback(
-    (id: string) => {
-      const next = cataloguePackInfo(id);
-      replaceParams((params) => {
-        params.set("pack", id);
-        // Pack switch: keep layout, drop a material that no longer exists.
-        params.delete("material");
-        if (next && !next.hasFoilEffects) {
-          params.set("scope", "all");
-        } else if (next?.defaultScope === "foils") {
-          params.delete("scope");
-        }
-      });
-    },
-    [replaceParams],
-  );
-
   const selectScope = useCallback(
     (next: CatalogueBrowseScope) => {
       replaceParams((params) => {
@@ -939,19 +882,12 @@ export function FoilPlayroom({
   return (
     <div className="flex flex-col gap-4">
       <div className="sticky top-14 z-30 -mx-1 flex flex-col gap-2 bg-background/95 px-1 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <SegmentedControl
-            value={cataloguePackId}
-            onChange={selectPack}
-            options={CATALOGUE_PACKS.map((entry) => ({
-              value: entry.id,
-              label: fr ? entry.labelFr : entry.labelEn,
-            }))}
-          />
-          {tools ? (
-            <div className="flex flex-wrap items-center gap-2">{tools}</div>
-          ) : null}
-        </div>
+        {/* Provider tabs live in TcgEffectsPanel — this pack is read from `?pack=`. */}
+        {tools ? (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {tools}
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
           {catalogueInfo.hasFoilEffects ? (
             <SegmentedControl

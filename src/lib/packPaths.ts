@@ -31,6 +31,27 @@ export const PACK_BACK_FILENAMES = [
   "back.jpeg",
 ] as const;
 
+const BACK_EXTENSIONS = ["webp", "png", "jpg", "jpeg"] as const;
+
+/**
+ * Back filenames to try, most specific first.
+ *
+ * A print run can carry its own verso — Japanese Pokémon and Japanese Carddass
+ * do not share the international back — while every Latin-script locale of the
+ * same run shares one. So a language-qualified `back.<lang>.webp` wins when it
+ * exists and everything else falls back to the common `back.webp`: no need to
+ * duplicate one identical file per locale.
+ */
+export function backFilenameCandidates(lang?: string | null): string[] {
+  const code = (lang ?? "").trim().toLowerCase();
+  const names: string[] = [];
+  if (/^[a-z]{2}([a-z]{2})?$/.test(code)) {
+    for (const ext of BACK_EXTENSIONS) names.push(`back.${code}.${ext}`);
+  }
+  for (const ext of BACK_EXTENSIONS) names.push(`back.${ext}`);
+  return names;
+}
+
 export function packDataDir(pack: string): string {
   return path.join(dataRoot(), pack);
 }
@@ -92,13 +113,18 @@ export function packCardsIndexPath(pack: string): string {
  * (callers that write a back still have a canonical destination).
  */
 export function packBackPath(pack: string): string {
-  return resolvePackBackPath(pack) ?? path.join(packCardsDir(pack), "back.webp");
+  return (
+    resolvePackBackPath(pack) ?? path.join(packCardsDir(pack), "back.webp")
+  );
 }
 
 /** Disk path of an existing pack back, or `null` if none. */
-export function resolvePackBackPath(pack: string): string | null {
+export function resolvePackBackPath(
+  pack: string,
+  lang?: string | null,
+): string | null {
   const dir = packCardsDir(pack);
-  for (const name of PACK_BACK_FILENAMES) {
+  for (const name of backFilenameCandidates(lang)) {
     const candidate = path.join(dir, name);
     if (existsSync(candidate)) return candidate;
   }
@@ -109,13 +135,22 @@ export function resolvePackBackPath(pack: string): string | null {
  * Optional set-specific verso under `cards/{set}/back.webp` (Naruto etc.).
  * Pack-common back stays at `cards/back.webp`.
  */
-export function resolveSetBackPath(pack: string, set: string): string | null {
+export function resolveSetBackPath(
+  pack: string,
+  set: string,
+  lang?: string | null,
+): string | null {
   const trimmed = set.trim();
-  if (!trimmed || trimmed.includes("..") || trimmed.includes("/") || trimmed.includes("\\")) {
+  if (
+    !trimmed ||
+    trimmed.includes("..") ||
+    trimmed.includes("/") ||
+    trimmed.includes("\\")
+  ) {
     return null;
   }
   const dir = path.join(packCardsDir(pack), trimmed);
-  for (const name of PACK_BACK_FILENAMES) {
+  for (const name of backFilenameCandidates(lang)) {
     const candidate = path.join(dir, name);
     if (existsSync(candidate)) return candidate;
   }
@@ -123,15 +158,22 @@ export function resolveSetBackPath(pack: string, set: string): string | null {
 }
 
 /** `/assets/<pack>/cards/back.{webp|png|…}` when a back file exists. */
-export function assetsPackBackUrl(pack: string): string | null {
-  const disk = resolvePackBackPath(pack);
+export function assetsPackBackUrl(
+  pack: string,
+  lang?: string | null,
+): string | null {
+  const disk = resolvePackBackPath(pack, lang);
   if (!disk) return null;
   return assetsPackFileUrl(pack, "cards", path.basename(disk));
 }
 
 /** `/assets/<pack>/cards/{set}/back.{webp|png|…}` when a set verso exists. */
-export function assetsSetBackUrl(pack: string, set: string): string | null {
-  const disk = resolveSetBackPath(pack, set);
+export function assetsSetBackUrl(
+  pack: string,
+  set: string,
+  lang?: string | null,
+): string | null {
+  const disk = resolveSetBackPath(pack, set, lang);
   if (!disk) return null;
   return assetsPackFileUrl(pack, "cards", set, path.basename(disk));
 }
@@ -197,7 +239,12 @@ export function splitAssetsPackPath(
   if (b === "cards" || b === "foil") {
     return { pack: a, rest: segments.slice(1) };
   }
-  if (b && segOk(b) && (c === "cards" || c === "foil") && segments.length >= 3) {
+  if (
+    b &&
+    segOk(b) &&
+    (c === "cards" || c === "foil") &&
+    segments.length >= 3
+  ) {
     return { pack: `${a}/${b}`, rest: segments.slice(2) };
   }
   return null;

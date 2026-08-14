@@ -1,31 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Database, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   enqueueCatalogueRefresh,
   fetchCatalogueCorpora,
+  type CatalogueCorpusRow,
 } from "@/lib/client/catalogueCorpora";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 /**
- * Catalogue hub — all ProviderModule.catalog corpora (TCG + LaunchBox / …).
- * Refresh all / per-provider; status from registry hooks.
+ * Catalogue corpora — all `ProviderModule.catalog` providers (TCG + LaunchBox /
+ * No-Intro / …).
+ *
+ * The admin shows one tab per provider rather than a hub block, so this module
+ * exposes the shared query + refresh plumbing and the small pieces the tabs
+ * render; the tab bar itself lives in `TcgEffectsPanel`.
  */
-export function CatalogueCorporaPanel() {
-  const { locale } = useLocale();
-  const fr = locale === "fr";
+
+const ALL = "*";
+
+export function useCatalogueCorpora() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -35,99 +34,121 @@ export function CatalogueCorporaPanel() {
     refetchInterval: 30_000,
   });
 
-  const run = async (opts: { providerId?: string; all?: boolean }) => {
-    const key = opts.all ? "*" : (opts.providerId ?? "");
-    setBusy(key);
-    try {
-      const done = await enqueueCatalogueRefresh(opts);
-      toast.success(
-        fr
-          ? `${done.jobs.length} job(s) en file`
-          : `${done.jobs.length} job(s) queued`,
-      );
-      void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
-      void queryClient.invalidateQueries({ queryKey: ["catalogueCorpora"] });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : String(error));
-    } finally {
-      setBusy(null);
-    }
-  };
+  const { locale } = useLocale();
+  const fr = locale === "fr";
 
+  const refresh = useCallback(
+    async (opts: { providerId?: string; all?: boolean }) => {
+      setBusy(opts.all ? ALL : (opts.providerId ?? ""));
+      try {
+        const done = await enqueueCatalogueRefresh(opts);
+        toast.success(
+          fr
+            ? `${done.jobs.length} job(s) en file`
+            : `${done.jobs.length} job(s) queued`,
+        );
+        void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
+        void queryClient.invalidateQueries({ queryKey: ["catalogueCorpora"] });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : String(error));
+      } finally {
+        setBusy(null);
+      }
+    },
+    [fr, queryClient],
+  );
+
+  return { corpora, isLoading, busy, refresh };
+}
+
+export function corpusStatusLabel(
+  corpus: CatalogueCorpusRow,
+  fr: boolean,
+): string {
+  const state = corpus.status.empty
+    ? fr
+      ? "vide"
+      : "empty"
+    : corpus.status.stale
+      ? fr
+        ? "obsolète"
+        : "stale"
+      : fr
+        ? "à jour"
+        : "fresh";
+  const synced = corpus.status.lastSyncAt
+    ? ` · ${new Date(corpus.status.lastSyncAt).toLocaleString()}`
+    : "";
+  return `${corpus.dataPack} · ${corpus.supplyMode} · ${state}${synced}`;
+}
+
+/** Refresh every catalog provider at once. Lives next to the tab bar. */
+export function RefreshAllCorporaButton({
+  busy,
+  disabled,
+  onRefresh,
+}: {
+  busy: string | null;
+  disabled?: boolean;
+  onRefresh: (opts: { all: true }) => void | Promise<void>;
+}) {
+  const { locale } = useLocale();
+  const fr = locale === "fr";
   return (
-    <Card className="border bg-card/60">
-      <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3">
-        <div>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Database className="size-4 text-primary" />
-            {fr ? "Corpus locaux" : "Local corpora"}
-          </CardTitle>
-          <CardDescription>
-            {fr
-              ? "Providers catalog (registry) — refresh unitaire ou tout. Auto Plex-like via worker."
-              : "Catalog providers (registry) — unit or full refresh. Plex-like auto via worker."}
-          </CardDescription>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          disabled={busy !== null || corpora.length === 0}
-          onClick={() => void run({ all: true })}
-        >
-          <RefreshCw
-            className={`size-3.5 ${busy === "*" ? "animate-spin" : ""}`}
-          />
-          {fr ? "Tout rafraîchir" : "Refresh all"}
-        </Button>
-      </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading && (
-          <p className="text-sm text-muted-foreground col-span-full">
-            {fr ? "Chargement…" : "Loading…"}
-          </p>
-        )}
-        {corpora.map((row) => {
-          const staleLabel = row.status.empty
-            ? fr
-              ? "vide"
-              : "empty"
-            : row.status.stale
-              ? fr
-                ? "obsolète"
-                : "stale"
-              : fr
-                ? "à jour"
-                : "fresh";
-          return (
-            <div
-              key={row.providerId}
-              className="flex flex-col gap-2 rounded-md border bg-background/50 p-3"
-            >
-              <div className="text-sm font-medium">{row.label}</div>
-              <p className="text-xs text-muted-foreground flex-1">
-                {row.dataPack} · {row.supplyMode} · {staleLabel}
-                {row.status.lastSyncAt
-                  ? ` · ${new Date(row.status.lastSyncAt).toLocaleString()}`
-                  : ""}
-              </p>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={busy !== null}
-                onClick={() => void run({ providerId: row.providerId })}
-              >
-                <RefreshCw
-                  className={`size-3.5 ${
-                    busy === row.providerId ? "animate-spin" : ""
-                  }`}
-                />
-                {fr ? "Rafraîchir" : "Refresh"}
-              </Button>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="h-7 gap-1 px-2 text-xs"
+      disabled={busy !== null || disabled}
+      onClick={() => void onRefresh({ all: true })}
+    >
+      <RefreshCw
+        className={`h-3.5 w-3.5 ${busy === ALL ? "animate-spin" : ""}`}
+      />
+      {fr ? "Tout rafraîchir" : "Refresh all"}
+    </Button>
+  );
+}
+
+/**
+ * A corpus with no cards browser of its own (LaunchBox, No-Intro, Players):
+ * status + its own refresh, nothing else to show.
+ */
+export function CorpusPanel({
+  corpus,
+  busy,
+  onRefresh,
+}: {
+  corpus: CatalogueCorpusRow;
+  busy: string | null;
+  onRefresh: (opts: { providerId: string }) => void | Promise<void>;
+}) {
+  const { locale } = useLocale();
+  const fr = locale === "fr";
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-background/50 p-3">
+      <div className="min-w-0">
+        <div className="text-sm font-medium">{corpus.label}</div>
+        <p className="text-xs text-muted-foreground">
+          {corpusStatusLabel(corpus, fr)}
+        </p>
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1 px-2 text-xs"
+        disabled={busy !== null}
+        onClick={() => void onRefresh({ providerId: corpus.providerId })}
+      >
+        <RefreshCw
+          className={`h-3.5 w-3.5 ${
+            busy === corpus.providerId ? "animate-spin" : ""
+          }`}
+        />
+        {fr ? "Rafraîchir" : "Refresh"}
+      </Button>
+    </div>
   );
 }

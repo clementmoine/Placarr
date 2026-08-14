@@ -163,6 +163,13 @@ export function CatalogueBrowser({
               </div>
               <figcaption className="truncate text-[11px] text-muted-foreground">
                 {card.label}
+                {/* Six locales share one set+number: without this the grid
+                    shows six identical captions for six different cards. */}
+                {card.lang && card.lang !== "—" ? (
+                  <span className="ml-1 font-medium uppercase text-foreground/80">
+                    {card.lang}
+                  </span>
+                ) : null}
                 {card.hasFoil ? (
                   <span className="ml-1 text-foreground/70">· foil</span>
                 ) : null}

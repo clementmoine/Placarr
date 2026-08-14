@@ -105,7 +105,11 @@ describe("bilingual titles", () => {
   it("looks up the English title row when asked", () => {
     const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
     expect(en?.language).toBe("en");
-    expect(en?.cardBackUrl).toContain("/images/cardlist/cardimg/BT1-001_b.png");
+    // The stored back wins over Bandai's remote `_b.png`, and the legacy
+    // `awakened.webp` name still resolves — those files predate the rename.
+    expect(en?.cardBackUrl).toMatch(
+      /^\/assets\/dbs\/cg\/cards\/bt1\/en\/001\/(back\.[a-z]+|awakened)\.webp$/,
+    );
   });
 });
 

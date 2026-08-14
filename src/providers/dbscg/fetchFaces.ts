@@ -613,7 +613,7 @@ export async function fetchDbsCgFaces(
         try {
           writeAtomic(awakenedDest, back.buf);
           // Same convention as the front: role + source, then a recorded
-          // winner. A fixed `awakened.webp` had no room for a second source
+          // winner. A fixed single name had no room for a second source
           // and would have been silently overwritten by whichever ran last.
           recordFaceDecision(
             cardDir,

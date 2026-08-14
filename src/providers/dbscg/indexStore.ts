@@ -20,8 +20,9 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import {
   DBS_FACE_DECISION_FILE,
-  dbsFaceSourceOf,
+  dbsFaceFileOf,
   parseFaceDecision,
+  type DbsFaceRole,
 } from "./faceChoice";
 import { DBS_CG_GAME } from "./printIdentity";
 
@@ -260,6 +261,7 @@ export function dbsCgCardFolder(
 export function dbsCgLocalArtFilename(
   print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
   lang = "fr",
+  role: DbsFaceRole = "art",
 ): string | null {
   const cardDir = packCardDir(DBS_CG_PACK_ID, {
     set: print.setCode,
@@ -276,7 +278,7 @@ export function dbsCgLocalArtFilename(
   const decision = path.join(cardDir, DBS_FACE_DECISION_FILE);
   if (existsSync(decision)) {
     try {
-      const named = parseFaceDecision(readFileSync(decision, "utf8"));
+      const named = parseFaceDecision(readFileSync(decision, "utf8"), role);
       if (named && existsSync(path.join(cardDir, named))) return named;
     } catch {
       /* fall through to the scan */
@@ -290,15 +292,29 @@ export function dbsCgLocalArtFilename(
   */
   try {
     const found = readdirSync(cardDir)
-      .filter((name) => dbsFaceSourceOf(name))
+      .filter((name) => dbsFaceFileOf(name)?.role === role)
       .sort();
     if (found.length > 0) return found[0]!;
   } catch {
     /* no folder */
   }
 
-  // Older layouts really did hold this file.
-  return existsSync(path.join(cardDir, "art.webp")) ? "art.webp" : null;
+  /*
+    Older layouts really did hold these names. Kept readable rather than
+    migrated: 628 Leader backs were written as `awakened.webp` before the role
+    was folded into the app's single `back` notion, and re-fetching them to
+    rename them would be work for nothing.
+  */
+  const legacy = role === "art" ? "art.webp" : "awakened.webp";
+  return existsSync(path.join(cardDir, legacy)) ? legacy : null;
+}
+
+/** The Leader's awakened side, when this print has one stored. */
+export function dbsCgLocalBackFilename(
+  print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
+  lang = "fr",
+): string | null {
+  return dbsCgLocalArtFilename(print, lang, "back");
 }
 
 export function loadDbsCgIndex(): {
@@ -382,10 +398,12 @@ export function exportDbsCgCardsIndexJson(
     const langs: Record<string, CardsIndexLangFiles> = {};
     for (const lang of DBS_CG_FACE_LANGS) {
       const art = dbsCgLocalArtFilename(print, lang);
+      const back = dbsCgLocalBackFilename(print, lang);
       const imageUrl = assetsFor?.get(lang)?.imageUrl;
       const name = titlesFor?.get(lang)?.fullName?.trim();
       const files: CardsIndexLangFiles = {};
       if (art) files.art = art;
+      if (back) files.back = back;
       if (imageUrl) files.artUrl = imageUrl;
       if (name) files.name = name;
       if (Object.keys(files).length) langs[lang] = files;

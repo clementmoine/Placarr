@@ -5,7 +5,7 @@
  * https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena
  * (`assets/{SET}/{collector}.webp`). Clone that into pack staging, then file
  * each English face. Leader `_b.webp` is the awakened verso of the same print
- * — `awakened.webp` in the card folder, never the pack sleeve.
+ * — `back.<source>.webp` in the card folder, never the pack sleeve.
  *
  * HTTP Deckplanet stays a gap-filler in `fetchFaces` for English prints the
  * clone does not hold.

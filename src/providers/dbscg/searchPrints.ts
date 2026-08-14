@@ -19,6 +19,7 @@ import {
   DBS_CG_PACK_ID,
   dbsCgCardFolder,
   dbsCgLocalArtFilename,
+  dbsCgLocalBackFilename,
   ensureDbsCgIndex,
 } from "./indexStore";
 import { DBS_CG_GAME, formatDbsReference } from "./printIdentity";
@@ -55,8 +56,26 @@ export type DbsPrintDetail = {
  * and the French one are different scans, and a print must show its own.
  */
 function localFaceUrl(row: DbsPrintDetail): string | null {
+  return localFileUrl(row, dbsCgLocalArtFilename);
+}
+
+/**
+ * The Leader's awakened side from disk, when the pack holds it.
+ *
+ * Same oversight the front face had: the pass downloads these and the
+ * candidate handed out Bandai's remote `_b.png` regardless, so every stored
+ * back sat unused.
+ */
+function localBackUrl(row: DbsPrintDetail): string | null {
+  return localFileUrl(row, dbsCgLocalBackFilename);
+}
+
+function localFileUrl(
+  row: DbsPrintDetail,
+  resolve: (print: DbsPrintDetail, lang: string) => string | null,
+): string | null {
   const lang = (row.lang || "fr").toLowerCase();
-  const file = dbsCgLocalArtFilename(row, lang);
+  const file = resolve(row, lang);
   if (!file) return null;
   return assetsCardUrl(
     DBS_CG_PACK_ID,
@@ -79,7 +98,10 @@ function toCandidate(row: DbsPrintDetail): PrintCandidate {
     ...(row.cardType ? { category: row.cardType } : {}),
     ...(face ? { imageUrl: face } : {}),
     ...(face ? { thumbnailUrl: face } : {}),
-    ...(row.backUrl ? { cardBackUrl: row.backUrl } : {}),
+    // Local first, remote as the fallback — as for the face.
+    ...((localBackUrl(row) ?? row.backUrl)
+      ? { cardBackUrl: localBackUrl(row) ?? row.backUrl }
+      : {}),
     language: row.lang,
     finishes,
     plainFinishes: finishes.filter((finish) => finish === PLAIN_FINISH),

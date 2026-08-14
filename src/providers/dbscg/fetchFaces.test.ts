@@ -58,6 +58,7 @@ beforeAll(async () => {
       width: 40,
       height: 56,
       channels: 3,
+      background: "#808080",
       noise: { type: "gaussian", mean: 128, sigma: 60 },
     },
   })
@@ -270,6 +271,7 @@ describe("fetchDbsCgFaces", () => {
         width: 120,
         height: 168,
         channels: 3,
+        background: "#808080",
         noise: { type: "gaussian", mean: 128, sigma: 60 },
       },
     })

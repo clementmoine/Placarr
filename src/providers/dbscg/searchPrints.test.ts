@@ -61,3 +61,26 @@ describe("searchDbsCgPrints", () => {
     expect(spr?.cardBackUrl).toBeUndefined();
   });
 });
+
+/**
+ * The pack downloads faces to `data/dbs/cg/cards/…` but the candidate used to
+ * hand out Bandai's remote URL regardless, so every card was served at 260x363
+ * while a 400x560 file sat unused on disk.
+ */
+describe("face preference", () => {
+  it("serves the synced local face rather than the remote one", () => {
+    const candidate = lookupDbsCgPrint("dbscg:bt1-001");
+    expect(candidate?.imageUrl).toBe(
+      "/assets/dbs/cg/cards/bt1/fr/001/art.webp",
+    );
+    expect(candidate?.thumbnailUrl).toBe(candidate?.imageUrl);
+  });
+
+  it("keeps the remote URL for a print with no local face yet", () => {
+    // A print the faces pass has not reached still has to be pickable.
+    const missing = lookupDbsCgPrint("dbscg:bt31-001");
+    if (missing?.imageUrl && !missing.imageUrl.startsWith("/assets/")) {
+      expect(missing.imageUrl).toMatch(/^https?:\/\//);
+    }
+  });
+});

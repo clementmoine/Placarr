@@ -1,9 +1,10 @@
 /**
  * Print search for the DBS Masters local catalogue.
  *
- * Catalogue faces are local Deckplanet WebPs when synced; Bandai SAMPLE URLs
- * remain as fallback. The sleeve back lives on the effect pack; Leader
- * awakened faces are `cardBackUrl` on the print.
+ * Catalogue faces are the local synced WebPs when present (400x560, see
+ * `dbscardsFaces`); Bandai SAMPLE URLs remain as fallback at 260x363. The
+ * sleeve back lives on the effect pack; Leader awakened faces are
+ * `cardBackUrl` on the print.
  */
 import {
   DBS_CG_EFFECT_PACK_ID,
@@ -12,7 +13,14 @@ import {
 } from "@/effects/dbscg";
 import type { PrintCandidate } from "@/types/providerModule";
 
-import { ensureDbsCgIndex } from "./indexStore";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
+
+import {
+  DBS_CG_PACK_ID,
+  dbsCgCardFolder,
+  dbsCgLocalArtFilename,
+  ensureDbsCgIndex,
+} from "./indexStore";
 import { DBS_CG_GAME, formatDbsReference } from "./printIdentity";
 
 const PLAIN_FINISH = "normal";
@@ -36,9 +44,28 @@ export type DbsPrintDetail = {
   backUrl: string | null;
 };
 
+/**
+ * The synced face, when the pack has one.
+ *
+ * Worth preferring over `image_url`: the local file is 400x560 from
+ * dbscards.fr, where Bandai's own URL is 260x363 — and it was already being
+ * downloaded, just never used, so every card was served at the smaller size.
+ */
+function localFaceUrl(row: DbsPrintDetail): string | null {
+  const file = dbsCgLocalArtFilename(row);
+  if (!file) return null;
+  return assetsCardUrl(
+    DBS_CG_PACK_ID,
+    { set: row.setCode, lang: "fr", card: dbsCgCardFolder(row) },
+    file,
+  );
+}
+
 function toCandidate(row: DbsPrintDetail): PrintCandidate {
   const finishes = DBS_FINISHES;
   const reference = formatDbsReference(row.setCode, row.number, row.grouping);
+  // Remote Bandai URL stays as the fallback for a print not synced yet.
+  const face = localFaceUrl(row) ?? row.imageUrl;
   return {
     printKey: row.printKey,
     title: row.fullName?.trim() || reference,
@@ -46,8 +73,8 @@ function toCandidate(row: DbsPrintDetail): PrintCandidate {
     setCode: row.setCode,
     ...(row.rarity ? { rarity: row.rarity } : {}),
     ...(row.cardType ? { category: row.cardType } : {}),
-    ...(row.imageUrl ? { imageUrl: row.imageUrl } : {}),
-    ...(row.imageUrl ? { thumbnailUrl: row.imageUrl } : {}),
+    ...(face ? { imageUrl: face } : {}),
+    ...(face ? { thumbnailUrl: face } : {}),
     ...(row.backUrl ? { cardBackUrl: row.backUrl } : {}),
     language: row.lang,
     finishes,

@@ -248,6 +248,70 @@ Reste ouvert :
 - [x] Provider Fusion World (`dbsfw` / `data/dbs/fw/`, `pnpm dbs:fw`).
 - [x] Catalogue admin : franchise Dragon Ball → Masters | Fusion World.
 
+## 8. À reprendre quand dbscards.fr sera de nouveau debout (2026-08-15)
+
+L'hôte est tombé en fin de session : `static.dbscards.fr` **et**
+`www.dbscards.fr` expirent tous deux à 30 s. Avant ça il tarpittait par
+intermittence — mesuré entre 0,07 s et 28 s sur la même URL.
+
+### 8.1 Le JSON-LD de `/cards` est l'index qu'on cherchait
+
+Leur page de liste embarque un `ItemList` schema.org qui donne, **par carte**,
+son `url`, son `name` et surtout son `image` — l'URL réelle, sans construction
+de slug :
+
+```json
+{ "@type": "ListItem", "position": 1,
+  "url": "https://www.dbscards.fr/cards/bt31-001-uc-gogeta-ss-fusion-de-renversement-de-situation",
+  "name": "Son Goku et Vegeta // Gogeta SS, Fusion de Renversement de Situation",
+  "image": ".../fr/bt31/image-cartes-a-collectionner-...-bt31-001-uc-gogeta-...-back.webp" }
+```
+
+J'avais écrit plus haut qu'aucune route adressable n'existait, à cause du POST
+à jeton CSRF et de la pagination XHR. C'est faux : la correspondance est en
+clair dans le balisage que lisent les moteurs de recherche. **À vérifier dès
+que l'hôte répond** : la pagination de ce JSON-LD. S'il se parcourt, il
+remplace toute la construction de slug et supprime la requête perdue par carte.
+
+### 8.2 Ce que le JSON-LD confirme déjà
+
+- Le suffixe de verso est bien **`-back.webp`**, y compris en français.
+- Le slug d'un Leader utilise le **nom d'éveil**, pas le nom de face — le champ
+  `name` porte les deux, séparés par `//`.
+
+Autrement dit, la construction actuelle de `dbscardsFaces` est correcte pour
+les versos. **Ne pas la « corriger » sur la foi du test raté ci-dessous.**
+
+### 8.3 Le test de versos du 15/08 ne mesure rien
+
+Un échantillon de 5 Leaders FR a donné 0/5 sur les versos. Mesure **invalide** :
+le contrôle lancé ensuite a montré que `bt1-001` échouait aussi sur sa **face**,
+alors que ce fichier est sur disque en 400×560, téléchargé le jour même. L'hôte
+ne répondait plus ; le test mesurait la panne, pas nos URLs.
+
+Leçon déjà apprise sur Naruto et re-apprise ici : *un résultat négatif ne vaut
+rien tant que l'outil n'a pas prouvé qu'il peut produire un positif.* Toujours
+inclure un témoin connu-bon dans ces sondages.
+
+### 8.4 État au moment de la coupure
+
+| | fr | en |
+|---|---|---|
+| tirages au catalogue | 7241 | 8421 |
+| faces dbscards | 111 | 0 |
+| faces bandai | ~183 | 0 |
+| faces deckplanet | — | 8823 |
+| versos | 0 (sur 503 attendus) | 628 (ancien nom `awakened.webp`) |
+
+À relancer quand l'hôte répond :
+
+```
+npx tsx src/providers/dbscg/cli.ts --skip scrape
+```
+
+Le catalogue est à jour (scrape des deux locales fait le 14/08), donc seules
+les étapes `arena` (locale, rapide) et `faces` restent utiles.
+
 ## Réfs
 
 - [tcg_support.md](tcg_support.md) — printKey, providers, apitcg  

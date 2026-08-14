@@ -8,15 +8,28 @@ const MISSING_ART_URL =
   /no[-_]?image|image[-_]?not[-_]?available|no[-_]?art(?:work)?|missing[-_]?cover/i;
 
 /**
+ * Site-root paths this app actually serves. Anything else stored as a
+ * site-root URL is a provider-relative path that escaped its host, and would
+ * point the item at nothing.
+ *
+ * `/uploads/` holds images we localized; `/assets/` holds the local pack
+ * corpora (`data/<pack>/`), which is where a card picked from a closed
+ * catalogue gets its face — that pack has no remote URL to fall back on.
+ */
+const SERVED_LOCAL_PREFIXES = ["/uploads/", "/assets/"] as const;
+
+/**
  * URL path/name signals "catalog has no artwork" — not a corrupt download.
- * Also rejects provider-relative paths stored as site-root URLs (only `/uploads/`
- * are valid localized assets on this app).
+ * Also rejects provider-relative paths stored as site-root URLs.
  */
 export function isMissingArtImageUrl(url?: string | null): boolean {
   if (!url?.trim()) return false;
   const pathOnly = url.split("?")[0]?.split("#")[0] ?? "";
   if (MISSING_ART_URL.test(pathOnly)) return true;
-  if (pathOnly.startsWith("/") && !pathOnly.startsWith("/uploads/")) {
+  if (
+    pathOnly.startsWith("/") &&
+    !SERVED_LOCAL_PREFIXES.some((prefix) => pathOnly.startsWith(prefix))
+  ) {
     return true;
   }
   return false;

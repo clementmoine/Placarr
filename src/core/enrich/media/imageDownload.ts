@@ -15,6 +15,7 @@ import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/core/enrich/media/remoteFetch";
 import { providerOriginalImageUrl } from "@/core/enrich/imageUrls";
+import { ASSETS_URL_PREFIX } from "@/lib/packAssetUrls";
 import { FETCHED_IMAGE_MAX_SIDE, toUploadWebp } from "@/lib/media/losslessWebp";
 import { uploadsDir } from "@/lib/runtimeData";
 
@@ -103,7 +104,17 @@ export async function downloadRemoteImage(
     return url;
   }
   if (url.startsWith("/")) {
-    return url.startsWith("/uploads/") ? url : null;
+    /**
+     * Already local, nothing to fetch. `/uploads/` is what we localised before;
+     * `/assets/` is a pack corpus the app serves from disk (`data/<pack>/`).
+     * A card picked from a local catalogue arrives with an `/assets/…` face —
+     * dropping it here left the item with no image at all, since a closed pack
+     * has no remote URL to fall back on.
+     */
+    return url.startsWith("/uploads/") ||
+      url.startsWith(`${ASSETS_URL_PREFIX}/`)
+      ? url
+      : null;
   }
   if (!url.startsWith("http")) {
     return null;

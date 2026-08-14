@@ -170,28 +170,26 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
    * captured: a spectrum would invent detail we do not have, while a glint
    * only claims "this copy is shiny", which is exactly what we do know.
    *
-   * Taken from the Pokémon TCG gallery's own hero cards — a thin white bar at
-   * -45°, `luminosity`, crossing in a fifth of the cycle and resting for the
-   * rest. `luminosity` is the part that matters: it lifts brightness while
-   * leaving the artwork's hue alone, so the card looks polished rather than
-   * washed white the way `screen` leaves it.
+   * Shape taken from the Pokémon TCG gallery's own hero cards: a thin white
+   * bar at -45°, `luminosity`. That blend is the part that matters — it lifts
+   * brightness while leaving the artwork's hue alone, so the card looks
+   * polished rather than washed white the way `screen` leaves it.
    *
-   * The pause is the character, and a pause needs a timeline — so this is the
-   * one look driven by keyframes instead of the pointer. See
-   * `HoloShader.animation`.
+   * Their bar is on a timer. Ours rides `--combined` like every other look
+   * here, so the glint tracks the tilt: it crosses as you turn the card and
+   * holds where you stop, instead of sweeping past on a clock that has nothing
+   * to do with what your hand is doing.
    */
   flare: {
     id: "flare",
     backgroundImage: `linear-gradient(-45deg, transparent 44%, rgba(255,255,255,0.95) 50%, transparent 56%)`,
     backgroundRepeat: "no-repeat",
     // Wider than the card so the band is fully off it at both ends of the
-    // sweep, instead of appearing and vanishing mid-face.
+    // travel, instead of appearing and vanishing mid-face.
     backgroundSize: "250% 250%",
-    // Overridden by the animation; the resting frame for reduced motion.
-    backgroundPosition: "160% 160%",
+    backgroundPosition: "var(--combined) center",
     mixBlendMode: "luminosity",
     opacity: 0.7,
-    animation: "holo-sweep 5s linear infinite",
     /*
       No pointer falloff. That mask fades the foil to nothing 68% out from the
       cursor, which suits a textured holo — light only reads where you point.
@@ -199,12 +197,8 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
       crossed the card: the one thing this look is.
     */
     pointerFalloff: false,
-    /*
-      The band's path is on a timer, but its strength still answers the light:
-      the glint is brightest when the card is turned away, which is when a real
-      foil catches it. Keeps this look inside the promise every other one makes
-      (`cssGuard`) instead of taking an exception from it.
-    */
+    // Brightest as the card turns away from you, which is when a real foil
+    // catches the light; settles as you face it.
     filter: `brightness(${lit(0.95, 0.5)})`,
   },
 };

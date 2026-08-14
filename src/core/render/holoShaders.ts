@@ -72,16 +72,6 @@ export type HoloShader = {
   opacity?: number;
   filter?: string;
   /**
-   * A CSS `animation` shorthand, for a look whose character is its *timing*.
-   *
-   * Everything else here is positioned by JS through `--combined` /
-   * `--pointer-*`, which can say where the light is but not that it should
-   * pass and then wait. Optional and rare on purpose: a keyframed layer no
-   * longer answers the pointer, so only reach for it when the pause is the
-   * point. Keyframes live in `globals.css`.
-   */
-  animation?: string;
-  /**
    * A second coat this finish always comes with, drawn above it through the
    * same mask. Two finishes ship one: without it a Lore card was missing the
    * layer that carries most of its colour.
@@ -500,7 +490,6 @@ export function holoLayerStyle(
         ? shader.opacity
         : round((shader.opacity ?? 1) * motif),
     filter: withFilter(shader.filter, added),
-    ...(shader.animation ? { animation: shader.animation } : {}),
     ...(shader.clipPath ? { clipPath: shader.clipPath } : {}),
   };
 }

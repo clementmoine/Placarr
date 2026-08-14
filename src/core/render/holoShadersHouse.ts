@@ -33,6 +33,7 @@ export const HOUSE_HOLO_SHADER_IDS = [
   "sheen",
   "sparkle",
   "etch",
+  "flare",
 ] as const;
 
 export type HouseHoloShaderId = (typeof HOUSE_HOLO_SHADER_IDS)[number];
@@ -160,6 +161,33 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
     mixBlendMode: "soft-light",
     opacity: 0.35,
     filter: `brightness(${lit(0.98, 0.35)}) contrast(${lit(1.15, 0.4)})`,
+  },
+
+  /**
+   * One clean band of white crossing the card, and nothing else.
+   *
+   * The plainest look here on purpose: no spectrum, no grain. It suits a pack
+   * whose foil was never captured — a rainbow would be inventing detail we do
+   * not have, while a moving highlight only claims "this copy is shiny", which
+   * is exactly what we do know.
+   *
+   * `screen` rather than `overlay`: the band must lighten what it crosses and
+   * never darken it, so the artwork stays readable underneath. It rides
+   * `--combined` like the others, so it sweeps on the idle lean and follows the
+   * pointer on hover instead of looping on a fixed timer.
+   */
+  flare: {
+    id: "flare",
+    // Narrow: transparent until 40%, peak at 50%, gone by 60%. A wider band
+    // reads as a haze over the whole card rather than a passing highlight.
+    backgroundImage: `linear-gradient(130deg, transparent 40%, rgba(255,255,255,0.7) 50%, transparent 60%)`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "200% 200%",
+    backgroundPosition: "var(--combined) center",
+    mixBlendMode: "screen",
+    opacity: 0.85,
+    // Blooms as the card turns away from the light, then settles facing it.
+    filter: `brightness(${lit(0.9, 0.55)})`,
   },
 };
 

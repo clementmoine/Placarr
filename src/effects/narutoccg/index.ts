@@ -49,9 +49,11 @@ export const NARUTO_CCG_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`
  * per-print mask we do not have.
  */
 const FINISH_SHADER: Record<string, string> = {
-  // "Tight repeating spectrum: what every foil used to look like" — a 2006
-  // Carddass holo, exactly.
-  holo: "rainbowBands",
+  // A single band of white crossing the card. The spectrum look was busier
+  // than anything we can actually claim about these scans: no foil was ever
+  // captured for this pack, so a passing highlight says "shiny" without
+  // inventing detail.
+  holo: "flare",
 };
 
 /** Finish names this pack renders, lower-cased as they are stored. */

@@ -1,9 +1,20 @@
 {
- "generatedAt": "2026-08-13T17:25:23.465Z",
+ "generatedAt": "2026-08-14T11:23:47.715Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "src/providers/narutoccg/curated/reconstructed/source-photos/",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
  "installs": [
+  {
+   "cardId": "ni195",
+   "set": "s4",
+   "source": "reconstructed/ni195.png",
+   "dest": "cards/s4/fr/ni195/art.reconstructed.webp",
+   "from": {
+    "width": 865,
+    "height": 1238
+   },
+   "cropped": false
+  },
   {
    "cardId": "ni232",
    "set": "s5",

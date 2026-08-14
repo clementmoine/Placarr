@@ -407,6 +407,16 @@ export async function fetchDbsCgFaces(
   );
   stats.total = jobs.length;
 
+  /*
+    A progress line every so often, because this pass is watched from the admin
+    log and can run for hours against a host that answers in seconds. Without
+    it the log showed one header and then nothing — and a run cut short by the
+    admin timeout ended on `── cancelled` with no counters at all, which is
+    exactly when you most need to know what it had managed.
+  */
+  let done = 0;
+  const progressEvery = Math.max(50, Math.floor(jobs.length / 40));
+
   await runPool(jobs, concurrency, delayMs, async ({ print, lang }) => {
     const cardDir = packCardDir(DBS_CG_PACK_ID, {
       set: print.setCode,
@@ -451,6 +461,13 @@ export async function fetchDbsCgFaces(
       }
     }
     if (throttledHere) stats.throttled += 1;
+    done += 1;
+    if (done % progressEvery === 0 || done === jobs.length) {
+      const pct = Math.round((done / jobs.length) * 100);
+      console.log(
+        `   ${done}/${jobs.length} (${pct}%) ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} bridé=${stats.throttled}`,
+      );
+    }
 
     try {
       const best = await promoteBestFace(cardDir);

@@ -27,6 +27,7 @@ import type {
   FoilExtractScope,
   FoilExtractTarget,
 } from "@/lib/client/foilExtract";
+import { resolveCataloguePackId } from "@/lib/admin/cataloguePacks";
 
 type FoilLogResponse = {
   pack: FoilExtractTarget;
@@ -131,9 +132,14 @@ function statusLine(
 export function foilExtractTargetForPack(
   packId: string | null | undefined,
 ): FoilExtractTarget | null {
-  if (packId === "lorcana" || packId === "pokemon" || packId === "naruto") {
-    return packId;
-  }
+  // Catalogue ids and extract targets are not the same vocabulary: the Naruto
+  // pack is `naruto/ccg`, the extract target is `naruto`. Go through the pack
+  // resolver so aliases (`carddass`, `cacg`, `pokemonpaper`…) map too.
+  // The server-side `normalizeFoilExtractTarget` cannot be reused here — it
+  // pulls `node:child_process` and this is a client component.
+  const pack = resolveCataloguePackId(packId);
+  if (pack === "pokemon" || pack === "lorcana") return pack;
+  if (pack === "naruto/ccg") return "naruto";
   return null;
 }
 

@@ -353,15 +353,25 @@ export function migrateNarutoVcBacksToCorrectedArt(root: string): number {
   const cardsDir = path.join(root, "cards");
   if (!fs.existsSync(cardsDir)) return 0;
   let moved = 0;
-  const walk = (dir: string) => {
+  /**
+   * Depth below `cards/`: a card folder is `<set>/<lang>/<card>` = 3.
+   * Only there was `back.jpg` ever a mislabelled errata face. Shallower backs
+   * are real versos — `cards/back.webp` is the pack back this very pipeline
+   * installs, and `cards/<set>/back.*` is a set verso (`resolveSetBackPath`).
+   * Renaming those turned the pack back into a stray `art.corrected.webp` on
+   * every run, leaving the card with nothing to flip to.
+   */
+  const CARD_FOLDER_DEPTH = 3;
+  const walk = (dir: string, depth: number) => {
     for (const name of fs.readdirSync(dir)) {
       if (name === ".DS_Store") continue;
       const abs = path.join(dir, name);
       const st = fs.statSync(abs);
       if (st.isDirectory()) {
-        walk(abs);
+        walk(abs, depth + 1);
         continue;
       }
+      if (depth < CARD_FOLDER_DEPTH) continue;
       if (!/^back\.(jpe?g|png|webp)$/i.test(name)) continue;
       const ext =
         path.extname(name).toLowerCase() === ".jpeg"
@@ -380,7 +390,7 @@ export function migrateNarutoVcBacksToCorrectedArt(root: string): number {
       moved += 1;
     }
   };
-  walk(cardsDir);
+  walk(cardsDir, 0);
   return moved;
 }
 
@@ -594,10 +604,7 @@ export function mapSiteMedThumbsOntoAssets(
           /* none */
         }
         for (const name of fs.readdirSync(path.dirname(dest))) {
-          if (
-            !/^thumb_.*Conflict\./i.test(name) &&
-            !/^thumb_MB-/i.test(name)
-          ) {
+          if (!/^thumb_.*Conflict\./i.test(name) && !/^thumb_MB-/i.test(name)) {
             continue;
           }
           try {
@@ -730,12 +737,7 @@ export async function scrapeNarutoCards(
       },
     });
     const indexPath = path.join(root, "cards-index.json");
-    exportNarutoCardsIndexJson(
-      merged.prints,
-      assets,
-      indexPath,
-      merged.titles,
-    );
+    exportNarutoCardsIndexJson(merged.prints, assets, indexPath, merged.titles);
     console.log(
       JSON.stringify(
         {

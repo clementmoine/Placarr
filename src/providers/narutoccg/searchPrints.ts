@@ -6,6 +6,7 @@
  * from `data/naruto/ccg/catalog.sqlite` — the pack is a closed corpus, so there
  * is no network call and no pagination to chase.
  */
+import { NARUTO_CCG_EFFECT_PACK_ID } from "@/effects/narutoccg";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import type { PrintCandidate } from "@/types/providerModule";
 
@@ -67,6 +68,11 @@ function toCandidate(row: SearchRow): PrintCandidate {
       ? { thumbnailUrl: assetsCardUrl(NARUTO_PACK_ID, id, row.thumb) }
       : {}),
     language: row.lang,
+    /**
+     * Carries the card back: the flip resolves the verso through the effect
+     * pack registry, so without this the card had nothing to turn over.
+     */
+    effectPack: NARUTO_CCG_EFFECT_PACK_ID,
   };
 }
 

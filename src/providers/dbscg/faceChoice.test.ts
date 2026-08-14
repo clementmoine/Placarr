@@ -28,12 +28,30 @@ describe("pickBestFace", () => {
     ).toBe("deckplanet");
   });
 
-  it("settles a tie on source order", () => {
+  it("settles a tie on the locale's own order", () => {
+    const tie = [
+      { source: "bandai" as const, width: 400, height: 560 },
+      { source: "deckplanet" as const, width: 400, height: 560 },
+    ];
+    // Deckplanet is an English source and must not win a French tie.
+    expect(pickBestFace(tie, "fr")).toBe("bandai");
+    expect(pickBestFace(tie, "en")).toBe("deckplanet");
+  });
+
+  it("keeps size above the priority list", () => {
+    /*
+      Measured: Deckplanet is 260x363 on the older English sets and 860x1205
+      on the recent ones, while dbscards is a steady 400x560. A list that
+      overrode size would lose the old sets — so it only breaks ties.
+    */
     expect(
-      pickBestFace([
-        { source: "bandai", width: 400, height: 560 },
-        { source: "dbscards", width: 400, height: 560 },
-      ]),
+      pickBestFace(
+        [
+          { source: "deckplanet", width: 260, height: 363 },
+          { source: "dbscards", width: 400, height: 560 },
+        ],
+        "en",
+      ),
     ).toBe("dbscards");
   });
 

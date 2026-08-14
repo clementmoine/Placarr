@@ -20,8 +20,37 @@ import path from "node:path";
  * candidate, however large it is.
  */
 
-/** Where a stored face came from. Order is the tie-break, best first. */
+/** Every source a stored face can come from. */
 export const DBS_FACE_SOURCES = ["dbscards", "bandai", "deckplanet"] as const;
+
+/**
+ * Preferred order per locale, best first — the tie-break, not the rule.
+ *
+ * Deliberately *not* dominating size, because with today's sources it could
+ * only make things worse. Measured: Deckplanet serves 260x363 on the older
+ * English sets and 860x1205 on the recent ones, while dbscards is a steady
+ * 400x560. An English list headed by Deckplanet would therefore lose on the
+ * old sets. Size-first already picks correctly everywhere — dbscards in
+ * French, dbscards on old English, Deckplanet on recent English.
+ *
+ * It earns its keep the day a source is better without being bigger: the Fnac
+ * scans are 500x680 *without* the SAMPLE watermark every other source carries.
+ * That is the rule this list is here to hold when it comes.
+ */
+export const DBS_FACE_PRIORITY: Record<string, readonly DbsFaceSource[]> = {
+  // Deckplanet mirrors no French printing at all.
+  fr: ["dbscards", "bandai"],
+  en: ["deckplanet", "dbscards", "bandai"],
+};
+
+/** Rank within a locale; unlisted sources sort last, in declaration order. */
+function priorityOf(source: DbsFaceSource, lang: string): number {
+  const list = DBS_FACE_PRIORITY[lang.toLowerCase()];
+  const rank = list?.indexOf(source) ?? -1;
+  return rank >= 0
+    ? rank
+    : DBS_FACE_SOURCES.length + DBS_FACE_SOURCES.indexOf(source);
+}
 
 export type DbsFaceSource = (typeof DBS_FACE_SOURCES)[number];
 
@@ -97,6 +126,7 @@ export type StoredFace = {
  */
 export function pickBestFace(
   faces: readonly StoredFace[],
+  lang = "fr",
 ): DbsFaceSource | null {
   /*
     A file we cannot measure is still a face. Dropping it would leave the card
@@ -105,8 +135,7 @@ export function pickBestFace(
   */
   if (faces.length > 0 && faces.every((f) => f.width <= 0 || f.height <= 0)) {
     return [...faces].sort(
-      (a, b) =>
-        DBS_FACE_SOURCES.indexOf(a.source) - DBS_FACE_SOURCES.indexOf(b.source),
+      (a, b) => priorityOf(a.source, lang) - priorityOf(b.source, lang),
     )[0]!.source;
   }
   let best: StoredFace | null = null;
@@ -121,8 +150,8 @@ export function pickBestFace(
     if (area > bestArea) {
       best = face;
     } else if (area === bestArea) {
-      const rank = DBS_FACE_SOURCES.indexOf(face.source);
-      const bestRank = DBS_FACE_SOURCES.indexOf(best.source);
+      const rank = priorityOf(face.source, lang);
+      const bestRank = priorityOf(best.source, lang);
       if (rank < bestRank) best = face;
     }
   }

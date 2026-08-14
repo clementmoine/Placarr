@@ -157,7 +157,8 @@ async function promoteArenaCard(cardDir: string): Promise<void> {
     recordFaceDecision(cardDir, "art", dbsFaceFilename("deckplanet"));
     return;
   }
-  await promoteBestFace(cardDir);
+  // Arena only fills the English column.
+  await promoteBestFace(cardDir, LANG);
 }
 
 function runGit(args: string[]): void {

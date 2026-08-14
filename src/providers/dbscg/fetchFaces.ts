@@ -374,12 +374,18 @@ function writeAtomic(destPath: string, buf: Buffer): void {
   renameSync(tmp, destPath);
 }
 
-/** Copy the largest stored source onto `art.webp` (catalogue name). */
+/**
+ * Rank what this card holds and record the winner.
+ *
+ * `lang` because the tie-break is per locale — Deckplanet is an English source
+ * and has no business breaking a tie on a French card.
+ */
 export async function promoteBestFace(
   cardDir: string,
+  lang = "fr",
 ): Promise<DbsFaceSource | null> {
   const stored = await readStoredFaces(cardDir);
-  const best = pickBestFace(stored);
+  const best = pickBestFace(stored, lang);
   if (!best) return null;
   // Record the winner; never copy it. See `DBS_FACE_DECISION_FILE`.
   recordFaceDecision(cardDir, "art", dbsFaceFilename(best));
@@ -632,7 +638,7 @@ export async function fetchDbsCgFaces(
     }
 
     try {
-      const best = await promoteBestFace(cardDir);
+      const best = await promoteBestFace(cardDir, lang);
       if (!best) {
         stats.miss += 1;
         return;

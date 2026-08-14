@@ -66,6 +66,23 @@ function rowArtUrl(
   return candidate.thumbnailUrl ?? candidate.imageUrl ?? null;
 }
 
+/**
+ * The picture the created item keeps — full art first, thumbnail only as a
+ * fallback. {@link rowArtUrl} is the opposite on purpose: it feeds a small
+ * grid tile. Storing that tile made the item page show a 200x286 thumbnail
+ * blown up to card size, visibly pixelated, while the full face sat unused
+ * next to it.
+ */
+function candidateCoverUrl(
+  candidate: PrintCandidateView,
+  finish: string | null,
+): string | null {
+  if (finish && candidate.variantImageUrls?.[finish]) {
+    return candidate.variantImageUrls[finish]!;
+  }
+  return candidate.imageUrl ?? candidate.thumbnailUrl ?? null;
+}
+
 function candidateAsVariantInfo(
   candidate: PrintCandidateView,
 ): PrintVariantInfo {
@@ -237,7 +254,7 @@ export function PrintPickerModal({
       setAddingKey(rowKey);
       setError(null);
       try {
-        const art = rowArtUrl(candidate, finish);
+        const art = candidateCoverUrl(candidate, finish);
         const response = await fetch("/api/items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

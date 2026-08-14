@@ -61,8 +61,27 @@ const STATIC_ORIGIN = "https://static.dbscards.fr";
   Note the typo: the older path spells `collectioner` with one `n`. It is not a
   transcription slip, it is what the bytes are served under.
 */
-const CURRENT_PREFIX =
-  "image-cartes-a-collectionner-dragon-ball-super-card-game-tcg-dbscards";
+/*
+  The filename prefix is written in the locale's own language, and the English
+  one carries an extra `-en-` before the slug. Building English URLs with the
+  French prefix is why the English column held zero dbscards files while
+  looking like it was being asked for — every request 404'd.
+
+  Taken from their own markup:
+    fr  /cards/fr/bt1/image-cartes-a-collectionner-…-dbscards-bt1-001-r-champa…
+    en  /cards/en/bt1/image-trading-cards-…-dbscards-en-bt1-001-r-god-of-…
+*/
+const PREFIX_BY_LANG: Record<string, string> = {
+  fr: "image-cartes-a-collectionner-dragon-ball-super-card-game-tcg-dbscards",
+  en: "image-trading-cards-dragon-ball-super-card-game-tcg-dbscards-en",
+};
+
+/*
+  The older pool sits flat under `original/`, with no language segment and the
+  prefix misspelled `collectioner` (one `n`). Not a transcription slip — it is
+  what the bytes are served under. French only: nothing marks its locale, so
+  its filenames' own language is the only guarantee.
+*/
 const LEGACY_PREFIX =
   "image-cartes-a-collectioner-dragon-ball-super-card-game-tcg-dbscards";
 
@@ -106,21 +125,23 @@ export function dbscardsFaceUrls(
   const suffix = opts.face === "back" ? "-back" : "";
   const set = input.setCode.trim().toLowerCase();
   const lang = (input.lang || "fr").trim().toLowerCase();
+  const prefix = PREFIX_BY_LANG[lang];
+  if (!prefix) return [];
   const urls: string[] = [];
   for (const slug of dbscardsSlugs(input)) {
     urls.push(
-      `${STATIC_ORIGIN}/cards/${lang}/${set}/${CURRENT_PREFIX}-${slug}${suffix}.webp`,
+      `${STATIC_ORIGIN}/cards/${lang}/${set}/${prefix}-${slug}${suffix}.webp`,
     );
-    /*
-      The legacy pool is not language-tagged in its path, so it can only be
-      trusted for the locale its filenames are written in — French. Reaching
-      for it on an English print would hand back a French face.
-    */
     if (lang === "fr") {
       urls.push(
         `${STATIC_ORIGIN}/cards/original/${LEGACY_PREFIX}-${slug}${suffix}.webp`,
       );
     }
   }
-  return urls;
+  /*
+    Both apostrophe spellings collapse to the same slug on a name without one,
+    which is most of them — so the list held each URL twice and every card paid
+    two round-trips to a host that can take half a minute to answer.
+  */
+  return [...new Set(urls)];
 }

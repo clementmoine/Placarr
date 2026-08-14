@@ -97,3 +97,59 @@ describe("dbscardsFaceUrls", () => {
     expect(urls[0]).toContain("-champa-dieu-de-la-destruction-back.webp");
   });
 });
+
+/**
+ * The English column held zero dbscards files while the log showed it being
+ * asked for: every URL was built with the French filename prefix, so every one
+ * of them 404'd. Their own markup spells the two differently.
+ */
+describe("locale prefixes", () => {
+  const champa = {
+    setCode: "bt1",
+    number: "001",
+    rarity: "Rare[R]",
+    fullName: "Champa",
+    awakenedName: "Champa, Dieu de la destruction",
+  };
+
+  it("writes the English filename in English, with its -en- segment", () => {
+    const [first] = dbscardsFaceUrls({ ...champa, lang: "en" });
+    expect(first).toContain("/cards/en/bt1/");
+    expect(first).toContain("image-trading-cards-");
+    expect(first).toContain("-tcg-dbscards-en-bt1-001-");
+    expect(first).not.toContain("cartes-a-collectionner");
+  });
+
+  it("keeps the French filename French", () => {
+    const [first] = dbscardsFaceUrls({ ...champa, lang: "fr" });
+    expect(first).toContain("image-cartes-a-collectionner-");
+    expect(first).not.toContain("-dbscards-en-");
+  });
+
+  it("reaches the untagged legacy pool for French only", () => {
+    const fr = dbscardsFaceUrls({ ...champa, lang: "fr" });
+    const en = dbscardsFaceUrls({ ...champa, lang: "en" });
+    expect(fr.some((url) => url.includes("/cards/original/"))).toBe(true);
+    // Nothing marks that pool's locale; on an English print it would hand back
+    // a French face.
+    expect(en.some((url) => url.includes("/cards/original/"))).toBe(false);
+  });
+
+  it("offers nothing for a locale it has no filename spelling for", () => {
+    expect(dbscardsFaceUrls({ ...champa, lang: "jp" })).toEqual([]);
+  });
+
+  it("never repeats a URL", () => {
+    // Both apostrophe spellings collapse on a name without one — which is most
+    // of them — and each duplicate costs a round-trip to a host that can take
+    // half a minute to answer.
+    const urls = dbscardsFaceUrls({
+      setCode: "bt12",
+      number: "066",
+      rarity: "Common[C]",
+      fullName: "Kakuja",
+      lang: "fr",
+    });
+    expect(urls.length).toBe(new Set(urls).size);
+  });
+});

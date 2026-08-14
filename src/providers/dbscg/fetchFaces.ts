@@ -8,6 +8,7 @@
  * `_b.webp` is not the pack sleeve.
  */
 import {
+  constants,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -54,7 +55,13 @@ export const DBS_MASTERS_GITHUB_PAGES_BASE =
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-const DOWNLOAD_TIMEOUT_MS = 20_000;
+/*
+  Sixty, not twenty. dbscards tarpits intermittently — measured at 28s on a
+  file that then served fine — so a twenty-second budget expired on the good
+  source and quietly took Bandai's smaller one instead. The pass looked
+  healthy and could never produce a single 400x560.
+*/
+const DOWNLOAD_TIMEOUT_MS = 60_000;
 const MAX_FACE_BYTES = 2 * 1024 * 1024;
 /*
   Sequential, like the Pokémon CDN scrape — and for the reason written there:
@@ -318,6 +325,14 @@ async function readStoredFaces(cardDir: string): Promise<StoredFace[]> {
   return out;
 }
 
+function copyCloned(src: string, dest: string): void {
+  try {
+    copyFileSync(src, dest, constants.COPYFILE_FICLONE);
+  } catch {
+    copyFileSync(src, dest);
+  }
+}
+
 function writeAtomic(destPath: string, buf: Buffer): void {
   mkdirSync(path.dirname(destPath), { recursive: true });
   const tmp = `${destPath}.tmp`;
@@ -332,7 +347,10 @@ export async function promoteBestFace(
   const stored = await readStoredFaces(cardDir);
   const best = pickBestFace(stored);
   if (!best) return null;
-  copyFileSync(
+  // Clone, not a byte copy: this duplicates a source file we already hold, and
+  // on APFS a clone costs nothing. Measured 96K where 48K was enough — about
+  // 800 MB across the catalogue.
+  copyCloned(
     path.join(cardDir, dbsFaceFilename(best)),
     path.join(cardDir, "art.webp"),
   );
@@ -418,20 +436,39 @@ export async function fetchDbsCgFaces(
     total: prints.length,
   };
 
-  const jobs = langs.flatMap((lang) =>
-    prints.map((print) => ({ print, lang })),
-  );
+  /*
+    Only prints that exist in that language. 1193 of the 8434 have no French
+    title — English-only releases (DRAFT BOX, EXPANSION SET 09-18…) that came
+    in with the English scrape. Asking Bandai's French CDN for them was 1193
+    guaranteed 404s, and it made a quarter of the run look like failures.
+  */
+  const titledIn = new Map<string, Set<string>>();
+  for (const title of loaded.titles) {
+    const lang = title.lang.toLowerCase();
+    if (!titledIn.has(lang)) titledIn.set(lang, new Set());
+    titledIn.get(lang)!.add(title.printKey);
+  }
+  const jobs = langs.flatMap((lang) => {
+    const known = titledIn.get(lang.toLowerCase());
+    return prints
+      .filter((print) => known?.has(print.printKey))
+      .map((print) => ({ print, lang }));
+  });
   stats.total = jobs.length;
 
   /*
-    A progress line every so often, because this pass is watched from the admin
-    log and can run for hours against a host that answers in seconds. Without
-    it the log showed one header and then nothing — and a run cut short by the
-    admin timeout ended on `── cancelled` with no counters at all, which is
-    exactly when you most need to know what it had managed.
+    Progress on a clock, not on a count.
+    
+    Per-job cost spans three orders of magnitude here — a held source is a
+    stat() while a throttled dbscards answers in fifteen seconds — so any
+    fixed number of jobs is wrong for one half of the pass. Counting made the
+    first line land after ~1h45 of the French leg, just before the admin's
+    two-hour timeout: a run that reported nothing until it was killed, which is
+    the failure this logging exists to prevent.
   */
   let done = 0;
-  const progressEvery = Math.max(50, Math.floor(jobs.length / 40));
+  const PROGRESS_EVERY_MS = 30_000;
+  let lastProgressAt = Date.now();
 
   await runPool(jobs, concurrency, delayMs, async ({ print, lang }) => {
     const cardDir = packCardDir(DBS_CG_PACK_ID, {
@@ -477,9 +514,48 @@ export async function fetchDbsCgFaces(
         stats.fail += 1;
       }
     }
+    /*
+      The awakened verso, for the Leaders that have one.
+
+      `dbscardsFaceUrls({ face: "back" })` was written with the front URLs and
+      then never called, so French held zero versos against 503 prints that
+      name an awakened side — the English ones exist only because `arena`
+      copies them out of the local clone. Same filename `arena` uses, so both
+      routes land on one name.
+    */
+    const awakenedDest = path.join(cardDir, "awakened.webp");
+    if (title?.awakenedName && (force || !existsSync(awakenedDest))) {
+      const back = await downloadFace(
+        dbscardsFaceUrls(
+          {
+            setCode: print.setCode,
+            number: print.number,
+            lang,
+            rarity: title.rarity,
+            fullName: title.fullName,
+            awakenedName: title.awakenedName,
+          },
+          { face: "back" },
+        ),
+        banned,
+      );
+      if (back.throttled) throttledHere = true;
+      // A Leader without a published verso is ordinary, not a failure: it is
+      // not counted as a miss.
+      if (back.buf) {
+        try {
+          writeAtomic(awakenedDest, back.buf);
+        } catch {
+          stats.fail += 1;
+        }
+      }
+    }
+
     if (throttledHere) stats.throttled += 1;
     done += 1;
-    if (done % progressEvery === 0 || done === jobs.length) {
+    const now = Date.now();
+    if (now - lastProgressAt >= PROGRESS_EVERY_MS || done === jobs.length) {
+      lastProgressAt = now;
       const pct = Math.round((done / jobs.length) * 100);
       console.log(
         `   ${done}/${jobs.length} (${pct}%) ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} bridé=${stats.throttled}`,

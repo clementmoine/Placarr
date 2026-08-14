@@ -1,21 +1,21 @@
 #!/usr/bin/env tsx
 /**
- * Dragon Ball Super Card Game (Masters) — Bandai cardlist + Deckplanet faces.
+ * Dragon Ball Super Card Game (Masters) — Bandai cardlist + TCG Arena dump.
  *
  *   pnpm dbs:cards
- *   pnpm dbs:cards -- --limit 2
- *   pnpm dbs:cards -- --only faces
+ *   pnpm dbs:cards -- --only arena
  *   pnpm dbs:cards -- --skip faces
- *   pnpm dbs:cards -- --offline
+ *   pnpm dbs:cards -- --offline          # range le clone déjà là, pas de HTTP
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fetchDbsCgFaces } from "./fetchFaces";
+import { ensureArenaClone, installArenaFaces } from "./installArena";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
 
-const STEPS = ["scrape", "faces"] as const;
+const STEPS = ["scrape", "arena", "faces"] as const;
 type Step = (typeof STEPS)[number];
 const ONLINE = new Set<Step>(["scrape", "faces"]);
 
@@ -69,11 +69,21 @@ export function dbsCgFaceDownloadLimit(
   return optionalNumber(argv, "--limit");
 }
 
+/** Print cap for `--only arena`. A full run ranges the whole dump. */
+export function dbsCgArenaLimit(
+  argv: readonly string[],
+  steps: readonly string[],
+): number | undefined {
+  if (steps.length !== 1 || steps[0] !== "arena") return undefined;
+  return optionalNumber(argv, "--limit");
+}
+
 export async function runDbsCgPackPipeline(
   argv: readonly string[] = process.argv,
 ): Promise<void> {
   const dryRun = argv.includes("--dry-run");
   const force = argv.includes("--force");
+  const offline = argv.includes("--offline");
   const steps = selectDbsCgSteps(argv);
   console.log(
     `── DBS Masters — étapes : ${steps.join(" → ") || "(curated only)"}`,
@@ -89,6 +99,17 @@ export async function runDbsCgPackPipeline(
         limit: optionalNumber(argv, "--limit"),
         delayMs: optionalNumber(argv, "--delay"),
       });
+    }
+    if (step === "arena") {
+      const ready = ensureArenaClone({ offline });
+      if (!ready) {
+        console.warn("── arena : rien à ranger");
+      } else {
+        await installArenaFaces({
+          force,
+          limit: dbsCgArenaLimit(argv, steps),
+        });
+      }
     }
     if (step === "faces") {
       await fetchDbsCgFaces({

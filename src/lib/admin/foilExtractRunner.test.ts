@@ -53,9 +53,8 @@ describe("foilExtractRunner targets", () => {
           a.includes("/dbscg/cli.ts"),
       ),
     ).toBe(true);
-    // The prelude has to say the two things a click cannot undo: faces are
-    // per-language now, and an existing one is skipped without --force.
-    expect(masters.prelude.some((line) => /fr, en/i.test(line))).toBe(true);
+    // Clone EN dump, HTTP FR faces; existing files skipped unless --force.
+    expect(masters.prelude.some((line) => /TCG Arena/i.test(line))).toBe(true);
     expect(masters.prelude.some((line) => /--force/.test(line))).toBe(true);
     const fw = await resolveFoilExtractCommand("dbs-fw");
     expect(
@@ -100,7 +99,7 @@ describe("foilExtractRunner targets", () => {
     );
   });
 
-  it("gives Masters a longer timeout for the Deckplanet dump", () => {
+  it("gives Masters a longer timeout for the Arena clone + faces", () => {
     expect(foilExtractTimeoutMs("dbs-cg", "catalogue")).toBe(
       FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
     );

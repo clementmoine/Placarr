@@ -181,8 +181,8 @@ export async function resolveFoilExtractCommand(
       command: path.join(root, "node_modules/.bin/tsx"),
       args: [DBS_CG_CLI_PATH],
       prelude: [
-        "Dragon Ball Masters: cardlist Bandai + faces par langue (fr, en) → data/dbs/cg",
-        "faces séquentielles (1 requête) ; les faces déjà présentes sont ignorées — relancer le CLI avec --force pour les remplacer",
+        "Dragon Ball Masters: cardlist Bandai + clone TCG Arena (EN) → data/dbs/cg",
+        "faces HTTP (FR dbscards / Bandai) séquentielles ; dump EN déjà rangé ignoré — --force pour écraser",
       ],
     };
   }

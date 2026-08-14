@@ -3,9 +3,9 @@
 > Statut : **Catalogue franchise** (2026-08-14). Admin Catalogue → **Dragon Ball**
 > avec onglets **Masters** | **Fusion World**. Providers `dbscg` (`data/dbs/cg`,
 > `pnpm dbs:cards`) et `dbsfw` (`data/dbs/fw`, `pnpm dbs:fw`). Packs foil
-> `dbs-cg` / `dbs-fw`. Faces Masters = dump Deckplanet au sync (Bandai SAMPLE
-> en fallback). Naruto suivra le même schéma (CCG | Panini). Journal d’audit
-> des **faces** ci-dessous.
+> `dbs-cg` / `dbs-fw`. Faces Masters FR = dbscards/Bandai ; faces EN = clone
+> TCG Arena (Deckplanet), rangées sous `cards/…/en/`. Naruto suivra le même
+> schéma (CCG | Panini). Journal d’audit des **faces** ci-dessous.
 >
 > Contrat produit (aligné Pokémon sans Live / OPTCG) :
 > - **Catalogue** (sets, printKey, images, finitions) = obligatoire.
@@ -197,7 +197,7 @@ watermark** Masters.
 | Source | Rôle probable | Note |
 |--------|---------------|------|
 | **[apitcg.com](https://docs.apitcg.com/)** | API (`dragon-ball-fusion` côté FW, à confirmer Masters) | Clé gratuite ; déjà dans [tcg_support.md](tcg_support.md) §2 — **à sonder** (langues, SAMPLE ou pas, parallels) |
-| **[vitorjcorreia/Dragon-Ball-Masters-Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena)** | Dump TCG Arena / Deckplanet (`{id}.webp`) | **Branché** — `pnpm dbs:cards` étape `faces`. 260×364, **sans SAMPLE** (BT1-001 lu 2026-08-14). Fallback GitHub Pages. Pas du HD. |
+| **[vitorjcorreia/Dragon-Ball-Masters-Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena)** | Dump TCG Arena / Deckplanet (`assets/{SET}/{id}.webp`) | **Clone** → `data/dbs/cg/staging/dragon-ball-masters-arena/`, rangé sous `cards/{set}/en/`. English only. Leader `_b` → `awakened.webp`. |
 | **Fusion World Digital** | Client Unity (physique + digital) | Piste **HD** du même genre que [pokemon_live_rainier.md](pokemon_live_rainier.md) — textures sans SAMPLE ? ToS / dump à cadrer avant tout extract |
 | **BANDAI TCG+** | App events / deck | Pas une cardlist HD connue |
 | Coleka | Photos marketplace | Comme Naruto : preuve / reconstruct, pas catalogue |
@@ -218,7 +218,7 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 
 - Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlist europe-fr (`pnpm dbs:cards`).
 - printKey `dbscg:bt1-001` ; parallels `_SPR` / `_PR` → grouping (`dbscg:bt1-011-spr`).
-- Faces = dump Deckplanet → `data/dbs/cg/cards/{set}/fr/{card}/art.webp` (étape `faces`). Bandai SAMPLE URLs restent en `artUrl`. Leader `_b` = `cardBackUrl`, pas le dos sleeve.
+- Faces FR = dbscards / Bandai (étape `faces`, HTTP). Faces EN = clone TCG Arena rangé sous `data/dbs/cg/cards/{set}/en/{card}/` (étape `arena`). Leader `_b` → `awakened.webp`, pas le dos sleeve.
 - Dos sleeve = dbscards `original/back.webp` (curated).
 - Foil : tag `foil` + house `flare`, pas de mask Bandai.
 - Fusion World = **autre** module (`src/providers/dbsfw/`, `data/dbs/fw`,
@@ -236,7 +236,7 @@ Reste ouvert :
 ## 7. Suite
 
 - [x] Cardlist europe-fr : POST `category_exp` (94 séries) — scrape `pnpm dbs:cards`.
-- [x] Faces Deckplanet / TCG Arena (`pnpm dbs:cards` étape `faces`).
+- [x] Faces Deckplanet / TCG Arena : clone + rangement `en/` (`pnpm dbs:cards` étape `arena`).
 - [ ] Compte apitcg : FW (et Masters s’il existe), SAMPLE, pagination.
 - [ ] Faces fw.dbscards.fr (taille, SAMPLE, alt arts).
 - [ ] Dos FW physique vs placeholder Masters.

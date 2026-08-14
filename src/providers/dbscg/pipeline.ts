@@ -17,8 +17,9 @@ import { dbsCgDbPath, DBS_CG_PACK_ID } from "./indexStore";
 export async function refreshDbsCgCatalog(
   opts?: ProviderCatalogRefreshOpts,
 ): Promise<void> {
-  // Bandai's cardlist is live — auto refresh re-scrapes then pulls Deckplanet
-  // faces (skip-existing). `--offline` is CLI-only (curated without network).
+  // Bandai's cardlist is live — auto refresh re-scrapes, clones the TCG Arena
+  // EN dump, then fills FR faces over HTTP. `--offline` still ranges a clone
+  // already on disk.
   await runDbsCgPackPipeline([]);
   const logs = packLogsDir(DBS_CG_PACK_ID);
   mkdirSync(logs, { recursive: true });

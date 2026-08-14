@@ -2,13 +2,10 @@
  * Card faces → `data/dbs/cg/cards/{set}/{lang}/{card}/art.webp`.
  *
  * One face per printing *in its own language*, filed per locale. dbscards
- * leads at 400x560, Bandai's own 260x363 stands in, and Deckplanet — English
- * only, up to 860x1205 — is reachable from the English column alone.
- *
- * Deckplanet hosts are the Linode bucket used by
- * https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena and that repo’s
- * GitHub Pages copy. Bandai SAMPLE URLs stay in sqlite as `artUrl`. Leader
- * `_b.webp` is not the pack sleeve — skip it.
+ * leads at 400x560, Bandai's own 260x363 stands in. English Deckplanet faces
+ * are cloned from TCG Arena (`installArena`) then ranked here; HTTP is only
+ * a gap-filler. Bandai SAMPLE URLs stay in sqlite as `artUrl`. Leader
+ * `_b.webp` is not the pack sleeve.
  */
 import {
   copyFileSync,
@@ -320,6 +317,20 @@ function writeAtomic(destPath: string, buf: Buffer): void {
   renameSync(tmp, destPath);
 }
 
+/** Copy the largest stored source onto `art.webp` (catalogue name). */
+export async function promoteBestFace(
+  cardDir: string,
+): Promise<DbsFaceSource | null> {
+  const stored = await readStoredFaces(cardDir);
+  const best = pickBestFace(stored);
+  if (!best) return null;
+  copyFileSync(
+    path.join(cardDir, dbsFaceFilename(best)),
+    path.join(cardDir, "art.webp"),
+  );
+  return best;
+}
+
 export async function fetchDbsCgFaces(
   opts: FetchDbsCgFacesOptions = {},
 ): Promise<FetchDbsCgFacesResult> {
@@ -441,23 +452,12 @@ export async function fetchDbsCgFaces(
     }
     if (throttledHere) stats.throttled += 1;
 
-    const stored = await readStoredFaces(cardDir);
-    if (stored.length === 0) {
-      stats.miss += 1;
-      return;
-    }
-    const best = pickBestFace(stored);
-    if (!best) {
-      stats.miss += 1;
-      return;
-    }
     try {
-      // `art.webp` stays the name every reader already knows; it is now a copy
-      // of whichever stored face won, not the first one that answered.
-      copyFileSync(
-        path.join(cardDir, dbsFaceFilename(best)),
-        path.join(cardDir, "art.webp"),
-      );
+      const best = await promoteBestFace(cardDir);
+      if (!best) {
+        stats.miss += 1;
+        return;
+      }
       if (fetched > 0) stats.ok += 1;
       else stats.skip += 1;
     } catch {

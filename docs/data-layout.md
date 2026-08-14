@@ -30,7 +30,9 @@ data/
     cg/                            # Masters (provider dbscg)
       catalog.sqlite | cards-index.json
       cards/back.webp              → /assets/dbs/cg/cards/back.webp
-      cards/{set}/fr/{card}/art.webp   # Deckplanet dump (sync)
+      cards/{set}/fr/{card}/art.webp   # dbscards / Bandai (FR)
+      cards/{set}/en/{card}/art.webp   # clone TCG Arena / Deckplanet
+      staging/dragon-ball-masters-arena/  # git clone, gitignored
       foil/full_foil_mask.webp
       logs/
     fw/                            # Fusion World (provider dbsfw)
@@ -49,12 +51,12 @@ CLI : `pnpm naruto:cards` — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.
 Dos : `cards/back.webp` depuis `src/providers/narutoccg/curated/`.
 
 `dbs` = franchise ; **`dbs/cg`** = Masters (`dbscg:bt1-001`) ; **`dbs/fw`** =
-Fusion World (`dbsfw:st01-001`, parallels `_P1`). Faces Masters = dump
-Deckplanet (`art.webp`) au sync, URLs Bandai SAMPLE en fallback. Faces FW =
-URLs Bandai SAMPLE (pas de dump). Dos sleeve : curated dbscards (FW = même
-octet placeholder). CLI : `pnpm dbs:cards` / `pnpm dbs:fw`. Catalogue admin :
-un onglet Dragon Ball, lignes Masters | Fusion World — même schéma que Naruto
-(CCG aujourd’hui, Panini plus tard).
+Fusion World (`dbsfw:st01-001`, parallels `_P1`). Faces Masters FR = dbscards /
+Bandai au sync HTTP. Faces Masters EN = clone
+[TCG Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena) rangé
+sous `cards/{set}/en/`. Faces FW = URLs Bandai SAMPLE (pas de dump). Dos
+sleeve : curated dbscards (FW = même octet placeholder). CLI : `pnpm dbs:cards`
+/ `pnpm dbs:fw`.
 
 ## Catalogues locaux / supply modes
 

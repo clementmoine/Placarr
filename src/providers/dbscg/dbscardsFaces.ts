@@ -68,6 +68,8 @@ const LEGACY_PREFIX =
 
 export type DbscardsFaceInput = {
   setCode: string;
+  /** Locale of the printing. Their CDN files faces under `/cards/<lang>/`. */
+  lang?: string;
   /** Printed collector number, without the set (`001`). */
   number: string;
   rarity?: string | null;
@@ -103,12 +105,22 @@ export function dbscardsFaceUrls(
 ): string[] {
   const suffix = opts.face === "back" ? "-back" : "";
   const set = input.setCode.trim().toLowerCase();
+  const lang = (input.lang || "fr").trim().toLowerCase();
   const urls: string[] = [];
   for (const slug of dbscardsSlugs(input)) {
     urls.push(
-      `${STATIC_ORIGIN}/cards/fr/${set}/${CURRENT_PREFIX}-${slug}${suffix}.webp`,
-      `${STATIC_ORIGIN}/cards/original/${LEGACY_PREFIX}-${slug}${suffix}.webp`,
+      `${STATIC_ORIGIN}/cards/${lang}/${set}/${CURRENT_PREFIX}-${slug}${suffix}.webp`,
     );
+    /*
+      The legacy pool is not language-tagged in its path, so it can only be
+      trusted for the locale its filenames are written in — French. Reaching
+      for it on an English print would hand back a French face.
+    */
+    if (lang === "fr") {
+      urls.push(
+        `${STATIC_ORIGIN}/cards/original/${LEGACY_PREFIX}-${slug}${suffix}.webp`,
+      );
+    }
   }
   return urls;
 }

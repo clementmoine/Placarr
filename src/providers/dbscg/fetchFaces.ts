@@ -19,7 +19,9 @@ import { packCardDir } from "@/lib/packPaths";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
 
 import { dbscardsFaceUrls } from "./dbscardsFaces";
+import { DBS_CG_CARDLIST_ORIGIN } from "./parseCardlist";
 import {
+  DBS_CG_FACE_LANGS,
   DBS_CG_PACK_ID,
   dbsCgCardFolder,
   exportDbsCgCardsIndexJson,
@@ -42,6 +44,8 @@ const MIN_WEBP_BYTES = 100;
 
 export type FetchDbsCgFacesOptions = {
   force?: boolean;
+  /** Locales to sync. Each is filed under its own `cards/<set>/<lang>/`. */
+  langs?: readonly string[];
   /** First N prints (debug). */
   limit?: number;
   delayMs?: number;
@@ -56,6 +60,13 @@ export type FetchDbsCgFacesResult = {
   total: number;
 };
 
+/**
+ * Deckplanet mirrors the **English** printings only — verified on the pixels:
+ * `BT22-004` there reads "Gamma 1 & Gamma 2, Arrival of Heroes" and its footer
+ * is stamped `EN`, at every resolution it serves. So these are candidates for
+ * an English print and for nothing else; using them to fill a French one put
+ * English faces on a French shelf.
+ */
 export function dbsMastersFaceUrls(
   setCode: string,
   collector: string,
@@ -66,6 +77,50 @@ export function dbsMastersFaceUrls(
     `${DBS_MASTERS_DECKPLANET_BASE}/${id}.webp`,
     `${DBS_MASTERS_GITHUB_PAGES_BASE}/${setDir}/${id}.webp`,
   ];
+}
+
+/** Bandai's own face for a locale — 260x363, but unmistakably that locale. */
+export function bandaiFaceUrl(collector: string, lang: string): string {
+  const region = lang.toLowerCase() === "en" ? "en" : "europe-fr";
+  return `${DBS_CG_CARDLIST_ORIGIN}/${region}/images/cartes/cardimg/${collector.trim().toUpperCase()}.png`;
+}
+
+/**
+ * Every face worth trying for one print, in the order they should win.
+ *
+ * The rule is the locale, not the pixel count: a print is shown in the
+ * language it was printed in. dbscards leads because it is that locale at
+ * 400x560; Bandai's own 260x363 follows, still that locale. Deckplanet's
+ * 860x1205 is only reachable for English prints — it is worth a lot of pixels
+ * and none of them are in French.
+ */
+export function dbsCgFaceUrls(input: {
+  setCode: string;
+  number: string;
+  collector: string;
+  lang: string;
+  rarity?: string | null;
+  fullName?: string | null;
+  awakenedName?: string | null;
+}): string[] {
+  const lang = input.lang.toLowerCase();
+  const urls: string[] = [];
+  if (input.fullName) {
+    urls.push(
+      ...dbscardsFaceUrls({
+        setCode: input.setCode,
+        number: input.number,
+        lang,
+        rarity: input.rarity,
+        fullName: input.fullName,
+        awakenedName: input.awakenedName,
+      }),
+    );
+  }
+  urls.push(bandaiFaceUrl(input.collector, lang));
+  if (lang === "en")
+    urls.push(...dbsMastersFaceUrls(input.setCode, input.collector));
+  return urls;
 }
 
 export function isWebpBuffer(buf: Buffer): boolean {
@@ -110,7 +165,27 @@ function toBuffer(data: unknown): Buffer {
   return Buffer.from(String(data));
 }
 
-async function downloadWebp(urls: readonly string[]): Promise<Buffer | null> {
+export function isPngBuffer(buf: Buffer): boolean {
+  return buf.length >= 8 && buf.toString("hex", 0, 8) === "89504e470d0a1a0a";
+}
+
+/**
+ * Bandai serves PNG where the pack stores WebP. Re-encoding rather than
+ * refusing it is what lets a locale's own face be used at all: it is the only
+ * source that covers a printing in its language when dbscards does not.
+ */
+async function toWebp(buf: Buffer): Promise<Buffer | null> {
+  if (isWebpBuffer(buf)) return buf;
+  if (!isPngBuffer(buf)) return null;
+  try {
+    const { default: sharp } = await import("sharp");
+    return await sharp(buf).webp({ quality: 92 }).toBuffer();
+  } catch {
+    return null;
+  }
+}
+
+async function downloadFace(urls: readonly string[]): Promise<Buffer | null> {
   for (const url of urls) {
     try {
       const response = await httpGet<ArrayBuffer>(url, {
@@ -124,8 +199,10 @@ async function downloadWebp(urls: readonly string[]): Promise<Buffer | null> {
         },
         validateStatus: (status) => status === 200,
       });
-      const buf = toBuffer(response.data);
-      if (buf.byteLength >= MIN_WEBP_BYTES && isWebpBuffer(buf)) return buf;
+      const raw = toBuffer(response.data);
+      if (raw.byteLength < MIN_WEBP_BYTES) continue;
+      const webp = await toWebp(raw);
+      if (webp) return webp;
     } catch {
       /* next host */
     }
@@ -172,11 +249,12 @@ export async function fetchDbsCgFaces(
     prints = prints.slice(0, opts.limit);
   }
 
+  const langs = opts.langs?.length ? opts.langs : DBS_CG_FACE_LANGS;
   const concurrency = Math.max(1, opts.concurrency ?? DEFAULT_CONCURRENCY);
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
   const force = opts.force === true;
   console.log(
-    `── faces dbscards→Deckplanet (${prints.length}) concurrency=${concurrency} delayMs=${delayMs}${force ? " force" : ""}`,
+    `── faces [${langs.join(",")}] (${prints.length} tirages) concurrency=${concurrency} delayMs=${delayMs}${force ? " force" : ""}`,
   );
 
   const stats: FetchDbsCgFacesResult = {
@@ -187,11 +265,16 @@ export async function fetchDbsCgFaces(
     total: prints.length,
   };
 
-  await runPool(prints, concurrency, delayMs, async (print) => {
+  const jobs = langs.flatMap((lang) =>
+    prints.map((print) => ({ print, lang })),
+  );
+  stats.total = jobs.length;
+
+  await runPool(jobs, concurrency, delayMs, async ({ print, lang }) => {
     const dest = path.join(
       packCardDir(DBS_CG_PACK_ID, {
         set: print.setCode,
-        lang: "fr",
+        lang,
         card: dbsCgCardFolder(print),
       }),
       "art.webp",
@@ -206,19 +289,17 @@ export async function fetchDbsCgFaces(
       print.grouping,
     );
     const title = titleByPrintKey.get(print.printKey);
-    const preferred = title
-      ? dbscardsFaceUrls({
-          setCode: print.setCode,
-          number: print.number,
-          rarity: title.rarity,
-          fullName: title.fullName,
-          awakenedName: title.awakenedName,
-        })
-      : [];
-    const buf = await downloadWebp([
-      ...preferred,
-      ...dbsMastersFaceUrls(print.setCode, collector),
-    ]);
+    const buf = await downloadFace(
+      dbsCgFaceUrls({
+        setCode: print.setCode,
+        number: print.number,
+        collector,
+        lang,
+        rarity: title?.rarity,
+        fullName: title?.fullName,
+        awakenedName: title?.awakenedName,
+      }),
+    );
     if (!buf) {
       stats.miss += 1;
       return;

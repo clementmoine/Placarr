@@ -50,13 +50,17 @@ export type DbsPrintDetail = {
  * Worth preferring over `image_url`: the local file is 400x560 from
  * dbscards.fr, where Bandai's own URL is 260x363 — and it was already being
  * downloaded, just never used, so every card was served at the smaller size.
+ *
+ * Read from the printing's own locale folder: the English pool (Deckplanet)
+ * and the French one are different scans, and a print must show its own.
  */
 function localFaceUrl(row: DbsPrintDetail): string | null {
-  const file = dbsCgLocalArtFilename(row);
+  const lang = (row.lang || "fr").toLowerCase();
+  const file = dbsCgLocalArtFilename(row, lang);
   if (!file) return null;
   return assetsCardUrl(
     DBS_CG_PACK_ID,
-    { set: row.setCode, lang: "fr", card: dbsCgCardFolder(row) },
+    { set: row.setCode, lang, card: dbsCgCardFolder(row) },
     file,
   );
 }

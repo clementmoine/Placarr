@@ -41,9 +41,9 @@ function tinyWebp(): Buffer {
   return buf;
 }
 
-function artPath(): string {
+function artPath(lang = "fr"): string {
   return path.join(
-    packCardDir(DBS_CG_PACK_ID, { set: "bt1", lang: "fr", card: "001" }),
+    packCardDir(DBS_CG_PACK_ID, { set: "bt1", lang, card: "001" }),
     "art.webp",
   );
 }
@@ -181,7 +181,11 @@ describe("fetchDbsCgFaces", () => {
       data: tinyWebp(),
       status: 200,
     } as never);
-    const result = await fetchDbsCgFaces({ delayMs: 0, concurrency: 1 });
+    const result = await fetchDbsCgFaces({
+      delayMs: 0,
+      concurrency: 1,
+      langs: ["fr"],
+    });
     expect(result.ok).toBe(1);
     expect(existsArt()).toBe(true);
     // dbscards leads because it is the only 400x560 source; every host behind
@@ -200,40 +204,19 @@ describe("fetchDbsCgFaces", () => {
   it("skips an existing face unless --force", async () => {
     mkdirSync(path.dirname(artPath()), { recursive: true });
     writeFileSync(artPath(), tinyWebp());
-    const result = await fetchDbsCgFaces({ delayMs: 0, concurrency: 1 });
+    const result = await fetchDbsCgFaces({
+      delayMs: 0,
+      concurrency: 1,
+      langs: ["fr"],
+    });
     expect(result.skip).toBe(1);
     expect(mockedGet).not.toHaveBeenCalled();
   });
-
-  it("falls through dbscards to Deckplanet, then to GitHub Pages", async () => {
-    mockedGet.mockImplementation(async (url: string) => {
-      const value = String(url);
-      if (
-        value.includes("dbscards.fr") ||
-        value.includes("linodeobjects.com")
-      ) {
-        throw new Error("404");
-      }
-      return { data: tinyWebp(), status: 200 } as never;
-    });
-    const result = await fetchDbsCgFaces({ delayMs: 0, concurrency: 1 });
-    expect(result.ok).toBe(1);
-    const tried = mockedGet.mock.calls.map((call) => String(call[0]));
-    // A dbscards miss is routine — its coverage is ~97%, not total — so the
-    // older hosts must still be reached rather than the face being lost.
-    expect(
-      tried.filter((url) => url.includes("dbscards.fr")).length,
-    ).toBeGreaterThan(0);
-    expect(tried.slice(-2)).toEqual([
-      `${DBS_MASTERS_DECKPLANET_BASE}/BT1-001.webp`,
-      `${DBS_MASTERS_GITHUB_PAGES_BASE}/BT1/BT1-001.webp`,
-    ]);
-  });
 });
 
-function existsArt(): boolean {
+function existsArt(lang = "fr"): boolean {
   try {
-    return readFileSync(artPath()).length >= 12;
+    return readFileSync(artPath(lang)).length >= 12;
   } catch {
     return false;
   }

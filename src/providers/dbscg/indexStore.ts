@@ -227,6 +227,9 @@ export function ensureDbsCgIndex(): DatabaseSync | null {
   }
 }
 
+/** Locales this pack files faces for. Each has its own sources. */
+export const DBS_CG_FACE_LANGS = ["fr", "en"] as const;
+
 /** Catalogue folder for one print: `001` or `011-spr`. */
 export function dbsCgCardFolder(
   print: Pick<DbsPrintRow, "number" | "grouping">,
@@ -234,13 +237,22 @@ export function dbsCgCardFolder(
   return print.grouping ? `${print.number}-${print.grouping}` : print.number;
 }
 
+/**
+ * The synced face for one printing *in its own language*.
+ *
+ * Locale is a parameter, not a constant: faces are filed per language
+ * (`cards/<set>/fr/…`, `cards/<set>/en/…`) because the sources differ by
+ * locale — dbscards and Bandai carry French, Deckplanet only English. Reading
+ * `fr` for every print is what put English faces on French cards.
+ */
 export function dbsCgLocalArtFilename(
   print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
+  lang = "fr",
 ): string | null {
   const art = path.join(
     packCardDir(DBS_CG_PACK_ID, {
       set: print.setCode,
-      lang: "fr",
+      lang: lang.toLowerCase(),
       card: dbsCgCardFolder(print),
     }),
     "art.webp",
@@ -316,14 +328,19 @@ export function exportDbsCgCardsIndexJson(
     const title = titleByKey.get(print.printKey);
     const card = dbsCgCardFolder(print);
     const imageUrl = assetByKey.get(print.printKey)?.imageUrl;
-    const art = dbsCgLocalArtFilename(print);
-    const fr: CardsIndexLangFiles = {};
-    if (art) fr.art = art;
-    if (imageUrl) fr.artUrl = imageUrl;
+    const langs: Record<string, CardsIndexLangFiles> = {};
+    for (const lang of DBS_CG_FACE_LANGS) {
+      const art = dbsCgLocalArtFilename(print, lang);
+      const files: CardsIndexLangFiles = {};
+      if (art) files.art = art;
+      // The Bandai URL in sqlite is the FR cardlist's own — not an EN one.
+      if (lang === "fr" && imageUrl) files.artUrl = imageUrl;
+      if (Object.keys(files).length) langs[lang] = files;
+    }
     cards[print.printKey] = {
       set: print.setCode,
       card,
-      langs: Object.keys(fr).length ? { fr } : {},
+      langs,
       ...(title?.fullName ? { name: title.fullName } : {}),
       ...(title?.rarity ? { rarity: title.rarity } : {}),
     };

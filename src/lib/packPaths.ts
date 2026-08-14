@@ -252,6 +252,11 @@ function isPackAssetRoot(segment: string | undefined): boolean {
   );
 }
 
+/** A plain filename with an extension — never a path, never a traversal. */
+function isPackAssetFile(segment: string | undefined): boolean {
+  return Boolean(segment && /^[a-z0-9_-]+\.[a-z0-9]+$/i.test(segment));
+}
+
 export function splitAssetsPackPath(
   segments: string[],
 ): { pack: string; rest: string[] } | null {
@@ -265,6 +270,20 @@ export function splitAssetsPackPath(
   // Nested product line: `naruto/ccg/cards/…`, `naruto/ccg/shaders/…`.
   if (b && segOk(b) && isPackAssetRoot(c) && segments.length >= 3) {
     return { pack: `${a}/${b}`, rest: segments.slice(2) };
+  }
+  /*
+    A loose file sitting at the root of `data/<pack>/foil/` — `full_foil_mask.
+    webp` is the one that matters, and it is what every pack's
+    `fallbackFoilMaskUrl` points at. Requiring a directory root here made those
+    URLs 404, so the Pokémon fallback mask had never once been served.
+    An extension is required so `naruto/ccg` stays a pack (not a file) and
+    `lorcana/etc/passwd` stays rejected.
+  */
+  if (segments.length === 2 && isPackAssetFile(b)) {
+    return { pack: a, rest: [b!] };
+  }
+  if (segments.length === 3 && b && segOk(b) && isPackAssetFile(c)) {
+    return { pack: `${a}/${b}`, rest: [c!] };
   }
   return null;
 }

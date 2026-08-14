@@ -6,7 +6,11 @@
  * from `data/naruto/ccg/catalog.sqlite` — the pack is a closed corpus, so there
  * is no network call and no pagination to chase.
  */
-import { NARUTO_CCG_EFFECT_PACK_ID } from "@/effects/narutoccg";
+import {
+  NARUTO_CCG_EFFECT_PACK_ID,
+  NARUTO_CCG_FINISHES,
+  NARUTO_CCG_FULL_FOIL_MASK_URL,
+} from "@/effects/narutoccg";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import type { PrintCandidate } from "@/types/providerModule";
 
@@ -48,8 +52,25 @@ export type NarutoPrintDetail = {
   thumb: string | null;
 };
 
+/** Canonical vocabulary (`items.finishes.normal`), not an invented word. */
+const PLAIN_FINISH = "normal";
+
+/**
+ * Every card is offered plain or holo, whatever the catalogue says its rarity
+ * is.
+ *
+ * Deriving the finish from the rarity was tempting — the catalogue has no
+ * finish axis — but the stored rarity is not trustworthy enough to *remove* an
+ * option: `ta158` is filed `commune` and exists in holo in a real collection.
+ * The parser also flattens the site's four grades (Commune, Rare, Holo, Holo
+ * rare) into two, so a wrong guess would silently deny a collector the copy
+ * they own. Rarity stays a displayed fact; it does not gate what you can hold.
+ */
+const NARUTO_FINISHES = [PLAIN_FINISH, ...NARUTO_CCG_FINISHES];
+
 function toCandidate(row: NarutoPrintDetail): PrintCandidate {
   const id = { set: row.setCode, lang: row.lang, card: row.number };
+  const finishes = NARUTO_FINISHES;
   return {
     printKey: row.printKey,
     // A print with no title yet still deserves to be pickable: the reference
@@ -68,6 +89,12 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
       ? { thumbnailUrl: assetsCardUrl(NARUTO_PACK_ID, id, row.thumb) }
       : {}),
     language: row.lang,
+    finishes,
+    // Derived from the same array, as Lorcana and TCGdex do, so the two can
+    // never drift apart.
+    plainFinishes: finishes.filter((finish) => finish === PLAIN_FINISH),
+    // Read only once a shiny finish is resolved, so a plain copy stays flat.
+    foilMaskUrl: NARUTO_CCG_FULL_FOIL_MASK_URL,
     /**
      * Carries the card back: the flip resolves the verso through the effect
      * pack registry, so without this the card had nothing to turn over.

@@ -120,3 +120,41 @@ describe("packPaths", () => {
     expect(assetsSetBackUrl("naruto/ccg", "s1/../s2")).toBeNull();
   });
 });
+
+/**
+ * `fallbackFoilMaskUrl` on every pack points at a file sitting directly in
+ * `data/<pack>/foil/`. Requiring a directory root made those URLs unresolvable,
+ * so no pack fallback mask was ever served.
+ */
+describe("loose file at the pack foil root", () => {
+  it("serves a pack-root file, flat pack and nested alike", async () => {
+    const { splitAssetsPackPath, resolveAssetsDiskRoot } = await import(
+      "./packPaths"
+    );
+    expect(splitAssetsPackPath(["pokemon", "full_foil_mask.webp"])).toEqual({
+      pack: "pokemon",
+      rest: ["full_foil_mask.webp"],
+    });
+    const nested = splitAssetsPackPath([
+      "naruto",
+      "ccg",
+      "full_foil_mask.webp",
+    ]);
+    expect(nested).toEqual({
+      pack: "naruto/ccg",
+      rest: ["full_foil_mask.webp"],
+    });
+    // The `foil` segment is implicit in the disk root — it must not be doubled.
+    const mapped = resolveAssetsDiskRoot(nested!.pack, nested!.rest)!;
+    expect(mapped.root.endsWith("naruto/ccg/foil")).toBe(true);
+    expect(mapped.relative).toEqual(["full_foil_mask.webp"]);
+  });
+
+  it("still refuses a bare segment, which is a pack name or a traversal", async () => {
+    const { splitAssetsPackPath } = await import("./packPaths");
+    // No extension: `ccg` is the product line, not a file.
+    expect(splitAssetsPackPath(["naruto", "ccg"])).toBeNull();
+    expect(splitAssetsPackPath(["lorcana", "passwd"])).toBeNull();
+    expect(splitAssetsPackPath(["lorcana", "..", "secret.env"])).toBeNull();
+  });
+});

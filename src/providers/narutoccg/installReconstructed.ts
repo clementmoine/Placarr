@@ -36,7 +36,7 @@ import path from "node:path";
 
 import sharp, { type Sharp } from "sharp";
 
-import { dataRoot } from "@/lib/runtimeData";
+import { dataRoot, foilPackDir } from "@/lib/runtimeData";
 
 import {
   narutoCuratedDir,
@@ -113,6 +113,35 @@ export async function installNarutoCuratedBack(
  * Called at the start of every pack update / extract so edits in
  * `curated/reconstructed/` are never left behind.
  */
+/**
+ * Full-card foil mask — a solid white plate.
+ *
+ * The pack has no per-print mask: these are flat scans, not a Unity dump. The
+ * renderer falls back to `EffectPackModule.fallbackFoilMaskUrl`, so a plain
+ * white plate means "the whole card shines", which is what a 2006 Carddass
+ * holo actually did — the foil is under the entire face, not a shaped layer.
+ * Generated rather than shipped: it is 64x64 of one colour.
+ */
+export async function installNarutoFullFoilMask(
+  opts: { force?: boolean; dryRun?: boolean } = {},
+): Promise<{ installed: boolean; dest: string }> {
+  const dest = path.join(foilPackDir(NARUTO_PACK_ID), "full_foil_mask.webp");
+  if (!opts.force && existsSync(dest)) return { installed: false, dest };
+  if (opts.dryRun) return { installed: true, dest };
+  mkdirSync(path.dirname(dest), { recursive: true });
+  await sharp({
+    create: {
+      width: 64,
+      height: 64,
+      channels: 3,
+      background: "#ffffff",
+    },
+  })
+    .webp({ lossless: true })
+    .toFile(dest);
+  return { installed: true, dest };
+}
+
 export async function ensureNarutoCuratedAssets(opts?: {
   dryRun?: boolean;
   force?: boolean;
@@ -124,6 +153,12 @@ export async function ensureNarutoCuratedAssets(opts?: {
   if (back.installed) {
     console.log(
       `   pack back → ${back.dest}${opts?.dryRun ? " (dry run)" : ""}`,
+    );
+  }
+  const mask = await installNarutoFullFoilMask(opts ?? {});
+  if (mask.installed) {
+    console.log(
+      `   foil mask → ${mask.dest}${opts?.dryRun ? " (dry run)" : ""}`,
     );
   }
   const installs = await installNarutoReconstructed(opts);

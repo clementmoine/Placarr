@@ -53,6 +53,7 @@ import { ImageCropModal } from "@/components/modals/ImageCropModal";
 import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { usePrintVariant } from "@/lib/client/hooks/usePrintVariant";
 import { normalizeVariantOptions } from "@/core/enrich/variants";
+import { isServedLocalPath } from "@/lib/media/servedLocalPaths";
 import { ScannerButton } from "@/components/ScannerButton";
 import {
   ConditionIcon,
@@ -221,7 +222,10 @@ export function ItemModal({
         (url) =>
           url == null ||
           url instanceof File ||
-          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          // Every path this app serves, not just `/uploads/`: a card from a
+          // local pack lives under `/assets/`, and rejecting it failed the
+          // whole form from a hidden tab — Enregistrer looked inert.
+          (typeof url === "string" && isServedLocalPath(url)) ||
           isUrl(url) ||
           /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
         t("items.invalidImage"),
@@ -234,7 +238,10 @@ export function ItemModal({
         (url) =>
           url == null ||
           url instanceof File ||
-          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          // Every path this app serves, not just `/uploads/`: a card from a
+          // local pack lives under `/assets/`, and rejecting it failed the
+          // whole form from a hidden tab — Enregistrer looked inert.
+          (typeof url === "string" && isServedLocalPath(url)) ||
           isUrl(url) ||
           /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
         t("items.invalidImage"),

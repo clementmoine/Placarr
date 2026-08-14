@@ -62,7 +62,11 @@ export async function POST(req: NextRequest) {
     kind: BACKGROUND_WORK_KIND.foilExtract,
     userId: auth.user.id,
     payload: { target, scope },
+    // Replace this pack's own run, not the neighbours': every extract shares
+    // the kind `foilExtract`, so an unrestricted sweep cancelled a running
+    // Lorcana pass when a Pokémon one was queued seconds later.
     replaceOpenForKind: true,
+    replaceOpenPayloadMatch: { path: ["target"], equals: target },
   });
 
   // Seed the pack log immediately so Logs opens with “queued” before the

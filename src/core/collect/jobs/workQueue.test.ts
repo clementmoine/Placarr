@@ -286,3 +286,41 @@ describe("workQueue", () => {
     );
   });
 });
+
+/**
+ * Every pack's extract shares the kind `foilExtract`. An unrestricted "replace
+ * the open job of this kind" therefore cancelled a running Lorcana pass because
+ * a Pokémon one was queued five seconds later — the Lorcana work was finished
+ * and only its status was lost.
+ */
+describe("replacing an open job of the same kind", () => {
+  beforeEach(() => {
+    h.updateMany.mockReset();
+    h.updateMany.mockResolvedValue({ count: 0 });
+    h.create.mockReset();
+    h.create.mockResolvedValue({ id: "job" });
+  });
+
+  it("only cancels jobs aimed at the same payload target", async () => {
+    await enqueueBackgroundWorkJob({
+      kind: BACKGROUND_WORK_KIND.foilExtract,
+      payload: { target: "pokemon", scope: "catalogue" },
+      replaceOpenForKind: true,
+      replaceOpenPayloadMatch: { path: ["target"], equals: "pokemon" },
+    });
+    const where = h.updateMany.mock.calls[0]?.[0]?.where;
+    expect(where.kind).toBe(BACKGROUND_WORK_KIND.foilExtract);
+    // A neighbour pack's run must survive.
+    expect(where.payload).toEqual({ path: ["target"], equals: "pokemon" });
+  });
+
+  it("still sweeps the whole kind when no target is given", async () => {
+    // Singleton ticks (catalog index sync) rely on this.
+    await enqueueBackgroundWorkJob({
+      kind: BACKGROUND_WORK_KIND.foilExtract,
+      payload: {},
+      replaceOpenForKind: true,
+    });
+    expect(h.updateMany.mock.calls[0]?.[0]?.where?.payload).toBeUndefined();
+  });
+});

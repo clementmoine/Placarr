@@ -299,7 +299,8 @@ export async function executePriceRefreshJob(
         metadataPlatformKey: payload.metadataPlatformKey,
         metadataExternalIds: payload.metadataExternalIds,
         metadataBarcodes: payload.metadataBarcodes,
-        metadataFacts: payload.metadataFacts as ItemPricesContext["metadataFacts"],
+        metadataFacts:
+          payload.metadataFacts as ItemPricesContext["metadataFacts"],
         shelfType: payload.shelfType,
         shelfName: payload.shelfName,
         printKey: payload.printKey,
@@ -417,7 +418,10 @@ async function stampFoilExtractFailure(
     );
     if (!isFoilExtractTarget(pack)) return;
     const typed = pack;
-    const existing = await readFoilExtractLog(typed, { after: 0, maxBytes: 64 });
+    const existing = await readFoilExtractLog(typed, {
+      after: 0,
+      maxBytes: 64,
+    });
     // Keep any scrape tail already on disk — only seed a fresh header when empty.
     if (!existing.exists || existing.size === 0) {
       await beginFoilExtractLog(typed, [`jobId=${jobId}`]);
@@ -477,12 +481,14 @@ async function executeFoilExtractJob(
       scope: normalizeFoilExtractScope(payload?.scope),
     });
   } catch (error) {
-    if (controller.signal.aborted || (await isBackgroundWorkJobCancelled(job.id))) {
+    if (
+      controller.signal.aborted ||
+      (await isBackgroundWorkJobCancelled(job.id))
+    ) {
       return;
     }
     const tail = logTail.slice(-8).join("\n");
-    const message =
-      error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? error.message : String(error);
     await stampFoilExtractFailure(
       target,
       job.id,

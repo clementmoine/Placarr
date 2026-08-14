@@ -135,6 +135,15 @@ async function cancelOpenJobs(options: {
   itemId?: string;
   kind?: BackgroundWorkKind;
   userId?: string;
+  /**
+   * Narrow the sweep to jobs whose payload matches, e.g. one pack's extract.
+   *
+   * Without it, "replace the open job of this kind" means *every* job of that
+   * kind — which cancelled a running Lorcana extract because a Pokémon one was
+   * started five seconds later. They share a kind and nothing else: different
+   * packs, different folders, different hosts.
+   */
+  payloadMatch?: { path: string[]; equals: string };
 }): Promise<number> {
   const where: Prisma.BackgroundWorkJobWhereInput = {
     status: {
@@ -144,6 +153,12 @@ async function cancelOpenJobs(options: {
   if (options.itemId) where.itemId = options.itemId;
   if (options.kind) where.kind = options.kind;
   if (options.userId) where.userId = options.userId;
+  if (options.payloadMatch) {
+    where.payload = {
+      path: options.payloadMatch.path,
+      equals: options.payloadMatch.equals,
+    };
+  }
 
   const result = await prisma.backgroundWorkJob.updateMany({
     where,
@@ -166,6 +181,12 @@ export async function enqueueBackgroundWorkJob(input: {
   replaceOpenForItem?: boolean;
   /** Replace any open job of this kind (e.g. singleton sync ticks). */
   replaceOpenForKind?: boolean;
+  /**
+   * Restrict `replaceOpenForKind` to jobs carrying the same payload value —
+   * how a per-pack job stays a singleton *for its own pack* without touching
+   * its neighbours.
+   */
+  replaceOpenPayloadMatch?: { path: string[]; equals: string };
 }): Promise<BackgroundWorkJobRow> {
   /**
    * Preserve FIFO `createdAt` when replacing. Cancel+recreate with a fresh
@@ -188,7 +209,10 @@ export async function enqueueBackgroundWorkJob(input: {
     preserveCreatedAt = earliest?.createdAt;
     await cancelOpenJobs({ itemId: input.itemId, kind: input.kind });
   } else if (input.replaceOpenForKind) {
-    await cancelOpenJobs({ kind: input.kind });
+    await cancelOpenJobs({
+      kind: input.kind,
+      payloadMatch: input.replaceOpenPayloadMatch,
+    });
   }
 
   return prisma.backgroundWorkJob.create({

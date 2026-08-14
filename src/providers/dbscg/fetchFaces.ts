@@ -38,13 +38,15 @@ const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const DOWNLOAD_TIMEOUT_MS = 20_000;
 const MAX_FACE_BYTES = 2 * 1024 * 1024;
-const DEFAULT_CONCURRENCY = 2;
 /*
-  Gentle on purpose. A pass at 6/40ms over 14k requests got dbscards to answer
-  403 to everything, and the run still reported success — just with half the
-  catalogue silently downgraded.
+  Sequential, like the Pokémon CDN scrape — and for the reason written there:
+  parallelism tripped a soft-ban under `6×0.05s`. This pack made the same bet
+  at 6×40ms over 14k requests and dbscards started answering 403 to
+  everything. RTT sets the pace instead.
 */
-const DEFAULT_DELAY_MS = 250;
+const DEFAULT_CONCURRENCY = 1;
+/** No artificial sleep: one request at a time is the throttle. */
+const DEFAULT_DELAY_MS = 0;
 const MIN_WEBP_BYTES = 100;
 
 export type FetchDbsCgFacesOptions = {
@@ -206,9 +208,32 @@ function isThrottleStatus(status: number | undefined): boolean {
 
 export type FaceDownload = { buf: Buffer | null; throttled: boolean };
 
-async function downloadFace(urls: readonly string[]): Promise<FaceDownload> {
+/** Hosts that told us to go away, for the rest of this run. */
+type BannedHosts = Set<string>;
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+async function downloadFace(
+  urls: readonly string[],
+  banned: BannedHosts,
+): Promise<FaceDownload> {
   let throttled = false;
   for (const url of urls) {
+    /*
+      Once a host has refused us, every further request to it is both useless
+      and rude — and it is thousands of them. Skipping keeps the run honest
+      (the print still counts as throttled) without leaning on the ban.
+    */
+    if (banned.has(hostOf(url))) {
+      throttled = true;
+      continue;
+    }
     try {
       const response = await httpGet<ArrayBuffer>(url, {
         responseType: "arraybuffer",
@@ -228,7 +253,10 @@ async function downloadFace(urls: readonly string[]): Promise<FaceDownload> {
     } catch (error) {
       const status = (error as { response?: { status?: number } } | undefined)
         ?.response?.status;
-      if (isThrottleStatus(status)) throttled = true;
+      if (isThrottleStatus(status)) {
+        throttled = true;
+        banned.add(hostOf(url));
+      }
       /* next host */
     }
   }
@@ -283,6 +311,9 @@ export async function fetchDbsCgFaces(
     `── faces [${langs.join(",")}] (${prints.length} tirages) concurrency=${concurrency} delayMs=${delayMs}${force ? " force" : ""}`,
   );
 
+  /** Shared across the pool so one refusal stops the whole run pestering. */
+  const banned: BannedHosts = new Set();
+
   const stats: FetchDbsCgFacesResult = {
     ok: 0,
     skip: 0,
@@ -326,6 +357,7 @@ export async function fetchDbsCgFaces(
         fullName: title?.fullName,
         awakenedName: title?.awakenedName,
       }),
+      banned,
     );
     if (throttled) stats.throttled += 1;
     if (!buf) {
@@ -354,8 +386,9 @@ export async function fetchDbsCgFaces(
     console.warn(
       `── ATTENTION : ${stats.throttled} tirages ont reçu une face de repli parce que la source préférée nous a bridés (403/429).`,
     );
+    console.warn(`   Hôtes ayant refusé : ${[...banned].join(", ") || "—"}`);
     console.warn(
-      "   Relancer plus tard avec --force et une concurrence plus basse : ces cartes sont en basse définition, pas absentes.",
+      "   Relancer --force plus tard : ces cartes sont en basse définition, pas absentes.",
     );
   }
   return stats;

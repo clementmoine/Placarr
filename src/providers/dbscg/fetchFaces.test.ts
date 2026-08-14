@@ -237,6 +237,22 @@ describe("fetchDbsCgFaces", () => {
     expect(result.throttled).toBe(1);
   });
 
+  it("stops asking a host that already refused, instead of hammering it", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("dbscards.fr")) {
+        throw Object.assign(new Error("403"), { response: { status: 403 } });
+      }
+      return { data: tinyWebp(), status: 200 } as never;
+    });
+    // Both locales, so the second one runs after the ban is known.
+    await fetchDbsCgFaces({ delayMs: 0, concurrency: 1 });
+    const tries = mockedGet.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.includes("dbscards.fr"));
+    // One refusal is enough to learn; the rest of the run leaves them alone.
+    expect(tries.length).toBe(1);
+  });
+
   it("does not count a plain 404 as throttling", async () => {
     mockedGet.mockImplementation(async (url: string) => {
       if (String(url).includes("dbscards.fr")) {

@@ -1,46 +1,49 @@
 {
- "source": "carddass.fr — articles « ZOOM SUR LA SERIE » et page de composition (Wayback)",
- "note": "Bandai ne donnait pas de titre à ses séries : chaque série sortait avec DEUX starters nommés, plus des boosters. Les libellés de Coleka (« Série 01 - Le Pays du Vent ») reprennent un seul des deux starters et le présentent comme un nom de série — c'est une convention de collectionneurs, pas une dénomination officielle. Les deux sont conservés : `starters` fait foi, `colekaLabel` sert à recoller avec cette base.",
- "quote": "CHOISIS TA SÉRIE POUR EN CONNAÎTRE LA COMPOSITION — Série 1 Starter Maître Hokage & Pays du Vent — Série 2 Starter Sceller le Maléfice & Détruire Konoha — Série 3 Starter Apprentissage & Puissances Cachées",
- "starterComposition": "40 cartes par starter : 11 rares, 2 holographiques, 27 communes.",
- "sets": {
-  "s1": {
-   "series": 1,
-   "starters": ["Maître Hokage", "Pays du Vent"],
-   "colekaLabel": "Cartes Naruto Série 01 - Le Pays du Vent"
-  },
-  "s2": {
-   "series": 2,
-   "starters": ["Sceller le maléfice", "Détruire Konoha"],
-   "colekaLabel": "Cartes Naruto Série 02 - Détruire Konoha"
-  },
-  "s3": {
-   "series": 3,
-   "starters": ["Apprentissage", "Puissances Cachées"],
-   "colekaLabel": "Cartes Naruto Série 03 - Puissances Cachées"
-  },
-  "s4": {
-   "series": 4,
-   "starters": ["L'esprit du sable", "Invocation"],
-   "colekaLabel": "Cartes Naruto Série 04 - L'Esprit du Sable"
-  },
-  "s5": {
-   "series": 5,
-   "starters": ["La quête", "Un nouveau départ"],
-   "colekaLabel": "Cartes Naruto Série 05 - Un Nouveau Départ"
-  },
-  "s6": {
-   "series": 6,
-   "starters": [],
-   "colekaLabel": "Cartes Naruto Série 06",
-   "released": false,
-   "cancelled": "Annoncée pour 2009, repoussée puis annulée — Carddass s'est reporté sur Dragon Ball. Cartes présentées chaque semaine sur carddass.fr mais jamais imprimées : aucune base de collectionneurs n'en détient de photo, et le site n'a jamais publié de packshot booster, logo ou starter S6 alors que S1–S5 en ont tous."
-  },
-  "promo": {
-   "series": null,
-   "starters": [],
-   "colekaLabel": null,
-   "note": "Promos hors série : retirages marqués du sigle PROMO accompagné de 1 à 3 shurikens (plus il y en a, plus la carte est rare), plus une séquence propre `PR-nn` dont le numéro imprimé varie (`PR-11`, `NI-PR16`). Aucune checklist officielle n'existe."
+  "source": "carddass.fr — articles « ZOOM SUR LA SERIE » et page de composition (Wayback)",
+  "note": "Bandai ne donnait pas de titre à ses séries : chaque série sortait avec DEUX starters nommés, plus des boosters. Les libellés de Coleka (« Série 01 - Le Pays du Vent ») reprennent un seul des deux starters et le présentent comme un nom de série — c'est une convention de collectionneurs, pas une dénomination officielle. Les deux sont conservés : `starters` fait foi, `colekaLabel` sert à recoller avec cette base.",
+  "quote": "CHOISIS TA SÉRIE POUR EN CONNAÎTRE LA COMPOSITION — Série 1 Starter Maître Hokage & Pays du Vent — Série 2 Starter Sceller le Maléfice & Détruire Konoha — Série 3 Starter Apprentissage & Puissances Cachées",
+  "starterComposition": "40 cartes par starter : 11 rares, 2 holographiques, 27 communes.",
+  "sets": {
+    "s1": {
+      "series": 1,
+      "starters": ["Maître Hokage", "Pays du Vent"],
+      "colekaLabel": "Cartes Naruto Série 01 - Le Pays du Vent"
+    },
+    "s2": {
+      "series": 2,
+      "starters": ["Sceller le maléfice", "Détruire Konoha"],
+      "colekaLabel": "Cartes Naruto Série 02 - Détruire Konoha"
+    },
+    "s3": {
+      "series": 3,
+      "starters": ["Apprentissage", "Puissances Cachées"],
+      "colekaLabel": "Cartes Naruto Série 03 - Puissances Cachées"
+    },
+    "s4": {
+      "series": 4,
+      "starters": ["L'esprit du sable", "Invocation"],
+      "colekaLabel": "Cartes Naruto Série 04 - L'Esprit du Sable"
+    },
+    "s5": {
+      "series": 5,
+      "starters": ["La quête", "Un nouveau départ"],
+      "colekaLabel": "Cartes Naruto Série 05 - Un Nouveau Départ"
+    },
+    "s6": {
+      "series": 6,
+      "starters": ["Le Duel", "Quartet"],
+      "startersSource": "manga-sanctuary news 7397, 28/01/2008 — « Le Duel » (Naruto contre Sasuke) et « Quartet » (le quatuor de ninjas d'Orochimaru). Noms annoncés ; les starters n'ont jamais été fabriqués.",
+      "colekaLabel": "Cartes Naruto Série 06",
+      "released": false,
+      "cancelled": "Annoncée pour AVRIL 2008 (presse du 28/01/2008), repoussée à 2009, puis annulée — Carddass s'est reporté sur Dragon Ball. Jamais imprimée en français : manga-news s'arrête au Deck Série 5, Ultrajeux n'a aucune S6 à l'unité sur 734 fiches, et aucun booster ni starter S6 français n'est jamais apparu en revente (eBay, leboncoin, Vinted, Delcampe). Le site n'a publié ni packshot booster, ni logo, ni starter S6 alors que S1–S5 en ont tous.",
+      "frenchArtefact": "Seuls existent les rendus préparés sur carddass.fr (`images/cartes/6/`) — de l'art de pré-production. Les entrées `s6` du catalogue sont ces rendus, pas des cartes physiques françaises.",
+      "printedElsewhere": "ATTENTION : les cartes ont bien été imprimées, mais EN ITALIE (« Serie 6 — Rivalità Eterna », BANDAI 2008 MADE IN CHINA). Coleka en détient 72 photos — l'ancienne note affirmait qu'aucune base n'en avait, c'est faux depuis le 14/08/2026. Numéros partagés avec le FR, seul le préfixe Tactique change (TA→ST). Ne PAS indexer ces cartes dans `s6` : ce sont des objets italiens. Voir docs/naruto_promo_research.md §1 bis."
+    },
+    "promo": {
+      "series": null,
+      "starters": [],
+      "colekaLabel": null,
+      "note": "Promos hors série : retirages marqués du sigle PROMO accompagné de 1 à 3 shurikens (plus il y en a, plus la carte est rare), plus une séquence propre `PR-nn` dont le numéro imprimé varie (`PR-11`, `NI-PR16`). Aucune checklist officielle n'existe."
+    }
   }
- }
 }

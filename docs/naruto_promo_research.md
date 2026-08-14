@@ -330,6 +330,70 @@ d'une tin scellée apparaît.
 
 ---
 
+## 1 quinquies. Les trois dernières cartes de la semaine — visuels perdus
+
+`NI-309` _Ino Yamanaka_, `TE-263` _Mélodie du guerrier illusoire_ et `TA-240`
+_L'homme-ivre_ sont les trois entrées `s6` sans image. Recherche épuisée le
+2026-08-14 — **les visuels n'existent nulle part en ligne.**
+
+### Ce qu'on sait exactement
+
+La page `naruto__archiveN_carte_semaine_26.html` les référence par leur nom de
+fichier :
+
+```
+images/cartes/cartes_med/NINJA-309-med.jpg
+images/cartes/cartes_med/TE-263-med.jpg
+images/cartes/cartes_med/TA-240-med.jpg
+```
+
+Et l'autoindex Apache capturé le **2012-06-04** prouve que les dossiers étaient
+toujours en place, `6/` daté du **22-Dec-2008 09:52** et `cartes_med/` du
+**29-Dec-2008**. Les fichiers ont donc vécu sur le serveur au moins jusqu'en
+2012 — Wayback a archivé le HTML sans jamais aller chercher ces images-là.
+
+### Canaux épuisés pour ces trois
+
+| Piste                                                          | Résultat                                                                                                                                                                |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CDX Wayback, domaine entier (2 936 URLs)                       | **0 occurrence** de `309` et `263`. Les 4 hits sur `240` sont `NINJA-240` et `TE-240`, deux autres cartes                                                               |
+| `cartes/6/` archivé                                            | exactement **21 images**, identiques à nos 21 sur disque                                                                                                                |
+| `cartes_med/` archivé                                          | 82 fichiers, **aucun des trois**                                                                                                                                        |
+| Autoindex de `6/` et `cartes_med/`                             | **jamais archivés** (seul le parent `cartes/` l'a été, en 2007 et 2012)                                                                                                 |
+| `naruto/images/archives/`                                      | chrome d'interface daté d'avril 2007, aucune carte                                                                                                                      |
+| **carddass.fr en direct**                                      | le domaine est **vivant mais revendu** : il sert `carteonepiece.fr`, boutique Shopify, **zéro mention de Naruto**. Les fichiers sont partis avec la revente             |
+| Common Crawl (6 crawls 2017)                                   | **1 URL** par crawl — le domaine n'y est quasiment pas, et CC ne moissonne pas les images                                                                               |
+| archive.today                                                  | aucun snapshot (page générique / bloqué)                                                                                                                                |
+| `tournoi-de-cartes.forumpro.fr`                                | **forum inédit** relayant les révélations hebdo : seulement 3 sujets (4ᵉ `NI-264`, 5ᵉ `TA-254`, 6ᵉ `NI-294`), **tous déjà chez nous**. Le relais s'arrête avec la série |
+| `2img.net` (cache d'images ForumActif)                         | le forum ci-dessus hotlinkait carddass.fr via ce proxy — piste idéale sur le papier, mais **mort** : 403 en direct, `naturalWidth: 0` au navigateur                     |
+| Recherche par nom de fichier (`TA-240-med`…)                   | rien                                                                                                                                                                    |
+| Recherche par nom de carte (« Mélodie du guerrier illusoire ») | rien — seule la technique de Tayuya ressort                                                                                                                             |
+| Ultrajeux                                                      | Ino Yamanaka en `NI-70` et `NI-88`, **jamais `NI-309`** — n'a jamais atteint la vente                                                                                   |
+| Coleka                                                         | photo pour `ni309` (italienne), **rien** pour `ta240` ni `te263`                                                                                                        |
+
+### Ce qui a été récupéré à la place
+
+Le texte éditorial complet des trois, publié par Bandai France :
+
+- **TA-240 « L'homme-ivre »** (08/12/2008) — puissance tactique 3. Révèle les 3
+  premières cartes du deck adverse : les Techniques retournent en main de leur
+  propriétaire, tout le reste part à la Poubelle.
+- **TE-263 « Mélodie du guerrier illusoire »** (15/12/2008) — Technique symbole
+  Eau, spécifique à Tayuya sans passage au Stade 2, coût 1 Eau + 1 Neutre.
+  Interdit les Tests de connaissances à toutes les équipes pour le tour.
+- **NI-309 « Ino Yamanaka »** (22/12/2008) — tour d'appel 0, 0/1, connaissance 1,
+  évolution. Les Ninjas _Konoha + Homme + Aspirant ninja_ de son équipe gagnent
+  +1/+1.
+
+Le **22/12/2008 est la dernière carte de la semaine jamais publiée** : c'est la
+date exacte où la ligne française s'arrête.
+
+**Piste morte, ne pas refouiller.** Seul un scan de collectionneur pourrait
+encore produire un visuel — mais ces cartes n'ayant jamais été imprimées en
+français, il n'existe aucun exemplaire à scanner.
+
+---
+
 ## 2. Canaux explorés
 
 ### narutoccgfrance.1fr1.net — vivant, productif

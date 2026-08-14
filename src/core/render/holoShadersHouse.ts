@@ -164,30 +164,41 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
   },
 
   /**
-   * One clean band of white crossing the card, and nothing else.
+   * A bright spot under the pointer with a dark falloff, crossed by one
+   * diagonal band. No spectrum, no grain.
    *
-   * The plainest look here on purpose: no spectrum, no grain. It suits a pack
-   * whose foil was never captured — a rainbow would be inventing detail we do
-   * not have, while a moving highlight only claims "this copy is shiny", which
-   * is exactly what we do know.
+   * The plainest look here on purpose. It suits a pack whose foil was never
+   * captured: a rainbow would invent detail we do not have, while a highlight
+   * that tracks the light only claims "this copy is shiny", which is exactly
+   * what we do know.
    *
-   * `screen` rather than `overlay`: the band must lighten what it crosses and
-   * never darken it, so the artwork stays readable underneath. It rides
-   * `--combined` like the others, so it sweeps on the idle lean and follows the
-   * pointer on hover instead of looping on a fixed timer.
+   * Shape follows the technique `kongyo2/cards-css` uses for its `reverse`
+   * card — a pointer-centred radial differenced against a diagonal sweep, the
+   * stack then dodged onto the art. Written in our own values and layers: we
+   * have no foil texture to sit under it, so the third layer of the original
+   * is gone and the blend collapses to one `difference`.
+   *
+   * Dodge is what gives it the wet, polished look instead of a flat wash — and
+   * dodge is also what blew out the earlier house looks. The brightness is
+   * held near half on purpose: that is the whole reason the reference reads
+   * clean rather than burnt.
    */
   flare: {
     id: "flare",
-    // Narrow: transparent until 40%, peak at 50%, gone by 60%. A wider band
-    // reads as a haze over the whole card rather than a passing highlight.
-    backgroundImage: `linear-gradient(130deg, transparent 40%, rgba(255,255,255,0.7) 50%, transparent 60%)`,
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "200% 200%",
-    backgroundPosition: "var(--combined) center",
+    backgroundImage: `radial-gradient(farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%), rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.28) 22%, rgba(255,255,255,0) 55%), linear-gradient(-45deg, transparent 38%, rgba(255,255,255,0.5) 50%, transparent 62%)`,
+    backgroundRepeat: "no-repeat, no-repeat",
+    backgroundSize: "120% 120%, 200% 200%",
+    backgroundPosition:
+      "center center, var(--background-x, 50%) var(--background-y, 50%)",
+    backgroundBlendMode: "screen",
+    // Screen, not dodge: dodge on a layer dark enough to stay safe lifts almost
+    // nothing, and bright enough to show burns the art. Screen only ever
+    // lightens, so the illustration survives underneath at any angle.
     mixBlendMode: "screen",
-    opacity: 0.85,
-    // Blooms as the card turns away from the light, then settles facing it.
-    filter: `brightness(${lit(0.9, 0.55)})`,
+    opacity: 0.9,
+    // Brightest as the card turns away from you, which is when a real foil
+    // catches the light; settles as you face it.
+    filter: `brightness(${lit(0.85, 0.6)}) contrast(1.25)`,
   },
 };
 

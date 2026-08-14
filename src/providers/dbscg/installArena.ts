@@ -24,7 +24,11 @@ import path from "node:path";
 import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
 
-import { dbsFaceFilename, dbsFaceSourceOf } from "./faceChoice";
+import {
+  dbsFaceFilename,
+  dbsFaceSourceOf,
+  recordFaceDecision,
+} from "./faceChoice";
 import { promoteBestFace } from "./fetchFaces";
 import {
   DBS_CG_PACK_ID,
@@ -44,7 +48,7 @@ export const DBS_CG_ARENA_STAGING_NAME = "dragon-ball-masters-arena";
 const LANG = "en";
 const CLONE_TIMEOUT_MS = 60 * 60 * 1000;
 
-export type ArenaFaceRole = "art" | "awakened";
+export type ArenaFaceRole = "art" | "back";
 
 export type ArenaFace = {
   filename: string;
@@ -87,7 +91,7 @@ export function parseArenaFaceFilename(
     set: parsed.set,
     number: parsed.number,
     grouping: parsed.grouping,
-    role: awakened ? "awakened" : "art",
+    role: awakened ? "back" : "art",
   };
 }
 
@@ -149,7 +153,8 @@ async function promoteArenaCard(cardDir: string): Promise<void> {
   }
   const sources = names.filter((name) => dbsFaceSourceOf(name));
   if (sources.length <= 1) {
-    copyCoW(deckplanet, path.join(cardDir, "art.webp"));
+    // Only one source: no ranking to run, just name it.
+    recordFaceDecision(cardDir, "art", dbsFaceFilename("deckplanet"));
     return;
   }
   await promoteBestFace(cardDir);
@@ -214,7 +219,7 @@ export type InstallArenaFacesOptions = {
 export type InstallArenaFacesResult = {
   ok: number;
   skip: number;
-  awakened: number;
+  backs: number;
   total: number;
 };
 
@@ -236,7 +241,7 @@ export async function installArenaFaces(
   const stats: InstallArenaFacesResult = {
     ok: 0,
     skip: 0,
-    awakened: 0,
+    backs: 0,
     total: selected.length,
   };
   console.log(
@@ -251,8 +256,8 @@ export async function installArenaFaces(
       card: dbsCgCardFolder(face),
     });
     const dest =
-      face.role === "awakened"
-        ? path.join(cardDir, "awakened.webp")
+      face.role === "back"
+        ? path.join(cardDir, dbsFaceFilename("deckplanet", "back"))
         : path.join(cardDir, dbsFaceFilename("deckplanet"));
     if (!opts.force && existsSync(dest)) {
       stats.skip += 1;
@@ -260,8 +265,14 @@ export async function installArenaFaces(
       continue;
     }
     copyCoW(face.absPath, dest);
-    if (face.role === "awakened") stats.awakened += 1;
-    else {
+    if (face.role === "back") {
+      stats.backs += 1;
+      recordFaceDecision(
+        cardDir,
+        "back",
+        dbsFaceFilename("deckplanet", "back"),
+      );
+    } else {
       stats.ok += 1;
       cardDirs.add(cardDir);
     }
@@ -283,9 +294,7 @@ export async function installArenaFaces(
     console.log(`── arena index → ${indexPath}`);
   }
 
-  console.log(
-    `── arena ok=${stats.ok} skip=${stats.skip} awakened=${stats.awakened}`,
-  );
+  console.log(`── arena ok=${stats.ok} skip=${stats.skip} dos=${stats.backs}`);
   return stats;
 }
 

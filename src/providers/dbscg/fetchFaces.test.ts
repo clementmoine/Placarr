@@ -155,7 +155,7 @@ describe("exportDbsCgCardsIndexJson local art", () => {
     );
   });
 
-  it("sets langs.fr.art when art.webp is on disk", () => {
+  it("still reads a legacy art.webp, from before the decision file", () => {
     mkdirSync(path.dirname(artPath()), { recursive: true });
     writeFileSync(artPath(), tinyWebp());
     const out = path.join(tmp, "cards-index.json");
@@ -263,7 +263,7 @@ describe("fetchDbsCgFaces", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("writes art.webp and indexes langs.fr.art, asking dbscards first", async () => {
+  it("records the chosen face and indexes it, asking dbscards first", async () => {
     mockedGet.mockResolvedValue({
       data: tinyWebp(),
       status: 200,
@@ -274,7 +274,8 @@ describe("fetchDbsCgFaces", () => {
       langs: ["fr"],
     });
     expect(result.ok).toBe(1);
-    expect(existsArt()).toBe(true);
+    // Nothing is copied to a generic name: the decision names the source file.
+    expect(chosenFace()).toBe("art.dbscards.webp");
     // dbscards leads because it is the only 400x560 source; every host behind
     // it serves Bandai's 260x363.
     expect(String(mockedGet.mock.calls[0]?.[0])).toContain(
@@ -285,7 +286,9 @@ describe("fetchDbsCgFaces", () => {
     ) as {
       cards: Record<string, { langs: { fr?: { art?: string } } }>;
     };
-    expect(index.cards["dbscg:bt1-001"]?.langs.fr?.art).toBe("art.webp");
+    expect(index.cards["dbscg:bt1-001"]?.langs.fr?.art).toBe(
+      "art.dbscards.webp",
+    );
   });
 
   it("re-asks only for the sources it does not hold yet", async () => {
@@ -339,7 +342,12 @@ describe("fetchDbsCgFaces", () => {
     writeFileSync(path.join(dir, "art.dbscards.webp"), tinyWebp());
     writeFileSync(path.join(dir, "art.bandai.webp"), big);
     await fetchDbsCgFaces({ delayMs: 0, concurrency: 1, langs: ["fr"] });
-    const shown = await sharp(artPath()).metadata();
+    // The decision points at Bandai's larger file, though dbscards outranks it
+    // on source order.
+    expect(chosenFace()).toBe("art.bandai.webp");
+    const shown = await sharp(
+      path.join(path.dirname(artPath()), chosenFace()!),
+    ).metadata();
     expect(shown.width).toBe(120);
   });
 
@@ -453,10 +461,15 @@ describe("fetchDbsCgFaces", () => {
   });
 });
 
-function existsArt(lang = "fr"): boolean {
+/** The filename the ranking recorded for this card, or null. */
+function chosenFace(lang = "fr"): string | null {
   try {
-    return readFileSync(artPath(lang)).length >= 12;
+    const raw = readFileSync(
+      path.join(path.dirname(artPath(lang)), "face.json"),
+      "utf8",
+    );
+    return (JSON.parse(raw) as { art?: string }).art ?? null;
   } catch {
-    return false;
+    return null;
   }
 }

@@ -3,7 +3,14 @@
  * Bandai SAMPLE URLs stay in `print_assets` per locale; local faces are
  * `cards/{set}/{fr|en}/{card}/art.webp` when the faces / arena steps have run.
  */
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -11,6 +18,11 @@ import type { CardsIndexLangFiles } from "@/effects/cardsIndex";
 import { packCardDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 
+import {
+  DBS_FACE_DECISION_FILE,
+  dbsFaceSourceOf,
+  parseFaceDecision,
+} from "./faceChoice";
 import { DBS_CG_GAME } from "./printIdentity";
 
 export const DBS_CG_SCHEMA_VERSION = "1";
@@ -249,15 +261,44 @@ export function dbsCgLocalArtFilename(
   print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
   lang = "fr",
 ): string | null {
-  const art = path.join(
-    packCardDir(DBS_CG_PACK_ID, {
-      set: print.setCode,
-      lang: lang.toLowerCase(),
-      card: dbsCgCardFolder(print),
-    }),
-    "art.webp",
-  );
-  return existsSync(art) ? "art.webp" : null;
+  const cardDir = packCardDir(DBS_CG_PACK_ID, {
+    set: print.setCode,
+    lang: lang.toLowerCase(),
+    card: dbsCgCardFolder(print),
+  });
+
+  /*
+    The ranking's own answer, written by the faces pass. Nothing is copied to a
+    generic `art.webp` any more: that name duplicated a file we already held and
+    froze a decision taken at download time. Reading the decision costs the same
+    one file access the old `existsSync` did.
+  */
+  const decision = path.join(cardDir, DBS_FACE_DECISION_FILE);
+  if (existsSync(decision)) {
+    try {
+      const named = parseFaceDecision(readFileSync(decision, "utf8"));
+      if (named && existsSync(path.join(cardDir, named))) return named;
+    } catch {
+      /* fall through to the scan */
+    }
+  }
+
+  /*
+    No decision recorded — a folder filled before this change, or one whose
+    pass was cut short. Take any source that is there rather than showing
+    nothing; the next pass will rank them properly.
+  */
+  try {
+    const found = readdirSync(cardDir)
+      .filter((name) => dbsFaceSourceOf(name))
+      .sort();
+    if (found.length > 0) return found[0]!;
+  } catch {
+    /* no folder */
+  }
+
+  // Older layouts really did hold this file.
+  return existsSync(path.join(cardDir, "art.webp")) ? "art.webp" : null;
 }
 
 export function loadDbsCgIndex(): {

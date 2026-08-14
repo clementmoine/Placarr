@@ -8,8 +8,6 @@
  * `_b.webp` is not the pack sleeve.
  */
 import {
-  constants,
-  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -43,6 +41,7 @@ import {
   dbsFaceFilename,
   dbsFaceSourceOf,
   pickBestFace,
+  recordFaceDecision,
   type DbsFaceSource,
   type StoredFace,
 } from "./faceChoice";
@@ -368,14 +367,6 @@ async function readStoredFaces(cardDir: string): Promise<StoredFace[]> {
   return out;
 }
 
-function copyCloned(src: string, dest: string): void {
-  try {
-    copyFileSync(src, dest, constants.COPYFILE_FICLONE);
-  } catch {
-    copyFileSync(src, dest);
-  }
-}
-
 function writeAtomic(destPath: string, buf: Buffer): void {
   mkdirSync(path.dirname(destPath), { recursive: true });
   const tmp = `${destPath}.tmp`;
@@ -390,13 +381,8 @@ export async function promoteBestFace(
   const stored = await readStoredFaces(cardDir);
   const best = pickBestFace(stored);
   if (!best) return null;
-  // Clone, not a byte copy: this duplicates a source file we already hold, and
-  // on APFS a clone costs nothing. Measured 96K where 48K was enough — about
-  // 800 MB across the catalogue.
-  copyCloned(
-    path.join(cardDir, dbsFaceFilename(best)),
-    path.join(cardDir, "art.webp"),
-  );
+  // Record the winner; never copy it. See `DBS_FACE_DECISION_FILE`.
+  recordFaceDecision(cardDir, "art", dbsFaceFilename(best));
   return best;
 }
 
@@ -594,7 +580,10 @@ export async function fetchDbsCgFaces(
       copies them out of the local clone. Same filename `arena` uses, so both
       routes land on one name.
     */
-    const awakenedDest = path.join(cardDir, "awakened.webp");
+    const awakenedDest = path.join(
+      cardDir,
+      dbsFaceFilename("dbscards", "back"),
+    );
     if (title?.awakenedName && (force || !existsSync(awakenedDest))) {
       const back = await downloadFace(
         dbscardsFaceUrls(
@@ -617,6 +606,14 @@ export async function fetchDbsCgFaces(
       if (back.buf) {
         try {
           writeAtomic(awakenedDest, back.buf);
+          // Same convention as the front: role + source, then a recorded
+          // winner. A fixed `awakened.webp` had no room for a second source
+          // and would have been silently overwritten by whichever ran last.
+          recordFaceDecision(
+            cardDir,
+            "back",
+            dbsFaceFilename("dbscards", "back"),
+          );
         } catch {
           stats.fail += 1;
         }

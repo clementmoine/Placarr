@@ -63,7 +63,7 @@ describe("parseArenaFaceFilename", () => {
     expect(parseArenaFaceFilename("BT1-001_b.webp")).toMatchObject({
       collector: "BT1-001",
       grouping: null,
-      role: "awakened",
+      role: "back",
     });
   });
 
@@ -107,7 +107,7 @@ describe("installArenaFaces", () => {
       assetsDir: path.join(tmp, "assets"),
     });
     expect(result.ok).toBe(2);
-    expect(result.awakened).toBe(1);
+    expect(result.backs).toBe(1);
 
     const leader = packCardDir(DBS_CG_PACK_ID, {
       set: "bt1",
@@ -117,20 +117,27 @@ describe("installArenaFaces", () => {
     expect(existsSync(path.join(leader, dbsFaceFilename("deckplanet")))).toBe(
       true,
     );
-    expect(existsSync(path.join(leader, "art.webp"))).toBe(true);
-    expect(existsSync(path.join(leader, "awakened.webp"))).toBe(true);
     expect(
-      existsSync(
-        path.join(
-          packCardDir(DBS_CG_PACK_ID, {
-            set: "bt1",
-            lang: "en",
-            card: "011-spr",
-          }),
-          "art.webp",
+      JSON.parse(readFileSync(path.join(leader, "face.json"), "utf8")).art,
+    ).toBe("art.deckplanet.webp");
+    expect(existsSync(path.join(leader, "back.deckplanet.webp"))).toBe(true);
+    // A grouping variant is its own card folder, and it too names its source
+    // rather than holding a copy under a generic name.
+    expect(
+      JSON.parse(
+        readFileSync(
+          path.join(
+            packCardDir(DBS_CG_PACK_ID, {
+              set: "bt1",
+              lang: "en",
+              card: "011-spr",
+            }),
+            "face.json",
+          ),
+          "utf8",
         ),
-      ),
-    ).toBe(true);
+      ).art,
+    ).toBe("art.deckplanet.webp");
     expect(
       existsSync(
         path.join(
@@ -143,9 +150,9 @@ describe("installArenaFaces", () => {
         ),
       ),
     ).toBe(false);
-    expect(readFileSync(path.join(leader, "art.webp")).length).toBeGreaterThan(
-      12,
-    );
+    expect(
+      readFileSync(path.join(leader, "art.deckplanet.webp")).length,
+    ).toBeGreaterThan(12);
   });
 
   it("skips files it already ranged", async () => {

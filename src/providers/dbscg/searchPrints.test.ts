@@ -117,8 +117,10 @@ describe("bilingual titles", () => {
 describe("face preference", () => {
   it("serves the synced local face rather than the remote one", () => {
     const candidate = lookupDbsCgPrint("dbscg:bt1-001");
-    expect(candidate?.imageUrl).toBe(
-      "/assets/dbs/cg/cards/bt1/fr/001/art.webp",
+    // The URL names the source that won, not a generic copy of it: nothing is
+    // duplicated to `art.webp` any more.
+    expect(candidate?.imageUrl).toMatch(
+      /^\/assets\/dbs\/cg\/cards\/bt1\/fr\/001\/art\.[a-z]+\.webp$/,
     );
     expect(candidate?.thumbnailUrl).toBe(candidate?.imageUrl);
   });

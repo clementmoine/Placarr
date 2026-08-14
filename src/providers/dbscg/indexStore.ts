@@ -1,7 +1,7 @@
 /**
  * DBS Masters local catalogue — `data/dbs/cg/catalog.sqlite`.
- * Bandai SAMPLE URLs stay in `print_assets`; local Deckplanet faces are
- * `cards/{set}/fr/{card}/art.webp` when the faces step has run.
+ * Bandai SAMPLE URLs stay in `print_assets` per locale; local faces are
+ * `cards/{set}/{fr|en}/{card}/art.webp` when the faces / arena steps have run.
  */
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -297,17 +297,30 @@ export function loadDbsCgIndex(): {
   }
 }
 
+function groupByPrintLang<T extends { printKey: string; lang: string }>(
+  rows: readonly T[],
+): Map<string, Map<string, T>> {
+  const map = new Map<string, Map<string, T>>();
+  for (const row of rows) {
+    const lang = row.lang.toLowerCase();
+    let inner = map.get(row.printKey);
+    if (!inner) {
+      inner = new Map();
+      map.set(row.printKey, inner);
+    }
+    inner.set(lang, row);
+  }
+  return map;
+}
+
 export function exportDbsCgCardsIndexJson(
   prints: DbsPrintRow[],
   titles: DbsTitleRow[] | undefined,
   assets: DbsAssetRow[] | undefined,
   outPath: string,
 ): void {
-  const titleByKey = new Map<string, DbsTitleRow>();
-  for (const title of titles ?? []) {
-    if (title.lang.toLowerCase() !== "fr") continue;
-    titleByKey.set(title.printKey, title);
-  }
+  const titlesByPrint = groupByPrintLang(titles ?? []);
+  const assetsByPrint = groupByPrintLang(assets ?? []);
   const cards: Record<
     string,
     {
@@ -318,31 +331,30 @@ export function exportDbsCgCardsIndexJson(
       langs: Record<string, CardsIndexLangFiles>;
     }
   > = {};
-  const assetByKey = new Map<string, DbsAssetRow>();
-  for (const asset of assets ?? []) {
-    if (asset.lang.toLowerCase() !== "fr") continue;
-    if (!asset.imageUrl) continue;
-    assetByKey.set(asset.printKey, asset);
-  }
   for (const print of prints) {
-    const title = titleByKey.get(print.printKey);
+    const titlesFor = titlesByPrint.get(print.printKey);
+    const assetsFor = assetsByPrint.get(print.printKey);
+    const displayTitle =
+      titlesFor?.get("fr") ??
+      (titlesFor ? [...titlesFor.values()][0] : undefined);
     const card = dbsCgCardFolder(print);
-    const imageUrl = assetByKey.get(print.printKey)?.imageUrl;
     const langs: Record<string, CardsIndexLangFiles> = {};
     for (const lang of DBS_CG_FACE_LANGS) {
       const art = dbsCgLocalArtFilename(print, lang);
+      const imageUrl = assetsFor?.get(lang)?.imageUrl;
+      const name = titlesFor?.get(lang)?.fullName?.trim();
       const files: CardsIndexLangFiles = {};
       if (art) files.art = art;
-      // The Bandai URL in sqlite is the FR cardlist's own — not an EN one.
-      if (lang === "fr" && imageUrl) files.artUrl = imageUrl;
+      if (imageUrl) files.artUrl = imageUrl;
+      if (name) files.name = name;
       if (Object.keys(files).length) langs[lang] = files;
     }
     cards[print.printKey] = {
       set: print.setCode,
       card,
       langs,
-      ...(title?.fullName ? { name: title.fullName } : {}),
-      ...(title?.rarity ? { rarity: title.rarity } : {}),
+      ...(displayTitle?.fullName ? { name: displayTitle.fullName } : {}),
+      ...(displayTitle?.rarity ? { rarity: displayTitle.rarity } : {}),
     };
   }
   mkdirSync(path.dirname(outPath), { recursive: true });

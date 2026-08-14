@@ -123,8 +123,10 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "dbs-cg",
     catalogueOnly: true,
-    blurbFr: "Catalogue Bandai Masters — faces Deckplanet (sync), SAMPLE en fallback",
-    blurbEn: "Bandai Masters catalogue — Deckplanet faces on sync, SAMPLE fallback",
+    blurbFr:
+      "Catalogue Bandai Masters — faces Deckplanet (sync), SAMPLE en fallback",
+    blurbEn:
+      "Bandai Masters catalogue — Deckplanet faces on sync, SAMPLE fallback",
   },
   {
     id: "dbs/fw",
@@ -204,7 +206,9 @@ export function cataloguePackForExtractTarget(
   return CATALOGUE_PACKS.find((pack) => pack.extractTarget === target) ?? null;
 }
 
-export function foilExtractNeedsApk(target: string | null | undefined): boolean {
+export function foilExtractNeedsApk(
+  target: string | null | undefined,
+): boolean {
   const pack = cataloguePackForExtractTarget(target);
   if (!pack) return true;
   return pack.catalogueOnly !== true;

@@ -84,14 +84,20 @@ export async function withCliFoilExtractJob<T>(
 
   try {
     const result = await run({ jobId: job.id, signal: controller.signal });
-    if (controller.signal.aborted || (await isBackgroundWorkJobCancelled(job.id))) {
+    if (
+      controller.signal.aborted ||
+      (await isBackgroundWorkJobCancelled(job.id))
+    ) {
       return result;
     }
     await completeBackgroundWorkJob(job.id);
     await appendFoilExtractLog(target, "── done (cli)");
     return result;
   } catch (error) {
-    if (controller.signal.aborted || (await isBackgroundWorkJobCancelled(job.id))) {
+    if (
+      controller.signal.aborted ||
+      (await isBackgroundWorkJobCancelled(job.id))
+    ) {
       throw error;
     }
     const message = error instanceof Error ? error.message : String(error);

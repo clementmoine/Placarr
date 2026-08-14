@@ -124,6 +124,32 @@ function remoteArtUrl(files: CardsIndexLangFiles): string | null {
   return null;
 }
 
+/** Preferred-lang name on the tile; the other locale stays searchable. */
+function catalogueNames(
+  entry: CardsIndexEntry,
+  files: CardsIndexLangFiles | undefined,
+): { name?: string; aka?: string[]; label: string } {
+  const preferred = files?.name?.trim() || entry.name?.trim() || undefined;
+  const aka = [
+    ...new Set(
+      [
+        entry.name?.trim(),
+        ...Object.values(entry.langs).map((langFiles) =>
+          langFiles.name?.trim(),
+        ),
+      ].filter((n): n is string => Boolean(n && n !== preferred)),
+    ),
+  ];
+  const label = preferred
+    ? `${entry.set} · ${entry.card} — ${preferred}`
+    : `${entry.set} · ${entry.card}`;
+  return {
+    ...(preferred ? { name: preferred } : {}),
+    ...(aka.length ? { aka } : {}),
+    label,
+  };
+}
+
 function thumbFile(files: CardsIndexLangFiles): string | null {
   return files.thumb ?? null;
 }
@@ -189,23 +215,25 @@ export function buildCatalogueCardRows(
     const file = picked ? artFile(picked.files) : null;
     const lang = picked?.lang ?? preferLang ?? "fr";
     const hasFoil = entryHasFoil(entry);
-    const label = entry.name
-      ? `${entry.set} · ${entry.card} — ${entry.name}`
-      : `${entry.set} · ${entry.card}`;
+    const names = catalogueNames(entry, picked?.files);
+    const identity = {
+      printKey,
+      set: entry.set,
+      card: entry.card,
+      hasFoil,
+      label: names.label,
+      ...(names.name ? { name: names.name } : {}),
+      ...(names.aka ? { aka: names.aka } : {}),
+      ...(entry.rarity ? { rarity: entry.rarity } : {}),
+    };
 
     if (!file) {
       const remote = picked ? remoteArtUrl(picked.files) : null;
       if (remote) {
         rows.push({
-          printKey,
-          set: entry.set,
-          card: entry.card,
+          ...identity,
           lang,
           artUrl: remote,
-          hasFoil,
-          label,
-          ...(entry.rarity ? { rarity: entry.rarity } : {}),
-          ...(entry.name ? { name: entry.name } : {}),
         });
         continue;
       }
@@ -224,31 +252,19 @@ export function buildCatalogueCardRows(
           ? packFaceAssetUrl(pack, diskId, donor.thumb)
           : undefined;
         rows.push({
-          printKey,
-          set: entry.set,
-          card: entry.card,
+          ...identity,
           lang: donor.lang,
           artUrl,
           ...(thumbUrl ? { thumbUrl } : {}),
-          hasFoil,
-          label,
           artFallbackFrom: donor.printKey,
-          ...(entry.rarity ? { rarity: entry.rarity } : {}),
-          ...(entry.name ? { name: entry.name } : {}),
         });
         continue;
       }
       rows.push({
-        printKey,
-        set: entry.set,
-        card: entry.card,
+        ...identity,
         lang,
         artUrl: "",
-        hasFoil,
-        label,
         missingArt: true,
-        ...(entry.rarity ? { rarity: entry.rarity } : {}),
-        ...(entry.name ? { name: entry.name } : {}),
       });
       continue;
     }
@@ -261,16 +277,10 @@ export function buildCatalogueCardRows(
     const artUrl = packFaceAssetUrl(pack, diskId, file);
     const thumbUrl = thumb ? packFaceAssetUrl(pack, diskId, thumb) : undefined;
     rows.push({
-      printKey,
-      set: entry.set,
-      card: entry.card,
+      ...identity,
       lang,
       artUrl,
       ...(thumbUrl ? { thumbUrl } : {}),
-      hasFoil,
-      label,
-      ...(entry.rarity ? { rarity: entry.rarity } : {}),
-      ...(entry.name ? { name: entry.name } : {}),
     });
   }
   rows.sort((a, b) => {
@@ -445,7 +455,8 @@ export function listCatalogueCards(
         row.printKey.toLowerCase().includes(q) ||
         row.set.toLowerCase().includes(q) ||
         row.card.toLowerCase().includes(q) ||
-        row.label.toLowerCase().includes(q),
+        row.label.toLowerCase().includes(q) ||
+        row.aka?.some((alias) => alias.toLowerCase().includes(q)),
     );
   }
   return {

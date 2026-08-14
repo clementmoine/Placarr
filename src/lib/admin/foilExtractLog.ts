@@ -33,11 +33,9 @@ export async function beginFoilExtractLog(
   const filePath = foilExtractLogPath(pack);
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   const stamp = new Date().toISOString();
-  const body = [
-    `── foil extract ${pack} @ ${stamp}`,
-    ...headerLines,
-    "",
-  ].join("\n");
+  const body = [`── foil extract ${pack} @ ${stamp}`, ...headerLines, ""].join(
+    "\n",
+  );
   await fs.promises.writeFile(filePath, `${body}\n`, "utf8");
   return filePath;
 }
@@ -82,8 +80,7 @@ export type FoilExtractLogSlice = {
   text: string;
 };
 
-const LAUNCH_HEADER_RE =
-  /^── foil extract \S+ @ (\d{4}-\d{2}-\d{2}T[^\s]+)/m;
+const LAUNCH_HEADER_RE = /^── foil extract \S+ @ (\d{4}-\d{2}-\d{2}T[^\s]+)/m;
 const JOB_ID_RE = /^jobId=([^\s]+)/m;
 
 async function readLogHead(filePath: string): Promise<string> {

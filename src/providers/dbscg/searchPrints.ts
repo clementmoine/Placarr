@@ -128,6 +128,7 @@ export function searchDbsCgPrints(
     .prepare(
       `${DETAIL_SQL}
         WHERE LOWER(t.full_name) LIKE ?
+           OR LOWER(COALESCE(t.awakened_name, '')) LIKE ?
            OR LOWER(p.number)    LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.set_code || '-' || p.number) LIKE ?
@@ -136,6 +137,7 @@ export function searchDbsCgPrints(
         LIMIT ?`,
     )
     .all(
+      like,
       like,
       likeCompact,
       likeCompact,

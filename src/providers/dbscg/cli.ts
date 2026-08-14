@@ -1,11 +1,12 @@
 #!/usr/bin/env tsx
 /**
- * Dragon Ball Super Card Game (Masters) — Bandai cardlist + TCG Arena dump.
+ * Dragon Ball Super Card Game (Masters) — Bandai FR+EN cardlists + TCG Arena dump.
  *
  *   pnpm dbs:cards
  *   pnpm dbs:cards -- --only arena
  *   pnpm dbs:cards -- --skip faces
  *   pnpm dbs:cards -- --offline          # range le clone déjà là, pas de HTTP
+ *   pnpm dbs:cards -- --langs fr         # une locale (défaut: fr,en)
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { fetchDbsCgFaces } from "./fetchFaces";
 import { ensureArenaClone, installArenaFaces } from "./installArena";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
+import type { DbsCardlistLocaleId } from "./parseCardlist";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
 
 const STEPS = ["scrape", "arena", "faces"] as const;
@@ -45,6 +47,16 @@ export function selectDbsCgSteps(argv: readonly string[]): Step[] {
   return base.filter(
     (step) => !skip.has(step) && !(offline && ONLINE.has(step)),
   );
+}
+
+/** `--langs fr,en` (default both). Unknown tokens are dropped. */
+export function dbsCgScrapeLangs(
+  argv: readonly string[],
+): DbsCardlistLocaleId[] {
+  const picked = argListFrom(argv, "--langs").filter(
+    (value): value is DbsCardlistLocaleId => value === "fr" || value === "en",
+  );
+  return picked.length ? picked : ["fr", "en"];
 }
 
 function optionalNumber(
@@ -84,9 +96,10 @@ export async function runDbsCgPackPipeline(
   const dryRun = argv.includes("--dry-run");
   const force = argv.includes("--force");
   const offline = argv.includes("--offline");
+  const langs = dbsCgScrapeLangs(argv);
   const steps = selectDbsCgSteps(argv);
   console.log(
-    `── DBS Masters — étapes : ${steps.join(" → ") || "(curated only)"}`,
+    `── DBS Masters — étapes : ${steps.join(" → ") || "(curated only)"} [${langs.join(",")}]`,
   );
 
   console.log(`── curated sync${dryRun ? " (dry run)" : ""}`);
@@ -96,6 +109,7 @@ export async function runDbsCgPackPipeline(
     if (step === "scrape") {
       await scrapeDbsCgCardlist({
         force,
+        langs,
         limit: optionalNumber(argv, "--limit"),
         delayMs: optionalNumber(argv, "--delay"),
       });
@@ -114,6 +128,7 @@ export async function runDbsCgPackPipeline(
     if (step === "faces") {
       await fetchDbsCgFaces({
         force,
+        langs,
         limit: dbsCgFaceDownloadLimit(argv, steps),
         delayMs: optionalNumber(argv, "--delay"),
         concurrency: optionalNumber(argv, "--concurrency"),

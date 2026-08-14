@@ -13,11 +13,13 @@ import { indexDbsCgCards } from "./scrapeCardlist";
 import { lookupDbsCgPrint, searchDbsCgPrints } from "./searchPrints";
 import { resetDbsCgDbCache } from "./indexStore";
 
+const dir = path.dirname(fileURLToPath(import.meta.url));
 const fixture = readFileSync(
-  path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "fixtures/bt1-sample.html",
-  ),
+  path.join(dir, "fixtures/bt1-sample.html"),
+  "utf8",
+);
+const enFixture = readFileSync(
+  path.join(dir, "fixtures/bt1-en-leader.html"),
   "utf8",
 );
 
@@ -59,6 +61,51 @@ describe("searchDbsCgPrints", () => {
     const spr = lookupDbsCgPrint("dbscg:bt1-011-spr");
     expect(spr?.reference).toBe("BT1-011_SPR");
     expect(spr?.cardBackUrl).toBeUndefined();
+  });
+
+  it("finds a Leader by its awakened name", () => {
+    expect(searchDbsCgPrints("Dieu de la destruction")[0]?.printKey).toBe(
+      "dbscg:bt1-001",
+    );
+  });
+});
+
+describe("bilingual titles", () => {
+  let tmp: string;
+
+  beforeEach(() => {
+    tmp = mkdtempSync(path.join(os.tmpdir(), "dbscg-bidi-"));
+    const dbPath = path.join(tmp, "catalog.sqlite");
+    process.env.PLACARR_DBSCG_DB = dbPath;
+    resetDbsCgDbCache();
+    indexDbsCgCards(
+      [
+        ...parseDbsCardlistHtml(fixture, "fr"),
+        ...parseDbsCardlistHtml(enFixture, "en"),
+      ],
+      dbPath,
+    );
+    resetDbsCgDbCache();
+  });
+
+  afterEach(() => {
+    resetDbsCgDbCache();
+    delete process.env.PLACARR_DBSCG_DB;
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("finds the English awakened name and prefers that locale", () => {
+    const hits = searchDbsCgPrints("God of Destruction Champa", {
+      language: "en",
+    });
+    expect(hits[0]?.printKey).toBe("dbscg:bt1-001");
+    expect(hits[0]?.language).toBe("en");
+  });
+
+  it("looks up the English title row when asked", () => {
+    const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
+    expect(en?.language).toBe("en");
+    expect(en?.cardBackUrl).toContain("/images/cardlist/cardimg/BT1-001_b.png");
   });
 });
 

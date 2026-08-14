@@ -1,9 +1,10 @@
 /**
- * Dragon Ball Super Card Game (Masters) — Bandai europe-fr cardlist, local index.
+ * Dragon Ball Super Card Game (Masters) — Bandai FR+EN cardlists, local index.
  * Provider id `dbscg`; printKey game slug `dbscg`. Fusion World is `dbsfw`.
  */
 import { existsSync } from "node:fs";
 
+import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
@@ -44,14 +45,20 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   const title = row.fullName?.trim();
   if (!title) return null;
 
-  const aliases = [row.awakenedName, row.character].filter(
-    (value): value is string => Boolean(value?.trim() && value !== title),
-  );
+  const otherLang = row.lang.toLowerCase() === "en" ? "fr" : "en";
+  const other = lookupDbsCgPrintDetail(printKey, { language: otherLang });
+  const aliases = catalogAliasesFromNames(title, [
+    row.awakenedName,
+    row.character,
+    other?.fullName,
+    other?.awakenedName,
+    other?.character,
+  ]);
 
   return {
     title,
     ...(row.imageUrl ? { imageUrl: row.imageUrl } : {}),
-    ...(aliases.length ? { aliases } : {}),
+    ...(aliases?.length ? { aliases } : {}),
     facts: dbsCgPrintFacts(row, PROVIDER_ID),
     externalIds: {
       [PROVIDER_ID]: printKey,
@@ -74,7 +81,7 @@ export const dbscgModule: ProviderModule = {
     defaultLanguage: "fr",
     websiteUrl: "https://www.dbs-cardgame.com/europe-fr/cartes/",
     notes:
-      "Masters (europe-fr cardlist) → `data/dbs/cg/`. Faces Deckplanet au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
+      "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
   },
   catalog: dbscgCatalog,
   evidence: {

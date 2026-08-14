@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  dbsCgCardlistUrls,
   parseDbsCardlistHtml,
   parseDbsSeriesOptions,
   resolveCardlistUrl,
@@ -14,6 +15,13 @@ const fixture = readFileSync(
   path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "fixtures/bt1-sample.html",
+  ),
+  "utf8",
+);
+const enFixture = readFileSync(
+  path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "fixtures/bt1-en-leader.html",
   ),
   "utf8",
 );
@@ -33,6 +41,7 @@ describe("parseDbsCardlistHtml", () => {
     const champa = cards.find((card) => card.cardNumber === "BT1-001");
     expect(champa).toMatchObject({
       printKey: "dbscg:bt1-001",
+      lang: "fr",
       name: "Champa",
       awakenedName: "Champa, Dieu de la destruction",
       cardType: "LEADER",
@@ -86,6 +95,34 @@ describe("resolveCardlistUrl", () => {
   it("resolves the relative cardimg path Bandai ships", () => {
     expect(resolveCardlistUrl("../images/cartes/cardimg/BT1-001.png")).toBe(
       "https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/BT1-001.png",
+    );
+  });
+
+  it("resolves the US cardlist path against /us-en/cardlist/", () => {
+    expect(
+      resolveCardlistUrl(
+        "../../images/cardlist/cardimg/BT1-001.png",
+        dbsCgCardlistUrls("en").base,
+      ),
+    ).toBe("https://www.dbs-cardgame.com/images/cardlist/cardimg/BT1-001.png");
+  });
+});
+
+describe("parseDbsCardlistHtml (en)", () => {
+  it("stamps lang=en and resolves the US cardimg URL", () => {
+    const [champa] = parseDbsCardlistHtml(enFixture, "en");
+    expect(champa).toMatchObject({
+      printKey: "dbscg:bt1-001",
+      lang: "en",
+      name: "Champa",
+      awakenedName: "God of Destruction Champa",
+      sourceUrl: dbsCgCardlistUrls("en").search,
+    });
+    expect(champa?.imageUrl).toBe(
+      "https://www.dbs-cardgame.com/images/cardlist/cardimg/BT1-001.png",
+    );
+    expect(champa?.backImageUrl).toBe(
+      "https://www.dbs-cardgame.com/images/cardlist/cardimg/BT1-001_b.png",
     );
   });
 });

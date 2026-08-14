@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   dbsCgArenaLimit,
   dbsCgFaceDownloadLimit,
+  dbsCgScrapeLangs,
   selectDbsCgSteps,
 } from "./cli";
 
@@ -44,5 +45,16 @@ describe("dbsCgArenaLimit", () => {
 
   it("caps art files on --only arena", () => {
     expect(dbsCgArenaLimit(["--limit", "2"], ["arena"])).toBe(2);
+  });
+});
+
+describe("dbsCgScrapeLangs", () => {
+  it("defaults to both catalogues", () => {
+    expect(dbsCgScrapeLangs([])).toEqual(["fr", "en"]);
+  });
+
+  it("honours --langs", () => {
+    expect(dbsCgScrapeLangs(["--langs", "en"])).toEqual(["en"]);
+    expect(dbsCgScrapeLangs(["--langs", "fr,en"])).toEqual(["fr", "en"]);
   });
 });

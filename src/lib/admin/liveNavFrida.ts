@@ -17,7 +17,9 @@ const NAVD_PY = path.join(SCRATCH, "navd.py");
 const NAVD_PORT = Number(process.env.FRIDA_NAVD_PORT || "8765");
 
 export function fridaNavAvailable(): boolean {
-  return existsSync(NAV_PY) && existsSync(path.join(SCRATCH, "agent.bundle.js"));
+  return (
+    existsSync(NAV_PY) && existsSync(path.join(SCRATCH, "agent.bundle.js"))
+  );
 }
 
 function navdHealthUrl(): string {
@@ -27,11 +29,10 @@ function navdHealthUrl(): string {
 /** True when navd is up and Live attach looks ready. */
 export function fridaNavdReady(): boolean {
   try {
-    const out = execFileSync(
-      "curl",
-      ["-sf", "-m", "1", navdHealthUrl()],
-      { encoding: "utf8", timeout: 2_000 },
-    ).trim();
+    const out = execFileSync("curl", ["-sf", "-m", "1", navdHealthUrl()], {
+      encoding: "utf8",
+      timeout: 2_000,
+    }).trim();
     const body = JSON.parse(out) as { ok?: boolean };
     return body.ok === true;
   } catch {
@@ -188,12 +189,21 @@ export function seriesLabelFr(setId: string): string {
   return "";
 }
 
-export function fridaCurrentSet(): { setId: string; loadedSetId: string } | null {
+export function fridaCurrentSet(): {
+  setId: string;
+  loadedSetId: string;
+} | null {
   if (!fridaNavAvailable()) return null;
   try {
-    const v = runNav(["current"]) as { setId?: string; loadedSetId?: string } | null;
+    const v = runNav(["current"]) as {
+      setId?: string;
+      loadedSetId?: string;
+    } | null;
     if (!v?.setId && !v?.loadedSetId) return null;
-    return { setId: String(v.setId ?? ""), loadedSetId: String(v.loadedSetId ?? "") };
+    return {
+      setId: String(v.setId ?? ""),
+      loadedSetId: String(v.loadedSetId ?? ""),
+    };
   } catch {
     return null;
   }
@@ -205,7 +215,8 @@ export function fridaSelectSet(setId: string): {
   error?: string;
   pool?: string[];
 } {
-  if (!fridaNavAvailable()) return { ok: false, error: "frida scratch missing" };
+  if (!fridaNavAvailable())
+    return { ok: false, error: "frida scratch missing" };
   try {
     // First line is the select result; runNav returns last line (now) — parse carefully.
     const out = execFileSync("python3", [NAV_PY, "select", setId], {
@@ -261,7 +272,8 @@ export function fridaOpenCard(
   bundleId: string,
   prefer: "" | "ph" | "holo" | "maxOwned" = "",
 ): { ok: boolean; bundle?: string; owned?: number; error?: string } {
-  if (!fridaNavAvailable()) return { ok: false, error: "frida scratch missing" };
+  if (!fridaNavAvailable())
+    return { ok: false, error: "frida scratch missing" };
   try {
     const args = ["open", bundleId];
     if (prefer) {
@@ -277,7 +289,12 @@ export function fridaOpenCard(
       .map((l) => l.trim())
       .filter(Boolean);
     // Last JSON with ok field wins (after optional jump retry).
-    let best: { ok?: boolean; bundle?: string; owned?: number; error?: string } = {
+    let best: {
+      ok?: boolean;
+      bundle?: string;
+      owned?: number;
+      error?: string;
+    } = {
       ok: false,
     };
     for (const line of lines) {
@@ -307,7 +324,8 @@ export function fridaGotoCard(
   bundleId: string,
   prefer: "" | "ph" | "holo" | "maxOwned" = "",
 ): FridaGotoResult {
-  if (!fridaNavAvailable()) return { ok: false, error: "frida scratch missing" };
+  if (!fridaNavAvailable())
+    return { ok: false, error: "frida scratch missing" };
 
   // Warm path only — never cold-attach while navd is warming (Frida race).
   ensureFridaNavd();
@@ -321,8 +339,7 @@ export function fridaGotoCard(
   if (fridaNavdReady() === false && ensureFridaNavd().started) {
     return {
       ok: false,
-      error:
-        "navd encore en warm attach — réessaie dans quelques secondes",
+      error: "navd encore en warm attach — réessaie dans quelques secondes",
     };
   }
 

@@ -15,6 +15,8 @@ export type CardsIndexLangFiles = {
    * Catalogue browse uses this when `art` is missing.
    */
   artUrl?: string;
+  /** Printed name in this locale when the pack ships more than one. */
+  name?: string;
   /** Pokémon: foil metadata per Live variant; files stay in the same card dir. */
   variants?: Record<
     string,

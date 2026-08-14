@@ -14,9 +14,9 @@ async function safeStat(filePath: string) {
   }
 }
 
-async function listApks(apkDir: string): Promise<
-  { name: string; bytes: number; mtimeMs: number }[]
-> {
+async function listApks(
+  apkDir: string,
+): Promise<{ name: string; bytes: number; mtimeMs: number }[]> {
   let names: string[];
   try {
     names = await readdir(apkDir);
@@ -93,7 +93,7 @@ export async function readFoilPackStatuses(opts: {
   dataRoot: string;
   repoRoot: string;
 }): Promise<FoilPackStatus[]> {
-  const { dataRoot, repoRoot } = opts;
+  const { dataRoot } = opts;
 
   const packs: Array<{
     id: FoilPackId;
@@ -188,7 +188,8 @@ export async function readFoilPackStatuses(opts: {
     const apks = await listApks(apkDir);
     const apkBytes = apks.reduce((sum, file) => sum + file.bytes, 0);
     const apkNewest = apks.reduce<number | null>(
-      (best, file) => (best == null || file.mtimeMs > best ? file.mtimeMs : best),
+      (best, file) =>
+        best == null || file.mtimeMs > best ? file.mtimeMs : best,
       null,
     );
 

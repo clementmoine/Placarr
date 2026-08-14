@@ -51,8 +51,10 @@ CLI : `pnpm naruto:cards` — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.
 Dos : `cards/back.webp` depuis `src/providers/narutoccg/curated/`.
 
 `dbs` = franchise ; **`dbs/cg`** = Masters (`dbscg:bt1-001`) ; **`dbs/fw`** =
-Fusion World (`dbsfw:st01-001`, parallels `_P1`). Faces Masters FR = dbscards /
-Bandai au sync HTTP. Faces Masters EN = clone
+Fusion World (`dbsfw:st01-001`, parallels `_P1`). Identité Masters = cardlists
+Bandai **FR** (`/europe-fr/cartes/`) et **EN** (`/us-en/cardlist/`), fusionnées
+sur printKey ; `cards-index.json` porte `langs.fr.name` et `langs.en.name`.
+Faces Masters FR = dbscards / Bandai au sync HTTP. Faces Masters EN = clone
 [TCG Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena) rangé
 sous `cards/{set}/en/`. Faces FW = URLs Bandai SAMPLE (pas de dump). Dos
 sleeve : curated dbscards (FW = même octet placeholder). CLI : `pnpm dbs:cards`

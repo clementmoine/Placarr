@@ -74,7 +74,10 @@ describe("catalogueCards foil detection", () => {
       entryHasFoil({
         set: "s1",
         card: "001",
-        langs: { fr: { art: "art.jpg" }, en: { art: "a.webp", etch: "e.webp" } },
+        langs: {
+          fr: { art: "art.jpg" },
+          en: { art: "a.webp", etch: "e.webp" },
+        },
       }),
     ).toBe(true);
   });
@@ -165,6 +168,38 @@ describe("same-number art fallback (Naruto)", () => {
     };
     const rows = buildCatalogueCardRows("dbs/cg", index);
     expect(rows[0]?.artUrl).toBe("/assets/dbs/cg/cards/bt1/fr/001/art.webp");
+  });
+
+  it("shows the English name when preferLang is en, and keeps FR searchable", () => {
+    const index = {
+      version: 1 as const,
+      pack: "dbs/cg",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "dbscg:bt1-005": {
+          set: "bt1",
+          card: "005",
+          name: "Champa, Dieu de la destruction",
+          langs: {
+            fr: {
+              name: "Champa, Dieu de la destruction",
+              art: "art.webp",
+            },
+            en: {
+              name: "God of Destruction Champa",
+              art: "art.webp",
+            },
+          },
+        },
+      },
+    };
+    const en = buildCatalogueCardRows("dbs/cg", index, "en");
+    expect(en[0]?.name).toBe("God of Destruction Champa");
+    expect(en[0]?.label).toContain("God of Destruction Champa");
+    expect(en[0]?.aka).toContain("Champa, Dieu de la destruction");
+    const fr = buildCatalogueCardRows("dbs/cg", index, "fr");
+    expect(fr[0]?.name).toBe("Champa, Dieu de la destruction");
+    expect(fr[0]?.aka).toContain("God of Destruction Champa");
   });
 
   it("uses a remote artUrl when the pack stores Bandai faces, not local files", () => {

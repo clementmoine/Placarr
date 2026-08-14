@@ -28,11 +28,10 @@ export function preferForLiveOpen(
     ? vars.find((v) => v.shader === material.trim())
     : undefined;
   const foil =
-    byMaterial ??
-    vars.find((v) => v.shader && v.shader !== "NonFoil") ??
-    null;
+    byMaterial ?? vars.find((v) => v.shader && v.shader !== "NonFoil") ?? null;
   const variant = foil?.variant;
-  if (variant === "ph" || variant === "mph" || variant === "sph") return variant;
+  if (variant === "ph" || variant === "mph" || variant === "sph")
+    return variant;
   return "";
 }
 

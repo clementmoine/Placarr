@@ -112,10 +112,18 @@ export function dbsMastersFaceUrls(
   ];
 }
 
-/** Bandai's own face for a locale — 260x363, but unmistakably that locale. */
+/**
+ * Bandai's own face for a locale — 260x363, but unmistakably that locale.
+ *
+ * EN lives at the site root (`/images/cardlist/…`), not `/en/` or `/us-en/`.
+ * Those two 404; the US cardlist HTML points at `../../images/cardlist/cardimg/`.
+ */
 export function bandaiFaceUrl(collector: string, lang: string): string {
-  const region = lang.toLowerCase() === "en" ? "en" : "europe-fr";
-  return `${DBS_CG_CARDLIST_ORIGIN}/${region}/images/cartes/cardimg/${collector.trim().toUpperCase()}.png`;
+  const id = collector.trim().toUpperCase();
+  if (lang.toLowerCase() === "en") {
+    return `${DBS_CG_CARDLIST_ORIGIN}/images/cardlist/cardimg/${id}.png`;
+  }
+  return `${DBS_CG_CARDLIST_ORIGIN}/europe-fr/images/cartes/cardimg/${id}.png`;
 }
 
 /**
@@ -349,15 +357,23 @@ export async function fetchDbsCgFaces(
   }
 
   /*
-    The slug needs the printed name and rarity, which live on the title row,
-    not the print. FR only: that is the corpus this pack ships and the only
-    locale whose slug we can build.
+    dbscards slugs need the printed name. Prefer the job's own locale, then
+    FR — EN names on a French host 404, but the collector still has a French
+    slug that might hit.
   */
-  const titleByPrintKey = new Map(
-    loaded.titles
-      .filter((title) => title.lang === "fr")
-      .map((title) => [title.printKey, title]),
-  );
+  const titlesByPrint = new Map<
+    string,
+    Map<string, (typeof loaded.titles)[number]>
+  >();
+  for (const title of loaded.titles) {
+    const lang = title.lang.toLowerCase();
+    let inner = titlesByPrint.get(title.printKey);
+    if (!inner) {
+      inner = new Map();
+      titlesByPrint.set(title.printKey, inner);
+    }
+    inner.set(lang, title);
+  }
 
   let prints = loaded.prints;
   if (opts.limit && opts.limit > 0) {
@@ -428,7 +444,8 @@ export async function fetchDbsCgFaces(
       print.number,
       print.grouping,
     );
-    const title = titleByPrintKey.get(print.printKey);
+    const titlesFor = titlesByPrint.get(print.printKey);
+    const title = titlesFor?.get(lang) ?? titlesFor?.get("fr");
     const candidates = dbsCgFaceCandidates({
       setCode: print.setCode,
       number: print.number,

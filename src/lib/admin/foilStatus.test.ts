@@ -26,7 +26,10 @@ async function makeRepo(): Promise<{ repo: string; data: string }> {
 describe("readFoilPackStatuses", () => {
   it("reports missing APKs and no extract on empty data", async () => {
     const { repo, data } = await makeRepo();
-    const packs = await readFoilPackStatuses({ dataRoot: data, repoRoot: repo });
+    const packs = await readFoilPackStatuses({
+      dataRoot: data,
+      repoRoot: repo,
+    });
     expect(packs.map((pack) => pack.id)).toEqual([
       "lorcana",
       "pokemon",
@@ -59,7 +62,10 @@ describe("readFoilPackStatuses", () => {
     await utimes(shaderPath, older, older);
     await utimes(apkPath, newer, newer);
 
-    const packs = await readFoilPackStatuses({ dataRoot: data, repoRoot: repo });
+    const packs = await readFoilPackStatuses({
+      dataRoot: data,
+      repoRoot: repo,
+    });
     const lorcana = packs.find((p) => p.id === "lorcana");
     expect(lorcana?.apk.present).toBe(true);
     expect(lorcana?.extract.present).toBe(true);

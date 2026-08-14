@@ -1,9 +1,12 @@
 /**
- * Bandai europe-fr cardlist HTML → structured cards.
+ * Bandai cardlist HTML → structured cards.
  *
- * The search form POSTs to `/europe-fr/cartes/index.php?search=true`. Each
- * `<li>` is one print; Leaders add a `.cardBack` sibling with the awakened
- * face (`_b.png`) — that is a verso of the same print, not a second card.
+ * FR: POST `/europe-fr/cartes/index.php?search=true`
+ * EN: POST `/us-en/cardlist/index.php?search=true`
+ *
+ * Category ids differ per locale — scrape each independently and merge on
+ * printKey. Each `<li>` is one print; Leaders add a `.cardBack` sibling with
+ * the awakened face (`_b.png`) — verso of the same print, not a second card.
  */
 import { decode as decodeHTMLEntities } from "html-entities";
 
@@ -14,11 +17,38 @@ import {
 } from "./printIdentity";
 
 export const DBS_CG_CARDLIST_ORIGIN = "https://www.dbs-cardgame.com";
-export const DBS_CG_CARDLIST_PATH = "/europe-fr/cartes/";
-export const DBS_CG_SEARCH_URL = `${DBS_CG_CARDLIST_ORIGIN}${DBS_CG_CARDLIST_PATH}index.php?search=true`;
-export const DBS_CG_INDEX_URL = `${DBS_CG_CARDLIST_ORIGIN}${DBS_CG_CARDLIST_PATH}`;
 
-const SEARCH_BASE = `${DBS_CG_CARDLIST_ORIGIN}${DBS_CG_CARDLIST_PATH}`;
+export const DBS_CG_CARDLIST_LOCALES = {
+  fr: { lang: "fr", path: "/europe-fr/cartes/" },
+  en: { lang: "en", path: "/us-en/cardlist/" },
+} as const;
+
+export type DbsCardlistLocaleId = keyof typeof DBS_CG_CARDLIST_LOCALES;
+
+export type DbsCardlistUrls = {
+  lang: DbsCardlistLocaleId;
+  index: string;
+  search: string;
+  base: string;
+};
+
+export function dbsCgCardlistUrls(
+  locale: DbsCardlistLocaleId = "fr",
+): DbsCardlistUrls {
+  const { lang, path } = DBS_CG_CARDLIST_LOCALES[locale];
+  const index = `${DBS_CG_CARDLIST_ORIGIN}${path}`;
+  return {
+    lang,
+    index,
+    search: `${index}index.php?search=true`,
+    base: index,
+  };
+}
+
+/** @deprecated Prefer {@link dbsCgCardlistUrls}("fr") — kept for existing imports. */
+export const DBS_CG_CARDLIST_PATH = DBS_CG_CARDLIST_LOCALES.fr.path;
+export const DBS_CG_SEARCH_URL = dbsCgCardlistUrls("fr").search;
+export const DBS_CG_INDEX_URL = dbsCgCardlistUrls("fr").index;
 
 export type DbsSeriesOption = {
   categoryId: string;
@@ -32,6 +62,7 @@ export type DbsParsedCard = {
   number: string;
   grouping: string | null;
   printKey: string;
+  lang: DbsCardlistLocaleId;
   name: string;
   awakenedName: string | null;
   setName: string | null;
@@ -57,7 +88,7 @@ export function stripHtml(value: string): string {
 
 export function resolveCardlistUrl(
   src: string | null | undefined,
-  base = SEARCH_BASE,
+  base = dbsCgCardlistUrls("fr").base,
 ): string | null {
   const trimmed = src?.trim();
   if (!trimmed) return null;
@@ -77,7 +108,10 @@ function dlDd(html: string, className: string): string | null {
   return text || null;
 }
 
-function parseFace(html: string): {
+function parseFace(
+  html: string,
+  base: string,
+): {
   cardNumber: string | null;
   name: string | null;
   imageUrl: string | null;
@@ -96,7 +130,7 @@ function parseFace(html: string): {
   return {
     cardNumber: numberMatch ? stripHtml(numberMatch[1]!) : null,
     name: nameMatch ? stripHtml(nameMatch[1]!) : null,
-    imageUrl: resolveCardlistUrl(imgMatch?.[1]),
+    imageUrl: resolveCardlistUrl(imgMatch?.[1], base),
     setName: dlDd(html, "seriesCol"),
     rarity: dlDd(html, "rarityCol"),
     cardType: dlDd(html, "typeCol"),
@@ -106,15 +140,19 @@ function parseFace(html: string): {
   };
 }
 
-function parseListItem(liHtml: string): DbsParsedCard | null {
+function parseListItem(
+  liHtml: string,
+  locale: DbsCardlistLocaleId,
+): DbsParsedCard | null {
+  const urls = dbsCgCardlistUrls(locale);
   const parts = liHtml.split(/<div class="cardBack">/i);
-  const front = parseFace(parts[0] ?? "");
+  const front = parseFace(parts[0] ?? "", urls.base);
   if (!front.cardNumber || !front.name) return null;
   const parsed = parseDbsCollectorNumber(front.cardNumber);
   const printKey = dbsPrintKey(front.cardNumber);
   if (!parsed || !printKey) return null;
 
-  const back = parts[1] ? parseFace(parts[1]) : null;
+  const back = parts[1] ? parseFace(parts[1], urls.base) : null;
   const awakened = back?.name && back.name !== front.name ? back.name : null;
 
   return {
@@ -127,6 +165,7 @@ function parseListItem(liHtml: string): DbsParsedCard | null {
     number: parsed.number,
     grouping: parsed.grouping,
     printKey,
+    lang: locale,
     name: front.name,
     awakenedName: awakened,
     setName: front.setName,
@@ -137,17 +176,20 @@ function parseListItem(liHtml: string): DbsParsedCard | null {
     power: front.power,
     imageUrl: front.imageUrl,
     backImageUrl: back?.imageUrl ?? null,
-    sourceUrl: DBS_CG_SEARCH_URL,
+    sourceUrl: urls.search,
   };
 }
 
-/** Every print in a cardlist result page. Duplicate `<li>` (front listed twice) collapse by printKey. */
-export function parseDbsCardlistHtml(html: string): DbsParsedCard[] {
+/** Every print in a cardlist result page. Duplicate `<li>` collapse by printKey. */
+export function parseDbsCardlistHtml(
+  html: string,
+  locale: DbsCardlistLocaleId = "fr",
+): DbsParsedCard[] {
   const cards: DbsParsedCard[] = [];
   const seen = new Set<string>();
   const listItems = html.matchAll(/<li>([\s\S]*?)<\/li>/gi);
   for (const match of listItems) {
-    const card = parseListItem(match[1] ?? "");
+    const card = parseListItem(match[1] ?? "", locale);
     if (!card || seen.has(card.printKey)) continue;
     seen.add(card.printKey);
     cards.push(card);

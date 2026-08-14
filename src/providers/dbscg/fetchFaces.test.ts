@@ -29,6 +29,7 @@ import { softbanRemainingMs } from "@/providers/shared/softban";
 import {
   DBS_MASTERS_DECKPLANET_BASE,
   DBS_MASTERS_GITHUB_PAGES_BASE,
+  bandaiFaceUrl,
   dbsMastersFaceUrls,
   fetchDbsCgFaces,
   isWebpBuffer,
@@ -92,6 +93,15 @@ describe("dbsMastersFaceUrls", () => {
   it("recognises a RIFF/WEBP header", () => {
     expect(isWebpBuffer(tinyWebp())).toBe(true);
     expect(isWebpBuffer(Buffer.from("<html>"))).toBe(false);
+  });
+
+  it("points Bandai EN faces at /images/cardlist/, not /en/images/cartes/", () => {
+    expect(bandaiFaceUrl("BT1-001", "fr")).toBe(
+      "https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/BT1-001.png",
+    );
+    expect(bandaiFaceUrl("BT1-001", "en")).toBe(
+      "https://www.dbs-cardgame.com/images/cardlist/cardimg/BT1-001.png",
+    );
   });
 });
 
@@ -160,6 +170,53 @@ describe("exportDbsCgCardsIndexJson local art", () => {
     expect(json.cards["dbscg:bt1-001"]?.langs.fr?.artUrl).toContain(
       "BT1-001.png",
     );
+  });
+
+  it("writes both locale names onto langs.*.name", () => {
+    const out = path.join(tmp, "cards-index.json");
+    exportDbsCgCardsIndexJson(
+      [print],
+      [
+        {
+          printKey: "dbscg:bt1-001",
+          lang: "fr",
+          fullName: "Champa",
+        },
+        {
+          printKey: "dbscg:bt1-001",
+          lang: "en",
+          fullName: "Champa",
+          awakenedName: "God of Destruction Champa",
+        },
+      ],
+      [
+        asset,
+        {
+          printKey: "dbscg:bt1-001",
+          lang: "en",
+          imageUrl:
+            "https://www.dbs-cardgame.com/images/cardlist/cardimg/BT1-001.png",
+        },
+      ],
+      out,
+    );
+    const json = JSON.parse(readFileSync(out, "utf8")) as {
+      cards: Record<
+        string,
+        {
+          name?: string;
+          langs: {
+            fr?: { name?: string; artUrl?: string };
+            en?: { name?: string; artUrl?: string };
+          };
+        }
+      >;
+    };
+    const entry = json.cards["dbscg:bt1-001"];
+    expect(entry?.name).toBe("Champa");
+    expect(entry?.langs.fr?.name).toBe("Champa");
+    expect(entry?.langs.en?.name).toBe("Champa");
+    expect(entry?.langs.en?.artUrl).toContain("/images/cardlist/cardimg/");
   });
 });
 

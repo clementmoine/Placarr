@@ -48,23 +48,23 @@ Pas de recovery Apache-style. Ne pas re-scraper ce domaine.
 Contrairement à `carddass.fr` (revendu, dump Wayback), Bandai sert encore les
 visuels. Sondage **2026-08-14** (HEAD + téléchargement + lecture des faces).
 
-### 2.1 Masters — FR
+### 2.1 Masters — FR + EN
 
-Liste : `https://www.dbs-cardgame.com/europe-fr/cartes/`  
-94 séries dans le `<select>` (Galactic Battle BT1 → Ultra-Bout UB04).  
-Catégorie BT1 : `category=461001`.
+Identité : deux cardlists, fusionnées sur le collector (`BT1-001`). Les ids
+`category_exp` ne se recoupent pas (FR `461xxx`, EN `428xxx`).
+
+| Locale | Liste | Images |
+|--------|-------|--------|
+| FR | […/europe-fr/cartes/](https://www.dbs-cardgame.com/europe-fr/cartes/) | `…/europe-fr/images/cartes/cardimg/{ID}.png` |
+| EN | […/us-en/cardlist/](https://www.dbs-cardgame.com/us-en/cardlist/) | `https://www.dbs-cardgame.com/images/cardlist/cardimg/{ID}.png` (pas `/us-en/` ni `/en/` — 404) |
+
+FR : ~76 séries (Galactic Battle BT1 → Ultra-Bout). Catégorie BT1 : `461001`.  
+EN : ~90 séries. Catégorie BT1 : `428001`. Verso Leader : `{ID}_b.png`.
 
 ```
 https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/{ID}.png
 https://www.dbs-cardgame.com/europe-fr/images/cartes/cardimg/{ID}_b.png   ← verso Leader
-```
-
-Ex. `BT1-001.png`, `BT1-001_b.png`, `BT31-001.png`.
-
-EN (art identique, texte EN) — chemin **racine**, pas `/us-en/` ni `/asia/` :
-
-```
-https://www.dbs-cardgame.com/images/cardlist/cardimg/{ID}.png
+https://www.dbs-cardgame.com/images/cardlist/cardimg/{ID}.png            ← EN
 ```
 
 | Mesure | Valeur |
@@ -198,6 +198,9 @@ watermark** Masters.
 |--------|---------------|------|
 | **[apitcg.com](https://docs.apitcg.com/)** | API (`dragon-ball-fusion` côté FW, à confirmer Masters) | Clé gratuite ; déjà dans [tcg_support.md](tcg_support.md) §2 — **à sonder** (langues, SAMPLE ou pas, parallels) |
 | **[vitorjcorreia/Dragon-Ball-Masters-Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena)** | Dump TCG Arena / Deckplanet (`assets/{SET}/{id}.webp`) | **Clone** → `data/dbs/cg/staging/dragon-ball-masters-arena/`, rangé sous `cards/{set}/en/`. English only. Leader `_b` → `awakened.webp`. |
+| **[Drive « DBS Proxies »](https://drive.google.com/drive/folders/1dSiMMzwGuXlyJoBAdcrBfUGVzH-aWqHC)** | Proxies r/DBS_CardGame | **Sondé 2026-08-14.** `BT1-001.png` = octet-pour-octet la cardlist Bandai **EN** (`/images/cardlist/cardimg/`, 260×364, SAMPLE, texte EN). Pas de FR, pas plus grand que Bandai, figé ~BT15 (2021). **Inutile** — on a déjà l’URL officielle. |
+| **[Drive « DBSCG Scans »](https://drive.google.com/drive/folders/1UWy7VQ6TdzDDuu-6EAEt8Z8hu0gGG2Tb)** | Scans physiques (u/CMANsurvives) | **Sondé 2026-08-14.** Vrai papier, EN, **sans SAMPLE**, ~741×1037 (~1,8 Mo). Corpus minuscule : 13 faces (BT1/7/10/11 + EX08) + `cardback.png` (dos 7 boules, 740×1037). Pas un catalogue ; dos sleeve déjà covered par dbscards 400×560 (plus propre). **Pas ingéré.** |
+| **[Template Card Conjurer](https://www.reddit.com/r/DBS_CardGame/comments/1lznuui/custom_card_template_for_dbs_masters_on_card/)** | Frames fan pour cartes custom | **Sondé 2026-08-14.** Fichier `DBS Battlecard.cct` (rakan121ksa2). 5 cadres Battle 645×900 + icônes energy/combo. `masks: []`. Pas de Leader, pas de dos, pas de faces officielles. **Hors catalogue / hors foil.** |
 | **Fusion World Digital** | Client Unity (physique + digital) | Piste **HD** du même genre que [pokemon_live_rainier.md](pokemon_live_rainier.md) — textures sans SAMPLE ? ToS / dump à cadrer avant tout extract |
 | **BANDAI TCG+** | App events / deck | Pas une cardlist HD connue |
 | Coleka | Photos marketplace | Comme Naruto : preuve / reconstruct, pas catalogue |
@@ -216,7 +219,7 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 
 **Livré (Masters)** — `src/providers/dbscg/` + pack `src/effects/dbscg/` (`dbs-cg`) :
 
-- Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlist europe-fr (`pnpm dbs:cards`).
+- Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlists **europe-fr** et **us-en** (`pnpm dbs:cards`, `--langs fr,en` par défaut). Noms FR et EN dans `cards-index.json` (`langs.fr.name` / `langs.en.name`).
 - printKey `dbscg:bt1-001` ; parallels `_SPR` / `_PR` → grouping (`dbscg:bt1-011-spr`).
 - Faces FR = dbscards / Bandai (étape `faces`, HTTP). Faces EN = clone TCG Arena rangé sous `data/dbs/cg/cards/{set}/en/{card}/` (étape `arena`). Leader `_b` → `awakened.webp`, pas le dos sleeve.
 - Dos sleeve = dbscards `original/back.webp` (curated).
@@ -235,7 +238,7 @@ Reste ouvert :
 
 ## 7. Suite
 
-- [x] Cardlist europe-fr : POST `category_exp` (94 séries) — scrape `pnpm dbs:cards`.
+- [x] Cardlist europe-fr + us-en : POST `category_exp` — scrape `pnpm dbs:cards` (noms FR et EN).
 - [x] Faces Deckplanet / TCG Arena : clone + rangement `en/` (`pnpm dbs:cards` étape `arena`).
 - [ ] Compte apitcg : FW (et Masters s’il existe), SAMPLE, pagination.
 - [ ] Faces fw.dbscards.fr (taille, SAMPLE, alt arts).

@@ -20,7 +20,12 @@ import {
   POKEMON_MAT_ALIASES,
   sharedMotifStems,
 } from "@/effects/pokemon/materials";
-import { packCardsDir, packLogsDir, packShadersDir, pokemonSimeyCssCardsDir } from "@/lib/packPaths";
+import {
+  packCardsDir,
+  packLogsDir,
+  packShadersDir,
+  pokemonSimeyCssCardsDir,
+} from "@/lib/packPaths";
 import { foilPackDir } from "@/lib/runtimeData";
 import { lorcanaTcgDbPath } from "@/providers/lorcanatcg/indexStore";
 
@@ -192,8 +197,7 @@ function apkGatedItems(): FoilGapItem[] {
     items.push({
       id: "lorcana-webgl",
       section: "apk-gated",
-      detail:
-        "Lorcana WebGL dump missing — APK one-shot (analyse CDN ouverte)",
+      detail: "Lorcana WebGL dump missing — APK one-shot (analyse CDN ouverte)",
       apkGated: true,
     });
   }

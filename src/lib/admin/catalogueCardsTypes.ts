@@ -12,6 +12,8 @@ export type CatalogueCardRow = {
   hasFoil: boolean;
   label: string;
   name?: string;
+  /** Other locale names, so search finds the card from either catalogue. */
+  aka?: string[];
   rarity?: string;
   /** True when index has the print/name but no art/thumb file yet. */
   missingArt?: boolean;

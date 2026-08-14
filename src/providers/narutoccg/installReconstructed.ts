@@ -26,6 +26,7 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   statSync,
   unlinkSync,
@@ -240,6 +241,39 @@ async function opaqueBox(
   return box;
 }
 
+/**
+ * `provenance.json` is a ledger of every reconstructed face on disk, not a log
+ * of the last run. Unchanged cards are skipped as fresh and never reach
+ * `installs`, so writing that array alone would silently drop them: adding one
+ * card would leave a one-entry ledger. Merge on top of what is already
+ * recorded, drop cards whose PNG is gone, and sort for stable diffs.
+ */
+function mergeProvenanceInstalls(
+  installs: readonly ReconstructedInstall[],
+): ReconstructedInstall[] {
+  const byCard = new Map<string, ReconstructedInstall>();
+  const ledger = path.join(reconstructedDir(), "provenance.json");
+  if (existsSync(ledger)) {
+    try {
+      const previous = JSON.parse(readFileSync(ledger, "utf8")) as {
+        installs?: ReconstructedInstall[];
+      };
+      for (const row of previous.installs ?? []) {
+        if (!row?.cardId) continue;
+        // A card whose source PNG was removed no longer belongs in the ledger.
+        if (!existsSync(path.join(reconstructedDir(), `${row.cardId}.png`))) {
+          continue;
+        }
+        byCard.set(row.cardId, row);
+      }
+    } catch {
+      // Unreadable ledger: rebuild from this run rather than fail the install.
+    }
+  }
+  for (const row of installs) byCard.set(row.cardId, row);
+  return [...byCard.values()].sort((a, b) => a.cardId.localeCompare(b.cardId));
+}
+
 export async function installNarutoReconstructed(opts?: {
   dryRun?: boolean;
   force?: boolean;
@@ -332,12 +366,13 @@ export async function installNarutoReconstructed(opts?: {
           generatedAt: new Date().toISOString(),
           method:
             "AI restoration of an authenticated collector photo, then Figma retouching",
-          sourcePhotos: "src/providers/narutoccg/curated/reconstructed/source-photos/",
+          sourcePhotos:
+            "src/providers/narutoccg/curated/reconstructed/source-photos/",
           note:
             "Displayed in place of the official face. The official file is kept on " +
             "disk and remains the authentic source; every field was proofread " +
             "against the collector photo (number, copyright, stats, badge).",
-          installs,
+          installs: mergeProvenanceInstalls(installs),
         },
         null,
         1,
@@ -352,9 +387,7 @@ export async function runNarutoReconstructedCli(opts?: {
   dryRun?: boolean;
   force?: boolean;
 }): Promise<void> {
-  console.log(
-    `── Naruto curated → data${opts?.dryRun ? " (dry run)" : ""}`,
-  );
+  console.log(`── Naruto curated → data${opts?.dryRun ? " (dry run)" : ""}`);
   const { installs } = await ensureNarutoCuratedAssets(opts);
   console.log(`   ${installs.length} reconstructed installed`);
 }

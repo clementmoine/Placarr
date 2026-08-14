@@ -38,8 +38,13 @@ const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const DOWNLOAD_TIMEOUT_MS = 20_000;
 const MAX_FACE_BYTES = 2 * 1024 * 1024;
-const DEFAULT_CONCURRENCY = 6;
-const DEFAULT_DELAY_MS = 40;
+const DEFAULT_CONCURRENCY = 2;
+/*
+  Gentle on purpose. A pass at 6/40ms over 14k requests got dbscards to answer
+  403 to everything, and the run still reported success — just with half the
+  catalogue silently downgraded.
+*/
+const DEFAULT_DELAY_MS = 250;
 const MIN_WEBP_BYTES = 100;
 
 export type FetchDbsCgFacesOptions = {
@@ -57,6 +62,8 @@ export type FetchDbsCgFacesResult = {
   skip: number;
   miss: number;
   fail: number;
+  /** Prints whose best source refused us — they got a worse face, not none. */
+  throttled: number;
   total: number;
 };
 
@@ -185,7 +192,22 @@ async function toWebp(buf: Buffer): Promise<Buffer | null> {
   }
 }
 
-async function downloadFace(urls: readonly string[]): Promise<Buffer | null> {
+/**
+ * A refusal that means "slow down", not "no such file".
+ *
+ * Treating the two alike is what made a throttle invisible: a bulk pass got
+ * 403s from dbscards, silently fell through to Bandai's 260x363 and reported
+ * a clean run, so half the catalogue ended up at the smaller size with nothing
+ * in the log to say why.
+ */
+function isThrottleStatus(status: number | undefined): boolean {
+  return status === 403 || status === 429 || status === 503;
+}
+
+export type FaceDownload = { buf: Buffer | null; throttled: boolean };
+
+async function downloadFace(urls: readonly string[]): Promise<FaceDownload> {
+  let throttled = false;
   for (const url of urls) {
     try {
       const response = await httpGet<ArrayBuffer>(url, {
@@ -202,12 +224,15 @@ async function downloadFace(urls: readonly string[]): Promise<Buffer | null> {
       const raw = toBuffer(response.data);
       if (raw.byteLength < MIN_WEBP_BYTES) continue;
       const webp = await toWebp(raw);
-      if (webp) return webp;
-    } catch {
+      if (webp) return { buf: webp, throttled };
+    } catch (error) {
+      const status = (error as { response?: { status?: number } } | undefined)
+        ?.response?.status;
+      if (isThrottleStatus(status)) throttled = true;
       /* next host */
     }
   }
-  return null;
+  return { buf: null, throttled };
 }
 
 function writeAtomic(destPath: string, buf: Buffer): void {
@@ -226,6 +251,7 @@ export async function fetchDbsCgFaces(
     skip: 0,
     miss: 0,
     fail: 0,
+    throttled: 0,
     total: 0,
   };
   if (!loaded) {
@@ -262,6 +288,7 @@ export async function fetchDbsCgFaces(
     skip: 0,
     miss: 0,
     fail: 0,
+    throttled: 0,
     total: prints.length,
   };
 
@@ -289,7 +316,7 @@ export async function fetchDbsCgFaces(
       print.grouping,
     );
     const title = titleByPrintKey.get(print.printKey);
-    const buf = await downloadFace(
+    const { buf, throttled } = await downloadFace(
       dbsCgFaceUrls({
         setCode: print.setCode,
         number: print.number,
@@ -300,6 +327,7 @@ export async function fetchDbsCgFaces(
         awakenedName: title?.awakenedName,
       }),
     );
+    if (throttled) stats.throttled += 1;
     if (!buf) {
       stats.miss += 1;
       return;
@@ -322,5 +350,13 @@ export async function fetchDbsCgFaces(
   console.log(
     `── faces ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} fail=${stats.fail} → ${indexPath}`,
   );
+  if (stats.throttled > 0) {
+    console.warn(
+      `── ATTENTION : ${stats.throttled} tirages ont reçu une face de repli parce que la source préférée nous a bridés (403/429).`,
+    );
+    console.warn(
+      "   Relancer plus tard avec --force et une concurrence plus basse : ces cartes sont en basse définition, pas absentes.",
+    );
+  }
   return stats;
 }

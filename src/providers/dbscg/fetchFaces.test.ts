@@ -212,6 +212,45 @@ describe("fetchDbsCgFaces", () => {
     expect(result.skip).toBe(1);
     expect(mockedGet).not.toHaveBeenCalled();
   });
+
+  /**
+   * A bulk pass got 403 from dbscards and quietly used Bandai's 260x363 instead,
+   * reporting `miss=0 fail=0`. Half the catalogue was downgraded with nothing in
+   * the log to show for it — so a refusal to serve now has to be counted.
+   */
+
+  it("counts a print whose preferred source refused, though it got a face", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("dbscards.fr")) {
+        throw Object.assign(new Error("403"), { response: { status: 403 } });
+      }
+      return { data: tinyWebp(), status: 200 } as never;
+    });
+    const result = await fetchDbsCgFaces({
+      delayMs: 0,
+      concurrency: 1,
+      langs: ["fr"],
+    });
+    // The face exists, so this is not a miss — but it is not the one we wanted.
+    expect(result.ok).toBe(1);
+    expect(result.miss).toBe(0);
+    expect(result.throttled).toBe(1);
+  });
+
+  it("does not count a plain 404 as throttling", async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("dbscards.fr")) {
+        throw Object.assign(new Error("404"), { response: { status: 404 } });
+      }
+      return { data: tinyWebp(), status: 200 } as never;
+    });
+    const result = await fetchDbsCgFaces({
+      delayMs: 0,
+      concurrency: 1,
+      langs: ["fr"],
+    });
+    expect(result.throttled).toBe(0);
+  });
 });
 
 function existsArt(lang = "fr"): boolean {

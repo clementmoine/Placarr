@@ -17,7 +17,14 @@ import {
   lookupNarutoTitle,
   narutoCcgDbPath,
 } from "./indexStore";
-import { searchNarutoPrints, lookupNarutoPrint } from "./searchPrints";
+import {
+  searchNarutoPrints,
+  lookupNarutoPrint,
+  lookupNarutoPrintDetail,
+} from "./searchPrints";
+import { narutoPrintFacts } from "./facts";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
+import { NARUTO_PACK_ID } from "./indexStore";
 import { narutoccgCatalog } from "./pipeline";
 
 const PROVIDER_ID = "narutoccg";
@@ -28,11 +35,26 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim() || "";
   if (!printKey) return null;
   if (!ensureNarutoCcgIndex()) return null;
+  const row = lookupNarutoPrintDetail(printKey);
+  if (!row) return null;
   const title =
-    lookupNarutoTitle(printKey, "fr") ?? lookupNarutoTitle(printKey, "en");
+    row.fullName?.trim() ||
+    lookupNarutoTitle(printKey, "fr")?.fullName ||
+    lookupNarutoTitle(printKey, "en")?.fullName;
   if (!title) return null;
+
+  const face = row.art
+    ? assetsCardUrl(
+        NARUTO_PACK_ID,
+        { set: row.setCode, lang: row.lang, card: row.number },
+        row.art,
+      )
+    : undefined;
+
   return {
-    title: title.fullName,
+    title,
+    ...(face ? { imageUrl: face } : {}),
+    facts: narutoPrintFacts(row, PROVIDER_ID),
     externalIds: {
       [PROVIDER_ID]: printKey,
       printKey,

@@ -36,7 +36,7 @@ export function formatNarutoReference(setCode: string, number: string): string {
   return `${setCode.toUpperCase()} · ${printed}`;
 }
 
-type SearchRow = {
+export type NarutoPrintDetail = {
   printKey: string;
   setCode: string;
   number: string;
@@ -48,7 +48,7 @@ type SearchRow = {
   thumb: string | null;
 };
 
-function toCandidate(row: SearchRow): PrintCandidate {
+function toCandidate(row: NarutoPrintDetail): PrintCandidate {
   const id = { set: row.setCode, lang: row.lang, card: row.number };
   return {
     printKey: row.printKey,
@@ -119,7 +119,13 @@ export function searchNarutoPrints(
         ORDER BY (t.lang = ?) DESC, p.set_code, p.number
         LIMIT ?`,
     )
-    .all(like, likeCompact, likeCompact, lang, limit * 3) as SearchRow[];
+    .all(
+      like,
+      likeCompact,
+      likeCompact,
+      lang,
+      limit * 3,
+    ) as NarutoPrintDetail[];
 
   const seen = new Set<string>();
   const out: PrintCandidate[] = [];
@@ -130,6 +136,41 @@ export function searchNarutoPrints(
     if (out.length >= limit) break;
   }
   return out;
+}
+
+/**
+ * Raw catalogue row for one print — what both the picker candidate and the
+ * item metadata are built from, so the two never disagree.
+ */
+export function lookupNarutoPrintDetail(
+  printKey: string,
+  opts: { language?: string } = {},
+): NarutoPrintDetail | null {
+  const db = ensureNarutoCcgIndex();
+  if (!db) return null;
+  const lang = (opts.language || "fr").toLowerCase();
+  const row = db
+    .prepare(
+      `SELECT p.print_key AS printKey,
+              p.set_code   AS setCode,
+              p.number     AS number,
+              p.card_type  AS cardType,
+              t.lang       AS lang,
+              t.full_name  AS fullName,
+              t.rarity     AS rarity,
+              a.art        AS art,
+              a.thumb      AS thumb
+         FROM prints p
+         LEFT JOIN print_titles t
+                ON t.print_key = p.print_key
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang
+        WHERE p.print_key = ?
+        ORDER BY (t.lang = ?) DESC
+        LIMIT 1`,
+    )
+    .get(printKey, lang) as NarutoPrintDetail | undefined;
+  return row ?? null;
 }
 
 /** One print by key — same shape, so the picker and the item agree. */
@@ -160,7 +201,7 @@ export function lookupNarutoPrint(
         ORDER BY (t.lang = ?) DESC
         LIMIT 1`,
     )
-    .get(printKey, lang) as SearchRow | undefined;
+    .get(printKey, lang) as NarutoPrintDetail | undefined;
   return row ? toCandidate(row) : null;
 }
 

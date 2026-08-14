@@ -62,6 +62,10 @@ const UA =
   healthy and could never produce a single 400x560.
 */
 const DOWNLOAD_TIMEOUT_MS = 60_000;
+/** Extra attempts when the host says nothing at all. Pokémon uses 2 as well. */
+const DOWNLOAD_RETRIES = 2;
+/** Grows per attempt: a host that is gasping is not helped by hurrying it. */
+const RETRY_BACKOFF_MS = 3_000;
 const MAX_FACE_BYTES = 2 * 1024 * 1024;
 /*
   Sequential, like the Pokémon CDN scrape — and for the reason written there:
@@ -88,6 +92,8 @@ export type FetchDbsCgFacesOptions = {
   limit?: number;
   delayMs?: number;
   concurrency?: number;
+  /** Pause before asking a silent host again. 0 in tests. */
+  retryBackoffMs?: number;
 };
 
 export type FetchDbsCgFacesResult = {
@@ -257,6 +263,7 @@ function hostOf(url: string): string {
 async function downloadFace(
   urls: readonly string[],
   banned: BannedHosts,
+  retryBackoffMs = RETRY_BACKOFF_MS,
 ): Promise<FaceDownload> {
   let throttled = false;
   for (const url of urls) {
@@ -269,30 +276,48 @@ async function downloadFace(
       throttled = true;
       continue;
     }
-    try {
-      const response = await httpGet<ArrayBuffer>(url, {
-        responseType: "arraybuffer",
-        timeout: DOWNLOAD_TIMEOUT_MS,
-        maxContentLength: MAX_FACE_BYTES,
-        noDedup: true,
-        headers: {
-          "User-Agent": UA,
-          Accept: "image/webp,image/*,*/*;q=0.8",
-        },
-        validateStatus: (status) => status === 200,
-      });
-      const raw = toBuffer(response.data);
-      if (raw.byteLength < MIN_WEBP_BYTES) continue;
-      const webp = await toWebp(raw);
-      if (webp) return { buf: webp, throttled };
-    } catch (error) {
-      const status = (error as { response?: { status?: number } } | undefined)
-        ?.response?.status;
-      if (isSoftbanStatus(status)) {
-        throttled = true;
-        banned.add(hostOf(url));
+    /*
+      Retry a timeout, do not retry a 404.
+
+      The slow host answers erratically: the same URL times out, then serves
+      fine minutes later. Measured — three cards written off as missing all
+      returned 200 on a second look. One attempt therefore loses cards *and*
+      lies about why, since a timeout is indistinguishable from an absence in
+      the result. A 404 is an answer and is taken at its word.
+    */
+    let attempt = 0;
+    for (;;) {
+      try {
+        const response = await httpGet<ArrayBuffer>(url, {
+          responseType: "arraybuffer",
+          timeout: DOWNLOAD_TIMEOUT_MS,
+          maxContentLength: MAX_FACE_BYTES,
+          noDedup: true,
+          headers: {
+            "User-Agent": UA,
+            Accept: "image/webp,image/*,*/*;q=0.8",
+          },
+          validateStatus: (status) => status === 200,
+        });
+        const raw = toBuffer(response.data);
+        if (raw.byteLength < MIN_WEBP_BYTES) break;
+        const webp = await toWebp(raw);
+        if (webp) return { buf: webp, throttled };
+        break;
+      } catch (error) {
+        const status = (error as { response?: { status?: number } } | undefined)
+          ?.response?.status;
+        if (isSoftbanStatus(status)) {
+          throttled = true;
+          banned.add(hostOf(url));
+          break;
+        }
+        // A status at all means the host answered; only silence is worth
+        // asking again.
+        if (status != null || attempt >= DOWNLOAD_RETRIES) break;
+        attempt += 1;
+        if (retryBackoffMs > 0) await sleep(retryBackoffMs * attempt);
       }
-      /* next host */
     }
   }
   return { buf: null, throttled };
@@ -399,6 +424,7 @@ export async function fetchDbsCgFaces(
   }
 
   const langs = opts.langs?.length ? opts.langs : DBS_CG_FACE_LANGS;
+  const retryBackoffMs = opts.retryBackoffMs ?? RETRY_BACKOFF_MS;
   const concurrency = Math.max(1, opts.concurrency ?? DEFAULT_CONCURRENCY);
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
   const force = opts.force === true;
@@ -504,7 +530,11 @@ export async function fetchDbsCgFaces(
         repaired by simply running again, no `--force` needed.
       */
       if (!force && existsSync(file)) continue;
-      const { buf, throttled } = await downloadFace(candidate.urls, banned);
+      const { buf, throttled } = await downloadFace(
+        candidate.urls,
+        banned,
+        retryBackoffMs,
+      );
       if (throttled) throttledHere = true;
       if (!buf) continue;
       try {
@@ -538,6 +568,7 @@ export async function fetchDbsCgFaces(
           { face: "back" },
         ),
         banned,
+        retryBackoffMs,
       );
       if (back.throttled) throttledHere = true;
       // A Leader without a published verso is ordinary, not a failure: it is

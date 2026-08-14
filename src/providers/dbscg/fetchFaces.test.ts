@@ -407,6 +407,36 @@ describe("fetchDbsCgFaces", () => {
     expect(tried.some((url) => url.includes("dbscards.fr"))).toBe(false);
   });
 
+  it("asks again when the host says nothing, but takes a 404 at its word", async () => {
+    /*
+      The slow host answers erratically — three cards written off as missing
+      all returned 200 on a second look minutes later. A single attempt loses
+      them and cannot tell a timeout from a real absence.
+    */
+    let dbscardsCalls = 0;
+    let bandaiCalls = 0;
+    mockedGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("dbscards.fr")) {
+        dbscardsCalls += 1;
+        // No `response` at all: what a timeout looks like.
+        throw new Error("timeout");
+      }
+      bandaiCalls += 1;
+      throw Object.assign(new Error("404"), { response: { status: 404 } });
+    });
+    await fetchDbsCgFaces({
+      delayMs: 0,
+      concurrency: 1,
+      langs: ["fr"],
+      retryBackoffMs: 0,
+    });
+    // Two distinct URLs for a French print — the per-set path and the legacy
+    // pool — each tried three times (one attempt plus two retries).
+    expect(dbscardsCalls).toBe(6);
+    // Bandai answered — asking twice would just be noise.
+    expect(bandaiCalls).toBe(1);
+  });
+
   it("does not count a plain 404 as throttling", async () => {
     mockedGet.mockImplementation(async (url: string) => {
       if (String(url).includes("dbscards.fr")) {

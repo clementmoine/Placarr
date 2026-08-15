@@ -11,17 +11,18 @@
  * The first version of this read their schema.org `ItemList`, which was a
  * mistake worth recording: **a list page renders 30 cards and publishes only 15
  * of them in its `ItemList`**. The index was silently half the catalogue —
- * 3884 French entries where the markup holds roughly 7770 — and cards that were
- * simply in the unpublished half looked like cards the site did not carry.
+ * 3884 French entries where the markup holds 7765 — and cards that were simply
+ * in the unpublished half looked like cards the site did not carry, which is
+ * how three real cards got reported as missing.
  *
- * So the tiles are the source now, and the `ItemList` is kept only as a
- * supplement: it is the one place the *representative* image of a card is
- * named. Reading tiles costs no extra request and yields, per card, the real
- * page URL, the rarity-qualified code, the price with its thirty-day move, and
- * both face URLs — see `dbscardsTile`.
+ * The tiles are the whole source now. The `ItemList` was kept for a while as a
+ * supplement, on the theory that it named a card's *representative* image; then
+ * it was measured, and on a full page all fifteen of its images are byte-equal
+ * to a face the tile already carries, with no slug of its own. It added
+ * nothing, so it is gone. Reading tiles costs no extra request and yields, per
+ * card, the real page URL, the rarity-qualified code, the price with its
+ * thirty-day move, and both face URLs — see `dbscardsTile`.
  */
-import { decode } from "html-entities";
-
 import {
   dbscardsBareSlug,
   dbscardsSlugToPrintRef,
@@ -32,62 +33,30 @@ import {
 export { dbscardsSlugToPrintRef } from "./dbscardsTile";
 
 /**
- * One card as their list publishes it.
+ * One card as their list renders it.
  *
- * A tile, plus the representative image when the page's `ItemList` named one.
- * `image` stays for the faces pass, which predates the tiles.
+ * A tile, and nothing else. `image` is only there to read the files crawled
+ * before the tiles were parsed, where it was the sole URL an entry carried; new
+ * crawls do not write it, because it merely repeated `imageFront`.
  */
 export type DbscardsIndexEntry = DbscardsTile & {
   /**
-   * The image the page points at — a Leader's is its `-back`.
-   *
-   * Prefer `imageFront` / `imageBack`: the tile names the sides outright, where
-   * this one has to be told apart by its filename suffix.
+   * @deprecated Legacy entries only. A Leader's is its `-back`, so it has to be
+   * told apart by its filename suffix — where `imageFront` / `imageBack` name
+   * the sides outright.
    */
-  image: string;
+  image?: string;
 };
-
-const LD_JSON = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
-
-/** The `ItemList` image for each slug it happens to publish. */
-function listedImages(html: string): Map<string, string> {
-  const out = new Map<string, string>();
-  for (const match of html.matchAll(LD_JSON)) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(match[1] ?? "");
-    } catch {
-      continue;
-    }
-    const list = parsed as {
-      "@type"?: string;
-      itemListElement?: Array<{ url?: string; image?: string }>;
-    };
-    if (list?.["@type"] !== "ItemList") continue;
-    for (const item of list.itemListElement ?? []) {
-      const url = item?.url?.trim();
-      const image = item?.image?.trim();
-      if (!url || !image) continue;
-      const slug = url.split("/cards/").pop()?.trim();
-      if (slug) out.set(slug, decode(image));
-    }
-  }
-  return out;
-}
 
 /**
  * Entries from one list page.
  *
- * Tolerant on purpose: a page that carries no tiles, or a malformed `ItemList`,
- * yields what it can rather than throwing — the crawl walks hundreds of pages
- * and one oddity must not lose the rest.
+ * Tolerant on purpose: a page that carries no tiles yields nothing rather than
+ * throwing — the crawl walks hundreds of pages and one oddity must not lose
+ * the rest.
  */
 export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
-  const listed = listedImages(html);
-  return parseDbscardsTiles(html).map((tile) => ({
-    ...tile,
-    image: listed.get(tile.slug) ?? tile.imageFront ?? tile.imageBack ?? "",
-  }));
+  return parseDbscardsTiles(html);
 }
 
 /**

@@ -55,6 +55,16 @@ describe("parseDbscardsListPage", () => {
     expect(rows).toHaveLength(4);
   });
 
+  it("takes nothing from the `ItemList`, which repeats what tiles carry", () => {
+    /*
+      Measured on a full page: all fifteen images it publishes are byte-equal to
+      a face the tile already holds, and it names no slug the tiles miss. The
+      entry is the tile, with no field sourced from the structured data.
+    */
+    const rows = parseDbscardsListPage(listPage);
+    expect(rows.every((row) => row.image === undefined)).toBe(true);
+  });
+
   it("carries the price and both faces, which the list never held", () => {
     const rows = parseDbscardsListPage(listPage);
     const slr = rows.find((row) => row.sku === "BT31-001-SLR");

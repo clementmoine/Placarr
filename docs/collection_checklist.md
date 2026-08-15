@@ -34,6 +34,55 @@ pack, et il s'appuie sur des ancres externes (les check-lists Manga-News). La
 fonctionnalité demandée est la **généralisation** de cette idée en vue
 utilisateur, alimentée par le catalogue local plutôt que par des ancres.
 
+## Le vrai prérequis : modéliser le set
+
+Une check-list n'a de sens que si l'on peut répondre à « **cette série est-elle
+terminée ?** ». Aujourd'hui, on ne le peut pas : il n'existe **aucune table de
+sets**. Le set est une chaîne dénormalisée sur `print_titles` (`set_name`), et
+Naruto ne la porte même pas. Ni date de sortie, ni statut, ni territoire.
+
+### Le statut est par territoire, pas global
+
+Cas déjà documenté chez nous : la **série 6 de Naruto CCG est annulée en
+France, mais elle est sortie en Italie** sous le titre « Rivalità Eterna » — les
+136 cartes S6 du catalogue Coleka sont italiennes. Un booléen « terminé » global
+serait donc faux dans les deux sens : faux pour un collectionneur français qui
+a fini, faux pour un italien à qui il manque une série entière.
+
+Le statut appartient au couple **(set, territoire)**, pas au set.
+
+### Ce qu'il faudrait porter
+
+| champ | pourquoi |
+| --- | --- |
+| code, nom, pack | aujourd'hui une chaîne libre, dupliquée sur chaque tirage |
+| date de sortie | dbscards la publie (`Date Sortie: 03/07/2026`) mais **sur la fiche carte**, pas dans la liste — donc absente de notre index |
+| territoire | une même série n'existe pas partout |
+| statut + **preuve** | `en cours` / `terminé` / `annulé`, avec la source qui l'atteste et sa date |
+
+Le champ « preuve » n'est pas décoratif : c'est ce qui distingue « la série est
+finie » de « on n'a rien vu passer depuis six mois ». Sans lui, une check-list
+annoncerait une complétion à 100 % sur une série encore vivante.
+
+### Ce que ça débloque au-delà de la check-list
+
+Une base locale de tout ce qui existe rend l'app plus rapide — elle l'est déjà
+pour la recherche — mais surtout elle ouvre une facette **complétion** :
+interroger un catalogue depuis l'application, pas seulement consulter ses
+étagères.
+
+## Étagères et catalogues : la question à trancher
+
+`Shelf` ne porte **aucun lien vers un catalogue** — seulement `type` et
+`cardFormat`. Le rattachement passe par les items : `Item.printKey` encode le
+pack (`dbscg:bt1-001`). Le catalogue d'une étagère est donc *dérivable de son
+contenu*, et une étagère peut légitimement en mélanger plusieurs.
+
+Conséquence pour la fonctionnalité : **une check-list s'ancre sur un catalogue
+et une portée** (un set, une plateforme), jamais sur une étagère. Éditer une
+check-list depuis une étagère revient donc à choisir laquelle de ses portées on
+vise — et à le proposer explicitement quand l'étagère en couvre plusieurs.
+
 ## Questions ouvertes, à trancher avant de coder
 
 1. **La clé de jointure côté jeux.** Une carte possédée porte `Item.printKey`

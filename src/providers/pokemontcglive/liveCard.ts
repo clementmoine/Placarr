@@ -129,12 +129,18 @@ function resolve(name: string, lang: string): Match[] {
   /*
     Names come from whichever locale was dumped, stems get normalised after.
 
-    The identity table is 25 763 rows of `de` against 643 of `fr` — the dump was
-    taken on a German client — but `name_fr` is populated regardless. Filtering
-    on `lang` therefore finds almost nothing, while the *names* are perfectly
-    usable. So: match on name in any locale, then rewrite the stem to the locale
-    the caller wants (`me5_de_001` → `me5_fr_001`), which is what the playroom
-    already does with these rows.
+    The identity table is 25 773 rows of `de` against 643 of `fr` — the dump was
+    taken on a German client — so filtering on `lang` finds almost nothing, and
+    the stem is rewritten to the locale the caller wants afterwards
+    (`me5_de_001` → `me5_fr_001`), which is what the playroom does too.
+
+    `name_fr` is **not** French on those rows. It holds the localised name of
+    the dump's own locale: `bw10_de_001` reads `Gehweiher`, the German for
+    Surskit, where French would be `Arakdo` — a string that appears nowhere in
+    the table. Only the 643 `fr` rows carry real French. `name_en` is genuinely
+    English throughout, so an English name matches everywhere and a French one
+    matches only the 40 sets dumped in French. Re-dumping on a French client is
+    what would close that.
   */
   const like = `%${name.trim()}%`;
   const rows = db

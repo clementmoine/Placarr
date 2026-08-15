@@ -64,6 +64,7 @@ def canonical_face_filename(
     tex_name: str,
     *,
     as_art: bool = False,
+    as_mask: bool = False,
 ) -> str:
     """Map a Unity Texture2D name to the on-disk face filename.
 
@@ -74,6 +75,13 @@ def canonical_face_filename(
     ``as_art``: MaterialManifest ``_c`` / cardTex (may be a cross-set alt name
     like ``me2-5_fr_153_alt`` on a ``mealt_fr_010`` bundle) — always
     ``art.webp``, matching ``pokemonFaceFileFromTex`` on the TS side.
+
+    ``as_mask``: this texture is a variant's ``maskTex``. Promo ``bsp`` sets
+    name theirs ``<set>_foil_<lang>_<num>`` with no ``_wp_``, which used to
+    fall to the ``extra-`` branch while the TS side answered ``art.webp`` — so
+    those cards asked for their own artwork as a foil mask. The role decides,
+    not the spelling: a bundle can also carry a stray ``_foil_`` texture that
+    no variant claims, and that one stays ``extra-``.
     """
     base = Path(tex_name).stem.lower()
     stem = bundle_stem.lower()
@@ -89,6 +97,8 @@ def canonical_face_filename(
         return "mask.webp"
     if as_art or base == stem:
         return "art.webp"
+    if as_mask:
+        return "mask.webp"
     return f"extra-{Path(tex_name).stem}.webp"
 
 
@@ -626,6 +636,7 @@ def extract_card_bundle(
     # Full Live stem (``swsh10_it_008``), not ``textures_dir.name`` (``008``).
     bundle_stem = path.name
     art_texes: set[str] = set()
+    mask_texes: set[str] = set()
     wanted: set[str] | None = None
     if texture_mode in ("masks", "cards"):
         wanted = set()
@@ -649,6 +660,14 @@ def extract_card_bundle(
                     alt_resolved = _texture_key_ci(textures, alt)
                     if alt_resolved:
                         wanted.add(alt_resolved)
+                if key == "maskTex":
+                    mask_texes.add(value.lower())
+                    if resolved:
+                        mask_texes.add(resolved.lower())
+                    if alt != value:
+                        mask_texes.add(alt.lower())
+                        if alt_resolved:
+                            mask_texes.add(alt_resolved.lower())
                 if texture_mode == "cards" and key == "cardTex":
                     art_texes.add(value.lower())
                     if resolved:
@@ -675,6 +694,7 @@ def extract_card_bundle(
             bundle_stem,
             name,
             as_art=name.lower() in art_texes,
+            as_mask=name.lower() in mask_texes,
         )
         if migrate_png_beside(dest):
             continue

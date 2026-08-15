@@ -8,8 +8,7 @@ import { parsePrintKey } from "@/core/identify/printKey";
 export const ASSETS_URL_PREFIX = "/assets";
 
 /** Live stem ``me5_fr_045`` / ``swsh10-5_fr_011`` (keep in sync with malie). */
-const BUNDLE_STEM_RE =
-  /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})(?:_[a-z]+)?$/i;
+const BUNDLE_STEM_RE = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})(?:_[a-z]+)?$/i;
 
 export type CardDiskId = { set: string; lang: string; card: string };
 
@@ -61,6 +60,17 @@ export function cardDiskIdFromBundleStem(stem: string): CardDiskId | null {
 export function pokemonFaceFileFromTex(
   bundleStem: string,
   texStem: string,
+  /**
+   * What the caller knows this texture is for.
+   *
+   * The spelling alone cannot say: promo `bsp` sets name their foil layer
+   * `<set>_foil_<lang>_<num>` with no `_wp_`, and the same bundle can carry a
+   * stray `_foil_` texture no variant claims. Told it is a mask, an
+   * unrecognised stem resolves to `mask.webp` instead of falling through to
+   * `art.webp` — which had 67 cards asking for their own artwork as a foil
+   * mask. Mirrors `as_mask` in `unity/extract.py`.
+   */
+  role: "art" | "mask" = "art",
 ): string {
   const base = texStem
     .trim()
@@ -73,17 +83,22 @@ export function pokemonFaceFileFromTex(
   if (base.includes("_wp_sph_")) return "mask-sph.webp";
   if (base.includes("_wp_ph_")) return "mask-ph.webp";
   if (base.includes("_wp_")) return "mask.webp";
-  return "art.webp";
+  return role === "mask" ? "mask.webp" : "art.webp";
 }
 
 /** `/assets/pokemon/cards/{set}/{lang}/{num}/{art|mask|…}.webp` */
 export function pokemonCardTextureUrl(
   bundleStem: string,
   texStem: string | null | undefined,
+  role: "art" | "mask" = "art",
 ): string | null {
   const tex = texStem?.trim();
   if (!tex) return null;
   const id = cardDiskIdFromBundleStem(bundleStem);
   if (!id) return null;
-  return assetsCardUrl("pokemon", id, pokemonFaceFileFromTex(bundleStem, tex));
+  return assetsCardUrl(
+    "pokemon",
+    id,
+    pokemonFaceFileFromTex(bundleStem, tex, role),
+  );
 }

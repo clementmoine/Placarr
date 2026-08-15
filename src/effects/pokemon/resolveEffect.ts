@@ -119,7 +119,7 @@ export function paperBundleId(
  * paper locales so a FR shelf can still use an EN-only dump (and vice versa).
  */
 export function liveBundleLangsToTry(lang?: string | null): string[] {
-  const primary = (lang?.trim().toLowerCase() || "fr") || "fr";
+  const primary = lang?.trim().toLowerCase() || "fr" || "fr";
   const ordered = [primary, "fr", "en"];
   return [...new Set(ordered)];
 }
@@ -197,8 +197,7 @@ function resolutionFromVariant(
   source: PaperEffectResolution["source"] = "tcglive-bundle",
 ): PaperEffectResolution | null {
   const shader =
-    foilManifestToShader(variant.shader) ||
-    foilManifestToShader(variant.foil);
+    foilManifestToShader(variant.shader) || foilManifestToShader(variant.foil);
   if (!shader || shader === "NonFoil" || !paperMaterial(shader)) return null;
   return {
     shader,
@@ -280,10 +279,7 @@ export function resolveEffectForPrintKey(
   const primarySet = new Set(primary);
   const candidates = orderLiveSetCandidates(rawCandidates, identity.number);
 
-  const liveNumber = remapCollectorNumberForLive(
-    identity.set,
-    identity.number,
-  );
+  const liveNumber = remapCollectorNumberForLive(identity.set, identity.number);
   if (!liveNumber) return null;
 
   const langs = liveBundleLangsToTry(lang);
@@ -302,12 +298,7 @@ export function resolveEffectForPrintKey(
       const source = primarySet.has(liveSet)
         ? "tcglive-bundle"
         : "tcglive-reprint-fallback";
-      return resolutionFromVariant(
-        bundle,
-        picked.key,
-        picked.variant,
-        source,
-      );
+      return resolutionFromVariant(bundle, picked.key, picked.variant, source);
     }
   }
 
@@ -359,7 +350,7 @@ export function paperMaskUrl(
   bundle: string,
   maskTex: string | null | undefined,
 ): string | null {
-  return pokemonCardTextureUrl(bundle, maskTex);
+  return pokemonCardTextureUrl(bundle, maskTex, "mask");
 }
 
 /** Public URL for a dumped card art texture under `/assets/pokemon/cards/…`. */
@@ -387,10 +378,7 @@ export function resolveLiveBundleForPrintKey(
     dumpHasLiveStem,
   );
   const candidates = orderLiveSetCandidates(rawCandidates, identity.number);
-  const liveNumber = remapCollectorNumberForLive(
-    identity.set,
-    identity.number,
-  );
+  const liveNumber = remapCollectorNumberForLive(identity.set, identity.number);
   if (!liveNumber) return null;
 
   const langs = liveBundleLangsToTry(lang);
@@ -419,4 +407,8 @@ export function resolveLiveBundleForPrintKey(
   return null;
 }
 
-export { liveSetCandidatesForResolve, liveSetCandidatesFromTcgdexSet, liveSetIdFromTcgdexSet };
+export {
+  liveSetCandidatesForResolve,
+  liveSetCandidatesFromTcgdexSet,
+  liveSetIdFromTcgdexSet,
+};

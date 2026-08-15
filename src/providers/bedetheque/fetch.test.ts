@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({
@@ -536,7 +536,7 @@ describe("bedetheque fetch", () => {
 
   it("résout un hors-série via la partie série du titre + similarité de sous-titre", async () => {
     mockedGet.mockImplementation(
-      async (url: string, config?: { params?: { term?: string } }) => {
+      async (url: string, config?: AxiosRequestConfig) => {
         if (url.includes("/ajax/tout")) {
           // Comme en réel : l'autocomplete ne répond qu'au nom de série seul,
           // pas au titre complet contenant « Hors-Série » et le sous-titre.

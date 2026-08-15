@@ -73,6 +73,50 @@ l'admin étant un outil de dernier recours, cette granularité sert quand quelqu
 chose casse, pas au quotidien. Elle reste souhaitable — c'est elle qui rendrait
 la CLI dispensable — mais elle ne bloque pas l'autonomie.
 
+### 4. Aucun job n'est récupéré après une coupure
+
+`BackgroundWorkJob` porte `status`, `attempts`, `updatedAt`, et `updatedAt` est
+mis à `NOW()` au moment où un worker réclame le job. Mais **rien ne balaie les
+jobs restés `running` dont le worker a disparu** — le module le dit lui-même :
+*« they would sit `running` forever »*.
+
+Un conteneur qui redémarre en plein travail laisse donc un job mort en base,
+qui bloque son `replaceOpenForKind` et n'est jamais repris.
+
+**Politique voulue**, et `updatedAt` suffit à la mettre en œuvre :
+
+| depuis le dernier signe de vie | décision |
+| --- | --- |
+| < quelques minutes | un worker est probablement encore vivant — ne pas toucher |
+| lease dépassé, coupure récente (~15 min) | **reprendre** là où on en était |
+| coupure ancienne (~24 h) | **repartir de zéro** : le monde a bougé, une reprise partielle mentirait |
+
+**Ce qui rend la reprise utile, c'est le point de contrôle**, pas la décision
+elle-même. Nos étapes sont déjà idempotentes — la passe de faces saute ce qui
+existe, source par source — donc « repartir » n'est pas dangereux, seulement
+long. Le coût réel est de refaire les étapes déjà finies avant d'atteindre
+celle qui manquait.
+
+Concrètement : si le payload notait l'étape atteinte, une reprise sauterait
+directement à `faces` au lieu de refaire 166 scrapes de séries et 387 pages de
+liste.
+
+### Cas observé — 2026-08-15
+
+Le worker de développement tourne sous `tsx watch`, qui surveille `src/` (le
+script n'exclut que `data/`, `.next/` et `node_modules/`). Une session
+d'édition a redémarré le worker à répétition ; à chaque fois il a relancé le
+pipeline **depuis le début**, et l'enfant `tsx src/providers/dbscg/cli.ts`
+précédent a survécu en orphelin.
+
+Résultat entre 15:36 et 18:32 : au moins six pipelines complets empilés, chacun
+refaisant 76 séries FR + 90 EN + 259 + 128 pages dbscards + le clone Arena,
+alors que seules les faces restaient à finir. Le compteur `bridé` est monté à
+563 sans que le refroidissement persistant se déclenche.
+
+Trois défauts cumulés, tous listés ci-dessus : pas de point de contrôle, enfant
+non rattaché au cycle de vie du worker, et un `softban` qui n'a pas mordu.
+
 ## La cause commune
 
 Ces comportements vivent dans des modules partagés **qu'il faut penser à

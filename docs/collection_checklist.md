@@ -7,6 +7,12 @@ le possède, une vignette, et un export imprimable.
 C'est une **fonctionnalité utilisateur**, pas de la maintenance : à mettre dans
 la roadmap, pas dans la dette.
 
+**Quand.** Décidé le 2026-08-15 : *après* la consolidation de l'existant et
+l'ajout de nouvelles sources de données (nouveaux TCG). Ce document est là pour
+que l'idée ne se perde pas d'ici là — elle a déjà produit deux constats qui
+valent indépendamment d'elle : l'absence de table de sets, et la confusion
+entre set d'origine et produit de distribution.
+
 ## La donnée existe déjà, entièrement en local
 
 | corpus | volume | vignettes |

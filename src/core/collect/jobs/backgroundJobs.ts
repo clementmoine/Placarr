@@ -14,10 +14,10 @@ import {
   cancelBackgroundWorkJobsForUser,
 } from "@/core/collect/jobs/workQueue";
 import {
-  foilExtractLabel,
-  normalizeFoilExtractTarget,
-  type FoilExtractTarget,
-} from "@/lib/admin/foilExtractRunner";
+  catalogueExtractLabel,
+  normalizeCatalogueExtractTarget,
+  type CatalogueExtractTarget,
+} from "@/lib/admin/catalogueExtractRunner";
 
 export type BackgroundJobKind =
   | "metadataRefresh"
@@ -36,7 +36,7 @@ export type BackgroundJobRow = {
   startedAt: Date;
   cancellable: boolean;
   /** Foil extract pack target — drives per-pack loading / logs in admin. */
-  foilTarget?: FoilExtractTarget | null;
+  foilTarget?: CatalogueExtractTarget | null;
   shelf: {
     id: string;
     name: string;
@@ -198,12 +198,12 @@ async function listCatalogIndexJobsForUser(
   }));
 }
 
-async function listFoilExtractJobsForUser(
+async function listCatalogueExtractJobsForUser(
   userId: string,
 ): Promise<BackgroundJobRow[]> {
   const jobs = await prisma.backgroundWorkJob.findMany({
     where: {
-      kind: BACKGROUND_WORK_KIND.foilExtract,
+      kind: BACKGROUND_WORK_KIND.catalogueExtract,
       status: {
         in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
       },
@@ -222,12 +222,12 @@ async function listFoilExtractJobsForUser(
 
   return jobs.flatMap((job) => {
     const payload = job.payload as { target?: unknown };
-    const target = normalizeFoilExtractTarget(payload?.target);
+    const target = normalizeCatalogueExtractTarget(payload?.target);
     if (!target) return [];
     return [
       {
         id: job.id,
-        name: foilExtractLabel(target),
+        name: catalogueExtractLabel(target),
         slug: null,
         kind: "foilExtract" as const,
         startedAt: job.lockedAt ?? job.createdAt,
@@ -259,7 +259,7 @@ export async function listBackgroundJobsForUser(
   const priceJobs = (await listPriceRefreshJobsForUser(userId)).filter(
     (job) => !metadataIds.has(job.id),
   );
-  const foilJobs = await listFoilExtractJobsForUser(userId);
+  const foilJobs = await listCatalogueExtractJobsForUser(userId);
   const catalogJobs = await listCatalogIndexJobsForUser(userId);
 
   return [...foilJobs, ...catalogJobs, ...metadataJobs, ...priceJobs].slice(

@@ -49,7 +49,10 @@ export async function POST(req: NextRequest) {
     windowMs: 60_000,
   });
   if (!throttle.allowed) {
-    return NextResponse.json({ error: "Too many sync requests" }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many sync requests" },
+      { status: 429 },
+    );
   }
 
   const body = (await req.json()) as {

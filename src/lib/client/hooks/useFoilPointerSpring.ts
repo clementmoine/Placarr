@@ -34,33 +34,36 @@ export function useFoilPointerSpring(place: Place): {
     lastTsRef.current = 0;
   }, []);
 
-  const tick = useCallback((ts: number) => {
-    const dt = lastTsRef.current ? Math.min(48, ts - lastTsRef.current) : 16;
-    lastTsRef.current = ts;
-    currentLean.current = springLean(
-      currentLean.current,
-      targetLean.current,
-      dt,
-    );
-    currentGlare.current = springStep(
-      currentGlare.current,
-      targetGlare.current,
-      dt,
-    );
-    placeRef.current(currentLean.current, currentGlare.current);
-    if (
-      springSettled(
+  const tick = useCallback(
+    (ts: number) => {
+      const dt = lastTsRef.current ? Math.min(48, ts - lastTsRef.current) : 16;
+      lastTsRef.current = ts;
+      currentLean.current = springLean(
         currentLean.current,
         targetLean.current,
+        dt,
+      );
+      currentGlare.current = springStep(
         currentGlare.current,
         targetGlare.current,
-      )
-    ) {
-      stop();
-      return;
-    }
-    rafRef.current = requestAnimationFrame(tick);
-  }, [stop]);
+        dt,
+      );
+      placeRef.current(currentLean.current, currentGlare.current);
+      if (
+        springSettled(
+          currentLean.current,
+          targetLean.current,
+          currentGlare.current,
+          targetGlare.current,
+        )
+      ) {
+        stop();
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    },
+    [stop],
+  );
 
   const ensureRunning = useCallback(() => {
     if (rafRef.current) return;

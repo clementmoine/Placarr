@@ -149,7 +149,7 @@ describe("workQueue", () => {
     expect(resolveWorkerKinds("interactive")).toEqual([
       BACKGROUND_WORK_KIND.metadataRefresh,
       BACKGROUND_WORK_KIND.priceRefresh,
-      BACKGROUND_WORK_KIND.foilExtract,
+      BACKGROUND_WORK_KIND.catalogueExtract,
     ]);
     expect(resolveWorkerKinds("catalog")).toEqual([
       BACKGROUND_WORK_KIND.icollectCatalogSync,
@@ -259,8 +259,16 @@ describe("workQueue", () => {
 
   it("requeues a stale foil lock once, then abandons after max attempts", async () => {
     h.findMany.mockResolvedValueOnce([
-      { id: "foil-1", kind: BACKGROUND_WORK_KIND.foilExtract, attempts: 1 },
-      { id: "foil-2", kind: BACKGROUND_WORK_KIND.foilExtract, attempts: 2 },
+      {
+        id: "foil-1",
+        kind: BACKGROUND_WORK_KIND.catalogueExtract,
+        attempts: 1,
+      },
+      {
+        id: "foil-2",
+        kind: BACKGROUND_WORK_KIND.catalogueExtract,
+        attempts: 2,
+      },
       { id: "meta-1", kind: BACKGROUND_WORK_KIND.metadataRefresh, attempts: 1 },
     ]);
     h.updateMany
@@ -303,13 +311,13 @@ describe("replacing an open job of the same kind", () => {
 
   it("only cancels jobs aimed at the same payload target", async () => {
     await enqueueBackgroundWorkJob({
-      kind: BACKGROUND_WORK_KIND.foilExtract,
+      kind: BACKGROUND_WORK_KIND.catalogueExtract,
       payload: { target: "pokemon", scope: "catalogue" },
       replaceOpenForKind: true,
       replaceOpenPayloadMatch: { path: ["target"], equals: "pokemon" },
     });
     const where = h.updateMany.mock.calls[0]?.[0]?.where;
-    expect(where.kind).toBe(BACKGROUND_WORK_KIND.foilExtract);
+    expect(where.kind).toBe(BACKGROUND_WORK_KIND.catalogueExtract);
     // A neighbour pack's run must survive.
     expect(where.payload).toEqual({ path: ["target"], equals: "pokemon" });
   });
@@ -317,7 +325,7 @@ describe("replacing an open job of the same kind", () => {
   it("still sweeps the whole kind when no target is given", async () => {
     // Singleton ticks (catalog index sync) rely on this.
     await enqueueBackgroundWorkJob({
-      kind: BACKGROUND_WORK_KIND.foilExtract,
+      kind: BACKGROUND_WORK_KIND.catalogueExtract,
       payload: {},
       replaceOpenForKind: true,
     });

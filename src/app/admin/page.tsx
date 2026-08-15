@@ -292,7 +292,7 @@ function AdminDashboardComponent() {
 
   const tabFromUrl = searchParams.get("tab");
   const initialTab =
-    tabFromUrl === "tcg-effects" ||
+    tabFromUrl === "catalogue" ||
     tabFromUrl === "refresh" ||
     tabFromUrl === "playground" ||
     tabFromUrl === "providers"
@@ -303,7 +303,7 @@ function AdminDashboardComponent() {
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (
-      tab === "tcg-effects" ||
+      tab === "catalogue" ||
       tab === "refresh" ||
       tab === "playground" ||
       tab === "providers"
@@ -316,7 +316,7 @@ function AdminDashboardComponent() {
     setActiveTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
-    if (value !== "tcg-effects") params.delete("pack");
+    if (value !== "catalogue") params.delete("pack");
     router.replace(`/admin?${params.toString()}`, { scroll: false });
   };
 
@@ -324,8 +324,7 @@ function AdminDashboardComponent() {
     {},
   );
 
-  const isAdmin =
-    status === "authenticated" && session?.user?.role === "admin";
+  const isAdmin = status === "authenticated" && session?.user?.role === "admin";
   const providersTabActive = activeTab === "providers";
 
   const {
@@ -737,7 +736,7 @@ function AdminDashboardComponent() {
 
       <div
         className={`max-w-7xl w-full mx-auto p-4 md:p-6 ${
-          activeTab === "tcg-effects" ? "space-y-3" : "space-y-6"
+          activeTab === "catalogue" ? "space-y-3" : "space-y-6"
         }`}
       >
         {/* Navigation & Header Info */}
@@ -753,13 +752,13 @@ function AdminDashboardComponent() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {activeTab === "tcg-effects"
+              {activeTab === "catalogue"
                 ? locale === "fr"
                   ? "Catalogue"
                   : "Catalogue"
                 : t("navigation.admin") || "Administration"}
             </h1>
-            {activeTab === "tcg-effects" ? null : (
+            {activeTab === "catalogue" ? null : (
               <p className="text-muted-foreground text-sm mt-1">
                 {t("admin.status.description")}
               </p>
@@ -771,7 +770,7 @@ function AdminDashboardComponent() {
           value={activeTab}
           onValueChange={setTab}
           className={`w-full ${
-            activeTab === "tcg-effects" ? "space-y-3" : "space-y-6"
+            activeTab === "catalogue" ? "space-y-3" : "space-y-6"
           }`}
         >
           <TabsList className="grid w-full grid-cols-4 max-w-[920px]">
@@ -787,18 +786,15 @@ function AdminDashboardComponent() {
               <FlaskConical className="size-4" />
               {locale === "fr" ? "Teardown" : "Teardown"}
             </TabsTrigger>
-            <TabsTrigger
-              value="tcg-effects"
-              className="flex items-center gap-2"
-            >
+            <TabsTrigger value="catalogue" className="flex items-center gap-2">
               <Sparkles className="size-4" />
               {locale === "fr" ? "Catalogue" : "Catalogue"}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="tcg-effects" className="outline-none">
+          <TabsContent value="catalogue" className="outline-none">
             {/* Mount only when open — the grid spins WebGL canvases. */}
-            {activeTab === "tcg-effects" ? (
+            {activeTab === "catalogue" ? (
               <TcgEffectsPanel locale={locale} />
             ) : null}
           </TabsContent>
@@ -1413,9 +1409,7 @@ function AdminDashboardComponent() {
                       refetchProviders();
                       refetchMappingAudit();
                     }}
-                    disabled={
-                      isLoading || isFetching || isFetchingProviders
-                    }
+                    disabled={isLoading || isFetching || isFetchingProviders}
                     className="w-full sm:w-auto"
                   >
                     <RefreshCw

@@ -13,7 +13,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 vi.mock("@/core/collect/jobs/workQueue", () => ({
-  BACKGROUND_WORK_KIND: { foilExtract: "foilExtract" },
+  BACKGROUND_WORK_KIND: { catalogueExtract: "foilExtract" },
   BACKGROUND_WORK_STATUS: {
     pending: "pending",
     running: "running",
@@ -27,9 +27,9 @@ vi.mock("@/core/collect/jobs/workQueue", () => ({
   touchBackgroundWorkJobLock: vi.fn(),
 }));
 
-vi.mock("@/lib/admin/foilExtractLog", () => ({
-  beginFoilExtractLog: vi.fn(),
-  appendFoilExtractLog: vi.fn(),
+vi.mock("@/lib/admin/catalogueExtractLog", () => ({
+  beginCatalogueExtractLog: vi.fn(),
+  appendCatalogueExtractLog: vi.fn(),
 }));
 
 describe("foilExtractCliJob", () => {

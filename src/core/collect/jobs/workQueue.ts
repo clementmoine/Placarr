@@ -11,7 +11,14 @@ export const BACKGROUND_WORK_KIND = {
   nointroIndexSync: "nointroIndexSync",
   /** Provider-blind catalog refresh — payload `{ providerId, auto? }`. */
   catalogProviderSync: "catalogProviderSync",
-  foilExtract: "foilExtract",
+  /*
+    The stored value stays `foilExtract` on purpose. This is a column in
+    `BackgroundWorkJob`, and rows carrying it are queued or running right now —
+    renaming the string would orphan them: the worker would stop recognising
+    its own work and they would sit `running` forever. The key is what the code
+    reads; the value is a wire format, and changing it needs a migration.
+  */
+  catalogueExtract: "foilExtract",
 } as const;
 
 export type BackgroundWorkKind =
@@ -21,7 +28,7 @@ export type BackgroundWorkKind =
 export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.metadataRefresh,
   BACKGROUND_WORK_KIND.priceRefresh,
-  BACKGROUND_WORK_KIND.foilExtract,
+  BACKGROUND_WORK_KIND.catalogueExtract,
 ];
 
 /** Local index / catalog crawl — dedicated process (`pnpm worker:icollect`). */
@@ -104,14 +111,14 @@ export type PriceRefreshJobPayload = {
 };
 
 import type {
-  FoilExtractScope,
-  FoilExtractTarget,
-} from "@/lib/admin/foilExtractRunner";
+  CatalogueExtractScope,
+  CatalogueExtractTarget,
+} from "@/lib/admin/catalogueExtractRunner";
 
-export type FoilExtractJobPayload = {
-  target: FoilExtractTarget;
+export type CatalogueExtractJobPayload = {
+  target: CatalogueExtractTarget;
   /** Absent on rows enqueued before scopes existed → treated as ``inventory``. */
-  scope?: FoilExtractScope;
+  scope?: CatalogueExtractScope;
 };
 
 export type BackgroundWorkJobRow = {
@@ -342,19 +349,19 @@ export async function claimNextBackgroundWorkJob(
         )
         AND (
           -- At most one long foil extract at a time (CDN scrape).
-          candidate."kind" <> ${BACKGROUND_WORK_KIND.foilExtract}
+          candidate."kind" <> ${BACKGROUND_WORK_KIND.catalogueExtract}
           OR (
             SELECT COUNT(*)::int
             FROM "BackgroundWorkJob" AS running_foil
             WHERE running_foil."status" = ${BACKGROUND_WORK_STATUS.running}
-              AND running_foil."kind" = ${BACKGROUND_WORK_KIND.foilExtract}
+              AND running_foil."kind" = ${BACKGROUND_WORK_KIND.catalogueExtract}
           ) < 1
         )
       ORDER BY
         CASE candidate."kind"
           WHEN ${BACKGROUND_WORK_KIND.metadataRefresh} THEN 0
           WHEN ${BACKGROUND_WORK_KIND.icollectCatalogSync} THEN 2
-          WHEN ${BACKGROUND_WORK_KIND.foilExtract} THEN 3
+          WHEN ${BACKGROUND_WORK_KIND.catalogueExtract} THEN 3
           ELSE 1
         END ASC,
         candidate."createdAt" ASC
@@ -530,11 +537,11 @@ export async function recoverStaleRunningBackgroundWorkJobs(
       status: BACKGROUND_WORK_STATUS.running,
       OR: [
         {
-          kind: BACKGROUND_WORK_KIND.foilExtract,
+          kind: BACKGROUND_WORK_KIND.catalogueExtract,
           lockedAt: { lt: foilCutoff },
         },
         {
-          kind: { not: BACKGROUND_WORK_KIND.foilExtract },
+          kind: { not: BACKGROUND_WORK_KIND.catalogueExtract },
           lockedAt: { lt: generalCutoff },
         },
       ],
@@ -546,7 +553,7 @@ export async function recoverStaleRunningBackgroundWorkJobs(
   let abandoned = 0;
 
   for (const job of stale) {
-    const isFoil = job.kind === BACKGROUND_WORK_KIND.foilExtract;
+    const isFoil = job.kind === BACKGROUND_WORK_KIND.catalogueExtract;
     if (isFoil && job.attempts >= foilMaxAttempts) {
       const result = await prisma.backgroundWorkJob.updateMany({
         where: {

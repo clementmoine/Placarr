@@ -22,9 +22,9 @@ import {
 } from "@/lib/admin/cataloguePacks";
 
 /** Same vocabulary as Catalogue packs — adding a pack is enough. */
-export type FoilExtractTarget = CatalogueExtractTarget;
+export type { CatalogueExtractTarget };
 
-export const FOIL_EXTRACT_TARGETS: readonly FoilExtractTarget[] = [
+export const CATALOGUE_EXTRACT_TARGETS: readonly CatalogueExtractTarget[] = [
   ...new Set(CATALOGUE_PACKS.map((pack) => pack.extractTarget)),
 ];
 
@@ -35,12 +35,12 @@ const LEGACY_LORCANA_TARGETS = new Set([
   "lorcana-cards",
 ]);
 
-export function normalizeFoilExtractTarget(
+export function normalizeCatalogueExtractTarget(
   value: unknown,
-): FoilExtractTarget | null {
+): CatalogueExtractTarget | null {
   if (typeof value !== "string") return null;
-  if ((FOIL_EXTRACT_TARGETS as readonly string[]).includes(value)) {
-    return value as FoilExtractTarget;
+  if ((CATALOGUE_EXTRACT_TARGETS as readonly string[]).includes(value)) {
+    return value as CatalogueExtractTarget;
   }
   if (LEGACY_LORCANA_TARGETS.has(value)) return "lorcana";
   if (
@@ -63,37 +63,37 @@ export function normalizeFoilExtractTarget(
   return null;
 }
 
-export function isFoilExtractTarget(
+export function isCatalogueExtractTarget(
   value: unknown,
-): value is FoilExtractTarget {
-  return normalizeFoilExtractTarget(value) != null;
+): value is CatalogueExtractTarget {
+  return normalizeCatalogueExtractTarget(value) != null;
 }
 
-export function foilExtractLabel(target: FoilExtractTarget): string {
+export function catalogueExtractLabel(target: CatalogueExtractTarget): string {
   const pack = cataloguePackForExtractTarget(target);
   return pack?.labelEn ?? target;
 }
 
 /** Inventory / Lorcana — CDN scrape + extract within a dev session. */
-export const FOIL_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
+export const CATALOGUE_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
 
 /** Pokémon catalogue (~93k bundles): scrape skip-pass + extract can run hours. */
-export const FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
+export const CATALOGUE_EXTRACT_FULL_TIMEOUT_MS = 8 * 60 * 60 * 1000;
 
 /** Masters first-run Deckplanet dump (~10k WebP) plus Bandai scrape. */
-export const FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+export const CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS = 2 * 60 * 60 * 1000;
 
-export function foilExtractTimeoutMs(
-  target: FoilExtractTarget,
-  scope: FoilExtractScope = "inventory",
+export function catalogueExtractTimeoutMs(
+  target: CatalogueExtractTarget,
+  scope: CatalogueExtractScope = "inventory",
 ): number {
   if (target === "pokemon" && scope === "catalogue") {
-    return FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS;
+    return CATALOGUE_EXTRACT_FULL_TIMEOUT_MS;
   }
   if (target === "dbs-cg") {
-    return FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS;
+    return CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS;
   }
-  return FOIL_EXTRACT_TIMEOUT_MS;
+  return CATALOGUE_EXTRACT_TIMEOUT_MS;
 }
 
 function repoRoot(): string {
@@ -118,7 +118,7 @@ async function preferredLorcanaApk(): Promise<string | null> {
   return null;
 }
 
-export type FoilExtractCommand = {
+export type CatalogueExtractCommand = {
   command: string;
   args: string[];
   prelude: string[];
@@ -129,22 +129,24 @@ export type FoilExtractCommand = {
  * ``catalogue`` re-dumps the CDN AssetManifests and scrapes everything they
  * list — authoritative and phantom-free, but that is the full ~93k bundles.
  */
-export const FOIL_EXTRACT_SCOPES = ["inventory", "catalogue"] as const;
-export type FoilExtractScope = (typeof FOIL_EXTRACT_SCOPES)[number];
+export const CATALOGUE_EXTRACT_SCOPES = ["inventory", "catalogue"] as const;
+export type CatalogueExtractScope = (typeof CATALOGUE_EXTRACT_SCOPES)[number];
 
-export function normalizeFoilExtractScope(value: unknown): FoilExtractScope {
+export function normalizeCatalogueExtractScope(
+  value: unknown,
+): CatalogueExtractScope {
   const raw = String(value ?? "")
     .trim()
     .toLowerCase();
-  return (FOIL_EXTRACT_SCOPES as readonly string[]).includes(raw)
-    ? (raw as FoilExtractScope)
+  return (CATALOGUE_EXTRACT_SCOPES as readonly string[]).includes(raw)
+    ? (raw as CatalogueExtractScope)
     : "inventory";
 }
 
-export async function resolveFoilExtractCommand(
-  target: FoilExtractTarget,
-  opts: { scope?: FoilExtractScope } = {},
-): Promise<FoilExtractCommand> {
+export async function resolveCatalogueExtractCommand(
+  target: CatalogueExtractTarget,
+  opts: { scope?: CatalogueExtractScope } = {},
+): Promise<CatalogueExtractCommand> {
   const scope = opts.scope ?? "inventory";
   const root = repoRoot();
   if (target === "lorcana") {
@@ -249,36 +251,39 @@ function pipeLines(
  * admin Logs dialog works even when the worker was started without an
  * explicit onLog hook.
  */
-export async function runFoilExtractCommand(
-  target: FoilExtractTarget,
+export async function runCatalogueExtractCommand(
+  target: CatalogueExtractTarget,
   options: {
     signal?: AbortSignal;
     onLog?: (line: string) => void;
     timeoutMs?: number;
     /** Extra header lines when (re)starting the pack log file. */
     logHeader?: readonly string[];
-    scope?: FoilExtractScope;
+    scope?: CatalogueExtractScope;
   } = {},
 ): Promise<void> {
-  const { command, args, prelude } = await resolveFoilExtractCommand(target, {
-    scope: options.scope,
-  });
+  const { command, args, prelude } = await resolveCatalogueExtractCommand(
+    target,
+    {
+      scope: options.scope,
+    },
+  );
   const timeoutMs =
     options.timeoutMs ??
-    foilExtractTimeoutMs(target, options.scope ?? "inventory");
+    catalogueExtractTimeoutMs(target, options.scope ?? "inventory");
   const root = repoRoot();
 
-  const { appendFoilExtractLog, beginFoilExtractLog } = await import(
-    "@/lib/admin/foilExtractLog"
+  const { appendCatalogueExtractLog, beginCatalogueExtractLog } = await import(
+    "@/lib/admin/catalogueExtractLog"
   );
-  await beginFoilExtractLog(target, options.logHeader ?? []);
+  await beginCatalogueExtractLog(target, options.logHeader ?? []);
 
   // Serialize disk writes so rapid lines are not interleaved / dropped.
   let logChain: Promise<void> = Promise.resolve();
   const onLog = (line: string) => {
     options.onLog?.(line);
     logChain = logChain
-      .then(() => appendFoilExtractLog(target, line))
+      .then(() => appendCatalogueExtractLog(target, line))
       .catch(() => {
         /* best-effort */
       });

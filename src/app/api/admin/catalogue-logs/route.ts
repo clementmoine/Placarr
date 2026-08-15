@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { normalizeFoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+import { normalizeCatalogueExtractTarget } from "@/lib/admin/catalogueExtractRunner";
 import {
   readFoilExtractJobId,
-  readFoilExtractLog,
-} from "@/lib/admin/foilExtractLog";
+  readCatalogueExtractLog,
+} from "@/lib/admin/catalogueExtractLog";
 import {
   BACKGROUND_WORK_KIND,
   BACKGROUND_WORK_STATUS,
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
 
-  const pack = normalizeFoilExtractTarget(
+  const pack = normalizeCatalogueExtractTarget(
     req.nextUrl.searchParams.get("pack")?.trim() ?? "",
   );
   if (!pack) {
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   const afterRaw = req.nextUrl.searchParams.get("after");
   const after = afterRaw ? Number.parseInt(afterRaw, 10) : 0;
-  const slice = await readFoilExtractLog(pack, {
+  const slice = await readCatalogueExtractLog(pack, {
     after: Number.isFinite(after) && after >= 0 ? after : 0,
   });
 
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
           error: true,
         },
       });
-      const target = normalizeFoilExtractTarget(
+      const target = normalizeCatalogueExtractTarget(
         (byId?.payload as { target?: unknown } | undefined)?.target,
       );
       if (byId && target === pack) {
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     if (!active) {
       const openJobs = await prisma.backgroundWorkJob.findMany({
         where: {
-          kind: BACKGROUND_WORK_KIND.foilExtract,
+          kind: BACKGROUND_WORK_KIND.catalogueExtract,
           status: {
             in: [
               BACKGROUND_WORK_STATUS.pending,
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
         },
       });
       const match = openJobs.find((job) => {
-        const target = normalizeFoilExtractTarget(
+        const target = normalizeCatalogueExtractTarget(
           (job.payload as { target?: unknown })?.target,
         );
         return target === pack;

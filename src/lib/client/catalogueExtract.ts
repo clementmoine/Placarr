@@ -1,22 +1,22 @@
 /**
- * Admin foil extract — enqueue durable background job (`POST /api/admin/foil-extract`).
+ * Admin catalogue extract — enqueue durable background job (`POST /api/admin/catalogue-extract`).
  */
 
 import type { CatalogueExtractTarget } from "@/lib/admin/cataloguePacks";
 
-export type FoilExtractTarget = CatalogueExtractTarget;
+export type { CatalogueExtractTarget };
 
 /**
  * ``inventory`` = liste dérivée APK ∪ Malie (rapide, incrémentale).
  * ``catalogue`` = tout ce que les AssetManifests du CDN déclarent.
  */
-export type FoilExtractScope = "inventory" | "catalogue";
+export type CatalogueExtractScope = "inventory" | "catalogue";
 
 export type FoilExtractEnqueued = {
   ok: true;
   jobId: string;
-  target: FoilExtractTarget;
-  scope: FoilExtractScope;
+  target: CatalogueExtractTarget;
+  scope: CatalogueExtractScope;
   kind: "foilExtract";
   label: string;
   hint?: string;
@@ -26,11 +26,11 @@ export type FoilExtractEnqueued = {
  * Enqueue foil extract on the interactive worker. Survives navigation;
  * watch progress via the header background-jobs menu.
  */
-export async function enqueueFoilExtract(
-  target: FoilExtractTarget,
-  scope: FoilExtractScope = "inventory",
+export async function enqueueCatalogueExtract(
+  target: CatalogueExtractTarget,
+  scope: CatalogueExtractScope = "inventory",
 ): Promise<FoilExtractEnqueued> {
-  const res = await fetch("/api/admin/foil-extract", {
+  const res = await fetch("/api/admin/catalogue-extract", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -43,8 +43,8 @@ export async function enqueueFoilExtract(
     error?: string;
     ok?: boolean;
     jobId?: string;
-    target?: FoilExtractTarget;
-    scope?: FoilExtractScope;
+    target?: CatalogueExtractTarget;
+    scope?: CatalogueExtractScope;
     kind?: "foilExtract";
     label?: string;
     hint?: string;
@@ -65,12 +65,12 @@ export async function enqueueFoilExtract(
   };
 }
 
-/** @deprecated Use {@link enqueueFoilExtract} — stream mode removed. */
-export async function runFoilExtractStream(
-  target: FoilExtractTarget,
+/** @deprecated Use {@link enqueueCatalogueExtract} — stream mode removed. */
+export async function runCatalogueExtractStream(
+  target: CatalogueExtractTarget,
   onLog: (line: string) => void,
-): Promise<{ ok: boolean; target?: FoilExtractTarget; hint?: string }> {
-  const done = await enqueueFoilExtract(target);
+): Promise<{ ok: boolean; target?: CatalogueExtractTarget; hint?: string }> {
+  const done = await enqueueCatalogueExtract(target);
   onLog(done.hint ?? `queued ${done.jobId}`);
   return { ok: true, target: done.target, hint: done.hint };
 }

@@ -55,8 +55,7 @@ export async function GET(req: Request) {
 
   const localized = await localizePrintMasks(
     samples,
-    ({ url, kind }) =>
-      localizeMaskImage(url, { kind, signal: req.signal }),
+    ({ url, kind }) => localizeMaskImage(url, { kind, signal: req.signal }),
     (items, worker) =>
       runWithConcurrency(items, MASK_DOWNLOAD_CONCURRENCY, worker, {
         signal: req.signal,

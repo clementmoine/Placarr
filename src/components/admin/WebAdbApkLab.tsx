@@ -219,7 +219,9 @@ export function WebAdbApkLab({
       file.name.toLowerCase().endsWith(".apk"),
     );
     if (list.length === 0) {
-      throw new Error(fr ? "Choisis au moins un .apk" : "Pick at least one .apk");
+      throw new Error(
+        fr ? "Choisis au moins un .apk" : "Pick at least one .apk",
+      );
     }
     append(`upload ${uploadPack} ×${list.length}`);
     const form = new FormData();

@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
 
   const files = form.getAll("apk").filter((v): v is File => v instanceof File);
   if (files.length === 0) {
-    return NextResponse.json({ error: "apk file(s) required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "apk file(s) required" },
+      { status: 400 },
+    );
   }
 
   const destDir = packApksDir(pack);

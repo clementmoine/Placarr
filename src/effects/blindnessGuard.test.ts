@@ -29,20 +29,20 @@ const SKIP_DIR_PREFIXES = [
   "src/components/admin/TcgEffects",
   "src/components/admin/WebAdb",
   "src/lib/admin/foilStatus",
-  "src/lib/admin/foilExtractRunner.ts",
+  "src/lib/admin/catalogueExtractRunner.ts",
   "src/lib/admin/foilCatalogSync.ts",
   "src/lib/admin/foilGaps.ts",
   "src/lib/admin/foilGapMaps.ts",
   "src/lib/admin/cataloguePacks.ts",
   "src/lib/admin/catalogueCards.ts",
   "src/lib/admin/catalogueCardsTypes.ts",
-  "src/app/api/admin/catalogue-cards/",
+  "src/app/api/admin/catalogue-",
   "src/components/admin/Catalogue",
   "src/lib/foilMetaLoad.ts",
   "src/lib/foilMetaLoad.server.ts",
   "src/lib/packAssetUrls.ts",
   "src/lib/packPaths.ts",
-  "src/lib/client/foilExtract.ts",
+  "src/lib/client/catalogueExtract.ts",
   // Foil extract enqueue — pack ids are the job target surface.
   "src/core/collect/jobs/backgroundJobs.ts",
   "src/lib/api/backgroundJobs.ts",
@@ -70,7 +70,9 @@ function discoverEffectPackIds(): string[] {
       continue;
     }
 
-    const registerMatch = text.match(/registerEffectPack\(\{[^}]*\bid:\s*["']([^"']+)["']/s);
+    const registerMatch = text.match(
+      /registerEffectPack\(\{[^}]*\bid:\s*["']([^"']+)["']/s,
+    );
     if (registerMatch) ids.push(registerMatch[1]);
   }
 

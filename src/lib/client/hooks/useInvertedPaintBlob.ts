@@ -71,9 +71,7 @@ async function invertToBlobUrl(source: Blob): Promise<string> {
   }
 }
 
-export function requestInvertedPaintBlob(
-  url: string | null | undefined,
-): void {
+export function requestInvertedPaintBlob(url: string | null | undefined): void {
   if (!url) return;
   if (blobs.has(url) || pending.has(url)) return;
   pending.add(url);

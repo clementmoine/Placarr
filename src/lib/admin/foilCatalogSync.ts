@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+import type { CatalogueExtractTarget } from "@/lib/admin/catalogueExtractRunner";
 import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
@@ -23,12 +23,12 @@ function maxAgeMs(): number {
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_MAX_AGE_MS;
 }
 
-function lastRunPath(pack: FoilExtractTarget): string {
+function lastRunPath(pack: CatalogueExtractTarget): string {
   const dataPack = cataloguePackForExtractTarget(pack)?.id ?? pack;
   return path.join(packLogsDir(dataPack), "last-run.json");
 }
 
-function lastRunMtime(pack: FoilExtractTarget): number | null {
+function lastRunMtime(pack: CatalogueExtractTarget): number | null {
   const p = lastRunPath(pack);
   if (!existsSync(p)) return null;
   try {
@@ -38,7 +38,7 @@ function lastRunMtime(pack: FoilExtractTarget): number | null {
   }
 }
 
-function packLooksEmpty(pack: FoilExtractTarget): boolean {
+function packLooksEmpty(pack: CatalogueExtractTarget): boolean {
   if (pack === "lorcana") {
     const cards = path.join(dataRoot(), "lorcana", "cards-index.json");
     const web = path.join(foilPackDir("lorcana"), "web");
@@ -64,7 +64,7 @@ function packLooksEmpty(pack: FoilExtractTarget): boolean {
   return !existsSync(shaders) && !existsSync(db);
 }
 
-export function isFoilPackStale(pack: FoilExtractTarget): boolean {
+export function isFoilPackStale(pack: CatalogueExtractTarget): boolean {
   if (packLooksEmpty(pack)) return true;
   const mtime = lastRunMtime(pack);
   if (mtime == null) return true;
@@ -73,7 +73,7 @@ export function isFoilPackStale(pack: FoilExtractTarget): boolean {
 
 /** @deprecated Prefer catalogueAutoSync — maps pack → provider catalog.refresh */
 export async function maybeEnqueueFoilCatalogSync(
-  pack: FoilExtractTarget,
+  pack: CatalogueExtractTarget,
 ): Promise<boolean> {
   const { maybeEnqueueFoilCatalogSync: enqueue } = await import(
     "./catalogueAutoSync"
@@ -95,7 +95,7 @@ export function resetFoilCatalogSyncForTests(): void {
 }
 
 /** Touch helper for tests / status — read last-run without throwing. */
-export function readFoilLastRun(pack: FoilExtractTarget): unknown | null {
+export function readFoilLastRun(pack: CatalogueExtractTarget): unknown | null {
   const p = lastRunPath(pack);
   if (!existsSync(p)) return null;
   try {

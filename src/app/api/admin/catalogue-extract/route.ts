@@ -7,13 +7,13 @@ import {
   enqueueBackgroundWorkJob,
 } from "@/core/collect/jobs/workQueue";
 import {
-  FOIL_EXTRACT_TARGETS,
-  foilExtractLabel,
-  normalizeFoilExtractScope,
-  normalizeFoilExtractTarget,
-  resolveFoilExtractCommand,
-} from "@/lib/admin/foilExtractRunner";
-import { beginFoilExtractLog } from "@/lib/admin/foilExtractLog";
+  CATALOGUE_EXTRACT_TARGETS,
+  catalogueExtractLabel,
+  normalizeCatalogueExtractScope,
+  normalizeCatalogueExtractTarget,
+  resolveCatalogueExtractCommand,
+} from "@/lib/admin/catalogueExtractRunner";
+import { beginCatalogueExtractLog } from "@/lib/admin/catalogueExtractLog";
 
 export const maxDuration = 60;
 
@@ -35,20 +35,22 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json()) as { target?: string; scope?: string };
-  const target = normalizeFoilExtractTarget(String(body.target || "").trim());
+  const target = normalizeCatalogueExtractTarget(
+    String(body.target || "").trim(),
+  );
   if (!target) {
     return NextResponse.json(
       {
-        error: `target must be ${FOIL_EXTRACT_TARGETS.join(", ")}`,
+        error: `target must be ${CATALOGUE_EXTRACT_TARGETS.join(", ")}`,
       },
       { status: 400 },
     );
   }
-  const scope = normalizeFoilExtractScope(body.scope);
+  const scope = normalizeCatalogueExtractScope(body.scope);
 
   // Validate paths before enqueue so the UI gets a fast error.
   try {
-    await resolveFoilExtractCommand(target, { scope });
+    await resolveCatalogueExtractCommand(target, { scope });
   } catch (error) {
     return NextResponse.json(
       {
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
   }
 
   const job = await enqueueBackgroundWorkJob({
-    kind: BACKGROUND_WORK_KIND.foilExtract,
+    kind: BACKGROUND_WORK_KIND.catalogueExtract,
     userId: auth.user.id,
     payload: { target, scope },
     // Replace this pack's own run, not the neighbours': every extract shares
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   // Seed the pack log immediately so Logs opens with “queued” before the
   // worker claims the job (and even if an old worker process lacks tee).
-  await beginFoilExtractLog(target, [
+  await beginCatalogueExtractLog(target, [
     `jobId=${job.id}`,
     "status=queued",
     "waiting for worker…",
@@ -82,13 +84,13 @@ export async function POST(req: NextRequest) {
     jobId: job.id,
     target,
     scope,
-    kind: BACKGROUND_WORK_KIND.foilExtract,
-    label: foilExtractLabel(target),
+    kind: BACKGROUND_WORK_KIND.catalogueExtract,
+    label: catalogueExtractLabel(target),
     hint:
       target === "pokemon"
         ? scope === "catalogue"
           ? "Catalogue complet en file d’attente : ~93k bundles, plusieurs heures. Tu peux quitter la page."
           : "Extract Pokémon en file d’attente (worker). Tu peux quitter la page."
-        : `Sync ${foilExtractLabel(target)} en file d’attente (worker). Tu peux quitter la page.`,
+        : `Sync ${catalogueExtractLabel(target)} en file d’attente (worker). Tu peux quitter la page.`,
   });
 }

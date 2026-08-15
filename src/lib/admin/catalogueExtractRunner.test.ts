@@ -6,46 +6,46 @@ vi.mock("@/lib/runtimeData", () => ({
 }));
 
 import {
-  FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
-  FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
-  FOIL_EXTRACT_TARGETS,
-  foilExtractLabel,
-  foilExtractTimeoutMs,
-  isFoilExtractTarget,
-  normalizeFoilExtractTarget,
-  resolveFoilExtractCommand,
-} from "./foilExtractRunner";
+  CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_TARGETS,
+  catalogueExtractLabel,
+  catalogueExtractTimeoutMs,
+  isCatalogueExtractTarget,
+  normalizeCatalogueExtractTarget,
+  resolveCatalogueExtractCommand,
+} from "./catalogueExtractRunner";
 import { CATALOGUE_PACKS } from "./cataloguePacks";
 
-describe("foilExtractRunner targets", () => {
+describe("catalogueExtractRunner targets", () => {
   it("covers every catalogue pack extract target", () => {
     for (const pack of CATALOGUE_PACKS) {
-      expect(isFoilExtractTarget(pack.extractTarget), pack.id).toBe(true);
+      expect(isCatalogueExtractTarget(pack.extractTarget), pack.id).toBe(true);
     }
-    expect(FOIL_EXTRACT_TARGETS).toEqual(
+    expect(CATALOGUE_EXTRACT_TARGETS).toEqual(
       CATALOGUE_PACKS.map((pack) => pack.extractTarget),
     );
   });
 
   it("exposes one target per pack", () => {
-    expect(isFoilExtractTarget("lorcana")).toBe(true);
-    expect(isFoilExtractTarget("pokemon")).toBe(true);
-    expect(isFoilExtractTarget("naruto")).toBe(true);
-    expect(isFoilExtractTarget("dbs-cg")).toBe(true);
-    expect(isFoilExtractTarget("dbs-fw")).toBe(true);
-    expect(isFoilExtractTarget("lorcana-web")).toBe(true); // legacy alias
-    expect(normalizeFoilExtractTarget("lorcana-cards")).toBe("lorcana");
-    expect(normalizeFoilExtractTarget("lorcana-mobile")).toBe("lorcana");
-    expect(normalizeFoilExtractTarget("naruto-cacg")).toBe("naruto");
-    expect(normalizeFoilExtractTarget("dbs/cg")).toBe("dbs-cg");
-    expect(normalizeFoilExtractTarget("fusionworld")).toBe("dbs-fw");
-    expect(foilExtractLabel("lorcana")).toBe("Lorcana");
-    expect(foilExtractLabel("naruto")).toBe("Naruto CCG");
-    expect(foilExtractLabel("dbs-cg")).toBe("Dragon Ball Masters");
+    expect(isCatalogueExtractTarget("lorcana")).toBe(true);
+    expect(isCatalogueExtractTarget("pokemon")).toBe(true);
+    expect(isCatalogueExtractTarget("naruto")).toBe(true);
+    expect(isCatalogueExtractTarget("dbs-cg")).toBe(true);
+    expect(isCatalogueExtractTarget("dbs-fw")).toBe(true);
+    expect(isCatalogueExtractTarget("lorcana-web")).toBe(true); // legacy alias
+    expect(normalizeCatalogueExtractTarget("lorcana-cards")).toBe("lorcana");
+    expect(normalizeCatalogueExtractTarget("lorcana-mobile")).toBe("lorcana");
+    expect(normalizeCatalogueExtractTarget("naruto-cacg")).toBe("naruto");
+    expect(normalizeCatalogueExtractTarget("dbs/cg")).toBe("dbs-cg");
+    expect(normalizeCatalogueExtractTarget("fusionworld")).toBe("dbs-fw");
+    expect(catalogueExtractLabel("lorcana")).toBe("Lorcana");
+    expect(catalogueExtractLabel("naruto")).toBe("Naruto CCG");
+    expect(catalogueExtractLabel("dbs-cg")).toBe("Dragon Ball Masters");
   });
 
   it("builds DBS Masters and Fusion World catalogue sync commands", async () => {
-    const masters = await resolveFoilExtractCommand("dbs-cg");
+    const masters = await resolveCatalogueExtractCommand("dbs-cg");
     expect(
       masters.args.some(
         (a) =>
@@ -56,7 +56,7 @@ describe("foilExtractRunner targets", () => {
     // Clone EN dump, HTTP FR faces; existing files skipped unless --force.
     expect(masters.prelude.some((line) => /TCG Arena/i.test(line))).toBe(true);
     expect(masters.prelude.some((line) => /--force/.test(line))).toBe(true);
-    const fw = await resolveFoilExtractCommand("dbs-fw");
+    const fw = await resolveCatalogueExtractCommand("dbs-fw");
     expect(
       fw.args.some(
         (a) =>
@@ -67,7 +67,7 @@ describe("foilExtractRunner targets", () => {
   });
 
   it("builds Naruto Wayback catalogue sync command", async () => {
-    const cmd = await resolveFoilExtractCommand("naruto");
+    const cmd = await resolveCatalogueExtractCommand("naruto");
     expect(cmd.command).toContain("tsx");
     expect(
       cmd.args.some(
@@ -80,7 +80,7 @@ describe("foilExtractRunner targets", () => {
   });
 
   it("builds a full Lorcana command (web + cards; Unity when APK exists)", async () => {
-    const cmd = await resolveFoilExtractCommand("lorcana");
+    const cmd = await resolveCatalogueExtractCommand("lorcana");
     expect(cmd.command).toContain("tsx");
     expect(
       cmd.args.some((a) => a.includes("src/providers/lorcanatcg/cli.ts")),
@@ -91,25 +91,25 @@ describe("foilExtractRunner targets", () => {
   });
 
   it("pokemon catalogue uses a longer worker timeout than inventory", () => {
-    expect(foilExtractTimeoutMs("pokemon", "catalogue")).toBe(
-      FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
+    expect(catalogueExtractTimeoutMs("pokemon", "catalogue")).toBe(
+      CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
     );
-    expect(foilExtractTimeoutMs("pokemon", "inventory")).toBeLessThan(
-      FOIL_EXTRACT_CATALOGUE_TIMEOUT_MS,
+    expect(catalogueExtractTimeoutMs("pokemon", "inventory")).toBeLessThan(
+      CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
     );
   });
 
   it("gives Masters a longer timeout for the Arena clone + faces", () => {
-    expect(foilExtractTimeoutMs("dbs-cg", "catalogue")).toBe(
-      FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
+    expect(catalogueExtractTimeoutMs("dbs-cg", "catalogue")).toBe(
+      CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
     );
-    expect(foilExtractTimeoutMs("dbs-fw", "catalogue")).toBeLessThan(
-      FOIL_EXTRACT_DBS_FACES_TIMEOUT_MS,
+    expect(catalogueExtractTimeoutMs("dbs-fw", "catalogue")).toBeLessThan(
+      CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
     );
   });
 
   it("pokemon inventory scrape unions APK/Malie then CDN (all Live langs)", async () => {
-    const cmd = await resolveFoilExtractCommand("pokemon");
+    const cmd = await resolveCatalogueExtractCommand("pokemon");
     expect(cmd.command).toContain("tsx");
     expect(
       cmd.args.some((a) => a.includes("src/providers/pokemontcglive/cli.ts")),
@@ -122,7 +122,7 @@ describe("foilExtractRunner targets", () => {
   });
 
   it("pokemon extract passes --refresh-manifests for catalogue scope", async () => {
-    const cmd = await resolveFoilExtractCommand("pokemon", {
+    const cmd = await resolveCatalogueExtractCommand("pokemon", {
       scope: "catalogue",
     });
     expect(cmd.args).toContain("--refresh-manifests");
@@ -130,7 +130,7 @@ describe("foilExtractRunner targets", () => {
   });
 
   it("lorcana extract passes --no-job so child does not cancel worker job", async () => {
-    const cmd = await resolveFoilExtractCommand("lorcana");
+    const cmd = await resolveCatalogueExtractCommand("lorcana");
     expect(cmd.args).toContain("--no-job");
   });
 });

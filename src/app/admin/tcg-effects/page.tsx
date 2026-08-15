@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Shorthand for the admin bench: `/admin/tcg-effects`. */
-export default function TcgEffectsPage() {
-  redirect("/admin?tab=tcg-effects");
+/** Legacy URL — the bench is now `/admin?tab=catalogue`. */
+export default function LegacyTcgEffectsPage() {
+  redirect("/admin?tab=catalogue");
 }

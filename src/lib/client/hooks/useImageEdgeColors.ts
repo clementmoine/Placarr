@@ -143,29 +143,32 @@ export function useImageEdgeColors(): {
 } {
   const [colors, setColors] = useState<ImageEdgeColors | null>(null);
 
-  const measure = useCallback((image: HTMLImageElement, box?: EdgeMeasureBox) => {
-    if (!image.naturalWidth || !image.naturalHeight) return;
-    // Foil CSS nests the art in a ratio box; letterboxing lives on the outer
-    // frame — pass that frame here or the axis reads as "no gap".
-    const boxWidth = box?.width || image.clientWidth || image.width;
-    const boxHeight = box?.height || image.clientHeight || image.height;
-    if (!boxWidth || !boxHeight) return;
+  const measure = useCallback(
+    (image: HTMLImageElement, box?: EdgeMeasureBox) => {
+      if (!image.naturalWidth || !image.naturalHeight) return;
+      // Foil CSS nests the art in a ratio box; letterboxing lives on the outer
+      // frame — pass that frame here or the axis reads as "no gap".
+      const boxWidth = box?.width || image.clientWidth || image.width;
+      const boxHeight = box?.height || image.clientHeight || image.height;
+      if (!boxWidth || !boxHeight) return;
 
-    try {
-      const axis = edgeAxisFor(
-        image.naturalWidth / image.naturalHeight,
-        boxWidth / boxHeight,
-      );
-      const from = readEdgeStrip(image, axis, "from");
-      const to = readEdgeStrip(image, axis, "to");
-      if (!from || !to) return;
+      try {
+        const axis = edgeAxisFor(
+          image.naturalWidth / image.naturalHeight,
+          boxWidth / boxHeight,
+        );
+        const from = readEdgeStrip(image, axis, "from");
+        const to = readEdgeStrip(image, axis, "to");
+        if (!from || !to) return;
 
-      const measured = edgeColorsFromStrips(from, to, axis);
-      if (measured) setColors(measured);
-    } catch {
-      // A tainted canvas or a decode failure simply means no bleed.
-    }
-  }, []);
+        const measured = edgeColorsFromStrips(from, to, axis);
+        if (measured) setColors(measured);
+      } catch {
+        // A tainted canvas or a decode failure simply means no bleed.
+      }
+    },
+    [],
+  );
 
   // Pointing the same slot at another image must drop the old measurement:
   // holding it until the new one decodes paints one cover's colours behind

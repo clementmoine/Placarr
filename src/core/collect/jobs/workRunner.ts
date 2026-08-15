@@ -12,7 +12,7 @@ import {
   isBackgroundWorkJobCancelled,
   touchBackgroundWorkJobLock,
   type BackgroundWorkJobRow,
-  type FoilExtractJobPayload,
+  type CatalogueExtractJobPayload,
   type MetadataRefreshJobPayload,
   type PriceRefreshJobPayload,
 } from "@/core/collect/jobs/workQueue";
@@ -34,11 +34,11 @@ import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesS
 import { prisma } from "@/lib/db/prisma";
 import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
 import {
-  foilExtractTimeoutMs,
-  normalizeFoilExtractScope,
-  normalizeFoilExtractTarget,
-  runFoilExtractCommand,
-} from "@/lib/admin/foilExtractRunner";
+  catalogueExtractTimeoutMs,
+  normalizeCatalogueExtractScope,
+  normalizeCatalogueExtractTarget,
+  runCatalogueExtractCommand,
+} from "@/lib/admin/catalogueExtractRunner";
 import path from "path";
 
 const CANCEL_POLL_MS = 2_000;
@@ -395,8 +395,8 @@ export async function executeBackgroundWorkJob(
     return;
   }
 
-  if (job.kind === BACKGROUND_WORK_KIND.foilExtract) {
-    await executeFoilExtractJob(job, payload as FoilExtractJobPayload);
+  if (job.kind === BACKGROUND_WORK_KIND.catalogueExtract) {
+    await executeFoilExtractJob(job, payload as CatalogueExtractJobPayload);
     return;
   }
 
@@ -409,25 +409,26 @@ async function stampFoilExtractFailure(
   message: string,
 ): Promise<void> {
   try {
-    const { appendFoilExtractLog, beginFoilExtractLog } = await import(
-      "@/lib/admin/foilExtractLog"
+    const { appendCatalogueExtractLog, beginCatalogueExtractLog } =
+      await import("@/lib/admin/catalogueExtractLog");
+    const { readCatalogueExtractLog } = await import(
+      "@/lib/admin/catalogueExtractLog"
     );
-    const { readFoilExtractLog } = await import("@/lib/admin/foilExtractLog");
-    const { isFoilExtractTarget } = await import(
-      "@/lib/admin/foilExtractRunner"
+    const { isCatalogueExtractTarget } = await import(
+      "@/lib/admin/catalogueExtractRunner"
     );
-    if (!isFoilExtractTarget(pack)) return;
+    if (!isCatalogueExtractTarget(pack)) return;
     const typed = pack;
-    const existing = await readFoilExtractLog(typed, {
+    const existing = await readCatalogueExtractLog(typed, {
       after: 0,
       maxBytes: 64,
     });
     // Keep any scrape tail already on disk — only seed a fresh header when empty.
     if (!existing.exists || existing.size === 0) {
-      await beginFoilExtractLog(typed, [`jobId=${jobId}`]);
+      await beginCatalogueExtractLog(typed, [`jobId=${jobId}`]);
     }
-    await appendFoilExtractLog(typed, `status=failed`);
-    await appendFoilExtractLog(typed, message);
+    await appendCatalogueExtractLog(typed, `status=failed`);
+    await appendCatalogueExtractLog(typed, message);
   } catch {
     /* log must not mask the real failure */
   }
@@ -435,10 +436,10 @@ async function stampFoilExtractFailure(
 
 async function executeFoilExtractJob(
   job: BackgroundWorkJobRow,
-  payload: FoilExtractJobPayload,
+  payload: CatalogueExtractJobPayload,
 ): Promise<void> {
   const rawTarget = String(payload?.target ?? "").trim();
-  const target = normalizeFoilExtractTarget(rawTarget);
+  const target = normalizeCatalogueExtractTarget(rawTarget);
   if (!target) {
     const message = `Invalid foil extract target: ${rawTarget || "(empty)"}`;
     if (rawTarget) await stampFoilExtractFailure(rawTarget, job.id, message);
@@ -470,15 +471,15 @@ async function executeFoilExtractJob(
   };
 
   try {
-    await runFoilExtractCommand(target, {
+    await runCatalogueExtractCommand(target, {
       signal: controller.signal,
-      timeoutMs: foilExtractTimeoutMs(
+      timeoutMs: catalogueExtractTimeoutMs(
         target,
-        normalizeFoilExtractScope(payload?.scope),
+        normalizeCatalogueExtractScope(payload?.scope),
       ),
       onLog: writeLog,
       logHeader: [`jobId=${job.id}`],
-      scope: normalizeFoilExtractScope(payload?.scope),
+      scope: normalizeCatalogueExtractScope(payload?.scope),
     });
   } catch (error) {
     if (

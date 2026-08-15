@@ -21,15 +21,15 @@ vi.mock("@/core/collect/jobs/workQueue", () => ({
     icollectCatalogSync: "icollectCatalogSync",
     launchboxIndexSync: "launchboxIndexSync",
     nointroIndexSync: "nointroIndexSync",
-    foilExtract: "foilExtract",
+    catalogueExtract: "foilExtract",
   },
   enqueueBackgroundWorkJob: h.enqueueBackgroundWorkJob,
   isBackgroundWorkJobCancelled: h.isBackgroundWorkJobCancelled,
 }));
 
-vi.mock("@/lib/admin/foilExtractRunner", () => ({
-  foilExtractTimeoutMs: () => 60_000,
-  isFoilExtractTarget: (value: unknown) =>
+vi.mock("@/lib/admin/catalogueExtractRunner", () => ({
+  catalogueExtractTimeoutMs: () => 60_000,
+  isCatalogueExtractTarget: (value: unknown) =>
     value === "pokemon" ||
     value === "lorcana" ||
     value === "lorcana-web" ||
@@ -38,7 +38,7 @@ vi.mock("@/lib/admin/foilExtractRunner", () => ({
     value === "naruto" ||
     value === "dbs-cg" ||
     value === "dbs-fw",
-  normalizeFoilExtractTarget: (value: unknown) => {
+  normalizeCatalogueExtractTarget: (value: unknown) => {
     if (value === "pokemon") return "pokemon";
     if (
       value === "lorcana" ||
@@ -53,7 +53,7 @@ vi.mock("@/lib/admin/foilExtractRunner", () => ({
     if (value === "dbs-fw" || value === "dbs/fw") return "dbs-fw";
     return null;
   },
-  runFoilExtractCommand: vi.fn().mockResolvedValue(undefined),
+  runCatalogueExtractCommand: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/core/collect/jobs/metadataRefreshSession", () => ({

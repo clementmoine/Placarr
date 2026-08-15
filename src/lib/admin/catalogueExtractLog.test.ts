@@ -23,29 +23,29 @@ afterEach(async () => {
 describe("foilExtractLog", () => {
   it("writes and tails the pack extract log", async () => {
     const {
-      appendFoilExtractLog,
-      beginFoilExtractLog,
-      foilExtractLogPath,
-      readFoilExtractLog,
-    } = await import("./foilExtractLog");
+      appendCatalogueExtractLog,
+      beginCatalogueExtractLog,
+      catalogueExtractLogPath,
+      readCatalogueExtractLog,
+    } = await import("./catalogueExtractLog");
 
-    await beginFoilExtractLog("pokemon", ["jobId=test"]);
-    await appendFoilExtractLog("pokemon", "line one");
-    await appendFoilExtractLog("pokemon", "line two");
+    await beginCatalogueExtractLog("pokemon", ["jobId=test"]);
+    await appendCatalogueExtractLog("pokemon", "line one");
+    await appendCatalogueExtractLog("pokemon", "line two");
 
-    const file = foilExtractLogPath("pokemon");
+    const file = catalogueExtractLogPath("pokemon");
     expect(file).toContain(path.join("pokemon", "logs", "foil-extract.log"));
     const raw = await readFile(file, "utf8");
     expect(raw).toContain("jobId=test");
     expect(raw).toContain("line one");
 
-    const first = await readFoilExtractLog("pokemon", { after: 0 });
+    const first = await readCatalogueExtractLog("pokemon", { after: 0 });
     expect(first.exists).toBe(true);
     expect(first.text).toContain("line two");
     expect(first.launchedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(first.mtime).toBeTruthy();
 
-    const second = await readFoilExtractLog("pokemon", {
+    const second = await readCatalogueExtractLog("pokemon", {
       after: first.nextOffset,
     });
     expect(second.text).toBe("");

@@ -20,11 +20,7 @@ export function useMaskBlob(
   kind: MaskKind = "foil",
 ): string | null {
   const snapshot = useCallback(() => peekMaskBlob(url, kind), [url, kind]);
-  const blob = useSyncExternalStore(
-    subscribeToMaskBlobs,
-    snapshot,
-    () => null,
-  );
+  const blob = useSyncExternalStore(subscribeToMaskBlobs, snapshot, () => null);
 
   useEffect(() => {
     requestMaskBlob(url, kind);

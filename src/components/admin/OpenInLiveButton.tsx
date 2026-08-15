@@ -64,7 +64,11 @@ export function OpenInLiveButton({
           [
             data.cardId ?? (fr ? "Ouvert" : "Opened"),
             data.ms != null ? `${data.ms} ms` : null,
-            data.via === "daemon" ? "warm" : data.via === "cold" ? "cold" : null,
+            data.via === "daemon"
+              ? "warm"
+              : data.via === "cold"
+                ? "cold"
+                : null,
           ]
             .filter(Boolean)
             .join(" · "),

@@ -15,10 +15,10 @@ import {
 } from "@/core/collect/jobs/workQueue";
 import { prisma } from "@/lib/db/prisma";
 import {
-  beginFoilExtractLog,
-  appendFoilExtractLog,
-} from "@/lib/admin/foilExtractLog";
-import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+  beginCatalogueExtractLog,
+  appendCatalogueExtractLog,
+} from "@/lib/admin/catalogueExtractLog";
+import type { CatalogueExtractTarget } from "@/lib/admin/catalogueExtractRunner";
 
 const HEARTBEAT_MS = 60_000;
 const CANCEL_POLL_MS = 2_000;
@@ -35,7 +35,7 @@ export type CliFoilJobHandle = {
  * If the database is unreachable, logs a warning and runs without registration.
  */
 export async function withCliFoilExtractJob<T>(
-  target: FoilExtractTarget,
+  target: CatalogueExtractTarget,
   run: (ctx: CliFoilJobHandle) => Promise<T>,
   options?: { disabled?: boolean },
 ): Promise<T> {
@@ -58,7 +58,7 @@ export async function withCliFoilExtractJob<T>(
   console.log(
     `[foilExtract] registered jobId=${job.id} target=${target} (visible in background jobs)`,
   );
-  await beginFoilExtractLog(target, [
+  await beginCatalogueExtractLog(target, [
     `jobId=${job.id}`,
     "status=running",
     "source=cli",
@@ -76,7 +76,7 @@ export async function withCliFoilExtractJob<T>(
     void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
       if (cancelled && !controller.signal.aborted) {
         controller.abort();
-        void appendFoilExtractLog(target, "cancelled from UI");
+        void appendCatalogueExtractLog(target, "cancelled from UI");
       }
     });
   }, CANCEL_POLL_MS);
@@ -91,7 +91,7 @@ export async function withCliFoilExtractJob<T>(
       return result;
     }
     await completeBackgroundWorkJob(job.id);
-    await appendFoilExtractLog(target, "── done (cli)");
+    await appendCatalogueExtractLog(target, "── done (cli)");
     return result;
   } catch (error) {
     if (
@@ -102,7 +102,7 @@ export async function withCliFoilExtractJob<T>(
     }
     const message = error instanceof Error ? error.message : String(error);
     await failBackgroundWorkJob(job.id, message);
-    await appendFoilExtractLog(target, `── failed: ${message}`);
+    await appendCatalogueExtractLog(target, `── failed: ${message}`);
     throw error;
   } finally {
     clearInterval(heartbeat);
@@ -112,13 +112,13 @@ export async function withCliFoilExtractJob<T>(
 
 /** Insert a running foil job owned by this CLI process. */
 export async function adoptCliFoilExtractJob(
-  target: FoilExtractTarget,
+  target: CatalogueExtractTarget,
 ): Promise<BackgroundWorkJobRow> {
   const lockedBy = `cli:${process.pid}`;
   // Singleton gate: drop other open foil rows so the menu shows this one.
   await prisma.backgroundWorkJob.updateMany({
     where: {
-      kind: BACKGROUND_WORK_KIND.foilExtract,
+      kind: BACKGROUND_WORK_KIND.catalogueExtract,
       status: {
         in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
       },
@@ -134,7 +134,7 @@ export async function adoptCliFoilExtractJob(
 
   return prisma.backgroundWorkJob.create({
     data: {
-      kind: BACKGROUND_WORK_KIND.foilExtract,
+      kind: BACKGROUND_WORK_KIND.catalogueExtract,
       status: BACKGROUND_WORK_STATUS.running,
       userId: null,
       payload: { target, source: "cli", pid: process.pid },

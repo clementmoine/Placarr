@@ -51,10 +51,7 @@ export function peekMaskBlob(
  * Decode a fetched image, bake Safari alpha when needed, return a PNG blob URL.
  * Falls back to the raw bytes if canvas conversion is unavailable (tests / SSR).
  */
-async function toSafariMaskBlob(
-  source: Blob,
-  kind: MaskKind,
-): Promise<string> {
+async function toSafariMaskBlob(source: Blob, kind: MaskKind): Promise<string> {
   if (
     typeof createImageBitmap !== "function" ||
     typeof document === "undefined"

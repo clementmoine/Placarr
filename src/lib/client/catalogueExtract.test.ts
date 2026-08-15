@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { enqueueFoilExtract, runFoilExtractStream } from "./foilExtract";
+import {
+  enqueueCatalogueExtract,
+  runCatalogueExtractStream,
+} from "./catalogueExtract";
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("enqueueFoilExtract", () => {
+describe("enqueueCatalogueExtract", () => {
   it("returns the queued job id", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -26,7 +29,7 @@ describe("enqueueFoilExtract", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const done = await enqueueFoilExtract("pokemon");
+    const done = await enqueueCatalogueExtract("pokemon");
     expect(done).toEqual({
       ok: true,
       jobId: "job-1",
@@ -37,7 +40,7 @@ describe("enqueueFoilExtract", () => {
       hint: "queued",
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/admin/foil-extract",
+      "/api/admin/catalogue-extract",
       expect.objectContaining({ method: "POST" }),
     );
   });
@@ -58,11 +61,12 @@ describe("enqueueFoilExtract", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const done = await enqueueFoilExtract("pokemon", "catalogue");
+    const done = await enqueueCatalogueExtract("pokemon", "catalogue");
     expect(done.scope).toBe("catalogue");
-    expect(
-      JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)),
-    ).toEqual({ target: "pokemon", scope: "catalogue" });
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      target: "pokemon",
+      scope: "catalogue",
+    });
   });
 
   it("throws on HTTP errors", async () => {
@@ -76,13 +80,13 @@ describe("enqueueFoilExtract", () => {
       ),
     );
 
-    await expect(enqueueFoilExtract("lorcana")).rejects.toThrow(
+    await expect(enqueueCatalogueExtract("lorcana")).rejects.toThrow(
       "Too many extracts",
     );
   });
 });
 
-describe("runFoilExtractStream (compat)", () => {
+describe("runCatalogueExtractStream (compat)", () => {
   it("delegates to enqueue", async () => {
     vi.stubGlobal(
       "fetch",
@@ -105,7 +109,7 @@ describe("runFoilExtractStream (compat)", () => {
     );
 
     const logs: string[] = [];
-    const done = await runFoilExtractStream("pokemon", (line) =>
+    const done = await runCatalogueExtractStream("pokemon", (line) =>
       logs.push(line),
     );
     expect(done.ok).toBe(true);

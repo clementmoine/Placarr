@@ -1,36 +1,36 @@
 /**
  * Durable foil extract log under ``data/<pack>/logs/foil-extract.log``.
- * Worker appends lines; admin UI polls via ``/api/admin/foil-logs``.
+ * Worker appends lines; admin UI polls via ``/api/admin/catalogue-logs``.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 import { foilPackDataDir } from "@/lib/runtimeData";
 import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
-import type { FoilExtractTarget } from "@/lib/admin/foilExtractRunner";
+import type { CatalogueExtractTarget } from "@/lib/admin/catalogueExtractRunner";
 
-export const FOIL_EXTRACT_LOG_NAME = "foil-extract.log";
+export const CATALOGUE_EXTRACT_LOG_NAME = "foil-extract.log";
 /** Cap retained file size so a multi-hour scrape cannot fill the disk. */
 const MAX_LOG_BYTES = 4 * 1024 * 1024;
 
 /** Extract UI target → on-disk data pack (franchise line nest). */
-function foilExtractDataPack(pack: FoilExtractTarget): string {
+function foilExtractDataPack(pack: CatalogueExtractTarget): string {
   return cataloguePackForExtractTarget(pack)?.id ?? pack;
 }
 
-export function foilExtractLogPath(pack: FoilExtractTarget): string {
+export function catalogueExtractLogPath(pack: CatalogueExtractTarget): string {
   return path.join(
     foilPackDataDir(foilExtractDataPack(pack)),
     "logs",
-    FOIL_EXTRACT_LOG_NAME,
+    CATALOGUE_EXTRACT_LOG_NAME,
   );
 }
 
-export async function beginFoilExtractLog(
-  pack: FoilExtractTarget,
+export async function beginCatalogueExtractLog(
+  pack: CatalogueExtractTarget,
   headerLines: readonly string[] = [],
 ): Promise<string> {
-  const filePath = foilExtractLogPath(pack);
+  const filePath = catalogueExtractLogPath(pack);
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   const stamp = new Date().toISOString();
   const body = [`── foil extract ${pack} @ ${stamp}`, ...headerLines, ""].join(
@@ -40,11 +40,11 @@ export async function beginFoilExtractLog(
   return filePath;
 }
 
-export async function appendFoilExtractLog(
-  pack: FoilExtractTarget,
+export async function appendCatalogueExtractLog(
+  pack: CatalogueExtractTarget,
   line: string,
 ): Promise<void> {
-  const filePath = foilExtractLogPath(pack);
+  const filePath = catalogueExtractLogPath(pack);
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   const text = line.endsWith("\n") ? line : `${line}\n`;
   await fs.promises.appendFile(filePath, text, "utf8");
@@ -107,9 +107,9 @@ async function readLaunchStamp(filePath: string): Promise<string | null> {
 
 /** jobId line written by admin enqueue / worker logHeader. */
 export async function readFoilExtractJobId(
-  pack: FoilExtractTarget,
+  pack: CatalogueExtractTarget,
 ): Promise<string | null> {
-  const head = await readLogHead(foilExtractLogPath(pack));
+  const head = await readLogHead(catalogueExtractLogPath(pack));
   const match = JOB_ID_RE.exec(head);
   return match?.[1] ?? null;
 }
@@ -118,11 +118,11 @@ export async function readFoilExtractJobId(
  * Read log bytes from ``after`` (inclusive) up to ``maxBytes``.
  * Truncation at a non-UTF8 boundary is avoided by decoding from a line start.
  */
-export async function readFoilExtractLog(
-  pack: FoilExtractTarget,
+export async function readCatalogueExtractLog(
+  pack: CatalogueExtractTarget,
   options: { after?: number; maxBytes?: number } = {},
 ): Promise<FoilExtractLogSlice> {
-  const filePath = foilExtractLogPath(pack);
+  const filePath = catalogueExtractLogPath(pack);
   const after = Math.max(0, options.after ?? 0);
   const maxBytes = Math.min(
     Math.max(1_024, options.maxBytes ?? 256 * 1024),

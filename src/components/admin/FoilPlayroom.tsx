@@ -697,8 +697,7 @@ export function FoilPlayroom({
 
   const packs = listEffectPacks();
   const cataloguePackId: CataloguePackId =
-    resolveCataloguePackId(searchParams.get("pack")) ??
-    CATALOGUE_PACKS[0]!.id;
+    resolveCataloguePackId(searchParams.get("pack")) ?? CATALOGUE_PACKS[0]!.id;
   const catalogueInfo =
     cataloguePackInfo(cataloguePackId) ?? CATALOGUE_PACKS[0]!;
   const browseScope: CatalogueBrowseScope = resolveCatalogueScope(
@@ -909,8 +908,7 @@ export function FoilPlayroom({
               {fr
                 ? (catalogueInfo.blurbFr ??
                   "Catalogue local — pas de dump foil")
-                : (catalogueInfo.blurbEn ??
-                  "Local catalogue — no foil dump")}
+                : (catalogueInfo.blurbEn ?? "Local catalogue — no foil dump")}
             </p>
           )}
         </div>
@@ -1024,75 +1022,73 @@ export function FoilPlayroom({
               </div>
               {layout === "compare" ? (
                 <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto py-1">
-                  {(focusedArts.length > 0
-                    ? focusedArts
-                    : [null]
-                  ).map((art, artIndex) => (
-                    <div
-                      key={
-                        art?.bundleId ??
-                        art?.imageUrl ??
-                        `${focusedMaterial}:face-${artIndex}`
-                      }
-                      className="grid shrink-0 grid-cols-2 gap-4"
-                    >
-                      {COMPARE_SIDES.map((side) => (
-                        <div
-                          key={side.backend}
-                          className="flex flex-col items-center gap-1.5"
-                        >
-                          {artIndex === 0 ? (
-                            <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                              {fr ? side.labelFr : side.labelEn}
-                            </span>
-                          ) : (
-                            <span className="h-[22px]" aria-hidden />
-                          )}
-                          <div className="flex w-full items-center justify-center">
-                            <MaterialTile
-                              key={`${pack?.id ?? packId}:${focusedMaterial}:${side.backend}:${art?.bundleId ?? artIndex}`}
-                              packId={pack?.id ?? packId}
-                              materialName={focusedMaterial!}
-                              samples={samples}
-                              backend={side.backend}
-                              tilt={tilt}
-                              locale={locale}
-                              size="stack"
-                              packArt={art}
-                            />
+                  {(focusedArts.length > 0 ? focusedArts : [null]).map(
+                    (art, artIndex) => (
+                      <div
+                        key={
+                          art?.bundleId ??
+                          art?.imageUrl ??
+                          `${focusedMaterial}:face-${artIndex}`
+                        }
+                        className="grid shrink-0 grid-cols-2 gap-4"
+                      >
+                        {COMPARE_SIDES.map((side) => (
+                          <div
+                            key={side.backend}
+                            className="flex flex-col items-center gap-1.5"
+                          >
+                            {artIndex === 0 ? (
+                              <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                                {fr ? side.labelFr : side.labelEn}
+                              </span>
+                            ) : (
+                              <span className="h-[22px]" aria-hidden />
+                            )}
+                            <div className="flex w-full items-center justify-center">
+                              <MaterialTile
+                                key={`${pack?.id ?? packId}:${focusedMaterial}:${side.backend}:${art?.bundleId ?? artIndex}`}
+                                packId={pack?.id ?? packId}
+                                materialName={focusedMaterial!}
+                                samples={samples}
+                                backend={side.backend}
+                                tilt={tilt}
+                                locale={locale}
+                                size="stack"
+                                packArt={art}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                        ))}
+                      </div>
+                    ),
+                  )}
                 </div>
               ) : (
                 <div className="flex min-h-0 flex-1 flex-col items-center gap-6 overflow-y-auto py-1">
-                  {(focusedArts.length > 0
-                    ? focusedArts
-                    : [null]
-                  ).map((art, artIndex) => (
-                    <div
-                      key={
-                        art?.bundleId ??
-                        art?.imageUrl ??
-                        `${focusedMaterial}:face-${artIndex}`
-                      }
-                      className="flex w-full shrink-0 justify-center"
-                    >
-                      <MaterialTile
-                        key={`${pack?.id ?? packId}:${focusedMaterial}:${art?.bundleId ?? artIndex}`}
-                        packId={pack?.id ?? packId}
-                        materialName={focusedMaterial!}
-                        samples={samples}
-                        backend={backend}
-                        tilt={tilt}
-                        locale={locale}
-                        size="stack"
-                        packArt={art}
-                      />
-                    </div>
-                  ))}
+                  {(focusedArts.length > 0 ? focusedArts : [null]).map(
+                    (art, artIndex) => (
+                      <div
+                        key={
+                          art?.bundleId ??
+                          art?.imageUrl ??
+                          `${focusedMaterial}:face-${artIndex}`
+                        }
+                        className="flex w-full shrink-0 justify-center"
+                      >
+                        <MaterialTile
+                          key={`${pack?.id ?? packId}:${focusedMaterial}:${art?.bundleId ?? artIndex}`}
+                          packId={pack?.id ?? packId}
+                          materialName={focusedMaterial!}
+                          samples={samples}
+                          backend={backend}
+                          tilt={tilt}
+                          locale={locale}
+                          size="stack"
+                          packArt={art}
+                        />
+                      </div>
+                    ),
+                  )}
                 </div>
               )}
             </div>

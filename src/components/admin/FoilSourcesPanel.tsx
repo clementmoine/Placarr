@@ -1,13 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Loader2,
-  Play,
-  RefreshCw,
-  ScrollText,
-  Upload,
-} from "lucide-react";
+import { Loader2, Play, RefreshCw, ScrollText, Upload } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -19,14 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type {
-  FoilPackStatus,
-} from "@/lib/admin/foilStatusTypes";
+import type { FoilPackStatus } from "@/lib/admin/foilStatusTypes";
 import { getBackgroundJobs } from "@/lib/api/backgroundJobs";
 import type {
-  FoilExtractScope,
-  FoilExtractTarget,
-} from "@/lib/client/foilExtract";
+  CatalogueExtractScope,
+  CatalogueExtractTarget,
+} from "@/lib/client/catalogueExtract";
 import {
   cataloguePackInfo,
   foilExtractNeedsApk,
@@ -34,7 +26,7 @@ import {
 } from "@/lib/admin/cataloguePacks";
 
 type FoilLogResponse = {
-  pack: FoilExtractTarget;
+  pack: CatalogueExtractTarget;
   exists: boolean;
   size: number;
   mtime: string | null;
@@ -71,7 +63,12 @@ async function fetchFoilStatus(): Promise<{
   packs: FoilPackStatus[];
   gaps: {
     actionableCount: number;
-    items: Array<{ id: string; section: string; detail: string; apkGated?: boolean }>;
+    items: Array<{
+      id: string;
+      section: string;
+      detail: string;
+      apkGated?: boolean;
+    }>;
   } | null;
 }> {
   const res = await fetch("/api/admin/foil-status");
@@ -79,7 +76,12 @@ async function fetchFoilStatus(): Promise<{
     packs?: FoilPackStatus[];
     gaps?: {
       actionableCount: number;
-      items: Array<{ id: string; section: string; detail: string; apkGated?: boolean }>;
+      items: Array<{
+        id: string;
+        section: string;
+        detail: string;
+        apkGated?: boolean;
+      }>;
     };
     error?: string;
   };
@@ -136,11 +138,11 @@ function statusLine(
  */
 export function foilExtractTargetForPack(
   packId: string | null | undefined,
-): FoilExtractTarget | null {
+): CatalogueExtractTarget | null {
   // Catalogue ids and extract targets are not the same vocabulary: the Naruto
   // pack is `naruto/ccg`, the extract target is `naruto`. Go through the pack
   // resolver so aliases (`carddass`, `cacg`, `pokemonpaper`…) map too.
-  // The server-side `normalizeFoilExtractTarget` cannot be reused here — it
+  // The server-side `normalizeCatalogueExtractTarget` cannot be reused here — it
   // pulls `node:child_process` and this is a client component.
   const pack = cataloguePackInfo(resolveCataloguePackId(packId));
   return pack?.extractTarget ?? null;
@@ -151,7 +153,7 @@ export function FoilPackSources({
   target,
   locale,
 }: {
-  target: FoilExtractTarget;
+  target: CatalogueExtractTarget;
   locale: string;
 }) {
   const fr = locale === "fr";
@@ -211,51 +213,55 @@ export function FoilPackSources({
     setLogActivityAt(null);
   };
 
-  const pollLogs = useCallback((reset: boolean) => {
-    logPollLockRef.current = logPollLockRef.current.then(async () => {
-      setLogLoading(true);
-      try {
-        const after = reset ? 0 : logOffsetRef.current;
-        const res = await fetch(
-          `/api/admin/foil-logs?pack=${encodeURIComponent(target)}&after=${after}`,
-        );
-        const body = (await res.json()) as FoilLogResponse;
-        if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-        setLogJobStatus(body.job?.status ?? null);
-        setLogLaunchedAt(body.launchedAt ?? body.job?.startedAt ?? null);
-        setLogActivityAt(body.mtime);
-        if (reset) {
-          setLogText(body.text || (body.exists ? "" : "—"));
-        } else if (body.text) {
-          setLogText((prev) => (prev ? `${prev}${body.text}` : body.text));
+  const pollLogs = useCallback(
+    (reset: boolean) => {
+      logPollLockRef.current = logPollLockRef.current.then(async () => {
+        setLogLoading(true);
+        try {
+          const after = reset ? 0 : logOffsetRef.current;
+          const res = await fetch(
+            `/api/admin/catalogue-logs?pack=${encodeURIComponent(target)}&after=${after}`,
+          );
+          const body = (await res.json()) as FoilLogResponse;
+          if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+          setLogJobStatus(body.job?.status ?? null);
+          setLogLaunchedAt(body.launchedAt ?? body.job?.startedAt ?? null);
+          setLogActivityAt(body.mtime);
+          if (reset) {
+            setLogText(body.text || (body.exists ? "" : "—"));
+          } else if (body.text) {
+            setLogText((prev) => (prev ? `${prev}${body.text}` : body.text));
+          }
+          // Only echo DB failure when it belongs to *this* log run (matched by
+          // jobId) and the file itself does not already record success/failure.
+          if (
+            body.job?.status === "failed" &&
+            body.job.error &&
+            !/── done\b/.test(body.text) &&
+            !/status=failed/.test(body.text) &&
+            !/── failed:/.test(body.text)
+          ) {
+            const failBlock = `\nstatus=failed\n${body.job.error}\n`;
+            setLogText((prev) => {
+              if (/── done\b/.test(prev) || prev.includes(body.job!.error!)) {
+                return prev;
+              }
+              return `${prev}${failBlock}`;
+            });
+          }
+          logOffsetRef.current = body.nextOffset;
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          setLogText((prev) => `${prev}\n${message}`);
+        } finally {
+          setLogLoading(false);
         }
-        // Only echo DB failure when it belongs to *this* log run (matched by
-        // jobId) and the file itself does not already record success/failure.
-        if (
-          body.job?.status === "failed" &&
-          body.job.error &&
-          !/── done\b/.test(body.text) &&
-          !/status=failed/.test(body.text) &&
-          !/── failed:/.test(body.text)
-        ) {
-          const failBlock = `\nstatus=failed\n${body.job.error}\n`;
-          setLogText((prev) => {
-            if (/── done\b/.test(prev) || prev.includes(body.job!.error!)) {
-              return prev;
-            }
-            return `${prev}${failBlock}`;
-          });
-        }
-        logOffsetRef.current = body.nextOffset;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        setLogText((prev) => `${prev}\n${message}`);
-      } finally {
-        setLogLoading(false);
-      }
-    });
-    return logPollLockRef.current;
-  }, [target]);
+      });
+      return logPollLockRef.current;
+    },
+    [target],
+  );
 
   useEffect(() => {
     if (!logsOpen) return;
@@ -266,18 +272,19 @@ export function FoilPackSources({
     return () => clearInterval(timer);
   }, [logsOpen, pollLogs]);
 
-  const runExtract = async (scope?: FoilExtractScope) => {
+  const runExtract = async (scope?: CatalogueExtractScope) => {
     setEnqueueing(true);
     try {
-      const { enqueueFoilExtract } = await import("@/lib/client/foilExtract");
+      const { enqueueCatalogueExtract } = await import(
+        "@/lib/client/catalogueExtract"
+      );
       // Pokémon: catalogue = AssetManifests CDN (authoritative). Inventory is
       // only APK∪Malie — used by auto-sync, not the admin button.
       const effective =
         scope ?? (target === "pokemon" ? "catalogue" : "inventory");
-      const done = await enqueueFoilExtract(target, effective);
+      const done = await enqueueCatalogueExtract(target, effective);
       toast.success(
-        done.hint ||
-          (fr ? "Extract en file d’attente" : "Extract queued"),
+        done.hint || (fr ? "Extract en file d’attente" : "Extract queued"),
       );
       void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
       void queryClient.invalidateQueries({ queryKey: ["catalogueCards"] });
@@ -309,7 +316,8 @@ export function FoilPackSources({
             ))}
           </ul>
           <p className="mt-2 text-muted-foreground">
-            docs/foil_new_finish.md · docs/foil_apk_sources.md · admin foil-status gaps
+            docs/foil_new_finish.md · docs/foil_apk_sources.md · admin
+            foil-status gaps
           </p>
         </details>
       ) : null}
@@ -372,11 +380,7 @@ export function FoilPackSources({
             ) : (
               <Play className="h-3.5 w-3.5" />
             )}
-            {!foilExtractNeedsApk(target)
-              ? fr
-                ? "Sync"
-                : "Sync"
-              : "Extract"}
+            {!foilExtractNeedsApk(target) ? (fr ? "Sync" : "Sync") : "Extract"}
           </Button>
         </div>
       </div>
@@ -385,7 +389,9 @@ export function FoilPackSources({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {fr ? "Scraper tout le catalogue CDN ?" : "Scrape the full CDN catalogue?"}
+              {fr
+                ? "Scraper tout le catalogue CDN ?"
+                : "Scrape the full CDN catalogue?"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 text-sm text-muted-foreground">

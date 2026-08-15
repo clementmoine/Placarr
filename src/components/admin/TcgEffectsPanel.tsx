@@ -81,7 +81,8 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
   const franchises = useMemo(() => catalogueFranchises(), []);
 
   const otherCorpora = useMemo(
-    () => corpora.filter((corpus) => !cataloguePackForDataPack(corpus.dataPack)),
+    () =>
+      corpora.filter((corpus) => !cataloguePackForDataPack(corpus.dataPack)),
     [corpora],
   );
 
@@ -122,7 +123,9 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     ? `franchise:${activeFranchise.id}`
     : activeCorpus
       ? `corpus:${activeCorpus.providerId}`
-      : (topTabs[0] ? topTabValue(topTabs[0]) : "");
+      : topTabs[0]
+        ? topTabValue(topTabs[0])
+        : "";
 
   const selectPack = useCallback(
     (packId: string) => {

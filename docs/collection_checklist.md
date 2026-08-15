@@ -274,6 +274,61 @@ Le noyau ne connaît que le minimum commun, et la check-list se construit dessus
 sans savoir ce qu'elle compte. C'est la même règle que pour les colonnes de
 `print_assets` : un tronc commun, des extensions déclarées, rien d'aplati.
 
+## Posséder un produit scellé : une nature, pas une condition
+
+On peut posséder un display, un booster ou un deck **non ouverts**. Il faut donc
+pouvoir les ajouter à une collection TCG. Mais l'observation décisive est
+celle-ci :
+
+> Un booster possédé est scellé **par définition**. Ouvert, ce ne sont plus des
+> boosters — ce sont des cartes.
+
+Le scellé n'est donc pas un état parmi d'autres du même objet : c'est ce qui
+fait exister l'objet en tant que tel. `Item.condition` (`new | used | loose |
+damaged`) ne peut pas porter ça — un booster `used` n'existe pas, il a cessé
+d'être un booster.
+
+### Trois cas, et ils ne se comportent pas pareil
+
+| objet | scellé | ouvert |
+| --- | --- | --- |
+| **booster / display** | un item, contenu **inconnu** — c'est une loterie non tirée | n'existe plus : on saisit les cartes obtenues |
+| **deck de démarrage** | un item, contenu **connu** | soit un item « deck ouvert », soit ses N cartes — au choix du collectionneur |
+| **carte** | — | l'unité de base |
+
+La différence entre booster et deck tient à la nature du contenu, pas à
+l'emballage : l'un est aléatoire, l'autre déterministe. C'est la même
+distinction que pour le conseil d'achat, ce qui est plutôt rassurant — le modèle
+et le calcul reposent sur le même axe.
+
+### Ajouter un deck ajoute-t-il ses cartes ?
+
+Question posée, et la bonne réponse est probablement « ça dépend, et il faut le
+demander » :
+
+- **Deck scellé** → un seul item. Ne *pas* créer les cartes : elles ne sont pas
+  disponibles, et un collectionneur qui garde son deck sous blister ne considère
+  pas qu'il possède ces cartes au sens de la collection.
+- **Deck ouvert** → proposer d'ajouter ses N cartes d'un coup. C'est le geste
+  utile, et le contenu étant déterministe, il est exact.
+
+Corollaire intéressant : « posséder un deck **complet** » peut vouloir dire deux
+choses — détenir la boîte, ou détenir toutes ses cartes à l'unité. Les deux sont
+des états de collection légitimes et **différents**. Une check-list devrait
+pouvoir montrer les deux plutôt que d'en choisir un.
+
+### Ce que ça implique pour la complétion
+
+Un display scellé ne doit pas compter comme « j'ai ces cartes » : on ne sait pas
+lesquelles. Un deck scellé le pourrait, puisqu'on les connaît — mais on ne les a
+pas *en main*.
+
+Il y a donc deux complétions défendables, et il faut choisir laquelle on affiche
+(ou afficher les deux) : **« cartes que je détiens »** et **« cartes que je
+possède, scellé compris »**. Ne pas trancher en silence : le collectionneur qui
+garde un deck sous blister et celui qui l'a ouvert n'ont pas la même collection,
+et aucune des deux lectures n'est fausse.
+
 ## Étagères et catalogues : la question à trancher
 
 `Shelf` ne porte **aucun lien vers un catalogue** — seulement `type` et

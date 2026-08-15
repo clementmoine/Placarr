@@ -104,7 +104,9 @@ describe("resolveEffectForPaperCard", () => {
   });
 
   it("returns null for unknown bundles (honest empty)", () => {
-    expect(resolveEffectForPaperCard({ bundleId: "zzznone_fr_001" })).toBeNull();
+    expect(
+      resolveEffectForPaperCard({ bundleId: "zzznone_fr_001" }),
+    ).toBeNull();
   });
 });
 
@@ -194,13 +196,28 @@ describe("resolveEffectForPrintKey", () => {
     });
   });
 
-  it("falls back to FR dump bundles when EN is missing from cards.json", () => {
+  /*
+    This asserted a FR fallback for an EN request, on the premise that
+    `xy1_en_001` was missing from the dump. It is there now — no card in the
+    shipped dump has FR without EN — so the assertion described a world that
+    no longer exists and the test stopped guarding anything.
+
+    The language fallback itself is alive (`liveBundleLangsToTry`: caller's
+    lang, then `fr`, then `en`), so it is still covered — by a locale the dump
+    genuinely lacks, which no re-extract will quietly turn into a hit.
+  */
+  it("serves the requested locale when the dump has it", () => {
     const r = resolveEffectForPrintKey("pokemon:xy1-001", "holo", "en");
     expect(r).toMatchObject({
-      bundle: "xy1_fr_001",
+      bundle: "xy1_en_001",
       shader: "Rainbow",
       source: "tcglive-bundle",
     });
+  });
+
+  it("falls back to a dumped locale when the asked-for one is absent", () => {
+    const r = resolveEffectForPrintKey("pokemon:xy1-001", "holo", "ja");
+    expect(r?.bundle).toMatch(/^xy1_(fr|en)_001$/);
   });
 
   it("uses Live identity name join when set+num miss but title matches", async () => {
@@ -208,9 +225,7 @@ describe("resolveEffectForPrintKey", () => {
     const { mkdtemp, rm } = await import("node:fs/promises");
     const os = await import("node:os");
     const path = await import("node:path");
-    const {
-      resetLiveCardsIndexCache,
-    } = await import("./liveCardsIndex");
+    const { resetLiveCardsIndexCache } = await import("./liveCardsIndex");
     const { resetCardFoilIndexCache } = await import("./cardFoilIndex");
 
     const dir = await mkdtemp(path.join(os.tmpdir(), "name-fallback-"));
@@ -246,9 +261,7 @@ describe("resolveEffectForPrintKey", () => {
         PRIMARY KEY (bundle_id, variant)
       );
     `);
-    db.prepare(
-      `INSERT INTO card_foil VALUES (?,?,?,?,?,?,?,?)`,
-    ).run(
+    db.prepare(`INSERT INTO card_foil VALUES (?,?,?,?,?,?,?,?)`).run(
       "bw10_fr_001",
       "ph",
       "bw10_fr_001",
